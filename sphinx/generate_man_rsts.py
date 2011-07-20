@@ -18,20 +18,17 @@ def _indent(stream):
 
 class ManConverter(object):
 
-    def __init__(self, base_path):
-        self.base_path = base_path
-
     positional_re = re.compile("(^|\n)([^: ]+)")
     positional_re = partial(positional_re.sub, '\g<1>:\g<2>:')
 
-    def regen_if_needed(self, src, out_name=None):
+    @classmethod
+    def regen_if_needed(cls, base_path, src, out_name=None, force=False):
         if out_name is None:
-            out_name = src.rsplit(".")[-1]
-        out_name += '.rst'
-        out_path = pjoin(self.base_path, out_name)
+            out_name = src.rsplit(".", 1)[-1]
+        out_path = pjoin(base_path, '%s.rst' % (out_name,))
+        script_time = int(os.stat(__file__).st_mtime)
         module = load_module(src)
         cur_time = int(os.stat(module.__file__).st_mtime)
-        script_time = int(os.stat(__file__).st_mtime)
         cur_time = max([cur_time, script_time])
         try:
             trg_time = int(os.stat(out_path).st_mtime)
@@ -40,13 +37,43 @@ class ManConverter(object):
                 raise
             trg_time = -1
 
-        if cur_time != trg_time:
-            sys.stdout.write("regenerating rst for %s\n" % (src,))
-            data = self.generate_rst(src, module)
-            open(out_path, "w").write("\n".join(data))
+        if cur_time != trg_time or force:
+            cls(base_path, out_name, module.argparse_parser, mtime=cur_time).run()
 
-        os.chmod(out_path, 0644)
-        os.utime(out_path, (cur_time, cur_time))
+    def __init__(self, base_path, name, parser, mtime=None, out_name=None):
+        self.see_also = []
+        self.subcommands_to_generate = []
+        self.base_path = base_path
+        if out_name is None:
+            out_name = name
+        self.out_name = out_name
+        self.out_path = pjoin(base_path, out_name + '.rst')
+        self.name = name
+        self.parser = parser
+        self.mtime = mtime
+
+    def run(self, mtime=None):
+        if mtime is None:
+            mtime = self.mtime
+        sys.stdout.write("regenerating rst for %s\n" % (self.name,))
+        data = self.generate_rst(self.name, self.parser)
+        open(self.out_path, "w").write("\n".join(data))
+
+        os.chmod(self.out_path, 0644)
+        if mtime:
+            os.utime(self.out_path, (mtime, mtime))
+
+    def generate_rst(self, python_name, parser):
+        self.see_also = []
+        self.subcommands_generate = []
+        try:
+            return self.process_parser(parser, python_name.rsplit(".")[-1])
+        finally:
+            for x in self.subcommands_generate:
+                name = python_name + '-' + x[0]
+                self.regen_if_needed(python_name, out_name=name, force=True, parser=x[1])
+            self.subcommands_generate = []
+            self.see_also = []
 
     @staticmethod
     def _get_formatter(parser, name):
@@ -61,8 +88,34 @@ class ManConverter(object):
         if data:
             l.extend(_rst_header("=", action_group.title))
             if action_group.description:
-                l.extend(description.split("\n"))
+                l.extend(action_group.description.split("\n"))
             l.extend(self.positional_re(data).split("\n"))
+            l.append('')
+        return l
+
+    def process_subcommands(self, parser, name, action_group):
+        l = []
+        h = self._get_formatter(parser, name)
+        h.add_arguments(action_group._group_actions)
+        data = h.format_help().strip()
+        if data:
+            assert len(action_group._group_actions) == 1
+            l.extend(_rst_header("=", action_group.title))
+            if action_group.description:
+                l.extend(action_group.description.split("\n"))
+            #data = re.sub("(^|\n)\{[^\}]+\}($|\n)", "\g<1>\g<2>", data)
+            #data = re.sub("(^|\n)  ([^ ]+) +([^\n]+)",
+            #    "\g<1>:doc:`%s-\g<2>`:  \g<3>" % (name,), data)
+            for subcommand, parser in action_group._group_actions[0].choices.iteritems():
+                self.__class__(self.base_path, "%s %s" % (self.name, subcommand), parser, mtime=self.mtime,
+                    out_name="%s-%s" % (self.out_name, subcommand)).run()
+            l.append('')
+            l.append(".. toctree::")
+            l.append("   :maxdepth: 2")
+            l.append('')
+            l.extend("   %s %s <%s-%s>" % ((name, subcommand)*2) for subcommand in action_group._group_actions[0].choices)
+            l.append('')
+            #l.extend(data.split("\n"))
             l.append('')
         return l
 
@@ -75,9 +128,9 @@ class ManConverter(object):
                 continue
             if any(isinstance(x, argparse._SubParsersAction)
                 for x in action_group._group_actions):
+                assert len(action_group._group_actions) == 1
+                l.extend(self.process_subcommands(parser, name, action_group))
                 continue
-#               assert len(action_group._group_actions) == 1
-#                l.extend(process_subparser(action_group, name))
             h = self._get_formatter(parser, name)
             #h.start_section(action_group.title)
             #h.add_text(action_group.description)
@@ -100,12 +153,9 @@ class ManConverter(object):
             text = text[len("usage:"):].lstrip()
         return filter(None, text.split("\n"))
 
-    def generate_rst(self, python_name, module):
-        parser = module.argparse_parser
-        return self.process_parser(parser, python_name.rsplit(".")[-1])
-
     def process_parser(self, parser, name):
-        l = _rst_header('=', name, leading=True)
+        l = ['.. _`%s manpage`:' % (name,), '']
+        l.extend(_rst_header('=', name, leading=True))
 
         l.extend(_rst_header('=', "synopsis"))
         l.extend(self.generate_usage(parser, name))
@@ -122,6 +172,5 @@ class ManConverter(object):
 
 if __name__ == '__main__':
     import sys
-    converter = ManConverter(sys.argv[1])
     for x in sys.stdin:
-        converter.regen_if_needed(*x.rstrip("\n").split())
+        ManConverter.regen_if_needed(sys.argv[1], *x.rstrip("\n").split())

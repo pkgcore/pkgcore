@@ -21,6 +21,30 @@ class ManConverter(object):
     positional_re = re.compile("(^|\n)([^: ]+)")
     positional_re = partial(positional_re.sub, '\g<1>:\g<2>:')
 
+    option_list_re = re.compile("(^|\n)(?!`)(?:-{1,2})(.*?)  ")
+    def mangle_options(match):
+        text = raw_text = match.string[match.start():match.end()]
+        leading = ''
+        if raw_text[0] == '\n':
+            leading = '\n'
+            text = raw_text[1:]
+        if '\n' in text:
+            # bad match...
+            print "not rewriting %r" % (text,)
+            return raw_text
+        text = text.split(',')
+        l = []
+        for chunk in text:
+            chunk = chunk.split()
+            if len(chunk) > 2:
+                chunk[1:] = ['<%s>' % (' '.join(chunk[1:]),)]
+            l.append(' '.join(chunk))
+        return "%s%s  " % (leading, ', '.join(l))
+
+    option_list_re = partial(option_list_re.sub,
+        mangle_options)
+    mangle_options = staticmethod(mangle_options)
+
     @classmethod
     def regen_if_needed(cls, base_path, src, out_name=None, force=False):
         if out_name is None:
@@ -139,6 +163,7 @@ class ManConverter(object):
             data = h.format_help()
             if not data:
                 continue
+            data = self.option_list_re(data)
             l.extend(_rst_header("=", action_group.title))
             if action_group.description:
                 l.extend(action_group.description.split("\n"))

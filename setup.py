@@ -1,6 +1,11 @@
 #!/usr/bin/env python
 
 import os
+# suppress snakeoil demandload warnings for all operations of we trigger.
+os.environ["SNAKEOIL_DEMANDLOAD_PROTECTION"] = 'n'
+os.environ["SNAKEOIL_DEMANDLOAD_WARN"] = 'n'
+#os.environ["SNAKEOIL_DEMANDLOAD_DISABLED"] = 'y'
+
 import sys
 import errno
 import subprocess
@@ -52,10 +57,8 @@ class mysdist(snk_distutils.sdist):
         """
         if self.build_docs:
             # this is icky, but covers up cwd changing issues.
-            my_path = map(os.path.abspath, sys.path)
             cwd = os.getcwd()
-            if subprocess.call(['python', 'setup.py', 'build_docs', '--builder=man'], cwd=cwd,
-                env={"PYTHONPATH":":".join(my_path)}):
+            if subprocess.call(['python', 'setup.py', 'build_docs', '--builder=man'], cwd=cwd):
                 raise errors.DistutilsExecError("build_docs failed")
             import shutil
             shutil.copytree(os.path.join(cwd, "build/sphinx/man"),

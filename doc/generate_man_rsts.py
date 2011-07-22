@@ -89,14 +89,9 @@ class ManConverter(object):
 
     def generate_rst(self, python_name, parser):
         self.see_also = []
-        self.subcommands_generate = []
         try:
             return self.process_parser(parser, python_name.rsplit(".")[-1])
         finally:
-            for x in self.subcommands_generate:
-                name = python_name + '-' + x[0]
-                self.regen_if_needed(python_name, out_name=name, force=True, parser=x[1])
-            self.subcommands_generate = []
             self.see_also = []
 
     @staticmethod
@@ -130,14 +125,20 @@ class ManConverter(object):
             #data = re.sub("(^|\n)\{[^\}]+\}($|\n)", "\g<1>\g<2>", data)
             #data = re.sub("(^|\n)  ([^ ]+) +([^\n]+)",
             #    "\g<1>:doc:`%s-\g<2>`:  \g<3>" % (name,), data)
+            base = pjoin(self.base_path, '%s-subcommands' % (self.name,))
+            try:
+                os.mkdir(base)
+            except EnvironmentError, e:
+                if e.errno != errno.EEXIST:
+                    raise
             for subcommand, parser in action_group._group_actions[0].choices.iteritems():
-                self.__class__(self.base_path, "%s %s" % (self.name, subcommand), parser, mtime=self.mtime,
-                    out_name="%s-%s" % (self.out_name, subcommand)).run()
+                self.__class__(base, "%s %s" % (self.name, subcommand), parser, mtime=self.mtime,
+                    out_name=subcommand).run()
             l.append('')
             l.append(".. toctree::")
             l.append("   :maxdepth: 2")
             l.append('')
-            l.extend("   %s %s <%s-%s>" % ((name, subcommand)*2) for subcommand in action_group._group_actions[0].choices)
+            l.extend("   %s %s <%s-subcommands/%s>" % ((name, subcommand)*2) for subcommand in action_group._group_actions[0].choices)
             l.append('')
             #l.extend(data.split("\n"))
             l.append('')

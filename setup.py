@@ -34,11 +34,14 @@ class mysdist(snk_distutils.sdist):
         self.build_docs = True
 
     def _add_to_file_list(self):
-        self.filelist.include_pattern('.rst', prefix='man')
-        self.filelist.exclude_pattern(os.path.sep + 'index.rst',
-            prefix='man')
-        self.filelist.append('man/manpage.py')
+        #self.filelist.include_pattern('.rst', prefix='man')
+        #self.filelist.exclude_pattern(os.path.sep + 'index.rst',
+        #    prefix='man')
+        self.filelist.include_pattern('doc/*')
+        self.filelist.include_pattern('man/*')
         self.filelist.append('build_api_docs.sh')
+        self.filelist.exclude_pattern("doc/_build")
+        self.filelist.exclude_pattern("build")
 
     def make_release_tree(self, base_dir, files):
         """Create and populate the directory tree that is put in source tars.
@@ -47,13 +50,17 @@ class mysdist(snk_distutils.sdist):
         into the release and adds generated files that should not
         exist in a working tree.
         """
-        snk_distutils.sdist.make_release_tree(self, base_dir, files)
         if self.build_docs:
             # this is icky, but covers up cwd changing issues.
             my_path = map(os.path.abspath, sys.path)
-            if subprocess.call(['./build_docs.py'], cwd=base_dir,
+            cwd = os.getcwd()
+            if subprocess.call(['python', 'setup.py', 'build_docs', '--builder=man'], cwd=cwd,
                 env={"PYTHONPATH":":".join(my_path)}):
                 raise errors.DistutilsExecError("build_docs failed")
+            import shutil
+            shutil.copytree(os.path.join(cwd, "build/sphinx/man"),
+                os.path.join(base_dir, "man"))
+        snk_distutils.sdist.make_release_tree(self, base_dir, files)
         self.cleanup_post_release_tree(base_dir)
 
 
@@ -157,6 +164,7 @@ class pkgcore_install_man(core.Command):
 
     """Install man pages"""
 
+    man_search_path = ('build/sphinx/man', 'man')
 
     def initialize_options(self):
         self.install_man = None
@@ -172,16 +180,27 @@ class pkgcore_install_man(core.Command):
             self.install_man = '/'
         self.install_man = os.path.join(self.install_man,
             self.prefix.lstrip(os.path.sep), 'share', 'man')
-        self.man_pages = [
-            os.path.join(os.getcwd(), 'man', path) for path in os.listdir('man')
-            if len(path) > 2 and path[-2] == '.' and path[-1].isdigit()]
 
+    def scan_man_pages(self, path=None):
+        if path is None:
+            cwd = os.getcwd()
+            for path in self.man_search_path:
+                path = os.path.join(cwd, path)
+                if os.path.isdir(path):
+                    break
+            else:
+                raise errors.DistutilsExecError("no man pages found")
+        obj = self.man_pages = [
+            os.path.join(path, x) for x in os.listdir(path)
+            if len(x) > 2 and x[-2] == '.' and x[-1].isdigit()]
+        return obj
 
     def run(self):
-        for x in sorted(set(page[-1] for page in self.man_pages)):
+        pages = self.scan_man_pages()
+        for x in sorted(set(page[-1] for page in pages)):
             self.mkpath(os.path.join(self.install_man, 'man%s' % x))
 
-        for page in self.man_pages:
+        for page in pages:
             self.copy_file(
                 page,
                 os.path.join(self.install_man, 'man%s' % page[-1],
@@ -236,6 +255,37 @@ class test(snk_distutils.test):
     default_test_namespace = 'pkgcore.test'
 
 
+class build_docs_mixin(object):
+
+    _kls = None
+
+    def initialize_options(self):
+        self._kls.initialize_options(self)
+        self.generate = True
+
+    def generate_docs(self):
+        if subprocess.call(['make', 'generated'], cwd=self.source_dir):
+            raise errors.DistutilsExecError("doc generation failed")
+
+    def run(self):
+        if self.generate:
+            self.generate_docs()
+        return self._kls.run(self)
+
+    @classmethod
+    def setup_kls(cls):
+        from sphinx.setup_command import BuildDoc as _BuildDoc
+        class BuildDoc(_BuildDoc, cls):
+            _kls = _BuildDoc
+            user_options = list(_BuildDoc.user_options) \
+                + [('generate', None, 'force autogeneration of intermediate docs')]
+            # annoying.
+            for x in "initialize_options run".split():
+                locals()[x] = getattr(cls, x)
+
+        return BuildDoc
+
+
 packages = [
     root.replace(os.path.sep, '.')
     for root, dirs, files in os.walk('pkgcore')
@@ -260,11 +310,37 @@ if not snk_distutils.is_py3k:
         extensions.append(snk_distutils.OptionalExtension(
                 'pkgcore.ebuild._misc', ['src/misc.c']))
 
+name = 'pkgcore'
+from pkgcore.const import VERSION as version
+release = version
+
+cmdclass={
+    'sdist': mysdist,
+    'build_py': pkgcore_build_py,
+    'build_ext': snk_distutils.build_ext,
+    'test': test,
+    'pkgcore_build_scripts': pkgcore_build_scripts,
+    'pkgcore_install_scripts': pkgcore_install_scripts,
+    'pkgcore_install_man': pkgcore_install_man,
+}
+command_options = {}
+try:
+    import sphinx
+    BuildDoc = build_docs_mixin.setup_kls()
+    cmdclass['build_docs'] = BuildDoc
+    command_options['build_docs'] = {
+#        'project': ('setup.py', name),
+        'version': ('setup.py', version),
+        'source_dir': ('setup.py', 'doc'),
+        #'config_dir': ('setup.py', 'sphinx'),
+        }
+except ImportError:
+    pass
 
 from pkgcore.const import VERSION
 core.setup(
-    name='pkgcore',
-    version=VERSION,
+    name=name,
+    version=version,
     description='package managing framework',
     url='http://www.pkgcore.org/',
     license='GPL-2',
@@ -280,14 +356,5 @@ core.setup(
             ['ebuild/eapi-bash/helpers/%s' % (x,) for x in ("internals/*", "common/*", "4/*")
             ],
         },
-    ext_modules=extensions,
-    cmdclass={
-        'sdist': mysdist,
-        'build_py': pkgcore_build_py,
-        'build_ext': snk_distutils.build_ext,
-        'test': test,
-        'pkgcore_build_scripts': pkgcore_build_scripts,
-        'pkgcore_install_scripts': pkgcore_install_scripts,
-        'pkgcore_install_man': pkgcore_install_man,
-        },
+    ext_modules=extensions, cmdclass=cmdclass, command_options=command_options,
     )

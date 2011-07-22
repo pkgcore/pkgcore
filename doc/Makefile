@@ -39,7 +39,7 @@ help:
 	@echo "  doctest    to run all doctests embedded in the documentation (if enabled)"
 
 clean:
-	-rm -rf $(BUILDDIR)/* api man
+	-rm -rf $(BUILDDIR) api man
 
 generated: api man_rsts
 

@@ -164,6 +164,8 @@ def rewrite_restrict(restrict):
         return restrict[2:]
     return restrict
 
+def get_repo_id(self):
+    return self.repo.repo_id
 
 class base(metadata.package):
 
@@ -180,7 +182,7 @@ class base(metadata.package):
         "depends", "rdepends", "post_rdepends", "provides", "license",
         "slot", "keywords", "eapi_obj", "restrict", "description", "iuse",
         "chost", "cbuild", "ctarget", "homepage", "properties",
-        "required_use", "defined_phases")
+        "required_use", "defined_phases", "repository")
 
     _config_wrappables = dict((x, alias_class_method("evaluate_depset"))
         for x in ["depends", "rdepends", "post_rdepends", "fetchables",
@@ -212,6 +214,7 @@ class base(metadata.package):
         s.data.pop("DEFINED_PHASES", "").split()), False)
     _get_attr["homepage"] = lambda s:s.data.pop("HOMEPAGE", "").strip()
     _get_attr["required_use"] = generate_required_use
+    _get_attr["repository"] = get_repo_id
 
     __slots__ = tuple(_get_attr.keys() + ["_pkg_metadata_shared"])
 
@@ -246,6 +249,10 @@ class base(metadata.package):
     @property
     def ebuild(self):
         return self._parent.get_ebuild_src(self)
+
+    @property
+    def repo_id(self):
+        return self.repo.repo_id
 
     def _fetch_metadata(self):
         return self._parent._get_metadata(self)

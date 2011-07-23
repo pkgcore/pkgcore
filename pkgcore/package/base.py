@@ -36,6 +36,12 @@ class base(object):
     def operations(self, domain, **kwds):
         return self._operations(domain, self, **kwds)
 
+    @property
+    def repo_id(self):
+        """Initially set to None. will be overriden later
+        when appropriate"""
+        return None
+
 
 class wrapper(base):
 

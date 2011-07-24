@@ -4,6 +4,9 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* man pages and docs in general have been converted to sphinx.  Definite
+  improvement already, but more to come.
+
 * pmaint copy arguments have changed; check the help, short version,
   it's now sane.
 

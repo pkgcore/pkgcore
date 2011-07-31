@@ -3,7 +3,7 @@
 
 use()
 {
-	echo "WARNING: 'use' function invoked by ${CATEGORY}/${PVR} during metadata regeneration." >&2
+	echo "WARNING: 'use' function invoked by ${CATEGORY}/${PF} during metadata regeneration." >&2
 	echo "WARNING: Please ensure upstream is aware of it and working to remove it." >&2
 	echo >&2
 	return 1
@@ -11,7 +11,7 @@ use()
 
 use_with()
 {
-	echo "WARNING: 'use_with' function invoked by ${CATEGORY}/${PVR} during metadata regeneration." >&2
+	echo "WARNING: 'use_with' function invoked by ${CATEGORY}/${PF} during metadata regeneration." >&2
 	echo "WARNING: Please ensure upstream is aware of it and working to remove it." >&2
 	echo >&2
 	return 1
@@ -19,7 +19,7 @@ use_with()
 
 use_enable()
 {
-	echo "WARNING: 'use_enable' function invoked by ${CATEGORY}/${PVR} during metadata regeneration." >&2
+	echo "WARNING: 'use_enable' function invoked by ${CATEGORY}/${PF} during metadata regeneration." >&2
 	echo "WARNING: Please ensure upstream is aware of it and working to remove it." >&2
 	echo >&2
 	return 1

@@ -63,7 +63,7 @@ addpredict()
 
 unpack()
 {
-	local x y myfail srcdir taropts tar_subdir
+	local x y myfail srcdir taropts tar_subdir name
 	taropts='--no-same-owner'
 
 	[ -z "$*" ] && die "Nothing passed to the 'unpack' command"
@@ -82,6 +82,8 @@ unpack()
 		[ ! -s "${srcdir}${x}" ] && die "$myfail: empty file"
 		[ "${x/${DISTDIR}}" != "${x}" ] && \
 			die "Arguments to unpack() should not begin with \${DISTDIR}."
+
+		name="${x##*/}"
 
 		case "${x}" in
 			*.tar)
@@ -105,17 +107,17 @@ unpack()
 				{ while :; do echo n || break; done } | unzip -qo "${srcdir}${x}" || die "$myfail"
 				;;
 			*.gz|*.Z|*.z)
-				gzip -dc "${srcdir}${x}" > ${x%.*} || die "$myfail"
+				gzip -dc "${srcdir}${x}" > ${name%.*} || die "$myfail"
 				;;
 			*.bz2|*.bz)
-				bzip2 -dc "${srcdir}${x}" > ${x%.*} || die "$myfail"
+				bzip2 -dc "${srcdir}${x}" > ${name%.*} || die "$myfail"
 				;;
 			*.xz)
 				if has "$EAPI" 0 1 2; then
 					echo "xv is a supported extension in eapi3 and above only" >&2
 					continue;
 				fi
-				xz -dc "${srcdir}${x}" > ${x%.*} || die "$myfail"
+				xz -dc "${srcdir}${x}" > ${name%.*} || die "$myfail"
 				;;
 			*.7Z|*.7z)
 				local my_output
@@ -139,7 +141,7 @@ unpack()
 					lzma -dc "${srcdir}${x}" | tar xof - ${taropts}
 					assert "$myfail"
 				else
-					lzma -dc "${srcdir}${x}" > ${x%.*} || die "$myfail"
+					lzma -dc "${srcdir}${x}" > ${name%.*} || die "$myfail"
 				fi
 				;;
 			*)

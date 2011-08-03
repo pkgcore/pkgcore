@@ -5,7 +5,7 @@ from pkgcore.util import commandline
 
 from snakeoil.demandload import demandload
 demandload(globals(),
-    'snakeoil:osutils',
+    'snakeoil:osutils,currying',
     "pkgcore.ebuild:atom,conditionals,eapi",
     "pkgcore.restrictions.boolean:AndRestriction",
     "pkgcore.util:packages",
@@ -37,6 +37,22 @@ def default_portageq_args(parser):
        "dev-lang/python[threads=] for example")
 
 
+def make_atom(value):
+    return commandline.DelayedValue(
+        currying.partial(_render_atom, value),
+        100)
+
+def _render_atom(value, namespace, attr):
+    a = namespace.atom_kls(value)
+    if isinstance(a, atom.transitive_use_atom):
+        a.restrictions
+        # XXX bit of a hack.
+        a = conditionals.DepSet(a.restrictions, atom.atom, True)
+        a = a.evaluate_depset(getattr(namespace, 'use', ()))
+        a = AndRestriction(*a.restrictions)
+    setattr(namespace, attr, a)
+
+
 class BaseCommand(commandline.ArgparseCommand):
 
     required_arg_count = 0
@@ -64,74 +80,10 @@ class BaseCommand(commandline.ArgparseCommand):
                 token = token[:-1]
             if token == 'atom':
                 parser.add_argument('atom', help="atom to inspect",
-                    type=atom.atom, **kwds)
+                    type=make_atom, **kwds)
             else:
                 parser.add_argument(token, help="%s to inspect" % (token,),
                     **kwds)
-
-    def _check_values(self, options, args):
-
-        min_arg_count = self.required_arg_count
-        arg_len = len(args)
-
-        if self.requires_root:
-            # note the _; this is to bypass the default property
-            # that loads the default domain if unspecified
-            if options._domain is None:
-                if not arg_len:
-                    self.error("not enough arguments supplied")
-                options._domain = self._handle_root_arg(options, args[0])
-                args = args[1:]
-                arg_len -= 1
-            min_arg_count -= 1
-
-        if options.use is not None:
-            options.use = frozenset(options.use.split())
-        else:
-            options.use = options.domain.settings.get("USE", frozenset())
-
-        args = self.rewrite_args(options, args)
-
-        return options, args
-
-    def _handle_root_arg(self, options, path):
-        domains = list(commandline.find_domains_from_path(options.config, path))
-        if len(domains) > 1:
-            self.error("multiple domains at %r; "
-                "please use --domain option instead.\nDomains found: %s" %
-                (path, ", ".join(repr(x[0]) for x in domains)))
-        elif len(domains) != 1:
-            self.error("couldn't find any domains at %r" % (path,))
-        # return just the domain instance- the name of that pair we don't care about
-        return domains[0][1]
-
-    def rewrite_args(self, options, args):
-        if not args:
-            return args
-        arg_spec = [x for x in self.arg_spec if 'root' != x]
-        arg_spec.extend(arg_spec[-1] for x in xrange(len(args) - len(self.arg_spec) + 1))
-
-        l = []
-        for atype, arg in zip(arg_spec, args):
-            if atype == 'atom':
-                l.append(self.make_atom(options.atom_kls, options.use, arg))
-            else:
-                l.append(arg)
-        return tuple(l)
-
-    def make_atom(self, atom_kls, use, arg):
-        try:
-            a = atom_kls(arg)
-            # force expansion.
-            a.restrictions
-            if isinstance(a, atom.transitive_use_atom):
-                # XXX: hack
-                a = conditionals.DepSet(a.restrictions, atom.atom, True)
-                a = a.evaluate_depset(use)
-                a = AndRestriction(*a.restrictions)
-        except atom.MalformedAtom, e:
-            self.error("malformed argument %r: %s" % (arg, e))
-        return a
 
     @classmethod
     def make_command(cls, arg_spec='', requires_root=True, bind=None):

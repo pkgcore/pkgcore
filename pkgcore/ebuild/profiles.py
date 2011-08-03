@@ -294,18 +294,16 @@ def _empty_provides_has_match(*args, **kwds):
     return False
 
 
-class OnDiskProfile(object):
+class ProfileStack(object):
 
-    pkgcore_config_type = ConfigHint({'basepath':'str', 'profile':'str'},
-        required=('basepath', 'profile'), typename='profile')
+    pkgcore_config_type = ConfigHint({'profile':'str'},
+        required=('profile'), typename='profile')
 
     _node_kls = ProfileNode
 
-    def __init__(self, basepath, profile, load_profile_base=True):
-        self.basepath = basepath
+    def __init__(self, profile):
         self.profile = profile
-        self.node = self._node_kls(pjoin(basepath, profile))
-        self.load_profile_base = load_profile_base
+        self.node = self._node_kls(profile)
 
     @property
     def arch(self):
@@ -322,10 +320,7 @@ class OnDiskProfile(object):
                     yield y
             yield node
 
-        l = list(f(self.node))
-        if self.load_profile_base:
-            l = [EmptyRootNode(self.basepath)] + l
-        return tuple(l)
+        return list(f(self.node))
 
     def _collapse_use_dict(self, attr):
 
@@ -402,7 +397,7 @@ class OnDiskProfile(object):
 
     def __getattr__(self, attr):
         if attr == "stack":
-            self.stack = obj = self._load_stack()
+            self.stack = obj = tuple(self._load_stack())
         elif attr in ('forced_use', 'masked_use', 'pkg_use'):
             obj = self._collapse_use_dict(attr)
             setattr(self, attr, obj)
@@ -428,6 +423,23 @@ class OnDiskProfile(object):
         else:
             raise AttributeError(attr)
         return obj
+
+
+class OnDiskProfile(ProfileStack):
+
+    pkgcore_config_type = ConfigHint({'basepath':'str', 'profile':'str'},
+        required=('basepath', 'profile'), typename='profile')
+
+    def __init__(self, basepath, profile, load_profile_base=True):
+        ProfileStack.__init__(self, pjoin(basepath, profile))
+        self.basepath = basepath
+        self.load_profile_base = load_profile_base
+
+    def _load_stack(self):
+        l = ProfileStack._load_stack(self)
+        if self.load_profile_base:
+            l = [EmptyRootNode(self.basepath)] + l
+        return l
 
 
 class UserProfileNode(ProfileNode):

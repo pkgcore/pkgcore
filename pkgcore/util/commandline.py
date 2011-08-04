@@ -484,6 +484,7 @@ def mk_argparser(suppress=False, config=True, domain=True, color=True, debug=Tru
         p.add_argument('--debug', action='store_true', help="Enable debugging checks")
     if color:
         p.add_argument('--color', action=StoreBool,
+            default=True,
             help="Enable or disable color support.")
 
     if config:

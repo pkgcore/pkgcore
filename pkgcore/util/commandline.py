@@ -419,6 +419,12 @@ class ArgparseCommand(object):
     def __call__(self, namespace, out, err):
         raise NotImplementedError(self, '__call__')
 
+def register_command(commands, real_type=type):
+    def f(name, bases, scope, real_type=real_type, commands=commands):
+        o = real_type(name, bases, scope)
+        commands.append(o)
+        return o
+    return f
 
 def _convert_config_mods(iterable):
     d = {}
@@ -449,6 +455,15 @@ def _mk_domain(parser):
     parser.add_argument('--domain', get_default=True, config_type='domain',
         action=StoreConfigObject,
         help="domain to use for this operation")
+
+def existant_path(value):
+    if not os.path.exists(value):
+        raise ValueError("path %r doesn't exist on disk" % (value,))
+    try:
+        return osutils.abspath(value)
+    except EnvironmentError, e:
+        raise ValueError("while resolving path %r, encountered error: %r" %
+            (value, e))
 
 def mk_argparser(suppress=False, config=True, domain=True, color=True, debug=True,
     version=True, **kwds):

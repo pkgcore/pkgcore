@@ -8,6 +8,7 @@ __all__ = ("pkgsets", "histo_data", "eapi_usage", "license_usage",
 
 from pkgcore.util import commandline
 from pkgcore.ebuild import portageq as _portageq
+from pkgcore.ebuild import inspect_profiles
 import os
 from snakeoil.demandload import demandload
 
@@ -316,3 +317,7 @@ _portageq.bind_parser(query, name='query')
 portageq = subparsers.add_parser("portageq",
     description="portageq compatible interface to query commands")
 _portageq.bind_parser(portageq, compat=True)
+
+profiles = subparsers.add_parser("profiles",
+    description="ebuild profiles related querying")
+inspect_profiles.bind_parser(profiles, 'profiles')

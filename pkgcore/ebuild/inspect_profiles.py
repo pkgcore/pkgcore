@@ -84,6 +84,17 @@ class provided(_base):
                 ", ".join(x.fullver for x in sorted(pkgs)))
 
 
+class use_expand(_base):
+
+    __metaclass__ = _register_command
+
+    def __call__(self, namespace, out, err):
+        out.write("flags:  ", 
+            ', '.join(sorted(namespace.profile.use_expand)))
+        out.write("hidden: ", 
+            ', '.join(sorted(namespace.profile.use_expand_hidden)))
+
+
 _color_parent = commandline.mk_argparser(color=True, domain=False, add_help=False)
 
 def bind_parser(parser, name):

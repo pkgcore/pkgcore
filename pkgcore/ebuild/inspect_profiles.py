@@ -4,7 +4,9 @@
 from pkgcore.util import commandline
 from snakeoil.demandload import demandload
 demandload(globals(),
-    "pkgcore.ebuild:profiles",
+    'pkgcore.ebuild:profiles',
+    'snakeoil:mappings',
+    'operator',
 )
 
 commands = []
@@ -66,7 +68,21 @@ class deprecated(_base):
                 out.write(" ", out.fg("yellow"), "deprecation message", out.reset, ":")
                 for line in data[1].split("\n"):
                     out.write(line, prefix='  ')
-        
+
+
+class provided(_base):
+
+    __metaclass__ = _register_command
+
+    def __call__(self, namespace, out, err):
+        targets = mappings.defaultdict(list)
+        for pkg in namespace.profile.provides_repo:
+            targets[pkg.key].append(pkg)
+
+        for pkg_name, pkgs in sorted(targets.iteritems(), key=operator.itemgetter(0)):
+            out.write(out.fg("cyan"), pkg_name, out.reset, ": ",
+                ", ".join(x.fullver for x in sorted(pkgs)))
+
 
 _color_parent = commandline.mk_argparser(color=True, domain=False, add_help=False)
 

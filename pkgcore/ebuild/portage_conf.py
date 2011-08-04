@@ -25,6 +25,7 @@ demandload(globals(),
     'ConfigParser:ConfigParser',
     'snakeoil.fileutils:read_bash_dict',
     'pkgcore.util:bzip2',
+    'pkgcore.ebuild:profiles',
     'snakeoil.xml:etree',
 )
 
@@ -228,11 +229,8 @@ def _find_profile_link(base_path, portage_compat=False):
 def add_profile(config, base_path, user_profile_path=None):
     profile = _find_profile_link(base_path)
 
-    psplit = list(piece for piece in profile.split(os.path.sep) if piece)
-    # poor mans rindex.
-    try:
-        profile_start = psplit.index('profiles')
-    except ValueError:
+    paths = profiles.OnDiskProfile.split_abspath(profile)
+    if paths is None:
         raise errors.InstantiationError(
             '%s expands to %s, but no profile detected' % (
                 pjoin(base_path, 'make.profile'), profile))
@@ -240,14 +238,14 @@ def add_profile(config, base_path, user_profile_path=None):
     if os.path.isdir(user_profile_path):
         config["profile"] = basics.AutoConfigSection({
                 "class": "pkgcore.ebuild.profiles.UserProfile",
-                "parent_path": pjoin("/", *psplit[:profile_start + 1]),
-                "parent_profile": pjoin(*psplit[profile_start + 1:]),
+                "parent_path": paths[0],
+                "parent_profile": paths[1],
                 "user_path": user_profile_path})
     else:
         config["profile"] = basics.AutoConfigSection({
                 "class": "pkgcore.ebuild.profiles.OnDiskProfile",
-                "basepath": pjoin("/", *psplit[:profile_start + 1]),
-                "profile": pjoin(*psplit[profile_start + 1:])})
+                "basepath": paths[0],
+                "profile": paths[1]})
 
 
 def add_fetcher(config, conf_dict, distdir):

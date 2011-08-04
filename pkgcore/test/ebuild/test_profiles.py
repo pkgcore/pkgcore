@@ -5,7 +5,7 @@ import os, shutil
 
 from pkgcore.test import TestCase
 from snakeoil.test.mixins import TempDirMixin
-from snakeoil.osutils import pjoin, ensure_dirs
+from snakeoil.osutils import pjoin, ensure_dirs, normpath
 from snakeoil.compatibility import all
 
 from pkgcore.ebuild import profiles
@@ -712,3 +712,11 @@ class TestOnDiskProfile(profile_mixin, TestCase):
             {"deprecated":"replacement\nfoon\n"}
             )
         self.assertTrue(self.get_profile("1").deprecated)
+
+    def test_from_abspath(self):
+        self.mk_profiles({'name':'profiles'}, {'name':'profiles/1'})
+        base = pjoin(self.dir, 'profiles')
+        p = self.kls.from_abspath(pjoin(base, '1'))
+        self.assertNotEqual(p, None)
+        self.assertEqual(normpath(p.basepath), normpath(base))
+        self.assertEqual(normpath(p.profile), normpath(pjoin(base, '1')))

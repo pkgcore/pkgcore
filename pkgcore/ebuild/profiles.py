@@ -435,6 +435,27 @@ class OnDiskProfile(ProfileStack):
         self.basepath = basepath
         self.load_profile_base = load_profile_base
 
+    @staticmethod
+    def split_abspath(path):
+        path = abspath(path)
+        # filter's heavy, but it handles '/' while also
+        # suppressing the leading '/'
+        chunks = filter(None, path.split("/"))
+        try:
+            # poor mans rindex.
+            pbase = max(x for x in enumerate(chunks) if x[1] == 'profiles')[0]
+        except ValueError:
+            # no base found.
+            return None
+        return pjoin("/", *chunks[:pbase+1]), '/'.join(chunks[pbase+1:])
+
+    @classmethod
+    def from_abspath(cls, path):
+        vals = cls.split_abspath(path)
+        if vals is not None:
+            vals = cls(load_profile_base=True, *vals)
+        return vals
+
     def _load_stack(self):
         l = ProfileStack._load_stack(self)
         if self.load_profile_base:

@@ -155,6 +155,15 @@ class defaults(_base):
             out.write("%s=%s" % (key, val))
 
 
+class arch(_base):
+
+    __metaclass__ = _register_command
+
+    def __call__(self, namespace, out, err):
+        if namespace.profile.arch is not None:
+            out.write(namespace.profile.arch)
+
+
 _color_parent = commandline.mk_argparser(color=True, domain=False, add_help=False)
 
 def bind_parser(parser, name):

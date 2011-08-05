@@ -108,6 +108,25 @@ class use_expand(_base):
             ', '.join(sorted(namespace.profile.use_expand_hidden)))
 
 
+class masks(_base):
+
+    __metaclass__ = _register_command
+
+    def __call__(self, namespace, out, err):
+        out.write("\n".join(str(x) for x in
+            sorted(namespace.profile.masks)))
+
+
+class virtuals(_base):
+
+    __metaclass__ = _register_command
+
+    def __call__(self, namespace, out, err):
+        for key, val in sorted(namespace.profile.virtuals,
+            key=operator.itemgetter(0)):
+            out.write("%s: %s" % (key, val))
+
+
 class defaults(_base):
 
     __metaclass__ = _register_command

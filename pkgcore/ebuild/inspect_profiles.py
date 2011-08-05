@@ -31,6 +31,11 @@ class _base(commandline.ArgparseCommand):
         commandline.ArgparseCommand.bind_to_parser(self, parser)
         parser.add_argument("profile", help="path to the profile to inspect",
             type=mk_profile)
+        self._subclass_bind(parser)
+
+    def _subclass_bind(self, parser):
+        pass
+
 
 _register_command = commandline.register_command(commands)
 
@@ -84,6 +89,14 @@ class provided(_base):
                 ", ".join(x.fullver for x in sorted(pkgs)))
 
 
+class system(_base):
+
+    __metaclass__ = _register_command
+
+    def __call__(self, namespace, out, err):
+        out.write("\n".join(str(x) for x in sorted(namespace.profile.system)))
+
+
 class use_expand(_base):
 
     __metaclass__ = _register_command
@@ -93,6 +106,34 @@ class use_expand(_base):
             ', '.join(sorted(namespace.profile.use_expand)))
         out.write("hidden: ", 
             ', '.join(sorted(namespace.profile.use_expand_hidden)))
+
+
+class defaults(_base):
+
+    __metaclass__ = _register_command
+
+    def _subclass_bind(self, parser):
+        parser.add_argument("variables", nargs='*',
+            help="if not specified, all settings are displayed"
+                ".  If given, output is limited to just those settings if "
+                "they exist")
+
+    def __call__(self, namespace, out, err):
+        var_filter = namespace.variables
+        if var_filter:
+            var_filter = set(var_filter).__contains__
+        else:
+            var_filter = lambda x: True
+
+        settings = namespace.profile.default_env
+        vars = sorted(filter(var_filter, settings))
+        for key in vars:
+            val = settings[key]
+            if not val:
+                continue
+            if isinstance(val, tuple):
+                val = ' '.join(val)
+            out.write("%s=%s" % (key, val))
 
 
 _color_parent = commandline.mk_argparser(color=True, domain=False, add_help=False)

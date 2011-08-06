@@ -20,6 +20,8 @@ eapi_optionals = mappings.ImmutableDict({
     "transitive_use_atoms":False,
     "src_uri_renames":False,
     "has_required_use":False,
+    "has_AA":False,
+    "has_KV":False
 })
 
 
@@ -143,7 +145,7 @@ eapi0 = EAPI("0",
     common_default_phases,
     common_metadata_keys,
     common_mandatory_metadata_keys,
-    dict(trust_defined_phases_cache=False, prefix_capable=False),
+    dict(trust_defined_phases_cache=False, prefix_capable=False, has_AA=True, has_KV=True),
     ebd_env_options=common_env_optionals,
 )
 
@@ -163,7 +165,7 @@ eapi2 = EAPI("2",
     eapi1.mandatory_keys,
     combine_dicts(eapi1.options,
         dict(doman_language_detect=True, transitive_use_atoms=True,
-        src_uri_renames=True)),
+        src_uri_renames=True, has_AA=True, has_KV=True)),
     ebd_env_options=eapi1.ebd_env_options,
 )
 
@@ -173,7 +175,7 @@ eapi3 = EAPI("3",
     eapi2.metadata_keys,
     eapi2.mandatory_keys,
     combine_dicts(eapi2.options,
-        dict(prefix_capable=True)),
+        dict(prefix_capable=True, has_AA=True, has_KV=True)),
     ebd_env_options=eapi2.ebd_env_options,
 )
 
@@ -190,6 +192,7 @@ eapi4 = EAPI("4",
         doins_allow_recursive=True,
         doman_language_override=True,
         has_required_use=True,
+        has_AA=False, has_KV=False,
     )),
     ebd_env_options=eapi3.ebd_env_options,
 )

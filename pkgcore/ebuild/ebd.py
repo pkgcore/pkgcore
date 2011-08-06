@@ -22,7 +22,7 @@ from pkgcore.ebuild.processor import \
 from pkgcore.os_data import portage_gid, portage_uid
 from pkgcore.spawn import (
     spawn_bash, spawn, is_sandbox_capable, is_fakeroot_capable,
-    is_userpriv_capable)
+    is_userpriv_capable, spawn_get_output)
 from pkgcore.os_data import xargs
 from pkgcore.ebuild.const import eapi_capable
 from pkgcore.operations import observer, format
@@ -34,8 +34,10 @@ from snakeoil.osutils import (ensure_dirs, normpath, join as pjoin,
 
 from snakeoil.demandload import demandload
 demandload(globals(),
+    'snakeoil.lists:iflatten_instance',
     "pkgcore.log:logger",
     "pkgcore.package.mutated:MutatedPkg",
+    'pkgcore:fetch',
     "time",
 )
 
@@ -587,6 +589,16 @@ class buildable(ebd, setup_mixin, format.build):
         self.fetchables = pkg.fetchables[:]
         self.env["A"] = ' '.join(set(x.filename
             for x in self.fetchables))
+
+        if self.eapi_obj.options.has_AA:
+            pkg = getattr(self.pkg, '_raw_pkg', self.pkg)
+            self.env["AA"] = ' '.join(set(x.filename
+                for x in iflatten_instance(pkg.fetchables, fetch.fetchable)))
+
+        if self.eapi_obj.options.has_KV:
+            ret = spawn_get_output(['uname', '-r'])
+            if ret[0] == 0:
+                self.env["KV"] = ret[1][0].strip()
 
         if self.eapi_obj.options.has_merge_type:
             self.env["MERGE_TYPE"] = "source"

@@ -102,9 +102,9 @@ class use_expand(_base):
     __metaclass__ = _register_command
 
     def __call__(self, namespace, out, err):
-        out.write("flags:  ", 
+        out.write("flags:  ",
             ', '.join(sorted(namespace.profile.use_expand)))
-        out.write("hidden: ", 
+        out.write("hidden: ",
             ', '.join(sorted(namespace.profile.use_expand_hidden)))
 
 

@@ -2,4 +2,4 @@
 
 my_eapi=${HELPER_PATH%/*}
 my_eapi=${my_eapi##*/}
-pkgcore_helper_exit 1 "${HELPER_NAME}' is explicitly banned from usage in EAPI '${my_eapi}'"
+die "'${HELPER_NAME}' is explicitly banned from usage in EAPI '${my_eapi}'"

@@ -1,4 +1,4 @@
-pkgcore-0.4.* < http://www.pkgcore.org >
+pkgcore-0.6.* < http://pkgcore.googlecode.com >
 
 
 WHAT IS PKGCORE?
@@ -16,13 +16,13 @@ WHAT DOES PKGCORE REQUIRE?
 
   At least python verison 2.4, and snakeoil- snakeoil is a utility library with
   misc optimizations split out of pkgcore for others to use.  Available via
-  http://pkgcore.org/trac/wiki/Releases .
+  http://snakeoil.googlecode.com/ .
 
 
 WHO TO CONTACT IF I FIND A BUG?
 
-  Please submit a bug/ticket via http://www.pkgcore.org. Barring that, please at
-  least send the details to pkgcore-bugs@pkgcore.org.  Please do not use
+  Please submit a bug/ticket via http://pkgcore.googlecode.com/ . Barring that, please at
+  least send the details via http://groups.google.com/group/pkgcore-dev.  Please do not use
   bugs.gentoo.org as the first step; any bugs, pkgcore devs should filter before
   passing up at this point.
 

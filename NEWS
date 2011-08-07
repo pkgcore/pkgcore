@@ -15,6 +15,9 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 * pmaint copy arguments have changed; check the help, short version,
   it's now sane.
 
+* pkgcore now lives at googlecode; http://pkgcore.googlecode.com/
+
+
 pkgcore 0.6.6: July 11th, 2011
 
 * make use/useq/usev extremely obnoxious towards offending devs who use them

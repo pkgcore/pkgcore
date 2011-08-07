@@ -258,37 +258,6 @@ class test(snk_distutils.test):
     default_test_namespace = 'pkgcore.test'
 
 
-class build_docs_mixin(object):
-
-    _kls = None
-
-    def initialize_options(self):
-        self._kls.initialize_options(self)
-        self.generate = True
-
-    def generate_docs(self):
-        if subprocess.call(['make', 'generated'], cwd=self.source_dir):
-            raise errors.DistutilsExecError("doc generation failed")
-
-    def run(self):
-        if self.generate:
-            self.generate_docs()
-        return self._kls.run(self)
-
-    @classmethod
-    def setup_kls(cls):
-        from sphinx.setup_command import BuildDoc as _BuildDoc
-        class BuildDoc(_BuildDoc, cls):
-            _kls = _BuildDoc
-            user_options = list(_BuildDoc.user_options) \
-                + [('generate', None, 'force autogeneration of intermediate docs')]
-            # annoying.
-            for x in "initialize_options run".split():
-                locals()[x] = getattr(cls, x)
-
-        return BuildDoc
-
-
 packages = [
     root.replace(os.path.sep, '.')
     for root, dirs, files in os.walk('pkgcore')
@@ -327,18 +296,14 @@ cmdclass={
     'pkgcore_install_man': pkgcore_install_man,
 }
 command_options = {}
-try:
-    import sphinx
-    BuildDoc = build_docs_mixin.setup_kls()
+
+BuildDoc = snk_distutils.sphinx_build_docs()
+if BuildDoc:
     cmdclass['build_docs'] = BuildDoc
     command_options['build_docs'] = {
-#        'project': ('setup.py', name),
         'version': ('setup.py', version),
         'source_dir': ('setup.py', 'doc'),
-        #'config_dir': ('setup.py', 'sphinx'),
         }
-except ImportError:
-    pass
 
 from pkgcore.const import VERSION
 core.setup(

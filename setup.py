@@ -1,11 +1,6 @@
 #!/usr/bin/env python
 
 import os
-# suppress snakeoil demandload warnings for all operations of we trigger.
-os.environ["SNAKEOIL_DEMANDLOAD_PROTECTION"] = 'n'
-os.environ["SNAKEOIL_DEMANDLOAD_WARN"] = 'n'
-#os.environ["SNAKEOIL_DEMANDLOAD_DISABLED"] = 'y'
-
 import sys
 import errno
 import subprocess

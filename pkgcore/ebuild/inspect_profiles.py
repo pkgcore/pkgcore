@@ -41,6 +41,10 @@ _register_command = commandline.register_command(commands)
 
 class parent(_base):
 
+    """output the linearized tree of inherited parents
+
+    later lines override earlier lines"""
+
     __metaclass__ = _register_command
 
     def __call__(self, namespace, out, err):
@@ -48,6 +52,8 @@ class parent(_base):
 
 
 class eapi(_base):
+
+    """output all eapi support required for reading this profile"""
 
     __metaclass__ = _register_command
 
@@ -57,6 +63,8 @@ class eapi(_base):
 
 
 class deprecated(_base):
+
+    """dump deprecation notices, if any"""
 
     __metaclass__ = _register_command
 
@@ -79,6 +87,12 @@ class provided(_base):
 
     __metaclass__ = _register_command
 
+    """list all package.provided packages
+
+    Note that these are exact versions- if a dep requires a higher version, it is not
+    considered satifisfied.
+    """
+
     def __call__(self, namespace, out, err):
         targets = mappings.defaultdict(list)
         for pkg in namespace.profile.provides_repo:
@@ -91,6 +105,8 @@ class provided(_base):
 
 class system(_base):
 
+    """Output the system package set."""
+
     __metaclass__ = _register_command
 
     def __call__(self, namespace, out, err):
@@ -98,6 +114,13 @@ class system(_base):
 
 
 class use_expand(_base):
+
+    """Output the USE_EXPAND configuration for this profile
+
+    Outputs two fields of interest; USE_EXPAND (pseudo use groups), and
+    USE_EXPAND_HIDDEN which is immutable by user configuration and use deps
+    (primarily used for things like setting the kernel or OS type).
+    """
 
     __metaclass__ = _register_command
 
@@ -110,6 +133,8 @@ class use_expand(_base):
 
 class masks(_base):
 
+    """Inspect package masks"""
+
     __metaclass__ = _register_command
 
     def __call__(self, namespace, out, err):
@@ -118,6 +143,12 @@ class masks(_base):
 
 
 class virtuals(_base):
+
+    """Inspect old style virtuals (aliasing) default targets
+
+    In the absence of any package PROVIDE'ing one of these virtuals,
+    the defined target will be used instead.
+    """
 
     __metaclass__ = _register_command
 
@@ -128,6 +159,11 @@ class virtuals(_base):
 
 
 class defaults(_base):
+
+    """Inspect defined configuration for this profile
+
+    This is data parsed from make.defaults, containing things like ACCEPT_KEYWORDS.
+    """
 
     __metaclass__ = _register_command
 
@@ -156,6 +192,8 @@ class defaults(_base):
 
 
 class arch(_base):
+
+    """Output the arch defined for this profile"""
 
     __metaclass__ = _register_command
 

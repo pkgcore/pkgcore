@@ -269,7 +269,7 @@ epub_copyright = u'2010, Brian Harring, Marien Zwart'
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {'python': ('http://docs.python.org/', None),
-    'snakeoil': ('http://www.pkgcore.org/snakeoil/', None),
+    'snakeoil': ('http://docs.snakeoil.googlecode.com/git/', None),
 }
 autosummary_generate = False
 autodoc_default_flags = ["members", "show-inheritance", "inherited-members", "undoc-members"]

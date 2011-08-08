@@ -5,7 +5,7 @@
 default fs ops.
 
 Shouldn't be accessed directly for the most part, use
-L{pkgcore.plugins} to get at these ops.
+:mod:`pkgcore.plugins` to get at these ops.
 """
 
 import os, errno
@@ -31,8 +31,8 @@ def default_ensure_perms(d1, d2=None):
     Attributes enforced are permissions, mtime, uid, gid.
 
     :param d2: if not None, an fs object for what's on the livefs now
-    :raise OSError: if fs object attributes can't be enforced
     :return: True on success, else an exception is thrown
+    :raise EnvironmentError: if fs object attributes can't be enforced
     """
 
     m, o, g, t = d1.mode, d1.uid, d1.gid, d1.mtime
@@ -80,9 +80,9 @@ def default_mkdir(d):
     """
     mkdir for a fsDir object
 
-    :param d: L{pkgcore.fs.fs.fsDir} instance
-    :raise OSError: if can't complete
+    :param d: :class:`pkgcore.fs.fs.fsDir` instance
     :return: true if success, else an exception is thrown
+    :raise EnvironmentError: if can't complete
     """
     if not d.mode:
         mode = 0777
@@ -115,11 +115,12 @@ class CannotOverwrite(FailedCopy):
 
 def default_copyfile(obj, mkdirs=False):
     """
-    copy a L{fs obj<pkgcore.fs.fs.fsBase>} to its stated location.
+    copy a :class:`pkgcore.fs.fs.fsBase` to its stated location.
 
-    :param obj: L{pkgcore.fs.fs.fsBase} instance, exempting fsDir
-    :raise OSError:, for non file objs, Exception (this needs to be fixed
+    :param obj: :class:`pkgcore.fs.fs.fsBase` instance, exempting :class:`fsDir`
     :return: true if success, else an exception is thrown
+    :raise EnvironmentError: permission errors
+
     """
 
     existant = False
@@ -178,19 +179,21 @@ def default_copyfile(obj, mkdirs=False):
     return True
 
 
-def merge_contents(cset, offset=None, callback=lambda obj:None):
+def merge_contents(cset, offset=None, callback=None):
 
     """
-    merge a L{pkgcore.fs.contents.contentsSet} instance to the livefs
+    merge a :class:`pkgcore.fs.contents.contentsSet` instance to the livefs
 
-    :param cset: L{pkgcore.fs.contents.contentsSet} instance
+    :param cset: :class:`pkgcore.fs.contents.contentsSet` instance
     :param offset: if not None, offset to prefix all locations with.
         Think of it as target dir.
-    :param callback: callable to report each entry being merged
-    :raise OSError: see L{default_copyfile} and L{default_mkdir}
-    :return: True, or an exception is thrown on failure
-        (OSError, although see default_copyfile for specifics).
+    :param callback: callable to report each entry being merged; given a single arg,
+        the fs object being merged.
+    :raise EnvironmentError: Thrown for permission failures.
     """
+
+    if callback is None:
+        callback = lambda obj:None
 
     ensure_perms = get_plugin("fs_ops.ensure_perms")
     copyfile = get_plugin("fs_ops.copyfile")
@@ -261,7 +264,7 @@ def merge_contents(cset, offset=None, callback=lambda obj:None):
     return True
 
 
-def unmerge_contents(cset, offset=None, callback=lambda obj:None):
+def unmerge_contents(cset, offset=None, callback=None):
 
     """
     unmerge a L{pkgcore.fs.contents.contentsSet} instance to the livefs
@@ -270,10 +273,13 @@ def unmerge_contents(cset, offset=None, callback=lambda obj:None):
     :param offset: if not None, offset to prefix all locations with.
         Think of it as target dir.
     :param callback: callable to report each entry being unmerged
-    :raise OSError: see L{default_copyfile} and L{default_mkdir}
     :return: True, or an exception is thrown on failure
         (OSError, although see default_copyfile for specifics).
+    :raise EnvironmentError: see :func:`default_copyfile` and :func:`default_mkdir`
     """
+
+    if callback is None:
+        callback = lambda obj: None
 
     iterate = iter
     if offset is not None:

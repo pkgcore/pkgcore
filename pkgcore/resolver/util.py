@@ -3,7 +3,9 @@
 
 __all__ = ("group_attempts", "fails_filter", "reduce_to_failures",)
 
-def group_attempts(sequence, filter_func=lambda x:True):
+def group_attempts(sequence, filter_func=None):
+    if filter_func is None:
+        filter_func = lambda x:True
     last, l = None, []
     for x in sequence:
         if isinstance(x, tuple) and x[0] == 'inspecting':

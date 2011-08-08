@@ -426,15 +426,18 @@ def spawn_fakeroot(mycommand, save_file, env=None, opt_name=None,
             cleanup_pids([fakepid] + pids)
 
 def spawn_get_output(
-    mycommand, spawn_type=spawn, raw_exit_code=False, collect_fds=(1,),
+    mycommand, spawn_type=None, raw_exit_code=False, collect_fds=(1,),
     fd_pipes=None, split_lines=True, **keywords):
 
     """Call spawn, collecting the output to fd's specified in collect_fds list.
 
-    :param spawn_type: the passed in function to call-
-       typically spawn_bash, spawn, spawn_sandbox, or spawn_fakeroot.
-       defaults to spawn
+    :param spawn_type: the passed in function to call- typically :func:`spawn_bash`,
+       :func:`spawn`, :func:`spawn_sandbox`, or :func:`spawn_fakeroot`.
+       Defaults to :func:`spawn`.
     """
+
+    if spawn_type is None:
+        spawn_type = spawn
 
     pr, pw = None, None
     if fd_pipes is None:

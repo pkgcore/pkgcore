@@ -519,7 +519,7 @@ class merge_plan(object):
         the choicepoint/matches iter if viable.
 
         :return: 3 possible; None (not viable), True (presolved),
-          L{caching_iter} (not solved, but viable), L{choice_point}
+          :obj:`caching_iter` (not solved, but viable), :obj:`choice_point`
         """
         choices = ret = None
         if atom in self.insoluble:
@@ -562,8 +562,8 @@ class merge_plan(object):
 
     def check_for_cycles(self, stack, cur_frame):
         """check the current stack for cyclical issues;
-        :param stack: current stack, a L{resolver_stack} instance
-        :param cur_frame: current frame, a L{resolver_frame} instance
+        :param stack: current stack, a :obj:`resolver_stack` instance
+        :param cur_frame: current frame, a :obj:`resolver_frame` instance
         :return: True if no issues and resolution should continue, else the
             value to return after collapsing the calling frame
         """

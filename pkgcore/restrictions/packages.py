@@ -27,7 +27,7 @@ class native_PackageRestriction(object):
         ignore_missing=True):
         """
         :param attr: package attribute to match against
-        :param childrestriction: a L{pkgcore.restrictions.values.base} instance
+        :param childrestriction: a :obj:`pkgcore.restrictions.values.base` instance
         to pass attr to for matching
         :param negate: should the results be negated?
         """
@@ -285,7 +285,7 @@ class Conditional(PackageRestriction):
         :param childrestriction: restriction to control whether or not the
             payload is accessible
         :param payload: payload data, whatever it may be.
-        :param kwds: additional args to pass to L{PackageRestriction}
+        :param kwds: additional args to pass to :obj:`PackageRestriction`
         """
         PackageRestriction.__init__(self, attr, childrestriction, **kwds)
         object.__setattr__(self, "payload", tuple(payload))

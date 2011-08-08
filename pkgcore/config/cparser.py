@@ -23,7 +23,7 @@ def config_from_file(file_obj):
     generate a config dict
 
     :param file_obj: file protocol instance
-    :return: L{snakeoil.mappings.LazyValDict} instance
+    :return: :obj:`snakeoil.mappings.LazyValDict` instance
     """
     cparser = CaseSensitiveConfigParser()
     try:

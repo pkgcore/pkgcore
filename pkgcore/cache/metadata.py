@@ -24,8 +24,8 @@ class database(flat_hash.database):
     Compatibility with (older) portage-generated caches.
 
     Autodetects per entry if it is a
-    L{flat_list<pkgcore.cache.flat_hash.database>} and flat_list
-    backends entry, and converts old (and incomplete) INHERITED field
+    :class:`flat_hash.database` or PMS compliant cache entry,
+    and converts old (and incomplete) INHERITED field
     to _eclasses_ as required.
     """
 

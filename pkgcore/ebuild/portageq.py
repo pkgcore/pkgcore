@@ -125,8 +125,8 @@ def envvar(options, out, err):
 @BaseCommand.make_command("atom", bind=commands)
 def has_version(options, out, err):
     """
-    @param domain: L{pkgcore.config.domain.domain} instance
-    @param atom_str: L{pkgcore.ebuild.atom.atom} instance
+    @param domain: :obj:`pkgcore.config.domain.domain` instance
+    @param atom_str: :obj:`pkgcore.ebuild.atom.atom` instance
     """
     if options.domain.all_livefs_repos.has_match(options.atom):
         return 0
@@ -153,8 +153,8 @@ def mass_best_version(options, out, err):
 @BaseCommand.make_command("atom", bind=commands)
 def best_version(options, out, err):
     """
-    @param domain: L{pkgcore.config.domain.domain} instance
-    @param atom_str: L{pkgcore.ebuild.atom.atom} instance
+    @param domain: :obj:`pkgcore.config.domain.domain` instance
+    @param atom_str: :obj:`pkgcore.ebuild.atom.atom` instance
     """
     out.write(_best_version(options.domain, options.atom, out))
     return 0
@@ -162,8 +162,8 @@ def best_version(options, out, err):
 @BaseCommand.make_command("atom", bind=commands)
 def match(options, out, err):
     """
-    @param domain: L{pkgcore.config.domain.domain} instance
-    @param atom_str: L{pkgcore.ebuild.atom.atom} instance
+    @param domain: :obj:`pkgcore.config.domain.domain` instance
+    @param atom_str: :obj:`pkgcore.ebuild.atom.atom` instance
     """
     i = options.domain.all_livefs_repos.itermatch(options.atom,
         sorter=sorted)

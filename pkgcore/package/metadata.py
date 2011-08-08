@@ -44,7 +44,7 @@ def DeriveMetadataKls(original_kls):
             they're passed directly to it
 
             :param parent_repository: parent repository this package belongs to
-            :type parent_repository: L{pkgcore.repository.prototype.tree}
+            :type parent_repository: :obj:`pkgcore.repository.prototype.tree`
                 instance
             """ % (original_kls, original_kls)
             original_kls.__init__(self, *a, **kwds)
@@ -53,7 +53,7 @@ def DeriveMetadataKls(original_kls):
         def _get_data(self):
             """
             internal hook func to get the packages metadata, consumer
-            of L{_get_attr}
+            of :obj:`_get_attr`
             """
             return self._fetch_metadata()
         _get_attr["data"] = _get_data

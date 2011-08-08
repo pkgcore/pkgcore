@@ -40,7 +40,7 @@ def check_instance(obj):
 
 
 class contentsSet(object):
-    """set of L{fs<pkgcore.fs.fs>} objects"""
+    """set of :class:`pkgcore.fs.fs.fsBase` objects"""
 
     __metaclass__ = generic_equality
     __attr_comparison__ = ('_dict',)
@@ -73,7 +73,7 @@ class contentsSet(object):
         """
         add a new fs obj to the set
 
-        :param obj: must be a derivative of L{pkgcore.fs.fs.fsBase}
+        :param obj: must be a derivative of :obj:`pkgcore.fs.fs.fsBase`
         """
 
         if not self.mutable:
@@ -89,7 +89,7 @@ class contentsSet(object):
         """
         remove a fs obj to the set
 
-        :type obj: a derivative of L{pkgcore.fs.fs.fsBase}
+        :type obj: a derivative of :obj:`pkgcore.fs.fs.fsBase`
             or a string location of an obj in the set.
         :raise KeyError: if the obj isn't found
         """
@@ -279,13 +279,13 @@ class contentsSet(object):
         s = k.capitalize()
         locals()[k].__doc__ = \
             """
-            returns a list of just L{pkgcore.fs.fs.fs%s} instances
+            returns a list of just :obj:`pkgcore.fs.fs.fs%s` instances
             :param invert: if True, yield everything that isn't a
                 fs%s instance, else yields just fs%s
             """ % (s.rstrip("s"), s, s)
         locals()["iter"+k].__doc__ = \
             """
-            a generator yielding just L{pkgcore.fs.fs.fs%s} instances
+            a generator yielding just :obj:`pkgcore.fs.fs.fs%s` instances
             :param invert: if True, yield everything that isn't a
                 fs%s instance, else yields just fs%s
             """ % (s.rstrip("s"), s, s)

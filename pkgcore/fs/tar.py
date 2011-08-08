@@ -109,7 +109,7 @@ def generate_contents(path, compressor="bz2"):
 
     :param path: string path to location on disk
     :param compressor: defaults to bz2; decompressor to use, see
-        L{known_compressors} for list of valid compressors
+        :obj:`known_compressors` for list of valid compressors
     """
     if compressor not in known_compressors:
         raise ValueError("compressor needs to be one of %r, got %r" %

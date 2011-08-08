@@ -3,7 +3,7 @@
 
 """make.conf translator.
 
-Converts portage configuration files into L{pkgcore.config} form.
+Converts portage configuration files into :obj:`pkgcore.config` form.
 """
 
 __all__ = ("SecurityUpgradesViaProfile", "add_layman_syncers", "make_syncer",
@@ -46,9 +46,9 @@ def SecurityUpgradesViaProfile(ebuild_repo, vdb, profile):
     """
     generate a GLSA vuln. pkgset limited by profile
 
-    :param ebuild_repo: L{pkgcore.ebuild.repository.UnconfiguredTree} instance
-    :param vdb: L{pkgcore.repository.prototype.tree} instance that is the livefs
-    :param profile: L{pkgcore.ebuild.profiles} instance
+    :param ebuild_repo: :obj:`pkgcore.ebuild.repository.UnconfiguredTree` instance
+    :param vdb: :obj:`pkgcore.repository.prototype.tree` instance that is the livefs
+    :param profile: :obj:`pkgcore.ebuild.profiles` instance
     """
     arch = profile.arch
     if arch is None:

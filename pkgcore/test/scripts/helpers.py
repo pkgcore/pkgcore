@@ -153,11 +153,11 @@ class MainMixin(object):
             self.fail('no exit triggered')
 
     def assertOut(self, out, *args, **kwargs):
-        """Like L{assertOutAndErr} but without err."""
+        """Like :obj:`assertOutAndErr` but without err."""
         return self.assertOutAndErr(out, (), *args, **kwargs)
 
     def assertErr(self, err, *args, **kwargs):
-        """Like L{assertOutAndErr} but without out."""
+        """Like :obj:`assertOutAndErr` but without out."""
         return self.assertOutAndErr((), err, *args, **kwargs)
 
     def get_main(self, options):
@@ -171,7 +171,7 @@ class MainMixin(object):
 
         :param out: list of strings produced as output on stdout.
         :param err: list of strings produced as output on stderr.
-        :return: the L{central.ConfigManager}.
+        :return: the :obj:`central.ConfigManager`.
         """
         options = self.parse(*args, **kwargs)
         outformatter = FakeStreamFormatter()

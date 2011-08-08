@@ -54,8 +54,8 @@ class AlwaysBool(base):
     def __init__(self, node_type=None, negate=False):
         """
         :param node_type: the restriction type the instance should be,
-            typically L{pkgcore.restrictions.packages.package_type} or
-            L{pkgcore.restrictions.values.value_type}
+            typically :obj:`pkgcore.restrictions.packages.package_type` or
+            :obj:`pkgcore.restrictions.values.value_type`
         :param negate: boolean to return for the match
         """
         object.__setattr__(self, "negate", negate)
@@ -92,7 +92,7 @@ class Negate(base):
 
     def __init__(self, restrict):
         """
-        :param restrict: L{pkgcore.restrictions.restriction.base} instance
+        :param restrict: :obj:`pkgcore.restrictions.restriction.base` instance
             to negate
         """
         sf = object.__setattr__
@@ -117,7 +117,7 @@ class FakeType(base):
 
     def __init__(self, restrict, new_type):
         """
-        :param restrict: L{pkgcore.restrictions.restriction.base} instance
+        :param restrict: :obj:`pkgcore.restrictions.restriction.base` instance
             to wrap
         :param new_type: new node_type
         """
@@ -168,7 +168,7 @@ class AnyMatch(base):
 def curry_node_type(klass, node_type, extradoc=None):
     """Helper function for creating restrictions of a certain type.
 
-    This uses L{partial} to pass a node_type to the wrapped class,
+    This uses :obj:`partial` to pass a node_type to the wrapped class,
     and extends the docstring.
 
     :param klass: callable (usually a class) that is wrapped.

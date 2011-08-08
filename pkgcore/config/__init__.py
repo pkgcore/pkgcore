@@ -59,7 +59,7 @@ def load_config(user_conf_file=USER_CONF_FILE,
     :param user_conf_file: file to attempt to load, else defaults to trying to
         load portage 2 style configs (/etc/make.conf, /etc/make.profile)
 
-    :return: L{pkgcore.config.central.ConfigManager} instance
+    :return: :obj:`pkgcore.config.central.ConfigManager` instance
         representing the system config.
     """
 

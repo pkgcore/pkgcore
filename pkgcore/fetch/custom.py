@@ -86,7 +86,7 @@ class fetcher(base.fetcher):
         """
         fetch a file
 
-        :type target: L{pkgcore.fetch.fetchable} instance
+        :type target: :obj:`pkgcore.fetch.fetchable` instance
         :return: None if fetching failed,
             else on disk location of the copied file
         """

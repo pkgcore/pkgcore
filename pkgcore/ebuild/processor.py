@@ -76,9 +76,9 @@ def request_ebuild_processor(userpriv=False, sandbox=None, fakeroot=False,
     Note that fakeroot processes are B{never} reused due to the fact
     the fakeroot env becomes localized to the pkg it's handling.
 
-    :return: L{EbuildProcessor}
+    :return: :obj:`EbuildProcessor`
     :param userpriv: should the processor be deprived to
-        L{pkgcore.os_data.portage_gid} and L{pkgcore.os_data.portage_uid}?
+        :obj:`pkgcore.os_data.portage_gid` and :obj:`pkgcore.os_data.portage_uid`?
     :param sandbox: should the processor be sandboxed?
     :param fakeroot: should the processor be fakerooted?  This option is
         mutually exclusive to sandbox, and requires save_file to be set.
@@ -111,7 +111,7 @@ def release_ebuild_processor(ebp):
     via this function once it's no longer in use.
     This includes fakerooted processors.
 
-    :param ebp: L{EbuildProcessor} instance
+    :param ebp: :obj:`EbuildProcessor` instance
     :return: boolean indicating release results- if the processor isn't known
         as active, False is returned.
         If a processor isn't known as active, this means either calling
@@ -603,9 +603,9 @@ class EbuildProcessor(object):
         """
         request the metadata be regenerated from an ebuild
 
-        :param package_inst: L{pkgcore.ebuild.ebuild_src.package} instance
+        :param package_inst: :obj:`pkgcore.ebuild.ebuild_src.package` instance
             to regenerate
-        :param eclass_cache: L{pkgcore.ebuild.eclass_cache} instance to use
+        :param eclass_cache: :obj:`pkgcore.ebuild.eclass_cache` instance to use
             for eclass access
         :return: dict when successful, None when failed
         """

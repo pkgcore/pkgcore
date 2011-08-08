@@ -35,7 +35,7 @@ class OverlayRepo(prototype.tree):
 
     def __init__(self, trees, **kwds):
         """
-        :param trees: L{pkgcore.ebuild.repository.UnconfiguredTree} instances
+        :param trees: :obj:`pkgcore.ebuild.repository.UnconfiguredTree` instances
             to combine.
         """
 

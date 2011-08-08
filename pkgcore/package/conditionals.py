@@ -73,7 +73,7 @@ def make_wrapper(configurable_attribute_name, attributes_to_wrap=(),
                      unchangable_settings=None):
 
             """
-            :type pkg_instance: L{pkgcore.package.metadata.package}
+            :type pkg_instance: :obj:`pkgcore.package.metadata.package`
             :param pkg_instance: instance to wrap.
             :type initial_settings: sequence
             :param initial_settings: initial configuration of the
@@ -143,7 +143,7 @@ def make_wrapper(configurable_attribute_name, attributes_to_wrap=(),
             it attempted
 
             :param attr: attr to try and change
-            :param vals: L{pkgcore.restrictions.values.base} instances that
+            :param vals: :obj:`pkgcore.restrictions.values.base` instances that
                 we're attempting to make match True
             """
             if attr not in self._wrapped_attr:
@@ -191,7 +191,7 @@ def make_wrapper(configurable_attribute_name, attributes_to_wrap=(),
             it attempted
 
             :param attr: attr to try and change
-            :param vals: L{pkgcore.restrictions.values.base} instances that
+            :param vals: :obj:`pkgcore.restrictions.values.base` instances that
                 we're attempting to make match False
             """
             if attr not in self._wrapped_attr:

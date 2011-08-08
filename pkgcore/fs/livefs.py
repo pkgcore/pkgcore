@@ -37,7 +37,7 @@ def gen_obj(path, stat=None, chksum_handlers=None, real_location=None,
     :param real_location: real path to the object if path is the desired
         location, rather then existant location.
     :raise KeyError: if no obj type matches the stat checks
-    :return: L{pkgcore.fs.fs.fsBase} derivative
+    :return: :obj:`pkgcore.fs.fs.fsBase` derivative
     """
 
     if real_location is None:
@@ -132,7 +132,7 @@ def iter_scan(path, offset=None, follow_symlinks=False):
     Does not follow symlinks pointing at dirs, just merely yields an
     obj representing said symlink
 
-    :return: an iterator of L{pkgcore.fs.fs.fsBase} objects.
+    :return: an iterator of :obj:`pkgcore.fs.fs.fsBase` objects.
 
     :param path: str path of what directory to scan in the livefs
     :param offset: if not None, prefix to strip from each objects location.

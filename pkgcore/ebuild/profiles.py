@@ -529,7 +529,7 @@ class AliasedVirtuals(virtual.tree):
     def __init__(self, virtuals, repo, *overrides):
         """
         :param virtuals: dict of virtual -> providers
-        :param repo: L{pkgcore.ebuild.repository.UnconfiguredTree} parent repo
+        :param repo: :obj:`pkgcore.ebuild.repository.UnconfiguredTree` parent repo
         :keyword overrides: mapping of virtual pkgname -> matches to override defaults
         """
         virtual.tree.__init__(self, livefs=False)

@@ -22,7 +22,7 @@ class tree(prototype.tree):
 
     def __init__(self, repo, package_class):
         """
-        :param repo: L{pkgcore.repository.prototype.tree} instance to wrap
+        :param repo: :obj:`pkgcore.repository.prototype.tree` instance to wrap
         :param package_class: callable to yield the package instance
         """
         self.raw_repo = repo

@@ -73,9 +73,9 @@ class UnconfiguredTree(syncable.tree_mixin, prototype.tree):
 
         """
         :param location: on disk location of the tree
-        :param cache: sequence of L{pkgcore.cache.template.database} instances
+        :param cache: sequence of :obj:`pkgcore.cache.template.database` instances
             to use for storing metadata
-        :param eclass_cache: If not None, L{pkgcore.ebuild.eclass_cache}
+        :param eclass_cache: If not None, :obj:`pkgcore.ebuild.eclass_cache`
             instance representing the eclasses available,
             if None, generates the eclass_cache itself
         :param default_mirrors: Either None, or sequence of mirrors to try
@@ -325,7 +325,7 @@ class SlavedTree(UnconfiguredTree):
 class ConfiguredTree(configured.tree):
 
     """
-    wrapper around a L{UnconfiguredTree} binding build/configuration data (USE)
+    wrapper around a :obj:`UnconfiguredTree` binding build/configuration data (USE)
     """
 
     configurable = "use"
@@ -337,9 +337,9 @@ class ConfiguredTree(configured.tree):
 
     def __init__(self, raw_repo, domain, domain_settings, fetcher=None):
         """
-        :param raw_repo: L{UnconfiguredTree} instance
+        :param raw_repo: :obj:`UnconfiguredTree` instance
         :param domain_settings: environment settings to bind
-        :param fetcher: L{pkgcore.fetch.base.fetcher} instance to use
+        :param fetcher: :obj:`pkgcore.fetch.base.fetcher` instance to use
             for getting access to fetchable files
         """
 

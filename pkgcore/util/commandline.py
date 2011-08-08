@@ -5,9 +5,9 @@
 
 """Utilities for writing commandline utilities.
 
-pkgcore scripts should use the L{OptionParser} subclass here for a
+pkgcore scripts should use the :obj:`OptionParser` subclass here for a
 consistent commandline "look and feel" (and it tries to make life a
-bit easier too). They will probably want to use L{main} from an C{if
+bit easier too). They will probably want to use :obj:`main` from an C{if
 __name__ == '__main__'} block too: it will take care of things like
 consistent exception handling.
 
@@ -540,8 +540,8 @@ def main(subcommands, args=None, outfile=None, errfile=None,
     :param subcommands: available commands.
         The keys are a subcommand name or None for other/unknown/no subcommand.
         The values are tuples of OptionParser subclasses and functions called
-        as main_func(config, out, err) with a L{Values} instance, two
-        L{snakeoil.formatters.Formatter} instances for output (stdout)
+        as main_func(config, out, err) with a :obj:`Values` instance, two
+        :obj:`snakeoil.formatters.Formatter` instances for output (stdout)
         and errors (stderr). It should return an integer used as
         exit status or None as synonym for 0.
     :type args: sequence of strings

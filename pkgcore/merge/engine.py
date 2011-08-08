@@ -139,10 +139,10 @@ class MergeEngine(object):
 
         :param tempdir: tempspace for the merger to use; this space it must
             control alone, no sharing.
-        :param pkg: L{pkgcore.package.metadata.package} instance to install
+        :param pkg: :obj:`pkgcore.package.metadata.package` instance to install
         :param offset: any livefs offset to force for modifications
         :param disable_plugins: if enabled, run just the triggers passed in
-        :return: L{MergeEngine}
+        :return: :obj:`MergeEngine`
 
         """
 
@@ -174,11 +174,11 @@ class MergeEngine(object):
 
         :param tempdir: tempspace for the merger to use; this space it must
             control alone, no sharing.
-        :param pkg: L{pkgcore.package.metadata.package} instance to uninstall,
+        :param pkg: :obj:`pkgcore.package.metadata.package` instance to uninstall,
             must be from a livefs vdb
         :param offset: any livefs offset to force for modifications
         :param disable_plugins: if enabled, run just the triggers passed in
-        :return: L{MergeEngine}
+        :return: :obj:`MergeEngine`
         """
 
         hooks = dict(
@@ -209,12 +209,12 @@ class MergeEngine(object):
 
         :param tempdir: tempspace for the merger to use; this space it must
             control alone, no sharing.
-        :param old: L{pkgcore.package.metadata.package} instance to replace,
+        :param old: :obj:`pkgcore.package.metadata.package` instance to replace,
             must be from a livefs vdb
-        :param new: L{pkgcore.package.metadata.package} instance
+        :param new: :obj:`pkgcore.package.metadata.package` instance
         :param offset: any livefs offset to force for modifications
         :param disable_plugins: if enabled, run just the triggers passed in
-        :return: L{MergeEngine}
+        :return: :obj:`MergeEngine`
 
         """
 
@@ -296,10 +296,10 @@ class MergeEngine(object):
 
     def add_trigger(self, hook_name, trigger, required_csets):
         """
-        register a L{pkgcore.merge.triggers.base} instance to be executed
+        register a :obj:`pkgcore.merge.triggers.base` instance to be executed
 
         :param hook_name: engine step to hook the trigger into
-        :param trigger: L{triggers<pkgcore.merge.triggers.base>} to add
+        :param trigger: :class:`pkgcore.merge.triggers.base` to add
         """
         if hook_name not in self.hooks:
             raise KeyError("trigger %r's hook %s isn't a known hook" %

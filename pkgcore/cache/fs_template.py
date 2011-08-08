@@ -23,7 +23,7 @@ class FsBased(base):
         """
         throws InitializationError if needs args aren't specified
 
-        :keyword gid: defaults to L{pkgcore.os_data.portage_gid},
+        :keyword gid: defaults to :obj:`pkgcore.os_data.portage_gid`,
             gid to force all entries to
         :keyword perms: defaults to 0665, mode to force all entries to"""
 

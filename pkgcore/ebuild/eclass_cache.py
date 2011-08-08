@@ -122,7 +122,7 @@ class StackedCaches(base):
 
     def __init__(self, caches, **kwds):
         """
-        :param caches: L{cache} instances to stack;
+        :param caches: :obj:`cache` instances to stack;
             ordering should be desired lookup order
         :keyword eclassdir: override for the master eclass dir, required for
             eapi0 and idiot eclass usage.  defaults to pulling from the first

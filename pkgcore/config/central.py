@@ -17,7 +17,7 @@ class _ConfigMapping(mappings.DictMixin):
 
     """Minimal dict-like wrapper returning config sections by type.
 
-    Similar to L{LazyValDict<mappings.LazyValDict>} but __getitem__
+    Similar to :class:`mappings.LazyValDict` but __getitem__
     does not call the key func for __getitem__.
 
     Careful: getting the keys for this mapping will collapse all of
@@ -63,7 +63,7 @@ class CollapsedConfig(object):
 
     """A collapsed config section.
 
-    :type type: L{basics.ConfigType}
+    :type type: :obj:`basics.ConfigType`
     @ivar type: Our type.
     :type config: dict
     @ivar config: The supplied configuration values.
@@ -168,9 +168,9 @@ class ConfigManager(object):
 
     The following special type names are recognized:
       - configsection: instantiated and used the same way as an entry in the
-        configs L{__init__} arg.
+        configs :obj:`__init__` arg.
       - remoteconfigsection: Instantiated and used the same way as an entry in
-        theremote_configs L{__init__} arg.
+        theremote_configs :obj:`__init__` arg.
 
     These "magic" typenames are only recognized if they are used by a
     section with a name starting with "autoload".
@@ -264,7 +264,7 @@ class ConfigManager(object):
     def collapse_named_section(self, name, raise_on_missing=True):
         """Collapse a config by name, possibly returning a cached instance.
 
-        @returns: L{CollapsedConfig}.
+        @returns: :obj:`CollapsedConfig`.
 
         If there is no section with this name a ConfigurationError is raised,
         unless raise_on_missing is False in which case None is returned.
@@ -303,7 +303,7 @@ class ConfigManager(object):
             self._refs.remove(name)
 
     def collapse_section(self, section, _name=None, _index=None):
-        """Collapse a ConfigSection to a L{CollapsedConfig}."""
+        """Collapse a ConfigSection to a :obj:`CollapsedConfig`."""
 
         # Bail if this is an inherit-only (uncollapsable) section.
         try:

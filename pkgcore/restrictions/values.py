@@ -5,7 +5,7 @@
 """
 value restrictions
 
-works hand in hand with L{pkgcore.restrictions.packages}, these
+works hand in hand with :obj:`pkgcore.restrictions.packages`, these
 classes match against a value handed in, package restrictions pull the
 attr from a package instance and hand it to their wrapped restriction
 (which is a value restriction).
@@ -548,7 +548,7 @@ class FlatteningRestriction(base):
 
         :type dont_iter: type or tuple of types
         :param dont_iter: type(s) not to flatten.
-                          Passed to L{snakeoil.lists.iflatten_instance}.
+                          Passed to :obj:`snakeoil.lists.iflatten_instance`.
         :type childrestriction: restriction
         :param childrestriction: restriction applied to the flattened list.
         """

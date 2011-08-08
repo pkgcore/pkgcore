@@ -76,7 +76,7 @@ def serialize_digest(handle, fetchables):
     and size chksums per fetchable.
 
     :param handle: file object to write to
-    :param fetchables: list of L{pkgcore.fetch.fetchable} instances
+    :param fetchables: list of :obj:`pkgcore.fetch.fetchable` instances
     """
     for fetchable in iflatten_instance(fetchables, fetch.fetchable):
         d = dict(fetchable.chksums)

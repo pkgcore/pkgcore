@@ -2,7 +2,7 @@
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
 # License: BSD/GPL2
 
-"""Commandline interface to L{pkgcore.ebuild.filter_env}."""
+"""Commandline interface to :obj:`pkgcore.ebuild.filter_env`."""
 
 __all__ = ("argparse_parser", "main")
 

@@ -23,7 +23,7 @@ class tree(prototype.tree):
 
         """
         :param raw_repo: repo to wrap
-        :type raw_repo: L{pkgcore.repository.prototype.tree}
+        :type raw_repo: :obj:`pkgcore.repository.prototype.tree`
         :param wrapped_attrs: sequence of attrs to wrap for each pkg
         """
 

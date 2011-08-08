@@ -6,8 +6,7 @@
 """
 configuration subsystem primitives
 
-all callables can/may throw a
-L{configuration exception<pkgcore.config.errors.ConfigurationError>}
+all callables can/may throw a :class:`pkgcore.config.errors.ConfigurationError`
 """
 
 __all__ = ("ConfigType", "LazySectionRef", "LazyNamedSectionRef", "ConfigSection",
@@ -60,7 +59,7 @@ class ConfigType(object):
 
         If an argument has no default, it is assumed to be a string-
         exception to this is if the callable has a pkgcore_config_type
-        attr that is a L{ConfigHint} instance, in which case those
+        attr that is a :obj:`ConfigHint` instance, in which case those
         override.
         """
         original_func_obj = func_obj
@@ -161,7 +160,7 @@ class LazySectionRef(object):
         raise NotImplementedError(self._collapse)
 
     def collapse(self):
-        """@returns: L{pkgcore.config.central.CollapsedConfig}."""
+        """@returns: :obj:`pkgcore.config.central.CollapsedConfig`."""
         if self.cached_config is None:
             config = self.cached_config = self._collapse()
             if self.typename is not None and config.type.name != self.typename:
@@ -454,10 +453,10 @@ def convert_asis(central, value, arg_type):
     return value
 
 def convert_hybrid(central, value, arg_type):
-    """Automagically switch between L{convert_string} and L{convert_asis}.
+    """Automagically switch between :obj:`convert_string` and :obj:`convert_asis`.
 
-    L{convert_asis} is used for arg_type str and if value is not a basestring.
-    L{convert_string} is used for the rest.
+    :obj:`convert_asis` is used for arg_type str and if value is not a basestring.
+    :obj:`convert_string` is used for the rest.
 
     Be careful about handing in escaped strings: they are not
     unescaped (for arg_type str).

@@ -160,14 +160,14 @@ class NoMatches(parserestrict.ParseError):
         parserestrict.ParseError.__init__(self, '%s: no matches' % (token,))
 
 def parse_atom(token, repo, return_none=False):
-    """Use L{parserestrict.parse_match} to produce a single atom.
+    """Use :obj:`parserestrict.parse_match` to produce a single atom.
 
     This matches the restriction against the repo, raises
     AmbiguousQuery if they belong to multiple cat/pkgs, returns an
     atom otherwise.
 
     :param token: string to convert.
-    :param repo: L{pkgcore.repository.prototype.tree} instance to search in.
+    :param repo: :obj:`pkgcore.repository.prototype.tree` instance to search in.
     :param return_none: indicates if no matches raises or returns C{None}
 
     :return: an atom or C{None}.

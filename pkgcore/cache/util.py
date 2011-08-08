@@ -15,14 +15,14 @@ def mirror_cache(valid_nodes_iterable, src_cache, trg_cache, eclass_cache=None,
     make a cache backend a mirror of another
 
     :param valid_nodes_iterable: valid keys
-    :param src_cache: L{pkgcore.cache.base} instance
+    :param src_cache: :obj:`pkgcore.cache.base` instance
         to copy keys from
-    :param trg_cache: L{pkgcore.cache.base} instance
+    :param trg_cache: :obj:`pkgcore.cache.base` instance
         to write keys to
     :param eclass_cache: if doing eclass_cache translation,
-        a L{pkgcore.ebuild.eclass_cache.cache} instance to use, else None
-    :param verbose_instance: either None (defaulting to L{quiet_mirroring}),
-        or a L{quiet_mirroring} derivative
+        a :obj:`pkgcore.ebuild.eclass_cache.cache` instance to use, else None
+    :param verbose_instance: either None (defaulting to :obj:`quiet_mirroring`),
+        or a :obj:`quiet_mirroring` derivative
     """
 
     if not src_cache.complete_eclass_entries and not eclass_cache:

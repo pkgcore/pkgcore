@@ -75,7 +75,7 @@ class _native_CPV(object):
         """
         Can be called with one string or with three string args.
 
-        If called with one arg that is the cpv string. (See L{parser}
+        If called with one arg that is the cpv string. (See :obj:`parser`
         for allowed syntax).
 
         If called with three args they are the category, package and

@@ -153,7 +153,7 @@ def generate_contents(path, compressor="bz2"):
 
     @param path: string path to location on disk
     @param compressor: defaults to bz2; decompressor to use, see
-        L{known_compressors} for list of valid compressors
+        :obj:`known_compressors` for list of valid compressors
     """
     t = xarfile.XarArchive(path)
 

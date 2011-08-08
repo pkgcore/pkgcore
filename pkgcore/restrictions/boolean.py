@@ -35,8 +35,8 @@ class base(restriction.base):
 
         """
         :keyword node_type: type of restriction this accepts
-            (L{package_type<pkgcore.restrictions.packages.package_type>} and
-            L{value_type<pkgcore.restrictions.values.value_type>} being
+            (:obj:`pkgcore.restrictions.packages.package_type` and
+            :obj:`pkgcore.restrictions.values.value_type` being
             common types).  If set to C{None}, no instance limiting is done.
         :type restrictions: node_type (if that is specified)
         :param restrictions: initial restrictions to add
@@ -346,7 +346,7 @@ class AndRestriction(base):
 
     def dnf_solutions(self, *args, **kwds):
         """
-        list form of L{iter_dnf_solutions}, see iter_dnf_solutions for args
+        list form of :obj:`iter_dnf_solutions`, see iter_dnf_solutions for args
         """
         return list(self.iter_dnf_solutions(*args, **kwds))
 

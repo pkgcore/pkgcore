@@ -151,7 +151,7 @@ class base(object):
 
 class mtime_watcher(object):
     """
-    passed a list of locations, return a L{contents.contentsSet} containing
+    passed a list of locations, return a :obj:`contents.contentsSet` containing
     those that are directories.
 
     If the location doesn't exist, it's ignored.  If stat_func is os.stat

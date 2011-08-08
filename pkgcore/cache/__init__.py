@@ -184,7 +184,7 @@ class base(object):
 
     @staticmethod
     def reconstruct_eclasses(cpv, eclass_string):
-        """Turn a string from L{serialize_eclasses} into a dict."""
+        """Turn a string from :obj:`serialize_eclasses` into a dict."""
         if not isinstance(eclass_string, basestring):
             raise TypeError("eclass_string must be basestring, got %r" %
                 eclass_string)

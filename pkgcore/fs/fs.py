@@ -156,7 +156,7 @@ class fsFile(fsBase):
     def __init__(self, location, chksums=None, data=None, **kwds):
         """
         :param chksums: dict of checksums, key chksum_type: val hash val.
-            See L{pkgcore.chksum}.
+            See :obj:`pkgcore.chksum`.
         """
         assert 'data_source' not in kwds
         if data is None:
@@ -306,7 +306,7 @@ class fsFifo(fsBase):
 
 def mk_check(name):
     return pretty_docs(post_curry(getattr, 'is_' + name, False),
-        extradocs=("return True if obj is an instance of L{%s}, else False" % name),
+        extradocs=("return True if obj is an instance of :obj:`%s`, else False" % name),
         name=("is" +name)
         )
     return f

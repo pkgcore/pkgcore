@@ -14,7 +14,7 @@ import os.path
 # import).
 
 def extend_path(path, name):
-    """Simpler version of the stdlib's L{pkgutil.extend_path}.
+    """Simpler version of the stdlib's :obj:`pkgutil.extend_path`.
 
     It does not support ".pkg" files, and it does not require an
     __init__.py (this is important: we want only one thing (pkgcore

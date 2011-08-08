@@ -267,9 +267,9 @@ def merge_contents(cset, offset=None, callback=None):
 def unmerge_contents(cset, offset=None, callback=None):
 
     """
-    unmerge a L{pkgcore.fs.contents.contentsSet} instance to the livefs
+    unmerge a :obj:`pkgcore.fs.contents.contentsSet` instance to the livefs
 
-    :param cset: L{pkgcore.fs.contents.contentsSet} instance
+    :param cset: :obj:`pkgcore.fs.contents.contentsSet` instance
     :param offset: if not None, offset to prefix all locations with.
         Think of it as target dir.
     :param callback: callable to report each entry being unmerged

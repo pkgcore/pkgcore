@@ -5,7 +5,7 @@
 EBuild Daemon (ebd), main high level interface to ebuild execution env
 (ebuild.sh being part of it).
 
-Wraps L{pkgcore.ebuild.processor} functionality into a higher level
+Wraps :obj:`pkgcore.ebuild.processor` functionality into a higher level
 api, per phase methods for example
 """
 
@@ -49,10 +49,10 @@ class ebd(object):
                 use_override=None):
         """
         :param pkg:
-            L{ebuild package instance<pkgcore.ebuild.ebuild_src.package>}
+            :class:`pkgcore.ebuild.ebuild_src.package`
             instance this env is being setup for
         :param initial_env: initial environment to use for this ebuild
-        :param env_data_source: a L{snakeoil.data_source..base} instance
+        :param env_data_source: a :obj:`snakeoil.data_source..base` instance
             to restore the environment from- used for restoring the
             state of an ebuild processing, whether for unmerging, or
             walking phases during building
@@ -260,8 +260,8 @@ class ebd(object):
         """
         :param phase: phase to execute
         :param userpriv: will we drop to
-            L{portage_uid<pkgcore.os_data.portage_uid>} and
-            L{portage_gid<pkgcore.os_data.portage_gid>} access for this phase?
+            :obj:`pkgcore.os_data.portage_uid` and
+            :obj:`pkgcore.os_data.portage_gid` access for this phase?
         :param sandbox: should this phase be sandboxed?
         :param fakeroot: should the phase be fakeroot'd?  Only really useful
             for install phase, and is mutually exclusive with sandbox
@@ -392,8 +392,8 @@ def run_generic_phase(pkg, phase, env, userpriv, sandbox, fakeroot,
     """
     :param phase: phase to execute
     :param userpriv: will we drop to
-        L{portage_uid<pkgcore.os_data.portage_uid>} and
-        L{portage_gid<pkgcore.os_data.portage_gid>} access for this phase?
+        :obj:`pkgcore.os_data.portage_uid` and
+        :obj:`pkgcore.os_data.portage_gid` access for this phase?
     :param sandbox: should this phase be sandboxed?
     :param fakeroot: should the phase be fakeroot'd?  Only really useful
         for install phase, and is mutually exclusive with sandbox
@@ -527,13 +527,13 @@ class buildable(ebd, setup_mixin, format.build):
         observer=None, **kwargs):
 
         """
-        :param pkg: L{pkgcore.ebuild.ebuild_src.package} instance we'll be
+        :param pkg: :obj:`pkgcore.ebuild.ebuild_src.package` instance we'll be
             building
         :param domain_settings: dict bled down from the domain configuration;
             basically initial env
-        :param eclass_cache: the L{eclass_cache<pkgcore.ebuild.eclass_cache>}
+        :param eclass_cache: the :class:`pkgcore.ebuild.eclass_cache`
             we'll be using
-        :param fetcher: a L{pkgcore.fetch.base.fetcher} instance to use to
+        :param fetcher: a :obj:`pkgcore.fetch.base.fetcher` instance to use to
             access our required files for building
         """
 
@@ -795,7 +795,7 @@ class buildable(ebd, setup_mixin, format.build):
         install the package somewhere prior to executing clean if you
         intend on installing it.
 
-        :return: L{pkgcore.ebuild.ebuild_built.package} instance
+        :return: :obj:`pkgcore.ebuild.ebuild_built.package` instance
         """
         factory = ebuild_built.fake_package_factory(self._built_class)
         return factory.new_package(self.pkg,

@@ -26,7 +26,7 @@ def comma_separated_containment(attr, values_kls=frozenset, token_kls=str):
 
     :param attr: name of the attribute.
     @returns: a parse function: takes a string of comma-separated values,
-        returns a L{packages.PackageRestriction} matching packages that
+        returns a :obj:`packages.PackageRestriction` matching packages that
         have any of those values in the attribute passed to this function.
     """
     def _parse(value):
@@ -79,7 +79,7 @@ def parse_match(text):
 
     :param text: string to attempt to parse
     :type text: string
-    :return: L{package restriction<pkgcore.restrictions.packages>} derivative
+    :return: :obj:`pkgcore.restrictions.packages` derivative
     """
 
     orig_text = text = text.strip()

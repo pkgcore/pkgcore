@@ -15,7 +15,7 @@ class nodeps_repo(object):
 
     """
     repository wrapper that returns wrapped pkgs via
-    L{MutatedPkg} that have their depends/rdepends/post_rdepends wiped
+    :obj:`MutatedPkg` that have their depends/rdepends/post_rdepends wiped
     """
 
     default_depends = default_rdepends = default_post_rdepends = \
@@ -47,7 +47,7 @@ class caching_repo(object):
 
     """
     repository wrapper that overrides match, returning
-    L{caching_iter} instances; itermatch is slaved to match,
+    :obj:`caching_iter` instances; itermatch is slaved to match,
     in other words iterating over the caching_iter.
 
     Main use for this is to cache results from query lookups;

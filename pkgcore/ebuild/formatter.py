@@ -20,7 +20,7 @@ demandload(globals(),
     )
 
 class NoChoice(KeyboardInterrupt):
-    """Raised by L{userquery} if no choice was made.
+    """Raised by :obj:`userquery` if no choice was made.
 
     HACK: this subclasses KeyboardInterrupt, so if you ignore this it
     should do something reasonable.
@@ -34,7 +34,7 @@ def userquery(prompt, out, err, responses=None, default_answer=None, limit=3):
     unambiguous match the value is returned.
 
     If the user does not input a valid response after a number of
-    tries L{NoChoice} is raised. You can catch this if you want to do
+    tries :obj:`NoChoice` is raised. You can catch this if you want to do
     something special. Because it subclasses C{KeyboardInterrupt}
     the default behaviour is to abort as if the user hit ctrl+c.
 

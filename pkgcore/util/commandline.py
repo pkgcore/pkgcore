@@ -360,6 +360,20 @@ class VersionFunc(argparse.Action):
         parser.exit(message=formatter.format_help())
 
 
+class _SubParser(argparse._SubParsersAction):
+
+    def add_parser(self, name, **kwds):
+        """modified version of argparse._SubParsersAction, linking description/help if one is specified"""
+        description = kwds.get("description")
+        help_txt = kwds.get("help")
+        if description is None:
+            if help_txt is not None:
+                kwds["description"] = help_txt
+        elif help_txt is None:
+            kwds["help"] = description
+        return argparse._SubParsersAction.add_parser(self, name, **kwds)
+
+
 class ArgumentParser(argparse.ArgumentParser):
 
     def __init__(self,
@@ -375,12 +389,15 @@ class ArgumentParser(argparse.ArgumentParser):
                  argument_default=None,
                  conflict_handler='error',
                  add_help=True):
+
         super(ArgumentParser, self).__init__(prog=prog, usage=usage,
             description=description, epilog=epilog, version=version,
             parents=parents, formatter_class=formatter_class,
             prefix_chars=prefix_chars, fromfile_prefix_chars=fromfile_prefix_chars,
             argument_default=argument_default, conflict_handler=conflict_handler,
             add_help=add_help)
+        # register our own subparser
+        self.register('action', 'parsers', _SubParser)
 
     def parse_args(self, args=None, namespace=None):
         args = argparse.ArgumentParser.parse_args(self, args, namespace)

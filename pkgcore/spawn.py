@@ -563,6 +563,30 @@ def find_invoking_python():
             continue
     raise CommandNotFound('python')
 
+
+def _get_linux_proc_count():
+    try:
+        return os.sysconf('SC_NPROCESSORS_ONLN')
+    except (ValueError, OSError, AttributeError):
+        try:
+            return len([x for x in open("/proc/cpuinfo") if x.split(":", 1)[0].strip() == "processor"])
+        except EnvironmentError:
+            return None
+
+def _get_bsd_proc_count():
+    try:
+        path = find_binary('sysctl', paths=["/sbin", "/bin", "/usr/sbin", "/usr/bin"])
+    except CommandNotFound:
+        return None
+    retval, out = spawn_get_output([path, '-n', 'hw.ncpu'], split_lines=False)
+    if retval == 0:
+        try:
+            return int(out.strip())
+        except ValueError:
+            pass
+    return None
+
+
 def get_proc_count(force=False):
     """return the number of cpu's identified, HT or otherwise
 
@@ -571,11 +595,10 @@ def get_proc_count(force=False):
     """
     val = getattr(get_proc_count, 'cached_result', None)
     if val is None or force:
-        try:
-            val = len([x for x in open("/proc/cpuinfo") if ''.join(x.split()).split(":")[0] == "processor"])
-        except EnvironmentError:
-            pass
+        if 'linux' in sys.platform:
+            val = _get_linux_proc_count()
+        elif 'bsd' in sys.platform or 'darwin' in sys.platform:
+            val = _get_bsd_proc_count()
         if not val:
             val = 1
-        get_proc_count.cached_result = val
     return val

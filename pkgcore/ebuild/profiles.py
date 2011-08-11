@@ -473,7 +473,9 @@ class PkgProvided(ebuild_src.base):
     package_is_real = False
     __inst_caching__ = True
 
-    keywords = InvertedContains(())
+    @property
+    def keywords(self):
+        return InvertedContains(())
 
     def __init__(self, *a, **kwds):
         ebuild_src.base.__init__(self, *a, **kwds)

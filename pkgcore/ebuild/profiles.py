@@ -145,7 +145,7 @@ class ProfileNode(object):
     def masks(self, data):
         return split_negations(data, self.eapi_atom)
 
-    @load_property("deprecated", (lambda i:i), None)
+    @load_property("deprecated", handler=None, fallback=None)
     def deprecated(self, data):
         if data is not None:
             data = iter(data)

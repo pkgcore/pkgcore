@@ -18,8 +18,7 @@ from pkgcore.repository import virtual
 from snakeoil.osutils import abspath, join as pjoin, readlines_utf8
 from snakeoil.containers import InvertedContains
 from snakeoil.fileutils import iter_read_bash, read_bash_dict
-from snakeoil import klass, caching
-from snakeoil.currying import partial
+from snakeoil import klass, caching, currying, sequences
 from snakeoil.compatibility import next, is_py3k
 from snakeoil.demandload import demandload
 
@@ -42,28 +41,45 @@ class ProfileError(Exception):
         return "ProfileError: profile %r, file %r, error %s" % (
             self.path, self.filename, self.error)
 
-def load_decorator(filename, handler=iter_read_bash, fallback=(),
+
+def load_property(filename, handler=iter_read_bash, fallback=(),
     read_func=readlines_utf8):
     def f(func):
-        def f2(self, *args):
-            path = pjoin(self.path, filename)
-            try:
-                data = read_func(path, True, True, True)
-                if data is None:
-                    return func(self, fallback, *args)
-                return func(self, handler(data), *args)
-            except (KeyboardInterrupt, RuntimeError, SystemExit):
-                raise
-            except ProfileError:
-                # no point in wrapping/throwing..
-                raise
-            except Exception, e:
-                raise ProfileError(self.path, filename, e)
-        return f2
+        f2 = klass.jit_attr_named('_%s' % (func.__name__,))
+        return f2(currying.partial(_load_and_invoke, func, filename, handler, fallback,
+            read_func))
     return f
 
+def _load_and_invoke(func, filename, handler, fallback, read_func, self):
+    path = pjoin(self.path, filename)
+    try:
+        data = read_func(path, True, True, True)
+        if data is None:
+            return func(self, fallback)
+        if handler:
+            data = handler(data)
+        return func(self, data)
+    except (KeyboardInterrupt, RuntimeError, SystemExit):
+        raise
+    except ProfileError:
+        # no point in wrapping/throwing..
+        raise
+    except Exception, e:
+        raise ProfileError(self.path, filename, e)
 
-_make_incrementals_dict = partial(IncrementalsDict, const.incrementals)
+
+_make_incrementals_dict = currying.partial(IncrementalsDict, const.incrementals)
+
+def _open_utf8(path, *args):
+    try:
+        if is_py3k:
+            return open(path, 'r', encoding='utf8')
+        return open(path, 'r')
+    except EnvironmentError, e:
+        if errno.ENOENT != e.errno:
+            raise
+        return None
+
 
 class ProfileNode(object):
 
@@ -82,8 +98,13 @@ class ProfileNode(object):
         return '<%s path=%r, @%#8x>' % (self.__class__.__name__, self.path,
             id(self))
 
-    @load_decorator("packages")
-    def _load_packages(self, data):
+    system = klass.alias_attr("packages.system")
+    visibility = klass.alias_attr("packages.visibility")
+
+    _packages_kls = sequences.namedtuple("packages", ("system", "visibility"))
+
+    @load_property("packages")
+    def packages(self, data):
         # sys packages and visibility
         sys, neg_sys, vis, neg_vis = [], [], [], []
         for line in data:
@@ -97,39 +118,35 @@ class ProfileNode(object):
                     sys.append(self.eapi_atom(line[1:]))
                 else:
                     vis.append(self.eapi_atom(line, negate_vers=True))
-        self.system = (tuple(neg_sys), tuple(sys))
-        self.visibility = (tuple(neg_vis), tuple(vis))
+        return self._packages_kls((tuple(neg_sys), tuple(sys)),
+            (tuple(neg_vis), tuple(vis)))
 
-    @load_decorator("parent")
-    def _load_parents(self, data):
+    @load_property("parent")
+    def parents(self, data):
         kls = getattr(self, 'parent_node_kls', self.__class__)
-        self.parents = tuple(kls(abspath(pjoin(self.path, x)))
+        return tuple(kls(abspath(pjoin(self.path, x)))
             for x in data)
-        return self.parents
 
-    @load_decorator("package.provided")
-    def _load_pkg_provided(self, data):
-        self.pkg_provided = split_negations(data, cpv.versioned_CPV)
-        return self.pkg_provided
+    @load_property("package.provided")
+    def pkg_provided(self, data):
+        return split_negations(data, cpv.versioned_CPV)
 
-    @load_decorator("virtuals")
-    def _load_virtuals(self, data):
+    @load_property("virtuals")
+    def virtuals(self, data):
         d = {}
         for line in data:
             l = line.split()
             if len(l) != 2:
                 raise ValueError("%r is malformated" % line)
             d[cpv.CPV.unversioned(l[0]).package] = self.eapi_atom(l[1])
-        self.virtuals = mappings.ImmutableDict(d)
-        return d
+        return mappings.ImmutableDict(d)
 
-    @load_decorator("package.mask")
-    def _load_masks(self, data):
-        self.masks = split_negations(data, self.eapi_atom)
-        return self.masks
+    @load_property("package.mask")
+    def masks(self, data):
+        return split_negations(data, self.eapi_atom)
 
-    @load_decorator("deprecated", (lambda i:i), None)
-    def _load_deprecated(self, data):
+    @load_property("deprecated", (lambda i:i), None)
+    def deprecated(self, data):
         if data is not None:
             data = iter(data)
             try:
@@ -141,7 +158,6 @@ class ProfileNode(object):
                 # only an empty replacement could trigger this; thus
                 # formatted badly.
                 raise ValueError("didn't specify a replacement profile")
-        self.deprecated = data
         return data
 
     def _parse_package_use(self, data):
@@ -158,27 +174,24 @@ class ProfileNode(object):
         return mappings.ImmutableDict((k, _build_cp_atom_payload(v, atom.atom(k)))
             for k,v in d.iteritems())
 
-    @load_decorator("package.use.force")
-    def _load_pkg_use_force(self, data):
-        self.pkg_use_force = d = self._parse_package_use(data)
-        return d
+    @load_property("package.use.force")
+    def pkg_use_force(self, data):
+        return self._parse_package_use(data)
 
-    @load_decorator("package.use.mask")
-    def _load_pkg_use_mask(self, data):
-        self.pkg_use_mask = d = self._parse_package_use(data)
-        return d
+    @load_property("package.use.mask")
+    def pkg_use_mask(self, data):
+        return self._parse_package_use(data)
 
-    @load_decorator("package.use")
-    def _load_pkg_use(self, data):
+    @load_property("package.use")
+    def pkg_use(self, data):
         c = ChunkedDataDict()
         c.update_from_stream(
             chain_from_iterable(self._parse_package_use(data).itervalues()))
         c.freeze()
-        self.pkg_use = c
         return c
 
-    @load_decorator("use.force")
-    def _load_forced_use(self, data):
+    @load_property("use.force")
+    def forced_use(self, data):
         c = ChunkedDataDict()
         neg, pos = split_negations(data)
         if neg or pos:
@@ -186,11 +199,10 @@ class ProfileNode(object):
         c.update_from_stream(
             chain_from_iterable(self.pkg_use_force.itervalues()))
         c.freeze()
-        self.forced_use = c
         return c
 
-    @load_decorator("use.mask")
-    def _load_masked_use(self, data):
+    @load_property("use.mask")
+    def masked_use(self, data):
         c = ChunkedDataDict()
         neg, pos = split_negations(data)
         if neg or pos:
@@ -198,81 +210,39 @@ class ProfileNode(object):
         c.update_from_stream(
             chain_from_iterable(self.pkg_use_mask.itervalues()))
         c.freeze()
-        self.masked_use = c
         return c
 
-    def _load_incremental_env(self):
-        self._parse_make_defaults()
-        return self.incremental_env
-
-    def _load_default_env(self):
-        self._parse_make_defaults()
-        return self.default_env
-
-    def _parse_make_defaults(self):
+    @load_property('make.defaults', fallback=None, read_func=_open_utf8,
+        handler=None)
+    def default_env(self, data):
         rendered = _make_incrementals_dict()
         for parent in self.parents:
             rendered.update(parent.default_env.iteritems())
 
-        path = pjoin(self.path, "make.defaults")
-        try:
-            if is_py3k:
-                f = open(path, 'r', encoding='utf8')
-            else:
-                f = open(path, "r")
-        except IOError, ie:
-            if ie.errno != errno.ENOENT:
-                raise ProfileError(self.path, "make.defaults", ie)
-            d = {}
-        else:
-            try:
-                try:
-                    d = read_bash_dict(f, vars_dict=rendered)
-                finally:
-                    f.close()
-            except (KeyboardInterrupt, RuntimeError, SystemExit):
-                raise
-            except Exception ,e:
-                raise ProfileError(self.path, "make.defaults", e)
-        self.incremental_env = mappings.ImmutableDict(d)
-        rendered.update(d.iteritems())
-        self.default_env = mappings.ImmutableDict(rendered)
+        if data is not None:
+            data = read_bash_dict(data, vars_dict=rendered)
+            rendered.update(data.iteritems())
+        return mappings.ImmutableDict(rendered)
 
-    def _load_bashrc(self):
+    @klass.jit_attr
+    def bashrc(self):
         path = pjoin(self.path, "profile.bashrc")
         if os.path.exists(path):
-            self.bashrc = local_source(path)
-        else:
-            self.bashrc = None
-        return self.bashrc
+            return local_source(path)
+        return None
 
-    @load_decorator('eapi', fallback=('0',))
-    def _load_eapi_obj(self, data):
+    @load_property('eapi', fallback=('0',))
+    def eapi_obj(self, data):
         data = [x.strip() for x in data]
         data = filter(None, data)
         if len(data) != 1:
             raise ProfileError(self.path, 'eapi', "multiple lines detected")
         elif not (data[0].isdigit() and int(data[0]) in const.eapi_capable):
             raise ProfileError(self.path, 'eapi', 'unsupported eapi: %s' % data[0])
-        self.eapi_obj = o = get_eapi(data[0])
-        return o
+        return get_eapi(data[0])
 
     eapi = klass.alias_attr("eapi_obj.magic")
     eapi_atom = klass.alias_attr("eapi_obj.atom_kls")
-
-    def __getattr__(self, attr):
-        if attr in ("system", "visibility"):
-            self._load_packages()
-            return getattr(self, attr)
-        # use objects getattr to bypass our own; prevents infinite recursion
-        # if they request something non existant
-        try:
-            func = object.__getattribute__(self, "_load_%s" % attr)
-        except AttributeError:
-            raise AttributeError(self, attr)
-        if func is None:
-            raise AttributeError(attr)
-        return func()
 
 
 class EmptyRootNode(ProfileNode):
@@ -372,7 +342,7 @@ class ProfileStack(object):
         for profile in self.stack:
             d.update(profile.virtuals)
         self.virtuals = d
-        self.make_virtuals_repo = partial(AliasedVirtuals, d)
+        self.make_virtuals_repo = currying.partial(AliasedVirtuals, d)
 
     def _collapse_pkg_provided(self):
         d = {}
@@ -380,7 +350,7 @@ class ProfileStack(object):
             d.setdefault(pkg.category, {}).setdefault(pkg.package,
                 []).append(pkg.fullver)
         intermediate_parent = PkgProvidedParent()
-        obj = util.SimpleTree(d, pkg_klass=partial(PkgProvided,
+        obj = util.SimpleTree(d, pkg_klass=currying.partial(PkgProvided,
             intermediate_parent), livefs=True, frozen=True)
         intermediate_parent._parent_repo = obj
 
@@ -471,9 +441,9 @@ class UserProfileNode(ProfileNode):
         self.override_path = pjoin(path, parent_path)
         ProfileNode.__init__(self, path)
 
-    def _load_parents(self):
-        self.parents = (ProfileNode(self.override_path),)
-        return self.parents
+    @klass.jit_attr
+    def parents(self):
+        return (ProfileNode(self.override_path),)
 
 
 class UserProfile(OnDiskProfile):

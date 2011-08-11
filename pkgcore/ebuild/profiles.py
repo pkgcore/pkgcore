@@ -279,18 +279,17 @@ class ProfileStack(object):
     def arch(self):
         return self.default_env.get("ARCH")
 
-    @property
-    def deprecated(self):
-        return self.node.deprecated
+    deprecated = klass.alias_attr("node.deprecated")
 
-    def _load_stack(self):
+    @klass.jit_attr
+    def stack(self):
         def f(node):
             for x in node.parents:
                 for y in f(x):
                     yield y
             yield node
 
-        return list(f(self.node))
+        return tuple(f(self.node))
 
     def _collapse_use_dict(self, attr):
 
@@ -303,6 +302,18 @@ class ProfileStack(object):
         d.freeze()
         return d
 
+    @klass.jit_attr
+    def forced_use(self):
+        return self._collapse_use_dict("forced_use")
+
+    @klass.jit_attr
+    def masked_use(self):
+        return self._collapse_use_dict("masked_use")
+
+    @klass.jit_attr
+    def pkg_use(self):
+        return self._collapse_use_dict("pkg_use")
+
     def _collapse_generic(self, attr):
         s = set()
         for node in self.stack:
@@ -311,7 +322,8 @@ class ProfileStack(object):
             s.update(val[1])
         return s
 
-    def _collapse_env(self):
+    @klass.jit_attr
+    def default_env(self):
         d = dict(self.node.default_env.iteritems())
         for incremental in const.incrementals:
             v = d.pop(incremental, '').split()
@@ -322,29 +334,33 @@ class ProfileStack(object):
                     v = misc.render_incrementals(v)
                     if v:
                         d[incremental] = tuple(v)
-        d = mappings.ImmutableDict(d.iteritems())
-        return d
+        return mappings.ImmutableDict(d.iteritems())
 
-    @property
+    @klass.jit_attr
     def use_expand(self):
         if "USE_EXPAND" in const.incrementals:
             return tuple(self.default_env.get("USE_EXPAND", ()))
         return tuple(self.default_env.get("USE_EXPAND", '').split())
 
-    @property
+    @klass.jit_attr
     def use_expand_hidden(self):
         if "USE_EXPAND_HIDDEN" in const.incrementals:
             return tuple(self.default_env.get("USE_EXPAND_HIDDEN", ()))
         return tuple(self.default_env.get("USE_EXPAND_HIDDEN", "").split())
 
-    def _collapse_virtuals(self):
+    @klass.jit_attr
+    def virtuals(self):
         d = {}
         for profile in self.stack:
             d.update(profile.virtuals)
-        self.virtuals = d
-        self.make_virtuals_repo = currying.partial(AliasedVirtuals, d)
+        return mappings.ImmutableDict(d)
 
-    def _collapse_pkg_provided(self):
+    @klass.jit_attr
+    def make_virtuals_repo(self):
+        return currying.partial(AliasedVirtuals, self.virtuals)
+
+    @klass.jit_attr
+    def provides_repo(self):
         d = {}
         for pkg in self._collapse_generic("pkg_provided"):
             d.setdefault(pkg.category, {}).setdefault(pkg.package,
@@ -359,40 +375,21 @@ class ProfileStack(object):
             obj.has_match = _empty_provides_has_match
         return obj
 
-    def _collapse_masks(self):
+    @klass.jit_attr
+    def masks(self):
         return frozenset(chain(self._collapse_generic("masks"),
             self._collapse_generic("visibility")))
 
-    bashrc = klass.alias_attr("bashrcs")
+    @klass.jit_attr
+    def bashrcs(self):
+        return tuple(x.bashrc for x in self.stack if x.bashrc is not None)
 
-    def __getattr__(self, attr):
-        if attr == "stack":
-            self.stack = obj = tuple(self._load_stack())
-        elif attr in ('forced_use', 'masked_use', 'pkg_use'):
-            obj = self._collapse_use_dict(attr)
-            setattr(self, attr, obj)
-        elif attr == 'bashrcs':
-            obj = self.bashrcc = tuple(x.bashrc
-                for x in self.stack if x.bashrc is not None)
-        elif attr == 'system':
-            obj = self.system = self._collapse_generic(attr)
-        elif attr == 'masks':
-            obj = self.masks = self._collapse_masks()
-        elif attr == 'default_env':
-            obj = self.default_env = self._collapse_env()
-        elif attr == 'virtuals':
-            self._collapse_virtuals()
-            obj = self.virtuals
-        elif attr == 'make_virtuals_repo':
-            self._collapse_virtuals()
-            obj = self.make_virtuals_repo
-        elif attr == 'provides_repo':
-            obj = self.provides_repo = self._collapse_pkg_provided()
-        elif attr == 'path':
-            obj = self.node.path
-        else:
-            raise AttributeError(attr)
-        return obj
+    bashrc = klass.alias_attr("bashrcs")
+    path = klass.alias_attr("node.path")
+
+    @klass.jit_attr
+    def system(self):
+        return self._collapse_generic('system')
 
 
 class OnDiskProfile(ProfileStack):
@@ -426,10 +423,11 @@ class OnDiskProfile(ProfileStack):
             vals = cls(load_profile_base=True, *vals)
         return vals
 
-    def _load_stack(self):
-        l = ProfileStack._load_stack(self)
+    @klass.jit_attr
+    def stack(self):
+        l = ProfileStack.stack.function(self)
         if self.load_profile_base:
-            l = [EmptyRootNode(self.basepath)] + l
+            l = (EmptyRootNode(self.basepath),) + l
         return l
 
 

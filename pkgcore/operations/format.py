@@ -8,7 +8,7 @@ build operation
 __all__ = ('build_base', 'install', 'uninstall', 'replace', 'fetch',
     'empty_build_op', 'FailedDirectory', 'GenericBuildError', 'errors')
 
-from pkgcore.operations import base as base_operations
+from pkgcore import operations as _operations_mod
 from snakeoil.dependant_methods import ForcedDepends
 
 def _raw_fetch(self):
@@ -34,14 +34,14 @@ def _raw_fetch(self):
     return True
 
 
-class operations(base_operations):
+class operations(_operations_mod.base):
 
     def __init__(self, domain, pkg, observer=None, disable_overrides=(),
         enable_overrides=()):
         self.observer = observer
         self.pkg = pkg
         self.domain = domain
-        base_operations.__init__(self, disable_overrides, enable_overrides)
+        _operations_mod.base.__init__(self, disable_overrides, enable_overrides)
 
     def _cmd_api_info(self):
         return self._cmd_implementation_info()

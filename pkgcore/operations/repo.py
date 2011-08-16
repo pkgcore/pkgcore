@@ -147,19 +147,19 @@ class operations(operations_base):
             observer = observer_mod.repo_observer()
         return observer
 
-    def _cmd_enabled_install(self, pkg, observer=None):
+    def _cmd_api_install(self, pkg, observer=None):
         return self._cmd_install(pkg,
             self._default_observer(observer))
 
-    def _cmd_enabled_uninstall(self, pkg, observer=None):
+    def _cmd_api_uninstall(self, pkg, observer=None):
         return self._cmd_uninstall(pkg,
             self._default_observer(observer))
 
-    def _cmd_enabled_replace(self, oldpkg, newpkg, observer=None):
+    def _cmd_api_replace(self, oldpkg, newpkg, observer=None):
         return self._cmd_replace(oldpkg, newpkg,
             self._default_observer(observer))
 
-    def _cmd_enabled_install_or_replace(self, newpkg, observer=None):
+    def _cmd_api_install_or_replace(self, newpkg, observer=None):
         return self._cmd_install_or_replace(newpkg,
             self._default_observer(observer))
 
@@ -176,11 +176,11 @@ class operations(operations_base):
 
     del x
 
-    def _cmd_enabled_configure(self, pkg, observer=None):
+    def _cmd_api_configure(self, pkg, observer=None):
         return self._cmd_configure(self.repository, pkg,
             self._default_observer(observer))
 
-    def _cmd_enabled_sync(self, observer=None):
+    def _cmd_api_sync(self, observer=None):
         # often enough, the syncer is a lazy_ref
         return self._cmd_sync(self._default_observer(observer))
 
@@ -207,7 +207,7 @@ class operations_proxy(operations):
             if attr.startswith("_cmd_"):
                 if attr.startswith("_cmd_check_support_"):
                     setattr(self, attr, partial(self._proxy_op_support, attr))
-                elif not attr.startswith("_cmd_enabled_"):
+                elif not attr.startswith("_cmd_api_"):
                     setattr(self, attr, partial(self._proxy_op, attr))
         operations.__init__(self, repository, *args, **kwds)
 

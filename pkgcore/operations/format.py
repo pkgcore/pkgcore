@@ -43,16 +43,16 @@ class operations(base_operations):
         self.domain = domain
         base_operations.__init__(self, disable_overrides, enable_overrides)
 
-    def _cmd_enabled_info(self):
+    def _cmd_api_info(self):
         return self._cmd_info()
 
-    def _cmd_enabled_mergable(self):
+    def _cmd_api_mergable(self):
         return self._cmd_mergable(self.domain)
 
     def _cmd_mergable(self, domain):
         return getattr(self.pkg, 'built', False)
 
-    def _cmd_enabled_sanity_check(self):
+    def _cmd_api_sanity_check(self):
         return self._cmd_sanity_check(self.domain)
 
     def _cmd_sanity_check(self, domain):
@@ -61,10 +61,10 @@ class operations(base_operations):
 
 class build_operations(operations):
 
-    def _cmd_enabled_build(self, observer=None, clean=True):
+    def _cmd_api_build(self, observer=None, clean=True):
         return self._cmd_build(observer=observer, clean=clean)
 
-    def _cmd_enabled_buildable(self, domain):
+    def _cmd_api_buildable(self, domain):
         return self._cmd_buildable(domain)
 
     def _cmd_buildable(self, domain):

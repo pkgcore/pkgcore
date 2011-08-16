@@ -35,12 +35,12 @@ class base(object):
 
     def _enable_operation(self, operation):
         setattr(self, operation,
-            getattr(self, '_cmd_enabled_%s' % operation))
+            getattr(self, '_cmd_api_%s' % operation))
 
     @classmethod
     def _collect_operations(cls):
         for x in dir(cls):
-            if x.startswith("_cmd_") and not x.startswith("_cmd_enabled_") \
+            if x.startswith("_cmd_") and not x.startswith("_cmd_api_") \
                 and not x.startswith("_cmd_check_support_"):
                 yield x[len("_cmd_"):]
 
@@ -50,7 +50,7 @@ class base(object):
                 return self._enabled_ops
             return frozenset(self._collect_operations())
         if raw:
-            return hasattr(self, '_cmd_enabled_%s' % operation_name)
+            return hasattr(self, '_cmd_api_%s' % operation_name)
         return hasattr(self, operation_name)
 
     #def __dir__(self):

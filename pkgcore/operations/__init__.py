@@ -3,6 +3,14 @@
 
 """
 operation templates for package/repository/data source objects
+
+For new format implementations, new formats, and generally any new extension,
+an operation class will likely have to be defined.  While the implementations
+are a bit repetitive, the design of it is intentional to ensure that any derivative
+will be forced to adhere to the pkgcore internal api.
+
+Basically it's a crappy form of zope interfaces; converting to zope.interfaces may
+occur down the line if dependencies can be kept as minimal as possible.
 """
 
 class base(object):

@@ -40,9 +40,8 @@ class base(object):
     @classmethod
     def _collect_operations(cls):
         for x in dir(cls):
-            if x.startswith("_cmd_") and not x.startswith("_cmd_api_") \
-                and not x.startswith("_cmd_check_support_"):
-                yield x[len("_cmd_"):]
+            if x.startswith("_cmd_implementation_"):
+                yield x[len("_cmd_implementation_"):]
 
     def supports(self, operation_name=None, raw=False):
         if not operation_name:

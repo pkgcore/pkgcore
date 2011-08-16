@@ -152,11 +152,11 @@ class replace(repo_ops.replace, install, uninstall):
 
 class operations(repo_ops.operations):
 
-    def _cmd_install(self, pkg, observer):
+    def _cmd_implementation_install(self, pkg, observer):
         return install(self.repo, pkg, observer)
 
-    def _cmd_uninstall(self, pkg, observer):
+    def _cmd_implementation_uninstall(self, pkg, observer):
         return uninstall(self.repo, pkg, observer)
 
-    def _cmd_replace(self, oldpkg, newpkg, observer):
+    def _cmd_implementation_replace(self, oldpkg, newpkg, observer):
         return replace(self.repo, oldpkg, newpkg, observer)

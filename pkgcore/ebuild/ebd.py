@@ -822,7 +822,7 @@ class binpkg_buildable(ebd, setup_mixin, format.build):
 
 class ebuild_mixin(object):
 
-    def _cmd_sanity_check(self, domain):
+    def _cmd_implementation_sanity_check(self, domain):
         pkg = self.pkg
         eapi = pkg.eapi_obj
         if eapi.options.has_required_use:
@@ -853,7 +853,7 @@ class src_operations(ebuild_mixin, format.build_operations):
         self._use_override = use_override
         self._eclass_cache = eclass_cache
 
-    def _cmd_build(self, observer=None, clean=False):
+    def _cmd_implementation_build(self, observer=None, clean=False):
         if observer is None:
             observer = self.observer
         return buildable(self.domain, self.pkg,
@@ -871,7 +871,7 @@ class built_operations(ebuild_mixin, format.build_operations):
         self._fetcher = fetcher
         self._initial_env = initial_env
 
-    def _cmd_build(self, observer=None, clean=False):
+    def _cmd_implementation_build(self, observer=None, clean=False):
         if observer is None:
             observer = self.observer
         return binpkg_buildable(self.domain, self.pkg,

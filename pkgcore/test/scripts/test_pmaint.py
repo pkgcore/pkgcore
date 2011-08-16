@@ -110,15 +110,15 @@ def derive_op(name, op, *a, **kw):
 
 class fake_operations(operations):
 
-    def _cmd_install(self, pkg, observer):
+    def _cmd_implementation_install(self, pkg, observer):
         self.repo.installed.append(pkg)
         return derive_op('add_data', install, self.repo, pkg, observer)
 
-    def _cmd_uninstall(self, pkg, observer):
+    def _cmd_implementation_uninstall(self, pkg, observer):
         self.repo.uninstalled.append(pkg)
         return derive_op('remove_data', uninstall, self.repo, pkg, observer)
 
-    def _cmd_replace(self, oldpkg, newpkg, observer):
+    def _cmd_implementation_replace(self, oldpkg, newpkg, observer):
         self.repo.replaced.append((oldpkg, newpkg))
         return derive_op(('add_data', 'remove_data'),
             replace, self.repo, oldpkg, newpkg, observer)

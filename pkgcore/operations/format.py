@@ -44,30 +44,30 @@ class operations(base_operations):
         base_operations.__init__(self, disable_overrides, enable_overrides)
 
     def _cmd_api_info(self):
-        return self._cmd_info()
+        return self._cmd_implementation_info()
 
     def _cmd_api_mergable(self):
-        return self._cmd_mergable(self.domain)
+        return self._cmd_implementation_mergable(self.domain)
 
-    def _cmd_mergable(self, domain):
+    def _cmd_implementation_mergable(self, domain):
         return getattr(self.pkg, 'built', False)
 
     def _cmd_api_sanity_check(self):
-        return self._cmd_sanity_check(self.domain)
+        return self._cmd_implementation_sanity_check(self.domain)
 
-    def _cmd_sanity_check(self, domain):
+    def _cmd_implementation_sanity_check(self, domain):
         return True
 
 
 class build_operations(operations):
 
     def _cmd_api_build(self, observer=None, clean=True):
-        return self._cmd_build(observer=observer, clean=clean)
+        return self._cmd_implementation_build(observer=observer, clean=clean)
 
     def _cmd_api_buildable(self, domain):
-        return self._cmd_buildable(domain)
+        return self._cmd_implementation_buildable(domain)
 
-    def _cmd_buildable(self, domain):
+    def _cmd_implementation_buildable(self, domain):
         return True
 
 

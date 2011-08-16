@@ -33,7 +33,7 @@ class operations(repo_interface.operations_proxy):
         return s
 
     def _proxy_op(self, op_name, *args, **kwds):
-        supports_name = op_name[len("_cmd_"):]
+        supports_name = op_name[len("_cmd_implementation_"):]
         for tree in self.repo.trees:
             ops = tree.operations
             if not ops.supports(supports_name):

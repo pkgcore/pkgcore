@@ -137,11 +137,11 @@ class replace(install, uninstall, repo_interfaces.replace):
 class operations(repo_interfaces.operations):
 
 
-    def _cmd_install(self, *args):
+    def _cmd_implementation_install(self, *args):
         return install(self.repo, *args)
 
-    def _cmd_uninstall(self, *args):
+    def _cmd_implementation_uninstall(self, *args):
         return uninstall(self.repo, *args)
 
-    def _cmd_replace(self, *args):
+    def _cmd_implementation_replace(self, *args):
         return replace(self.repo, *args)

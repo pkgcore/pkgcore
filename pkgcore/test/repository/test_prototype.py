@@ -217,7 +217,7 @@ class TestPrototype(TestCase):
         # if replace, override _replace since replace reflects to it
 
         class my_ops(operations):
-            locals()['_cmd_%s' % attr] = f
+            locals()['_cmd_implementation_%s' % attr] = f
         self.repo.operations_kls = my_ops
         args = [self.repo.match(atom(arg1))]
         if arg2:

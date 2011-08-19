@@ -8,7 +8,9 @@ check_args 2
 ln_option=
 src_prefix=
 if [[ ${HELPER_NAME} == dosym ]]; then
-	ln_option=sn
+	# T while nonportable, is to ensure that if there is a directory
+	# conflict, it doesn't just create the sym w/in
+	ln_option=snT
 else
 	src_prefix="${D}"
 fi

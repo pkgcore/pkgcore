@@ -61,6 +61,8 @@ class operations(_operations_mod.base):
 
 class build_operations(operations):
 
+    __required__ = frozenset(["build"])
+
     def _cmd_api_build(self, observer=None, clean=True):
         return self._cmd_implementation_build(observer=observer, clean=clean)
 

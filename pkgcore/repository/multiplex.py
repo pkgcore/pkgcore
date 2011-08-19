@@ -10,8 +10,9 @@ __all__ = ("tree", "operations")
 from operator import itemgetter
 from pkgcore.repository import prototype, errors
 from snakeoil.currying import partial, post_curry
-from snakeoil.iterables import iter_sort
+from snakeoil.iterables import iter_sort, chain_from_iterable
 from snakeoil.compatibility import all, any, sorted_cmp
+from snakeoil import klass
 from pkgcore.operations import repo as repo_interface
 
 
@@ -20,34 +21,31 @@ class operations(repo_interface.operations_proxy):
     ops_stop_after_first_supported = frozenset(["install", "uninstall",
         "replace"])
 
-    def _collect_operations(self):
-        s = set()
-        for tree in self.repo.trees:
-            s.update(tree.operations._collect_operations())
-        return s
+    @klass.cached_property
+    def raw_operations(self):
+        return frozenset(chain_from_iterable(tree.operations.raw_operations
+            for tree in self.repo.trees))
 
-    def _get_target_attrs(self):
-        s = set()
-        for tree in self.repo.trees:
-            s.update(dir(tree.operations))
-        return s
+    @klass.cached_property
+    def enabled_operations(self):
+        s = set(chain_from_iterable(tree.operations.enabled_operations
+            for tree in self.repo.trees))
+        return frozenset(self._apply_overrides(s))
+
+    def _setup_api(self):
+        for op in self.enabled_operations:
+            setattr(self, op, partial(self._proxy_op, op))
 
     def _proxy_op(self, op_name, *args, **kwds):
-        supports_name = op_name[len("_cmd_implementation_"):]
         for tree in self.repo.trees:
             ops = tree.operations
-            if not ops.supports(supports_name):
+            if not ops.supports(op_name):
                 continue
             ret = getattr(ops, op_name)(*args, **kwds)
-            if supports_name in self.ops_stop_after_first_supported:
+            if op_name in self.ops_stop_after_first_supported:
                 return ret
             return ret
         raise NotImplementedError(self, op_name)
-
-    def _proxy_op_support(self, op_name):
-        op_name = op_name[len('_cmd_check_support_'):]
-        return any(tree.operations.supports(op_name)
-            for tree in self.repo.trees)
 
 
 class tree(prototype.tree):

@@ -11,7 +11,8 @@ __all__ = ("Failure", "base", "install", "uninstall", "replace",
 from snakeoil.dependant_methods import ForcedDepends
 from snakeoil.weakrefs import WeakRefFinalizer
 from snakeoil.currying import partial, post_curry
-from pkgcore.operations import base as operations_base
+from snakeoil import klass
+from pkgcore import operations as _operations_mod
 from snakeoil.demandload import demandload
 demandload(globals(), "pkgcore.log:logger",
     "pkgcore.operations:observer@observer_mod",
@@ -130,11 +131,11 @@ class replace(install, uninstall):
         install.__init__(self, repo, newpkg, observer)
 
 
-class operations(operations_base):
+class operations(_operations_mod.base):
 
     def __init__(self, repository, disable_overrides=(), enable_overrides=()):
         self.repo = repository
-        operations_base.__init__(self, disable_overrides, enable_overrides)
+        _operations_mod.base.__init__(self, disable_overrides, enable_overrides)
 
     def _disabled_if_frozen(self, command):
         if self.repo.frozen:
@@ -180,12 +181,10 @@ class operations(operations_base):
         return self._cmd_implementation_configure(self.repository, pkg,
             self._default_observer(observer))
 
+    @_operations_mod.is_standalone
     def _cmd_api_sync(self, observer=None):
         # often enough, the syncer is a lazy_ref
-        return self._cmd_implementation_sync(self._default_observer(observer))
-
-    def _cmd_implementation_sync(self, observer):
-        return self._get_syncer().sync()
+        syncer = self._get_syncer()
         return syncer.sync()
 
     def _get_syncer(self):
@@ -201,23 +200,16 @@ class operations(operations_base):
 
 class operations_proxy(operations):
 
-    def __init__(self, repository, *args, **kwds):
-        self.repo = repository
-        for attr in self._get_target_attrs():
-            if attr.startswith("_cmd_"):
-                if attr.startswith("_cmd_check_support_"):
-                    setattr(self, attr, partial(self._proxy_op_support, attr))
-                elif not attr.startswith("_cmd_api_"):
-                    setattr(self, attr, partial(self._proxy_op, attr))
-        operations.__init__(self, repository, *args, **kwds)
+    # cache this; this is to prevent the target operations mutating resulting in
+    # our proxy setup not matching the target.
+    raw_operations = klass.cached_property_named("raw_operations")(
+        klass.alias_attr("repo.operations.raw_operations"))
 
-    def _get_target_attrs(self):
-        return dir(self.repo.raw_repo.operations)
+    @klass.cached_property
+    def enabled_operations(self):
+        s = set(self.repo.operations.enabled_operations)
+        return frozenset(self._apply_overrides(s))
 
-    def _proxy_op(self, op_name, *args, **kwds):
-        return getattr(self.repo.raw_repo.operations, op_name)(*args, **kwds)
-
-    _proxy_op_support = _proxy_op
-
-    def _collect_operations(self):
-        return self.repo.raw_repo.operations._collect_operations()
+    def _setup_api(self):
+        for op in self.enabled_operations:
+            setattr(self, op, klass.alias_attr('repo.operations.%s' % (op,)))

@@ -13,44 +13,63 @@ Basically it's a crappy form of zope interfaces; converting to zope.interfaces m
 occur down the line if dependencies can be kept as minimal as possible.
 """
 
+from snakeoil import klass
+
 class base(object):
 
+    __required__ = frozenset()
+
     def __init__(self, disable_overrides=(), enable_overrides=()):
-        enabled_ops = set(self._filter_disabled_commands(
-            self._collect_operations()))
-        enabled_ops.update(enable_overrides)
-        enabled_ops.difference_update(disable_overrides)
+        self._force_disabled = frozenset(disable_overrides)
+        self._force_enabled = frozenset(enable_overrides)
+        self._setup_api()
 
-        for op in enabled_ops:
-            self._enable_operation(op)
+    @klass.cached_property
+    def raw_operations(self):
+        return frozenset(x[len("_cmd_api_"):] for x in dir(self.__class__)
+            if x.startswith("_cmd_api_"))
 
-        self._enabled_ops = frozenset(enabled_ops)
+    @klass.cached_property
+    def enabled_operations(self):
+        enabled_ops = set(self._filter_disabled_commands(self.raw_operations))
+        return frozenset(self._apply_overrides(enabled_ops))
+
+    def _apply_overrides(self, ops):
+        ops.update(self._force_enabled)
+        ops.difference_update(self._force_disabled)
+        return ops
+
+    def _setup_api(self):
+        for op in self.enabled_operations:
+            setattr(self, op,
+                getattr(self, '_cmd_api_%s' % op))
 
     def _filter_disabled_commands(self, sequence):
         for command in sequence:
+            obj = getattr(self, '_cmd_api_%s' % command, None)
+            if not getattr(obj, '_is_standalone', False):
+                if not hasattr(self, '_cmd_implementation_%s' % command):
+                    continue
             check_f = getattr(self, '_cmd_check_support_%s' % command, None)
             if check_f is not None and not check_f():
                 continue
             yield command
 
-    def _enable_operation(self, operation):
-        setattr(self, operation,
-            getattr(self, '_cmd_api_%s' % operation))
-
-    @classmethod
-    def _collect_operations(cls):
-        for x in dir(cls):
-            if x.startswith("_cmd_implementation_"):
-                yield x[len("_cmd_implementation_"):]
-
     def supports(self, operation_name=None, raw=False):
         if not operation_name:
             if not raw:
-                return self._enabled_ops
-            return frozenset(self._collect_operations())
+                return self.enabled_operations
+            return self.raw_operations
         if raw:
-            return hasattr(self, '_cmd_api_%s' % operation_name)
-        return hasattr(self, operation_name)
+            return operation_name in self.raw_operations
+        return operation_name in self.enabled_operations
 
-    #def __dir__(self):
-    #    return list(self._enabled_ops)
+
+def is_standalone(functor):
+    """decorator to mark a api operation method as containing the implementation
+
+    This is primarily useful for commands that can contain all of the logic in
+    the template class itself, rather than requiring a glue method to be provided
+    """
+    functor._is_standalone = True
+    return functor

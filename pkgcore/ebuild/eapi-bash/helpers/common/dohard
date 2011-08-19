@@ -8,7 +8,7 @@ check_args 2
 ln_option=
 src_prefix=
 if [[ ${HELPER_NAME} == dosym ]]; then
-	ln_option=s
+	ln_option=sn
 else
 	src_prefix="${D}"
 fi

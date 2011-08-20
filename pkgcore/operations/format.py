@@ -46,10 +46,8 @@ class operations(_operations_mod.base):
     def _cmd_api_info(self):
         return self._cmd_implementation_info()
 
+    @_operations_mod.is_standalone
     def _cmd_api_mergable(self):
-        return self._cmd_implementation_mergable(self.domain)
-
-    def _cmd_implementation_mergable(self, domain):
         return getattr(self.pkg, 'built', False)
 
     def _cmd_api_sanity_check(self):

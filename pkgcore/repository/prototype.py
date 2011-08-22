@@ -136,7 +136,6 @@ class tree(object):
     package_class = None
     configured = True
     configure = None
-    syncable = False
     frozen_settable = True
     operations_kls = repo.operations
 

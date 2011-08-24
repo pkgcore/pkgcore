@@ -19,6 +19,8 @@ class base(object):
 
     __required__ = frozenset()
 
+    UNSUPPORTED = object()
+
     def __init__(self, disable_overrides=(), enable_overrides=()):
         self._force_disabled = frozenset(disable_overrides)
         self._force_enabled = frozenset(enable_overrides)
@@ -63,6 +65,22 @@ class base(object):
         if raw:
             return operation_name in self.raw_operations
         return operation_name in self.enabled_operations
+
+    def run_if_supported(self, operation_name, *args, **kwds):
+        """invoke an operation if it's supported
+
+        :param operation_name: operation to run if supported
+        :param args: positional args passed to the operation
+        :param kwds: optional args passed to the operation
+        :keyword or_return: if the operation isn't supported, return this
+            (if unspecified, it returns :obj:`base.UNSUPPORTED`)
+        :return: Either the value of or_return, or if the operation is
+            supported, the return value from that operation
+        """
+        ret = kwds.pop("or_return", self.UNSUPPORTED)
+        if self.supports(operation_name):
+            ret = getattr(self, operation_name)(*args, **kwds)
+        return ret
 
 
 def is_standalone(functor):

@@ -289,3 +289,24 @@ def dump_uncollapsed_main(options, out, err):
             _dump_uncollapsed_section(options.config, out, err, section)
             out.write()
 
+package = subparsers.add_parser("package",
+    parents=(commandline.mk_argparser(add_help=False),),
+    description="invoke a packages custom configuration scripts")
+commandline.make_query(package, nargs='+', dest='query',
+    help="restrictions/atoms; matching installed packages will be configured")
+@package.bind_main_func
+def package_func(options, out, err):
+    matched = True
+    domain = options.domain
+    for pkg in domain.installed_repositories.combined.itermatch(options.query):
+        matched = True
+        ops = domain.pkg_operations(pkg)
+        if not ops.supports("configure"):
+            out.write("package %s: nothing to configure, ignoring" %
+                (pkg,))
+            continue
+        out.write("package %s: configuring..." % (pkg,))
+        ops.configure()
+    if not matched:
+        out.write("no packages matched")
+    return 1

@@ -60,6 +60,10 @@ class operations(_operations_mod.base):
         return self._cmd_implementation_localize(
             self._get_observer(observer), force=force)
 
+    def _cmd_api_configure(self, observer=None):
+        return self._cmd_implementation_configure(
+            self._get_observer(observer))
+
 
 class build_operations(operations):
 

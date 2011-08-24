@@ -581,64 +581,79 @@ def main(options, out, err):
     change_count = len(changes)
 
     # left in place for ease of debugging.
+    cleanup = []
     try:
         for count, op in enumerate(changes):
+            for func in cleanup:
+                func()
+
+            cleanup = []
+
             out.write("Processing %i of %i: %s" % (count + 1, change_count,
                 op.pkg.cpvstr))
             out.title("%i/%i: %s" % (count + 1, change_count, op.pkg.cpvstr))
-            reset = ['pkg']
             if op.desc != "remove":
+                cleanup = [op.pkg.release_cached_data]
+
                 if not options.fetchonly and options.debug:
                     out.write("Forcing a clean of workdir")
-                pkg_ops = domain.pkg_operations(op.pkg, observer=build_obs)
-                buildop = pkg_ops.build()
-                if options.fetchonly:
-                    out.write("\n%i files required-" % len(op.pkg.fetchables))
-                    try:
-                        ret = buildop.fetch()
-                    except (SystemExit, KeyboardInterrupt):
-                        raise
-                    except Exception, e:
-                        ret = e
-                    if ret != True:
-                        out.error("got %s for a phase execution for %s" % (ret, op.pkg))
-                        if not options.ignore_failures:
-                            return 1
-                    buildop.cleanup()
-                    del buildop, ret
-                    op.pkg.release_cached_data()
-                    continue
 
-                ret = None
+                pkg_ops = domain.pkg_operations(op.pkg, observer=build_obs)
+                out.write("\n%i files required-" % len(op.pkg.fetchables))
                 try:
-                    built_pkg = buildop.finalize()
-                    if built_pkg is False:
-                        ret = built_pkg
-                except format.errors, e:
+                    ret = pkg_ops.run_if_supported("fetch", or_return=True)
+                except (SystemExit, KeyboardInterrupt):
+                    raise
+                except Exception, e:
                     ret = e
-                if ret is not None:
-                    out.error("Failed to build %s: %s" % (op.pkg, ret))
+                if ret is not True:
+                    out.error("got %s for a phase execution for %s" % (ret, op.pkg))
                     if not options.ignore_failures:
                         return 1
-                    op.pkg.release_cached_data()
                     continue
+                if options.fetchonly:
+                    continue
+
+                buildop = pkg_ops.run_if_supported("build", or_return=None)
+                pkg = op.pkg
+                if buildop is not None:
+                    out.write("building %s" % (op.pkg,))
+                    try:
+                        result = buildop.finalize()
+                    except format.errors, e:
+                        out.error("caught exception building %s: % s" % (op.pkg, e))
+                    else:
+                        if result is False:
+                            out.error("failed building %s" % (op.pkg,))
+                    if result is False:
+                        if not options.ignore_failures:
+                            return 1
+                        continue
+                    pkg = result
+                    cleanup.append(pkg.release_cached_data)
+                    pkg_ops = domain.pkg_operations(pkg, observer=build_obs)
+
+                pkg = pkg_ops.run_if_supported("localize", or_return=pkg)
+                # wipe this to ensure we don't inadvertantly use it further down;
+                # we aren't resetting it after localizing, so could have the wrong
+                # set of ops.
+                del pkg_ops
 
                 out.write()
                 if op.desc == "replace":
-                    if op.old_pkg == op.pkg:
-                        out.write(">>> Reinstalling %s" % (built_pkg.cpvstr))
+                    if op.old_pkg == pkg:
+                        out.write(">>> Reinstalling %s" % (pkg.cpvstr))
                     else:
                         out.write(">>> Replacing %s with %s" % (
-                            op.old_pkg.cpvstr, built_pkg.cpvstr))
-                    i = domain.replace_pkg(op.old_pkg, built_pkg, repo_obs)
-                    reset.append('old_pkg')
+                            op.old_pkg.cpvstr, pkg.cpvstr))
+                    i = domain.replace_pkg(op.old_pkg, pkg, repo_obs)
+                    cleanup.append(op.old_pkg.release_cached_data)
                 else:
-                    out.write(">>> Installing %s" % built_pkg.cpvstr)
-                    i = domain.install_pkg(built_pkg, repo_obs)
+                    out.write(">>> Installing %s" % (pkg.cpvstr,))
+                    i = domain.install_pkg(pkg, repo_obs)
 
                 # force this explicitly- can hold onto a helluva lot more
                 # then we would like.
-                del built_pkg
             else:
                 out.write(">>> Removing %s" % op.pkg.cpvstr)
                 i = domain.uninstall_pkg(op.pkg, repo_obs)
@@ -650,10 +665,14 @@ def main(options, out, err):
                     return 1
                 continue
 
-            for x in reset:
-                getattr(op, x).release_cached_data()
+            # while this does get handled through each loop, wipe it now; we don't need
+            # that data, thus we punt it now to keep memory down.
+            # for safety sake, we let the next pass trigger a release also-
+            # mainly to protect against any code following triggering reloads
+            # basically, be protective
 
-            buildop.cleanup()
+            if buildop is not None:
+                buildop.cleanup()
             if world_set is not None:
                 if op.desc == "remove":
                     out.write('>>> Removing %s from world file' % op.pkg.cpvstr)
@@ -664,6 +683,7 @@ def main(options, out, err):
                         out.write('>>> Adding %s to world file' % op.pkg.cpvstr)
                         add_pkg = slotatom_if_slotted(source_repos.combined, op.pkg.versioned_atom)
                         update_worldset(world_set, add_pkg)
+
 #    again... left in place for ease of debugging.
 #    except KeyboardInterrupt:
 #        import pdb;pdb.set_trace()
@@ -671,5 +691,17 @@ def main(options, out, err):
 #        import pdb;pdb.set_trace()
     finally:
         pass
+
+    # the final run from the loop above doesn't invoke cleanups;
+    # we could ignore it, but better to run it to ensure nothing is inadvertantly
+    # held on the way out of this function.
+    # makes heappy analysis easier if we're careful about it.
+    for func in cleanup:
+        func()
+
+    # and wipe the reference to the functions to allow things to fall out of
+    # memory.
+    cleanup = []
+
     out.write("finished")
     return 0

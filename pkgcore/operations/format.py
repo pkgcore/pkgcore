@@ -56,6 +56,10 @@ class operations(_operations_mod.base):
     def _cmd_implementation_sanity_check(self, domain):
         return True
 
+    def _cmd_api_localize(self, observer=None, force=False):
+        return self._cmd_implementation_localize(
+            self._get_observer(observer), force=force)
+
 
 class build_operations(operations):
 

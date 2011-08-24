@@ -26,6 +26,9 @@ class base(object):
         self._force_enabled = frozenset(enable_overrides)
         self._setup_api()
 
+    def _get_observer(self, observer=None):
+        return observer
+
     @klass.cached_property
     def raw_operations(self):
         return frozenset(x[len("_cmd_api_"):] for x in dir(self.__class__)

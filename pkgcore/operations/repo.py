@@ -143,26 +143,26 @@ class operations(_operations_mod.base):
                 self.repo, command)
         return not self.repo.frozen
 
-    def _default_observer(self, observer):
+    def _get_observer(self, observer=None):
         if observer is None:
             observer = observer_mod.repo_observer()
         return observer
 
     def _cmd_api_install(self, pkg, observer=None):
         return self._cmd_implementation_install(pkg,
-            self._default_observer(observer))
+            self._get_observer(observer))
 
     def _cmd_api_uninstall(self, pkg, observer=None):
         return self._cmd_implementation_uninstall(pkg,
-            self._default_observer(observer))
+            self._get_observer(observer))
 
     def _cmd_api_replace(self, oldpkg, newpkg, observer=None):
         return self._cmd_implementation_replace(oldpkg, newpkg,
-            self._default_observer(observer))
+            self._get_observer(observer))
 
     def _cmd_api_install_or_replace(self, newpkg, observer=None):
         return self._cmd_implementation_install_or_replace(newpkg,
-            self._default_observer(observer))
+            self._get_observer(observer))
 
     def _cmd_implementation_install_or_replace(self, newpkg, observer=None):
         match = self.repo.match(newpkg.versioned_atom)
@@ -179,7 +179,7 @@ class operations(_operations_mod.base):
 
     def _cmd_api_configure(self, pkg, observer=None):
         return self._cmd_implementation_configure(self.repository, pkg,
-            self._default_observer(observer))
+            self._get_observer(observer))
 
     @_operations_mod.is_standalone
     def _cmd_api_sync(self, observer=None):

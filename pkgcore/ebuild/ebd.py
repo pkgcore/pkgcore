@@ -52,7 +52,7 @@ class ebd(object):
             :class:`pkgcore.ebuild.ebuild_src.package`
             instance this env is being setup for
         :param initial_env: initial environment to use for this ebuild
-        :param env_data_source: a :obj:`snakeoil.data_source..base` instance
+        :param env_data_source: a :obj:`snakeoil.data_source.base` instance
             to restore the environment from- used for restoring the
             state of an ebuild processing, whether for unmerging, or
             walking phases during building

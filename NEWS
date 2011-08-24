@@ -4,6 +4,9 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* pkg_config can now be invoked via:
+  pconfig package <target>
+
 * splitdebug no longer runs if the pkg has been split already.
 
 * arbitrary exceptions during merging/unmerging no longer stop the

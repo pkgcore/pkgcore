@@ -863,6 +863,15 @@ class src_operations(ebuild_mixin, format.build_operations):
             clean=clean)
 
 
+class misc_operations(ebd):
+
+    def __init__(self, domain, *args, **kwds):
+        self.domain = domain
+        ebd.__init__(self, *args, **kwds)
+
+    def configure(self, observer=None):
+        return self._generic_phase('config', False, True, False)
+
 
 class built_operations(ebuild_mixin, format.operations):
 
@@ -878,3 +887,19 @@ class built_operations(ebuild_mixin, format.operations):
             initial_env=self._initial_env, env_data_source=self.pkg.environment,
             observer=observer)
         return op.finalize()
+
+    def _cmd_check_support_configure(self):
+        pkg = self.pkg
+        if pkg.eapi_obj.options.trust_defined_phases_cache and \
+            'config' not in pkg.defined_phases:
+            return False
+        return True
+
+    def _cmd_implementation_configure(self, observer):
+        misc = misc_operations(self.domain, self.pkg, env_data_source=self.pkg.environment, clean=True)
+        try:
+            misc.start()
+            misc.configure()
+        finally:
+            misc.cleanup()
+        return True

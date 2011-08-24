@@ -67,6 +67,10 @@ class package(ebuild_src.base):
     tracked_attributes = tuple(tracked_attributes)
     allow_regen = False
 
+    @property
+    def _operations(self):
+        return ebd.built_operations
+
     # hack, not for consumer usage
     _is_from_source = False
 

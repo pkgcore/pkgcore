@@ -10,7 +10,7 @@ api, per phase methods for example
 """
 
 __all__ = ("ebd", "setup_mixin", "install_op", "uninstall_op", "replace_op",
-    "buildable", "binpkg_buildable")
+    "buildable", "binpkg_localize")
 
 import os, errno, shutil
 
@@ -802,7 +802,7 @@ class buildable(ebd, setup_mixin, format.build):
             self.env["IMAGE"], pjoin(self.env["T"], "environment"))
 
 
-class binpkg_buildable(ebd, setup_mixin, format.build):
+class binpkg_localize(ebd, setup_mixin, format.build):
 
     stage_depends = {"finalize":"setup", "setup":"start"}
     setup_is_for_src = False
@@ -864,17 +864,17 @@ class src_operations(ebuild_mixin, format.build_operations):
 
 
 
-class built_operations(ebuild_mixin, format.build_operations):
+class built_operations(ebuild_mixin, format.operations):
 
     def __init__(self, domain, pkg, fetcher=None, observer=None, initial_env=None):
-        format.build_operations.__init__(self, domain, pkg, observer=observer)
+        format.operations.__init__(self, domain, pkg, observer=observer)
         self._fetcher = fetcher
         self._initial_env = initial_env
 
-    def _cmd_implementation_build(self, observer=None, clean=False):
-        if observer is None:
-            observer = self.observer
-        return binpkg_buildable(self.domain, self.pkg,
-            clean=clean,
-            initial_env=self._initial_env,
-            env_data_source=self.pkg.environment)
+    def _cmd_implementation_localize(self, observer, force=False):
+        if not force and getattr(self.pkg, '_is_from_source', False):
+            return self.pkg
+        op = binpkg_localize(self.domain, self.pkg, clean=False,
+            initial_env=self._initial_env, env_data_source=self.pkg.environment,
+            observer=observer)
+        return op.finalize()

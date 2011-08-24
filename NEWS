@@ -4,6 +4,8 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* splitdebug no longer runs if the pkg has been split already.
+
 * arbitrary exceptions during merging/unmerging no longer stop the
   merge/unmerge; a traceback is displayed instead.
 

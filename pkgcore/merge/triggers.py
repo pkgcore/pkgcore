@@ -798,7 +798,14 @@ class BinaryDebug(base):
         cset.update(modified)
 
     def _splitter(self, engine, cset):
-        if 'strip' in getattr(engine.new, 'restrict', ()):
+        skip = frozenset(['strip', 'splitdebug']).intersection(getattr(engine.new, 'restrict', ()))
+        skip = bool(skip)
+        if not skip:
+            for fs_obj in cset:
+                if fs_obj.basename.endswith(".debug"):
+                    skip = True
+                    break
+        if skip:
             engine.observer.info("stripping disabled for %s, "
                 "skipping splitdebug" % engine.new)
             return

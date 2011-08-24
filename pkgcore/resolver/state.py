@@ -97,7 +97,7 @@ class ops_sequence(object):
             if plan_op.desc == 'remove':
                 continue
 
-            pkg_ops = domain.get_pkg_operations(plan_op.pkg, observer=observer)
+            pkg_ops = domain.pkg_operations(plan_op.pkg, observer=observer)
             if pkg_ops.supports("sanity_check"):
                 if not pkg_ops.sanity_check():
                     return False

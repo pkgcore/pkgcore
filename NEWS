@@ -4,6 +4,9 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* arbitrary exceptions during merging/unmerging no longer stop the
+  merge/unmerge; a traceback is displayed instead.
+
 * large scale conversion of internals to argparse.  Saner parsing namely,
   although it's still a work in progress to make it pretty.
 

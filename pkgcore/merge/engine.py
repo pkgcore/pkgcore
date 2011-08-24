@@ -338,7 +338,7 @@ class MergeEngine(object):
                             "during trigger %r: %s" % (trigger,e))
                         raise
                     except Exception, e:
-                        if not trigger.suppress_exception:
+                        if not trigger.suppress_exceptions:
                             raise
 
                         handle = stringio.text_writable()

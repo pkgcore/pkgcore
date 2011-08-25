@@ -872,6 +872,9 @@ class misc_operations(ebd):
     def configure(self, observer=None):
         return self._generic_phase('config', False, True, False)
 
+    def info(self, observer=None):
+        return self._generic_phase('info', True, True, False)
+
 
 class built_operations(ebuild_mixin, format.operations):
 

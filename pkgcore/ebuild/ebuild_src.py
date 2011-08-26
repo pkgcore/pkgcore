@@ -218,6 +218,9 @@ class base(metadata.package):
 
     __slots__ = tuple(_get_attr.keys() + ["_pkg_metadata_shared"])
 
+    PN = klass.alias_attr("package")
+    repo_id = klass.alias_attr("repo.repo_id")
+
     @property
     def eapi(self):
         eapi_obj = self.eapi_obj
@@ -233,8 +236,6 @@ class base(metadata.package):
     def PF(self):
         return "%s-%s" % (self.package, self.fullver)
 
-    PN = klass.alias_attr("package")
-
     @property
     def PR(self):
         r = self.revision
@@ -249,10 +250,6 @@ class base(metadata.package):
     @property
     def ebuild(self):
         return self._parent.get_ebuild_src(self)
-
-    @property
-    def repo_id(self):
-        return self.repo.repo_id
 
     def _fetch_metadata(self):
         return self._parent._get_metadata(self)

@@ -25,10 +25,8 @@ demandload(globals(),
 )
 
 
-def passthrough(inst, attr, rename=None):
-    if rename is None:
-        rename = attr
-    return inst.data[rename]
+def passthrough(inst, attr):
+    return inst.data[attr]
 
 def flatten_depset(inst, conditionals):
     return inst.evaluate_depset(conditionals)
@@ -54,6 +52,7 @@ def wrap_inst(self, wrap, inst):
 
 _empty_fetchable = conditionals.DepSet.parse('', ebuild_src.fetchable,
     operators={})
+
 
 class package(ebuild_src.base):
 

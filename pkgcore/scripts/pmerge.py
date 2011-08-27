@@ -18,7 +18,7 @@ from pkgcore.merge import errors as merge_errors
 from pkgcore.restrictions import packages, values
 from pkgcore.restrictions.boolean import AndRestriction, OrRestriction
 
-from snakeoil import lists
+from snakeoil import lists, currying
 from snakeoil.formatters import ObserverFormatter
 from snakeoil.compatibility import any
 from pkgcore.resolver.util import reduce_to_failures
@@ -632,7 +632,9 @@ def main(options, out, err):
                     pkg = result
                     cleanup.append(pkg.release_cached_data)
                     pkg_ops = domain.pkg_operations(pkg, observer=build_obs)
+                    cleanup.append(buildop.cleanup)
 
+                cleanup.append(currying.partial(pkg_ops.run_if_supported, "cleanup"))
                 pkg = pkg_ops.run_if_supported("localize", or_return=pkg)
                 # wipe this to ensure we don't inadvertantly use it further down;
                 # we aren't resetting it after localizing, so could have the wrong
@@ -671,8 +673,6 @@ def main(options, out, err):
             # mainly to protect against any code following triggering reloads
             # basically, be protective
 
-            if buildop is not None:
-                buildop.cleanup()
             if world_set is not None:
                 if op.desc == "remove":
                     out.write('>>> Removing %s from world file' % op.pkg.cpvstr)
@@ -683,6 +683,7 @@ def main(options, out, err):
                         out.write('>>> Adding %s to world file' % op.pkg.cpvstr)
                         add_pkg = slotatom_if_slotted(source_repos.combined, op.pkg.versioned_atom)
                         update_worldset(world_set, add_pkg)
+
 
 #    again... left in place for ease of debugging.
 #    except KeyboardInterrupt:

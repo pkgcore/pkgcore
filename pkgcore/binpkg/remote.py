@@ -79,18 +79,18 @@ class PackagesCacheV0(cache.bulk):
 
     commit_rate = 200
 
-    _rewrite_map = {'DESC':'DESCRIPTION', 'repo':'repository', 'MTIME':'mtime'}
-    _write_translate = {"DEPENDS": "DEPEND", "RDEPENDS": "RDEPEND",
+    _deserialize_map = {'DESC':'DESCRIPTION', 'repo':'repository', 'MTIME':'mtime'}
+    _serialize_map   = {"DEPENDS": "DEPEND", "RDEPENDS": "RDEPEND",
         "POST_RDEPENDS":"POST_RDEPEND", "DESCRIPTION":"DESC", 'mtime':'MTIME'}
-    inheritable = frozenset(('CBUILD', 'CHOST', 'repository'))
-    _sequences = ('use', 'keywords', 'iuse')
-    _pkg_defaults = dict.fromkeys(('BUILD_TIME', 'DEPEND', 'IUSE', 'KEYWORDS',
+    deserialized_inheritable = frozenset(('CBUILD', 'CHOST', 'repository'))
+    _pkg_attr_sequences = ('use', 'keywords', 'iuse')
+    _deserialized_defaults = dict.fromkeys(('BUILD_TIME', 'DEPEND', 'IUSE', 'KEYWORDS',
         'LICENSE', 'PATH', 'PDEPEND', 'PROPERTIES', 'PROVIDE', 'RDEPEND',
         'USE', 'DEFINED_PHASES', 'CHOST', 'CBUILD', 'DESC', 'repository',
         'DESCRIPTION'),
         '')
-    _pkg_defaults.update({'EAPI':'0', 'SLOT':'0'})
-    _pkg_defaults = ImmutableDict(_pkg_defaults)
+    _deserialized_defaults.update({'EAPI':'0', 'SLOT':'0'})
+    _deserialized_defaults = ImmutableDict(_deserialized_defaults)
 
     _stored_chfs = ('size', 'sha1', 'md5', 'mtime')
 
@@ -99,7 +99,7 @@ class PackagesCacheV0(cache.bulk):
     def __init__(self, location, *args, **kwds):
         self._location = location
         vkeys = set(self._stored_chfs)
-        vkeys.update(self._pkg_defaults)
+        vkeys.update(self._deserialized_defaults)
         vkeys.add("CPV")
         vkeys.update(x.upper() for x in self._stored_chfs)
         kwds["auxdbkeys"] = vkeys
@@ -122,9 +122,9 @@ class PackagesCacheV0(cache.bulk):
             raise
         self.preamble = self.read_preamble(handle)
 
-        defaults = dict(self._pkg_defaults.iteritems())
+        defaults = dict(self._deserialized_defaults.iteritems())
         defaults.update((k, v) for k,v in self.preamble.iteritems()
-            if k in self.inheritable)
+            if k in self.deserialized_inheritable)
         defaults = ImmutableDict(defaults)
 
         pkgs = {}
@@ -143,7 +143,7 @@ class PackagesCacheV0(cache.bulk):
 
             if 'USE' in d:
                 d.setdefault('IUSE', d.get('USE', ''))
-            for src, dst in self._rewrite_map.iteritems():
+            for src, dst in self._deserialize_map.iteritems():
                 if src in d:
                     d.setdefault(dst, d.pop(src))
 
@@ -154,7 +154,7 @@ class PackagesCacheV0(cache.bulk):
     @classmethod
     def _assemble_preamble_dict(cls, target_dicts):
         preamble = {'VERSION':cls.version, 'PACKAGES':len(target_dicts)}
-        for key in cls.inheritable:
+        for key in cls.deserialized_inheritable:
             try:
                 preamble[key] = find_best_savings(
                     (d[1].get(key, '') for d in target_dicts), key)
@@ -166,7 +166,7 @@ class PackagesCacheV0(cache.bulk):
     @classmethod
     def _assemble_pkg_dict(cls, pkg):
         d = {}
-        sequences = cls._sequences
+        sequences = cls._pkg_attr_sequences
         for key in cls._stored_attrs:
 
             value = getattr(pkg, key)
@@ -175,7 +175,7 @@ class PackagesCacheV0(cache.bulk):
             else:
                 value = str(getattr(pkg, key)).strip()
             key = key.upper()
-            d[cls._write_translate.get(key, key)] = value
+            d[cls._serialize_map.get(key, key)] = value
 
         for key, value in izip(cls._stored_chfs,
             get_chksums(pkg.path, *cls._stored_chfs)):
@@ -215,7 +215,7 @@ class PackagesCacheV0(cache.bulk):
         vkeys = self._known_keys
         for cpv, pkg_data in sorted(data, key=itemgetter(0)):
             handler.write("CPV:%s%s\n" % (spacer, cpv))
-            data = [(self._write_translate.get(key, key), value)
+            data = [(self._serialize_map.get(key, key), value)
                 for key, value in pkg_data.iteritems()]
             for write_key, value in sorted(data):
                 if write_key not in vkeys:
@@ -268,11 +268,11 @@ class PackagesCacheV1(PackagesCacheV0):
     a better ondisk format
     """
 
-    inheritable = PackagesCacheV0.inheritable.union(('SLOT', 'EAPI', 'LICENSE',
-        'KEYWORDS', 'USE', 'RESTRICT'))
+    deserialized_inheritable = PackagesCacheV0.deserialized_inheritable.union(
+        ('SLOT', 'EAPI', 'LICENSE', 'KEYWORDS', 'USE', 'RESTRICT'))
 
-    _pkg_defaults = ImmutableDict(PackagesCacheV0._pkg_defaults.items() +
-        [('RESTRICT', '')])
+    _deserialized_defaults = ImmutableDict(
+        PackagesCacheV0._deserialized_defaults.items() + [('RESTRICT', '')])
 
     @classmethod
     def _assemble_pkg_dict(cls, pkg):

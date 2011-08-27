@@ -806,7 +806,7 @@ class BinaryDebug(base):
                     skip = True
                     break
         if skip:
-            engine.observer.info("stripping disabled for %s, "
+            engine.observer.info("splitdebug disabled for %s, "
                 "skipping splitdebug" % engine.new)
             return
 

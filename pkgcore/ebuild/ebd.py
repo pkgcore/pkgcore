@@ -480,6 +480,10 @@ class uninstall_op(ebd, format.uninstall):
     def add_triggers(self, domain_op, engine):
         self.old_pkg.add_format_triggers(domain_op, self, engine)
 
+    def finish(self):
+        self.cleanup()
+        return format.uninstall.finish(self)
+
 
 class replace_op(format.replace):
 

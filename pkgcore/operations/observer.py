@@ -9,16 +9,16 @@ from snakeoil.currying import pre_curry
 
 class base(object):
 
-    def warn(self, msg):
+    def warn(self, msg, *args):
         pass
 
-    def error(self, msg):
+    def error(self, msg, *args):
         pass
 
-    def info(self, msg):
+    def info(self, msg, *args):
         pass
 
-    def debug(self, msg):
+    def debug(self, msg, *args):
         pass
 
 
@@ -41,18 +41,18 @@ class file_phase_observer(phase_observer):
         if not self._semiquiet:
             self._out.write("starting %s\n" % phase)
 
-    def info(self, msg):
-        self._out.write("info: %s\n" % msg)
+    def info(self, msg, *args):
+        self._out.write("info: %s\n" % (msg % args))
 
-    def debug(self, msg):
+    def debug(self, msg, *args):
         if not self._semiquiet:
-            self._out.write("debug: %s\n" % msg)
+            self._out.write("debug: %s\n" % (msg % args))
 
-    def warn(self, msg):
-        self._out.write("warning: %s\n" % msg)
+    def warn(self, msg, *args):
+        self._out.write("warning: %s\n" % (msg % args))
 
-    def error(self, msg):
-        self._out.write("error: %s\n" % msg)
+    def error(self, msg, *args):
+        self._out.write("error: %s\n" % (msg % args))
 
     def phase_end(self, phase, status):
         if not self._semiquiet:

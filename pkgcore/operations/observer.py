@@ -1,108 +1,123 @@
 # Copyright: 2006-2008 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
-__all__ = ("base", "phase_observer", "file_phase_observer",
-    "build_observer", "repo_base", "repo_observer", "file_repo_observer",
+__all__ = ("null_output", "formatter_output", "file_handle_output",
+    "phase_observer", "build_observer", "repo_observer",
     "decorate_build_method")
 
 from snakeoil.currying import pre_curry
+from snakeoil import klass
 
-class base(object):
 
-    def warn(self, msg, *args):
+def _convert(msg, args=(), kwds={}):
+    if args:
+        if kwds:
+            raise TypeError("both position and optional args cannot be "
+                "supplied: given msg(%r), args(%r), kwds(%r)"
+                % (msg, args, kwds))
+        return msg % args
+    return msg % kwds
+
+
+class null_output(object):
+
+    def warn(self, msg, *args, **kwds):
         pass
 
-    def error(self, msg, *args):
+    def error(self, msg, *args, **kwds):
         pass
 
-    def info(self, msg, *args):
+    def info(self, msg, *args, **kwds):
         pass
 
-    def debug(self, msg, *args):
+    def debug(self, msg, *args, **kwds):
         pass
+
+    def write(self, msg, *args, **kwds):
+        pass
+
+
+class formatter_output(null_output):
+
+    def __init__(self, out):
+        self._out = out
+
+    def error(self, msg, *args, **kwds):
+        self._out.error(_convert(msg, args, kwds))
+
+    def info(self, msg, *args, **kwds):
+        self._out.write(_convert(msg, args, kwds))
+
+    def warn(self, msg, *args, **kwds):
+        self._out.warn(_convert(msg, args, kwds))
+
+    def write(self, msg, *args, **kwds):
+        self._out.write(_convert(msg, args, kwds), autoline=False)
+
+
+class file_handle_output(null_output):
+
+    def __init__(self, out):
+        self.out = out
+
+    def info(self, msg, *args, **kwds):
+        self._out.write("info: %s\n" % _convert(msg, args, kwds))
+
+    def debug(self, msg, *args, **kwds):
+        self._out.write("debug: %s\n" % _convert(msg, args, kwds))
+
+    def warn(self, msg, *args, **kwds):
+        self._out.write("warning: %s\n" % _convert(msg, args, kwds))
+
+    def error(self, msg, *args, **kwds):
+        self._out.write("error: %s\n" % _convert(msg, args, kwds))
+
+    def write(self, msg, *args, **kwds):
+        self._out.write(_convert(msg, args, kwds))
 
 
 class phase_observer(object):
 
-    def phase_start(self, phase):
-        pass
-
-    def phase_end(self, phase, status):
-        pass
-
-
-class file_phase_observer(phase_observer):
-
-    def __init__(self, out, semiquiet=True):
-        self._out = out
+    def __init__(self, output, semiquiet=True):
+        self._output = output
         self._semiquiet = semiquiet
 
     def phase_start(self, phase):
         if not self._semiquiet:
-            self._out.write("starting %s\n" % phase)
+            self._output.write("starting %s\n" % phase)
 
-    def info(self, msg, *args):
-        self._out.write("info: %s\n" % (msg % args))
-
-    def debug(self, msg, *args):
+    def debug(self, msg, *args, **kwds):
         if not self._semiquiet:
-            self._out.write("debug: %s\n" % (msg % args))
+            self._output.debug(msg, *args, **kwds)
 
-    def warn(self, msg, *args):
-        self._out.write("warning: %s\n" % (msg % args))
-
-    def error(self, msg, *args):
-        self._out.write("error: %s\n" % (msg % args))
+    info  = klass.alias_attr("_output.info")
+    warn  = klass.alias_attr("_output.warn")
+    error = klass.alias_attr("_output.error")
+    write = klass.alias_attr("_output.write")
 
     def phase_end(self, phase, status):
         if not self._semiquiet:
-            self._out.write("finished %s: %s\n" % (phase, status))
+            self._output.write("finished %s: %s\n" % (phase, status))
+
+# left in place for compatibility sake
+build_observer = phase_observer
 
 
-class build_observer(base, phase_observer):
-    pass
-
-
-class repo_base(base):
-    pass
-
-
-class repo_observer(repo_base, phase_observer):
-
-    def trigger_start(self, hook, trigger):
-        pass
-
-    trigger_end = trigger_start
-
-    def installing_fs_obj(self, obj):
-        pass
-
-    removing_fs_obj = installing_fs_obj
-
-
-class file_build_observer(build_observer, file_phase_observer):
-    pass
-
-
-class file_repo_observer(file_phase_observer, repo_base):
-
-    def __init__(self, out, semiquiet=True):
-        self._out = out
-        self._semiquiet = semiquiet
+class repo_observer(phase_observer):
 
     def trigger_start(self, hook, trigger):
         if not self._semiquiet:
-            self._out.write("hook %s: trigger: starting %r\n" % (hook, trigger))
+            self._output.write("hook %s: trigger: starting %r\n" % (hook, trigger))
 
     def trigger_end(self, hook, trigger):
         if not self._semiquiet:
-            self._out.write("hook %s: trigger: finished %r\n" % (hook, trigger))
+            self._output.write("hook %s: trigger: finished %r\n" % (hook, trigger))
 
     def installing_fs_obj(self, obj):
-        self._out.write(">>> %s\n" % obj)
+        self._output.write(">>> %s\n" % obj)
 
     def removing_fs_obj(self, obj):
-        self._out.write("<<< %s\n" % obj)
+        self._output.write("<<< %s\n" % obj)
 
 
 def wrap_build_method(phase, method, self, *args, **kwds):

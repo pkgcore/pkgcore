@@ -84,7 +84,7 @@ class MergeEngine(object):
     def __init__(self, mode, tempdir, hooks, csets, preserves, observer,
         offset=None, disable_plugins=False):
         if observer is None:
-            observer = observer_mod.repo_observer()
+            observer = observer_mod.repo_observer(observer_mod.null_output)
         self.observer = observer
         self.mode = mode
         if tempdir is not None:

@@ -10,7 +10,6 @@ __all__ = ("argparse_parser", "main")
 from pkgcore.util import commandline
 from pkgcore.ebuild import atom, errors
 from pkgcore.operations import observer
-from snakeoil.formatters import ObserverFormatter
 from snakeoil.compatibility import all
 
 
@@ -41,7 +40,7 @@ def main(options, out, err):
         err.write("choosing %r, slot %r, %s" % (getattr(pkgs[0].repo, 'repo_id', 'unknown'),
             pkgs[0].slot, pkgs[0].cpvstr), prefix='  ')
     kwds = {}
-    build_obs = observer.file_build_observer(ObserverFormatter(out),
+    build_obs = observer.build_observer(observer.formatter_output(out),
         not options.debug)
 
     phases = [x for x in options.phase if x != 'clean']

@@ -19,7 +19,6 @@ from pkgcore.restrictions import packages, values
 from pkgcore.restrictions.boolean import AndRestriction, OrRestriction
 
 from snakeoil import lists, currying
-from snakeoil.formatters import ObserverFormatter
 from snakeoil.compatibility import any
 from pkgcore.resolver.util import reduce_to_failures
 
@@ -219,7 +218,7 @@ def unmerge(out, err, vdb, tokens, options, formatter, world_set=None):
         out.write(match.cpvstr)
     out.prefix = []
 
-    repo_obs = observer.file_repo_observer(ObserverFormatter(out),
+    repo_obs = observer.repo_observer(observer.formatter_output(out),
         not options.debug)
 
     if options.pretend:
@@ -525,7 +524,7 @@ def main(options, out, err):
             if not formatter.ask("Do you wish to proceed?", default_answer=False):
                 return 1
             out.write()
-        repo_obs = observer.file_repo_observer(ObserverFormatter(out),
+        repo_obs = observer.repo_observer(observer.formatter_output(out),
             not options.debug)
         do_unmerge(options, out, err, installed_repos.combined, wipes, world_set, repo_obs)
         return 0
@@ -543,9 +542,9 @@ def main(options, out, err):
 
     changes = resolver_inst.state.ops(only_real=True)
 
-    build_obs = observer.file_build_observer(ObserverFormatter(out),
+    build_obs = observer.build_observer(observer.formatter_output(out),
         not options.debug)
-    repo_obs = observer.file_repo_observer(ObserverFormatter(out),
+    repo_obs = observer.repo_observer(observer.formatter_output(out),
         not options.debug)
 
     if options.debug:

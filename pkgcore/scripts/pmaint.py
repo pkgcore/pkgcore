@@ -14,12 +14,10 @@ from snakeoil.demandload import demandload
 demandload(globals(),
     'os',
     'errno',
-    'threading:Event',
-    'threading:Thread',
-    'Queue',
-    'time:time,sleep',
+    'time',
     'snakeoil.osutils:pjoin,listdir_dirs',
     'pkgcore:spawn',
+    'pkgcore.operations:observer',
     'pkgcore.repository:multiplex',
     'pkgcore.package:mutated',
     'pkgcore.fs:contents,livefs',
@@ -162,25 +160,6 @@ def copy_main(options, out, err):
         return 1
     return 0
 
-
-def regen_iter(iterable, err):
-    for x in iterable:
-        try:
-            x.keywords
-        except RuntimeError:
-            raise
-        except Exception, e:
-            err.write("caught exception %s for %s" % (e, x))
-
-def reclaim_threads(threads, err):
-    for x in threads:
-        try:
-            x.join()
-        except RuntimeError:
-            raise
-        except Exception, e:
-            err.write("caught exception %s reclaiming thread" % (e,))
-
 def _get_default_jobs(namespace, attr):
     # we intentionally overschedule for SMP; the main python thread
     # isn't too busy, thus we want to keep all bash workers going.
@@ -208,54 +187,21 @@ regen.add_argument("repo", action=commandline.StoreConfigObject,
 @regen.bind_main_func
 def regen_main(options, out, err):
     """Regenerate a repository cache."""
-    start_time = time()
-    # HACK: store this here so we can assign to it from inside def passthru.
-    options.count = 0
+
+    repo = options.repo
+    if not repo.operations.supports("regen_cache"):
+        out.write("repository %s doesn't support cache regeneration" % (options.repo,))
+        return 0
+
     if not options.disable_eclass_preloading:
         processor._global_enable_eclass_preloading = True
-    if options.threads == 1:
-        def passthru(iterable):
-            for x in iterable:
-                options.count += 1
-                yield x
-        regen_iter(passthru(options.repo), err)
-    else:
-        queue = Queue.Queue(options.threads * 2)
-        kill = Event()
-        kill.clear()
-        def iter_queue(kill, qlist, timeout=0.25):
-            while not kill.isSet():
-                try:
-                    yield qlist.get(timeout=timeout)
-                except Queue.Empty:
-                    continue
-        regen_threads = [
-            Thread(
-                target=regen_iter, args=(iter_queue(kill, queue), err))
-            for x in xrange(options.threads)]
-        out.write('starting %d threads' % (options.threads,))
-        try:
-            for x in regen_threads:
-                x.start()
-            out.write('started')
-            # now we feed the queue.
-            for pkg in options.repo:
-                options.count += 1
-                queue.put(pkg)
-        except Exception:
-            kill.set()
-            reclaim_threads(regen_threads, err)
-            raise
 
-        # by now, queue is fed. reliable for our uses since the queue
-        # is only subtracted from.
-        while not queue.empty():
-            sleep(.5)
-        kill.set()
-        reclaim_threads(regen_threads, err)
-        assert queue.empty()
-    out.write("finished %d nodes in in %.2f seconds" % (options.count,
-        time() - start_time))
+    start_time = time.time()
+    repo.operations.regen_cache(threads=options.threads,
+        observer=observer.formatter_output(out))
+    end_time = time.time()
+    out.write("finished %d nodes in in %.2f seconds" % (len(options.repo),
+        end_time - start_time))
     return 0
 
 

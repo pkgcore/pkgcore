@@ -152,6 +152,8 @@ class replace(repo_ops.replace, install, uninstall):
 
 class operations(repo_ops.operations):
 
+    _regen_disable_threads = True
+
     def _cmd_implementation_install(self, pkg, observer):
         return install(self.repo, pkg, observer)
 

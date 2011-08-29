@@ -4,6 +4,9 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* pmaint regen now supports regenerating binary and install repository
+  caches.
+
 * pkgcore observer api's were heavily gutted and split into observer and
   outputter.  This should enable easier UX integration, while enabling
   our next step towards parallelization.

@@ -15,7 +15,7 @@ from snakeoil import klass
 from pkgcore import operations as _operations_mod
 from snakeoil.demandload import demandload
 demandload(globals(), "pkgcore.log:logger",
-    "pkgcore.operations:observer@observer_mod",
+    "pkgcore.operations:observer@observer_mod,regen",
     "pkgcore:sync",
     "pkgcore.package.mutated:MutatedPkg",
     )
@@ -196,6 +196,13 @@ class operations(_operations_mod.base):
     def _cmd_check_support_sync(self):
         return getattr(self.repo, '_syncer', None) is not None \
             and not self._get_syncer().disabled
+
+    @_operations_mod.is_standalone
+    def _cmd_api_regen_cache(self, observer=None, threads=1, **options):
+        if getattr(self, '_regen_disable_threads', False):
+            threads = 1
+        return regen.regen_repository(self.repo,
+            self._get_observer(observer), threads=threads, **options)
 
 
 class operations_proxy(operations):

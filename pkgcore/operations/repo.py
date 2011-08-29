@@ -201,8 +201,18 @@ class operations(_operations_mod.base):
     def _cmd_api_regen_cache(self, observer=None, threads=1, **options):
         if getattr(self, '_regen_disable_threads', False):
             threads = 1
-        return regen.regen_repository(self.repo,
-            self._get_observer(observer), threads=threads, **options)
+        cache = getattr(self.repo, 'cache', None)
+        sync_rate = getattr(cache, 'sync_rate', None)
+        try:
+            if sync_rate is not None:
+                cache.set_sync_rate(20000)
+            return regen.regen_repository(self.repo,
+                self._get_observer(observer), threads=threads, **options)
+        finally:
+            if sync_rate is not None:
+                cache.set_sync_rate(sync_rate)
+            if cache:
+                cache.commit(force=True)
 
 
 class operations_proxy(operations):

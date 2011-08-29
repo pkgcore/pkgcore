@@ -882,14 +882,20 @@ class built_operations(ebuild_mixin, format.operations):
         format.operations.__init__(self, domain, pkg, observer=observer)
         self._fetcher = fetcher
         self._initial_env = initial_env
+        self._localized_ebd = None
 
     def _cmd_implementation_localize(self, observer, force=False):
         if not force and getattr(self.pkg, '_is_from_source', False):
             return self.pkg
-        op = binpkg_localize(self.domain, self.pkg, clean=False,
+        self._localized_ebd = op = binpkg_localize(self.domain, self.pkg, clean=False,
             initial_env=self._initial_env, env_data_source=self.pkg.environment,
             observer=observer)
         return op.finalize()
+
+    def _cmd_implementation_cleanup(self, observer, force=False):
+        if not self._localized_ebd:
+            return True
+        return self._localized_ebd.cleanup(force=force)
 
     def _cmd_check_support_configure(self):
         pkg = self.pkg

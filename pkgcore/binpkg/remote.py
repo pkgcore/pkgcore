@@ -77,8 +77,6 @@ class PackagesCacheV0(cache.bulk):
         'FEATURES':'UPSTREAM_FEATURES',
         'ACCEPT_KEYWORDS':'KEYWORDS'})
 
-    commit_rate = 200
-
     _deserialize_map = {'DESC':'DESCRIPTION', 'MTIME':'mtime'}
     _serialize_map   = {"DEPENDS": "DEPEND", "RDEPENDS": "RDEPEND",
         "POST_RDEPENDS":"POST_RDEPEND", "DESCRIPTION":"DESC", 'mtime':'MTIME',

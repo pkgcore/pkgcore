@@ -79,14 +79,15 @@ class PackagesCacheV0(cache.bulk):
 
     commit_rate = 200
 
-    _deserialize_map = {'DESC':'DESCRIPTION', 'repo':'repository', 'MTIME':'mtime'}
+    _deserialize_map = {'DESC':'DESCRIPTION', 'MTIME':'mtime'}
     _serialize_map   = {"DEPENDS": "DEPEND", "RDEPENDS": "RDEPEND",
-        "POST_RDEPENDS":"POST_RDEPEND", "DESCRIPTION":"DESC", 'mtime':'MTIME'}
-    deserialized_inheritable = frozenset(('CBUILD', 'CHOST', 'repository'))
+        "POST_RDEPENDS":"POST_RDEPEND", "DESCRIPTION":"DESC", 'mtime':'MTIME',
+        "source_repository":"repo"}
+    deserialized_inheritable = frozenset(('CBUILD', 'CHOST', 'source_repository'))
     _pkg_attr_sequences = ('use', 'keywords', 'iuse')
     _deserialized_defaults = dict.fromkeys(('BUILD_TIME', 'DEPEND', 'IUSE', 'KEYWORDS',
         'LICENSE', 'PATH', 'PDEPEND', 'PROPERTIES', 'PROVIDE', 'RDEPEND',
-        'USE', 'DEFINED_PHASES', 'CHOST', 'CBUILD', 'DESC', 'repository',
+        'USE', 'DEFINED_PHASES', 'CHOST', 'CBUILD', 'DESC', 'repo',
         'DESCRIPTION'),
         '')
     _deserialized_defaults.update({'EAPI':'0', 'SLOT':'0'})

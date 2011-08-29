@@ -28,6 +28,9 @@ demandload(globals(),
 def passthrough(inst, attr):
     return inst.data[attr]
 
+def passthrough_repo(inst):
+    return inst.data['repo'].strip()
+
 def flatten_depset(inst, conditionals):
     return inst.evaluate_depset(conditionals)
 
@@ -81,6 +84,7 @@ class package(ebuild_src.base):
 
     _get_attr.update((x, post_curry(passthrough, x))
                      for x in ("contents", "environment", "ebuild"))
+    _get_attr['source_repository'] = passthrough_repo
     _get_attr.update(
         (k, post_curry(wrap_inst,
                        ebuild_src.package._config_wrappables[k],

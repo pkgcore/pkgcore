@@ -171,7 +171,7 @@ class tree(prototype.tree):
     _metadata_rewrites = {
         "depends":"DEPEND", "rdepends":"RDEPEND", "post_rdepends":"PDEPEND",
         "use":"USE", "eapi":"EAPI", "CONTENTS":"contents", "provides":"PROVIDE",
-        "repository": "repository"}
+        "source_repository": "repository"}
 
     def _get_metadata(self, pkg):
         return IndeterminantDict(partial(self._internal_load_key,
@@ -195,11 +195,11 @@ class tree(prototype.tree):
             fp = pjoin(path,
                 os.path.basename(path.rstrip(os.path.sep))+".ebuild")
             data = data_source.local_source(fp)
-        elif key == 'repository':
+        elif key == 'repo':
             # try both, for portage/paludis compatibility.
-            data = readfile(pjoin(path, key), True)
+            data = readfile(pjoin(path, 'repository'), True)
             if data is None:
-                data = readfile(pjoin(path, key.upper()), True)
+                data = readfile(pjoin(path, 'REPOSITORY'), True)
                 if data is None:
                     raise KeyError(key)
         else:

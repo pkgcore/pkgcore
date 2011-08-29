@@ -310,7 +310,8 @@ class OptionParser(commandline.OptionParser):
     printable_attrs = sorted(('rdepends', 'depends', 'post_rdepends',
         'provides', 'use', 'iuse', 'description', 'longdescription',
         'herds', 'license', 'uris', 'files', 'category', 'package',  'slot',
-        'maintainers', 'restrict', 'repo', 'alldepends', 'path', 'version',
+        'maintainers', 'restrict', 'repo', 'source_repository',
+        'alldepends', 'path', 'version',
         'revision', 'fullver', 'environment', 'keywords', 'homepage',
         'fetchables', 'eapi', 'inherited', 'chost', 'cbuild', 'ctarget',
         'all', 'allmetadata', 'properties', 'defined_phases', 'required_use'))

@@ -4,6 +4,13 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* pkgcore now tracks and records the originating/source repository
+  when installing to the vdb.
+
+* new pkg attribute; source_repository.  This tracks where a package
+  originated from- primarily useful for binpkgs and vdb.
+  pquery --attr source_repository is how to access it from the CLI.
+
 * pkg_config can now be invoked via:
   pconfig package <target>
 

@@ -118,7 +118,8 @@ class StackedXpakDict(DictMixin):
     _metadata_rewrites = {
         "depends":"DEPEND", "rdepends":"RDEPEND", "post_rdepends":"PDEPEND",
         "provides":"PROVIDE", "use":"USE", "eapi":"EAPI",
-        "CONTENTS":"contents"}
+        "CONTENTS":"contents",
+        }
 
     def __init__(self, parent, pkg):
         self._pkg = pkg

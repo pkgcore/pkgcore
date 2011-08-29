@@ -138,8 +138,6 @@ class replace(install, uninstall, repo_interfaces.replace):
 
 class operations(repo_interfaces.operations):
 
-    _regen_disable_threads = True
-
     def _cmd_implementation_install(self, *args):
         return install(self.repo, *args)
 

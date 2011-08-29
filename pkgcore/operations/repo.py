@@ -205,7 +205,7 @@ class operations(_operations_mod.base):
         sync_rate = getattr(cache, 'sync_rate', None)
         try:
             if sync_rate is not None:
-                cache.set_sync_rate(20000)
+                cache.set_sync_rate(1000000)
             return regen.regen_repository(self.repo,
                 self._get_observer(observer), threads=threads, **options)
         finally:

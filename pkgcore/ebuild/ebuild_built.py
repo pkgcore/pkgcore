@@ -14,6 +14,7 @@ from snakeoil.data_source import local_source
 from snakeoil.mappings import IndeterminantDict
 from snakeoil.currying import post_curry, partial
 from snakeoil.obj import DelayedInstantiation
+from snakeoil.compatibility import raise_from
 
 from snakeoil.demandload import demandload
 demandload(globals(),
@@ -248,7 +249,7 @@ class fake_package_factory(package_factory):
             try:
                 return getattr(self.pkg, key)
             except AttributeError:
-                raise KeyError
+                raise_from(KeyError(key))
 
     _generate_format_install_op   = _generic_format_install_op
     _generate_format_uninstall_op = _generic_format_uninstall_op

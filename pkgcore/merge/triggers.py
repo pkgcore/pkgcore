@@ -31,7 +31,7 @@ import pkgcore.os_data
 
 from snakeoil.osutils import listdir_files, pjoin, ensure_dirs, normpath
 from snakeoil.demandload import demandload
-from snakeoil.compatibility import is_py3k
+from snakeoil.compatibility import is_py3k, raise_from
 
 demandload(globals(),
     'os',
@@ -301,8 +301,8 @@ class ldconfig(base):
             # touch the file.
         try:
             open(fp, 'w')
-        except (IOError, OSError), e:
-            raise errors.BlockModification(self, e)
+        except EnvironmentError, e:
+            raise_from(errors.BlockModification(self, e))
 
     def trigger(self, engine):
         locations = self.read_ld_so_conf(engine.offset)

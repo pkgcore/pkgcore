@@ -26,7 +26,7 @@ from pkgcore.ebuild import const, processor
 from snakeoil.mappings import IndeterminantDict
 from snakeoil.currying import alias_class_method, partial
 from snakeoil import klass
-from snakeoil.compatibility import intern
+from snakeoil.compatibility import intern, raise_from
 
 from snakeoil.demandload import demandload
 demandload(globals(),
@@ -48,7 +48,7 @@ def generate_depset(c, key, non_package_type, s, **kwds):
         kwds['transitive_use_atoms'] = eapi_obj.options.transitive_use_atoms
         return conditionals.DepSet.parse(s.data.pop(key, ""), c, **kwds)
     except conditionals.ParseError, p:
-        raise metadata_errors.MetadataException(s, str(key), str(p))
+        raise_from(metadata_errors.MetadataException(s, str(key), str(p)))
 
 def _mk_required_use_node(data):
   if data[0] == '!':
@@ -64,7 +64,7 @@ def generate_required_use(self):
             element_func=_mk_required_use_node,
             )
     except conditionals.ParseError, p:
-        raise metadata_errors.MetadatException(self, "REQUIRED_USE", str(p))
+        raise_from(metadata_errors.MetadatException(self, "REQUIRED_USE", str(p)))
 
 def generate_providers(self):
     rdep = AndRestriction(self.versioned_atom)
@@ -79,7 +79,7 @@ def generate_providers(self):
             operators={"":boolean.AndRestriction})
 
     except conditionals.ParseError, p:
-        raise metadata_errors.MetadataException(self, "provide", str(p))
+        raise_from(metadata_errors.MetadataException(self, "provide", str(p)))
 
 def generate_fetchables(self):
     chksums_can_be_missing = bool(getattr(self.repo, '_allow_missing_chksums', False))
@@ -99,7 +99,7 @@ def generate_fetchables(self):
             v.uri.finalize()
         return d
     except conditionals.ParseError, p:
-        raise metadata_errors.MetadataException(self, "src_uri", str(p))
+        raise_from(metadata_errors.MetadataException(self, "src_uri", str(p)))
 
 # utility func.
 def create_fetchable_from_uri(pkg, chksums, ignore_missing_chksums, mirrors,

@@ -1,4 +1,4 @@
-# Copyright: 2005-2010 Brian Harring <ferringb@gmail.com>
+# Copyright: 2005-2011 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
 """
@@ -18,7 +18,7 @@ from pkgcore.fs.livefs import iter_scan
 from pkgcore.fs.fs import fsFile, fsDir
 
 from snakeoil.obj import make_SlottedDict_kls
-from snakeoil.compatibility import any
+from snakeoil.compatibility import any, raise_from
 from snakeoil.demandload import demandload
 demandload(globals(),
     "pkgcore:fetch",
@@ -55,10 +55,10 @@ def parse_digest(source, throw_errors=True):
                     d2[chf] = long(l[1], 16)
                 chf_keys.add(chf)
         except EnvironmentError, e:
-            raise errors.ParseChksumError(source, e,
-                missing=(e.errno == errno.ENOENT))
+            raise_from(errors.ParseChksumError(source, e,
+                missing=(e.errno == errno.ENOENT)))
         except TypeError, e:
-            raise errors.ParseChksumError(source, e)
+            raise_from(errors.ParseChksumError(source, e))
     finally:
         if f is not None and f.close:
             f.close()
@@ -187,8 +187,8 @@ def parse_manifest(source, throw_errors=True, ignore_gpg=True,
                         [long(line[3]), line[0].lower(), long(line[1], 16)])
 
         except EnvironmentError, e:
-            raise errors.ParseChksumError(source, e,
-                missing=(e.errno == errno.ENOENT))
+            raise_from(errors.ParseChksumError(source, e,
+                missing=(e.errno == errno.ENOENT)))
     finally:
         if f is not None and f.close:
             f.close()

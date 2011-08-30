@@ -1,4 +1,4 @@
-# Copyright: 2006-2007 Brian Harring <ferringb@gmail.com>
+# Copyright: 2006-2011 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
 """
@@ -7,6 +7,7 @@ XPAK container support
 
 __all__ = ("MalformedXpak", "Xpak")
 
+from snakeoil.compatibility import raise_from
 from snakeoil import struct_compat as struct
 from snakeoil.mappings import OrderedDict, autoconvert_py3k_methods_metaclass
 from snakeoil import klass, compatibility
@@ -158,9 +159,9 @@ class Xpak(object):
             try:
                 offset, data_len = struct.unpack(">LL", fd.read(8))
             except struct.error:
-                raise MalformedXpak(
+                raise_from(MalformedXpak(
                     "key %i, tried reading data offset/len but hit EOF" % (
-                        len(keys_dict) + 1))
+                        len(keys_dict) + 1)))
             keys_dict[key] = (data_start + offset, data_len,
                 compatibility.is_py3k and not key.startswith("environment"))
             index_len -= (key_len + 12) # 12 for key_len, offset, data_len longs
@@ -175,8 +176,8 @@ class Xpak(object):
                 raise MalformedXpak(
                     "not an xpak segment, trailer didn't match: %r" % fd)
         except struct.error:
-            raise MalformedXpak(
-                "not an xpak segment, failed parsing trailer: %r" % fd)
+            raise_from(MalformedXpak(
+                "not an xpak segment, failed parsing trailer: %r" % fd))
 
         # this is a bit daft, but the format seems to intentionally
         # have an off by 8 in the offset address. presumably cause the
@@ -190,8 +191,8 @@ class Xpak(object):
                 raise MalformedXpak(
                     "not an xpak segment, header didn't match: %r" % fd)
         except struct.error:
-            raise MalformedXpak(
-                "not an xpak segment, failed parsing header: %r" % fd)
+            raise_from(MalformedXpak(
+                "not an xpak segment, failed parsing header: %r" % fd))
 
         return self.xpak_start + self.header.size, index_len, data_len
 

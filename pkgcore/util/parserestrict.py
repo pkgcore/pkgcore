@@ -13,6 +13,7 @@ from pkgcore.restrictions import packages, values, util
 from pkgcore.package import errors
 from pkgcore.ebuild import atom, cpv, errors
 from snakeoil.containers import InvertedContains
+from snakeoil.compatibility import raise_from
 import re
 
 valid_globbing = re.compile(r"^(?:[\w+-.]+|(?<!\*)\*)+$").match
@@ -106,7 +107,7 @@ def parse_match(text):
                     atom.atom("%scategory/%s" % (ops, text)).restrictions,
                     attrs=("category",), invert=True))
         except errors.MalformedAtom, e:
-            raise ParseError(str(e))
+            raise_from(ParseError(str(e)))
         if len(r) == 1:
             return r[0]
         return packages.AndRestriction(*r)
@@ -114,12 +115,12 @@ def parse_match(text):
         try:
             return atom.atom(text)
         except errors.MalformedAtom, e:
-            raise ParseError(str(e))
+            raise_from(ParseError(str(e)))
     if "*" not in text:
         try:
             return atom.atom(text)
         except errors.MalformedAtom, e:
-            raise ParseError(str(e))
+            raise_from(ParseError(str(e)))
     r = map(convert_glob, tsplit)
     if not r[0] and not r[1]:
         return packages.AlwaysTrue

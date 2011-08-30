@@ -17,6 +17,7 @@ from pkgcore.ebuild import const
 from pkgcore.pkgsets.glsa import SecurityUpgrades
 
 from snakeoil.osutils import normpath, abspath, listdir_files, pjoin, ensure_dirs
+from snakeoil.compatibility import raise_from
 from snakeoil.demandload import demandload
 demandload(globals(),
     'errno',
@@ -220,11 +221,11 @@ def _find_profile_link(base_path, portage_compat=False):
                 profile = _find_profile_link(pjoin(base_path, 'portage'), True)
                 if profile is not None:
                     return profile
-            raise errors.InstantiationError(
+            raise_from(errors.InstantiationError(
                 "%s must be a symlink pointing to a real target" % (
-                    make_profile,))
-        raise errors.InstantiationError(
-            "%s: unexpected error- %s" % (make_profile, oe.strerror))
+                    make_profile,)))
+        raise_from(errors.InstantiationError(
+            "%s: unexpected error- %s" % (make_profile, oe.strerror)))
 
 def add_profile(config, base_path, user_profile_path=None):
     profile = _find_profile_link(base_path)
@@ -289,9 +290,9 @@ def load_make_config(vars_dict, path, allow_sourcing=False, required=True,
             sourcing_command=sourcing_command)
     except EnvironmentError, ie:
         if ie.errno == errno.EACCES:
-            raise errors.PermissionDeniedError(fp, write=False)
+            raise_from(errors.PermissionDeniedError(fp, write=False))
         if ie.errno != errno.ENOENT or required:
-            raise errors.ParsingError("parsing %r" % (fp,), exception=ie)
+            raise_from(errors.ParsingError("parsing %r" % (fp,), exception=ie))
         return
 
     if incrementals:

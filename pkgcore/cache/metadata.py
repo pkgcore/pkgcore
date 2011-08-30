@@ -15,6 +15,7 @@ from pkgcore.cache import flat_hash, errors
 from pkgcore.config import ConfigHint
 from pkgcore.ebuild import eclass_cache
 from snakeoil.osutils import join as pjoin
+from snakeoil.compatibility import raise_from
 from snakeoil.mappings import ProtectedDict
 
 
@@ -119,15 +120,14 @@ class database(flat_hash.database):
             self.location, cpv[:s],".update.%i.%s" % (os.getpid(), cpv[s+1:]))
         try:
             myf = open(fp, "w")
-        except (OSError, IOError), e:
-            if errno.ENOENT == e.errno:
-                try:
-                    self._ensure_dirs(cpv)
-                    myf = open(fp,"w")
-                except (OSError, IOError),e:
-                    raise errors.CacheCorruption(cpv, e)
-            else:
-                raise errors.CacheCorruption(cpv, e)
+        except EnvironmentError, e:
+            if errno.ENOENT != e.errno:
+                raise_from(errors.CacheCorruption(cpv, e))
+            try:
+                self._ensure_dirs(cpv)
+                myf = open(fp,"w")
+            except EnvironmentError, e:
+                raise_from(errors.CacheCorruption(cpv, e))
 
         count = 0
         for idx, key in self.hardcoded_auxdbkeys_order:
@@ -142,9 +142,9 @@ class database(flat_hash.database):
         new_fp = pjoin(self.location, cpv)
         try:
             os.rename(fp, new_fp)
-        except (OSError, IOError), e:
+        except EnvironmentError, e:
             os.remove(fp)
-            raise errors.CacheCorruption(cpv, e)
+            raise_from(errors.CacheCorruption(cpv, e))
 
     def _set_mtime(self, fp, values, eclasses):
         if self._mtime_used:

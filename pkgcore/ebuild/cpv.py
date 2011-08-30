@@ -1,5 +1,5 @@
-# Copyright: 2005 Jason Stubbs <jstubbs@gentoo.org>
 # Copyright: 2005-2011 Brian Harring <ferringb@gmail.com>
+# Copyright: 2005 Jason Stubbs <jstubbs@gentoo.org>
 # License: GPL2/BSD
 
 
@@ -159,11 +159,8 @@ class _native_CPV(object):
         return hash(self.cpvstr)
 
     def __repr__(self):
-        try:
-            return '<%s cpvstr=%s @%#8x>' % (
-                self.__class__.__name__, getattr(self, 'cpvstr', None), id(self))
-        except AttributeError, ae:
-            raise
+        return '<%s cpvstr=%s @%#8x>' % (
+             self.__class__.__name__, getattr(self, 'cpvstr', None), id(self))
 
     def __str__(self):
         return getattr(self, 'cpvstr', 'None')

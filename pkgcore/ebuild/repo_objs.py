@@ -1,4 +1,4 @@
-# Copyright: 2006-2010 Brian Harring <ferringb@gmail.com>
+# Copyright: 2006-2011 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
 """
@@ -247,8 +247,10 @@ class Licenses(object):
             raise KeyError(license)
         try:
             return open(pjoin(self._base, self.licenses_dir, license)).read()
-        except EnvironmentError:
-            raise KeyError(license)
+        except EnvironmentError, e:
+            if e.errno == errno.ENOENT:
+                raise KeyError(license)
+            raise
 
     def __iter__(self):
         return iter(self.licenses)

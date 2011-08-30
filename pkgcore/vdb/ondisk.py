@@ -97,8 +97,8 @@ class tree(prototype.tree):
                     "base lacks read/executable: %r" % self.base)
 
         except OSError:
-            raise errors.InitializationError(
-                "lstat failed on base %r" % self.base)
+            compatibility.raise_from(errors.InitializationError(
+                "lstat failed on base %r" % self.base))
 
         self.package_class = get_plugin('format.' + self.format_magic)(self)
 
@@ -110,8 +110,8 @@ class tree(prototype.tree):
             try:
                 return tuple(x for x in listdir_dirs(self.base) if not
                              x.startswith('.'))
-            except (OSError, IOError), e:
-                raise KeyError("failed fetching categories: %s" % str(e))
+            except EnvironmentError, e:
+                compatibility.raise_from(KeyError("failed fetching categories: %s" % str(e)))
         finally:
             pass
 
@@ -150,9 +150,9 @@ class tree(prototype.tree):
                         "not standard." % (category, x, bad))
                 l.add(pkg.package)
                 d.setdefault((category, pkg.package), []).append(pkg.fullver)
-        except (OSError, IOError), e:
-            raise KeyError("failed fetching packages for category %s: %s" % \
-            (pjoin(self.base, category.lstrip(os.path.sep)), str(e)))
+        except EnvironmentError, e:
+            compatibility.raise_from(KeyError("failed fetching packages for category %s: %s" % \
+            (pjoin(self.base, category.lstrip(os.path.sep)), str(e))))
 
         self._versions_tmp_cache.update(d)
         return tuple(l)

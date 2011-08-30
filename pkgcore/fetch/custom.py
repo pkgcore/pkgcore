@@ -1,4 +1,4 @@
-# Copyright: 2005-2008 Brian Harring <ferringb@gmail.com>
+# Copyright: 2005-2011 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
 """
@@ -13,6 +13,7 @@ from pkgcore.os_data import portage_uid, portage_gid
 from pkgcore.fetch import errors, base, fetchable
 from pkgcore.config import ConfigHint
 from snakeoil.osutils import ensure_dirs, join as pjoin
+from snakeoil.compatibility import raise_from
 
 class MalformedCommand(errors.base):
 
@@ -129,7 +130,7 @@ class fetcher(base.fetcher):
                         os.unlink(fp)
                         command = self.command
                     except OSError, oe:
-                        raise errors.UnmodifiableFile(fp, oe)
+                        raise_from(errors.UnmodifiableFile(fp, oe))
                 elif c == -2:
                     command = self.command
                 else:

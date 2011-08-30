@@ -1,4 +1,4 @@
-# Copyright: 2005-2010 Brian Harring <ferringb@gmail.com>
+# Copyright: 2005-2011 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
 """
@@ -95,7 +95,7 @@ class cache(base):
         eclass_len = len(".eclass")
         try:
             files = listdir_files(self.eclassdir)
-        except (OSError, IOError), e:
+        except EnvironmentError, e:
             if e.errno not in (errno.ENOENT, errno.ENOTDIR):
                 raise
             return ImmutableDict()

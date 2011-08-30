@@ -13,7 +13,7 @@ __all__ = ("atom", "transitive_use_atom", "generate_collapsed_restriction")
 import string
 from pkgcore.restrictions import values, packages, boolean
 from pkgcore.ebuild import cpv, errors, const, restricts
-from snakeoil.compatibility import all, is_py3k, cmp
+from snakeoil.compatibility import all, is_py3k, cmp, raise_from
 from snakeoil.klass import (generic_equality, inject_richcmp_methods_from_cmp,
     reflective_hash)
 from snakeoil.demandload import demandload
@@ -201,7 +201,7 @@ def native_init(self, atom, negate_vers=False, eapi=-1):
     try:
         c = cpv.CPV(self.cpvstr, versioned=bool(self.op))
     except errors.InvalidCPV, e:
-        raise errors.MalformedAtom(orig_atom, str(e))
+        raise_from(errors.MalformedAtom(orig_atom, str(e)))
     sf(self, "key", c.key)
     sf(self, "package", c.package)
     sf(self, "category", c.category)

@@ -19,6 +19,7 @@ from pkgcore.ebuild.cpv import versioned_CPV
 from pkgcore.ebuild.errors import InvalidCPV
 from pkgcore.binpkg import repo_ops
 
+from snakeoil.compatibility import raise_from
 from snakeoil.currying import partial
 from snakeoil.mappings import DictMixin, StackedDict
 from snakeoil.osutils import listdir_dirs, listdir_files, access
@@ -266,8 +267,8 @@ class tree(prototype.tree):
             return tuple(
                 x for x in listdir_dirs(self.base)
                 if x.lower() != "all")
-        except (OSError, IOError), e:
-            raise KeyError("failed fetching categories: %s" % str(e))
+        except EnvironmentError, e:
+            raise_from(KeyError("failed fetching categories: %s" % str(e)))
 
     def _get_packages(self, category):
         cpath = pjoin(self.base, category.lstrip(os.path.sep))
@@ -302,9 +303,9 @@ class tree(prototype.tree):
                         "not standard." % (category, pv, bad))
                 l.add(pkg.package)
                 d.setdefault((category, pkg.package), []).append(pkg.fullver)
-        except (OSError, IOError), e:
-            raise KeyError("failed fetching packages for category %s: %s" % \
-            (pjoin(self.base, category.lstrip(os.path.sep)), str(e)))
+        except EnvironmentError, e:
+            raise_from(KeyError("failed fetching packages for category %s: %s" % \
+            (pjoin(self.base, category.lstrip(os.path.sep)), str(e))))
 
         self._versions_tmp_cache.update(d)
         return tuple(l)

@@ -19,7 +19,7 @@ from snakeoil.osutils import abspath, join as pjoin, readlines_utf8
 from snakeoil.containers import InvertedContains
 from snakeoil.fileutils import iter_read_bash, read_bash_dict
 from snakeoil import klass, caching, currying, sequences
-from snakeoil.compatibility import next, is_py3k
+from snakeoil import compatibility
 from snakeoil.demandload import demandload
 
 demandload(globals(),
@@ -65,14 +65,14 @@ def _load_and_invoke(func, filename, handler, fallback, read_func, self):
         # no point in wrapping/throwing..
         raise
     except Exception, e:
-        raise ProfileError(self.path, filename, e)
+        compatibility.raise_from(ProfileError(self.path, filename, e))
 
 
 _make_incrementals_dict = currying.partial(IncrementalsDict, const.incrementals)
 
 def _open_utf8(path, *args):
     try:
-        if is_py3k:
+        if compatibility.is_py3k:
             return open(path, 'r', encoding='utf8')
         return open(path, 'r')
     except EnvironmentError, e:
@@ -150,7 +150,7 @@ class ProfileNode(object):
         if data is not None:
             data = iter(data)
             try:
-                replacement = next(data).strip()
+                replacement = compatibility.next(data).strip()
                 msg = "\n".join(x.lstrip("#").strip()
                     for x in data)
                 data = (replacement, msg)

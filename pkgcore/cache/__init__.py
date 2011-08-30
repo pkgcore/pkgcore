@@ -1,4 +1,4 @@
-# Copyright: 2005-2010 Brian Harring <ferringb@gmail.com>
+# Copyright: 2005-2011 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
 """
@@ -11,6 +11,7 @@ from pkgcore.cache import errors
 from snakeoil.mappings import ProtectedDict, autoconvert_py3k_methods_metaclass
 from snakeoil.obj import make_SlottedDict_kls
 from snakeoil import klass
+from snakeoil.compatibility import raise_from
 
 # temp hack for .2
 from pkgcore.ebuild.const import metadata_keys
@@ -212,8 +213,8 @@ class base(object):
                 for x in xrange(0, len(eclasses), 2):
                     d[eclasses[x]] = ('', long(eclasses[x + 1]))
         except ValueError:
-            raise errors.CacheCorruption(
-                cpv, 'ValueError reading %r' % (eclass_string,))
+            raise_from(errors.CacheCorruption(
+                cpv, 'ValueError reading %r' % (eclass_string,)))
         return d
 
 

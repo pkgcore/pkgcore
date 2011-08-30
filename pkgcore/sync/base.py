@@ -1,4 +1,4 @@
-# Copyright: 2006-2008 Brian Harring <ferringb@gmail.com>
+# Copyright: 2006-2011 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
 
@@ -9,7 +9,7 @@ __all__ = ("syncer_exception", "uri_exception", "generic_exception",
 )
 
 from pkgcore.config import ConfigHint, configurable
-from snakeoil import demandload, descriptors
+from snakeoil import demandload, descriptors, compatibility
 demandload.demandload(globals(),
     'os',
     'pwd',
@@ -171,9 +171,9 @@ class dvcs_syncer(ExternalSyncer):
     def _sync(self, verbosity, output_fd):
         try:
             st = os.stat(self.basedir)
-        except (IOError, OSError), ie:
+        except EnvironmentError, ie:
             if ie.errno != errno.ENOENT:
-                raise generic_exception(self, self.basedir, ie)
+                compatibility.raise_from(generic_exception(self, self.basedir, ie))
             command = self._initial_pull()
             chdir = None
         else:

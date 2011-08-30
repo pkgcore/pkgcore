@@ -1,5 +1,6 @@
-# Copyright: 2006 Charlie Shepherd <masterdriverz@gmail.com>
-# License: GPL2
+# Copyright: 2007-2011 Brian Harring <ferringb@gmail.com>
+# Copyright: 2007 Charlie Shepherd <masterdriverz@gmail.com>
+# License: GPL2/BSD2
 
 """pmerge formatting module"""
 
@@ -12,6 +13,7 @@ import operator
 
 from pkgcore.config import configurable
 from snakeoil.demandload import demandload
+from snakeoil.compatibility import raise_from
 demandload(globals(),
     'errno',
     'snakeoil.compatibility:any',
@@ -90,11 +92,11 @@ def userquery(prompt, out, err, responses=None, default_answer=None, limit=3):
             response = raw_input()
         except EOFError:
             out.write("\nNot answerable: EOF on STDIN")
-            raise NoChoice()
+            raise_from(NoChoice())
         except IOError, e:
             if e.errno == errno.EBADF:
                 out.write("\nNot answerable: STDIN is either closed, or not readable")
-                raise NoChoice()
+                raise_from(NoChoice())
             raise
         if not response:
             return default_answer

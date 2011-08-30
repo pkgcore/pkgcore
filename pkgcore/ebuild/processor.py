@@ -52,14 +52,14 @@ def shutdown_all_processors():
             try:
                 active_ebp_list.pop().shutdown_processor(
                     ignore_keyboard_interrupt=True)
-            except (IOError, OSError):
+            except EnvironmentError:
                 pass
 
         while inactive_ebp_list:
             try:
                 inactive_ebp_list.pop().shutdown_processor(
                     ignore_keyboard_interrupt=True)
-            except (IOError, OSError):
+            except EnvironmentError:
                 pass
     except Exception,e:
         traceback.print_exc()
@@ -515,7 +515,7 @@ class EbuildProcessor(object):
                 self.ebd_read.close()
             else:
                 return
-        except (IOError, OSError, ValueError):
+        except (EnvironmentError, ValueError):
             os.kill(self.pid, signal.SIGTERM)
 
         # now we wait.

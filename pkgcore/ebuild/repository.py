@@ -21,7 +21,7 @@ from snakeoil.osutils import listdir_files, readfile, listdir_dirs, pjoin
 from snakeoil.containers import InvertedContains
 from snakeoil.obj import make_kls
 from snakeoil.weakrefs import WeakValCache
-from snakeoil.compatibility import any, intern
+from snakeoil.compatibility import any, intern, raise_from
 
 from snakeoil.demandload import demandload
 demandload(globals(),
@@ -98,8 +98,8 @@ class UnconfiguredTree(syncable.tree_mixin, prototype.tree):
                     "base not a dir: %s" % self.base)
 
         except OSError:
-            raise errors.InitializationError(
-                "lstat failed on base %s" % self.base)
+            raise_from(errors.InitializationError(
+                "lstat failed on base %s" % (self.base,)))
         if eclass_cache is None:
             self.eclass_cache = eclass_cache_module.cache(
                 pjoin(self.base, "eclass"), self.base)
@@ -193,18 +193,18 @@ class UnconfiguredTree(syncable.tree_mixin, prototype.tree):
                 ifilterfalse(self.false_categories.__contains__,
                     (x for x in listdir_dirs(self.base) if x[0:1] != ".")
                 )))
-        except (OSError, IOError), e:
-            raise KeyError("failed fetching categories: %s" % str(e))
+        except EnvironmentError, e:
+            raise_from(KeyError("failed fetching categories: %s" % str(e)))
 
     def _get_packages(self, category):
         cpath = pjoin(self.base, category.lstrip(os.path.sep))
         try:
             return tuple(ifilterfalse(self.false_packages.__contains__,
                 listdir_dirs(cpath)))
-        except (OSError, IOError), e:
-            raise KeyError("failed fetching packages for category %s: %s" % \
+        except EnvironmentError, e:
+            raise_from(KeyError("failed fetching packages for category %s: %s" % \
                     (pjoin(self.base, category.lstrip(os.path.sep)), \
-                    str(e)))
+                    str(e))))
 
     def _get_versions(self, catpkg):
         cppath = pjoin(self.base, catpkg[0], catpkg[1])
@@ -228,9 +228,9 @@ class UnconfiguredTree(syncable.tree_mixin, prototype.tree):
                 return tuple(x for x in ret
                     if ('scm' not in x and 'try' not in x))
             return ret
-        except (OSError, IOError), e:
-            raise KeyError("failed fetching versions for package %s: %s" % \
-                (pjoin(self.base, catpkg.lstrip(os.path.sep)), str(e)))
+        except EnvironmentError, e:
+            raise_from(KeyError("failed fetching versions for package %s: %s" % \
+                (pjoin(self.base, catpkg.lstrip(os.path.sep)), str(e))))
 
     def _get_ebuild_path(self, pkg):
         if pkg.revision is None:
@@ -293,8 +293,8 @@ class UnconfiguredTree(syncable.tree_mixin, prototype.tree):
                 raise
             return []
         except ebuild_errors.MalformedAtom, ma:
-            raise profiles.ProfileError(pjoin(self.base, 'profiles'),
-                'package.mask', ma)
+            raise_from(profiles.ProfileError(pjoin(self.base, 'profiles'),
+                'package.mask', ma))
 
 
 class SlavedTree(UnconfiguredTree):

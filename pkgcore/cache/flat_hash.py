@@ -1,4 +1,4 @@
-# Copyright: 2005-2007 Brian Harring <ferringb@gmail.com>
+# Copyright: 2005-2011 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
 """
@@ -11,6 +11,7 @@ import os, stat, errno
 from pkgcore.cache import fs_template, errors
 from pkgcore.config import ConfigHint
 from snakeoil.osutils import join as pjoin, readlines_ascii
+from snakeoil.compatibility import raise_from
 
 class database(fs_template.FsBased):
 
@@ -37,8 +38,8 @@ class database(fs_template.FsBased):
             if data is None:
                 raise KeyError(cpv)
             return self._parse_data(data, data.mtime)
-        except (IOError, OSError, ValueError), e:
-            raise errors.CacheCorruption(cpv, e)
+        except (EnvironmentError, ValueError), e:
+            raise_from(errors.CacheCorruption(cpv, e))
 
     def _parse_data(self, data, mtime):
         d = self._cdict_kls()
@@ -70,12 +71,12 @@ class database(fs_template.FsBased):
                         cpv, 'error creating directory for %r' % (fp,))
                 try:
                     myf = open(fp, "w", 32768)
-                except (OSError, IOError), e:
-                    raise errors.CacheCorruption(cpv, e)
+                except EnvironmentError, e:
+                    raise_from(errors.CacheCorruption(cpv, e))
             else:
-                raise errors.CacheCorruption(cpv, ie)
+                raise_from(errors.CacheCorruption(cpv, ie))
         except OSError, e:
-            raise errors.CacheCorruption(cpv, e)
+            raise_from(errors.CacheCorruption(cpv, e))
 
         if self.mtime_in_entry:
             for k, v in values.iteritems():
@@ -96,9 +97,9 @@ class database(fs_template.FsBased):
         new_fp = pjoin(self.location, cpv)
         try:
             os.rename(fp, new_fp)
-        except (OSError, IOError), e:
+        except EnvironmentError, e:
             os.remove(fp)
-            raise errors.CacheCorruption(cpv, e)
+            raise_from(errors.CacheCorruption(cpv, e))
 
     def _delitem(self, cpv):
         try:
@@ -107,7 +108,7 @@ class database(fs_template.FsBased):
             if e.errno == errno.ENOENT:
                 raise KeyError(cpv)
             else:
-                raise errors.CacheCorruption(cpv, e)
+                raise_from(errors.CacheCorruption(cpv, e))
 
     def __contains__(self, cpv):
         return os.path.exists(pjoin(self.location, cpv))

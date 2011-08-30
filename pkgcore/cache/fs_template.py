@@ -1,4 +1,4 @@
-# Copyright: 2005-2006 Brian Harring <ferringb@gmail.com>
+# Copyright: 2005-2011 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
 """
@@ -60,7 +60,7 @@ class FsBased(base):
             if mtime is not None:
                 mtime = long(mtime)
                 os.utime(path, (mtime, mtime))
-        except (OSError, IOError):
+        except EnvironmentError:
             return False
         return True
 

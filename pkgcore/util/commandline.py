@@ -24,6 +24,7 @@ import logging
 
 from pkgcore.config import load_config, errors
 from snakeoil import formatters, demandload, currying, modules
+from snakeoil.compatibility import raise_from
 import optparse
 from pkgcore.util import argparse
 from pkgcore.util.commandline_optparse import *
@@ -338,7 +339,7 @@ def python_namespace_type(value, module=False, attribute=False):
             return modules.load_attribute(value)
         return modules.load_any(value)
     except modules.FailedImport, err:
-        raise argparse.ArgumentTypeError(str(err))
+        raise_from(argparse.ArgumentTypeError(str(err)))
 
 
 class VersionFunc(argparse.Action):
@@ -479,8 +480,8 @@ def existant_path(value):
     try:
         return osutils.abspath(value)
     except EnvironmentError, e:
-        raise ValueError("while resolving path %r, encountered error: %r" %
-            (value, e))
+        raise_from(ValueError("while resolving path %r, encountered error: %r" %
+            (value, e)))
 
 def mk_argparser(suppress=False, config=True, domain=True, color=True, debug=True,
     version=True, **kwds):
@@ -538,8 +539,8 @@ def convert_to_restrict(sequence, default=packages.AlwaysTrue):
         for x in sequence:
             l.append(parserestrict.parse_match(x))
     except parserestrict.ParseError, e:
-        raise optparse.OptionValueError("arg %r isn't a valid atom: %s"
-            % (x, e))
+        raise_from(optparse.OptionValueError("arg %r isn't a valid atom: %s"
+            % (x, e)))
     return l or [default]
 
 

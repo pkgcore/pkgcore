@@ -5,7 +5,7 @@ __all__ = ("rsync_syncer", "rsync_timestamp_syncer",)
 
 from pkgcore.sync import base
 from pkgcore.config import ConfigHint
-from snakeoil.demandload import demandload
+from snakeoil.demandload import compatibility, demandload
 
 demandload(globals(),
     'os',
@@ -100,7 +100,8 @@ class rsync_syncer(base.ExternalSyncer):
                     yield ipaddr[4][0]
 
         except socket.error, e:
-            raise base.syncer_exception(self.hostname, af_fam, str(e))
+            compatibility.raise_from(
+                base.syncer_exception(self.hostname, af_fam, str(e)))
 
 
     def _sync(self, verbosity, output_fd):
@@ -217,7 +218,7 @@ class rsync_timestamp_syncer(rsync_syncer):
                     open(pjoin(self.basedir, "metadata", "timestamp.chk"),
                         "w").write(time.strftime("%a, %d %b %Y %H:%M:%S +0000",
                             time.gmtime(self.last_timestamp)))
-            except (IOError, OSError):
+            except EnvironmentError:
                 # don't care...
                 pass
         return ret

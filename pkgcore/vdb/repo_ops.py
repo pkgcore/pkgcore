@@ -26,7 +26,7 @@ def update_mtime(path, timestamp=None):
     logger.debug("updating vdb timestamp for %r", path)
     try:
         os.utime(path, (timestamp, timestamp))
-    except (OSError, IOError), e:
+    except EnvironmentError, e:
         logger.error("failed updated vdb timestamp for %r: %s", path, e)
 
 

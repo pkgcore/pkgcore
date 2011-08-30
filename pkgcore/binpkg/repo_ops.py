@@ -104,7 +104,7 @@ class install(repo_interfaces.install):
         except Exception, e:
             try:
                 unlink_if_exists(tmp_path)
-            except (IOError, OSError), e:
+            except EnvironmentError, e:
                 logger.warn("failed removing %r: %r" % (tmp_path, e))
             raise
         return True

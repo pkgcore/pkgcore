@@ -1,4 +1,4 @@
-# Copyright: 2005-2009 Brian Harring <ferringb@gmail.com>
+# Copyright: 2005-2011 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
 """
@@ -45,7 +45,7 @@ def gen_obj(path, stat=None, chksum_handlers=None, real_location=None,
     if stat is None:
         try:
             stat = stat_func(real_location)
-        except (IOError, OSError), e:
+        except EnvironmentError, e:
             if stat_func == os.lstat or e.errno != errno.ENOENT:
                 raise
             stat = os.lstat(real_location)
@@ -198,7 +198,7 @@ def recursively_fill_syms(cset, limiter=fsBase):
                 continue
             try:
                 obj = gen_obj(new_loc)
-            except (OSError, IOError), e:
+            except EnvironmentError, e:
                 if e.errno != errno.ENOENT:
                     raise
                 continue

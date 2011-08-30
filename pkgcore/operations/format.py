@@ -12,13 +12,14 @@ from pkgcore import operations as _operations_mod
 from snakeoil.dependant_methods import ForcedDepends
 
 def _raw_fetch(self):
+    fetchables = self.pkg.fetchables
     if not "files" in self.__dict__:
         self.files = {}
 
     # this is being anal, but protect against pkgs that don't collapse
     # common uri down to a single file.
     gotten_fetchables = set(x.filename for x in self.files.values())
-    for x in self.fetchables:
+    for x in fetchables:
         if x.filename in gotten_fetchables:
             continue
         # fetching files without uri won't fly

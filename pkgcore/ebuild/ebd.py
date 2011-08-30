@@ -590,9 +590,8 @@ class buildable(ebd, setup_mixin, format.build):
                         del self.env[s+y]
         path = [piece for piece in path if piece]
         self.env["PATH"] = ":".join(path)
-        self.fetchables = pkg.fetchables[:]
         self.env["A"] = ' '.join(set(x.filename
-            for x in self.fetchables))
+            for x in pkg.fetchables))
 
         if self.eapi_obj.options.has_AA:
             pkg = getattr(self.pkg, '_raw_pkg', self.pkg)
@@ -818,7 +817,6 @@ class binpkg_localize(ebd, setup_mixin, format.build):
         ebd.__init__(self, pkg, **kwargs)
         if self.eapi_obj.options.has_merge_type:
             self.env["MERGE_TYPE"] = "binpkg"
-        self.fetchables = ()
 
     def finalize(self):
         return MutatedPkg(self.pkg, {"environment":self.get_env_source()})

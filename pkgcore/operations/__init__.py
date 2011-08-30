@@ -14,6 +14,7 @@ occur down the line if dependencies can be kept as minimal as possible.
 """
 
 from snakeoil import klass
+from pkgcore.operations import observer as _observer
 
 class base(object):
 
@@ -27,7 +28,9 @@ class base(object):
         self._setup_api()
 
     def _get_observer(self, observer=None):
-        return observer
+        if observer is not None:
+            return observer
+        return _observer.null_output()
 
     @klass.cached_property
     def raw_operations(self):

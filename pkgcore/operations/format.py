@@ -5,37 +5,49 @@
 build operation
 """
 
-__all__ = ('build_base', 'install', 'uninstall', 'replace', 'fetch',
+__all__ = ('build_base', 'install', 'uninstall', 'replace', 'fetch_base',
     'empty_build_op', 'FailedDirectory', 'GenericBuildError', 'errors')
 
 from pkgcore import operations as _operations_mod
 from snakeoil.dependant_methods import ForcedDepends
+from snakeoil import klass
 
-def _raw_fetch(self):
-    fetchables = self.pkg.fetchables
-    if not "files" in self.__dict__:
-        self.files = {}
 
-    # this is being anal, but protect against pkgs that don't collapse
-    # common uri down to a single file.
-    gotten_fetchables = set(x.filename for x in self.files.values())
-    for x in fetchables:
-        if x.filename in gotten_fetchables:
-            continue
+class fetch_base(object):
+
+    def __init__(self, domain, pkg, fetcher):
+        self.verified_files = {}
+        self._basenames = set()
+        self.domain = domain
+        self.pkg = pkg
+        self.fetcher = fetcher
+
+    def fetch_all(self, observer):
+        for fetchable in self.pkg.fetchables:
+            if not self.fetch_one(fetchable, observer):
+                return False
+        return True
+
+    def fetch_one(self, fetchable, observer):
+        if fetchable.filename in self._basenames:
+            return True
         # fetching files without uri won't fly
         # XXX hack atm, could use better logic but works for now
-        fp = self.fetcher(x)
+        fp = self.fetcher(fetchable)
         if fp is None:
-            if x.uri:
-                return False
-            self.nofetch()
+            self.failed_fetch(fetchable, observer)
             return False
-        self.files[fp] = x
-        gotten_fetchables.add(x.filename)
-    return True
+        self.verified_files[fp] = fetchable
+        self._basenames.add(fetchable.filename)
+        return True
+
+    def failed_fetch(self, fetchable, observer):
+        observer.error("failed fetching %s" % (fetchable,))
 
 
 class operations(_operations_mod.base):
+
+    _fetch_kls = fetch_base
 
     def __init__(self, domain, pkg, observer=None, disable_overrides=(),
         enable_overrides=()):
@@ -69,13 +81,33 @@ class operations(_operations_mod.base):
         return self._cmd_implementation_configure(
             self._get_observer(observer))
 
+    def _cmd_check_support_fetch(self):
+        return self._find_fetcher() is not None
+
+    @klass.cached_property
+    def _fetch_op(self):
+        return self._fetch_kls(self.domain, self.pkg, self._find_fetcher())
+
+    @_operations_mod.is_standalone
+    def _cmd_api_fetch(self, observer=None):
+        return self._fetch_op.fetch_all(
+            self._get_observer(observer))
+
+    def _find_fetcher(self):
+        fetcher = getattr(self.pkg.repo, 'fetcher', None)
+        if fetcher is None:
+            return getattr(self.domain, 'fetcher', None)
+        return fetcher
+
 
 class build_operations(operations):
 
     __required__ = frozenset(["build"])
 
     def _cmd_api_build(self, observer=None, clean=True):
-        return self._cmd_implementation_build(observer=observer, clean=clean)
+        return self._cmd_implementation_build(self._get_observer(observer),
+            self._fetch_op.verified_files,
+            clean=clean)
 
     def _cmd_api_buildable(self, domain):
         return self._cmd_implementation_buildable(domain)
@@ -103,7 +135,7 @@ class build_base(object):
 class build(build_base):
     stage_depends = {
         "setup":"start",
-        "unpack":("fetch", "setup"),
+        "unpack":"setup",
         "configure":"prepare",
         "prepare":"unpack",
         "compile":"configure",
@@ -111,14 +143,13 @@ class build(build_base):
         "install":"test",
         "finalize":"install"}
 
-    def __init__(self, domain, pkg, observer):
+    def __init__(self, domain, pkg, verified_files, observer):
         build_base.__init__(self, domain, observer)
         self.pkg = pkg
+        self.verified_files = verified_files
 
     def setup(self):
         return True
-
-    fetch = _raw_fetch
 
     def unpack(self):
         return True
@@ -147,13 +178,13 @@ class build(build_base):
         return True
 
     for k in (
-        "setup", "fetch", "unpack", "configure", "compile", "test", "install"):
+        "setup", "unpack", "configure", "compile", "test", "install"):
         locals()[k].__doc__ = (
             "execute any %s steps required; "
             "implementations of this interface should overide this as needed"
             % k)
     for k in (
-        "setup", "fetch", "unpack", "configure", "compile", "test", "install",
+        "setup", "unpack", "configure", "compile", "test", "install",
         "finalize"):
         o = locals()[k]
         o.__doc__ = "\n".join(x.lstrip() for x in o.__doc__.split("\n") + [
@@ -220,25 +251,6 @@ class replace(install, uninstall):
         build_base.__init__(self, domain, observer)
         self.new_pkg = new_pkg
         self.old_pkg = old_pkg
-
-
-class fetch(object):
-    __metaclass__ = ForcedDepends
-
-    stage_depends = {"finalize":"fetch"}
-
-    fetch = _raw_fetch
-
-    def __init__(self, pkg):
-        self.pkg = pkg
-        self.fetchables = pkg.fetchables
-
-    def finalize(self):
-        """finalize any build steps required"""
-        return self.pkg
-
-    def cleanup(self):
-        return True
 
 
 class empty_build_op(build_base):

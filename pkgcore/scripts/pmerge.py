@@ -606,7 +606,8 @@ def main(options, out, err):
                 except Exception, e:
                     ret = e
                 if ret is not True:
-                    out.error("got %s for a phase execution for %s" % (ret, op.pkg))
+                    out.write("\n")
+                    out.error("fetching failed for %s" % (op.pkg,))
                     if not options.ignore_failures:
                         return 1
                     continue

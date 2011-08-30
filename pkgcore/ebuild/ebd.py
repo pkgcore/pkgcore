@@ -527,7 +527,7 @@ class buildable(ebd, setup_mixin, format.build):
 
     # XXX this is unclean- should be handing in strictly what is build
     # env, rather then dumping domain settings as env.
-    def __init__(self, domain, pkg, eclass_cache, fetcher,
+    def __init__(self, domain, pkg, verified_files, eclass_cache,
         observer=None, **kwargs):
 
         """
@@ -537,14 +537,13 @@ class buildable(ebd, setup_mixin, format.build):
             basically initial env
         :param eclass_cache: the :class:`pkgcore.ebuild.eclass_cache`
             we'll be using
-        :param fetcher: a :obj:`pkgcore.fetch.base.fetcher` instance to use to
-            access our required files for building
+        :param files: mapping of fetchables mapped to their disk location
         """
 
         use = kwargs.get("use_override", pkg.use)
         domain_settings = domain.settings
 
-        format.build.__init__(self, domain, pkg, observer)
+        format.build.__init__(self, domain, pkg, verified_files, observer)
         ebd.__init__(self, pkg, initial_env=domain_settings,
                      features=domain_settings["FEATURES"], **kwargs)
 
@@ -552,8 +551,6 @@ class buildable(ebd, setup_mixin, format.build):
         self.eclass_cache = eclass_cache
         self.env["ECLASSDIR"] = eclass_cache.eclassdir
         self.env["PORTDIR"] = eclass_cache.portdir
-
-        self.fetcher = fetcher
 
         self.run_test = self.feat_or_bool("test", domain_settings)
         if "test" in self.restrict:
@@ -611,10 +608,10 @@ class buildable(ebd, setup_mixin, format.build):
 
     def init_distfiles_env(self):
         # cvs/svn ebuilds need to die.
-        distdir_write = self.fetcher.get_storage_path()
+        distdir_write = self.domain.fetcher.get_storage_path()
         if distdir_write is None:
             raise format.GenericBuildError("no usable distdir was found "
-                "for PORTAGE_ACTUAL_DISTDIR from fetcher %s" % self.fetcher)
+                "for PORTAGE_ACTUAL_DISTDIR from fetcher %s" % self.domain.fetcher)
         self.env["PORTAGE_ACTUAL_DISTDIR"] = distdir_write
         self.env["DISTDIR"] = normpath(
             pjoin(self.builddir, "distdir"))
@@ -622,11 +619,8 @@ class buildable(ebd, setup_mixin, format.build):
             self.env[x] = os.path.realpath(self.env[x]).rstrip("/") + "/"
 
     def setup_distfiles(self):
-        # added to protect against no-auto usage in pebuild.
-        if not hasattr(self, 'files'):
-            self.fetch()
 
-        if self.files:
+        if self.verified_files:
             try:
                 if os.path.exists(self.env["DISTDIR"]):
                     if (os.path.isdir(self.env["DISTDIR"])
@@ -650,7 +644,7 @@ class buildable(ebd, setup_mixin, format.build):
             try:
                 for src, dest in [
                     (k, pjoin(self.env["DISTDIR"], v.filename))
-                    for (k, v) in self.files.items()]:
+                    for (k, v) in self.verified_files.iteritems()]:
                     os.symlink(src, dest)
 
             except OSError, oe:
@@ -855,12 +849,9 @@ class src_operations(ebuild_mixin, format.build_operations):
         self._use_override = use_override
         self._eclass_cache = eclass_cache
 
-    def _cmd_implementation_build(self, observer=None, clean=False):
-        if observer is None:
-            observer = self.observer
-        return buildable(self.domain, self.pkg,
+    def _cmd_implementation_build(self, observer, verified_files, clean=False):
+        return buildable(self.domain, self.pkg, verified_files,
             self._eclass_cache,
-            self._fetcher,
             use_override=self._use_override,
             clean=clean)
 

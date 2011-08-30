@@ -617,6 +617,7 @@ def main(options, out, err):
                 pkg = op.pkg
                 if buildop is not None:
                     out.write("building %s" % (op.pkg,))
+                    result = False
                     try:
                         result = buildop.finalize()
                     except format.errors, e:

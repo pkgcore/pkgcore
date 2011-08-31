@@ -96,8 +96,8 @@ def get_classes(configs):
 
 
 shared_options = (commandline.mk_argparser(domain=False, add_help=False),)
-argparse_parser = commandline.mk_argparser(suppress=True, parents=shared_options)
-subparsers = argparse_parser.add_subparsers(description="configuration related subcommands")
+argparser = commandline.mk_argparser(suppress=True, parents=shared_options)
+subparsers = argparser.add_subparsers(description="configuration related subcommands")
 classes = subparsers.add_parser("classes", parents=shared_options,
     description="list all classes referenced by the config")
 @classes.bind_main_func

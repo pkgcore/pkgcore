@@ -5,21 +5,21 @@
 
 """Update the plugin cache."""
 
-__all__ = ("argparse_parser", "main")
+__all__ = ("argparser", "main")
 
 from pkgcore.util import commandline
 from pkgcore import plugin, plugins
 from snakeoil import lists, currying
 
-argparse_parser = commandline.mk_argparser(config=False, domain=False, color=False,
+argparser = commandline.mk_argparser(config=False, domain=False, color=False,
     description = __doc__)
-argparse_parser.add_argument("packages", nargs="*", action='store',
+argparser.add_argument("packages", nargs="*", action='store',
     type=currying.partial(commandline.python_namespace_type, module=True),
     default=[plugins],
     help="python namespace(s) to regenerate plugins for.  If none are "
     "specified, pkgcore.plugins is updated")
 
-@argparse_parser.bind_main_func
+@argparser.bind_main_func
 def main(options, out, err):
     """Update caches."""
     if not options.packages:

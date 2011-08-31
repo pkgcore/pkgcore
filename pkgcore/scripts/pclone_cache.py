@@ -5,23 +5,23 @@
 
 """Clone a repository cache."""
 
-__all__ = ("argparse_parser", "main")
+__all__ = ("argparser", "main")
 
 import time
 
 from pkgcore.util import commandline
 
-argparse_parser = commandline.mk_argparser(domain=False, description=__doc__)
-argparse_parser.add_argument("--verbose", "-v", action='store_true',
+argparser = commandline.mk_argparser(domain=False, description=__doc__)
+argparser.add_argument("--verbose", "-v", action='store_true',
     help="print keys as they are processed")
-argparse_parser.add_argument("source", config_type='cache',
+argparser.add_argument("source", config_type='cache',
     action=commandline.StoreConfigObject,
     help="source cache to copy data from")
-argparse_parser.add_argument("target", config_type='cache',
+argparser.add_argument("target", config_type='cache',
     action=commandline.StoreConfigObject, writable=True,
     help="target cache to update.  Must be writable.")
 
-@argparse_parser.bind_main_func
+@argparser.bind_main_func
 def main(options, out, err):
     import pdb;pdb.set_trace()
     if options.target.readonly:

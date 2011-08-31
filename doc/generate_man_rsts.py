@@ -62,7 +62,7 @@ class ManConverter(object):
             trg_time = -1
 
         if cur_time != trg_time or force:
-            cls(base_path, out_name, module.argparse_parser, mtime=cur_time).run()
+            cls(base_path, out_name, module.argparser, mtime=cur_time).run()
 
     def __init__(self, base_path, name, parser, mtime=None, out_name=None):
         self.see_also = []

@@ -22,8 +22,8 @@ demandload(globals(),
 )
 
 shared = (commandline.mk_argparser(domain=False, add_help=False),)
-argparse_parser = commandline.mk_argparser(suppress=True, parents=shared)
-subparsers = argparse_parser.add_subparsers(description="report applets")
+argparser = commandline.mk_argparser(suppress=True, parents=shared)
+subparsers = argparser.add_subparsers(description="report applets")
 
 pkgsets = subparsers.add_parser("pkgsets", description="pkgset related introspection")
 mux = pkgsets.add_mutually_exclusive_group()

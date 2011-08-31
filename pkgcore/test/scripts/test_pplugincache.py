@@ -9,7 +9,7 @@ from pkgcore.test.scripts import helpers
 
 class CommandlineTest(TestCase, helpers.ArgParseMixin):
 
-    _argparser = pplugincache.argparse_parser
+    _argparser = pplugincache.argparser
 
     has_config = False
 

@@ -5,7 +5,7 @@
 
 """Low-level ebuild operations."""
 
-__all__ = ("argparse_parser", "main")
+__all__ = ("argparser", "main")
 
 from pkgcore.util import commandline
 from pkgcore.ebuild import atom, errors
@@ -13,15 +13,15 @@ from pkgcore.operations import observer
 from snakeoil.compatibility import all
 
 
-argparse_parser = commandline.mk_argparser(description=__doc__)
-argparse_parser.add_argument("--no-auto", action='store_true', default=False,
+argparser = commandline.mk_argparser(description=__doc__)
+argparser.add_argument("--no-auto", action='store_true', default=False,
     help="run just the specified phases; it's up to the invoker to get the order right")
-argparse_parser.add_argument('atom', type=atom.atom,
+argparser.add_argument('atom', type=atom.atom,
     help="atom to match a pkg to execute phases from")
-argparse_parser.add_argument('phase', nargs='+',
+argparser.add_argument('phase', nargs='+',
     help="phases to run")
 
-@argparse_parser.bind_main_func
+@argparser.bind_main_func
 def main(options, out, err):
     pkgs = options.domain.all_repos.match(options.atom)
     if not pkgs:

@@ -10,7 +10,7 @@ from pkgcore.test.scripts import helpers
 
 class CommandlineTest(TestCase, helpers.ArgParseMixin):
 
-    _argparser = filter_env.argparse_parser
+    _argparser = filter_env.argparser
 
     def test_option_parser(self):
         self.assertError(

@@ -18,7 +18,7 @@ class Cache(object):
 
 class CommandlineTest(TestCase, helpers.ArgParseMixin):
 
-    _argparser = pclone_cache.argparse_parser
+    _argparser = pclone_cache.argparser
 
     def test_parser(self):
         self.assertError(

@@ -4,7 +4,7 @@
 
 """Commandline interface to :obj:`pkgcore.ebuild.filter_env`."""
 
-__all__ = ("argparse_parser", "main")
+__all__ = ("argparser", "main")
 
 import sys
 
@@ -13,12 +13,12 @@ from pkgcore.util import commandline
 from pkgcore.ebuild import filter_env
 from pkgcore.log import logger
 
-argparse_parser = commandline.mk_argparser(config=False, domain=False, color=False)
-argparse_parser.add_argument('-V', '--var-match', action='store_true',
+argparser = commandline.mk_argparser(config=False, domain=False, color=False)
+argparser.add_argument('-V', '--var-match', action='store_true',
     default=False,
     help="Invert the filtering- instead of removing a var if it matches "
     "remove all vars that do not match")
-argparse_parser.add_argument('-F', '--func-match', action='store_true',
+argparser.add_argument('-F', '--func-match', action='store_true',
     default=False,
     help="Invert the filtering- instead of removing a function if it matches "
     "remove all functions that do not match")
@@ -28,17 +28,17 @@ def stdin_default(namespace, attr):
         raise ValueError("Refusing to read from stdin since it's a TTY")
     setattr(namespace, attr, sys.stdin)
 
-argparse_parser.add_argument('--input', '-i', action='store',
+argparser.add_argument('--input', '-i', action='store',
     type=commandline.argparse.FileType(), default=commandline.DelayedValue(stdin_default, 0),
     help='Filename to read the env from (uses stdin if omitted).')
-argparse_parser.add_argument('--funcs', '-f', action=commandline.ExtendCommaDelimited,
+argparser.add_argument('--funcs', '-f', action=commandline.ExtendCommaDelimited,
     help="commad seperated list of regexes to match function names against for filtering")
-argparse_parser.add_argument('--vars', '-v', action=commandline.ExtendCommaDelimited,
+argparser.add_argument('--vars', '-v', action=commandline.ExtendCommaDelimited,
     help="commad seperated list of regexes to match variable names against for filtering")
-argparse_parser.add_argument('--print-vars', action='store_true', default=False,
+argparser.add_argument('--print-vars', action='store_true', default=False,
     help="print just the global scope environment variables that match")
 
-@argparse_parser.bind_main_func
+@argparser.bind_main_func
 def main(options, out, err):
     if options.debug:
         if options.funcs is None:

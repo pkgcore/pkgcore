@@ -40,9 +40,9 @@ def format_seq(seq, formatter=repr):
 
 
 shared_options = (commandline.mk_argparser(domain=False, add_help=False),)
-argparse_parser = commandline.mk_argparser(suppress=True, parents=shared_options,
+argparser = commandline.mk_argparser(suppress=True, parents=shared_options,
     description="commandline access to various system/repository maintenance functionality")
-subparsers = argparse_parser.add_subparsers(description="general system maintenance")
+subparsers = argparser.add_subparsers(description="general system maintenance")
 
 
 # inconsistant argparse POS; needed due to nargs='*', it tries supplying the

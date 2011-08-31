@@ -9,7 +9,7 @@ from pkgcore.test.scripts import helpers
 
 class CommandlineTest(TestCase, helpers.ArgParseMixin):
 
-    _argparser = pebuild.argparse_parser
+    _argparser = pebuild.argparser
 
     suppress_domain = True
 

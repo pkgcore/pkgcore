@@ -6,4 +6,4 @@ from pkgcore.scripts import filter_env
 from pkgcore.util import commandline
 
 if __name__ == '__main__':
-    commandline.main(filter_env.argparse_parser)
+    commandline.main(filter_env.argparser)

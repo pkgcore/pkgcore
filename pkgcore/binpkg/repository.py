@@ -204,9 +204,6 @@ class StackedCache(StackedDict):
 
     __externally_mutable__ = True
 
-    def __init__(self, cache_entry, xpak):
-        StackedDict.__init__(self, cache_entry, xpak)
-
     def __delitem__(self, key):
         self._dicts[0].pop(key)
 

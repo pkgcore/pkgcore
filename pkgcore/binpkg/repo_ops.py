@@ -35,7 +35,7 @@ def discern_loc(base, pkg, extension='.tbz2'):
 _metadata_rewrites = {
     "depends":"DEPEND", "rdepends":"RDEPEND", "post_rdepends":"PDEPEND",
     "use":"USE", "eapi_obj":"EAPI", "CONTENTS":"contents", "provides":"PROVIDE",
-    "source_repository":"repo",
+    "source_repository":"REPO",
 }
 
 def generate_attr_dict(pkg, portage_compatible=True):

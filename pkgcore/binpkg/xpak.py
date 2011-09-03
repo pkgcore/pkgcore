@@ -41,6 +41,8 @@ class Xpak(object):
 
     __metaclass__ = autoconvert_py3k_methods_metaclass
 
+    _reading_key_rewrites = {'repo':'REPO'}
+
     trailer_pre_magic = "XPAKSTOP"
     trailer_post_magic = "STOP"
     trailer = struct.Struct(">%isL%is" % (
@@ -147,6 +149,7 @@ class Xpak(object):
         index_start, index_len, data_len = self._check_magic(fd)
         data_start = index_start + index_len
         keys_dict = OrderedDict()
+        key_rewrite = self._reading_key_rewrites.get
         while index_len:
             key_len = struct.unpack(">L", fd.read(4))[0]
             key = fd.read(key_len)
@@ -162,6 +165,7 @@ class Xpak(object):
                 raise_from(MalformedXpak(
                     "key %i, tried reading data offset/len but hit EOF" % (
                         len(keys_dict) + 1)))
+            key = key_rewrite(key, key)
             keys_dict[key] = (data_start + offset, data_len,
                 compatibility.is_py3k and not key.startswith("environment"))
             index_len -= (key_len + 12) # 12 for key_len, offset, data_len longs

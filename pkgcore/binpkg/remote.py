@@ -25,6 +25,7 @@ demandload(globals(), 'errno',
     'snakeoil.osutils:readlines',
     'operator:itemgetter',
     'pkgcore:log',
+    'time:time',
 )
 
 
@@ -77,15 +78,17 @@ class PackagesCacheV0(cache.bulk):
         'FEATURES':'UPSTREAM_FEATURES',
         'ACCEPT_KEYWORDS':'KEYWORDS'})
 
-    _deserialize_map = {'DESC':'DESCRIPTION', 'MTIME':'mtime'}
+    # this maps from literal keys in the cache to .data[key] expected forms
+    _deserialize_map = {'DESC':'DESCRIPTION', 'MTIME':'mtime', 'repo':'REPO'}
+    # this maps from .attr to data items.
     _serialize_map   = {"DEPENDS": "DEPEND", "RDEPENDS": "RDEPEND",
         "POST_RDEPENDS":"POST_RDEPEND", "DESCRIPTION":"DESC", 'mtime':'MTIME',
-        "source_repository":"repo"}
+        "source_repository":"REPO"}
     deserialized_inheritable = frozenset(('CBUILD', 'CHOST', 'source_repository'))
     _pkg_attr_sequences = ('use', 'keywords', 'iuse')
     _deserialized_defaults = dict.fromkeys(('BUILD_TIME', 'DEPEND', 'IUSE', 'KEYWORDS',
         'LICENSE', 'PATH', 'PDEPEND', 'PROPERTIES', 'PROVIDE', 'RDEPEND',
-        'USE', 'DEFINED_PHASES', 'CHOST', 'CBUILD', 'DESC', 'repo',
+        'USE', 'DEFINED_PHASES', 'CHOST', 'CBUILD', 'DESC', 'REPO',
         'DESCRIPTION'),
         '')
     _deserialized_defaults.update({'EAPI':'0', 'SLOT':'0'})
@@ -152,7 +155,8 @@ class PackagesCacheV0(cache.bulk):
 
     @classmethod
     def _assemble_preamble_dict(cls, target_dicts):
-        preamble = {'VERSION':cls.version, 'PACKAGES':len(target_dicts)}
+        preamble = {'VERSION':cls.version, 'PACKAGES':len(target_dicts),
+            'TIMESTAMP':str(int(time()))}
         for key in cls.deserialized_inheritable:
             try:
                 preamble[key] = find_best_savings(
@@ -203,8 +207,10 @@ class PackagesCacheV0(cache.bulk):
     def _serialize_to_handle(self, data, handler):
         preamble = self._assemble_preamble_dict(data)
 
+        convert_key = self._serialize_map.get
+
         for key in sorted(preamble):
-            handler.write("%s: %s\n" % (key, preamble[key]))
+            handler.write("%s: %s\n" % (convert_key(key, key), preamble[key]))
         handler.write('\n')
 
         spacer = ' '
@@ -214,7 +220,7 @@ class PackagesCacheV0(cache.bulk):
         vkeys = self._known_keys
         for cpv, pkg_data in sorted(data, key=itemgetter(0)):
             handler.write("CPV:%s%s\n" % (spacer, cpv))
-            data = [(self._serialize_map.get(key, key), value)
+            data = [(convert_key(key, key), value)
                 for key, value in pkg_data.iteritems()]
             for write_key, value in sorted(data):
                 if write_key not in vkeys:

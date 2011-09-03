@@ -809,7 +809,7 @@ class binpkg_localize(ebd, setup_mixin, format.build):
     _built_class = ebuild_built.package
 
     def __init__(self, domain, pkg, **kwargs):
-        format.build.__init__(self, domain, pkg, observer=kwargs.get("observer",None))
+        format.build.__init__(self, domain, pkg, {}, observer=kwargs.get("observer",None))
         ebd.__init__(self, pkg, **kwargs)
         if self.eapi_obj.options.has_merge_type:
             self.env["MERGE_TYPE"] = "binpkg"

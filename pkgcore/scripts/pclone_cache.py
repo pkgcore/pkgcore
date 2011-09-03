@@ -23,7 +23,6 @@ argparser.add_argument("target", config_type='cache',
 
 @argparser.bind_main_func
 def main(options, out, err):
-    import pdb;pdb.set_trace()
     if options.target.readonly:
         self.error("can't update cache label '%s', it's marked readonly." %
         (options.target,))

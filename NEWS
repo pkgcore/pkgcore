@@ -4,6 +4,23 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+pkgcore 0.7.1: Sep 3rd, 2011
+
+* add TIMESTAMP header to binpkg Packages cache.
+
+* mangle and add compatibility to source_repository handling to make
+  it play nice w/ past transgressions, and generate in a form portage
+  will like.
+
+* fix traceback in binpkg installation
+
+* fix pclone_cache hang
+
+* suppress spurious slot shadowing test failure; occurs dependant on
+  GC behaviour, the complaint however doesn't matter (it false-negatives
+  on a mock object used for tests).
+
+
 pkgcore 0.7: Sep 2nd, 2011
 
 * pmaint regen now supports regenerating binary and install repository

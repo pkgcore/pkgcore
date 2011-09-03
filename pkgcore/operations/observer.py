@@ -122,7 +122,7 @@ class repo_observer(phase_observer):
 
 def wrap_build_method(phase, method, self, *args, **kwds):
     disable_observer = kwds.pop("disable_observer", False)
-    if self.observer is None or disable_observer:
+    if not hasattr(self.observer, 'phase_start') or disable_observer:
         return method(self, *args, **kwds)
     self.observer.phase_start(phase)
     ret = False
@@ -136,5 +136,3 @@ def decorate_build_method(phase):
     def f(func):
         return pre_curry(wrap_build_method, phase, func)
     return f
-
-

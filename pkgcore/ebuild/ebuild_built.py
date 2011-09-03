@@ -30,7 +30,10 @@ def passthrough(inst, attr):
     return inst.data[attr]
 
 def passthrough_repo(inst):
-    return inst.data['repo'].strip()
+    repo = inst.data.get('REPO')
+    if repo:
+        return repo.strip()
+    return None
 
 def flatten_depset(inst, conditionals):
     return inst.evaluate_depset(conditionals)

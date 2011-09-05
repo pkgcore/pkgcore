@@ -59,7 +59,7 @@ def _load_and_invoke(func, filename, handler, fallback, read_func, self):
         if handler:
             data = handler(data)
         return func(self, data)
-    except (KeyboardInterrupt, RuntimeError, SystemExit):
+    except compatibility.IGNORED_EXCEPTIONS:
         raise
     except ProfileError:
         # no point in wrapping/throwing..

@@ -6,11 +6,13 @@ import Queue
 import threading
 import itertools
 
+from snakeoil import compatibility
+
 def regen_iter(iterable, observer, attribute):
     for x in iterable:
         try:
             getattr(x, attribute)
-        except (KeyboardInterrupt, RuntimeError, SystemExit):
+        except compatibility.IGNORED_EXCEPTIONS:
             raise
         except Exception, e:
             observer.error("caught exception %s for %s" % (e, x))
@@ -19,7 +21,7 @@ def reclaim_threads(threads, observer):
     for x in threads:
         try:
             x.join()
-        except (KeyboardInterrupt, RuntimeError, SystemExit):
+        except compatibility.IGNORED_EXCEPTIONS:
             raise
         except Exception, e:
             observer.error("caught exception %s reclaiming thread" % (e,))

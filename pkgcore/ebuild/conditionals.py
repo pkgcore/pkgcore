@@ -16,7 +16,7 @@ from snakeoil.iterables import expandable_chain
 from snakeoil.lists import iflatten_instance
 from pkgcore.ebuild.atom import atom, transitive_use_atom
 from pkgcore.ebuild.errors import ParseError
-from snakeoil.compatibility import any, raise_from
+from snakeoil.compatibility import any, raise_from, IGNORED_EXCEPTIONS
 
 try:
     from pkgcore.ebuild._depset import parse_depset
@@ -178,7 +178,7 @@ class DepSet(boolean.AndRestriction):
                     depsets[-1].append(element_func(k))
 
 
-        except (RuntimeError, SystemExit, KeyboardInterrupt):
+        except IGNORED_EXCEPTIONS:
             raise
         except IndexError:
             # [][-1] for a frame access, which means it was a parse error.

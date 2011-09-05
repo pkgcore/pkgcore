@@ -15,7 +15,7 @@ __all__ = ("ebd", "setup_mixin", "install_op", "uninstall_op", "replace_op",
 import os, errno, shutil
 
 from snakeoil import data_source
-from snakeoil.compatibility import raise_from
+from snakeoil.compatibility import raise_from, IGNORED_EXCEPTIONS
 from pkgcore.ebuild.processor import \
     request_ebuild_processor, release_ebuild_processor, \
     expected_ebuild_env, chuck_UnhandledCommand, \
@@ -421,7 +421,7 @@ def run_generic_phase(pkg, phase, env, userpriv, sandbox, fakeroot,
     except Exception, e:
         ebd.shutdown_processor()
         release_ebuild_processor(ebd)
-        if isinstance(e, (SystemExit, format.GenericBuildError)):
+        if isinstance(e, IGNORED_EXCEPTIONS + (format.GenericBuildError,)):
             raise
         raise_from(
             format.GenericBuildError("Executing phase %s: Caught exception: "

@@ -21,6 +21,7 @@ from pkgcore.merge import errors
 from pkgcore.operations import observer as observer_mod
 from pkgcore.merge.const import REPLACE_MODE, INSTALL_MODE, UNINSTALL_MODE
 
+from snakeoil import compatibility
 from snakeoil.mappings import LazyValDict, ImmutableDict, StackedDict
 from snakeoil import currying, data_source
 from snakeoil.osutils import normpath, pjoin
@@ -327,7 +328,7 @@ class MergeEngine(object):
                 try:
                     try:
                         trigger(self, self.csets)
-                    except (RuntimeError, SystemExit, KeyboardInterrupt):
+                    except compatibility.IGNORED_EXCEPTIONS:
                         raise
                     except errors.BlockModification, e:
                         self.observer.error("modification was blocked by "

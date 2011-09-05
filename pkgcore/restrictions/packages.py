@@ -6,7 +6,7 @@ restriction classes designed for package level matching
 """
 
 from pkgcore.restrictions import restriction, boolean
-from snakeoil.compatibility import any, is_py3k
+from snakeoil.compatibility import any, is_py3k, IGNORED_EXCEPTIONS
 from snakeoil.klass import generic_equality, static_attrgetter
 from snakeoil.demandload import demandload
 from operator import attrgetter
@@ -46,7 +46,7 @@ class native_PackageRestriction(object):
     def _pull_attr(self, pkg):
         try:
             return self._pull_attr_func(pkg)
-        except (KeyboardInterrupt, RuntimeError, SystemExit):
+        except IGNORED_EXCEPTIONS:
             raise
         except Exception, e:
             if self._handle_exception(pkg, e, self._attr_split):
@@ -196,7 +196,7 @@ class native_PackageRestrictionMulti(native_PackageRestriction):
         try:
             for attr_func in self._pull_attr_func:
                 val.append(attr_func(pkg))
-        except (KeyboardInterrupt, RuntimeError, SystemExit):
+        except IGNORED_EXCEPTIONS:
             raise
         except Exception, e:
             if self._handle_exception(pkg, e,

@@ -19,7 +19,7 @@ from pkgcore.restrictions import packages, values
 from pkgcore.restrictions.boolean import AndRestriction, OrRestriction
 
 from snakeoil import lists, currying
-from snakeoil.compatibility import any
+from snakeoil.compatibility import any, IGNORED_EXCEPTIONS
 from pkgcore.resolver.util import reduce_to_failures
 
 class OptionParser(commandline.OptionParser):
@@ -601,7 +601,7 @@ def main(options, out, err):
                 out.write("\n%i files required-" % len(op.pkg.fetchables))
                 try:
                     ret = pkg_ops.run_if_supported("fetch", or_return=True)
-                except (SystemExit, KeyboardInterrupt):
+                except IGNORED_EXCEPTIONS:
                     raise
                 except Exception, e:
                     ret = e

@@ -13,6 +13,7 @@ __all__ = ("BaseError", "TypeDefinitionError", "ConfigurationError", "ParsingErr
     "PermissionError", "PermissionDeniedError",
 )
 
+from snakeoil import compatibility
 from snakeoil.demandload import demandload
 demandload(globals(),
     "snakeoil.currying:pretty_docs,post_curry",
@@ -93,7 +94,7 @@ class ParsingError(ConfigurationError):
         def f(*args, **kwargs):
             try:
                 return functor(*args, **kwargs)
-            except (RuntimeError, SystemExit, KeyboardInterrupt):
+            except compatibility.IGNORED_EXCEPTIONS:
                 raise
             except Exception, e:
                 if isinstance(e, BaseError):

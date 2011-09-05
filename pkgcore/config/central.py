@@ -10,7 +10,7 @@ A lot of extra documentation on this is in dev-notes/config.rst.
 __all__ = ("CollapsedConfig", "ConfigManager",)
 
 from pkgcore.config import errors, basics
-from snakeoil import mappings
+from snakeoil import mappings, compatibility
 
 
 class _ConfigMapping(mappings.DictMixin):
@@ -143,7 +143,7 @@ class CollapsedConfig(object):
                 e.pargs = pargs
                 e.kwargs = configdict
             raise
-        except (RuntimeError, SystemExit, KeyboardInterrupt):
+        except compatibility.IGNORED_EXCEPTIONS:
             raise
         except Exception, e:
             if self.debug:

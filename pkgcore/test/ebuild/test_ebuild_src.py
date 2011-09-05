@@ -94,7 +94,7 @@ class test_base(TestCase):
         self.assertEqual(sorted(o.restrict.evaluate_depset([])),
             ['dar'])
         # ensure restrict doesn't have || () in it
-        self.assertRaises(ebuild_errors.ParseError, getattr,
+        self.assertRaises(errors.MetadataException, getattr,
             self.get_pkg({'RESTRICT':'|| ( foon dar )'}), 'restrict')
 
     def test_eapi(self):

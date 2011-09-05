@@ -9,10 +9,11 @@ Right now, doesn't provide much, need to change that down the line
 
 __all__ = ("base", "wrapper", "dynamic_getattr_dict")
 
-from snakeoil.compatibility import cmp
+from snakeoil.compatibility import cmp, raise_from, IGNORED_EXCEPTIONS
 from snakeoil import klass
 
 from pkgcore.operations import format
+from pkgcore.package.errors import MetadataException
 
 class base(object):
 
@@ -79,9 +80,18 @@ class wrapper(base):
 
 
 def dynamic_getattr_dict(self, attr):
+    functor = self._get_attr.get(attr)
+    if functor is None:
+        raise AttributeError(self, attr)
     try:
-        val = self._get_attr[attr](self)
+        val = functor(self)
         object.__setattr__(self, attr, val)
         return val
-    except KeyError:
-        raise AttributeError(self, attr)
+    except IGNORED_EXCEPTIONS:
+        raise
+    except MetadataException, e:
+        if e.attr == attr:
+            raise
+        raise_from(MetadataException(self, attr, str(e)))
+    except Exception, e:
+        raise_from(MetadataException(self, attr, str(e)))

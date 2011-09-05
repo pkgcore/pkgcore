@@ -26,7 +26,7 @@ from pkgcore.ebuild import const, processor
 from snakeoil.mappings import IndeterminantDict
 from snakeoil.currying import alias_class_method, partial
 from snakeoil import klass
-from snakeoil.compatibility import intern, raise_from
+from snakeoil.compatibility import intern, raise_from, IGNORED_EXCEPTIONS
 
 from snakeoil.demandload import demandload
 demandload(globals(),
@@ -82,15 +82,15 @@ def generate_providers(self):
         raise_from(metadata_errors.MetadataException(self, "provide", str(p)))
 
 def generate_fetchables(self):
-    chksums_can_be_missing = bool(getattr(self.repo, '_allow_missing_chksums', False))
-    chksums = self.repo._get_digests(self, allow_missing=chksums_can_be_missing)
-
-    mirrors = getattr(self._parent, "mirrors", {})
-    default_mirrors = getattr(self._parent, "default_mirrors", None)
-    common = {}
-    func = partial(create_fetchable_from_uri, self, chksums,
-        chksums_can_be_missing, mirrors, default_mirrors, common)
     try:
+        chksums_can_be_missing = bool(getattr(self.repo, '_allow_missing_chksums', False))
+        chksums = self.repo._get_digests(self, allow_missing=chksums_can_be_missing)
+
+        mirrors = getattr(self._parent, "mirrors", {})
+        default_mirrors = getattr(self._parent, "default_mirrors", None)
+        common = {}
+        func = partial(create_fetchable_from_uri, self, chksums,
+            chksums_can_be_missing, mirrors, default_mirrors, common)
         d = conditionals.DepSet.parse(
             self.data.pop("SRC_URI", ""), fetchable, operators={},
             element_func=func,
@@ -98,8 +98,10 @@ def generate_fetchables(self):
         for v in common.itervalues():
             v.uri.finalize()
         return d
-    except conditionals.ParseError, p:
-        raise_from(metadata_errors.MetadataException(self, "src_uri", str(p)))
+    except IGNORED_EXCEPTIONS:
+        raise
+    except Exception, e:
+        raise_from(metadata_errors.MetadataException(self, "src_uri", str(e)))
 
 # utility func.
 def create_fetchable_from_uri(pkg, chksums, ignore_missing_chksums, mirrors,

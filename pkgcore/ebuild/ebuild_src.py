@@ -26,7 +26,7 @@ from pkgcore.ebuild import const, processor
 from snakeoil.mappings import IndeterminantDict
 from snakeoil.currying import alias_class_method, partial
 from snakeoil import klass
-from snakeoil.compatibility import intern, raise_from, IGNORED_EXCEPTIONS
+from snakeoil.compatibility import intern
 
 from snakeoil.demandload import demandload
 demandload(globals(),
@@ -36,19 +36,16 @@ demandload(globals(),
 
 
 def generate_depset(c, key, non_package_type, s, **kwds):
-    try:
-        if non_package_type:
-            return conditionals.DepSet.parse(s.data.pop(key, ""), c,
-                operators={"||":boolean.OrRestriction,
-                "":boolean.AndRestriction}, **kwds)
-        eapi_obj = s.eapi_obj
-        if eapi_obj is None:
-            raise metadata_errors.MetadataException(s, "eapi", "unsupported eapi")
-        kwds['element_func'] = eapi_obj.atom_kls
-        kwds['transitive_use_atoms'] = eapi_obj.options.transitive_use_atoms
-        return conditionals.DepSet.parse(s.data.pop(key, ""), c, **kwds)
-    except conditionals.ParseError, p:
-        raise_from(metadata_errors.MetadataException(s, str(key), str(p)))
+    if non_package_type:
+        return conditionals.DepSet.parse(s.data.pop(key, ""), c,
+            operators={"||":boolean.OrRestriction,
+            "":boolean.AndRestriction}, **kwds)
+    eapi_obj = s.eapi_obj
+    if eapi_obj is None:
+        raise metadata_errors.MetadataException(s, "eapi", "unsupported eapi")
+    kwds['element_func'] = eapi_obj.atom_kls
+    kwds['transitive_use_atoms'] = eapi_obj.options.transitive_use_atoms
+    return conditionals.DepSet.parse(s.data.pop(key, ""), c, **kwds)
 
 def _mk_required_use_node(data):
   if data[0] == '!':
@@ -56,15 +53,12 @@ def _mk_required_use_node(data):
   return values.ContainmentMatch(data,)
 
 def generate_required_use(self):
-    try:
-        return conditionals.DepSet.parse(self.data.pop("REQUIRED_USE", ""),
-            values.ContainmentMatch, operators={"||":boolean.OrRestriction,
-                "":boolean.AndRestriction,
-                "^^":boolean.JustOneRestriction},
-            element_func=_mk_required_use_node,
-            )
-    except conditionals.ParseError, p:
-        raise_from(metadata_errors.MetadatException(self, "REQUIRED_USE", str(p)))
+    return conditionals.DepSet.parse(self.data.pop("REQUIRED_USE", ""),
+        values.ContainmentMatch, operators={"||":boolean.OrRestriction,
+            "":boolean.AndRestriction,
+            "^^":boolean.JustOneRestriction},
+        element_func=_mk_required_use_node,
+        )
 
 def generate_providers(self):
     rdep = AndRestriction(self.versioned_atom)
@@ -73,35 +67,26 @@ def generate_providers(self):
     # re-enable license at some point.
     #, "license":self.license})
 
-    try:
-        return conditionals.DepSet.parse(
-            self.data.pop("PROVIDE", ""), virtual_ebuild, element_func=func,
-            operators={"":boolean.AndRestriction})
-
-    except conditionals.ParseError, p:
-        raise_from(metadata_errors.MetadataException(self, "provide", str(p)))
+    return conditionals.DepSet.parse(
+        self.data.pop("PROVIDE", ""), virtual_ebuild, element_func=func,
+        operators={"":boolean.AndRestriction})
 
 def generate_fetchables(self):
-    try:
-        chksums_can_be_missing = bool(getattr(self.repo, '_allow_missing_chksums', False))
-        chksums = self.repo._get_digests(self, allow_missing=chksums_can_be_missing)
+    chksums_can_be_missing = bool(getattr(self.repo, '_allow_missing_chksums', False))
+    chksums = self.repo._get_digests(self, allow_missing=chksums_can_be_missing)
 
-        mirrors = getattr(self._parent, "mirrors", {})
-        default_mirrors = getattr(self._parent, "default_mirrors", None)
-        common = {}
-        func = partial(create_fetchable_from_uri, self, chksums,
-            chksums_can_be_missing, mirrors, default_mirrors, common)
-        d = conditionals.DepSet.parse(
-            self.data.pop("SRC_URI", ""), fetchable, operators={},
-            element_func=func,
-            allow_src_uri_file_renames=self.eapi_obj.options.src_uri_renames)
-        for v in common.itervalues():
-            v.uri.finalize()
-        return d
-    except IGNORED_EXCEPTIONS:
-        raise
-    except Exception, e:
-        raise_from(metadata_errors.MetadataException(self, "src_uri", str(e)))
+    mirrors = getattr(self._parent, "mirrors", {})
+    default_mirrors = getattr(self._parent, "default_mirrors", None)
+    common = {}
+    func = partial(create_fetchable_from_uri, self, chksums,
+        chksums_can_be_missing, mirrors, default_mirrors, common)
+    d = conditionals.DepSet.parse(
+        self.data.pop("SRC_URI", ""), fetchable, operators={},
+        element_func=func,
+        allow_src_uri_file_renames=self.eapi_obj.options.src_uri_renames)
+    for v in common.itervalues():
+        v.uri.finalize()
+    return d
 
 # utility func.
 def create_fetchable_from_uri(pkg, chksums, ignore_missing_chksums, mirrors,

@@ -145,7 +145,7 @@ class operations(_operations_mod.base):
 
     def _get_observer(self, observer=None):
         if observer is None:
-            observer = observer_mod.repo_observer(observer_mod.null_output)
+            observer = observer_mod.repo_observer(observer_mod.null_output())
         return observer
 
     def _cmd_api_install(self, pkg, observer=None):

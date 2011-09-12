@@ -230,4 +230,7 @@ class operations_proxy(operations):
 
     def _setup_api(self):
         for op in self.raw_operations.enabled_operations:
-            setattr(self, op, klass.alias_attr('repo.raw_repo.operations.%s' % (op,)))
+            setattr(self, op, partial(self._proxy_op, op))
+
+    def _proxy_op(self, op_name, *args, **kwds):
+        return getattr(self.raw_operations, op_name)(*args, **kwds)

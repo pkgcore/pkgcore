@@ -357,7 +357,7 @@ class ConfiguredTree(configured.tree):
         scope_update = {'chost': chost}
         scope_update.update((x, domain_settings.get(x.upper(), chost))
             for x in ('cbuild', 'ctarget'))
-        scope_update['operations_callback'] = self._generate_operations
+        scope_update['operations_callback'] = self._generate_pkg_operations
 
         configured.tree.__init__(self, raw_repo, self.config_wrappables,
            pkg_kls_injections=scope_update)
@@ -378,7 +378,7 @@ class ConfiguredTree(configured.tree):
             "unchangable_settings": self._delayed_iuse(
                 self._get_delayed_immutable, pkg, immutable)}
 
-    def _generate_operations(self, domain, pkg, **kwds):
+    def _generate_pkg_operations(self, domain, pkg, **kwds):
         fetcher = self.fetcher_override
         if fetcher is None:
             fetcher = domain.fetcher

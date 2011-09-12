@@ -219,14 +219,15 @@ class operations_proxy(operations):
 
     # cache this; this is to prevent the target operations mutating resulting in
     # our proxy setup not matching the target.
-    raw_operations = klass.cached_property_named("raw_operations")(
-        klass.alias_attr("repo.operations.raw_operations"))
+    @klass.cached_property
+    def raw_operations(self):
+        return self.repo.raw_repo.operations
 
     @klass.cached_property
     def enabled_operations(self):
-        s = set(self.repo.operations.enabled_operations)
+        s = set(self.raw_operations.enabled_operations)
         return frozenset(self._apply_overrides(s))
 
     def _setup_api(self):
-        for op in self.enabled_operations:
-            setattr(self, op, klass.alias_attr('repo.operations.%s' % (op,)))
+        for op in self.raw_operations.enabled_operations:
+            setattr(self, op, klass.alias_attr('repo.raw_repo.operations.%s' % (op,)))

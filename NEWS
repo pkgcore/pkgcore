@@ -4,6 +4,9 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* operations proxy no longer triggers infinite recursion.
+
+
 pkgcore 0.7.1: Sep 3rd, 2011
 
 * add TIMESTAMP header to binpkg Packages cache.

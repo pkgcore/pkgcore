@@ -605,6 +605,8 @@ def main(subcommands, args=None, outfile=None, errfile=None,
     except KeyboardInterrupt:
         if getattr(options, 'debug', False):
             raise
+        errfile.write("keyboard interupted- exiting\n")
+        exitstatus = 1
     if out is not None:
         if exitstatus:
             out.title('%s failed' % (options.prog,))

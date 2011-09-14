@@ -4,6 +4,9 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* new pmaint 'mirror' command.  This is used for pulling down
+  all distfiles that could be required for a specific package.
+
 * operations proxy no longer triggers infinite recursion.
 
 

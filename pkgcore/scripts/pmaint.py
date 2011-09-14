@@ -261,3 +261,35 @@ def env_update_main(options, out, err):
         out.write("update ldso cache/elf hints for %r..." % (root,))
         merge_triggers.update_elf_hints(root)
     return 0
+
+
+mirror = subparsers.add_parser("mirror",
+    description="mirror the sources for a package in full- grab everything"
+    " that could be required",
+    parents=(commandline.mk_argparser(add_help=False),))
+mirror.add_argument("--ignore-failures", "-f", action='store_true',
+    default=False,
+    help="if a failure occurs, keep going.  If this option isn't given, it'll"
+    " stop at the first failure encountered")
+commandline.make_query(mirror, nargs='+', dest='query',
+    help="query of which packages to mirror")
+@mirror.bind_main_func
+def mirror_main(options, out, err):
+    domain = options.domain
+    warnings = False
+    for pkg in domain.all_repos.itermatch(options.query):
+        pkg_ops = domain.pkg_operations(pkg)
+        if not pkg_ops.supports("mirror"):
+            warnings = True
+            out.write("pkg %s doesn't support mirroring\n" % (pkg,))
+            continue
+        out.write("mirroring %s" % (pkg,))
+        if not pkg_ops.mirror():
+            out.error("pkg %s failed to mirror" % (pkg,))
+            if not options.ignore_failures:
+                return 2
+            out.info("ignoring..\n")
+            continue
+    if warnings:
+        return 1
+    return 0

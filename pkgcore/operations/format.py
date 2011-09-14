@@ -12,18 +12,25 @@ from pkgcore import operations as _operations_mod
 from snakeoil.dependant_methods import ForcedDepends
 from snakeoil import klass
 
+from snakeoil import demandload
+demandload.demandload(globals(),
+    'pkgcore:fetch@_fetch_module',
+    'snakeoil.lists:iflatten_instance',
+)
+
 
 class fetch_base(object):
 
-    def __init__(self, domain, pkg, fetcher):
+    def __init__(self, domain, pkg, fetchables, fetcher):
         self.verified_files = {}
         self._basenames = set()
         self.domain = domain
         self.pkg = pkg
+        self.fetchables = fetchables
         self.fetcher = fetcher
 
     def fetch_all(self, observer):
-        for fetchable in self.pkg.fetchables:
+        for fetchable in self.fetchables:
             if not self.fetch_one(fetchable, observer):
                 return False
         return True
@@ -84,13 +91,34 @@ class operations(_operations_mod.base):
     def _cmd_check_support_fetch(self):
         return self._find_fetcher() is not None
 
+    def _generate_fetchables(self, mirroring=False):
+        pkg = self.pkg
+        if not mirroring:
+            return pkg.fetchables
+        pkg = getattr(pkg, '_raw_pkg', pkg)
+        return tuple(iflatten_instance(pkg.fetchables,
+            _fetch_module.fetchable))
+
     @klass.cached_property
     def _fetch_op(self):
-        return self._fetch_kls(self.domain, self.pkg, self._find_fetcher())
+        return self._fetch_kls(self.domain, self.pkg,
+            self._generate_fetchables(),
+            self._find_fetcher())
+
+    @klass.cached_property
+    def _mirror_op(self):
+        return self._fetch_kls(self.domain, self.pkg,
+            self._generate_fetchables(mirroring=True),
+            self._find_fetcher())
 
     @_operations_mod.is_standalone
     def _cmd_api_fetch(self, observer=None):
         return self._fetch_op.fetch_all(
+            self._get_observer(observer))
+
+    @_operations_mod.is_standalone
+    def _cmd_api_mirror(self, observer=None):
+        return self._mirror_op.fetch_all(
             self._get_observer(observer))
 
     def _find_fetcher(self):

@@ -259,7 +259,7 @@ class UnconfiguredTree(syncable.tree_mixin, prototype.tree):
             package, "metadata.xml"))
 
     def _get_manifest(self, category, package):
-        return repo_objs.Manifest(pjoin(self.base, category, package,
+        return digest.Manifest(pjoin(self.base, category, package,
             "Manifest"), enforce_gpg=self.enable_gpg)
 
     def _get_digests(self, pkg, force_manifest1=False, allow_missing=False):

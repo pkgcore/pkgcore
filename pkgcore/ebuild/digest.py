@@ -6,7 +6,7 @@ ebuild tree manifest/digest support
 """
 
 __all__ = ("parse_digest", "serialize_digest", "serialize_manifest",
-    "parse_manifest")
+    "parse_manifest", "Manifest")
 
 from itertools import izip
 from os.path import basename, dirname, sep
@@ -23,6 +23,7 @@ from snakeoil.demandload import demandload
 demandload(globals(),
     "pkgcore:fetch",
     "snakeoil.lists:iflatten_instance",
+    'snakeoil:mappings',
     "errno",
 )
 
@@ -234,3 +235,41 @@ def parse_manifest(source, throw_errors=True, ignore_gpg=True,
             d = kls_override((k, kls(v)) for k, v in d.iteritems())
         ret.append(d)
     return ret, manifest_type
+
+
+class Manifest(object):
+
+    def __init__(self, source, enforce_gpg=False):
+        self._source = (source, not enforce_gpg)
+
+    def _pull_manifest(self):
+        if self._source is None:
+            return
+        source, gpg = self._source
+        data = parse_manifest(source, ignore_gpg=gpg,
+            kls_override=mappings.ImmutableDict)
+        self._dist, self._aux, self._ebuild, self._misc = data[0]
+        self._version = data[1]
+        self._source = None
+
+    @property
+    def version(self):
+        self._pull_manifest()
+        return self._version
+
+    @property
+    def required_files(self):
+        self._pull_manifest()
+        return mappings.StackedDict(self._ebuild, self._misc)
+
+    @property
+    def aux_files(self):
+        self._pull_manifest()
+        return self._aux
+
+    @property
+    def distfiles(self):
+        self._pull_manifest()
+        if self.version != 2:
+            raise TypeError("only manifest2 instances carry digest data")
+        return self._dist

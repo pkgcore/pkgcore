@@ -12,7 +12,7 @@ from pkgcore import fetch
 from pkgcore.package import errors
 from pkgcore.test import malleable_obj
 from pkgcore.test.ebuild.test_eclass_cache import FakeEclassCache
-from pkgcore.ebuild import ebuild_src, repo_objs, const, errors as ebuild_errors
+from pkgcore.ebuild import ebuild_src, digest, repo_objs, const, errors as ebuild_errors
 
 
 class test_base(TestCase):
@@ -294,7 +294,7 @@ class test_package(test_base):
     del x
 
     def test_manifest(self):
-        m = repo_objs.Manifest(None)
+        m = digest.Manifest(None)
         o = self.make_shared_pkg_data(manifest=m)
         self.assertIdentical(o.manifest, m)
 

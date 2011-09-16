@@ -28,47 +28,6 @@ digest_chksum = (
 
 files = ["Python-2.4.2.tar.bz2", "python-2.4-patches-1.tar.bz2"]
 
-class TestDigest(TestCase):
-
-    convert_source = staticmethod(lambda x:x)
-
-    def gen_digest(self, data=digest_contents, **flags):
-        fn = tempfile.mktemp()
-        open(fn, "w").write(data)
-        try:
-            return digest.parse_digest(self.convert_source(fn), **flags)
-        finally:
-            os.unlink(fn)
-
-    def test_parsing(self):
-        d = self.gen_digest()
-        self.assertEqual(sorted(d.keys()), sorted(files))
-        d2 = d["Python-2.4.2.tar.bz2"]
-        self.assertEqual(
-            sorted(d2.keys()), sorted(x[0] for x in digest_chksum))
-        for chf, expectedsum in digest_chksum:
-            self.assertEqual(d2[chf], expectedsum)
-        self.assertInstance(d2["size"], long)
-
-    def test_throw(self):
-        self.assertRaises(
-            ParseChksumError,
-            self.gen_digest, digest_contents+"\nMD5 asdfasdfasdfasdf")
-        self.assertEqual(2,
-            len(self.gen_digest(
-                    digest_contents+"\nMD5 asdfasdf", throw_errors=False)))
-        try:
-            d = tempfile.mkdtemp()
-            self.assertRaises(ParseChksumError,
-                digest.parse_digest, os.path.join(d, "foo"))
-        finally:
-            os.rmdir(d)
-
-
-class TestDigestDataSource(TestDigest):
-
-    convert_source = staticmethod(lambda x:local_source(x))
-
 
 # ripped straight from the glep
 pure_manifest2 = \
@@ -108,38 +67,18 @@ class TestManifest(TestCase):
         finally:
             os.unlink(fn)
 
-    def test_gpg_filtering(self, gpg_insert=True):
-        if gpg_insert:
-            data = digest_contents.split("\n")
-            s = "\n".join(data[0:2])
-            s += "\n%s\nasdf\n%s\n" % (gpg.sig_header, gpg.sig_footer)
-            s += "\n".join(data[2:])
-        else:
-            s = digest_contents
-        (dist, aux, ebuild, misc), version = self.get_manifest(s)
-        self.assertEqual(version, 1)
-        self.assertFalse(dist)
-        self.assertFalse(ebuild)
-        self.assertFalse(aux)
-        self.assertEqual(sorted(misc.keys()),
-            sorted(["Python-2.4.2.tar.bz2", "python-2.4-patches-1.tar.bz2"]))
-
-        d2 = misc["Python-2.4.2.tar.bz2"]
-
-        self.assertEqual(
-            sorted(d2.keys()), sorted(x[0] for x in digest_chksum))
-        for chf, expectedsum in digest_chksum:
-            self.assertEqual(d2[chf], expectedsum)
-        self.assertInstance(d2["size"], long)
-
-    def test_manifest1(self):
-        self.test_gpg_filtering(False)
+    def test_gpg_filtering(self):
+        # intentionally stick gpg signing midway through
+        data = pure_manifest2.split("\n")
+        s = "\n".join(data[0:2])
+        s += "\n%s\nasdf\n%s\n" % (gpg.sig_header, gpg.sig_footer)
+        s += "\n".join(data[2:])
+        # ensure it can parse it
+        (dist, aux, ebuild, misc) = self.get_manifest(s)
 
     def test_manifest2(self):
-        (dist, aux, ebuild, misc), version = \
+        (dist, aux, ebuild, misc) = \
             self.get_manifest(pure_manifest2)
-
-        self.assertEqual(version, 2)
 
         for dtype, d in (("DIST", dist), ("AUX", aux),
             ("EBUILD", ebuild), ("MISC", misc)):

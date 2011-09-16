@@ -262,14 +262,10 @@ class UnconfiguredTree(syncable.tree_mixin, prototype.tree):
         return digest.Manifest(pjoin(self.base, category, package,
             "Manifest"), enforce_gpg=self.enable_gpg)
 
-    def _get_digests(self, pkg, force_manifest1=False, allow_missing=False):
+    def _get_digests(self, pkg, allow_missing=False):
         try:
             manifest = pkg._shared_pkg_data.manifest
-            if manifest.version == 2 and not force_manifest1:
-                return manifest.distfiles
-            return digest.parse_digest(pjoin(
-                os.path.dirname(self._get_ebuild_path(pkg)), "files",
-                "digest-%s-%s" % (pkg.package, pkg.fullver)))
+            return manifest.distfiles
         except pkg_errors.ParseChksumError, e:
             if e.missing and allow_missing:
                 return {}

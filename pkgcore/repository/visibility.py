@@ -13,11 +13,9 @@ from pkgcore.operations.repo import operations_proxy
 from snakeoil.klass import GetAttrProxy
 # these tricks are to keep 2to3 from screwing up.
 from snakeoil import compatibility
-from itertools import ifilterfalse as filterfalse
+from itertools import ifilterfalse as filterfalse, ifilter
 if compatibility.is_py3k:
     ifilter = filter
-else:
-    from itertools import ifilter
 
 class filterTree(prototype.tree):
 

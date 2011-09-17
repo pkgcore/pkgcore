@@ -2,12 +2,10 @@
 
 import os
 import sys
-import errno
 import subprocess
-import unittest
 
-from distutils import core, ccompiler, log, errors
-from distutils.command import (build, build_py, build_ext,
+from distutils import core, log, errors
+from distutils.command import (build,
     build_scripts, install)
 from stat import ST_MODE
 
@@ -280,7 +278,6 @@ if not snk_distutils.is_py3k:
 
 name = 'pkgcore'
 from pkgcore.const import VERSION as version
-release = version
 
 cmdclass={
     'sdist': mysdist,
@@ -301,7 +298,6 @@ if BuildDoc:
         'source_dir': ('setup.py', 'doc'),
         }
 
-from pkgcore.const import VERSION
 core.setup(
     name=name,
     version=version,

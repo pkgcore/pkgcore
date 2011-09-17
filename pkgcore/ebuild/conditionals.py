@@ -39,6 +39,8 @@ class DepSet(boolean.AndRestriction):
 
     # do not enable instance caching w/out adjust evaluate_depset!
     __inst_caching__ = False
+    # stored for tests primarily
+    parse_depset = parse_depset
     if parse_depset is not None:
         parse_depset = staticmethod(parse_depset)
 

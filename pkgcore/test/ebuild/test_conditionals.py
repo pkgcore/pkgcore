@@ -3,11 +3,10 @@
 
 from pkgcore.test import TestCase
 from snakeoil.test import mk_cpy_loadable_testcase
-from snakeoil.compatibility import any
 from snakeoil.currying import post_curry
 from snakeoil.iterables import expandable_chain
 from snakeoil.lists import iflatten_instance
-from pkgcore.ebuild import conditionals, eapi
+from pkgcore.ebuild import conditionals
 from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.errors import ParseError
 from pkgcore.restrictions import boolean, packages

@@ -27,7 +27,7 @@ __all__ = (
 inactive_ebp_list = []
 active_ebp_list = []
 
-import pkgcore.spawn, os, signal, errno, sys
+import pkgcore.spawn, os, signal, errno
 from pkgcore import const, os_data
 from pkgcore.ebuild import const as e_const
 

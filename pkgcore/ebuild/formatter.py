@@ -312,7 +312,6 @@ class PortageFormatter(CountingFormatter):
         pkg_coloring = []
         if pkg_is_bold:
             pkg_coloring.append(out.bold)
-        l = []
         if op.desc == 'remove':
             pkg_coloring.insert(0, out.fg('red'))
             data += pkg_coloring + ['uninstall']

@@ -12,11 +12,9 @@ __all__ = ("make_wrapper",)
 from operator import attrgetter
 
 from snakeoil.containers import LimitedChangeSet, Unchangable
-from snakeoil.klass import GetAttrProxy
 from snakeoil.currying import partial
 
 from pkgcore.package.base import wrapper
-from pkgcore.operations import format
 
 from snakeoil.demandload import demandload
 demandload(globals(),

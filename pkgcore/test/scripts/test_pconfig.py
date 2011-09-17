@@ -3,7 +3,6 @@
 
 from pkgcore.test import TestCase
 from pkgcore.scripts import pconfig
-from pkgcore.util import commandline
 from pkgcore.test.scripts import helpers
 from pkgcore.config import configurable, basics, errors
 

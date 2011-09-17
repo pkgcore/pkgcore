@@ -1,7 +1,7 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
-import os, shutil, pwd
+import os, shutil
 from pkgcore.test import TestCase, SkipTest
 from snakeoil.test.mixins import TempDirMixin
 from snakeoil.osutils import pjoin

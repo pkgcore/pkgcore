@@ -17,7 +17,7 @@ from pkgcore.const import COPY_BINARY
 from pkgcore.plugin import get_plugin
 
 from snakeoil.currying import partial
-from snakeoil.osutils import ensure_dirs, pjoin, normpath, unlink_if_exists
+from snakeoil.osutils import ensure_dirs, pjoin, unlink_if_exists
 
 __all__ = [
     "merge_contents", "unmerge_contents", "default_ensure_perms",

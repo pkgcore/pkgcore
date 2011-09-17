@@ -11,7 +11,7 @@ __all__ = ("optimize_incrementals", "incremental_expansion_license",
 
 
 from pkgcore.restrictions import packages, restriction
-from pkgcore.ebuild.atom import atom
+from pkgcore.ebuild import atom
 
 from snakeoil import compatibility, mappings
 from snakeoil.lists import iflatten_instance
@@ -20,12 +20,10 @@ from snakeoil.sequences import namedtuple
 
 from itertools import chain
 
-from snakeoil.currying import partial, alias_class_method
+from snakeoil.currying import partial
 from snakeoil.demandload import demandload
 
 demandload(globals(),
-    'pkgcore.ebuild:atom',
-    'pkgcore.restrictions:packages',
     'snakeoil.iterables:chain_from_iterable',
 )
 
@@ -49,13 +47,11 @@ def optimize_incrementals(sequence):
     # identifying terminal points for incrementals; aka, -x x, 'x'
     # is the terminal point- no point in having -x.
     finalized = set()
-    result = []
     for item in reversed(sequence):
         if item[0] == '-':
             i = item[1:]
             if not i:
-                raise ValueError("%sencountered an incomplete negation, '-'"
-                    % (msg_prefix,))
+                raise ValueError("encountered an incomplete negation (just -, no flag)")
             if i == '*':
                 # seen enough.
                 yield item
@@ -391,7 +387,6 @@ class ChunkedDataDict(object):
     def _add_global(self, disabled, enabled, restrict=None):
         if not disabled and not enabled:
             return
-        global_settings = self._global_settings
         # discard current global in the mapping.
         disabled = set(disabled)
         enabled = set(enabled)

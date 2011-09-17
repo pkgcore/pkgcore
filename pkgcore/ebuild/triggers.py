@@ -26,7 +26,6 @@ from snakeoil.demandload import demandload
 demandload(globals(),
     "fnmatch",
     'pkgcore:os_data',
-    'pkgcore.merge.engine:map_new_cset_livefs',
     'snakeoil:compatibility',
 )
 
@@ -339,9 +338,6 @@ class preinst_contents_reset(triggers.base):
         if engine.offset != '/':
             cs = cs.insert_offset(engine.offset)
         cset.update(cs)
-        #cs = map_new_cset_livefs(engine, {'cset':cset}, 'cset')
-        #cset.clear()
-        #cset.update(cs)
 
 
 class collision_protect(triggers.base):

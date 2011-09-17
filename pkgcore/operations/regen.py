@@ -4,7 +4,6 @@
 import time
 import Queue
 import threading
-import itertools
 
 from snakeoil import compatibility
 

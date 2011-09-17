@@ -4,7 +4,7 @@
 from pkgcore.test import TestCase
 from pkgcore.ebuild import const
 from snakeoil.osutils import pjoin
-import os, sys
+import sys
 import subprocess
 
 class Test_DontExportFuncsList(TestCase):

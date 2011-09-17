@@ -8,7 +8,7 @@
 __all__ = ("CPV", "versioned_CPV", "unversioned_CPV")
 
 from itertools import izip
-from snakeoil.compatibility import all, cmp, is_py3k
+from snakeoil.compatibility import all, cmp
 from snakeoil.klass import inject_richcmp_methods_from_cmp
 from pkgcore.ebuild.errors import InvalidCPV
 
@@ -230,7 +230,6 @@ def native_ver_cmp(ver1, rev1, ver2, rev2):
         # OPT: Pull length calculation out of the loop
         ver_parts1_len = len(ver_parts1)
         ver_parts2_len = len(ver_parts2)
-        len_list = (ver_parts1_len, ver_parts2_len)
 
         # Iterate through the components
         for v1, v2 in izip(ver_parts1, ver_parts2):

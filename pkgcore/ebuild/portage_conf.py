@@ -12,7 +12,7 @@ __all__ = ("SecurityUpgradesViaProfile", "add_layman_syncers", "make_syncer",
 
 import os
 
-from pkgcore.config import basics, configurable, errors
+from pkgcore.config import basics, configurable
 from pkgcore.ebuild import const
 from pkgcore.pkgsets.glsa import SecurityUpgrades
 
@@ -290,9 +290,9 @@ def load_make_config(vars_dict, path, allow_sourcing=False, required=True,
             sourcing_command=sourcing_command)
     except EnvironmentError, ie:
         if ie.errno == errno.EACCES:
-            raise_from(errors.PermissionDeniedError(fp, write=False))
+            raise_from(errors.PermissionDeniedError(path, write=False))
         if ie.errno != errno.ENOENT or required:
-            raise_from(errors.ParsingError("parsing %r" % (fp,), exception=ie))
+            raise_from(errors.ParsingError("parsing %r" % (path,), exception=ie))
         return
 
     if incrementals:

@@ -12,7 +12,7 @@ __all__ = ("domain",)
 from snakeoil import klass
 from snakeoil.demandload import demandload
 demandload(globals(),
-    "pkgcore.repository:multiplex,util@repo_utils",
+    "pkgcore.repository:util@repo_utils",
     "pkgcore.operations:domain@domain_ops",
 
 )

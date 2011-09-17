@@ -21,11 +21,9 @@ demandload(globals(),
     'pkgcore.repository:multiplex',
     'pkgcore.package:mutated',
     'pkgcore.fs:contents,livefs',
-    'pkgcore.ebuild:atom,errors,digest,processor,triggers',
+    'pkgcore.ebuild:digest,processor,triggers',
     'pkgcore.merge:triggers@merge_triggers',
-    'pkgcore.restrictions.boolean:OrRestriction',
     'pkgcore.sync:base@sync_base',
-    'snakeoil.compatibility:any',
     're',
 )
 
@@ -64,7 +62,6 @@ sync.add_argument('repos', nargs='*', help="repositories to sync",
 @sync.bind_main_func
 def sync_main(options, out, err):
     """Update a local repositories to match their remote parent"""
-    config = options.config
     succeeded, failed = [], []
     seen = set()
     for name, repo in options.repos:

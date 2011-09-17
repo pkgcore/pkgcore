@@ -9,7 +9,6 @@ __all__ = ("pkgsets", "histo_data", "eapi_usage", "license_usage",
 from pkgcore.util import commandline
 from pkgcore.ebuild import portageq as _portageq
 from pkgcore.ebuild import inspect_profiles
-import os
 from snakeoil.demandload import demandload
 
 demandload(globals(),
@@ -43,7 +42,6 @@ def pkgsets_run(opts, out, err):
         else:
             opts.pkgsets = sorted(opts.config.pkgset)
 
-    missing = False
     for position, (set_name, pkgset) in enumerate(opts.pkgsets):
         if position:
             out.write()

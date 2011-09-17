@@ -12,7 +12,6 @@ import os
 from pkgcore.repository import prototype, errors
 from pkgcore.merge import triggers
 from pkgcore.plugin import get_plugin
-from pkgcore.ebuild.ebuild_built import pkg_uses_default_preinst
 from pkgcore.config import ConfigHint
 #needed to grab the PN
 from pkgcore.ebuild.cpv import versioned_CPV
@@ -20,7 +19,6 @@ from pkgcore.ebuild.errors import InvalidCPV
 from pkgcore.binpkg import repo_ops
 
 from snakeoil.compatibility import raise_from
-from snakeoil.currying import partial
 from snakeoil.mappings import DictMixin, StackedDict
 from snakeoil.osutils import listdir_dirs, listdir_files, access
 from snakeoil.osutils import join as pjoin
@@ -97,9 +95,7 @@ def wrap_factory(klass, *args, **kwds):
                                  engine_inst):
             if engine.UNINSTALL_MODE != engine_inst.mode and \
                 pkg == engine_inst.new and \
-                pkg.repo is engine_inst.new.repo and \
-                True:
-#                not pkg_uses_default_preinst(pkg):
+                pkg.repo is engine_inst.new.repo:
                 t = force_unpacking(op_inst.format_op)
                 t.register(engine_inst)
 
@@ -179,7 +175,7 @@ class StackedXpakDict(DictMixin):
     def __setitem__(self, key, val):
         if key in ("contents", "environment"):
             setattr(self, key, val)
-            self._wipes.discard(remove)
+            self._wipes.discard(key)
         else:
             self.xpak[key] = val
         return val
@@ -324,7 +320,7 @@ class tree(prototype.tree):
             cache_data = self.cache[pkg.cpvstr]
             if int(cache_data['mtime']) != int(xpak.mtime):
                 raise KeyError
-        except KeyError, ke:
+        except KeyError:
             cache_data = self.cache.update_from_xpak(pkg, xpak)
         obj = StackedCache(cache_data, xpak)
         return obj

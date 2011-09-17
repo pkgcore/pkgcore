@@ -7,6 +7,12 @@ from snakeoil.currying import post_curry, partial
 from pkgcore.fs import fs, contents
 from snakeoil.osutils import pjoin
 
+mk_file = partial(fs.fsFile, strict=False)
+mk_dir  = partial(fs.fsDir, strict=False)
+mk_link = partial(fs.fsLink, strict=False)
+mk_dev  = partial(fs.fsDev, strict=False)
+mk_fifo = partial(fs.fsFifo, strict=False)
+
 for x in ("File", "Dir", "Link", "Dev", "Fifo"):
     globals()["mk_" + x.lower()] = partial(getattr(fs, "fs%s" % x),
         strict=False)
@@ -236,7 +242,6 @@ class TestContentsSet(TestCase):
 
 
     def test_child_nodes(self):
-        cset = contents.contentsSet
         self.assertEqual(sorted(['/usr', '/usr/bin', '/usr/foo']),
             sorted(x.location for x in contents.contentsSet(
                 [self.mk_dir("/usr"), self.mk_dir("/usr/bin"),

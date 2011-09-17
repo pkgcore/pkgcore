@@ -9,7 +9,7 @@ __all__ = ("GlsaDirSet", "SecurityUpgrades")
 
 import os
 
-from pkgcore.restrictions import packages, restriction, boolean, values
+from pkgcore.restrictions import packages, restriction, values
 from pkgcore.config import ConfigHint
 
 from snakeoil.osutils import listdir_files, join as pjoin

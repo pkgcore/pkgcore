@@ -185,7 +185,7 @@ class OptparseOptionsTest(TestCase):
 
         try:
             parser.parse_args(["--testing=invalid"])
-        except helpers.Error, e:
+        except helpers.Error:
             pass
         else:
             self.fail("no error message thrown for --testing=invalid")
@@ -278,7 +278,7 @@ class ArgparseOptionsTest(TestCase):
 
         try:
             parser.parse_args(["--testing=invalid"])
-        except helpers.Error, e:
+        except helpers.Error:
             pass
         else:
             self.fail("no error message thrown for --testing=invalid")

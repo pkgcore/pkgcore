@@ -69,7 +69,6 @@ class OverlayRepo(prototype.tree):
     def _get_versions(self, catpkg):
         ver_owners = {}
         fails = 0
-        i = iter(self._rv_trees)
         for tree in self._rv_trees:
             new_vers = tree.versions.get(catpkg)
             if new_vers is not None:

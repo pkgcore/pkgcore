@@ -11,7 +11,6 @@ from time import time
 
 from pkgcore.util import commandline, parserestrict, repo_utils
 from pkgcore.ebuild import resolver
-from pkgcore.repository import multiplex
 from pkgcore.operations import observer, format
 from pkgcore.ebuild.atom import atom
 from pkgcore.merge import errors as merge_errors
@@ -466,7 +465,6 @@ def main(options, out, err):
     resolve_time = time()
     out.title('Resolving...')
     out.write(out.bold, ' * ', out.reset, 'Resolving...')
-    orig_atoms = atoms[:]
     ret = resolver_inst.add_atoms(atoms, finalize=True)
     while ret:
         out.error('resolution failed')

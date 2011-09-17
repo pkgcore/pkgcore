@@ -59,7 +59,7 @@ class Test_MergeEngineCsets(TestCase):
 
         self.assertCsetEqual(self.simple_cset, run(engine, 'new_cset'))
         engine.offset = '/foon/'
-        new_cset = run(engine, 'new_cset')
+        run(engine, 'new_cset')
         self.assertCsetEqual(self.simple_cset.insert_offset(engine.offset),
             run(engine, 'new_cset'))
 

@@ -12,9 +12,9 @@ from pkgcore.restrictions import packages, values, restriction
 from pkgcore.repository import misc, multiplex, visibility
 from pkgcore.resolver import state
 
-from snakeoil.currying import partial, post_curry
+from snakeoil.currying import partial
 from snakeoil.compatibility import any, cmp, sort_cmp
-from snakeoil.iterables import caching_iter, iter_sort
+from snakeoil.iterables import caching_iter
 
 
 limiters = set(["cycle"])#, None])
@@ -184,7 +184,6 @@ class resolver_stack(deque):
             if key == frame.current_pkg.key and slot == frame.current_pkg.slot)
 
     def _cycles(self, trg_frame, start=0, reverse=False, skip_trg_frame=True):
-        i = self.filter_ignored(self)
         if reverse:
             i = self.filter_ignored(reversed(self))
         else:
@@ -196,10 +195,10 @@ class resolver_stack(deque):
         return i
 
     def index(self, frame, start=0, stop=None):
+        i = self
         if start != 0 or stop is not None:
-            i = slice(self, start, stop)
-        else:
-            i = self
+            i = slice(i, start, stop)
+
         for idx, x in enumerate(self):
             if x == frame:
                 return idx + start
@@ -478,7 +477,7 @@ class merge_plan(object):
         # this needs to be *far* more fine grained also. it'll try
         # regardless of if it's cycle issue
         if not drop_cycles and self.drop_cycles:
-            stack.add_event(("cycle", cur_frame, "trying to drop any cycles"),)
+            stack.add_event(("cycle", stack.current_frame, "trying to drop any cycles"),)
             self._dprint("trying saving throw for %s ignoring cycles",
                    atom, "cycle")
             # note everything is retored to a pristine state prior also.

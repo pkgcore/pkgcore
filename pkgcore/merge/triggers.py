@@ -93,7 +93,7 @@ class base(object):
 
         # ok... so we care about this mode.
         try:
-            i = iter(self._hooks)
+            iter(self._hooks)
         except TypeError:
             # bad monkey...
             raise TypeError("%r: %r: _hooks needs to be a sequence" %

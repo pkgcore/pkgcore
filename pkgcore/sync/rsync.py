@@ -162,7 +162,6 @@ class rsync_timestamp_syncer(rsync_syncer):
             path = pjoin(self.basedir, "metadata", "timestamp.chk")
         try:
             date, offset = open(path).read().strip().rsplit('+', 1)
-            orig_date = date
             date = time.mktime(time.strptime(date, "%a, %d %b %Y %H:%M:%S "))
             # add the hour/minute offset.
             date += int(offset[:2] * 60) + int(offset[2:])

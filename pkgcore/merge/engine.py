@@ -24,7 +24,7 @@ from pkgcore.merge.const import REPLACE_MODE, INSTALL_MODE, UNINSTALL_MODE
 from snakeoil import compatibility
 from snakeoil.mappings import LazyValDict, ImmutableDict, StackedDict
 from snakeoil import currying, data_source
-from snakeoil.osutils import normpath, pjoin
+from snakeoil.osutils import normpath
 
 from snakeoil.demandload import demandload
 demandload(globals(),
@@ -393,7 +393,7 @@ class MergeEngine(object):
         if self.offset not in (None, '/') and strip_offset:
             rewrite = contents.change_offset_rewriter(self.offset, '/',
                 cset)
-            cset = contents.contentsSet(cset)
+            cset = contents.contentsSet(rewrite)
         return cset
 
     def get_writable_fsobj(self, fsobj, prefer_reuse=True, empty=False):

@@ -21,7 +21,7 @@ from pkgcore.restrictions import boolean, values
 from pkgcore.package.errors import MissingChksum
 from pkgcore.fetch.errors import UnknownMirror
 from pkgcore.fetch import fetchable, mirror, uri_list, default_mirror
-from pkgcore.ebuild import const, processor
+from pkgcore.ebuild import processor
 
 from snakeoil.mappings import IndeterminantDict
 from snakeoil.currying import alias_class_method, partial

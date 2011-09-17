@@ -39,7 +39,6 @@ class DepSet(boolean.AndRestriction):
 
     # do not enable instance caching w/out adjust evaluate_depset!
     __inst_caching__ = False
-    parse_depset = parse_depset
     if parse_depset is not None:
         parse_depset = staticmethod(parse_depset)
 
@@ -71,7 +70,6 @@ class DepSet(boolean.AndRestriction):
             # yes, this blocks non new style classes.  touch cookies.
             raise ValueError("element_class must be a new style class")
 
-        sf = object.__setattr__
         if element_func is None:
             element_func = element_class
 
@@ -196,7 +194,7 @@ class DepSet(boolean.AndRestriction):
 
         if transitive_use_atoms and not node_conds:
             # localize to this scope for speed.
-            kls = transitive_use_atom
+            element_class = transitive_use_atom
             # we can't rely on iter(self) here since it doesn't
             # descend through boolean restricts.
             node_conds = cls._has_transitive_use_atoms(restrictions)

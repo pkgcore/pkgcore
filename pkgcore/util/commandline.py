@@ -31,13 +31,11 @@ from pkgcore.util.commandline_optparse import *
 
 demandload.demandload(globals(),
     'copy@_copy',
-    'snakeoil.fileutils:iter_read_bash',
     'snakeoil:osutils',
     'pkgcore:version@_version',
     'pkgcore.config:basics',
     'pkgcore.restrictions:packages,restriction',
     'pkgcore.util:parserestrict',
-    'pkgcore.ebuild:atom',
 )
 
 

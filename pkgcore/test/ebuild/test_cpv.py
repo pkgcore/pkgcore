@@ -6,7 +6,6 @@ from random import shuffle
 from pkgcore.test import TestCase
 from snakeoil.test import mk_cpy_loadable_testcase
 from pkgcore.ebuild import cpv
-from snakeoil.currying import partial
 from snakeoil.compatibility import cmp
 
 def generate_misc_sufs():

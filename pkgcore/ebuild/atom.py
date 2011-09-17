@@ -665,7 +665,6 @@ class transitive_use_atom(atom):
         flag = varied[0]
         use = flag.lstrip('!').rstrip('?=')
         varied = varied[1:]
-        l = []
         if flag[-1] == '?':
             # a[x?] == x? ( a[x] ) !x? ( a )
             # a[!x?] == x? ( a ) !x? ( a[-x] )

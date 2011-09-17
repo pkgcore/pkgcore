@@ -13,7 +13,7 @@ from pkgcore.ebuild.misc import chunked_data
 from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.cpv import CPV
 from pkgcore.ebuild import const
-from pkgcore.restrictions import packages, restriction
+from pkgcore.restrictions import packages
 
 atrue = packages.AlwaysTrue
 

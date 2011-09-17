@@ -8,9 +8,8 @@
 __all__ = ("argparser", "main")
 
 from pkgcore.util import commandline
-from pkgcore.ebuild import atom, errors
+from pkgcore.ebuild import atom
 from pkgcore.operations import observer
-from snakeoil.compatibility import all
 
 
 argparser = commandline.mk_argparser(description=__doc__)

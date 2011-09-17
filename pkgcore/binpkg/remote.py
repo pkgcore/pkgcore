@@ -12,7 +12,6 @@ __all__ = ("PackagesCacheV0", "PackagesCacheV1", "write_index")
 
 
 from snakeoil.mappings import ImmutableDict, StackedDict
-from snakeoil import klass
 from pkgcore import cache
 from snakeoil.weakrefs import WeakRefFinalizer
 from itertools import izip
@@ -25,6 +24,7 @@ demandload(globals(), 'errno',
     'snakeoil.osutils:readlines',
     'operator:itemgetter',
     'pkgcore:log',
+    'pkgcore.restrictions.packages:AlwaysTrue',
     'time:time',
 )
 

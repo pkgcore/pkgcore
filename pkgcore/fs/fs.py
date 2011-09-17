@@ -39,19 +39,16 @@ _fs_doc = {
 
 def gen_doc_additions(init, slots):
     if init.__doc__ is None:
-        d = raw_init_doc.split("\n")
-    else:
-        d = init.__doc__.split("\n")
-    init.__doc__ = "\n".join(k.lstrip() for k in d) + \
-        "\n".join(_fs_doc[k] for k in _fs_doc if k in slots)
-
-
-raw_init_doc = \
+        d = \
 """
 :param location: location (real or intended) for this entry
 :param strict: is this fully representative of the entry, or only partially
 :raise KeyError: if strict is enabled, and not all args are passed in
-"""
+""".split("\n")
+    else:
+        d = init.__doc__.split("\n")
+    init.__doc__ = "\n".join(k.lstrip() for k in d) + \
+        "\n".join(_fs_doc[k] for k in _fs_doc if k in slots)
 
 
 class fsBase(object):
@@ -309,7 +306,6 @@ def mk_check(name):
         extradocs=("return True if obj is an instance of :obj:`%s`, else False" % name),
         name=("is" +name)
         )
-    return f
 
 isdir    = mk_check('dir')
 isreg    = mk_check('reg')
@@ -319,4 +315,4 @@ isdev    = mk_check('dev')
 isfs_obj = pretty_docs(post_curry(isinstance, fsBase), name='isfs_obj',
     extradocs='return True if obj is an fsBase derived object')
 
-del raw_init_doc, gen_doc_additions, _fs_doc, mk_check
+del gen_doc_additions, mk_check

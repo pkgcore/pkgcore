@@ -53,8 +53,6 @@ class TestBasePkg(mixin, TestCase):
         for x in xrange(10):
             self.assertEqual(getattr(o, str(x)), x)
         self.assertEqual(o.a, "foo")
-
-    def test_getattr(self):
         self.assertEqual(self.mk_inst().built, False)
 
 

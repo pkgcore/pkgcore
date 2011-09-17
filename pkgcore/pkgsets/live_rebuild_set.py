@@ -9,9 +9,6 @@ Note: HACK. Quick proof of concept, could do with cleaning up.
 """
 
 
-import operator
-
-
 from pkgcore.pkgsets.installed import VersionedInstalled
 from pkgcore.config import ConfigHint
 from snakeoil.compatibility import is_disjoint

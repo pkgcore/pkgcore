@@ -12,7 +12,7 @@ from pkgcore import fetch
 from pkgcore.package import errors
 from pkgcore.test import malleable_obj
 from pkgcore.test.ebuild.test_eclass_cache import FakeEclassCache
-from pkgcore.ebuild import ebuild_src, digest, repo_objs, const, errors as ebuild_errors
+from pkgcore.ebuild import ebuild_src, digest, repo_objs
 
 
 class test_base(TestCase):

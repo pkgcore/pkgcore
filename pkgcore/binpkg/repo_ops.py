@@ -14,7 +14,7 @@ or changing how it uninstalls, or adding a new operation (cleaning/cache regen f
 
 __all__ = ("install", "uninstall", "replace", "operations")
 
-import os, errno
+import os
 
 from pkgcore.operations import repo as repo_interfaces
 from pkgcore.fs import tar

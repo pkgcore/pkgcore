@@ -14,7 +14,7 @@ from snakeoil.chksum import get_handler
 from pkgcore import gpg
 from pkgcore.package import errors
 from pkgcore.fs.livefs import iter_scan
-from pkgcore.fs.fs import fsFile, fsDir
+from pkgcore.fs.fs import fsFile
 
 from snakeoil.obj import make_SlottedDict_kls
 from snakeoil.compatibility import any, raise_from
@@ -34,9 +34,11 @@ def serialize_manifest(pkgdir, fetchables):
     :param fetchables: the fetchables of the package
     """
     handle = open(pkgdir + '/Manifest', 'w')
-    for file in (x for x in iter_scan(pkgdir) if isinstance(x, fsFile)):
-        excludes=set(["CVS", ".svn", "Manifest"])
-        if any(True for x in file.location.split(sep) if x in excludes):
+    excludes = frozenset(["CVS", ".svn", "Manifest"])
+    for file in iter_scan(pkgdir):
+        if not file.is_reg:
+            continue
+        if excludes.intersection(file.location.split(sep)):
             continue
         type = 'misc'
         if 'files' in dirname(file.location):

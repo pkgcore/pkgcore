@@ -73,9 +73,6 @@ def write(tempspace, finalpath, pkg, cset=None, platform='', maintainer='', comp
 
     # The data.tar.gz file
 
-    imgdir = pjoin("/var/tmp/portage/", pkg.category, "%s-%s" % (pkg.package, pkg.fullver), "image")
-    filename = "%s_%s_solaris-i386.deb" % (pkg.package, pkg.version)
-
     data_path = pjoin(tempspace, 'data.tar.gz')
     tar.write_set(cset, data_path, compressor='gz', absolute_paths=False)
 
@@ -92,7 +89,6 @@ def write(tempspace, finalpath, pkg, cset=None, platform='', maintainer='', comp
     pkgdeps = "%s" % (pkg.rdepends,)
     if (pkgdeps is not None and pkgdeps != ""):
         control.update(parsedeps(pkgdeps))
-    cpath = pjoin(tempspace, 'control.ar.bz')
 
     control_ds = text_data_source("".join("%s: %s\n" % (k, v)
         for (k, v) in control.iteritems()))

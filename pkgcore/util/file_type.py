@@ -5,6 +5,7 @@ __all__ = ("file_identifier",)
 
 from pkgcore.spawn import spawn_get_output
 from snakeoil.klass import jit_attr
+from snakeoil import compatibility
 
 class file_identifier(object):
 
@@ -33,9 +34,9 @@ class file_identifier(object):
             ret = obj.load()
             if ret == 0:
                 return obj.file
-        except (RuntimeError, SystemExit, KeyboardInterrupt):
+        except compatibility.IGNORED_EXCEPTIONS:
             raise
-        except Excepton:
+        except Exception:
             pass # POS of library.
         return self._fallback_file
 

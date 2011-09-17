@@ -5,4 +5,6 @@
 exceptions thrown by chksum subsystem
 """
 
+__all__ = ('MissingChksum', 'ParseChksumError')
+
 from pkgcore.package.errors import (MissingChksum, ParseChksumError)

@@ -10,9 +10,7 @@ __all__ = ("parse_match", "ParseError",)
 """
 
 from pkgcore.restrictions import packages, values, util
-from pkgcore.package import errors
 from pkgcore.ebuild import atom, cpv, errors
-from snakeoil.containers import InvertedContains
 from snakeoil.compatibility import raise_from
 import re
 

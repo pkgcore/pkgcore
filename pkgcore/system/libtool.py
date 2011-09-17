@@ -5,9 +5,8 @@ __all__ = ("UnknownData", "FixLibtoolArchivesTrigger")
 
 from snakeoil.lists import stable_unique
 from snakeoil.currying import partial, post_curry
-from snakeoil.data_source import local_source
 from os.path import basename, dirname
-import re, operator
+import re
 
 from pkgcore.merge import triggers
 

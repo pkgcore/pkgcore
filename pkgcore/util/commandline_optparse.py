@@ -26,17 +26,15 @@ import sys
 import os.path
 import logging
 
-from pkgcore.config import load_config, errors
-from snakeoil import formatters, demandload, klass
+from pkgcore.config import load_config
+from snakeoil import demandload, klass
 import optparse
 import copy
 
 demandload.demandload(globals(),
     'snakeoil.fileutils:iter_read_bash',
-    'snakeoil:osutils',
     'pkgcore:version',
     'pkgcore.config:basics',
-    'pkgcore.restrictions:packages',
     'pkgcore.util:parserestrict',
     'pkgcore.ebuild:atom',
 )
@@ -369,7 +367,7 @@ class OptionParser(optparse.OptionParser, object):
 
     def parse_restrict(self, arg, msg=None, eapi=None):
         if eapi is not None:
-            return parse_atom(arg, msg, eapi=eapi, msg=msg)
+            return self.parse_atom(arg, msg=msg, eapi=eapi)
         try:
             return parserestrict.parse_match(arg)
         except parserestrict.ParseError, e:
@@ -383,7 +381,7 @@ class OptionParser(optparse.OptionParser, object):
         except atom.MalformedAtom, ma:
             if msg is None:
                 msg="couldn't parse valid atom from %(arg)s: %(error)s"
-            self.error(msg % {"arg":arg, "error":"ma"})
+            self.error(msg % {"arg":arg, "error":ma})
 
     def parse_args(self, args=None, values=None):
         """Extend optparse to clear the ref values -> parser it adds."""
@@ -480,8 +478,6 @@ def optparse_parse(subcommands, args=None, script_name=None,
         prog = os.path.basename(sys.argv[0])
     else:
         prog = script_name
-
-    raw_subcommands = subcommands
 
     parser_class = None
     while args:

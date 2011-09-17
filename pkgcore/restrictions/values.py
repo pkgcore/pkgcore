@@ -14,7 +14,7 @@ attr from a package instance and hand it to their wrapped restriction
 from pkgcore.restrictions import restriction, boolean, packages
 from snakeoil.klass import generic_equality, reflective_hash
 from snakeoil import demandload
-from snakeoil.compatibility import cmp, is_disjoint
+from snakeoil.compatibility import is_disjoint
 demandload.demandload(globals(), 're', 'snakeoil:lists')
 
 # Backwards compatibility.
@@ -427,24 +427,21 @@ class ContainmentMatch2(base):
                     pkg, None, list(vals), 0, len(vals), truths,
                     filter, desired_false=false, desired_true=true):
                     return True
-            else:
-                if pkg.request_disable(attr, *vals):
+            elif pkg.request_disable(attr, *vals):
                     return True
             return False
 
         if not self.all:
-            if pkg.request_disable(attr, *vals):
-                return True
-        else:
-            l = len(vals)
-            def filter(truths):     return truths.count(True) < l
-            def true(r, pvals):     return pkg.request_enable(attr, r)
-            def false(r, pvals):    return pkg.request_disable(attr, r)
-            truths = [x in val for x in vals]
-            for x in boolean.iterative_quad_toggling(
-                pkg, None, list(vals), 0, l, truths, filter,
-                desired_false=false, desired_true=true):
-                return True
+            return pkg.request_disable(attr, *vals)
+        l = len(vals)
+        def filter(truths):     return truths.count(True) < l
+        def true(r, pvals):     return pkg.request_enable(attr, r)
+        def false(r, pvals):    return pkg.request_disable(attr, r)
+        truths = [x in val for x in vals]
+        for x in boolean.iterative_quad_toggling(
+            pkg, None, list(vals), 0, l, truths, filter,
+            desired_false=false, desired_true=true):
+            return True
         return False
 
     def force_True(self, pkg, attr, val, _values_override=None):

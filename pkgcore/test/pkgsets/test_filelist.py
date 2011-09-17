@@ -99,7 +99,7 @@ class TestWorldFile(TestFileList):
         self.assertRaises(ValueError, sorted, s)
 
     @protect_logging(log.logging.root)
-    def test_subset_awareness(self):
+    def test_subset_awareness2(self):
         callbacks = []
         log.logging.root.handlers = [callback_logger(callbacks.append)]
         s = self.gen_pkgset("@world\ndev-util/bsdiff")

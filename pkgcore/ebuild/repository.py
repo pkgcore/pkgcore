@@ -153,7 +153,6 @@ class UnconfiguredTree(syncable.tree_mixin, prototype.tree):
                     self.versions[(cpv_inst.category, cpv_inst.package)]:
                     # ebuild on disk has an explicit -r0 in it's name
                     return cpv_inst
-            del cpv_inst
             raise KeyError(cpv)
         return cpv_inst
 

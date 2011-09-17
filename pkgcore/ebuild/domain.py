@@ -24,7 +24,7 @@ from pkgcore.ebuild import const
 from pkgcore.ebuild.misc import (collapsed_restrict_to_data,
     non_incremental_collapsed_restrict_to_data, incremental_expansion,
     incremental_expansion_license, optimize_incrementals,
-    restrict_payload, ChunkedDataDict, chunked_data, split_negations)
+    ChunkedDataDict, chunked_data, split_negations)
 from pkgcore.ebuild.repo_objs import OverlayedLicenses
 from pkgcore.util.parserestrict import parse_match
 
@@ -38,7 +38,6 @@ from snakeoil.osutils import pjoin
 demandload(globals(),
     'errno',
     'pkgcore.fs.livefs:iter_scan',
-    'pkgcore.fs.fs:fsFile',
     're',
     'operator:itemgetter',
     'pkgcore.ebuild.triggers:generate_triggers@ebuild_generate_triggers',

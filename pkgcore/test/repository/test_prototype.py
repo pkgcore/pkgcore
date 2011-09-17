@@ -1,7 +1,7 @@
 # Copyright: 2006-2009 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
-from pkgcore.test import TestCase, Todo, malleable_obj
+from pkgcore.test import TestCase, malleable_obj
 from snakeoil.mappings import OrderedDict
 from snakeoil.currying import post_curry, partial
 
@@ -10,7 +10,6 @@ from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.cpv import versioned_CPV
 from pkgcore.package.mutated import MutatedPkg
 from pkgcore.repository.util import SimpleTree
-from pkgcore.repository import wrapper
 from pkgcore.operations.repo import operations
 
 

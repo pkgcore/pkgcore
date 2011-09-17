@@ -10,7 +10,7 @@ from snakeoil.iterables import chain_from_iterable
 
 from pkgcore.config import ConfigHint
 from pkgcore.ebuild import const, ebuild_src, misc
-from pkgcore.ebuild.misc import (incremental_expansion, restrict_payload,
+from pkgcore.ebuild.misc import (
     _build_cp_atom_payload, chunked_data, ChunkedDataDict, split_negations,
     IncrementalsDict)
 from pkgcore.repository import virtual

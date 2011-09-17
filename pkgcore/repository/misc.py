@@ -6,7 +6,6 @@ from pkgcore.package.mutated import MutatedPkg
 from pkgcore.operations.repo import operations_proxy
 from snakeoil.iterables import caching_iter
 from snakeoil.klass import GetAttrProxy
-from snakeoil.currying import partial
 from snakeoil.iterables import iter_sort
 
 __all__ = ("nodeps_repo", "caching_repo")

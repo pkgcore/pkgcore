@@ -5,7 +5,6 @@ import tempfile, os
 from pkgcore.test import TestCase
 from pkgcore.ebuild import digest
 from pkgcore import gpg
-from pkgcore.package.errors import ParseChksumError, MissingChksum
 from snakeoil.data_source import local_source
 
 # "Line too long" (and our custom more agressive version of that)

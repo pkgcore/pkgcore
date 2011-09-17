@@ -9,7 +9,6 @@ from pkgcore.restrictions import restriction, boolean
 from snakeoil.compatibility import any, is_py3k, IGNORED_EXCEPTIONS
 from snakeoil.klass import generic_equality, static_attrgetter
 from snakeoil.demandload import demandload
-from operator import attrgetter
 demandload(globals(), "pkgcore.log:logger")
 
 # Backwards compatibility.
@@ -84,7 +83,7 @@ class PackageRestriction_mixin(restriction.base):
         if isinstance(exc, AttributeError):
             if not self.ignore_missing:
                 logger.exception("failed getting attribute %s from %s, "
-                              "exception %s" % (attr, str(pkg), str(exc)))
+                              "exception %s" % ('.'.join(attr_split), str(pkg), str(exc)))
 
             eargs = [x for x in exc.args if isinstance(x, basestring)]
             if any(x in attr_split for x in eargs):

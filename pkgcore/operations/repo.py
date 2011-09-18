@@ -16,7 +16,7 @@ from pkgcore import operations as _operations_mod
 from snakeoil.demandload import demandload
 demandload(globals(), "pkgcore.log:logger",
     "pkgcore.operations:observer@observer_mod,regen",
-    "pkgcore:sync",
+    "pkgcore.sync:base@_sync_base",
     "pkgcore.package.mutated:MutatedPkg",
     )
 
@@ -189,7 +189,7 @@ class operations(_operations_mod.base):
 
     def _get_syncer(self):
         syncer = self.repo._syncer
-        if not isinstance(syncer, sync.base.syncer):
+        if not isinstance(syncer, _sync_base.syncer):
             syncer = syncer.instantiate()
         return syncer
 

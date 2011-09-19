@@ -4,6 +4,8 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* experimental support added for generating Manifests via pmaint digests.
+
 * pkgcore no longer supports manifest version1; nothing else supports
   it now, it's no longer in use, thus the removal.
 

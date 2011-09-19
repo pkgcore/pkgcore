@@ -21,7 +21,7 @@ demandload(globals(),
     'pkgcore.repository:multiplex',
     'pkgcore.package:mutated',
     'pkgcore.fs:contents,livefs',
-    'pkgcore.ebuild:digest,processor,triggers',
+    'pkgcore.ebuild:processor,triggers',
     'pkgcore.merge:triggers@merge_triggers',
     'pkgcore.sync:base@sync_base',
     're',
@@ -290,3 +290,23 @@ def mirror_main(options, out, err):
     if warnings:
         return 1
     return 0
+
+
+digests = subparsers.add_parser("digests",
+    description="update a repositories package manifest/digest information",
+    parents=(commandline.mk_argparser(add_help=False),))
+digests.add_argument("--repository", "--repo", action='store',
+    help="force a specific repository, rather than spceifying it via a repo atom")
+commandline.make_query(digests, nargs='+', dest='query',
+    help="packages matching any of these restrictions will have their"
+    " manifest/digest updated")
+@digests.bind_main_func
+def digests_main(options, out, err):
+    domain = options.domain
+    repos = domain.all_repos
+    repo_ops = repos.operations
+    obs=observer.formatter_output(out)
+    if not repo_ops.supports("digests"):
+        out.write("no repository support for digests\n")
+        return 1
+    repo_ops.digests(domain, options.query, observer=obs)

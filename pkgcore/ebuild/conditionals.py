@@ -224,12 +224,10 @@ class DepSet(boolean.AndRestriction):
             return self
 
         results = []
-        boolean.AndRestriction.evaluate_conditionals(self, self.__class__, results,
+        self.evaluate_conditionals(self.__class__, results,
             cond_dict, tristate_filter, force_collapse=True)
 
-        flat_deps = self.__class__((), self.element_class, False)
-        object.__setattr__(flat_deps, "restrictions", tuple(results))
-        return flat_deps
+        return self.__class__(tuple(results), self.element_class, False)
 
     @staticmethod
     def find_cond_nodes(restriction_set, yield_non_conditionals=False):

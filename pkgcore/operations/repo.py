@@ -214,6 +214,15 @@ class operations(_operations_mod.base):
             if cache:
                 cache.commit(force=True)
 
+    def _cmd_api_digests(self, domain, query, observer=None, **options):
+        observer = self._get_observer(observer)
+        matches = self.repo.match(query)
+        if not matches:
+            observer.info("skipping digest: nothing matched query %s\n" % (query,))
+            return
+        self._cmd_implementation_digests(domain, matches,
+            observer, **options)
+
 
 class operations_proxy(operations):
 

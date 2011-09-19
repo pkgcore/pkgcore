@@ -218,9 +218,9 @@ class operations(_operations_mod.base):
         observer = self._get_observer(observer)
         matches = self.repo.match(query)
         if not matches:
-            observer.info("skipping digest: nothing matched query %s\n" % (query,))
-            return
-        self._cmd_implementation_digests(domain, matches,
+            observer.debug("skipping digest of query %s; no matches\n" % (query,))
+            return True
+        return self._cmd_implementation_digests(domain, matches,
             observer, **options)
 
 

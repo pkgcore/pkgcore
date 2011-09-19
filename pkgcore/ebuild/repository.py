@@ -46,7 +46,7 @@ class repo_operations(_repo_ops.operations):
 
     def _cmd_implementation_digests(self, domain, matches, observer, **options):
         for key_query in sorted(set(match.unversioned_atom for match in matches)):
-            observer.info("generating digests for %s\n", key_query)
+            observer.info("generating digests for %s for repo %s\n", key_query, self)
             packages = self.repo.match(key_query)
             pkgdir_fetchables = []
             try:

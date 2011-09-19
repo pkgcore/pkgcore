@@ -309,4 +309,10 @@ def digests_main(options, out, err):
     if not repo_ops.supports("digests"):
         out.write("no repository support for digests\n")
         return 1
-    repo_ops.digests(domain, options.query, observer=obs)
+    elif not repos.has_match(options.query):
+        out.write("query %s doesn't match anything\n" % (query,))
+        return 1
+    if not repo_ops.digests(domain, options.query, observer=obs):
+        out.write("some errors were encountered...")
+        return 1
+    return 0

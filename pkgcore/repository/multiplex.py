@@ -37,6 +37,7 @@ class operations(repo_interface.operations_proxy):
             setattr(self, op, partial(self._proxy_op, op))
 
     def _proxy_op(self, op_name, *args, **kwds):
+        ret = singleton = object()
         for tree in self.repo.trees:
             ops = tree.operations
             if not ops.supports(op_name):
@@ -44,8 +45,9 @@ class operations(repo_interface.operations_proxy):
             ret = getattr(ops, op_name)(*args, **kwds)
             if op_name in self.ops_stop_after_first_supported:
                 return ret
-            return ret
-        raise NotImplementedError(self, op_name)
+        if ret is singleton:
+            raise NotImplementedError(self, op_name)
+        return ret
 
 
 class tree(prototype.tree):

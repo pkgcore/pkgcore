@@ -42,7 +42,8 @@ class operations(repo_interface.operations_proxy):
             ops = tree.operations
             if not ops.supports(op_name):
                 continue
-            ret = getattr(ops, op_name)(*args, **kwds)
+            # track the success for return.
+            ret = getattr(ops, op_name)(*args, **kwds) or ret
             if op_name in self.ops_stop_after_first_supported:
                 return ret
         if ret is singleton:

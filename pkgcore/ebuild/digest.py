@@ -108,8 +108,9 @@ def parse_manifest(source, ignore_gpg=True):
                     list(convert_chksums(izip(i, i)))
 
         except EnvironmentError, e:
+            missing = (e.errno == errno.ENOENT)
             raise_from(errors.ParseChksumError(source, e,
-                missing=(e.errno == errno.ENOENT)))
+                missing=missing))
     finally:
         if f is not None and f.close:
             f.close()

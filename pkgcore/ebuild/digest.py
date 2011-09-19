@@ -8,7 +8,7 @@ ebuild tree manifest/digest support
 __all__ = ("serialize_manifest", "parse_manifest", "Manifest")
 
 from itertools import izip
-from os.path import basename, dirname, sep
+from os.path import basename, dirname
 
 from snakeoil.chksum import get_handler
 from pkgcore import gpg
@@ -35,20 +35,42 @@ def serialize_manifest(pkgdir, fetchables):
     """
     handle = open(pkgdir + '/Manifest', 'w')
     excludes = frozenset(["CVS", ".svn", "Manifest"])
-    for file in iter_scan(pkgdir):
-        if not file.is_reg:
+    aux, ebuild, misc = {}, {}, {}
+    filesdir = '/files/'
+    for obj in iter_scan('/', offset=pkgdir):
+        if not obj.is_reg:
             continue
-        if excludes.intersection(file.location.split(sep)):
+        pathname = obj.location
+        if excludes.intersection(pathname.split('/')):
             continue
-        type = 'misc'
-        if 'files' in dirname(file.location):
-            type = 'aux'
-        elif basename(file.location)[-7:] ==  '.ebuild':
-            type = 'ebuild'
-        _write_manifest(handle, type, basename(file.location), dict(file.chksums))
-    type = 'dist'
-    for fetchable in iflatten_instance(fetchables, fetch.fetchable):
-        _write_manifest(handle, type, basename(fetchable.filename), dict(fetchable.chksums))
+        if pathname.startswith(filesdir):
+            d = aux
+            pathname = pathname[len(filesdir):]
+        elif obj.dirname == '/':
+            pathname = pathname[1:]
+            if obj.location[-7:] == '.ebuild':
+                d = ebuild
+            else:
+                d = misc
+        else:
+            raise Exception("Unexpected directory found in %r; %r"
+                % (pkgdir, obj.dirname))
+        d[pathname] = dict(obj.chksums)
+
+    # write it in alphabetical order; aux gets flushed now.
+    for path in sorted(aux):
+        _write_manifest(handle, 'AUX', path, aux[path])
+
+    # next dist...
+    for fetchable in sorted(iflatten_instance(fetchables, fetch.fetchable)):
+        _write_manifest(handle, 'DIST', basename(fetchable.filename),
+            dict(fetchable.chksums))
+
+    # then ebuild and misc
+    for mtype, inst in (("EBUILD", ebuild), ("MISC", misc)):
+        for path in sorted(inst):
+            _write_manifest(handle, mtype, path, inst[path])
+
 
 def _write_manifest(handle, type, filename, chksums):
     """Convenient, internal method for writing manifests"""

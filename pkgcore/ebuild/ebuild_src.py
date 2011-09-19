@@ -71,8 +71,9 @@ def generate_providers(self):
         self.data.pop("PROVIDE", ""), virtual_ebuild, element_func=func,
         operators={"":boolean.AndRestriction})
 
-def generate_fetchables(self):
-    chksums_can_be_missing = bool(getattr(self.repo, '_allow_missing_chksums', False))
+def generate_fetchables(self, allow_missing_checksums=False):
+    chksums_can_be_missing = allow_missing_checksums or \
+        bool(getattr(self.repo, '_allow_missing_chksums', False))
     chksums = self.repo._get_digests(self, allow_missing=chksums_can_be_missing)
 
     mirrors = getattr(self._parent, "mirrors", {})

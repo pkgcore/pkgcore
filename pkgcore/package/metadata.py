@@ -62,10 +62,16 @@ def DeriveMetadataKls(original_kls):
 
         repo = klass.alias_attr("_parent._parent_repo")
 
-        def release_cached_data(self):
+        def release_cached_data(self, all=False):
             for x in self._get_attr:
                 try:
                     object.__delattr__(self, x)
+                except AttributeError:
+                    pass
+
+            if all:
+                try:
+                    object.__delattr__(self, 'data')
                 except AttributeError:
                     pass
 

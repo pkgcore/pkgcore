@@ -14,6 +14,7 @@ from pkgcore.repository import prototype, errors, configured, syncable
 from pkgcore.ebuild import eclass_cache as eclass_cache_module
 from pkgcore.config import ConfigHint
 from pkgcore.plugin import get_plugin
+from pkgcore.operations import repo as _repo_ops
 
 from snakeoil.fileutils import read_dict, iter_read_bash
 from snakeoil import currying, klass
@@ -27,13 +28,57 @@ from snakeoil.demandload import demandload
 demandload(globals(),
     'pkgcore.ebuild:ebd',
     'snakeoil.data_source:local_source',
+    'snakeoil.chksum:get_chksums',
     'pkgcore.ebuild:digest,repo_objs,atom',
     'pkgcore.ebuild:errors@ebuild_errors',
     'pkgcore.ebuild:profiles',
     'pkgcore.package:errors@pkg_errors',
+    'pkgcore.util.packages:groupby_pkg',
+    'operator:attrgetter',
     'random:shuffle',
     'errno',
 )
+
+
+class repo_operations(_repo_ops.operations):
+
+    _manifest_chksums = ("size", "rmd160", "sha1", "sha256")
+
+    def _cmd_implementation_digests(self, domain, matches, observer, **options):
+        for key_query in sorted(set(match.unversioned_atom for match in matches)):
+            observer.info("generating digests for %s\n", key_query)
+            packages = self.repo.match(key_query)
+            pkgdir_fetchables = []
+            try:
+                for pkg in packages:
+                    # XXX: needs modification to grab all sources, and also to not
+                    # bail if digests are missing
+                    pkg.release_cached_data(all=True)
+                    # heinous.
+                    fetchables = pkg._get_attr['fetchables'](pkg, allow_missing_checksums=True)
+                    object.__setattr__(pkg, 'fetchables', fetchables)
+                    pkg_ops = domain.pkg_operations(pkg, observer=observer)
+                    if not pkg_ops.supports("fetch"):
+                        observer.error("pkg %s doesn't support fetching, can't generate manifest/digest info\n",
+                            pkg)
+                    if not pkg_ops.mirror(observer):
+                        observer.error("failed fetching for pkg %s" % (pkg,))
+                        return False
+
+                    fetchables = pkg_ops._mirror_op.verified_files
+                    required = self._manifest_chksums
+                    for path, fetchable in fetchables.iteritems():
+                        d = dict(zip(required, get_chksums(path, *required)))
+                        fetchable.chksums = d
+                    pkgdir_fetchables.extend(fetchables.itervalues())
+
+                digest.serialize_manifest(os.path.dirname(pkg.ebuild.get_path()),
+                    pkgdir_fetchables)
+            finally:
+                for pkg in packages:
+                    # done since we do hackish shit above
+                    # should be uneeded once this is cleaned up
+                    pkg.release_cached_data(all=True)
 
 
 metadata_offset = "profiles"
@@ -56,6 +101,8 @@ class UnconfiguredTree(syncable.tree_mixin, prototype.tree):
     format_magic = "ebuild_src"
     enable_gpg = False
     extension = '.ebuild'
+
+    operations_kls = repo_operations
 
     pkgcore_config_type = ConfigHint(
         {'location': 'str', 'cache': 'refs:cache',

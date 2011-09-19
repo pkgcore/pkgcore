@@ -45,10 +45,11 @@ class repo_operations(_repo_ops.operations):
     _manifest_chksums = ("size", "rmd160", "sha1", "sha256")
 
     def _cmd_implementation_digests(self, domain, matches, observer, **options):
+        required = self._manifest_chksums
         for key_query in sorted(set(match.unversioned_atom for match in matches)):
-            observer.info("generating digests for %s for repo %s\n", key_query, self)
-            packages = self.repo.match(key_query)
-            pkgdir_fetchables = []
+            observer.info("generating digests for %s for repo %s", key_query, self)
+            packages = self.repo.match(key_query, sorter=sorted)
+            pkgdir_fetchables = {}
             try:
                 for pkg in packages:
                     # XXX: needs modification to grab all sources, and also to not
@@ -66,14 +67,15 @@ class repo_operations(_repo_ops.operations):
                         return False
 
                     fetchables = pkg_ops._mirror_op.verified_files
-                    required = self._manifest_chksums
                     for path, fetchable in fetchables.iteritems():
                         d = dict(zip(required, get_chksums(path, *required)))
                         fetchable.chksums = d
-                    pkgdir_fetchables.extend(fetchables.itervalues())
+                    # should report on conflicts here...
+                    pkgdir_fetchables.update(fetchables.iteritems())
 
+                pkgdir_fetchables = sorted(pkgdir_fetchables.itervalues())
                 digest.serialize_manifest(os.path.dirname(pkg.ebuild.get_path()),
-                    pkgdir_fetchables)
+                    pkgdir_fetchables, chfs=required)
             finally:
                 for pkg in packages:
                     # done since we do hackish shit above

@@ -8,6 +8,7 @@ ebuild tree manifest/digest support
 __all__ = ("serialize_manifest", "parse_manifest", "Manifest")
 
 from itertools import izip
+import operator
 from os.path import basename, dirname
 
 from snakeoil.chksum import get_handler
@@ -20,19 +21,27 @@ from snakeoil.obj import make_SlottedDict_kls
 from snakeoil.compatibility import any, raise_from
 from snakeoil.demandload import demandload
 demandload(globals(),
-    "pkgcore:fetch",
     "snakeoil.lists:iflatten_instance",
     'snakeoil:mappings',
     "errno",
 )
 
-def serialize_manifest(pkgdir, fetchables):
+
+def serialize_manifest(pkgdir, fetchables, chfs=None):
     """
     Write a manifest given a pkg_instance
 
     :param pkgdir: the location of the package dir
     :param fetchables: the fetchables of the package
     """
+
+    if chfs is None:
+        filter_chfs = dict
+    else:
+        filter_chfs = lambda x:dict((k, x[k]) for k in chfs)
+
+    _key_sort = operator.itemgetter(0)
+
     handle = open(pkgdir + '/Manifest', 'w')
     excludes = frozenset(["CVS", ".svn", "Manifest"])
     aux, ebuild, misc = {}, {}, {}
@@ -55,30 +64,31 @@ def serialize_manifest(pkgdir, fetchables):
         else:
             raise Exception("Unexpected directory found in %r; %r"
                 % (pkgdir, obj.dirname))
-        d[pathname] = dict(obj.chksums)
+        d[pathname] = filter_chfs(obj.chksums)
 
     # write it in alphabetical order; aux gets flushed now.
-    for path in sorted(aux):
-        _write_manifest(handle, 'AUX', path, aux[path])
+    for path, chksums in sorted(aux.iteritems(), key=_key_sort):
+        _write_manifest(handle, 'AUX', path, chksums)
 
     # next dist...
-    for fetchable in sorted(iflatten_instance(fetchables, fetch.fetchable)):
+    for fetchable in sorted(fetchables, key=operator.attrgetter('filename')):
         _write_manifest(handle, 'DIST', basename(fetchable.filename),
             dict(fetchable.chksums))
 
     # then ebuild and misc
     for mtype, inst in (("EBUILD", ebuild), ("MISC", misc)):
-        for path in sorted(inst):
-            _write_manifest(handle, mtype, path, inst[path])
+        for path, chksum in sorted(inst.iteritems(), key=_key_sort):
+            _write_manifest(handle, mtype, path, chksum)
 
 
-def _write_manifest(handle, type, filename, chksums):
+def _write_manifest(handle, chf, filename, chksums):
     """Convenient, internal method for writing manifests"""
     size = chksums.pop("size")
-    handle.write("%s %s %i" % (type.upper(), filename, size))
-    for chf, sum in chksums.iteritems():
-        handle.write(" %s %s" % (chf.upper(), get_handler(chf).long2str(sum)))
+    handle.write("%s %s %i" % (chf.upper(), filename, size))
+    for chf in sorted(chksums):
+        handle.write(" %s %s" % (chf.upper(), get_handler(chf).long2str(chksums[chf])))
     handle.write('\n')
+
 
 def convert_chksums(iterable):
     for chf, sum in iterable:

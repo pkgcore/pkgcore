@@ -17,7 +17,8 @@ from pkgcore.fs import livefs
 from pkgcore.restrictions import values
 
 from snakeoil.osutils import normpath
-from snakeoil.fileutils import read_bash_dict, AtomicWriteFile
+from snakeoil.fileutils import AtomicWriteFile
+from snakeoil.bash import read_bash_dict
 from snakeoil.osutils import listdir_files
 from snakeoil.lists import stable_unique, iflatten_instance
 from snakeoil.osutils import join as pjoin

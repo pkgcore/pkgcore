@@ -32,7 +32,7 @@ import optparse
 import copy
 
 demandload.demandload(globals(),
-    'snakeoil.fileutils:iter_read_bash',
+    'snakeoil.bash:iter_read_bash',
     'pkgcore:version',
     'pkgcore.config:basics',
     'pkgcore.util:parserestrict',

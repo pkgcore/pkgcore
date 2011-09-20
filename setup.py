@@ -178,15 +178,23 @@ class pkgcore_install_man(core.Command):
         self.install_man = os.path.join(self.install_man,
             self.prefix.lstrip(os.path.sep), 'share', 'man')
 
-    def scan_man_pages(self, path=None):
+    def scan_man_pages(self, path=None, first_run=True):
         if path is None:
             cwd = os.getcwd()
-            for path in self.man_search_path:
-                path = os.path.join(cwd, path)
-                if os.path.isdir(path):
+            for possible_path in self.man_search_path:
+                possible_path = os.path.join(cwd, possible_path)
+                if os.path.isdir(possible_path):
+                    path = possible_path
                     break
             else:
-                raise errors.DistutilsExecError("no man pages found")
+                if not first_run:
+                    if not BuildDoc:
+                        raise errors.DistutilsExecError(
+                            "no pregenerated man pages, and sphinx isn't available "
+                            "to generate them; bailing")
+                    raise errors.DistutilsExecError("no man pages found")
+                self.run_command('build_man')
+                return self.scan_man_pages(path=path, first_run=False)
         obj = self.man_pages = [
             os.path.join(path, x) for x in os.listdir(path)
             if len(x) > 2 and x[-2] == '.' and x[-1].isdigit()]
@@ -296,6 +304,12 @@ if BuildDoc:
     command_options['build_docs'] = {
         'version': ('setup.py', version),
         'source_dir': ('setup.py', 'doc'),
+        }
+    cmdclass['build_man'] = BuildDoc
+    command_options['build_man'] = {
+        'version': ('setup.py', version),
+        'source_dir': ('setup.py', 'doc'),
+        'builder': ('setup.py', 'man'),
         }
 
 core.setup(

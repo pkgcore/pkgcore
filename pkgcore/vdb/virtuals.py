@@ -12,9 +12,9 @@ from pkgcore.os_data import portage_gid
 from pkgcore.repository import virtual
 
 from snakeoil.lists import iflatten_instance
-from snakeoil.osutils import listdir, ensure_dirs, pjoin, readlines_ascii
+from snakeoil.osutils import listdir, ensure_dirs, pjoin
 from snakeoil.currying import partial
-from snakeoil.fileutils import read_dict, AtomicWriteFile
+from snakeoil.fileutils import read_dict, AtomicWriteFile, readlines_ascii
 from snakeoil.demandload import demandload
 demandload(globals(),
     'errno',

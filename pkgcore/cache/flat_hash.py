@@ -10,7 +10,8 @@ __all__ = ("database",)
 import os, stat, errno
 from pkgcore.cache import fs_template, errors
 from pkgcore.config import ConfigHint
-from snakeoil.osutils import join as pjoin, readlines_ascii
+from snakeoil.osutils import join as pjoin
+from snakeoil.fileutils import readlines_ascii
 from snakeoil.compatibility import raise_from
 
 class database(fs_template.FsBased):

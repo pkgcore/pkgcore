@@ -19,7 +19,8 @@ from pkgcore.operations import repo as _repo_ops
 from snakeoil.fileutils import read_dict
 from snakeoil.bash import iter_read_bash
 from snakeoil import currying, klass
-from snakeoil.osutils import listdir_files, readfile, listdir_dirs, pjoin
+from snakeoil.osutils import listdir_files, listdir_dirs, pjoin
+from snakeoil.fileutils import readfile
 from snakeoil.containers import InvertedContains
 from snakeoil.obj import make_kls
 from snakeoil.weakrefs import WeakValCache

@@ -15,7 +15,8 @@ from pkgcore.ebuild.misc import (
     IncrementalsDict)
 from pkgcore.repository import virtual
 
-from snakeoil.osutils import abspath, join as pjoin, readlines_utf8
+from snakeoil.osutils import abspath, join as pjoin
+from snakeoil.fileutils import readlines_utf8
 from snakeoil.containers import InvertedContains
 from snakeoil.fileutils import iter_read_bash, read_bash_dict
 from snakeoil import klass, caching, currying, sequences

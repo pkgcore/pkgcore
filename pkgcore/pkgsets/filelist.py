@@ -14,8 +14,7 @@ from snakeoil.klass import jit_attr
 
 from snakeoil.demandload import demandload
 demandload(globals(),
-    'snakeoil.fileutils:AtomicWriteFile',
-    'snakeoil.osutils:readlines_ascii',
+    'snakeoil.fileutils:AtomicWriteFile,readlines_ascii',
     'pkgcore:os_data',
     'pkgcore.log:logger',
 )

@@ -18,7 +18,8 @@ from pkgcore.ebuild.errors import InvalidCPV
 from snakeoil.osutils import pjoin
 from snakeoil.mappings import IndeterminantDict
 from snakeoil.currying import partial
-from snakeoil.osutils import listdir_dirs, readfile, readfile_bytes
+from snakeoil.osutils import listdir_dirs
+from snakeoil.fileutils import readfile, readfile_bytes
 from snakeoil import klass, compatibility
 from pkgcore.util import bzip2
 from snakeoil.demandload import demandload

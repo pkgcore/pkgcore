@@ -15,7 +15,7 @@ demandload(globals(),
     'stat',
     'errno',
     'snakeoil.chksum:get_handler',
-    'snakeoil.osutils:readlines_ascii',
+    'snakeoil.fileutils:readlines_ascii',
     'pkgcore:os_data',
 )
 

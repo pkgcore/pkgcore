@@ -49,4 +49,4 @@ unset source
 echo >&2
 declare -F | cut -d ' ' -f3 | while read l; do
 	[[ -n $l ]] && echo "$(escape_regex_chars "$l")"
-done | sort
+done | sort > dont_export_funcs.list

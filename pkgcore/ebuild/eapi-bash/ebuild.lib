@@ -186,9 +186,9 @@ load_ebuild()
 	# Expand KEYWORDS
 	# We need to turn off pathname expansion for -* in KEYWORDS and
 	# we need to escape ~ to avoid tilde expansion (damn bash) :)
-	set -f
+	pkgcore_shopt_push -f
 	KEYWORDS="$(echo ${KEYWORDS//~/\\~})"
-	set +f
+	pkgcore_shopt_pop
 
 	unset   IUSE   DEPEND   RDEPEND   PDEPEND
 	unset E_IUSE E_DEPEND E_RDEPEND E_PDEPEND
@@ -412,7 +412,7 @@ execute_phases() {
 }
 
 pkgcore_dump_metadata_keys() {
-	set -f
+	pkgcore_shopt_push -f
 	local key
 	for key in EAPI DEPEND RDEPEND SLOT SRC_URI RESTRICT HOMEPAGE LICENSE \
 		DESCRIPTION KEYWORDS INHERITED IUSE PDEPEND PROVIDE PROPERTIES; do
@@ -420,6 +420,7 @@ pkgcore_dump_metadata_keys() {
 		# after using echo to normalize whitespace (specifically removal of newlines)
 		[ "${!key:-unset}" != "unset" ] && ebd_write_line "key ${key}=$(echo ${!key})"
 	done
+	pkgcore_shopt_pop
 
 	# defined phases... fun one.
 	local phases
@@ -428,8 +429,6 @@ pkgcore_dump_metadata_keys() {
 			is_function "${key}" && phases="${phases} ${key}"
 	done
 	ebd_write_line "key DEFINED_PHASES=${phases:--}"
-
-	set +f
 }
 
 DONT_EXPORT_VARS="${DONT_EXPORT_VARS} $(declare | invoke_filter_env --print-vars | regex_filter_input ${ORIG_VARS} ${DONT_EXPORT_VARS})"

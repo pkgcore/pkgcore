@@ -422,7 +422,7 @@ inherit()
 		#(if set).. and then restore them after the inherit call.
 
 		#turn off glob expansion
-		set -f
+		pkgcore_shopt_push -f
 
 		# Retain the old data and restore it later.
 		unset B_IUSE B_DEPEND B_RDEPEND B_PDEPEND
@@ -432,13 +432,13 @@ inherit()
 		[ "${PDEPEND-unset}" != "unset" ] && B_PDEPEND="${PDEPEND}"
 		unset   IUSE   DEPEND   RDEPEND   PDEPEND
 		#turn on glob expansion
-		set +f
+		pkgcore_shopt_pop
 		if ! internal_inherit "$1"; then
 			die "failed sourcing $1 in inherit()"
 		fi
 
-		#turn off glob expansion
-		set -f
+		#turn off glob expansion; again, for var assignment here
+		pkgcore_shopt_push -f
 
 		# If each var has a value, append it to the global variable E_* to
 		# be applied after everything is finished. New incremental behavior.
@@ -459,8 +459,8 @@ inherit()
 		[ "${B_PDEPEND-unset}" != "unset" ] && PDEPEND="${B_PDEPEND}"
 		[ "${B_PDEPEND-unset}" != "unset" ] || unset PDEPEND
 
-		#turn on glob expansion
-		set +f
+		#restore...
+		pkgcore_shopt_pop
 
 		if ! has $1 $INHERITED; then
 			INHERITED="$INHERITED $ECLASS"

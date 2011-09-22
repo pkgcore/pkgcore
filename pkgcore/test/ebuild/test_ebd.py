@@ -17,7 +17,7 @@ class Test_DontExportFuncsList(TestCase):
 
         ppath = ":".join(sys.path)
         proc = subprocess.Popen([pjoin(self.base_path,
-            "regenerate_dont_export_func_list.bash")],
+            "regenerate_dont_export_func_list.bash"), "-"],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             env={"PKGCORE_PYTHON_PATH":ppath},

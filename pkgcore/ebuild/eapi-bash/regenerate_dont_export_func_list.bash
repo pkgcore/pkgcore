@@ -1,7 +1,10 @@
 #!/bin/bash
+
+_FP="${1:-dont_export_funcs.list}"
+
 export PKGCORE_BIN_PATH=$(dirname "$0")
 if [[ -z ${PKGCORE_CLEAN_ENV} ]]; then
-	exec env -i PKGCORE_PYTHON_PATH="${PKGCORE_PYTHON_PATH}" PKGCORE_CLEAN_ENV=1 /bin/bash "$0"
+	exec env -i PKGCORE_PYTHON_PATH="${PKGCORE_PYTHON_PATH}" PKGCORE_CLEAN_ENV=1 /bin/bash "$0" "${_FP}"
 fi
 
 export LC_ALL=C # avoid any potential issues of unicode sorting for whacked func names
@@ -47,6 +50,13 @@ unset source_was_seen
 unset source
 
 echo >&2
-declare -F | cut -d ' ' -f3 | while read l; do
+
+declare -F 2> /dev/null | cut -d ' ' -f3 | while read l; do
 	[[ -n $l ]] && echo "$(escape_regex_chars "$l")"
-done | sort > dont_export_funcs.list
+done | sort | {
+	if [ "${_FP}" == '-' ]; then
+		cat
+	else
+		cat > dont_export_funcs.list
+	fi
+}

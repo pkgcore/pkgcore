@@ -132,10 +132,10 @@ class build_operations(operations):
 
     __required__ = frozenset(["build"])
 
-    def _cmd_api_build(self, observer=None, clean=True):
+    def _cmd_api_build(self, observer=None, clean=True, **format_options):
         return self._cmd_implementation_build(self._get_observer(observer),
             self._fetch_op.verified_files,
-            clean=clean)
+            clean=clean, format_options=format_options)
 
     def _cmd_api_buildable(self, domain):
         return self._cmd_implementation_buildable(domain)

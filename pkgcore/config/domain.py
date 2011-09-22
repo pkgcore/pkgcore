@@ -48,8 +48,9 @@ class domain(object):
     def pkg_operations(self, pkg, observer=None):
         return pkg.operations(self, observer=observer)
 
-    def build_pkg(self, pkg, observer, clean=True):
-        return self.pkg_operations(pkg, observer=observer).build(observer=observer, clean=clean)
+    def build_pkg(self, pkg, observer, clean=True, **format_options):
+        return self.pkg_operations(pkg, observer=observer).build(
+            observer=observer, clean=clean, **format_options)
 
     def install_pkg(self, newpkg, observer):
         return domain_ops.install(self, self.all_livefs_repos, newpkg,

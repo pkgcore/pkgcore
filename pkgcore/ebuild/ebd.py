@@ -47,7 +47,7 @@ class ebd(object):
 
     def __init__(self, pkg, initial_env=None, env_data_source=None,
                  features=None, observer=None, clean=True, tmp_offset=None,
-                use_override=None):
+                 use_override=None, allow_fetching=False):
         """
         :param pkg:
             :class:`pkgcore.ebuild.ebuild_src.package`
@@ -66,6 +66,8 @@ class ebd(object):
             use = use_override
         else:
             use = pkg.use
+
+        self.allow_fetching = allow_fetching
 
         if not hasattr(self, "observer"):
             self.observer = observer
@@ -621,6 +623,12 @@ class buildable(ebd, setup_mixin, format.build):
             self.env[x] = os.path.realpath(self.env[x]).rstrip("/") + "/"
 
     def setup_distfiles(self):
+        if not self.verified_files and self.allow_fetching:
+            ops = self.domain.pkg_operations(self.pkg,
+                observer=self.observer)
+            if not ops.fetch():
+                raise format.BuildError("failed fetching required distfiles")
+            self.verified_files = ops._fetch_op.verified_files
 
         if self.verified_files:
             try:
@@ -719,6 +727,7 @@ class buildable(ebd, setup_mixin, format.build):
                 raise_from(format.FailedDirectory(
                     self.env["CCACHE_DIR"],
                     "failed ensuring perms/group owner for CCACHE_DIR"))
+
         return setup_mixin.setup(self)
 
     def configure(self):
@@ -851,11 +860,14 @@ class src_operations(ebuild_mixin, format.build_operations):
         self._use_override = use_override
         self._eclass_cache = eclass_cache
 
-    def _cmd_implementation_build(self, observer, verified_files, clean=False):
+    def _cmd_implementation_build(self, observer, verified_files, clean=False, format_options=None):
+        if format_options is None:
+            format_options = {}
+        allow_fetching = format_options.get("allow_fetching", False)
         return buildable(self.domain, self.pkg, verified_files,
             self._eclass_cache,
             use_override=self._use_override,
-            clean=clean)
+            clean=clean, allow_fetching=allow_fetching)
 
 
 class misc_operations(ebd):

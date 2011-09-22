@@ -42,4 +42,110 @@ hasv()
 	return 0
 }
 
+elog() {
+	pkgcore_elog_base LOG "$*"
+	echo -e " ${PKGCORE_RC_GOOD}*${PKGCORE_RC_NORMAL} $*" >&2
+	return 0
+}
+
+einfo() {
+	einfon "$*\n"
+	PKGCORE_RC_LAST_CMD="einfo"
+	return 0
+}
+
+einfon() {
+	pkgcore_elog_base INFO "$*"
+	echo -ne " ${PKGCORE_RC_GOOD}*${PKGCORE_RC_NORMAL} $*" >&2
+	PKGCORE_RC_LAST_CMD="einfon"
+	return 0
+}
+
+ewarn() {
+	pkgcore_elog_base WARN "$*"
+	echo -e " ${PKGCORE_RC_WARN}*${PKGCORE_RC_NORMAL} $*" >&2
+	PKGCORE_RC_LAST_CMD="ewarn"
+	return 0
+}
+
+eerror() {
+	pkgcore_elog_base ERROR "$*"
+	echo -e " ${PKGCORE_RC_BAD}*${PKGCORE_RC_NORMAL} $*" >&2
+	PKGCORE_RC_LAST_CMD="eerror"
+	return 0
+}
+
+ebegin() {
+	local msg="$* ..."
+	einfon "${msg}"
+	echo >&2
+	PKGCORE_RC_LAST_CMD="ebegin"
+	return 0
+}
+
+eend() {
+	local retval=${1:-0}
+	shift
+
+	local msg
+
+	if [[ ${retval} == "0" ]] ; then
+		msg="${PKGCORE_RC_BRACKET}[ ${PKGCORE_RC_GOOD}ok${PKGCORE_RC_BRACKET} ]${PKGCORE_RC_NORMAL}"
+	else
+		if [[ -n $* ]] ; then
+			eerror "$*"
+		fi
+		msg="${PKGCORE_RC_BRACKET}[ ${PKGCORE_RC_BAD}!!${PKGCORE_RC_BRACKET} ]${PKGCORE_RC_NORMAL}"
+	fi
+
+	echo -e "${PKGCORE_RC_ENDCOL}  ${msg}" >&2
+
+	return ${retval}
+}
+
+KV_major() {
+	[[ -z $1 ]] && return 1
+
+	local KV=$@
+	echo "${KV%%.*}"
+}
+
+KV_minor() {
+	[[ -z $1 ]] && return 1
+
+	local KV=$@
+	KV=${KV#*.}
+	echo "${KV%%.*}"
+}
+
+KV_micro() {
+	[[ -z $1 ]] && return 1
+
+	local KV=$@
+	KV=${KV#*.*.}
+	echo "${KV%%[^[:digit:]]*}"
+}
+
+KV_to_int() {
+	[[ -z $1 ]] && return 1
+
+	local KV_MAJOR=$(KV_major "$1")
+	local KV_MINOR=$(KV_minor "$1")
+	local KV_MICRO=$(KV_micro "$1")
+	local KV_int=$(( KV_MAJOR * 65536 + KV_MINOR * 256 + KV_MICRO ))
+
+	# We make version 2.2.0 the minimum version we will handle as
+	# a sanity check ... if its less, we fail ...
+	if [[ ${KV_int} -ge 131584 ]] ; then
+		echo "${KV_int}"
+		return 0
+	fi
+
+	return 1
+}
+
+get_KV() {
+	echo $(KV_to_int "$(uname -r)")
+}
+
 :

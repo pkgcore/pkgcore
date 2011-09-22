@@ -3,7 +3,6 @@ KV_major
 KV_micro
 KV_minor
 KV_to_int
-_eend
 adddeny
 addpredict
 addread
@@ -47,7 +46,6 @@ einfo
 einfon
 einstall
 elog
-elog_base
 enable_qa_interceptors
 escape_regex_chars
 ewarn
@@ -99,6 +97,7 @@ pkgcore_eapi4_src_install
 pkgcore_ebd_exec_main
 pkgcore_ebd_main_loop
 pkgcore_ebd_process_ebuild_phases
+pkgcore_elog_base
 pkgcore_ensure_PATH
 pkgcore_get_env_funcs
 pkgcore_helper_check_exit
@@ -110,6 +109,8 @@ pkgcore_load_eapi_libs
 pkgcore_pop_IFS
 pkgcore_push_IFS
 pkgcore_run_ebuild_phase
+pkgcore_shopt_pop
+pkgcore_shopt_push
 portageq
 regex_filter_input
 remove_path_entry

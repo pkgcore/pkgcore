@@ -74,7 +74,41 @@ directory_is_empty() {
 	return 0
 }
 
+PKGCORE_SHOPT_STACK=( )
+
+pkgcore_shopt_push()
+{
+	PKGCORE_SHOPT_STACK[${#PKGCORE_SHOPT_STACK[@]}]=$(shopt -p)
+	PKGCORE_SHOPT_STACK[${#PKGCORE_SHOPT_STACK[@]}]="$-"
+	if [[ $1 == -s ]] || [[ $1 == -u ]]; then
+		# shopt modification
+		shopt "$@" || die "bad shopt options: $@"
+	elif [ -n "$@" ]; then
+		set "$@" || die "bad set invocation: $@"
+	fi
+	:
+}
+
+pkgcore_shopt_pop()
+{
+	[ "$#" -ne 0 ] && die "bad invocation of pkgcore_shopt_pop; no args should be supplied, got $@"
+	local count=$(( ${#PKGCORE_SHOPT_STACK[@]} - 1 ))
+	[ "$count" -eq -1 ] && die "bad pkgcore_shopt_pop invocation; no matching push, stack was empty"
+	local set_val="${PKGCORE_SHOPT_STACK[$count]}"
+	if [ -n "$-" ]; then
+		set +$- || die "failed wiping set"
+	fi
+	if [ -n "${set_val}" ]; then
+		set -${set_val} || die "failed restoring set; ${set_val}"
+	fi
+	unset PKGCORE_SHOPT_STACK[$count]
+	count=$(( $count - 1 ))
+	eval "${PKGCORE_SHOPT_STACK[$count]}" || die "failed restoring shopt settings: ${PKGCORE_SHOPT_STACK[$count]}"
+	unset PKGCORE_SHOPT_STACK[$count]
+	:
+}
+
 unset_colors
-DONT_EXPORT_VARS="${DONT_EXPORT_VARS} PKGCORE_RC_.*"
+DONT_EXPORT_VARS="${DONT_EXPORT_VARS} PKGCORE_RC_.* PKGCORE_ESHOPT_STATE"
 
 :

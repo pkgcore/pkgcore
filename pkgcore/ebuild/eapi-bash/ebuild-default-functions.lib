@@ -81,6 +81,7 @@ unpack()
 			srcdir="${DISTDIR}"
 		fi
 
+		[ ! -e "${srcdir}${x}" ] && die "$myfail: file doesn't exist"
 		[ ! -s "${srcdir}${x}" ] && die "$myfail: empty file"
 		[ "${x/${DISTDIR}}" != "${x}" ] && \
 			die "Arguments to unpack() should not begin with \${DISTDIR}."

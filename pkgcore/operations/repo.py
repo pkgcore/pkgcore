@@ -211,8 +211,18 @@ class operations(_operations_mod.base):
         finally:
             if sync_rate is not None:
                 cache.set_sync_rate(sync_rate)
-            if cache:
-                cache.commit(force=True)
+            self.repo.operations.run_if_supported("flush_cache")
+
+    def _get_caches(self):
+        caches = getattr(self.repo, 'cache', ())
+        if not hasattr(caches, 'commit'):
+            return caches
+        return [caches]
+
+    @_operations_mod.is_standalone
+    def _cmd_api_flush_cache(self, observer=None):
+        for cache in self._get_caches():
+            cache.commit(force=True)
 
     def _cmd_api_digests(self, domain, query, observer=None, **options):
         observer = self._get_observer(observer)

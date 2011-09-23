@@ -62,6 +62,16 @@ class base(object):
         self.set_sync_rate(self.default_sync_rate)
         self.updates = 0
 
+    def _sync_if_needed(self, increment=False):
+        if self.autocommits:
+            return
+        if increment:
+            self.updates += 1
+        if self.updates > self.sync_rate:
+            import pdb;pdb.set_trace()
+            self.commit()
+            self.updates = 0
+
     def __getitem__(self, cpv):
         """set a cpv to values
 
@@ -69,9 +79,7 @@ class base(object):
         handles the __eclasses__ conversion. That said, if the class
         handles it, they can override it.
         """
-        if self.updates > self.sync_rate:
-            self.commit()
-            self.updates = 0
+        self._sync_if_needed()
         d = self._getitem(cpv)
         if self.serialize_eclasses and "_eclasses_" in d:
             d["_eclasses_"] = self.reconstruct_eclasses(cpv, d["_eclasses_"])
@@ -105,11 +113,7 @@ class base(object):
         else:
             d = values
         self._setitem(cpv, d)
-        if not self.autocommits:
-            self.updates += 1
-            if self.updates >= self.sync_rate:
-                self.commit()
-                self.updates = 0
+        self._sync_if_needed(True)
 
     def _setitem(self, name, values):
         """__setitem__ calls this after readonly checks.
@@ -127,12 +131,8 @@ class base(object):
         """
         if self.readonly:
             raise errors.ReadOnly()
-        if not self.autocommits:
-            self.updates += 1
         self._delitem(cpv)
-        if self.updates > self.sync_rate:
-            self.commit()
-            self.updates = 0
+        self._sync_if_needed(True)
 
     def _delitem(self, cpv):
         """__delitem__ calls this after readonly checks.

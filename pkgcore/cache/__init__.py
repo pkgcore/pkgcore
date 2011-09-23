@@ -67,8 +67,7 @@ class base(object):
             return
         if increment:
             self.updates += 1
-        if self.updates > self.sync_rate:
-            import pdb;pdb.set_trace()
+        if self.updates >= self.sync_rate:
             self.commit()
             self.updates = 0
 

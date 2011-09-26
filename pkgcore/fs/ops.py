@@ -19,6 +19,7 @@ from pkgcore.plugin import get_plugin
 from snakeoil.currying import partial
 from snakeoil.osutils import ensure_dirs, pjoin, unlink_if_exists
 
+
 __all__ = [
     "merge_contents", "unmerge_contents", "default_ensure_perms",
     "default_copyfile", "default_mkdir"]
@@ -152,14 +153,7 @@ def default_copyfile(obj, mkdirs=False):
         fp = existant_fp = obj.location + "#new"
 
     if fs.isreg(obj):
-        src_f = obj.data.bytes_fileobj()
-        new_f = open(fp, "wb", 32768)
-        d = src_f.read(32768)
-        while d:
-            new_f.write(d)
-            d = src_f.read(32768)
-        new_f.close()
-        del src_f
+        obj.data.transfer_to_path(fp)
     elif fs.issym(obj):
         os.symlink(obj.target, fp)
     elif fs.isfifo(obj):

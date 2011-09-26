@@ -292,16 +292,16 @@ def mirror_main(options, out, err):
     return 0
 
 
-digests = subparsers.add_parser("digests",
+digest = subparsers.add_parser("digest",
     description="update a repositories package manifest/digest information",
     parents=(commandline.mk_argparser(add_help=False),))
-digests.add_argument("--repository", "--repo", action='store',
+digest.add_argument("--repository", "--repo", action='store',
     help="force a specific repository, rather than spceifying it via a repo atom")
-commandline.make_query(digests, nargs='+', dest='query',
+commandline.make_query(digest, nargs='+', dest='query',
     help="packages matching any of these restrictions will have their"
     " manifest/digest updated")
-@digests.bind_main_func
-def digests_main(options, out, err):
+@digest.bind_main_func
+def digest_main(options, out, err):
     domain = options.domain
     repos = domain.all_repos
     repo_ops = repos.operations

@@ -18,7 +18,7 @@ from pkgcore.repository import virtual
 from snakeoil.osutils import abspath, join as pjoin
 from snakeoil.fileutils import readlines_utf8
 from snakeoil.containers import InvertedContains
-from snakeoil.fileutils import iter_read_bash, read_bash_dict
+from snakeoil.bash import iter_read_bash, read_bash_dict
 from snakeoil import klass, caching, currying, sequences
 from snakeoil import compatibility
 from snakeoil.demandload import demandload

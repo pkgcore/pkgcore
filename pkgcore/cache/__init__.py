@@ -8,8 +8,8 @@ cache subsystem, typically used for storing package metadata
 __all__ = ("base", "bulk")
 
 from pkgcore.cache import errors
-from snakeoil.mappings import ProtectedDict, autoconvert_py3k_methods_metaclass
-from snakeoil.obj import make_SlottedDict_kls
+from snakeoil.mappings import (ProtectedDict, autoconvert_py3k_methods_metaclass,
+    make_SlottedDict_kls)
 from snakeoil import klass
 from snakeoil.compatibility import raise_from
 

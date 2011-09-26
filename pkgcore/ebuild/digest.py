@@ -17,7 +17,7 @@ from pkgcore.package import errors
 from pkgcore.fs.livefs import iter_scan
 from pkgcore.fs.fs import fsFile
 
-from snakeoil.obj import make_SlottedDict_kls
+from snakeoil.mappings import make_SlottedDict_kls
 from snakeoil.compatibility import any, raise_from
 from snakeoil.demandload import demandload
 demandload(globals(),

@@ -157,6 +157,10 @@ def parse_manifest(source, ignore_gpg=True):
 
 class Manifest(object):
 
+
+    # left for compatibility until 0.8 (pcheck needs it)
+    version = 2
+
     def __init__(self, source, enforce_gpg=False):
         self._source = (source, not enforce_gpg)
 

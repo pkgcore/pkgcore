@@ -193,6 +193,12 @@ class pkgcore_install_man(core.Command):
                             "no pregenerated man pages, and sphinx isn't available "
                             "to generate them; bailing")
                     raise errors.DistutilsExecError("no man pages found")
+                try:
+                    self.distribution.get_command_obj('build_man')
+                except errors.DistutilsModuleError:
+                    # command doesn't exist
+                    self.warn("build_man command doesn't exist; sphinx isn't installed, skipping man pages")
+                    return []
                 self.run_command('build_man')
                 return self.scan_man_pages(path=path, first_run=False)
         obj = self.man_pages = [

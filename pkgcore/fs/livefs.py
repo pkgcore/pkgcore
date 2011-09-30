@@ -49,8 +49,6 @@ def gen_obj(path, stat=None, chksum_handlers=None, real_location=None,
             if stat_func == os.lstat or e.errno != errno.ENOENT:
                 raise
             stat = os.lstat(real_location)
-    if chksum_handlers is None:
-        chksum_handlers = get_handlers()
 
     mode = stat.st_mode
     d = {"mtime":stat.st_mtime, "mode":S_IMODE(mode),
@@ -60,6 +58,8 @@ def gen_obj(path, stat=None, chksum_handlers=None, real_location=None,
     elif S_ISREG(mode):
         d["size"] = stat.st_size
         d["data"] = local_source(real_location)
+        if chksum_handlers is not None:
+            d["chf_types"] = chksum_handlers
         return fsFile(path, **d)
     elif S_ISLNK(mode):
         d["target"] = os.readlink(real_location)
@@ -125,7 +125,7 @@ def _internal_offset_iter_scan(path, chksum_handlers, offset,
                 dirs.append(path)
 
 
-def iter_scan(path, offset=None, follow_symlinks=False):
+def iter_scan(path, offset=None, follow_symlinks=False, chksum_types=None):
     """
     Recursively scan a path.
 
@@ -138,7 +138,7 @@ def iter_scan(path, offset=None, follow_symlinks=False):
     :param offset: if not None, prefix to strip from each objects location.
         if offset is /tmp, /tmp/blah becomes /blah
     """
-    chksum_handlers = get_handlers()
+    chksum_handlers = get_handlers(chksum_types)
 
     stat_func = follow_symlinks and os.stat or os.lstat
     if offset is None:

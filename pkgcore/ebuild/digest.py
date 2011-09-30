@@ -35,18 +35,13 @@ def serialize_manifest(pkgdir, fetchables, chfs=None):
     :param fetchables: the fetchables of the package
     """
 
-    if chfs is None:
-        filter_chfs = dict
-    else:
-        filter_chfs = lambda x:dict((k, x[k]) for k in chfs)
-
     _key_sort = operator.itemgetter(0)
 
     handle = open(pkgdir + '/Manifest', 'w')
     excludes = frozenset(["CVS", ".svn", "Manifest"])
     aux, ebuild, misc = {}, {}, {}
     filesdir = '/files/'
-    for obj in iter_scan('/', offset=pkgdir):
+    for obj in iter_scan('/', offset=pkgdir, chksum_types=chfs):
         if not obj.is_reg:
             continue
         pathname = obj.location
@@ -64,7 +59,7 @@ def serialize_manifest(pkgdir, fetchables, chfs=None):
         else:
             raise Exception("Unexpected directory found in %r; %r"
                 % (pkgdir, obj.dirname))
-        d[pathname] = filter_chfs(obj.chksums)
+        d[pathname] = dict(obj.chksums)
 
     # write it in alphabetical order; aux gets flushed now.
     for path, chksums in sorted(aux.iteritems(), key=_key_sort):

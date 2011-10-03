@@ -13,13 +13,14 @@ from snakeoil.compatibility import any
 from snakeoil.demandload import demandload
 from snakeoil.osutils import pjoin, listdir_files
 from snakeoil.caching import WeakInstMeta
+from snakeoil import mappings
 from snakeoil import klass
 from itertools import chain
 demandload(globals(),
     'snakeoil.xml:etree',
     'pkgcore.log:logger',
-    'snakeoil:mappings',
     'snakeoil:fileutils',
+    'snakeoil.lists:iter_stable_unique',
     'errno',
 )
 
@@ -266,3 +267,52 @@ class OverlayedLicenses(Licenses):
                 l.append(x.licenses)
         object.__setattr__(self, '_license_instances',
             tuple(l))
+
+
+class _immutable_attr_dict(mappings.ImmutableDict):
+
+    __slots__ = ()
+
+    mappings.inject_getitem_as_getattr(locals())
+
+
+class RepoConfig(object):
+
+    __slots__ = ("repo_location", "manifests", "masters", "aliases", "authoritative_cache")
+
+    layout_offset = "metadata/layout.conf"
+
+    default_hashes = ('sha1', 'sha256', 'rmd160')
+
+    def __init__(self, repo_location):
+        self.repo_location = repo_location
+        self.parse_config()
+
+    def load_config(self):
+        path = pjoin(self.repo_location, self.layout_offset)
+        return fileutils.read_dict(fileutils.readlines_ascii(path, True, True),
+            source_isiter=True)
+
+    def parse_config(self):
+        data = self.load_config()
+
+        self.authoritative_cache = \
+            (data.get('authoritative-cache', 'false').lower() == 'true')
+
+        hashes = tuple(iter_stable_unique(data.get('manifest-hashes', '').split()))
+        if not hashes:
+            hashes = self.default_hashes
+
+        manifest_policy = data.get('use-manifests', 'strict').lower()
+        d = {
+            'disabled':(manifest_policy == 'false'),
+            'strict':(manifest_policy == 'strict'),
+            'thin':(data.get('thin-manifests', '').lower() == 'true'),
+            'signed':(data.get('sign-manifests', 'true').lower() == 'true'),
+            'hashes':hashes,
+        }
+
+        self.manifests = _immutable_attr_dict(d)
+        self.masters = tuple(data.get('masters', '').strip())
+        self.aliases = tuple(data.get('aliases', '').strip())
+

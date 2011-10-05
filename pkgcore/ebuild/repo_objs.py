@@ -282,7 +282,7 @@ class RepoConfig(object):
 
     layout_offset = "metadata/layout.conf"
 
-    default_hashes = ('sha1', 'sha256', 'rmd160')
+    default_hashes = ('size', 'rmd160', 'sha1', 'sha256')
 
     def __init__(self, repo_location):
         self.repo_location = repo_location
@@ -291,7 +291,7 @@ class RepoConfig(object):
     def load_config(self):
         path = pjoin(self.repo_location, self.layout_offset)
         return fileutils.read_dict(fileutils.readlines_ascii(path, True, True),
-            source_isiter=True)
+            source_isiter=True, strip=True)
 
     def parse_config(self):
         data = self.load_config()
@@ -299,8 +299,11 @@ class RepoConfig(object):
         self.authoritative_cache = \
             (data.get('authoritative-cache', 'false').lower() == 'true')
 
-        hashes = tuple(iter_stable_unique(data.get('manifest-hashes', '').split()))
-        if not hashes:
+        hashes = data.get('manifest-hashes', '').split()
+        if hashes:
+            hashes = ['size'] + hashes
+            hashes = tuple(iter_stable_unique(hashes))
+        else:
             hashes = self.default_hashes
 
         manifest_policy = data.get('use-manifests', 'strict').lower()
@@ -313,6 +316,6 @@ class RepoConfig(object):
         }
 
         self.manifests = _immutable_attr_dict(d)
-        self.masters = tuple(data.get('masters', '').strip())
-        self.aliases = tuple(data.get('aliases', '').strip())
+        self.masters = tuple(iter_stable_unique(data.get('masters', '').split()))
+        self.aliases = tuple(iter_stable_unique(data.get('aliases', '').split()))
 

@@ -153,7 +153,7 @@ class test_base(TestCase):
         l = []
         def f(self, cpv, allow_missing=False):
             l.append(cpv)
-            return {'monkey.tgz': {}, 'boon.tgz': {}, 'foon.tar.gz': {}}
+            return allow_missing, {'monkey.tgz': {}, 'boon.tgz': {}, 'foon.tar.gz': {}}
         repo = self.make_parent(_get_digests=f)
         parent = self.make_parent(_parent_repo=repo)
         # verify it does digest lookups...

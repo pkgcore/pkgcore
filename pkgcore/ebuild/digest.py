@@ -27,7 +27,7 @@ demandload(globals(),
 )
 
 
-def serialize_manifest(pkgdir, fetchables, chfs=None):
+def serialize_manifest(pkgdir, fetchables, chfs=None, thin=False):
     """
     Write a manifest given a pkg_instance
 
@@ -40,26 +40,27 @@ def serialize_manifest(pkgdir, fetchables, chfs=None):
     handle = open(pkgdir + '/Manifest', 'w')
     excludes = frozenset(["CVS", ".svn", "Manifest"])
     aux, ebuild, misc = {}, {}, {}
-    filesdir = '/files/'
-    for obj in iter_scan('/', offset=pkgdir, chksum_types=chfs):
-        if not obj.is_reg:
-            continue
-        pathname = obj.location
-        if excludes.intersection(pathname.split('/')):
-            continue
-        if pathname.startswith(filesdir):
-            d = aux
-            pathname = pathname[len(filesdir):]
-        elif obj.dirname == '/':
-            pathname = pathname[1:]
-            if obj.location[-7:] == '.ebuild':
-                d = ebuild
+    if not thin:
+        filesdir = '/files/'
+        for obj in iter_scan('/', offset=pkgdir, chksum_types=chfs):
+            if not obj.is_reg:
+                continue
+            pathname = obj.location
+            if excludes.intersection(pathname.split('/')):
+                continue
+            if pathname.startswith(filesdir):
+                d = aux
+                pathname = pathname[len(filesdir):]
+            elif obj.dirname == '/':
+                pathname = pathname[1:]
+                if obj.location[-7:] == '.ebuild':
+                    d = ebuild
+                else:
+                    d = misc
             else:
-                d = misc
-        else:
-            raise Exception("Unexpected directory found in %r; %r"
-                % (pkgdir, obj.dirname))
-        d[pathname] = dict(obj.chksums)
+                raise Exception("Unexpected directory found in %r; %r"
+                    % (pkgdir, obj.dirname))
+            d[pathname] = dict(obj.chksums)
 
     # write it in alphabetical order; aux gets flushed now.
     for path, chksums in sorted(aux.iteritems(), key=_key_sort):
@@ -156,8 +157,9 @@ class Manifest(object):
     # left for compatibility until 0.8 (pcheck needs it)
     version = 2
 
-    def __init__(self, source, enforce_gpg=False):
+    def __init__(self, source, enforce_gpg=False, thin=False):
         self._source = (source, not enforce_gpg)
+        self.thin = thin
 
     def _pull_manifest(self):
         if self._source is None:

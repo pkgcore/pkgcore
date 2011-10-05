@@ -44,13 +44,15 @@ demandload(globals(),
 
 class repo_operations(_repo_ops.operations):
 
-    _manifest_chksums = ("size", "rmd160", "sha1", "sha256")
-
     def _cmd_implementation_digests(self, domain, matches, observer, **options):
-        required = self._manifest_chksums
+        manifest_config = self.repo.config.manifests
+        if manifest_config.disabled:
+            observer.info("repo %s has manifests diabled" % (self.repo,))
+            return
+        required = manifest_config.hashes
         ret = False
         for key_query in sorted(set(match.unversioned_atom for match in matches)):
-            observer.info("generating digests for %s for repo %s", key_query, self)
+            observer.info("generating digests for %s for repo %s", key_query, self.repo)
             packages = self.repo.match(key_query, sorter=sorted)
             if packages:
                 observer.info("generating digests for %s for repo %s", key_query, self.repo)
@@ -80,7 +82,7 @@ class repo_operations(_repo_ops.operations):
 
                 pkgdir_fetchables = sorted(pkgdir_fetchables.itervalues())
                 digest.serialize_manifest(os.path.dirname(pkg.ebuild.get_path()),
-                    pkgdir_fetchables, chfs=required)
+                    pkgdir_fetchables, chfs=required, thin=manifest_config.thin)
                 ret = True
             finally:
                 for pkg in packages:
@@ -147,6 +149,7 @@ class UnconfiguredTree(syncable.tree_mixin, prototype.tree):
 
         prototype.tree.__init__(self)
         syncable.tree_mixin.__init__(self, sync)
+        self.config = repo_objs.RepoConfig(location)
         self._repo_id = override_repo_id
         self.base = self.location = location
         try:
@@ -316,15 +319,18 @@ class UnconfiguredTree(syncable.tree_mixin, prototype.tree):
 
     def _get_manifest(self, category, package):
         return digest.Manifest(pjoin(self.base, category, package,
-            "Manifest"), enforce_gpg=self.enable_gpg)
+            "Manifest"), thin=self.config.manifests.thin,
+                enforce_gpg=self.enable_gpg)
 
     def _get_digests(self, pkg, allow_missing=False):
+        if self.config.manifests.disabled:
+            return True, {}
         try:
             manifest = pkg._shared_pkg_data.manifest
-            return manifest.distfiles
+            return allow_missing, manifest.distfiles
         except pkg_errors.ParseChksumError, e:
             if e.missing and allow_missing:
-                return {}
+                return allow_missing, {}
             raise
 
     def __str__(self):

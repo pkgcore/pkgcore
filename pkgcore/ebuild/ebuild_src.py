@@ -74,7 +74,8 @@ def generate_providers(self):
 def generate_fetchables(self, allow_missing_checksums=False):
     chksums_can_be_missing = allow_missing_checksums or \
         bool(getattr(self.repo, '_allow_missing_chksums', False))
-    chksums = self.repo._get_digests(self, allow_missing=chksums_can_be_missing)
+    chksums_can_be_missing, chksums = self.repo._get_digests(self,
+        allow_missing=chksums_can_be_missing)
 
     mirrors = getattr(self._parent, "mirrors", {})
     default_mirrors = getattr(self._parent, "default_mirrors", None)

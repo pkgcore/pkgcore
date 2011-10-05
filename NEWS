@@ -4,6 +4,10 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* initial layout.conf support; thin-manifests, use-manifests, and
+  controllable hashes.
+
+
 pkgcore 0.7.2: Sept 27th, 2011
 
 * bug fixes; fix to pebuild so it works again, bugs spotted by pyflakes,

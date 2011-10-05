@@ -48,9 +48,12 @@ class repo_operations(_repo_ops.operations):
 
     def _cmd_implementation_digests(self, domain, matches, observer, **options):
         required = self._manifest_chksums
+        ret = False
         for key_query in sorted(set(match.unversioned_atom for match in matches)):
             observer.info("generating digests for %s for repo %s", key_query, self)
             packages = self.repo.match(key_query, sorter=sorted)
+            if packages:
+                observer.info("generating digests for %s for repo %s", key_query, self.repo)
             pkgdir_fetchables = {}
             try:
                 for pkg in packages:
@@ -78,11 +81,14 @@ class repo_operations(_repo_ops.operations):
                 pkgdir_fetchables = sorted(pkgdir_fetchables.itervalues())
                 digest.serialize_manifest(os.path.dirname(pkg.ebuild.get_path()),
                     pkgdir_fetchables, chfs=required)
+                ret = True
             finally:
                 for pkg in packages:
                     # done since we do hackish shit above
                     # should be uneeded once this is cleaned up
                     pkg.release_cached_data(all=True)
+        return ret
+
 
 
 metadata_offset = "profiles"

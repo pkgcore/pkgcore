@@ -41,21 +41,20 @@ domain_config = basics.HardCodedConfigSection({
         })
 
 
-class CommandlineTest(TestCase, helpers.MainMixin):
+class CommandlineTest(TestCase, helpers.ArgParseMixin):
 
-    parser = helpers.mangle_parser(pquery.OptionParser())
-    main = staticmethod(pquery.main)
+    _argparser = pquery.argparser
 
     def test_parser(self):
         self.assertError(
-            '--no-version with --min or --max does not make sense.',
-            '--no-version', '--max', '--min')
+            'argument --min: not allowed with argument --max',
+            '--max', '--min')
         self.parse('--all', domain=domain_config)
 
     def test_no_domain(self):
         self.assertError(
-            'No default domain found, fix your configuration or '
-            'pass --domain (valid domains: )',
+            "config error: no default object of type 'domain' found.  "
+            "Please either fix your configuration, or set the domain via the --domain option.",
             '--all')
 
     def test_no_description(self):

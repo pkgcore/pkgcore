@@ -4,6 +4,9 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* pquery argument parsing was rewritten; ordering issues for --config
+  were fixed, error messages improved, and general cleanup.
+
 * fix traceback that occurs when unmerging a pkg, but tempspace needs
   to be created.
 

@@ -487,6 +487,7 @@ def mk_argparser(suppress=False, config=True, domain=True, color=True, debug=Tru
         kwds["version"] = version
         version = None
     p = ArgumentParser(**kwds)
+    p.register('action', 'extend_comma', ExtendCommaDelimited)
 
     if suppress:
         return p

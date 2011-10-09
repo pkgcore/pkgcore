@@ -19,7 +19,7 @@ from itertools import chain
 demandload(globals(),
     'snakeoil.xml:etree',
     'pkgcore.log:logger',
-    'snakeoil:fileutils',
+    'snakeoil:fileutils,bash',
     'snakeoil.lists:iter_stable_unique',
     'errno',
 )
@@ -290,8 +290,8 @@ class RepoConfig(object):
 
     def load_config(self):
         path = pjoin(self.repo_location, self.layout_offset)
-        return fileutils.read_dict(fileutils.readlines_ascii(path, True, True),
-            source_isiter=True, strip=True)
+        return fileutils.read_dict(bash.iter_read_bash(fileutils.readlines_ascii(path, True, True)),
+            source_isiter=True, strip=True, filename=path)
 
     def parse_config(self):
         data = self.load_config()

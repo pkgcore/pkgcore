@@ -51,19 +51,23 @@ set_colors() {
 }
 
 has() {
+	pkgcore_shopt_push +x
 	local needle=$1
 	shift
 
 	local x
 	for x in "$@"; do
-		[ "${x}" == "${needle}" ] && return 0
+		[ "${x}" != "${needle}" ] && continue
+		pkgcore_shopt_pop
+		return 0
 	done
+	pkgcore_shopt_pop
 	return 1
 }
 
 is_function() {
 	declare -F "$1" &> /dev/null
-}
+} &> /dev/null
 
 run_function_if_exists() {
 	is_function "$1" && "$@"
@@ -87,7 +91,7 @@ pkgcore_shopt_push()
 		set "$@" || die "bad set invocation: $@"
 	fi
 	:
-}
+} &> /dev/null
 
 pkgcore_shopt_pop()
 {
@@ -106,7 +110,7 @@ pkgcore_shopt_pop()
 	eval "${PKGCORE_SHOPT_STACK[$count]}" || die "failed restoring shopt settings: ${PKGCORE_SHOPT_STACK[$count]}"
 	unset PKGCORE_SHOPT_STACK[$count]
 	:
-}
+} &> /dev/null
 
 unset_colors
 DONT_EXPORT_VARS="${DONT_EXPORT_VARS} PKGCORE_RC_.* PKGCORE_ESHOPT_STATE"

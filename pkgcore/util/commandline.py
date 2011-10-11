@@ -313,12 +313,20 @@ def make_query(parser, *args, **kwargs):
     attrs = kwargs.pop("attrs", [])
     subattr = "_%s" % (dest,)
     kwargs["dest"] = subattr
-    kwargs.setdefault("type", parse_restriction)
+    if kwargs.get('type', False) is None:
+        del kwargs['type']
+    else:
+        kwargs.setdefault("type", parse_restriction)
     kwargs.setdefault("metavar", dest)
+    final_priority  = kwargs.pop("final_priority", None)
     parser.add_argument(*args, **kwargs)
-    kwargs2 = {}
-    kwargs2[dest] = BooleanQuery(list(attrs) + [subattr], klass_type=klass_type)
-    parser.set_defaults(**kwargs2)
+    bool_kwargs = {}
+    if final_priority is not None:
+        bool_kwargs['priority'] = final_priority
+    obj = BooleanQuery(list(attrs) + [subattr], klass_type=klass_type, **bool_kwargs)
+    # note that dict expansion has to be used here; dest=obj would just set a
+    # default named 'dest'
+    parser.set_defaults(**{dest:obj})
 
 
 def python_namespace_type(value, module=False, attribute=False):

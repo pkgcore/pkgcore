@@ -4,6 +4,9 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* fix traceback that occurs when unmerging a pkg, but tempspace needs
+  to be created.
+
 * initial layout.conf support; thin-manifests, use-manifests, and
   controllable hashes.
 

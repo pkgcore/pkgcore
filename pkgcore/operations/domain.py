@@ -17,6 +17,7 @@ demandload(globals(), "pkgcore.log:logger",
     'errno',
     "shutil",
     "tempfile",
+    'snakeoil:osutils',
     )
 
 
@@ -67,7 +68,9 @@ class base(object):
         raise NotImplementedError(self, 'create_repo_op')
 
     def _create_tempspace(self):
-        self.tempspace = tempfile.mkdtemp(dir=self.domain._get_tempspace(),
+        location = self.domain._get_tempspace()
+        osutils.ensure_dirs(location)
+        self.tempspace = tempfile.mkdtemp(dir=location,
             prefix="merge-engine-tmp")
 
     def _add_triggers(self, engine):

@@ -272,7 +272,7 @@ def parse_restriction(value):
 
 class BooleanQuery(DelayedValue):
 
-    def __init__(self, attrs, klass_type=None, priority=100):
+    def __init__(self, attrs, klass_type=None, priority=100, converter=None):
         if klass_type == 'and':
             self.klass = packages.AndRestriction
         elif klass_type == 'or':
@@ -283,6 +283,11 @@ class BooleanQuery(DelayedValue):
             raise ValueError("klass_type either needs to be 'or', 'and', "
                 "or a callable.  Got %r" % (klass_type,))
 
+        if converter is not None and not callable(converter):
+            raise ValueError("converter either needs to be None, or a callable;"
+                " got %r" % (converter,))
+
+        self.converter = converter
         self.priority = int(priority)
         self.attrs = tuple(attrs)
 
@@ -296,6 +301,8 @@ class BooleanQuery(DelayedValue):
                 l.append(val)
             else:
                 l.extend(val)
+        if self.converter:
+            l = self.converter(l, namespace)
         if len(l) > 1:
             val = self.klass(*l)
         elif l:
@@ -319,8 +326,9 @@ def make_query(parser, *args, **kwargs):
         kwargs.setdefault("type", parse_restriction)
     kwargs.setdefault("metavar", dest)
     final_priority  = kwargs.pop("final_priority", None)
+    final_converter = kwargs.pop("final_converter", None)
     parser.add_argument(*args, **kwargs)
-    bool_kwargs = {}
+    bool_kwargs = {'converter':final_converter}
     if final_priority is not None:
         bool_kwargs['priority'] = final_priority
     obj = BooleanQuery(list(attrs) + [subattr], klass_type=klass_type, **bool_kwargs)

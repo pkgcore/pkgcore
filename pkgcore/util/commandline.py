@@ -297,7 +297,7 @@ class BooleanQuery(DelayedValue):
             else:
                 l.extend(val)
         if len(l) > 1:
-            val = self.klass(*val)
+            val = self.klass(*l)
         elif l:
             val = l[0]
         else:

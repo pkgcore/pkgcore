@@ -434,6 +434,14 @@ class ArgumentParser(argparse.ArgumentParser):
         obj.bind_to_parser(self)
         return self
 
+    def bind_delayed_default(self, priority, name=None):
+        def f(functor, name=name):
+            if name is None:
+                name = functor.__name__
+            self.set_defaults(**{name:DelayedValue(functor, priority)})
+            return functor
+        return f
+
 
 class ArgparseCommand(object):
 

@@ -536,7 +536,8 @@ add_query(nargs='*', dest='matches',
     help="extended atom matching of pkgs")
 add_query('--all', action='append_const', dest='all',
     const=packages.AlwaysTrue, type=None, suppress_nargs=True,
-    help='Match all packages (equivalent to "pquery *")')
+    help='Match all packages (equivalent to "pquery *").  '
+        'If no query options are specified, this option is enabled.')
 add_query('--has-use', action='append', dest='has_use',
     type=parserestrict.comma_separated_containment('iuse'),
     help='Exact string match on a USE flag.')
@@ -692,6 +693,18 @@ add_query('--pkgset', dest='pkgset',
     config_type='pkgset',
     help='find packages that match the given package set (world for example).')
 
+# add a fallback if no restrictions are specified.
+_query_items.append('_fallback_all')
+def _add_all_if_needed(namespace, attr):
+    val = [packages.AlwaysTrue]
+    for query_attr in _query_items:
+        if getattr(namespace, '_%s' % (query_attr,), None):
+            val = None
+            break
+    setattr(namespace, attr, val)
+
+argparser.set_defaults(_fallback_all=
+    commandline.DelayedValue(_add_all_if_needed, priority=89))
 
 argparser.set_defaults(query=
     commandline.BooleanQuery(_query_items, klass_type='and',

@@ -32,6 +32,7 @@ from pkgcore.util.commandline_optparse import *
 demandload.demandload(globals(),
     'copy@_copy',
     'snakeoil:osutils',
+    'snakeoil.lists:iflatten_instance',
     'pkgcore:version@_version',
     'pkgcore.config:basics',
     'pkgcore.restrictions:packages,restriction',
@@ -301,6 +302,9 @@ class BooleanQuery(DelayedValue):
                 l.append(val)
             else:
                 l.extend(val)
+
+        l = list(iflatten_instance(l, (restriction.base,)))
+
         if self.converter:
             l = self.converter(l, namespace)
         if len(l) > 1:

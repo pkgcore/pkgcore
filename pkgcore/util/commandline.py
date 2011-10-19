@@ -141,6 +141,9 @@ class Delayed(argparse.Action):
 CONFIG_ALL_DEFAULT = object()
 
 
+class ConfigError(Exception):
+    pass
+
 class StoreConfigObject(argparse._StoreAction):
 
     default_priority = 20
@@ -156,7 +159,8 @@ class StoreConfigObject(argparse._StoreAction):
 
         if kwargs.pop("get_default", False):
             kwargs["default"] = DelayedValue(currying.partial(self.store_default,
-                self.config_type), self.priority)
+                self.config_type, option_string=kwargs.get('option_strings', [None])[0]),
+                self.priority)
 
         self.store_name = kwargs.pop("store_name", False)
         self.writable = kwargs.pop("writable", None)
@@ -199,13 +203,22 @@ class StoreConfigObject(argparse._StoreAction):
         setattr(namespace, self.dest, value)
 
     @staticmethod
-    def store_default(config_type, namespace, attr):
+    def store_default(config_type, namespace, attr, option_string=None):
         config = getattr(namespace, 'config', None)
         if config is None:
-            raise ValueError("no config found.  Internal bug")
+            raise ConfigError("no config found.  Internal bug, or broken on disk configuration.")
         obj = config.get_default(config_type)
         if obj is None:
-            raise ValueError("config error: no default object of type %r found" % (config_type,))
+            known_objs = sorted(getattr(config, config_type).keys())
+            msg = "config error: no default object of type %r found.  " % (config_type,)
+            if not option_string:
+                msg += "Please fix your configuration."
+            else:
+                msg += "Please either fix your configuration, or set the %s " \
+                    "via the %s option." % (config_type, option_string)
+            if known_objs:
+                msg += "Known %ss: %s" % (config_type, ', '.join(map(repr, known_objs)))
+            raise ConfigError(msg)
         setattr(namespace, attr, obj)
 
     @staticmethod
@@ -471,7 +484,7 @@ class ArgumentParser(argparse.ArgumentParser):
                 delayed(args, attr)
         except (TypeError, ValueError), err:
             self.error("failed loading/parsing %s: %s" % (attr, str(err)))
-        except argparse.ArgumentError:
+        except (ConfigError, argparse.ArgumentError):
             err = sys.exc_info()[1]
             self.error(str(err))
 

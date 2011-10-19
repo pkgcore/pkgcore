@@ -337,6 +337,48 @@ def make_query(parser, *args, **kwargs):
     parser.set_defaults(**{dest:obj})
 
 
+class Expansion(argparse.Action):
+
+    def __init__(self, option_strings, dest, nargs=None, help=None,
+        required=None, subst=None):
+
+        if subst is None:
+            raise TypeError("resultant_string must be set")
+
+        super(Expansion, self).__init__(option_strings=option_strings,
+            dest=dest,
+            help=help,
+            required=required,
+            default=False,
+            nargs=nargs)
+        self.subst = tuple(subst)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        actions = parser._actions
+        action_map = {}
+        vals = values
+        if isinstance(values, basestring):
+            vals = [vals]
+        dvals = dict((str(idx), val) for (idx, val) in enumerate(vals))
+        dvals['*'] = ' '.join(vals)
+
+        for action in parser._actions:
+            action_map.update((option, action) for option in action.option_strings)
+
+        for chunk in self.subst:
+            option, args = chunk[0], chunk[1:]
+            action = action_map.get(option)
+            args = [x % dvals for x in args]
+            if not action:
+                raise ValueError("unable to find option %r for %r" (option, self.option_strings))
+            if action.type is not None:
+                args = map(action.type, args)
+            if action.nargs in (1, None):
+                args = args[0]
+            action(parser, namespace, args, option_string=option_string)
+        setattr(namespace, self.dest, True)
+
+
 def python_namespace_type(value, module=False, attribute=False):
     """
     return the object from python namespace that value specifies

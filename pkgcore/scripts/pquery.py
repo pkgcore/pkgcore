@@ -52,77 +52,6 @@ class DataSourceRestriction(values.base):
 
     __hash__ = object.__hash__
 
-def parse_expression(string):
-    """Convert a string to a restriction object using pyparsing."""
-    # Two reasons to delay this import: we want to deal if it is
-    # not there and the import is slow (needs to compile a bunch
-    # of regexps).
-    try:
-        import pyparsing as pyp
-    except ImportError:
-        raise parserestrict.ParseError('pyparsing is not installed.')
-
-    grammar = getattr(parse_expression, 'grammar', None)
-    if grammar is None:
-
-        anystring = pyp.quotedString.copy().setParseAction(pyp.removeQuotes)
-        anystring |= pyp.Word(pyp.alphanums + ',')
-
-        def funcall(name, parser):
-            """Create a pyparsing expression from a name and parse func."""
-            # This function cannot be inlined below: we use its scope to
-            # "store" the parser function. If we store the parser function
-            # as default argument to the _parse function pyparsing passes
-            # different arguments (it detects the number of arguments the
-            # function takes).
-            result = (pyp.Suppress('%s(' % (name,)) + anystring +
-                      pyp.Suppress(')'))
-            def _parse(tokens):
-                return parser(tokens[0])
-            result.setParseAction(_parse)
-            return result
-
-
-        boolcall = pyp.Forward()
-        expr = boolcall
-        for name, func in PARSE_FUNCS.iteritems():
-            expr |= funcall(name, func)
-
-        andcall = (pyp.Suppress(pyp.CaselessLiteral('and') + '(') +
-                   pyp.delimitedList(expr) + pyp.Suppress(')'))
-        def _parse_and(tokens):
-            return packages.AndRestriction(*tokens)
-        andcall.setParseAction(_parse_and)
-
-        orcall = (pyp.Suppress(pyp.CaselessLiteral('or') + '(') +
-                   pyp.delimitedList(expr) + pyp.Suppress(')'))
-        def _parse_or(tokens):
-            return packages.OrRestriction(*tokens)
-        orcall.setParseAction(_parse_or)
-
-        notcall = (pyp.Suppress(pyp.CaselessLiteral('not') + '(') + expr +
-                   pyp.Suppress(')'))
-        def _parse_not(tokens):
-            return restriction.Negate(tokens[0])
-        notcall.setParseAction(_parse_not)
-
-        # "Statement seems to have no effect"
-        # pylint: disable-msg=W0104
-        boolcall << (notcall | andcall | orcall)
-
-        # This forces a match on the entire thing, without it trailing
-        # unparsed data is ignored.
-        grammar = pyp.stringStart + expr + pyp.stringEnd
-
-        # grammar.validate()
-
-        parse_expression.grammar = grammar
-
-    try:
-        return grammar.parseString(string)[0]
-    except pyp.ParseException, e:
-        raise parserestrict.ParseError(e.msg)
-
 
 printable_attrs = sorted(('rdepends', 'depends', 'post_rdepends',
     'provides', 'use', 'iuse', 'description', 'longdescription',
@@ -676,13 +605,6 @@ def parse_envmatch(value):
     return packages.PackageRestriction(
         'environment', DataSourceRestriction(values.AnyMatch(
                 mk_strregex(value))))
-
-add_query('--expr', action='append',
-    type=parse_expression, dest='expr',
-    help='Boolean combinations of other restrictions, like '
-        '\'and(not(herd("python")), match("dev-python/*"))\'.'
-        'WARNING: currently not completely reliable.',
-    )
 
 # note the type=str; this is to suppress the default
 # fallback of using match parsing.

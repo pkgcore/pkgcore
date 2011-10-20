@@ -31,9 +31,9 @@ def stdin_default(namespace, attr):
 argparser.add_argument('--input', '-i', action='store',
     type=commandline.argparse.FileType(), default=commandline.DelayedValue(stdin_default, 0),
     help='Filename to read the env from (uses stdin if omitted).')
-argparser.add_argument('--funcs', '-f', action=commandline.ExtendCommaDelimited,
+argparser.add_argument('--funcs', '-f', action='extend_comma',
     help="comma seperated list of regexes to match function names against for filtering")
-argparser.add_argument('--vars', '-v', action=commandline.ExtendCommaDelimited,
+argparser.add_argument('--vars', '-v', action='extend_comma',
     help="comma seperated list of regexes to match variable names against for filtering")
 argparser.add_argument('--print-vars', action='store_true', default=False,
     help="print just the global scope environment variables that match")

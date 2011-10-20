@@ -4,6 +4,14 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* pquery --expr was removed.  Open to re-adding it, but in a maintainable
+  form that has testing, and is usable elsewhere.
+
+* pquery now if given no restrictions, defaults to --all.
+
+* pquery argument parsing was rewritten; ordering issues for --config
+  were fixed, error messages improved, and general cleanup.
+
 * fix traceback that occurs when unmerging a pkg, but tempspace needs
   to be created.
 

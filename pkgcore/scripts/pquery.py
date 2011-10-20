@@ -21,64 +21,11 @@ demandload(globals(),
 )
 
 
-# ordering here matters; pkgcore does a trick to commandline to avoid the
-# heavy inspect loadup hit.
-import optparse
-
 def mk_strregex(value, **kwds):
     try:
         return values.StrRegex(value, **kwds)
     except re.error, e:
-        raise optparse.OptionValueError("invalid regex: %r, %s" % (value, e))
-
-
-# To add a new restriction you have to do the following:
-# - add a parse function for it here.
-# - add the parse function to the PARSE_FUNCS dict.
-# - add an optparse option using the name you used in the dict as
-#   both the typename and the long option name.
-
-def parse_revdep(value):
-    """Value should be an atom, packages with deps intersecting that match."""
-    try:
-        targetatom = atom.atom(value)
-    except atom.MalformedAtom, e:
-        raise parserestrict.ParseError(str(e))
-    val_restrict = values.FlatteningRestriction(
-        atom.atom,
-        values.AnyMatch(values.FunctionRestriction(targetatom.intersects)))
-    return packages.OrRestriction(*list(
-            packages.PackageRestriction(dep, val_restrict)
-            for dep in ('depends', 'rdepends', 'post_rdepends')))
-
-def parse_description(value):
-    """Value is used as a regexp matching description or longdescription."""
-    matcher = mk_strregex(value, case_sensitive=False)
-    return packages.OrRestriction(*list(
-            packages.PackageRestriction(attr, matcher)
-            for attr in ('description', 'longdescription')))
-
-def parse_ownsre(value):
-    """Value is a regexp matched against the string form of an fs object.
-
-    This means the object kind is prepended to the path the regexp has
-    to match.
-    """
-    return packages.PackageRestriction(
-        'contents', values.AnyMatch(values.GetAttrRestriction(
-            'location', mk_strregex(value))))
-
-def parse_owns(value):
-    "Value is a comma delimited set of paths to search contents for"
-    # yes it would be easier to do this without using parserestrict-
-    # we use defer to using it for the sake of a common parsing
-    # exposed to the commandline however.
-    # the problem here is we don't want to trigger fs* module loadup
-    # unless needed- hence this function.
-    parser = parserestrict.comma_separated_containment('contents',
-        values_kls=contents_module.contentsSet,
-        token_kls=partial(fs_module.fsBase, strict=False))
-    return parser(value)
+        raise ValueError("invalid regex: %r, %s" % (value, e))
 
 
 class DataSourceRestriction(values.base):
@@ -106,505 +53,14 @@ class DataSourceRestriction(values.base):
     __hash__ = object.__hash__
 
 
-def parse_envmatch(value):
-    """Apply a regexp to the environment."""
-    return packages.PackageRestriction(
-        'environment', DataSourceRestriction(values.AnyMatch(
-                mk_strregex(value))))
-
-
-def parse_maintainer_email(value):
-    """
-    Case insensitive Regex match on the email bit of metadata.xml's
-    maintainer data.
-    """
-    return packages.PackageRestriction(
-        'maintainers', values.AnyMatch(values.GetAttrRestriction(
-                'email', mk_strregex(value.lower(),
-                case_sensitive=False))))
-
-def parse_maintainer_name(value):
-    """
-    Case insensitive Regex match on the name bit of metadata.xml's
-    maintainer data.
-    """
-    return packages.PackageRestriction(
-        'maintainers', values.AnyMatch(values.GetAttrRestriction(
-                'name', mk_strregex(value.lower(),
-                    case_sensitive=False))))
-
-def parse_maintainer(value):
-    """
-    Case insensitive Regex match on the combined 'name <email>' bit of
-    metadata.xml's maintainer data.
-    """
-    return packages.PackageRestriction(
-        'maintainers', values.AnyMatch(
-            values.UnicodeConversion(
-                mk_strregex(value.lower(),
-                    case_sensitive=False))))
-
-
-def parse_expression(string):
-    """Convert a string to a restriction object using pyparsing."""
-    # Two reasons to delay this import: we want to deal if it is
-    # not there and the import is slow (needs to compile a bunch
-    # of regexps).
-    try:
-        import pyparsing as pyp
-    except ImportError:
-        raise parserestrict.ParseError('pyparsing is not installed.')
-
-    grammar = getattr(parse_expression, 'grammar', None)
-    if grammar is None:
-
-        anystring = pyp.quotedString.copy().setParseAction(pyp.removeQuotes)
-        anystring |= pyp.Word(pyp.alphanums + ',')
-
-        def funcall(name, parser):
-            """Create a pyparsing expression from a name and parse func."""
-            # This function cannot be inlined below: we use its scope to
-            # "store" the parser function. If we store the parser function
-            # as default argument to the _parse function pyparsing passes
-            # different arguments (it detects the number of arguments the
-            # function takes).
-            result = (pyp.Suppress('%s(' % (name,)) + anystring +
-                      pyp.Suppress(')'))
-            def _parse(tokens):
-                return parser(tokens[0])
-            result.setParseAction(_parse)
-            return result
-
-
-        boolcall = pyp.Forward()
-        expr = boolcall
-        for name, func in PARSE_FUNCS.iteritems():
-            expr |= funcall(name, func)
-
-        andcall = (pyp.Suppress(pyp.CaselessLiteral('and') + '(') +
-                   pyp.delimitedList(expr) + pyp.Suppress(')'))
-        def _parse_and(tokens):
-            return packages.AndRestriction(*tokens)
-        andcall.setParseAction(_parse_and)
-
-        orcall = (pyp.Suppress(pyp.CaselessLiteral('or') + '(') +
-                   pyp.delimitedList(expr) + pyp.Suppress(')'))
-        def _parse_or(tokens):
-            return packages.OrRestriction(*tokens)
-        orcall.setParseAction(_parse_or)
-
-        notcall = (pyp.Suppress(pyp.CaselessLiteral('not') + '(') + expr +
-                   pyp.Suppress(')'))
-        def _parse_not(tokens):
-            return restriction.Negate(tokens[0])
-        notcall.setParseAction(_parse_not)
-
-        # "Statement seems to have no effect"
-        # pylint: disable-msg=W0104
-        boolcall << (notcall | andcall | orcall)
-
-        # This forces a match on the entire thing, without it trailing
-        # unparsed data is ignored.
-        grammar = pyp.stringStart + expr + pyp.stringEnd
-
-        # grammar.validate()
-
-        parse_expression.grammar = grammar
-
-    try:
-        return grammar.parseString(string)[0]
-    except pyp.ParseException, e:
-        raise parserestrict.ParseError(e.msg)
-
-
-PARSE_FUNCS = {
-    'restrict_revdep': parse_revdep,
-    'description': parse_description,
-    'owns': parse_owns,
-    'ownsre': parse_ownsre,
-    'environment': parse_envmatch,
-    'expr': parse_expression,
-    'maintainer': parse_maintainer,
-    'maintainer_name': parse_maintainer_name,
-    'maintainer_email': parse_maintainer_email,
-    }
-
-# This is not just a blind "update" because we really need a config
-# option for everything in this dict (so parserestrict growing parsers
-# would break us).
-for _name in ['match']:
-    PARSE_FUNCS[_name] = parserestrict.parse_funcs[_name]
-
-for _name, _attr in [
-    ('herd', 'herds'),
-    ('license', 'license'),
-    ('hasuse', 'iuse'),
-    ]:
-    PARSE_FUNCS[_name] = parserestrict.comma_separated_containment(_attr)
-
-del _name, _attr
-
-
-def optparse_type(parsefunc):
-    """Wrap a parsefunc shared with the expression-style code for optparse."""
-    def _typecheck(option, opt, value):
-        try:
-            return parsefunc(value)
-        except parserestrict.ParseError, e:
-            raise optparse.OptionValueError('option %s: %s' % (opt, e))
-    return _typecheck
-
-
-def atom_type(option, opt, value):
-    try:
-        return atom.atom(value)
-    except atom.MalformedAtom, e:
-        raise optparse.OptionValueError('option %s: %s' % (opt, e))
-
-
-extras = dict((parser_name, optparse_type(parser_func))
-              for parser_name, parser_func in PARSE_FUNCS.iteritems())
-extras['atom'] = atom_type
-
-class Option(commandline.Option):
-    """C{optparse.Option} subclass supporting our custom types."""
-    TYPES = optparse.Option.TYPES + tuple(extras.keys())
-    # Copy the original dict
-    TYPE_CHECKER = dict(optparse.Option.TYPE_CHECKER)
-    TYPE_CHECKER.update(extras)
-
-
-def append_const_callback(option, opt_str, value, parser, const):
-    """Callback version of python 2.5's append_const action."""
-    parser.values.ensure_value(option.dest, []).append(const)
-
-
-def revdep_callback(option, opt_str, value, parser):
-    try:
-        parser.values.ensure_value('restrict_revdep', []).append(
-            parse_revdep(value))
-        parser.values.ensure_value('print_revdep', []).append(atom.atom(value))
-    except (parserestrict.ParseError, atom.MalformedAtom), e:
-        raise optparse.OptionValueError('option %s: %s' % (opt_str, e))
-
-def revdep_pkgs_callback(option, opt_str, value, parser):
-    try:
-        parser.values.ensure_value('restrict_revdep_pkgs', []).append(
-            atom.atom(value))
-        parser.values.ensure_value('print_revdep', []).append(atom.atom(value))
-    except (parserestrict.ParseError, atom.MalformedAtom), e:
-        raise optparse.OptionValueError('option %s: %s' % (opt_str, e))
-
-def revdep_pkgs_match(pkgs, value):
-    return any(value.match(pkg) for pkg in pkgs)
-
-
-class OptionParser(commandline.OptionParser):
-
-    """Option parser with custom option postprocessing and validation."""
-
-    description = __doc__
-    option_class = Option
-    enable_domain_options = True
-
-    printable_attrs = sorted(('rdepends', 'depends', 'post_rdepends',
-        'provides', 'use', 'iuse', 'description', 'longdescription',
-        'herds', 'license', 'uris', 'files', 'category', 'package',  'slot',
-        'maintainers', 'restrict', 'repo', 'source_repository',
-        'alldepends', 'path', 'version',
-        'revision', 'fullver', 'environment', 'keywords', 'homepage',
-        'fetchables', 'eapi', 'inherited', 'chost', 'cbuild', 'ctarget',
-        'all', 'allmetadata', 'properties', 'defined_phases', 'required_use'))
-
-    metadata_attrs = tuple(x for x in printable_attrs if not x.startswith("all")
-        and x != 'environment')
-
-    def _register_options(self):
-        self.set_default('pkgset', [])
-        self.set_default('restrict', [])
-
-        self.add_option('--repo', action='callback', type='string',
-                        callback=commandline.config_callback,
-                        callback_args=('repo',),
-                        help='repo to use (default from domain if omitted).')
-        self.add_option('--early-out', action='store_true', dest='earlyout',
-                        help='stop when first match is found.')
-        self.add_option('--no-version', '-n', action='store_true',
-                        dest='noversion',
-                        help='collapse multiple matching versions together')
-        self.add_option('--min', action='store_true',
-                        help='show only the lowest version for each package.')
-        self.add_option('--max', action='store_true',
-                        help='show only the highest version for each package.')
-
-        repo = self.add_option_group('Source repo')
-        repo.add_option('--raw', action='store_true',
-                        help='Without this switch your configuration affects '
-                        'what packages are visible (through masking) and what '
-                        'USE flags are applied to depends and fetchables. '
-                        "With this switch your configuration values aren't "
-                        'used and you see the "raw" repository data.')
-        repo.add_option(
-            '--virtuals', action='store', choices=('only', 'disable'),
-            help='arg "only" for only matching virtuals, "disable" to not '
-            'match virtuals at all. Default is to match everything.')
-        repo.add_option('--vdb', action='store_true',
-                        help='match only vdb (installed) packages.')
-        repo.add_option('--all-repos', action='store_true',
-                        help='search all repos, vdb included')
-
-        restrict = self.add_option_group(
-            'Package matching',
-            'Each option specifies a restriction packages must match.  '
-            'Specifying the same option twice means "or" unless stated '
-            'otherwise. Specifying multiple types of restrictions means "and" '
-            'unless stated otherwise.')
-        restrict.add_option('--all', action='callback',
-                            callback=append_const_callback,
-                            callback_args=(packages.AlwaysTrue,),
-                            dest='restrict',
-                            help='Match all packages (equivalent to -m "*")')
-        restrict.add_option(
-            '--match', '-m', action='append', type='match',
-            help='Glob-like match on category/package-version.')
-        restrict.add_option('--has-use', action='append', type='hasuse',
-                            dest='hasuse',
-                            help='Exact string match on a USE flag.')
-        restrict.add_option(
-            '--revdep', action='callback', callback=revdep_callback,
-            type='string',
-            help='shorthand for --restrict-revdep atom --print-revdep atom. '
-            '--print-revdep is slow, use just --restrict-revdep if you just '
-            'need a list.')
-        restrict.add_option(
-            '--revdep-pkgs', action='callback', callback=revdep_pkgs_callback,
-            type='string',
-            help='shorthand for --restrict-revdep-pkgs atom '
-                '--print-revdep-pkgs atom. --print-revdep is slow, use just '
-                '--restrict-revdep if you just need a list.')
-        restrict.add_option(
-                '--restrict-revdep', action='append', type='restrict_revdep',
-                help='Dependency on an atom.')
-        restrict.add_option(
-                '--restrict-revdep-pkgs', action='append', type='atom',
-                help='Dependency on pkgs that match a specific atom.')
-        restrict.add_option('--description', '-S', action='append',
-            type='description',
-            help='regexp search on description and longdescription.')
-        restrict.add_option('--herd', action='append', type='herd',
-                            help='exact match on a herd.')
-        restrict.add_option('--license', action='append', type='license',
-                            help='exact match on a license.')
-        restrict.add_option('--owns', action='append', type='owns',
-                            help='exact match on an owned file/dir.')
-        restrict.add_option(
-            '--owns-re', action='append', type='ownsre', dest='ownsre',
-            help='like "owns" but using a regexp for matching.')
-        restrict.add_option('--maintainer', action='append', type='maintainer',
-                            help='comma-separated list of regexes to search for '
-                            'maintainers.')
-        restrict.add_option('--maintainer-name', action='append', type='maintainer_name',
-                            help='comma-separated list of maintainer name regexes '
-                            'to search for.')
-        restrict.add_option('--maintainer-email', action='append', type='maintainer_email',
-                            help='comma-separated list of maintainer email regexes '
-                            'to search for.')
-        restrict.add_option(
-            '--environment', action='append', type='environment',
-            help='regexp search in environment.bz2.')
-        restrict.add_option(
-            '--expr', action='append', type='expr',
-            help='Boolean combinations of other restrictions, like '
-            '\'and(not(herd("python")), match("dev-python/*"))\'.'
-            'WARNING: currently not completely reliable.',
-            long_help='Boolean combinations of other restrictions, like '
-            '``and(not(herd("python")), match("dev-python/*"))``. '
-            '*WARNING*: currently not completely reliable.'
-            )
-        # XXX fix the negate stuff and remove that warning.
-        restrict.add_option(
-            '--pkgset', action='callback', type='string',
-            callback=commandline.config_append_callback,
-            callback_args=('pkgset',),
-            help='is inside a named set of packages (like "world").')
-
-        output = self.add_option_group('Output formatting')
-        output.add_option(
-            '--cpv', action='store_true',
-            help='Print the category/package-version. This is done '
-            'by default, this option re-enables this if another '
-            'output option (like --contents) disabled it.')
-        output.add_option('--atom', '-a', action='store_true',
-                          help='print =cat/pkg-3 instead of cat/pkg-3. '
-                          'Implies --cpv, has no effect with --no-version')
-        output.add_option('--attr', action='append', choices=self.printable_attrs,
-            help="Print this attribute's value (can be specified more than "
-            "once).  --attr=help will get you the list of valid attrs.")
-        output.add_option('--one-attr', choices=self.printable_attrs,
-                          help="Print one attribute. Suppresses other output.")
-        output.add_option('--force-attr', action='append', dest='attr',
-                          help='Like --attr but accepts any string as '
-                          'attribute name instead of only explicitly '
-                          'supported names.')
-        output.add_option('--force-one-attr',
-                          help='Like --oneattr but accepts any string as '
-                          'attribute name instead of only explicitly '
-                          'supported names.')
-        output.add_option(
-            '--contents', action='store_true',
-            help='list files owned by the package. Implies --vdb.')
-        output.add_option('--verbose', '-v', action='store_true',
-                          help='human-readable multi-line output per package')
-        output.add_option('--highlight-dep', action='append', type='atom',
-                          help='highlight dependencies matching this atom')
-        output.add_option(
-            '--blame', action='store_true',
-            help='shorthand for --attr maintainers --attr herds')
-        output.add_option(
-            '--print-revdep', type='atom', action='append',
-            help='print what condition(s) trigger a dep.')
-
-    def _check_values(self, vals, args):
-        # Interpret args with parens in them as --expr additions, the
-        # rest as --match additions (since parens are invalid in --match).
-        try:
-            for arg in args:
-                if '(' in arg:
-                    vals.expr.append(parse_expression(arg))
-                else:
-                    vals.match.append(self.parse_restrict(str(arg)))
-        except parserestrict.ParseError, e:
-            self.error(str(e))
-
-        # TODO come up with something better than "match" for this.
-        for highlight in vals.highlight_dep:
-            if not isinstance(highlight, atom.atom):
-                self.error('highlight-dep must be an atom')
-
-        if vals.contents or vals.owns or vals.ownsre:
-            vals.vdb = True
-
-        if vals.atom:
-            vals.cpv = True
-
-        if vals.noversion:
-            if vals.contents:
-                self.error(
-                    'both --no-version and --contents does not make sense.')
-            if vals.min or vals.max:
-                self.error(
-                    '--no-version with --min or --max does not make sense.')
-            if vals.print_revdep:
-                self.error(
-                    '--print-revdep with --no-version does not make sense.')
-
-        if vals.blame:
-            vals.attr.extend(['herds', 'maintainers'])
-
-        if 'all' in vals.attr:
-            vals.attr.extend(x for x in self.printable_attrs if not x == 'all')
-            # startswith is used to filter out --attr all --attr allmetadata, etc.
-            vals.attr = [x for x in vals.attr if not x.startswith('all')]
-        elif 'allmetadata' in vals.attr:
-            vals.attr.extend(self.metadata_attrs)
-            vals.attr = [x for x in vals.attr if not x.startswith('all')]
-        elif 'alldepends' in vals.attr:
-            vals.attr.remove('alldepends')
-            vals.attr.extend(['depends', 'rdepends', 'post_rdepends'])
-
-        if vals.verbose:
-            # slice assignment to an empty range; behaves as an insertion.
-            vals.attr[0:0] = ['repo', 'description', 'homepage']
-
-        if vals.force_one_attr:
-            if vals.one_attr:
-                self.error(
-                    '--one-attr and --force-one-attr are mutually exclusive.')
-            vals.one_attr = vals.force_one_attr
-
-        if vals.one_attr and vals.print_revdep:
-            self.error(
-                '--print-revdep with --force-one-attr or --one-attr does not '
-                'make sense.')
-
-        if vals.repo and (vals.vdb or vals.all_repos):
-            self.error(
-                '--repo with --vdb, --all-repos makes no sense')
-
-        # Get the vdb if we need it.
-        if vals.verbose and vals.noversion:
-            vals.vdbs = vals.domain.vdb
-        else:
-            vals.vdbs = None
-        # Get repo(s) to operate on.
-        if vals.vdb:
-            vals.repos = vals.domain.vdb
-        elif vals.all_repos:
-            vals.repos = vals.domain.repos + vals.domain.vdb
-        elif vals.repo:
-            vals.repos = [vals.repo]
-        else:
-            vals.repos = vals.domain.repos
-        if vals.raw or vals.virtuals:
-            vals.repos = repo_utils.get_raw_repos(vals.repos)
-        if vals.virtuals:
-            vals.repos = repo_utils.get_virtual_repos(
-                vals.repos, vals.virtuals == 'only')
-
-        revdep_pkgs = getattr(vals, 'restrict_revdep_pkgs')
-        if revdep_pkgs:
-            l = []
-            # odd?  a bit; we allow strs to reuse parse_revdep
-            for atom_inst in revdep_pkgs:
-                for repo in vals.repos:
-                    l.extend(repo.itermatch(atom_inst))
-            # have our pkgs; now build the restrict.
-            r = values.FlatteningRestriction(atom.atom,
-                values.AnyMatch(values.FunctionRestriction(
-                    partial(revdep_pkgs_match, tuple(l))
-                )))
-            vals.restrict_revdep_pkgs = packages.OrRestriction(
-                *list(
-                    packages.PackageRestriction(dep, r)
-                        for dep in ('depends', 'rdepends', 'post_rdepends')))
-            vals.restrict.append(vals.restrict_revdep_pkgs)
-
-        # Build up a restriction.
-        for attr in PARSE_FUNCS:
-            val = getattr(vals, attr)
-            if len(val) == 1:
-                # Omit the boolean.
-                vals.restrict.append(val[0])
-            elif val:
-                vals.restrict.append(
-                    packages.OrRestriction(*val))
-
-        all_atoms = []
-        # this should use options.get_pkgset, delayed loadup... potentially.
-        for pkgset in vals.pkgset:
-            atoms = list(pkgset)
-            if not atoms:
-                # This is currently an error because I am unsure what
-                # it should do.
-                self.error('Cannot use empty pkgsets')
-            all_atoms.extend(atoms)
-        if all_atoms:
-            vals.restrict.append(packages.OrRestriction(*all_atoms))
-
-        if not vals.restrict:
-            self.error('No restrictions specified.')
-
-        if len(vals.restrict) == 1:
-            # Single restriction, omit the AndRestriction for a bit of speed
-            vals.restrict = vals.restrict[0]
-        else:
-            # "And" them all together
-            vals.restrict = packages.AndRestriction(*vals.restrict)
-
-        # finally, uniquify the attrs.
-        vals.attr = list(iter_stable_unique(vals.attr))
-
-        return vals, ()
+printable_attrs = sorted(('rdepends', 'depends', 'post_rdepends',
+    'provides', 'use', 'iuse', 'description', 'longdescription',
+    'herds', 'license', 'uris', 'files', 'category', 'package',  'slot',
+    'maintainers', 'restrict', 'repo', 'source_repository',
+    'alldepends', 'path', 'version',
+    'revision', 'fullver', 'environment', 'keywords', 'homepage',
+    'fetchables', 'eapi', 'inherited', 'chost', 'cbuild', 'ctarget',
+    'all', 'allmetadata', 'properties', 'defined_phases', 'required_use'))
 
 
 def stringify_attr(config, pkg, attr):
@@ -913,18 +369,392 @@ def print_packages_noversion(options, out, err, pkgs):
         out.write()
 
 
+# note the usage of priorities throughout this argparse setup;
+# priority 0 (commandline sets this):
+#  basically, sort the config first (additions/removals/etc),
+# priority 30:
+#   sort the repositories
+# priority 50:
+#  sort the query args individually (potentially accessing the config) along
+#  or lines for each (thus multiple revdep args are or'd together)
+# priority 90:
+#  finally generate a final query object, a boolean and of all previous
+#  queries.
+# priority 100:
+#  default priority for DelayedValue; anything else is setup then.
+
+argparser = commandline.mk_argparser(domain=True,
+    description="pkgcore query interface")
+
+repo_group = argparser.add_argument_group('Repository matching options',
+    'options controlling which repositories to inspect.')
+repo_group.add_argument('--raw', action='store_true', default=False,
+    help="Without this switch your configuration affects what packages are "
+        "visible (through masking) and what USE flags are applied to depends "
+        "and fetchables.  With this switch your configuration values aren't "
+        'used and you see the "raw" repository data.')
+repo_group.add_argument('--virtuals', action='store', choices=('only', 'disable'),
+    help='arg "only" for only matching virtuals, "disable" to not match '
+        'virtuals at all. Default is to match everything.')
+
+repo_mux = repo_group.add_mutually_exclusive_group()
+
+repo_mux.add_argument('--repo', config_type='repo',
+    action=commandline.StoreConfigObject, priority=29,
+    help='repo to use (default from domain if omitted).')
+repo_mux.add_argument('--vdb', action='store_true',
+    help='match only vdb (installed) packages.')
+repo_mux.add_argument('--all-repos', action='store_true',
+    help='search all repos, vdb included')
+
+@argparser.bind_delayed_default(30, 'repos')
+def setup_repos(namespace, attr):
+    # Get the vdb if we need it.  This shouldn't be here...
+    if namespace.verbose and namespace.noversion:
+        namespace.vdbs, namespace.domain.vdb
+    else:
+        namespace.vdbs = None
+
+    if namespace.contents or namespace._owns or namespace._owns_re:
+        namespace.vdb = True
+
+    # Get repo(s) to operate on.
+    if namespace.vdb:
+        repos = namespace.domain.vdb
+    elif namespace.all_repos:
+        repos = namespace.domain.repos + namespace.domain.vdb
+    elif namespace.repo:
+        repos = [namespace.repo]
+    else:
+        repos = namespace.domain.repos
+
+    if namespace.raw or namespace.virtuals:
+        repos = repo_utils.get_raw_repos(repos)
+    if namespace.virtuals:
+        repos = repo_utils.get_virtual_repos(
+            repos, namespace.virtuals == 'only')
+    setattr(namespace, attr, repos)
+
+query = argparser.add_argument_group('Package matching options',
+    'Each option specifies a restriction packages must match.  '
+    'Specifying the same option twice means "or" unless stated '
+    'otherwise. Specifying multiple types of restrictions means "and" '
+    'unless stated otherwise.')
+
+# for queries, use add_query always; this has the bookkeeping
+# necessary to ensure the sub-query gets bound into the
+# finalized query
+_query_items = []
+def add_query(*args, **kwds):
+    _query_items.append(kwds["dest"])
+    kwds.setdefault('final_priority', 50)
+    kwds.setdefault('default', [])
+    if not kwds.pop('suppress_nargs', False):
+        if kwds.get('action', None) != 'append':
+            kwds.setdefault('nargs', 1)
+    commandline.make_query(query, *args, **kwds)
+
+def bind_add_query(*args, **kwds):
+    def f(functor):
+        kwds[kwds.pop('bind', 'type')] = functor
+        add_query(*args, **kwds)
+        return functor
+    return f
+
+add_query(nargs='*', dest='matches',
+    help="extended atom matching of pkgs")
+add_query('--all', action='append_const', dest='all',
+    const=packages.AlwaysTrue, type=None, suppress_nargs=True,
+    help='Match all packages (equivalent to "pquery *").  '
+        'If no query options are specified, this option is enabled.')
+add_query('--has-use', action='append', dest='has_use',
+    type=parserestrict.comma_separated_containment('iuse'),
+    help='Exact string match on a USE flag.')
+add_query('--license', action='append', dest='license',
+    type=parserestrict.comma_separated_containment('license'),
+    help='exact match on a license.')
+add_query('--herd', action='append', dest='herd',
+    type=parserestrict.comma_separated_containment('herds'),
+    help='exact match on a herd.')
+
+query.add_argument('--revdep', nargs=1,
+    action=commandline.Expansion,
+    subst=(('--restrict-revdep', '%(0)s'), ('--print-revdep', '%(0)s')),
+    help='shorthand for --restrict-revdep atom --print-revdep atom. '
+        '--print-revdep is slow, use just --restrict-revdep if you just '
+        'need a list.')
+
+query.add_argument('--revdep-pkgs', nargs=1,
+    action=commandline.Expansion,
+    subst=(('--restrict-revdep-pkgs', '%(0)s'), ('--print-revdep', '%(0)s')),
+    help='shorthand for --restrict-revdep-pkgs atom '
+        '--print-revdep atom. --print-revdep is slow, use just '
+        '--restrict-revdep if you just need a list.')
+
+@bind_add_query('--restrict-revdep', action='append',
+    default=[], dest='restrict_revdep',
+    help='Dependency on an atom.')
+def parse_revdep(value):
+    """Value should be an atom, packages with deps intersecting that match."""
+    try:
+        targetatom = atom.atom(value)
+    except atom.MalformedAtom, e:
+        raise parserestrict.ParseError(str(e))
+    val_restrict = values.FlatteningRestriction(
+        atom.atom,
+        values.AnyMatch(values.FunctionRestriction(targetatom.intersects)))
+    return packages.OrRestriction(*list(
+            packages.PackageRestriction(dep, val_restrict)
+            for dep in ('depends', 'rdepends', 'post_rdepends')))
+
+def _revdep_pkgs_match(pkgs, value):
+    return any(value.match(pkg) for pkg in pkgs)
+
+@bind_add_query('--restrict-revdep-pkgs', action='append', type=atom.atom,
+    default=[], dest='restrict_revdep_pkgs',
+    bind='final_converter',
+    help='Dependency on pkgs that match a specific atom.')
+def revdep_pkgs_finalize(sequence, namespace):
+    if not sequence:
+        return []
+    l = []
+    for atom_inst in sequence:
+        for repo in namespace.repos:
+            l.extend(repo.itermatch(atom_inst))
+    # have our pkgs; now build the restrict.
+    any_restrict = values.AnyMatch(values.FunctionRestriction(
+            partial(_revdep_pkgs_match, tuple(l))))
+    r = values.FlatteningRestriction(atom.atom, any_restrict)
+    return list(packages.PackageRestriction(dep, r)
+        for dep in ('depends', 'rdepends', 'post_rdepends'))
+
+@bind_add_query('--description', '-S', action='append', dest='description',
+    help='regexp search on description and longdescription.')
+def parse_description(value):
+    """Value is used as a regexp matching description or longdescription."""
+    matcher = mk_strregex(value, case_sensitive=False)
+    return packages.OrRestriction(*list(
+            packages.PackageRestriction(attr, matcher)
+            for attr in ('description', 'longdescription')))
+
+@bind_add_query('--owns', action='append', dest='owns',
+    help='exact match on an owned file/dir.')
+def parse_owns(value):
+    "Value is a comma delimited set of paths to search contents for"
+    # yes it would be easier to do this without using parserestrict-
+    # we use defer to using it for the sake of a common parsing
+    # exposed to the commandline however.
+    # the problem here is we don't want to trigger fs* module loadup
+    # unless needed- hence this function.
+    parser = parserestrict.comma_separated_containment('contents',
+        values_kls=contents_module.contentsSet,
+        token_kls=partial(fs_module.fsBase, strict=False))
+    return parser(value)
+
+@bind_add_query('--owns-re', action='append', dest='owns_re',
+    help='like "owns" but using a regexp for matching.')
+def parse_ownsre(value):
+    """Value is a regexp matched against the string form of an fs object.
+
+    This means the object kind is prepended to the path the regexp has
+    to match.
+    """
+    return packages.PackageRestriction('contents',
+        values.AnyMatch(values.GetAttrRestriction(
+        'location', mk_strregex(value))))
+
+@bind_add_query('--maintainer', action='append', dest='maintainer',
+    help='comma-separated list of regexes to search for '
+        'maintainers.')
+def parse_maintainer(value):
+    """
+    Case insensitive Regex match on the combined 'name <email>' bit of
+    metadata.xml's maintainer data.
+    """
+    return packages.PackageRestriction('maintainers',
+        values.AnyMatch(values.UnicodeConversion(
+        mk_strregex(value.lower(), case_sensitive=False))))
+
+@bind_add_query('--maintainer-name', action='append', dest='maintainer_name',
+    help='comma-separated list of maintainer name regexes to search for.')
+def parse_maintainer_name(value):
+    """
+    Case insensitive Regex match on the name bit of metadata.xml's
+    maintainer data.
+    """
+    return packages.PackageRestriction('maintainers',
+        values.AnyMatch(values.GetAttrRestriction(
+        'name', mk_strregex(value.lower(), case_sensitive=False))))
+
+@bind_add_query('--maintainer-email', action='append', dest='maintainer_email',
+    help='comma-separated list of maintainer email regexes to search for.')
+def parse_maintainer_email(value):
+    """
+    Case insensitive Regex match on the email bit of metadata.xml's
+    maintainer data.
+    """
+    return packages.PackageRestriction(
+        'maintainers', values.AnyMatch(values.GetAttrRestriction(
+                'email', mk_strregex(value.lower(),
+                case_sensitive=False))))
+
+@bind_add_query('--environment', action='append', dest='environment',
+    help='regexp search in environment.bz2.')
+def parse_envmatch(value):
+    """Apply a regexp to the environment."""
+    return packages.PackageRestriction(
+        'environment', DataSourceRestriction(values.AnyMatch(
+                mk_strregex(value))))
+
+# note the type=str; this is to suppress the default
+# fallback of using match parsing.
+add_query('--pkgset', dest='pkgset',
+    action=commandline.StoreConfigObject,
+    type=str,
+    priority=35,
+    config_type='pkgset',
+    help='find packages that match the given package set (world for example).')
+
+# add a fallback if no restrictions are specified.
+_query_items.append('_fallback_all')
+def _add_all_if_needed(namespace, attr):
+    val = [packages.AlwaysTrue]
+    for query_attr in _query_items:
+        if getattr(namespace, '_%s' % (query_attr,), None):
+            val = None
+            break
+    setattr(namespace, attr, val)
+
+argparser.set_defaults(_fallback_all=
+    commandline.DelayedValue(_add_all_if_needed, priority=89))
+
+argparser.set_defaults(query=
+    commandline.BooleanQuery(_query_items, klass_type='and',
+        priority=90))
+
+
+output = argparser.add_argument_group('Output formatting')
+
+output.add_argument('--early-out', action='store_true', dest='earlyout',
+    help='stop when first match is found.')
+output_mux = output.add_mutually_exclusive_group()
+output_mux.add_argument('--no-version', '-n', action='store_true',
+    dest='noversion',
+    help='collapse multiple matching versions together')
+output_mux.add_argument('--min', action='store_true',
+    help='show only the lowest version for each package.')
+output_mux.add_argument('--max', action='store_true',
+    help='show only the highest version for each package.')
+del output_mux
+output.add_argument('--cpv', action='store_true',
+    help='Print the category/package-version. This is done '
+    'by default, this option re-enables this if another '
+    'output option (like --contents) disabled it.')
+output.add_argument('--atom', '-a', action=commandline.Expansion,
+    subst=(('--cpv',),), nargs=0,
+    help='print =cat/pkg-3 instead of cat/pkg-3. '
+        'Implies --cpv, has no effect with --no-version')
+output.add_argument('--attr', action='append', choices=printable_attrs,
+    metavar='attribute', default=[],
+    help="Print this attribute's value (can be specified more than "
+    "once).  --attr=help will get you the list of valid attrs.")
+output.add_argument('--force-attr', action='append', dest='attr',
+    metavar='attribute', default=[],
+    help='Like --attr but accepts any string as '
+    'attribute name instead of only explicitly '
+    'supported names.')
+one_attr_mux = output.add_mutually_exclusive_group()
+one_attr_mux.add_argument('--one-attr', choices=printable_attrs,
+    metavar='attribute',
+    help="Print one attribute. Suppresses other output.")
+one_attr_mux.add_argument('--force-one-attr',
+    metavar='attribute',
+    help='Like --one-attr but accepts any string as '
+    'attribute name instead of only explicitly '
+    'supported names.')
+del one_attr_mux
+output.add_argument('--contents', action='store_true',
+    help='list files owned by the package. Implies --vdb.')
+output.add_argument('--verbose', '-v', action='store_true',
+    help='human-readable multi-line output per package')
+output.add_argument('--highlight-dep', action='append',
+    type=atom.atom, default=[],
+    help='highlight dependencies matching this atom')
+output.add_argument('--blame', action=commandline.Expansion,
+    subst=(("--attr", "maintainers"), ("--attr", "herds")),
+    help='shorthand for --attr maintainers --attr herds')
+output.add_argument('--print-revdep', action='append',
+    type=atom.atom, default=[],
+    help='print what condition(s) trigger a dep.')
+
+
+class _Fail(Exception):
+    pass
+
+def mangle_values(vals, err):
+
+    def error_out(*args, **kwds):
+        err.write(*args, **kwds)
+        raise _Fail()
+
+    if vals.noversion:
+        if vals.contents:
+            error_out(
+                'both --no-version and --contents does not make sense.')
+        if vals.min or vals.max:
+            error_out(
+                '--no-version with --min or --max does not make sense.')
+        if vals.print_revdep:
+            error_out(
+                '--print-revdep with --no-version does not make sense.')
+
+    if 'all' in vals.attr:
+        vals.attr.extend(x for x in self.printable_attrs if not x == 'all')
+        # startswith is used to filter out --attr all --attr allmetadata, etc.
+        vals.attr = [x for x in vals.attr if not x.startswith('all')]
+    elif 'allmetadata' in vals.attr:
+        vals.attr.extend(self.metadata_attrs)
+        vals.attr = [x for x in vals.attr if not x.startswith('all')]
+    elif 'alldepends' in vals.attr:
+        vals.attr.remove('alldepends')
+        vals.attr.extend(['depends', 'rdepends', 'post_rdepends'])
+
+    if vals.verbose:
+        # slice assignment to an empty range; behaves as an insertion.
+        vals.attr[0:0] = ['repo', 'description', 'homepage']
+
+    if vals.one_attr and vals.print_revdep:
+        error_out(
+            '--print-revdep with --force-one-attr or --one-attr does not '
+            'make sense.')
+
+    # finally, uniquify the attrs.
+    vals.attr = list(iter_stable_unique(vals.attr))
+
+    return vals, ()
+
+
+@argparser.bind_main_func
 def main(options, out, err):
     """Run a query."""
+
+    try:
+        mangle_values(options, err)
+    except _Fail:
+        return -1
+
     if options.debug:
         for repo in options.repos:
             out.write('repo: %r' % (repo,))
-        out.write('restrict: %r' % (options.restrict,))
+        out.write('restrict: %r' % (options.query,))
         out.write()
 
+    if options.query is None:
+        return 0
     for repo in options.repos:
         try:
             for pkgs in pkgutils.groupby_pkg(
-                repo.itermatch(options.restrict, sorter=sorted)):
+                repo.itermatch(options.query, sorter=sorted)):
                 pkgs = list(pkgs)
                 if options.noversion:
                     print_packages_noversion(options, out, err, pkgs)
@@ -949,5 +779,5 @@ def main(options, out, err):
                 return
             err.write('caught an exception!')
             err.write('repo: %r' % (repo,))
-            err.write('restrict: %r' % (options.restrict,))
+            err.write('restrict: %r' % (options.query,))
             raise

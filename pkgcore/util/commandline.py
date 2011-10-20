@@ -32,6 +32,7 @@ from pkgcore.util.commandline_optparse import *
 demandload.demandload(globals(),
     'copy@_copy',
     'snakeoil:osutils',
+    'snakeoil.lists:iflatten_instance',
     'pkgcore:version@_version',
     'pkgcore.config:basics',
     'pkgcore.restrictions:packages,restriction',
@@ -140,6 +141,9 @@ class Delayed(argparse.Action):
 CONFIG_ALL_DEFAULT = object()
 
 
+class ConfigError(Exception):
+    pass
+
 class StoreConfigObject(argparse._StoreAction):
 
     default_priority = 20
@@ -155,7 +159,8 @@ class StoreConfigObject(argparse._StoreAction):
 
         if kwargs.pop("get_default", False):
             kwargs["default"] = DelayedValue(currying.partial(self.store_default,
-                self.config_type), self.priority)
+                self.config_type, option_string=kwargs.get('option_strings', [None])[0]),
+                self.priority)
 
         self.store_name = kwargs.pop("store_name", False)
         self.writable = kwargs.pop("writable", None)
@@ -198,13 +203,22 @@ class StoreConfigObject(argparse._StoreAction):
         setattr(namespace, self.dest, value)
 
     @staticmethod
-    def store_default(config_type, namespace, attr):
+    def store_default(config_type, namespace, attr, option_string=None):
         config = getattr(namespace, 'config', None)
         if config is None:
-            raise ValueError("no config found.  Internal bug")
+            raise ConfigError("no config found.  Internal bug, or broken on disk configuration.")
         obj = config.get_default(config_type)
         if obj is None:
-            raise ValueError("config error: no default object of type %r found" % (config_type,))
+            known_objs = sorted(getattr(config, config_type).keys())
+            msg = "config error: no default object of type %r found.  " % (config_type,)
+            if not option_string:
+                msg += "Please fix your configuration."
+            else:
+                msg += "Please either fix your configuration, or set the %s " \
+                    "via the %s option." % (config_type, option_string)
+            if known_objs:
+                msg += "Known %ss: %s" % (config_type, ', '.join(map(repr, known_objs)))
+            raise ConfigError(msg)
         setattr(namespace, attr, obj)
 
     @staticmethod
@@ -272,7 +286,7 @@ def parse_restriction(value):
 
 class BooleanQuery(DelayedValue):
 
-    def __init__(self, attrs, klass_type=None, priority=100):
+    def __init__(self, attrs, klass_type=None, priority=100, converter=None):
         if klass_type == 'and':
             self.klass = packages.AndRestriction
         elif klass_type == 'or':
@@ -283,6 +297,11 @@ class BooleanQuery(DelayedValue):
             raise ValueError("klass_type either needs to be 'or', 'and', "
                 "or a callable.  Got %r" % (klass_type,))
 
+        if converter is not None and not callable(converter):
+            raise ValueError("converter either needs to be None, or a callable;"
+                " got %r" % (converter,))
+
+        self.converter = converter
         self.priority = int(priority)
         self.attrs = tuple(attrs)
 
@@ -296,6 +315,11 @@ class BooleanQuery(DelayedValue):
                 l.append(val)
             else:
                 l.extend(val)
+
+        l = list(iflatten_instance(l, (restriction.base,)))
+
+        if self.converter:
+            l = self.converter(l, namespace)
         if len(l) > 1:
             val = self.klass(*l)
         elif l:
@@ -313,12 +337,63 @@ def make_query(parser, *args, **kwargs):
     attrs = kwargs.pop("attrs", [])
     subattr = "_%s" % (dest,)
     kwargs["dest"] = subattr
-    kwargs.setdefault("type", parse_restriction)
+    if kwargs.get('type', False) is None:
+        del kwargs['type']
+    else:
+        kwargs.setdefault("type", parse_restriction)
     kwargs.setdefault("metavar", dest)
+    final_priority  = kwargs.pop("final_priority", None)
+    final_converter = kwargs.pop("final_converter", None)
     parser.add_argument(*args, **kwargs)
-    kwargs2 = {}
-    kwargs2[dest] = BooleanQuery(list(attrs) + [subattr], klass_type=klass_type)
-    parser.set_defaults(**kwargs2)
+    bool_kwargs = {'converter':final_converter}
+    if final_priority is not None:
+        bool_kwargs['priority'] = final_priority
+    obj = BooleanQuery(list(attrs) + [subattr], klass_type=klass_type, **bool_kwargs)
+    # note that dict expansion has to be used here; dest=obj would just set a
+    # default named 'dest'
+    parser.set_defaults(**{dest:obj})
+
+
+class Expansion(argparse.Action):
+
+    def __init__(self, option_strings, dest, nargs=None, help=None,
+        required=None, subst=None):
+
+        if subst is None:
+            raise TypeError("resultant_string must be set")
+
+        super(Expansion, self).__init__(option_strings=option_strings,
+            dest=dest,
+            help=help,
+            required=required,
+            default=False,
+            nargs=nargs)
+        self.subst = tuple(subst)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        actions = parser._actions
+        action_map = {}
+        vals = values
+        if isinstance(values, basestring):
+            vals = [vals]
+        dvals = dict((str(idx), val) for (idx, val) in enumerate(vals))
+        dvals['*'] = ' '.join(vals)
+
+        for action in parser._actions:
+            action_map.update((option, action) for option in action.option_strings)
+
+        for chunk in self.subst:
+            option, args = chunk[0], chunk[1:]
+            action = action_map.get(option)
+            args = [x % dvals for x in args]
+            if not action:
+                raise ValueError("unable to find option %r for %r" (option, self.option_strings))
+            if action.type is not None:
+                args = map(action.type, args)
+            if action.nargs in (1, None):
+                args = args[0]
+            action(parser, namespace, args, option_string=option_string)
+        setattr(namespace, self.dest, True)
 
 
 def python_namespace_type(value, module=False, attribute=False):
@@ -409,7 +484,7 @@ class ArgumentParser(argparse.ArgumentParser):
                 delayed(args, attr)
         except (TypeError, ValueError), err:
             self.error("failed loading/parsing %s: %s" % (attr, str(err)))
-        except argparse.ArgumentError:
+        except (ConfigError, argparse.ArgumentError):
             err = sys.exc_info()[1]
             self.error(str(err))
 
@@ -425,6 +500,14 @@ class ArgumentParser(argparse.ArgumentParser):
                 "ArgparseCommand; got %r" % (obj,))
         obj.bind_to_parser(self)
         return self
+
+    def bind_delayed_default(self, priority, name=None):
+        def f(functor, name=name):
+            if name is None:
+                name = functor.__name__
+            self.set_defaults(**{name:DelayedValue(functor, priority)})
+            return functor
+        return f
 
 
 class ArgparseCommand(object):
@@ -487,6 +570,7 @@ def mk_argparser(suppress=False, config=True, domain=True, color=True, debug=Tru
         kwds["version"] = version
         version = None
     p = ArgumentParser(**kwds)
+    p.register('action', 'extend_comma', ExtendCommaDelimited)
 
     if suppress:
         return p

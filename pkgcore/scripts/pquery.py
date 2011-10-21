@@ -411,7 +411,7 @@ repo_mux.add_argument('--all-repos', action='store_true',
 def setup_repos(namespace, attr):
     # Get the vdb if we need it.  This shouldn't be here...
     if namespace.verbose and namespace.noversion:
-        namespace.vdbs, namespace.domain.vdb
+        namespace.vdbs = namespace.domain.vdb
     else:
         namespace.vdbs = None
 

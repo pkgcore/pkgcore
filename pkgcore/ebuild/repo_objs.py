@@ -284,8 +284,13 @@ class RepoConfig(object):
 
     default_hashes = ('size', 'rmd160', 'sha1', 'sha256')
 
+    klass.inject_immutable_instance(locals())
+
+    __metaclass__ = WeakInstMeta
+    __inst_caching__ = True
+
     def __init__(self, repo_location):
-        self.repo_location = repo_location
+        object.__setattr__(self, 'repo_location', repo_location)
         self.parse_config()
 
     def load_config(self):
@@ -295,6 +300,8 @@ class RepoConfig(object):
 
     def parse_config(self):
         data = self.load_config()
+
+        sf = object.__setattr__
 
         hashes = data.get('manifest-hashes', '').split()
         if hashes:
@@ -312,10 +319,10 @@ class RepoConfig(object):
             'hashes':hashes,
         }
 
-        self.manifests = _immutable_attr_dict(d)
-        self.masters = tuple(iter_stable_unique(data.get('masters', '').split()))
-        self.aliases = tuple(iter_stable_unique(data.get('aliases', '').split()))
+        sf(self, 'manifests', _immutable_attr_dict(d))
+        sf(self, 'masters', tuple(iter_stable_unique(data.get('masters', '').split())))
+        sf(self, 'aliases', tuple(iter_stable_unique(data.get('aliases', '').split())))
         v = data.get('cache-format', 'pms').lower()
         if v not in ('md5-dict', 'pms'):
             v = 'pms'
-        self.cache_format = v
+        sf(self, 'cache_format', v)

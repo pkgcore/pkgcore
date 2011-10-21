@@ -278,7 +278,7 @@ class _immutable_attr_dict(mappings.ImmutableDict):
 
 class RepoConfig(object):
 
-    __slots__ = ("repo_location", "manifests", "masters", "aliases", "authoritative_cache")
+    __slots__ = ("repo_location", "manifests", "masters", "aliases", "cache_format")
 
     layout_offset = "metadata/layout.conf"
 
@@ -295,9 +295,6 @@ class RepoConfig(object):
 
     def parse_config(self):
         data = self.load_config()
-
-        self.authoritative_cache = \
-            (data.get('authoritative-cache', 'false').lower() == 'true')
 
         hashes = data.get('manifest-hashes', '').split()
         if hashes:
@@ -318,4 +315,7 @@ class RepoConfig(object):
         self.manifests = _immutable_attr_dict(d)
         self.masters = tuple(iter_stable_unique(data.get('masters', '').split()))
         self.aliases = tuple(iter_stable_unique(data.get('aliases', '').split()))
-
+        v = data.get('cache-format', 'pms').lower()
+        if v not in ('md5-dict', 'pms'):
+            v = 'pms'
+        self.cache_format = v

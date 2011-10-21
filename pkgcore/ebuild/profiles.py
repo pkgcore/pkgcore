@@ -344,7 +344,7 @@ class ProfileStack(object):
 
     def __init__(self, profile):
         self.profile = profile
-        self.node = self._node_kls(profile)
+        self.node = self._node_kls._autodetect_and_create(profile)
 
     @property
     def arch(self):
@@ -499,7 +499,7 @@ class OnDiskProfile(ProfileStack):
     def stack(self):
         l = ProfileStack.stack.function(self)
         if self.load_profile_base:
-            l = (EmptyRootNode(self.basepath),) + l
+            l = (EmptyRootNode._autodetect_and_create(self.basepath),) + l
         return l
 
 

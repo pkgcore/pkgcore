@@ -36,6 +36,7 @@ demandload(globals(),
     'pkgcore.ebuild:profiles',
     'pkgcore.package:errors@pkg_errors',
     'pkgcore.util.packages:groupby_pkg',
+    'pkgcore.fs.livefs:iter_scan',
     'operator:attrgetter',
     'random:shuffle',
     'errno',
@@ -344,15 +345,24 @@ class UnconfiguredTree(syncable.tree_mixin, prototype.tree):
     def _visibility_limiters(self):
         path = pjoin(self.base, 'profiles', 'package.mask')
         try:
-            return [atom.atom(x.strip())
-                for x in iter_read_bash(path)]
+            if path == '/var/db/repos/gentoo/profiles':
+                import pdb;pdb.set_trace()
+            if self.config.profile_format != 'pms':
+                paths = sorted(x.location for x in iter_scan(path)
+                    if x.is_reg)
+            else:
+                paths = [path]
+            data = []
+            for path in paths:
+                data.extend(atom.atom(x.strip()) for x in
+                    iter_read_bash(path))
+            return data
         except IOError, i:
             if i.errno != errno.ENOENT:
                 raise
             return []
         except ebuild_errors.MalformedAtom, ma:
-            raise_from(profiles.ProfileError(pjoin(self.base, 'profiles'),
-                'package.mask', ma))
+            raise_from(profiles.ProfileError(path, ma))
 
 
 class SlavedTree(UnconfiguredTree):

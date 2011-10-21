@@ -4,6 +4,10 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* pkgcore now allows profile package.mask and friends as directories for user
+  configuration, and within repositories that set profile-format = portage-1
+  in their layout.conf.
+
 * pquery --expr was removed.  Open to re-adding it, but in a maintainable
   form that has testing, and is usable elsewhere.
 

@@ -1,7 +1,7 @@
 # Copyright: 2006-2011 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
-import os, shutil
+import os, shutil, errno
 
 from pkgcore.test import TestCase
 from snakeoil.test.mixins import TempDirMixin
@@ -14,6 +14,8 @@ from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.cpv import CPV
 from pkgcore.ebuild import const
 from pkgcore.restrictions import packages
+
+from snakeoil.currying import partial
 
 atrue = packages.AlwaysTrue
 
@@ -85,13 +87,25 @@ class profile_mixin(TempDirMixin):
 
 empty = ((), ())
 
-class TestProfileNode(profile_mixin, TestCase):
+class TestPmsProfileNode(profile_mixin, TestCase):
+
+    klass = staticmethod(ProfileNode)
 
     def setUp(self, default=True):
         TempDirMixin.setUp(self)
         if default:
             self.profile = "default"
             self.mk_profile(self.profile)
+
+    def wipe_path(self, path):
+        try:
+            os.unlink(path)
+        except EnvironmentError, e:
+            if e.errno == errno.ENOENT:
+                return
+            elif e.errno != errno.EISDIR:
+                raise
+            shutil.rmtree(path)
 
     def write_file(self, filename, iterable, profile=None):
         if profile is None:
@@ -101,10 +115,11 @@ class TestProfileNode(profile_mixin, TestCase):
     def parsing_checks(self, filename, attr, data="", line_negation=True):
         path = pjoin(self.dir, self.profile)
         self.write_file(filename, data)
-        getattr(ProfileNode(path), attr)
+        getattr(self.klass(path), attr)
         self.write_file(filename,  "-")
         self.assertRaises(profiles.ProfileError,
-            getattr, ProfileNode(path), attr)
+            getattr, self.klass(path), attr)
+        self.wipe_path(pjoin(path, filename))
 
     def simple_eapi_awareness_check(self, filename, attr,
         bad_data="dev-util/diffball\ndev-util/bsdiff:1",
@@ -120,31 +135,31 @@ class TestProfileNode(profile_mixin, TestCase):
 
     def test_eapi(self):
         path = pjoin(self.dir, self.profile)
-        self.assertEqual(ProfileNode(path).eapi, '0')
+        self.assertEqual(self.klass(path).eapi, '0')
         self.write_file("eapi", "1")
-        self.assertEqual(ProfileNode(path).eapi, '1')
+        self.assertEqual(self.klass(path).eapi, '1')
         self.write_file("eapi", "some-random-eapi-adsfafa")
         self.assertRaises(profiles.ProfileError, getattr,
-            ProfileNode(path), 'eapi')
+            self.klass(path), 'eapi')
 
     def test_packages(self):
-        p = ProfileNode(pjoin(self.dir, self.profile))
+        p = self.klass(pjoin(self.dir, self.profile))
         self.assertEqual(p.system, empty)
         self.assertEqual(p.visibility, empty)
         self.parsing_checks("packages", "system")
         self.write_file("packages", "#foo\n")
-        p = ProfileNode(pjoin(self.dir, self.profile))
+        p = self.klass(pjoin(self.dir, self.profile))
         self.assertEqual(p.visibility, empty)
         self.assertEqual(p.system, empty)
         self.write_file("packages", "#foo\ndev-util/diffball\n")
-        p = ProfileNode(pjoin(self.dir, self.profile))
+        p = self.klass(pjoin(self.dir, self.profile))
         self.assertEqual(p.system, empty)
         self.assertEqual(list(p.visibility), [(), (atom("dev-util/diffball",
             negate_vers=True),)])
 
         self.write_file("packages", "-dev-util/diffball\ndev-foo/bar\n*dev-sys/atom\n"
             "-*dev-sys/atom2\nlock-foo/dar")
-        p = ProfileNode(pjoin(self.dir, self.profile))
+        p = self.klass(pjoin(self.dir, self.profile))
         self.assertEqual(p.system, ((atom("dev-sys/atom2"),), (atom("dev-sys/atom"),)))
         self.assertEqual([set(x) for x in p.visibility],
             [set([atom("dev-util/diffball", negate_vers=True)]),
@@ -154,86 +169,85 @@ class TestProfileNode(profile_mixin, TestCase):
         self.simple_eapi_awareness_check('packages', 'system')
 
     def test_deprecated(self):
-        self.assertEqual(ProfileNode(pjoin(self.dir, self.profile)).deprecated,
+        self.assertEqual(self.klass(pjoin(self.dir, self.profile)).deprecated,
             None)
         self.write_file("deprecated", "")
         self.assertRaises(profiles.ProfileError, getattr,
-            ProfileNode(pjoin(self.dir, self.profile)), "deprecated")
+            self.klass(pjoin(self.dir, self.profile)), "deprecated")
         self.write_file("deprecated", "foon\n#dar\nfasd")
-        self.assertEqual(list(ProfileNode(pjoin(self.dir,
+        self.assertEqual(list(self.klass(pjoin(self.dir,
             self.profile)).deprecated),
             ["foon", "dar\nfasd"])
 
     def test_pkg_provided(self):
-        self.assertEqual(ProfileNode(pjoin(self.dir,
+        self.assertEqual(self.klass(pjoin(self.dir,
             self.profile)).pkg_provided,
             ((), ()))
         self.parsing_checks("package.provided", "pkg_provided")
         self.write_file("package.provided", "-dev-util/diffball-1.0")
-        self.assertEqual(ProfileNode(pjoin(self.dir,
+        self.assertEqual(self.klass(pjoin(self.dir,
             self.profile)).pkg_provided,
                 ((CPV.versioned("dev-util/diffball-1.0"),), ()))
         self.write_file("package.provided", "dev-util/diffball-1.0")
-        self.assertEqual(ProfileNode(pjoin(self.dir,
+        self.assertEqual(self.klass(pjoin(self.dir,
             self.profile)).pkg_provided, ((),
                 (CPV.versioned("dev-util/diffball-1.0"),)))
 
     def test_masks(self):
         path = pjoin(self.dir, self.profile)
-        self.assertEqual(ProfileNode(path).masks, empty)
+        self.assertEqual(self.klass(path).masks, empty)
         self.parsing_checks("package.mask", "masks")
         self.write_file("package.mask", "dev-util/diffball")
-        self.assertEqual(ProfileNode(path).masks, ((),
+        self.assertEqual(self.klass(path).masks, ((),
             (atom("dev-util/diffball"),)))
         self.write_file("package.mask", "-dev-util/diffball")
-        self.assertEqual(ProfileNode(path).masks,
+        self.assertEqual(self.klass(path).masks,
             ((atom("dev-util/diffball"),), ()))
         self.simple_eapi_awareness_check('package.mask', 'masks')
 
     def _check_package_use_files(self, path, filename, attr):
         self.write_file(filename, "dev-util/bar X")
-        self.assertEqualChunks(getattr(ProfileNode(path), attr),
+        self.assertEqualChunks(getattr(self.klass(path), attr),
            {"dev-util/bar":(chunked_data(atom("dev-util/bar"), (), ('X',)),)})
         self.write_file(filename, "-dev-util/bar X")
-        self.assertRaises(profiles.ProfileError, getattr, ProfileNode(path),
+        self.assertRaises(profiles.ProfileError, getattr, self.klass(path),
             attr)
 
         # verify collapsing optimizations
         self.write_file(filename, "dev-util/foo X\ndev-util/foo X")
-        self.assertEqualChunks(getattr(ProfileNode(path), attr),
+        self.assertEqualChunks(getattr(self.klass(path), attr),
             {"dev-util/foo":(chunked_data(atom("dev-util/foo"), (), ('X',)),)})
 
         self.write_file(filename, "d-u/a X\n=d-u/a-1 X")
-        self.assertEqualChunks(getattr(ProfileNode(path), attr),
+        self.assertEqualChunks(getattr(self.klass(path), attr),
             {"d-u/a":(chunked_data(atom("d-u/a"), (), ('X',)),)})
 
         self.write_file(filename, "d-u/a X\n=d-u/a-1 -X")
-        self.assertEqualChunks(getattr(ProfileNode(path), attr),
+        self.assertEqualChunks(getattr(self.klass(path), attr),
             {"d-u/a":(chunked_data(atom("d-u/a"), (), ('X',)),
                 chunked_data(atom("=d-u/a-1"), ('X',), ()),)})
 
         self.write_file(filename, "=d-u/a-1 X\nd-u/a X")
-        self.assertEqualChunks(getattr(ProfileNode(path), attr),
+        self.assertEqualChunks(getattr(self.klass(path), attr),
             {"d-u/a":(chunked_data(atom("d-u/a"), (), ('X',)),)})
 
         self.write_file(filename, "dev-util/bar -X\ndev-util/foo X")
-        self.assertEqualChunks(getattr(ProfileNode(path), attr),
+        self.assertEqualChunks(getattr(self.klass(path), attr),
            {"dev-util/bar":(chunked_data(atom("dev-util/bar"), ('X',), ()),),
            "dev-util/foo":(chunked_data(atom("dev-util/foo"), (), ('X',)),)})
 
     def test_masked_use(self):
         path = pjoin(self.dir, self.profile)
-        self.assertEqualChunks(ProfileNode(path).masked_use, {})
+        self.assertEqualChunks(self.klass(path).masked_use, {})
         self.parsing_checks("package.use.mask", "masked_use")
-        if os.path.exists(pjoin(path, "package.use.mask")):
-            os.unlink(pjoin(path, "package.use.mask"))
+        self.wipe_path(pjoin(path, "package.use.mask"))
         self.parsing_checks("use.mask", "masked_use")
         self.write_file("use.mask", "")
 
         self._check_package_use_files(path, "package.use.mask", 'masked_use')
 
         self.write_file("use.mask", "mmx")
-        self.assertEqualChunks(ProfileNode(path).masked_use,
+        self.assertEqualChunks(self.klass(path).masked_use,
             {"dev-util/bar":
                 (chunked_data(atom("dev-util/bar"), ('X',), ('mmx',)),),
             "dev-util/foo":
@@ -242,7 +256,7 @@ class TestProfileNode(profile_mixin, TestCase):
             })
 
         self.write_file("use.mask", "mmx\n-foon")
-        self.assertEqualChunks(ProfileNode(path).masked_use,
+        self.assertEqualChunks(self.klass(path).masked_use,
             {"dev-util/bar":
                 (chunked_data(atom("dev-util/bar"), ('X', 'foon'), ('mmx',)),),
             "dev-util/foo":
@@ -252,13 +266,13 @@ class TestProfileNode(profile_mixin, TestCase):
 
         # verify that use.mask is layered first, then package.use.mask
         self.write_file("package.use.mask", "dev-util/bar -mmx foon")
-        self.assertEqualChunks(ProfileNode(path).masked_use,
+        self.assertEqualChunks(self.klass(path).masked_use,
             {atrue:(chunked_data(atrue, ('foon',), ('mmx',)),),
             "dev-util/bar":(chunked_data(atom("dev-util/bar"), ('mmx',), ('foon',)),)
             })
 
         self.write_file("package.use.mask", "")
-        self.assertEqualChunks(ProfileNode(path).masked_use,
+        self.assertEqualChunks(self.klass(path).masked_use,
            {atrue:(chunked_data(atrue, ('foon',),('mmx',)),)})
         self.simple_eapi_awareness_check('package.use.mask', 'masked_use',
             bad_data='=de/bs-1:1 x\nda/bs y',
@@ -266,14 +280,13 @@ class TestProfileNode(profile_mixin, TestCase):
 
         self.write_file("package.use.mask", "dev-util/diffball")
         self.assertRaises(profiles.ProfileError, getattr,
-            ProfileNode(path), 'masked_use')
+            self.klass(path), 'masked_use')
 
     def test_forced_use(self):
         path = pjoin(self.dir, self.profile)
-        self.assertEqualChunks(ProfileNode(path).forced_use, {})
+        self.assertEqualChunks(self.klass(path).forced_use, {})
         self.parsing_checks("package.use.force", "forced_use")
-        if os.path.exists(pjoin(path, "package.use.force")):
-            os.unlink(pjoin(path, "package.use.force"))
+        self.wipe_path(pjoin(path, 'package.use.force'))
         self.parsing_checks("use.force", "forced_use")
         self.write_file("use.force", "")
 
@@ -281,7 +294,7 @@ class TestProfileNode(profile_mixin, TestCase):
 
         self.write_file("use.force", "mmx")
 
-        self.assertEqualChunks(ProfileNode(path).forced_use,
+        self.assertEqualChunks(self.klass(path).forced_use,
             {"dev-util/bar":
                 (chunked_data(atom("dev-util/bar"), ('X',), ('mmx',)),),
             "dev-util/foo":
@@ -290,7 +303,7 @@ class TestProfileNode(profile_mixin, TestCase):
             })
 
         self.write_file("use.force", "mmx\n-foon")
-        self.assertEqualChunks(ProfileNode(path).forced_use,
+        self.assertEqualChunks(self.klass(path).forced_use,
             {"dev-util/bar":
                 (chunked_data(atom("dev-util/bar"), ('X', 'foon',), ('mmx',)),),
             "dev-util/foo":
@@ -300,13 +313,14 @@ class TestProfileNode(profile_mixin, TestCase):
 
         # verify that use.force is layered first, then package.use.force
         self.write_file("package.use.force", "dev-util/bar -mmx foon")
-        self.assertEqualChunks(ProfileNode(path).forced_use,
+        p = self.klass(path)
+        self.assertEqualChunks(self.klass(path).forced_use,
             {atrue:(chunked_data(atrue, ('foon',), ('mmx',)),),
             "dev-util/bar":(chunked_data(atom("dev-util/bar"), ('mmx',), ('foon',)),)
             })
 
         self.write_file("package.use.force", "")
-        self.assertEqualChunks(ProfileNode(path).forced_use,
+        self.assertEqualChunks(self.klass(path).forced_use,
             {atrue:(chunked_data(atrue, ('foon',), ('mmx',)),)
             })
         self.simple_eapi_awareness_check('package.use.force', 'forced_use',
@@ -315,23 +329,23 @@ class TestProfileNode(profile_mixin, TestCase):
 
         self.write_file("package.use.force", "dev-util/diffball")
         self.assertRaises(profiles.ProfileError, getattr,
-            ProfileNode(path), 'forced_use')
+            self.klass(path), 'forced_use')
 
     def test_pkg_use(self):
         path = pjoin(self.dir, self.profile)
-        self.assertEqualChunks(ProfileNode(path).pkg_use, {})
+        self.assertEqualChunks(self.klass(path).pkg_use, {})
         self.parsing_checks("package.use", "pkg_use")
         self.write_file("package.use", "dev-util/bar X")
-        self.assertEqualChunks(ProfileNode(path).pkg_use,
+        self.assertEqualChunks(self.klass(path).pkg_use,
             {"dev-util/bar":(chunked_data(atom("dev-util/bar"), (), ('X',)),)})
         self.write_file("package.use", "-dev-util/bar X")
-        self.assertRaises(profiles.ProfileError, getattr, ProfileNode(path),
+        self.assertRaises(profiles.ProfileError, getattr, self.klass(path),
             "pkg_use")
 
         self._check_package_use_files(path, "package.use", 'pkg_use')
 
         self.write_file("package.use", "dev-util/bar -X\ndev-util/foo X")
-        self.assertEqualChunks(ProfileNode(path).pkg_use,
+        self.assertEqualChunks(self.klass(path).pkg_use,
             {"dev-util/bar": (chunked_data(atom("dev-util/bar"), ('X',), ()),),
             "dev-util/foo":(chunked_data(atom("dev-util/foo"), (), ('X',)),)})
         self.simple_eapi_awareness_check('package.use', 'pkg_use',
@@ -340,22 +354,22 @@ class TestProfileNode(profile_mixin, TestCase):
 
         self.write_file("package.use", "dev-util/diffball")
         self.assertRaises(profiles.ProfileError, getattr,
-            ProfileNode(path), 'pkg_use')
+            self.klass(path), 'pkg_use')
 
     def test_parents(self):
         path = pjoin(self.dir, self.profile)
         os.mkdir(pjoin(path, 'child'))
         self.write_file("parent", "..", profile="%s/child" % self.profile)
-        p = ProfileNode(pjoin(path, "child"))
+        p = self.klass(pjoin(path, "child"))
         self.assertEqual(1, len(p.parents))
         self.assertEqual(p.parents[0].path, path)
 
     def test_virtuals(self):
         path = pjoin(self.dir, self.profile)
-        self.assertEqual(ProfileNode(path).virtuals, {})
+        self.assertEqual(self.klass(path).virtuals, {})
         self.parsing_checks("virtuals", "virtuals")
         self.write_file("virtuals", "virtual/alsa media-sound/alsalib")
-        self.assertEqual(ProfileNode(path).virtuals,
+        self.assertEqual(self.klass(path).virtuals,
             {'alsa':atom("media-sound/alsalib")})
         self.simple_eapi_awareness_check('virtuals', 'virtuals',
             bad_data='virtual/al =de/bs-1:1\nvirtual/foo da/bs',
@@ -363,18 +377,18 @@ class TestProfileNode(profile_mixin, TestCase):
 
     def test_default_env(self):
         path = pjoin(self.dir, self.profile)
-        self.assertEqual(ProfileNode(path).default_env, {})
+        self.assertEqual(self.klass(path).default_env, {})
         self.write_file("make.defaults", "X=foo\n")
-        self.assertEqual(ProfileNode(path).default_env, {'X':'foo'})
+        self.assertEqual(self.klass(path).default_env, {'X':'foo'})
         self.write_file('make.defaults', 'y=narf\nx=${y}\n')
-        self.assertEqual(ProfileNode(path).default_env,
+        self.assertEqual(self.klass(path).default_env,
             {'y':'narf', 'x':'narf'})
         # ensure make.defaults can access the proceeding env.
         child = pjoin(path, 'child')
         os.mkdir(child)
         self.write_file('make.defaults', 'x="${x} twice"', profile=child)
         self.write_file('parent', '..', profile=child)
-        self.assertEqual(ProfileNode(child).default_env,
+        self.assertEqual(self.klass(child).default_env,
             {'y':'narf', 'x':'narf twice'})
 
     def test_default_env_incrementals(self):
@@ -389,18 +403,44 @@ class TestProfileNode(profile_mixin, TestCase):
         self.write_file("parent", "..", profile=profile2)
         self.write_file("make.defaults", 'USE=-foo', profile=profile3)
         self.write_file("parent", "..", profile=profile3)
-        self.assertEqual(ProfileNode(profile1).default_env,
+        self.assertEqual(self.klass(profile1).default_env,
             dict(USE="foo"))
-        self.assertEqual(ProfileNode(profile2).default_env,
+        self.assertEqual(self.klass(profile2).default_env,
             dict(USE="foo", x="dar"))
-        self.assertEqual(ProfileNode(profile3).default_env,
+        self.assertEqual(self.klass(profile3).default_env,
             dict(USE="foo -foo", x="dar"))
 
     def test_bashrc(self):
         path = pjoin(self.dir, self.profile)
-        self.assertIdentical(ProfileNode(path).bashrc, None)
+        self.assertIdentical(self.klass(path).bashrc, None)
         self.write_file("profile.bashrc", '')
-        self.assertNotEqual(ProfileNode(path).bashrc, None)
+        self.assertNotEqual(self.klass(path).bashrc, None)
+
+
+class TestPortage1ProfileNode(TestPmsProfileNode):
+
+    can_be_dirs = frozenset(["package.use", "package.use.force",
+        "package.use.mask", "package.provided", "package.mask",
+        "use.force", "use.mask"])
+
+    klass = partial(TestPmsProfileNode.klass, pms_strict=False)
+
+    def write_file(self, filename, iterable, profile=None):
+        if not filename in self.can_be_dirs:
+            return TestPmsProfileNode.write_file(self, filename, iterable,
+                profile=profile)
+        if profile is None:
+            profile = self.profile
+        base = pjoin(self.dir, profile, filename)
+        iterable = iterable.split("\n")
+        if os.path.exists(base):
+            self.wipe_path(base)
+        os.mkdir(base)
+
+        for idx, data in enumerate(iterable):
+            f = open(pjoin(base, str(idx)), 'w')
+            f.write(data)
+            f.close()
 
 
 class TestOnDiskProfile(profile_mixin, TestCase):

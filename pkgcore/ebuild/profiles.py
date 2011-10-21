@@ -29,6 +29,7 @@ demandload(globals(),
     'pkgcore.ebuild.eapi:get_eapi',
     'pkgcore.repository:util',
     'pkgcore.restrictions:packages',
+    'pkgcore.fs.livefs:iter_scan',
     'snakeoil:mappings',
 )
 
@@ -44,17 +45,46 @@ class ProfileError(Exception):
 
 
 def load_property(filename, handler=iter_read_bash, fallback=(),
-    read_func=readlines_utf8):
+    read_func=readlines_utf8, allow_recurse=False):
     def f(func):
         f2 = klass.jit_attr_named('_%s' % (func.__name__,))
         return f2(currying.partial(_load_and_invoke, func, filename, handler, fallback,
-            read_func))
+            read_func, allow_recurse))
     return f
 
-def _load_and_invoke(func, filename, handler, fallback, read_func, self):
-    path = pjoin(self.path, filename)
+def _load_and_invoke(func, filename, handler, fallback, read_func,
+    allow_recurse, self):
+    profile_path = self.path.rstrip('/')
     try:
-        data = read_func(path, True, True, True)
+        base = pjoin(profile_path, filename)
+        if self.pms_strict or not allow_recurse:
+            try:
+                data = read_func(base, True, True, True)
+            except EnvironmentError, e:
+                if errno.EISDIR == e.errno:
+                    compatibility.raise_from(ProfileError(self.path, filename,
+                        "path is a directory, but this profile is PMS format- "
+                        "directories aren't allowed.  See layout.conf profile-format "
+                        "to enable directory support"))
+                raise
+        else:
+            data = []
+            profile_len = len(profile_path) + 1
+            try:
+                files = iter_scan(base)
+                files = (x.location for x in files if x.is_reg)
+                files = sorted(files)
+            except EnvironmentError, e:
+                if errno.ENOENT != e.errno:
+                    raise
+                files = []
+            if not files:
+                data = None
+            else:
+                for location in sorted(files):
+                    filename = location[profile_len:]
+                    data.extend(read_func(location, True, True, True))
+
         if data is None:
             return func(self, fallback)
         if handler:
@@ -66,7 +96,7 @@ def _load_and_invoke(func, filename, handler, fallback, read_func, self):
         # no point in wrapping/throwing..
         raise
     except Exception, e:
-        compatibility.raise_from(ProfileError(self.path, filename, e))
+        compatibility.raise_from(ProfileError(profile_path, filename, e))
 
 
 _make_incrementals_dict = currying.partial(IncrementalsDict, const.incrementals)
@@ -87,10 +117,11 @@ class ProfileNode(object):
     __metaclass__ = caching.WeakInstMeta
     __inst_caching__ = True
 
-    def __init__(self, path):
+    def __init__(self, path, pms_strict=False):
         if not os.path.isdir(path):
             raise ProfileError(path, "", "profile doesn't exist")
         self.path = path
+        self.pms_strict = pms_strict
 
     def __str__(self):
         return "Profile at %r" % self.path
@@ -128,7 +159,7 @@ class ProfileNode(object):
         return tuple(kls(abspath(pjoin(self.path, x)))
             for x in data)
 
-    @load_property("package.provided")
+    @load_property("package.provided", allow_recurse=True)
     def pkg_provided(self, data):
         return split_negations(data, cpv.versioned_CPV)
 
@@ -142,7 +173,7 @@ class ProfileNode(object):
             d[cpv.CPV.unversioned(l[0]).package] = self.eapi_atom(l[1])
         return mappings.ImmutableDict(d)
 
-    @load_property("package.mask")
+    @load_property("package.mask", allow_recurse=True)
     def masks(self, data):
         return split_negations(data, self.eapi_atom)
 
@@ -175,15 +206,15 @@ class ProfileNode(object):
         return mappings.ImmutableDict((k, _build_cp_atom_payload(v, atom.atom(k)))
             for k,v in d.iteritems())
 
-    @load_property("package.use.force")
+    @load_property("package.use.force", allow_recurse=True)
     def pkg_use_force(self, data):
         return self._parse_package_use(data)
 
-    @load_property("package.use.mask")
+    @load_property("package.use.mask", allow_recurse=True)
     def pkg_use_mask(self, data):
         return self._parse_package_use(data)
 
-    @load_property("package.use")
+    @load_property("package.use", allow_recurse=True)
     def pkg_use(self, data):
         c = ChunkedDataDict()
         c.update_from_stream(
@@ -191,7 +222,7 @@ class ProfileNode(object):
         c.freeze()
         return c
 
-    @load_property("use.force")
+    @load_property("use.force", allow_recurse=True)
     def forced_use(self, data):
         c = ChunkedDataDict()
         neg, pos = split_negations(data)
@@ -202,7 +233,7 @@ class ProfileNode(object):
         c.freeze()
         return c
 
-    @load_property("use.mask")
+    @load_property("use.mask", allow_recurse=True)
     def masked_use(self, data):
         c = ChunkedDataDict()
         neg, pos = split_negations(data)
@@ -438,7 +469,7 @@ class UserProfileNode(ProfileNode):
 
     def __init__(self, path, parent_path):
         self.override_path = pjoin(path, parent_path)
-        ProfileNode.__init__(self, path)
+        ProfileNode.__init__(self, path, pms_strict=False)
 
     @klass.jit_attr
     def parents(self):
@@ -451,6 +482,8 @@ class UserProfile(OnDiskProfile):
         'parent_profile':'str', 'incrementals':'list'},
         required=('user_path','parent_path', 'parent_profile'),
         typename='profile')
+
+    _node_kls = currying.partial(ProfileNode, pms_strict=False)
 
     def __init__(self, user_path, parent_path, parent_profile,
         load_profiles_base=False):

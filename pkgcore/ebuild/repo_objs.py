@@ -278,7 +278,8 @@ class _immutable_attr_dict(mappings.ImmutableDict):
 
 class RepoConfig(object):
 
-    __slots__ = ("repo_location", "manifests", "masters", "aliases", "cache_format")
+    __slots__ = ("repo_location", "manifests", "masters", "aliases", "cache_format",
+        'profile_format')
 
     layout_offset = "metadata/layout.conf"
 
@@ -326,3 +327,10 @@ class RepoConfig(object):
         if v not in ('md5-dict', 'pms'):
             v = 'pms'
         sf(self, 'cache_format', v)
+
+        v = data.get('profile-format', 'pms').lower()
+        if v not in ('pms', 'portage-1'):
+            logger.warn("repository at %r has an unsupported profile format: %r" %
+                (self.repo_location, v))
+            v = 'pms'
+        sf(self, 'profile_format', v)

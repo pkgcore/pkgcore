@@ -25,7 +25,7 @@ from snakeoil.demandload import demandload
 
 demandload(globals(),
     'snakeoil.data_source:local_source',
-    'pkgcore.ebuild:cpv,atom',
+    'pkgcore.ebuild:cpv,atom,repo_objs',
     'pkgcore.ebuild.eapi:get_eapi',
     'pkgcore.repository:util',
     'pkgcore.restrictions:packages',
@@ -117,7 +117,7 @@ class ProfileNode(object):
     __metaclass__ = caching.WeakInstMeta
     __inst_caching__ = True
 
-    def __init__(self, path, pms_strict=False):
+    def __init__(self, path, pms_strict=True):
         if not os.path.isdir(path):
             raise ProfileError(path, "", "profile doesn't exist")
         self.path = path
@@ -280,6 +280,41 @@ class ProfileNode(object):
     eapi = klass.alias_attr("eapi_obj.magic")
     eapi_atom = klass.alias_attr("eapi_obj.atom_kls")
 
+    @klass.jit_attr
+    def repoconfig(self):
+        return self._load_repoconfig_from_path(self.path)
+
+    @staticmethod
+    def _load_repoconfig_from_path(path):
+        path = abspath(path)
+        # strip '/' so we don't get '/usr/portage' == ('', 'usr', 'portage')
+        chunks = path.lstrip('/').split('/')
+        try:
+            pindex = max(idx for idx, x in enumerate(chunks) if x == 'profiles')
+        except ValueError:
+            # not in a repo...
+            return None
+        repo_path = pjoin('/', *chunks[:pindex])
+        return repo_objs.RepoConfig(repo_path)
+
+    @classmethod
+    def _autodetect_and_create(cls, path):
+        repo_config = cls._load_repoconfig_from_path(path)
+
+        # note while this else seems pointless, we do it this
+        # way so that we're not passing an arg unless needed- instance
+        # caching is a bit overprotective, even if pms_strict defaults to True,
+        # cls(path) is not cls(path, pms_strict=True)
+
+        if repo_config is not None and repo_config.profile_format != 'pms':
+            obj = cls(path, pms_strict=False)
+        else:
+            obj = cls(path)
+
+        # optimization to avoid re-parsing what we already did.
+        object.__setattr__(obj, '_repoconfig', repo_config)
+        return obj
+
 
 class EmptyRootNode(ProfileNode):
 
@@ -320,11 +355,12 @@ class ProfileStack(object):
     @klass.jit_attr
     def stack(self):
         def f(node):
-            for x in node.parents:
+            for x in node.parent_paths:
+                x = self._node_kls._autodetect_and_create(x)
                 for y in f(x):
                     yield y
             yield node
-
+        l = list(f(self.node))
         return tuple(f(self.node))
 
     def _collapse_use_dict(self, attr):

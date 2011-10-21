@@ -154,10 +154,14 @@ class ProfileNode(object):
             (tuple(neg_vis), tuple(vis)))
 
     @load_property("parent")
-    def parents(self, data):
-        kls = getattr(self, 'parent_node_kls', self.__class__)
-        return tuple(kls(abspath(pjoin(self.path, x)))
+    def parent_paths(self, data):
+        return tuple(abspath(pjoin(self.path, x))
             for x in data)
+
+    @klass.jit_attr
+    def parents(self):
+        kls = getattr(self, 'parent_node_kls', self.__class__)
+        return tuple(kls(x) for x in self.parent_paths)
 
     @load_property("package.provided", allow_recurse=True)
     def pkg_provided(self, data):

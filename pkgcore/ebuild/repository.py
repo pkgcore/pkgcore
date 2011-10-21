@@ -16,7 +16,7 @@ from pkgcore.config import ConfigHint
 from pkgcore.plugin import get_plugin
 from pkgcore.operations import repo as _repo_ops
 
-from snakeoil.fileutils import read_dict
+from snakeoil.fileutils import read_dict, readlines
 from snakeoil.bash import iter_read_bash
 from snakeoil import currying, klass
 from snakeoil.osutils import listdir_files, listdir_dirs, pjoin
@@ -241,13 +241,10 @@ class UnconfiguredTree(syncable.tree_mixin, prototype.tree):
 
         try:
             # try reading $LOC/profiles/categories if it's available.
-            try:
-                cats = iter_read_bash(pjoin(self.base, 'profiles',
-                    'categories'))
+            cats = readlines(pjoin(self.base, 'profiles', 'categories'),
+                True, True, True)
+            if cats is not None:
                 return tuple(imap(intern, cats))
-            except IOError, e:
-                if e.errno != errno.ENOENT:
-                    raise
 
             return tuple(imap(intern,
                 ifilterfalse(self.false_categories.__contains__,

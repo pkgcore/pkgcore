@@ -99,6 +99,8 @@ class ops_sequence(object):
 
             pkg_ops = domain.pkg_operations(plan_op.pkg, observer=observer)
             if pkg_ops.supports("sanity_check"):
+                if observer is not None:
+                    observer.debug("running sanity_check for %s" % (plan_op.pkg,))
                 if not pkg_ops.sanity_check():
                     return False
         return True

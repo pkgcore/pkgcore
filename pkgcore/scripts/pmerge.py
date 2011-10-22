@@ -547,7 +547,7 @@ def main(options, out, err):
 
     if options.debug:
         out.write(out.bold, " * ", out.reset, "running sanity checks")
-    if not changes.run_sanity_checks(domain):
+    if not changes.run_sanity_checks(domain, build_obs):
         out.error("sanity checks failed.  please resolve them and try again.")
         return 1
     if options.debug:

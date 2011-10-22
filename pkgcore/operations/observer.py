@@ -54,6 +54,9 @@ class formatter_output(null_output):
     def write(self, msg, *args, **kwds):
         self._out.write(_convert(msg, args, kwds), autoline=False)
 
+    def debug(self, msg, *args, **kwds):
+        self._out.write(_convert("debug: " + msg, args, kwds))
+
 
 class file_handle_output(null_output):
 

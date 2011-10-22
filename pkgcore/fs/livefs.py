@@ -53,14 +53,14 @@ def gen_obj(path, stat=None, chksum_handlers=None, real_location=None,
     mode = stat.st_mode
     d = {"mtime":stat.st_mtime, "mode":S_IMODE(mode),
          "uid":stat.st_uid, "gid":stat.st_gid}
-    if S_ISDIR(mode):
-        return fsDir(path, **d)
-    elif S_ISREG(mode):
+    if S_ISREG(mode):
         d["size"] = stat.st_size
         d["data"] = local_source(real_location)
         if chksum_handlers is not None:
             d["chf_types"] = chksum_handlers
         return fsFile(path, **d)
+    elif S_ISDIR(mode):
+        return fsDir(path, **d)
     elif S_ISLNK(mode):
         d["target"] = os.readlink(real_location)
         return fsSymlink(path, **d)

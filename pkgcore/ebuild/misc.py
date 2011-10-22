@@ -296,6 +296,13 @@ class non_incremental_collapsed_restrict_to_data(collapsed_restrict_to_data):
             return iter(self.defaults)
         return iflatten_instance(l)
 
+def _cached_build_cp_atom_payload(cache, sequence, restrict, payload_form=False):
+    sequence = list(sequence)
+    key = (payload_form, restrict, tuple(sequence))
+    val = cache.get(key)
+    if val is None:
+        val = cache[key] = _build_cp_atom_payload(sequence, restrict, payload_form=payload_form)
+    return val
 
 def _build_cp_atom_payload(sequence, restrict, payload_form=False):
 
@@ -460,11 +467,17 @@ class ChunkedDataDict(object):
                 for k,v in self._dict.iteritems())
             self._global_settings = tuple(self._global_settings)
 
-    def optimize(self):
-        d_stream = ((k, _build_cp_atom_payload(v, atom.atom(k), False))
-            for k,v in self._dict.iteritems())
-        g_stream = (_build_cp_atom_payload(self._global_settings,
-                packages.AlwaysTrue, payload_form=isinstance(self, PayloadDict)))
+    def optimize(self, cache=None):
+        if cache is None:
+            d_stream = ((k, _build_cp_atom_payload(v, atom.atom(k), False))
+                for k,v in self._dict.iteritems())
+            g_stream = (_build_cp_atom_payload(self._global_settings,
+                    packages.AlwaysTrue, payload_form=isinstance(self, PayloadDict)))
+        else:
+            d_stream = ((k, _cached_build_cp_atom_payload(cache, v, atom.atom(k), False))
+                for k,v in self._dict.iteritems())
+            g_stream = (_cached_build_cp_atom_payload(cache, self._global_settings,
+                    packages.AlwaysTrue, payload_form=isinstance(self, PayloadDict)))
 
         if self.frozen:
             self._dict = mappings.ImmutableDict(d_stream)

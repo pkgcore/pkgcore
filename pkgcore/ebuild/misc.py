@@ -375,6 +375,17 @@ class ChunkedDataDict(object):
     def frozen(self):
         return isinstance(self._dict, mappings.ImmutableDict)
 
+    def clone(self, unfreeze=False):
+        obj = self.__class__()
+        if self.frozen and not unfreeze:
+            obj._dict = self._dict
+            obj._global_settings = self._global_settings
+            return obj
+        obj._dict = dict((key, list(val)) for key, val in
+            self._dict.iteritems())
+        obj._global_settings = list(self._global_settings)
+        return obj
+
     def mk_item(self, key, neg, pos):
         return chunked_data(key, tuple(neg), tuple(pos))
 

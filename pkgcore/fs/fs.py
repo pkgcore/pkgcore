@@ -134,13 +134,7 @@ class fsBase(object):
 
 
 class _LazyChksums(LazyFullValLoadDict):
-
-    __slots__ = ('_requested_chfs',)
-
-    def __init__(self, callback, chf_types=None):
-        if chf_types is None:
-            chf_types = tuple(get_handlers())
-        LazyFullValLoadDict.__init__(self, chf_types, callback)
+    __slots__ = ()
 
 
 class fsFile(fsBase):
@@ -166,7 +160,10 @@ class fsFile(fsBase):
         if chksums is None:
             # this can be problematic offhand if the file is modified
             # but chksum not triggered
-            chksums = _LazyChksums(self._chksum_callback, chf_types=kwds.pop("chf_types", None))
+            chf_types = kwds.pop("chf_types", None)
+            if chf_types is None:
+                chf_types = tuple(get_handlers())
+            chksums = _LazyChksums(chf_types, self._chksum_callback)
         kwds["chksums"] = chksums
         fsBase.__init__(self, location, **kwds)
     gen_doc_additions(__init__, __slots__)

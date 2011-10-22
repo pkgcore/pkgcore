@@ -88,16 +88,16 @@ def _internal_iter_scan(path, chksum_handlers, stat_func=os.lstat):
     obj = gen_obj(dirs[0], chksum_handlers=chksum_handlers,
         stat_func=stat_func)
     yield obj
-    if not isinstance(obj, fsDir):
+    if not obj.is_dir:
         return
     while dirs:
         base = dirs.popleft()
         for x in listdir(base):
             path = pjoin(base, x)
-            o = gen_obj(path, chksum_handlers=chksum_handlers,
+            obj = gen_obj(path, chksum_handlers=chksum_handlers,
                         real_location=path, stat_func=stat_func)
-            yield o
-            if isinstance(o, fsDir):
+            yield obj
+            if obj.is_dir:
                 dirs.append(path)
 
 
@@ -117,11 +117,11 @@ def _internal_offset_iter_scan(path, chksum_handlers, offset,
         base = base.rstrip(sep) + sep
         for x in listdir(real_base):
             path = pjoin(base, x)
-            o = gen_obj(path, chksum_handlers=chksum_handlers,
+            obj = gen_obj(path, chksum_handlers=chksum_handlers,
                         real_location=pjoin(real_base, x),
                         stat_func=os.lstat)
-            yield o
-            if isinstance(o, fsDir):
+            yield obj
+            if obj.is_dir:
                 dirs.append(path)
 
 

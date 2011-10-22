@@ -65,14 +65,10 @@ class ContentsFile(contentsSet):
         return cset
 
     def add(self, obj):
-        if isinstance(obj, fs.fsFile):
+        if obj.is_reg:
             # strict checks
             if obj.chksums is None or "md5" not in obj.chksums:
                 raise TypeError("fsFile objects need to be strict")
-        elif not isinstance(obj, (fs.fsDir, fs.fsSymlink, fs.fsFifo, fs.fsDev)):
-            raise TypeError(
-                "obj must be of fsObj, fsDir, fsLink, fsFifo, fsDev class "
-                "or derivative")
 
         contentsSet.add(self, obj)
 
@@ -137,22 +133,22 @@ class ContentsFile(contentsSet):
 
             for obj in sorted(self):
 
-                if isinstance(obj, fs.fsFile):
+                if obj.is_reg:
                     s = " ".join(("obj", obj.location,
                         md5_handler.long2str(obj.chksums["md5"]),
                         str(long(obj.mtime))))
 
-                elif isinstance(obj, fs.fsLink):
+                elif obj.is_sym:
                     s = " ".join(("sym", obj.location, "->",
                                    obj.target, str(long(obj.mtime))))
 
-                elif isinstance(obj, fs.fsDir):
+                elif obj.is_dir:
                     s = "dir " + obj.location
 
-                elif isinstance(obj, fs.fsDev):
+                elif obj.is_dev:
                     s = "dev " + obj.location
 
-                elif isinstance(obj, fs.fsFifo):
+                elif obj.is_fifo:
                     s = "fif " + obj.location
 
                 else:

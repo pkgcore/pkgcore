@@ -76,17 +76,17 @@ def archive_to_fsobj(src_tar):
 
 def fsobj_to_tarinfo(fsobj, absolute_path=True):
     t = tarfile.TarInfo()
-    if isinstance(fsobj, fsFile):
+    if fsobj.is_reg:
         t.type = tarfile.REGTYPE
         t.size = fsobj.chksums["size"]
-    elif isinstance(fsobj, fsDir):
+    elif fsobj.is_dir:
         t.type = tarfile.DIRTYPE
-    elif isinstance(fsobj, fsSymlink):
+    elif fsobj.is_sym:
         t.type = tarfile.SYMTYPE
         t.linkname = fsobj.target
-    elif isinstance(fsobj, fsFifo):
+    elif fsobj.is_fifo:
         t.type = tarfile.FIFOTYPE
-    elif isinstance(fsobj, fsDev):
+    elif fsobj.is_dev:
         if stat.S_ISCHR(fsobj.mode):
             t.type = tarfile.CHRTYPE
         else:

@@ -315,7 +315,7 @@ class contentsSet(object):
         """
 
         if isinstance(start_point, fs.fsBase):
-            if start_point.is_sym():
+            if start_point.is_sym:
                 start_point = start_point.target
             else:
                 start_point = start_point.location

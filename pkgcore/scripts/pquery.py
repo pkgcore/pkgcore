@@ -680,7 +680,7 @@ output.add_argument('--verbose', '-v', action='store_true',
 output.add_argument('--highlight-dep', action='append',
     type=atom.atom, default=[],
     help='highlight dependencies matching this atom')
-output.add_argument('--blame', action=commandline.Expansion,
+output.add_argument('--blame', action=commandline.Expansion, nargs=0,
     subst=(("--attr", "maintainers"), ("--attr", "herds")),
     help='shorthand for --attr maintainers --attr herds')
 output.add_argument('--print-revdep', action='append',

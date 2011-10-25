@@ -64,7 +64,7 @@ def _load_and_invoke(func, filename, handler, fallback, read_func,
                 if errno.EISDIR == e.errno:
                     compatibility.raise_from(ProfileError(self.path, filename,
                         "path is a directory, but this profile is PMS format- "
-                        "directories aren't allowed.  See layout.conf profile-format "
+                        "directories aren't allowed.  See layout.conf profile-formats "
                         "to enable directory support"))
                 raise
         else:

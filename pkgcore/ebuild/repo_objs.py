@@ -328,9 +328,13 @@ class RepoConfig(object):
             v = 'pms'
         sf(self, 'cache_format', v)
 
-        v = data.get('profile-format', 'pms').lower()
-        if v not in ('pms', 'portage-1'):
-            logger.warn("repository at %r has an unsupported profile format: %r" %
-                (self.repo_location, v))
+        v = set(data.get('profile-formats', 'pms').lower().split())
+        if not v:
+            # dumb ass overlay devs, treat it as missing.
+            v = set(['pms'])
+        unknown = v.difference(['pms', 'portage-1'])
+        if unknown:
+            logger.warn("repository at %r has an unsupported profile formats: %s" %
+                (self.repo_location, ', '.join(repr(x) for x in sorted(v))))
             v = 'pms'
-        sf(self, 'profile_format', v)
+        sf(self, 'profile_format', list(v)[0])

@@ -515,6 +515,10 @@ class UserProfileNode(ProfileNode):
     def parents(self):
         return (ProfileNode(self.override_path),)
 
+    @klass.jit_attr
+    def parent_paths(self):
+        return (self.override_path,)
+
 
 class UserProfile(OnDiskProfile):
 
@@ -522,8 +526,6 @@ class UserProfile(OnDiskProfile):
         'parent_profile':'str', 'incrementals':'list'},
         required=('user_path','parent_path', 'parent_profile'),
         typename='profile')
-
-    _node_kls = currying.partial(ProfileNode, pms_strict=False)
 
     def __init__(self, user_path, parent_path, parent_profile,
         load_profiles_base=False):

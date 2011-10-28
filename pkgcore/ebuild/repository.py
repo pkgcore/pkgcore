@@ -342,8 +342,6 @@ class UnconfiguredTree(syncable.tree_mixin, prototype.tree):
     def _visibility_limiters(self):
         path = pjoin(self.base, 'profiles', 'package.mask')
         try:
-            if path == '/var/db/repos/gentoo/profiles':
-                import pdb;pdb.set_trace()
             if self.config.profile_format != 'pms':
                 paths = sorted(x.location for x in iter_scan(path)
                     if x.is_reg)

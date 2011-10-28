@@ -357,7 +357,8 @@ class UnconfiguredTree(syncable.tree_mixin, prototype.tree):
                 raise
             return []
         except ebuild_errors.MalformedAtom, ma:
-            raise_from(profiles.ProfileError(path, ma))
+            raise_from(profiles.ProfileError(pjoin(self.base, 'profiles'),
+                'package.mask', ma))
 
 
 class SlavedTree(UnconfiguredTree):

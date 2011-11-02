@@ -89,4 +89,9 @@ class OverlayRepo(prototype.tree):
                 yield pkg
 
     def _visibility_limiters(self):
-        return [x for r in self.trees for x in r.default_visibility_limiters]
+        s = set()
+        for tree in self.trees:
+            neg, pos = tree._visibility_limiters()
+            s.update(pos)
+            s.difference_update(neg)
+        return [[], list(s)]

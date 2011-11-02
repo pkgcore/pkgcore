@@ -164,7 +164,12 @@ class tree(prototype.tree):
             id(self))
 
     def _visibility_limiters(self):
-        return [x for r in self.trees for x in r.default_visibility_limiters]
+        neg, pos = set(), set()
+        for tree in self.trees:
+            data = tree._visibility_limiters()
+            neg.update(data[0])
+            pos.update(data[1])
+        return [list(neg), list(pos)]
 
     @property
     def frozen(self):

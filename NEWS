@@ -4,6 +4,10 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* pkgcore no longer export PWORKDIR; this was in use via extremely old
+  libtool versions as a way to do QA; no longer needed.
+
+
 pkgcore 0.7.4: Oct 27th, 2011
 
 * fix userprofile stacking for /etc/portage/profile; this fixes a traceback.

@@ -336,9 +336,6 @@ pkgcore_default_pre_src_configure()
 	for x in C{BUILD,HOST,TARGET,C,XX} {AS,LD,{,LIB}C{,XX}}FLAGS; do
 		[[ ${!x-unset} != unset ]] && export ${x}="${!x}"
 	done
-	# this is/was used by libtool bits to filter bad pathways out
-	# likely dead, but keep it around for the time being.
-	export PWORKDIR=${WORKDIR}
 	pkgcore_common_pre_phase
 }
 

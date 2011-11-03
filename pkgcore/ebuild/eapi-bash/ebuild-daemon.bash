@@ -363,10 +363,9 @@ ebd_process_metadata()
 
 pkgcore_ebd_main_loop()
 {
-	local line alive=1
 	DONT_EXPORT_VARS="${DONT_EXPORT_VARS} alie com phases line cont DONT_EXPORT_FUNCS"
 	SANDBOX_ON=1
-	while [[ $alive == 1 ]]; do
+	while :; do
 		local com=''
 		ebd_read_line com
 		case $com in
@@ -383,7 +382,7 @@ pkgcore_ebd_main_loop()
 			fi
 			;;
 		shutdown_daemon)
-			alive="0"
+			break
 			;;
 		preload_eclass\ *)
 			success="succeeded"

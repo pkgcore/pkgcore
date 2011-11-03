@@ -68,10 +68,10 @@ unset GZIP BZIP BZIP2 CDPATH GREP_OPTIONS GREP_COLOR GLOB_IGNORE
 # gentoo bug 309369; nasty alias, but it exists due to portage using declare's in env dumping.  declare statements are implicitly local.
 # as such, the sourcing statement has to be in the same scope as the invoker of load_environ for that scope to get the changes
 alias load_environ='{
-	[[ -z ${TARGET_ENV} ]] && die "load_environ was invoked w/out TARGET_ENV set";
+	[[ -z ${PKGCORE_TARGET_ENV} ]] && die "load_environ was invoked w/out PKGCORE_TARGET_ENV set";
 	[[ -z ${T} ]] && die "load_environ requires \$T to be set";
 	EXISTING_PATH=${PATH};
-	scrub_environ "${TARGET_ENV}";source "${T}/.scrubbed-env" >&2 || die "sourcing scrubbed env failed";
+	scrub_environ "${PKGCORE_TARGET_ENV}";source "${T}/.scrubbed-env" >&2 || die "sourcing scrubbed env failed";
 	pkgcore_ensure_PATH "${EXISTING_PATH}";
 	export EAPI=${PKGCORE_EAPI-${EAPI}}
 	pkgcore_load_eapi_libs
@@ -150,7 +150,7 @@ generate_initial_ebuild_environ() {
 
 		#restore the saved env vars.
 		PKGCORE_SUPPRESS_BASHRCS=true
-		TARGET_ENV="${T}/.temp_env"
+		PKGCORE_TARGET_ENV="${T}/.temp_env"
 		if ! load_environ; then
 			#this shouldn't happen.
 			die "failed to load ${T}/.tmp_env- fs is readonly?"
@@ -310,7 +310,7 @@ execute_phases() {
 		prerm|preinst|postinst|config)
 			export SANDBOX_ON="0"
 
-			TARGET_ENV="${T}/environment"
+			PKGCORE_TARGET_ENV="${T}/environment"
 			if ! load_environ; then
 				#hokay.  this sucks.
 				ewarn
@@ -331,7 +331,7 @@ execute_phases() {
 			fi
 
 			[[ $PKGCORE_DEBUG -ge 3 ]] && set -x
-			TARGET_ENV="${T}/environment"
+			PKGCORE_TARGET_ENV="${T}/environment"
 			if ! load_environ; then
 				ewarn
 				ewarn "failed to load env.  This is bad, bailing."
@@ -364,7 +364,7 @@ execute_phases() {
 				[[ $PKGCORE_DEBUG == 2 ]] && set -x
 				init_environ
 			else
-				TARGET_ENV="${T}/environment"
+				PKGCORE_TARGET_ENV="${T}/environment"
 				if ! load_environ; then
 					die "failed loading saved env; at ${T}/environment"
 				fi

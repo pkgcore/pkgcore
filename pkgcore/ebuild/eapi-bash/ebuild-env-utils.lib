@@ -70,7 +70,7 @@ dump_environ() {
 		declare -f "${x}" || die "failed outputting func ${x}" >&2
 	done
 
-	declare | invoke_filter_env --print-vars | regex_filter_input ${DONT_EXPORT_VARS} | ${_sort} | while read x; do
+	declare | invoke_filter_env --print-vars | regex_filter_input ${DONT_EXPORT_VARS} x _sort| ${_sort} | while read x; do
 		declare -p "${x}" || die "failed outputting variable ${x}" >&2
 	done
 }

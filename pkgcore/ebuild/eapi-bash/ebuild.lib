@@ -163,8 +163,8 @@ generate_initial_ebuild_environ() {
 	load_ebuild "${EBUILD}"
 
 	if [[ ${PKGCORE_EBUILD_PHASE} != depend ]]; then
-		RESTRICT="${FINALIZED_RESTRICT}"
-		unset FINALIZED_RESTRICT
+		RESTRICT="${PKGCORE_FINALIZED_RESTRICT}"
+		unset PKGCORE_FINALIZED_RESTRICT
 		unset CC CXX
 		[[ -n $OCC ]] && export CC="$OCC"
 		[[ -n $OCXX ]] && export CXX="$OCXX"

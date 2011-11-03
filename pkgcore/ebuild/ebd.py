@@ -128,7 +128,7 @@ class ebd(object):
 
         self.env["USE"] = ' '.join(str(x) for x in use)
         self.env["SLOT"] = pkg.slot
-        self.env["FINALIZED_RESTRICT"] = ' '.join(str(x) for x in pkg.restrict)
+        self.env["PKGCORE_FINALIZED_RESTRICT"] = ' '.join(str(x) for x in pkg.restrict)
 
         self.restrict = pkg.restrict
 

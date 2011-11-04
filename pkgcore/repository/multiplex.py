@@ -14,6 +14,7 @@ from snakeoil.iterables import iter_sort, chain_from_iterable
 from snakeoil.compatibility import all, sorted_cmp
 from snakeoil import klass
 from pkgcore.operations import repo as repo_interface
+from pkgcore.config import configurable
 
 
 class operations(repo_interface.operations_proxy):
@@ -54,6 +55,11 @@ class operations(repo_interface.operations_proxy):
             raise NotImplementedError(self, op_name)
         return ret
 
+
+@configurable({'repositories': 'refs:repo'},
+    typename='repo')
+def config_tree(repositories):
+    return tree(*repositories)
 
 class tree(prototype.tree):
 

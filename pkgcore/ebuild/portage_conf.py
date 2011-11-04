@@ -486,8 +486,8 @@ def config_from_make_conf(location="/etc/"):
 
         new_config['repo-stack'] = basics.FakeIncrementalDictConfigSection(
             my_convert_hybrid, {
-                'class': 'pkgcore.ebuild.overlay_repository.OverlayRepo',
-                'trees': tuple(reversed([portdir] + portdir_overlays))})
+                'class': 'pkgcore.repository.multiplex.config_tree',
+                'repositories': tuple(reversed([portdir] + portdir_overlays))})
 
     new_config['vuln'] = basics.AutoConfigSection({
             'class': SecurityUpgradesViaProfile,
@@ -498,7 +498,7 @@ def config_from_make_conf(location="/etc/"):
         SecurityUpgradesViaProfile.pkgcore_config_type.typename)
     #binpkg.
     pkgdir = conf_dict.pop('PKGDIR', None)
-    default_repos = ('repo-stack',)
+    default_repos = list(reversed(portdir_overlays)) + [portdir]
     if pkgdir is not None:
         try:
             pkgdir = abspath(pkgdir)
@@ -534,7 +534,7 @@ def config_from_make_conf(location="/etc/"):
                     'location': pkgdir,
                     'ignore_paludis_versioning':
                         str('ignore-paludis-versioning' in features)})
-                default_repos += ('binpkg',)
+                default_repos.append('binpkg')
 
         if 'buildpkg' in features:
             add_trigger('buildpkg_trigger', 'pkgcore.merge.triggers.SavePkg',
@@ -580,7 +580,7 @@ def config_from_make_conf(location="/etc/"):
     # finally... domain.
     conf_dict.update({
             'class': 'pkgcore.ebuild.domain.domain',
-            'repositories': default_repos,
+            'repositories': tuple(default_repos),
             'fetcher': 'fetcher',
             'default': True,
             'vdb': ('vdb',),

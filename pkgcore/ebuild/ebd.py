@@ -845,8 +845,10 @@ class ebuild_mixin(object):
             'pretend' not in pkg.defined_phases:
             return True
         commands = {"request_inherit": partial(inherit_handler, self._eclass_cache)}
+        env = expected_ebuild_env(pkg)
+        env["ROOT"] = domain.root
         try:
-            return run_generic_phase(pkg, "pretend", None, True, True, False,
+            return run_generic_phase(pkg, "pretend", env, True, True, False,
                 extra_handlers=commands)
         except format.GenericBuildError:
             return False

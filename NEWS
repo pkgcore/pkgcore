@@ -4,8 +4,13 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* fix bug- export ROOT to pkg_pretend invocations.
+
 * pkgcore no longer export PWORKDIR; this was in use via extremely old
   libtool versions as a way to do QA; no longer needed.
+
+* match multirepo portage behaviour; specifically, no longer force overlay
+  version shadowing.
 
 
 pkgcore 0.7.4: Oct 27th, 2011

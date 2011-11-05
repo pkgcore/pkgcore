@@ -13,7 +13,7 @@ portageq() {
 	# being snagged by the sandbox
 	local portageq_str=portageq
 	${PKGCORE_DISABLE_COMPAT-false} && portageq_str=query
-	SANDBOX_on=0 PYTHONPATH="$PKGCORE_PYTHONPATH" pinspect ${portageq_str} "${command}" \
+	SANDBOX_on=0 PYTHONPATH="$PKGCORE_PYTHONPATH" "${PKGCORE_BIN_PATH}/pinspect" ${portageq_str} "${command}" \
 	    --eapi "${EAPI:--1}" --use "${USE}" "$@"
 	local ret="$?"
 	[ "$ret" == 127 ] && die "pinspect couldn't be found; broken pkgcore installation?"

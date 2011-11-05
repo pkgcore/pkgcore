@@ -15,6 +15,9 @@ portageq() {
 	${PKGCORE_DISABLE_COMPAT-false} && portageq_str=query
 	SANDBOX_on=0 PYTHONPATH="$PKGCORE_PYTHONPATH" pinspect ${portageq_str} "${command}" \
 	    --eapi "${EAPI:--1}" --use "${USE}" "$@"
+	local ret="$?"
+	[ "$ret" == 127 ] && die "pinspect couldn't be found; broken pkgcore installation?"
+	return $(( $ret ))
 }
 
 has_version()

@@ -1,0 +1,9 @@
+#!/usr/bin/env python
+
+"""Commandline wrapper."""
+
+from pkgcore.scripts import pinspect
+from pkgcore.util import commandline
+
+if __name__ == '__main__':
+    commandline.main(pinspect.argparser)

@@ -365,8 +365,8 @@ class domain(pkgcore.config.domain.domain):
                 r = (packages.OrRestriction(masking, unmasking, disable_inst_caching=True),)
             else:
                 r = (masking,)
-        vfilter = packages.AndRestriction(*(r + extra),
-            disable_inst_caching=True, finalize=True)
+        vfilter = packages.AndRestriction(disable_inst_caching=True,
+            finalize=True, *(r + extra))
         return vfilter
 
     def make_license_filter(self, master_license, pkg_licenses):

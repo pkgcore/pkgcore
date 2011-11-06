@@ -249,6 +249,7 @@ class pkgcore_build_py(snk_distutils.build_py):
         self.set_chmod(os.path.join(base, "ebuild-daemon.bash"))
         self.set_chmod(os.path.join(base, "regenerate_dont_export_func_list.bash"))
         self.set_chmod(os.path.join(base, "filter-env"))
+        self.set_chmod(os.path.join(base, "pinspect"))
 
     def set_chmod(self, path):
         if self.dry_run:

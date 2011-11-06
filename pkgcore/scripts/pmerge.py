@@ -480,6 +480,9 @@ def main(options, out, err):
         ret = resolver_inst.add_atoms(atoms, finalize=True)
     resolve_time = time() - resolve_time
 
+    if options.debug:
+        out.write(out.bold, " * ", out.reset, "resolution took %.2f seconds" % resolve_time)
+
     if failures:
         out.write()
         out.write('Failures encountered:')
@@ -547,11 +550,14 @@ def main(options, out, err):
 
     if options.debug:
         out.write(out.bold, " * ", out.reset, "running sanity checks")
+        start_time = time()
     if not changes.run_sanity_checks(domain, build_obs):
         out.error("sanity checks failed.  please resolve them and try again.")
         return 1
     if options.debug:
-        out.write(out.bold, " * ", out.reset, "finished sanity checks")
+        out.write(out.bold, " * ", out.reset, "finished sanity checks in %.2f seconds"
+            % (time() - start_time))
+        out.write()
 
     if options.ask or options.pretend:
         for op in changes:

@@ -140,11 +140,7 @@ class domain(pkgcore.config.domain.domain):
             vdb.append(profile.provides_repo)
 
         self.profile = profile
-        pkg_maskers = set(profile.masks)
-        for r in repositories:
-            pkg_maskers.update(r.default_visibility_limiters)
-        pkg_maskers = list(pkg_maskers)
-        pkg_unmaskers, pkg_keywords, pkg_license = [], [], []
+        pkg_maskers, pkg_unmaskers, pkg_keywords, pkg_license = [], [], [], []
         pkg_use, self.bashrcs = [], []
 
         self.ebuild_hook_dir = settings.pop("ebuild_hook_dir", None)
@@ -220,25 +216,11 @@ class domain(pkgcore.config.domain.domain):
             u2 = u.lower()+"_"
             use.update(u2 + x for x in v.split())
 
-        # visibility mask...
-        # if ((package.mask or visibility) and not package.unmask)
-        # or not (package.keywords or accept_keywords)
-        vfilter = packages.AndRestriction(finalize=False,
-            disable_inst_caching=True)
         r = None
-        if pkg_maskers:
-            r = generate_masking_restrict(pkg_maskers)
+        unmasking_restrict = None
         if pkg_unmaskers:
-            if r is None:
-                # unmasking without masking... 'k (wtf?)
-                r = generate_unmasking_restrict(pkg_unmaskers)
-            else:
-                r = packages.OrRestriction(
-                    r, generate_unmasking_restrict(pkg_unmaskers),
-                    disable_inst_caching=True)
-        if r:
-            vfilter.add_restriction(r)
-        del pkg_unmaskers, pkg_maskers
+            unmasking_restrict = generate_unmasking_restrict(pkg_unmaskers)
+        del pkg_unmaskers
 
         license, default_keywords = [], []
         master_license = []
@@ -267,20 +249,18 @@ class domain(pkgcore.config.domain.domain):
                 default_keywords.append(x.lstrip("~"))
         default_keywords = unstable_unique(default_keywords + [self.arch])
 
-        vfilter.add_restriction(self.make_keywords_filter(
+        vfilters = [self.make_keywords_filter(
             self.arch, default_keywords, pkg_keywords,
-            incremental="package.keywords" in incrementals))
+            incremental="package.keywords" in incrementals)]
 
         del default_keywords
         # we can finally close that fricking
         # "DISALLOW NON FOSS LICENSES" bug via this >:)
         if master_license:
-            vfilter.add_restriction(self.make_license_filter(
+            vfilters.append(self.make_license_filter(
                 master_license, license))
 
         del master_license, license
-
-        vfilter.finalize()
 
         # if it's made it this far...
 
@@ -316,6 +296,8 @@ class domain(pkgcore.config.domain.domain):
 
         rev_names = dict((repo, name) for name, repo in self.named_repos.iteritems())
 
+        profile_masks = profile._incremental_masks()
+        repo_masks = dict((r.repo_id, r._visibility_limiters()) for r in repositories)
 
         for l, repos, filtered in ((self.repos, repositories, True),
             (self.vdb, vdb, False)):
@@ -342,8 +324,22 @@ class domain(pkgcore.config.domain.domain):
                 key = rev_names.get(repo)
                 self.configured_named_repos[key] = wrapped_repo
                 if filtered:
+                    config = getattr(repo, 'config', None)
+                    masks = [repo_masks.get(master, [(), ()])
+                        for master in getattr(config, 'masters', ())]
+                    masks.append(repo_masks[repo.repo_id])
+                    masks.extend(profile_masks)
+                    m = set()
+                    for neg, pos in masks:
+                        m.difference_update(neg)
+                        m.update(pos)
+                    m.update(pkg_maskers)
+                    m = list(m)
+                    filtered = self.generate_filter(generate_masking_restrict(m),
+                        unmasking_restrict, *vfilters)
+                if filtered:
                     wrapped_repo = visibility.filterTree(wrapped_repo,
-                        vfilter, True)
+                        filtered, True)
                 self.filtered_named_repos[key] = wrapped_repo
                 l.append(wrapped_repo)
 
@@ -359,6 +355,19 @@ class domain(pkgcore.config.domain.domain):
 
         self.use_expand_re = re.compile("^(?:[+-])?(%s)_(.*)$" %
             "|".join(x.lower() for x in sorted(self.use_expand, reverse=True)))
+
+    def generate_filter(self, masking, unmasking, *extra):
+        # note that we ignore unmasking if masking isn't specified.
+        # no point, mainly
+        r = ()
+        if masking:
+            if unmasking:
+                r = (packages.OrRestriction(masking, unmasking, disable_inst_caching=True),)
+            else:
+                r = (masking,)
+        vfilter = packages.AndRestriction(*(r + extra),
+            disable_inst_caching=True, finalize=True)
+        return vfilter
 
     def make_license_filter(self, master_license, pkg_licenses):
 #        data = collapsed_restrict_to_data(

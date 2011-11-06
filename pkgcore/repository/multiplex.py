@@ -14,6 +14,7 @@ from snakeoil.iterables import iter_sort, chain_from_iterable
 from snakeoil.compatibility import all, sorted_cmp
 from snakeoil import klass
 from pkgcore.operations import repo as repo_interface
+from pkgcore.config import configurable
 
 
 class operations(repo_interface.operations_proxy):
@@ -54,6 +55,11 @@ class operations(repo_interface.operations_proxy):
             raise NotImplementedError(self, op_name)
         return ret
 
+
+@configurable({'repositories': 'refs:repo'},
+    typename='repo')
+def config_tree(repositories):
+    return tree(*repositories)
 
 class tree(prototype.tree):
 
@@ -164,7 +170,12 @@ class tree(prototype.tree):
             id(self))
 
     def _visibility_limiters(self):
-        return [x for r in self.trees for x in r.default_visibility_limiters]
+        neg, pos = set(), set()
+        for tree in self.trees:
+            data = tree._visibility_limiters()
+            neg.update(data[0])
+            pos.update(data[1])
+        return [list(neg), list(pos)]
 
     @property
     def frozen(self):

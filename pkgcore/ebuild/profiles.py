@@ -452,6 +452,11 @@ class ProfileStack(object):
         return frozenset(chain(self._collapse_generic("masks"),
             self._collapse_generic("visibility")))
 
+    def _incremental_masks(self, stack_override=None):
+        if stack_override is None:
+            stack_override = self.stack
+        return [node.masks for node in stack_override]
+
     @klass.jit_attr
     def bashrcs(self):
         return tuple(x.bashrc for x in self.stack if x.bashrc is not None)
@@ -501,6 +506,12 @@ class OnDiskProfile(ProfileStack):
         if self.load_profile_base:
             l = (EmptyRootNode._autodetect_and_create(self.basepath),) + l
         return l
+
+    def _incremental_masks(self):
+        stack = self.stack
+        if self.load_profile_base:
+            stack = stack[1:]
+        return ProfileStack._incremental_masks(self, stack_override=stack)
 
 
 class UserProfileNode(ProfileNode):

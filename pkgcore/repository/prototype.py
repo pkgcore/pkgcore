@@ -445,7 +445,7 @@ class tree(object):
     @property
     def default_visibility_limiters(self):
         # designed this way to allow for easy override
-        return self._visibility_limiters()
+        return self._visibility_limiters()[1]
 
     def _visibility_limiters(self):
-        return []
+        return [(), ()]

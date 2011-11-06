@@ -341,24 +341,27 @@ class UnconfiguredTree(syncable.tree_mixin, prototype.tree):
 
     def _visibility_limiters(self):
         path = pjoin(self.base, 'profiles', 'package.mask')
+        pos, neg = [], []
         try:
             if self.config.profile_format != 'pms':
                 paths = sorted(x.location for x in iter_scan(path)
                     if x.is_reg)
             else:
                 paths = [path]
-            data = []
             for path in paths:
-                data.extend(atom.atom(x.strip()) for x in
-                    iter_read_bash(path))
-            return data
+                for line in iter_read_bash(path):
+                    line = line.strip()
+                    if line.startswith('-'):
+                        neg.append(atom.atom(line))
+                    else:
+                        pos.append(atom.atom(line))
         except IOError, i:
             if i.errno != errno.ENOENT:
                 raise
-            return []
         except ebuild_errors.MalformedAtom, ma:
             raise_from(profiles.ProfileError(pjoin(self.base, 'profiles'),
                 'package.mask', ma))
+        return [neg, pos]
 
 
 class SlavedTree(UnconfiguredTree):

@@ -1,5 +1,5 @@
+# Copyright: 2009-2011 Brian Harring <ferringb@gmail.com>
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
-# Copyright: 2009 Brian Harring <ferringb@gmail.com>
 # License: BSD/GPL2
 
 
@@ -197,8 +197,12 @@ def get_plugins(key, package=plugins):
     for modname, max_prio in cache.get(key, ()):
         module = modules.load_module('.'.join((package.__name__, modname)))
         for obj in module.pkgcore_plugins.get(key, ()):
-            if not getattr(obj, 'disabled', False):
-                yield obj
+            if getattr(obj, 'disabled', False):
+               continue
+            f = getattr(obj, '_plugin_disabled_check', None)
+            if f is not None and f():
+                continue
+            yield obj
 
 
 def get_plugin(key, package=plugins):

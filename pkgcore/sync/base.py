@@ -43,6 +43,9 @@ class syncer(object):
 
     supported_uris = ()
 
+    # plugin system uses this.
+    disabled = False
+
     pkgcore_config_type = ConfigHint(
         {'path':'str', 'uri':'str'}, typename='syncer')
 
@@ -105,10 +108,6 @@ class syncer(object):
                 return level
         return 0
 
-    @descriptors.classproperty
-    def disabled(cls):
-        return False
-
 
 class ExternalSyncer(syncer):
 
@@ -133,8 +132,8 @@ class ExternalSyncer(syncer):
                 raise missing_binary(bin_name, e)
             return None
 
-    @descriptors.classproperty
-    def disabled(cls):
+    @classmethod
+    def _plugin_disabled_check(cls):
         disabled = getattr(cls, '_disabled', None)
         if disabled is None:
             path = getattr(cls, 'binary_path', None)

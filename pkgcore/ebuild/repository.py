@@ -352,7 +352,7 @@ class UnconfiguredTree(syncable.tree_mixin, prototype.tree):
                 for line in iter_read_bash(path):
                     line = line.strip()
                     if line.startswith('-'):
-                        neg.append(atom.atom(line))
+                        neg.append(atom.atom(line[1:]))
                     else:
                         pos.append(atom.atom(line))
         except IOError, i:

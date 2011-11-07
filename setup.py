@@ -331,7 +331,7 @@ core.setup(
     package_data={
         'pkgcore':
             ['ebuild/eapi-bash/%s' % (x,) for x in
-                ['filter-env', 'portageq_emulation', '*.lib', 'eapi/*', '*.bash',
+                ['filter-env', 'pinspect', '*.lib', 'eapi/*', '*.bash',
                 '*.list']
             ] +
             ['ebuild/eapi-bash/helpers/%s' % (x,) for x in ("internals/*", "common/*", "4/*")

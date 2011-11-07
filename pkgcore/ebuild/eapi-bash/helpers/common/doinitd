@@ -5,4 +5,4 @@
 
 check_args 1 -
 
-EXEDESTTREE="/etc/init.d/" invoke_script doexe "$@"
+PKGCORE_EXEDESTTREE="/etc/init.d/" invoke_script doexe "$@"

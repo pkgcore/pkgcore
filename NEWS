@@ -4,6 +4,8 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+pkgcore 0.7.5: Nov 7th, 2011
+
 * pkgcore now extends masking rules to binpkg repositories; in addition,
   it now honors 'masters' for masking.  This means repositories that
   try to suppress an inherited mask that affects that repo, can now

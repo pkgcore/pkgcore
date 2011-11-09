@@ -836,7 +836,9 @@ class BinaryDebug(base):
                 '--add-gnu-debuglink', debug_ondisk, fpath])
             if ret != 0:
                 observer.warn("splitdebug created debug file %r, but "
-                    "failed adding links to %r" % (debug_loc, fpath))
+                    "failed adding links to %r (%r)" % (debug_loc, fpath, ret))
+                observer.debug("failed splitdebug command was %r",
+                    (self.objcopy_binary, '--add-gnu-debuglink', debug_ondisk, fpath))
                 continue
             debug_obj = gen_obj(debug_loc, real_location=debug_ondisk)
             modified.add(debug_obj.change_attributes(uid=os_data.root_uid,

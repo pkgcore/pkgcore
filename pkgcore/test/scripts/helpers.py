@@ -120,13 +120,21 @@ class MainMixin(object):
     @cvar main: main function to test.
     """
 
+    requires_compat_config_manager = True
+
+    def _mk_config(self, *args, **kwds):
+        config = central.ConfigManager(*args, **kwds)
+        if self.requires_compat_config_manager:
+            config = central.CompatConfigManager(config)
+        return config
+
     def parse(self, *args, **kwargs):
         """Parse a commandline and return the Values object.
 
         args are passed to parse_args, keyword args are used as config keys.
         """
         values = self.parser.get_default_values()
-        values._config = central.ConfigManager([kwargs], debug=True)
+        values._config = self._mk_config([kwargs], debug=True)
         # optparse needs a list (it does make a copy, but it uses [:]
         # to do it, which is a noop on a tuple).
         options, args = self.parser.parse_args(list(args), values)
@@ -171,7 +179,7 @@ class MainMixin(object):
 
         :param out: list of strings produced as output on stdout.
         :param err: list of strings produced as output on stderr.
-        :return: the :obj:`central.ConfigManager`.
+        :return: the :obj:`self._mk_config`.
         """
         options = self.parse(*args, **kwargs)
         outformatter = FakeStreamFormatter()
@@ -210,7 +218,7 @@ class ArgParseMixin(MainMixin):
             namespace = commandline.argparse.Namespace()
             if kwargs.pop("suppress_domain", self.suppress_domain):
                 kwargs["default_domain"] = default_domain
-            namespace.config = central.ConfigManager([kwargs], debug=True)
+            namespace.config = self._mk_config([kwargs], debug=True)
         namespace = self.parser.parse_args(list(args), namespace=namespace)
         return namespace
 

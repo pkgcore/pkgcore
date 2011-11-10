@@ -82,4 +82,4 @@ def load_config(user_conf_file=USER_CONF_FILE,
             from pkgcore.ebuild.portage_conf import config_from_make_conf
             configs.append(config_from_make_conf())
     configs.extend(get_plugins('global_config'))
-    return central.ConfigManager(configs, debug=debug)
+    return central.CompatConfigManager(central.ConfigManager(configs, debug=debug))

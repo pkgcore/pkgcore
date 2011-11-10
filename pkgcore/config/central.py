@@ -159,6 +159,27 @@ class CollapsedConfig(object):
         return self._instance
 
 
+class _ConfigObjMap(object):
+
+    def __init__(self, manager):
+        self._manager = manager
+
+    def __getattr__(self, attr):
+        return _ConfigMapping(self._manager, attr)
+
+
+class CompatConfigManager(object):
+
+    def __init__(self, manager):
+        self._manager = manager
+
+    def __getattr__(self, attr, singleton=object()):
+        obj = getattr(self._manager, attr, singleton)
+        if obj is singleton:
+            obj = getattr(self._manager.objects, attr)
+        return obj
+
+
 class ConfigManager(object):
 
     """Combine config type definitions and configuration sections.
@@ -189,6 +210,8 @@ class ConfigManager(object):
         self._refs = set()
         self.debug = debug
         self.reload()
+        # cycle...
+        self.objects = _ConfigObjMap(self)
 
     def _compat_mangle_config(self, config):
         if hasattr(config, 'sections'):
@@ -208,9 +231,6 @@ class ConfigManager(object):
         self.collapsed_configs = {}
         for config in self.original_config_sources:
             self.add_config_source(config)
-
-    def __getattr__(self, attr):
-        return _ConfigMapping(self, attr)
 
     def add_config_source(self, config):
         return self._add_config_source(self._compat_mangle_config(config))

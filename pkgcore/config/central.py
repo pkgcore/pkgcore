@@ -169,28 +169,22 @@ class ConfigManager(object):
     The following special type names are recognized:
       - configsection: instantiated and used the same way as an entry in the
         configs :obj:`__init__` arg.
-      - remoteconfigsection: Instantiated and used the same way as an entry in
-        theremote_configs :obj:`__init__` arg.
 
     These "magic" typenames are only recognized if they are used by a
     section with a name starting with "autoload".
     """
 
-    def __init__(self, configs=(), remote_configs=(), debug=False):
+    def __init__(self, configs=(), debug=False):
         """Initialize.
 
         :type configs: sequence of mappings of string to ConfigSection.
         :param configs: configuration to use.
             Can define extra configs that are also loaded.
-        :type remote_configs: sequence of mappings of string to ConfigSection.
-        :param remote_configs: configuration to use.
-            Cannot define extra configs.
         :param debug: if set to True exception wrapping is disabled.
             This means things can raise other exceptions than
             ConfigurationError but tracebacks are complete.
         """
         self.original_configs = tuple(configs)
-        self.original_remote_configs = tuple(remote_configs)
         # Set of encountered section names, used to catch recursive references.
         self._refs = set()
         self.debug = debug
@@ -203,11 +197,10 @@ class ConfigManager(object):
         """
         # "Attribute defined outside __init__"
         # pylint: disable-msg=W0201
-        self.configs = (list(self.original_configs) +
-                        list(self.original_remote_configs))
+        self.configs = list(self.original_configs)
         # Cache mapping confname to CollapsedConfig.
         self.collapsed_configs = {}
-        self._exec_configs(self.original_configs)
+        self._exec_configs(self.configs)
 
     def __getattr__(self, attr):
         return _ConfigMapping(self, attr)
@@ -237,11 +230,10 @@ class ConfigManager(object):
                 except errors.ConfigurationError, e:
                     e.stack.append('Collapsing autoload %r' % (name,))
                     raise
-                if collapsed.type.name not in (
-                    'configsection', 'remoteconfigsection'):
+                if collapsed.type.name != 'configsection':
                     raise errors.ConfigurationError(
                         'Section %r is marked as autoload but type is %s, not '
-                        '(remote)configsection' % (name, collapsed.type.name))
+                        'configsection' % (name, collapsed.type.name))
                 try:
                     instance = collapsed.instantiate()
                 except errors.ConfigurationError, e:
@@ -249,8 +241,6 @@ class ConfigManager(object):
                     raise
                 if collapsed.type.name == 'configsection':
                     new_configs.append(instance)
-                elif collapsed.type.name == 'remoteconfigsection':
-                    self.configs.append(instance)
         if new_configs:
             self.configs.extend(new_configs)
             self._exec_configs(new_configs)

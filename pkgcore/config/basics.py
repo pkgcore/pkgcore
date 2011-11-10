@@ -558,3 +558,20 @@ def parse_config_file(path, parser):
         return parser(f)
     finally:
         f.close()
+
+
+class ConfigSource(object):
+
+    description = "No description available"
+    def sections(self):
+        raise NotImplementedError(self, 'sections')
+
+
+class GeneratedConfigSource(ConfigSource):
+
+    def __init__(self, section_data, description):
+        self.description = description
+        self.section_data = section_data
+
+    def sections(self):
+        return self.section_data

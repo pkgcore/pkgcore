@@ -184,11 +184,16 @@ class ConfigManager(object):
             This means things can raise other exceptions than
             ConfigurationError but tracebacks are complete.
         """
-        self.original_configs = tuple(configs)
+        self.original_config_sources = tuple(map(self._compat_mangle_config, configs))
         # Set of encountered section names, used to catch recursive references.
         self._refs = set()
         self.debug = debug
         self.reload()
+
+    def _compat_mangle_config(self, config):
+        if hasattr(config, 'sections'):
+            return config
+        return basics.GeneratedConfigSource(config, "unknown")
 
     def reload(self):
         """Reinitialize us from the config sources originally passed in.
@@ -197,53 +202,56 @@ class ConfigManager(object):
         """
         # "Attribute defined outside __init__"
         # pylint: disable-msg=W0201
-        self.configs = list(self.original_configs)
+        self.configs = []
+        self.config_sources = []
         # Cache mapping confname to CollapsedConfig.
         self.collapsed_configs = {}
-        self._exec_configs(self.configs)
+        for config in self.original_config_sources:
+            self.add_config_source(config)
 
     def __getattr__(self, attr):
         return _ConfigMapping(self, attr)
 
-    def _exec_configs(self, configs):
+    def add_config_source(self, config):
+        return self._add_config_source(self._compat_mangle_config(config))
+
+    def _add_config_source(self, config):
         """Pull extra type and config sections from configs and use them.
 
         Things loaded this way are added after already loaded things
         (meaning the config containing the autoload section overrides
         the config(s) added by that section).
         """
-        new_configs = []
-        for config in configs:
-            for name in config:
-                # Do not even touch the ConfigSection if it's not an autoload.
-                if not name.startswith('autoload'):
-                    continue
-                # If this matches something we previously instantiated
-                # we should probably blow up to prevent massive
-                # amounts of confusion (and recursive autoloads)
-                if name in self.collapsed_configs:
-                    raise errors.ConfigurationError(
-                        'section %r from autoload is already collapsed!' % (
-                            name,))
-                try:
-                    collapsed = self.collapse_named_section(name)
-                except errors.ConfigurationError, e:
-                    e.stack.append('Collapsing autoload %r' % (name,))
-                    raise
-                if collapsed.type.name != 'configsection':
-                    raise errors.ConfigurationError(
-                        'Section %r is marked as autoload but type is %s, not '
-                        'configsection' % (name, collapsed.type.name))
-                try:
-                    instance = collapsed.instantiate()
-                except errors.ConfigurationError, e:
-                    e.stack.append('Instantiating autoload %r' % (name,))
-                    raise
-                if collapsed.type.name == 'configsection':
-                    new_configs.append(instance)
-        if new_configs:
-            self.configs.extend(new_configs)
-            self._exec_configs(new_configs)
+        config_data = config.sections()
+        self.configs.append(config_data)
+        self.config_sources.append(config)
+        for name in config_data:
+            # Do not even touch the ConfigSection if it's not an autoload.
+            if not name.startswith('autoload'):
+                continue
+            # If this matches something we previously instantiated
+            # we should probably blow up to prevent massive
+            # amounts of confusion (and recursive autoloads)
+            if name in self.collapsed_configs:
+                raise errors.ConfigurationError(
+                    'section %r from autoload is already collapsed!' % (
+                        name,))
+            try:
+                collapsed = self.collapse_named_section(name)
+            except errors.ConfigurationError, e:
+                e.stack.append('Collapsing autoload %r' % (name,))
+                raise
+            if collapsed.type.name != 'configsection':
+                raise errors.ConfigurationError(
+                   'Section %r is marked as autoload but type is %s, not '
+                   'configsection' % (name, collapsed.type.name))
+            try:
+                instance = collapsed.instantiate()
+            except errors.ConfigurationError, e:
+                e.stack.append('Instantiating autoload %r' % (name,))
+                raise
+            if collapsed.type.name == 'configsection':
+                self.add_config_source(instance)
 
     def sections(self):
         """Return an iterator of all section names."""

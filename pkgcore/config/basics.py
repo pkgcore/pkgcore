@@ -11,8 +11,8 @@ all callables can/may throw a :class:`pkgcore.config.errors.ConfigurationError`
 
 __all__ = ("ConfigType", "LazySectionRef", "LazyNamedSectionRef", "ConfigSection",
     "DictConfigSection", "FakeIncrementalDictConfigSection", "convert_string",
-    "convert_asis", "convert_hybrid", "section_alias", "list_parser", "str_parser",
-    "bool_parser", "int_parser", "parse_config_file"
+    "convert_asis", "convert_hybrid", "section_alias", "str_to_list", "str_to_str",
+    "str_to_bool", "str_to_int", "parse_config_file"
 )
 
 from pkgcore.config import errors, configurable
@@ -211,9 +211,9 @@ class ConfigSection(object):
         """Return a list of keys."""
         raise NotImplementedError(self.keys)
 
-    def get_value(self, central, name, arg_type):
+    def render_value(self, central, name, arg_type):
         """Return a setting, converted to the requested type."""
-        raise NotImplementedError(self.get_value)
+        raise NotImplementedError(self, 'render_value')
 
 
 class DictConfigSection(ConfigSection):
@@ -238,7 +238,7 @@ class DictConfigSection(ConfigSection):
     def keys(self):
         return self.dict.keys()
 
-    def get_value(self, central, name, arg_type):
+    def render_value(self, central, name, arg_type):
         try:
             return self.func(central, self.dict[name], arg_type)
         except errors.ConfigurationError, e:
@@ -282,7 +282,7 @@ class FakeIncrementalDictConfigSection(ConfigSection):
             keys.add(key)
         return list(keys)
 
-    def get_value(self, central, name, arg_type):
+    def render_value(self, central, name, arg_type):
         # Check if we need our special incremental magic.
         if arg_type in ('list', 'str', 'repr') or arg_type.startswith('refs:'):
             result = []
@@ -382,6 +382,75 @@ class FakeIncrementalDictConfigSection(ConfigSection):
             e.stack.append('Converting argument %r to %s' % (name, arg_type))
             raise
 
+
+def str_to_list(string):
+    """split on whitespace honoring quoting for new tokens"""
+    l = []
+    i = 0
+    e = len(string)
+    # check for stringness because we return something interesting if
+    # feeded a sequence of strings
+    if not isinstance(string, basestring):
+        raise TypeError('expected a string, got %r' % (string,))
+    while i < e:
+        if not string[i].isspace():
+            if string[i] in ("'", '"'):
+                q = i
+                i += 1
+                res = []
+                while i < e and string[i] != string[q]:
+                    if string[i] == '\\':
+                        i += 1
+                    res.append(string[i])
+                    i += 1
+                if i >= e:
+                    raise errors.QuoteInterpretationError(string)
+                l.append(''.join(res))
+            else:
+                res = []
+                while i < e and not (string[i].isspace() or
+                                     string[i] in ("'", '"')):
+                    if string[i] == '\\':
+                        i += 1
+                    res.append(string[i])
+                    i += 1
+                if i < e and string[i] in ("'", '"'):
+                    raise errors.QuoteInterpretationError(string)
+                l.append(''.join(res))
+        i += 1
+    return l
+
+def str_to_str(string):
+    """yank leading/trailing whitespace and quotation, along with newlines"""
+    s = string.strip()
+    if len(s) > 1 and s[0] in '"\'' and s[0] == s[-1]:
+        s = s[1:-1]
+    return s.replace('\n', ' ').replace('\t', ' ')
+
+def str_to_bool(string):
+    """convert a string to a boolean"""
+    s = str_to_str(string).lower()
+    if s in ("no", "false", "0"):
+        return False
+    if s in ("yes", "true", "1"):
+        return True
+    raise errors.ConfigurationError('%r is not a boolean' % s)
+
+def str_to_int(string):
+    """convert a string to a integer"""
+    string = str_to_str(string)
+    try:
+        return int(string)
+    except ValueError:
+        raise errors.ConfigurationError('%r is not an integer' % string)
+
+_str_converters = {
+    'list': str_to_list,
+    'str': str_to_str,
+    'bool': str_to_bool,
+    'int': str_to_int
+}
+
 def convert_string(central, value, arg_type):
     """Conversion func for a string-based DictConfigSection."""
     assert isinstance(value, basestring), value
@@ -395,19 +464,13 @@ def convert_string(central, value, arg_type):
         return func
     elif arg_type.startswith('refs:'):
         return list(LazyNamedSectionRef(central, arg_type, ref)
-                    for ref in list_parser(value))
+                    for ref in str_to_list(value))
     elif arg_type.startswith('ref:'):
-        return LazyNamedSectionRef(central, arg_type, str_parser(value))
+        return LazyNamedSectionRef(central, arg_type, str_to_str(value))
     elif arg_type == 'repr':
         return 'str', value
-    try:
-        func = {
-            'list': list_parser,
-            'str': str_parser,
-            'bool': bool_parser,
-            'int': int_parser,
-            }[arg_type]
-    except KeyError:
+    func = _str_converters.get(arg_type)
+    if func is None:
         raise errors.ConfigurationError('Unknown type %r' % (arg_type,))
     return func(value)
 
@@ -486,67 +549,6 @@ def section_alias(target, typename):
         return target
     return AutoConfigSection({'class': section_alias, 'target': target})
 
-
-def list_parser(string):
-    """split on whitespace honoring quoting for new tokens"""
-    l = []
-    i = 0
-    e = len(string)
-    # check for stringness because we return something interesting if
-    # feeded a sequence of strings
-    if not isinstance(string, basestring):
-        raise TypeError('expected a string, got %r' % (string,))
-    while i < e:
-        if not string[i].isspace():
-            if string[i] in ("'", '"'):
-                q = i
-                i += 1
-                res = []
-                while i < e and string[i] != string[q]:
-                    if string[i] == '\\':
-                        i += 1
-                    res.append(string[i])
-                    i += 1
-                if i >= e:
-                    raise errors.QuoteInterpretationError(string)
-                l.append(''.join(res))
-            else:
-                res = []
-                while i < e and not (string[i].isspace() or
-                                     string[i] in ("'", '"')):
-                    if string[i] == '\\':
-                        i += 1
-                    res.append(string[i])
-                    i += 1
-                if i < e and string[i] in ("'", '"'):
-                    raise errors.QuoteInterpretationError(string)
-                l.append(''.join(res))
-        i += 1
-    return l
-
-def str_parser(string):
-    """yank leading/trailing whitespace and quotation, along with newlines"""
-    s = string.strip()
-    if len(s) > 1 and s[0] in '"\'' and s[0] == s[-1]:
-        s = s[1:-1]
-    return s.replace('\n', ' ').replace('\t', ' ')
-
-def bool_parser(string):
-    """convert a string to a boolean"""
-    s = str_parser(string).lower()
-    if s in ("no", "false", "0"):
-        return False
-    if s in ("yes", "true", "1"):
-        return True
-    raise errors.ConfigurationError('%r is not a boolean' % s)
-
-def int_parser(string):
-    """convert a string to a integer"""
-    string = str_parser(string)
-    try:
-        return int(string)
-    except ValueError:
-        raise errors.ConfigurationError('%r is not an integer' % string)
 
 @configurable({'path': 'str', 'parser': 'callable'}, typename='configsection')
 def parse_config_file(path, parser):

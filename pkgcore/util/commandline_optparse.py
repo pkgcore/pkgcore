@@ -172,7 +172,7 @@ def debug_callback(option, opt_str, value, parser):
     config = parser.values.config
     config.debug = True
     logging.root.setLevel(logging.DEBUG)
-    for collapsed in config.collapsed_configs.itervalues():
+    for collapsed in config.rendered_sections.itervalues():
         collapsed.debug = True
 
 

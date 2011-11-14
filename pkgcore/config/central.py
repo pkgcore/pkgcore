@@ -148,9 +148,9 @@ class CollapsedConfig(object):
         except Exception, e:
             if self.debug:
                 raise
-            raise errors.InstantiationError(exception=e,
+            compatibility.raise_from(errors.InstantiationError(exception=e,
                                             callable_obj=callable_obj,
-                                            pargs=pargs, kwargs=configdict)
+                                            pargs=pargs, kwargs=configdict))
         if self._instance is None:
             raise errors.InstantiationError(
                 'No object returned', callable_obj=callable_obj, pargs=pargs,
@@ -228,7 +228,7 @@ class ConfigManager(object):
         self.configs = []
         self.config_sources = []
         # Cache mapping confname to CollapsedConfig.
-        self.collapsed_configs = {}
+        self.rendered_sections = {}
         for config in self.original_config_sources:
             self.add_config_source(config)
 
@@ -252,7 +252,7 @@ class ConfigManager(object):
             # If this matches something we previously instantiated
             # we should probably blow up to prevent massive
             # amounts of confusion (and recursive autoloads)
-            if name in self.collapsed_configs:
+            if name in self.rendered_sections:
                 raise errors.ConfigurationError(
                     'section %r from autoload is already collapsed!' % (
                         name,))
@@ -292,7 +292,7 @@ class ConfigManager(object):
                 'Reference to %r is recursive' % (name,))
         self._refs.add(name)
         try:
-            result = self.collapsed_configs.get(name)
+            result = self.rendered_sections.get(name)
             if result is not None:
                 return result
             for source_index, config in enumerate(self.configs):
@@ -315,7 +315,7 @@ class ConfigManager(object):
             except errors.ConfigurationError, e:
                 e.stack.append('Collapsing section named %r' % (name,))
                 raise
-            self.collapsed_configs[name] = result
+            self.rendered_sections[name] = result
             return result
         finally:
             self._refs.remove(name)
@@ -325,7 +325,7 @@ class ConfigManager(object):
 
         # Bail if this is an inherit-only (uncollapsable) section.
         try:
-            inherit_only = section.get_value(self, 'inherit-only', 'bool')
+            inherit_only = section.render_value(self, 'inherit-only', 'bool')
         except (AttributeError, KeyError):
             pass
         else:
@@ -341,7 +341,7 @@ class ConfigManager(object):
         for current_section, current_conf, index in slist:
             if 'inherit' not in current_conf:
                 continue
-            prepend, inherits, append = current_conf.get_value(
+            prepend, inherits, append = current_conf.render_value(
                 self, 'inherit', 'list')
             if prepend is not None or append is not None:
                 raise errors.ConfigurationError(
@@ -379,7 +379,7 @@ class ConfigManager(object):
         else:
             raise errors.ConfigurationError('no class specified')
 
-        type_obj = basics.ConfigType(inherit_conf.get_value(self, 'class',
+        type_obj = basics.ConfigType(inherit_conf.render_value(self, 'class',
                                                             'callable'))
 
         conf = {}
@@ -406,7 +406,7 @@ class ConfigManager(object):
                 # The sections do not care about lazy vs nonlazy.
                 if typename.startswith('lazy_'):
                     typename = typename[5:]
-                result = inherit_conf.get_value(self, key, typename)
+                result = inherit_conf.render_value(self, key, typename)
                 if is_ref:
                     try:
                         result = result.collapse()
@@ -458,7 +458,7 @@ class ConfigManager(object):
             for name, section in source.iteritems():
                 collapsed = None
                 try:
-                    is_default = section.get_value(self, 'default', 'bool')
+                    is_default = section.render_value(self, 'default', 'bool')
                 except KeyError:
                     is_default = False
                 if not is_default:
@@ -467,7 +467,7 @@ class ConfigManager(object):
                 # which we need the class. Try to grab this from the
                 # section directly:
                 try:
-                    klass = section.get_value(self, 'class', 'callable')
+                    klass = section.render_value(self, 'class', 'callable')
                 except errors.ConfigurationError:
                     # There is a class setting but it is not valid.
                     # This means it is definitely not the one we are

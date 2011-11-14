@@ -83,7 +83,7 @@ class ConfigSection(basics.ConfigSection):
     def keys(self):
         return self.section.keys()
 
-    def get_value(self, central, name, arg_type):
+    def render_value(self, central, name, arg_type):
         value = self.section[name]
         if arg_type == 'callable':
             if len(value) != 1:
@@ -126,7 +126,7 @@ class ConfigSection(basics.ConfigSection):
             if not isinstance(value, basestring):
                 # sequence
                 value = ' '.join(value)
-            return None, basics.list_parser(value), None
+            return None, basics.str_to_list(value), None
         elif arg_type == 'repr':
             if len(value) == 1:
                 value = value[0]
@@ -148,9 +148,9 @@ class ConfigSection(basics.ConfigSection):
                 raise errors.ConfigurationError(
                     '%r should be a string' % value)
             if arg_type == 'str':
-                return [None, basics.str_parser(value[0]), None]
+                return [None, basics.str_to_str(value[0]), None]
             elif arg_type == 'bool':
-                return basics.bool_parser(value[0])
+                return basics.str_to_bool(value[0])
             else:
                 raise errors.ConfigurationError(
                     'unsupported type %r' % (arg_type,))

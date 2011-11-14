@@ -48,7 +48,7 @@ test {
             section = config['test']
             self.assertTrue('hi' in section)
             self.assertEqual(section.keys(), ['hi'])
-            self.assertEqual(section.get_value(None, 'hi', 'str'),
+            self.assertEqual(section.render_value(None, 'hi', 'str'),
                              [None, 'there', None])
 
     def test_basic_types(self):
@@ -77,7 +77,7 @@ test {
                 ('bool', 'bool', True),
                 ('callable', 'callable', passthrough),
                 ):
-                self.assertEqual(section.get_value(None, name, typename),
+                self.assertEqual(section.render_value(None, name, typename),
                                   value)
             for name, typename, value in (
                 ('list', 'list', ['one', 'two', 'three']),
@@ -87,7 +87,7 @@ test {
                  'pkgcore.test.config.test_dhcpformat.passthrough'),
                 ):
                 self.assertEqual(
-                    (typename, value), section.get_value(None, name, 'repr'))
+                    (typename, value), section.render_value(None, name, 'repr'))
 
     def test_section_ref(self):
         for parser, text in [
@@ -122,16 +122,16 @@ test {
             manager = central.ConfigManager([config])
             section = config['test']
             self.assertEqual(
-                section.get_value(manager, 'ref', 'ref:test').instantiate(),
+                section.render_value(manager, 'ref', 'ref:test').instantiate(),
                 ((), {'hi': 'there'}))
             self.assertEqual(
-                section.get_value(
+                section.render_value(
                     manager, 'inline', 'ref:test').instantiate(),
                 ((), {'hi': 'here'}))
-            kind, ref = section.get_value(manager, 'inline', 'repr')
+            kind, ref = section.render_value(manager, 'inline', 'repr')
             self.assertEqual('ref', kind)
             self.assertEqual(
-                [None, 'here', None], ref.get_value(None, 'hi', 'str'))
+                [None, 'here', None], ref.render_value(None, 'hi', 'str'))
 
     def test_multiple_section_ref(self):
         for parser, text in [
@@ -181,17 +181,17 @@ test {
             section = config['test']
             for name in ('ref', 'inline', 'mix'):
                 try:
-                    section.get_value(manager, name, 'ref:test')
+                    section.render_value(manager, name, 'ref:test')
                 except errors.ConfigurationError, e:
                     self.assertEqual('only one argument required', str(e))
                 else:
                     self.fail('no exception raised')
-            kind, refs = section.get_value(manager, 'mix', 'repr')
+            kind, refs = section.render_value(manager, 'mix', 'repr')
             self.assertEqual('refs', kind)
             self.assertEqual(2, len(refs))
             self.assertEqual('target', refs[0])
             self.assertEqual(
-                [None, 'here', None], refs[1].get_value(None, 'hi', 'str'))
+                [None, 'here', None], refs[1].render_value(None, 'hi', 'str'))
 
     def test_section_refs(self):
         for parser, text in [
@@ -223,7 +223,7 @@ test {
             config = parser(StringIO(text))
             manager = central.ConfigManager([config])
             section = config['test']
-            refs = section.get_value(manager, 'refs', 'refs:test')
+            refs = section.render_value(manager, 'refs', 'refs:test')
             self.assertEqual(((), {'hi': 'there'}), refs[1][0].instantiate())
             self.assertEqual(((), {'hi': 'here'}), refs[1][1].instantiate())
 
@@ -260,11 +260,11 @@ test {
             manager = central.ConfigManager([config])
             section = config['test']
             self.assertEqual(
-                section.get_value(
+                section.render_value(
                     manager, 'inline', 'refs:test')[1][0].instantiate(),
                 ((), {'hi': 'here'}))
             self.assertEqual(
-                section.get_value(
+                section.render_value(
                     manager, 'ref', 'refs:test')[1][0].instantiate(),
                 ((), {'hi': 'there'}))
 
@@ -295,28 +295,28 @@ test {
             section = parser(StringIO(text))['test']
             self.assertRaises(
                 errors.ConfigurationError,
-                section.get_value, None, 'bool', 'bool')
+                section.render_value, None, 'bool', 'bool')
             self.assertRaises(
                 errors.ConfigurationError,
-                section.get_value, None, 'string', 'str')
+                section.render_value, None, 'string', 'str')
             self.assertRaises(
                 errors.ConfigurationError,
-                section.get_value, None, 'callable', 'callable')
+                section.render_value, None, 'callable', 'callable')
             self.assertRaises(
                 errors.ConfigurationError,
-                section.get_value, None, 'borkedimport', 'callable')
+                section.render_value, None, 'borkedimport', 'callable')
             self.assertRaises(
                 errors.ConfigurationError,
-                section.get_value, None, 'ref', 'ref:test')
+                section.render_value, None, 'ref', 'ref:test')
             self.assertRaises(
                 errors.ConfigurationError,
-                section.get_value, None, 'inlinecallable', 'callable')
+                section.render_value, None, 'inlinecallable', 'callable')
             self.assertRaises(
                 errors.ConfigurationError,
-                section.get_value, None, 'string', 'callable')
+                section.render_value, None, 'string', 'callable')
             self.assertRaises(
                 errors.ConfigurationError,
-                section.get_value, None, 'inlinecallable', 'bool')
+                section.render_value, None, 'inlinecallable', 'bool')
 
     def test_error(self):
         for parser, text in [

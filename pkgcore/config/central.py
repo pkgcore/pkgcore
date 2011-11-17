@@ -320,24 +320,12 @@ class ConfigManager(object):
         finally:
             self._refs.remove(name)
 
-    def collapse_section(self, section, _name=None, _index=None):
-        """Collapse a ConfigSection to a :obj:`CollapsedConfig`."""
-
-        # Bail if this is an inherit-only (uncollapsable) section.
-        try:
-            inherit_only = section.render_value(self, 'inherit-only', 'bool')
-        except (AttributeError, KeyError):
-            pass
-        else:
-            if inherit_only:
-                raise errors.CollapseInheritOnly(
-                    'cannot collapse inherit-only section')
-
+    def _get_inherited_sections(self, name, section, index):
         # List of (name, ConfigSection, index) tuples, most specific first.
-        slist = [(_name, section, _index)]
+        slist = [(name, section, index)]
 
         # first map out inherits.
-        inherit_names = set([_name])
+        inherit_names = set([name])
         for current_section, current_conf, index in slist:
             if 'inherit' not in current_conf:
                 continue
@@ -370,6 +358,22 @@ class ConfigManager(object):
                     else:
                         raise errors.ConfigurationError(
                             'inherit target %r cannot be found' % (inherit,))
+        return slist
+
+    def collapse_section(self, section, _name=None, _index=None):
+        """Collapse a ConfigSection to a :obj:`CollapsedConfig`."""
+
+        # Bail if this is an inherit-only (uncollapsable) section.
+        try:
+            inherit_only = section.render_value(self, 'inherit-only', 'bool')
+        except (AttributeError, KeyError):
+            pass
+        else:
+            if inherit_only:
+                raise errors.CollapseInheritOnly(
+                    'cannot collapse inherit-only section')
+
+        slist = self._get_inherited_sections(_name, section, _index)
 
         # Grab the "class" setting first (we need it to get a type obj
         # to collapse to the right type in the more general loop)

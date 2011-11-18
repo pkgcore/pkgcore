@@ -8,9 +8,10 @@ check_args 2
 ln_option=
 src_prefix=
 if [[ ${HELPER_NAME} == dosym ]]; then
-	# T while nonportable, is to ensure that if there is a directory
-	# conflict, it doesn't just create the sym w/in
-	ln_option=snT
+	ln_option=sn
+	if [[ ${2} == */ ]] || [[ -d $2 && ! -L $2 ]]; then
+		echo "QA: dosym target '$2' omits the filename target; see bug 379899" >&2
+	fi
 else
 	src_prefix="${D}"
 fi

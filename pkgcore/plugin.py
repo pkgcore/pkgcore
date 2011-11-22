@@ -29,6 +29,7 @@ demandload.demandload(globals(),
     'tempfile',
     'errno',
     'pkgcore.log:logger',
+    'snakeoil:fileutils',
 )
 
 
@@ -171,21 +172,12 @@ def initialize_cache(package):
                 break
         if cache_stale:
             # Write a new cache.
+            cachefile = None
             try:
-                fd, name = tempfile.mkstemp(dir=path)
-            except OSError, e:
-                # We cannot write a new cache. We should log this
-                # since it will have a performance impact.
-
-                # Use error, not exception for this one: the traceback
-                # is not necessary and too alarming.
-                logger.error('Cannot write cache for %s: %s. '
-                             'Try running pplugincache.',
-                             stored_cache_name, e)
-            else:
-                cachefile = os.fdopen(fd, 'w')
-                cachefile.write(CACHE_HEADER)
                 try:
+                    cachefile = fileutils.AtomicWriteFile(stored_cache_name, binary=False,
+                        perms=0644)
+                    cachefile.write(CACHE_HEADER)
                     for module, (mtime, entries) in actual_cache.iteritems():
                         strings = []
                         for plugname, max_prio in entries:
@@ -195,10 +187,20 @@ def initialize_cache(package):
                                 strings.append('%s,%s' % (plugname, max_prio))
                         cachefile.write(
                             '%s:%s:%s\n' % (module, mtime, ':'.join(strings)))
-                finally:
                     cachefile.close()
-                os.chmod(name, 0644)
-                os.rename(name, stored_cache_name)
+                except EnvironmentError, e:
+                    # We cannot write a new cache. We should log this
+                    # since it will have a performance impact.
+
+                    # Use error, not exception for this one: the traceback
+                    # is not necessary and too alarming.
+                    logger.error('Cannot write cache for %s: %s. '
+                             'Try running pplugincache.',
+                             stored_cache_name, e)
+            finally:
+                if cachefile is not None:
+                    cachefile.discard()
+
         # Update the package_cache.
         for module, (mtime, entries) in actual_cache.iteritems():
             seen_modnames.add(module)

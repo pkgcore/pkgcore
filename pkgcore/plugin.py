@@ -162,11 +162,12 @@ def initialize_cache(package):
                     values.add((key, max_prio))
                 actual_cache[modname] = (mtime, values)
         # Cache is also stale if it sees entries that are no longer there.
-        for key in stored_cache:
-            if key not in actual_cache and key not in assumed_valid:
-                logger.debug('stale because %s is no longer there', key)
-                cache_stale = True
-                break
+        stale = set(stored_cache)
+        stale.difference_update(actual_cache)
+        stale.difference_update(assumed_valid)
+        if stale:
+            logger.debug('stale due to %r no longer existing', sorted(stale))
+            cache_stale = True
         if cache_stale:
             # Write a new cache.
             cachefile = None

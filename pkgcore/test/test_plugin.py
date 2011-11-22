@@ -124,7 +124,7 @@ pkgcore_plugins = {'plugtest': [HiddenPlug]}
             plugin.get_plugin('plugtest', mod_testplug).__class__.__name__)
         lines = list(open(os.path.join(self.packdir, 'plugincache2')))
         self.assertEqual(3, len(lines))
-        self.assertEqual(plugin.CACHE_HEADER, lines[0])
+        self.assertEqual(plugin.CACHE_HEADER + "\n", lines[0])
         lines.pop(0)
         lines.sort()
         mtime = int(os.path.getmtime(os.path.join(self.packdir, 'plug2.py')))
@@ -149,7 +149,9 @@ pkgcore_plugins = {'plugtest': [HiddenPlug]}
     def test_no_unneeded_import(self):
         self._runit(self._test_no_unneeded_import)
 
+    @protect_logging(logging.root)
     def test_cache_corruption(self):
+        logging.root.handlers = [quiet_logger]
         import mod_testplug
         list(plugin.get_plugins('spork', mod_testplug))
         filename = os.path.join(self.packdir, 'plugincache2')
@@ -296,7 +298,9 @@ pkgcore_plugins = {
         self.assertIn('mod_testplug.plug5', sys.modules, 'plug4 not loaded')
         self.assertNotIn('mod_testplug.plug6', sys.modules, 'plug6 loaded')
 
+    @protect_logging(logging.root)
     def test_header_change_invalidates_cache(self):
+        logging.root.handlers = [quiet_logger]
         # Write the cache
         plugin._cache.clear()
         import mod_testplug

@@ -23,7 +23,7 @@ import os.path
 
 from pkgcore import plugins
 from snakeoil.osutils import join as pjoin, listdir_files
-from snakeoil.compatibility import cmp, sort_cmp
+from snakeoil import compatibility
 from snakeoil import modules, demandload, mappings
 demandload.demandload(globals(),
     'tempfile',
@@ -33,7 +33,7 @@ demandload.demandload(globals(),
 )
 
 
-CACHE_HEADER = 'pkgcore plugin cache v2\n'
+CACHE_HEADER = 'pkgcore plugin cache v2'
 
 def _process_plugins(package, modname, sequence, filter_disabled=False):
     for plug in sequence:
@@ -75,39 +75,36 @@ def initialize_cache(package):
         # (mtime, set([keys]))
         stored_cache = {}
         stored_cache_name = pjoin(path, 'plugincache2')
-        try:
-            cachefile = open(stored_cache_name)
-        except IOError:
-            # Something is wrong with the cache file. We just handle
-            # this as a missing/empty cache, which will force a
-            # rewrite. If whatever it is that is wrong prevents us
-            # from writing the new cache we log it there.
-            pass
-        else:
+        cache_data = list(fileutils.readlines_ascii(stored_cache_name,
+            True, True, False))
+        if len(cache_data) > 1:
+            if cache_data[0] != CACHE_HEADER:
+                logger.warn("plugin cache has a wrong header: %r, regenerating",
+                    cache_data[0])
+                cache_data = []
             try:
-                # Remove this extra nesting once we require python 2.5
-                try:
-                    if cachefile.readline() != CACHE_HEADER:
-                        raise ValueError('bogus header')
-                    for line in cachefile:
-                        module, mtime, entries = line[:-1].split(':', 2)
-                        mtime = int(mtime)
-                        result = set()
-                        # Needed because ''.split(':') == [''], not []
-                        if entries:
-                            for s in entries.split(':'):
-                                name, max_prio = s.split(',')
-                                if max_prio:
-                                    max_prio = int(max_prio)
-                                else:
-                                    max_prio = None
-                                result.add((name, max_prio))
-                        stored_cache[module] = (mtime, result)
-                except ValueError:
-                    # Corrupt cache, treat as empty.
-                    stored_cache = {}
-            finally:
-                cachefile.close()
+                for line in cache_data[1:]:
+                    module, mtime, entries = line.split(':', 2)
+                    mtime = int(mtime)
+                    result = set()
+                    # Needed because ''.split(':') == [''], not []
+                    if entries:
+                        for s in entries.split(':'):
+                            name, max_prio = s.split(',')
+                            if max_prio:
+                                max_prio = int(max_prio)
+                            else:
+                                max_prio = None
+                            result.add((name, max_prio))
+                    stored_cache[module] = (mtime, result)
+
+            except compatibility.IGNORED_EXCEPTIONS:
+                raise
+            except Exception, e:
+                # corrupt cache, or bug in this code.
+                logger.warn("failed reading cache; exception %s.  Regenerating.",
+                    e)
+                stored_cache.clear()
         cache_stale = False
         # Hunt for modules.
         actual_cache = {}
@@ -177,7 +174,7 @@ def initialize_cache(package):
                 try:
                     cachefile = fileutils.AtomicWriteFile(stored_cache_name, binary=False,
                         perms=0644)
-                    cachefile.write(CACHE_HEADER)
+                    cachefile.write(CACHE_HEADER + "\n")
                     for module, (mtime, entries) in actual_cache.iteritems():
                         strings = []
                         for plugname, max_prio in entries:
@@ -234,7 +231,8 @@ def get_plugin(key, package=plugins):
     modlist = cache.get(key, [])
     # explicitly force cmp.  for py3k, our compatibility cmp
     # still allows None comparisons.
-    sort_cmp(modlist, cmp, key=operator.itemgetter(1), reverse=True)
+    compatibility.sort_cmp(modlist, compatibility.cmp,
+        key=operator.itemgetter(1), reverse=True)
     plugs = []
     for i, (modname, max_prio) in enumerate(modlist):
         module = modules.load_module('.'.join((package.__name__, modname)))

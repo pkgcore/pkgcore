@@ -24,20 +24,15 @@ import os.path
 from pkgcore import plugins
 from snakeoil.osutils import join as pjoin, listdir_files
 from snakeoil.compatibility import cmp, sort_cmp
-from snakeoil import modules, demandload
+from snakeoil import modules, demandload, mappings
 demandload.demandload(globals(),
     'tempfile',
     'errno',
     'pkgcore.log:logger',
-    'snakeoil:mappings',
 )
 
 
 CACHE_HEADER = 'pkgcore plugin cache v2\n'
-
-# Global plugin cache. Mapping of package to package cache, which is a
-# mapping of plugin key to a list of module names.
-_cache = {}
 
 def _process_plugins(package, modname, sequence, filter_disabled=False):
     for plug in sequence:
@@ -217,9 +212,7 @@ def get_plugins(key, package=plugins):
 
     Plugins with a C{disabled} attribute evaluating to C{True} are skipped.
     """
-    cache = _cache.get(package)
-    if cache is None:
-        cache = _cache[package] = initialize_cache(package)
+    cache = _cache[package]
     for modname, max_prio in cache.get(key, ()):
         module = modules.load_module('.'.join((package.__name__, modname)))
         for obj in _process_plugins(package, modname, module.pkgcore_plugins.get(key, ()),
@@ -235,9 +228,7 @@ def get_plugin(key, package=plugins):
 
     :return: highest-priority plugin or None if no plugin available.
     """
-    cache = _cache.get(package)
-    if cache is None:
-        cache = _cache[package] = initialize_cache(package)
+    cache = _cache[package]
     modlist = cache.get(key, [])
     # explicitly force cmp.  for py3k, our compatibility cmp
     # still allows None comparisons.
@@ -257,3 +248,8 @@ def get_plugin(key, package=plugins):
         if i + 1 == len(modlist) or plugs[0].priority > modlist[i + 1][1]:
             return plugs[0]
     return None
+
+# Global plugin cache. Mapping of package to package cache, which is a
+# mapping of plugin key to a list of module names.
+_cache = mappings.defaultdictkey(initialize_cache)
+

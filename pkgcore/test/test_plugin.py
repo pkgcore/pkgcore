@@ -100,11 +100,11 @@ pkgcore_plugins = {'plugtest': [HiddenPlug]}
             set(expected) ^ set(mod_testplug.__path__))
 
     def _runit(self, method):
-        plugin._cache = {}
+        plugin._cache.clear()
         method()
         mtime = os.path.getmtime(os.path.join(self.packdir, 'plugincache2'))
         method()
-        plugin._cache = {}
+        plugin._cache.clear()
         method()
         method()
         self.assertEqual(
@@ -163,11 +163,11 @@ pkgcore_plugins = {'plugtest': [HiddenPlug]}
         st = os.stat(filename)
         corrupt_mtime = st.st_mtime - 2
         os.utime(filename, (st.st_atime, corrupt_mtime))
-        plugin._cache = {}
+        plugin._cache.clear()
         self._test_plug()
         good_mtime = os.path.getmtime(
             os.path.join(self.packdir, 'plugincache2'))
-        plugin._cache = {}
+        plugin._cache.clear()
         self._test_plug()
         self.assertEqual(good_mtime, os.path.getmtime(
                 os.path.join(self.packdir, 'plugincache2')))
@@ -183,7 +183,7 @@ pkgcore_plugins = {'plugtest': [HiddenPlug]}
         finally:
             plug.close()
 
-        plugin._cache = {}
+        plugin._cache.clear()
         self._test_plug()
 
         filename = os.path.join(self.packdir, 'plugincache2')
@@ -191,7 +191,7 @@ pkgcore_plugins = {'plugtest': [HiddenPlug]}
         mtime = st.st_mtime - 2
         os.utime(filename, (st.st_atime, mtime))
 
-        plugin._cache = {}
+        plugin._cache.clear()
         self._test_plug()
 
         # Should never write a usable cache.
@@ -207,14 +207,14 @@ pkgcore_plugins = {'plugtest': [HiddenPlug]}
         finally:
             plug.close()
 
-        plugin._cache = {}
+        plugin._cache.clear()
         import mod_testplug
         self.assertEqual(
             3, len(list(plugin.get_plugins('plugtest', mod_testplug))))
 
         os.unlink(filename)
 
-        plugin._cache = {}
+        plugin._cache.clear()
         self._test_plug()
 
     def test_priority_caching(self):
@@ -298,7 +298,7 @@ pkgcore_plugins = {
 
     def test_header_change_invalidates_cache(self):
         # Write the cache
-        plugin._cache = {}
+        plugin._cache.clear()
         import mod_testplug
         list(plugin.get_plugins('testplug', mod_testplug))
 
@@ -309,5 +309,5 @@ pkgcore_plugins = {
         open(filename, 'w').write(''.join(cache))
 
         # And test if it is properly rewritten.
-        plugin._cache = {}
+        plugin._cache.clear()
         self._test_plug()

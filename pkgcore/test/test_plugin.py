@@ -13,6 +13,9 @@ from snakeoil import lists
 from pkgcore.test import quiet_logger, protect_logging
 from pkgcore import plugin
 
+class LowPlug(object):
+    priority = 0
+
 class ModulesTest(TestCase):
 
     def setUp(self):
@@ -49,7 +52,7 @@ pkgcore_plugins = {
     'plugtest': [
         DisabledPlug,
         high_plug,
-        low_plug,
+        'pkgcore.test.test_plugin.LowPlug',
     ]
 }
 ''')

@@ -39,6 +39,16 @@ CACHE_HEADER = 'pkgcore plugin cache v2\n'
 # mapping of plugin key to a list of module names.
 _cache = {}
 
+def _process_plugins(package, modname, sequence):
+    for plug in sequence:
+        if isinstance(plug, basestring):
+            try:
+                plug = modules.load_any(plug)
+            except modules.FailedImport, e:
+                logger.exception("plugin import for %s failed processing file %s, entry %s: %s",
+                    package.__name__, modname, plug, e)
+                continue
+        yield plug
 
 def initialize_cache(package):
     """Determine available plugins in a package.
@@ -129,13 +139,14 @@ def initialize_cache(package):
                     # here we cripple pkgcore entirely which may make
                     # fixing the problem impossible. So be noisy but
                     # try to continue.
-                    logger.exception('plugin import failed')
+                    logger.exception('plugin import failed for %s processing %s',
+                        package.__name__, modname)
                     continue
                 values = set()
                 registry = getattr(module, 'pkgcore_plugins', {})
                 for key, plugs in registry.iteritems():
                     max_prio = None
-                    for plug in plugs:
+                    for plug in _process_plugins(package, modname, plugs):
                         priority = getattr(plug, 'priority', None)
                         if priority is not None \
                                 and not isinstance(priority, int):
@@ -202,7 +213,7 @@ def get_plugins(key, package=plugins):
         cache = _cache[package] = initialize_cache(package)
     for modname, max_prio in cache.get(key, ()):
         module = modules.load_module('.'.join((package.__name__, modname)))
-        for obj in module.pkgcore_plugins.get(key, ()):
+        for obj in _process_plugins(package, modname, module.pkgcore_plugins.get(key, ())):
             if getattr(obj, 'disabled', False):
                continue
             f = getattr(obj, '_plugin_disabled_check', None)
@@ -229,7 +240,7 @@ def get_plugin(key, package=plugins):
     plugs = []
     for i, (modname, max_prio) in enumerate(modlist):
         module = modules.load_module('.'.join((package.__name__, modname)))
-        for plug in module.pkgcore_plugins.get(key, ()):
+        for plug in _process_plugins(package, modname, module.pkgcore_plugins.get(key, ())):
             # sanity check.
             if getattr(plug, 'disabled', False):
                 logger.debug("pluging %s is disabled, skipping" % plug)

@@ -130,24 +130,24 @@ def initialize_cache(package):
                     # fixing the problem impossible. So be noisy but
                     # try to continue.
                     logger.exception('plugin import failed')
-                else:
-                    values = set()
-                    registry = getattr(module, 'pkgcore_plugins', {})
-                    for key, plugs in registry.iteritems():
-                        max_prio = None
-                        for plug in plugs:
-                            priority = getattr(plug, 'priority', None)
-                            if priority is not None \
-                                    and not isinstance(priority, int):
-                                # This happens rather a lot with
-                                # plugins not meant for use with
-                                # get_plugin. Just ignore it.
-                                priority = None
-                            if priority is not None and (
-                                max_prio is None or priority > max_prio):
-                                max_prio = priority
-                        values.add((key, max_prio))
-                    actual_cache[modname] = (mtime, values)
+                    continue
+                values = set()
+                registry = getattr(module, 'pkgcore_plugins', {})
+                for key, plugs in registry.iteritems():
+                    max_prio = None
+                    for plug in plugs:
+                        priority = getattr(plug, 'priority', None)
+                        if priority is not None \
+                                and not isinstance(priority, int):
+                            # This happens rather a lot with
+                            # plugins not meant for use with
+                            # get_plugin. Just ignore it.
+                            priority = None
+                        if priority is not None and (
+                            max_prio is None or priority > max_prio):
+                            max_prio = priority
+                    values.add((key, max_prio))
+                actual_cache[modname] = (mtime, values)
         # Cache is also stale if it sees entries that are no longer there.
         for key in stored_cache:
             if key not in actual_cache and key not in assumed_valid:

@@ -39,7 +39,7 @@ CACHE_HEADER = 'pkgcore plugin cache v2\n'
 # mapping of plugin key to a list of module names.
 _cache = {}
 
-def _process_plugins(package, modname, sequence):
+def _process_plugins(package, modname, sequence, filter_disabled=False):
     for plug in sequence:
         if isinstance(plug, basestring):
             try:
@@ -48,6 +48,15 @@ def _process_plugins(package, modname, sequence):
                 logger.exception("plugin import for %s failed processing file %s, entry %s: %s",
                     package.__name__, modname, plug, e)
                 continue
+        if filter_disabled:
+            if getattr(plug, 'disabled', False):
+                logger.debug("plugin %s is disabled, skipping", plug)
+                continue
+            f = getattr(plug, '_plugin_disabled_check', None)
+            if f is not None and f():
+                logger.debug("plugin %s is disabled, skipping", plug)
+                continue
+
         yield plug
 
 def initialize_cache(package):
@@ -213,12 +222,8 @@ def get_plugins(key, package=plugins):
         cache = _cache[package] = initialize_cache(package)
     for modname, max_prio in cache.get(key, ()):
         module = modules.load_module('.'.join((package.__name__, modname)))
-        for obj in _process_plugins(package, modname, module.pkgcore_plugins.get(key, ())):
-            if getattr(obj, 'disabled', False):
-               continue
-            f = getattr(obj, '_plugin_disabled_check', None)
-            if f is not None and f():
-                continue
+        for obj in _process_plugins(package, modname, module.pkgcore_plugins.get(key, ()),
+            filter_disabled=True):
             yield obj
 
 
@@ -240,11 +245,9 @@ def get_plugin(key, package=plugins):
     plugs = []
     for i, (modname, max_prio) in enumerate(modlist):
         module = modules.load_module('.'.join((package.__name__, modname)))
-        for plug in _process_plugins(package, modname, module.pkgcore_plugins.get(key, ())):
-            # sanity check.
-            if getattr(plug, 'disabled', False):
-                logger.debug("pluging %s is disabled, skipping" % plug)
-            elif plug.priority is None:
+        for plug in _process_plugins(package, modname, module.pkgcore_plugins.get(key, ()),
+            filter_disabled=True):
+            if plug.priority is None:
                 logger.warn("plugin %s has an invalid priority, skipping" % plug)
             else:
                 plugs.append(plug)

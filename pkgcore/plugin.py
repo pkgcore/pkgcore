@@ -25,7 +25,12 @@ from pkgcore import plugins
 from snakeoil.osutils import join as pjoin, listdir_files
 from snakeoil.compatibility import cmp, sort_cmp
 from snakeoil import modules, demandload
-demandload.demandload(globals(), 'tempfile', 'errno', 'pkgcore.log:logger')
+demandload.demandload(globals(),
+    'tempfile',
+    'errno',
+    'pkgcore.log:logger',
+    'snakeoil:mappings',
+)
 
 
 CACHE_HEADER = 'pkgcore plugin cache v2\n'
@@ -91,6 +96,7 @@ def initialize_cache(package):
         cache_stale = False
         # Hunt for modules.
         actual_cache = {}
+        mtime_cache = mappings.defaultdictkey(lambda x:int(os.path.getmtime(x)))
         assumed_valid = set()
         for modfullname in modlist:
             modname, modext = os.path.splitext(modfullname)
@@ -104,7 +110,7 @@ def initialize_cache(package):
                 assumed_valid.add(modname)
                 continue
             # It is an actual module. Check if its cache entry is valid.
-            mtime = int(os.path.getmtime(pjoin(path, modfullname)))
+            mtime = mtime_cache[pjoin(path, modfullname)]
             if mtime == stored_cache.get(modname, (0, ()))[0]:
                 # Cache is good, use it.
                 actual_cache[modname] = stored_cache[modname]

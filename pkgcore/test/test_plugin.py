@@ -102,17 +102,17 @@ pkgcore_plugins = {'plugtest': [HiddenPlug]}
     def _runit(self, method):
         plugin._cache.clear()
         method()
-        mtime = os.path.getmtime(os.path.join(self.packdir, 'plugincache2'))
+        mtime = os.path.getmtime(os.path.join(self.packdir, plugin.CACHE_FILENAME))
         method()
         plugin._cache.clear()
         method()
         method()
         self.assertEqual(
             mtime,
-            os.path.getmtime(os.path.join(self.packdir, 'plugincache2')))
+            os.path.getmtime(os.path.join(self.packdir, plugin.CACHE_FILENAME)))
         # We cannot write this since it contains an unimportable plugin.
         self.assertFalse(
-            os.path.exists(os.path.join(self.packdir2, 'plugincache2')))
+            os.path.exists(os.path.join(self.packdir2, plugin.CACHE_FILENAME)))
 
     def _test_plug(self):
         import mod_testplug
@@ -122,7 +122,7 @@ pkgcore_plugins = {'plugtest': [HiddenPlug]}
         self.assertEqual(
             'HighPlug',
             plugin.get_plugin('plugtest', mod_testplug).__class__.__name__)
-        lines = list(open(os.path.join(self.packdir, 'plugincache2')))
+        lines = list(open(os.path.join(self.packdir, plugin.CACHE_FILENAME)))
         self.assertEqual(3, len(lines))
         self.assertEqual(plugin.CACHE_HEADER + "\n", lines[0])
         lines.pop(0)
@@ -154,7 +154,7 @@ pkgcore_plugins = {'plugtest': [HiddenPlug]}
         logging.root.handlers = [quiet_logger]
         import mod_testplug
         list(plugin.get_plugins('spork', mod_testplug))
-        filename = os.path.join(self.packdir, 'plugincache2')
+        filename = os.path.join(self.packdir, plugin.CACHE_FILENAME)
         cachefile = open(filename, 'a')
         try:
             cachefile.write('corruption\n')
@@ -168,11 +168,11 @@ pkgcore_plugins = {'plugtest': [HiddenPlug]}
         plugin._cache.clear()
         self._test_plug()
         good_mtime = os.path.getmtime(
-            os.path.join(self.packdir, 'plugincache2'))
+            os.path.join(self.packdir, plugin.CACHE_FILENAME))
         plugin._cache.clear()
         self._test_plug()
         self.assertEqual(good_mtime, os.path.getmtime(
-                os.path.join(self.packdir, 'plugincache2')))
+                os.path.join(self.packdir, plugin.CACHE_FILENAME)))
         self.assertNotEqual(good_mtime, corrupt_mtime)
 
     @protect_logging(logging.root)
@@ -188,7 +188,7 @@ pkgcore_plugins = {'plugtest': [HiddenPlug]}
         plugin._cache.clear()
         self._test_plug()
 
-        filename = os.path.join(self.packdir, 'plugincache2')
+        filename = os.path.join(self.packdir, plugin.CACHE_FILENAME)
         st = os.stat(filename)
         mtime = st.st_mtime - 2
         os.utime(filename, (st.st_atime, mtime))
@@ -199,7 +199,7 @@ pkgcore_plugins = {'plugtest': [HiddenPlug]}
         # Should never write a usable cache.
         self.assertNotEqual(
             mtime,
-            os.path.getmtime(os.path.join(self.packdir, 'plugincache2')))
+            os.path.getmtime(os.path.join(self.packdir, plugin.CACHE_FILENAME)))
 
     def test_rewrite_on_remove(self):
         filename = os.path.join(self.packdir, 'extra.py')
@@ -307,7 +307,7 @@ pkgcore_plugins = {
         list(plugin.get_plugins('testplug', mod_testplug))
 
         # Modify the cache.
-        filename = os.path.join(self.packdir, 'plugincache2')
+        filename = os.path.join(self.packdir, plugin.CACHE_FILENAME)
         cache = list(open(filename))
         cache[0] = 'not really a pkgcore plugin cache\n'
         open(filename, 'w').write(''.join(cache))

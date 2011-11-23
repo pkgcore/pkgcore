@@ -34,6 +34,7 @@ demandload.demandload(globals(),
 
 
 CACHE_HEADER = 'pkgcore plugin cache v2'
+CACHE_FILENAME = 'plugincache2'
 
 def _process_plugins(package, modname, sequence, filter_disabled=False):
     for plug in sequence:
@@ -55,6 +56,73 @@ def _process_plugins(package, modname, sequence, filter_disabled=False):
 
         yield plug
 
+def _read_cache_file(cache_path):
+    stored_cache = {}
+    cache_data = list(fileutils.readlines_ascii(cache_path, True, True, False))
+    if len(cache_data) >= 1:
+        if cache_data[0] != CACHE_HEADER:
+            logger.warn("plugin cache has a wrong header: %r, regenerating",
+                cache_data[0])
+            cache_data = []
+        else:
+            cache_data = cache_data[1:]
+    if not cache_data:
+        return {}
+    try:
+        for line in cache_data:
+            module, mtime, entries = line.split(':', 2)
+            mtime = int(mtime)
+            result = set()
+            # Needed because ''.split(':') == [''], not []
+            if entries:
+                for s in entries.split(':'):
+                    name, max_prio = s.split(',')
+                    if max_prio:
+                        max_prio = int(max_prio)
+                    else:
+                        max_prio = None
+                    result.add((name, max_prio))
+            stored_cache[module] = (mtime, result)
+
+    except compatibility.IGNORED_EXCEPTIONS:
+        raise
+    except Exception, e:
+        # corrupt cache, or bug in this code.
+        logger.warn("failed reading cache; exception %s.  Regenerating.",
+            e)
+        return {}
+    return stored_cache
+
+def _write_cache_file(path, data):
+    # Write a new cache.
+    cachefile = None
+    try:
+        try:
+            cachefile = fileutils.AtomicWriteFile(path, binary=False, perms=0664)
+            cachefile.write(CACHE_HEADER + "\n")
+            for module, (mtime, entries) in data.iteritems():
+                strings = []
+                for plugname, max_prio in entries:
+                    if max_prio is None:
+                        strings.append(plugname + ',')
+                    else:
+                        strings.append('%s,%s' % (plugname, max_prio))
+                cachefile.write('%s:%s:%s\n' % (module, mtime, ':'.join(strings)))
+            cachefile.close()
+        except EnvironmentError, e:
+            # We cannot write a new cache. We should log this
+            # since it will have a performance impact.
+
+            # Use error, not exception for this one: the traceback
+            # is not necessary and too alarming.
+            logger.error('Cannot write cache for %s: %s. '
+                         'Try running pplugincache.',
+                         path, e)
+    finally:
+        if cachefile is not None:
+            cachefile.discard()
+
+
 def initialize_cache(package):
     """Determine available plugins in a package.
 
@@ -73,38 +141,8 @@ def initialize_cache(package):
             continue
         # Directory cache, mapping modulename to
         # (mtime, set([keys]))
-        stored_cache = {}
-        stored_cache_name = pjoin(path, 'plugincache2')
-        cache_data = list(fileutils.readlines_ascii(stored_cache_name,
-            True, True, False))
-        if len(cache_data) > 1:
-            if cache_data[0] != CACHE_HEADER:
-                logger.warn("plugin cache has a wrong header: %r, regenerating",
-                    cache_data[0])
-                cache_data = []
-            try:
-                for line in cache_data[1:]:
-                    module, mtime, entries = line.split(':', 2)
-                    mtime = int(mtime)
-                    result = set()
-                    # Needed because ''.split(':') == [''], not []
-                    if entries:
-                        for s in entries.split(':'):
-                            name, max_prio = s.split(',')
-                            if max_prio:
-                                max_prio = int(max_prio)
-                            else:
-                                max_prio = None
-                            result.add((name, max_prio))
-                    stored_cache[module] = (mtime, result)
-
-            except compatibility.IGNORED_EXCEPTIONS:
-                raise
-            except Exception, e:
-                # corrupt cache, or bug in this code.
-                logger.warn("failed reading cache; exception %s.  Regenerating.",
-                    e)
-                stored_cache.clear()
+        stored_cache_name = pjoin(path, CACHE_FILENAME)
+        stored_cache = _read_cache_file(stored_cache_name)
         cache_stale = False
         # Hunt for modules.
         actual_cache = {}
@@ -169,35 +207,7 @@ def initialize_cache(package):
             logger.debug('stale due to %r no longer existing', sorted(stale))
             cache_stale = True
         if cache_stale:
-            # Write a new cache.
-            cachefile = None
-            try:
-                try:
-                    cachefile = fileutils.AtomicWriteFile(stored_cache_name, binary=False,
-                        perms=0644)
-                    cachefile.write(CACHE_HEADER + "\n")
-                    for module, (mtime, entries) in actual_cache.iteritems():
-                        strings = []
-                        for plugname, max_prio in entries:
-                            if max_prio is None:
-                                strings.append(plugname + ',')
-                            else:
-                                strings.append('%s,%s' % (plugname, max_prio))
-                        cachefile.write(
-                            '%s:%s:%s\n' % (module, mtime, ':'.join(strings)))
-                    cachefile.close()
-                except EnvironmentError, e:
-                    # We cannot write a new cache. We should log this
-                    # since it will have a performance impact.
-
-                    # Use error, not exception for this one: the traceback
-                    # is not necessary and too alarming.
-                    logger.error('Cannot write cache for %s: %s. '
-                             'Try running pplugincache.',
-                             stored_cache_name, e)
-            finally:
-                if cachefile is not None:
-                    cachefile.discard()
+            _write_cache_file(stored_cache_name, actual_cache)
 
         # Update the package_cache.
         for module, (mtime, entries) in actual_cache.iteritems():
@@ -235,6 +245,7 @@ def get_plugin(key, package=plugins):
     compatibility.sort_cmp(modlist, compatibility.cmp,
         key=operator.itemgetter(1), reverse=True)
     plugs = []
+
     for i, (modname, max_prio) in enumerate(modlist):
         module = modules.load_module('.'.join((package.__name__, modname)))
         for plug in _process_plugins(package, modname, module.pkgcore_plugins.get(key, ()),

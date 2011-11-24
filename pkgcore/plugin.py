@@ -24,7 +24,7 @@ import os.path
 from pkgcore import plugins
 from snakeoil.osutils import join as pjoin, listdir_files
 from snakeoil import compatibility
-from snakeoil import modules, demandload, mappings
+from snakeoil import modules, demandload, mappings, sequences
 demandload.demandload(globals(),
     'tempfile',
     'errno',
@@ -32,31 +32,59 @@ demandload.demandload(globals(),
     'snakeoil:fileutils',
 )
 
+_plugin_data = sequences.namedtuple("_plugin_data",
+    ["key", "priority", "source", "target"])
 
-CACHE_HEADER = 'pkgcore plugin cache v2'
-CACHE_FILENAME = 'plugincache2'
+PLUGIN_ATTR = 'pkgcore_plugins'
 
-def _process_plugins(package, modname, sequence, filter_disabled=False):
+CACHE_HEADER = 'pkgcore plugin cache v3'
+CACHE_FILENAME = 'plugincache'
+
+def _process_plugins(package, sequence, filter_disabled=False):
     for plug in sequence:
-        if isinstance(plug, basestring):
-            try:
-                plug = modules.load_any(plug)
-            except modules.FailedImport, e:
-                logger.exception("plugin import for %s failed processing file %s, entry %s: %s",
-                    package.__name__, modname, plug, e)
-                continue
-        if filter_disabled:
-            if getattr(plug, 'disabled', False):
-                logger.debug("plugin %s is disabled, skipping", plug)
-                continue
-            f = getattr(plug, '_plugin_disabled_check', None)
-            if f is not None and f():
-                logger.debug("plugin %s is disabled, skipping", plug)
-                continue
+        plug = _process_plugin(package, plug, filter_disabled)
+        if plug is not None:
+            yield plug
 
-        yield plug
+def _process_plugin(package, plug, filter_disabled=False):
+    if isinstance(plug.target, basestring):
+        try:
+            plug = modules.load_any(plug.target)
+        except modules.FailedImport, e:
+            logger.exception("plugin import for %s failed processing file %s, entry %s: %s",
+                package.__name__, plug.source, plug.target, e)
+            return None
+    elif isinstance(plug.target, int):
+        try:
+            module = modules.load_any(plug.source)
+        except modules.FailedImport, e:
+            logger.exception("plugin import for %s failed processing file %s: %s",
+                package.__name__, plug.source, e)
+            return None
+        plugs = getattr(module, PLUGIN_ATTR, {})
+        plugs = plugs.get(plug.key, [])
+        if len(plugs) <= plug.target:
+            logger.exception("plugin cache for %s, %s, %s is somehow wrong; no item at position %s",
+                package.__name__, plug.source, plug.key, plug.target)
+            return None
+        plug = plugs[plug.target]
+    else:
+        logger.error("package %s, plug %s; non int, non string.  wtf?",
+            package.__name__, plug)
+        return None
 
-def _read_cache_file(cache_path):
+    if filter_disabled:
+        if getattr(plug, 'disabled', False):
+            logger.debug("plugin %s is disabled, skipping", plug)
+            return None
+        f = getattr(plug, '_plugin_disabled_check', None)
+        if f is not None and f():
+            logger.debug("plugin %s is disabled, skipping", plug)
+            return None
+
+    return plug
+
+def _read_cache_file(package, cache_path):
     stored_cache = {}
     cache_data = list(fileutils.readlines_ascii(cache_path, True, True, False))
     if len(cache_data) >= 1:
@@ -72,25 +100,33 @@ def _read_cache_file(cache_path):
         for line in cache_data:
             module, mtime, entries = line.split(':', 2)
             mtime = int(mtime)
-            result = set()
             # Needed because ''.split(':') == [''], not []
-            if entries:
-                for s in entries.split(':'):
-                    name, max_prio = s.split(',')
-                    if max_prio:
-                        max_prio = int(max_prio)
-                    else:
-                        max_prio = None
-                    result.add((name, max_prio))
-            stored_cache[module] = (mtime, result)
+            if not entries:
+                entries = set()
+            else:
+                entries = entries.replace(':', ',').split(',')
+
+                if not len(entries) % 3 == 0:
+                    logger.error("failed reading cache %s; entries field isn't "
+                        "divisable by 3: %r", cache_path, entries)
+                    continue
+                entries = iter(entries)
+                def f(val):
+                    if val.isdigit():
+                        val = int(val)
+                    return val
+                entries = set(
+                    _plugin_data(key, int(priority), '%s.%s' % (package.__name__, module),
+                        f(target))
+                        for (key, priority, target) in zip(entries, entries, entries))
+            stored_cache[(module,mtime)] = entries
 
     except compatibility.IGNORED_EXCEPTIONS:
         raise
     except Exception, e:
-        # corrupt cache, or bug in this code.
-        logger.warn("failed reading cache; exception %s.  Regenerating.",
-            e)
-        return {}
+      logger.warn("failed reading cache; exception %s.  Regenerating.", e)
+      stored_cache.clear()
+
     return stored_cache
 
 def _write_cache_file(path, data):
@@ -100,14 +136,10 @@ def _write_cache_file(path, data):
         try:
             cachefile = fileutils.AtomicWriteFile(path, binary=False, perms=0664)
             cachefile.write(CACHE_HEADER + "\n")
-            for module, (mtime, entries) in data.iteritems():
-                strings = []
-                for plugname, max_prio in entries:
-                    if max_prio is None:
-                        strings.append(plugname + ',')
-                    else:
-                        strings.append('%s,%s' % (plugname, max_prio))
-                cachefile.write('%s:%s:%s\n' % (module, mtime, ':'.join(strings)))
+            for (module, mtime), plugs in sorted(data.iteritems(), key=operator.itemgetter(0)):
+                plugs = sorted(plugs, reverse=True)
+                plugs = ':'.join('%s,%s,%s' % (plug.key, plug.priority, plug.target) for plug in plugs)
+                cachefile.write("%s:%s:%s\n" % (module, mtime, plugs))
             cachefile.close()
         except EnvironmentError, e:
             # We cannot write a new cache. We should log this
@@ -129,7 +161,7 @@ def initialize_cache(package):
     Writes cache files if they are stale and writing is possible.
     """
     # package plugin cache, see above.
-    package_cache = {}
+    package_cache = mappings.defaultdict(set)
     seen_modnames = set()
     for path in package.__path__:
         # Check if the path actually exists first.
@@ -141,30 +173,22 @@ def initialize_cache(package):
             continue
         # Directory cache, mapping modulename to
         # (mtime, set([keys]))
+        modlist = set(x for x in modlist if os.path.splitext(x)[1] == '.py'
+                and x != '__init__.py')
+        modlist.difference_update(seen_modnames)
+
         stored_cache_name = pjoin(path, CACHE_FILENAME)
-        stored_cache = _read_cache_file(stored_cache_name)
+        stored_cache = _read_cache_file(package, stored_cache_name)
         cache_stale = False
         # Hunt for modules.
-        actual_cache = {}
+        actual_cache = mappings.defaultdict(set)
         mtime_cache = mappings.defaultdictkey(lambda x:int(os.path.getmtime(x)))
-        assumed_valid = set()
-        for modfullname in modlist:
-            modname, modext = os.path.splitext(modfullname)
-            if modext != '.py':
-                continue
-            if modname == '__init__':
-                continue
-            if modname in seen_modnames:
-                # This module is shadowed by a module earlier in
-                # sys.path. Skip it, assuming its cache is valid.
-                assumed_valid.add(modname)
-                continue
+        for modfullname in sorted(modlist):
+            modname = os.path.splitext(modfullname)[0]
             # It is an actual module. Check if its cache entry is valid.
             mtime = mtime_cache[pjoin(path, modfullname)]
-            if mtime == stored_cache.get(modname, (0, ()))[0]:
-                # Cache is good, use it.
-                actual_cache[modname] = stored_cache[modname]
-            else:
+            vals = stored_cache.get((modname, mtime))
+            if vals is None:
                 # Cache entry is stale.
                 logger.debug(
                     'stale because of %s: actual %s != stored %s',
@@ -182,39 +206,38 @@ def initialize_cache(package):
                     logger.exception('plugin import failed for %s processing %s',
                         package.__name__, modname)
                     continue
-                values = set()
-                registry = getattr(module, 'pkgcore_plugins', {})
+
+                registry = getattr(module, PLUGIN_ATTR, {})
+                vals = set()
                 for key, plugs in registry.iteritems():
-                    max_prio = None
-                    for plug in _process_plugins(package, modname, plugs):
-                        priority = getattr(plug, 'priority', None)
-                        if priority is not None \
-                                and not isinstance(priority, int):
-                            # This happens rather a lot with
-                            # plugins not meant for use with
-                            # get_plugin. Just ignore it.
-                            priority = None
-                        if priority is not None and (
-                            max_prio is None or priority > max_prio):
-                            max_prio = priority
-                    values.add((key, max_prio))
-                actual_cache[modname] = (mtime, values)
-        # Cache is also stale if it sees entries that are no longer there.
-        stale = set(stored_cache)
-        stale.difference_update(actual_cache)
-        stale.difference_update(assumed_valid)
-        if stale:
-            logger.debug('stale due to %r no longer existing', sorted(stale))
-            cache_stale = True
-        if cache_stale:
+                    for idx, plug_name in enumerate(plugs):
+                        if isinstance(plug_name, basestring):
+                            plug = _process_plugin(package, _plugin_data(key, 0, qualname, plug_name))
+                        else:
+                            plug = plug_name
+                        if plug is None:
+                            # import failure, ignore it, error already logged
+                            continue
+                        priority = getattr(plug, 'priority', 0)
+                        if not isinstance(priority, int):
+                            logger.error("ignoring plugin %s: has a non integer priority: %s",
+                                plug, priority)
+                            continue
+                        if plug_name is plug:
+                            # this means it's an object, rather than a string; store
+                            # the offset.
+                            plug_name = idx
+                        data = _plugin_data(key, priority, qualname, plug_name)
+                        vals.add(data)
+            actual_cache[(modname,mtime)] = vals
+            seen_modnames.add(modfullname)
+            for data in vals:
+                package_cache[data.key].add(data)
+        if set(stored_cache) != set(actual_cache):
+            logger.debug('updating cache %r for new plugins', stored_cache_name)
             _write_cache_file(stored_cache_name, actual_cache)
 
-        # Update the package_cache.
-        for module, (mtime, entries) in actual_cache.iteritems():
-            seen_modnames.add(module)
-            for key, max_prio in entries:
-                package_cache.setdefault(key, []).append((module, max_prio))
-    return package_cache
+    return mappings.ImmutableDict((k, sorted(v, reverse=True)) for k,v in package_cache.iteritems())
 
 
 def get_plugins(key, package=plugins):
@@ -222,12 +245,9 @@ def get_plugins(key, package=plugins):
 
     Plugins with a C{disabled} attribute evaluating to C{True} are skipped.
     """
-    cache = _cache[package]
-    for modname, max_prio in cache.get(key, ()):
-        module = modules.load_module('.'.join((package.__name__, modname)))
-        for obj in _process_plugins(package, modname, module.pkgcore_plugins.get(key, ()),
-            filter_disabled=True):
-            yield obj
+    cache = _global_cache[package]
+    for plug in _process_plugins(package, cache.get(key, ()), filter_disabled=True):
+        yield plug
 
 
 def get_plugin(key, package=plugins):
@@ -238,30 +258,13 @@ def get_plugin(key, package=plugins):
 
     :return: highest-priority plugin or None if no plugin available.
     """
-    cache = _cache[package]
-    modlist = cache.get(key, [])
-    # explicitly force cmp.  for py3k, our compatibility cmp
-    # still allows None comparisons.
-    compatibility.sort_cmp(modlist, compatibility.cmp,
-        key=operator.itemgetter(1), reverse=True)
-    plugs = []
-
-    for i, (modname, max_prio) in enumerate(modlist):
-        module = modules.load_module('.'.join((package.__name__, modname)))
-        for plug in _process_plugins(package, modname, module.pkgcore_plugins.get(key, ()),
-            filter_disabled=True):
-            if plug.priority is None:
-                logger.warn("plugin %s has an invalid priority, skipping" % plug)
-            else:
-                plugs.append(plug)
-        if not plugs:
-            continue
-        plugs.sort(key=operator.attrgetter('priority'), reverse=True)
-        if i + 1 == len(modlist) or plugs[0].priority > modlist[i + 1][1]:
-            return plugs[0]
+    cache = _global_cache[package]
+    for plug in _process_plugins(package, cache.get(key, ()), filter_disabled=True):
+        # first returned will be the highest.
+        return plug
     return None
 
 # Global plugin cache. Mapping of package to package cache, which is a
 # mapping of plugin key to a list of module names.
-_cache = mappings.defaultdictkey(initialize_cache)
+_global_cache = mappings.defaultdictkey(initialize_cache)
 

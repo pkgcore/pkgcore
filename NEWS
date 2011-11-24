@@ -4,6 +4,9 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* plugin cache format is now v3; this improves performance primarily.
+
+
 pkgcore 0.7.5: Nov 7th, 2011
 
 * pkgcore now extends masking rules to binpkg repositories; in addition,

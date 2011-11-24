@@ -1,3 +1,4 @@
+# Copyright: 2011 Brian Harring <ferringb@gmail.com>
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
 # License: BSD/GPL2
 
@@ -100,11 +101,11 @@ pkgcore_plugins = {'plugtest': [HiddenPlug]}
             set(expected) ^ set(mod_testplug.__path__))
 
     def _runit(self, method):
-        plugin._cache.clear()
+        plugin._global_cache.clear()
         method()
         mtime = os.path.getmtime(os.path.join(self.packdir, plugin.CACHE_FILENAME))
         method()
-        plugin._cache.clear()
+        plugin._global_cache.clear()
         method()
         method()
         self.assertEqual(
@@ -119,6 +120,7 @@ pkgcore_plugins = {'plugtest': [HiddenPlug]}
         self.assertIdentical(None, plugin.get_plugin('spork', mod_testplug))
         plugins = list(plugin.get_plugins('plugtest', mod_testplug))
         self.assertEqual(2, len(plugins), plugins)
+        plugin.get_plugin('plugtest', mod_testplug)
         self.assertEqual(
             'HighPlug',
             plugin.get_plugin('plugtest', mod_testplug).__class__.__name__)
@@ -130,7 +132,10 @@ pkgcore_plugins = {'plugtest': [HiddenPlug]}
         mtime = int(os.path.getmtime(os.path.join(self.packdir, 'plug2.py')))
         self.assertEqual('plug2:%s:\n' % (mtime,), lines[0])
         mtime = int(os.path.getmtime(os.path.join(self.packdir, 'plug.py')))
-        self.assertEqual('plug:%s:plugtest,7\n' % (mtime,), lines[1])
+        self.assertEqual(
+            'plug:%s:plugtest,7,1:plugtest,0,pkgcore.test.test_plugin.LowPlug:plugtest,0,0\n'
+                % (mtime,),
+            lines[1])
 
     def test_plug(self):
         self._runit(self._test_plug)
@@ -165,41 +170,15 @@ pkgcore_plugins = {'plugtest': [HiddenPlug]}
         st = os.stat(filename)
         corrupt_mtime = st.st_mtime - 2
         os.utime(filename, (st.st_atime, corrupt_mtime))
-        plugin._cache.clear()
+        plugin._global_cache.clear()
         self._test_plug()
         good_mtime = os.path.getmtime(
             os.path.join(self.packdir, plugin.CACHE_FILENAME))
-        plugin._cache.clear()
+        plugin._global_cache.clear()
         self._test_plug()
         self.assertEqual(good_mtime, os.path.getmtime(
                 os.path.join(self.packdir, plugin.CACHE_FILENAME)))
         self.assertNotEqual(good_mtime, corrupt_mtime)
-
-    @protect_logging(logging.root)
-    def test_broken_module(self):
-        logging.root.handlers = [quiet_logger]
-        filename = os.path.join(self.packdir, 'bug.py')
-        plug = open(filename, 'w')
-        try:
-            plug.write('this is not actually python\n')
-        finally:
-            plug.close()
-
-        plugin._cache.clear()
-        self._test_plug()
-
-        filename = os.path.join(self.packdir, plugin.CACHE_FILENAME)
-        st = os.stat(filename)
-        mtime = st.st_mtime - 2
-        os.utime(filename, (st.st_atime, mtime))
-
-        plugin._cache.clear()
-        self._test_plug()
-
-        # Should never write a usable cache.
-        self.assertNotEqual(
-            mtime,
-            os.path.getmtime(os.path.join(self.packdir, plugin.CACHE_FILENAME)))
 
     def test_rewrite_on_remove(self):
         filename = os.path.join(self.packdir, 'extra.py')
@@ -209,17 +188,19 @@ pkgcore_plugins = {'plugtest': [HiddenPlug]}
         finally:
             plug.close()
 
-        plugin._cache.clear()
+        plugin._global_cache.clear()
         import mod_testplug
         self.assertEqual(
             3, len(list(plugin.get_plugins('plugtest', mod_testplug))))
 
         os.unlink(filename)
 
-        plugin._cache.clear()
+        plugin._global_cache.clear()
         self._test_plug()
 
+    @protect_logging(logging.root)
     def test_priority_caching(self):
+        logging.root.handlers = [quiet_logger]
         plug3 = open(os.path.join(self.packdir, 'plug3.py'), 'w')
         try:
             plug3.write('''
@@ -302,7 +283,7 @@ pkgcore_plugins = {
     def test_header_change_invalidates_cache(self):
         logging.root.handlers = [quiet_logger]
         # Write the cache
-        plugin._cache.clear()
+        plugin._global_cache.clear()
         import mod_testplug
         list(plugin.get_plugins('testplug', mod_testplug))
 
@@ -313,5 +294,5 @@ pkgcore_plugins = {
         open(filename, 'w').write(''.join(cache))
 
         # And test if it is properly rewritten.
-        plugin._cache.clear()
+        plugin._global_cache.clear()
         self._test_plug()

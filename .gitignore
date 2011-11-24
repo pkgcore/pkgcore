@@ -1,7 +1,7 @@
 *.pyc
 *.pyo
 pkgcore/ebuild/*.so
-pkgcore/plugins/plugincache2
+pkgcore/plugins/plugincache
 pkgcore/restrictions/*.so
 build
 dist

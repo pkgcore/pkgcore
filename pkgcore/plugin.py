@@ -40,6 +40,9 @@ PLUGIN_ATTR = 'pkgcore_plugins'
 CACHE_HEADER = 'pkgcore plugin cache v3'
 CACHE_FILENAME = 'plugincache'
 
+def sort_plugs(plugs):
+    return sorted(plugs, reverse=True, key=lambda x:(x.key, x.priority, x.source))
+
 def _process_plugins(package, sequence, filter_disabled=False):
     for plug in sequence:
         plug = _process_plugin(package, plug, filter_disabled)
@@ -137,7 +140,7 @@ def _write_cache_file(path, data):
             cachefile = fileutils.AtomicWriteFile(path, binary=False, perms=0664)
             cachefile.write(CACHE_HEADER + "\n")
             for (module, mtime), plugs in sorted(data.iteritems(), key=operator.itemgetter(0)):
-                plugs = sorted(plugs, reverse=True)
+                plugs = sort_plugs(plugs)
                 plugs = ':'.join('%s,%s,%s' % (plug.key, plug.priority, plug.target) for plug in plugs)
                 cachefile.write("%s:%s:%s\n" % (module, mtime, plugs))
             cachefile.close()
@@ -237,7 +240,7 @@ def initialize_cache(package):
             logger.debug('updating cache %r for new plugins', stored_cache_name)
             _write_cache_file(stored_cache_name, actual_cache)
 
-    return mappings.ImmutableDict((k, sorted(v, reverse=True)) for k,v in package_cache.iteritems())
+    return mappings.ImmutableDict((k, sort_plugs(v)) for k,v in package_cache.iteritems())
 
 
 def get_plugins(key, package=plugins):

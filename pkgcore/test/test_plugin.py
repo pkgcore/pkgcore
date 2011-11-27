@@ -11,7 +11,7 @@ import logging
 from pkgcore.test import TestCase
 from snakeoil import lists
 
-from pkgcore.test import quiet_logger, protect_logging
+from pkgcore.test import silence_logging
 from pkgcore import plugin
 
 class LowPlug(object):
@@ -154,9 +154,8 @@ pkgcore_plugins = {'plugtest': [HiddenPlug]}
     def test_no_unneeded_import(self):
         self._runit(self._test_no_unneeded_import)
 
-    @protect_logging(logging.root)
+    @silence_logging(logging.root)
     def test_cache_corruption(self):
-        logging.root.handlers = [quiet_logger]
         import mod_testplug
         list(plugin.get_plugins('spork', mod_testplug))
         filename = os.path.join(self.packdir, plugin.CACHE_FILENAME)
@@ -198,9 +197,8 @@ pkgcore_plugins = {'plugtest': [HiddenPlug]}
         plugin._global_cache.clear()
         self._test_plug()
 
-    @protect_logging(logging.root)
+    @silence_logging(logging.root)
     def test_priority_caching(self):
-        logging.root.handlers = [quiet_logger]
         plug3 = open(os.path.join(self.packdir, 'plug3.py'), 'w')
         try:
             plug3.write('''
@@ -279,9 +277,8 @@ pkgcore_plugins = {
         self.assertIn('mod_testplug.plug5', sys.modules, 'plug4 not loaded')
         self.assertNotIn('mod_testplug.plug6', sys.modules, 'plug6 loaded')
 
-    @protect_logging(logging.root)
+    @silence_logging(logging.root)
     def test_header_change_invalidates_cache(self):
-        logging.root.handlers = [quiet_logger]
         # Write the cache
         plugin._global_cache.clear()
         import mod_testplug

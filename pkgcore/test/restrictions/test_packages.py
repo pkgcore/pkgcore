@@ -6,8 +6,8 @@ from pkgcore.test import TestCase
 from snakeoil.test import mk_cpy_loadable_testcase
 from pkgcore import log
 from pkgcore.restrictions import packages, values
-from pkgcore.test import (protect_logging, TestRestriction, malleable_obj,
-    quiet_logger, callback_logger)
+from pkgcore.test import (silence_logging, TestRestriction, malleable_obj,
+    callback_logger)
 
 from snakeoil.mappings import AttrAccessible
 
@@ -45,11 +45,10 @@ class native_PackageRestrictionTest(TestRestriction):
 
     kls = staticmethod(kls)
 
-    @protect_logging(log.logging.root)
+    @silence_logging(log.logging.root)
     def test_matching(self):
         strexact = values.StrExactMatch
 
-        log.logging.root.handlers = [quiet_logger]
         args = [malleable_obj(category="foon", package="dar")]
         self.assertMatches(self.kls("category", strexact("foon")), args)
         self.assertMatches(self.kls("package", strexact("dar")), args)

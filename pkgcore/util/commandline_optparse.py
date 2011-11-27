@@ -80,7 +80,7 @@ class Values(optparse.Values, object):
         # (instead of silently ignoring).
         self.add_config = self.new_config = None
         return load_config(
-            debug=self.debug, prepend_sources=(add_config, new_config),
+            debug=self.debug, append_sources=(new_config, add_config),
             skip_config_files=self.empty_config)
 
     def load_domain(self):

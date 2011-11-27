@@ -591,28 +591,6 @@ class ConfigManagerTest(TestCase):
                     }], [RemoteSource()])
         self.assertTrue(manager.get_default('drawer'))
 
-    def test_autoload_default_order(self):
-        @configurable(typename='configsection')
-        def autoloader():
-            return {
-                'spork': basics.HardCodedConfigSection({'class': repo,
-                                                        'cache': 'test',
-                                                        'default': True})}
-
-        manager = central.ConfigManager([{
-                    'autoload-sub': basics.HardCodedConfigSection({
-                            'class': autoloader,
-                            }),
-                    'foon': basics.HardCodedConfigSection({
-                            'class': repo,
-                            'cache': 'foon',
-                            'default': True,
-                            }),
-               }])
-        self.assertIdentical(
-            manager.collapse_named_section('foon').instantiate(),
-            manager.get_default('repo'))
-
     def test_section_names(self):
         manager = central.ConfigManager([{
                     'thing': basics.HardCodedConfigSection({'class': drawer}),
@@ -649,7 +627,7 @@ class ConfigManagerTest(TestCase):
             self.get_config_obj, manager, 'drawer', 'self')
         self.check_error(
             "Self-inherit 'self' cannot be found",
-            manager.collapse_section, section)
+            manager.collapse_section, [section])
 
         manager = central.ConfigManager([{
                     'self': basics.HardCodedConfigSection({
@@ -661,7 +639,7 @@ class ConfigManagerTest(TestCase):
                     'self': basics.HardCodedConfigSection({
                             'class': drawer})}])
         self.assertTrue(manager.collapse_named_section('self'))
-        self.assertTrue(manager.collapse_section(section))
+        self.assertTrue(manager.collapse_section([section]))
 
     def test_prepend_inherit(self):
         manager = central.ConfigManager([{

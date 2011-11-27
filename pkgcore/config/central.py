@@ -9,11 +9,12 @@ A lot of extra documentation on this is in dev-notes/config.rst.
 
 __all__ = ("CollapsedConfig", "ConfigManager",)
 
+import collections
 from pkgcore.config import errors, basics
 from snakeoil import mappings, compatibility, sequences, klass, iterables
 
 
-_section_data = sequences.namedtuple('_section_data', ['name', 'section', 'index'])
+_section_data = sequences.namedtuple('_section_data', ['name', 'section'])
 
 class _ConfigMapping(mappings.DictMixin):
 
@@ -270,6 +271,7 @@ class ConfigManager(object):
         self.config_sources = []
         # Cache mapping confname to CollapsedConfig.
         self.rendered_sections = {}
+        self.sections_lookup = mappings.defaultdict(collections.deque)
         for config in self.original_config_sources:
             self.add_config_source(config)
 
@@ -287,9 +289,6 @@ class ConfigManager(object):
         self.configs.append(config_data)
         self.config_sources.append(config)
         for name in config_data:
-            # Do not even touch the ConfigSection if it's not an autoload.
-            if not name.startswith('autoload'):
-                continue
             # If this matches something we previously instantiated
             # we should probably blow up to prevent massive
             # amounts of confusion (and recursive autoloads)
@@ -297,6 +296,13 @@ class ConfigManager(object):
                 raise errors.ConfigurationError(
                     'section %r from autoload is already collapsed!' % (
                         name,))
+
+            self.sections_lookup[name].appendleft(config_data[name])
+
+            # Do not even touch the ConfigSection if it's not an autoload.
+            if not name.startswith('autoload'):
+                continue
+
             try:
                 collapsed = self.collapse_named_section(name)
             except errors.ConfigurationError, e:
@@ -316,9 +322,7 @@ class ConfigManager(object):
 
     def sections(self):
         """Return an iterator of all section names."""
-        for config in self.configs:
-            for name in config:
-                yield name
+        return self.sections_lookup.iterkeys()
 
     def collapse_named_section(self, name, raise_on_missing=True):
         """Collapse a config by name, possibly returning a cached instance.
@@ -336,22 +340,18 @@ class ConfigManager(object):
             result = self.rendered_sections.get(name)
             if result is not None:
                 return result
-            for source_index, config in enumerate(self.configs):
-                if name in config:
-                    section = config[name]
-                    break
-            else:
-                if raise_on_missing:
-                    if name == "portdir":
-                        # gentoo-related usability --jokey
-                        raise errors.ConfigurationError(
-                            "no section called %r, maybe you didn't add autoload-portage to your file" % (name,))
-                    else:
-                        raise errors.ConfigurationError(
-                            'no section called %r' % (name,))
-                return None
+            section_stack = self.sections_lookup.get(name)
+            if section_stack is None:
+                if not raise_on_missing:
+                    return None
+                if name == "portdir":
+                    # gentoo-related usability --jokey
+                    raise errors.ConfigurationError(
+                        "no section called %r, maybe you didn't add autoload-portage to your file" % (name,))
+                raise errors.ConfigurationError(
+                   'no section called %r' % (name,))
             try:
-                result = self.collapse_section(section, name, source_index)
+                result = self.collapse_section(section_stack, name)
                 result.name = name
             except errors.ConfigurationError, e:
                 e.stack.append('Collapsing section named %r' % (name,))
@@ -361,13 +361,14 @@ class ConfigManager(object):
         finally:
             self._refs.remove(name)
 
-    def _get_inherited_sections(self, name, section, index):
+    def _get_inherited_sections(self, name, sections):
         # List of (name, ConfigSection, index) tuples, most specific first.
-        slist = [(name, section, index)]
+        slist = [(name, sections)]
 
         # first map out inherits.
         inherit_names = set([name])
-        for current_section, current_conf, index in slist:
+        for current_section, section_stack in slist:
+            current_conf = section_stack[0]
             if 'inherit' not in current_conf:
                 continue
             prepend, inherits, append = current_conf.render_value(
@@ -378,41 +379,39 @@ class ConfigManager(object):
                     'sense')
             for inherit in inherits:
                 if inherit == current_section:
-                    # Self-inherit is a bit special.
-                    for i, config in enumerate(self.configs[index + 1:]):
-                        if inherit in config:
-                            slist.append((inherit, config[inherit],
-                                          index + i + 1))
-                            break
-                    else:
+                    # self-inherit.  Mkae use of section_stack to handle this.
+                    if len(section_stack) == 1:
+                        # nothing else to self inherit.
                         raise errors.ConfigurationError(
                             'Self-inherit %r cannot be found' % (inherit,))
+                    if isinstance(section_stack, collections.deque):
+                        slist.append((inherit, list(section_stack)[1:]))
+                    else:
+                        slist.append((inherit, section_stack[1:]))
                 else:
                     if inherit in inherit_names:
                         raise errors.ConfigurationError(
                             'Inherit %r is recursive' % (inherit,))
                     inherit_names.add(inherit)
-                    for i, config in enumerate(self.configs):
-                        if inherit in config:
-                            slist.append((inherit, config[inherit], i))
-                            break
-                    else:
+                    target = self.sections_lookup.get(inherit)
+                    if target is None:
                         raise errors.ConfigurationError(
                             'inherit target %r cannot be found' % (inherit,))
-        return [_section_data(*x) for x in slist]
+                    slist.append((inherit, target))
+        return [_section_data(name, stack[0]) for (name, stack) in slist]
 
-    def collapse_section(self, section, _name=None, _index=None):
+    def collapse_section(self, sections, _name=None):
         """Collapse a ConfigSection to a :obj:`CollapsedConfig`."""
 
-        sections = self._get_inherited_sections(_name, section, _index)
-
-        if 'inherit-only' in sections[0].section:
-            if sections[0].section.render_value(self, 'inherit-only', 'bool'):
+        if 'inherit-only' in sections[0]:
+            if sections[0].render_value(self, 'inherit-only', 'bool'):
                 raise errors.CollapseInheritOnly(
                     'cannot collapse inherit-only section')
 
+        relevant_sections = self._get_inherited_sections(_name, sections)
+
         config_stack = _ConfigStack()
-        for data in sections:
+        for data in relevant_sections:
             for key in data.section.keys():
                 config_stack[key].append(data)
 
@@ -488,62 +487,63 @@ class ConfigManager(object):
         default_name = None
         # The collapsed default section or None.
         default = None
-        for source in self.configs:
-            for name, section in source.iteritems():
-                collapsed = None
+        for name, section_stack in self.sections_lookup.iteritems():
+            section = section_stack[0]
+            collapsed = None
+            try:
+                is_default = section.render_value(self, 'default', 'bool')
+            except KeyError:
+                is_default = False
+            if not is_default:
+                continue
+            # We need to know the type name of this section, for
+            # which we need the class. Try to grab this from the
+            # section directly:
+            try:
+                klass = section.render_value(self, 'class', 'callable')
+            except errors.ConfigurationError:
+                # There is a class setting but it is not valid.
+                # This means it is definitely not the one we are
+                # interested in, so just skip this.
+                continue
+            except KeyError:
+                # There is no class value on the section. Collapse
+                # it to see if it inherits one:
                 try:
-                    is_default = section.render_value(self, 'default', 'bool')
-                except KeyError:
-                    is_default = False
-                if not is_default:
-                    continue
-                # We need to know the type name of this section, for
-                # which we need the class. Try to grab this from the
-                # section directly:
-                try:
-                    klass = section.render_value(self, 'class', 'callable')
+                    collapsed = self.collapse_named_section(name)
                 except errors.ConfigurationError:
-                    # There is a class setting but it is not valid.
-                    # This means it is definitely not the one we are
-                    # interested in, so just skip this.
+                    # Uncollapsable. Just ignore this, since we
+                    # have no clean way of determining if this
+                    # would be an "interesting" section if it
+                    # could be collapsed (and complaining about
+                    # every uncollapsable section with
+                    # default=true would be too much).
                     continue
-                except KeyError:
-                    # There is no class value on the section. Collapse
-                    # it to see if it inherits one:
-                    try:
-                        collapsed = self.collapse_named_section(name)
-                    except errors.ConfigurationError:
-                        # Uncollapsable. Just ignore this, since we
-                        # have no clean way of determining if this
-                        # would be an "interesting" section if it
-                        # could be collapsed (and complaining about
-                        # every uncollapsable section with
-                        # default=true would be too much).
-                        continue
-                    type_obj = collapsed.type
-                else:
-                    # Grabbed the class directly from the section.
-                    type_obj = basics.ConfigType(klass)
-                if type_obj.name != type_name:
-                    continue
-                if default_name is not None:
-                    raise errors.ConfigurationError(
-                        'both %r and %r are default for %r' % (
-                            default_name, name, type_name))
-                default_name = name
-                default = collapsed
+                type_obj = collapsed.type
+            else:
+                # Grabbed the class directly from the section.
+                type_obj = basics.ConfigType(klass)
+            if type_obj.name != type_name:
+                continue
             if default_name is not None:
-                if default is None:
-                    try:
-                        default = self.collapse_named_section(default_name)
-                    except errors.ConfigurationError, e:
-                        e.stack.append('Collapsing default %s %r' % (
-                                type_name, default_name))
-                        raise
+                raise errors.ConfigurationError(
+                    'both %r and %r are default for %r' % (
+                       default_name, name, type_name))
+            default_name = name
+            default = collapsed
+
+        if default_name is not None:
+            if default is None:
                 try:
-                    return default.instantiate()
+                    default = self.collapse_named_section(default_name)
                 except errors.ConfigurationError, e:
-                    e.stack.append('Instantiating default %s %r' %
-                                   (type_name, default_name))
+                    e.stack.append('Collapsing default %s %r' % (
+                            type_name, default_name))
                     raise
+            try:
+                return default.instantiate()
+            except errors.ConfigurationError, e:
+                e.stack.append('Instantiating default %s %r' %
+                              (type_name, default_name))
+                raise
         return None

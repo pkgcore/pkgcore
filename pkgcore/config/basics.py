@@ -191,7 +191,7 @@ class LazyUnnamedSectionRef(LazySectionRef):
         self.section = section
 
     def _collapse(self):
-        return self.central.collapse_section(self.section)
+        return self.central.collapse_section([self.section])
 
 
 class ConfigSection(object):

@@ -32,6 +32,8 @@ class ConfigLoadingTest(TestCase):
         self.system_config.flush()
 
     def tearDown(self):
+        self.user_config.close()
+        self.system_config.close()
         del self.user_config
         del self.system_config
 

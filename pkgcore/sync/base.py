@@ -138,8 +138,11 @@ class ExternalSyncer(syncer):
         if disabled is None:
             path = getattr(cls, 'binary_path', None)
             if path is None:
-                disabled = cls._disabled = (
-                    cls.require_binary(cls.binary, fatal=False) is None)
+                if cls.binary is None:
+                    disabled = cls._disabled = True
+                else:
+                    disabled = cls._disabled = (
+                        cls.require_binary(cls.binary, fatal=False) is None)
             else:
                 disabled = cls._disabled = os.path.exists(path)
         return disabled

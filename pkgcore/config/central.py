@@ -400,10 +400,16 @@ class ConfigManager(object):
                     slist.append((inherit, target))
         return [_section_data(name, stack[0]) for (name, stack) in slist]
 
+    def _section_is_inherit_only(self, section):
+        if 'inherit-only' in section:
+            if section.render_value(self, 'inherit-only', 'bool'):
+                return True
+        return False
+
     def collapse_section(self, sections, _name=None):
         """Collapse a ConfigSection to a :obj:`CollapsedConfig`."""
 
-        if 'inherit-only' in sections[0]:
+        if self._section_is_inherit_only(sections[0]):
             if sections[0].render_value(self, 'inherit-only', 'bool'):
                 raise errors.CollapseInheritOnly(
                     'cannot collapse inherit-only section')

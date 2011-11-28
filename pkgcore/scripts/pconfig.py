@@ -138,6 +138,10 @@ def write_type(out, type_obj):
         out.write('values not listed are handled as strings')
     out.write()
     for name, typename in sorted(type_obj.types.iteritems()):
+        if typename.startswith("lazy_ref:"):
+            typename = typename[len("lazy_ref:"):]
+        elif typename.startswith("lazy_refs:"):
+            typename = typename[len("lazy_refs:"):]
         out.write('%s: %s' % (name, typename), autoline=False)
         if name in type_obj.required:
             out.write(' (required)', autoline=False)

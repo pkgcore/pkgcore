@@ -272,6 +272,8 @@ class ConfigManager(object):
         # Cache mapping confname to CollapsedConfig.
         self.rendered_sections = {}
         self.sections_lookup = mappings.defaultdict(collections.deque)
+        # force regeneration.
+        self._types = klass._uncached_singleton
         for config in self.original_config_sources:
             self.add_config_source(config)
 
@@ -439,6 +441,17 @@ class ConfigManager(object):
             self, default=is_default, debug=self.debug)
         return collapsed
 
+    @klass.jit_attr
+    def types(self):
+        type_map = mappings.defaultdict(dict)
+        for name, sections in self.sections_lookup.iteritems():
+            if self._section_is_inherit_only(sections[0]):
+                continue
+            obj = self.collapse_named_section(name)
+            type_map[obj.type.name][name] = obj
+        return mappings.ImmutableDict((k, mappings.ImmutableDict(v))
+            for k,v in type_map.iteritems())
+
     def _render_config_stack(self, type_obj, config_stack):
         conf = {}
         for key in config_stack:
@@ -494,67 +507,26 @@ class ConfigManager(object):
 
         Returns C{None} if no defaults.
         """
-        # The name of the "winning" default or None if there is none.
-        default_name = None
-        # The collapsed default section or None.
-        default = None
-        for name, section_stack in self.sections_lookup.iteritems():
-            section = section_stack[0]
-            collapsed = None
-            try:
-                is_default = section.render_value(self, 'default', 'bool')
-            except KeyError:
-                is_default = False
-            if not is_default:
-                continue
-            # We need to know the type name of this section, for
-            # which we need the class. Try to grab this from the
-            # section directly:
-            try:
-                klass = section.render_value(self, 'class', 'callable')
-            except errors.ConfigurationError:
-                # There is a class setting but it is not valid.
-                # This means it is definitely not the one we are
-                # interested in, so just skip this.
-                continue
-            except KeyError:
-                # There is no class value on the section. Collapse
-                # it to see if it inherits one:
-                try:
-                    collapsed = self.collapse_named_section(name)
-                except errors.ConfigurationError:
-                    # Uncollapsable. Just ignore this, since we
-                    # have no clean way of determining if this
-                    # would be an "interesting" section if it
-                    # could be collapsed (and complaining about
-                    # every uncollapsable section with
-                    # default=true would be too much).
-                    continue
-                type_obj = collapsed.type
-            else:
-                # Grabbed the class directly from the section.
-                type_obj = basics.ConfigType(klass)
-            if type_obj.name != type_name:
-                continue
-            if default_name is not None:
-                raise errors.ConfigurationError(
-                    'both %r and %r are default for %r' % (
-                       default_name, name, type_name))
-            default_name = name
-            default = collapsed
+        try:
+            defaults = self.types.get(type_name, {}).iteritems()
+        except errors.ConfigurationError, e:
+            e.stack.append("Collapsing defaults for %s" % (type_name,))
+            raise
+        defaults = [(name, section) for name, section in defaults if section.default]
 
-        if default_name is not None:
-            if default is None:
-                try:
-                    default = self.collapse_named_section(default_name)
-                except errors.ConfigurationError, e:
-                    e.stack.append('Collapsing default %s %r' % (
-                            type_name, default_name))
-                    raise
-            try:
-                return default.instantiate()
-            except errors.ConfigurationError, e:
-                e.stack.append('Instantiating default %s %r' %
-                              (type_name, default_name))
-                raise
+        if not defaults:
+            return None
+
+        if len(defaults) > 1:
+            defaults = [x[0] for x in defaults]
+            raise errors.ConfigurationError(
+                'type %s incorrectly has multiple default sections: %s'
+                    % (type_name, ', '.join(map(repr, defaults))))
+
+        try:
+            return defaults[0][1].instantiate()
+        except errors.ConfigurationError, e:
+            e.stack.append('Instantiating default %s %r' %
+                          (type_name, defaults[0][0]))
+            raise
         return None

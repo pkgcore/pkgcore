@@ -245,12 +245,14 @@ class ConfigManagerTest(TestCase):
         self.assertIdentical(collapsedspork,
                              manager.collapse_named_section('spork'))
         self.assertEqual('test', collapsedspork.instantiate())
+        types = manager.types
         manager.reload()
         newspork = manager.collapse_named_section('spork')
         self.assertNotIdentical(collapsedspork, newspork)
         self.assertEqual(
             'modded', newspork.instantiate(),
             'it did not throw away the cached instance')
+        self.assertIsNot(types, manager.types)
 
     def test_instantiate_default_ref(self):
         manager = central.ConfigManager(
@@ -445,6 +447,7 @@ class ConfigManagerTest(TestCase):
                     'thing': basics.HardCodedConfigSection({'class': drawer,
                                                             'default': True}),
                     'bug': basics.HardCodedConfigSection({'class': None,
+                                                          'inherit-only':True,
                                                           'default': True}),
                     'ignore': basics.HardCodedConfigSection({'class': drawer}),
                     }])
@@ -458,7 +461,7 @@ class ConfigManagerTest(TestCase):
                                                              'default': True}),
                     }])
         self.check_error(
-            "both 'thing2' and 'thing' are default for 'drawer'",
+            "type drawer incorrectly has multiple default sections: 'thing2', 'thing'",
             manager.get_default, 'drawer')
 
         manager = central.ConfigManager([])
@@ -475,15 +478,18 @@ class ConfigManagerTest(TestCase):
                     'thing2': basics.HardCodedConfigSection({
                             'class': broken, 'default': True})}])
         self.check_error(
-            "Collapsing default drawer 'thing':\n"
+            "Collapsing defaults for drawer:\n"
             "Collapsing section named 'thing':\n"
             "Collapsing section key 'content':\n"
             "Converting argument 'class' to callable:\n"
             "'spork' is not callable",
             manager.get_default, 'drawer')
         self.check_error(
-            "Instantiating default broken 'thing2':\n"
-            "'broken' instantiating pkgcore.test.config.test_central.broken",
+            "Collapsing defaults for broken:\n"
+            "Collapsing section named 'thing':\n"
+            "Collapsing section key 'content':\n"
+            "Converting argument 'class' to callable:\n"
+            "'spork' is not callable",
             manager.get_default, 'broken')
 
     def test_instantiate_broken_ref(self):
@@ -587,6 +593,7 @@ class ConfigManagerTest(TestCase):
                     'uncollapsable': basics.HardCodedConfigSection({
                             'default': True,
                             'inherit': ['spork'],
+                            'inherit-only': True,
                             }),
                     'basic': basics.HardCodedConfigSection({'class': drawer}),
                     }], [RemoteSource()])

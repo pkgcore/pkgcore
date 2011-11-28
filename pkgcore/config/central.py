@@ -10,8 +10,10 @@ A lot of extra documentation on this is in dev-notes/config.rst.
 __all__ = ("CollapsedConfig", "ConfigManager",)
 
 from pkgcore.config import errors, basics
-from snakeoil import mappings, compatibility
+from snakeoil import mappings, compatibility, sequences, klass, iterables
 
+
+_section_data = sequences.namedtuple('_section_data', ['name', 'section', 'index'])
 
 class _ConfigMapping(mappings.DictMixin):
 
@@ -57,6 +59,45 @@ class _ConfigMapping(mappings.DictMixin):
     def __contains__(self, key):
         conf = self.manager.collapse_named_section(key, raise_on_missing=False)
         return conf is not None and conf.type.name == self.typename
+
+
+class _ConfigStack(mappings.defaultdict):
+
+    def __init__(self):
+        mappings.defaultdict.__init__(self, list)
+
+    def render_vals(self, manager, key, type_name):
+        for data in self.get(key, ()):
+            if key in data.section:
+                yield data.section.render_value(manager, key, type_name)
+
+    def render_val(self, manager, key, type_name):
+        for val in self.render_vals(manager, key, type_name):
+            return val
+        return None
+
+    def render_prepends(self, manager, key, type_name, flatten=True):
+        results = []
+        # keep in mind that the sequence we get is a top -> bottom walk of the config
+        # as such for this operation we have to reverse it when building the content-
+        # specifically, reverse the ordering, but not the content of each item.
+        data = []
+        for content in self.render_vals(manager, key, type_name):
+            data.append(content)
+            if content[1]:
+                break
+
+        for prepend, this_content, append in reversed(data):
+            if this_content:
+                results = [this_content]
+            if prepend:
+                results = [prepend] + results
+            if append:
+                results += [append]
+
+        if flatten:
+            results = iterables.chain_from_iterable(results)
+        return list(results)
 
 
 class CollapsedConfig(object):
@@ -358,96 +399,85 @@ class ConfigManager(object):
                     else:
                         raise errors.ConfigurationError(
                             'inherit target %r cannot be found' % (inherit,))
-        return slist
+        return [_section_data(*x) for x in slist]
 
     def collapse_section(self, section, _name=None, _index=None):
         """Collapse a ConfigSection to a :obj:`CollapsedConfig`."""
 
-        # Bail if this is an inherit-only (uncollapsable) section.
-        try:
-            inherit_only = section.render_value(self, 'inherit-only', 'bool')
-        except (AttributeError, KeyError):
-            pass
-        else:
-            if inherit_only:
+        sections = self._get_inherited_sections(_name, section, _index)
+
+        if 'inherit-only' in sections[0].section:
+            if sections[0].section.render_value(self, 'inherit-only', 'bool'):
                 raise errors.CollapseInheritOnly(
                     'cannot collapse inherit-only section')
 
-        slist = self._get_inherited_sections(_name, section, _index)
+        config_stack = _ConfigStack()
+        for data in sections:
+            for key in data.section.keys():
+                config_stack[key].append(data)
 
-        # Grab the "class" setting first (we need it to get a type obj
-        # to collapse to the right type in the more general loop)
-        for inherit_name, inherit_conf, index in slist:
-            if "class" in inherit_conf:
-                break
-        else:
+        kls = config_stack.render_val(self, 'class', 'callable')
+        if kls is None:
             raise errors.ConfigurationError('no class specified')
+        type_obj = basics.ConfigType(kls)
+        is_default = bool(config_stack.render_val(self, 'default', 'bool'))
 
-        type_obj = basics.ConfigType(inherit_conf.render_value(self, 'class',
-                                                            'callable'))
+        for key in ('inherit', 'inherit-only', 'class', 'default'):
+            config_stack.pop(key, None)
 
+        collapsed = CollapsedConfig(type_obj, self._render_config_stack(type_obj, config_stack),
+            self, default=is_default, debug=self.debug)
+        return collapsed
+
+    def _render_config_stack(self, type_obj, config_stack):
         conf = {}
-        for section_nr, (inherit_name, inherit_conf, index) in \
-                enumerate(reversed(slist)):
-            for key in inherit_conf.keys():
-                if key in ('class', 'inherit', 'inherit-only'):
-                    continue
-                typename = type_obj.types.get(key)
-                if typename is None:
-                    if key == 'default':
-                        typename = 'bool'
-                    elif not type_obj.allow_unknowns:
-                        if section_nr != len(slist) - 1:
-                            raise errors.ConfigurationError(
-                                'Type of %r inherited from %r unknown' % (
-                                    key, inherit_name))
-                        raise errors.ConfigurationError(
-                            'Type of %r unknown' % (key,))
-                    else:
-                        typename = 'str'
-                is_ref = typename.startswith('ref:')
-                is_refs = typename.startswith('refs:')
-                # The sections do not care about lazy vs nonlazy.
-                if typename.startswith('lazy_'):
-                    typename = typename[5:]
-                result = inherit_conf.render_value(self, key, typename)
-                if is_ref:
-                    try:
-                        result = result.collapse()
-                    except errors.ConfigurationError, e:
-                        e.stack.append(
-                            'Collapsing section ref %r' % (key,))
-                        raise
-                elif is_refs:
-                    try:
-                        result = list(
-                            list(ref.collapse() for ref in subresult or ())
-                            for subresult in result)
-                    except errors.ConfigurationError, e:
-                        e.stack.append(
-                            'Collapsing section refs %r' % (key,))
-                        raise
-                if typename == 'list' or typename.startswith('refs:'):
-                    prepend, result, append = result
-                    if result is None:
-                        if key in conf:
-                            result = conf[key]
-                        else:
-                            result = []
-                    if prepend:
-                        result = prepend + result
-                    if append:
-                        result += append
-                elif typename == 'str':
-                    prepend, result, append = result
-                    if result is None and key in conf:
-                        result = conf[key]
-                    result = ' '.join(
-                        v for v in (prepend, result, append) if v)
-                conf[key] = result
-        default = conf.pop('default', False)
-        return CollapsedConfig(
-            type_obj, conf, self, debug=self.debug, default=default)
+        for key in config_stack:
+            typename = type_obj.types.get(key)
+            if typename is None:
+                if not type_obj.allow_unknowns:
+                    raise errors.ConfigurationError(
+                        'Type of %r unknown' % (key,))
+                typename = 'str'
+
+            is_ref = typename.startswith('ref:')
+            is_refs = typename.startswith('refs:')
+
+            if typename.startswith('lazy_'):
+                typename = typename[5:]
+
+            if typename.startswith('refs:') or typename in ('list', 'str'):
+                result = config_stack.render_prepends(self, key, typename, flatten=(typename != 'str'))
+                if typename == 'str':
+                    result = ' '.join(result)
+            else:
+                result = config_stack.render_val(self, key, typename)
+
+            if is_ref:
+                result = [result]
+                is_refs = True
+
+            if is_refs:
+                try:
+                    result = [ref.collapse() for ref in result]
+                except errors.ConfigurationError, e:
+                    e.stack.append(
+                       'Collapsing section key %r' % (key,))
+                    raise
+            if is_ref:
+                result = result[0]
+
+            conf[key] = result
+
+        # Check if we got all values required to instantiate.
+        missing = set(type_obj.required) - set(conf)
+        if missing:
+            raise errors.ConfigurationError(
+                'type %s.%s needs settings for %s' % (
+                    type_obj.callable.__module__,
+                    type_obj.callable.__name__,
+                    ', '.join(repr(var) for var in missing)))
+
+        return mappings.ImmutableDict(conf)
 
     def get_default(self, type_name):
         """Finds the configuration specified default obj of type_name.

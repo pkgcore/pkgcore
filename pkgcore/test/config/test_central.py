@@ -121,7 +121,7 @@ class ConfigManagerTest(TestCase):
               }])
         self.check_error(
             "Collapsing section named 'actual repo':\n"
-            "Type of 'cache' inherited from 'baserepo' unknown",
+            "Type of 'cache' unknown",
             self.get_config_obj, manager, 'repo', 'actual repo')
 
     def test_inherit(self):
@@ -331,7 +331,7 @@ class ConfigManagerTest(TestCase):
         self.assertRaises(KeyError, self.get_config_obj, manager, 'repo', 'foon')
         self.check_error(
             "Collapsing section named 'spork':\n"
-            "Collapsing section ref 'content':\n"
+            "Collapsing section key 'content':\n"
             "no section called 'ref'",
             self.get_config_obj, manager, 'repo', 'spork')
 
@@ -364,14 +364,14 @@ class ConfigManagerTest(TestCase):
               }])
         self.check_error(
             "Collapsing section named 'self':\n"
-            "Collapsing section ref 'content':\n"
+            "Collapsing section key 'content':\n"
             "Reference to 'self' is recursive",
             self.get_config_obj, manager, 'drawer', 'self')
         self.check_error(
             "Collapsing section named 'spork':\n"
-            "Collapsing section ref 'content':\n"
+            "Collapsing section key 'content':\n"
             "Collapsing section named 'foon':\n"
-            "Collapsing section ref 'content':\n"
+            "Collapsing section key 'content':\n"
             "Reference to 'spork' is recursive",
             self.get_config_obj, manager, 'drawer', 'spork')
 
@@ -419,7 +419,7 @@ class ConfigManagerTest(TestCase):
                     }])
         self.check_error(
             "Collapsing section named 'wrong':\n"
-            "Collapsing section ref 'myrepo':\n"
+            "Collapsing section key 'myrepo':\n"
             "reference 'drawer' should be of type 'repo', got 'drawer'",
             self.get_config_obj, manager, 'repo', 'wrong')
         self.assertEqual('repo!', manager.objects.repo['right'])
@@ -434,7 +434,7 @@ class ConfigManagerTest(TestCase):
                     }])
         self.check_error(
             "Collapsing section named 'wrong':\n"
-            "Collapsing section refs 'myrepo':\n"
+            "Collapsing section key 'myrepo':\n"
             "reference 'drawer' should be of type 'repo', got 'drawer'",
             self.get_config_obj, manager, 'repo', 'wrong')
         self.assertEqual(['repo!'], manager.objects.repo['right'])
@@ -476,7 +476,7 @@ class ConfigManagerTest(TestCase):
         self.check_error(
             "Collapsing default drawer 'thing':\n"
             "Collapsing section named 'thing':\n"
-            "Collapsing section ref 'content':\n"
+            "Collapsing section key 'content':\n"
             "Converting argument 'class' to callable:\n"
             "'spork' is not callable",
             manager.get_default, 'drawer')

@@ -52,7 +52,7 @@ def configurable(*args, **kwargs):
 
 def load_config(user_conf_file=USER_CONF_FILE,
                 system_conf_file=SYSTEM_CONF_FILE,
-                debug=False, prepend_sources=(), skip_config_files=False):
+                debug=False, prepend_sources=(), append_sources=(), skip_config_files=False):
     """
     the main entry point for any code looking to use pkgcore.
 
@@ -68,18 +68,19 @@ def load_config(user_conf_file=USER_CONF_FILE,
     import os
 
     configs = list(prepend_sources)
+    configs.extend(get_plugins('global_config'))
     if not skip_config_files:
         have_system_conf = os.path.isfile(system_conf_file)
         have_user_conf = os.path.isfile(user_conf_file)
         if have_system_conf or have_user_conf:
-            if have_user_conf:
-                configs.append(cparser.config_from_file(open(user_conf_file)))
             if have_system_conf:
                 configs.append(
                     cparser.config_from_file(open(system_conf_file)))
+            if have_user_conf:
+                configs.append(cparser.config_from_file(open(user_conf_file)))
         else:
             # make.conf...
             from pkgcore.ebuild.portage_conf import config_from_make_conf
             configs.append(config_from_make_conf())
-    configs.extend(get_plugins('global_config'))
-    return central.ConfigManager(configs, debug=debug)
+    configs.extend(append_sources)
+    return central.CompatConfigManager(central.ConfigManager(configs, debug=debug))

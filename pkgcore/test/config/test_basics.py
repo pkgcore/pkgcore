@@ -230,7 +230,7 @@ class ConfigSectionTest(TestCase):
         self.assertRaises(NotImplementedError, section.__contains__, 42)
         self.assertRaises(NotImplementedError, section.keys)
         self.assertRaises(
-            NotImplementedError, section.get_value, None, 'a', 'str')
+            NotImplementedError, section.render_value, None, 'a', 'str')
 
 
 class DictConfigSectionTest(TestCase):
@@ -243,7 +243,7 @@ class DictConfigSectionTest(TestCase):
         self.assertTrue('list' in section)
         self.assertEqual(['list'], section.keys())
         self.assertEqual(
-            (None, [1, 2], 'spoon'), section.get_value(None, 'list', 'spoon'))
+            (None, [1, 2], 'spoon'), section.render_value(None, 'list', 'spoon'))
 
     def test_failure(self):
         def fail(central, value, arg_type):
@@ -251,7 +251,7 @@ class DictConfigSectionTest(TestCase):
         section = basics.DictConfigSection(fail, {'list': [1, 2]})
         self.assertRaises(
             errors.ConfigurationError,
-            section.get_value, None, 'list', 'spoon')
+            section.render_value, None, 'list', 'spoon')
 
 
 class FakeIncrementalDictConfigSectionTest(TestCase):
@@ -273,7 +273,7 @@ class FakeIncrementalDictConfigSectionTest(TestCase):
         self.assertRaises(
             errors.ConfigurationError,
             basics.FakeIncrementalDictConfigSection(
-                self._fail, {'a': 'b'}).get_value,
+                self._fail, {'a': 'b'}).render_value,
             None, 'a', 'str')
 
     def test_fake_incrementals(self):
@@ -282,18 +282,18 @@ class FakeIncrementalDictConfigSectionTest(TestCase):
         manager = object()
         self.assertEqual(
             [None, None, (manager, [1, 2], 'list')],
-            section.get_value(manager, 'seq', 'list'))
+            section.render_value(manager, 'seq', 'list'))
         def _repr(central, value, arg_type):
             return 'list', ['thing']
         section = basics.FakeIncrementalDictConfigSection(
             _repr, {'foo': None})
         self.assertEqual(
             ('list', (None, ['thing'], None)),
-            section.get_value(manager, 'foo', 'repr'))
+            section.render_value(manager, 'foo', 'repr'))
         self.assertRaises(
             errors.ConfigurationError,
             basics.FakeIncrementalDictConfigSection(
-                self._fail, {'a.prepend': 'b'}).get_value,
+                self._fail, {'a.prepend': 'b'}).render_value,
             None, 'a', 'list')
 
     def test_repr(self):
@@ -314,32 +314,32 @@ class FakeIncrementalDictConfigSectionTest(TestCase):
                    })
         manager = object()
         self.assertRaises(
-            KeyError, section.get_value, manager, 'spoon', 'repr')
+            KeyError, section.render_value, manager, 'spoon', 'repr')
         self.assertEqual(
             ('list', [None, None, [1, 2]]),
-            section.get_value(manager, 'seq', 'repr'))
+            section.render_value(manager, 'seq', 'repr'))
         self.assertEqual(
-            ('bool', True), section.get_value(manager, 'simple', 'repr'))
+            ('bool', True), section.render_value(manager, 'simple', 'repr'))
         self.assertEqual(
             ('str', ['head', 'body', None]),
-            section.get_value(manager, 'multistr', 'repr'))
+            section.render_value(manager, 'multistr', 'repr'))
         self.assertEqual(
             ('refs', [['a', 'b'], ['lost'], ['main']]),
-            section.get_value(manager, 'refs', 'repr'))
+            section.render_value(manager, 'refs', 'repr'))
         self.assertEqual(
             ('list', [
                     ['whatever'],
                     ['pkgcore.test.config.test_basics.asis'],
                     None]),
-            section.get_value(manager, 'strlist', 'repr'))
+            section.render_value(manager, 'strlist', 'repr'))
         self.assertRaises(
             errors.ConfigurationError,
-            section.get_value, manager, 'wrong', 'repr')
+            section.render_value, manager, 'wrong', 'repr')
 
 
 class ConvertStringTest(TestCase):
 
-    def test_get_value(self):
+    def test_render_value(self):
         source = {
             'str': 'pkgcore.test',
             'bool': 'yes',
@@ -429,7 +429,7 @@ class ConvertAsIsTest(TestCase):
         'callable': passthrough,
         }
 
-    def test_get_value(self):
+    def test_render_value(self):
         # try all combinations
         for arg, value in self.source.iteritems():
             for typename in self.source:
@@ -483,17 +483,17 @@ class AliasTest(TestCase):
                 return object()
         manager = MockManager()
         alias = basics.section_alias('foon', 'spoon')
-        type_obj = basics.ConfigType(alias.get_value(manager, 'class',
+        type_obj = basics.ConfigType(alias.render_value(manager, 'class',
                                                      'callable'))
         self.assertEqual('spoon', type_obj.name)
         self.assertIdentical(
             foon,
-            alias.get_value(manager, 'target', 'ref:spoon').collapse())
+            alias.render_value(manager, 'target', 'ref:spoon').collapse())
 
 
 class ParsersTest(TestCase):
 
-    def test_bool_parser(self):
+    def test_str_to_bool(self):
         # abuse Identical to make sure we get actual bools, not some
         # weird object that happens to be True or False when converted
         # to a bool
@@ -505,17 +505,17 @@ class ParsersTest(TestCase):
             ('no', False),
             ('0', False),
             ]:
-            self.assertIdentical(basics.bool_parser(string), output)
+            self.assertIdentical(basics.str_to_bool(string), output)
 
-    def test_int_parser(self):
+    def test_str_to_int(self):
         for string, output in [
             ('\t 1', 1),
             ('1', 1),
             ('-100', -100)]:
-            self.assertEqual(basics.int_parser(string), output)
-        self.assertRaises(errors.ConfigurationError, basics.int_parser, 'f')
+            self.assertEqual(basics.str_to_int(string), output)
+        self.assertRaises(errors.ConfigurationError, basics.str_to_int, 'f')
 
-    def test_str_parser(self):
+    def test_str_to_str(self):
         for string, output in [
             ('\t ', ''),
             (' foo ', 'foo'),
@@ -527,9 +527,9 @@ class ParsersTest(TestCase):
             ("'a", "'a"),
             ('"a', '"a'),
             ]:
-            self.assertEqual(basics.str_parser(string), output)
+            self.assertEqual(basics.str_to_str(string), output)
 
-    def test_list_parser(self):
+    def test_str_to_list(self):
         for string, output in [
             ('foo', ['foo']),
             ('"f\'oo"  \'b"ar\'', ["f'oo", 'b"ar']),
@@ -539,13 +539,13 @@ class ParsersTest(TestCase):
             ('\'"hi\'', ['"hi']),
             ('"\\"hi"', ['"hi']),
             ]:
-            self.assertEqual(basics.list_parser(string), output)
+            self.assertEqual(basics.str_to_list(string), output)
         for string in ['"', "'foo", 'ba"r', 'baz"']:
             self.assertRaises(
-                errors.QuoteInterpretationError, basics.list_parser, string)
+                errors.QuoteInterpretationError, basics.str_to_list, string)
         # make sure this explodes instead of returning something
         # confusing so we explode much later
-        self.assertRaises(TypeError, basics.list_parser, ['no', 'string'])
+        self.assertRaises(TypeError, basics.str_to_list, ['no', 'string'])
 
 
 class LoaderTest(TestCase):

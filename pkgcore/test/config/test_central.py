@@ -50,25 +50,29 @@ class ConfigManagerTest(TestCase):
         else:
             self.fail('no exception raised')
 
+    def get_config_obj(self, manager, obj_type, obj_name):
+        types = getattr(manager.objects, obj_type)
+        return types[obj_name]
+
     def test_sections(self):
         manager = central.ConfigManager(
             [{'fooinst': basics.HardCodedConfigSection({'class': repo}),
               'barinst': basics.HardCodedConfigSection({'class': drawer}),
               }])
         self.assertEqual(['barinst', 'fooinst'], sorted(manager.sections()))
-        self.assertEqual(manager.drawer.keys(), ['barinst'])
-        self.assertEqual(manager.drawer, {'barinst': (None, None)})
+        self.assertEqual(manager.objects.drawer.keys(), ['barinst'])
+        self.assertEqual(manager.objects.drawer, {'barinst': (None, None)})
 
     def test_contains(self):
         manager = central.ConfigManager(
             [{'spork': basics.HardCodedConfigSection({'class': drawer})}],
             [RemoteSource()])
-        self.assertIn('spork', manager.drawer)
-        self.assertNotIn('foon', manager.drawer)
+        self.assertIn('spork', manager.objects.drawer)
+        self.assertNotIn('foon', manager.objects.drawer)
 
     def test_no_class(self):
         manager = central.ConfigManager(
-            [{'foo': basics.HardCodedConfigSection({})}], [object()])
+            [{'foo': basics.HardCodedConfigSection({})}])
         self.check_error(
             "Collapsing section named 'foo':\n"
             'no class specified',
@@ -77,18 +81,17 @@ class ConfigManagerTest(TestCase):
     def test_missing_section_ref(self):
         manager = central.ConfigManager(
             [{'rsync repo': basics.HardCodedConfigSection({'class': repo}),
-              }], [object()])
+              }])
         self.check_error(
             "Collapsing section named 'rsync repo':\n"
             "type pkgcore.test.config.test_central.repo needs settings for "
             "'cache'",
-            operator.getitem, manager.repo, 'rsync repo')
+            self.get_config_obj, manager, 'repo', 'rsync repo')
 
     def test_unknown_type(self):
         manager = central.ConfigManager(
             [{'spork': basics.HardCodedConfigSection({'class': drawer,
-                                                      'foon': None})}],
-            [object()])
+                                                      'foon': None})}])
         self.check_error(
             "Collapsing section named 'spork':\n"
             "Type of 'foon' unknown",
@@ -104,7 +107,7 @@ class ConfigManagerTest(TestCase):
         self.check_error(
             "Collapsing section named 'myrepo':\n"
             "inherit target 'baserepo' cannot be found",
-            operator.getitem, manager.repo, 'myrepo')
+            self.get_config_obj, manager, 'repo', 'myrepo')
 
     def test_inherit_unknown_type(self):
         manager = central.ConfigManager(
@@ -115,11 +118,11 @@ class ConfigManagerTest(TestCase):
                             'class': drawer,
                             'inherit': ['baserepo'],
                             }),
-              }], [object()])
+              }])
         self.check_error(
             "Collapsing section named 'actual repo':\n"
-            "Type of 'cache' inherited from 'baserepo' unknown",
-            operator.getitem, manager.repo, 'actual repo')
+            "Type of 'cache' unknown",
+            self.get_config_obj, manager, 'repo', 'actual repo')
 
     def test_inherit(self):
         manager = central.ConfigManager(
@@ -133,16 +136,16 @@ class ConfigManagerTest(TestCase):
                             'class': repo,
                             'inherit': ['baserepo'],
                             }),
-              }], [object()])
+              }])
 
-        self.assertEqual('available', manager.repo['actual repo'])
+        self.assertEqual('available', manager.objects.repo['actual repo'])
 
     def test_no_object_returned(self):
         def noop():
             """Do not do anything."""
         manager = central.ConfigManager(
             [{'myrepo': basics.HardCodedConfigSection({'class': noop}),
-              }], [object()])
+              }])
         self.check_error(
             "'No object returned' instantiating "
             "pkgcore.test.config.test_central.noop",
@@ -154,23 +157,23 @@ class ConfigManagerTest(TestCase):
                 return 'useless'
         manager = central.ConfigManager(
             [{'myrepo': basics.HardCodedConfigSection({'class': myrepo()}),
-              }], [object()])
+              }])
         self.check_error(
             "Collapsing section named 'myrepo':\n"
             "Converting argument 'class' to callable:\n"
             "useless is not callable",
-            operator.getitem, manager.myrepo, 'myrepo')
+            self.get_config_obj, manager, 'myrepo', 'myrepo')
 
     def test_raises_instantiationerror(self):
         def myrepo():
             raise errors.InstantiationError('I raised')
         manager = central.ConfigManager(
             [{'myrepo': basics.HardCodedConfigSection({'class': myrepo}),
-              }], [object()])
+              }])
         self.check_error(
             "Instantiating named section 'myrepo':\n"
             "'I raised' instantiating pkgcore.test.config.test_central.myrepo",
-            operator.getitem, manager.myrepo, 'myrepo',
+            self.get_config_obj, manager, 'myrepo', 'myrepo',
             klass=errors.InstantiationError)
 
     def test_raises(self):
@@ -178,17 +181,17 @@ class ConfigManagerTest(TestCase):
             raise ValueError('I raised')
         manager = central.ConfigManager(
             [{'myrepo': basics.HardCodedConfigSection({'class': myrepo})
-              }], [object()])
+              }])
         self.check_error(
             "Instantiating named section 'myrepo':\n"
             "Caught exception 'I raised' instantiating "
             'pkgcore.test.config.test_central.myrepo',
-            operator.getitem, manager.myrepo, 'myrepo')
+            self.get_config_obj, manager, 'myrepo', 'myrepo')
         manager = central.ConfigManager(
             [{'myrepo': basics.HardCodedConfigSection({'class': myrepo})
-              }], [object()], debug=True)
+              }], debug=True)
         self.check_error('I raised',
-                         operator.getitem, manager.myrepo, 'myrepo',
+                         self.get_config_obj, manager, 'myrepo', 'myrepo',
                          klass=ValueError)
 
     def test_pargs(self):
@@ -202,10 +205,10 @@ class ConfigManagerTest(TestCase):
                             'p': 'pos',
                             'notp': 'notpos',
                             }),
-              }], [object()])
+              }])
 
         self.assertEqual(
-            manager.myrepo['myrepo'], (('pos',), {'notp': 'notpos'}))
+            manager.objects.myrepo['myrepo'], (('pos',), {'notp': 'notpos'}))
 
     def test_autoexec(self):
         @configurable(typename='configsection')
@@ -218,7 +221,7 @@ class ConfigManagerTest(TestCase):
                             'class': autoloader,
                             })}])
         self.assertEqual(['autoload-sub', 'spork'], list(manager.sections()))
-        self.assertEqual(['spork'], manager.repo.keys())
+        self.assertEqual(['spork'], manager.objects.repo.keys())
         self.assertEqual(
             'test',
             manager.collapse_named_section('spork').instantiate())
@@ -235,24 +238,26 @@ class ConfigManagerTest(TestCase):
                             'class': autoloader})}])
 
         self.assertEqual(['autoload-sub', 'spork'], list(manager.sections()))
-        self.assertEqual(['spork'], manager.repo.keys())
+        self.assertEqual(['spork'], manager.objects.repo.keys())
         collapsedspork = manager.collapse_named_section('spork')
         self.assertEqual('test', collapsedspork.instantiate())
         mod_dict['cache'] = 'modded'
         self.assertIdentical(collapsedspork,
                              manager.collapse_named_section('spork'))
         self.assertEqual('test', collapsedspork.instantiate())
+        types = manager.types
         manager.reload()
         newspork = manager.collapse_named_section('spork')
         self.assertNotIdentical(collapsedspork, newspork)
         self.assertEqual(
             'modded', newspork.instantiate(),
             'it did not throw away the cached instance')
+        self.assertIsNot(types, manager.types)
 
     def test_instantiate_default_ref(self):
         manager = central.ConfigManager(
             [{'spork': basics.HardCodedConfigSection({'class': drawer})}],
-            [object()])
+            )
         self.assertEqual(
             (None, None),
             manager.collapse_named_section('spork').instantiate())
@@ -264,7 +269,7 @@ class ConfigManagerTest(TestCase):
 
         manager = central.ConfigManager(
             [{'spork': basics.HardCodedConfigSection({
-                            'class': myrepo, 'spork': 'foon'})}], [object()])
+                            'class': myrepo, 'spork': 'foon'})}])
 
         self.assertEqual(
             {'spork': 'foon'},
@@ -287,7 +292,7 @@ class ConfigManagerTest(TestCase):
                             'thing': basics.HardCodedConfigSection({
                                     'class': spork_producer,
                                     }),
-                            })}], [object()])
+                            })}])
         spork = manager.collapse_named_section('spork')
         for i in range(3):
             self.check_error(
@@ -312,7 +317,7 @@ class ConfigManagerTest(TestCase):
                             'class': 'pkgcore.test.config.test_central.drawer',
                             'content': 'spork',
                             }),
-              }], [object()])
+              }])
 
         config = manager.collapse_named_section('spork')
         self.assertIdentical(config.instantiate(), config.instantiate())
@@ -325,12 +330,12 @@ class ConfigManagerTest(TestCase):
             [{'spork': basics.ConfigSectionFromStringDict({
                             'class': 'pkgcore.test.config.test_central.drawer',
                             'content': 'ref'})}], [RemoteSource()])
-        self.assertRaises(KeyError, operator.getitem, manager.repo, 'foon')
+        self.assertRaises(KeyError, self.get_config_obj, manager, 'repo', 'foon')
         self.check_error(
             "Collapsing section named 'spork':\n"
-            "Collapsing section ref 'content':\n"
+            "Collapsing section key 'content':\n"
             "no section called 'ref'",
-            operator.getitem, manager.repo, 'spork')
+            self.get_config_obj, manager, 'repo', 'spork')
 
     def test_recursive_autoload(self):
         @configurable(typename='configsection')
@@ -341,11 +346,12 @@ class ConfigManagerTest(TestCase):
                                                             'cache': 'test'})}
 
         self.check_error(
-            "section 'autoload-sub' from autoload is already collapsed!",
+            "New config is trying to modify existing section(s) 'autoload-sub' "
+            "that was already instantiated.",
             central.ConfigManager,
             [{'autoload-sub': basics.HardCodedConfigSection({
                             'class': autoloader,
-                            })}], [object()])
+                            })}])
 
     def test_recursive_section_ref(self):
         manager = central.ConfigManager(
@@ -358,19 +364,19 @@ class ConfigManagerTest(TestCase):
               'self': basics.ConfigSectionFromStringDict({
                             'class': 'pkgcore.test.config.test_central.drawer',
                             'content': 'self'}),
-              }], [object()])
+              }])
         self.check_error(
             "Collapsing section named 'self':\n"
-            "Collapsing section ref 'content':\n"
+            "Collapsing section key 'content':\n"
             "Reference to 'self' is recursive",
-            operator.getitem, manager.drawer, 'self')
+            self.get_config_obj, manager, 'drawer', 'self')
         self.check_error(
             "Collapsing section named 'spork':\n"
-            "Collapsing section ref 'content':\n"
+            "Collapsing section key 'content':\n"
             "Collapsing section named 'foon':\n"
-            "Collapsing section ref 'content':\n"
+            "Collapsing section key 'content':\n"
             "Reference to 'spork' is recursive",
-            operator.getitem, manager.drawer, 'spork')
+            self.get_config_obj, manager, 'drawer', 'spork')
 
     def test_recursive_inherit(self):
         manager = central.ConfigManager(
@@ -380,11 +386,11 @@ class ConfigManagerTest(TestCase):
               'foon': basics.ConfigSectionFromStringDict({
                             'class': 'pkgcore.test.config.test_central.drawer',
                             'inherit': 'spork'}),
-              }], [object()])
+              }])
         self.check_error(
             "Collapsing section named 'spork':\n"
             "Inherit 'spork' is recursive",
-            operator.getitem, manager.drawer, 'spork')
+            self.get_config_obj, manager, 'drawer', 'spork')
 
     def test_alias(self):
         def myspork():
@@ -392,9 +398,9 @@ class ConfigManagerTest(TestCase):
         manager = central.ConfigManager(
             [{'spork': basics.HardCodedConfigSection({'class': myspork}),
               'foon': basics.section_alias('spork', 'myspork'),
-              }], [object()])
+              }])
         # This tests both the detected typename of foon and the caching.
-        self.assertIdentical(manager.myspork['spork'], manager.myspork['foon'])
+        self.assertIdentical(manager.objects.myspork['spork'], manager.objects.myspork['foon'])
 
     def test_typecheck(self):
         @configurable({'myrepo': 'ref:repo'}, typename='repo')
@@ -413,13 +419,13 @@ class ConfigManagerTest(TestCase):
                                                         'myrepo': 'myrepo'}),
                     'wrong':  basics.AutoConfigSection({'class': reporef,
                                                         'myrepo': 'drawer'}),
-                    }], [object()])
+                    }])
         self.check_error(
             "Collapsing section named 'wrong':\n"
-            "Collapsing section ref 'myrepo':\n"
+            "Collapsing section key 'myrepo':\n"
             "reference 'drawer' should be of type 'repo', got 'drawer'",
-            operator.getitem, manager.repo, 'wrong')
-        self.assertEqual('repo!', manager.repo['right'])
+            self.get_config_obj, manager, 'repo', 'wrong')
+        self.assertEqual('repo!', manager.objects.repo['right'])
 
         manager = central.ConfigManager([{
                     'myrepo': basics.HardCodedConfigSection({'class': myrepo}),
@@ -428,22 +434,23 @@ class ConfigManagerTest(TestCase):
                                                         'myrepo': 'myrepo'}),
                     'wrong':  basics.AutoConfigSection({'class': reporefs,
                                                         'myrepo': 'drawer'}),
-                    }], [object()])
+                    }])
         self.check_error(
             "Collapsing section named 'wrong':\n"
-            "Collapsing section refs 'myrepo':\n"
+            "Collapsing section key 'myrepo':\n"
             "reference 'drawer' should be of type 'repo', got 'drawer'",
-            operator.getitem, manager.repo, 'wrong')
-        self.assertEqual(['repo!'], manager.repo['right'])
+            self.get_config_obj, manager, 'repo', 'wrong')
+        self.assertEqual(['repo!'], manager.objects.repo['right'])
 
     def test_default(self):
         manager = central.ConfigManager([{
                     'thing': basics.HardCodedConfigSection({'class': drawer,
                                                             'default': True}),
                     'bug': basics.HardCodedConfigSection({'class': None,
+                                                          'inherit-only':True,
                                                           'default': True}),
                     'ignore': basics.HardCodedConfigSection({'class': drawer}),
-                    }], [object()])
+                    }])
         self.assertEqual((None, None), manager.get_default('drawer'))
         self.assertTrue(manager.collapse_named_section('thing').default)
 
@@ -452,9 +459,9 @@ class ConfigManagerTest(TestCase):
                                                             'default': True}),
                     'thing2': basics.HardCodedConfigSection({'class': drawer,
                                                              'default': True}),
-                    }], [object()])
+                    }])
         self.check_error(
-            "both 'thing2' and 'thing' are default for 'drawer'",
+            "type drawer incorrectly has multiple default sections: 'thing2', 'thing'",
             manager.get_default, 'drawer')
 
         manager = central.ConfigManager([])
@@ -469,17 +476,20 @@ class ConfigManagerTest(TestCase):
                             'content': basics.HardCodedConfigSection({
                                     'class': 'spork'})}),
                     'thing2': basics.HardCodedConfigSection({
-                            'class': broken, 'default': True})}], [object()])
+                            'class': broken, 'default': True})}])
         self.check_error(
-            "Collapsing default drawer 'thing':\n"
+            "Collapsing defaults for drawer:\n"
             "Collapsing section named 'thing':\n"
-            "Collapsing section ref 'content':\n"
+            "Collapsing section key 'content':\n"
             "Converting argument 'class' to callable:\n"
             "'spork' is not callable",
             manager.get_default, 'drawer')
         self.check_error(
-            "Instantiating default broken 'thing2':\n"
-            "'broken' instantiating pkgcore.test.config.test_central.broken",
+            "Collapsing defaults for broken:\n"
+            "Collapsing section named 'thing':\n"
+            "Collapsing section key 'content':\n"
+            "Converting argument 'class' to callable:\n"
+            "'spork' is not callable",
             manager.get_default, 'broken')
 
     def test_instantiate_broken_ref(self):
@@ -495,7 +505,7 @@ class ConfigManagerTest(TestCase):
                             'class': drawer,
                             'contents': [basics.HardCodedConfigSection({
                                         'class': broken})]}),
-                    }], [object()])
+                    }])
         self.check_error(
             "Instantiating ref 'content':\n"
             "'broken' instantiating pkgcore.test.config.test_central.broken",
@@ -514,7 +524,7 @@ class ConfigManagerTest(TestCase):
             "'broken' instantiating pkgcore.test.config.test_central.broken",
             central.ConfigManager, [{
                     'autoload_broken': basics.HardCodedConfigSection({
-                            'class': broken})}], [object()])
+                            'class': broken})}])
 
     def test_autoload_uncollapsable(self):
         self.check_error(
@@ -524,25 +534,15 @@ class ConfigManagerTest(TestCase):
             "'spork' is not callable",
             central.ConfigManager, [{
                     'autoload_broken': basics.HardCodedConfigSection({
-                            'class': 'spork'})}], [object()])
+                            'class': 'spork'})}])
 
     def test_autoload_wrong_type(self):
         self.check_error(
             "Section 'autoload_wrong' is marked as autoload but type is "
-            'drawer, not (remote)configsection',
+            'drawer, not configsection',
             central.ConfigManager, [{
                     'autoload_wrong': basics.HardCodedConfigSection({
-                            'class': drawer})}], [object()])
-
-    def test_autoload_remoteconfig(self):
-        @configurable(typename='remoteconfigsection')
-        def remote():
-            return {'autoload_spork': basics.HardCodedConfigSection({
-                        'class': drawer})}
-        manager = central.ConfigManager([{
-                    'autoload_remote': basics.HardCodedConfigSection({
-                            'class': remote})}], [RemoteSource()])
-        self.assertTrue(manager.collapse_named_section('autoload_spork'))
+                            'class': drawer})}])
 
     def test_lazy_refs(self):
         @configurable({'myrepo': 'lazy_ref:repo', 'thing': 'lazy_ref'},
@@ -563,11 +563,11 @@ class ConfigManagerTest(TestCase):
                                                         'myrepo': 'myrepo'}),
                     'wrong':  basics.AutoConfigSection({'class': reporef,
                                                         'myrepo': 'drawer'}),
-                    }], [object()])
+                    }])
         self.check_error(
             "reference 'drawer' should be of type 'repo', got 'drawer'",
-            manager.repo['wrong'][0].collapse)
-        self.assertEqual('repo!', manager.repo['right'][0].instantiate())
+            manager.objects.repo['wrong'][0].collapse)
+        self.assertEqual('repo!', manager.objects.repo['right'][0].instantiate())
 
         manager = central.ConfigManager([{
                     'myrepo': basics.HardCodedConfigSection({'class': myrepo}),
@@ -576,13 +576,13 @@ class ConfigManagerTest(TestCase):
                                                         'myrepo': 'myrepo'}),
                     'wrong':  basics.AutoConfigSection({'class': reporefs,
                                                         'myrepo': 'drawer'}),
-                    }], [object()])
+                    }])
         self.check_error(
             "reference 'drawer' should be of type 'repo', got 'drawer'",
-            manager.repo['wrong'][0][0].collapse)
+            manager.objects.repo['wrong'][0][0].collapse)
         self.assertEqual(
             ['repo!'],
-            [c.instantiate() for c in manager.repo['right'][0]])
+            [c.instantiate() for c in manager.objects.repo['right'][0]])
 
     def test_inherited_default(self):
         manager = central.ConfigManager([{
@@ -593,32 +593,11 @@ class ConfigManagerTest(TestCase):
                     'uncollapsable': basics.HardCodedConfigSection({
                             'default': True,
                             'inherit': ['spork'],
+                            'inherit-only': True,
                             }),
                     'basic': basics.HardCodedConfigSection({'class': drawer}),
                     }], [RemoteSource()])
         self.assertTrue(manager.get_default('drawer'))
-
-    def test_autoload_default_order(self):
-        @configurable(typename='configsection')
-        def autoloader():
-            return {
-                'spork': basics.HardCodedConfigSection({'class': repo,
-                                                        'cache': 'test',
-                                                        'default': True})}
-
-        manager = central.ConfigManager([{
-                    'autoload-sub': basics.HardCodedConfigSection({
-                            'class': autoloader,
-                            }),
-                    'foon': basics.HardCodedConfigSection({
-                            'class': repo,
-                            'cache': 'foon',
-                            'default': True,
-                            }),
-               }], [object()])
-        self.assertIdentical(
-            manager.collapse_named_section('foon').instantiate(),
-            manager.get_default('repo'))
 
     def test_section_names(self):
         manager = central.ConfigManager([{
@@ -653,10 +632,10 @@ class ConfigManagerTest(TestCase):
         self.check_error(
             "Collapsing section named 'self':\n"
             "Self-inherit 'self' cannot be found",
-            operator.getitem, manager.drawer, 'self')
+            self.get_config_obj, manager, 'drawer', 'self')
         self.check_error(
             "Self-inherit 'self' cannot be found",
-            manager.collapse_section, section)
+            manager.collapse_section, [section])
 
         manager = central.ConfigManager([{
                     'self': basics.HardCodedConfigSection({
@@ -666,14 +645,14 @@ class ConfigManagerTest(TestCase):
                             'inherit': ['self'],
                             })}, {
                     'self': basics.HardCodedConfigSection({
-                            'class': drawer})}], [object()])
+                            'class': drawer})}])
         self.assertTrue(manager.collapse_named_section('self'))
-        self.assertTrue(manager.collapse_section(section))
+        self.assertTrue(manager.collapse_section([section]))
 
     def test_prepend_inherit(self):
         manager = central.ConfigManager([{
                     'sect': basics.HardCodedConfigSection({
-                            'inherit.prepend': ['self']})}], [object()])
+                            'inherit.prepend': ['self']})}])
         self.check_error(
             "Collapsing section named 'sect':\n"
             'Prepending or appending to the inherit list makes no sense',
@@ -696,10 +675,10 @@ class ConfigManagerTest(TestCase):
                             'class': seq,
                             'seq.prepend': ['-1'],
                             'seq.append': ['post'],
-                            })}], [object()])
-        self.assertEqual(['-1', 'post'], manager.seq['base'])
-        self.assertEqual(['1', '2'], manager.seq['sect'])
-        self.assertEqual(['pre', '1', '2'], manager.seq['inh'])
+                            })}])
+        self.assertEqual(['-1', 'post'], manager.objects.seq['base'])
+        self.assertEqual(['1', '2'], manager.objects.seq['sect'])
+        self.assertEqual(['pre', '1', '2'], manager.objects.seq['inh'])
 
     def test_str_prepend(self):
         @configurable({'string': 'str'})
@@ -719,7 +698,7 @@ class ConfigManagerTest(TestCase):
                             'class': sect,
                             'string.prepend': 'a',
                             'string.append': 'c',
-                            })}], [object()])
-        self.assertEqual('a c', manager.sect['base'])
-        self.assertEqual('b', manager.sect['sect'])
-        self.assertEqual('pre b', manager.sect['inh'])
+                            })}])
+        self.assertEqual('a c', manager.objects.sect['base'])
+        self.assertEqual('b', manager.objects.sect['sect'])
+        self.assertEqual('pre b', manager.objects.sect['inh'])

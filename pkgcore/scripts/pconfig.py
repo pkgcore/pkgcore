@@ -222,7 +222,7 @@ def _dump_uncollapsed_section(config, out, err, section):
         out.write('named section %r' % (section,))
         return
     for key in sorted(section.keys()):
-        kind, value = section.get_value(config, key, 'repr')
+        kind, value = section.render_value(config, key, 'repr')
         out.write('# type: %s' % (kind,))
         if kind == 'list':
             for name, val in zip((

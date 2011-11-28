@@ -24,6 +24,10 @@ from snakeoil.currying import partial
 def sect():
     """Just a no-op to use as configurable class."""
 
+def mk_config(*args, **kwds):
+    return central.CompatConfigManager(
+        central.ConfigManager(*args, **kwds))
+
 
 class OptparseOptionsTest(TestCase):
 
@@ -47,7 +51,7 @@ class OptparseOptionsTest(TestCase):
                 optparse.Option('-a', action='callback', callback=callback)])
         parser = helpers.mangle_parser(parser)
         values = parser.get_default_values()
-        values._config = central.ConfigManager([{
+        values._config = mk_config([{
                     'sect': basics.HardCodedConfigSection({'class': sect})}])
 
         values, args = parser.parse_args(['-a', '--debug'], values)
@@ -56,7 +60,7 @@ class OptparseOptionsTest(TestCase):
         self.assertTrue(confdict['sect'].debug)
 
         values = parser.get_default_values()
-        values._config = central.ConfigManager([{
+        values._config = mk_config([{
                     'sect': basics.HardCodedConfigSection({'class': sect})}])
         values, args = parser.parse_args(['-a'], values)
         self.assertFalse(args)
@@ -75,7 +79,7 @@ class OptparseOptionsTest(TestCase):
                           callback=commandline.config_callback,
                           type='string', callback_args=('foon', 'utensil'))
         values = parser.get_default_values()
-        values._config = central.ConfigManager([{
+        values._config = mk_config([{
                     'afoon': basics.HardCodedConfigSection({'class': test})}])
 
         values, args = parser.parse_args(['--spork', 'afoon'], values)
@@ -231,7 +235,7 @@ class ArgparseOptionsTest(TestCase):
                           callback=commandline.config_callback,
                           type='string', callback_args=('foon', 'utensil'))
         values = parser.get_default_values()
-        values._config = central.ConfigManager([{
+        values._config = mk_config([{
                     'afoon': basics.HardCodedConfigSection({'class': test})}])
 
         values, args = parser.parse_args(['--spork', 'afoon'], values)
@@ -466,7 +470,7 @@ Use --help after a subcommand for more help.
             """HACK: avoid the config load --debug triggers."""
             def get_default_values(self):
                 values = commandline.OptionParser.get_default_values(self)
-                values._config = central.ConfigManager()
+                values._config = mk_config()
                 return values
         self.assertMain(
             1, '', 'Error in configuration:\nbork\n',

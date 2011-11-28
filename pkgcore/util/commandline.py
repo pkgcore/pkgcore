@@ -534,19 +534,19 @@ def _convert_config_mods(iterable):
     return d
 
 def store_config(namespace, attr):
-    prepend = map(_convert_config_mods,
+    configs = map(_convert_config_mods,
         [namespace.new_config, namespace.add_config])
     # add necessary inherits for add_config
-    for key, vals in prepend[1].iteritems():
+    for key, vals in configs[1].iteritems():
         vals.setdefault('inherit', key)
 
-    prepend = [dict((section, basics.ConfigSectionFromStringDict(vals))
+    configs = [dict((section, basics.ConfigSectionFromStringDict(vals))
         for section, vals in d.iteritems())
-            for d in prepend if d]
+            for d in configs if d]
 
     config = load_config(skip_config_files=namespace.empty_config,
         debug=getattr(namespace, 'debug', False),
-        prepend_sources=tuple(prepend))
+        append_sources=tuple(configs))
     setattr(namespace, attr, config)
 
 

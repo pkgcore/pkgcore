@@ -249,7 +249,7 @@ class WeirdSection(basics.ConfigSection):
     def keys(self):
         return ['sects']
 
-    def get_value(self, central, name, arg_type):
+    def render_value(self, central, name, arg_type):
         if name != 'sects':
             raise KeyError(name)
         if arg_type != 'repr':

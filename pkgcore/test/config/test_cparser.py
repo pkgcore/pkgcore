@@ -43,7 +43,7 @@ false = no
             ('true', 'bool', True),
             ('false', 'bool', False),
             ]:
-            self.assertEqual(section.get_value(None, key, arg_type), value)
+            self.assertEqual(section.render_value(None, key, arg_type), value)
 
     def test_missing_section_ref(self):
         config = cparser.config_from_file(StringIO('''
@@ -53,5 +53,5 @@ ref = 'missing'
         section = config['test']
         self.assertRaises(
             errors.ConfigurationError,
-            section.get_value(
+            section.render_value(
                 central.ConfigManager([]), 'ref', 'ref:drawer').collapse)

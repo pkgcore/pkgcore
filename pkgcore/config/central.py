@@ -286,17 +286,22 @@ class ConfigManager(object):
         the config(s) added by that section).
         """
         config_data = config.sections()
-        self.configs.append(config_data)
-        self.config_sources.append(config)
-        for name in config_data:
+
+        collision = set(self.rendered_sections)
+        collision.intersection_update(config_data)
+
+        if collision:
             # If this matches something we previously instantiated
             # we should probably blow up to prevent massive
             # amounts of confusion (and recursive autoloads)
-            if name in self.rendered_sections:
-                raise errors.ConfigurationError(
-                    'section %r from autoload is already collapsed!' % (
-                        name,))
+            raise errors.ConfigurationError("New config is trying to "
+                "modify existing section(s) %s that was already instantiated."
+                % (', '.join(repr(x) for x in sorted(collision)),))
 
+
+        self.configs.append(config_data)
+        self.config_sources.append(config)
+        for name in config_data:
             self.sections_lookup[name].appendleft(config_data[name])
 
             # Do not even touch the ConfigSection if it's not an autoload.

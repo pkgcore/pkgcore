@@ -344,7 +344,8 @@ class ConfigManagerTest(TestCase):
                                                             'cache': 'test'})}
 
         self.check_error(
-            "section 'autoload-sub' from autoload is already collapsed!",
+            "New config is trying to modify existing section(s) 'autoload-sub' "
+            "that was already instantiated.",
             central.ConfigManager,
             [{'autoload-sub': basics.HardCodedConfigSection({
                             'class': autoloader,

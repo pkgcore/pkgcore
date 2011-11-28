@@ -252,7 +252,7 @@ class ConfigManagerTest(TestCase):
         self.assertEqual(
             'modded', newspork.instantiate(),
             'it did not throw away the cached instance')
-        self.assertIsNot(types, manager.types)
+        self.assertNotIdentical(types, manager.types)
 
     def test_instantiate_default_ref(self):
         manager = central.ConfigManager(

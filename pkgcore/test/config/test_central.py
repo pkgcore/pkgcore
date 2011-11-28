@@ -1,3 +1,4 @@
+# Copyright: 2011 Brian Harring <ferringb@gmail.com>
 # Copyright: 2005 Marien Zwart <marienz@gentoo.org>
 # License: BSD/GPL2
 
@@ -45,7 +46,7 @@ class ConfigManagerTest(TestCase):
         except klass, e:
             self.assertEqual(
                 message, str(e),
-                '\nGot:\n%s\nExpected:\n%s\n' % (message, str(e)))
+                '\nGot:\n%r\nExpected:\n%r\n' % (str(e), message))
         else:
             self.fail('no exception raised')
 

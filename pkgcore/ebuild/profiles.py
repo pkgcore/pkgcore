@@ -337,9 +337,6 @@ def _empty_provides_has_match(*args, **kwds):
 
 class ProfileStack(object):
 
-    pkgcore_config_type = ConfigHint({'profile':'str'},
-        required=('profile'), typename='profile')
-
     _node_kls = ProfileNode
 
     def __init__(self, profile):

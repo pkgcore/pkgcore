@@ -199,7 +199,13 @@ configurables.add_argument("typename", nargs='?', default=None, action='store',
 @configurables.bind_main_func
 def configurables_main(options, out, err):
     """List registered configurables."""
-    for configurable in get_plugins('configurable'):
+
+    # try and sort this beast.
+    def key_func(obj):
+        return "%s.%s" % (getattr(obj, '__module__', ''),
+            getattr(obj, '__name__', ''))
+
+    for configurable in sorted(get_plugins('configurable'), key=key_func):
         type_obj = basics.ConfigType(configurable)
         if options.typename is not None and type_obj.name != options.typename:
             continue

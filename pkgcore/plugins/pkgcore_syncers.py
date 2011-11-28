@@ -1,16 +1,8 @@
-# Copyright: 2006 Marien Zwart <marienz@gentoo.org>
+# Copyright: 2011 Brian Harring <ferringb@gmail.com>
 # License: BSD/GPL2
 
-from pkgcore.sync import bzr, cvs, darcs, git, hg, svn
-
-
 pkgcore_plugins = {
-    'syncer': [
-        bzr.bzr_syncer,
-        cvs.cvs_syncer,
-        darcs.darcs_syncer,
-        git.git_syncer,
-        hg.hg_syncer,
-        svn.svn_syncer,
+    'syncer': ['pkgcore.sync.%s.%s_syncer' % (x, x) for x in
+            ('bzr', 'cvs', 'darcs', 'git','hg', 'svn')
         ],
     }

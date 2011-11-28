@@ -1,19 +1,17 @@
-# Copyright: 2006-2008 Brian Harring <ferringb@gmail.com>
+# Copyright: 2006-2011 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
-from pkgcore.merge import triggers
-
 pkgcore_plugins = {
-    'triggers':[
-        triggers.ldconfig,
-        triggers.merge,
-        triggers.unmerge,
-        triggers.fix_uid_perms,
-        triggers.fix_gid_perms,
-        triggers.fix_set_bits,
-        triggers.detect_world_writable,
-        triggers.InfoRegen,
-        triggers.CommonDirectoryModes,
-        triggers.BaseSystemUnmergeProtection,
-        ],
+    'triggers':['pkgcore.merge.triggers.%s' % x for x in [
+        'ldconfig',
+        'merge',
+        'unmerge',
+        'fix_uid_perms',
+        'fix_gid_perms',
+        'fix_set_bits',
+        'detect_world_writable',
+        'InfoRegen',
+        'CommonDirectoryModes',
+        'BaseSystemUnmergeProtection',
+        ]],
     }

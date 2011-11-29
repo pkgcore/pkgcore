@@ -27,5 +27,5 @@ def main(options, out, err):
         options.packages = [plugins]
     for package in lists.stable_unique(options.packages):
         out.write('Updating cache for %s...' % (package.__name__,))
-        plugin.initialize_cache(package)
+        plugin.initialize_cache(package, force=True)
 

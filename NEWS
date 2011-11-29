@@ -4,6 +4,8 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* pplugincache now forces an update, regardless of mtimes involved.
+
 * pkgcore internal configuration was rewritten to be stricter, while
   allowing far more overriding.  In general, it should now do what
   you would expect.  Exact details, see the git logs.

@@ -158,7 +158,7 @@ def _write_cache_file(path, data):
             cachefile.discard()
 
 
-def initialize_cache(package):
+def initialize_cache(package, force=False):
     """Determine available plugins in a package.
 
     Writes cache files if they are stale and writing is possible.
@@ -191,7 +191,7 @@ def initialize_cache(package):
             # It is an actual module. Check if its cache entry is valid.
             mtime = mtime_cache[pjoin(path, modfullname)]
             vals = stored_cache.get((modname, mtime))
-            if vals is None:
+            if vals is None or force:
                 # Cache entry is stale.
                 logger.debug(
                     'stale because of %s: actual %s != stored %s',
@@ -236,7 +236,7 @@ def initialize_cache(package):
             seen_modnames.add(modfullname)
             for data in vals:
                 package_cache[data.key].add(data)
-        if set(stored_cache) != set(actual_cache):
+        if force or set(stored_cache) != set(actual_cache):
             logger.debug('updating cache %r for new plugins', stored_cache_name)
             _write_cache_file(stored_cache_name, actual_cache)
 

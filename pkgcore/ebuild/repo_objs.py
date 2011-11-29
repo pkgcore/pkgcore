@@ -16,6 +16,7 @@ from snakeoil.caching import WeakInstMeta
 from snakeoil import mappings
 from snakeoil import klass
 from itertools import chain
+from pkgcore.config import ConfigHint
 demandload(globals(),
     'snakeoil.xml:etree',
     'pkgcore.log:logger',
@@ -278,7 +279,7 @@ class _immutable_attr_dict(mappings.ImmutableDict):
 
 class RepoConfig(object):
 
-    __slots__ = ("repo_location", "manifests", "masters", "aliases", "cache_format",
+    __slots__ = ("location", "manifests", "masters", "aliases", "cache_format",
         'profile_format')
 
     layout_offset = "metadata/layout.conf"
@@ -290,12 +291,14 @@ class RepoConfig(object):
     __metaclass__ = WeakInstMeta
     __inst_caching__ = True
 
-    def __init__(self, repo_location):
-        object.__setattr__(self, 'repo_location', repo_location)
+    pkgcore_config_type = ConfigHint(typename='raw_repo')
+
+    def __init__(self, location):
+        object.__setattr__(self, 'location', location)
         self.parse_config()
 
     def load_config(self):
-        path = pjoin(self.repo_location, self.layout_offset)
+        path = pjoin(self.location, self.layout_offset)
         return fileutils.read_dict(bash.iter_read_bash(fileutils.readlines_ascii(path, True, True)),
             source_isiter=True, strip=True, filename=path)
 
@@ -335,6 +338,6 @@ class RepoConfig(object):
         unknown = v.difference(['pms', 'portage-1'])
         if unknown:
             logger.warn("repository at %r has an unsupported profile formats: %s" %
-                (self.repo_location, ', '.join(repr(x) for x in sorted(v))))
+                (self.location, ', '.join(repr(x) for x in sorted(v))))
             v = 'pms'
         sf(self, 'profile_format', list(v)[0])

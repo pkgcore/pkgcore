@@ -417,6 +417,11 @@ def config_from_make_conf(location="/etc/"):
             kwds['sync'] = overlay_syncers[tree_loc]
         new_config[tree_loc] = basics.AutoConfigSection(kwds)
 
+    for tree_loc in [portdir] + portdir_overlays:
+        new_config['raw %s' % tree_loc] = basics.AutoConfigSection(
+            {'class':'pkgcore.ebuild.repo_objs.RepoConfig',
+             'location':tree_loc})
+
     rsync_portdir_cache = os.path.exists(pjoin(portdir, "metadata", "cache")) \
         and "metadata-transfer" not in features
 

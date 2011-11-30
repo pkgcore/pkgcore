@@ -115,6 +115,7 @@ class ConfigType(object):
             self.types[arg] = 'str'
         self.required = tuple(self.positional)
         self.allow_unknowns = False
+        self.requires_config = False
 
         # Process ConfigHint (if any)
         if hint_overrides is not None:
@@ -128,6 +129,10 @@ class ConfigType(object):
             if hint_overrides.doc:
                 self.doc = hint_overrides.doc
             self.allow_unknowns = hint_overrides.allow_unknowns
+            self.requires_config = hint_overrides.requires_config
+            if self.requires_config:
+                if self.requires_config in self.required:
+                    self.required = tuple(x for x in self.required if x != self.requires_config)
         elif varargs or varkw:
             raise TypeError(
                 'func %s accepts *args or **kwargs, and no ConfigHint is '
@@ -140,7 +145,7 @@ class ConfigType(object):
                         self.callable, var))
 
         for var in self.positional:
-            if var not in self.required:
+            if var not in self.required and var != self.requires_config:
                 raise errors.TypeDefinitionError(
                     '%s: %r is in positionals but not in required' %
                     (self.callable, var))

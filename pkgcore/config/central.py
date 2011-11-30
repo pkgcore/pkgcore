@@ -9,10 +9,9 @@ A lot of extra documentation on this is in dev-notes/config.rst.
 
 __all__ = ("CollapsedConfig", "ConfigManager",)
 
-import collections
+import collections, weakref
 from pkgcore.config import errors, basics
 from snakeoil import mappings, compatibility, sequences, klass, iterables
-
 
 _section_data = sequences.namedtuple('_section_data', ['name', 'section'])
 
@@ -129,6 +128,9 @@ class CollapsedConfig(object):
         self.config = config
         # Cached instance if we have one.
         self._instance = None
+        if manager is not None:
+            manager = weakref.ref(manager)
+        self.manager = manager
 
     def instantiate(self):
         if self._instance is None:
@@ -177,6 +179,19 @@ class CollapsedConfig(object):
                 except errors.ConfigurationError, e:
                     e.stack.append('Instantiating refs %r' % (name,))
                     raise
+
+        if self.type.requires_config:
+            if self.manager is None:
+                raise Exception("configuration internal error; "
+                    "requires_config is enabled "
+                    "but we have no config manager to return ")
+            manager = self.manager()
+            if manager is None:
+                raise Exception("Configuration internal error, potentially "
+                    "client code error; manager requested, but the config "
+                    "manager is no longer in memory")
+
+            config[self.type.requires_config] = manager
 
         callable_obj = self.type.callable
 

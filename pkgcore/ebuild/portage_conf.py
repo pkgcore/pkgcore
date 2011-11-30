@@ -165,13 +165,13 @@ def make_syncer(new_config, basedir, sync_uri, rsync_opts,
     else:
         d['class'] = 'pkgcore.sync.base.GenericSyncer'
 
-    name = '%s syncer' % basedir
+    name = 'sync:%s' % basedir
     new_config[name] = basics.AutoConfigSection(d)
     return name
 
 
 def make_autodetect_syncer(new_config, basedir):
-    name = '%s syncer' % basedir
+    name = 'sync:%s' % basedir
     new_config[name] = basics.AutoConfigSection({
         'class':'pkgcore.sync.base.AutodetectSyncer',
         'basedir':basedir})
@@ -413,14 +413,7 @@ def config_from_make_conf(location="/etc/"):
                 'raw_repo': ('raw:' + tree_loc),
                 'parent_repo': 'portdir',
         }
-        if tree_loc in overlay_syncers:
-            kwds['sync'] = overlay_syncers[tree_loc]
         new_config[tree_loc] = basics.AutoConfigSection(kwds)
-
-    for tree_loc in [portdir] + portdir_overlays:
-        new_config['raw:' + tree_loc] = basics.AutoConfigSection(
-            {'class':'pkgcore.ebuild.repo_objs.RepoConfig',
-             'location':tree_loc})
 
     rsync_portdir_cache = os.path.exists(pjoin(portdir, "metadata", "cache")) \
         and "metadata-transfer" not in features
@@ -436,8 +429,7 @@ def config_from_make_conf(location="/etc/"):
 
     base_portdir_config = {}
     if portdir_syncer is not None:
-        base_portdir_config = {"sync": make_syncer(new_config, portdir,
-            portdir_syncer, rsync_opts)}
+        make_syncer(new_config, portdir, portdir_syncer, rsync_opts)
 
     # setup portdir.
     cache = ('portdir cache',)
@@ -493,6 +485,14 @@ def config_from_make_conf(location="/etc/"):
             my_convert_hybrid, {
                 'class': 'pkgcore.repository.multiplex.config_tree',
                 'repositories': tuple(reversed([portdir] + portdir_overlays))})
+
+    for tree_loc in [portdir] + portdir_overlays:
+        conf = {'class':'pkgcore.ebuild.repo_objs.RepoConfig',
+             'location':tree_loc}
+        if 'sync:%s' % (tree_loc,) in new_config:
+            conf['syncer'] = 'sync:%s' % (tree_loc,)
+        new_config['raw:' + tree_loc] = basics.AutoConfigSection(conf)
+
 
     new_config['vuln'] = basics.AutoConfigSection({
             'class': SecurityUpgradesViaProfile,

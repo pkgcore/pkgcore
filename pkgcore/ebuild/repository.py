@@ -182,9 +182,11 @@ class _UnconfiguredTree(syncable.tree_mixin, prototype.tree):
         """
 
         prototype.tree.__init__(self)
-        syncable.tree_mixin.__init__(self, sync)
         if repo_config is None:
             repo_config = repo_objs.RepoConfig(location)
+        if sync is None:
+            sync = repo_config.syncer
+        syncable.tree_mixin.__init__(self, sync)
         self.config = repo_config
         self._repo_id = override_repo_id
         self.base = self.location = location

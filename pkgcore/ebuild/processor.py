@@ -546,6 +546,9 @@ class EbuildProcessor(object):
                 if not x[0].isalpha():
                     raise KeyError(x)
                 s = env_dict[x]
+                if not isinstance(s, basestring):
+                    raise ValueError("_generate_env_str was fed a bad value; key=%s, val=%s"
+                        % (x, s))
                 if s.isalnum():
                     data.append("%s=%s" % (x, s))
                 elif "'" not in s:

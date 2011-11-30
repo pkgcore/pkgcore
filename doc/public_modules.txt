@@ -81,14 +81,6 @@ pkgcore.pkgsets.glsa
 pkgcore.pkgsets.installed
 pkgcore.pkgsets.system
 pkgcore.plugin
-pkgcore.plugins
-pkgcore.plugins.pkgcore_configurables
-pkgcore.plugins.pkgcore_ebuild_built
-pkgcore.plugins.pkgcore_ebuild_src
-pkgcore.plugins.pkgcore_formatters
-pkgcore.plugins.pkgcore_fsops_default
-pkgcore.plugins.pkgcore_syncers
-pkgcore.plugins.pkgcore_triggers
 pkgcore.repository
 pkgcore.repository.configured
 pkgcore.repository.errors

@@ -27,6 +27,7 @@ class UnconfiguredTreeTest(mixins.TempDirMixin):
         self.pdir = pjoin(self.dir, 'profiles')
         osutils.ensure_dirs(self.pdir)
 
+    @silence_logging
     def test_basics(self):
         self.assertRaises(
             errors.InitializationError,
@@ -41,6 +42,7 @@ class UnconfiguredTreeTest(mixins.TempDirMixin):
         self.assertTrue(str(repo))
         self.assertTrue(repr(repo))
 
+    @silence_logging
     def test_thirdpartymirrors(self):
         open(pjoin(self.pdir, 'thirdpartymirrors'), 'w').write('''\
 spork		http://sporks/ http://moresporks/
@@ -68,6 +70,7 @@ foon		foon://foons/
         repo = self.mk_tree(dir2)
         self.assertEqual('testrepo', repo.repo_id)
 
+    @silence_logging
     def test_categories_packages(self):
         osutils.ensure_dirs(pjoin(self.dir, 'cat', 'pkg'))
         osutils.ensure_dirs(pjoin(self.dir, 'empty', 'empty'))
@@ -98,6 +101,7 @@ foon		foon://foons/
                     repo.itermatch(atom('cat/pkg'))), ['cat/pkg-3'])
                 os.unlink(fp)
 
+    @silence_logging
     def test_package_mask(self):
         open(pjoin(self.pdir, 'package.mask'), 'w').write('''\
 # lalala

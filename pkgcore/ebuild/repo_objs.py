@@ -326,7 +326,16 @@ class RepoConfig(object):
         }
 
         sf(self, 'manifests', _immutable_attr_dict(d))
-        sf(self, 'masters', tuple(iter_stable_unique(data.get('masters', '').split())))
+        masters = data.get('masters')
+        if masters is None:
+            if self.repo_id != 'gentoo':
+                logger.warn("repository at %r, named %r, doesn't specify masters in layout.conf. "
+                    "Defaulting to whatever repository is defined as 'default' (gentoo usually). "
+                    "Please explicitly set the masters, or set masters = '' if the repository "
+                    "is standalone.", self.location, self.repo_id)
+        else:
+            masters = tuple(iter_stable_unique(masters.split()))
+        sf(self, 'masters', masters)
         sf(self, 'aliases', tuple(iter_stable_unique(data.get('aliases', '').split())))
         v = data.get('cache-format', 'pms').lower()
         if v not in ('md5-dict', 'pms'):

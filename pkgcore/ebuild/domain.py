@@ -325,8 +325,14 @@ class domain(pkgcore.config.domain.domain):
                 self.configured_named_repos[key] = wrapped_repo
                 if filtered:
                     config = getattr(repo, 'config', None)
-                    masks = [repo_masks.get(master, [(), ()])
-                        for master in getattr(config, 'masters', ())]
+                    masters = getattr(config, 'masters', ())
+                    if masters is None:
+                        # tough cookies.  If a user has an overlay, no masters
+                        # defined, we're not applying the portdir masks.
+                        # we do this both since that's annoying, and since
+                        # frankly there isn't any good course of action.
+                        masters = ()
+                    masks = [repo_masks.get(master, [(), ()]) for master in masters]
                     masks.append(repo_masks[repo.repo_id])
                     masks.extend(profile_masks)
                     m = set()

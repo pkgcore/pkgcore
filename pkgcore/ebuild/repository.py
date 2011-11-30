@@ -92,11 +92,56 @@ class repo_operations(_repo_ops.operations):
                     pkg.release_cached_data(all=True)
         return ret
 
-def _sort_eclasses(path, eclasses):
+def _sort_eclasses(config, raw_repo, eclasses):
     if eclasses:
         return eclasses
-    epath = pjoin(path, 'eclasses')
-    return eclass_cache_module.cache(epath)
+
+    loc = raw_repo.location
+    masters = raw_repo.masters
+    eclasses = []
+    default = portdir = config.get_default('raw_repo')
+    if portdir is None:
+        portdir = loc
+    else:
+        portdir = portdir.location
+
+    if not masters:
+        if masters is None and raw_repo.repo_id != 'gentoo':
+            # if it's None, that means it's not a standalone, and is PMS, or misconfigured.
+            # empty tuple means it's a standalone repository
+            if default is None:
+                raise Exception("repository %r named %r wants the default repository "
+                    "(portdir for example), but no repository is marked as the default. "
+                    "Fix your configuration." % (loc, raw_repo.repo_id))
+            eclasses = [default.location]
+    else:
+        repo_map = dict((r.repo_id, r.location) for r in
+            config.objects['raw_repo'].itervalues())
+
+        missing = set(raw_repo.masters).difference(repo_map)
+        if missing:
+            missing = ', '.join(sorted(missing))
+            raise Exception("repo %r at path %r has masters %r, but we cannot find "
+                "the following repositories: %s" % (raw_repo.repo_id, loc, missing))
+        eclasses = [repo_map[x] for x in masters]
+
+    # add the repositories eclasses directories if it's not specified.
+    # do it in this fashion so that the repositories masters can actually interpose
+    # this repositories eclasses in between others.
+    # admittedly an odd thing to do, but it has some benefits
+    if loc not in eclasses:
+        eclasses.append(loc)
+
+    eclasses = [eclass_cache_module.cache(pjoin(x, 'eclass'), portdir=portdir)
+        for x in eclasses]
+
+    if len(eclasses) == 1:
+        eclasses = eclasses[0]
+    else:
+        eclasses = eclass_cache_module.StackedCaches(eclasses, portdir=portdir,
+            eclassdir=portdir)
+    return eclasses
+
 
 @configurable(typename='repo',
         types={'raw_repo': 'ref:raw_repo', 'cache': 'refs:cache',
@@ -104,10 +149,13 @@ def _sort_eclasses(path, eclasses):
          'default_mirrors': 'list', 'sync': 'lazy_ref:syncer',
          'override_repo_id':'str',
          'ignore_paludis_versioning':'bool',
-         'allow_missing_manifests':'bool'})
-def tree(raw_repo, cache=(), eclass_override=None, default_mirrors=None,
+         'allow_missing_manifests':'bool'},
+         requires_config='config')
+def tree(config, raw_repo, cache=(), eclass_override=None, default_mirrors=None,
     ignore_paludis_versioning=False, allow_missing_manifests=False, sync=None):
-    eclass_override = _sort_eclasses(raw_repo.location, eclass_override)
+
+    eclass_override = _sort_eclasses(config, raw_repo, eclass_override)
+
     return _UnconfiguredTree(raw_repo.location, eclass_override, cache=cache,
         default_mirrors=default_mirrors,
         ignore_paludis_versioning=ignore_paludis_versioning,
@@ -121,10 +169,13 @@ def tree(raw_repo, cache=(), eclass_override=None, default_mirrors=None,
          'default_mirrors': 'list', 'sync': 'lazy_ref:syncer',
          'override_repo_id':'str',
          'ignore_paludis_versioning':'bool',
-         'allow_missing_manifests':'bool'})
-def slavedtree(raw_repo, parent_repo, cache=(), eclass_override=None, default_mirrors=None,
+         'allow_missing_manifests':'bool'},
+         requires_config='config')
+def slavedtree(config, raw_repo, parent_repo, cache=(), eclass_override=None, default_mirrors=None,
     ignore_paludis_versioning=False, allow_missing_manifests=False, sync=None):
-    eclass_override = _sort_eclasses(raw_repo.location, eclass_override)
+
+    eclass_override = _sort_eclasses(config, raw_repo, eclass_override)
+
     return _SlavedTree(parent_repo, raw_repo.location, eclass_override, cache=cache,
         default_mirrors=default_mirrors,
         ignore_paludis_versioning=ignore_paludis_versioning,

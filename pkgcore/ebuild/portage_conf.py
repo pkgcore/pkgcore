@@ -369,21 +369,10 @@ def config_from_make_conf(location="/etc/"):
         normpath(x) for x in conf_dict.pop("PORTDIR_OVERLAY", "").split()]
 
 
-    # define the eclasses now.
-    all_ecs = []
-    for x in [portdir] + portdir_overlays:
-        ec_path = pjoin(x, "eclass")
-        new_config[ec_path] = basics.AutoConfigSection({
-                "class": "pkgcore.ebuild.eclass_cache.cache",
-                "path": ec_path,
-                "portdir": portdir})
-        all_ecs.append(ec_path)
-
     new_config['ebuild-repo-common'] = basics.AutoConfigSection({
             'class': 'pkgcore.ebuild.repository.tree',
             'default_mirrors': gentoo_mirrors,
             'inherit-only': True,
-            'eclass_override': 'eclass stack',
             'ignore_paludis_versioning':
                 ('ignore-paludis-versioning' in features),
             'allow_missing_manifests':
@@ -422,7 +411,7 @@ def config_from_make_conf(location="/etc/"):
     if rsync_portdir_cache:
         new_config["portdir cache"] = basics.AutoConfigSection({
             'class': 'pkgcore.cache.metadata.database', 'readonly': 'yes',
-            'location': portdir, 'eclasses': pjoin(portdir, 'eclass'),
+            'location': portdir,
         })
     else:
         new_config["portdir cache"] = mk_simple_cache(config_root, portdir)
@@ -471,15 +460,7 @@ def config_from_make_conf(location="/etc/"):
                 'inherit': ('ebuild-repo-common',),
                 'raw_repo': 'raw:' + portdir,
                 'cache': cache,
-                'eclass_override': pjoin(portdir, 'eclass')})
-
-        # reverse the ordering so that overlays override portdir
-        # (portage default)
-        new_config["eclass stack"] = basics.FakeIncrementalDictConfigSection(
-            my_convert_hybrid, {
-                'class': 'pkgcore.ebuild.eclass_cache.StackedCaches',
-                'eclassdir': pjoin(portdir, "eclass"),
-                'caches': tuple(reversed(all_ecs))})
+            })
 
         new_config['repo-stack'] = basics.FakeIncrementalDictConfigSection(
             my_convert_hybrid, {
@@ -491,6 +472,8 @@ def config_from_make_conf(location="/etc/"):
              'location':tree_loc}
         if 'sync:%s' % (tree_loc,) in new_config:
             conf['syncer'] = 'sync:%s' % (tree_loc,)
+        if tree_loc == portdir:
+            conf['default'] = True
         new_config['raw:' + tree_loc] = basics.AutoConfigSection(conf)
 
 

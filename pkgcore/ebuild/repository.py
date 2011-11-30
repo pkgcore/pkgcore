@@ -92,6 +92,11 @@ class repo_operations(_repo_ops.operations):
                     pkg.release_cached_data(all=True)
         return ret
 
+def _sort_eclasses(path, eclasses):
+    if eclasses:
+        return eclasses
+    epath = pjoin(path, 'eclasses')
+    return eclass_cache_module.cache(epath)
 
 @configurable(typename='repo',
         types={'raw_repo': 'ref:raw_repo', 'cache': 'refs:cache',
@@ -102,8 +107,9 @@ class repo_operations(_repo_ops.operations):
          'allow_missing_manifests':'bool'})
 def tree(raw_repo, cache=(), eclass_override=None, default_mirrors=None,
     ignore_paludis_versioning=False, allow_missing_manifests=False, sync=None):
-    return _UnconfiguredTree(raw_repo.location, cache=cache,
-        eclass_cache=eclass_override, default_mirrors=default_mirrors,
+    eclass_override = _sort_eclasses(raw_repo.location, eclass_override)
+    return _UnconfiguredTree(raw_repo.location, eclass_override, cache=cache,
+        default_mirrors=default_mirrors,
         ignore_paludis_versioning=ignore_paludis_versioning,
         allow_missing_manifests=allow_missing_manifests,
         repo_config=raw_repo, sync=sync)
@@ -118,8 +124,9 @@ def tree(raw_repo, cache=(), eclass_override=None, default_mirrors=None,
          'allow_missing_manifests':'bool'})
 def slavedtree(raw_repo, parent_repo, cache=(), eclass_override=None, default_mirrors=None,
     ignore_paludis_versioning=False, allow_missing_manifests=False, sync=None):
-    return _SlavedTree(parent_repo, raw_repo.location, cache=cache,
-        eclass_cache=eclass_override, default_mirrors=default_mirrors,
+    eclass_override = _sort_eclasses(raw_repo.location, eclass_override)
+    return _SlavedTree(parent_repo, raw_repo.location, eclass_override, cache=cache,
+        default_mirrors=default_mirrors,
         ignore_paludis_versioning=ignore_paludis_versioning,
         allow_missing_manifests=allow_missing_manifests,
         repo_config=raw_repo, sync=sync)
@@ -159,7 +166,7 @@ class _UnconfiguredTree(syncable.tree_mixin, prototype.tree):
         },
         typename='repo')
 
-    def __init__(self, location, cache=(), eclass_cache=None,
+    def __init__(self, location, eclass_cache, cache=(),
                  default_mirrors=None, sync=None, override_repo_id=None,
                  ignore_paludis_versioning=False, allow_missing_manifests=False,
                  repo_config=None):
@@ -198,11 +205,7 @@ class _UnconfiguredTree(syncable.tree_mixin, prototype.tree):
         except OSError:
             raise_from(errors.InitializationError(
                 "lstat failed on base %s" % (self.base,)))
-        if eclass_cache is None:
-            self.eclass_cache = eclass_cache_module.cache(
-                pjoin(self.base, "eclass"), self.base)
-        else:
-            self.eclass_cache = eclass_cache
+        self.eclass_cache = eclass_cache
 
         self.licenses = repo_objs.Licenses(location)
 

@@ -7,7 +7,7 @@ from snakeoil.test import mixins
 from pkgcore.test import silence_logging
 from snakeoil import osutils
 pjoin = osutils.pjoin
-from pkgcore.ebuild import repository
+from pkgcore.ebuild import repository, eclass_cache
 from pkgcore.ebuild.atom import atom
 from pkgcore.repository import errors
 from pkgcore.ebuild import errors as ebuild_errors
@@ -15,7 +15,12 @@ from pkgcore.ebuild import errors as ebuild_errors
 class UnconfiguredTreeTest(mixins.TempDirMixin):
 
     def mk_tree(self, path, *args, **kwds):
-        return repository._UnconfiguredTree(path, *args, **kwds)
+        eclasses = kwds.pop('eclass_cache', None)
+        if eclasses is None:
+            epath = pjoin(path, 'eclass')
+            osutils.ensure_dirs(epath)
+            eclasses = eclass_cache.cache(epath)
+        return repository._UnconfiguredTree(path, eclasses, *args, **kwds)
 
     def setUp(self):
         mixins.TempDirMixin.setUp(self)

@@ -29,7 +29,7 @@ demandload.demandload(globals(),
     'tempfile',
     'errno',
     'pkgcore.log:logger',
-    'snakeoil:fileutils',
+    'snakeoil:fileutils,osutils',
 )
 
 _plugin_data = sequences.namedtuple("_plugin_data",
@@ -39,6 +39,14 @@ PLUGIN_ATTR = 'pkgcore_plugins'
 
 CACHE_HEADER = 'pkgcore plugin cache v3'
 CACHE_FILENAME = 'plugincache'
+
+def _clean_old_caches(path):
+    for name in ('plugincache2',):
+        try:
+            osutils.unlink_if_exists(pjoin(path, name))
+        except EnvironmentError, e:
+            logger.error("attempting to clean old plugin cache %r failed with %s",
+                pjoin(path, name), e)
 
 def sort_plugs(plugs):
     return sorted(plugs, reverse=True, key=lambda x:(x.key, x.priority, x.source))
@@ -174,14 +182,18 @@ def initialize_cache(package, force=False):
             if e.errno not in (errno.ENOENT, errno.ENOTDIR):
                 raise
             continue
+        stored_cache_name = pjoin(path, CACHE_FILENAME)
+        stored_cache = _read_cache_file(package, stored_cache_name)
+
+        if force:
+            _clean_old_caches(path)
+
         # Directory cache, mapping modulename to
         # (mtime, set([keys]))
         modlist = set(x for x in modlist if os.path.splitext(x)[1] == '.py'
                 and x != '__init__.py')
         modlist.difference_update(seen_modnames)
 
-        stored_cache_name = pjoin(path, CACHE_FILENAME)
-        stored_cache = _read_cache_file(package, stored_cache_name)
         cache_stale = False
         # Hunt for modules.
         actual_cache = mappings.defaultdict(set)

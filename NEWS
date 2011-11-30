@@ -4,6 +4,8 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* pplugincache now removes old caches when ran.
+
 * pkgcore now honors layout.conf masters for eclass stacking.
 
 * pplugincache now forces an update, regardless of mtimes involved.

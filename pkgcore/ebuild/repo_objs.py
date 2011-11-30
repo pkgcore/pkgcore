@@ -280,7 +280,7 @@ class _immutable_attr_dict(mappings.ImmutableDict):
 class RepoConfig(object):
 
     __slots__ = ("location", "manifests", "masters", "aliases", "cache_format",
-        'profile_format', 'syncer')
+        'profile_format', 'syncer', '_repo_id')
 
     layout_offset = "metadata/layout.conf"
 
@@ -343,3 +343,12 @@ class RepoConfig(object):
                 (self.location, ', '.join(repr(x) for x in sorted(v))))
             v = 'pms'
         sf(self, 'profile_format', list(v)[0])
+
+    @klass.jit_attr
+    def repo_id(self):
+        val = fileutils.readfile(pjoin(self.location, 'profiles', 'repo_name'), True)
+        if val is None:
+            logger.warn("repository at location %r lacks a defined repo_name",
+                self.location)
+            val = '<unlabeled repository %s>' % self.location
+        return val.strip()

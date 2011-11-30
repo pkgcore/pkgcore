@@ -231,17 +231,7 @@ class _UnconfiguredTree(syncable.tree_mixin, prototype.tree):
             self, cache, self.eclass_cache, self.mirrors, self.default_mirrors)
         self._shared_pkg_cache = WeakValCache()
 
-    @property
-    def repo_id(self):
-        if self._repo_id is None:
-            # thank you spb for a stupid location, and stupid file name.
-            r = readfile(pjoin(self.location, "profiles",
-                "repo_name"), True)
-            if r is None:
-                self._repo_id = self.location
-            else:
-                self._repo_id = r.strip()
-        return self._repo_id
+    repo_id = klass.alias_attr("config.repo_id")
 
     def __getitem__(self, cpv):
         cpv_inst = self.package_class(*cpv)

@@ -1,8 +1,10 @@
+# Copyright: 2011 Brian Harring <ferringb@gmail.com>
 # Copyright: 2007 Marien Zwart <marienz@gentoo.org>
 # License: BSD/GPL2
 
 import os
 from snakeoil.test import mixins
+from pkgcore.test import silence_logging
 from snakeoil import osutils
 pjoin = osutils.pjoin
 from pkgcore.ebuild import repository
@@ -49,11 +51,16 @@ foon		foon://foons/
         self.assertEqual(self.mk_tree(self.dir).mirrors.keys(),
             ['foon'])
 
+    @silence_logging
     def test_repo_id(self):
-        repo = self.mk_tree(self.dir)
-        self.assertEqual(self.dir, repo.repo_id)
-        open(pjoin(self.pdir, 'repo_name'), 'w').write('testrepo\n')
-        repo = self.mk_tree(self.dir)
+        dir1 = pjoin(self.dir, '1')
+        os.mkdir(dir1, 0755)
+        repo = self.mk_tree(dir1)
+        self.assertEqual(repo.repo_id, '<unlabeled repository %s>' % (dir1,))
+        dir2 = pjoin(self.dir, '2')
+        osutils.ensure_dirs(pjoin(dir2, 'profiles'))
+        open(pjoin(dir2, 'profiles', 'repo_name'), 'w').write('testrepo\n')
+        repo = self.mk_tree(dir2)
         self.assertEqual('testrepo', repo.repo_id)
 
     def test_categories_packages(self):

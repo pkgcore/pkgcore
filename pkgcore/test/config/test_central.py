@@ -147,6 +147,7 @@ class ConfigManagerTest(TestCase):
             [{'myrepo': basics.HardCodedConfigSection({'class': noop}),
               }])
         self.check_error(
+            "Instantiating named section 'myrepo':\n"
             "'No object returned' instantiating "
             "pkgcore.test.config.test_central.noop",
             manager.collapse_named_section('myrepo').instantiate)
@@ -190,9 +191,11 @@ class ConfigManagerTest(TestCase):
         manager = central.ConfigManager(
             [{'myrepo': basics.HardCodedConfigSection({'class': myrepo})
               }], debug=True)
-        self.check_error('I raised',
-                         self.get_config_obj, manager, 'myrepo', 'myrepo',
-                         klass=ValueError)
+        self.check_error(
+            "Instantiating named section 'myrepo':\n"
+            "Caught exception 'I raised' instantiating pkgcore.test.config.test_central.myrepo",
+                self.get_config_obj, manager, 'myrepo', 'myrepo',
+                klass=errors.ConfigurationError)
 
     def test_pargs(self):
         @configurable(types={'p': 'str', 'notp': 'str'},
@@ -296,11 +299,13 @@ class ConfigManagerTest(TestCase):
         spork = manager.collapse_named_section('spork')
         for i in range(3):
             self.check_error(
+                "Instantiating named section 'spork':\n"
                 "'I suck' instantiating "
                 'pkgcore.test.config.test_central.myrepo',
                 spork.instantiate, klass=errors.InstantiationError)
         for i in range(3):
             self.check_error(
+                "Instantiating named section 'spork':\n"
                 "'I suck' instantiating "
                 'pkgcore.test.config.test_central.myrepo',
                 manager.collapse_named_section('spork').instantiate,
@@ -507,11 +512,15 @@ class ConfigManagerTest(TestCase):
                                         'class': broken})]}),
                     }])
         self.check_error(
+            "Instantiating named section 'one':\n"
             "Instantiating ref 'content':\n"
+            "Instantiating named section None:\n"
             "'broken' instantiating pkgcore.test.config.test_central.broken",
             manager.collapse_named_section('one').instantiate)
         self.check_error(
+            "Instantiating named section 'multi':\n"
             "Instantiating refs 'contents':\n"
+            "Instantiating named section None:\n"
             "'broken' instantiating pkgcore.test.config.test_central.broken",
             manager.collapse_named_section('multi').instantiate)
 
@@ -521,6 +530,7 @@ class ConfigManagerTest(TestCase):
             raise errors.InstantiationError('broken')
         self.check_error(
             "Instantiating autoload 'autoload_broken':\n"
+            "Instantiating named section 'autoload_broken':\n"
             "'broken' instantiating pkgcore.test.config.test_central.broken",
             central.ConfigManager, [{
                     'autoload_broken': basics.HardCodedConfigSection({

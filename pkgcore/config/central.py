@@ -37,11 +37,7 @@ class _ConfigMapping(mappings.DictMixin):
         conf = self.manager.collapse_named_section(key, raise_on_missing=False)
         if conf is None or conf.type.name != self.typename:
             raise KeyError(key)
-        try:
-            return conf.instantiate()
-        except errors.ConfigurationError, e:
-            e.stack.append('Instantiating named section %r' % (key,))
-            raise
+        return conf.instantiate()
 
     def iterkeys(self):
         for config in self.manager.configs:
@@ -135,12 +131,26 @@ class CollapsedConfig(object):
         self._instance = None
 
     def instantiate(self):
+        if self._instance is None:
+            try:
+                self._instance = self._instantiate()
+            except compatibility.IGNORED_EXCEPTIONS:
+                raise
+            except errors.BaseError, e:
+                e.stack.append("Instantiating named section %r" % (self.name,))
+                raise
+            except Exception, e:
+                new_e = errors.InstantiationError(exception=e,
+                    callable_obj=self.type.callable)
+                new_e.stack.append("Instantiating named section %r" % (self.name,))
+                compatibility.raise_from(new_e)
+        return self._instance
+
+    def _instantiate(self):
         """Call our type's callable, cache and return the result.
 
         Calling instantiate more than once will return the cached value.
         """
-        if self._instance is not None:
-            return self._instance
 
         # Needed because this code can run twice even with instance
         # caching if we trigger an InstantiationError.

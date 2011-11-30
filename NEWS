@@ -4,6 +4,8 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+pkgcore 0.7.6: Nov 30th, 2011
+
 * pplugincache now removes old caches when ran.
 
 * pkgcore now honors layout.conf masters for eclass stacking.

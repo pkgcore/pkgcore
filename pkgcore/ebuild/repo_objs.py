@@ -280,7 +280,7 @@ class _immutable_attr_dict(mappings.ImmutableDict):
 class RepoConfig(object):
 
     __slots__ = ("location", "manifests", "masters", "aliases", "cache_format",
-        'profile_format')
+        'profile_format', 'syncer')
 
     layout_offset = "metadata/layout.conf"
 
@@ -291,10 +291,12 @@ class RepoConfig(object):
     __metaclass__ = WeakInstMeta
     __inst_caching__ = True
 
-    pkgcore_config_type = ConfigHint(typename='raw_repo')
+    pkgcore_config_type = ConfigHint(typename='raw_repo',
+        types={'syncer':'lazy_ref:syncer'})
 
-    def __init__(self, location):
+    def __init__(self, location, syncer=None):
         object.__setattr__(self, 'location', location)
+        object.__setattr__(self, 'syncer', syncer)
         self.parse_config()
 
     def load_config(self):

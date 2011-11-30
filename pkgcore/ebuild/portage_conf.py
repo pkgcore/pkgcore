@@ -383,7 +383,7 @@ def config_from_make_conf(location="/etc/"):
             'class': 'pkgcore.ebuild.repository.tree',
             'default_mirrors': gentoo_mirrors,
             'inherit-only': True,
-            'eclass_cache': 'eclass stack',
+            'eclass_override': 'eclass stack',
             'ignore_paludis_versioning':
                 ('ignore-paludis-versioning' in features),
             'allow_missing_manifests':
@@ -408,17 +408,17 @@ def config_from_make_conf(location="/etc/"):
     for tree_loc in portdir_overlays:
         kwds = {
                 'inherit': ('ebuild-repo-common',),
-                'location': tree_loc,
                 'cache': (mk_simple_cache(config_root, tree_loc),),
-                'class': 'pkgcore.ebuild.repository.SlavedTree',
-                'parent_repo': 'portdir'
+                'class': 'pkgcore.ebuild.repository.slavedtree',
+                'raw_repo': ('raw:' + tree_loc),
+                'parent_repo': 'portdir',
         }
         if tree_loc in overlay_syncers:
             kwds['sync'] = overlay_syncers[tree_loc]
         new_config[tree_loc] = basics.AutoConfigSection(kwds)
 
     for tree_loc in [portdir] + portdir_overlays:
-        new_config['raw %s' % tree_loc] = basics.AutoConfigSection(
+        new_config['raw:' + tree_loc] = basics.AutoConfigSection(
             {'class':'pkgcore.ebuild.repo_objs.RepoConfig',
              'location':tree_loc})
 
@@ -444,7 +444,7 @@ def config_from_make_conf(location="/etc/"):
     if not portdir_overlays:
         d = dict(base_portdir_config)
         d['inherit'] = ('ebuild-repo-common',)
-        d['location'] = portdir
+        d['portdir'] = 'raw:' + portdir
         d['cache'] = ('portdir cache',)
 
         new_config[portdir] = basics.FakeIncrementalDictConfigSection(
@@ -462,7 +462,7 @@ def config_from_make_conf(location="/etc/"):
 
         d = dict(base_portdir_config)
         d['inherit'] = ('ebuild-repo-common',)
-        d['location'] = portdir
+        d['raw_repo'] = 'raw:' + portdir
         d['cache'] = cache
 
         new_config[portdir] = basics.FakeIncrementalDictConfigSection(
@@ -477,9 +477,9 @@ def config_from_make_conf(location="/etc/"):
         new_config['portdir'] = basics.FakeIncrementalDictConfigSection(
             my_convert_hybrid, {
                 'inherit': ('ebuild-repo-common',),
-                'location': portdir,
+                'raw_repo': 'raw:' + portdir,
                 'cache': cache,
-                'eclass_cache': pjoin(portdir, 'eclass')})
+                'eclass_override': pjoin(portdir, 'eclass')})
 
         # reverse the ordering so that overlays override portdir
         # (portage default)

@@ -5,14 +5,14 @@
 ebuild repository, specific to gentoo ebuild trees (whether cvs or rsync)
 """
 
-__all__ = ("UnconfiguredTree", "SlavedTree", "ConfiguredTree")
+__all__ = ("tree", "slavedtree",)
 
 import os, stat
 from itertools import imap, ifilterfalse
 
 from pkgcore.repository import prototype, errors, configured, syncable
 from pkgcore.ebuild import eclass_cache as eclass_cache_module
-from pkgcore.config import ConfigHint
+from pkgcore.config import ConfigHint, configurable
 from pkgcore.plugin import get_plugin
 from pkgcore.operations import repo as _repo_ops
 
@@ -93,10 +93,41 @@ class repo_operations(_repo_ops.operations):
         return ret
 
 
+@configurable(typename='repo',
+        types={'raw_repo': 'ref:raw_repo', 'cache': 'refs:cache',
+         'eclass_override': 'ref:eclass_cache',
+         'default_mirrors': 'list', 'sync': 'lazy_ref:syncer',
+         'override_repo_id':'str',
+         'ignore_paludis_versioning':'bool',
+         'allow_missing_manifests':'bool'})
+def tree(raw_repo, cache=(), eclass_override=None, default_mirrors=None,
+    ignore_paludis_versioning=False, allow_missing_manifests=False, sync=None):
+    return _UnconfiguredTree(raw_repo.location, cache=cache,
+        eclass_cache=eclass_override, default_mirrors=default_mirrors,
+        ignore_paludis_versioning=ignore_paludis_versioning,
+        allow_missing_manifests=allow_missing_manifests,
+        repo_config=raw_repo, sync=sync)
+
+@configurable(typename='repo',
+        types={'raw_repo': 'ref:raw_repo', 'cache': 'refs:cache',
+         'parent_repo':'ref:repo',
+         'eclass_override': 'ref:eclass_cache',
+         'default_mirrors': 'list', 'sync': 'lazy_ref:syncer',
+         'override_repo_id':'str',
+         'ignore_paludis_versioning':'bool',
+         'allow_missing_manifests':'bool'})
+def slavedtree(raw_repo, parent_repo, cache=(), eclass_override=None, default_mirrors=None,
+    ignore_paludis_versioning=False, allow_missing_manifests=False, sync=None):
+    return _SlavedTree(parent_repo, raw_repo.location, cache=cache,
+        eclass_cache=eclass_override, default_mirrors=default_mirrors,
+        ignore_paludis_versioning=ignore_paludis_versioning,
+        allow_missing_manifests=allow_missing_manifests,
+        repo_config=raw_repo, sync=sync)
+
 
 metadata_offset = "profiles"
 
-class UnconfiguredTree(syncable.tree_mixin, prototype.tree):
+class _UnconfiguredTree(syncable.tree_mixin, prototype.tree):
 
     """
     raw implementation supporting standard ebuild tree.
@@ -124,12 +155,14 @@ class UnconfiguredTree(syncable.tree_mixin, prototype.tree):
          'override_repo_id':'str',
          'ignore_paludis_versioning':'bool',
          'allow_missing_manifests':'bool',
+         'repo_config':'ref:raw_repo',
         },
         typename='repo')
 
     def __init__(self, location, cache=(), eclass_cache=None,
                  default_mirrors=None, sync=None, override_repo_id=None,
-                 ignore_paludis_versioning=False, allow_missing_manifests=False):
+                 ignore_paludis_versioning=False, allow_missing_manifests=False,
+                 repo_config=None):
 
         """
         :param location: on disk location of the tree
@@ -150,7 +183,9 @@ class UnconfiguredTree(syncable.tree_mixin, prototype.tree):
 
         prototype.tree.__init__(self)
         syncable.tree_mixin.__init__(self, sync)
-        self.config = repo_objs.RepoConfig(location)
+        if repo_config is None:
+            repo_config = repo_objs.RepoConfig(location)
+        self.config = repo_config
         self._repo_id = override_repo_id
         self.base = self.location = location
         try:
@@ -364,14 +399,14 @@ class UnconfiguredTree(syncable.tree_mixin, prototype.tree):
         return [neg, pos]
 
 
-class SlavedTree(UnconfiguredTree):
+class _SlavedTree(_UnconfiguredTree):
 
     """
     repository that pulls repo metadata from a parent repo; mirrors
     being the main metadata pulled at this point
     """
 
-    orig_hint = UnconfiguredTree.pkgcore_config_type
+    orig_hint = _UnconfiguredTree.pkgcore_config_type
     d = dict(orig_hint.types.iteritems())
     d["parent_repo"] = 'ref:repo'
     pkgcore_config_type = orig_hint.clone(types=d,
@@ -380,7 +415,7 @@ class SlavedTree(UnconfiguredTree):
     del d, orig_hint
 
     def __init__(self, parent_repo, *args, **kwds):
-        UnconfiguredTree.__init__(self, *args, **kwds)
+        _UnconfiguredTree.__init__(self, *args, **kwds)
         for k, v in parent_repo.mirrors.iteritems():
             if k not in self.mirrors:
                 self.mirrors[k] = v
@@ -389,10 +424,10 @@ class SlavedTree(UnconfiguredTree):
             self.default_mirrors)
 
 
-class ConfiguredTree(configured.tree):
+class _ConfiguredTree(configured.tree):
 
     """
-    wrapper around a :obj:`UnconfiguredTree` binding build/configuration data (USE)
+    wrapper around a :obj:`_UnconfiguredTree` binding build/configuration data (USE)
     """
 
     configurable = "use"
@@ -404,7 +439,7 @@ class ConfiguredTree(configured.tree):
 
     def __init__(self, raw_repo, domain, domain_settings, fetcher=None):
         """
-        :param raw_repo: :obj:`UnconfiguredTree` instance
+        :param raw_repo: :obj:`_UnconfiguredTree` instance
         :param domain_settings: environment settings to bind
         :param fetcher: :obj:`pkgcore.fetch.base.fetcher` instance to use
             for getting access to fetchable files
@@ -453,5 +488,4 @@ class ConfiguredTree(configured.tree):
             use_override=self._get_pkg_use_for_building(pkg), **kwds)
 
 
-UnconfiguredTree.configure = ConfiguredTree
-tree = UnconfiguredTree
+_UnconfiguredTree.configure = _ConfiguredTree

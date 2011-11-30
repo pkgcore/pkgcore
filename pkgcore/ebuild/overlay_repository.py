@@ -26,7 +26,7 @@ class OverlayRepo(prototype.tree):
 
     configured = False
     configurables = ("domain", "settings",)
-    configure = repository.ConfiguredTree
+    configure = repository._ConfiguredTree
 
     operations_kls = multiplex.operations
 
@@ -35,7 +35,7 @@ class OverlayRepo(prototype.tree):
 
     def __init__(self, trees, **kwds):
         """
-        :param trees: :obj:`pkgcore.ebuild.repository.UnconfiguredTree` instances
+        :param trees: :obj:`pkgcore.ebuild.repository._UnconfiguredTree` instances
             to combine.
         """
 

@@ -286,7 +286,7 @@ pkgcore_ebd_process_ebuild_phases()
 			cont=2
 			;;
 		*)
-			echo "received unknown com during phase processing: $line" >&2
+			echo "received unknown com during phase processing: line was: $line" >&2
 			;;
 		esac
 	done

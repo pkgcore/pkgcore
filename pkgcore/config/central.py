@@ -211,6 +211,8 @@ class CollapsedConfig(object):
         return self._instance
 
 
+_singleton = object()
+
 class _ConfigObjMap(object):
 
     def __init__(self, manager):
@@ -219,15 +221,21 @@ class _ConfigObjMap(object):
     def __getattr__(self, attr):
         return _ConfigMapping(self._manager, attr)
 
+    def __getitem__(self, key):
+        val = getattr(self._manager.objects, key, _singleton)
+        if val is None:
+            raise KeyError(key)
+        return val
+
 
 class CompatConfigManager(object):
 
     def __init__(self, manager):
         self._manager = manager
 
-    def __getattr__(self, attr, singleton=object()):
-        obj = getattr(self._manager, attr, singleton)
-        if obj is singleton:
+    def __getattr__(self, attr):
+        obj = getattr(self._manager, attr, _singleton)
+        if obj is _singleton:
             obj = getattr(self._manager.objects, attr)
         return obj
 

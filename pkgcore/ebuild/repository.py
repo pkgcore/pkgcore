@@ -535,3 +535,7 @@ class _ConfiguredTree(configured.tree):
 
 
 _UnconfiguredTree.configure = _ConfiguredTree
+
+# XXX compatibility hacks for pcheck
+SlavedTree = _SlavedTree
+UnconfiguredTree = _UnconfiguredTree

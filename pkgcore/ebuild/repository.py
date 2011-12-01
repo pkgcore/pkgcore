@@ -10,7 +10,7 @@ __all__ = ("tree", "slavedtree",)
 import os, stat
 from itertools import imap, ifilterfalse
 
-from pkgcore.repository import prototype, errors, configured, syncable
+from pkgcore.repository import prototype, errors, configured
 from pkgcore.ebuild import eclass_cache as eclass_cache_module
 from pkgcore.config import ConfigHint, configurable
 from pkgcore.plugin import get_plugin
@@ -147,13 +147,13 @@ def _sort_eclasses(config, raw_repo, eclasses):
 @configurable(typename='repo',
         types={'raw_repo': 'ref:raw_repo', 'cache': 'refs:cache',
          'eclass_override': 'ref:eclass_cache',
-         'default_mirrors': 'list', 'sync': 'lazy_ref:syncer',
+         'default_mirrors': 'list',
          'override_repo_id':'str',
          'ignore_paludis_versioning':'bool',
          'allow_missing_manifests':'bool'},
          requires_config='config')
 def tree(config, raw_repo, cache=(), eclass_override=None, default_mirrors=None,
-    ignore_paludis_versioning=False, allow_missing_manifests=False, sync=None):
+    ignore_paludis_versioning=False, allow_missing_manifests=False):
 
     eclass_override = _sort_eclasses(config, raw_repo, eclass_override)
 
@@ -161,19 +161,19 @@ def tree(config, raw_repo, cache=(), eclass_override=None, default_mirrors=None,
         default_mirrors=default_mirrors,
         ignore_paludis_versioning=ignore_paludis_versioning,
         allow_missing_manifests=allow_missing_manifests,
-        repo_config=raw_repo, sync=sync)
+        repo_config=raw_repo)
 
 @configurable(typename='repo',
         types={'raw_repo': 'ref:raw_repo', 'cache': 'refs:cache',
          'parent_repo':'ref:repo',
          'eclass_override': 'ref:eclass_cache',
-         'default_mirrors': 'list', 'sync': 'lazy_ref:syncer',
+         'default_mirrors': 'list',
          'override_repo_id':'str',
          'ignore_paludis_versioning':'bool',
          'allow_missing_manifests':'bool'},
          requires_config='config')
 def slavedtree(config, raw_repo, parent_repo, cache=(), eclass_override=None, default_mirrors=None,
-    ignore_paludis_versioning=False, allow_missing_manifests=False, sync=None):
+    ignore_paludis_versioning=False, allow_missing_manifests=False):
 
     eclass_override = _sort_eclasses(config, raw_repo, eclass_override)
 
@@ -181,12 +181,12 @@ def slavedtree(config, raw_repo, parent_repo, cache=(), eclass_override=None, de
         default_mirrors=default_mirrors,
         ignore_paludis_versioning=ignore_paludis_versioning,
         allow_missing_manifests=allow_missing_manifests,
-        repo_config=raw_repo, sync=sync)
+        repo_config=raw_repo)
 
 
 metadata_offset = "profiles"
 
-class _UnconfiguredTree(syncable.tree, prototype.tree):
+class _UnconfiguredTree(prototype.tree):
 
     """
     raw implementation supporting standard ebuild tree.
@@ -210,7 +210,7 @@ class _UnconfiguredTree(syncable.tree, prototype.tree):
     pkgcore_config_type = ConfigHint(
         {'location': 'str', 'cache': 'refs:cache',
          'eclass_cache': 'ref:eclass_cache',
-         'default_mirrors': 'list', 'sync': 'lazy_ref:syncer',
+         'default_mirrors': 'list',
          'override_repo_id':'str',
          'ignore_paludis_versioning':'bool',
          'allow_missing_manifests':'bool',
@@ -219,7 +219,7 @@ class _UnconfiguredTree(syncable.tree, prototype.tree):
         typename='repo')
 
     def __init__(self, location, eclass_cache, cache=(),
-                 default_mirrors=None, sync=None, override_repo_id=None,
+                 default_mirrors=None, override_repo_id=None,
                  ignore_paludis_versioning=False, allow_missing_manifests=False,
                  repo_config=None):
 
@@ -234,8 +234,6 @@ class _UnconfiguredTree(syncable.tree, prototype.tree):
             fetching from first, then falling back to other uri
         :param override_repo_id: Either None, or string to force as the
             repository unique id
-        :param sync: Either None, or a syncer object to use for updating of this
-            repository.
         :param ignore_paludis_versioning: If False, fail when -scm is encountred.  if True,
             silently ignore -scm ebuilds.
         """
@@ -243,9 +241,6 @@ class _UnconfiguredTree(syncable.tree, prototype.tree):
         prototype.tree.__init__(self)
         if repo_config is None:
             repo_config = repo_objs.RepoConfig(location)
-        if sync is None:
-            sync = repo_config.syncer
-        syncable.tree.__init__(self, sync)
         self.config = repo_config
         self._repo_id = override_repo_id
         self.base = self.location = location

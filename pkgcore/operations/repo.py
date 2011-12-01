@@ -143,15 +143,24 @@ class sync_operations(_operations_mod.base):
         syncer = self._get_syncer()
         return syncer.sync()
 
-    def _get_syncer(self):
-        syncer = self.repo._syncer
-        if not isinstance(syncer, _sync_base.syncer):
+    def _get_syncer(self, lazy=False):
+        singleton = object()
+        syncer = getattr(self.repo, '_syncer', singleton)
+        if syncer is singleton:
+            # raw repo's vs non-raw; drive down to the raw repo.
+            # see pkgcore.ebuild.repository for an example
+            syncer = getattr(self.repo, 'config', None)
+            syncer = getattr(syncer, '_syncer', None)
+
+        if not lazy and not isinstance(syncer, _sync_base.syncer):
             syncer = syncer.instantiate()
         return syncer
 
     def _cmd_check_support_sync(self):
-        return getattr(self.repo, '_syncer', None) is not None \
-            and not self._get_syncer().disabled
+        syncer = self._get_syncer(lazy=True)
+        if syncer is not None:
+            return not self._get_syncer().disabled
+        return False
 
 
 class operations(sync_operations):

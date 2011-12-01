@@ -42,23 +42,10 @@ argparser = commandline.mk_argparser(suppress=True, parents=shared_options,
     description="commandline access to various system/repository maintenance functionality")
 subparsers = argparser.add_subparsers(description="general system maintenance")
 
-
-# inconsistant argparse POS; needed due to nargs='*', it tries supplying the
-# default as if it was given via the commandline
-class ReposStoreConfig(commandline.StoreConfigObject):
-
-    def _real_call(self, parser, namespace, values, option_string=None):
-        if values == []:
-            values = namespace.config.repo.keys()
-        return commandline.StoreConfigObject._real_call(self, parser, namespace,
-            values, option_string=option_string)
-
-
 sync = subparsers.add_parser("sync", parents=shared_options,
     description="synchronize a local repository with it's defined remote")
 sync.add_argument('repos', nargs='*', help="repositories to sync",
-    action=ReposStoreConfig, store_name=True,
-    config_type='repo')
+    action=commandline.StoreConfigObject, store_name=True, config_type='repo')
 @sync.bind_main_func
 def sync_main(options, out, err):
     """Update a local repositories to match their remote parent"""

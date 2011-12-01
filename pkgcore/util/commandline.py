@@ -207,6 +207,10 @@ class StoreConfigObject(argparse._StoreAction):
             raise ValueError("no config found.  Internal bug")
 
         sections = getattr(config, self.config_type)
+
+        if self.nargs == argparse.ZERO_OR_MORE and values == []:
+            values = sections.keys()
+
         if values is CONFIG_ALL_DEFAULT:
             value = [self._load_obj(sections, x) for x in sections]
         elif isinstance(values, basestring):

@@ -152,6 +152,11 @@ class EnableDebug(argparse._StoreTrueAction):
 class ConfigError(Exception):
     pass
 
+
+class NoDefaultConfigError(ConfigError):
+    pass
+
+
 class StoreConfigObject(argparse._StoreAction):
 
     default_priority = 20
@@ -226,7 +231,7 @@ class StoreConfigObject(argparse._StoreAction):
                     "via the %s option." % (config_type, option_string)
             if known_objs:
                 msg += "Known %ss: %s" % (config_type, ', '.join(map(repr, known_objs)))
-            raise ConfigError(msg)
+            raise NoDefaultConfigError(msg)
         setattr(namespace, attr, obj)
 
     @staticmethod

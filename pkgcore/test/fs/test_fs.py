@@ -88,6 +88,7 @@ class base(object):
             __default_attrs__ = self.kls.__default_attrs__.copy()
             __default_attrs__['tmp'] = lambda self2:getattr(self2, 'a', 1)
             __attrs__ = self.kls.__attrs__ + ('tmp',)
+            __slots__ = ()
         try:
             self.kls = tmp
             self.assertEqual(self.make_obj('/adsf', strict=False).tmp, 1)

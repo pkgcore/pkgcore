@@ -131,11 +131,30 @@ class replace(install, uninstall):
         install.__init__(self, repo, newpkg, observer)
 
 
-class operations(_operations_mod.base):
+class sync_operations(_operations_mod.base):
 
     def __init__(self, repository, disable_overrides=(), enable_overrides=()):
         self.repo = repository
         _operations_mod.base.__init__(self, disable_overrides, enable_overrides)
+
+    @_operations_mod.is_standalone
+    def _cmd_api_sync(self, observer=None):
+        # often enough, the syncer is a lazy_ref
+        syncer = self._get_syncer()
+        return syncer.sync()
+
+    def _get_syncer(self):
+        syncer = self.repo._syncer
+        if not isinstance(syncer, _sync_base.syncer):
+            syncer = syncer.instantiate()
+        return syncer
+
+    def _cmd_check_support_sync(self):
+        return getattr(self.repo, '_syncer', None) is not None \
+            and not self._get_syncer().disabled
+
+
+class operations(sync_operations):
 
     def _disabled_if_frozen(self, command):
         if self.repo.frozen:
@@ -180,22 +199,6 @@ class operations(_operations_mod.base):
     def _cmd_api_configure(self, pkg, observer=None):
         return self._cmd_implementation_configure(self.repository, pkg,
             self._get_observer(observer))
-
-    @_operations_mod.is_standalone
-    def _cmd_api_sync(self, observer=None):
-        # often enough, the syncer is a lazy_ref
-        syncer = self._get_syncer()
-        return syncer.sync()
-
-    def _get_syncer(self):
-        syncer = self.repo._syncer
-        if not isinstance(syncer, _sync_base.syncer):
-            syncer = syncer.instantiate()
-        return syncer
-
-    def _cmd_check_support_sync(self):
-        return getattr(self.repo, '_syncer', None) is not None \
-            and not self._get_syncer().disabled
 
     @_operations_mod.is_standalone
     def _cmd_api_regen_cache(self, observer=None, threads=1, **options):

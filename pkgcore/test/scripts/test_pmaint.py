@@ -34,14 +34,14 @@ class FakeSyncer(base.syncer):
         return self.succeed
 
 
-class SyncableRepo(syncable.tree_mixin, util.SimpleTree):
+class SyncableRepo(syncable.tree, util.SimpleTree):
 
-    pkgcore_config_type = ConfigHint(typename='repo')
+    pkgcore_config_type = ConfigHint(typename='raw_repo')
 
     def __init__(self, succeed=True):
         util.SimpleTree.__init__(self, {})
         syncer = FakeSyncer('/fake', 'fake', succeed=succeed)
-        syncable.tree_mixin.__init__(self, syncer)
+        syncable.tree.__init__(self, syncer)
 
 
 success_section = basics.HardCodedConfigSection({'class': SyncableRepo,
@@ -67,7 +67,7 @@ class TestSync(TestCase, helpers.ArgParseMixin):
                 "*** synced 'myrepo'",
                 ],
             myrepo=success_section)
-        self.assertTrue(config.repo['myrepo']._syncer.synced)
+        self.assertTrue(config.raw_repo['myrepo']._syncer.synced)
         self.assertOut(
             [
                 "*** syncing 'myrepo'...",

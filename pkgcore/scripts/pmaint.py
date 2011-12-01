@@ -45,16 +45,23 @@ subparsers = argparser.add_subparsers(description="general system maintenance")
 sync = subparsers.add_parser("sync", parents=shared_options,
     description="synchronize a local repository with it's defined remote")
 sync.add_argument('repos', nargs='*', help="repositories to sync",
-    action=commandline.StoreRepoObject, store_name=True)
+    action=commandline.StoreRepoObject, store_name=True, raw=True)
 @sync.bind_main_func
 def sync_main(options, out, err):
     """Update a local repositories to match their remote parent"""
     succeeded, failed = [], []
     seen = set()
     for name, repo in options.repos:
-        if repo in seen:
+        # rewrite the name if it has the usual prefix
+        if name.startswith("raw:"):
+            name = name[len("raw:"):]
+        repo_id = getattr(repo, 'repo_id', None)
+        if repo in seen or repo_id in seen:
             out.write("*** skipping %r, already synced" % name)
             continue
+
+        if repo_id:
+            seen.add(repo_id)
         seen.add(repo)
         ops = repo.operations
         if not ops.supports("sync"):

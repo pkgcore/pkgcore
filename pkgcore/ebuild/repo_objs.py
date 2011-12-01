@@ -17,6 +17,7 @@ from snakeoil import mappings
 from snakeoil import klass
 from itertools import chain
 from pkgcore.config import ConfigHint
+from pkgcore.repository import syncable
 demandload(globals(),
     'snakeoil.xml:etree',
     'pkgcore.log:logger',
@@ -277,10 +278,10 @@ class _immutable_attr_dict(mappings.ImmutableDict):
     mappings.inject_getitem_as_getattr(locals())
 
 
-class RepoConfig(object):
+class RepoConfig(syncable.tree):
 
     __slots__ = ("location", "manifests", "masters", "aliases", "cache_format",
-        'profile_format', 'syncer', '_repo_id', '_is_empty')
+        'profile_format', '_syncer', '_repo_id', '_is_empty')
 
     layout_offset = "metadata/layout.conf"
 
@@ -296,7 +297,7 @@ class RepoConfig(object):
 
     def __init__(self, location, syncer=None):
         object.__setattr__(self, 'location', location)
-        object.__setattr__(self, 'syncer', syncer)
+        syncable.tree.__init__(self, syncer)
         self.parse_config()
 
     def load_config(self):
@@ -376,3 +377,4 @@ class RepoConfig(object):
                     self.location)
             val = '<unlabeled repository %s>' % self.location
         return val.strip()
+

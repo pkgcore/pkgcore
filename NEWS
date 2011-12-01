@@ -4,6 +4,8 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* restore pmaint sync support for unsynced repositories.
+
 * support lookup of a repo by it's name, rather than just by path.
   This affects pquery --repo, pmaint sync, pmaint copy, pinspect, etc.
 

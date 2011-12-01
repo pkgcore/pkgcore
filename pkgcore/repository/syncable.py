@@ -1,9 +1,21 @@
-# Copyright: 2006-2008 Brian Harring <ferringb@gmail.com>
+# Copyright: 2006-2011 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
-__all__ = ("tree_mixin",)
+__all__ = ("tree",)
 
-class tree_mixin(object):
+from pkgcore.operations.repo import sync_operations
+
+class tree(object):
+
+    operations_kls = sync_operations
 
     def __init__(self, sync=None):
-        self._syncer = sync
+        object.__setattr__(self, '_syncer', sync)
+
+    @property
+    def operations(self):
+        return self.get_operations()
+
+    def get_operations(self, observer=None):
+        return self.operations_kls(self)
+

@@ -186,7 +186,7 @@ def slavedtree(config, raw_repo, parent_repo, cache=(), eclass_override=None, de
 
 metadata_offset = "profiles"
 
-class _UnconfiguredTree(syncable.tree_mixin, prototype.tree):
+class _UnconfiguredTree(syncable.tree, prototype.tree):
 
     """
     raw implementation supporting standard ebuild tree.
@@ -245,7 +245,7 @@ class _UnconfiguredTree(syncable.tree_mixin, prototype.tree):
             repo_config = repo_objs.RepoConfig(location)
         if sync is None:
             sync = repo_config.syncer
-        syncable.tree_mixin.__init__(self, sync)
+        syncable.tree.__init__(self, sync)
         self.config = repo_config
         self._repo_id = override_repo_id
         self.base = self.location = location

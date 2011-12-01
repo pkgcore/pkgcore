@@ -141,6 +141,14 @@ class Delayed(argparse.Action):
 CONFIG_ALL_DEFAULT = object()
 
 
+class EnableDebug(argparse._StoreTrueAction):
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        super(EnableDebug, self).__call__(parser, namespace, values,
+            option_string=option_string)
+        logging.root.setLevel(logging.DEBUG)
+
+
 class ConfigError(Exception):
     pass
 
@@ -581,7 +589,7 @@ def mk_argparser(suppress=False, config=True, domain=True, color=True, debug=Tru
         p.add_argument('--version', action=VersionFunc,
             version_func=version)
     if debug:
-        p.add_argument('--debug', action='store_true', help="Enable debugging checks")
+        p.add_argument('--debug', action=EnableDebug, help="Enable debugging checks")
     if color:
         p.add_argument('--color', action=StoreBool,
             default=True,
@@ -605,8 +613,8 @@ def mk_argparser(suppress=False, config=True, domain=True, color=True, debug=Tru
     return p
 
 
-def argparse_parse(parser, args):
-    namespace = parser.parse_args(args)
+def argparse_parse(parser, args, namespace=None):
+    namespace = parser.parse_args(args, namespace=namespace)
     main = getattr(namespace, 'main_func', None)
     if main is None:
         raise Exception("parser %r lacks a main method- internal bug.\nGot namespace %r\n"
@@ -661,13 +669,14 @@ def main(subcommands, args=None, outfile=None, errfile=None,
     if errfile is None:
         errfile = sys.stderr
 
-    options = out = None
+    out = options = None
     try:
         if isinstance(subcommands, dict):
             main_func, options = optparse_parse(subcommands, args=args, script_name=script_name,
                 errfile=errfile)
         else:
-            main_func, options = argparse_parse(subcommands, args)
+            options = argparse.Namespace()
+            main_func, options = argparse_parse(subcommands, args, options)
 
         if getattr(options, 'color', True):
             formatter_factory = formatters.get_formatter

@@ -4,6 +4,9 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* --debug now again enables full traceback output for config failures.
+
+
 * pkgcore 0.7.6.1: Dec 1st, 2011
 
 * fix portage_config generation bug in 0.7.6; in the process, forced

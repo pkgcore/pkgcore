@@ -39,18 +39,17 @@ class _ConfigMapping(mappings.DictMixin):
         return conf.instantiate()
 
     def iterkeys(self):
-        for config in self.manager.configs:
-            for name in config:
-                try:
-                    collapsed = self.manager.collapse_named_section(name)
-                except errors.BaseError:
-                    # Cannot be collapsed, ignore it (this is not
-                    # an error, it can be used as base for
-                    # something that can be collapsed)
-                    pass
-                else:
-                    if collapsed.type.name == self.typename:
-                        yield name
+        for name in self.manager.sections():
+            try:
+                collapsed = self.manager.collapse_named_section(name)
+            except errors.BaseError:
+                # Cannot be collapsed, ignore it (this is not
+                # an error, it can be used as base for
+                # something that can be collapsed)
+                pass
+            else:
+                if collapsed.type.name == self.typename:
+                    yield name
 
     def __contains__(self, key):
         conf = self.manager.collapse_named_section(key, raise_on_missing=False)

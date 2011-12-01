@@ -247,6 +247,33 @@ class StoreConfigObject(argparse._StoreAction):
         setattr(namespace, attr, obj)
 
 
+class StoreRepoObject(StoreConfigObject):
+
+    def __init__(self, *args, **kwargs):
+        if 'config_type' in kwargs:
+            raise ValueError("StoreRepoObject: config_type keyword is redundant: got %s"
+                % (kwargs['config_type'],))
+        self.raw = kwargs.pop("raw", False)
+        if self.raw:
+            kwargs['config_type'] = 'raw_repo'
+        else:
+            kwargs['config_type'] = 'repo'
+        self.allow_name_lookup = kwargs.pop("allow_name_lookup", True)
+        StoreConfigObject.__init__(self, *args, **kwargs)
+
+    def _load_obj(self, sections, name):
+        if not self.allow_name_lookup or name in sections:
+            return StoreConfigObject._load_obj(self, sections, name)
+
+        # name wasn't found; search for it.
+        for repo_name, repo in sections.iteritems():
+            if getattr(repo, 'repo_id', None) == name:
+                name = repo_name
+                break
+
+        return StoreConfigObject._load_obj(self, sections, repo_name)
+
+
 class DomainFromPath(StoreConfigObject):
 
     def __init__(self, *args, **kwargs):

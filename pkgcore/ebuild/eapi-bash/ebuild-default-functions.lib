@@ -405,6 +405,7 @@ inherit()
 	local PECLASS
 
 	local B_IUSE
+	local B_REQUIRED_USE
 	local B_DEPEND
 	local B_RDEPEND
 	local B_PDEPEND
@@ -429,12 +430,13 @@ inherit()
 		pkgcore_shopt_push -f
 
 		# Retain the old data and restore it later.
-		unset B_IUSE B_DEPEND B_RDEPEND B_PDEPEND
+		unset B_IUSE B_REQUIRED_USE B_DEPEND B_RDEPEND B_PDEPEND
 		[ "${IUSE-unset}"    != "unset" ] && B_IUSE="${IUSE}"
+		[ "${REQUIRED_USE-unset}" != "unset" ] && B_REQUIRED_USE="${REQUIRED_USE}"
 		[ "${DEPEND-unset}"  != "unset" ] && B_DEPEND="${DEPEND}"
 		[ "${RDEPEND-unset}" != "unset" ] && B_RDEPEND="${RDEPEND}"
 		[ "${PDEPEND-unset}" != "unset" ] && B_PDEPEND="${PDEPEND}"
-		unset   IUSE   DEPEND   RDEPEND   PDEPEND
+		unset IUSE REQUIRED_USE DEPEND RDEPEND PDEPEND
 		#turn on glob expansion
 		pkgcore_shopt_pop
 		if ! internal_inherit "$1"; then
@@ -446,13 +448,17 @@ inherit()
 
 		# If each var has a value, append it to the global variable E_* to
 		# be applied after everything is finished. New incremental behavior.
-		[ "${IUSE-unset}"    != "unset" ] && export E_IUSE="${E_IUSE} ${IUSE}"
-		[ "${DEPEND-unset}"  != "unset" ] && export E_DEPEND="${E_DEPEND} ${DEPEND}"
-		[ "${RDEPEND-unset}" != "unset" ] && export E_RDEPEND="${E_RDEPEND} ${RDEPEND}"
-		[ "${PDEPEND-unset}" != "unset" ] && export E_PDEPEND="${E_PDEPEND} ${PDEPEND}"
+		[ "${IUSE-unset}"         != "unset" ] && export E_IUSE="${E_IUSE:+ }${IUSE}"
+		[ "${REQUIRED_USE-unset}" != "unset" ] && export E_IUSE="${E_REQUIRED_USE:+ }${REQUIRED_USE}"
+		[ "${DEPEND-unset}"       != "unset" ] && export E_DEPEND="${E_DEPEND:+ }${DEPEND}"
+		[ "${RDEPEND-unset}"      != "unset" ] && export E_RDEPEND="${E_RDEPEND:+ }${RDEPEND}"
+		[ "${PDEPEND-unset}"      != "unset" ] && export E_PDEPEND="${E_PDEPEND:+ }${PDEPEND}"
 
 		[ "${B_IUSE-unset}"    != "unset" ] && IUSE="${B_IUSE}"
 		[ "${B_IUSE-unset}"    != "unset" ] || unset IUSE
+
+		[ "${B_REQUIRED_USE-unset}"    != "unset" ] && B_REQUIRED_USE="${B_REQUIRED_USE}"
+		[ "${B_REQUIRED_USE-unset}"    != "unset" ] || unset REQUIRED_USE
 
 		[ "${B_DEPEND-unset}"  != "unset" ] && DEPEND="${B_DEPEND}"
 		[ "${B_DEPEND-unset}"  != "unset" ] || unset DEPEND

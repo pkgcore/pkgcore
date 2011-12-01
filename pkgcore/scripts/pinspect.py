@@ -107,7 +107,7 @@ class histo_data(commandline.ArgparseCommand):
             help="show only the last N detail items")
 
         parser.add_argument("repos", metavar='repo', nargs='*',
-            action=commandline.StoreConfigObject, config_type='repo', store_name=True,
+            action=commandline.StoreRepoObject, store_name=True,
             default=commandline.CONFIG_ALL_DEFAULT,
             help="repositories to inspect")
 

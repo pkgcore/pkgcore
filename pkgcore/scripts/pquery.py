@@ -399,8 +399,8 @@ repo_group.add_argument('--virtuals', action='store', choices=('only', 'disable'
 
 repo_mux = repo_group.add_mutually_exclusive_group()
 
-repo_mux.add_argument('--repo', config_type='repo',
-    action=commandline.StoreConfigObject, priority=29,
+repo_mux.add_argument('--repo',
+    action=commandline.StoreRepoObject, priority=29,
     help='repo to use (default from domain if omitted).')
 repo_mux.add_argument('--vdb', action='store_true',
     help='match only vdb (installed) packages.')

@@ -45,7 +45,7 @@ subparsers = argparser.add_subparsers(description="general system maintenance")
 sync = subparsers.add_parser("sync", parents=shared_options,
     description="synchronize a local repository with it's defined remote")
 sync.add_argument('repos', nargs='*', help="repositories to sync",
-    action=commandline.StoreConfigObject, store_name=True, config_type='repo')
+    action=commandline.StoreRepoObject, store_name=True)
 @sync.bind_main_func
 def sync_main(options, out, err):
     """Update a local repositories to match their remote parent"""
@@ -86,11 +86,10 @@ def sync_main(options, out, err):
 copy = subparsers.add_parser("copy", parents=shared_options,
     description="copy binpkgs between repositories; primarily useful for "
     "quickpkging a livefs pkg")
-copy.add_argument('target_repo', action=commandline.StoreConfigObject,
-    config_type='repo', writable=True,
-    help="repository to add packages to")
+copy.add_argument('target_repo', action=commandline.StoreRepoObject,
+    writable=True, help="repository to add packages to")
 copy.add_argument('--source-repo', '-s', default=None,
-    action=commandline.StoreConfigObject, config_type='repo',
+    action=commandline.StoreRepoObject,
     help="copy strictly from the supplied repository; else it copies from "
     "wherever a match is found")
 commandline.make_query(copy, nargs='+', dest='query',
@@ -166,8 +165,8 @@ regen.add_argument("--threads", "-t", type=int,
     default=commandline.DelayedValue(_get_default_jobs, 100),
     help="number of threads to use for regeneration.  Defaults to using all "
     "available processors")
-regen.add_argument("repo", action=commandline.StoreConfigObject,
-    config_type='repo', help="repository to regenerate caches for")
+regen.add_argument("repo", action=commandline.StoreRepoObject,
+    help="repository to regenerate caches for")
 @regen.bind_main_func
 def regen_main(options, out, err):
     """Regenerate a repository cache."""

@@ -11,7 +11,7 @@ __all__ = ("Maintainer", "MetadataXml", "LocalMetadataXml",
 from snakeoil.currying import post_curry
 from snakeoil.compatibility import any
 from snakeoil.demandload import demandload
-from snakeoil.osutils import pjoin, listdir_files
+from snakeoil.osutils import pjoin, listdir_files, listdir
 from snakeoil.caching import WeakInstMeta
 from snakeoil import mappings
 from snakeoil import klass
@@ -280,7 +280,7 @@ class _immutable_attr_dict(mappings.ImmutableDict):
 class RepoConfig(object):
 
     __slots__ = ("location", "manifests", "masters", "aliases", "cache_format",
-        'profile_format', 'syncer', '_repo_id')
+        'profile_format', 'syncer', '_repo_id', '_is_empty')
 
     layout_offset = "metadata/layout.conf"
 
@@ -328,7 +328,7 @@ class RepoConfig(object):
         sf(self, 'manifests', _immutable_attr_dict(d))
         masters = data.get('masters')
         if masters is None:
-            if self.repo_id != 'gentoo':
+            if self.repo_id != 'gentoo' and not self.is_empty:
                 logger.warn("repository at %r, named %r, doesn't specify masters in layout.conf. "
                     "Defaulting to whatever repository is defined as 'default' (gentoo usually). "
                     "Please explicitly set the masters, or set masters = '' if the repository "
@@ -354,10 +354,25 @@ class RepoConfig(object):
         sf(self, 'profile_format', list(v)[0])
 
     @klass.jit_attr
+    def is_empty(self):
+        result = True
+        try:
+            # any files means it's not empty
+            result = not listdir(self.location)
+        except EnvironmentError, e:
+            if e.errno != errno.ENOENT:
+                raise
+
+        if result:
+            logger.debug("repository at %r is empty" % (self.location,))
+        return result
+
+    @klass.jit_attr
     def repo_id(self):
         val = fileutils.readfile(pjoin(self.location, 'profiles', 'repo_name'), True)
         if val is None:
-            logger.warn("repository at location %r lacks a defined repo_name",
-                self.location)
+            if not self.is_empty:
+                logger.warn("repository at location %r lacks a defined repo_name",
+                    self.location)
             val = '<unlabeled repository %s>' % self.location
         return val.strip()

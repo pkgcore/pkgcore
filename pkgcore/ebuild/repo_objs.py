@@ -330,7 +330,7 @@ class RepoConfig(syncable.tree):
         masters = data.get('masters')
         if masters is None:
             if self.repo_id != 'gentoo' and not self.is_empty:
-                logger.warn("repository at %r, named %r, doesn't specify masters in layout.conf. "
+                logger.warn("repository at %r, named %r, doesn't specify masters in metadata/layout.conf. "
                     "Defaulting to whatever repository is defined as 'default' (gentoo usually). "
                     "Please explicitly set the masters, or set masters = '' if the repository "
                     "is standalone.", self.location, self.repo_id)

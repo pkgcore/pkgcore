@@ -4,6 +4,9 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* pmaint regen was sped up by over 2x; this restores it's performance
+  back to 0.7.2 levels, fixing a regression introduced in 0.7.3.
+
 * restore pmaint sync support for unsynced repositories.
 
 * support lookup of a repo by it's name, rather than just by path.

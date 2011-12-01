@@ -121,8 +121,9 @@ def _sort_eclasses(config, raw_repo, eclasses):
         missing = set(raw_repo.masters).difference(repo_map)
         if missing:
             missing = ', '.join(sorted(missing))
-            raise Exception("repo %r at path %r has masters %r, but we cannot find "
-                "the following repositories: %s" % (raw_repo.repo_id, loc, missing))
+            raise Exception("repo %r at path %r has masters %s; we cannot find "
+                "the following repositories: %s"
+                    % (raw_repo.repo_id, loc, ', '.join(map(repr, masters)), missing))
         eclasses = [repo_map[x] for x in masters]
 
     # add the repositories eclasses directories if it's not specified.

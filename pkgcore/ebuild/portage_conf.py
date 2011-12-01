@@ -368,9 +368,8 @@ def config_from_make_conf(location="/etc/"):
     portdir_overlays = [
         normpath(x) for x in conf_dict.pop("PORTDIR_OVERLAY", "").split()]
 
-
     new_config['ebuild-repo-common'] = basics.AutoConfigSection({
-            'class': 'pkgcore.ebuild.repository.tree',
+            'class': 'pkgcore.ebuild.repository.slavedtree',
             'default_mirrors': gentoo_mirrors,
             'inherit-only': True,
             'ignore_paludis_versioning':
@@ -394,14 +393,17 @@ def config_from_make_conf(location="/etc/"):
             if path not in overlay_syncers:
                 overlay_syncers[path] = make_autodetect_syncer(new_config, path)
 
-    for tree_loc in portdir_overlays:
+    for tree_loc in [portdir] + portdir_overlays:
         kwds = {
                 'inherit': ('ebuild-repo-common',),
-                'cache': (mk_simple_cache(config_root, tree_loc),),
-                'class': 'pkgcore.ebuild.repository.slavedtree',
                 'raw_repo': ('raw:' + tree_loc),
-                'parent_repo': 'portdir',
         }
+        if tree_loc == portdir:
+            kwds['class'] = 'pkgcore.ebuild.repository.tree'
+            kwds['cache'] = 'cache:%s' % (portdir,)
+        else:
+            kwds['parent_repo'] = portdir
+            kwds['cache'] = (mk_simple_cache(config_root, tree_loc),)
         new_config[tree_loc] = basics.AutoConfigSection(kwds)
 
     rsync_portdir_cache = os.path.exists(pjoin(portdir, "metadata", "cache")) \
@@ -409,63 +411,26 @@ def config_from_make_conf(location="/etc/"):
 
     # if a metadata cache exists, use it
     if rsync_portdir_cache:
-        new_config["portdir cache"] = basics.AutoConfigSection({
+        new_config["cache:%s" % (portdir,)] = basics.AutoConfigSection({
             'class': 'pkgcore.cache.metadata.database', 'readonly': 'yes',
             'location': portdir,
         })
     else:
-        new_config["portdir cache"] = mk_simple_cache(config_root, portdir)
+        new_config["cache:%s" % (portdir,)] = mk_simple_cache(config_root, portdir)
+
+    new_config['portdir'] = basics.section_alias(portdir, 'repo')
 
     base_portdir_config = {}
     if portdir_syncer is not None:
         make_syncer(new_config, portdir, portdir_syncer, rsync_opts)
 
-    # setup portdir.
-    cache = ('portdir cache',)
-    if not portdir_overlays:
-        d = dict(base_portdir_config)
-        d['inherit'] = ('ebuild-repo-common',)
-        d['portdir'] = 'raw:' + portdir
-        d['cache'] = ('portdir cache',)
-
-        new_config[portdir] = basics.FakeIncrementalDictConfigSection(
-            my_convert_hybrid, d)
-        new_config["eclass stack"] = basics.section_alias(
-            pjoin(portdir, 'eclass'), 'eclass_cache')
-        new_config['portdir'] = basics.section_alias(portdir, 'repo')
-        new_config['repo-stack'] = basics.section_alias(portdir, 'repo')
-    else:
-        # There's always at least one (portdir) so this means len(all_ecs) > 1
-        new_config['%s cache' % (portdir,)] = mk_simple_cache(config_root, portdir)
-        cache = ('portdir cache',)
-        if rsync_portdir_cache:
-            cache = cache + ('%s cache' % (portdir,),)
-
-        d = dict(base_portdir_config)
-        d['inherit'] = ('ebuild-repo-common',)
-        d['raw_repo'] = 'raw:' + portdir
-        d['cache'] = cache
-
-        new_config[portdir] = basics.FakeIncrementalDictConfigSection(
-            my_convert_hybrid, d)
-
-        if rsync_portdir_cache:
-            # created higher up; two caches, writes to the local,
-            # reads (when possible) from pregenned metadata
-            cache = ('portdir cache',)
-        else:
-            cache = ('%s cache' % (portdir,),)
-        new_config['portdir'] = basics.FakeIncrementalDictConfigSection(
-            my_convert_hybrid, {
-                'inherit': ('ebuild-repo-common',),
-                'raw_repo': 'raw:' + portdir,
-                'cache': cache,
-            })
-
+    if portdir_overlays:
         new_config['repo-stack'] = basics.FakeIncrementalDictConfigSection(
             my_convert_hybrid, {
                 'class': 'pkgcore.repository.multiplex.config_tree',
                 'repositories': tuple(reversed([portdir] + portdir_overlays))})
+    else:
+        new_config['repo-stack'] = basics.section_alias(portdir, 'repo')
 
     for tree_loc in [portdir] + portdir_overlays:
         conf = {'class':'pkgcore.ebuild.repo_objs.RepoConfig',

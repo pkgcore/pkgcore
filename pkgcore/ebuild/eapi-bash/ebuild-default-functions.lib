@@ -404,11 +404,9 @@ inherit()
 	local location olocation
 	local PECLASS
 
-	local B_IUSE
-	local B_REQUIRED_USE
-	local B_DEPEND
-	local B_RDEPEND
-	local B_PDEPEND
+	# note that this ensures any later unsets/mangling, the ebuilds original
+	# setting is protected.
+	local IUSE REQUIRED_USE DEPEND RDEPEND PDEPEND
 	while [ -n "$1" ]; do
 
 		# PECLASS is used to restore the ECLASS var after recursion.
@@ -423,28 +421,11 @@ inherit()
 			fi
 		fi
 
-		#We need to back up the value of DEPEND and RDEPEND to B_DEPEND and B_RDEPEND
-		#(if set).. and then restore them after the inherit call.
-
-		#turn off glob expansion
-		pkgcore_shopt_push -f
-
-		# Retain the old data and restore it later.
-		unset B_IUSE B_REQUIRED_USE B_DEPEND B_RDEPEND B_PDEPEND
-		[ "${IUSE-unset}"    != "unset" ] && B_IUSE="${IUSE}"
-		[ "${REQUIRED_USE-unset}" != "unset" ] && B_REQUIRED_USE="${REQUIRED_USE}"
-		[ "${DEPEND-unset}"  != "unset" ] && B_DEPEND="${DEPEND}"
-		[ "${RDEPEND-unset}" != "unset" ] && B_RDEPEND="${RDEPEND}"
-		[ "${PDEPEND-unset}" != "unset" ] && B_PDEPEND="${PDEPEND}"
 		unset IUSE REQUIRED_USE DEPEND RDEPEND PDEPEND
-		#turn on glob expansion
-		pkgcore_shopt_pop
+
 		if ! internal_inherit "$1"; then
 			die "failed sourcing $1 in inherit()"
 		fi
-
-		#turn off glob expansion; again, for var assignment here
-		pkgcore_shopt_push -f
 
 		# If each var has a value, append it to the global variable E_* to
 		# be applied after everything is finished. New incremental behavior.
@@ -453,24 +434,6 @@ inherit()
 		[ "${DEPEND-unset}"       != "unset" ] && export E_DEPEND="${E_DEPEND:+ }${DEPEND}"
 		[ "${RDEPEND-unset}"      != "unset" ] && export E_RDEPEND="${E_RDEPEND:+ }${RDEPEND}"
 		[ "${PDEPEND-unset}"      != "unset" ] && export E_PDEPEND="${E_PDEPEND:+ }${PDEPEND}"
-
-		[ "${B_IUSE-unset}"    != "unset" ] && IUSE="${B_IUSE}"
-		[ "${B_IUSE-unset}"    != "unset" ] || unset IUSE
-
-		[ "${B_REQUIRED_USE-unset}"    != "unset" ] && B_REQUIRED_USE="${B_REQUIRED_USE}"
-		[ "${B_REQUIRED_USE-unset}"    != "unset" ] || unset REQUIRED_USE
-
-		[ "${B_DEPEND-unset}"  != "unset" ] && DEPEND="${B_DEPEND}"
-		[ "${B_DEPEND-unset}"  != "unset" ] || unset DEPEND
-
-		[ "${B_RDEPEND-unset}" != "unset" ] && RDEPEND="${B_RDEPEND}"
-		[ "${B_RDEPEND-unset}" != "unset" ] || unset RDEPEND
-
-		[ "${B_PDEPEND-unset}" != "unset" ] && PDEPEND="${B_PDEPEND}"
-		[ "${B_PDEPEND-unset}" != "unset" ] || unset PDEPEND
-
-		#restore...
-		pkgcore_shopt_pop
 
 		if ! has $1 $INHERITED; then
 			INHERITED="$INHERITED $ECLASS"

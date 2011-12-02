@@ -414,7 +414,10 @@ execute_phases() {
 }
 
 pkgcore_dump_metadata_keys() {
-	pkgcore_shopt_push -f
+	# note this function does /not/ use shopt pushing/popping; it should only
+	# be invoked after ebuild code has done it's thing, as such we no longer care,
+	# and directly screw w/ it for speed reasons- about 5% speedup in metadata regen.
+	set -f
 	local key
 	for key in EAPI DEPEND RDEPEND SLOT SRC_URI RESTRICT HOMEPAGE LICENSE \
 		DESCRIPTION KEYWORDS INHERITED IUSE PDEPEND PROVIDE PROPERTIES; do
@@ -422,13 +425,13 @@ pkgcore_dump_metadata_keys() {
 		# after using echo to normalize whitespace (specifically removal of newlines)
 		[ "${!key:-unset}" != "unset" ] && ebd_write_line "key ${key}=$(echo ${!key})"
 	done
-	pkgcore_shopt_pop
+	set +f
 
 	# defined phases... fun one.
 	local phases
 	for key in pkg_{pretend,configure,info,{pre,post}{rm,inst},setup} \
 		src_{unpack,prepare,configure,compile,test,install}; do
-			is_function "${key}" && phases="${phases} ${key}"
+			is_function "${key}" && phases+="${phases:+ }${key}"
 	done
 	ebd_write_line "key DEFINED_PHASES=${phases:--}"
 }

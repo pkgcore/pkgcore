@@ -185,13 +185,6 @@ load_ebuild()
 	SANDBOX_ON="1"
 	export S=${WORKDIR}/${P}
 
-	# Expand KEYWORDS
-	# We need to turn off pathname expansion for -* in KEYWORDS and
-	# we need to escape ~ to avoid tilde expansion (damn bash) :)
-	pkgcore_shopt_push -f
-	KEYWORDS="$(echo ${KEYWORDS//~/\\~})"
-	pkgcore_shopt_pop
-
 	unset   IUSE   DEPEND   RDEPEND   PDEPEND
 	unset E_IUSE E_DEPEND E_RDEPEND E_PDEPEND
 

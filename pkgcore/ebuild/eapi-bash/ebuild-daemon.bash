@@ -3,30 +3,6 @@
 # Copyright 2004-2011 Brian Harring <ferringb@gmail.com>
 # License: BSD/GPL2
 
-declare -a PKGCORE_SAVED_IFS
-
-pkgcore_push_IFS()
-{
-	PKGCORE_SAVED_IFS[${#PKGCORE_SAVED_IFS[@]}]="${IFS-unset}"
-	if [[ $1 == unset ]]; then
-		unset IFS
-	else
-		IFS="$1"
-	fi
-	:
-}
-
-pkgcore_pop_IFS()
-{
-	if [[ ${#PKGCORE_SAVED_IFS[@]} == 0 ]]; then
-		die "pkgcore_pop_IFS invoked with nothing on the stack..."
-	fi
-	IFS=${PKGCORE_SAVED_IFS[$(( ${#PKGCORE_SAVED_IFS[@]} -1 ))]}
-	[[ ${IFS} == unset ]] && unset IFS
-	unset PKGCORE_SAVED_IFS[$(( ${#PKGCORE_SAVED_IFS[@]} -1 ))]
-	:
-}
-
 # use ebd_read/ebd_write for talking to the running portage instance instead of echo'ing to the fd yourself.
 # this allows us to move the open fd's w/out issues down the line.
 ebd_read_line()
@@ -128,6 +104,12 @@ pkgcore_ebd_exec_main()
 	# get our die functionality now.
 	if ! source "${PKGCORE_BIN_PATH}/exit-handling.lib"; then
 		ebd_write_line "failed sourcing exit handling functionality"
+		exit 2;
+	fi
+
+	# get our die functionality now.
+	if ! source "${PKGCORE_BIN_PATH}/isolated-functions.lib"; then
+		ebd_write_line "failed sourcing isolated-functions.lib"
 		exit 2;
 	fi
 

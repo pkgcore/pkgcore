@@ -234,7 +234,6 @@ load_ebuild()
 # note that exit-handling loads the die functions, thus the custom failure there.
 source "${PKGCORE_BIN_PATH}/exit-handling.lib" >&2 || { echo "ERROR: failed sourcing exit-handling.lib"; exit -1; }
 source "${PKGCORE_BIN_PATH}/ebuild-default-functions.lib" >&2 || die "failed sourcing ebuild-default-functions.lib"
-source "${PKGCORE_BIN_PATH}/isolated-functions.lib" >&2 || die "failed sourcing stripped down functions.lib"
 source "${PKGCORE_BIN_PATH}/ebuild-env-utils.lib" >&2 || die "failed sourcing ebuild-env-utils.lib"
 
 pkgcore_run_ebuild_phase()

@@ -429,11 +429,11 @@ inherit()
 
 		# If each var has a value, append it to the global variable E_* to
 		# be applied after everything is finished. New incremental behavior.
-		[ "${IUSE-unset}"         != "unset" ] && export E_IUSE="${E_IUSE:+ }${IUSE}"
-		[ "${REQUIRED_USE-unset}" != "unset" ] && export E_IUSE="${E_REQUIRED_USE:+ }${REQUIRED_USE}"
-		[ "${DEPEND-unset}"       != "unset" ] && export E_DEPEND="${E_DEPEND:+ }${DEPEND}"
-		[ "${RDEPEND-unset}"      != "unset" ] && export E_RDEPEND="${E_RDEPEND:+ }${RDEPEND}"
-		[ "${PDEPEND-unset}"      != "unset" ] && export E_PDEPEND="${E_PDEPEND:+ }${PDEPEND}"
+		[ "${IUSE-unset}"         != "unset" ] && export E_IUSE+="${E_IUSE:+ }${IUSE}"
+		[ "${REQUIRED_USE-unset}" != "unset" ] && export E_IUSE+="${E_REQUIRED_USE:+ }${REQUIRED_USE}"
+		[ "${DEPEND-unset}"       != "unset" ] && export E_DEPEND+="${E_DEPEND:+ }${DEPEND}"
+		[ "${RDEPEND-unset}"      != "unset" ] && export E_RDEPEND+="${E_RDEPEND:+ }${RDEPEND}"
+		[ "${PDEPEND-unset}"      != "unset" ] && export E_PDEPEND+="${E_PDEPEND:+ }${PDEPEND}"
 
 		if ! has $1 $INHERITED; then
 			INHERITED="$INHERITED $ECLASS"

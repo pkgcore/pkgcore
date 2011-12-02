@@ -185,8 +185,8 @@ load_ebuild()
 	SANDBOX_ON="1"
 	export S=${WORKDIR}/${P}
 
-	unset   IUSE   DEPEND   RDEPEND   PDEPEND
-	unset E_IUSE E_DEPEND E_RDEPEND E_PDEPEND
+	unset   IUSE   REQUIRED_USE   DEPEND   RDEPEND   PDEPEND
+	local E_IUSE E_REQUIRED_USE E_DEPEND E_RDEPEND E_PDEPEND
 
 	if [ ! -f "${EBUILD}" ]; then
 		echo "bailing, ebuild not found at '$EBUILD'"
@@ -220,14 +220,13 @@ load_ebuild()
 	fi
 
 	#add in dependency info from eclasses
-	IUSE="$IUSE $E_IUSE"
-	DEPEND="${DEPEND} ${E_DEPEND}"
-	RDEPEND="$RDEPEND $E_RDEPEND"
-	PDEPEND="$PDEPEND $E_PDEPEND"
+	IUSE+="${IUSE:+ } ${E_IUSE}"
+	REQUIRED_USE+="${REQUIRED_USE:+ }${E_REQUIRED_USE}"
+	DEPEND+="${DEPEND:+ }${E_DEPEND}"
+	RDEPEND+="${RDEPEND:+ }${E_RDEPEND}"
+	PDEPEND+="${PDEPEND:+ }${E_PDEPEND}"
 
 	EAPI="${EAPI-0}"
-
-	unset E_IUSE E_DEPEND E_RDEPEND E_PDEPEND
 }
 
 # short version.  think these should be sourced via at the daemons choice, rather then defacto.

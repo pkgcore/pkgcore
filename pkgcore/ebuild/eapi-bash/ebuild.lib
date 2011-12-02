@@ -421,8 +421,8 @@ pkgcore_dump_metadata_keys() {
 			# write to the FD.  This is done since it's about 25% faster for our usage;
 			# if we used the functions, we'd have to subshell the 'echo ${!key}', which
 			# because of bash behaviour, means the content would be read byte by byte.
-			echo -n "key ${key}=" >&${EBD_WRITE_FD}
-			echo ${!key} >&${EBD_WRITE_FD}
+			echo -n "key ${key}=" >&${PKGCORE_EBD_WRITE_FD}
+			echo ${!key} >&${PKGCORE_EBD_WRITE_FD}
 		fi
 	done
 	set +f

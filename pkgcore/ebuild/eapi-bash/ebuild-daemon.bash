@@ -31,7 +31,7 @@ pkgcore_pop_IFS()
 # this allows us to move the open fd's w/out issues down the line.
 ebd_read_line()
 {
-	if ! read -u ${EBD_READ_FD} $1; then
+	if ! read -u ${PKGCORE_EBD_READ_FD} $1; then
 		echo "coms error, read failed: backing out of daemon."
 		exit 1
 	fi
@@ -41,7 +41,7 @@ ebd_read_line()
 if echo 'y' | read -N 1 &> /dev/null; then
 	ebd_read_size()
 	{
-		if ! read -u ${EBD_READ_FD} -r -N $1 $2; then
+		if ! read -u ${PKGCORE_EBD_READ_FD} -r -N $1 $2; then
 			echo "coms error, read failed: backing out of daemon."
 			exit 1;
 		fi
@@ -51,7 +51,7 @@ else
 	# fallback to a *icky icky* but working alternative.
 	ebd_read_size()
 	{
-		eval "${2}=\$(dd bs=1 count=$1 <&${EBD_READ_FD} 2> /dev/null)"
+		eval "${2}=\$(dd bs=1 count=$1 <&${PKGCORE_EBD_READ_FD} 2> /dev/null)"
 		if [[ $? != 0 ]]; then
 			echo "coms error, read failed: backing out of daemon."
 			exit 1;
@@ -61,12 +61,12 @@ fi
 
 ebd_read_cat_size()
 {
-	dd bs=$1 count=1 <&${EBD_READ_FD}
+	dd bs=$1 count=1 <&${PKGCORE_EBD_READ_FD}
 }
 
 ebd_write_line()
 {
-	echo "$*" >&${EBD_WRITE_FD}
+	echo "$*" >&${PKGCORE_EBD_WRITE_FD}
 }
 
 
@@ -74,7 +74,13 @@ for x in ebd_read_{line,{cat_,}size} ebd_write_line; do
 	declare -rf ${x}
 done
 unset x
-declare -r EBD_WRITE_FD EBD_READ_FD
+# protection for upgrading across pkgcore 0.7.7
+if [ -z "${PKGCORE_EBD_WRITE_FD}" ]; then
+	PKGCORE_EBD_WRITE_FD="${EBD_WRITE_FD}"
+	PKGCORE_EBD_READ_FD="${EBD_READ_FD}"
+	unset EBD_WRITE_FD EBD_READ_FD
+fi
+declare -r PKGCORE_EBD_WRITE_FD PKGCORE_EBD_READ_FD
 
 ebd_sigint_handler()
 {
@@ -241,7 +247,6 @@ pkgcore_ebd_process_ebuild_phases()
 				line="${line#bytes }"
 				ebd_read_size ${line} line
 				pkgcore_push_IFS $'\0'
-				#source <(ebd_read_cat_size "${line}" <&"${EBD_READ_FD}" )
 				eval "$line"
 				cont=$?
 				pkgcore_pop_IFS

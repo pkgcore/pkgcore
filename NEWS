@@ -4,8 +4,8 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
-* pmaint regen optimizations.  This is now ~4x faster than 0.7.6,
-  and 2x faster than 0.7.2 (0.7.3 introduced a regression).
+* pmaint regen optimizations.  This is now >5x faster than 0.7.6,
+  and ~3x faster than 0.7.2 (0.7.3 introduced a regression).
 
 * restore pmaint sync support for unsynced repositories.
 

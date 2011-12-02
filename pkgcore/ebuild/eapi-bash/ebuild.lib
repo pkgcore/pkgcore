@@ -423,7 +423,14 @@ pkgcore_dump_metadata_keys() {
 		DESCRIPTION KEYWORDS INHERITED IUSE PDEPEND PROVIDE PROPERTIES; do
 		# deref the val, if it's not empty/unset, then spit a key command to EBD
 		# after using echo to normalize whitespace (specifically removal of newlines)
-		[ "${!key:-unset}" != "unset" ] && ebd_write_line "key ${key}=$(echo ${!key})"
+		if [ "${!key:-unset}" != "unset" ]; then
+			# note that we explicitly bypass the normal functions, and directly
+			# write to the FD.  This is done since it's about 25% faster for our usage;
+			# if we used the functions, we'd have to subshell the 'echo ${!key}', which
+			# because of bash behaviour, means the content would be read byte by byte.
+			echo -n "key ${key}=" >&${EBD_WRITE_FD}
+			echo ${!key} >&${EBD_WRITE_FD}
+		fi
 	done
 	set +f
 

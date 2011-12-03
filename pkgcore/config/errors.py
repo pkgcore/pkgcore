@@ -16,7 +16,7 @@ __all__ = ("BaseError", "TypeDefinitionError", "ConfigurationError", "ParsingErr
 from snakeoil import compatibility
 from snakeoil.demandload import demandload
 demandload(globals(),
-    "snakeoil.currying:pretty_docs,post_curry",
+    'snakeoil:currying',
 )
 
 class BaseError(Exception):
@@ -86,23 +86,8 @@ class ParsingError(ConfigurationError):
 
     @classmethod
     def wrap_exception(cls, message):
-        return post_curry(cls._inner_wrap_exception, message)
-
-    @classmethod
-    def _inner_wrap_exception(cls, functor, message):
-
-        def f(*args, **kwargs):
-            try:
-                return functor(*args, **kwargs)
-            except compatibility.IGNORED_EXCEPTIONS:
-                raise
-            except Exception, e:
-                if isinstance(e, BaseError):
-                    raise
-                raise cls(message=message, exception=e)
-        f.func = functor
-        f.__name__ = functor.__name__
-        return pretty_docs(f)
+        return currying.wrap_exception(cls, message=message,
+            pass_error='exception')
 
 
 class CollapseInheritOnly(ConfigurationError):

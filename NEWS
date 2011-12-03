@@ -4,6 +4,14 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+pkgcore 0.7.7.1: Dec 2nd, 2011
+
+* Fix eclass metadata var (IUSE for example) stacking in metadata
+  phases.
+
+* Fix has invocations in ebuild helpers
+
+
 pkgcore 0.7.7: Dec 2nd, 2011
 
 * pmaint regen optimizations.  This is now >5x faster than 0.7.6,

@@ -119,11 +119,8 @@ pkgcore_shopt_pop()
 	local count=$(( ${#PKGCORE_SHOPT_STACK[@]} - 1 ))
 	[ "$count" -eq -1 ] && die "bad pkgcore_shopt_pop invocation; no matching push, stack was empty"
 	local set_val="${PKGCORE_SHOPT_STACK[$count]}"
-	if [ -n "$-" ]; then
-		set +$- || die "failed wiping set"
-	fi
-	if [ -n "${set_val}" ]; then
-		set -${set_val} || die "failed restoring set; ${set_val}"
+	if [[ "$-" != "${set_val}" ]]; then
+		set ${-:++${-}} ${set_val:+-${set_val}} || die "failed enforcing set state of ${set_val}"
 	fi
 	unset PKGCORE_SHOPT_STACK[$count]
 	count=$(( $count - 1 ))

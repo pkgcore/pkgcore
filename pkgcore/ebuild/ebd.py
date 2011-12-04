@@ -850,8 +850,13 @@ class ebuild_mixin(object):
         env = expected_ebuild_env(pkg)
         env["ROOT"] = domain.root
         try:
-            return run_generic_phase(pkg, "pretend", env, True, True, False,
+            logger.debug("running ebuild pkg_pretend sanity check for %s", pkg)
+            start = time.time()
+            ret = run_generic_phase(pkg, "pretend", env, True, True, False,
                 extra_handlers=commands)
+            logger.debug("pkg_pretend sanity check for %s took %2.2f seconds",
+                pkg, time.time() - start)
+            return ret
         except format.GenericBuildError:
             return False
 

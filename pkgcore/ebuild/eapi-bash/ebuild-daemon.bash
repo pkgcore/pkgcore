@@ -329,7 +329,7 @@ ebd_process_metadata()
 	# way so that if someone ever drops the (), it'll still not bleed out.
 	(
 	# Heavy QA checks (IFS, shopt, etc) are suppressed for speed
-	declare -r PKGCORE_QA_SUPPRESSED=true
+	declare -r PKGCORE_QA_SUPPRESSED=false
 	local size=$1
 	local data
 	local ret

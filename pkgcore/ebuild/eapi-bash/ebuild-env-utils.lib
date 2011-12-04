@@ -30,6 +30,8 @@ regex_filter_input() {
 	if [[ -n $l ]]; then
 		# use type -p; qa_interceptors may be be active.
 		"$l" -v "${regex}"
+		local ret=$?
+		[[ $ret -gt 1 ]] && die "got failing return code (${ret}) invoking regex_filter_input in egrep -v mode with args: ${regex}"
 	else
 		while read l; do
 			[[ $l =~ $regex ]] || echo "${l}"

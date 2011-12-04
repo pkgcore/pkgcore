@@ -130,24 +130,24 @@ declare -a PKGCORE_SAVED_IFS
 
 pkgcore_push_IFS()
 {
-    PKGCORE_SAVED_IFS[${#PKGCORE_SAVED_IFS[@]}]="${IFS-unset}"
-    if [[ $1 == unset ]]; then
-        unset IFS
-    else
-        IFS="$1"
-    fi
-    :
+	PKGCORE_SAVED_IFS[${#PKGCORE_SAVED_IFS[@]}]="${IFS-unset}"
+	if [[ $1 == unset ]]; then
+		unset IFS
+	else
+		IFS="$1"
+	fi
+	:
 }
 
 pkgcore_pop_IFS()
 {
-    if [[ ${#PKGCORE_SAVED_IFS[@]} == 0 ]]; then
-        die "pkgcore_pop_IFS invoked with nothing on the stack..."
-    fi
-    IFS=${PKGCORE_SAVED_IFS[$(( ${#PKGCORE_SAVED_IFS[@]} -1 ))]}
-    [[ ${IFS} == unset ]] && unset IFS
-    unset PKGCORE_SAVED_IFS[$(( ${#PKGCORE_SAVED_IFS[@]} -1 ))]
-    :
+	if [[ ${#PKGCORE_SAVED_IFS[@]} == 0 ]]; then
+		die "pkgcore_pop_IFS invoked with nothing on the stack..."
+	fi
+	IFS=${PKGCORE_SAVED_IFS[$(( ${#PKGCORE_SAVED_IFS[@]} -1 ))]}
+	[[ ${IFS} == unset ]] && unset IFS
+	unset PKGCORE_SAVED_IFS[$(( ${#PKGCORE_SAVED_IFS[@]} -1 ))]
+	:
 }
 
 unset_colors

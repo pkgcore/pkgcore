@@ -14,7 +14,7 @@ def regen_iter(iterable, observer, attribute):
         except compatibility.IGNORED_EXCEPTIONS:
             raise
         except Exception, e:
-            observer.error("caught exception %s for %s" % (e, x))
+            observer.error("caught exception %s while processing %s" % (e, x))
 
 def reclaim_threads(threads, observer):
     for x in threads:

@@ -19,6 +19,13 @@ demandload(globals(),
     'snakeoil:currying',
 )
 
+
+def _identify_functor_source(functor):
+    module = getattr(functor, '__module__', None)
+    if module is None:
+        return functor.__name__
+    return '%s.%s' % (module, functor.__name__)
+
 class BaseError(Exception):
     pass
 
@@ -95,6 +102,28 @@ class CollapseInheritOnly(ConfigurationError):
 
     Separate exception because pconfig catches it separately.
     """
+
+
+class InstantiationError(ConfigurationError):
+
+    _txt = "Failed instantiating section %r%s"
+
+    def __init__(self, section_name, message=None):
+        self.section_name = section_name
+        self.message = message
+
+    def __str__(self):
+        s = self.message
+        if s is None:
+            s = ''
+        else:
+            s = ': %s' % (s,)
+        return self._txt % (self.section_name, s)
+
+
+class AutoloadInstantiationError(InstantiationError):
+
+    _txt = "Failed loading autoload section %r%s"
 
 
 class ComplexInstantiationError(ConfigurationError):

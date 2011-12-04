@@ -11,7 +11,7 @@ import optparse
 import weakref
 
 from snakeoil import compatibility
-from pkgcore.test import TestCase
+from pkgcore.test import TestCase, silence_logging
 
 from pkgcore.test.scripts import helpers
 from pkgcore.util import commandline
@@ -37,6 +37,7 @@ class OptparseOptionsTest(TestCase):
         options, values = parser.parse_args([])
         self.assertEqual([], list(options.seq))
 
+    @silence_logging
     def test_debug(self):
         # Hack: we can modify this from inside the callback.
         confdict = {}
@@ -205,6 +206,7 @@ class ArgparseOptionsTest(TestCase):
         kwargs.setdefault("config", False)
         return self._parser_func(**kwargs)
 
+    @silence_logging
     def test_debug(self):
         namespace = self._parser().parse_args(["--debug"])
         self.assertTrue(namespace.debug)
@@ -473,7 +475,7 @@ Use --help after a subcommand for more help.
                 values._config = mk_config()
                 return values
         self.assertMain(
-            1, '', 'Error in configuration:\nbork\n',
+            1, '', 'Error in configuration:\n bork\n',
             {None: (NoLoadParser, error_main)}, [])
         self.assertRaises(
             errors.ConfigurationError, self.assertMain,

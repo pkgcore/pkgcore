@@ -221,10 +221,17 @@ class UncollapsableTest(TestCase, helpers.ArgParseMixin):
 
     def test_uncollapsable(self):
         self.assertOut(
-            ["Collapsing section named 'spork':",
-             'type pkgcore.test.scripts.test_pconfig.spork needs settings for '
-             "'reff'",
-             ''],
+            ["section foon:",
+            " Collapsing section named 'foon'",
+            " cannot collapse inherit-only section"
+            "",
+            "",
+            "section spork:",
+            " Collapsing section named 'spork'",
+            " type pkgcore.test.scripts.test_pconfig.spork needs settings for 'reff'"
+            "",
+            "",
+            ],
             spork=basics.HardCodedConfigSection({'class': spork}),
             foon=basics.HardCodedConfigSection({'class': spork,
                                                 'inherit-only': True}),

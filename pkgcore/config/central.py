@@ -137,14 +137,8 @@ class CollapsedConfig(object):
                 self._instance = self._instantiate()
             except compatibility.IGNORED_EXCEPTIONS:
                 raise
-            except errors.BaseError, e:
-                e.stack.append("Instantiating named section %r" % (self.name,))
-                raise
             except Exception, e:
-                new_e = errors.ComplexInstantiationError(exception=e,
-                    callable_obj=self.type.callable)
-                new_e.stack.append("Instantiating named section %r" % (self.name,))
-                compatibility.raise_from(new_e)
+                compatibility.raise_from(errors.InstantiationError(self.name))
         return self._instance
 
     def _instantiate(self):
@@ -166,18 +160,24 @@ class CollapsedConfig(object):
             if typename is None:
                 continue
             # central already checked the type, no need to repeat that here.
+            unlist_it = False
             if typename.startswith('ref:'):
+                val = [val]
+                unlist_it = True
+            if typename.startswith('refs:') or unlist_it:
                 try:
-                    config[name] = val.instantiate()
-                except errors.ConfigurationError, e:
-                    e.stack.append('Instantiating ref %r' % (name,))
+                    final_val = []
+                    for ref in val:
+                        final_val.append(ref.instantiate())
+                except compatibility.IGNORED_EXCEPTIONS:
                     raise
-            elif typename.startswith('refs:'):
-                try:
-                    config[name] = list(ref.instantiate() for ref in val)
-                except errors.ConfigurationError, e:
-                    e.stack.append('Instantiating refs %r' % (name,))
-                    raise
+                except Exception, e:
+                    compatibility.raise_from(errors.ConfigurationError(
+                        "Instantiating reference %r pointing at %r" % (name, ref.name)))
+                if unlist_it:
+                    final_val = final_val[0]
+                config[name] = final_val
+
 
         if self.type.requires_config:
             if self.manager is None:
@@ -202,21 +202,11 @@ class CollapsedConfig(object):
         configdict = dict(config)
         try:
             self._instance = callable_obj(*pargs, **configdict)
-        except errors.ComplexInstantiationError, e:
-            # This is probably just paranoia, but better safe than sorry.
-            if e.callable is None:
-                e.callable = callable_obj
-                e.pargs = pargs
-                e.kwargs = configdict
-            raise
         except compatibility.IGNORED_EXCEPTIONS:
             raise
         except Exception, e:
-            if self.debug:
-                raise
-            compatibility.raise_from(errors.ComplexInstantiationError(exception=e,
-                                            callable_obj=callable_obj,
-                                            pargs=pargs, kwargs=configdict))
+            compatibility.raise_from(errors.InstantiationError(self.name,
+                "exception caught from %r" % (errors._identify_functor_source(self.type.callable),)))
         if self._instance is None:
             raise errors.ComplexInstantiationError(
                 'No object returned', callable_obj=callable_obj, pargs=pargs,
@@ -344,18 +334,22 @@ class ConfigManager(object):
 
             try:
                 collapsed = self.collapse_named_section(name)
-            except errors.ConfigurationError, e:
-                e.stack.append('Collapsing autoload %r' % (name,))
+            except compatibility.IGNORED_EXCEPTIONS:
                 raise
+            except Exception:
+                compatibility.raise_from(errors.ConfigurationError(
+                    "Failed collapsing autoload section %r" % (name,)))
+
             if collapsed.type.name != 'configsection':
                 raise errors.ConfigurationError(
                    'Section %r is marked as autoload but type is %s, not '
                    'configsection' % (name, collapsed.type.name))
             try:
                 instance = collapsed.instantiate()
-            except errors.ConfigurationError, e:
-                e.stack.append('Instantiating autoload %r' % (name,))
-                raise
+            except compatibility.IGNORED_EXCEPTIONS:
+                compatibility.raise_from(errors.AutoloadInstantiationError(name))
+            except Exception:
+                compatibility.raise_from(errors.AutoloadInstantiationError(name))
             if collapsed.type.name == 'configsection':
                 self.add_config_source(instance)
 
@@ -392,9 +386,11 @@ class ConfigManager(object):
             try:
                 result = self.collapse_section(section_stack, name)
                 result.name = name
-            except errors.ConfigurationError, e:
-                e.stack.append('Collapsing section named %r' % (name,))
+            except compatibility.IGNORED_EXCEPTIONS:
                 raise
+            except Exception:
+                compatibility.raise_from(errors.ConfigurationError(
+                    "Collapsing section named %r" % (name,)))
             self.rendered_sections[name] = result
             return result
         finally:
@@ -514,10 +510,11 @@ class ConfigManager(object):
             if is_refs:
                 try:
                     result = [ref.collapse() for ref in result]
-                except errors.ConfigurationError, e:
-                    e.stack.append(
-                       'Collapsing section key %r' % (key,))
+                except compatibility.IGNORED_EXCEPTIONS:
                     raise
+                except Exception:
+                    compatibility.raise_from(errors.ConfigurationError(
+                        "Failed collapsing section key %r" % (key,)))
             if is_ref:
                 result = result[0]
 
@@ -541,9 +538,11 @@ class ConfigManager(object):
         """
         try:
             defaults = self.types.get(type_name, {}).iteritems()
-        except errors.ConfigurationError, e:
-            e.stack.append("Collapsing defaults for %s" % (type_name,))
+        except compatibility.IGNORED_EXCEPTIONS:
             raise
+        except Exception:
+            compatibility.raise_from(errors.ConfigurationError(
+                "Collapsing defaults for %r" % (type_name,)))
         defaults = [(name, section) for name, section in defaults if section.default]
 
         if not defaults:
@@ -557,8 +556,9 @@ class ConfigManager(object):
 
         try:
             return defaults[0][1].instantiate()
-        except errors.ConfigurationError, e:
-            e.stack.append('Instantiating default %s %r' %
-                          (type_name, defaults[0][0]))
+        except compatibility.IGNORED_EXCEPTIONS:
             raise
+        except Exception:
+            compatibility.raise_from(errors.ConfigurationError(
+                "Failed instantiating default %s %r" % (type_name, defaults[0][0])))
         return None

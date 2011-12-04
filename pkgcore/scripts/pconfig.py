@@ -110,6 +110,8 @@ def classes_main(options, out, err):
             sections.append(configmanager.collapse_named_section(name))
         except errors.CollapseInheritOnly:
             pass
+        except errors.ConfigurationError:
+            pass
     for classname in sorted(get_classes(sections)):
         out.write(classname)
 
@@ -159,10 +161,11 @@ def uncollapsable_main(options, out, err):
         except errors.CollapseInheritOnly:
             pass
         except errors.ConfigurationError, e:
+            out.autoline = False
+            commandline.dump_error(out, e, "section %s" % (name,))
             if options.debug:
                 traceback.print_exc()
-            else:
-                out.write(str(e))
+            out.autoline = True
             out.write()
 
 
@@ -187,6 +190,8 @@ def dump_main(options, out, err):
         try:
             section = config.collapse_named_section(name)
         except errors.CollapseInheritOnly:
+            continue
+        except errors.ConfigurationError:
             continue
         out.write('%r {' % (name,))
         dump_section(section, out)

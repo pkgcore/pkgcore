@@ -24,7 +24,7 @@ import logging
 
 from pkgcore.config import load_config, errors
 from snakeoil import formatters, demandload, currying, modules
-from snakeoil.compatibility import raise_from
+from snakeoil import compatibility
 import optparse
 from pkgcore.util import argparse
 from pkgcore.util.commandline_optparse import *
@@ -32,6 +32,7 @@ from pkgcore.util.commandline_optparse import *
 demandload.demandload(globals(),
     'copy@_copy',
     'snakeoil:osutils',
+    'snakeoil.errors:walk_exception_chain',
     'snakeoil.lists:iflatten_instance',
     'pkgcore:version@_version',
     'pkgcore.config:basics',
@@ -477,7 +478,7 @@ def python_namespace_type(value, module=False, attribute=False):
             return modules.load_attribute(value)
         return modules.load_any(value)
     except modules.FailedImport, err:
-        raise_from(argparse.ArgumentTypeError(str(err)))
+        compatibility.raise_from(argparse.ArgumentTypeError(str(err)))
 
 
 class VersionFunc(argparse.Action):
@@ -642,8 +643,9 @@ def existant_path(value):
     try:
         return osutils.abspath(value)
     except EnvironmentError, e:
-        raise_from(ValueError("while resolving path %r, encountered error: %r" %
-            (value, e)))
+        compatibility.raise_from(
+            ValueError("while resolving path %r, encountered error: %r" %
+                (value, e)))
 
 def mk_argparser(suppress=False, config=True, domain=True, color=True, debug=True,
     version=True, **kwds):
@@ -702,8 +704,9 @@ def convert_to_restrict(sequence, default=packages.AlwaysTrue):
         for x in sequence:
             l.append(parserestrict.parse_match(x))
     except parserestrict.ParseError, e:
-        raise_from(optparse.OptionValueError("arg %r isn't a valid atom: %s"
-            % (x, e)))
+        compatibility.raise_from(
+            optparse.OptionValueError("arg %r isn't a valid atom: %s"
+                % (x, e)))
     return l or [default]
 
 
@@ -762,18 +765,31 @@ def main(subcommands, args=None, outfile=None, errfile=None,
             logging.root.handlers.pop(0)
         logging.root.addHandler(FormattingHandler(err))
         exitstatus = main_func(options, out, err)
-    except errors.ConfigurationError, e:
-        if getattr(options, 'debug', False):
-            raise
-        errfile.write('Error in configuration:\n%s\n' % (e,))
     except KeyboardInterrupt:
         if getattr(options, 'debug', False):
             raise
         errfile.write("keyboard interupted- exiting\n")
         exitstatus = 1
+    except compatibility.IGNORED_EXCEPTIONS:
+        raise
+    except errors.ConfigurationError, e:
+        dump_error(errfile, e, "Error in configuration")
+        if getattr(options, 'debug', False):
+            raise
+    except Exception, e:
+        dump_error(errfile, e, "Unhandled Exception occured")
+        raise
     if out is not None:
         if exitstatus:
             out.title('%s failed' % (options.prog,))
         else:
             out.title('%s succeeded' % (options.prog,))
     raise MySystemExit(exitstatus)
+
+def dump_error(handle, raw_exc, context_msg=None):
+    prefix = ''
+    if context_msg:
+        prefix = ' '
+        handle.write(context_msg.rstrip("\n") + ":\n")
+    for exc in walk_exception_chain(raw_exc):
+        handle.write('%s%s\n' % (prefix, str(exc).rstrip("\n"),))

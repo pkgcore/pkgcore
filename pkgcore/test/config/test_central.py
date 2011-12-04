@@ -4,6 +4,7 @@
 
 
 import operator
+from snakeoil.errors import walk_exception_chain
 from pkgcore.test import TestCase
 from pkgcore.config import central, basics, errors, configurable
 
@@ -36,6 +37,9 @@ class RemoteSource(object):
         raise NotImplementedError()
 
 
+def _str_exc(exc):
+    return ":\n".join(str(x) for x in walk_exception_chain(exc))
+
 class ConfigManagerTest(TestCase):
 
     def check_error(self, message, func, *args, **kwargs):
@@ -45,8 +49,8 @@ class ConfigManagerTest(TestCase):
             func(*args, **kwargs)
         except klass, e:
             self.assertEqual(
-                message, str(e),
-                '\nGot:\n%r\nExpected:\n%r\n' % (str(e), message))
+                message, _str_exc(e),
+                '\nGot:\n%r\nExpected:\n%r\n' % (_str_exc(e), message))
         else:
             self.fail('no exception raised')
 
@@ -147,7 +151,7 @@ class ConfigManagerTest(TestCase):
             [{'myrepo': basics.HardCodedConfigSection({'class': noop}),
               }])
         self.check_error(
-            "Instantiating named section 'myrepo':\n"
+            "Failed instantiating section 'myrepo':\n"
             "'No object returned' instantiating "
             "pkgcore.test.config.test_central.noop",
             manager.collapse_named_section('myrepo').instantiate)
@@ -161,21 +165,21 @@ class ConfigManagerTest(TestCase):
               }])
         self.check_error(
             "Collapsing section named 'myrepo':\n"
-            "Converting argument 'class' to callable:\n"
+            "Failed converting argument 'class' to callable:\n"
             "useless is not callable",
             self.get_config_obj, manager, 'myrepo', 'myrepo')
 
     def test_raises_instantiationerror(self):
         def myrepo():
-            raise errors.ComplexInstantiationError('I raised')
+            raise Exception('I raised')
         manager = central.ConfigManager(
             [{'myrepo': basics.HardCodedConfigSection({'class': myrepo}),
               }])
         self.check_error(
-            "Instantiating named section 'myrepo':\n"
-            "'I raised' instantiating pkgcore.test.config.test_central.myrepo",
-            self.get_config_obj, manager, 'myrepo', 'myrepo',
-            klass=errors.ComplexInstantiationError)
+            "Failed instantiating section 'myrepo':\n"
+            "Failed instantiating section 'myrepo': exception caught from 'pkgcore.test.config.test_central.myrepo':\n"
+            "I raised",
+            self.get_config_obj, manager, 'myrepo', 'myrepo')
 
     def test_raises(self):
         def myrepo():
@@ -184,16 +188,17 @@ class ConfigManagerTest(TestCase):
             [{'myrepo': basics.HardCodedConfigSection({'class': myrepo})
               }])
         self.check_error(
-            "Instantiating named section 'myrepo':\n"
-            "Caught exception 'I raised' instantiating "
-            'pkgcore.test.config.test_central.myrepo',
+            "Failed instantiating section 'myrepo':\n"
+            "Failed instantiating section 'myrepo': exception caught from 'pkgcore.test.config.test_central.myrepo':\n"
+            "I raised",
             self.get_config_obj, manager, 'myrepo', 'myrepo')
         manager = central.ConfigManager(
             [{'myrepo': basics.HardCodedConfigSection({'class': myrepo})
               }], debug=True)
         self.check_error(
-            "Instantiating named section 'myrepo':\n"
-            "Caught exception 'I raised' instantiating pkgcore.test.config.test_central.myrepo",
+            "Failed instantiating section 'myrepo':\n"
+            "Failed instantiating section 'myrepo': exception caught from 'pkgcore.test.config.test_central.myrepo':\n"
+            "I raised",
                 self.get_config_obj, manager, 'myrepo', 'myrepo',
                 klass=errors.ConfigurationError)
 
@@ -299,17 +304,16 @@ class ConfigManagerTest(TestCase):
         spork = manager.collapse_named_section('spork')
         for i in range(3):
             self.check_error(
-                "Instantiating named section 'spork':\n"
-                "'I suck' instantiating "
-                'pkgcore.test.config.test_central.myrepo',
-                spork.instantiate, klass=errors.ComplexInstantiationError)
+                "Failed instantiating section 'spork':\n"
+                "Failed instantiating section 'spork': exception caught from 'pkgcore.test.config.test_central.myrepo':\n"
+                "'I suck', callable unset!",
+                spork.instantiate)
         for i in range(3):
             self.check_error(
-                "Instantiating named section 'spork':\n"
-                "'I suck' instantiating "
-                'pkgcore.test.config.test_central.myrepo',
-                manager.collapse_named_section('spork').instantiate,
-                klass=errors.ComplexInstantiationError)
+                "Failed instantiating section 'spork':\n"
+                "Failed instantiating section 'spork': exception caught from 'pkgcore.test.config.test_central.myrepo':\n"
+                "'I suck', callable unset!",
+                manager.collapse_named_section('spork').instantiate)
 
     def test_instantiation_caching(self):
         @configurable(typename='drawer')
@@ -338,7 +342,7 @@ class ConfigManagerTest(TestCase):
         self.assertRaises(KeyError, self.get_config_obj, manager, 'repo', 'foon')
         self.check_error(
             "Collapsing section named 'spork':\n"
-            "Collapsing section key 'content':\n"
+            "Failed collapsing section key 'content':\n"
             "no section called 'ref'",
             self.get_config_obj, manager, 'repo', 'spork')
 
@@ -372,14 +376,14 @@ class ConfigManagerTest(TestCase):
               }])
         self.check_error(
             "Collapsing section named 'self':\n"
-            "Collapsing section key 'content':\n"
+            "Failed collapsing section key 'content':\n"
             "Reference to 'self' is recursive",
             self.get_config_obj, manager, 'drawer', 'self')
         self.check_error(
             "Collapsing section named 'spork':\n"
-            "Collapsing section key 'content':\n"
+            "Failed collapsing section key 'content':\n"
             "Collapsing section named 'foon':\n"
-            "Collapsing section key 'content':\n"
+            "Failed collapsing section key 'content':\n"
             "Reference to 'spork' is recursive",
             self.get_config_obj, manager, 'drawer', 'spork')
 
@@ -427,7 +431,7 @@ class ConfigManagerTest(TestCase):
                     }])
         self.check_error(
             "Collapsing section named 'wrong':\n"
-            "Collapsing section key 'myrepo':\n"
+            "Failed collapsing section key 'myrepo':\n"
             "reference 'drawer' should be of type 'repo', got 'drawer'",
             self.get_config_obj, manager, 'repo', 'wrong')
         self.assertEqual('repo!', manager.objects.repo['right'])
@@ -442,7 +446,7 @@ class ConfigManagerTest(TestCase):
                     }])
         self.check_error(
             "Collapsing section named 'wrong':\n"
-            "Collapsing section key 'myrepo':\n"
+            "Failed collapsing section key 'myrepo':\n"
             "reference 'drawer' should be of type 'repo', got 'drawer'",
             self.get_config_obj, manager, 'repo', 'wrong')
         self.assertEqual(['repo!'], manager.objects.repo['right'])
@@ -483,17 +487,17 @@ class ConfigManagerTest(TestCase):
                     'thing2': basics.HardCodedConfigSection({
                             'class': broken, 'default': True})}])
         self.check_error(
-            "Collapsing defaults for drawer:\n"
+            "Collapsing defaults for 'drawer':\n"
             "Collapsing section named 'thing':\n"
-            "Collapsing section key 'content':\n"
-            "Converting argument 'class' to callable:\n"
+            "Failed collapsing section key 'content':\n"
+            "Failed converting argument 'class' to callable:\n"
             "'spork' is not callable",
             manager.get_default, 'drawer')
         self.check_error(
-            "Collapsing defaults for broken:\n"
+            "Collapsing defaults for 'broken':\n"
             "Collapsing section named 'thing':\n"
-            "Collapsing section key 'content':\n"
-            "Converting argument 'class' to callable:\n"
+            "Failed collapsing section key 'content':\n"
+            "Failed converting argument 'class' to callable:\n"
             "'spork' is not callable",
             manager.get_default, 'broken')
 
@@ -512,16 +516,18 @@ class ConfigManagerTest(TestCase):
                                         'class': broken})]}),
                     }])
         self.check_error(
-            "Instantiating named section 'one':\n"
-            "Instantiating ref 'content':\n"
-            "Instantiating named section None:\n"
-            "'broken' instantiating pkgcore.test.config.test_central.broken",
+            "Failed instantiating section 'one':\n"
+            "Instantiating reference 'content' pointing at None:\n"
+            "Failed instantiating section None:\n"
+            "Failed instantiating section None: exception caught from 'pkgcore.test.config.test_central.broken':\n"
+            "'broken', callable unset!",
             manager.collapse_named_section('one').instantiate)
         self.check_error(
-            "Instantiating named section 'multi':\n"
-            "Instantiating refs 'contents':\n"
-            "Instantiating named section None:\n"
-            "'broken' instantiating pkgcore.test.config.test_central.broken",
+            "Failed instantiating section 'multi':\n"
+            "Instantiating reference 'contents' pointing at None:\n"
+            "Failed instantiating section None:\n"
+            "Failed instantiating section None: exception caught from 'pkgcore.test.config.test_central.broken':\n"
+            "'broken', callable unset!",
             manager.collapse_named_section('multi').instantiate)
 
     def test_autoload_instantiationerror(self):
@@ -529,18 +535,19 @@ class ConfigManagerTest(TestCase):
         def broken():
             raise errors.ComplexInstantiationError('broken')
         self.check_error(
-            "Instantiating autoload 'autoload_broken':\n"
-            "Instantiating named section 'autoload_broken':\n"
-            "'broken' instantiating pkgcore.test.config.test_central.broken",
+            "Failed loading autoload section 'autoload_broken':\n"
+            "Failed instantiating section 'autoload_broken':\n"
+            "Failed instantiating section 'autoload_broken': exception caught from 'pkgcore.test.config.test_central.broken':\n"
+            "'broken', callable unset!",
             central.ConfigManager, [{
                     'autoload_broken': basics.HardCodedConfigSection({
                             'class': broken})}])
 
     def test_autoload_uncollapsable(self):
         self.check_error(
-            "Collapsing autoload 'autoload_broken':\n"
+            "Failed collapsing autoload section 'autoload_broken':\n"
             "Collapsing section named 'autoload_broken':\n"
-            "Converting argument 'class' to callable:\n"
+            "Failed converting argument 'class' to callable:\n"
             "'spork' is not callable",
             central.ConfigManager, [{
                     'autoload_broken': basics.HardCodedConfigSection({
@@ -628,8 +635,7 @@ class ConfigManagerTest(TestCase):
         self.check_error(
             "Collapsing section named 'source':\n"
             'cannot collapse inherit-only section',
-            manager.collapse_named_section, 'source',
-            klass=errors.CollapseInheritOnly)
+            manager.collapse_named_section, 'source')
         self.assertTrue(manager.collapse_named_section('target'))
 
     def test_self_inherit(self):

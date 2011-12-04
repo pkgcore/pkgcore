@@ -246,9 +246,12 @@ class DictConfigSection(ConfigSection):
     def render_value(self, central, name, arg_type):
         try:
             return self.func(central, self.dict[name], arg_type)
-        except errors.ConfigurationError, e:
-            e.stack.append('Converting argument %r to %s' % (name, arg_type))
+        except compatibility.IGNORED_EXCEPTIONS:
             raise
+        except Exception:
+            compatibility.raise_from(errors.ConfigurationError(
+                "Failed converting argument %r to %s"
+                    % (name, arg_type)))
 
 
 class FakeIncrementalDictConfigSection(ConfigSection):
@@ -300,10 +303,12 @@ class FakeIncrementalDictConfigSection(ConfigSection):
                 else:
                     try:
                         val = self.func(central, val, arg_type)
-                    except errors.ConfigurationError, e:
-                        e.stack.append('Converting argument %r to %s' % (
-                                subname, arg_type))
+                    except compatibility.IGNORED_EXCEPTIONS:
                         raise
+                    except Exception:
+                        compatibility.raise_from(errors.ConfigurationError(
+                            "Failed converting argument %r to %s"
+                                % (subname, arg_type)))
                 result.append(val)
             if result[0] is result[1] is result[2] is None:
                 raise KeyError(name)
@@ -383,9 +388,11 @@ class FakeIncrementalDictConfigSection(ConfigSection):
         # Not incremental.
         try:
             return self.func(central, self.dict[name], arg_type)
-        except errors.ConfigurationError, e:
-            e.stack.append('Converting argument %r to %s' % (name, arg_type))
+        except compatibility.IGNORED_EXCEPTIONS:
             raise
+        except Exception:
+            compatibility.raise_from(errors.ConfigurationError(
+                "Failed converting argument %r to %s" % (name, arg_type)))
 
 
 def str_to_list(string):
@@ -560,7 +567,7 @@ def parse_config_file(path, parser):
     try:
         f = open(path, 'r')
     except (IOError, OSError), e:
-        raise errors.ComplexInstantiationError(e.strerror)
+        raise errors.InstantiationError("Failed opening %r" % (path,))
     try:
         return parser(f)
     finally:

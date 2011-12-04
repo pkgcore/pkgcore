@@ -102,7 +102,7 @@ PKGCORE_SHOPT_STACK=( )
 
 pkgcore_shopt_push()
 {
-	PKGCORE_SHOPT_STACK[${#PKGCORE_SHOPT_STACK[@]}]=$(shopt -p)
+	PKGCORE_SHOPT_STACK[${#PKGCORE_SHOPT_STACK[@]}]="${BASHOPTS}"
 	PKGCORE_SHOPT_STACK[${#PKGCORE_SHOPT_STACK[@]}]="$-"
 	if [[ $1 == -s ]] || [[ $1 == -u ]]; then
 		# shopt modification
@@ -110,23 +110,36 @@ pkgcore_shopt_push()
 	elif [ -n "$@" ]; then
 		set "$@" || die "bad set invocation: $@"
 	fi
-	:
+	return 0
 } &> /dev/null
 
 pkgcore_shopt_pop()
 {
 	[ "$#" -ne 0 ] && die "bad invocation of pkgcore_shopt_pop; no args should be supplied, got $@"
 	local count=$(( ${#PKGCORE_SHOPT_STACK[@]} - 1 ))
-	[ "$count" -eq -1 ] && die "bad pkgcore_shopt_pop invocation; no matching push, stack was empty"
+	[ "$count" -le 0 ] && die "bad pkgcore_shopt_pop invocation; no matching push, stack was empty"
+
 	local set_val="${PKGCORE_SHOPT_STACK[$count]}"
 	if [[ "$-" != "${set_val}" ]]; then
 		set ${-:++${-}} ${set_val:+-${set_val}} || die "failed enforcing set state of ${set_val}"
 	fi
 	unset PKGCORE_SHOPT_STACK[$count]
+
 	count=$(( $count - 1 ))
-	eval "${PKGCORE_SHOPT_STACK[$count]}" || die "failed restoring shopt settings: ${PKGCORE_SHOPT_STACK[$count]}"
+
+	local previous=${PKGCORE_SHOPT_STACK[$count]}
 	unset PKGCORE_SHOPT_STACK[$count]
-	:
+	[ "$BASHOPTS" == "$previous" ] && return 0
+
+	local IFS=' '
+	local current="${BASHOPTS}"
+	if [ -n "${current}" ]; then
+		shopt -u ${current//:/ } >&2 || die "failed wiping current shopt settings of ${current}"
+	fi
+	if [ -n "${previous}" ]; then
+		shopt -s ${previous//:/ } >&2 || die "failed forcing old shopt settings to ${previous}"
+	fi
+	return 0
 } &> /dev/null
 
 declare -a PKGCORE_SAVED_IFS
@@ -163,10 +176,12 @@ qa_invoke()
 	# save env and shopt settings.
 	local PKGCORE_IFS_POS="${#PKGCORE_SAVED_IFS[@]}"
 	local PKGCORE_SHOPT_POS="${#PKGCORE_SHOPT_STACK[@]}"
+
 	pkgcore_IFS_push "${IFS}"
 	pkgcore_shopt_push
 	"$@"
 	local ret=$?
+
 	if [ "${PKGCORE_IFS_POS}" != $(( ${#PKGCORE_SAVED_IFS[@]} - 1 )) ]; then
 		echo "QA warning: unbalanced pkgcore_IFS_push/pkgcore_IFS_pop detected.  internal error?"
 		pkgcore_should_fail=true
@@ -181,15 +196,17 @@ qa_invoke()
 	fi
 	pkgcore_IFS_pop
 
-	pkgcore_shopt_push
-	if [ "${PKGCORE_SHOPT_STACK[${PKGCORE_SHOPT_POS}]}" != "${PKGCORE_SHOPT_STACK[$(( $PKGCORE_SHOPT_POS + 2 ))]}" ]; then
-		echo "QA WARNING; shopt modification bled out of invocation ${@}!"
+	if [ "${BASHOPTS}" != "${PKGCORE_SHOPT_STACK[${PKGCORE_SHOPT_POS}]}" ]; then
+		echo "QA warning: shopt modification bled out of invocation ${@}" >&2
+		echo "          : was ${PKGCORE_SHOPT_STACK[${PKGCORE_SHOPT_POS}]}" >&2
+		echo "          : now ${BASHOPTS}" >&2
 	fi
-	PKGCORE_SHOPT_POS+=1
-	if [ "${PKGCORE_SHOPT_STACK[${PKGCORE_SHOPT_POS}]}" != "${PKGCORE_SHOPT_STACK[$(( $PKGCORE_SHOPT_POS + 2 ))]}" ]; then
-		echo "QA WARNING; set modification bled out of invocation ${@}!"
+	PKGCORE_SHOPT_POS=$(( $PKGCORE_SHOPT_POS + 1 ))
+	if [ "$-" != "${PKGCORE_SHOPT_STACK[${PKGCORE_SHOPT_POS}]}" ]; then
+		echo "QA warning: set modification bled out of invocation ${@}" >&2
+		echo "          : was ${PKGCORE_SHOPT_STACK[${PKGCORE_SHOPT_POS}]}" >&2
+		echo "          : now $-" >&2
 	fi
-	pkgcore_shopt_pop
 	pkgcore_shopt_pop
 
 	${pkgcore_should_fail} && die "invocation $@ modified globals and didn't clean up"

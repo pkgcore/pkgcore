@@ -107,8 +107,8 @@ pkgcore_shopt_push()
 	if [[ $1 == -s ]] || [[ $1 == -u ]]; then
 		# shopt modification
 		shopt "$@" || die "bad shopt options: $@"
-	elif [ -n "$@" ]; then
-		set "$@" || die "bad set invocation: $@"
+	elif [[ -n "$@" ]]; then
+		set "${@}" || die "bad set invocation: $@"
 	fi
 	return 0
 } &> /dev/null
@@ -179,6 +179,7 @@ qa_invoke()
 
 	pkgcore_IFS_push "${IFS}"
 	pkgcore_shopt_push
+
 	"$@"
 	local ret=$?
 

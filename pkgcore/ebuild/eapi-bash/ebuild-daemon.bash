@@ -229,19 +229,19 @@ pkgcore_ebd_process_ebuild_phases()
 			bytes*)
 				line="${line#bytes }"
 				ebd_read_size ${line} line
-				pkgcore_push_IFS $'\0'
+				pkgcore_IFS_push $'\0'
 				eval "$line"
 				cont=$?
-				pkgcore_pop_IFS
+				pkgcore_IFS_pop
 				;;
 			lines)
 				;&
 			*)
 				while ebd_read_line line && [ "$line" != "end_receiving_env" ]; do
-					pkgcore_push_IFS $'\0'
+					pkgcore_IFS_push $'\0'
 					eval ${line};
 					cont=$?;
-					pkgcore_pop_IFS
+					pkgcore_IFS_pop
 					if [[ $cont != 0 ]]; then
 						echo "err, env receiving threw an error for '$line': $?" >&2
 						break
@@ -334,10 +334,10 @@ ebd_process_metadata()
 	local data
 	local ret
 	ebd_read_size $1 data
-	pkgcore_push_IFS $'\0'
+	pkgcore_IFS_push $'\0'
 	eval "$data"
 	ret=$?
-	pkgcore_pop_IFS
+	pkgcore_IFS_pop
 	[[ $ret != 0 ]] && exit 1
 
 	if ${is_depends} && [[ -n ${PKGCORE_METADATA_PATH} ]]; then

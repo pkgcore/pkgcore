@@ -470,7 +470,7 @@ EXPORT_FUNCTIONS()
 remove_path_entry()
 {
 	local cur_path stripped_path p
-	pkgcore_push_IFS ':'
+	pkgcore_IFS_push ':'
 	stripped_path="${PATH}"
 	while [ -n "$1" ]; do
 		cur_path=""
@@ -482,7 +482,7 @@ remove_path_entry()
 		stripped_path="${cur_path#:*}"
 		shift
 	done
-	pkgcore_pop_IFS
+	pkgcore_IFS_pop
 	PATH="${stripped_path}"
 }
 

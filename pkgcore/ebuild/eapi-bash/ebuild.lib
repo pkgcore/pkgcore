@@ -107,7 +107,7 @@ pkgcore_ensure_PATH()
 	# note this isolates the adds in the same order they appear in
 	# the passed in path, maintaining that order.
 	if [ "$EXISTING_PATH" != "$PATH" ]; then
-		pkgcore_push_IFS ':'
+		pkgcore_IFS_push ':'
 		local x
 		for x in ${EXISTING_PATH}; do
 			# keep in mind PATH=":foon" is a valid way to say "cwd"
@@ -116,7 +116,7 @@ pkgcore_ensure_PATH()
 				adds="${adds:+${adds}:}${x}"
 			fi
 		done
-		pkgcore_pop_IFS
+		pkgcore_IFS_pop
 		[ -n "$adds" ] && PATH="${PATH}${PATH:+:}${adds}"
 	fi
 	export PATH

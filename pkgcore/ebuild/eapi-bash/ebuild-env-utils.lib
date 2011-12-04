@@ -61,20 +61,30 @@ invoke_filter_env() {
 # selectively saves  the environ- specifically removes things that have been marked to not be exported.
 # dump the environ to stdout.
 dump_environ() {
-	local x _sort
 
 	# if possible, sort the outputting of funcs/vars; this isn't required however.
-	_sort=$(type -p sort 2> /dev/null)
-	[ -z "${_sort}" ] && _sort=cat
+	local PKGCORE_SORT=$(type -p sort 2> /dev/null)
+	[ -z "${PKGCORE_SORT}" ] && PKGCORE_SORT=cat
 
-	# dump funcs.
-	pkgcore_get_env_funcs | regex_filter_input ${DONT_EXPORT_FUNCS} | ${_sort} | while read x; do
-		declare -f "${x}" || die "failed outputting func ${x}" >&2
-	done
+	pkgcore_shopt_push -f
+	declare -a PKGCORE_TARGETS=( $(pkgcore_get_env_funcs | regex_filter_input ${DONT_EXPORT_FUNCS} | ${PKGCORE_SORT}) )
+	local PKGCORE_RET=$?
+	if [ "$PKGCORE_RET" != "0" ]; then
+		die "failed invoking pkgcore_get_env_funcs/regex filtering: ret $PKGCORE_RET" >&2
+	fi
+	if [ 0 != "${#PKGCORE_TARGETS[@]}" ]; then
+		declare -f "${PKGCORE_TARGETS[@]}" || die "failed outputing funcs ${PKGCORE_TARGETS[@]}" >&2
+	fi
 
-	declare | invoke_filter_env --print-vars | regex_filter_input ${DONT_EXPORT_VARS} x _sort| ${_sort} | while read x; do
-		declare -p "${x}" || die "failed outputting variable ${x}" >&2
-	done
+	PKGCORE_TARGETS=( $(declare | invoke_filter_env --print-vars | regex_filter_input ${DONT_EXPORT_VARS} | ${PKGCORE_SORT}) )
+	PKGCORE_RET=$?
+	if [ "$PKGCORE_RET" != 0 ]; then
+		die "failed invoking pkgcore_get_env_vars/regex filtering: ret $PKGCORE_RET" >&2
+	fi
+	if [ 0 != "${#PKGCORE_TARGETS[@]}" ]; then
+		declare -p "${PKGCORE_TARGETS[@]}" || die "failed outputing env vars ${PKGCORE_TARGETS[@]}" >&2
+	fi
+	pkgcore_shopt_pop
 }
 
 # dump environ to $1, optionally piping it through $2 and redirecting $2's output to $1.

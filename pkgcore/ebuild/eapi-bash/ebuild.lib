@@ -138,6 +138,7 @@ generate_initial_ebuild_environ() {
 	local OCC="$CC"
 	local OCXX="$CXX"
 	local EXISTING_PATH="$PATH"
+	local T="${T}"
 
 	if [ "${PKGCORE_EBUILD_PHASE}" == "setup" ]; then
 		#we specifically save the env so it's not stomped on by sourcing.
@@ -174,7 +175,14 @@ generate_initial_ebuild_environ() {
 	fi
 
 	pkgcore_ensure_PATH "$EXISTING_PATH"
-	dump_environ || die "dump_environ returned non zero"
+	if [ -n "${T}" ]; then
+		# use a file if possible; faster since bash does this lovely byte by byte reading if it's a pipe.
+		# having the file around is useful for debugging also.
+		dump_environ > "${T}/.initial_environ" || die "dump_environ > ${T}/.initial_environ return non zero"
+		echo "source ${T}/.initial_environ"
+	else
+		dump_environ || die "dump_environ returned non zero"
+	fi
 }
 
 load_ebuild()

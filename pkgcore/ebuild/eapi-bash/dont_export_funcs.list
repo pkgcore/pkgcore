@@ -112,6 +112,8 @@ pkgcore_run_ebuild_phase
 pkgcore_shopt_pop
 pkgcore_shopt_push
 portageq
+qa_invoke
+qa_run_function_if_exists
 regex_filter_input
 remove_path_entry
 request_sandbox_summary

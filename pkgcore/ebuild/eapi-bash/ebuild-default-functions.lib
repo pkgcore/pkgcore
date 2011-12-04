@@ -167,9 +167,9 @@ dyn_src_install()
 	echo
 	echo ">>> Install ${PF} into ${D} category ${CATEGORY}"
 	if is_function src_install; then
-		src_install
+		qa_invoke src_install
 	else
-		run_function_if_exists pkgcore_default_src_install
+		qa_run_function_if_exists pkgcore_default_src_install
 	fi
 
 	"${PKGCORE_BIN_PATH}/helpers/internals/prepall"
@@ -254,9 +254,9 @@ dyn_pkg_preinst()
 	local i
 
 	if is_function pkg_preinst; then
-		pkg_preinst
+		qa_invoke pkg_preinst
 	else
-		run_function_if_exists pkgcore_default_pkg_preinst
+		qa_run_function_if_exists pkgcore_default_pkg_preinst
 	fi
 
 	# total suid control.
@@ -381,7 +381,7 @@ internal_inherit()
 		done
 	fi
 	debug-print "inherit: $1 -> $location"
-	source "$location" >&2 || die "died sourcing $location in inherit()"
+	qa_invoke source "$location" >&2 || die "died sourcing $location in inherit()"
 	return 0
 }
 

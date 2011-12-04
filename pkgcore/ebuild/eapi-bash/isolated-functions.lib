@@ -84,7 +84,13 @@ is_function() {
 } &> /dev/null
 
 run_function_if_exists() {
-	is_function "$1" && "$@"
+	is_function "$1" || return 0
+	"$@"
+}
+
+qa_run_function_if_exists() {
+	is_function "$1" || return 0
+	qa_invoke "$@"
 }
 
 directory_is_empty() {
@@ -149,6 +155,51 @@ pkgcore_pop_IFS()
 	unset PKGCORE_SAVED_IFS[$(( ${#PKGCORE_SAVED_IFS[@]} -1 ))]
 	:
 }
+
+qa_invoke()
+{
+	if ${PKGCORE_QA_SUPPRESSED:-false}; then
+		"$@"
+		return $(( $? ))
+	fi
+	local pkgcore_should_fail=false
+	# save env and shopt settings.
+	local PKGCORE_IFS_POS="${#PKGCORE_SAVED_IFS[@]}"
+	local PKGCORE_SHOPT_POS="${#PKGCORE_SHOPT_STACK[@]}"
+	pkgcore_push_IFS "${IFS}"
+	pkgcore_shopt_push
+	"$@"
+	local ret=$?
+	if [ "${PKGCORE_IFS_POS}" != $(( ${#PKGCORE_SAVED_IFS[@]} - 1 )) ]; then
+		echo "QA warning: unbalanced pkgcore_push_IFS/pkgcore_pop_IFS detected.  internal error?"
+		pkgcore_should_fail=true
+	fi
+	if [ ${PKGCORE_SHOPT_POS} != $(( ${#PKGCORE_SHOPT_STACK[@]} - 2 )) ]; then
+		echo "QA warning: unbalanced pkgcore_shopt_push/pkgcore_shopt_pop detected. internal error?"
+		pkgcore_should_fail=true
+	fi
+	# push again so we can reuse the same machinery to check it.
+	pkgcore_push_IFS "${IFS}"
+	if [ "${PKGCORE_SAVED_IFS[${PKGCORE_IFS_POS}]}" != "${PKGCORE_SAVED_IFS[$(( $PKGCORE_IFS_POS + 1 ))]}" ]; then
+		echo "QA WARNING: invocation ${@} manipulated IFS to ${IFS}, but didn't restore it to it's original value!"
+	fi
+	pkgcore_pop_IFS
+	pkgcore_pop_IFS
+	pkgcore_shopt_push
+	if [ "${PKGCORE_SHOPT_STACK[${PKGCORE_SHOPT_POS}]}" != "${PKGCORE_SHOPT_STACK[$(( $PKGCORE_SHOPT_POS + 2 ))]}" ]; then
+		echo "QA WARNING; shopt modification bled out of invocation ${@}!"
+	fi
+	PKGCORE_SHOPT_POS+=1
+	if [ "${PKGCORE_SHOPT_STACK[${PKGCORE_SHOPT_POS}]}" != "${PKGCORE_SHOPT_STACK[$(( $PKGCORE_SHOPT_POS + 2 ))]}" ]; then
+		echo "QA WARNING; set modification bled out of invocation ${@}!"
+	fi
+	pkgcore_shopt_pop
+	pkgcore_shopt_pop
+
+	${pkgcore_should_fail} && die "invocation $@ modified globals and didn't clean up"
+	return $(( $ret ))
+}
+
 
 unset_colors
 

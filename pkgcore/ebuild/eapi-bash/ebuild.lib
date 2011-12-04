@@ -146,7 +146,7 @@ generate_initial_ebuild_environ() {
 
 		if [ "$USERLAND" == "GNU" ]; then
 			local PORTAGE_SHIFTED_PATH="$PATH"
-			source /etc/profile.env &>/dev/null
+			qa_invoke source /etc/profile.env
 			pkgcore_ensure_PATH "$EXISTING_PATH"
 		fi
 
@@ -197,7 +197,7 @@ load_ebuild()
 	# XXX: as soon as these eclasses behave, remove this.
 	export DESTTREE=/usr
 
-	source "${EBUILD}" >&2
+	qa_invoke source "${EBUILD}" >&2
 
 	#a reasonable default for $S
 	if [ "$S" = "" ]; then
@@ -238,18 +238,18 @@ source "${PKGCORE_BIN_PATH}/ebuild-env-utils.lib" >&2 || die "failed sourcing eb
 pkgcore_run_ebuild_phase()
 {
 	[[ -n $PKGCORE_DEBUG ]] && set -x
-	run_function_if_exists pkgcore_default_pre_${1}
-	run_function_if_exists pre_${1}
+	qa_run_function_if_exists pkgcore_default_pre_${1}
+	qa_run_function_if_exists pre_${1}
 	if is_function dyn_${1}; then
 		dyn_${1}
 	elif is_function ${1}; then
-		${1}
+		qa_invoke ${1}
 	else
-		run_function_if_exists pkgcore_default_${1}
+		qa_run_function_if_exists pkgcore_default_${1}
 	fi
 
-	run_function_if_exists post_${1}
-	run_function_if_exists pkgcore_default_post_${1}
+	qa_run_function_if_exists post_${1}
+	qa_run_function_if_exists pkgcore_default_post_${1}
 	[[ $PKGCORE_DEBUG -lt 2 ]] && set +x
 }
 

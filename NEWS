@@ -4,6 +4,10 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* added protection and QA scanning for bad IFS/shopt/set manipulation
+  by user code.
+
+
 pkgcore 0.7.7.1: Dec 2nd, 2011
 
 * Fix eclass metadata var (IUSE for example) stacking in metadata

@@ -210,6 +210,7 @@ pkgcore_ebd_process_ebuild_phases()
 {
 	# note that this is entirely subshelled; as such exit is used rather than returns
 	(
+	declare -r PKGCORE_QA_SUPPRESSED=false
 	local phases="$@"
 	local is_depends=true
 	if [[ ${phases/depend} == $phases ]]; then
@@ -327,6 +328,8 @@ ebd_process_metadata()
 	# note the local usage is redunant in light of it, but prefer to write it this
 	# way so that if someone ever drops the (), it'll still not bleed out.
 	(
+	# Heavy QA checks (IFS, shopt, etc) are suppressed for speed
+	declare -r PKGCORE_QA_SUPPRESSED=true
 	local size=$1
 	local data
 	local ret

@@ -167,7 +167,7 @@ class ConfigManagerTest(TestCase):
 
     def test_raises_instantiationerror(self):
         def myrepo():
-            raise errors.InstantiationError('I raised')
+            raise errors.ComplexInstantiationError('I raised')
         manager = central.ConfigManager(
             [{'myrepo': basics.HardCodedConfigSection({'class': myrepo}),
               }])
@@ -175,7 +175,7 @@ class ConfigManagerTest(TestCase):
             "Instantiating named section 'myrepo':\n"
             "'I raised' instantiating pkgcore.test.config.test_central.myrepo",
             self.get_config_obj, manager, 'myrepo', 'myrepo',
-            klass=errors.InstantiationError)
+            klass=errors.ComplexInstantiationError)
 
     def test_raises(self):
         def myrepo():
@@ -285,7 +285,7 @@ class ConfigManagerTest(TestCase):
         @configurable({'thing': 'ref:spork'})
         def myrepo(thing):
             self.assertIdentical(thing, spork)
-            raise errors.InstantiationError('I suck')
+            raise errors.ComplexInstantiationError('I suck')
         @configurable(typename='spork')
         def spork_producer():
             return spork
@@ -302,14 +302,14 @@ class ConfigManagerTest(TestCase):
                 "Instantiating named section 'spork':\n"
                 "'I suck' instantiating "
                 'pkgcore.test.config.test_central.myrepo',
-                spork.instantiate, klass=errors.InstantiationError)
+                spork.instantiate, klass=errors.ComplexInstantiationError)
         for i in range(3):
             self.check_error(
                 "Instantiating named section 'spork':\n"
                 "'I suck' instantiating "
                 'pkgcore.test.config.test_central.myrepo',
                 manager.collapse_named_section('spork').instantiate,
-                klass=errors.InstantiationError)
+                klass=errors.ComplexInstantiationError)
 
     def test_instantiation_caching(self):
         @configurable(typename='drawer')
@@ -474,7 +474,7 @@ class ConfigManagerTest(TestCase):
 
     def test_broken_default(self):
         def broken():
-            raise errors.InstantiationError('broken')
+            raise errors.ComplexInstantiationError('broken')
         manager = central.ConfigManager([{
                     'thing': basics.HardCodedConfigSection({
                             'class': drawer, 'default': True,
@@ -500,7 +500,7 @@ class ConfigManagerTest(TestCase):
     def test_instantiate_broken_ref(self):
         @configurable(typename='drawer')
         def broken():
-            raise errors.InstantiationError('broken')
+            raise errors.ComplexInstantiationError('broken')
         manager = central.ConfigManager([{
                     'one': basics.HardCodedConfigSection({
                             'class': drawer,
@@ -527,7 +527,7 @@ class ConfigManagerTest(TestCase):
     def test_autoload_instantiationerror(self):
         @configurable(typename='configsection')
         def broken():
-            raise errors.InstantiationError('broken')
+            raise errors.ComplexInstantiationError('broken')
         self.check_error(
             "Instantiating autoload 'autoload_broken':\n"
             "Instantiating named section 'autoload_broken':\n"

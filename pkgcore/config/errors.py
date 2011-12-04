@@ -9,7 +9,7 @@
 """Exceptions raised by the config code."""
 
 __all__ = ("BaseError", "TypeDefinitionError", "ConfigurationError", "ParsingError",
-    "CollapseInheritOnly", "InstantiationError", "QuoteInterpretationError",
+    "CollapseInheritOnly", "ComplexInstantiationError", "QuoteInterpretationError",
     "PermissionError", "PermissionDeniedError",
 )
 
@@ -97,7 +97,7 @@ class CollapseInheritOnly(ConfigurationError):
     """
 
 
-class InstantiationError(ConfigurationError):
+class ComplexInstantiationError(ConfigurationError):
 
     """Exception occured during instantiation.
 

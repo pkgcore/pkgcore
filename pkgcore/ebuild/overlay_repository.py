@@ -40,7 +40,7 @@ class OverlayRepo(prototype.tree):
         """
 
         if not trees or len(trees) < 2:
-            raise errors.InstantiationError(
+            raise errors.ComplexInstantiationError(
                 "Must specify at least two pathes to ebuild trees to overlay")
 
         self.trees = tuple(trees)

@@ -560,7 +560,7 @@ def parse_config_file(path, parser):
     try:
         f = open(path, 'r')
     except (IOError, OSError), e:
-        raise errors.InstantiationError(e.strerror)
+        raise errors.ComplexInstantiationError(e.strerror)
     try:
         return parser(f)
     finally:

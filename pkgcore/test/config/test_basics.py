@@ -561,7 +561,7 @@ class LoaderTest(TestCase):
 
     def test_parse_config_file(self):
         self.assertRaises(
-            errors.InstantiationError,
+            errors.ComplexInstantiationError,
             basics.parse_config_file, '/spork', None)
         def parser(f):
             return f.read()

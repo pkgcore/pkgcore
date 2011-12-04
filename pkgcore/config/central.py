@@ -141,7 +141,7 @@ class CollapsedConfig(object):
                 e.stack.append("Instantiating named section %r" % (self.name,))
                 raise
             except Exception, e:
-                new_e = errors.InstantiationError(exception=e,
+                new_e = errors.ComplexInstantiationError(exception=e,
                     callable_obj=self.type.callable)
                 new_e.stack.append("Instantiating named section %r" % (self.name,))
                 compatibility.raise_from(new_e)
@@ -154,7 +154,7 @@ class CollapsedConfig(object):
         """
 
         # Needed because this code can run twice even with instance
-        # caching if we trigger an InstantiationError.
+        # caching if we trigger an ComplexInstantiationError.
         config = mappings.ProtectedDict(self.config)
 
         # Instantiate section refs.
@@ -202,7 +202,7 @@ class CollapsedConfig(object):
         configdict = dict(config)
         try:
             self._instance = callable_obj(*pargs, **configdict)
-        except errors.InstantiationError, e:
+        except errors.ComplexInstantiationError, e:
             # This is probably just paranoia, but better safe than sorry.
             if e.callable is None:
                 e.callable = callable_obj
@@ -214,11 +214,11 @@ class CollapsedConfig(object):
         except Exception, e:
             if self.debug:
                 raise
-            compatibility.raise_from(errors.InstantiationError(exception=e,
+            compatibility.raise_from(errors.ComplexInstantiationError(exception=e,
                                             callable_obj=callable_obj,
                                             pargs=pargs, kwargs=configdict))
         if self._instance is None:
-            raise errors.InstantiationError(
+            raise errors.ComplexInstantiationError(
                 'No object returned', callable_obj=callable_obj, pargs=pargs,
                 kwargs=configdict)
 

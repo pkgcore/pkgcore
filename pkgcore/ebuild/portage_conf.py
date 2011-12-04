@@ -53,7 +53,7 @@ def SecurityUpgradesViaProfile(ebuild_repo, vdb, profile):
     """
     arch = profile.arch
     if arch is None:
-        raise errors.InstantiationError("arch wasn't set in profiles")
+        raise errors.ComplexInstantiationError("arch wasn't set in profiles")
     return SecurityUpgrades(ebuild_repo, vdb, arch)
 
 
@@ -221,10 +221,10 @@ def _find_profile_link(base_path, portage_compat=False):
                 profile = _find_profile_link(pjoin(base_path, 'portage'), True)
                 if profile is not None:
                     return profile
-            raise_from(errors.InstantiationError(
+            raise_from(errors.ComplexInstantiationError(
                 "%s must be a symlink pointing to a real target" % (
                     make_profile,)))
-        raise_from(errors.InstantiationError(
+        raise_from(errors.ComplexInstantiationError(
             "%s: unexpected error- %s" % (make_profile, oe.strerror)))
 
 def add_profile(config, base_path, user_profile_path=None):
@@ -232,7 +232,7 @@ def add_profile(config, base_path, user_profile_path=None):
 
     paths = profiles.OnDiskProfile.split_abspath(profile)
     if paths is None:
-        raise errors.InstantiationError(
+        raise errors.ComplexInstantiationError(
             '%s expands to %s, but no profile detected' % (
                 pjoin(base_path, 'make.profile'), profile))
 

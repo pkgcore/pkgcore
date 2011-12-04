@@ -226,6 +226,11 @@ pkgcore_ebd_process_ebuild_phases()
 		start_receiving_env*)
 			line="${line#start_receiving_env }"
 			case "$line" in
+			file*)
+				line="${line#file }"
+				source "${line}"
+				cont=$?
+				;;
 			bytes*)
 				line="${line#bytes }"
 				ebd_read_size ${line} line

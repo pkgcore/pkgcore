@@ -38,7 +38,7 @@ from snakeoil.compatibility import any
 from snakeoil.demandload import demandload
 demandload(globals(),
     'pkgcore.log:logger',
-    'snakeoil:osutils',
+    'snakeoil:osutils,fileutils',
 )
 
 _global_enable_eclass_preloading = False
@@ -280,7 +280,7 @@ class EbuildProcessor(object):
         self.unlock()
 
 
-    def prep_phase(self, phase, env, sandbox=None, logging=None):
+    def prep_phase(self, phase, env, sandbox=None, logging=None, tmpdir=None):
         """
         Utility function, to initialize the processor for a phase.
 
@@ -298,7 +298,7 @@ class EbuildProcessor(object):
         """
 
         self.write("process_ebuild %s" % phase)
-        if not self.send_env(env):
+        if not self.send_env(env, tmpdir=tmpdir):
             return False
         if sandbox:
             self.set_sandbox_state(sandbox)
@@ -557,7 +557,7 @@ class EbuildProcessor(object):
                     data.append("%s=$'%s'" % (x, s.replace("'", "\\'")))
         return 'export %s' % (' '.join(data),)
 
-    def send_env(self, env_dict, async=False):
+    def send_env(self, env_dict, async=False, tmpdir=None):
         """
         transfer the ebuild's desired env (env_dict) to the running daemon
 
@@ -565,8 +565,14 @@ class EbuildProcessor(object):
         :param env_dict: the bash env.
         """
         data = self._generate_env_str(env_dict)
-        self.write("start_receiving_env bytes %i\n%s" %
-            (len(data), data), append_newline=False)
+        if tmpdir:
+            path = osutils.pjoin(tmpdir, 'ebd-env-transfer')
+            fileutils.write_file(path, 'wb', data)
+            self.write("start_receiving_env file %s\n" % (path,),
+                append_newline=False)
+        else:
+            self.write("start_receiving_env bytes %i\n%s" %
+                (len(data), data), append_newline=False)
         return self.expect("env_received", async=async, flush=True)
 
     def set_logfile(self, logfile=''):

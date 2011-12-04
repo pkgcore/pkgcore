@@ -412,7 +412,7 @@ def run_generic_phase(pkg, phase, env, userpriv, sandbox, fakeroot,
         fakeroot=fakeroot)
     try:
         ebd.prep_phase(phase, env, sandbox=sandbox,
-                       logging=logging)
+                       logging=logging, tmpdir=env.get('T'))
         ebd.write("start_processing")
         if not ebd.generic_handler(additional_commands=extra_handlers):
             if not failure_allowed:

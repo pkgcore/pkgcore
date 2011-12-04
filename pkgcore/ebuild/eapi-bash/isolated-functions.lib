@@ -175,13 +175,12 @@ qa_invoke()
 		echo "QA warning: unbalanced pkgcore_shopt_push/pkgcore_shopt_pop detected. internal error?"
 		pkgcore_should_fail=true
 	fi
-	# push again so we can reuse the same machinery to check it.
-	pkgcore_IFS_push "${IFS}"
-	if [ "${PKGCORE_SAVED_IFS[${PKGCORE_IFS_POS}]}" != "${PKGCORE_SAVED_IFS[$(( $PKGCORE_IFS_POS + 1 ))]}" ]; then
+
+	if [ "${IFS-unset}" != "${PKGCORE_SAVED_IFS[${PKGCORE_IFS_POS}]}" ]; then
 		echo "QA WARNING: invocation ${@} manipulated IFS to ${IFS}, but didn't restore it to it's original value!"
 	fi
 	pkgcore_IFS_pop
-	pkgcore_IFS_pop
+
 	pkgcore_shopt_push
 	if [ "${PKGCORE_SHOPT_STACK[${PKGCORE_SHOPT_POS}]}" != "${PKGCORE_SHOPT_STACK[$(( $PKGCORE_SHOPT_POS + 2 ))]}" ]; then
 		echo "QA WARNING; shopt modification bled out of invocation ${@}!"

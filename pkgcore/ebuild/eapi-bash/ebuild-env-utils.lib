@@ -151,7 +151,8 @@ scrub_environ() {
 		# run the filtered env.
 		invoke_filter_env \
 			-f "$(filter_env_func_filter ${DONT_EXPORT_FUNCS} )" \
-			-v "$(filter_env_var_filter ${DONT_EXPORT_VARS} src x EXISTING_PATH)" -i "$src" \
+			-v "$(filter_env_var_filter ${DONT_EXPORT_VARS} src x EXISTING_PATH)" \
+			-i "$src" \
 			> "${T}/.pre-scrubbed-env" || die "failed first step of scrubbing the env to load"
 
 		[ -s "${T}/.pre-scrubbed-env" ] || die "empty pre-scrubbed-env file.  pkgcore bug?"

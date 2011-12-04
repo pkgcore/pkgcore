@@ -30,10 +30,10 @@ internal_inherit()
 	ebd_read_line line
 	if [[ $line == path ]]; then
 		ebd_read_line line
-		source "${line}" >&2 || die "failed sources inherit: ${line}"
+		qa_invoke source "${line}" >&2 || die "failed sources inherit: ${line}"
 	elif [[ $line == transfer ]]; then
 		ebd_read_line line
-		eval "$line" || die "failed evaluating eclass $1 on an inherit transfer"
+		qa_invoke eval "$line" || die "failed evaluating eclass $1 on an inherit transfer"
 	elif [[ $line == failed ]]; then
 		die "inherit for $1 failed"
 	else

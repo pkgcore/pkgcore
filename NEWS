@@ -4,6 +4,9 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* fixed long standing race that could occur during pmaint regen leading
+  to an ebuild failing to be regenerated.
+
 * added protection and QA scanning for bad IFS/shopt/set manipulation
   by user code.
 

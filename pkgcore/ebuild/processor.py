@@ -23,6 +23,18 @@ __all__ = (
     "request_ebuild_processor", "release_ebuild_processor", "EbuildProcessor",
     "UnhandledCommand", "expected_ebuild_env")
 
+try:
+    import threading
+    _global_ebp_lock = threading.Lock()
+    _acquire_global_ebp_lock = _global_ebp_lock.acquire
+    _release_global_ebp_lock = _global_ebp_lock.release
+except ImportError:
+    def _acquire_global_ebp_lock():
+        pass
+
+    def _release_global_ebp_lock():
+        pass
+
 
 inactive_ebp_list = []
 active_ebp_list = []
@@ -31,7 +43,7 @@ import pkgcore.spawn, os, signal, errno
 from pkgcore import const, os_data
 from pkgcore.ebuild import const as e_const
 
-from snakeoil.currying import post_curry, partial
+from snakeoil.currying import post_curry, partial, pretty_docs
 from snakeoil import klass
 from snakeoil.weakrefs import WeakRefFinalizer
 from snakeoil.compatibility import any
@@ -45,6 +57,18 @@ _global_enable_eclass_preloading = False
 
 import traceback
 
+def _single_thread_allowed(functor):
+    def _inner(*args, **kwds):
+        _acquire_global_ebp_lock()
+        try:
+            return functor(*args, **kwds)
+        finally:
+            _release_global_ebp_lock()
+    _inner.func = functor
+    pretty_docs(_inner, name=functor.__name__)
+    return _inner
+
+@_single_thread_allowed
 def shutdown_all_processors():
     """kill off all known processors"""
     try:
@@ -68,6 +92,7 @@ def shutdown_all_processors():
 
 pkgcore.spawn.atexit_register(shutdown_all_processors)
 
+@_single_thread_allowed
 def request_ebuild_processor(userpriv=False, sandbox=None, fakeroot=False,
                              save_file=None):
     """
@@ -102,7 +127,7 @@ def request_ebuild_processor(userpriv=False, sandbox=None, fakeroot=False,
     active_ebp_list.append(e)
     return e
 
-
+@_single_thread_allowed
 def release_ebuild_processor(ebp):
     """
     the inverse of request_ebuild_processor.

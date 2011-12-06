@@ -4,7 +4,7 @@
 # Internal logging function, don't use this in ebuilds
 pkgcore_elog_base() {
 	local messagetype
-	[ -z "${1}" -o -z "${T}" -o ! -d "${T}/logging" ] && return 1
+	[ -z "${1}" -o  -z "${T}" -o ! -d "${T}/logging" ] && return 1
 	case "${1}" in
 		INFO|WARN|ERROR|LOG)
 			messagetype="${1}"
@@ -70,7 +70,7 @@ has() {
 	pkgcore_shopt_push +x
 	local x
 	for x in "$@"; do
-		if [ "${x}" == "${needle}" ]; then
+		if [[ "${x}" == "${needle}" ]]; then
 			pkgcore_shopt_pop
 			return 0
 		fi
@@ -115,9 +115,9 @@ pkgcore_shopt_push()
 
 pkgcore_shopt_pop()
 {
-	[ "$#" -ne 0 ] && die "bad invocation of pkgcore_shopt_pop; no args should be supplied, got $@"
+	[[ "$#" -ne 0 ]] && die "bad invocation of pkgcore_shopt_pop; no args should be supplied, got $@"
 	local count=$(( ${#PKGCORE_SHOPT_STACK[@]} - 1 ))
-	[ "$count" -le 0 ] && die "bad pkgcore_shopt_pop invocation; no matching push, stack was empty"
+	[[ "$count" -le 0 ]] && die "bad pkgcore_shopt_pop invocation; no matching push, stack was empty"
 
 	local set_val="${PKGCORE_SHOPT_STACK[$count]}"
 	if [[ "$-" != "${set_val}" ]]; then
@@ -129,14 +129,14 @@ pkgcore_shopt_pop()
 
 	local previous=${PKGCORE_SHOPT_STACK[$count]}
 	unset PKGCORE_SHOPT_STACK[$count]
-	[ "$BASHOPTS" == "$previous" ] && return 0
+	[[ "$BASHOPTS" == "$previous" ]] && return 0
 
 	local IFS=' '
 	local current="${BASHOPTS}"
-	if [ -n "${current}" ]; then
+	if [[ -n "${current}" ]]; then
 		shopt -u ${current//:/ } >&2 || die "failed wiping current shopt settings of ${current}"
 	fi
-	if [ -n "${previous}" ]; then
+	if [[ -n "${previous}" ]]; then
 		shopt -s ${previous//:/ } >&2 || die "failed forcing old shopt settings to ${previous}"
 	fi
 	return 0
@@ -183,27 +183,27 @@ qa_invoke()
 	"$@"
 	local ret=$?
 
-	if [ "${PKGCORE_IFS_POS}" != $(( ${#PKGCORE_SAVED_IFS[@]} - 1 )) ]; then
+	if [[ "${PKGCORE_IFS_POS}" != $(( ${#PKGCORE_SAVED_IFS[@]} - 1 )) ]]; then
 		echo "QA warning: unbalanced pkgcore_IFS_push/pkgcore_IFS_pop detected.  internal error?"
 		pkgcore_should_fail=true
 	fi
-	if [ ${PKGCORE_SHOPT_POS} != $(( ${#PKGCORE_SHOPT_STACK[@]} - 2 )) ]; then
+	if [[ ${PKGCORE_SHOPT_POS} != $(( ${#PKGCORE_SHOPT_STACK[@]} - 2 )) ]]; then
 		echo "QA warning: unbalanced pkgcore_shopt_push/pkgcore_shopt_pop detected. internal error?"
 		pkgcore_should_fail=true
 	fi
 
-	if [ "${IFS-unset}" != "${PKGCORE_SAVED_IFS[${PKGCORE_IFS_POS}]}" ]; then
+	if [[ "${IFS-unset}" != "${PKGCORE_SAVED_IFS[${PKGCORE_IFS_POS}]}" ]]; then
 		echo "QA WARNING: invocation ${@} manipulated IFS to ${IFS}, but didn't restore it to it's original value!"
 	fi
 	pkgcore_IFS_pop
 
-	if [ "${BASHOPTS}" != "${PKGCORE_SHOPT_STACK[${PKGCORE_SHOPT_POS}]}" ]; then
+	if [[ "${BASHOPTS}" != "${PKGCORE_SHOPT_STACK[${PKGCORE_SHOPT_POS}]}" ]]; then
 		echo "QA warning: shopt modification bled out of invocation ${@}" >&2
 		echo "          : was ${PKGCORE_SHOPT_STACK[${PKGCORE_SHOPT_POS}]}" >&2
 		echo "          : now ${BASHOPTS}" >&2
 	fi
 	PKGCORE_SHOPT_POS=$(( $PKGCORE_SHOPT_POS + 1 ))
-	if [ "$-" != "${PKGCORE_SHOPT_STACK[${PKGCORE_SHOPT_POS}]}" ]; then
+	if [[ "$-" != "${PKGCORE_SHOPT_STACK[${PKGCORE_SHOPT_POS}]}" ]]; then
 		echo "QA warning: set modification bled out of invocation ${@}" >&2
 		echo "          : was ${PKGCORE_SHOPT_STACK[${PKGCORE_SHOPT_POS}]}" >&2
 		echo "          : now $-" >&2

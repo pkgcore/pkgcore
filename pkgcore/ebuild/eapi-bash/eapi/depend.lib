@@ -92,7 +92,7 @@ eend() {
 	if [[ ${retval} == "0" ]] ; then
 		msg="${PKGCORE_RC_BRACKET}[ ${PKGCORE_RC_GOOD}ok${PKGCORE_RC_BRACKET} ]${PKGCORE_RC_NORMAL}"
 	else
-		if [[ -n $* ]] ; then
+		if [[ $# != 0 ]] ; then
 			eerror "$*"
 		fi
 		msg="${PKGCORE_RC_BRACKET}[ ${PKGCORE_RC_BAD}!!${PKGCORE_RC_BRACKET} ]${PKGCORE_RC_NORMAL}"

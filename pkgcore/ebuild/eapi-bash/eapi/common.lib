@@ -11,7 +11,7 @@ use()
 
 use_with()
 {
-	if [ -z "$1" ]; then
+	if [[ -z "$1" ]]; then
 		echo "!!! use_with() called without a parameter." >&2
 		echo "!!! use_with <USEFLAG> [<flagname> [value]]" >&2
 		return
@@ -25,7 +25,7 @@ use_with()
 	fi
 
 	local UWORD="$2"
-	if [ -z "${UWORD}" ]; then
+	if [[ -z "${UWORD}" ]]; then
 		UWORD="$1"
 	fi
 
@@ -39,7 +39,7 @@ use_with()
 
 use_enable()
 {
-	if [ -z "$1" ]; then
+	if [[ -z "$1" ]]; then
 		echo "!!! use_enable() called without a parameter." >&2
 		echo "!!! use_enable <USEFLAG> [<flagname> [value]]" >&2
 		return
@@ -53,7 +53,7 @@ use_enable()
 	fi
 
 	local UWORD="$2"
-	if [ -z "${UWORD}" ]; then
+	if [[ -z "${UWORD}" ]]; then
 		UWORD="$1"
 	fi
 
@@ -69,8 +69,8 @@ econf()
 {
 	local ret
 	ECONF_SOURCE="${ECONF_SOURCE:-.}"
-	if [ ! -x "${ECONF_SOURCE}/configure" ]; then
-		[ -f "${ECONF_SOURCE}/configure" ] && die "configure script isn't executable"
+	if [[ ! -x "${ECONF_SOURCE}/configure" ]]; then
+		[[ -f "${ECONF_SOURCE}/configure" ]] && die "configure script isn't executable"
 		die "no configure script found"
 	fi
 
@@ -91,22 +91,22 @@ econf()
 		local CONF_LIBDIR="${!LIBDIR_VAR}"
 	fi
 	unset LIBDIR_VAR
-	if [ -n "${CONF_LIBDIR}" ] && [ "${*/--libdir}" == "$*" ]; then
-		if [ "${*/--exec-prefix}" != "$*" ]; then
+	if [[ -n "${CONF_LIBDIR}" ]] && [[ "${*/--libdir}" == "$*" ]]; then
+		if [[ "${*/--exec-prefix}" != "$*" ]]; then
 		    local args="$(echo $*)"
 		    local -a pref=($(echo ${args/*--exec-prefix[= ]}))
 		    CONF_PREFIX=${pref}
-		    [ "${CONF_PREFIX:0:1}" != "/" ] && CONF_PREFIX="/${CONF_PREFIX}"
-		elif [ "${*/--prefix}" != "$*" ]; then
+		    [[ "${CONF_PREFIX:0:1}" != "/" ]] && CONF_PREFIX="/${CONF_PREFIX}"
+		elif [[ "${*/--prefix}" != "$*" ]]; then
 		    local args="$(echo $*)"
  			local -a pref=($(echo ${args/*--prefix[= ]}))
  			CONF_PREFIX=${pref}
-		    [ "${CONF_PREFIX:0:1}" != "/" ] && CONF_PREFIX="/${CONF_PREFIX}"
+		    [[ "${CONF_PREFIX:0:1}" != "/" ]] && CONF_PREFIX="/${CONF_PREFIX}"
 		else
 		    CONF_PREFIX="/usr"
  	    fi
  		export CONF_PREFIX
-		[ "${CONF_LIBDIR:0:1}" != "/" ] && CONF_LIBDIR="/${CONF_LIBDIR}"
+		[[ "${CONF_LIBDIR:0:1}" != "/" ]] && CONF_LIBDIR="/${CONF_LIBDIR}"
 
 		local CONF_LIBDIR_RESULT="${CONF_PREFIX}${CONF_LIBDIR}"
 		for X in 1 2 3; do
@@ -144,7 +144,7 @@ econf()
 
 	if ! "$@"; then
 
-		if [ -s config.log ]; then
+		if [[ -s config.log ]]; then
 		    echo
 		    echo "!!! Please attach the config.log to your bug report:"
 		    echo "!!! ${PWD}/config.log"
@@ -156,9 +156,9 @@ econf()
 
 strip_duplicate_slashes ()
 {
-	if [ -n "${1}" ]; then
+	if [[ -n "${1}" ]]; then
 		local removed="${1/\/\///}"
-		[ "${removed}" != "${removed/\/\///}" ] && removed=$(strip_duplicate_slashes "${removed}")
+		[[ "${removed}" != "${removed/\/\///}" ]] && removed=$(strip_duplicate_slashes "${removed}")
 		echo ${removed}
 	fi
 }
@@ -172,15 +172,15 @@ einstall()
 		CONF_LIBDIR="${!LIBDIR_VAR}"
 	fi
 	unset LIBDIR_VAR
-	if [ -n "${CONF_LIBDIR}" ] && [ "${CONF_PREFIX:-unset}" != "unset" ]; then
+	if [[ -n "${CONF_LIBDIR}" ]] && [[ "${CONF_PREFIX:-unset}" != "unset" ]]; then
 		EI_DESTLIBDIR="${D}/${CONF_PREFIX}/${CONF_LIBDIR}"
 		EI_DESTLIBDIR="$(strip_duplicate_slashes ${EI_DESTLIBDIR})"
 		LOCAL_EXTRA_EINSTALL="${LOCAL_EXTRA_EINSTALL} libdir=${EI_DESTLIBDIR}"
 		unset EI_DESTLIBDIR
 	fi
 
-	if [ -f ./[mM]akefile -o -f ./GNUmakefile ] ; then
-		if [ ! -z "${PKGCORE_DEBUG}" ]; then
+	if [ -f ./[mM]akefile -o -f ./GNUmakefile ]; then
+		if [[ ! -z "${PKGCORE_DEBUG}" ]]; then
 		    ${MAKE:-make} -n prefix=${D}/usr \
 		        datadir=${D}/usr/share \
 		        infodir=${D}/usr/share/info \
@@ -225,13 +225,13 @@ pkgcore_common_src_compile()
 {
 	# only eapi 0/1 invoke configure...
 	if has "${EAPI:-0}" 0 1; then
-		if [ "${EAPI:-0}" == 0 ] ; then
-		    [ -x ./configure ] && econf
-		elif [ -x "${ECONF_SOURCE:-.}/configure" ]; then
+		if [[ "${EAPI:-0}" == 0 ]]; then
+		    [[ -x ./configure ]] && econf
+		elif [[ -x "${ECONF_SOURCE:-.}/configure" ]]; then
 		    econf
 		fi
 	fi
-	if [ -f Makefile ] || [ -f GNUmakefile ] || [ -f makefile ]; then
+	if [[ -f Makefile ]] || [[ -f GNUmakefile ]] || [[ -f makefile ]]; then
 		emake || die "emake failed"
 	fi
 }

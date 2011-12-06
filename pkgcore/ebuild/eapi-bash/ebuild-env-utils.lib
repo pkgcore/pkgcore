@@ -2,17 +2,17 @@
 # this functionality is all related to saving/loading environmental dumps for ebuilds
 
 filter_env_func_filter() {
-	while [ -n "$1" ]; do
+	while [[ -n "$1" ]]; do
 		echo -n "$1"
-		[ "$#" != 1 ] && echo -n ','
+		[[ $# != 1 ]] && echo -n ','
 		shift
 	done
 }
 
 filter_env_var_filter() {
-	while [ -n "$1" ]; do
+	while [[ -n "$1" ]]; do
 		echo -n "$1"
-		[ "$#" != 1 ] && echo -n ','
+		[[ $# != 1 ]] && echo -n ','
 		shift
 	done
 }
@@ -20,7 +20,7 @@ filter_env_var_filter() {
 regex_filter_input() {
 	local regex="${1}"
 	shift
-	while [ -n "$1" ]; do
+	while [[ -n "$1" ]]; do
 		regex="${regex}|${1}"
 		shift
 	done
@@ -64,24 +64,24 @@ dump_environ() {
 
 	# if possible, sort the outputting of funcs/vars; this isn't required however.
 	local PKGCORE_SORT=$(type -p sort 2> /dev/null)
-	[ -z "${PKGCORE_SORT}" ] && PKGCORE_SORT=cat
+	[[ -z "${PKGCORE_SORT}" ]] && PKGCORE_SORT=cat
 
 	pkgcore_shopt_push -f
 	declare -a PKGCORE_TARGETS=( $(pkgcore_get_env_funcs | regex_filter_input ${DONT_EXPORT_FUNCS} | ${PKGCORE_SORT}) )
 	local PKGCORE_RET=$?
-	if [ "$PKGCORE_RET" != "0" ]; then
+	if [[ "$PKGCORE_RET" != "0" ]]; then
 		die "failed invoking pkgcore_get_env_funcs/regex filtering: ret $PKGCORE_RET" >&2
 	fi
-	if [ 0 != "${#PKGCORE_TARGETS[@]}" ]; then
+	if [[ 0 != "${#PKGCORE_TARGETS[@]}" ]]; then
 		declare -f "${PKGCORE_TARGETS[@]}" || die "failed outputing funcs ${PKGCORE_TARGETS[@]}" >&2
 	fi
 
 	PKGCORE_TARGETS=( $(declare | invoke_filter_env --print-vars | regex_filter_input ${DONT_EXPORT_VARS} | ${PKGCORE_SORT}) )
 	PKGCORE_RET=$?
-	if [ "$PKGCORE_RET" != 0 ]; then
+	if [[ "$PKGCORE_RET" != 0 ]]; then
 		die "failed invoking pkgcore_get_env_vars/regex filtering: ret $PKGCORE_RET" >&2
 	fi
-	if [ 0 != "${#PKGCORE_TARGETS[@]}" ]; then
+	if [[ 0 != "${#PKGCORE_TARGETS[@]}" ]]; then
 		declare -p "${PKGCORE_TARGETS[@]}" || die "failed outputing env vars ${PKGCORE_TARGETS[@]}" >&2
 	fi
 	pkgcore_shopt_pop
@@ -89,8 +89,8 @@ dump_environ() {
 
 # dump environ to $1, optionally piping it through $2 and redirecting $2's output to $1.
 export_environ() {
-	if [ "${1:-unset}" == "unset" ]; then
-		die "export_environ requires at least one arguement"
+	if [[ $# != 1 ]] && [[ $# != 2 ]]; then
+		die "export_environ requires at least one arguement, two max; given $@"
 	fi
 
 	#the spaces on both sides are important- otherwise, the later ${DONT_EXPORT_VARS/ temp_umask /} won't match.
@@ -102,7 +102,7 @@ export_environ() {
 	local temp_umask=`umask`
 	umask 0002
 
-	if [ "${2:-unset}" == "unset" ]; then
+	if [[ $# == 1 ]]; then
 		dump_environ > "$1"
 	else
 		dump_environ | $2 > "$1"
@@ -120,11 +120,12 @@ scrub_environ() {
 	local src e ret EXISTING_PATH
 	# localize these so the reload doesn't have the ability to change them
 
-	[ ! -f "$1" ] && die "scrub_environ called with a nonexist env: $1"
-
-	if [ -z "$1" ]; then
-		die "load_environ called with no args, need args"
+	if [[ $# != 1 ]]; then
+		die "load_environ called with wrong args, only one can be given: $@"
 	fi
+
+	[[ ! -f "$1" ]] && die "scrub_environ called with a nonexist env: $1"
+
 	src="$1"
 
 	# here's how this goes; we do an eval'd loadup of the target env w/in a subshell..
@@ -155,7 +156,7 @@ scrub_environ() {
 			-i "$src" \
 			> "${T}/.pre-scrubbed-env" || die "failed first step of scrubbing the env to load"
 
-		[ -s "${T}/.pre-scrubbed-env" ] || die "empty pre-scrubbed-env file.  pkgcore bug?"
+		[[ -s "${T}/.pre-scrubbed-env" ]] || die "empty pre-scrubbed-env file.  pkgcore bug?"
 		source "${T}/.pre-scrubbed-env" >&2 || die "failed sourcing scrubbed env"
 
 

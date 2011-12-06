@@ -174,8 +174,9 @@ qa_invoke()
 	fi
 	local pkgcore_should_fail=false
 	# save env and shopt settings.
-	local PKGCORE_IFS_POS="${#PKGCORE_SAVED_IFS[@]}"
-	local PKGCORE_SHOPT_POS="${#PKGCORE_SHOPT_STACK[@]}"
+	# in addition, protect the stack from bad pkgcore calls, or bad consumers accessing internals
+	local PKGCORE_SAVED_IFS=( )
+	local PKGCORE_SHOPT_STACK=( )
 
 	pkgcore_IFS_push "${IFS}"
 	pkgcore_shopt_push
@@ -183,29 +184,31 @@ qa_invoke()
 	"$@"
 	local ret=$?
 
-	if [[ "${PKGCORE_IFS_POS}" != $(( ${#PKGCORE_SAVED_IFS[@]} - 1 )) ]]; then
-		echo "QA warning: unbalanced pkgcore_IFS_push/pkgcore_IFS_pop detected.  internal error?"
+	if [[ 1 != ${#PKGCORE_SAVED_IFS[@]} ]]; then
+		echo "QA warning: unbalanced pkgcore_IFS_push/pkgcore_IFS_pop detected.  internal error?" \
+			" count was ${#PKGCORE_SAVED_IFS[@]}"
 		pkgcore_should_fail=true
 	fi
-	if [[ ${PKGCORE_SHOPT_POS} != $(( ${#PKGCORE_SHOPT_STACK[@]} - 2 )) ]]; then
-		echo "QA warning: unbalanced pkgcore_shopt_push/pkgcore_shopt_pop detected. internal error?"
+	if [[ 2 != ${#PKGCORE_SHOPT_STACK[@]} ]]; then
+		echo "QA warning: unbalanced pkgcore_shopt_push/pkgcore_shopt_pop detected. internal error?" \
+			" count was ${#PKGCORE_SHOPT_STACK[@]}"
 		pkgcore_should_fail=true
 	fi
 
-	if [[ "${IFS-unset}" != "${PKGCORE_SAVED_IFS[${PKGCORE_IFS_POS}]}" ]]; then
+	if [[ "${IFS-unset}" != "${PKGCORE_SAVED_IFS[0]}" ]]; then
 		echo "QA WARNING: invocation ${@} manipulated IFS to ${IFS}, but didn't restore it to it's original value!"
 	fi
 	pkgcore_IFS_pop
 
-	if [[ "${BASHOPTS}" != "${PKGCORE_SHOPT_STACK[${PKGCORE_SHOPT_POS}]}" ]]; then
+	if [[ "${BASHOPTS}" != "${PKGCORE_SHOPT_STACK[0]}" ]]; then
 		echo "QA warning: shopt modification bled out of invocation ${@}" >&2
-		echo "          : was ${PKGCORE_SHOPT_STACK[${PKGCORE_SHOPT_POS}]}" >&2
+		echo "          : was ${PKGCORE_SHOPT_STACK[0]}" >&2
 		echo "          : now ${BASHOPTS}" >&2
 	fi
-	PKGCORE_SHOPT_POS=$(( $PKGCORE_SHOPT_POS + 1 ))
-	if [[ "$-" != "${PKGCORE_SHOPT_STACK[${PKGCORE_SHOPT_POS}]}" ]]; then
+
+	if [[ "$-" != "${PKGCORE_SHOPT_STACK[1]}" ]]; then
 		echo "QA warning: set modification bled out of invocation ${@}" >&2
-		echo "          : was ${PKGCORE_SHOPT_STACK[${PKGCORE_SHOPT_POS}]}" >&2
+		echo "          : was ${PKGCORE_SHOPT_STACK[1]}" >&2
 		echo "          : now $-" >&2
 	fi
 	pkgcore_shopt_pop

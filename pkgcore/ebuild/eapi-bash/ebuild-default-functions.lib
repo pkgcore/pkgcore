@@ -385,33 +385,23 @@ internal_inherit()
 	return 0
 }
 
-# Sources all eclasses in parameters
-declare -ix ECLASS_DEPTH=0
 inherit()
 {
-	local SAVED_INHERIT_COUNT=0
+	local ECLASS_DEPTH=$(( ${ECLASS_DEPTH-0} + 1 ))
 
-	if [[ $ECLASS_DEPTH < 0 ]] && [[ "${EBUILD_PHASE}" == "depend" ]]; then
-		#echo "QA Notice: ${CATEGORY}/${PF} makes multiple inherit calls: $*" >&2
-		SAVED_INHERIT_COUNT=$ECLASS_DEPTH
-		ECLASS_DEPTH=0
-	fi
-	ECLASS_DEPTH=$(($ECLASS_DEPTH + 1))
 	if [[ $ECLASS_DEPTH > 1 ]]; then
 		debug-print "*** Multiple Inheritence (Level: ${ECLASS_DEPTH})"
 	fi
 
 	local location olocation
-	local PECLASS
+	local ECLASS
 
 	# note that this ensures any later unsets/mangling, the ebuilds original
 	# setting is protected.
 	local IUSE REQUIRED_USE DEPEND RDEPEND PDEPEND
 	while [[ -n "$1" ]]; do
 
-		# PECLASS is used to restore the ECLASS var after recursion.
-		PECLASS="$ECLASS"
-		export ECLASS="$1"
+		ECLASS="$1"
 
 		if [[ "$EBUILD_PHASE" != "depend" ]]; then
 			if ! has $ECLASS $INHERITED; then
@@ -423,29 +413,22 @@ inherit()
 
 		unset IUSE REQUIRED_USE DEPEND RDEPEND PDEPEND
 
-		if ! internal_inherit "$1"; then
-			die "failed sourcing $1 in inherit()"
-		fi
+		internal_inherit "$1" || die "failed sourcing $1 in inherit()"
 
 		# If each var has a value, append it to the global variable E_* to
 		# be applied after everything is finished. New incremental behavior.
-		[[ "${IUSE-unset}"         != "unset" ]] && export E_IUSE+="${E_IUSE:+ }${IUSE}"
-		[[ "${REQUIRED_USE-unset}" != "unset" ]] && export E_IUSE+="${E_REQUIRED_USE:+ }${REQUIRED_USE}"
-		[[ "${DEPEND-unset}"       != "unset" ]] && export E_DEPEND+="${E_DEPEND:+ }${DEPEND}"
-		[[ "${RDEPEND-unset}"      != "unset" ]] && export E_RDEPEND+="${E_RDEPEND:+ }${RDEPEND}"
-		[[ "${PDEPEND-unset}"      != "unset" ]] && export E_PDEPEND+="${E_PDEPEND:+ }${PDEPEND}"
+		[[ -n "${IUSE}"         ]] && E_IUSE+="${E_IUSE:+ }${IUSE}"
+		[[ -n "${REQUIRED_USE}" ]] && E_REQUIRED_USE+="${E_REQUIRED_USE:+ }${REQUIRED_USE}"
+		[[ -n "${DEPEND}"       ]] && E_DEPEND+="${E_DEPEND:+ }${DEPEND}"
+		[[ -n "${RDEPEND}"      ]] && E_RDEPEND+="${E_RDEPEND:+ }${RDEPEND}"
+		[[ -n "${PDEPEND}"      ]] && E_PDEPEND+="${E_PDEPEND:+ }${PDEPEND}"
 
 		if ! has $1 $INHERITED; then
 			INHERITED="$INHERITED $ECLASS"
 		fi
-		export ECLASS="$PECLASS"
 
 		shift
 	done
-	ECLASS_DEPTH=$(($ECLASS_DEPTH - 1))
-	if [[ $ECLASS_DEPTH == 0 ]]; then
-		ECLASS_DEPTH=$(($SAVED_INHERIT_COUNT - 1))
-	fi
 }
 
 # Exports stub functions that call the eclass's functions, thereby making them default.

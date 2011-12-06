@@ -398,12 +398,14 @@ def config_from_make_conf(location="/etc/"):
                 'inherit': ('ebuild-repo-common',),
                 'raw_repo': ('raw:' + tree_loc),
         }
+        cache_name = 'cache:%s' % (tree_loc,)
+        new_config[cache_name] = mk_simple_cache(config_root, tree_loc)
+        kwds['cache'] = cache_name
         if tree_loc == portdir:
             kwds['class'] = 'pkgcore.ebuild.repository.tree'
-            kwds['cache'] = 'cache:%s' % (portdir,)
+            kwds['cache'] = 'cache:%s/metadata/cache cache:%s' % (portdir, portdir)
         else:
             kwds['parent_repo'] = portdir
-            kwds['cache'] = (mk_simple_cache(config_root, tree_loc),)
         new_config[tree_loc] = basics.AutoConfigSection(kwds)
 
     rsync_portdir_cache = os.path.exists(pjoin(portdir, "metadata", "cache")) \
@@ -411,7 +413,7 @@ def config_from_make_conf(location="/etc/"):
 
     # if a metadata cache exists, use it
     if rsync_portdir_cache:
-        new_config["cache:%s" % (portdir,)] = basics.AutoConfigSection({
+        new_config["cache:%s/metadata/cache" % (portdir,)] = basics.AutoConfigSection({
             'class': 'pkgcore.cache.metadata.database', 'readonly': 'yes',
             'location': portdir,
         })

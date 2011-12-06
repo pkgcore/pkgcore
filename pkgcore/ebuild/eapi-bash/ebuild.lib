@@ -36,7 +36,7 @@ AUTOCLEAN CLEAN_DELAY USE_ORDER XARGS
 COLORTERM LESS(OPEN)? DISPLAY EDITOR LS_COLORS PAGER TERM TERMCAP (ftp|http)_proxy USER(NAME)?"
 
 
-if [ -z "$PKGCORE_BIN_PATH" ]; then
+if [[ -z "$PKGCORE_BIN_PATH" ]]; then
 	echo "PKGCORE_BIN_PATH is unset!"
 	exit 1
 fi
@@ -49,7 +49,7 @@ reset_sandbox() {
 	export SANDBOX_READ="${SANDBOX_READ:+${SANDBOX_READ}:}/dev/shm:${PORTAGE_TMPDIR}"
 	local x
 	for x in CCACHE_DIR DISTCC_DIR D WORKDIR T; do
-		if [ -n "${!x}" ]; then
+		if [[ -n "${!x}" ]]; then
 			addread  "${!x}"
 			addwrite "${!x}"
 		fi
@@ -106,18 +106,18 @@ pkgcore_ensure_PATH()
 	local adds
 	# note this isolates the adds in the same order they appear in
 	# the passed in path, maintaining that order.
-	if [ "$EXISTING_PATH" != "$PATH" ]; then
+	if [[ "$EXISTING_PATH" != "$PATH" ]]; then
 		pkgcore_IFS_push ':'
 		local x
 		for x in ${EXISTING_PATH}; do
 			# keep in mind PATH=":foon" is a valid way to say "cwd"
-			[ -z "${x}" ] && continue
+			[[ -z "${x}" ]] && continue
 			if ! has ${x} ${PATH} && ! has ${x} ${adds}; then
 				adds="${adds:+${adds}:}${x}"
 			fi
 		done
 		pkgcore_IFS_pop
-		[ -n "$adds" ] && PATH="${PATH}${PATH:+:}${adds}"
+		[[ -n "$adds" ]] && PATH="${PATH}${PATH:+:}${adds}"
 	fi
 	export PATH
 }
@@ -140,12 +140,12 @@ generate_initial_ebuild_environ() {
 	local EXISTING_PATH="$PATH"
 	local T="${T}"
 
-	if [ "${PKGCORE_EBUILD_PHASE}" == "setup" ]; then
+	if [[ "${PKGCORE_EBUILD_PHASE}" == "setup" ]]; then
 		#we specifically save the env so it's not stomped on by sourcing.
 		#bug 51552
 		export_environ "${T}/.temp_env"
 
-		if [ "$USERLAND" == "GNU" ]; then
+		if [[ "$USERLAND" == "GNU" ]]; then
 			local PORTAGE_SHIFTED_PATH="$PATH"
 			qa_invoke source /etc/profile.env
 			pkgcore_ensure_PATH "$EXISTING_PATH"
@@ -175,7 +175,7 @@ generate_initial_ebuild_environ() {
 	fi
 
 	pkgcore_ensure_PATH "$EXISTING_PATH"
-	if [ -n "${T}" ]; then
+	if [[ -n "${T}" ]]; then
 		# use a file if possible; faster since bash does this lovely byte by byte reading if it's a pipe.
 		# having the file around is useful for debugging also.
 		dump_environ > "${T}/.initial_environ" || die "dump_environ > ${T}/.initial_environ return non zero"
@@ -196,7 +196,7 @@ load_ebuild()
 	unset   IUSE   REQUIRED_USE   DEPEND   RDEPEND   PDEPEND
 	local E_IUSE E_REQUIRED_USE E_DEPEND E_RDEPEND E_PDEPEND
 
-	if [ ! -f "${EBUILD}" ]; then
+	if [[ ! -f "${EBUILD}" ]]; then
 		echo "bailing, ebuild not found at '$EBUILD'"
 		die "EBUILD=${EBUILD}; problem is, it doesn't exist.  bye." >&2
 	fi
@@ -208,7 +208,7 @@ load_ebuild()
 	qa_invoke source "${EBUILD}" >&2
 
 	#a reasonable default for $S
-	if [ "$S" = "" ]; then
+	if [[ -z "$S" ]]; then
 		export S=${WORKDIR}/${P}
 	fi
 
@@ -222,7 +222,7 @@ load_ebuild()
 	# That will test for unset *or* NULL ("").  We want just to set for unset...
 
 	if has ${EAPI-0} 0 1 2 3; then
-		if [ "${RDEPEND-unset}" == "unset" ]; then
+		if [[ "${RDEPEND-unset}" == "unset" ]]; then
 			export RDEPEND="${DEPEND}"
 		fi
 	fi
@@ -325,7 +325,7 @@ execute_phases() {
 			ret=0
 			;;
 		unpack|prepare|configure|compile|test|install)
-			if [ "${SANDBOX_DISABLED="0"}" == "0" ]; then
+			if [[ "${SANDBOX_DISABLED="0"}" == "0" ]]; then
 				export SANDBOX_ON="1"
 			else
 				export SANDBOX_ON="0"
@@ -339,7 +339,7 @@ execute_phases() {
 				die "unable to load saved env for phase $EBUILD_PHASE, unwilling to continue"
 			fi
 
-			[ -z "${S}" ] && die "S was null- ${S}, path=$PATH"
+			[[ -z "${S}" ]] && die "S was null- ${S}, path=$PATH"
 
 			pkgcore_run_ebuild_phase src_${EBUILD_PHASE}
 			ret=0
@@ -352,14 +352,14 @@ execute_phases() {
 			EBUILD_PHASE="setup"
 
 			# binpkgs don't need to reinitialize the env.
-			if [ "$myarg"  == "setup" ]; then
-				[ ! -z "${DISTCC_LOG}" ] && addwrite "$(dirname ${DISTCC_LOG})"
+			if [[ "$myarg"  == "setup" ]]; then
+				[[ ! -z "${DISTCC_LOG}" ]] && addwrite "$(dirname ${DISTCC_LOG})"
 
 				local x
 				# if they aren't set, then holy hell ensues.  deal.
 
 				if has ccache $FEATURES; then
-					[ -z "${CCACHE_SIZE}" ] && export CCACHE_SIZE="500M"
+					[[ -z "${CCACHE_SIZE}" ]] && export CCACHE_SIZE="500M"
 					ccache -M ${CCACHE_SIZE} &> /dev/null
 				fi
 				[[ $PKGCORE_DEBUG == 2 ]] && set -x
@@ -381,13 +381,13 @@ execute_phases() {
 			PKGCORE_SAVE_ENV=false
 
 			PKGCORE_DIE_OUTPUT_DETAILS=false
-			if [ -z "$QA_CONTROLLED_EXTERNALLY" ]; then
+			if [[ -z "$QA_CONTROLLED_EXTERNALLY" ]]; then
 				enable_qa_interceptors
 			fi
 
 			load_ebuild "${EBUILD}"
 
-			if [ -z "$QA_CONTROLLED_EXTERNALLY" ]; then
+			if [[ -z "$QA_CONTROLLED_EXTERNALLY" ]]; then
 				disable_qa_interceptors
 			fi
 
@@ -422,7 +422,7 @@ pkgcore_dump_metadata_keys() {
 		DESCRIPTION KEYWORDS INHERITED IUSE PDEPEND PROVIDE PROPERTIES; do
 		# deref the val, if it's not empty/unset, then spit a key command to EBD
 		# after using echo to normalize whitespace (specifically removal of newlines)
-		if [ "${!key:-unset}" != "unset" ]; then
+		if [[ "${!key:-unset}" != "unset" ]]; then
 			# note that we explicitly bypass the normal functions, and directly
 			# write to the FD.  This is done since it's about 25% faster for our usage;
 			# if we used the functions, we'd have to subshell the 'echo ${!key}', which

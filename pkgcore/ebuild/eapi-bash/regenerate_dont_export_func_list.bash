@@ -54,7 +54,7 @@ echo >&2
 declare -F 2> /dev/null | cut -d ' ' -f3 | while read l; do
 	[[ -n $l ]] && echo "$(escape_regex_chars "$l")"
 done | sort | {
-	if [ "${_FP}" == '-' ]; then
+	if [[ "${_FP}" == '-' ]]; then
 		cat
 	else
 		cat > dont_export_funcs.list

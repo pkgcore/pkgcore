@@ -171,7 +171,7 @@ class base(metadata.package):
         "depends", "rdepends", "post_rdepends", "provides", "license",
         "slot", "keywords", "eapi_obj", "restrict", "description", "iuse",
         "chost", "cbuild", "ctarget", "homepage", "properties",
-        "required_use", "defined_phases", "source_repository")
+        "defined_phases", "source_repository")
 
     _config_wrappables = dict((x, alias_class_method("evaluate_depset"))
         for x in ["depends", "rdepends", "post_rdepends", "fetchables",

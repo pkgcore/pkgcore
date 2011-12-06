@@ -4,6 +4,16 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* pkgcore no longer adds REQUIRED_USE to vdb nor binpkg; it's a pointless
+  metadata key, plus we used to corrupt it.
+
+* fixed bug where portdir write cache wouldn't be created, nor used.
+  Wasn't seen primarily due to regen being fast enough it's not a huge
+  issue.
+
+* fixed addition stacking issue w/ eclass defined REQUIRED_USE resulting
+  in corrupted IUSE.
+
 * fixed long standing race that could occur during pmaint regen leading
   to an ebuild failing to be regenerated.
 

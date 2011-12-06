@@ -7,7 +7,7 @@ check_args 1 -
 check_command_or_stop install -d "${D}${DESTTREE}/share/locale/"
 
 for x in "$@" ; do
-	if [ -e "${x}" ] ; then
+	if [[ -e "${x}" ]]; then
 		my_basename="${x##*/}"
 		mydir="${D}${DESTTREE}/share/locale/${my_basename%.*}/LC_MESSAGES"
 		check_command install -d "${mydir}" && \

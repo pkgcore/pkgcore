@@ -7,7 +7,7 @@ source "${PKGCORE_BIN_PATH}/exit-handling.lib" || { echo "failed loading libs"; 
 
 dir="${D}usr/share/doc"
 
-[ ! -d "${dir}" ] && exit 0
+[[ ! -d "${dir}" ]] && exit 0
 
 z=$(find "${dir}" -print \
 	'(' -type f -or -type l ')' \
@@ -17,11 +17,11 @@ z=$(find "${dir}" -print \
 	-not -name '*.js' \
 	2>/dev/null)
 
-[ -z "${z}" ] && exit 0
+[[ -z "${z}" ]] && exit 0
 
 PORTAGE_COMPRESS=${PORTAGE_COMPRESS:-gzip}
 PORTAGE_COMPRESS_FLAGS=${PORTAGE_COMPRESS_FLAGS:--9}
-if [ -z "${PORTAGE_COMPRESS_SUFFIX}" ] ; then
+if [[ -z "${PORTAGE_COMPRESS_SUFFIX}" ]]; then
 	case ${PORTAGE_COMPRESS} in
 		gzip)  suffix="gz";;
 		bzip2) suffix="bz2";;
@@ -33,26 +33,26 @@ fi
 IFS=$'\n'
 echo "doc: ${PORTAGE_COMPRESS} ${PORTAGE_COMPRESS_FLAGS}"
 for y in ${z} ; do
-	if [ -L "${y}" ] ; then
+	if [[ -L "${y}" ]]; then
 		# Symlink ...
 		mylink=${y}
 		linkto=$(readlink "${y}")
 
-		if [ "${linkto##*.}" != "${suffix}" ] ; then
+		if [[ "${linkto##*.}" != "${suffix}" ]]; then
 			linkto="${linkto}.${suffix}"
 		fi
-		if [ "${mylink##*.}" != "${suffix}" ] ; then
+		if [[ "${mylink##*.}" != "${suffix}" ]]; then
 			mylink="${mylink}.${suffix}"
 		fi
 
 		echo "   link fixed ${mylink##*/}"
 		ln -snf "${linkto}" "${mylink}"
-		if [ "${y}" != "${mylink}" ] ; then
+		if [[ "${y}" != "${mylink}" ]]; then
 			echo "   link removed ${y##*/}"
 			rm -f "${y}"
 		fi
 	else
-		if [ "${y##*.}" != "${suffix}" ] ; then
+		if [[ "${y##*.}" != "${suffix}" ]]; then
 			echo "   compressing ${y##*/}" >&2
 			"${PORTAGE_COMPRESS}" ${PORTAGE_COMPRESS_FLAGS} -f "${y}"
 		fi

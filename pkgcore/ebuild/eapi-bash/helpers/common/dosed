@@ -8,7 +8,7 @@ pattern="s:${D}::g"
 
 for x in "$@" ; do
 	trg="${D}${x}"
-	if [ ! -e "${trg}" ] ; then
+	if [[ ! -e "${trg}" ]]; then
 		pattern="${x}"
 		continue
 	fi

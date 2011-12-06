@@ -5,7 +5,7 @@
 shopt -s extdebug
 source "${PKGCORE_BIN_PATH}/exit-handling.lib" || { echo "failed loading libs"; exit -127; }
 
-if [ "${FEATURES//*nostrip*/true}" == "true" ] || [ "${RESTRICT//*nostrip*/true}" == "true" ] ; then
+if [[ "${FEATURES//*nostrip*/true}" == "true" ]] || [[ "${RESTRICT//*nostrip*/true}" == "true" ]]; then
 	exit 0
 fi
 

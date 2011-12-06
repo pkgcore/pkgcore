@@ -8,10 +8,10 @@ check_args 1 -
 check_command_or_stop install -d "${D}${PKGCORE_EXEDESTTREE}"
 
 for x in "$@" ; do
-	if [ -L "${x}" ] ; then
+	if [[ -L "${x}" ]]; then
 		check_command cp "${x}" "${T}" || continue
 		mysrc="${T}/${x##*/}"
-	elif [ -d "${x}" ] ; then
+	elif [[ -d "${x}" ]]; then
 		warn "skipping directory ${x}"
 		continue
 	else

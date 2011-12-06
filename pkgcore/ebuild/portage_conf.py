@@ -393,6 +393,16 @@ def config_from_make_conf(location="/etc/"):
             if path not in overlay_syncers:
                 overlay_syncers[path] = make_autodetect_syncer(new_config, path)
 
+    rsync_portdir_cache = os.path.exists(pjoin(portdir, "metadata", "cache")) \
+        and "metadata-transfer" not in features
+
+    # if a metadata cache exists, use it
+    if rsync_portdir_cache:
+        new_config["cache:%s/metadata/cache" % (portdir,)] = basics.AutoConfigSection({
+            'class': 'pkgcore.cache.metadata.database', 'readonly': 'yes',
+            'location': portdir,
+        })
+
     for tree_loc in [portdir] + portdir_overlays:
         kwds = {
                 'inherit': ('ebuild-repo-common',),
@@ -403,22 +413,11 @@ def config_from_make_conf(location="/etc/"):
         kwds['cache'] = cache_name
         if tree_loc == portdir:
             kwds['class'] = 'pkgcore.ebuild.repository.tree'
-            kwds['cache'] = 'cache:%s/metadata/cache cache:%s' % (portdir, portdir)
+            if rsync_portdir_cache:
+                kwds['cache'] = 'cache:%s/metadata/cache %s' % (portdir, cache_name)
         else:
             kwds['parent_repo'] = portdir
         new_config[tree_loc] = basics.AutoConfigSection(kwds)
-
-    rsync_portdir_cache = os.path.exists(pjoin(portdir, "metadata", "cache")) \
-        and "metadata-transfer" not in features
-
-    # if a metadata cache exists, use it
-    if rsync_portdir_cache:
-        new_config["cache:%s/metadata/cache" % (portdir,)] = basics.AutoConfigSection({
-            'class': 'pkgcore.cache.metadata.database', 'readonly': 'yes',
-            'location': portdir,
-        })
-    else:
-        new_config["cache:%s" % (portdir,)] = mk_simple_cache(config_root, portdir)
 
     new_config['portdir'] = basics.section_alias(portdir, 'repo')
 

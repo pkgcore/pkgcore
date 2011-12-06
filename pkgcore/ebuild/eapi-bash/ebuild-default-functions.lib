@@ -17,7 +17,7 @@ portageq() {
 		"${PKGCORE_BIN_PATH}/pinspect" ${portageq_str} "${command}" \
 			--eapi "${EAPI:--1}" --use "${USE}" "$@"
 	local ret="$?"
-	[ "$ret" == 127 ] && die "pinspect couldn't be found; broken pkgcore installation?"
+	[[ "$ret" == 127 ]] && die "pinspect couldn't be found; broken pkgcore installation?"
 	return $(( $ret ))
 }
 
@@ -35,7 +35,7 @@ best_version()
 keepdir()
 {
 	dodir "$@"
-	if [ "$1" == "-R" ] || [ "$1" == "-r" ]; then
+	if [[ "$1" == "-R" ]] || [[ "$1" == "-r" ]]; then
 		shift
 		find "$@" -type d -printf "${D}/%p/.keep\0" | $XARGS -0 -n100 touch || die "Failed to recursive create .keep files"
 	else
@@ -72,22 +72,22 @@ unpack()
 	local x y myfail srcdir taropts tar_subdir name
 	taropts='--no-same-owner'
 
-	[ -z "$*" ] && die "Nothing passed to the 'unpack' command"
+	[[ "$#" == 0 ]] && die "Nothing passed to the 'unpack' command"
 
 	for x in "$@"; do
 		echo ">>> Unpacking ${x} to ${PWD}"
 		myfail="failure unpacking ${x}"
 		y="${x%.*}"
 		y="${y##*.}"
-		if [ "${x:0:2}" == "./" ]; then
+		if [[ "${x:0:2}" == "./" ]]; then
 			srcdir=''
 		else
 			srcdir="${DISTDIR}"
 		fi
 
-		[ ! -e "${srcdir}${x}" ] && die "$myfail: file doesn't exist"
-		[ ! -s "${srcdir}${x}" ] && die "$myfail: empty file"
-		[ "${x/${DISTDIR}}" != "${x}" ] && \
+		[[ ! -e "${srcdir}${x}" ]] && die "$myfail: file doesn't exist"
+		[[ ! -s "${srcdir}${x}" ]] && die "$myfail: empty file"
+		[[ "${x/${DISTDIR}}" != "${x}" ]] && \
 			die "Arguments to unpack() should not begin with \${DISTDIR}."
 
 		name="${x##*/}"
@@ -129,7 +129,7 @@ unpack()
 			*.7Z|*.7z)
 				local my_output
 				my_output="$(7z x -y "${srcdir}/${x}")"
-				if [ $? -ne 0 ]; then
+				if [[ $? -ne 0 ]]; then
 					echo "${my_output}" >&2
 					die "$myfail"
 				fi
@@ -144,7 +144,7 @@ unpack()
 				ar x "${srcdir}/${x}" || die "$myfail"
 				;;
 			*.lzma)
-				if [ "${y}" == "tar" ]; then
+				if [[ "${y}" == "tar" ]]; then
 					lzma -dc "${srcdir}${x}" | tar xof - ${taropts}
 					assert "$myfail"
 				else
@@ -264,9 +264,9 @@ dyn_pkg_preinst()
 		sfconf=/etc/portage/suidctl.conf
 		echo ">>> Preforming suid scan in ${IMAGE}"
 		for i in $(find "${IMAGE}"/ -type f \( -perm -4000 -o -perm -2000 \) ); do
-			if [ -s "${sfconf}" ]; then
+			if [[ -s "${sfconf}" ]]; then
 				suid=$(grep ^${i/${IMAGE}/}$ ${sfconf})
-				if [ "${suid}" = "${i/${IMAGE}/}" ]; then
+				if [[ "${suid}" = "${i/${IMAGE}/}" ]]; then
 					echo "- ${i/${IMAGE}/} is an approved suid file"
 				else
 					echo ">>> Removing sbit on non registered ${i/${IMAGE}/}"
@@ -294,9 +294,9 @@ dyn_pkg_preinst()
 	if has selinux $FEATURES || use selinux; then
 		# only attempt to label if setfiles is executable
 		# and 'context' is available on selinuxfs.
-		if [ -f /selinux/context -a -x /usr/sbin/setfiles ]; then
+		if [[ -f /selinux/context ]] && [[ -x /usr/sbin/setfiles ]]; then
 			echo ">>> Setting SELinux security labels"
-			if [ -f ${POLICYDIR}/file_contexts/file_contexts ]; then
+			if [[ -f ${POLICYDIR}/file_contexts/file_contexts ]]; then
 				cp -f "${POLICYDIR}/file_contexts/file_contexts" "${T}"
 			else
 				make -C "${POLICYDIR}" FC=${T}/file_contexts "${T}/file_contexts"
@@ -330,14 +330,14 @@ debug-print()
 	fi
 	# if $T isn't defined, we're in dep calculation mode and
 	# shouldn't do anything
-	[ -z "$T" ] && return 0
+	[[ -z "$T" ]] && return 0
 
-	while [ "$1" ]; do
+	while [[ "$1" ]]; do
 
 		# extra user-configurable targets
-		if [ "$ECLASS_DEBUG_OUTPUT" == "on" ]; then
+		if [[ "$ECLASS_DEBUG_OUTPUT" == "on" ]]; then
 			echo "debug: $1"
-		elif [ -n "$ECLASS_DEBUG_OUTPUT" ]; then
+		elif [[ -n "$ECLASS_DEBUG_OUTPUT" ]]; then
 			echo "debug: $1" >> $ECLASS_DEBUG_OUTPUT
 		fi
 
@@ -371,10 +371,10 @@ internal_inherit()
 	local location overlay
 	location="${ECLASSDIR}/${1}.eclass"
 
-	if [ -n "$PORTDIR_OVERLAY" ]; then
+	if [[ -n "$PORTDIR_OVERLAY" ]]; then
 		local overlay
 		for overlay in ${PORTDIR_OVERLAY}; do
-			if [ -e "${overlay}/eclass/${1}.eclass" ]; then
+			if [[ -e "${overlay}/eclass/${1}.eclass" ]]; then
 				location="${overlay}/eclass/${1}.eclass"
 				debug-print "  eclass exists: ${location}"
 			fi
@@ -391,7 +391,7 @@ inherit()
 {
 	local SAVED_INHERIT_COUNT=0
 
-	if [[ $ECLASS_DEPTH < 0 ]] && [ "${EBUILD_PHASE}" == "depend" ]; then
+	if [[ $ECLASS_DEPTH < 0 ]] && [[ "${EBUILD_PHASE}" == "depend" ]]; then
 		#echo "QA Notice: ${CATEGORY}/${PF} makes multiple inherit calls: $*" >&2
 		SAVED_INHERIT_COUNT=$ECLASS_DEPTH
 		ECLASS_DEPTH=0
@@ -407,13 +407,13 @@ inherit()
 	# note that this ensures any later unsets/mangling, the ebuilds original
 	# setting is protected.
 	local IUSE REQUIRED_USE DEPEND RDEPEND PDEPEND
-	while [ -n "$1" ]; do
+	while [[ -n "$1" ]]; do
 
 		# PECLASS is used to restore the ECLASS var after recursion.
 		PECLASS="$ECLASS"
 		export ECLASS="$1"
 
-		if [ "$EBUILD_PHASE" != "depend" ]; then
+		if [[ "$EBUILD_PHASE" != "depend" ]]; then
 			if ! has $ECLASS $INHERITED; then
 				echo
 				echo "QA Notice: ECLASS '$ECLASS' illegal conditional inherit in $CATEGORY/$PF" >&2
@@ -429,11 +429,11 @@ inherit()
 
 		# If each var has a value, append it to the global variable E_* to
 		# be applied after everything is finished. New incremental behavior.
-		[ "${IUSE-unset}"         != "unset" ] && export E_IUSE+="${E_IUSE:+ }${IUSE}"
-		[ "${REQUIRED_USE-unset}" != "unset" ] && export E_IUSE+="${E_REQUIRED_USE:+ }${REQUIRED_USE}"
-		[ "${DEPEND-unset}"       != "unset" ] && export E_DEPEND+="${E_DEPEND:+ }${DEPEND}"
-		[ "${RDEPEND-unset}"      != "unset" ] && export E_RDEPEND+="${E_RDEPEND:+ }${RDEPEND}"
-		[ "${PDEPEND-unset}"      != "unset" ] && export E_PDEPEND+="${E_PDEPEND:+ }${PDEPEND}"
+		[[ "${IUSE-unset}"         != "unset" ]] && export E_IUSE+="${E_IUSE:+ }${IUSE}"
+		[[ "${REQUIRED_USE-unset}" != "unset" ]] && export E_IUSE+="${E_REQUIRED_USE:+ }${REQUIRED_USE}"
+		[[ "${DEPEND-unset}"       != "unset" ]] && export E_DEPEND+="${E_DEPEND:+ }${DEPEND}"
+		[[ "${RDEPEND-unset}"      != "unset" ]] && export E_RDEPEND+="${E_RDEPEND:+ }${RDEPEND}"
+		[[ "${PDEPEND-unset}"      != "unset" ]] && export E_PDEPEND+="${E_PDEPEND:+ }${PDEPEND}"
 
 		if ! has $1 $INHERITED; then
 			INHERITED="$INHERITED $ECLASS"
@@ -454,11 +454,11 @@ inherit()
 # src_unpack() { base_src_unpack; }
 EXPORT_FUNCTIONS()
 {
-	if [ -z "$ECLASS" ]; then
+	if [[ -z "$ECLASS" ]]; then
 		echo "EXPORT_FUNCTIONS without a defined ECLASS" >&2
 		exit 1
 	fi
-	while [ "$1" ]; do
+	while [[ -n "$1" ]]; do
 		debug-print "EXPORT_FUNCTIONS: ${1} -> ${ECLASS}_${1}"
 		eval "$1() { ${ECLASS}_$1 "\$@" ; }" > /dev/null
 		shift
@@ -472,10 +472,10 @@ remove_path_entry()
 	local cur_path stripped_path p
 	pkgcore_IFS_push ':'
 	stripped_path="${PATH}"
-	while [ -n "$1" ]; do
+	while [[ -n "$1" ]]; do
 		cur_path=""
 		for p in ${stripped_path}; do
-			if [ "${p/${1}}" == "${p}" ]; then
+			if [[ "${p/${1}}" == "${p}" ]]; then
 				cur_path="${cur_path}:${p}"
 			fi
 		done
@@ -496,14 +496,14 @@ enable_qa_interceptors()
 	local FUNC_SRC BIN BODY BIN_PATH
 	for BIN in ${QA_INTERCEPTORS}; do
 		BIN_PATH=$(type -pf ${BIN})
-		if [ "$?" != "0" ]; then
+		if [[ "$?" != "0" ]]; then
 			BODY="echo \"*** missing command: ${BIN}\" >&2; return 127"
 		else
 			BODY="${BIN_PATH} \"\$@\"; return \$?"
 		fi
 		FUNC_SRC="function ${BIN}() {
 			echo -n \"QA Notice: ${BIN} in global scope: \" >&2
-			if [ \$ECLASS_DEPTH -gt 0 ]; then
+			if [[ \$ECLASS_DEPTH -gt 0 ]]; then
 				echo \"eclass \${ECLASS}\" >&2
 			else
 				echo \"\${CATEGORY}/\${PF}\" >&2
@@ -526,7 +526,7 @@ useq()
 {
 	local u="${1}"
 	local neg=0
-	if [ "${u:0:1}" == "!" ]; then
+	if [[ "${u:0:1}" == "!" ]]; then
 		u="${u:1}"
 		neg=1
 	fi
@@ -539,15 +539,15 @@ useq()
 
 	local x
 	for x in ${USE}; do
-		if [ "${x}" == "${u}" ]; then
-			if [ ${neg} -eq 1 ]; then
+		if [[ "${x}" == "${u}" ]]; then
+			if [[ ${neg} -eq 1 ]]; then
 				return 1
 			else
 				return 0
 			fi
 		fi
 	done
-	if [ ${neg} -eq 1 ]; then
+	if [[ ${neg} -eq 1 ]]; then
 		return 0
 	else
 		return 1
@@ -569,7 +569,7 @@ insopts()
 	INSOPTIONS=""
 	for x in $*; do
 		#if we have a debug build, let's not strip anything
-		if has nostrip $FEATURES $RESTRICT && [ "$x" == "-s" ]; then
+		if has nostrip $FEATURES $RESTRICT && [[ "$x" == "-s" ]]; then
 			continue
 		else
 			INSOPTIONS="$INSOPTIONS $x"
@@ -594,7 +594,7 @@ exeopts()
 	EXEOPTIONS=""
 	for x in $*; do
 		#if we have a debug build, let's not strip anything
-		if has nostrip $FEATURES $RESTRICT && [ "$x" == "-s" ]; then
+		if has nostrip $FEATURES $RESTRICT && [[ "$x" == "-s" ]]; then
 			continue
 		else
 			EXEOPTIONS="$EXEOPTIONS $x"
@@ -609,7 +609,7 @@ libopts()
 	LIBOPTIONS=""
 	for x in $*; do
 		#if we have a debug build, let's not strip anything
-		if has nostrip $FEATURES $RESTRICT && [ "$x" == "-s" ]; then
+		if has nostrip $FEATURES $RESTRICT && [[ "$x" == "-s" ]]; then
 			continue
 		else
 			LIBOPTIONS="$LIBOPTIONS $x"

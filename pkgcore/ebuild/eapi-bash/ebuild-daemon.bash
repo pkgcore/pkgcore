@@ -51,7 +51,7 @@ for x in ebd_read_{line,{cat_,}size} ebd_write_line; do
 done
 unset x
 # protection for upgrading across pkgcore 0.7.7
-if [ -z "${PKGCORE_EBD_WRITE_FD}" ]; then
+if [[ -z "${PKGCORE_EBD_WRITE_FD}" ]]; then
 	PKGCORE_EBD_WRITE_FD="${EBD_WRITE_FD}"
 	PKGCORE_EBD_READ_FD="${EBD_READ_FD}"
 	unset EBD_WRITE_FD EBD_READ_FD
@@ -93,13 +93,13 @@ pkgcore_ebd_exec_main()
 	# ensure the other side is still there.  Well, this moreso is for the python side to ensure
 	# loading up the intermediate funcs succeeded.
 	ebd_read_line com
-	if [ "$com" != "dude?" ]; then
+	if [[ "$com" != "dude?" ]]; then
 		echo "serv init coms failed, received $com when expecting 'dude?'"
 		exit 1
 	fi
 	ebd_write_line "dude!"
 	ebd_read_line PKGCORE_BIN_PATH
-	[ -z "$PKGCORE_BIN_PATH" ] && { ebd_write_line "empty PKGCORE_BIN_PATH;"; exit 1; }
+	[[ -z "$PKGCORE_BIN_PATH" ]] && { ebd_write_line "empty PKGCORE_BIN_PATH;"; exit 1; }
 
 	# get our die functionality now.
 	if ! source "${PKGCORE_BIN_PATH}/exit-handling.lib"; then
@@ -114,18 +114,18 @@ pkgcore_ebd_exec_main()
 	fi
 
 	ebd_read_line PKGCORE_PYTHON_BINARY
-	[ -z "$PKGCORE_PYTHON_BINARY" ] && die "empty PKGCORE_PYTHON_BINARY, bailing"
+	[[ -z "$PKGCORE_PYTHON_BINARY" ]] && die "empty PKGCORE_PYTHON_BINARY, bailing"
 	ebd_read_line PKGCORE_PYTHONPATH
-	[ -z "$PKGCORE_PYTHONPATH" ] && die "empty PKGCORE_PYTHONPATH, bailing"
+	[[ -z "$PKGCORE_PYTHONPATH" ]] && die "empty PKGCORE_PYTHONPATH, bailing"
 
 	if ! source "${PKGCORE_BIN_PATH}/ebuild.lib" >&2; then
 		ebd_write_line "failed"
 		die "failed sourcing ${PKGCORE_BIN_PATH}/ebuild.lib"
 	fi
 
-	if [ -n "$SANDBOX_LOG" ]; then
+	if [[ -n "$SANDBOX_LOG" ]]; then
 		ebd_read_line com
-		if [ "$com" != "sandbox_log?" ]; then
+		if [[ "$com" != "sandbox_log?" ]]; then
 			echo "unknown com '$com'"
 			exit 1
 		fi
@@ -162,7 +162,7 @@ pkgcore_ebd_exec_main()
 
 	# finally, load the master list of pkgcore funcs. fallback to
 	# regenerating it if needed.
-	if [ -e "${PKGCORE_BIN_PATH}/dont_export_funcs.list" ]; then
+	if [[ -e "${PKGCORE_BIN_PATH}/dont_export_funcs.list" ]]; then
 		DONT_EXPORT_FUNCS="${DONT_EXPORT_FUNCS} $(<${PKGCORE_BIN_PATH}/dont_export_funcs.list)"
 	else
 		DONT_EXPORT_FUNCS="${DONT_EXPORT_FUNCS} $("${PKGCORE_BIN_PATH}/regenerate_dont_export_func_list.bash" 2> /dev/null)"
@@ -219,7 +219,7 @@ pkgcore_ebd_process_ebuild_phases()
 	fi
 	local cont=0
 
-	while [ "$cont" == 0 ]; do
+	while [[ "$cont" == 0 ]]; do
 		local line=''
 		ebd_read_line line
 		case "$line" in
@@ -242,7 +242,7 @@ pkgcore_ebd_process_ebuild_phases()
 			lines)
 				;&
 			*)
-				while ebd_read_line line && [ "$line" != "end_receiving_env" ]; do
+				while ebd_read_line line && [[ "$line" != "end_receiving_env" ]]; do
 					pkgcore_IFS_push $'\0'
 					eval ${line};
 					cont=$?;
@@ -300,11 +300,11 @@ pkgcore_ebd_process_ebuild_phases()
 	}
 
 	umask 0022
-	if [ -z $PORTAGE_LOGFILE ]; then
+	if [[ -z "$PORTAGE_LOGFILE" ]]; then
 		execute_phases ${phases}
 		ret=$?
 	else
-		# why do it this way rather then the old '[ -f ${T}/.succesfull }'?
+		# why do it this way rather then the old '[[ -f ${T}/.succesfull ]]'?
 		# simple.  this allows the actual exit code to be used, rather then just stating no .success == 1 || 0
 		# note this was
 		# execute_phases ${phases} &> >(umask 0002; tee -i -a $PORTAGE_LOGFILE)

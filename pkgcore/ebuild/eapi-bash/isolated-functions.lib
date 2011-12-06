@@ -190,8 +190,7 @@ qa_invoke()
 		pkgcore_should_fail=true
 	fi
 	if [[ 2 != ${#PKGCORE_SHOPT_STACK[@]} ]]; then
-		echo "QA warning: unbalanced pkgcore_shopt_push/pkgcore_shopt_pop detected. internal error?" \
-			" count was ${#PKGCORE_SHOPT_STACK[@]}"
+		echo "QA warning: unbalanced pkgcore_shopt_push/pkgcore_shopt_pop detected. internal error? count was ${#PKGCORE_SHOPT_STACK[@]}"
 		pkgcore_should_fail=true
 	fi
 
@@ -200,16 +199,15 @@ qa_invoke()
 	fi
 	pkgcore_IFS_pop
 
+	# while these echo statements are ugly, written this way to ensure bash does it as a single write-
+	# aka, keep it within the size of atomic writes for pipes.
+	# relevant for threaded output straight to term
 	if [[ "${BASHOPTS}" != "${PKGCORE_SHOPT_STACK[0]}" ]]; then
-		echo "QA warning: shopt modification bled out of invocation ${@}" >&2
-		echo "          : was ${PKGCORE_SHOPT_STACK[0]}" >&2
-		echo "          : now ${BASHOPTS}" >&2
+		echo "QA warning: shopt modification bled out of invocation ${@}"$'\n'"          : was ${PKGCORE_SHOPT_STACK[0]}"$'\n'"          : now ${BASHOPTS}" >&2
 	fi
 
 	if [[ "$-" != "${PKGCORE_SHOPT_STACK[1]}" ]]; then
-		echo "QA warning: set modification bled out of invocation ${@}" >&2
-		echo "          : was ${PKGCORE_SHOPT_STACK[1]}" >&2
-		echo "          : now $-" >&2
+		echo "QA warning: set modification bled out of invocation ${@}"$'\n'"          : was ${PKGCORE_SHOPT_STACK[1]}"$'\n'"          : now $-" >&2
 	fi
 	pkgcore_shopt_pop
 

@@ -1,22 +1,6 @@
 # Copyright 2005-2011 Brian Harring <ferringb@gmail.com>: BSD/GPL2
 # this functionality is all related to saving/loading environmental dumps for ebuilds
 
-filter_env_func_filter() {
-	while [[ -n "$1" ]]; do
-		echo -n "$1"
-		[[ $# != 1 ]] && echo -n ','
-		shift
-	done
-}
-
-filter_env_var_filter() {
-	while [[ -n "$1" ]]; do
-		echo -n "$1"
-		[[ $# != 1 ]] && echo -n ','
-		shift
-	done
-}
-
 regex_filter_input() {
 	local regex="${1}"
 	shift
@@ -148,11 +132,22 @@ scrub_environ() {
 		readonly -f dump_environ &> /dev/null
 		readonly -f regex_filter_input &> /dev/null
 
+		pkgcore_shopt_push -f
+		pkgcore_IFS_push $'\n '
+		declare -a PKGCORE_ENV_ARRAY=( ${DONT_EXPORT_FUNCS} )
+		declare -a PKGCORE_VAR_ARRAY=( ${DONT_EXPORT_VARS} src x EXISTING_PATH )
+		pkgcore_IFS_pop
+		pkgcore_IFS_push ,
+		PKGCORE_ENV_ARRAY="${PKGCORE_ENV_ARRAY[*]}"
+		PKGCORE_VAR_ARRAY="${PKGCORE_VAR_ARRAY[*]}"
+		pkgcore_IFS_pop
+		pkgcore_shopt_pop
+
 		rm -f "${T}/.pre-scrubbed-env" || die "failed rm'ing"
 		# run the filtered env.
 		invoke_filter_env \
-			-f "$(filter_env_func_filter ${DONT_EXPORT_FUNCS} )" \
-			-v "$(filter_env_var_filter ${DONT_EXPORT_VARS} src x EXISTING_PATH)" \
+			-f "${PKGCORE_FUNC_ARRAY}" \
+			-v "${PKGCORE_ENV_ARRAY}" \
 			-i "$src" \
 			> "${T}/.pre-scrubbed-env" || die "failed first step of scrubbing the env to load"
 

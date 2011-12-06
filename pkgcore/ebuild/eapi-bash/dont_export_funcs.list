@@ -53,8 +53,6 @@ execute_phases
 exeinto
 exeopts
 export_environ
-filter_env_func_filter
-filter_env_var_filter
 generate_initial_ebuild_environ
 get_KV
 has

@@ -566,20 +566,20 @@ class EbuildProcessor(object):
 
     def _generate_env_str(self, env_dict):
         data = []
-        for x in env_dict:
-            if x not in self.dont_export_vars:
-                if not x[0].isalpha():
-                    raise KeyError(x)
-                s = env_dict[x]
-                if not isinstance(s, basestring):
-                    raise ValueError("_generate_env_str was fed a bad value; key=%s, val=%s"
-                        % (x, s))
-                if s.isalnum():
-                    data.append("%s=%s" % (x, s))
-                elif "'" not in s:
-                    data.append("%s='%s'" % (x, s))
-                else:
-                    data.append("%s=$'%s'" % (x, s.replace("'", "\\'")))
+        for key, val in env_dict.iteritems():
+            if key in self.dont_export_vars:
+                continue
+            if not key[0].isalpha():
+                raise KeyError("%s: bash doesn't allow digits as the first char" % (key,))
+            if not isinstance(val, basestring):
+                raise ValueError("_generate_env_str was fed a bad value; key=%s, val=%s"
+                    % (key, val))
+            if val.isalnum():
+                data.append("%s=%s" % (key, val))
+            elif "'" not in val:
+                data.append("%s='%s'" % (key, val))
+            else:
+                data.append("%s=$'%s'" % (key, val.replace("'", "\\'")))
         return 'export %s' % (' '.join(data),)
 
     def send_env(self, env_dict, async=False, tmpdir=None):

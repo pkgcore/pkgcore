@@ -217,10 +217,9 @@ class eclass_usage_kls(histo_data):
         "repositories")
 
     def get_data(self, repo, options):
-        pos, data = 0, {}
+        pos, data = 0, defaultdict(lambda:0)
         for pos, pkg in enumerate(repo):
-            for eclass in getattr(pkg, 'data', {}).get("_eclasses_", {}).keys():
-                data.setdefault(eclass, 0)
+            for eclass in getattr(pkg, 'inherited', ()):
                 data[eclass] += 1
         return data, pos + 1
 

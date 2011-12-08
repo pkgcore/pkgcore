@@ -54,7 +54,7 @@ class test_base(TestCase):
         self.assertEqual(l, [o])
 
     def test_fetch_metadata(self):
-        def f(self, cpv):
+        def f(self, cpv, **options):
             return {'1':'2'}
         o = self.get_pkg(repo=self.make_parent(_get_metadata=f))
         self.assertEqual(o.data, {'1': '2'})

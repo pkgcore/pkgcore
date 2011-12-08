@@ -33,7 +33,7 @@ demandload(globals(),
     'snakeoil.chksum:get_chksums',
     'pkgcore.ebuild:digest,repo_objs,atom',
     'pkgcore.ebuild:errors@ebuild_errors',
-    'pkgcore.ebuild:profiles',
+    'pkgcore.ebuild:profiles,processor',
     'pkgcore.package:errors@pkg_errors',
     'pkgcore.util.packages:groupby_pkg',
     'pkgcore.fs.livefs:iter_scan',
@@ -439,6 +439,23 @@ class _UnconfiguredTree(prototype.tree):
             raise_from(profiles.ProfileError(pjoin(self.base, 'profiles'),
                 'package.mask', ma))
         return [neg, pos]
+
+    def _regen_operation_helper(self, **kwds):
+        return _RegenOpHelper(force=bool(kwds.get('force', False)))
+
+
+class _RegenOpHelper(object):
+
+    def __init__(self, force=False):
+        self.force=force
+        self.ebp = processor.request_ebuild_processor()
+
+    def __call__(self, pkg):
+        return pkg._fetch_metadata(ebp=self.ebp, force_regen=self.force)
+
+    def finish(self):
+        processor.release_ebuild_processor(self.ebp)
+        self.ebp = None
 
 
 class _SlavedTree(_UnconfiguredTree):

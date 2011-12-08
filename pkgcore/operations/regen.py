@@ -7,10 +7,10 @@ import threading
 
 from snakeoil import compatibility
 
-def regen_iter(iterable, observer, attribute):
+def regen_iter(iterable, observer, regen_func):
     for x in iterable:
         try:
-            getattr(x, attribute)
+            regen_func(x)
         except compatibility.IGNORED_EXCEPTIONS:
             raise
         except Exception, e:
@@ -25,16 +25,27 @@ def reclaim_threads(threads, observer):
         except Exception, e:
             observer.error("caught exception %s reclaiming thread" % (e,))
 
+
 def regen_repository(repo, observer, threads=1, pkg_attr='keywords'):
     # HACK: store this here so we can assign to it from inside def passthru.
 #    if not options.disable_eclass_preloading:
 #        processor._global_enable_eclass_preloading = True
+
+    helpers = []
+    def _get_repo_helper():
+        if not hasattr(repo, '_regen_operation_helper'):
+            return lambda pkg:getattr(pkg, 'keywords')
+        # for an actual helper, track it and invoke .finish if it exists.
+        helper = repo._regen_operation_helper()
+        helpers.append(helper)
+        return helper
+
     if threads == 1:
         def passthru(iterable):
             global count
             for x in iterable:
                 yield x
-        regen_iter(passthru(repo), observer, pkg_attr)
+        regen_iter(passthru(repo), observer, _get_repo_helper())
     else:
         queue = Queue.Queue(threads * 2)
         kill = threading.Event()
@@ -48,7 +59,7 @@ def regen_repository(repo, observer, threads=1, pkg_attr='keywords'):
         regen_threads = [
             threading.Thread(
                 target=regen_iter, args=(iter_queue(kill, queue), observer,
-                    pkg_attr))
+                    _get_repo_helper()))
             for x in xrange(threads)]
         try:
             for x in regen_threads:
@@ -68,3 +79,8 @@ def regen_repository(repo, observer, threads=1, pkg_attr='keywords'):
         kill.set()
         reclaim_threads(regen_threads, observer)
         assert queue.empty()
+
+    for helper in helpers:
+        f = getattr(helper, 'finish', None)
+        if f is not None:
+            f()

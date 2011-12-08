@@ -245,8 +245,8 @@ class base(metadata.package):
     def ebuild(self):
         return self._parent.get_ebuild_src(self)
 
-    def _fetch_metadata(self):
-        return self._parent._get_metadata(self)
+    def _fetch_metadata(self, ebp=None, force_regen=None):
+        return self._parent._get_metadata(self, ebp=ebp, force_regen=force_regen)
 
     def __str__(self):
         return "ebuild src: %s" % self.cpvstr
@@ -310,8 +310,11 @@ class package_factory(metadata.factory):
         return (data.get("_eclasses_") is not None and not
             self._ecache.is_eclass_data_valid(data["_eclasses_"]))
 
-    def _get_metadata(self, pkg):
-        for cache in self._cache:
+    def _get_metadata(self, pkg, ebp=None, force_regen=False):
+        caches = self._cache
+        if force_regen:
+            caches = ()
+        for cache in caches:
             if cache is not None:
                 try:
                     data = cache[pkg.cpvstr]
@@ -329,15 +332,16 @@ class package_factory(metadata.factory):
                     continue
 
         # no cache entries, regen
-        return self._update_metadata(pkg)
+        return self._update_metadata(pkg, ebp=ebp)
 
-    def _update_metadata(self, pkg):
-        ebp = None
+    def _update_metadata(self, pkg, ebp=None):
+        release = ebp is None
         try:
-            ebp = processor.request_ebuild_processor()
+            if release:
+                ebp = processor.request_ebuild_processor()
             mydata = ebp.get_keys(pkg, self._ecache)
         finally:
-            if ebp is not None:
+            if ebp is not None and release:
                 processor.release_ebuild_processor(ebp)
 
         inherited = mydata.pop("INHERITED", None)

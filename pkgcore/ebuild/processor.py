@@ -53,8 +53,6 @@ demandload(globals(),
     'snakeoil:osutils,fileutils',
 )
 
-_global_enable_eclass_preloading = False
-
 import traceback
 
 def _single_thread_allowed(functor):
@@ -454,6 +452,15 @@ class EbuildProcessor(object):
             print "exception caught when cleansing sandbox_log=%s" % str(e)
         return 1
 
+    def clear_preloaded_eclasses(self):
+        if self.is_alive:
+            self.write("clear_preloaded_eclasses")
+            if not self.expect("clear_preload_eclasses succeeded", flush=True):
+                self.shutdown_processor()
+                return False
+        self._preloaded_eclasses.clear()
+        return True
+
     def preload_eclasses(self, cache, async=False):
         """
         Preload an eclass stack's eclasses into a bash functions
@@ -633,7 +640,7 @@ class EbuildProcessor(object):
         if self.expect("metadata_path_received", flush=True):
             self._metadata_paths = paths
 
-    def get_keys(self, package_inst, eclass_cache, preload_eclasses=None):
+    def get_keys(self, package_inst, eclass_cache):
         """
         request the metadata be regenerated from an ebuild
 
@@ -643,11 +650,6 @@ class EbuildProcessor(object):
             for eclass access
         :return: dict when successful, None when failed
         """
-
-        if preload_eclasses is None:
-            preload_eclasses = _global_enable_eclass_preloading
-        if preload_eclasses:
-            self.preload_eclasses(eclass_cache, async=True)
 
         self._ensure_metadata_paths(const.HOST_NONROOT_PATHS)
 

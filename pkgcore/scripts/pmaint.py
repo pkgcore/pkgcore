@@ -165,13 +165,15 @@ regen.add_argument("--disable-eclass-preloading", action='store_true',
     help="For regen operation, pkgcore internally turns on an "
     "optimization that preloads eclasses into individual functions "
     "thus parsing the eclass only once per EBD processor.  Disabling "
-    "this optimization via this option results in ~50%% slower "
+    "this optimization via this option results in ~2x slower "
     "regeneration. Disable it only if you suspect the optimization "
     "is somehow causing issues.")
 regen.add_argument("--threads", "-t", type=int,
     default=commandline.DelayedValue(_get_default_jobs, 100),
     help="number of threads to use for regeneration.  Defaults to using all "
     "available processors")
+regen.add_argument("--force", action='store_true', default=False,
+    help="force regeneration to occur regardless of staleness checks")
 regen.add_argument("repo", action=commandline.StoreRepoObject,
     help="repository to regenerate caches for")
 @regen.bind_main_func
@@ -183,12 +185,10 @@ def regen_main(options, out, err):
         out.write("repository %s doesn't support cache regeneration" % (options.repo,))
         return 0
 
-    if not options.disable_eclass_preloading:
-        processor._global_enable_eclass_preloading = True
-
     start_time = time.time()
     repo.operations.regen_cache(threads=options.threads,
-        observer=observer.formatter_output(out))
+        observer=observer.formatter_output(out), force=options.force,
+            preload_eclasses=(not options.disable_eclass_preloading))
     end_time = time.time()
     out.write("finished %d nodes in in %.2f seconds" % (len(options.repo),
         end_time - start_time))

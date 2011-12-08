@@ -26,17 +26,14 @@ def reclaim_threads(threads, observer):
             observer.error("caught exception %s reclaiming thread" % (e,))
 
 
-def regen_repository(repo, observer, threads=1, pkg_attr='keywords'):
-    # HACK: store this here so we can assign to it from inside def passthru.
-#    if not options.disable_eclass_preloading:
-#        processor._global_enable_eclass_preloading = True
+def regen_repository(repo, observer, threads=1, pkg_attr='keywords', **options):
 
     helpers = []
     def _get_repo_helper():
         if not hasattr(repo, '_regen_operation_helper'):
             return lambda pkg:getattr(pkg, 'keywords')
         # for an actual helper, track it and invoke .finish if it exists.
-        helper = repo._regen_operation_helper()
+        helper = repo._regen_operation_helper(**options)
         helpers.append(helper)
         return helper
 

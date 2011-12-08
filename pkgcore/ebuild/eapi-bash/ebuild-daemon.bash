@@ -399,6 +399,11 @@ pkgcore_ebd_main_loop()
 			ebd_write_line "preload_eclass ${success}"
 			unset e x success
 			;;
+		clear_preloaded_eclasses)
+			unset PKGCORE_PRELOADED_ECLASSES
+			declare -A PKGCORE_PRELOADED_ECLASSES
+			ebd_write_line "clear_preloaded_eclasses succeeded"
+			;;
 		set_metadata_path\ *)
 			line=${com#set_metadata_path }
 			ebd_read_size ${line} PKGCORE_METADATA_PATH

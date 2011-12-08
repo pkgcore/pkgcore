@@ -33,7 +33,7 @@ def update_mtime(path, timestamp=None):
 class install(repo_ops.install):
 
     def __init__(self, repo, newpkg, observer):
-        base = pjoin(repo.base, newpkg.category)
+        base = pjoin(repo.location, newpkg.category)
         dirname = "%s-%s" % (newpkg.package, newpkg.fullver)
         self.install_path = pjoin(base, dirname)
         self.tmp_write_path = pjoin(base, '.tmp.%s' % (dirname,))
@@ -43,7 +43,7 @@ class install(repo_ops.install):
         # error checking?
         dirpath = self.tmp_write_path
         ensure_dirs(dirpath, mode=0755, minimal=True)
-        update_mtime(self.repo.base)
+        update_mtime(self.repo.location)
         rewrite = self.repo._metadata_rewrites
         for k in self.new_pkg.tracked_attributes:
             if k == "contents":
@@ -108,7 +108,7 @@ class install(repo_ops.install):
 
     def finalize_data(self):
         os.rename(self.tmp_write_path, self.install_path)
-        update_mtime(self.repo.base)
+        update_mtime(self.repo.location)
         return True
 
 
@@ -116,16 +116,16 @@ class uninstall(repo_ops.uninstall):
 
     def __init__(self, repo, pkg, observer):
         self.remove_path = pjoin(
-            repo.base, pkg.category, pkg.package+"-"+pkg.fullver)
+            repo.location, pkg.category, pkg.package+"-"+pkg.fullver)
         repo_ops.uninstall.__init__(self, repo, pkg, observer)
 
     def remove_data(self):
         return True
 
     def finalize_data(self):
-        update_mtime(self.repo.base)
+        update_mtime(self.repo.location)
         shutil.rmtree(self.remove_path)
-        update_mtime(self.repo.base)
+        update_mtime(self.repo.location)
         return True
 
 

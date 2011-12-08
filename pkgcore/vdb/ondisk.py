@@ -80,7 +80,7 @@ class tree(prototype.tree):
         disable_cache=False):
         prototype.tree.__init__(self, frozen=False)
         self.repo_id = repo_id
-        self.base = self.location = location
+        self.location = location
         if disable_cache:
             cache_location = None
         elif cache_location is None:
@@ -89,17 +89,17 @@ class tree(prototype.tree):
         self.cache_location = cache_location
         self._versions_tmp_cache = {}
         try:
-            st = os.stat(self.base)
+            st = os.stat(self.location)
             if not stat.S_ISDIR(st.st_mode):
                 raise errors.InitializationError(
-                    "base not a dir: %r" % self.base)
+                    "base not a dir: %r" % self.location)
             elif not st.st_mode & (os.X_OK|os.R_OK):
                 raise errors.InitializationError(
-                    "base lacks read/executable: %r" % self.base)
+                    "base lacks read/executable: %r" % self.location)
 
         except OSError:
             compatibility.raise_from(errors.InitializationError(
-                "lstat failed on base %r" % self.base))
+                "lstat failed on base %r" % self.location))
 
         self.package_class = get_plugin('format.' + self.format_magic)(self)
 
@@ -109,7 +109,7 @@ class tree(prototype.tree):
             return {}
         try:
             try:
-                return tuple(x for x in listdir_dirs(self.base) if not
+                return tuple(x for x in listdir_dirs(self.location) if not
                              x.startswith('.'))
             except EnvironmentError, e:
                 compatibility.raise_from(KeyError("failed fetching categories: %s" % str(e)))
@@ -117,7 +117,7 @@ class tree(prototype.tree):
             pass
 
     def _get_packages(self, category):
-        cpath = pjoin(self.base, category.lstrip(os.path.sep))
+        cpath = pjoin(self.location, category.lstrip(os.path.sep))
         l = set()
         d = {}
         bad = False
@@ -153,7 +153,7 @@ class tree(prototype.tree):
                 d.setdefault((category, pkg.package), []).append(pkg.fullver)
         except EnvironmentError, e:
             compatibility.raise_from(KeyError("failed fetching packages for category %s: %s" % \
-            (pjoin(self.base, category.lstrip(os.path.sep)), str(e))))
+            (pjoin(self.location, category.lstrip(os.path.sep)), str(e))))
 
         self._versions_tmp_cache.update(d)
         return tuple(l)
@@ -163,11 +163,11 @@ class tree(prototype.tree):
 
     def _get_ebuild_path(self, pkg):
         s = "%s-%s" % (pkg.package, pkg.fullver)
-        return pjoin(self.base, pkg.category, s, s+".ebuild")
+        return pjoin(self.location, pkg.category, s, s+".ebuild")
 
     def _get_path(self, pkg):
         s = "%s-%s" % (pkg.package, pkg.fullver)
-        return pjoin(self.base, pkg.category, s)
+        return pjoin(self.location, pkg.category, s)
 
     _metadata_rewrites = {
         "depends":"DEPEND", "rdepends":"RDEPEND", "post_rdepends":"PDEPEND",
@@ -176,7 +176,7 @@ class tree(prototype.tree):
 
     def _get_metadata(self, pkg):
         return IndeterminantDict(partial(self._internal_load_key,
-            pjoin(self.base, pkg.category,
+            pjoin(self.location, pkg.category,
                 "%s-%s" % (pkg.package, pkg.fullver))))
 
     def _internal_load_key(self, path, key):
@@ -214,7 +214,7 @@ class tree(prototype.tree):
         prototype.tree.notify_remove_package(self, pkg)
         if remove_it:
             try:
-                os.rmdir(pjoin(self.base, pkg.category))
+                os.rmdir(pjoin(self.location, pkg.category))
             except OSError, oe:
                 if oe.errno != errno.ENOTEMPTY:
                     raise
@@ -223,7 +223,7 @@ class tree(prototype.tree):
 
     def __str__(self):
         return '%s.%s: location %s' % (
-            self.__class__.__module__, self.__class__.__name__, self.base)
+            self.__class__.__module__, self.__class__.__name__, self.location)
 
 
 class ConfiguredTree(multiplex.tree):

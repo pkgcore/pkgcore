@@ -30,7 +30,9 @@ def passthrough(inst, attr):
     return inst.data[attr]
 
 def passthrough_repo(inst):
-    repo = inst.data.get('REPO')
+    repo = inst.data.get('source_repository')
+    if repo is None:
+        repo = inst.data.get('REPO')
     if repo:
         return repo.strip()
     return None

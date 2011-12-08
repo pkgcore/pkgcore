@@ -4,6 +4,9 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* `pquery --attr source_repository --vdb` now correctly returns the
+  originating repository.
+
 * pmerge --source-only was added; this disables all binpkg repositories
   from being used for the resolution; binpkg building however still will
   occur if the feature is enabled.

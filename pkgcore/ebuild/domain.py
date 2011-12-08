@@ -110,7 +110,7 @@ class domain(pkgcore.config.domain.domain):
     del _types, _thing
 
     def __init__(self, profile, repositories, vdb, name=None,
-        root='/', incrementals=const.incrementals, triggers=(), **settings):
+        root='/', prefix='/', incrementals=const.incrementals, triggers=(), **settings):
         # voodoo, unfortunately (so it goes)
         # break this up into chunks once it's stabilized (most of code
         # here has already, but still more to add)
@@ -264,6 +264,7 @@ class domain(pkgcore.config.domain.domain):
         # if it's made it this far...
 
         self.root = settings["ROOT"] = root
+        self.prefix = prefix
         self.settings = settings
 
         for data in self.settings.get('bashrc', ()):
@@ -364,10 +365,10 @@ class domain(pkgcore.config.domain.domain):
     def _extend_use_for_features(self, use_settings, features):
         # hackish implementation; if test is on, flip on the flag
         if "test" in features:
-            use.add("test")
+            use_settings.add("test")
 
         if "prefix" in features or "force-prefix" in features:
-            use.add("prefix")
+            use_settings.add("prefix")
 
     def generate_filter(self, masking, unmasking, *extra):
         # note that we ignore unmasking if masking isn't specified.

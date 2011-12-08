@@ -8,7 +8,7 @@ See ChangeLog for full commit logs; this is summarized/major changes.
   This could only be triggered by actual API usage, not from commandline
   usage.
 
-* ebuild package instances now have an office, supported .inherited attribute
+* ebuild package instances now have an officially supported .inherited attribute
   for finding out the eclasses used by a pkg.  In addition, this attribute
   is now installed into the vdb repository, and binpkgs.
 

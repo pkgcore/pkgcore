@@ -5,9 +5,9 @@
 
 check_args 1 -
 
-check_command_or_stop install -d "${D}usr/share/info"
+check_command_or_stop install -d "${ED}usr/share/info"
 
 for x in "$@" ; do
-	check_command install -m0644 "${x}" "${D}usr/share/info" && \
-		check_command gzip -f -9 "${D}usr/share/info/${x##*/}"
+	check_command install -m0644 "${x}" "${ED}usr/share/info" && \
+		check_command gzip -f -9 "${ED}usr/share/info/${x##*/}"
 done

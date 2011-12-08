@@ -6,4 +6,4 @@
 check_args 2 -
 
 # pathway must be absolute.
-check_command chmod "${@/#\//${D}/}"
+check_command chmod "${@/#\//${ED}/}"

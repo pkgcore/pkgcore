@@ -5,7 +5,14 @@
 shopt -s extdebug
 source "${PKGCORE_BIN_PATH}/exit-handling.lib" || { echo "failed loading libs"; exit -127; }
 
-for x in $(find "${D}" -name man -type d -printf '%P\n') ; do
+if ! ${PKGCORE_PREFIX_SUPPORT=false}; then
+	export ED="${D}"
+elif [[ "${ED-unset}" == "unset" ]]; then
+	echo "The ED variable was missing from the environment, but is required for prefix mode.  Failing".
+	exit -1
+fi
+
+for x in $(find "${ED}" -name man -type d -printf '%P\n') ; do
 	prepman ${x%/man}
 	export prepallman_banner=no
 done

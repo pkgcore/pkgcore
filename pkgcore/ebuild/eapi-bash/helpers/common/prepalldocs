@@ -5,7 +5,7 @@
 shopt -s extdebug
 source "${PKGCORE_BIN_PATH}/exit-handling.lib" || { echo "failed loading libs"; exit -127; }
 
-dir="${D}usr/share/doc"
+dir="${ED}usr/share/doc"
 
 [[ ! -d "${dir}" ]] && exit 0
 

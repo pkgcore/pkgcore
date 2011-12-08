@@ -10,8 +10,8 @@ fi
 
 check_args 1 -
 
-if [[ "${INSDESTTREE%${D}*}" == "" ]]; then
-	pkgcore_helper_exit 2 "do not give \${D} as part of the pathways to doins"
+if [[ "${INSDESTTREE%${ED}*}" == "" ]]; then
+	pkgcore_helper_exit 2 "do not give \${D} nor \${ED} as part of the pathways to doins"
 fi
 
 install_paths()
@@ -36,7 +36,7 @@ install_paths()
 				continue
 			fi
 		fi
-		check_command install ${INSOPTIONS} "${mysrc}" "${D}${mydir}"
+		check_command install ${INSOPTIONS} "${mysrc}" "${ED}${mydir}"
 		# cleanup the tempspace...
 		[[ ${mysrc} != ${x} ]] && rm -f "${mysrc}"
 	done

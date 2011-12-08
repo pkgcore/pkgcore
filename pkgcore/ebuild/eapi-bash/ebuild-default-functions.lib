@@ -34,14 +34,15 @@ best_version()
 # adds ".keep" files so that dirs aren't auto-cleaned
 keepdir()
 {
+	${PKGCORE_PREFIX_SUPPORT} || local ED="${D}"
 	dodir "$@"
 	if [[ "$1" == "-R" ]] || [[ "$1" == "-r" ]]; then
 		shift
-		find "$@" -type d -printf "${D}/%p/.keep\0" | $XARGS -0 -n100 touch || die "Failed to recursive create .keep files"
+		find "$@" -type d -printf "${ED}/%p/.keep\0" | $XARGS -0 -n100 touch || die "Failed to recursive create .keep files"
 	else
 		local x
 		for x in "$@"; do
-			touch "${D}/${x}/.keep" || die "Failed to create .keep in ${D}/${x}"
+			touch "${ED}/${x}/.keep" || die "Failed to create .keep in ${ED}/${x}"
 		done
 	fi
 }
@@ -166,7 +167,11 @@ dyn_src_install()
 {
 	local f
 	echo
-	echo ">>> Install ${PF} into ${D} category ${CATEGORY}"
+	if ${PKGCORE_PREFIX_SUPPORT}; then
+		echo ">>> Install ${PF} into ${ED} category ${CATEGORY}"
+	else:
+		echo ">>> Install ${PF} into ${D} category ${CATEGORY}"
+	fi
 	if is_function src_install; then
 		qa_invoke src_install
 	else
@@ -174,14 +179,15 @@ dyn_src_install()
 	fi
 
 	"${PKGCORE_BIN_PATH}/helpers/internals/prepall"
-	cd "${D}"
+	${PKGCORE_PREFIX_SUPPORT} || local ED="${D}"
+	cd "${ED}"
 
 	if type -p scanelf > /dev/null ; then
 		# Make sure we disallow insecure RUNPATH/RPATH's
 		# Don't want paths that point to the tree where the package was built
 		# (older, broken libtools would do this).  Also check for null paths
 		# because the loader will search $PWD when it finds null paths.
-		f=$(scanelf -qyRF '%r %p' "${D}" | grep -E "(${WORKDIR}|${D}|: |::|^ )")
+		f=$(scanelf -qyRF '%r %p' "${ED}" | grep -E "(${WORKDIR}|${ED}|: |::|^ )")
 		if [[ -n ${f} ]] ; then
 			echo -ne '\a\n'
 			echo "QA Notice: the following files contain insecure RUNPATH's"
@@ -196,7 +202,7 @@ dyn_src_install()
 		fi
 
 		# Check for setid binaries but are not built with BIND_NOW
-		f=$(scanelf -qyRF '%b %p' "${D}")
+		f=$(scanelf -qyRF '%b %p' "${ED}")
 		if [[ -n ${f} ]] ; then
 			echo -ne '\a\n'
 			echo "QA Notice: the following files are setXid, dyn linked, and using lazy bindings"
@@ -209,7 +215,7 @@ dyn_src_install()
 		fi
 
 		# TEXTREL's are baaaaaaaad
-		f=$(scanelf -qyRF '%t %p' "${D}")
+		f=$(scanelf -qyRF '%t %p' "${ED}")
 		if [[ -n ${f} ]] ; then
 			echo -ne '\a\n'
 			echo "QA Notice: the following files contain runtime text relocations"
@@ -225,7 +231,7 @@ dyn_src_install()
 		fi
 
 		# Check for files with executable stacks
-		f=$(scanelf -qyRF '%e %p' "${D}")
+		f=$(scanelf -qyRF '%e %p' "${ED}")
 		if [[ -n ${f} ]] ; then
 			echo -ne '\a\n'
 			echo "QA Notice: the following files contain executable stacks"
@@ -240,18 +246,16 @@ dyn_src_install()
 
 		# disabled by harring; we don't use it currently.
 		# Save NEEDED information
-		#scanelf -qyRF '%p %n' "${D}" | sed -e 's:^:/:' > "${T}/NEEDED"
+		#scanelf -qyRF '%p %n' "${ED}" | sed -e 's:^:/:' > "${T}/NEEDED"
 	fi
 
-	echo ">>> Completed installing ${PF} into ${D}"
+	echo ">>> Completed installing ${PF} into ${ED}"
 	echo
 	unset dir
 }
 
 dyn_pkg_preinst()
 {
-	# set IMAGE depending if this is a binary or compile merge
-	local IMAGE=${D}
 	local i
 
 	if is_function pkg_preinst; then
@@ -260,27 +264,29 @@ dyn_pkg_preinst()
 		qa_run_function_if_exists pkgcore_default_pkg_preinst
 	fi
 
+	${PKGCORE_PREFIX_SUPPORT} || local ED="${D}"
+
 	# total suid control.
 	if has suidctl $FEATURES > /dev/null ; then
 		sfconf=/etc/portage/suidctl.conf
-		echo ">>> Preforming suid scan in ${IMAGE}"
-		for i in $(find "${IMAGE}"/ -type f \( -perm -4000 -o -perm -2000 \) ); do
+		echo ">>> Preforming suid scan in ${ED}"
+		for i in $(find "${ED}"/ -type f \( -perm -4000 -o -perm -2000 \) ); do
 			if [[ -s "${sfconf}" ]]; then
-				suid=$(grep ^${i/${IMAGE}/}$ ${sfconf})
-				if [[ "${suid}" = "${i/${IMAGE}/}" ]]; then
-					echo "- ${i/${IMAGE}/} is an approved suid file"
+				suid=$(grep ^${i/${ED}/}$ ${sfconf})
+				if [[ "${suid}" = "${i/${ED}/}" ]]; then
+					echo "- ${i/${ED}/} is an approved suid file"
 				else
-					echo ">>> Removing sbit on non registered ${i/${IMAGE}/}"
+					echo ">>> Removing sbit on non registered ${i/${ED}/}"
 					chmod ugo-s "${i}"
-					grep ^#${i/${IMAGE}/}$ ${sfconf} > /dev/null || {
+					grep ^#${i/${ED}/}$ ${sfconf} > /dev/null || {
 						# sandbox prevents us from writing directly
 						# to files outside of the sandbox, but this
 						# can easly be bypassed using the addwrite() function
 						addwrite "${sfconf}"
 						echo ">>> Appending commented out entry to ${sfconf} for ${PF}"
 						ls_ret=`ls -ldh "${i}"`
-						echo "## ${ls_ret%${IMAGE}*}${ls_ret#*${IMAGE}}" >> ${sfconf}
-						echo "#${i/${IMAGE}/}" >> ${sfconf}
+						echo "## ${ls_ret%${ED}*}${ls_ret#*${ED}}" >> ${sfconf}
+						echo "#${i/${ED}/}" >> ${sfconf}
 						# no delwrite() eh?
 						# delwrite ${sconf}
 					}
@@ -304,7 +310,7 @@ dyn_pkg_preinst()
 			fi
 
 			addwrite /selinux/context
-			/usr/sbin/setfiles -r "${IMAGE}" "${T}/file_contexts" "${IMAGE}" \
+			/usr/sbin/setfiles -r "${ED}" "${T}/file_contexts" "${ED}" \
 				|| die "Failed to set SELinux security labels."
 		else
 			# nonfatal, since merging can happen outside a SE kernel

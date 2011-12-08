@@ -6,4 +6,4 @@
 check_args 2 -
 
 # pathway must be absolute.
-check_command chown "${@/#\//${D}/}"
+check_command chown "${@/#\//${ED}/}"

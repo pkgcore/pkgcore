@@ -29,10 +29,10 @@ save_elf_sources() {
 	debugedit -b "${WORKDIR}" -d "${sources_dir}" \
 		-l "${T}"/debug.sources "${x}"
 	if [[ -s ${T}/debug.sources ]] ; then
-		[[ -d ${D}${sources_dir} ]] || mkdir -p "${D}${sources_dir}"
+		[[ -d ${ED}${sources_dir} ]] || mkdir -p "${ED}${sources_dir}"
 		grep -zv '/<built-in>$' "${T}"/debug.sources | \
 			(cd "${WORKDIR}"; LANG=C sort -z -u | \
-			rsync -rtL0 --files-from=- "${WORKDIR}/" "${D}${sources_dir}/" )
+			rsync -rtL0 --files-from=- "${WORKDIR}/" "${ED}${sources_dir}/" )
 	fi
 }
 

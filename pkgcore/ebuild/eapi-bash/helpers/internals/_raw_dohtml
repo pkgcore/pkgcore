@@ -76,6 +76,10 @@ class OptionsClass:
             self.PF = os.environ["PF"]
         if os.environ.has_key("D"):
             self.D = os.environ["D"]
+        if os.environ.get("PKGCORE_PREFIX_SUPPORT", "false") == "true":
+            if not "ED" in os.environ:
+                raise Exception("runtime error, or ebuild error: no ED variable found, but required")
+            self.D = os.environ["ED"]
         if os.environ.has_key("_E_DOCDESTTREE_"):
             self.DOCDESTTREE = os.environ["_E_DOCDESTTREE_"]
 

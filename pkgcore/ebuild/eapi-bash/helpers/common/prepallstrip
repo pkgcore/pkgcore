@@ -9,4 +9,4 @@ if [[ "${FEATURES//*nostrip*/true}" == "true" ]] || [[ "${RESTRICT//*nostrip*/tr
 	exit 0
 fi
 
-exec prepstrip "${D}"
+exec prepstrip "${ED}"

@@ -4,4 +4,4 @@
 
 check_args 1 -
 
-check_command install -d ${DIROPTIONS} "${@/#/${D}/}"
+check_command install -d ${DIROPTIONS} "${@/#/${ED}/}"

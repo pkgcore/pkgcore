@@ -88,6 +88,13 @@ check_command_or_stop()
 MASTER_HELPER_NAME=${1##*/}
 HELPER_ERROR_PREFIX=
 
+if ! ${PKGCORE_PREFIX_SUPPORT:=false}; then
+	export ED="${D}"
+elif [[ "${ED:-unset}" == unset ]]; then
+	error "prefix mode is enabled, but ED can't be found.  Ebuild bug?"
+	exit 1
+fi
+
 invoke_script()
 {
 	[[ $# == 0 ]] && die "internal error: invoke_script invoked incorrectly"

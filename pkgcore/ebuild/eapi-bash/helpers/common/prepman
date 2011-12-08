@@ -7,9 +7,9 @@ shopt -s extdebug
 source "${PKGCORE_BIN_PATH}/exit-handling.lib" || { echo "failed loading libs"; exit -127; }
 
 if [[ -z "$1" ]]; then
-	z="${D}usr/share/man"
+	z="${ED}usr/share/man"
 else
-	z="${D}$1/man"
+	z="${ED}$1/man"
 fi
 
 [[ ! -d "${z}" ]] && exit 0

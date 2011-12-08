@@ -8,8 +8,8 @@ check_args 1 -
 target=${HELPER_NAME:2}
 
 # may exist already, but that's fine.
-check_command_or_stop install -d "${D}${DESTTREE}/${target}"
+check_command_or_stop install -d "${ED}${DESTTREE}/${target}"
 
 for x in "$@" ; do
-	check_command install -m0755 -o "${PKGCORE_INST_UID:-0}" -g "${PKGCORE_INST_GID:-0}" "${x}" "${D}${DESTTREE}/${target}"
+	check_command install -m0755 -o "${PKGCORE_INST_UID:-0}" -g "${PKGCORE_INST_GID:-0}" "${x}" "${ED}${DESTTREE}/${target}"
 done

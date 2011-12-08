@@ -13,7 +13,7 @@ fi
 
 CONF_LIBDIR=${CONF_LIBDIR:-lib}
 
-libdir="${D}${DESTTREE}/${CONF_LIBDIR}"
+libdir="${ED}${DESTTREE}/${CONF_LIBDIR}"
 
 if [[ ${HELPER_NAME} == dolib.so ]]; then
 	LIBOPTIONS=-m0755

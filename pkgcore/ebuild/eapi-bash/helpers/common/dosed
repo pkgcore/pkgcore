@@ -4,10 +4,10 @@
 
 check_args 1 -
 
-pattern="s:${D}::g"
+pattern="s:${ED}::g"
 
 for x in "$@" ; do
-	trg="${D}${x}"
+	trg="${ED}${x}"
 	if [[ ! -e "${trg}" ]]; then
 		pattern="${x}"
 		continue

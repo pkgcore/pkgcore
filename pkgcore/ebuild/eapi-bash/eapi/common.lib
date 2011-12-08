@@ -165,6 +165,7 @@ strip_duplicate_slashes ()
 
 einstall()
 {
+	${PKGCORE_PREFIX_SUPPORT} || local ED="${D}"
 	# CONF_PREFIX is only set if they didn't pass in libdir above
 	local LOCAL_EXTRA_EINSTALL="${EXTRA_EINSTALL}"
 	local LIBDIR_VAR="LIBDIR_${ABI}"
@@ -173,7 +174,7 @@ einstall()
 	fi
 	unset LIBDIR_VAR
 	if [[ -n "${CONF_LIBDIR}" ]] && [[ "${CONF_PREFIX:-unset}" != "unset" ]]; then
-		EI_DESTLIBDIR="${D}/${CONF_PREFIX}/${CONF_LIBDIR}"
+		EI_DESTLIBDIR="${ED}/${CONF_PREFIX}/${CONF_LIBDIR}"
 		EI_DESTLIBDIR="$(strip_duplicate_slashes ${EI_DESTLIBDIR})"
 		LOCAL_EXTRA_EINSTALL="${LOCAL_EXTRA_EINSTALL} libdir=${EI_DESTLIBDIR}"
 		unset EI_DESTLIBDIR
@@ -181,21 +182,21 @@ einstall()
 
 	if [ -f ./[mM]akefile -o -f ./GNUmakefile ]; then
 		if [[ ! -z "${PKGCORE_DEBUG}" ]]; then
-		    ${MAKE:-make} -n prefix=${D}/usr \
-		        datadir=${D}/usr/share \
-		        infodir=${D}/usr/share/info \
-		  		localstatedir=${D}/var/lib \
-		        mandir=${D}/usr/share/man \
-		        sysconfdir=${D}/etc \
+		    ${MAKE:-make} -n prefix=${ED}/usr \
+		        datadir=${ED}/usr/share \
+		        infodir=${ED}/usr/share/info \
+				localstatedir=${ED}/var/lib \
+		        mandir=${ED}/usr/share/man \
+		        sysconfdir=${ED}/etc \
 		        ${LOCAL_EXTRA_EINSTALL} \
 		        "$@" install
 		fi
-		${MAKE:-make} prefix=${D}/usr \
-		    datadir=${D}/usr/share \
-		    infodir=${D}/usr/share/info \
-		    localstatedir=${D}/var/lib \
-		    mandir=${D}/usr/share/man \
-		    sysconfdir=${D}/etc \
+		${MAKE:-make} prefix=${ED}/usr \
+		    datadir=${ED}/usr/share \
+		    infodir=${ED}/usr/share/info \
+		    localstatedir=${ED}/var/lib \
+		    mandir=${ED}/usr/share/man \
+		    sysconfdir=${ED}/etc \
 		    ${LOCAL_EXTRA_EINSTALL} \
 		    "$@" install || die "einstall failed"
 	else
@@ -252,48 +253,52 @@ pkgcore_common_src_test()
 
 into()
 {
+	${PKGCORE_PREFIX_SUPPORT} || local ED="${D}"
 	if [ $1 == "/" ]; then
 		export DESTTREE=""
 	else
 		export DESTTREE=$1
-		if [ ! -d "${D}${DESTTREE}" ]; then
-		    install -d "${D}${DESTTREE}"
+		if [ ! -d "${ED}${DESTTREE}" ]; then
+		    install -d "${ED}${DESTTREE}"
 		fi
 	fi
 }
 
 insinto()
 {
+	${PKGCORE_PREFIX_SUPPORT} || local ED="${D}"
 	if [ "$1" == "/" ]; then
 		export INSDESTTREE=""
 	else
 		export INSDESTTREE=$1
-		if [ ! -d "${D}${INSDESTTREE}" ]; then
-		    install -d "${D}${INSDESTTREE}"
+		if [ ! -d "${ED}${INSDESTTREE}" ]; then
+		    install -d "${ED}${INSDESTTREE}"
 		fi
 	fi
 }
 
 exeinto()
 {
+	${PKGCORE_PREFIX_SUPPORT} || local ED="${D}"
 	if [ "$1" == "/" ]; then
 		export PKGCORE_EXEDESTTREE=""
 	else
 		export PKGCORE_EXEDESTTREE="$1"
-		if [ ! -d "${D}${PKGCORE_EXEDESTTREE}" ]; then
-		    install -d "${D}${PKGCORE_EXEDESTTREE}"
+		if [ ! -d "${ED}${PKGCORE_EXEDESTTREE}" ]; then
+		    install -d "${ED}${PKGCORE_EXEDESTTREE}"
 		fi
 	fi
 }
 
 docinto()
 {
+	${PKGCORE_PREFIX_SUPPORT} || local ED="${D}"
 	if [ "$1" == "/" ]; then
 		export PKGCORE_DOCDESTTREE=""
 	else
 		export PKGCORE_DOCDESTTREE="$1"
-		if [ ! -d "${D}usr/share/doc/${PF}/${PKGCORE_DOCDESTTREE}" ]; then
-		    install -d "${D}usr/share/doc/${PF}/${PKGCORE_DOCDESTTREE}"
+		if [ ! -d "${ED}usr/share/doc/${PF}/${PKGCORE_DOCDESTTREE}" ]; then
+		    install -d "${ED}usr/share/doc/${PF}/${PKGCORE_DOCDESTTREE}"
 		fi
 	fi
 }
@@ -371,7 +376,14 @@ pkgcore_default_pre_src_install()
 	export MOPREFIX=${PN}
 	export D
 	rm -rf "${D}"
-	mkdir "${D}"
+	if ${PKGCORE_PREFIX_SUPPORT}; then
+		[[ "${ED-unset}" == "unset" ]] && \
+			die "variable ED is unset, but prefix mode is enabled.  internal error?"
+		export ED="${ED}"
+		mkdir -p "${ED}"
+	else
+		mkdir "${D}"
+	fi
 	pkgcore_common_pre_phase
 }
 

@@ -204,9 +204,7 @@ class domain(pkgcore.config.domain.domain):
         use = settings['USE'] = set(optimize_incrementals(
             settings.get("USE", ())))
 
-        # hackish implementation; if test is on, flip on the flag
-        if "test" in settings.get("FEATURES", ()):
-            use.add("test")
+        self._extend_use_for_features(use, settings.get("FEATURES", ()))
 
         self.use_expand = frozenset(profile.use_expand)
         self.use_expand_hidden = frozenset(profile.use_expand_hidden)
@@ -362,6 +360,14 @@ class domain(pkgcore.config.domain.domain):
 
         self.use_expand_re = re.compile("^(?:[+-])?(%s)_(.*)$" %
             "|".join(x.lower() for x in sorted(self.use_expand, reverse=True)))
+
+    def _extend_use_for_features(self, use_settings, features):
+        # hackish implementation; if test is on, flip on the flag
+        if "test" in features:
+            use.add("test")
+
+        if "prefix" in features or "force-prefix" in features:
+            use.add("prefix")
 
     def generate_filter(self, masking, unmasking, *extra):
         # note that we ignore unmasking if masking isn't specified.

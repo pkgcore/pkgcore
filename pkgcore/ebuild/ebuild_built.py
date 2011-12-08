@@ -32,7 +32,14 @@ def passthrough(inst, attr):
 def passthrough_repo(inst):
     repo = inst.data.get('source_repository')
     if repo is None:
-        repo = inst.data.get('REPO')
+        repo = inst.data.get('repository')
+        # work around managers storing this in different places.
+        if repo is None:
+            # finally, do the strip ourselves since this can come
+            # back as '\n' from binpkg Packages caches...
+            repo = inst.data.get('REPO', '').strip()
+            if not repo:
+                repo = None
     if repo:
         return repo.strip()
     return None

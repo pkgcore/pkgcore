@@ -4,6 +4,10 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* pmerge --source-only was added; this disables all binpkg repositories
+  from being used for the resolution; binpkg building however still will
+  occur if the feature is enabled.
+
 * fixed potential for eclass preloading to use the incorrect repo source.
   This could only be triggered by actual API usage, not from commandline
   usage.

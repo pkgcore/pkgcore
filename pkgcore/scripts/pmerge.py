@@ -79,6 +79,8 @@ a depends on b, and b depends on a, with neither built is an example""")
             help="prefer to use binpkgs")
         self.add_option('--usepkgonly', '-K', action='store_true',
             help="use only built packages")
+        self.add_option('--source-only', action='store_true',
+            help="use source packages only; no pre-built packages used")
         self.add_option('--empty', '-e', action='store_true',
             help="force rebuilding of all involved packages, using installed "
                 "packages only to satisfy building the replacements")
@@ -133,11 +135,14 @@ a depends on b, and b depends on a, with neither built is an example""")
                     "other words, accepts no args")
             options.set = ['world', 'system']
             options.deep = True
-            if options.usepkgonly or options.usepkg:
+            if options.usepkgonly or options.usepkg or options.source_only:
                 self.error(
-                    '--usepkg and --usepkgonly cannot be used with --clean')
+                    '--clean cannot be used with any of the following options: '
+                        '--usepkg --usepkgonly --source-only')
         elif options.usepkgonly and options.usepkg:
             self.error('--usepkg is redundant when --usepkgonly is used')
+        elif (options.usepkgonly or options.usepkg) and options.source_only:
+            self.error("--source-only cannot be used with --usepkg nor --usepkgonly")
         if options.set:
             options.replace = False
         if not options.targets and not options.set and not options.newuse:
@@ -368,6 +373,9 @@ def main(options, out, err):
             [x[1] for x in repo_types if x[0]] +
             [x[1] for x in repo_types if not x[0]]
         )
+    elif options.source_only:
+        source_repos = source_repos.change_repos(x for x in source_repos
+            if getattr(x, 'format_magic', None) != 'ebuild_built')
 
     atoms = []
     for setname in options.set:

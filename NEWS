@@ -3,6 +3,11 @@ Pkgcore Release Notes
 
 See ChangeLog for full commit logs; this is summarized/major changes.
 
+
+
+* FEATURES=distcc-pump support was added; issue #21.
+
+
 pkgcore 0.7.7.3: Dec 8th, 2011
 
 * fixed merging error for gconf files named %gconf, and introduced

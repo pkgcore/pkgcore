@@ -78,6 +78,7 @@ pkgcore_common_src_compile
 pkgcore_common_src_test
 pkgcore_common_src_unpack
 pkgcore_default_pkg_nofetch
+pkgcore_default_post_src_compile
 pkgcore_default_pre_src_compile
 pkgcore_default_pre_src_configure
 pkgcore_default_pre_src_install

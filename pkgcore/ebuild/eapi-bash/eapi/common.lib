@@ -345,7 +345,21 @@ pkgcore_default_pre_src_compile()
 	# if the eapi has configure or not.
 	pkgcore_default_pre_src_configure
 
-	[[ -n ${DISTCC_DIR} ]] && addwrite "${DISTCC_DIR}"
+	if has distcc ${FEATURES}; then
+		[[ -n ${DISTCC_DIR} ]] && addwrite "${DISTCC_DIR}"
+		if has distcc-pump ${FEATURES}; then
+			eval $(pump --startup) || echo "Warning: Failed starting pump" >&2
+		fi
+	fi
+	trap 'pump --shutdown' EXIT
+}
+
+pkgcore_default_post_src_compile()
+{
+	if has distcc ${FEATURES} && has distcc-pump ${FEATURES}; then
+		pump --shutdown
+		trap - EXIT
+	fi
 }
 
 pkgcore_default_pre_src_install()

@@ -60,6 +60,8 @@ def wrap_inst(self, wrap, inst):
 _empty_fetchable = conditionals.DepSet.parse('', ebuild_src.fetchable,
     operators={})
 
+def _get_inherited(self):
+    return tuple(sorted(self.data.get("INHERITED", "").split()))
 
 class package(ebuild_src.base):
 
@@ -100,6 +102,8 @@ class package(ebuild_src.base):
 
     _get_attr["use"] = lambda s:DelayedInstantiation(frozenset,
         lambda: frozenset(s.data["USE"].split()))
+
+    _get_attr["inherited"] = _get_inherited
 
     def _chost_fallback(initial, self):
         o = self.data.get(initial)

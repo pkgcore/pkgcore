@@ -86,15 +86,12 @@ def stringify_attr(config, pkg, attr):
         result = sorted(iuse & use) + sorted('-' + val for val in (iuse - use))
         return ' '.join(result)
 
-    # TODO: is a missing or None attr an error?
-    if attr == 'inherited':
-        return ' '.join(sorted(getattr(pkg, 'data', {}).get('_eclasses_', {})))
-
     value = getattr(pkg, attr, None)
     if value is None:
         return 'MISSING'
 
-    if attr in ('herds', 'iuse', 'maintainers', 'properties', 'defined_phases'):
+    if attr in ('herds', 'iuse', 'maintainers', 'properties', 'defined_phases',
+        'inherited'):
         return ' '.join(sorted(unicode(v) for v in value))
     if attr == 'longdescription':
         return unicode(value)

@@ -4,6 +4,10 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* ebuild package instances now have an office, supported .inherited attribute
+  for finding out the eclasses used by a pkg.  In addition, this attribute
+  is now installed into the vdb repository, and binpkgs.
+
 * pkgcore no longer adds REQUIRED_USE to vdb nor binpkg; it's a pointless
   metadata key, plus we used to corrupt it.
 

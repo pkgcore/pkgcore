@@ -156,6 +156,10 @@ def rewrite_restrict(restrict):
 def get_repo_id(self):
     return self.repo.repo_id
 
+def get_inherited(self):
+    return tuple(sorted(self.data.get('_eclasses_', {})))
+
+
 class base(metadata.package):
 
     """
@@ -170,7 +174,7 @@ class base(metadata.package):
     tracked_attributes = (
         "depends", "rdepends", "post_rdepends", "provides", "license",
         "slot", "keywords", "eapi_obj", "restrict", "description", "iuse",
-        "chost", "cbuild", "ctarget", "homepage", "properties",
+        "chost", "cbuild", "ctarget", "homepage", "properties", "inherited",
         "defined_phases", "source_repository")
 
     _config_wrappables = dict((x, alias_class_method("evaluate_depset"))
@@ -202,6 +206,7 @@ class base(metadata.package):
     _get_attr["defined_phases"] = lambda s:s.eapi_obj.interpret_cache_defined_phases(imap(intern,
         s.data.pop("DEFINED_PHASES", "").split()), False)
     _get_attr["homepage"] = lambda s:s.data.pop("HOMEPAGE", "").strip()
+    _get_attr["inherited"] = get_inherited
     _get_attr["required_use"] = generate_required_use
     _get_attr["source_repository"] = get_repo_id
 

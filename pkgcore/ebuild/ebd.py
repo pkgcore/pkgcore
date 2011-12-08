@@ -100,12 +100,19 @@ class ebd(object):
         if "PKGCORE_DEBUG" in os.environ:
             self.env["PKGCORE_DEBUG"] = str(int(os.environ["PKGCORE_DEBUG"]))
 
-        self.env.setdefault("ROOT", "/")
+        if features is None:
+            features = self.env.get("FEATURES", ())
 
         # XXX: note this is just eapi3 compatibility; not full prefix, soon..
-        if pkg.eapi_obj.options.prefix_capable:
-            self.env['EROOT'] = self.env['ROOT']
-            self.env['EPREFIX'] = ''
+        self.env["ROOT"] = self.domain.root
+        self.prefix_mode = pkg.eapi_obj.options.prefix_capable or 'force-prefix' in features
+        self.env["PKGCORE_PREFIX_SUPPORT"] = 'false'
+        self.prefix = '/'
+        if self.prefix_mode:
+            self.env['EROOT'] = normpath(self.domain.root)
+            self.prefix = self.domain.prefix.lstrip("/")
+            self.env['EPREFIX'] = normpath(pjoin(self.env["EROOT"], self.prefix))
+            self.env["PKGCORE_PREFIX_SUPPORT"] = 'true'
 
         self.env.update(pkg.eapi_obj.get_ebd_env())
 
@@ -116,9 +123,6 @@ class ebd(object):
                 "env_data_source must be None, or a pkgcore.data_source.base "
                 "derivative: %s: %s" % (
                     env_data_source.__class__, env_data_source))
-
-        if features is None:
-            features = self.env.get("FEATURES", ())
 
         self.features = set(x.lower() for x in features)
 
@@ -192,8 +196,8 @@ class ebd(object):
 
         # XXX: note that this is just eapi3 support, not yet prefix
         # full awareness.
-        if self.eapi_obj.options.prefix_capable:
-            self.env["ED"] = self.env["D"]
+        if self.prefix_mode:
+            self.env["ED"] = normpath(pjoin(self.env["D"], self.prefix)) + "/"
 
     def get_env_source(self):
         return data_source.bytes_data_source(

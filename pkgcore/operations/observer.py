@@ -15,8 +15,16 @@ def _convert(msg, args=(), kwds={}):
             raise TypeError("both position and optional args cannot be "
                 "supplied: given msg(%r), args(%r), kwds(%r)"
                 % (msg, args, kwds))
-        return msg % args
-    return msg % kwds
+        try:
+            return msg % args
+        except TypeError, e:
+            raise TypeError("observer interpolation error: %s, msg=%r, args=%r" %
+                (e, msg, args))
+    try:
+        return msg % kwds
+    except TypeError, e:
+        raise TypeError("observer interpolation error: %s, msg=%r, kwds=%r" %
+            (e, msg, kwds))
 
 
 class null_output(object):

@@ -95,7 +95,7 @@ class phase_observer(object):
 
     def phase_start(self, phase):
         if not self._semiquiet:
-            self._output.write("starting %s\n" % phase)
+            self._output.write("starting %s\n", phase)
 
     def debug(self, msg, *args, **kwds):
         if not self._semiquiet:
@@ -108,7 +108,7 @@ class phase_observer(object):
 
     def phase_end(self, phase, status):
         if not self._semiquiet:
-            self._output.write("finished %s: %s\n" % (phase, status))
+            self._output.write("finished %s: %s\n", phase, status)
 
 # left in place for compatibility sake
 build_observer = phase_observer
@@ -118,17 +118,17 @@ class repo_observer(phase_observer):
 
     def trigger_start(self, hook, trigger):
         if not self._semiquiet:
-            self._output.write("hook %s: trigger: starting %r\n" % (hook, trigger))
+            self._output.write("hook %s: trigger: starting %r\n", hook, trigger)
 
     def trigger_end(self, hook, trigger):
         if not self._semiquiet:
-            self._output.write("hook %s: trigger: finished %r\n" % (hook, trigger))
+            self._output.write("hook %s: trigger: finished %r\n", hook, trigger)
 
     def installing_fs_obj(self, obj):
-        self._output.write(">>> %s\n" % obj)
+        self._output.write(">>> %s\n", obj)
 
     def removing_fs_obj(self, obj):
-        self._output.write("<<< %s\n" % obj)
+        self._output.write("<<< %s\n", obj)
 
 
 def wrap_build_method(phase, method, self, *args, **kwds):

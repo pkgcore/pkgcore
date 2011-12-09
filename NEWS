@@ -3,6 +3,11 @@ Pkgcore Release Notes
 
 See ChangeLog for full commit logs; this is summarized/major changes.
 
+pkgcore 0.7.7.3: Dec 8th, 2011
+
+* fixed merging error for gconf files named %gconf, and introduced
+  better error messages for those sort of failures.
+
 
 pkgcore 0.7.7.2: Dec 7th, 2011
 

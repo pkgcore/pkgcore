@@ -34,8 +34,13 @@ set_colors() {
 	# try setting the column width to bash's internal COLUMNS variable,
 	# then try to get it via stty.  no go? hardcode it to 80.
 	PKGCORE_RC_COLS=${COLUMNS:-0}
-	(( PKGCORE_RC_COLS == 0 )) && PKGCORE_RC_COLS=$(set -- `stty size 2>/dev/null` ; echo $2)
-	(( PKGCORE_RC_COLS > 0 )) || (( PKGCORE_RC_COLS = 80 ))
+	if (( PKGCORE_RC_COLS <= 0 )); then
+		PKGCORE_RC_COLS=$(set -- `stty size 2>/dev/null` ; echo ${2:-0})
+		if (( PKGCORE_RC_COLS <= 0 )); then
+			PKGCORE_RC_COLS=80
+		fi
+	fi
+	export COLUMNS=${PKGCORE_RC_COLS}
 	PKGCORE_RC_COLS=$((${PKGCORE_RC_COLS} - 8))	# width of [ ok ] == 7
 
 	PKGCORE_RC_ENDCOL=$'\e[A\e['${PKGCORE_RC_COLS}'C'

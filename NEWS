@@ -4,6 +4,8 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* COLUMNS now is always 0 or higher to make perl (gentoo bug 394091)
+  play nice.
 
 * FEATURES=distcc-pump support was added; issue #21.
 

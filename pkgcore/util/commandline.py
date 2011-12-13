@@ -313,6 +313,27 @@ class DelayedValue(object):
         self.invokable(namespace, attr)
 
 
+class DelayedDefault(DelayedValue):
+
+    @classmethod
+    def wipe(cls, attrs, priority):
+        if isinstance(attrs, basestring):
+            attrs = (attrs,)
+        return cls(currying.partial(cls._wipe, attrs), priority)
+
+    @staticmethod
+    def _wipe(attrs, namespace, triggering_attr):
+        for attr in attrs:
+            try:
+                delattr(namespace, attr)
+            except AttributeError:
+                pass
+        try:
+            delattr(namespace, triggering_attr)
+        except AttributeError:
+            pass
+
+
 class DelayedParse(DelayedValue):
 
     def __init__(self, invokable, priority):
@@ -520,7 +541,23 @@ class ArgumentParser(argparse.ArgumentParser):
     def parse_args(self, args=None, namespace=None):
         args = argparse.ArgumentParser.parse_args(self, args, namespace)
 
-        # bleh.  direct access...
+        # two runs are required; first, handle any suppression defaults
+        # introduced.  subparsers defaults cannot override the parent parser,
+        # as such a subparser can't turn off config/domain for example.
+        # so we first find all DelayedDefault
+        # run them, then rescan for delayeds to run.
+        # this allows subparsers to introduce a default named for themselves
+        # that suppresses the parent.
+
+        # intentionally no protection of suppression code; this should
+        # just work.
+
+        i = ((attr, val) for attr, val in args.__dict__.iteritems()
+            if isinstance(val, DelayedDefault))
+        for attr, functor in sorted(i, key=lambda val:val[1].priority):
+            functor(args, attr)
+
+        # now run the delays.
         i = ((attr, val) for attr, val in args.__dict__.iteritems()
             if isinstance(val, DelayedValue))
         try:

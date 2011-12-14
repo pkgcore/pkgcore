@@ -4,6 +4,10 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+pkgcore 0.7.7.4: Dec 14th, 2011
+
+* pkgcore now requires snakeoil 0.4.6 and higher.
+
 * `pinspect profiles` no longer requires parsing the system configuration.
 
 * COLUMNS now is always 0 or higher to make perl (gentoo bug 394091)

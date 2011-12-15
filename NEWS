@@ -4,6 +4,9 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* pmaint regen --disable-eclass-preloading is now
+  pmaint regen --disable-eclsas-caching.
+
 * ctrl-c'ing pmaint regen hang bug is now fixed.
 
 * fix a bug in pmaint regen and friends where if the requested repository

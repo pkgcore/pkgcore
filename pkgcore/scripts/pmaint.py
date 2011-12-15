@@ -160,11 +160,11 @@ def _get_default_jobs(namespace, attr):
 
 regen = subparsers.add_parser("regen", parents=shared_options,
     description="regenerate repository caches")
-regen.add_argument("--disable-eclass-preloading", action='store_true',
+regen.add_argument("--disable-eclass-caching", action='store_true',
     default=False,
     help="For regen operation, pkgcore internally turns on an "
-    "optimization that preloads eclasses into individual functions "
-    "thus parsing the eclass only once per EBD processor.  Disabling "
+    "optimization that caches eclasses into individual functions "
+    "thus parsing the eclass only twice max per EBD processor.  Disabling "
     "this optimization via this option results in ~2x slower "
     "regeneration. Disable it only if you suspect the optimization "
     "is somehow causing issues.")
@@ -188,7 +188,7 @@ def regen_main(options, out, err):
     start_time = time.time()
     repo.operations.regen_cache(threads=options.threads,
         observer=observer.formatter_output(out), force=options.force,
-            preload_eclasses=(not options.disable_eclass_preloading))
+            eclass_caching=(not options.disable_eclass_caching))
     end_time = time.time()
     out.write("finished %d nodes in in %.2f seconds" % (len(options.repo),
         end_time - start_time))

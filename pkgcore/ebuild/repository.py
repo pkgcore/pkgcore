@@ -442,24 +442,24 @@ class _UnconfiguredTree(prototype.tree):
 
     def _regen_operation_helper(self, **kwds):
         return _RegenOpHelper(self, force=bool(kwds.get('force', False)),
-            preload_eclasses=bool(kwds.get('preload_eclasses', True)))
+            eclass_caching=bool(kwds.get('eclass_caching', True)))
 
 
 class _RegenOpHelper(object):
 
-    def __init__(self, repo, force=False, preload_eclasses='preload_eclasses'):
+    def __init__(self, repo, force=False, eclass_caching=True):
         self.force=force
-        self.preload_eclasses = preload_eclasses
+        self.eclass_caching = eclass_caching
         self.ebp = processor.request_ebuild_processor()
-        if self.preload_eclasses:
-            self.ebp.preload_eclasses(repo.eclass_cache)
+        if eclass_caching:
+            self.ebp.allow_eclass_caching()
 
     def __call__(self, pkg):
         return pkg._fetch_metadata(ebp=self.ebp, force_regen=self.force)
 
     def finish(self):
-        if self.preload_eclasses:
-            self.ebp.clear_preloaded_eclasses()
+        if self.eclass_caching:
+            self.ebp.disable_eclass_caching()
         processor.release_ebuild_processor(self.ebp)
         self.ebp = None
 

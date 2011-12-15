@@ -216,6 +216,7 @@ class EbuildProcessor(object):
         spawn_opts = {}
 
         self._preloaded_eclasses = {}
+        self._eclass_caching = False
         self._outstanding_expects = []
         self._metadata_paths = None
 
@@ -461,7 +462,7 @@ class EbuildProcessor(object):
         self._preloaded_eclasses.clear()
         return True
 
-    def preload_eclasses(self, cache, async=False):
+    def preload_eclasses(self, cache, async=False, limited_to=None):
         """
         Preload an eclass stack's eclasses into a bash functions
 
@@ -472,12 +473,26 @@ class EbuildProcessor(object):
         :param ec_file: filepath of eclass to preload
         :return: boolean, True for success
         """
-        for eclass, data in cache.eclasses.iteritems():
+        ec = cache.eclasses
+        if limited_to:
+            i = ((eclass, ec[eclass]) for eclass in limited_to)
+        else:
+            i = cache.eclasses.iteritems()
+        for eclass, data in i:
             fp = os.path.join(data[0], eclass) + ".eclass"
             if data[1] != self._preloaded_eclasses.get(fp, None):
-                #print "preloadding", fp
-                if self._preload_eclass(fp, async=async):
+                if self._preload_eclass(fp, async=True):
                     self._preloaded_eclasses[fp] = data[1]
+        if not async:
+            return self._consume_async_expects()
+        return True
+
+    def allow_eclass_caching(self):
+        self._eclass_caching = True
+
+    def disable_eclass_caching(self):
+        self.clear_preloaded_eclasses()
+        self._eclass_caching = False
 
     def _preload_eclass(self, ec_file, async=False):
         """
@@ -659,13 +674,19 @@ class EbuildProcessor(object):
             append_newline=False)
 
         metadata_keys = {}
+        updates = None
+        if self._eclass_caching:
+            updates = set()
         val = self.generic_handler(additional_commands={
-                "request_inherit": partial(inherit_handler, eclass_cache),
+                "request_inherit": partial(inherit_handler, eclass_cache, updates=updates),
                 "key": post_curry(self.__class__._receive_key, metadata_keys)})
 
         if not val:
             logger.error("returned val from get_keys was '%s'" % str(val))
             raise Exception(val)
+
+        if updates:
+            self.preload_eclasses(eclass_cache, limited_to=updates, async=True)
 
         return metadata_keys
 
@@ -744,7 +765,7 @@ class EbuildProcessor(object):
             self.unlock()
             return v
 
-def inherit_handler(ecache, ebp, line):
+def inherit_handler(ecache, ebp, line, updates=None):
     """
     Callback for implementing inherit digging into eclass_cache.
 
@@ -770,6 +791,9 @@ def inherit_handler(ecache, ebp, line):
         value = eclass.text_fileobj().read()
         ebp.write("transfer")
         ebp.write(value)
+
+    if updates is not None:
+        updates.add(line)
 
 
 def expected_ebuild_env(pkg, d=None, env_source_override=None, depends=False):

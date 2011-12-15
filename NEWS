@@ -4,6 +4,10 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* fix a bug in pmaint regen and friends where if the requested repository
+  isn't found, the last examined is used.  Additionally, restore ability
+  to specify a repository by location.
+
 * all operation api's now are chained exceptions deriving from
   pkgcore.operations.OperationError; for CLI users, this means we
   display a traceback far less often now.

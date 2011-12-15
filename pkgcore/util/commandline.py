@@ -269,11 +269,11 @@ class StoreRepoObject(StoreConfigObject):
 
         # name wasn't found; search for it.
         for repo_name, repo in sections.iteritems():
-            if getattr(repo, 'repo_id', None) == name:
+            if getattr(repo, 'repo_id', None) == name or getattr(repo, 'location', None) == name:
                 name = repo_name
                 break
 
-        return StoreConfigObject._load_obj(self, sections, repo_name)
+        return StoreConfigObject._load_obj(self, sections, name)
 
 
 class DomainFromPath(StoreConfigObject):

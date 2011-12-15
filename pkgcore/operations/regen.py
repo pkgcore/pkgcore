@@ -2,13 +2,14 @@
 # License: GPL2/BSD 3 clause
 
 import time
-import Queue
-import threading
-import thread
-
 from snakeoil import compatibility
+from snakeoil.demandload import demandload
+demandload(globals(),
+    'pkgcore.util.thread_pool:map_async',
+)
 
-def regen_iter(iterable, observer, regen_func, is_thread=False):
+
+def regen_iter(iterable, regen_func, observer, is_thread=False):
     for x in iterable:
         try:
             regen_func(x)
@@ -18,15 +19,6 @@ def regen_iter(iterable, observer, regen_func, is_thread=False):
             raise
         except Exception, e:
             observer.error("caught exception %s while processing %s" % (e, x))
-
-def reclaim_threads(threads, observer):
-    for x in threads:
-        try:
-            x.join()
-        except compatibility.IGNORED_EXCEPTIONS:
-            raise
-        except Exception, e:
-            observer.error("caught exception %s reclaiming thread" % (e,))
 
 
 def regen_repository(repo, observer, threads=1, pkg_attr='keywords', **options):
@@ -45,43 +37,11 @@ def regen_repository(repo, observer, threads=1, pkg_attr='keywords', **options):
             global count
             for x in iterable:
                 yield x
-        regen_iter(passthru(repo), observer, _get_repo_helper())
+        regen_iter(passthru(repo), _get_repo_helper(), observer)
     else:
-        # note we allow an infinite queue since .put below
-        # is blocking, and won't return till it succeeds (regardless of signal)
-        # as such, we do it this way to ensure the put succeeds, then the keyboardinterrupt
-        # can be seen.
-        queue = Queue.Queue()
-        kill = threading.Event()
-        kill.clear()
-        def iter_queue(kill, qlist, timeout=0.5):
-            while not kill.isSet():
-                try:
-                    yield qlist.get(timeout=timeout)
-                except Queue.Empty:
-                    continue
-        regen_threads = [
-            threading.Thread(
-                target=regen_iter, args=(iter_queue(kill, queue), observer,
-                    _get_repo_helper(), True))
-            for x in xrange(threads)]
-        try:
-            failed = True
-            for x in regen_threads:
-                x.start()
-            # now we feed the queue.
-            for pkg in repo:
-                queue.put(pkg)
-            failed = False
-        finally:
-            if not failed:
-                while not queue.empty():
-                    time.sleep(0.5)
-
-            kill.set()
-            reclaim_threads(regen_threads, observer)
-
-        assert queue.empty()
+        def get_args():
+            return (_get_repo_helper(), observer, True)
+        map_async(repo, regen_iter, per_thread_args=get_args)
 
     for helper in helpers:
         f = getattr(helper, 'finish', None)

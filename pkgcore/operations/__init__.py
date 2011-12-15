@@ -13,14 +13,25 @@ Basically it's a crappy form of zope interfaces; converting to zope.interfaces m
 occur down the line if dependencies can be kept as minimal as possible.
 """
 
-from snakeoil import klass
+from snakeoil import klass, currying, compatibility
 from pkgcore.operations import observer as _observer
+
+
+class OperationError(Exception):
+
+    def __init__(self, api):
+        self._api = api
+
+    def __str__(self):
+        return "Unhandled exception in %s" % (self._api,)
+
 
 class base(object):
 
     __required__ = frozenset()
 
     UNSUPPORTED = object()
+    __casting_exception__ = OperationError
 
     def __init__(self, disable_overrides=(), enable_overrides=()):
         self._force_disabled = frozenset(disable_overrides)
@@ -47,10 +58,31 @@ class base(object):
         ops.difference_update(self._force_disabled)
         return ops
 
+    @staticmethod
+    def _recast_exception_decorator(exc_class, name, functor, *args, **kwds):
+        try:
+            return functor(*args, **kwds)
+        except compatibility.IGNORED_EXCEPTIONS:
+            raise
+        except Exception, exc:
+            if isinstance(exc, exc_class):
+                raise
+            compatibility.raise_from(exc_class(name))
+
+    def _wrap_exception(self, functor, name):
+        f = currying.partial(self._recast_exception_decorator,
+            self.__casting_exception__, name, functor)
+        return currying.pretty_docs(f)
+
     def _setup_api(self):
+        recast_exc = self.__casting_exception__
+        if recast_exc is None:
+            f = lambda x, y:x
+        else:
+            f = self._wrap_exception
         for op in self.enabled_operations:
             setattr(self, op,
-                getattr(self, '_cmd_api_%s' % op))
+                f(getattr(self, '_cmd_api_%s' % op), op))
 
     def _filter_disabled_commands(self, sequence):
         for command in sequence:

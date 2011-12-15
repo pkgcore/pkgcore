@@ -23,7 +23,7 @@ internal_inherit()
 		die "internal_inherit accepts one arg, requested eclass location.  $* is a bit much"
 	fi
 	if [[ -n ${PKGCORE_PRELOADED_ECLASSES[$1]} ]]; then
-		qa_invoke ${PKGCORE_PRELOADED_ECLASSES[$1]}
+		qa_invoke "${PKGCORE_PRELOADED_ECLASSES[$1]}"
 		return
 	fi
 	ebd_write_line "request_inherit $1"

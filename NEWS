@@ -4,6 +4,13 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* pkgcore configuration subsystem now uses chained exceptions.  In
+  accessing it, you'll get a ConfigurationError exception (or derivative)
+  for any config data errors, or the appropriate exception if you use the
+  subsystem incorrectly.  In the process, reporting on errors to the commandline
+  is now augmented.
+
+
 pkgcore 0.7.7.4: Dec 14th, 2011
 
 * pkgcore now requires snakeoil 0.4.6 and higher.

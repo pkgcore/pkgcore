@@ -107,6 +107,7 @@ pkgcore_helper_exit
 pkgcore_inject_common_phase_funcs
 pkgcore_inject_phase_funcs
 pkgcore_load_eapi_libs
+pkgcore_make_preloaded_eclass_func
 pkgcore_run_ebuild_phase
 pkgcore_shopt_pop
 pkgcore_shopt_push

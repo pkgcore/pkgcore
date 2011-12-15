@@ -356,6 +356,15 @@ ebd_process_metadata()
 	)
 }
 
+pkgcore_make_preloaded_eclass_func()
+{
+	eval "pkgcore_eclass_${1}_inherit() {
+		${2}
+	}"
+	PKGCORE_PRELOADED_ECLASSES[${1}]="pkgcore_eclass_${1}_inherit"
+}
+
+
 pkgcore_ebd_main_loop()
 {
 	DONT_EXPORT_VARS="${DONT_EXPORT_VARS} alie com phases line cont DONT_EXPORT_FUNCS"
@@ -390,11 +399,7 @@ pkgcore_ebd_main_loop()
 					success='failed'
 					break
 				fi
-				eval "pkgcore_eclass_${x}_inherit() {
-					$( < $e )
-				}"
-				PKGCORE_PRELOADED_ECLASSES[${x}]="pkgcore_eclass_${x}_inherit"
-				DONT_EXPORT_FUNCS="${DONT_EXPORT_FUNCS} pkgcore_eclass_${x}_inherit"
+				pkgcore_make_preloaded_eclass_func "$x" "$(< "$e")"
 			done
 			ebd_write_line "preload_eclass ${success}"
 			unset e x success

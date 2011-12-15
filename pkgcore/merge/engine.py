@@ -31,6 +31,7 @@ demandload(globals(),
     "tempfile",
     "traceback",
     "snakeoil:stringio",
+    "snakeoil.process:get_proc_count",
 )
 
 def alias_cset(alias, engine, csets):
@@ -83,7 +84,7 @@ class MergeEngine(object):
 
 
     def __init__(self, mode, tempdir, hooks, csets, preserves, observer,
-        offset=None, disable_plugins=False):
+        offset=None, disable_plugins=False, parallelism=None):
         if observer is None:
             observer = observer_mod.repo_observer(observer_mod.null_output)
         self.observer = observer
@@ -91,6 +92,11 @@ class MergeEngine(object):
         if tempdir is not None:
             tempdir = normpath(tempdir) + '/'
         self.tempdir = tempdir
+
+        if parallelism is None:
+            parallelism = get_proc_count()
+
+        self.parallelism = parallelism
 
         self.hooks = ImmutableDict((x, []) for x in hooks)
 

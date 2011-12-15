@@ -31,7 +31,7 @@ import pkgcore.os_data
 
 from snakeoil.osutils import listdir_files, pjoin, ensure_dirs, normpath
 from snakeoil.demandload import demandload
-from snakeoil.compatibility import is_py3k, raise_from
+from snakeoil import compatibility
 
 demandload(globals(),
     'os',
@@ -46,8 +46,9 @@ demandload(globals(),
     'math:floor',
     'snakeoil.compatibility:any',
     'pkgcore.package.mutated:MutatedPkg',
-    'pkgcore.util:file_type',
+    'pkgcore.util:file_type,thread_pool',
     'pkgcore:os_data',
+    'pkgcore.operations.observer:threadsafe_repo_observer',
 )
 
 UNINSTALLING_MODES = (const.REPLACE_MODE, const.UNINSTALL_MODE)
@@ -147,6 +148,50 @@ class base(object):
         return "<%s cset=%r @#%x>" % (
             self.label,
             self.required_csets, id(self))
+
+
+class ThreadedTrigger(base):
+
+    def identify_work(self, engine, *csets):
+        raise NotImplementedError(self, 'identify_work')
+
+    def _run_job(self, observer, functor, args, kwds):
+        try:
+            functor(*args, **kwds)
+        except compatibility.IGNORED_EXCEPTIONS, e:
+            if isinstance(e, KeyboardInterrupt):
+                return
+            raise
+        except Exception, e:
+            observer.error("exception occured in thread: %s",
+                e)
+
+    def threading_get_args(self, engine, *csets):
+        return ()
+
+    def threading_get_kwargs(self, engine, *csets):
+        return {}
+
+    def trigger(self, engine, *csets):
+        parallelism = engine.parallelism
+        if not self.threading_setup(engine, *csets):
+            return
+
+        observer = engine.observer
+        observer = threadsafe_repo_observer(observer)
+        args = (observer,) + self.threading_get_args(engine, *csets)
+        kwargs = self.threading_get_kwargs(engine, *csets)
+
+        thread_pool.map_async(list(self.identify_work(engine, *csets)), self.thread_trigger,
+            *args, **kwargs)
+
+        self.threading_finish(engine, *csets)
+
+    def threading_setup(self, engine, *csets):
+        return True
+
+    def threading_finish(self, engine, *csets):
+        pass
 
 
 class mtime_watcher(object):
@@ -302,7 +347,7 @@ class ldconfig(base):
         try:
             open(fp, 'w')
         except EnvironmentError, e:
-            raise_from(errors.BlockModification(self, e))
+            compatibility.raise_from(errors.BlockModification(self, e))
 
     def trigger(self, engine):
         locations = self.read_ld_so_conf(engine.offset)
@@ -589,7 +634,7 @@ class CommonDirectoryModes(base):
     directories.extend(['/lib', '/lib32', '/lib64', '/etc', '/bin', '/sbin',
         '/var'])
     directories = frozenset(map(normpath, directories))
-    if not is_py3k:
+    if not compatibility.is_py3k:
         del x
 
     def trigger(self, engine, cset):
@@ -722,7 +767,7 @@ class SavePkgUnmergingIfInPkgset(SavePkgUnmerging):
             return SavePkgUnmerging.trigger(self, engine, cset)
 
 
-class BinaryDebug(base):
+class BinaryDebug(ThreadedTrigger):
 
     required_csets = ('install',)
     _engine_types = INSTALLING_MODES
@@ -737,14 +782,14 @@ class BinaryDebug(base):
 
     def __init__(self, mode='split', strip_binary=None, objcopy_binary=None,
         extra_strip_flags=(), debug_storage='/usr/lib/debug/'):
-        mode = mode.lower()
-        if mode == 'split':
-            self.trigger = self._splitter
-        elif mode == 'strip':
-            self.trigger = self._stripper
-        else:
+        self.mode = mode = mode.lower()
+        if mode not in ('split', 'strip'):
             raise TypeError("mode %r is unknown; must be either split "
                 "or strip")
+        self.thread_trigger = getattr(self, '_%s' % mode)
+        self.threading_setup = getattr(self, '_%s_setup' % mode)
+        self.threading_finish = getattr(self, '_%s_finish' % mode)
+
         self._strip_binary = strip_binary
         self._objcopy_binary = objcopy_binary
         self._strip_flags = list(self.default_strip_flags)
@@ -776,28 +821,37 @@ class BinaryDebug(base):
         # need to update chksums here...
         return (fs_obj,)
 
-    def _elf_filter(self, cset, observer):
+    def identify_work(self, engine, cset):
         file_typer = file_type.file_identifier()
         regex_f = re.compile(self.elf_regex).match
-        observer.debug("starting binarydebug filetype scan")
+        engine.observer.debug("starting binarydebug filetype scan")
         for fs_obj in cset.iterfiles():
             ftype = file_typer(fs_obj.data)
             if regex_f(ftype):
                 yield fs_obj, ftype
-        observer.debug("completed binarydebug scan")
+        engine.observer.debug("completed binarydebug scan")
 
-    def _stripper(self, engine, cset):
+    def threading_get_args(self, engine, cset):
+        return (engine, cset)
+
+    def _strip_setup(self, engine, cset):
         if 'strip' in getattr(engine.new, 'restrict', ()):
             engine.observer.info("stripping disabled for %s" % engine.new)
-            return
+            return False
         self._initialize_paths(engine.new)
-        modified = []
-        for fs_obj, ftype in self._elf_filter(cset, engine.observer):
-            modified.extend(self._strip_fsobj(fs_obj, ftype,
-                engine.observer))
-        cset.update(modified)
+        self._modified = []
+        return True
 
-    def _splitter(self, engine, cset):
+    def _strip(self, iterable, observer, engine, cset):
+        for fs_obj, ftype in iterable:
+            self._modified.extend(self._strip_fsobj(fs_obj, ftype, observer))
+
+    def _strip_finish(self, engine, cset):
+        if hasattr(self, '_modified'):
+            cset.update(self._modified)
+            del self._modified
+
+    def _split_setup(self, engine, cset):
         skip = frozenset(['strip', 'splitdebug']).intersection(getattr(engine.new, 'restrict', ()))
         skip = bool(skip)
         if not skip:
@@ -808,13 +862,16 @@ class BinaryDebug(base):
         if skip:
             engine.observer.info("splitdebug disabled for %s, "
                 "skipping splitdebug" % engine.new)
-            return
+            return False
 
         self._initialize_paths(engine.new)
-        modified = contents.contentsSet()
+        self._modified = contents.contentsSet()
+        return True
+
+    def _split(self, iterable, observer, engine, cset):
         debug_store = pjoin(engine.offset, self._debug_storage.lstrip('/'))
-        observer = engine.observer
-        for fs_obj, ftype in self._elf_filter(cset, observer):
+
+        for fs_obj, ftype in iterable:
             if 'ar archive' in ftype or ('relocatable' in ftype and not
                 fs_obj.basename.endswith(".ko")):
                 continue
@@ -841,13 +898,19 @@ class BinaryDebug(base):
                     (self.objcopy_binary, '--add-gnu-debuglink', debug_ondisk, fpath))
                 continue
             debug_obj = gen_obj(debug_loc, real_location=debug_ondisk)
-            modified.add(debug_obj.change_attributes(uid=os_data.root_uid,
+            self._modified.add(debug_obj.change_attributes(uid=os_data.root_uid,
                 gid=os_data.root_gid))
-            modified.update(self._strip_fsobj(fs_obj, ftype,
+            self._modified.update(self._strip_fsobj(fs_obj, ftype,
                 observer, quiet=True))
-        modified.add_missing_directories(mode=0775)
+
+    def _split_finish(self, engine, cset):
+        if not hasattr(self, '_modified'):
+            return
+        self._modified.add_missing_directories(mode=0775)
         # add the non directories first.
-        cset.update(modified.iterdirs(invert=True))
+        cset.update(self._modified.iterdirs(invert=True))
         # punt any intersections, leaving just the new directories.
-        modified.difference_update(cset)
-        cset.update(modified)
+        self._modified.difference_update(cset)
+        cset.update(self._modified)
+        del self._modified
+

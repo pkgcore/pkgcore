@@ -7,6 +7,10 @@ __all__ = ("null_output", "formatter_output", "file_handle_output",
 
 from snakeoil.currying import pre_curry
 from snakeoil import klass
+from snakeoil.demandload import demandload
+demandload(globals(),
+    'threading',
+)
 
 
 def _convert(msg, args=(), kwds={}):
@@ -131,6 +135,30 @@ class repo_observer(phase_observer):
         self._output.write("<<< %s\n", obj)
 
 
+def _reflection_func(attr, self, *args, **kwds):
+    return self._invoke(attr, *args, **kwds)
+
+def _mk_observer_proxy(target):
+    class foo(target):
+        for x in set(dir(target)).difference(dir(object)):
+            locals()[x] = pre_curry(_reflection_func, x)
+    return foo
+
+
+class threadsafe_repo_observer(_mk_observer_proxy(repo_observer)):
+
+    def __init__(self, observer):
+        self._observer = observer
+        self._lock = threading.Lock()
+
+    def _invoke(self, attr, *args, **kwds):
+        self._lock.acquire()
+        try:
+            return getattr(self._observer, attr)(*args, **kwds)
+        finally:
+            self._lock.release()
+
+
 def wrap_build_method(phase, method, self, *args, **kwds):
     disable_observer = kwds.pop("disable_observer", False)
     if not hasattr(self.observer, 'phase_start') or disable_observer:
@@ -142,6 +170,7 @@ def wrap_build_method(phase, method, self, *args, **kwds):
     finally:
         self.observer.phase_end(phase, ret)
     return ret
+
 
 def decorate_build_method(phase):
     def f(func):

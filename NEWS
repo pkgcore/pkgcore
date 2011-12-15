@@ -4,6 +4,10 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* issue #7; add framework for parallelized trigger execution.  Currently
+  only splitdebug/stripping uses it, but it has a sizable gain for pkgs
+  with many binaries.
+
 * pmaint regen --disable-eclass-preloading is now
   pmaint regen --disable-eclsas-caching.
 

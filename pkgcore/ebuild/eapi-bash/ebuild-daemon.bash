@@ -418,7 +418,7 @@ pkgcore_ebd_main_loop()
 			fi
 			;;
 		*)
-			echo "received unknown com: $line" >&2
+			echo "received unknown com: $com" >&2
 			;;
 		esac
 	done

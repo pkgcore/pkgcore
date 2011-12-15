@@ -38,6 +38,7 @@ demandload.demandload(globals(),
     'pkgcore.config:basics',
     'pkgcore.restrictions:packages,restriction',
     'pkgcore.util:parserestrict',
+    'pkgcore:operations',
 )
 
 
@@ -774,6 +775,10 @@ def main(subcommands, args=None, outfile=None, errfile=None,
         raise
     except errors.ConfigurationError, e:
         dump_error(errfile, e, "Error in configuration")
+        if getattr(options, 'debug', False):
+            raise
+    except operations.OperationError, e:
+        dump_error(errfile, e, "Error running an operation")
         if getattr(options, 'debug', False):
             raise
     except Exception, e:

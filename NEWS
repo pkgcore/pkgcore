@@ -4,6 +4,10 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* all operation api's now are chained exceptions deriving from
+  pkgcore.operations.OperationError; for CLI users, this means we
+  display a traceback far less often now.
+
 * pkgcore configuration subsystem now uses chained exceptions.  In
   accessing it, you'll get a ConfigurationError exception (or derivative)
   for any config data errors, or the appropriate exception if you use the

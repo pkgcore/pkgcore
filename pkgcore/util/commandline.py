@@ -746,12 +746,27 @@ def main(subcommands, args=None, outfile=None, errfile=None,
     if errfile is None:
         errfile = sys.stderr
 
-    if hasattr(errfile, 'fileno') and hasattr(outfile, 'fileno'):
-        out_fd, err_fd = outfile.fileno(), errfile.fileno()
+    out_fd = err_fd = None
+    if hasattr(outfile, 'fileno') and hasattr(errfile, 'fileno'):
+        if compatibility.is_py3k:
+            # annoyingly, fileno can exist but through unsupport
+            import io
+            try:
+                out_fd, err_fd = outfile.fileno(), errfile.fileno()
+            except (io.UnsupportedOperation, IOError):
+                pass
+        else:
+            try:
+                out_fd, err_fd = outfile.fileno(), errfile.fileno()
+            except IOError:
+                # shouldn't be possible, but docs claim it, thus protect.
+                pass
+
+    if out_fd is not None and err_fd is not None:
         out_stat, err_stat = os.fstat(out_fd), os.fstat(err_fd)
         if out_stat.st_dev == err_stat.st_dev \
             and out_stat.st_ino == err_stat.st_ino and \
-            not os.isatty(out_fd):
+            not errfile.isatty():
             # they're the same underlying fd.  thus
             # point the handles at the same so we don't
             # get intermixed buffering issues.

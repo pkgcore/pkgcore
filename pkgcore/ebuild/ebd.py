@@ -12,7 +12,7 @@ api, per phase methods for example
 __all__ = ("ebd", "setup_mixin", "install_op", "uninstall_op", "replace_op",
     "buildable", "binpkg_localize")
 
-import os, errno, shutil
+import os, errno, shutil, sys
 
 from snakeoil import data_source
 from snakeoil.compatibility import raise_from, IGNORED_EXCEPTIONS
@@ -410,6 +410,12 @@ def run_generic_phase(pkg, phase, env, userpriv, sandbox, fakeroot,
 
     ebd = request_ebuild_processor(userpriv=userpriv, sandbox=sandbox,
         fakeroot=fakeroot)
+    # this is a bit of a hack; used until ebd accepts observers that handle
+    # the output redirection on it's own.  Primary relevance is when
+    # stdout/stderr are pointed at a file; we leave buffering on, just
+    # force the flush for synchronization.
+    sys.stdout.flush()
+    sys.stderr.flush()
     try:
         ebd.prep_phase(phase, env, sandbox=sandbox,
                        logging=logging, tmpdir=env.get('T'))

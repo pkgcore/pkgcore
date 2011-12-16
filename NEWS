@@ -4,6 +4,9 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* pkgcore no longer intermixes python/bash output incorrectly when stdout
+  or stderr or the same fd: pmerge -Du @system &> log for example.
+
 * issue #7; add framework for parallelized trigger execution.  Currently
   only splitdebug/stripping uses it, but it has a sizable gain for pkgs
   with many binaries.

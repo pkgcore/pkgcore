@@ -746,6 +746,17 @@ def main(subcommands, args=None, outfile=None, errfile=None,
     if errfile is None:
         errfile = sys.stderr
 
+    if hasattr(errfile, 'fileno') and hasattr(outfile, 'fileno'):
+        out_fd, err_fd = outfile.fileno(), errfile.fileno()
+        out_stat, err_stat = os.fstat(out_fd), os.fstat(err_fd)
+        if out_stat.st_dev == err_stat.st_dev \
+            and out_stat.st_ino == err_stat.st_ino and \
+            not os.isatty(out_fd):
+            # they're the same underlying fd.  thus
+            # point the handles at the same so we don't
+            # get intermixed buffering issues.
+            errfile = outfile
+
     out = options = None
     try:
         if isinstance(subcommands, dict):

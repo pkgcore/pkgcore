@@ -40,7 +40,7 @@ warn()
 
 info()
 {
-	echo "${HELPER_ERROR_PREFIX}: $@" >&2
+	echo "${HELPER_ERROR_PREFIX}: $@"
 }
 
 check_args()

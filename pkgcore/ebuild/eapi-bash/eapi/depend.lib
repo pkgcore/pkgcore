@@ -40,7 +40,7 @@ hasv()
 
 elog() {
 	pkgcore_elog_base LOG "$*"
-	echo -e " ${PKGCORE_RC_GOOD}*${PKGCORE_RC_NORMAL} $*" >&2
+	echo -e " ${PKGCORE_RC_GOOD}*${PKGCORE_RC_NORMAL} $*"
 	return 0
 }
 
@@ -52,7 +52,7 @@ einfo() {
 
 einfon() {
 	pkgcore_elog_base INFO "$*"
-	echo -ne " ${PKGCORE_RC_GOOD}*${PKGCORE_RC_NORMAL} $*" >&2
+	echo -ne " ${PKGCORE_RC_GOOD}*${PKGCORE_RC_NORMAL} $*"
 	PKGCORE_RC_LAST_CMD="einfon"
 	return 0
 }
@@ -74,7 +74,7 @@ eerror() {
 ebegin() {
 	local msg="$* ..."
 	einfon "${msg}"
-	echo >&2
+	echo
 	PKGCORE_RC_LAST_CMD="ebegin"
 	return 0
 }
@@ -94,7 +94,7 @@ eend() {
 		msg="${PKGCORE_RC_BRACKET}[ ${PKGCORE_RC_BAD}!!${PKGCORE_RC_BRACKET} ]${PKGCORE_RC_NORMAL}"
 	fi
 
-	echo -e "${PKGCORE_RC_ENDCOL}  ${msg}" >&2
+	echo -e "${PKGCORE_RC_ENDCOL}  ${msg}"
 
 	return ${retval}
 }

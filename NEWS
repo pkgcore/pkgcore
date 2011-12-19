@@ -4,6 +4,8 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* PORTAGE_LOGDIR is supported again.
+
 * pkgcore no longer intermixes python/bash output incorrectly when stdout
   or stderr or the same fd: pmerge -Du @system &> log for example.
 

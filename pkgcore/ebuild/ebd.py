@@ -278,7 +278,8 @@ class ebd(object):
             extra_handlers.setdefault("request_bashrcs", self._request_bashrcs)
         return run_generic_phase(self.pkg, phase, self.env,
             userpriv, sandbox, fakeroot,
-            extra_handlers=extra_handlers, failure_allowed=failure_allowed)
+            extra_handlers=extra_handlers, failure_allowed=failure_allowed,
+            logging=self.logging)
 
     def _request_bashrcs(self, ebd, a):
         if a is not None:

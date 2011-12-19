@@ -261,7 +261,7 @@ pkgcore_ebd_process_ebuild_phases()
 			ebd_write_line "env_received"
 			;;
 		logging*)
-			PORTAGE_LOGFILE="$(echo ${line#logging})"
+			PORTAGE_LOGFILE="${line#logging }"
 			ebd_write_line "logging_ack"
 			;;
 		set_sandbox_state*)

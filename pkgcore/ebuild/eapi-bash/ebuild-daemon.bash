@@ -304,19 +304,8 @@ pkgcore_ebd_process_ebuild_phases()
 		execute_phases ${phases}
 		ret=$?
 	else
-		# why do it this way rather then the old '[[ -f ${T}/.succesfull ]]'?
-		# simple.  this allows the actual exit code to be used, rather then just stating no .success == 1 || 0
-		# note this was
-		# execute_phases ${phases} &> >(umask 0002; tee -i -a $PORTAGE_LOGFILE)
-		# less then bash v3 however hates it.  And I hate less then v3.
-		# circle of hate you see.
-		execute_phases ${phases} 2>&1 | {
-			# this applies to the subshell only.
-			umask 0002
-			tee -i -a $PORTAGE_LOGFILE
-		}
-
-		ret=${PIPESTATUS[0]}
+		execute_phases ${phases} &> >(umask 0002; tee -i -a "${PORTAGE_LOGFILE}")
+		ret=$?
 	fi
 
 	if [[ $ret != 0 ]]; then

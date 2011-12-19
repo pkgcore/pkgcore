@@ -418,10 +418,9 @@ def run_generic_phase(pkg, phase, env, userpriv, sandbox, fakeroot,
     sys.stdout.flush()
     sys.stderr.flush()
     try:
-        ebd.prep_phase(phase, env, sandbox=sandbox,
-                       logging=logging, tmpdir=env.get('T'))
-        ebd.write("start_processing")
-        if not ebd.generic_handler(additional_commands=extra_handlers):
+        if not ebd.run_phase(phase, env, env.get('T'), sandbox=sandbox,
+                       logging=logging,
+                       additional_commands=extra_handlers):
             if not failure_allowed:
                 raise format.GenericBuildError(
                     phase + ": Failed building (False/0 return from handler)")

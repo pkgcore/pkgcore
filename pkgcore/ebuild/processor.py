@@ -303,8 +303,8 @@ class EbuildProcessor(object):
         # locking isn't used much, but w/ threading this will matter
         self.unlock()
 
-
-    def prep_phase(self, phase, env, sandbox=None, logging=None, tmpdir=None):
+    def run_phase(self, phase, env, tmpdir, logging=None,
+        additional_commands=None, sandbox=True):
         """
         Utility function, to initialize the processor for a phase.
 
@@ -329,7 +329,8 @@ class EbuildProcessor(object):
         if logging:
             if not self.set_logfile(logging):
                 return False
-        return True
+        self.write("start_processing")
+        return self.generic_handler(additional_commands=additional_commands)
 
     def sandboxed(self):
         """is this instance sandboxed?"""

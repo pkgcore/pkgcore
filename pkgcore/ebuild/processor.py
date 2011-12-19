@@ -213,7 +213,7 @@ class EbuildProcessor(object):
 
         self.lock()
         self.ebd = e_const.EBUILD_DAEMON_PATH
-        spawn_opts = {}
+        spawn_opts = {'umask':0002}
 
         self._preloaded_eclasses = {}
         self._eclass_caching = False
@@ -231,7 +231,7 @@ class EbuildProcessor(object):
             self.__userpriv = True
             spawn_opts.update({
                     "uid":os_data.portage_uid, "gid":os_data.portage_gid,
-                    "groups":[os_data.portage_gid], "umask":002})
+                    "groups":[os_data.portage_gid]})
         else:
             if pkgcore.spawn.is_userpriv_capable():
                 spawn_opts.update({"gid":os_data.portage_gid,

@@ -325,7 +325,19 @@ def config_from_make_conf(location="/etc/"):
     # unfortunately
 
     conf_dict = {}
-    load_make_config(conf_dict, pjoin(base_path, 'make.globals'))
+    try:
+        load_make_config(conf_dict, pjoin(base_path, 'make.globals'))
+    except errors.ParsingError, e:
+        if not getattr(getattr(e, 'exc', None), 'errno', None) == errno.ENOENT:
+           raise
+        try:
+            load_make_config(conf_dict,
+                pjoin(config_root, 'usr/share/portage/config/make.globals'))
+        except compatibility.IGNORED_EXCEPTIONS:
+            raise
+        except:
+            compatibility.raise_from(errors.ParsingError(
+                "failed to find a usable make.globals"))
     load_make_config(conf_dict, pjoin(base_path, 'make.conf'), required=False,
         allow_sourcing=True, incrementals=True)
     load_make_config(conf_dict, pjoin(portage_base, 'make.conf'), required=False,

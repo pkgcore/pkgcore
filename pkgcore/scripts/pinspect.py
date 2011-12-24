@@ -344,8 +344,11 @@ def digest_manifest(options, out, err):
         out.later_prefix.pop()
         count = len(repo)
         if count:
-            out.write("%i out of %i are broken (%2.2f%%)" % (broken, count,
-                float(broken)/count))
+            broken = float(broken)
+            percent = (broken/count)
+            percent *= 100
+            out.write("%i out of %i the tree has broken checksum data "
+                "(%2.2f%%)" % (broken, count, percent))
         else:
             out.write("repository has no packages")
 

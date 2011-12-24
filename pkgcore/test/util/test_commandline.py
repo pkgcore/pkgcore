@@ -475,12 +475,8 @@ Use --help after a subcommand for more help.
                 values._config = mk_config()
                 return values
         self.assertMain(
-            1, '', 'Error in configuration:\n bork\n',
+            -10, '', 'Error in configuration:\n bork\n',
             {None: (NoLoadParser, error_main)}, [])
-        self.assertRaises(
-            errors.ConfigurationError, self.assertMain,
-            1, '', '',
-            {None: (NoLoadParser, error_main)}, ['--debug'])
 
     def _get_pty_pair(self, encoding='ascii'):
         master_fd, slave_fd = pty.openpty()

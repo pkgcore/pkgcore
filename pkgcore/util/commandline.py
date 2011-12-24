@@ -39,6 +39,7 @@ demandload.demandload(globals(),
     'pkgcore.restrictions:packages,restriction',
     'pkgcore.util:parserestrict',
     'pkgcore:operations',
+    'traceback',
 )
 
 
@@ -773,6 +774,7 @@ def main(subcommands, args=None, outfile=None, errfile=None,
             errfile = outfile
 
     out = options = None
+    exitstatus = -10
     try:
         if isinstance(subcommands, dict):
             main_func, options = optparse_parse(subcommands, args=args, script_name=script_name,
@@ -800,16 +802,18 @@ def main(subcommands, args=None, outfile=None, errfile=None,
     except compatibility.IGNORED_EXCEPTIONS:
         raise
     except errors.ConfigurationError, e:
-        dump_error(errfile, e, "Error in configuration")
-        if getattr(options, 'debug', False):
-            raise
+        tb = sys.exc_info()[-1]
+        if not getattr(options, 'debug', False):
+            tb = None
+        dump_error(errfile, e, "Error in configuration", tb=tb)
     except operations.OperationError, e:
-        dump_error(errfile, e, "Error running an operation")
-        if getattr(options, 'debug', False):
-            raise
+        exc = sys.exc_info()[-1]
+        if not getattr(options, 'debug', False):
+            tb = None
+        dump_error(errfile, e, "Error running an operation", tb=tb)
     except Exception, e:
-        dump_error(errfile, e, "Unhandled Exception occured")
-        raise
+        exc = sys.exc_info()[-1]
+        dump_error(errfile, e, "Unhandled Exception occured", tb=tb)
     if out is not None:
         if exitstatus:
             out.title('%s failed' % (options.prog,))
@@ -817,10 +821,18 @@ def main(subcommands, args=None, outfile=None, errfile=None,
             out.title('%s succeeded' % (options.prog,))
     raise MySystemExit(exitstatus)
 
-def dump_error(handle, raw_exc, context_msg=None):
+def dump_error(handle, raw_exc, context_msg=None, tb=None):
     prefix = ''
     if context_msg:
         prefix = ' '
         handle.write(context_msg.rstrip("\n") + ":\n")
+        if tb:
+            handle.write("Traceback follows:\n")
+            traceback.print_tb(tb, file=handle)
+            handle.write("\nError was:\n")
     for exc in walk_exception_chain(raw_exc):
-        handle.write('%s%s\n' % (prefix, str(exc).rstrip("\n"),))
+        s = str(exc)
+        s = ['%s%s' % (prefix, x.strip())
+            for x in filter(None, s.split("\n"))]
+        handle.write("\n".join(s))
+        handle.write("\n")

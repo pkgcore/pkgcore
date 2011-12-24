@@ -35,9 +35,13 @@ def serialize_manifest(pkgdir, fetchables, chfs=None, thin=False):
     :param fetchables: the fetchables of the package
     """
 
+    if thin and not fetchables:
+        # thin doesn't require a manifest to be written
+        # if there is no fetchables.
+        return
+
     _key_sort = operator.itemgetter(0)
 
-    handle = open(pkgdir + '/Manifest', 'w')
     excludes = frozenset(["CVS", ".svn", "Manifest"])
     aux, ebuild, misc = {}, {}, {}
     if not thin:
@@ -62,6 +66,7 @@ def serialize_manifest(pkgdir, fetchables, chfs=None, thin=False):
                     % (pkgdir, obj.dirname))
             d[pathname] = dict(obj.chksums)
 
+    handle = open(pkgdir + '/Manifest', 'w')
     # write it in alphabetical order; aux gets flushed now.
     for path, chksums in sorted(aux.iteritems(), key=_key_sort):
         _write_manifest(handle, 'AUX', path, chksums)
@@ -106,39 +111,33 @@ def parse_manifest(source, ignore_gpg=True):
     # CHF sum filename size
     # note that we do _not_ support manifest1
     chf_types = set(["size"])
+    f = None
     try:
-        f = None
-        try:
-            if isinstance(source, basestring):
-                i = f = open(source, "r", 32768)
-            else:
-                i = f = source.text_fileobj()
-            if ignore_gpg:
-                i = gpg.skip_signatures(f)
-            for data in i:
-                line = data.split()
-                if not line:
-                    continue
-                d = types.get(line[0])
-                if d is None:
-                    raise errors.ParseChksumError(source,
-                        "unknown manifest type: %s: %r" % (line[0], line))
-                if len(line) % 2 != 1:
-                    raise errors.ParseChksumError(source,
-                        "manifest 2 entry doesn't have right "
-                        "number of tokens, %i: %r" %
-                        (len(line), line))
-                chf_types.update(line[3::2])
-                # this is a trick to do pairwise collapsing;
-                # [size, 1] becomes [(size, 1)]
-                i = iter(line[3:])
-                d[line[1]] = [("size", long(line[2]))] + \
-                    list(convert_chksums(izip(i, i)))
-
-        except EnvironmentError, e:
-            missing = (e.errno == errno.ENOENT)
-            raise_from(errors.ParseChksumError(source, e,
-                missing=missing))
+        if isinstance(source, basestring):
+            i = f = open(source, "r", 32768)
+        else:
+            i = f = source.text_fileobj()
+        if ignore_gpg:
+            i = gpg.skip_signatures(f)
+        for data in i:
+            line = data.split()
+            if not line:
+                continue
+            d = types.get(line[0])
+            if d is None:
+                raise errors.ParseChksumError(source,
+                    "unknown manifest type: %s: %r" % (line[0], line))
+            if len(line) % 2 != 1:
+                raise errors.ParseChksumError(source,
+                    "manifest 2 entry doesn't have right "
+                    "number of tokens, %i: %r" %
+                    (len(line), line))
+            chf_types.update(line[3::2])
+            # this is a trick to do pairwise collapsing;
+            # [size, 1] becomes [(size, 1)]
+            i = iter(line[3:])
+            d[line[1]] = [("size", long(line[2]))] + \
+                list(convert_chksums(izip(i, i)))
     finally:
         if f is not None and f.close:
             f.close()
@@ -165,7 +164,12 @@ class Manifest(object):
         if self._source is None:
             return
         source, gpg = self._source
-        data = parse_manifest(source, ignore_gpg=gpg)
+        try:
+            data = parse_manifest(source, ignore_gpg=gpg)
+        except EnvironmentError, e:
+            if not self.thin or e.errno != errno.ENOENT:
+                raise_from(errors.ParseChksumError(source, e))
+            data = {}, {}, {}, {}
         self._dist, self._aux, self._ebuild, self._misc = data
         self._source = None
 

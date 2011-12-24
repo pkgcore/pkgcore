@@ -4,6 +4,9 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* pinspect subcommand digests was added; this is used for scanning for
+  broken manifest/digests in a repository.
+
 * PORTAGE_LOGDIR is supported again.
 
 * pkgcore no longer intermixes python/bash output incorrectly when stdout

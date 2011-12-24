@@ -17,7 +17,8 @@ demandload(globals(),
     'pkgcore:fetch',
     'pkgcore.restrictions:packages',
     'itertools:groupby,islice',
-    'operator:attrgetter,itemgetter'
+    'operator:attrgetter,itemgetter',
+    'pkgcore.package:errors',
 )
 
 shared = (commandline.mk_argparser(domain=False, add_help=False),)
@@ -318,3 +319,34 @@ _portageq.bind_parser(portageq, compat=True)
 profiles = subparsers.add_parser("profiles",
     description="ebuild profiles related querying")
 inspect_profiles.bind_parser(profiles, 'profiles')
+
+digests = subparsers.add_parser("digests",
+    description="identify what packages are missing digest info")
+digests.add_argument('repos', nargs='*', help="repository to inspect",
+    action=commandline.StoreRepoObject, store_name=True)
+@digests.bind_main_func
+def digest_manifest(options, out, err):
+    for name, repo in options.repos:
+        broken = count = 0
+        out.write("inspecting %r:" % (name,))
+        out.first_prefix.append("  ")
+        out.later_prefix.append("  ")
+        for pkg in repo:
+            count += 1
+            try:
+                pkg.fetchables
+            except errors.MetadataException:
+                out.write("%s is broken" % (pkg,))
+                broken += 1
+                continue
+
+        out.first_prefix.pop()
+        out.later_prefix.pop()
+        count = len(repo)
+        if count:
+            out.write("%i out of %i are broken (%2.2f%%)" % (broken, count,
+                float(broken)/count))
+        else:
+            out.write("repository has no packages")
+
+        out.write()

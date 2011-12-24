@@ -4,6 +4,8 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* complain about incorrect profiles/categories files.
+
 * fix bug in masters handling where eclass lookup order was reversed.
 
 * pinspect subcommand digests was added; this is used for scanning for

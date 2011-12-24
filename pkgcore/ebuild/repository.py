@@ -37,6 +37,7 @@ demandload(globals(),
     'pkgcore.package:errors@pkg_errors',
     'pkgcore.util.packages:groupby_pkg',
     'pkgcore.fs.livefs:iter_scan',
+    'pkgcore.log:logger',
     'operator:attrgetter',
     'random:shuffle',
     'errno',
@@ -310,20 +311,25 @@ class _UnconfiguredTree(prototype.tree):
         o.versions = self.versions
         return o
 
+    @klass.jit_attr
+    def hardcoded_categories(self):
+        # try reading $LOC/profiles/categories if it's available.
+        cats = readlines(pjoin(self.base, 'profiles', 'categories'),
+            True, True, True)
+        if cats is not None:
+            cats = tuple(imap(intern, cats))
+        return cats
+
     def _get_categories(self, *optional_category):
         # why the auto return? current porttrees don't allow/support
         # categories deeper then one dir.
         if optional_category:
             #raise KeyError
             return ()
-
+        cats = self.hardcoded_categories
+        if cats is not None:
+            return cats
         try:
-            # try reading $LOC/profiles/categories if it's available.
-            cats = readlines(pjoin(self.base, 'profiles', 'categories'),
-                True, True, True)
-            if cats is not None:
-                return tuple(imap(intern, cats))
-
             return tuple(imap(intern,
                 ifilterfalse(self.false_categories.__contains__,
                     (x for x in listdir_dirs(self.base) if x[0:1] != ".")
@@ -337,9 +343,14 @@ class _UnconfiguredTree(prototype.tree):
             return tuple(ifilterfalse(self.false_packages.__contains__,
                 listdir_dirs(cpath)))
         except EnvironmentError, e:
+            if e.errno == errno.ENOENT:
+                if self.hardcoded_categories and category in self.hardcoded_categories:
+                    logger.warning("repo %r in profiles/categories incorrectly "
+                         "states category %s exists" % (self.location, category))
+                    return ()
             raise_from(KeyError("failed fetching packages for category %s: %s" % \
-                    (pjoin(self.base, category.lstrip(os.path.sep)), \
-                    str(e))))
+                (pjoin(self.base, category.lstrip(os.path.sep)), \
+                str(e))))
 
     def _get_versions(self, catpkg):
         cppath = pjoin(self.base, catpkg[0], catpkg[1])

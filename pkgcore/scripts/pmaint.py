@@ -289,7 +289,7 @@ digest = subparsers.add_parser("digest",
     description="update a repositories package manifest/digest information",
     parents=(commandline.mk_argparser(add_help=False),))
 digest.add_argument("--repository", "--repo", action='store',
-    help="force a specific repository, rather than spceifying it via a repo atom")
+    help="force a specific repository, rather than specifying it via a repo atom")
 commandline.make_query(digest, nargs='+', dest='query',
     help="packages matching any of these restrictions will have their"
     " manifest/digest updated")

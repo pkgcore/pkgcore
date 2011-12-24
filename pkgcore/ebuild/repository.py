@@ -139,6 +139,7 @@ def _sort_eclasses(config, raw_repo, eclasses):
     if len(eclasses) == 1:
         eclasses = eclasses[0]
     else:
+        eclasses = list(reversed(eclasses))
         eclasses = eclass_cache_module.StackedCaches(eclasses, portdir=portdir,
             eclassdir=portdir)
     return eclasses

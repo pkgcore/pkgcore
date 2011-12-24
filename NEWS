@@ -4,6 +4,9 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* removed support for FEATURES=allow-missing-checksums.  Use repository
+  metadata/layout.conf controls instead.
+
 * complain about incorrect profiles/categories files.
 
 * fix bug in masters handling where eclass lookup order was reversed.

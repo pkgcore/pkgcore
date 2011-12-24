@@ -386,8 +386,6 @@ def config_from_make_conf(location="/etc/"):
             'inherit-only': True,
             'ignore_paludis_versioning':
                 ('ignore-paludis-versioning' in features),
-            'allow_missing_manifests':
-                ('allow-missing-manifests' in features)
             })
 
 

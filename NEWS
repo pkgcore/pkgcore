@@ -4,11 +4,13 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+pkgcore 0.7.7.5: Dec 26th, 2011
+
 * pkgcore no longer requires a manifest to exist if the repository uses
   thin-manifests, and there are no distfiles for a pkg.
 
 * removed support for FEATURES=allow-missing-checksums.  Use repository
-  metadata/layout.conf controls instead.
+  metadata/layout.conf use-manifest setting instead.
 
 * complain about incorrect profiles/categories files.
 
@@ -27,7 +29,7 @@ See ChangeLog for full commit logs; this is summarized/major changes.
   with many binaries.
 
 * pmaint regen --disable-eclass-preloading is now
-  pmaint regen --disable-eclsas-caching.
+  pmaint regen --disable-eclass-caching.
 
 * ctrl-c'ing pmaint regen hang bug is now fixed.
 

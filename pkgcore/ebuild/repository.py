@@ -345,8 +345,7 @@ class _UnconfiguredTree(prototype.tree):
         except EnvironmentError, e:
             if e.errno == errno.ENOENT:
                 if self.hardcoded_categories and category in self.hardcoded_categories:
-                    logger.warning("repo %r in profiles/categories incorrectly "
-                         "states category %s exists" % (self.location, category))
+                    # ignore it, since it's PMS mandated that it be allowed.
                     return ()
             raise_from(KeyError("failed fetching packages for category %s: %s" % \
                 (pjoin(self.base, category.lstrip(os.path.sep)), \

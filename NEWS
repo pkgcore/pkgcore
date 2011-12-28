@@ -4,6 +4,10 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* no longer complaint about incorrect profiles/categories files.  PMS,
+  and people who hate QA suck.
+
+
 pkgcore 0.7.7.5: Dec 26th, 2011
 
 * pkgcore no longer requires a manifest to exist if the repository uses

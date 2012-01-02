@@ -807,12 +807,14 @@ def main(subcommands, args=None, outfile=None, errfile=None,
             tb = None
         dump_error(errfile, e, "Error in configuration", tb=tb)
     except operations.OperationError, e:
-        exc = sys.exc_info()[-1]
+        tb = sys.exc_info()[-1]
         if not getattr(options, 'debug', False):
             tb = None
         dump_error(errfile, e, "Error running an operation", tb=tb)
     except Exception, e:
-        exc = sys.exc_info()[-1]
+        tb = sys.exc_info()[-1]
+        if not getattr(options, 'debug', False):
+            tb = None
         dump_error(errfile, e, "Unhandled Exception occured", tb=tb)
     if out is not None:
         if exitstatus:

@@ -470,7 +470,7 @@ def convert_string(central, value, arg_type):
         try:
             func = modules.load_attribute(value)
         except modules.FailedImport:
-            raise errors.ConfigurationError('cannot import %r' % (value,))
+            raise
         if not callable(func):
             raise errors.ConfigurationError('%r is not callable' % (value,))
         return func

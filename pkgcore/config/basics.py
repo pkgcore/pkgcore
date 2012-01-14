@@ -362,13 +362,22 @@ class FakeIncrementalDictConfigSection(ConfigSection):
                     continue
                 kind, val = val
                 if kind == 'ref':
-                    assert target_kind == 'refs', target_kind
+                    if target_kind != 'refs':
+                        raise ValueError("Internal issue detected: kind(ref), "
+                            "target_kind(%r), name(%r), val(%r), arg_type(%r)"
+                            % (target_kind, name, val, arg_type))
                     converted.append([val])
                 elif kind == 'refs':
-                    assert target_kind == 'refs', target_kind
+                    if target_kind != 'refs':
+                        raise ValueError("Internal issue detected: kind(refs), "
+                            "target_kind(%r), name(%r), val(%r), arg_type(%r)"
+                            % (target_kind, name, val, arg_type))
                     converted.append(val)
                 elif kind == 'list':
-                    assert target_kind != 'str', target_kind
+                    if target_kind == 'str':
+                        raise ValueError("Internal issue detected: kind(str), "
+                            "target_kind(%r), name(%r), val(%r), arg_type(%r)"
+                            % (target_kind, name, val, arg_type))
                     converted.append(val)
                 else:
                     # Everything else gets converted to a string first.
@@ -465,7 +474,9 @@ _str_converters = {
 
 def convert_string(central, value, arg_type):
     """Conversion func for a string-based DictConfigSection."""
-    assert isinstance(value, basestring), value
+    if not isinstance(value, basestring):
+        raise ValueError('convert_string invoked with non basestring instance:'
+            ' val(%r), arg_type(%r)' % (value, arg_type))
     if arg_type == 'callable':
         try:
             func = modules.load_attribute(value)

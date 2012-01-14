@@ -781,7 +781,7 @@ class BinaryDebug(ThreadedTrigger):
         types={"strip_binary":"str", "objcopy_binary":"str"})
 
     def __init__(self, mode='split', strip_binary=None, objcopy_binary=None,
-        extra_strip_flags=(), debug_storage='/usr/lib/debug/'):
+        extra_strip_flags=(), debug_storage='/usr/lib/debug/', compress=False):
         self.mode = mode = mode.lower()
         if mode not in ('split', 'strip'):
             raise TypeError("mode %r is unknown; must be either split "
@@ -795,6 +795,7 @@ class BinaryDebug(ThreadedTrigger):
         self._strip_flags = list(self.default_strip_flags)
         self._extra_strip_flags = list(extra_strip_flags)
         self._debug_storage = debug_storage
+        self._compress = compress
 
     def _initialize_paths(self, pkg):
         for x in ("strip", "objcopy"):
@@ -871,6 +872,10 @@ class BinaryDebug(ThreadedTrigger):
     def _split(self, iterable, observer, engine, cset):
         debug_store = pjoin(engine.offset, self._debug_storage.lstrip('/'))
 
+        objcopy_args = [self.objcopy_binary, '--only-keep-debug']
+        if self._compress:
+            objcopy_args.append('--compress-debug-sections')
+
         for fs_obj, ftype in iterable:
             if 'ar archive' in ftype or ('relocatable' in ftype and not
                 fs_obj.basename.endswith(".ko")):
@@ -883,8 +888,7 @@ class BinaryDebug(ThreadedTrigger):
                 os.path.basename(fpath) + ".debug")
             observer.info("splitdebug'ing %s into %s" %
                 (fs_obj.location, debug_loc))
-            ret = spawn.spawn([self.objcopy_binary, '--only-keep-debug',
-                fpath, debug_ondisk])
+            ret = spawn.spawn(objcopy_args + [fpath, debug_ondisk])
             if ret != 0:
                 observer.warn("splitdebug'ing %s failed w/ exitcode %s" %
                     (fs_obj.location, ret))

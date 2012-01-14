@@ -525,8 +525,13 @@ def config_from_make_conf(location="/etc/"):
                 platform=conf_dict.pop("DEB_ARCHITECTURE", ""))
 
     if 'splitdebug' in features:
+        kwds = {}
+
+        if 'compressdebug' in features:
+            kwds['compress'] = 'true'
+
         add_trigger('binary_debug_trigger', 'pkgcore.merge.triggers.BinaryDebug',
-            mode='split')
+            mode='split', **kwds)
     elif 'strip' in features or 'nostrip' not in features:
         add_trigger('binary_debug_trigger', 'pkgcore.merge.triggers.BinaryDebug',
             mode='strip')

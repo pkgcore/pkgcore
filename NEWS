@@ -4,7 +4,11 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
-* no longer complaint about incorrect profiles/categories files.  PMS,
+* FEATURES=compressdebug support was added.  This enables splitdebug
+  to compress the generate debug files; this can easily reduce the footprint
+  from 20GB to ~8GB on an average system.
+
+* no longer complain about incorrect profiles/categories files.  PMS,
   and people who hate QA suck.
 
 

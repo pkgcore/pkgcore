@@ -10,8 +10,8 @@ from pkgcore.operations import repo as repo_ops
 from pkgcore.const import VERSION
 
 from snakeoil.osutils import ensure_dirs, pjoin
-from pkgcore.util import bzip2
 from snakeoil.demandload import demandload
+from snakeoil import compression
 demandload(globals(),
     'time',
     'pkgcore.ebuild:conditionals',
@@ -52,7 +52,7 @@ class install(repo_ops.install):
                 v.update(self.new_pkg.contents)
                 v.flush()
             elif k == "environment":
-                data = bzip2.compress(
+                data = compression.compress_data('bzip2',
                     self.new_pkg.environment.bytes_fileobj().read())
                 open(pjoin(dirpath, "environment.bz2"), "wb").write(data)
                 del data

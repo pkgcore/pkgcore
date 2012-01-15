@@ -20,8 +20,7 @@ from snakeoil.mappings import IndeterminantDict
 from snakeoil.currying import partial
 from snakeoil.osutils import listdir_dirs
 from snakeoil.fileutils import readfile, readfile_bytes
-from snakeoil import klass, compatibility
-from pkgcore.util import bzip2
+from snakeoil import klass, compatibility, compression
 from snakeoil.demandload import demandload
 demandload(globals(),
     'pkgcore.vdb:repo_ops',
@@ -42,7 +41,8 @@ class bz2_data_source(data_source.base):
         self.mutable = mutable
 
     def text_fileobj(self, writable=False):
-        data = bzip2.decompress(readfile_bytes(self.location)).decode()
+        data = compression.decompress_data('bzip2',
+            readfile_bytes(self.location)).decode()
         if writable:
             if not self.mutable:
                 raise TypeError("data source %s is not mutable" % (self,))
@@ -50,7 +50,8 @@ class bz2_data_source(data_source.base):
         return data_source.text_ro_StringIO(data)
 
     def bytes_fileobj(self, writable=False):
-        data = bzip2.decompress(readfile_bytes(self.location))
+        data = compression.decompress_data('bzip2',
+            readfile_bytes(self.location))
         if writable:
             if not self.mutable:
                 raise TypeError("data source %s is not mutable" % (self,))
@@ -61,7 +62,8 @@ class bz2_data_source(data_source.base):
         if compatibility.is_py3k:
             if isinstance(data, str):
                 data = data.encode()
-        open(self.location, "wb").write(bzip2.compress(data))
+        open(self.location, "wb").write(
+            compression.compress_data('bzip2', data))
 
 
 class tree(prototype.tree):

@@ -145,7 +145,6 @@ Modules
     pkgcore.system
     pkgcore.system.libtool
     pkgcore.util
-    pkgcore.util.bzip2
     pkgcore.util.commandline
     pkgcore.util.file_type
     pkgcore.util.packages

@@ -21,8 +21,7 @@ from pkgcore.fs import tar
 from pkgcore.binpkg import xpak
 from pkgcore.ebuild.conditionals import stringify_boolean
 
-from snakeoil import osutils, klass
-from pkgcore.util.bzip2 import compress
+from snakeoil import osutils, klass, compression
 from snakeoil.osutils import join as pjoin, unlink_if_exists
 from snakeoil.demandload import demandload
 demandload(globals(), "pkgcore.log:logger")
@@ -45,7 +44,8 @@ def generate_attr_dict(pkg, portage_compatible=True):
             continue
         v = getattr(pkg, k)
         if k == 'environment':
-            d['environment.bz2'] = compress(v.bytes_fileobj().read())
+            d['environment.bz2'] = compression.compress_data('bzip2',
+                v.bytes_fileobj().read())
             continue
         if k == 'provides':
             versionless_provides = lambda b: b.key

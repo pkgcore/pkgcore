@@ -25,7 +25,6 @@ demandload(globals(),
     'pkgcore.log:logger',
     'ConfigParser:ConfigParser',
     'snakeoil.bash:read_bash_dict',
-    'pkgcore.util:bzip2',
     'pkgcore.ebuild:profiles',
     'snakeoil.xml:etree',
 )
@@ -486,19 +485,13 @@ def config_from_make_conf(location="/etc/"):
 
     # yes, round two; may be disabled from above and massive else block sucks
     if pkgdir is not None:
-        # If we are not using the native bzip2 then the Tarfile.bz2open
-        # the binpkg repository uses will fail.
         if pkgdir and os.path.isdir(pkgdir):
-            if not bzip2.native:
-                logger.warn("python's bz2 module isn't available: "
-                    "disabling binpkg support")
-            else:
-                new_config['binpkg'] = basics.ConfigSectionFromStringDict({
-                    'class': 'pkgcore.binpkg.repository.tree',
-                    'location': pkgdir,
-                    'ignore_paludis_versioning':
-                        str('ignore-paludis-versioning' in features)})
-                default_repos.append('binpkg')
+            new_config['binpkg'] = basics.ConfigSectionFromStringDict({
+                'class': 'pkgcore.binpkg.repository.tree',
+                'location': pkgdir,
+                'ignore_paludis_versioning':
+                    str('ignore-paludis-versioning' in features)})
+            default_repos.append('binpkg')
 
         if 'buildpkg' in features:
             add_trigger('buildpkg_trigger', 'pkgcore.merge.triggers.SavePkg',

@@ -36,7 +36,7 @@ demandload(globals(),
     "errno",
     "pkgcore.fs.tar:generate_contents",
     "pkgcore.binpkg.xpak:Xpak",
-    "pkgcore.util.bzip2:decompress",
+    "snakeoil:compression",
     'pkgcore.binpkg:remote',
 )
 
@@ -148,7 +148,8 @@ class StackedXpakDict(DictMixin):
                         "environment.bz2 not found in xpak segment, "
                         "malformed binpkg?")
             else:
-                data = data_source(decompress(data), mutable=True)
+                data = data_source(compression.decompress_data('bzip2', data),
+                    mutable=True)
         elif key == "ebuild":
             data = self.xpak.get("%s-%s.ebuild" %
                 (self._pkg.package, self._pkg.fullver), "")

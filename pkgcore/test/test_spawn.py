@@ -14,6 +14,7 @@ def capability_based(capable, msg):
         return f
     return internal_f
 
+
 class SpawnTest(TempDirMixin, TestCase):
 
     def __init__(self, *a, **kw):
@@ -33,17 +34,6 @@ class SpawnTest(TempDirMixin, TestCase):
     def tearDown(self):
         os.environ["PATH"] = self.orig_env
         TempDirMixin.tearDown(self)
-
-    def test_find_binary(self):
-        script_name = "pkgcore-findpath-test.sh"
-        self.assertRaises(spawn.CommandNotFound, spawn.find_binary, script_name)
-        fp = os.path.join(self.dir, script_name)
-        open(fp,"w")
-        os.chmod(fp, 0640)
-        self.assertRaises(spawn.CommandNotFound, spawn.find_binary, script_name)
-        os.chmod(fp, 0750)
-        self.assertIn(self.dir, spawn.find_binary(script_name))
-        os.unlink(fp)
 
     def generate_script(self, filename, text):
         if not os.path.isabs(filename):

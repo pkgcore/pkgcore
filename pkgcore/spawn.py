@@ -19,7 +19,7 @@ from pkgcore.const import (
 
 from snakeoil.osutils import listdir, access
 from snakeoil.mappings import ProtectedDict
-from snakeoil.process import get_proc_count
+from snakeoil.process import get_proc_count, find_binary, CommandNotFound
 
 
 try:
@@ -340,24 +340,6 @@ def _exec(binary, mycommand, opt_name, fd_pipes, env, gid, groups, uid, umask,
     os.execve(binary, myargs, env)
 
 
-def find_binary(binary, paths=None):
-    """look through the PATH environment, finding the binary to execute"""
-
-    if os.path.isabs(binary):
-        if not (os.path.isfile(binary) and access(binary, os.X_OK)):
-            raise CommandNotFound(binary)
-        return binary
-
-    if paths is None:
-        paths = os.environ.get("PATH", "").split(":")
-
-    for path in paths:
-        filename = "%s/%s" % (path, binary)
-        if access(filename, os.X_OK) and os.path.isfile(filename):
-            return filename
-
-    raise CommandNotFound(binary)
-
 def spawn_fakeroot(mycommand, save_file, env=None, opt_name=None,
                    returnpid=False, **keywords):
     """spawn a process via fakeroot
@@ -504,12 +486,6 @@ class ExecutionFailure(Exception):
         self.msg = msg
     def __str__(self):
         return "Execution Failure: %s" % self.msg
-
-class CommandNotFound(ExecutionFailure):
-    def __init__(self, command):
-        ExecutionFailure.__init__(
-            self, "CommandNotFound Exception: Couldn't find '%s'" % (command,))
-        self.command = command
 
 # cached capabilities
 

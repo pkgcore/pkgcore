@@ -19,32 +19,13 @@ from pkgcore.const import (
 
 from snakeoil.osutils import listdir, access
 from snakeoil.mappings import ProtectedDict
-from snakeoil.process import get_proc_count, find_binary, CommandNotFound
-
+from snakeoil.process import get_proc_count, find_binary, CommandNotFound, closerange
 
 try:
     import resource
     max_fd_limit = resource.getrlimit(resource.RLIMIT_NOFILE)[0]
 except ImportError:
     max_fd_limit = 256
-
-def slow_get_open_fds():
-    return xrange(max_fd_limit)
-if os.path.isdir("/proc/%i/fd" % os.getpid()):
-    def get_open_fds():
-        try:
-            return map(int, listdir("/proc/%i/fd" % os.getpid()))
-        except EnvironmentError:
-            return slow_get_open_fds()
-        except ValueError, v:
-            import warnings
-            warnings.warn(
-                "extremely odd, got a value error '%s' while scanning "
-                "/proc/%i/fd; OS allowing string names in fd?" %
-                (v, os.getpid()))
-            return slow_get_open_fds()
-else:
-    get_open_fds = slow_get_open_fds
 
 
 def spawn_bash(mycommand, debug=False, opt_name=None, **keywords):
@@ -307,13 +288,13 @@ def _exec(binary, mycommand, opt_name, fd_pipes, env, gid, groups, uid, umask,
 
     # Then close _all_ fds that haven't been explictly
     # requested to be kept open.
-    for fd in get_open_fds():
-        # if it's not a target fd, close it.
-        if fd not in fd_pipes:
-            try:
-                os.close(fd)
-            except OSError:
-                pass
+    last = 0
+    for fd in sorted(fd_pipes):
+        if fd != last:
+            closerange(last, fd)
+        last = fd + 1
+
+    closerange(last, max_fd_limit)
 
     if chdir is not None:
         os.chdir(chdir)

@@ -3,6 +3,10 @@ Pkgcore Release Notes
 
 See ChangeLog for full commit logs; this is summarized/major changes.
 
+pkgcore 0.7.7.6: Jan 16th, 2011
+
+* fix bug where REQUIRED_USE wasn't being stored during metadata
+  regeneration.  Thanks to marienz for reporting it.
 
 * FEATURES=compressdebug support was added.  This enables splitdebug
   to compress the generate debug files; this can easily reduce the footprint

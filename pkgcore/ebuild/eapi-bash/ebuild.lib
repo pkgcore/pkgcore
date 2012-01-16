@@ -419,7 +419,7 @@ pkgcore_dump_metadata_keys() {
 	set -f
 	local key
 	for key in EAPI DEPEND RDEPEND SLOT SRC_URI RESTRICT HOMEPAGE LICENSE \
-		DESCRIPTION KEYWORDS INHERITED IUSE PDEPEND PROVIDE PROPERTIES; do
+		DESCRIPTION KEYWORDS INHERITED IUSE PDEPEND PROVIDE PROPERTIES REQUIRED_USE; do
 		# deref the val, if it's not empty/unset, then spit a key command to EBD
 		# after using echo to normalize whitespace (specifically removal of newlines)
 		if [[ "${!key:-unset}" != "unset" ]]; then

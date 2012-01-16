@@ -53,7 +53,10 @@ def _mk_required_use_node(data):
   return values.ContainmentMatch(data,)
 
 def generate_required_use(self):
-    return conditionals.DepSet.parse(self.data.pop("REQUIRED_USE", ""),
+    data = self.data.pop("REQUIRED_USE", "")
+    if not self.eapi_obj.options.has_required_use:
+        data = ''
+    return conditionals.DepSet.parse(data,
         values.ContainmentMatch, operators={"||":boolean.OrRestriction,
             "":boolean.AndRestriction,
             "^^":boolean.JustOneRestriction},

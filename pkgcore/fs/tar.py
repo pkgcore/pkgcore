@@ -10,6 +10,7 @@ from pkgcore.fs import contents
 from snakeoil.data_source import invokable_data_source
 
 from snakeoil.tar import tarfile
+from snakeoil import compression
 from snakeoil.currying import partial
 from snakeoil.compatibility import cmp, sorted_cmp
 
@@ -18,16 +19,23 @@ known_compressors = {"bz2": tarfile.TarFile.bz2open,
     "gz": tarfile.TarFile.gzopen,
     None: tarfile.TarFile.open}
 
-def write_set(contents_set, filepath, compressor='bz2', absolute_paths=False):
-    if compressor not in known_compressors:
-        raise ValueError("compression must be one of %r, got %r" %
-            (known_compressors.keys(), compressor))
-    tar_fd = known_compressors[compressor](filepath, mode="w")
-    try:
-        add_contents_to_tarfile(contents_set, tar_fd)
-    finally:
-        tar_fd.close()
 
+def write_set(contents_set, filepath, compressor='bzip2', absolute_paths=False,
+    parallelize=False):
+
+    if compressor == 'bz2':
+        compressor = 'bzip2'
+
+    tar_handle = None
+    handle = compression.compress_handle(compressor, filepath,
+        parallelize=parallelize)
+    try:
+        tar_handle = tarfile.TarFile(name=filepath, fileobj=handle, mode='w')
+        add_contents_to_tarfile(contents_set, tar_handle)
+    finally:
+        if tar_handle is not None:
+            tar_handle.close()
+        handle.close()
 
 def add_contents_to_tarfile(contents_set, tar_fd, absolute_paths=False):
     # first add directories, then everything else

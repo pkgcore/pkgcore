@@ -93,7 +93,8 @@ class install(repo_interfaces.install):
                 os.path.dirname(tmp_path))
         try:
             start("generating tarball: %s" % tmp_path)
-            tar.write_set(pkg.contents, tmp_path, compressor='bz2')
+            tar.write_set(pkg.contents, tmp_path, compressor='bzip2',
+                parallelize=True)
             end("tarball created", True)
             start("writing Xpak")
             # ok... got a tarball.  now add xpak.

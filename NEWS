@@ -4,6 +4,14 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* pkgcore now forces parallelization for tbz2 generation if pbzip2
+  is installed.
+
+* Python stdlib's BZ2File doesn't handle multiple streams in a bz2
+  file correctly- we work around this via always forcing bzip2 -dc
+  unless the python version is 3.3 or later.
+
+
 pkgcore 0.7.7.8: Jan 26th, 2011
 
 * pkgcore's merger now will preserve any hardlinks specified in the

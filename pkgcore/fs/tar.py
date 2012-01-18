@@ -114,24 +114,29 @@ def fsobj_to_tarinfo(fsobj, absolute_path=True):
     return t
 
 
-def generate_contents(path, compressor="bz2"):
+def generate_contents(filepath, compressor="bz2", parallelize=True):
     """
     generate a contentset from a tarball
 
-    :param path: string path to location on disk
+    :param filepath: string path to location on disk
     :param compressor: defaults to bz2; decompressor to use, see
         :obj:`known_compressors` for list of valid compressors
     """
-    if compressor not in known_compressors:
-        raise ValueError("compressor needs to be one of %r, got %r" %
-            (known_compressors.keys(), compressor))
+
+    if compressor == 'bz2':
+        compressor = 'bzip2'
+
+    tar_handle = None
+    handle = compression.decompress_handle(compressor, filepath,
+        parallelize=parallelize)
+
     try:
-        t = known_compressors[compressor](path, mode="r")
+        tar_handle = tarfile.TarFile(name=filepath, fileobj=handle, mode='r')
     except tarfile.ReadError, e:
         if not e.message.endswith("empty header"):
             raise
-        t = []
-    return convert_archive(t)
+        tar_handle = []
+    return convert_archive(tar_handle)
 
 
 def convert_archive(archive):

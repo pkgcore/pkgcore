@@ -3,6 +3,12 @@ Pkgcore Release Notes
 
 See ChangeLog for full commit logs; this is summarized/major changes.
 
+
+* pkgcore resolver know understand weak blockers.  This fixes a long
+  standing issue where portage/paludis would allow a transaction that
+  pkgcore would refuse (at the time of pkgcore's creation, weak/strong
+  didn't exist- just strong).
+
 * work around eselect incompatibility for root not always being specified
   to `pinspect portageq get_repositories`.
 

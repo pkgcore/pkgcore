@@ -12,6 +12,9 @@ from pkgcore.restrictions import packages, values, restriction
 from pkgcore.repository import misc, multiplex, visibility
 from pkgcore.resolver import state
 
+# XXX: hack; see insert_blockers
+from pkgcore.ebuild import atom as _atom
+
 from snakeoil.currying import partial
 from snakeoil.compatibility import any, cmp, sort_cmp
 from snakeoil.iterables import caching_iter
@@ -773,7 +776,17 @@ class merge_plan(object):
             if l:
                 # blocker caught something. yay.
                 self._dprint("%s blocker %s hit %s for atom %s pkg %s",
-                       (stack[-1].mode, x, l, stack[-1].atom, choices.current_pkg))
+                    (stack[-1].mode, x, l, stack[-1].atom, choices.current_pkg))
+                if x.weak_blocker:
+                    # note that we use the top frame of the stacks' dbs; this
+                    # is to allow us to upgrade as needed.
+                    # For this to match, it's *only* possible if the blocker is resolved
+                    # since the limiter is already in place.
+                    result = self._add_atom(packages.KeyedAndRestriction(
+                        restriction.Negate(x), _atom.atom(x.key), key=x.key), stack, stack[0].dbs)
+                    if not result:
+                        # ignore the blocker, we resolved past it.
+                        continue
                 return x, l
         return None
 

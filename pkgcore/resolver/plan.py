@@ -782,7 +782,7 @@ class merge_plan(object):
                     # is to allow us to upgrade as needed.
                     # For this to match, it's *only* possible if the blocker is resolved
                     # since the limiter is already in place.
-                    result = self._add_atom(packages.KeyedAndRestriction(
+                    result = self._rec_add_atom(packages.KeyedAndRestriction(
                         restriction.Negate(x), _atom.atom(x.key), key=x.key), stack, stack[0].dbs)
                     if not result:
                         # ignore the blocker, we resolved past it.

@@ -15,7 +15,7 @@ from pkgcore.restrictions import values, packages, boolean
 from pkgcore.ebuild import cpv, errors, const, restricts
 from snakeoil.compatibility import all, is_py3k, cmp, raise_from
 from snakeoil.klass import (generic_equality, inject_richcmp_methods_from_cmp,
-    reflective_hash)
+    reflective_hash, alias_attr)
 from snakeoil.demandload import demandload
 from snakeoil.currying import partial
 demandload(globals(),
@@ -348,6 +348,8 @@ class atom(boolean.AndRestriction):
     @property
     def blocks_temp_ignorable(self):
         return not self.blocks_strongly
+
+    weak_blocker = alias_attr("blocks_temp_ignorable")
 
     def __repr__(self):
         if self.op == '=*':

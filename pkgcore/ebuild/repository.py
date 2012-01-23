@@ -439,6 +439,9 @@ class _UnconfiguredTree(prototype.tree):
             for path in paths:
                 for line in iter_read_bash(path):
                     line = line.strip()
+                    if line in ('-', ''):
+                        raise profiles.ProfileError(pjoin(self.base, 'profiles'),
+                            'package.mask', "encountered empty negation: -")
                     if line.startswith('-'):
                         neg.append(atom.atom(line[1:]))
                     else:

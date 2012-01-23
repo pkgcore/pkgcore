@@ -400,7 +400,9 @@ class ProfileStack(object):
                 if incremental in const.incrementals_unfinalized:
                     d[incremental] = tuple(v)
                 else:
-                    v = misc.render_incrementals(v)
+                    v = misc.render_incrementals(v,
+                        msg_prefix="While expanding %s, value %r: " %
+                        (incremental, v))
                     if v:
                         d[incremental] = tuple(v)
         return mappings.ImmutableDict(d.iteritems())

@@ -863,7 +863,9 @@ class ebuild_mixin(object):
             logger.debug("pkg_pretend sanity check for %s took %2.2f seconds",
                 pkg, time.time() - start)
             return ret
-        except format.GenericBuildError:
+        except format.GenericBuildError, e:
+            logger.error("pkg_pretend sanity check for %s failed with exception %r"
+                % (pkg, e))
             return False
 
 

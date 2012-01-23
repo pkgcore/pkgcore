@@ -64,9 +64,13 @@ class BaseCommand(commandline.ArgparseCommand):
         default_portageq_args(parser)
         if self.requires_root:
             if compat:
+                kwds = {}
+                if self._compat_root_default:
+                    kwds["nargs"] = "?"
+                    kwds["default"] = self._compat_root_default
                 parser.add_argument(dest="domain", metavar="root",
                     action=commandline.DomainFromPath,
-                    help="the domain that lives at root will be used")
+                    help="the domain that lives at root will be used", **kwds)
             else:
                 mux = parser.add_mutually_exclusive_group()
                 commandline._mk_domain(mux)
@@ -86,7 +90,7 @@ class BaseCommand(commandline.ArgparseCommand):
                     **kwds)
 
     @classmethod
-    def make_command(cls, arg_spec='', requires_root=True, bind=None):
+    def make_command(cls, arg_spec='', requires_root=True, bind=None, root_default=None):
 
         kwds = dict(arg_spec=tuple(arg_spec.split()), requires_root=requires_root)
 
@@ -102,6 +106,7 @@ class BaseCommand(commandline.ArgparseCommand):
         def internal_function(functor):
             mycommand.__name__ = functor.__name__
             mycommand.__call__ = staticmethod(functor)
+            mycommand._compat_root_default = root_default
             if bind is not None:
                 bind.append(mycommand)
             return mycommand
@@ -171,7 +176,7 @@ def match(options, out, err):
         out.write(str_pkg(pkg))
     return 0
 
-@BaseCommand.make_command(bind=commands)
+@BaseCommand.make_command(bind=commands, root_default='/')
 def get_repositories(options, out, err):
     l = []
     for k, repo in options.config.repo.iteritems():

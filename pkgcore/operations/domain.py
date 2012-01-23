@@ -238,10 +238,7 @@ class uninstall(base):
         """execute any removal steps required"""
         for unmerge_phase in (self.me.pre_unmerge, self.me.unmerge,
             self.me.post_unmerge):
-            try:
-                unmerge_phase()
-            except merge_errors.NonFatalModification, e:
-                print "warning caught: %s" % e
+            unmerge_phase()
         return True
 
     def postrm(self):

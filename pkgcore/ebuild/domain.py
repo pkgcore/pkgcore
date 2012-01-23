@@ -196,7 +196,8 @@ class domain(pkgcore.config.domain.domain):
             if incremental not in settings or incremental == "USE":
                 continue
             s = set()
-            incremental_expansion(s, settings[incremental])
+            incremental_expansion(s, settings[incremental],
+                'While expanding %s ' % (incremental,))
             settings[incremental] = tuple(s)
 
         # use is collapsed; now stack use_expand.

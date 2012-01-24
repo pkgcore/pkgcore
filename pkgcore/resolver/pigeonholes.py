@@ -54,7 +54,7 @@ class PigeonHoledSlots(object):
         if key is None:
             key = atom.key
         self.limiters.setdefault(key, []).append(atom)
-        return filter(atom.match, self.slot_dict.get(key, ()))
+        return self.find_atom_matches(atom, key=key)
 
     def remove_slotting(self, obj):
         key = obj.key

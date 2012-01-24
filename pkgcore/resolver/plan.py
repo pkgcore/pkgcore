@@ -787,7 +787,7 @@ class merge_plan(object):
                     if not result:
                         # ok, inserted a new version.  did it take care of the conflict?
                         # it /may/ not have, via filling a different slot...
-                        result = self.state.find_atom_matches(x)
+                        result = self.state.match_atom(x)
                         if not result:
                             # ignore the blocker, we resolved past it.
                             continue

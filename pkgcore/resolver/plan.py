@@ -785,8 +785,12 @@ class merge_plan(object):
                     result = self._rec_add_atom(packages.KeyedAndRestriction(
                         restriction.Negate(x), _atom.atom(x.key), key=x.key), stack, stack[0].dbs)
                     if not result:
-                        # ignore the blocker, we resolved past it.
-                        continue
+                        # ok, inserted a new version.  did it take care of the conflict?
+                        # it /may/ not have, via filling a different slot...
+                        result = self.state.find_atom_matches(x)
+                        if not result:
+                            # ignore the blocker, we resolved past it.
+                            continue
                 return x, l
         return None
 

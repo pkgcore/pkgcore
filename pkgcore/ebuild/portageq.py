@@ -62,6 +62,7 @@ class BaseCommand(commandline.ArgparseCommand):
     def bind_to_parser(self, parser, compat=False):
         commandline.ArgparseCommand.bind_to_parser(self, parser)
         default_portageq_args(parser)
+
         if self.requires_root:
             if compat:
                 kwds = {}
@@ -77,6 +78,7 @@ class BaseCommand(commandline.ArgparseCommand):
                 mux.add_argument('--domain-at-root',
                     action=commandline.DomainFromPath,
                     dest="domain", help="specify the domain to use via it's root path")
+
         for token in self.arg_spec:
             kwds = {}
             if token[-1] in '+?*':
@@ -90,35 +92,37 @@ class BaseCommand(commandline.ArgparseCommand):
                     **kwds)
 
     @classmethod
-    def make_command(cls, arg_spec='', requires_root=True, bind=None, root_default=None):
+    def make_command(cls, arg_spec='', requires_root=True, bind=None,
+        root_default=None, name=None, **kwds):
 
-        kwds = dict(arg_spec=tuple(arg_spec.split()), requires_root=requires_root)
+        kwds = dict(arg_spec=tuple(arg_spec.split()), requires_root=requires_root,
+            _compat_root_default=root_default, **kwds)
 
-        class mycommand(BaseCommand):
-            locals().update(kwds)
+        def internal_function(functor, name=name):
+            class mycommand(BaseCommand):
+                function = __call__ = staticmethod(functor)
+                __doc__ = getattr(functor, '__doc__', None)
+                locals().update(kwds)
 
-        # note that we're modifying a global scope var here.
-        # we could require globals() be passed in, but that
-        # leads to fun reference cycles
-        #commandline_commands[functor.__name__] = (mycommand, functor)
+            if name is None:
+                name = functor.__name__
+            mycommand.__name__ = name
 
-
-        def internal_function(functor):
-            mycommand.__name__ = functor.__name__
-            mycommand.__call__ = staticmethod(functor)
-            mycommand._compat_root_default = root_default
             if bind is not None:
                 bind.append(mycommand)
             return mycommand
 
         return internal_function
 
-commands = []
 
-@BaseCommand.make_command("variable+", bind=commands)
-def envvar(options, out, err):
+common_commands = []
+query_commands = []
+portageq_commands = []
+
+@BaseCommand.make_command("variable+", bind=query_commands)
+def env_var(options, out, err):
     """
-    return configuration defined variables
+    return configuration defined variables.
     """
     default_get = lambda d,k: d.settings.get(k, "")
     distdir_get = lambda d,k: d.settings["fetcher"].distdir
@@ -130,15 +134,31 @@ def envvar(options, out, err):
         out.write(str(val))
     return 0
 
-@BaseCommand.make_command("atom", bind=commands)
+@BaseCommand.make_command("variable+", bind=portageq_commands, name='envvar',
+    root_default='/')
+def portageq_envvar(options, out, err):
+    """
+    return configuration defined variables.  Use envvar2 instead, this will be removed.
+    """
+    return envvar.function(options, out, err)
+
+@BaseCommand.make_command("variable+", bind=portageq_commands, name='envvar2')
+def portageq_envvar(options, out, err):
+    """
+    return configuration defined variables.
+    """
+    return envvar.function(options, out, err)
+
+
+@BaseCommand.make_command("atom", bind=common_commands)
 def has_version(options, out, err):
     """
-    @param domain: :obj:`pkgcore.config.domain.domain` instance
-    @param atom_str: :obj:`pkgcore.ebuild.atom.atom` instance
+    Return 0 if an atom is merged, 1 if not.
     """
     if options.domain.all_livefs_repos.has_match(options.atom):
         return 0
     return 1
+
 
 def _best_version(domain, restrict, out):
     try:
@@ -148,30 +168,29 @@ def _best_version(domain, restrict, out):
         return ''
     return str_pkg(p)
 
-@BaseCommand.make_command("atom+", bind=commands)
+@BaseCommand.make_command("atom+", bind=common_commands)
 def mass_best_version(options, out, err):
     """
-    multiple best_version calls
+    multiple best_version calls.
     """
     for x in options.atom:
         out.write("%s:%s" %
             (x, _best_version(options.domain, x, out).rstrip()))
     return 0
 
-@BaseCommand.make_command("atom", bind=commands)
+@BaseCommand.make_command("atom", bind=common_commands)
 def best_version(options, out, err):
     """
-    @param domain: :obj:`pkgcore.config.domain.domain` instance
-    @param atom_str: :obj:`pkgcore.ebuild.atom.atom` instance
+    Return the maximum visible version for a given atom.
     """
     out.write(_best_version(options.domain, options.atom, out))
     return 0
 
-@BaseCommand.make_command("atom", bind=commands)
+
+@BaseCommand.make_command("atom", bind=portageq_commands)
 def match(options, out, err):
     """
-    @param domain: :obj:`pkgcore.config.domain.domain` instance
-    @param atom_str: :obj:`pkgcore.ebuild.atom.atom` instance
+    Shorthand for `pquery --vdb`
     """
     i = options.domain.all_livefs_repos.itermatch(options.atom,
         sorter=sorted)
@@ -179,7 +198,8 @@ def match(options, out, err):
         out.write(str_pkg(pkg))
     return 0
 
-@BaseCommand.make_command(bind=commands, root_default='/')
+
+@BaseCommand.make_command(bind=common_commands, root_default='/')
 def get_repositories(options, out, err):
     l = []
     for k, repo in options.config.repo.iteritems():
@@ -195,15 +215,20 @@ def find_repo_by_repo_id(config, repo_id):
         if getattr(repo, 'repo_id', None) == repo_id:
             yield repo
 
-@BaseCommand.make_command("repo_id", bind=commands)
-def get_repository_path(options, out, err):
+
+@BaseCommand.make_command("repo_id", bind=portageq_commands)
+def get_repo_path(options, out, err):
     for repo in find_repo_by_repo_id(options.config, options.repo_id):
         if getattr(repo, 'location', None) is not None:
             out.write(repo.location)
         return 0
     return 1
 
-@BaseCommand.make_command("repo_id", bind=commands)
+get_repositories_path = BaseCommand.make_command("repo_id", bind=query_commands,
+    name='get_repositories_path')(get_repo_path.function)
+
+
+@BaseCommand.make_command("repo_id", bind=portageq_commands)
 def get_repo_news_path(options, out, err):
     for repo in find_repo_by_repo_id(options.config, options.repo_id):
         if getattr(repo, 'location', None) is not None:
@@ -212,9 +237,21 @@ def get_repo_news_path(options, out, err):
         return 0
     return 1
 
+
+@BaseCommand.make_command("root? repo_id", bind=portageq_commands,
+    requires_root=False, name='get_repo_news_path')
+def portageq_get_repo_news_path(options, out, err):
+    return get_repo_news_path.function(options, out, err)
+
 def bind_parser(parser, compat=False, name='portageq'):
     subparsers = parser.add_subparsers(help="%s commands" % (name,))
-    for command in commands:
+    l = common_commands[:]
+    if compat:
+        l += portageq_commands
+    else:
+        l += query_commands
+
+    for command in sorted(l, key=lambda x:x.__name__):
         subparser = subparsers.add_parser(command.__name__,
-            help=command.__doc__)
+            help=command.__doc__, description=command.__doc__)
         command().bind_to_parser(subparser, compat=compat)

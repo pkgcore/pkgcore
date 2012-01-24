@@ -472,8 +472,6 @@ class domain(pkgcore.config.domain.domain):
         pre_defaults = [x[1:] for x in pkg.iuse if x[0] == '+']
         if pre_defaults:
             pre_defaults, ue_flags = self.split_use_expand_flags(pre_defaults)
-#            pre_defaults = izip(imap(self.use_expand_re.match, pre_defaults), pre_defaults)
-#            flags, ue_flags = predicate_split(bool, pre_defaults, itemgetter(0))
             pre_defaults.extend(x[1]
                 for x in ue_flags if x[0][0].upper() not in self.settings)
 
@@ -487,37 +485,19 @@ class domain(pkgcore.config.domain.domain):
         disabled = self.disabled_use.pull_data(pkg)
         immutable = self.forced_use.pull_data(pkg)
 
-        if disabled:
-            pass
-            #if enabled is self.enabled_use.defaults:
-            #    enabled = set(enabled)
-            #if immutable is self.forced_use.defaults:
-            #    immutable = set(immutable)
-        elif immutable:
-            pass
-            #if enabled is self.enabled_use.defaults:
-            #    enabled = set(enabled)
-        else:
-            return immutable, enabled, disabled
-        enabled.update(immutable)
-        enabled.difference_update(disabled)
-        immutable.update(disabled)
-
         return immutable, enabled, disabled
 
     def get_package_use_buildable(self, pkg):
-        # we append USE_EXPAND flags into the build env;
-        # this is done for things like linguas.
-        changed_use = set(pkg.use)
-        immutable, enabled, disabled = self.get_package_use_unconfigured(pkg)
-        new_enabled = enabled.difference(changed_use)
-        new_disabled = changed_use.difference(enabled)
-        # we've isolated what's changed.  now get the buildable use,
-        # and apply those changes
-        immutable, enabled, disabled = self.get_package_use_unconfigured(pkg,
-            for_metadata=False)
-        enabled.update(new_enabled)
-        enabled.difference_update(new_disabled)
+        # isolate just what isn't exposed for metadata- anything non-IUSE
+        # this brings in actual use flags the ebuild shouldn't see, but that's
+        # a future enhancement to be done when USE_EXPAND is kept seperate from
+        # mainline USE in this code.
+
+        metadata_use = self.get_package_use_unconfigured(pkg, for_metadata=True)[1]
+        raw_use = self.get_package_use_unconfigured(pkg, for_metadata=False)[1]
+        enabled = raw_use.difference(metadata_use)
+
+        enabled.update(pkg.use)
         return enabled
 
     def get_package_bashrcs(self, pkg):

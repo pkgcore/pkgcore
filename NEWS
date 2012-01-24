@@ -4,6 +4,9 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* pinspect portageq and pinspect query envvar now return space delimited
+  string values if the queried value was a list.
+
 * Fix bug where use dep forced changes to use state weren't honored
   at the build level.
 

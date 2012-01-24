@@ -124,7 +124,10 @@ def envvar(options, out, err):
     distdir_get = lambda d,k: d.settings["fetcher"].distdir
     envvar_getter = {"DISTDIR":distdir_get}
     for x in options.variable:
-        out.write(str(envvar_getter.get(x, default_get)(options.domain, x)))
+        val = envvar_getter.get(x, default_get)(options.domain, x)
+        if not isinstance(val, basestring):
+            val = ' '.join(val)
+        out.write(str(val))
     return 0
 
 @BaseCommand.make_command("atom", bind=commands)

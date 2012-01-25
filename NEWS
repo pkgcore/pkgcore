@@ -4,6 +4,12 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* added hardlink awareness to splitdebug and stripping.  For pkgs
+  that install hardlinks (git for example), this fixes double stripping
+  and complaints output during merging for trying to splitdebug it.
+  Bit faster in addition since for git, it cuts the splitdebug down
+  from 110 to 7 or so.
+
 * Fix incompatibilities in pinspect portageq api that eselect uses.
   Eselect will be updated to use better api's moving forward, but
   till then restore support.

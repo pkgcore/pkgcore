@@ -820,16 +820,17 @@ class BinaryDebug(ThreadedTrigger):
         if ret != 0:
             reporter.warn("stripping %s, type %s failed" % (fs_obj, ftype))
         # need to update chksums here...
-        return (fs_obj,)
+        return fs_obj
 
     def identify_work(self, engine, cset):
         file_typer = file_type.file_identifier()
         regex_f = re.compile(self.elf_regex).match
         engine.observer.debug("starting binarydebug filetype scan")
-        for fs_obj in cset.iterfiles():
+        for fs_objs in cset.inode_map().itervalues():
+            fs_obj = fs_objs[0]
             ftype = file_typer(fs_obj.data)
             if regex_f(ftype):
-                yield fs_obj, ftype
+                yield fs_objs, ftype
         engine.observer.debug("completed binarydebug scan")
 
     def threading_get_args(self, engine, cset):
@@ -840,12 +841,17 @@ class BinaryDebug(ThreadedTrigger):
             engine.observer.info("stripping disabled for %s" % engine.new)
             return False
         self._initialize_paths(engine.new)
-        self._modified = []
+        self._modified = set()
         return True
 
     def _strip(self, iterable, observer, engine, cset):
-        for fs_obj, ftype in iterable:
-            self._modified.extend(self._strip_fsobj(fs_obj, ftype, observer))
+        for fs_objs, ftype in iterable:
+            # strip the first hardlink; then update the rest with the
+            # new objects data.
+            stripped = self._strip_fsobj(fs_objs[0], ftype, observer)
+            self._modified.add(stripped)
+            self._modified.update(stripped.change_attributes(location=fs_obj.data.path)
+                for fs_obj in fs_objs[1:])
 
     def _strip_finish(self, engine, cset):
         if hasattr(self, '_modified'):
@@ -876,10 +882,13 @@ class BinaryDebug(ThreadedTrigger):
         if self._compress:
             objcopy_args.append('--compress-debug-sections')
 
-        for fs_obj, ftype in iterable:
-            if 'ar archive' in ftype or ('relocatable' in ftype and not
-                fs_obj.basename.endswith(".ko")):
+        for fs_objs, ftype in iterable:
+            if 'ar archive' in ftype:
                 continue
+            if 'relocatable' in ftype:
+                if not any(x.basename.endswith(".ko") for x in fs_objs):
+                    continue
+            fs_obj = fs_objs[0]
             debug_loc = pjoin(debug_store, fs_obj.location.lstrip('/') + ".debug")
             if debug_loc in cset:
                 continue
@@ -904,8 +913,20 @@ class BinaryDebug(ThreadedTrigger):
             debug_obj = gen_obj(debug_loc, real_location=debug_ondisk)
             self._modified.add(debug_obj.change_attributes(uid=os_data.root_uid,
                 gid=os_data.root_gid))
-            self._modified.update(self._strip_fsobj(fs_obj, ftype,
-                observer, quiet=True))
+            stripped_fsobj = self._strip_fsobj(fs_obj, ftype, observer, quiet=True)
+            self._modified.add(stripped_fsobj)
+
+            # finally, add hardlinks for each hardlink.
+            for fs_obj in fs_objs[1:]:
+                fpath = fs_obj.data.path
+                debug_loc = pjoin(debug_store,
+                    fs_obj.location.lstrip('/') + ".debug")
+                linked_debug_obj = debug_obj.change_attributes(location=debug_loc)
+                observer.info("splitdebug hardlinking %s to %s" %
+                    (debug_obj.location, debug_loc))
+                self._modified.add(linked_debug_obj)
+                self._modified.add(stripped_fsobj.change_attributes(
+                    location=fpath))
 
     def _split_finish(self, engine, cset):
         if not hasattr(self, '_modified'):

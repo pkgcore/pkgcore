@@ -172,6 +172,36 @@ def default_copyfile(obj, mkdirs=False):
         os.rename(existant_fp, obj.location)
     return True
 
+def do_link(src, trg):
+    try:
+        os.link(src.location, trg.location)
+        return True
+    except EnvironmentError, e:
+        if e.errno != errno.EEXIST:
+            raise
+
+    path = trg.location + '#new'
+    unlink_if_exists(path)
+    try:
+        os.link(src.location, path)
+    except EnvironmentError, e:
+        if e.errno != errno.EXDEV:
+            # someone is screwing with us, or unlink_if_exists is broken.
+            raise
+        # hardlink is impossible, force copyfile
+        return False
+    try:
+        os.rename(path, trg.location)
+    except EnvironmentError:
+        unlink_if_exists(path)
+        if e.eerrno != errno.EXDEV:
+            # weird error, broken FS codes, perms, or someone is screwing with us.
+            raise
+        # this is only possible on overlay fs's; while annoying, you can have two
+        # different filesystems in use in the same directory in those cases.
+        return False
+    return True
+
 
 def merge_contents(cset, offset=None, callback=None):
 
@@ -238,10 +268,22 @@ def merge_contents(cset, offset=None, callback=None):
     # might look odd, but what this does is minimize the try/except cost
     # to one time, assuming everything behaves, rather then per item.
     i = iterate(cset.iterdirs(invert=True))
+    merged_inodes = {}
     while True:
         try:
             for x in i:
                 callback(x)
+
+                if x.is_reg:
+                    key = (x.dev, x.inode)
+                    link_target = merged_inodes.get(key)
+                    if link_target is not None and \
+                        link_target._can_be_hardlinked(x):
+                        if do_link(link_target, x):
+                            continue
+                        # TODO: should notify that hardlinking failed.
+                    merged_inodes.setdefault(key, x)
+
                 copyfile(x, mkdirs=True)
             break
         except CannotOverwrite, cf:

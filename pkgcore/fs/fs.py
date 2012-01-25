@@ -182,6 +182,18 @@ class fsFile(fsBase):
             kwds['chksums'] = None
         return fsBase.change_attributes(self, **kwds)
 
+    def _can_be_hardlinked(self, other):
+        if not other.is_reg:
+            return False
+
+        if None in (self.inode, self.dev):
+            return False
+
+        for attr in ('dev', 'inode', 'uid', 'gid', 'mode', 'mtime'):
+            if getattr(self, attr) != getattr(other, attr):
+                return False
+        return True
+
 
 class fsDir(fsBase):
 

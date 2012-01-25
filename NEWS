@@ -4,6 +4,10 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* pkgcore's merger now will preserve any hardlinks specified in the
+  merge set.  Merges straight from binpkgs don't current preserve
+  hardlinks.
+
 * added hardlink awareness to splitdebug and stripping.  For pkgs
   that install hardlinks (git for example), this fixes double stripping
   and complaints output during merging for trying to splitdebug it.

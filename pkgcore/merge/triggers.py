@@ -355,8 +355,9 @@ class ldconfig(base):
             self.saved_mtimes.set_state(locations)
             return
 
-        if self.saved_mtimes.check_state(locations):
-            self.regen(engine)
+        # always invoke regen; ld.so.conf can have source/include statements,
+        # and modern ldconfig maintains a cache that renders this very, very fast.
+        self.regen(engine)
 
     def regen(self, engine):
         ret = update_elf_hints(engine.offset)

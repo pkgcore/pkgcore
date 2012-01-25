@@ -316,12 +316,9 @@ class Test_ldconfig(trigger_mixin, TestCase):
         self.engine.phase = 'post_%s' % hook
         self.trigger(self.engine, {})
 
-        if ran:
-            self.assertEqual([[getattr(x, 'offset', None) for x in y]
-                for y in self.trigger._passed_in_args],
-                [[self.dir]])
-        else:
-            self.assertEqual(self.trigger._passed_in_args, [])
+        self.assertEqual([[getattr(x, 'offset', None) for x in y]
+            for y in self.trigger._passed_in_args],
+            [[self.dir]])
 
     def test_trigger(self):
         # ensure it doesn't explode for missing dirs.

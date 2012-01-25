@@ -173,7 +173,6 @@ class ThreadedTrigger(base):
         return {}
 
     def trigger(self, engine, *csets):
-        parallelism = engine.parallelism
         if not self.threading_setup(engine, *csets):
             return
 
@@ -181,9 +180,10 @@ class ThreadedTrigger(base):
         observer = threadsafe_repo_observer(observer)
         args = (observer,) + self.threading_get_args(engine, *csets)
         kwargs = self.threading_get_kwargs(engine, *csets)
+        kwargs['threads'] = engine.parallelism
 
-        thread_pool.map_async(list(self.identify_work(engine, *csets)), self.thread_trigger,
-            *args, **kwargs)
+        work = list(self.identify_work(engine, *csets))
+        thread_pool.map_async(work, self.thread_trigger, *args, **kwargs)
 
         self.threading_finish(engine, *csets)
 

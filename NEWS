@@ -20,6 +20,9 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 * Fix bug where use dep forced changes to use state weren't honored
   at the build level.
 
+* Fix fairly serious bug where immutable use flags (arch for example),
+  wasn't being enforced for pkg dependency calculations.
+
 
 pkgcore 0.7.7.7: Jan 24th, 2011
 

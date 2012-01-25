@@ -475,15 +475,18 @@ class domain(pkgcore.config.domain.domain):
             pre_defaults.extend(x[1]
                 for x in ue_flags if x[0][0].upper() not in self.settings)
 
+
+        disabled = self.disabled_use.pull_data(pkg)
+        immutable = self.forced_use.pull_data(pkg)
+
         # lock the configurable use flags to only what's in IUSE, and what's forced
         # from the profiles (things like userland_GNU and arch)
         enabled = self.enabled_use.pull_data(pkg,
             pre_defaults=pre_defaults)
         if for_metadata:
-            enabled = enabled.intersection(x.lstrip("-+") for x in pkg.iuse)
-
-        disabled = self.disabled_use.pull_data(pkg)
-        immutable = self.forced_use.pull_data(pkg)
+            preserves = set(x.lstrip('-+') for x in pkg.iuse)
+            preserves.update(immutable)
+            enabled = enabled.intersection(preserves)
 
         return immutable, enabled, disabled
 

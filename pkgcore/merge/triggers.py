@@ -895,30 +895,38 @@ class BinaryDebug(ThreadedTrigger):
             fpath = fs_obj.data.path
             debug_ondisk = pjoin(os.path.dirname(fpath),
                 os.path.basename(fpath) + ".debug")
+
+            # note that we tell the UI the final pathway- not the intermediate one.
             observer.info("splitdebug'ing %s into %s" %
                 (fs_obj.location, debug_loc))
+
             ret = spawn.spawn(objcopy_args + [fpath, debug_ondisk])
             if ret != 0:
                 observer.warn("splitdebug'ing %s failed w/ exitcode %s" %
                     (fs_obj.location, ret))
                 continue
+
+            # note that the given pathway to the debug file /must/ be relative to ${D};
+            # it must exist at the time of invocation.
             ret = spawn.spawn([self.objcopy_binary,
                 '--add-gnu-debuglink', debug_ondisk, fpath])
             if ret != 0:
                 observer.warn("splitdebug created debug file %r, but "
-                    "failed adding links to %r (%r)" % (debug_loc, fpath, ret))
+                    "failed adding links to %r (%r)" % (debug_ondisk, fpath, ret))
                 observer.debug("failed splitdebug command was %r",
                     (self.objcopy_binary, '--add-gnu-debuglink', debug_ondisk, fpath))
                 continue
-            debug_obj = gen_obj(debug_loc, real_location=debug_ondisk)
-            self._modified.add(debug_obj.change_attributes(uid=os_data.root_uid,
-                gid=os_data.root_gid))
-            stripped_fsobj = self._strip_fsobj(fs_obj, ftype, observer, quiet=True)
-            self._modified.add(stripped_fsobj)
 
-            # finally, add hardlinks for each hardlink.
+
+            debug_obj = gen_obj(debug_loc, real_location=debug_ondisk,
+                uid=os_data.root_uid, gid=os_data.root_gid)
+
+            stripped_fsobj = self._strip_fsobj(fs_obj, ftype, observer, quiet=True)
+
+            self._modified.add(stripped_fsobj)
+            self._modified.add(debug_obj)
+
             for fs_obj in fs_objs[1:]:
-                fpath = fs_obj.data.path
                 debug_loc = pjoin(debug_store,
                     fs_obj.location.lstrip('/') + ".debug")
                 linked_debug_obj = debug_obj.change_attributes(location=debug_loc)
@@ -926,7 +934,7 @@ class BinaryDebug(ThreadedTrigger):
                     (debug_obj.location, debug_loc))
                 self._modified.add(linked_debug_obj)
                 self._modified.add(stripped_fsobj.change_attributes(
-                    location=fpath))
+                    location=fs_obj.location))
 
     def _split_finish(self, engine, cset):
         if not hasattr(self, '_modified'):

@@ -15,7 +15,6 @@ from snakeoil.chksum import get_handler
 from pkgcore import gpg
 from pkgcore.package import errors
 from pkgcore.fs.livefs import iter_scan
-from pkgcore.fs.fs import fsFile
 
 from snakeoil.mappings import make_SlottedDict_kls
 from snakeoil.compatibility import any, raise_from

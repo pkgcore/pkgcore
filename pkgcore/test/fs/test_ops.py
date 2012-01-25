@@ -26,7 +26,7 @@ class TestDefaultEnsurePerms(VerifyMixin, TempDirMixin, TestCase):
 
     def common_bits(self, creator_func, kls):
         kwds = {"mtime":01234, "uid":os.getuid(), "gid":os.getgid(),
-                "mode":0775}
+                "mode":0775, "dev":None, "inode":None}
         o = kls(pjoin(self.dir, "blah"), **kwds)
         creator_func(o.location)
         self.assertTrue(ops.default_ensure_perms(o))
@@ -69,7 +69,8 @@ class TestCopyFile(VerifyMixin, TempDirMixin, TestCase):
         dest = pjoin(self.dir, "copy_test_dest")
         open(src, "w").writelines("asdf\n" for i in xrange(10))
         kwds = {"mtime":10321, "uid":os.getuid(), "gid":os.getgid(),
-                "mode":0664, "data":local_source(src)}
+                "mode":0664, "data":local_source(src), "dev":None,
+                "inode":None}
         o = fs.fsFile(dest, **kwds)
         self.assertTrue(ops.default_copyfile(o))
         self.assertEqual("asdf\n" * 10, open(dest, "r").read())

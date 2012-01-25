@@ -14,7 +14,7 @@ from snakeoil.osutils import normpath, pjoin
 demandload(globals(),
     'os:path',
     'time',
-    'snakeoil.mappings:OrderedDict',
+    'snakeoil.mappings:OrderedDict,defaultdict',
 )
 from itertools import ifilter
 from operator import attrgetter
@@ -291,6 +291,15 @@ class contentsSet(object):
             """ % (s.rstrip("s"), s, s)
         del s
     del k
+
+    def inode_map(self):
+        d = defaultdict(list)
+        for obj in self.iterfiles():
+            key = (obj.dev, obj.inode)
+            if None in key:
+                continue
+            d[key].append(obj)
+        return d
 
     def clone(self, empty=False):
         if empty:

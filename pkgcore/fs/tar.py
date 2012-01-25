@@ -60,6 +60,9 @@ def archive_to_fsobj(src_tar):
             d["data"] = invokable_data_source.wrap_function(partial(
                     src_tar.extractfile, member.name), returns_text=False,
                     returns_handle=True)
+            # suppress hardlinks until the rest of pkgcore is updated for it.
+            d["dev"] = None
+            d["inode"] = None
             yield fsFile(location, **d)
         elif member.issym() or member.islnk():
             yield fsSymlink(location, member.linkname, **d)

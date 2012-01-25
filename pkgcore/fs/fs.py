@@ -141,9 +141,9 @@ class fsFile(fsBase):
 
     """file class"""
 
-    __slots__ = ("chksums", "data")
+    __slots__ = ("chksums", "data", "dev", "inode")
     __attrs__ = fsBase.__attrs__ + __slots__
-    __default_attrs__ = {"mtime":0l}
+    __default_attrs__ = {"mtime":0l, 'dev':None, 'inode':None}
 
     is_reg = True
 

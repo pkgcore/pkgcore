@@ -280,6 +280,30 @@ class TestContentsSet(TestCase):
         obj = cs['/dir1']
         self.assertEqual(obj.mode, 0775)
 
+    def test_inode_map(self):
+
+        def check_it(target):
+            d = dict((k, sorted(v)) for k,v in cs.inode_map().iteritems())
+            target = dict((k, sorted(v)) for k,v in target.iteritems())
+            self.assertEqual(d, target)
+
+        cs = contents.contentsSet()
+        f1 = self.mk_file("/f", dev=1, inode=1)
+        cs.add(f1)
+        check_it({(1,1):[f1]})
+
+        f2 = self.mk_file("/x", dev=1, inode=2)
+        cs.add(f2)
+        check_it({(1,1):[f1], (1,2):[f2]})
+
+        f3 = self.mk_file("/y", dev=2, inode=1)
+        cs.add(f3)
+        check_it({(1,1):[f1], (1,2):[f2], (2,1):[f3]})
+
+        f4 = self.mk_file("/z", dev=1, inode=1)
+        cs.add(f4)
+        check_it({(1,1):[f1, f4], (1,2):[f2], (2,1):[f3]})
+
 
 class Test_offset_rewriting(TestCase):
 

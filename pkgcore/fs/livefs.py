@@ -56,6 +56,8 @@ def gen_obj(path, stat=None, chksum_handlers=None, real_location=None,
     if S_ISREG(mode):
         d["size"] = stat.st_size
         d["data"] = local_source(real_location)
+        d["dev"] = stat.st_dev
+        d["inode"] = stat.st_ino
         if chksum_handlers is not None:
             d["chf_types"] = chksum_handlers
         return fsFile(path, **d)

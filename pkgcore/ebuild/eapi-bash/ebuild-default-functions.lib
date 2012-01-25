@@ -111,7 +111,8 @@ unpack()
 				xz -dc "${srcdir}${x}" | tar xf - ${taropts} || die "$myfail"
 				;;
 			*.ZIP|*.zip|*.jar)
-				{ while :; do echo n || break; done } | unzip -qo "${srcdir}${x}" || die "$myfail"
+				{ set +x; while :; do echo n || break; done } | \
+					unzip -qo "${srcdir}${x}" || die "$myfail"
 				;;
 			*.gz|*.Z|*.z)
 				gzip -dc "${srcdir}${x}" > ${name%.*} || die "$myfail"

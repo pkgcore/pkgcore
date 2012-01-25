@@ -43,6 +43,9 @@ class FsObjsTest(TempDirMixin, TestCase):
         o = livefs.gen_obj(path)
         self.assertTrue(fs.isreg(o))
         self.check_attrs(o, path)
+        o2 = livefs.gen_obj(path, inode=None)
+        self.check_attrs(o, path)
+        self.assertNotEqual(o.inode, o2.inode)
 
     def test_gen_obj_dir(self):
         o = livefs.gen_obj(self.dir)

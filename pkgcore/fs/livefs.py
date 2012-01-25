@@ -28,7 +28,7 @@ def gen_chksums(handlers, location):
 
 
 def gen_obj(path, stat=None, chksum_handlers=None, real_location=None,
-    stat_func=os.lstat):
+    stat_func=os.lstat, **overrides):
 
     """
     given a fs path, and an optional stat, create an appropriate fs obj.
@@ -60,8 +60,11 @@ def gen_obj(path, stat=None, chksum_handlers=None, real_location=None,
         d["inode"] = stat.st_ino
         if chksum_handlers is not None:
             d["chf_types"] = chksum_handlers
+        d.update(overrides)
         return fsFile(path, **d)
-    elif S_ISDIR(mode):
+
+    d.update(overrides)
+    if S_ISDIR(mode):
         return fsDir(path, **d)
     elif S_ISLNK(mode):
         d["target"] = os.readlink(real_location)

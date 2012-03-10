@@ -27,8 +27,8 @@ def DeriveMetadataKls(original_kls):
                 "generation\n\n" + \
                      "\n".join(x.lstrip()
                           for x in original_kls.__doc__.split("\n")
-                          if "@ivar" in x or "@cvar" in x)
-            __doc__ += "\n@ivar repo: parent repository"
+                          if ":ivar" in x or ":cvar" in x)
+            __doc__ += "\n:ivar repo: parent repository"
         except AttributeError:
             # wee, must be in -OO mode.
             __doc__ = None
@@ -100,7 +100,7 @@ class factory(object):
 
     does weakref caching per repository
 
-    @cvar child_class: callable to generate packages
+    :cvar child_class: callable to generate packages
     """
 
     child_class = package

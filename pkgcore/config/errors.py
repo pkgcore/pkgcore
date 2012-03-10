@@ -61,7 +61,7 @@ class ConfigurationError(BaseError):
     """Fatal error in parsing a config section.
 
     :type stack: sequence of strings.
-    @ivar stack: messages describing where this ConfigurationError originated.
+    :ivar stack: messages describing where this ConfigurationError originated.
         configuration-related code catching ConfigurationError that wants to
         raise its own ConfigurationError should modify (usually append to)
         the stack and then re-raise the original exception (this makes sure
@@ -130,10 +130,10 @@ class ComplexInstantiationError(ConfigurationError):
 
     """Exception occured during instantiation.
 
-    @ivar callable: callable object which failed during instantiation.
-    @ivar pargs: positional args passed to callable.
-    @ivar kwargs: keyword args passed to callable.
-    @ivar exc: Original exception object or None.
+    :ivar callable: callable object which failed during instantiation.
+    :ivar pargs: positional args passed to callable.
+    :ivar kwargs: keyword args passed to callable.
+    :ivar exc: Original exception object or None.
 
     A well-behaved configurable callable should raise this exception
     if instantiation failed, providing one or both of message and

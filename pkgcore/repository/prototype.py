@@ -119,15 +119,15 @@ class tree(object):
     """
     repository template
 
-    @ivar raw_repo: if wrapping a repo, set raw_repo per instance to it
-    @ivar livefs: boolean, set it to True if it's a repository representing
+    :ivar raw_repo: if wrapping a repo, set raw_repo per instance to it
+    :ivar livefs: boolean, set it to True if it's a repository representing
         a livefs
-    @ivar package_class: callable to generate a package instance, must override
-    @ivar configured: if a repo is unusable for merging/unmerging
+    :ivar package_class: callable to generate a package instance, must override
+    :ivar configured: if a repo is unusable for merging/unmerging
         without being configured, set it to False
-    @ivar configure: if the repository isn't configured, must be a callable
+    :ivar configure: if the repository isn't configured, must be a callable
         yielding a configured form of the repository
-    @ivar frozen_settable: bool controlling whether frozen is able to be set via
+    :ivar frozen_settable: bool controlling whether frozen is able to be set via
         __init__
     """
 

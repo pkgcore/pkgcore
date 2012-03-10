@@ -57,14 +57,14 @@ class _native_CPV(object):
     """
     base ebuild package class
 
-    @ivar category: str category
-    @ivar package: str package
-    @ivar key: strkey (cat/pkg)
-    @ivar version: str version
-    @ivar revision: int revision
-    @ivar versioned_atom: atom matching this exact version
-    @ivar unversioned_atom: atom matching all versions of this package
-    @cvar _get_attr: mapping of attr:callable to generate attributes on the fly
+    :ivar category: str category
+    :ivar package: str package
+    :ivar key: strkey (cat/pkg)
+    :ivar version: str version
+    :ivar revision: int revision
+    :ivar versioned_atom: atom matching this exact version
+    :ivar unversioned_atom: atom matching all versions of this package
+    :cvar _get_attr: mapping of attr:callable to generate attributes on the fly
     """
 
     __slots__ = ("__weakref__", "cpvstr", "key", "category", "package",
@@ -338,14 +338,14 @@ def mk_cpv_cls(base_cls):
         """
         base ebuild package class
 
-        @ivar category: str category
-        @ivar package: str package
-        @ivar key: strkey (cat/pkg)
-        @ivar version: str version
-        @ivar revision: int revision
-        @ivar versioned_atom: atom matching this exact version
-        @ivar unversioned_atom: atom matching all versions of this package
-        @cvar _get_attr: mapping of attr:callable to generate attributes on the fly
+        :ivar category: str category
+        :ivar package: str package
+        :ivar key: strkey (cat/pkg)
+        :ivar version: str version
+        :ivar revision: int revision
+        :ivar versioned_atom: atom matching this exact version
+        :ivar unversioned_atom: atom matching all versions of this package
+        :cvar _get_attr: mapping of attr:callable to generate attributes on the fly
         """
 
         __slots__ = ()

@@ -59,12 +59,12 @@ class base(object):
 
     """base trigger class
 
-    @ivar required_csets: If None, all csets are passed in, else it must be a
+    :ivar required_csets: If None, all csets are passed in, else it must be a
         sequence, those specific csets are passed in
-    @ivar _label: Either None, or a string to use for this triggers label
-    @ivar _hook: sequence of hook points to register into
-    @ivar priority: range of 0 to 100, order of execution for triggers per hook
-    @ivar _engine_types: if None, trigger works for all engine modes, else it's
+    :ivar _label: Either None, or a string to use for this triggers label
+    :ivar _hook: sequence of hook points to register into
+    :ivar priority: range of 0 to 100, order of execution for triggers per hook
+    :ivar _engine_types: if None, trigger works for all engine modes, else it's
         limited to that mode, and must be a sequence
     """
 

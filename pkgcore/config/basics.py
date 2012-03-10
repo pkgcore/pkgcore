@@ -38,13 +38,13 @@ class ConfigType(object):
 
     """A configurable type.
 
-    @ivar name: string specifying the protocol the instantiated object
+    :ivar name: string specifying the protocol the instantiated object
         conforms to.
-    @ivar callable: callable used to instantiate this type.
-    @ivar types: dict mapping key names to type strings.
-    @ivar positional: container holding positional arguments.
-    @ivar required: container holding required arguments.
-    @ivar allow_unknowns: controls whether unknown settings should error.
+    :ivar callable: callable used to instantiate this type.
+    :ivar types: dict mapping key names to type strings.
+    :ivar positional: container holding positional arguments.
+    :ivar required: container holding required arguments.
+    :ivar allow_unknowns: controls whether unknown settings should error.
     """
 
     def __init__(self, func_obj):

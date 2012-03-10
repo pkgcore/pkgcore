@@ -24,13 +24,13 @@ class base(object):
     # leave this.
 
     """
-    @ivar autocommits: Controls whether the template commits every update,
+    :ivar autocommits: Controls whether the template commits every update,
         or queues up updates.
-    @ivar complete_eclass_entries: Specifies if the cache backend stores full
+    :ivar complete_eclass_entries: Specifies if the cache backend stores full
         eclass data, or partial.
-    @ivar cleanse_keys: Boolean controlling whether the template should drop
+    :ivar cleanse_keys: Boolean controlling whether the template should drop
         empty keys for storing.
-    @ivar serialize_eclasses: Boolean controlling whether the template should
+    :ivar serialize_eclasses: Boolean controlling whether the template should
         serialize eclass data itself, or leave it to the derivative.
     """
 

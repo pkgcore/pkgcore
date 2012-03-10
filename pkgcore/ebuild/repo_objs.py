@@ -34,11 +34,11 @@ class Maintainer(object):
     At least one of email and name is not C{None}.
 
     :type email: C{unicode} object or C{None}
-    @ivar email: email address.
+    :ivar email: email address.
     :type name: C{unicode} object or C{None}
-    @ivar name: full name
+    :ivar name: full name
     :type description: C{unicode} object or C{None}
-    @ivar description: description of maintainership.
+    :ivar description: description of maintainership.
     """
 
     __slots__ = ('email', 'description', 'name')

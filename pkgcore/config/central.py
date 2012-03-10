@@ -100,13 +100,13 @@ class CollapsedConfig(object):
     """A collapsed config section.
 
     :type type: :obj:`basics.ConfigType`
-    @ivar type: Our type.
+    :ivar type: Our type.
     :type config: dict
-    @ivar config: The supplied configuration values.
-    @ivar debug: if True exception wrapping is disabled.
-    @ivar default: True if this section is a default.
+    :ivar config: The supplied configuration values.
+    :ivar debug: if True exception wrapping is disabled.
+    :ivar default: True if this section is a default.
     :type name: C{str} or C{None}
-    @ivar name: our section name or C{None} for an anonymous section.
+    :ivar name: our section name or C{None} for an anonymous section.
     """
 
     def __init__(self, type_obj, config, manager, debug=False, default=False):

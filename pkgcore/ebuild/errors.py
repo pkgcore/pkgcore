@@ -33,7 +33,7 @@ class InvalidVersion(errors.InvalidDependency):
 class InvalidCPV(errors.InvalidPackageName):
     """Raised if an invalid cpv was passed in.
 
-    @ivar args: single-element tuple containing the invalid string.
+    :ivar args: single-element tuple containing the invalid string.
     :type args: C{tuple}
     """
 

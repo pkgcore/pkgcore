@@ -116,8 +116,8 @@ class MainMixin(object):
 
     """Provide some utility methods for testing the parser and main.
 
-    @cvar parser: OptionParser subclass to test.
-    @cvar main: main function to test.
+    :cvar parser: OptionParser subclass to test.
+    :cvar main: main function to test.
     """
 
     requires_compat_config_manager = True

@@ -5,7 +5,7 @@
 virtual repository, pkgs generated via callable
 """
 
-__all__ = ("virtual",)
+__all__ = ("tree",)
 
 from pkgcore.repository import prototype
 from pkgcore.package import virtual

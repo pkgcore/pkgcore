@@ -76,8 +76,9 @@ class Xpak(object):
     def write_xpak(cls, target_source, data):
         """
         write an xpak dict to disk; overwriting an xpak if it exists
-        :param target_source: string path, or
-            :obj:`snakeoil.data_source.base` derivative
+
+        :param target_source: string path, or \
+          :obj:`snakeoil.data_source.base` derivative
         :param data: mapping instance to write into the xpak.
         :return: xpak instance
         """

@@ -111,7 +111,12 @@ class ebd(object):
         if self.prefix_mode:
             self.env['EROOT'] = normpath(self.domain.root)
             self.prefix = self.domain.prefix.lstrip("/")
-            self.env['EPREFIX'] = normpath(pjoin(self.env["EROOT"], self.prefix))
+            eprefix = normpath(pjoin(self.env["EROOT"], self.prefix))
+            if eprefix == '/':
+                # Set eprefix to '' if it's basically empty; this keeps certain crappy builds
+                # (cmake for example) from puking over //usr/blah pathways
+                eprefix = ''
+            self.env["EPREFIX"] = eprefix
             self.env["PKGCORE_PREFIX_SUPPORT"] = 'true'
 
         self.env.update(pkg.eapi_obj.get_ebd_env())

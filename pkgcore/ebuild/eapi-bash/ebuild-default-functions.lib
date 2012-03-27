@@ -169,7 +169,7 @@ dyn_src_install()
 	echo
 	if ${PKGCORE_PREFIX_SUPPORT}; then
 		echo ">>> Install ${PF} into ${ED} category ${CATEGORY}"
-	else:
+	else
 		echo ">>> Install ${PF} into ${D} category ${CATEGORY}"
 	fi
 	if is_function src_install; then

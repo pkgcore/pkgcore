@@ -11,6 +11,7 @@ from stat import ST_MODE
 
 from snakeoil import distutils_extensions as snk_distutils
 
+
 class mysdist(snk_distutils.sdist):
 
     """sdist command specifying the right files and generating ChangeLog."""
@@ -226,9 +227,22 @@ class pkgcore_install_man(core.Command):
 
 class pkgcore_install(install.install):
 
+    user_options = install.install.user_options[:]
+    user_options.append(('skip-man', None, 'Skip installing man pages'))
+
+    boolean_options = install.install.boolean_options[:]
+    boolean_options.append('skip-man')
+
+    def initialize_options(self):
+        install.install.initialize_options(self)
+        self.skip_man = False
+
+    def _should_install_man(self):
+        return not self.skip_man
+
     sub_commands = install.install.sub_commands[:]
     sub_commands.append(('pkgcore_install_scripts', None))
-    sub_commands.append(('pkgcore_install_man', None))
+    sub_commands.append(('install_man', _should_install_man))
 
 
 class pkgcore_build_py(snk_distutils.build_py):
@@ -306,10 +320,13 @@ cmdclass={
     'install':pkgcore_install,
     'pkgcore_build_scripts': pkgcore_build_scripts,
     'pkgcore_install_scripts': pkgcore_install_scripts,
-    'pkgcore_install_man': pkgcore_install_man,
+    'install_man': pkgcore_install_man,
 }
 command_options = {}
 
+# All versions of snakeoil past 0.4.6 now return a class
+# by default, that is a failure if invoked; this code is
+# left in place for <=0.4.6 compatibility.
 BuildDoc = snk_distutils.sphinx_build_docs()
 if BuildDoc:
     cmdclass['build_docs'] = BuildDoc

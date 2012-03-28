@@ -629,14 +629,6 @@ class atom(boolean.AndRestriction):
         raise NotImplementedError(
             'Someone added an op to atom without adding it to intersects')
 
-    def f(cls, *args, **kwds):
-        return cls(*args, **kwds)
-
-    for x in const.eapi_capable:
-        locals()['eapi%i_atom' % x] = classmethod(partial(f, eapi=x))
-
-    del f, x
-
     def evaluate_conditionals(self, parent_cls, parent_seq, enabled, tristate=None):
         parent_seq.append(self)
 

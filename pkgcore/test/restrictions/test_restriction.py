@@ -1,4 +1,4 @@
-# Copyright: 2007 Brian Harring <ferringb@gmail.com
+# Copyright: 2007-2012 Brian Harring <ferringb@gmail.com
 # Copyright: 2005 Marien Zwart <marienz@gentoo.org>
 # License: BSD/GPL2
 
@@ -32,7 +32,6 @@ class BaseTest(TestRestriction):
         self.assertTrue(repr(base))
         self.assertTrue(hash(base))
         self.assertRaises(NotImplementedError, base.match)
-        self.assertIdentical(None, base.intersect(base))
 
     def test_it(self):
         true = self.bool_kls(negate=False)

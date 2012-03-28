@@ -1,4 +1,4 @@
-# Copyright: 2005-2011 Brian Harring <ferringb@gmail.com>
+# Copyright: 2005-2012 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
 """
@@ -119,37 +119,6 @@ class PackageRestriction_mixin(restriction.base):
         if not isinstance(self.restriction, boolean.base):
             return 1
         return len(self.restriction) + 1
-
-    def intersect(self, other):
-        """Build a restriction that matches anything matched by this and other.
-
-        If an optimized intersection cannot be determined this returns C{None}.
-        """
-        if (self.negate != other.negate or
-            self.attrs != other.attrs or
-            self.__class__ is not other.__class__):
-            return None
-        # Make the most subclassed instance do the intersecting
-        if isinstance(self.restriction, other.restriction.__class__):
-            s = self.restriction.intersect(other.restriction)
-        elif isinstance(other.restriction, self.restriction.__class__):
-            s = other.restriction.intersect(self.restriction)
-        else:
-            # Child restrictions are not related, give up.
-            return None
-        if s is None:
-            return None
-
-        # optimization: do not build a new wrapper if we already have one.
-        if s == self.restriction:
-            return self
-        elif s == other.restriction:
-            return other
-
-        # This breaks completely if we are a subclass with different
-        # __init__ args, so such a subclass had better override this
-        # method...
-        return self.__class__(self.attr, s, negate=self.negate)
 
     def __hash__(self):
         return hash((self.negate, self.attrs, self.restriction))
@@ -288,11 +257,6 @@ class Conditional(PackageRestriction):
         """
         PackageRestriction.__init__(self, attr, childrestriction, **kwds)
         object.__setattr__(self, "payload", tuple(payload))
-
-    def intersect(self, other):
-        # PackageRestriction defines this but its implementation won't
-        # work for us, so fail explicitly.
-        raise NotImplementedError(self)
 
     def __str__(self):
         return "( Conditional: %s payload: [ %s ] )" % (

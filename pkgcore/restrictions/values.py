@@ -1,4 +1,4 @@
-# Copyright: 2005-2011 Brian Harring <ferringb@gmail.com
+# Copyright: 2005-2012 Brian Harring <ferringb@gmail.com
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
 # License: BSD/GPL2
 
@@ -127,11 +127,6 @@ class StrRegex(base):
             else:
                 value = str(value)
         return (self._matchfunc(value) is not None) != self.negate
-
-    def intersect(self, other):
-        if self == other:
-            return self
-        return None
 
     def __repr__(self):
         result = [self.__class__.__name__, repr(self.regex)]
@@ -271,15 +266,6 @@ class StrGlobMatch(base):
         else:
             f = value.endswith
         return f(self.glob) ^ self.negate
-
-    def intersect(self, other):
-        if self.match(other.glob):
-            if self.negate == other.negate:
-                return other
-        elif other.match(self.glob):
-            if self.negate == other.negate:
-                return self
-        return None
 
     def __repr__(self):
         if self.negate:

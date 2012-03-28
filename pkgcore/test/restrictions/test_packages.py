@@ -1,4 +1,4 @@
-# Copyright: 2006-2011 Brian Harring <ferringb@gmail.com
+# Copyright: 2006-2012 Brian Harring <ferringb@gmail.com
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
 # License: BSD/GPL2
 
@@ -15,20 +15,6 @@ from snakeoil.mappings import AttrAccessible
 class AlwaysSelfIntersect(values.base):
     def intersect(self, other):
         return self
-
-    __hash__ = object.__hash__
-
-
-class DummyIntersectingValues(values.base):
-
-    """Helper to test PackageRestriction.intersect."""
-
-    def __init__(self, val, iself=False, negate=False):
-        object.__setattr__(self, "negate", negate)
-        object.__setattr__(self, "val", val)
-
-    def intersect(self, other):
-        return DummyIntersectingValues((self.val, other.val))
 
     __hash__ = object.__hash__
 
@@ -126,26 +112,6 @@ class native_PackageRestrictionTest(TestRestriction):
         self.assertNotEqual(
             self.kls('one', values.AlwaysTrue, negate=True),
             self.kls('one', values.AlwaysFalse, negate=True))
-
-    def test_intersect(self):
-        always_self = AlwaysSelfIntersect()
-        p1 = self.kls('one', always_self)
-        p1n = self.kls('one', always_self, negate=True)
-        p2 = self.kls('two', always_self)
-        self.assertIdentical(p1, p1.intersect(p1))
-        self.assertIdentical(None, p1.intersect(p2))
-        self.assertIdentical(None, p1n.intersect(p1))
-
-        for negate in (False, True):
-            d1 = self.kls(
-                'one', DummyIntersectingValues(1), negate=negate)
-            d2 = self.kls(
-                'one', DummyIntersectingValues(2), negate=negate)
-            i1 = d1.intersect(d2)
-            self.assertTrue(i1)
-            self.assertEqual((1, 2), i1.restriction.val)
-            self.assertEqual(negate, i1.negate)
-            self.assertEqual('one', i1.attr)
 
     def test_hash(self):
         inst = self.kls('one.dar', AlwaysSelfIntersect())

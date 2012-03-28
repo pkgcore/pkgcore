@@ -1,4 +1,4 @@
-# Copyright: 2005-2011 Brian Harring <ferringb@gmail.com
+# Copyright: 2005-2012 Brian Harring <ferringb@gmail.com
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
 # License: BSD/GPL2
 
@@ -35,9 +35,6 @@ class base(object):
 
     def force_True(self, *arg, **kwargs):
         return self.match(*arg, **kwargs)
-
-    def intersect(self, other):
-        return None
 
     def __len__(self):
         return 1

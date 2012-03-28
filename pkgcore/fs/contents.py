@@ -7,7 +7,7 @@ contents set- container of fs objects
 
 from pkgcore.fs import fs
 from snakeoil.compatibility import all, any
-from snakeoil.klass import generic_equality
+from snakeoil.klass import generic_equality, alias_method
 from snakeoil.currying import partial
 from snakeoil.demandload import demandload
 from snakeoil.osutils import normpath, pjoin
@@ -236,11 +236,22 @@ class contentsSet(object):
             d[x.location] = x
 
     def iterfiles(self, invert=False):
+        """A generator yielding just :obj:`pkgcore.fs.fs.fsFile` instances.
+
+        :param invert: if True, yield everything that isn't a fsFile instance,
+            else yields just fsFile instances.
+        """
+
         if invert:
             return (x for x in self if not x.is_reg)
         return ifilter(attrgetter('is_reg'), self)
 
     def files(self, invert=False):
+        """Returns a list of just :obj:`pkgcore.fs.fs.fsFile` instances.
+
+        :param invert: if True, yield everything that isn't a
+            fsFile instance, else yields just fsFile.
+        """
         return list(self.iterfiles(invert=invert))
 
     def iterdirs(self, invert=False):
@@ -251,13 +262,16 @@ class contentsSet(object):
     def dirs(self, invert=False):
         return list(self.iterdirs(invert=invert))
 
-    def iterlinks(self, invert=False):
+    def itersymlinks(self, invert=False):
         if invert:
             return (x for x in self if not x.is_sym)
         return ifilter(attrgetter('is_sym'), self)
 
-    def links(self, invert=False):
+    def symlinks(self, invert=False):
         return list(self.iterlinks(invert=invert))
+
+    iterlinks = alias_method('itersymlinks')
+    links = alias_method('symlinks')
 
     def iterdevs(self, invert=False):
         if invert:
@@ -275,21 +289,11 @@ class contentsSet(object):
     def fifos(self, invert=False):
         return list(self.iterfifos(invert=invert))
 
-    for k in ("files", "dirs", "links", "devs", "fifos"):
-        s = k.capitalize()
-        locals()[k].__doc__ = \
-            """
-            returns a list of just :obj:`pkgcore.fs.fs.fs%s` instances
-            :param invert: if True, yield everything that isn't a
-                fs%s instance, else yields just fs%s
-            """ % (s.rstrip("s"), s, s)
-        locals()["iter"+k].__doc__ = \
-            """
-            a generator yielding just :obj:`pkgcore.fs.fs.fs%s` instances
-            :param invert: if True, yield everything that isn't a
-                fs%s instance, else yields just fs%s
-            """ % (s.rstrip("s"), s, s)
-        del s
+    for k in ("file", "dir", "symlink", "dev", "fifo"):
+        locals()['iter%ss' % k].__doc__ = \
+            iterfiles.__doc__.replace('fsFile', 'fs%s' % k.capitalize())
+        locals()['%ss' % k].__doc__ = \
+            files.__doc__.replace('fsFile', 'fs%s' % k.capitalize())
     del k
 
     def inode_map(self):
@@ -317,10 +321,10 @@ class contentsSet(object):
         return cset
 
     def iter_child_nodes(self, start_point):
-        """yield a stream of nodes that are fs entries contained within the
-        passed in start point
+        """Yield a stream of nodes that are fs entries contained within the
+        passed in start point.
 
-        :param start_point: fs filepath all yielded nodes must be w/in
+        :param start_point: fs filepath all yielded nodes must be within.
         """
 
         if isinstance(start_point, fs.fsBase):
@@ -335,18 +339,18 @@ class contentsSet(object):
                 yield x
 
     def child_nodes(self, start_point):
-        """return a clone of this instance, w/ just the child nodes returned
-        from iter_child_nodes
+        """Return a clone of this instance, w/ just the child nodes returned
+        from `iter_child_nodes`.
 
-        :param start_point: fs filepath all yielded nodes must be w/in
+        :param start_point: fs filepath all yielded nodes must be within.
         """
         obj = self.clone(empty=True)
         obj.update(self.iter_child_nodes(start_point))
         return obj
 
     def map_directory_structure(self, other, add_conflicting_sym=True):
-        """resolve the directory structure between this instance, and another contentset,
-        collapsing syms of self into directories of other
+        """Resolve the directory structure between this instance, and another
+        contentset, collapsing syms of self into directories of other.
         """
         conflicts_d = dict((x, x.resolved_target) for x in other.iterlinks())
         # rebuild the targets first; sorted due to the fact that we want to
@@ -370,9 +374,7 @@ class contentsSet(object):
         return obj
 
     def add_missing_directories(self, mode=0775, uid=0, gid=0, mtime=None):
-        """
-        ensure that a directory node exists for each path; add if missing
-        """
+        """Ensure that a directory node exists for each path; add if missing."""
         missing = (x.dirname for x in self)
         missing = set(x for x in missing if x not in self)
         if mtime is None:

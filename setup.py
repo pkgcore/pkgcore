@@ -69,11 +69,11 @@ class pkgcore_build_scripts(build_scripts.build_scripts):
         build_scripts.build_scripts.finalize_options(self)
         self.scripts = [os.path.join('bin', 'pwrapper_installed')]
 
-# pkgcore_{build,install}_scripts are registered as separate commands
-# instead of overriding the default {build,install}_scripts because
-# those are only run if the "scripts" arg to setup is not empty.
 
-build.build.sub_commands.append(('pkgcore_build_scripts', None))
+class pkgcore_build(build.build):
+
+  sub_commands = build.build.sub_commands[:]
+  sub_commands.append(('pkgcore_build_scripts', None))
 
 
 class pkgcore_install_scripts(core.Command):
@@ -224,8 +224,11 @@ class pkgcore_install_man(core.Command):
         return self.man_pages
 
 
-install.install.sub_commands.append(('pkgcore_install_scripts', None))
-install.install.sub_commands.append(('pkgcore_install_man', None))
+class pkgcore_install(install.install):
+
+    sub_commands = install.install.sub_commands[:]
+    sub_commands.append(('pkgcore_install_scripts', None))
+    sub_commands.append(('pkgcore_install_man', None))
 
 
 class pkgcore_build_py(snk_distutils.build_py):
@@ -296,9 +299,11 @@ from pkgcore.const import VERSION as version
 
 cmdclass={
     'sdist': mysdist,
+    'build': pkgcore_build,
     'build_py': pkgcore_build_py,
     'build_ext': snk_distutils.build_ext,
     'test': test,
+    'install':pkgcore_install,
     'pkgcore_build_scripts': pkgcore_build_scripts,
     'pkgcore_install_scripts': pkgcore_install_scripts,
     'pkgcore_install_man': pkgcore_install_man,

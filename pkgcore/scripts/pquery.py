@@ -121,7 +121,7 @@ def format_depends(out, node, func=_default_formatter):
         without writing a newline and return C{False}.
         If it needs multiple lines it should first write a newline, not write
         a terminating newline, and return C{True}.
-    @returns: The same kind of boolean func should return.
+    :returns: The same kind of boolean func should return.
     """
     # Do this first since if it is a DepSet it is also an
     # AndRestriction (DepSet subclasses that).

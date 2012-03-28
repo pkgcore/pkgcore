@@ -48,12 +48,9 @@ def userquery(prompt, out, err, responses=None, default_answer=None, limit=3):
     :type responses: mapping with C{basestring} keys and tuple values.
     :param responses: mapping of user input to function result.
         The first item in the value tuple is returned, the rest is passed to
-        out.
-        Defaults to::
-        {
-            'yes': (True, out.fg('green'), 'Yes'),
-            'no': (False, out.fg('red'), 'No'),
-        }
+        out.  Defaults to::
+        {'yes': (True, out.fg('green'), 'Yes'),
+        'no': (False, out.fg('red'), 'No')}
     :param default_answer: returned if there is no input
         (user just hits enter). Defaults to True if responses is unset,
         unused otherwise.

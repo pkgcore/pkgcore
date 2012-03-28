@@ -473,11 +473,12 @@ class atom(boolean.AndRestriction):
 
         Two atoms "intersect" if a package can be constructed that
         matches both:
-          - if you query for just "dev-lang/python" it "intersects" both
-            "dev-lang/python" and ">=dev-lang/python-2.4"
-          - if you query for "=dev-lang/python-2.4" it "intersects"
-            ">=dev-lang/python-2.4" and "dev-lang/python" but not
-            "<dev-lang/python-2.3"
+
+        - if you query for just "dev-lang/python" it "intersects" both
+          "dev-lang/python" and ">=dev-lang/python-2.4"
+        - if you query for "=dev-lang/python-2.4" it "intersects"
+          ">=dev-lang/python-2.4" and "dev-lang/python" but not
+          "<dev-lang/python-2.3"
 
         USE and slot deps are also taken into account.
 

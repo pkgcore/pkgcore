@@ -203,8 +203,8 @@ class tree(object):
         """
         generator that yields packages match a restriction.
 
-        :type restrict : :obj:`pkgcore.restrictions.packages.PackageRestriction`
-            instance
+        :type restrict: :obj:`pkgcore.restrictions.packages.PackageRestriction`
+            instance.
         :param restrict: restriction to search via
         :param restrict_solutions: cnf collapsed list of the restrict.
             Don't play with it unless you know what you're doing

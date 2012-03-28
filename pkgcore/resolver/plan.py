@@ -140,7 +140,7 @@ class resolver_stack(deque):
     frame_klass = resolver_frame
     depth = property(len)
     current_frame = property(operator.itemgetter(-1))
-    filter_ignored = staticmethod(
+    _filter_ignored = staticmethod(
         partial(filterfalse, operator.attrgetter("ignored")))
 
     # this *has* to be a property, else it creates a cycle.
@@ -188,9 +188,9 @@ class resolver_stack(deque):
 
     def _cycles(self, trg_frame, start=0, reverse=False, skip_trg_frame=True):
         if reverse:
-            i = self.filter_ignored(reversed(self))
+            i = self._filter_ignored(reversed(self))
         else:
-            i = self.filter_ignored(self)
+            i = self._filter_ignored(self)
         if start != 0:
             i = islice(i, start, None)
         if skip_trg_frame:
@@ -564,6 +564,7 @@ class merge_plan(object):
 
     def check_for_cycles(self, stack, cur_frame):
         """check the current stack for cyclical issues;
+
         :param stack: current stack, a :obj:`resolver_stack` instance
         :param cur_frame: current frame, a :obj:`resolver_frame` instance
         :return: True if no issues and resolution should continue, else the

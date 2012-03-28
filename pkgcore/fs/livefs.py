@@ -152,9 +152,9 @@ def iter_scan(path, offset=None, follow_symlinks=False, chksum_types=None):
 
 
 def scan(*a, **kw):
-    """
-    calls list(iter_scan(*a, **kw))
-    Look at iter_scan for valid args
+    """Alias for list(iter_scan(\*a, \*\*kw))
+
+    Look at :py:func:`iter_scan` for valid args.
     """
     mutable = kw.pop("mutable", True)
     return contentsSet(iter_scan(*a, **kw), mutable=mutable)
@@ -177,7 +177,7 @@ class _realpath_dir(object):
 
 
 def intersect(cset, realpath=False):
-    """generate the intersect of a cset and the livefs"""
+    """Generate the intersect of a cset and the livefs."""
     f = gen_obj
     if realpath:
         f2 = _realpath_dir()

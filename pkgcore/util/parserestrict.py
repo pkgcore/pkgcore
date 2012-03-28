@@ -24,7 +24,7 @@ def comma_separated_containment(attr, values_kls=frozenset, token_kls=str):
     """Helper for parsing comma-separated strings to a ContainmentMatch.
 
     :param attr: name of the attribute.
-    @returns: a parse function: takes a string of comma-separated values,
+    :returns: a parse function: takes a string of comma-separated values,
         returns a :obj:`packages.PackageRestriction` matching packages that
         have any of those values in the attribute passed to this function.
     """
@@ -55,26 +55,26 @@ def collect_ops(text):
     return text[0:i], text[i:]
 
 def parse_match(text):
-
     """generate appropriate restriction for text
 
     Parsing basically breaks it down into chunks split by /, with each
     chunk allowing for prefix/postfix globbing- note that a postfixed
     glob on package token is treated as package attribute matching,
-    B{not} as necessarily a version match.
+    not as necessarily a version match.
 
     If only one chunk is found, it's treated as a package chunk.
     Finally, it supports a nonstandard variation of atom syntax where
     the category can be dropped.
 
-    Examples-
-      - "*": match all
-      - "dev-*/*": category must start with dev-
-      - "dev-*": package must start with dev-
-      - *-apps/portage*: category must end in -apps,
-          package must start with portage
-      - >=portage-2.1: atom syntax, package portage,
-          version greater then or equal to 2.1
+    Examples:
+
+    - `*`: match all
+    - `dev-*/*`: category must start with 'dev-'
+    - `dev-*`: package must start with 'dev-'
+    - `*-apps/portage*`: category must end in '-apps', package must start with
+      'portage'
+    - `>=portage-2.1`: atom syntax, package 'portage', version greater then or
+      equal to '2.1'
 
     :param text: string to attempt to parse
     :type text: string

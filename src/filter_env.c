@@ -583,13 +583,13 @@ PyDoc_STRVAR(
 	run_docstring,
 	"Print a filtered environment.\n"
 	"\n"
-	"@param out: file-like object to write to.\n"
-	"@param file_buff: string containing the environment to filter.\n"
+	":param out: file-like object to write to.\n"
+	":param file_buff: string containing the environment to filter.\n"
 	"	Should end in '\0'.\n"
-	"@param vsr: result of build_regex_string or C{None}, for variables.\n"
-	"@param vsr: result of build_regex_string or C{None}, for functions.\n"
-	"@param desired_var_match: boolean indicating vsr should match or not.\n"
-	"@param desired_func_match: boolean indicating fsr should match or not.\n"
+	":param vsr: result of build_regex_string or C{None}, for variables.\n"
+	":param vsr: result of build_regex_string or C{None}, for functions.\n"
+	":param desired_var_match: boolean indicating vsr should match or not.\n"
+	":param desired_func_match: boolean indicating fsr should match or not.\n"
 	);
 
 static PyObject *

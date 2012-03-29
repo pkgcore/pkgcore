@@ -98,9 +98,17 @@ class pkgcore_build(build.build):
 
     def initialize_options(self):
         build.build.initialize_options(self)
-        path = os.path.abspath(os.path.dirname(__file__))
-        self.enable_man_pages = not os.path.exists(os.path.join(path, 'man'))
-        self.enable_html_docs = False
+        self.enable_man_pages = None
+        self.enable_html_docs = None
+
+    def finalize_options(self):
+        build.build.finalize_options(self)
+        if self.enable_man_pages is None:
+            path = os.path.dirname(os.path.abspath(__file__))
+            self.enable_man_pages = not os.path.exists(os.path.join(path, 'man'))
+
+        if self.enable_html_docs is None:
+            self.enable_html_docs = False
 
 
 class pkgcore_install_scripts(core.Command):
@@ -223,41 +231,35 @@ class pkgcore_install_docs(core.Command):
         return os.path.join(self.prefix, 'share', 'doc',
             'pkgcore-%s' % version, 'html')
 
-    def scan_content(self, path=None, first_run=True):
-        if path is None:
-            path = self.source_path
-        if path is None:
-            cwd = os.getcwd()
-            for possible_path in self.content_search_path:
-                possible_path = os.path.join(cwd, possible_path)
-                if os.path.isdir(possible_path):
-                    path = possible_path
-                    break
-            else:
-                if not first_run:
-                    if not BuildDoc:
-                        raise errors.DistutilsExecError(
-                            "no pregenerated sphinx content, and sphinx isn't available "
-                            "to generate them; bailing")
-                    raise errors.DistutilsExecError("no content found")
-                try:
-                    self.distribution.get_command_obj(self.build_command)
-                except errors.DistutilsModuleError:
-                    # command doesn't exist
-                    self.warn("%s command doesn't exist; sphinx isn't "
-                              "installed, skipping man pages" % (self.build_command,))
-                    return []
-                self.run_command(self.build_command)
-                return self.scan_content(path=path, first_run=False)
-            self.source_path = path
-        obj = self.content = self._map_paths(_get_files(path))
-        return obj
+    def find_content(self):
+        cwd = os.path.dirname(os.path.abspath(__file__))
+        for possible_path in self.content_search_path:
+            possible_path = os.path.join(cwd, possible_path)
+            if os.path.isdir(possible_path):
+                return possible_path
+        else:
+            return None
 
     def _map_paths(self, content):
         return dict((x, x) for x in content)
 
-    def run(self):
+    def scan_content(self):
+        self.content = self._map_paths(_get_files(self.source_path))
+        return self.content
+
+    def run(self, firstrun=True):
+        self.source_path = self.find_content()
+        if self.source_path is None:
+            if not firstrun:
+                raise errors.DistutilsExecError(
+                    "no pregenerated sphinx content, and sphinx isn't available "
+                    "to generate it; bailing")
+            self.run_command(self.build_command)
+            return self.run(False)
+
         content = self.scan_content()
+
+        content = self.content
         directories = set(map(os.path.dirname, content.itervalues()))
         directories.discard('')
         for x in sorted(directories):
@@ -321,6 +323,12 @@ class pkgcore_install(install.install):
         install.install.initialize_options(self)
         self.enable_man_pages = True
         self.enable_html_docs = False
+
+    def finalize_options(self):
+        build_options = self.distribution.command_options.setdefault('build', {})
+        build_options['enable_man_pages'] = ('command_line', self.enable_man_pages and 1 or 0)
+        build_options['enable_html_docs'] = ('command_line', self.enable_man_pages and 1 or 0)
+        install.install.finalize_options(self)
 
     sub_commands = install.install.sub_commands[:]
     sub_commands.append(('pkgcore_install_scripts', None))

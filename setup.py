@@ -167,9 +167,9 @@ def _get_files(path):
     return l
 
 
-class pkgcore_install_html(core.Command):
+class pkgcore_install_docs(core.Command):
 
-    """Install html pages"""
+    """Install html documentation"""
 
     content_search_path = ('build/sphinx/html', 'html')
     user_options = [('path=', None,
@@ -250,7 +250,7 @@ class pkgcore_install_html(core.Command):
         return self.content.values()
 
 
-class pkgcore_install_man(pkgcore_install_html):
+class pkgcore_install_man(pkgcore_install_docs):
 
     """Install man pages"""
 
@@ -276,30 +276,31 @@ class pkgcore_install_man(pkgcore_install_html):
 class pkgcore_install(install.install):
 
     user_options = install.install.user_options[:]
-    user_options.append(('man-pages', None,
+    user_options.append(('enable-man-pages', None,
         'Install man pages.  Defaults to enabled.'))
-    user_options.append(('no-man-pages', None,
+    user_options.append(('disable-man-pages', None,
         'Disable man page generation and installation.'))
-    user_options.append(('html-docs', None,
+    user_options.append(('enable-html-docs', None,
         'Install html docs.'))
-    user_options.append(('no-html-docs', None,
+    user_options.append(('disable-html-docs', None,
         'Disable installation of html docs.  This is the default.'))
 
     boolean_options = install.install.boolean_options[:]
-    boolean_options.extend(['man-pages', 'html-docs'])
+    boolean_options.extend(['enable-man-pages', 'enable-html-docs'])
 
     negative_opt = install.install.negative_opt.copy()
-    negative_opt.update({'no-html-docs':'html-docs', 'no-man-pages':'man-pages'})
+    negative_opt.update({'disable-html-docs':'enable-html-docs',
+                        'disable-man-pages':'enable-man-pages'})
 
     def initialize_options(self):
         install.install.initialize_options(self)
-        self.man_pages = True
-        self.html_docs = False
+        self.enable_man_pages = True
+        self.enable_html_docs = False
 
     sub_commands = install.install.sub_commands[:]
     sub_commands.append(('pkgcore_install_scripts', None))
-    sub_commands.append(('install_man', operator.attrgetter('man_pages')))
-    sub_commands.append(('install_html', operator.attrgetter('html_docs')))
+    sub_commands.append(('install_man', operator.attrgetter('enable_man_pages')))
+    sub_commands.append(('install_docs', operator.attrgetter('enable_html_docs')))
 
 
 class pkgcore_build_py(snk_distutils.build_py):
@@ -381,7 +382,7 @@ cmdclass={
     'pkgcore_build_scripts': pkgcore_build_scripts,
     'pkgcore_install_scripts': pkgcore_install_scripts,
     'install_man': pkgcore_install_man,
-    'install_html': pkgcore_install_html,
+    'install_docs': pkgcore_install_docs,
 }
 command_options = {}
 

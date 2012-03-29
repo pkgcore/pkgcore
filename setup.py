@@ -284,10 +284,13 @@ class test(snk_distutils.test):
     default_test_namespace = 'pkgcore.test'
 
 
-packages = [
-    root.replace(os.path.sep, '.')
-    for root, dirs, files in os.walk('pkgcore')
-    if '__init__.py' in files]
+def _find_modules(location):
+    return [root.replace(os.path.sep, '.')
+        for root, dirs, files in os.walk(location)
+        if '__init__.py' in files]
+
+
+packages = _find_modules('pkgcore')
 
 extensions = []
 if not snk_distutils.is_py3k:

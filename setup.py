@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import operator
 import os
 import sys
 import subprocess
@@ -275,21 +276,30 @@ class pkgcore_install_man(pkgcore_install_html):
 class pkgcore_install(install.install):
 
     user_options = install.install.user_options[:]
-    user_options.append(('skip-man', None, 'Skip installing man pages'))
+    user_options.append(('man-pages', None,
+        'Install man pages.  Defaults to enabled.'))
+    user_options.append(('no-man-pages', None,
+        'Disable man page generation and installation.'))
+    user_options.append(('html-docs', None,
+        'Install html docs.'))
+    user_options.append(('no-html-docs', None,
+        'Disable installation of html docs.  This is the default.'))
 
     boolean_options = install.install.boolean_options[:]
-    boolean_options.append('skip-man')
+    boolean_options.extend(['man-pages', 'html-docs'])
+
+    negative_opt = install.install.negative_opt.copy()
+    negative_opt.update({'no-html-docs':'html-docs', 'no-man-pages':'man-pages'})
 
     def initialize_options(self):
         install.install.initialize_options(self)
-        self.skip_man = False
-
-    def _should_install_man(self):
-        return not self.skip_man
+        self.man_pages = True
+        self.html_docs = False
 
     sub_commands = install.install.sub_commands[:]
     sub_commands.append(('pkgcore_install_scripts', None))
-    sub_commands.append(('install_man', _should_install_man))
+    sub_commands.append(('install_man', operator.attrgetter('man_pages')))
+    sub_commands.append(('install_html', operator.attrgetter('html_docs')))
 
 
 class pkgcore_build_py(snk_distutils.build_py):

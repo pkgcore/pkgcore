@@ -330,8 +330,11 @@ class pkgcore_install(_base_install):
 
     def finalize_options(self):
         build_options = self.distribution.command_options.setdefault('build', {})
-        build_options['enable_man_pages'] = ('command_line', self.enable_man_pages and 1 or 0)
         build_options['enable_html_docs'] = ('command_line', self.enable_html_docs and 1 or 0)
+        man_pages = self.enable_man_pages
+        if man_pages and os.path.exists('man'):
+            man_pages = False
+        build_options['enable_man_pages'] = ('command_line', man_pages and 1 or 0)
         _base_install.finalize_options(self)
 
     sub_commands = _base_install.sub_commands[:]

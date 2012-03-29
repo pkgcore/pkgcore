@@ -302,9 +302,11 @@ class pkgcore_install_man(pkgcore_install_docs):
         return d
 
 
-class pkgcore_install(install.install):
+_base_install = getattr(snk_distutils, 'install', install.install)
 
-    user_options = install.install.user_options[:]
+class pkgcore_install(_base_install):
+
+    user_options = _base_install.user_options[:]
     user_options.append(('enable-man-pages', None,
         'Install man pages.  Defaults to enabled.'))
     user_options.append(('disable-man-pages', None,
@@ -314,15 +316,15 @@ class pkgcore_install(install.install):
     user_options.append(('disable-html-docs', None,
         'Disable installation of html docs.  This is the default.'))
 
-    boolean_options = install.install.boolean_options[:]
+    boolean_options = _base_install.boolean_options[:]
     boolean_options.extend(['enable-man-pages', 'enable-html-docs'])
 
-    negative_opt = install.install.negative_opt.copy()
+    negative_opt = _base_install.negative_opt.copy()
     negative_opt.update({'disable-html-docs':'enable-html-docs',
                         'disable-man-pages':'enable-man-pages'})
 
     def initialize_options(self):
-        install.install.initialize_options(self)
+        _base_install.initialize_options(self)
         self.enable_man_pages = True
         self.enable_html_docs = False
 
@@ -330,9 +332,9 @@ class pkgcore_install(install.install):
         build_options = self.distribution.command_options.setdefault('build', {})
         build_options['enable_man_pages'] = ('command_line', self.enable_man_pages and 1 or 0)
         build_options['enable_html_docs'] = ('command_line', self.enable_man_pages and 1 or 0)
-        install.install.finalize_options(self)
+        _base_install.finalize_options(self)
 
-    sub_commands = install.install.sub_commands[:]
+    sub_commands = _base_install.sub_commands[:]
     sub_commands.append(('pkgcore_install_scripts', None))
     sub_commands.append(('install_man', operator.attrgetter('enable_man_pages')))
     sub_commands.append(('install_docs', operator.attrgetter('enable_html_docs')))

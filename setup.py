@@ -17,6 +17,8 @@ class mysdist(snk_distutils.sdist):
 
     """sdist command specifying the right files and generating ChangeLog."""
 
+    old_verinfo = False
+
     user_options = snk_distutils.sdist.user_options + [
         ('build-docs', None, 'build docs [default]'),
         ('no-build-docs', None, 'do not build docs'),

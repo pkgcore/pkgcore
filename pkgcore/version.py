@@ -10,19 +10,27 @@ from pkgcore import const
 
 _ver = None
 
-def get_version():
-    """:return: a string describing the pkgcore version."""
-    global _ver
-    if _ver is not None:
-        return _ver
-
+def _compatibility_version():
+    version_info = None
     try:
         from pkgcore._verinfo import version_info
     except ImportError:
-        # intentionally lazy imported.
-        from snakeoil.version import get_git_version
-        version_info = get_git_version(__file__)
+        return "pkgcore %s\nUnknown vcs version" % (const.VERSION,)
+    if not isinstance(version_info, str):
+        return ("pkgcore %s\ngit rev %s, date %s" %
+            (const.VERSION, version_info['rev'], version_info['date']))
+    return "pkgcore %s\n%s" % (const.VERSION, version_info)
 
-    _ver = 'pkgcore %s\n(%s)' % (const.VERSION, version_info)
-
+def get_version():
+    """:return: a string describing the pkgcore version."""
+    global _ver
+    if _ver is None:
+        try:
+            from snakeoil.version import format_version
+        except ImportError:
+            format_version = None
+        if format_version is None:
+            _ver = _compatibility_version()
+        else:
+            _ver = format_version('pkgcore', __file__, const.VERSION)
     return _ver

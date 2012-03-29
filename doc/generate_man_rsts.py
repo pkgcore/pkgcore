@@ -5,6 +5,7 @@ from pkgcore.util import argparse
 pjoin = os.path.join
 from snakeoil.currying import partial
 
+
 def _rst_header(char, text, leading=False):
     s = char * len(text)
     if leading:
@@ -15,35 +16,59 @@ def _indent(stream):
     for s in stream:
         yield '  ' + s
 
+_splitting_regex = re.compile("(?:^|\n+(?=[^ \n]))")
+def _find_spacing(string):
+  pre, sep, post = string.rpartition('  ')
+  while pre:
+    yield len(pre)
+    pre, sep, post = pre.rpartition('  ')
+
+def _deserialize_2d_array(data):
+    lines = _splitting_regex.split(data.strip())
+    if not lines:
+        return []
+    line_iter = iter(lines)
+    candidates = set(_find_spacing(line_iter.next()))
+    for line in lines:
+        candidates.intersection_update(_find_spacing(line))
+        if not candidates:
+            break
+    else:
+        lowest = min(candidates)
+        return [(line[:lowest].strip(), line[lowest+2:].strip())
+            for line in lines]
+    raise Exception("Failed to parse %r" % (data,))
+
 
 class ManConverter(object):
 
     positional_re = re.compile("(^|\n)([^: ]+)")
     positional_re = partial(positional_re.sub, '\g<1>:\g<2>:')
 
-    option_list_re = re.compile("(^|\n)(?!`)(?:-{1,2})(.*?)  ")
-    def mangle_options(match):
-        text = raw_text = match.string[match.start():match.end()]
-        leading = ''
-        if raw_text[0] == '\n':
-            leading = '\n'
-            text = raw_text[1:]
-        if '\n' in text:
-            # bad match...
-            print "not rewriting %r" % (text,)
-            return raw_text
-        text = text.split(',')
+    arg_enumeration_re = re.compile("{([^}]+)}")
+    def _rewrite_option(self, text):
+        def f(match):
+            string = match.group(1)
+            string = string.replace(',', '|')
+            array = [x.strip() for x in string.split('|')]
+            # Specifically return '|' w/out spaces; later code is
+            # space sensitve.  We do the appropriate replacement as
+            # the last step.
+            return '<%s>' % ('|'.join(array),)
+        text = self.arg_enumeration_re.sub(f, text)
+        # Now that we've convert {x,y} style options, we need to next
+        # convert multi-argument options into a form that is parsable
+        # as a two item tuple.
         l = []
-        for chunk in text:
+        for chunk in text.split(','):
             chunk = chunk.split()
             if len(chunk) > 2:
-                chunk[1:] = ['<%s>' % (' '.join(chunk[1:]),)]
+                chunk[1:] = ['<%s>' % ' '.join(chunk[1:])]
             l.append(' '.join(chunk))
-        return "%s%s  " % (leading, ', '.join(l))
-
-    option_list_re = partial(option_list_re.sub,
-        mangle_options)
-    mangle_options = staticmethod(mangle_options)
+        # Recompose the options into one text field.
+        text = ', '.join(l)
+        # Finally, touch up <x|a> into <x | a>
+        return text.replace('|', ' | ')
 
     @classmethod
     def regen_if_needed(cls, base_path, src, out_name=None, force=False):
@@ -164,11 +189,18 @@ class ManConverter(object):
             data = h.format_help()
             if not data:
                 continue
-            data = self.option_list_re(data)
             l.extend(_rst_header("=", action_group.title))
             if action_group.description:
-                l.extend(action_group.description.split("\n"))
-            l.extend(data.split("\n"))
+                l.extend(action_group.description.lstrip('\n').rstrip('\n').splitlines())
+                l.append('')
+
+            array = _deserialize_2d_array(data)
+            if array:
+                array = [(self._rewrite_option(x[0]), x[1]) for x in array]
+                min_length = max(len(x[0]) for x in array) +2
+                array = [(x[0].ljust(min_length, ' '), x[1]) for x in array]
+                l.extend(''.join(x) for x in array)
+            l.append('')
         return l
 
     def generate_usage(self, parser, name):

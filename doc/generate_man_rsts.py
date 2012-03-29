@@ -198,5 +198,21 @@ class ManConverter(object):
 
 if __name__ == '__main__':
     import sys
-    for x in sys.stdin:
-        ManConverter.regen_if_needed(sys.argv[1], *x.rstrip("\n").split())
+    output = sys.argv[1]
+    targets = sys.argv[2:]
+    if not targets:
+        sys.exit(0)
+    elif targets[0] == '--conf':
+        import conf
+        targets = getattr(conf, 'generated_man_pages', [])
+    elif len(targets) % 2 != 0:
+        print "bad arguments given"
+        sys.exit(1)
+    else:
+        targets = iter(targets)
+        targets = zip(targets, targets)
+    output = os.path.abspath(output)
+    if not os.path.isdir(output):
+        os.makedirs(output)
+    for source, target in targets:
+        ManConverter.regen_if_needed(sys.argv[1], source, target)

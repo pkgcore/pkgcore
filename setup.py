@@ -158,31 +158,51 @@ class pkgcore_install_scripts(core.Command):
         return self.scripts
 
 
-class pkgcore_install_man(core.Command):
+def _get_files(path):
+    l = []
+    for root, dirs, files in os.walk(path):
+        l.extend(os.path.join(root, fn)[len(path):].lstrip('/')
+            for fn in files)
+    return l
 
-    """Install man pages"""
 
-    man_search_path = ('build/sphinx/man', 'man')
+class pkgcore_install_html(core.Command):
+
+    """Install html pages"""
+
+    content_search_path = ('build/sphinx/html', 'html')
+    user_options = [('path=', None,
+                        "Final path to install to; else it's calculated")]
+    build_command = 'build_docs'
 
     def initialize_options(self):
-        self.install_man = None
+        self.root = None
         self.prefix = None
-        self.man_pages = []
+        self.path = None
+        self.content = []
+        self.source_path = None
 
     def finalize_options(self):
         self.set_undefined_options('install',
-                                   ('root', 'install_man'),
+                                   ('root', 'root'),
                                    ('install_base', 'prefix'),
                                    )
-        if not self.install_man:
-            self.install_man = '/'
-        self.install_man = os.path.join(self.install_man,
-            self.prefix.lstrip(os.path.sep), 'share', 'man')
+        if not self.root:
+            self.root = '/'
+        if self.path is None:
+            self.path = os.path.join(self.root,
+                self.calculate_install_path().lstrip(os.path.sep))
 
-    def scan_man_pages(self, path=None, first_run=True):
+    def calculate_install_path(self):
+        return os.path.join(self.prefix, 'share', 'doc',
+            'pkgcore-%s' % version, 'html')
+
+    def scan_content(self, path=None, first_run=True):
+        if path is None:
+            path = self.source_path
         if path is None:
             cwd = os.getcwd()
-            for possible_path in self.man_search_path:
+            for possible_path in self.content_search_path:
                 possible_path = os.path.join(cwd, possible_path)
                 if os.path.isdir(possible_path):
                     path = possible_path
@@ -191,38 +211,65 @@ class pkgcore_install_man(core.Command):
                 if not first_run:
                     if not BuildDoc:
                         raise errors.DistutilsExecError(
-                            "no pregenerated man pages, and sphinx isn't available "
+                            "no pregenerated sphinx content, and sphinx isn't available "
                             "to generate them; bailing")
-                    raise errors.DistutilsExecError("no man pages found")
+                    raise errors.DistutilsExecError("no content found")
                 try:
-                    self.distribution.get_command_obj('build_man')
+                    self.distribution.get_command_obj(self.build_command)
                 except errors.DistutilsModuleError:
                     # command doesn't exist
-                    self.warn("build_man command doesn't exist; sphinx isn't installed, skipping man pages")
+                    self.warn("%s command doesn't exist; sphinx isn't "
+                              "installed, skipping man pages" % (self.build_command,))
                     return []
-                self.run_command('build_man')
-                return self.scan_man_pages(path=path, first_run=False)
-        obj = self.man_pages = [
-            os.path.join(path, x) for x in os.listdir(path)
-            if len(x) > 2 and x[-2] == '.' and x[-1].isdigit()]
+                self.run_command(self.build_command)
+                return self.scan_content(path=path, first_run=False)
+            self.source_path = path
+        obj = self.content = self._map_paths(_get_files(path))
         return obj
 
-    def run(self):
-        pages = self.scan_man_pages()
-        for x in sorted(set(page[-1] for page in pages)):
-            self.mkpath(os.path.join(self.install_man, 'man%s' % x))
+    def _map_paths(self, content):
+        return dict((x, x) for x in content)
 
-        for page in pages:
+    def run(self):
+        content = self.scan_content()
+        directories = set(map(os.path.dirname, content.itervalues()))
+        directories.discard('')
+        for x in sorted(directories):
+            self.mkpath(os.path.join(self.path, x))
+
+        for src, dst in sorted(content.iteritems()):
             self.copy_file(
-                page,
-                os.path.join(self.install_man, 'man%s' % page[-1],
-                    os.path.basename(page)))
+                os.path.join(self.source_path, src),
+                os.path.join(self.path, dst))
 
     def get_inputs(self):
-        return self.man_pages
+        return self.content.keys()
 
     def get_outputs(self):
-        return self.man_pages
+        return self.content.values()
+
+
+class pkgcore_install_man(pkgcore_install_html):
+
+    """Install man pages"""
+
+    content_search_path = ('build/sphinx/man', 'man')
+    user_options = [('path=', None,
+                        "Final path to install to; else it's calculated")]
+    build_command = 'build_man'
+
+    def calculate_install_path(self):
+        return os.path.join(self.prefix, 'share', 'man')
+
+    def _map_paths(self, content):
+        d = {}
+        for x in content:
+            if len(x) >= 3 and x[-2] == '.' and x[-1].isdigit():
+                # Only consider extensions .1, .2, .3, etc, and files that
+                # have at least a single char beyond the extension (thus ignore
+                # .1, but allow a.1).
+                d[x] = 'man%s/%s' % (x[-1], os.path.basename(x))
+        return d
 
 
 class pkgcore_install(install.install):
@@ -324,6 +371,7 @@ cmdclass={
     'pkgcore_build_scripts': pkgcore_build_scripts,
     'pkgcore_install_scripts': pkgcore_install_scripts,
     'install_man': pkgcore_install_man,
+    'install_html': pkgcore_install_html,
 }
 command_options = {}
 

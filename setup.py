@@ -74,8 +74,33 @@ class pkgcore_build_scripts(build_scripts.build_scripts):
 
 class pkgcore_build(build.build):
 
-  sub_commands = build.build.sub_commands[:]
-  sub_commands.append(('pkgcore_build_scripts', None))
+    user_options = build.build.user_options[:]
+    user_options.append(('enable-man-pages', None,
+        'Install man pages.  Defaults to enabled.'))
+    user_options.append(('disable-man-pages', None,
+        'Disable man page generation and installation.'))
+    user_options.append(('enable-html-docs', None,
+        'Install html docs.'))
+    user_options.append(('disable-html-docs', None,
+        'Disable installation of html docs.  This is the default.'))
+
+    boolean_options = build.build.boolean_options[:]
+    boolean_options.extend(['enable-man-pages', 'enable-html-docs'])
+
+    negative_opt = dict(getattr(build.build, 'negative_opt', {}))
+    negative_opt.update({'disable-html-docs':'enable-html-docs',
+                        'disable-man-pages':'enable-man-pages'})
+
+    sub_commands = build.build.sub_commands[:]
+    sub_commands.append(('pkgcore_build_scripts', None))
+    sub_commands.append(('build_docs', operator.attrgetter('enable_html_docs')))
+    sub_commands.append(('build_man', operator.attrgetter('enable_man_pages')))
+
+    def initialize_options(self):
+        build.build.initialize_options(self)
+        path = os.path.abspath(os.path.dirname(__file__))
+        self.enable_man_pages = not os.path.exists(os.path.join(path, 'man'))
+        self.enable_html_docs = False
 
 
 class pkgcore_install_scripts(core.Command):

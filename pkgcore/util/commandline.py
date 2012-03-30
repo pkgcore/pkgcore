@@ -593,6 +593,9 @@ class ArgumentParser(argparse.ArgumentParser):
             return functor
         return f
 
+    def add_subparsers(self, **kwargs):
+        kwargs.setdefault('title', 'subcommands')
+        return argparse.ArgumentParser.add_subparsers(self, **kwargs)
 
 class ArgparseCommand(object):
 

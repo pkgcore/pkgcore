@@ -64,6 +64,8 @@ class ManConverter(object):
             chunk = chunk.split()
             if len(chunk) > 2:
                 chunk[1:] = ['<%s>' % ' '.join(chunk[1:])]
+            if not chunk[0].startswith('-'):
+                chunk[0] = ':%s:' % (chunk[0],)
             l.append(' '.join(chunk))
         # Recompose the options into one text field.
         text = ', '.join(l)

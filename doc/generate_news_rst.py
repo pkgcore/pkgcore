@@ -49,7 +49,7 @@ def convert_news(text, project_name, release_extlink=None, git_extlink=None):
         if ver != 'trunk' and release_extlink is not None:
             l2.append(':%s:`Download<%s>`' % (release_extlink, tag))
         if git_extlink is not None:
-            l2.append(':%s:`Git history<%s>`' % (git_extlink, tag))
+            l2.append(':%s:`Git Shortlog<%s>`' % (git_extlink, tag))
 
         if l2:
             l.append(', '.join(l2))

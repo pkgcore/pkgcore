@@ -274,7 +274,7 @@ autosummary_generate = False
 autodoc_default_flags = ["members", "show-inheritance", "inherited-members", "undoc-members"]
 
 extlinks = {
-    'git_tag':('http://code.google.com/p/pkgcore/source/list?name=v%s', 'git log '),
+    'git_tag':('http://code.google.com/p/pkgcore/source/list?name=%s', 'git log '),
     'git_release':('http://code.google.com/p/pkgcore/downloads/detail?name=pkgcore-%s.tar.bz2',
         'release download ')
 }

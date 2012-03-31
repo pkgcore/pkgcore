@@ -3,6 +3,7 @@ Pkgcore Release Notes
 
 See ChangeLog for full commit logs; this is summarized/major changes.
 
+pkgcore trunk:
 
 * Added `pconfig world` for world file manipulation.
 

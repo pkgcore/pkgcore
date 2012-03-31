@@ -9,8 +9,10 @@ Welcome to pkgcore's documentation!
 Contents:
 
 .. toctree::
-   :maxdepth: 2
+   :titlesonly:
+   :maxdepth: 1
 
+   news
    api
    man
    dev-notes

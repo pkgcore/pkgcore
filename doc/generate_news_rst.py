@@ -40,12 +40,14 @@ def convert_news(text, project_name, release_extlink=None, git_extlink=None):
         # Ensure we leave a trailing and leading newline to keep ReST happy.
         l = ['', '.. _release-%s:' % (ver,), '', s, '-' * len(s), '']
 
+        l2 = []
         if release_extlink is not None:
-            l.append(':%s:`Download<%s>`' % (release_extlink, ver))
+            l2.append(':%s:`Download<%s>`' % (release_extlink, ver))
         if git_extlink is not None:
-            l.append(':%s:`Git history<%s>`' % (git_extlink, ver))
+            l2.append(':%s:`Git history<%s>`' % (git_extlink, ver))
 
-        if (git_extlink, release_extlink) != (None, None):
+        if l2:
+            l.append(', '.join(l2))
             l.append('')
 
         l.append('Notable changes:')

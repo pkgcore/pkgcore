@@ -11,7 +11,7 @@ __all__ = ("parse_match", "ParseError",)
 
 from pkgcore.restrictions import packages, values, util
 from pkgcore.ebuild import atom, cpv, errors
-from snakeoil.compatibility import raise_from
+from snakeoil.compatibility import raise_from, is_py3k
 import re
 
 valid_globbing = re.compile(r"^(?:[\w+-.]+|(?<!\*)\*)+$").match
@@ -81,8 +81,10 @@ def parse_match(text):
     :return: :obj:`pkgcore.restrictions.packages` derivative
     """
 
-    # Ensure the text var is a string.
-    orig_text = text = text.encode('ascii').strip()
+    # Ensure the text var is a string if we're under py3k.
+    if not is_py3k:
+        text = text.encode('ascii')
+    orig_text = text = text.strip()
     if "!" in text:
         raise ParseError(
             "!, or any form of blockers make no sense in this usage: %s" % (

@@ -39,12 +39,13 @@ def convert_news(text, project_name, release_extlink=None, git_extlink=None):
             tag = 'v%s' % ver
         date = match.group(2)
         s = ' '.join([project_name, ver])
-        if date is not None:
-            s += ': %s' % (date.strip(),)
+        date = date.strip()
         # Ensure we leave a trailing and leading newline to keep ReST happy.
         l = ['', '.. _release-%s:' % (ver,), '', s, '-' * len(s), '']
 
         l2 = []
+        if date:
+            l2.append("Released %s" % date.strip())
         if ver != 'trunk' and release_extlink is not None:
             l2.append(':%s:`Download<%s>`' % (release_extlink, tag))
         if git_extlink is not None:
@@ -57,7 +58,7 @@ def convert_news(text, project_name, release_extlink=None, git_extlink=None):
         l.append('Notable changes:')
         l.append('')
         return '\n'.join(l)
-    text = re.sub(r'(?:\n|^)%s +(\d\.[^:\n]+|trunk):?([^\n]*)(?:\n|$)' % (project_name,),
+    text = re.sub(r'(?:\n|^)%s +(\d+\.\d+[^:\s]*|trunk):?([^\n]*)(?:\n|$)' % (project_name,),
         f, text)
     return ".. _news:\n\n%s" % (text,)
 

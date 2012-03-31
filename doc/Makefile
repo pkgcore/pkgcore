@@ -49,7 +49,7 @@ man_rsts:
 
 news:
 	@echo "autogenerating news rst..."
-	./generate_news_rst.py pkgcore ../NEWS news.rst
+	./generate_news_rst.py pkgcore ../NEWS news.rst 'git_release' 'git_tag'
 
 api:
 	@echo "autogenerating api rsts..."

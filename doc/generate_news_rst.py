@@ -5,7 +5,7 @@ import re
 import sys
 
 
-def regenerate_if_needed(project, src, out):
+def regenerate_if_needed(project, src, out, release_extlink=None, git_extlink=None):
     cut_off = int(max(os.stat(x).st_mtime for x in [src,__file__]))
     try:
         if int(os.stat(out).st_mtime) >= cut_off:
@@ -14,12 +14,12 @@ def regenerate_if_needed(project, src, out):
         if e.errno != errno.ENOENT:
             raise
     print "regenerating %s news for %s -> %s" % (project, src, out)
-    new_text = convert_news(open(src, 'r').read(), project)
+    new_text = convert_news(open(src, 'r').read(), project, release_extlink, git_extlink)
     open(out, 'w').write(new_text)
     os.utime(out, (-1, cut_off))
 
 
-def convert_news(text, project_name):
+def convert_news(text, project_name, release_extlink=None, git_extlink=None):
     project_name = project_name.strip()
     def f(match):
         ver = match.group(1).strip()
@@ -29,6 +29,17 @@ def convert_news(text, project_name):
             s += ': %s' % (date.strip(),)
         # Ensure we leave a trailing and leading newline to keep ReST happy.
         l = ['', '.. _release-%s:' % (ver,), '', s, '-' * len(s), '']
+
+        if release_extlink is not None:
+            l.append(':%s:`Download<%s>`' % (release_extlink, ver))
+        if git_extlink is not None:
+            l.append(':%s:`Git history<%s>`' % (git_extlink, ver))
+
+        if (git_extlink, release_extlink) != (None, None):
+            l.append('')
+
+        l.append('Notable changes\:')
+        l.append('')
         return '\n'.join(l)
     text = re.sub(r'(?:\n|^)%s +(0\.[^:\n]+):?([^\n]*)(?:\n|$)' % (project_name,),
         f, text)
@@ -36,7 +47,7 @@ def convert_news(text, project_name):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) != 4:
+    if len(sys.argv) not in (4, 6):
         print "wrong args given; need project_name src out"
         sys.exit(1)
-    regenerate_if_needed(*sys.argv[1:4])
+    regenerate_if_needed(*sys.argv[1:6])

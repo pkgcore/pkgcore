@@ -572,6 +572,10 @@ class ArgumentParser(argparse.ArgumentParser):
             err = sys.exc_info()[1]
             self.error(str(err))
 
+        final_check = getattr(args, 'final_check', None)
+        if final_check is not None:
+            del args.final_check
+            final_check(self, args)
         return args
 
     def bind_main_func(self, functor):
@@ -596,6 +600,11 @@ class ArgumentParser(argparse.ArgumentParser):
     def add_subparsers(self, **kwargs):
         kwargs.setdefault('title', 'subcommands')
         return argparse.ArgumentParser.add_subparsers(self, **kwargs)
+
+    def bind_final_check(self, functor):
+        self.set_defaults(final_check=functor)
+        return functor
+
 
 class ArgparseCommand(object):
 

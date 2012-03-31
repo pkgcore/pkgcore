@@ -214,8 +214,7 @@ latex_documents = [
 # -- Options for manual page output --------------------------------------------
 
 generated_man_pages = [('pkgcore.scripts.' + s, s) for s in
-#    "filter_env pclone_cache pconfig pebuild pinspect pmaint pmerge pplugincache pquery".split()]
-    "filter_env pclone_cache pconfig pebuild pinspect pmaint pplugincache pquery".split()]
+    "filter_env pclone_cache pconfig pebuild pinspect pmaint pmerge pplugincache pquery".split()]
 generated_man_pages.append(('pkgcore.scripts.filter_env', 'filter-env'))
 
 # One entry per manual page. List of tuples

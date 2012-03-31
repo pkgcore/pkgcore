@@ -3,13 +3,13 @@
 # License: BSD/GPL2
 
 # more should be doc'd...
-__all__ = ("OptionParser", "AmbiguousQuery", "NoMatches")
+__all__ = ("argparser", "AmbiguousQuery", "NoMatches")
 
 """Mess with the resolver and vdb."""
 
 from time import time
 
-from pkgcore.util import commandline, parserestrict, repo_utils
+from pkgcore.util import commandline, parserestrict, repo_utils, argparse
 from pkgcore.ebuild import resolver
 from pkgcore.operations import observer, format
 from pkgcore.ebuild.atom import atom
@@ -21,135 +21,105 @@ from snakeoil import lists, currying
 from snakeoil.compatibility import any, IGNORED_EXCEPTIONS
 from pkgcore.resolver.util import reduce_to_failures
 
-class OptionParser(commandline.OptionParser):
-
-    enable_domain_options = True
-    description = __doc__
-
-    def _register_options(self):
-        self.add_option('--deep', '-D', action='store_true',
-            help='force the resolver to verify already installed dependencies')
-        self.add_option('--unmerge', '-C', action='store_true',
-            help='unmerge a package')
-        self.add_option('--clean', action='store_true',
-            help='remove installed packages that are not referenced by any '
-            'target packages/sets; defaults to -s world -s system if no targets'
-            ' are specified.  Use with *caution*, this option used incorrectly '
-            'can render your system unusable.  Implies --deep'),
-        self.add_option('--upgrade', '-u', action='store_true',
-            help='try to upgrade already installed packages/dependencies')
-        self.add_option('--set', '-s', action='append',
-            help='specify a pkgset to use')
-        self.add_option('--ignore-failures', action='store_true',
-            help='ignore resolution failures')
-        self.add_option('--preload-vdb-state', action='store_true',
-            help=\
-"""enable preloading of the installed packages database
-This causes the resolver to work with a complete graph, thus disallowing
-actions that conflict with installed packages.  If disabled, it's possible
-for the requested action to conflict with already installed dependencies
-that aren't involved in the graph of the requested operation""")
-
-        self.add_option('--pretend', '-p', action='store_true',
-            help="do the resolution, but don't merge/fetch anything")
-        self.add_option('--verbose', '-v', action='store_true',
-            help="be verbose in output")
-        self.add_option('--ask', '-a', action='store_true',
-            help="do the resolution, but ask to merge/fetch anything")
-        self.add_option('--fetchonly', '-f', action='store_true',
-            help="do only the fetch steps of the resolved plan")
-        self.add_option('--newuse', '-N', action='store_true',
-            help="check for changed useflags in installed packages "
-                "(implies -1)")
-        self.add_option('--ignore-cycles', '-i', action='store_true',
-            help=\
-"""ignore cycles if they're found to be unbreakable;
-a depends on b, and b depends on a, with neither built is an example""")
-
-        self.add_option('-B', '--with-built-depends', action='store_true',
-            default=False,
-            help="whether or not to process build depends for pkgs that "
-            "are already built; defaults to ignoring them"),
-        self.add_option('--nodeps', action='store_true',
-            help='disable dependency resolution')
-        self.add_option('--noreplace', action='store_false',
-            dest='replace', default=True,
-            help="don't reinstall target atoms if they're already installed")
-        self.add_option('--usepkg', '-k', action='store_true',
-            help="prefer to use binpkgs")
-        self.add_option('--usepkgonly', '-K', action='store_true',
-            help="use only built packages")
-        self.add_option('--source-only', action='store_true',
-            help="use source packages only; no pre-built packages used")
-        self.add_option('--empty', '-e', action='store_true',
-            help="force rebuilding of all involved packages, using installed "
-                "packages only to satisfy building the replacements")
-        self.add_option('--force', action='store_true',
-                        dest='force',
-            help="force merging to a repo, regardless of if it's frozen")
-        self.add_option('--oneshot', '-o', '-1', action='store_true',
-            default=False,
-            help="do not record changes in the world file; if a set is "
-                "involved, defaults to forcing oneshot")
-        self.add_option(
-            '--formatter', '-F', action='callback', type='string',
-            callback=commandline.config_callback,
-            callback_args=('pmerge_formatter',),
-            help='which formatter to output --pretend or --ask output through.')
-
-    def _check_values(self, options, args):
-        options.targets = [x for x in args if x[0] != '@']
-        set_targets = [x[1:] for x in args if x[0] == '@']
-        if any(not x for x in set_targets):
-            self.error("empty set name specified via @")
-        options.set.extend(set_targets)
+argparser = commandline.mk_argparser(domain=True,
+    description="pkgcore package merging and unmerging interface")
 
 
-        # TODO this is rather boilerplate-ish, the commandline module
-        # should somehow do this for us.
-        if options.formatter is None:
-            options.formatter = options.config.get_default('pmerge_formatter')
-            if options.formatter is None:
-                self.error(
-                    'No default formatter found, fix your configuration '
-                    'or pass --formatter (Valid formatters: %s)' % (
-                        ', '.join(options.config.pmerge_formatter),))
+class StoreTarget(argparse._AppendAction):
 
-        # this may seem odd, but via touching this attribute we ensure that
-        # there is a valid domain- specifically it'll throw a config exception
-        # if that's not the case.
-        options.domain
+    def __call__(self, parser, namespace, values, option_string=None):
+        if isinstance(values, basestring):
+            values = [values]
+        for x in values:
+            if x.startswith('@'):
+                ret = parser._parse_known_args(['--set', x[1:]], namespace)
+                if ret[1]:
+                    raise RuntimeError("failed parsing %r, %r, got back %r"
+                        % (option_string, values, ret[1]))
+            else:
+                argparse._AppendAction.__call__(self, parser, namespace,
+                    parserestrict.parse_match(x), option_string=option_string)
 
-        if options.unmerge:
-            if options.set:
-                self.error("Using sets with -C probably isn't wise, aborting")
-            if options.upgrade:
-                self.error("Cannot upgrade and unmerge simultaneously")
-            if not options.targets:
-                self.error("You must provide at least one atom")
-            if options.clean:
-                self.error("Cannot use -C with --clean")
-        if options.clean:
-            if options.set or options.targets:
-                self.error("--clean currently has set/targets disabled; in "
-                    "other words, accepts no args")
-            options.set = ['world', 'system']
-            options.deep = True
-            if options.usepkgonly or options.usepkg or options.source_only:
-                self.error(
-                    '--clean cannot be used with any of the following options: '
-                        '--usepkg --usepkgonly --source-only')
-        elif options.usepkgonly and options.usepkg:
-            self.error('--usepkg is redundant when --usepkgonly is used')
-        elif (options.usepkgonly or options.usepkg) and options.source_only:
-            self.error("--source-only cannot be used with --usepkg nor --usepkgonly")
-        if options.set:
-            options.replace = False
-        if not options.targets and not options.set and not options.newuse:
-            self.error('Need at least one atom/set')
-        if options.newuse:
-            options.oneshot = True
-        return options, ()
+query_options = argparser.add_argument_group("Package querying options")
+
+query_options.add_argument(nargs='*', dest='targets', action=StoreTarget,
+    help="extended atom matching of packages")
+query_options.add_argument('--newuse', '-N', action='store_true',
+    help="check for changed useflags in installed packages "
+         "(implies -1)")
+query_options.add_argument('--set', '-s', store_name=True,
+    action=commandline.StoreConfigObject, type=str, priority=35,
+    config_type='pkgset', help='specify a pkgset to use')
+
+
+merge_mode = argparser.add_argument_group('Available operations')
+merge_mode.add_argument('--unmerge', '-C', action='store_true',
+    help='unmerge a package')
+merge_mode.add_argument('--clean', action='store_true',
+    help='remove installed packages that are not referenced by any '
+         'target packages/sets; defaults to -s world -s system if no targets'
+         ' are specified.  Use with *caution*, this option used incorrectly '
+         'can render your system unusable.  Implies --deep'),
+merge_mode.add_argument('--pretend', '-p', action='store_true',
+    help="do the resolution, but don't merge/fetch anything")
+merge_mode.add_argument('--ignore-failures', action='store_true',
+    help='ignore resolution failures')
+merge_mode.add_argument('--ask', '-a', action='store_true',
+    help="do the resolution, but ask to merge/fetch anything")
+merge_mode.add_argument('--force', action='store_true',
+    dest='force',
+    help="force merging to a repo, regardless of if it's frozen")
+merge_mode.add_argument('--fetchonly', '-f', action='store_true',
+    help="do only the fetch steps of the resolved plan")
+merge_mode.add_argument('--oneshot', '-o', '-1', action='store_true',
+    default=False,
+    help="do not record changes in the world file; if a set is "
+         "involved, defaults to forcing oneshot")
+
+resolution_options = argparser.add_argument_group("Resolver options")
+
+resolution_options.add_argument('--upgrade', '-u', action='store_true',
+    help='try to upgrade already installed packages/dependencies')
+resolution_options.add_argument('--deep', '-D', action='store_true',
+    help='force the resolver to verify already installed dependencies')
+resolution_options.add_argument('--preload-vdb-state', action='store_true',
+    help=("enable preloading of the installed packages database"
+          "This causes the resolver to work with a complete graph, thus "
+          "disallowing actions that conflict with installed packages.  If "
+          "disabled, it's possible for the requested action to conflict with "
+          "already installed dependencies that aren't involved in the graph of "
+          "the requested operation"))
+resolution_options.add_argument('--ignore-cycles', '-i', action='store_true',
+    help=("ignore cycles if they're found to be unbreakable;"
+           "a depends on b, and b depends on a, with neither built is an "
+           "example"))
+resolution_options.add_argument('-B', '--with-built-depends',
+    action='store_true', default=False,
+    help="whether or not to process build depends for pkgs that "
+         "are already built; defaults to ignoring them"),
+resolution_options.add_argument('--nodeps', action='store_true',
+    help='disable dependency resolution')
+resolution_options.add_argument('--noreplace', action='store_false',
+    dest='replace', default=True,
+    help="don't reinstall target atoms if they're already installed")
+resolution_options.add_argument('--usepkg', '-k', action='store_true',
+    help="prefer to use binpkgs")
+resolution_options.add_argument('--usepkgonly', '-K', action='store_true',
+    help="use only built packages")
+resolution_options.add_argument('--source-only', action='store_true',
+    help="use source packages only; no pre-built packages used")
+resolution_options.add_argument('--empty', '-e', action='store_true',
+    help="force rebuilding of all involved packages, using installed "
+         "packages only to satisfy building the replacements")
+
+output_options = argparser.add_argument_group("Output related options")
+output_options.add_argument('--verbose', '-v', action='store_true',
+    help="be verbose in output")
+output_options.add_argument('--formatter', '-F',
+    action=commandline.StoreConfigObject, get_default=True,
+    config_type='pmerge_formatter',
+    help='which formatter to output --pretend or --ask output through.')
+
 
 class AmbiguousQuery(parserestrict.ParseError):
     def __init__(self, token, keys):
@@ -162,40 +132,15 @@ class NoMatches(parserestrict.ParseError):
     def __init__(self, token):
         parserestrict.ParseError.__init__(self, '%s: no matches' % (token,))
 
-def parse_atom(token, repo, return_none=False):
-    """Use :obj:`parserestrict.parse_match` to produce a single atom.
-
-    This matches the restriction against the repo, raises
-    AmbiguousQuery if they belong to multiple cat/pkgs, returns an
-    atom otherwise.
-
-    :param token: string to convert.
-    :param repo: :obj:`pkgcore.repository.prototype.tree` instance to search in.
-    :param return_none: indicates if no matches raises or returns C{None}
-
-    :return: an atom or C{None}.
-    """
-    # XXX this should be in parserestrict in some form, perhaps.
-    restriction = parserestrict.parse_match(str(token))
-    key_matches = set(x.key for x in repo.itermatch(restriction))
-    if not key_matches:
-        raise NoMatches(token)
-    elif len(key_matches) > 1:
-        raise AmbiguousQuery(token, sorted(key_matches))
-    if isinstance(restriction, atom):
-        # atom is guranteed to be fine, since it's cat/pkg
-        return restriction
-    return packages.KeyedAndRestriction(restriction, key=key_matches.pop())
-
 
 class Failure(ValueError):
     """Raised internally to indicate an "expected" failure condition."""
 
 
-def unmerge(out, err, vdb, tokens, options, formatter, world_set=None):
+def unmerge(out, err, vdb, restrictions, options, formatter, world_set=None):
     """Unmerge tokens. hackish, should be rolled back into the resolver"""
     all_matches = set()
-    for token in tokens:
+    for restriction in restrictions:
         # Catch restrictions matching across more than one category.
         # Multiple matches in the same category are acceptable.
 
@@ -204,15 +149,14 @@ def unmerge(out, err, vdb, tokens, options, formatter, world_set=None):
         # realising there are sporks in more than one category), but
         # matching more than one cat/pkg is impossible without
         # explicit wildcards.
-        restriction = parserestrict.parse_match(token)
         matches = vdb.match(restriction)
         if not matches:
-            raise Failure('Nothing matches %s' % (token,))
+            raise Failure('Nothing matches %s' % (restriction,))
         categories = set(pkg.category for pkg in matches)
         if len(categories) > 1:
             raise parserestrict.ParseError(
                 '%s is in multiple categories (%s)' % (
-                    token, ', '.join(set(pkg.key for pkg in matches))))
+                    restriction, ', '.join(set(pkg.key for pkg in matches))))
         all_matches.update(matches)
 
     matches = sorted(all_matches)
@@ -327,6 +271,81 @@ def update_worldset(world_set, pkg, remove=False):
         world_set.add(pkg)
     world_set.flush()
 
+@argparser.bind_final_check
+def _validate(parser, namespace):
+    if namespace.unmerge:
+        if namespace.set:
+            parser.error("Using sets with -C probably isn't wise, aborting")
+        if namespace.upgrade:
+            parser.error("Cannot upgrade and unmerge simultaneously")
+        if not namespace.targets:
+            parser.error("You must provide at least one atom")
+        if namespace.clean:
+            parser.error("Cannot use -C with --clean")
+    if namespace.clean:
+        if namespace.set or namespace.targets:
+            parser.error("--clean currently cannot be used w/ any sets or "
+                         "targets given")
+        namespace.set = [(x, namespace.config.pkgset[x])
+            for x in ('world', 'system')]
+        namespace.deep = True
+        if namespace.usepkgonly or namespace.usepkg or namespace.source_only:
+            parser.error(
+                '--clean cannot be used with any of the following namespace: '
+                '--usepkg --usepkgonly --source-only')
+    elif namespace.usepkgonly and namespace.usepkg:
+        parser.error('--usepkg is redundant when --usepkgonly is used')
+    elif (namespace.usepkgonly or namespace.usepkg) and namespace.source_only:
+        parser.error("--source-only cannot be used with --usepkg nor --usepkgonly")
+    if namespace.set:
+        namespace.replace = False
+    if not namespace.targets and not namespace.set and not namespace.newuse:
+        parser.error('Need at least one atom/set')
+    if namespace.newuse:
+        namespace.oneshot = True
+
+    # At some point, fix argparse so this isn't necessary...
+    def f(val):
+        if val is None:
+            return ()
+        elif isinstance(val, tuple):
+            return [val]
+        return val
+    namespace.targets = f(namespace.targets)
+    namespace.set = f(namespace.set)
+
+
+def parse_atom(restriction, repo, return_none=False):
+    """Use :obj:`parserestrict.parse_match` to produce a single atom.
+
+    This matches the restriction against the repo, raises
+    AmbiguousQuery if they belong to multiple cat/pkgs, returns an
+    atom otherwise.
+
+    :param token: string to convert.
+    :param repo: :obj:`pkgcore.repository.prototype.tree` instance to search in.
+    :param return_none: indicates if no matches raises or returns C{None}
+
+    :return: an atom or C{None}.
+    """
+    key_matches = set(x.key for x in repo.itermatch(restriction))
+    if not key_matches:
+        raise NoMatches(token)
+    elif len(key_matches) > 1:
+        raise AmbiguousQuery(token, sorted(key_matches))
+    if isinstance(restriction, atom):
+        # atom is guranteed to be fine, since it's cat/pkg
+        return restriction
+    return packages.KeyedAndRestriction(restriction, key=key_matches.pop())
+
+
+@argparser.bind_delayed_default(50, name='world')
+def load_world(namespace, attr):
+    value = namespace.config.pkgset['world']
+    setattr(namespace, attr, value)
+    return value
+
+@argparser.bind_main_func
 def main(options, out, err):
     config = options.config
     if options.debug:
@@ -334,7 +353,7 @@ def main(options, out, err):
 
     domain = options.domain
     livefs_repos = domain.all_livefs_repos
-    world_set = world_list = options.get_pkgset(err, "world")
+    world_set = world_list = options.world
     if options.oneshot:
         world_set = None
 
@@ -378,8 +397,7 @@ def main(options, out, err):
             if getattr(x, 'format_magic', None) != 'ebuild_built')
 
     atoms = []
-    for setname in options.set:
-        pkgset = options.get_pkgset(err, setname)
+    for setname, pkgset in options.set:
         if pkgset is None:
             return 1
         l = list(pkgset)

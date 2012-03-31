@@ -49,14 +49,14 @@ man_rsts:
 
 news:
 	@echo "autogenerating news rst..."
-	./generate_news_rst.py pkgcore ../NEWS news.rst 'git_release' 'git_tag'
+	python -m snakeoil.sphinx_utils.generate_news_rst pkgcore ../NEWS news.rst 'git_release' 'git_tag'
 
 api:
 	@echo "autogenerating api rsts..."
 	@mkdir -p api
 	@for fn in `cat public_modules.txt`; \
 		do echo $${fn} api/$${fn}.rst; \
-	done | ./generate_api_rsts.py
+	done | python -m snakeoil.sphinx_utils.generate_api_rsts
 
 html: generated
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html

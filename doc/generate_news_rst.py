@@ -21,6 +21,16 @@ def regenerate_if_needed(project, src, out, release_extlink=None, git_extlink=No
 
 def convert_news(text, project_name, release_extlink=None, git_extlink=None):
     project_name = project_name.strip()
+
+    # First, escape all necessary characters so that since NEWS doesn't use true
+    # ReST syntax.
+    text = re.sub("\\\\", "\\\\", text)
+    def f(match):
+        return match.group(0).replace('_', '\_')
+    #text = re.sub('((?:[^_]+_)+)(?=[;:.])', f, text)
+    text = re.sub('_', '\\_', text)
+    text = re.sub('(?<!\n)\*', '\\*', text)
+
     def f(match):
         ver = match.group(1).strip()
         date = match.group(2)
@@ -38,7 +48,7 @@ def convert_news(text, project_name, release_extlink=None, git_extlink=None):
         if (git_extlink, release_extlink) != (None, None):
             l.append('')
 
-        l.append('Notable changes\:')
+        l.append('Notable changes:')
         l.append('')
         return '\n'.join(l)
     text = re.sub(r'(?:\n|^)%s +(0\.[^:\n]+):?([^\n]*)(?:\n|$)' % (project_name,),

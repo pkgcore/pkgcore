@@ -81,7 +81,8 @@ def parse_match(text):
     :return: :obj:`pkgcore.restrictions.packages` derivative
     """
 
-    orig_text = text = text.strip()
+    # Ensure the text var is a string.
+    orig_text = text = text.encode('ascii').strip()
     if "!" in text:
         raise ParseError(
             "!, or any form of blockers make no sense in this usage: %s" % (

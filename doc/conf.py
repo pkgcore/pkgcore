@@ -46,7 +46,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'pkgcore'
-copyright = u'2010, Brian Harring, Marien Zwart'
+copyright = u'2006-2012, Brian Harring, Marien Zwart'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -96,7 +96,7 @@ pygments_style = 'sphinx'
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'default'
+html_theme = 'sphinxdoc'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -234,7 +234,7 @@ man_pages = [
 epub_title = u'pkgcore'
 epub_author = u'Brian Harring, Marien Zwart'
 epub_publisher = u'Brian Harring, Marien Zwart'
-epub_copyright = u'2010, Brian Harring, Marien Zwart'
+epub_copyright = u'2006-2012, Brian Harring, Marien Zwart'
 
 # The language of the text. It defaults to the language option
 # or en if the language is not set.

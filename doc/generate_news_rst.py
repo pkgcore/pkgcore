@@ -31,17 +31,29 @@ def convert_news(text, project_name, release_extlink=None, git_extlink=None):
     text = re.sub('_', '\\_', text)
     text = re.sub('(?<!\n)\*', '\\*', text)
 
+    seen = set()
+
     def f(match):
         ver = match.group(1).strip()
         if ver == 'trunk':
             tag = 'master'
+            char = '-'
         else:
             tag = 'v%s' % ver
+            char = '+'
         date = match.group(2)
         s = ' '.join([project_name, ver])
         date = date.strip()
         # Ensure we leave a trailing and leading newline to keep ReST happy.
-        l = ['', '.. _release-%s:' % (ver,), '', s, '-' * len(s), '']
+        l = ['']
+        major = '.'.join(ver.split('.')[:2])
+        if major not in seen:
+            l += ['.. _release-latest-%s:' % major, '']
+            if major != 'trunk':
+                header = '%s %s releases' % (project_name, major)
+                l += [header, '-' * len(header), '']
+            seen.add(major)
+        l += ['.. _release-%s:' % (ver,), '', s, char * len(s), '']
 
         l2 = []
         if date:
@@ -60,7 +72,7 @@ def convert_news(text, project_name, release_extlink=None, git_extlink=None):
         return '\n'.join(l)
     text = re.sub(r'(?:\n|^)%s +(\d+\.\d+[^:\s]*|trunk):?([^\n]*)(?:\n|$)' % (project_name,),
         f, text)
-    return ".. _news:\n\n%s" % (text,)
+    return ".. _releases:\n\n%s" % (text,)
 
 
 if __name__ == '__main__':

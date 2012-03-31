@@ -64,7 +64,9 @@ def convert_news(text, project_name, release_extlink=None, git_extlink=None):
             l2.append(':%s:`Git Shortlog<%s>`' % (git_extlink, tag))
 
         if l2:
-            l.append(', '.join(l2))
+            if date:
+                l2[1:] = [(', '.join(l2[1:])) + '.']
+            l.append('.  '.join(l2))
             l.append('')
 
         l.append('Notable changes:')

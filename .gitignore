@@ -10,6 +10,7 @@ _trial_temp
 /doc/dev-notes/index.rst
 /doc/dev-notes/*/index.rst
 /doc/doc/index.rst
+/doc/news.rst
 /doc/_build/
 /doc/api/
 /doc/man/

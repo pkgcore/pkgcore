@@ -39,13 +39,17 @@ help:
 	@echo "  doctest    to run all doctests embedded in the documentation (if enabled)"
 
 clean:
-	-rm -rf $(BUILDDIR) api man
+	-rm -rf $(BUILDDIR) api man news.rst
 
-generated: api man_rsts
+generated: api man_rsts news
 
 man_rsts:
 	@echo "autogenerating api rsts..."
 	./generate_man_rsts.py man --conf
+
+news:
+	@echo "autogenerating news rst..."
+	./generate_news_rst.py pkgcore ../NEWS news.rst
 
 api:
 	@echo "autogenerating api rsts..."

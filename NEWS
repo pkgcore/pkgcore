@@ -4,6 +4,8 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* Added `pconfig world` for world file manipulation.
+
 * Heavy doc fixups, including fixing the man pages to actually be
   readable.  New man page for pmerge added.
 

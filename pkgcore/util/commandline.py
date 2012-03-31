@@ -249,6 +249,25 @@ class StoreConfigObject(argparse._StoreAction):
         obj = [(k, v) for k, v in getattr(config, config_type).iteritems()]
         setattr(namespace, attr, obj)
 
+    @classmethod
+    def lazy_load_object(cls, config_type, key, priority=None):
+        if priority is None:
+            priority = cls.default_priority
+        return DelayedValue(
+            currying.partial(cls._lazy_load_object, config_type, key),
+            priority)
+
+    @staticmethod
+    def _lazy_load_object(config_type, key, namespace, attr):
+        try:
+            obj = getattr(namespace.config, config_type)[key]
+        except KeyError:
+            raise ConfigError("Failed loading object %s of type %s"
+                % (config_type, key))
+            raise argparse.ArgumentError(self, "couldn't find %s %r" %
+                (self.config_type, name))
+        setattr(namespace, attr, obj)
+
 
 class StoreRepoObject(StoreConfigObject):
 

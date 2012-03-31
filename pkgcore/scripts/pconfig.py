@@ -16,6 +16,7 @@ import traceback
 from pkgcore.config import errors, basics
 from pkgcore.plugin import get_plugins
 from pkgcore.util import commandline
+from pkgcore.ebuild import atom
 from snakeoil import currying
 
 def dump_section(config, out):
@@ -325,3 +326,44 @@ def package_func(options, out, err):
     if not matched:
         out.write("no packages matched")
     return 1
+
+
+world = subparsers.add_parser("world",
+    parents=(commandline.mk_argparser(add_help=False),),
+    description="Inspect and modify the world file.")
+world_modes = world.add_argument_group("Command modes",
+    "These options are directives for what to do with the world file.  You "
+    "can do multiple operations in a single invocation. "
+    "For example, you can have `--add x11-wm/fluxbox "
+    "--remove gnome-base/gnome -l` to add fluxbox, remove gnome, and list the "
+    "world file contents all in one call.")
+world_modes.add_argument('--list', '-l', action='store_true',
+    help="List the current world file contents for this domain.")
+world_modes.add_argument('--remove', '-r', action='append',
+    type=atom.atom,
+    help="Remove an entry from the world file.  Can be specified multiple times.")
+world_modes.add_argument('--add', '-a', action='append',
+    type=atom.atom,
+    help="Add an entry to the world file.  Can be specified multiple times.")
+
+world.set_defaults(world=
+    commandline.StoreConfigObject.lazy_load_object(
+        'pkgset', 'world', 99))
+@world.bind_main_func
+def world_func(options, out, err):
+    world_file = options.world
+
+    if options.remove:
+        for item in options.remove:
+            world_file.remove(item)
+
+    if options.add:
+        for item in options.add:
+            world_file.add(item)
+
+    if options.remove or options.add:
+        world_file.flush()
+
+    if options.list:
+        out.write("\n".join(map(str, sorted(world_file))))
+        return 0

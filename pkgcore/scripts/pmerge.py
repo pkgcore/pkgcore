@@ -115,7 +115,7 @@ resolution_options.add_argument('--empty', '-e', action='store_true',
 output_options = argparser.add_argument_group("Output related options")
 output_options.add_argument('--verbose', '-v', action='store_true',
     help="be verbose in output")
-output_options.add_argument('--formatter', '-F',
+output_options.add_argument('--formatter', '-F', priority=90,
     action=commandline.StoreConfigObject, get_default=True,
     config_type='pmerge_formatter',
     help='which formatter to output --pretend or --ask output through.')
@@ -330,9 +330,9 @@ def parse_atom(restriction, repo, return_none=False):
     """
     key_matches = set(x.key for x in repo.itermatch(restriction))
     if not key_matches:
-        raise NoMatches(token)
+        raise NoMatches(restriction)
     elif len(key_matches) > 1:
-        raise AmbiguousQuery(token, sorted(key_matches))
+        raise AmbiguousQuery(restriction, sorted(key_matches))
     if isinstance(restriction, atom):
         # atom is guranteed to be fine, since it's cat/pkg
         return restriction

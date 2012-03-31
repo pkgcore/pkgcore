@@ -4,6 +4,8 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* Fix py3k incompatibility in pmerge -N .
+
 * prefix branch was merged.  This fleshes out the majority of prefix
   support; extended-versions currently aren't supported however.
 

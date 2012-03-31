@@ -460,12 +460,12 @@ def main(options, out, err):
             src_pkgs = source_repos.match(inst_pkg.versioned_atom)
             if src_pkgs:
                 src_pkg = max(src_pkgs)
-                inst_use = set(use.lstrip("+-") for use in inst_pkg.iuse)
-                src_use = set(use.lstrip("+-") for use in src_pkg.iuse)
-                oldflags = inst_use & inst_pkg.use
-                newflags = src_use & src_pkg.use
-                changed_flags = (oldflags ^ newflags) | (inst_pkg.iuse ^ src_pkg.iuse)
-                if changed_flags:
+                inst_iuse = set(use.lstrip("+-") for use in inst_pkg.iuse)
+                src_iuse = set(use.lstrip("+-") for use in src_pkg.iuse)
+                inst_flags = inst_iuse.intersection(inst_pkg.use)
+                src_flags = src_iuse.intersection(src_pkg.use)
+                if inst_flags.symmetric_difference(src_flags) or \
+                   inst_pkg.iuse.symmetric_difference(src_pkg.iuse):
                     atoms.append(src_pkg.versioned_atom)
 
 #    left intentionally in place for ease of debugging.

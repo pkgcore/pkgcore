@@ -44,7 +44,7 @@ clean:
 generated: api man_rsts news
 
 man_rsts:
-	@echo "autogenerating api rsts..."
+	@echo "autogenerating man rsts..."
 	./generate_man_rsts.py man --conf
 
 news:

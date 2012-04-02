@@ -5,6 +5,8 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 
 pkgcore trunk:
 
+* Fixed pinspect portageq envvar support.
+
 * Added `pconfig world` for world file manipulation.
 
 * Heavy doc fixups, including fixing the man pages to actually be

@@ -140,14 +140,14 @@ def portageq_envvar(options, out, err):
     """
     return configuration defined variables.  Use envvar2 instead, this will be removed.
     """
-    return envvar.function(options, out, err)
+    return env_var.function(options, out, err)
 
 @BaseCommand.make_command("variable+", bind=portageq_commands, name='envvar2')
-def portageq_envvar(options, out, err):
+def portageq_envvar2(options, out, err):
     """
     return configuration defined variables.
     """
-    return envvar.function(options, out, err)
+    return env_var.function(options, out, err)
 
 
 @BaseCommand.make_command("atom", bind=common_commands)

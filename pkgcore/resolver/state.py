@@ -127,6 +127,12 @@ class base_op_state(object):
             self.__class__.__name__, self.choices, self.pkg, self.force,
             id(self))
 
+    def apply(self, plan):
+        raise NotImplemented(self, 'apply')
+
+    def revert(self, plan):
+        raise NotImplemented(self, 'revert')
+
 
 class add_op(base_op_state):
 
@@ -277,6 +283,12 @@ class blocker_base_op(object):
         return '<%s choices=%r blocker=%r key=%r @#%x>' % (
             self.__class__.__name__, self.choices, self.blocker, self.key,
             id(self))
+
+    def apply(self, plan):
+        raise NotImplementedError(self, 'apply')
+
+    def revert(self, plan):
+        raise NotImplementedError(self, 'revert')
 
 
 class incref_forward_block_op(blocker_base_op):

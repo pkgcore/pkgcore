@@ -198,24 +198,26 @@ class remove_op(base_op_state):
         plan.vdb_filter.add(self.pkg)
 
     def revert(self, plan):
-        plan.state.fill_slotting(self.pkg, force=self.force)
+        plan.state.fill_slotting(self.pkg, force=True)
         plan.pkg_choices[self.pkg] = self.choices
         plan.vdb_filter.remove(self.pkg)
 
 
 class replace_op(base_op_state):
 
-    __slots__ = ("old_pkg", "old_choices")
+    __slots__ = ("old_pkg", "old_choices", "force_old")
     desc = "replace"
 
     def __init__(self, *args, **kwds):
         base_op_state.__init__(self, *args, **kwds)
         self.old_pkg, self.old_choices = None, None
+        self.force_old = False
 
     def apply(self, plan):
         revert_point = plan.current_state
         old = plan.state.get_conflicting_slot(self.pkg)
         # probably should just convert to an add...
+        force_old = bool(plan.state.check_limiters(old))
         assert old is not None
         plan.state.remove_slotting(old)
         old_choices = plan.pkg_choices[old]
@@ -233,6 +235,7 @@ class replace_op(base_op_state):
         # wipe olds blockers.
 
         self.old_pkg = old
+        self.force_old = force_old
         self.old_choices = old_choices
         del plan.pkg_choices[old]
         plan.pkg_choices[self.pkg] = self.choices
@@ -243,8 +246,11 @@ class replace_op(base_op_state):
         # far simpler, since the apply op generates multiple ops on it's own.
         # all we have to care about is swap.
         plan.state.remove_slotting(self.pkg)
-        l = plan.state.fill_slotting(self.old_pkg, force=self.force)
-        assert not l, "reverting a replace op %r, got %r from slotting" % (self, l)
+        l = plan.state.fill_slotting(self.old_pkg, force=self.force_old)
+        if bool(l) != self.force_old:
+            raise AssertionError(
+                "Internal error detected, unable to revert %s; got %s, "
+                "force_old=%s " % (self, l, self.force_old))
         del plan.pkg_choices[self.pkg]
         plan.pkg_choices[self.old_pkg] = self.old_choices
         plan.vdb_filter.remove(self.old_pkg)

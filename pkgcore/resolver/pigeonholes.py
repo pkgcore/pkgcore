@@ -22,16 +22,16 @@ class PigeonHoledSlots(object):
 
         :return: any conflicting objs (empty list if inserted successfully).
         """
-        key = obj.key
-        l = [x for x in self.limiters.get(key, ()) if x.match(obj)]
 
+        l = self.check_limiters(obj)
+
+        key = obj.key
         dslot = obj.slot
         l.extend(x for x in self.slot_dict.get(key, ()) if x.slot == dslot)
 
         if not l or force:
             self.slot_dict.setdefault(key, []).append(obj)
         return l
-
 
     def get_conflicting_slot(self, pkg):
         for x in self.slot_dict.get(pkg.key, ()):
@@ -55,6 +55,11 @@ class PigeonHoledSlots(object):
             key = atom.key
         self.limiters.setdefault(key, []).append(atom)
         return self.find_atom_matches(atom, key=key)
+
+    def check_limiters(self, obj):
+        """return any limiters conflicting w/ the psased in obj"""
+        key = obj.key
+        return [x for x in self.limiters.get(key, ()) if x.match(obj)]
 
     def remove_slotting(self, obj):
         key = obj.key

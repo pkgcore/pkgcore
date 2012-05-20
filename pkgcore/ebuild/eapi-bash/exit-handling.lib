@@ -5,7 +5,7 @@ assert() {
 	local _pipestatus=${PIPESTATUS[*]}
 	local x
 	for x in ${_pipestatus}; do
-		[ "$x" != 0 ] && die "$@"
+		[ "$x" -eq 0 ] || die "$@"
 	done
 }
 

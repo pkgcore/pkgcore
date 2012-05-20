@@ -5,6 +5,10 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 
 pkgcore trunk:
 
+* Gentoo's unpacker eclass is sensitive to the return code of
+  assert; this is outside of pms rules, but we've matched portage
+  behaviour to keep things working
+
 * Fixed pinspect portageq envvar support.
 
 * Added `pconfig world` for world file manipulation.

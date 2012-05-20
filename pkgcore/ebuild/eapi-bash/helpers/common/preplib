@@ -1,5 +1,0 @@
-#!/usr/bin/env pkgcore-ebuild-helper
-
-warn "preplib calls are deprecated, and pointless.  Stop calling it."
-# give them a zero exitcode for the time being.
-:

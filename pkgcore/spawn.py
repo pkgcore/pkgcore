@@ -121,8 +121,7 @@ def cleanup_pids(pids=None):
                 pass
 
 def spawn(mycommand, env=None, name=None, fd_pipes=None, returnpid=False,
-          uid=None, gid=None, groups=None, umask=None, logfile=None,
-          cwd=None):
+          uid=None, gid=None, groups=None, umask=None, cwd=None):
 
     """wrapper around execve
 
@@ -153,28 +152,6 @@ def spawn(mycommand, env=None, name=None, fd_pipes=None, returnpid=False,
     # mypids will hold the pids of all processes created.
     mypids = []
 
-    if logfile:
-        # Using a log file requires that stdout and stderr
-        # are assigned to the process we're running.
-        if 1 not in fd_pipes or 2 not in fd_pipes:
-            raise ValueError(fd_pipes)
-
-        # Create a pipe
-        (pr, pw) = os.pipe()
-
-        # Create a tee process, giving it our stdout and stderr
-        # as well as the read end of the pipe.
-        mypids.extend(spawn(('tee', '-i', '-a', logfile), returnpid=True,
-            fd_pipes={0:pr, 1:fd_pipes[1], 2:fd_pipes[2]}))
-
-        # We don't need the read end of the pipe, so close it.
-        os.close(pr)
-
-        # Assign the write end of the pipe to our stdout and stderr.
-        fd_pipes[1] = pw
-        fd_pipes[2] = pw
-
-
     pid = os.fork()
 
     if not pid:
@@ -193,11 +170,6 @@ def spawn(mycommand, env=None, name=None, fd_pipes=None, returnpid=False,
     # Add the pid to our local and the global pid lists.
     mypids.append(pid)
     spawned_pids.append(pid)
-
-    # If we started a tee process the write side of the pipe is no
-    # longer needed, so close it.
-    if logfile:
-        os.close(pw)
 
     # If the caller wants to handle cleaning up the processes, we tell
     # it about all processes that were created.

@@ -185,16 +185,6 @@ class SpawnTest(TempDirMixin, TestCase):
         # bash builtin for true without exec'ing true (eg, no path lookup)
         self.assertEqual(0, spawn.spawn_bash(":"))
 
-    def test_logfile(self):
-        log_fp = os.path.join(self.dir, "logfile_test")
-        text = "grande tiza"
-        fp = self.generate_script(
-            "logfile.sh", "#!%s\necho %s\n" % (self.bash_path, text))
-        self.assertEqual(
-            0, spawn.spawn(fp, logfile=log_fp, fd_pipes={1:self.null, 2:1}))
-        self.assertEqual(
-            text, open(log_fp).read().rstrip("\n"), "logged text differed")
-
     def test_umask(self):
         fp = self.generate_script(
             "portage_spawn_umask.sh", "#!%s\numask" % self.bash_path)

@@ -122,7 +122,7 @@ def cleanup_pids(pids=None):
 
 def spawn(mycommand, env=None, opt_name=None, fd_pipes=None, returnpid=False,
           uid=None, gid=None, groups=None, umask=None, logfile=None,
-          chdir=None, path_lookup=True):
+          chdir=None):
 
     """wrapper around execve
 
@@ -143,12 +143,7 @@ def spawn(mycommand, env=None, opt_name=None, fd_pipes=None, returnpid=False,
 
     # If an absolute path to an executable file isn't given
     # search for it unless we've been told not to.
-    binary = mycommand[0]
-    if not path_lookup:
-        if find_binary(binary) != binary:
-            raise CommandNotFound(binary)
-    else:
-        binary = find_binary(binary)
+    binary = find_binary(mycommand[0])
 
     # If we haven't been told what file descriptors to use
     # default to propogating our stdin, stdout and stderr.

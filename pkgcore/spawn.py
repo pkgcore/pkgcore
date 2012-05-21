@@ -12,7 +12,7 @@ __all__ = [
     "cleanup_pids", "spawn", "spawn_sandbox", "spawn_bash", "spawn_fakeroot",
     "spawn_get_output", "find_binary"]
 
-import os, atexit, signal, sys
+import os, atexit, itertools, signal, sys
 
 from pkgcore.const import (
     BASH_BINARY, SANDBOX_BINARY, FAKED_PATH, LIBFAKEROOT_PATH)
@@ -255,27 +255,31 @@ def _exec(binary, mycommand, executable, fd_pipes, env, gid, groups, uid, umask,
     myargs = [executable]
     myargs.extend(mycommand[1:])
 
+
+    def _find_unused_pid(protected):
+        for potential in itertools.count():
+            if potential not in protected:
+                protected.add(potential)
+                yield potential
+
     # Set up the command's pipes.
     my_fds = {}
+
     # To protect from cases where direct assignment could
     # clobber needed fds ({1:2, 2:1}) we first dupe the fds
     # into unused fds.
-
-    protected_fds = set(fd_pipes.itervalues())
+    protected = set(fd_pipes)
+    protected.update(fd_pipes.itervalues())
+    fd_source = _find_unused_pid(protected)
 
     for trg_fd, src_fd in fd_pipes.iteritems():
-        # if it's not the same we care
         if trg_fd != src_fd:
-            if trg_fd not in protected_fds:
-                # if nothing we care about is there... do it now.
-                # we're not updating protected_fds here due to the fact
-                # dup will not overwrite existing fds, and that the target is
-                # not stated as a src at this point.
+            if trg_fd not in protected:
+                # Nothing is in the way; move it immediately.
                 os.dup2(src_fd, trg_fd)
             else:
-                x = os.dup(src_fd)
-                protected_fds.add(x)
-                my_fds[trg_fd] = x
+                x = my_fds[trg_fd] = fd_source.next()
+                os.dup2(src_fd, x)
 
     # reassign whats required now.
     for trg_fd, src_fd in my_fds.iteritems():

@@ -5,6 +5,12 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 
 pkgcore trunk:
 
+* Fix a longstanding potential bug in spawn's fd reassignment;
+  if fed {2:3, 3:2, 4:6}, dependent on python dict ordering, it
+  was possible for it to inadvertantly stomp fd 4 during the
+  final reassignment.  Haven't seen any signs it's occured in the
+  wild, but the potential is there, thus fixed.
+
 * Gentoo's unpacker eclass is sensitive to the return code of
   assert; this is outside of pms rules, but we've matched portage
   behaviour to keep things working

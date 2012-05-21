@@ -122,7 +122,7 @@ def cleanup_pids(pids=None):
 
 def spawn(mycommand, env=None, executable=None, fd_pipes=None, returnpid=False,
           uid=None, gid=None, groups=None, umask=None, logfile=None,
-          chdir=None):
+          cwd=None):
 
     """wrapper around execve
 
@@ -182,7 +182,7 @@ def spawn(mycommand, env=None, executable=None, fd_pipes=None, returnpid=False,
         # pylint: disable-msg=W0703
         try:
             _exec(binary, mycommand, executable, fd_pipes, env, gid, groups,
-                  uid, umask, chdir)
+                  uid, umask, cwd)
         except Exception, e:
             # We need to catch _any_ exception so that it doesn't
             # propogate out of this function and cause exiting
@@ -237,7 +237,7 @@ def spawn(mycommand, env=None, executable=None, fd_pipes=None, returnpid=False,
     return 0
 
 def _exec(binary, mycommand, executable, fd_pipes, env, gid, groups, uid, umask,
-    chdir):
+    cwd):
     """internal function to handle exec'ing the child process.
 
     If it succeeds this function does not return. It might raise an
@@ -291,8 +291,8 @@ def _exec(binary, mycommand, executable, fd_pipes, env, gid, groups, uid, umask,
 
     closerange(last, max_fd_limit)
 
-    if chdir is not None:
-        os.chdir(chdir)
+    if cwd is not None:
+        os.chdir(cwd)
 
     # Set requested process permissions.
     if gid:

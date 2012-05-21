@@ -186,7 +186,7 @@ class dvcs_syncer(ExternalSyncer):
             chdir = self.basedir
 
         ret = self._spawn(command, {1:output_fd, 2:output_fd, 0:0},
-            chdir=chdir)
+            cwd=chdir)
         return ret == 0
 
     def _initial_pull(self):

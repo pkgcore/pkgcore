@@ -92,7 +92,7 @@ class SpawnTest(TempDirMixin, TestCase):
             os.rmdir(dpath)
             self.assertIn("libsandbox.so", [os.path.basename(x.strip()) for x in
                 spawn.spawn_get_output(
-                fp, spawn_type=spawn.spawn_sandbox, chdir='/')[1][0].split()])
+                fp, spawn_type=spawn.spawn_sandbox, cwd='/')[1][0].split()])
             os.unlink(fp)
         finally:
             if cwd is not None:

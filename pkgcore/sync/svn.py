@@ -61,5 +61,5 @@ class svn_syncer(base.ExternalSyncer):
             return 0 == self._spawn([self.binary_path, "co",
                 uri, self.basedir], {1:output_fd, 2:output_fd, 0:0})
         return 0 == self._spawn([self.binary_path, "update"],
-            {1:output_fd, 2:output_fd, 0:0}, chdir=self.basedir)
+            {1:output_fd, 2:output_fd, 0:0}, cwd=self.basedir)
 

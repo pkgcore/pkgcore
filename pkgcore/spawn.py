@@ -28,7 +28,7 @@ except ImportError:
     max_fd_limit = 256
 
 
-def spawn_bash(mycommand, debug=False, opt_name=None, **keywords):
+def spawn_bash(mycommand, debug=False, executable=None, **keywords):
     """spawn the command via bash -c"""
 
     args = [BASH_BINARY, '--norc', '--noprofile']
@@ -40,23 +40,23 @@ def spawn_bash(mycommand, debug=False, opt_name=None, **keywords):
         args.append(mycommand)
     else:
         args.extend(mycommand)
-    if not opt_name:
-        opt_name = os.path.basename(args[2])
-    return spawn(args, opt_name=opt_name, **keywords)
+    if not executable:
+        executable = os.path.basename(args[2])
+    return spawn(args, executable=executable, **keywords)
 
-def spawn_sandbox(mycommand, opt_name=None, **keywords):
+def spawn_sandbox(mycommand, executable=None, **keywords):
     """spawn the command under sandboxed"""
 
     if not is_sandbox_capable():
-        return spawn_bash(mycommand, opt_name=opt_name, **keywords)
+        return spawn_bash(mycommand, executable=executable, **keywords)
     args = [SANDBOX_BINARY]
     if isinstance(mycommand, str):
         args.extend(mycommand.split())
     else:
         args.extend(mycommand)
-    if not opt_name:
-        opt_name = os.path.basename(args[1])
-    return spawn(args, opt_name=opt_name, **keywords)
+    if not executable:
+        executable = os.path.basename(args[1])
+    return spawn(args, executable=executable, **keywords)
 
 _exithandlers = []
 def atexit_register(func, *args, **kargs):
@@ -120,7 +120,7 @@ def cleanup_pids(pids=None):
             except ValueError:
                 pass
 
-def spawn(mycommand, env=None, opt_name=None, fd_pipes=None, returnpid=False,
+def spawn(mycommand, env=None, executable=None, fd_pipes=None, returnpid=False,
           uid=None, gid=None, groups=None, umask=None, logfile=None,
           chdir=None):
 
@@ -128,7 +128,7 @@ def spawn(mycommand, env=None, opt_name=None, fd_pipes=None, returnpid=False,
 
     :type mycommand: list or string
     :type env: mapping with string keys and values
-    :param opt_name: controls what the process is named
+    :param executable: controls what the process is named
         (what it would show up as under top for example)
     :type fd_pipes: mapping from existing fd to fd (inside the new process)
     :param fd_pipes: controls what fd's are left open in the spawned process-
@@ -181,7 +181,7 @@ def spawn(mycommand, env=None, opt_name=None, fd_pipes=None, returnpid=False,
         # 'Catch "Exception"'
         # pylint: disable-msg=W0703
         try:
-            _exec(binary, mycommand, opt_name, fd_pipes, env, gid, groups,
+            _exec(binary, mycommand, executable, fd_pipes, env, gid, groups,
                   uid, umask, chdir)
         except Exception, e:
             # We need to catch _any_ exception so that it doesn't
@@ -236,7 +236,7 @@ def spawn(mycommand, env=None, opt_name=None, fd_pipes=None, returnpid=False,
     # Everything succeeded
     return 0
 
-def _exec(binary, mycommand, opt_name, fd_pipes, env, gid, groups, uid, umask,
+def _exec(binary, mycommand, executable, fd_pipes, env, gid, groups, uid, umask,
     chdir):
     """internal function to handle exec'ing the child process.
 
@@ -248,11 +248,11 @@ def _exec(binary, mycommand, opt_name, fd_pipes, env, gid, groups, uid, umask,
 
     # If the process we're creating hasn't been given a name
     # assign it the name of the executable.
-    if not opt_name:
-        opt_name = os.path.basename(binary)
+    if not executable:
+        executable = os.path.basename(binary)
 
     # Set up the command's argument list.
-    myargs = [opt_name]
+    myargs = [executable]
     myargs.extend(mycommand[1:])
 
     # Set up the command's pipes.
@@ -316,7 +316,7 @@ def _exec(binary, mycommand, opt_name, fd_pipes, env, gid, groups, uid, umask,
     os.execve(binary, myargs, env)
 
 
-def spawn_fakeroot(mycommand, save_file, env=None, opt_name=None,
+def spawn_fakeroot(mycommand, save_file, env=None, executable=None,
                    returnpid=False, **keywords):
     """spawn a process via fakeroot
 
@@ -327,8 +327,8 @@ def spawn_fakeroot(mycommand, save_file, env=None, opt_name=None,
     else:
         env = ProtectedDict(env)
 
-    if opt_name is None:
-        opt_name = "fakeroot %s" % mycommand
+    if executable is None:
+        executable = "fakeroot %s" % mycommand
 
     args = [
         FAKED_PATH,
@@ -375,7 +375,7 @@ def spawn_fakeroot(mycommand, save_file, env=None, opt_name=None,
 
     try:
         ret = spawn(
-            mycommand, opt_name=opt_name, env=env, returnpid=returnpid,
+            mycommand, executable=executable, env=env, returnpid=returnpid,
             **keywords)
         if returnpid:
             return ret + [fakepid] + pids

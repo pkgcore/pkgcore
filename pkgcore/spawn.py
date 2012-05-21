@@ -41,7 +41,7 @@ def spawn_bash(mycommand, debug=False, name=None, **keywords):
     else:
         args.extend(mycommand)
     if not name:
-        name = os.path.basename(args[2])
+        name = os.path.basename(args[3])
     return spawn(args, name=name, **keywords)
 
 def spawn_sandbox(mycommand, name=None, **keywords):

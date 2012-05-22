@@ -28,24 +28,31 @@ __set_perf_debug()
 
 __set_perf_debug
 
+die() {
+  # Temporary function used by the daemon, till proper die implementation is loaded.
+  echo "$@" >&2
+  exit 1
+}
+
+STARTING_PID=$BASHPID
 # use ebd_read/ebd_write for talking to the running portage instance instead of echo'ing to the fd yourself.
 # this allows us to move the open fd's w/out issues down the line.
 __ebd_read_line()
 {
-	if ! read -u ${PKGCORE_EBD_READ_FD} $1; then
-		echo "coms error, read failed: backing out of daemon."
-		exit 1
-	fi
+	read -u ${PKGCORE_EBD_READ_FD} $1
+	local ret=$?
+	[ $ret -ne 0 ] && \
+		die "coms error in $STARTING_PID, read_line $@ failed w/ $ret: backing out of daemon."
 }
 
 # are we running a version of bash (4.1 or so) that does -N?
 if echo 'y' | read -N 1 &> /dev/null; then
 	__ebd_read_size()
 	{
-		if ! read -u ${PKGCORE_EBD_READ_FD} -r -N $1 $2; then
-			echo "coms error, read failed: backing out of daemon."
-			exit 1;
-		fi
+		read -u ${PKGCORE_EBD_READ_FD} -r -N $1 $2
+		local ret=$?
+		[ $ret -ne 0 ] && \
+			die "coms error in $STARTING_PID, read_size $@ failed w/ $ret: backing out of daemon."
 	}
 
 else
@@ -53,10 +60,9 @@ else
 	__ebd_read_size()
 	{
 		eval "${2}=\$(dd bs=1 count=$1 <&${PKGCORE_EBD_READ_FD} 2> /dev/null)"
-		if [[ $? != 0 ]]; then
-			echo "coms error, read failed: backing out of daemon."
-			exit 1;
-		fi
+		local ret=$?
+		[ $ret -ne 0 ] && \
+			die "coms error in $STARTING_PID, read_size $@ failed w/ $ret: backing out of daemon."
 	}
 fi
 
@@ -68,6 +74,9 @@ __ebd_read_cat_size()
 __ebd_write_line()
 {
 	echo "$*" >&${PKGCORE_EBD_WRITE_FD}
+	local ret=$?
+	[ $ret -ne 0 ] && \
+		die "coms error, write failed w/ $ret: backing out of daemon."
 }
 
 
@@ -118,7 +127,7 @@ __ebd_exec_main()
 	# loading up the intermediate funcs succeeded.
 	__ebd_read_line com
 	if [[ "$com" != "dude?" ]]; then
-		echo "serv init coms failed, received $com when expecting 'dude?'"
+		echo "serv init coms failed, received $com when expecting 'dude?'" >&2
 		exit 1
 	fi
 	__ebd_write_line "dude!"
@@ -380,7 +389,7 @@ __make_preloaded_eclass_func()
 
 __ebd_main_loop()
 {
-	DONT_EXPORT_VARS="${DONT_EXPORT_VARS} alie com phases line cont DONT_EXPORT_FUNCS"
+	DONT_EXPORT_VARS="${DONT_EXPORT_VARS} alie com phases line cont DONT_EXPORT_FUNCS STARTING_PID"
 	SANDBOX_ON=1
 	while :; do
 		local com=''

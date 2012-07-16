@@ -636,8 +636,8 @@ def main(options, out, err):
                 except Exception, e:
                     ret = e
                 if ret is not True:
-                    out.write("\n")
-                    out.error("fetching failed for %s" % (op.pkg,))
+                    commandline.dump_error(out, ret,
+                       "\nfetching failed for %s" % (op.pkg,))
                     if not options.ignore_failures:
                         return 1
                     continue

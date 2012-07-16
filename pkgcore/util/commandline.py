@@ -863,9 +863,9 @@ def dump_error(handle, raw_exc, context_msg=None, tb=None):
             handle.write("Traceback follows:\n")
             traceback.print_tb(tb, file=handle)
             handle.write("\nError was:\n")
+    exc_strings = []
     for exc in walk_exception_chain(raw_exc):
-        s = str(exc)
-        s = ['%s%s' % (prefix, x.strip())
-            for x in filter(None, s.split("\n"))]
-        handle.write("\n".join(s))
-        handle.write("\n")
+        exc_strings.extend('%s%s' % (prefix, x.strip())
+            for x in filter(None, str(exc).split("\n")))
+    handle.write("\n".join(exc_strings))
+    handle.write("\n")

@@ -43,16 +43,26 @@ class TestFetcher(TempDirMixin, TestCase):
         o = c()
         o.fetch(1, foon=True)
         self.assertEqual([(1,), {"foon":True}], l)
-        class d(base.fetcher):
-            __parent = self
-            def get_path(self, fetchable):
-                if self._verify(self.__parent.fp, fetchable) == 0:
-                    return self.__parent.fp
-                return None
         self.write_data()
-        self.assertEqual(d().get_path(self.obj), self.fp)
+        self.assertEqual(self.fetcher._verify(self.fp, self.obj), None)
         self.write_data("asdf")
-        self.assertEqual(d().get_path(self.obj), None)
+        self.assertFailure(self.fetcher._verify, self.fp, self.obj,
+                           resumable=True)
+
+    def assertFailure(self, functor, path, fetchable, resumable=False,
+                      kls=None, **kwds):
+        try:
+          self.assertEqual(functor(path, fetchable, **kwds), None)
+          raise AssertionError(
+              "functor %s(%r, %r, **%r) didn't raise an exception"
+              % (functor, path, fetchable, kwds))
+        except errors.base, e:
+          self.assertEqual(resumable, e.resumable,
+                           msg="Expected resumable=%r, got %r"
+                               % (resumable, e.resumable))
+          self.assertEqual(path, e.filename)
+          if kls is not None:
+            self.assertIsInstance(e, kls)
 
     def test_verify_all_chksums(self):
         self.write_data()
@@ -60,7 +70,7 @@ class TestFetcher(TempDirMixin, TestCase):
         self.assertRaises(errors.RequiredChksumDataMissing,
             self.fetcher._verify, self.fp, self.obj, handlers=subhandlers)
         self.fetcher._verify(self.fp, self.obj)
-        self.assertEqual(0, self.fetcher._verify(self.fp, self.obj,
+        self.assertEqual(None, self.fetcher._verify(self.fp, self.obj,
             handlers=subhandlers, all_chksums=False))
 
     def test_size_verification_first(self):
@@ -81,20 +91,24 @@ class TestFetcher(TempDirMixin, TestCase):
             while l:
                 l.pop(-1)
             chksum_data["size"] = chksums["size"] + x
-            self.fetcher._verify(self.fp, self.obj, handlers=subhandlers,
-                all_chksums=False)
+            self.assertFailure(self.fetcher._verify, self.fp, self.obj,
+                               handlers=subhandlers, all_chksums=False,
+                               resumable=x < 0)
             self.assertEqual(['size'], l)
 
     def test_normal(self):
         self.write_data()
-        self.assertEqual(self.fetcher._verify(self.fp, self.obj), 0)
+        self.assertEqual(self.fetcher._verify(self.fp, self.obj), None)
         self.write_data(data[:-1])
-        self.assertEqual(self.fetcher._verify(self.fp, self.obj), -1)
+        self.assertFailure(self.fetcher._verify, self.fp, self.obj,
+                           resumable=True)
         # verify it returns -2 for missing file paths.
         os.unlink(self.fp)
-        self.assertEqual(self.fetcher._verify(self.fp, self.obj), -2)
+        self.assertFailure(self.fetcher._verify, self.fp, self.obj,
+                           kls=errors.MissingDistfile, resumable=True)
         self.write_data(data + "foon")
-        self.assertEqual(self.fetcher._verify(self.fp, self.obj), 1)
+        self.assertFailure(self.fetcher._verify, self.fp, self.obj,
+                           resumable=False)
 
         # verify they're ran one, and only once
         l = []
@@ -104,5 +118,5 @@ class TestFetcher(TempDirMixin, TestCase):
 
         alt_handlers = dict((chf, partial(f, chf)) for chf in chksums)
         self.assertEqual(self.fetcher._verify(self.fp, self.obj,
-            handlers=alt_handlers), 0)
+            handlers=alt_handlers), None)
         self.assertEqual(sorted(l), sorted(alt_handlers))

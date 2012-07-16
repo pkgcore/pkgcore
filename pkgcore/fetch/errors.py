@@ -11,6 +11,7 @@ __all__ = ("base", "distdirPerms", "UnmodifiableFile", "UnknownMirror",
 class base(Exception):
     pass
 
+
 class distdirPerms(base):
     def __init__(self, distdir, required):
         base.__init__(
@@ -18,11 +19,13 @@ class distdirPerms(base):
             % (distdir, required))
         self.distdir, self.required = distdir, required
 
+
 class UnmodifiableFile(base):
     def __init__(self, filename, extra=''):
         base.__init__(self, "Unable to update file %s, unmodifiable %s"
                       % (filename, extra))
-        self.file = filename
+        self.filename = filename
+
 
 class UnknownMirror(base):
     def __init__(self, host, uri):
@@ -30,9 +33,26 @@ class UnknownMirror(base):
                       % (host, uri))
         self.host, self.uri = host, uri
 
+
 class RequiredChksumDataMissing(base):
     def __init__(self, fetchable, *chksum):
         base.__init__(self, "chksum(s) %s were configured as required, "
                       "but the data is missing from fetchable '%s'"
                       % (', '.join(chksum), fetchable))
         self.fetchable, self.missing_chksum = fetchable, chksum
+
+
+class FetchFailed(base):
+    def __init__(self, filename, message, resumable=False):
+        base.__init__(self, message)
+        self.filename = filename
+        self.message = message
+        self.resumable = resumable
+
+    def __str__(self):
+        return "File %s: %s" % (self.filename, self.message)
+
+
+class MissingDistfile(FetchFailed):
+    def __init__(self, filename):
+        FetchFailed.__init__(self, filename, "Doesn't exist.", resumable=True)

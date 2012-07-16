@@ -9,6 +9,7 @@ __all__ = ("fetcher",)
 
 import os
 from snakeoil.chksum import get_handlers, get_chksums
+from snakeoil import compatibility
 from pkgcore.fetch import errors
 from snakeoil.compatibility import cmp
 
@@ -16,9 +17,10 @@ class fetcher(object):
 
     def _verify(self, file_location, target, all_chksums=True, handlers=None):
         """
-        internal function for derivatives.
+        Internal function for derivatives.
 
-        digs through chksums, and returns:
+        Digs through chksums, and either returns None, or throws an
+        errors.FetchFailed exception.
           - -2: file doesn't exist.
           - -1: if (size chksum is available, and
                 file is smaller than stated chksum)
@@ -32,7 +34,12 @@ class fetcher(object):
 
         nondefault_handlers = handlers
         if handlers is None:
-            handlers = get_handlers(target.chksums)
+            try:
+                handlers = get_handlers(target.chksums)
+            except KeyError, e:
+                compatibility.raise_from(
+                    errors.FetchFailed(file_location,
+                        "Couldn't find a required checksum handler"))
         if all_chksums:
             missing = set(target.chksums).difference(handlers)
             if missing:
@@ -42,27 +49,33 @@ class fetcher(object):
         if "size" in handlers:
             val = handlers["size"](file_location)
             if val is None:
-                return -2
+                raise errors.MissingDistfile(file_location)
             c = cmp(val, target.chksums["size"])
             if c:
-                if c < 0:
-                    return -1
-                return 1
+                resumable = (c < 0)
+                raise errors.FetchFailed(file_location,
+                    "File is too small.", resumable=resumable)
         elif not os.path.exists(file_location):
-            return -2
+            raise errors.MissingDistfile(file_location)
 
         chfs = set(target.chksums).intersection(handlers)
         chfs.discard("size")
         chfs = list(chfs)
         if nondefault_handlers:
             for x in chfs:
-                if not handlers[x](file_location) == target.chksums[x]:
-                    return 1
-        elif [target.chksums[x] for x in chfs] != \
-            get_chksums(file_location, *chfs):
-            return 1
-
-        return 0
+                val = handlers[x](file_location)
+                if val != target.chksums[x]:
+                    raise errors.FetchFailed(file_location,
+                        "Validation handler %s: expected %s, got %s" % (
+                        x, target.chksums[x], val))
+        else:
+            desired_vals = [target.chksums[x] for x in chfs]
+            calced = get_chksums(file_location, *chfs)
+            for desired, got, chf in zip(desired_vals, calced, chfs):
+                if desired != got:
+                    raise errors.FetchFailed(file_location,
+                        "Validation handler %s: expected %s, got %s" % (
+                        chf, desired, got))
 
     def __call__(self, fetchable):
         if not fetchable.uri:

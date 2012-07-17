@@ -310,7 +310,7 @@ class RepoConfig(syncable.tree):
 
         sf = object.__setattr__
 
-        hashes = data.get('manifest-hashes', '').split()
+        hashes = data.get('manifest-hashes', '').lower().split()
         if hashes:
             hashes = ['size'] + hashes
             hashes = tuple(iter_stable_unique(hashes))

@@ -48,13 +48,17 @@ class fetcher(object):
 
         if "size" in handlers:
             val = handlers["size"](file_location)
-            if val is None:
-                raise errors.MissingDistfile(file_location)
+            if val == -1:
+              raise errors.MissingDistfile(file_location)
             c = cmp(val, target.chksums["size"])
             if c:
                 resumable = (c < 0)
+                if resumable:
+                  msg = "File is too small."
+                else:
+                  msg = "File is too big."
                 raise errors.FetchFailed(file_location,
-                    "File is too small.", resumable=resumable)
+                    msg, resumable=resumable)
         elif not os.path.exists(file_location):
             raise errors.MissingDistfile(file_location)
 

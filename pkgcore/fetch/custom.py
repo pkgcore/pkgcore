@@ -7,7 +7,7 @@ fetcher class that pulls files via executing another program to do the fetching
 
 __all__ = ("MalformedCommand", "fetcher",)
 
-import os
+import os, sys
 from pkgcore.spawn import spawn_bash, is_userpriv_capable
 from pkgcore.os_data import portage_uid, portage_gid
 from pkgcore.fetch import errors, base, fetchable
@@ -120,21 +120,25 @@ class fetcher(base.fetcher):
         extra["umask"] = 0002
         extra["env"] = self.extra_env
         attempts = self.attempts
+        last_exc = None
         try:
             while attempts >= 0:
-                c = self._verify(fp, target)
-                if c == 0:
+                try:
+                    c = self._verify(fp, target)
                     return fp
-                elif c > 0:
-                    try:
-                        os.unlink(fp)
-                        command = self.command
-                    except OSError, oe:
-                        raise_from(errors.UnmodifiableFile(fp, oe))
-                elif c == -2:
+                except errors.MissingDistfile:
                     command = self.command
-                else:
-                    command = self.resume_command
+                    last_exc = sys.exc_info()
+                except errors.FetchFailed, e:
+                    last_exc = sys.exc_info()
+                    if not e.resumable:
+                       try:
+                            os.unlink(fp)
+                            command = self.command
+                       except OSError, oe:
+                            raise_from(errors.UnmodifiableFile(fp, oe))
+                    else:
+                        command = self.resume_command
 
                 # yeah, it's funky, but it works.
                 if attempts > 0:
@@ -145,12 +149,12 @@ class fetcher(base.fetcher):
                     # instead.
                     spawn_bash(command % {"URI":u, "FILE":filename}, **extra)
                 attempts -= 1
+            assert last_exc is not None
+            raise last_exc[0], last_exc[1], last_exc[2]
 
         except StopIteration:
             # ran out of uris
-            return None
-
-        return None
+            return FetchFailed(fp, "Ran out of urls to fetch from")
 
     def get_path(self, fetchable):
         fp = pjoin(self.distdir, fetchable.filename)

@@ -16,7 +16,6 @@ from snakeoil.demandload import demandload
 from snakeoil.compatibility import raise_from
 demandload(globals(),
     'errno',
-    'snakeoil.compatibility:any',
     'pkgcore.log:logger',
     'snakeoil.mappings:defaultdictkey',
     )

@@ -6,7 +6,6 @@ contents set- container of fs objects
 """
 
 from pkgcore.fs import fs
-from snakeoil.compatibility import all, any
 from snakeoil.klass import generic_equality, alias_method
 from snakeoil.currying import partial
 from snakeoil.demandload import demandload
@@ -14,7 +13,8 @@ from snakeoil.osutils import normpath, pjoin
 demandload(globals(),
     'os:path',
     'time',
-    'snakeoil.mappings:OrderedDict,defaultdict',
+    'snakeoil.mappings:OrderedDict',
+    'collections:defaultdict',
 )
 from itertools import ifilter
 from operator import attrgetter

@@ -443,7 +443,7 @@ class InfoRegen(triggers.InfoRegen):
         triggers.InfoRegen.register(self, engine)
 
     def should_skip_directory(self, basepath, files):
-        return compatibility.any(x.startswith(".keepinfodir")
+        return any(x.startswith(".keepinfodir")
             for x in files)
 
     def trigger(self, engine, *args):

@@ -6,7 +6,7 @@ restriction classes designed for package level matching
 """
 
 from pkgcore.restrictions import restriction, boolean
-from snakeoil.compatibility import any, is_py3k, IGNORED_EXCEPTIONS
+from snakeoil.compatibility import is_py3k, IGNORED_EXCEPTIONS
 from snakeoil.klass import generic_equality, static_attrgetter
 from snakeoil.demandload import demandload
 demandload(globals(), "pkgcore.log:logger")

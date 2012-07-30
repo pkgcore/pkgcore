@@ -30,6 +30,7 @@ demandload(globals(),
     'pkgcore.repository:util',
     'pkgcore.restrictions:packages',
     'pkgcore.fs.livefs:iter_scan',
+    'collections',
     'snakeoil:mappings',
 )
 
@@ -197,7 +198,7 @@ class ProfileNode(object):
         return data
 
     def _parse_package_use(self, data):
-        d = mappings.defaultdict(list)
+        d = collections.defaultdict(list)
         # split the data down ordered cat/pkg lines
         for line in data:
             l = line.split()

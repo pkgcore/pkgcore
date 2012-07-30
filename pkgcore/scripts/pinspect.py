@@ -13,7 +13,7 @@ from snakeoil.demandload import demandload
 
 demandload(globals(),
     'snakeoil.lists:iflatten_instance,unstable_unique',
-    'snakeoil.mappings:defaultdict',
+    'collections:defaultdict',
     'pkgcore:fetch',
     'pkgcore.restrictions:packages',
     'itertools:groupby,islice',

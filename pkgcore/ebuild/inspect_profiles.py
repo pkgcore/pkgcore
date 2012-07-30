@@ -1,6 +1,7 @@
 # Copyright: 2011 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD 3 clause
 
+import collections
 from pkgcore.util import commandline
 from snakeoil.demandload import demandload
 demandload(globals(),
@@ -97,7 +98,7 @@ class provided(_base):
     """
 
     def __call__(self, namespace, out, err):
-        targets = mappings.defaultdict(list)
+        targets = collections.defaultdict(list)
         for pkg in namespace.profile.provides_repo:
             targets[pkg.key].append(pkg)
 

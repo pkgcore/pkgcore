@@ -41,8 +41,7 @@ Example of the supported format (not a complete config)::
 __all__ = ("config_from_file",)
 
 from pkgcore.config import basics, errors
-from snakeoil import mappings, modules, demandload
-demandload.demandload(globals(), 'snakeoil.compatibility:all')
+from snakeoil import mappings, modules
 
 import pyparsing as pyp
 

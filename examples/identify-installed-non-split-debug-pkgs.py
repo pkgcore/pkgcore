@@ -1,7 +1,6 @@
 #!/usr/bin/python
 from pkgcore.config import load_config
 from pkgcore.util.file_type import file_identifier
-from snakeoil.compatibility import any
 
 import re
 debug_paths = ["/usr/lib%s/debug" % (x,) for x in ("64", "32", "")]

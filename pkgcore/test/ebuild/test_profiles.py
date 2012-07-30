@@ -6,7 +6,6 @@ import os, shutil, errno
 from pkgcore.test import TestCase
 from snakeoil.test.mixins import TempDirMixin
 from snakeoil.osutils import pjoin, ensure_dirs, normpath
-from snakeoil.compatibility import all
 
 from pkgcore.ebuild import profiles
 from pkgcore.ebuild.misc import chunked_data

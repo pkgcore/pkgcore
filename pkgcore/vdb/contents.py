@@ -8,7 +8,6 @@ from pkgcore.fs import fs
 from snakeoil import data_source
 
 from snakeoil.fileutils import AtomicWriteFile
-from snakeoil.compatibility import any
 from snakeoil.demandload import demandload
 demandload(globals(),
     'os',

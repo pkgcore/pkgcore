@@ -16,7 +16,7 @@ from pkgcore.resolver import state
 from pkgcore.ebuild import atom as _atom
 
 from snakeoil.currying import partial
-from snakeoil.compatibility import any, cmp, sort_cmp
+from snakeoil.compatibility import cmp, sort_cmp
 from snakeoil.iterables import caching_iter
 
 

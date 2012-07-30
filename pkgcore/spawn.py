@@ -72,9 +72,6 @@ def run_exitfuncs():
     function when atexit will not work (because of os.execv, for
     example)."""
 
-    # This function is a copy of the private atexit._run_exitfuncs()
-    # from the python 2.4.2 sources.  The only difference from the
-    # original function is in the output to stderr.
     exc_info = None
     while _exithandlers:
         func, targs, kargs = _exithandlers.pop()

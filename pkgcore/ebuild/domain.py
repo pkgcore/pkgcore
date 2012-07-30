@@ -29,7 +29,7 @@ from pkgcore.ebuild.repo_objs import OverlayedLicenses
 from pkgcore.util.parserestrict import parse_match
 
 from snakeoil.lists import stable_unique, unstable_unique, predicate_split
-from snakeoil.compatibility import any, raise_from
+from snakeoil.compatibility import raise_from
 from snakeoil.mappings import ProtectedDict
 from snakeoil.fileutils import iter_read_bash
 from snakeoil.currying import partial

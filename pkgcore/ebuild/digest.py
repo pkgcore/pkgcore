@@ -17,7 +17,7 @@ from pkgcore.package import errors
 from pkgcore.fs.livefs import iter_scan
 
 from snakeoil.mappings import make_SlottedDict_kls
-from snakeoil.compatibility import any, raise_from
+from snakeoil.compatibility import raise_from
 from snakeoil.demandload import demandload
 demandload(globals(),
     "snakeoil.lists:iflatten_instance",

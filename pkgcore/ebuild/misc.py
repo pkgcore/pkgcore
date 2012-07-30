@@ -10,6 +10,7 @@ __all__ = ("optimize_incrementals", "incremental_expansion_license",
     )
 
 
+import collections
 from pkgcore.restrictions import packages, restriction
 from pkgcore.ebuild import atom
 
@@ -376,7 +377,7 @@ class ChunkedDataDict(object):
 
     def __init__(self):
         self._global_settings = []
-        self._dict = mappings.defaultdict(partial(list, self._global_settings))
+        self._dict = collections.defaultdict(partial(list, self._global_settings))
 
     @property
     def frozen(self):

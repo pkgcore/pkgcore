@@ -2,11 +2,10 @@
 # License: GPL2/BSD 3 clause
 
 from operator import itemgetter
-from collections import deque
+from collections import deque, defaultdict
 from snakeoil.osutils import listdir_files, pjoin
 from snakeoil.fileutils import readlines
 from snakeoil.iterables import chain_from_iterable
-from snakeoil.mappings import defaultdict
 from pkgcore.ebuild.atom import atom
 from snakeoil.lists import iflatten_instance
 from snakeoil import demandload

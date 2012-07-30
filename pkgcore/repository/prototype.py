@@ -14,7 +14,7 @@ from pkgcore.restrictions.util import collect_package_restrictions
 
 from snakeoil.mappings import LazyValDict, DictMixin
 from snakeoil.lists import iflatten_instance
-from snakeoil.compatibility import any, is_py3k
+from snakeoil.compatibility import is_py3k
 from pkgcore.operations import repo
 
 class IterValLazyDict(LazyValDict):

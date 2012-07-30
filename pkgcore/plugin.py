@@ -18,6 +18,7 @@ __all__ = ("initialize_cache", "get_plugins", "get_plugin")
 # latter an installed plugin issue. May have to change this if it
 # causes problems.
 
+import collections
 import operator
 import os.path
 
@@ -172,7 +173,7 @@ def initialize_cache(package, force=False):
     Writes cache files if they are stale and writing is possible.
     """
     # package plugin cache, see above.
-    package_cache = mappings.defaultdict(set)
+    package_cache = collections.defaultdict(set)
     seen_modnames = set()
     for path in package.__path__:
         # Check if the path actually exists first.
@@ -196,7 +197,7 @@ def initialize_cache(package, force=False):
 
         cache_stale = False
         # Hunt for modules.
-        actual_cache = mappings.defaultdict(set)
+        actual_cache = collections.defaultdict(set)
         mtime_cache = mappings.defaultdictkey(lambda x:int(os.path.getmtime(x)))
         for modfullname in sorted(modlist):
             modname = os.path.splitext(modfullname)[0]

@@ -9,7 +9,6 @@ __all__ = ("Maintainer", "MetadataXml", "LocalMetadataXml",
     "SharedPkgData", "Licenses", "OverlayedLicenses")
 
 from snakeoil.currying import post_curry
-from snakeoil.compatibility import any
 from snakeoil.demandload import demandload
 from snakeoil.osutils import pjoin, listdir_files, listdir
 from snakeoil.caching import WeakInstMeta

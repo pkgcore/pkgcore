@@ -10,7 +10,6 @@ from pkgcore.ebuild import conditionals, atom
 from pkgcore.util import (
     commandline, repo_utils, parserestrict, packages as pkgutils)
 from snakeoil.currying import partial
-from snakeoil.compatibility import any
 from snakeoil.formatters import decorate_forced_wrapping
 from snakeoil.demandload import demandload
 demandload(globals(),

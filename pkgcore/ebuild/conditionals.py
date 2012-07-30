@@ -16,7 +16,7 @@ from snakeoil.iterables import expandable_chain
 from snakeoil.lists import iflatten_instance
 from pkgcore.ebuild.atom import atom, transitive_use_atom
 from pkgcore.ebuild.errors import ParseError
-from snakeoil.compatibility import any, raise_from, IGNORED_EXCEPTIONS
+from snakeoil.compatibility import raise_from, IGNORED_EXCEPTIONS
 
 try:
     from pkgcore.ebuild._depset import parse_depset

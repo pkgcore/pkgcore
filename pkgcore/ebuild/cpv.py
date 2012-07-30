@@ -8,7 +8,7 @@
 __all__ = ("CPV", "versioned_CPV", "unversioned_CPV")
 
 from itertools import izip
-from snakeoil.compatibility import all, cmp
+from snakeoil.compatibility import cmp
 from snakeoil.klass import inject_richcmp_methods_from_cmp
 from pkgcore.ebuild.errors import InvalidCPV
 

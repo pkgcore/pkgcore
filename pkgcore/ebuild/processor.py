@@ -46,7 +46,6 @@ from pkgcore.ebuild import const as e_const
 from snakeoil.currying import post_curry, partial, pretty_docs
 from snakeoil import klass
 from snakeoil.weakrefs import WeakRefFinalizer
-from snakeoil.compatibility import any
 from snakeoil.demandload import demandload
 demandload(globals(),
     'pkgcore.log:logger',

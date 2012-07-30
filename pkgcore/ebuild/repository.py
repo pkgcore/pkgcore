@@ -24,7 +24,7 @@ from snakeoil.fileutils import readfile
 from snakeoil.containers import InvertedContains
 from snakeoil.obj import make_kls
 from snakeoil.weakrefs import WeakValCache
-from snakeoil.compatibility import any, intern, raise_from
+from snakeoil.compatibility import intern, raise_from
 
 from snakeoil.demandload import demandload
 demandload(globals(),

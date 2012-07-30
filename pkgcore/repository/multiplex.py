@@ -11,7 +11,7 @@ from operator import itemgetter
 from pkgcore.repository import prototype, errors
 from snakeoil.currying import partial, post_curry
 from snakeoil.iterables import iter_sort, chain_from_iterable
-from snakeoil.compatibility import all, sorted_cmp
+from snakeoil.compatibility import sorted_cmp
 from snakeoil import klass
 from pkgcore.operations import repo as repo_interface
 from pkgcore.config import configurable

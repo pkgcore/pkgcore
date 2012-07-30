@@ -13,7 +13,7 @@ __all__ = ("atom", "transitive_use_atom", "generate_collapsed_restriction")
 import string
 from pkgcore.restrictions import values, packages, boolean
 from pkgcore.ebuild import cpv, errors, const, restricts
-from snakeoil.compatibility import all, is_py3k, cmp, raise_from
+from snakeoil.compatibility import is_py3k, cmp, raise_from
 from snakeoil.klass import (generic_equality, inject_richcmp_methods_from_cmp,
     reflective_hash, alias_attr)
 from snakeoil.demandload import demandload

@@ -5,6 +5,8 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 
 pkgcore trunk:
 
+* Python 2.4 support was dropped.
+
 * Fix a longstanding potential bug in spawn's fd reassignment;
   if fed {2:3, 3:2, 4:6}, dependent on python dict ordering, it
   was possible for it to inadvertantly stomp fd 4 during the

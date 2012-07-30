@@ -56,10 +56,10 @@ class _ConfigMapping(mappings.DictMixin):
         return conf is not None and conf.type.name == self.typename
 
 
-class _ConfigStack(mappings.defaultdict):
+class _ConfigStack(collections.defaultdict):
 
     def __init__(self):
-        mappings.defaultdict.__init__(self, list)
+        collections.defaultdict.__init__(self, list)
 
     def render_vals(self, manager, key, type_name):
         for data in self.get(key, ()):
@@ -293,7 +293,7 @@ class ConfigManager(object):
         self.config_sources = []
         # Cache mapping confname to CollapsedConfig.
         self.rendered_sections = {}
-        self.sections_lookup = mappings.defaultdict(collections.deque)
+        self.sections_lookup = collections.defaultdict(collections.deque)
         # force regeneration.
         self._types = klass._uncached_singleton
         for config in self.original_config_sources:
@@ -471,7 +471,7 @@ class ConfigManager(object):
 
     @klass.jit_attr
     def types(self):
-        type_map = mappings.defaultdict(dict)
+        type_map = collections.defaultdict(dict)
         for name, sections in self.sections_lookup.iteritems():
             if self._section_is_inherit_only(sections[0]):
                 continue

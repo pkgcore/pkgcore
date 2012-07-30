@@ -18,7 +18,7 @@ from pkgcore.restrictions import packages, values
 from pkgcore.restrictions.boolean import AndRestriction, OrRestriction
 
 from snakeoil import lists, currying
-from snakeoil.compatibility import any, IGNORED_EXCEPTIONS
+from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from pkgcore.resolver.util import reduce_to_failures
 
 argparser = commandline.mk_argparser(domain=True,

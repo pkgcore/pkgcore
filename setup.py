@@ -162,7 +162,7 @@ class pkgcore_install_scripts(core.Command):
                 # note, we use the int here for python3k compatibility.
                 # 365 == 0555, 4095 = 0777
                 mode = ((os.stat(copyname)[ST_MODE]) | 365) & 4095
-                log.info("changing mode of %s to %o", copyname, mode)
+                log.debug("changing mode of %s to %o", copyname, mode)
                 os.chmod(copyname, mode)
             # Use symlinks for the other scripts.
             for script in self.scripts[1:]:
@@ -371,7 +371,7 @@ class pkgcore_build_py(snk_distutils.build_py):
             # note, we use the int here for python3k compatibility.
             # 365 == 0555, 4095 = 0777
             mode = ((os.stat(path)[ST_MODE]) | 365) & 4095
-            log.info("changing mode of %s to %o", path, mode)
+            log.debug("changing mode of %s to %o", path, mode)
             os.chmod(path, mode)
 
 

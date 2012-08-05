@@ -3,7 +3,11 @@ Pkgcore Release Notes
 
 See ChangeLog for full commit logs; this is summarized/major changes.
 
-pkgcore trunk:
+
+pkgcore 0.8: August 4th, 2012
+
+* Fix fetch support broken by gentoo's recent enabling of whirlpool
+  checksum.
 
 * Python 2.4 support was dropped.
 

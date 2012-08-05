@@ -3,7 +3,7 @@
 
 import os, shutil, errno
 
-from pkgcore.test import TestCase
+from pkgcore.test import TestCase, silence_logging
 from snakeoil.test.mixins import TempDirMixin
 from snakeoil.osutils import pjoin, ensure_dirs, normpath
 
@@ -752,6 +752,7 @@ class TestOnDiskProfile(profile_mixin, TestCase):
             )
         self.assertTrue(self.get_profile("1").deprecated)
 
+    @silence_logging
     def test_from_abspath(self):
         self.mk_profiles({'name':'profiles'}, {'name':'profiles/1'})
         base = pjoin(self.dir, 'profiles')

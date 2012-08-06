@@ -347,8 +347,6 @@ def config_from_make_conf(location="/etc/"):
     root = os.environ.get("ROOT", conf_dict.get("ROOT", "/"))
     gentoo_mirrors = list(
         x+"/distfiles" for x in conf_dict.pop("GENTOO_MIRRORS", "").split())
-    if not gentoo_mirrors:
-        gentoo_mirrors = None
 
     # this is flawed... it'll pick up -some-feature
     features = conf_dict.get("FEATURES", "").split()

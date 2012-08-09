@@ -7,14 +7,17 @@ in memory representation of on disk eclass stacking order
 
 __all__ = ("base", "cache", "StackedCaches")
 
+import operator
+
 from snakeoil.data_source import local_source
 from pkgcore.config import ConfigHint
 
-from snakeoil.mappings import ImmutableDict
-from snakeoil.weakrefs import WeakValCache
-from snakeoil.osutils import join as pjoin, listdir_files
+from snakeoil.chksum import LazilyHashedPath
 from snakeoil.compatibility import intern
 from snakeoil.klass import jit_attr_ext_method
+from snakeoil.mappings import ImmutableDict
+from snakeoil.osutils import join as pjoin, listdir_files
+from snakeoil.weakrefs import WeakValCache
 
 from snakeoil.demandload import demandload
 demandload(globals(),
@@ -36,23 +39,6 @@ class base(object):
         self.portdir = portdir
         self.eclassdir = eclassdir
 
-    def is_eclass_data_valid(self, ec_dict):
-        """Check if eclass data is still valid.
-
-        Given a dict as returned by get_eclass_data, walk it comparing
-        it to internal eclass view.
-
-        :return: a boolean representing whether that eclass data is still
-            up to date, or not
-        """
-        ec = self.eclasses
-        for eclass, tup in ec_dict.iteritems():
-            if eclass not in ec:
-                return False
-            if tup[1] != ec[eclass][1]:
-                return False
-        return True
-
     def get_eclass_data(self, inherits):
         """Return the cachable entries from a list of inherited eclasses.
 
@@ -73,9 +59,29 @@ class base(object):
         o = self.eclasses.get(eclass)
         if o is None:
             return None
-        return local_source(pjoin(o[0], eclass+".eclass"))
+        return local_source(o.path)
 
     eclasses = jit_attr_ext_method("_load_eclasses", "_eclasses")
+
+    def rebuild_cache_entry(self, entry_eclasses):
+        """Check if eclass data is still valid.
+
+        Given a dict as returned by get_eclass_data, walk it comparing
+        it to internal eclass view.
+
+        :return: a boolean representing whether that eclass data is still
+            up to date, or not
+        """
+        ec = self.eclasses
+        d = {}
+
+        for eclass, chksums in entry_eclasses:
+            data = ec.get(eclass)
+            if any(val != getattr(data, chf, None) for chf, val in chksums):
+                return None
+            d[eclass] = data
+
+        return d
 
 
 class cache(base):
@@ -102,9 +108,9 @@ class cache(base):
         for y in files:
             if not y.endswith(".eclass"):
                 continue
-            mtime = os.stat(pjoin(self.eclassdir, y)).st_mtime
             ys = y[:-eclass_len]
-            ec[intern(ys)] = (self.eclassdir, long(mtime))
+            ec[intern(ys)] = LazilyHashedPath(pjoin(self.eclassdir, y),
+                                              eclassdir=self.eclassdir)
         return ImmutableDict(ec)
 
 

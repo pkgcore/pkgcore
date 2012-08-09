@@ -241,7 +241,7 @@ class PackagesCacheV0(cache.bulk):
         # it'll load up the contents in full.
         new_dict = dict((k, xpak[k]) for k in
             self._known_keys if k in xpak)
-        new_dict['mtime'] = xpak.mtime
+        new_dict['_chf_'] = xpak._chf_
         chfs = [x for x in self._stored_chfs if x != 'mtime']
         for key, value in izip(chfs, get_chksums(pkg.path, *chfs)):
             if key != 'size':

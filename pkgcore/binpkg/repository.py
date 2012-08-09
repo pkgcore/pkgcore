@@ -22,13 +22,14 @@ from snakeoil.compatibility import raise_from
 from snakeoil.mappings import DictMixin, StackedDict
 from snakeoil.osutils import listdir_dirs, listdir_files, access
 from snakeoil.osutils import join as pjoin
-from snakeoil.klass import jit_attr
+from snakeoil.klass import jit_attr, jit_attr_named, alias_attr
 
 from snakeoil.demandload import demandload
 demandload(globals(),
+    "snakeoil:chksum",
+    "snakeoil.data_source:local_source,data_source",
     "pkgcore.merge:engine",
     "pkgcore.fs.livefs:scan",
-    "snakeoil.data_source:local_source,data_source",
     "pkgcore.fs.contents:offset_rewriter,contentsSet",
     "pkgcore.repository:wrapper",
     "pkgcore.package:base@pkg_base",
@@ -110,7 +111,7 @@ def wrap_factory(klass, *args, **kwds):
 
 class StackedXpakDict(DictMixin):
     __slots__ = ("_xpak", "_parent", "_pkg", "contents",
-        "_wipes", "_mtime")
+        "_wipes", "_chf_obj")
 
     _metadata_rewrites = {
         "depends":"DEPEND", "rdepends":"RDEPEND", "post_rdepends":"PDEPEND",
@@ -127,9 +128,11 @@ class StackedXpakDict(DictMixin):
     def xpak(self):
         return Xpak(self._parent._get_path(self._pkg))
 
-    @jit_attr
-    def mtime(self):
-        return int(os.stat(self._parent._get_path(self._pkg)).st_mtime)
+    mtime = alias_attr('_chf_.mtime')
+
+    @jit_attr_named('_chf_obj')
+    def _chf_(self):
+        return chksum.LazilyHashedPath(self._parent._get_path(self._pkg))
 
     def __getitem__(self, key):
         key = self._metadata_rewrites.get(key, key)

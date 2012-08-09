@@ -345,13 +345,16 @@ class test_package_factory(TestCase):
 
     def test_get_metadata(self):
         ec = FakeEclassCache('/nonexistant/path')
-        pkg = malleable_obj(_mtime_=100, cpvstr='dev-util/diffball-0.71')
+        pkg = malleable_obj(_mtime_=100, cpvstr='dev-util/diffball-0.71', path='bollocks')
 
         class fake_cache(dict):
             readonly = False
+            validate_result = False
+            def validate_entry(self, *args):
+                return self.validate_result
 
         cache1 = fake_cache({pkg.cpvstr:
-            {'_mtime_':100, '_eclasses_':{'eclass1':(None, 100)}, 'marker':1}
+            {'_mtime_':100, 'marker':1}
         })
         cache2 = fake_cache({})
 
@@ -364,8 +367,9 @@ class test_package_factory(TestCase):
         pf = self.mkinst(cache=(cache2, cache1), eclasses=ec,
             _update_metadata=partial(explode, '_update_metadata'))
 
+        cache1.validate_result = True
         self.assertEqual(pf._get_metadata(pkg),
-            {'_eclasses_':{'eclass1':(None, 100)}, 'marker':1},
+            {'marker':1, '_mtime_':100},
             reflective=False)
 
         self.assertEqual(cache1.keys(), [pkg.cpvstr])
@@ -373,10 +377,13 @@ class test_package_factory(TestCase):
 
         # mtime was wiped, thus no longer is usable.
         # note also, that the caches are writable.
+        cache1.validate_result = False
         self.assertRaises(explode_kls, pf._get_metadata, pkg)
         self.assertFalse(cache2)
         self.assertFalse(cache1)
 
+        # Note that this is known crap eclass data; partially lazyness, partially
+        # to validate the eclass validation is left to ec cache only.
         cache2.update({pkg.cpvstr:
             {'_mtime_':200, '_eclasses_':{'eclass1':(None, 100)}, 'marker':2}
         })
@@ -386,5 +393,5 @@ class test_package_factory(TestCase):
         # keep in mind the backend assumes it gets it's own copy of the data.
         # thus, modifying (popping _mtime_) _is_ valid
         self.assertEqual(cache2[pkg.cpvstr],
-            {'_eclasses_':{'eclass1':(None, 100)}, 'marker':2})
+            {'_eclasses_':{'eclass1':(None, 100)}, 'marker':2, '_mtime_':200})
 

@@ -3,6 +3,7 @@
 
 from pkgcore.test import TestCase
 from pkgcore.cache import errors
+from snakeoil.chksum import LazilyHashedPath
 
 generic_data = \
     ("sys-libs/libtrash-2.4",
@@ -21,10 +22,10 @@ generic_data = \
         ('SRC_URI', 'http://pages.stern.nyu.edu/~marriaga/software/blah.tgz'),
         ('_eclasses_',
             {
-                'toolchain-funcs': ('/usr/portage/eclass', 1155996352L),
-                'multilib': ('/usr/portage/eclass', 1156014349L),
-                'eutils': ('/usr/portage/eclass', 1155996352L),
-                'portability': ('/usr/portage/eclass', 1141850196L)
+                'toolchain-funcs': LazilyHashedPath('/usr/portage/eclass', mtime=1155996352L),
+                'multilib': LazilyHashedPath('/usr/portage/eclass', mtime=1156014349L),
+                'eutils': LazilyHashedPath('/usr/portage/eclass', mtime=1155996352L),
+                'portability': LazilyHashedPath('/usr/portage/eclass', mtime=1141850196L)
             }
         ),
         ('_mtime_', 1000),

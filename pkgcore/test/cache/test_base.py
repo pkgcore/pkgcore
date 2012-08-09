@@ -5,6 +5,13 @@
 import operator
 from pkgcore.test import TestCase
 from pkgcore.cache import base, errors, bulk
+from snakeoil.chksum import LazilyHashedPath
+
+
+def _mk_chf_obj(**kwargs):
+    kwargs.setdefault('mtime', 100)
+    return LazilyHashedPath('/nonexistent/path', **kwargs)
+_chf_obj = _mk_chf_obj()
 
 
 class DictCache(base):
@@ -20,6 +27,18 @@ class DictCache(base):
 
     def _getitem(self, cpv):
         return self._data[cpv]
+
+    def __getitem__(self, cpv):
+        # Protected dict's come back by default, but are a minor
+        # pita to deal with for this code- thus we convert back.
+        # Additionally, we drop any chksum info in the process.
+        d = dict(base.__getitem__(self, cpv).iteritems())
+        d.pop('_%s_' % self.chf_type, None)
+        return d
+
+    def __setitem__(self, cpv, data):
+        data['_chf_'] = _chf_obj
+        return base.__setitem__(self, cpv, data)
 
     def _setitem(self, cpv, values):
         self._data[cpv] = values
@@ -50,6 +69,15 @@ class DictCacheBulk(bulk):
     def _write_data(self):
         self._data = self.data.copy()
         self._write_count += 1
+
+    def __getitem__(self, cpv):
+        d = bulk.__getitem__(self, cpv)
+        d.pop('_%s_' % self.chf_type, None)
+        return d
+
+    def __setitem__(self, cpv, data):
+        data['_chf_'] = _chf_obj
+        return bulk.__setitem__(self, cpv, data)
 
 
 class BaseTest(TestCase):
@@ -86,18 +114,19 @@ class BaseTest(TestCase):
     def test_eclasses(self):
         self.cache = self.get_db()
         self.cache['spork'] = {'foo':'bar'}
-        self.cache['spork'] = {'_eclasses_': {'spork': 'here',
-                                              'foon': 'there'}}
+        self.cache['spork'] = {'_eclasses_': {'spork': _chf_obj,
+                                              'foon': _chf_obj}}
         self.assertRaises(errors.CacheCorruption,
                           operator.getitem, self.cache, 'spork')
 
-        self.cache['spork'] = {'_eclasses_': {'spork': ('here', 1),
-                                              'foon': ('there', 2)}}
+        self.cache['spork'] = {'_eclasses_': {'spork': _mk_chf_obj(mtime=1),
+                                              'foon': _mk_chf_obj(mtime=2)}}
         self.assertIn(self.cache._data['spork']['_eclasses_'], [
-                'spork\there\t1\tfoon\tthere\t2',
-                'foon\tthere\t2\tspork\there\t1'])
-        self.assertEqual({'spork': ('here', 1), 'foon': ('there', 2)},
-                          self.cache['spork']['_eclasses_'])
+                'spork\t1\tfoon\t2',
+                'foon\t2\tspork\t1'])
+        self.assertEqual(
+            sorted([('foon', (('mtime', 2L),)), ('spork', (('mtime', 1L),))]),
+            sorted(self.cache['spork']['_eclasses_']))
 
     def test_readonly(self):
         self.cache = self.get_db()

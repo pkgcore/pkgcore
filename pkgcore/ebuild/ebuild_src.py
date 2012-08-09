@@ -35,6 +35,7 @@ demandload(globals(),
     "pkgcore.log:logger",
     "pkgcore.ebuild.eapi:get_eapi",
     "snakeoil:data_source",
+    "snakeoil:chksum",
 )
 
 
@@ -326,24 +327,19 @@ class package_factory(metadata.factory):
     def _get_ebuild_mtime(self, pkg):
         return os.stat(self._get_ebuild_path(pkg)).st_mtime
 
-    def _invalidated_eclasses(self, data, pkg):
-        return (data.get("_eclasses_") is not None and not
-            self._ecache.is_eclass_data_valid(data["_eclasses_"]))
-
     def _get_metadata(self, pkg, ebp=None, force_regen=False):
         caches = self._cache
         if force_regen:
             caches = ()
+        ebuild_hash = chksum.LazilyHashedPath(pkg.path)
         for cache in caches:
             if cache is not None:
                 try:
                     data = cache[pkg.cpvstr]
-                    if long(data.pop("_mtime_", -1)) != long(pkg._mtime_) or \
-                        self._invalidated_eclasses(data, pkg):
-                        if not cache.readonly:
-                            del cache[pkg.cpvstr]
-                        continue
-                    return data
+                    if cache.validate_entry(data, ebuild_hash, self._ecache):
+                        return data
+                    if not cache.readonly:
+                        del cache[pkg.cpvstr]
                 except KeyError:
                     continue
                 except cache_errors.CacheError, ce:
@@ -368,7 +364,8 @@ class package_factory(metadata.factory):
             # drop the metadata, leaving just the validation info
             # we currently know about, and marking the eapi
             # in a negative fashion.
-            wipes.difference_update(["_eclasses_", "EAPI", "_mtime_"])
+            # TODO(FIX THIS)
+            wipes.difference_update(["_eclasses_", "EAPI"])
             mydata["EAPI"] = "-" + mydata["EAPI"]
         else:
             wipes.difference_update(eapi.metadata_keys)
@@ -381,13 +378,12 @@ class package_factory(metadata.factory):
                 phases.discard(None)
                 mydata["DEFINED_PHASES"] = ' '.join(sorted(phases))
 
-        mydata["_mtime_"] = long(pkg._mtime_)
         if inherited:
             mydata["_eclasses_"] = self._ecache.get_eclass_data(
                 inherited.split())
         else:
             mydata["_eclasses_"] = {}
-
+        mydata['_chf_'] = chksum.LazilyHashedPath(pkg.path)
 
         for x in wipes:
             del mydata[x]

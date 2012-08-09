@@ -8,14 +8,15 @@ from snakeoil.test.mixins import TempDirMixin
 from snakeoil.osutils import pjoin
 from pkgcore.ebuild import eclass_cache
 from snakeoil import data_source
+from snakeoil.chksum import LazilyHashedPath
 
 class FakeEclassCache(eclass_cache.base):
 
     def __init__(self, path):
         eclass_cache.base.__init__(self, portdir=path, eclassdir=path)
         self.eclasses = {
-            "eclass1":(path, 100),
-            "eclass2":(path, 200)}
+            "eclass1":LazilyHashedPath(path, mtime=100),
+            "eclass2":LazilyHashedPath(path, mtime=200)}
 
 
 class TestBase(TestCase):
@@ -25,19 +26,17 @@ class TestBase(TestCase):
         self.ec = FakeEclassCache(self.dir)
         self.ec_locs = dict((x, self.dir) for x in ("eclass1", "eclass2"))
 
-    def test_is_eclass_data_valid(self):
-        self.assertFalse(self.ec.is_eclass_data_valid(
-            {"eclass3":("foon", 100)}))
-        self.assertTrue(self.ec.is_eclass_data_valid(
-            {"eclass1":("", 100)}))
-        self.assertFalse(self.ec.is_eclass_data_valid(
-            {"eclass3":(self.dir, 100)}))
-        self.assertTrue(self.ec.is_eclass_data_valid(
-            {"eclass1":(self.dir, 100)}))
-        self.assertFalse(self.ec.is_eclass_data_valid(
-            {"eclass1":(self.dir, 200)}))
-        self.assertTrue(self.ec.is_eclass_data_valid(
-            {"eclass1":(self.ec_locs["eclass1"], 100)}))
+    def test_rebuild_eclass_entry(self):
+        def assertRebuildResults(result, *raw_data):
+            i = iter(raw_data)
+            data = [(ec, [('mtime', mtime)]) for ec, mtime in zip(i, i)]
+            got = self.ec.rebuild_cache_entry(data)
+            self.assertTrue(bool(got) == bool(result),
+                msg="Expected %r from %r, got %r" % (result, raw_data, got))
+
+        assertRebuildResults(False, 'eclass3', 100)
+        assertRebuildResults(True, 'eclass1', 100)
+        assertRebuildResults(False, 'eclass1', 200)
 
     def test_get_eclass_data(self):
         keys = self.ec.eclasses.keys()
@@ -47,7 +46,7 @@ class TestBase(TestCase):
         self.assertIdentical(data, self.ec.get_eclass_data(keys))
         self.assertEqual(sorted(keys), sorted(data))
         data = self.ec.get_eclass_data(["eclass1"])
-        self.assertEqual(data, {"eclass1":(self.ec_locs["eclass1"], 100)})
+        self.assertEqual(data, {'eclass1':self.ec.eclasses['eclass1']})
 
 
 class TestEclassCache(TempDirMixin, TestBase):

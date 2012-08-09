@@ -31,6 +31,7 @@ class database(fs_template.FsBased):
 
     autocommits = True
     mtime_in_entry = True
+    eclass_chf_types = ('eclassdir', 'mtime')
 
     def _getitem(self, cpv):
         path = pjoin(self.location, cpv)
@@ -52,9 +53,11 @@ class database(fs_template.FsBased):
 
         if self._mtime_used:
             if self.mtime_in_entry:
-                d["_mtime_"] = long(d["_mtime_"])
+                d[self._chf_key] = self._chf_deserializer(d[self._chf_key])
             else:
-                d["_mtime_"] = long(mtime)
+                d[self._chf_key] = long(mtime)
+        else:
+            d[self._chf_key] = self._chf_deserializer(d[self._chf_key])
         return d
 
     def _setitem(self, cpv, values):
@@ -79,17 +82,15 @@ class database(fs_template.FsBased):
         except OSError, e:
             raise_from(errors.CacheCorruption(cpv, e))
 
-        if self.mtime_in_entry:
-            for k, v in values.iteritems():
-                myf.writelines("%s=%s\n" % (k, v))
-        else:
-            for k, v in values.iteritems():
-                if k != "_mtime_":
-                    myf.writelines("%s=%s\n" % (k, v))
+        if self._mtime_used:
+            if not self.mtime_in_entry:
+                mtime = values['_mtime_']
+        for k, v in values.iteritems():
+            myf.writelines("%s=%s\n" % (k, v))
 
         myf.close()
         if self._mtime_used and not self.mtime_in_entry:
-            self._ensure_access(fp, mtime=values["_mtime_"])
+            self._ensure_access(fp, mtime=mtime)
         else:
             self._ensure_access(fp)
 

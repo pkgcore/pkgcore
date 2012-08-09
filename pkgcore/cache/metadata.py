@@ -38,11 +38,15 @@ class database(flat_hash.database):
         typename='cache')
 
 
-    complete_eclass_entries = False
+    # No eclass validation data is stored.
+    eclass_chf_types = []
+    eclass_splitter = ' '
+    chf_type = 'mtime'
+    complete_eclass_entries = True
 
     auxdbkeys_order = ('DEPEND', 'RDEPEND', 'SLOT', 'SRC_URI',
         'RESTRICT',  'HOMEPAGE',  'LICENSE', 'DESCRIPTION',
-        'KEYWORDS',  'INHERITED', 'IUSE', 'REQUIRED_USE',
+        'KEYWORDS',  '_eclasses_', 'IUSE', 'REQUIRED_USE',
         'PDEPEND',   'PROVIDE', 'EAPI', 'PROPERTIES',
         'DEFINED_PHASES')
 
@@ -55,7 +59,6 @@ class database(flat_hash.database):
     def __init__(self, location, *args, **config):
         self.ec = config.pop("eclasses", None)
         if self.ec is None:
-            #import pdb;pdb.set_trace()
             self.ec = eclass_cache.cache(pjoin(location, "eclass"), location)
 
         config.pop('label', None)
@@ -71,23 +74,6 @@ class database(flat_hash.database):
 
     __init__.__doc__ = flat_hash.database.__init__.__doc__.replace(
         "@keyword location", "@param location")
-
-
-    def _format_location(self):
-        return pjoin(self.location, "metadata", "cache")
-
-    def __getitem__(self, cpv):
-        d = flat_hash.database.__getitem__(self, cpv)
-
-        if "_eclasses_" not in d:
-            if "INHERITED" in d:
-                d["_eclasses_"] = self.ec.get_eclass_data(
-                    d["INHERITED"].split())
-                del d["INHERITED"]
-        else:
-            d["_eclasses_"] = self.reconstruct_eclasses(cpv, d["_eclasses_"])
-
-        return d
 
     def _parse_data(self, data, mtime):
         i = iter(self.hardcoded_auxdbkeys_processing)

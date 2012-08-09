@@ -7,6 +7,10 @@ cache subsystem, typically used for storing package metadata
 
 __all__ = ("base", "bulk")
 
+import itertools
+import math
+import os
+import operator
 from pkgcore.cache import errors
 from snakeoil.mappings import (ProtectedDict, autoconvert_py3k_methods_metaclass,
     make_SlottedDict_kls)
@@ -26,19 +30,16 @@ class base(object):
     """
     :ivar autocommits: Controls whether the template commits every update,
         or queues up updates.
-    :ivar complete_eclass_entries: Specifies if the cache backend stores full
-        eclass data, or partial.
     :ivar cleanse_keys: Boolean controlling whether the template should drop
         empty keys for storing.
-    :ivar serialize_eclasses: Boolean controlling whether the template should
-        serialize eclass data itself, or leave it to the derivative.
     """
 
-    complete_eclass_entries = True
     autocommits = False
     cleanse_keys = False
-    serialize_eclasses = True
     default_sync_rate = 1
+    chf_type = 'mtime'
+    eclass_chf_types = ('mtime',)
+    eclass_splitter = '\t'
 
     default_keys = metadata_keys
 
@@ -57,10 +58,49 @@ class base(object):
         if auxdbkeys is None:
             auxdbkeys = self.default_keys
         self._known_keys = frozenset(auxdbkeys)
+        self._chf_key = '_%s_' % self.chf_type
+        self._chf_serializer = self._get_chf_serializer(self.chf_type)
+        self._chf_deserializer = self._get_chf_deserializer(self.chf_type)
+        self._known_keys |= frozenset([self._chf_key])
         self._cdict_kls = make_SlottedDict_kls(self._known_keys)
         self.readonly = readonly
         self.set_sync_rate(self.default_sync_rate)
         self.updates = 0
+
+    @staticmethod
+    def _get_chf_serializer(chf):
+        if chf == 'eclassdir':
+            return lambda data: os.path.dirname(data.path)
+        if chf == 'mtime':
+            def f(data):
+                if isinstance(data, (tuple, str)):
+                    import pdb;pdb.set_trace()
+                return '%.0f' % math.floor(data.mtime)
+            return f
+            return lambda data:'%.0f' % math.floor(data.mtime)
+        # Skip the leading 0x...
+        getter = operator.attrgetter(chf)
+        return lambda data: hex(getter(data))[2:].rstrip('L')
+
+    @staticmethod
+    def _get_chf_deserializer(chf):
+        if chf == 'eclassdir':
+            return str
+        elif chf == 'mtime':
+            return lambda val:long(math.floor(float(val)))
+        return lambda val:long(val, 16)
+
+    @klass.jit_attr
+    def eclass_chf_serializers(self):
+        return tuple(self._get_chf_serializer(chf) for chf in
+                     self.eclass_chf_types)
+
+    @klass.jit_attr
+    def eclass_chf_deserializers(self):
+        l = []
+        for chf in self.eclass_chf_types:
+            l.append((chf, self._get_chf_deserializer(chf)))
+        return tuple(l)
 
     def _sync_if_needed(self, increment=False):
         if self.autocommits:
@@ -80,7 +120,7 @@ class base(object):
         """
         self._sync_if_needed()
         d = self._getitem(cpv)
-        if self.serialize_eclasses and "_eclasses_" in d:
+        if "_eclasses_" in d:
             d["_eclasses_"] = self.reconstruct_eclasses(cpv, d["_eclasses_"])
         return d
 
@@ -99,18 +139,17 @@ class base(object):
         """
         if self.readonly:
             raise errors.ReadOnly()
+        d = ProtectedDict(values)
         if self.cleanse_keys:
-            d = ProtectedDict(values)
             for k in d.iterkeys():
                 if not d[k]:
                     del d[k]
-            if self.serialize_eclasses and "_eclasses_" in values:
+            if "_eclasses_" in values:
                 d["_eclasses_"] = self.deconstruct_eclasses(d["_eclasses_"])
-        elif self.serialize_eclasses and "_eclasses_" in values:
-            d = ProtectedDict(values)
+        elif "_eclasses_" in values:
             d["_eclasses_"] = self.deconstruct_eclasses(d["_eclasses_"])
-        else:
-            d = values
+
+        d[self._chf_key] = self._chf_serializer(d.pop('_chf_'))
         self._setitem(cpv, d)
         self._sync_if_needed(True)
 
@@ -175,46 +214,66 @@ class base(object):
         if not self.autocommits:
             raise NotImplementedError
 
-    @staticmethod
-    def deconstruct_eclasses(eclass_dict):
+    def deconstruct_eclasses(self, eclass_dict):
         """takes a dict, returns a string representing said dict"""
-        return "\t".join(
-            "%s\t%s\t%s" % (k, v[0], v[1])
-            for k, v in eclass_dict.iteritems())
+        l = []
+        converters = self.eclass_chf_serializers
+        for eclass, data in eclass_dict.iteritems():
+            l.append(eclass)
+            l.extend(f(data) for f in converters)
+        return self.eclass_splitter.join(l)
 
-    @staticmethod
-    def reconstruct_eclasses(cpv, eclass_string):
+    def _deserialize_eclass_chfs(self, data):
+        data = itertools.izip(self.eclass_chf_deserializers, data)
+        for (chf, convert), item in data:
+            yield chf, convert(item)
+
+    def reconstruct_eclasses(self, cpv, eclass_string):
         """Turn a string from :obj:`serialize_eclasses` into a dict."""
         if not isinstance(eclass_string, basestring):
             raise TypeError("eclass_string must be basestring, got %r" %
                 eclass_string)
-        eclasses = eclass_string.strip().split("\t")
-        if eclasses == [""]:
+        eclass_data = eclass_string.strip().split(self.eclass_splitter)
+        if eclass_data == [""]:
             # occasionally this occurs in the fs backends.  they suck.
-            return {}
+            return []
 
-        l = len(eclasses)
-        if not l % 3:
-            paths = True
-        elif not l % 2:
-            # edge case of a multiple of 6
-            paths = not eclasses[1].isdigit()
-        else:
-            raise errors.CacheCorruption(
-                cpv, "_eclasses_ was of invalid len %i"
-                "(must be mod 3 or mod 2)" % len(eclasses))
-        d = {}
+        l = len(eclass_data)
+        chf_funcs = self.eclass_chf_deserializers
+        tuple_len = len(chf_funcs) + 1
+        if len(eclass_data) % tuple_len:
+             raise errors.CacheCorruption(
+                 cpv, "_eclasses_ was of invalid len %i"
+                 "(must be mod %i)" % (len(eclass_data), tuple_len))
+
+        i = iter(eclass_data)
+        # roughly; deserializer grabs the values it needs, resulting
+        # in a sequence of key/tuple pairs for each block of chfs;
+        # this is in turn fed into the dict kls which converts it
+        # to the dict.
+        # Finally, the first item, and that chain, is zipped into
+        # a dict; in effect, if 2 chfs, this results in a stream of-
+        # (eclass_name, ((chf1,chf1_val), (chf2, chf2_val))).
         try:
-            if paths:
-                for x in xrange(0, len(eclasses), 3):
-                    d[eclasses[x]] = (eclasses[x + 1], long(eclasses[x + 2]))
-            else:
-                for x in xrange(0, len(eclasses), 2):
-                    d[eclasses[x]] = ('', long(eclasses[x + 1]))
+            return [(eclass, tuple(self._deserialize_eclass_chfs(i)))
+                for eclass in i]
         except ValueError:
             raise_from(errors.CacheCorruption(
                 cpv, 'ValueError reading %r' % (eclass_string,)))
-        return d
+
+    def validate_entry(self, cache_item, ebuild_hash_item, eclass_db):
+        chf_hash = cache_item.get(self._chf_key)
+        if (chf_hash is None or
+            chf_hash != getattr(ebuild_hash_item, self.chf_type, None)):
+            return False
+        eclass_data = cache_item.get('_eclasses_')
+        if eclass_data is None:
+            return True
+        update = eclass_db.rebuild_cache_entry(eclass_data)
+        if update is None:
+            return False
+        cache_item['_eclasses_'] = update
+        return True
 
 
 class bulk(base):

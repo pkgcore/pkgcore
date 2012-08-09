@@ -12,6 +12,7 @@ from pkgcore.cache import base
 from pkgcore.os_data import portage_gid
 from snakeoil.osutils import ensure_dirs, pjoin
 
+
 class FsBased(base):
     """Template wrapping fs needed options.
 
@@ -19,7 +20,7 @@ class FsBased(base):
     the specified owners/perms.
     """
 
-    def __init__(self, location, label=None,  **config):
+    def __init__(self, location, label=None, **config):
         """
         throws InitializationError if needs args aren't specified
 
@@ -40,7 +41,7 @@ class FsBased(base):
 
         self.location = location
 
-        self._mtime_used = "_mtime_" in self._known_keys
+        self._mtime_used = 'mtime' == self.chf_type
 
     __init__.__doc__ = "\n".join(
         x.lstrip() for x in __init__.__doc__.split("\n") + [

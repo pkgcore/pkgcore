@@ -6,6 +6,9 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 
 pkgcore trunk:
 
+* The cache format 'md5-cache' is now supported (this is what gentoo-x86
+  switched to, and what chromeos uses).
+
 * core environment saving functionality was sped up by ~10x.  Basically
   every package will see a gain; simple ones like bsdiff, on my hardware
   went from ~5.2s to 1.5s; diffball from ~12.4 to ~9.2; hell, even

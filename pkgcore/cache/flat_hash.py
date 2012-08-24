@@ -130,3 +130,14 @@ class database(fs_template.FsBased):
                     dirs.append(p)
                     continue
                 yield p[len_base+1:]
+
+
+class md5_cache(database):
+
+    chf_type = 'md5'
+    eclass_chf_types = ('md5',)
+    chf_base = 16
+
+    def __init__(self, location, **config):
+        location = pjoin(location, 'metadata', 'md5-cache')
+        database.__init__(self, location, **config)

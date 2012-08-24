@@ -400,15 +400,21 @@ def config_from_make_conf(location="/etc/"):
             if path not in overlay_syncers:
                 overlay_syncers[path] = make_autodetect_syncer(new_config, path)
 
-    rsync_portdir_cache = os.path.exists(pjoin(portdir, "metadata", "cache")) \
-        and "metadata-transfer" not in features
-
-    # if a metadata cache exists, use it
+    rsync_portdir_cache = 'metadata-transfer' not in features
+    # if a metadata cache exists, use it.
     if rsync_portdir_cache:
-        new_config["cache:%s/metadata/cache" % (portdir,)] = basics.AutoConfigSection({
-            'class': 'pkgcore.cache.metadata.database', 'readonly': 'yes',
-            'location': portdir,
-        })
+        for cache_type, frag in (('flat_hash.md5_cache', 'md5-cache'),
+                                 ('metadata.database', 'cache')):
+            if not os.path.exists(pjoin(portdir, 'metadata', frag)):
+                continue
+            new_config["cache:%s/metadata/cache" % (portdir,)] = basics.AutoConfigSection({
+                'class': 'pkgcore.cache.' + cache_type,
+                'readonly': 'yes',
+                'location': portdir,
+            })
+            break
+        else:
+            rsync_portdir_cache = False
 
     for tree_loc in [portdir] + portdir_overlays:
         kwds = {

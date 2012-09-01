@@ -2,13 +2,9 @@
 # this functionality is all related to saving/loading environmental dumps for ebuilds
 
 regex_filter_input() {
-	local regex="${1}"
-	shift
-	while [[ -n "$1" ]]; do
-		regex="${regex}|${1}"
-		shift
-	done
-	regex="^(${regex})$"
+	pkgcore_IFS_push '|'
+	local regex="^(${*})$"
+	pkgcore_IFS_pop
 	# use egrep if possible... tis faster.
 	local l=$(type -p egrep)
 	if [[ -n $l ]]; then

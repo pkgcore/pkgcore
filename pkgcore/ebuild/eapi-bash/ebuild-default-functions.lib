@@ -320,58 +320,6 @@ dyn_pkg_preinst()
 	fi
 }
 
-
-# debug-print() gets called from many places with verbose status information useful
-# for tracking down problems. The output is in $T/eclass-debug.log.
-# You can set ECLASS_DEBUG_OUTPUT to redirect the output somewhere else as well.
-# The special "on" setting echoes the information, mixing it with the rest of the
-# emerge output.
-# You can override the setting by exporting a new one from the console, or you can
-# set a new default in make.*. Here the default is "" or unset.
-
-# in the future might use e* from /etc/init.d/functions.sh if i feel like it
-debug-print()
-{
-	if has ${EBUILD_PHASE} depend nofetch config info postinst; then
-		return
-	fi
-	# if $T isn't defined, we're in dep calculation mode and
-	# shouldn't do anything
-	[[ -z "$T" ]] && return 0
-
-	while [[ "$1" ]]; do
-
-		# extra user-configurable targets
-		if [[ "$ECLASS_DEBUG_OUTPUT" == "on" ]]; then
-			echo "debug: $1"
-		elif [[ -n "$ECLASS_DEBUG_OUTPUT" ]]; then
-			echo "debug: $1" >> $ECLASS_DEBUG_OUTPUT
-		fi
-
-		# default target
-		echo "$1" >> "${T}/eclass-debug.log"
-		# let the portage user own/write to this file
-		chmod g+w "${T}/eclass-debug.log" &>/dev/null
-
-		shift
-	done
-}
-
-# The following 2 functions are debug-print() wrappers
-
-debug-print-function()
-{
-	str="$1: entering function"
-	shift
-	debug-print "$str, parameters: $*"
-}
-
-debug-print-section()
-{
-	debug-print "now in section $*"
-}
-
-
 internal_inherit()
 {
 	# default, backwards compatible beast.

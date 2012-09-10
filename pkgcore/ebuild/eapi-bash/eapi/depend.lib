@@ -38,6 +38,21 @@ hasv()
 	return 0
 }
 
+debug-print()
+{
+	:
+}
+
+debug-print-function()
+{
+	:
+}
+
+debug-print-section()
+{
+	:
+}
+
 elog() {
 	pkgcore_elog_base LOG "$*"
 	echo -e " ${PKGCORE_RC_GOOD}*${PKGCORE_RC_NORMAL} $*"

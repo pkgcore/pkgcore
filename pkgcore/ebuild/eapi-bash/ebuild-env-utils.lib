@@ -102,7 +102,7 @@ pkgcore_scrub_environ() {
 	# localize these so the reload doesn't have the ability to change them
 
 	if [[ $# != 1 ]]; then
-		die "load_environ called with wrong args, only one can be given: $@"
+		die "scrub_environ called with wrong args, only one can be given: $@"
 	fi
 
 	[[ ! -f "$1" ]] && die "pkgcore_scrub_environ called with a nonexist env: $1"

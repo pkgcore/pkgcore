@@ -6,7 +6,6 @@
 import os
 import gc
 import pty
-import StringIO
 import optparse
 import weakref
 
@@ -20,6 +19,11 @@ from pkgcore.config import basics, central, configurable, errors
 from snakeoil.currying import partial
 
 # Careful: the tests should not hit a load_config() call!
+
+if compatibility.is_py3k:
+    import io
+else:
+    from StringIO import StringIO
 
 def sect():
     """Just a no-op to use as configurable class."""
@@ -362,18 +366,36 @@ def main(options, out, err):
     return options
 
 
+if compatibility.is_py3k:
+    # This dance is currently necessary because commandline.main wants
+    # an object it can write text to (to write error messages) and
+    # pass to PlainTextFormatter, which wants an object it can write
+    # bytes to. If we pass it a TextIOWrapper then the formatter can
+    # unwrap it to get at the byte stream (a BytesIO in our case).
+    def _stream_and_getvalue():
+        bio = io.BytesIO()
+        f = io.TextIOWrapper(bio, line_buffering=True)
+        def getvalue():
+            return bio.getvalue().decode('ascii')
+        return f, getvalue
+else:
+    def _stream_and_getvalue():
+        bio = StringIO()
+        return bio, bio.getvalue
+
+
 class MainTest(TestCase):
 
     def assertMain(self, status, outtext, errtext, *args, **kwargs):
-        out = StringIO.StringIO()
-        err = StringIO.StringIO()
+        out, out_getvalue = _stream_and_getvalue()
+        err, err_getvalue = _stream_and_getvalue()
         try:
             commandline.main(outfile=out, errfile=err, *args, **kwargs)
         except commandline.MySystemExit, e:
+            self.assertEqual(errtext, err_getvalue())
+            self.assertEqual(outtext, out_getvalue())
             self.assertEqual(status, e.args[0],
                 msg="expected status %r, got %r" % (status, e.args[0]))
-            self.assertEqual(outtext, out.getvalue())
-            self.assertEqual(errtext, err.getvalue())
         else:
             self.fail('no exception raised')
 
@@ -502,7 +524,7 @@ Use --help after a subcommand for more help.
             (['--nocolor'], 'PlainTextFormatter', 'PlainTextFormatter'),
             ]:
             master, out = self._get_pty_pair()
-            err = StringIO.StringIO()
+            err, err_getvalue = _stream_and_getvalue()
 
             try:
                 commandline.main(
@@ -516,6 +538,6 @@ Use --help after a subcommand for more help.
                 self.assertTrue(
                     out_name.startswith(out_kind) or out_name == 'PlainTextFormatter',
                     'expected %r, got %r' % (out_kind, out_name))
-                self.assertEqual(err_kind, err.getvalue())
+                self.assertEqual(err_kind, err_getvalue())
             else:
                 self.fail('no exception raised')

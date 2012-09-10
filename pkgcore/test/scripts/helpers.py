@@ -4,11 +4,15 @@
 
 """Helpers for testing scripts."""
 
-import difflib, copy
+import difflib, copy, sys
 from snakeoil.formatters import PlainTextFormatter
 from snakeoil.caching import WeakInstMeta
+from snakeoil.compatibility import force_bytes
 from pkgcore.config import central, basics, ConfigHint
 from pkgcore.util import commandline
+
+if sys.version_info < (2, 6):
+    bytes = str
 
 
 class Exit(Exception):
@@ -55,6 +59,9 @@ default_domain = basics.HardCodedConfigSection({
     })
 
 
+# b''.join but works on python < 2.6
+_join_bytes = force_bytes('').join
+
 class FormatterObject(object):
     __metaclass__ = WeakInstMeta
     __inst_caching__ = True
@@ -84,16 +91,16 @@ class ListStream(list):
         stringlist = []
         objectlist = []
         for arg in args:
-            if isinstance(arg, basestring):
+            if isinstance(arg, bytes):
                 stringlist.append(arg)
             else:
-                objectlist.append(''.join(stringlist))
+                objectlist.append(_join_bytes(stringlist))
                 stringlist = []
                 objectlist.append(arg)
-        objectlist.append(''.join(stringlist))
+        objectlist.append(_join_bytes(stringlist))
         # We use len because boolean ops shortcircuit
-        if (len(self) and isinstance(self[-1], basestring) and
-                isinstance(objectlist[0], basestring)):
+        if (len(self) and isinstance(self[-1], bytes) and
+                isinstance(objectlist[0], bytes)):
             self[-1] = self[-1] + objectlist.pop(0)
         self.extend(objectlist)
 
@@ -110,7 +117,7 @@ class FakeStreamFormatter(PlainTextFormatter):
     def bg(self, color=None):
         return Color('bg', color)
     def get_text_stream(self):
-        return ''.join([x for x in self.stream if not isinstance(x, FormatterObject)])
+        return _join_bytes([x for x in self.stream if not isinstance(x, FormatterObject)]).decode('ascii')
 
 class MainMixin(object):
 

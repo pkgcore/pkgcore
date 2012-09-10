@@ -2,9 +2,8 @@
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>: BSD/GPL2
 # License: BSD/GPL2
 
-from StringIO import StringIO
-
 from pkgcore.test import TestCase
+from snakeoil import compatibility
 from snakeoil.formatters import PlainTextFormatter
 from snakeoil.currying import partial
 from snakeoil.mappings import AttrAccessible
@@ -17,6 +16,11 @@ from pkgcore.sync import base
 from pkgcore.ebuild.cpv import CPV
 from pkgcore.operations.repo import (install,
     uninstall, replace, operations)
+
+if compatibility.is_py3k:
+    from io import BytesIO
+else:
+    from StringIO import StringIO as BytesIO
 
 
 Options = AttrAccessible
@@ -151,7 +155,7 @@ class TestCopy(TestCase, helpers.ArgParseMixin):
 
     def execute_main(self, *a, **kw):
         config = self.parse(*a, **kw)
-        out = PlainTextFormatter(StringIO())
+        out = PlainTextFormatter(BytesIO())
         ret = config.main_func(config, out, out)
         return ret, config, out
 

@@ -1,14 +1,21 @@
 # Copyright 2007 Charlie Shepherd <masterdriverz@gmail.com>
 # License: GPL2
 
-import difflib
+import difflib, sys
 
+from snakeoil.compatibility import force_bytes
 from pkgcore.test import TestCase
 from pkgcore.ebuild.formatter import (BasicFormatter, PkgcoreFormatter,
     PortageFormatter, PaludisFormatter)
 from pkgcore.test.misc import FakePkg, FakeRepo
 from pkgcore.test.scripts.helpers import FakeStreamFormatter, Color, Reset, Bold
 from pkgcore.ebuild.misc import collapsed_restrict_to_data
+
+if sys.version_info < (2, 6):
+    bytes = str
+
+# b''.join but works on python < 2.6
+_join_bytes = force_bytes('').join
 
 # These two are probably unnecessary with ferringb's changes to
 # PkgcoreFormatter, but as he's the one that uses it there's no point fixing
@@ -93,16 +100,18 @@ class BaseFormatterTest(object):
             args.append(suffix)
 
         for arg in args:
-            if isinstance(arg, basestring):
+            if isinstance(arg, unicode):
+                stringlist.append(arg.encode('ascii'))
+            elif isinstance(arg, bytes):
                 stringlist.append(arg)
             else:
-                objectlist.append(''.join(stringlist))
+                objectlist.append(_join_bytes(stringlist))
                 stringlist = []
                 objectlist.append(arg)
-        objectlist.append(''.join(stringlist))
+        objectlist.append(_join_bytes(stringlist))
 
         # Hack because a list with an empty string in is True
-        if objectlist == ['']:
+        if objectlist == [force_bytes('')]:
             objectlist = []
 
         self.assertEqual(self.fakeout.stream, objectlist, '\n' + '\n'.join(

@@ -4,38 +4,22 @@
 use()
 {
 	local u="${1}"
-	local neg=0
+	# Ensure USE is split on normal IFS.
+	pkgcore_shopt_push -f
+	local IFS=$' \t\n'
 	if [[ "${u:0:1}" == "!" ]]; then
-		u="${u:1}"
-		neg=1
-	fi
-
-	# Make sure we have this USE flag in IUSE
-	# temp disable due to PORTAGE_ARCHLIST not being exported in
-	#if ! has "${u}" ${IUSE} ${E_IUSE} && ! has "${u}" ${PORTAGE_ARCHLIST} selinux; then
-	#    echo "QA Notice: USE Flag '${u}' not in IUSE for ${CATEGORY}/${PF}" >&2
-	#fi
-
-	local x
-	for x in ${USE}; do
-		if [[ "${x}" == "${u}" ]]; then
-			if [[ ${neg} -eq 1 ]]; then
-				return 1
-			else
-				return 0
-			fi
-		fi
-	done
-	if [[ ${neg} -eq 1 ]]; then
-		return 0
+		! has "${u:1}" ${USE}
 	else
-		return 1
+		has "$u" ${USE}
 	fi
+	local ret=$?
+	pkgcore_shopt_pop
+	return "${ret}"
 }
 
 usev()
 {
-	if use ${1}; then
+	if use "${1}"; then
 		echo "${1}"
 		return 0
 	fi
@@ -67,7 +51,7 @@ use_with()
 		UWORD="$1"
 	fi
 
-	if useq $1; then
+	if use $1; then
 		echo "--with-${UWORD}${UW_SUFFIX}"
 		return 0
 	fi
@@ -85,9 +69,9 @@ use_enable()
 
 	local UE_SUFFIX=""
 	if has "${EAPI:-0}" 0 1 2 3; then
-		UE_SUFFIX=${3:+=$3}
+		UE_SUFFIX="${3:+=$3}"
 	else
-		UE_SUFFIX=${3+=$3}
+		UE_SUFFIX="${3+=$3}"
 	fi
 
 	local UWORD="$2"
@@ -95,7 +79,7 @@ use_enable()
 		UWORD="$1"
 	fi
 
-	if useq $1; then
+	if use "$1"; then
 		echo "--enable-${UWORD}${UE_SUFFIX}"
 		return 0
 	fi

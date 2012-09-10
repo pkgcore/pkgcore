@@ -58,20 +58,19 @@ set_colors() {
 has() {
 	local needle=$1
 	shift
-	# fast mode if possible; verify it doesn't have \001 in it already,
-	# if not, than use regex w/ appropriate anchors to do it.
-	if [[ *$'\001'* != "${*}" ]]; then
-		pkgcore_IFS_push $'\001'
-		# fast mode.
-		if [[ "${IFS}${*}${IFS}" == *"${IFS}${needle}${IFS}"* ]]; then
-			:
-			pkgcore_IFS_pop
-			return 0
-		fi
-		pkgcore_IFS_pop
-		return 1
-	fi
-	# slow path
+
+	local IFS=$'\001'
+
+	# try fast mode first; no IFS match is guaranteed that the needle isn't there.
+	[[ "${IFS}${*}${IFS}" != *"${IFS}${needle}${IFS}"* ]] && return 1
+
+	# If we have a match, ensure it's not due to $@ already having \001 in it.
+	# unlikely, but better safe than sorry.
+	IFS=' '
+	[[ *$'\001'* != "${*}" ]] && return 0
+
+	# \001 for some insane reason was in $@; fallback to the slow for loop.
+	# Suppress debug outut for this part however.
 	pkgcore_shopt_push +x
 	local x
 	for x in "$@"; do

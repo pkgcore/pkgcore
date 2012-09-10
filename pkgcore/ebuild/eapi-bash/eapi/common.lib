@@ -416,8 +416,8 @@ pkgcore_default_pre_src_compile()
 		[[ -n ${DISTCC_DIR} ]] && addwrite "${DISTCC_DIR}"
 		if has distcc-pump ${FEATURES}; then
 			eval $(pump --startup) || echo "Warning: Failed starting pump" >&2
+			trap 'pump --shutdown' EXIT
 		fi
-		trap 'pump --shutdown' EXIT
 	fi
 }
 

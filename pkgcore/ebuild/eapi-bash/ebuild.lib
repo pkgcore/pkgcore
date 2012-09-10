@@ -73,20 +73,35 @@ alias load_environ='{
 	[[ -z ${PKGCORE_TARGET_ENV} ]] && die "load_environ was invoked w/out PKGCORE_TARGET_ENV set";
 	[[ -z ${T} ]] && die "load_environ requires \$T to be set";
 	EXISTING_PATH=${PATH};
-	pkgcore_scrub_environ "${PKGCORE_TARGET_ENV}";source "${T}/.scrubbed-env" >&2 || die "sourcing scrubbed env failed";
+	pkgcore_timed pkgcore_scrub_environ "${PKGCORE_TARGET_ENV}"
+	if [[ -n "$PKGCORE_PERF_DEBUG" ]]; then
+		echo "timing source ${PKGCORE_TARGET_ENV}" >&2
+		time source "${PKGCORE_TARGET_ENV}" >&2
+		echo "timed  source ${PKGCORE_TARGET_ENV}" >&2
+	else
+		source "${PKGCORE_TARGET_ENV}" >&2
+	fi
+	[[ $? == 0 ]] || die "sourcing saved env failed";
 	pkgcore_ensure_PATH "${EXISTING_PATH}";
 	export EAPI=${PKGCORE_EAPI-${EAPI}}
-	pkgcore_load_eapi_libs
-	source_bashrcs
+	pkgcore_timed pkgcore_load_eapi_libs
+	pkgcore_timed source_bashrcs
 	unset -v EXISTING_PATH;
 }'
 
 alias init_environ='{
 	EXISTING_PATH=${PATH};
-	pkgcore_load_eapi_libs
-	eval "$(generate_initial_ebuild_environ)" || die "failed loading initialized environment";
+	pkgcore_timed pkgcore_load_eapi_libs
+	if [[ -n "${PKGCORE_PERF_DEBUG}" ]]; then
+		echo "timing eval \$(generate_initial_ebuild_environ)" >&2
+		time eval "$(pkgcore_timed generate_initial_ebuild_environ)" >&2
+		echo "timed  eval \$(generate_initial_ebuild_environ)" >&2
+	else
+		eval "$(generate_initial_ebuild_environ)"
+	fi
+	[[ $? == 0 ]] || die "failed loading initialized environment";
 	pkgcore_ensure_PATH "${EXISTING_PATH}";
-	source_bashrcs
+	pkgcore_timed source_bashrcs
 	unset -v EXISTING_PATH;
 }'
 
@@ -142,11 +157,11 @@ generate_initial_ebuild_environ() {
 	if [[ "${PKGCORE_EBUILD_PHASE}" == "setup" ]]; then
 		#we specifically save the env so it's not stomped on by sourcing.
 		#bug 51552
-		pkgcore_export_environ "${T}/.temp_env"
+		pkgcore_timed pkgcore_export_environ "${T}/.temp_env"
 
 		if [[ "$USERLAND" == "GNU" ]]; then
 			local PORTAGE_SHIFTED_PATH="$PATH"
-			qa_invoke source /etc/profile.env
+			pkgcore_timed qa_invoke source /etc/profile.env
 			pkgcore_ensure_PATH "$EXISTING_PATH"
 		fi
 
@@ -162,7 +177,7 @@ generate_initial_ebuild_environ() {
 		rm "${T}/.temp_env"
 	fi
 
-	load_ebuild "${EBUILD}"
+	pkgcore_timed load_ebuild "${EBUILD}"
 
 	if [[ ${PKGCORE_EBUILD_PHASE} != depend ]]; then
 		RESTRICT="${PKGCORE_FINALIZED_RESTRICT}"
@@ -177,10 +192,10 @@ generate_initial_ebuild_environ() {
 	if [[ -n "${T}" ]]; then
 		# use a file if possible; faster since bash does this lovely byte by byte reading if it's a pipe.
 		# having the file around is useful for debugging also.
-		pkgcore_dump_environ > "${T}/.initial_environ" || die "dump_environ > ${T}/.initial_environ return non zero"
+		pkgcore_timed pkgcore_dump_environ > "${T}/.initial_environ" || die "dump_environ > ${T}/.initial_environ return non zero"
 		echo "source ${T}/.initial_environ"
 	else
-		pkgcore_dump_environ || die "dump_environ returned non zero"
+		pkgcore_timed pkgcore_dump_environ || die "dump_environ returned non zero"
 	fi
 }
 
@@ -406,7 +421,7 @@ execute_phases() {
 	done
 
 	if ${PKGCORE_MUST_EXPORT_ENV}; then
-		pkgcore_export_environ "${T}/environment"
+		pkgcore_timed pkgcore_export_environ "${T}/environment"
 	fi
 	return ${ret:-0}
 }

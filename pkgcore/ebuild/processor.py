@@ -247,6 +247,9 @@ class EbuildProcessor(object):
         # sandbox or fakeroot fex), we ensure the bashrc is invalid.
         env = dict((x, "/etc/portage/spork/not/valid/ha/ha")
                    for x in ("BASHRC", "BASH_ENV"))
+        if int(os.environ.get('PKGCORE_PERF_DEBUG', 1)) > 1:
+            env["PKGCORE_PERF_DEBUG"] = os.environ['PKGCORE_PERF_DEBUG']
+
         args = []
         if sandbox:
             if not pkgcore.spawn.is_sandbox_capable():
@@ -832,7 +835,9 @@ def expected_ebuild_env(pkg, d=None, env_source_override=None, depends=False):
         d["PKGCORE_EAPI"] = pkg.eapi_obj.magic
         d["INHERITED"] = ' '.join(pkg.data.get("_eclasses_", ()))
 
-    if "PKGCORE_DEBUG" in os.environ:
-        d["PKGCORE_DEBUG"] = os.environ["PKGCORE_DEBUG"]
+    for key in e_const.PKGCORE_DEBUG_VARS:
+        val = os.environ.get(key)
+        if val is not None:
+            d[key] = val
     return d
 

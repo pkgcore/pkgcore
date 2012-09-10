@@ -3,6 +3,31 @@
 # Copyright 2004-2011 Brian Harring <ferringb@gmail.com>
 # License: BSD/GPL2
 
+# These are functions that shouldn't be marked readonly, since they're runtime
+# switchable.
+PKGCORE_RUNTIME_FUNCS=( 'pkgcore_timed' )
+
+pkgcore_set_perf_debug()
+{
+	if [[ "$PKGCORE_DEBUG" -ge 4 ]] || [[ -n "${PKGCORE_PERF_DEBUG}" ]]; then
+		pkgcore_timed()
+		{
+			echo "timing $*" >&2
+			time "$@"
+			local __ret=$?
+			echo "timed  $*" >&2
+			return $__ret
+		}
+	else
+		pkgcore_timed()
+		{
+			"$@"
+		}
+	fi
+}
+
+pkgcore_set_perf_debug
+
 # use ebd_read/ebd_write for talking to the running portage instance instead of echo'ing to the fd yourself.
 # this allows us to move the open fd's w/out issues down the line.
 ebd_read_line()
@@ -46,7 +71,7 @@ ebd_write_line()
 }
 
 
-for x in ebd_read_{line,{cat_,}size} ebd_write_line; do
+for x in ebd_read_{line,{cat_,}size} ebd_write_line pkgcore_set_perf_debug; do
 	declare -rf ${x}
 done
 unset x
@@ -87,7 +112,6 @@ ebd_sigkill_handler()
 	exit 9
 }
 
-
 pkgcore_ebd_exec_main()
 {
 	# ensure the other side is still there.  Well, this moreso is for the python side to ensure
@@ -101,7 +125,6 @@ pkgcore_ebd_exec_main()
 	ebd_read_line PKGCORE_BIN_PATH
 	[[ -z "$PKGCORE_BIN_PATH" ]] && { ebd_write_line "empty PKGCORE_BIN_PATH;"; exit 1; }
 
-	# get our die functionality now.
 	if ! source "${PKGCORE_BIN_PATH}/exit-handling.lib"; then
 		ebd_write_line "failed sourcing exit handling functionality"
 		exit 2;
@@ -168,10 +191,12 @@ pkgcore_ebd_exec_main()
 		DONT_EXPORT_FUNCS="${DONT_EXPORT_FUNCS} $("${PKGCORE_BIN_PATH}/regenerate_dont_export_func_list.bash" 2> /dev/null)"
 	fi
 
-
 	DONT_EXPORT_FUNCS="${DONT_EXPORT_FUNCS} ${PORTAGE_PRELOADED_ECLASSES}"
 	for x in $DONT_EXPORT_FUNCS; do
-		is_function $x && declare -fr $x &> /dev/null
+		is_function $x || continue
+		if ! has "$x" "${PKGCORE_RUNTIME_FUNCS[@]}"; then
+			declare -fr $x &> /dev/null
+		fi
 	done
 	unset x
 
@@ -258,6 +283,7 @@ pkgcore_ebd_process_ebuild_phases()
 				ebd_write_line "env_receiving_failed"
 				exit 1
 			fi
+			pkgcore_set_perf_debug
 			ebd_write_line "env_received"
 			;;
 		logging*)

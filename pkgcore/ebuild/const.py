@@ -29,3 +29,5 @@ WORLD_FILE           = '/var/lib/portage/world'
 EAPI_BIN_PATH        = path.join(path.dirname(path.abspath(__file__)), "eapi-bash")
 EBUILD_DAEMON_PATH   = path.join(EAPI_BIN_PATH, "ebuild-daemon.bash")
 EBUILD_HELPERS_PATH  = path.join(EAPI_BIN_PATH, "helpers")
+
+PKGCORE_DEBUG_VARS   = ("PKGCORE_DEBUG", "PKGCORE_PERF_DEBUG")

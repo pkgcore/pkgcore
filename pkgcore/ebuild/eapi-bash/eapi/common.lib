@@ -154,15 +154,6 @@ econf()
 	return $?
 }
 
-strip_duplicate_slashes ()
-{
-	if [[ -n "${1}" ]]; then
-		local removed="${1/\/\///}"
-		[[ "${removed}" != "${removed/\/\///}" ]] && removed=$(strip_duplicate_slashes "${removed}")
-		echo ${removed}
-	fi
-}
-
 # debug-print() gets called from many places with verbose status information useful
 # for tracking down problems. The output is in $T/eclass-debug.log.
 # You can set ECLASS_DEBUG_OUTPUT to redirect the output somewhere else as well.
@@ -224,8 +215,7 @@ einstall()
 	fi
 	unset LIBDIR_VAR
 	if [[ -n "${CONF_LIBDIR}" ]] && [[ "${CONF_PREFIX:-unset}" != "unset" ]]; then
-		EI_DESTLIBDIR="${ED}/${CONF_PREFIX}/${CONF_LIBDIR}"
-		EI_DESTLIBDIR="$(strip_duplicate_slashes ${EI_DESTLIBDIR})"
+		EI_DESTLIBDIR="${ED%%/}/${CONF_PREFIX%%/}/${CONF_LIBDIR%%/}/"
 		LOCAL_EXTRA_EINSTALL="${LOCAL_EXTRA_EINSTALL} libdir=${EI_DESTLIBDIR}"
 		unset EI_DESTLIBDIR
 	fi

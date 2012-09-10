@@ -115,14 +115,12 @@ portageq
 qa_invoke
 qa_run_function_if_exists
 regex_filter_input
-remove_path_entry
 request_sandbox_summary
 reset_sandbox
 run_function_if_exists
 scrub_environ
 set_colors
 source_bashrcs
-strip_duplicate_slashes
 unpack
 unset_colors
 use

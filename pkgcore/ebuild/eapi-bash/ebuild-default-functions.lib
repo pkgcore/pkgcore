@@ -403,27 +403,6 @@ EXPORT_FUNCTIONS()
 	done
 }
 
-# this is a function for removing any directory matching a passed in pattern from
-# PATH
-remove_path_entry()
-{
-	local cur_path stripped_path p
-	pkgcore_IFS_push ':'
-	stripped_path="${PATH}"
-	while [[ -n "$1" ]]; do
-		cur_path=""
-		for p in ${stripped_path}; do
-			if [[ "${p/${1}}" == "${p}" ]]; then
-				cur_path="${cur_path}:${p}"
-			fi
-		done
-		stripped_path="${cur_path#:*}"
-		shift
-	done
-	pkgcore_IFS_pop
-	PATH="${stripped_path}"
-}
-
 QA_INTERCEPTORS="javac java-config python python-config perl grep egrep fgrep sed gcc g++ cc bash awk nawk pkg-config"
 enable_qa_interceptors()
 {

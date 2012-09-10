@@ -278,6 +278,13 @@ class ebd(object):
         :param fakeroot: should the phase be fakeroot'd?  Only really useful
             for install phase, and is mutually exclusive with sandbox
         """
+        if phase not in self.pkg.mandatory_phases:
+            # TODO(ferringb): Note the preinst hack; this will be removed once dyn_pkg_preinst
+            # is dead in full (currently it has a selinux labelling and suidctl ran from there)
+            if phase != 'preinst':
+                return True
+            if 'selinux' not in self.features and 'suidctl' not in self.features:
+                return True
         userpriv = self.userpriv and userpriv
         sandbox = self.sandbox and sandbox
         fakeroot = self.fakeroot and fakeroot
@@ -856,10 +863,7 @@ class ebuild_mixin(object):
                     print "REQUIRED_USE requirement weren't met\nFailed to match: %s\nfrom: %s\nfor USE: %s\npkg: %s" % \
                         (node, pkg.required_use, " ".join(use), pkg)
                     return False
-        if 'pretend' not in eapi.phases:
-            return True
-        elif eapi.options.trust_defined_phases_cache and \
-            'pretend' not in pkg.defined_phases:
+        if 'pretend' not in pkg.mandatory_phases:
             return True
         commands = {"request_inherit": partial(inherit_handler, self._eclass_cache)}
         env = expected_ebuild_env(pkg)
@@ -932,8 +936,7 @@ class built_operations(ebuild_mixin, format.operations):
 
     def _cmd_check_support_configure(self):
         pkg = self.pkg
-        if pkg.eapi_obj.options.trust_defined_phases_cache and \
-            'config' not in pkg.defined_phases:
+        if 'config' not in pkg.mandatory_phases:
             return False
         return True
 

@@ -8,7 +8,7 @@ package class for buildable ebuilds
 __all__ = ("base", "package", "package_factory", "virtual_ebuild")
 
 import os
-from itertools import imap
+from itertools import imap, chain
 
 from pkgcore.package import metadata
 from pkgcore.package import errors as metadata_errors
@@ -207,7 +207,7 @@ class base(metadata.package):
     _get_attr["properties"] = lambda s:frozenset(imap(intern,
         s.data.pop("PROPERTIES", "").split()))
     _get_attr["defined_phases"] = lambda s:s.eapi_obj.interpret_cache_defined_phases(imap(intern,
-        s.data.pop("DEFINED_PHASES", "").split()), False)
+        s.data.pop("DEFINED_PHASES", "").split()))
     _get_attr["homepage"] = lambda s:s.data.pop("HOMEPAGE", "").strip()
     _get_attr["inherited"] = get_inherited
     _get_attr["required_use"] = generate_required_use
@@ -224,6 +224,11 @@ class base(metadata.package):
         if eapi_obj is not None:
             return int(eapi_obj.magic)
         return "unsupported"
+
+    @property
+    def mandatory_phases(self):
+        return frozenset(
+            chain(self.defined_phases, self.eapi_obj.default_phases))
 
     @property
     def P(self):

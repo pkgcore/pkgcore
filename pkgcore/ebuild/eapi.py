@@ -70,7 +70,7 @@ class EAPI(object):
     def atom_kls(self):
         return partial(atom.atom, eapi=int(self.magic))
 
-    def interpret_cache_defined_phases(self, sequence, add_defaults=True):
+    def interpret_cache_defined_phases(self, sequence):
         phases = set(sequence)
         if not self.options.trust_defined_phases_cache:
             if not phases:
@@ -79,11 +79,7 @@ class EAPI(object):
                 return frozenset(self.phases)
 
         phases.discard("-")
-        if not add_defaults:
-            return frozenset(phases)
-        if phases:
-            return self.default_phases | phases
-        return self.default_phases
+        return frozenset(phases)
 
     def get_ebd_env(self):
         d = {}
@@ -119,8 +115,9 @@ def combine_dicts(*sequence_of_mappings):
 def convert_bool_to_bash_bool(val):
     return str(bool(val)).lower()
 
+# Note that pkg_setup is forced by default since this is how our env setup occurs.
 common_default_phases = tuple(shorten_phase_name(x)
-    for x in ("src_unpack", "src_compile", "src_test", "pkg_nofetch"))
+    for x in ("pkg_setup", "src_unpack", "src_compile", "src_test", "pkg_nofetch"))
 
 common_phases = ("pkg_setup", "pkg_config", "pkg_info", "pkg_nofetch",
     "pkg_prerm", "pkg_postrm", "pkg_preinst", "pkg_postinst",

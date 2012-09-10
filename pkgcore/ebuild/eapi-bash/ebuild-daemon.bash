@@ -328,13 +328,13 @@ ebd_process_metadata()
 	local data
 	local ret
 	ebd_read_size $1 data
-	pkgcore_IFS_push $'\0'
+	local IFS=$'\0'
 	eval "$data"
 	ret=$?
-	pkgcore_IFS_pop
 	[[ $ret != 0 ]] && exit 1
+	local IFS=$' \t\n'
 
-	if ${is_depends} && [[ -n ${PKGCORE_METADATA_PATH} ]]; then
+	if [[ -n ${PKGCORE_METADATA_PATH} ]]; then
 		export PATH="${PKGCORE_METADATA_PATH}"
 	fi
 

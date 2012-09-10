@@ -2,9 +2,9 @@
 # this functionality is all related to saving/loading environmental dumps for ebuilds
 
 pkgcore_regex_filter_input() {
-	pkgcore_IFS_push '|'
+	# We don't need to reset IFS in this context, thus skip the pop.
+	local IFS='|'
 	local regex="^(${*})$"
-	pkgcore_IFS_pop
 	# use egrep if possible... tis faster.
 	local l=$(type -p egrep)
 	if [[ -n $l ]]; then
@@ -130,14 +130,13 @@ pkgcore_scrub_environ() {
 		readonly -f pkgcore_regex_filter_input &> /dev/null
 
 		pkgcore_shopt_push -f
-		pkgcore_IFS_push $'\n '
+		IFS=$' \t\n'
 		declare -a PKGCORE_ENV_ARRAY=( ${DONT_EXPORT_FUNCS} )
 		declare -a PKGCORE_VAR_ARRAY=( ${DONT_EXPORT_VARS} src x EXISTING_PATH )
-		pkgcore_IFS_pop
-		pkgcore_IFS_push ,
+		IFS=,
 		PKGCORE_ENV_ARRAY="${PKGCORE_ENV_ARRAY[*]}"
 		PKGCORE_VAR_ARRAY="${PKGCORE_VAR_ARRAY[*]}"
-		pkgcore_IFS_pop
+		IFS=$' \t\n'
 		pkgcore_shopt_pop
 
 		rm -f "${T}/.pre-scrubbed-env" || die "failed rm'ing"

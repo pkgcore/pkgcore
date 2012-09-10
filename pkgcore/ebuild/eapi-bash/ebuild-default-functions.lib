@@ -320,7 +320,7 @@ dyn_pkg_preinst()
 	fi
 }
 
-internal_inherit()
+pkgcore_internal_inherit()
 {
 	# default, backwards compatible beast.
 	local location overlay
@@ -354,9 +354,8 @@ inherit()
 	# note that this ensures any later unsets/mangling, the ebuilds original
 	# setting is protected.
 	local IUSE REQUIRED_USE DEPEND RDEPEND PDEPEND
-	while [[ -n "$1" ]]; do
 
-		ECLASS="$1"
+    for ECLASS in "$@"; do
 
 		if [[ "$EBUILD_PHASE" != "depend" ]]; then
 			if ! has $ECLASS $INHERITED; then
@@ -368,7 +367,7 @@ inherit()
 
 		unset IUSE REQUIRED_USE DEPEND RDEPEND PDEPEND
 
-		internal_inherit "$1" || die "failed sourcing $1 in inherit()"
+		pkgcore_internal_inherit "$1" || die "failed sourcing $1 in inherit()"
 
 		# If each var has a value, append it to the global variable E_* to
 		# be applied after everything is finished. New incremental behavior.

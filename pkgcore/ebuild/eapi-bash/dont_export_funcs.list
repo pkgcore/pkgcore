@@ -62,7 +62,6 @@ hasv
 inherit
 insinto
 insopts
-internal_inherit
 into
 invoke_filter_env
 is_function
@@ -106,6 +105,7 @@ pkgcore_helper_died
 pkgcore_helper_exit
 pkgcore_inject_common_phase_funcs
 pkgcore_inject_phase_funcs
+pkgcore_internal_inherit
 pkgcore_load_eapi_libs
 pkgcore_make_preloaded_eclass_func
 pkgcore_run_ebuild_phase

@@ -16,7 +16,7 @@ request_sandbox_summary()
 	done
 }
 
-internal_inherit()
+pkgcore_internal_inherit()
 {
 	local line
 	if [[ $# != 1 ]]; then

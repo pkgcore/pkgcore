@@ -9,6 +9,12 @@ use()
 	return 1
 }
 
+usev()
+{
+	echo "WARNING: 'usev' function invoked by ${CATEGORY}/${PF} during metadata regeneration."$'\nWARNING: Please ensure upstream is aware of it and working to remove it.\n' >&2
+	return 1
+}
+
 use_with()
 {
 	echo "WARNING: 'use_with' function invoked by ${CATEGORY}/${PF} during metadata regeneration."$'\nWARNING: Please ensure upstream is aware of it and working to remove it.\n' >&2

@@ -37,7 +37,7 @@ die() {
 	if [[ -z ${PKGCORE_IS_NOT_HELPER} ]]; then
 		echo "!!! was running helper: ${HELPER_ERROR_PREFIX}"
 	else
-		dump_trace 2 ${filespacing} ${linespacing} >&2
+		pkgcore_dump_trace 2 ${filespacing} ${linespacing} >&2
 		echo "!!!   $(printf "%${filespacing}s" "${BASH_SOURCE[1]##*/}"), line $(printf "%${linespacing}s" "${BASH_LINENO[0]}"):  Called die" >&2
 	fi
 	echo "!!! The die message:" >&2
@@ -60,10 +60,10 @@ die() {
 }
 
 # usage- first arg is the number of funcs on the stack to ignore.
-# defaults to 1 (ignoring dump_trace)
+# defaults to 1 (ignoring pkgcore_dump_trace)
 # whitespacing for filenames
 # whitespacing for line numbers
-dump_trace() {
+pkgcore_dump_trace() {
 
 	declare -i strip=1
 

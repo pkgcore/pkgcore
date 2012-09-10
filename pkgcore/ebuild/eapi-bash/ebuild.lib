@@ -73,7 +73,7 @@ alias load_environ='{
 	[[ -z ${PKGCORE_TARGET_ENV} ]] && die "load_environ was invoked w/out PKGCORE_TARGET_ENV set";
 	[[ -z ${T} ]] && die "load_environ requires \$T to be set";
 	EXISTING_PATH=${PATH};
-	scrub_environ "${PKGCORE_TARGET_ENV}";source "${T}/.scrubbed-env" >&2 || die "sourcing scrubbed env failed";
+	pkgcore_scrub_environ "${PKGCORE_TARGET_ENV}";source "${T}/.scrubbed-env" >&2 || die "sourcing scrubbed env failed";
 	pkgcore_ensure_PATH "${EXISTING_PATH}";
 	export EAPI=${PKGCORE_EAPI-${EAPI}}
 	pkgcore_load_eapi_libs
@@ -143,7 +143,7 @@ generate_initial_ebuild_environ() {
 	if [[ "${PKGCORE_EBUILD_PHASE}" == "setup" ]]; then
 		#we specifically save the env so it's not stomped on by sourcing.
 		#bug 51552
-		export_environ "${T}/.temp_env"
+		pkgcore_export_environ "${T}/.temp_env"
 
 		if [[ "$USERLAND" == "GNU" ]]; then
 			local PORTAGE_SHIFTED_PATH="$PATH"
@@ -178,10 +178,10 @@ generate_initial_ebuild_environ() {
 	if [[ -n "${T}" ]]; then
 		# use a file if possible; faster since bash does this lovely byte by byte reading if it's a pipe.
 		# having the file around is useful for debugging also.
-		dump_environ > "${T}/.initial_environ" || die "dump_environ > ${T}/.initial_environ return non zero"
+		pkgcore_dump_environ > "${T}/.initial_environ" || die "dump_environ > ${T}/.initial_environ return non zero"
 		echo "source ${T}/.initial_environ"
 	else
-		dump_environ || die "dump_environ returned non zero"
+		pkgcore_dump_environ || die "dump_environ returned non zero"
 	fi
 }
 
@@ -407,7 +407,7 @@ execute_phases() {
 	done
 
 	if ${PKGCORE_MUST_EXPORT_ENV}; then
-		export_environ "${T}/environment"
+		pkgcore_export_environ "${T}/environment"
 	fi
 	return ${ret:-0}
 }
@@ -442,7 +442,7 @@ pkgcore_dump_metadata_keys() {
 	ebd_write_line "key DEFINED_PHASES=${phases:--}"
 }
 
-DONT_EXPORT_VARS="${DONT_EXPORT_VARS} $(declare | invoke_filter_env --print-vars | regex_filter_input ${ORIG_VARS} ${DONT_EXPORT_VARS})"
+DONT_EXPORT_VARS="${DONT_EXPORT_VARS} $(declare | pkgcore_filter_env --print-vars | pkgcore_regex_filter_input ${ORIG_VARS} ${DONT_EXPORT_VARS})"
 
 set +f
 

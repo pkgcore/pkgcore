@@ -292,7 +292,11 @@ EXPORT_FUNCTIONS()
 	done
 }
 
-QA_INTERCEPTORS="javac java-config python python-config perl grep egrep fgrep sed gcc g++ cc bash awk nawk pkg-config"
+PKGCORE_QA_INTERCEPTORS=(
+   javac java-config python python-config perl grep egrep fgrep sed
+   gcc "g++" cc bash awk nawk pkg-config
+)
+
 enable_qa_interceptors()
 {
 	# Turn of extended glob matching so that g++ doesn't get incorrectly matched.
@@ -300,7 +304,7 @@ enable_qa_interceptors()
 
 	# QA INTERCEPTORS
 	local FUNC_SRC BIN BODY BIN_PATH
-	for BIN in ${QA_INTERCEPTORS}; do
+	for BIN in "${PKGCORE_QA_INTERCEPTORS[@]}"; do
 		BIN_PATH=$(type -pf ${BIN})
 		if [[ "$?" != "0" ]]; then
 			BODY="echo \"*** missing command: ${BIN}\" >&2; return 127"
@@ -323,7 +327,7 @@ enable_qa_interceptors()
 disable_qa_interceptors()
 {
 	local x
-	for x in $QA_INTERCEPTORS; do
+	for x in "${PKGCORE_QA_INTERCEPTORS[@]}"; do
 		unset -f $x
 	done
 }

@@ -52,7 +52,7 @@ unset source
 echo >&2
 
 declare -F 2> /dev/null | cut -d ' ' -f3 | while read l; do
-	[[ -n $l ]] && echo "$(escape_regex_chars "$l")"
+	[[ -n $l ]] && echo "$(pkgcore_escape_regex_chars "$l")"
 done | sort | {
 	if [[ "${_FP}" == '-' ]]; then
 		cat

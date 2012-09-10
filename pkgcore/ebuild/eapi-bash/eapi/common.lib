@@ -1,4 +1,4 @@
-# Copyright: 2011 Brian Harring <ferringb@gmail.com>
+# Copyright: 2011-2012 Brian Harring <ferringb@gmail.com>
 # license GPL2/BSD 3
 
 use()
@@ -143,17 +143,19 @@ econf()
 
 
 	if ! hasq "${EAPI}" 0 1 2 3; then
-		if ${ECONF_SOURCE}/configure --help 2> /dev/null | \
+		if "${ECONF_SOURCE}/configure" --help 2> /dev/null | \
 		    grep -q disable-dependency-tracking; then
 		    set -- --disable-dependency-tracking "$@"
 		fi
 	fi
 
-	set -- ${ECONF_SOURCE}/configure \
+	# Reset IFS since we're interpretting user supplied EXTRA_ECONF.
+	local IFS=' \t\n'
+	set -- "${ECONF_SOURCE}/configure" \
 		--prefix=/usr \
-		${CBUILD:+--build=${CBUILD}} \
-		--host=${CHOST} \
-		${CTARGET:+--target=${CTARGET}} \
+		${CBUILD:+--build="${CBUILD}"} \
+		--host="${CHOST}" \
+		${CTARGET:+--target="${CTARGET}"} \
 		--mandir=/usr/share/man \
 		--infodir=/usr/share/info \
 		--datadir=/usr/share \
@@ -194,22 +196,20 @@ debug-print()
 	# shouldn't do anything
 	[[ -z "$T" ]] && return 0
 
-	while [[ "$1" ]]; do
-
+	local _item
+	for _item in "$@"; do
 		# extra user-configurable targets
 		if [[ "$ECLASS_DEBUG_OUTPUT" == "on" ]]; then
-			echo "debug: $1"
+			echo "debug: ${_item}"
 		elif [[ -n "$ECLASS_DEBUG_OUTPUT" ]]; then
-			echo "debug: $1" >> $ECLASS_DEBUG_OUTPUT
+			echo "debug: ${_item}" >> $ECLASS_DEBUG_OUTPUT
 		fi
 
 		# default target
-		echo "$1" >> "${T}/eclass-debug.log"
-		# let the portage user own/write to this file
+		echo "${_item}" >> "${T}/eclass-debug.log"
 		chmod g+w "${T}/eclass-debug.log" &>/dev/null
-
-		shift
 	done
+	# let the portage user own/write to this file
 }
 
 # The following 2 functions are debug-print() wrappers
@@ -242,28 +242,23 @@ einstall()
 		unset EI_DESTLIBDIR
 	fi
 
-	if [ -f ./[mM]akefile -o -f ./GNUmakefile ]; then
-		if [[ ! -z "${PKGCORE_DEBUG}" ]]; then
-		    ${MAKE:-make} -n prefix=${ED}/usr \
-		        datadir=${ED}/usr/share \
-		        infodir=${ED}/usr/share/info \
-				localstatedir=${ED}/var/lib \
-		        mandir=${ED}/usr/share/man \
-		        sysconfdir=${ED}/etc \
-		        ${LOCAL_EXTRA_EINSTALL} \
-		        "$@" install
-		fi
-		${MAKE:-make} prefix=${ED}/usr \
-		    datadir=${ED}/usr/share \
-		    infodir=${ED}/usr/share/info \
-		    localstatedir=${ED}/var/lib \
-		    mandir=${ED}/usr/share/man \
-		    sysconfdir=${ED}/etc \
-		    ${LOCAL_EXTRA_EINSTALL} \
-		    "$@" install || die "einstall failed"
-	else
+	# Reset IFS for LOCAL_EXTRA_EINSTALL, should users be up to something.
+	local IFS=$' \t\n'
+	if [ ! -f ./[mM]akefile -a ! -f ./GNUmakefile ]; then
 		die "no Makefile found"
 	fi
+	set -- \
+		${MAKE:-make} \
+		prefix="${ED}/usr" \
+	    datadir="${ED}/usr/share" \
+	    infodir="${ED}/usr/share/info" \
+	    localstatedir="${ED}/var/lib" \
+	    mandir="${ED}/usr/share/man" \
+	    sysconfdir="${ED}/etc" \
+	    ${LOCAL_EXTRA_EINSTALL} \
+	    "$@" install
+	[[ "$PKGCORE_DEBUG" != 0 ]] && "$@" -n
+	"$@" || die "einstall failed"
 }
 
 pkgcore_common_pkg_nofetch()
@@ -272,9 +267,11 @@ pkgcore_common_pkg_nofetch()
 
 	echo "!!! The following are listed in SRC_URI for ${PN}:"
 	local fp
-	for fp in `echo ${SRC_URI}`; do
+	pkgcore_shopt_push -f
+	for fp in ${SRC_URI}; do
 		echo "!!!   ${fp}"
 	done
+	pkgcore_shopt_pop
 }
 
 pkgcore_common_src_unpack()
@@ -319,7 +316,7 @@ into()
 	if [ $1 == "/" ]; then
 		export DESTTREE=""
 	else
-		export DESTTREE=$1
+		export DESTTREE="$1"
 		if [ ! -d "${ED}${DESTTREE}" ]; then
 		    install -d "${ED}${DESTTREE}"
 		fi
@@ -332,7 +329,7 @@ insinto()
 	if [ "$1" == "/" ]; then
 		export INSDESTTREE=""
 	else
-		export INSDESTTREE=$1
+		export INSDESTTREE="$1"
 		if [ ! -d "${ED}${INSDESTTREE}" ]; then
 		    install -d "${ED}${INSDESTTREE}"
 		fi
@@ -401,7 +398,7 @@ pkgcore_default_pre_src_test()    { pkgcore_common_pre_phase; }
 pkgcore_default_pre_src_configure()
 {
 	for x in C{BUILD,HOST,TARGET,C,XX} {AS,LD,{,LIB}C{,XX}}FLAGS; do
-		[[ ${!x-unset} != unset ]] && export ${x}="${!x}"
+		[[ -n ${!x+set} ]] && export ${x}="${!x}"
 	done
 	pkgcore_common_pre_phase
 }
@@ -439,7 +436,7 @@ pkgcore_default_pre_src_install()
 	export D
 	rm -rf "${D}"
 	if ${PKGCORE_PREFIX_SUPPORT}; then
-		[[ "${ED-unset}" == "unset" ]] && \
+		[[ -n "${ED+set}" ]] || \
 			die "variable ED is unset, but prefix mode is enabled.  internal error?"
 		export ED="${ED}"
 		mkdir -p "${ED}"
@@ -451,13 +448,12 @@ pkgcore_default_pre_src_install()
 
 pkgcore_inject_phase_funcs()
 {
-	local pref=$1
+	local pref="$1" x
 	shift
-	while [ -n "$1" ]; do
-		if ! is_function "$1"; then
-		    eval "pkgcore_default_${1}() { ${pref}_${1}; }";
+	for x in "$@"; do
+		if ! is_function "$x"; then
+		    eval "pkgcore_default_${x}() { ${pref}_${x}; }";
 		fi
-		shift
 	done
 }
 
@@ -471,7 +467,7 @@ keepdir()
 {
 	${PKGCORE_PREFIX_SUPPORT} || local ED="${D}"
 	dodir "$@"
-	if [[ "$1" == "-R" ]] || [[ "$1" == "-r" ]]; then
+	if [[ "$1" == -[Rr] ]]; then
 		shift
 		find "$@" -type d -printf "${ED}/%p/.keep\0" | $XARGS -0 -n100 touch || die "Failed to recursive create .keep files"
 	else
@@ -502,8 +498,10 @@ unpack()
 
 		[[ ! -e "${srcdir}${x}" ]] && die "$myfail: file doesn't exist"
 		[[ ! -s "${srcdir}${x}" ]] && die "$myfail: empty file"
-		[[ "${x/${DISTDIR}}" != "${x}" ]] && \
-			die "Arguments to unpack() should not begin with \${DISTDIR}."
+		[[ "${x}" == "${DISTDIR%%/}/"* ]] && \
+			die "Arguments to unpack() must not begin with \${DISTDIR}."
+		[[ "${x}" == "/"* ]] &&
+			die "Arguments to unpack() must not be absolute paths."
 
 		name="${x##*/}"
 
@@ -577,59 +575,30 @@ unpack()
 
 }
 
-insopts()
-{
-	local x
-	INSOPTIONS=""
-	for x in $*; do
-		#if we have a debug build, let's not strip anything
-		if has nostrip $FEATURES $RESTRICT && [[ "$x" == "-s" ]]; then
-			continue
-		else
-			INSOPTIONS="$INSOPTIONS $x"
-		fi
-	done
-	export INSOPTIONS
-}
-
 diropts()
 {
-	local x
-	DIROPTIONS=""
-	for x in $*; do
-		DIROPTIONS="${DIROPTIONS} $x"
-	done
-	export DIROPTIONS
+	export DIROPTIONS="$@"
+}
+
+insopts()
+{
+	{ has -s "$@" || has --strip "$@"; } && \
+		ewarn "insopts shouldn't be given -s; stripping should be left to the manager."
+	export INSOPTIONS="$@"
 }
 
 exeopts()
 {
-	local x
-	EXEOPTIONS=""
-	for x in $*; do
-		#if we have a debug build, let's not strip anything
-		if has nostrip $FEATURES $RESTRICT && [[ "$x" == "-s" ]]; then
-			continue
-		else
-			EXEOPTIONS="$EXEOPTIONS $x"
-		fi
-	done
-	export EXEOPTIONS
+	{ has -s "$@" || has --strip "$@"; } && \
+		ewarn "exeopts shouldn't be given -s; stripping should be left to the manager."
+	export EXEOPTIONS="$@"
 }
 
 libopts()
 {
-	local x
-	LIBOPTIONS=""
-	for x in $*; do
-		#if we have a debug build, let's not strip anything
-		if has nostrip $FEATURES $RESTRICT && [[ "$x" == "-s" ]]; then
-			continue
-		else
-			LIBOPTIONS="$LIBOPTIONS $x"
-		fi
-	done
-	export LIBOPTIONS
+	{ has -s "$@" || has --strip "$@"; } && \
+		ewarn "libopts shouldn't be given -s; stripping should be left to the manager."
+	export LIBOPTIONS="$@"
 }
 
 :

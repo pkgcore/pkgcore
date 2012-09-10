@@ -89,6 +89,27 @@ alias load_environ='{
 	unset -v EXISTING_PATH;
 }'
 
+# Invoke this when we know that this version of pkgcore generated the env dump; this bypasses
+# The safeties in loading.
+alias load_safe_environ='{
+	[[ -z ${PKGCORE_TARGET_ENV} ]] && die "load_environ was invoked w/out PKGCORE_TARGET_ENV set";
+	[[ -z ${T} ]] && die "load_environ requires \$T to be set";
+	EXISTING_PATH=${PATH};
+	if [[ -n "$PKGCORE_PERF_DEBUG" ]]; then
+		echo "timing source ${PKGCORE_TARGET_ENV}" >&2
+		time source "${PKGCORE_TARGET_ENV}" >&2
+		echo "timed  source ${PKGCORE_TARGET_ENV}" >&2
+	else
+		source "${PKGCORE_TARGET_ENV}" >&2
+	fi
+	[[ $? == 0 ]] || die "sourcing saved env failed";
+	pkgcore_ensure_PATH "${EXISTING_PATH}";
+	export EAPI=${PKGCORE_EAPI-${EAPI}}
+	pkgcore_timed pkgcore_load_eapi_libs
+	pkgcore_timed source_bashrcs
+	unset -v EXISTING_PATH;
+}'
+
 alias init_environ='{
 	EXISTING_PATH=${PATH};
 	pkgcore_timed pkgcore_load_eapi_libs
@@ -347,7 +368,7 @@ execute_phases() {
 
 			[[ $PKGCORE_DEBUG -ge 3 ]] && set -x
 			PKGCORE_TARGET_ENV="${T}/environment"
-			if ! load_environ; then
+			if ! load_safe_environ; then
 				ewarn
 				ewarn "failed to load env.  This is bad, bailing."
 				die "unable to load saved env for phase $EBUILD_PHASE, unwilling to continue"

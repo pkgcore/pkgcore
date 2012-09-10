@@ -6,6 +6,24 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 
 pkgcore trunk:
 
+* For performance debugging of EBD, PKGCORE_PERF_DEBUG=1 was added.
+
+* Defined phases is now trusted in full, and used to control exactly
+  what phases are actually ran.  This in conjunction w/ some relaxation
+  of a few protections (namely, if pkgcore just generated the env dump,
+  and we know it's from our version/machinery, then we can directly
+  source that dump rather than doing protective scrubbing).  End result
+  is that for build -> binpkg -> install, for example bsdiff went from
+  4.9s to 2.1s; diffball went from ~12.5s to ~9.8s.  Gain primarily
+  is for either huge environments, or small pkgs.
+
+* Minor round of metadata regen optimization; 18-20% faster now.
+
+* Heavy environment cleanup; pkgcore now generally doesn't expose
+  any real functionality to ebuilds/eclasses that could be accidentally
+  relied upon (all of it is prefixed with pkgcore_, making it obvious
+  they shouldn't be using it).
+
 * Fix issue #31; empty GENTOO_MIRRORS breaks portage conf support.
 
 

@@ -148,7 +148,7 @@ __ensure_PATH()
 		for x in ${EXISTING_PATH}; do
 			# keep in mind PATH=":foon" is a valid way to say "cwd"
 			[[ -z "${x}" ]] && continue
-			if ! has ${x} ${PATH} && ! has ${x} ${adds}; then
+			if ! __safe_has ${x} ${PATH} && ! __safe_has ${x} ${adds}; then
 				adds="${adds:+${adds}:}${x}"
 			fi
 		done
@@ -256,7 +256,7 @@ __load_ebuild()
 	# Note: this next line is not the same as export RDEPEND=${RDEPEND:-${DEPEND}}
 	# That will test for unset *or* NULL ("").  We want just to set for unset...
 
-	if has ${EAPI-0} 0 1 2 3; then
+	if __safe_has ${EAPI-0} 0 1 2 3; then
 		if [[ "${RDEPEND-unset}" == "unset" ]]; then
 			export RDEPEND="${DEPEND}"
 		fi
@@ -311,7 +311,7 @@ __execute_phases() {
 	trap 'die "a helper failed, see above"' SIGUSR1
 	declare -rx PKGCORE_EBUILD_PROCESS_PID=$BASHPID
 
-	if has ${EAPI:-0} 0 1 2 3; then
+	if __safe_has ${EAPI:-0} 0 1 2 3; then
 		declare -rx PKGCORE_NONFATAL_HELPER=1
 	fi
 
@@ -393,7 +393,7 @@ __execute_phases() {
 				local x
 				# if they aren't set, then holy hell ensues.  deal.
 
-				if has ccache $FEATURES; then
+				if __safe_has ccache $FEATURES; then
 					[[ -z "${CCACHE_SIZE}" ]] && export CCACHE_SIZE="500M"
 					ccache -M ${CCACHE_SIZE} &> /dev/null
 				fi

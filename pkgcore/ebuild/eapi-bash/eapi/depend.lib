@@ -29,19 +29,14 @@ use_enable()
 
 hasq()
 {
-	if has "$@"; then
-		return 0
-	fi
-	return 1
+	has "$@"
 }
 
 hasv()
 {
-	if ! has "$@"; then
-		return 1;
+	if has "$@"; then
+		echo "${1}"
 	fi
-	echo "${1}"
-	return 0
 }
 
 debug-print()

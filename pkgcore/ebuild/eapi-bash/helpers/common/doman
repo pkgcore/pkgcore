@@ -17,7 +17,7 @@ for x in "$@" ; do
 
 	# rewrite this suffix bits into regex.
 	suffix=${x##*.}
-	if has ${suffix} Z gz bz2 ; then
+	if __safe_has ${suffix} Z gz bz2 ; then
 		uncompressed_name=${x%.*}
 		suffix=${uncompressed_name##*.}
 	fi

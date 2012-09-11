@@ -8,9 +8,9 @@ use()
 	__shopt_push -f
 	local IFS=$' \t\n'
 	if [[ "${u:0:1}" == "!" ]]; then
-		! has "${u:1}" ${USE}
+		! __safe_has "${u:1}" ${USE}
 	else
-		has "$u" ${USE}
+		__safe_has "$u" ${USE}
 	fi
 	local ret=$?
 	__shopt_pop
@@ -21,9 +21,7 @@ usev()
 {
 	if use "${1}"; then
 		echo "${1}"
-		return 0
 	fi
-	return 1
 }
 
 useq()
@@ -40,7 +38,7 @@ use_with()
 	fi
 
 	local UW_SUFFIX=""
-	if has "${EAPI:-0}" 0 1 2 3; then
+	if __safe_has "${EAPI:-0}" 0 1 2 3; then
 		UW_SUFFIX=${3:+=$3}
 	else
 		UW_SUFFIX=${3+=$3}
@@ -68,7 +66,7 @@ use_enable()
 	fi
 
 	local UE_SUFFIX=""
-	if has "${EAPI:-0}" 0 1 2 3; then
+	if __safe_has "${EAPI:-0}" 0 1 2 3; then
 		UE_SUFFIX="${3:+=$3}"
 	else
 		UE_SUFFIX="${3+=$3}"
@@ -189,7 +187,7 @@ econf()
 # in the future might use e* from /etc/init.d/functions.sh if i feel like it
 debug-print()
 {
-	if has ${EBUILD_PHASE} depend nofetch config info postinst; then
+	if __safe_has ${EBUILD_PHASE} depend nofetch config info postinst; then
 		return
 	fi
 	# if $T isn't defined, we're in dep calculation mode and
@@ -284,7 +282,7 @@ __phase_common_src_unpack()
 __phase_common_src_compile()
 {
 	# only eapi 0/1 invoke configure...
-	if has "${EAPI:-0}" 0 1; then
+	if __safe_has "${EAPI:-0}" 0 1; then
 		if [[ "${EAPI:-0}" == 0 ]]; then
 		    [[ -x ./configure ]] && econf
 		elif [[ -x "${ECONF_SOURCE:-.}/configure" ]]; then
@@ -366,7 +364,7 @@ __phase_common_pre_phase()
 {
 	if [[ -d ${S} ]]; then
 		cd "${S}"
-	elif has ${EAPI} 0 1 2 3; then
+	elif __safe_has ${EAPI} 0 1 2 3; then
 		cd "${WORKDIR}"
 	elif [[ -n ${A} ]]; then
 		die "source directory '${S}' doesn't exist, but \${A} isn't empty (see S-WORKDIR-FALLBACK in PMS)"
@@ -409,9 +407,9 @@ __phase_default_pre_src_compile()
 	# if the eapi has configure or not.
 	__phase_default_pre_src_configure
 
-	if has distcc ${FEATURES}; then
+	if __safe_has distcc ${FEATURES}; then
 		[[ -n ${DISTCC_DIR} ]] && addwrite "${DISTCC_DIR}"
-		if has distcc-pump ${FEATURES}; then
+		if __safe_has distcc-pump ${FEATURES}; then
 			eval $(pump --startup) || echo "Warning: Failed starting pump" >&2
 			trap 'pump --shutdown' EXIT
 		fi
@@ -420,7 +418,7 @@ __phase_default_pre_src_compile()
 
 __phase_default_post_src_compile()
 {
-	if has distcc ${FEATURES} && has distcc-pump ${FEATURES}; then
+	if __safe_has distcc ${FEATURES} && __safe_has distcc-pump ${FEATURES}; then
 		pump --shutdown
 		trap - EXIT
 	fi
@@ -517,7 +515,7 @@ unpack()
 				assert "$myfail"
 				;;
 			*.tar.xz)
-				if has "$EAPI" 0 1 2; then
+				if __safe_has "$EAPI" 0 1 2; then
 					echo "xv is a supported extension in eapi3 and above only" >&2
 					continue;
 				fi
@@ -534,7 +532,7 @@ unpack()
 				bzip2 -dc "${srcdir}${x}" > ${name%.*} || die "$myfail"
 				;;
 			*.xz)
-				if has "$EAPI" 0 1 2; then
+				if __safe_has "$EAPI" 0 1 2; then
 					echo "xv is a supported extension in eapi3 and above only" >&2
 					continue;
 				fi

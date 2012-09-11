@@ -126,6 +126,7 @@ __request_sandbox_summary
 __reset_sandbox
 __run_ebuild_phase
 __run_function_if_exists
+__safe_has
 __set_perf_debug
 __shopt_pop
 __shopt_push

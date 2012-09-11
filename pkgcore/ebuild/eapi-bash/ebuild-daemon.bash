@@ -159,7 +159,7 @@ __ebd_exec_main()
 
 	re="$(readonly | cut -s -d '=' -f 1 | cut -s -d ' ' -f 3)"
 	for x in $re; do
-		if ! has $x "$DONT_EXPORT_VARS"; then
+		if ! __safe_has $x "$DONT_EXPORT_VARS"; then
 			DONT_EXPORT_VARS="${DONT_EXPORT_VARS} $x"
 		fi
 	done
@@ -194,7 +194,7 @@ __ebd_exec_main()
 	DONT_EXPORT_FUNCS="${DONT_EXPORT_FUNCS} ${PORTAGE_PRELOADED_ECLASSES}"
 	for x in $DONT_EXPORT_FUNCS; do
 		__is_function $x || continue
-		if ! has "$x" "${PKGCORE_RUNTIME_FUNCS[@]}"; then
+		if ! __safe_has "$x" "${PKGCORE_RUNTIME_FUNCS[@]}"; then
 			declare -fr $x &> /dev/null
 		fi
 	done

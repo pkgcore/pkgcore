@@ -85,7 +85,7 @@ __dyn_src_install()
 			echo " http://bugs.gentoo.org/81745"
 			echo "${f}"
 			echo -ne '\a\n'
-			has stricter $FEATURES && die "Insecure binaries detected"
+			__safe_has stricter $FEATURES && die "Insecure binaries detected"
 			echo "autofixing rpath..."
 			TMPDIR="${WORKDIR}" scanelf -BXr ${f} -o /dev/null
 		fi
@@ -99,7 +99,7 @@ __dyn_src_install()
 			echo " LDFLAGS='-Wl,-z,now' for the pkg, or disable FEATURES=stricter"
 			echo "${f}"
 			echo -ne '\a\n'
-			has stricter $FEATURES && die "Aborting due to lazy bindings"
+			__safe_has stricter $FEATURES && die "Aborting due to lazy bindings"
 			sleep 1
 		fi
 
@@ -115,7 +115,7 @@ __dyn_src_install()
 			echo " consider writing a patch which addresses this problem."
 			echo "${f}"
 			echo -ne '\a\n'
-			has stricter $FEATURES && die "Aborting due to textrels"
+			__safe_has stricter $FEATURES && die "Aborting due to textrels"
 			sleep 1
 		fi
 
@@ -129,7 +129,7 @@ __dyn_src_install()
 			echo " at http://bugs.gentoo.org/ to make sure the file is fixed."
 			echo "${f}"
 			echo -ne '\a\n'
-			has stricter $FEATURES && die "Aborting due to +x stack"
+			__safe_has stricter $FEATURES && die "Aborting due to +x stack"
 			sleep 1
 		fi
 
@@ -156,7 +156,7 @@ __dyn_pkg_preinst()
 	${PKGCORE_PREFIX_SUPPORT} || local ED="${D}"
 
 	# total suid control.
-	if has suidctl $FEATURES > /dev/null ; then
+	if __safe_has suidctl $FEATURES > /dev/null ; then
 		sfconf=/etc/portage/suidctl.conf
 		echo ">>> Preforming suid scan in ${ED}"
 		for i in $(find "${ED}"/ -type f \( -perm -4000 -o -perm -2000 \) ); do
@@ -187,7 +187,7 @@ __dyn_pkg_preinst()
 	fi
 
 	# SELinux file labeling (needs to always be last in dyn_preinst)
-	if has selinux $FEATURES || use selinux; then
+	if __safe_has selinux $FEATURES || use selinux; then
 		# only attempt to label if setfiles is executable
 		# and 'context' is available on selinuxfs.
 		if [[ -f /selinux/context ]] && [[ -x /usr/sbin/setfiles ]]; then
@@ -247,7 +247,7 @@ inherit()
     for ECLASS in "$@"; do
 
 		if [[ "$EBUILD_PHASE" != "depend" ]]; then
-			if ! has $ECLASS $INHERITED; then
+			if ! __safe_has $ECLASS $INHERITED; then
 				echo
 				echo "QA Notice: ECLASS '$ECLASS' illegal conditional inherit in $CATEGORY/$PF" >&2
 				echo

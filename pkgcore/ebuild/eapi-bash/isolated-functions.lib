@@ -83,6 +83,15 @@ has() {
 	return 1
 }
 
+__safe_has() {
+	# Version of has, only to be used when the invoker knows that that
+	# the needle/targets will never have \001 in them
+	local needle="$1"
+	shift
+	local IFS=$'\001'
+	[[ "${IFS}${*}${IFS}" == *"${IFS}${needle}${IFS}"* ]]
+}
+
 __is_function() {
 	declare -F "$1" &> /dev/null
 } &> /dev/null

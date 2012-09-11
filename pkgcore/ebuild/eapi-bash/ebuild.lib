@@ -393,7 +393,7 @@ __execute_phases() {
 				local x
 				# if they aren't set, then holy hell ensues.  deal.
 
-				if __safe_has ccache $FEATURES; then
+				if __feature_is_enabled ccache; then
 					[[ -z "${CCACHE_SIZE}" ]] && export CCACHE_SIZE="500M"
 					ccache -M ${CCACHE_SIZE} &> /dev/null
 				fi

@@ -92,6 +92,12 @@ __safe_has() {
 	[[ "${IFS}${*}${IFS}" == *"${IFS}${needle}${IFS}"* ]]
 }
 
+__feature_is_enabled() {
+	local IFS=$' \t\n'
+	__safe_has "$1" ${FEATURES}
+}
+
+
 __is_function() {
 	declare -F "$1" &> /dev/null
 } &> /dev/null

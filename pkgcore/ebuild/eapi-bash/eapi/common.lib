@@ -407,9 +407,9 @@ __phase_default_pre_src_compile()
 	# if the eapi has configure or not.
 	__phase_default_pre_src_configure
 
-	if __safe_has distcc ${FEATURES}; then
+	if __feature_is_enabled distcc; then
 		[[ -n ${DISTCC_DIR} ]] && addwrite "${DISTCC_DIR}"
-		if __safe_has distcc-pump ${FEATURES}; then
+		if __feature_is_enabled distcc-pump; then
 			eval $(pump --startup) || echo "Warning: Failed starting pump" >&2
 			trap 'pump --shutdown' EXIT
 		fi
@@ -418,7 +418,7 @@ __phase_default_pre_src_compile()
 
 __phase_default_post_src_compile()
 {
-	if __safe_has distcc ${FEATURES} && __safe_has distcc-pump ${FEATURES}; then
+	if __feature_is_enabled distcc && __feature_is_enabled distcc-pump; then
 		pump --shutdown
 		trap - EXIT
 	fi

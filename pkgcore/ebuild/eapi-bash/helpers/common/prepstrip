@@ -12,7 +12,7 @@ source "${PKGCORE_BIN_PATH}"/isolated-functions.lib || {
 }
 
 # exit if the feature isn't requested, or the restrict isn't there.
-__safe_has installsources ${FEATURES} || exit 0
+__feature_is_enabled installsources || exit 0
 __safe_has installsources ${RESTRICT} && exit 0
 
 for x in debugedit scanelf rsync sort; do

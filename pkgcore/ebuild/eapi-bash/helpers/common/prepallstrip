@@ -1,12 +1,9 @@
-#!/bin/bash
-# Copyright 1999-2005 Gentoo Foundation
+#!/usr/bin/env pkgcore-ebuild-helper
+# Copyright 2012 Brian Harring <ferringb@gmail.com>
 # Distributed under the terms of the GNU General Public License v2
 
-shopt -s extdebug
-source "${PKGCORE_BIN_PATH}/exit-handling.lib" || { echo "failed loading libs"; exit -127; }
+check_args 0 0
 
-if __feature_is_enabled prepstrip || __safe_has nostrip ${RESTRICT}; then
-	exit 0
+if ! __feature_is_enabled prepstrip && ! __safe_has nostrip ${RESTRICT}; then
+	check_command_or_stop prepstrip "${ED}"
 fi
-
-exec prepstrip "${ED}"

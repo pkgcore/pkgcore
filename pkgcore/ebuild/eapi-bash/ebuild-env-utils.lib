@@ -27,8 +27,27 @@ __escape_regex_chars() {
 	echo "${x}"
 }
 
-__get_env_funcs() {
-	declare -F | cut -s -d ' ' -f3 -s
+__environ_list_funcs() {
+	# Grab the vars /before/ adding our custom declare function, else it'll
+	# show up in the list of functions.
+	local __content="$(builtin declare -F)"
+	declare() {
+		echo "$2"
+	}
+	eval "${__content}"	|| die "__environ_list_funcs eval failed" >&2
+	unset declare
+	:
+}
+
+__environ_list_vars() {
+	declare() {
+		local __ret="${2%%=*}"
+		[[ "$2" != "$__ret" ]] && echo "$__ret"
+		:
+	}
+	eval "$(builtin declare -p)" || die "__environ_list_vars eval failed" >&2
+	unset declare
+	:
 }
 
 __filter_env() {
@@ -41,27 +60,15 @@ __filter_env() {
 
 # selectively saves  the environ- specifically removes things that have been marked to not be exported.
 # dump the environ to stdout.
-__dump_environ() {
-
-	# if possible, sort the outputting of funcs/vars; this isn't required however.
-	local PKGCORE_SORT=$(type -p sort 2> /dev/null)
-	[[ -z "${PKGCORE_SORT}" ]] && PKGCORE_SORT=cat
+__environ_dump() {
 
 	__shopt_push -f
-	declare -a PKGCORE_TARGETS=( $(__get_env_funcs | __regex_filter_input ${DONT_EXPORT_FUNCS} | ${PKGCORE_SORT}) )
-	local PKGCORE_RET=$?
-	if [[ "$PKGCORE_RET" != "0" ]]; then
-		die "failed invoking __get_env_funcs/regex filtering: ret $PKGCORE_RET" >&2
-	fi
+	declare -a PKGCORE_TARGETS=( $(__environ_list_funcs | __regex_filter_input ${DONT_EXPORT_FUNCS}) )
 	if [[ 0 != "${#PKGCORE_TARGETS[@]}" ]]; then
 		declare -f "${PKGCORE_TARGETS[@]}" || die "failed outputing funcs ${PKGCORE_TARGETS[@]}" >&2
 	fi
 
-	PKGCORE_TARGETS=( $(declare | __filter_env --print-vars | __regex_filter_input ${DONT_EXPORT_VARS} | ${PKGCORE_SORT}) )
-	PKGCORE_RET=$?
-	if [[ "$PKGCORE_RET" != 0 ]]; then
-		die "failed invoking pkgcore_get_env_vars/regex filtering: ret $PKGCORE_RET" >&2
-	fi
+	PKGCORE_TARGETS=( $(__environ_list_vars | __regex_filter_input ${DONT_EXPORT_VARS}) )
 	if [[ 0 != "${#PKGCORE_TARGETS[@]}" ]]; then
 		declare -p "${PKGCORE_TARGETS[@]}" || die "failed outputing env vars ${PKGCORE_TARGETS[@]}" >&2
 	fi
@@ -69,9 +76,9 @@ __dump_environ() {
 }
 
 # dump environ to $1, optionally piping it through $2 and redirecting $2's output to $1.
-__export_environ() {
+__environ_save_to_file() {
 	if [[ $# != 1 ]] && [[ $# != 2 ]]; then
-		die "__export_environ requires at least one arguement, two max; given $@"
+		die "__environ_save_to_file requires at least one arguement, two max; given $@"
 	fi
 
 	#the spaces on both sides are important- otherwise, the later ${DONT_EXPORT_VARS/ temp_umask /} won't match.
@@ -84,9 +91,9 @@ __export_environ() {
 	umask 0002
 
 	if [[ $# == 1 ]]; then
-		__dump_environ > "$1"
+		__environ_dump > "$1"
 	else
-		__dump_environ | $2 > "$1"
+		__environ_dump | $2 > "$1"
 	fi
 	chown portage:portage "$1" &>/dev/null
 	chmod 0664 "$1" &>/dev/null
@@ -97,7 +104,7 @@ __export_environ() {
 }
 
 # reload a saved env, applying usual filters to the env prior to eval'ing it.
-__scrub_environ() {
+__environ_sanitize_saved_env() {
 	local src e ret EXISTING_PATH
 	# localize these so the reload doesn't have the ability to change them
 
@@ -105,17 +112,17 @@ __scrub_environ() {
 		die "scrub_environ called with wrong args, only one can be given: $@"
 	fi
 
-	[[ ! -f "$1" ]] && die "__scrub_environ called with a nonexist env: $1"
+	[[ ! -f "$1" ]] && die "__environ_sanitize_saved_env called with a nonexist env: $1"
 
 	src="$1"
 
 	# here's how this goes; we do an eval'd loadup of the target env w/in a subshell..
 	# declares and such will slide past filter-env (so it goes).  we then use our own
-	# __dump_environ from within to get a clean dump from that env, and load it into
+	# __environ_dump from within to get a clean dump from that env, and load it into
 	# the parent eval.
 	(
 
-		# protect the core vars and functions needed to do a __dump_environ
+		# protect the core vars and functions needed to do a __environ_dump
 		# some of these are already readonly- we still are forcing it to be safe.
 		declare -r PKGCORE_PYTHONPATH="${PKGCORE_PYTHONPATH}" &> /dev/null
 		declare -r PKGCORE_PYTHON_BINARY="${PKGCORE_PYTHON_BINARY}" &> /dev/null
@@ -126,7 +133,7 @@ __scrub_environ() {
 #		declare -rx PATH="${PATH}" &> /dev/null
 
 		readonly -f __filter_env &> /dev/null
-		readonly -f __dump_environ &> /dev/null
+		readonly -f __environ_dump &> /dev/null
 		readonly -f __regex_filter_input &> /dev/null
 
 		__shopt_push -f
@@ -165,7 +172,7 @@ __scrub_environ() {
 		unset -v EXISTING_PATH old_phase
 
 		rm -f "${T}/.scrubbed-env"
-		__dump_environ > ${T}/.scrubbed-env || die "dumping environment failed"
+		__environ_dump > ${T}/.scrubbed-env || die "dumping environment failed"
 	) && return
 
 	echo "die 'failed parsing the env dump'" # yep, we're injecting code into the eval.

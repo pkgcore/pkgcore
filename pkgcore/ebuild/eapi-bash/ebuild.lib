@@ -73,7 +73,7 @@ alias __load_environ='{
 	[[ -z ${PKGCORE_TARGET_ENV} ]] && die "__load_environ was invoked w/out PKGCORE_TARGET_ENV set";
 	[[ -z ${T} ]] && die "__load_environ requires \$T to be set";
 	EXISTING_PATH=${PATH};
-	__timed_call __scrub_environ "${PKGCORE_TARGET_ENV}"
+	__timed_call __environ_sanitize_saved_env "${PKGCORE_TARGET_ENV}"
 	if [[ -n "$PKGCORE_PERF_DEBUG" ]]; then
 		echo "timing source ${PKGCORE_TARGET_ENV}" >&2
 		time source "${PKGCORE_TARGET_ENV}" >&2
@@ -178,7 +178,7 @@ __generate_initial_ebuild_environ() {
 	if [[ "${PKGCORE_EBUILD_PHASE}" == "setup" ]]; then
 		#we specifically save the env so it's not stomped on by sourcing.
 		#bug 51552
-		__timed_call __export_environ "${T}/.temp_env"
+		__timed_call __environ_save_to_file "${T}/.temp_env"
 
 		if [[ "$USERLAND" == "GNU" ]]; then
 			local PORTAGE_SHIFTED_PATH="$PATH"
@@ -213,10 +213,10 @@ __generate_initial_ebuild_environ() {
 	if [[ -n "${T}" ]]; then
 		# use a file if possible; faster since bash does this lovely byte by byte reading if it's a pipe.
 		# having the file around is useful for debugging also.
-		__timed_call __dump_environ > "${T}/.initial_environ" || die "dump_environ > ${T}/.initial_environ return non zero"
+		__timed_call __environ_dump > "${T}/.initial_environ" || die "dump_environ > ${T}/.initial_environ return non zero"
 		echo "source ${T}/.initial_environ"
 	else
-		__timed_call __dump_environ || die "dump_environ returned non zero"
+		__timed_call __environ_dump || die "dump_environ returned non zero"
 	fi
 }
 
@@ -438,7 +438,7 @@ __execute_phases() {
 	done
 
 	if ${PKGCORE_MUST_EXPORT_ENV}; then
-		__timed_call __export_environ "${T}/environment"
+		__timed_call __environ_save_to_file "${T}/environment"
 	fi
 	return ${ret:-0}
 }

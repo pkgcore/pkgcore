@@ -59,7 +59,6 @@ __colored_output_disable
 __colored_output_enable
 __diefunc
 __directory_is_empty
-__dump_environ
 __dump_metadata_keys
 __dump_trace
 __dyn_pkg_preinst
@@ -77,12 +76,15 @@ __ebd_sigkill_handler
 __ebd_write_line
 __elog_base
 __ensure_PATH
+__environ_dump
+__environ_list_funcs
+__environ_list_vars
+__environ_sanitize_saved_env
+__environ_save_to_file
 __escape_regex_chars
 __execute_phases
-__export_environ
 __filter_env
 __generate_initial_ebuild_environ
-__get_env_funcs
 __helper_check_exit
 __helper_died
 __helper_exit
@@ -124,7 +126,6 @@ __request_sandbox_summary
 __reset_sandbox
 __run_ebuild_phase
 __run_function_if_exists
-__scrub_environ
 __set_perf_debug
 __shopt_pop
 __shopt_push

@@ -1,4 +1,4 @@
-# Copyright 2005-2011 Brian Harring <ferringb@gmail.com>: BSD/GPL2
+# Copyright 2005-2012 Brian Harring <ferringb@gmail.com>: BSD/GPL2
 # Copyright 2004-2005 Gentoo Foundation: GPL2
 
 assert() {
@@ -11,7 +11,7 @@ assert() {
 
 # this exists to protect against older env dumps that had the historical
 # implementation of die that was alias based.
-diefunc() {
+__diefunc() {
 	die "$@"
 }
 
@@ -37,7 +37,7 @@ die() {
 	if [[ -z ${PKGCORE_IS_NOT_HELPER} ]]; then
 		echo "!!! was running helper: ${HELPER_ERROR_PREFIX}"
 	else
-		pkgcore_dump_trace 2 ${filespacing} ${linespacing} >&2
+		__dump_trace 2 ${filespacing} ${linespacing} >&2
 		echo "!!!   $(printf "%${filespacing}s" "${BASH_SOURCE[1]##*/}"), line $(printf "%${linespacing}s" "${BASH_LINENO[0]}"):  Called die" >&2
 	fi
 	echo "!!! The die message:" >&2
@@ -60,10 +60,10 @@ die() {
 }
 
 # usage- first arg is the number of funcs on the stack to ignore.
-# defaults to 1 (ignoring pkgcore_dump_trace)
+# defaults to 1 (ignoring __dump_trace)
 # whitespacing for filenames
 # whitespacing for line numbers
-pkgcore_dump_trace() {
+__dump_trace() {
 
 	declare -i strip=1
 
@@ -91,7 +91,7 @@ pkgcore_dump_trace() {
 	done
 }
 
-pkgcore_helper_exit() {
+__helper_exit() {
 	[[ $1 == 0 ]] && exit 0
 	if [[ -n ${PKGCORE_NONFATAL_HELPER} ]]; then
 		echo "WARNING: exitcode $1 from ${HELPER_ERROR_PREFIX}" >&2
@@ -103,14 +103,14 @@ pkgcore_helper_exit() {
 	die "exitcode $1: $2"
 }
 
-pkgcore_helper_died() {
+__helper_died() {
 	die "got $*";
 }
 
-pkgcore_helper_check_exit() {
+__helper_check_exit() {
 	[[ $1 == 0 ]] && return
 	shift
-	pkgcore_helper_exit "$@"
+	__helper_exit "$@"
 }
 
 :

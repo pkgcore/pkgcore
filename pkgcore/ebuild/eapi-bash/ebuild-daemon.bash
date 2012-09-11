@@ -1,16 +1,16 @@
 #!/bin/bash
 # ebuild-daemon.bash; core ebuild processor handling code
-# Copyright 2004-2011 Brian Harring <ferringb@gmail.com>
+# Copyright 2004-2012 Brian Harring <ferringb@gmail.com>
 # License: BSD/GPL2
 
 # These are functions that shouldn't be marked readonly, since they're runtime
 # switchable.
-PKGCORE_RUNTIME_FUNCS=( 'pkgcore_timed' )
+PKGCORE_RUNTIME_FUNCS=( '__timed_call' )
 
-pkgcore_set_perf_debug()
+__set_perf_debug()
 {
 	if [[ "$PKGCORE_DEBUG" -ge 4 ]] || [[ -n "${PKGCORE_PERF_DEBUG}" ]]; then
-		pkgcore_timed()
+		__timed_call()
 		{
 			echo "timing $*" >&2
 			time "$@"
@@ -19,18 +19,18 @@ pkgcore_set_perf_debug()
 			return $__ret
 		}
 	else
-		pkgcore_timed()
+		__timed_call()
 		{
 			"$@"
 		}
 	fi
 }
 
-pkgcore_set_perf_debug
+__set_perf_debug
 
 # use ebd_read/ebd_write for talking to the running portage instance instead of echo'ing to the fd yourself.
 # this allows us to move the open fd's w/out issues down the line.
-ebd_read_line()
+__ebd_read_line()
 {
 	if ! read -u ${PKGCORE_EBD_READ_FD} $1; then
 		echo "coms error, read failed: backing out of daemon."
@@ -40,7 +40,7 @@ ebd_read_line()
 
 # are we running a version of bash (4.1 or so) that does -N?
 if echo 'y' | read -N 1 &> /dev/null; then
-	ebd_read_size()
+	__ebd_read_size()
 	{
 		if ! read -u ${PKGCORE_EBD_READ_FD} -r -N $1 $2; then
 			echo "coms error, read failed: backing out of daemon."
@@ -50,7 +50,7 @@ if echo 'y' | read -N 1 &> /dev/null; then
 
 else
 	# fallback to a *icky icky* but working alternative.
-	ebd_read_size()
+	__ebd_read_size()
 	{
 		eval "${2}=\$(dd bs=1 count=$1 <&${PKGCORE_EBD_READ_FD} 2> /dev/null)"
 		if [[ $? != 0 ]]; then
@@ -60,18 +60,18 @@ else
 	}
 fi
 
-ebd_read_cat_size()
+__ebd_read_cat_size()
 {
 	dd bs=$1 count=1 <&${PKGCORE_EBD_READ_FD}
 }
 
-ebd_write_line()
+__ebd_write_line()
 {
 	echo "$*" >&${PKGCORE_EBD_WRITE_FD}
 }
 
 
-for x in ebd_read_{line,{cat_,}size} ebd_write_line pkgcore_set_perf_debug; do
+for x in ebd_read_{line,{cat_,}size} __ebd_write_line __set_perf_debug; do
 	declare -rf ${x}
 done
 unset x
@@ -83,7 +83,7 @@ if [[ -z "${PKGCORE_EBD_WRITE_FD}" ]]; then
 fi
 declare -r PKGCORE_EBD_WRITE_FD PKGCORE_EBD_READ_FD
 
-ebd_sigint_handler()
+__ebd_sigint_handler()
 {
 	EBD_DISABLE_DIEFUNC="asdf"
 	# silence ourselves as everything shuts down.
@@ -92,13 +92,13 @@ ebd_sigint_handler()
 	# supress sigpipe; if we can't tell the parent to die,
 	# it's already shutting us down.
 	trap 'exit 2' SIGPIPE
-	ebd_write_line "killed"
+	__ebd_write_line "killed"
 	trap - SIGINT
 	# this relies on the python side to *not* discard the killed
 	exit 2
 }
 
-ebd_sigkill_handler()
+__ebd_sigkill_handler()
 {
 	EBD_DISABLE_DIEFUNC="asdf"
 	# silence ourselves as everything shuts down.
@@ -107,52 +107,52 @@ ebd_sigkill_handler()
 	# supress sigpipe; if we can't tell the parent to die,
 	# it's already shutting us down.
 	trap 'exit 9' SIGPIPE
-	ebd_write_line "killed"
+	__ebd_write_line "killed"
 	trap - SIGKILL
 	exit 9
 }
 
-pkgcore_ebd_exec_main()
+__ebd_exec_main()
 {
 	# ensure the other side is still there.  Well, this moreso is for the python side to ensure
 	# loading up the intermediate funcs succeeded.
-	ebd_read_line com
+	__ebd_read_line com
 	if [[ "$com" != "dude?" ]]; then
 		echo "serv init coms failed, received $com when expecting 'dude?'"
 		exit 1
 	fi
-	ebd_write_line "dude!"
-	ebd_read_line PKGCORE_BIN_PATH
-	[[ -z "$PKGCORE_BIN_PATH" ]] && { ebd_write_line "empty PKGCORE_BIN_PATH;"; exit 1; }
+	__ebd_write_line "dude!"
+	__ebd_read_line PKGCORE_BIN_PATH
+	[[ -z "$PKGCORE_BIN_PATH" ]] && { __ebd_write_line "empty PKGCORE_BIN_PATH;"; exit 1; }
 
 	if ! source "${PKGCORE_BIN_PATH}/exit-handling.lib"; then
-		ebd_write_line "failed sourcing exit handling functionality"
+		__ebd_write_line "failed sourcing exit handling functionality"
 		exit 2;
 	fi
 
 	# get our die functionality now.
 	if ! source "${PKGCORE_BIN_PATH}/isolated-functions.lib"; then
-		ebd_write_line "failed sourcing isolated-functions.lib"
+		__ebd_write_line "failed sourcing isolated-functions.lib"
 		exit 2;
 	fi
 
-	ebd_read_line PKGCORE_PYTHON_BINARY
+	__ebd_read_line PKGCORE_PYTHON_BINARY
 	[[ -z "$PKGCORE_PYTHON_BINARY" ]] && die "empty PKGCORE_PYTHON_BINARY, bailing"
-	ebd_read_line PKGCORE_PYTHONPATH
+	__ebd_read_line PKGCORE_PYTHONPATH
 	[[ -z "$PKGCORE_PYTHONPATH" ]] && die "empty PKGCORE_PYTHONPATH, bailing"
 
 	if ! source "${PKGCORE_BIN_PATH}/ebuild.lib" >&2; then
-		ebd_write_line "failed"
+		__ebd_write_line "failed"
 		die "failed sourcing ${PKGCORE_BIN_PATH}/ebuild.lib"
 	fi
 
 	if [[ -n "$SANDBOX_LOG" ]]; then
-		ebd_read_line com
+		__ebd_read_line com
 		if [[ "$com" != "sandbox_log?" ]]; then
 			echo "unknown com '$com'"
 			exit 1
 		fi
-		ebd_write_line "$SANDBOX_LOG"
+		__ebd_write_line "$SANDBOX_LOG"
 		declare -rx SANDBOX_LOG="$SANDBOX_LOG"
 		addwrite $SANDBOX_LOG
 	fi
@@ -163,7 +163,7 @@ pkgcore_ebd_exec_main()
 			DONT_EXPORT_VARS="${DONT_EXPORT_VARS} $x"
 		fi
 	done
-	ebd_write_line $re
+	__ebd_write_line $re
 	unset x re
 
 
@@ -173,15 +173,15 @@ pkgcore_ebd_exec_main()
 	declare -rx PKGCORE_PYTHONPATH="${PKGCORE_PYTHONPATH}"
 
 	if ! source "${PKGCORE_BIN_PATH}/ebuild-daemon.lib" >&2; then
-		ebd_write_line failed
+		__ebd_write_line failed
 		die "failed source ${PKGCORE_BIN_PATH}/ebuild-daemon.lib"
 	fi
 
-	unset_colors
+	__colored_output_disable
 	declare -A PKGCORE_PRELOADED_ECLASSES
 
-	trap ebd_sigint_handler SIGINT
-	trap ebd_sigkill_handler SIGKILL
+	trap __ebd_sigint_handler SIGINT
+	trap __ebd_sigkill_handler SIGKILL
 
 	# finally, load the master list of pkgcore funcs. fallback to
 	# regenerating it if needed.
@@ -193,7 +193,7 @@ pkgcore_ebd_exec_main()
 
 	DONT_EXPORT_FUNCS="${DONT_EXPORT_FUNCS} ${PORTAGE_PRELOADED_ECLASSES}"
 	for x in $DONT_EXPORT_FUNCS; do
-		is_function $x || continue
+		__is_function $x || continue
 		if ! has "$x" "${PKGCORE_RUNTIME_FUNCS[@]}"; then
 			declare -fr $x &> /dev/null
 		fi
@@ -205,20 +205,20 @@ pkgcore_ebd_exec_main()
 	# important- this needs be loaded after the declare -fr so it doesn't get marked as readonly.
 	# call.
 	export QA_CONTROLLED_EXTERNALLY="yes"
-	enable_qa_interceptors
+	__qa_interceptors_enable
 
 	source "${PKGCORE_BIN_PATH}/eapi/depend.lib" >&2 || die "failed sourcing eapi/depend.lib"
-	pkgcore_ebd_main_loop
+	__ebd_main_loop
 	exit 0
 }
 
-ebd_process_sandbox_results()
+__ebd_process_sandbox_results()
 {
 	if [[ -z $SANDBOX_LOG ]] || [[ ! -e $SANDBOX_LOG ]]; then
 		return 0;
 	fi
 	echo "sandbox exists- $SANDBOX_LOG" >&2
-	request_sandbox_summary >&2
+	__request_sandbox_summary >&2
 	echo "SANDBOX_ON:=${SANDBOX_ON:-unset}" >&2
 	echo "SANDBOX_DISABLED:=${SANDBOX_DISABLED:-unset}" >&2
 	echo "SANDBOX_READ:=${SANDBOX_READ:-unset}" >&2
@@ -231,7 +231,7 @@ ebd_process_sandbox_results()
 	return 1
 }
 
-pkgcore_ebd_process_ebuild_phases()
+__ebd_process_ebuild_phases()
 {
 	# note that this is entirely subshelled; as such exit is used rather than returns
 	(
@@ -240,13 +240,13 @@ pkgcore_ebd_process_ebuild_phases()
 	local is_depends=true
 	if [[ ${phases/depend} == $phases ]]; then
 		is_depends=false
-		disable_qa_interceptors
+		__qa_interceptors_disable
 	fi
 	local cont=0
 
 	while [[ "$cont" == 0 ]]; do
 		local line=''
-		ebd_read_line line
+		__ebd_read_line line
 		case "$line" in
 		start_receiving_env*)
 			line="${line#start_receiving_env }"
@@ -258,20 +258,20 @@ pkgcore_ebd_process_ebuild_phases()
 				;;
 			bytes*)
 				line="${line#bytes }"
-				ebd_read_size ${line} line
-				pkgcore_IFS_push $'\0'
+				__ebd_read_size ${line} line
+				__IFS_push $'\0'
 				eval "$line"
 				cont=$?
-				pkgcore_IFS_pop
+				__IFS_pop
 				;;
 			lines)
 				;&
 			*)
-				while ebd_read_line line && [[ "$line" != "end_receiving_env" ]]; do
-					pkgcore_IFS_push $'\0'
+				while __ebd_read_line line && [[ "$line" != "end_receiving_env" ]]; do
+					__IFS_push $'\0'
 					eval ${line};
 					cont=$?;
-					pkgcore_IFS_pop
+					__IFS_pop
 					if [[ $cont != 0 ]]; then
 						echo "err, env receiving threw an error for '$line': $?" >&2
 						break
@@ -280,15 +280,15 @@ pkgcore_ebd_process_ebuild_phases()
 				;;
 			esac
 			if [[ $cont != 0 ]]; then
-				ebd_write_line "env_receiving_failed"
+				__ebd_write_line "env_receiving_failed"
 				exit 1
 			fi
-			pkgcore_set_perf_debug
-			ebd_write_line "env_received"
+			__set_perf_debug
+			__ebd_write_line "env_received"
 			;;
 		logging*)
 			PORTAGE_LOGFILE="${line#logging }"
-			ebd_write_line "logging_ack"
+			__ebd_write_line "logging_ack"
 			;;
 		set_sandbox_state*)
 			if [[ $((${line:18})) -eq 0 ]]; then
@@ -315,9 +315,7 @@ pkgcore_ebd_process_ebuild_phases()
 
 	[[ -n $PORTAGE_LOGFILE ]] && addwrite "$(readlink -f "$PORTAGE_LOGFILE")"
 
-	if [[ -z $RC_NOCOLOR ]]; then
-		set_colors
-	fi
+	[[ -z $RC_NOCOLOR ]] && __colored_output_enable
 
 	[[ -n $PORTAGE_TMPDIR ]] && {
 		addpredict "${PORTAGE_TMPDIR}"
@@ -327,22 +325,22 @@ pkgcore_ebd_process_ebuild_phases()
 
 	umask 0022
 	if [[ -z "$PORTAGE_LOGFILE" ]]; then
-		execute_phases ${phases}
+		__execute_phases ${phases}
 		ret=$?
 	else
-		execute_phases ${phases} &> >(umask 0002; tee -i -a "${PORTAGE_LOGFILE}")
+		__execute_phases ${phases} &> >(umask 0002; tee -i -a "${PORTAGE_LOGFILE}")
 		ret=$?
 	fi
 
 	if [[ $ret != 0 ]]; then
-		ebd_process_sandbox_results
+		__ebd_process_sandbox_results
 		exit $(( $ret ))
 	fi
 	exit 0
 	)
 }
 
-ebd_process_metadata()
+__ebd_process_metadata()
 {
 	# protect the env.
 	# note the local usage is redunant in light of it, but prefer to write it this
@@ -353,7 +351,7 @@ ebd_process_metadata()
 	local size=$1
 	local data
 	local ret
-	ebd_read_size $1 data
+	__ebd_read_size $1 data
 	local IFS=$'\0'
 	eval "$data"
 	ret=$?
@@ -365,39 +363,39 @@ ebd_process_metadata()
 	fi
 
 	PORTAGE_SANDBOX_PID="$PPID"
-	execute_phases depend && exit 0
-	ebd_process_sandbox_results
+	__execute_phases depend && exit 0
+	__ebd_process_sandbox_results
 	exit 1
 	)
 }
 
-pkgcore_make_preloaded_eclass_func()
+__make_preloaded_eclass_func()
 {
-	eval "pkgcore_eclass_${1}_inherit() {
+	eval "__preloaded_eclass_${1}() {
 		${2}
 	}"
-	PKGCORE_PRELOADED_ECLASSES[${1}]="pkgcore_eclass_${1}_inherit"
+	PKGCORE_PRELOADED_ECLASSES[${1}]="__preloaded_eclass_${1}"
 }
 
 
-pkgcore_ebd_main_loop()
+__ebd_main_loop()
 {
 	DONT_EXPORT_VARS="${DONT_EXPORT_VARS} alie com phases line cont DONT_EXPORT_FUNCS"
 	SANDBOX_ON=1
 	while :; do
 		local com=''
-		ebd_read_line com
+		__ebd_read_line com
 		case $com in
 		process_ebuild*)
 			# cleanse whitespace.
 			local phases="$(echo ${com#process_ebuild})"
 			PORTAGE_SANDBOX_PID="$PPID"
-			pkgcore_ebd_process_ebuild_phases ${phases}
+			__ebd_process_ebuild_phases ${phases}
 			# tell python if it succeeded or not.
 			if [[ $? != 0 ]]; then
-				ebd_write_line "phases failed"
+				__ebd_write_line "phases failed"
 			else
-				ebd_write_line "phases succeeded"
+				__ebd_write_line "phases succeeded"
 			fi
 			;;
 		shutdown_daemon)
@@ -414,27 +412,27 @@ pkgcore_ebd_main_loop()
 					success='failed'
 					break
 				fi
-				pkgcore_make_preloaded_eclass_func "$x" "$(< "$e")"
+				__make_preloaded_eclass_func "$x" "$(< "$e")"
 			done
-			ebd_write_line "preload_eclass ${success}"
+			__ebd_write_line "preload_eclass ${success}"
 			unset e x success
 			;;
 		clear_preloaded_eclasses)
 			unset PKGCORE_PRELOADED_ECLASSES
 			declare -A PKGCORE_PRELOADED_ECLASSES
-			ebd_write_line "clear_preloaded_eclasses succeeded"
+			__ebd_write_line "clear_preloaded_eclasses succeeded"
 			;;
 		set_metadata_path\ *)
 			line=${com#set_metadata_path }
-			ebd_read_size ${line} PKGCORE_METADATA_PATH
-			ebd_write_line "metadata_path_received"
+			__ebd_read_size ${line} PKGCORE_METADATA_PATH
+			__ebd_write_line "metadata_path_received"
 			;;
 		gen_metadata\ *)
 			line=${com#gen_metadata }
-			if ebd_process_metadata ${line}; then
-				ebd_write_line "phases succeeded"
+			if __ebd_process_metadata ${line}; then
+				__ebd_write_line "phases succeeded"
 			else
-				ebd_write_line "phases failed"
+				__ebd_write_line "phases failed"
 			fi
 			;;
 		*)
@@ -444,6 +442,6 @@ pkgcore_ebd_main_loop()
 	done
 }
 
-[[ -z $PKGCORE_SOURCING_FOR_REGEN_FUNCS_LIST ]] && pkgcore_ebd_exec_main
+[[ -z $PKGCORE_SOURCING_FOR_REGEN_FUNCS_LIST ]] && __ebd_exec_main
 
 :

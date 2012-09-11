@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Copyright: 2011 Brian Harring <ferringb@gmail.com>
+# Copyright: 2012 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD 3 clause
 
 # protect against env screwups.
@@ -81,7 +81,7 @@ check_command()
 check_command_or_stop()
 {
 	check_command "$@"
-	pkgcore_helper_check_exit $? "$@ failed, cannot continue"
+	__helper_check_exit $? "$@ failed, cannot continue"
 	return 0
 }
 

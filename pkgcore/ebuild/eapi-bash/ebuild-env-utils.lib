@@ -1,7 +1,7 @@
-# Copyright 2005-2011 Brian Harring <ferringb@gmail.com>: BSD/GPL2
+# Copyright 2005-2012 Brian Harring <ferringb@gmail.com>: BSD/GPL2
 # this functionality is all related to saving/loading environmental dumps for ebuilds
 
-pkgcore_regex_filter_input() {
+__regex_filter_input() {
 	# We don't need to reset IFS in this context, thus skip the pop.
 	local IFS='|'
 	local regex="^(${*})$"
@@ -11,7 +11,7 @@ pkgcore_regex_filter_input() {
 		# use type -p; qa_interceptors may be be active.
 		"$l" -v "${regex}"
 		local ret=$?
-		[[ $ret -gt 1 ]] && die "got failing return code (${ret}) invoking pkgcore_regex_filter_input in egrep -v mode with args: ${regex}"
+		[[ $ret -gt 1 ]] && die "got failing return code (${ret}) invoking __regex_filter_input in egrep -v mode with args: ${regex}"
 	else
 		while read l; do
 			[[ $l =~ $regex ]] || echo "${l}"
@@ -19,7 +19,7 @@ pkgcore_regex_filter_input() {
 	fi
 }
 
-pkgcore_escape_regex_chars() {
+__escape_regex_chars() {
 	local x="$1"
 	x="${x//\+/\\+}"
 	x="${x//\./\\.}"
@@ -27,11 +27,11 @@ pkgcore_escape_regex_chars() {
 	echo "${x}"
 }
 
-pkgcore_get_env_funcs() {
+__get_env_funcs() {
 	declare -F | cut -s -d ' ' -f3 -s
 }
 
-pkgcore_filter_env() {
+__filter_env() {
 	local opts
 	[[ $PKGCORE_DEBUG -ge 3 ]] && opts="$opts --debug"
 	PYTHONPATH="${PKGCORE_PYTHONPATH}" "${PKGCORE_PYTHON_BINARY}" \
@@ -41,23 +41,23 @@ pkgcore_filter_env() {
 
 # selectively saves  the environ- specifically removes things that have been marked to not be exported.
 # dump the environ to stdout.
-pkgcore_dump_environ() {
+__dump_environ() {
 
 	# if possible, sort the outputting of funcs/vars; this isn't required however.
 	local PKGCORE_SORT=$(type -p sort 2> /dev/null)
 	[[ -z "${PKGCORE_SORT}" ]] && PKGCORE_SORT=cat
 
-	pkgcore_shopt_push -f
-	declare -a PKGCORE_TARGETS=( $(pkgcore_get_env_funcs | pkgcore_regex_filter_input ${DONT_EXPORT_FUNCS} | ${PKGCORE_SORT}) )
+	__shopt_push -f
+	declare -a PKGCORE_TARGETS=( $(__get_env_funcs | __regex_filter_input ${DONT_EXPORT_FUNCS} | ${PKGCORE_SORT}) )
 	local PKGCORE_RET=$?
 	if [[ "$PKGCORE_RET" != "0" ]]; then
-		die "failed invoking pkgcore_get_env_funcs/regex filtering: ret $PKGCORE_RET" >&2
+		die "failed invoking __get_env_funcs/regex filtering: ret $PKGCORE_RET" >&2
 	fi
 	if [[ 0 != "${#PKGCORE_TARGETS[@]}" ]]; then
 		declare -f "${PKGCORE_TARGETS[@]}" || die "failed outputing funcs ${PKGCORE_TARGETS[@]}" >&2
 	fi
 
-	PKGCORE_TARGETS=( $(declare | pkgcore_filter_env --print-vars | pkgcore_regex_filter_input ${DONT_EXPORT_VARS} | ${PKGCORE_SORT}) )
+	PKGCORE_TARGETS=( $(declare | __filter_env --print-vars | __regex_filter_input ${DONT_EXPORT_VARS} | ${PKGCORE_SORT}) )
 	PKGCORE_RET=$?
 	if [[ "$PKGCORE_RET" != 0 ]]; then
 		die "failed invoking pkgcore_get_env_vars/regex filtering: ret $PKGCORE_RET" >&2
@@ -65,13 +65,13 @@ pkgcore_dump_environ() {
 	if [[ 0 != "${#PKGCORE_TARGETS[@]}" ]]; then
 		declare -p "${PKGCORE_TARGETS[@]}" || die "failed outputing env vars ${PKGCORE_TARGETS[@]}" >&2
 	fi
-	pkgcore_shopt_pop
+	__shopt_pop
 }
 
 # dump environ to $1, optionally piping it through $2 and redirecting $2's output to $1.
-pkgcore_export_environ() {
+__export_environ() {
 	if [[ $# != 1 ]] && [[ $# != 2 ]]; then
-		die "pkgcore_export_environ requires at least one arguement, two max; given $@"
+		die "__export_environ requires at least one arguement, two max; given $@"
 	fi
 
 	#the spaces on both sides are important- otherwise, the later ${DONT_EXPORT_VARS/ temp_umask /} won't match.
@@ -84,9 +84,9 @@ pkgcore_export_environ() {
 	umask 0002
 
 	if [[ $# == 1 ]]; then
-		pkgcore_dump_environ > "$1"
+		__dump_environ > "$1"
 	else
-		pkgcore_dump_environ | $2 > "$1"
+		__dump_environ | $2 > "$1"
 	fi
 	chown portage:portage "$1" &>/dev/null
 	chmod 0664 "$1" &>/dev/null
@@ -97,7 +97,7 @@ pkgcore_export_environ() {
 }
 
 # reload a saved env, applying usual filters to the env prior to eval'ing it.
-pkgcore_scrub_environ() {
+__scrub_environ() {
 	local src e ret EXISTING_PATH
 	# localize these so the reload doesn't have the ability to change them
 
@@ -105,17 +105,17 @@ pkgcore_scrub_environ() {
 		die "scrub_environ called with wrong args, only one can be given: $@"
 	fi
 
-	[[ ! -f "$1" ]] && die "pkgcore_scrub_environ called with a nonexist env: $1"
+	[[ ! -f "$1" ]] && die "__scrub_environ called with a nonexist env: $1"
 
 	src="$1"
 
 	# here's how this goes; we do an eval'd loadup of the target env w/in a subshell..
 	# declares and such will slide past filter-env (so it goes).  we then use our own
-	# pkgcore_dump_environ from within to get a clean dump from that env, and load it into
+	# __dump_environ from within to get a clean dump from that env, and load it into
 	# the parent eval.
 	(
 
-		# protect the core vars and functions needed to do a pkgcore_dump_environ
+		# protect the core vars and functions needed to do a __dump_environ
 		# some of these are already readonly- we still are forcing it to be safe.
 		declare -r PKGCORE_PYTHONPATH="${PKGCORE_PYTHONPATH}" &> /dev/null
 		declare -r PKGCORE_PYTHON_BINARY="${PKGCORE_PYTHON_BINARY}" &> /dev/null
@@ -125,11 +125,11 @@ pkgcore_scrub_environ() {
 		declare -r T="${T}" &> /dev/null
 #		declare -rx PATH="${PATH}" &> /dev/null
 
-		readonly -f pkgcore_filter_env &> /dev/null
-		readonly -f pkgcore_dump_environ &> /dev/null
-		readonly -f pkgcore_regex_filter_input &> /dev/null
+		readonly -f __filter_env &> /dev/null
+		readonly -f __dump_environ &> /dev/null
+		readonly -f __regex_filter_input &> /dev/null
 
-		pkgcore_shopt_push -f
+		__shopt_push -f
 		IFS=$' \t\n'
 		declare -a PKGCORE_ENV_ARRAY=( ${DONT_EXPORT_FUNCS} )
 		declare -a PKGCORE_VAR_ARRAY=( ${DONT_EXPORT_VARS} src x EXISTING_PATH )
@@ -137,11 +137,11 @@ pkgcore_scrub_environ() {
 		PKGCORE_ENV_ARRAY="${PKGCORE_ENV_ARRAY[*]}"
 		PKGCORE_VAR_ARRAY="${PKGCORE_VAR_ARRAY[*]}"
 		IFS=$' \t\n'
-		pkgcore_shopt_pop
+		__shopt_pop
 
 		rm -f "${T}/.pre-scrubbed-env" || die "failed rm'ing"
 		# run the filtered env.
-		pkgcore_filter_env \
+		__filter_env \
 			-f "${PKGCORE_FUNC_ARRAY}" \
 			-v "${PKGCORE_ENV_ARRAY}" \
 			-i "$src" \
@@ -165,7 +165,7 @@ pkgcore_scrub_environ() {
 		unset -v EXISTING_PATH old_phase
 
 		rm -f "${T}/.scrubbed-env"
-		pkgcore_dump_environ > ${T}/.scrubbed-env || die "dumping environment failed"
+		__dump_environ > ${T}/.scrubbed-env || die "dumping environment failed"
 	) && return
 
 	echo "die 'failed parsing the env dump'" # yep, we're injecting code into the eval.

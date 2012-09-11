@@ -1,5 +1,5 @@
 #!/usr/bin/env pkgcore-ebuild-helper
-# Copyright: 2011 Brian Harring <ferringb@gmail.com>
+# Copyright: 2012 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD 3 clause
 
 recursive=false
@@ -11,7 +11,7 @@ fi
 check_args 1 -
 
 if [[ "${INSDESTTREE%${ED}*}" == "" ]]; then
-	pkgcore_helper_exit 2 "do not give \${D} nor \${ED} as part of the pathways to doins"
+	__helper_exit 2 "do not give \${D} nor \${ED} as part of the pathways to doins"
 fi
 
 install_paths()
@@ -28,7 +28,7 @@ install_paths()
 				mysrc="${T}/${x##*/}"
 			elif [[ -d $x ]] ; then
 				$recursive || continue
-				if directory_is_empty "${x}"; then
+				if __directory_is_empty "${x}"; then
 					install_paths "${mydir}/${x##*/}"
 				else
 					install_paths "${mydir}/${x##*/}" "${x}"/*

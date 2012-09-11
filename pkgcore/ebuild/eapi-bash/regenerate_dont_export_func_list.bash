@@ -51,12 +51,14 @@ unset source
 
 echo >&2
 
+# Sorting order; put PMS functionality first, then our internals.
+result=$(
 declare -F 2> /dev/null | cut -d ' ' -f3 | while read l; do
-	[[ -n $l ]] && echo "$(pkgcore_escape_regex_chars "$l")"
-done | sort | {
-	if [[ "${_FP}" == '-' ]]; then
-		cat
-	else
-		cat > dont_export_funcs.list
-	fi
-}
+	[[ -n $l ]] && echo "$(__escape_regex_chars "$l")"
+done | sort)
+result=$(echo "$result" | grep -v "^__"; echo "$result" | grep "^__")
+if [[ "${_FP}" == '-' ]]; then
+	echo "$result"
+else
+	echo "$result" > dont_export_funcs.list
+fi

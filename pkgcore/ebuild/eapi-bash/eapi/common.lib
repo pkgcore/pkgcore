@@ -5,7 +5,7 @@ use()
 {
 	local u="${1}"
 	# Ensure USE is split on normal IFS.
-	pkgcore_shopt_push -f
+	__shopt_push -f
 	local IFS=$' \t\n'
 	if [[ "${u:0:1}" == "!" ]]; then
 		! has "${u:1}" ${USE}
@@ -13,7 +13,7 @@ use()
 		has "$u" ${USE}
 	fi
 	local ret=$?
-	pkgcore_shopt_pop
+	__shopt_pop
 	return "${ret}"
 }
 
@@ -261,27 +261,27 @@ einstall()
 	"$@" || die "einstall failed"
 }
 
-pkgcore_common_pkg_nofetch()
+__phase_common_pkg_nofetch()
 {
 	[[ -z ${SRC_URI} ]] && return
 
 	echo "!!! The following are listed in SRC_URI for ${PN}:"
 	local fp
-	pkgcore_shopt_push -f
+	__shopt_push -f
 	for fp in ${SRC_URI}; do
 		echo "!!!   ${fp}"
 	done
-	pkgcore_shopt_pop
+	__shopt_pop
 }
 
-pkgcore_common_src_unpack()
+__phase_common_src_unpack()
 {
 	if [[ -n ${A} ]]; then
 		unpack ${A}
 	fi
 }
 
-pkgcore_common_src_compile()
+__phase_common_src_compile()
 {
 	# only eapi 0/1 invoke configure...
 	if has "${EAPI:-0}" 0 1; then
@@ -296,7 +296,7 @@ pkgcore_common_src_compile()
 	fi
 }
 
-pkgcore_common_src_test()
+__phase_common_src_test()
 {
 	addpredict /
 	if make check -n &> /dev/null; then
@@ -362,7 +362,7 @@ docinto()
 	fi
 }
 
-pkgcore_common_pre_phase()
+__phase_common_pre_phase()
 {
 	if [[ -d ${S} ]]; then
 		cd "${S}"
@@ -375,7 +375,7 @@ pkgcore_common_pre_phase()
 		# eapi4 blatant idiocy...
 		for phase in unpack prepare configure compile install; do
 			[[ ${phase} == ${EBUILD_PHASE} ]] && break
-			is_function src_${phase} || continue
+			__is_function src_${phase} || continue
 			# to reach here means that (for example), we're doing src_install, and src_compile was defined
 			# but S doesn't exist.
 			die "source directory '${S}' doesn't exist, \${A} is defined, and there was a defined " \
@@ -386,28 +386,28 @@ pkgcore_common_pre_phase()
 	fi
 }
 
-pkgcore_default_pre_src_unpack()
+__phase_default_pre_src_unpack()
 {
 	export S
 	cd "${WORKDIR}"
 }
 
-pkgcore_default_pre_src_prepare() { pkgcore_common_pre_phase; }
-pkgcore_default_pre_src_test()    { pkgcore_common_pre_phase; }
+__phase_default_pre_src_prepare() { __phase_common_pre_phase; }
+__phase_default_pre_src_test()    { __phase_common_pre_phase; }
 
-pkgcore_default_pre_src_configure()
+__phase_default_pre_src_configure()
 {
 	for x in C{BUILD,HOST,TARGET,C,XX} {AS,LD,{,LIB}C{,XX}}FLAGS; do
 		[[ -n ${!x+set} ]] && export ${x}="${!x}"
 	done
-	pkgcore_common_pre_phase
+	__phase_common_pre_phase
 }
 
-pkgcore_default_pre_src_compile()
+__phase_default_pre_src_compile()
 {
 	# just reuse the default_pre_src_configure; this means we don't have to care
 	# if the eapi has configure or not.
-	pkgcore_default_pre_src_configure
+	__phase_default_pre_src_configure
 
 	if has distcc ${FEATURES}; then
 		[[ -n ${DISTCC_DIR} ]] && addwrite "${DISTCC_DIR}"
@@ -418,7 +418,7 @@ pkgcore_default_pre_src_compile()
 	fi
 }
 
-pkgcore_default_post_src_compile()
+__phase_default_post_src_compile()
 {
 	if has distcc ${FEATURES} && has distcc-pump ${FEATURES}; then
 		pump --shutdown
@@ -426,7 +426,7 @@ pkgcore_default_post_src_compile()
 	fi
 }
 
-pkgcore_default_pre_src_install()
+__phase_default_pre_src_install()
 {
 	local x
 	export DESTTREE=/usr INSDESTTREE='' PKGCORE_EXEDESTTREE='' PKGCORE_DOCDESTTREE=''
@@ -443,23 +443,23 @@ pkgcore_default_pre_src_install()
 	else
 		mkdir "${D}"
 	fi
-	pkgcore_common_pre_phase
+	__phase_common_pre_phase
 }
 
-pkgcore_inject_phase_funcs()
+__inject_phase_funcs()
 {
 	local pref="$1" x
 	shift
 	for x in "$@"; do
-		if ! is_function "$x"; then
-		    eval "pkgcore_default_${x}() { ${pref}_${x}; }";
+		if ! __is_function "$x"; then
+		    eval "__phase_default_${x}() { ${pref}_${x}; }";
 		fi
 	done
 }
 
-pkgcore_inject_common_phase_funcs()
+__inject_common_phase_funcs()
 {
-	pkgcore_inject_phase_funcs pkgcore_common pkg_nofetch src_{unpack,compile,test}
+	__inject_phase_funcs __phase_common pkg_nofetch src_{unpack,compile,test}
 }
 
 # adds ".keep" files so that dirs aren't auto-cleaned

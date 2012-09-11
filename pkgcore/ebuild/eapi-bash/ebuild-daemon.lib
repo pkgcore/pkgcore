@@ -1,39 +1,39 @@
 #!/bin/bash
 # ebuild-daemon.lib; daemon lib code.
-# Copyright 2005-2011 Brian Harring <ferringb@gmail.com>
+# Copyright 2005-2012 Brian Harring <ferringb@gmail.com>
 # License BSD/GPL2
 
 
 # ask the python side to display sandbox complaints.
-request_sandbox_summary()
+__request_sandbox_summary()
 {
 	local line
-	ebd_write_line "request_sandbox_summary ${SANDBOX_LOG}"
-	ebd_read_line line
+	__ebd_write_line "__request_sandbox_summary ${SANDBOX_LOG}"
+	__ebd_read_line line
 	while [[ $line != end_sandbox_summary ]]; do
 		echo "$line"
-		ebd_read_line line
+		__ebd_read_line line
 	done
 }
 
-pkgcore_internal_inherit()
+__internal_inherit()
 {
 	local line
 	if [[ $# != 1 ]]; then
 		die "internal_inherit accepts one arg, requested eclass location.  $* is a bit much"
 	fi
 	if [[ -n ${PKGCORE_PRELOADED_ECLASSES[$1]} ]]; then
-		qa_invoke "${PKGCORE_PRELOADED_ECLASSES[$1]}"
+		__qa_invoke "${PKGCORE_PRELOADED_ECLASSES[$1]}"
 		return
 	fi
-	ebd_write_line "request_inherit $1"
-	ebd_read_line line
+	__ebd_write_line "request_inherit $1"
+	__ebd_read_line line
 	if [[ $line == path ]]; then
-		ebd_read_line line
-		qa_invoke source "${line}" >&2 || die "failed sources inherit: ${line}"
+		__ebd_read_line line
+		__qa_invoke source "${line}" >&2 || die "failed sources inherit: ${line}"
 	elif [[ $line == transfer ]]; then
-		ebd_read_line line
-		qa_invoke eval "$line" || die "failed evaluating eclass $1 on an inherit transfer"
+		__ebd_read_line line
+		__qa_invoke eval "$line" || die "failed evaluating eclass $1 on an inherit transfer"
 	elif [[ $line == failed ]]; then
 		die "inherit for $1 failed"
 	else
@@ -41,25 +41,25 @@ pkgcore_internal_inherit()
 	fi
 }
 
-source_bashrcs()
+__source_bashrcs()
 {
 	${PKGCORE_SUPPRESS_BASHRCS:-false} && return
 	local line
-	ebd_write_line request_bashrcs
-	ebd_read_line line
+	__ebd_write_line request_bashrcs
+	__ebd_read_line line
 	while [[ $line != end_request ]]; do
 		if [[ $line == path ]]; then
-			ebd_read_line line
+			__ebd_read_line line
 			source "${line}" >&2
 		elif [[ $line == transfer ]]; then
-			ebd_read_line line
+			__ebd_read_line line
 			eval "$line" || die "failed evaluating profile bashrc: ${line}"
 		else
-			ebd_write_line "failed"
+			__ebd_write_line "failed"
 			die "unknown profile bashrc transfer mode from pythonic side, '$line'"
 		fi
-		ebd_write_line "next"
-		ebd_read_line line
+		__ebd_write_line "next"
+		__ebd_read_line line
 	done
 }
 

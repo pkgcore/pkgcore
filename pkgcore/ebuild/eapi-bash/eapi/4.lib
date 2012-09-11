@@ -1,4 +1,4 @@
-# Copyright: 2011 Brian Harring <ferringb@gmail.com>
+# Copyright: 2011-2012 Brian Harring <ferringb@gmail.com>
 # license GPL2/BSD 3
 
 source "${PKGCORE_BIN_PATH}/"/eapi/3.lib
@@ -7,9 +7,9 @@ nonfatal() {
 	PKGCORE_NONFATAL_HELPER=y "$@"
 }
 
-default_src_install() { pkgcore_eapi4_src_install; }
+default_src_install() { __phase_eapi4_src_install; }
 
-pkgcore_eapi4_src_install() {
+__phase_eapi4_src_install() {
 	if [[ -f Makefile ]] || [[ -f GNUmakefile ]] || [[ -f makefile ]]; then
 		emake DESTDIR="${D}" install
 	fi
@@ -35,6 +35,6 @@ pkgcore_eapi4_src_install() {
 	fi
 }
 
-pkgcore_inject_phase_funcs pkgcore_eapi4 src_install
+__inject_phase_funcs __phase_eapi4 src_install
 
 :

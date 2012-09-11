@@ -1,4 +1,4 @@
-# Copyright: 2011 Brian Harring <ferringb@gmail.com>
+# Copyright: 2011-2012 Brian Harring <ferringb@gmail.com>
 # license GPL2/BSD 3
 
 # while these echo statements are ugly, written this way to ensure bash does it as a single write-
@@ -60,7 +60,7 @@ debug-print-section()
 }
 
 elog() {
-	pkgcore_elog_base LOG "$*"
+	__elog_base LOG "$*"
 	echo -e " ${PKGCORE_RC_GOOD}*${PKGCORE_RC_NORMAL} $*"
 	return 0
 }
@@ -72,21 +72,21 @@ einfo() {
 }
 
 einfon() {
-	pkgcore_elog_base INFO "$*"
+	__elog_base INFO "$*"
 	echo -ne " ${PKGCORE_RC_GOOD}*${PKGCORE_RC_NORMAL} $*"
 	PKGCORE_RC_LAST_CMD="einfon"
 	return 0
 }
 
 ewarn() {
-	pkgcore_elog_base WARN "$*"
+	__elog_base WARN "$*"
 	echo -e " ${PKGCORE_RC_WARN}*${PKGCORE_RC_NORMAL} $*" >&2
 	PKGCORE_RC_LAST_CMD="ewarn"
 	return 0
 }
 
 eerror() {
-	pkgcore_elog_base ERROR "$*"
+	__elog_base ERROR "$*"
 	echo -e " ${PKGCORE_RC_BAD}*${PKGCORE_RC_NORMAL} $*" >&2
 	PKGCORE_RC_LAST_CMD="eerror"
 	return 0

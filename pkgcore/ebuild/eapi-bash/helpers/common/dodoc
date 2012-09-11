@@ -1,5 +1,5 @@
 #!/usr/bin/env pkgcore-ebuild-helper
-# Copyright: 2011 Brian Harring <ferringb@gmail.com>
+# Copyright: 2012 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD 3 clause
 
 recursive=false
@@ -24,7 +24,7 @@ install_paths()
 				error "'$x' is a directory$($PKGCORE_DODOC_ALLOW_RECURSIVE && echo ", perhaps you forgot -r?")"
 				continue
 			fi
-			directory_is_empty "$x" && continue
+			__directory_is_empty "$x" && continue
 			install_paths "${mydir}/${x##*/}" "${x}"/*
 		elif [[ -s $x ]]; then
 			check_command install -m0644 "${x}" "${mydir}" && \

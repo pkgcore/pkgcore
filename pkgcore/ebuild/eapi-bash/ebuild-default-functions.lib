@@ -1,6 +1,6 @@
 #!/bin/bash
 # ebuild-default-functions.sh; default functions for ebuild env that aren't saved- specific to the portage instance.
-# Copyright 2005-2011 Brian Harring <ferringb@gmail.com>: BSD/GPL2
+# Copyright 2005-2012 Brian Harring <ferringb@gmail.com>: BSD/GPL2
 # Copyright 2004-2006 Gentoo Foundation: GPL2
 
 portageq() {
@@ -52,7 +52,7 @@ addpredict()
 	export SANDBOX_PREDICT="$SANDBOX_PREDICT:$1"
 }
 
-dyn_src_install()
+__dyn_src_install()
 {
 	local f
 	echo
@@ -61,10 +61,10 @@ dyn_src_install()
 	else
 		echo ">>> Install ${PF} into ${D} category ${CATEGORY}"
 	fi
-	if is_function src_install; then
-		qa_invoke src_install
+	if __is_function src_install; then
+		__qa_invoke src_install
 	else
-		qa_run_function_if_exists pkgcore_default_src_install
+		__qa_run_function_if_exists __phase_default_src_install
 	fi
 
 	"${PKGCORE_BIN_PATH}/helpers/internals/prepall"
@@ -143,14 +143,14 @@ dyn_src_install()
 	unset dir
 }
 
-dyn_pkg_preinst()
+__dyn_pkg_preinst()
 {
 	local i
 
-	if is_function pkg_preinst; then
-		qa_invoke pkg_preinst
+	if __is_function pkg_preinst; then
+		__qa_invoke pkg_preinst
 	else
-		qa_run_function_if_exists pkgcore_default_pkg_preinst
+		__qa_run_function_if_exists __phase_default_pkg_preinst
 	fi
 
 	${PKGCORE_PREFIX_SUPPORT} || local ED="${D}"
@@ -209,7 +209,7 @@ dyn_pkg_preinst()
 	fi
 }
 
-pkgcore_internal_inherit()
+__internal_inherit()
 {
 	# default, backwards compatible beast.
 	local location overlay
@@ -225,7 +225,7 @@ pkgcore_internal_inherit()
 		done
 	fi
 	debug-print "inherit: $1 -> $location"
-	qa_invoke source "$location" >&2 || die "died sourcing $location in inherit()"
+	__qa_invoke source "$location" >&2 || die "died sourcing $location in inherit()"
 	return 0
 }
 
@@ -256,7 +256,7 @@ inherit()
 
 		unset IUSE REQUIRED_USE DEPEND RDEPEND PDEPEND
 
-		pkgcore_internal_inherit "$1" || die "failed sourcing $1 in inherit()"
+		__internal_inherit "$1" || die "failed sourcing $1 in inherit()"
 
 		# If each var has a value, append it to the global variable E_* to
 		# be applied after everything is finished. New incremental behavior.
@@ -297,7 +297,7 @@ PKGCORE_QA_INTERCEPTORS=(
    gcc "g++" cc bash awk nawk pkg-config
 )
 
-enable_qa_interceptors()
+__qa_interceptors_enable()
 {
 	# Turn of extended glob matching so that g++ doesn't get incorrectly matched.
 	shopt -u extglob
@@ -324,7 +324,7 @@ enable_qa_interceptors()
 	done
 }
 
-disable_qa_interceptors()
+__qa_interceptors_disable()
 {
 	local x
 	for x in "${PKGCORE_QA_INTERCEPTORS[@]}"; do

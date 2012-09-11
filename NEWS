@@ -6,6 +6,9 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 
 pkgcore trunk:
 
+* All pkgcore internal functions now are prefixed with __; ebuilds
+  and eclasses should never touch them.
+
 * For performance debugging of EBD, PKGCORE_PERF_DEBUG=1 was added.
 
 * Defined phases is now trusted in full, and used to control exactly

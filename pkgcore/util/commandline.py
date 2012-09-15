@@ -204,12 +204,15 @@ class StoreConfigObject(argparse._StoreAction):
             currying.partial(self._real_call, parser, namespace, values, option_string),
             self.priority))
 
+    def _get_sections(self, config, namespace):
+        return getattr(config, self.config_type)
+
     def _real_call(self, parser, namespace, values, option_string=None):
         config = getattr(namespace, 'config', None)
         if config is None:
             raise ValueError("no config found.  Internal bug")
 
-        sections = getattr(config, self.config_type)
+        sections = self._get_sections(config, namespace)
 
         if self.nargs == argparse.ZERO_OR_MORE and values == []:
             values = sections.keys()
@@ -276,12 +279,27 @@ class StoreRepoObject(StoreConfigObject):
             raise ValueError("StoreRepoObject: config_type keyword is redundant: got %s"
                 % (kwargs['config_type'],))
         self.raw = kwargs.pop("raw", False)
+        self.domain_forced = 'domain' in kwargs
+        self.domain = kwargs.pop('domain', 'domain')
         if self.raw:
             kwargs['config_type'] = 'raw_repo'
         else:
             kwargs['config_type'] = 'repo'
         self.allow_name_lookup = kwargs.pop("allow_name_lookup", True)
         StoreConfigObject.__init__(self, *args, **kwargs)
+
+    def _get_sections(self, config, namespace):
+        domain = None
+        if self.domain:
+            domain = getattr(namespace, self.domain, None)
+            if domain is None and self.domain_forced:
+                raise ConfigError(
+                    "No domain found, but one was forced for %s; "
+                    "internal bug.  NS=%s" % (self, namespace))
+        if domain is None:
+            return StoreConfigObject._get_sections(
+                self, config, namespace)
+        return domain.named_repos if self.raw else domain.filtered_named_repos
 
     def _load_obj(self, sections, name):
         if not self.allow_name_lookup or name in sections:

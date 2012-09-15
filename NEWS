@@ -6,6 +6,11 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 
 pkgcore trunk:
 
+* pquery --repo gentoo no longer implies/forces --raw.  Same goes
+  for all other places that take repo arguments.
+  Now, pquery --repo <some-repo> must be within the specified domain
+  unless --raw is forced.
+
 * All pkgcore internal functions now are prefixed with __; ebuilds
   and eclasses should never touch them.
 

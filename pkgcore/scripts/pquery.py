@@ -404,8 +404,19 @@ repo_group.add_argument('--virtuals', action='store', choices=('only', 'disable'
 
 repo_mux = repo_group.add_mutually_exclusive_group()
 
+class RawAwareStoreRepoObject(commandline.StoreRepoObject):
+
+    """Custom implementation that is aware of the --raw flag."""
+
+    def _get_sections(self, config, namespace):
+        if namespace.raw:
+            return commandline.StoreConfigObject._get_sections(
+                self, config, namespace)
+        return commandline.StoreRepoObject._get_sections(
+            self, config, namespace)
+
 repo_mux.add_argument('--repo',
-    action=commandline.StoreRepoObject, priority=29,
+    action=RawAwareStoreRepoObject, priority=29,
     help='repo to use (default from domain if omitted).')
 repo_mux.add_argument('--vdb', action='store_true',
     help='match only vdb (installed) packages.')

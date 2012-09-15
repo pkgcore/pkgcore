@@ -52,21 +52,28 @@ class DataSourceRestriction(values.base):
     __hash__ = object.__hash__
 
 
-printable_attrs = sorted(('rdepends', 'depends', 'post_rdepends',
+deps_like_attrs = ['rdepends', 'depends', 'post_rdepends']
+deps_like_attrs += list('raw_%s' % x for x in deps_like_attrs) + ['restrict']
+deps_like_attrs = frozenset(deps_like_attrs)
+
+printable_attrs = tuple(sorted(
+    list(deps_like_attrs) + [
+    'alldepends', 'raw_alldepends',
     'provides', 'use', 'iuse', 'description', 'longdescription',
     'herds', 'license', 'uris', 'files', 'category', 'package',  'slot',
     'maintainers', 'restrict', 'repo', 'source_repository',
-    'alldepends', 'path', 'version',
+    'path', 'version',
     'revision', 'fullver', 'environment', 'keywords', 'homepage',
     'fetchables', 'eapi', 'inherited', 'chost', 'cbuild', 'ctarget',
-    'all', 'allmetadata', 'properties', 'defined_phases', 'required_use'))
+    'all', 'allmetadata', 'properties', 'defined_phases', 'required_use'
+    ]))
 
 
 def stringify_attr(config, pkg, attr):
     """Grab a package attr and convert it to a string."""
     # config is currently unused but may affect display in the future.
     if attr in ('files', 'uris'):
-        data = getattr(pkg, 'fetchables', None)
+        data = get_pkg_attr(pkg, 'fetchables')
         if data is None:
             return 'MISSING'
         if attr == 'files':
@@ -80,12 +87,12 @@ def stringify_attr(config, pkg, attr):
     if attr == 'use':
         # Combine a list of all enabled (including irrelevant) and all
         # available flags into a "enabled -disabled" style string.
-        use = set(getattr(pkg, 'use', ()))
-        iuse = set(x.lstrip("-+") for x in getattr(pkg, 'iuse', ()))
+        use = set(get_pkg_attr(pkg, 'use', ()))
+        iuse = set(x.lstrip("-+") for x in get_pkg_attr(pkg, 'iuse', ()))
         result = sorted(iuse & use) + sorted('-' + val for val in (iuse - use))
         return ' '.join(result)
 
-    value = getattr(pkg, attr, None)
+    value = get_pkg_attr(pkg, attr)
     if value is None:
         return 'MISSING'
 
@@ -99,7 +106,7 @@ def stringify_attr(config, pkg, attr):
     if attr == 'environment':
         return value.text_fileobj().read()
     if attr == 'repo':
-        return str(getattr(value, 'repo_id', 'no repo id'))
+        return str(get_pkg_attr(value, 'repo_id', 'no repo id'))
     # hackish.
     return str(value)
 
@@ -183,8 +190,8 @@ def _internal_format_depends(out, node, func):
 def format_attr(config, out, pkg, attr):
     """Grab a package attr and print it through a formatter."""
     # config is currently unused but may affect display in the future.
-    if attr in ('depends', 'rdepends', 'post_rdepends', 'restrict'):
-        data = getattr(pkg, attr, None)
+    if attr in deps_like_attrs:
+        data = get_pkg_attr(pkg, attr)
         if data is None:
             out.write('MISSING')
         else:
@@ -203,7 +210,7 @@ def format_attr(config, out, pkg, attr):
             out.first_prefix.pop()
             out.write()
     elif attr in ('files', 'uris'):
-        data = getattr(pkg, 'fetchables', None)
+        data = get_pkg_attr(pkg, 'fetchables')
         if data is None:
             out.write('MISSING')
             return
@@ -244,8 +251,8 @@ def print_package(options, out, err, pkg):
             out.write(green, '     %s: ' % (attr,), out.fg(), autoline=False)
             format_attr(options, out, pkg, attr)
         for revdep in options.print_revdep:
-            for name in ('depends', 'rdepends', 'post_rdepends'):
-                depset = getattr(pkg, name)
+            for name in deps_like_attrs:
+                depset = get_pkg_attr(pkg, name)
                 find_cond = getattr(depset, 'find_cond_nodes', None)
                 if find_cond is None:
                     out.write(
@@ -304,8 +311,8 @@ def print_package(options, out, err, pkg):
             printed_something = True
             out.write('%s="%s"' % (attr, stringify_attr(options, pkg, attr)))
         for revdep in options.print_revdep:
-            for name in ('depends', 'rdepends', 'post_rdepends'):
-                depset = getattr(pkg, name)
+            for name in deps_like_attrs:
+                depset = get_pkg_attr(pkg, name)
                 if getattr(depset, 'find_cond_nodes', None) is None:
                     # TODO maybe be smarter here? (this code is
                     # triggered by virtuals currently).
@@ -327,7 +334,7 @@ def print_package(options, out, err, pkg):
 
     if options.contents:
         for location in sorted(obj.location
-            for obj in getattr(pkg, 'contents', ())):
+            for obj in get_pkg_attr(pkg, 'contents', ())):
             out.write(location)
 
 def print_packages_noversion(options, out, err, pkgs):
@@ -686,8 +693,16 @@ output.add_argument('--print-revdep', action='append',
     help='print what condition(s) trigger a dep.')
 
 
+def get_pkg_attr(pkg, attr, fallback=None):
+    if attr[0:4] == 'raw_':
+        pkg = getattr(pkg, '_raw_pkg', pkg)
+        attr = attr[4:]
+    return getattr(pkg, attr, fallback)
+
+
 class _Fail(Exception):
     pass
+
 
 def mangle_values(vals, err):
 
@@ -710,12 +725,15 @@ def mangle_values(vals, err):
         vals.attr.extend(x for x in printable_attrs if not x == 'all')
         # startswith is used to filter out --attr all --attr allmetadata, etc.
         vals.attr = [x for x in vals.attr if not x.startswith('all')]
-    elif 'allmetadata' in vals.attr:
+    if 'allmetadata' in vals.attr:
         vals.attr.extend(self.metadata_attrs)
         vals.attr = [x for x in vals.attr if not x.startswith('all')]
-    elif 'alldepends' in vals.attr:
+    if 'alldepends' in vals.attr:
         vals.attr.remove('alldepends')
         vals.attr.extend(['depends', 'rdepends', 'post_rdepends'])
+    if 'raw_alldepends' in vals.attr:
+        vals.attr.remove('raw_alldepends')
+        vals.attr.extend(['raw_depends', 'raw_rdepends', 'raw_post_rdepends'])
 
     if vals.verbose:
         # slice assignment to an empty range; behaves as an insertion.

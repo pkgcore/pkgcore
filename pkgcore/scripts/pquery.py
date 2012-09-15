@@ -705,7 +705,7 @@ def mangle_values(vals, err):
                 '--print-revdep with --no-version does not make sense.')
 
     if 'all' in vals.attr:
-        vals.attr.extend(x for x in self.printable_attrs if not x == 'all')
+        vals.attr.extend(x for x in printable_attrs if not x == 'all')
         # startswith is used to filter out --attr all --attr allmetadata, etc.
         vals.attr = [x for x in vals.attr if not x.startswith('all')]
     elif 'allmetadata' in vals.attr:

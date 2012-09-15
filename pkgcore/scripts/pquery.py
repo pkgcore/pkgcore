@@ -128,6 +128,8 @@ def format_depends(out, node, func=_default_formatter):
         if not node.restrictions:
             return False
         if len(node.restrictions) == 1:
+            # Force a newline first.
+            out.write()
             return _internal_format_depends(out, node.restrictions[0], func)
         out.write()
         for child in node.restrictions[:-1]:

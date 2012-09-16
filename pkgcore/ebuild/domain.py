@@ -128,15 +128,15 @@ class domain(pkgcore.config.domain.domain):
         self.default_licenses_manager = OverlayedLicenses(*repositories)
         vdb_collapsed = [r.collapse() for r in vdb]
         vdb = [r.instantiate() for r in vdb_collapsed]
-        self.named_repos = dict(
+        self.repos_raw = dict(
             (collapsed.name, repo) for (collapsed, repo) in izip(
                 repositories_collapsed, repositories))
-        self.named_repos.update(
+        self.repos_raw.update(
             (collapsed.name, repo) for (collapsed, repo) in izip(
                 vdb_collapsed, vdb))
-        self.named_repos.pop(None, None)
+        self.repos_raw.pop(None, None)
         if profile.provides_repo is not None:
-            self.named_repos['package.provided'] = profile.provides_repo
+            self.repos_raw['package.provided'] = profile.provides_repo
             vdb.append(profile.provides_repo)
 
         self.profile = profile
@@ -291,10 +291,10 @@ class domain(pkgcore.config.domain.domain):
         self.settings = ProtectedDict(settings)
         self.repos = []
         self.vdb = []
-        self.configured_named_repos = {}
-        self.filtered_named_repos = {}
+        self.repos_configured = {}
+        self.repos_configured_filtered = {}
 
-        rev_names = dict((repo, name) for name, repo in self.named_repos.iteritems())
+        rev_names = dict((repo, name) for name, repo in self.repos_raw.iteritems())
 
         profile_masks = profile._incremental_masks()
         repo_masks = dict((r.repo_id, r._visibility_limiters()) for r in repositories)
@@ -322,7 +322,7 @@ class domain(pkgcore.config.domain.domain):
                 else:
                     wrapped_repo = repo
                 key = rev_names.get(repo)
-                self.configured_named_repos[key] = wrapped_repo
+                self.repos_configured[key] = wrapped_repo
                 if filtered:
                     config = getattr(repo, 'config', None)
                     masters = getattr(config, 'masters', ())
@@ -346,7 +346,7 @@ class domain(pkgcore.config.domain.domain):
                 if filtered:
                     wrapped_repo = visibility.filterTree(wrapped_repo,
                         filtered, True)
-                self.filtered_named_repos[key] = wrapped_repo
+                self.repos_configured_filtered[key] = wrapped_repo
                 l.append(wrapped_repo)
 
         if profile.virtuals:
@@ -354,9 +354,9 @@ class domain(pkgcore.config.domain.domain):
                 for v in self.vdb) if x is not None]
             profile_repo = profile.make_virtuals_repo(
                 multiplex.tree(*repositories), *l)
-            self.named_repos["profile virtuals"] = profile_repo
-            self.filtered_named_repos["profile virtuals"] = profile_repo
-            self.configured_named_repos["profile virtuals"] = profile_repo
+            self.repos_raw["profile virtuals"] = profile_repo
+            self.repos_configured_filtered["profile virtuals"] = profile_repo
+            self.repos_configured["profile virtuals"] = profile_repo
             self.repos = [profile_repo] + self.repos
 
         self.use_expand_re = re.compile("^(?:[+-])?(%s)_(.*)$" %

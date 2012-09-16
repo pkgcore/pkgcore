@@ -299,7 +299,7 @@ class StoreRepoObject(StoreConfigObject):
         if domain is None:
             return StoreConfigObject._get_sections(
                 self, config, namespace)
-        return domain.named_repos if self.raw else domain.filtered_named_repos
+        return domain.repos_raw if self.raw else domain.repos_configured_filtered
 
     def _load_obj(self, sections, name):
         if not self.allow_name_lookup or name in sections:

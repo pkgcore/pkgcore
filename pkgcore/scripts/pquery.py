@@ -170,7 +170,7 @@ def _internal_format_depends(out, node, func):
             out.first_prefix.pop()
             if newline:
                 out.write()
-                out.write(')')
+                out.write(')', autoline=False)
                 return True
             else:
                 out.write(' )', autoline=False)

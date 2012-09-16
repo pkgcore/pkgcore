@@ -44,9 +44,6 @@ def passthrough_repo(inst):
         return repo.strip()
     return None
 
-def flatten_depset(inst, conditionals):
-    return inst.evaluate_depset(conditionals)
-
 default_pkg_preinst_re = None
 
 def pkg_uses_default_preinst(pkg):

@@ -732,31 +732,32 @@ def mangle_values(vals, err):
             error_out(
                 '--print-revdep with --no-version does not make sense.')
 
-    if 'all' in vals.attr:
-        vals.attr.extend(x for x in printable_attrs if not x == 'all')
-        # startswith is used to filter out --attr all --attr allmetadata, etc.
-        vals.attr = [x for x in vals.attr if not x.startswith('all')]
-    if 'allmetadata' in vals.attr:
-        vals.attr.extend(self.metadata_attrs)
-        vals.attr = [x for x in vals.attr if not x.startswith('all')]
-    if 'alldepends' in vals.attr:
-        vals.attr.remove('alldepends')
-        vals.attr.extend(['depends', 'rdepends', 'post_rdepends'])
-    if 'raw_alldepends' in vals.attr:
-        vals.attr.remove('raw_alldepends')
-        vals.attr.extend(['raw_depends', 'raw_rdepends', 'raw_post_rdepends'])
-
-    if vals.verbose:
-        # slice assignment to an empty range; behaves as an insertion.
-        vals.attr[0:0] = ['repo', 'description', 'homepage']
-
     if vals.one_attr and vals.print_revdep:
         error_out(
             '--print-revdep with --force-one-attr or --one-attr does not '
             'make sense.')
 
+    def process_attrs(sequence):
+        for attr in sequence:
+            if attr == 'all':
+                i = [x for x in printable_attrs if x != 'all']
+            elif attr == 'allmetadata':
+                i = process_attrs(self.metadata_attrs)
+            elif attr == 'alldepends':
+                i = ['depends', 'rdepends', 'post_rdepends']
+            elif attr == 'raw_alldepends':
+                i = ['raw_depends', 'raw_rdepends', 'raw_post_rdepends']
+            else:
+                i = [attr]
+            for attr in i:
+                yield attr
+
+
+    attrs = ['repo', 'description', 'homepage'] if vals.verbose else []
+    attrs.extend(process_attrs(vals.attr))
+
     # finally, uniquify the attrs.
-    vals.attr = list(iter_stable_unique(vals.attr))
+    vals.attr = list(iter_stable_unique(attrs))
 
     return vals, ()
 

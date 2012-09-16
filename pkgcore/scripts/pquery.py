@@ -394,10 +394,14 @@ argparser = commandline.mk_argparser(domain=True,
 repo_group = argparser.add_argument_group('Repository matching options',
     'options controlling which repositories to inspect.')
 repo_group.add_argument('--raw', action='store_true', default=False,
-    help="Without this switch your configuration affects what packages are "
-        "visible (through masking) and what USE flags are applied to depends "
-        "and fetchables.  With this switch your configuration values aren't "
-        'used and you see the "raw" repository data.')
+    help="With this switch enabled, no configuration is used, and no filtering "
+         " is done.  This means you see the raw dependencies, rather than the "
+         "dependencies rendered via your USE configuration.  Primarily useful "
+         "for people who need to look under the hood- ebuild devs, PM tool "
+         "authors, etc.  Note this option ignores --domain if is specified.")
+repo_group.add_argument('--no-filters', action='store_true', default=False,
+    help="With this option enabled, all license filtering, visibility filtering"
+         " (ACCEPT_KEYWORDS, package masking, etc) is turned off.")
 repo_group.add_argument('--virtuals', action='store', choices=('only', 'disable'),
     help='arg "only" for only matching virtuals, "disable" to not match '
         'virtuals at all. Default is to match everything.')
@@ -412,6 +416,8 @@ class RawAwareStoreRepoObject(commandline.StoreRepoObject):
         if namespace.raw:
             return commandline.StoreConfigObject._get_sections(
                 self, config, namespace)
+        elif namespace.no_filters:
+            return namespace.domain.repos_configured
         return commandline.StoreRepoObject._get_sections(
             self, config, namespace)
 
@@ -435,12 +441,20 @@ def setup_repos(namespace, attr):
         namespace.vdb = True
 
     # Get repo(s) to operate on.
-    if namespace.vdb:
+    if namespace.repo:
+        # The store repo machinery handles --raw and --no-filters for
+        # us, thus it being the first check.
+        repos = [namespace.repo]
+    elif namespace.vdb:
         repos = namespace.domain.vdb
+    elif namespace.no_filters:
+        if namespace.all_repos:
+            repos = list(namespace.domain.vdb)
+            repos.extend(namespace.domain.repos_configured.itervalues())
+        else:
+            repos = namespace.domain.repos_configured.values()
     elif namespace.all_repos:
         repos = namespace.domain.repos + namespace.domain.vdb
-    elif namespace.repo:
-        repos = [namespace.repo]
     else:
         repos = namespace.domain.repos
 

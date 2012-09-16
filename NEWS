@@ -6,6 +6,10 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 
 pkgcore trunk:
 
+* pquery --no-filter was added; this gives you the configured
+  (USE rendered) view of a package, just without any visibility
+  or license filtering applied.
+
 * Errant newlines in pquery --attr *depends -v output were removed.
 
 * pquery --repo gentoo no longer implies/forces --raw.  Same goes

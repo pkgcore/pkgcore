@@ -15,7 +15,7 @@ from snakeoil.demandload import demandload
 demandload(globals(),
     're',
     'errno',
-    'snakeoil.lists:iter_stable_unique',
+     'snakeoil.lists:iter_stable_unique',
     'pkgcore.fs:fs@fs_module,contents@contents_module',
 )
 
@@ -52,21 +52,28 @@ class DataSourceRestriction(values.base):
     __hash__ = object.__hash__
 
 
-deps_like_attrs = ['rdepends', 'depends', 'post_rdepends']
-deps_like_attrs += list('raw_%s' % x for x in deps_like_attrs) + ['restrict']
-deps_like_attrs = frozenset(deps_like_attrs)
+dep_like_attrs = ['rdepends', 'depends', 'post_rdepends']
+metadata_attrs = dep_like_attrs
+dep_like_attrs += list('raw_%s' % x for x in dep_like_attrs) + ['restrict']
+dep_like_attrs = tuple(sorted(dep_like_attrs))
+dep_like_attrs_set = frozenset(dep_like_attrs)
 
-printable_attrs = tuple(sorted(
-    list(deps_like_attrs) + [
+metadata_attrs += [
+    'provides', 'use', 'iuse', 'description', 'license', 'fetchables',
+    'slot', 'keywords', 'homepage', 'eapi', 'properties', 'defined_phases',
+    'restrict', 'required_use', 'inherited',]
+metadata_attrs = tuple(sorted(metadata_attrs))
+
+printable_attrs = dep_like_attrs + metadata_attrs
+printable_attrs += (
     'alldepends', 'raw_alldepends',
-    'provides', 'use', 'iuse', 'description', 'longdescription',
-    'herds', 'license', 'uris', 'files', 'category', 'package',  'slot',
-    'maintainers', 'restrict', 'repo', 'source_repository',
-    'path', 'version',
-    'revision', 'fullver', 'environment', 'keywords', 'homepage',
-    'fetchables', 'eapi', 'inherited', 'chost', 'cbuild', 'ctarget',
-    'all', 'allmetadata', 'properties', 'defined_phases', 'required_use'
-    ]))
+    'longdescription', 'herds', 'uris', 'files', 'category', 'package',
+    'maintainers', 'repo', 'source_repository', 'path', 'version',
+    'revision', 'fullver', 'environment',
+    'chost', 'cbuild', 'ctarget',
+    'all', 'allmetadata',
+)
+printable_attrs = tuple(sorted(set(printable_attrs)))
 
 
 def stringify_attr(config, pkg, attr):
@@ -190,7 +197,7 @@ def _internal_format_depends(out, node, func):
 def format_attr(config, out, pkg, attr):
     """Grab a package attr and print it through a formatter."""
     # config is currently unused but may affect display in the future.
-    if attr in deps_like_attrs:
+    if attr in dep_like_attrs_set:
         data = get_pkg_attr(pkg, attr)
         if data is None:
             out.write('MISSING')
@@ -251,7 +258,7 @@ def print_package(options, out, err, pkg):
             out.write(green, '     %s: ' % (attr,), out.fg(), autoline=False)
             format_attr(options, out, pkg, attr)
         for revdep in options.print_revdep:
-            for name in deps_like_attrs:
+            for name in dep_like_attrs_set:
                 depset = get_pkg_attr(pkg, name)
                 find_cond = getattr(depset, 'find_cond_nodes', None)
                 if find_cond is None:
@@ -311,7 +318,7 @@ def print_package(options, out, err, pkg):
             printed_something = True
             out.write('%s="%s"' % (attr, stringify_attr(options, pkg, attr)))
         for revdep in options.print_revdep:
-            for name in deps_like_attrs:
+            for name in dep_like_attrs_set:
                 depset = get_pkg_attr(pkg, name)
                 if getattr(depset, 'find_cond_nodes', None) is None:
                     # TODO maybe be smarter here? (this code is
@@ -756,7 +763,7 @@ def mangle_values(vals, err):
             if attr == 'all':
                 i = [x for x in printable_attrs if x != 'all']
             elif attr == 'allmetadata':
-                i = process_attrs(self.metadata_attrs)
+                i = process_attrs(metadata_attrs)
             elif attr == 'alldepends':
                 i = ['depends', 'rdepends', 'post_rdepends']
             elif attr == 'raw_alldepends':

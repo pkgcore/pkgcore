@@ -37,9 +37,14 @@ die() {
 STARTING_PID=$BASHPID
 # use ebd_read/ebd_write for talking to the running portage instance instead of echo'ing to the fd yourself.
 # this allows us to move the open fd's w/out issues down the line.
-__ebd_read_line()
+__ebd_read_line_nonfatal()
 {
 	read -u ${PKGCORE_EBD_READ_FD} $1
+}
+
+__ebd_read_line()
+{
+	__ebd_read_line_nonfatal "$@"
 	local ret=$?
 	[ $ret -ne 0 ] && \
 		die "coms error in $STARTING_PID, read_line $@ failed w/ $ret: backing out of daemon."
@@ -397,7 +402,9 @@ __ebd_main_loop()
 	SANDBOX_ON=1
 	while :; do
 		local com=''
-		__ebd_read_line com
+		# If we don't manage to read, this means that the other end hung up.
+		# exit.
+		__ebd_read_line_nonfatal com || com=shutdown_daemon
 		case $com in
 		process_ebuild*)
 			# cleanse whitespace.

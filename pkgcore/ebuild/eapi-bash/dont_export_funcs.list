@@ -70,6 +70,7 @@ __ebd_process_metadata
 __ebd_process_sandbox_results
 __ebd_read_cat_size
 __ebd_read_line
+__ebd_read_line_nonfatal
 __ebd_read_size
 __ebd_sigint_handler
 __ebd_sigkill_handler

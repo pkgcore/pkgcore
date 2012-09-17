@@ -67,6 +67,12 @@ def _single_thread_allowed(functor):
     return _inner
 
 @_single_thread_allowed
+def forget_all_processors():
+    active_ebp_list[:] = []
+    inactive_ebp_list[:] = []
+
+
+@_single_thread_allowed
 def shutdown_all_processors():
     """kill off all known processors"""
     try:

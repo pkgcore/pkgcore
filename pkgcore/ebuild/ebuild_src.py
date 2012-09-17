@@ -1,6 +1,8 @@
 # Copyright: 2005-2011 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
+from __future__ import with_statement
+
 """
 package class for buildable ebuilds
 """

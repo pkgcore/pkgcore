@@ -296,12 +296,14 @@ PKGCORE_QA_INTERCEPTORS=(
    javac java-config python python-config perl grep egrep fgrep sed
    gcc "g++" cc bash awk nawk pkg-config
 )
+__QA_INTERCEPTORS_ACTIVE=false
 
 __qa_interceptors_enable()
 {
 	# Turn of extended glob matching so that g++ doesn't get incorrectly matched.
 	shopt -u extglob
 
+	${__QA_INTERCEPTORS_ACTIVE} && return
 	# QA INTERCEPTORS
 	local FUNC_SRC BIN BODY BIN_PATH
 	for BIN in "${PKGCORE_QA_INTERCEPTORS[@]}"; do
@@ -326,12 +328,13 @@ __qa_interceptors_enable()
 
 __qa_interceptors_disable()
 {
+	${__QA_INTERCEPTORS_ACTIVE} || return
 	local x
 	for x in "${PKGCORE_QA_INTERCEPTORS[@]}"; do
 		unset -f $x
 	done
 }
 
-DONT_EXPORT_VARS="${DONT_EXPORT_VARS} ECLASS_DEPTH"
+DONT_EXPORT_VARS="${DONT_EXPORT_VARS} ECLASS_DEPTH __QA_INTERCEPTORS_ACTIVE"
 
 :

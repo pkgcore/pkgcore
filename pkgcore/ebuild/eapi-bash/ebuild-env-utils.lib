@@ -63,7 +63,10 @@ __filter_env() {
 __environ_dump() {
 
 	__shopt_push -f
-	declare -a PKGCORE_TARGETS=( $(__environ_list_funcs | __regex_filter_input ${DONT_EXPORT_FUNCS} "${PKGCORE_PRELOADED_ECLASSES[@]}") )
+	local __func_filters=( ${DONT_EXPORT_FUNCS} "${PKGCORE_PRELOADED_ECLASSES[@]}" )
+	${__QA_INTERCEPTORS_ACTIVE:-false} && __func_filters+=( "${PKGCORE_QA_INTERCEPTORS[@]}" )
+	declare -a PKGCORE_TARGETS=( $(__environ_list_funcs | __regex_filter_input "${__func_filters[@]}" ) )
+	unset __func_filters
 	if [[ 0 != "${#PKGCORE_TARGETS[@]}" ]]; then
 		declare -f "${PKGCORE_TARGETS[@]}" || die "failed outputing funcs ${PKGCORE_TARGETS[@]}" >&2
 	fi

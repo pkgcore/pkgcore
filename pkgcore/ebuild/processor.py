@@ -39,6 +39,7 @@ except ImportError:
 inactive_ebp_list = []
 active_ebp_list = []
 
+import contextlib
 import pkgcore.spawn, os, signal, errno
 from pkgcore import const, os_data
 from pkgcore.ebuild import const as e_const
@@ -154,6 +155,23 @@ def release_ebuild_processor(ebp):
     else:
         inactive_ebp_list.append(ebp)
     return True
+
+
+@contextlib.contextmanager
+def reuse_or_request(ebp=None, **request_kwds):
+    """Do an processor operation, locking as necessary.
+
+    If the processor is given, it's assumed to be locked already.
+    If no processor is given, one is allocated, then released upon
+    finishing."""
+    release_required = ebp is None
+    try:
+        if ebp is None:
+            ebp = request_ebuild_processor(**request_kwds)
+        yield ebp
+    finally:
+        if release_required and ebp is not None:
+            release_ebuild_processor(ebp)
 
 
 class ProcessingInterruption(Exception):

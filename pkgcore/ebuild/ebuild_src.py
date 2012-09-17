@@ -343,14 +343,10 @@ class package_factory(metadata.factory):
         return self._update_metadata(pkg, ebp=ebp)
 
     def _update_metadata(self, pkg, ebp=None):
-        release = ebp is None
-        try:
-            if release:
-                ebp = processor.request_ebuild_processor()
-            mydata = ebp.get_keys(pkg, self._ecache)
-        finally:
-            if ebp is not None and release:
-                processor.release_ebuild_processor(ebp)
+        with processor.reuse_or_request(ebp) as my_proc:
+            mydata = my_proc.get_keys(pkg, self._ecache)
+            del my_proc
+        del ebp
 
         inherited = mydata.pop("INHERITED", None)
         # rewrite defined_phases as needed, since we now know the eapi.

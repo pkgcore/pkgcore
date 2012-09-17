@@ -31,12 +31,16 @@ def stdin_default(namespace, attr):
 argparser.add_argument('--input', '-i', action='store',
     type=commandline.argparse.FileType(), default=commandline.DelayedValue(stdin_default, 0),
     help='Filename to read the env from (uses stdin if omitted).')
-argparser.add_argument('--funcs', '-f', action='extend_comma',
+mux = argparser.add_mutually_exclusive_group()
+filtering = mux.add_argument_group("Environment filtering options")
+filtering.add_argument('--funcs', '-f', action='extend_comma',
     help="comma seperated list of regexes to match function names against for filtering")
-argparser.add_argument('--vars', '-v', action='extend_comma',
+filtering.add_argument('--vars', '-v', action='extend_comma',
     help="comma seperated list of regexes to match variable names against for filtering")
-argparser.add_argument('--print-vars', action='store_true', default=False,
-    help="print just the global scope environment variables that match")
+mux.add_argument('--print-vars', action='store_true', default=False,
+    help="print just the global scope environment variables.")
+mux.add_argument('--print-funcs', action='store_true', default=False,
+    help="print just the global scope functions.")
 
 @argparser.bind_main_func
 def main(options, out, err):
@@ -57,18 +61,29 @@ def main(options, out, err):
                      options.var_match, options.func_match)
 
     stream = out.stream
-    var_callback = None
-    if options.print_vars:
+    var_callback = func_callback = None
+    if options.print_vars or options.print_funcs:
         import cStringIO
         stream = cStringIO.StringIO()
+    if options.print_vars:
         var_matches = []
         var_callback = var_matches.append
+    if options.print_funcs:
+        func_matches = []
+        def func_callback(level, name, body):
+            func_matches.append((level, name, body))
 
     # Hack: write to the stream directly.
     filter_env.main_run(stream, options.input.read(), options.vars, options.funcs,
                    options.var_match, options.func_match,
-                   global_envvar_callback=var_callback)
+                   global_envvar_callback=var_callback,
+                   func_callback=func_callback)
 
     if options.print_vars:
         for var in sorted(var_matches):
             out.write(var.strip())
+
+    if options.print_funcs:
+        for level, name, block in func_matches:
+            if level == 0:
+                out.write(block)

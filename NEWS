@@ -6,6 +6,10 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 
 pkgcore trunk:
 
+* filter-env gained a --print-funcs option.  Additionally, the underlying
+  core has been enhanced so that analysis within a function block is
+  possible.
+
 * pquery --attr environment now can work for raw ebuilds, rather than
   just built ebuilds.
 

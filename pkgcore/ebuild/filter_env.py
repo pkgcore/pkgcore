@@ -17,7 +17,9 @@ demandload(globals(),
 COMMAND_PARSING, SPACE_PARSING = range(2)
 
 
-def native_run(out, file_buff, var_match, func_match, global_envvar_callback=None):
+def native_run(out, file_buff, var_match, func_match,
+               global_envvar_callback=None,
+               func_callback=None):
     """Print a filtered environment.
 
     :param out: file-like object to write to.
@@ -28,7 +30,7 @@ def native_run(out, file_buff, var_match, func_match, global_envvar_callback=Non
     """
 
     process_scope(out, file_buff, 0, var_match, func_match, '\0',
-        global_envvar_callback)
+        global_envvar_callback, func_callback=func_callback)
 
 
 cpy_run = None
@@ -117,7 +119,9 @@ def is_envvar(buff, pos):
     except IndexError:
         return None, None, None
 
-def process_scope(out, buff, pos, var_match, func_match, endchar, envvar_callback=None):
+def process_scope(out, buff, pos, var_match, func_match, endchar,
+                  envvar_callback=None, func_callback=None,
+                  func_level=0):
     window_start = pos
     window_end = None
     isspace = str.isspace
@@ -144,8 +148,12 @@ def process_scope(out, buff, pos, var_match, func_match, endchar, envvar_callbac
         if new_p is not None:
             func_name = buff[new_start:new_end]
             logger.debug('matched func name %r', func_name)
-            new_p = process_scope(None, buff, new_p, None, None, '}')
+            new_p = process_scope(None, buff, new_p, None, None, '}',
+                                  func_callback=func_callback,
+                                  func_level=func_level+1)
             logger.debug('ended processing %r', func_name)
+            if func_callback is not None:
+                func_callback(func_level, func_name, buff[new_start:new_p])
             if func_match is not None and func_match(func_name):
                 logger.debug('filtering func %r', func_name)
                 window_end = com_start
@@ -402,19 +410,30 @@ def walk_dollar_expansion(buff, pos, end, endchar, disable_quote=False):
             pos += 1
     return pos + 1
 
-def main_run(out_handle, data, vars_str, funcs_str, vars_is_whitelist=False, funcs_is_whitelist=False,
-    global_envvar_callback=None, _parser=None):
+def main_run(out_handle, data, vars_to_filter=(), funcs_to_filter=(), vars_is_whitelist=False, funcs_is_whitelist=False,
+    global_envvar_callback=None, func_callback=None, _parser=None):
 
     vars = funcs = None
-    if vars_str:
-        vars = build_regex_string(vars_str, invert=vars_is_whitelist).match
+    if vars_to_filter:
+        vars = build_regex_string(vars_to_filter, invert=vars_is_whitelist).match
 
-    if funcs_str:
-        funcs = build_regex_string(funcs_str, invert=funcs_is_whitelist).match
+    if funcs_to_filter:
+        if isinstance(funcs_to_filter, basestring):
+            raise ValueError("funcs_str should not be a string; should be a sequence.")
+        funcs = build_regex_string(funcs_to_filter, invert=funcs_is_whitelist).match
 
     data = data + '\0'
 
+    kwds = {'global_envvar_callback':global_envvar_callback}
+
+    if func_callback:
+        if _parser not in (None, native_run):
+            raise ValueError("_parser must be native_run or None if func_callback is active")
+        _parser = native_run
+        # Set this only if func_callback is enabled; extension can't yet
+        # handle the arg.
+        kwds['func_callback'] = func_callback
     if _parser is None:
         _parser = run
 
-    _parser(out_handle, data, vars, funcs, global_envvar_callback=global_envvar_callback)
+    _parser(out_handle, data, vars, funcs, **kwds)

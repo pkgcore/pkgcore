@@ -411,7 +411,7 @@ __execute_phases() {
 			ret=0;
 
 			;;
-		depend)
+		depend|generate_env)
 			SANDBOX_ON="1"
 			PKGCORE_SAVE_ENV=false
 
@@ -420,13 +420,19 @@ __execute_phases() {
 				__qa_interceptors_enable
 			fi
 
+			EBUILD_PHASE=depend
 			__load_ebuild "${EBUILD}"
 
 			if [[ -z "$QA_CONTROLLED_EXTERNALLY" ]]; then
 				__qa_interceptors_disable
 			fi
-
-			__dump_metadata_keys
+			if [[ $myarg == depend ]]; then
+				__dump_metadata_keys
+			else
+				local my_env="$(__environ_dump)"
+				__ebd_write_line "receive_env ${#my_env}"
+				__ebd_write_raw "${my_env}"
+			fi
 			;;
 		*)
 			die "Please specify a valid command: $EBUILD_PHASE isn't valid."

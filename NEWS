@@ -6,6 +6,9 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 
 pkgcore trunk:
 
+* pquery --attr environment now can work for raw ebuilds, rather than
+  just built ebuilds.
+
 * pquery --no-filter was added; this gives you the configured
   (USE rendered) view of a package, just without any visibility
   or license filtering applied.

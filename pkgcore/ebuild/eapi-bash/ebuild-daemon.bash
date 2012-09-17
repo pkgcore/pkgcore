@@ -79,6 +79,10 @@ __ebd_write_line()
 		die "coms error, write failed w/ $ret: backing out of daemon."
 }
 
+__ebd_write_raw()
+{
+    echo -n "$*" >&${PKGCORE_EBD_WRITE_FD} || die "coms error, __ebd_write_raw failed;  Backing out."
+}
 
 for x in ebd_read_{line,{cat_,}size} __ebd_write_line __set_perf_debug; do
 	declare -rf ${x}
@@ -357,10 +361,10 @@ __ebd_process_metadata()
 	(
 	# Heavy QA checks (IFS, shopt, etc) are suppressed for speed
 	declare -r PKGCORE_QA_SUPPRESSED=false
-	local size=$1
+	local __mode="${2:-depend}"
 	local data
 	local ret
-	__ebd_read_size $1 data
+	__ebd_read_size "$1" data
 	local IFS=$'\0'
 	eval "$data"
 	ret=$?
@@ -372,7 +376,7 @@ __ebd_process_metadata()
 	fi
 
 	PORTAGE_SANDBOX_PID="$PPID"
-	__execute_phases depend && exit 0
+	__execute_phases "$__mode" && exit 0
 	__ebd_process_sandbox_results
 	exit 1
 	)
@@ -436,9 +440,11 @@ __ebd_main_loop()
 			__ebd_read_size ${line} PKGCORE_METADATA_PATH
 			__ebd_write_line "metadata_path_received"
 			;;
-		gen_metadata\ *)
-			line=${com#gen_metadata }
-			if __ebd_process_metadata ${line}; then
+		gen_metadata\ *|gen_ebuild_env\ *)
+			local __mode=depend
+			[[ "${com}" == gen_ebuild_env* ]] && __mode=generate_env
+			line="${com#* }"
+			if __ebd_process_metadata "${line}" "${__mode}"; then
 				__ebd_write_line "phases succeeded"
 			else
 				__ebd_write_line "phases failed"

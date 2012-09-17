@@ -32,6 +32,7 @@ from snakeoil.demandload import demandload
 demandload(globals(),
     "pkgcore.log:logger",
     "pkgcore.ebuild.eapi:get_eapi",
+    "snakeoil:data_source",
 )
 
 
@@ -281,6 +282,15 @@ class package(base):
     @property
     def _mtime_(self):
         return self._parent._get_ebuild_mtime(self)
+
+    @property
+    def environment(self):
+        data = self._get_ebuild_environment()
+        return data_source.data_source(data, mutable=False)
+
+    def _get_ebuild_environment(self, ebp=None):
+        with processor.reuse_or_request(ebp) as ebp:
+            return ebp.get_ebuild_environment(self, self.repo.eclass_cache)
 
 
 class package_factory(metadata.factory):

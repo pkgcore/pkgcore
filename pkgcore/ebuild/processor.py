@@ -190,6 +190,16 @@ class UnhandledCommand(ProcessingInterruption):
         ProcessingInterruption.__init__(
             self, "unhandled command, %s" % (line,))
         self.line = line
+        self.args = (line,)
+
+class InternalError(ProcessingInterruption):
+
+    def __init__(self, line=None, msg=None):
+        ProcessingInterruption.__init__(
+            self, "Internal error occured: line=%r, msg=%r"
+            % (line, msg))
+        self.line, self.msg = line, msg
+        self.args = (line, msg)
 
 def chuck_KeyboardInterrupt(*arg):
     raise KeyboardInterrupt("ctrl+c encountered")
@@ -205,8 +215,6 @@ def chuck_StoppingCommand(val, processor, *args):
 
 class InitializationError(Exception):
     pass
-
-
 
 
 class EbuildProcessor(object):
@@ -676,6 +684,59 @@ class EbuildProcessor(object):
         if self.expect("metadata_path_received", flush=True):
             self._metadata_paths = paths
 
+    def _run_depend_like_phase(self, command, package_inst, eclass_cache,
+                               extra_commands={}):
+        self._ensure_metadata_paths(const.HOST_NONROOT_PATHS)
+
+        e = expected_ebuild_env(package_inst, depends=True)
+        data = self._generate_env_str(e)
+        self.write("%s %i\n%s" % (command, len(data), data),
+            append_newline=False)
+
+        updates = None
+        if self._eclass_caching:
+            updates = set()
+        commands = extra_commands.copy()
+        commands["request_inherit"] = partial(inherit_handler, eclass_cache, updates=updates)
+        val = self.generic_handler(additional_commands=commands)
+
+        if not val:
+            logger.error("returned val from %s was '%s'" % (command, str(val)))
+            raise Exception(val)
+
+        if updates:
+            self.preload_eclasses(eclass_cache, limited_to=updates, async=True)
+
+    def get_ebuild_environment(self, package_inst, eclass_cache):
+        """Request a dump of the ebuild environ for a package.
+
+        This dump is created from doing metadata sourcing.
+
+        :param package_inst: :obj:`pkgcore.ebuild.ebuild_src.package` instance
+            to regenerate
+        :param eclass_cache: :obj:`pkgcore.ebuild.eclass_cache` instance to use
+            for eclass access
+        :return: string of the ebuild environment.
+        """
+
+        environ = []
+        def receive_env(self, line):
+            if environ:
+                raise InternalError(line, "receive_env was invoked twice.")
+            line = line.strip()
+            if not line:
+                raise InternalError(line, "During env receive, ebd didn't give us a size.")
+            elif not line.isdigit():
+                raise InternalError(line, "Returned size wasn't an integer")
+            # This is a raw transfer, for obvious reasons.
+            environ.append(self.ebd_read.read(int(line)))
+
+        self._run_depend_like_phase('gen_ebuild_env', package_inst, eclass_cache,
+                                    {'receive_env': receive_env})
+        if not environ:
+            raise InternalError(None, "receive_env was never invoked.")
+        return environ[0]
+
     def get_keys(self, package_inst, eclass_cache):
         """
         request the metadata be regenerated from an ebuild
@@ -686,39 +747,17 @@ class EbuildProcessor(object):
             for eclass access
         :return: dict when successful, None when failed
         """
-
-        self._ensure_metadata_paths(const.HOST_NONROOT_PATHS)
-
-        e = expected_ebuild_env(package_inst, depends=True)
-        data = self._generate_env_str(e)
-        self.write("gen_metadata %i\n%s" % (len(data), data),
-            append_newline=False)
-
         metadata_keys = {}
-        updates = None
-        if self._eclass_caching:
-            updates = set()
-        val = self.generic_handler(additional_commands={
-                "request_inherit": partial(inherit_handler, eclass_cache, updates=updates),
-                "key": post_curry(self.__class__._receive_key, metadata_keys)})
+        def receive_key(self, line):
+            line = line.split("=", 1)
+            if len(line) != 2:
+                raise FinishedProcessing(True)
+            metadata_keys[line[0]] = line[1]
 
-        if not val:
-            logger.error("returned val from get_keys was '%s'" % str(val))
-            raise Exception(val)
-
-        if updates:
-            self.preload_eclasses(eclass_cache, limited_to=updates, async=True)
+        self._run_depend_like_phase('gen_metadata', package_inst, eclass_cache,
+                                    {"key": receive_key})
 
         return metadata_keys
-
-    def _receive_key(self, line, keys_dict):
-        """
-        internal function used for receiving keys from the bash processor
-        """
-        line = line.split("=", 1)
-        if len(line) != 2:
-            raise FinishedProcessing(True)
-        keys_dict[line[0]] = line[1]
 
     # this basically handles all hijacks from the daemon, whether
     # confcache or portageq.

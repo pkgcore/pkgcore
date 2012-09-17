@@ -74,6 +74,7 @@ __ebd_read_size
 __ebd_sigint_handler
 __ebd_sigkill_handler
 __ebd_write_line
+__ebd_write_raw
 __elog_base
 __ensure_PATH
 __environ_dump

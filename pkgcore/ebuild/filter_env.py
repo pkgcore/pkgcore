@@ -10,6 +10,7 @@ __all__ = ("run",)
 from snakeoil.demandload import demandload
 
 demandload(globals(),
+    'cStringIO',
     're',
     'pkgcore.log:logger'
 )
@@ -435,5 +436,8 @@ def main_run(out_handle, data, vars_to_filter=(), funcs_to_filter=(), vars_is_wh
         kwds['func_callback'] = func_callback
     if _parser is None:
         _parser = run
+
+    if out_handle is None:
+        out_handle = cStringIO.StringIO()
 
     _parser(out_handle, data, vars, funcs, **kwds)

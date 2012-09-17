@@ -62,13 +62,12 @@ def main(options, out, err):
 
     stream = out.stream
     var_callback = func_callback = None
-    if options.print_vars or options.print_funcs:
-        import cStringIO
-        stream = cStringIO.StringIO()
     if options.print_vars:
+        stream = None
         var_matches = []
         var_callback = var_matches.append
     if options.print_funcs:
+        stream = None
         func_matches = []
         def func_callback(level, name, body):
             func_matches.append((level, name, body))

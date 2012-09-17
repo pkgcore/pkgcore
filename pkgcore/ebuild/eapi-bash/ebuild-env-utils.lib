@@ -63,7 +63,7 @@ __filter_env() {
 __environ_dump() {
 
 	__shopt_push -f
-	declare -a PKGCORE_TARGETS=( $(__environ_list_funcs | __regex_filter_input ${DONT_EXPORT_FUNCS}) )
+	declare -a PKGCORE_TARGETS=( $(__environ_list_funcs | __regex_filter_input ${DONT_EXPORT_FUNCS} "${PKGCORE_PRELOADED_ECLASSES[@]}") )
 	if [[ 0 != "${#PKGCORE_TARGETS[@]}" ]]; then
 		declare -f "${PKGCORE_TARGETS[@]}" || die "failed outputing funcs ${PKGCORE_TARGETS[@]}" >&2
 	fi

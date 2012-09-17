@@ -307,7 +307,7 @@ class StoreRepoObject(StoreConfigObject):
 
         # name wasn't found; search for it.
         for repo_name, repo in sections.iteritems():
-            if getattr(repo, 'repo_id', None) == name or getattr(repo, 'location', None) == name:
+            if name in repo.aliases.values():
                 name = repo_name
                 break
 

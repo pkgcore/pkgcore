@@ -366,13 +366,16 @@ __ebd_process_metadata()
 	(
 	# Heavy QA checks (IFS, shopt, etc) are suppressed for speed
 	declare -r PKGCORE_QA_SUPPRESSED=false
-	local __mode="${2:-depend}"
-	local data
-	local ret
-	__ebd_read_size "$1" data
+	# Wipe __mode; it bleeds from our parent.
+	unset __mode
+	local __data
+	local __ret
+	__ebd_read_size "$1" __data
 	local IFS=$'\0'
-	eval "$data"
+	eval "$__data"
 	ret=$?
+	unset __data
+	unset __ret
 	[[ $ret != 0 ]] && exit 1
 	local IFS=$' \t\n'
 
@@ -381,7 +384,7 @@ __ebd_process_metadata()
 	fi
 
 	PORTAGE_SANDBOX_PID="$PPID"
-	__execute_phases "$__mode" && exit 0
+	__execute_phases "${2:-depend}" && exit 0
 	__ebd_process_sandbox_results
 	exit 1
 	)

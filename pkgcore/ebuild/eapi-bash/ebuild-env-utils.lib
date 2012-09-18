@@ -7,7 +7,7 @@ __regex_filter_input() {
 	local regex="^(${*})$"
 	# use egrep if possible... tis faster.
 	local l
-	if l=$(type -P sed); then
+	if l=$(type -P gsed || type -P sed); then
 		"${l}" -re "/$regex/d"
 		local ret=$?
 		[[ $ret != 0 ]] && die "got failing return code (${ret}) invoking ${l} -e '/${regex}/d'"

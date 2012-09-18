@@ -817,6 +817,8 @@ class EbuildProcessor(object):
                 line = self.read().strip()
                 # split on first whitespace.
                 s = line.split(None, 1)
+                if not s:
+                    raise InternalError("Expected command; instead got nothing from %r" % (line,))
                 if s[0] in handlers:
                     if len(s) == 1:
                         s.append(None)

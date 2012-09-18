@@ -741,7 +741,8 @@ class EbuildProcessor(object):
                                     {'receive_env': receive_env})
         if not environ:
             raise InternalError(None, "receive_env was never invoked.")
-        return environ[0]
+        # Dump any leading/trailing spaces.
+        return environ[0].strip()
 
     def get_keys(self, package_inst, eclass_cache):
         """

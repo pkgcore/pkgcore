@@ -15,7 +15,7 @@ cd "${PKGCORE_BIN_PATH}" || { echo "!!! failed cd'ing to ${PKGCORE_BIN_PATH}" >&
 
 # force some ordering.
 
-source_was_seen() {
+__source_was_seen() {
 	local x
 	for x in "${seen[@]}"; do
 		[[ $x == $1 ]] && return 0
@@ -25,7 +25,7 @@ source_was_seen() {
 declare -a seen
 source() {
 	local fp=$(readlink -f "$1")
-	source_was_seen "$fp" && return 0
+	__source_was_seen "$fp" && return 0
 	# die relies on these vars; we reuse them.
 	local CATEGORY=${PKGCORE_BIN_PATH}
 	local PF=$1
@@ -46,16 +46,13 @@ for x in ${forced_order_source} $(find . -name '*.lib' | sed -e 's:^\./::' | sor
 done
 
 # wipe our custom funcs
-unset source_was_seen
+unset __source_was_seen
 unset source
 
 echo >&2
 
 # Sorting order; put PMS functionality first, then our internals.
-result=$(
-declare -F 2> /dev/null | cut -d ' ' -f3 | while read l; do
-	[[ -n $l ]] && echo "$(__escape_regex_chars "$l")"
-done | sort)
+result=$(__environ_list_funcs | sort)
 result=$(echo "$result" | grep -v "^__"; echo "$result" | grep "^__")
 if [[ "${_FP}" == '-' ]]; then
 	echo "$result"

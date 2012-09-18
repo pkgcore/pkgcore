@@ -83,7 +83,7 @@ __environ_list_funcs
 __environ_list_vars
 __environ_sanitize_saved_env
 __environ_save_to_file
-__escape_regex_chars
+__escape_regex_array
 __execute_phases
 __feature_is_enabled
 __filter_env

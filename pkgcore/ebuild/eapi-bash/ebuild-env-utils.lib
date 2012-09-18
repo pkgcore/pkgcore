@@ -31,12 +31,15 @@ __regex_filter_input() {
 	fi
 }
 
-__escape_regex_chars() {
-	local x="$1"
-	x="${x//\+/\\+}"
-	x="${x//\./\\.}"
-	x="${x//\*/\\*}"
-	echo "${x}"
+__escape_regex_array() {
+	local __tmp_array
+	# Need to get the content of the original array...
+	eval "__tmp_array=( \"\${${1}[@]}\" )"
+	__tmp_array=( "${__tmp_array[@]//\+/\\+}" )
+	__tmp_array=( "${__tmp_array[@]//\./\\.}" )
+	__tmp_array=( "${__tmp_array[@]//\*/\\*}" )
+	# Now transfer the content back.
+	eval ${1}='( "${__tmp_array[@]}" )'
 }
 
 __environ_list_funcs() {
@@ -78,6 +81,8 @@ __environ_dump() {
 	local __func_filters=( ${DONT_EXPORT_FUNCS} "${PKGCORE_PRELOADED_ECLASSES[@]}" )
 	${__QA_INTERCEPTORS_ACTIVE:-false} && __func_filters+=( "${PKGCORE_QA_INTERCEPTORS[@]}" )
 
+	# Punt any regex chars...
+	__escape_regex_array __func_filters
 	__PKGCORE_TARGETS=( $(__environ_list_funcs | __regex_filter_input "${__func_filters[@]}" ) )
 	unset __func_filters
 	if [[ 0 != "${#__PKGCORE_TARGETS[@]}" ]]; then

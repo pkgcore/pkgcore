@@ -324,6 +324,7 @@ __qa_interceptors_enable()
 		}";
 		eval "$FUNC_SRC" || echo "error creating QA interceptor ${BIN}" >&2
 	done
+	__QA_INTERCEPTORS_ACTIVE=true
 }
 
 __qa_interceptors_disable()
@@ -333,6 +334,7 @@ __qa_interceptors_disable()
 	for x in "${PKGCORE_QA_INTERCEPTORS[@]}"; do
 		unset -f $x
 	done
+	__QA_INTERCEPTORS_ACTIVE=false
 }
 
 DONT_EXPORT_VARS="${DONT_EXPORT_VARS} ECLASS_DEPTH __QA_INTERCEPTORS_ACTIVE"

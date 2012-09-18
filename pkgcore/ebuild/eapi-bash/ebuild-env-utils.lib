@@ -6,12 +6,24 @@ __regex_filter_input() {
 	local IFS='|'
 	local regex="^(${*})$"
 	# use egrep if possible... tis faster.
-	local l=$(type -p egrep)
-	if [[ -n $l ]]; then
+	local l
+	if l=$(type -P sed); then
+		"${l}" -re "/$regex/d"
+		local ret=$?
+		[[ $ret != 0 ]] && die "got failing return code (${ret}) invoking ${l} -e '/${regex}/d'"
+	elif l=$(type -P egrep); then
 		# use type -p; qa_interceptors may be be active.
 		"$l" -v "${regex}"
 		local ret=$?
-		[[ $ret -gt 1 ]] && die "got failing return code (${ret}) invoking __regex_filter_input in egrep -v mode with args: ${regex}"
+		[[ $ret -gt 1 ]] && die "got failing return code (${ret}) ${l} -v '${regex}'"
+	elif [[ -x "${PKGCORE_PYTHON_BINARY}" ]]; then
+		# We check for the binary on the offchance an ebuild operation
+		# just removed it under our feet.
+		"${PKGCORE_PYTHON_BINARY}" -c \
+			'import sys;import re;r=re.compile(sys.argv[1]).match;sys.stdout.write("\n".join(x for x in sys.stdin.read().splitlines() if r(x) is None))' \
+			"${regex}"
+		local ret=$?
+		[[ $ret != 0 ]] && die "got failing return code (${ret}) invoking ${PKGCORE_PYTHON_BINARY} for regex_filter"
 	else
 		while read l; do
 			[[ $l =~ $regex ]] || echo "${l}"
@@ -65,16 +77,18 @@ __environ_dump() {
 	__shopt_push -f
 	local __func_filters=( ${DONT_EXPORT_FUNCS} "${PKGCORE_PRELOADED_ECLASSES[@]}" )
 	${__QA_INTERCEPTORS_ACTIVE:-false} && __func_filters+=( "${PKGCORE_QA_INTERCEPTORS[@]}" )
-	declare -a PKGCORE_TARGETS=( $(__environ_list_funcs | __regex_filter_input "${__func_filters[@]}" ) )
+
+	__PKGCORE_TARGETS=( $(__environ_list_funcs | __regex_filter_input "${__func_filters[@]}" ) )
 	unset __func_filters
-	if [[ 0 != "${#PKGCORE_TARGETS[@]}" ]]; then
-		declare -f "${PKGCORE_TARGETS[@]}" || die "failed outputing funcs ${PKGCORE_TARGETS[@]}" >&2
+	if [[ 0 != "${#__PKGCORE_TARGETS[@]}" ]]; then
+		declare -f "${__PKGCORE_TARGETS[@]}" || die "failed outputing funcs ${__PKGCORE_TARGETS[@]}" >&2
 	fi
 
-	PKGCORE_TARGETS=( $(__environ_list_vars | __regex_filter_input ${DONT_EXPORT_VARS}) )
-	if [[ 0 != "${#PKGCORE_TARGETS[@]}" ]]; then
-		declare -p "${PKGCORE_TARGETS[@]}" || die "failed outputing env vars ${PKGCORE_TARGETS[@]}" >&2
+	__PKGCORE_TARGETS=( $(__environ_list_vars | __regex_filter_input ${DONT_EXPORT_VARS} __PKGCORE_TARGETS) )
+	if [[ 0 != "${#__PKGCORE_TARGETS[@]}" ]]; then
+		declare -p "${__PKGCORE_TARGETS[@]}" || die "failed outputing env vars ${__PKGCORE_TARGETS[@]}" >&2
 	fi
+
 	__shopt_pop
 }
 

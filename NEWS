@@ -6,6 +6,13 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 
 pkgcore trunk:
 
+* core environment saving functionality was sped up by ~10x.  Basically
+  every package will see a gain; simple ones like bsdiff, on my hardware
+  went from ~5.2s to 1.5s; diffball from ~12.4 to ~9.2; hell, even
+  git (with binpkgs turned off) dropped from 28.5s to 21.1s.
+  This improves both --attr environment, and general functionality;
+  regen however shouldn't be any faster (already avoided these pathways).
+
 * filter-env gained a --print-funcs option.  Additionally, the underlying
   core has been enhanced so that analysis within a function block is
   possible.

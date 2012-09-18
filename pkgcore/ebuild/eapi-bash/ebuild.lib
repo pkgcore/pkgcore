@@ -430,9 +430,19 @@ __execute_phases() {
 			if [[ $myarg == depend ]]; then
 				__dump_metadata_keys
 			else
-				local my_env="$(__environ_dump)"
-				__ebd_write_line "receive_env ${#my_env}"
-				__ebd_write_raw "${my_env}"
+				# Use gawk if at possible; it's a fair bit faster since bash likes to do byte by byte reading.
+				local __path=$(type -P gawk)
+				if [[ $? == 0 ]]; then
+					{ unset __path; __environ_dump; } | \
+					LC_ALL=C "${__path}" -F $'\0' 'BEGIN { content="";chars=0;RS="\0";ORS=""} {chars += length($0);content = content $0} END {printf("receive_env %i\n%s",chars, content)}' >&${PKGCORE_EBD_WRITE_FD}
+				else
+					local my_env="$(__environ_dump)"
+					__ebd_write_line "receive_env ${#my_env}"
+					__ebd_write_raw "${my_env}"
+					unset my_env __path
+				fi
+				#__environ_dump | $(type -P gawk)  -F $'\0' 'BEGIN { content="";chars=0;RS="\0";ORS=""} {chars += length($0);content = content $0} END {printf("receive_env %i\n%s",chars, content)}' >&${PKGCORE_EBD_WRITE_FD}
+				#__environ_dump | $(type -P python) -c 'import sys;data=sys.stdin.read();sys.stdout.write("receive_env %i\n%s" % (len(data), data))' >&${PKGCORE_EBD_WRITE_FD}
 			fi
 			;;
 		*)

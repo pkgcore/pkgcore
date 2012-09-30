@@ -4,7 +4,9 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
-pkgcore trunk:
+pkgcore 0.8.1: September 29th, 2012
+
+* Pkgcore now requires snakeoil 0.5.1.
 
 * The cache format 'md5-cache' is now supported (this is what gentoo-x86
   switched to, and what chromeos uses).

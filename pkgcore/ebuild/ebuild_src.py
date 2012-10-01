@@ -30,13 +30,17 @@ from snakeoil.currying import alias_class_method, partial
 from snakeoil import klass
 from snakeoil.compatibility import intern
 
-from snakeoil.demandload import demandload
-demandload(globals(),
+from snakeoil import demandload
+demandload.demandload(globals(),
     "pkgcore.log:logger",
     "pkgcore.ebuild.eapi:get_eapi",
-    "snakeoil:data_source",
+    "snakeoil:data_source,fileutils",
     "snakeoil:chksum",
 )
+
+demandload.demand_compile_regexp(globals(),
+    '_parse_EAPI_RE',
+    r"^EAPI=(['\"]?)([A-Za-z0-9+_.-]*)\1[\t ]*(?:#.*)?")
 
 
 def generate_depset(c, key, non_package_type, s, **kwds):
@@ -230,6 +234,23 @@ class base(metadata.package):
         return "unsupported"
 
     @property
+    def parsed_eapi(self):
+        ebuild = self.ebuild
+        eapi = None
+        if ebuild.path:
+            # Use readlines directly since it does whitespace stripping
+            # for us, far faster than native python can.
+            i = fileutils.readlines_ascii(ebuild.path)
+        else:
+            i = (x.strip() for x in ebuild.get_text_fileobj())
+        for line in i:
+            if line[0:1] in ('', '#'):
+                continue
+            eapi = _parse_EAPI_RE.match(line)
+            break
+        return get_eapi(eapi.group(2) if eapi is not None else '0')
+
+    @property
     def mandatory_phases(self):
         return frozenset(
             chain(self.defined_phases, self.eapi_obj.default_phases))
@@ -351,22 +372,31 @@ class package_factory(metadata.factory):
         return self._update_metadata(pkg, ebp=ebp)
 
     def _update_metadata(self, pkg, ebp=None):
-        with processor.reuse_or_request(ebp) as my_proc:
-            mydata = my_proc.get_keys(pkg, self._ecache)
-            del my_proc
-        del ebp
+        eapi = parsed_eapi = pkg.parsed_eapi
+        if parsed_eapi is None:
+            # We don't know how to parse this, thus don't even try.
+            mydata = {}
+        else:
+            with processor.reuse_or_request(ebp) as my_proc:
+                mydata = my_proc.get_keys(pkg, self._ecache)
+                del my_proc
+            del ebp
+            inherited = mydata.pop("INHERITED", None)
+            # rewrite defined_phases as needed, since we now know the eapi.
+            eapi = get_eapi(mydata["EAPI"])
+            if parsed_eapi != eapi:
+                raise metadata_errors.MetadataException(
+                    pkg, 'eapi', "parsed eapi doesn't match sourced eapi")
+            wipes = set(mydata)
 
-        inherited = mydata.pop("INHERITED", None)
-        # rewrite defined_phases as needed, since we now know the eapi.
-        eapi = get_eapi(mydata["EAPI"])
-        wipes = set(mydata)
         if eapi is None:
             # drop the metadata, leaving just the validation info
             # we currently know about, and marking the eapi
             # in a negative fashion.
             # TODO(FIX THIS)
-            wipes.difference_update(["_eclasses_", "EAPI"])
-            mydata["EAPI"] = "-" + mydata["EAPI"]
+            # Return, bypass cache in full; it'll get sorted when we
+            # know how to parse this EAPI.
+            return {'EAPI':'unknown'}
         else:
             wipes.difference_update(eapi.metadata_keys)
             if mydata["DEFINED_PHASES"] != '-':

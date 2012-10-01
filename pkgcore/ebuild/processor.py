@@ -514,10 +514,9 @@ class EbuildProcessor(object):
         else:
             i = cache.eclasses.iteritems()
         for eclass, data in i:
-            fp = os.path.join(data[0], eclass) + ".eclass"
-            if data[1] != self._preloaded_eclasses.get(fp, None):
-                if self._preload_eclass(fp, async=True):
-                    self._preloaded_eclasses[fp] = data[1]
+            if data.path != self._preloaded_eclasses.get(eclass):
+                if self._preload_eclass(data.path, async=True):
+                    self._preloaded_eclasses[eclass] = data.path
         if not async:
             return self._consume_async_expects()
         return True

@@ -40,7 +40,7 @@ __escape_regex_array() {
 	__tmp_array=( "${__tmp_array[@]//\*/\\*}" )
 	# Now transfer the content back.
 	eval ${1}='( "${__tmp_array[@]}" )'
-}
+} &> /dev/null
 
 __environ_list_funcs() {
 	# Grab the vars /before/ adding our custom declare function, else it'll

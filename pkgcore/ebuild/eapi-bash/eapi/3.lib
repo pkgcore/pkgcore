@@ -13,7 +13,7 @@ __phase_eapi2_src_prepare() {
 }
 
 for x in pkg_nofetch src_{unpack,compile,test}; do
-	eval "default_${x}() { __common_phse_${x}; }"
+	eval "default_${x}() { __phase_common_${x}; }"
 done
 unset x
 

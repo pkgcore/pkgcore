@@ -6,6 +6,11 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 
 pkgcore trunk:
 
+pkgcore 0.8.4: October 4th, 2012
+
+Fix bad function reference in eapi3 guts.
+
+
 pkgcore 0.8.3: October 4th, 2012
 
 * Fixed bug where default phases weren't guranteed to be ran.

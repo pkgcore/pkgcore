@@ -139,7 +139,7 @@ common_env_optionals = mappings.ImmutableDict(dict.fromkeys(
 
 eapi0 = EAPI("0",
     mk_phase_func_map(*common_phases),
-    common_default_phases,
+    mk_phase_func_map(*common_default_phases),
     common_metadata_keys,
     common_mandatory_metadata_keys,
     dict(trust_defined_phases_cache=False, prefix_capable=False, has_AA=True, has_KV=True),
@@ -157,7 +157,7 @@ eapi1 = EAPI("1",
 
 eapi2 = EAPI("2",
     combine_dicts(eapi1.phases, mk_phase_func_map("src_prepare", "src_configure")),
-    eapi1.default_phases | frozenset(["src_prepare", "src_configure"]),
+    eapi1.default_phases.union(map(shorten_phase_name, ["src_prepare", "src_configure"])),
     eapi1.metadata_keys,
     eapi1.mandatory_keys,
     combine_dicts(eapi1.options,
@@ -178,7 +178,7 @@ eapi3 = EAPI("3",
 
 eapi4 = EAPI("4",
     combine_dicts(eapi3.phases, mk_phase_func_map("pkg_pretend")),
-    eapi3.default_phases,
+    eapi3.default_phases.union([shorten_phase_name('src_install')]),
     eapi3.metadata_keys | frozenset(["REQUIRED_USE"]),
     eapi3.mandatory_keys,
     combine_dicts(eapi3.options, dict(

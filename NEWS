@@ -6,7 +6,12 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 
 pkgcore trunk:
 
-* Pkgcore no longer supports the old form cvs version component; for
+* pkgcore now matches the new PMS rules on package naming (specifically
+  that the last component can't be a version at all, period).  Also
+  tightened up some stupidly horrible allowed names- stuff like diff-mode-
+  for a package name (gentoo bug #438370).
+
+* pkgcore no longer supports the old form cvs version component; for
   example, diffball-cvs.1.0 (cvs version of 1.0 for diffball).  This has
   long since been deprecated- basically since day 1 of cvs.  It's been
   basically six years, no vdb usage should exist anymore, thus dropping

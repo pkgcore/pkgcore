@@ -41,14 +41,15 @@ class native_CpvTest(TestCase):
         "dev-util", "dev+", "dev-util+", "DEV-UTIL", "aaa0",
         "aaa-0", "multi/depth", "cross-dev_idiot.hacks-suck", "a")
     bad_cats  = (".util", "_dev", "", "dev-util ", "multi//depth")
-    good_pkgs = ("diffball", "a9", "a9+", "a-100dpi", "a-3D")
-    bad_pkgs  = ("diffball ",)
+    good_pkgs = ("diffball", "a9", "a9+", "a-100dpi", "diff-mode-")
+    bad_pkgs  = ("diffball ", "diffball-9", "a-3D", "ab--df", "-df", "+dfa")
 
     good_cp   = (
         "bbb-9/foon", "dev-util/diffball", "dev-util/diffball-a9",
-        "dev-ut-asdf/emacs-cvs", "xfce-base/xfce4", "bah/f-100dpi")
+        "dev-ut-asdf/emacs-cvs", "xfce-base/xfce4", "bah/f-100dpi",
+        "dev-util/diffball-blah-monkeys")
 
-    good_vers = ("1", "2.3.4", "2.3.4a", "02.3", "2.03")
+    good_vers = ("1", "2.3.4", "2.3.4a", "02.3", "2.03", "3d", "3D")
     bad_vers  = ("2.3a.4", "2.a.3", "2.3_", "2.3 ", "2.3.", "cvs.2")
 
     good_sufs, bad_sufs = generate_misc_sufs()

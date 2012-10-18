@@ -24,28 +24,25 @@ suffix_value = {"pre": -2, "p": 1, "alpha": -4, "beta": -3, "rc": -1}
 # while the package section looks fugly, there is a reason for it-
 # to prevent version chunks from showing up in the package
 
-
 demand_compile_regexp(globals(), 'isvalid_version_re',
-    "^(?:\\d+)(?:\\.\\d+)*[a-z]?"
-    "(?:_(p(?:re)?|beta|alpha|rc)\\d*)*$")
+    r"^(?:\d+)(?:\.\d+)*[a-zA-Z]?(?:_(p(?:re)?|beta|alpha|rc)\d*)*$")
 
 demand_compile_regexp(globals(), 'isvalid_cat_re',
-    "^(?:[a-zA-Z0-9][-a-zA-Z0-9+._]*(?:/(?!$))?)+$")
+    r"^(?:[a-zA-Z0-9][-a-zA-Z0-9+._]*(?:/(?!$))?)+$")
 
 demand_compile_regexp(globals(), '_pkg_re',
     #empty string is fine, means a -- was encounter.
-    "^[a-zA-Z0-9+_]+$")
+    r"^[a-zA-Z0-9+_]+$")
 
 def isvalid_pkg_name(chunks):
-    if not chunks[0]:
-        # this means a leading -
+    if not chunks[0] or chunks[0][0] == '+':
+        # this means a leading -; additionally, '+asdf' is disallowed
         return False
     mf = _pkg_re.match
-    if not all(not s or mf(s) for s in chunks):
+    if not all(mf(s) for s in chunks[:-1]):
         return False
-    if chunks[-1].isdigit() or not chunks[-1]:
-        # not allowed.
-        return False
+    if chunks[-1]:
+        return mf(chunks[-1]) and not isvalid_version_re.match(chunks[-1])
     return True
 
 def isvalid_rev(s):

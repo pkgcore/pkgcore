@@ -163,48 +163,8 @@ pkgcore_cpv_parse_category(const char *start, int null_is_end)
 }
 
 static int
-pkgcore_cpv_valid_package(char *start, char *end)
-{
-	char *tok_start, *p;
-	if(!end) {
-		end = start;
-		while('\0' != *end) {
-			end++;
-		}
-	}
-	tok_start = p = start;
-	if(end == p)
-		return 1;
-	while(end != p) {
-		while((isalnum(*p) || '_' == *p || '+' == *p) && end != p)
-			p++;
-		if(end == p)
-			break;
-		if('-' == *p) {
-			// cannot have 'aa--f' nor 'aa-'
-			p++;
-			if(p == tok_start + 1 || p >= end) {
-				return 1;
-			}
-		} else if ('\0' != *p) {
-			return 1;
-		} else {
-			break;
-		}
-		tok_start = p;
-	}
-	// revalidate the last token to ensure it's not all digits
-	p = tok_start;
-	while(isdigit(*p))
-		p++;
-	if(p == end)
-		return 1;
-	return 0;
-}
-
-static int
 pkgcore_cpv_parse_version(pkgcore_cpv *self, char *ver_start,
-	char *ver_end)
+	char *ver_end, int do_assign)
 {
 	// version parsing.
 	// "(?:-(?P<fullver>(?P<version>(?:\\d+)(?:\\.\\d+)*[a-z]?(?:_(p(?:re)?|beta|alpha|rc)\\d*)*)" +
@@ -250,11 +210,13 @@ pkgcore_cpv_parse_version(pkgcore_cpv *self, char *ver_start,
 		// trailing is 0 0
 
 		p = orig_p;
-		self->suffixes = PyObject_Malloc(sizeof(Py_ssize_t) * (suffix_count + 1) * 2);
-		if(NULL == self->suffixes) {
-			// wanker.
-			PyErr_NoMemory();
-			return 2;
+		if (do_assign) {
+			self->suffixes = PyObject_Malloc(sizeof(Py_ssize_t) * (suffix_count + 1) * 2);
+			if(NULL == self->suffixes) {
+				// wanker.
+				PyErr_NoMemory();
+				return 2;
+			}
 		}
 		suffix_count *= 2;
 		for(pos = 0; pos < suffix_count; pos += 2) {
@@ -263,7 +225,9 @@ pkgcore_cpv_parse_version(pkgcore_cpv *self, char *ver_start,
 				return 1;
 			for(sv = pkgcore_ebuild_suffixes; NULL != sv->str; sv++) {
 				if(0 == strncmp(p, sv->str, sv->str_len)) {
-					self->suffixes[pos] = sv->val;
+					if (do_assign) {
+						self->suffixes[pos] = sv->val;
+					}
 					p += sv->str_len;
 					Py_ssize_t suffix_val = 0;
 					while(isdigit(*p)) {
@@ -272,7 +236,9 @@ pkgcore_cpv_parse_version(pkgcore_cpv *self, char *ver_start,
 					}
 					if('\0' != *p && '_' != *p && '-'  != *p)
 						return 1;
-					self->suffixes[pos + 1] = suffix_val;
+					if (do_assign) {
+						self->suffixes[pos + 1] = suffix_val;
+					}
 					break;
 				}
 			}
@@ -281,13 +247,60 @@ pkgcore_cpv_parse_version(pkgcore_cpv *self, char *ver_start,
 				return 1;
 			}
 		}
-		self->suffixes[pos] = PKGCORE_EBUILD_SUFFIX_DEFAULT_SUF;
-		self->suffixes[pos + 1] = PKGCORE_EBUILD_SUFFIX_DEFAULT_VAL;
+		if (do_assign) {
+			self->suffixes[pos] = PKGCORE_EBUILD_SUFFIX_DEFAULT_SUF;
+			self->suffixes[pos + 1] = PKGCORE_EBUILD_SUFFIX_DEFAULT_VAL;
+		}
 	} else {
-		self->suffixes = (Py_ssize_t *)pkgcore_ebuild_default_suffixes;
+		if (do_assign) {
+			self->suffixes = (Py_ssize_t *)pkgcore_ebuild_default_suffixes;
+		}
 	}
 	if(p != ver_end)
 		return 1;
+	return 0;
+}
+
+static int
+pkgcore_cpv_valid_package(pkgcore_cpv *self, char *start, char *end)
+{
+	char *tok_start, *p;
+	if(!end) {
+		end = start;
+		while('\0' != *end) {
+			end++;
+		}
+	}
+	tok_start = p = start;
+	if(end == p)
+		return 1;
+	if ('*p' == '-' || '+' == *p) {
+		return 1;
+	}
+	while(end != p) {
+		while((isalnum(*p) || '_' == *p || '+' == *p) && end != p)
+			p++;
+		if(end == p) {
+			if (tok_start == start)
+				return 0;
+			break;
+		} else if('-' != *p) {
+			return 1;
+		} else if (tok_start == p) {
+			// cannot have aa--f, nor -a
+			return 1;
+		}
+		p++;
+		tok_start = p;
+	}
+	// revalidate the last token to ensure it's not a version component.
+	int ret = pkgcore_cpv_parse_version(self, tok_start, end, 0);
+	// if it's a valid version, that's a failure; if it's a memory error,
+	// return that; else it passes.
+	if (0 == ret)
+		return 1;
+	else if (1 != ret)
+		return ret;
 	return 0;
 }
 
@@ -363,7 +376,7 @@ pkgcore_cpv_parse_from_components(pkgcore_cpv *self, PyObject *category,
 	Py_INCREF(category);
 	self->category = category;
 	Py_XDECREF(tmp);
-	if(0 != (ret = pkgcore_cpv_valid_package(PyString_AsString(package), NULL))) {
+	if(0 != (ret = pkgcore_cpv_valid_package(self, PyString_AsString(package), NULL))) {
 		return ret;
 	}
 	tmp = self->package;
@@ -390,7 +403,7 @@ pkgcore_cpv_parse_from_components(pkgcore_cpv *self, PyObject *category,
 			}
 		}
 
-		if(0 != (ret = pkgcore_cpv_parse_version(self, version_start, rev_start))) {
+		if(0 != (ret = pkgcore_cpv_parse_version(self, version_start, rev_start, 1))) {
 			return ret; // either memory, or parse error.
 		}
 
@@ -489,7 +502,7 @@ pkgcore_cpv_parse_from_cpvstr(pkgcore_cpv *self, PyObject *cpvstr,
 		} else if (1 == ret) {
 			// either there is no rev, or it's a bad rev.
 			// check if it's a valid version.
-			if(0 != (ret = pkgcore_cpv_parse_version(self, cpv_pos + 1, cpv_end))) {
+			if(0 != (ret = pkgcore_cpv_parse_version(self, cpv_pos + 1, cpv_end, 1))) {
 				return ret; // either memory, or parse error.
 			}
 			// ok... no rev.
@@ -505,7 +518,7 @@ pkgcore_cpv_parse_from_cpvstr(pkgcore_cpv *self, PyObject *cpvstr,
 				return 1;
 			}
 			if(0 != (ret = pkgcore_cpv_parse_version(self, cpv_pos + 1,
-				version_end))) {
+				version_end, 1))) {
 				// invalid version, or mem error.
 				return ret;
 			}
@@ -538,7 +551,7 @@ pkgcore_cpv_parse_from_cpvstr(pkgcore_cpv *self, PyObject *cpvstr,
 		cpv_pos = cpv_end;
 	}
 	// validate package name finally.
-	if(0 != (ret = pkgcore_cpv_valid_package(pkg_start, cpv_pos))) {
+	if(0 != (ret = pkgcore_cpv_valid_package(self, pkg_start, cpv_pos))) {
 		return ret;
 	}
 	if(!(tmp = PyString_FromStringAndSize(pkg_start, cpv_pos - pkg_start))) {

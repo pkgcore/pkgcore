@@ -274,7 +274,7 @@ pkgcore_cpv_valid_package(pkgcore_cpv *self, char *start, char *end)
 	tok_start = p = start;
 	if(end == p)
 		return 1;
-	if ('*p' == '-' || '+' == *p) {
+	if ('-' == *p || '+' == *p) {
 		return 1;
 	}
 	while(end != p) {

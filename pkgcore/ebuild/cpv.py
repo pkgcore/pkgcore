@@ -26,7 +26,7 @@ suffix_value = {"pre": -2, "p": 1, "alpha": -4, "beta": -3, "rc": -1}
 
 
 demand_compile_regexp(globals(), 'isvalid_version_re',
-    "^(?:cvs\\.)?(?:\\d+)(?:\\.\\d+)*[a-z]?"
+    "^(?:\\d+)(?:\\.\\d+)*[a-z]?"
     "(?:_(p(?:re)?|beta|alpha|rc)\\d*)*$")
 
 demand_compile_regexp(globals(), 'isvalid_cat_re',
@@ -204,17 +204,6 @@ def native_ver_cmp(ver1, rev1, ver2, rev2):
         # First split up the dotted strings into their components.
         ver_parts1 = parts1[0].split(".")
         ver_parts2 = parts2[0].split(".")
-
-        # And check if CVS ebuilds come into play. If there is only
-        # one it wins by default. Otherwise any CVS component can
-        # be ignored.
-        if ver_parts1[0] == "cvs" and ver_parts2[0] != "cvs":
-            return 1
-        elif ver_parts1[0] != "cvs" and ver_parts2[0] == "cvs":
-            return -1
-        elif ver_parts1[0] == "cvs":
-            del ver_parts1[0]
-            del ver_parts2[0]
 
         # Pull out any letter suffix on the final components and keep
         # them for later.

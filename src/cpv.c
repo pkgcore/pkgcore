@@ -17,7 +17,7 @@
 #include <string.h>
 #include <ctype.h>
 
-// dev-util/diffball-cvs.2006.0_alpha1_alpha2
+// dev-util/diffball-2006.0_alpha1_alpha2
 // dev-util/diffball
 
 
@@ -62,7 +62,6 @@ typedef struct {
 	PyObject *revision;
 	Py_ssize_t *suffixes;
 	long hash_val;
-	int cvs;
 } pkgcore_cpv;
 
 static PyObject *pkgcore_InvalidCPV_Exc = NULL;
@@ -208,7 +207,7 @@ pkgcore_cpv_parse_version(pkgcore_cpv *self, char *ver_start,
 	char *ver_end)
 {
 	// version parsing.
-	// "(?:-(?P<fullver>(?P<version>(?:cvs\\.)?(?:\\d+)(?:\\.\\d+)*[a-z]?(?:_(p(?:re)?|beta|alpha|rc)\\d*)*)" +
+	// "(?:-(?P<fullver>(?P<version>(?:\\d+)(?:\\.\\d+)*[a-z]?(?:_(p(?:re)?|beta|alpha|rc)\\d*)*)" +
 	// "(?:-r(?P<revision>\\d+))?))?$")
 	char *p = ver_start;
 
@@ -216,13 +215,6 @@ pkgcore_cpv_parse_version(pkgcore_cpv *self, char *ver_start,
 	if('_' == *p)
 		return 1;
 
-	// grab cvs chunk
-	if(0 == strncmp(ver_start, "cvs.", 4)) {
-		self->cvs = 1;
-		p += 4;
-		if('\0' == *p)
-			return 1;
-	}
 	// (\d+)(\.\d+)*[a-z]?
 	for(;;) {
 		while(isdigit(*p))
@@ -770,9 +762,6 @@ pkgcore_cpv_compare(pkgcore_cpv *self, pkgcore_cpv *other)
 	if(other->version == NULL)
 		return 1;
 
-	if(self->cvs != other->cvs)
-		return self->cvs ? +1 : -1;
-
 	char *s1, *o1;
 	s1 = PyString_AsString(self->version);
 	if(!s1)
@@ -781,10 +770,6 @@ pkgcore_cpv_compare(pkgcore_cpv *self, pkgcore_cpv *other)
 	if (!o1)
 		return -1;
 
-	if(self->cvs) {
-		s1 += 4; // "cvs."
-		o1 += 4;
-	}
 	while('_' != *s1 && '\0' != *s1 && '_' != *o1 && '\0' != *o1) {
 		if('0' == *s1 || '0' == *o1) {
 			// float comparison rules.

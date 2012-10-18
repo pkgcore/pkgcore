@@ -37,24 +37,24 @@ class native_CpvTest(TestCase):
 
     run_cpy_ver_cmp = False
 
-    good_cats = [
+    good_cats = (
         "dev-util", "dev+", "dev-util+", "DEV-UTIL", "aaa0",
-        "aaa-0", "multi/depth", "cross-dev_idiot.hacks-suck", "a"]
-    bad_cats  = [".util", "_dev", "", "dev-util ", "multi//depth"]
-    good_pkgs = ["diffball", "a9", "a9+", "a-100dpi", "a-cvs", "a-3D"]
-    bad_pkgs  = ["diffball "]
+        "aaa-0", "multi/depth", "cross-dev_idiot.hacks-suck", "a")
+    bad_cats  = (".util", "_dev", "", "dev-util ", "multi//depth")
+    good_pkgs = ("diffball", "a9", "a9+", "a-100dpi", "a-3D")
+    bad_pkgs  = ("diffball ",)
 
-    good_cp   = [
+    good_cp   = (
         "bbb-9/foon", "dev-util/diffball", "dev-util/diffball-a9",
-        "dev-ut-asdf/emacs-cvs", "xfce-base/xfce4", "bah/f-100dpi"]
+        "dev-ut-asdf/emacs-cvs", "xfce-base/xfce4", "bah/f-100dpi")
 
-    good_vers = ["1", "2.3.4", "2.3.4a", "02.3", "2.03", "cvs.2", "cvs.2.03"]
-    bad_vers  = ["2.3a.4", "2.a.3", "2.3_", "2.3 ", "2.3."]
+    good_vers = ("1", "2.3.4", "2.3.4a", "02.3", "2.03")
+    bad_vers  = ("2.3a.4", "2.a.3", "2.3_", "2.3 ", "2.3.", "cvs.2")
 
     good_sufs, bad_sufs = generate_misc_sufs()
-    good_revs = ["-r1", "-r300", "-r0", "",
-        "-r1000000000000000000"]
-    bad_revs = ["-r", "-ra", "-r", "-R1"]
+    good_revs = ("-r1", "-r300", "-r0", "",
+        "-r1000000000000000000")
+    bad_revs = ("-r", "-ra", "-r", "-R1")
 
     testing_secondary_args = False
 
@@ -225,10 +225,6 @@ class native_CpvTest(TestCase):
                     if last is not None:
                         self.assertGT(cur, last)
 
-        self.assertGT(
-            vkls("dev-util/diffball-cvs.6"), vkls("dev-util/diffball-600"))
-        self.assertGT(
-            vkls("dev-util/diffball-cvs.7"), vkls("dev-util/diffball-cvs.6"))
         self.assertGT(vkls("da/ba-6a"), vkls("da/ba-6"))
         self.assertGT(vkls("da/ba-6a-r1"), vkls("da/ba-6a"))
         self.assertGT(vkls("da/ba-6.0"), vkls("da/ba-6"))

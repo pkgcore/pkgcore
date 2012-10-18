@@ -1,6 +1,9 @@
 # Makefile for Sphinx documentation
 #
 
+# which python version to use; overridable from the commandline.
+PYTHONPATH    = ../
+PYTHON        = python
 # You can set these variables from the command line.
 SPHINXOPTS    =
 SPHINXBUILD   = sphinx-build
@@ -15,7 +18,7 @@ ALLSPHINXOPTS   = -d $(BUILDDIR)/doctrees $(MAINSPHINXOPTS) .
 # note this should probably just check for sphinx.domains in sys.modules w/in the demandload instead..
 export SNAKEOIL_DEMANDLOAD_WARN = no
 export SNAKEOIL_DEMANDLOAD_PROTECTION = no
-export PYTHONPATH=../
+export PYTHONPATH=$(PYTHONPATH)
 
 .PHONY: help clean html dirhtml singlehtml pickle json htmlhelp qthelp devhelp epub latex latexpdf text man changes linkcheck doctest generated api man
 
@@ -45,18 +48,19 @@ generated: api man_rsts news
 
 man_rsts:
 	@echo "autogenerating man rsts..."
-	./generate_man_rsts.py man --conf
+	$(PYTHON) -m pkgcore.sphinx_utils.generate_man_rsts man \
+	   `$(PYTHON) -c 'import conf,sys;sys.stdout.write(" ".join(" ".join(x) for x in conf.generated_man_pages))'`
 
 news:
 	@echo "autogenerating news rst..."
-	python -m snakeoil.sphinx_utils.generate_news_rst pkgcore ../NEWS news.rst 'git_release' 'git_tag'
+	$(PYTHON) -m snakeoil.sphinx_utils.generate_news_rst pkgcore ../NEWS news.rst 'git_release' 'git_tag'
 
 api:
 	@echo "autogenerating api rsts..."
 	@mkdir -p api
 	@for fn in `cat public_modules.txt`; \
 		do echo $${fn} api/$${fn}.rst; \
-	done | python -m snakeoil.sphinx_utils.generate_api_rsts
+	done | $(PYTHON) -m snakeoil.sphinx_utils.generate_api_rsts
 
 html: generated
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html

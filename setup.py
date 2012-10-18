@@ -56,7 +56,7 @@ class mysdist(snk_distutils.sdist):
         if self.build_docs:
             # this is icky, but covers up cwd changing issues.
             cwd = os.getcwd()
-            if subprocess.call(['python', 'setup.py', 'build_docs', '--builder=man'], cwd=cwd):
+            if subprocess.call([sys.executable, 'setup.py', 'build_docs', '--builder=man'], cwd=cwd):
                 raise errors.DistutilsExecError("build_docs failed")
             import shutil
             shutil.copytree(os.path.join(cwd, "build/sphinx/man"),
@@ -262,21 +262,23 @@ class pkgcore_install_docs(core.Command):
         content = self.scan_content()
 
         content = self.content
-        directories = set(map(os.path.dirname, content.itervalues()))
+        directories = set(map(os.path.dirname, content.values()))
         directories.discard('')
         for x in sorted(directories):
             self.mkpath(os.path.join(self.path, x))
 
-        for src, dst in sorted(content.iteritems()):
+        for src, dst in sorted(content.items()):
             self.copy_file(
                 os.path.join(self.source_path, src),
                 os.path.join(self.path, dst))
 
     def get_inputs(self):
-        return self.content.keys()
+        # Py3k compatibility- force list so behaviour is the same.
+        return list(self.content)
 
     def get_outputs(self):
-        return self.content.values()
+        # Py3k compatibility- force list so behaviour is the same.
+        return list(self.content.values())
 
 
 class pkgcore_install_man(pkgcore_install_docs):

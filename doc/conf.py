@@ -45,8 +45,8 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'pkgcore'
-copyright = u'2006-2012, Brian Harring, Marien Zwart'
+project = 'pkgcore'
+copyright = '2006-2012, Brian Harring, Marien Zwart'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -183,8 +183,8 @@ htmlhelp_basename = 'pkgcoredoc'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'pkgcore.tex', u'pkgcore Documentation',
-   u'Brian Harring, Marien Zwart', 'manual'),
+  ('index', 'pkgcore.tex', 'pkgcore Documentation',
+   'Brian Harring, Marien Zwart', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -222,8 +222,8 @@ generated_man_pages.append(('pkgcore.scripts.filter_env', 'filter-env'))
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('man/%s' % x[1], x[1], u'%s Documentation' % (x[1],),
-     [u'Brian Harring', u'Marien Zwart'], 1)
+    ('man/%s' % x[1], x[1], '%s Documentation' % (x[1],),
+     ['Brian Harring', 'Marien Zwart'], 1)
     for x in generated_man_pages
 ]
 
@@ -231,10 +231,10 @@ man_pages = [
 # -- Options for Epub output ---------------------------------------------------
 
 # Bibliographic Dublin Core info.
-epub_title = u'pkgcore'
-epub_author = u'Brian Harring, Marien Zwart'
-epub_publisher = u'Brian Harring, Marien Zwart'
-epub_copyright = u'2006-2012, Brian Harring, Marien Zwart'
+epub_title = 'pkgcore'
+epub_author = 'Brian Harring, Marien Zwart'
+epub_publisher = 'Brian Harring, Marien Zwart'
+epub_copyright = '2006-2012, Brian Harring, Marien Zwart'
 
 # The language of the text. It defaults to the language option
 # or en if the language is not set.

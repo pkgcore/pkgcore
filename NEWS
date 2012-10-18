@@ -6,6 +6,9 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 
 pkgcore trunk:
 
+* Fixed test sporadic test failure- false positive code quality check.
+  Gentoo bug 437216.
+
 * Fixed doc generation for py3k.
 
 

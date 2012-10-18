@@ -21,6 +21,7 @@ def make_pkg_kls(attrs=(), callbacks={}):
 
     class metadata_pkg(metadata.DeriveMetadataKls(simple_pkg)):
 
+        __slots__ = ()
         def _fetch_metadata(self):
             self._fetch_called = True
             return self._data

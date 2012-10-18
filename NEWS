@@ -6,6 +6,8 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 
 pkgcore trunk:
 
+pkgcore 0.8.5: October 18th, 2012
+
 * pkgcore now matches the new PMS rules on package naming (specifically
   that the last component can't be a version at all, period).  Also
   tightened up some stupidly horrible allowed names- stuff like diff-mode-

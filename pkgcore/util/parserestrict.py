@@ -44,7 +44,7 @@ def convert_glob(token):
         return values.StrExactMatch(token)
     elif not valid_globbing(token):
         raise ParseError("globs must be composed of [\w-.+], with optional "
-            "'*'- ** is disallowed however")
+            "'*'- '%s' is disallowed however" % token)
     pattern = "^%s$" % (re.escape(token).replace("\*", ".*"),)
     return values.StrRegex(pattern, match=True)
 

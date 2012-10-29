@@ -4,6 +4,12 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* Fix false positive test failure under py3k related to /etc/passwd
+  encoding (gentoo bug 439800).
+
+* Better error messages for config errors.
+
+
 pkgcore trunk:
 
 pkgcore 0.8.5: October 18th, 2012

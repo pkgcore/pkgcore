@@ -105,8 +105,8 @@ class Test_fsFile(TestCase, base):
     def test_init(self):
         base.test_init(self)
         mkobj = self.make_obj
-        o = mkobj("/etc/passwd")
-        raw_data = open("/etc/passwd").read()
+        o = mkobj(__file__)
+        raw_data = open(__file__).read()
         self.assertEqual(o.data.text_fileobj().read(), raw_data)
         o = mkobj("/bin/this-file-should-not-exist-nor-be-read",
             data=data_source(raw_data))
@@ -121,7 +121,7 @@ class Test_fsFile(TestCase, base):
 
     def test_chksum_regen(self):
         data_source = object()
-        obj = self.make_obj("/etc/passwd")
+        obj = self.make_obj(__file__)
         self.assertIdentical(obj.chksums,
             obj.change_attributes(location="/tpp").chksums)
         chksums1 = obj.chksums
@@ -132,7 +132,7 @@ class Test_fsFile(TestCase, base):
             obj.change_attributes(data=data_source,
                 chksums=obj.chksums).chksums)
 
-        obj2 = self.make_obj("/etc/passwd", chksums={1:2})
+        obj2 = self.make_obj(__file__, chksums={1:2})
         self.assertIdentical(obj2.chksums,
             obj2.change_attributes(data=data_source).chksums)
 

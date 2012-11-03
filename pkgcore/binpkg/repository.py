@@ -15,6 +15,7 @@ from pkgcore.plugin import get_plugin
 from pkgcore.config import ConfigHint
 #needed to grab the PN
 from pkgcore.ebuild.cpv import versioned_CPV
+from pkgcore.ebuild import ebuild_built
 from pkgcore.ebuild.errors import InvalidCPV
 from pkgcore.binpkg import repo_ops
 
@@ -210,7 +211,9 @@ class StackedCache(StackedDict):
 
 class tree(prototype.tree):
 
-    format_magic = "ebuild_built"
+    # This attributes needs to be replaced/removed; it's a hack for pmerge.
+    repository_type = 'built'
+    package_factory = staticmethod(ebuild_built.generate_new_factory)
 
     # yes, the period is required. no, do not try and remove it
     # (harring says it stays)
@@ -253,8 +256,7 @@ class tree(prototype.tree):
                 os.stat(self.base).st_mode & 04777))
 
         self.cache = remote.get_cache_kls(cache_version)(pjoin(self.base, self.cache_name))
-        self.package_class = wrap_factory(
-            get_plugin("format." + self.format_magic), self)
+        self.package_class = wrap_factory(self.package_factory, self)
 
     def _get_categories(self, *optional_category):
         # return if optional_category is passed... cause it's not yet supported
@@ -351,7 +353,6 @@ class tree(prototype.tree):
 
 class ConfiguredBinpkgTree(wrapper.tree):
 
-    format_magic = "ebuild_built"
     configured = True
 
     def __init__(self, repo, domain_settings):

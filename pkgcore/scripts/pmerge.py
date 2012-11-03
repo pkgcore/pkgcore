@@ -384,9 +384,9 @@ def main(options, out, err):
 
     if options.usepkgonly:
         source_repos = source_repos.change_repos(x for x in source_repos
-            if getattr(x, 'format_magic', None) != 'ebuild_src')
+            if getattr(x, 'repository_type', None) != 'source')
     elif options.usepkg:
-        repo_types = [(getattr(x, 'format_magic', None) == 'ebuild_built', x)
+        repo_types = [(getattr(x, 'repository_type', None) == 'built', x)
             for x in source_repos]
         source_repos = source_repos.change_repos(
             [x[1] for x in repo_types if x[0]] +
@@ -394,7 +394,7 @@ def main(options, out, err):
         )
     elif options.source_only:
         source_repos = source_repos.change_repos(x for x in source_repos
-            if getattr(x, 'format_magic', None) != 'ebuild_built')
+            if getattr(x, 'repository_type', None) == 'source')
 
     atoms = []
     for setname, pkgset in options.set:

@@ -12,6 +12,7 @@ from itertools import imap, ifilterfalse
 
 from pkgcore.repository import prototype, errors, configured
 from pkgcore.ebuild import eclass_cache as eclass_cache_module
+from pkgcore.ebuild import ebuild_src
 from pkgcore.config import ConfigHint, configurable
 from pkgcore.plugin import get_plugin
 from pkgcore.operations import repo as _repo_ops
@@ -203,7 +204,9 @@ class _UnconfiguredTree(prototype.tree):
     configured = False
     configurables = ("domain", "settings")
     configure = None
-    format_magic = "ebuild_src"
+    package_factory = staticmethod(ebuild_src.generate_new_factory)
+    # This attributes needs to be replaced/removed; it's a hack for pmerge.
+    repository_type = 'source'
     enable_gpg = False
     extension = '.ebuild'
 
@@ -279,7 +282,7 @@ class _UnconfiguredTree(prototype.tree):
         self.cache = cache
         self.ignore_paludis_versioning = ignore_paludis_versioning
         self._allow_missing_chksums = allow_missing_manifests
-        self.package_class = get_plugin("format." + self.format_magic)(
+        self.package_class = self.package_factory(
             self, cache, self.eclass_cache, self.mirrors, self.default_mirrors)
         self._shared_pkg_cache = WeakValCache()
 
@@ -498,7 +501,7 @@ class _SlavedTree(_UnconfiguredTree):
         for k, v in parent_repo.mirrors.iteritems():
             if k not in self.mirrors:
                 self.mirrors[k] = v
-        self.package_class = get_plugin("format." + self.format_magic)(
+        self.package_class = self.package_factory(
             self, self.cache, self.eclass_cache, self.mirrors,
             self.default_mirrors)
 

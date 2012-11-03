@@ -30,9 +30,6 @@ class OverlayRepo(prototype.tree):
 
     operations_kls = multiplex.operations
 
-    # sucks a bit, need to work something better out here
-    format_magic = "ebuild_src"
-
     def __init__(self, trees, **kwds):
         """
         :param trees: :obj:`pkgcore.ebuild.repository._UnconfiguredTree` instances

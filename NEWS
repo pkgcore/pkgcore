@@ -6,6 +6,9 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 
 pkgcore trunk:
 
+* format_magic attribute was dropped from ebuild repositories; shouldn't
+  have been used (was always a hack).
+
 
 pkgcore 0.8.6, October 29th, 2012
 

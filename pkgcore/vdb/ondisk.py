@@ -13,6 +13,7 @@ from pkgcore.repository import multiplex
 from pkgcore.config import ConfigHint
 #needed to grab the PN
 from pkgcore.ebuild.cpv import versioned_CPV
+from pkgcore.ebuild import ebuild_built
 from pkgcore.ebuild.errors import InvalidCPV
 
 from snakeoil.osutils import pjoin
@@ -71,7 +72,7 @@ class tree(prototype.tree):
     configured = False
     configurables = ("domain", "settings")
     configure = None
-    format_magic = "ebuild_built"
+    package_factory = staticmethod(ebuild_built.generate_new_factory)
     operations_kls = repo_ops.operations
 
     pkgcore_config_type = ConfigHint({'location': 'str',
@@ -103,7 +104,7 @@ class tree(prototype.tree):
             compatibility.raise_from(errors.InitializationError(
                 "lstat failed on base %r" % self.location))
 
-        self.package_class = get_plugin('format.' + self.format_magic)(self)
+        self.package_class = self.package_factory(self)
 
     def _get_categories(self, *optional_category):
         # return if optional_category is passed... cause it's not yet supported

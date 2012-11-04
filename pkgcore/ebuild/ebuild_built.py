@@ -44,30 +44,18 @@ def passthrough_repo(inst):
         return repo.strip()
     return None
 
-default_pkg_preinst_re = None
-
-def pkg_uses_default_preinst(pkg):
-    global default_pkg_preinst_re
-    if default_pkg_preinst_re is None:
-        default_pkg_preinst_re = re.compile(
-            "(?:^|\n)pkg_preinst *\(\)\s*{\s*return;?\s*}[ \t]*(?:\n|$)")
-
-    data = pkg.environment.text_fileobj().read()
-    m = default_pkg_preinst_re.search(data)
-
-    # second check. make sure there aren't two matches- if so, that
-    # means we should not guess it.
-    return m is not None and \
-        default_pkg_preinst_re.search(data[m.end():]) is None
 
 def wrap_inst(self, wrap, inst):
     return wrap(inst(self), self.use)
 
+
 _empty_fetchable = conditionals.DepSet.parse('', ebuild_src.fetchable,
     operators={})
 
+
 def _get_inherited(self):
     return tuple(sorted(self.data.get("INHERITED", "").split()))
+
 
 class package(ebuild_src.base):
 
@@ -171,7 +159,7 @@ class fresh_built_package(package):
 def generic_format_triggers(self, pkg, op_inst, format_op_inst, engine_inst):
     if (engine_inst.mode in (engine.REPLACE_MODE, engine.INSTALL_MODE)
         and pkg == engine_inst.new and pkg.repo is engine_inst.new.repo):
-        if not pkg_uses_default_preinst(pkg):
+        if 'preinst' in pkg.mandatory_phases:
             t = triggers.preinst_contents_reset(format_op_inst)
             t.register(engine_inst)
         # for ebuild format, always check the syms.

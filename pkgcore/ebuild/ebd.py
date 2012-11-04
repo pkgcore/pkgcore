@@ -25,7 +25,6 @@ from pkgcore.spawn import (
     spawn_bash, spawn, is_sandbox_capable, is_fakeroot_capable,
     is_userpriv_capable, spawn_get_output)
 from pkgcore.os_data import xargs
-from pkgcore.ebuild.const import eapi_capable
 from pkgcore.operations import observer, format
 from pkgcore.ebuild import ebuild_built
 from snakeoil.currying import post_curry, pretty_docs, partial
@@ -71,10 +70,9 @@ class ebd(object):
 
         if not hasattr(self, "observer"):
             self.observer = observer
-        if pkg.eapi not in eapi_capable:
+        if not pkg.eapi_obj.is_supported:
             raise TypeError(
-                "pkg isn't of a supported eapi!, %i not in %s for %s" % (
-                    pkg.eapi, eapi_capable, pkg))
+                "package %s uses an unsupported eapi: %s" % (pkg, pkg.eapi))
 
         if initial_env is not None:
             # copy.

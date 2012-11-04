@@ -274,9 +274,10 @@ class ProfileNode(object):
         data = filter(None, data)
         if len(data) != 1:
             raise ProfileError(self.path, 'eapi', "multiple lines detected")
-        elif not (data[0].isdigit() and int(data[0]) in const.eapi_capable):
+        obj = get_eapi(data[0])
+        if obj is None:
             raise ProfileError(self.path, 'eapi', 'unsupported eapi: %s' % data[0])
-        return get_eapi(data[0])
+        return obj
 
     eapi = klass.alias_attr("eapi_obj.magic")
     eapi_atom = klass.alias_attr("eapi_obj.atom_kls")

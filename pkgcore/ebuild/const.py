@@ -7,8 +7,6 @@ ebuild internal constants
 """
 from os import path
 
-eapi_capable = (0, 1, 2, 3, 4)
-
 incrementals = (
     "USE", "USE_EXPAND", "USE_EXPAND_HIDDEN", "FEATURES", "ACCEPT_KEYWORDS",
     "ACCEPT_LICENSE", "CONFIG_PROTECT_MASK", "CONFIG_PROTECT", "PRELINK_PATH",

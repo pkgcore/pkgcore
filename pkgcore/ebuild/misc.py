@@ -228,9 +228,6 @@ class collapsed_restrict_to_data(object):
         self.freeform = tuple(x for x in (repo, cat, pkg) if x)
         self.atoms = atom_d
 
-    def atom_intersects(self, atom):
-        return atom.key in self.atoms
-
     def pull_data(self, pkg, force_copy=False, pre_defaults=()):
         l = []
         for specific in self.freeform:

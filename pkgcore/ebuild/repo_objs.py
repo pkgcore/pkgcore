@@ -8,10 +8,12 @@ package class for buildable ebuilds
 __all__ = ("Maintainer", "MetadataXml", "LocalMetadataXml",
     "SharedPkgData", "Licenses", "OverlayedLicenses")
 
+from snakeoil.caching import WeakInstMeta
+from snakeoil import compatibility
 from snakeoil.currying import post_curry
 from snakeoil.demandload import demandload
 from snakeoil.osutils import pjoin, listdir_files, listdir
-from snakeoil.caching import WeakInstMeta
+from snakeoil.sequences import namedtuple
 from snakeoil import mappings
 from snakeoil import klass
 from itertools import chain
@@ -279,6 +281,9 @@ class _immutable_attr_dict(mappings.ImmutableDict):
     mappings.inject_getitem_as_getattr(locals())
 
 
+_KnownProfile = namedtuple("_KnownProfile", ['profile', 'status'])
+
+
 class RepoConfig(syncable.tree):
 
     __slots__ = ("location", "manifests", "masters", "aliases", "cache_format",
@@ -403,20 +408,51 @@ class RepoConfig(syncable.tree):
         return tuple(f())
 
     def _split_use_desc_file(self, name, converter):
+        line = None
+        fp = pjoin(self.location, 'profiles', name)
         try:
-            for line in fileutils.iter_read_bash(
-                pjoin(self.location, 'profiles', name)):
+            for line in fileutils.iter_read_bash(fp):
                 key, val = line.split(None, 1)
                 key = converter(key)
                 yield key[0], (key[1], val.split('-', 1)[1].strip())
         except EnvironmentError, e:
             if e.errno != errno.ENOENT:
                 raise
+        except ValueError, v:
+            if line is None:
+                raise
+            compatibility.raise_from(
+                ValueError("Failed parsing %r: line was %r" % (fp, line)))
 
     known_arches = klass.alias_attr('raw_known_arches')
     use_desc = klass.alias_attr('raw_use_desc')
     use_local_desc = klass.alias_attr('raw_use_local_desc')
     use_expand_desc = klass.alias_attr('raw_use_expand_desc')
+
+    @klass.jit_attr
+    def arch_profiles(self):
+        d = mappings.defaultdict(list)
+        fp = pjoin(self.location, 'profiles', 'profiles.desc')
+        try:
+            for line in fileutils.iter_read_bash(fp):
+                l = line.split()
+                try:
+                    key, profile, status = l
+                except ValueError:
+                    logger.error(
+                        "%s: line doesn't follow 'key profile status' form: %s",
+                         fp, line)
+                    continue
+                # Normalize the profile name on the offchance someone slipped an extra /
+                # into it.
+                d[key].append(_KnownProfile(
+                    '/'.join(filter(None, profile.split('/'))), status))
+        except EnvironmentError, e:
+            if e.errno != errno.ENOENT:
+                raise
+            logger.debug("No profile descriptions found at %r", fp)
+        return mappings.ImmutableDict(
+            (k, tuple(sorted(v))) for k, v in d.iteritems())
 
     @klass.jit_attr
     def is_empty(self):

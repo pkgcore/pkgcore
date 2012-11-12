@@ -18,11 +18,13 @@ from itertools import chain
 from pkgcore.config import ConfigHint
 from pkgcore.repository import syncable
 demandload(globals(),
-    'snakeoil.xml:etree',
-    'pkgcore.log:logger',
-    'snakeoil:fileutils,bash',
-    'snakeoil.lists:iter_stable_unique',
     'errno',
+    'snakeoil.xml:etree',
+    'snakeoil:fileutils,bash,mappings',
+    'snakeoil.lists:iter_stable_unique',
+    'pkgcore.log:logger',
+    'pkgcore.ebuild:atom',
+    "pkgcore.restrictions:packages",
 )
 
 
@@ -354,10 +356,73 @@ class RepoConfig(syncable.tree):
         sf(self, 'profile_format', list(v)[0])
 
     @klass.jit_attr
+    def raw_known_arches(self):
+        try:
+            return frozenset(bash.iter_read_bash(
+                pjoin(self.location, 'profiles', 'arch.list')))
+        except EnvironmentError, e:
+            if e.errno != errno.ENOENT:
+                raise
+            return None
+
+    @klass.jit_attr
+    def raw_use_desc(self):
+        # todo: convert this to using a common exception base, with
+        # conversion of ValueErrors...
+        def converter(key):
+            return (packages.AlwaysTrue, key)
+        return tuple(self._split_use_desc_file('use.desc', converter))
+
+    @klass.jit_attr
+    def raw_use_local_desc(self):
+        def converter(key):
+            # todo: convert this to using a common exception base, with
+            # conversion of ValueErrors/atom exceptoins...
+            chunks = key.split(':', 1)
+            return (atom.atom(chunks[0]), chunks[1])
+
+        return tuple(self._split_use_desc_file('use.local.desc', converter))
+
+    @klass.jit_attr
+    def raw_use_expand_desc(self):
+        base = pjoin(self.location, 'profiles', 'desc')
+        try:
+            targets = sorted(listdir_files(base))
+        except EnvironmentError, e:
+            if e.errno != errno.ENOENT:
+                raise
+            return ()
+
+        def f():
+            for use_group in targets:
+                group = use_group.split('.', 1)[0] + "_"
+                def converter(key):
+                    return (packages.AlwaysTrue, group + key)
+                for blah in self._split_use_desc_file('desc/%s' % use_group, converter):
+                    yield blah
+        return tuple(f())
+
+    def _split_use_desc_file(self, name, converter):
+        try:
+            for line in fileutils.iter_read_bash(
+                pjoin(self.location, 'profiles', name)):
+                key, val = line.split(None, 1)
+                key = converter(key)
+                yield key[0], (key[1], val.split('-', 1)[1].strip())
+        except EnvironmentError, e:
+            if e.errno != errno.ENOENT:
+                raise
+
+    known_arches = klass.alias_attr('raw_known_arches')
+    use_desc = klass.alias_attr('raw_use_desc')
+    use_local_desc = klass.alias_attr('raw_use_local_desc')
+    use_expand_desc = klass.alias_attr('raw_use_expand_desc')
+
+    @klass.jit_attr
     def is_empty(self):
         result = True
         try:
-            # any files means it's not empty
+            # any files existing means it's not empty
             result = not listdir(self.location)
         except EnvironmentError, e:
             if e.errno != errno.ENOENT:

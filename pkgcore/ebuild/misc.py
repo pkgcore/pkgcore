@@ -171,6 +171,7 @@ class collapsed_restrict_to_data(object):
 
     __metaclass__ = generic_equality
     __attr_comparison__ = ('defaults', 'freeform', 'atoms', '__class__')
+    incremental = True
 
     def __init__(self, *restrict_sources, **kwds):
         """

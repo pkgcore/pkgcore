@@ -21,7 +21,8 @@ eapi_optionals = mappings.ImmutableDict({
     "src_uri_renames":False,
     "has_required_use":False,
     "has_AA":False,
-    "has_KV":False
+    "has_KV":False,
+    'is_supported':True,
 })
 
 
@@ -35,15 +36,11 @@ class EAPI(object):
     known_eapis = weakrefs.WeakValCache()
     __metaclass__ = klass.immutable_instance
 
-    def __init__(self, magic, phases, default_phases,
-        metadata_keys, mandatory_keys, optionals, ebd_env_options=None):
+    def __init__(self, magic, phases, default_phases, metadata_keys, mandatory_keys,
+                 optionals, ebd_env_options=None):
 
         sf = object.__setattr__
 
-        pre_existing = self.known_eapis.get(magic)
-        if pre_existing is not None:
-            raise ValueError("eapi magic %s is already known/instantiated- %r" %
-                (magic, pre_existing))
         sf(self, "magic", magic)
 
         sf(self, "phases", mappings.ImmutableDict(phases))
@@ -61,10 +58,25 @@ class EAPI(object):
         d = dict(eapi_optionals)
         d.update(optionals)
         sf(self, 'options', optionals_cls(d))
-        self.known_eapis[magic] = self
         if ebd_env_options is None:
             ebd_env_options = {}
         sf(self, "ebd_env_options", mappings.ImmutableDict(ebd_env_options))
+
+    @classmethod
+    def register(cls, *args, **kwds):
+        ret = cls(*args, **kwds)
+        pre_existing = cls.known_eapis.get(ret.magic)
+        if pre_existing is not None:
+            raise ValueError("eapi magic %s is already known/instantiated- %r" %
+                (ret.magic, pre_existing))
+        cls.known_eapis[ret.magic] = ret
+        return ret
+
+    is_supported = klass.alias_attr('options.is_supported')
+
+    @classmethod
+    def get_unsupported_eapi(cls, magic):
+        return cls(magic, (), (), (), (), {'is_supported':False})
 
     @klass.jit_attr
     def atom_kls(self):
@@ -89,11 +101,11 @@ class EAPI(object):
         return d
 
 
-def get_eapi(magic):
-    return EAPI.known_eapis.get(magic)
-
-def is_supported(magic):
-    return magic in EAPI.known_eapis
+def get_eapi(magic, suppress_unsupported=False):
+    ret = EAPI.known_eapis.get(magic)
+    if ret is None and suppress_unsupported:
+        return EAPI.get_unsupported_eapi(magic)
+    return ret
 
 def shorten_phase_name(func_name):
     if func_name.startswith("src_") or func_name.startswith("pkg_"):
@@ -137,7 +149,7 @@ common_env_optionals = mappings.ImmutableDict(dict.fromkeys(
         convert_bool_to_bash_bool))
 
 
-eapi0 = EAPI("0",
+eapi0 = EAPI.register("0",
     mk_phase_func_map(*common_phases),
     mk_phase_func_map(*common_default_phases),
     common_metadata_keys,
@@ -146,7 +158,7 @@ eapi0 = EAPI("0",
     ebd_env_options=common_env_optionals,
 )
 
-eapi1 = EAPI("1",
+eapi1 = EAPI.register("1",
     eapi0.phases,
     eapi0.default_phases,
     eapi0.metadata_keys,
@@ -155,7 +167,7 @@ eapi1 = EAPI("1",
     ebd_env_options=eapi0.ebd_env_options,
 )
 
-eapi2 = EAPI("2",
+eapi2 = EAPI.register("2",
     combine_dicts(eapi1.phases, mk_phase_func_map("src_prepare", "src_configure")),
     eapi1.default_phases.union(map(shorten_phase_name, ["src_prepare", "src_configure"])),
     eapi1.metadata_keys,
@@ -166,7 +178,7 @@ eapi2 = EAPI("2",
     ebd_env_options=eapi1.ebd_env_options,
 )
 
-eapi3 = EAPI("3",
+eapi3 = EAPI.register("3",
     eapi2.phases,
     eapi2.default_phases,
     eapi2.metadata_keys,
@@ -176,7 +188,7 @@ eapi3 = EAPI("3",
     ebd_env_options=eapi2.ebd_env_options,
 )
 
-eapi4 = EAPI("4",
+eapi4 = EAPI.register("4",
     combine_dicts(eapi3.phases, mk_phase_func_map("pkg_pretend")),
     eapi3.default_phases.union([shorten_phase_name('src_install')]),
     eapi3.metadata_keys | frozenset(["REQUIRED_USE"]),

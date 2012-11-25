@@ -25,7 +25,7 @@ demandload(globals(),
     'snakeoil:fileutils,bash,mappings',
     'snakeoil.lists:iter_stable_unique',
     'pkgcore.log:logger',
-    'pkgcore.ebuild:atom',
+    'pkgcore.ebuild:atom,profiles',
     "pkgcore.restrictions:packages",
 )
 
@@ -146,19 +146,17 @@ class Licenses(object):
     __metaclass__ = WeakInstMeta
     __inst_caching__ = True
 
-    __slots__ = ('_base', '_licenses', '_groups')
+    __slots__ = ('_base', '_licenses', '_groups', 'license_groups_path', 'licenses_dir')
 
-    licenses_dir = 'licenses'
-    license_group_location = 'profiles/license_groups'
-
-    def __init__(self, repo_base):
+    def __init__(self, repo_base, profile_base='profiles', licenses_dir='licenses', license_groups='profiles/license_groups'):
         object.__setattr__(self, '_base', repo_base)
+        object.__setattr__(self, 'license_groups_path', pjoin(repo_base, license_groups))
+        object.__setattr__(self, 'licenses_dir', pjoin(repo_base, licenses_dir))
 
     @klass.jit_attr_none
     def licenses(self):
         try:
-            content = listdir_files(pjoin(self._base,
-                self.licenses_dir))
+            content = listdir_files(self.licenses_dir)
         except EnvironmentError:
             content = ()
         return frozenset(content)
@@ -166,8 +164,7 @@ class Licenses(object):
     @klass.jit_attr_none
     def groups(self):
         try:
-            fp = pjoin(self._base, self.license_group_location)
-            d = fileutils.read_dict(fp, splitter=' ')
+            d = fileutils.read_dict(self.license_groups_path, splitter=' ')
         except EnvironmentError:
             return mappings.ImmutableDict()
         except fileutils.ParseError, pe:
@@ -212,7 +209,7 @@ class Licenses(object):
         if not license in self:
             raise KeyError(license)
         try:
-            return open(pjoin(self._base, self.licenses_dir, license)).read()
+            return open(pjoin(self.licenses_dir, license)).read()
         except EnvironmentError, e:
             if e.errno == errno.ENOENT:
                 raise KeyError(license)
@@ -284,10 +281,44 @@ class _immutable_attr_dict(mappings.ImmutableDict):
 _KnownProfile = namedtuple("_KnownProfile", ['profile', 'status'])
 
 
-class RepoConfig(syncable.tree):
+class BundledProfiles(object):
 
-    __slots__ = ("location", "manifests", "masters", "aliases", "cache_format",
-        'profile_format', '_syncer', '_repo_id', '_is_empty')
+    klass.inject_immutable_instance(locals())
+
+    def __init__(self, profile_base, format='pms'):
+        object.__setattr__(self, 'profile_base', profile_base)
+        object.__setattr__(self, 'format', format)
+
+    @klass.jit_attr
+    def arch_profiles(self):
+        d = mappings.defaultdict(list)
+        fp = pjoin(self.profile_base, 'profiles.desc')
+        try:
+            for line in fileutils.iter_read_bash(fp):
+                l = line.split()
+                try:
+                    key, profile, status = l
+                except ValueError:
+                    logger.error(
+                        "%s: line doesn't follow 'key profile status' form: %s",
+                         fp, line)
+                    continue
+                # Normalize the profile name on the offchance someone slipped an extra /
+                # into it.
+                d[key].append(_KnownProfile(
+                    '/'.join(filter(None, profile.split('/'))), status))
+        except EnvironmentError, e:
+            if e.errno != errno.ENOENT:
+                raise
+            logger.debug("No profile descriptions found at %r", fp)
+        return mappings.ImmutableDict(
+            (k, tuple(sorted(v))) for k, v in d.iteritems())
+
+    def create_profile(self, node):
+        return profiles.OnDiskProfile(self.profile_base, node)
+
+
+class RepoConfig(syncable.tree):
 
     layout_offset = "metadata/layout.conf"
 
@@ -301,8 +332,9 @@ class RepoConfig(syncable.tree):
     pkgcore_config_type = ConfigHint(typename='raw_repo',
         types={'syncer':'lazy_ref:syncer'})
 
-    def __init__(self, location, syncer=None):
+    def __init__(self, location, syncer=None, profiles_base='profiles'):
         object.__setattr__(self, 'location', location)
+        object.__setattr__(self, 'profiles_base', pjoin(self.location, profiles_base))
         syncable.tree.__init__(self, syncer)
         self.parse_config()
 
@@ -364,11 +396,11 @@ class RepoConfig(syncable.tree):
     def raw_known_arches(self):
         try:
             return frozenset(bash.iter_read_bash(
-                pjoin(self.location, 'profiles', 'arch.list')))
+                pjoin(self.profiles_base, 'arch.list')))
         except EnvironmentError, e:
             if e.errno != errno.ENOENT:
                 raise
-            return None
+            return frozenset()
 
     @klass.jit_attr
     def raw_use_desc(self):
@@ -390,7 +422,7 @@ class RepoConfig(syncable.tree):
 
     @klass.jit_attr
     def raw_use_expand_desc(self):
-        base = pjoin(self.location, 'profiles', 'desc')
+        base = pjoin(self.profiles_base, 'desc')
         try:
             targets = sorted(listdir_files(base))
         except EnvironmentError, e:
@@ -409,7 +441,7 @@ class RepoConfig(syncable.tree):
 
     def _split_use_desc_file(self, name, converter):
         line = None
-        fp = pjoin(self.location, 'profiles', name)
+        fp = pjoin(self.profiles_base, name)
         try:
             for line in fileutils.iter_read_bash(fp):
                 key, val = line.split(None, 1)
@@ -430,31 +462,6 @@ class RepoConfig(syncable.tree):
     use_expand_desc = klass.alias_attr('raw_use_expand_desc')
 
     @klass.jit_attr
-    def arch_profiles(self):
-        d = mappings.defaultdict(list)
-        fp = pjoin(self.location, 'profiles', 'profiles.desc')
-        try:
-            for line in fileutils.iter_read_bash(fp):
-                l = line.split()
-                try:
-                    key, profile, status = l
-                except ValueError:
-                    logger.error(
-                        "%s: line doesn't follow 'key profile status' form: %s",
-                         fp, line)
-                    continue
-                # Normalize the profile name on the offchance someone slipped an extra /
-                # into it.
-                d[key].append(_KnownProfile(
-                    '/'.join(filter(None, profile.split('/'))), status))
-        except EnvironmentError, e:
-            if e.errno != errno.ENOENT:
-                raise
-            logger.debug("No profile descriptions found at %r", fp)
-        return mappings.ImmutableDict(
-            (k, tuple(sorted(v))) for k, v in d.iteritems())
-
-    @klass.jit_attr
     def is_empty(self):
         result = True
         try:
@@ -470,7 +477,7 @@ class RepoConfig(syncable.tree):
 
     @klass.jit_attr
     def repo_id(self):
-        val = fileutils.readfile(pjoin(self.location, 'profiles', 'repo_name'), True)
+        val = fileutils.readfile(pjoin(self.profiles_base, 'repo_name'), True)
         if val is None:
             if not self.is_empty:
                 logger.warn("repository at location %r lacks a defined repo_name",
@@ -478,3 +485,8 @@ class RepoConfig(syncable.tree):
             val = '<unlabeled repository %s>' % self.location
         return val.strip()
 
+    arch_profiles = klass.alias_attr('profiles.arch_profiles')
+
+    @klass.jit_attr
+    def profiles(self):
+        return BundledProfiles(self.profiles_base)

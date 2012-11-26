@@ -101,7 +101,7 @@ class EAPI(object):
         return d
 
 
-def get_eapi(magic, suppress_unsupported=False):
+def get_eapi(magic, suppress_unsupported=True):
     ret = EAPI.known_eapis.get(magic)
     if ret is None and suppress_unsupported:
         return EAPI.get_unsupported_eapi(magic)

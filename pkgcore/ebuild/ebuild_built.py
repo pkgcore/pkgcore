@@ -7,7 +7,7 @@ built ebuild packages (vdb packages and binpkgs are derivatives of this)
 
 __all__ = ("package", "package_factory")
 
-from pkgcore.ebuild import ebuild_src, conditionals
+from pkgcore.ebuild import ebuild_src, conditionals, eapi
 from pkgcore.package import metadata
 from snakeoil.data_source import local_source
 
@@ -57,6 +57,17 @@ def _get_inherited(self):
     return tuple(sorted(self.data.get("INHERITED", "").split()))
 
 
+def generate_eapi_obj(self):
+    eapi_magic = self.data.pop("EAPI", "0")
+    if not eapi_magic:
+        # "" means '0' eapi
+        eapi_magic = '0'
+    eapi_obj = eapi.get_eapi(str(eapi_magic).strip())
+    # this can return None... definitely the wrong thing right now
+    # for an unsupported eapi.  Fix it later.
+    return eapi_obj
+
+
 class package(ebuild_src.base):
 
     """
@@ -98,6 +109,7 @@ class package(ebuild_src.base):
         lambda: frozenset(s.data["USE"].split()))
 
     _get_attr["inherited"] = _get_inherited
+    _get_attr["eapi_obj"] = generate_eapi_obj
 
     def _chost_fallback(initial, self):
         o = self.data.get(initial)

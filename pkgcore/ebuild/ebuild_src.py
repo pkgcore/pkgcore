@@ -49,7 +49,7 @@ def generate_depset(c, key, non_package_type, s, **kwds):
             operators={"||":boolean.OrRestriction,
             "":boolean.AndRestriction}, **kwds)
     eapi_obj = s.eapi_obj
-    if eapi_obj is None:
+    if not eapi_obj.is_supported:
         raise metadata_errors.MetadataException(s, "eapi", "unsupported eapi")
     kwds['element_func'] = eapi_obj.atom_kls
     kwds['transitive_use_atoms'] = eapi_obj.options.transitive_use_atoms
@@ -143,15 +143,21 @@ def create_fetchable_from_uri(pkg, chksums, ignore_missing_chksums, mirrors,
         common_files[filename] = fetchable(filename, uris, chksums.get(filename))
     return common_files[filename]
 
-def generate_eapi_obj(self):
-    eapi_magic = self.data.pop("EAPI", "0")
-    if not eapi_magic:
-        # "" means '0' eapi
-        eapi_magic = '0'
-    eapi_obj = get_eapi(str(eapi_magic).strip())
-    # this can return None... definitely the wrong thing right now
-    # for an unsupported eapi.  Fix it later.
-    return eapi_obj
+def get_parsed_eapi(self):
+    ebuild = self.ebuild
+    eapi = None
+    if ebuild.path:
+        # Use readlines directly since it does whitespace stripping
+        # for us, far faster than native python can.
+        i = fileutils.readlines_ascii(ebuild.path)
+    else:
+        i = (x.strip() for x in ebuild.get_text_fileobj())
+    for line in i:
+        if line[0:1] in ('', '#'):
+            continue
+        eapi = _parse_EAPI_RE.match(line)
+        break
+    return get_eapi(eapi.group(2) if eapi is not None else '0', True)
 
 def get_slot(self):
     o = self.data.pop("SLOT", "0").strip()
@@ -209,7 +215,7 @@ class base(metadata.package):
     _get_attr["restrict"] = lambda s:conditionals.DepSet.parse(
         s.data.pop("RESTRICT", ''), str, operators={},
         element_func=rewrite_restrict)
-    _get_attr["eapi_obj"] = generate_eapi_obj
+    _get_attr["eapi_obj"] = get_parsed_eapi
     _get_attr["iuse"] = lambda s:frozenset(imap(intern,
         s.data.pop("IUSE", "").split()))
     _get_attr["properties"] = lambda s:frozenset(imap(intern,
@@ -232,23 +238,6 @@ class base(metadata.package):
         if eapi_obj is not None:
             return int(eapi_obj.magic)
         return "unsupported"
-
-    @property
-    def parsed_eapi(self):
-        ebuild = self.ebuild
-        eapi = None
-        if ebuild.path:
-            # Use readlines directly since it does whitespace stripping
-            # for us, far faster than native python can.
-            i = fileutils.readlines_ascii(ebuild.path)
-        else:
-            i = (x.strip() for x in ebuild.get_text_fileobj())
-        for line in i:
-            if line[0:1] in ('', '#'):
-                continue
-            eapi = _parse_EAPI_RE.match(line)
-            break
-        return get_eapi(eapi.group(2) if eapi is not None else '0')
 
     @property
     def mandatory_phases(self):
@@ -373,40 +362,29 @@ class package_factory(metadata.factory):
 
     def _update_metadata(self, pkg, ebp=None):
         eapi = parsed_eapi = pkg.parsed_eapi
-        if parsed_eapi is None:
-            # We don't know how to parse this, thus don't even try.
-            mydata = {}
-        else:
-            with processor.reuse_or_request(ebp) as my_proc:
-                mydata = my_proc.get_keys(pkg, self._ecache)
-                del my_proc
-            del ebp
-            inherited = mydata.pop("INHERITED", None)
-            # rewrite defined_phases as needed, since we now know the eapi.
-            eapi = get_eapi(mydata["EAPI"])
-            if parsed_eapi != eapi:
-                raise metadata_errors.MetadataException(
-                    pkg, 'eapi', "parsed eapi doesn't match sourced eapi")
-            wipes = set(mydata)
+        if not parsed_eapi.is_supported:
+            return {'EAPI':eapi.magic}
 
-        if eapi is None:
-            # drop the metadata, leaving just the validation info
-            # we currently know about, and marking the eapi
-            # in a negative fashion.
-            # TODO(FIX THIS)
-            # Return, bypass cache in full; it'll get sorted when we
-            # know how to parse this EAPI.
-            return {'EAPI':'unknown'}
-        else:
-            wipes.difference_update(eapi.metadata_keys)
-            if mydata["DEFINED_PHASES"] != '-':
-                phases = mydata["DEFINED_PHASES"].split()
-                d = eapi.phases_rev
-                phases = set(d.get(x) for x in phases)
-                # discard is required should we have gotten
-                # a phase that isn't actually in this eapi
-                phases.discard(None)
-                mydata["DEFINED_PHASES"] = ' '.join(sorted(phases))
+        with processor.reuse_or_request(ebp) as my_proc:
+            mydata = my_proc.get_keys(pkg, self._ecache)
+
+        inherited = mydata.pop("INHERITED", None)
+        # rewrite defined_phases as needed, since we now know the eapi.
+        eapi = get_eapi(mydata["EAPI"])
+        if parsed_eapi != eapi:
+            raise metadata_errors.MetadataException(
+                pkg, 'eapi', "parsed eapi doesn't match sourced eapi")
+        wipes = set(mydata)
+
+        wipes.difference_update(eapi.metadata_keys)
+        if mydata["DEFINED_PHASES"] != '-':
+            phases = mydata["DEFINED_PHASES"].split()
+            d = eapi.phases_rev
+            phases = set(d.get(x) for x in phases)
+            # discard is required should we have gotten
+            # a phase that isn't actually in this eapi
+            phases.discard(None)
+            mydata["DEFINED_PHASES"] = ' '.join(sorted(phases))
 
         if inherited:
             mydata["_eclasses_"] = self._ecache.get_eclass_data(

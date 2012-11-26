@@ -284,6 +284,11 @@ __run_ebuild_phase()
 	[[ -n $PKGCORE_DEBUG ]] && set -x
 	__qa_run_function_if_exists __phase_default_pre_${1}
 	__qa_run_function_if_exists pre_${1}
+
+	local EBUILD_PHASE_FUNC
+	if ${PKGCORE_EBUILD_PHASE_FUNC}; then
+		EBUILD_PHASE_FUNC="$1"
+	fi
 	if __is_function __dyn_${1}; then
 		__dyn_${1}
 	elif __is_function ${1}; then

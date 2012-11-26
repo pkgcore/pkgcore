@@ -28,6 +28,7 @@ eapi_optionals = mappings.ImmutableDict({
     'new_reads_stdin':False,
     'econf_disable_silent_rules':False,
     'econf_disable_dependency_tracking':False,
+    'allow_parallel_src_test':False,
 })
 
 
@@ -224,6 +225,7 @@ eapi5 = EAPI.register("5",
         sub_slotting=True,
         new_reads_stdin=True,
         econf_disable_silent_rules=True,
+        allow_parallel_src_test=True,
         is_supported=False,
     )),
     ebd_env_options=eapi4.ebd_env_options,

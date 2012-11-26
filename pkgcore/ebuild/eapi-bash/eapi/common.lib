@@ -310,11 +310,13 @@ __phase_common_src_compile()
 __phase_common_src_test()
 {
 	addpredict /
+	local extra_args=( ${EXTRA_EMAKE} )
+	${PKGCORE_ALLOW_PARALLEL_SRC_TEST} || extra_args+=( -j1 )
 	if make check -n &> /dev/null; then
 		echo ">>> Test phase [check]: ${CATEGORY}/${PF}"
-		emake -j1 check || die "Make check failed. See above for details."
+		emake "${extra_args[@]}" check || die "Make check failed. See above for details."
 	elif make test -n &> /dev/null; then
-		make test || die "Make test failed. See above for details."
+		make "${extra_args[@]}" test || die "Make test failed. See above for details."
 	else
 		echo ">>> Test phase [none]: ${CATEGORY}/${PF}"
 	fi

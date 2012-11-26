@@ -140,11 +140,24 @@ econf()
 	fi
 
 
-	if ! hasq "${EAPI}" 0 1 2 3; then
-		if "${ECONF_SOURCE}/configure" --help 2> /dev/null | \
-		    grep -q disable-dependency-tracking; then
-		    set -- --disable-dependency-tracking "$@"
+	if ${PKGCORE_ECONF_DISABLE_DEPENDENCY_TRACKING} || ${PKGCORE_ECONF_DISABLE_SILENT_RULES}; then
+		local help_text=$("${CONF_SOURCE}/configure" --help 2> /dev/null)
+		local extra_args=( )
+
+		# EAPI4 and up.
+		if ${PKGCORE_ECONF_DISABLE_DEPENDENCY_TRACKING} && \
+			[[ "${help_text}" =~ "--disable-dependency-tracking" ]]; then
+			extra_args+=( --disable-dependency-tracking )
 		fi
+
+		# EAPI5 and up.
+		if ${PKGCORE_ECONF_DISABLE_SILENT_RULES} && \
+			[[ "${help_text}" =~ "--disable-silent-rules" ]]; then
+			extra_args+=( --disable-silent-rules )
+		fi
+		set -- "${extra_args[@]}" "$@"
+		unset extra_args
+		unset help_text
 	fi
 
 	# Reset IFS since we're interpretting user supplied EXTRA_ECONF.

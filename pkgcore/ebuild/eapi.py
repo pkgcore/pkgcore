@@ -26,6 +26,8 @@ eapi_optionals = mappings.ImmutableDict({
     'required_use_one_of':False,
     'sub_slotting':False,
     'new_reads_stdin':False,
+    'econf_disable_silent_rules':False,
+    'econf_disable_dependency_tracking':False,
 })
 
 
@@ -148,7 +150,8 @@ common_metadata_keys = common_mandatory_metadata_keys + (
 
 common_env_optionals = mappings.ImmutableDict(dict.fromkeys(
     ("dodoc_allow_recursive", "doins_allow_symlinks",
-     "doman_language_detect", "doman_language_override"),
+     "doman_language_detect", "doman_language_override",
+     "econf_disable_silent_rules",),
         convert_bool_to_bash_bool))
 
 
@@ -205,6 +208,7 @@ eapi4 = EAPI.register("4",
         doman_language_override=True,
         has_required_use=True,
         has_AA=False, has_KV=False,
+        econf_disable_dependency_tracking=True,
     )),
     ebd_env_options=eapi3.ebd_env_options,
 )
@@ -219,6 +223,7 @@ eapi5 = EAPI.register("5",
         required_use_one_of=True,
         sub_slotting=True,
         new_reads_stdin=True,
+        econf_disable_silent_rules=True,
         is_supported=False,
     )),
     ebd_env_options=eapi4.ebd_env_options,

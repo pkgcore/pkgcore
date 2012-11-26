@@ -1,0 +1,11 @@
+# Copyright: 2012 Brian Harring <ferringb@gmail.com>
+# license GPL2/BSD 3
+
+source "${PKGCORE_BIN_PATH}/eapi/4.lib"
+
+usex() {
+	use "$1" && echo "${2-yes}$4" || echo "${3-no}$5"
+	return 0
+}
+
+:

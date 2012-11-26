@@ -6,6 +6,10 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 
 pkgcore trunk:
 
+* Packages with unsupported EAPIs are now automasked.  Longer term,
+  proper exposing of the masking reason will be implemented- in the interim,
+  this matches pkgcores normal behaviour.
+
 * format_magic attribute was dropped from ebuild repositories; shouldn't
   have been used (was always a hack).
 

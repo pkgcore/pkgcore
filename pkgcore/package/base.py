@@ -43,6 +43,10 @@ class base(object):
         when appropriate"""
         return None
 
+    @property
+    def is_supported(self):
+        return True
+
 
 class wrapper(base):
 
@@ -74,6 +78,7 @@ class wrapper(base):
     built = klass.alias_attr("_raw_pkg.built")
     versioned_atom = klass.alias_attr("_raw_pkg.versioned_atom")
     unversioned_atom = klass.alias_attr("_raw_pkg.unversioned_atom")
+    is_supported = klass.alias_attr('_raw_pkg.is_supported')
 
     def __hash__(self):
         return hash(self._raw_pkg)

@@ -232,6 +232,8 @@ class base(metadata.package):
     PN = klass.alias_attr("package")
     repo_id = klass.alias_attr("repo.repo_id")
 
+    is_supported = klass.alias_attr('eapi_obj.options.is_supported')
+
     @property
     def eapi(self):
         eapi_obj = self.eapi_obj

@@ -23,6 +23,9 @@ eapi_optionals = mappings.ImmutableDict({
     "has_AA":False,
     "has_KV":False,
     'is_supported':True,
+    'required_use_one_of':False,
+    'sub_slotting':False,
+    'new_reads_stdin':False,
 })
 
 
@@ -204,4 +207,19 @@ eapi4 = EAPI.register("4",
         has_AA=False, has_KV=False,
     )),
     ebd_env_options=eapi3.ebd_env_options,
+)
+
+
+eapi5 = EAPI.register("5",
+    eapi4.phases,
+    eapi4.default_phases,
+    eapi4.metadata_keys,
+    eapi4.mandatory_keys,
+    combine_dicts(eapi4.options, dict(
+        required_use_one_of=True,
+        sub_slotting=True,
+        new_reads_stdin=True,
+        is_supported=False,
+    )),
+    ebd_env_options=eapi4.ebd_env_options,
 )

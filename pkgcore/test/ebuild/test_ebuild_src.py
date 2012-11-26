@@ -398,3 +398,7 @@ class test_package_factory(TestCase):
         self.assertEqual(cache2[pkg.cpvstr],
             {'_eclasses_':{'eclass1':(None, 100)}, 'marker':2, '_mtime_':200})
 
+    def test_required_use(self):
+        pass
+
+    test_required_use.skip = "TODO"

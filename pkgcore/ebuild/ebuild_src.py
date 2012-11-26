@@ -64,10 +64,16 @@ def generate_required_use(self):
     data = self.data.pop("REQUIRED_USE", "")
     if not self.eapi_obj.options.has_required_use:
         data = ''
+    operators = {
+        "||":boolean.OrRestriction,
+        "":boolean.AndRestriction,
+        "^^":boolean.JustOneRestriction
+    }
+    if self.eapi_obj.options.required_use_one_of:
+        operators['??'] = boolean.AtMostOneOfRestriction
+
     return conditionals.DepSet.parse(data,
-        values.ContainmentMatch, operators={"||":boolean.OrRestriction,
-            "":boolean.AndRestriction,
-            "^^":boolean.JustOneRestriction},
+        values.ContainmentMatch, operators=operators,
         element_func=_mk_required_use_node,
         )
 

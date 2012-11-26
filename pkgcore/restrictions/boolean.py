@@ -563,3 +563,26 @@ class JustOneRestriction(base):
         if self.negate:
             return "not ^^ ( %s )" % " ".join(str(x) for x in self.restrictions)
         return "^^ ( %s )" % " ".join(str(x) for x in self.restrictions)
+
+
+class AtMostOneOfRestriction(base):
+    """Either none, or exactly one match must occur."""
+    __slots__ = ()
+
+    _evaluate_collapsable = True
+    _evaluate_wipe_empty = False
+
+    def match(self, vals):
+        armed = False
+        for restrict in self.restrictions:
+            if not restrict.match(vals):
+                continue
+            if armed:
+                return self.negate
+            armed = True
+        return not self.negate
+
+    def __str__(self):
+        if self.negate:
+            return "not ?? ( %s )" % " ".join(str(x) for x in self.restrictions)
+        return "?? ( %s )" % " ".join(str(x) for x in self.restrictions)

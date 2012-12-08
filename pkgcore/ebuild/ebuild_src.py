@@ -369,9 +369,9 @@ class package_factory(metadata.factory):
         return self._update_metadata(pkg, ebp=ebp)
 
     def _update_metadata(self, pkg, ebp=None):
-        eapi = parsed_eapi = pkg.parsed_eapi
+        parsed_eapi = pkg.eapi_obj
         if not parsed_eapi.is_supported:
-            return {'EAPI':eapi.magic}
+            return {'EAPI':parsed_eapi.magic}
 
         with processor.reuse_or_request(ebp) as my_proc:
             mydata = my_proc.get_keys(pkg, self._ecache)

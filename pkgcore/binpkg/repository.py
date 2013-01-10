@@ -258,6 +258,9 @@ class tree(prototype.tree):
         self.cache = remote.get_cache_kls(cache_version)(pjoin(self.base, self.cache_name))
         self.package_class = wrap_factory(self.package_factory, self)
 
+    def __str__(self):
+        return self.repo_id
+
     def _get_categories(self, *optional_category):
         # return if optional_category is passed... cause it's not yet supported
         if optional_category:

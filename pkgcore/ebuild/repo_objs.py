@@ -322,7 +322,7 @@ class RepoConfig(syncable.tree):
 
     layout_offset = "metadata/layout.conf"
 
-    default_hashes = ('size', 'rmd160', 'sha1', 'sha256')
+    default_hashes = ('size', 'sha256', 'sha512', 'whirlpool')
 
     klass.inject_immutable_instance(locals())
 

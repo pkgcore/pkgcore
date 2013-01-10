@@ -728,9 +728,9 @@ class SavePkgIfInPkgset(SavePkg):
     del d
 
     def __init__(self, target_repo, pkgset, pristine=True,
-        skip_if_in_source=True):
+        skip_if_source=True):
         SavePkg.__init__(self, target_repo, pristine=pristine,
-            skip_if_in_source=skip_if_in_source)
+            skip_if_source=skip_if_source)
         self.pkgset = pkgset
 
     def trigger(self, engine, cset):

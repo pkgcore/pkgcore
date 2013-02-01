@@ -46,16 +46,33 @@ class ProfileError(Exception):
 
 
 def load_property(filename, handler=iter_read_bash, fallback=(),
-    read_func=readlines_utf8, allow_recurse=False):
+    read_func=readlines_utf8, allow_recurse=False, eapi_optional=None):
+    """Decorator simplifying parsing profile files to generate a profile property.
+
+    :param filename: The filename to parse within that profile directory.
+    :keyword handler: An invokable that is fed the content returned from read_func.
+    :keyword fallback: What to return if the file does not exist for this profile.  Must
+        be immutable.
+    :keyword read_func: An invokable in the form of :py:`readlines_utf8`.
+    :keyword allow_recurse: Controls whether or not this specific content can be a directory
+        of files, rather than just a file.  Only is consulted if we're parsing the profile
+        in non pms strict mode.
+    :keyword eapi_optional: If given, the EAPI for this profile node is checked to see if
+        the given optional evalutes to True; if so, then parsing occurs.  If False, then
+        the fallback is returned and no ondisk activity occurs.
+    :return: A :py:`klass.jit.attr_named` property instance.
+    """
     def f(func):
         f2 = klass.jit_attr_named('_%s' % (func.__name__,))
         return f2(currying.partial(_load_and_invoke, func, filename, handler, fallback,
-            read_func, allow_recurse))
+            read_func, allow_recurse, eapi_optional))
     return f
 
 def _load_and_invoke(func, filename, handler, fallback, read_func,
-    allow_recurse, self):
+    allow_recurse, eapi_optional, self):
     profile_path = self.path.rstrip('/')
+    if eapi_optional is not None and not getattr(self.eapi_obj, eapi_optional, None):
+            return fallback
     try:
         base = pjoin(profile_path, filename)
         if self.pms_strict or not allow_recurse:

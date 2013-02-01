@@ -9,27 +9,80 @@ demandload(globals(),
 )
 
 eapi_optionals = mappings.ImmutableDict({
-    "trust_defined_phases_cache":True,
-    "prefix_capable":True,
-    "has_merge_type":False,
-    "exports_replacing":False,
-    "dodoc_allow_recursive":False,
-    "doins_allow_symlinks":False,
-    "doman_language_detect":False,
-    "doman_language_override":False,
-    "transitive_use_atoms":False,
-    "src_uri_renames":False,
-    "has_required_use":False,
-    "has_AA":False,
-    "has_KV":False,
-    'is_supported':True,
-    'required_use_one_of':False,
-    'sub_slotting':False,
-    'new_reads_stdin':False,
-    'econf_disable_silent_rules':False,
-    'econf_disable_dependency_tracking':False,
+    # Controls whether -j1 is forced for emake tests
     'allow_parallel_src_test':False,
+
+    # Controls whether -r is allowed for dodoc
+    "dodoc_allow_recursive":False,
+
+    # Controls whether doins recurses symlinks
+    "doins_allow_symlinks":False,
+
+    # Controls the language awareness of doman; see PMS
+    "doman_language_detect":False,
+
+    # Controls whether -i18n option is allowed.
+    "doman_language_override":False,
+
+    # Controls --disable-silent-rules passing for econf.
+    'econf_disable_silent_rules':False,
+
+    # Controls --disable-dependency-tracking passing for econf.
+    'econf_disable_dependency_tracking':False,
+
+    # Controls whether an ebuild_phase function exists for ebuild consumption
     'ebuild_phase_func':False,
+
+    # Controls whether REPLACING vars are exported to ebuilds; see PMS.
+    "exports_replacing":False,
+
+    # Controls whether MERGE vars are exported to ebuilds; see PMS.
+    "has_merge_type":False,
+
+    # Controls whether REQUIRED_USE is supported, enforcing constraints on
+    # allowed use configuration states
+    "has_required_use":False,
+
+    # Controls whether AA env var is exported to ebuilds; this is a flattened
+    # listing of each filename in SRC_URI
+    "has_AA":False,
+
+    # Controls whether KV (kernel version; see PMS for details) is exported
+    "has_KV":False,
+
+    # Controls whether or not pkgcore, or extensions loaded, actually fully support
+    # this EAPI.
+    'is_supported':True,
+
+    # Controls whether new* style bash functions can take their content input from
+    # stdin, rather than an explicit ondisk file.
+    'new_reads_stdin':False,
+
+    # Controls whether this EAPI supports prefix related variables/settings; prefix
+    # awareness basically.  See PMS for full details.
+    "prefix_capable":True,
+
+    # Controls whether SLOT values can actually be multi-part; see PMS EAPI5.  This is
+    # related to ABI breakage detection.
+    'sub_slotting':False,
+
+    # Controls whether REQUIRED_USE supports the ?? operator.
+    'required_use_one_of':False,
+
+    # Controls whether SRC_URI supports the '->' operator for url filename renaming.
+    "src_uri_renames":False,
+
+    # Controls whether or not use dependency atoms are able to control their enforced
+    # value relative to another; standard use deps just enforce either on or off; EAPIs
+    # supporting this allow syntax that can enforce (for example) X to be on if Y is on.
+    # See PMS EAPI4 for full details.
+    "transitive_use_atoms":False,
+
+    # Controls whether or DEFINED_PHASES is mandated for this EAPI; if so, then we can
+    # trust the cache definition and skip invoking those phases if they're not defined.
+    # If the EAPI didn't mandate this var, then we can do our inference, but generally will
+    # invoke the phase in the absense of that metadata var since we have no other choice.
+    "trust_defined_phases_cache":True,
 })
 
 
@@ -143,8 +196,7 @@ common_phases = ("pkg_setup", "pkg_config", "pkg_info", "pkg_nofetch",
     "src_unpack", "src_compile", "src_test", "src_install")
 
 common_mandatory_metadata_keys = ("DESCRIPTION", "HOMEPAGE", "IUSE",
-    "KEYWORDS",
-    "LICENSE", "SLOT", "SRC_URI")
+    "KEYWORDS", "LICENSE", "SLOT", "SRC_URI")
 
 common_metadata_keys = common_mandatory_metadata_keys + (
     "DEPEND", "RDEPEND", "PDEPEND", "PROVIDE", "RESTRICT",
@@ -202,15 +254,15 @@ eapi4 = EAPI.register("4",
     eapi3.metadata_keys | frozenset(["REQUIRED_USE"]),
     eapi3.mandatory_keys,
     combine_dicts(eapi3.options, dict(
-        trust_defined_phases_cache=True,
-        has_merge_type=True,
-        exports_replacing=True,
         dodoc_allow_recursive=True,
         doins_allow_recursive=True,
         doman_language_override=True,
-        has_required_use=True,
-        has_AA=False, has_KV=False,
         econf_disable_dependency_tracking=True,
+        exports_replacing=True,
+        has_AA=False, has_KV=False,
+        has_merge_type=True,
+        has_required_use=True,
+        trust_defined_phases_cache=True,
     )),
     ebd_env_options=eapi3.ebd_env_options,
 )
@@ -222,13 +274,13 @@ eapi5 = EAPI.register("5",
     eapi4.metadata_keys,
     eapi4.mandatory_keys,
     combine_dicts(eapi4.options, dict(
-        required_use_one_of=True,
-        sub_slotting=True,
-        new_reads_stdin=True,
-        econf_disable_silent_rules=True,
         allow_parallel_src_test=True,
         ebuild_phase_func=True,
+        econf_disable_silent_rules=True,
         is_supported=False,
+        new_reads_stdin=True,
+        required_use_one_of=True,
+        sub_slotting=True,
     )),
     ebd_env_options=eapi4.ebd_env_options,
 )

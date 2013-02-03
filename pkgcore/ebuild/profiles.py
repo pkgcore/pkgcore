@@ -266,6 +266,36 @@ class ProfileNode(object):
         c.freeze()
         return c
 
+    @load_property("package.use.stable.force", allow_recurse=True,
+        eapi_optional='profile_stable_use')
+    def stable_pkg_use_force(self, data):
+        return self._parse_package_use(data)
+
+    @load_property("package.use.stable.mask", allow_recurse=True,
+        eapi_optional='profile_stable_use')
+    def stable_pkg_use_mask(self, data):
+        return self._parse_package_use(data)
+
+    @klass.jit_attr
+    def stable_forced_use(self):
+        c = self.forced_use
+        if self.stable_pkg_use_force:
+            c = c.clone(unfreeze=True)
+            c.update_from_stream(
+                chain_from_iterable(self.stable_pkg_use_force.itervalues()))
+            c.freeze()
+        return c
+
+    @klass.jit_attr
+    def stable_masked_use(self):
+        c = self.masked_use
+        if self.stable_pkg_use_mask:
+            c = c.clone(unfreeze=True)
+            c.update_from_stream(
+                chain_from_iterable(self.stable_pkg_use_mask.itervalues()))
+            c.freeze()
+        return c
+
     @load_property('make.defaults', fallback=None, read_func=_open_utf8,
         handler=None)
     def default_env(self, data):
@@ -341,7 +371,7 @@ class EmptyRootNode(ProfileNode):
 
     parents = ()
     deprecated = None
-    pkg_use = masked_use = forced_use = ChunkedDataDict()
+    pkg_use = masked_use = stable_masked_use = forced_use = stable_forced_use = ChunkedDataDict()
     forced_use.freeze()
     virtuals = pkg_use_force = pkg_use_mask = mappings.ImmutableDict()
     pkg_provided = visibility = system = ((), ())
@@ -397,6 +427,14 @@ class ProfileStack(object):
     @klass.jit_attr
     def masked_use(self):
         return self._collapse_use_dict("masked_use")
+
+    @klass.jit_attr
+    def stable_forced_use(self):
+        return self._collapse_use_dict("stable_forced_use")
+
+    @klass.jit_attr
+    def stable_masked_use(self):
+        return self._collapse_use_dict("stable_masked_use")
 
     @klass.jit_attr
     def pkg_use(self):

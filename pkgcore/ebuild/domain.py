@@ -241,6 +241,7 @@ class domain(pkgcore.config.domain.domain):
                 "No ARCH setting detected from profile, or user config")
 
         self.arch = settings["ARCH"]
+        self.stable_arch = settings["ARCH"].lstrip('~')
 
         # ~amd64 -> [amd64, ~amd64]
         for x in default_keywords[:]:
@@ -282,11 +283,16 @@ class domain(pkgcore.config.domain.domain):
         self.enabled_use.add_bare_global(*split_negations(self.use))
         self.enabled_use.update_from_stream(chunked_data(k, *split_negations(v)) for k,v in pkg_use)
         self.enabled_use.add_bare_global((), (self.arch,))
-        self.forced_use = ChunkedDataDict()
-        self.forced_use.merge(profile.forced_use)
-        self.forced_use.add_bare_global((), (self.arch,))
-        self.disabled_use = ChunkedDataDict()
-        self.disabled_use.merge(profile.masked_use)
+
+        for attr in ('', 'stable_'):
+             c = ChunkedDataDict()
+             c.merge(getattr(profile, attr + 'forced_use'))
+             c.add_bare_global((), (self.arch,))
+             setattr(self, attr + 'forced_use', c)
+
+             c = ChunkedDataDict()
+             c.merge(getattr(profile, attr + 'masked_use'))
+             setattr(self, attr + 'disabled_use', c)
 
         self.settings = ProtectedDict(settings)
         self.repos = []
@@ -483,8 +489,9 @@ class domain(pkgcore.config.domain.domain):
                 for x in ue_flags if x[0][0].upper() not in self.settings)
 
 
-        disabled = self.disabled_use.pull_data(pkg)
-        immutable = self.forced_use.pull_data(pkg)
+        attr = 'stable_' if self.stable_arch in pkg.keywords else ''
+        disabled = getattr(self, attr + 'disabled_use').pull_data(pkg)
+        immutable = getattr(self, attr + 'forced_use').pull_data(pkg)
 
         # lock the configurable use flags to only what's in IUSE, and what's forced
         # from the profiles (things like userland_GNU and arch)

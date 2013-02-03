@@ -62,6 +62,9 @@ eapi_optionals = mappings.ImmutableDict({
     # awareness basically.  See PMS for full details.
     "prefix_capable":True,
 
+    # Controls whether profiles support package.use.stable.* and use.stable.* files.
+    "profile_stable_use": False,
+
     # Controls whether SLOT values can actually be multi-part; see PMS EAPI5.  This is
     # related to ABI breakage detection.
     'sub_slotting':False,
@@ -278,6 +281,7 @@ eapi5 = EAPI.register("5",
         ebuild_phase_func=True,
         econf_disable_silent_rules=True,
         is_supported=False,
+        profile_stable_use=True,
         new_reads_stdin=True,
         required_use_one_of=True,
         sub_slotting=True,

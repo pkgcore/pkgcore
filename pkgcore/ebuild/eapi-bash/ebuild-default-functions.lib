@@ -3,34 +3,6 @@
 # Copyright 2005-2012 Brian Harring <ferringb@gmail.com>: BSD/GPL2
 # Copyright 2004-2006 Gentoo Foundation: GPL2
 
-portageq() {
-	if [[ $EBUILD_PHASE == depend ]]; then
-		die "portageq calls in depends phase aren't allowed"
-	fi
-	local command="$1"
-	shift
-	# suppress sandbox for the invocation; do this to avoid things like .pyc generation
-	# being snagged by the sandbox
-	local portageq_str=portageq
-	${PKGCORE_DISABLE_COMPAT-false} && portageq_str=query
-	SANDBOX_ON=0 PYTHONPATH="$PKGCORE_PYTHONPATH" "${PKGCORE_PYTHON_BINARY}" \
-		"${PKGCORE_BIN_PATH}/pinspect" ${portageq_str} "${command}" \
-			--eapi "${EAPI:--1}" --use "${USE}" "$@"
-	local ret="$?"
-	[[ "$ret" == 127 ]] && die "pinspect couldn't be found; broken pkgcore installation?"
-	return $(( $ret ))
-}
-
-has_version()
-{
-	PKGCORE_DISABLE_COMPAT=true portageq 'has_version' "$1"
-}
-
-best_version()
-{
-	PKGCORE_DISABLE_COMPAT=true portageq 'best_version' "$1"
-}
-
 # sandbox support functions
 addread()
 {

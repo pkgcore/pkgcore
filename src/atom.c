@@ -240,18 +240,14 @@ parse_use_deps(PyObject *atom_str, char **p_ptr, PyObject **use_ptr, int allow_d
 }
 
 static int
-parse_slot_deps(PyObject *atom_str, char **p_ptr, PyObject **slots_ptr)
+parse_slot_deps(PyObject *atom_str, char **p_ptr, PyObject **slot_ptr)
 {
 	char *p = *p_ptr;
 	char *start = p;
 	char check_valid_first_char = 1;
 	Py_ssize_t len = 1;
-	PyObject *slots = NULL;
 	while('\0' != *p && ':' != *p && '[' != *p) {
-		if (',' == *p) {
-			len++;
-			check_valid_first_char = 1;
-		} else if (check_valid_first_char) {
+		if (check_valid_first_char) {
 			if (INVALID_SLOT_FIRST_CHAR(*p)) {
 				Err_SetMalformedAtom(atom_str,
 					"invalid first char of slot dep; must not be '-'");
@@ -266,61 +262,19 @@ parse_slot_deps(PyObject *atom_str, char **p_ptr, PyObject **slots_ptr)
 		p++;
 	}
 	char *end = p;
-	if(NULL == (slots = PyTuple_New(len)))
-		return 1;
 
-	Py_ssize_t idx = 0;
-	PyObject *s;
-	p = len > 1 ? start : p;
-	while(end != p) {
-		if(',' == *p) {
-			// flag...
-			if(start == p) {
-				Err_SetMalformedAtom(atom_str,
-					"invalid slot dep; all slots must be non empty");
-				goto cleanup_slot_processing;
-			}
-			s = PyString_FromStringAndSize(start, p - start);
-			if(!s)
-				goto cleanup_slot_processing;
-			PyTuple_SET_ITEM(slots, idx, s);
-			idx++;
-			start = p + 1;
-		}
-		p++;
-	}
-	// one more to add...
-	if(start == p) {
+	if (start == end) {
 		Err_SetMalformedAtom(atom_str,
-			"invalid slot flag; all slots must be non empty");
+			"invalid slot dep; all slots must be non empty");
 		goto cleanup_slot_processing;
 	}
-	s = PyString_FromStringAndSize(start, end - start);
-	if(s) {
-		PyTuple_SET_ITEM(slots, idx, s);
-		if(len > 1) {
-			// bugger. need a list :/
-			PyObject *tmp = PyList_New(len);
-			if(!tmp)
-				goto cleanup_slot_processing;
-			if(PyList_SetSlice(tmp, 0, len, slots)) {
-				Py_DECREF(tmp);
-				goto cleanup_slot_processing;
-			} else if (PyList_Sort(tmp)) {
-				Py_DECREF(tmp);
-				goto cleanup_slot_processing;
-			}
-			for(idx=0; idx < len; idx++) {
-				PyTuple_SET_ITEM(slots, idx, PyList_GET_ITEM(tmp, idx));
-			}
-			Py_DECREF(tmp);
-		}
-		*slots_ptr = slots;
-		*p_ptr = p;
+
+	*slot_ptr = PyString_FromStringAndSize(start, end - start);
+	if (*slot_ptr) {
+		*p_ptr = end;
 		return 0;
 	}
 	cleanup_slot_processing:
-	Py_CLEAR(slots);
 	return 1;
 }
 
@@ -613,14 +567,17 @@ pkgcore_atom_init(PyObject *self, PyObject *args, PyObject *kwds)
 	// store remaining attributes...
 
 	long hash_val = PyObject_Hash(atom_str);
-	PyObject *tmp;
-	if(hash_val == -1 || !(tmp = PyLong_FromLong(hash_val)))
-		goto pkgcore_atom_parse_error;
-	if(PyObject_GenericSetAttr(self, pkgcore_atom_hash, tmp)) {
-		Py_DECREF(tmp);
+	PyObject *tmp = NULL;
+	if(hash_val != -1) {
+		tmp = PyLong_FromLong(hash_val);
+		if (tmp && PyObject_GenericSetAttr(self, pkgcore_atom_hash, tmp)) {
+			Py_CLEAR(tmp);
+		}
+	}
+	if (!tmp) {
 		goto pkgcore_atom_parse_error;
 	}
-	Py_DECREF(tmp);
+	Py_CLEAR(tmp);
 
 	if(0 == eapi_int) {
 		if(Py_None != use) {
@@ -646,11 +603,6 @@ pkgcore_atom_init(PyObject *self, PyObject *args, PyObject *kwds)
 	if(eapi_int != -1 && Py_None != repo_id) {
 		Err_SetMalformedAtom(atom_str,
 			"repository deps aren't allowed in EAPI <=2");
-		goto pkgcore_atom_parse_error;
-	}
-	if(eapi_int != -1 && Py_None != slot && PyTuple_GET_SIZE(slot) > 1) {
-		Err_SetMalformedAtom(atom_str,
-			"multiple slot deps aren't allowed in any supported EAPI");
 		goto pkgcore_atom_parse_error;
 	}
 
@@ -859,20 +811,10 @@ internal_pkgcore_atom_getattr(PyObject *self, PyObject *attr)
 		idx++;
 	}
 	if(slot != Py_None) {
-		tmp = NULL;
-		if(!PyTuple_CheckExact(slot)) {
-			PyErr_SetString(PyExc_TypeError, "slot must be tuple or None");
+		tmp = PyObject_CallFunctionObjArgs(pkgcore_atom_SlotDep, slot, NULL);
+		if(!tmp)
 			goto pkgcore_atom_getattr_error;
-		}
-		if(PyTuple_GET_SIZE(slot) == 0) {
-			if(_PyTuple_Resize(&tup, PyTuple_GET_SIZE(tup) - 1))
-				goto pkgcore_atom_getattr_error;
-		} else {
-			if (! (tmp = PyObject_CallObject(pkgcore_atom_SlotDep, slot))) {
-				goto pkgcore_atom_getattr_error;
-			}
-			PyTuple_SET_ITEM(tup, idx, tmp);
-		}
+		PyTuple_SET_ITEM(tup, idx, tmp);
 		idx++;
 	}
 	if(use != Py_None) {

@@ -78,11 +78,11 @@ class TestWorldFile(TestFileList):
         s = self.gen_pkgset("dev-util/bsdiff")
         s.add(atom("dev-util/foon"))
         s.add(atom("=dev-util/lib-1"))
-        s.add(atom("dev-util/mylib:2,3"))
+        s.add(atom("dev-util/mylib:2"))
         s.flush()
         self.assertEqual(sorted(x.strip() for x in open(self.fn)),
             sorted(("dev-util/bsdiff", "dev-util/foon", "dev-util/lib",
-                "dev-util/mylib:2", "dev-util/mylib:3")))
+                "dev-util/mylib:2")))
 
     def test_remove(self):
         s = self.gen_pkgset("dev-util/diffball\ndev-util/bsdiff")

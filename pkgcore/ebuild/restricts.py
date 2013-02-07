@@ -132,12 +132,8 @@ class SlotDep(packages.PackageRestriction):
     __slots__ = ()
     __instance_caching__ = True
 
-    def __init__(self, *slots, **kwds):
-        v = map(values.StrExactMatch, slots)
-        if len(v) == 1:
-            v = v[0]
-        else:
-            v = values.OrRestriction(*v)
+    def __init__(self, slot, **kwds):
+        v = values.StrExactMatch(slot)
         return packages.PackageRestriction.__init__(self,
             "slot", v, negate=kwds.get("negate", False))
 

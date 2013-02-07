@@ -3,8 +3,10 @@ Pkgcore Release Notes
 
 See ChangeLog for full commit logs; this is summarized/major changes.
 
-
 pkgcore trunk:
+
+* Support for multiple slots in a single atom dependency was removed;
+  never made it into a mainline EAPI and isn't useful these days.
 
 * Packages with unsupported EAPIs are now automasked.  Longer term,
   proper exposing of the masking reason will be implemented- in the interim,

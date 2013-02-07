@@ -20,6 +20,11 @@ class Test_native_atom(TestCase):
 
     kls = staticmethod(kls)
 
+    def test_removed_features(self):
+        # Ensure multi-slots no longer are allowed.
+        self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/diffball:1,2")
+        self.assertEqual(self.kls("dev-util/diffball:1").slot, "1")
+
     def test_solutions(self):
         d = self.kls("=dev-util/diffball-0.7.1:2")
         self.assertEqual(list(d.iter_dnf_solutions()), [[d]])
@@ -34,7 +39,7 @@ class Test_native_atom(TestCase):
 
     def test_str_hash(self):
         for s in ("dev-util/diffball", "=dev-util/diffball-0.7.1",
-            ">foon/bar-1:2,3[-4,3]", "=foon/bar-2*", "~foon/bar-2.3",
+            ">foon/bar-1:2[-4,3]", "=foon/bar-2*", "~foon/bar-2.3",
             "!dev-util/diffball", "!=dev-util/diffball-0.7*",
             "foon/bar::gentoo", ">=foon/bar-10_alpha1:1::gentoo[-not,use]",
             "!!dev-util/diffball[use]"):
@@ -61,7 +66,7 @@ class Test_native_atom(TestCase):
 
 
     def test_iter(self):
-        d = self.kls("!>=dev-util/diffball-0.7:1,2::gentoo[use,x]")
+        d = self.kls("!>=dev-util/diffball-0.7:1::gentoo[use,x]")
         self.assertEqual(list(d), list(d.restrictions))
 
     def test_pickling(self):
@@ -218,11 +223,8 @@ class Test_native_atom(TestCase):
         self.assertFalse(self.kls("%s:0" % astr).match(c))
         self.assertTrue(self.kls("%s:1" % astr).match(c))
         self.assertFalse(self.kls("%s:2" % astr).match(c))
-        self.assertTrue(self.kls("%s:0,1" % astr).match(c))
-        self.assertFalse(self.kls("%s:0,2" % astr).match(c))
         # note the above isn't compliant with eapi2/3; thus this test
-        self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/foo:0,2", eapi=2)
-        self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/foo:0,2", eapi=3)
+        self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/foo:0", eapi=0)
 
         # shouldn't puke, but has, thus checking"
         self.kls("sys-libs/db:4.4")
@@ -449,8 +451,6 @@ class Test_native_atom(TestCase):
         # slots.
         self.assertNotEqual2(self.kls('cat/pkg:1'), self.kls('cat/pkg'))
         self.assertEqual2(self.kls('cat/pkg:2'), self.kls('cat/pkg:2'))
-        self.assertEqual2(self.kls('cat/pkg:2,1'), self.kls('cat/pkg:2,1'))
-        self.assertEqual2(self.kls('cat/pkg:2,1'), self.kls('cat/pkg:1,2'))
         for lesser, greater in (('0.1', '1'), ('1', '1-r1'), ('1.1', '1.2')):
             self.assertTrue(self.kls('=d/b-%s' % lesser) <
                 self.kls('=d/b-%s' % greater),

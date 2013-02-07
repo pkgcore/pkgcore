@@ -122,24 +122,22 @@ def native_init(self, atom, negate_vers=False, eapi=-1):
         else:
             sf(self, "repo_id", None)
         # slot dep.
-        slots = tuple(sorted(atom[slot_start+1:].split(",")))
-        if not all(slots):
+        slot = atom[slot_start+1:]
+        if not slot:
             # if the slot char came in only due to repo_id, force slots to None
-            if len(slots) == 1 and i2 != -1:
-                slots = None
-            else:
+            if i2 == -1:
                 raise errors.MalformedAtom(orig_atom,
                     "empty slots aren't allowed")
+            slot = None
         else:
-            for x in slots:
-                if x[0] in '-.':
-                    raise errors.MalformedAtom(orig_atom,
-                        "invalid first char of slot dep '%s' (must not begin with a hyphen or a dot)" % x)
-                if not valid_slot_chars.issuperset(x):
-                   raise errors.MalformedAtom(orig_atom,
-                       "invalid char spotted in slot dep '%s'" % x)
+            if slot[0] in '-.':
+                raise errors.MalformedAtom(orig_atom,
+                    "invalid first char of slot dep '%s' (must not begin with a hyphen or a dot)" % slot)
+            elif not valid_slot_chars.issuperset(slot):
+                raise errors.MalformedAtom(orig_atom,
+                    "invalid char spotted in slot dep '%s'" % slot)
 
-        sf(self, "slot", slots)
+        sf(self, "slot", slot)
         atom = atom[:slot_start]
     else:
         sf(self, "slot", None)
@@ -192,9 +190,6 @@ def native_init(self, atom, negate_vers=False, eapi=-1):
         if self.repo_id is not None:
             raise errors.MalformedAtom(orig_atom,
                 "repo_id atoms aren't supported for eapi %i" % eapi)
-        if self.slot and len(self.slot) > 1:
-            raise errors.MalformedAtom(orig_atom,
-                "multiple slot restrictions not supported for eapi %s" % eapi)
     if use_start != -1 and slot_start != -1 and use_start < slot_start:
         raise errors.MalformedAtom(orig_atom,
             "slot restriction must proceed use")

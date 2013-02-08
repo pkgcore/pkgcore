@@ -4,14 +4,14 @@
 from snakeoil.pickling import dumps, loads
 from snakeoil.test import mk_cpy_loadable_testcase
 from snakeoil.compatibility import cmp
-from pkgcore.test import TestCase
+from pkgcore import test
 from pkgcore.ebuild.cpv import CPV
 from pkgcore.ebuild import atom, errors, restricts
 from pkgcore.test.misc import FakePkg, FakeRepo
 from pkgcore.restrictions.boolean import AndRestriction
 from snakeoil.currying import partial
 
-class Test_native_atom(TestCase):
+class Test_native_atom(test.TestRestriction):
 
     class kls(atom.atom):
         locals().update(atom.native_atom_overrides.iteritems())
@@ -82,17 +82,17 @@ class Test_native_atom(TestCase):
             "dev-util/diffball-1.*")
 
         a = self.kls("=dev-util/diffball-1.2*")
-        self.assertTrue(a.match(FakePkg("dev-util/diffball-1.2")))
-        self.assertTrue(a.match(FakePkg("dev-util/diffball-1.2.0")))
-        self.assertTrue(a.match(FakePkg("dev-util/diffball-1.2-r1")))
-        self.assertTrue(a.match(FakePkg("dev-util/diffball-1.2_alpha")))
-        self.assertFalse(a.match(FakePkg("dev-util/diffball-1")))
+        self.assertMatch(a, FakePkg("dev-util/diffball-1.2"))
+        self.assertMatch(a, FakePkg("dev-util/diffball-1.2.0"))
+        self.assertMatch(a, FakePkg("dev-util/diffball-1.2-r1"))
+        self.assertMatch(a, FakePkg("dev-util/diffball-1.2_alpha"))
+        self.assertNotMatch(a, FakePkg("dev-util/diffball-1"))
 
     def test_nonversioned(self):
         a = self.kls("kde-base/kde")
-        self.assertTrue(a.match(CPV.unversioned("kde-base/kde")))
-        self.assertFalse(a.match(CPV.unversioned("kde-base/kde2")))
-        self.assertTrue(a.match(CPV.versioned("kde-base/kde-3")))
+        self.assertMatch(a, CPV.unversioned("kde-base/kde"))
+        self.assertNotMatch(a, CPV.unversioned("kde-base/kde2"))
+        self.assertMatch(a, CPV.versioned("kde-base/kde-3"))
 
     def make_atom(self, s, ops, ver):
         l = []
@@ -118,26 +118,26 @@ class Test_native_atom(TestCase):
                 ops = (ops,)
             a = self.make_atom(astr, ops, ver)
             if -1 in ops:
-                self.assertTrue(a.match(ge_cpv))
-                self.assertTrue(a.match(eq_cpv))
-                self.assertFalse(a.match(le_cpv))
+                self.assertMatch(a, ge_cpv)
+                self.assertMatch(a, eq_cpv)
+                self.assertNotMatch(a, le_cpv)
             if 0 in ops:
                 self.assertTrue(a.match(eq_cpv))
                 if ops == (0,):
-                    self.assertFalse(a.match(le_cpv))
-                    self.assertFalse(a.match(ge_cpv))
+                    self.assertNotMatch(a, le_cpv)
+                    self.assertNotMatch(a, ge_cpv)
             if 1 in ops:
-                self.assertFalse(a.match(ge_cpv))
-                self.assertTrue(a.match(eq_cpv))
-                self.assertTrue(a.match(le_cpv))
+                self.assertNotMatch(a, ge_cpv)
+                self.assertMatch(a, eq_cpv)
+                self.assertMatch(a, le_cpv)
 
     def test_norev(self):
         astr = "app-arch/tarsync"
         a = self.kls("~%s-1" % astr)
-        self.assertTrue(a.match(CPV.versioned("%s-1" % astr)))
-        self.assertTrue(a.match(CPV.versioned("%s-1-r1" % astr)))
-        self.assertTrue(a.match(CPV.versioned("%s-1-r0" % astr)))
-        self.assertFalse(a.match(CPV.versioned("%s-2" % astr)))
+        self.assertMatch(a, CPV.versioned("%s-1" % astr))
+        self.assertMatch(a, CPV.versioned("%s-1-r1" % astr))
+        self.assertMatch(a, CPV.versioned("%s-1-r0" % astr))
+        self.assertNotMatch(a, CPV.versioned("%s-2" % astr))
         self.assertRaises(errors.MalformedAtom, self.kls, "~%s-r1" % astr)
         self.assertRaises(errors.MalformedAtom, self.kls, "~%s-r2" % astr)
         # special case- yes -r0 effectively is None, but -r shouldn't be used
@@ -167,17 +167,17 @@ class Test_native_atom(TestCase):
             kls('%s[x(-)]' % astr)
             self.assertRaises(errors.MalformedAtom, kls, '%s[x(+-)]' % astr)
             self.assertRaises(errors.MalformedAtom, kls, '%s[x(@)]' % astr)
-            self.assertTrue(kls("%s[debug(+)]" % astr).match(c))
-            self.assertTrue(kls("%s[debug(-)]" % astr).match(c))
-            self.assertTrue(kls("%s[missing(+)]" % astr).match(c))
-            self.assertFalse(kls("%s[missing(-)]" % astr).match(c))
-            self.assertTrue(kls("%s[missing(+)]" % astr).match(c))
-            self.assertTrue(kls("%s[-missing(-)]" % astr).match(c))
-            self.assertFalse(kls("%s[-missing(+)]" % astr).match(c))
+            self.assertMatch(kls("%s[debug(+)]" % astr), c)
+            self.assertMatch(kls("%s[debug(-)]" % astr), c)
+            self.assertMatch(kls("%s[missing(+)]" % astr), c)
+            self.assertNotMatch(kls("%s[missing(-)]" % astr), c)
+            self.assertMatch(kls("%s[missing(+)]" % astr), c)
+            self.assertMatch(kls("%s[-missing(-)]" % astr), c)
+            self.assertNotMatch(kls("%s[-missing(+)]" % astr), c)
 
-            self.assertTrue(kls("%s[-missing(-),debug]" % astr).match(c))
-            self.assertFalse(kls("%s[-missing(+),debug(+)]" % astr).match(c))
-            self.assertTrue(kls("%s[missing(+),debug(+)]" % astr).match(c))
+            self.assertMatch(kls("%s[-missing(-),debug]" % astr), c)
+            self.assertNotMatch(kls("%s[-missing(+),debug(+)]" % astr), c)
+            self.assertMatch(kls("%s[missing(+),debug(+)]" % astr), c)
         else:
             self.assertRaises(errors.MalformedAtom, kls, '%s[x(+)]' % astr)
             self.assertRaises(errors.MalformedAtom, kls, '%s[x(-)]' % astr)
@@ -194,10 +194,10 @@ class Test_native_atom(TestCase):
         self.assertRaises(errors.MalformedAtom, kls, "%s[-+x]" % astr)
         self.assertRaises(errors.MalformedAtom, kls, "%s[--x]" % astr)
 
-        self.assertTrue(kls("%s[debug]" % astr).match(c))
-        self.assertFalse(kls("%s[-debug]" % astr).match(c))
-        self.assertTrue(kls("%s[debug,-not]" % astr).match(c))
-        self.assertTrue(kls("%s:1[debug,-not]" % astr).match(c))
+        self.assertMatch(kls("%s[debug]" % astr), c)
+        self.assertNotMatch(kls("%s[-debug]" % astr), c)
+        self.assertMatch(kls("%s[debug,-not]" % astr), c)
+        self.assertMatch(kls("%s:1[debug,-not]" % astr), c)
 
         self.assertRaises(errors.MalformedAtom, kls, "%s[]" % astr)
         self.assertRaises(errors.MalformedAtom, kls, "%s[-]" % astr)
@@ -220,9 +220,9 @@ class Test_native_atom(TestCase):
     def test_slot(self):
         astr = "dev-util/confcache"
         c = FakePkg("%s-1" % astr, slot=1)
-        self.assertFalse(self.kls("%s:0" % astr).match(c))
-        self.assertTrue(self.kls("%s:1" % astr).match(c))
-        self.assertFalse(self.kls("%s:2" % astr).match(c))
+        self.assertNotMatch(self.kls("%s:0" % astr), c)
+        self.assertMatch(self.kls("%s:1" % astr), c)
+        self.assertNotMatch(self.kls("%s:2" % astr), c)
         # note the above isn't compliant with eapi2/3; thus this test
         self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/foo:0", eapi=0)
 
@@ -328,10 +328,10 @@ class Test_native_atom(TestCase):
     def test_repo_id(self):
         astr = "dev-util/bsdiff"
         c = FakePkg("%s-1" % astr, repo=FakeRepo(repoid="gentoo-x86A_"), slot="0")
-        self.assertTrue(self.kls("%s" % astr).match(c))
-        self.assertTrue(self.kls("%s::gentoo-x86A_" % astr).match(c))
-        self.assertTrue(self.kls("%s:0::gentoo-x86A_" % astr).match(c))
-        self.assertFalse(self.kls("%s::gentoo2" % astr).match(c))
+        self.assertMatch(self.kls("%s" % astr), c)
+        self.assertMatch(self.kls("%s::gentoo-x86A_" % astr), c)
+        self.assertMatch(self.kls("%s:0::gentoo-x86A_" % astr), c)
+        self.assertNotMatch(self.kls("%s::gentoo2" % astr), c)
         self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/foon:1:")
         self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/foon::")
         self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/foon::-gentoo-x86")
@@ -469,20 +469,19 @@ class Test_native_atom(TestCase):
         self.assertTrue(self.kls("!=d/b-1") < self.kls("!!=d/b-1"))
         self.assertEqual(self.kls("!=d/b-1"), self.kls("!=d/b-1"))
 
-
     def test_compatibility(self):
-        self.assertFalse(self.kls('=dev-util/diffball-0.7').match(
-            FakePkg('dev-util/diffball-0.7.0')))
+        self.assertNotMatch(self.kls('=dev-util/diffball-0.7'),
+            FakePkg('dev-util/diffball-0.7.0'))
         # see bug http://bugs.gentoo.org/152127
-        self.assertFalse(self.kls('>=sys-apps/portage-2.1.0_pre3-r5').match(
-            FakePkg('sys-apps/portage-2.1_pre3-r5')))
+        self.assertNotMatch(self.kls('>=sys-apps/portage-2.1.0_pre3-r5'),
+            FakePkg('sys-apps/portage-2.1_pre3-r5'))
 
     def test_combined(self):
         p = FakePkg('dev-util/diffball-0.7', repo=FakeRepo(repoid='gentoo'))
-        self.assertTrue(self.kls('=dev-util/diffball-0.7::gentoo').match(p))
-        self.assertTrue(self.kls('dev-util/diffball::gentoo').match(p))
-        self.assertFalse(self.kls('=dev-util/diffball-0.7:1::gentoo').match(
-            FakePkg('dev-util/diffball-0.7', slot='2')))
+        self.assertMatch(self.kls('=dev-util/diffball-0.7::gentoo'), p)
+        self.assertMatch(self.kls('dev-util/diffball::gentoo'), p)
+        self.assertNotMatch(self.kls('=dev-util/diffball-0.7:1::gentoo'),
+            FakePkg('dev-util/diffball-0.7', slot='2'))
 
     def test_unversioned(self):
         self.assertTrue(self.kls("dev-util/diffball").is_simple)

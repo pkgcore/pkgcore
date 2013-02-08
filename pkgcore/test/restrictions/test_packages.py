@@ -35,7 +35,7 @@ class native_PackageRestrictionTest(TestRestriction):
     def test_matching(self):
         strexact = values.StrExactMatch
 
-        args = [malleable_obj(category="foon", package="dar")]
+        args = malleable_obj(category="foon", package="dar")
         self.assertMatches(self.kls("category", strexact("foon")), args)
         self.assertMatches(self.kls("package", strexact("dar")), args)
         self.assertNotMatches(self.kls("package", strexact("dar"), negate=True),

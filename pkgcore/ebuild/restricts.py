@@ -138,6 +138,17 @@ class SlotDep(packages.PackageRestriction):
             "slot", v, negate=kwds.get("negate", False))
 
 
+class SubSlotDep(packages.PackageRestriction):
+
+    __slots__ = ()
+    __instance_caching__ = True
+
+    def __init__(self, slot, **kwds):
+        v = values.StrExactMatch(slot)
+        return packages.PackageRestriction.__init__(self,
+            "subslot", v, negate=kwds.get("negate", False))
+
+
 class CategoryDep(packages.PackageRestriction):
 
     __slots__ = ()

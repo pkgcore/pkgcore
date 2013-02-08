@@ -238,6 +238,51 @@ class Test_native_atom(test.TestRestriction):
         self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/foo:.1")
         self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/foo:1@2")
 
+    def test_slot_operators_and_subslots(self):
+        self.assertRaises(errors.MalformedAtom, self.kls, "sys-libs/db:*", eapi=4)
+        self.kls("sys-libs/db:*", eapi=5)
+        self.assertRaises(errors.MalformedAtom, self.kls, "sys-libs/db:=", eapi=4)
+        self.kls("sys-libs/db:=", eapi=5)
+        self.assertRaises(errors.MalformedAtom, self.kls, "sys-libs/db:==", eapi=5)
+        self.assertRaises(errors.MalformedAtom, self.kls, "sys-libs/db:1=", eapi=4)
+        self.assertRaises(errors.MalformedAtom, self.kls, "sys-libs/db:2/3.0=", eapi=4)
+        self.assertRaises(errors.MalformedAtom, self.kls, "sys-libs/db:2/3.0", eapi=1)
+        self.assertRaises(errors.MalformedAtom, self.kls, "sys-libs/db:/=", eapi=5)
+        self.assertRaises(errors.MalformedAtom, self.kls, "sys-libs/db:/1=", eapi=5)
+        self.assertRaises(errors.MalformedAtom, self.kls, "sys-libs/db:1/=", eapi=5)
+        self.assertRaises(errors.MalformedAtom, self.kls, "sys-libs/db:*1/=", eapi=5)
+
+        for subslot in ("/1.0", ""):
+            self.assertRaises(errors.MalformedAtom, self.kls, "sys-libs/db:*4%s" % subslot, eapi=5)
+            self.assertRaises(errors.MalformedAtom, self.kls, "sys-libs/db:4%s*" % subslot, eapi=5)
+            self.assertRaises(errors.MalformedAtom, self.kls, "sys-libs/db:=4%s" % subslot, eapi=5)
+            self.kls("sys-libs/db:4%s=" % subslot, eapi=5)
+            self.kls("sys-libs/db:3.2%s=" % subslot, eapi=5)
+            self.assertRaises(errors.MalformedAtom, self.kls, "sys-libs/db:4%s==" % subslot, eapi=5)
+
+        def check_it(text, slot, subslot, operator):
+            obj = self.kls("sys-libs/db%s" % text)
+            self.assertEqual(obj.slot, slot)
+            self.assertEqual(obj.subslot, subslot)
+            self.assertEqual(obj.slot_operator, operator)
+        check_it(":4", "4", None, None)
+        check_it(":=", None, None, "=")
+        check_it(":4=", "4", None, "=")
+        check_it(":4/0.4=", "4", "0.4", "=")
+        check_it(":*", None, None, "*")
+
+        # Verify restrictions.
+        self.assertMatch(self.kls("sys-libs/db:1="),
+            FakePkg("sys-libs/db-1", slot="1"))
+        self.assertMatch(self.kls("sys-libs/db:1/2="),
+            FakePkg("sys-libs/db-1", slot="1", subslot="2"))
+        self.assertNotMatch(self.kls("sys-libs/db:1/2.3="),
+            FakePkg("sys-libs/db-1", slot="1", subslot="2"))
+        self.assertNotMatch(self.kls("sys-libs/db:1/2.3="),
+            FakePkg("sys-libs/db-1", slot="1"))
+        self.assertMatch(self.kls("sys-libs/db:1a.2/2.3"),
+            FakePkg("sys-libs/db-1", slot="1a.2", subslot="2.3"))
+
     def test_getattr(self):
         # assert it explodes for bad attr access.
         obj = self.kls("dev-util/diffball")
@@ -419,7 +464,6 @@ class Test_native_atom(test.TestRestriction):
         self.assertNotEqual(c, 0,
             msg="checking cmp for %r, %r, not supposed to be equal, got %i"
                 % (o2, o1, c))
-
 
     def test_comparison(self):
         self.assertEqual2(self.kls('cat/pkg'), self.kls('cat/pkg'))

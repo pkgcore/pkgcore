@@ -81,13 +81,16 @@ class FakeRepo(object):
 
 
 class FakePkg(FakePkgBase):
-    def __init__(self, cpv, slot=0, iuse=(), use=(), repo=FakeRepo(), restrict=''):
+    def __init__(self, cpv, slot="0", subslot=None, iuse=(), use=(), repo=FakeRepo(), restrict=''):
         if isinstance(repo, str):
             repo = FakeRepo(repo)
         elif isinstance(repo, (tuple, list)) and len(repo) < 3:
             repo = FakeRepo(*repo)
         FakePkgBase.__init__(self, cpv, repo=factory(repo))
         object.__setattr__(self, "slot", str(slot))
+        if subslot is None:
+            subslot = slot
+        object.__setattr__(self, "subslot", subslot)
         object.__setattr__(self, "restrict", DepSet.parse(restrict, str))
         object.__setattr__(self, "use", set(use))
         object.__setattr__(self, "iuse", set(iuse))

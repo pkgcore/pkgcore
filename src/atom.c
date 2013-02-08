@@ -22,6 +22,7 @@ static PyObject *pkgcore_atom_InvalidCPV_Exc = NULL;
 // restricts.
 static PyObject *pkgcore_atom_VersionMatch = NULL;
 static PyObject *pkgcore_atom_SlotDep = NULL;
+static PyObject *pkgcore_atom_SubSlotDep = NULL;
 static PyObject *pkgcore_atom_RepositoryDep = NULL;
 static PyObject *pkgcore_atom_CategoryDep = NULL;
 static PyObject *pkgcore_atom_PackageDep = NULL;
@@ -55,6 +56,8 @@ static PyObject *pkgcore_atom_fullver = NULL;
 static PyObject *pkgcore_atom_hash = NULL;
 static PyObject *pkgcore_atom_use = NULL;
 static PyObject *pkgcore_atom_slot = NULL;
+static PyObject *pkgcore_atom_subslot = NULL;
+static PyObject *pkgcore_atom_slot_operator = NULL;
 static PyObject *pkgcore_atom_repo_id = NULL;
 static PyObject *pkgcore_atom_restrict_repo_id = NULL;
 static PyObject *pkgcore_atom_blocks = NULL;
@@ -239,43 +242,92 @@ parse_use_deps(PyObject *atom_str, char **p_ptr, PyObject **use_ptr, int allow_d
 	return -1;
 }
 
-static int
-parse_slot_deps(PyObject *atom_str, char **p_ptr, PyObject **slot_ptr)
+static inline PyObject *
+validate_slot_chunk(PyObject *atom_str, char **position, char allow_subslots,
+	char allow_trailing_operator)
 {
-	char *p = *p_ptr;
-	char *start = p;
+	char *start = *position;
+	char *p = start;
+
 	char check_valid_first_char = 1;
-	Py_ssize_t len = 1;
+
 	while('\0' != *p && ':' != *p && '[' != *p) {
 		if (check_valid_first_char) {
 			if (INVALID_SLOT_FIRST_CHAR(*p)) {
 				Err_SetMalformedAtom(atom_str,
 					"invalid first char of slot dep; must not be '-'");
-				goto cleanup_slot_processing;
+				return NULL;
 			}
 			check_valid_first_char = 0;
-		} else if(!VALID_SLOT_CHAR(*p)) {
+		}
+		if(!VALID_SLOT_CHAR(*p)) {
+			if(allow_subslots && '/' == *p) {
+				break;
+			} else if(allow_trailing_operator && '=' == *p &&
+				('\0' == p[1] || ':' == p[1] || '[' == p[1])) {
+				// trailing operator.  This is allowed.
+				break;
+			}
 			Err_SetMalformedAtom(atom_str,
-				"invalid char in slot dep; each flag must be a-Z0-9_.-+");
-			goto cleanup_slot_processing;
+				"invalid char in slot dep; allowed characters are a-Z0-9_.-+");
+			return NULL;
 		}
 		p++;
 	}
-	char *end = p;
 
-	if (start == end) {
+	if (*position == p) {
 		Err_SetMalformedAtom(atom_str,
-			"invalid slot dep; all slots must be non empty");
-		goto cleanup_slot_processing;
+			"invalid slot dep; an empty slot target is not allowed");
+		return NULL;
 	}
 
-	*slot_ptr = PyString_FromStringAndSize(start, end - start);
-	if (*slot_ptr) {
-		*p_ptr = end;
-		return 0;
+	*position = p;
+	return PyString_FromStringAndSize(start, p - start);
+}
+
+static int
+parse_slot_deps(PyObject *atom_str, char **p_ptr, PyObject **slot_operator,
+	PyObject **slot_ptr, PyObject **subslot_ptr, char allow_slot_operators)
+{
+	char *p = *p_ptr;
+	*slot_operator = *slot_ptr = *subslot_ptr = NULL;
+	if(allow_slot_operators) {
+		if('*' == *p || '=' == *p) {
+			if('\0' != p[1] && ':' != p[1] && '[' != p[1]) {
+				Err_SetMalformedAtom(atom_str,
+					"'*' and '=' slot operators take no slot target");
+				return 1;
+			}
+			*slot_operator = PyString_FromStringAndSize(p, 1);
+			if(NULL == *slot_operator)
+				return 1;
+			*p_ptr = p + 1;
+			return 0;
+		}
 	}
-	cleanup_slot_processing:
-	return 1;
+	*slot_ptr = validate_slot_chunk(atom_str, &p, allow_slot_operators,
+		allow_slot_operators);
+	if(!(*slot_ptr)) {
+		return 1;
+	}
+	if ('/' == *p) {
+		// subslot processing.
+		p++;
+		*subslot_ptr = validate_slot_chunk(atom_str, &p, 0, 1);
+		if(!(*subslot_ptr)) {
+			Py_CLEAR(*slot_ptr);
+			return 1;;
+		}
+	}
+	if('=' == *p) {
+		// only possible in this mode, assuming no fuck ups occured.
+		assert(allow_slot_operators);
+		Py_INCREF(pkgcore_atom_op_eq);
+		*slot_operator = pkgcore_atom_op_eq;
+		p++;
+	}
+	*p_ptr = p;
+	return 0;
 }
 
 static int
@@ -457,7 +509,8 @@ pkgcore_atom_init(PyObject *self, PyObject *args, PyObject *kwds)
 	// look for : or [
 	atom_start = p;
 	char *cpv_end = NULL;
-	PyObject *slot = NULL, *use = NULL, *repo_id = NULL;
+	PyObject *use = NULL, *repo_id = NULL;
+	PyObject *slot = NULL, *subslot = NULL, *slot_operator = NULL;
 	while('\0' != *p && ':' != *p && '[' != *p) {
 		p++;
 	}
@@ -469,7 +522,8 @@ pkgcore_atom_init(PyObject *self, PyObject *args, PyObject *kwds)
 				"empty slot restriction isn't allowed");
 			goto pkgcore_atom_parse_error;
 		} else if(':' != *p) {
-			if(parse_slot_deps(atom_str, &p, &slot)) {
+			if(parse_slot_deps(atom_str, &p, &slot_operator, &slot, &subslot,
+				(eapi_int >= 5 || eapi_int < 0))) {
 				goto pkgcore_atom_parse_error;
 			}
 			if(':' == *p) {
@@ -551,18 +605,13 @@ pkgcore_atom_init(PyObject *self, PyObject *args, PyObject *kwds)
 			goto pkgcore_atom_parse_error;
 		}
 	}
-	if(!use) {
-		Py_INCREF(Py_None);
-		use = Py_None;
-	}
-	if(!slot) {
-		Py_INCREF(Py_None);
-		slot = Py_None;
-	}
-	if(!repo_id) {
-		Py_INCREF(Py_None);
-		repo_id = Py_None;
-	}
+	#define set_if_null(ptr) if(!(ptr)) { Py_INCREF(Py_None); (ptr) = Py_None; }
+	set_if_null(use);
+	set_if_null(slot);
+	set_if_null(subslot);
+	set_if_null(slot_operator);
+	set_if_null(repo_id);
+	#undef set_if_null
 
 	// store remaining attributes...
 
@@ -610,12 +659,17 @@ pkgcore_atom_init(PyObject *self, PyObject *args, PyObject *kwds)
 	if(PyObject_GenericSetAttr(self, (attr_name), (val)))  \
 		goto pkgcore_atom_parse_error;
 
-	STORE_ATTR(pkgcore_atom_blocks, blocks ? Py_True : Py_False);
-	STORE_ATTR(pkgcore_atom_blocks_strongly,
-		(blocks && blocks != 2) ? Py_False : Py_True);
+	tmp = blocks ? Py_True : Py_False;
+	Py_INCREF(tmp);
+	STORE_ATTR(pkgcore_atom_blocks, tmp);
+	tmp = (blocks && blocks != 2) ? Py_False : Py_True;
+	Py_INCREF(tmp);
+	STORE_ATTR(pkgcore_atom_blocks_strongly, tmp);
 	STORE_ATTR(pkgcore_atom_op, op);
 	STORE_ATTR(pkgcore_atom_use, use);
 	STORE_ATTR(pkgcore_atom_slot, slot);
+	STORE_ATTR(pkgcore_atom_subslot, subslot);
+	STORE_ATTR(pkgcore_atom_slot_operator, slot_operator);
 	STORE_ATTR(pkgcore_atom_repo_id, repo_id);
 	STORE_ATTR(pkgcore_atom_negate_vers, negate_vers);
 	#undef STORE_ATTR
@@ -626,6 +680,8 @@ pkgcore_atom_init(PyObject *self, PyObject *args, PyObject *kwds)
 	Py_DECREF(op);
 	Py_CLEAR(use);
 	Py_CLEAR(slot);
+	Py_CLEAR(subslot);
+	Py_CLEAR(slot_operator);
 	Py_CLEAR(repo_id);
 	Py_CLEAR(negate_vers);
 	return NULL;
@@ -732,7 +788,7 @@ internal_pkgcore_atom_getattr(PyObject *self, PyObject *attr)
 	int failed = 1;
 
 	PyObject *op = NULL, *package = NULL, *category = NULL;
-	PyObject *use = NULL, *slot = NULL, *repo_id = NULL;
+	PyObject *use = NULL, *slot = NULL, *subslot = NULL, *repo_id = NULL;
 	PyObject *tup = NULL, *tmp = NULL;
 	PyObject *use_restrict = NULL;
 	Py_ssize_t use_len = 0;
@@ -743,9 +799,9 @@ internal_pkgcore_atom_getattr(PyObject *self, PyObject *attr)
 		return NULL;
 	}
 
-	#define MUST_LOAD(ptr, str)					 \
+	#define MUST_LOAD(ptr, str)			\
 	if(!((ptr) = PyObject_GetAttr(self, (str))))	\
-		return NULL;
+		goto pkgcore_atom_getattr_error;
 
 	MUST_LOAD(op, pkgcore_atom_op);
 	MUST_LOAD(package, pkgcore_atom_package);
@@ -753,8 +809,6 @@ internal_pkgcore_atom_getattr(PyObject *self, PyObject *attr)
 	MUST_LOAD(use, pkgcore_atom_use);
 	MUST_LOAD(slot, pkgcore_atom_slot);
 	MUST_LOAD(repo_id, pkgcore_atom_repo_id);
-
-	#undef MUST_LOAD
 
 	if(op != pkgcore_atom_op_none)
 		required++;
@@ -765,8 +819,16 @@ internal_pkgcore_atom_getattr(PyObject *self, PyObject *attr)
 			goto pkgcore_atom_getattr_error;
 		required += use_len;
 	}
-	if(slot != Py_None)
+	if(slot != Py_None) {
 		required++;
+		MUST_LOAD(subslot, pkgcore_atom_subslot);
+		if(subslot != Py_None) {
+			required++;
+		}
+	}
+
+	#undef MUST_LOAD
+
 	if(repo_id != Py_None)
 		required++;
 
@@ -816,6 +878,15 @@ internal_pkgcore_atom_getattr(PyObject *self, PyObject *attr)
 			goto pkgcore_atom_getattr_error;
 		PyTuple_SET_ITEM(tup, idx, tmp);
 		idx++;
+
+		assert(subslot);
+		if(subslot != Py_None) {
+			tmp = PyObject_CallFunctionObjArgs(pkgcore_atom_SubSlotDep, subslot, NULL);
+			if(!tmp)
+				goto pkgcore_atom_getattr_error;
+			PyTuple_SET_ITEM(tup, idx, tmp);
+			idx++;
+		}
 	}
 	if(use != Py_None) {
 		Py_ssize_t x = 0;
@@ -832,6 +903,7 @@ internal_pkgcore_atom_getattr(PyObject *self, PyObject *attr)
 	Py_XDECREF(package);
 	Py_XDECREF(use);
 	Py_XDECREF(slot);
+	Py_XDECREF(subslot);
 	Py_XDECREF(repo_id);
 	Py_XDECREF(use_restrict);
 	if(failed)
@@ -902,6 +974,7 @@ init_atom(void)
 	snakeoil_LOAD_MODULE(tmp, "pkgcore.ebuild.restricts");
 	snakeoil_LOAD_ATTR(pkgcore_atom_VersionMatch, tmp, "VersionMatch");
 	snakeoil_LOAD_ATTR(pkgcore_atom_SlotDep, tmp, "SlotDep");
+	snakeoil_LOAD_ATTR(pkgcore_atom_SubSlotDep, tmp, "SubSlotDep");
 	snakeoil_LOAD_ATTR(pkgcore_atom_CategoryDep, tmp, "CategoryDep");
 	snakeoil_LOAD_ATTR(pkgcore_atom_PackageDep, tmp, "PackageDep");
 	snakeoil_LOAD_ATTR(pkgcore_atom_RepositoryDep, tmp, "RepositoryDep");
@@ -931,6 +1004,8 @@ init_atom(void)
 	snakeoil_LOAD_STRING(pkgcore_atom_hash,		  "_hash");
 	snakeoil_LOAD_STRING(pkgcore_atom_use,		   "use");
 	snakeoil_LOAD_STRING(pkgcore_atom_slot,		  "slot");
+	snakeoil_LOAD_STRING(pkgcore_atom_subslot,	  "subslot");
+	snakeoil_LOAD_STRING(pkgcore_atom_slot_operator, "slot_operator");
 	snakeoil_LOAD_STRING(pkgcore_atom_repo_id,	   "repo_id");
 	snakeoil_LOAD_STRING(pkgcore_atom_restrict_repo_id,
 											"repo.repo_id");

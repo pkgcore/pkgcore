@@ -123,24 +123,55 @@ def native_init(self, atom, negate_vers=False, eapi=-1):
             sf(self, "repo_id", None)
         # slot dep.
         slot = atom[slot_start+1:]
+        slot_operator = subslot = None
         if not slot:
             # if the slot char came in only due to repo_id, force slots to None
             if i2 == -1:
                 raise errors.MalformedAtom(orig_atom,
-                    "empty slots aren't allowed")
+                    "Empty slot targets aren't allowed")
             slot = None
         else:
-            if slot[0] in '-.':
+            slots = (slot,)
+            if eapi not in (0, 1, 2, 3, 4):
+                if slot[0:1] in ("*", "="):
+                    if len(slot) > 1:
+                        raise errors.MalformedAtom(orig_atom,
+                            "Slot operators '*' and '=' do not take slot targets")
+                    slot_operator = slot
+                    slot, slots = None, ()
+                else:
+                    if slot.endswith('='):
+                        slot_operator = '='
+                        slot = slot[:-1]
+                    slots = slot.split('/', 1)
+            elif eapi == 0:
                 raise errors.MalformedAtom(orig_atom,
-                    "invalid first char of slot dep '%s' (must not begin with a hyphen or a dot)" % slot)
-            elif not valid_slot_chars.issuperset(slot):
-                raise errors.MalformedAtom(orig_atom,
-                    "invalid char spotted in slot dep '%s'" % slot)
+                    "slot dependencies aren't allowed in EAPI0")
 
+            for chunk in slots:
+                if not chunk:
+                    raise errors.MalformedAtom(orig_atom,
+                        "Empty slot targets aren't allowed")
+
+                if chunk[0] in '-.':
+                    raise errors.MalformedAtom(orig_atom,
+                        "Slot targets must not start with a hypen or dot: %r" % chunk)
+                elif not valid_slot_chars.issuperset(chunk):
+                    raise errors.MalformedAtom(orig_atom,
+                        "Invalid character(s) in slot target: %s" %
+                            ', '.join(map(repr, sorted(set(chunk).difference(valid_slot_chars)))))
+
+            if len(slots) == 2:
+                slot, subslot = slots
+
+        sf(self, "slot_operator", slot_operator)
         sf(self, "slot", slot)
+        sf(self, "subslot", subslot)
         atom = atom[:slot_start]
     else:
+        sf(self, "slot_operator", None)
         sf(self, "slot", None)
+        sf(self, "subslot", None)
         sf(self, "repo_id", None)
 
     sf(self, "blocks", atom[0] == "!")
@@ -245,7 +276,9 @@ def native__getattr__(self, attr):
                                   negate=self.negate_vers))
 
     if self.slot is not None:
-        r.append(restricts.SlotDep(*self.slot))
+        r.append(restricts.SlotDep(self.slot))
+        if self.subslot is not None:
+            r.append(restricts.SubSlotDep(self.subslot))
 
     if self.use is not None:
         r.extend(restricts._parse_nontransitive_use(self.use))
@@ -316,7 +349,8 @@ class atom(boolean.AndRestriction):
     # note we don't need _hash
     __slots__ = (
         "blocks", "blocks_strongly", "op", "cpvstr", "negate_vers",
-        "use", "slot", "category", "version", "revision", "fullver",
+        "use", "slot_operator", "slot", "subslot",
+        "category", "version", "revision", "fullver",
         "package", "key", "repo_id", "_hash")
 
     type = packages.package_type
@@ -326,7 +360,7 @@ class atom(boolean.AndRestriction):
     _evaluate_collapse = True
 
     __attr_comparison__ = ("cpvstr", "op", "blocks", "negate_vers",
-        "use", "slot", "repo_id")
+        "use", "slot", "subslot", "slot_operator", "repo_id")
 
     inject_richcmp_methods_from_cmp(locals())
     # hack; combine these 2 metaclasses at some point...

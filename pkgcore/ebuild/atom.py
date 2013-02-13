@@ -487,7 +487,9 @@ class atom(boolean.AndRestriction):
         if c:
             return c
 
-        c = cmp(self.slot, other.slot)
+        def f(v):
+            return '' if v is None else v
+        c = cmp(f(self.slot), f(other.slot))
         if c:
             return c
 

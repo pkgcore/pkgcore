@@ -394,11 +394,11 @@ class atom(boolean.AndRestriction):
                 atom = '!' + atom
         attrs = [atom]
         if self.use:
-            attrs.append('use=' + repr(self.use))
-        if self.slot:
-            attrs.append('slot=' + repr(self.slot))
-        if self.repo_id:
-            attrs.append('repoid=' + repr(self.repo_id))
+            attrs.append('use=%r' % (self.use,))
+        if self.slot is not None:
+            attrs.append('slot=%r' % (self.slot,))
+        if self.repo_id is not None:
+            attrs.append('repoid=%r' % (self.repo_id,))
         return '<%s %s @#%x>' % (
             self.__class__.__name__, ' '.join(attrs), id(self))
 
@@ -435,7 +435,7 @@ class atom(boolean.AndRestriction):
             else:
                 s = '!' + s
         if self.slot:
-            s += ":%s" % ",".join(self.slot)
+            s += ":%s" % (self.slot,)
         if self.repo_id:
             s += "::%s" % self.repo_id
         if self.use:

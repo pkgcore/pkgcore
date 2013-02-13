@@ -7,10 +7,11 @@ pkgset based around loading a list of atoms from a world file
 
 __all__ = ("FileList", "WorldFile")
 
+from pkgcore.config import ConfigHint, errors
 from pkgcore.ebuild import const
 from pkgcore.ebuild.atom import atom
-from pkgcore.config import ConfigHint
-from snakeoil.klass import jit_attr
+from pkgcore.package.errors import InvalidDependency
+from snakeoil import compatibility, klass
 
 from snakeoil.demandload import demandload
 demandload(globals(),
@@ -29,21 +30,24 @@ class FileList(object):
         self.mode = mode
         # note that _atoms is generated on the fly.
 
-    @jit_attr
+    @klass.jit_attr
     def _atoms(self):
-        s = set()
-        for x in readlines_ascii(self.path, True):
-            if not x or x.startswith("#"):
-                continue
-            elif x.startswith("@"):
-                if self.error_on_subsets:
-                    raise ValueError("set %s isn't a valid atom in pkgset %r" %
-                        (x, self.path))
-                logger.warning("set item %r found in pkgset %r: it will be "
-                    "wiped on update since portage/pkgcore store set items"
-                    " in a seperate way" % (x[1:], self.path))
-                continue
-            s.add(atom(x))
+        try:
+            s = set()
+            for x in readlines_ascii(self.path, True):
+                if not x or x.startswith("#"):
+                    continue
+                elif x.startswith("@"):
+                    if self.error_on_subsets:
+                        raise ValueError("set %s isn't a valid atom in pkgset %r" %
+                            (x, self.path))
+                    logger.warning("set item %r found in pkgset %r: it will be "
+                        "wiped on update since portage/pkgcore store set items"
+                        " in a seperate way" % (x[1:], self.path))
+                    continue
+                s.add(atom(x))
+        except InvalidDependency, e:
+            compatibility.raise_from(errors.ParsingError("parsing %r" % self.path, exception=e))
 
         return s
 

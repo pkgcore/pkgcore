@@ -95,7 +95,7 @@ class domain(pkgcore.config.domain.domain):
         _types[_thing] = 'list'
     for _thing in [
         'package.mask', 'package.keywords', 'package.license', 'package.use',
-        'package.unmask', 'package.env']:
+        'package.unmask', 'package.env', 'package.accept_keywords']:
         _types[_thing] = 'list'
     for _thing in ['root', 'CHOST', 'CBUILD', 'CTARGET', 'CFLAGS', 'PATH',
         'PORTAGE_TMPDIR', 'DISTCC_PATH', 'DISTCC_DIR', 'CCACHE_DIR']:
@@ -149,6 +149,7 @@ class domain(pkgcore.config.domain.domain):
             ("package.mask", pkg_maskers, parse_match),
             ("package.unmask", pkg_unmaskers, parse_match),
             ("package.keywords", pkg_keywords, package_keywords_splitter),
+            ("package.accept_keywords", pkg_keywords, package_keywords_splitter),
             ("package.license", pkg_license, package_keywords_splitter),
             ("package.use", pkg_use, package_keywords_splitter),
             ("package.env", self.bashrcs, package_env_splitter),

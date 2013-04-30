@@ -554,7 +554,7 @@ def config_from_make_conf(location="/etc/"):
             'name': 'livefs domain',
             'root':root})
 
-    for f in ("package.mask", "package.unmask", "package.keywords",
+    for f in ("package.mask", "package.unmask", "package.accept_keywords", "package.keywords",
             "package.use", "package.env", "env:ebuild_hook_dir", "bashrc"):
         fp = pjoin(portage_base, f.split(":")[0])
         try:

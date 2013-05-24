@@ -362,10 +362,22 @@ class PortageFormatter(CountingFormatter):
 
         self.visit_op(op_type)
 
-        out.write(*(pkg_coloring + [ op.pkg.cpvstr, out.reset]))
+        pkg = [op.pkg.cpvstr]
+        if self.verbose:
+            if op.pkg.slot != '0/0':
+                pkg.append(':%s' % op.pkg.slot)
+            if op.pkg.repo.repo_id != 'gentoo' and not op.pkg.built:
+                pkg.append("::%s" % op.pkg.repo.repo_id)
+        out.write(*(pkg_coloring + pkg + [out.reset]))
 
         if op.desc == 'replace' and op_type != 'replace':
-            out.write(' ', out.fg('blue'), out.bold, '[%s]' % op.old_pkg.fullver, out.reset)
+            old_pkg = [op.old_pkg.fullver]
+            if self.verbose:
+                if op.old_pkg.slot != '0/0':
+                    old_pkg.append(':%s' % op.old_pkg.slot)
+                if op.pkg.repo.repo_id != op.old_pkg.source_repository and not op.pkg.built:
+                    old_pkg.append("::%s" % op.old_pkg.source_repository)
+            out.write(' ', out.fg('blue'), out.bold, '[%s]' % ''.join(old_pkg), out.reset)
 
         # Build a list of (useflags, use_expand_dicts) tuples.
         # HACK: if we are in "replace" mode we build a list of length
@@ -390,9 +402,6 @@ class PortageFormatter(CountingFormatter):
                 out.write(' ')
             flaglists = [d.get(expand, ()) for d in usedicts]
             self.format_use(expand, *flaglists)
-
-        if self.verbose:
-            out.write(out.fg('cyan'), " [%d]" % (reponr))
 
         out.write('\n')
         out.autoline = origautoline
@@ -475,23 +484,6 @@ class PortageFormatter(CountingFormatter):
             # Omit the final space.
             out.write(*flags[:-1])
             out.write('"')
-
-    def end(self):
-        out = self.out
-        if self.verbose:
-            super(PortageFormatter, self).end()
-            out.write()
-            repos = self.repos.items()
-            repos.sort(key=operator.itemgetter(1))
-            for k, v in repos:
-                reponame = getattr(k, 'repo_id', 'unknown repo id')
-                location = getattr(k, 'location', 'unspecified location')
-                if reponame != location:
-                    self.out.write(' ', self.out.fg('cyan'), "[%d]" % v,
-                        self.out.reset, " %s (%s)" % (reponame, location))
-                else:
-                    self.out.write(' ', self.out.fg('cyan'), "[%d]" % v,
-                        self.out.reset, " %s" % location)
 
 
 class PaludisFormatter(CountingFormatter):

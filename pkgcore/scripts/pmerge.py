@@ -83,12 +83,12 @@ resolution_options.add_argument('--upgrade', '-u', action='store_true',
 resolution_options.add_argument('--deep', '-D', action='store_true',
     help='force the resolver to verify already installed dependencies')
 resolution_options.add_argument('--preload-vdb-state', action='store_true',
-    help=("enable preloading of the installed packages database"
+    help=("enable preloading of the installed packages database "
           "This causes the resolver to work with a complete graph, thus "
-          "disallowing actions that conflict with installed packages.  If "
+          "disallowing actions that conflict with installed packages. If "
           "disabled, it's possible for the requested action to conflict with "
           "already installed dependencies that aren't involved in the graph of "
-          "the requested operation"))
+          "the requested operation."))
 resolution_options.add_argument('--ignore-cycles', '-i', action='store_true',
     help=("ignore cycles if they're found to be unbreakable;"
            "a depends on b, and b depends on a, with neither built is an "

@@ -859,7 +859,7 @@ class ebuild_mixin(object):
             for node in pkg.required_use:
                 if not node.match(use):
                     print "REQUIRED_USE requirement weren't met\nFailed to match: %s\nfrom: %s\nfor USE: %s\npkg: %s" % \
-                        (node, pkg.required_use, " ".join(use), pkg)
+                        (node, pkg.required_use, " ".join(use), pkg.cpvstr)
                     return False
         if 'pretend' not in pkg.mandatory_phases:
             return True
@@ -867,16 +867,16 @@ class ebuild_mixin(object):
         env = expected_ebuild_env(pkg)
         env["ROOT"] = domain.root
         try:
-            logger.debug("running ebuild pkg_pretend sanity check for %s", pkg)
+            logger.debug("running ebuild pkg_pretend sanity check for %s", pkg.cpvstr)
             start = time.time()
             ret = run_generic_phase(pkg, "pretend", env, True, True, False,
                 extra_handlers=commands)
             logger.debug("pkg_pretend sanity check for %s took %2.2f seconds",
-                pkg, time.time() - start)
+                pkg.cpvstr, time.time() - start)
             return ret
         except format.GenericBuildError, e:
             logger.error("pkg_pretend sanity check for %s failed with exception %r"
-                % (pkg, e))
+                % (pkg.cpvstr, e))
             return False
 
 

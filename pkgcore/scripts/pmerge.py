@@ -639,7 +639,7 @@ def main(options, out, err):
                     if ret is False:
                         ret = None
                     commandline.dump_error(out, ret,
-                       "\nfetching failed for %s" % (op.pkg,))
+                       "\nfetching failed for %s" % (op.pkg.cpvstr,))
                     if not options.ignore_failures:
                         return 1
                     continue
@@ -649,15 +649,15 @@ def main(options, out, err):
                 buildop = pkg_ops.run_if_supported("build", or_return=None)
                 pkg = op.pkg
                 if buildop is not None:
-                    out.write("building %s" % (op.pkg,))
+                    out.write("building %s" % (op.pkg.cpvstr,))
                     result = False
                     try:
                         result = buildop.finalize()
                     except format.errors, e:
-                        out.error("caught exception building %s: % s" % (op.pkg, e))
+                        out.error("caught exception building %s: % s" % (op.pkg.cpvstr, e))
                     else:
                         if result is False:
-                            out.error("failed building %s" % (op.pkg,))
+                            out.error("failed building %s" % (op.pkg.cpvstr,))
                     if result is False:
                         if not options.ignore_failures:
                             return 1

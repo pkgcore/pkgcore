@@ -49,7 +49,7 @@ class fetcher(object):
         if "size" in handlers:
             val = handlers["size"](file_location)
             if val == -1:
-              raise errors.MissingDistfile(file_location)
+                raise errors.MissingDistfile(file_location)
             c = cmp(val, target.chksums["size"])
             if c:
                 resumable = (c < 0)

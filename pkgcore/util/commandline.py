@@ -883,9 +883,9 @@ def dump_error(handle, raw_exc, context_msg=None, tb=None):
             handle.write("\nError was:\n")
     exc_strings = []
     if raw_exc is not None:
-      for exc in walk_exception_chain(raw_exc):
-          exc_strings.extend('%s%s' % (prefix, x.strip())
-              for x in filter(None, str(exc).split("\n")))
+        for exc in walk_exception_chain(raw_exc):
+            exc_strings.extend('%s%s' % (prefix, x.strip())
+                for x in filter(None, str(exc).split("\n")))
     if exc_strings:
         handle.write("\n".join(exc_strings))
         handle.write("\n")

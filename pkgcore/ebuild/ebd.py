@@ -778,7 +778,7 @@ class buildable(ebd, setup_mixin, format.build):
         execute the nofetch phase.
         we need the same prerequisites as setup, so reuse that.
         """
-        return setup_mixin.setup(self,  "nofetch")
+        return setup_mixin.setup(self, "nofetch")
 
     def unpack(self):
         """

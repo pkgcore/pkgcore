@@ -97,9 +97,9 @@ resolution_options.add_argument('-B', '--with-built-depends',
     action='store_true', default=False,
     help="whether or not to process build depends for pkgs that "
          "are already built; defaults to ignoring them"),
-resolution_options.add_argument('--nodeps', action='store_true',
+resolution_options.add_argument('--nodeps', '-O', action='store_true',
     help='disable dependency resolution')
-resolution_options.add_argument('--noreplace', action='store_false',
+resolution_options.add_argument('--noreplace', '-n', action='store_false',
     dest='replace', default=True,
     help="don't reinstall target atoms if they're already installed")
 resolution_options.add_argument('--usepkg', '-k', action='store_true',

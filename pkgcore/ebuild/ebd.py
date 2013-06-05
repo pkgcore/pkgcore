@@ -866,6 +866,10 @@ class ebuild_mixin(object):
         commands = {"request_inherit": partial(inherit_handler, self._eclass_cache)}
         env = expected_ebuild_env(pkg)
         env["ROOT"] = domain.root
+        tmpdir = normpath(domain._get_tempspace())
+        builddir = pjoin(tmpdir, env["CATEGORY"], env["PF"])
+        env["T"] = normpath(pjoin(builddir, "temp"))
+        ensure_dirs(env["T"], mode=0770, gid=portage_gid, minimal=True)
         try:
             logger.debug("running ebuild pkg_pretend sanity check for %s", pkg.cpvstr)
             start = time.time()

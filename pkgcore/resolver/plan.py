@@ -239,7 +239,7 @@ class merge_plan(object):
         self.per_repo_strategy = per_repo_strategy
         self.total_ordering_strategy = global_strategy
         self.all_raw_dbs = [misc.caching_repo(x, self.per_repo_strategy) for x in dbs]
-        self.all_dbs = global_strategy(self, self.all_raw_dbs)
+        self.all_dbs = global_strategy(self.all_raw_dbs)
         self.default_dbs = self.all_dbs
 
         self.state = state.plan_state()
@@ -616,7 +616,7 @@ class merge_plan(object):
             atom = stack.current_frame.atom
         if depth is None:
             depth = stack.depth
-        depset = self.depset_reorder(self, getattr(choices, attr), attr)
+        depset = self.depset_reorder(getattr(choices, attr), attr)
         l = self.process_dependencies(stack, choices, attr, depset, atom)
         if len(l) == 1:
             self._dprint("resetting for %s%s because of %s: %s",
@@ -801,7 +801,6 @@ class merge_plan(object):
 
     # selection strategies for atom matches
 
-    @staticmethod
     def default_depset_reorder_strategy(self, depset, mode):
         for or_block in depset:
             vdb = []
@@ -824,7 +823,7 @@ class merge_plan(object):
                 yield or_block
 
     @staticmethod
-    def default_global_strategy(self, dbs, atom):
+    def default_global_strategy(dbs, atom):
         return chain(*[repo.itermatch(atom) for repo in dbs])
 
     @staticmethod
@@ -845,20 +844,20 @@ class merge_plan(object):
         """
         return chain(cls.just_livefs_dbs(dbs), cls.just_nonlivefs_dbs(dbs))
 
-    @staticmethod
-    def prefer_highest_version_strategy(self, dbs):
+    @classmethod
+    def prefer_highest_version_strategy(cls, dbs):
         return misc.multiplex_sorting_repo(highest_iter_sort,
-            *list(self.prefer_livefs_dbs(dbs)))
+            *list(cls.prefer_livefs_dbs(dbs)))
 
     @staticmethod
-    def prefer_lowest_version_strategy(self, dbs):
+    def prefer_lowest_version_strategy(dbs):
         return misc.multiplex_sorting_repo(lowest_iter_sort, *list(dbs))
 
-    @staticmethod
-    def prefer_reuse_strategy(self, dbs):
+    @classmethod
+    def prefer_reuse_strategy(cls, dbs):
         return multiplex.tree(
             misc.multiplex_sorting_repo(highest_iter_sort,
-                *list(self.just_livefs_dbs(dbs))),
+                *list(cls.just_livefs_dbs(dbs))),
             misc.multiplex_sorting_repo(highest_iter_sort,
-                *list(self.just_nonlivefs_dbs(dbs)))
+                *list(cls.just_nonlivefs_dbs(dbs)))
         )

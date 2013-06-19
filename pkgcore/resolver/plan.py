@@ -310,7 +310,7 @@ class merge_plan(object):
     def load_vdb_state(self):
         for pkg in self.livefs_dbs:
             self._dprint("inserting %s", (pkg,), "vdb")
-            ret = self.add_atom(pkg.versioned_atom, dbs=self.livefs_dbs)
+            ret = self.add_atom(pkg.versioned_atom)
             self._dprint("insertion of %s: %s", (pkg, ret), "vdb")
             if ret:
                 raise Exception(

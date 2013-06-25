@@ -243,20 +243,21 @@ class CountingFormatter(Formatter):
 
     def end(self):
         self.out.write()
-        self.out.write(
-            'Total: %d packages ' % sum(self.package_data.itervalues()),
-            autoline=False)
+        if self.verbose:
+            self.out.write(
+                'Total: %d packages ' % sum(self.package_data.itervalues()),
+                autoline=False)
 
-        d = dict(self.package_data.iteritems())
-        s =  "(%i new, " % (d.pop("add",0),)
-        s += "%i upgrades, " % (d.pop("upgrade", 0),)
-        s += "%i downgrades, " % (d.pop("downgrade", 0),)
-        s += "%i in new slots" % (d.pop("slotted_add", 0),)
-        if d:
-            s += ", %i other ops" % (len(d),)
-        else:
-            s += ")"
-        self.out.write(s)
+            d = dict(self.package_data.iteritems())
+            s =  "(%i new, " % (d.pop("add",0),)
+            s += "%i upgrades, " % (d.pop("upgrade", 0),)
+            s += "%i downgrades, " % (d.pop("downgrade", 0),)
+            s += "%i in new slots" % (d.pop("slotted_add", 0),)
+            if d:
+                s += ", %i other ops)" % (len(d),)
+            else:
+                s += ")"
+            self.out.write(s)
 
 
 class PortageFormatter(CountingFormatter):

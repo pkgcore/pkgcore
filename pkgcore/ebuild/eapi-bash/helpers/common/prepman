@@ -20,6 +20,7 @@ if [[ -z "${PORTAGE_COMPRESS_SUFFIX}" ]]; then
 	case ${PORTAGE_COMPRESS} in
 		gzip)  suffix="gz";;
 		bzip2) suffix="bz2";;
+		xz)    suffix="xz";;
 		*)     echo "prepman error: please set PORTAGE_COMPRESS_SUFFIX in make.conf" 1>&2
 		       exit 1;;
 	esac

@@ -13,6 +13,7 @@ z=$(find "${dir}" -print \
 	'(' -type f -or -type l ')' \
 	-not -name '*.gz' \
 	-not -name '*.bz2' \
+	-not -name '*.xz' \
 	-not -name '*.Z' \
 	-not -name '*.js' \
 	2>/dev/null)
@@ -25,6 +26,7 @@ if [[ -z "${PORTAGE_COMPRESS_SUFFIX}" ]]; then
 	case ${PORTAGE_COMPRESS} in
 		gzip)  suffix="gz";;
 		bzip2) suffix="bz2";;
+		xz)    suffix="xz";;
 		*)     echo "prepalldocs error: please set PORTAGE_COMPRESS_SUFFIX in make.conf" >&2
 		       exit 1;;
 	esac

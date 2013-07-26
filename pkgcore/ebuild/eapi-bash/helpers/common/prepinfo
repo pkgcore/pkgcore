@@ -18,7 +18,7 @@ fi
 
 [[ ! -d "${z}" ]] && exit 0
 
-rm -f "${z}"/dir{,.old}{,.info{,.gz,.bz2,.Z}}
+rm -f "${z}"/dir{,.old}{,.info{,.gz,.bz2,.xz,.Z}}
 
 PORTAGE_COMPRESS=${PORTAGE_COMPRESS:-gzip}
 PORTAGE_COMPRESS_FLAGS=${PORTAGE_COMPRESS_FLAGS:--9}
@@ -26,6 +26,7 @@ if [[ -z "${PORTAGE_COMPRESS_SUFFIX}" ]]; then
 	case ${PORTAGE_COMPRESS} in
 		gzip)  suffix="gz";;
 		bzip2) suffix="bz2";;
+		xz)    suffix="xz";;
 		*)     echo "prepinfo: error fixing links: please set PORTAGE_COMPRESS_SUFFIX in make.conf" >&2
 		       exit 1;;
 	esac

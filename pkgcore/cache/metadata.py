@@ -82,7 +82,7 @@ class database(flat_hash.database):
         # sadly, this is faster then doing a .next() and snagging the
         # exception
         for x in i:
-            # if we reach here, then bad things occured.
+            # if we reach here, then bad things occurred.
             raise errors.GeneralCacheCorruption(
                 "wrong line count, requires %i" %
                     (self.magic_line_count,))

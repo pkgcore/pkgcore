@@ -73,10 +73,9 @@ __filter_env() {
 		die "filter-env invocation failed"
 }
 
-# selectively saves  the environ- specifically removes things that have been marked to not be exported.
+# selectively saves the environ- specifically removes things that have been marked to not be exported.
 # dump the environ to stdout.
 __environ_dump() {
-
 	__shopt_push -f
 	local __func_filters=( ${DONT_EXPORT_FUNCS} "${PKGCORE_PRELOADED_ECLASSES[@]}" )
 	${__QA_INTERCEPTORS_ACTIVE:-false} && __func_filters+=( "${PKGCORE_QA_INTERCEPTORS[@]}" )
@@ -86,12 +85,12 @@ __environ_dump() {
 	__PKGCORE_TARGETS=( $(__environ_list_funcs | __regex_filter_input "${__func_filters[@]}" ) )
 	unset __func_filters
 	if [[ 0 != "${#__PKGCORE_TARGETS[@]}" ]]; then
-		declare -f "${__PKGCORE_TARGETS[@]}" || die "failed outputing funcs ${__PKGCORE_TARGETS[@]}" >&2
+		declare -f "${__PKGCORE_TARGETS[@]}" || die "failed outputting funcs ${__PKGCORE_TARGETS[@]}" >&2
 	fi
 
 	__PKGCORE_TARGETS=( $(__environ_list_vars | __regex_filter_input ${DONT_EXPORT_VARS} __PKGCORE_TARGETS) )
 	if [[ 0 != "${#__PKGCORE_TARGETS[@]}" ]]; then
-		declare -p "${__PKGCORE_TARGETS[@]}" || die "failed outputing env vars ${__PKGCORE_TARGETS[@]}" >&2
+		declare -p "${__PKGCORE_TARGETS[@]}" || die "failed outputting env vars ${__PKGCORE_TARGETS[@]}" >&2
 	fi
 
 	__shopt_pop
@@ -100,11 +99,11 @@ __environ_dump() {
 # dump environ to $1, optionally piping it through $2 and redirecting $2's output to $1.
 __environ_save_to_file() {
 	if [[ $# != 1 ]] && [[ $# != 2 ]]; then
-		die "__environ_save_to_file requires at least one arguement, two max; given $@"
+		die "__environ_save_to_file requires at least one argument, two max; given $@"
 	fi
 
-	#the spaces on both sides are important- otherwise, the later ${DONT_EXPORT_VARS/ temp_umask /} won't match.
-	#we use spaces on both sides, to ensure we don't remove part of a variable w/ the same name-
+	# the spaces on both sides are important- otherwise, the later ${DONT_EXPORT_VARS/ temp_umask /} won't match.
+	# we use spaces on both sides, to ensure we don't remove part of a variable w/ the same name-
 	# ex: temp_umask_for_some_app == _for_some_app.
 	#Do it with spaces on both sides.
 

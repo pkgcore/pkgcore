@@ -864,7 +864,7 @@ def main(subcommands, args=None, outfile=None, errfile=None,
         tb = sys.exc_info()[-1]
         if not getattr(options, 'debug', False):
             tb = None
-        dump_error(errfile, e, "Unhandled Exception occured", tb=tb)
+        dump_error(errfile, e, "Unhandled Exception occurred", tb=tb)
     if out is not None:
         if exitstatus:
             out.title('%s failed' % (options.prog,))

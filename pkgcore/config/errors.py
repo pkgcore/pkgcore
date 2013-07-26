@@ -128,7 +128,7 @@ class AutoloadInstantiationError(InstantiationError):
 
 class ComplexInstantiationError(ConfigurationError):
 
-    """Exception occured during instantiation.
+    """Exception occurred during instantiation.
 
     :ivar callable: callable object which failed during instantiation.
     :ivar pargs: positional args passed to callable.

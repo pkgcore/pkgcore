@@ -130,7 +130,7 @@ pkgcore 0.8: August 4th, 2012
 * Fix a longstanding potential bug in spawn's fd reassignment;
   if fed {2:3, 3:2, 4:6}, dependent on python dict ordering, it
   was possible for it to inadvertantly stomp fd 4 during the
-  final reassignment.  Haven't seen any signs it's occured in the
+  final reassignment.  Haven't seen any signs it's occurred in the
   wild, but the potential is there, thus fixed.
 
 * Gentoo's unpacker eclass is sensitive to the return code of

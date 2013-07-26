@@ -12,7 +12,7 @@ prepallstrip
 if ! ${PKGCORE_PREFIX_SUPPORT=false}; then
 	export ED="${D}"
 elif [[ "${ED:-unset}" == "unset" ]]; then
-	echo "The variable ED is missing from the environemnt of prepall; failing."
+	echo "The variable ED is missing from the environment of prepall; failing."
 	exit -1
 fi
 

@@ -162,7 +162,7 @@ class ThreadedTrigger(base):
                 return
             raise
         except Exception, e:
-            observer.error("exception occured in thread: %s",
+            observer.error("exception occurred in thread: %s",
                 e)
 
     def threading_get_args(self, engine, *csets):

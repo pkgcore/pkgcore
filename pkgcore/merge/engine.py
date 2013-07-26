@@ -341,7 +341,7 @@ class MergeEngine(object):
                             "trigger %r: %s" % (trigger, e))
                         raise
                     except errors.ModificationError, e:
-                        self.observer.error("modification error occured "
+                        self.observer.error("modification error occurred "
                             "during trigger %r: %s" % (trigger,e))
                         raise
                     except Exception, e:

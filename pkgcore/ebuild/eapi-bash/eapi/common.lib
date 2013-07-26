@@ -531,7 +531,7 @@ unpack()
 				;;
 			*.tar.xz)
 				if __safe_has "$EAPI" 0 1 2; then
-					echo "xv is a supported extension in eapi3 and above only" >&2
+					echo "xz is a supported extension in eapi3 and above only" >&2
 					continue;
 				fi
 				xz -dc "${srcdir}${x}" | tar xf - ${taropts} || die "$myfail"
@@ -548,7 +548,7 @@ unpack()
 				;;
 			*.xz)
 				if __safe_has "$EAPI" 0 1 2; then
-					echo "xv is a supported extension in eapi3 and above only" >&2
+					echo "xz is a supported extension in eapi3 and above only" >&2
 					continue;
 				fi
 				xz -dc "${srcdir}${x}" > ${name%.*} || die "$myfail"

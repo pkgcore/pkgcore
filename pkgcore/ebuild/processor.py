@@ -202,7 +202,7 @@ class InternalError(ProcessingInterruption):
 
     def __init__(self, line=None, msg=None):
         ProcessingInterruption.__init__(
-            self, "Internal error occured: line=%r, msg=%r"
+            self, "Internal error occurred: line=%r, msg=%r"
             % (line, msg))
         self.line, self.msg = line, msg
         self.args = (line, msg)
@@ -451,7 +451,7 @@ class EbuildProcessor(object):
         if the instance is sandboxed, print the sandbox access summary
 
         :param move_log: location to move the sandbox log to if a failure
-            occured
+            occurred
         """
         if not os.path.exists(self.__sandbox_log):
             self.write("end_sandbox_summary")
@@ -582,7 +582,7 @@ class EbuildProcessor(object):
             return False
 
         except AttributeError:
-            # thrown only if failure occured instantiation.
+            # thrown only if failure occurred instantiation.
             return False
 
     def shutdown_processor(self, ignore_keyboard_interrupt=False):

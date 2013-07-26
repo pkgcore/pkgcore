@@ -36,7 +36,7 @@ save_elf_sources() {
 	fi
 }
 
-# The existance of the section .symtab tells us that a binary is stripped.
+# The existence of the section .symtab tells us that a binary is stripped.
 # We want to log already stripped binaries, as this may be a QA violation.
 # They prevent us from getting the splitdebug data.
 if ! __safe_has binchecks ${RESTRICT} && \

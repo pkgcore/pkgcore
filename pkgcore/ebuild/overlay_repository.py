@@ -38,7 +38,7 @@ class OverlayRepo(prototype.tree):
 
         if not trees or len(trees) < 2:
             raise errors.ComplexInstantiationError(
-                "Must specify at least two pathes to ebuild trees to overlay")
+                "Must specify at least two paths to ebuild trees to overlay")
 
         self.trees = tuple(trees)
         self._rv_trees = tuple(reversed(trees))

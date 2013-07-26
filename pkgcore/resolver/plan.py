@@ -331,7 +331,7 @@ class merge_plan(object):
                 if ret:
                     return ret
         if finalize:
-            # note via this being outside the recurssion, backtracking
+            # note via this being outside the recursion, backtracking
             # is excluded... inline it somehow.
             self.process_finalize()
         return ()

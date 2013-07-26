@@ -320,7 +320,7 @@ parse_slot_deps(PyObject *atom_str, char **p_ptr, PyObject **slot_operator,
 		}
 	}
 	if('=' == *p) {
-		// only possible in this mode, assuming no fuck ups occured.
+		// only possible in this mode, assuming no fuck ups occurred.
 		assert(allow_slot_operators);
 		Py_INCREF(pkgcore_atom_op_eq);
 		*slot_operator = pkgcore_atom_op_eq;

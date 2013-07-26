@@ -33,4 +33,4 @@ install_paths()
 	done
 }
 
-install_paths "${ED}usr/share/doc/${PF}/${DOCDESTTREE}" "$@"
+install_paths "${ED}usr/share/doc/${PF}/${PKGCORE_DOCDESTTREE}" "$@"

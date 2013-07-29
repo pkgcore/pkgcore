@@ -500,8 +500,8 @@ class domain(pkgcore.config.domain.domain):
             pre_defaults=pre_defaults)
         if for_metadata:
             preserves = set(x.lstrip('-+') for x in pkg.iuse)
-            preserves.update(immutable)
             enabled = enabled.intersection(preserves)
+            enabled.update(immutable)
 
         return immutable, enabled, disabled
 

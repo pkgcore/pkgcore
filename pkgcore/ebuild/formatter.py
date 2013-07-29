@@ -395,11 +395,11 @@ class PortageFormatter(CountingFormatter):
         # Convert the list of tuples to a list of lists and a list of
         # dicts (both length 2 or 4).
         uselists, usedicts = zip(*stuff)
-        if uselists[0] and type != 'upgrade':
+        if uselists[0] and op_type != 'upgrade':
             out.write(' ')
         self.format_use('use', *uselists)
         for useno, expand in enumerate(self.use_expand-self.use_expand_hidden):
-            if not uselists[0] and useno == 0 and type != 'upgrade':
+            if not uselists[0] and useno == 0 and op_type != 'upgrade':
                 out.write(' ')
             flaglists = [d.get(expand, ()) for d in usedicts]
             self.format_use(expand, *flaglists)

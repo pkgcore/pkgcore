@@ -25,6 +25,12 @@ class choice_point(object):
 
     @property
     def state(self):
+        """Return choice point state.
+
+        :return: A tuple consisting of the number of possible choices,
+            current matches' repo, current package match, all possible
+            matches, build deps, runtime deps, and post merge deps.
+        """
         m = self.matches_cur
         return (len(self.solution_filters),
             m.repo, m,
@@ -42,8 +48,8 @@ class choice_point(object):
             yield l
 
     def _internal_force_next(self):
-        """
-        force next pkg without triggering a reduce_atoms call
+        """Force next pkg without triggering a reduce_atoms call.
+
         :return: True if pkgs remain, False if no more remain
         """
         for self.matches_cur in self.matches:
@@ -53,7 +59,13 @@ class choice_point(object):
         return False
 
     def reduce_atoms(self, atom):
+        """Alter choice point atom set.
 
+        :param atom: set of package atoms
+        :type atom: set of :obj:`pkgcore.ebuild.atom.atom`
+        :return: True if no more pkgs remain or atoms were removed,
+            False if no atoms were removed
+        """
         if self.matches is None:
             raise IndexError("no solutions remain")
         if hasattr(atom, "__contains__") and not isinstance(atom, basestring):
@@ -83,6 +95,10 @@ class choice_point(object):
                 return round > 0
 
     def _reset_iters(self):
+        """
+        Reset depends, rdepends, post_rdepends, and provides properties
+        to current matches' related attributes.
+        """
         cur = self.matches_cur
         self._deps = cur.depends.cnf_solutions()
         self._rdeps = cur.rdepends.cnf_solutions()
@@ -94,6 +110,7 @@ class choice_point(object):
 
     @property
     def current_pkg(self):
+        """Current selected package."""
         if self.matches_cur is None:
             if self.matches is None:
                 raise IndexError("no packages remain")
@@ -106,6 +123,7 @@ class choice_point(object):
         return self.matches_cur
 
     def force_next_pkg(self):
+        """Force next package to be selected from available matches."""
         if self.matches is None:
             return False
         for self.matches_cur in self.matches:
@@ -117,24 +135,28 @@ class choice_point(object):
 
     @property
     def depends(self):
+        """Build time dependencies."""
         if not self:
             raise IndexError("no more solutions remain")
         return self._deps
 
     @property
     def rdepends(self):
+        """Runtime dependencies."""
         if not self:
             raise IndexError("no more solutions remain")
         return self._rdeps
 
     @property
     def post_rdepends(self):
+        """Post merge dependencies."""
         if not self:
             raise IndexError("no more solutions remain")
         return self._prdeps
 
     @property
     def provides(self):
+        """Deprecated package provides."""
         if not self:
             raise IndexError("no more solutions remain")
         return self._provides

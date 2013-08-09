@@ -36,6 +36,12 @@ pkg_sort_lowest = sorted
 pkg_grabber = operator.itemgetter(0)
 
 def highest_iter_sort(l, pkg_grabber=pkg_grabber):
+    """Sort a list of packages from highest to lowest.
+
+    :param l: list of packages
+    :param pkg_grabber: function to use as an attrgetter
+    :return: sorted list of packages
+    """
     def f(x, y):
         c = cmp(x, y)
         if c:
@@ -52,6 +58,12 @@ def highest_iter_sort(l, pkg_grabber=pkg_grabber):
 
 
 def lowest_iter_sort(l, pkg_grabber=pkg_grabber):
+    """Sort a list of packages from lowest to highest.
+
+    :param l: list of packages
+    :param pkg_grabber: function to use as an attrgetter
+    :return: sorted list of packages
+    """
     def f(x, y):
         c = cmp(x, y)
         if c:
@@ -129,6 +141,7 @@ class resolver_frame(object):
 
     @property
     def current_pkg(self):
+        """Return the package related to the resolver frame."""
         try:
             return self.choices.current_pkg
         except IndexError:
@@ -518,8 +531,17 @@ class merge_plan(object):
     def _viable(self, stack, mode, atom, dbs, drop_cycles, limit_to_vdb):
         """
         internal function to discern if an atom is viable, returning
-        the choicepoint/matches iter if viable.
+        the choicepoint/matches iterator if viable.
 
+        :param stack: current stack
+        :type stack: :obj:`resolver_stack`
+        :param mode: type of dependency (depends/rdepends)
+        :type mode: str
+        :param atom: atom for the current package
+        :type atom: :obj:`pkgcore.ebuild.atom.atom`
+        :param dbs: db list to walk
+        :param drop_cycles: boolean controlling whether to drop dep cycles
+        :param limit_to_vdb: boolean controlling considering pkgs only from the vdb
         :return: 3 possible; None (not viable), True (presolved),
           :obj:`caching_iter` (not solved, but viable), :obj:`choice_point`
         """
@@ -563,7 +585,7 @@ class merge_plan(object):
         return choices, matches
 
     def check_for_cycles(self, stack, cur_frame):
-        """check the current stack for cyclical issues;
+        """Check the current stack for cyclical issues.
 
         :param stack: current stack, a :obj:`resolver_stack` instance
         :param cur_frame: current frame, a :obj:`resolver_frame` instance

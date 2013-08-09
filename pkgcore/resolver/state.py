@@ -24,16 +24,26 @@ class plan_state(object):
         self.forced_restrictions = RefCountingSet()
 
     def add_blocker(self, choices, blocker, key=None):
-        """adds blocker, returning any packages blocked"""
+        """Adds blocker, returning any packages blocked.
+
+        :param choices: package choices
+        :type choices: :obj:`pkgcore.resolver.choice_point.choice_point`
+        """
         return incref_forward_block_op(choices, blocker, key).apply(self)
 
     def _remove_pkg_blockers(self, choices):
+        """Remove blockers.
+
+        :param choices: package choices
+        :type choices: :obj:`pkgcore.resolver.choice_point.choice_point`
+        """
         l = self.rev_blockers.get(choices, ())
         # walk a copy- it's possible it'll change under foot
         for blocker, key in l[:]:
             decref_forward_block_op(choices, blocker, key).apply(self)
 
     def backtrack(self, state_pos):
+        """Backtrack over a plan."""
         assert state_pos <= len(self.plan)
         if len(self.plan) == state_pos:
             return

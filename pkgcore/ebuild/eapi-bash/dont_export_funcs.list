@@ -43,7 +43,6 @@ inherit
 insinto
 insopts
 into
-keepdir
 libopts
 nonfatal
 portageq

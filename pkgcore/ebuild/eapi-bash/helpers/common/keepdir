@@ -1,0 +1,24 @@
+#!/usr/bin/env pkgcore-ebuild-helper
+# Copyright: 2011 Brian Harring <ferringb@gmail.com>
+# License: GPL2/BSD 3 clause
+#
+# adds ".keep" files so that dirs aren't auto-cleaned
+
+${PKGCORE_PREFIX_SUPPORT} || ED="${D}"
+
+recursive=false
+if [[ "$1" == -[Rr] ]]; then
+	recursive=true
+	shift
+fi
+
+check_args 1 -
+dodir "$@"
+
+if ${recursive}; then
+	check_command_or_stop find "$@" -type d -printf "${ED}/%p/.keep\0" | $XARGS -0 -n100 touch
+else
+	for x in "$@"; do
+		check_command_or_stop touch "${ED}/${x}/.keep"
+	done
+fi

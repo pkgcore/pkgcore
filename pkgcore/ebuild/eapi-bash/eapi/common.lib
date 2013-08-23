@@ -475,22 +475,6 @@ __inject_common_phase_funcs()
 	__inject_phase_funcs __phase_common pkg_nofetch src_{unpack,compile,test}
 }
 
-# adds ".keep" files so that dirs aren't auto-cleaned
-keepdir()
-{
-	${PKGCORE_PREFIX_SUPPORT} || local ED="${D}"
-	dodir "$@"
-	if [[ "$1" == -[Rr] ]]; then
-		shift
-		find "$@" -type d -printf "${ED}/%p/.keep\0" | $XARGS -0 -n100 touch || die "Failed to recursive create .keep files"
-	else
-		local x
-		for x in "$@"; do
-			touch "${ED}/${x}/.keep" || die "Failed to create .keep in ${ED}/${x}"
-		done
-	fi
-}
-
 unpack()
 {
 	local x y myfail srcdir taropts tar_subdir name

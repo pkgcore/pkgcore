@@ -458,7 +458,8 @@ core.setup(
                 ['filter-env', 'pinspect', '*.lib', 'eapi/*', '*.bash',
                 '*.list']
             ] +
-            ['ebuild/eapi-bash/helpers/%s' % (x,) for x in ("internals/*", "common/*", "4/*")
+            ['ebuild/eapi-bash/helpers/%s' % (x,) for x in
+                ["internals/*", "common/*", "4/*", "5/*"]
             ],
         },
     ext_modules=extensions, cmdclass=cmdclass, command_options=command_options,

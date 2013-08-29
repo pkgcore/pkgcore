@@ -14,8 +14,6 @@ fi
 
 [[ ! -d "${z}" ]] && exit 0
 
-PORTAGE_COMPRESS=${PORTAGE_COMPRESS:-gzip}
-PORTAGE_COMPRESS_FLAGS=${PORTAGE_COMPRESS_FLAGS:--9}
 if [[ -z "${PORTAGE_COMPRESS_SUFFIX}" ]]; then
 	case ${PORTAGE_COMPRESS} in
 		gzip)  suffix="gz";;

@@ -20,8 +20,6 @@ fi
 
 rm -f "${z}"/dir{,.old}{,.info{,.gz,.bz2,.xz,.Z}}
 
-PORTAGE_COMPRESS=${PORTAGE_COMPRESS:-gzip}
-PORTAGE_COMPRESS_FLAGS=${PORTAGE_COMPRESS_FLAGS:--9}
 if [[ -z "${PORTAGE_COMPRESS_SUFFIX}" ]]; then
 	case ${PORTAGE_COMPRESS} in
 		gzip)  suffix="gz";;

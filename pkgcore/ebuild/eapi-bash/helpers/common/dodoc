@@ -28,7 +28,7 @@ install_paths()
 			install_paths "${mydir}/${x##*/}" "${x}"/*
 		elif [[ -s $x ]]; then
 			check_command install -m0644 "${x}" "${mydir}" && \
-			check_command gzip -f -9 "${mydir}/${x##*/}"
+				check_command "${PORTAGE_COMPRESS}" "${PORTAGE_COMPRESS_FLAGS}" -f "${mydir}/${x##*/}"
 		fi
 	done
 }

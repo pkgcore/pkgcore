@@ -549,7 +549,7 @@ class ConfigManager(object):
             return None
 
         if len(defaults) > 1:
-            defaults = [x[0] for x in defaults]
+            defaults = sorted([x[0] for x in defaults])
             raise errors.ConfigurationError(
                 'type %s incorrectly has multiple default sections: %s'
                     % (type_name, ', '.join(map(repr, defaults))))

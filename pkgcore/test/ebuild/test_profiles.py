@@ -49,7 +49,7 @@ class profile_mixin(TempDirMixin):
 
     def assertEqualChunks(self, given_mapping, desired_mapping):
         def f(chunk):
-            return chunked_data(chunk.key, tuple(set(chunk.neg)), tuple(set(chunk.pos)))
+            return chunked_data(chunk.key, tuple(sorted(chunk.neg)), tuple(sorted(chunk.pos)))
         given_mapping.optimize()
         return self._assertEqualPayload(given_mapping.render_to_dict(), desired_mapping, f, chunked_data)
 

@@ -246,9 +246,9 @@ class tree(object):
 
     def _internal_gen_candidates(self, candidates, sorter):
         pkls = self.package_class
-        for cp in candidates:
+        for cp in sorter(candidates):
             for pkg in sorter(pkls(cp[0], cp[1], ver)
-                for ver in self.versions.get(cp, ())):
+                              for ver in self.versions.get(cp, ())):
                 yield pkg
 
     def _internal_match(self, candidates, match_func, sorter,

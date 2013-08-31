@@ -228,7 +228,7 @@ class ConfigManagerTest(TestCase):
             [{'autoload-sub': basics.HardCodedConfigSection({
                             'class': autoloader,
                             })}])
-        self.assertEqual(['autoload-sub', 'spork'], list(manager.sections()))
+        self.assertEqual(set(['autoload-sub', 'spork']), set(manager.sections()))
         self.assertEqual(['spork'], manager.objects.repo.keys())
         self.assertEqual(
             'test',
@@ -245,7 +245,7 @@ class ConfigManagerTest(TestCase):
             [{'autoload-sub': basics.HardCodedConfigSection({
                             'class': autoloader})}])
 
-        self.assertEqual(['autoload-sub', 'spork'], list(manager.sections()))
+        self.assertEqual(set(['autoload-sub', 'spork']), set(manager.sections()))
         self.assertEqual(['spork'], manager.objects.repo.keys())
         collapsedspork = manager.collapse_named_section('spork')
         self.assertEqual('test', collapsedspork.instantiate())
@@ -470,7 +470,7 @@ class ConfigManagerTest(TestCase):
                                                              'default': True}),
                     }])
         self.check_error(
-            "type drawer incorrectly has multiple default sections: 'thing2', 'thing'",
+            "type drawer incorrectly has multiple default sections: 'thing', 'thing2'",
             manager.get_default, 'drawer')
 
         manager = central.ConfigManager([])

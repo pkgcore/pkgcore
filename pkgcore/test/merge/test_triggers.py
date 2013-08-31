@@ -626,8 +626,8 @@ class TestPruneFiles(TestCase):
 
         self.assertEqual(orig, run(lambda s:False))
         self.assertEqual([], run(post_curry(isinstance, fs.fsDir)).dirs())
-        self.assertEqual(orig.files(),
-            run(post_curry(isinstance, fs.fsDir)).dirs(True))
+        self.assertEqual(sorted(orig.files()),
+            sorted(run(post_curry(isinstance, fs.fsDir)).dirs(True)))
 
         # check noisyness.
         info = []

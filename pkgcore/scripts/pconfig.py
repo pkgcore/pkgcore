@@ -156,7 +156,7 @@ uncollapsable = subparsers.add_parser("uncollapsable", parents=shared_options,
 def uncollapsable_main(options, out, err):
     """Show things that could not be collapsed."""
     config = options.config
-    for name in config.sections():
+    for name in sorted(config.sections()):
         try:
             config.collapse_named_section(name)
         except errors.CollapseInheritOnly:

@@ -235,6 +235,7 @@ class CountingFormatter(Formatter):
     mappings = EmptyDict()
 
     def __init__(self, **kwargs):
+        kwargs.setdefault("verbose", False)
         Formatter.__init__(self, **kwargs)
         self.package_data = defaultdictkey(lambda x:0)
 
@@ -271,7 +272,6 @@ class PortageFormatter(CountingFormatter):
     def __init__(self, **kwargs):
         kwargs.setdefault("use_expand", set())
         kwargs.setdefault("use_expand_hidden", set())
-        kwargs.setdefault("verbose", False)
         CountingFormatter.__init__(self, **kwargs)
         self.use_splitter = use_expand_filter(self.use_expand,
             self.use_expand_hidden)
@@ -498,6 +498,10 @@ class PaludisFormatter(CountingFormatter):
     A Formatter designed to resemble Paludis' output
     as much as much as possible.
     """
+
+    def __init__(self, **kwargs):
+        kwargs.setdefault("verbose", True)
+        CountingFormatter.__init__(self, **kwargs)
 
     def format(self, op):
         out = self.out

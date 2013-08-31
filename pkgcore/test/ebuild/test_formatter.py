@@ -168,6 +168,7 @@ class CountingFormatterTest(BaseFormatterTest):
     endsuffix = "\n"
 
     def assertEnd(self, *args, **kwargs):
+        kwargs.setdefault("verbose", True)
         kwargs.setdefault('prefix', self.endprefix)
         kwargs.setdefault('suffix', self.endsuffix)
         BaseFormatterTest.assertOut(self, *args, **kwargs)

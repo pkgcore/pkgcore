@@ -369,7 +369,7 @@ class PortageFormatter(CountingFormatter):
                 pkg.append(':%s/%s' % (op.pkg.slot, op.pkg.subslot))
             elif op.pkg.slot != '0':
                 pkg.append(':%s' % op.pkg.slot)
-            if op.pkg.repo.repo_id != 'gentoo' and not op.pkg.built:
+            if op.pkg.repo.repo_id and op.pkg.repo.repo_id != 'gentoo' and not op.pkg.built:
                 pkg.append("::%s" % op.pkg.repo.repo_id)
         out.write(*(pkg_coloring + pkg + [out.reset]))
 

@@ -166,10 +166,16 @@ def get_parsed_eapi(self):
     return get_eapi(eapi.group(2) if eapi is not None else '0', True)
 
 def get_slot(self):
-    o = self.data.pop("SLOT", "0").strip()
-    if not o:
+    o = self.data.get("SLOT", "0")
+    if o is None:
         raise ValueError(self, "SLOT cannot be unset")
-    return o
+    return o.partition('/')[0].strip()
+
+def get_subslot(self):
+    o = self.data.get("SLOT").partition('/')
+    if o[2] == "":
+        return o[0].strip()
+    return o[2].strip()
 
 def rewrite_restrict(restrict):
     if restrict[0:2] == 'no':
@@ -213,7 +219,8 @@ class base(metadata.package):
                                          False)
     _get_attr["license"] = partial(generate_depset, str,
         "LICENSE", True, element_func=intern)
-    _get_attr["slot"] = get_slot # lambda s: s.data.pop("SLOT", "0").strip()
+    _get_attr["slot"] = get_slot
+    _get_attr["subslot"] = get_subslot
     _get_attr["fetchables"] = generate_fetchables
     _get_attr["description"] = lambda s:s.data.pop("DESCRIPTION", "").strip()
     _get_attr["keywords"] = lambda s:tuple(map(intern,

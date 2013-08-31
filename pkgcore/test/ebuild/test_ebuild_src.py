@@ -84,6 +84,16 @@ class test_base(TestCase):
         self.assertRaises(ValueError, getattr, self.get_pkg({'SLOT':''}),
             'slot')
 
+    def test_subslot(self):
+        o = self.get_pkg({'SLOT': '0'})
+        self.assertEqual(o.subslot, '0')
+        o = self.get_pkg({'SLOT': '1'})
+        self.assertEqual(o.subslot, '1')
+        o = self.get_pkg({'SLOT': '0/2'})
+        self.assertEqual(o.subslot, '2')
+        o = self.get_pkg({'SLOT': '1/foo-1'})
+        self.assertEqual(o.subslot, 'foo-1')
+
     def test_restrict(self):
         o = self.get_pkg({'RESTRICT': 'strip fetch strip'})
         self.assertEqual(*map(sorted, (o.restrict, ['strip', 'fetch', 'strip'])))

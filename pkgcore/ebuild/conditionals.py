@@ -30,8 +30,7 @@ class DepSet(boolean.AndRestriction):
     gentoo DepSet syntax parser
     """
 
-    __slots__ = ("has_conditionals", "element_class", "_node_conds",
-                 "_known_conditionals")
+    __slots__ = ("element_class", "_node_conds", "_known_conditionals")
     type = packages.package_type
     negate = False
 

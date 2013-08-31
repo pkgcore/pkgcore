@@ -300,7 +300,8 @@ class PortageFormatter(CountingFormatter):
             self.pkg_disabled_use = self.disabled_use.pull_data(op.pkg)
 
         # This is for the summary at the end
-        reponr = self.repos.setdefault(op.pkg.repo, len(self.repos) + 1)
+        if self.quiet_repo_display:
+            reponr = self.repos.setdefault(op.pkg.repo, len(self.repos) + 1)
 
         pkg_is_bold = any(x.match(op.pkg) for x in getattr(self, 'world_list', ()))
 
@@ -369,7 +370,8 @@ class PortageFormatter(CountingFormatter):
                 pkg.append(':%s/%s' % (op.pkg.slot, op.pkg.subslot))
             elif op.pkg.slot != '0':
                 pkg.append(':%s' % op.pkg.slot)
-            if op.pkg.repo.repo_id and op.pkg.repo.repo_id != 'gentoo' and not op.pkg.built:
+            if not self.quiet_repo_display and \
+                    op.pkg.repo.repo_id and op.pkg.repo.repo_id != 'gentoo' and not op.pkg.built:
                 pkg.append("::%s" % op.pkg.repo.repo_id)
         out.write(*(pkg_coloring + pkg + [out.reset]))
 
@@ -380,7 +382,8 @@ class PortageFormatter(CountingFormatter):
                     old_pkg.append(':%s/%s' % (op.old_pkg.slot, op.old_pkg.subslot))
                 elif op.old_pkg.slot != '0':
                     old_pkg.append(':%s' % op.old_pkg.slot)
-                if op.pkg.repo.repo_id != op.old_pkg.source_repository and not op.pkg.built:
+                if not self.quiet_repo_display and \
+                        op.pkg.repo.repo_id != op.old_pkg.source_repository and not op.pkg.built:
                     old_pkg.append("::%s" % op.old_pkg.source_repository)
             out.write(' ', out.fg('blue'), out.bold, '[%s]' % ''.join(old_pkg), out.reset)
 
@@ -407,6 +410,9 @@ class PortageFormatter(CountingFormatter):
                 out.write(' ')
             flaglists = [d.get(expand, ()) for d in usedicts]
             self.format_use(expand, *flaglists)
+
+        if self.verbose and self.quiet_repo_display:
+            out.write(out.fg('cyan'), " [%d]" % (reponr))
 
         out.write('\n')
         out.autoline = origautoline
@@ -489,6 +495,24 @@ class PortageFormatter(CountingFormatter):
             # Omit the final space.
             out.write(*flags[:-1])
             out.write('"')
+
+    def end(self):
+        out = self.out
+        if self.verbose:
+            super(PortageFormatter, self).end()
+            out.write()
+            if self.quiet_repo_display:
+                repos = self.repos.items()
+                repos.sort(key=operator.itemgetter(1))
+                for k, v in repos:
+                   reponame = getattr(k, 'repo_id', 'unknown repo id')
+                   location = getattr(k, 'location', 'unspecified location')
+                   if reponame != location:
+                       self.out.write(' ', self.out.fg('cyan'), "[%d]" % v,
+                           self.out.reset, " %s (%s)" % (reponame, location))
+                   else:
+                       self.out.write(' ', self.out.fg('cyan'), "[%d]" % v,
+                           self.out.reset, " %s" % location)
 
 
 class PaludisFormatter(CountingFormatter):

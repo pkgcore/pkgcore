@@ -115,6 +115,10 @@ resolution_options.add_argument('--empty', '-e', action='store_true',
 output_options = argparser.add_argument_group("Output related options")
 output_options.add_argument('--verbose', '-v', action='store_true',
     help="be verbose in output")
+output_options.add_argument('--quiet-repo-display', action='store_true',
+    help="In the package merge list display, suppress ::repository "
+         "output, and instead use numbers to indicate which repositories "
+         "packages come from.")
 output_options.add_argument('--formatter', '-F', priority=90,
     action=commandline.StoreConfigObject, get_default=True,
     config_type='pmerge_formatter',
@@ -361,7 +365,9 @@ def main(options, out, err):
         use_expand=domain.use_expand,
         use_expand_hidden=domain.use_expand_hidden,
         disabled_use=domain.disabled_use,
-        world_list=world_list, verbose=options.verbose)
+        world_list=world_list,
+        verbose=options.verbose,
+        quiet_repo_display=options.quiet_repo_display)
 
     # This mode does not care about sets and packages so bypass all that.
     if options.unmerge:

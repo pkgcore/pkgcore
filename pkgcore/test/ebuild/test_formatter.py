@@ -273,10 +273,9 @@ class TestPaludisFormatter(CountingFormatterTest, TestCase):
 class TestPortageFormatter(BaseFormatterTest, TestCase):
     formatterClass = PortageFormatter
 
-    def setUp(self):
-        BaseFormatterTest.setUp(self)
-        self.repo1 = FakeRepo(repo_id='gentoo', location='/usr/portage')
-        self.repo2 = FakeRepo(location='/usr/local/portage')
+    def newFormatter(self, **kwargs):
+        kwargs.setdefault("quiet_repo_display", False)
+        return BaseFormatterTest.newFormatter(self, **kwargs)
 
     def test_new(self):
         self.formatter.format(
@@ -449,6 +448,8 @@ class TestPortageVerboseFormatter(TestPortageFormatter):
 
     def setUp(self):
         TestPortageFormatter.setUp(self)
+        self.repo1 = FakeRepo(repo_id='gentoo', location='/usr/portage')
+        self.repo2 = FakeRepo(location='/usr/local/portage')
         self.repo3 = FakeRepo(repo_id='fakerepo', location='/var/cache/gentoo/repos/fakerepo')
 
     def test_repo_id(self):
@@ -520,4 +521,27 @@ class TestPortageVerboseFormatter(TestPortageFormatter):
         self.fakeout.resetstream()
         self.formatter.end()
         self.assertOut('\nTotal: 2 packages (2 new, 0 upgrades, 0 downgrades, 0 in new slots)\n\n',
+            suffix=[''])
+
+class TestPortageVerboseRepoIdFormatter(TestPortageVerboseFormatter):
+    suffix = [Color("fg", "cyan"), ' [1]\n']
+
+    def newFormatter(self, **kwargs):
+        kwargs.setdefault("quiet_repo_display", True)
+        return TestPortageVerboseFormatter.newFormatter(self, **kwargs)
+
+    def test_repo_id(self):
+        self.formatter.format(FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6', repo=self.repo1)))
+        self.assertOut('[', Color('fg', 'green'), 'ebuild', Reset(),
+            '  ', Color('fg', 'green'), Bold(), 'N', Reset(), '    ] ',
+            Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6', Reset())
+
+    def test_end(self):
+        self.formatter.format(FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6', repo=self.repo1)))
+        self.formatter.format(FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6', repo=self.repo2)))
+        self.fakeout.resetstream()
+        self.formatter.end()
+        self.assertOut('\nTotal: 2 packages (2 new, 0 upgrades, 0 downgrades, 0 in new slots)\n\n',
+            ' ', Color('fg', 'cyan'), '[1]', Reset(),' gentoo (/usr/portage)\n',
+            ' ', Color('fg', 'cyan'), '[2]', Reset(),' /usr/local/portage\n',
             suffix=[''])

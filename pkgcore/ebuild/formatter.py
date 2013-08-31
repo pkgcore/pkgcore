@@ -365,7 +365,9 @@ class PortageFormatter(CountingFormatter):
 
         pkg = [op.pkg.cpvstr]
         if self.verbose:
-            if op.pkg.slot != '0/0':
+            if op.pkg.subslot != op.pkg.slot:
+                pkg.append(':%s/%s' % (op.pkg.slot, op.pkg.subslot))
+            elif op.pkg.slot != '0':
                 pkg.append(':%s' % op.pkg.slot)
             if op.pkg.repo.repo_id != 'gentoo' and not op.pkg.built:
                 pkg.append("::%s" % op.pkg.repo.repo_id)
@@ -374,7 +376,9 @@ class PortageFormatter(CountingFormatter):
         if op.desc == 'replace' and op_type != 'replace':
             old_pkg = [op.old_pkg.fullver]
             if self.verbose:
-                if op.old_pkg.slot != '0/0':
+                if op.old_pkg.subslot != op.old_pkg.slot:
+                    old_pkg.append(':%s/%s' % (op.old_pkg.slot, op.old_pkg.subslot))
+                elif op.old_pkg.slot != '0':
                     old_pkg.append(':%s' % op.old_pkg.slot)
                 if op.pkg.repo.repo_id != op.old_pkg.source_repository and not op.pkg.built:
                     old_pkg.append("::%s" % op.old_pkg.source_repository)

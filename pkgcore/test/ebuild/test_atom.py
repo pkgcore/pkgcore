@@ -372,7 +372,7 @@ class Test_native_atom(test.TestRestriction):
 
     def test_repo_id(self):
         astr = "dev-util/bsdiff"
-        c = FakePkg("%s-1" % astr, repo=FakeRepo(repoid="gentoo-x86A_"), slot="0")
+        c = FakePkg("%s-1" % astr, repo=FakeRepo(repo_id="gentoo-x86A_"), slot="0")
         self.assertMatch(self.kls("%s" % astr), c)
         self.assertMatch(self.kls("%s::gentoo-x86A_" % astr), c)
         self.assertMatch(self.kls("%s:0::gentoo-x86A_" % astr), c)
@@ -487,7 +487,7 @@ class Test_native_atom(test.TestRestriction):
                              self.kls('cat/pkg[-foo]'))
         self.assertEqual2(self.kls('cat/pkg[foo,-bar]'),
                           self.kls('cat/pkg[-bar,foo]'))
-        # repoid
+        # repo_id
         self.assertEqual2(self.kls('cat/pkg::a'), self.kls('cat/pkg::a'))
         self.assertNotEqual2(self.kls('cat/pkg::a'), self.kls('cat/pkg::b'))
         self.assertNotEqual2(self.kls('cat/pkg::a'), self.kls('cat/pkg'))
@@ -521,7 +521,7 @@ class Test_native_atom(test.TestRestriction):
             FakePkg('sys-apps/portage-2.1_pre3-r5'))
 
     def test_combined(self):
-        p = FakePkg('dev-util/diffball-0.7', repo=FakeRepo(repoid='gentoo'))
+        p = FakePkg('dev-util/diffball-0.7', repo=FakeRepo(repo_id='gentoo'))
         self.assertMatch(self.kls('=dev-util/diffball-0.7::gentoo'), p)
         self.assertMatch(self.kls('dev-util/diffball::gentoo'), p)
         self.assertNotMatch(self.kls('=dev-util/diffball-0.7:1::gentoo'),

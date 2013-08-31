@@ -150,12 +150,12 @@ class TestPkgcoreFormatter(BaseFormatterTest, TestCase):
         self.assertOut("add     dev-util/diffball-1.0")
 
         self.formatter.format(FakeOp(FakeEbuildSrc('dev-util/diffball-1.0',
-            repo=FakeRepo(repoid='gentoo', location='/usr/portage'))))
+            repo=FakeRepo(repo_id='gentoo', location='/usr/portage'))))
         self.assertOut("add     dev-util/diffball-1.0::gentoo")
 
         self.formatter.format(
             FakeOp(FakeEbuildSrc('dev-util/diffball-1.2',
-                   repo=FakeRepo(repoid='gentoo', location='/usr/portage')),
+                   repo=FakeRepo(repo_id='gentoo', location='/usr/portage')),
                 FakeMutatedPkg('dev-util/diffball-1.1')))
         self.assertOut(
             "replace dev-util/diffball-1.1, "
@@ -210,7 +210,7 @@ class TestPaludisFormatter(CountingFormatterTest, TestCase):
 
     def setUp(self):
         BaseFormatterTest.setUp(self)
-        self.repo = FakeRepo(repoid='gentoo', location='/usr/portage')
+        self.repo = FakeRepo(repo_id='gentoo', location='/usr/portage')
 
     def FakeEbuildSrc(self, *args, **kwargs):
         kwargs.setdefault("repo", self.repo)
@@ -440,7 +440,7 @@ class TestPortageVerboseFormatter(TestPortageFormatter):
 
     def setUp(self):
         TestPortageFormatter.setUp(self)
-        self.repo1 = FakeRepo(repoid='gentoo', location='/usr/portage')
+        self.repo1 = FakeRepo(repo_id='gentoo', location='/usr/portage')
         self.repo2 = FakeRepo(location='/usr/local/portage')
 
     def newFormatter(self, **kwargs):

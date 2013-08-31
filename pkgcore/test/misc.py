@@ -64,9 +64,9 @@ class FakeProfile(object):
 
 class FakeRepo(object):
 
-    def __init__(self, pkgs=(), repoid='', location='', **kwds):
+    def __init__(self, pkgs=(), repo_id='', location='', **kwds):
         self.pkgs = pkgs
-        self.repo_id = repoid or location
+        self.repo_id = repo_id or location
         self.location = location
 
         for k, v in kwds.iteritems():

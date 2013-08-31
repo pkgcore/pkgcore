@@ -398,7 +398,7 @@ class atom(boolean.AndRestriction):
         if self.slot is not None:
             attrs.append('slot=%r' % (self.slot,))
         if self.repo_id is not None:
-            attrs.append('repoid=%r' % (self.repo_id,))
+            attrs.append('repo_id=%r' % (self.repo_id,))
         return '<%s %s @#%x>' % (
             self.__class__.__name__, ' '.join(attrs), id(self))
 

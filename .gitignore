@@ -1,5 +1,5 @@
-*.pyc
-*.pyo
+*.py[co]
+.*.sw[po]
 pkgcore/ebuild/*.so
 pkgcore/plugins/plugincache
 pkgcore/restrictions/*.so

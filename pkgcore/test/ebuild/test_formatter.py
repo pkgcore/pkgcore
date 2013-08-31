@@ -272,6 +272,11 @@ class TestPaludisFormatter(CountingFormatterTest, TestCase):
 class TestPortageFormatter(BaseFormatterTest, TestCase):
     formatterClass = PortageFormatter
 
+    def setUp(self):
+        BaseFormatterTest.setUp(self)
+        self.repo1 = FakeRepo(repo_id='gentoo', location='/usr/portage')
+        self.repo2 = FakeRepo(location='/usr/local/portage')
+
     def test_new(self):
         self.formatter.format(
             FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.4')))
@@ -436,16 +441,52 @@ class TestPortageFormatter(BaseFormatterTest, TestCase):
             Color('fg', 'green'), Bold(), 'app-arch/bzip2-1.0.3-r6', Reset())
 
 class TestPortageVerboseFormatter(TestPortageFormatter):
-    suffix = [Color("fg", "cyan"), ' [1]\n']
-
-    def setUp(self):
-        TestPortageFormatter.setUp(self)
-        self.repo1 = FakeRepo(repo_id='gentoo', location='/usr/portage')
-        self.repo2 = FakeRepo(location='/usr/local/portage')
 
     def newFormatter(self, **kwargs):
         kwargs.setdefault("verbose", True)
         return TestPortageFormatter.newFormatter(self, **kwargs)
+
+    def setUp(self):
+        TestPortageFormatter.setUp(self)
+        self.repo3 = FakeRepo(repo_id='fakerepo', location='/var/cache/gentoo/repos/fakerepo')
+
+    def test_repo_id(self):
+        self.formatter.format(FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6', repo=self.repo3)))
+        self.assertOut('[', Color('fg', 'green'), 'ebuild', Reset(),
+            '  ', Color('fg', 'green'), Bold(), 'N', Reset(), '    ] ',
+            Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6::fakerepo', Reset())
+        self.formatter.format(
+            FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.4', repo=self.repo3),
+            FakeMutatedPkg('app-arch/bzip2-1.0.3-r6', repo=self.repo1)))
+        self.assertOut('[', Color('fg', 'green'), 'ebuild', Reset(),
+            '     ', Color('fg', 'cyan'), Bold(), 'U', Reset(), ' ] ',
+            Color('fg', 'green'), 'app-arch/bzip2-1.0.4::fakerepo', Reset(), ' ',
+            Color('fg', 'blue'), Bold(), '[1.0.3-r6::gentoo]', Reset())
+
+    def test_misc(self):
+        self.formatter.format(FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6', slot='0')))
+        self.assertOut('[', Color('fg', 'green'), 'ebuild', Reset(),
+            '  ', Color('fg', 'green'), Bold(), 'N', Reset(), '    ] ',
+            Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6', Reset())
+        self.formatter.format(FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6', slot='0', subslot='2')))
+        self.assertOut('[', Color('fg', 'green'), 'ebuild', Reset(),
+            '  ', Color('fg', 'green'), Bold(), 'N', Reset(), '    ] ',
+            Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6:0/2', Reset())
+        self.formatter.format(FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6', slot='foo')))
+        self.assertOut('[', Color('fg', 'green'), 'ebuild', Reset(),
+            '  ', Color('fg', 'green'), Bold(), 'N', Reset(), Color('fg', 'green'), Bold(),
+            'S', Reset(), '   ] ',
+            Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6:foo', Reset())
+        self.formatter.format(FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6', slot='1', subslot='0')))
+        self.assertOut('[', Color('fg', 'green'), 'ebuild', Reset(),
+            '  ', Color('fg', 'green'), Bold(), 'N', Reset(), Color('fg', 'green'), Bold(),
+            'S', Reset(), '   ] ',
+            Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6:1/0', Reset())
+        self.formatter.format(FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6', slot='2', subslot='foo')))
+        self.assertOut('[', Color('fg', 'green'), 'ebuild', Reset(),
+            '  ', Color('fg', 'green'), Bold(), 'N', Reset(), Color('fg', 'green'), Bold(),
+            'S', Reset(), '   ] ',
+            Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6:2/foo', Reset())
 
     def test_changed_use(self):
         self.formatter.format(
@@ -478,6 +519,4 @@ class TestPortageVerboseFormatter(TestPortageFormatter):
         self.fakeout.resetstream()
         self.formatter.end()
         self.assertOut('\nTotal: 2 packages (2 new, 0 upgrades, 0 downgrades, 0 in new slots)\n\n',
-            ' ', Color('fg', 'cyan'), '[1]', Reset(),' gentoo (/usr/portage)\n',
-            ' ', Color('fg', 'cyan'), '[2]', Reset(),' /usr/local/portage\n',
             suffix=[''])

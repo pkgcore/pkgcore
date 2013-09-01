@@ -50,7 +50,7 @@ def convert_glob(token):
 
 def collect_ops(text):
     i = 0
-    while text[i] in ("<", "=", ">", "~"):
+    while i < len(text) and text[i] in ("<", "=", ">", "~"):
         i += 1
     return text[0:i], text[i:]
 

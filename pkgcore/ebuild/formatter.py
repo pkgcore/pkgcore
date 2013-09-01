@@ -370,8 +370,11 @@ class PortageFormatter(CountingFormatter):
                 pkg.append(':%s/%s' % (op.pkg.slot, op.pkg.subslot))
             elif op.pkg.slot != '0':
                 pkg.append(':%s' % op.pkg.slot)
-            if not self.quiet_repo_display and \
-                    op.pkg.repo.repo_id and op.pkg.repo.repo_id != 'gentoo' and not op.pkg.built:
+            if not self.quiet_repo_display and op.pkg.repo.repo_id and \
+                    not op.pkg.built and \
+                    op.pkg.repo.repo_id != 'gentoo' or \
+                    (op.desc == 'replace' and op_type != 'replace' and \
+                     op.pkg.repo.repo_id != op.old_pkg.source_repository):
                 pkg.append("::%s" % op.pkg.repo.repo_id)
         out.write(*(pkg_coloring + pkg + [out.reset]))
 
@@ -382,8 +385,10 @@ class PortageFormatter(CountingFormatter):
                     old_pkg.append(':%s/%s' % (op.old_pkg.slot, op.old_pkg.subslot))
                 elif op.old_pkg.slot != '0':
                     old_pkg.append(':%s' % op.old_pkg.slot)
-                if not self.quiet_repo_display and \
-                        op.pkg.repo.repo_id != op.old_pkg.source_repository and not op.pkg.built:
+                if not self.quiet_repo_display and op.old_pkg.repo.repo_id and \
+                        not op.pkg.built and \
+                        (op.pkg.repo.repo_id != op.old_pkg.source_repository or \
+                         op.old_pkg.repo.repo_id != 'gentoo'):
                     old_pkg.append("::%s" % op.old_pkg.source_repository)
             out.write(' ', out.fg('blue'), out.bold, '[%s]' % ''.join(old_pkg), out.reset)
 

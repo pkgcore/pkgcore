@@ -303,7 +303,6 @@ class PortageFormatter(CountingFormatter):
         # - U and D are both displayed to show a downgrade - this is kept
         # in order to be consistent with existing portage behaviour
 
-
         out = self.out
         origautoline = out.autoline
         out.autoline = False

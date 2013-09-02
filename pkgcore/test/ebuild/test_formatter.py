@@ -328,8 +328,14 @@ class TestPaludisFormatter(CountingFormatterTest, TestCase):
 class TestPortageFormatter(BaseFormatterTest, TestCase):
     formatterClass = PortageFormatter
 
+    def setUp(self):
+        pkg = FakeMutatedPkg('app-arch/bzip2-1.0.1-r1', slot='0')
+        self.livefs = FakeRepo(repo_id='vdb', pkgs=[pkg])
+        BaseFormatterTest.setUp(self)
+
     def newFormatter(self, **kwargs):
-        kwargs.setdefault("quiet_repo_display", False)
+        kwargs.setdefault('quiet_repo_display', False)
+        kwargs.setdefault('livefs_repos', self.livefs)
         return BaseFormatterTest.newFormatter(self, **kwargs)
 
     def test_new(self):

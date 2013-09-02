@@ -367,6 +367,7 @@ def main(options, out, err):
         disabled_use=domain.disabled_use,
         world_list=world_list,
         verbose=options.verbose,
+        livefs_repos=livefs_repos,
         quiet_repo_display=options.quiet_repo_display)
 
     # This mode does not care about sets and packages so bypass all that.

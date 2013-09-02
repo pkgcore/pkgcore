@@ -345,7 +345,7 @@ class PortageFormatter(CountingFormatter):
 
         if op.desc == "add":
             out.write(' ', out.fg('green'), out.bold, 'N', out.reset)
-            if op.pkg.slot != '0':
+            if op.pkg.slot != '0' and self.livefs_repos.match(op.pkg.unversioned_atom):
                 out.write(out.fg('green'), out.bold, 'S', out.reset)
                 op_type = 'slotted_add'
             else:

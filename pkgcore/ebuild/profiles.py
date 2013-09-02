@@ -622,6 +622,7 @@ class PkgProvided(ebuild_src.base):
         ebuild_src.base.__init__(self, *a, **kwds)
         object.__setattr__(self, "use", [])
         object.__setattr__(self, "data", {})
+        object.__setattr__(self, "eapi_obj", get_eapi('0'))
 
 
 class ForgetfulDict(dict):

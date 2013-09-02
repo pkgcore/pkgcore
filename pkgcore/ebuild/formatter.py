@@ -245,20 +245,33 @@ class CountingFormatter(Formatter):
     def end(self):
         self.out.write()
         if self.verbose:
+            total = sum(self.package_data.itervalues())
             self.out.write(
-                'Total: %d packages ' % sum(self.package_data.itervalues()),
+                'Total: %d package%s' % (total, 's'[total==1:]),
                 autoline=False)
 
             d = dict(self.package_data.iteritems())
-            s =  "(%i new, " % (d.pop("add",0),)
-            s += "%i upgrades, " % (d.pop("upgrade", 0),)
-            s += "%i downgrades, " % (d.pop("downgrade", 0),)
-            s += "%i in new slots" % (d.pop("slotted_add", 0),)
+            op_types = [
+                        ('add', 'new'),
+                        ('upgrade', 'upgrade'),
+                        ('downgrade', 'downgrade'),
+                        ('slotted_add', 'in new slot'),
+                        ('replace', 'reinstall')
+                       ]
+            op_list = []
+            for op_type, op_str in op_types:
+                num_ops = d.pop(op_type, 0)
+                if num_ops:
+                    if op_str == 'new':
+                        op_list.append('%i %s' % (num_ops, op_str))
+                    else:
+                        op_list.append('%i %s%s' % (num_ops, op_str, 's'[num_ops==1:]))
             if d:
-                s += ", %i other ops)" % (len(d),)
+                op_list.append('%i other op%s' % (len(d), 's'[len(d)==1:]))
+            if op_list:
+                self.out.write(' (' + ', '.join(op_list) + ')')
             else:
-                s += ")"
-            self.out.write(s)
+                self.out.write()
 
 
 class PortageFormatter(CountingFormatter):

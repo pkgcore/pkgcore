@@ -175,19 +175,33 @@ class CountingFormatterTest(BaseFormatterTest):
 
     def test_end(self):
         self.formatter.end()
-        self.assertEnd('\nTotal: 0 packages (0 new, 0 upgrades, 0 downgrades, 0 in new slots)')
+        self.assertEnd('\nTotal: 0 packages')
 
     def test_end_new(self):
         self.formatter.format(FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6')))
         self.fakeout.resetstream()
         self.formatter.end()
-        self.assertEnd('\nTotal: 1 packages (1 new, 0 upgrades, 0 downgrades, 0 in new slots)')
+        self.assertEnd('\nTotal: 1 package (1 new)')
+
+    def test_end_new_multiple(self):
+        self.formatter.format(FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6')))
+        self.formatter.format(FakeOp(FakeEbuildSrc('app-arch/gzip-1.6')))
+        self.fakeout.resetstream()
+        self.formatter.end()
+        self.assertEnd('\nTotal: 2 packages (2 new)')
 
     def test_end_newslot(self):
         self.formatter.format(FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6', slot='1')))
         self.fakeout.resetstream()
         self.formatter.end()
-        self.assertEnd('\nTotal: 1 packages (0 new, 0 upgrades, 0 downgrades, 1 in new slots)')
+        self.assertEnd('\nTotal: 1 package (1 in new slot)')
+
+    def test_end_newslot_multiple(self):
+        self.formatter.format(FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6', slot='1')))
+        self.formatter.format(FakeOp(FakeEbuildSrc('app-arch/gzip-1.6', slot='2')))
+        self.fakeout.resetstream()
+        self.formatter.end()
+        self.assertEnd('\nTotal: 2 packages (2 in new slots)')
 
     def test_end_downgrade(self):
         self.formatter.format(
@@ -195,7 +209,18 @@ class CountingFormatterTest(BaseFormatterTest):
             FakeMutatedPkg('app-arch/bzip2-1.0.4')))
         self.fakeout.resetstream()
         self.formatter.end()
-        self.assertEnd('\nTotal: 1 packages (0 new, 0 upgrades, 1 downgrades, 0 in new slots)')
+        self.assertEnd('\nTotal: 1 package (1 downgrade)')
+
+    def test_end_downgrade_multiple(self):
+        self.formatter.format(
+            FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6'),
+            FakeMutatedPkg('app-arch/bzip2-1.0.4')))
+        self.formatter.format(
+            FakeOp(FakeEbuildSrc('app-arch/gzip-1.5'),
+            FakeMutatedPkg('app-arch/gzip-1.6')))
+        self.fakeout.resetstream()
+        self.formatter.end()
+        self.assertEnd('\nTotal: 2 packages (2 downgrades)')
 
     def test_end_upgrade(self):
         self.formatter.format(
@@ -203,7 +228,37 @@ class CountingFormatterTest(BaseFormatterTest):
             FakeMutatedPkg('app-arch/bzip2-1.0.3-r6')))
         self.fakeout.resetstream()
         self.formatter.end()
-        self.assertEnd('\nTotal: 1 packages (0 new, 1 upgrades, 0 downgrades, 0 in new slots)')
+        self.assertEnd('\nTotal: 1 package (1 upgrade)')
+
+    def test_end_upgrade_multiple(self):
+        self.formatter.format(
+            FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.4'),
+            FakeMutatedPkg('app-arch/bzip2-1.0.3-r6')))
+        self.formatter.format(
+            FakeOp(FakeEbuildSrc('app-arch/gzip-1.6'),
+            FakeMutatedPkg('app-arch/gzip-1.5')))
+        self.fakeout.resetstream()
+        self.formatter.end()
+        self.assertEnd('\nTotal: 2 packages (2 upgrades)')
+
+    def test_end_reinstall(self):
+        self.formatter.format(
+            FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.4'),
+            FakeMutatedPkg('app-arch/bzip2-1.0.4')))
+        self.fakeout.resetstream()
+        self.formatter.end()
+        self.assertEnd('\nTotal: 1 package (1 reinstall)')
+
+    def test_end_reinstall_multiple(self):
+        self.formatter.format(
+            FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.4'),
+            FakeMutatedPkg('app-arch/bzip2-1.0.4')))
+        self.formatter.format(
+            FakeOp(FakeEbuildSrc('app-arch/gzip-1.6'),
+            FakeMutatedPkg('app-arch/gzip-1.6')))
+        self.fakeout.resetstream()
+        self.formatter.end()
+        self.assertEnd('\nTotal: 2 packages (2 reinstalls)')
 
 
 class TestPaludisFormatter(CountingFormatterTest, TestCase):
@@ -545,7 +600,7 @@ class TestPortageVerboseFormatter(TestPortageFormatter):
         self.formatter.format(FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6', repo=self.repo2)))
         self.fakeout.resetstream()
         self.formatter.end()
-        self.assertOut('\nTotal: 2 packages (2 new, 0 upgrades, 0 downgrades, 0 in new slots)\n\n',
+        self.assertOut('\nTotal: 2 packages (2 new)\n\n',
             suffix=[''])
 
 class TestPortageVerboseRepoIdFormatter(TestPortageVerboseFormatter):
@@ -566,7 +621,7 @@ class TestPortageVerboseRepoIdFormatter(TestPortageVerboseFormatter):
         self.formatter.format(FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6', repo=self.repo2)))
         self.fakeout.resetstream()
         self.formatter.end()
-        self.assertOut('\nTotal: 2 packages (2 new, 0 upgrades, 0 downgrades, 0 in new slots)\n\n',
+        self.assertOut('\nTotal: 2 packages (2 new)\n\n',
             ' ', Color('fg', 'cyan'), '[1]', Reset(),' gentoo (/usr/portage)\n',
             ' ', Color('fg', 'cyan'), '[2]', Reset(),' /usr/local/portage\n',
             suffix=[''])

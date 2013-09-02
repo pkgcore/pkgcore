@@ -338,7 +338,7 @@ def parse_atom(restriction, repo, return_none=False):
     elif len(key_matches) > 1:
         raise AmbiguousQuery(restriction, sorted(key_matches))
     if isinstance(restriction, atom):
-        # atom is guranteed to be fine, since it's cat/pkg
+        # atom is guaranteed to be fine, since it's cat/pkg
         return restriction
     return packages.KeyedAndRestriction(restriction, key=key_matches.pop())
 

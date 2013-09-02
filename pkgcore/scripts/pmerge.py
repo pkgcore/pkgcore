@@ -59,7 +59,7 @@ merge_mode.add_argument('--clean', action='store_true',
     help='remove installed packages that are not referenced by any '
          'target packages/sets; defaults to -s world -s system if no targets'
          ' are specified.  Use with *caution*, this option used incorrectly '
-         'can render your system unusable.  Implies --deep'),
+         'can render your system unusable.  Implies --deep')
 merge_mode.add_argument('--pretend', '-p', action='store_true',
     help="do the resolution, but don't merge/fetch anything")
 merge_mode.add_argument('--ignore-failures', action='store_true',
@@ -96,7 +96,7 @@ resolution_options.add_argument('--ignore-cycles', '-i', action='store_true',
 resolution_options.add_argument('-B', '--with-built-depends',
     action='store_true', default=False,
     help="whether or not to process build depends for pkgs that "
-         "are already built; defaults to ignoring them"),
+         "are already built; defaults to ignoring them")
 resolution_options.add_argument('--nodeps', '-O', action='store_true',
     help='disable dependency resolution')
 resolution_options.add_argument('--noreplace', '-n', action='store_false',

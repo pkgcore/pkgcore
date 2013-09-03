@@ -500,6 +500,7 @@ class domain(pkgcore.config.domain.domain):
             preserves = set(x.lstrip('-+') for x in pkg.iuse)
             enabled.intersection_update(preserves)
             enabled.update(immutable)
+            enabled.difference_update(disabled)
 
         return immutable, enabled, disabled
 

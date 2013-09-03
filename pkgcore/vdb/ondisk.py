@@ -175,7 +175,8 @@ class tree(prototype.tree):
     _metadata_rewrites = {
         "depends":"DEPEND", "rdepends":"RDEPEND", "post_rdepends":"PDEPEND",
         "use":"USE", "eapi":"EAPI", "CONTENTS":"contents", "provides":"PROVIDE",
-        "source_repository": "repository"}
+        "source_repository":"repository"
+    }
 
     def _get_metadata(self, pkg):
         return IndeterminantDict(partial(self._internal_load_key,

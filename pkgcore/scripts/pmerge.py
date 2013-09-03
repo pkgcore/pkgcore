@@ -51,7 +51,6 @@ query_options.add_argument('--set', '-s', store_name=True,
     action=commandline.StoreConfigObject, type=str, priority=35,
     config_type='pkgset', help='specify a pkgset to use')
 
-
 merge_mode = argparser.add_argument_group('Available operations')
 merge_mode.add_argument('--unmerge', '-C', action='store_true',
     help='unmerge a package')

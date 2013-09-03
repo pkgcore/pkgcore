@@ -96,7 +96,7 @@ class resolver_frame(object):
         "events", "succeeded")
 
     def __init__(self, parent, mode, atom, choices, dbs, start_point, depth,
-        drop_cycles, ignored=False, vdb_limited=False):
+                 drop_cycles, ignored=False, vdb_limited=False):
         assert hasattr(dbs, 'itermatch')
         self.parent = parent
         self.atom = atom
@@ -658,8 +658,7 @@ class merge_plan(object):
             failure = []
             for or_node in potentials:
                 if or_node.blocks:
-                    failure = self.process_blocker(stack, choices, or_node,
-                        mode, atom)
+                    failure = self.process_blocker(stack, choices, or_node, mode, atom)
                     if not failure:
                         blocks.append(or_node)
                         break
@@ -746,18 +745,17 @@ class merge_plan(object):
             if any(True for x in conflicts if isinstance(x, restriction.base)):
                 # blocker was caught
                 try_rematch = True
-            elif not any(True for x in conflicts if not
-                self.vdb_restrict.match(x)):
+            elif not any(True for x in conflicts if not self.vdb_restrict.match(x)):
                 # vdb entry, replace.
                 if self.vdb_restrict.match(choices.current_pkg):
                     # we're replacing a vdb entry with a vdb entry?  wtf.
                     print ("internal weirdness spotted- vdb restrict matches, "
-                        "but current doesn't, bailing")
-                    raise Exception("internal weirdness- vdb restrict matches, but current doesn't. bailing- run w/ --debug")
-                conflicts = state.replace_op(choices, choices.current_pkg).apply(
-                    self.state)
+                           "but current doesn't, bailing")
+                    raise Exception("internal weirdness- vdb restrict matches ",
+                                    "but current doesn't. bailing- run w/ --debug")
+                conflicts = state.replace_op(choices, choices.current_pkg).apply(self.state)
                 if not conflicts:
-                    self._dprint("replacing vdb entry for   '%s' with pkg '%s'",
+                    self._dprint("replacing vdb entry for '%s' with pkg '%s'",
                         (atom, choices.current_pkg))
 
             else:

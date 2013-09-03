@@ -495,11 +495,10 @@ class domain(pkgcore.config.domain.domain):
 
         # lock the configurable use flags to only what's in IUSE, and what's forced
         # from the profiles (things like userland_GNU and arch)
-        enabled = self.enabled_use.pull_data(pkg,
-            pre_defaults=pre_defaults)
+        enabled = self.enabled_use.pull_data(pkg, pre_defaults=pre_defaults)
         if for_metadata:
             preserves = set(x.lstrip('-+') for x in pkg.iuse)
-            enabled = enabled.intersection(preserves)
+            enabled.intersection_update(preserves)
             enabled.update(immutable)
 
         return immutable, enabled, disabled

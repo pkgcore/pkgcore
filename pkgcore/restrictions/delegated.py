@@ -28,7 +28,7 @@ class delegate(restriction.base):
     def __init__(self, transform_func, negate=False):
         """
 
-        :param transform_func: callable inovked with data, pkg, and mode
+        :param transform_func: callable invoked with data, pkg, and mode
             mode may be "match", "force_True", or "force_False"
         """
 

@@ -274,7 +274,7 @@ class tree(object):
               for p in collect_package_restrictions(x, ("package",))])
             for x in restrict.iter_dnf_solutions(True)]
 
-        # see if any solution state isn't dependant on cat/pkg in anyway.
+        # see if any solution state isn't dependent on cat/pkg in anyway.
         # if so, search whole search space.
         for x in dsolutions:
             if not x[0] and not x[1]:
@@ -420,7 +420,7 @@ class tree(object):
         """
         internal function,
 
-        notify the repository that a pkg is being addeded to it
+        notify the repository that a pkg is being added to it
         """
         ver_key = (pkg.category, pkg.package)
         s = set(self.versions.get(ver_key, ()))

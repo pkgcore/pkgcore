@@ -191,7 +191,7 @@ class ProfileNode(object):
         for line in data:
             l = line.split()
             if len(l) != 2:
-                raise ValueError("%r is malformated" % line)
+                raise ValueError("%r is malformed" % line)
             d[cpv.CPV.unversioned(l[0]).package] = self.eapi_atom(l[1])
         return mappings.ImmutableDict(d)
 

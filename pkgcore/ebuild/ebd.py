@@ -215,7 +215,7 @@ class ebd(object):
 
         if self.env_data_source is not None:
             fp = pjoin(self.env["T"], "environment")
-            # load data first (might be a local_source), *then* right
+            # load data first (might be a local_source), *then* write
             # if it's a src_ebuild being installed, trying to do two steps
             # stomps the local_sources data.
             data = self.env_data_source.bytes_fileobj().read()

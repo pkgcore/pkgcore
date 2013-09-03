@@ -413,7 +413,6 @@ class domain(pkgcore.config.domain.domain):
                 return True
         return False
 
-
     def make_keywords_filter(self, arch, default_keys, pkg_keywords,
         incremental=False):
         """Generates a restrict that matches iff the keywords are allowed."""
@@ -508,7 +507,7 @@ class domain(pkgcore.config.domain.domain):
     def get_package_use_buildable(self, pkg):
         # isolate just what isn't exposed for metadata- anything non-IUSE
         # this brings in actual use flags the ebuild shouldn't see, but that's
-        # a future enhancement to be done when USE_EXPAND is kept seperate from
+        # a future enhancement to be done when USE_EXPAND is kept separate from
         # mainline USE in this code.
 
         metadata_use = self.get_package_use_unconfigured(pkg, for_metadata=True)[1]

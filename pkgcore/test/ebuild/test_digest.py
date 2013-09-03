@@ -7,7 +7,7 @@ from pkgcore.ebuild import digest
 from pkgcore import gpg
 from snakeoil.data_source import local_source
 
-# "Line too long" (and our custom more agressive version of that)
+# "Line too long" (and our custom more aggressive version of that)
 # pylint: disable-msg=C0301,CPC01
 
 digest_contents = \

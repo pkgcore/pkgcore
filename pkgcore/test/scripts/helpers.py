@@ -41,7 +41,7 @@ def noerror(msg=None):
 
 def mangle_parser(parser):
     """Make an OptionParser or argparser testable."""
-    # copy it.  avoid the potential of inadvertantly tainting what we're working on.
+    # copy it.  avoid the potential of inadvertently tainting what we're working on.
     parser = copy.copy(parser)
     parser.exit = noexit
     parser.error = noerror

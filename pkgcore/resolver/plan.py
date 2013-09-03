@@ -723,7 +723,7 @@ class merge_plan(object):
         if conflicts:
             # this means in this branch of resolution, someone slipped
             # something in already. cycle, basically.
-            # hack.  see if what was insert is enough for us.
+            # hack.  see if what was inserted is enough for us.
 
             # this is tricky... if it's the same node inserted
             # (cycle), then we ignore it; this does *not* perfectly

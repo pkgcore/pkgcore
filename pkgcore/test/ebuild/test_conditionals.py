@@ -306,9 +306,9 @@ class native_DepSetEvaluateTest(base):
             # this needs to a *very* large number of attributes; what we're asserting here
             # is that the backend doesn't use a quadratic implementation- if it does,
             # we want to preferably blow the allowed stack depth (runtime exception, but that's fine),
-            # worst case (jython), we want to force amemory exhausation.
+            # worst case (jython), we want to force a memory exhaustion.
             # we assert it in the tests to make sure some 'special' ebuild dev doesn't trigger
-            # it on a users machines, thus the abuse leveled here.
+            # it on a user's machine, thus the abuse leveled here.
             ("a/b", "a/b[!c?,%s]" % (",".join(x + "?" for x in flag_set)), "c"),
             ("a/b", "a/b[%s]" % (",".join("%s?" % (x,) for x in flag_set)), "",
                 " ".join(flag_set)),

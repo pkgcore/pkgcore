@@ -216,7 +216,6 @@ class domain(pkgcore.config.domain.domain):
             u2 = u.lower()+"_"
             use.update(u2 + x for x in v.split())
 
-        r = None
         license, default_keywords = [], []
         master_license = []
         if not 'ACCEPT_KEYWORDS' in settings:

@@ -24,11 +24,12 @@ from pkgcore.ebuild import const
 from pkgcore.ebuild.misc import (collapsed_restrict_to_data,
     non_incremental_collapsed_restrict_to_data, incremental_expansion,
     incremental_expansion_license, optimize_incrementals,
-    ChunkedDataDict, chunked_data, split_negations)
+    ChunkedDataDict, chunked_data, split_negations,
+    package_keywords_splitter)
 from pkgcore.ebuild.repo_objs import OverlayedLicenses
 from pkgcore.util.parserestrict import parse_match
 
-from snakeoil.lists import stable_unique, unstable_unique, predicate_split
+from snakeoil.lists import unstable_unique, predicate_split
 from snakeoil.compatibility import raise_from
 from snakeoil.mappings import ProtectedDict
 from snakeoil.fileutils import iter_read_bash
@@ -55,10 +56,6 @@ class Failure(BaseError):
         BaseError.__init__(self, "domain failure: %s" % (text,))
         self.text = text
 
-
-def package_keywords_splitter(val):
-    v = val.split()
-    return parse_match(v[0]), stable_unique(v[1:])
 
 def package_env_splitter(basedir, val):
     val = val.split()
@@ -244,8 +241,9 @@ class domain(pkgcore.config.domain.domain):
                 default_keywords.append(x.lstrip("~"))
         default_keywords = unstable_unique(default_keywords + [self.arch])
 
+        keywords = pkg_keywords + profile.keywords + profile.accept_keywords
         vfilters = [self.make_keywords_filter(
-            self.arch, default_keywords, pkg_keywords,
+            self.arch, default_keywords, keywords,
             incremental="package.keywords" in incrementals)]
 
         del default_keywords

@@ -12,7 +12,7 @@ from pkgcore.config import ConfigHint
 from pkgcore.ebuild import const, ebuild_src, misc
 from pkgcore.ebuild.misc import (
     _build_cp_atom_payload, chunked_data, ChunkedDataDict, split_negations,
-    IncrementalsDict)
+    IncrementalsDict, package_keywords_splitter)
 from pkgcore.repository import virtual
 from pkgcore.util.parserestrict import parse_match
 
@@ -203,6 +203,14 @@ class ProfileNode(object):
     @load_property("package.unmask", allow_recurse=True)
     def unmasks(self, data):
         return [parse_match(x) for x in data]
+
+    @load_property("package.keywords", allow_recurse=True)
+    def keywords(self, data):
+        return [package_keywords_splitter(x) for x in data]
+
+    @load_property("package.accept_keywords", allow_recurse=True)
+    def accept_keywords(self, data):
+        return [package_keywords_splitter(x) for x in data]
 
     @load_property("deprecated", handler=None, fallback=None)
     def deprecated(self, data):
@@ -519,6 +527,20 @@ class ProfileStack(object):
         for profile in self.stack:
             s.update(profile.unmasks)
         return frozenset(s)
+
+    @klass.jit_attr
+    def keywords(self):
+        l = []
+        for profile in self.stack:
+            l.extend(profile.keywords)
+        return l
+
+    @klass.jit_attr
+    def accept_keywords(self):
+        l = []
+        for profile in self.stack:
+            l.extend(profile.accept_keywords)
+        return l
 
     def _incremental_masks(self, stack_override=None):
         if stack_override is None:

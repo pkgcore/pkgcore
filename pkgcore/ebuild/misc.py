@@ -13,9 +13,10 @@ __all__ = ("optimize_incrementals", "incremental_expansion_license",
 import collections
 from pkgcore.restrictions import packages, restriction
 from pkgcore.ebuild import atom
+from pkgcore.util.parserestrict import parse_match
 
 from snakeoil import compatibility, mappings
-from snakeoil.lists import iflatten_instance
+from snakeoil.lists import iflatten_instance, stable_unique
 from snakeoil.klass import generic_equality, alias_method
 from snakeoil.sequences import namedtuple
 
@@ -31,6 +32,10 @@ demandload(globals(),
 
 restrict_payload = namedtuple("restrict_data", ["restrict", "data"])
 chunked_data = namedtuple("chunked_data", ("key", "neg", "pos"))
+
+def package_keywords_splitter(val):
+    v = val.split()
+    return parse_match(v[0]), stable_unique(v[1:])
 
 def split_negations(data, func=str):
     neg, pos = [], []

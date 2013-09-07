@@ -14,6 +14,7 @@ from pkgcore.ebuild.misc import (
     _build_cp_atom_payload, chunked_data, ChunkedDataDict, split_negations,
     IncrementalsDict)
 from pkgcore.repository import virtual
+from pkgcore.util.parserestrict import parse_match
 
 from snakeoil.osutils import abspath, join as pjoin
 from snakeoil.fileutils import readlines_utf8
@@ -198,6 +199,10 @@ class ProfileNode(object):
     @load_property("package.mask", allow_recurse=True)
     def masks(self, data):
         return split_negations(data, self.eapi_atom)
+
+    @load_property("package.unmask", allow_recurse=True)
+    def unmasks(self, data):
+        return [parse_match(x) for x in data]
 
     @load_property("deprecated", handler=None, fallback=None)
     def deprecated(self, data):
@@ -508,10 +513,22 @@ class ProfileStack(object):
         return frozenset(chain(self._collapse_generic("masks"),
             self._collapse_generic("visibility")))
 
+    @klass.jit_attr
+    def unmasks(self):
+        s = set()
+        for profile in self.stack:
+            s.update(profile.unmasks)
+        return frozenset(s)
+
     def _incremental_masks(self, stack_override=None):
         if stack_override is None:
             stack_override = self.stack
         return [node.masks for node in stack_override]
+
+    def _incremental_unmasks(self, stack_override=None):
+        if stack_override is None:
+            stack_override = self.stack
+        return [node.unmasks for node in stack_override]
 
     @klass.jit_attr
     def bashrcs(self):
@@ -568,6 +585,12 @@ class OnDiskProfile(ProfileStack):
         if self.load_profile_base:
             stack = stack[1:]
         return ProfileStack._incremental_masks(self, stack_override=stack)
+
+    def _incremental_unmasks(self):
+        stack = self.stack
+        if self.load_profile_base:
+            stack = stack[1:]
+        return ProfileStack._incremental_unmasks(self, stack_override=stack)
 
 
 class UserProfileNode(ProfileNode):

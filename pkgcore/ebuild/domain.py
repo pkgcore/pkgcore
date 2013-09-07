@@ -217,11 +217,6 @@ class domain(pkgcore.config.domain.domain):
             use.update(u2 + x for x in v.split())
 
         r = None
-        unmasking_restrict = None
-        if pkg_unmaskers:
-            unmasking_restrict = generate_unmasking_restrict(pkg_unmaskers)
-        del pkg_unmaskers
-
         license, default_keywords = [], []
         master_license = []
         if not 'ACCEPT_KEYWORDS' in settings:
@@ -348,8 +343,9 @@ class domain(pkgcore.config.domain.domain):
                         m.update(pos)
                     m.update(pkg_maskers)
                     m = list(m)
+                    u = list(profile.unmasks) + pkg_unmaskers
                     filtered = self.generate_filter(generate_masking_restrict(m),
-                        unmasking_restrict, *vfilters)
+                        generate_unmasking_restrict(u), *vfilters)
                 if filtered:
                     wrapped_repo = visibility.filterTree(wrapped_repo,
                         filtered, True)

@@ -639,10 +639,8 @@ class UserProfile(OnDiskProfile):
         required=('user_path','parent_path', 'parent_profile'),
         typename='profile')
 
-    def __init__(self, user_path, parent_path, parent_profile,
-        load_profiles_base=False):
-        OnDiskProfile.__init__(self, parent_path, parent_profile,
-            load_profiles_base)
+    def __init__(self, user_path, parent_path, parent_profile, load_profile_base=True):
+        OnDiskProfile.__init__(self, parent_path, parent_profile, load_profile_base)
         self.node = UserProfileNode(user_path, pjoin(parent_path, parent_profile))
 
 

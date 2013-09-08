@@ -384,7 +384,6 @@ def main(options, out, err):
             return 1
         return
 
-
     source_repos = domain.source_repositories
     installed_repos = domain.installed_repositories
 

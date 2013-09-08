@@ -204,5 +204,3 @@ class protective_database(database):
         if self._mtime_used:
             d["_mtime_"] = mtime
         return d
-
-

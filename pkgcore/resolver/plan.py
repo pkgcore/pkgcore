@@ -195,8 +195,7 @@ class resolver_stack(deque):
         slot = pkg.slot
         key = pkg.key
         kwds['skip_trg_frame'] = True
-        return (frame for frame in self._cycles(trg_frame,
-            **kwds)
+        return (frame for frame in self._cycles(trg_frame, **kwds)
             if key == frame.current_pkg.key and slot == frame.current_pkg.slot)
 
     def _cycles(self, trg_frame, start=0, reverse=False, skip_trg_frame=True):

@@ -241,9 +241,9 @@ class domain(pkgcore.config.domain.domain):
                 default_keywords.append(x.lstrip("~"))
         default_keywords = unstable_unique(default_keywords + [self.arch])
 
-        keywords = pkg_keywords + profile.keywords + profile.accept_keywords
+        accept_keywords = pkg_keywords + profile.accept_keywords
         vfilters = [self.make_keywords_filter(
-            self.arch, default_keywords, keywords,
+            self.arch, default_keywords, accept_keywords, profile.keywords,
             incremental="package.keywords" in incrementals)]
 
         del default_keywords
@@ -406,10 +406,10 @@ class domain(pkgcore.config.domain.domain):
                 return True
         return False
 
-    def make_keywords_filter(self, arch, default_keys, pkg_keywords,
-        incremental=False):
+    def make_keywords_filter(self, arch, default_keys,
+            accept_keywords, profile_keywords, incremental=False):
         """Generates a restrict that matches iff the keywords are allowed."""
-        if not pkg_keywords:
+        if not accept_keywords and not profile_keywords:
             return packages.PackageRestriction(
                 "keywords", values.ContainmentMatch(*default_keys))
 
@@ -422,21 +422,21 @@ class domain(pkgcore.config.domain.domain):
                 return r, v
             data = collapsed_restrict_to_data(
                 ((packages.AlwaysTrue, default_keys),),
-                (f(*i) for i in pkg_keywords))
+                (f(*i) for i in accept_keywords))
         else:
             if incremental:
                 f = collapsed_restrict_to_data
             else:
                 f = non_incremental_collapsed_restrict_to_data
             data = f(((packages.AlwaysTrue, default_keys),),
-                pkg_keywords)
+                accept_keywords)
 
         if incremental:
             raise NotImplementedError(self.incremental_apply_keywords_filter)
             #f = self.incremental_apply_keywords_filter
         else:
             f = self.apply_keywords_filter
-        return delegate(partial(f, data))
+        return delegate(partial(f, data, profile_keywords))
 
     @staticmethod
     def incremental_apply_keywords_filter(data, pkg, mode):
@@ -446,21 +446,25 @@ class domain(pkgcore.config.domain.domain):
         return any(True for x in pkg.keywords if x in allowed)
 
     @staticmethod
-    def apply_keywords_filter(data, pkg, mode):
+    def apply_keywords_filter(data, profile_keywords, pkg, mode):
         # note we ignore mode; keywords aren't influenced by conditionals.
         # note also, we're not using a restriction here.  this is faster.
+        pkg_keywords = pkg.keywords
+        for atom, keywords in profile_keywords:
+            if atom.match(pkg):
+                pkg_keywords += tuple(keywords)
         allowed = data.pull_data(pkg)
         if '**' in allowed:
             return True
         if "*" in allowed:
-            for k in pkg.keywords:
+            for k in pkg_keywords:
                 if k[0] not in "-~":
                     return True
         if "~*" in allowed:
-            for k in pkg.keywords:
+            for k in pkg_keywords:
                 if k[0] == "~":
                     return True
-        return any(True for x in pkg.keywords if x in allowed)
+        return any(True for x in pkg_keywords if x in allowed)
 
     def split_use_expand_flags(self, use_stream):
         matcher = self.use_expand_re.match

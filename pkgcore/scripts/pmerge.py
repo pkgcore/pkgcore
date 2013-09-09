@@ -70,7 +70,7 @@ merge_mode.add_argument('--force', action='store_true',
     help="force merging to a repo, regardless of if it's frozen")
 merge_mode.add_argument('--fetchonly', '-f', action='store_true',
     help="do only the fetch steps of the resolved plan")
-merge_mode.add_argument('--oneshot', '-o', '-1', action='store_true',
+merge_mode.add_argument('--oneshot', '-1', action='store_true',
     default=False,
     help="do not record changes in the world file; if a set is "
          "involved, defaults to forcing oneshot")

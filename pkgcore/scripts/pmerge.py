@@ -471,7 +471,7 @@ def main(options, out, err):
                 src_flags = src_iuse.intersection(src_pkg.use)
                 if inst_flags.symmetric_difference(src_flags) or \
                    inst_pkg.iuse.symmetric_difference(src_pkg.iuse):
-                    atoms.append(src_pkg.versioned_atom)
+                    atoms.append(src_pkg.unversioned_atom)
 
 #    left intentionally in place for ease of debugging.
 #    from guppy import hpy

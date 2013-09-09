@@ -457,10 +457,8 @@ def main(options, out, err):
     if options.newuse:
         out.write(out.bold, ' * ', out.reset, 'Scanning for changed USE...')
         out.title('Scanning for changed USE...')
-        restrict = packages.PackageRestriction('category',
-            values.StrExactMatch('virtual'), negate=True)
         if atoms:
-            restrict = AndRestriction(restrict, OrRestriction(*atoms))
+            restrict = OrRestriction(*atoms)
         for inst_pkg in installed_repos.itermatch(restrict):
             src_pkgs = source_repos.match(inst_pkg.versioned_atom)
             if src_pkgs:

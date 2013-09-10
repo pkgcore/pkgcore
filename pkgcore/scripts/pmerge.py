@@ -478,9 +478,9 @@ def main(options, out, err):
 
     resolver_inst = resolver_kls(
         installed_repos.repositories, source_repos.repositories,
-        verify_vdb=options.deep, nodeps=options.nodeps, drop_cycles=options.ignore_cycles,
-        force_replacement=options.replace, process_built_depends=options.with_built_depends,
-        **extra_kwargs)
+        verify_vdb=options.deep, nodeps=options.nodeps,
+        drop_cycles=options.ignore_cycles, force_replace=options.replace,
+        process_built_depends=options.with_built_depends, **extra_kwargs)
 
     if options.preload_vdb_state:
         out.write(out.bold, ' * ', out.reset, 'Preloading vdb... ')

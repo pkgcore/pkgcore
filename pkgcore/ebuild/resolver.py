@@ -16,8 +16,8 @@ demandload(globals(),
 )
 
 def upgrade_resolver(vdbs, dbs, verify_vdb=True, nodeps=False,
-                     force_replacement=False,
-                     resolver_cls=plan.merge_plan, **kwds):
+                     force_replace=False, resolver_cls=plan.merge_plan,
+                     **kwds):
 
     """
     generate and configure a resolver for upgrading all processed nodes.
@@ -44,13 +44,13 @@ def upgrade_resolver(vdbs, dbs, verify_vdb=True, nodeps=False,
         vdbs = map(misc.nodeps_repo, vdbs)
         dbs = list(dbs)
 
-    if force_replacement:
+    if force_replace:
         resolver_cls = generate_replace_resolver_kls(resolver_cls)
     return resolver_cls(dbs + vdbs, plan.pkg_sort_highest, f, **kwds)
 
 
 def min_install_resolver(vdbs, dbs, verify_vdb=True, force_vdb_virtuals=True,
-                         force_replacement=False, resolver_cls=plan.merge_plan,
+                         force_replace=False, resolver_cls=plan.merge_plan,
                          nodeps=False, **kwds):
     """
     Resolver that tries to minimize the number of changes while installing.
@@ -80,7 +80,7 @@ def min_install_resolver(vdbs, dbs, verify_vdb=True, force_vdb_virtuals=True,
         vdbs = map(misc.nodeps_repo, vdbs)
         dbs = list(dbs)
 
-    if force_replacement:
+    if force_replace:
         resolver_cls = generate_replace_resolver_kls(resolver_cls)
     return resolver_cls(vdbs + dbs, plan.pkg_sort_highest,
                         plan.merge_plan.prefer_reuse_strategy, **kwds)

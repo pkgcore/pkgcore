@@ -426,7 +426,7 @@ class atom(boolean.AndRestriction):
 
     def __str__(self):
         if self.op == '=*':
-            s = "=%s*" %  self.cpvstr
+            s = "=%s*" % self.cpvstr
         else:
             s = self.op + self.cpvstr
         if self.blocks:
@@ -435,7 +435,7 @@ class atom(boolean.AndRestriction):
             else:
                 s = '!' + s
         if self.slot:
-            s += ":%s" % (self.slot,)
+            s += ":%s" % self.slot
         if self.repo_id:
             s += "::%s" % self.repo_id
         if self.use:

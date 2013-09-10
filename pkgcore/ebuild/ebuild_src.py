@@ -166,16 +166,16 @@ def get_parsed_eapi(self):
     return get_eapi(eapi.group(2) if eapi is not None else '0', True)
 
 def get_slot(self):
-    o = self.data.get("SLOT", "0")
+    o = self.data.pop("SLOT", "0")
     if o is None:
         raise ValueError(self, "SLOT cannot be unset")
-    return o.partition('/')[0].strip()
+    return o.strip()
 
 def get_subslot(self):
-    o = self.data.get("SLOT").partition('/')
-    if o[2] == "":
-        return o[0].strip()
-    return o[2].strip()
+    slot, separator, subslot = self.fullslot.partition('/')
+    if not subslot:
+        return slot
+    return subslot
 
 def rewrite_restrict(restrict):
     if restrict[0:2] == 'no':
@@ -202,7 +202,7 @@ class base(metadata.package):
 
     tracked_attributes = (
         "depends", "rdepends", "post_rdepends", "provides", "license",
-        "slot", "keywords", "eapi_obj", "restrict", "description", "iuse",
+        "fullslot", "keywords", "eapi_obj", "restrict", "description", "iuse",
         "chost", "cbuild", "ctarget", "homepage", "properties", "inherited",
         "defined_phases", "source_repository")
 
@@ -219,7 +219,8 @@ class base(metadata.package):
                                          False)
     _get_attr["license"] = partial(generate_depset, str,
         "LICENSE", True, element_func=intern)
-    _get_attr["slot"] = get_slot
+    _get_attr["fullslot"] = get_slot
+    _get_attr["slot"] = lambda s:s.fullslot.partition('/')[0]
     _get_attr["subslot"] = get_subslot
     _get_attr["fetchables"] = generate_fetchables
     _get_attr["description"] = lambda s:s.data.pop("DESCRIPTION", "").strip()

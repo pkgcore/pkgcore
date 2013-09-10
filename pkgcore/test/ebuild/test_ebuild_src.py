@@ -78,21 +78,36 @@ class test_base(TestCase):
         o = self.get_pkg({'HOMEPAGE': ' http://slashdot/ '})
         self.assertEqual(o.homepage, 'http://slashdot/')
 
+    def test_fullslot(self):
+        o = self.get_pkg({'SLOT': '0'})
+        self.assertEqual(o.fullslot, '0')
+        o = self.get_pkg({'SLOT': '0/0'})
+        self.assertEqual(o.fullslot, '0/0')
+        o = self.get_pkg({'SLOT': '1/2'})
+        self.assertEqual(o.fullslot, '1/2')
+        o = self.get_pkg({'SLOT': '1/foo-1'})
+        self.assertEqual(o.fullslot, '1/foo-1')
+        self.assertRaises(ValueError, getattr, self.get_pkg({'SLOT':''}), 'fullslot')
+
     def test_slot(self):
         o = self.get_pkg({'SLOT': '0'})
         self.assertEqual(o.slot, '0')
-        self.assertRaises(ValueError, getattr, self.get_pkg({'SLOT':''}),
-            'slot')
+        o = self.get_pkg({'SLOT': '1/2'})
+        self.assertEqual(o.slot, '1')
+        o = self.get_pkg({'SLOT': '1/foo-1'})
+        self.assertEqual(o.slot, '1')
+        self.assertRaises(ValueError, getattr, self.get_pkg({'SLOT':''}), 'slot')
 
     def test_subslot(self):
         o = self.get_pkg({'SLOT': '0'})
         self.assertEqual(o.subslot, '0')
         o = self.get_pkg({'SLOT': '1'})
         self.assertEqual(o.subslot, '1')
-        o = self.get_pkg({'SLOT': '0/2'})
+        o = self.get_pkg({'SLOT': '1/2'})
         self.assertEqual(o.subslot, '2')
         o = self.get_pkg({'SLOT': '1/foo-1'})
         self.assertEqual(o.subslot, 'foo-1')
+        self.assertRaises(ValueError, getattr, self.get_pkg({'SLOT':''}), 'subslot')
 
     def test_restrict(self):
         o = self.get_pkg({'RESTRICT': 'strip fetch strip'})

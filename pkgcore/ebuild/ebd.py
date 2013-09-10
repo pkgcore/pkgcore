@@ -134,7 +134,7 @@ class ebd(object):
         expected_ebuild_env(pkg, self.env, env_source_override=self.env_data_source)
 
         self.env["USE"] = ' '.join(str(x) for x in use)
-        self.env["SLOT"] = pkg.slot
+        self.env["SLOT"] = pkg.fullslot
         self.env["PKGCORE_FINALIZED_RESTRICT"] = ' '.join(str(x) for x in pkg.restrict)
 
         self.restrict = pkg.restrict

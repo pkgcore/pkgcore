@@ -449,6 +449,8 @@ class TestPortageFormatter(BaseFormatterTest, TestCase):
             ' ', Color('fg', 'red'), Bold(), 'F', Reset(), '   ] ',
             Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6', Reset())
 
+        # TODO: add test for fetch restricted ebuild with already downloaded files
+
     def test_changed_use(self):
         self.formatter.format(
             FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6', iuse=['static', 'bootstrap'], use=['static']),

@@ -92,6 +92,7 @@ class FakePkg(FakePkgBase):
             subslot = slot
         object.__setattr__(self, "subslot", subslot)
         object.__setattr__(self, "restrict", DepSet.parse(restrict, str))
+        object.__setattr__(self, "fetchables", [])
         object.__setattr__(self, "use", set(use))
         object.__setattr__(self, "iuse", set(iuse))
 

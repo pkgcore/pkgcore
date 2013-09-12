@@ -17,9 +17,11 @@ from snakeoil.compatibility import raise_from
 from snakeoil.lists import iflatten_instance
 demandload(globals(),
     'errno',
+    'os',
     'pkgcore.log:logger',
     'snakeoil.mappings:defaultdictkey',
-    )
+    'snakeoil.osutils:pjoin',
+)
 
 class NoChoice(KeyboardInterrupt):
     """Raised by :obj:`userquery` if no choice was made.
@@ -297,6 +299,7 @@ class PortageFormatter(CountingFormatter):
         #         N     - new package
         #          R    - rebuild package
         #           F   - fetch restricted
+        #           f   - fetch restricted already downloaded
         #            D  - downgrade
         #             U - updating to another version
         # Caveats:
@@ -340,7 +343,12 @@ class PortageFormatter(CountingFormatter):
         op_type = op.desc
         op_chars = [[' '] for x in range(7)]
         if 'fetch' in op.pkg.restrict:
-            op_chars[3] = [out.fg('red'), out.bold, 'F', out.reset]
+            fetched = [out.fg('red'), out.bold, 'F', out.reset]
+            for fetchable in op.pkg.fetchables:
+                if not os.path.isfile(pjoin(self.distdir, fetchable.filename)):
+                    break
+                fetched = [out.fg('green'), out.bold, 'f', out.reset]
+            op_chars[3] = fetched
 
         if op.desc == "add":
             op_chars[1] = [out.fg('green'), out.bold, 'N', out.reset]

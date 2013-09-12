@@ -367,6 +367,7 @@ def main(options, out, err):
         world_list=world_list,
         verbose=options.verbose,
         livefs_repos=livefs_repos,
+        distdir=domain.fetcher.get_storage_path(),
         quiet_repo_display=options.quiet_repo_display)
 
     # This mode does not care about sets and packages so bypass all that.

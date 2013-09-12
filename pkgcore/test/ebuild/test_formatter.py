@@ -387,7 +387,7 @@ class TestPortageFormatter(BaseFormatterTest, TestCase):
         self.assertOut('[', Color('fg', 'green'), 'ebuild', Reset(),
             '  ', Color('fg', 'green'), Bold(), 'N', Reset(), '     ] ',
             Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6', Reset(),
-            '  USE="', Color('fg', 'red'), Bold(), 'static', Reset(), '"')
+            ' USE="', Color('fg', 'red'), Bold(), 'static', Reset(), '"')
 
     def test_new_nouse(self):
         self.formatter.format(
@@ -395,7 +395,7 @@ class TestPortageFormatter(BaseFormatterTest, TestCase):
         self.assertOut('[', Color('fg', 'green'), 'ebuild', Reset(),
             '  ', Color('fg', 'green'), Bold(), 'N', Reset(), '     ] ',
             Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6', Reset(),
-            '  USE="', Color('fg', 'blue'), Bold(), '-static', Reset(), '"')
+            ' USE="', Color('fg', 'blue'), Bold(), '-static', Reset(), '"')
 
     def test_nouse(self):
         self.formatter.format(
@@ -404,7 +404,7 @@ class TestPortageFormatter(BaseFormatterTest, TestCase):
         self.assertOut('[', Color('fg', 'green'), 'ebuild', Reset(),
             '   ', Color('fg', 'yellow'), Bold(), 'R', Reset(), '    ] ',
             Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6', Reset(),
-            '  USE="', Color('fg', 'yellow'), Bold(), '-static', Reset(), '%"')
+            ' USE="', Color('fg', 'yellow'), Bold(), '-static', Reset(), '%"')
 
     def test_iuse_filter(self):
         self.formatter.format(
@@ -413,7 +413,7 @@ class TestPortageFormatter(BaseFormatterTest, TestCase):
         self.assertOut('[', Color('fg', 'green'), 'ebuild', Reset(),
             '   ', Color('fg', 'yellow'), Bold(), 'R', Reset(), '    ] ',
             Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6', Reset(),
-            '  USE="', Color('fg', 'yellow'), Bold(), 'static', Reset(), "%* ",
+            ' USE="', Color('fg', 'yellow'), Bold(), 'static', Reset(), "%* ",
             Color('fg', 'yellow'), Bold(), '-junk', Reset(), '%"')
 
     def test_use(self):
@@ -423,7 +423,7 @@ class TestPortageFormatter(BaseFormatterTest, TestCase):
         self.assertOut('[', Color('fg', 'green'), 'ebuild', Reset(),
             '   ', Color('fg', 'yellow'), Bold(), 'R', Reset(), '    ] ',
             Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6', Reset(),
-            '  USE="', Color('fg', 'yellow'), Bold(), 'static', Reset(), '%*"')
+            ' USE="', Color('fg', 'yellow'), Bold(), 'static', Reset(), '%*"')
 
     def test_multiuse(self):
         self.formatter.format(
@@ -432,7 +432,7 @@ class TestPortageFormatter(BaseFormatterTest, TestCase):
         self.assertOut('[', Color('fg', 'green'), 'ebuild', Reset(),
             '   ', Color('fg', 'yellow'), Bold(), 'R', Reset(), '    ] ',
             Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6', Reset(),
-            '  USE="', Color('fg', 'yellow'), Bold(), 'static', Reset(), '%* ',
+            ' USE="', Color('fg', 'yellow'), Bold(), 'static', Reset(), '%* ',
             Color('fg', 'yellow'), Bold(), '-bootstrap', Reset(), '%"')
 
     def test_misc(self):
@@ -455,7 +455,7 @@ class TestPortageFormatter(BaseFormatterTest, TestCase):
         self.assertOut('[', Color('fg', 'green'), 'ebuild', Reset(),
             '   ', Color('fg', 'yellow'), Bold(), 'R', Reset(), '    ] ',
             Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6', Reset(),
-            '  USE="', Color('fg', 'yellow'), Bold(), '-bootstrap', Reset(), '%"')
+            ' USE="', Color('fg', 'yellow'), Bold(), '-bootstrap', Reset(), '%"')
         self.formatter.format(
             FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6',
                 iuse=['static', 'bootstrap', 'perl', 'foobar', 'rice'],
@@ -480,7 +480,7 @@ class TestPortageFormatter(BaseFormatterTest, TestCase):
         self.assertOut('[', Color('fg', 'green'), 'ebuild', Reset(),
             '   ', Color('fg', 'yellow'), Bold(), 'R', Reset(), '    ] ',
             Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6', Reset(),
-            '  FOO="', Color('fg', 'yellow'), Bold(), 'static', Reset(), '%* ',
+            ' FOO="', Color('fg', 'yellow'), Bold(), 'static', Reset(), '%* ',
             Color('fg', 'yellow'), Bold(), '-bootstrap', Reset(), '%"')
 
     def test_disabled_use(self):
@@ -491,7 +491,7 @@ class TestPortageFormatter(BaseFormatterTest, TestCase):
         self.assertOut('[', Color('fg', 'green'), 'ebuild', Reset(),
             '  ', Color('fg', 'green'), Bold(), 'N', Reset(), '     ] ',
             Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6', Reset(),
-            '  USE="',
+            ' USE="',
             Color('fg', 'blue'), Bold(), '-bootstrap', Reset(), ' ',
             '(', Color('fg', 'blue'), Bold(), '-static', Reset(), ')"')
 
@@ -590,7 +590,7 @@ class TestPortageVerboseFormatter(TestPortageFormatter):
         self.assertOut('[', Color('fg', 'green'), 'ebuild', Reset(),
             '   ', Color('fg', 'yellow'), Bold(), 'R', Reset(), '    ] ',
             Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6', Reset(),
-            '  USE="', Color('fg', 'red'), Bold(), 'static', Reset(), ' ',
+            ' USE="', Color('fg', 'red'), Bold(), 'static', Reset(), ' ',
             Color('fg', 'yellow'), Bold(), '-bootstrap', Reset(), '%"')
         self.formatter.format(
             FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6',

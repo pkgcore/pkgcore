@@ -14,6 +14,7 @@ import operator
 from pkgcore.config import configurable
 from snakeoil.demandload import demandload
 from snakeoil.compatibility import raise_from
+from snakeoil.lists import iflatten_instance
 demandload(globals(),
     'errno',
     'pkgcore.log:logger',
@@ -292,13 +293,12 @@ class PortageFormatter(CountingFormatter):
         self.repos = {}
 
     def format(self, op):
-        # [<type> NRFDU]
         #  <type>       - ebuild, block or nomerge (for --tree)
-        #         N     - New package
-        #          R    - Rebuild package
-        #           F   - Fetch restricted
-        #            D  - Downgrade
-        #             U - Upgrade
+        #         N     - new package
+        #          R    - rebuild package
+        #           F   - fetch restricted
+        #            D  - downgrade
+        #             U - updating to another version
         # Caveats:
         # - U and D are both displayed to show a downgrade - this is kept
         # in order to be consistent with existing portage behaviour
@@ -338,40 +338,31 @@ class PortageFormatter(CountingFormatter):
         # Order is important here - look at the above diagram
 
         op_type = op.desc
-        fetch_data = [' ']
+        op_chars = [[' '] for x in range(7)]
         if 'fetch' in op.pkg.restrict:
-            fetch_data = [out.fg('red'), out.bold, 'F', out.reset]
+            op_chars[3] = [out.fg('red'), out.bold, 'F', out.reset]
 
         if op.desc == "add":
-            out.write(' ', out.fg('green'), out.bold, 'N', out.reset)
+            op_chars[1] = [out.fg('green'), out.bold, 'N', out.reset]
             if op.pkg.slot != '0' and self.livefs_repos.match(op.pkg.unversioned_atom):
-                out.write(out.fg('green'), out.bold, 'S', out.reset)
+                op_chars[2] = [out.fg('green'), out.bold, 'S', out.reset]
                 op_type = 'slotted_add'
-            else:
-                out.write(' ')
-            out.write(*fetch_data)
-            out.write("  ")
         elif op.desc == "replace":
             if op.pkg == op.old_pkg:
-                out.write('  ', out.fg('yellow'), out.bold, 'R', out.reset)
-                out.write(*fetch_data)
-                out.write("  ")
+                op_chars[2] = [out.fg('yellow'), out.bold, 'R', out.reset]
             else:
-                out.write("   ")
-                out.write(*fetch_data)
-                out.write(out.fg('cyan'), out.bold, 'U', out.reset)
+                op_chars[4] = [out.fg('cyan'), out.bold, 'U', out.reset]
                 if op.pkg > op.old_pkg:
-                    out.write(' ')
                     op_type = 'upgrade'
                 else:
-                    out.write(out.fg('blue'), out.bold, 'D', out.reset)
+                    op_chars[5] = [out.fg('blue'), out.bold, 'D', out.reset]
                     op_type = 'downgrade'
         elif op.desc == 'remove':
-            # This is very likely unaligned...
-            out.write('   ')
+            pass
         else:
             logger.warn("unformattable op type: desc(%r), %r", (op.desc, op))
 
+        out.write(*(iflatten_instance(op_chars)))
         out.write('] ')
 
         self.visit_op(op_type)

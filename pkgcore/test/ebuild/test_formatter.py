@@ -439,8 +439,9 @@ class TestPortageFormatter(BaseFormatterTest, TestCase):
         self.formatter.format(FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6', slot='1')))
         self.assertOut('[', Color('fg', 'green'), 'ebuild', Reset(),
             '  ', Color('fg', 'green'), Bold(), 'N', Reset(), Color('fg', 'green'), Bold(),
-            'S', Reset(), '   ] ',
-            Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6', Reset())
+            'S', Reset(), '    ] ',
+            Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6', Reset(),
+            ' ', Color('fg', 'blue'), Bold(), '[1.0.1-r1]', Reset())
 
         self.formatter.format(FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6', restrict='fetch')))
         self.assertOut('[', Color('fg', 'green'), 'ebuild', Reset(),
@@ -570,18 +571,21 @@ class TestPortageVerboseFormatter(TestPortageFormatter):
         self.formatter.format(FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6', slot='foo')))
         self.assertOut('[', Color('fg', 'green'), 'ebuild', Reset(),
             '  ', Color('fg', 'green'), Bold(), 'N', Reset(), Color('fg', 'green'), Bold(),
-            'S', Reset(), '   ] ',
-            Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6:foo', Reset())
+            'S', Reset(), '    ] ',
+            Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6:foo', Reset(),
+            ' ', Color('fg', 'blue'), Bold(), '[1.0.1-r1:0]', Reset())
         self.formatter.format(FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6', slot='1', subslot='0')))
         self.assertOut('[', Color('fg', 'green'), 'ebuild', Reset(),
             '  ', Color('fg', 'green'), Bold(), 'N', Reset(), Color('fg', 'green'), Bold(),
-            'S', Reset(), '   ] ',
-            Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6:1/0', Reset())
+            'S', Reset(), '    ] ',
+            Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6:1/0', Reset(),
+            ' ', Color('fg', 'blue'), Bold(), '[1.0.1-r1:0]', Reset())
         self.formatter.format(FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6', slot='2', subslot='foo')))
         self.assertOut('[', Color('fg', 'green'), 'ebuild', Reset(),
             '  ', Color('fg', 'green'), Bold(), 'N', Reset(), Color('fg', 'green'), Bold(),
-            'S', Reset(), '   ] ',
-            Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6:2/foo', Reset())
+            'S', Reset(), '    ] ',
+            Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6:2/foo', Reset(),
+            ' ', Color('fg', 'blue'), Bold(), '[1.0.1-r1:0]', Reset())
 
     def test_changed_use(self):
         self.formatter.format(

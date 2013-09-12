@@ -380,6 +380,7 @@ class PortageFormatter(CountingFormatter):
                 pkg.append("::%s" % op.pkg.source_repository)
         out.write(*(pkg_coloring + pkg + [out.reset]))
 
+        installed = None
         if op.desc == 'replace' and op_type != 'replace':
             old_pkg = [op.old_pkg.fullver]
             if self.verbose:
@@ -391,7 +392,18 @@ class PortageFormatter(CountingFormatter):
                         op.old_pkg.source_repository != 'gentoo' or \
                         op.pkg.source_repository != op.old_pkg.source_repository:
                     old_pkg.append("::%s" % op.old_pkg.source_repository)
-            out.write(' ', out.fg('blue'), out.bold, '[%s]' % ''.join(old_pkg), out.reset)
+            installed = ''.join(old_pkg)
+        elif op_type == 'slotted_add':
+            if self.verbose:
+                pkgs = sorted(['%s:%s' % (x.fullver, x.slot) for x in \
+                               self.livefs_repos.match(op.pkg.unversioned_atom)])
+            else:
+                pkgs = sorted([x.fullver for x in \
+                               self.livefs_repos.match(op.pkg.unversioned_atom)])
+            installed = ', '.join(pkgs)
+
+        if installed:
+            out.write(' ', out.fg('blue'), out.bold, '[%s]' % installed, out.reset)
 
         # Build a list of (useflags, use_expand_dicts) tuples.
         # HACK: if we are in "replace" mode we build a list of length

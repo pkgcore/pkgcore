@@ -158,7 +158,7 @@ class fetcher(base.fetcher):
 
     def get_path(self, fetchable):
         fp = pjoin(self.distdir, fetchable.filename)
-        if 0 == self._verify(fp, fetchable):
+        if self._verify(fp, fetchable) is None:
             return fp
         return None
 

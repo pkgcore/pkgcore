@@ -360,7 +360,6 @@ def config_from_make_conf(location="/etc/"):
         new_config[name] = basics.ConfigSectionFromStringDict(d)
         triggers.append(name)
 
-
     # sets...
     add_sets(new_config, root, portage_base)
 

@@ -561,7 +561,6 @@ class TestOnDiskProfile(profile_mixin, TestCase):
             "dev-util/blah":(chunked_data(atom("dev-util/blah"), (), ("X", "mmx",)),)
             })
 
-
         self.mk_profiles(
             {"use.mask":"X", "package.use.mask":"dev-util/foo -X"},
             {"use.mask":"X"},

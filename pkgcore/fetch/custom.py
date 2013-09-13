@@ -92,7 +92,6 @@ class fetcher(base.fetcher):
             else on disk location of the copied file
         """
 
-
         if not isinstance(target, fetchable):
             raise TypeError(
                 "target must be fetchable instance/derivative: %s" % target)

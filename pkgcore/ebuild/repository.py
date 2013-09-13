@@ -299,7 +299,6 @@ class _UnconfiguredTree(prototype.tree):
             raise KeyError(cpv)
         return cpv_inst
 
-
     def rebind(self, **kwds):
 
         """

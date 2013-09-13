@@ -778,6 +778,7 @@ class buildable(ebd, setup_mixin, format.build):
         execute the nofetch phase.
         we need the same prerequisites as setup, so reuse that.
         """
+        ensure_dirs(self.env["T"], mode=0770, gid=portage_gid, minimal=True)
         return setup_mixin.setup(self, "nofetch")
 
     def unpack(self):
@@ -865,11 +866,12 @@ class ebuild_mixin(object):
             return True
         commands = {"request_inherit": partial(inherit_handler, self._eclass_cache)}
         env = expected_ebuild_env(pkg)
-        env["ROOT"] = domain.root
         tmpdir = normpath(domain._get_tempspace())
         builddir = pjoin(tmpdir, env["CATEGORY"], env["PF"])
-        env["T"] = normpath(pjoin(builddir, "temp"))
-        ensure_dirs(env["T"], mode=0770, gid=portage_gid, minimal=True)
+        pkg_tmpdir = normpath(pjoin(builddir, "temp"))
+        ensure_dirs(pkg_tmpdir, mode=0770, gid=portage_gid, minimal=True)
+        env["ROOT"] = domain.root
+        env["T"] = pkg_tmpdir
         try:
             logger.debug("running ebuild pkg_pretend sanity check for %s", pkg.cpvstr)
             start = time.time()

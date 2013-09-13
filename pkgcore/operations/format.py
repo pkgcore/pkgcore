@@ -40,7 +40,10 @@ class fetch_base(object):
             return True
         # fetching files without uri won't fly
         # XXX hack atm, could use better logic but works for now
-        fp = self.fetcher(fetchable)
+        try:
+            fp = self.fetcher(fetchable)
+        except Exception:
+            fp = None
         if fp is None:
             self.failed_fetch(fetchable, observer)
             return False
@@ -49,6 +52,9 @@ class fetch_base(object):
         return True
 
     def failed_fetch(self, fetchable, observer):
+        build_ops = self.domain.build_pkg(self.pkg, observer)
+        build_ops.nofetch()
+        build_ops.cleanup(force=True)
         observer.error("failed fetching %s" % (fetchable,))
 
 

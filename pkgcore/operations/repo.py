@@ -54,7 +54,7 @@ class base(object):
         if self.lock is None:
             self.lock = fake_lock()
 
-    def start(self):
+    def start(self, *args):
         self.underway = True
         self.lock.acquire_write_lock()
         return True

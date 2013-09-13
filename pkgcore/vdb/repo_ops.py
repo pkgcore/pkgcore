@@ -39,7 +39,7 @@ class install(repo_ops.install):
         self.tmp_write_path = pjoin(base, '.tmp.%s' % (dirname,))
         repo_ops.install.__init__(self, repo, newpkg, observer)
 
-    def add_data(self):
+    def add_data(self, domain):
         # error checking?
         dirpath = self.tmp_write_path
         ensure_dirs(dirpath, mode=0755, minimal=True)
@@ -66,6 +66,8 @@ class install(repo_ops.install):
                     # hackity hack.
                     s = v.magic
                     k = 'eapi'
+                elif k == 'depends' or k == 'rdepends':
+                    s = v.slotdep_str(domain)
                 elif not isinstance(v, basestring):
                     try:
                         s = ' '.join(v)
@@ -136,8 +138,10 @@ class replace(repo_ops.replace, install, uninstall):
         uninstall.__init__(self, repo, pkg, observer)
         install.__init__(self, repo, newpkg, observer)
 
-    add_data = install.add_data
     remove_data = uninstall.remove_data
+
+    def add_data(self, domain):
+        return install.add_data(self, domain)
 
     def finalize_data(self):
         # XXX: should really restructure this into

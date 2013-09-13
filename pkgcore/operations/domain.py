@@ -183,7 +183,7 @@ class install(base):
         return self.format_op.postinst()
 
     def repo_add(self):
-        return self.repo_op.add_data()
+        return self.repo_op.add_data(self.domain)
 
     def finish(self):
         ret = self.format_op.finalize()

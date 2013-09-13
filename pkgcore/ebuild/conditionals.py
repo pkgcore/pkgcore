@@ -298,6 +298,9 @@ class DepSet(boolean.AndRestriction):
     def match(self, *a):
         raise NotImplementedError
 
+    def slotdep_str(self, domain):
+        return stringify_boolean(self, domain=domain)
+
     force_False = force_True = match
 
     def __str__(self):
@@ -310,17 +313,17 @@ class DepSet(boolean.AndRestriction):
         return self.restrictions[key]
 
 
-def stringify_boolean(node, func=str):
+def stringify_boolean(node, func=str, domain=None):
     """func is used to stringify the actual content. Useful for fetchables."""
     l = []
     if isinstance(node, DepSet):
         for x in node.restrictions:
-            _internal_stringify_boolean(x, func, l.append)
+            _internal_stringify_boolean(x, domain, func, l.append)
     else:
-        _internal_stringify_boolean(node, func, l.append)
+        _internal_stringify_boolean(node, domain, func, l.append)
     return ' '.join(l)
 
-def _internal_stringify_boolean(node, func, visit):
+def _internal_stringify_boolean(node, domain, func, visit):
     """func is used to stringify the actual content. Useful for fetchables."""
 
     if isinstance(node, boolean.OrRestriction):
@@ -337,8 +340,13 @@ def _internal_stringify_boolean(node, func, visit):
             node.restriction.negate and "!" or "",
             list(node.restriction.vals)[0]))
     else:
+        if domain is not None and \
+                (isinstance(node, atom) and node.slot_operator == '='):
+            pkg = max(sorted(domain.all_livefs_repos.itermatch(node)))
+            object.__setattr__(node, "slot", pkg.slot)
+            object.__setattr__(node, "subslot", pkg.subslot)
         visit(func(node))
         return
     for node in iterable:
-        _internal_stringify_boolean(node, func, visit)
+        _internal_stringify_boolean(node, domain, func, visit)
     visit(")")

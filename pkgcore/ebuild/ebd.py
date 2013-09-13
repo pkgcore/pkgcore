@@ -884,6 +884,14 @@ class ebuild_mixin(object):
             logger.error("pkg_pretend sanity check for %s failed with exception %r"
                 % (pkg.cpvstr, e))
             return False
+        finally:
+            shutil.rmtree(builddir)
+            # try to wipe the cat dir; if not empty, ignore it
+            try:
+                os.rmdir(os.path.dirname(builddir))
+            except EnvironmentError, e:
+                if e.errno != errno.ENOTEMPTY:
+                    raise
 
 
 class src_operations(ebuild_mixin, format.build_operations):

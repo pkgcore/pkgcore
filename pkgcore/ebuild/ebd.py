@@ -409,13 +409,21 @@ def run_generic_phase(pkg, phase, env, userpriv, sandbox, fakeroot,
     extra_handlers=None, failure_allowed=False, logging=None):
     """
     :param phase: phase to execute
+    :param env: environment mapping for the phase
     :param userpriv: will we drop to
         :obj:`pkgcore.os_data.portage_uid` and
         :obj:`pkgcore.os_data.portage_gid` access for this phase?
     :param sandbox: should this phase be sandboxed?
     :param fakeroot: should the phase be fakeroot'd?  Only really useful
         for install phase, and is mutually exclusive with sandbox
+    :param extra_handlers: extra command handlers
+    :type extra_handlers: mapping from string to callable
+    :param failure_allowed: allow failure without raising error
+    :type failure_allowed: boolean
+    :param logging: None or a filepath to log output to
+    :return: True when the phase has finished execution
     """
+
     userpriv = userpriv and is_userpriv_capable()
     sandbox = sandbox and is_sandbox_capable()
     fakeroot = fakeroot and is_fakeroot_capable()
@@ -454,9 +462,7 @@ def run_generic_phase(pkg, phase, env, userpriv, sandbox, fakeroot,
 
 
 class install_op(ebd, format.install):
-    """
-    phase operations and steps for install execution
-    """
+    """phase operations and steps for install execution"""
 
     def __init__(self, domain, pkg, observer):
         format.install.__init__(self, domain, pkg, observer)
@@ -479,9 +485,7 @@ class install_op(ebd, format.install):
 
 
 class uninstall_op(ebd, format.uninstall):
-    """
-    phase operations and steps for uninstall execution
-    """
+    """phase operations and steps for uninstall execution"""
 
     def __init__(self, domain, pkg, observer):
         format.uninstall.__init__(self, domain, pkg, observer)
@@ -510,6 +514,7 @@ class uninstall_op(ebd, format.uninstall):
 
 
 class replace_op(format.replace):
+    """phase operations and steps for replace execution"""
 
     install_kls = staticmethod(install_op)
     uninstall_kls = staticmethod(uninstall_op)
@@ -542,10 +547,7 @@ class replace_op(format.replace):
 
 
 class buildable(ebd, setup_mixin, format.build):
-
-    """
-    build operation
-    """
+    """build operation"""
 
     _built_class = ebuild_built.fresh_built_package
 
@@ -553,7 +555,6 @@ class buildable(ebd, setup_mixin, format.build):
     # env, rather then dumping domain settings as env.
     def __init__(self, domain, pkg, verified_files, eclass_cache,
         observer=None, **kwargs):
-
         """
         :param pkg: :obj:`pkgcore.ebuild.ebuild_src.package` instance we'll be
             building
@@ -754,7 +755,7 @@ class buildable(ebd, setup_mixin, format.build):
 
     def configure(self):
         """
-        execute the configure phase.
+        execute the configure phase
 
         does nothing if the pkg's EAPI is less than 2 (that spec lacks a
         seperated configure phase).
@@ -775,16 +776,15 @@ class buildable(ebd, setup_mixin, format.build):
 
     def nofetch(self):
         """
-        execute the nofetch phase.
-        we need the same prerequisites as setup, so reuse that.
+        execute the nofetch phase
+
+        We need the same prerequisites as setup, so reuse that.
         """
         ensure_dirs(self.env["T"], mode=0770, gid=portage_gid, minimal=True)
         return setup_mixin.setup(self, "nofetch")
 
     def unpack(self):
-        """
-        execute the unpack phase.
-        """
+        """execute the unpack phase"""
         if self.setup_is_for_src:
             self.setup_distfiles()
         if self.userpriv:

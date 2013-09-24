@@ -859,7 +859,7 @@ class ebuild_mixin(object):
             use = pkg.use
             for node in pkg.required_use:
                 if not node.match(use):
-                    print "REQUIRED_USE requirement weren't met\nFailed to match: %s\nfrom: %s\nfor USE: %s\npkg: %s" % \
+                    print "REQUIRED_USE requirement wasn't met\nFailed to match: %s\nfrom: %s\nfor USE: %s\npkg: %s" % \
                         (node, pkg.required_use, " ".join(use), pkg.cpvstr)
                     return False
         if 'pretend' not in pkg.mandatory_phases:

@@ -9,7 +9,7 @@ from pkgcore.operations import repo as repo_ops
 
 from pkgcore.const import VERSION
 
-from snakeoil.osutils import ensure_dirs, pjoin
+from snakeoil.osutils import ensure_dirs, pjoin, normpath
 from snakeoil.demandload import demandload
 from snakeoil import compression
 demandload(globals(),
@@ -17,6 +17,7 @@ demandload(globals(),
     'pkgcore.ebuild:conditionals',
     'pkgcore.log:logger',
     'pkgcore.vdb.contents:ContentsFile',
+    'snakeoil.data_source:local_source',
 )
 
 
@@ -92,6 +93,16 @@ class install(repo_ops.install):
             o = o.bytes_fileobj().read()
         # XXX lil hackish accessing PF
         open(pjoin(dirpath, self.new_pkg.PF + ".ebuild"), "wb").write(o)
+
+        # install NEEDED and NEEDED.ELF.2 files from tmpdir if they exist
+        pkg_tmpdir = normpath(pjoin(domain._get_tempspace(), self.new_pkg.category,
+                                    self.new_pkg.PF, 'temp'))
+        for f in ['NEEDED', 'NEEDED.ELF.2']:
+            fp = pjoin(pkg_tmpdir, f)
+            if os.path.exists(fp):
+                data = local_source(fp)
+                data = data.bytes_fileobj().read()
+                open(pjoin(dirpath, f), "wb").write(data)
 
         # XXX finally, hack to keep portage from doing stupid shit.
         # relies on counter to discern what to punt during

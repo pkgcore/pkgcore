@@ -105,9 +105,16 @@ __dyn_src_install()
 			sleep 1
 		fi
 
-		# disabled by harring; we don't use it currently.
-		# Save NEEDED information
-		#scanelf -qyRF '%p %n' "${ED}" | sed -e 's:^:/:' > "${T}/NEEDED"
+		# Create NEEDED and NEEDED.ELF.2 files required for things like preserve-libs
+		scanelf -qyRF '%a;%p;%S;%r;%n' "${ED}" | { while IFS= read -r l; do
+			arch=${l%%;*}; l=${l#*;}
+			obj="/${l%%;*}"; l=${l#*;}
+			soname=${l%%;*}; l=${l#*;}
+			rpath=${l%%;*}; l=${l#*;}; [ "${rpath}" = "  -  " ] && rpath=""
+			needed=${l%%;*}; l=${l#*;}
+			echo "${obj} ${needed}" >> "${T}"/NEEDED
+			echo "${arch:3};${obj};${soname};${rpath};${needed}" >> "${T}"/NEEDED.ELF.2
+		done }
 	fi
 
 	echo ">>> Completed installing ${PF} into ${ED}"

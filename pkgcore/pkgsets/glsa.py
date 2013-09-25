@@ -12,7 +12,7 @@ import os
 from pkgcore.restrictions import packages, restriction, values
 from pkgcore.config import ConfigHint
 
-from snakeoil.osutils import listdir_files, join as pjoin
+from snakeoil.osutils import listdir_files, pjoin
 from snakeoil.klass import generic_equality
 from snakeoil.iterables import caching_iter
 from snakeoil.demandload import demandload

@@ -22,7 +22,7 @@ from pkgcore.binpkg import repo_ops
 from snakeoil.compatibility import raise_from
 from snakeoil.mappings import DictMixin, StackedDict
 from snakeoil.osutils import listdir_dirs, listdir_files, access
-from snakeoil.osutils import join as pjoin
+from snakeoil.osutils import pjoin
 from snakeoil.klass import jit_attr, jit_attr_named, alias_attr
 
 from snakeoil.demandload import demandload

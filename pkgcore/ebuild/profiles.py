@@ -16,7 +16,7 @@ from pkgcore.ebuild.misc import (
 from pkgcore.repository import virtual
 from pkgcore.util.parserestrict import parse_match
 
-from snakeoil.osutils import abspath, join as pjoin
+from snakeoil.osutils import abspath, pjoin
 from snakeoil.fileutils import readlines_utf8
 from snakeoil.containers import InvertedContains
 from snakeoil.bash import iter_read_bash, read_bash_dict

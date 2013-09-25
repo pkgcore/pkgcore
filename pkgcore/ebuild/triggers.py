@@ -21,7 +21,7 @@ from snakeoil.fileutils import AtomicWriteFile
 from snakeoil.bash import read_bash_dict
 from snakeoil.osutils import listdir_files
 from snakeoil.lists import stable_unique, iflatten_instance
-from snakeoil.osutils import join as pjoin
+from snakeoil.osutils import pjoin
 
 from snakeoil.demandload import demandload
 demandload(globals(),

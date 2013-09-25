@@ -14,7 +14,7 @@ from pkgcore.fs.contents import contentsSet
 from snakeoil.chksum import get_handlers
 from snakeoil.data_source import local_source
 
-from snakeoil.osutils import normpath, join as pjoin
+from snakeoil.osutils import normpath, pjoin
 from snakeoil.mappings import LazyValDict
 from snakeoil.osutils import listdir
 

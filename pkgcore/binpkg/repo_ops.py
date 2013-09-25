@@ -22,7 +22,7 @@ from pkgcore.binpkg import xpak
 from pkgcore.ebuild.conditionals import stringify_boolean
 
 from snakeoil import osutils, klass, compression
-from snakeoil.osutils import join as pjoin, unlink_if_exists
+from snakeoil.osutils import pjoin, unlink_if_exists
 from snakeoil.demandload import demandload
 demandload(globals(), "pkgcore.log:logger")
 

@@ -14,7 +14,7 @@ from itertools import izip
 from pkgcore.cache import flat_hash, errors
 from pkgcore.config import ConfigHint
 from pkgcore.ebuild import eclass_cache
-from snakeoil.osutils import join as pjoin
+from snakeoil.osutils import pjoin
 from snakeoil.compatibility import raise_from
 from snakeoil.mappings import ProtectedDict
 

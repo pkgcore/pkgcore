@@ -29,8 +29,7 @@ from pkgcore.operations import observer, format
 from pkgcore.ebuild import ebuild_built
 from snakeoil.currying import post_curry, pretty_docs, partial
 from snakeoil import klass
-from snakeoil.osutils import (ensure_dirs, normpath, join as pjoin,
-    listdir_files)
+from snakeoil.osutils import ensure_dirs, normpath, pjoin, listdir_files
 
 from snakeoil.demandload import demandload
 demandload(globals(),

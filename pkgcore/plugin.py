@@ -23,7 +23,7 @@ import operator
 import os.path
 
 from pkgcore import plugins
-from snakeoil.osutils import join as pjoin, listdir_files
+from snakeoil.osutils import pjoin, listdir_files
 from snakeoil import compatibility
 from snakeoil import modules, demandload, mappings, sequences
 demandload.demandload(globals(),

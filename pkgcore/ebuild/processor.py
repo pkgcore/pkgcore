@@ -302,7 +302,7 @@ class EbuildProcessor(object):
             spawn_func = pkgcore.spawn.spawn
 
         # force to a neutral dir so that sandbox/fakeroot won't explode if
-        # ran from a nonexistant dir
+        # ran from a nonexistent dir
         spawn_opts["cwd"] = e_const.EAPI_BIN_PATH
         # little trick. we force the pipes to be high up fd wise so
         # nobody stupidly hits 'em.

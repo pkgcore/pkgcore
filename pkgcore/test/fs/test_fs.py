@@ -75,8 +75,8 @@ class base(object):
         new_obj = obj.realpath()
         self.assertNotIdentical(obj, new_obj)
         self.assertEqual(new_obj.location, pjoin(self.dir, "test1", "foon"), reflective=False)
-        os.symlink(pjoin(self.dir, "test3"), pjoin(self.dir, "nonexistant"))
-        obj = self.make_obj(pjoin(self.dir, "nonexistant", "foon"))
+        os.symlink(pjoin(self.dir, "test3"), pjoin(self.dir, "nonexistent"))
+        obj = self.make_obj(pjoin(self.dir, "nonexistent", "foon"))
         # path is incomplete; should still realpath it.
         new_obj = obj.realpath()
         self.assertNotIdentical(obj, new_obj)

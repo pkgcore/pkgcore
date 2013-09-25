@@ -22,7 +22,7 @@ class FakeEclassCache(eclass_cache.base):
 class TestBase(TestCase):
 
     def setUp(self):
-        self.dir = '/nonexistant/path/'
+        self.dir = '/nonexistent/path/'
         self.ec = FakeEclassCache(self.dir)
         self.ec_locs = dict((x, self.dir) for x in ("eclass1", "eclass2"))
 

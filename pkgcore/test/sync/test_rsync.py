@@ -12,7 +12,7 @@ class TestrsyncParsing(TestCase):
 
     def test_parse(self):
         self.assertRaises(base.syncer_exception, bogus,
-            "/tmp/foon", "rsync+hopefully_nonexistant_binary://foon.com/dar")
+            "/tmp/foon", "rsync+hopefully_nonexistent_binary://foon.com/dar")
         o = valid("/tmp/foon", "rsync://dar/module")
         self.assertEqual(o.rsh, None)
         self.assertEqual(o.uri, "rsync://dar/module/")

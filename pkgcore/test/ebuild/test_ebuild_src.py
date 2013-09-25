@@ -372,7 +372,7 @@ class test_package_factory(TestCase):
             os.stat_float_times(cur)
 
     def test_get_metadata(self):
-        ec = FakeEclassCache('/nonexistant/path')
+        ec = FakeEclassCache('/nonexistent/path')
         pkg = malleable_obj(_mtime_=100, cpvstr='dev-util/diffball-0.71', path='bollocks')
 
         class fake_cache(dict):

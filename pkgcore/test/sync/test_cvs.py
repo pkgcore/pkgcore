@@ -12,7 +12,7 @@ class TestcvsParsing(TestCase):
 
     def test_parse(self):
         self.assertRaises(base.syncer_exception, bogus,
-            "/tmp/foon", "cvs+hopefully_nonexistant_binary://foon.com/dar")
+            "/tmp/foon", "cvs+hopefully_nonexistent_binary://foon.com/dar")
         o = valid("/tmp/foon", "cvs://dar:module")
         self.assertEqual(o.uri, ":anoncvs:dar")
         self.assertEqual(o.module, "module")

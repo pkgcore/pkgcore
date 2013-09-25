@@ -75,7 +75,7 @@ class SpawnTest(TempDirMixin, TestCase):
     @capability_based(spawn.is_sandbox_capable, "sandbox binary wasn't found")
     def test_sandbox_empty_dir(self):
         """
-        sandbox gets pissy if it's ran from a nonexistant dir
+        sandbox gets pissy if it's ran from a nonexistent dir
 
         this verifies our fix works.
         """

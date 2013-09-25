@@ -5,6 +5,26 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 
 pkgcore trunk:
 
+* Define SLOT and USE for pkg_pretend (mirroring portage) so checking for
+  enabled use flags during pkg_pretend works as expected.
+
+* Apply use flags from make.defaults before package.use in profiles.
+
+* Run pkg_nofetch phase when any files in SRC_URI fail to be fetched.
+
+* Update pmerge's portage-like output to more closely approximate current
+  portage releases.
+
+* Add pmerge options -O and -n to match --nodeps and --noreplace similar
+  to portage.
+
+* Add package.accept_keywords and proper profile package.keywords support
+  and force the profile base to be loaded by default so related settings
+  in the profile root dir are respected.
+
+* Define ${T} for pkg_pretend phase, allows things like check-reqs for disk
+  tempspace to work properly.
+
 * Support for multiple slots in a single atom dependency was removed;
   never made it into a mainline EAPI and isn't useful these days.
 

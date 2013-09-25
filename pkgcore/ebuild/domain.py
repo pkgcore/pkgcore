@@ -272,8 +272,8 @@ class domain(pkgcore.config.domain.domain):
 
         # stack use stuff first, then profile.
         self.enabled_use = ChunkedDataDict()
-        self.enabled_use.merge(profile.pkg_use)
         self.enabled_use.add_bare_global(*split_negations(self.use))
+        self.enabled_use.merge(profile.pkg_use)
         self.enabled_use.update_from_stream(chunked_data(k, *split_negations(v)) for k,v in pkg_use)
         self.enabled_use.add_bare_global((), (self.arch,))
 

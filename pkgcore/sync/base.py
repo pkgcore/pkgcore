@@ -9,7 +9,7 @@ __all__ = ("syncer_exception", "uri_exception", "generic_exception",
 )
 
 from pkgcore.config import ConfigHint, configurable
-from snakeoil import demandload, descriptors, compatibility
+from snakeoil import demandload, compatibility
 demandload.demandload(globals(),
     'os',
     'pwd',

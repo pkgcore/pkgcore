@@ -21,8 +21,9 @@ from pkgcore.fs import tar
 from pkgcore.binpkg import xpak
 from pkgcore.ebuild.conditionals import stringify_boolean
 
-from snakeoil import osutils, klass, compression
-from snakeoil.osutils import pjoin, unlink_if_exists
+from snakeoil.compression import compress_data
+from snakeoil.klass import steal_docs
+from snakeoil.osutils import pjoin, unlink_if_exists, ensure_dirs
 from snakeoil.demandload import demandload
 demandload(globals(), "pkgcore.log:logger")
 
@@ -44,7 +45,7 @@ def generate_attr_dict(pkg, portage_compatible=True):
             continue
         v = getattr(pkg, k)
         if k == 'environment':
-            d['environment.bz2'] = compression.compress_data('bzip2',
+            d['environment.bz2'] = compress_data('bzip2',
                 v.bytes_fileobj().read())
             continue
         if k == 'provides':
@@ -74,7 +75,7 @@ def generate_attr_dict(pkg, portage_compatible=True):
 
 class install(repo_interfaces.install):
 
-    @klass.steal_docs(repo_interfaces.install)
+    @steal_docs(repo_interfaces.install)
     def add_data(self):
         if self.observer is None:
             end = start = lambda x:None
@@ -88,7 +89,7 @@ class install(repo_interfaces.install):
 
         self.tmp_path, self.final_path = tmp_path, final_path
 
-        if not osutils.ensure_dirs(os.path.dirname(tmp_path), mode=0755):
+        if not ensure_dirs(os.path.dirname(tmp_path), mode=0755):
             raise repo_interfaces.Failure("failed creating directory %r" %
                 os.path.dirname(tmp_path))
         try:
@@ -117,11 +118,11 @@ class install(repo_interfaces.install):
 
 class uninstall(repo_interfaces.uninstall):
 
-    @klass.steal_docs(repo_interfaces.uninstall)
+    @steal_docs(repo_interfaces.uninstall)
     def remove_data(self):
         return True
 
-    @klass.steal_docs(repo_interfaces.uninstall)
+    @steal_docs(repo_interfaces.uninstall)
     def finalize_data(self):
         os.unlink(discern_loc(self.repo.base, self.old_pkg, self.repo.extension))
         return True
@@ -129,7 +130,7 @@ class uninstall(repo_interfaces.uninstall):
 
 class replace(install, uninstall, repo_interfaces.replace):
 
-    @klass.steal_docs(repo_interfaces.replace)
+    @steal_docs(repo_interfaces.replace)
     def finalize_data(self):
         # we just invoke install finalize_data, since it atomically
         # transfers the new pkg in

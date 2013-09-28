@@ -15,7 +15,7 @@ from pkgcore.test import silence_logging
 from pkgcore import plugin
 
 class LowPlug(object):
-    priority = 0
+    priority = 1
 
 class ModulesTest(TestCase):
 
@@ -44,7 +44,7 @@ class HighPlug(object):
     priority = 7
 
 class LowPlug(object):
-    priority = 0
+    priority = 1
 
 low_plug = LowPlug()
 high_plug = HighPlug()
@@ -133,7 +133,7 @@ pkgcore_plugins = {'plugtest': [HiddenPlug]}
         self.assertEqual('plug2:%s:\n' % (mtime,), lines[0])
         mtime = int(os.path.getmtime(os.path.join(self.packdir, 'plug.py')))
         self.assertEqual(
-            'plug:%s:plugtest,7,1:plugtest,0,pkgcore.test.test_plugin.LowPlug:plugtest,0,0\n'
+            'plug:%s:plugtest,7,1:plugtest,1,pkgcore.test.test_plugin.LowPlug:plugtest,0,0\n'
                 % (mtime,),
             lines[1])
 

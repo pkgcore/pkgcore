@@ -6,7 +6,6 @@ __all__ = ("ProfileError", "ProfileNode", "EmptyRootNode", "OnDiskProfile",
 
 import errno, os
 from itertools import chain
-from snakeoil.iterables import chain_from_iterable
 
 from pkgcore.config import ConfigHint
 from pkgcore.ebuild import const, ebuild_src, misc
@@ -20,10 +19,10 @@ from snakeoil.osutils import abspath, pjoin
 from snakeoil.fileutils import readlines_utf8
 from snakeoil.containers import InvertedContains
 from snakeoil.bash import iter_read_bash, read_bash_dict
+from snakeoil.iterables import chain_from_iterable
 from snakeoil import klass, caching, currying, sequences
 from snakeoil import compatibility
 from snakeoil.demandload import demandload
-
 demandload(globals(),
     'snakeoil.data_source:local_source',
     'pkgcore.ebuild:cpv,atom,repo_objs',

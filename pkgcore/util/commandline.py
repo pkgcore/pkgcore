@@ -164,10 +164,7 @@ class StoreConfigObject(argparse._StoreAction):
 
     default_priority = 20
 
-    def __init__(self,
-                *args,
-                **kwargs):
-
+    def __init__(self, *args, **kwargs):
         self.priority = int(kwargs.pop("priority", self.default_priority))
         self.config_type = kwargs.pop("config_type", None)
         if self.config_type is None or not isinstance(self.config_type, str):
@@ -698,8 +695,8 @@ def existant_path(value):
             ValueError("while resolving path %r, encountered error: %r" %
                 (value, e)))
 
-def mk_argparser(suppress=False, config=True, domain=True, color=True, debug=True,
-    version=True, **kwds):
+def mk_argparser(suppress=False, config=True, domain=True,
+                 color=True, debug=True, version=True, **kwds):
     if isinstance(version, basestring):
         kwds["version"] = version
         version = None

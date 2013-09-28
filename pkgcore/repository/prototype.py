@@ -278,7 +278,7 @@ class tree(object):
         # if so, search whole search space.
         for x in dsolutions:
             if not x[0] and not x[1]:
-                if iter is sorter:
+                if sorter is iter:
                     return self.versions
                 return (
                     (c,p)

@@ -16,9 +16,11 @@ argparser.add_argument("--verbose", "-v", action='store_true',
     help="print keys as they are processed")
 argparser.add_argument("source", config_type='cache',
     action=commandline.StoreConfigObject,
+    priority=20,
     help="source cache to copy data from")
 argparser.add_argument("target", config_type='cache',
     action=commandline.StoreConfigObject, writable=True,
+    priority=21,
     help="target cache to update.  Must be writable.")
 
 @argparser.bind_main_func

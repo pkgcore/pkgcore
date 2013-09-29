@@ -80,3 +80,13 @@ Rough TODO
 - reintroduce locking of certain high level components using read/write;
   mainly, use it as a way to block sync'ing a repo that's being used to build,
   lock the vdb for updates, etc.
+
+- preserve xattrs when merging files to properly support hardened profiles
+
+- improve logging support, initially involving saving build output to build.log
+  files and supporting emerge.log so tools such as qlop work properly
+
+- add FEATURES=parallel-fetch support for downloading distfiles in the
+  background while building pkgs, possibly extend to support parallel downloads
+
+- apply repo masks to related binpkgs (or handle masks somehow)

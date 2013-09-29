@@ -12,7 +12,7 @@ Rough TODO
 - userpriv for pebuild misbehaves..
 
 - http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/491285
-  check into, probably better then my curfty itersort; need to see how
+  check into, probably better then my crufty itersort; need to see how
   well heapqu's nlargest pop behaves (looks funky)
 
 - look into converting MULTILIB_STRICT* crap over to a trigger

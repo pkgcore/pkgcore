@@ -1,3 +1,6 @@
-pkgcore currently is available under GPL2; everything but pkgcore/bin/ebuild-* is available under BSD 3 class or GPL-2, pkgcore/bin/ebuild-* however is GPL2.
+pkgcore currently is available under GPL2; everything but pkgcore/bin/ebuild-*
+is available under BSD 3 class or GPL-2, pkgcore/bin/ebuild-* however is GPL2.
 
-At some point down the line pkgcore will become pure BSD/GPL2 via moving pkgcore/bin/ebuild-* bits into a seperate pkg; till then if desired to use it under just BSD terms those files must be excluded.
+At some point down the line pkgcore will become pure BSD/GPL2 via moving
+pkgcore/bin/ebuild-* bits into a seperate pkg; till then if desired to use it
+under just BSD terms those files must be excluded.

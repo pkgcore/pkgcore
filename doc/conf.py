@@ -234,7 +234,7 @@ man_pages = [
 epub_title = 'pkgcore'
 epub_author = 'Brian Harring, Marien Zwart'
 epub_publisher = 'Brian Harring, Marien Zwart'
-epub_copyright = '2006-2012, Brian Harring, Marien Zwart'
+epub_copyright = '2006-2013, Brian Harring, Marien Zwart'
 
 # The language of the text. It defaults to the language option
 # or en if the language is not set.

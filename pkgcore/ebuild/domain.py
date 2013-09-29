@@ -493,6 +493,17 @@ class domain(pkgcore.config.domain.domain):
         # lock the configurable use flags to only what's in IUSE, and what's forced
         # from the profiles (things like userland_GNU and arch)
         enabled = self.enabled_use.pull_data(pkg, pre_defaults=pre_defaults)
+
+        # support globs for USE_EXPAND vars
+        use_globs = [u for u in enabled if u.endswith('*')]
+        enabled_use_globs = []
+        for glob in use_globs:
+            for u in pkg.iuse:
+                if u.startswith(glob[:-1]):
+                    enabled_use_globs.append(u)
+        enabled.difference_update(use_globs)
+        enabled.update(enabled_use_globs)
+
         if for_metadata:
             preserves = set(x.lstrip('-+') for x in pkg.iuse)
             enabled.intersection_update(preserves)

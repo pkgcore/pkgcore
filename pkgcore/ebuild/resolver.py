@@ -28,10 +28,6 @@ def upgrade_resolver(vdbs, dbs, verify_vdb=True, nodeps=False,
         representing sources of pkgs
     :param verify_vdb: should we stop resolving once we hit the vdb,
         or do full resolution?
-    :param force_vdb_virtuals: old style portage virtuals (non metapkgs)
-        cannot be technically sorted since their versions are from multiple
-        packages bleeding through- results make no sense essentially.
-        You want this option enabled if you're dealing in old style virtuals.
     :return: :obj:`pkgcore.resolver.plan.merge_plan` instance
     """
 
@@ -49,9 +45,9 @@ def upgrade_resolver(vdbs, dbs, verify_vdb=True, nodeps=False,
     return resolver_cls(dbs + vdbs, plan.pkg_sort_highest, f, **kwds)
 
 
-def min_install_resolver(vdbs, dbs, verify_vdb=True, force_vdb_virtuals=True,
+def min_install_resolver(vdbs, dbs, verify_vdb=True, nodeps=False,
                          force_replace=False, resolver_cls=plan.merge_plan,
-                         nodeps=False, **kwds):
+                         **kwds):
     """
     Resolver that tries to minimize the number of changes while installing.
 
@@ -65,14 +61,9 @@ def min_install_resolver(vdbs, dbs, verify_vdb=True, force_vdb_virtuals=True,
         representing sources of pkgs
     :param verify_vdb: should we stop resolving once we hit the vdb,
         or do full resolution?
-    :param force_vdb_virtuals: old style portage virtuals (non metapkgs)
-        cannot be technically sorted since their versions are from multiple
-        packages bleeding through- results make no sense essentially.
-        You want this option enabled if you're dealing in old style virtuals.
     :return: :obj:`pkgcore.resolver.plan.merge_plan` instance
     """
 
-    # nothing fancy required for force_vdb_virtuals, we just silently ignore it.
     if nodeps:
         vdbs = map(misc.nodeps_repo, vdbs)
         dbs = map(misc.nodeps_repo, dbs)

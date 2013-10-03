@@ -142,7 +142,7 @@ class MergeEngine(object):
         disable_plugins=False):
 
         """
-        generate a MergeEngine instance configured for uninstalling a pkg
+        generate a MergeEngine instance configured for installing a pkg
 
         :param tempdir: tempspace for the merger to use; this space it must
             control alone, no sharing.

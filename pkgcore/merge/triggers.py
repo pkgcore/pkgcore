@@ -333,7 +333,7 @@ class ldconfig(base):
             if oe.errno != errno.ENOENT:
                 raise
             self._mk_ld_so_conf(fp)
-            # fall back to an edjucated guess.
+            # fall back to an educated guess.
             l = self.default_ld_path
         return [pjoin(offset, x) for x in l]
 

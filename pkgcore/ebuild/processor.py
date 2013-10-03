@@ -239,7 +239,7 @@ class EbuildProcessor(object):
         :param fakeroot: enables a fakeroot'd processor-
             this is a mutually exclusive option to sandbox, and
             requires userpriv to be enabled. Violating this will
-            result in nastyness.
+            result in nastiness.
         """
 
         self.lock()

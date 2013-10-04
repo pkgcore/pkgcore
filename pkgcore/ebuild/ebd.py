@@ -193,6 +193,7 @@ class ebd(object):
             self.env[x] = normpath(pjoin(self.builddir, y))
         self.env["D"] += "/"
         self.env["IMAGE"] = self.env["D"]
+        self.env["PORTAGE_LOGFILE"] = normpath(pjoin(self.env["T"], "build.log"))
 
         # XXX: note that this is just eapi3 support, not yet prefix
         # full awareness.

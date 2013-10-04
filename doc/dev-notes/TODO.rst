@@ -83,8 +83,7 @@ Rough TODO
 
 - preserve xattrs when merging files to properly support hardened profiles
 
-- improve logging support, initially involving saving build output to build.log
-  files and supporting emerge.log so tools such as qlop work properly
+- support standard emerge.log output so tools such as qlop work properly
 
 - add FEATURES=parallel-fetch support for downloading distfiles in the
   background while building pkgs, possibly extend to support parallel downloads

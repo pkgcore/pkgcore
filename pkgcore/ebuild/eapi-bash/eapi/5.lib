@@ -23,4 +23,7 @@ usex() {
 	return 0
 }
 
+# don't export internal usex implementation
+DONT_EXPORT_FUNCS="${DONT_EXPORT_FUNCS} usex"
+
 :

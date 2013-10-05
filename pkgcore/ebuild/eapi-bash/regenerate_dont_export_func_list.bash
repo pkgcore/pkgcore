@@ -54,6 +54,11 @@ echo >&2
 # Sorting order; put PMS functionality first, then our internals.
 result=$(__environ_list_funcs | sort)
 result=$(echo "$result" | grep -v "^__"; echo "$result" | grep "^__")
+
+# skip functions that are explicitly disabled only for certain EAPIs
+skip_funcs=$(echo ${DONT_EXPORT_FUNCS} | tr ' ' '\n')
+result=$(echo "$result" | grep -v "$skip_funcs")
+
 if [[ "${_FP}" == '-' ]]; then
 	echo "$result"
 else

@@ -52,7 +52,6 @@ use_enable
 use_with
 useq
 usev
-usex
 __IFS_pop
 __IFS_push
 __colored_output_disable

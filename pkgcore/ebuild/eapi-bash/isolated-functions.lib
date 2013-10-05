@@ -113,9 +113,12 @@ __qa_run_function_if_exists() {
 }
 
 __directory_is_empty() {
-	ls "$1" &> /dev/null && return 1
+	__shopt_push -s dotglob nullglob
+	files=(${1}/*)
+	__shopt_pop
+	[[ ${#files[@]} -gt 0 ]] && return 1
 	return 0
-} &> /dev/null
+}
 
 PKGCORE_SHOPT_STACK=( )
 

@@ -28,11 +28,9 @@ install_paths()
 				mysrc="${T}/${x##*/}"
 			elif [[ -d $x ]] ; then
 				$recursive || continue
-				if __directory_is_empty "${x}"; then
-					install_paths "${mydir}/${x##*/}"
-				else
-					install_paths "${mydir}/${x##*/}" "${x}"/*
-				fi
+				__shopt_push -s dotglob nullglob
+				install_paths "${mydir}/${x##*/}" "${x}"/*
+				__shopt_pop
 				continue
 			fi
 		fi

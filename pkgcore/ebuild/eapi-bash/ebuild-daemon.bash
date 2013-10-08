@@ -401,7 +401,7 @@ __make_preloaded_eclass_func()
 
 __ebd_main_loop()
 {
-	DONT_EXPORT_VARS="${DONT_EXPORT_VARS} alie com phases line cont DONT_EXPORT_FUNCS STARTING_PID"
+	DONT_EXPORT_VARS="${DONT_EXPORT_VARS} com phases line cont DONT_EXPORT_FUNCS STARTING_PID"
 	SANDBOX_ON=1
 	while :; do
 		local com=''

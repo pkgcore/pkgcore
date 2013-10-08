@@ -14,7 +14,7 @@ __phase_eapi4_src_install() {
 		emake DESTDIR="${D}" install
 	fi
 
-	# important; keep these as seperate statements.  we use the exit
+	# important; keep these as separate statements.  we use the exit
 	# code after all.
 	local tmp_var
 

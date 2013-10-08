@@ -9,7 +9,7 @@
 # it bails (theres no way the env should be missing- exemption is setup phase).
 #
 # for env filtering for restoration and reloading, note the updates to DONT_EXPORT_(VARS|FUNCS).
-# those vars are basically used to track what shouldn't be saved/restored.  Whitespace seperated,
+# those vars are basically used to track what shouldn't be saved/restored.  Whitespace separated,
 # those vars can support posix (think egrep) regex.  They should hold all vars/funcs that are internal
 # ebuild.sh vars.  Basically, filter all vars/funcs that are specific to ebuild.sh, not the ebuild.
 #

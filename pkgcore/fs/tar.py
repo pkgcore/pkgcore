@@ -173,7 +173,7 @@ def convert_archive(archive):
     del raw_syms
     syms = sorted(syms, reverse=True)
     # ok, syms are correct.  now we get the rest.
-    # we shift the readds into a seperate list so that we don't reinspect
+    # we shift the readds into a separate list so that we don't reinspect
     # them on later runs; this slightly reduces the working set.
     additions = []
     for x in syms:

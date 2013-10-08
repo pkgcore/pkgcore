@@ -3,7 +3,7 @@
 # License: BSD/GPL2
 
 # potentially use an intermediate base for user config errors,
-# seperate base for instantiation?
+# separate base for instantiation?
 
 
 """Exceptions raised by the config code."""

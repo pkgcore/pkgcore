@@ -314,7 +314,7 @@ def config_from_make_conf(location="/etc/"):
 
     # this actually differs from portage parsing- we allow
     # make.globals to provide vars used in make.conf, portage keeps
-    # them seperate (kind of annoying)
+    # them separate (kind of annoying)
 
     config_root = os.environ.get("PORTAGE_CONFIGROOT", "/")
     base_path = pjoin(config_root, location.strip("/"))

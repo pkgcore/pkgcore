@@ -102,7 +102,7 @@ class MergeEngine(object):
 
         self.preserve_csets = []
         self.cset_sources = {}
-        # instantiate these seperately so their values are preserved
+        # instantiate these separately so their values are preserved
         self.preserved_csets = LazyValDict(
             self.preserve_csets, self._get_cset_source)
         for k, v in csets.iteritems():

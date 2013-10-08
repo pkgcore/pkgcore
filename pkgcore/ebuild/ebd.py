@@ -756,7 +756,7 @@ class buildable(ebd, setup_mixin, format.build):
         execute the configure phase
 
         does nothing if the pkg's EAPI is less than 2 (that spec lacks a
-        seperated configure phase).
+        separated configure phase).
         """
         if "configure" in self.eapi_obj.phases:
             return self._generic_phase("configure", True, True, False)

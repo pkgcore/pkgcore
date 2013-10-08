@@ -35,7 +35,7 @@ source() {
 	return 0
 }
 
-# without this var, parsing certain things can fail; force tot true
+# without this var, parsing certain things can fail; force to true
 # so any code that tried accessing it thinks it succeeded
 export PKGCORE_PYTHON_BINARY=/bin/true
 

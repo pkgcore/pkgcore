@@ -109,7 +109,7 @@ def add_layman_syncers(new_config, rsync_opts, overlay_paths, config_root='/',
 
 def isolate_rsync_opts(options):
     """
-    pop the misc RSYNC related options litered in make.conf, returning
+    pop the misc RSYNC related options littered in make.conf, returning
     a base rsync dict, and the full SYNC config
     """
     base = {}

@@ -4,7 +4,6 @@
 from pkgcore.test import TestCase
 
 from pkgcore.scripts import pmerge
-from pkgcore.test.scripts import helpers
 from pkgcore.repository import util
 from pkgcore.ebuild import formatter
 from pkgcore.config import basics

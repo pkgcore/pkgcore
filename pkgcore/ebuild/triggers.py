@@ -186,6 +186,23 @@ def gen_config_protect_filter(offset, extra_protects=(), extra_disables=()):
         r = values.AndRestriction(r, r2)
     return r
 
+def gen_collision_ignore_filter(offset, extra_ignores=()):
+    collapsed_d, inc, colon = collapse_envd(pjoin(offset, "etc/env.d"))
+    collapsed_d.setdefault("COLLISION_IGNORE", []).extend(extra_ignores)
+
+    r = []
+    ignored = stable_unique(collapsed_d["COLLISION_IGNORE"])
+    if ignored:
+        for i, x in enumerate(ignored):
+            if os.path.isdir(x) and not x.endswith("/*"):
+                ignored[i] = ignored.rstrip("/") + "/*"
+        if len(ignored) == 1:
+            r = values.StrRegex(fnmatch.translate(ignored[0]))
+        else:
+            r = values.OrRestriction(
+                *[values.StrRegex(fnmatch.translate(x)) for x in set(ignored)])
+    return r
+
 
 class ConfigProtectInstall(triggers.base):
 
@@ -353,10 +370,11 @@ class collision_protect(triggers.base):
 
     suppress_exceptions = False
 
-    def __init__(self, extra_protects=(), extra_disables=()):
+    def __init__(self, extra_protects=(), extra_disables=(), extra_ignores=()):
         triggers.base.__init__(self)
         self.extra_protects = extra_protects
         self.extra_disables = extra_disables
+        self.extra_ignores = extra_ignores
 
     def trigger(self, engine, install, existing, old_cset=()):
         if not existing:
@@ -370,16 +388,18 @@ class collision_protect(triggers.base):
         # hackish, but it works.
         protected_filter = gen_config_protect_filter(engine.offset,
             self.extra_protects, self.extra_disables).match
+        ignore_filter = gen_collision_ignore_filter(engine.offset,
+            self.extra_ignores).match
 
         l = []
         for x in colliding:
-            if x.location.endswith(".keep"):
-                l.append(x)
-            elif protected_filter(x.location):
+            if x.location.endswith(".keep") or \
+               protected_filter(x.location) or \
+               ignore_filter(x.location):
                 l.append(x)
 
         colliding.difference_update(l)
-        del l, protected_filter
+        del l, protected_filter, ignore_filter
         if not colliding:
             return
 
@@ -539,13 +559,16 @@ def generate_triggers(domain):
     mask = domain_settings.get('CONFIG_PROTECT_MASK', ())
     if isinstance(protect, basestring):
         protect = protect.split()
+    ignore = domain_settings.get('COLLISION_IGNORE', ())
+    if isinstance(ignore, basestring):
+        ignore = ignore.split()
 
     yield ConfigProtectInstall(protect, mask)
     yield ConfigProtectUninstall()
 
     features = domain_settings.get("FEATURES", ())
     if "collision-protect" in features:
-        yield collision_protect(protect, mask)
+        yield collision_protect(protect, mask, ignore)
 
     if "multilib-strict" in features:
         yield register_multilib_strict_trigger(domain_settings)

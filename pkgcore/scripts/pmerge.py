@@ -318,15 +318,17 @@ def _validate(parser, namespace):
     namespace.set = f(namespace.set)
 
 
-def parse_atom(restriction, repo, return_none=False):
+def parse_atom(restriction, repo, livefs_repos, return_none=False):
     """Use :obj:`parserestrict.parse_match` to produce a single atom.
 
-    This matches the restriction against the repo, raises
-    AmbiguousQuery if they belong to multiple cat/pkgs, returns an
-    atom otherwise.
+    This matches the restriction against the repo, if they belong to
+    multiple cat/pkgs matches the restriction against installed
+    repos, and finally raises AmbiguousQuery if they belong to
+    multiple installed cat/pkgs or returns the matched atom.
 
-    :param token: string to convert.
+    :param restriction: string to convert.
     :param repo: :obj:`pkgcore.repository.prototype.tree` instance to search in.
+    :param livefs_repos: :obj:`pkgcore.config.domain.all_livefs_repos` instance to search in.
     :param return_none: indicates if no matches raises or returns C{None}
 
     :return: an atom or C{None}.
@@ -335,7 +337,11 @@ def parse_atom(restriction, repo, return_none=False):
     if not key_matches:
         raise NoMatches(restriction)
     elif len(key_matches) > 1:
-        raise AmbiguousQuery(restriction, sorted(key_matches))
+        installed_matches = set(x.key for x in livefs_repos.itermatch(restriction))
+        if len(installed_matches) == 1:
+            restriction = atom(installed_matches.pop())
+        else:
+            raise AmbiguousQuery(restriction, sorted(key_matches))
     if isinstance(restriction, atom):
         # atom is guaranteed to be fine, since it's cat/pkg
         return restriction
@@ -414,7 +420,7 @@ def main(options, out, err):
 
     for token in options.targets:
         try:
-            a = parse_atom(token, source_repos.combined, return_none=True)
+            a = parse_atom(token, source_repos.combined, livefs_repos, return_none=True)
         except parserestrict.ParseError, e:
             out.error(str(e))
             return 1

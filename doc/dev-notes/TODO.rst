@@ -93,10 +93,6 @@ Rough TODO
 - sorting USE/USE_EXPAND flags so they're shown in alphabetical order in
   pmerge output
 
-- modify parse_atom in pmerge to support defaulting to using the matching
-  installed pkg, if any, for duplicate atoms instead of raising
-  AmbiguousQuery for all duplicate instances
-
 - add trigger for updating the GNU info directory index and remove
   /usr/share/info/dir from files to install to prevent collisions,
   e.g. dev-libs/gmp

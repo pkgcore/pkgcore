@@ -667,15 +667,6 @@ class PkgProvided(ebuild_src.base):
         object.__setattr__(self, "eapi_obj", get_eapi('0'))
 
 
-class ForgetfulDict(dict):
-
-    def __setitem__(self, key, attr):
-        return
-
-    def update(self, other):
-        return
-
-
 class AliasedVirtuals(virtual.tree):
 
     """

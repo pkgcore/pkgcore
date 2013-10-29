@@ -346,7 +346,7 @@ def config_from_make_conf(location="/etc/"):
     conf_dict.setdefault("PORTDIR", "/usr/portage")
     root = os.environ.get("ROOT", conf_dict.get("ROOT", "/"))
     gentoo_mirrors = list(
-        x+"/distfiles" for x in conf_dict.pop("GENTOO_MIRRORS", "").split())
+        x.rstrip("/")+"/distfiles" for x in conf_dict.pop("GENTOO_MIRRORS", "").split())
 
     # this is flawed... it'll pick up -some-feature
     features = conf_dict.get("FEATURES", "").split()

@@ -4,8 +4,6 @@
 #
 # adds ".keep" files so that dirs aren't auto-cleaned
 
-${PKGCORE_PREFIX_SUPPORT} || ED="${D}"
-
 recursive=false
 if [[ "$1" == -[Rr] ]]; then
 	recursive=true

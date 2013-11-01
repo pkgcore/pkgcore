@@ -52,15 +52,15 @@ for x in `find "${z}"/ \( -type f -or -type l \) -maxdepth 1 -mindepth 1 2>/dev/
 			mylink="${mylink}.${suffix}"
 		fi
 
-		echo "fixing GNU info symlink: ${mylink##*/}"
+		echo "   fixing GNU info symlink: ${mylink##*/}"
 		ln -snf "${linkto}" "${mylink}"
 		if [[ "${x}" != "${mylink}" ]]; then
-			echo "removing old symlink: ${x##*/}"
+			echo "   removing old symlink: ${x##*/}"
 			rm -f "${x}"
 		fi
 	else
 		if [[ "${x##*.}" != "${suffix}" ]]; then
-			echo "compressing GNU info page: ${x##*/}"
+			echo "   compressing GNU info page: ${x##*/}"
 			"${PORTAGE_COMPRESS}" ${PORTAGE_COMPRESS_FLAGS} -f "${x}"
 		fi
 	fi

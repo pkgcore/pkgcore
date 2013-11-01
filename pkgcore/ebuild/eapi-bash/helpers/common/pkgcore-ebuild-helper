@@ -91,8 +91,8 @@ HELPER_ERROR_PREFIX=
 if ! ${PKGCORE_PREFIX_SUPPORT:=false}; then
 	export ED="${D}"
 elif [[ "${ED:-unset}" == unset ]]; then
-	error "prefix mode is enabled, but ED can't be found.  Ebuild bug?"
-	exit 1
+	error "The variable ED is missing from the environment, but is required for prefix mode; failing."
+	exit -1
 fi
 
 invoke_script()

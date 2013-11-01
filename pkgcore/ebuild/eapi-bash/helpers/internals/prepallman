@@ -5,10 +5,10 @@
 shopt -s extdebug
 source "${PKGCORE_BIN_PATH}/exit-handling.lib" || { echo "failed loading libs"; exit -127; }
 
-if ! ${PKGCORE_PREFIX_SUPPORT=false}; then
-	export ED="${D}"
-elif [[ "${ED-unset}" == "unset" ]]; then
-	echo "The ED variable was missing from the environment, but is required for prefix mode.  Failing".
+if ! ${PKGCORE_PREFIX_SUPPORT:=false}; then
+	ED="${D}"
+elif [[ "${ED:-unset}" == "unset" ]]; then
+	echo "The variable ED is missing from the environment, but is required for prefix mode; failing."
 	exit -1
 fi
 

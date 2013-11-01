@@ -15,6 +15,13 @@ source "${PKGCORE_BIN_PATH}"/isolated-functions.lib || {
 __feature_is_enabled installsources || exit 0
 __safe_has installsources ${RESTRICT} && exit 0
 
+if ! ${PKGCORE_PREFIX_SUPPORT:=false}; then
+	ED="${D}"
+elif [[ "${ED:-unset}" == "unset" ]]; then
+	echo "The variable ED is missing from the environment, but is required for prefix mode; failing."
+	exit -1
+fi
+
 for x in debugedit scanelf rsync sort; do
 	if ! type -P $x >/dev/null ; then
 		ewarn "FEATURES=installsources is enabled but the $x binary could not"

@@ -13,6 +13,8 @@ __all__ = ("ConfigHint", "configurable", "load_config")
 # actually needed
 from pkgcore.const import SYSTEM_CONF_FILE, USER_CONF_FILE
 
+_config = None
+
 class ConfigHint(object):
 
     """hint for introspection supplying overrides"""
@@ -65,24 +67,32 @@ def load_config(user_conf_file=USER_CONF_FILE,
         representing the system config.
     """
 
-    from pkgcore.config import central, cparser
-    from pkgcore.plugin import get_plugins
-    import os
+    global _config
 
-    configs = list(prepend_sources)
-    configs.extend(get_plugins('global_config'))
-    if not skip_config_files:
-        have_system_conf = os.path.isfile(system_conf_file)
-        have_user_conf = os.path.isfile(user_conf_file)
-        if have_system_conf or have_user_conf:
-            if have_system_conf:
-                configs.append(
-                    cparser.config_from_file(open(system_conf_file)))
-            if have_user_conf:
-                configs.append(cparser.config_from_file(open(user_conf_file)))
-        else:
-            # make.conf...
-            from pkgcore.ebuild.portage_conf import config_from_make_conf
-            configs.append(config_from_make_conf())
-    configs.extend(append_sources)
-    return central.CompatConfigManager(central.ConfigManager(configs, debug=debug))
+    # True if load_config is called with no arguments or the passed arguments match the defaults
+    cached = user_conf_file == USER_CONF_FILE and system_conf_file == SYSTEM_CONF_FILE and \
+            not any([debug, prepend_sources, append_sources, skip_config_files])
+
+    if _config is None or not cached:
+        from pkgcore.config import central, cparser
+        from pkgcore.plugin import get_plugins
+        import os
+
+        configs = list(prepend_sources)
+        configs.extend(get_plugins('global_config'))
+        if not skip_config_files:
+            have_system_conf = os.path.isfile(system_conf_file)
+            have_user_conf = os.path.isfile(user_conf_file)
+            if have_system_conf or have_user_conf:
+                if have_system_conf:
+                    configs.append(
+                        cparser.config_from_file(open(system_conf_file)))
+                if have_user_conf:
+                    configs.append(cparser.config_from_file(open(user_conf_file)))
+            else:
+                # make.conf...
+                from pkgcore.ebuild.portage_conf import config_from_make_conf
+                configs.append(config_from_make_conf())
+        configs.extend(append_sources)
+        _config = central.CompatConfigManager(central.ConfigManager(configs, debug=debug))
+    return _config

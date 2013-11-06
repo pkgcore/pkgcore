@@ -385,7 +385,7 @@ class RepoConfig(syncable.tree):
         if not v:
             # dumb ass overlay devs, treat it as missing.
             v = set(['pms'])
-        unknown = v.difference(['pms', 'portage-1'])
+        unknown = v.difference(['pms', 'portage-1', 'portage-2'])
         if unknown:
             logger.warn("repository at %r has an unsupported profile formats: %s" %
                 (self.location, ', '.join(repr(x) for x in sorted(v))))

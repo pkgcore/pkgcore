@@ -7,7 +7,7 @@ __all__ = ("ProfileError", "ProfileNode", "EmptyRootNode", "OnDiskProfile",
 import errno, os
 from itertools import chain
 
-from pkgcore.config import ConfigHint
+from pkgcore.config import ConfigHint, load_config
 from pkgcore.ebuild import const, ebuild_src, misc
 from pkgcore.ebuild.misc import (
     _build_cp_atom_payload, chunked_data, ChunkedDataDict, split_negations,
@@ -141,6 +141,9 @@ class ProfileNode(object):
         self.path = path
         self.pms_strict = pms_strict
 
+        # TODO: move this to the config object so we aren't recreating it
+        self.repo_map = ImmutableDict((r.repo_id, r.location + '/profiles') for r in load_config().objects['raw_repo'].itervalues())
+
     def __str__(self):
         return "Profile at %r" % self.path
 
@@ -173,8 +176,19 @@ class ProfileNode(object):
 
     @load_property("parent")
     def parent_paths(self, data):
-        return tuple(abspath(pjoin(self.path, x))
-            for x in data)
+        repo_config = self.repoconfig
+        if repo_config is not None and repo_config.profile_format == 'portage-2':
+            l = []
+            for x in data:
+                if ':' in x:
+                    repo_id, _sep, profile_path = x.partition(':')
+                    if repo_id:
+                        repo_config = self._load_repoconfig_from_path(self.repo_map[repo_id])
+                    l.append(abspath(pjoin(repo_config.location, 'profiles', profile_path)))
+                else:
+                    l.append(abspath(pjoin(self.path, x)))
+            return tuple(l)
+        return tuple(abspath(pjoin(self.path, x)) for x in data)
 
     @klass.jit_attr
     def parents(self):

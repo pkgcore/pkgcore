@@ -433,7 +433,7 @@ class _UnconfiguredTree(prototype.tree):
         path = pjoin(self.base, 'profiles', 'package.mask')
         pos, neg = [], []
         try:
-            if self.config.profile_format != 'pms':
+            if self.config.profile_format not in ['pms', 'portage-2']:
                 paths = sorted(x.location for x in iter_scan(path)
                     if x.is_reg)
             else:

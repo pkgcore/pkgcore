@@ -31,7 +31,7 @@ demandload(globals(),
     'pkgcore.restrictions:packages',
     'pkgcore.fs.livefs:iter_scan',
     'collections',
-    'snakeoil:mappings',
+    'snakeoil.mappings:ImmutableDict',
 )
 
 
@@ -193,7 +193,7 @@ class ProfileNode(object):
             if len(l) != 2:
                 raise ValueError("%r is malformed" % line)
             d[cpv.CPV.unversioned(l[0]).package] = self.eapi_atom(l[1])
-        return mappings.ImmutableDict(d)
+        return ImmutableDict(d)
 
     @load_property("package.mask", allow_recurse=True)
     def masks(self, data):
@@ -237,7 +237,7 @@ class ProfileNode(object):
             d[a.key].append(chunked_data(a,
                 *split_negations(l[1:])))
 
-        return mappings.ImmutableDict((k, _build_cp_atom_payload(v, atom.atom(k)))
+        return ImmutableDict((k, _build_cp_atom_payload(v, atom.atom(k)))
             for k,v in d.iteritems())
 
     @load_property("package.use.force", allow_recurse=True)
@@ -318,7 +318,7 @@ class ProfileNode(object):
         if data is not None:
             data = read_bash_dict(data, vars_dict=rendered)
             rendered.update(data.iteritems())
-        return mappings.ImmutableDict(rendered)
+        return ImmutableDict(rendered)
 
     @klass.jit_attr
     def bashrc(self):
@@ -385,7 +385,7 @@ class EmptyRootNode(ProfileNode):
     deprecated = None
     pkg_use = masked_use = stable_masked_use = forced_use = stable_forced_use = ChunkedDataDict()
     forced_use.freeze()
-    virtuals = pkg_use_force = pkg_use_mask = mappings.ImmutableDict()
+    virtuals = pkg_use_force = pkg_use_mask = ImmutableDict()
     pkg_provided = visibility = system = ((), ())
 
 
@@ -474,7 +474,7 @@ class ProfileStack(object):
                         (incremental, v))
                     if v:
                         d[incremental] = tuple(v)
-        return mappings.ImmutableDict(d.iteritems())
+        return ImmutableDict(d.iteritems())
 
     @klass.jit_attr
     def use_expand(self):
@@ -493,7 +493,7 @@ class ProfileStack(object):
         d = {}
         for profile in self.stack:
             d.update(profile.virtuals)
-        return mappings.ImmutableDict(d)
+        return ImmutableDict(d)
 
     @klass.jit_attr
     def make_virtuals_repo(self):

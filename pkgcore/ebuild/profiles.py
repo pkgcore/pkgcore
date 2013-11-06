@@ -418,7 +418,6 @@ class ProfileStack(object):
                 for y in f(x):
                     yield y
             yield node
-        l = list(f(self.node))
         return tuple(f(self.node))
 
     def _collapse_use_dict(self, attr):
@@ -634,7 +633,7 @@ class UserProfileNode(ProfileNode):
 class UserProfile(OnDiskProfile):
 
     pkgcore_config_type = ConfigHint({'user_path':'str', 'parent_path':'str',
-        'parent_profile':'str', 'incrementals':'list'},
+        'parent_profile':'str'},
         required=('user_path','parent_path', 'parent_profile'),
         typename='profile')
 

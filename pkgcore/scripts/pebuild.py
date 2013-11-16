@@ -51,8 +51,7 @@ def main(options, out, err):
             phases.insert(0, "fetch")
     # by default turn off startup cleans; we clean by ourselves if
     # told to do so via an arg
-    build = options.domain.build_pkg(pkgs[0], build_obs, clean=False,
-        allow_fetching=True)
+    build = options.domain.build_pkg(pkgs[0], build_obs, clean=False, allow_fetching=True)
     if clean:
         build.cleanup(force=True)
     build._reload_state()
@@ -61,4 +60,3 @@ def main(options, out, err):
         out.write()
         out.write('executing phase %s' % (phase,))
         f(**kwds)
-

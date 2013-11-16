@@ -462,6 +462,7 @@ def config_from_make_conf(location="/etc/"):
             'profile': 'profile'})
     new_config['glsa'] = basics.section_alias('vuln',
         SecurityUpgradesViaProfile.pkgcore_config_type.typename)
+
     #binpkg.
     pkgdir = conf_dict.pop('PKGDIR', None)
     default_repos = list(reversed(portdir_overlays)) + [portdir]

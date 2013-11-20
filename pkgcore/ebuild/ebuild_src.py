@@ -197,7 +197,7 @@ class base(metadata.package):
     :cvar tracked_attributes: sequence of attributes that are required to exist
         in the built version of ebuild-src
     :cvar _config_wrappables: mapping of attribute to callable for
-        re-evaluating attributes dependant on configuration
+        re-evaluating attributes dependent on configuration
     """
 
     tracked_attributes = (

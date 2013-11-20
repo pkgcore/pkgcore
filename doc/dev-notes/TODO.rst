@@ -69,7 +69,7 @@ Rough TODO
 
   derivative of pkgcore.ebuild.ebuild_repository, this overloads
   ebuild_factory and eclass_cache so that gpg checks are done.
-  This requires some hackery, partially dependant on config.central changes
+  This requires some hackery, partially dependent on config.central changes
   (see above).  Need a way to specify the trust ring to use, 'severity' level
   (different class targets works for me).
   Anyone who implements this deserves massive cookies.

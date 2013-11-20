@@ -136,7 +136,7 @@ subsystem, (these map out to run time objects unless otherwise stated)::
   \-- visibility wrappers
 
 domain is configuration data, accept_(license|keywords), use, cflags,
-chost, features, etc. profile, dependant on the profile class you
+chost, features, etc. profile, dependent on the profile class you
 choose is either bound to a repository, or to user defined location on
 disk (/etc/portage/profile fex). Domain knows to do incremental crap
 upon profile settings, lifting package.* crap for visibility wrappers
@@ -188,7 +188,7 @@ why it wouldn't work, the consensus thus far is mainly "err, don't
 want to add the deps, too much work". Regarding work, use indirection.
 
 virtual/toolchain-c
-  metapkg (glep37) that expands out (dependant on arch) into whatever
+  metapkg (glep37) that expands out (dependent on arch) into whatever
   is required to do building of c sources
 virtual/toolchain-c++
   same thing, just c++
@@ -360,7 +360,7 @@ hooks)
 .test()
   guess.
 .install()
-  install to tmp location.  may not be used dependant on the format.
+  install to tmp location.  may not be used dependent on the format.
 .finalize()
   good to go.  generate (jit?) contents/metadata attributes, or
   returns a finalized instance should generate a immutable package instance.
@@ -463,7 +463,7 @@ is general info for using it, not designing a repository class
   boolean, indicative of whether or not it's a livefs target- this is
   useful for resolver, shop it to other repos, binpkg fex prior to
   shopping it to the vdb for merging to the fs.  Or merge to livefs,
-  then binpkg it while continuing further building dependant on that
+  then binpkg it while continuing further building dependent on that
   package (ui app's choice really).
 .raw_repo
   either it weakref's self, or non-weakref refs another repo. why is
@@ -560,7 +560,7 @@ properties (iterating over all keys).
   Flesh this out. Either handed a metadata restriction (or set of
   'em), or handed dict with equiv info (like the former). ebuild
   caches most likely *should* return mtime information alongside,
-  although maybe dependant on readonly. purpose of this? Gives you a
+  although maybe dependent on readonly. purpose of this? Gives you a
   way to hand off metadata searching to the cache db, rather then the
   repo having to resort to pulling each cpv from the cache and doing
   the check itself. This is what will make rdbms cache backends
@@ -613,7 +613,7 @@ and pmatch have been reversed namewise.
   handed package instance, will return bool of whether or not this
   restriction matches.
 .cmatch()
-  try to force the changes; this is dependant on the package being
+  try to force the changes; this is dependent on the package being
   configurable.
 .itermatch()
   new one, debatable. short version, giving a sequence of package

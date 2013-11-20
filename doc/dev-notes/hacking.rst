@@ -263,7 +263,7 @@ Variables that leak from for loops _normally_ aren't an issue, just be
 aware it does occur- especially if the var is referencing a large object
 (thus keeping it in memory).
 
-So... for loops leak, list comps leak, dependant on your except
+So... for loops leak, list comps leak, dependent on your except
 clause they can also leak.
 
 Do not go overboard with this though. If your function will exit soon

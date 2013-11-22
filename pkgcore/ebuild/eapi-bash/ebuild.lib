@@ -194,7 +194,7 @@ __generate_initial_ebuild_environ() {
 			#this shouldn't happen.
 			die "failed to load ${T}/.tmp_env- fs is readonly?"
 		fi
-		unset SUPRESS_BASHRCS
+		unset PKGCORE_SUPPRESS_BASHRCS
 
 		rm "${T}/.temp_env"
 	fi

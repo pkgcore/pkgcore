@@ -187,7 +187,10 @@ class ProfileNode(object):
                 if ':' in x:
                     repo_id, _sep, profile_path = x.partition(':')
                     if repo_id:
-                        repo_config = self._load_repoconfig_from_path(self.repo_map[repo_id])
+                        try:
+                            repo_config = self._load_repoconfig_from_path(self._repo_map[repo_id])
+                        except KeyError:
+                            raise ValueError("unknown repository name: %r" % repo_id)
                     l.append(abspath(pjoin(repo_config.location, 'profiles', profile_path)))
                 else:
                     l.append(abspath(pjoin(self.path, x)))

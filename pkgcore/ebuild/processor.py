@@ -888,7 +888,11 @@ def expected_ebuild_env(pkg, d=None, env_source_override=None, depends=False):
         if path is not None:
             d["EBUILD"] = path
     else:
-        d["EBUILD"] = pkg.ebuild.path
+        if pkg.ebuild.path is not None:
+            d["EBUILD"] = pkg.ebuild.path
+        else:
+            # binpkgs don't have ebuild paths
+            d["EBUILD"] = ""
 
     if not depends:
         path = list()

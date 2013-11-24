@@ -862,7 +862,9 @@ class ebuild_mixin(object):
                     return False
         if 'pretend' not in pkg.mandatory_phases:
             return True
-        commands = {"request_inherit": partial(inherit_handler, self._eclass_cache)}
+        commands = None
+        if not pkg.built:
+            commands = {"request_inherit": partial(inherit_handler, self._eclass_cache)}
         env = expected_ebuild_env(pkg)
         tmpdir = normpath(domain._get_tempspace())
         builddir = pjoin(tmpdir, env["CATEGORY"], env["PF"])

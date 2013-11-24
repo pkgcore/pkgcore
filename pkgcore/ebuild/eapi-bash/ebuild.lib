@@ -199,7 +199,7 @@ __generate_initial_ebuild_environ() {
 		rm "${T}/.temp_env"
 	fi
 
-	__timed_call __load_ebuild "${EBUILD}"
+	[[ -n "${EBUILD}" ]] && __timed_call __load_ebuild "${EBUILD}"
 
 	if [[ ${PKGCORE_EBUILD_PHASE} != depend ]]; then
 		RESTRICT="${PKGCORE_FINALIZED_RESTRICT}"

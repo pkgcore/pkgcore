@@ -134,6 +134,7 @@ class ProfileNode(object):
 
     __metaclass__ = caching.WeakInstMeta
     __inst_caching__ = True
+    _repo_map = None
 
     def __init__(self, path, pms_strict=True):
         if not os.path.isdir(path):
@@ -141,8 +142,11 @@ class ProfileNode(object):
         self.path = path
         self.pms_strict = pms_strict
 
-        # TODO: move this to the config object so we aren't recreating it
-        self.repo_map = ImmutableDict((r.repo_id, r.location + '/profiles') for r in load_config().objects['raw_repo'].itervalues())
+        # XXX: hack to provide a repo-id -> repo-location mapping for portage-2 profile format
+        if self.__class__._repo_map is None:
+            self.__class__._repo_map = ImmutableDict(
+                (r.repo_id, pjoin(r.location, 'profiles')) \
+                for r in load_config().objects['raw_repo'].itervalues())
 
     def __str__(self):
         return "Profile at %r" % self.path

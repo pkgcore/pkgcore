@@ -75,9 +75,8 @@ class package(ebuild_src.base):
     """
 
     immutable = True
-    tracked_attributes = list(ebuild_src.package.tracked_attributes)
-    tracked_attributes.extend(["contents", "use", "environment"])
-    tracked_attributes = tuple(tracked_attributes)
+    tracked_attributes = ebuild_src.package.tracked_attributes + \
+                         ("contents", "use", "environment")
     allow_regen = False
 
     @property

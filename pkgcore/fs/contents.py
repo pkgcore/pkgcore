@@ -408,5 +408,3 @@ class OrderedContentsSet(contentsSet):
         if add_missing_directories:
             self.add_missing_directories()
         self.mutable = mutable
-
-

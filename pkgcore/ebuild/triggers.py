@@ -228,7 +228,7 @@ class ConfigProtectInstall(triggers.base):
         protected = {}
 
         for x in existing_cset.iterfiles():
-            if x.location.endswith("/.keep"):
+            if x.location.endswith("/.keep") or fnmatch.fnmatch(x.location, "*/.keep_*"):
                 continue
             elif protected_filter(x.location):
                 replacement = install_cset[x]
@@ -319,7 +319,7 @@ class ConfigProtectUninstall(triggers.base):
 
         remove = []
         for x in existing_cset.iterfiles():
-            if x.location.endswith("/.keep"):
+            if x.location.endswith("/.keep") or fnmatch.fnmatch(x.location, "*/.keep_*"):
                 continue
             if protected_restrict.match(x.location):
                 recorded_ent = uninstall_cset[x]
@@ -394,6 +394,7 @@ class collision_protect(triggers.base):
         l = []
         for x in colliding:
             if x.location.endswith(".keep") or \
+               fnmatch.fnmatch(x.location, "*/.keep_*") or \
                protected_filter(x.location) or \
                ignore_filter(x.location):
                 l.append(x)

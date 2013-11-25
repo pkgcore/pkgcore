@@ -14,9 +14,9 @@ check_args 1 -
 dodir "$@"
 
 if ${recursive}; then
-	check_command_or_stop find "$@" -type d -printf "${ED}/%p/.keep\0" | $XARGS -0 -n100 touch
+	check_command_or_stop find "$@" -type d -printf "${ED}/%p/.keep_${CATEGORY}_${PN}-${SLOT%/*}\0" | $XARGS -0 -n100 touch
 else
 	for x in "$@"; do
-		check_command_or_stop touch "${ED}/${x}/.keep"
+		check_command_or_stop touch "${ED}/${x}/.keep_${CATEGORY}_${PN}-${SLOT%/*}"
 	done
 fi

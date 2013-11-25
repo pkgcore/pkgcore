@@ -242,6 +242,9 @@ class CountingFormatter(Formatter):
         Formatter.__init__(self, **kwargs)
         self.package_data = defaultdictkey(lambda x:0)
 
+        # total download size for all pkgs to be merged
+        self.download_size = 0
+
     def visit_op(self, op_type):
         self.package_data[op_type] += 1
 
@@ -272,9 +275,10 @@ class CountingFormatter(Formatter):
             if d:
                 op_list.append('%i other op%s' % (len(d), 's'[len(d)==1:]))
             if op_list:
-                self.out.write(' (' + ', '.join(op_list) + ')')
-            else:
-                self.out.write()
+                self.out.write(' (' + ', '.join(op_list) + ')', autoline=False)
+            if self.download_size > 0:
+                self.out.write(', Size of downloads: ', sizeof_fmt(self.download_size), autoline=False)
+            self.out.write()
 
 
 class PortageFormatter(CountingFormatter):
@@ -293,6 +297,9 @@ class PortageFormatter(CountingFormatter):
             self.use_expand_hidden)
         # Map repo location to an index.
         self.repos = {}
+
+        # set of files to be downloaded
+        self.downloads = set()
 
     def format(self, op):
         #  <type>       - ebuild, block or nomerge (for --tree)
@@ -433,8 +440,20 @@ class PortageFormatter(CountingFormatter):
             flaglists = [d.get(expand, ()) for d in usedicts]
             self.format_use(expand, *flaglists)
 
-        if self.verbose and self.quiet_repo_display:
-            out.write(out.fg('cyan'), " [%d]" % (reponr))
+        if self.verbose:
+            if not op.pkg.built:
+                downloads = set([f.filename for f in op.pkg.fetchables
+                    if not os.path.isfile(pjoin(self.distdir, f.filename))])
+                if downloads.difference(self.downloads):
+                    self.downloads.update(downloads)
+                    size = sum([v.size for dist, v in
+                               op.pkg.manifest.distfiles.iteritems() if dist in downloads])
+                    if size > 0:
+                        self.download_size += size
+                        out.write(' ', sizeof_fmt(size))
+
+            if self.quiet_repo_display:
+                out.write(out.fg('cyan'), " [%d]" % (reponr))
 
         out.write('\n')
         out.autoline = origautoline
@@ -626,3 +645,10 @@ def portage_verbose_factory():
         kwargs['verbose'] = True
         return PortageFormatter(**kwargs)
     return factory
+
+def sizeof_fmt(size):
+    for x in ['B', 'kB', 'MB', 'GB']:
+        if size < 1024.0:
+            return "%3.1f %s" % (size, x)
+        size /= 1024.0
+    return "%3.1f %s" % (size, 'TB')

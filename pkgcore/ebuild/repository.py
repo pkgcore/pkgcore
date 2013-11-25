@@ -17,8 +17,8 @@ from pkgcore.config import ConfigHint, configurable
 from pkgcore.plugin import get_plugin
 from pkgcore.operations import repo as _repo_ops
 
-from snakeoil.fileutils import read_dict, readlines
-from snakeoil.bash import iter_read_bash
+from snakeoil.fileutils import readlines
+from snakeoil.bash import iter_read_bash, read_dict
 from snakeoil import currying, klass
 from snakeoil.osutils import listdir_files, listdir_dirs, pjoin
 from snakeoil.fileutils import readfile

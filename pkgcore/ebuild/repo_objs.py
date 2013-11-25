@@ -22,7 +22,8 @@ from pkgcore.repository import syncable
 demandload(globals(),
     'errno',
     'snakeoil.xml:etree',
-    'snakeoil:fileutils,bash,mappings',
+    'snakeoil.bash:BashParseError,iter_read_bash,read_dict',
+    'snakeoil.fileutils:readfile,readlines_ascii',
     'snakeoil.lists:iter_stable_unique',
     'pkgcore.log:logger',
     'pkgcore.ebuild:atom,profiles',
@@ -164,10 +165,10 @@ class Licenses(object):
     @klass.jit_attr_none
     def groups(self):
         try:
-            d = fileutils.read_dict(self.license_groups_path, splitter=' ')
+            d = read_dict(self.license_groups_path, splitter=' ')
         except EnvironmentError:
             return mappings.ImmutableDict()
-        except fileutils.ParseError, pe:
+        except BashParseError, pe:
             logger.error("failed parsing license_groups: %s", pe)
             return mappings.ImmutableDict()
         self._expand_groups(d)
@@ -294,7 +295,7 @@ class BundledProfiles(object):
         d = mappings.defaultdict(list)
         fp = pjoin(self.profile_base, 'profiles.desc')
         try:
-            for line in fileutils.iter_read_bash(fp):
+            for line in iter_read_bash(fp):
                 l = line.split()
                 try:
                     key, profile, status = l
@@ -340,7 +341,7 @@ class RepoConfig(syncable.tree):
 
     def load_config(self):
         path = pjoin(self.location, self.layout_offset)
-        return fileutils.read_dict(bash.iter_read_bash(fileutils.readlines_ascii(path, True, True)),
+        return read_dict(iter_read_bash(readlines_ascii(path, True, True)),
             source_isiter=True, strip=True, filename=path)
 
     def parse_config(self):
@@ -395,7 +396,7 @@ class RepoConfig(syncable.tree):
     @klass.jit_attr
     def raw_known_arches(self):
         try:
-            return frozenset(bash.iter_read_bash(
+            return frozenset(iter_read_bash(
                 pjoin(self.profiles_base, 'arch.list')))
         except EnvironmentError, e:
             if e.errno != errno.ENOENT:
@@ -443,7 +444,7 @@ class RepoConfig(syncable.tree):
         line = None
         fp = pjoin(self.profiles_base, name)
         try:
-            for line in fileutils.iter_read_bash(fp):
+            for line in iter_read_bash(fp):
                 key, val = line.split(None, 1)
                 key = converter(key)
                 yield key[0], (key[1], val.split('-', 1)[1].strip())
@@ -477,7 +478,7 @@ class RepoConfig(syncable.tree):
 
     @klass.jit_attr
     def repo_id(self):
-        val = fileutils.readfile(pjoin(self.profiles_base, 'repo_name'), True)
+        val = readfile(pjoin(self.profiles_base, 'repo_name'), True)
         if val is None:
             if not self.is_empty:
                 logger.warn("repository at location %r lacks a defined repo_name",

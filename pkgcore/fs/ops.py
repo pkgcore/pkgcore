@@ -8,16 +8,17 @@ Shouldn't be accessed directly for the most part, use
 :mod:`pkgcore.plugins` to get at these ops.
 """
 
-import os, errno
-
-from pkgcore.fs import contents, fs
-from pkgcore.fs.livefs import gen_obj
-from pkgcore.spawn import spawn
-from pkgcore.const import COPY_BINARY
-from pkgcore.plugin import get_plugin
+import os
+import errno
 
 from snakeoil.currying import partial
 from snakeoil.osutils import ensure_dirs, pjoin, unlink_if_exists
+
+from pkgcore.const import COPY_BINARY
+from pkgcore.fs import contents, fs
+from pkgcore.fs.livefs import gen_obj
+from pkgcore.plugin import get_plugin
+from pkgcore.spawn import spawn
 
 
 __all__ = [

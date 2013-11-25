@@ -5,15 +5,16 @@
 filesystem entry abstractions
 """
 
-import stat
-from snakeoil.chksum import get_handlers, get_chksums
 from os.path import sep as path_seperator, realpath, abspath, dirname, basename
+import stat
+
+from snakeoil import klass
+from snakeoil.chksum import get_handlers, get_chksums
+from snakeoil.compatibility import cmp
+from snakeoil.currying import post_curry, pretty_docs
 from snakeoil.data_source import local_source
 from snakeoil.mappings import LazyFullValLoadDict
 from snakeoil.osutils import normpath, pjoin
-from snakeoil.compatibility import cmp
-from snakeoil.currying import post_curry, pretty_docs
-from snakeoil import klass
 
 
 # goofy set of classes representating the fs objects pkgcore knows of.

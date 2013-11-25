@@ -4,15 +4,18 @@
 """
 binpkg tar utilities
 """
-import os, stat
-from pkgcore.fs.fs import fsFile, fsDir, fsSymlink, fsFifo, fsDev
-from pkgcore.fs import contents
-from snakeoil.data_source import invokable_data_source
 
-from snakeoil.tar import tarfile
+import os
+import stat
+
 from snakeoil import compression
-from snakeoil.currying import partial
 from snakeoil.compatibility import cmp, sorted_cmp
+from snakeoil.currying import partial
+from snakeoil.data_source import invokable_data_source
+from snakeoil.tar import tarfile
+
+from pkgcore.fs import contents
+from pkgcore.fs.fs import fsFile, fsDir, fsSymlink, fsFifo, fsDev
 
 
 known_compressors = {"bz2": tarfile.TarFile.bz2open,

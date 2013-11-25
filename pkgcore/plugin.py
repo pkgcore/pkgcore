@@ -22,16 +22,16 @@ import collections
 import operator
 import os.path
 
-from pkgcore import plugins
+from snakeoil import compatibility, demandload, mappings, modules, sequences
 from snakeoil.osutils import pjoin, listdir_files
-from snakeoil import compatibility
-from snakeoil import modules, demandload, mappings, sequences
 demandload.demandload(globals(),
     'tempfile',
     'errno',
     'pkgcore.log:logger',
     'snakeoil:fileutils,osutils',
 )
+
+from pkgcore import plugins
 
 _plugin_data = sequences.namedtuple("_plugin_data",
     ["key", "priority", "source", "target"])

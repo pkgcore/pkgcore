@@ -12,14 +12,18 @@ __all__ = [
     "cleanup_pids", "spawn", "spawn_sandbox", "spawn_bash", "spawn_fakeroot",
     "spawn_get_output", "find_binary"]
 
-import os, atexit, itertools, signal, sys
-
-from pkgcore.const import (
-    BASH_BINARY, SANDBOX_BINARY, FAKED_PATH, LIBFAKEROOT_PATH)
+import atexit
+import itertools
+import os
+import signal
+import sys
 
 from snakeoil.osutils import listdir, access
 from snakeoil.mappings import ProtectedDict
 from snakeoil.process import get_proc_count, find_binary, CommandNotFound, closerange
+
+from pkgcore.const import (
+    BASH_BINARY, SANDBOX_BINARY, FAKED_PATH, LIBFAKEROOT_PATH)
 
 try:
     import resource

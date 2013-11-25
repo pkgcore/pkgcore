@@ -5,19 +5,22 @@
 contents set- container of fs objects
 """
 
-from pkgcore.fs import fs
-from snakeoil.klass import generic_equality, alias_method
+from itertools import ifilter
+from operator import attrgetter
+
 from snakeoil.currying import partial
-from snakeoil.demandload import demandload
+from snakeoil.klass import generic_equality, alias_method
 from snakeoil.osutils import normpath, pjoin
+from snakeoil.demandload import demandload
 demandload(globals(),
     'os:path',
     'time',
     'snakeoil.mappings:OrderedDict',
     'collections:defaultdict',
 )
-from itertools import ifilter
-from operator import attrgetter
+
+from pkgcore.fs import fs
+
 
 def change_offset_rewriter(orig_offset, new_offset, iterable):
     path_sep = path.sep

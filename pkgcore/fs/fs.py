@@ -7,6 +7,7 @@ filesystem entry abstractions
 
 from os.path import sep as path_seperator, realpath, abspath, dirname, basename
 import stat
+import fnmatch
 
 from snakeoil import klass
 from snakeoil.chksum import get_handlers, get_chksums
@@ -129,6 +130,9 @@ class fsBase(object):
     @property
     def dirname(self):
         return dirname(self.location)
+
+    def fnmatch(self, pattern):
+        return fnmatch.fnmatch(self.location, pattern)
 
     def __cmp__(self, other):
         return cmp(self.location, other.location)

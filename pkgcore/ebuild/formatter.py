@@ -276,7 +276,7 @@ class CountingFormatter(Formatter):
                 op_list.append('%i other op%s' % (len(d), 's'[len(d)==1:]))
             if op_list:
                 self.out.write(' (' + ', '.join(op_list) + ')', autoline=False)
-            if self.download_size > 0:
+            if self.download_size:
                 self.out.write(', Size of downloads: ', sizeof_fmt(self.download_size), autoline=False)
             self.out.write()
 
@@ -442,13 +442,13 @@ class PortageFormatter(CountingFormatter):
 
         if self.verbose:
             if not op.pkg.built:
-                downloads = set([f.filename for f in op.pkg.fetchables
-                    if not os.path.isfile(pjoin(self.distdir, f.filename))])
+                downloads = set(f.filename for f in op.pkg.fetchables
+                    if not os.path.isfile(pjoin(self.distdir, f.filename)))
                 if downloads.difference(self.downloads):
                     self.downloads.update(downloads)
-                    size = sum([v.size for dist, v in
-                               op.pkg.manifest.distfiles.iteritems() if dist in downloads])
-                    if size > 0:
+                    size = sum(v.size for dist, v in
+                               op.pkg.manifest.distfiles.iteritems() if dist in downloads)
+                    if size:
                         self.download_size += size
                         out.write(' ', sizeof_fmt(size))
 

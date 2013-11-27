@@ -194,13 +194,13 @@ def gen_collision_ignore_filter(offset, extra_ignores=()):
     ignored = stable_unique(collapsed_d["COLLISION_IGNORE"])
     if ignored:
         for i, x in enumerate(ignored):
-            if os.path.isdir(x) and not x.endswith("/*"):
+            if not x.endswith("/*") and os.path.isdir(x):
                 ignored[i] = ignored.rstrip("/") + "/*"
-        if len(ignored) == 1:
-            r = values.StrRegex(fnmatch.translate(ignored[0]))
-        else:
-            r = values.OrRestriction(
-                *[values.StrRegex(fnmatch.translate(x)) for x in set(ignored)])
+    if len(ignored) == 1:
+        r = values.StrRegex(fnmatch.translate(ignored[0]))
+    else:
+        r = values.OrRestriction(
+            *[values.StrRegex(fnmatch.translate(x)) for x in set(ignored)])
     return r
 
 

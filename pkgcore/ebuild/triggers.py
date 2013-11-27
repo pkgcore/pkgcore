@@ -186,22 +186,21 @@ def gen_config_protect_filter(offset, extra_protects=(), extra_disables=()):
         r = values.AndRestriction(r, r2)
     return r
 
+
 def gen_collision_ignore_filter(offset, extra_ignores=()):
     collapsed_d, inc, colon = collapse_envd(pjoin(offset, "etc/env.d"))
-    collapsed_d.setdefault("COLLISION_IGNORE", []).extend(extra_ignores)
+    ignored = collapsed_d.setdefault("COLLISION_IGNORE", [])
+    ignored.extend(extra_ignores)
+    ignored.extend(["*/.keep", "*/.keep_*"])
 
-    r = []
-    ignored = stable_unique(collapsed_d["COLLISION_IGNORE"])
-    if ignored:
-        for i, x in enumerate(ignored):
-            if not x.endswith("/*") and os.path.isdir(x):
-                ignored[i] = ignored.rstrip("/") + "/*"
+    ignored = stable_unique(ignored)
+    for i, x in enumerate(ignored):
+        if not x.endswith("/*") and os.path.isdir(x):
+            ignored[i] = ignored.rstrip("/") + "/*"
+    ignored = [values.StrRegex(fnmatch.translate(x)) for x in stable_unique(ignored)]
     if len(ignored) == 1:
-        r = values.StrRegex(fnmatch.translate(ignored[0]))
-    else:
-        r = values.OrRestriction(
-            *[values.StrRegex(fnmatch.translate(x)) for x in set(ignored)])
-    return r
+        return ignored[0]
+    return values.OrRestriction(*ignored)
 
 
 class ConfigProtectInstall(triggers.base):
@@ -225,12 +224,11 @@ class ConfigProtectInstall(triggers.base):
         # hackish, but it works.
         protected_filter = gen_config_protect_filter(engine.offset,
             self.extra_protects, self.extra_disables).match
+        ignore_filter = gen_collision_ignore_filter(engine.offset).match
         protected = {}
 
         for x in existing_cset.iterfiles():
-            if x.location.endswith("/.keep") or x.fnmatch("*/.keep_*"):
-                continue
-            elif protected_filter(x.location):
+            if not ignore_filter(x.location) and protected_filter(x.location):
                 replacement = install_cset[x]
                 if not simple_chksum_compare(replacement, x):
                     protected.setdefault(
@@ -315,13 +313,12 @@ class ConfigProtectUninstall(triggers.base):
     pkgcore_config_type = None
 
     def trigger(self, engine, existing_cset, uninstall_cset):
-        protected_restrict = gen_config_protect_filter(engine.offset)
+        protected_filter = gen_config_protect_filter(engine.offset).match
+        ignore_filter = gen_collision_ignore_filter(engine.offset).match
 
         remove = []
         for x in existing_cset.iterfiles():
-            if x.location.endswith("/.keep") or x.fnmatch("*/.keep_*"):
-                continue
-            if protected_restrict.match(x.location):
+            if not ignore_filter(x.location) and protected_restrict(x.location):
                 recorded_ent = uninstall_cset[x]
                 try:
                     if not simple_chksum_compare(recorded_ent, x):
@@ -391,19 +388,18 @@ class collision_protect(triggers.base):
         ignore_filter = gen_collision_ignore_filter(engine.offset,
             self.extra_ignores).match
 
-        l = []
+        ignores = []
         for x in colliding:
-            if x.location.endswith(".keep") or \
-               x.fnmatch("*/.keep_*") or \
-               protected_filter(x.location) or \
-               ignore_filter(x.location):
-                l.append(x)
+            if protected_filter(x.location) or ignore_filter(x.location):
+                ignores.append(x)
 
-        colliding.difference_update(l)
-        del l, protected_filter, ignore_filter
+        colliding.difference_update(ignores)
         if not colliding:
             return
 
+        # Wipe the references since we may throw an exception- we don't want potentially
+        # Millions of references being kept in memory for heavy ignore matches.
+        del ignores, protected_filter, ignore_filter
         colliding.difference_update(old_cset)
         if colliding:
             raise errors.BlockModification(self,

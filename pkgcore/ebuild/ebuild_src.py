@@ -467,6 +467,7 @@ class virtual_ebuild(metadata.package):
         sfunc(self, "data", IndeterminantDict(lambda *a: str(), data))
         sfunc(self, "_orig_data", data)
         sfunc(self, "provider", pkg.versioned_atom)
+        sfunc(self, "eapi_obj", get_eapi("0"))
 
     def __getattr__(self, attr):
         if attr in self._orig_data:

@@ -52,11 +52,12 @@ class DataSourceRestriction(values.base):
     __hash__ = object.__hash__
 
 
-dep_like_attrs = ['rdepends', 'depends', 'post_rdepends']
-metadata_attrs = dep_like_attrs
-dep_like_attrs += list('raw_%s' % x for x in dep_like_attrs) + ['restrict']
-dep_like_attrs = tuple(sorted(dep_like_attrs))
-dep_like_attrs_set = frozenset(dep_like_attrs)
+dep_attrs = ['rdepends', 'depends', 'post_rdepends']
+metadata_attrs = dep_attrs
+dep_attrs += list('raw_%s' % x for x in dep_attrs)
+dep_formatted_attrs = dep_attrs + ['restrict']
+dep_formatted_attrs = frozenset(dep_attrs + ['restrict'])
+dep_attrs = tuple(sorted(dep_attrs))
 
 metadata_attrs += [
     'provides', 'use', 'iuse', 'description', 'license', 'fetchables',
@@ -64,7 +65,7 @@ metadata_attrs += [
     'restrict', 'required_use', 'inherited',]
 metadata_attrs = tuple(sorted(metadata_attrs))
 
-printable_attrs = dep_like_attrs + metadata_attrs
+printable_attrs = tuple(dep_formatted_attrs) + metadata_attrs
 printable_attrs += (
     'alldepends', 'raw_alldepends',
     'longdescription', 'herds', 'uris', 'files', 'category', 'package',
@@ -197,7 +198,7 @@ def _internal_format_depends(out, node, func):
 def format_attr(config, out, pkg, attr):
     """Grab a package attr and print it through a formatter."""
     # config is currently unused but may affect display in the future.
-    if attr in dep_like_attrs_set:
+    if attr in dep_formatted_attrs:
         data = get_pkg_attr(pkg, attr)
         if data is None:
             out.write('MISSING')
@@ -258,7 +259,7 @@ def print_package(options, out, err, pkg):
             out.write(green, '     %s: ' % (attr,), out.fg(), autoline=False)
             format_attr(options, out, pkg, attr)
         for revdep in options.print_revdep:
-            for name in dep_like_attrs_set:
+            for name in dep_attrs:
                 depset = get_pkg_attr(pkg, name)
                 find_cond = getattr(depset, 'find_cond_nodes', None)
                 if find_cond is None:
@@ -318,7 +319,7 @@ def print_package(options, out, err, pkg):
             printed_something = True
             out.write('%s="%s"' % (attr, stringify_attr(options, pkg, attr)))
         for revdep in options.print_revdep:
-            for name in dep_like_attrs_set:
+            for name in dep_attrs:
                 depset = get_pkg_attr(pkg, name)
                 if getattr(depset, 'find_cond_nodes', None) is None:
                     # TODO maybe be smarter here? (this code is

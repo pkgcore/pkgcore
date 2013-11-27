@@ -100,9 +100,7 @@ class install(repo_ops.install):
         for f in ['NEEDED', 'NEEDED.ELF.2']:
             fp = pjoin(pkg_tmpdir, f)
             if os.path.exists(fp):
-                data = local_source(fp)
-                data = data.bytes_fileobj().read()
-                open(pjoin(dirpath, f), "wb").write(data)
+                local_source(fp).transfer_to_path(pjoin(dirpath, f))
 
         # XXX finally, hack to keep portage from doing stupid shit.
         # relies on counter to discern what to punt during

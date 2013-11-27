@@ -222,15 +222,15 @@ class ProfileNode(object):
 
     @load_property("package.unmask", allow_recurse=True)
     def unmasks(self, data):
-        return [parse_match(x) for x in data]
+        return tuple(parse_match(x) for x in data)
 
     @load_property("package.keywords", allow_recurse=True)
     def keywords(self, data):
-        return [package_keywords_splitter(x) for x in data]
+        return tuple(package_keywords_splitter(x) for x in data)
 
     @load_property("package.accept_keywords", allow_recurse=True)
     def accept_keywords(self, data):
-        return [package_keywords_splitter(x) for x in data]
+        return tuple(package_keywords_splitter(x) for x in data)
 
     @load_property("deprecated", handler=None, fallback=None)
     def deprecated(self, data):
@@ -552,7 +552,7 @@ class ProfileStack(object):
         l = []
         for profile in self.stack:
             l.extend(profile.keywords)
-        return l
+        return tuple(l)
 
     @klass.jit_attr
     def accept_keywords(self):

@@ -452,7 +452,7 @@ class domain(pkgcore.config.domain.domain):
         pkg_keywords = pkg.keywords
         for atom, keywords in profile_keywords:
             if atom.match(pkg):
-                pkg_keywords += tuple(keywords)
+                pkg_keywords += keywords
         allowed = data.pull_data(pkg)
         if '**' in allowed:
             return True

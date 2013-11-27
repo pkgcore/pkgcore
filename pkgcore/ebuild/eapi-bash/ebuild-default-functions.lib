@@ -106,6 +106,8 @@ __dyn_src_install()
 		fi
 
 		# Create NEEDED and NEEDED.ELF.2 files required for things like preserve-libs
+		# TODO: someday find a way to move this to the triggers implementation to allow
+		# for parallelization of the scanning- if useful.
 		scanelf -qyRF '%a;%p;%S;%r;%n' "${ED}" | { while IFS= read -r l; do
 			arch=${l%%;*}; l=${l#*;}
 			obj="/${l%%;*}"; l=${l#*;}

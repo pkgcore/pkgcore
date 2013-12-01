@@ -399,7 +399,7 @@ class setup_mixin(object):
             additional_commands["request_inherit"] = partial(inherit_handler,
                 self.eclass_cache)
 
-        return self._generic_phase(phase_name, self.userpriv, True, False,
+        return self._generic_phase(phase_name, False, True, False,
             extra_handlers=additional_commands)
 
 

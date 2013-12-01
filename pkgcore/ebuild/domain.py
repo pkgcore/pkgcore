@@ -9,7 +9,7 @@ __all__ = ("MissingFile", "Failure", "domain")
 
 # XXX doc this up better...
 
-from itertools import izip, imap
+from itertools import chain, izip, imap
 import os.path
 
 import pkgcore.config.domain
@@ -295,6 +295,7 @@ class domain(pkgcore.config.domain.domain):
         rev_names = dict((repo, name) for name, repo in self.repos_raw.iteritems())
 
         profile_masks = profile._incremental_masks()
+        profile_unmasks = profile._incremental_unmasks()
         repo_masks = dict((r.repo_id, r._visibility_limiters()) for r in repositories)
 
         for l, repos, filtered in ((self.repos, repositories, True),
@@ -333,15 +334,14 @@ class domain(pkgcore.config.domain.domain):
                     masks = [repo_masks.get(master, [(), ()]) for master in masters]
                     masks.append(repo_masks[repo.repo_id])
                     masks.extend(profile_masks)
-                    m = set()
+                    mask_atoms = set()
                     for neg, pos in masks:
-                        m.difference_update(neg)
-                        m.update(pos)
-                    m.update(pkg_maskers)
-                    m = list(m)
-                    u = list(profile.unmasks) + pkg_unmaskers
-                    filtered = self.generate_filter(generate_masking_restrict(m),
-                        generate_unmasking_restrict(u), *vfilters)
+                        mask_atoms.difference_update(neg)
+                        mask_atoms.update(pos)
+                    mask_atoms.update(pkg_maskers)
+                    unmask_atoms = set(chain(pkg_unmaskers, *profile_unmasks))
+                    filtered = self.generate_filter(generate_masking_restrict(mask_atoms),
+                        generate_unmasking_restrict(unmask_atoms), *vfilters)
                 if filtered:
                     wrapped_repo = visibility.filterTree(wrapped_repo,
                         filtered, True)

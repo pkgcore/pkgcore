@@ -581,7 +581,7 @@ class ProfileStack(object):
         l = []
         for profile in self.stack:
             l.extend(profile.accept_keywords)
-        return l
+        return tuple(l)
 
     def _incremental_masks(self, stack_override=None):
         if stack_override is None:

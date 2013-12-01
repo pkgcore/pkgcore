@@ -241,12 +241,12 @@ class domain(pkgcore.config.domain.domain):
                 default_keywords.append(x.lstrip("~"))
         default_keywords = unstable_unique(default_keywords + [self.arch])
 
-        accept_keywords = pkg_keywords + profile.accept_keywords
+        accept_keywords = pkg_keywords + list(profile.accept_keywords)
         vfilters = [self.make_keywords_filter(
             self.arch, default_keywords, accept_keywords, profile.keywords,
             incremental="package.keywords" in incrementals)]
 
-        del default_keywords
+        del default_keywords, accept_keywords
         # we can finally close that fricking
         # "DISALLOW NON FOSS LICENSES" bug via this >:)
         if master_license:

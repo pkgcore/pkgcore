@@ -392,9 +392,9 @@ class ChunkedDataDict(object):
             obj._dict = self._dict
             obj._global_settings = self._global_settings
             return obj
-        obj._dict = dict((key, list(val)) for key, val in
-            self._dict.iteritems())
-        obj._global_settings = list(self._global_settings)
+        obj._dict = collections.defaultdict(partial(list, self._global_settings))
+        for key, values in self._dict.iteritems():
+            obj._dict[key].extend(values)
         return obj
 
     def mk_item(self, key, neg, pos):

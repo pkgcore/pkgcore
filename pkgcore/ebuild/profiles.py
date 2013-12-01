@@ -71,7 +71,7 @@ def load_property(filename, handler=iter_read_bash, fallback=(),
 def _load_and_invoke(func, filename, handler, fallback, read_func,
     allow_recurse, eapi_optional, self):
     profile_path = self.path.rstrip('/')
-    if eapi_optional is not None and not getattr(self.eapi_obj, eapi_optional, None):
+    if eapi_optional is not None and not getattr(self.eapi_obj.options, eapi_optional, None):
             return fallback
     try:
         base = pjoin(profile_path, filename)
@@ -304,16 +304,37 @@ class ProfileNode(object):
     def stable_pkg_use_force(self, data):
         return self._parse_package_use(data)
 
+    @load_property("use.stable.force", allow_recurse=True,
+        eapi_optional='profile_stable_use')
+    def stable_use_force(self, data):
+        c = ChunkedDataDict()
+        neg, pos = split_negations(data)
+        if neg or pos:
+            c.add_bare_global(neg, pos)
+        c.freeze()
+        return c
+
     @load_property("package.use.stable.mask", allow_recurse=True,
         eapi_optional='profile_stable_use')
     def stable_pkg_use_mask(self, data):
         return self._parse_package_use(data)
 
+    @load_property("use.stable.mask", allow_recurse=True,
+        eapi_optional='profile_stable_use')
+    def stable_use_mask(self, data):
+        c = ChunkedDataDict()
+        neg, pos = split_negations(data)
+        if neg or pos:
+            c.add_bare_global(neg, pos)
+        c.freeze()
+        return c
+
     @klass.jit_attr
     def stable_forced_use(self):
         c = self.forced_use
-        if self.stable_pkg_use_force:
+        if self.stable_pkg_use_force or self.stable_use_force:
             c = c.clone(unfreeze=True)
+            c.merge(self.stable_use_force)
             c.update_from_stream(
                 chain_from_iterable(self.stable_pkg_use_force.itervalues()))
             c.freeze()
@@ -322,8 +343,9 @@ class ProfileNode(object):
     @klass.jit_attr
     def stable_masked_use(self):
         c = self.masked_use
-        if self.stable_pkg_use_mask:
+        if self.stable_pkg_use_mask or self.stable_use_mask:
             c = c.clone(unfreeze=True)
+            c.merge(self.stable_use_mask)
             c.update_from_stream(
                 chain_from_iterable(self.stable_pkg_use_mask.itervalues()))
             c.freeze()

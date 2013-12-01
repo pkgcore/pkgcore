@@ -318,7 +318,7 @@ class ConfigProtectUninstall(triggers.base):
 
         remove = []
         for x in existing_cset.iterfiles():
-            if not ignore_filter(x.location) and protected_restrict(x.location):
+            if not ignore_filter(x.location) and protected_filter(x.location):
                 recorded_ent = uninstall_cset[x]
                 try:
                     if not simple_chksum_compare(recorded_ent, x):

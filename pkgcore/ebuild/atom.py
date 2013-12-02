@@ -22,6 +22,7 @@ demandload(globals(),
     "pkgcore.restrictions.delegated:delegate",
     'pkgcore.restrictions.packages:Conditional,AndRestriction@PkgAndRestriction',
     'pkgcore.restrictions.values:ContainmentMatch',
+    'collections:defaultdict',
 )
 
 # namespace compatibility...
@@ -838,11 +839,7 @@ def _collapsed_restrict_match(data, pkg, mode):
     return False
 
 def generate_collapsed_restriction(atoms, negate=False):
-    d = {}
+    d = defaultdict(list)
     for a in atoms:
-        k = a.key
-        if k not in d:
-            d[k] = [a]
-        else:
-            d[k].append(a)
+        d[a.key].append(a)
     return delegate(partial(_collapsed_restrict_match, d), negate=negate)

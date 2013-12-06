@@ -258,7 +258,7 @@ eapi4 = EAPI.register("4",
     eapi3.mandatory_keys,
     combine_dicts(eapi3.options, dict(
         dodoc_allow_recursive=True,
-        doins_allow_recursive=True,
+        doins_allow_symlinks=True,
         doman_language_override=True,
         econf_disable_dependency_tracking=True,
         exports_replacing=True,

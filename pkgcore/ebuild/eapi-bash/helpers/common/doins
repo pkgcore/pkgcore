@@ -3,7 +3,7 @@
 # License: GPL2/BSD 3 clause
 
 recursive=false
-if [[ ${1} == -r ]] ; then
+if [[ ${1} == -r ]]; then
 	recursive=true
 	shift
 fi
@@ -22,17 +22,20 @@ install_paths()
 
 	for x in "$@"; do
 		mysrc="${x}"
-		if ! ${PKGCORE_DOINS_ALLOW_SYMLINKS}; then
-			if [[ -L $x ]]; then
-				check_command cp "$x" "${T}" || continue
+		if [[ -L ${x} ]]; then
+			if ! ${PKGCORE_DOINS_ALLOW_SYMLINKS}; then
+				check_command cp "${x}" "${T}" || continue
 				mysrc="${T}/${x##*/}"
-			elif [[ -d $x ]] ; then
-				$recursive || continue
-				__shopt_push -s dotglob nullglob
-				install_paths "${mydir}/${x##*/}" "${x}"/*
-				__shopt_pop
+			else
+				check_command cp -P "${x}" "${ED}${mydir}/${x##*/}"
 				continue
 			fi
+		elif [[ -d ${x} ]]; then
+			$recursive || continue
+			__shopt_push -s dotglob nullglob
+			install_paths "${mydir}/${x##*/}" "${x}"/*
+			__shopt_pop
+			continue
 		fi
 		check_command install ${INSOPTIONS} "${mysrc}" "${ED}${mydir}"
 		# cleanup the tempspace...

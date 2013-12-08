@@ -232,6 +232,14 @@ class ProfileNode(object):
     def accept_keywords(self, data):
         return tuple(package_keywords_splitter(x) for x in data)
 
+    @load_property("package.use", allow_recurse=True)
+    def pkg_use(self, data):
+        c = ChunkedDataDict()
+        c.update_from_stream(
+            chain_from_iterable(self._parse_package_use(data).itervalues()))
+        c.freeze()
+        return c
+
     @load_property("deprecated", handler=None, fallback=None)
     def deprecated(self, data):
         if data is not None:
@@ -261,94 +269,96 @@ class ProfileNode(object):
         return ImmutableDict((k, _build_cp_atom_payload(v, atom.atom(k)))
             for k,v in d.iteritems())
 
-    @load_property("package.use.force", allow_recurse=True)
-    def pkg_use_force(self, data):
-        return self._parse_package_use(data)
-
-    @load_property("package.use.mask", allow_recurse=True)
-    def pkg_use_mask(self, data):
-        return self._parse_package_use(data)
-
-    @load_property("package.use", allow_recurse=True)
-    def pkg_use(self, data):
+    def _parse_use(self, data):
         c = ChunkedDataDict()
-        c.update_from_stream(
-            chain_from_iterable(self._parse_package_use(data).itervalues()))
+        neg, pos = split_negations(data)
+        if neg or pos:
+            c.add_bare_global(neg, pos)
         c.freeze()
         return c
 
     @load_property("use.force", allow_recurse=True)
-    def forced_use(self, data):
-        c = ChunkedDataDict()
-        neg, pos = split_negations(data)
-        if neg or pos:
-            c.add_bare_global(neg, pos)
-        c.update_from_stream(
-            chain_from_iterable(self.pkg_use_force.itervalues()))
-        c.freeze()
-        return c
+    def use_force(self, data):
+        return self._parse_use(data)
 
-    @load_property("use.mask", allow_recurse=True)
-    def masked_use(self, data):
-        c = ChunkedDataDict()
-        neg, pos = split_negations(data)
-        if neg or pos:
-            c.add_bare_global(neg, pos)
-        c.update_from_stream(
-            chain_from_iterable(self.pkg_use_mask.itervalues()))
-        c.freeze()
-        return c
+    @load_property("use.stable.force", allow_recurse=True,
+        eapi_optional='profile_stable_use')
+    def use_stable_force(self, data):
+        return self._parse_use(data)
+
+    @load_property("package.use.force", allow_recurse=True)
+    def pkg_use_force(self, data):
+        return self._parse_package_use(data)
 
     @load_property("package.use.stable.force", allow_recurse=True,
         eapi_optional='profile_stable_use')
     def stable_pkg_use_force(self, data):
         return self._parse_package_use(data)
 
-    @load_property("use.stable.force", allow_recurse=True,
+    @load_property("use.mask", allow_recurse=True)
+    def use_mask(self, data):
+        return self._parse_use(data)
+
+    @load_property("use.stable.mask", allow_recurse=True,
         eapi_optional='profile_stable_use')
-    def stable_use_force(self, data):
-        c = ChunkedDataDict()
-        neg, pos = split_negations(data)
-        if neg or pos:
-            c.add_bare_global(neg, pos)
-        c.freeze()
-        return c
+    def use_stable_mask(self, data):
+        return self._parse_use(data)
+
+    @load_property("package.use.mask", allow_recurse=True)
+    def pkg_use_mask(self, data):
+        return self._parse_package_use(data)
 
     @load_property("package.use.stable.mask", allow_recurse=True,
         eapi_optional='profile_stable_use')
     def stable_pkg_use_mask(self, data):
         return self._parse_package_use(data)
 
-    @load_property("use.stable.mask", allow_recurse=True,
-        eapi_optional='profile_stable_use')
-    def stable_use_mask(self, data):
-        c = ChunkedDataDict()
-        neg, pos = split_negations(data)
-        if neg or pos:
-            c.add_bare_global(neg, pos)
-        c.freeze()
-        return c
-
     @klass.jit_attr
-    def stable_forced_use(self):
-        c = self.forced_use
-        if self.stable_pkg_use_force or self.stable_use_force:
+    def masked_use(self):
+        c = self.use_mask
+        if self.pkg_use_mask:
             c = c.clone(unfreeze=True)
-            c.merge(self.stable_use_force)
             c.update_from_stream(
-                chain_from_iterable(self.stable_pkg_use_force.itervalues()))
+                chain_from_iterable(self.pkg_use_mask.itervalues()))
             c.freeze()
         return c
 
     @klass.jit_attr
     def stable_masked_use(self):
-        c = self.masked_use
-        if self.stable_pkg_use_mask or self.stable_use_mask:
-            c = c.clone(unfreeze=True)
-            c.merge(self.stable_use_mask)
+        c = self.use_mask.clone(unfreeze=True)
+        if self.use_stable_mask:
+            c.merge(self.use_stable_mask)
+        if self.pkg_use_mask:
+            c.update_from_stream(
+                chain_from_iterable(self.pkg_use_mask.itervalues()))
+        if self.stable_pkg_use_mask:
             c.update_from_stream(
                 chain_from_iterable(self.stable_pkg_use_mask.itervalues()))
+        c.freeze()
+        return c
+
+    @klass.jit_attr
+    def forced_use(self):
+        c = self.use_force
+        if self.pkg_use_force:
+            c = c.clone(unfreeze=True)
+            c.update_from_stream(
+                chain_from_iterable(self.pkg_use_force.itervalues()))
             c.freeze()
+        return c
+
+    @klass.jit_attr
+    def stable_forced_use(self):
+        c = self.use_force.clone(unfreeze=True)
+        if self.use_stable_force:
+            c.merge(self.use_stable_force)
+        if self.pkg_use_force:
+            c.update_from_stream(
+                chain_from_iterable(self.pkg_use_force.itervalues()))
+        if self.stable_pkg_use_force:
+            c.update_from_stream(
+                chain_from_iterable(self.stable_pkg_use_force.itervalues()))
+        c.freeze()
         return c
 
     @load_property('make.defaults', fallback=None, read_func=_open_utf8,

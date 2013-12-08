@@ -5,26 +5,27 @@
 misc. stuff we've not found a spot for yet.
 """
 
-__all__ = ("optimize_incrementals", "incremental_expansion_license",
-    "collapsed_restrict_to_data", "non_incremental_collapsed_restrict_to_data"
-    )
+__all__ = (
+    "ChunkedDataDict", "IncrementalsDict", "PayloadDict",
+    "chunked_data", "collapsed_restrict_to_data", "incremental_chunked",
+    "incremental_expansion", "incremental_expansion_license",
+    "non_incremental_collapsed_restrict_to_data", "optimize_incrementals",
+    "package_keywords_splitter", "split_negations"
+)
 
+from collections import defaultdict
+from itertools import chain
 
-import collections
-from pkgcore.restrictions import packages, restriction
 from pkgcore.ebuild import atom
+from pkgcore.restrictions import packages, restriction
 from pkgcore.util.parserestrict import parse_match
 
 from snakeoil import compatibility, mappings
-from snakeoil.lists import iflatten_instance, stable_unique
-from snakeoil.klass import generic_equality, alias_method
-from snakeoil.sequences import namedtuple
-
-from itertools import chain
-
 from snakeoil.currying import partial
+from snakeoil.klass import generic_equality, alias_method
+from snakeoil.lists import iflatten_instance, stable_unique
+from snakeoil.sequences import namedtuple
 from snakeoil.demandload import demandload
-
 demandload(globals(),
     'snakeoil.iterables:chain_from_iterable',
 )
@@ -380,7 +381,7 @@ class ChunkedDataDict(object):
 
     def __init__(self):
         self._global_settings = []
-        self._dict = collections.defaultdict(partial(list, self._global_settings))
+        self._dict = defaultdict(partial(list, self._global_settings))
 
     @property
     def frozen(self):
@@ -392,7 +393,7 @@ class ChunkedDataDict(object):
             obj._dict = self._dict
             obj._global_settings = self._global_settings
             return obj
-        obj._dict = collections.defaultdict(partial(list, self._global_settings))
+        obj._dict = defaultdict(partial(list, self._global_settings))
         for key, values in self._dict.iteritems():
             obj._dict[key].extend(values)
         return obj

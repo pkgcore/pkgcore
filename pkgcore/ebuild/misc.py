@@ -463,6 +463,9 @@ class ChunkedDataDict(object):
                 # atom, or something similar.  use the key lookup.
                 # hack also... recreate the restriction; this is due to
                 # internal idiocy in ChunkedDataDict that will be fixed.
+                new_globals = (x for x in self._global_settings
+                               if x not in self._dict[cinst.key.key])
+                self._dict[cinst.key.key].extend(new_globals)
                 self._dict[cinst.key.key].append(cinst)
             else:
                 self.add_global(cinst)

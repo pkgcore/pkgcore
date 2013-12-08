@@ -61,8 +61,7 @@ class profile_mixin(TempDirMixin):
 
     assertEqualPayload = assertEqualChunks
 
-    def _assertEqualPayload(self, given_mapping, desired_mapping, reformat_f,
-        bare_kls):
+    def _assertEqualPayload(self, given_mapping, desired_mapping, reformat_f, bare_kls):
         keys1, keys2 = set(given_mapping), set(desired_mapping)
         self.assertEqual(keys1, keys2, msg="keys differ: wanted %r got %r\nfrom %r" %
             (keys2, keys1, given_mapping))
@@ -121,8 +120,9 @@ class TestPmsProfileNode(profile_mixin, TestCase):
         self.wipe_path(pjoin(path, filename))
 
     def simple_eapi_awareness_check(self, filename, attr,
-        bad_data="dev-util/diffball\ndev-util/bsdiff:1",
-        good_data="dev-util/diffball\ndev-util/bsdiff"):
+            bad_data="dev-util/diffball\ndev-util/bsdiff:1",
+            good_data="dev-util/diffball\ndev-util/bsdiff"):
+        path = pjoin(self.dir, self.profile)
         # validate unset eapi=0 prior
         self.parsing_checks(filename, attr, data=good_data)
         self.write_file("eapi", "1")
@@ -131,6 +131,7 @@ class TestPmsProfileNode(profile_mixin, TestCase):
         self.write_file("eapi", "0")
         self.assertRaises(profiles.ProfileError,
             self.parsing_checks, filename, attr, data=bad_data)
+        self.wipe_path(pjoin(path, "eapi"))
 
     def test_eapi(self):
         path = pjoin(self.dir, self.profile)
@@ -140,6 +141,7 @@ class TestPmsProfileNode(profile_mixin, TestCase):
         self.write_file("eapi", "some-random-eapi-adsfafa")
         self.assertRaises(profiles.ProfileError, getattr,
             self.klass(path), 'eapi')
+        self.wipe_path(pjoin(path, "eapi"))
 
     def test_packages(self):
         p = self.klass(pjoin(self.dir, self.profile))
@@ -244,6 +246,8 @@ class TestPmsProfileNode(profile_mixin, TestCase):
            {"dev-util/bar":(chunked_data(atom("dev-util/bar"), ('X',), ()),),
            "dev-util/foo":(chunked_data(atom("dev-util/foo"), (), ('X',)),)})
 
+        self.wipe_path(pjoin(path, filename))
+
     def test_pkg_keywords(self):
         path = pjoin(self.dir, self.profile)
         self.assertEqual(self.klass(path).keywords, ())
@@ -291,6 +295,8 @@ class TestPmsProfileNode(profile_mixin, TestCase):
 
         self._check_package_use_files(path, "package.use.mask", 'masked_use')
 
+        self.write_file("package.use.mask", "dev-util/bar -X\ndev-util/foo X")
+
         self.write_file("use.mask", "mmx")
         self.assertEqualChunks(self.klass(path).masked_use,
             {"dev-util/bar":
@@ -337,8 +343,9 @@ class TestPmsProfileNode(profile_mixin, TestCase):
 
         self._check_package_use_files(path, "package.use.force", 'forced_use')
 
-        self.write_file("use.force", "mmx")
+        self.write_file("package.use.force", "dev-util/bar -X\ndev-util/foo X")
 
+        self.write_file("use.force", "mmx")
         self.assertEqualChunks(self.klass(path).forced_use,
             {"dev-util/bar":
                 (chunked_data(atom("dev-util/bar"), ('X',), ('mmx',)),),

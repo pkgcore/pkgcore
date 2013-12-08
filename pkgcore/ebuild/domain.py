@@ -484,7 +484,6 @@ class domain(pkgcore.config.domain.domain):
             pre_defaults.extend(x[1]
                 for x in ue_flags if x[0][0].upper() not in self.settings)
 
-
         attr = 'stable_' if self.stable_arch in pkg.keywords else ''
         disabled = getattr(self, attr + 'disabled_use').pull_data(pkg)
         immutable = getattr(self, attr + 'forced_use').pull_data(pkg)

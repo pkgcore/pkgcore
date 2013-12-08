@@ -46,7 +46,7 @@ class ProfileError(Exception):
 
 
 def load_property(filename, handler=iter_read_bash, fallback=(),
-    read_func=readlines_utf8, allow_recurse=False, eapi_optional=None):
+                  read_func=readlines_utf8, allow_recurse=False, eapi_optional=None):
     """Decorator simplifying parsing profile files to generate a profile property.
 
     :param filename: The filename to parse within that profile directory.
@@ -69,7 +69,7 @@ def load_property(filename, handler=iter_read_bash, fallback=(),
     return f
 
 def _load_and_invoke(func, filename, handler, fallback, read_func,
-    allow_recurse, eapi_optional, self):
+                     allow_recurse, eapi_optional, self):
     profile_path = self.path.rstrip('/')
     if eapi_optional is not None and not getattr(self.eapi_obj.options, eapi_optional, None):
             return fallback
@@ -145,15 +145,14 @@ class ProfileNode(object):
         # XXX: hack to provide a repo-id -> repo-location mapping for portage-2 profile format
         if self.__class__._repo_map is None:
             self.__class__._repo_map = ImmutableDict(
-                (r.repo_id, pjoin(r.location, 'profiles')) \
+                (r.repo_id, pjoin(r.location, 'profiles'))
                 for r in load_config().objects['raw_repo'].itervalues())
 
     def __str__(self):
         return "Profile at %r" % self.path
 
     def __repr__(self):
-        return '<%s path=%r, @%#8x>' % (self.__class__.__name__, self.path,
-            id(self))
+        return '<%s path=%r, @%#8x>' % (self.__class__.__name__, self.path, id(self))
 
     system = klass.alias_attr("packages.system")
     visibility = klass.alias_attr("packages.visibility")
@@ -246,8 +245,7 @@ class ProfileNode(object):
             data = iter(data)
             try:
                 replacement = compatibility.next(data).strip()
-                msg = "\n".join(x.lstrip("#").strip()
-                    for x in data)
+                msg = "\n".join(x.lstrip("#").strip() for x in data)
                 data = (replacement, msg)
             except StopIteration:
                 # only an empty replacement could trigger this; thus
@@ -474,13 +472,10 @@ class ProfileStack(object):
         return tuple(f(self.node))
 
     def _collapse_use_dict(self, attr):
-
-        stack = [getattr(x, attr) for x in self.stack]
-
+        stack = (getattr(x, attr) for x in self.stack)
         d = ChunkedDataDict()
         for mapping in stack:
             d.merge(mapping)
-
         d.freeze()
         return d
 
@@ -685,8 +680,8 @@ class UserProfileNode(ProfileNode):
 
 class UserProfile(OnDiskProfile):
 
-    pkgcore_config_type = ConfigHint({'user_path':'str', 'parent_path':'str',
-        'parent_profile':'str'},
+    pkgcore_config_type = ConfigHint(
+        {'user_path':'str', 'parent_path':'str', 'parent_profile':'str'},
         required=('user_path','parent_path', 'parent_profile'),
         typename='profile')
 

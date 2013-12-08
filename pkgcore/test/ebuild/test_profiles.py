@@ -333,6 +333,89 @@ class TestPmsProfileNode(profile_mixin, TestCase):
         self.assertRaises(profiles.ProfileError, getattr,
             self.klass(path), 'masked_use')
 
+    def test_stable_masked_use(self):
+        path = pjoin(self.dir, self.profile)
+        self.assertEqualChunks(self.klass(path).stable_masked_use, {})
+
+        # use.stable.mask/package.use.stable.mask only >= EAPI 5
+        self.write_file("use.stable.mask", "mmx")
+        self.write_file("package.use.stable.mask", "dev-util/bar mmx")
+        self.assertEqualChunks(self.klass(path).stable_masked_use, {})
+        self.wipe_path(pjoin(path, 'use.stable.mask'))
+        self.wipe_path(pjoin(path, 'package.use.stable.mask'))
+
+        self.simple_eapi_awareness_check('package.use.stable.mask', 'stable_masked_use',
+            bad_data='=de/bs-1:1 x\nda/bs y',
+            good_data='=de/bs-1 x\nda/bs y')
+
+        self.write_file("eapi", "5")
+        self.assertEqualChunks(self.klass(path).stable_masked_use, {})
+        self.parsing_checks("package.use.stable.mask", "stable_masked_use")
+        self.wipe_path(pjoin(path, "package.use.stable.mask"))
+        self.parsing_checks("use.stable.mask", "stable_masked_use")
+        self.wipe_path(pjoin(path, 'use.stable.mask'))
+
+        self._check_package_use_files(path, "package.use.stable.mask", 'stable_masked_use')
+
+        self.write_file("package.use.stable.mask", "dev-util/bar -X\ndev-util/foo X")
+
+        self.write_file("use.stable.mask", "mmx")
+        self.assertEqualChunks(self.klass(path).stable_masked_use,
+            {"dev-util/bar":
+                (chunked_data(atom("dev-util/bar"), ('X',), ('mmx',)),),
+            "dev-util/foo":
+                (chunked_data(atom("dev-util/foo"), (), ('X', 'mmx')),),
+            atrue:(chunked_data(packages.AlwaysTrue, (), ("mmx",)),)
+            })
+
+        self.write_file("use.stable.mask", "mmx\n-foon")
+        self.assertEqualChunks(self.klass(path).stable_masked_use,
+            {"dev-util/bar":
+                (chunked_data(atom("dev-util/bar"), ('X', 'foon'), ('mmx',)),),
+            "dev-util/foo":
+                (chunked_data(atom("dev-util/foo"), ('foon',), ('X', 'mmx',)),),
+            atrue:(chunked_data(packages.AlwaysTrue, ('foon',), ('mmx',)),)
+            })
+
+        # verify that use.stable.mask is layered first, then package.use.stable.mask
+        self.write_file("package.use.stable.mask", "dev-util/bar -mmx foon")
+        self.assertEqualChunks(self.klass(path).stable_masked_use,
+            {atrue:(chunked_data(atrue, ('foon',), ('mmx',)),),
+            "dev-util/bar":(chunked_data(atom("dev-util/bar"), ('mmx',), ('foon',)),)
+            })
+
+        self.write_file("package.use.stable.mask", "")
+        self.assertEqualChunks(self.klass(path).stable_masked_use,
+           {atrue:(chunked_data(atrue, ('foon',),('mmx',)),)})
+
+        self.write_file("package.use.stable.mask", "dev-util/diffball")
+        self.assertRaises(profiles.ProfileError, getattr,
+            self.klass(path), 'stable_masked_use')
+
+        # verify that settings stack in the following order:
+        # use.mask -> use.stable.mask -> package.use.mask -> package.use.stable.mask
+        self.write_file("use.mask", "mmx")
+        self.write_file("use.stable.mask", "-foon")
+        self.write_file("package.use.mask", "dev-util/foo -mmx")
+        self.write_file("package.use.stable.mask", "dev-util/bar foon")
+        self.assertEqualChunks(self.klass(path).stable_masked_use,
+           {"dev-util/foo":
+               (chunked_data(atom("dev-util/foo"), ('foon', 'mmx'), ()),),
+           "dev-util/bar":
+               (chunked_data(atom("dev-util/bar"), (), ('foon', 'mmx')),),
+           atrue:(chunked_data(atrue, ('foon',), ('mmx',)),)
+           })
+
+        self.write_file("use.mask", "-mmx")
+        self.write_file("use.stable.mask", "foon")
+        self.write_file("package.use.mask", "dev-util/foo mmx")
+        self.write_file("package.use.stable.mask", "dev-util/foo -foon")
+        self.assertEqualChunks(self.klass(path).stable_masked_use,
+           {"dev-util/foo":
+               (chunked_data(atom("dev-util/foo"), ('foon',), ('mmx',)),),
+           atrue:(chunked_data(atrue, ('mmx',), ('foon',)),)
+           })
+
     def test_forced_use(self):
         path = pjoin(self.dir, self.profile)
         self.assertEqualChunks(self.klass(path).forced_use, {})
@@ -382,6 +465,91 @@ class TestPmsProfileNode(profile_mixin, TestCase):
         self.write_file("package.use.force", "dev-util/diffball")
         self.assertRaises(profiles.ProfileError, getattr,
             self.klass(path), 'forced_use')
+
+    def test_stable_forced_use(self):
+        path = pjoin(self.dir, self.profile)
+        self.assertEqualChunks(self.klass(path).stable_forced_use, {})
+
+        # use.stable.force/package.use.stable.force only >= EAPI 5
+        self.write_file("use.stable.force", "mmx")
+        self.write_file("package.use.stable.force", "dev-util/bar mmx")
+        self.assertEqualChunks(self.klass(path).stable_forced_use, {})
+        self.wipe_path(pjoin(path, 'use.stable.force'))
+        self.wipe_path(pjoin(path, 'package.use.stable.force'))
+
+        self.simple_eapi_awareness_check('package.use.stable.force', 'stable_forced_use',
+           bad_data='=de/bs-1:1 x\nda/bs y',
+           good_data='=de/bs-1 x\nda/bs y')
+
+        self.write_file("eapi", "5")
+        self.assertEqualChunks(self.klass(path).stable_forced_use, {})
+        self.parsing_checks("package.use.stable.force", "stable_forced_use")
+        self.wipe_path(pjoin(path, 'package.use.stable.force'))
+        self.parsing_checks("use.stable.force", "stable_forced_use")
+        self.wipe_path(pjoin(path, 'use.stable.force'))
+
+        self._check_package_use_files(path, "package.use.stable.force", 'stable_forced_use')
+
+        self.write_file("package.use.stable.force", "dev-util/bar -X\ndev-util/foo X")
+
+        self.write_file("use.stable.force", "mmx")
+        self.assertEqualChunks(self.klass(path).stable_forced_use,
+           {"dev-util/bar":
+               (chunked_data(atom("dev-util/bar"), ('X',), ('mmx',)),),
+           "dev-util/foo":
+               (chunked_data(atom("dev-util/foo"), (), ('X', 'mmx')),),
+           atrue:(chunked_data(atrue, (), ('mmx',)),),
+           })
+
+        self.write_file("use.stable.force", "mmx\n-foon")
+        self.assertEqualChunks(self.klass(path).stable_forced_use,
+           {"dev-util/bar":
+               (chunked_data(atom("dev-util/bar"), ('X', 'foon',), ('mmx',)),),
+           "dev-util/foo":
+               (chunked_data(atom("dev-util/foo"), ('foon',), ('X', 'mmx')),),
+           atrue:(chunked_data(atrue, ('foon',), ('mmx',)),)
+           })
+
+        # verify that use.stable.force is layered first, then package.use.stable.force
+        self.write_file("package.use.stable.force", "dev-util/bar -mmx foon")
+        p = self.klass(path)
+        self.assertEqualChunks(self.klass(path).stable_forced_use,
+           {atrue:(chunked_data(atrue, ('foon',), ('mmx',)),),
+           "dev-util/bar":(chunked_data(atom("dev-util/bar"), ('mmx',), ('foon',)),)
+           })
+
+        self.write_file("package.use.stable.force", "")
+        self.assertEqualChunks(self.klass(path).stable_forced_use,
+           {atrue:(chunked_data(atrue, ('foon',), ('mmx',)),)
+           })
+
+        self.write_file("package.use.stable.force", "dev-util/diffball")
+        self.assertRaises(profiles.ProfileError, getattr,
+            self.klass(path), 'stable_forced_use')
+
+        # verify that settings stack in the following order:
+        # use.force -> use.stable.force -> package.use.force -> package.use.stable.force
+        self.write_file("use.force", "mmx")
+        self.write_file("use.stable.force", "-foon")
+        self.write_file("package.use.force", "dev-util/foo -mmx")
+        self.write_file("package.use.stable.force", "dev-util/bar foon")
+        self.assertEqualChunks(self.klass(path).stable_forced_use,
+           {"dev-util/foo":
+               (chunked_data(atom("dev-util/foo"), ('foon', 'mmx'), ()),),
+           "dev-util/bar":
+               (chunked_data(atom("dev-util/bar"), (), ('foon', 'mmx')),),
+           atrue:(chunked_data(atrue, ('foon',), ('mmx',)),)
+           })
+
+        self.write_file("use.force", "-mmx")
+        self.write_file("use.stable.force", "foon")
+        self.write_file("package.use.force", "dev-util/foo mmx")
+        self.write_file("package.use.stable.force", "dev-util/foo -foon")
+        self.assertEqualChunks(self.klass(path).stable_forced_use,
+           {"dev-util/foo":
+               (chunked_data(atom("dev-util/foo"), ('foon',), ('mmx',)),),
+           atrue:(chunked_data(atrue, ('mmx',), ('foon',)),)
+           })
 
     def test_pkg_use(self):
         path = pjoin(self.dir, self.profile)
@@ -706,6 +874,81 @@ class TestOnDiskProfile(profile_mixin, TestCase):
             {"dev-util/foo":(chunked_data(atom("dev-util/foo"), ("X",), (),),),
             })
 
+    def test_stable_masked_use(self):
+        self.mk_profiles({})
+        self.assertEqualPayload(self.get_profile("0").stable_masked_use, {})
+
+        self.mk_profiles(
+            {"eapi":"5", "use.stable.mask":"X\nmmx\n"},
+            {"eapi":"5"},
+            {"eapi":"5", "use.stable.mask":"-X"})
+
+        self.assertEqualPayload(self.get_profile("0").stable_masked_use,
+            {atrue:(chunked_data(atrue, (), ('X', 'mmx')),)})
+
+        self.assertEqualPayload(self.get_profile("1").stable_masked_use,
+            {atrue:(chunked_data(atrue, (), ('X', 'mmx',)),)})
+
+        self.assertEqualPayload(self.get_profile("2").stable_masked_use,
+            {atrue:(chunked_data(atrue, ('X',), ('mmx',)),)})
+
+        self.mk_profiles(
+            {"eapi":"5", "use.stable.mask":"X\nmmx\n", "package.use.stable.mask":"dev-util/foo cups"},
+            {"eapi":"5", "package.use.stable.mask": "dev-util/foo -cups"},
+            {"eapi":"5", "use.stable.mask":"-X", "package.use.stable.mask": "dev-util/blah X"})
+
+        self.assertEqualPayload(self.get_profile("0").stable_masked_use,
+            {atrue:(chunked_data(atrue, (), ('X', 'mmx')),),
+            "dev-util/foo":(chunked_data(atom("dev-util/foo"), (), ("X", "cups", "mmx")),),
+            })
+
+        self.assertEqualPayload(self.get_profile("1").stable_masked_use,
+            {atrue:(chunked_data(atrue, (), ('X', 'mmx')),),
+            "dev-util/foo":(chunked_data(atom("dev-util/foo"), ('cups',), ("X", "mmx")),),
+            })
+
+        self.assertEqualPayload(self.get_profile("2").stable_masked_use,
+            {atrue:(chunked_data(atrue, ('X',), ('mmx',)),),
+            "dev-util/foo":(chunked_data(atom("dev-util/foo"), ('X', 'cups'), ("mmx",)),),
+            "dev-util/blah":(chunked_data(atom("dev-util/blah"), (), ("X", "mmx",)),)
+            })
+
+        self.mk_profiles(
+            {"eapi":"5", "use.stable.mask":"X", "package.use.stable.mask":"dev-util/foo -X"},
+            {"eapi":"5", "use.stable.mask":"X"},
+            {"eapi":"5", "package.use.stable.mask":"dev-util/foo -X"})
+
+        self.assertEqualPayload(self.get_profile("0").stable_masked_use,
+            {atrue:(chunked_data(atrue, (), ("X",)),),
+            "dev-util/foo": (chunked_data(atom("dev-util/foo"), ('X',), ()),)
+            })
+        self.assertEqualPayload(self.get_profile("1").stable_masked_use,
+            {atrue:(chunked_data(atrue, (), ("X",)),),
+            "dev-util/foo": (chunked_data(atom("dev-util/foo"), (), ("X",)),)
+            })
+        self.assertEqualPayload(self.get_profile("2").stable_masked_use,
+            {atrue:(chunked_data(atrue, (), ("X")),),
+            "dev-util/foo":(chunked_data(atom("dev-util/foo"), ("X",), (),),)
+            })
+
+        # pkgcore bug 237; per PMS, later profiles can punch wholes in the
+        # ranges applicable.
+        self.mk_profiles(
+            {"eapi":"5", "package.use.stable.mask":"dev-util/foo X"},
+            {"eapi":"5", "package.use.stable.mask":">=dev-util/foo-1 -X"},
+            {"eapi":"5", "package.use.stable.mask":">=dev-util/foo-2 X"},
+            {"eapi":"5", "package.use.stable.mask":"dev-util/foo X", "name":"collapse_p"},
+            {"eapi":"5", "package.use.stable.mask":"dev-util/foo -X", "parent":"2", "name":"collapse_n"},
+            )
+
+        self.assertEqualPayload(self.get_profile("collapse_p").stable_masked_use,
+            {"dev-util/foo":(chunked_data(atom("dev-util/foo"), (), ("X",)),)
+            })
+
+        self.assertEqualPayload(self.get_profile("collapse_n").stable_masked_use,
+            {"dev-util/foo":(chunked_data(atom("dev-util/foo"), ("X",), (),),),
+            })
+
     def test_forced_use(self):
         self.mk_profiles({})
         self.assertEqualPayload(self.get_profile("0").forced_use, {})
@@ -754,6 +997,60 @@ class TestOnDiskProfile(profile_mixin, TestCase):
             "dev-util/foo":(chunked_data(atom("dev-util/foo"), (), ('X',)),),
             })
         self.assertEqualPayload(self.get_profile("2").forced_use,
+            {atrue:(chunked_data(atrue, (), ("X",)),),
+            "dev-util/foo":(chunked_data(atom("dev-util/foo"), ('X',), ()),),
+            })
+
+    def test_stable_forced_use(self):
+        self.mk_profiles({})
+        self.assertEqualPayload(self.get_profile("0").stable_forced_use, {})
+        self.mk_profiles(
+            {"eapi":"5", "use.stable.force":"X\nmmx\n"},
+            {"eapi":"5"},
+            {"eapi":"5", "use.stable.force":"-X"}
+        )
+
+        self.assertEqualPayload(self.get_profile("0").stable_forced_use,
+            {atrue:(chunked_data(atrue, (), ('X', 'mmx')),)})
+        self.assertEqualPayload(self.get_profile("1").stable_forced_use,
+            {atrue:(chunked_data(atrue, (), ('X', 'mmx')),)})
+        self.assertEqualPayload(self.get_profile("2").stable_forced_use,
+            {atrue:(chunked_data(atrue, ('X',), ('mmx',)),)})
+
+        self.mk_profiles(
+            {"eapi":"5", "use.stable.force":"X\nmmx\n", "package.use.stable.force":"dev-util/foo cups"},
+            {"eapi":"5", "package.use.stable.force":"dev-util/foo -cups"},
+            {"eapi":"5", "use.stable.force":"-X", "package.use.stable.force":"dev-util/blah X"}
+        )
+
+        self.assertEqualPayload(self.get_profile("0").stable_forced_use,
+            {atrue:(chunked_data(atrue, (), ('X', 'mmx')),),
+            "dev-util/foo":(chunked_data(atom("dev-util/foo"), (), ("X", "mmx", "cups",)),),
+            })
+        self.assertEqualPayload(self.get_profile("1").stable_forced_use,
+            {atrue:(chunked_data(atrue, (), ('X', 'mmx')),),
+            "dev-util/foo":(chunked_data(atom("dev-util/foo"), ('cups',), ("X", "mmx")),),
+            })
+        self.assertEqualPayload(self.get_profile("2").stable_forced_use,
+            {atrue:(chunked_data(atrue, ('X',), ('mmx',)),),
+            "dev-util/foo":(chunked_data(atom("dev-util/foo"), ('cups', 'X'), ('mmx',)),),
+            "dev-util/blah":(chunked_data(atom("dev-util/blah"), (), ('X', "mmx")),),
+            })
+
+        self.mk_profiles(
+            {"eapi":"5", "use.stable.force":"X", "package.use.stable.force":"dev-util/foo -X"},
+            {"eapi":"5", "use.stable.force":"X"},
+            {"eapi":"5", "package.use.stable.force":"dev-util/foo -X"})
+
+        self.assertEqualPayload(self.get_profile("0").stable_forced_use,
+            {atrue:(chunked_data(atrue, (), ("X",)),),
+            "dev-util/foo":(chunked_data(atom("dev-util/foo"), ('X',), ()),),
+            })
+        self.assertEqualPayload(self.get_profile("1").stable_forced_use,
+            {atrue:(chunked_data(atrue, (), ("X",)),),
+            "dev-util/foo":(chunked_data(atom("dev-util/foo"), (), ('X',)),),
+            })
+        self.assertEqualPayload(self.get_profile("2").stable_forced_use,
             {atrue:(chunked_data(atrue, (), ("X",)),),
             "dev-util/foo":(chunked_data(atom("dev-util/foo"), ('X',), ()),),
             })

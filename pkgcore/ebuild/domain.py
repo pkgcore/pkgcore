@@ -112,6 +112,11 @@ class domain(pkgcore.config.domain.domain):
         # break this up into chunks once it's stabilized (most of code
         # here has already, but still more to add)
         self._triggers = triggers
+
+        # prevent critical variables from being changed by the user in make.conf
+        for k in set(profile.profile_only_variables).intersection(settings.keys()):
+            del settings[k]
+
         if 'CHOST' in settings and 'CBUILD' not in settings:
             settings['CBUILD'] = settings['CHOST']
         settings.setdefault('ACCEPT_LICENSE', const.ACCEPT_LICENSE)

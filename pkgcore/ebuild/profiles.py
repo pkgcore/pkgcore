@@ -523,6 +523,12 @@ class ProfileStack(object):
         return ImmutableDict(d.iteritems())
 
     @klass.jit_attr
+    def profile_only_variables(self):
+        if "PROFILE_ONLY_VARIABLES" in const.incrementals:
+            return tuple(self.default_env.get("PROFILE_ONLY_VARIABLES", ()))
+        return tuple(self.default_env.get("PROFILE_ONLY_VARIABLES", "").split())
+
+    @klass.jit_attr
     def use_expand(self):
         if "USE_EXPAND" in const.incrementals:
             return tuple(self.default_env.get("USE_EXPAND", ()))

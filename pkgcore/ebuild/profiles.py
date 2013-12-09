@@ -182,15 +182,14 @@ class ProfileNode(object):
         repo_config = self.repoconfig
         if repo_config is not None and repo_config.profile_format == 'portage-2':
             l = []
-            for x in data:
-                if ':' in x:
-                    repo_id, _sep, profile_path = x.partition(':')
+            for repo_id, separator, path in (x.partition(':') for x in data):
+                if separator:
                     if repo_id:
                         try:
                             repo_config = self._load_repoconfig_from_path(self._repo_map[repo_id])
                         except KeyError:
                             raise ValueError("unknown repository name: %r" % repo_id)
-                    l.append(abspath(pjoin(repo_config.location, 'profiles', profile_path)))
+                    l.append(abspath(pjoin(repo_config.location, 'profiles', path)))
                 else:
                     l.append(abspath(pjoin(self.path, x)))
             return tuple(l)

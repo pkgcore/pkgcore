@@ -628,7 +628,7 @@ def main(options, out, err):
 
             cleanup = []
 
-            out.write("Processing %i of %i: %s" % (count + 1, change_count,
+            out.write("\nProcessing %i of %i: %s" % (count + 1, change_count,
                 op.pkg.cpvstr))
             out.title("%i/%i: %s" % (count + 1, change_count, op.pkg.cpvstr))
             if op.desc != "remove":

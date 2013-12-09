@@ -1,10 +1,11 @@
 # Copyright: 2007-2011 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
-from pkgcore.test import TestCase
 from snakeoil.test import mk_cpy_loadable_testcase
+
 from pkgcore.ebuild import misc
 from pkgcore.restrictions import packages
+from pkgcore.test import TestCase
 
 AlwaysTrue = packages.AlwaysTrue
 AlwaysFalse = packages.AlwaysFalse

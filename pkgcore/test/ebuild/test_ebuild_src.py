@@ -3,16 +3,15 @@
 
 import os
 
-from pkgcore.test import TestCase
-from snakeoil.test.mixins import tempdir_decorator
-from snakeoil.osutils import pjoin
 from snakeoil.currying import post_curry, partial
+from snakeoil.osutils import pjoin
+from snakeoil.test.mixins import tempdir_decorator
 
 from pkgcore import fetch
-from pkgcore.package import errors
-from pkgcore.test import malleable_obj
-from pkgcore.test.ebuild.test_eclass_cache import FakeEclassCache
 from pkgcore.ebuild import ebuild_src, digest, repo_objs, eapi
+from pkgcore.package import errors
+from pkgcore.test import TestCase, malleable_obj
+from pkgcore.test.ebuild.test_eclass_cache import FakeEclassCache
 
 
 class test_base(TestCase):
@@ -20,7 +19,7 @@ class test_base(TestCase):
     kls = ebuild_src.base
 
     def get_pkg(self, data=None, cpv='dev-util/diffball-0.1-r1', repo=None,
-        pre_args=()):
+                pre_args=()):
         o = self.kls(*(list(pre_args) + [repo, cpv]))
         if data is not None:
             eapi_data = str(data.pop('EAPI', 0))
@@ -152,7 +151,7 @@ class test_base(TestCase):
             sorted(['x86', 'amd64']))
 
     def generic_check_depends(self, depset, attr, expected=None,
-        data_name=None):
+                              data_name=None):
         if expected is None:
             expected = depset
         if data_name is None:
@@ -332,7 +331,7 @@ class test_package_factory(TestCase):
     kls = ebuild_src.package_factory
 
     def mkinst(self, repo=None, cache=(), eclasses=None, mirrors={},
-        default_mirrors={}, **overrides):
+               default_mirrors={}, **overrides):
         o = self.kls(repo, cache, eclasses, mirrors, default_mirrors)
         for k, v in overrides.iteritems():
             object.__setattr__(o, k, v)

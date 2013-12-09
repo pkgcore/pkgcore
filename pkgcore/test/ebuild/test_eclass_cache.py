@@ -3,12 +3,13 @@
 
 import os
 
-from pkgcore.test import TestCase
-from snakeoil.test.mixins import TempDirMixin
-from snakeoil.osutils import pjoin
-from pkgcore.ebuild import eclass_cache
 from snakeoil import data_source
 from snakeoil.chksum import LazilyHashedPath
+from snakeoil.osutils import pjoin
+from snakeoil.test.mixins import TempDirMixin
+
+from pkgcore.ebuild import eclass_cache
+from pkgcore.test import TestCase
 
 class FakeEclassCache(eclass_cache.base):
 

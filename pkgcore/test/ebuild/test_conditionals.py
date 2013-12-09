@@ -1,15 +1,16 @@
 # Copyright: 2005-2011 Brian Harring <ferringb@gentoo.org>
 # License: GPL2/BSD
 
-from pkgcore.test import TestCase
-from snakeoil.test import mk_cpy_loadable_testcase
 from snakeoil.currying import post_curry
 from snakeoil.iterables import expandable_chain
 from snakeoil.lists import iflatten_instance
+from snakeoil.test import mk_cpy_loadable_testcase
+
 from pkgcore.ebuild import conditionals
 from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.errors import ParseError
 from pkgcore.restrictions import boolean, packages
+from pkgcore.test import TestCase
 
 
 class base(TestCase):
@@ -19,7 +20,7 @@ class base(TestCase):
         parse_depset = None
 
     def gen_depset(self, string, operators=None, element_kls=str,
-        element_func=None, **kwds):
+                   element_func=None, **kwds):
         if element_func is not None:
             kwds["element_func"] = element_func
         if operators is None:
@@ -56,7 +57,6 @@ class native_DepSetParsingTest(base):
                 s = "!"
             for y in x.vals:
                 yield s + y
-
 
     def flatten_restricts(self, v):
         i = expandable_chain(v)

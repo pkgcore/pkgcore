@@ -1,15 +1,16 @@
 # Copyright: 2006-2011 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
+from snakeoil.compatibility import cmp
+from snakeoil.currying import partial
 from snakeoil.pickling import dumps, loads
 from snakeoil.test import mk_cpy_loadable_testcase
-from snakeoil.compatibility import cmp
+
 from pkgcore import test
-from pkgcore.ebuild.cpv import CPV
 from pkgcore.ebuild import atom, errors, restricts
-from pkgcore.test.misc import FakePkg, FakeRepo
+from pkgcore.ebuild.cpv import CPV
 from pkgcore.restrictions.boolean import AndRestriction
-from snakeoil.currying import partial
+from pkgcore.test.misc import FakePkg, FakeRepo
 
 class Test_native_atom(test.TestRestriction):
 

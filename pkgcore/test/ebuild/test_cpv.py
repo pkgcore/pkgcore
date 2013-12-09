@@ -3,10 +3,12 @@
 # License: BSD/GPL2
 
 from random import shuffle
-from pkgcore.test import TestCase
-from snakeoil.test import mk_cpy_loadable_testcase
-from pkgcore.ebuild import cpv
+
 from snakeoil.compatibility import cmp
+from snakeoil.test import mk_cpy_loadable_testcase
+
+from pkgcore.ebuild import cpv
+from pkgcore.test import TestCase
 
 def generate_misc_sufs():
     simple_good_sufs = ["_alpha", "_beta", "_pre", "_p"]

@@ -3,29 +3,30 @@
 # License: BSD/GPL2
 
 import os
-from snakeoil.test import mixins
-from pkgcore.test import silence_logging
-from snakeoil import osutils
-pjoin = osutils.pjoin
+
+from snakeoil.osutils import ensure_dirs, pjoin
+from snakeoil.test.mixins import TempDirMixin
+
+from pkgcore.ebuild import errors as ebuild_errors
 from pkgcore.ebuild import repository, eclass_cache
 from pkgcore.ebuild.atom import atom
 from pkgcore.repository import errors
-from pkgcore.ebuild import errors as ebuild_errors
+from pkgcore.test import silence_logging
 
-class UnconfiguredTreeTest(mixins.TempDirMixin):
+class UnconfiguredTreeTest(TempDirMixin):
 
     def mk_tree(self, path, *args, **kwds):
         eclasses = kwds.pop('eclass_cache', None)
         if eclasses is None:
             epath = pjoin(path, 'eclass')
-            osutils.ensure_dirs(epath)
+            ensure_dirs(epath)
             eclasses = eclass_cache.cache(epath)
         return repository._UnconfiguredTree(path, eclasses, *args, **kwds)
 
     def setUp(self):
-        mixins.TempDirMixin.setUp(self)
+        TempDirMixin.setUp(self)
         self.pdir = pjoin(self.dir, 'profiles')
-        osutils.ensure_dirs(self.pdir)
+        ensure_dirs(self.pdir)
 
     @silence_logging
     def test_basics(self):
@@ -65,17 +66,17 @@ foon		foon://foons/
         repo = self.mk_tree(dir1)
         self.assertEqual(repo.repo_id, '<unlabeled repository %s>' % (dir1,))
         dir2 = pjoin(self.dir, '2')
-        osutils.ensure_dirs(pjoin(dir2, 'profiles'))
+        ensure_dirs(pjoin(dir2, 'profiles'))
         open(pjoin(dir2, 'profiles', 'repo_name'), 'w').write('testrepo\n')
         repo = self.mk_tree(dir2)
         self.assertEqual('testrepo', repo.repo_id)
 
     @silence_logging
     def test_categories_packages(self):
-        osutils.ensure_dirs(pjoin(self.dir, 'cat', 'pkg'))
-        osutils.ensure_dirs(pjoin(self.dir, 'empty', 'empty'))
-        osutils.ensure_dirs(pjoin(self.dir, 'scripts', 'pkg'))
-        osutils.ensure_dirs(pjoin(self.dir, 'notcat', 'CVS'))
+        ensure_dirs(pjoin(self.dir, 'cat', 'pkg'))
+        ensure_dirs(pjoin(self.dir, 'empty', 'empty'))
+        ensure_dirs(pjoin(self.dir, 'scripts', 'pkg'))
+        ensure_dirs(pjoin(self.dir, 'notcat', 'CVS'))
         # "touch"
         open(pjoin(self.dir, 'cat', 'pkg', 'pkg-3.ebuild'), 'w')
         repo = self.mk_tree(self.dir)

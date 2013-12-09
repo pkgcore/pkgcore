@@ -1,11 +1,13 @@
 # Copyright: 2011 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
-from pkgcore.test import TestCase
-from pkgcore.ebuild import const
-from snakeoil.osutils import pjoin
-import sys
 import subprocess
+import sys
+
+from snakeoil.osutils import pjoin
+
+from pkgcore.ebuild import const
+from pkgcore.test import TestCase
 
 class Test_DontExportFuncsList(TestCase):
     base_path = const.EAPI_BIN_PATH

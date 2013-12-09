@@ -1,11 +1,14 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
-import tempfile, os
-from pkgcore.test import TestCase
-from pkgcore.ebuild import digest
-from pkgcore import gpg
+import os
+import tempfile
+
 from snakeoil.data_source import local_source
+
+from pkgcore import gpg
+from pkgcore.ebuild import digest
+from pkgcore.test import TestCase
 
 # "Line too long" (and our custom more aggressive version of that)
 # pylint: disable-msg=C0301,CPC01

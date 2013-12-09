@@ -1,15 +1,17 @@
 # Copyright 2007 Charlie Shepherd <masterdriverz@gmail.com>
 # License: GPL2
 
-import difflib, sys
+import difflib
+import sys
 
 from snakeoil.compatibility import force_bytes
-from pkgcore.test import TestCase
+
 from pkgcore.ebuild.formatter import (BasicFormatter, PkgcoreFormatter,
     PortageFormatter, PaludisFormatter)
+from pkgcore.ebuild.misc import collapsed_restrict_to_data
+from pkgcore.test import TestCase
 from pkgcore.test.misc import FakePkg, FakeRepo
 from pkgcore.test.scripts.helpers import FakeStreamFormatter, Color, Reset, Bold
-from pkgcore.ebuild.misc import collapsed_restrict_to_data
 
 if sys.version_info < (2, 6):
     bytes = str

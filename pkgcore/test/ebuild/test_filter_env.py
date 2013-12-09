@@ -3,10 +3,12 @@
 # License: BSD/GPL2
 
 import cStringIO
-from pkgcore.test import TestCase
-from snakeoil.test import mk_cpy_loadable_testcase
+
 from snakeoil.currying import partial
+from snakeoil.test import mk_cpy_loadable_testcase
+
 from pkgcore.ebuild import filter_env
+from pkgcore.test import TestCase
 
 
 class NativeFilterEnvTest(TestCase):

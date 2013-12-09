@@ -1,20 +1,20 @@
 # Copyright: 2006-2011 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
-import os, shutil, errno
-
-from pkgcore.test import TestCase, silence_logging
-from snakeoil.test.mixins import TempDirMixin
-from snakeoil.osutils import pjoin, ensure_dirs, normpath
-
-from pkgcore.ebuild import profiles
-from pkgcore.ebuild.misc import chunked_data
-from pkgcore.ebuild.atom import atom
-from pkgcore.ebuild.cpv import CPV
-from pkgcore.ebuild import const
-from pkgcore.restrictions import packages
+import errno
+import os
+import shutil
 
 from snakeoil.currying import partial
+from snakeoil.osutils import pjoin, ensure_dirs, normpath
+from snakeoil.test.mixins import TempDirMixin
+
+from pkgcore.ebuild import const, profiles
+from pkgcore.ebuild.atom import atom
+from pkgcore.ebuild.cpv import CPV
+from pkgcore.ebuild.misc import chunked_data
+from pkgcore.restrictions import packages
+from pkgcore.test import TestCase, silence_logging
 
 atrue = packages.AlwaysTrue
 

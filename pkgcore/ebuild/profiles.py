@@ -532,13 +532,31 @@ class ProfileStack(object):
     def use_expand(self):
         if "USE_EXPAND" in const.incrementals:
             return tuple(self.default_env.get("USE_EXPAND", ()))
-        return tuple(self.default_env.get("USE_EXPAND", '').split())
+        return tuple(self.default_env.get("USE_EXPAND", "").split())
 
     @klass.jit_attr
     def use_expand_hidden(self):
         if "USE_EXPAND_HIDDEN" in const.incrementals:
             return tuple(self.default_env.get("USE_EXPAND_HIDDEN", ()))
         return tuple(self.default_env.get("USE_EXPAND_HIDDEN", "").split())
+
+    @klass.jit_attr
+    def iuse_implicit(self):
+        if "IUSE_IMPLICIT" in const.incrementals:
+            return tuple(self.default_env.get("IUSE_IMPLICIT", ()))
+        return tuple(self.default_env.get("IUSE_IMPLICIT", "").split())
+
+    @klass.jit_attr
+    def use_expand_implicit(self):
+        if "USE_EXPAND_IMPLICIT" in const.incrementals:
+            return tuple(self.default_env.get("USE_EXPAND_IMPLICIT", ()))
+        return tuple(self.default_env.get("USE_EXPAND_IMPLICIT", "").split())
+
+    @klass.jit_attr
+    def use_expand_unprefixed(self):
+        if "USE_EXPAND_UNPREFIXED" in const.incrementals:
+            return tuple(self.default_env.get("USE_EXPAND_UNPREFIXED", ()))
+        return tuple(self.default_env.get("USE_EXPAND_UNPREFIXED", "").split())
 
     @klass.jit_attr
     def virtuals(self):

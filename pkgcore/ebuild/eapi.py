@@ -63,6 +63,9 @@ eapi_optionals = mappings.ImmutableDict({
     # awareness basically.  See PMS for full details.
     "prefix_capable":True,
 
+    # Controls whether profile-defined IUSE injection is supported.
+    "profile_iuse_injection": False,
+
     # Controls whether profiles support package.use.stable.* and use.stable.* files.
     "profile_stable_use": False,
 
@@ -288,6 +291,7 @@ eapi5 = EAPI.register("5",
         ebuild_phase_func=True,
         econf_disable_silent_rules=True,
         is_supported=False,
+        profile_iuse_injection=True,
         profile_stable_use=True,
         new_reads_stdin=True,
         required_use_one_of=True,

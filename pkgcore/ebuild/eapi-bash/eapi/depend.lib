@@ -54,9 +54,17 @@ debug-print-section()
 	:
 }
 
+eqawarn() {
+	__elog_base QA "$*"
+	echo -e " ${PKGCORE_RC_WARN}*${PKGCORE_RC_NORMAL} $*" >&2
+	PKGCORE_RC_LAST_CMD="eqawarn"
+	return 0
+}
+
 elog() {
 	__elog_base LOG "$*"
 	echo -e " ${PKGCORE_RC_GOOD}*${PKGCORE_RC_NORMAL} $*"
+	PKGCORE_RC_LAST_CMD="elog"
 	return 0
 }
 

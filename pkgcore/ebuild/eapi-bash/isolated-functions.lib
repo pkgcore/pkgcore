@@ -6,7 +6,7 @@ __elog_base() {
 	local messagetype
 	[ -z "${1}" -o  -z "${T}" -o ! -d "${T}/logging" ] && return 1
 	case "${1}" in
-		INFO|WARN|ERROR|LOG)
+		INFO|WARN|ERROR|LOG|QA)
 			messagetype="${1}"
 			shift
 			;;

@@ -361,7 +361,7 @@ __ebd_process_ebuild_phases()
 __ebd_process_metadata()
 {
 	# protect the env.
-	# note the local usage is redunant in light of it, but prefer to write it this
+	# note the local usage is redundant in light of it, but prefer to write it this
 	# way so that if someone ever drops the (), it'll still not bleed out.
 	(
 	# Heavy QA checks (IFS, shopt, etc) are suppressed for speed

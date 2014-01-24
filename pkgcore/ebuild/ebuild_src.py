@@ -194,17 +194,9 @@ class base(metadata.package):
     """
     ebuild package
 
-    :cvar tracked_attributes: sequence of attributes that are required to exist
-        in the built version of ebuild-src
     :cvar _config_wrappables: mapping of attribute to callable for
         re-evaluating attributes dependent on configuration
     """
-
-    tracked_attributes = (
-        "depends", "rdepends", "post_rdepends", "provides", "license",
-        "fullslot", "keywords", "eapi_obj", "restrict", "description", "iuse",
-        "chost", "cbuild", "ctarget", "homepage", "properties", "inherited",
-        "defined_phases", "source_repository")
 
     _config_wrappables = dict((x, klass.alias_method("evaluate_depset"))
         for x in ["depends", "rdepends", "post_rdepends", "fetchables",
@@ -245,6 +237,7 @@ class base(metadata.package):
     PN = klass.alias_attr("package")
     repo_id = klass.alias_attr("repo.repo_id")
     is_supported = klass.alias_attr('eapi_obj.is_supported')
+    tracked_attributes = klass.alias_attr('eapi_obj.tracked_attributes')
 
     @property
     def eapi(self):

@@ -104,7 +104,7 @@ class EAPI(object):
     __metaclass__ = klass.immutable_instance
 
     def __init__(self, magic, phases, default_phases, metadata_keys, mandatory_keys,
-                 optionals, ebd_env_options=None):
+                 tracked_attributes, optionals, ebd_env_options=None):
 
         sf = object.__setattr__
 
@@ -122,6 +122,7 @@ class EAPI(object):
 
         sf(self, "mandatory_keys", frozenset(mandatory_keys))
         sf(self, "metadata_keys", frozenset(metadata_keys))
+        sf(self, "tracked_attributes", frozenset(tracked_attributes))
         d = dict(eapi_optionals)
         d.update(optionals)
         sf(self, 'options', optionals_cls(d))
@@ -149,7 +150,7 @@ class EAPI(object):
 
     @classmethod
     def get_unsupported_eapi(cls, magic):
-        return cls(magic, (), (), (), (), {'is_supported':False})
+        return cls(magic, (), (), (), (), (), {'is_supported':False})
 
     @klass.jit_attr
     def atom_kls(self):
@@ -215,6 +216,11 @@ common_metadata_keys = common_mandatory_metadata_keys + (
     "DEPEND", "RDEPEND", "PDEPEND", "PROVIDE", "RESTRICT",
     "DEFINED_PHASES", "PROPERTIES", "EAPI")
 
+common_tracked_attributes = ("depends", "rdepends", "post_rdepends", "provides",
+    "license", "fullslot", "keywords", "eapi_obj", "restrict", "description",
+    "iuse", "chost", "cbuild", "ctarget", "homepage", "properties", "inherited",
+    "defined_phases", "source_repository")
+
 common_env_optionals = mappings.ImmutableDict(dict.fromkeys(
     ("dodoc_allow_recursive", "doins_allow_symlinks",
      "doman_language_detect", "doman_language_override",
@@ -227,6 +233,7 @@ eapi0 = EAPI.register("0",
     mk_phase_func_map(*common_default_phases),
     common_metadata_keys,
     common_mandatory_metadata_keys,
+    common_tracked_attributes,
     dict(trust_defined_phases_cache=False, prefix_capable=False, has_AA=True, has_KV=True),
     ebd_env_options=common_env_optionals,
 )
@@ -236,6 +243,7 @@ eapi1 = EAPI.register("1",
     eapi0.default_phases,
     eapi0.metadata_keys,
     eapi0.mandatory_keys,
+    eapi0.tracked_attributes,
     eapi0.options,
     ebd_env_options=eapi0.ebd_env_options,
 )
@@ -245,6 +253,7 @@ eapi2 = EAPI.register("2",
     eapi1.default_phases.union(map(shorten_phase_name, ["src_prepare", "src_configure"])),
     eapi1.metadata_keys,
     eapi1.mandatory_keys,
+    eapi1.tracked_attributes,
     combine_dicts(eapi1.options,
         dict(doman_language_detect=True, transitive_use_atoms=True,
         src_uri_renames=True, has_AA=True, has_KV=True)),
@@ -256,6 +265,7 @@ eapi3 = EAPI.register("3",
     eapi2.default_phases,
     eapi2.metadata_keys,
     eapi2.mandatory_keys,
+    eapi2.tracked_attributes,
     combine_dicts(eapi2.options,
         dict(prefix_capable=True, has_AA=True, has_KV=True)),
     ebd_env_options=eapi2.ebd_env_options,
@@ -266,6 +276,7 @@ eapi4 = EAPI.register("4",
     eapi3.default_phases.union([shorten_phase_name('src_install')]),
     eapi3.metadata_keys | frozenset(["REQUIRED_USE"]),
     eapi3.mandatory_keys,
+    eapi3.tracked_attributes,
     combine_dicts(eapi3.options, dict(
         dodoc_allow_recursive=True,
         doins_allow_symlinks=True,
@@ -280,12 +291,12 @@ eapi4 = EAPI.register("4",
     ebd_env_options=eapi3.ebd_env_options,
 )
 
-
 eapi5 = EAPI.register("5",
     eapi4.phases,
     eapi4.default_phases,
     eapi4.metadata_keys,
     eapi4.mandatory_keys,
+    eapi4.tracked_attributes | frozenset(["iuse_effective"]),
     combine_dicts(eapi4.options, dict(
         allow_parallel_src_test=True,
         ebuild_phase_func=True,

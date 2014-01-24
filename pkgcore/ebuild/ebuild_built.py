@@ -75,9 +75,12 @@ class package(ebuild_src.base):
     """
 
     immutable = True
-    tracked_attributes = ebuild_src.package.tracked_attributes + \
-                         ("contents", "use", "environment")
     allow_regen = False
+
+    @property
+    def tracked_attributes(self):
+        return tuple(super(package, self).tracked_attributes) + \
+            ("contents", "use", "environment")
 
     @property
     def _operations(self):
@@ -95,12 +98,6 @@ class package(ebuild_src.base):
     _get_attr.update((x, post_curry(passthrough, x))
                      for x in ("contents", "environment", "ebuild"))
     _get_attr['source_repository'] = passthrough_repo
-    _get_attr.update(
-        (k, post_curry(wrap_inst,
-                       ebuild_src.package._config_wrappables[k],
-                       ebuild_src.package._get_attr[k]))
-        for k in ebuild_src.package._config_wrappables
-        if k in ebuild_src.package.tracked_attributes)
 
     _get_attr['fetchables'] = lambda self:_empty_fetchable
 
@@ -109,6 +106,15 @@ class package(ebuild_src.base):
 
     _get_attr["inherited"] = _get_inherited
     _get_attr["eapi_obj"] = generate_eapi_obj
+
+    def __init__(self, *args, **kwargs):
+        super(package, self).__init__(*args, **kwargs)
+        self._get_attr.update(
+            (k, post_curry(wrap_inst,
+                        ebuild_src.package._config_wrappables[k],
+                        ebuild_src.package._get_attr[k]))
+            for k in ebuild_src.package._config_wrappables
+            if k in super(package, self).tracked_attributes)
 
     def _chost_fallback(initial, self):
         o = self.data.get(initial)
@@ -229,15 +235,13 @@ class fake_package_factory(package_factory):
         self.child_class = child_class
         self._parent_repo = None
 
-    _forced_copy = ebuild_src.package.tracked_attributes
-
     def new_package(self, pkg, image_root, environment_path):
         self.pkg = pkg
         self.image_root = image_root
         self.environment_path = environment_path
         # lambda redirects path to environment path
         obj = self.child_class(self, pkg.cpvstr)
-        for x in self._forced_copy:
+        for x in self.pkg._raw_pkg.tracked_attributes:
             # bypass setattr restrictions.
             object.__setattr__(obj, x, getattr(self.pkg, x))
         object.__setattr__(obj, "use", self.pkg.use)

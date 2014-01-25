@@ -114,7 +114,7 @@ class base(object):
     def __getitem__(self, cpv):
         """set a cpv to values
 
-        This shouldn't be overriden in derived classes since it
+        This shouldn't be overridden in derived classes since it
         handles the __eclasses__ conversion. That said, if the class
         handles it, they can override it.
         """
@@ -134,7 +134,7 @@ class base(object):
     def __setitem__(self, cpv, values):
         """set a cpv to values
 
-        This shouldn't be overriden in derived classes since it
+        This shouldn't be overridden in derived classes since it
         handles the readonly checks.
         """
         if self.readonly:
@@ -164,7 +164,7 @@ class base(object):
     def __delitem__(self, cpv):
         """delete a key from the cache.
 
-        This shouldn't be overriden in derived classes since it
+        This shouldn't be overridden in derived classes since it
         handles the readonly checks.
         """
         if self.readonly:

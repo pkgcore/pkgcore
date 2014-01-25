@@ -785,7 +785,7 @@ class EbuildProcessor(object):
         # note that self is passed in. so... we just pass in the
         # unbound instance. Specifically, via digging through
         # __class__ if you don't do it, sandbox_summary (fex) cannot
-        # be overriden, this func will just use this classes version.
+        # be overridden, this func will just use this classes version.
         # so dig through self.__class__ for it. :P
 
         handlers = {"request_sandbox_summary":self.__class__.sandbox_summary}

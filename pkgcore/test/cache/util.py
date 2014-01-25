@@ -43,7 +43,7 @@ class GenericCacheMixin(TestCase):
 
     def get_db(self, readonly=False):
         raise NotImplementedError(
-            self, "get_db- must be overriden for test mixin, "
+            self, "get_db- must be overridden for test mixin, "
             "setting self.db to a cache instance ")
 
     def test_readonly(self):

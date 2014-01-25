@@ -39,7 +39,7 @@ class base(object):
 
     @property
     def repo_id(self):
-        """Initially set to None. will be overriden later
+        """Initially set to None. will be overridden later
         when appropriate"""
         return None
 

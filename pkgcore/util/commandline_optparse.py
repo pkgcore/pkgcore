@@ -312,7 +312,7 @@ class OptionParser(optparse.OptionParser, object):
         kwargs.setdefault('option_class', self.option_class)
         for setting in ('description', 'usage'):
             if not setting in kwargs and hasattr(self, setting):
-                # only set if not overriden, and if there is a usable value.
+                # only set if not overridden, and if there is a usable value.
                 kwargs[setting] = getattr(self, setting)
 
         optparse.OptionParser.__init__(self, *args, **kwargs)

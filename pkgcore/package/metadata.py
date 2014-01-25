@@ -131,12 +131,12 @@ class factory(object):
     def _get_metadata(self, *args):
         """Pulls metadata from the repo/cache/wherever.
 
-        Must be overriden in derivatives.
+        Must be overridden in derivatives.
         """
         raise NotImplementedError
 
     def _update_metadata(self, *args):
         """Updates metadata in the repo/cache/wherever.
 
-        Must be overriden in derivatives."""
+        Must be overridden in derivatives."""
         raise NotImplementedError

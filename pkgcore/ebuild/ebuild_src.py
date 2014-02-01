@@ -26,7 +26,7 @@ from pkgcore.fetch import fetchable, mirror, uri_list, default_mirror
 from pkgcore.ebuild import processor
 
 from snakeoil.mappings import IndeterminantDict
-from snakeoil.currying import alias_class_method, partial
+from snakeoil.currying import partial
 from snakeoil import klass
 from snakeoil.compatibility import intern
 
@@ -206,7 +206,7 @@ class base(metadata.package):
         "chost", "cbuild", "ctarget", "homepage", "properties", "inherited",
         "defined_phases", "source_repository")
 
-    _config_wrappables = dict((x, alias_class_method("evaluate_depset"))
+    _config_wrappables = dict((x, klass.alias_method("evaluate_depset"))
         for x in ["depends", "rdepends", "post_rdepends", "fetchables",
                   "license", "src_uri", "provides", "restrict",
                   "required_use"])

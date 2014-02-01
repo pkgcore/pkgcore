@@ -14,7 +14,6 @@ from snakeoil.demandload import demandload
 demandload(globals(),
     "pkgcore.repository:util@repo_utils",
     "pkgcore.operations:domain@domain_ops",
-
 )
 
 # yes this is basically empty. will fill it out as the base is better

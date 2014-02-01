@@ -512,8 +512,7 @@ class _ConfiguredTree(configured.tree):
     """
 
     configurable = "use"
-    config_wrappables = dict(
-        (x, klass.alias_method("evaluate_depset"))
+    config_wrappables = dict((x, klass.alias_method("evaluate_depset"))
         for x in ["depends", "rdepends", "post_rdepends", "fetchables",
                   "license", "src_uri", "provides", "restrict",
                   "required_use"])

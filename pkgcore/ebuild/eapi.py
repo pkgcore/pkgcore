@@ -5,6 +5,7 @@ from snakeoil import mappings, weakrefs, klass
 from snakeoil.demandload import demandload
 demandload(globals(),
     "pkgcore.ebuild:atom",
+    "pkgcore.log:logger",
     "snakeoil.currying:partial",
 )
 
@@ -135,7 +136,13 @@ class EAPI(object):
         cls.known_eapis[ret.magic] = ret
         return ret
 
-    is_supported = klass.alias_attr('options.is_supported')
+    @klass.jit_attr
+    def is_supported(self):
+        if EAPI.known_eapis.get(self.magic) is not None:
+            if not self.options.is_supported:
+                logger.warning("EAPI %s isn't fully supported" % self.magic)
+            return True
+        return False
 
     @classmethod
     def get_unsupported_eapi(cls, magic):

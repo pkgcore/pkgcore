@@ -56,9 +56,9 @@ def generate_depset(c, key, non_package_type, s, **kwds):
     return conditionals.DepSet.parse(s.data.pop(key, ""), c, **kwds)
 
 def _mk_required_use_node(data):
-  if data[0] == '!':
-    return values.ContainmentMatch(data[1:], negate=True)
-  return values.ContainmentMatch(data,)
+    if data[0] == '!':
+        return values.ContainmentMatch(data[1:], negate=True)
+    return values.ContainmentMatch(data,)
 
 def generate_required_use(self):
     data = self.data.pop("REQUIRED_USE", "")

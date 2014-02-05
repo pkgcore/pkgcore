@@ -32,7 +32,7 @@ def _getattr_wrapped(attr, self):
 
 
 def make_wrapper(configurable_attribute_name, attributes_to_wrap=(),
-    kls_injections={}):
+                 kls_injections={}):
     """
     :param configurable_attribute_name: attribute name to add,
         and that is used for evaluating attributes_to_wrap

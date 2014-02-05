@@ -1,6 +1,7 @@
 # Copyright: 2006-2011 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
+import binascii
 import errno
 import os
 import shutil
@@ -665,6 +666,23 @@ class TestPortage1ProfileNode(TestPmsProfileNode):
             f = open(pjoin(base, str(idx)), 'w')
             f.write(data)
             f.close()
+
+
+class TestPortage2ProfileNode(TestPortage1ProfileNode):
+
+    def setup_repo(self):
+        self.repo_name = binascii.b2a_hex(os.urandom(10))
+        open(pjoin(self.dir, "profiles", "repo_name"), "w").write(self.repo_name)
+        ensure_dirs(pjoin(self.dir, "metadata"))
+        metadata = "masters = ''\nprofile-formats = portage-2"
+        open(pjoin(self.dir, "metadata", "layout.conf"), "w").write(metadata)
+
+    def setUp(self, default=True):
+        TempDirMixin.setUp(self)
+        if default:
+            self.profile = pjoin("profiles", "default")
+            self.mk_profile(self.profile)
+            self.setup_repo()
 
 
 class TestOnDiskProfile(profile_mixin, TestCase):

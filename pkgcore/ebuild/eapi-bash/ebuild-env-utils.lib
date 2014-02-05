@@ -159,10 +159,10 @@ __environ_sanitize_saved_env() {
 
 		__shopt_push -f
 		IFS=$' \t\n'
-		declare -a PKGCORE_ENV_ARRAY=( ${DONT_EXPORT_FUNCS} )
+		declare -a PKGCORE_FUNC_ARRAY=( ${DONT_EXPORT_FUNCS} )
 		declare -a PKGCORE_VAR_ARRAY=( ${DONT_EXPORT_VARS} src x EXISTING_PATH )
 		IFS=,
-		PKGCORE_ENV_ARRAY="${PKGCORE_ENV_ARRAY[*]}"
+		PKGCORE_FUNC_ARRAY="${PKGCORE_FUNC_ARRAY[*]}"
 		PKGCORE_VAR_ARRAY="${PKGCORE_VAR_ARRAY[*]}"
 		IFS=$' \t\n'
 		__shopt_pop
@@ -171,7 +171,7 @@ __environ_sanitize_saved_env() {
 		# run the filtered env.
 		__filter_env \
 			-f "${PKGCORE_FUNC_ARRAY}" \
-			-v "${PKGCORE_ENV_ARRAY}" \
+			-v "${PKGCORE_VAR_ARRAY}" \
 			-i "$src" \
 			> "${T}/.pre-scrubbed-env" || die "failed first step of scrubbing the env to load"
 

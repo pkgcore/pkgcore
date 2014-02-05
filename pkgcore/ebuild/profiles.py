@@ -191,7 +191,7 @@ class ProfileNode(object):
                             raise ValueError("unknown repository name: %r" % repo_id)
                     l.append(abspath(pjoin(repo_config.location, 'profiles', path)))
                 else:
-                    l.append(abspath(pjoin(self.path, x)))
+                    l.append(abspath(pjoin(self.path, repo_id)))
             return tuple(l)
         return tuple(abspath(pjoin(self.path, x)) for x in data)
 

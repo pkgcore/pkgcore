@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 from snakeoil.modules import load_module
 import datetime, os, errno, re
 from pkgcore.util import argparse

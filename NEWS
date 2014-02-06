@@ -5,6 +5,17 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 
 pkgcore trunk:
 
+* Deprecated pkgcore.chksum compatibility shim removed.
+
+* Fix installing symlinks via doins for >= EAPI-4.
+
+* Throw warnings for EAPI support in development instead of erroring out.
+
+* Move to using portage's keepdir file naming scheme (.keep_CAT_PN-SLOT)
+  while still supporting pkgs using the previous ".keep" method.
+
+* Support the portage-2 profile format.
+
 * Define SLOT and USE for pkg_pretend (mirroring portage) so checking for
   enabled use flags during pkg_pretend works as expected.
 

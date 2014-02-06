@@ -155,7 +155,7 @@ class fsFile(fsBase):
     def __init__(self, location, chksums=None, data=None, **kwds):
         """
         :param chksums: dict of checksums, key chksum_type: val hash val.
-            See :obj:`pkgcore.chksum`.
+            See :obj:`snakeoil.chksum`.
         """
         assert 'data_source' not in kwds
         if data is None:

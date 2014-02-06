@@ -209,8 +209,7 @@ def spawn(mycommand, env=None, name=None, fd_pipes=None, returnpid=False,
     # Everything succeeded
     return 0
 
-def _exec(binary, mycommand, name, fd_pipes, env, gid, groups, uid, umask,
-    cwd):
+def _exec(binary, mycommand, name, fd_pipes, env, gid, groups, uid, umask, cwd):
     """internal function to handle exec'ing the child process.
 
     If it succeeds this function does not return. It might raise an
@@ -361,9 +360,8 @@ def spawn_fakeroot(mycommand, save_file, env=None, name=None,
         if not returnpid:
             cleanup_pids([fakepid] + pids)
 
-def spawn_get_output(
-    mycommand, spawn_type=None, raw_exit_code=False, collect_fds=(1,),
-    fd_pipes=None, split_lines=True, **keywords):
+def spawn_get_output(mycommand, spawn_type=None, raw_exit_code=False, collect_fds=(1,),
+                     fd_pipes=None, split_lines=True, **keywords):
 
     """Call spawn, collecting the output to fd's specified in collect_fds list.
 

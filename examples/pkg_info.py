@@ -34,7 +34,7 @@ def getter(pkg):
 
 def main(options, out, err):
     for t, pkgs in itertools.groupby(
-        options.repo.itermatch(options.restrict, sorter=sorted), getter):
+            options.repo.itermatch(options.restrict, sorter=sorted), getter):
         out.write(t[0])
         out.first_prefix = "    "
         for pkg in pkgs:

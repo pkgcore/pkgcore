@@ -8,7 +8,7 @@ from pkgcore.ebuild.atom import atom
 # we use a WorldFile since it *currently* forces unversioned atoms.
 from pkgcore.pkgsets.filelist import WorldFile
 
-from snakeoil.fileutils import iter_read_bash
+from snakeoil.bash import iter_read_bash
 from snakeoil.osutils import listdir_files
 
 def main(target_repo, seen, moves):

@@ -17,9 +17,10 @@ from pkgcore.config import ConfigHint, configurable
 from pkgcore.plugin import get_plugin
 from pkgcore.operations import repo as _repo_ops
 
+from snakeoil import klass
 from snakeoil.fileutils import readlines
 from snakeoil.bash import iter_read_bash, read_dict
-from snakeoil import currying, klass
+from snakeoil.currying import partial
 from snakeoil.osutils import listdir_files, listdir_dirs, pjoin
 from snakeoil.fileutils import readfile
 from snakeoil.containers import InvertedContains
@@ -541,14 +542,36 @@ class _ConfiguredTree(configured.tree):
             for x in ('cbuild', 'ctarget'))
         scope_update['operations_callback'] = self._generate_pkg_operations
 
+        self.config_wrappables['iuse_effective'] = partial(
+            self._generate_iuse_effective, domain.profile)
         configured.tree.__init__(self, raw_repo, self.config_wrappables,
-           pkg_kls_injections=scope_update)
+            pkg_kls_injections=scope_update)
         self._get_pkg_use = domain.get_package_use_unconfigured
         self._get_pkg_use_for_building = domain.get_package_use_buildable
         self.domain_settings = domain_settings
         self.fetcher_override = fetcher
-        self._delayed_iuse = currying.partial(make_kls(InvertedContains),
+        self._delayed_iuse = partial(make_kls(InvertedContains),
             InvertedContains)
+
+    def _generate_iuse_effective(self, profile, pkg, *args):
+        iuse_effective = [x.lstrip('-+') for x in pkg.iuse]
+        use_expand = frozenset(profile.use_expand)
+
+        if pkg.eapi_obj.options.profile_iuse_injection:
+            iuse_effective.extend(profile.iuse_implicit)
+            use_expand_implicit = frozenset(profile.use_expand_implicit)
+            use_expand_unprefixed = frozenset(profile.use_expand_unprefixed)
+
+            for v in use_expand_implicit.intersection(use_expand_unprefixed):
+                iuse_effective.extend(profile.default_env.get("USE_EXPAND_VALUES_" + v, "").split())
+            for v in use_expand.intersection(use_expand_implicit):
+                for x in profile.default_env.get("USE_EXPAND_VALUES_" + v, "").split():
+                    iuse_effective.append(v.lower() + "_" + x)
+        else:
+            iuse_effective.extend(pkg.repo.config.known_arches)
+            iuse_effective.extend(x.lower() + "_.*" for x in use_expand)
+
+        return sorted(iuse_effective)
 
     def _get_delayed_immutable(self, pkg, immutable):
         return InvertedContains(pkg.iuse.difference(immutable))

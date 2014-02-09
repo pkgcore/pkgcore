@@ -4,6 +4,15 @@
 use()
 {
 	local u="${1}"
+
+	if [[ ! ${u} =~ ${PKGCORE_IUSE_EFFECTIVE} ]]; then
+		if __safe_has "${EAPI:-0}" 0 1 2 3 4; then
+			ewarn "QA Notice: USE flag '${u}' not in IUSE for ${CATEGORY}/${PF}"
+		else
+			die "USE flag '${u}' not in IUSE for ${CATEGORY}/${PF}"
+		fi
+	fi
+
 	# Ensure USE is split on normal IFS.
 	__shopt_push -f
 	local IFS=$' \t\n'

@@ -12,7 +12,7 @@ api, per phase methods for example
 __all__ = ("ebd", "setup_mixin", "install_op", "uninstall_op", "replace_op",
     "buildable", "binpkg_localize")
 
-import os, errno, shutil, sys
+import os, errno, re, shutil, sys
 
 from snakeoil import data_source
 from snakeoil.compatibility import raise_from, IGNORED_EXCEPTIONS
@@ -129,6 +129,11 @@ class ebd(object):
         self.features = set(x.lower() for x in features)
 
         self.env["FEATURES"] = ' '.join(sorted(self.features))
+
+        iuse_effective_regex = (re.escape(x) for x in pkg.iuse_effective)
+        iuse_effective_regex = "^(%s)$" % "|".join(iuse_effective_regex)
+        iuse_effective_regex = iuse_effective_regex.replace("\\.\\*", ".*")
+        self.env["PKGCORE_IUSE_EFFECTIVE"] = iuse_effective_regex
 
         expected_ebuild_env(pkg, self.env, env_source_override=self.env_data_source)
 

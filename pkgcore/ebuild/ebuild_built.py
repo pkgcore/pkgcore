@@ -98,6 +98,7 @@ class package(ebuild_src.base):
     _get_attr.update((x, post_curry(passthrough, x))
                      for x in ("contents", "environment", "ebuild"))
     _get_attr['source_repository'] = passthrough_repo
+    _get_attr['iuse_effective'] = lambda s:s.data.get('IUSE_EFFECTIVE', '')
 
     _get_attr['fetchables'] = lambda self:_empty_fetchable
 

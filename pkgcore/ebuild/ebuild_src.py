@@ -223,6 +223,7 @@ class base(metadata.package):
     _get_attr["eapi_obj"] = get_parsed_eapi
     _get_attr["iuse"] = lambda s:frozenset(imap(intern,
         s.data.pop("IUSE", "").split()))
+    _get_attr["iuse_effective"] = lambda s:s
     _get_attr["properties"] = lambda s:frozenset(imap(intern,
         s.data.pop("PROPERTIES", "").split()))
     _get_attr["defined_phases"] = lambda s:s.eapi_obj.interpret_cache_defined_phases(imap(intern,

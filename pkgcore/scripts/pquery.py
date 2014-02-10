@@ -15,7 +15,7 @@ from snakeoil.demandload import demandload
 demandload(globals(),
     're',
     'errno',
-     'snakeoil.lists:iter_stable_unique',
+    'snakeoil.lists:iter_stable_unique',
     'pkgcore.fs:fs@fs_module,contents@contents_module',
 )
 
@@ -61,7 +61,7 @@ dep_attrs = tuple(sorted(dep_attrs))
 
 metadata_attrs += [
     'provides', 'use', 'iuse', 'description', 'license', 'fetchables',
-    'slot', 'keywords', 'homepage', 'eapi', 'properties', 'defined_phases',
+    'slot', 'subslot', 'keywords', 'homepage', 'eapi', 'properties', 'defined_phases',
     'restrict', 'required_use', 'inherited',]
 metadata_attrs = tuple(sorted(metadata_attrs))
 

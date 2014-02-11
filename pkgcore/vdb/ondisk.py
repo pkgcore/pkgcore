@@ -1,7 +1,7 @@
 # Copyright: 2005-2011 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
-__all__ = ("bz2_data_source", "tree", "ConfiguredTree")
+__all__ = ("tree", "ConfiguredTree")
 
 import os, stat, errno
 
@@ -20,51 +20,14 @@ from snakeoil.osutils import pjoin
 from snakeoil.mappings import IndeterminantDict
 from snakeoil.currying import partial
 from snakeoil.osutils import listdir_dirs
-from snakeoil.fileutils import readfile, readfile_bytes
-from snakeoil import klass, compatibility, compression
+from snakeoil.fileutils import readfile
+from snakeoil import klass, compatibility
 from snakeoil.demandload import demandload
 demandload(globals(),
     'pkgcore.vdb:repo_ops',
     'pkgcore.vdb.contents:ContentsFile',
     'pkgcore.log:logger',
 )
-
-
-class bz2_data_source(data_source.base):
-
-    # XXX might want to rebase this to data_source.data_source...
-
-    __slots__ = ("location", "mutable")
-
-    def __init__(self, location, mutable=False):
-        data_source.base.__init__(self)
-        self.location = location
-        self.mutable = mutable
-
-    def text_fileobj(self, writable=False):
-        data = compression.decompress_data('bzip2',
-            readfile_bytes(self.location)).decode()
-        if writable:
-            if not self.mutable:
-                raise TypeError("data source %s is not mutable" % (self,))
-            return data_source.text_wr_StringIO(self._set_data, data)
-        return data_source.text_ro_StringIO(data)
-
-    def bytes_fileobj(self, writable=False):
-        data = compression.decompress_data('bzip2',
-            readfile_bytes(self.location))
-        if writable:
-            if not self.mutable:
-                raise TypeError("data source %s is not mutable" % (self,))
-            return data_source.bytes_wr_StringIO(self._set_data, data)
-        return data_source.bytes_ro_StringIO(data)
-
-    def _set_data(self, data):
-        if compatibility.is_py3k:
-            if isinstance(data, str):
-                data = data.encode()
-        open(self.location, "wb").write(
-            compression.compress_data('bzip2', data))
 
 
 class tree(prototype.tree):
@@ -195,7 +158,7 @@ class tree(prototype.tree):
                     raise KeyError("environment: no environment file found")
                 data = data_source.local_source(fp)
             else:
-                data = bz2_data_source(fp+".bz2")
+                data = data_source.bz2_source(fp+".bz2")
         elif key == "ebuild":
             fp = pjoin(path,
                 os.path.basename(path.rstrip(os.path.sep))+".ebuild")

@@ -157,7 +157,7 @@ def get_parsed_eapi(self):
         # for us, far faster than native python can.
         i = fileutils.readlines_ascii(ebuild.path)
     else:
-        i = (x.strip() for x in ebuild.get_text_fileobj())
+        i = (x.strip() for x in ebuild.text_fileobj())
     for line in i:
         if line[0:1] in ('', '#'):
             continue

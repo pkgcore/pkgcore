@@ -18,8 +18,6 @@ Modules
     pkgcore.cache.flat_hash
     pkgcore.cache.fs_template
     pkgcore.cache.metadata
-    pkgcore.chksum
-    pkgcore.chksum.errors
     pkgcore.config
     pkgcore.config.basics
     pkgcore.config.central

@@ -571,7 +571,7 @@ class _ConfiguredTree(configured.tree):
             iuse_effective.extend(pkg.repo.config.known_arches)
             iuse_effective.extend(x.lower() + "_.*" for x in use_expand)
 
-        return sorted(iuse_effective)
+        return tuple(sorted(set(iuse_effective)))
 
     def _get_delayed_immutable(self, pkg, immutable):
         return InvertedContains(pkg.iuse.difference(immutable))

@@ -671,7 +671,7 @@ class TestPortage1ProfileNode(TestPmsProfileNode):
 class TestPortage2ProfileNode(TestPortage1ProfileNode):
 
     def setup_repo(self):
-        self.repo_name = binascii.b2a_hex(os.urandom(10))
+        self.repo_name = str(binascii.b2a_hex(os.urandom(10)))
         open(pjoin(self.dir, "profiles", "repo_name"), "w").write(self.repo_name)
         ensure_dirs(pjoin(self.dir, "metadata"))
         metadata = "masters = ''\nprofile-formats = portage-2"

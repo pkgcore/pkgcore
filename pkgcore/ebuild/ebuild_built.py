@@ -53,10 +53,6 @@ _empty_fetchable = conditionals.DepSet.parse('', ebuild_src.fetchable,
     operators={})
 
 
-def _get_inherited(self):
-    return tuple(sorted(self.data.get("INHERITED", "").split()))
-
-
 def generate_eapi_obj(self):
     eapi_magic = self.data.pop("EAPI", "0")
     if not eapi_magic:
@@ -106,7 +102,8 @@ class package(ebuild_src.base):
     _get_attr["use"] = lambda s:DelayedInstantiation(frozenset,
         lambda: frozenset(s.data["USE"].split()))
 
-    _get_attr["inherited"] = _get_inherited
+    _get_attr["inherited"] = lambda s:tuple(sorted(
+        s.data.get("INHERITED", "").split()))
     _get_attr["eapi_obj"] = generate_eapi_obj
 
     def __init__(self, *args, **kwargs):

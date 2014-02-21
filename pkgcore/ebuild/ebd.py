@@ -583,6 +583,7 @@ class buildable(ebd, setup_mixin, format.build):
             del self.env["PORTDIR"]
 
         self.run_test = self.feat_or_bool("test", domain_settings)
+        self.allow_failed_test = self.feat_or_bool("test-fail-continue", domain_settings)
         if "test" in self.restrict:
             self.run_test = False
         elif "test" not in use:
@@ -818,7 +819,8 @@ class buildable(ebd, setup_mixin, format.build):
         """run the test phase (if enabled), maps to src_test"""
         if not self.run_test:
             return True
-        return self._generic_phase("test", True, True, False)
+        return self._generic_phase("test", True, True, False,
+                                   failure_allowed=self.allow_failed_test)
 
     def finalize(self):
         """

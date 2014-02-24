@@ -5,6 +5,9 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 
 pkgcore trunk:
 
+* Add support for FEATURES=test-fail-continue. This allows the remaining
+  phases after src_test to continue executing if the test phase fails.
+
 * Deprecated pkgcore.chksum compatibility shim removed.
 
 * Fix installing symlinks via doins for >= EAPI-4.

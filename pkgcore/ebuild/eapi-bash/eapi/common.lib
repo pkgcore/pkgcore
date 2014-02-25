@@ -5,12 +5,10 @@ use()
 {
 	local u="${1}"
 
-	if [[ ! ${u} =~ ${PKGCORE_IUSE_EFFECTIVE} ]]; then
-		if __safe_has "${EAPI:-0}" 0 1 2 3 4; then
-			ewarn "QA Notice: USE flag '${u}' not in IUSE for ${CATEGORY}/${PF}"
-		else
-			die "USE flag '${u}' not in IUSE for ${CATEGORY}/${PF}"
-		fi
+	# EAPI5 and up.
+	if ${PKGCORE_PROFILE_IUSE_INJECTION} && \
+			[[ ! ${u} =~ ${PKGCORE_IUSE_EFFECTIVE} ]]; then
+		die "USE flag '${u}' not in IUSE for ${CATEGORY}/${PF}"
 	fi
 
 	# Ensure USE is split on normal IFS.

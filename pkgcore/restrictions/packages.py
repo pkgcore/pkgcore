@@ -22,8 +22,7 @@ class native_PackageRestriction(object):
     __attr_comparison__ = ("__class__", "negate", "_attr_split", "restriction")
     __metaclass__ = generic_equality
 
-    def __init__(self, attr, childrestriction, negate=False,
-        ignore_missing=True):
+    def __init__(self, attr, childrestriction, negate=False, ignore_missing=True):
         """
         :param attr: package attribute to match against
         :param childrestriction: a :obj:`pkgcore.restrictions.values.base` instance

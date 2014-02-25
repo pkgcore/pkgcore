@@ -338,7 +338,7 @@ class EbuildProcessor(object):
         self.unlock()
 
     def run_phase(self, phase, env, tmpdir, logging=None,
-        additional_commands=None, sandbox=True):
+                  additional_commands=None, sandbox=True):
         """
         Utility function, to initialize the processor for a phase.
 
@@ -383,7 +383,7 @@ class EbuildProcessor(object):
         return self.__fakeroot
 
     def write(self, string, flush=True, disable_runtime_exceptions=False,
-        append_newline=True):
+              append_newline=True):
         """send something to the bash side.
 
         :param string: string to write to the bash processor.

@@ -510,8 +510,7 @@ class fix_uid_perms(base):
     _engine_types = INSTALLING_MODES
 
     def __init__(self, uid=pkgcore.os_data.portage_uid,
-        replacement=pkgcore.os_data.root_uid):
-
+                 replacement=pkgcore.os_data.root_uid):
         base.__init__(self)
         self.bad_uid = uid
         self.good_uid = replacement
@@ -531,8 +530,7 @@ class fix_gid_perms(base):
     _engine_types = INSTALLING_MODES
 
     def __init__(self, gid=pkgcore.os_data.portage_gid,
-        replacement=pkgcore.os_data.root_gid):
-
+                 replacement=pkgcore.os_data.root_gid):
         base.__init__(self)
         self.bad_gid = gid
         self.good_gid = replacement
@@ -728,7 +726,7 @@ class SavePkgIfInPkgset(SavePkg):
     del d
 
     def __init__(self, target_repo, pkgset, pristine=True,
-        skip_if_source=True):
+                 skip_if_source=True):
         SavePkg.__init__(self, target_repo, pristine=pristine,
             skip_if_source=skip_if_source)
         self.pkgset = pkgset
@@ -781,7 +779,7 @@ class BinaryDebug(ThreadedTrigger):
         types={"strip_binary":"str", "objcopy_binary":"str"})
 
     def __init__(self, mode='split', strip_binary=None, objcopy_binary=None,
-        extra_strip_flags=(), debug_storage='/usr/lib/debug/', compress=False):
+                 extra_strip_flags=(), debug_storage='/usr/lib/debug/', compress=False):
         self.mode = mode = mode.lower()
         if mode not in ('split', 'strip'):
             raise TypeError("mode %r is unknown; must be either split "

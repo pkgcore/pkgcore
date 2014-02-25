@@ -93,8 +93,7 @@ class BaseCommand(commandline.ArgparseCommand):
 
     @classmethod
     def make_command(cls, arg_spec='', requires_root=True, bind=None,
-        root_default=None, name=None, **kwds):
-
+                     root_default=None, name=None, **kwds):
         kwds = dict(arg_spec=tuple(arg_spec.split()), requires_root=requires_root,
             _compat_root_default=root_default, **kwds)
 

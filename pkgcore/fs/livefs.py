@@ -30,8 +30,7 @@ def gen_chksums(handlers, location):
 
 
 def gen_obj(path, stat=None, chksum_handlers=None, real_location=None,
-    stat_func=os.lstat, **overrides):
-
+            stat_func=os.lstat, **overrides):
     """
     given a fs path, and an optional stat, create an appropriate fs obj.
 
@@ -109,7 +108,7 @@ def _internal_iter_scan(path, chksum_handlers, stat_func=os.lstat):
 
 
 def _internal_offset_iter_scan(path, chksum_handlers, offset,
-    stat_func=os.lstat):
+                               stat_func=os.lstat):
     offset = normpath(offset)
     path = normpath(path)
     dirs = collections.deque([path[len(offset):]])

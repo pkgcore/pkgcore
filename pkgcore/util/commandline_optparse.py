@@ -449,7 +449,7 @@ def output_subcommands(prog, subcommands, out):
 
 
 def optparse_parse(subcommands, args=None, script_name=None,
-    subcommand_usage_func=output_subcommands, errfile=None):
+                   subcommand_usage_func=output_subcommands, errfile=None):
     """Function to use in an "if __name__ == '__main__'" block in a script.
 
     Takes one or more combinations of option parser and main func and

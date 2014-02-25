@@ -24,8 +24,7 @@ known_compressors = {"bz2": tarfile.TarFile.bz2open,
 
 
 def write_set(contents_set, filepath, compressor='bzip2', absolute_paths=False,
-    parallelize=False):
-
+              parallelize=False):
     if compressor == 'bz2':
         compressor = 'bzip2'
 

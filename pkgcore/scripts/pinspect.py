@@ -55,9 +55,8 @@ def pkgsets_run(opts, out, err):
 
 
 def print_simple_histogram(data, out, format, total, sort_by_key=False,
-    first=None, last=None):
+                           first=None, last=None):
     # do the division up front...
-
     total = float(total) / 100
 
     if sort_by_key:

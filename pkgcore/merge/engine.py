@@ -84,7 +84,7 @@ class MergeEngine(object):
 
 
     def __init__(self, mode, tempdir, hooks, csets, preserves, observer,
-        offset=None, disable_plugins=False, parallelism=None):
+                 offset=None, disable_plugins=False, parallelism=None):
         if observer is None:
             observer = observer_mod.repo_observer(observer_mod.null_output)
         self.observer = observer
@@ -139,7 +139,7 @@ class MergeEngine(object):
 
     @classmethod
     def install(cls, tempdir, pkg, offset=None, observer=None,
-        disable_plugins=False):
+                disable_plugins=False):
 
         """
         generate a MergeEngine instance configured for installing a pkg
@@ -174,7 +174,7 @@ class MergeEngine(object):
 
     @classmethod
     def uninstall(cls, tempdir, pkg, offset=None, observer=None,
-        disable_plugins=False):
+                  disable_plugins=False):
 
         """
         generate a MergeEngine instance configured for uninstalling a pkg
@@ -209,7 +209,7 @@ class MergeEngine(object):
 
     @classmethod
     def replace(cls, tempdir, old, new, offset=None, observer=None,
-        disable_plugins=False):
+                disable_plugins=False):
 
         """
         generate a MergeEngine instance configured for replacing a pkg.

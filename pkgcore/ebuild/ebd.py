@@ -409,7 +409,7 @@ class setup_mixin(object):
 
 
 def run_generic_phase(pkg, phase, env, userpriv, sandbox, fakeroot,
-    extra_handlers=None, failure_allowed=False, logging=None):
+                      extra_handlers=None, failure_allowed=False, logging=None):
     """
     :param phase: phase to execute
     :param env: environment mapping for the phase
@@ -557,7 +557,7 @@ class buildable(ebd, setup_mixin, format.build):
     # XXX this is unclean- should be handing in strictly what is build
     # env, rather then dumping domain settings as env.
     def __init__(self, domain, pkg, verified_files, eclass_cache,
-        observer=None, **kwargs):
+                 observer=None, **kwargs):
         """
         :param pkg: :obj:`pkgcore.ebuild.ebuild_src.package` instance we'll be
             building

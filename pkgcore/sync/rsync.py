@@ -53,10 +53,9 @@ class rsync_syncer(base.ExternalSyncer):
         typename='syncer')
 
     def __init__(self, basedir, uri, timeout=default_timeout,
-        compress=False, excludes=(), includes=(),
-        retries=default_retries, proxy=None,
-        extra_opts=()):
-
+                 compress=False, excludes=(), includes=(),
+                 retries=default_retries, proxy=None,
+                 extra_opts=()):
         uri = uri.rstrip(os.path.sep) + os.path.sep
         self.rsh, uri = self.parse_uri(uri)
         base.ExternalSyncer.__init__(self, basedir, uri, default_verbosity=1)

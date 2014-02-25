@@ -458,8 +458,7 @@ class PortageFormatter(CountingFormatter):
         out.write('\n')
         out.autoline = origautoline
 
-    def format_use(self, attr, selectable, choice, oldselectable=None,
-               oldchoice=None):
+    def format_use(self, attr, selectable, choice, oldselectable=None, oldchoice=None):
         """Write the current selection from a set of flags to a formatter.
 
         :type attr: string

@@ -632,7 +632,7 @@ class merge_plan(object):
             drop_cycles = cur_frame.drop_cycles)
 
     def process_dependencies_and_blocks(self, stack, choices, attr,
-        atom=None, depth=None):
+                                        atom=None, depth=None):
         if atom is None:
             atom = stack.current_frame.atom
         if depth is None:

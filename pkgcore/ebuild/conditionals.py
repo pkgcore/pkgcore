@@ -51,11 +51,10 @@ class DepSet(boolean.AndRestriction):
         sf(self, '_node_conds', node_conds)
 
     @classmethod
-    def parse(cls, dep_str, element_class, \
-        operators=None,
-        element_func=None, transitive_use_atoms=False,
-        allow_src_uri_file_renames=False):
-
+    def parse(cls, dep_str, element_class,
+              operators=None,
+              element_func=None, transitive_use_atoms=False,
+              allow_src_uri_file_renames=False):
         """
         :param dep_str: string abiding by DepSet syntax
         :param operators: mapping of node -> callable for special operators

@@ -96,13 +96,13 @@ class ExtendCommaDelimited(argparse._AppendAction):
 
 class StoreBool(argparse._StoreAction):
     def __init__(self,
-                option_strings,
-                dest,
-                const=None,
-                default=None,
-                required=False,
-                help=None,
-                metavar='BOOLEAN'):
+                 option_strings,
+                 dest,
+                 const=None,
+                 default=None,
+                 required=False,
+                 help=None,
+                 metavar='BOOLEAN'):
         super(StoreBool, self).__init__(
             option_strings=option_strings,
             dest=dest,
@@ -459,8 +459,7 @@ def make_query(parser, *args, **kwargs):
 class Expansion(argparse.Action):
 
     def __init__(self, option_strings, dest, nargs=None, help=None,
-        required=None, subst=None):
-
+                 required=None, subst=None):
         if subst is None:
             raise TypeError("resultant_string must be set")
 
@@ -520,9 +519,9 @@ def python_namespace_type(value, module=False, attribute=False):
 class VersionFunc(argparse.Action):
 
     def __init__(self, option_strings,
-        dest=argparse.SUPPRESS, default=argparse.SUPPRESS,
-        nargs=0,
-        version_func=None):
+                 dest=argparse.SUPPRESS, default=argparse.SUPPRESS,
+                 nargs=0,
+                 version_func=None):
         super(VersionFunc, self).__init__(option_strings,
             dest=dest,
             default=default,
@@ -758,8 +757,7 @@ def convert_to_restrict(sequence, default=packages.AlwaysTrue):
     return l or [default]
 
 
-def main(subcommands, args=None, outfile=None, errfile=None,
-    script_name=None):
+def main(subcommands, args=None, outfile=None, errfile=None, script_name=None):
     """Function to use in an "if __name__ == '__main__'" block in a script.
 
     Takes one or more combinations of option parser and main func and

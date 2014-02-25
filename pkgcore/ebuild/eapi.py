@@ -256,7 +256,7 @@ eapi2 = EAPI.register("2",
     eapi1.tracked_attributes,
     combine_dicts(eapi1.options,
         dict(doman_language_detect=True, transitive_use_atoms=True,
-        src_uri_renames=True, has_AA=True, has_KV=True)),
+             src_uri_renames=True, has_AA=True, has_KV=True)),
     ebd_env_options=eapi1.ebd_env_options,
 )
 

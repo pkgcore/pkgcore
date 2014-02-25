@@ -412,8 +412,7 @@ def walk_dollar_expansion(buff, pos, end, endchar, disable_quote=False):
     return pos + 1
 
 def main_run(out_handle, data, vars_to_filter=(), funcs_to_filter=(), vars_is_whitelist=False, funcs_is_whitelist=False,
-    global_envvar_callback=None, func_callback=None, _parser=None):
-
+             global_envvar_callback=None, func_callback=None, _parser=None):
     vars = funcs = None
     if vars_to_filter:
         vars = build_regex_string(vars_to_filter, invert=vars_is_whitelist).match

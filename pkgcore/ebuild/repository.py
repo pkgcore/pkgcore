@@ -157,8 +157,7 @@ def _sort_eclasses(config, raw_repo, eclasses):
          'allow_missing_manifests':'bool'},
          requires_config='config')
 def tree(config, raw_repo, cache=(), eclass_override=None, default_mirrors=None,
-    ignore_paludis_versioning=False, allow_missing_manifests=False):
-
+         ignore_paludis_versioning=False, allow_missing_manifests=False):
     eclass_override = _sort_eclasses(config, raw_repo, eclass_override)
 
     return _UnconfiguredTree(raw_repo.location, eclass_override, cache=cache,
@@ -177,8 +176,7 @@ def tree(config, raw_repo, cache=(), eclass_override=None, default_mirrors=None,
          'allow_missing_manifests':'bool'},
          requires_config='config')
 def slavedtree(config, raw_repo, parent_repo, cache=(), eclass_override=None, default_mirrors=None,
-    ignore_paludis_versioning=False, allow_missing_manifests=False):
-
+               ignore_paludis_versioning=False, allow_missing_manifests=False):
     eclass_override = _sort_eclasses(config, raw_repo, eclass_override)
 
     return _SlavedTree(parent_repo, raw_repo.location, eclass_override, cache=cache,

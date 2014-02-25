@@ -109,8 +109,7 @@ def generate_fetchables(self, allow_missing_checksums=False):
 
 # utility func.
 def create_fetchable_from_uri(pkg, chksums, ignore_missing_chksums, mirrors,
-    default_mirrors, common_files, uri, filename=None):
-
+                              default_mirrors, common_files, uri, filename=None):
     if filename is None:
         filename = os.path.basename(uri)
 

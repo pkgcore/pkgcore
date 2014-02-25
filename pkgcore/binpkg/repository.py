@@ -228,7 +228,7 @@ class tree(prototype.tree):
         'repo_id':'str', 'ignore_paludis_versioning':'bool'}, typename='repo')
 
     def __init__(self, location, repo_id=None, ignore_paludis_versioning=False,
-        cache_version='0'):
+                 cache_version='0'):
         """
         :param location: root of the tbz2 repository
         :keyword repo_id: unique repository id to use; else defaults to

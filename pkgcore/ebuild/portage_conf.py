@@ -153,7 +153,7 @@ def isolate_rsync_opts(options):
 
 
 def make_syncer(new_config, basedir, sync_uri, rsync_opts,
-    allow_timestamps=True):
+                allow_timestamps=True):
     d = {'basedir': basedir, 'uri': sync_uri}
     if sync_uri.startswith('rsync'):
         d.update(rsync_opts)
@@ -268,7 +268,7 @@ def add_fetcher(config, conf_dict, distdir):
 
 
 def mk_simple_cache(config_root, tree_loc, readonly=False,
-    kls='pkgcore.cache.flat_hash.database'):
+                    kls='pkgcore.cache.flat_hash.database'):
     readonly = readonly and 'yes' or 'no'
     tree_loc = pjoin(config_root, 'var/cache/edb/dep',
        tree_loc.lstrip('/'))
@@ -280,7 +280,7 @@ def mk_simple_cache(config_root, tree_loc, readonly=False,
 
 
 def load_make_config(vars_dict, path, allow_sourcing=False, required=True,
-    incrementals=False):
+                     incrementals=False):
     sourcing_command = None
     if allow_sourcing:
         sourcing_command = 'source'

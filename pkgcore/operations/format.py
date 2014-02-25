@@ -63,7 +63,7 @@ class operations(_operations_mod.base):
     _fetch_kls = fetch_base
 
     def __init__(self, domain, pkg, observer=None, disable_overrides=(),
-        enable_overrides=()):
+                 enable_overrides=()):
         self.observer = observer
         self.pkg = pkg
         self.domain = domain

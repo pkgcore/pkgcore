@@ -43,7 +43,7 @@ class tree(prototype.tree):
         'disable_cache': 'bool'}, typename='repo')
 
     def __init__(self, location, cache_location=None, repo_id='vdb',
-        disable_cache=False):
+                 disable_cache=False):
         prototype.tree.__init__(self, frozen=False)
         self.repo_id = repo_id
         self.location = location

@@ -107,7 +107,8 @@ class domain(pkgcore.config.domain.domain):
     del _types, _thing
 
     def __init__(self, profile, repositories, vdb, name=None,
-        root='/', prefix='/', incrementals=const.incrementals, triggers=(), **settings):
+                 root='/', prefix='/', incrementals=const.incrementals,
+                 triggers=(), **settings):
         # voodoo, unfortunately (so it goes)
         # break this up into chunks once it's stabilized (most of code
         # here has already, but still more to add)
@@ -410,8 +411,8 @@ class domain(pkgcore.config.domain.domain):
                 return True
         return False
 
-    def make_keywords_filter(self, arch, default_keys,
-            accept_keywords, profile_keywords, incremental=False):
+    def make_keywords_filter(self, arch, default_keys, accept_keywords,
+                             profile_keywords, incremental=False):
         """Generates a restrict that matches iff the keywords are allowed."""
         if not accept_keywords and not profile_keywords:
             return packages.PackageRestriction(

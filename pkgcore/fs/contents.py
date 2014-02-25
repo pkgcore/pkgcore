@@ -397,8 +397,7 @@ class contentsSet(object):
 class OrderedContentsSet(contentsSet):
 
     def __init__(self, initial=None, mutable=False,
-        add_missing_directories=False):
-
+                 add_missing_directories=False):
         contentsSet.__init__(self, mutable=True)
         self._dict = OrderedDict()
         if initial:

@@ -159,7 +159,7 @@ class base(restriction.base):
         return self.restrictions[key]
 
     def evaluate_conditionals(self, parent_cls, parent_seq, enabled,
-        tristate_locked=None, force_collapse=False):
+                              tristate_locked=None, force_collapse=False):
         l = []
         for restrict in self:
             f = getattr(restrict, 'evaluate_conditionals', None)

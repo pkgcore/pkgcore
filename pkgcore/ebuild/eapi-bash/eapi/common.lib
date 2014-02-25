@@ -3,7 +3,7 @@
 
 use()
 {
-	local u="${1}"
+	local u="$1"
 
 	# EAPI5 and up.
 	if ${PKGCORE_PROFILE_IUSE_INJECTION} && \
@@ -17,7 +17,7 @@ use()
 	if [[ "${u:0:1}" == "!" ]]; then
 		! __safe_has "${u:1}" ${USE}
 	else
-		__safe_has "$u" ${USE}
+		__safe_has "${u}" ${USE}
 	fi
 	local ret=$?
 	__shopt_pop
@@ -26,8 +26,8 @@ use()
 
 usev()
 {
-	if use "${1}"; then
-		echo "${1}"
+	if use "$1"; then
+		echo "$1"
 	fi
 }
 
@@ -114,7 +114,7 @@ econf()
 	# if the ebuild passes in --libdir, they're responsible for the conf_libdir fun.
 
 	LIBDIR_VAR="LIBDIR_${ABI}"
-	if [ -n "${ABI}" -a -n "${!LIBDIR_VAR}" ]; then
+	if [[ -n "${ABI}" ]] && [[ -n "${!LIBDIR_VAR}" ]]; then
 		local CONF_LIBDIR="${!LIBDIR_VAR}"
 	fi
 	unset LIBDIR_VAR
@@ -153,13 +153,13 @@ econf()
 
 		# EAPI4 and up.
 		if ${PKGCORE_ECONF_DISABLE_DEPENDENCY_TRACKING} && \
-			[[ "${help_text}" =~ "--disable-dependency-tracking" ]]; then
+				[[ "${help_text}" =~ "--disable-dependency-tracking" ]]; then
 			extra_args+=( --disable-dependency-tracking )
 		fi
 
 		# EAPI5 and up.
 		if ${PKGCORE_ECONF_DISABLE_SILENT_RULES} && \
-			[[ "${help_text}" =~ "--disable-silent-rules" ]]; then
+				[[ "${help_text}" =~ "--disable-silent-rules" ]]; then
 			extra_args+=( --disable-silent-rules )
 		fi
 		set -- "${extra_args[@]}" "$@"
@@ -250,7 +250,7 @@ einstall()
 	# CONF_PREFIX is only set if they didn't pass in libdir above
 	local LOCAL_EXTRA_EINSTALL="${EXTRA_EINSTALL}"
 	local LIBDIR_VAR="LIBDIR_${ABI}"
-	if [ -n "${ABI}" -a -n "${!LIBDIR_VAR}" ]; then
+	if [[ -n "${ABI}" ]] && [[ -n "${!LIBDIR_VAR}" ]]; then
 		CONF_LIBDIR="${!LIBDIR_VAR}"
 	fi
 	unset LIBDIR_VAR
@@ -262,7 +262,7 @@ einstall()
 
 	# Reset IFS for LOCAL_EXTRA_EINSTALL, should users be up to something.
 	local IFS=$' \t\n'
-	if [ ! -f ./[mM]akefile -a ! -f ./GNUmakefile ]; then
+	if [[ ! -f ./[mM]akefile ]] && [[ ! -f ./GNUmakefile ]]; then
 		die "no Makefile found"
 	fi
 	set -- \
@@ -333,11 +333,11 @@ __phase_common_src_test()
 into()
 {
 	${PKGCORE_PREFIX_SUPPORT} || local ED="${D}"
-	if [ $1 == "/" ]; then
+	if [[ $1 == "/" ]]; then
 		export DESTTREE=""
 	else
 		export DESTTREE="$1"
-		if [ ! -d "${ED}${DESTTREE}" ]; then
+		if [[ ! -d "${ED}${DESTTREE}" ]]; then
 		    install -d "${ED}${DESTTREE}"
 		fi
 	fi
@@ -346,11 +346,11 @@ into()
 insinto()
 {
 	${PKGCORE_PREFIX_SUPPORT} || local ED="${D}"
-	if [ "$1" == "/" ]; then
+	if [[ "$1" == "/" ]]; then
 		export INSDESTTREE=""
 	else
 		export INSDESTTREE="$1"
-		if [ ! -d "${ED}${INSDESTTREE}" ]; then
+		if [[ ! -d "${ED}${INSDESTTREE}" ]]; then
 		    install -d "${ED}${INSDESTTREE}"
 		fi
 	fi
@@ -359,11 +359,11 @@ insinto()
 exeinto()
 {
 	${PKGCORE_PREFIX_SUPPORT} || local ED="${D}"
-	if [ "$1" == "/" ]; then
+	if [[ "$1" == "/" ]]; then
 		export PKGCORE_EXEDESTTREE=""
 	else
 		export PKGCORE_EXEDESTTREE="$1"
-		if [ ! -d "${ED}${PKGCORE_EXEDESTTREE}" ]; then
+		if [[ ! -d "${ED}${PKGCORE_EXEDESTTREE}" ]]; then
 		    install -d "${ED}${PKGCORE_EXEDESTTREE}"
 		fi
 	fi
@@ -372,11 +372,11 @@ exeinto()
 docinto()
 {
 	${PKGCORE_PREFIX_SUPPORT} || local ED="${D}"
-	if [ "$1" == "/" ]; then
+	if [[ "$1" == "/" ]]; then
 		export PKGCORE_DOCDESTTREE=""
 	else
 		export PKGCORE_DOCDESTTREE="$1"
-		if [ ! -d "${ED}usr/share/doc/${PF}/${PKGCORE_DOCDESTTREE}" ]; then
+		if [[ ! -d "${ED}usr/share/doc/${PF}/${PKGCORE_DOCDESTTREE}" ]]; then
 		    install -d "${ED}usr/share/doc/${PF}/${PKGCORE_DOCDESTTREE}"
 		fi
 	fi

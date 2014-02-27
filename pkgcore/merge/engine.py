@@ -397,8 +397,7 @@ class MergeEngine(object):
     def get_merged_cset(self, strip_offset=True):
         cset = self.csets["install"]
         if self.offset not in (None, '/') and strip_offset:
-            rewrite = contents.change_offset_rewriter(self.offset, '/',
-                cset)
+            rewrite = contents.change_offset_rewriter(self.offset, '/', cset)
             cset = contents.contentsSet(rewrite)
         return cset
 

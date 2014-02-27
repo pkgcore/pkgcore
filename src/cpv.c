@@ -120,8 +120,7 @@ pkgcore_cpv_parse_category(const char *start, int null_is_end)
 			if(!isalnum(*p))
 				return NULL;
 			p++;
-			while(isalnum(*p) || '+' == *p || '-' == *p || '.' == *p \
-				|| '_' == *p)
+			while(isalnum(*p) || '+' == *p || '-' == *p || '.' == *p || '_' == *p)
 				p++;
 			if('/' == *p) {
 				end = p;
@@ -145,7 +144,7 @@ pkgcore_cpv_parse_category(const char *start, int null_is_end)
 				return NULL;
 			p++;
 			while('\0' != *p && (isalnum(*p) || '+' == *p || '-' == *p \
-				|| '.' == *p || '_' == *p))
+			      || '.' == *p || '_' == *p))
 				p++;
 			if('/' == *p) {
 				p++;
@@ -571,7 +570,6 @@ pkgcore_cpv_parse_from_cpvstr(pkgcore_cpv *self, PyObject *cpvstr,
 	Py_XDECREF(tmp2);
 
 	return 0;
-
 }
 
 
@@ -591,7 +589,7 @@ pkgcore_cpv_init(pkgcore_cpv *self, PyObject *args, PyObject *kwds)
 		Py_ssize_t len = PyObject_Length(kwds);
 		if(len > 1) {
 			PyErr_SetString(PyExc_TypeError,
-				"cpv accepts only one keyword arguement- versioned");
+				"cpv accepts only one keyword argument- versioned");
 			goto cleanup;
 		} else if (len) {
 			// borrowed ref.
@@ -690,8 +688,8 @@ parse_error:
 		PyErr_SetObject(pkgcore_InvalidCPV_Exc, tmp);
 		Py_DECREF(tmp);
 	}
-cleanup:
 
+cleanup:
 	Py_CLEAR(self->category);
 	Py_CLEAR(self->package);
 	Py_CLEAR(self->key);
@@ -876,7 +874,6 @@ pkgcore_cpv_compare(pkgcore_cpv *self, pkgcore_cpv *other)
 	// all that remains is revision.
 	return pkgcore_nullsafe_compare(self->revision, other->revision);
 }
-
 
 
 static long

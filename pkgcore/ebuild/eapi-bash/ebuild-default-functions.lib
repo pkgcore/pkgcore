@@ -168,7 +168,7 @@ __dyn_pkg_preinst()
 	fi
 
 	# SELinux file labeling (needs to always be last in dyn_preinst)
-	if __feature_is_enabled selinux || use selinux; then
+	if __feature_is_enabled selinux; then
 		# only attempt to label if setfiles is executable
 		# and 'context' is available on selinuxfs.
 		if [[ -f /selinux/context ]] && [[ -x /usr/sbin/setfiles ]]; then

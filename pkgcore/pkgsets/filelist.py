@@ -103,4 +103,3 @@ class WorldFile(FileList):
         else:
             atom_inst = atom(atom_inst.key)
             func(self, atom_inst)
-

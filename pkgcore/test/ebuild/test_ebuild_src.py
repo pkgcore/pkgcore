@@ -41,8 +41,7 @@ class test_base(TestCase):
         self.assertEqual(o.P, 'diffball-0.1')
         self.assertEqual(o.PF, 'diffball-0.1-r1')
         self.assertEqual(o.PR, 1)
-        self.assertEqual(self.get_pkg({}, 'dev-util/diffball-0.1').PR,
-            0)
+        self.assertEqual(self.get_pkg({}, 'dev-util/diffball-0.1').PR, 0)
 
     def test_ebuild(self):
         l = []
@@ -59,7 +58,6 @@ class test_base(TestCase):
             return {'1':'2'}
         o = self.get_pkg(repo=self.make_parent(_get_metadata=f))
         self.assertEqual(o.data, {'1': '2'})
-
 
     def test_license(self):
         o = self.get_pkg({'LICENSE':'GPL2 FOON'})

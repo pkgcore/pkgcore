@@ -53,21 +53,24 @@ def map_new_cset_livefs(engine, csets, cset_name='new_cset'):
 class MergeEngine(object):
 
     install_hooks = dict((x, []) for x in [
-            "sanity_check", "pre_merge", "merge", "post_merge", "final"])
+        "sanity_check", "pre_merge", "merge", "post_merge", "final"])
     uninstall_hooks = dict((x, []) for x in [
-            "sanity_check", "pre_unmerge", "unmerge", "post_unmerge", "final"])
+        "sanity_check", "pre_unmerge", "unmerge", "post_unmerge", "final"])
     replace_hooks = dict((x, []) for x in set(
-            install_hooks.keys() + uninstall_hooks.keys()))
+        install_hooks.keys() + uninstall_hooks.keys()))
 
-    install_csets = {"install_existing":"get_install_livefs_intersect",
+    install_csets = {
+        "install_existing": "get_install_livefs_intersect",
         "resolved_install": map_new_cset_livefs,
-        'new_cset':currying.partial(alias_cset, 'raw_new_cset'),
-        "install":currying.partial(alias_cset, 'new_cset'),
-        "replace":currying.partial(alias_cset, 'new_cset')}
+        'new_cset': currying.partial(alias_cset, 'raw_new_cset'),
+        "install": currying.partial(alias_cset, 'new_cset'),
+        "replace": currying.partial(alias_cset, 'new_cset'),
+    }
     uninstall_csets = {
-        "uninstall_existing":currying.partial(alias_cset, "uninstall"),
-        "uninstall":currying.partial(alias_cset, "old_cset"),
-        "old_cset":"get_uninstall_livefs_intersect"}
+        "uninstall_existing": currying.partial(alias_cset, "uninstall"),
+        "uninstall": currying.partial(alias_cset, "old_cset"),
+        "old_cset": "get_uninstall_livefs_intersect",
+    }
     replace_csets = dict(install_csets)
     replace_csets.update(uninstall_csets)
     replace_csets["modifying"] = (
@@ -153,16 +156,14 @@ class MergeEngine(object):
 
         """
 
-        hooks = dict(
-            (k, [y() for y in v])
-            for (k, v) in cls.install_hooks.iteritems())
+        hooks = dict((k, [y() for y in v])
+                     for (k, v) in cls.install_hooks.iteritems())
 
         csets = dict(cls.install_csets)
         if "raw_new_cset" not in csets:
             csets["raw_new_cset"] = currying.post_curry(cls.get_pkg_contents, pkg)
-        o = cls(
-            INSTALL_MODE, tempdir, hooks, csets, cls.install_csets_preserve,
-            observer, offset=offset, disable_plugins=disable_plugins)
+        o = cls(INSTALL_MODE, tempdir, hooks, csets, cls.install_csets_preserve,
+                observer, offset=offset, disable_plugins=disable_plugins)
 
         if o.offset != '/':
             # wrap the results of new_cset to pass through an offset generator
@@ -188,16 +189,14 @@ class MergeEngine(object):
         :return: :obj:`MergeEngine`
         """
 
-        hooks = dict(
-            (k, [y() for y in v])
-            for (k, v) in cls.uninstall_hooks.iteritems())
+        hooks = dict((k, [y() for y in v])
+                     for (k, v) in cls.uninstall_hooks.iteritems())
         csets = dict(cls.uninstall_csets)
+
         if "raw_old_cset" not in csets:
-            csets["raw_old_cset"] = currying.post_curry(cls.get_pkg_contents,
-                pkg)
-        o = cls(
-            UNINSTALL_MODE, tempdir, hooks, csets, cls.uninstall_csets_preserve,
-            observer, offset=offset, disable_plugins=disable_plugins)
+            csets["raw_old_cset"] = currying.post_curry(cls.get_pkg_contents, pkg)
+        o = cls(UNINSTALL_MODE, tempdir, hooks, csets, cls.uninstall_csets_preserve,
+                observer, offset=offset, disable_plugins=disable_plugins)
 
         if o.offset != '/':
             # wrap the results of new_cset to pass through an offset generator
@@ -225,18 +224,16 @@ class MergeEngine(object):
 
         """
 
-        hooks = dict(
-            (k, [y() for y in v])
-            for (k, v) in cls.replace_hooks.iteritems())
+        hooks = dict((k, [y() for y in v])
+                     for (k, v) in cls.replace_hooks.iteritems())
 
         csets = dict(cls.replace_csets)
 
         csets.setdefault('raw_old_cset', currying.post_curry(cls.get_pkg_contents, old))
         csets.setdefault('raw_new_cset', currying.post_curry(cls.get_pkg_contents, new))
 
-        o = cls(
-            REPLACE_MODE, tempdir, hooks, csets, cls.replace_csets_preserve,
-            observer, offset=offset, disable_plugins=disable_plugins)
+        o = cls(REPLACE_MODE, tempdir, hooks, csets, cls.replace_csets_preserve,
+                observer, offset=offset, disable_plugins=disable_plugins)
 
         if o.offset != '/':
             for k in ("raw_old_cset", "raw_new_cset"):

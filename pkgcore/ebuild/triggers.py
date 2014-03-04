@@ -30,16 +30,18 @@ demandload(globals(),
     'snakeoil:compatibility',
 )
 
-colon_parsed = frozenset(
-    ["ADA_INCLUDE_PATH",  "ADA_OBJECTS_PATH", "INFODIR", "INFOPATH",
-     "LDPATH", "MANPATH", "PATH", "PRELINK_PATH", "PRELINK_PATH_MASK",
-     "PYTHONPATH", "PKG_CONFIG_PATH", "ROOTPATH"])
+colon_parsed = frozenset([
+    "ADA_INCLUDE_PATH",  "ADA_OBJECTS_PATH", "INFODIR", "INFOPATH",
+    "LDPATH", "MANPATH", "PATH", "PRELINK_PATH", "PRELINK_PATH_MASK",
+    "PYTHONPATH", "PKG_CONFIG_PATH", "ROOTPATH"
+])
 
-incrementals = frozenset(
-    ['ADA_INCLUDE_PATH', 'ADA_OBJECTS_PATH', 'CLASSPATH', 'CONFIG_PROTECT',
-     'CONFIG_PROTECT_MASK', 'INFODIR', 'INFOPATH', 'KDEDIRS', 'LDPATH',
-     'MANPATH', 'PATH', 'PRELINK_PATH', 'PRELINK_PATH_MASK', 'PYTHONPATH',
-     'ROOTPATH', 'PKG_CONFIG_PATH'])
+incrementals = frozenset([
+    'ADA_INCLUDE_PATH', 'ADA_OBJECTS_PATH', 'CLASSPATH', 'CONFIG_PROTECT',
+    'CONFIG_PROTECT_MASK', 'INFODIR', 'INFOPATH', 'KDEDIRS', 'LDPATH',
+    'MANPATH', 'PATH', 'PRELINK_PATH', 'PRELINK_PATH_MASK', 'PYTHONPATH',
+    'ROOTPATH', 'PKG_CONFIG_PATH'
+])
 
 default_ldpath = ('/lib', '/lib64', '/lib32',
     '/usr/lib', '/usr/lib64', '/usr/lib32')
@@ -360,7 +362,7 @@ class collision_protect(triggers.base):
     required_csets = {
         const.INSTALL_MODE:('resolved_install', 'install_existing'),
         const.REPLACE_MODE:('resolved_install', 'install_existing', 'old_cset')
-        }
+    }
 
     _hooks = ('sanity_check',)
     _engine_types = triggers.INSTALLING_MODES
@@ -380,8 +382,6 @@ class collision_protect(triggers.base):
         # for the moment, we just care about files
         colliding = existing.difference(install.iterdirs())
 
-        # filter out daft .keep files.
-
         # hackish, but it works.
         protected_filter = gen_config_protect_filter(engine.offset,
             self.extra_protects, self.extra_disables).match
@@ -398,7 +398,7 @@ class collision_protect(triggers.base):
             return
 
         # Wipe the references since we may throw an exception- we don't want potentially
-        # Millions of references being kept in memory for heavy ignore matches.
+        # millions of references being kept in memory for heavy ignore matches.
         del ignores, protected_filter, ignore_filter
         colliding.difference_update(old_cset)
         if colliding:
@@ -412,7 +412,7 @@ class install_into_symdir_protect(triggers.base):
     required_csets = {
         const.INSTALL_MODE:('install', 'install_existing'),
         const.REPLACE_MODE:('install', 'install_existing', 'old_cset')
-        }
+    }
 
     _hooks = ('sanity_check',)
     _engine_types = triggers.INSTALLING_MODES

@@ -154,7 +154,7 @@ def get_parsed_eapi(self):
     if ebuild.path:
         # Use readlines directly since it does whitespace stripping
         # for us, far faster than native python can.
-        i = fileutils.readlines_ascii(ebuild.path)
+        i = fileutils.readlines_utf8(ebuild.path)
     else:
         i = (x.strip() for x in ebuild.text_fileobj())
     for line in i:

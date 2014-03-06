@@ -301,7 +301,8 @@ __ebd_process_ebuild_phases() {
 				cont=2
 				;;
 			*)
-				echo "received unknown com during phase processing: line was: ${line}" >&2
+				echo "received unknown com during phase processing: ${line}" >&2
+				exit 1
 				;;
 		esac
 	done
@@ -438,6 +439,7 @@ __ebd_main_loop() {
 				;;
 			*)
 				echo "received unknown com: ${com}" >&2
+				exit 1
 				;;
 		esac
 	done

@@ -322,6 +322,10 @@ __ebd_process_ebuild_phases()
 			fi
 			cont=2
 			;;
+		shutdown_daemon)
+			echo "ebuild processing aborted" >&2
+			exit 1
+			;;
 		*)
 			echo "received unknown com during phase processing: line was: $line" >&2
 			;;

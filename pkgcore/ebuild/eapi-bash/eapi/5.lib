@@ -6,14 +6,20 @@ source "${PKGCORE_BIN_PATH}/eapi/4.lib"
 has_version()
 {
 	local r="${ROOT:-/}"
-	[ "$1" == --host-root ] && r=/
+	if [[ $1 == --host-root ]]; then
+		r=/
+		shift
+	fi
 	PKGCORE_DISABLE_COMPAT=true portageq 'has_version' "$1" --domain-at-root "$r"
 }
 
 best_version()
 {
 	local r="${ROOT:-/}"
-	[ "$1" == --host-root ] && r=/
+	if [[ $1 == --host-root ]]; then
+		r=/
+		shift
+	fi
 	PKGCORE_DISABLE_COMPAT=true portageq 'best_version' "$1" --domain-at-root "$r"
 
 }

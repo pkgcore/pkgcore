@@ -4,8 +4,15 @@
 use()
 {
 	local u="$1"
+	local found=0
 
-	# EAPI5 and up.
+	# invert return values for '!flag' and strip prefix for EAPI 5 check
+	if [[ ${u:0:1} == "!" ]]; then
+		u=${u:1}
+		found=1
+	fi
+
+	# EAPI 5 and up
 	if ${PKGCORE_PROFILE_IUSE_INJECTION} && \
 			[[ ! ${u} =~ ${PKGCORE_IUSE_EFFECTIVE} ]]; then
 		die "USE flag '${u}' not in IUSE for ${CATEGORY}/${PF}"
@@ -13,13 +20,12 @@ use()
 
 	# Ensure USE is split on normal IFS.
 	__shopt_push -f
-	local IFS=$' \t\n'
-	if [[ "${u:0:1}" == "!" ]]; then
-		! __safe_has "${u:1}" ${USE}
+	local IFS=$' \t\n' ret
+	if __safe_has ${u} ${USE}; then
+		ret=${found}
 	else
-		__safe_has "${u}" ${USE}
+		ret=$((!found))
 	fi
-	local ret=$?
 	__shopt_pop
 	return "${ret}"
 }

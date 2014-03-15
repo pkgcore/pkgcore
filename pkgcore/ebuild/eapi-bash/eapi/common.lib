@@ -173,7 +173,7 @@ econf()
 	fi
 
 	# Reset IFS since we're interpretting user supplied EXTRA_ECONF.
-	local IFS=' \t\n'
+	local IFS=$' \t\n'
 	set -- "${ECONF_SOURCE}/configure" \
 		--prefix=/usr \
 		${CBUILD:+--build="${CBUILD}"} \

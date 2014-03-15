@@ -110,9 +110,9 @@ econf()
 	if [[ -d /usr/share/gnuconfig ]]; then
 		local x
 		find "${WORKDIR}" -type f \( -name config.guess -o -name config.sub \) | \
-		    while read x; do
-		    echo "econf: replacing ${x} with /usr/share/gnuconfig/${x##*/}"
-		    cp -f "/usr/share/gnuconfig/${x##*/}" "$x"
+			while read x; do
+			echo "econf: replacing ${x} with /usr/share/gnuconfig/${x##*/}"
+			cp -f "/usr/share/gnuconfig/${x##*/}" "$x"
 		done
 	fi
 
@@ -126,32 +126,31 @@ econf()
 	unset LIBDIR_VAR
 	if [[ -n "${CONF_LIBDIR}" ]] && [[ "${*/--libdir}" == "$*" ]]; then
 		if [[ "${*/--exec-prefix}" != "$*" ]]; then
-		    local args="$(echo $*)"
-		    local -a pref=($(echo ${args/*--exec-prefix[= ]}))
-		    CONF_PREFIX=${pref/--*}
-		    [[ "${CONF_PREFIX:0:1}" != "/" ]] && CONF_PREFIX="/${CONF_PREFIX}"
+			local args="$(echo $*)"
+			local -a pref=($(echo ${args/*--exec-prefix[= ]}))
+			CONF_PREFIX=${pref/--*}
+			[[ "${CONF_PREFIX:0:1}" != "/" ]] && CONF_PREFIX="/${CONF_PREFIX}"
 		elif [[ "${*/--prefix}" != "$*" ]]; then
-		    local args="$(echo $*)"
- 			local -a pref=($(echo ${args/*--prefix[= ]}))
- 			CONF_PREFIX=${pref/--*}
-		    [[ "${CONF_PREFIX:0:1}" != "/" ]] && CONF_PREFIX="/${CONF_PREFIX}"
+			local args="$(echo $*)"
+			local -a pref=($(echo ${args/*--prefix[= ]}))
+			CONF_PREFIX=${pref/--*}
+			[[ "${CONF_PREFIX:0:1}" != "/" ]] && CONF_PREFIX="/${CONF_PREFIX}"
 		else
-		    CONF_PREFIX="/usr"
- 	    fi
- 		export CONF_PREFIX
+			CONF_PREFIX="/usr"
+		fi
+		export CONF_PREFIX
 		[[ "${CONF_LIBDIR:0:1}" != "/" ]] && CONF_LIBDIR="/${CONF_LIBDIR}"
 
 		local CONF_LIBDIR_RESULT="${CONF_PREFIX}${CONF_LIBDIR}"
 		for X in 1 2 3; do
-		    # The escaping is weird. It will break if you escape the last one.
-		    CONF_LIBDIR_RESULT="${CONF_LIBDIR_RESULT//\/\///}"
+			# The escaping is weird. It will break if you escape the last one.
+			CONF_LIBDIR_RESULT="${CONF_LIBDIR_RESULT//\/\///}"
 		done
 		unset X
 
 		set -- --libdir="${CONF_LIBDIR_RESULT}" "$@"
 		unset CONF_LIBDIR_RESULT
 	fi
-
 
 	if ${PKGCORE_ECONF_DISABLE_DEPENDENCY_TRACKING} || ${PKGCORE_ECONF_DISABLE_SILENT_RULES}; then
 		local help_text=$("${CONF_SOURCE}/configure" --help 2> /dev/null)
@@ -191,11 +190,10 @@ econf()
 	echo "$@"
 
 	if ! "$@"; then
-
 		if [[ -s config.log ]]; then
-		    echo
-		    echo "!!! Please attach the config.log to your bug report:"
-		    echo "!!! ${PWD}/config.log"
+			echo
+			echo "!!! Please attach the config.log to your bug report:"
+			echo "!!! ${PWD}/config.log"
 		fi
 		die "econf failed"
 	fi
@@ -274,13 +272,13 @@ einstall()
 	set -- \
 		${MAKE:-make} \
 		prefix="${ED}/usr" \
-	    datadir="${ED}/usr/share" \
-	    infodir="${ED}/usr/share/info" \
-	    localstatedir="${ED}/var/lib" \
-	    mandir="${ED}/usr/share/man" \
-	    sysconfdir="${ED}/etc" \
-	    ${LOCAL_EXTRA_EINSTALL} \
-	    "$@" install
+		datadir="${ED}/usr/share" \
+		infodir="${ED}/usr/share/info" \
+		localstatedir="${ED}/var/lib" \
+		mandir="${ED}/usr/share/man" \
+		sysconfdir="${ED}/etc" \
+		${LOCAL_EXTRA_EINSTALL} \
+		"$@" install
 	[[ "$PKGCORE_DEBUG" != 0 ]] && "$@" -n
 	"$@" || die "einstall failed"
 }
@@ -293,7 +291,7 @@ __phase_common_pkg_nofetch()
 	local fp
 	__shopt_push -f
 	for fp in ${SRC_URI}; do
-		echo "!!!   ${fp}"
+		echo "!!! ${fp}"
 	done
 	__shopt_pop
 }
@@ -310,9 +308,9 @@ __phase_common_src_compile()
 	# only eapi 0/1 invoke configure...
 	if __safe_has "${EAPI:-0}" 0 1; then
 		if [[ "${EAPI:-0}" == 0 ]]; then
-		    [[ -x ./configure ]] && econf
+			[[ -x ./configure ]] && econf
 		elif [[ -x "${ECONF_SOURCE:-.}/configure" ]]; then
-		    econf
+			econf
 		fi
 	fi
 	if [[ -f Makefile ]] || [[ -f GNUmakefile ]] || [[ -f makefile ]]; then
@@ -344,7 +342,7 @@ into()
 	else
 		export DESTTREE="$1"
 		if [[ ! -d "${ED}${DESTTREE}" ]]; then
-		    install -d "${ED}${DESTTREE}"
+			install -d "${ED}${DESTTREE}"
 		fi
 	fi
 }
@@ -357,7 +355,7 @@ insinto()
 	else
 		export INSDESTTREE="$1"
 		if [[ ! -d "${ED}${INSDESTTREE}" ]]; then
-		    install -d "${ED}${INSDESTTREE}"
+			install -d "${ED}${INSDESTTREE}"
 		fi
 	fi
 }
@@ -370,7 +368,7 @@ exeinto()
 	else
 		export PKGCORE_EXEDESTTREE="$1"
 		if [[ ! -d "${ED}${PKGCORE_EXEDESTTREE}" ]]; then
-		    install -d "${ED}${PKGCORE_EXEDESTTREE}"
+			install -d "${ED}${PKGCORE_EXEDESTTREE}"
 		fi
 	fi
 }
@@ -383,7 +381,7 @@ docinto()
 	else
 		export PKGCORE_DOCDESTTREE="$1"
 		if [[ ! -d "${ED}usr/share/doc/${PF}/${PKGCORE_DOCDESTTREE}" ]]; then
-		    install -d "${ED}usr/share/doc/${PF}/${PKGCORE_DOCDESTTREE}"
+			install -d "${ED}usr/share/doc/${PF}/${PKGCORE_DOCDESTTREE}"
 		fi
 	fi
 }
@@ -468,7 +466,7 @@ __phase_default_pre_src_install()
 	rm -rf "${D}"
 	if ${PKGCORE_PREFIX_SUPPORT}; then
 		[[ -n "${ED+set}" ]] || \
-			die "variable ED is unset, but prefix mode is enabled.  internal error?"
+			die "variable ED is unset, but prefix mode is enabled.	internal error?"
 		export ED="${ED}"
 		mkdir -p "${ED}"
 	else
@@ -483,7 +481,7 @@ __inject_phase_funcs()
 	shift
 	for x in "$@"; do
 		if ! __is_function "$x"; then
-		    eval "__phase_default_${x}() { ${pref}_${x}; }";
+			eval "__phase_default_${x}() { ${pref}_${x}; }";
 		fi
 	done
 }
@@ -588,8 +586,7 @@ unpack()
 		esac
 	done
 	find . -mindepth 1 -maxdepth 1 ! -type l -print0 | \
-		 ${XARGS} -0 chmod -fR a+rX,u+w,g-w,o-w
-
+		${XARGS} -0 chmod -fR a+rX,u+w,g-w,o-w
 }
 
 diropts()
@@ -630,7 +627,7 @@ portageq() {
 	${PKGCORE_DISABLE_COMPAT-false} && portageq_str=query
 	SANDBOX_ON=0 PYTHONPATH="$PKGCORE_PYTHONPATH" "${PKGCORE_PYTHON_BINARY}" \
 		"${PKGCORE_BIN_PATH}/pinspect" ${portageq_str} "${command}" \
-			--eapi "${EAPI:--1}" --use "${USE}" "$@"
+		--eapi "${EAPI:--1}" --use "${USE}" "$@"
 	local ret="$?"
 	[[ "$ret" == 127 ]] && die "pinspect couldn't be found; broken pkgcore installation?"
 	return $(( $ret ))
@@ -638,12 +635,12 @@ portageq() {
 
 has_version()
 {
-    PKGCORE_DISABLE_COMPAT=true portageq 'has_version' "$1"
+	PKGCORE_DISABLE_COMPAT=true portageq 'has_version' "$1"
 }
 
 best_version()
 {
-    PKGCORE_DISABLE_COMPAT=true portageq 'best_version' "$1"
+	PKGCORE_DISABLE_COMPAT=true portageq 'best_version' "$1"
 }
 
 :

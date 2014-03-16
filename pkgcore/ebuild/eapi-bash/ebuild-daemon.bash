@@ -324,6 +324,7 @@ __ebd_process_ebuild_phases()
 			;;
 		*)
 			echo "received unknown com during phase processing: line was: $line" >&2
+			exit 1
 			;;
 		esac
 	done

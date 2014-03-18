@@ -897,7 +897,10 @@ def expected_ebuild_env(pkg, d=None, env_source_override=None, depends=False):
     if not depends:
         path = list()
         path.extend(const.HOST_ROOT_PATHS)
-        path.append(osutils.pjoin(e_const.EBUILD_HELPERS_PATH, str(pkg.eapi)))
+        for eapi in range(0, pkg.eapi+1):
+            eapi_helper_dir = osutils.pjoin(e_const.EBUILD_HELPERS_PATH, str(eapi))
+            if os.path.exists(eapi_helper_dir):
+                path.append(eapi_helper_dir)
         path.append(osutils.pjoin(e_const.EBUILD_HELPERS_PATH, "common"))
         path.extend(d.get("PATH", "").split(":"))
         d["PATH"] = ":".join(filter(None, path))

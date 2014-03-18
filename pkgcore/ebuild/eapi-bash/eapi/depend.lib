@@ -27,8 +27,9 @@ use_enable()
 	return 1
 }
 
-hasq()
-{
+hasq() {
+	has ${EBUILD_PHASE} prerm postrm || eqawarn \
+		"QA Notice: The 'hasq' function is deprecated (replaced by 'has')"
 	has "$@"
 }
 

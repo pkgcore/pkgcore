@@ -49,8 +49,6 @@ done
 unset __source_was_seen
 unset source
 
-echo >&2
-
 # Sorting order; put PMS functionality first, then our internals.
 result=$(__environ_list_funcs | sort)
 result=$(echo "$result" | grep -v "^__"; echo "$result" | grep "^__")
@@ -58,8 +56,9 @@ result=$(echo "$result" | grep -v "^__"; echo "$result" | grep "^__")
 # remove internal functions with external variants that need to be exported for certain EAPI ranges (e.g. usex)
 [[ ${#INTERNAL_FUNCS[@]} -gt 0 ]] && result=$(echo "${result}" | grep -v "$(echo ${INTERNAL_FUNCS[@]} | tr ' ' '\n')")
 
-if [[ "${_FP}" == '-' ]]; then
-	echo "$result"
+if [[ ${_FP} == '-' ]]; then
+	echo >&2
+	echo "${result}"
 else
 	echo "$result" > dont_export_funcs.list
 fi

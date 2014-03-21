@@ -1,36 +1,6 @@
 # Copyright: 2011-2012 Brian Harring <ferringb@gmail.com>
 # license GPL2/BSD 3
 
-__phase_eapi2_src_configure()
-{
-	if [[ -x ${ECONF_SOURCE:-.}/configure ]] ; then
-		econf
-	fi
-}
-
-__phase_eapi2_src_prepare() {
-	:
-}
-
-for x in pkg_nofetch src_{unpack,compile,test}; do
-	eval "default_${x}() { __phase_common_${x}; }"
-done
-unset x
-
-default_src_configure() { __phase_eapi2_src_configure; }
-default_src_prepare()   { __phase_eapi2_src_prepare; }
-
-default() {
-	if __is_function default_pkg_${EBUILD_PHASE}; then
-		default_pkg_${EBUILD_PHASE}
-	elif __is_function default_src_${EBUILD_PHASE}; then
-		default_src_${EBUILD_PHASE}
-	else
-		die "default is not available in ebuild phase '${EBUILD_PHASE}'"
-	fi
-}
-
-__inject_phase_funcs __phase_eapi2 src_{configure,prepare}
-__inject_common_phase_funcs
+source "${PKGCORE_BIN_PATH}"/eapi/2.lib
 
 :

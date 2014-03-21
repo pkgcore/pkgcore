@@ -11,7 +11,7 @@ for x in "$@" ; do
 		my_basename="${x##*/}"
 		mydir="${ED}${DESTTREE}/share/locale/${my_basename%.*}/LC_MESSAGES"
 		check_command install -d "${mydir}" && \
-		check_command install -m0644 "${x}" "${mydir}/${MOPREFIX}.mo"
+			check_command install -m0644 -- "${x}" "${mydir}/${MOPREFIX}.mo"
 	else
 		error "'${x}' does not exist"
 	fi

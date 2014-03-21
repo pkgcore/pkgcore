@@ -37,7 +37,7 @@ for x in "$@" ; do
 	if [[ ${mandir} =~ man[0-9n](f|p|pm)?$ ]] ; then
 		if [[ -s ${x} ]] ; then
 			check_command install -d "${ED}/usr/share/man/${mandir}" || continue
-			check_command install -m0644 "${x}" "${ED}/usr/share/man/${mandir}/${name}"
+			check_command install -m0644 -- "${x}" "${ED}/usr/share/man/${mandir}/${name}"
 		elif [[ ! -e ${x} ]] ; then
 			error "'${x}' does not exist"
 		fi

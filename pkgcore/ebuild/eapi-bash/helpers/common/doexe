@@ -9,7 +9,7 @@ check_command_or_stop install -d "${ED}${PKGCORE_EXEDESTTREE}"
 
 for x in "$@" ; do
 	if [[ -L "${x}" ]]; then
-		check_command cp "${x}" "${T}" || continue
+		check_command cp -- "${x}" "${T}" || continue
 		mysrc="${T}/${x##*/}"
 	elif [[ -d "${x}" ]]; then
 		warn "skipping directory ${x}"
@@ -17,7 +17,7 @@ for x in "$@" ; do
 	else
 		mysrc="${x}"
 	fi
-	check_command install ${EXEOPTIONS} "${mysrc}" "${ED}${PKGCORE_EXEDESTTREE}"
+	check_command install ${EXEOPTIONS} -- "${mysrc}" "${ED}${PKGCORE_EXEDESTTREE}"
 	# cleanup after ourselves...
 	[[ ${mysrc} != ${x} ]] && rm -f "${mysrc}"
 done

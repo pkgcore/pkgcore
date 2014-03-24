@@ -43,9 +43,6 @@ incrementals = frozenset([
     'ROOTPATH', 'PKG_CONFIG_PATH'
 ])
 
-default_ldpath = ('/lib', '/lib64', '/lib32',
-    '/usr/lib', '/usr/lib64', '/usr/lib32')
-
 def collapse_envd(base):
     collapsed_d = {}
     try:

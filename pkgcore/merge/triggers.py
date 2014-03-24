@@ -116,7 +116,7 @@ class base(object):
                 csets = csets.get(mode)
         return csets
 
-    def localize(self, mergeengine):
+    def localize(self, engine):
         """
         'localize' a trigger to a specific merge engine process
         mainly used if the trigger comes from configuration

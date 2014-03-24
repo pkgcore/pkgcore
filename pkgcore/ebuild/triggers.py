@@ -358,8 +358,8 @@ class preinst_contents_reset(triggers.base):
 class collision_protect(triggers.base):
 
     required_csets = {
-        const.INSTALL_MODE:('install', 'install_existing'),
-        const.REPLACE_MODE:('install', 'install_existing', 'old_cset')
+        const.INSTALL_MODE:('resolved_install', 'install_existing'),
+        const.REPLACE_MODE:('resolved_install', 'install_existing', 'old_cset')
         }
 
     _hooks = ('sanity_check',)

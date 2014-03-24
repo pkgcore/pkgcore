@@ -379,14 +379,14 @@ class MergeEngine(object):
         return csets["resolved_install"].intersection(csets["old_cset"])
 
     @staticmethod
-    def _get_livefs_intersect_cset(engine, csets, cset_name, realpath=False):
+    def _get_livefs_intersect_cset(engine, csets, cset_name, realpath=True):
         """generates the livefs intersection against a cset"""
         return contents.contentsSet(livefs.intersect(csets[cset_name],
             realpath=realpath))
 
     @staticmethod
     def get_install_livefs_intersect(engine, csets):
-        return engine._get_livefs_intersect_cset(engine, csets, "install")
+        return engine._get_livefs_intersect_cset(engine, csets, "resolved_install")
 
     @staticmethod
     def get_uninstall_livefs_intersect(engine, csets):

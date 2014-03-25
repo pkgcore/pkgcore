@@ -547,22 +547,22 @@ def generate_triggers(domain):
     domain_settings = domain.settings
     yield env_update()
 
-    protect = domain_settings.get('CONFIG_PROTECT', ())
-    if isinstance(protect, basestring):
-        protect = protect.split()
-    mask = domain_settings.get('CONFIG_PROTECT_MASK', ())
-    if isinstance(protect, basestring):
-        protect = protect.split()
-    ignore = domain_settings.get('COLLISION_IGNORE', ())
-    if isinstance(ignore, basestring):
-        ignore = ignore.split()
+    config_protect = domain_settings.get('CONFIG_PROTECT', ())
+    if isinstance(config_protect, basestring):
+        config_protect = config_protect.split()
+    config_protect_mask = domain_settings.get('CONFIG_PROTECT_MASK', ())
+    if isinstance(config_protect_mask, basestring):
+        config_protect_mask = config_protect_mask.split()
+    collision_ignore = domain_settings.get('COLLISION_IGNORE', ())
+    if isinstance(collision_ignore, basestring):
+        collision_ignore = collision_ignore.split()
 
-    yield ConfigProtectInstall(protect, mask)
+    yield ConfigProtectInstall(config_protect, config_protect_mask)
     yield ConfigProtectUninstall()
 
     features = domain_settings.get("FEATURES", ())
     if "collision-protect" in features:
-        yield collision_protect(protect, mask, ignore)
+        yield collision_protect(config_protect, config_protect_mask, collision_ignore)
 
     if "multilib-strict" in features:
         yield register_multilib_strict_trigger(domain_settings)
@@ -570,7 +570,7 @@ def generate_triggers(domain):
     if "sfperms" in features:
         yield SFPerms()
 
-    yield install_into_symdir_protect(protect, mask)
+    yield install_into_symdir_protect(config_protect, config_protect_mask)
     install_mask = domain_settings.get("INSTALL_MASK", '').split()
 
     for x in ("man", "info", "doc"):

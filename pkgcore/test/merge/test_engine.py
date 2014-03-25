@@ -71,14 +71,14 @@ class Test_MergeEngineCsets(TestCase):
 
     def test_get_remove_cset(self):
         files = contentsSet(self.simple_cset.iterfiles(invert=True))
-        engine = fake_engine(csets={'resolved_install':files,
+        engine = fake_engine(csets={'install':files,
             'old_cset':self.simple_cset})
         self.assertCsetEqual(self.simple_cset.iterfiles(),
             self.run_cset('get_remove_cset', engine))
 
     def test_get_replace_cset(self):
         files = contentsSet(self.simple_cset.iterfiles(invert=True))
-        engine = fake_engine(csets={'resolved_install':files,
+        engine = fake_engine(csets={'install':files,
             'old_cset':self.simple_cset})
         self.assertCsetEqual(files,
             self.run_cset('get_replace_cset', engine))

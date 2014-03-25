@@ -44,7 +44,7 @@ def map_new_cset_livefs(engine, csets, cset_name='new_cset'):
     localized to the livefs"""
     initial = csets[cset_name]
     ondisk = contents.contentsSet(livefs.intersect(initial.iterdirs(),
-        realpath=True))
+        realpath=False))
     livefs.recursively_fill_syms(ondisk)
     ret = initial.map_directory_structure(ondisk, add_conflicting_sym=True)
     return ret
@@ -368,22 +368,22 @@ class MergeEngine(object):
     @staticmethod
     def get_remove_cset(engine, csets):
         """generate the cset of what files shall be removed from the livefs"""
-        return csets["old_cset"].difference(csets["resolved_install"])
+        return csets["old_cset"].difference(csets["install"])
 
     @staticmethod
     def get_replace_cset(engine, csets):
         """Return the cset of what will be replaced going from old->new pkg."""
-        return csets["resolved_install"].intersection(csets["old_cset"])
+        return csets["install"].intersection(csets["old_cset"])
 
     @staticmethod
-    def _get_livefs_intersect_cset(engine, csets, cset_name, realpath=True):
+    def _get_livefs_intersect_cset(engine, csets, cset_name, realpath=False):
         """generates the livefs intersection against a cset"""
         return contents.contentsSet(livefs.intersect(csets[cset_name],
             realpath=realpath))
 
     @staticmethod
     def get_install_livefs_intersect(engine, csets):
-        return engine._get_livefs_intersect_cset(engine, csets, "resolved_install")
+        return engine._get_livefs_intersect_cset(engine, csets, "install")
 
     @staticmethod
     def get_uninstall_livefs_intersect(engine, csets):

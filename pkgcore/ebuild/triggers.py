@@ -547,22 +547,20 @@ def generate_triggers(domain):
     domain_settings = domain.settings
     yield env_update()
 
-    config_protect = domain_settings.get('CONFIG_PROTECT', ())
-    if isinstance(config_protect, basestring):
-        config_protect = config_protect.split()
-    config_protect_mask = domain_settings.get('CONFIG_PROTECT_MASK', ())
-    if isinstance(config_protect_mask, basestring):
-        config_protect_mask = config_protect_mask.split()
-    collision_ignore = domain_settings.get('COLLISION_IGNORE', ())
-    if isinstance(collision_ignore, basestring):
-        collision_ignore = collision_ignore.split()
+    d = {}
+    for x in ("CONFIG_PROTECT", "CONFIG_PROTECT_MASK", "COLLISION_IGNORE",
+              "INSTALL_MASK"):
+        d[x] = domain_settings.get(x, ())
+        if isinstance(d[x], basestring):
+            d[x] = d[x].split()
 
-    yield ConfigProtectInstall(config_protect, config_protect_mask)
+    yield ConfigProtectInstall(d["CONFIG_PROTECT"], d["CONFIG_PROTECT_MASK"])
     yield ConfigProtectUninstall()
 
     features = domain_settings.get("FEATURES", ())
     if "collision-protect" in features:
-        yield collision_protect(config_protect, config_protect_mask, collision_ignore)
+        yield collision_protect(d["CONFIG_PROTECT"], d["CONFIG_PROTECT_MASK"],
+                                d["COLLISION_IGNORE"])
 
     if "multilib-strict" in features:
         yield register_multilib_strict_trigger(domain_settings)
@@ -570,14 +568,13 @@ def generate_triggers(domain):
     if "sfperms" in features:
         yield SFPerms()
 
-    yield install_into_symdir_protect(config_protect, config_protect_mask)
-    install_mask = domain_settings.get("INSTALL_MASK", '').split()
+    yield install_into_symdir_protect(d["CONFIG_PROTECT"], d["CONFIG_PROTECT_MASK"])
 
     for x in ("man", "info", "doc"):
         if "no%s" % x in features:
-            install_mask.append("/usr/share/%s" % x)
+            d["INSTALL_MASK"].append("/usr/share/%s" % x)
     l = []
-    for x in install_mask:
+    for x in d["INSTALL_MASK"]:
         x = x.rstrip("/")
         l.append(values.StrRegex(fnmatch.translate(x)))
         l.append(values.StrRegex(fnmatch.translate("%s/*" % x)))

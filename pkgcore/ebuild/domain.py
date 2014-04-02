@@ -238,8 +238,8 @@ class domain(pkgcore.config.domain.domain):
             raise Failure(
                 "No ARCH setting detected from profile, or user config")
 
-        self.arch = settings["ARCH"]
-        self.stable_arch = settings["ARCH"].lstrip('~')
+        self.arch = self.stable_arch = settings["ARCH"]
+        self.unstable_arch = "~%s" % self.arch
 
         # ~amd64 -> [amd64, ~amd64]
         for x in default_keywords[:]:
@@ -490,7 +490,8 @@ class domain(pkgcore.config.domain.domain):
             pre_defaults.extend(x[1]
                 for x in ue_flags if x[0][0].upper() not in self.settings)
 
-        attr = 'stable_' if self.stable_arch in pkg.keywords else ''
+        attr = 'stable_' if self.stable_arch in pkg.keywords \
+            and self.unstable_arch not in self.settings['ACCEPT_KEYWORDS'] else ''
         disabled = getattr(self, attr + 'disabled_use').pull_data(pkg)
         immutable = getattr(self, attr + 'forced_use').pull_data(pkg)
 

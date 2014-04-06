@@ -332,6 +332,27 @@ class ConfigProtectUninstall(triggers.base):
             del uninstall_cset[x]
 
 
+class UninstallIgnore(triggers.base):
+
+    required_csets = ('uninstall_existing', 'uninstall')
+    _hooks = ('pre_unmerge',)
+
+    pkgcore_config_type = None
+
+    def __init__(self, uninstall_ignore=()):
+        triggers.base.__init__(self)
+        self.uninstall_ignore = uninstall_ignore
+
+    def trigger(self, engine, existing_cset, uninstall_cset):
+        ignore = [values.StrRegex(fnmatch.translate(x), match=True)
+                   for x in self.uninstall_ignore]
+        ignore_filter = values.OrRestriction(*ignore).match
+
+        remove = [x for x in existing_cset.iterfiles() if ignore_filter(x.location)]
+        for x in remove:
+            del uninstall_cset[x]
+
+
 class preinst_contents_reset(triggers.base):
 
     required_csets = ('new_cset',)
@@ -549,7 +570,7 @@ def generate_triggers(domain):
 
     d = {}
     for x in ("CONFIG_PROTECT", "CONFIG_PROTECT_MASK", "COLLISION_IGNORE",
-              "INSTALL_MASK"):
+              "INSTALL_MASK", "UNINSTALL_IGNORE"):
         d[x] = domain_settings.get(x, ())
         if isinstance(d[x], basestring):
             d[x] = d[x].split()
@@ -589,4 +610,5 @@ def generate_triggers(domain):
         # note that if this wipes all /usr/share/ entries, should
         # wipe the empty dir.
 
+    yield UninstallIgnore(d["UNINSTALL_IGNORE"])
     yield InfoRegen()

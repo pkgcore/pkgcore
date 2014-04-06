@@ -5,6 +5,9 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 
 pkgcore trunk:
 
+* Add support for COLLISION_IGNORE and UNINSTALL_IGNORE variables (see
+  make.conf man page for details).
+
 * Add support for FEATURES=test-fail-continue. This allows the remaining
   phases after src_test to continue executing if the test phase fails.
 

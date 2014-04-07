@@ -426,14 +426,14 @@ class MergeEngine(object):
 
         # clone it into tempspace; it's required we control the tempspace,
         # so this function is safe in our usage.
-        path = tempfile.mktemp(prefix='merge-engine-', dir=self.tempdir)
+        fd, path = tempfile.mkstemp(prefix='merge-engine-', dir=self.tempdir)
 
         # XXX: annoying quirk of python, we don't want append mode, so 'a+'
         # isn't viable; wr will truncate the file, so data_source uses r+.
         # this however doesn't allow us to state "create if missing"
         # so we create it ourselves.  Annoying, but so it goes.
         # just touch the filepath.
-        open(path, 'w')
+        open(path, 'w').close()
         new_source = data_source.local_source(path, True,
             encoding=getattr(fsobj, 'encoding', None))
 

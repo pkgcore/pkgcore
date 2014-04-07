@@ -20,16 +20,17 @@ class TestFileList(TestCase):
         return grps[0]
 
     def setUp(self):
-        self.fn = tempfile.mktemp()
+        self.fd, self.fn = tempfile.mkstemp()
 
     def tearDown(self):
+        os.close(self.fd)
         try:
             os.unlink(self.fn)
         except IOError:
             pass
 
     def gen_pkgset(self, contents):
-        open(self.fn, "w").write(contents)
+        os.write(self.fd, contents.encode())
         return self.kls(self.fn, gid=self.gid)
 
     def test_contains(self):

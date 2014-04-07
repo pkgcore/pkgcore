@@ -62,8 +62,9 @@ class TestManifest(TestCase):
     convert_source = staticmethod(lambda x:x)
 
     def get_manifest(self, data):
-        fn = tempfile.mktemp()
-        open(fn, "w").write(data)
+        fd, fn = tempfile.mkstemp()
+        os.write(fd, data.encode())
+        os.close(fd)
         try:
             return digest.parse_manifest(self.convert_source(fn))
         finally:

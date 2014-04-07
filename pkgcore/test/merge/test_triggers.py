@@ -180,18 +180,13 @@ class Test_mtime_watcher(mixins.TempDirMixin, TestCase):
         self.assertFalse(t.check_state())
 
     def test_float_mtime(self):
-        cur = os.stat_float_times()
-        try:
-            t = self.kls()
-            t.set_state([self.dir])
-            l = list(t.saved_mtimes)
-            self.assertEqual(len(l), 1)
-            l = l[0]
-            # mtime *must* be a float.
-            self.assertInstance(l.mtime, float)
-            self.assertEqual(os.stat_float_times(), cur)
-        finally:
-            os.stat_float_times(cur)
+        t = self.kls()
+        t.set_state([self.dir])
+        l = list(t.saved_mtimes)
+        self.assertEqual(len(l), 1)
+        l = l[0]
+        # mtime *must* be a float.
+        self.assertInstance(l.mtime, float)
 
     def test_race_protection(self):
         # note this isn't perfect- being a race, triggering it on
@@ -202,20 +197,15 @@ class Test_mtime_watcher(mixins.TempDirMixin, TestCase):
         # fast io (crazy hardware, or async mount), fs's lacking subsecond,
         # and just severely crappy chance.
         # faster the io actions, easier it is to trigger.
-        cur = os.stat_float_times()
-        try:
-            t = self.kls()
-            os.stat_float_times(True)
-            for x in xrange(100):
-                now = ceil(time.time()) + 1
-                os.utime(self.dir, (now + 100, now + 100))
-                t.set_state([self.dir])
-                now, st_mtime = time.time(), os.stat(self.dir).st_mtime
-                now, st_mtime = ceil(now), floor(st_mtime)
-                self.assertTrue(now > st_mtime,
-                    msg="%r must be > %r" % (now, st_mtime))
-        finally:
-            os.stat_float_times(cur)
+        t = self.kls()
+        for x in xrange(100):
+            now = ceil(time.time()) + 1
+            os.utime(self.dir, (now + 100, now + 100))
+            t.set_state([self.dir])
+            now, st_mtime = time.time(), os.stat(self.dir).st_mtime
+            now, st_mtime = ceil(now), floor(st_mtime)
+            self.assertTrue(now > st_mtime,
+                msg="%r must be > %r" % (now, st_mtime))
 
 
 def castrate_trigger(base_kls, **kwargs):

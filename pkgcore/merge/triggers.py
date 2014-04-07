@@ -215,16 +215,6 @@ class mtime_watcher(object):
         self.saved_mtimes = None
         self.locations = None
 
-    def mtime_floats(func):
-        def mtime_floats_wrapper(self, *args, **kwargs):
-            cur = os.stat_float_times()
-            try:
-                os.stat_float_times(True)
-                return func(self, *args, **kwargs)
-            finally:
-                os.stat_float_times(cur)
-        return mtime_floats_wrapper
-
     def __nonzero__(self):
         return bool(self.saved_mtimes)
 
@@ -241,7 +231,6 @@ class mtime_watcher(object):
             if fs.isdir(obj):
                 yield obj
 
-    @mtime_floats
     def set_state(self, locations, stat_func=os.stat, forced_past=2):
         """
         set the initial state; will adjust ondisk mtimes as needed
@@ -264,7 +253,6 @@ class mtime_watcher(object):
 
         self.saved_mtimes = cset
 
-    @mtime_floats
     def check_state(self, locations=None, stat_func=os.stat):
         """
         set the initial state; will adjust ondisk mtimes as needed
@@ -282,7 +270,6 @@ class mtime_watcher(object):
             return True
         return False
 
-    @mtime_floats
     def get_changes(self, locations=None, stat_func=os.stat):
         """
         generator yielding the fs objs for what has changed.

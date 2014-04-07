@@ -369,7 +369,7 @@ class RepoConfig(syncable.tree):
         masters = data.get('masters')
         if masters is None:
             if self.repo_id != 'gentoo' and not self.is_empty:
-                logger.warn("repository at %r, named %r, doesn't specify masters in metadata/layout.conf. "
+                logger.warning("repository at %r, named %r, doesn't specify masters in metadata/layout.conf. "
                     "Defaulting to whatever repository is defined as 'default' (gentoo usually). "
                     "Please explicitly set the masters, or set masters = '' if the repository "
                     "is standalone.", self.location, self.repo_id)
@@ -388,7 +388,7 @@ class RepoConfig(syncable.tree):
             v = set(['pms'])
         unknown = v.difference(['pms', 'portage-1', 'portage-2'])
         if unknown:
-            logger.warn("repository at %r has an unsupported profile format: %s" %
+            logger.warning("repository at %r has an unsupported profile format: %s" %
                 (self.location, ', '.join(repr(x) for x in sorted(v))))
             v = 'pms'
         sf(self, 'profile_format', list(v)[0])
@@ -481,7 +481,7 @@ class RepoConfig(syncable.tree):
         val = readfile(pjoin(self.profiles_base, 'repo_name'), True)
         if val is None:
             if not self.is_empty:
-                logger.warn("repository at location %r lacks a defined repo_name",
+                logger.warning("repository at location %r lacks a defined repo_name",
                     self.location)
             val = '<unlabeled repository %s>' % self.location
         return val.strip()

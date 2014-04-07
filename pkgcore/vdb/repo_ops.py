@@ -84,7 +84,7 @@ class install(repo_ops.install):
         # it for built ebuilds, but if it's there, we store it.
         o = getattr(self.new_pkg, "ebuild", None)
         if o is None:
-            logger.warn(
+            logger.warning(
                 "doing install/replace op, "
                 "but source package doesn't provide the actual ebuild data.  "
                 "Creating an empty file")

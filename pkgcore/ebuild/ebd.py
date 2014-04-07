@@ -144,7 +144,7 @@ class ebd(object):
         for x in ("sandbox", "userpriv", "fakeroot"):
             setattr(self, x, self.feat_or_bool(x) and not (x in self.restrict))
         if self.fakeroot:
-            logger.warn("disabling fakeroot; unusable till coreutils/fakeroot" +
+            logger.warning("disabling fakeroot; unusable till coreutils/fakeroot" +
                 " interaction is fixed")
             self.fakeroot = False
         if self.userpriv and os.getuid() != 0:
@@ -264,7 +264,7 @@ class ebd(object):
                         k, 0770, portage_gid))
             # XXX hack, just 'til pkgcore controls these directories
             if (os.stat(self.env[k]).st_mode & 02000):
-                logger.warn("%s ( %s ) is setgid" % (self.env[k], k))
+                logger.warning("%s ( %s ) is setgid" % (self.env[k], k))
 
 
     def _generic_phase(self, phase, userpriv, sandbox, fakeroot,
@@ -449,7 +449,7 @@ def run_generic_phase(pkg, phase, env, userpriv, sandbox, fakeroot,
             if not failure_allowed:
                 raise format.GenericBuildError(
                     phase + ": Failed building (False/0 return from handler)")
-                logger.warn("executing phase %s: execution failed, ignoring" % (phase,))
+                logger.warning("executing phase %s: execution failed, ignoring" % (phase,))
 
     except Exception, e:
         ebd.shutdown_processor()
@@ -588,7 +588,7 @@ class buildable(ebd, setup_mixin, format.build):
             self.run_test = False
         elif "test" not in use:
             if self.run_test:
-                logger.warn("disabling test for %s due to test use flag being disabled" % pkg)
+                logger.warning("disabling test for %s due to test use flag being disabled" % pkg)
             self.run_test = False
 
         # XXX minor hack

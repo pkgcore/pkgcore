@@ -98,7 +98,7 @@ def _write_mtime_cache(mtimes, data, location):
                 f.discard()
             if e.errno != errno.EACCES:
                 raise
-            logger.warn("unable to update vdb virtuals cache due to "
+            logger.warning("unable to update vdb virtuals cache due to "
                 "lacking permissions")
     finally:
         os.umask(old)

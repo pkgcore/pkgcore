@@ -197,7 +197,7 @@ def add_sets(config, root, portage_base_dir):
             # Potential for name clashes here, those will just make
             # the set not show up in config.
             if setname in ("system", "world"):
-                logger.warn("user defined set %s is disallowed; ignoring" %
+                logger.warning("user defined set %s is disallowed; ignoring" %
                     pjoin(set_fp, setname))
                 continue
             config[setname] = basics.AutoConfigSection({
@@ -474,17 +474,17 @@ def config_from_make_conf(location="/etc/"):
                 raise
             if set(features).intersection(
                 ('buildpkg', 'pristine-buildpkg', 'buildsyspkg', 'unmerge-backup')):
-                logger.warn("disabling buildpkg related features since PKGDIR doesn't exist")
+                logger.warning("disabling buildpkg related features since PKGDIR doesn't exist")
             pkgdir = None
         else:
             if not ensure_dirs(pkgdir, mode=0755, minimal=True):
-                logger.warn("disabling buildpkg related features since PKGDIR either doesn't "
+                logger.warning("disabling buildpkg related features since PKGDIR either doesn't "
                     "exist, or lacks 0755 minimal permissions")
                 pkgdir = None
     else:
        if set(features).intersection(
            ('buildpkg', 'pristine-buildpkg', 'buildsyspkg', 'unmerge-backup')):
-           logger.warn("disabling buildpkg related features since PKGDIR is unset")
+           logger.warning("disabling buildpkg related features since PKGDIR is unset")
 
 
     # yes, round two; may be disabled from above and massive else block sucks
@@ -515,7 +515,7 @@ def config_from_make_conf(location="/etc/"):
     if 'save-deb' in features:
         path = conf_dict.pop("DEB_REPO_ROOT", None)
         if path is None:
-            logger.warn("disabling save-deb; DEB_REPO_ROOT is unset")
+            logger.warning("disabling save-deb; DEB_REPO_ROOT is unset")
         else:
             add_trigger('save_deb_trigger', 'pkgcore.ospkg.triggers.SaveDeb',
                 basepath=normpath(path), maintainer=conf_dict.pop("DEB_MAINAINER", ''),

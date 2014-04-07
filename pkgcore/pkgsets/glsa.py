@@ -112,7 +112,7 @@ class GlsaDirSet(object):
                             yield fn[5:-4], pkgname, pkgatom, pkg_vuln_restrict
                         except (TypeError, ValueError), v:
                             # thrown from cpv.
-                            logger.warn("invalid glsa- %s, package %s: error %s"
+                            logger.warning("invalid glsa- %s, package %s: error %s"
                                 % (fn, pkgname, v))
                             del v
 

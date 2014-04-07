@@ -188,7 +188,7 @@ class install(base):
     def finish(self):
         ret = self.format_op.finalize()
         if not ret:
-            logger.warn("ignoring unexpected result from install finalize- "
+            logger.warning("ignoring unexpected result from install finalize- "
                 "%r" % ret)
         return base.finish(self)
 
@@ -252,7 +252,7 @@ class uninstall(base):
         ret = self.format_op.finalize()
         self.format_op.cleanup(disable_observer=True)
         if not ret:
-            logger.warn("ignoring unexpected result from uninstall finalize- "
+            logger.warning("ignoring unexpected result from uninstall finalize- "
                 "%r" % ret)
         return base.finish(self)
 
@@ -312,7 +312,7 @@ class replace(install, uninstall):
     def finish(self):
         ret = self.format_op.finalize()
         if not ret:
-            logger.warn("ignoring unexpected result from replace finalize- "
+            logger.warning("ignoring unexpected result from replace finalize- "
                 "%r" % ret)
         return base.finish(self)
 

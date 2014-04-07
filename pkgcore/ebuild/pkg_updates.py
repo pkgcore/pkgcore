@@ -67,7 +67,7 @@ def _process_update(sequence, filename, mods, moved):
                     % (filename, raw_line, trg))
 
             if src.key in moved:
-                logger.warn("file %r, line %r: %s was already moved to %s,"
+                logger.warning("file %r, line %r: %s was already moved to %s,"
                     " this line is redundant." % (filename, raw_line, src, moved[src.key]))
                 continue
 
@@ -84,11 +84,11 @@ def _process_update(sequence, filename, mods, moved):
             src = atom(line[1])
 
             if src.key in moved:
-                logger.warn("file %r, line %r: %s was already moved to %s,"
+                logger.warning("file %r, line %r: %s was already moved to %s,"
                     " this line is redundant.", filename, raw_line, src, moved[src.key])
                 continue
             elif src.slot is not None:
-                logger.warn("file %r, line %r: slotted atom makes no sense for slotmoves, ignoring",
+                logger.warning("file %r, line %r: slotted atom makes no sense for slotmoves, ignoring",
                     filename, raw_line)
 
             src_slot = atom("%s:%s" % (src, line[2]))

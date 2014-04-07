@@ -375,7 +375,7 @@ class PortageFormatter(CountingFormatter):
         elif op.desc == 'remove':
             pass
         else:
-            logger.warn("unformattable op type: desc(%r), %r", (op.desc, op))
+            logger.warning("unformattable op type: desc(%r), %r", (op.desc, op))
 
         out.write(*(iflatten_instance(op_chars)))
         out.write('] ')
@@ -596,7 +596,7 @@ class PaludisFormatter(CountingFormatter):
                 out.write(out.fg('yellow'), "[R]")
         else:
             # Shouldn't reach here
-            logger.warn("unknown op type encountered: desc(%r), %r",
+            logger.warning("unknown op type encountered: desc(%r), %r",
                 (op.desc, op))
         self.visit_op(op_type)
 

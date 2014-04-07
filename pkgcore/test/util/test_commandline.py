@@ -535,6 +535,7 @@ Use --help after a subcommand for more help.
                 self.assertEqual(None, e.args[0])
                 # There can be an xterm title update after this.
                 out_name = master.read()
+                master.close()
                 self.assertTrue(
                     out_name.startswith(out_kind) or out_name == 'PlainTextFormatter',
                     'expected %r, got %r' % (out_kind, out_name))

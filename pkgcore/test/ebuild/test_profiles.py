@@ -37,16 +37,19 @@ class profile_mixin(TempDirMixin):
             ensure_dirs(path)
             parent = vals.pop("parent", None)
             for fname, data in vals.iteritems():
-                open(pjoin(path, fname), "w").write(data)
+                with open(pjoin(path, fname), "w") as f:
+                    f.write(data)
 
             if idx and not parent:
                 parent = idx - 1
 
             if parent is not None:
-                open(pjoin(path, "parent"), "w").write("../%s" % (parent,))
+                with open(pjoin(path, "parent"), "w") as f:
+                    f.write("../%s" % (parent,))
         if kwds:
             for key, val in kwds.iteritems():
-                open(pjoin(self.dir, key), "w").write(val)
+                with open(pjoin(self.dir, key), "w") as f:
+                    f.write(val)
 
     def assertEqualChunks(self, given_mapping, desired_mapping):
         def f(chunk):
@@ -109,7 +112,8 @@ class TestPmsProfileNode(profile_mixin, TestCase):
     def write_file(self, filename, iterable, profile=None):
         if profile is None:
             profile = self.profile
-        open(pjoin(self.dir, profile, filename), "w").write(iterable)
+        with open(pjoin(self.dir, profile, filename), "w") as f:
+            f.write(iterable)
 
     def parsing_checks(self, filename, attr, data="", line_negation=True):
         path = pjoin(self.dir, self.profile)
@@ -663,19 +667,20 @@ class TestPortage1ProfileNode(TestPmsProfileNode):
         os.mkdir(base)
 
         for idx, data in enumerate(iterable):
-            f = open(pjoin(base, str(idx)), 'w')
-            f.write(data)
-            f.close()
+            with open(pjoin(base, str(idx)), 'w') as f:
+                f.write(data)
 
 
 class TestPortage2ProfileNode(TestPortage1ProfileNode):
 
     def setup_repo(self):
         self.repo_name = str(binascii.b2a_hex(os.urandom(10)))
-        open(pjoin(self.dir, "profiles", "repo_name"), "w").write(self.repo_name)
+        with open(pjoin(self.dir, "profiles", "repo_name"), "w") as f:
+            f.write(self.repo_name)
         ensure_dirs(pjoin(self.dir, "metadata"))
         metadata = "masters = ''\nprofile-formats = portage-2"
-        open(pjoin(self.dir, "metadata", "layout.conf"), "w").write(metadata)
+        with open(pjoin(self.dir, "metadata", "layout.conf"), "w") as f:
+            f.write(metadata)
 
     def setUp(self, default=True):
         TempDirMixin.setUp(self)

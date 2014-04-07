@@ -106,7 +106,8 @@ class Test_fsFile(TestCase, base):
         base.test_init(self)
         mkobj = self.make_obj
         o = mkobj(__file__)
-        raw_data = open(__file__).read()
+        with open(__file__) as f:
+            raw_data = f.read()
         self.assertEqual(o.data.text_fileobj().read(), raw_data)
         o = mkobj("/bin/this-file-should-not-exist-nor-be-read",
             data=data_source(raw_data))

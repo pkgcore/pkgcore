@@ -32,7 +32,8 @@ class TestFetcher(TempDirMixin, TestCase):
         self.fetcher = base.fetcher()
 
     def write_data(self, data=data):
-        open(self.fp, "w").write(data)
+        with open(self.fp, "w") as f:
+            f.write(data)
 
     def test__call__(self):
         l = []

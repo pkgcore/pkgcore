@@ -128,9 +128,8 @@ class Test_mtime_watcher(mixins.TempDirMixin, TestCase):
         o = [gen_obj(self.dir)]
         t = self.kls()
         t.set_state([self.dir])
-        self.assertEqual(list(t.saved_mtimes),
-            o)
-        open(pjoin(self.dir, 'file'), 'w')
+        self.assertEqual(list(t.saved_mtimes), o)
+        open(pjoin(self.dir, 'file'), 'w').close()
         t.set_state([self.dir, pjoin(self.dir, 'file')])
         self.assertEqual(list(t.saved_mtimes), o)
         loc = pjoin(self.dir, 'dir')
@@ -171,7 +170,7 @@ class Test_mtime_watcher(mixins.TempDirMixin, TestCase):
         # thus ignored.
         t.set_state(locs, stat_func=os.lstat)
         self.assertEqual(sorted(t.saved_mtimes), o)
-        open(pjoin(self.dir, 'bar'), 'w')
+        open(pjoin(self.dir, 'bar'), 'w').close()
         self.assertTrue(t.check_state())
 
         # test dead sym filtering for stat.
@@ -261,8 +260,8 @@ class Test_ldconfig(trigger_mixin, TestCase):
         self.assertTrue(os.path.exists(pjoin(self.dir, 'etc/ld.so.conf')))
 
         # test normal functioning.
-        open(pjoin(self.dir, 'etc/ld.so.conf'), 'w').write("\n".join(
-            ["/foon", "dar", "blarnsball", "#comment"]))
+        with open(pjoin(self.dir, 'etc/ld.so.conf'), 'w') as f:
+            f.write("\n".join(["/foon", "dar", "blarnsball", "#comment"]))
         self.assertPaths(self.trigger.read_ld_so_conf(self.dir),
             [pjoin(self.dir, x) for x in ["foon", "dar", "blarnsball"]])
 
@@ -278,8 +277,8 @@ class Test_ldconfig(trigger_mixin, TestCase):
             os.unlink(x.location)
 
         ensure_dirs(pjoin(self.dir, "etc"))
-        open(pjoin(self.dir, "etc/ld.so.conf"), "w").write(
-            "\n".join('/' + x for x in dirs))
+        with open(pjoin(self.dir, "etc/ld.so.conf"), "w") as f:
+            f.write("\n".join('/' + x for x in dirs))
         # force directory mtime to 1s less.
         past = time.time() - 10.0
         if mkdirs:
@@ -295,7 +294,7 @@ class Test_ldconfig(trigger_mixin, TestCase):
         resets = set()
         for x in touches:
             fp = pjoin(self.dir, x.lstrip('/'))
-            open(pjoin(fp), "w")
+            open(pjoin(fp), "w").close()
             if same_mtime:
                 os.utime(fp, (past, past))
                 resets.add(os.path.dirname(fp))
@@ -362,17 +361,18 @@ END-INFO-DIR-ENTRY
         # test it without the directory existing.
         self.assertEqual(list(o.regen(path, pjoin(self.dir, 'foo'))), [])
         self.assertFalse(os.path.exists(pjoin(self.dir, 'foo')))
-        open(pjoin(self.dir, "foo.info"), 'w').write(self.info_data)
+        with open(pjoin(self.dir, "foo.info"), 'w') as f:
+            f.write(self.info_data)
         # no issues.
         self.assertEqual(list(o.regen(path, self.dir)), [])
         self.assertTrue(os.path.exists(pjoin(self.dir, 'dir')),
             msg="info dir file wasn't created")
 
         # drop the last line, verify it returns that file.
-        open(pjoin(self.dir, "foo2.info"), 'w').write(
-            '\n'.join(self.info_data.splitlines()[:-1]))
+        with open(pjoin(self.dir, "foo2.info"), 'w') as f:
+            f.write('\n'.join(self.info_data.splitlines()[:-1]))
         # should ignore \..* files
-        open(pjoin(self.dir, ".foo.info"), 'w')
+        open(pjoin(self.dir, ".foo.info"), 'w').close()
         os.unlink(pjoin(self.dir, 'dir'))
         self.assertEqual(list(o.regen(path, self.dir)),
             [pjoin(self.dir, 'foo2.info')])
@@ -409,7 +409,8 @@ END-INFO-DIR-ENTRY
         self.assertFalse(self.run_trigger('post_merge', [self.dir]))
 
         # and an info, and verify it generated.
-        open(pjoin(self.dir, 'foo.info'), 'w').write(self.info_data)
+        with open(pjoin(self.dir, 'foo.info'), 'w') as f:
+            f.write(self.info_data)
         self.reset_objects()
         self.trigger.enable_regen = True
         self.assertFalse(self.run_trigger('pre_merge', []))
@@ -426,15 +427,16 @@ END-INFO-DIR-ENTRY
         self.reset_objects()
         self.trigger.enable_regen = True
         self.assertFalse(self.run_trigger('pre_merge', []))
-        open(pjoin(self.dir, "blaidd drwg.info"), "w").write(self.info_data)
+        with open(pjoin(self.dir, "blaidd drwg.info"), "w") as f:
+            f.write(self.info_data)
         self.assertFalse(self.run_trigger('post_merge', [self.dir]))
 
         # verify it passes back failures.
         self.reset_objects()
         self.trigger.enable_regen = True
         self.assertFalse(self.run_trigger('pre_merge', []))
-        open(pjoin(self.dir, "tiza grande.info"), "w").write(
-            '\n'.join(self.info_data.splitlines()[:-1]))
+        with open(pjoin(self.dir, "tiza grande.info"), "w") as f:
+            f.write('\n'.join(self.info_data.splitlines()[:-1]))
         l = self.run_trigger('post_merge', [self.dir])
         self.assertEqual(len(l), 1)
         self.assertIn('tiza grande.info', l[0])

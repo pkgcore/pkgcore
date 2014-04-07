@@ -8,11 +8,12 @@ import shutil
 import tempfile
 import logging
 
-from pkgcore.test import TestCase
 from snakeoil import lists
+from snakeoil.osutils import pjoin
 
-from pkgcore.test import silence_logging
+from pkgcore.test import silence_logging, TestCase
 from pkgcore import plugin
+
 
 class LowPlug(object):
     priority = 1
@@ -23,20 +24,19 @@ class ModulesTest(TestCase):
         # Set up some test modules for our use.
         self.dir = tempfile.mkdtemp()
         self.dir2 = tempfile.mkdtemp()
-        self.packdir = os.path.join(self.dir, 'mod_testplug')
-        self.packdir2 = os.path.join(self.dir2, 'mod_testplug')
+        self.packdir = pjoin(self.dir, 'mod_testplug')
+        self.packdir2 = pjoin(self.dir2, 'mod_testplug')
         os.mkdir(self.packdir)
         os.mkdir(self.packdir2)
-        init = open(os.path.join(self.packdir, '__init__.py'), 'w')
-        init.write('''
+        with open(pjoin(self.packdir, '__init__.py'), 'w') as init:
+            init.write('''
 from pkgcore.plugins import extend_path
 
 extend_path(__path__, __name__)
 ''')
-        init.close()
-        filename = os.path.join(self.packdir, 'plug.py')
-        plug = open(filename, 'w')
-        plug.write('''
+        filename = pjoin(self.packdir, 'plug.py')
+        with open(filename, 'w') as plug:
+            plug.write('''
 class DisabledPlug(object):
     disabled = True
 
@@ -57,16 +57,14 @@ pkgcore_plugins = {
     ]
 }
 ''')
-        plug.close()
         # Move the mtime 2 seconds into the past so the .pyc file has
         # a different mtime.
         st = os.stat(filename)
         os.utime(filename, (st.st_atime, st.st_mtime - 2))
-        plug2 = open(os.path.join(self.packdir, 'plug2.py'), 'w')
-        plug2.write('# I do not have any pkgcore_plugins for you!\n')
-        plug2.close()
-        plug = open(os.path.join(self.packdir2, 'plug.py'), 'w')
-        plug.write('''
+        with open(pjoin(self.packdir, 'plug2.py'), 'w') as plug2:
+            plug2.write('# I do not have any pkgcore_plugins for you!\n')
+        with open(pjoin(self.packdir2, 'plug.py'), 'w') as plug:
+            plug.write('''
 # This file is later on sys.path than the plug.py in packdir, so it should
 # not have any effect on the tests.
 
@@ -94,7 +92,7 @@ pkgcore_plugins = {'plugtest': [HiddenPlug]}
     def test_extend_path(self):
         import mod_testplug
         expected = lists.stable_unique(
-            os.path.join(p, 'mod_testplug')
+            pjoin(p, 'mod_testplug')
             for p in sys.path if os.path.isdir(p))
         self.assertEqual(
             expected, mod_testplug.__path__,
@@ -103,17 +101,17 @@ pkgcore_plugins = {'plugtest': [HiddenPlug]}
     def _runit(self, method):
         plugin._global_cache.clear()
         method()
-        mtime = os.path.getmtime(os.path.join(self.packdir, plugin.CACHE_FILENAME))
+        mtime = os.path.getmtime(pjoin(self.packdir, plugin.CACHE_FILENAME))
         method()
         plugin._global_cache.clear()
         method()
         method()
         self.assertEqual(
             mtime,
-            os.path.getmtime(os.path.join(self.packdir, plugin.CACHE_FILENAME)))
+            os.path.getmtime(pjoin(self.packdir, plugin.CACHE_FILENAME)))
         # We cannot write this since it contains an unimportable plugin.
         self.assertFalse(
-            os.path.exists(os.path.join(self.packdir2, plugin.CACHE_FILENAME)))
+            os.path.exists(pjoin(self.packdir2, plugin.CACHE_FILENAME)))
 
     def _test_plug(self):
         import mod_testplug
@@ -124,14 +122,15 @@ pkgcore_plugins = {'plugtest': [HiddenPlug]}
         self.assertEqual(
             'HighPlug',
             plugin.get_plugin('plugtest', mod_testplug).__class__.__name__)
-        lines = list(open(os.path.join(self.packdir, plugin.CACHE_FILENAME)))
+        with open(pjoin(self.packdir, plugin.CACHE_FILENAME)) as f:
+            lines = f.readlines()
         self.assertEqual(3, len(lines))
         self.assertEqual(plugin.CACHE_HEADER + "\n", lines[0])
         lines.pop(0)
         lines.sort()
-        mtime = int(os.path.getmtime(os.path.join(self.packdir, 'plug2.py')))
+        mtime = int(os.path.getmtime(pjoin(self.packdir, 'plug2.py')))
         self.assertEqual('plug2:%s:\n' % (mtime,), lines[0])
-        mtime = int(os.path.getmtime(os.path.join(self.packdir, 'plug.py')))
+        mtime = int(os.path.getmtime(pjoin(self.packdir, 'plug.py')))
         self.assertEqual(
             'plug:%s:plugtest,7,1:plugtest,1,pkgcore.test.test_plugin.LowPlug:plugtest,0,0\n'
                 % (mtime,),
@@ -158,7 +157,7 @@ pkgcore_plugins = {'plugtest': [HiddenPlug]}
     def test_cache_corruption(self):
         import mod_testplug
         list(plugin.get_plugins('spork', mod_testplug))
-        filename = os.path.join(self.packdir, plugin.CACHE_FILENAME)
+        filename = pjoin(self.packdir, plugin.CACHE_FILENAME)
         cachefile = open(filename, 'a')
         try:
             cachefile.write('corruption\n')
@@ -172,15 +171,15 @@ pkgcore_plugins = {'plugtest': [HiddenPlug]}
         plugin._global_cache.clear()
         self._test_plug()
         good_mtime = os.path.getmtime(
-            os.path.join(self.packdir, plugin.CACHE_FILENAME))
+            pjoin(self.packdir, plugin.CACHE_FILENAME))
         plugin._global_cache.clear()
         self._test_plug()
         self.assertEqual(good_mtime, os.path.getmtime(
-                os.path.join(self.packdir, plugin.CACHE_FILENAME)))
+                pjoin(self.packdir, plugin.CACHE_FILENAME)))
         self.assertNotEqual(good_mtime, corrupt_mtime)
 
     def test_rewrite_on_remove(self):
-        filename = os.path.join(self.packdir, 'extra.py')
+        filename = pjoin(self.packdir, 'extra.py')
         plug = open(filename, 'w')
         try:
             plug.write('pkgcore_plugins = {"plugtest": [object()]}\n')
@@ -199,7 +198,7 @@ pkgcore_plugins = {'plugtest': [HiddenPlug]}
 
     @silence_logging(logging.root)
     def test_priority_caching(self):
-        plug3 = open(os.path.join(self.packdir, 'plug3.py'), 'w')
+        plug3 = open(pjoin(self.packdir, 'plug3.py'), 'w')
         try:
             plug3.write('''
 class LowPlug(object):
@@ -211,7 +210,7 @@ pkgcore_plugins = {
 ''')
         finally:
             plug3.close()
-        plug4 = open(os.path.join(self.packdir, 'plug4.py'), 'w')
+        plug4 = open(pjoin(self.packdir, 'plug4.py'), 'w')
         try:
             plug4.write('''
 # First file tried, only a disabled plugin.
@@ -225,7 +224,7 @@ pkgcore_plugins = {
 ''')
         finally:
             plug4.close()
-        plug5 = open(os.path.join(self.packdir, 'plug5.py'), 'w')
+        plug5 = open(pjoin(self.packdir, 'plug5.py'), 'w')
         try:
             plug5.write('''
 # Second file tried, with a skipped low priority plugin.
@@ -242,7 +241,7 @@ pkgcore_plugins = {
 ''')
         finally:
             plug5.close()
-        plug6 = open(os.path.join(self.packdir, 'plug6.py'), 'w')
+        plug6 = open(pjoin(self.packdir, 'plug6.py'), 'w')
         try:
             plug6.write('''
 # Not tried, bogus priority.
@@ -285,10 +284,12 @@ pkgcore_plugins = {
         list(plugin.get_plugins('testplug', mod_testplug))
 
         # Modify the cache.
-        filename = os.path.join(self.packdir, plugin.CACHE_FILENAME)
-        cache = list(open(filename))
+        filename = pjoin(self.packdir, plugin.CACHE_FILENAME)
+        with open(filename) as f:
+            cache = f.readlines()
         cache[0] = 'not really a pkgcore plugin cache\n'
-        open(filename, 'w').write(''.join(cache))
+        with open(filename, 'w') as f:
+            f.write(''.join(cache))
 
         # And test if it is properly rewritten.
         plugin._global_cache.clear()

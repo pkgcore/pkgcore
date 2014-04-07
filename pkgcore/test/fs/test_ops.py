@@ -43,7 +43,7 @@ class TestDefaultEnsurePerms(VerifyMixin, TempDirMixin, TestCase):
         self.common_bits(os.mkdir, fs.fsDir)
 
     def test_file(self):
-        self.common_bits(lambda s:open(s, "w"), fs.fsFile)
+        self.common_bits(lambda s:open(s, "w").close(), fs.fsFile)
 
 
 class TestDefaultMkdir(TempDirMixin, TestCase):
@@ -67,13 +67,15 @@ class TestCopyFile(VerifyMixin, TempDirMixin, TestCase):
     def test_it(self):
         src = pjoin(self.dir, "copy_test_src")
         dest = pjoin(self.dir, "copy_test_dest")
-        open(src, "w").writelines("asdf\n" for i in xrange(10))
+        with open(src, "w") as f:
+            f.writelines("asdf\n" for i in xrange(10))
         kwds = {"mtime":10321, "uid":os.getuid(), "gid":os.getgid(),
                 "mode":0664, "data":local_source(src), "dev":None,
                 "inode":None}
         o = fs.fsFile(dest, **kwds)
         self.assertTrue(ops.default_copyfile(o))
-        self.assertEqual("asdf\n" * 10, open(dest, "r").read())
+        with open(dest, "r") as f:
+            self.assertEqual("asdf\n" * 10, f.read())
         self.verify(o, kwds, os.stat(o.location))
 
     def test_sym_perms(self):
@@ -97,7 +99,7 @@ class TestCopyFile(VerifyMixin, TempDirMixin, TestCase):
             fs.fsDir(path, strict=False))
         os.mkdir(path)
         fp = pjoin(self.dir, "foon")
-        open(fp, "w")
+        open(fp, "w").close()
         f = livefs.gen_obj(fp)
         self.assertRaises(TypeError,
             livefs.gen_obj(fp).change_attributes(location=path))
@@ -136,7 +138,7 @@ class ContentsMixin(VerifyMixin, TempDirMixin, TestCase):
             if v[0] == "dir":
                 pass
             elif v[0] == "reg":
-                open(k, "w")
+                open(k, "w").close()
             elif v[0] == "sym":
                 os.symlink(v[1], k)
             else:
@@ -243,6 +245,6 @@ class Test_unmerge_contents(ContentsMixin):
         img, cset = self.generic_unmerge_bits(self.entries_norm1)
         dirs = [k for k, v in self.entries_norm1.iteritems() if v[0] == "dir"]
         fp = os.path.join(img, dirs[0], "linger")
-        open(fp, "w")
+        open(fp, "w").close()
         self.assertTrue(ops.unmerge_contents(cset, offset=img))
         self.assertTrue(os.path.exists(fp))

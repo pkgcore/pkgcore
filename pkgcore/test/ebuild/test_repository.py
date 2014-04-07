@@ -93,7 +93,7 @@ foon		foon://foons/
             for rev in ("", "-r1"):
                 fp = pjoin(self.dir, 'cat', 'pkg', 'pkg-%s%s.ebuild' %
                     (x, rev))
-                open(fp, 'w')
+                open(fp, 'w').close()
                 repo = self.mk_tree(self.dir)
                 self.assertRaises(ebuild_errors.InvalidCPV,
                     repo.match, atom('cat/pkg'))

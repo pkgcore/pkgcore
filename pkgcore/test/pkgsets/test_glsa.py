@@ -98,8 +98,8 @@ class TestGlsaDirSet(TempDirMixin, TestCase):
 
     def mk_glsa(self, feed):
         for idx, data in enumerate(feed):
-            open(pjoin(self.dir, "glsa-200611-%02i.xml" % idx),
-                "w").write(mk_glsa(data))
+            with open(pjoin(self.dir, "glsa-200611-%02i.xml" % idx), "w") as f:
+                f.write(mk_glsa(data))
 
     def check_range(self, vuln_range, ver_matches, ver_nonmatches):
         self.mk_glsa([("dev-util/diffball", ([], [vuln_range]))])

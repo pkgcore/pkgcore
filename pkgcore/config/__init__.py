@@ -85,10 +85,11 @@ def load_config(user_conf_file=USER_CONF_FILE,
             have_user_conf = os.path.isfile(user_conf_file)
             if have_system_conf or have_user_conf:
                 if have_system_conf:
-                    configs.append(
-                        cparser.config_from_file(open(system_conf_file)))
+                    with open(system_conf_file) as f:
+                        configs.append(cparser.config_from_file(f))
                 if have_user_conf:
-                    configs.append(cparser.config_from_file(open(user_conf_file)))
+                    with open(user_conf_file) as f:
+                        configs.append(cparser.config_from_file(f))
             else:
                 # make.conf...
                 from pkgcore.ebuild.portage_conf import config_from_make_conf

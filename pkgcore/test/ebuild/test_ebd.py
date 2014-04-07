@@ -14,8 +14,8 @@ class Test_DontExportFuncsList(TestCase):
 
     def test_list_is_upto_date(self):
 
-        existing = set(x.strip() for x in
-            open(pjoin(self.base_path, "dont_export_funcs.list")))
+        with open(pjoin(self.base_path, "dont_export_funcs.list")) as f:
+            existing = set(x.strip() for x in f)
 
         ppath = ":".join(sys.path)
         proc = subprocess.Popen([pjoin(self.base_path,

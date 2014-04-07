@@ -34,12 +34,12 @@ class FsObjsTest(TempDirMixin, TestCase):
         o = livefs.gen_obj("/tmp/etc/passwd", real_location="/etc/passwd")
         self.assertTrue(o.location, "/tmp/etc/passwd")
         self.assertTrue(o.data.path, "/etc/passwd")
-        self.assertTrue(
-            o.data.bytes_fileobj().read(), open("/etc/passwd", "rb").read())
+        with open("/etc/passwd", "rb") as f:
+            self.assertTrue(o.data.bytes_fileobj().read(), f.read())
 
     def test_gen_obj_reg(self):
         path = os.path.join(self.dir, "reg_obj")
-        open(path, "w")
+        open(path, "w").close()
         o = livefs.gen_obj(path)
         self.assertTrue(fs.isreg(o))
         self.check_attrs(o, path)
@@ -57,7 +57,7 @@ class FsObjsTest(TempDirMixin, TestCase):
         os.mkdir(path)
         src = os.path.join(path, "s")
         link = os.path.join(path, "t")
-        open(src, "w")
+        open(src, "w").close()
         os.symlink(src, link)
         obj = livefs.gen_obj(link)
         self.assertInstance(obj, fs.fsSymlink)
@@ -76,7 +76,7 @@ class FsObjsTest(TempDirMixin, TestCase):
         files = [os.path.normpath(os.path.join(path, x)) for x in [
                 "tmp", "blah", "dar"]]
         # cheap version of a touch.
-        map(lambda x:open(x, "w"), files)
+        map(lambda x:open(x, "w").close(), files)
         dirs = [os.path.normpath(os.path.join(path, x)) for x in [
                 "a", "b", "c"]]
         map(os.mkdir, dirs)
@@ -110,7 +110,7 @@ class FsObjsTest(TempDirMixin, TestCase):
         self.assertTrue(o.target == "../sym1/blah")
 
     def test_intersect(self):
-        open(pjoin(self.dir, 'reg'), 'w')
+        open(pjoin(self.dir, 'reg'), 'w').close()
         cset = contentsSet([fs.fsFile('reg', strict=False)])
         cset = cset.insert_offset(self.dir)
         self.assertEqual(contentsSet(livefs.intersect(cset)), cset)

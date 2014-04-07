@@ -361,7 +361,7 @@ class test_package_factory(TestCase):
     @tempdir_decorator
     def test_get_ebuild_mtime(self):
         f = pjoin(self.dir, "temp-0.ebuild")
-        open(f, 'w')
+        open(f, 'w').close()
         cur = os.stat_float_times()
         try:
             for x in (False, True):

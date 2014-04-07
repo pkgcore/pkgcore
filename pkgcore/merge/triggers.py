@@ -331,7 +331,7 @@ class ldconfig(base):
                     os.path.basename(fp))
             # touch the file.
         try:
-            open(fp, 'w')
+            open(fp, 'w').close()
         except EnvironmentError, e:
             compatibility.raise_from(errors.BlockModification(self, e))
 

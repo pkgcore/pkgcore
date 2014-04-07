@@ -117,12 +117,12 @@ class Test_MergeEngineCsets(TestCase):
         # have to add it; scan adds the root node
         old_cset.add(fsDir(self.dir))
         os.mkdir(pjoin(self.dir, "usr"))
-        open(pjoin(self.dir, "usr", "dar"), 'w')
-        open(pjoin(self.dir, 'foon'), 'w')
+        open(pjoin(self.dir, "usr", "dar"), 'w').close()
+        open(pjoin(self.dir, 'foon'), 'w').close()
         # note that this *is* a sym in the cset; adding this specific
         # check so that if the code differs, the test breaks, and the tests
         # get updated (additionally, folks may not be aware of the potential)
-        open(pjoin(self.dir, 'broken-symlink'), 'w')
+        open(pjoin(self.dir, 'broken-symlink'), 'w').close()
         engine = fake_engine(csets={'test':old_cset})
         existant = livefs.scan(self.dir)
         generated = self.run_cset('_get_livefs_intersect_cset', engine,

@@ -32,15 +32,16 @@ class SpawnTest(TempDirMixin, TestCase):
         os.environ["PATH"] = ":".join([self.dir] + self.orig_env.split(":"))
 
     def tearDown(self):
+        self.null_file.close()
         os.environ["PATH"] = self.orig_env
         TempDirMixin.tearDown(self)
 
     def generate_script(self, filename, text):
         if not os.path.isabs(filename):
             fp = os.path.join(self.dir, filename)
-        f = open(fp, "w")
-        f.write("#!/bin/bash\n")
-        f.write(text)
+        with open(fp, "w") as f:
+            f.write("#!/bin/bash\n")
+            f.write(text)
         os.chmod(fp, 0750)
         self.assertEqual(os.stat(fp).st_mode & 0750, 0750)
         return fp

@@ -51,16 +51,18 @@ class TestFileList(TestCase):
         s.add(atom("dev-util/foon"))
         s.add(atom("=dev-util/lib-1"))
         s.flush()
-        self.assertEqual(map(atom, (x.strip() for x in open(self.fn))),
-            sorted(map(atom, ("dev-util/diffball", "=dev-util/bsdiff-0.4",
-            "dev-util/foon", "=dev-util/lib-1"))))
+        with open(self.fn) as f:
+            self.assertEqual(map(atom, (x.strip() for x in f)),
+                sorted(map(atom, ("dev-util/diffball", "=dev-util/bsdiff-0.4",
+                "dev-util/foon", "=dev-util/lib-1"))))
 
     def test_remove(self):
         s = self.gen_pkgset("=dev-util/diffball-0.4\ndev-util/bsdiff")
         s.remove(atom("=dev-util/diffball-0.4"))
         s.flush()
-        self.assertEqual(sorted(x.strip() for x in open(self.fn) if x.strip()),
-            ["dev-util/bsdiff"])
+        with open(self.fn) as f:
+            self.assertEqual(sorted(x.strip() for x in f if x.strip()),
+                ["dev-util/bsdiff"])
 
     def test_subset_awareness(self):
         s = self.gen_pkgset("@world\ndev-util/bsdiff")
@@ -81,16 +83,18 @@ class TestWorldFile(TestFileList):
         s.add(atom("=dev-util/lib-1"))
         s.add(atom("dev-util/mylib:2"))
         s.flush()
-        self.assertEqual(sorted(x.strip() for x in open(self.fn)),
-            sorted(("dev-util/bsdiff", "dev-util/foon", "dev-util/lib",
-                "dev-util/mylib:2")))
+        with open(self.fn) as f:
+            self.assertEqual(sorted(x.strip() for x in f),
+                sorted(("dev-util/bsdiff", "dev-util/foon", "dev-util/lib",
+                    "dev-util/mylib:2")))
 
     def test_remove(self):
         s = self.gen_pkgset("dev-util/diffball\ndev-util/bsdiff")
         s.remove(atom("=dev-util/diffball-0.4"))
         s.flush()
-        self.assertEqual(sorted(x.strip() for x in open(self.fn) if x.strip()),
-            ["dev-util/bsdiff"])
+        with open(self.fn) as f:
+            self.assertEqual(sorted(x.strip() for x in f if x.strip()),
+                ["dev-util/bsdiff"])
 
     @protect_logging(log.logging.root)
     def test_subset_awareness(self):

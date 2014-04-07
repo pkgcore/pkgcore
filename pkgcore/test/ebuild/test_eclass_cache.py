@@ -55,10 +55,10 @@ class TestEclassCache(TempDirMixin, TestBase):
     def setUp(self):
         TempDirMixin.setUp(self)
         for x, mtime in (("eclass1", 100), ("eclass2", 200)):
-            open(pjoin(self.dir, "%s.eclass" % x), "w")
+            open(pjoin(self.dir, "%s.eclass" % x), "w").close()
             os.utime(pjoin(self.dir, "%s.eclass" % x), (mtime, mtime))
         # insert a crap file to ensure it doesn't grab it.
-        open(pjoin(self.dir, 'foon-eclass'), 'w')
+        open(pjoin(self.dir, 'foon-eclass'), 'w').close()
         self.ec = eclass_cache.cache(self.dir)
         self.ec_locs = dict((x, self.dir) for x in ("eclass1", "eclass2"))
 
@@ -82,15 +82,15 @@ class TestStackedCaches(TestEclassCache):
         self.loc2 = pjoin(self.dir, "stack2")
 
         os.mkdir(self.loc1)
-        open(pjoin(self.loc1, 'eclass1.eclass'), 'w')
+        open(pjoin(self.loc1, 'eclass1.eclass'), 'w').close()
         os.utime(pjoin(self.loc1, 'eclass1.eclass'), (100, 100))
         self.ec1 = eclass_cache.cache(self.loc1)
 
         os.mkdir(self.loc2)
-        open(pjoin(self.loc2, 'eclass2.eclass'), 'w')
+        open(pjoin(self.loc2, 'eclass2.eclass'), 'w').close()
         os.utime(pjoin(self.loc2, 'eclass2.eclass'), (100, 100))
         self.ec2 = eclass_cache.cache(self.loc2)
         self.ec = eclass_cache.StackedCaches([self.ec1, self.ec2])
         self.ec_locs = {"eclass1":self.loc1, "eclass2":self.loc2}
         # make a shadowed file to verify it's not seen
-        open(pjoin(self.loc2, 'eclass1.eclass'), 'w')
+        open(pjoin(self.loc2, 'eclass1.eclass'), 'w').close()

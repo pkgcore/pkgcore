@@ -126,8 +126,7 @@ def incremental_expansion_license(licenses, license_groups, iterable, msg_prefix
                     i = i[1:]
                     if not i:
                         raise ValueError("%sencountered an incomplete negation"
-                            " of a license group, '-@'"
-                                % (msg_prefix,))
+                            " of a license group, '-@'" % (msg_prefix,))
                     seen.difference_update(license_groups.get(i, ()))
                 else:
                     seen.discard(i)

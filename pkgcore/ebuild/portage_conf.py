@@ -6,9 +6,11 @@
 Converts portage configuration files into :obj:`pkgcore.config` form.
 """
 
-__all__ = ("SecurityUpgradesViaProfile", "add_layman_syncers", "make_syncer",
+__all__ = (
+    "SecurityUpgradesViaProfile", "add_layman_syncers", "make_syncer",
     "add_sets", "add_profile", "add_fetcher", "mk_simple_cache",
-    "config_from_make_conf")
+    "config_from_make_conf",
+)
 
 import os
 import sys
@@ -58,9 +60,7 @@ def SecurityUpgradesViaProfile(ebuild_repo, vdb, profile):
 
 
 def add_layman_syncers(new_config, rsync_opts, overlay_paths, config_root='/',
-    default_loc="etc/layman/layman.cfg",
-    default_conf='overlays.xml'):
-
+                       default_loc="etc/layman/layman.cfg", default_conf='overlays.xml'):
     try:
         f = open(pjoin(config_root, default_loc))
     except IOError, ie:
@@ -177,24 +177,24 @@ def make_syncer(new_config, basedir, sync_uri, rsync_opts,
 def make_autodetect_syncer(new_config, basedir):
     name = 'sync:%s' % basedir
     new_config[name] = basics.AutoConfigSection({
-        'class':'pkgcore.sync.base.AutodetectSyncer',
-        'basedir':basedir})
+        'class': 'pkgcore.sync.base.AutodetectSyncer',
+        'basedir': basedir})
     return name
 
 
 def add_sets(config, root, portage_base_dir):
     config["world"] = basics.AutoConfigSection({
-            "class": "pkgcore.pkgsets.filelist.WorldFile",
-            "location": pjoin(root, const.WORLD_FILE)})
+        "class": "pkgcore.pkgsets.filelist.WorldFile",
+        "location": pjoin(root, const.WORLD_FILE)})
     config["system"] = basics.AutoConfigSection({
-            "class": "pkgcore.pkgsets.system.SystemSet",
-            "profile": "profile"})
+        "class": "pkgcore.pkgsets.system.SystemSet",
+        "profile": "profile"})
     config["installed"] = basics.AutoConfigSection({
-            "class": "pkgcore.pkgsets.installed.Installed",
-            "vdb": "vdb"})
+        "class": "pkgcore.pkgsets.installed.Installed",
+        "vdb": "vdb"})
     config["versioned-installed"] = basics.AutoConfigSection({
-            "class": "pkgcore.pkgsets.installed.VersionedInstalled",
-            "vdb": "vdb"})
+        "class": "pkgcore.pkgsets.installed.VersionedInstalled",
+        "vdb": "vdb"})
 
     set_fp = pjoin(portage_base_dir, "sets")
     try:
@@ -206,8 +206,8 @@ def add_sets(config, root, portage_base_dir):
                     pjoin(set_fp, setname))
                 continue
             config[setname] = basics.AutoConfigSection({
-                    "class":"pkgcore.pkgsets.filelist.FileList",
-                    "location":pjoin(set_fp, setname)})
+                "class": "pkgcore.pkgsets.filelist.FileList",
+                "location": pjoin(set_fp, setname)})
     except OSError, e:
         if e.errno != errno.ENOENT:
             raise
@@ -242,15 +242,17 @@ def add_profile(config, base_path, user_profile_path=None):
 
     if os.path.isdir(user_profile_path):
         config["profile"] = basics.AutoConfigSection({
-                "class": "pkgcore.ebuild.profiles.UserProfile",
-                "parent_path": paths[0],
-                "parent_profile": paths[1],
-                "user_path": user_profile_path})
+            "class": "pkgcore.ebuild.profiles.UserProfile",
+            "parent_path": paths[0],
+            "parent_profile": paths[1],
+            "user_path": user_profile_path,
+        })
     else:
         config["profile"] = basics.AutoConfigSection({
-                "class": "pkgcore.ebuild.profiles.OnDiskProfile",
-                "basepath": paths[0],
-                "profile": paths[1]})
+            "class": "pkgcore.ebuild.profiles.OnDiskProfile",
+            "basepath": paths[0],
+            "profile": paths[1],
+        })
 
 
 def add_fetcher(config, conf_dict, distdir):
@@ -263,25 +265,25 @@ def add_fetcher(config, conf_dict, distdir):
     if "FETCH_ATTEMPTS" in fetcher_dict:
         fetcher_dict["attempts"] = fetcher_dict.pop("FETCH_ATTEMPTS")
     fetcher_dict.pop("readonly", None)
-    fetcher_dict.update(
-        {"class": "pkgcore.fetch.custom.fetcher",
-            "distdir": distdir,
-            "command": fetchcommand,
-            "resume_command": resumecommand
-        })
+    fetcher_dict.update({
+        "class": "pkgcore.fetch.custom.fetcher",
+        "distdir": distdir,
+        "command": fetchcommand,
+        "resume_command": resumecommand,
+    })
     config["fetcher"] = basics.AutoConfigSection(fetcher_dict)
 
 
 def mk_simple_cache(config_root, tree_loc, readonly=False,
                     kls='pkgcore.cache.flat_hash.database'):
     readonly = readonly and 'yes' or 'no'
-    tree_loc = pjoin(config_root, 'var/cache/edb/dep',
-       tree_loc.lstrip('/'))
+    tree_loc = pjoin(config_root, 'var/cache/edb/dep', tree_loc.lstrip('/'))
 
-    return basics.AutoConfigSection({'class': kls,
+    return basics.AutoConfigSection({
+        'class': kls,
         'location': tree_loc,
         'readonly': readonly,
-        })
+    })
 
 
 def load_make_config(vars_dict, path, allow_sourcing=False, required=True,
@@ -347,7 +349,6 @@ def config_from_make_conf(location="/etc/"):
     load_make_config(conf_dict, pjoin(portage_base, 'make.conf'), required=False,
         allow_sourcing=True, incrementals=True)
 
-
     conf_dict.setdefault("PORTDIR", "/usr/portage")
     root = os.environ.get("ROOT", conf_dict.get("ROOT", "/"))
     gentoo_mirrors = list(
@@ -371,24 +372,22 @@ def config_from_make_conf(location="/etc/"):
     user_profile_path = pjoin(base_path, "portage", "profile")
     add_profile(new_config, base_path, user_profile_path)
 
-    kwds = {"class": "pkgcore.vdb.ondisk.tree",
-            "location": pjoin(root, 'var', 'db', 'pkg')}
-    kwds["cache_location"] = pjoin(config_root, 'var', 'cache', 'edb',
-        'dep', 'var', 'db', 'pkg')
+    kwds = {
+        "class": "pkgcore.vdb.ondisk.tree",
+        "location": pjoin(root, 'var', 'db', 'pkg'),
+        "cache_location": pjoin(config_root, 'var', 'cache', 'edb', 'dep', 'var', 'db', 'pkg'),
+    }
     new_config["vdb"] = basics.AutoConfigSection(kwds)
 
     portdir = normpath(conf_dict.pop("PORTDIR").strip())
-    portdir_overlays = [
-        normpath(x) for x in conf_dict.pop("PORTDIR_OVERLAY", "").split()]
+    portdir_overlays = [normpath(x) for x in conf_dict.pop("PORTDIR_OVERLAY", "").split()]
 
     new_config['ebuild-repo-common'] = basics.AutoConfigSection({
-            'class': 'pkgcore.ebuild.repository.slavedtree',
-            'default_mirrors': gentoo_mirrors,
-            'inherit-only': True,
-            'ignore_paludis_versioning':
-                ('ignore-paludis-versioning' in features),
-            })
-
+        'class': 'pkgcore.ebuild.repository.slavedtree',
+        'default_mirrors': gentoo_mirrors,
+        'inherit-only': True,
+        'ignore_paludis_versioning': ('ignore-paludis-versioning' in features),
+    })
 
     # used by PORTDIR syncer, and any layman defined syncers
     rsync_opts = isolate_rsync_opts(conf_dict)
@@ -422,8 +421,8 @@ def config_from_make_conf(location="/etc/"):
 
     for tree_loc in [portdir] + portdir_overlays:
         kwds = {
-                'inherit': ('ebuild-repo-common',),
-                'raw_repo': ('raw:' + tree_loc),
+            'inherit': ('ebuild-repo-common',),
+            'raw_repo': ('raw:' + tree_loc),
         }
         cache_name = 'cache:%s' % (tree_loc,)
         new_config[cache_name] = mk_simple_cache(config_root, tree_loc)
@@ -461,10 +460,11 @@ def config_from_make_conf(location="/etc/"):
 
 
     new_config['vuln'] = basics.AutoConfigSection({
-            'class': SecurityUpgradesViaProfile,
-            'ebuild_repo': 'repo-stack',
-            'vdb': 'vdb',
-            'profile': 'profile'})
+        'class': SecurityUpgradesViaProfile,
+        'ebuild_repo': 'repo-stack',
+        'vdb': 'vdb',
+        'profile': 'profile',
+    })
     new_config['glsa'] = basics.section_alias('vuln',
         SecurityUpgradesViaProfile.pkgcore_config_type.typename)
 
@@ -477,20 +477,19 @@ def config_from_make_conf(location="/etc/"):
         except OSError, oe:
             if oe.errno != errno.ENOENT:
                 raise
-            if set(features).intersection(
-                ('buildpkg', 'pristine-buildpkg', 'buildsyspkg', 'unmerge-backup')):
+            if set(features).intersection(('buildpkg', 'pristine-buildpkg',
+                                           'buildsyspkg', 'unmerge-backup')):
                 logger.warning("disabling buildpkg related features since PKGDIR doesn't exist")
             pkgdir = None
         else:
             if not ensure_dirs(pkgdir, mode=0755, minimal=True):
                 logger.warning("disabling buildpkg related features since PKGDIR either doesn't "
-                    "exist, or lacks 0755 minimal permissions")
+                               "exist, or lacks 0755 minimal permissions")
                 pkgdir = None
     else:
-       if set(features).intersection(
-           ('buildpkg', 'pristine-buildpkg', 'buildsyspkg', 'unmerge-backup')):
+       if set(features).intersection(('buildpkg', 'pristine-buildpkg',
+                                      'buildsyspkg', 'unmerge-backup')):
            logger.warning("disabling buildpkg related features since PKGDIR is unset")
-
 
     # yes, round two; may be disabled from above and massive else block sucks
     if pkgdir is not None:
@@ -498,18 +497,16 @@ def config_from_make_conf(location="/etc/"):
             new_config['binpkg'] = basics.ConfigSectionFromStringDict({
                 'class': 'pkgcore.binpkg.repository.tree',
                 'location': pkgdir,
-                'ignore_paludis_versioning':
-                    str('ignore-paludis-versioning' in features)})
+                'ignore_paludis_versioning': str('ignore-paludis-versioning' in features),
+            })
             default_repos.append('binpkg')
 
         if 'buildpkg' in features:
             add_trigger('buildpkg_trigger', 'pkgcore.merge.triggers.SavePkg',
-                pristine='no',
-                target_repo='binpkg')
+                pristine='no', target_repo='binpkg')
         elif 'pristine-buildpkg' in features:
             add_trigger('buildpkg_trigger', 'pkgcore.merge.triggers.SavePkg',
-                 pristine='yes',
-                target_repo='binpkg')
+                pristine='yes', target_repo='binpkg')
         elif 'buildsyspkg' in features:
             add_trigger('buildpkg_system_trigger', 'pkgcore.merge.triggers.SavePkgIfInPkgset',
                 pristine='yes', target_repo='binpkg', pkgset='system')
@@ -550,17 +547,18 @@ def config_from_make_conf(location="/etc/"):
 
     # finally... domain.
     conf_dict.update({
-            'class': 'pkgcore.ebuild.domain.domain',
-            'repositories': tuple(default_repos),
-            'fetcher': 'fetcher',
-            'default': True,
-            'vdb': ('vdb',),
-            'profile': 'profile',
-            'name': 'livefs domain',
-            'root':root})
+        'class': 'pkgcore.ebuild.domain.domain',
+        'repositories': tuple(default_repos),
+        'fetcher': 'fetcher',
+        'default': True,
+        'vdb': ('vdb',),
+        'profile': 'profile',
+        'name': 'livefs domain',
+        'root':root,
+    })
 
     for f in ("package.mask", "package.unmask", "package.accept_keywords", "package.keywords",
-            "package.use", "package.env", "env:ebuild_hook_dir", "bashrc"):
+              "package.use", "package.env", "env:ebuild_hook_dir", "bashrc"):
         fp = pjoin(portage_base, f.split(":")[0])
         try:
             os.stat(fp)

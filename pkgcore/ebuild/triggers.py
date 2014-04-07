@@ -259,7 +259,6 @@ class ConfigProtectInstall(triggers.base):
                 if fn in updates:
                     updates[fn].append((count, fn))
 
-
             # now we rename.
             for fname, entry in entries:
                 # check for any updates with the same chksums.

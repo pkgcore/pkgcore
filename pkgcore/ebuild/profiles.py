@@ -358,8 +358,7 @@ class ProfileNode(object):
         c.freeze()
         return c
 
-    @load_property('make.defaults', fallback=None, read_func=_open_utf8,
-        handler=None)
+    @load_property('make.defaults', fallback=None, read_func=_open_utf8, handler=None)
     def default_env(self, data):
         rendered = _make_incrementals_dict()
         for parent in self.parents:

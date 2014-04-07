@@ -100,9 +100,9 @@ class domain(pkgcore.config.domain.domain):
 
     # TODO this is missing defaults
     pkgcore_config_type = ConfigHint(
-            _types, typename='domain',
-            required=['repositories', 'profile', 'vdb', 'fetcher', 'name'],
-            allow_unknowns=True)
+        _types, typename='domain',
+        required=['repositories', 'profile', 'vdb', 'fetcher', 'name'],
+        allow_unknowns=True)
 
     del _types, _thing
 
@@ -322,7 +322,7 @@ class domain(pkgcore.config.domain.domain):
                                 pargs.append(getattr(self, x))
                     except AttributeError, ae:
                         raise_from(Failure("failed configuring repo '%s': "
-                                      "configurable missing: %s" % (repo, ae)))
+                                           "configurable missing: %s" % (repo, ae)))
                     wrapped_repo = repo.configure(*pargs)
                 else:
                     wrapped_repo = repo

@@ -30,8 +30,8 @@ class fake_lock(object):
 
 
 class finalizer_base(WeakRefFinalizer, ForcedDepends):
-
     pass
+
 
 class Failure(Exception):
     pass

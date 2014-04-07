@@ -9,6 +9,7 @@ ini based configuration format
 __all__ = ("config_from_file",)
 
 import ConfigParser
+import sys
 
 from pkgcore.config import basics, errors
 from snakeoil import mappings
@@ -27,7 +28,10 @@ def config_from_file(file_obj):
     """
     cparser = CaseSensitiveConfigParser()
     try:
-        cparser.readfp(file_obj)
+        if sys.hexversion < 0x03020000:
+            cparser.readfp(file_obj)
+        else:
+            cparser.read_file(file_obj)
     except ConfigParser.ParsingError, pe:
         raise errors.ParsingError("while parsing %s" % (file_obj,), pe)
     def get_section(section):

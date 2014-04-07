@@ -2,6 +2,8 @@
 # License: BSD/GPL2
 
 from StringIO import StringIO
+import sys
+
 from pkgcore.test import TestCase
 from pkgcore.config import cparser, central, errors
 
@@ -10,13 +12,17 @@ class CaseSensitiveConfigParserTest(TestCase):
 
     def test_case_sensitivity(self):
         cp = cparser.CaseSensitiveConfigParser()
-        cp.readfp(StringIO('\n'.join((
-                        '[header]',
-                        'foo=bar',
-                        'FOO=BAR',
-                        '[HEADER]',
-                        'foo=notbar',
-                        ))))
+        config = StringIO('\n'.join((
+            '[header]',
+            'foo=bar',
+            'FOO=BAR',
+            '[HEADER]',
+            'foo=notbar',
+            )))
+        if sys.hexversion < 0x03020000:
+            cp.readfp(config)
+        else:
+            cp.read_file(config)
         self.assertEqual(cp.get('header', 'foo'), 'bar')
         self.assertEqual(cp.get('header', 'FOO'), 'BAR')
         self.assertEqual(cp.get('HEADER', 'foo'), 'notbar')

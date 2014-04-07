@@ -11,6 +11,7 @@ __all__ = ("SecurityUpgradesViaProfile", "add_layman_syncers", "make_syncer",
     "config_from_make_conf")
 
 import os
+import sys
 
 from pkgcore.config import basics, configurable
 from pkgcore.ebuild import const
@@ -68,7 +69,11 @@ def add_layman_syncers(new_config, rsync_opts, overlay_paths, config_root='/',
         return {}
 
     c = ConfigParser()
-    c.readfp(f)
+    if sys.hexversion < 0x03020000:
+        c.readfp(f)
+    else:
+        c.read_file(f)
+    f.close()
     storage_loc = c.get('MAIN', 'storage')
     overlay_xml = pjoin(storage_loc, default_conf)
     del c

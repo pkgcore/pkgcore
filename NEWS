@@ -8,6 +8,9 @@ pkgcore trunk:
 * Add support for COLLISION_IGNORE and UNINSTALL_IGNORE variables (see
   make.conf man page for details).
 
+* Don't localize file system paths by resolving symlinks to provide a
+  consistent view of merged files between pmerge output and the vdb.
+
 * Add support for FEATURES=test-fail-continue. This allows the remaining
   phases after src_test to continue executing if the test phase fails.
 
@@ -16,6 +19,11 @@ pkgcore trunk:
 * Fix installing symlinks via doins for >= EAPI-4.
 
 * Throw warnings for EAPI support in development instead of erroring out.
+
+* Add eqawarn support.
+
+* Add support for profile-defined PROFILE_ONLY_VARIABLES to prevent critical
+  variables from being changed by the user in make.conf or the env.
 
 * Move to using portage's keepdir file naming scheme (.keep_CAT_PN-SLOT)
   while still supporting pkgs using the previous ".keep" method.
@@ -35,9 +43,9 @@ pkgcore trunk:
 * Add pmerge options -O and -n to match --nodeps and --noreplace similar
   to portage.
 
-* Add package.accept_keywords and proper profile package.keywords support
-  and force the profile base to be loaded by default so related settings
-  in the profile root dir are respected.
+* Add profile-based package.accept_keywords, package.keywords, and
+  package.unmask support and force the profile base to be loaded by default so
+  related settings in the profile root dir are respected.
 
 * Define ${T} for pkg_pretend phase, allows things like check-reqs for disk
   tempspace to work properly.

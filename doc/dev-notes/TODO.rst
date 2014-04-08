@@ -104,3 +104,19 @@ Rough TODO
 - support FEATURES=protect-owned
 
 - support repos.conf (SYNC is now deprecated)
+
+- make profile defaults (LDFLAGS) override global settings from
+  /usr/share/portage/config/make.globals or similar then apply user settings on
+  top, currently LDFLAGS is explicitly set to an empty string in make.globals
+  but the profile settings aren't overriding that
+
+- support /etc/portage/mirrors
+
+- fix /etc/portage/package.license support
+
+- support ACCEPT_PROPERTIES and /etc/portage/package.properties
+
+- support ACCEPT_RESTRICT and /etc/portage/package.accept_restrict
+
+- support pmerge --info (emerge --info workalike), requires support for
+  info_vars and info_pkgs files from profiles

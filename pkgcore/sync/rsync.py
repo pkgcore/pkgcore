@@ -160,7 +160,8 @@ class rsync_timestamp_syncer(rsync_syncer):
         if path is None:
             path = pjoin(self.basedir, "metadata", "timestamp.chk")
         try:
-            date, offset = open(path).read().strip().rsplit('+', 1)
+            with open(path) as f:
+                date, offset = f.read().strip().rsplit('+', 1)
             date = time.mktime(time.strptime(date, "%a, %d %b %Y %H:%M:%S "))
             # add the hour/minute offset.
             date += int(offset[:2] * 60) + int(offset[2:])
@@ -213,9 +214,9 @@ class rsync_timestamp_syncer(rsync_syncer):
                 if self.last_timestamp is None:
                     os.remove(path)
                 else:
-                    open(pjoin(self.basedir, "metadata", "timestamp.chk"),
-                        "w").write(time.strftime("%a, %d %b %Y %H:%M:%S +0000",
-                            time.gmtime(self.last_timestamp)))
+                    with open(pjoin(self.basedir, "metadata", "timestamp.chk"), "w") as f:
+                        f.write(time.strftime("%a, %d %b %Y %H:%M:%S +0000",
+                                time.gmtime(self.last_timestamp)))
             except EnvironmentError:
                 # don't care...
                 pass

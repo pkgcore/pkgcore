@@ -108,7 +108,8 @@ class ManConverter(object):
             mtime = self.mtime
         sys.stdout.write("regenerating rst for %s\n" % (self.name,))
         data = self.generate_rst(self.name, self.parser)
-        open(self.out_path, "w").write("\n".join(data))
+        with open(self.out_path, "w") as f:
+            f.write("\n".join(data))
 
         os.chmod(self.out_path, 0644)
         if mtime:

@@ -103,7 +103,8 @@ def write(tempspace, finalpath, pkg, cset=None, platform='', maintainer='', comp
             ]),
         control_path, compressor='gz')
     dbinary_path = pjoin(tempspace, 'debian-binary')
-    open(dbinary_path, 'w').write("2.0\n")
+    with open(dbinary_path, 'w') as f:
+        f.write("2.0\n")
     ret = spawn(['ar', '-r', finalpath, dbinary_path, data_path, control_path])
     if ret != 0:
         unlink_if_exists(finalpath)

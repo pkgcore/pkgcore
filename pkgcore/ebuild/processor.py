@@ -456,18 +456,17 @@ class EbuildProcessor(object):
         if not os.path.exists(self.__sandbox_log):
             self.write("end_sandbox_summary")
             return 0
-        violations = [x.strip()
-                      for x in open(self.__sandbox_log, "r") if x.strip()]
+        with open(self.__sandbox_log, "r") as f:
+            violations = [x.strip() for x in f if x.strip()]
         if not violations:
             self.write("end_sandbox_summary")
             return 0
         if not move_log:
             move_log = self.__sandbox_log
         elif move_log != self.__sandbox_log:
-            myf = open(move_log)
-            for x in violations:
-                myf.write(x+"\n")
-            myf.close()
+            with open(move_log) as myf:
+                for x in violations:
+                    myf.write(x+"\n")
         # XXX this is fugly, use a colorizer or something
         # (but it is better than "from output import red" (portage's output))
         def red(text):

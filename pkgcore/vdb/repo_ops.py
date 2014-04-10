@@ -55,7 +55,8 @@ class install(repo_ops.install):
             elif k == "environment":
                 data = compression.compress_data('bzip2',
                     self.new_pkg.environment.bytes_fileobj().read())
-                open(pjoin(dirpath, "environment.bz2"), "wb").write(data)
+                with open(pjoin(dirpath, "environment.bz2"), "wb") as f:
+                    f.write(data)
                 del data
             else:
                 v = getattr(self.new_pkg, k)
@@ -76,9 +77,8 @@ class install(repo_ops.install):
                         s = str(v)
                 else:
                     s = v
-                open(pjoin(
-                        dirpath,
-                        rewrite.get(k, k.upper())), "w", 32768).write(s)
+                with open(pjoin(dirpath, rewrite.get(k, k.upper())), "w", 32768) as f:
+                    f.write(s)
 
         # ebuild_data is the actual ebuild- no point in holding onto
         # it for built ebuilds, but if it's there, we store it.
@@ -92,7 +92,8 @@ class install(repo_ops.install):
         else:
             o = o.bytes_fileobj().read()
         # XXX lil hackish accessing PF
-        open(pjoin(dirpath, self.new_pkg.PF + ".ebuild"), "wb").write(o)
+        with open(pjoin(dirpath, self.new_pkg.PF + ".ebuild"), "wb") as f:
+            f.write(o)
 
         # install NEEDED and NEEDED.ELF.2 files from tmpdir if they exist
         pkg_tmpdir = normpath(pjoin(domain._get_tempspace(), self.new_pkg.category,
@@ -110,11 +111,12 @@ class install(repo_ops.install):
         # need to get zmedico to localize the counter
         # creation/counting to per CP for this trick to behave
         # perfectly.
-        open(pjoin(dirpath, "COUNTER"), "w").write(str(int(time.time())))
+        with open(pjoin(dirpath, "COUNTER"), "w") as f:
+            f.write(str(int(time.time())))
 
         #finally, we mark who made this.
-        open(pjoin(dirpath, "PKGMANAGER"), "w").write(
-            "pkgcore-%s\n" % VERSION)
+        with open(pjoin(dirpath, "PKGMANAGER"), "w") as f:
+            f.write("pkgcore-%s\n" % VERSION)
         return True
 
     def finalize_data(self):

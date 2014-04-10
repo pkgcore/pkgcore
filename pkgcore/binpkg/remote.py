@@ -256,7 +256,7 @@ class PackagesCacheV0(cache.bulk):
 
         if not targets:
             # just open/trunc the target instead, and bail
-            open(self._location, 'wb')
+            open(self._location, 'wb').close()
             return
 
     def __del__(self):

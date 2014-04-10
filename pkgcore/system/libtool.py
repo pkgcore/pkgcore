@@ -114,9 +114,11 @@ def fix_fsobject(location):
         if not fs.isreg(obj) or not obj.basename.endswith(".la"):
             continue
 
-        updated, content = rewrite_lafile(open(obj.location, 'r'))
+        with open(obj.location, 'r') as f:
+            updated, content = rewrite_lafile(f, obj.basename)
         if updated:
-            open(obj.location, 'w').write(content)
+            with open(obj.location, 'w') as f:
+                f.write(content)
 
 
 class FixLibtoolArchivesTrigger(triggers.base):

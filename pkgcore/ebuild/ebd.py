@@ -206,8 +206,8 @@ class ebd(object):
             self.env["ED"] = normpath(pjoin(self.env["D"], self.prefix)) + "/"
 
     def get_env_source(self):
-        return data_source.bytes_data_source(
-            open(pjoin(self.env["T"], "environment"), "rb").read())
+        with open(pjoin(self.env["T"], "environment"), "rb") as f:
+            return data_source.bytes_data_source(f.read())
 
     def setup_env_data_source(self):
         if not ensure_dirs(self.env["T"], mode=0770, gid=portage_gid,
@@ -222,7 +222,8 @@ class ebd(object):
             # if it's a src_ebuild being installed, trying to do two steps
             # stomps the local_sources data.
             data = self.env_data_source.bytes_fileobj().read()
-            open(fp, "wb").write(data)
+            with open(fp, "wb") as f:
+                f.write(data)
             del data
 
     def _set_per_phase_env(self, phase, env):
@@ -372,7 +373,7 @@ class ebd(object):
 
     def __stage_step_callback__(self, stage):
         try:
-            open(pjoin(self.builddir, '.%s' % (stage,)), 'w')
+            open(pjoin(self.builddir, '.%s' % (stage,)), 'w').close()
         except EnvironmentError:
             # we really don't care...
             pass

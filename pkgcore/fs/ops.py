@@ -125,7 +125,7 @@ def default_copyfile(obj, mkdirs=False):
 
     """
 
-    existant = False
+    existent = False
     ensure_perms = get_plugin("fs_ops.ensure_perms")
     if not fs.isfs_obj(obj):
         raise TypeError("obj must be fsBase derivative: %r" % obj)
@@ -136,7 +136,7 @@ def default_copyfile(obj, mkdirs=False):
         existing = gen_obj(obj.location)
         if fs.isdir(existing):
             raise CannotOverwrite(obj, existing)
-        existant = True
+        existent = True
     except OSError, oe:
         # verify the parent dir is there at least
         basefp = os.path.dirname(obj.location)
@@ -146,12 +146,12 @@ def default_copyfile(obj, mkdirs=False):
                     raise FailedCopy(obj, str(oe))
             else:
                 raise
-        existant = False
+        existent = False
 
-    if not existant:
+    if not existent:
         fp = obj.location
     else:
-        fp = existant_fp = obj.location + "#new"
+        fp = existent_fp = obj.location + "#new"
 
     if fs.isreg(obj):
         obj.data.transfer_to_path(fp)
@@ -169,8 +169,8 @@ def default_copyfile(obj, mkdirs=False):
 
     ensure_perms(obj.change_attributes(location=fp))
 
-    if existant:
-        os.rename(existant_fp, obj.location)
+    if existent:
+        os.rename(existent_fp, obj.location)
     return True
 
 def do_link(src, trg):

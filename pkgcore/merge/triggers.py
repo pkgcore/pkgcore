@@ -199,7 +199,7 @@ class mtime_watcher(object):
     those that are directories.
 
     If the location doesn't exist, it's ignored.  If stat_func is os.stat
-    and the location is a symlink pointing at a non existant location, it's
+    and the location is a symlink pointing at a nonexistent location, it's
     ignored.
 
     Additionally, since this function is used for effectively 'snapshotting'

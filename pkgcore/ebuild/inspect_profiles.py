@@ -23,7 +23,7 @@ commands = []
 # global known flags, etc
 
 def mk_profile(value):
-    return profiles.ProfileStack(commandline.existant_path(value))
+    return profiles.ProfileStack(commandline.existent_path(value))
 
 
 class _base(commandline.ArgparseCommand):

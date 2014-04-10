@@ -684,7 +684,7 @@ def _mk_domain(parser):
         action=StoreConfigObject,
         help="domain to use for this operation")
 
-def existant_path(value):
+def existent_path(value):
     if not os.path.exists(value):
         raise ValueError("path %r doesn't exist on disk" % (value,))
     try:

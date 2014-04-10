@@ -36,7 +36,7 @@ def gen_obj(path, stat=None, chksum_handlers=None, real_location=None,
 
     :param stat: stat object to reuse if available
     :param real_location: real path to the object if path is the desired
-        location, rather then existant location.
+        location, rather then existent location.
     :raise KeyError: if no obj type matches the stat checks
     :return: :obj:`pkgcore.fs.fs.fsBase` derivative
     """

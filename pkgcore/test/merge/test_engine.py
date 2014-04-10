@@ -124,7 +124,7 @@ class Test_MergeEngineCsets(TestCase):
         # get updated (additionally, folks may not be aware of the potential)
         open(pjoin(self.dir, 'broken-symlink'), 'w').close()
         engine = fake_engine(csets={'test':old_cset})
-        existant = livefs.scan(self.dir)
+        existent = livefs.scan(self.dir)
         generated = self.run_cset('_get_livefs_intersect_cset', engine,
             'test')
-        self.assertEqual(generated, existant)
+        self.assertEqual(generated, existent)

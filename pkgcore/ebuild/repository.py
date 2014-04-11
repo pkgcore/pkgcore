@@ -345,7 +345,8 @@ class _UnconfiguredTree(prototype.tree):
                 listdir_dirs(cpath)))
         except EnvironmentError, e:
             if e.errno == errno.ENOENT:
-                if self.hardcoded_categories and category in self.hardcoded_categories:
+                if self.hardcoded_categories and category in self.hardcoded_categories or \
+                        isinstance(self, _SlavedTree) and category in self.parent_repo.categories:
                     # ignore it, since it's PMS mandated that it be allowed.
                     return ()
             raise_from(KeyError("failed fetching packages for category %s: %s" % \

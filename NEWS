@@ -5,6 +5,8 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 
 pkgcore trunk:
 
+* Add `pinspect query get_profiles` support.
+
 * Add support for COLLISION_IGNORE and UNINSTALL_IGNORE variables (see
   make.conf man page for details).
 

@@ -215,6 +215,20 @@ def find_repo_by_repo_id(config, repo_id):
             yield repo
 
 
+@BaseCommand.make_command("repo_id", bind=query_commands)
+def get_profiles(options, out, err):
+    l = []
+    for repo in find_repo_by_repo_id(options.config, options.repo_id):
+        if getattr(repo, 'location', None) is not None:
+            profiles = repo.config.profiles.arch_profiles
+            for arch in profiles.iterkeys():
+                for path, stability in profiles[arch]:
+                    l.append(path)
+    for x in sorted(set(l)):
+        out.write(x)
+    return 0
+
+
 @BaseCommand.make_command("repo_id", bind=portageq_commands)
 def get_repo_path(options, out, err):
     for repo in find_repo_by_repo_id(options.config, options.repo_id):

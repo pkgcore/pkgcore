@@ -47,6 +47,8 @@ TOOLS?
 
   pebuild: low-level ebuild operations, go through phases manually
 
+  pinspect: generic utility for inspecting repository related info
+
   pmaint: generic utility for repository maintenance (syncing, copying...)
 
   pmerge: generic utility for doing resolution, fetching, merging/unmerging,
@@ -54,8 +56,6 @@ TOOLS?
 
   pquery: generic utility for querying info about repositories, revdeps, pkg
     search, vdb search, etc.
-
-  pregen: script for doing ebuild metadata regeneration; can be parallelized
 
 TESTS?
 

@@ -438,8 +438,7 @@ class virtual_ebuild(metadata.package):
     package_is_real = False
     built = True
 
-    #__slots__ = ("_orig_data", "data", "provider")
-    __slotting_intentionally_disabled__ = True
+    __slots__ = ("_orig_data", "provider", "eapi_obj")
 
     def __init__(self, parent_repository, pkg, data, cpvstr):
         """

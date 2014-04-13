@@ -118,3 +118,79 @@ class UnconfiguredTreeTest(TempDirMixin):
         self.assertEqual(sorted([atom('it-is/broken'),
             atom('<just/newer-than-42')]),
             sorted(repo.default_visibility_limiters))
+
+
+class SlavedTreeTest(UnconfiguredTreeTest):
+
+    def mk_tree(self, path, *args, **kwds):
+        if path != self.dir:
+            self.dir_slave = path
+            self.dir_master = pjoin(os.path.dirname(path), os.path.basename(path) + 'master')
+            ensure_dirs(self.dir_slave)
+            ensure_dirs(self.dir_master)
+
+        eclasses = kwds.pop('eclass_cache', None)
+        if eclasses is None:
+            epath = pjoin(self.dir_master, 'eclass')
+            ensure_dirs(epath)
+            eclasses = eclass_cache.cache(epath)
+
+        master_repo = repository._UnconfiguredTree(self.dir_master, eclasses, *args, **kwds)
+        return repository._SlavedTree(master_repo, self.dir_slave, eclasses, *args, **kwds)
+
+    def setUp(self):
+        TempDirMixin.setUp(self)
+        self.dir_orig = self.dir
+
+        self.dir_master = pjoin(self.dir, 'master')
+        self.dir_slave = pjoin(self.dir, 'slave')
+        ensure_dirs(self.dir_master)
+        ensure_dirs(self.dir_slave)
+
+        self.dir = self.dir_slave
+
+        self.master_pdir = pjoin(self.dir_master, 'profiles')
+        self.pdir = self.slave_pdir = pjoin(self.dir_slave, 'profiles')
+        ensure_dirs(self.master_pdir)
+        ensure_dirs(self.slave_pdir)
+
+        with open(pjoin(self.master_pdir, 'repo_name'), 'w') as f:
+            f.write('master\n')
+        with open(pjoin(self.slave_pdir, 'repo_name'), 'w') as f:
+            f.write('slave\n')
+
+        ensure_dirs(pjoin(self.dir_master, 'metadata'))
+        ensure_dirs(pjoin(self.dir_slave, 'metadata'))
+        with open(pjoin(self.dir_master, 'metadata', 'layout.conf'), 'w') as f:
+            f.write('masters =\n')
+        with open(pjoin(self.dir_slave, 'metadata', 'layout.conf'), 'w') as f:
+            f.write('masters = master\n')
+
+    def tearDown(self):
+        self.dir = self.dir_orig
+        TempDirMixin.tearDown(self)
+
+    def test_inherit_parent_categories(self):
+        with open(pjoin(self.master_pdir, 'categories'), 'w') as f:
+            f.write(dedent('''\
+                sys-apps
+                foo-bar
+            '''))
+        with open(pjoin(self.slave_pdir, 'categories'), 'w') as f:
+            f.write(dedent('''\
+                cat
+                foo-bar
+            '''))
+        repo = self.mk_tree(self.dir)
+        self.assertEqual(tuple(sorted(repo.categories)), ('cat', 'foo-bar', 'sys-apps'))
+
+        ensure_dirs(pjoin(self.dir, 'sys-apps', 'pkgcore'))
+        ensure_dirs(pjoin(self.dir, 'cat', 'pkg'))
+        open(pjoin(self.dir, 'sys-apps', 'pkgcore', 'pkgcore-9999.ebuild'), 'w').close()
+        open(pjoin(self.dir, 'cat', 'pkg', 'pkg-1.ebuild'), 'w').close()
+        self.assertEqual(
+            {'foo-bar': (), 'cat': ('pkg',), 'sys-apps': ('pkgcore',)},
+            dict(repo.packages))
+        self.assertEqual(
+            {('cat', 'pkg'): ('1',), ('sys-apps', 'pkgcore'): ('9999',)},
+            dict(repo.versions))

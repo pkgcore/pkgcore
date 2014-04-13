@@ -506,7 +506,7 @@ class _SlavedTree(_UnconfiguredTree):
         self.parent_repo = parent_repo
 
     def _get_categories(self, *optional_category):
-        categories = super(_SlavedTree, self)._get_categories(optional_category)
+        categories = super(_SlavedTree, self)._get_categories(*optional_category)
         return tuple(set(categories + tuple(self.parent_repo.categories)))
 
 

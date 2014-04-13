@@ -33,7 +33,8 @@ class UnconfiguredTreeTest(TempDirMixin):
         self.assertRaises(
             errors.InitializationError,
             self.mk_tree, pjoin(self.dir, 'missing'))
-        open(pjoin(self.dir, 'random'), 'w').write('random')
+        with open(pjoin(self.dir, 'random'), 'w') as f:
+            f.write('random')
         self.assertRaises(
             errors.InitializationError,
             self.mk_tree, pjoin(self.dir, 'random'))
@@ -45,7 +46,8 @@ class UnconfiguredTreeTest(TempDirMixin):
 
     @silence_logging
     def test_thirdpartymirrors(self):
-        open(pjoin(self.pdir, 'thirdpartymirrors'), 'w').write('''\
+        with open(pjoin(self.pdir, 'thirdpartymirrors'), 'w') as f:
+            f.write('''\
 spork		http://sporks/ http://moresporks/
 foon		foon://foons/
 ''')
@@ -54,8 +56,8 @@ foon		foon://foons/
         self.assertEqual(
             ['http://moresporks/', 'http://sporks/'],
             sorted(mirrors['spork']))
-        open(pjoin(self.pdir, 'thirdpartymirrors'), 'w').write(
-            "foon  dar\n")
+        with open(pjoin(self.pdir, 'thirdpartymirrors'), 'w') as f:
+            f.write("foon  dar\n")
         self.assertEqual(self.mk_tree(self.dir).mirrors.keys(),
             ['foon'])
 
@@ -67,7 +69,8 @@ foon		foon://foons/
         self.assertEqual(repo.repo_id, '<unlabeled repository %s>' % (dir1,))
         dir2 = pjoin(self.dir, '2')
         ensure_dirs(pjoin(dir2, 'profiles'))
-        open(pjoin(dir2, 'profiles', 'repo_name'), 'w').write('testrepo\n')
+        with open(pjoin(dir2, 'profiles', 'repo_name'), 'w') as f:
+            f.write('testrepo\n')
         repo = self.mk_tree(dir2)
         self.assertEqual('testrepo', repo.repo_id)
 
@@ -78,7 +81,7 @@ foon		foon://foons/
         ensure_dirs(pjoin(self.dir, 'scripts', 'pkg'))
         ensure_dirs(pjoin(self.dir, 'notcat', 'CVS'))
         # "touch"
-        open(pjoin(self.dir, 'cat', 'pkg', 'pkg-3.ebuild'), 'w')
+        open(pjoin(self.dir, 'cat', 'pkg', 'pkg-3.ebuild'), 'w').close()
         repo = self.mk_tree(self.dir)
         self.assertEqual(
             {'cat': (), 'notcat': (), 'empty': ()}, dict(repo.categories))
@@ -104,7 +107,8 @@ foon		foon://foons/
 
     @silence_logging
     def test_package_mask(self):
-        open(pjoin(self.pdir, 'package.mask'), 'w').write('''\
+        with open(pjoin(self.pdir, 'package.mask'), 'w') as f:
+            f.write('''\
 # lalala
 it-is/broken
 <just/newer-than-42

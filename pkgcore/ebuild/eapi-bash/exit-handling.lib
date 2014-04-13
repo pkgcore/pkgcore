@@ -3,7 +3,7 @@
 
 assert() {
 	local _pipestatus=${PIPESTATUS[*]}
-	[[ -z ${_pipestatus//[ 0]/} ]] || die "$@"
+	[[ -z ${_pipestatus//[ 0]/} ]] || die "$@ (pipestatus: ${_pipestatus})"
 }
 
 # this exists to protect against older env dumps that had the historical

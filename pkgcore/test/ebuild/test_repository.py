@@ -3,6 +3,7 @@
 # License: BSD/GPL2
 
 import os
+from textwrap import dedent
 
 from snakeoil.osutils import ensure_dirs, pjoin
 from snakeoil.test.mixins import TempDirMixin
@@ -47,10 +48,10 @@ class UnconfiguredTreeTest(TempDirMixin):
     @silence_logging
     def test_thirdpartymirrors(self):
         with open(pjoin(self.pdir, 'thirdpartymirrors'), 'w') as f:
-            f.write('''\
-spork		http://sporks/ http://moresporks/
-foon		foon://foons/
-''')
+            f.write(dedent('''\
+                spork http://sporks/ http://moresporks/
+                foon foon://foons/
+            '''))
         mirrors = self.mk_tree(self.dir).mirrors
         self.assertEqual(['foon', 'spork'], sorted(mirrors))
         self.assertEqual(
@@ -108,11 +109,11 @@ foon		foon://foons/
     @silence_logging
     def test_package_mask(self):
         with open(pjoin(self.pdir, 'package.mask'), 'w') as f:
-            f.write('''\
-# lalala
-it-is/broken
-<just/newer-than-42
-''')
+            f.write(dedent('''\
+                # lalala
+                it-is/broken
+                <just/newer-than-42
+            '''))
         repo = self.mk_tree(self.dir)
         self.assertEqual(sorted([atom('it-is/broken'),
             atom('<just/newer-than-42')]),

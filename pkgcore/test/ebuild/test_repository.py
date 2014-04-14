@@ -171,26 +171,12 @@ class SlavedTreeTest(UnconfiguredTreeTest):
         TempDirMixin.tearDown(self)
 
     def test_inherit_parent_categories(self):
-        with open(pjoin(self.master_pdir, 'categories'), 'w') as f:
-            f.write(dedent('''\
-                sys-apps
-                foo-bar
-            '''))
-        with open(pjoin(self.slave_pdir, 'categories'), 'w') as f:
-            f.write(dedent('''\
-                cat
-                foo-bar
-            '''))
-        repo = self.mk_tree(self.dir)
-        self.assertEqual(tuple(sorted(repo.categories)), ('cat', 'foo-bar', 'sys-apps'))
-
-        ensure_dirs(pjoin(self.dir, 'sys-apps', 'pkgcore'))
-        ensure_dirs(pjoin(self.dir, 'cat', 'pkg'))
-        open(pjoin(self.dir, 'sys-apps', 'pkgcore', 'pkgcore-9999.ebuild'), 'w').close()
-        open(pjoin(self.dir, 'cat', 'pkg', 'pkg-1.ebuild'), 'w').close()
-        self.assertEqual(
-            {'foo-bar': (), 'cat': ('pkg',), 'sys-apps': ('pkgcore',)},
-            dict(repo.packages))
-        self.assertEqual(
-            {('cat', 'pkg'): ('1',), ('sys-apps', 'pkgcore'): ('9999',)},
-            dict(repo.versions))
+        for cats in ((('sys-apps', 'foo-bar'), ('cat', 'foo-bar')),
+                     (('cat', 'sys-apps', 'foo-bar'), ()),
+                     ((), ('cat', 'foo-bar', 'sys-apps'))):
+            with open(pjoin(self.master_pdir, 'categories'), 'w') as f:
+                f.write('\n'.join(cats[0]))
+            with open(pjoin(self.slave_pdir, 'categories'), 'w') as f:
+                f.write('\n'.join(cats[1]))
+            repo = self.mk_tree(self.dir)
+            self.assertEqual(tuple(sorted(repo.categories)), ('cat', 'foo-bar', 'sys-apps'))

@@ -471,4 +471,3 @@ class virtual_ebuild(metadata.package):
     @property
     def eapi(self):
         return int(self.eapi_obj.magic)
-

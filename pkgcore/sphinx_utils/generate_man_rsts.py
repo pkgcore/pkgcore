@@ -18,10 +18,10 @@ def _indent(stream):
 
 _splitting_regex = re.compile("(?:^|\n+(?=[^ \n]))")
 def _find_spacing(string):
-  pre, sep, post = string.rpartition('  ')
-  while pre:
-    yield len(pre)
-    pre, sep, post = pre.rpartition('  ')
+    pre, sep, post = string.rpartition('  ')
+    while pre:
+        yield len(pre)
+        pre, sep, post = pre.rpartition('  ')
 
 def _deserialize_2d_array(data):
     lines = _splitting_regex.split(data.strip())

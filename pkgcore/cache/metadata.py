@@ -103,7 +103,7 @@ class database(flat_hash.database):
 
         s = cpv.rfind("/")
         fp = pjoin(
-            self.location, cpv[:s],".update.%i.%s" % (os.getpid(), cpv[s+1:]))
+            self.location, cpv[:s], ".update.%i.%s" % (os.getpid(), cpv[s+1:]))
         try:
             myf = open(fp, "w")
         except EnvironmentError, e:
@@ -111,7 +111,7 @@ class database(flat_hash.database):
                 raise_from(errors.CacheCorruption(cpv, e))
             try:
                 self._ensure_dirs(cpv)
-                myf = open(fp,"w")
+                myf = open(fp, "w")
             except EnvironmentError, e:
                 raise_from(errors.CacheCorruption(cpv, e))
 

@@ -80,7 +80,7 @@ def write(tempspace, finalpath, pkg, cset=None, platform='', maintainer='', comp
 
     control = {}
     control['Package'] = pkg.package
-#    control['Section'] = pkg.category
+    #control['Section'] = pkg.category
     control['Version'] = pkg.fullver
     control['Architecture'] = platform
     if maintainer:

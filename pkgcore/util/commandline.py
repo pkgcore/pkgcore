@@ -294,8 +294,7 @@ class StoreRepoObject(StoreConfigObject):
                     "No domain found, but one was forced for %s; "
                     "internal bug.  NS=%s" % (self, namespace))
         if domain is None:
-            return StoreConfigObject._get_sections(
-                self, config, namespace)
+            return StoreConfigObject._get_sections(self, config, namespace)
         return domain.repos_raw if self.raw else domain.repos_configured_filtered
 
     def _load_obj(self, sections, name):

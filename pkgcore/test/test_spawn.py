@@ -51,7 +51,7 @@ class SpawnTest(TempDirMixin, TestCase):
         for r, s, text, args in [
             [0, ["dar\n"], "echo dar\n", {}],
             [0, ["dar"], "echo -n dar", {}],
-            [1, ["blah\n","dar\n"], "echo blah\necho dar\nexit 1", {}],
+            [1, ["blah\n", "dar\n"], "echo blah\necho dar\nexit 1", {}],
             [0, [], "echo dar 1>&2", {"fd_pipes":{1:1,2:self.null}}]]:
 
             fp = self.generate_script(filename, text)

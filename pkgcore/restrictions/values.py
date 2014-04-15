@@ -325,7 +325,7 @@ class EqualityMatch(base):
 class ContainmentMatch2(base):
 
     """
-    used for an 'in' style operation, 'x86' in ['x86','~x86'] for example
+    used for an 'in' style operation, 'x86' in ['x86', '~x86'] for example
     note that negation of this *does* not result in a true NAND when all is on.
 
     Note that ContainmentMatch will be removed in favor of this class.  When that
@@ -500,7 +500,7 @@ class ContainmentMatch2(base):
 class ContainmentMatch(ContainmentMatch2):
 
     """
-    used for an 'in' style operation, 'x86' in ['x86','~x86'] for example
+    used for an 'in' style operation, 'x86' in ['x86', '~x86'] for example
     note that negation of this *does* not result in a true NAND when all is on.
 
     Deprecated in favor of ContainmentMatch2.

@@ -149,8 +149,7 @@ class tree(object):
 
         self.categories = CategoryIterValLazyDict(
             self._get_categories, self._get_categories)
-        self.packages   = PackageMapping(self.categories,
-            self._get_packages)
+        self.packages = PackageMapping(self.categories, self._get_packages)
         self.versions = VersionMapping(self.packages, self._get_versions)
 
         if self.frozen_settable:

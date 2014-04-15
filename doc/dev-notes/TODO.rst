@@ -37,8 +37,8 @@ Rough TODO
 
 - vdb2 format (ask harring for details).
 
-- pkgcore.fs.ops.merge_contents; doesn't rewite the contents set when a file
-  it's mergeing is relying on symlinked directories for the full path; eg,
+- pkgcore.fs.ops.merge_contents; doesn't rewrite the contents set when a file
+  it's merging is relying on symlinked directories for the full path; eg,
   /usr/share/X11/xkb/compiled -> /var/blah, it records the former instead of
   recording the true absolute path.
 

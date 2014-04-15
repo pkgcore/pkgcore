@@ -35,7 +35,7 @@ class base(object):
     def __init__(self, portdir=None, eclassdir=None):
         self._eclass_data_inst_cache = WeakValCache()
         # generate this.
-        # self.eclasses = {} # {"Name": ("location","_mtime_")}
+        # self.eclasses = {} # {"Name": ("location", "_mtime_")}
         self.portdir = portdir
         self.eclassdir = eclassdir
 

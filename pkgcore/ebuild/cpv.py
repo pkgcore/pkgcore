@@ -167,8 +167,7 @@ class _native_CPV(object):
             if self.cpvstr == other.cpvstr:
                 return 0
 
-            if (self.category and other.category and
-                self.category != other.category):
+            if (self.category and other.category and self.category != other.category):
                 return cmp(self.category, other.category)
 
             if self.package and other.package and self.package != other.package:

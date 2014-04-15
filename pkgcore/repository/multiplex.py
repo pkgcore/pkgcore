@@ -56,8 +56,7 @@ class operations(repo_interface.operations_proxy):
         return ret
 
 
-@configurable({'repositories': 'refs:repo'},
-    typename='repo')
+@configurable({'repositories': 'refs:repo'}, typename='repo')
 def config_tree(repositories):
     return tree(*repositories)
 

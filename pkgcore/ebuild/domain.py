@@ -304,8 +304,7 @@ class domain(pkgcore.config.domain.domain):
         repo_masks = dict((r.repo_id, r._visibility_limiters()) for r in repositories)
 
         for l, repos, filtered in ((self.repos, repositories, True),
-            (self.vdb, vdb, False)):
-
+                                   (self.vdb, vdb, False)):
             for repo in repos:
                 if not repo.configured:
                     pargs = [repo]
@@ -435,8 +434,7 @@ class domain(pkgcore.config.domain.domain):
                 f = collapsed_restrict_to_data
             else:
                 f = non_incremental_collapsed_restrict_to_data
-            data = f(((packages.AlwaysTrue, default_keys),),
-                accept_keywords)
+            data = f(((packages.AlwaysTrue, default_keys),), accept_keywords)
 
         if incremental:
             raise NotImplementedError(self.incremental_apply_keywords_filter)

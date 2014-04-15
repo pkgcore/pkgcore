@@ -389,24 +389,23 @@ class domain(pkgcore.config.domain.domain):
         return vfilter
 
     def make_license_filter(self, master_license, pkg_licenses):
-#        data = collapsed_restrict_to_data(
-#            ((packages.AlwaysTrue, master_license),),
-#            pkg_licenses)
-#        return delegate(partial(self.apply_license_filter, data))
-        return delegate(partial(self.apply_license_filter, master_license,
-            pkg_licenses))
+        """Generates a restrict that matches iff the licenses are allowed."""
+        return delegate(partial(self.apply_license_filter, master_license, pkg_licenses))
 
     def apply_license_filter(self, master_licenses, pkg_licenses, pkg, mode):
+        """Determine if a package's license is allowed."""
         # note we're not honoring mode; it's always match.
-        # reason is that of not turning on use flags to get acceptible license
-        # pairs.
-        # maybe change this down the line?
+        # reason is that of not turning on use flags to get acceptable license
+        # pairs, maybe change this down the line?
+
         matched_pkg_licenses = []
         for atom, licenses in pkg_licenses:
             if atom.match(pkg):
                 matched_pkg_licenses += licenses
+
         raw_accepted_licenses = master_licenses + matched_pkg_licenses
         license_manager = getattr(pkg.repo, 'licenses', self.default_licenses_manager)
+
         for and_pair in pkg.license.dnf_solutions():
             accepted = incremental_expansion_license(and_pair, license_manager.groups,
                 raw_accepted_licenses,

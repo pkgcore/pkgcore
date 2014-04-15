@@ -193,11 +193,12 @@ class domain(pkgcore.config.domain.domain):
 
         # next we finalize incrementals.
         for incremental in incrementals:
-            # skip USE for the time being; hack; we need the negations currently
-            # so that pkg iuse induced enablings can be disabled by negations.
-            # think of the profile doing USE=-cdr for brasero w/ IUSE=+cdr
-            # for example
-            if incremental not in settings or incremental == "USE":
+            # Skip USE/ACCEPT_LICENSE for the time being; hack; we need the
+            # negations currently so that pkg iuse induced enablings can be
+            # disabled by negations. For example, think of the profile doing
+            # USE=-cdr for brasero w/ IUSE=+cdr. Similarly, ACCEPT_LICENSE is
+            # skipped because negations are required for license filtering.
+            if incremental not in settings or incremental in ("USE", "ACCEPT_LICENSE"):
                 continue
             s = set()
             incremental_expansion(s, settings[incremental],

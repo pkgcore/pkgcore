@@ -256,7 +256,7 @@ class domain(pkgcore.config.domain.domain):
         # "DISALLOW NON FOSS LICENSES" bug via this >:)
         master_license = []
         master_license.extend(settings.get('ACCEPT_LICENSE', ()))
-        if master_license:
+        if master_license or pkg_licenses:
             vfilters.append(self.make_license_filter(master_license, pkg_licenses))
 
         del master_license

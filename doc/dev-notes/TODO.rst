@@ -112,8 +112,6 @@ Rough TODO
 
 - support /etc/portage/mirrors
 
-- fix /etc/portage/package.license support
-
 - support ACCEPT_PROPERTIES and /etc/portage/package.properties
 
 - support ACCEPT_RESTRICT and /etc/portage/package.accept_restrict

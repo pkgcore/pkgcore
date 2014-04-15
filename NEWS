@@ -5,6 +5,8 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 
 pkgcore trunk:
 
+* Fix granular license filtering support via /etc/portage/package.license.
+
 * Add `pinspect query get_profiles` support.
 
 * Add support for COLLISION_IGNORE and UNINSTALL_IGNORE variables (see

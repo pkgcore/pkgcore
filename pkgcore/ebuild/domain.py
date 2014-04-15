@@ -143,7 +143,7 @@ class domain(pkgcore.config.domain.domain):
             vdb.append(profile.provides_repo)
 
         self.profile = profile
-        pkg_maskers, pkg_unmaskers, pkg_keywords, pkg_license = [], [], [], []
+        pkg_maskers, pkg_unmaskers, pkg_keywords, pkg_licenses = [], [], [], []
         pkg_use, self.bashrcs = [], []
 
         self.ebuild_hook_dir = settings.pop("ebuild_hook_dir", None)
@@ -153,7 +153,7 @@ class domain(pkgcore.config.domain.domain):
             ("package.unmask", pkg_unmaskers, parse_match),
             ("package.keywords", pkg_keywords, package_keywords_splitter),
             ("package.accept_keywords", pkg_keywords, package_keywords_splitter),
-            ("package.license", pkg_license, package_keywords_splitter),
+            ("package.license", pkg_licenses, package_keywords_splitter),
             ("package.use", pkg_use, package_keywords_splitter),
             ("package.env", self.bashrcs, package_env_splitter),
             ):
@@ -401,7 +401,11 @@ class domain(pkgcore.config.domain.domain):
         # reason is that of not turning on use flags to get acceptible license
         # pairs.
         # maybe change this down the line?
-        raw_accepted_licenses = master_licenses + pkg_licenses
+        matched_pkg_licenses = []
+        for atom, licenses in pkg_licenses:
+            if atom.match(pkg):
+                matched_pkg_licenses += licenses
+        raw_accepted_licenses = master_licenses + matched_pkg_licenses
         license_manager = getattr(pkg.repo, 'licenses', self.default_licenses_manager)
         for and_pair in pkg.license.dnf_solutions():
             accepted = incremental_expansion_license(and_pair, license_manager.groups,

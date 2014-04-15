@@ -219,18 +219,15 @@ class domain(pkgcore.config.domain.domain):
             u2 = u.lower()+"_"
             use.update(u2 + x for x in v.split())
 
-        license, default_keywords = [], []
-        master_license = []
         if not 'ACCEPT_KEYWORDS' in settings:
             raise Failure("No ACCEPT_KEYWORDS setting detected from profile, "
                           "or user config")
         s = set()
+        default_keywords = []
         incremental_expansion(s, settings['ACCEPT_KEYWORDS'],
             'while expanding ACCEPT_KEYWORDS')
         default_keywords.extend(s)
-        settings['ACCEPT_KEYWORDS'] = default_keywords
-
-        master_license.extend(settings.get('ACCEPT_LICENSE', ()))
+        settings['ACCEPT_KEYWORDS'] = set(default_keywords)
 
         self.use = use
 
@@ -253,19 +250,21 @@ class domain(pkgcore.config.domain.domain):
             incremental="package.keywords" in incrementals)]
 
         del default_keywords, accept_keywords
+
         # we can finally close that fricking
         # "DISALLOW NON FOSS LICENSES" bug via this >:)
+        master_license = []
+        master_license.extend(settings.get('ACCEPT_LICENSE', ()))
         if master_license:
-            vfilters.append(self.make_license_filter(
-                master_license, license))
+            vfilters.append(self.make_license_filter(master_license, pkg_licenses))
 
-        del master_license, license
+        del master_license
 
         # if it's made it this far...
 
         self.root = settings["ROOT"] = root
         self.prefix = prefix
-        self.settings = settings
+        self.settings = ProtectedDict(settings)
 
         for data in self.settings.get('bashrc', ()):
             source = local_source(data)
@@ -292,7 +291,6 @@ class domain(pkgcore.config.domain.domain):
              c.merge(getattr(profile, attr + 'masked_use'))
              setattr(self, attr + 'disabled_use', c)
 
-        self.settings = ProtectedDict(settings)
         self.repos = []
         self.vdb = []
         self.repos_configured = {}

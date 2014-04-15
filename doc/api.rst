@@ -43,7 +43,6 @@ Modules
     pkgcore.ebuild.filter_env
     pkgcore.ebuild.formatter
     pkgcore.ebuild.misc
-    pkgcore.ebuild.overlay_repository
     pkgcore.ebuild.portage_conf
     pkgcore.ebuild.processor
     pkgcore.ebuild.profiles

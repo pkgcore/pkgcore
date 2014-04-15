@@ -36,7 +36,7 @@ chunked_data = namedtuple("chunked_data", ("key", "neg", "pos"))
 
 def package_keywords_splitter(val):
     v = val.split()
-    return parse_match(v[0]), stable_unique(v[1:])
+    return parse_match(v[0]), tuple(stable_unique(v[1:]))
 
 def split_negations(data, func=str):
     neg, pos = [], []

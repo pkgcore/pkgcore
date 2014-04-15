@@ -260,14 +260,14 @@ class TestPmsProfileNode(profile_mixin, TestCase):
 
         self.write_file("package.keywords", "dev-util/foo amd64")
         self.assertEqual(self.klass(path).keywords,
-            ((atom("dev-util/foo"), ["amd64"]),))
+            ((atom("dev-util/foo"), ("amd64",)),))
 
         self.write_file("package.keywords", "")
         self.assertEqual(self.klass(path).keywords, ())
 
         self.write_file("package.keywords", ">=dev-util/foo-2 -amd64 ~amd64")
         self.assertEqual(self.klass(path).keywords,
-            ((atom(">=dev-util/foo-2"), ["-amd64", "~amd64"]),))
+            ((atom(">=dev-util/foo-2"), ("-amd64", "~amd64")),))
 
     def test_pkg_accept_keywords(self):
         path = pjoin(self.dir, self.profile)
@@ -277,18 +277,18 @@ class TestPmsProfileNode(profile_mixin, TestCase):
 
         self.write_file("package.accept_keywords", "dev-util/foo ~amd64")
         self.assertEqual(self.klass(path).accept_keywords,
-            ((atom("dev-util/foo"), ["~amd64"]),))
+            ((atom("dev-util/foo"), ("~amd64",)),))
 
         self.write_file("package.accept_keywords", "")
         self.assertEqual(self.klass(path).accept_keywords, ())
 
         self.write_file("package.accept_keywords", "dev-util/bar **")
         self.assertEqual(self.klass(path).accept_keywords,
-            ((atom("dev-util/bar"), ["**"]),))
+            ((atom("dev-util/bar"), ("**",)),))
 
         self.write_file("package.accept_keywords", "dev-util/baz")
         self.assertEqual(self.klass(path).accept_keywords,
-            ((atom("dev-util/baz"), []),))
+            ((atom("dev-util/baz"), ()),))
 
     def test_masked_use(self):
         path = pjoin(self.dir, self.profile)
@@ -792,12 +792,12 @@ class TestOnDiskProfile(profile_mixin, TestCase):
             {"package.keywords": ">=dev-util/foo-2 -amd64 ~amd64"}
         )
         self.assertEqual(self.get_profile("0").keywords,
-            ((atom("dev-util/foo"), ["amd64"]),))
+            ((atom("dev-util/foo"), ("amd64",)),))
         self.assertEqual(self.get_profile("1").keywords,
-            ((atom("dev-util/foo"), ["amd64"]),))
+            ((atom("dev-util/foo"), ("amd64",)),))
         self.assertEqual(self.get_profile("2").keywords,
-            ((atom("dev-util/foo"), ["amd64"]),
-            (atom(">=dev-util/foo-2"), ["-amd64", "~amd64"])))
+            ((atom("dev-util/foo"), ("amd64",)),
+            (atom(">=dev-util/foo-2"), ("-amd64", "~amd64"))))
 
     def test_pkg_accept_keywords(self):
         self.mk_profiles({})
@@ -810,16 +810,16 @@ class TestOnDiskProfile(profile_mixin, TestCase):
             {"package.accept_keywords": "dev-util/baz"}
         )
         self.assertEqual(self.get_profile("0").accept_keywords,
-            ((atom("dev-util/foo"), ["~amd64"]),))
+            ((atom("dev-util/foo"), ("~amd64",)),))
         self.assertEqual(self.get_profile("1").accept_keywords,
-            ((atom("dev-util/foo"), ["~amd64"]),))
+            ((atom("dev-util/foo"), ("~amd64",)),))
         self.assertEqual(self.get_profile("2").accept_keywords,
-            ((atom("dev-util/foo"), ["~amd64"]),
-            (atom("dev-util/bar"), ["**"])))
+            ((atom("dev-util/foo"), ("~amd64",)),
+            (atom("dev-util/bar"), ("**",))))
         self.assertEqual(self.get_profile("3").accept_keywords,
-            ((atom("dev-util/foo"), ["~amd64"]),
-            (atom("dev-util/bar"), ["**"]),
-            (atom("dev-util/baz"), [])))
+            ((atom("dev-util/foo"), ("~amd64",)),
+            (atom("dev-util/bar"), ("**",)),
+            (atom("dev-util/baz"), ())))
 
     def test_masked_use(self):
         self.mk_profiles({})

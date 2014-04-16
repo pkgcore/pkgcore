@@ -21,12 +21,12 @@ def _convert(msg, args=(), kwds={}):
                 % (msg, args, kwds))
         try:
             return msg % args
-        except TypeError, e:
+        except TypeError as e:
             raise TypeError("observer interpolation error: %s, msg=%r, args=%r" %
                 (e, msg, args))
     try:
         return msg % kwds
-    except TypeError, e:
+    except TypeError as e:
         raise TypeError("observer interpolation error: %s, msg=%r, kwds=%r" %
             (e, msg, kwds))
 

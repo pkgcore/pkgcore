@@ -46,7 +46,7 @@ def gen_obj(path, stat=None, chksum_handlers=None, real_location=None,
     if stat is None:
         try:
             stat = stat_func(real_location)
-        except EnvironmentError, e:
+        except EnvironmentError as e:
             if stat_func == os.lstat or e.errno != errno.ENOENT:
                 raise
             stat = os.lstat(real_location)
@@ -187,7 +187,7 @@ def intersect(cset, realpath=False):
     for x in cset:
         try:
             yield f(f2(x.location))
-        except OSError, oe:
+        except OSError as oe:
             if oe.errno not in (errno.ENOENT, errno.ENOTDIR):
                 raise
             del oe
@@ -204,7 +204,7 @@ def recursively_fill_syms(cset, limiter=fsBase):
                 continue
             try:
                 obj = gen_obj(new_loc)
-            except EnvironmentError, e:
+            except EnvironmentError as e:
                 if e.errno != errno.ENOENT:
                     raise
                 continue

@@ -124,7 +124,7 @@ class LocalMetadataXml(MetadataXml):
     def _parse_xml(self):
         try:
             MetadataXml._parse_xml(self, open(self._source, "rb", 32768))
-        except EnvironmentError, oe:
+        except EnvironmentError as oe:
             if oe.errno != errno.ENOENT:
                 raise
             self._maintainers = ()
@@ -168,7 +168,7 @@ class Licenses(object):
             d = read_dict(self.license_groups_path, splitter=' ')
         except EnvironmentError:
             return mappings.ImmutableDict()
-        except BashParseError, pe:
+        except BashParseError as pe:
             logger.error("failed parsing license_groups: %s", pe)
             return mappings.ImmutableDict()
         self._expand_groups(d)
@@ -211,7 +211,7 @@ class Licenses(object):
             raise KeyError(license)
         try:
             return open(pjoin(self.licenses_dir, license)).read()
-        except EnvironmentError, e:
+        except EnvironmentError as e:
             if e.errno == errno.ENOENT:
                 raise KeyError(license)
             raise
@@ -308,7 +308,7 @@ class BundledProfiles(object):
                 # into it.
                 d[key].append(_KnownProfile(
                     '/'.join(filter(None, profile.split('/'))), status))
-        except EnvironmentError, e:
+        except EnvironmentError as e:
             if e.errno != errno.ENOENT:
                 raise
             logger.debug("No profile descriptions found at %r", fp)
@@ -398,7 +398,7 @@ class RepoConfig(syncable.tree):
         try:
             return frozenset(iter_read_bash(
                 pjoin(self.profiles_base, 'arch.list')))
-        except EnvironmentError, e:
+        except EnvironmentError as e:
             if e.errno != errno.ENOENT:
                 raise
             return frozenset()
@@ -426,7 +426,7 @@ class RepoConfig(syncable.tree):
         base = pjoin(self.profiles_base, 'desc')
         try:
             targets = sorted(listdir_files(base))
-        except EnvironmentError, e:
+        except EnvironmentError as e:
             if e.errno != errno.ENOENT:
                 raise
             return ()
@@ -448,10 +448,10 @@ class RepoConfig(syncable.tree):
                 key, val = line.split(None, 1)
                 key = converter(key)
                 yield key[0], (key[1], val.split('-', 1)[1].strip())
-        except EnvironmentError, e:
+        except EnvironmentError as e:
             if e.errno != errno.ENOENT:
                 raise
-        except ValueError, v:
+        except ValueError as v:
             if line is None:
                 raise
             compatibility.raise_from(
@@ -468,7 +468,7 @@ class RepoConfig(syncable.tree):
         try:
             # any files existing means it's not empty
             result = not listdir(self.location)
-        except EnvironmentError, e:
+        except EnvironmentError as e:
             if e.errno != errno.ENOENT:
                 raise
 

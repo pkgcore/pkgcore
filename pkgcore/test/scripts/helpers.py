@@ -152,7 +152,7 @@ class MainMixin(object):
         """Pass args to the option parser and assert it errors message."""
         try:
             self.parse(*args, **kwargs)
-        except Error, e:
+        except Error as e:
             self.assertEqual(message, e.msg)
         else:
             self.fail('no error triggered')
@@ -161,7 +161,7 @@ class MainMixin(object):
         """Pass args, assert they trigger the right exit condition."""
         try:
             self.parse(*args, **kwargs)
-        except Exit, e:
+        except Exit as e:
             self.assertEqual(message, e.msg)
             self.assertEqual(status, e.status)
         else:

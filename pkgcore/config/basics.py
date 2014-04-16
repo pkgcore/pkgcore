@@ -578,7 +578,7 @@ def section_alias(target, typename):
 def parse_config_file(path, parser):
     try:
         f = open(path, 'r')
-    except (IOError, OSError), e:
+    except (IOError, OSError) as e:
         raise errors.InstantiationError("Failed opening %r" % (path,))
     try:
         return parser(f)

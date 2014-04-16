@@ -94,9 +94,9 @@ def dynamic_getattr_dict(self, attr):
         return val
     except IGNORED_EXCEPTIONS:
         raise
-    except MetadataException, e:
+    except MetadataException as e:
         if e.attr == attr:
             raise
         raise_from(MetadataException(self, attr, str(e)))
-    except Exception, e:
+    except Exception as e:
         raise_from(MetadataException(self, attr, str(e)))

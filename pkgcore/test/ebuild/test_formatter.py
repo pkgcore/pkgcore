@@ -59,7 +59,7 @@ class BaseFormatterTest(object):
                 autoline = self.fakeout.autoline
                 try:
                     ret = self.formatterClass.format(internal_self, *args, **kwds)
-                except Exception, e:
+                except Exception as e:
                     self.assertEqual(autoline, self.fakeout.autoline, msg=
                         "exception thrown %s, autoline was %s, now is %s" % (e, autoline, self.fakeout.autoline))
                     raise

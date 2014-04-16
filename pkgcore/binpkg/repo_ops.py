@@ -103,10 +103,10 @@ class install(repo_interfaces.install):
             end("wrote Xpak", True)
             # ok... we tagged the xpak on.
             os.chmod(tmp_path, 0644)
-        except Exception, e:
+        except Exception as e:
             try:
                 unlink_if_exists(tmp_path)
-            except EnvironmentError, e:
+            except EnvironmentError as e:
                 logger.warning("failed removing %r: %r" % (tmp_path, e))
             raise
         return True

@@ -26,7 +26,7 @@ class LookupFsDev(fs.fsDev):
         if any(x not in kwds for x in ("major", "minor", "mode")):
             try:
                 st = os.lstat(path)
-            except OSError, oe:
+            except OSError as oe:
                 if oe.errno != errno.ENOENT:
                     raise
                 st = None

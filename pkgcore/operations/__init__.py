@@ -64,7 +64,7 @@ class base(object):
             return functor(*args, **kwds)
         except compatibility.IGNORED_EXCEPTIONS:
             raise
-        except Exception, exc:
+        except Exception as exc:
             if isinstance(exc, exc_class):
                 raise
             compatibility.raise_from(exc_class(name))

@@ -23,7 +23,7 @@ demandload(globals(),
 def mk_strregex(value, **kwds):
     try:
         return values.StrRegex(value, **kwds)
-    except re.error, e:
+    except re.error as e:
         raise ValueError("invalid regex: %r, %s" % (value, e))
 
 
@@ -536,7 +536,7 @@ def parse_revdep(value):
     """Value should be an atom, packages with deps intersecting that match."""
     try:
         targetatom = atom.atom(value)
-    except atom.MalformedAtom, e:
+    except atom.MalformedAtom as e:
         raise parserestrict.ParseError(str(e))
     val_restrict = values.FlatteningRestriction(
         atom.atom,
@@ -823,7 +823,7 @@ def main(options, out, err):
 
         except KeyboardInterrupt:
             raise
-        except Exception, e:
+        except Exception as e:
             if isinstance(e, IOError) and e.errno == errno.EPIPE:
                 # swallow it; receiving end shutdown early.
                 return

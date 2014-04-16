@@ -70,7 +70,7 @@ def main(options, out, err):
         try:
             pfiles.update(fetchable.filename for fetchable in
                         iflatten_instance(pkg.fetchables, fetchable_kls))
-        except ParseChksumError, e:
+        except ParseChksumError as e:
             err.write("got corruption error '%s', with package %s " %
                 (e, pkg.cpvstr))
             if options.ignore_failures:
@@ -79,7 +79,7 @@ def main(options, out, err):
             else:
                 err.write("aborting...")
                 return 1
-        except Exception, e:
+        except Exception as e:
             err.write("got error '%s', parsing package %s in repo '%s'" %
                 (e, pkg.cpvstr, pkg.repo))
             raise

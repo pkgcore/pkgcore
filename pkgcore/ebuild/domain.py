@@ -169,11 +169,11 @@ class domain(pkgcore.config.domain.domain):
                         if not fs_obj.is_reg or '/.' in fs_obj.location:
                             continue
                         val.extend(action(x) for x in iter_read_bash(fs_obj.location))
-                except EnvironmentError, e:
+                except EnvironmentError as e:
                     if e.errno == errno.ENOENT:
                         raise MissingFile(fp, key)
                     raise_from(Failure("failed reading '%s': %s" % (fp, e)))
-                except ValueError, e:
+                except ValueError as e:
                     raise_from(Failure("failed reading '%s': %s" % (fp, e)))
 
         self.name = name
@@ -318,7 +318,7 @@ class domain(pkgcore.config.domain.domain):
                                 pargs.append(profile)
                             else:
                                 pargs.append(getattr(self, x))
-                    except AttributeError, ae:
+                    except AttributeError as ae:
                         raise_from(Failure("failed configuring repo '%s': "
                                            "configurable missing: %s" % (repo, ae)))
                     wrapped_repo = repo.configure(*pargs)

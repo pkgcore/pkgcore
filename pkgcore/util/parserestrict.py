@@ -107,7 +107,7 @@ def parse_match(text):
             r = list(util.collect_package_restrictions(
                     atom.atom("%scategory/%s" % (ops, text)).restrictions,
                     attrs=("category",), invert=True))
-        except errors.MalformedAtom, e:
+        except errors.MalformedAtom as e:
             raise_from(ParseError(str(e)))
         if len(r) == 1:
             return r[0]
@@ -115,12 +115,12 @@ def parse_match(text):
     elif text[0] in "=<>~":
         try:
             return atom.atom(text)
-        except errors.MalformedAtom, e:
+        except errors.MalformedAtom as e:
             raise_from(ParseError(str(e)))
     if "*" not in text:
         try:
             return atom.atom(text)
-        except errors.MalformedAtom, e:
+        except errors.MalformedAtom as e:
             raise_from(ParseError(str(e)))
     r = map(convert_glob, tsplit)
     if not r[0] and not r[1]:

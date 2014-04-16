@@ -89,7 +89,7 @@ def shutdown_all_processors():
                     ignore_keyboard_interrupt=True)
             except EnvironmentError:
                 pass
-    except Exception,e:
+    except Exception as e:
         traceback.print_exc()
         print e
         raise
@@ -401,7 +401,7 @@ class EbuildProcessor(object):
             self.ebd_write.write(string)
             if flush:
                 self.ebd_write.flush()
-        except IOError, ie:
+        except IOError as ie:
             if ie.errno == errno.EPIPE and not disable_runtime_exceptions:
                 raise RuntimeError(ie)
             raise
@@ -483,7 +483,7 @@ class EbuildProcessor(object):
         self.write("end_sandbox_summary")
         try:
             os.remove(self.__sandbox_log)
-        except (IOError, OSError), e:
+        except (IOError, OSError) as e:
             print "exception caught when cleansing sandbox_log=%s" % str(e)
         return 1
 
@@ -827,7 +827,7 @@ class EbuildProcessor(object):
                                  (s[0], line))
                     raise UnhandledCommand(line)
 
-        except FinishedProcessing, fp:
+        except FinishedProcessing as fp:
             v = fp.val
             self.unlock()
             return v

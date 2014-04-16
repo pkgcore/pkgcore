@@ -137,7 +137,7 @@ def default_copyfile(obj, mkdirs=False):
         if fs.isdir(existing):
             raise CannotOverwrite(obj, existing)
         existent = True
-    except OSError, oe:
+    except OSError as oe:
         # verify the parent dir is there at least
         basefp = os.path.dirname(obj.location)
         if basefp.strip(os.path.sep) and not os.path.exists(basefp):
@@ -177,7 +177,7 @@ def do_link(src, trg):
     try:
         os.link(src.location, trg.location)
         return True
-    except EnvironmentError, e:
+    except EnvironmentError as e:
         if e.errno != errno.EEXIST:
             raise
 
@@ -185,7 +185,7 @@ def do_link(src, trg):
     unlink_if_exists(path)
     try:
         os.link(src.location, path)
-    except EnvironmentError, e:
+    except EnvironmentError as e:
         if e.errno != errno.EXDEV:
             # someone is screwing with us, or unlink_if_exists is broken.
             raise
@@ -252,13 +252,13 @@ def merge_contents(cset, offset=None, callback=None):
                     "%s exists and needs to be a dir, but is a %s" %
                         (x.location, obj))
             ensure_perms(x, obj)
-        except OSError, oe:
+        except OSError as oe:
             if oe.errno != errno.ENOENT:
                 raise
             try:
                 # we do this form to catch dangling symlinks
                 mkdir(x)
-            except OSError, oe:
+            except OSError as oe:
                 if oe.errno != errno.EEXIST:
                     raise
                 os.unlink(x.location)
@@ -287,7 +287,7 @@ def merge_contents(cset, offset=None, callback=None):
 
                 copyfile(x, mkdirs=True)
             break
-        except CannotOverwrite, cf:
+        except CannotOverwrite as cf:
             if not fs.issym(x):
                 raise
 
@@ -332,7 +332,7 @@ def unmerge_contents(cset, offset=None, callback=None):
     for x in l:
         try:
             os.rmdir(x.location)
-        except OSError, e:
+        except OSError as e:
             if not e.errno in (errno.ENOTEMPTY, errno.ENOENT, errno.ENOTDIR,
                                errno.EBUSY, errno.EEXIST):
                 raise

@@ -47,7 +47,7 @@ class ConfigManagerTest(TestCase):
         klass = kwargs.pop('klass', errors.ConfigurationError)
         try:
             func(*args, **kwargs)
-        except klass, e:
+        except klass as e:
             self.assertEqual(
                 message, _str_exc(e),
                 '\nGot:\n%r\nExpected:\n%r\n' % (_str_exc(e), message))

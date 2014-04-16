@@ -182,7 +182,7 @@ test {
             for name in ('ref', 'inline', 'mix'):
                 try:
                     section.render_value(manager, name, 'ref:test')
-                except errors.ConfigurationError, e:
+                except errors.ConfigurationError as e:
                     self.assertEqual('only one argument required', str(e))
                 else:
                     self.fail('no exception raised')

@@ -386,7 +386,7 @@ def main(options, out, err):
         try:
             unmerge(
                 out, err, livefs_repos, options.targets, options, formatter, world_set)
-        except (parserestrict.ParseError, Failure), e:
+        except (parserestrict.ParseError, Failure) as e:
             out.error(str(e))
             return 1
         return
@@ -421,7 +421,7 @@ def main(options, out, err):
     for token in options.targets:
         try:
             a = parse_atom(token, source_repos.combined, livefs_repos, return_none=True)
-        except parserestrict.ParseError, e:
+        except parserestrict.ParseError as e:
             out.error(str(e))
             return 1
         if a is None:
@@ -643,7 +643,7 @@ def main(options, out, err):
                     ret = pkg_ops.run_if_supported("fetch", or_return=True)
                 except IGNORED_EXCEPTIONS:
                     raise
-                except Exception, e:
+                except Exception as e:
                     ret = e
                 if ret is not True:
                     if ret is False:
@@ -663,7 +663,7 @@ def main(options, out, err):
                     result = False
                     try:
                         result = buildop.finalize()
-                    except format.errors, e:
+                    except format.errors as e:
                         out.error("caught exception building %s: % s" % (op.pkg.cpvstr, e))
                     else:
                         if result is False:
@@ -704,7 +704,7 @@ def main(options, out, err):
                 i = domain.uninstall_pkg(op.pkg, repo_obs)
             try:
                 ret = i.finish()
-            except merge_errors.BlockModification, e:
+            except merge_errors.BlockModification as e:
                 out.error("Failed to merge %s: %s" % (op.pkg, e))
                 if not options.ignore_failures:
                     return 1

@@ -110,7 +110,7 @@ class GlsaDirSet(object):
                                 continue
                             pkgatom = atom.atom(pkgname)
                             yield fn[5:-4], pkgname, pkgatom, pkg_vuln_restrict
-                        except (TypeError, ValueError), v:
+                        except (TypeError, ValueError) as v:
                             # thrown from cpv.
                             logger.warning("invalid glsa- %s, package %s: error %s"
                                 % (fn, pkgname, v))

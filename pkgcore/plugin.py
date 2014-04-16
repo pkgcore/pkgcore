@@ -45,7 +45,7 @@ def _clean_old_caches(path):
     for name in ('plugincache2',):
         try:
             osutils.unlink_if_exists(pjoin(path, name))
-        except EnvironmentError, e:
+        except EnvironmentError as e:
             logger.error("attempting to clean old plugin cache %r failed with %s",
                 pjoin(path, name), e)
 
@@ -62,14 +62,14 @@ def _process_plugin(package, plug, filter_disabled=False):
     if isinstance(plug.target, basestring):
         try:
             plug = modules.load_any(plug.target)
-        except modules.FailedImport, e:
+        except modules.FailedImport as e:
             logger.exception("plugin import for %s failed processing file %s, entry %s: %s",
                 package.__name__, plug.source, plug.target, e)
             return None
     elif isinstance(plug.target, int):
         try:
             module = modules.load_any(plug.source)
-        except modules.FailedImport, e:
+        except modules.FailedImport as e:
             logger.exception("plugin import for %s failed processing file %s: %s",
                 package.__name__, plug.source, e)
             return None
@@ -135,7 +135,7 @@ def _read_cache_file(package, cache_path):
 
     except compatibility.IGNORED_EXCEPTIONS:
         raise
-    except Exception, e:
+    except Exception as e:
       logger.warning("failed reading cache; exception %s.  Regenerating.", e)
       stored_cache.clear()
 
@@ -153,7 +153,7 @@ def _write_cache_file(path, data):
                 plugs = ':'.join('%s,%s,%s' % (plug.key, plug.priority, plug.target) for plug in plugs)
                 cachefile.write("%s:%s:%s\n" % (module, mtime, plugs))
             cachefile.close()
-        except EnvironmentError, e:
+        except EnvironmentError as e:
             # We cannot write a new cache. We should log this
             # since it will have a performance impact.
 
@@ -179,7 +179,7 @@ def initialize_cache(package, force=False):
         # Check if the path actually exists first.
         try:
             modlist = listdir_files(path)
-        except OSError, e:
+        except OSError as e:
             if e.errno not in (errno.ENOENT, errno.ENOTDIR):
                 raise
             continue

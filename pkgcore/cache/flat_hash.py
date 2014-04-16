@@ -40,7 +40,7 @@ class database(fs_template.FsBased):
             if data is None:
                 raise KeyError(cpv)
             return self._parse_data(data, data.mtime)
-        except (EnvironmentError, ValueError), e:
+        except (EnvironmentError, ValueError) as e:
             raise_from(errors.CacheCorruption(cpv, e))
 
     def _parse_data(self, data, mtime):
@@ -68,18 +68,18 @@ class database(fs_template.FsBased):
             cpv[:s], ".update.%i.%s" % (os.getpid(), cpv[s:]))
         try:
             myf = open(fp, "w", 32768)
-        except IOError, ie:
+        except IOError as ie:
             if ie.errno == errno.ENOENT:
                 if not self._ensure_dirs(cpv):
                     raise errors.CacheCorruption(
                         cpv, 'error creating directory for %r' % (fp,))
                 try:
                     myf = open(fp, "w", 32768)
-                except EnvironmentError, e:
+                except EnvironmentError as e:
                     raise_from(errors.CacheCorruption(cpv, e))
             else:
                 raise_from(errors.CacheCorruption(cpv, ie))
-        except OSError, e:
+        except OSError as e:
             raise_from(errors.CacheCorruption(cpv, e))
 
         if self._mtime_used:
@@ -99,14 +99,14 @@ class database(fs_template.FsBased):
         new_fp = pjoin(self.location, cpv)
         try:
             os.rename(fp, new_fp)
-        except EnvironmentError, e:
+        except EnvironmentError as e:
             os.remove(fp)
             raise_from(errors.CacheCorruption(cpv, e))
 
     def _delitem(self, cpv):
         try:
             os.remove(pjoin(self.location, cpv))
-        except OSError, e:
+        except OSError as e:
             if e.errno == errno.ENOENT:
                 raise KeyError(cpv)
             else:

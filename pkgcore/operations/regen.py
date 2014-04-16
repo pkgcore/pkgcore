@@ -13,11 +13,11 @@ def regen_iter(iterable, regen_func, observer, is_thread=False):
     for x in iterable:
         try:
             regen_func(x)
-        except compatibility.IGNORED_EXCEPTIONS, e:
+        except compatibility.IGNORED_EXCEPTIONS as e:
             if isinstance(e, KeyboardInterrupt):
                 return
             raise
-        except Exception, e:
+        except Exception as e:
             observer.error("caught exception %s while processing %s" % (e, x))
 
 

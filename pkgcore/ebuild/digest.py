@@ -165,7 +165,7 @@ class Manifest(object):
         source, gpg = self._source
         try:
             data = parse_manifest(source, ignore_gpg=gpg)
-        except EnvironmentError, e:
+        except EnvironmentError as e:
             if not self.thin or e.errno != errno.ENOENT:
                 raise_from(errors.ParseChksumError(source, e))
             data = {}, {}, {}, {}

@@ -93,7 +93,7 @@ def _write_mtime_cache(mtimes, data, location):
                     f.write("%s\t%i\n" % (cat, mtime))
             f.close()
             os.chown(location, -1, portage_gid)
-        except IOError, e:
+        except IOError as e:
             if f is not None:
                 f.discard()
             if e.errno != errno.EACCES:
@@ -116,7 +116,7 @@ def _read_mtime_cache(location):
             if (len(v) -1) % 3 == 0:
                 d[k] = v
         return d
-    except IOError, e:
+    except IOError as e:
         if e.errno != errno.ENOENT:
             raise
         logger.debug("failed reading mtime cache at %r", (location,))

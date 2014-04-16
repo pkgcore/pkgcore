@@ -78,7 +78,7 @@ def _load_and_invoke(func, filename, handler, fallback, read_func,
         if self.pms_strict or not allow_recurse:
             try:
                 data = read_func(base, True, True, True)
-            except EnvironmentError, e:
+            except EnvironmentError as e:
                 if errno.EISDIR == e.errno:
                     compatibility.raise_from(ProfileError(self.path, filename,
                         "path is a directory, but this profile is PMS format- "
@@ -92,7 +92,7 @@ def _load_and_invoke(func, filename, handler, fallback, read_func,
                 files = iter_scan(base)
                 files = (x.location for x in files if x.is_reg)
                 files = sorted(files)
-            except EnvironmentError, e:
+            except EnvironmentError as e:
                 if errno.ENOENT != e.errno:
                     raise
                 files = []
@@ -113,7 +113,7 @@ def _load_and_invoke(func, filename, handler, fallback, read_func,
     except ProfileError:
         # no point in wrapping/throwing..
         raise
-    except Exception, e:
+    except Exception as e:
         compatibility.raise_from(ProfileError(profile_path, filename, e))
 
 
@@ -124,7 +124,7 @@ def _open_utf8(path, *args):
         if compatibility.is_py3k:
             return open(path, 'r', encoding='utf8')
         return open(path, 'r')
-    except EnvironmentError, e:
+    except EnvironmentError as e:
         if errno.ENOENT != e.errno:
             raise
         return None

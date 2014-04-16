@@ -36,7 +36,7 @@ class fetcher(object):
         if handlers is None:
             try:
                 handlers = get_handlers(target.chksums)
-            except KeyError, e:
+            except KeyError as e:
                 compatibility.raise_from(
                     errors.FetchFailed(file_location,
                         "Couldn't find a required checksum handler"))

@@ -359,7 +359,7 @@ class package_factory(metadata.factory):
                         del cache[pkg.cpvstr]
                 except KeyError:
                     continue
-                except cache_errors.CacheError, ce:
+                except cache_errors.CacheError as ce:
                     logger.warning("caught cache error: %s" % ce)
                     del ce
                     continue
@@ -408,7 +408,7 @@ class package_factory(metadata.factory):
                 if not cache.readonly:
                     try:
                         cache[pkg.cpvstr] = mydata
-                    except cache_errors.CacheError, ce:
+                    except cache_errors.CacheError as ce:
                         logger.warning("caught cache error: %s" % ce)
                         del ce
                         continue

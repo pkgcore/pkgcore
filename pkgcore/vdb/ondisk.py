@@ -77,7 +77,7 @@ class tree(prototype.tree):
             try:
                 return tuple(x for x in listdir_dirs(self.location) if not
                              x.startswith('.'))
-            except EnvironmentError, e:
+            except EnvironmentError as e:
                 compatibility.raise_from(KeyError("failed fetching categories: %s" % str(e)))
         finally:
             pass
@@ -117,7 +117,7 @@ class tree(prototype.tree):
                         "not standard." % (category, x, bad))
                 l.add(pkg.package)
                 d.setdefault((category, pkg.package), []).append(pkg.fullver)
-        except EnvironmentError, e:
+        except EnvironmentError as e:
             compatibility.raise_from(KeyError("failed fetching packages for category %s: %s" % \
             (pjoin(self.location, category.lstrip(os.path.sep)), str(e))))
 
@@ -182,7 +182,7 @@ class tree(prototype.tree):
         if remove_it:
             try:
                 os.rmdir(pjoin(self.location, pkg.category))
-            except OSError, oe:
+            except OSError as oe:
                 if oe.errno != errno.ENOTEMPTY:
                     raise
                 # silently swallow it;

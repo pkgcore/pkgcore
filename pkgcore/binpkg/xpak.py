@@ -93,7 +93,7 @@ class Xpak(object):
             if source_is_path:
                 try:
                     start = os.lstat(target_source).st_size
-                except OSError, e:
+                except OSError as e:
                     if e.errno != errno.ENOENT:
                         raise
                     start = 0

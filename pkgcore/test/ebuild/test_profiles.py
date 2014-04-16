@@ -102,7 +102,7 @@ class TestPmsProfileNode(profile_mixin, TestCase):
     def wipe_path(self, path):
         try:
             os.unlink(path)
-        except EnvironmentError, e:
+        except EnvironmentError as e:
             if e.errno == errno.ENOENT:
                 return
             elif e.errno != errno.EISDIR:

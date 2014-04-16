@@ -184,7 +184,7 @@ class DepSet(boolean.AndRestriction):
             if k is None:
                 raise
             raise ParseError(dep_str, k)
-        except Exception, e:
+        except Exception as e:
             raise_from(ParseError(dep_str, e))
 
         # check if any closures required

@@ -55,7 +55,7 @@ def build_regex_string(tokens, invert=False):
         s = "(?!%s)" % (s,)
     try:
         return re.compile(s)
-    except re.error, e:
+    except re.error as e:
         raise Exception("failed compiling %r:\n\nerror: %s" % (s, e))
 
 

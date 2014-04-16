@@ -32,7 +32,7 @@ def config_from_file(file_obj):
             cparser.readfp(file_obj)
         else:
             cparser.read_file(file_obj)
-    except ConfigParser.ParsingError, pe:
+    except ConfigParser.ParsingError as pe:
         raise errors.ParsingError("while parsing %s" % (file_obj,), pe)
     def get_section(section):
         return basics.ConfigSectionFromStringDict(dict(cparser.items(section)))

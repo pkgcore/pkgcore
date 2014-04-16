@@ -46,7 +46,7 @@ class FileList(object):
                         " in a separate way" % (x[1:], self.path))
                     continue
                 s.add(atom(x))
-        except InvalidDependency, e:
+        except InvalidDependency as e:
             compatibility.raise_from(errors.ParsingError("parsing %r" % self.path, exception=e))
 
         return s

@@ -134,7 +134,7 @@ def generate_contents(filepath, compressor="bz2", parallelize=True):
 
     try:
         tar_handle = tarfile.TarFile(name=filepath, fileobj=handle, mode='r')
-    except tarfile.ReadError, e:
+    except tarfile.ReadError as e:
         if not e.message.endswith("empty header"):
             raise
         tar_handle = []

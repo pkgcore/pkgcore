@@ -108,7 +108,7 @@ class base(object):
         if self.tempspace:
             try:
                 shutil.rmtree(self.tempspace)
-            except EnvironmentError, e:
+            except EnvironmentError as e:
                 if e.errno != errno.ENOENT:
                     raise
         self.tempspace = None

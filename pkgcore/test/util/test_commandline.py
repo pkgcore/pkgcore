@@ -92,7 +92,7 @@ class OptparseOptionsTest(TestCase):
 
         try:
             parser.parse_args(['--spork', 'nofoon'], values)
-        except helpers.Error, e:
+        except helpers.Error as e:
             self.assertEqual(
                 "'nofoon' is not a valid foon for --spork "
                 "(valid values: 'afoon')",
@@ -102,7 +102,7 @@ class OptparseOptionsTest(TestCase):
 
         try:
             parser.parse_args(['--foon', 'nofoon'], values)
-        except helpers.Error, e:
+        except helpers.Error as e:
             self.assertEqual(
                 "'nofoon' is not a valid utensil for --foon "
                 "(valid values: 'afoon')",
@@ -249,7 +249,7 @@ class ArgparseOptionsTest(TestCase):
 
         try:
             parser.parse_args(['--spork', 'nofoon'], values)
-        except helpers.Error, e:
+        except helpers.Error as e:
             self.assertEqual(
                 "'nofoon' is not a valid foon for --spork "
                 "(valid values: 'afoon')",
@@ -259,7 +259,7 @@ class ArgparseOptionsTest(TestCase):
 
         try:
             parser.parse_args(['--foon', 'nofoon'], values)
-        except helpers.Error, e:
+        except helpers.Error as e:
             self.assertEqual(
                 "'nofoon' is not a valid utensil for --foon "
                 "(valid values: 'afoon')",
@@ -391,7 +391,7 @@ class MainTest(TestCase):
         err, err_getvalue = _stream_and_getvalue()
         try:
             commandline.main(outfile=out, errfile=err, *args, **kwargs)
-        except commandline.MySystemExit, e:
+        except commandline.MySystemExit as e:
             self.assertEqual(errtext, err_getvalue())
             self.assertEqual(outtext, out_getvalue())
             self.assertEqual(status, e.args[0],
@@ -529,7 +529,7 @@ Use --help after a subcommand for more help.
             try:
                 commandline.main(
                     {None: (commandline.OptionParser, main)}, args, out, err)
-            except commandline.MySystemExit, e:
+            except commandline.MySystemExit as e:
                 # Important, without this master.read() blocks.
                 out.close()
                 self.assertEqual(None, e.args[0])

@@ -333,15 +333,15 @@ class MergeEngine(object):
                         trigger(self, self.csets)
                     except compatibility.IGNORED_EXCEPTIONS:
                         raise
-                    except errors.BlockModification, e:
+                    except errors.BlockModification as e:
                         self.observer.error("modification was blocked by "
                             "trigger %r: %s" % (trigger, e))
                         raise
-                    except errors.ModificationError, e:
+                    except errors.ModificationError as e:
                         self.observer.error("modification error occurred "
                             "during trigger %r: %s" % (trigger,e))
                         raise
-                    except Exception, e:
+                    except Exception as e:
                         if not trigger.suppress_exceptions:
                             raise
 

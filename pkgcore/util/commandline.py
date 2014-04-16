@@ -511,7 +511,7 @@ def python_namespace_type(value, module=False, attribute=False):
         elif attribute:
             return modules.load_attribute(value)
         return modules.load_any(value)
-    except modules.FailedImport, err:
+    except modules.FailedImport as err:
         compatibility.raise_from(argparse.ArgumentTypeError(str(err)))
 
 
@@ -598,7 +598,7 @@ class ArgumentParser(argparse.ArgumentParser):
         try:
             for attr, delayed in sorted(i, key=lambda val:val[1].priority):
                 delayed(args, attr)
-        except (TypeError, ValueError), err:
+        except (TypeError, ValueError) as err:
             self.error("failed loading/parsing %s: %s" % (attr, str(err)))
         except (ConfigError, argparse.ArgumentError):
             err = sys.exc_info()[1]
@@ -688,7 +688,7 @@ def existent_path(value):
         raise ValueError("path %r doesn't exist on disk" % (value,))
     try:
         return osutils.abspath(value)
-    except EnvironmentError, e:
+    except EnvironmentError as e:
         compatibility.raise_from(
             ValueError("while resolving path %r, encountered error: %r" %
                 (value, e)))
@@ -749,7 +749,7 @@ def convert_to_restrict(sequence, default=packages.AlwaysTrue):
     try:
         for x in sequence:
             l.append(parserestrict.parse_match(x))
-    except parserestrict.ParseError, e:
+    except parserestrict.ParseError as e:
         compatibility.raise_from(
             optparse.OptionValueError("arg %r isn't a valid atom: %s"
                 % (x, e)))
@@ -844,17 +844,17 @@ def main(subcommands, args=None, outfile=None, errfile=None, script_name=None):
         exitstatus = 1
     except compatibility.IGNORED_EXCEPTIONS:
         raise
-    except errors.ConfigurationError, e:
+    except errors.ConfigurationError as e:
         tb = sys.exc_info()[-1]
         if not getattr(options, 'debug', False):
             tb = None
         dump_error(errfile, e, "Error in configuration", tb=tb)
-    except operations.OperationError, e:
+    except operations.OperationError as e:
         tb = sys.exc_info()[-1]
         if not getattr(options, 'debug', False):
             tb = None
         dump_error(errfile, e, "Error running an operation", tb=tb)
-    except Exception, e:
+    except Exception as e:
         tb = sys.exc_info()[-1]
         if not getattr(options, 'debug', False):
             tb = None

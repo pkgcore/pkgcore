@@ -46,7 +46,7 @@ class native_PackageRestriction(object):
             return self._pull_attr_func(pkg)
         except IGNORED_EXCEPTIONS:
             raise
-        except Exception, e:
+        except Exception as e:
             if self._handle_exception(pkg, e, self._attr_split):
                 raise
             return self.__sentinel__
@@ -165,7 +165,7 @@ class native_PackageRestrictionMulti(native_PackageRestriction):
                 val.append(attr_func(pkg))
         except IGNORED_EXCEPTIONS:
             raise
-        except Exception, e:
+        except Exception as e:
             if self._handle_exception(pkg, e,
                 self._attr_split[len(val)]):
                 raise

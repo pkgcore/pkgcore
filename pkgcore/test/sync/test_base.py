@@ -45,7 +45,7 @@ class GenericSyncerTest(TestCase):
         # TODO this should be using a syncer we know is always available.
         try:
             syncer = base.GenericSyncer('/', 'svn://blah/')
-        except base.uri_exception, e:
+        except base.uri_exception as e:
             if str(e) == "no known syncer supports 'svn://blah/'":
                 raise SkipTest('svn syncer unavailable')
             raise

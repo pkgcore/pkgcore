@@ -118,7 +118,7 @@ class PackagesCacheV0(cache.bulk):
     def _read_data(self):
         try:
             handle = self._handle()
-        except EnvironmentError, e:
+        except EnvironmentError as e:
             if e.errno == errno.ENOENT:
                 return {}
             raise
@@ -195,7 +195,7 @@ class PackagesCacheV0(cache.bulk):
                 handler = AtomicWriteFile(self._location)
                 self._serialize_to_handle(self.data.items(), handler)
                 handler.close()
-            except EnvironmentError, e:
+            except EnvironmentError as e:
                 if e.errno != errno.EACCES:
                     raise
                 log.logger.error("failed writing binpkg Packages cache to %r; permissions issue %s",

@@ -370,7 +370,7 @@ class OptionParser(optparse.OptionParser, object):
             return self.parse_atom(arg, msg=msg, eapi=eapi)
         try:
             return parserestrict.parse_match(arg)
-        except parserestrict.ParseError, e:
+        except parserestrict.ParseError as e:
             if msg is None:
                 msg="couldn't parse restriction from %(arg)s: %(error)s"
             self.error(msg % {"arg":arg, "error": e})
@@ -378,7 +378,7 @@ class OptionParser(optparse.OptionParser, object):
     def parse_atom(self, arg, msg=None, eapi=-1):
         try:
             return atom.atom(arg, eapi=eapi)
-        except atom.MalformedAtom, ma:
+        except atom.MalformedAtom as ma:
             if msg is None:
                 msg="couldn't parse valid atom from %(arg)s: %(error)s"
             self.error(msg % {"arg":arg, "error":ma})

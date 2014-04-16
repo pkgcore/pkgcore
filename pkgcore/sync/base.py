@@ -80,7 +80,7 @@ class syncer(object):
                 uri[1] = "%s//%s" % (proto[0], uri[1])
 
             return pwd.getpwnam(uri[0]).pw_uid, uri[1]
-        except KeyError, e:
+        except KeyError as e:
             raise missing_local_user(raw_uri, uri[0], e)
 
     def sync(self, verbosity=None, force=False):
@@ -127,7 +127,7 @@ class ExternalSyncer(syncer):
     def require_binary(bin_name, fatal=True):
         try:
             return spawn.find_binary(bin_name)
-        except spawn.CommandNotFound, e:
+        except spawn.CommandNotFound as e:
             if fatal:
                 raise missing_binary(bin_name, e)
             return None
@@ -173,7 +173,7 @@ class dvcs_syncer(ExternalSyncer):
     def _sync(self, verbosity, output_fd):
         try:
             st = os.stat(self.basedir)
-        except EnvironmentError, ie:
+        except EnvironmentError as ie:
             if ie.errno != errno.ENOENT:
                 compatibility.raise_from(generic_exception(self, self.basedir, ie))
             command = self._initial_pull()

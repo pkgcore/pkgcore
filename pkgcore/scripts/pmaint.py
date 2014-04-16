@@ -69,7 +69,7 @@ def sync_main(options, out, err):
         out.write("*** syncing %r..." % name)
         try:
             ret = ops.sync()
-        except sync_base.syncer_exception, se:
+        except sync_base.syncer_exception as se:
             out.write("*** failed syncing %r- caught exception %r" % (name, se))
             failed.append(name)
             continue
@@ -129,7 +129,7 @@ def copy_main(options, out, err):
             for fsobj in pkg.contents:
                 try:
                     new_contents.add(livefs.gen_obj(fsobj.location))
-                except OSError, oe:
+                except OSError as oe:
                     if oe.errno != errno.ENOENT:
                         err.write("failed accessing fs obj %r; %r\n"
                             "aborting this copy" %

@@ -157,11 +157,11 @@ class ThreadedTrigger(base):
     def _run_job(self, observer, functor, args, kwds):
         try:
             functor(*args, **kwds)
-        except compatibility.IGNORED_EXCEPTIONS, e:
+        except compatibility.IGNORED_EXCEPTIONS as e:
             if isinstance(e, KeyboardInterrupt):
                 return
             raise
-        except Exception, e:
+        except Exception as e:
             observer.error("exception occurred in thread: %s",
                 e)
 
@@ -223,7 +223,7 @@ class mtime_watcher(object):
         for x in locations:
             try:
                 st = stat_func(x)
-            except OSError, oe:
+            except OSError as oe:
                 if not oe.errno == errno.ENOENT:
                     raise
                 continue
@@ -316,7 +316,7 @@ class ldconfig(base):
 
         try:
             l = [x.lstrip(os.path.sep) for x in iter_read_bash(fp)]
-        except IOError, oe:
+        except IOError as oe:
             if oe.errno != errno.ENOENT:
                 raise
             self._mk_ld_so_conf(fp)
@@ -332,7 +332,7 @@ class ldconfig(base):
             # touch the file.
         try:
             open(fp, 'w').close()
-        except EnvironmentError, e:
+        except EnvironmentError as e:
             compatibility.raise_from(errors.BlockModification(self, e))
 
     def trigger(self, engine):
@@ -410,7 +410,7 @@ class InfoRegen(base):
         ignores = ("dir", "dir.old")
         try:
             files = listdir_files(basepath)
-        except OSError, oe:
+        except OSError as oe:
             if oe.errno == errno.ENOENT:
                 return
             raise

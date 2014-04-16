@@ -267,7 +267,7 @@ class _UnconfiguredTree(prototype.tree):
                 v = v.split()
                 shuffle(v)
                 mirrors[k] = v
-        except EnvironmentError, ee:
+        except EnvironmentError as ee:
             if ee.errno != errno.ENOENT:
                 raise
 
@@ -335,7 +335,7 @@ class _UnconfiguredTree(prototype.tree):
                 ifilterfalse(self.false_categories.__contains__,
                     (x for x in listdir_dirs(self.base) if x[0:1] != ".")
                 )))
-        except EnvironmentError, e:
+        except EnvironmentError as e:
             raise_from(KeyError("failed fetching categories: %s" % str(e)))
 
     def _get_packages(self, category):
@@ -343,7 +343,7 @@ class _UnconfiguredTree(prototype.tree):
         try:
             return tuple(ifilterfalse(self.false_packages.__contains__,
                 listdir_dirs(cpath)))
-        except EnvironmentError, e:
+        except EnvironmentError as e:
             if e.errno == errno.ENOENT:
                 if self.hardcoded_categories and category in self.hardcoded_categories or \
                         isinstance(self, _SlavedTree) and category in self.parent_repo.categories:
@@ -375,7 +375,7 @@ class _UnconfiguredTree(prototype.tree):
                 return tuple(x for x in ret
                     if ('scm' not in x and 'try' not in x))
             return ret
-        except EnvironmentError, e:
+        except EnvironmentError as e:
             raise_from(KeyError("failed fetching versions for package %s: %s" % \
                 (pjoin(self.base, catpkg.lstrip(os.path.sep)), str(e))))
 
@@ -416,7 +416,7 @@ class _UnconfiguredTree(prototype.tree):
         try:
             manifest = pkg._shared_pkg_data.manifest
             return allow_missing, manifest.distfiles
-        except pkg_errors.ParseChksumError, e:
+        except pkg_errors.ParseChksumError as e:
             if e.missing and allow_missing:
                 return allow_missing, {}
             raise
@@ -448,10 +448,10 @@ class _UnconfiguredTree(prototype.tree):
                         neg.append(atom.atom(line[1:]))
                     else:
                         pos.append(atom.atom(line))
-        except IOError, i:
+        except IOError as i:
             if i.errno != errno.ENOENT:
                 raise
-        except ebuild_errors.MalformedAtom, ma:
+        except ebuild_errors.MalformedAtom as ma:
             raise_from(profiles.ProfileError(pjoin(self.base, 'profiles'),
                 'package.mask', ma))
         return [neg, pos]

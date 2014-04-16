@@ -63,7 +63,7 @@ def add_layman_syncers(new_config, rsync_opts, overlay_paths, config_root='/',
                        default_loc="etc/layman/layman.cfg", default_conf='overlays.xml'):
     try:
         f = open(pjoin(config_root, default_loc))
-    except IOError, ie:
+    except IOError as ie:
         if ie.errno != errno.ENOENT:
             raise
         return {}
@@ -80,7 +80,7 @@ def add_layman_syncers(new_config, rsync_opts, overlay_paths, config_root='/',
 
     try:
         xmlconf = etree.parse(overlay_xml)
-    except IOError, ie:
+    except IOError as ie:
         if ie.errno != errno.ENOENT:
             raise
         return {}
@@ -208,7 +208,7 @@ def add_sets(config, root, portage_base_dir):
             config[setname] = basics.AutoConfigSection({
                 "class": "pkgcore.pkgsets.filelist.FileList",
                 "location": pjoin(set_fp, setname)})
-    except OSError, e:
+    except OSError as e:
         if e.errno != errno.ENOENT:
             raise
 
@@ -217,7 +217,7 @@ def _find_profile_link(base_path, portage_compat=False):
     try:
         return normpath(abspath(
             pjoin(base_path, os.readlink(make_profile))))
-    except EnvironmentError, oe:
+    except EnvironmentError as oe:
         if oe.errno in (errno.ENOENT, errno.EINVAL):
             if oe.errno == errno.ENOENT:
                 if portage_compat:
@@ -294,7 +294,7 @@ def load_make_config(vars_dict, path, allow_sourcing=False, required=True,
     try:
         new_vars = read_bash_dict(path, vars_dict=vars_dict,
             sourcing_command=sourcing_command)
-    except EnvironmentError, ie:
+    except EnvironmentError as ie:
         if ie.errno == errno.EACCES:
             raise_from(errors.PermissionDeniedError(path, write=False))
         if ie.errno != errno.ENOENT or required:
@@ -333,7 +333,7 @@ def config_from_make_conf(location="/etc/"):
     conf_dict = {}
     try:
         load_make_config(conf_dict, pjoin(base_path, 'make.globals'))
-    except errors.ParsingError, e:
+    except errors.ParsingError as e:
         if not getattr(getattr(e, 'exc', None), 'errno', None) == errno.ENOENT:
            raise
         try:
@@ -474,7 +474,7 @@ def config_from_make_conf(location="/etc/"):
     if pkgdir is not None:
         try:
             pkgdir = abspath(pkgdir)
-        except OSError, oe:
+        except OSError as oe:
             if oe.errno != errno.ENOENT:
                 raise
             if set(features).intersection(('buildpkg', 'pristine-buildpkg',
@@ -562,7 +562,7 @@ def config_from_make_conf(location="/etc/"):
         fp = pjoin(portage_base, f.split(":")[0])
         try:
             os.stat(fp)
-        except OSError, oe:
+        except OSError as oe:
             if oe.errno != errno.ENOENT:
                 raise
         else:

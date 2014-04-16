@@ -137,7 +137,7 @@ class CollapsedConfig(object):
                 self._instance = self._instantiate()
             except compatibility.IGNORED_EXCEPTIONS:
                 raise
-            except Exception, e:
+            except Exception as e:
                 compatibility.raise_from(errors.InstantiationError(self.name))
         return self._instance
 
@@ -171,7 +171,7 @@ class CollapsedConfig(object):
                         final_val.append(ref.instantiate())
                 except compatibility.IGNORED_EXCEPTIONS:
                     raise
-                except Exception, e:
+                except Exception as e:
                     compatibility.raise_from(errors.ConfigurationError(
                         "Instantiating reference %r pointing at %r" % (name, ref.name)))
                 if unlist_it:
@@ -204,7 +204,7 @@ class CollapsedConfig(object):
             self._instance = callable_obj(*pargs, **configdict)
         except compatibility.IGNORED_EXCEPTIONS:
             raise
-        except Exception, e:
+        except Exception as e:
             compatibility.raise_from(errors.InstantiationError(self.name,
                 "exception caught from %r" % (errors._identify_functor_source(self.type.callable),)))
         if self._instance is None:

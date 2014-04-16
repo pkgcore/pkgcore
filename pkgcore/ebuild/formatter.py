@@ -92,7 +92,7 @@ def userquery(prompt, out, err, responses=None, default_answer=None, limit=3):
         except EOFError:
             out.write("\nNot answerable: EOF on STDIN")
             raise_from(NoChoice())
-        except IOError, e:
+        except IOError as e:
             if e.errno == errno.EBADF:
                 out.write("\nNot answerable: STDIN is either closed, or not readable")
                 raise_from(NoChoice())

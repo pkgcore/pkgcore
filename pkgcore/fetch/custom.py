@@ -68,7 +68,7 @@ class fetcher(base.fetcher):
                 raise MalformedCommand(string)
             try:
                 new_command % {"URI":"blah", "FILE":"blah"}
-            except KeyError, k:
+            except KeyError as k:
                 raise MalformedCommand("%s: unexpected key %s" % (command, k.args[0]))
             return new_command
 
@@ -128,13 +128,13 @@ class fetcher(base.fetcher):
                 except errors.MissingDistfile:
                     command = self.command
                     last_exc = sys.exc_info()
-                except errors.FetchFailed, e:
+                except errors.FetchFailed as e:
                     last_exc = sys.exc_info()
                     if not e.resumable:
                        try:
                             os.unlink(fp)
                             command = self.command
-                       except OSError, oe:
+                       except OSError as oe:
                             raise_from(errors.UnmodifiableFile(fp, oe))
                     else:
                         command = self.resume_command

@@ -101,7 +101,7 @@ class cache(base):
         eclass_len = len(".eclass")
         try:
             files = listdir_files(self.eclassdir)
-        except EnvironmentError, e:
+        except EnvironmentError as e:
             if e.errno not in (errno.ENOENT, errno.ENOTDIR):
                 raise
             return ImmutableDict()

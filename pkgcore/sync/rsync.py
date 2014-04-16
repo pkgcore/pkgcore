@@ -98,7 +98,7 @@ class rsync_syncer(base.ExternalSyncer):
                 else:
                     yield ipaddr[4][0]
 
-        except socket.error, e:
+        except socket.error as e:
             compatibility.raise_from(
                 base.syncer_exception(self.hostname, af_fam, str(e)))
 
@@ -166,7 +166,7 @@ class rsync_timestamp_syncer(rsync_syncer):
             # add the hour/minute offset.
             date += int(offset[:2] * 60) + int(offset[2:])
             return date
-        except IOError, oe:
+        except IOError as oe:
             if oe.errno not in (errno.ENOENT, errno.ENOTDIR):
                 raise
             return None

@@ -343,10 +343,10 @@ class ebd(object):
             # try to wipe the cat dir; if not empty, ignore it
             try:
                 os.rmdir(os.path.dirname(self.builddir))
-            except EnvironmentError, e:
+            except EnvironmentError as e:
                 if e.errno != errno.ENOTEMPTY:
                     raise
-        except EnvironmentError, oe:
+        except EnvironmentError as oe:
             raise_from(format.GenericBuildError(
                 "clean: Caught exception while cleansing: %s" % (oe,)))
         return True
@@ -382,7 +382,7 @@ class ebd(object):
         try:
             self.__set_stage_state__([x[1:]
                 for x in listdir_files(self.builddir) if x.startswith(".")])
-        except EnvironmentError, e:
+        except EnvironmentError as e:
             if e.errno not in (errno.ENOTDIR, errno.ENOENT):
                 raise
 
@@ -452,7 +452,7 @@ def run_generic_phase(pkg, phase, env, userpriv, sandbox, fakeroot,
                     phase + ": Failed building (False/0 return from handler)")
                 logger.warning("executing phase %s: execution failed, ignoring" % (phase,))
 
-    except Exception, e:
+    except Exception as e:
         ebd.shutdown_processor()
         release_ebuild_processor(ebd)
         if isinstance(e, IGNORED_EXCEPTIONS + (format.GenericBuildError,)):
@@ -667,7 +667,7 @@ class buildable(ebd, setup_mixin, format.build):
                     else:
                         os.unlink(self.env["DISTDIR"])
 
-            except EnvironmentError, oe:
+            except EnvironmentError as oe:
                 raise_from(format.FailedDirectory(
                     self.env["DISTDIR"],
                     "failed removing existing file/dir/link at: exception %s"
@@ -685,7 +685,7 @@ class buildable(ebd, setup_mixin, format.build):
                     for (k, v) in self.verified_files.iteritems()]:
                     os.symlink(src, dest)
 
-            except EnvironmentError, oe:
+            except EnvironmentError as oe:
                 raise_from(format.GenericBuildError(
                     "Failed symlinking in distfiles for src %s -> %s: %s" % (
                         src, dest, str(oe))))
@@ -795,7 +795,7 @@ class buildable(ebd, setup_mixin, format.build):
         if self.userpriv:
             try:
                 os.chown(self.env["WORKDIR"], portage_uid, -1)
-            except OSError, oe:
+            except OSError as oe:
                 raise_from(format.GenericBuildError(
                     "failed forcing %i uid for WORKDIR: %s" %
                         (portage_uid, str(oe))))
@@ -888,7 +888,7 @@ class ebuild_mixin(object):
             logger.debug("pkg_pretend sanity check for %s took %2.2f seconds",
                 pkg.cpvstr, time.time() - start)
             return ret
-        except format.GenericBuildError, e:
+        except format.GenericBuildError as e:
             logger.error("pkg_pretend sanity check for %s failed with exception %r"
                 % (pkg.cpvstr, e))
             return False
@@ -897,7 +897,7 @@ class ebuild_mixin(object):
             # try to wipe the cat dir; if not empty, ignore it
             try:
                 os.rmdir(os.path.dirname(builddir))
-            except EnvironmentError, e:
+            except EnvironmentError as e:
                 if e.errno != errno.ENOTEMPTY:
                     raise
 

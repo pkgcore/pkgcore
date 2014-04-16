@@ -161,7 +161,7 @@ def uncollapsable_main(options, out, err):
             config.collapse_named_section(name)
         except errors.CollapseInheritOnly:
             pass
-        except errors.ConfigurationError, e:
+        except errors.ConfigurationError as e:
             out.autoline = False
             commandline.dump_error(out, e, "section %s" % (name,))
             if options.debug:

@@ -106,13 +106,13 @@ class database(flat_hash.database):
             self.location, cpv[:s], ".update.%i.%s" % (os.getpid(), cpv[s+1:]))
         try:
             myf = open(fp, "w")
-        except EnvironmentError, e:
+        except EnvironmentError as e:
             if errno.ENOENT != e.errno:
                 raise_from(errors.CacheCorruption(cpv, e))
             try:
                 self._ensure_dirs(cpv)
                 myf = open(fp, "w")
-            except EnvironmentError, e:
+            except EnvironmentError as e:
                 raise_from(errors.CacheCorruption(cpv, e))
 
         count = 0
@@ -128,7 +128,7 @@ class database(flat_hash.database):
         new_fp = pjoin(self.location, cpv)
         try:
             os.rename(fp, new_fp)
-        except EnvironmentError, e:
+        except EnvironmentError as e:
             os.remove(fp)
             raise_from(errors.CacheCorruption(cpv, e))
 

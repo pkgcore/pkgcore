@@ -6,6 +6,7 @@ import sys
 
 from snakeoil.compatibility import force_bytes
 
+from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.formatter import (BasicFormatter, PkgcoreFormatter,
     PortageFormatter, PaludisFormatter)
 from pkgcore.ebuild.misc import collapsed_restrict_to_data
@@ -491,7 +492,6 @@ class TestPortageFormatter(BaseFormatterTest, TestCase):
             Color('fg', 'yellow'), Bold(), '-bootstrap', Reset(), '%"')
 
     def test_disabled_use(self):
-        from pkgcore.ebuild.atom import atom
         self.formatter.disabled_use = collapsed_restrict_to_data(([(atom('=app-arch/bzip2-1.0.3-r6'),('static'))]))
         self.formatter.format(
             FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6', iuse=['static', 'bootstrap'])))
@@ -502,8 +502,36 @@ class TestPortageFormatter(BaseFormatterTest, TestCase):
             Color('fg', 'blue'), Bold(), '-bootstrap', Reset(), ' ',
             '(', Color('fg', 'blue'), Bold(), '-static', Reset(), ')"')
 
+    def test_forced_use(self):
+        self.formatter.forced_use = collapsed_restrict_to_data(([(atom('=app-arch/bzip2-1.0.3-r6'),('static'))]))
+
+        # new pkg: static use flag forced on
+        self.formatter.format(
+            FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6', iuse=['static'], use=['static'])))
+        self.assertOut('[', Color('fg', 'green'), 'ebuild', Reset(),
+            '  ', Color('fg', 'green'), Bold(), 'N', Reset(), '     ] ',
+            Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6', Reset(),
+            ' USE="(', Color('fg', 'red'), Bold(), 'static', Reset(), ')"')
+
+        # rebuilt pkg: toggled static use flag forced on
+        self.formatter.format(
+            FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6', iuse=['static'], use=['static']),
+            FakeMutatedPkg('app-arch/bzip2-1.0.3-r6', iuse=['static'])))
+        self.assertOut('[', Color('fg', 'green'), 'ebuild', Reset(),
+            '   ', Color('fg', 'yellow'), Bold(), 'R', Reset(), '    ] ',
+            Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6', Reset(),
+            ' USE="(', Color('fg', 'green'), Bold(), 'static', Reset(), '*)"')
+
+        # rebuilt pkg: new static use flag forced on
+        self.formatter.format(
+            FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6', iuse=['static'], use=['static']),
+            FakeMutatedPkg('app-arch/bzip2-1.0.3-r6')))
+        self.assertOut('[', Color('fg', 'green'), 'ebuild', Reset(),
+            '   ', Color('fg', 'yellow'), Bold(), 'R', Reset(), '    ] ',
+            Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6', Reset(),
+            ' USE="(', Color('fg', 'yellow'), Bold(), 'static', Reset(), '%*)"')
+
     def test_worldfile_atom(self):
-        from pkgcore.ebuild.atom import atom
         self.formatter.world_list = [atom('app-arch/bzip2')]
         self.formatter.format(
         FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6')))
@@ -618,6 +646,18 @@ class TestPortageVerboseFormatter(TestPortageFormatter):
             Color('fg', 'green'), Bold(), '-foobar', Reset(), '* ',
             Color('fg', 'yellow'), Bold(), '-perl', Reset(), '% ',
             '(', Color('fg', 'yellow'), Bold(), '-kazaam', Reset(), '%)"')
+
+    def test_forced_use_verbose(self):
+        self.formatter.forced_use = collapsed_restrict_to_data(([(atom('=app-arch/bzip2-1.0.3-r6'),('static'))]))
+
+        # rebuilt pkg: unchanged static use flag forced on
+        self.formatter.format(
+            FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6', iuse=['static'], use=['static']),
+            FakeMutatedPkg('app-arch/bzip2-1.0.3-r6', iuse=['static'], use=['static'])))
+        self.assertOut('[', Color('fg', 'green'), 'ebuild', Reset(),
+            '   ', Color('fg', 'yellow'), Bold(), 'R', Reset(), '    ] ',
+            Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6', Reset(),
+            ' USE="(', Color('fg', 'red'), Bold(), 'static', Reset(), ')"')
 
     def test_removed_use(self):
         self.formatter.format(

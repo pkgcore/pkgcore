@@ -317,7 +317,7 @@ class PortageFormatter(CountingFormatter):
         origautoline = out.autoline
         out.autoline = False
 
-        self.pkg_disabled_use = self.pkg_forced_use = []
+        self.pkg_disabled_use = self.pkg_forced_use = set()
         if hasattr(self, 'disabled_use'):
             self.pkg_disabled_use = self.disabled_use.pull_data(op.pkg)
         if hasattr(self, 'forced_use'):

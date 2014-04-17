@@ -30,7 +30,6 @@
 #
 import os
 import sys
-import types
 
 def dodir(path):
     os.spawnlp(os.P_WAIT, "install", "install", "-d", path)
@@ -149,7 +148,7 @@ def main():
 
     (options, args) = parse_args()
 
-    if type(options.allowed_exts) == types.StringType:
+    if isinstance(options.allowed_exts, basestring):
         options.allowed_exts = options.allowed_exts.split(",")
 
     if options.verbose:

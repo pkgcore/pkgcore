@@ -473,7 +473,7 @@ class TestPortageFormatter(BaseFormatterTest, TestCase):
             Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6', Reset(), ' USE="',
             Color('fg', 'green'), Bold(), 'rice', Reset(), '* ',
             Color('fg', 'yellow'), Bold(), 'static', Reset(), '%* ',
-            Color('fg', 'yellow'), Bold(), '-foobar', Reset(), '* ',
+            Color('fg', 'green'), Bold(), '-foobar', Reset(), '* ',
             Color('fg', 'yellow'), Bold(), '-perl', Reset(), '%"')
 
     def test_use_expand(self):
@@ -613,8 +613,9 @@ class TestPortageVerboseFormatter(TestPortageFormatter):
             Color('fg', 'green'), Bold(), 'rice', Reset(), '* ',
             Color('fg', 'yellow'), Bold(), 'static', Reset(), '%* ',
             Color('fg', 'blue'), Bold(), '-bootstrap', Reset(), ' ',
-            Color('fg', 'yellow'), Bold(), '-foobar', Reset(), '* ',
-            Color('fg', 'yellow'), Bold(), '-perl', Reset(), '%"')
+            Color('fg', 'green'), Bold(), '-foobar', Reset(), '* ',
+            Color('fg', 'yellow'), Bold(), '-perl', Reset(), '% ',
+            '(', Color('fg', 'yellow'), Bold(), '-kazaam', Reset(), '%)"')
 
     def test_end(self):
         self.formatter.format(FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6', repo=self.repo1)))

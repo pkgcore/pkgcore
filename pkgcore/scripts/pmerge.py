@@ -370,6 +370,7 @@ def main(options, out, err):
         use_expand=domain.use_expand,
         use_expand_hidden=domain.use_expand_hidden,
         disabled_use=domain.disabled_use,
+        forced_use=domain.forced_use,
         world_list=world_list,
         verbose=options.verbose,
         livefs_repos=livefs_repos,

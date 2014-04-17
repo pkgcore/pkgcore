@@ -438,7 +438,7 @@ class PortageFormatter(CountingFormatter):
         # dicts (both length 2 or 4).
         uselists, usedicts = zip(*stuff)
         self.format_use('use', *uselists)
-        for useno, expand in enumerate(self.use_expand-self.use_expand_hidden):
+        for expand in sorted(self.use_expand-self.use_expand_hidden):
             flaglists = [d.get(expand, ()) for d in usedicts]
             self.format_use(expand, *flaglists)
 

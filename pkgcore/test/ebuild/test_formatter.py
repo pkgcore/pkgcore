@@ -477,14 +477,16 @@ class TestPortageFormatter(BaseFormatterTest, TestCase):
             Color('fg', 'yellow'), Bold(), '-perl', Reset(), '%"')
 
     def test_use_expand(self):
-        self.formatter = self.newFormatter(use_expand=set(["foo"]))
+        self.formatter = self.newFormatter(use_expand=set(["foo", "bar"]))
         self.formatter.format(
             FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6',
-                iuse=['foo_static', 'foo_bootstrap'], use=['foo_static']),
+                iuse=['foo_static', 'foo_bootstrap', 'bar_baz'],
+                use=['foo_static', 'bar_baz']),
             FakeMutatedPkg('app-arch/bzip2-1.0.3-r6')))
         self.assertOut('[', Color('fg', 'green'), 'ebuild', Reset(),
             '   ', Color('fg', 'yellow'), Bold(), 'R', Reset(), '    ] ',
             Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6', Reset(),
+            ' BAR="', Color('fg', 'yellow'), Bold(), 'baz', Reset(), '%*"',
             ' FOO="', Color('fg', 'yellow'), Bold(), 'static', Reset(), '%* ',
             Color('fg', 'yellow'), Bold(), '-bootstrap', Reset(), '%"')
 

@@ -14,7 +14,7 @@ WHAT IS PKGCORE?
 
 WHAT DOES PKGCORE REQUIRE?
 
-  At least python verison 2.5, and snakeoil- snakeoil is a utility library with
+  At least python verison 2.6, and snakeoil- snakeoil is a utility library with
   misc optimizations split out of pkgcore for others to use.  Available via
   http://snakeoil.googlecode.com/ .
 

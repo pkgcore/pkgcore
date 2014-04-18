@@ -1,9 +1,12 @@
 #!/usr/bin/env python
-from snakeoil.modules import load_module
+
 import datetime, os, errno, re
-from pkgcore.util import argparse
-pjoin = os.path.join
+
 from snakeoil.currying import partial
+from snakeoil.modules import load_module
+from snakeoil.osutils import pjoin
+
+from pkgcore.util import argparse
 
 
 def _rst_header(char, text, leading=False):

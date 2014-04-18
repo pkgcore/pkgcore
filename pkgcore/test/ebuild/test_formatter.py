@@ -336,6 +336,8 @@ class TestPortageFormatter(BaseFormatterTest, TestCase):
 
     def setUp(self):
         pkg = FakeMutatedPkg('app-arch/bzip2-1.0.1-r1', slot='0')
+        self.repo1 = FakeRepo(repo_id='gentoo', location='/usr/portage')
+        self.repo2 = FakeRepo(repo_id='fakerepo', location='/var/gentoo/repos/fakerepo')
         self.livefs = FakeRepo(repo_id='vdb', pkgs=[pkg])
         BaseFormatterTest.setUp(self)
 
@@ -545,18 +547,12 @@ class TestPortageVerboseFormatter(TestPortageFormatter):
         kwargs.setdefault("verbose", True)
         return TestPortageFormatter.newFormatter(self, **kwargs)
 
-    def setUp(self):
-        TestPortageFormatter.setUp(self)
-        self.repo1 = FakeRepo(repo_id='gentoo', location='/usr/portage')
-        self.repo2 = FakeRepo(location='/usr/local/portage')
-        self.repo3 = FakeRepo(repo_id='fakerepo', location='/var/cache/gentoo/repos/fakerepo')
-
     def test_repo_id(self):
         self.formatter.format(FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6', repo=self.repo1)))
         self.assertOut('[', Color('fg', 'green'), 'ebuild', Reset(),
             '  ', Color('fg', 'green'), Bold(), 'N', Reset(), '     ] ',
             Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6', Reset())
-        self.formatter.format(FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6', repo=self.repo3)))
+        self.formatter.format(FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6', repo=self.repo2)))
         self.assertOut('[', Color('fg', 'green'), 'ebuild', Reset(),
             '  ', Color('fg', 'green'), Bold(), 'N', Reset(), '     ] ',
             Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6::fakerepo', Reset())
@@ -568,7 +564,7 @@ class TestPortageVerboseFormatter(TestPortageFormatter):
             Color('fg', 'green'), 'app-arch/bzip2-1.0.4', Reset(), ' ',
             Color('fg', 'blue'), Bold(), '[1.0.3-r6]', Reset())
         self.formatter.format(
-            FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.4', repo=self.repo3),
+            FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.4', repo=self.repo2),
             FakeMutatedPkg('app-arch/bzip2-1.0.3-r6', repo=self.repo1)))
         self.assertOut('[', Color('fg', 'green'), 'ebuild', Reset(),
             '     ', Color('fg', 'cyan'), Bold(), 'U', Reset(), '  ] ',
@@ -576,14 +572,14 @@ class TestPortageVerboseFormatter(TestPortageFormatter):
             Color('fg', 'blue'), Bold(), '[1.0.3-r6::gentoo]', Reset())
         self.formatter.format(
             FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.4', repo=self.repo1),
-            FakeMutatedPkg('app-arch/bzip2-1.0.3-r6', repo=self.repo3)))
+            FakeMutatedPkg('app-arch/bzip2-1.0.3-r6', repo=self.repo2)))
         self.assertOut('[', Color('fg', 'green'), 'ebuild', Reset(),
             '     ', Color('fg', 'cyan'), Bold(), 'U', Reset(), '  ] ',
             Color('fg', 'green'), 'app-arch/bzip2-1.0.4::gentoo', Reset(), ' ',
             Color('fg', 'blue'), Bold(), '[1.0.3-r6::fakerepo]', Reset())
         self.formatter.format(
-            FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.4', repo=self.repo3),
-            FakeMutatedPkg('app-arch/bzip2-1.0.3-r6', repo=self.repo3)))
+            FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.4', repo=self.repo2),
+            FakeMutatedPkg('app-arch/bzip2-1.0.3-r6', repo=self.repo2)))
         self.assertOut('[', Color('fg', 'green'), 'ebuild', Reset(),
             '     ', Color('fg', 'cyan'), Bold(), 'U', Reset(), '  ] ',
             Color('fg', 'green'), 'app-arch/bzip2-1.0.4::fakerepo', Reset(), ' ',
@@ -681,6 +677,10 @@ class TestPortageVerboseFormatter(TestPortageFormatter):
 class TestPortageVerboseRepoIdFormatter(TestPortageVerboseFormatter):
     suffix = [Color("fg", "cyan"), ' [1]\n']
 
+    def setUp(self):
+        TestPortageVerboseFormatter.setUp(self)
+        self.repo3 = FakeRepo(location='/usr/local/portage')
+
     def newFormatter(self, **kwargs):
         kwargs.setdefault("quiet_repo_display", True)
         return TestPortageVerboseFormatter.newFormatter(self, **kwargs)
@@ -694,9 +694,11 @@ class TestPortageVerboseRepoIdFormatter(TestPortageVerboseFormatter):
     def test_end(self):
         self.formatter.format(FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6', repo=self.repo1)))
         self.formatter.format(FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6', repo=self.repo2)))
+        self.formatter.format(FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6', repo=self.repo3)))
         self.fakeout.resetstream()
         self.formatter.end()
-        self.assertOut('\nTotal: 2 packages (2 new)\n\n',
+        self.assertOut('\nTotal: 3 packages (3 new)\n\n',
             ' ', Color('fg', 'cyan'), '[1]', Reset(),' gentoo (/usr/portage)\n',
-            ' ', Color('fg', 'cyan'), '[2]', Reset(),' /usr/local/portage\n',
+            ' ', Color('fg', 'cyan'), '[2]', Reset(),' fakerepo (/var/gentoo/repos/fakerepo)\n',
+            ' ', Color('fg', 'cyan'), '[3]', Reset(),' /usr/local/portage\n',
             suffix=[''])

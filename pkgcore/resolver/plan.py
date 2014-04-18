@@ -469,12 +469,6 @@ class merge_plan(object):
                 choices.force_next_pkg()
                 continue
 
-            fail = self.insert_providers(stack, atom, choices)
-            if fail:
-                self.state.backtrack(stack.current_frame.start_point)
-                choices.force_next_pkg()
-                continue
-
             new_additions, failures = self.process_dependencies_and_blocks(
                 stack, choices, 'post_rdepends', atom, depth)
             if failures:

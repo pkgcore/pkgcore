@@ -5,7 +5,6 @@ from operator import itemgetter
 from collections import deque, defaultdict
 from snakeoil.osutils import listdir_files, pjoin
 from snakeoil.fileutils import readlines
-from snakeoil.iterables import chain_from_iterable
 from pkgcore.ebuild.atom import atom
 from snakeoil.lists import iflatten_instance
 from snakeoil import demandload

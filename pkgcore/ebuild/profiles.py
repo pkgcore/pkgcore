@@ -19,7 +19,6 @@ from snakeoil.osutils import abspath, pjoin
 from snakeoil.fileutils import readlines_utf8
 from snakeoil.containers import InvertedContains
 from snakeoil.bash import iter_read_bash, read_bash_dict
-from snakeoil.iterables import chain_from_iterable
 from snakeoil import klass, caching, currying, sequences
 from snakeoil import compatibility
 from snakeoil.demandload import demandload
@@ -234,7 +233,7 @@ class ProfileNode(object):
     def pkg_use(self, data):
         c = ChunkedDataDict()
         c.update_from_stream(
-            chain_from_iterable(self._parse_package_use(data).itervalues()))
+            chain.from_iterable(self._parse_package_use(data).itervalues()))
         c.freeze()
         return c
 
@@ -316,7 +315,7 @@ class ProfileNode(object):
         if self.pkg_use_mask:
             c = c.clone(unfreeze=True)
             c.update_from_stream(
-                chain_from_iterable(self.pkg_use_mask.itervalues()))
+                chain.from_iterable(self.pkg_use_mask.itervalues()))
             c.freeze()
         return c
 
@@ -327,10 +326,10 @@ class ProfileNode(object):
             c.merge(self.use_stable_mask)
         if self.pkg_use_mask:
             c.update_from_stream(
-                chain_from_iterable(self.pkg_use_mask.itervalues()))
+                chain.from_iterable(self.pkg_use_mask.itervalues()))
         if self.stable_pkg_use_mask:
             c.update_from_stream(
-                chain_from_iterable(self.stable_pkg_use_mask.itervalues()))
+                chain.from_iterable(self.stable_pkg_use_mask.itervalues()))
         c.freeze()
         return c
 
@@ -340,7 +339,7 @@ class ProfileNode(object):
         if self.pkg_use_force:
             c = c.clone(unfreeze=True)
             c.update_from_stream(
-                chain_from_iterable(self.pkg_use_force.itervalues()))
+                chain.from_iterable(self.pkg_use_force.itervalues()))
             c.freeze()
         return c
 
@@ -351,10 +350,10 @@ class ProfileNode(object):
             c.merge(self.use_stable_force)
         if self.pkg_use_force:
             c.update_from_stream(
-                chain_from_iterable(self.pkg_use_force.itervalues()))
+                chain.from_iterable(self.pkg_use_force.itervalues()))
         if self.stable_pkg_use_force:
             c.update_from_stream(
-                chain_from_iterable(self.stable_pkg_use_force.itervalues()))
+                chain.from_iterable(self.stable_pkg_use_force.itervalues()))
         c.freeze()
         return c
 

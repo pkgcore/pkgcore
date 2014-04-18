@@ -10,8 +10,10 @@ A lot of extra documentation on this is in dev-notes/config.rst.
 __all__ = ("CollapsedConfig", "ConfigManager",)
 
 import collections, weakref
+from itertools import chain
+
 from pkgcore.config import errors, basics
-from snakeoil import mappings, compatibility, sequences, klass, iterables
+from snakeoil import mappings, compatibility, sequences, klass
 
 _section_data = sequences.namedtuple('_section_data', ['name', 'section'])
 
@@ -91,7 +93,7 @@ class _ConfigStack(collections.defaultdict):
                 results += [append]
 
         if flatten:
-            results = iterables.chain_from_iterable(results)
+            results = chain.from_iterable(results)
         return list(results)
 
 

@@ -26,9 +26,6 @@ from snakeoil.klass import generic_equality, alias_method
 from snakeoil.lists import iflatten_instance, stable_unique
 from snakeoil.sequences import namedtuple
 from snakeoil.demandload import demandload
-demandload(globals(),
-    'snakeoil.iterables:chain_from_iterable',
-)
 
 
 restrict_payload = namedtuple("restrict_data", ["restrict", "data"])
@@ -557,7 +554,7 @@ class PayloadDict(ChunkedDataDict):
             items = self._global_settings
         s = set(pre_defaults)
         incremental_expansion(s,
-            chain_from_iterable(item.data for item in items
+            chain.from_iterable(item.data for item in items
                 if item.restrict.match(pkg)))
         return s
 

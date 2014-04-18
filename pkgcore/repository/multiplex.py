@@ -7,10 +7,12 @@ repository that combines multiple repositories together
 
 __all__ = ("tree", "operations")
 
+from itertools import chain
+
 from operator import itemgetter
 from pkgcore.repository import prototype, errors
 from snakeoil.currying import partial, post_curry
-from snakeoil.iterables import iter_sort, chain_from_iterable
+from snakeoil.iterables import iter_sort
 from snakeoil.compatibility import sorted_cmp
 from snakeoil import klass
 from pkgcore.operations import repo as repo_interface
@@ -24,12 +26,12 @@ class operations(repo_interface.operations_proxy):
 
     @klass.cached_property
     def raw_operations(self):
-        return frozenset(chain_from_iterable(tree.operations.raw_operations
+        return frozenset(chain.from_iterable(tree.operations.raw_operations
             for tree in self.repo.trees))
 
     @klass.cached_property
     def enabled_operations(self):
-        s = set(chain_from_iterable(tree.operations.enabled_operations
+        s = set(chain.from_iterable(tree.operations.enabled_operations
             for tree in self.repo.trees))
         return frozenset(self._apply_overrides(s))
 

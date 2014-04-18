@@ -325,7 +325,7 @@ class PortageFormatter(CountingFormatter):
 
         # This is for the summary at the end
         if self.quiet_repo_display:
-            reponr = self.repos.setdefault(op.pkg.repo, len(self.repos) + 1)
+            self.repos.setdefault(op.pkg.repo, len(self.repos)+1)
 
         pkg_is_bold = any(x.match(op.pkg) for x in getattr(self, 'world_list', ()))
 
@@ -345,10 +345,9 @@ class PortageFormatter(CountingFormatter):
             data += pkg_coloring + ['ebuild']
 
         data += [out.reset, ' ']
-
         out.write(*data)
-        # Order is important here - look at the above diagram
 
+        # Order is important here - look at the above diagram
         op_type = op.desc
         op_chars = [[' '] for x in range(7)]
         if 'fetch' in op.pkg.restrict:
@@ -456,7 +455,7 @@ class PortageFormatter(CountingFormatter):
                         out.write(' ', sizeof_fmt(size))
 
             if self.quiet_repo_display:
-                out.write(out.fg('cyan'), " [%d]" % (reponr))
+                out.write(out.fg('cyan'), " [%d]" % (self.repos[op.pkg.repo]))
 
         out.write('\n')
         out.autoline = origautoline

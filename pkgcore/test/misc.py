@@ -32,6 +32,8 @@ class FakePkgBase(package):
         for x in ("DEPEND", "RDEPEND", "PDEPEND", "IUSE", "LICENSE"):
             data.setdefault(x, "")
 
+        data.setdefault("KEYWORDS", ' '.join(default_arches))
+
         cpv = CPV(cpvstr, versioned=True)
         package.__init__(self, shared, repo, cpv.category, cpv.package,
             cpv.fullver)
@@ -64,10 +66,11 @@ class FakeProfile(object):
 
 class FakeRepo(object):
 
-    def __init__(self, pkgs=(), repo_id='', location='', **kwds):
+    def __init__(self, pkgs=(), repo_id='', location='', masks=(), **kwds):
         self.pkgs = pkgs
         self.repo_id = repo_id or location
         self.location = location
+        self.default_visibility_limiters = masks
 
         for k, v in kwds.iteritems():
             setattr(self, k, v)
@@ -81,12 +84,15 @@ class FakeRepo(object):
 
 
 class FakePkg(FakePkgBase):
-    def __init__(self, cpv, slot="0", subslot=None, iuse=(), use=(), repo=FakeRepo(), restrict=''):
+    def __init__(self, cpv, slot="0", subslot=None, iuse=(), use=(),
+                 repo=FakeRepo(), restrict='', keywords=None):
         if isinstance(repo, str):
             repo = FakeRepo(repo)
         elif isinstance(repo, (tuple, list)) and len(repo) < 3:
             repo = FakeRepo(*repo)
         FakePkgBase.__init__(self, cpv, repo=factory(repo))
+        if keywords is not None:
+            object.__setattr__(self, "keywords", set(keywords))
         object.__setattr__(self, "slot", str(slot))
         if subslot is None:
             subslot = slot

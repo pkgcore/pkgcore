@@ -367,6 +367,8 @@ def main(options, out, err):
         world_set = None
 
     formatter = options.formatter(out=out, err=err,
+        unstable_arch=domain.unstable_arch,
+        domain_settings=domain.settings,
         use_expand=domain.use_expand,
         use_expand_hidden=domain.use_expand_hidden,
         disabled_use=domain.disabled_use,

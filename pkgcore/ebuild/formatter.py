@@ -378,6 +378,17 @@ class PortageFormatter(CountingFormatter):
         else:
             logger.warning("unformattable op type: desc(%r), %r", (op.desc, op))
 
+        if self.verbose:
+            if not op.pkg.keywords:
+                op_chars[6] = [out.fg('red'), out.bold, '*', out.reset]
+            elif self.unstable_arch in op.pkg.keywords and \
+                    self.unstable_arch not in self.domain_settings['ACCEPT_KEYWORDS']:
+                op_chars[6] = [out.fg('yellow'), out.bold, '~', out.reset]
+            else:
+                for masked_atom in op.pkg.repo.default_visibility_limiters:
+                    if masked_atom.match(op.pkg.versioned_atom):
+                        op_chars[6] = [out.fg('red'), out.bold, '#', out.reset]
+
         out.write(*(iflatten_instance(op_chars)))
         out.write('] ')
 

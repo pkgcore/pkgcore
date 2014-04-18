@@ -380,11 +380,20 @@ class TestPortageFormatter(BaseFormatterTest, TestCase):
 
     def test_reinstall(self):
         self.formatter.format(
-            FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6'),
-            FakeMutatedPkg('app-arch/bzip2-1.0.3-r6')))
+            FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6', repo=self.repo1),
+            FakeMutatedPkg('app-arch/bzip2-1.0.3-r6', repo=self.repo1)))
         self.assertOut('[', Color('fg', 'green'), 'ebuild', Reset(),
             '   ', Color('fg', 'yellow'), Bold(), 'R', Reset(), '    ] ',
             Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6', Reset())
+
+    def test_reinstall_from_new_repo(self):
+        self.formatter.format(
+            FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6', repo=self.repo1),
+            FakeMutatedPkg('app-arch/bzip2-1.0.3-r6', repo=self.repo2)))
+        self.assertOut('[', Color('fg', 'green'), 'ebuild', Reset(),
+            '   ', Color('fg', 'yellow'), Bold(), 'R', Reset(), '    ] ',
+            Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6', Reset(),
+            ' ', Color('fg', 'blue'), Bold(), '[1.0.3-r6]', Reset())
 
     def test_new_use(self):
         self.formatter.format(
@@ -546,6 +555,15 @@ class TestPortageVerboseFormatter(TestPortageFormatter):
     def newFormatter(self, **kwargs):
         kwargs.setdefault("verbose", True)
         return TestPortageFormatter.newFormatter(self, **kwargs)
+
+    def test_reinstall_from_new_repo(self):
+        self.formatter.format(
+            FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6', repo=self.repo1),
+            FakeMutatedPkg('app-arch/bzip2-1.0.3-r6', repo=self.repo2)))
+        self.assertOut('[', Color('fg', 'green'), 'ebuild', Reset(),
+            '   ', Color('fg', 'yellow'), Bold(), 'R', Reset(), '    ] ',
+            Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6', Reset(),
+            ' ', Color('fg', 'blue'), Bold(), '[1.0.3-r6::fakerepo]', Reset())
 
     def test_repo_id(self):
         self.formatter.format(FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6', repo=self.repo1)))

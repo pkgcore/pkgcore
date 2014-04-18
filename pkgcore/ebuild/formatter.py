@@ -397,8 +397,8 @@ class PortageFormatter(CountingFormatter):
                 pkg.append("::%s" % op.pkg.source_repository)
         out.write(*(pkg_coloring + pkg + [out.reset]))
 
-        installed = None
-        if op.desc == 'replace' and op_type != 'replace':
+        installed = []
+        if op.desc == 'replace':
             old_pkg = [op.old_pkg.fullver]
             if self.verbose:
                 if op.old_pkg.subslot != op.old_pkg.slot:
@@ -409,7 +409,8 @@ class PortageFormatter(CountingFormatter):
                         op.old_pkg.source_repository != 'gentoo' or \
                         op.pkg.source_repository != op.old_pkg.source_repository:
                     old_pkg.append("::%s" % op.old_pkg.source_repository)
-            installed = ''.join(old_pkg)
+            if op_type != 'replace' or op.pkg.source_repository != op.old_pkg.source_repository:
+                installed = ''.join(old_pkg)
         elif op_type == 'slotted_add':
             if self.verbose:
                 pkgs = sorted(['%s:%s' % (x.fullver, x.slot) for x in \

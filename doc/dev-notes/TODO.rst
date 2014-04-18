@@ -90,9 +90,6 @@ Rough TODO
 
 - apply repo masks to related binpkgs (or handle masks somehow)
 
-- sorting USE/USE_EXPAND flags so they're shown in alphabetical order in
-  pmerge output
-
 - remove deprecated PROVIDE and old style virtuals handling
 
 - add argparse support for checking the inputted phase name with pebuild to

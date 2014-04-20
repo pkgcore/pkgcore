@@ -3,23 +3,23 @@
  */
 
 #include <string.h>
-#define MAXCHAR 256
+#include <limits.h>
 
 const char *
 bmh_search(const unsigned char *pat, const unsigned char *text, int n)
 {
-	int i, j, m, k, skip[MAXCHAR];
+	int i, j, m, k, skip[UCHAR_MAX + 1];
 
 	m = strlen((char *)pat);
 	if (m == 0)
 		return (char *)text;
 
-	for (k = 0; k < MAXCHAR; ++k)
+	for (k = 0; k <= UCHAR_MAX; ++k)
 		skip[k] = m;
 	for (k = 0; k < m - 1; k++)
 		skip[pat[k]] = m - k - 1;
 
-	for (k = m - 1; k < n; k += skip[text[k] & (MAXCHAR - 1)]) {
+	for (k = m - 1; k < n; k += skip[text[k] & UCHAR_MAX]) {
 		for (j = m - 1, i = k; j >= 0 && text[i] == pat[j]; --j)
 			--i;
 		if (j == -1)

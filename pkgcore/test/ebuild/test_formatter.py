@@ -4,8 +4,6 @@
 import difflib
 import sys
 
-from snakeoil.compatibility import force_bytes
-
 from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.formatter import (BasicFormatter, PkgcoreFormatter,
     PortageFormatter, PaludisFormatter)
@@ -16,9 +14,6 @@ from pkgcore.test.scripts.helpers import FakeStreamFormatter, Color, Reset, Bold
 
 if sys.version_info < (2, 6):
     bytes = str
-
-# b''.join but works on python < 2.6
-_join_bytes = force_bytes('').join
 
 # These two are probably unnecessary with ferringb's changes to
 # PkgcoreFormatter, but as he's the one that uses it there's no point fixing
@@ -108,13 +103,13 @@ class BaseFormatterTest(object):
             elif isinstance(arg, bytes):
                 stringlist.append(arg)
             else:
-                objectlist.append(_join_bytes(stringlist))
+                objectlist.append(b''.join(stringlist))
                 stringlist = []
                 objectlist.append(arg)
-        objectlist.append(_join_bytes(stringlist))
+        objectlist.append(b''.join(stringlist))
 
         # Hack because a list with an empty string in is True
-        if objectlist == [force_bytes('')]:
+        if objectlist == [b'']:
             objectlist = []
 
         self.assertEqual(self.fakeout.stream, objectlist, '\n' + '\n'.join(

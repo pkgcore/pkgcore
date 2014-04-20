@@ -7,7 +7,6 @@
 import difflib, copy, sys
 from snakeoil.formatters import PlainTextFormatter
 from snakeoil.caching import WeakInstMeta
-from snakeoil.compatibility import force_bytes
 from pkgcore.config import central, basics, ConfigHint
 from pkgcore.util import commandline
 
@@ -59,9 +58,6 @@ default_domain = basics.HardCodedConfigSection({
     })
 
 
-# b''.join but works on python < 2.6
-_join_bytes = force_bytes('').join
-
 class FormatterObject(object):
     __metaclass__ = WeakInstMeta
     __inst_caching__ = True
@@ -94,10 +90,10 @@ class ListStream(list):
             if isinstance(arg, bytes):
                 stringlist.append(arg)
             else:
-                objectlist.append(_join_bytes(stringlist))
+                objectlist.append(b''.join(stringlist))
                 stringlist = []
                 objectlist.append(arg)
-        objectlist.append(_join_bytes(stringlist))
+        objectlist.append(b''.join(stringlist))
         # We use len because boolean ops shortcircuit
         if (len(self) and isinstance(self[-1], bytes) and
                 isinstance(objectlist[0], bytes)):
@@ -117,7 +113,7 @@ class FakeStreamFormatter(PlainTextFormatter):
     def bg(self, color=None):
         return Color('bg', color)
     def get_text_stream(self):
-        return _join_bytes([x for x in self.stream if not isinstance(x, FormatterObject)]).decode('ascii')
+        return b''.join([x for x in self.stream if not isinstance(x, FormatterObject)]).decode('ascii')
 
 class MainMixin(object):
 

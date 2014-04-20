@@ -11,7 +11,6 @@ Note: HACK. Quick proof of concept, could do with cleaning up.
 
 from pkgcore.pkgsets.installed import VersionedInstalled
 from pkgcore.config import ConfigHint
-from snakeoil.compatibility import is_disjoint
 from snakeoil.currying import partial
 
 
@@ -28,7 +27,6 @@ class EclassConsumerSet(VersionedInstalled):
         self.eclasses = frozenset(eclasses)
 
     def __iter__(self):
-        matcher = partial(is_disjoint, self.eclasses)
         for atom in VersionedInstalled.__iter__(self):
             pkgs = self.portdir.match(atom)
             if not pkgs:
@@ -38,5 +36,5 @@ class EclassConsumerSet(VersionedInstalled):
                 continue
             assert len(pkgs) == 1, 'I do not know what I am doing: %r' % (pkgs,)
             pkg = pkgs[0]
-            if matcher(pkg.data.get('_eclasses_', ())):
+            if self.eclasses.isdisjoint(pkg.data.get('_eclasses_', ())):
                 yield atom

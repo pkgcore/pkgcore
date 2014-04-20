@@ -14,7 +14,6 @@ attr from a package instance and hand it to their wrapped restriction
 from pkgcore.restrictions import restriction, boolean, packages
 from snakeoil.klass import generic_equality, reflective_hash
 from snakeoil import demandload
-from snakeoil.compatibility import is_disjoint
 demandload.demandload(globals(), 're', 'snakeoil:lists')
 
 # Backwards compatibility.
@@ -371,7 +370,7 @@ class ContainmentMatch2(base):
                 return vals.issubset(val) != self.negate
             # if something intersects, then we return the inverse of negate-
             # if negate=False, something is found, result is True
-            return is_disjoint(vals, val) == self.negate
+            return vals.isdisjoint(val) == self.negate
         except TypeError:
             # isn't iterable, try the other way around.  rely on contains.
             if self.all:

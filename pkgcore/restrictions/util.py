@@ -7,7 +7,6 @@ restriction related utilities
 
 from pkgcore.restrictions import packages, boolean, restriction
 from snakeoil.lists import iflatten_func
-from snakeoil.compatibility import is_disjoint
 
 def _is_package_instance(inst):
     return (getattr(inst, "type", None) == packages.package_type
@@ -33,5 +32,5 @@ def collect_package_restrictions(restrict, attrs=None, invert=False):
     else:
         attrs = frozenset(attrs)
         for r in iflatten_func(restrict, _is_package_instance):
-            if invert == is_disjoint(attrs, getattr(r, 'attrs', ())):
+            if invert == attrs.isdisjoint(getattr(r, 'attrs', ())):
                 yield r

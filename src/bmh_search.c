@@ -1,5 +1,6 @@
-/* raided from http://www.dcc.uchile.cl/~rbaeza/handbook/algs/7/713b.srch.c.html
- * apparently distributed by Addison-Wesley Publishing Co. Inc, http://aw.com/
+/* Boyer-Moore-Horspool algorithm for finding substrings in strings.
+ * Raided from http://www.dcc.uchile.cl/~rbaeza/handbook/algs/7/713b.srch.c.html
+ * apparently distributed by Addison-Wesley Publishing Co. Inc.
  */
 
 #include <string.h>

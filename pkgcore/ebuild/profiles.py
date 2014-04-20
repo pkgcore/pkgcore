@@ -242,7 +242,7 @@ class ProfileNode(object):
         if data is not None:
             data = iter(data)
             try:
-                replacement = compatibility.next(data).strip()
+                replacement = next(data).strip()
                 msg = "\n".join(x.lstrip("#").strip() for x in data)
                 data = (replacement, msg)
             except StopIteration:

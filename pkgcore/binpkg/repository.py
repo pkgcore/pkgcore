@@ -82,7 +82,7 @@ class force_unpacking(triggers.base):
             # wrap the iter, iow.
             fi = offset_rewriter(engine.offset, fi)
 
-        cset = contentsSet(fi)
+        cset.update(contentsSet(fi))
 
         # we *probably* should change the csets class at some point
         # since it no longer needs to be tar, but that's for another day.

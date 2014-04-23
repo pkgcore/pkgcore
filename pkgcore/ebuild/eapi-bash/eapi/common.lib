@@ -528,6 +528,9 @@ unpack()
 			*.tar.bz2|*.tbz2|*.tbz)
 				tar xf "${srcdir}${x}" -I"${PORTAGE_BZIP2_COMMAND}" ${taropts} || die "${myfail}"
 				;;
+			*.tar.lzma)
+				tar xf "${srcdir}${x}" -Ilzma ${taropts} || die "${myfail}"
+				;;
 			*.tar.xz)
 				if __safe_has "$EAPI" 0 1 2; then
 					echo "xz is a supported extension in eapi3 and above only" >&2
@@ -570,12 +573,7 @@ unpack()
 				ar x "${srcdir}/${x}" || die "$myfail"
 				;;
 			*.lzma)
-				if [[ "${y}" == "tar" ]]; then
-					lzma -dc "${srcdir}${x}" | tar xof - ${taropts}
-					assert "$myfail"
-				else
-					lzma -dc "${srcdir}${x}" > ${name%.*} || die "$myfail"
-				fi
+				lzma -dc "${srcdir}${x}" > ${name%.*} || die "$myfail"
 				;;
 			*)
 				echo "unpack ${x}: file format not recognized. Ignoring."

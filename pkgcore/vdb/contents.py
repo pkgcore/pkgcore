@@ -86,10 +86,6 @@ class ContentsFile(contentsSet):
     def flush(self):
         return self._write()
 
-    def _parse_old(self, line):
-        """parse old contents, non tab based format"""
-        # specifically force splitting on spaces.
-
     def _iter_contents(self):
         self.clear()
         for line in self._get_fd():

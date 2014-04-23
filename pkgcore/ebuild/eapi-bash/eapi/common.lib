@@ -523,20 +523,17 @@ unpack()
 				tar xf "${srcdir}${x}" ${taropts} || die "$myfail"
 				;;
 			*.tar.gz|*.tgz|*.tar.Z)
-				${PORTAGE_GUNZIP_COMMAND:-${PORTAGE_GZIP_COMMAND} -d} -c "${srcdir}${x}" | tar xf - ${taropts}
-				assert "$myfail"
+				tar xf "${srcdir}${x}" -I"${PORTAGE_GZIP_COMMAND}" ${taropts} || die "${myfail}"
 				;;
 			*.tar.bz2|*.tbz2|*.tbz)
-				${PORTAGE_BUNZIP2_COMMAND:-${PORTAGE_BZIP2_COMMAND} -d} -c "${srcdir}${x}" | tar xf - ${taropts}
-				assert "$myfail"
+				tar xf "${srcdir}${x}" -I"${PORTAGE_BZIP2_COMMAND}" ${taropts} || die "${myfail}"
 				;;
 			*.tar.xz)
 				if __safe_has "$EAPI" 0 1 2; then
 					echo "xz is a supported extension in eapi3 and above only" >&2
 					continue;
 				fi
-				${PORTAGE_UNXZ_COMMAND:-${PORTAGE_XZ_COMMAND} -d} -c "${srcdir}${x}" | tar xf - ${taropts}
-				assert "$myfail"
+				tar xf "${srcdir}${x}" -I"${PORTAGE_XZ_COMMAND}" ${taropts} || die "${myfail}"
 				;;
 			*.ZIP|*.zip|*.jar)
 				{ set +x; while :; do echo n || break; done } | \

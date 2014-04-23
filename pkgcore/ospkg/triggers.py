@@ -9,7 +9,7 @@ from pkgcore.ospkg import deb
 class SaveDeb(triggers.base):
 
     required_csets = ('raw_new_cset',)
-    priority = 1000
+    priority = 95
     _hooks = ('sanity_check',)
     _engine_types = triggers.INSTALLING_MODES
 

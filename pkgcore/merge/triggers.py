@@ -668,7 +668,7 @@ class BlockFileType(base):
 class SavePkg(base):
 
     required_csets = ('raw_new_cset',)
-    priority = 1000
+    priority = 90
     _hooks = ('sanity_check',)
     _engine_types = INSTALLING_MODES
 

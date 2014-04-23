@@ -205,7 +205,7 @@ def gen_collision_ignore_filter(offset, extra_ignores=()):
 class ConfigProtectInstall(triggers.base):
 
     required_csets = ('install_existing', 'install')
-    priority = 90
+    priority = 100
     _hooks = ('pre_merge',)
 
     def __init__(self, extra_protects=(), extra_disables=()):

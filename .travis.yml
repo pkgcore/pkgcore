@@ -4,7 +4,6 @@ python:
     - 3.2
     - 3.3
 install:
-    - pip install pyparsing
     - git clone git://github.com/pkgcore/snakeoil.git
     - cd snakeoil
     - python setup.py install --install-headers "${VIRTUAL_ENV}"/include/snakeoil

@@ -570,7 +570,7 @@ def generate_triggers(domain):
     d = {}
     for x in ("CONFIG_PROTECT", "CONFIG_PROTECT_MASK", "COLLISION_IGNORE",
               "INSTALL_MASK", "UNINSTALL_IGNORE"):
-        d[x] = domain_settings.get(x, ())
+        d[x] = domain_settings.get(x, [])
         if isinstance(d[x], basestring):
             d[x] = d[x].split()
 

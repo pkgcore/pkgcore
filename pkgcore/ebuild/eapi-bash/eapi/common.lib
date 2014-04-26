@@ -533,7 +533,7 @@ unpack()
 				;;
 			*.tar.xz)
 				if __safe_has "$EAPI" 0 1 2; then
-					echo "xz is a supported extension in eapi3 and above only" >&2
+					echo "xz is a supported extension in EAPI 3 and above only" >&2
 					continue;
 				fi
 				tar xf "${srcdir}${x}" -I"${PORTAGE_XZ_COMMAND}" ${taropts} || die "${myfail}"
@@ -550,10 +550,10 @@ unpack()
 				;;
 			*.xz)
 				if __safe_has "$EAPI" 0 1 2; then
-					echo "xz is a supported extension in eapi3 and above only" >&2
+					echo "xz is a supported extension in EAPI 3 and above only" >&2
 					continue;
 				fi
-				${PORTAGE_UNXZ_COMMAND:-${PORTAGE_XZ_COMMAND} -d} -c "${srcdir}${x}" > ${name%.*} || die "$myfail"
+				${PORTAGE_UNXZ_COMMAND:-${PORTAGE_XZ_COMMAND} -d} < "${srcdir}${x}" > ${name%.*} || die "$myfail"
 				;;
 			*.7Z|*.7z)
 				local my_output

@@ -95,7 +95,7 @@ copy = subparsers.add_parser("copy", parents=shared_options,
     "quickpkging a livefs pkg")
 copy.add_argument('target_repo', action=commandline.StoreRepoObject,
     writable=True, help="repository to add packages to")
-copy.add_argument('--source-repo', '-s', default=None,
+copy.add_argument('-s', '--source-repo', default=None,
     action=commandline.StoreRepoObject,
     help="copy strictly from the supplied repository; else it copies from "
     "wherever a match is found")
@@ -168,7 +168,7 @@ regen.add_argument("--disable-eclass-caching", action='store_true',
     "this optimization via this option results in ~2x slower "
     "regeneration. Disable it only if you suspect the optimization "
     "is somehow causing issues.")
-regen.add_argument("--threads", "-t", type=int,
+regen.add_argument("-t", "--threads", type=int,
     default=commandline.DelayedValue(_get_default_jobs, 100),
     help="number of threads to use for regeneration.  Defaults to using all "
     "available processors")
@@ -257,7 +257,7 @@ mirror = subparsers.add_parser("mirror",
     description="mirror the sources for a package in full- grab everything"
     " that could be required",
     parents=(commandline.mk_argparser(add_help=False),))
-mirror.add_argument("--ignore-failures", "-f", action='store_true',
+mirror.add_argument("-f", "--ignore-failures", action='store_true',
     default=False,
     help="if a failure occurs, keep going.  If this option isn't given, it'll"
     " stop at the first failure encountered")

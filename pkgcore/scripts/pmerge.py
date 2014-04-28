@@ -44,42 +44,42 @@ query_options = argparser.add_argument_group("Package querying options")
 
 query_options.add_argument(nargs='*', dest='targets', action=StoreTarget,
     help="extended atom matching of packages")
-query_options.add_argument('--newuse', '-N', action='store_true',
+query_options.add_argument('-N', '--newuse', action='store_true',
     help="check for changed useflags in installed packages "
          "(implies -1)")
-query_options.add_argument('--set', '-s', store_name=True,
+query_options.add_argument('-s', '--set', store_name=True,
     action=commandline.StoreConfigObject, type=str, priority=35,
     config_type='pkgset', help='specify a pkgset to use')
 
 merge_mode = argparser.add_argument_group('Available operations')
-merge_mode.add_argument('--unmerge', '-C', action='store_true',
+merge_mode.add_argument('-C', '--unmerge', action='store_true',
     help='unmerge a package')
 merge_mode.add_argument('--clean', action='store_true',
     help='remove installed packages that are not referenced by any '
          'target packages/sets; defaults to -s world -s system if no targets'
          ' are specified.  Use with *caution*, this option used incorrectly '
          'can render your system unusable.  Implies --deep')
-merge_mode.add_argument('--pretend', '-p', action='store_true',
+merge_mode.add_argument('-p', '--pretend', action='store_true',
     help="do the resolution, but don't merge/fetch anything")
 merge_mode.add_argument('--ignore-failures', action='store_true',
     help='ignore resolution failures')
-merge_mode.add_argument('--ask', '-a', action='store_true',
+merge_mode.add_argument('-a', '--ask', action='store_true',
     help="do the resolution, but ask to merge/fetch anything")
 merge_mode.add_argument('--force', action='store_true',
     dest='force',
     help="force merging to a repo, regardless of if it's frozen")
-merge_mode.add_argument('--fetchonly', '-f', action='store_true',
+merge_mode.add_argument('-f', '--fetchonly', action='store_true',
     help="do only the fetch steps of the resolved plan")
-merge_mode.add_argument('--oneshot', '-1', action='store_true',
+merge_mode.add_argument('-1', '--oneshot', action='store_true',
     default=False,
     help="do not record changes in the world file; if a set is "
          "involved, defaults to forcing oneshot")
 
 resolution_options = argparser.add_argument_group("Resolver options")
 
-resolution_options.add_argument('--upgrade', '-u', action='store_true',
+resolution_options.add_argument('-u', '--upgrade', action='store_true',
     help='try to upgrade already installed packages/dependencies')
-resolution_options.add_argument('--deep', '-D', action='store_true',
+resolution_options.add_argument('-D', '--deep', action='store_true',
     help='force the resolver to verify already installed dependencies')
 resolution_options.add_argument('--preload-vdb-state', action='store_true',
     help=("enable preloading of the installed packages database "
@@ -88,7 +88,7 @@ resolution_options.add_argument('--preload-vdb-state', action='store_true',
           "disabled, it's possible for the requested action to conflict with "
           "already installed dependencies that aren't involved in the graph of "
           "the requested operation."))
-resolution_options.add_argument('--ignore-cycles', '-i', action='store_true',
+resolution_options.add_argument('-i', '--ignore-cycles', action='store_true',
     help=("ignore cycles if they're found to be unbreakable;"
            "a depends on b, and b depends on a, with neither built is an "
            "example"))
@@ -96,29 +96,29 @@ resolution_options.add_argument('-B', '--with-built-depends',
     action='store_true', default=False,
     help="whether or not to process build depends for pkgs that "
          "are already built; defaults to ignoring them")
-resolution_options.add_argument('--nodeps', '-O', action='store_true',
+resolution_options.add_argument('-O', '--nodeps', action='store_true',
     help='disable dependency resolution')
-resolution_options.add_argument('--noreplace', '-n', action='store_false',
+resolution_options.add_argument('-n', '--noreplace', action='store_false',
     dest='replace', default=True,
     help="don't reinstall target atoms if they're already installed")
-resolution_options.add_argument('--usepkg', '-k', action='store_true',
+resolution_options.add_argument('-k', '--usepkg', action='store_true',
     help="prefer to use binpkgs")
-resolution_options.add_argument('--usepkgonly', '-K', action='store_true',
+resolution_options.add_argument('-K', '--usepkgonly', action='store_true',
     help="use only built packages")
 resolution_options.add_argument('--source-only', action='store_true',
     help="use source packages only; no pre-built packages used")
-resolution_options.add_argument('--empty', '-e', action='store_true',
+resolution_options.add_argument('-e', '--empty', action='store_true',
     help="force rebuilding of all involved packages, using installed "
          "packages only to satisfy building the replacements")
 
 output_options = argparser.add_argument_group("Output related options")
-output_options.add_argument('--verbose', '-v', action='store_true',
+output_options.add_argument('-v', '--verbose', action='store_true',
     help="be verbose in output")
 output_options.add_argument('--quiet-repo-display', action='store_true',
     help="In the package merge list display, suppress ::repository "
          "output, and instead use numbers to indicate which repositories "
          "packages come from.")
-output_options.add_argument('--formatter', '-F', priority=90,
+output_options.add_argument('-F', '--formatter', priority=90,
     action=commandline.StoreConfigObject, get_default=True,
     config_type='pmerge_formatter',
     help='which formatter to output --pretend or --ask output through.')

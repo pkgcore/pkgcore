@@ -28,14 +28,14 @@ def stdin_default(namespace, attr):
         raise ValueError("Refusing to read from stdin since it's a TTY")
     setattr(namespace, attr, sys.stdin)
 
-argparser.add_argument('--input', '-i', action='store',
+argparser.add_argument('-i', '--input', action='store',
     type=commandline.argparse.FileType(), default=commandline.DelayedValue(stdin_default, 0),
     help='Filename to read the env from (uses stdin if omitted).')
 mux = argparser.add_mutually_exclusive_group()
 filtering = mux.add_argument_group("Environment filtering options")
-filtering.add_argument('--funcs', '-f', action='extend_comma',
+filtering.add_argument('-f', '--funcs', action='extend_comma',
     help="comma separated list of regexes to match function names against for filtering")
-filtering.add_argument('--vars', '-v', action='extend_comma',
+filtering.add_argument('-v', '--vars', action='extend_comma',
     help="comma separated list of regexes to match variable names against for filtering")
 mux.add_argument('--print-vars', action='store_true', default=False,
     help="print just the global scope environment variables.")

@@ -12,7 +12,7 @@ import time
 from pkgcore.util import commandline
 
 argparser = commandline.mk_argparser(domain=False, description=__doc__)
-argparser.add_argument("--verbose", "-v", action='store_true',
+argparser.add_argument("-v", "--verbose", action='store_true',
     help="print keys as they are processed")
 argparser.add_argument("source", config_type='cache',
     action=commandline.StoreConfigObject,

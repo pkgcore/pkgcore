@@ -337,12 +337,12 @@ world_modes = world.add_argument_group("Command modes",
     "For example, you can have `--add x11-wm/fluxbox "
     "--remove gnome-base/gnome -l` to add fluxbox, remove gnome, and list the "
     "world file contents all in one call.")
-world_modes.add_argument('--list', '-l', action='store_true',
+world_modes.add_argument('-l', '--list', action='store_true',
     help="List the current world file contents for this domain.")
-world_modes.add_argument('--remove', '-r', action='append',
+world_modes.add_argument('-r', '--remove', action='append',
     type=atom.atom,
     help="Remove an entry from the world file.  Can be specified multiple times.")
-world_modes.add_argument('--add', '-a', action='append',
+world_modes.add_argument('-a', '--add', action='append',
     type=atom.atom,
     help="Add an entry to the world file.  Can be specified multiple times.")
 

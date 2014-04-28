@@ -676,7 +676,7 @@ output = argparser.add_argument_group('Output formatting')
 output.add_argument('--early-out', action='store_true', dest='earlyout',
     help='stop when first match is found.')
 output_mux = output.add_mutually_exclusive_group()
-output_mux.add_argument('--no-version', '-n', action='store_true',
+output_mux.add_argument('-n', '--no-version', action='store_true',
     dest='noversion',
     help='collapse multiple matching versions together')
 output_mux.add_argument('--min', action='store_true',
@@ -688,7 +688,7 @@ output.add_argument('--cpv', action='store_true',
     help='Print the category/package-version. This is done '
     'by default, this option re-enables this if another '
     'output option (like --contents) disabled it.')
-output.add_argument('--atom', '-a', action=commandline.Expansion,
+output.add_argument('-a', '--atom', action=commandline.Expansion,
     subst=(('--cpv',),), nargs=0,
     help='print =cat/pkg-3 instead of cat/pkg-3. '
         'Implies --cpv, has no effect with --no-version')
@@ -713,7 +713,7 @@ one_attr_mux.add_argument('--force-one-attr',
 del one_attr_mux
 output.add_argument('--contents', action='store_true',
     help='list files owned by the package. Implies --vdb.')
-output.add_argument('--verbose', '-v', action='store_true',
+output.add_argument('-v', '--verbose', action='store_true',
     help='human-readable multi-line output per package')
 output.add_argument('--highlight-dep', action='append',
     type=atom.atom, default=[],

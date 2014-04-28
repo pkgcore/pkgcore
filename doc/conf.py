@@ -46,7 +46,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'pkgcore'
-copyright = '2006-2012, Brian Harring, Marien Zwart'
+copyright = '2006-2014, Brian Harring, Marien Zwart, Tim Harder'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -184,7 +184,7 @@ htmlhelp_basename = 'pkgcoredoc'
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
   ('index', 'pkgcore.tex', 'pkgcore Documentation',
-   'Brian Harring, Marien Zwart', 'manual'),
+   'Brian Harring, Marien Zwart, Tim Harder', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -223,7 +223,7 @@ generated_man_pages.append(('pkgcore.scripts.filter_env', 'filter-env'))
 # (source start file, name, description, authors, manual section).
 man_pages = [
     ('man/%s' % x[1], x[1], '%s Documentation' % (x[1],),
-     ['Brian Harring', 'Marien Zwart'], 1)
+     ['Brian Harring', 'Marien Zwart', 'Tim Harder'], 1)
     for x in generated_man_pages
 ]
 
@@ -232,9 +232,9 @@ man_pages = [
 
 # Bibliographic Dublin Core info.
 epub_title = 'pkgcore'
-epub_author = 'Brian Harring, Marien Zwart'
-epub_publisher = 'Brian Harring, Marien Zwart'
-epub_copyright = '2006-2013, Brian Harring, Marien Zwart'
+epub_author = 'Brian Harring, Marien Zwart, Tim Harder'
+epub_publisher = 'Brian Harring, Marien Zwart, Tim Harder'
+epub_copyright = '2006-2014, Brian Harring, Marien Zwart, Tim Harder'
 
 # The language of the text. It defaults to the language option
 # or en if the language is not set.

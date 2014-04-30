@@ -29,9 +29,9 @@ __set_perf_debug()
 __set_perf_debug
 
 die() {
-  # Temporary function used by the daemon, till proper die implementation is loaded.
-  echo "$@" >&2
-  exit 1
+	# Temporary function used by the daemon, till proper die implementation is loaded.
+	echo "$@" >&2
+	exit 1
 }
 
 STARTING_PID=$BASHPID
@@ -46,8 +46,8 @@ __ebd_read_line()
 {
 	__ebd_read_line_nonfatal "$@"
 	local ret=$?
-	[ $ret -ne 0 ] && \
-		die "coms error in $STARTING_PID, read_line $@ failed w/ $ret: backing out of daemon."
+	[[ ${ret} -ne 0 ]] && \
+		die "coms error in $STARTING_PID, read_line $@ failed w/ ${ret}: backing out of daemon."
 }
 
 # are we running a version of bash (4.1 or so) that does -N?
@@ -56,18 +56,17 @@ if echo 'y' | read -N 1 &> /dev/null; then
 	{
 		read -u ${PKGCORE_EBD_READ_FD} -r -N $1 $2
 		local ret=$?
-		[ $ret -ne 0 ] && \
-			die "coms error in $STARTING_PID, read_size $@ failed w/ $ret: backing out of daemon."
+		[[ ${ret} -ne 0 ]] && \
+			die "coms error in $STARTING_PID, read_size $@ failed w/ ${ret}: backing out of daemon."
 	}
-
 else
 	# fallback to a *icky icky* but working alternative.
 	__ebd_read_size()
 	{
 		eval "${2}=\$(dd bs=1 count=$1 <&${PKGCORE_EBD_READ_FD} 2> /dev/null)"
 		local ret=$?
-		[ $ret -ne 0 ] && \
-			die "coms error in $STARTING_PID, read_size $@ failed w/ $ret: backing out of daemon."
+		[[ ${ret} -ne 0 ]] && \
+			die "coms error in $STARTING_PID, read_size $@ failed w/ ${ret}: backing out of daemon."
 	}
 fi
 
@@ -80,13 +79,13 @@ __ebd_write_line()
 {
 	echo "$*" >&${PKGCORE_EBD_WRITE_FD}
 	local ret=$?
-	[ $ret -ne 0 ] && \
-		die "coms error, write failed w/ $ret: backing out of daemon."
+	[[ ${ret} -ne 0 ]] && \
+		die "coms error, write failed w/ ${ret}: backing out of daemon."
 }
 
 __ebd_write_raw()
 {
-    echo -n "$*" >&${PKGCORE_EBD_WRITE_FD} || die "coms error, __ebd_write_raw failed;  Backing out."
+	echo -n "$*" >&${PKGCORE_EBD_WRITE_FD} || die "coms error, __ebd_write_raw failed;  Backing out."
 }
 
 for x in ebd_read_{line,{cat_,}size} __ebd_write_line __set_perf_debug; do
@@ -107,7 +106,7 @@ __ebd_sigint_handler()
 	# silence ourselves as everything shuts down.
 	exec 2>/dev/null
 	exec 1>/dev/null
-	# supress sigpipe; if we can't tell the parent to die,
+	# suppress sigpipe; if we can't tell the parent to die,
 	# it's already shutting us down.
 	trap 'exit 2' SIGPIPE
 	__ebd_write_line "killed"
@@ -122,7 +121,7 @@ __ebd_sigkill_handler()
 	# silence ourselves as everything shuts down.
 	exec 2>/dev/null
 	exec 1>/dev/null
-	# supress sigpipe; if we can't tell the parent to die,
+	# suppress sigpipe; if we can't tell the parent to die,
 	# it's already shutting us down.
 	trap 'exit 9' SIGPIPE
 	__ebd_write_line "killed"
@@ -266,65 +265,65 @@ __ebd_process_ebuild_phases()
 		local line=''
 		__ebd_read_line line
 		case "$line" in
-		start_receiving_env*)
-			line="${line#start_receiving_env }"
-			case "$line" in
-			file*)
-				line="${line#file }"
-				source "${line}"
-				cont=$?
+			start_receiving_env*)
+				line="${line#start_receiving_env }"
+				case "$line" in
+					file*)
+						line="${line#file }"
+						source "${line}"
+						cont=$?
+						;;
+					bytes*)
+						line="${line#bytes }"
+						__ebd_read_size ${line} line
+						__IFS_push $'\0'
+						eval "$line"
+						cont=$?
+						__IFS_pop
+						;;
+					lines)
+						;&
+					*)
+						while __ebd_read_line line && [[ "$line" != "end_receiving_env" ]]; do
+							__IFS_push $'\0'
+							eval ${line};
+							cont=$?;
+							__IFS_pop
+							if [[ $cont != 0 ]]; then
+								echo "err, env receiving threw an error for '$line': $?" >&2
+								break
+							fi
+						done
+						;;
+				esac
+				if [[ $cont != 0 ]]; then
+					__ebd_write_line "env_receiving_failed"
+					exit 1
+				fi
+				__set_perf_debug
+				__ebd_write_line "env_received"
 				;;
-			bytes*)
-				line="${line#bytes }"
-				__ebd_read_size ${line} line
-				__IFS_push $'\0'
-				eval "$line"
-				cont=$?
-				__IFS_pop
+			logging*)
+				PORTAGE_LOGFILE="${line#logging }"
+				__ebd_write_line "logging_ack"
 				;;
-			lines)
-				;&
+			set_sandbox_state*)
+				if [[ $((${line:18})) -eq 0 ]]; then
+					export SANDBOX_DISABLED=1
+				else
+					export SANDBOX_DISABLED=0
+					export SANDBOX_VERBOSE="no"
+				fi
+				;;
+			start_processing)
+				if ${is_depends} && [[ -n ${PKGCORE_METADATA_PATH} ]]; then
+					export PATH="${PKGCORE_METADATA_PATH}"
+				fi
+				cont=2
+				;;
 			*)
-				while __ebd_read_line line && [[ "$line" != "end_receiving_env" ]]; do
-					__IFS_push $'\0'
-					eval ${line};
-					cont=$?;
-					__IFS_pop
-					if [[ $cont != 0 ]]; then
-						echo "err, env receiving threw an error for '$line': $?" >&2
-						break
-					fi
-				done
+				echo "received unknown com during phase processing: line was: $line" >&2
 				;;
-			esac
-			if [[ $cont != 0 ]]; then
-				__ebd_write_line "env_receiving_failed"
-				exit 1
-			fi
-			__set_perf_debug
-			__ebd_write_line "env_received"
-			;;
-		logging*)
-			PORTAGE_LOGFILE="${line#logging }"
-			__ebd_write_line "logging_ack"
-			;;
-		set_sandbox_state*)
-			if [[ $((${line:18})) -eq 0 ]]; then
-				export SANDBOX_DISABLED=1
-			else
-				export SANDBOX_DISABLED=0
-				export SANDBOX_VERBOSE="no"
-			fi
-			;;
-		start_processing)
-			if ${is_depends} && [[ -n ${PKGCORE_METADATA_PATH} ]]; then
-				export PATH="${PKGCORE_METADATA_PATH}"
-			fi
-			cont=2
-			;;
-		*)
-			echo "received unknown com during phase processing: line was: $line" >&2
-			;;
 		esac
 	done
 	if [[ $cont != 2 ]]; then
@@ -341,7 +340,9 @@ __ebd_process_ebuild_phases()
 		addread "${PORTAGE_TMPDIR}"
 	}
 
+	local ret
 	umask 0022
+
 	if [[ -z "$PORTAGE_LOGFILE" ]]; then
 		__execute_phases ${phases}
 		ret=$?
@@ -350,9 +351,9 @@ __ebd_process_ebuild_phases()
 		ret=$?
 	fi
 
-	if [[ $ret != 0 ]]; then
+	if [[ ${ret} -ne 0 ]]; then
 		__ebd_process_sandbox_results
-		exit $(( $ret ))
+		exit ${ret}
 	fi
 	exit 0
 	)
@@ -373,10 +374,10 @@ __ebd_process_metadata()
 	__ebd_read_size "$1" __data
 	local IFS=$'\0'
 	eval "$__data"
-	ret=$?
+	__ret=$?
 	unset __data
+	[[ ${__ret} -ne 0 ]] && exit 1
 	unset __ret
-	[[ $ret != 0 ]] && exit 1
 	local IFS=$' \t\n'
 
 	if [[ -n ${PKGCORE_METADATA_PATH} ]]; then
@@ -408,61 +409,61 @@ __ebd_main_loop()
 		# If we don't manage to read, this means that the other end hung up.
 		# exit.
 		__ebd_read_line_nonfatal com || com=shutdown_daemon
-		case $com in
-		process_ebuild*)
-			# cleanse whitespace.
-			local phases="$(echo ${com#process_ebuild})"
-			PORTAGE_SANDBOX_PID="$PPID"
-			__ebd_process_ebuild_phases ${phases}
-			# tell python if it succeeded or not.
-			if [[ $? != 0 ]]; then
-				__ebd_write_line "phases failed"
-			else
-				__ebd_write_line "phases succeeded"
-			fi
-			;;
-		shutdown_daemon)
-			break
-			;;
-		preload_eclass\ *)
-			success="succeeded"
-			com="${com#preload_eclass }"
-			for e in ${com}; do
-				x="${e##*/}"
-				x="${x%.eclass}"
-				if ! $(type -P bash) -n "$e"; then
-					echo "errors detected in '$e'" >&2
-					success='failed'
-					break
+		case ${com} in
+			process_ebuild*)
+				# cleanse whitespace.
+				local phases="$(echo ${com#process_ebuild})"
+				PORTAGE_SANDBOX_PID="$PPID"
+				__ebd_process_ebuild_phases ${phases}
+				# tell python if it succeeded or not.
+				if [[ $? -ne 0 ]]; then
+					__ebd_write_line "phases failed"
+				else
+					__ebd_write_line "phases succeeded"
 				fi
-				__make_preloaded_eclass_func "$x" "$(< "$e")"
-			done
-			__ebd_write_line "preload_eclass ${success}"
-			unset e x success
-			;;
-		clear_preloaded_eclasses)
-			unset PKGCORE_PRELOADED_ECLASSES
-			declare -A PKGCORE_PRELOADED_ECLASSES
-			__ebd_write_line "clear_preloaded_eclasses succeeded"
-			;;
-		set_metadata_path\ *)
-			line=${com#set_metadata_path }
-			__ebd_read_size ${line} PKGCORE_METADATA_PATH
-			__ebd_write_line "metadata_path_received"
-			;;
-		gen_metadata\ *|gen_ebuild_env\ *)
-			local __mode=depend
-			[[ "${com}" == gen_ebuild_env* ]] && __mode=generate_env
-			line="${com#* }"
-			if __ebd_process_metadata "${line}" "${__mode}"; then
-				__ebd_write_line "phases succeeded"
-			else
-				__ebd_write_line "phases failed"
-			fi
-			;;
-		*)
-			echo "received unknown com: $com" >&2
-			;;
+				;;
+			shutdown_daemon)
+				break
+				;;
+			preload_eclass\ *)
+				success="succeeded"
+				com="${com#preload_eclass }"
+				for e in ${com}; do
+					x="${e##*/}"
+					x="${x%.eclass}"
+					if ! $(type -P bash) -n "$e"; then
+						echo "errors detected in '$e'" >&2
+						success='failed'
+						break
+					fi
+					__make_preloaded_eclass_func "$x" "$(< "$e")"
+				done
+				__ebd_write_line "preload_eclass ${success}"
+				unset e x success
+				;;
+			clear_preloaded_eclasses)
+				unset PKGCORE_PRELOADED_ECLASSES
+				declare -A PKGCORE_PRELOADED_ECLASSES
+				__ebd_write_line "clear_preloaded_eclasses succeeded"
+				;;
+			set_metadata_path\ *)
+				line=${com#set_metadata_path }
+				__ebd_read_size ${line} PKGCORE_METADATA_PATH
+				__ebd_write_line "metadata_path_received"
+				;;
+			gen_metadata\ *|gen_ebuild_env\ *)
+				local __mode=depend
+				[[ "${com}" == gen_ebuild_env* ]] && __mode=generate_env
+				line="${com#* }"
+				if __ebd_process_metadata "${line}" "${__mode}"; then
+					__ebd_write_line "phases succeeded"
+				else
+					__ebd_write_line "phases failed"
+				fi
+				;;
+			*)
+				echo "received unknown com: $com" >&2
+				;;
 		esac
 	done
 }

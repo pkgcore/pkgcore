@@ -68,7 +68,7 @@ def _get_mtimes(loc):
     return d
 
 def _write_mtime_cache(mtimes, data, location):
-    old = os.umask(0113)
+    old_umask = os.umask(0113)
     try:
         f = None
         logger.debug("attempting to update mtime cache at %r", (location,))
@@ -101,7 +101,7 @@ def _write_mtime_cache(mtimes, data, location):
             logger.warning("unable to update vdb virtuals cache due to "
                 "lacking permissions")
     finally:
-        os.umask(old)
+        os.umask(old_umask)
 
 def _read_mtime_cache(location):
     try:

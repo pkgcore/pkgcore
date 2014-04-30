@@ -190,8 +190,8 @@ class SpawnTest(TempDirMixin, TestCase):
         fp = self.generate_script(
             "portage_spawn_umask.sh", "#!%s\numask" % self.bash_path)
         try:
-            old_um = os.umask(0)
-            if old_um == 0:
+            old_umask = os.umask(0)
+            if old_umask == 0:
                 # crap.
                 desired = 022
                 os.umask(desired)
@@ -200,5 +200,5 @@ class SpawnTest(TempDirMixin, TestCase):
             self.assertEqual(str(desired).lstrip("0"),
                 spawn.spawn_get_output(fp)[1][0].strip().lstrip("0"))
         finally:
-            os.umask(old_um)
+            os.umask(old_umask)
 

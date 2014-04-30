@@ -51,11 +51,11 @@ class TestDefaultMkdir(TempDirMixin, TestCase):
     def test_it(self):
         o = fs.fsDir(pjoin(self.dir, "mkdir_test"), strict=False)
         self.assertTrue(ops.default_mkdir(o))
-        u = os.umask(0)
+        old_umask = os.umask(0)
         try:
-            self.assertEqual((os.stat(o.location).st_mode & 04777), 0777 & ~u)
+            self.assertEqual((os.stat(o.location).st_mode & 04777), 0777 & ~old_umask)
         finally:
-            os.umask(u)
+            os.umask(old_umask)
         os.rmdir(o.location)
         o = fs.fsDir(pjoin(self.dir, "mkdir_test2"), strict=False, mode=0750)
         self.assertTrue(ops.default_mkdir(o))

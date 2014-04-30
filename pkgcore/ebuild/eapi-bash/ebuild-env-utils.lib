@@ -108,7 +108,7 @@ __environ_save_to_file() {
 	#Do it with spaces on both sides.
 
 	DONT_EXPORT_VARS="${DONT_EXPORT_VARS} temp_umask "
-	local temp_umask=`umask`
+	local temp_umask=$(umask)
 	umask 0002
 
 	if [[ $# == 1 ]]; then

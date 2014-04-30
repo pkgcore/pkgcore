@@ -645,6 +645,7 @@ class EbuildProcessor(object):
         :param env_dict: the bash env.
         """
         data = self._generate_env_str(env_dict)
+        old_umask = os.umask(0002)
         if tmpdir:
             path = osutils.pjoin(tmpdir, 'ebd-env-transfer')
             fileutils.write_file(path, 'wb', data)
@@ -653,6 +654,7 @@ class EbuildProcessor(object):
         else:
             self.write("start_receiving_env bytes %i\n%s" %
                 (len(data), data), append_newline=False)
+        os.umask(old_umask)
         return self.expect("env_received", async=async, flush=True)
 
     def set_logfile(self, logfile=''):

@@ -231,8 +231,14 @@ def _find_profile_link(base_path, portage_compat=False):
         raise_from(errors.ComplexInstantiationError(
             "%s: unexpected error- %s" % (make_profile, oe.strerror)))
 
-def add_profile(config, base_path, user_profile_path=None):
-    profile = _find_profile_link(base_path)
+def add_profile(config, base_path, user_profile_path=None, profile_override=None):
+    if profile_override is None:
+        profile = _find_profile_link(base_path)
+    else:
+        profile = normpath(abspath(profile_override))
+        if not os.path.exists(profile):
+            raise_from(errors.ComplexInstantiationError(
+                "%s doesn't exist" % (profile,)))
 
     paths = profiles.OnDiskProfile.split_abspath(profile)
     if paths is None:
@@ -311,12 +317,15 @@ def load_make_config(vars_dict, path, allow_sourcing=False, required=True,
 
 @configurable({'location': 'str'}, typename='configsection')
 @errors.ParsingError.wrap_exception("while loading portage configuration")
-def config_from_make_conf(location="/etc/"):
+def config_from_make_conf(location="/etc/", profile_override=None):
     """
     generate a config from a file location
 
     :param location: location the portage configuration is based in,
         defaults to /etc
+    :param profile_override: profile to use instead of the current system
+        profile, i.e. the target of the /etc/portage/make.profile
+        (or deprecated /etc/make.profile) symlink
     """
 
     # this actually differs from portage parsing- we allow
@@ -370,7 +379,7 @@ def config_from_make_conf(location="/etc/"):
     add_sets(new_config, root, portage_base)
 
     user_profile_path = pjoin(base_path, "portage", "profile")
-    add_profile(new_config, base_path, user_profile_path)
+    add_profile(new_config, base_path, user_profile_path, profile_override)
 
     kwds = {
         "class": "pkgcore.vdb.ondisk.tree",

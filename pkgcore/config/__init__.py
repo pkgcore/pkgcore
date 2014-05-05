@@ -57,7 +57,8 @@ def configurable(*args, **kwargs):
 def load_config(user_conf_file=USER_CONF_FILE,
                 system_conf_file=SYSTEM_CONF_FILE,
                 debug=False, prepend_sources=(), append_sources=(),
-                skip_config_files=False, profile_override=None):
+                skip_config_files=False, profile_override=None,
+                location='/etc/'):
     """
     the main entry point for any code looking to use pkgcore.
 
@@ -65,6 +66,8 @@ def load_config(user_conf_file=USER_CONF_FILE,
         load portage 2 style configs (/etc/portage/make.conf and
         /etc/portage/make.profile or the deprecated /etc/make.conf and
         /etc/make.profile locations)
+    :param location: location the portage configuration is based in,
+        defaults to /etc
     :param profile_override: profile to use instead of the current system
         profile, i.e. the target path of the /etc/portage/make.profile
         (or deprecated /etc/make.profile) symlink
@@ -77,7 +80,8 @@ def load_config(user_conf_file=USER_CONF_FILE,
 
     # True if load_config is called with no arguments or the passed arguments match the defaults
     cached = user_conf_file == USER_CONF_FILE and system_conf_file == SYSTEM_CONF_FILE and \
-        not any((debug, prepend_sources, append_sources, skip_config_files, profile_override))
+        location != '/etc/' and not any((debug, prepend_sources, append_sources,
+                                         skip_config_files, profile_override))
 
     if _config is None or not cached:
         from pkgcore.config import central, cparser
@@ -99,7 +103,8 @@ def load_config(user_conf_file=USER_CONF_FILE,
             else:
                 # make.conf...
                 from pkgcore.ebuild.portage_conf import config_from_make_conf
-                configs.append(config_from_make_conf(profile_override=profile_override))
+                configs.append(config_from_make_conf(
+                    location=location, profile_override=profile_override))
         configs.extend(append_sources)
         _config = central.CompatConfigManager(central.ConfigManager(configs, debug=debug))
     return _config

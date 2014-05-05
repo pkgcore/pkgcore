@@ -191,6 +191,16 @@ class domain(pkgcore.config.domain.domain):
             if k in incrementals:
                 settings[k] = v + tuple(settings[k])
 
+        # allow environmental overrides
+        env_vars = set(os.environ.keys()).intersection(settings.keys())
+        for k in env_vars.difference(set(profile.profile_only_variables)):
+            if k not in settings:
+                settings[k] = tuple(os.environ[k].split())
+                continue
+            if k in incrementals:
+                settings[k] = settings[k] + tuple(os.environ[k].split())
+        del env_vars
+
         # next we finalize incrementals.
         for incremental in incrementals:
             # Skip USE/ACCEPT_LICENSE for the time being; hack; we need the

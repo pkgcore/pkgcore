@@ -358,7 +358,6 @@ def config_from_make_conf(location="/etc/", profile_override=None):
     load_make_config(conf_dict, pjoin(portage_base, 'make.conf'), required=False,
         allow_sourcing=True, incrementals=True)
 
-    conf_dict.setdefault("PORTDIR", "/usr/portage")
     root = os.environ.get("ROOT", conf_dict.get("ROOT", "/"))
     gentoo_mirrors = list(
         x.rstrip("/")+"/distfiles" for x in conf_dict.pop("GENTOO_MIRRORS", "").split())
@@ -388,8 +387,11 @@ def config_from_make_conf(location="/etc/", profile_override=None):
     }
     new_config["vdb"] = basics.AutoConfigSection(kwds)
 
-    portdir = normpath(conf_dict.pop("PORTDIR").strip())
-    portdir_overlays = [normpath(x) for x in conf_dict.pop("PORTDIR_OVERLAY", "").split()]
+    portdir = normpath(os.environ.get(
+        "PORTDIR", conf_dict.pop("PORTDIR", "/usr/portage")).strip())
+    portdir_overlays = os.environ.get(
+        "PORTDIR_OVERLAY", conf_dict.pop("PORTDIR_OVERLAY", "")).split()
+    portdir_overlays = [normpath(x) for x in portdir_overlays]
 
     new_config['ebuild-repo-common'] = basics.AutoConfigSection({
         'class': 'pkgcore.ebuild.repository.slavedtree',

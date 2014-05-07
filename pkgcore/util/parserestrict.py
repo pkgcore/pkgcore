@@ -123,12 +123,7 @@ def parse_match(text):
         if len(r) == 1:
             return r[0]
         return packages.AndRestriction(*r)
-    elif text[0] in "=<>~":
-        try:
-            return atom.atom(text)
-        except errors.MalformedAtom as e:
-            raise_from(ParseError(str(e)))
-    if "*" not in text:
+    elif text[0] in "=<>~" or "*" not in text:
         try:
             return atom.atom(text)
         except errors.MalformedAtom as e:

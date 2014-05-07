@@ -106,6 +106,12 @@ class TestExtendedRestrictionGeneration(TestCase):
         self.assertInstance(o, atom, "sys-devel/automake:1.6")
         self.assertTrue(o.slot)
 
+    def test_subslot_atom(self):
+        o = parserestrict.parse_match("dev-libs/boost:0/1.54")
+        self.assertInstance(o, atom, "dev-libs/boost:0/1.54")
+        self.assertTrue(o.slot)
+        self.assertTrue(o.subslot)
+
     def test_exceptions(self):
         pm = parserestrict.parse_match
         pe = parserestrict.ParseError

@@ -115,10 +115,14 @@ class TestExtendedRestrictionGeneration(TestCase):
     def test_exceptions(self):
         pm = parserestrict.parse_match
         pe = parserestrict.ParseError
-        self.assertRaises(pe, pm, "!dev-util/diffball")
-        self.assertRaises(pe, pm, "dev-util/diffball-0.4")
-        self.assertRaises(pe, pm, "=dev-util/*diffball-0.4")
-        self.assertRaises(pe, pm, "=*/diffball-0.4")
+        for token in (
+                "!dev-util/diffball",
+                "dev-util/diffball-0.4",
+                "=dev-util/*diffball-0.4",
+                "=*/diffball-0.4",
+                "::gentoo",
+                ):
+            self.assertRaises(pe, pm, token)
 
 
 class ParsePVTest(TestCase):

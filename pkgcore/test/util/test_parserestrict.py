@@ -7,8 +7,9 @@ from snakeoil.currying import post_curry
 
 from pkgcore.repository import util
 from pkgcore.util import parserestrict
+from pkgcore.ebuild import restricts
 from pkgcore.ebuild.atom import atom
-from pkgcore.restrictions import packages, values, boolean
+from pkgcore.restrictions import packages, values, boolean, restriction
 
 
 class MatchTest(TestCase):
@@ -91,6 +92,36 @@ class TestExtendedRestrictionGeneration(TestCase):
             self.assertEqual(len(i), 2)
             self.verify_restrict(i[0], "category", token.split("/")[0])
             self.verify_restrict(i[1], "package", token.split("/")[1])
+
+    def test_globs(self):
+        for token in ("*", "*/*"):
+            i = parserestrict.parse_match(token)
+            self.assertInstance(i, restriction.AlwaysBool, token)
+            self.assertEqual(len(i), 1)
+
+        for token in ("*::gentoo", "*/*::gentoo"):
+            i = parserestrict.parse_match(token)
+            self.assertInstance(i, boolean.AndRestriction, token)
+            self.assertEqual(len(i), 2)
+            self.assertInstance(i[0], restricts.RepositoryDep, token.split("::")[1])
+            self.assertInstance(i[1], restriction.AlwaysBool, token.split("::")[0])
+
+        for token in ("foo*::gentoo", "*foo::gentoo"):
+            i = parserestrict.parse_match(token)
+            self.assertInstance(i, boolean.AndRestriction, token)
+            self.assertEqual(len(i), 2)
+            self.assertInstance(i[0], restricts.RepositoryDep, token.split("::")[1])
+            self.verify_restrict(i[1], "package", token.split("::")[0])
+
+        for token, attr, n in (
+                ("foo/*::gentoo", "category", 0),
+                ("*/foo::gentoo", "package", 1),
+                ):
+            i = parserestrict.parse_match(token)
+            self.assertInstance(i, boolean.AndRestriction, token)
+            self.assertEqual(len(i), 2)
+            self.assertInstance(i[0], restricts.RepositoryDep, token.split("::")[1])
+            self.verify_restrict(i[1], attr, token.split("::")[0].split("/")[n])
 
     def test_atom_globbed(self):
         self.assertInstance(parserestrict.parse_match("=sys-devel/gcc-4*"),

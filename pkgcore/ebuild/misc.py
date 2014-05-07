@@ -17,7 +17,7 @@ from collections import defaultdict
 from itertools import chain
 
 from pkgcore.ebuild import atom
-from pkgcore.restrictions import packages, restriction
+from pkgcore.restrictions import packages, restriction, boolean
 from pkgcore.util.parserestrict import parse_match
 
 from snakeoil import compatibility, mappings
@@ -192,6 +192,7 @@ class collapsed_restrict_to_data(object):
         repo = []
         cat = []
         pkg = []
+        multi = []
         atom_d = {}
         for restrict_pairs in restrict_sources:
             for a, data in restrict_pairs:
@@ -206,16 +207,20 @@ class collapsed_restrict_to_data(object):
                             atomlist.append((a, set([flag for flag in data if flag.startswith("-")])))
                 elif isinstance(a, atom.atom):
                     atom_d.setdefault(a.key, []).append((a, data))
+                elif isinstance(a, boolean.AndRestriction):
+                    multi.append((a, data))
                 elif isinstance(a, packages.PackageRestriction):
                     if a.attr == "category":
                         cat.append((a, data))
                     elif a.attr == "package":
                         pkg.append((a, data))
+                    elif a.attr == "repo.repo_id":
+                        repo.append((a, data))
                     else:
-                        raise ValueError("%r doesn't operate on package/category: "
+                        raise ValueError("%r doesn't operate on package/category/repo: "
                             "data %r" % (a, data))
                 else:
-                    raise ValueError("%r is not a AlwaysBool, PackageRestriction, "
+                    raise ValueError("%r is not an AlwaysBool, PackageRestriction, "
                         "or atom: data %r" % (a, data))
 
         if always:
@@ -228,7 +233,7 @@ class collapsed_restrict_to_data(object):
         self.defaults = always
         self.defaults_finalized = set(x for x in self.defaults
             if not x.startswith("-"))
-        self.freeform = tuple(x for x in (repo, cat, pkg) if x)
+        self.freeform = tuple(x for x in (repo, cat, pkg, multi) if x)
         self.atoms = atom_d
 
     def pull_data(self, pkg, force_copy=False, pre_defaults=()):

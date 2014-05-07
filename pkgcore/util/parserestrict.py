@@ -9,10 +9,12 @@ __all__ = ("parse_match", "ParseError",)
 @var parse_funcs: dict of the functions that are available.
 """
 
-from pkgcore.restrictions import packages, values, util
-from pkgcore.ebuild import atom, cpv, errors
-from snakeoil.compatibility import raise_from, is_py3k
 import re
+
+from snakeoil.compatibility import raise_from, is_py3k
+
+from pkgcore.restrictions import packages, values, util
+from pkgcore.ebuild import atom, cpv, errors, restricts
 
 valid_globbing = re.compile(r"^(?:[\w+-.]+|(?<!\*)\*)+$").match
 
@@ -38,7 +40,7 @@ def comma_separated_containment(attr, values_kls=frozenset, token_kls=str):
 
 
 def convert_glob(token):
-    if token in ("*", ''):
+    if token in ('*', ''):
         return None
     elif '*' not in token:
         return values.StrExactMatch(token)
@@ -89,15 +91,24 @@ def parse_match(text):
         raise ParseError(
             "!, or any form of blockers make no sense in this usage: %s" % (
                 text,))
+
     tsplit = text.rsplit("/", 1)
     if len(tsplit) == 1:
         ops, text = collect_ops(text)
         if not ops:
             if "*" in text:
+                restrictions = []
+                if '::' in text:
+                    text, repo_id = text.rsplit('::', 1)
+                    restrictions.append(restricts.RepositoryDep(repo_id))
                 r = convert_glob(text)
                 if r is None:
-                    return packages.AlwaysTrue
-                return packages.PackageRestriction("package", r)
+                    restrictions.append(packages.AlwaysTrue)
+                else:
+                    restrictions.append(packages.PackageRestriction("package", r))
+                if len(restrictions) == 1:
+                    return restrictions[0]
+                return packages.AndRestriction(*restrictions)
         elif text.startswith("*"):
             raise ParseError(
                 "cannot do prefix glob matches with version ops: %s" % (
@@ -122,17 +133,26 @@ def parse_match(text):
             return atom.atom(text)
         except errors.MalformedAtom as e:
             raise_from(ParseError(str(e)))
+
+    restrictions = []
+    if '::' in tsplit[1]:
+        tsplit[1], repo_id = tsplit[1].rsplit('::', 1)
+        restrictions.append(restricts.RepositoryDep(repo_id))
     r = map(convert_glob, tsplit)
     if not r[0] and not r[1]:
-        return packages.AlwaysTrue
-    if not r[0]:
-        return packages.PackageRestriction("package", r[1])
+        restrictions.append(packages.AlwaysTrue)
+    elif not r[0]:
+        restrictions.append(packages.PackageRestriction("package", r[1]))
     elif not r[1]:
-        return packages.PackageRestriction("category", r[0])
-    return packages.AndRestriction(
-        packages.PackageRestriction("category", r[0]),
-        packages.PackageRestriction("package", r[1]),
-        )
+        restrictions.append(packages.PackageRestriction("category", r[0]))
+    else:
+        restrictions.extend((
+            packages.PackageRestriction("category", r[0]),
+            packages.PackageRestriction("package", r[1]),
+        ))
+    if len(restrictions) == 1:
+        return restrictions[0]
+    return packages.AndRestriction(*restrictions)
 
 
 def parse_pv(repo, text):

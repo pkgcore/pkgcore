@@ -20,7 +20,7 @@ from pkgcore.ebuild import const
 from pkgcore.pkgsets.glsa import SecurityUpgrades
 
 from snakeoil.osutils import normpath, abspath, listdir_files, pjoin, ensure_dirs
-from snakeoil.compatibility import raise_from
+from snakeoil.compatibility import raise_from, IGNORED_EXCEPTIONS
 from snakeoil.demandload import demandload
 demandload(globals(),
     'errno',
@@ -348,10 +348,10 @@ def config_from_make_conf(location="/etc/", profile_override=None):
         try:
             load_make_config(conf_dict,
                 pjoin(config_root, 'usr/share/portage/config/make.globals'))
-        except compatibility.IGNORED_EXCEPTIONS:
+        except IGNORED_EXCEPTIONS:
             raise
         except:
-            compatibility.raise_from(errors.ParsingError(
+            raise_from(errors.ParsingError(
                 "failed to find a usable make.globals"))
     load_make_config(conf_dict, pjoin(base_path, 'make.conf'), required=False,
         allow_sourcing=True, incrementals=True)

@@ -392,6 +392,7 @@ def config_from_make_conf(location="/etc/", profile_override=None):
     portdir_overlays = os.environ.get(
         "PORTDIR_OVERLAY", conf_dict.pop("PORTDIR_OVERLAY", "")).split()
     portdir_overlays = [normpath(x) for x in portdir_overlays]
+    repos = [portdir] + portdir_overlays
 
     new_config['ebuild-repo-common'] = basics.AutoConfigSection({
         'class': 'pkgcore.ebuild.repository.slavedtree',
@@ -430,7 +431,7 @@ def config_from_make_conf(location="/etc/", profile_override=None):
         else:
             rsync_portdir_cache = False
 
-    for tree_loc in [portdir] + portdir_overlays:
+    for tree_loc in repos:
         kwds = {
             'inherit': ('ebuild-repo-common',),
             'raw_repo': ('raw:' + tree_loc),
@@ -456,11 +457,11 @@ def config_from_make_conf(location="/etc/", profile_override=None):
         new_config['repo-stack'] = basics.FakeIncrementalDictConfigSection(
             my_convert_hybrid, {
                 'class': 'pkgcore.repository.multiplex.config_tree',
-                'repositories': tuple(reversed([portdir] + portdir_overlays))})
+                'repositories': tuple(reversed(repos))})
     else:
         new_config['repo-stack'] = basics.section_alias(portdir, 'repo')
 
-    for tree_loc in [portdir] + portdir_overlays:
+    for tree_loc in repos:
         conf = {'class':'pkgcore.ebuild.repo_objs.RepoConfig',
              'location':tree_loc}
         if 'sync:%s' % (tree_loc,) in new_config:
@@ -481,7 +482,7 @@ def config_from_make_conf(location="/etc/", profile_override=None):
 
     #binpkg.
     pkgdir = conf_dict.pop('PKGDIR', None)
-    default_repos = list(reversed(portdir_overlays)) + [portdir]
+    default_repos = list(reversed(repos))
     if pkgdir is not None:
         try:
             pkgdir = abspath(pkgdir)

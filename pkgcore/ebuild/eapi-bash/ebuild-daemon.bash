@@ -92,12 +92,6 @@ for x in ebd_read_{line,{cat_,}size} __ebd_write_line __set_perf_debug; do
 	declare -rf ${x}
 done
 unset x
-# protection for upgrading across pkgcore 0.7.7
-if [[ -z "${PKGCORE_EBD_WRITE_FD}" ]]; then
-	PKGCORE_EBD_WRITE_FD="${EBD_WRITE_FD}"
-	PKGCORE_EBD_READ_FD="${EBD_READ_FD}"
-	unset EBD_WRITE_FD EBD_READ_FD
-fi
 declare -r PKGCORE_EBD_WRITE_FD PKGCORE_EBD_READ_FD
 
 __ebd_sigint_handler()

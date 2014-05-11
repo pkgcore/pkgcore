@@ -303,12 +303,15 @@ class PortageFormatter(CountingFormatter):
 
     def format(self, op):
         # <type>       - ebuild, block or nomerge (for --tree)
-        #        N     - new package
-        #         R    - rebuild package
-        #          F   - fetch restricted
-        #          f   - fetch restricted already downloaded
-        #           D  - downgrade
-        #            U - updating to another version
+        #       N      - new package
+        #        R     - rebuild package
+        #         F    - fetch restricted
+        #         f    - fetch restricted already downloaded
+        #          D   - downgrade
+        #           U  - updating to another version
+        #            # - masked
+        #            * - missing keyword
+        #            ~ - unstable keyword
         # Caveats:
         # - U and D are both displayed to show a downgrade - this is kept
         # in order to be consistent with existing portage behaviour

@@ -21,8 +21,6 @@ metadata_keys = (
     'DESCRIPTION', 'KEYWORDS', 'INHERITED', 'IUSE', 'REQUIRED_USE', 'PDEPEND',
     'PROVIDE', 'EAPI', 'PROPERTIES', 'DEFINED_PHASES', '_eclasses_')
 
-ACCEPT_LICENSE = ()
-
 WORLD_FILE           = '/var/lib/portage/world'
 
 EAPI_BIN_PATH        = path.join(path.dirname(path.abspath(__file__)), "eapi-bash")

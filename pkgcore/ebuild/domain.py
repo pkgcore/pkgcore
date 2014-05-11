@@ -120,7 +120,6 @@ class domain(pkgcore.config.domain.domain):
 
         if 'CHOST' in settings and 'CBUILD' not in settings:
             settings['CBUILD'] = settings['CHOST']
-        settings.setdefault('ACCEPT_LICENSE', const.ACCEPT_LICENSE)
 
         # map out sectionname -> config manager immediately.
         repositories_collapsed = [r.collapse() for r in repositories]

@@ -481,7 +481,7 @@ def config_from_make_conf(location="/etc/", profile_override=None):
         SecurityUpgradesViaProfile.pkgcore_config_type.typename)
 
     #binpkg.
-    pkgdir = conf_dict.pop('PKGDIR', None)
+    pkgdir = os.environ.get("PKGDIR", conf_dict.pop('PKGDIR', None))
     default_repos = list(reversed(repos))
     if pkgdir is not None:
         try:
@@ -554,7 +554,8 @@ def config_from_make_conf(location="/etc/", profile_override=None):
     # now add the fetcher- we delay it till here to clean out the environ
     # it passes to the command.
     # *everything* in the conf_dict must be str values also.
-    distdir = normpath(conf_dict.pop("DISTDIR", pjoin(portdir, "distdir")))
+    distdir = normpath(os.environ.get(
+        "DISTDIR", conf_dict.pop("DISTDIR", pjoin(portdir, "distdir"))))
     add_fetcher(new_config, conf_dict, distdir)
 
     # finally... domain.

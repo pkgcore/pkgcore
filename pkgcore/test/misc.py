@@ -6,6 +6,7 @@
 from itertools import ifilter, imap
 from snakeoil.mappings import AttrAccessible
 from pkgcore.ebuild.ebuild_src import package
+from pkgcore.ebuild.eapi import get_eapi
 from pkgcore.ebuild.cpv import CPV
 from pkgcore.ebuild.conditionals import DepSet
 from pkgcore.ebuild.atom import atom
@@ -84,7 +85,7 @@ class FakeRepo(object):
 
 
 class FakePkg(FakePkgBase):
-    def __init__(self, cpv, slot="0", subslot=None, iuse=(), use=(),
+    def __init__(self, cpv, eapi="0", slot="0", subslot=None, iuse=(), use=(),
                  repo=FakeRepo(), restrict='', keywords=None):
         if isinstance(repo, str):
             repo = FakeRepo(repo)
@@ -101,6 +102,7 @@ class FakePkg(FakePkgBase):
         object.__setattr__(self, "fetchables", [])
         object.__setattr__(self, "use", set(use))
         object.__setattr__(self, "iuse", set(iuse))
+        object.__setattr__(self, 'eapi_obj', get_eapi(eapi, False))
 
 
 class DisablePlugins(object):

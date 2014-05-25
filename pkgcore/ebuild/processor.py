@@ -277,8 +277,8 @@ class EbuildProcessor(object):
 
         # since it's questionable which spawn method we'll use (if
         # sandbox or fakeroot fex), we ensure the bashrc is invalid.
-        env = dict((x, "/etc/portage/spork/not/valid/ha/ha")
-                   for x in ("BASHRC", "BASH_ENV"))
+        env = {x: "/etc/portage/spork/not/valid/ha/ha"
+               for x in ("BASHRC", "BASH_ENV")}
         if int(os.environ.get('PKGCORE_PERF_DEBUG', 1)) > 1:
             env["PKGCORE_PERF_DEBUG"] = os.environ['PKGCORE_PERF_DEBUG']
 

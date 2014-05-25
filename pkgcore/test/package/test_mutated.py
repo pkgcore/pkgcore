@@ -20,8 +20,7 @@ class FakePkg(base):
         base.__init__(self)
         self.pkg = pkg
         self.ver = ver
-        self._get_attr = dict((k, partial(passthru, v))
-            for k,v in data.iteritems())
+        self._get_attr = {k: partial(passthru, v) for k, v in data.iteritems()}
 
     # disable protection.  don't want it here
     __setattr__ = object.__setattr__

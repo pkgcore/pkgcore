@@ -18,7 +18,7 @@ class base(TestCase):
             reflective=False)
         self.assertEqual(sorted(obj.freeform), sorted(freeform),
             reflective=False)
-        atoms_dict = dict((a[0].key, (a, a[1])) for a in atoms)
+        atoms_dict = {a[0].key: (a, a[1]) for a in atoms}
         self.assertEqual(sorted(obj.atoms), sorted(atoms_dict))
         for k, v in obj.atoms.iteritems():
             l1 = sorted((x[0], list(x[1])) for x in v)

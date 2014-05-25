@@ -238,11 +238,9 @@ class native_DepSetConditionalsInspectionTest(base):
         return l
 
     def check_conds(self, s, r, msg=None, element_kls=str, **kwds):
-        nc = dict(
-            (k, self.flatten_cond(v))
-            for (k, v) in self.gen_depset(s,
-                element_kls=element_kls, **kwds).node_conds.iteritems())
-        d = dict((element_kls(k), v) for k,v in r.iteritems())
+        nc = {k: self.flatten_cond(v) for k, v in
+              self.gen_depset(s, element_kls=element_kls, **kwds).node_conds.iteritems()}
+        d = {element_kls(k): v for k, v in r.iteritems()}
         for k, v in d.iteritems():
             if isinstance(v, basestring):
                 d[k] = set([frozenset(v.split())])

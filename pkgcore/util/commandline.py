@@ -476,7 +476,7 @@ class Expansion(argparse.Action):
         vals = values
         if isinstance(values, basestring):
             vals = [vals]
-        dvals = dict((str(idx), val) for (idx, val) in enumerate(vals))
+        dvals = {str(idx): val for idx, val in enumerate(vals)}
         dvals['*'] = ' '.join(vals)
 
         for action in parser._actions:
@@ -668,9 +668,9 @@ def store_config(namespace, attr):
     for key, vals in configs[1].iteritems():
         vals.setdefault('inherit', key)
 
-    configs = [dict((section, basics.ConfigSectionFromStringDict(vals))
-        for section, vals in d.iteritems())
-            for d in configs if d]
+    configs = [{section: basics.ConfigSectionFromStringDict(vals)
+                for section, vals in d.iteritems()}
+               for d in configs if d]
 
     config = load_config(skip_config_files=namespace.empty_config,
         debug=getattr(namespace, 'debug', False),

@@ -123,8 +123,8 @@ class use_expand_filter(object):
         :param use_expand_hidden: names of use-expanded vars that should not
             be added to the dict.
         """
-        self.expand_filters = dict((x.lower(), (x not in use_expand_hidden, x))
-            for x in use_expand)
+        self.expand_filters = {x.lower(): (x not in use_expand_hidden, x)
+                               for x in use_expand}
         self.use_expand = use_expand
         self.use_expand_hidden = use_expand_hidden
         self.known_flags = {}

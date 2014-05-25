@@ -118,8 +118,8 @@ def _sort_eclasses(config, raw_repo, eclasses):
                     "Fix your configuration." % (loc, raw_repo.repo_id))
             eclasses = [default.location]
     else:
-        repo_map = dict((r.repo_id, r.location) for r in
-            config.objects['raw_repo'].itervalues())
+        repo_map = {r.repo_id: r.location for r in
+                    config.objects['raw_repo'].itervalues()}
 
         missing = set(raw_repo.masters).difference(repo_map)
         if missing:
@@ -517,10 +517,9 @@ class _ConfiguredTree(configured.tree):
     """
 
     configurable = "use"
-    config_wrappables = dict((x, klass.alias_method("evaluate_depset"))
-        for x in ["depends", "rdepends", "post_rdepends", "fetchables",
-                  "license", "src_uri", "provides", "restrict",
-                  "required_use"])
+    config_wrappables = {x: klass.alias_method("evaluate_depset")
+        for x in ("depends", "rdepends", "post_rdepends", "fetchables",
+                  "license", "src_uri", "provides", "restrict", "required_use")}
 
     def __init__(self, raw_repo, domain, domain_settings, fetcher=None):
         """

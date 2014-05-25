@@ -355,7 +355,7 @@ class contentsSet(object):
         """Resolve the directory structure between this instance, and another
         contentset, collapsing syms of self into directories of other.
         """
-        conflicts_d = dict((x, x.resolved_target) for x in other.iterlinks())
+        conflicts_d = {x: x.resolved_target for x in other.iterlinks()}
         # rebuild the targets first; sorted due to the fact that we want to
         # rewrite each node (resolving down the filepath chain)
         conflicts = sorted(contentsSet(self.iterdirs()).intersection(conflicts_d))

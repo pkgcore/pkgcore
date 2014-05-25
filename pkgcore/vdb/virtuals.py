@@ -36,9 +36,8 @@ def _finalize_virtuals(virtuals):
             pkg_dict[full_ver] = tuple(rdep_atoms)
 
 def _collect_default_providers(virtuals):
-    return dict((virt,
-        frozenset(atom(x.key) for y in data.itervalues() for x in y))
-        for virt, data in virtuals.iteritems())
+    return {virt: frozenset(atom(x.key) for y in data.itervalues() for x in y)
+            for virt, data in virtuals.iteritems()}
 
 # noncaching...
 

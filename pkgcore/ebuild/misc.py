@@ -504,8 +504,8 @@ class ChunkedDataDict(object):
 
     def render_to_payload(self):
         d = PayloadDict()
-        d = dict((atom.atom(k), _build_cp_atom_payload(v, atom.atom(k), True))
-            for k,v in self._dict.iteritems())
+        d = {atom.atom(k): _build_cp_atom_payload(v, atom.atom(k), True)
+             for k,v in self._dict.iteritems()}
         if self._global_settings:
             data = _build_cp_atom_payload(self._global_settings,
                 packages.AlwaysTrue, payload_form=True)

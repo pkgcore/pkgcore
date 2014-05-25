@@ -69,9 +69,9 @@ class Values(optparse.Values, object):
         # This makes mixing --new-config and --add-config sort of
         # work. Not sure if that is a good thing, but detecting and
         # erroring is about as much work as making it mostly work :)
-        new_config = dict(
-            (name, basics.ConfigSectionFromStringDict(val))
-            for name, val in self.new_config.iteritems())
+        new_config = {
+            name: basics.ConfigSectionFromStringDict(val)
+            for name, val in self.new_config.iteritems()}
         add_config = {}
         for name, config in self.add_config.iteritems():
             config.setdefault('inherit', name)

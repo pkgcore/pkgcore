@@ -81,8 +81,8 @@ class fsBase(object):
     gen_doc_additions(__init__, __attrs__)
 
     def change_attributes(self, **kwds):
-        d = dict((x, getattr(self, x))
-                 for x in self.__attrs__ if hasattr(self, x))
+        d = {x: getattr(self, x)
+             for x in self.__attrs__ if hasattr(self, x)}
         d.update(kwds)
         # split location out
         location = d.pop("location")
@@ -228,8 +228,8 @@ class fsLink(fsBase):
     gen_doc_additions(__init__, __slots__)
 
     def change_attributes(self, **kwds):
-        d = dict((x, getattr(self, x))
-                 for x in self.__attrs__ if hasattr(self, x))
+        d = {x: getattr(self, x)
+             for x in self.__attrs__ if hasattr(self, x)}
         d.update(kwds)
         # split location out
         location = d.pop("location")

@@ -39,9 +39,7 @@ class VersionMatch(restriction.base):
     _convert_op2str = {(-1,):"<", (-1, 0): "<=", (0,):"=",
         (0, 1):">=", (1,):">"}
 
-    _convert_str2op = dict([(v, k) for k, v in _convert_op2str.iteritems()])
-    if not is_py3k:
-        del k, v
+    _convert_str2op = {v: k for k, v in _convert_op2str.iteritems()}
 
     def __init__(self, operator, ver, rev=None, negate=False, **kwd):
         """

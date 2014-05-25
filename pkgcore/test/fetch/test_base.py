@@ -117,7 +117,7 @@ class TestFetcher(TempDirMixin, TestCase):
             l.append(chf)
             return chksums[chf]
 
-        alt_handlers = dict((chf, partial(f, chf)) for chf in chksums)
+        alt_handlers = {chf: partial(f, chf) for chf in chksums}
         self.assertEqual(self.fetcher._verify(self.fp, self.obj,
             handlers=alt_handlers), None)
         self.assertEqual(sorted(l), sorted(alt_handlers))

@@ -46,8 +46,8 @@ class FakeProfile(object):
     def __init__(self, masked_use={}, forced_use={},
         provides={}, masks=[], virtuals={}, arch='x86', name='none'):
         self.provides_repo = SimpleTree(provides)
-        self.masked_use = dict((atom(k), v) for k,v in masked_use.iteritems())
-        self.forced_use = dict((atom(k), v) for k,v in forced_use.iteritems())
+        self.masked_use = {atom(k): v for k,v in masked_use.iteritems()}
+        self.forced_use = {atom(k): v for k,v in forced_use.iteritems()}
         self.masks = tuple(map(atom, masks))
         self.virtuals = SimpleTree(virtuals)
         self.arch = arch

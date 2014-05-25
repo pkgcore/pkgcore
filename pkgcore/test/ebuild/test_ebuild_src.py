@@ -341,7 +341,7 @@ class test_package_factory(TestCase):
 
     def test_mirrors(self):
         mirrors_d = {'gentoo':['http://bar/', 'http://far/']}
-        mirrors = dict((k, fetch.mirror(v,k)) for k,v in mirrors_d.iteritems())
+        mirrors = {k: fetch.mirror(v, k) for k, v in mirrors_d.iteritems()}
         pf = self.mkinst(mirrors=mirrors_d)
         self.assertLen(pf._cache, 0)
         self.assertEqual(sorted(pf.mirrors), sorted(mirrors))

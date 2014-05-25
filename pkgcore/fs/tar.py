@@ -150,7 +150,7 @@ def convert_archive(archive):
     raw = list(archive_to_fsobj(archive))
     # we use the data source as the unique key to get position.
     files_ordering = list(enumerate(x for x in raw if x.is_reg))
-    files_ordering = dict((x.data, idx) for idx, x in files_ordering)
+    files_ordering = {x.data: idx for idx, x in files_ordering}
     t = contents.contentsSet(raw, mutable=True)
     del raw, archive
 

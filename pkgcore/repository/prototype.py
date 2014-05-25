@@ -453,5 +453,5 @@ class tree(object):
 
     @property
     def aliases(self):
-        potentials = [(key, getattr(self, key, None)) for key in ('repo_id', 'location')]
-        return dict((k,v) for k,v in potentials if v is not None)
+        potentials = ((key, getattr(self, key, None)) for key in ('repo_id', 'location'))
+        return {k:v for k,v in potentials if v is not None}

@@ -243,7 +243,7 @@ class pkgcore_install_docs(core.Command):
             return None
 
     def _map_paths(self, content):
-        return dict((x, x) for x in content)
+        return {x: x for x in content}
 
     def scan_content(self):
         self.content = self._map_paths(_get_files(self.source_path))

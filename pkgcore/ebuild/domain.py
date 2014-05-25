@@ -130,9 +130,9 @@ class domain(pkgcore.config.domain.domain):
         self.default_licenses_manager = OverlayedLicenses(*repositories)
         vdb_collapsed = [r.collapse() for r in vdb]
         vdb = [r.instantiate() for r in vdb_collapsed]
-        self.repos_raw = dict(
-            (collapsed.name, repo) for (collapsed, repo) in izip(
-                repositories_collapsed, repositories))
+        self.repos_raw = {
+            collapsed.name: repo for (collapsed, repo) in izip(
+                repositories_collapsed, repositories)}
         self.repos_raw.update(
             (collapsed.name, repo) for (collapsed, repo) in izip(
                 vdb_collapsed, vdb))
@@ -296,11 +296,11 @@ class domain(pkgcore.config.domain.domain):
         self.repos_configured = {}
         self.repos_configured_filtered = {}
 
-        rev_names = dict((repo, name) for name, repo in self.repos_raw.iteritems())
+        rev_names = {repo: name for name, repo in self.repos_raw.iteritems()}
 
         profile_masks = profile._incremental_masks()
         profile_unmasks = profile._incremental_unmasks()
-        repo_masks = dict((r.repo_id, r._visibility_limiters()) for r in repositories)
+        repo_masks = {r.repo_id: r._visibility_limiters() for r in repositories}
 
         for l, repos, filtered in ((self.repos, repositories, True),
                                    (self.vdb, vdb, False)):

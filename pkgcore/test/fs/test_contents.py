@@ -283,8 +283,8 @@ class TestContentsSet(TestCase):
     def test_inode_map(self):
 
         def check_it(target):
-            d = dict((k, sorted(v)) for k,v in cs.inode_map().iteritems())
-            target = dict((k, sorted(v)) for k,v in target.iteritems())
+            d = {k: sorted(v) for k, v in cs.inode_map().iteritems()}
+            target = {k: sorted(v) for k, v in target.iteritems()}
             self.assertEqual(d, target)
 
         cs = contents.contentsSet()

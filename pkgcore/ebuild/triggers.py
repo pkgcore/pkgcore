@@ -237,7 +237,7 @@ class ConfigProtectInstall(triggers.base):
                                     replacement))
 
         for dir_loc, entries in protected.iteritems():
-            updates = dict((x[0], []) for x in entries)
+            updates = {x[0]: [] for x in entries}
             try:
                 existing = sorted(x for x in listdir_files(dir_loc)
                     if x.startswith("._cfg"))

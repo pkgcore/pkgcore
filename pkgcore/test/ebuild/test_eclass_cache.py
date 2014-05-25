@@ -25,7 +25,7 @@ class TestBase(TestCase):
     def setUp(self):
         self.dir = '/nonexistent/path/'
         self.ec = FakeEclassCache(self.dir)
-        self.ec_locs = dict((x, self.dir) for x in ("eclass1", "eclass2"))
+        self.ec_locs = {x: self.dir for x in ("eclass1", "eclass2")}
 
     def test_rebuild_eclass_entry(self):
         def assertRebuildResults(result, *raw_data):
@@ -60,7 +60,7 @@ class TestEclassCache(TempDirMixin, TestBase):
         # insert a crap file to ensure it doesn't grab it.
         open(pjoin(self.dir, 'foon-eclass'), 'w').close()
         self.ec = eclass_cache.cache(self.dir)
-        self.ec_locs = dict((x, self.dir) for x in ("eclass1", "eclass2"))
+        self.ec_locs = {x: self.dir for x in ("eclass1", "eclass2")}
 
     def test_get_eclass(self):
         for x in ("eclass1", "eclass2"):

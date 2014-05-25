@@ -45,8 +45,8 @@ class TestBasePkg(mixin, TestCase):
     def test_getattr(self):
         class Class(base.base):
             __slotting_intentionally_disabled__ = True
-            _get_attr = dict((str(x), partial((lambda a, s: a), x))
-                             for x in xrange(10))
+            _get_attr = {str(x): partial((lambda a, s: a), x)
+                         for x in xrange(10)}
             _get_attr["a"] = lambda s:"foo"
             __getattr__ = base.dynamic_getattr_dict
 

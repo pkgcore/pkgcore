@@ -197,10 +197,11 @@ class base(metadata.package):
         re-evaluating attributes dependent on configuration
     """
 
-    _config_wrappables = dict((x, klass.alias_method("evaluate_depset"))
-        for x in ["depends", "rdepends", "post_rdepends", "fetchables",
-                  "license", "src_uri", "provides", "restrict",
-                  "required_use"])
+    _config_wrappables = {
+        x: klass.alias_method("evaluate_depset")
+        for x in ("depends", "rdepends", "post_rdepends", "fetchables",
+                  "license", "src_uri", "provides", "restrict", "required_use")
+    }
 
     _get_attr = dict(metadata.package._get_attr)
     _get_attr["provides"] = generate_providers
@@ -326,7 +327,7 @@ class package_factory(metadata.factory):
         self._ecache = eclass_cache
 
         if mirrors:
-            mirrors = dict((k, mirror(v, k)) for k, v in mirrors.iteritems())
+            mirrors = {k: mirror(v, k) for k, v in mirrors.iteritems()}
 
         self.mirrors = mirrors
         if default_mirrors:

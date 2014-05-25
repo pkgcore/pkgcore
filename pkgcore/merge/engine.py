@@ -52,12 +52,12 @@ def map_new_cset_livefs(engine, csets, cset_name='new_cset'):
 
 class MergeEngine(object):
 
-    install_hooks = dict((x, []) for x in [
-        "sanity_check", "pre_merge", "merge", "post_merge", "final"])
-    uninstall_hooks = dict((x, []) for x in [
-        "sanity_check", "pre_unmerge", "unmerge", "post_unmerge", "final"])
-    replace_hooks = dict((x, []) for x in set(
-        install_hooks.keys() + uninstall_hooks.keys()))
+    install_hooks = {x: [] for x in
+        ("sanity_check", "pre_merge", "merge", "post_merge", "final")}
+    uninstall_hooks = {x: [] for x in
+        ("sanity_check", "pre_unmerge", "unmerge", "post_unmerge", "final")}
+    replace_hooks = {x: [] for x in
+        set(install_hooks.keys() + uninstall_hooks.keys())}
 
     install_csets = {
         "install_existing": "get_install_livefs_intersect",
@@ -156,8 +156,8 @@ class MergeEngine(object):
 
         """
 
-        hooks = dict((k, [y() for y in v])
-                     for (k, v) in cls.install_hooks.iteritems())
+        hooks = {k: [y() for y in v]
+                 for (k, v) in cls.install_hooks.iteritems()}
 
         csets = dict(cls.install_csets)
         if "raw_new_cset" not in csets:
@@ -189,8 +189,8 @@ class MergeEngine(object):
         :return: :obj:`MergeEngine`
         """
 
-        hooks = dict((k, [y() for y in v])
-                     for (k, v) in cls.uninstall_hooks.iteritems())
+        hooks = {k: [y() for y in v]
+                 for (k, v) in cls.uninstall_hooks.iteritems()}
         csets = dict(cls.uninstall_csets)
 
         if "raw_old_cset" not in csets:
@@ -224,8 +224,8 @@ class MergeEngine(object):
 
         """
 
-        hooks = dict((k, [y() for y in v])
-                     for (k, v) in cls.replace_hooks.iteritems())
+        hooks = {k: [y() for y in v]
+                 for (k, v) in cls.replace_hooks.iteritems()}
 
         csets = dict(cls.replace_csets)
 

@@ -20,7 +20,12 @@ install_paths()
 	shift
 	check_command invoke_script dodir "${mydir}" || return 1
 
-	for x in "$@"; do
+	__shopt_push -s extglob
+	# strip trailing slashes
+	paths=( "${@%%+(/)}" )
+	__shopt_pop
+
+	for x in "${paths[@]}"; do
 		mysrc="${x}"
 		if [[ -L ${x} ]]; then
 			if ! ${PKGCORE_DOINS_ALLOW_SYMLINKS}; then

@@ -6,19 +6,13 @@ assert() {
 	[[ -z ${_pipestatus//[ 0]/} ]] || die "$@ (pipestatus: ${_pipestatus})"
 }
 
-# this exists to protect against older env dumps that had the historical
-# implementation of die that was alias based.
-__diefunc() {
-	die "$@"
-}
-
 die() {
 	set +x
 	# if we were signaled to die...
 	if [[ -n $EBD_DISABLE_DIEFUNC ]]; then
 		return
 	fi
-	shift 3
+
 	local n filespacing=0 linespacing=0 sourcefile lineno
 	# setup spacing to make output easier to read
 	for ((n = ${#FUNCNAME[@]} - 1; n >= 0; --n)); do

@@ -57,7 +57,6 @@ __IFS_pop
 __IFS_push
 __colored_output_disable
 __colored_output_enable
-__diefunc
 __directory_is_empty
 __dump_metadata_keys
 __dump_trace

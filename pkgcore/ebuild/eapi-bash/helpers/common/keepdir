@@ -5,7 +5,7 @@
 # adds ".keep" files so that dirs aren't auto-cleaned
 
 recursive=false
-if [[ "$1" == -[Rr] ]]; then
+if [[ $1 == -r ]]; then
 	recursive=true
 	shift
 fi

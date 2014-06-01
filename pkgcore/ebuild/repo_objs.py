@@ -377,8 +377,9 @@ class RepoConfig(syncable.tree):
             masters = tuple(iter_stable_unique(masters.split()))
         sf(self, 'masters', masters)
         sf(self, 'aliases', tuple(iter_stable_unique(data.get('aliases', '').split())))
-        v = tuple(data.get('cache-formats', 'pms').lower().split())
-        if 'md5-dict' not in v and 'pms' not in v:
+
+        v = set(data.get('cache-formats', 'pms').lower().split())
+        if not v.intersection(['pms', 'md5-dict']):
             v = ('pms',)
         sf(self, 'cache_format', v[0])
 

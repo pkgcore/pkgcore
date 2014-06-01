@@ -471,8 +471,8 @@ def config_from_make_conf(location="/etc/", profile_override=None):
         new_config['repo-stack'] = basics.section_alias(portdir, 'repo')
 
     for tree_loc in repos:
-        conf = {'class':'pkgcore.ebuild.repo_objs.RepoConfig',
-             'location':tree_loc}
+        conf = {'class': 'pkgcore.ebuild.repo_objs.RepoConfig',
+                'location': tree_loc}
         if 'sync:%s' % (tree_loc,) in new_config:
             conf['syncer'] = 'sync:%s' % (tree_loc,)
         if tree_loc == portdir:

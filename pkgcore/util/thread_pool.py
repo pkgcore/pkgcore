@@ -30,7 +30,7 @@ def map_async(iterable, functor, *args, **kwds):
     if hasattr(iterable, '__len__'):
         # if there are less items than parallelism, don't
         # spawn pointless threads.
-        paralleism = max(min(len(iterable), parallelism), 0)
+        parallelism = max(min(len(iterable), parallelism), 0)
 
     # note we allow an infinite queue since .put below
     # is blocking, and won't return till it succeeds (regardless of signal)

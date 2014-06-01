@@ -380,8 +380,8 @@ class RepoConfig(syncable.tree):
 
         v = set(data.get('cache-formats', 'pms').lower().split())
         if not v.intersection(['pms', 'md5-dict']):
-            v = ('pms',)
-        sf(self, 'cache_format', v[0])
+            v = 'pms'
+        sf(self, 'cache_format', list(v)[0])
 
         v = set(data.get('profile-formats', 'pms').lower().split())
         if not v:

@@ -17,6 +17,7 @@ import sys
 
 from pkgcore.config import basics, configurable
 from pkgcore.ebuild import const
+from pkgcore.ebuild.repo_objs import RepoConfig
 from pkgcore.pkgsets.glsa import SecurityUpgrades
 
 from snakeoil.osutils import normpath, abspath, listdir_files, pjoin, ensure_dirs
@@ -280,10 +281,18 @@ def add_fetcher(config, conf_dict, distdir):
     config["fetcher"] = basics.AutoConfigSection(fetcher_dict)
 
 
-def mk_simple_cache(config_root, tree_loc, readonly=False,
-                    kls='pkgcore.cache.flat_hash.database'):
+def mk_simple_cache(config_root, tree_loc, readonly=False):
+    # TODO: probably should pull RepoConfig objects dynamically from the config
+    # instead of regenerating them
+    repo_config = RepoConfig(tree_loc)
     readonly = readonly and 'yes' or 'no'
-    tree_loc = pjoin(config_root, 'var/cache/edb/dep', tree_loc.lstrip('/'))
+
+    if repo_config.cache_format == 'md5-dict':
+        kls = 'pkgcore.cache.flat_hash.md5_cache'
+        tree_loc = pjoin(config_root, tree_loc.lstrip('/'))
+    else:
+        kls = 'pkgcore.cache.flat_hash.database'
+        tree_loc = pjoin(config_root, 'var/cache/edb/dep', tree_loc.lstrip('/'))
 
     return basics.AutoConfigSection({
         'class': kls,

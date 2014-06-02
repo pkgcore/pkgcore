@@ -164,7 +164,7 @@ class GlsaDirSet(object):
                 if '=' not in restrict:
                     # this is a non-range.
                     raise ValueError(
-                        "range %s version %s is a guranteed empty set" %
+                        "range %s version %s is a guaranteed empty set" %
                         (op, str(node.text.strip())))
                 return atom_restricts.VersionMatch("~", base.version, negate=negate)
             return packages.AndRestriction(

@@ -7,6 +7,8 @@
 
 __all__ = ("argparser", "main")
 
+from itertools import izip
+
 from pkgcore.util import commandline
 from pkgcore.ebuild import atom
 from pkgcore.operations import observer
@@ -55,8 +57,8 @@ def main(options, out, err):
     if clean:
         build.cleanup(force=True)
     build._reload_state()
-    phase_funcs = list(getattr(build, x) for x in phases)
-    for phase, f in zip(phases, phase_funcs):
+    phase_funcs = (getattr(build, x) for x in phases)
+    for phase, f in izip(phases, phase_funcs):
         out.write()
         out.write('executing phase %s' % (phase,))
         f(**kwds)

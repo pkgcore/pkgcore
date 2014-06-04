@@ -190,7 +190,7 @@ def regen_main(options, out, err):
         observer=observer.formatter_output(out), force=options.force,
             eclass_caching=(not options.disable_eclass_caching))
     end_time = time.time()
-    out.write("finished %d nodes in in %.2f seconds" % (len(options.repo),
+    out.write("finished %d nodes in %.2f seconds" % (len(options.repo),
         end_time - start_time))
     return 0
 

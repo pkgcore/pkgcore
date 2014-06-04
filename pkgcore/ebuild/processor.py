@@ -165,7 +165,7 @@ def release_ebuild_processor(ebp):
 
 @contextlib.contextmanager
 def reuse_or_request(ebp=None, **request_kwds):
-    """Do an processor operation, locking as necessary.
+    """Do a processor operation, locking as necessary.
 
     If the processor is given, it's assumed to be locked already.
     If no processor is given, one is allocated, then released upon
@@ -498,10 +498,10 @@ class EbuildProcessor(object):
 
     def preload_eclasses(self, cache, async=False, limited_to=None):
         """
-        Preload an eclass stack's eclasses into a bash functions
+        Preload an eclass stack's eclasses into bash functions.
 
         Avoids the cost of going to disk on inherit. Preloading eutils
-        (which is heaviliy inherited) speeds up regen times for
+        (which is heavily inherited) speeds up regen times for
         example.
 
         :param ec_file: filepath of eclass to preload
@@ -532,7 +532,7 @@ class EbuildProcessor(object):
         Preload an eclass into a bash function.
 
         Avoids the cost of going to disk on inherit. Preloading eutils
-        (which is heaviliy inherited) speeds up regen times for
+        (which is heavily inherited) speeds up regen times for
         example.
 
         :param ec_file: filepath of eclass to preload

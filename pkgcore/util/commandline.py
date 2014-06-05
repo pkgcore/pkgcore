@@ -840,7 +840,7 @@ def main(subcommands, args=None, outfile=None, errfile=None, script_name=None):
     except KeyboardInterrupt:
         if getattr(options, 'debug', False):
             raise
-        errfile.write("keyboard interupted- exiting\n")
+        errfile.write("keyboard interrupted- exiting\n")
         exitstatus = 1
     except compatibility.IGNORED_EXCEPTIONS:
         raise

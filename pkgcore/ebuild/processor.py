@@ -44,13 +44,14 @@ import pkgcore.spawn, os, signal, errno
 from pkgcore import const, os_data
 from pkgcore.ebuild import const as e_const
 
-from snakeoil.currying import post_curry, partial, pretty_docs
 from snakeoil import klass
+from snakeoil.currying import post_curry, partial, pretty_docs
+from snakeoil.osutils import abspath, normpath, pjoin
 from snakeoil.weakrefs import WeakRefFinalizer
 from snakeoil.demandload import demandload
 demandload(globals(),
     'pkgcore.log:logger',
-    'snakeoil:osutils,fileutils',
+    'snakeoil:fileutils',
 )
 
 import traceback
@@ -328,8 +329,8 @@ class EbuildProcessor(object):
         self.write(e_const.EAPI_BIN_PATH)
         # send PKGCORE_PYTHON_BINARY...
         self.write(pkgcore.spawn.find_invoking_python())
-        self.write(osutils.normpath(osutils.abspath(osutils.join(
-                        pkgcore.__file__, os.pardir, os.pardir))))
+        self.write(normpath(abspath(pjoin(
+            pkgcore.__file__, os.pardir, os.pardir))))
         if self.__sandbox:
             self.write("sandbox_log?")
             self.__sandbox_log = self.read().split()[0]
@@ -647,7 +648,7 @@ class EbuildProcessor(object):
         data = self._generate_env_str(env_dict)
         old_umask = os.umask(0002)
         if tmpdir:
-            path = osutils.pjoin(tmpdir, 'ebd-env-transfer')
+            path = pjoin(tmpdir, 'ebd-env-transfer')
             fileutils.write_file(path, 'wb', data)
             self.write("start_receiving_env file %s\n" % (path,),
                 append_newline=False)
@@ -899,10 +900,10 @@ def expected_ebuild_env(pkg, d=None, env_source_override=None, depends=False):
         path = list()
         path.extend(const.HOST_ROOT_PATHS)
         for eapi in range(0, pkg.eapi+1):
-            eapi_helper_dir = osutils.pjoin(e_const.EBUILD_HELPERS_PATH, str(eapi))
+            eapi_helper_dir = pjoin(e_const.EBUILD_HELPERS_PATH, str(eapi))
             if os.path.exists(eapi_helper_dir):
                 path.append(eapi_helper_dir)
-        path.append(osutils.pjoin(e_const.EBUILD_HELPERS_PATH, "common"))
+        path.append(pjoin(e_const.EBUILD_HELPERS_PATH, "common"))
         path.extend(d.get("PATH", "").split(":"))
         d["PATH"] = ":".join(filter(None, path))
         d["PKGCORE_EAPI"] = pkg.eapi_obj.magic

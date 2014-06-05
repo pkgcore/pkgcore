@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 
+import glob
 import operator
 import os
-import sys
 import subprocess
+import sys
 
 from distutils import core, log, errors
-from distutils.command import (build,
-    build_scripts, install)
+from distutils.command import build, build_scripts, install
 from stat import ST_MODE
 
 from snakeoil import distutils_extensions as snk_distutils
@@ -455,12 +455,10 @@ core.setup(
     package_data={
         'pkgcore':
             ['ebuild/eapi-bash/%s' % (x,) for x in
-                ['filter-env', 'pinspect', '*.lib', 'eapi/*', '*.bash',
-                '*.list']
+                ['filter-env', 'pinspect', '*.lib', 'eapi/*', '*.bash', '*.list']
             ] +
-            ['ebuild/eapi-bash/helpers/%s' % (x,) for x in
-                ["internals/*", "common/*", "4/*", "5/*"]
-            ],
+            ['%s/*' % (x.partition('/')[2],) for x in
+             glob.glob('pkgcore/ebuild/eapi-bash/helpers/*')],
         },
     ext_modules=extensions, cmdclass=cmdclass, command_options=command_options,
     )

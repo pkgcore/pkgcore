@@ -288,7 +288,7 @@ def mk_simple_cache(config_root, tree_loc):
 
     if repo_config.cache_format == 'md5-dict':
         kls = 'pkgcore.cache.flat_hash.md5_cache'
-        tree_loc = pjoin(config_root, tree_loc.lstrip('/'))
+        tree_loc = pjoin(config_root, tree_loc.lstrip('/'), 'metadata', 'md5-cache')
     else:
         kls = 'pkgcore.cache.flat_hash.database'
         tree_loc = pjoin(config_root, 'var/cache/edb/dep', tree_loc.lstrip('/'))

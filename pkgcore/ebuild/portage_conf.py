@@ -20,7 +20,7 @@ from pkgcore.ebuild import const
 from pkgcore.ebuild.repo_objs import RepoConfig
 from pkgcore.pkgsets.glsa import SecurityUpgrades
 
-from snakeoil.osutils import normpath, abspath, listdir_files, pjoin, ensure_dirs
+from snakeoil.osutils import access, normpath, abspath, listdir_files, pjoin, ensure_dirs
 from snakeoil.compatibility import raise_from, IGNORED_EXCEPTIONS
 from snakeoil.demandload import demandload
 demandload(globals(),
@@ -281,11 +281,10 @@ def add_fetcher(config, conf_dict, distdir):
     config["fetcher"] = basics.AutoConfigSection(fetcher_dict)
 
 
-def mk_simple_cache(config_root, tree_loc, readonly=False):
+def mk_simple_cache(config_root, tree_loc):
     # TODO: probably should pull RepoConfig objects dynamically from the config
     # instead of regenerating them
     repo_config = RepoConfig(tree_loc)
-    readonly = readonly and 'yes' or 'no'
 
     if repo_config.cache_format == 'md5-dict':
         kls = 'pkgcore.cache.flat_hash.md5_cache'
@@ -294,10 +293,15 @@ def mk_simple_cache(config_root, tree_loc, readonly=False):
         kls = 'pkgcore.cache.flat_hash.database'
         tree_loc = pjoin(config_root, 'var/cache/edb/dep', tree_loc.lstrip('/'))
 
+    cache_parent_dir = tree_loc
+    while not os.path.exists(cache_parent_dir):
+        cache_parent_dir = normpath(abspath(pjoin(cache_parent_dir, os.pardir)))
+    readonly = (not access(cache_parent_dir, os.W_OK | os.X_OK))
+
     return basics.AutoConfigSection({
         'class': kls,
         'location': tree_loc,
-        'readonly': readonly,
+        'readonly': readonly
     })
 
 
@@ -433,7 +437,7 @@ def config_from_make_conf(location="/etc/", profile_override=None):
                 continue
             new_config["cache:%s/metadata/cache" % (portdir,)] = basics.AutoConfigSection({
                 'class': 'pkgcore.cache.' + cache_type,
-                'readonly': 'yes',
+                'readonly': True,
                 'location': portdir,
             })
             break

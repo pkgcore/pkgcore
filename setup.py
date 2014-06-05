@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-import glob
 import operator
 import os
 import subprocess
@@ -453,12 +452,8 @@ core.setup(
     author_email='ferringb@gmail.com',
     packages=packages,
     package_data={
-        'pkgcore':
-            ['ebuild/eapi-bash/%s' % (x,) for x in
-                ['filter-env', 'pinspect', '*.lib', 'eapi/*', '*.bash', '*.list']
-            ] +
-            ['%s/*' % (x.partition('/')[2],) for x in
-             glob.glob('pkgcore/ebuild/eapi-bash/helpers/*')],
+        'pkgcore': ['ebuild/eapi-bash/%s' % (x,) for x in
+                    _get_files('pkgcore/ebuild/eapi-bash')]
         },
     ext_modules=extensions, cmdclass=cmdclass, command_options=command_options,
     )

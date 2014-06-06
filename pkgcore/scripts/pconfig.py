@@ -11,13 +11,15 @@ __all__ = ("get_classes", "dump", "dump_main", "classes", "classes_main",
     "dump_uncollapsed", "dump_uncollapsed_main"
 )
 
-import traceback
-
 from pkgcore.config import errors, basics
 from pkgcore.plugin import get_plugins
 from pkgcore.util import commandline
 from pkgcore.ebuild import atom
 from snakeoil import currying
+from snakeoil.demandload import demandload
+demandload(globals(),
+    'traceback',
+)
 
 def dump_section(config, out):
     out.first_prefix.append('    ')

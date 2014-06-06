@@ -56,9 +56,9 @@ from snakeoil.demandload import demandload
 demandload(globals(),
     'pkgcore.log:logger',
     'snakeoil:fileutils',
+    'traceback',
 )
 
-import traceback
 
 def _single_thread_allowed(functor):
     def _inner(*args, **kwds):

@@ -67,10 +67,9 @@ __environ_list_vars() {
 
 __filter_env() {
 	local opts
-	[[ $PKGCORE_DEBUG -ge 3 ]] && opts="$opts --debug"
+	[[ ${PKGCORE_DEBUG} -ge 3 ]] && opts="--debug"
 	PYTHONPATH="${PKGCORE_PYTHONPATH}" "${PKGCORE_PYTHON_BINARY}" \
-	"${PKGCORE_BIN_PATH}/filter-env" "$@" || \
-		die "filter-env invocation failed"
+		$(type -P filter-env) ${opts} "$@" || die "filter-env invocation failed"
 }
 
 # selectively saves the environ- specifically removes things that have been marked to not be exported.

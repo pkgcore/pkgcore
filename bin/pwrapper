@@ -7,6 +7,7 @@ checkout or unpacked tarball. It adds the parent of that "bin" dir to
 sys.path unconditionally.
 """
 
+import os
 import os.path as osp
 import sys
 
@@ -25,6 +26,7 @@ except ImportError:
     sys.exit(1)
 
 if __name__ == '__main__':
+    os.environ["PKGCORE_SCRIPT_PATH"] = osp.dirname(osp.abspath(__file__))
     name = osp.basename(sys.argv[0]).replace("-", "_")
     script = modules.load_module('pkgcore.scripts.%s' % (name,))
     subcommands = getattr(script, 'argparser', None)

@@ -283,6 +283,10 @@ class EbuildProcessor(object):
         if int(os.environ.get('PKGCORE_PERF_DEBUG', 1)) > 1:
             env["PKGCORE_PERF_DEBUG"] = os.environ['PKGCORE_PERF_DEBUG']
 
+        # append script dir to PATH for git repo or unpacked tarball
+        if "PKGCORE_SCRIPT_PATH" in os.environ:
+            env["PATH"] = os.environ["PATH"] + os.pathsep + os.environ["PKGCORE_SCRIPT_PATH"]
+
         args = []
         if sandbox:
             if not pkgcore.spawn.is_sandbox_capable():
@@ -899,6 +903,8 @@ def expected_ebuild_env(pkg, d=None, env_source_override=None, depends=False):
     if not depends:
         path = list()
         path.extend(const.HOST_ROOT_PATHS)
+        if "PKGCORE_SCRIPT_PATH" in os.environ:
+            path.append(os.environ["PKGCORE_SCRIPT_PATH"])
         for eapi in range(0, pkg.eapi+1):
             eapi_helper_dir = pjoin(e_const.EBUILD_HELPERS_PATH, str(eapi))
             if os.path.exists(eapi_helper_dir):
@@ -916,4 +922,3 @@ def expected_ebuild_env(pkg, d=None, env_source_override=None, depends=False):
         if val is not None:
             d[key] = val
     return d
-

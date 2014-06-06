@@ -40,7 +40,11 @@ inactive_ebp_list = []
 active_ebp_list = []
 
 import contextlib
-import pkgcore.spawn, os, signal, errno
+import errno
+import os
+import signal
+
+import pkgcore.spawn
 from pkgcore import const, os_data
 from pkgcore.ebuild import const as e_const
 

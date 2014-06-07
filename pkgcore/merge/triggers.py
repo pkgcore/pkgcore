@@ -162,8 +162,7 @@ class ThreadedTrigger(base):
                 return
             raise
         except Exception as e:
-            observer.error("exception occurred in thread: %s",
-                e)
+            observer.error("exception occurred in thread: %s", e)
 
     def threading_get_args(self, engine, *csets):
         return ()
@@ -282,8 +281,7 @@ class mtime_watcher(object):
             locations = self.locations
 
         for x in self._scan_mtimes(locations, stat_func):
-            if x not in self.saved_mtimes or \
-                self.saved_mtimes[x].mtime != x.mtime:
+            if x not in self.saved_mtimes or self.saved_mtimes[x].mtime != x.mtime:
                 yield x
 
 
@@ -298,8 +296,7 @@ class ldconfig(base):
     _engine_types = None
     _hooks = ('pre_merge', 'post_merge', 'pre_unmerge', 'post_unmerge')
 
-    default_ld_path = ['usr/lib', 'usr/lib64', 'usr/lib32', 'lib',
-        'lib64', 'lib32']
+    default_ld_path = ['usr/lib', 'usr/lib64', 'usr/lib32', 'lib', 'lib64', 'lib32']
 
     pkgcore_config_type = base.pkgcore_config_type.clone(
         types={'ld_so_conf_path':'str'})
@@ -473,12 +470,14 @@ class BaseSystemUnmergeProtection(base):
 
     suppress_exceptions = False
 
-    _preserve_sequence = ('/usr', '/usr/lib', '/usr/lib64', '/usr/lib32',
+    _preserve_sequence = (
+        '/usr', '/usr/lib', '/usr/lib64', '/usr/lib32',
         '/usr/bin', '/usr/sbin', '/bin', '/sbin', '/lib', '/lib32', '/lib64',
-        '/etc', '/var', '/home', '/root')
+        '/etc', '/var', '/home', '/root',
+    )
 
-    pkgcore_config_type = base.pkgcore_config_type.clone(types=
-        {"preserve_sequence":"list"})
+    pkgcore_config_type = base.pkgcore_config_type.clone(
+        types={"preserve_sequence":"list"})
 
     def __init__(self, preserve_sequence=None):
         if preserve_sequence is None:
@@ -506,8 +505,7 @@ class fix_uid_perms(base):
         good = self.good_uid
         bad = self.bad_uid
 
-        cset.update(x.change_attributes(uid=good)
-            for x in cset if x.uid == bad)
+        cset.update(x.change_attributes(uid=good) for x in cset if x.uid == bad)
 
 
 class fix_gid_perms(base):
@@ -540,7 +538,7 @@ class fix_set_bits(base):
         reporter = engine.observer
         # if s(uid|gid) *and* world writable...
         l = [x for x in cset.iterlinks(True) if
-            (x.mode & 06000) and (x.mode & 0002)]
+             (x.mode & 06000) and (x.mode & 0002)]
 
         if reporter is not None:
             for x in l:
@@ -616,8 +614,7 @@ class CommonDirectoryModes(base):
         'bin', 'sbin', 'local')]
     directories.extend(pjoin('/usr/share', x) for x in ('.', 'man', 'info'))
     directories.extend('/usr/share/man/man%i' % x for x in xrange(1, 10))
-    directories.extend(['/lib', '/lib32', '/lib64', '/etc', '/bin', '/sbin',
-        '/var'])
+    directories.extend(['/lib', '/lib32', '/lib64', '/etc', '/bin', '/sbin', '/var'])
     directories = frozenset(map(normpath, directories))
     if not compatibility.is_py3k:
         del x
@@ -675,8 +672,7 @@ class SavePkg(base):
     _copy_source = 'new'
 
     pkgcore_config_type = base.pkgcore_config_type.clone(
-        types={'target_repo':'ref:repo','pristine':'bool',
-            'skip_if_source':'bool'},
+        types={'target_repo':'ref:repo','pristine':'bool', 'skip_if_source':'bool'},
         required=['target_repo'])
 
     def __init__(self, target_repo, pristine=True, skip_if_source=True):
@@ -708,14 +704,12 @@ class SavePkgIfInPkgset(SavePkg):
 
     d = SavePkg.pkgcore_config_type.types.copy()
     d['pkgset'] = 'ref:pkgset'
-    pkgcore_config_type = SavePkg.pkgcore_config_type.clone(types=d,
-        required=['target_repo', 'pkgset'])
+    pkgcore_config_type = SavePkg.pkgcore_config_type.clone(
+        types=d, required=['target_repo', 'pkgset'])
     del d
 
-    def __init__(self, target_repo, pkgset, pristine=True,
-                 skip_if_source=True):
-        SavePkg.__init__(self, target_repo, pristine=pristine,
-            skip_if_source=skip_if_source)
+    def __init__(self, target_repo, pkgset, pristine=True, skip_if_source=True):
+        SavePkg.__init__(self, target_repo, pristine=pristine, skip_if_source=skip_if_source)
         self.pkgset = pkgset
 
     def trigger(self, engine, cset):
@@ -769,8 +763,7 @@ class BinaryDebug(ThreadedTrigger):
                  extra_strip_flags=(), debug_storage='/usr/lib/debug/', compress=False):
         self.mode = mode = mode.lower()
         if mode not in ('split', 'strip'):
-            raise TypeError("mode %r is unknown; must be either split "
-                "or strip")
+            raise TypeError("mode %r is unknown; must be either split or strip")
         self.thread_trigger = getattr(self, '_%s' % mode)
         self.threading_setup = getattr(self, '_%s_setup' % mode)
         self.threading_finish = getattr(self, '_%s_finish' % mode)
@@ -800,8 +793,7 @@ class BinaryDebug(ThreadedTrigger):
             args = ['-g']
         if not quiet:
             reporter.info("stripping: %s %s" % (fs_obj, ' '.join(args)))
-        ret = spawn.spawn([self.strip_binary] + args +
-            [fs_obj.data.path])
+        ret = spawn.spawn([self.strip_binary] + args + [fs_obj.data.path])
         if ret != 0:
             reporter.warn("stripping %s, type %s failed" % (fs_obj, ftype))
         # need to update chksums here...
@@ -852,8 +844,7 @@ class BinaryDebug(ThreadedTrigger):
                     skip = True
                     break
         if skip:
-            engine.observer.info("splitdebug disabled for %s, "
-                "skipping splitdebug" % engine.new)
+            engine.observer.info("splitdebug disabled for %s, skipping splitdebug" % engine.new)
             return False
 
         self._initialize_paths(engine.new)
@@ -878,17 +869,14 @@ class BinaryDebug(ThreadedTrigger):
             if debug_loc in cset:
                 continue
             fpath = fs_obj.data.path
-            debug_ondisk = pjoin(os.path.dirname(fpath),
-                os.path.basename(fpath) + ".debug")
+            debug_ondisk = pjoin(os.path.dirname(fpath), os.path.basename(fpath) + ".debug")
 
             # note that we tell the UI the final pathway- not the intermediate one.
-            observer.info("splitdebug'ing %s into %s" %
-                (fs_obj.location, debug_loc))
+            observer.info("splitdebug'ing %s into %s" % (fs_obj.location, debug_loc))
 
             ret = spawn.spawn(objcopy_args + [fpath, debug_ondisk])
             if ret != 0:
-                observer.warn("splitdebug'ing %s failed w/ exitcode %s" %
-                    (fs_obj.location, ret))
+                observer.warn("splitdebug'ing %s failed w/ exitcode %s" % (fs_obj.location, ret))
                 continue
 
             # note that the given pathway to the debug file /must/ be relative to ${D};
@@ -912,14 +900,11 @@ class BinaryDebug(ThreadedTrigger):
             self._modified.add(debug_obj)
 
             for fs_obj in fs_objs[1:]:
-                debug_loc = pjoin(debug_store,
-                    fs_obj.location.lstrip('/') + ".debug")
+                debug_loc = pjoin(debug_store, fs_obj.location.lstrip('/') + ".debug")
                 linked_debug_obj = debug_obj.change_attributes(location=debug_loc)
-                observer.info("splitdebug hardlinking %s to %s" %
-                    (debug_obj.location, debug_loc))
+                observer.info("splitdebug hardlinking %s to %s" % (debug_obj.location, debug_loc))
                 self._modified.add(linked_debug_obj)
-                self._modified.add(stripped_fsobj.change_attributes(
-                    location=fs_obj.location))
+                self._modified.add(stripped_fsobj.change_attributes(location=fs_obj.location))
 
     def _split_finish(self, engine, cset):
         if not hasattr(self, '_modified'):
@@ -931,4 +916,3 @@ class BinaryDebug(ThreadedTrigger):
         self._modified.difference_update(cset)
         cset.update(self._modified)
         del self._modified
-

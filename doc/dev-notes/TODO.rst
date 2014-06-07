@@ -98,8 +98,6 @@ Rough TODO
 - allow pebuild to be passed ebuild file paths in addition to its current atom
   handling, this should work similar to how portage's ebuild command operates
 
-- support FEATURES=protect-owned
-
 - support repos.conf (SYNC is now deprecated)
 
 - make profile defaults (LDFLAGS) override global settings from

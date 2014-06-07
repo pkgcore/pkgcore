@@ -5,6 +5,8 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 
 pkgcore trunk:
 
+* Add support for FEATURES=protect-owned (see make.conf man page for details).
+
 * Fix granular license filtering support via /etc/portage/package.license.
 
 * Add `pinspect query get_profiles` support.

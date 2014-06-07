@@ -7,8 +7,8 @@ gentoo/ebuild specific triggers
 
 __all__ = ("collapse_envd", "string_collapse_envd", "env_update",
     "ConfigProtectInstall", "ConfigProtectUninstall", "preinst_contents_reset",
-    "collision_protect", "install_into_symdir_protect", "InfoRegen", "SFPerms",
-    "FixImageSymlinks", "generate_triggers")
+    "CollisionProtect", "ProtectOwned", "install_into_symdir_protect", "InfoRegen",
+    "SFPerms", "FixImageSymlinks", "generate_triggers")
 
 
 import os, errno
@@ -374,7 +374,8 @@ class preinst_contents_reset(triggers.base):
         cset.update(cs)
 
 
-class collision_protect(triggers.base):
+class FileCollision(triggers.base):
+    """Generic livefs file collision trigger."""
 
     required_csets = {
         const.INSTALL_MODE:('install', 'install_existing'),
@@ -391,6 +392,13 @@ class collision_protect(triggers.base):
         self.extra_protects = extra_protects
         self.extra_disables = extra_disables
         self.extra_ignores = extra_ignores
+
+    def collision(self, colliding):
+        """Handle livefs file collisions.
+
+        Must be overridden in derived trigger classes.
+        """
+        raise NotImplementedError
 
     def trigger(self, engine, install, existing, old_cset=()):
         if not existing:
@@ -418,10 +426,34 @@ class collision_protect(triggers.base):
         # millions of references being kept in memory for heavy ignore matches.
         del ignores, protected_filter, ignore_filter
         colliding.difference_update(old_cset)
+
         if colliding:
-            raise errors.BlockModification(self,
-                "collision-protect: file(s) already exist: ( %s )" %
-                ', '.join(repr(x) for x in sorted(colliding)))
+            self.collision(colliding)
+
+
+class CollisionProtect(FileCollision):
+
+    def collision(self, colliding):
+        raise errors.BlockModification(self,
+            "collision-protect: file(s) already exist: ( %s )" %
+            ', '.join(repr(x) for x in sorted(colliding)))
+
+
+class ProtectOwned(FileCollision):
+
+    def __init__(self, vdb, *args):
+        super(ProtectOwned, self).__init__(*args)
+        self.vdb = vdb
+
+    def collision(self, colliding):
+        real_pkgs = (pkg for repo in self.vdb for pkg in repo if pkg.package_is_real)
+        for pkg in real_pkgs:
+            if pkg.contents.intersection(colliding):
+                raise errors.BlockModification(self,
+                    "protect-owned: file(s) are owned by '%s': ( %s )" %
+                    (pkg.cpvstr, ', '.join(repr(x) for x in sorted(colliding))))
+
+        # TODO: output a file override warning here
 
 
 class install_into_symdir_protect(triggers.base):
@@ -578,9 +610,14 @@ def generate_triggers(domain):
     yield ConfigProtectUninstall()
 
     features = domain_settings.get("FEATURES", ())
+
     if "collision-protect" in features:
-        yield collision_protect(d["CONFIG_PROTECT"], d["CONFIG_PROTECT_MASK"],
-                                d["COLLISION_IGNORE"])
+        yield CollisionProtect(d["CONFIG_PROTECT"], d["CONFIG_PROTECT_MASK"],
+                               d["COLLISION_IGNORE"])
+
+    if "protect-owned" in features and not "collision-protect" in features:
+        yield ProtectOwned(domain.vdb, d["CONFIG_PROTECT"],
+                           d["CONFIG_PROTECT_MASK"], d["COLLISION_IGNORE"])
 
     if "multilib-strict" in features:
         yield register_multilib_strict_trigger(domain_settings)

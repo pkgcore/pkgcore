@@ -447,11 +447,21 @@ class ProtectOwned(FileCollision):
 
     def collision(self, colliding):
         real_pkgs = (pkg for repo in self.vdb for pkg in repo if pkg.package_is_real)
+        collisions = {}
+
+        # TODO: worth parallelizing this vdb scanning?
         for pkg in real_pkgs:
-            if pkg.contents.intersection(colliding):
-                raise errors.BlockModification(self,
-                    "protect-owned: file(s) are owned by '%s': ( %s )" %
-                    (pkg.cpvstr, ', '.join(repr(x) for x in sorted(colliding))))
+            pkg_file_collisions = pkg.contents.intersection(colliding)
+            if pkg_file_collisions:
+                collisions[pkg.cpvstr] = pkg_file_collisions
+
+        if collisions:
+            pkg_collisions = [
+                "( %s ) owned by '%s'" %
+                (', '.join(repr(x) for x in sorted(collisions[pkg_cpvstr])), pkg_cpvstr)
+                for pkg_cpvstr in sorted(collisions.iterkeys())]
+            raise errors.BlockModification(self,
+                "protect-owned: %s" % (', '.join(pkg_collisions),))
 
         # TODO: output a file override warning here
 

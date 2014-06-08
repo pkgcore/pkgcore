@@ -377,6 +377,7 @@ class RepoConfig(syncable.tree):
             masters = tuple(iter_stable_unique(masters.split()))
         sf(self, 'masters', masters)
         sf(self, 'aliases', tuple(iter_stable_unique(data.get('aliases', '').split())))
+        sf(self, 'eapis_deprecated', tuple(iter_stable_unique(data.get('eapis-deprecated', '').split())))
 
         v = set(data.get('cache-formats', 'pms').lower().split())
         if not v.intersection(['pms', 'md5-dict']):

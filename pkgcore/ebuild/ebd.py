@@ -883,8 +883,8 @@ class ebuild_mixin(object):
         try:
             logger.debug("running ebuild pkg_pretend sanity check for %s", pkg.cpvstr)
             start = time.time()
-            ret = run_generic_phase(pkg, "pretend", env, True, True, False,
-                extra_handlers=commands)
+            ret = run_generic_phase(pkg, "pretend", env, userpriv=True, sandbox=True,
+                                    fakeroot=False, extra_handlers=commands)
             logger.debug("pkg_pretend sanity check for %s took %2.2f seconds",
                 pkg.cpvstr, time.time() - start)
             return ret

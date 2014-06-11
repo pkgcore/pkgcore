@@ -26,7 +26,7 @@ def comma_separated_containment(attr, values_kls=frozenset, token_kls=str):
     """Helper for parsing comma-separated strings to a ContainmentMatch.
 
     :param attr: name of the attribute.
-    :returns: a parse function: takes a string of comma-separated values,
+    :return: a parse function: takes a string of comma-separated values,
         returns a :obj:`packages.PackageRestriction` matching packages that
         have any of those values in the attribute passed to this function.
     """

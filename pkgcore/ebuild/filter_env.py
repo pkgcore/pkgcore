@@ -62,7 +62,7 @@ def build_regex_string(tokens, invert=False):
 FUNC_LEN = len('function')
 
 def is_function(buff, pos):
-    """@returns: start, end, pos or None, None, None tuple."""
+    """:return: start, end, pos or None, None, None tuple."""
     isspace = str.isspace
     try:
         while buff[pos] in ' \t':
@@ -104,7 +104,7 @@ def is_function(buff, pos):
 
 
 def is_envvar(buff, pos):
-    """@returns: start, end, pos or None, None, None tuple."""
+    """:return: start, end, pos or None, None, None tuple."""
     try:
         while buff[pos] in ' \t':
             pos += 1

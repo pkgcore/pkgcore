@@ -4,30 +4,30 @@
 # Distributed under the terms of the GNU General Public License v2
 
 shopt -s extdebug
-source "${PKGCORE_BIN_PATH}/exit-handling.lib" || { echo "failed loading libs"; exit -127; }
+source "${PKGCORE_BIN_PATH}"/exit-handling.lib || { echo "failed loading libs"; exit -127; }
 
 if ! ${PKGCORE_PREFIX_SUPPORT:=false}; then
-	ED="${D}"
-elif [[ "${ED:-unset}" == "unset" ]]; then
+	ED=${D}
+elif [[ ${ED:-unset} == "unset" ]]; then
 	echo "The variable ED is missing from the environment, but is required for prefix mode; failing."
 	exit -1
 fi
 
-if [[ -z "$1" ]]; then
-	z="${ED}usr/share/info"
+if [[ -z $1 ]]; then
+	z=${ED}usr/share/info
 else
-	if [[ -d "${ED}$1/share/info" ]]; then
-		z="${ED}$1/share/info"
+	if [[ -d ${ED}$1/share/info ]]; then
+		z=${ED}$1/share/info
 	else
-		z="${ED}$1/info"
+		z=${ED}$1/info
 	fi
 fi
 
-[[ ! -d "${z}" ]] && exit 0
+[[ ! -d ${z} ]] && exit 0
 
 rm -f "${z}"/dir{,.old}{,.info{,.gz,.bz2,.xz,.Z}}
 
-if [[ -z "${PORTAGE_COMPRESS_SUFFIX}" ]]; then
+if [[ -z ${PORTAGE_COMPRESS_SUFFIX} ]]; then
 	case ${PORTAGE_COMPRESS} in
 		gzip)  suffix="gz";;
 		bzip2) suffix="bz2";;
@@ -39,27 +39,27 @@ fi
 
 echo "info: ${PORTAGE_COMPRESS} ${PORTAGE_COMPRESS_FLAGS}"
 
-for x in `find "${z}"/ \( -type f -or -type l \) -maxdepth 1 -mindepth 1 2>/dev/null` ; do
-	if [[ -L "${x}" ]]; then
+for x in $(find "${z}"/ \( -type f -or -type l \) -maxdepth 1 -mindepth 1 2>/dev/null); do
+	if [[ -L ${x} ]]; then
 		# Symlink ...
 		mylink=${x}
 		linkto=$(readlink "${x}")
 
-		if [[ "${linkto##*.}" != "${suffix}" ]]; then
-			linkto="${linkto}.${suffix}"
+		if [[ ${linkto##*.} != ${suffix} ]]; then
+			linkto=${linkto}.${suffix}
 		fi
-		if [[ "${mylink##*.}" != "${suffix}" ]]; then
-			mylink="${mylink}.${suffix}"
+		if [[ ${mylink##*.} != ${suffix} ]]; then
+			mylink=${mylink}.${suffix}
 		fi
 
 		echo "   fixing GNU info symlink: ${mylink##*/}"
 		ln -snf "${linkto}" "${mylink}"
-		if [[ "${x}" != "${mylink}" ]]; then
+		if [[ ${x} != ${mylink} ]]; then
 			echo "   removing old symlink: ${x##*/}"
 			rm -f "${x}"
 		fi
 	else
-		if [[ "${x##*.}" != "${suffix}" ]]; then
+		if [[ ${x##*.} != ${suffix} ]]; then
 			echo "   compressing GNU info page: ${x##*/}"
 			"${PORTAGE_COMPRESS}" ${PORTAGE_COMPRESS_FLAGS} -f "${x}"
 		fi

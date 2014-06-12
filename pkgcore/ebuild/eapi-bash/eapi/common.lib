@@ -1,10 +1,8 @@
 # Copyright: 2011-2012 Brian Harring <ferringb@gmail.com>
 # license GPL2/BSD 3
 
-use()
-{
-	local u="$1"
-	local found=0
+use() {
+	local u=$1 found=0
 
 	# invert return values for '!flag' and strip prefix for EAPI 5 check
 	if [[ ${u:0:1} == "!" ]]; then
@@ -21,30 +19,27 @@ use()
 	# Ensure USE is split on normal IFS.
 	__shopt_push -f
 	local IFS=$' \t\n' ret
-	if __safe_has ${u} ${USE}; then
+	if __safe_has "${u}" ${USE}; then
 		ret=${found}
 	else
-		ret=$((!found))
+		ret=$(( !found ))
 	fi
 	__shopt_pop
 	return "${ret}"
 }
 
-usev()
-{
+usev() {
 	if use "$1"; then
 		echo "$1"
 	fi
 }
 
-useq()
-{
+useq() {
 	use "$@"
 }
 
-use_with()
-{
-	if [[ -z "$1" ]]; then
+use_with() {
+	if [[ -z $1 ]]; then
 		echo "!!! use_with() called without a parameter." >&2
 		echo "!!! use_with <USEFLAG> [<flagname> [value]]" >&2
 		return
@@ -57,9 +52,9 @@ use_with()
 		UW_SUFFIX=${3+=$3}
 	fi
 
-	local UWORD="$2"
-	if [[ -z "${UWORD}" ]]; then
-		UWORD="$1"
+	local UWORD=$2
+	if [[ -z ${UWORD} ]]; then
+		UWORD=$1
 	fi
 
 	if use $1; then
@@ -70,9 +65,8 @@ use_with()
 	return 1
 }
 
-use_enable()
-{
-	if [[ -z "$1" ]]; then
+use_enable() {
+	if [[ -z $1 ]]; then
 		echo "!!! use_enable() called without a parameter." >&2
 		echo "!!! use_enable <USEFLAG> [<flagname> [value]]" >&2
 		return
@@ -80,14 +74,14 @@ use_enable()
 
 	local UE_SUFFIX=""
 	if __safe_has "${EAPI:-0}" 0 1 2 3; then
-		UE_SUFFIX="${3:+=$3}"
+		UE_SUFFIX=${3:+=$3}
 	else
-		UE_SUFFIX="${3+=$3}"
+		UE_SUFFIX=${3+=$3}
 	fi
 
-	local UWORD="$2"
-	if [[ -z "${UWORD}" ]]; then
-		UWORD="$1"
+	local UWORD=$2
+	if [[ -z ${UWORD} ]]; then
+		UWORD=$1
 	fi
 
 	if use "$1"; then
@@ -98,12 +92,11 @@ use_enable()
 	return 1
 }
 
-econf()
-{
+econf() {
 	local ret
-	ECONF_SOURCE="${ECONF_SOURCE:-.}"
-	if [[ ! -x "${ECONF_SOURCE}/configure" ]]; then
-		[[ -f "${ECONF_SOURCE}/configure" ]] && die "configure script isn't executable"
+	ECONF_SOURCE=${ECONF_SOURCE:-.}
+	if [[ ! -x ${ECONF_SOURCE}/configure ]]; then
+		[[ -f ${ECONF_SOURCE}/configure ]] && die "configure script isn't executable"
 		die "no configure script found"
 	fi
 
@@ -112,7 +105,7 @@ econf()
 		find "${WORKDIR}" -type f \( -name config.guess -o -name config.sub \) | \
 			while read x; do
 			echo "econf: replacing ${x} with /usr/share/gnuconfig/${x##*/}"
-			cp -f "/usr/share/gnuconfig/${x##*/}" "$x"
+			cp -f "/usr/share/gnuconfig/${x##*/}" "${x}"
 		done
 	fi
 
@@ -120,31 +113,31 @@ econf()
 	# if the ebuild passes in --libdir, they're responsible for the conf_libdir fun.
 
 	LIBDIR_VAR="LIBDIR_${ABI}"
-	if [[ -n "${ABI}" ]] && [[ -n "${!LIBDIR_VAR}" ]]; then
-		local CONF_LIBDIR="${!LIBDIR_VAR}"
+	if [[ -n ${ABI} ]] && [[ -n ${!LIBDIR_VAR} ]]; then
+		local CONF_LIBDIR=${!LIBDIR_VAR}
 	fi
 	unset LIBDIR_VAR
-	if [[ -n "${CONF_LIBDIR}" ]] && [[ "${*/--libdir}" == "$*" ]]; then
-		if [[ "${*/--exec-prefix}" != "$*" ]]; then
-			local args="$(echo $*)"
-			local -a pref=($(echo ${args/*--exec-prefix[= ]}))
+	if [[ -n ${CONF_LIBDIR} ]] && [[ ${*/--libdir} == $* ]]; then
+		if [[ ${*/--exec-prefix} != $* ]]; then
+			local args=$(echo $*)
+			local -a pref=( $(echo ${args/*--exec-prefix[= ]}) )
 			CONF_PREFIX=${pref/--*}
-			[[ "${CONF_PREFIX:0:1}" != "/" ]] && CONF_PREFIX="/${CONF_PREFIX}"
-		elif [[ "${*/--prefix}" != "$*" ]]; then
-			local args="$(echo $*)"
-			local -a pref=($(echo ${args/*--prefix[= ]}))
+			[[ ${CONF_PREFIX:0:1} != "/" ]] && CONF_PREFIX="/${CONF_PREFIX}"
+		elif [[ ${*/--prefix} != $* ]]; then
+			local args=$(echo $*)
+			local -a pref=( $(echo ${args/*--prefix[= ]}) )
 			CONF_PREFIX=${pref/--*}
-			[[ "${CONF_PREFIX:0:1}" != "/" ]] && CONF_PREFIX="/${CONF_PREFIX}"
+			[[ ${CONF_PREFIX:0:1} != "/" ]] && CONF_PREFIX="/${CONF_PREFIX}"
 		else
-			CONF_PREFIX="/usr"
+			CONF_PREFIX=/usr
 		fi
 		export CONF_PREFIX
-		[[ "${CONF_LIBDIR:0:1}" != "/" ]] && CONF_LIBDIR="/${CONF_LIBDIR}"
+		[[ ${CONF_LIBDIR:0:1} != "/" ]] && CONF_LIBDIR="/${CONF_LIBDIR}"
 
-		local CONF_LIBDIR_RESULT="${CONF_PREFIX}${CONF_LIBDIR}"
+		local CONF_LIBDIR_RESULT=${CONF_PREFIX}${CONF_LIBDIR}
 		for X in 1 2 3; do
 			# The escaping is weird. It will break if you escape the last one.
-			CONF_LIBDIR_RESULT="${CONF_LIBDIR_RESULT//\/\///}"
+			CONF_LIBDIR_RESULT=${CONF_LIBDIR_RESULT//\/\///}
 		done
 		unset X
 
@@ -154,17 +147,17 @@ econf()
 
 	if ${PKGCORE_ECONF_DISABLE_DEPENDENCY_TRACKING} || ${PKGCORE_ECONF_DISABLE_SILENT_RULES}; then
 		local help_text=$("${CONF_SOURCE}/configure" --help 2> /dev/null)
-		local extra_args=( )
+		local extra_args=()
 
 		# EAPI4 and up.
 		if ${PKGCORE_ECONF_DISABLE_DEPENDENCY_TRACKING} && \
-				[[ "${help_text}" =~ "--disable-dependency-tracking" ]]; then
+				[[ ${help_text} =~ "--disable-dependency-tracking" ]]; then
 			extra_args+=( --disable-dependency-tracking )
 		fi
 
 		# EAPI5 and up.
 		if ${PKGCORE_ECONF_DISABLE_SILENT_RULES} && \
-				[[ "${help_text}" =~ "--disable-silent-rules" ]]; then
+				[[ ${help_text} =~ "--disable-silent-rules" ]]; then
 			extra_args+=( --disable-silent-rules )
 		fi
 		set -- "${extra_args[@]}" "$@"
@@ -201,7 +194,7 @@ econf()
 }
 
 # debug-print() gets called from many places with verbose status information useful
-# for tracking down problems. The output is in $T/eclass-debug.log.
+# for tracking down problems. The output is in ${T}/eclass-debug.log.
 # You can set ECLASS_DEBUG_OUTPUT to redirect the output somewhere else as well.
 # The special "on" setting echoes the information, mixing it with the rest of the
 # emerge output.
@@ -209,57 +202,53 @@ econf()
 # set a new default in make.*. Here the default is "" or unset.
 
 # in the future might use e* from /etc/init.d/functions.sh if i feel like it
-debug-print()
-{
+debug-print() {
 	if __safe_has ${EBUILD_PHASE} depend nofetch config info postinst; then
 		return
 	fi
-	# if $T isn't defined, we're in dep calculation mode and
+	# if ${T} isn't defined, we're in dep calculation mode and
 	# shouldn't do anything
-	[[ -z "$T" ]] && return 0
+	[[ -z ${T} ]] && return 0
 
 	local _item
 	for _item in "$@"; do
 		# extra user-configurable targets
-		if [[ "$ECLASS_DEBUG_OUTPUT" == "on" ]]; then
+		if [[ ${ECLASS_DEBUG_OUTPUT} == "on" ]]; then
 			echo "debug: ${_item}"
-		elif [[ -n "$ECLASS_DEBUG_OUTPUT" ]]; then
-			echo "debug: ${_item}" >> $ECLASS_DEBUG_OUTPUT
+		elif [[ -n ${ECLASS_DEBUG_OUTPUT} ]]; then
+			echo "debug: ${_item}" >> "${ECLASS_DEBUG_OUTPUT}"
 		fi
 
 		# default target
-		echo "${_item}" >> "${T}/eclass-debug.log"
-		chmod g+w "${T}/eclass-debug.log" &>/dev/null
+		echo "${_item}" >> "${T}"/eclass-debug.log
+		chmod g+w "${T}"/eclass-debug.log &> /dev/null
 	done
 	# let the portage user own/write to this file
 }
 
 # The following 2 functions are debug-print() wrappers
 
-debug-print-function()
-{
+debug-print-function() {
 	str="$1: entering function"
 	shift
-	debug-print "$str, parameters: $*"
+	debug-print "${str}, parameters: $*"
 }
 
-debug-print-section()
-{
+debug-print-section() {
 	debug-print "now in section $*"
 }
 
-einstall()
-{
-	${PKGCORE_PREFIX_SUPPORT} || local ED="${D}"
+einstall() {
+	${PKGCORE_PREFIX_SUPPORT} || local ED=${D}
 	# CONF_PREFIX is only set if they didn't pass in libdir above
-	local LOCAL_EXTRA_EINSTALL="${EXTRA_EINSTALL}"
+	local LOCAL_EXTRA_EINSTALL=${EXTRA_EINSTALL}
 	local LIBDIR_VAR="LIBDIR_${ABI}"
-	if [[ -n "${ABI}" ]] && [[ -n "${!LIBDIR_VAR}" ]]; then
-		CONF_LIBDIR="${!LIBDIR_VAR}"
+	if [[ -n ${ABI} ]] && [[ -n ${!LIBDIR_VAR} ]]; then
+		CONF_LIBDIR=${!LIBDIR_VAR}
 	fi
 	unset LIBDIR_VAR
-	if [[ -n "${CONF_LIBDIR}" ]] && [[ "${CONF_PREFIX:-unset}" != "unset" ]]; then
-		EI_DESTLIBDIR="${ED%%/}/${CONF_PREFIX%%/}/${CONF_LIBDIR%%/}/"
+	if [[ -n ${CONF_LIBDIR} ]] && [[ ${CONF_PREFIX:-unset} != "unset" ]]; then
+		EI_DESTLIBDIR=${ED%%/}/${CONF_PREFIX%%/}/${CONF_LIBDIR%%/}/
 		LOCAL_EXTRA_EINSTALL="${LOCAL_EXTRA_EINSTALL} libdir=${EI_DESTLIBDIR}"
 		unset EI_DESTLIBDIR
 	fi
@@ -279,12 +268,11 @@ einstall()
 		sysconfdir="${ED}/etc" \
 		${LOCAL_EXTRA_EINSTALL} \
 		"$@" install
-	[[ "$PKGCORE_DEBUG" != 0 ]] && "$@" -n
+	[[ ${PKGCORE_DEBUG} != 0 ]] && "$@" -n
 	"$@" || die "einstall failed"
 }
 
-__phase_common_pkg_nofetch()
-{
+__phase_common_pkg_nofetch() {
 	[[ -z ${SRC_URI} ]] && return
 
 	echo "!!! The following are listed in SRC_URI for ${PN}:"
@@ -296,20 +284,18 @@ __phase_common_pkg_nofetch()
 	__shopt_pop
 }
 
-__phase_common_src_unpack()
-{
+__phase_common_src_unpack() {
 	if [[ -n ${A} ]]; then
 		unpack ${A}
 	fi
 }
 
-__phase_common_src_compile()
-{
+__phase_common_src_compile() {
 	# only eapi 0/1 invoke configure...
 	if __safe_has "${EAPI:-0}" 0 1; then
-		if [[ "${EAPI:-0}" == 0 ]]; then
+		if [[ ${EAPI:-0} == 0 ]]; then
 			[[ -x ./configure ]] && econf
-		elif [[ -x "${ECONF_SOURCE:-.}/configure" ]]; then
+		elif [[ -x ${ECONF_SOURCE:-.}/configure ]]; then
 			econf
 		fi
 	fi
@@ -318,8 +304,7 @@ __phase_common_src_compile()
 	fi
 }
 
-__phase_common_src_test()
-{
+__phase_common_src_test() {
 	addpredict /
 	local extra_args=( ${EXTRA_EMAKE} )
 	${PKGCORE_ALLOW_PARALLEL_SRC_TEST} || extra_args+=( -j1 )
@@ -331,66 +316,61 @@ __phase_common_src_test()
 	else
 		echo ">>> Test phase [none]: ${CATEGORY}/${PF}"
 	fi
-	SANDBOX_PREDICT="${SANDBOX_PREDICT%:/}"
+	SANDBOX_PREDICT=${SANDBOX_PREDICT%:/}
 }
 
-into()
-{
-	${PKGCORE_PREFIX_SUPPORT} || local ED="${D}"
+into() {
+	${PKGCORE_PREFIX_SUPPORT} || local ED=${D}
 	if [[ $1 == "/" ]]; then
 		export DESTTREE=""
 	else
-		export DESTTREE="$1"
-		if [[ ! -d "${ED}${DESTTREE}" ]]; then
+		export DESTTREE=$1
+		if [[ ! -d ${ED}${DESTTREE} ]]; then
 			install -d "${ED}${DESTTREE}"
 		fi
 	fi
 }
 
-insinto()
-{
-	${PKGCORE_PREFIX_SUPPORT} || local ED="${D}"
-	if [[ "$1" == "/" ]]; then
+insinto() {
+	${PKGCORE_PREFIX_SUPPORT} || local ED=${D}
+	if [[ $1 == "/" ]]; then
 		export INSDESTTREE=""
 	else
-		export INSDESTTREE="$1"
-		if [[ ! -d "${ED}${INSDESTTREE}" ]]; then
+		export INSDESTTREE=$1
+		if [[ ! -d ${ED}${INSDESTTREE} ]]; then
 			install -d "${ED}${INSDESTTREE}"
 		fi
 	fi
 }
 
-exeinto()
-{
-	${PKGCORE_PREFIX_SUPPORT} || local ED="${D}"
-	if [[ "$1" == "/" ]]; then
+exeinto() {
+	${PKGCORE_PREFIX_SUPPORT} || local ED=${D}
+	if [[ $1 == "/" ]]; then
 		export PKGCORE_EXEDESTTREE=""
 	else
-		export PKGCORE_EXEDESTTREE="$1"
-		if [[ ! -d "${ED}${PKGCORE_EXEDESTTREE}" ]]; then
+		export PKGCORE_EXEDESTTREE=$1
+		if [[ ! -d ${ED}${PKGCORE_EXEDESTTREE} ]]; then
 			install -d "${ED}${PKGCORE_EXEDESTTREE}"
 		fi
 	fi
 }
 
-docinto()
-{
-	${PKGCORE_PREFIX_SUPPORT} || local ED="${D}"
-	if [[ "$1" == "/" ]]; then
+docinto() {
+	${PKGCORE_PREFIX_SUPPORT} || local ED=${D}
+	if [[ $1 == "/" ]]; then
 		export PKGCORE_DOCDESTTREE=""
 	else
-		export PKGCORE_DOCDESTTREE="$1"
-		if [[ ! -d "${ED}usr/share/doc/${PF}/${PKGCORE_DOCDESTTREE}" ]]; then
+		export PKGCORE_DOCDESTTREE=$1
+		if [[ ! -d ${ED}usr/share/doc/${PF}/${PKGCORE_DOCDESTTREE} ]]; then
 			install -d "${ED}usr/share/doc/${PF}/${PKGCORE_DOCDESTTREE}"
 		fi
 	fi
 }
 
-__phase_common_pre_phase()
-{
+__phase_common_pre_phase() {
 	if [[ -d ${S} ]]; then
 		cd "${S}"
-	elif __safe_has ${EAPI} 0 1 2 3; then
+	elif __safe_has "${EAPI}" 0 1 2 3; then
 		cd "${WORKDIR}"
 	elif [[ -n ${A} ]]; then
 		die "source directory '${S}' doesn't exist, but \${A} isn't empty (see S-WORKDIR-FALLBACK in PMS)"
@@ -410,8 +390,7 @@ __phase_common_pre_phase()
 	fi
 }
 
-__phase_default_pre_src_unpack()
-{
+__phase_default_pre_src_unpack() {
 	export PORTAGE_GZIP_COMMAND=${PORTAGE_GZIP_COMMAND:-gzip}
 	export PORTAGE_BZIP2_COMMAND=${PORTAGE_BZIP2_COMMAND:-bzip2}
 	export PORTAGE_XZ_COMMAND=${PORTAGE_XZ_COMMAND:-xz}
@@ -422,16 +401,14 @@ __phase_default_pre_src_unpack()
 __phase_default_pre_src_prepare() { __phase_common_pre_phase; }
 __phase_default_pre_src_test()    { __phase_common_pre_phase; }
 
-__phase_default_pre_src_configure()
-{
+__phase_default_pre_src_configure() {
 	for x in C{BUILD,HOST,TARGET,C,XX} {AS,LD,{,LIB}C{,XX}}FLAGS; do
 		[[ -n ${!x+set} ]] && export ${x}="${!x}"
 	done
 	__phase_common_pre_phase
 }
 
-__phase_default_pre_src_compile()
-{
+__phase_default_pre_src_compile() {
 	# just reuse the default_pre_src_configure; this means we don't have to care
 	# if the eapi has configure or not.
 	__phase_default_pre_src_configure
@@ -445,16 +422,14 @@ __phase_default_pre_src_compile()
 	fi
 }
 
-__phase_default_post_src_compile()
-{
+__phase_default_post_src_compile() {
 	if __feature_is_enabled distcc && __feature_is_enabled distcc-pump; then
 		pump --shutdown
 		trap - EXIT
 	fi
 }
 
-__phase_default_pre_src_install()
-{
+__phase_default_pre_src_install() {
 	local x
 	export DESTTREE=/usr INSDESTTREE='' PKGCORE_EXEDESTTREE='' PKGCORE_DOCDESTTREE=''
 	export INSOPTIONS="-m0644" EXEOPTIONS="-m0755"
@@ -465,9 +440,9 @@ __phase_default_pre_src_install()
 	export D
 	rm -rf "${D}"
 	if ${PKGCORE_PREFIX_SUPPORT}; then
-		[[ -n "${ED+set}" ]] || \
+		[[ -n ${ED+set} ]] || \
 			die "variable ED is unset, but prefix mode is enabled.	internal error?"
-		export ED="${ED}"
+		export ED=${ED}
 		mkdir -p "${ED}"
 	else
 		mkdir "${D}"
@@ -475,52 +450,49 @@ __phase_default_pre_src_install()
 	__phase_common_pre_phase
 }
 
-__inject_phase_funcs()
-{
-	local pref="$1" x
+__inject_phase_funcs() {
+	local pref=$1 x
 	shift
 	for x in "$@"; do
-		if ! __is_function "$x"; then
+		if ! __is_function "${x}"; then
 			eval "__phase_default_${x}() { ${pref}_${x}; }";
 		fi
 	done
 }
 
-__inject_common_phase_funcs()
-{
+__inject_common_phase_funcs() {
 	__inject_phase_funcs __phase_common pkg_nofetch src_{unpack,compile,test}
 }
 
-unpack()
-{
+unpack() {
 	local x y myfail srcdir taropts tar_subdir name
 	taropts='--no-same-owner'
 
-	[[ "$#" == 0 ]] && die "Nothing passed to the 'unpack' command"
+	[[ $# -eq 0 ]] && die "Nothing passed to the 'unpack' command"
 
 	for x in "$@"; do
 		echo ">>> Unpacking ${x} to ${PWD}"
 		myfail="failure unpacking ${x}"
-		y="${x%.*}"
-		y="${y##*.}"
-		if [[ "${x:0:2}" == "./" ]]; then
-			srcdir=''
+		y=${x%.*}
+		y=${y##*.}
+		if [[ ${x:0:2} == "./" ]]; then
+			srcdir=""
 		else
-			srcdir="${DISTDIR}"
+			srcdir=${DISTDIR}
 		fi
 
-		[[ ! -e "${srcdir}${x}" ]] && die "$myfail: file doesn't exist"
-		[[ ! -s "${srcdir}${x}" ]] && die "$myfail: empty file"
-		[[ "${x}" == "${DISTDIR%%/}/"* ]] && \
+		[[ ! -e ${srcdir}${x} ]] && die "${myfail}: file doesn't exist"
+		[[ ! -s ${srcdir}${x} ]] && die "${myfail}: empty file"
+		[[ ${x} == ${DISTDIR%%/}/* ]] && \
 			die "Arguments to unpack() must not begin with \${DISTDIR}."
-		[[ "${x}" == "/"* ]] &&
+		[[ ${x} == /* ]] &&
 			die "Arguments to unpack() must not be absolute paths."
 
-		name="${x##*/}"
+		name=${x##*/}
 
-		case "${x}" in
+		case ${x} in
 			*.tar)
-				tar xf "${srcdir}${x}" ${taropts} || die "$myfail"
+				tar xf "${srcdir}${x}" ${taropts} || die "${myfail}"
 				;;
 			*.tar.gz|*.tgz|*.tar.Z)
 				tar xf "${srcdir}${x}" -I"${PORTAGE_GZIP_COMMAND}" ${taropts} || die "${myfail}"
@@ -532,7 +504,7 @@ unpack()
 				tar xf "${srcdir}${x}" -Ilzma ${taropts} || die "${myfail}"
 				;;
 			*.tar.xz)
-				if __safe_has "$EAPI" 0 1 2; then
+				if __safe_has "${EAPI}" 0 1 2; then
 					echo "xz is a supported extension in EAPI 3 and above only" >&2
 					continue;
 				fi
@@ -540,40 +512,40 @@ unpack()
 				;;
 			*.ZIP|*.zip|*.jar)
 				{ set +x; while :; do echo n || break; done } | \
-					unzip -qo "${srcdir}${x}" || die "$myfail"
+					unzip -qo "${srcdir}${x}" || die "${myfail}"
 				;;
 			*.gz|*.Z|*.z)
-				${PORTAGE_GUNZIP_COMMAND:-${PORTAGE_GZIP_COMMAND} -d} -c "${srcdir}${x}" > ${name%.*} || die "$myfail"
+				${PORTAGE_GUNZIP_COMMAND:-${PORTAGE_GZIP_COMMAND} -d} -c "${srcdir}${x}" > ${name%.*} || die "${myfail}"
 				;;
 			*.bz2|*.bz)
-				${PORTAGE_BUNZIP2_COMMAND:-${PORTAGE_BZIP2_COMMAND} -d} -c "${srcdir}${x}" > ${name%.*} || die "$myfail"
+				${PORTAGE_BUNZIP2_COMMAND:-${PORTAGE_BZIP2_COMMAND} -d} -c "${srcdir}${x}" > ${name%.*} || die "${myfail}"
 				;;
 			*.xz)
-				if __safe_has "$EAPI" 0 1 2; then
+				if __safe_has "${EAPI}" 0 1 2; then
 					echo "xz is a supported extension in EAPI 3 and above only" >&2
 					continue;
 				fi
-				${PORTAGE_UNXZ_COMMAND:-${PORTAGE_XZ_COMMAND} -d} < "${srcdir}${x}" > ${name%.*} || die "$myfail"
+				${PORTAGE_UNXZ_COMMAND:-${PORTAGE_XZ_COMMAND} -d} < "${srcdir}${x}" > ${name%.*} || die "${myfail}"
 				;;
 			*.7Z|*.7z)
 				local my_output
-				my_output="$(7z x -y "${srcdir}/${x}")"
+				my_output=$(7z x -y "${srcdir}/${x}")
 				if [[ $? -ne 0 ]]; then
 					echo "${my_output}" >&2
-					die "$myfail"
+					die "${myfail}"
 				fi
 				;;
 			*.RAR|*.rar)
-				unrar x -idq -o+ "${srcdir}/${x}" || die "$myfail"
+				unrar x -idq -o+ "${srcdir}/${x}" || die "${myfail}"
 				;;
 			*.LHa|*.LHA|*.lha|*.lzh)
-				lha xfq "${srcdir}/${x}" || die "$myfail"
+				lha xfq "${srcdir}/${x}" || die "${myfail}"
 				;;
 			*.a|*.deb)
-				ar x "${srcdir}/${x}" || die "$myfail"
+				ar x "${srcdir}/${x}" || die "${myfail}"
 				;;
 			*.lzma)
-				lzma -dc "${srcdir}${x}" > ${name%.*} || die "$myfail"
+				lzma -dc "${srcdir}${x}" > ${name%.*} || die "${myfail}"
 				;;
 			*)
 				echo "unpack ${x}: file format not recognized. Ignoring."
@@ -584,57 +556,51 @@ unpack()
 		${XARGS} -0 chmod -fR a+rX,u+w,g-w,o-w
 }
 
-diropts()
-{
-	export DIROPTIONS="$@"
+diropts() {
+	export DIROPTIONS=$@
 }
 
-insopts()
-{
+insopts() {
 	{ has -s "$@" || has --strip "$@"; } && \
 		ewarn "insopts shouldn't be given -s; stripping should be left to the manager."
-	export INSOPTIONS="$@"
+	export INSOPTIONS=$@
 }
 
-exeopts()
-{
+exeopts() {
 	{ has -s "$@" || has --strip "$@"; } && \
 		ewarn "exeopts shouldn't be given -s; stripping should be left to the manager."
-	export EXEOPTIONS="$@"
+	export EXEOPTIONS=$@
 }
 
-libopts()
-{
+libopts() {
 	{ has -s "$@" || has --strip "$@"; } && \
 		ewarn "libopts shouldn't be given -s; stripping should be left to the manager."
-	export LIBOPTIONS="$@"
+	export LIBOPTIONS=$@
 }
 
 portageq() {
-	if [[ $EBUILD_PHASE == depend ]]; then
+	if [[ ${EBUILD_PHASE} == "depend" ]]; then
 		die "portageq calls in depends phase aren't allowed"
 	fi
-	local command="$1"
+	local command=$1
 	shift
 	# suppress sandbox for the invocation; do this to avoid things like .pyc generation
 	# being snagged by the sandbox
-	local portageq_str=portageq
-	${PKGCORE_DISABLE_COMPAT-false} && portageq_str=query
+	local portageq_str="portageq"
+	${PKGCORE_DISABLE_COMPAT-false} && portageq_str="query"
 	SANDBOX_ON=0 PYTHONPATH="${PKGCORE_PYTHONPATH}" "${PKGCORE_PYTHON_BINARY}" \
 		$(type -P pinspect) ${portageq_str} "${command}" \
 		--eapi "${EAPI:--1}" --use "${USE}" "$@"
-	local ret="$?"
-	[[ "$ret" == 127 ]] && die "pinspect couldn't be found; broken pkgcore installation?"
-	return $(( $ret ))
+	local ret=$?
+	[[ ${ret} == 127 ]] && die "pinspect couldn't be found; broken pkgcore installation?"
+	return $(( ret ))
 }
 
-has_version()
-{
+has_version() {
 	PKGCORE_DISABLE_COMPAT=true portageq 'has_version' "$1"
 }
 
-best_version()
-{
+best_version() {
 	PKGCORE_DISABLE_COMPAT=true portageq 'best_version' "$1"
 }
 

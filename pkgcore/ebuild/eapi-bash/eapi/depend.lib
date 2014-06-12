@@ -3,26 +3,22 @@
 
 # while these echo statements are ugly, written this way to ensure bash does it as a single write-
 # aka, keep it within the size of atomic writes for pipes.  Relevant for threaded output straight to term
-use()
-{
+use() {
 	echo "WARNING: 'use' function invoked by ${CATEGORY}/${PF} during metadata regeneration."$'\nWARNING: Please ensure upstream is aware of it and working to remove it.\n' >&2
 	return 1
 }
 
-usev()
-{
+usev() {
 	echo "WARNING: 'usev' function invoked by ${CATEGORY}/${PF} during metadata regeneration."$'\nWARNING: Please ensure upstream is aware of it and working to remove it.\n' >&2
 	return 1
 }
 
-use_with()
-{
+use_with() {
 	echo "WARNING: 'use_with' function invoked by ${CATEGORY}/${PF} during metadata regeneration."$'\nWARNING: Please ensure upstream is aware of it and working to remove it.\n' >&2
 	return 1
 }
 
-use_enable()
-{
+use_enable() {
 	echo "WARNING: 'use_enable' function invoked by ${CATEGORY}/${PF} during metadata regeneration."$'\nWARNING: Please ensure upstream is aware of it and working to remove it.\n' >&2
 	return 1
 }
@@ -33,25 +29,21 @@ hasq() {
 	has "$@"
 }
 
-hasv()
-{
+hasv() {
 	if has "$@"; then
-		echo "${1}"
+		echo "$1"
 	fi
 }
 
-debug-print()
-{
+debug-print() {
 	:
 }
 
-debug-print-function()
-{
+debug-print-function() {
 	:
 }
 
-debug-print-section()
-{
+debug-print-section() {
 	:
 }
 
@@ -110,16 +102,16 @@ eend() {
 
 	local msg
 
-	if [[ ${retval} == "0" ]] ; then
+	if [[ ${retval} == 0 ]]; then
 		msg="${PKGCORE_RC_BRACKET}[ ${PKGCORE_RC_GOOD}ok${PKGCORE_RC_BRACKET} ]${PKGCORE_RC_NORMAL}"
 	else
-		if [[ $# != 0 ]] ; then
+		if [[ $# -ne 0 ]]; then
 			eerror "$*"
 		fi
 		msg="${PKGCORE_RC_BRACKET}[ ${PKGCORE_RC_BAD}!!${PKGCORE_RC_BRACKET} ]${PKGCORE_RC_NORMAL}"
 	fi
 
-	echo -e "${PKGCORE_RC_ENDCOL}  ${msg}"
+	echo -e "${PKGCORE_RC_ENDCOL} ${msg}"
 
 	return ${retval}
 }
@@ -157,7 +149,7 @@ KV_to_int() {
 
 	# We make version 2.2.0 the minimum version we will handle as
 	# a sanity check ... if its less, we fail ...
-	if [[ ${KV_int} -ge 131584 ]] ; then
+	if [[ ${KV_int} -ge 131584 ]]; then
 		echo "${KV_int}"
 		return 0
 	fi

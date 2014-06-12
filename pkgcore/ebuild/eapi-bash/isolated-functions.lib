@@ -4,10 +4,10 @@
 # Internal logging function, don't use this in ebuilds
 __elog_base() {
 	local messagetype
-	[ -z "${1}" -o  -z "${T}" -o ! -d "${T}/logging" ] && return 1
-	case "${1}" in
+	[[ -z $1 || -z ${T} || ! -d ${T}/logging ]] && return 1
+	case $1 in
 		INFO|WARN|ERROR|LOG|QA)
-			messagetype="${1}"
+			messagetype=$1
 			shift
 			;;
 		*)
@@ -15,7 +15,7 @@ __elog_base() {
 			return 1
 			;;
 	esac
-	echo "$*" >> ${T}/logging/${EBUILD_PHASE}.${messagetype}
+	echo "$*" >> "${T}/logging/${EBUILD_PHASE}.${messagetype}"
 	return 0
 }
 
@@ -35,13 +35,13 @@ __colored_output_enable() {
 	# then try to get it via stty.  no go? hardcode it to 80.
 	PKGCORE_RC_COLS=${COLUMNS:-0}
 	if (( PKGCORE_RC_COLS <= 0 )); then
-		PKGCORE_RC_COLS=$(set -- `stty size 2>/dev/null` ; echo ${2:-0})
+		PKGCORE_RC_COLS=$(set -- $(stty size 2>/dev/null) ; echo ${2:-0})
 		if (( PKGCORE_RC_COLS <= 0 )); then
 			PKGCORE_RC_COLS=80
 		fi
 	fi
 	export COLUMNS=${PKGCORE_RC_COLS}
-	PKGCORE_RC_COLS=$((${PKGCORE_RC_COLS} - 8))	# width of [ ok ] == 7
+	PKGCORE_RC_COLS=$(( PKGCORE_RC_COLS - 8 )) # width of [ ok ] == 7
 
 	PKGCORE_RC_ENDCOL=$'\e[A\e['${PKGCORE_RC_COLS}'C'
 	# Now, ${PKGCORE_RC_ENDCOL} will move us to the end of the
@@ -67,14 +67,14 @@ has() {
 	# If we have a match, ensure it's not due to $@ already having \001 in it.
 	# unlikely, but better safe than sorry.
 	IFS=' '
-	[[ *$'\001'* != "${*}" ]] && return 0
+	[[ *$'\001'* != $* ]] && return 0
 
 	# \001 for some insane reason was in $@; fallback to the slow for loop.
 	# Suppress debug outut for this part however.
 	__shopt_push +x
 	local x
 	for x in "$@"; do
-		if [[ "${x}" == "${needle}" ]]; then
+		if [[ ${x} == ${needle} ]]; then
 			__shopt_pop
 			return 0
 		fi
@@ -86,7 +86,7 @@ has() {
 __safe_has() {
 	# Version of has, only to be used when the invoker knows that that
 	# the needle/targets will never have \001 in them
-	local needle="$1"
+	local needle=$1
 	shift
 	local IFS=$'\001'
 	[[ "${IFS}${*}${IFS}" == *"${IFS}${needle}${IFS}"* ]]
@@ -114,51 +114,49 @@ __qa_run_function_if_exists() {
 
 __directory_is_empty() {
 	__shopt_push -s dotglob nullglob
-	files=(${1}/*)
+	files=( ${1}/* )
 	__shopt_pop
 	[[ ${#files[@]} -gt 0 ]] && return 1
 	return 0
 }
 
-PKGCORE_SHOPT_STACK=( )
+PKGCORE_SHOPT_STACK=()
 
-__shopt_push()
-{
-	PKGCORE_SHOPT_STACK[${#PKGCORE_SHOPT_STACK[@]}]="${BASHOPTS}"
-	PKGCORE_SHOPT_STACK[${#PKGCORE_SHOPT_STACK[@]}]="$-"
-	if [[ $1 == -s ]] || [[ $1 == -u ]]; then
+__shopt_push() {
+	PKGCORE_SHOPT_STACK[${#PKGCORE_SHOPT_STACK[@]}]=${BASHOPTS}
+	PKGCORE_SHOPT_STACK[${#PKGCORE_SHOPT_STACK[@]}]=$-
+	if [[ $1 == "-s" ]] || [[ $1 == "-u" ]]; then
 		# shopt modification
 		shopt "$@" || die "bad shopt options: $@"
-	elif [[ -n "$@" ]]; then
-		set "${@}" || die "bad set invocation: $@"
+	elif [[ -n $@ ]]; then
+		set "$@" || die "bad set invocation: $@"
 	fi
 	return 0
 } &> /dev/null
 
-__shopt_pop()
-{
-	[[ "$#" -ne 0 ]] && die "bad invocation of __shopt_pop; no args should be supplied, got $@"
+__shopt_pop() {
+	[[ $# -ne 0 ]] && die "bad invocation of __shopt_pop; no args should be supplied, got $@"
 	local count=$(( ${#PKGCORE_SHOPT_STACK[@]} - 1 ))
-	[[ "$count" -le 0 ]] && die "bad __shopt_pop invocation; no matching push, stack was empty"
+	[[ ${count} -le 0 ]] && die "bad __shopt_pop invocation; no matching push, stack was empty"
 
-	local set_val="${PKGCORE_SHOPT_STACK[$count]}"
-	if [[ "$-" != "${set_val}" ]]; then
+	local set_val=${PKGCORE_SHOPT_STACK[${count}]}
+	if [[ $- != ${set_val} ]]; then
 		set ${-:++${-}} ${set_val:+-${set_val}} || die "failed enforcing set state of ${set_val}"
 	fi
-	unset PKGCORE_SHOPT_STACK[$count]
+	unset PKGCORE_SHOPT_STACK[${count}]
 
-	count=$(( $count - 1 ))
+	count=$(( count - 1 ))
 
-	local previous=${PKGCORE_SHOPT_STACK[$count]}
-	unset PKGCORE_SHOPT_STACK[$count]
-	[[ "$BASHOPTS" == "$previous" ]] && return 0
+	local previous=${PKGCORE_SHOPT_STACK[${count}]}
+	unset PKGCORE_SHOPT_STACK[${count}]
+	[[ ${BASHOPTS} == ${previous} ]] && return 0
 
 	local IFS=' '
-	local current="${BASHOPTS}"
-	if [[ -n "${current}" ]]; then
+	local current=${BASHOPTS}
+	if [[ -n ${current} ]]; then
 		shopt -u ${current//:/ } >&2 || die "failed wiping current shopt settings of ${current}"
 	fi
-	if [[ -n "${previous}" ]]; then
+	if [[ -n ${previous} ]]; then
 		shopt -s ${previous//:/ } >&2 || die "failed forcing old shopt settings to ${previous}"
 	fi
 	return 0
@@ -166,30 +164,27 @@ __shopt_pop()
 
 declare -a PKGCORE_SAVED_IFS
 
-__IFS_push()
-{
-	PKGCORE_SAVED_IFS[${#PKGCORE_SAVED_IFS[@]}]="${IFS-unset}"
+__IFS_push() {
+	PKGCORE_SAVED_IFS[${#PKGCORE_SAVED_IFS[@]}]=${IFS-unset}
 	if [[ $1 == unset ]]; then
 		unset IFS
 	else
-		IFS="$1"
+		IFS=$1
 	fi
 	:
 }
 
-__IFS_pop()
-{
-	if [[ ${#PKGCORE_SAVED_IFS[@]} == 0 ]]; then
+__IFS_pop() {
+	if [[ ${#PKGCORE_SAVED_IFS[@]} -eq 0 ]]; then
 		die "__IFS_pop invoked with nothing on the stack..."
 	fi
-	IFS=${PKGCORE_SAVED_IFS[$(( ${#PKGCORE_SAVED_IFS[@]} -1 ))]}
+	IFS=${PKGCORE_SAVED_IFS[$(( ${#PKGCORE_SAVED_IFS[@]} - 1 ))]}
 	[[ ${IFS} == unset ]] && unset IFS
-	unset PKGCORE_SAVED_IFS[$(( ${#PKGCORE_SAVED_IFS[@]} -1 ))]
+	unset PKGCORE_SAVED_IFS[$(( ${#PKGCORE_SAVED_IFS[@]} - 1 ))]
 	:
 }
 
-__qa_invoke()
-{
+__qa_invoke() {
 	if ${PKGCORE_QA_SUPPRESSED:-false}; then
 		"$@"
 		return $(( $? ))
@@ -197,8 +192,8 @@ __qa_invoke()
 	local pkgcore_should_fail=false
 	# save env and shopt settings.
 	# in addition, protect the stack from bad pkgcore calls, or bad consumers accessing internals
-	local PKGCORE_SAVED_IFS=( )
-	local PKGCORE_SHOPT_STACK=( )
+	local PKGCORE_SAVED_IFS=()
+	local PKGCORE_SHOPT_STACK=()
 
 	__IFS_push "${IFS}"
 	__shopt_push
@@ -206,37 +201,36 @@ __qa_invoke()
 	"$@"
 	local ret=$?
 
-	if [[ 1 != ${#PKGCORE_SAVED_IFS[@]} ]]; then
+	if [[ ${#PKGCORE_SAVED_IFS[@]} -ne 1 ]]; then
 		echo "QA warning: unbalanced __IFS_push/__IFS_pop detected.  internal error?" \
 			" count was ${#PKGCORE_SAVED_IFS[@]}"
 		pkgcore_should_fail=true
 	fi
-	if [[ 2 != ${#PKGCORE_SHOPT_STACK[@]} ]]; then
+	if [[ ${#PKGCORE_SHOPT_STACK[@]} -ne 2 ]]; then
 		echo "QA warning: unbalanced __shopt_push/__shopt_pop detected. internal error? count was ${#PKGCORE_SHOPT_STACK[@]}"
 		pkgcore_should_fail=true
 	fi
 
-	if [[ "${IFS-unset}" != "${PKGCORE_SAVED_IFS[0]}" ]]; then
-		echo "QA WARNING: invocation ${@} manipulated IFS to ${IFS}, but didn't restore it to it's original value!"
+	if [[ ${PKGCORE_SAVED_IFS[0]} != ${IFS-unset} ]]; then
+		echo "QA WARNING: invocation $@ manipulated IFS to ${IFS}, but didn't restore it to it's original value!"
 	fi
 	__IFS_pop
 
 	# while these echo statements are ugly, written this way to ensure bash does it as a single write-
 	# aka, keep it within the size of atomic writes for pipes.
 	# relevant for threaded output straight to term
-	if [[ "${BASHOPTS}" != "${PKGCORE_SHOPT_STACK[0]}" ]]; then
-		echo "QA warning: shopt modification bled out of invocation ${@}"$'\n'"          : was ${PKGCORE_SHOPT_STACK[0]}"$'\n'"          : now ${BASHOPTS}" >&2
+	if [[ ${PKGCORE_SHOPT_STACK[0]} != ${BASHOPTS} ]]; then
+		echo "QA warning: shopt modification bled out of invocation $@"$'\n'"          : was ${PKGCORE_SHOPT_STACK[0]}"$'\n'"          : now ${BASHOPTS}" >&2
 	fi
 
-	if [[ "$-" != "${PKGCORE_SHOPT_STACK[1]}" ]]; then
-		echo "QA warning: set modification bled out of invocation ${@}"$'\n'"          : was ${PKGCORE_SHOPT_STACK[1]}"$'\n'"          : now $-" >&2
+	if [[ ${PKGCORE_SHOPT_STACK[1]} != $- ]]; then
+		echo "QA warning: set modification bled out of invocation $@"$'\n'"          : was ${PKGCORE_SHOPT_STACK[1]}"$'\n'"          : now $-" >&2
 	fi
 	__shopt_pop
 
 	${pkgcore_should_fail} && die "invocation $@ modified globals and didn't clean up"
-	return $(( $ret ))
+	return $(( ret ))
 }
-
 
 __colored_output_disable
 

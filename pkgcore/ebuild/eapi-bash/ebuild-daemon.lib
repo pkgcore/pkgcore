@@ -3,23 +3,20 @@
 # Copyright 2005-2012 Brian Harring <ferringb@gmail.com>
 # License BSD/GPL2
 
-
 # ask the python side to display sandbox complaints.
-__request_sandbox_summary()
-{
+__request_sandbox_summary() {
 	local line
 	__ebd_write_line "__request_sandbox_summary ${SANDBOX_LOG}"
 	__ebd_read_line line
-	while [[ $line != end_sandbox_summary ]]; do
-		echo "$line"
+	while [[ ${line} != "end_sandbox_summary" ]]; do
+		echo "${line}"
 		__ebd_read_line line
 	done
 }
 
-__internal_inherit()
-{
+__internal_inherit() {
 	local line
-	if [[ $# != 1 ]]; then
+	if [[ $# -ne 1 ]]; then
 		die "internal_inherit accepts one arg, requested eclass location.  $* is a bit much"
 	fi
 	if [[ -n ${PKGCORE_PRELOADED_ECLASSES[$1]} ]]; then
@@ -28,35 +25,34 @@ __internal_inherit()
 	fi
 	__ebd_write_line "request_inherit $1"
 	__ebd_read_line line
-	if [[ $line == path ]]; then
+	if [[ ${line} == "path" ]]; then
 		__ebd_read_line line
 		__qa_invoke source "${line}" >&2 || die "failed sources inherit: ${line}"
-	elif [[ $line == transfer ]]; then
+	elif [[ ${line} == "transfer" ]]; then
 		__ebd_read_line line
-		__qa_invoke eval "$line" || die "failed evaluating eclass $1 on an inherit transfer"
-	elif [[ $line == failed ]]; then
+		__qa_invoke eval "${line}" || die "failed evaluating eclass $1 on an inherit transfer"
+	elif [[ ${line} == "failed" ]]; then
 		die "inherit for $1 failed"
 	else
-		die "unknown inherit command from pythonic side, '$line' for eclass $1"
+		die "unknown inherit command from pythonic side, '${line}' for eclass $1"
 	fi
 }
 
-__source_bashrcs()
-{
+__source_bashrcs() {
 	${PKGCORE_SUPPRESS_BASHRCS:-false} && return
 	local line
-	__ebd_write_line request_bashrcs
+	__ebd_write_line "request_bashrcs"
 	__ebd_read_line line
-	while [[ $line != end_request ]]; do
-		if [[ $line == path ]]; then
+	while [[ ${line} != "end_request" ]]; do
+		if [[ ${line} == "path" ]]; then
 			__ebd_read_line line
 			source "${line}" >&2
-		elif [[ $line == transfer ]]; then
+		elif [[ ${line} == "transfer" ]]; then
 			__ebd_read_line line
-			eval "$line" || die "failed evaluating profile bashrc: ${line}"
+			eval "${line}" || die "failed evaluating profile bashrc: ${line}"
 		else
 			__ebd_write_line "failed"
-			die "unknown profile bashrc transfer mode from pythonic side, '$line'"
+			die "unknown profile bashrc transfer mode from pythonic side, '${line}'"
 		fi
 		__ebd_write_line "next"
 		__ebd_read_line line

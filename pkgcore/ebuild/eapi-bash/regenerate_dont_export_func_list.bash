@@ -1,10 +1,10 @@
 #!/bin/bash
 
-_FP="${1:-dont_export_funcs.list}"
+_FP=${1:-dont_export_funcs.list}
 
 export PKGCORE_BIN_PATH=$(dirname "$0")
 if [[ -z ${PKGCORE_CLEAN_ENV} ]]; then
-	exec env -i PKGCORE_PYTHON_PATH="${PKGCORE_PYTHON_PATH}" PKGCORE_CLEAN_ENV=1 /bin/bash "$0" "${_FP}"
+	exec env -i PKGCORE_PYTHON_PATH=${PKGCORE_PYTHON_PATH} PKGCORE_CLEAN_ENV=1 /bin/bash "$0" "${_FP}"
 fi
 
 export LC_ALL=C # avoid any potential issues of unicode sorting for whacked func names
@@ -18,20 +18,20 @@ cd "${PKGCORE_BIN_PATH}" || { echo "!!! failed cd'ing to ${PKGCORE_BIN_PATH}" >&
 __source_was_seen() {
 	local x
 	for x in "${seen[@]}"; do
-		[[ $x == $1 ]] && return 0
+		[[ ${x} == $1 ]] && return 0
 	done
 	return 1
 }
 declare -a seen
 source() {
 	local fp=$(readlink -f "$1")
-	__source_was_seen "$fp" && return 0
+	__source_was_seen "${fp}" && return 0
 	# die relies on these vars; we reuse them.
 	local CATEGORY=${PKGCORE_BIN_PATH}
 	local PF=$1
 	echo "sourcing ${x}" >&2
 	. "$@" || { echo "!!! failed sourcing ${x}; exit $?" >&2; exit 3; }
-	seen[${#seen[@]}]="${fp}"
+	seen[${#seen[@]}]=${fp}
 	return 0
 }
 
@@ -51,7 +51,7 @@ unset source
 
 # Sorting order; put PMS functionality first, then our internals.
 result=$(__environ_list_funcs | sort)
-result=$(echo "$result" | grep -v "^__"; echo "$result" | grep "^__")
+result=$(echo "${result}" | grep -v "^__"; echo "${result}" | grep "^__")
 
 # remove internal functions with external variants that need to be exported for certain EAPI ranges (e.g. usex)
 [[ ${#INTERNAL_FUNCS[@]} -gt 0 ]] && result=$(echo "${result}" | grep -v "$(echo ${INTERNAL_FUNCS[@]} | tr ' ' '\n')")
@@ -60,5 +60,5 @@ if [[ ${_FP} == '-' ]]; then
 	echo >&2
 	echo "${result}"
 else
-	echo "$result" > dont_export_funcs.list
+	echo "${result}" > dont_export_funcs.list
 fi

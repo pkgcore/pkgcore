@@ -2,29 +2,28 @@
 # Copyright: 2011 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD 3 clause
 
-
 check_args 1 -
 
 if [[ -n ${ABI} ]]; then
-	libdir_abi=LIBDIR_"${ABI}"
+	libdir_abi="LIBDIR_${ABI}"
 	[[ -n ${!libdir_abi} ]] && CONF_LIBDIR=${!libdir_abi}
 	unset libdir_abi
 fi
 
 CONF_LIBDIR=${CONF_LIBDIR:-lib}
 
-libdir="${ED}${DESTTREE}/${CONF_LIBDIR}"
+libdir=${ED}${DESTTREE}/${CONF_LIBDIR}
 
-if [[ ${HELPER_NAME} == dolib.so ]]; then
-	LIBOPTIONS=-m0755
-elif [[ ${HELPER_NAME} == dolib.a ]]; then
-	LIBOPTIONS=-m0644
+if [[ ${HELPER_NAME} == "dolib.so" ]]; then
+	LIBOPTIONS="-m0755"
+elif [[ ${HELPER_NAME} == "dolib.a" ]]; then
+	LIBOPTIONS="-m0644"
 fi
 
 check_command_or_stop install -d "${libdir}"
 
-for x in "$@" ; do
-	if [[ -L ${x} ]] ; then
+for x in "$@"; do
+	if [[ -L ${x} ]]; then
 		# yes we want readlink, not readlink -f; we want the symlink content,
 		# not the resolved symlink target.
 		check_command ln -s -- "$(readlink -- "${x}")" "${libdir}/${x##*/}"

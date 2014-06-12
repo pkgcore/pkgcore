@@ -1,26 +1,24 @@
 # Copyright: 2012 Brian Harring <ferringb@gmail.com>
 # license GPL2/BSD 3
 
-source "${PKGCORE_BIN_PATH}/eapi/4.lib"
+source "${PKGCORE_BIN_PATH}"/eapi/4.lib
 
-has_version()
-{
-	local r="${ROOT:-/}"
-	if [[ $1 == --host-root ]]; then
+has_version() {
+	local r=${ROOT:-/}
+	if [[ $1 == "--host-root" ]]; then
 		r=/
 		shift
 	fi
-	PKGCORE_DISABLE_COMPAT=true portageq 'has_version' "$1" --domain-at-root "$r"
+	PKGCORE_DISABLE_COMPAT=true portageq 'has_version' "$1" --domain-at-root "${r}"
 }
 
-best_version()
-{
-	local r="${ROOT:-/}"
-	if [[ $1 == --host-root ]]; then
+best_version() {
+	local r=${ROOT:-/}
+	if [[ $1 == "--host-root" ]]; then
 		r=/
 		shift
 	fi
-	PKGCORE_DISABLE_COMPAT=true portageq 'best_version' "$1" --domain-at-root "$r"
+	PKGCORE_DISABLE_COMPAT=true portageq 'best_version' "$1" --domain-at-root "${r}"
 
 }
 

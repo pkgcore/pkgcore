@@ -8,25 +8,25 @@ __regex_filter_input() {
 	# use egrep if possible... tis faster.
 	local l
 	if l=$(type -P gsed || type -P sed); then
-		"${l}" -re "/$regex/d"
+		"${l}" -re "/${regex}/d"
 		local ret=$?
-		[[ $ret != 0 ]] && die "got failing return code (${ret}) invoking ${l} -e '/${regex}/d'"
+		[[ ${ret} != 0 ]] && die "got failing return code (${ret}) invoking ${l} -e '/${regex}/d'"
 	elif l=$(type -P egrep); then
-		# use type -p; qa_interceptors may be be active.
-		"$l" -v "${regex}"
+		# use type -p; qa_interceptors may be active.
+		"${l}" -v "${regex}"
 		local ret=$?
-		[[ $ret -gt 1 ]] && die "got failing return code (${ret}) ${l} -v '${regex}'"
-	elif [[ -x "${PKGCORE_PYTHON_BINARY}" ]]; then
+		[[ ${ret} -gt 1 ]] && die "got failing return code (${ret}) ${l} -v '${regex}'"
+	elif [[ -x ${PKGCORE_PYTHON_BINARY} ]]; then
 		# We check for the binary on the offchance an ebuild operation
 		# just removed it under our feet.
 		"${PKGCORE_PYTHON_BINARY}" -c \
 			'import sys;import re;r=re.compile(sys.argv[1]).match;sys.stdout.write("\n".join(x for x in sys.stdin.read().splitlines() if r(x) is None))' \
 			"${regex}"
 		local ret=$?
-		[[ $ret != 0 ]] && die "got failing return code (${ret}) invoking ${PKGCORE_PYTHON_BINARY} for regex_filter"
+		[[ ${ret} != 0 ]] && die "got failing return code (${ret}) invoking ${PKGCORE_PYTHON_BINARY} for regex_filter"
 	else
 		while read l; do
-			[[ $l =~ $regex ]] || echo "${l}"
+			[[ ${l} =~ ${regex} ]] || echo "${l}"
 		done
 	fi
 }
@@ -34,18 +34,18 @@ __regex_filter_input() {
 __escape_regex_array() {
 	local __tmp_array
 	# Need to get the content of the original array...
-	eval "__tmp_array=( \"\${${1}[@]}\" )"
+	eval "__tmp_array=( \"\${$1[@]}\" )"
 	__tmp_array=( "${__tmp_array[@]//\+/\\+}" )
 	__tmp_array=( "${__tmp_array[@]//\./\\.}" )
 	__tmp_array=( "${__tmp_array[@]//\*/\\*}" )
 	# Now transfer the content back.
-	eval ${1}='( "${__tmp_array[@]}" )'
+	eval $1='( "${__tmp_array[@]}" )'
 } &> /dev/null
 
 __environ_list_funcs() {
 	# Grab the vars /before/ adding our custom declare function, else it'll
 	# show up in the list of functions.
-	local __content="$(builtin declare -F)"
+	local __content=$(builtin declare -F)
 	declare() {
 		echo "$2"
 	}
@@ -56,8 +56,8 @@ __environ_list_funcs() {
 
 __environ_list_vars() {
 	declare() {
-		local __ret="${2%%=*}"
-		[[ "$2" != "$__ret" ]] && echo "$__ret"
+		local __ret=${2%%=*}
+		[[ $2 != ${__ret} ]] && echo "${__ret}"
 		:
 	}
 	eval "$(builtin declare -p)" || die "__environ_list_vars eval failed" >&2
@@ -83,12 +83,12 @@ __environ_dump() {
 	__escape_regex_array __func_filters
 	__PKGCORE_TARGETS=( $(__environ_list_funcs | __regex_filter_input "${__func_filters[@]}" ) )
 	unset __func_filters
-	if [[ 0 != "${#__PKGCORE_TARGETS[@]}" ]]; then
+	if [[ ${#__PKGCORE_TARGETS[@]} -ne 0 ]]; then
 		declare -f "${__PKGCORE_TARGETS[@]}" || die "failed outputting funcs ${__PKGCORE_TARGETS[@]}" >&2
 	fi
 
 	__PKGCORE_TARGETS=( $(__environ_list_vars | __regex_filter_input ${DONT_EXPORT_VARS} __PKGCORE_TARGETS) )
-	if [[ 0 != "${#__PKGCORE_TARGETS[@]}" ]]; then
+	if [[ ${#__PKGCORE_TARGETS[@]} -ne 0 ]]; then
 		declare -p "${__PKGCORE_TARGETS[@]}" || die "failed outputting env vars ${__PKGCORE_TARGETS[@]}" >&2
 	fi
 
@@ -97,7 +97,7 @@ __environ_dump() {
 
 # dump environ to $1, optionally piping it through $2 and redirecting $2's output to $1.
 __environ_save_to_file() {
-	if [[ $# != 1 ]] && [[ $# != 2 ]]; then
+	if [[ $# -ne 1 ]] && [[ $# -ne 2 ]]; then
 		die "__environ_save_to_file requires at least one argument, two max; given $@"
 	fi
 
@@ -106,21 +106,21 @@ __environ_save_to_file() {
 	# ex: temp_umask_for_some_app == _for_some_app.
 	#Do it with spaces on both sides.
 
-	DONT_EXPORT_VARS="${DONT_EXPORT_VARS} temp_umask "
+	DONT_EXPORT_VARS+=" temp_umask "
 	local temp_umask=$(umask)
 	umask 0002
 
-	if [[ $# == 1 ]]; then
+	if [[ $# -eq 1 ]]; then
 		__environ_dump > "$1"
 	else
 		__environ_dump | $2 > "$1"
 	fi
-	chown portage:portage "$1" &>/dev/null
-	chmod 0664 "$1" &>/dev/null
+	chown portage:portage "$1" &> /dev/null
+	chmod 0664 "$1" &> /dev/null
 
-	DONT_EXPORT_VARS="${DONT_EXPORT_VARS/ temp_umask /}"
+	DONT_EXPORT_VARS=${DONT_EXPORT_VARS/ temp_umask /}
 
-	umask $temp_umask
+	umask ${temp_umask}
 }
 
 # reload a saved env, applying usual filters to the env prior to eval'ing it.
@@ -128,13 +128,13 @@ __environ_sanitize_saved_env() {
 	local src e ret EXISTING_PATH
 	# localize these so the reload doesn't have the ability to change them
 
-	if [[ $# != 1 ]]; then
+	if [[ $# -ne 1 ]]; then
 		die "scrub_environ called with wrong args, only one can be given: $@"
 	fi
 
-	[[ ! -f "$1" ]] && die "__environ_sanitize_saved_env called with a nonexist env: $1"
+	[[ ! -f $1 ]] && die "__environ_sanitize_saved_env called with a nonexist env: $1"
 
-	src="$1"
+	src=$1
 
 	# here's how this goes; we do an eval'd loadup of the target env w/in a subshell..
 	# declares and such will slide past filter-env (so it goes).  we then use our own
@@ -144,13 +144,13 @@ __environ_sanitize_saved_env() {
 
 		# protect the core vars and functions needed to do a __environ_dump
 		# some of these are already readonly- we still are forcing it to be safe.
-		declare -r PKGCORE_PYTHONPATH="${PKGCORE_PYTHONPATH}" &> /dev/null
-		declare -r PKGCORE_PYTHON_BINARY="${PKGCORE_PYTHON_BINARY}" &> /dev/null
-		declare -r DONT_EXPORT_VARS="${DONT_EXPORT_VARS}" &> /dev/null
-		declare -r DONT_EXPORT_FUNCS="${DONT_EXPORT_FUNCS}" &> /dev/null
-		declare -r SANDBOX_ON="${SANDBOX_ON}" &> /dev/null
-		declare -r T="${T}" &> /dev/null
-#		declare -rx PATH="${PATH}" &> /dev/null
+		declare -r PKGCORE_PYTHONPATH=${PKGCORE_PYTHONPATH} &> /dev/null
+		declare -r PKGCORE_PYTHON_BINARY=${PKGCORE_PYTHON_BINARY} &> /dev/null
+		declare -r DONT_EXPORT_VARS=${DONT_EXPORT_VARS} &> /dev/null
+		declare -r DONT_EXPORT_FUNCS=${DONT_EXPORT_FUNCS} &> /dev/null
+		declare -r SANDBOX_ON=${SANDBOX_ON} &> /dev/null
+		declare -r T=${T} &> /dev/null
+#		declare -rx PATH=${PATH} &> /dev/null
 
 		readonly -f __filter_env &> /dev/null
 		readonly -f __environ_dump &> /dev/null
@@ -161,21 +161,21 @@ __environ_sanitize_saved_env() {
 		declare -a PKGCORE_FUNC_ARRAY=( ${DONT_EXPORT_FUNCS} )
 		declare -a PKGCORE_VAR_ARRAY=( ${DONT_EXPORT_VARS} src x EXISTING_PATH )
 		IFS=,
-		PKGCORE_FUNC_ARRAY="${PKGCORE_FUNC_ARRAY[*]}"
-		PKGCORE_VAR_ARRAY="${PKGCORE_VAR_ARRAY[*]}"
+		PKGCORE_FUNC_ARRAY=${PKGCORE_FUNC_ARRAY[*]}
+		PKGCORE_VAR_ARRAY=${PKGCORE_VAR_ARRAY[*]}
 		IFS=$' \t\n'
 		__shopt_pop
 
-		rm -f "${T}/.pre-scrubbed-env" || die "failed rm'ing"
+		rm -f "${T}"/.pre-scrubbed-env || die "failed rm'ing"
 		# run the filtered env.
 		__filter_env \
 			-f "${PKGCORE_FUNC_ARRAY}" \
 			-v "${PKGCORE_VAR_ARRAY}" \
-			-i "$src" \
-			> "${T}/.pre-scrubbed-env" || die "failed first step of scrubbing the env to load"
+			-i "${src}" \
+			> "${T}"/.pre-scrubbed-env || die "failed first step of scrubbing the env to load"
 
-		[[ -s "${T}/.pre-scrubbed-env" ]] || die "empty pre-scrubbed-env file.  pkgcore bug?"
-		source "${T}/.pre-scrubbed-env" >&2 || die "failed sourcing scrubbed env"
+		[[ -s ${T}/.pre-scrubbed-env ]] || die "empty pre-scrubbed-env file.  pkgcore bug?"
+		source "${T}"/.pre-scrubbed-env >&2 || die "failed sourcing scrubbed env"
 
 
 		# if reinstate_loaded_env_attributes exists, run it to add to the vars.
@@ -191,8 +191,8 @@ __environ_sanitize_saved_env() {
 
 		unset -v EXISTING_PATH old_phase
 
-		rm -f "${T}/.scrubbed-env"
-		__environ_dump > ${T}/.scrubbed-env || die "dumping environment failed"
+		rm -f "${T}"/.scrubbed-env
+		__environ_dump > "${T}"/.scrubbed-env || die "dumping environment failed"
 	) && return
 
 	echo "die 'failed parsing the env dump'" # yep, we're injecting code into the eval.

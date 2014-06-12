@@ -2,20 +2,19 @@
 # Copyright: 2011 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD 3 clause
 
-
 check_args 1 -
 
 check_command_or_stop install -d "${ED}${PKGCORE_EXEDESTTREE}"
 
-for x in "$@" ; do
-	if [[ -L "${x}" ]]; then
+for x in "$@"; do
+	if [[ -L ${x} ]]; then
 		check_command cp -- "${x}" "${T}" || continue
-		mysrc="${T}/${x##*/}"
-	elif [[ -d "${x}" ]]; then
+		mysrc=${T}/${x##*/}
+	elif [[ -d ${x} ]]; then
 		warn "skipping directory ${x}"
 		continue
 	else
-		mysrc="${x}"
+		mysrc=${x}
 	fi
 	check_command install ${EXEOPTIONS} -- "${mysrc}" "${ED}${PKGCORE_EXEDESTTREE}"
 	# cleanup after ourselves...

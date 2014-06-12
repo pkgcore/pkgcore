@@ -4,28 +4,23 @@
 # Copyright 2004-2006 Gentoo Foundation: GPL2
 
 # sandbox support functions
-addread()
-{
-	export SANDBOX_READ="$SANDBOX_READ:$1"
+addread() {
+	export SANDBOX_READ=${SANDBOX_READ}:$1
 }
 
-addwrite()
-{
-	export SANDBOX_WRITE="$SANDBOX_WRITE:$1"
+addwrite() {
+	export SANDBOX_WRITE=${SANDBOX_WRITE}:$1
 }
 
-adddeny()
-{
-	export SANDBOX_DENY="$SANDBOX_DENY:$1"
+adddeny() {
+	export SANDBOX_DENY=${SANDBOX_DENY}:$1
 }
 
-addpredict()
-{
-	export SANDBOX_PREDICT="$SANDBOX_PREDICT:$1"
+addpredict() {
+	export SANDBOX_PREDICT=${SANDBOX_PREDICT}:$1
 }
 
-__dyn_src_install()
-{
+__dyn_src_install() {
 	local f
 	echo
 	if ${PKGCORE_PREFIX_SUPPORT}; then
@@ -39,17 +34,17 @@ __dyn_src_install()
 		__qa_run_function_if_exists __phase_default_src_install
 	fi
 
-	"${PKGCORE_BIN_PATH}/helpers/internals/prepall"
-	${PKGCORE_PREFIX_SUPPORT} || local ED="${D}"
+	"${PKGCORE_BIN_PATH}"/helpers/internals/prepall
+	${PKGCORE_PREFIX_SUPPORT} || local ED=${D}
 	cd "${ED}"
 
-	if type -p scanelf > /dev/null ; then
+	if type -p scanelf > /dev/null; then
 		# Make sure we disallow insecure RUNPATH/RPATH's
 		# Don't want paths that point to the tree where the package was built
 		# (older, broken libtools would do this).  Also check for null paths
 		# because the loader will search $PWD when it finds null paths.
 		f=$(scanelf -qyRF '%r %p' "${ED}" | grep -E "(${WORKDIR}|${ED}|: |::|^ )")
-		if [[ -n ${f} ]] ; then
+		if [[ -n ${f} ]]; then
 			echo -ne '\a\n'
 			echo "QA Notice: the following files contain insecure RUNPATH's"
 			echo " Please file a bug about this at http://bugs.gentoo.org/"
@@ -59,12 +54,12 @@ __dyn_src_install()
 			echo -ne '\a\n'
 			__feature_is_enabled stricter && die "Insecure binaries detected"
 			echo "autofixing rpath..."
-			TMPDIR="${WORKDIR}" scanelf -BXr ${f} -o /dev/null
+			TMPDIR=${WORKDIR} scanelf -BXr ${f} -o /dev/null
 		fi
 
 		# Check for setid binaries but are not built with BIND_NOW
 		f=$(scanelf -qyRF '%b %p' "${ED}")
-		if [[ -n ${f} ]] ; then
+		if [[ -n ${f} ]]; then
 			echo -ne '\a\n'
 			echo "QA Notice: the following files are setXid, dyn linked, and using lazy bindings"
 			echo " This combination is generally discouraged.  Try forcing via bashrc"
@@ -77,7 +72,7 @@ __dyn_src_install()
 
 		# TEXTREL's are baaaaaaaad
 		f=$(scanelf -qyRF '%t %p' "${ED}")
-		if [[ -n ${f} ]] ; then
+		if [[ -n ${f} ]]; then
 			echo -ne '\a\n'
 			echo "QA Notice: the following files contain runtime text relocations"
 			echo " Text relocations require a lot of extra work to be preformed by the"
@@ -93,7 +88,7 @@ __dyn_src_install()
 
 		# Check for files with executable stacks
 		f=$(scanelf -qyRF '%e %p' "${ED}")
-		if [[ -n ${f} ]] ; then
+		if [[ -n ${f} ]]; then
 			echo -ne '\a\n'
 			echo "QA Notice: the following files contain executable stacks"
 			echo " Files with executable stacks will not work properly (or at all!)"
@@ -112,7 +107,7 @@ __dyn_src_install()
 			arch=${l%%;*}; l=${l#*;}
 			obj="/${l%%;*}"; l=${l#*;}
 			soname=${l%%;*}; l=${l#*;}
-			rpath=${l%%;*}; l=${l#*;}; [ "${rpath}" = "  -  " ] && rpath=""
+			rpath=${l%%;*}; l=${l#*;}; [[ ${rpath} == "  -  " ]] && rpath=""
 			needed=${l%%;*}; l=${l#*;}
 			echo "${obj} ${needed}" >> "${T}"/NEEDED
 			echo "${arch:3};${obj};${soname};${rpath};${needed}" >> "${T}"/NEEDED.ELF.2
@@ -124,26 +119,24 @@ __dyn_src_install()
 	unset dir
 }
 
-__dyn_pkg_preinst()
-{
-	local i
-
+__dyn_pkg_preinst() {
 	if __is_function pkg_preinst; then
 		__qa_invoke pkg_preinst
 	else
 		__qa_run_function_if_exists __phase_default_pkg_preinst
 	fi
 
-	${PKGCORE_PREFIX_SUPPORT} || local ED="${D}"
+	${PKGCORE_PREFIX_SUPPORT} || local ED=${D}
 
 	# total suid control.
-	if __feature_is_enabled suidctl > /dev/null ; then
+	if __feature_is_enabled suidctl > /dev/null; then
 		sfconf=/etc/portage/suidctl.conf
 		echo ">>> Preforming suid scan in ${ED}"
+		local i
 		for i in $(find "${ED}"/ -type f \( -perm -4000 -o -perm -2000 \) ); do
-			if [[ -s "${sfconf}" ]]; then
-				suid=$(grep ^${i/${ED}/}$ ${sfconf})
-				if [[ "${suid}" = "${i/${ED}/}" ]]; then
+			if [[ -s ${sfconf} ]]; then
+				suid=$(grep ^${i/${ED}/}$ "${sfconf}")
+				if [[ ${suid} == ${i/${ED}/} ]]; then
 					echo "- ${i/${ED}/} is an approved suid file"
 				else
 					echo ">>> Removing sbit on non registered ${i/${ED}/}"
@@ -154,9 +147,9 @@ __dyn_pkg_preinst()
 						# can easly be bypassed using the addwrite() function
 						addwrite "${sfconf}"
 						echo ">>> Appending commented out entry to ${sfconf} for ${PF}"
-						ls_ret=`ls -ldh "${i}"`
-						echo "## ${ls_ret%${ED}*}${ls_ret#*${ED}}" >> ${sfconf}
-						echo "#${i/${ED}/}" >> ${sfconf}
+						ls_ret=$(ls -ldh "${i}")
+						echo "## ${ls_ret%${ED}*}${ls_ret#*${ED}}" >> "${sfconf}"
+						echo "#${i/${ED}/}" >> "${sfconf}"
 						# no delwrite() eh?
 						# delwrite ${sconf}
 					}
@@ -174,13 +167,13 @@ __dyn_pkg_preinst()
 		if [[ -f /selinux/context ]] && [[ -x /usr/sbin/setfiles ]]; then
 			echo ">>> Setting SELinux security labels"
 			if [[ -f ${POLICYDIR}/file_contexts/file_contexts ]]; then
-				cp -f "${POLICYDIR}/file_contexts/file_contexts" "${T}"
+				cp -f "${POLICYDIR}"/file_contexts/file_contexts "${T}"
 			else
-				make -C "${POLICYDIR}" FC=${T}/file_contexts "${T}/file_contexts"
+				make -C "${POLICYDIR}" FC=${T}/file_contexts "${T}"/file_contexts
 			fi
 
 			addwrite /selinux/context
-			/usr/sbin/setfiles -r "${ED}" "${T}/file_contexts" "${ED}" \
+			/usr/sbin/setfiles -r "${ED}" "${T}"/file_contexts "${ED}" \
 				|| die "Failed to set SELinux security labels."
 		else
 			# nonfatal, since merging can happen outside a SE kernel
@@ -190,31 +183,29 @@ __dyn_pkg_preinst()
 	fi
 }
 
-__internal_inherit()
-{
+__internal_inherit() {
 	# default, backwards compatible beast.
 	local location overlay
-	location="${ECLASSDIR}/${1}.eclass"
+	location=${ECLASSDIR}/${1}.eclass
 
-	if [[ -n "$PORTDIR_OVERLAY" ]]; then
+	if [[ -n ${PORTDIR_OVERLAY} ]]; then
 		local overlay
 		for overlay in ${PORTDIR_OVERLAY}; do
-			if [[ -e "${overlay}/eclass/${1}.eclass" ]]; then
-				location="${overlay}/eclass/${1}.eclass"
+			if [[ -e ${overlay}/eclass/${1}.eclass ]]; then
+				location=${overlay}/eclass/${1}.eclass
 				debug-print "  eclass exists: ${location}"
 			fi
 		done
 	fi
-	debug-print "inherit: $1 -> $location"
-	__qa_invoke source "$location" >&2 || die "died sourcing $location in inherit()"
+	debug-print "inherit: $1 -> ${location}"
+	__qa_invoke source "${location}" >&2 || die "died sourcing ${location} in inherit()"
 	return 0
 }
 
-inherit()
-{
+inherit() {
 	local ECLASS_DEPTH=$(( ${ECLASS_DEPTH-0} + 1 ))
 
-	if [[ $ECLASS_DEPTH > 1 ]]; then
+	if [[ ${ECLASS_DEPTH} -gt 1 ]]; then
 		debug-print "*** Multiple Inheritence (Level: ${ECLASS_DEPTH})"
 	fi
 
@@ -225,12 +216,11 @@ inherit()
 	# setting is protected.
 	local IUSE REQUIRED_USE DEPEND RDEPEND PDEPEND
 
-    for ECLASS in "$@"; do
-
-		if [[ "$EBUILD_PHASE" != "depend" ]]; then
-			if ! __safe_has $ECLASS $INHERITED; then
+	for ECLASS in "$@"; do
+		if [[ ${EBUILD_PHASE} != "depend" ]]; then
+			if ! __safe_has "${ECLASS}" ${INHERITED}; then
 				echo
-				echo "QA Notice: ECLASS '$ECLASS' illegal conditional inherit in $CATEGORY/$PF" >&2
+				echo "QA Notice: ECLASS '${ECLASS}' illegal conditional inherit in ${CATEGORY}/${PF}" >&2
 				echo
 			fi
 		fi
@@ -241,16 +231,16 @@ inherit()
 
 		# If each var has a value, append it to the global variable E_* to
 		# be applied after everything is finished. New incremental behavior.
-		[[ -n "${IUSE}"         ]] && E_IUSE+="${E_IUSE:+ }${IUSE}"
-		[[ -n "${REQUIRED_USE}" ]] && E_REQUIRED_USE+="${E_REQUIRED_USE:+ }${REQUIRED_USE}"
-		[[ -n "${DEPEND}"       ]] && E_DEPEND+="${E_DEPEND:+ }${DEPEND}"
-		[[ -n "${RDEPEND}"      ]] && E_RDEPEND+="${E_RDEPEND:+ }${RDEPEND}"
-		[[ -n "${PDEPEND}"      ]] && E_PDEPEND+="${E_PDEPEND:+ }${PDEPEND}"
+		[[ -n ${IUSE}         ]] && E_IUSE+=${E_IUSE:+ }${IUSE}
+		[[ -n ${REQUIRED_USE} ]] && E_REQUIRED_USE+=${E_REQUIRED_USE:+ }${REQUIRED_USE}
+		[[ -n ${DEPEND}       ]] && E_DEPEND+=${E_DEPEND:+ }${DEPEND}
+		[[ -n ${RDEPEND}      ]] && E_RDEPEND+=${E_RDEPEND:+ }${RDEPEND}
+		[[ -n ${PDEPEND}      ]] && E_PDEPEND+=${E_PDEPEND:+ }${PDEPEND}
 
 		# while other PMs do has checks to keep this unique, we don't; no need,
 		# further up the stack (python side) we uniquify this.
 		# if you try to do it in bash rather than python, it's ~10% slower regen
-		INHERITED="${INHERITED} $ECLASS"
+		INHERITED="${INHERITED} ${ECLASS}"
 
 		shift
 	done
@@ -260,28 +250,26 @@ inherit()
 # For example, if ECLASS="base" and you call "EXPORT_FUNCTIONS src_unpack", the following
 # code will be eval'd:
 # src_unpack() { base_src_unpack; }
-EXPORT_FUNCTIONS()
-{
-	if [[ -z "$ECLASS" ]]; then
+EXPORT_FUNCTIONS() {
+	if [[ -z ${ECLASS} ]]; then
 		echo "EXPORT_FUNCTIONS without a defined ECLASS" >&2
 		exit 1
 	fi
-	while [[ -n "$1" ]]; do
-		debug-print "EXPORT_FUNCTIONS: ${1} -> ${ECLASS}_${1}"
+	while [[ -n $1 ]]; do
+		debug-print "EXPORT_FUNCTIONS: $1 -> ${ECLASS}_$1"
 		eval "$1() { ${ECLASS}_$1 "\$@" ; }" > /dev/null
 		shift
 	done
 }
 
 PKGCORE_QA_INTERCEPTORS=(
-   javac java-config python python-config perl grep egrep fgrep sed
-   gcc "g++" cc bash awk nawk pkg-config
+	javac java-config python python-config perl grep egrep fgrep sed
+	gcc "g++" cc bash awk nawk pkg-config
 )
 __QA_INTERCEPTORS_ACTIVE=false
 
-__qa_interceptors_enable()
-{
-	# Turn of extended glob matching so that g++ doesn't get incorrectly matched.
+__qa_interceptors_enable() {
+	# Turn off extended glob matching so that g++ doesn't get incorrectly matched.
 	shopt -u extglob
 
 	${__QA_INTERCEPTORS_ACTIVE} && return
@@ -289,35 +277,34 @@ __qa_interceptors_enable()
 	local FUNC_SRC BIN BODY BIN_PATH
 	for BIN in "${PKGCORE_QA_INTERCEPTORS[@]}"; do
 		BIN_PATH=$(type -pf ${BIN})
-		if [[ "$?" != "0" ]]; then
+		if [[ $? != 0 ]]; then
 			BODY="echo \"*** missing command: ${BIN}\" >&2; return 127"
 		else
 			BODY="${BIN_PATH} \"\$@\"; return \$?"
 		fi
 		FUNC_SRC="function ${BIN}() {
 			echo -n \"QA Notice: ${BIN} in global scope: \" >&2
-			if [[ \$ECLASS_DEPTH -gt 0 ]]; then
+			if [[ \${ECLASS_DEPTH} -gt 0 ]]; then
 				echo \"eclass \${ECLASS}\" >&2
 			else
 				echo \"\${CATEGORY}/\${PF}\" >&2
 			fi
 			${BODY}
 		}";
-		eval "$FUNC_SRC" || echo "error creating QA interceptor ${BIN}" >&2
+		eval "${FUNC_SRC}" || echo "error creating QA interceptor ${BIN}" >&2
 	done
 	__QA_INTERCEPTORS_ACTIVE=true
 } &> /dev/null
 
-__qa_interceptors_disable()
-{
+__qa_interceptors_disable() {
 	${__QA_INTERCEPTORS_ACTIVE} || return
 	local x
 	for x in "${PKGCORE_QA_INTERCEPTORS[@]}"; do
-		unset -f $x
+		unset -f ${x}
 	done
 	__QA_INTERCEPTORS_ACTIVE=false
 } &> /dev/null
 
-DONT_EXPORT_VARS="${DONT_EXPORT_VARS} ECLASS_DEPTH __QA_INTERCEPTORS_ACTIVE"
+DONT_EXPORT_VARS+=" ECLASS_DEPTH __QA_INTERCEPTORS_ACTIVE"
 
 :

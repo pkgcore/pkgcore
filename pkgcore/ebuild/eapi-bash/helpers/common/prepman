@@ -4,24 +4,24 @@
 # Distributed under the terms of the GNU General Public License v2
 
 shopt -s extdebug
-source "${PKGCORE_BIN_PATH}/exit-handling.lib" || { echo "failed loading libs"; exit -127; }
+source "${PKGCORE_BIN_PATH}"/exit-handling.lib || { echo "failed loading libs"; exit -127; }
 
 if ! ${PKGCORE_PREFIX_SUPPORT:=false}; then
-	ED="${D}"
-elif [[ "${ED:-unset}" == "unset" ]]; then
+	ED=${D}
+elif [[ ${ED:-unset} == "unset" ]]; then
 	echo "The variable ED is missing from the environment, but is required for prefix mode; failing."
 	exit -1
 fi
 
-if [[ -z "$1" ]]; then
-	z="${ED}usr/share/man"
+if [[ -z $1 ]]; then
+	z=${ED}usr/share/man
 else
-	z="${ED}$1/man"
+	z=${ED}$1/man
 fi
 
-[[ ! -d "${z}" ]] && exit 0
+[[ ! -d ${z} ]] && exit 0
 
-if [[ -z "${PORTAGE_COMPRESS_SUFFIX}" ]]; then
+if [[ -z ${PORTAGE_COMPRESS_SUFFIX} ]]; then
 	case ${PORTAGE_COMPRESS} in
 		gzip)  suffix="gz";;
 		bzip2) suffix="bz2";;
@@ -31,37 +31,37 @@ if [[ -z "${PORTAGE_COMPRESS_SUFFIX}" ]]; then
 	esac
 fi
 
-if [[ -z "${prepallman_banner}" ]]; then
+if [[ -z ${prepallman_banner} ]]; then
 	echo "man: ${PORTAGE_COMPRESS} ${PORTAGE_COMPRESS_FLAGS}"
 fi
 
-for x in `find "${z}"/ -type d 2>/dev/null` ; do
-	for y in `find "${x}"/ \( -type f -or -type l \) ! -name '.keep*' -maxdepth 1 -mindepth 1 2>/dev/null` ; do
-		if [[ -L "${y}" ]]; then
+for x in $(find "${z}"/ -type d 2>/dev/null); do
+	for y in $(find "${x}"/ \( -type f -or -type l \) ! -name '.keep*' -maxdepth 1 -mindepth 1 2>/dev/null); do
+		if [[ -L ${y} ]]; then
 			# Symlink ...
 			mylink=${y}
 			linkto=$(readlink "${y}")
 
 			# Do NOT change links to directories
-			if [[ -d "${z}/${linkto}" ]]; then
+			if [[ -d ${z}/${linkto} ]]; then
 				continue
 			fi
 
-			if [[ "${linkto##*.}" != "${suffix}" ]]; then
-				linkto="${linkto}.${suffix}"
+			if [[ ${linkto##*.} != ${suffix} ]]; then
+				linkto=${linkto}.${suffix}
 			fi
-			if [[ "${mylink##*.}" != "${suffix}" ]]; then
-				mylink="${mylink}.${suffix}"
+			if [[ ${mylink##*.} != ${suffix} ]]; then
+				mylink=${mylink}.${suffix}
 			fi
 
 			echo "   link fixed ${mylink##*/}"
 			ln -snf "${linkto}" "${mylink}"
-			if [[ "${y}" != "${mylink}" ]]; then
+			if [[ ${y} != ${mylink} ]]; then
 				echo "   link removed ${y##*/}"
 				rm -f "${y}"
 			fi
 		else
-			if [[ "${y##*.}" != "${suffix}" ]] && [[ ! -d "${y}" ]] ; then
+			if [[ ${y##*.} != ${suffix} ]] && [[ ! -d ${y} ]]; then
 				echo "   compressing ${y##*/}"
 				"${PORTAGE_COMPRESS}" ${PORTAGE_COMPRESS_FLAGS} -f "${y}"
 			fi

@@ -12,74 +12,68 @@ if [[ -z ${PKGCORE_BIN_PATH} ]]; then
 fi
 export PKGCORE_BIN_PATH
 
-source "${PKGCORE_BIN_PATH}/exit-handling.lib" || {
+source "${PKGCORE_BIN_PATH}"/exit-handling.lib || {
 	echo "failed to load exit-handling library: PKGCORE_BIN_PATH=${PKGCORE_BIN_PATH}" >&2
-	exit -127;
+	exit -127
 }
 
 if [[ $# -lt 1 ]]; then
 	die "ebuild-helper invoked without a target helper; no args given."
 fi
 
-source "${PKGCORE_BIN_PATH}/isolated-functions.lib" || \
+source "${PKGCORE_BIN_PATH}"/isolated-functions.lib || \
 	die "failed to load isolated-functions.lib"
 
 failed=false
-_helper_issues=( )
-error()
-{
+_helper_issues=()
+error() {
 	echo "${HELPER_ERROR_PREFIX}: ${@-no message given}" >&2
-	_helper[${#_helper[@]}]="${*-no message given}"
+	_helper[${#_helper[@]}]=${*-no message given}
 	failed=true
 }
 
-warn()
-{
+warn() {
 	echo "${HELPER_ERROR_PREFIX}: warning, ${@-no message given}" >&2
 }
 
-info()
-{
+info() {
 	echo "${HELPER_ERROR_PREFIX}: $@" >&2
 }
 
-check_args()
-{
+check_args() {
 	local tense="argument"
 	local min=$(( $1 ))
 	local max
-	[[ $min -gt 1 ]] && tense="arguments"
-	if [[ $2 == - ]]; then
+	[[ ${min} -gt 1 ]] && tense="arguments"
+	if [[ $2 == '-' ]]; then
 		max=${HELPER_ARG_COUNT}
 	elif [[ -z $2 ]]; then
-		max=${1}
+		max=$1
 	fi
-	max=$(( ${max} ))
+	max=$(( max ))
 
 	if [[ ${HELPER_ARG_COUNT} -ge ${min} ]] && [[ ${HELPER_ARG_COUNT} -le ${max} ]]; then
-		return 0;
+		return 0
 	fi
-	if [[ $min == $max ]]; then
+	if [[ ${min} -eq ${max} ]]; then
 		die "${HELPER_ERROR_PREFIX}: requires exactly ${min} ${tense}, got ${HELPER_ARG_COUNT}"
-	elif [[ ${2} == - ]]; then
+	elif [[ $2 == '-' ]]; then
 		die "${HELPER_ERROR_PREFIX}: requires at least ${min} ${tense}, got ${HELPER_ARG_COUNT}"
 	else:
 		die "${HELPER_ERROR_PREFIX}: requires at least ${min} ${tense}, and at most ${max} arguments, got ${HELPER_ARG_COUNT}"
 	fi
 }
 
-check_command()
-{
+check_command() {
 	local ret
 	"$@"
 	ret=$?
-	[[ $ret == 0 ]] && return 0
-	error "exitcode $ret from $*"
-	return $(( $ret ))
+	[[ ${ret} == 0 ]] && return 0
+	error "exitcode ${ret} from $*"
+	return $(( ret ))
 }
 
-check_command_or_stop()
-{
+check_command_or_stop() {
 	check_command "$@"
 	__helper_check_exit $? "$@ failed, cannot continue"
 	return 0
@@ -89,19 +83,18 @@ MASTER_HELPER_NAME=${1##*/}
 HELPER_ERROR_PREFIX=
 
 if ! ${PKGCORE_PREFIX_SUPPORT:=false}; then
-	export ED="${D}"
-elif [[ "${ED:-unset}" == unset ]]; then
+	export ED=${D}
+elif [[ ${ED:-unset} == "unset" ]]; then
 	error "The variable ED is missing from the environment, but is required for prefix mode; failing."
 	exit -1
 fi
 
-invoke_script()
-{
-	[[ $# == 0 ]] && die "internal error: invoke_script invoked incorrectly"
-	local HELPER_PATH="${1}"
+invoke_script() {
+	[[ $# -eq 0 ]] && die "internal error: invoke_script invoked incorrectly"
+	local HELPER_PATH=$1
 	local HELPER_NAME=${1##*/}
 	shift
-	local HELPER_ARG_COUNT="$#"
+	local HELPER_ARG_COUNT=$#
 	if [[ ! -e ${HELPER_PATH} ]]; then
 		# note this can daftly go find a binary...
 		HELPER_PATH=$(type -p "${HELPER_NAME}")
@@ -109,12 +102,12 @@ invoke_script()
 	fi
 
 	local OLD_ERROR_PREFIX=${HELPER_ERROR_PREFIX}
-	local HELPER_ERROR_PREFIX="${OLD_ERROR_PREFIX:+${OLD_ERROR_PREFIX}: }${HELPER_NAME}"
+	local HELPER_ERROR_PREFIX=${OLD_ERROR_PREFIX:+${OLD_ERROR_PREFIX}: }${HELPER_NAME}
 
 	source "${HELPER_PATH}"
 
-	if $failed; then
-		if [[ -n ${PKGCORE_NONFATAL_HELPER} ]]; then
+	if ${failed}; then
+		if ${PKGCORE_NONFATAL_HELPER}; then
 			echo "WARNING: nonzero exitcode from ${HELPER_ERROR_PREFIX}" >&2
 			# need to track the exit code here...
 			return 1

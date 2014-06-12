@@ -3,40 +3,39 @@
 # License: GPL2/BSD 3 clause
 
 recursive=false
-if [[ ${1} == -r ]]; then
+if [[ $1 == "-r" ]]; then
 	recursive=true
 	shift
 fi
 
 check_args 1 -
 
-if [[ -n "${INSDESTTREE}" ]] && [[ "${INSDESTTREE%${ED}*}" == "" ]]; then
+if [[ -n ${INSDESTTREE} ]] && [[ -z ${INSDESTTREE%${ED}*} ]]; then
 	__helper_exit 2 "do not give \${D} nor \${ED} as part of the pathways to doins"
 fi
 
-install_paths()
-{
+install_paths() {
 	local mydir=$1
 	shift
 	check_command invoke_script dodir "${mydir}" || return 1
 
 	__shopt_push -s extglob
 	# strip trailing slashes
-	paths=( "${@%%+(/)}" )
+	local paths=( "${@%%+(/)}" )
 	__shopt_pop
 
 	for x in "${paths[@]}"; do
-		mysrc="${x}"
+		mysrc=${x}
 		if [[ -L ${x} ]]; then
 			if ! ${PKGCORE_DOINS_ALLOW_SYMLINKS}; then
 				check_command cp -- "${x}" "${T}" || continue
-				mysrc="${T}/${x##*/}"
+				mysrc=${T}/${x##*/}
 			else
 				check_command cp -P -- "${x}" "${ED}${mydir}/${x##*/}"
 				continue
 			fi
 		elif [[ -d ${x} ]]; then
-			$recursive || continue
+			${recursive} || continue
 			__shopt_push -s dotglob nullglob
 			install_paths "${mydir}/${x##*/}" "${x}"/*
 			__shopt_pop
@@ -47,4 +46,5 @@ install_paths()
 		[[ ${mysrc} != ${x} ]] && rm -f "${mysrc}"
 	done
 }
+
 install_paths "${INSDESTTREE}" "$@"

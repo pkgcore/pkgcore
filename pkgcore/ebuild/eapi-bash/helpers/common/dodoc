@@ -3,30 +3,29 @@
 # License: GPL2/BSD 3 clause
 
 recursive=false
-if ${PKGCORE_DODOC_ALLOW_RECURSIVE} && [[ $1 == -r ]]; then
+if ${PKGCORE_DODOC_ALLOW_RECURSIVE} && [[ $1 == "-r" ]]; then
 	recursive=true
 	shift
 fi
 
 check_args 1 -
 
-install_paths()
-{
-	local mydir="$1"
+install_paths() {
+	local mydir=$1
 	shift
 	check_command install -d -- "${mydir}" || return
 
 	for x in "${@}"; do
 		if [[ ! -e ${x} ]]; then
 			error "file '${x}' doesn't exist"
-		elif [[ -d $x ]]; then
-			if ! $recursive; then
-				error "'$x' is a directory$($PKGCORE_DODOC_ALLOW_RECURSIVE && echo ", perhaps you forgot -r?")"
+		elif [[ -d ${x} ]]; then
+			if ! ${recursive}; then
+				error "'${x}' is a directory$($PKGCORE_DODOC_ALLOW_RECURSIVE && echo ", perhaps you forgot -r?")"
 				continue
 			fi
-			__directory_is_empty "$x" && continue
+			__directory_is_empty "${x}" && continue
 			install_paths "${mydir}/${x##*/}" "${x}"/*
-		elif [[ -s $x ]]; then
+		elif [[ -s ${x} ]]; then
 			check_command install -m0644 -- "${x}" "${mydir}" && \
 				check_command "${PORTAGE_COMPRESS}" "${PORTAGE_COMPRESS_FLAGS}" -f "${mydir}/${x##*/}"
 		fi

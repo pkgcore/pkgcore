@@ -9,7 +9,7 @@ assert() {
 die() {
 	set +x
 	# if we were signaled to die...
-	if [[ -n $EBD_DISABLE_DIEFUNC ]]; then
+	if [[ -n ${EBD_DISABLE_DIEFUNC} ]]; then
 		return
 	fi
 
@@ -23,7 +23,7 @@ die() {
 	done
 
 	echo >&2
-	echo "!!! ERROR: $CATEGORY/$PF failed." >&2
+	echo "!!! ERROR: ${CATEGORY}/${PF} failed." >&2
 	echo "!!! die invoked from directory $(pwd)" >&2
 	if [[ -z ${PKGCORE_IS_NOT_HELPER} ]]; then
 		echo "!!! was running helper: ${HELPER_ERROR_PREFIX}"
@@ -33,13 +33,13 @@ die() {
 	fi
 	echo "!!! The die message:" >&2
 	echo "!!!  ${*:-(no error message)}" >&2
-	if ${PKGCORE_DIE_OUTPUT_DETAILS-true} ; then
+	if ${PKGCORE_DIE_OUTPUT_DETAILS-true}; then
 		if [[ -n ${PKGCORE_IS_NOT_HELPER} ]]; then
 			echo "!!!" >&2
 			echo "!!! If you need support, post the topmost build error, and the call stack if relevant." >&2
 		fi
 		local x
-		for x in $EBUILD_DEATH_HOOKS; do
+		for x in ${EBUILD_DEATH_HOOKS}; do
 			${x} "$@" >&2 1>&2
 		done
 	fi
@@ -55,7 +55,6 @@ die() {
 # whitespacing for filenames
 # whitespacing for line numbers
 __dump_trace() {
-
 	declare -i strip=1
 
 	if [[ -n $1 ]]; then
@@ -64,14 +63,14 @@ __dump_trace() {
 	echo "!!! Call stack:"
 	local filespacing=$2 linespacing=$3
 	local n p
-	for (( n = ${#FUNCNAME[@]} - 1, p = ${#BASH_ARGV[@]} ; n > $strip ; n-- )) ; do
+	for (( n = ${#FUNCNAME[@]} - 1, p = ${#BASH_ARGV[@]} ; n > ${strip} ; n-- )); do
 		local funcname=${FUNCNAME[${n} - 1]}
 		local sourcefile=$(basename ${BASH_SOURCE[${n}]})
 		local lineno=${BASH_LINENO[${n} - 1]}
 		# Display function arguments
 		local args= newargs=
 		local j
-		if [[ -n "${BASH_ARGV[@]}" ]]; then
+		if [[ -n ${BASH_ARGV[@]} ]]; then
 			for (( j = 0 ; j < ${BASH_ARGC[${n} - 1]} ; ++j )); do
 				newarg=${BASH_ARGV[$(( p - j - 1 ))]}
 				args="${args:+${args} }'${newarg}'"
@@ -84,7 +83,7 @@ __dump_trace() {
 
 __helper_exit() {
 	[[ $1 == 0 ]] && exit 0
-	if [[ -n ${PKGCORE_NONFATAL_HELPER} ]]; then
+	if ${PKGCORE_NONFATAL_HELPER}; then
 		echo "WARNING: exitcode $1 from ${HELPER_ERROR_PREFIX}" >&2
 		exit $1
 	fi

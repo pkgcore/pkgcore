@@ -1,10 +1,10 @@
 # Copyright: 2011-2012 Brian Harring <ferringb@gmail.com>
 # license GPL2/BSD 3
 
-source "${PKGCORE_BIN_PATH}/"/eapi/3.lib
+source "${PKGCORE_BIN_PATH}"/eapi/3.lib
 
 nonfatal() {
-	PKGCORE_NONFATAL_HELPER=y "$@"
+	PKGCORE_NONFATAL_HELPER=true "$@"
 }
 
 default_src_install() { __phase_eapi4_src_install; }
@@ -20,8 +20,8 @@ __phase_eapi4_src_install() {
 
 	if tmp_var=$(declare -p DOCS 2> /dev/null); then
 		# given declare -- x= || declare -a x=, isolate the --/-a
-		tmp_var="${tmp_var#declare -}"
-		tmp_var="${tmp_var%% *}"
+		tmp_var=${tmp_var#declare -}
+		tmp_var=${tmp_var%% *}
 		if [[ ${tmp_var/a} != ${tmp_var} ]]; then
 			dodoc "${DOCS[@]}"
 		else

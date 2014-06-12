@@ -1,9 +1,8 @@
 # Copyright: 2011-2012 Brian Harring <ferringb@gmail.com>
 # license GPL2/BSD 3
 
-__phase_eapi2_src_configure()
-{
-	if [[ -x ${ECONF_SOURCE:-.}/configure ]] ; then
+__phase_eapi2_src_configure() {
+	if [[ -x ${ECONF_SOURCE:-.}/configure ]]; then
 		econf
 	fi
 }

@@ -21,8 +21,8 @@
 # readonly.  This limits users, but also helps to ensure that reloaded envs from older portages don't
 # overwrite an internal ebd.sh function that has since changed.
 
-ORIG_VARS=`declare | grep -E '^[^[:space:]{}()]+=' | cut -s -d '=' -f 1`
-ORIG_FUNCS=`declare -F | cut -s -d ' ' -f 3`
+ORIG_VARS=$(declare | grep -E '^[^[:space:]{}()]+=' | cut -s -d '=' -f 1)
+ORIG_FUNCS=$(declare -F | cut -s -d ' ' -f 3)
 
 DONT_EXPORT_VARS="ORIG_VARS GROUPS ORIG_FUNCS FUNCNAME CCACHE.* DISTCC.* SYNC
 (TMP)?DIR FEATURES CONFIG_PROTECT.* WORKDIR RSYNC_.* GENTOO_MIRRORS
@@ -37,21 +37,21 @@ AUTOCLEAN CLEAN_DELAY USE_ORDER XARGS
 COLORTERM LESS(OPEN)? DISPLAY EDITOR LS_COLORS PAGER TERM TERMCAP (ftp|http)_proxy USER(NAME)?"
 
 
-if [[ -z "$PKGCORE_BIN_PATH" ]]; then
+if [[ -z ${PKGCORE_BIN_PATH} ]]; then
 	echo "PKGCORE_BIN_PATH is unset!"
 	exit 1
 fi
 
 # knock the sandbox vars back to the pkgs defaults.
 __reset_sandbox() {
-	export SANDBOX_ON="1"
-	export SANDBOX_PREDICT="${SANDBOX_PREDICT:+${SANDBOX_PREDICT}:}/proc/self/maps:/dev/console:/dev/random:${PORTAGE_TMPDIR}"
-	export SANDBOX_WRITE="${SANDBOX_WRITE:+${SANDBOX_WRITE}:}/dev/shm:${PORTAGE_TMPDIR}"
-	export SANDBOX_READ="${SANDBOX_READ:+${SANDBOX_READ}:}/dev/shm:${PORTAGE_TMPDIR}"
+	export SANDBOX_ON=1
+	export SANDBOX_PREDICT=${SANDBOX_PREDICT:+${SANDBOX_PREDICT}:}/proc/self/maps:/dev/console:/dev/random:${PORTAGE_TMPDIR}
+	export SANDBOX_WRITE=${SANDBOX_WRITE:+${SANDBOX_WRITE}:}/dev/shm:${PORTAGE_TMPDIR}
+	export SANDBOX_READ=${SANDBOX_READ:+${SANDBOX_READ}:}/dev/shm:${PORTAGE_TMPDIR}
 	local x
 	for x in CCACHE_DIR DISTCC_DIR D WORKDIR T; do
-		if [[ -n "${!x}" ]]; then
-			addread  "${!x}"
+		if [[ -n ${!x} ]]; then
+			addread "${!x}"
 			addwrite "${!x}"
 		fi
 	done
@@ -75,10 +75,10 @@ alias __load_environ='{
 	[[ -z ${T} ]] && die "__load_environ requires \$T to be set";
 	EXISTING_PATH=${PATH};
 	__timed_call __environ_sanitize_saved_env "${PKGCORE_TARGET_ENV}"
-	if [[ -n "$PKGCORE_PERF_DEBUG" ]]; then
+	if [[ -n ${PKGCORE_PERF_DEBUG} ]]; then
 		echo "timing source ${PKGCORE_TARGET_ENV}" >&2
 		time source "${PKGCORE_TARGET_ENV}" >&2
-		echo "timed  source ${PKGCORE_TARGET_ENV}" >&2
+		echo "timed source ${PKGCORE_TARGET_ENV}" >&2
 	else
 		source "${PKGCORE_TARGET_ENV}" >&2
 	fi
@@ -96,10 +96,10 @@ alias __load_safe_environ='{
 	[[ -z ${PKGCORE_TARGET_ENV} ]] && die "__load_safe_environ was invoked w/out PKGCORE_TARGET_ENV set";
 	[[ -z ${T} ]] && die "__load_safe_environ requires \$T to be set";
 	EXISTING_PATH=${PATH};
-	if [[ -n "$PKGCORE_PERF_DEBUG" ]]; then
+	if [[ -n ${PKGCORE_PERF_DEBUG} ]]; then
 		echo "timing source ${PKGCORE_TARGET_ENV}" >&2
 		time source "${PKGCORE_TARGET_ENV}" >&2
-		echo "timed  source ${PKGCORE_TARGET_ENV}" >&2
+		echo "timed source ${PKGCORE_TARGET_ENV}" >&2
 	else
 		source "${PKGCORE_TARGET_ENV}" >&2
 	fi
@@ -114,10 +114,10 @@ alias __load_safe_environ='{
 alias __init_environ='{
 	EXISTING_PATH=${PATH};
 	__timed_call __load_eapi_libs
-	if [[ -n "${PKGCORE_PERF_DEBUG}" ]]; then
+	if [[ -n ${PKGCORE_PERF_DEBUG} ]]; then
 		echo "timing eval \$(__generate_initial_ebuild_environ)" >&2
 		time eval "$(__timed_call __generate_initial_ebuild_environ)" >&2
-		echo "timed  eval \$(__generate_initial_ebuild_environ)" >&2
+		echo "timed eval \$(__generate_initial_ebuild_environ)" >&2
 	else
 		eval "$(__generate_initial_ebuild_environ)"
 	fi
@@ -129,31 +129,30 @@ alias __init_environ='{
 
 shopt -s extdebug &> /dev/null
 
-#if no perms are specified, dirs/files will have decent defaults
-#(not secretive, but not stupid)
+# if no perms are specified, dirs/files will have decent defaults
+# (not secretive, but not stupid)
 umask 022
 
 # the sandbox is disabled by default except when overridden in the relevant stages
-export SANDBOX_ON="0"
+export SANDBOX_ON=0
 
 # ensure the passed in PATH has its components in $PATH
-__ensure_PATH()
-{
-	local EXISTING_PATH="$1"
+__ensure_PATH() {
+	local EXISTING_PATH=$1
 	local adds
 	# note this isolates the adds in the same order they appear in
 	# the passed in path, maintaining that order.
-	if [[ "$EXISTING_PATH" != "$PATH" ]]; then
+	if [[ ${EXISTING_PATH} != ${PATH} ]]; then
 		local IFS=:
 		local x
 		for x in ${EXISTING_PATH}; do
 			# keep in mind PATH=":foon" is a valid way to say "cwd"
-			[[ -z "${x}" ]] && continue
-			if ! __safe_has ${x} ${PATH} && ! __safe_has ${x} ${adds}; then
-				adds="${adds:+${adds}:}${x}"
+			[[ -z ${x} ]] && continue
+			if ! __safe_has "${x}" ${PATH} && ! __safe_has "${x}" ${adds}; then
+				adds=${adds:+${adds}:}${x}
 			fi
 		done
-		[[ -n "$adds" ]] && PATH="${PATH}${PATH:+:}${adds}"
+		[[ -n ${adds} ]] && PATH=${PATH}${PATH:+:}${adds}
 	fi
 	export PATH
 }
@@ -163,7 +162,7 @@ __load_eapi_libs() {
 	# rely on this setting the env up as necessary
 	# finally, update the filters with functionality loaded from here-
 	# always, always, *always* use our own functionality
-	source "${PKGCORE_BIN_PATH}/eapi/common.lib" || die "failed sourcing eapi/common.lib"
+	source "${PKGCORE_BIN_PATH}"/eapi/common.lib || die "failed sourcing eapi/common.lib"
 	source "${PKGCORE_BIN_PATH}/eapi/${PKGCORE_EAPI-${EAPI}}.lib" || \
 		die "failed loading eapi/${PKGCORE_EAPI-${EAPI}}.lib"
 }
@@ -171,131 +170,129 @@ __load_eapi_libs() {
 # do all profile, bashrc's, and ebuild sourcing.  Should only be called in setup phase, unless the
 # env is *completely* missing, as it is occasionally for ebuilds during prerm/postrm.
 __generate_initial_ebuild_environ() {
-	local OCC="$CC"
-	local OCXX="$CXX"
-	local EXISTING_PATH="$PATH"
-	local T="${T}"
+	local OCC=${CC}
+	local OCXX=${CXX}
+	local EXISTING_PATH=${PATH}
+	local T=${T}
 
-	if [[ "${PKGCORE_EBUILD_PHASE}" == "setup" ]]; then
-		#we specifically save the env so it's not stomped on by sourcing.
-		#bug 51552
-		__timed_call __environ_save_to_file "${T}/.temp_env"
+	if [[ ${PKGCORE_EBUILD_PHASE} == "setup" ]]; then
+		# we specifically save the env so it's not stomped on by sourcing.
+		# bug 51552
+		__timed_call __environ_save_to_file "${T}"/.temp_env
 
-		if [[ "$USERLAND" == "GNU" ]]; then
-			local PORTAGE_SHIFTED_PATH="$PATH"
+		if [[ ${USERLAND} == "GNU" ]]; then
+			local PORTAGE_SHIFTED_PATH=${PATH}
 			__timed_call __qa_invoke source /etc/profile.env
-			__ensure_PATH "$EXISTING_PATH"
+			__ensure_PATH "${EXISTING_PATH}"
 		fi
 
-		#restore the saved env vars.
+		# restore the saved env vars.
 		PKGCORE_SUPPRESS_BASHRCS=true
-		PKGCORE_TARGET_ENV="${T}/.temp_env"
+		PKGCORE_TARGET_ENV=${T}/.temp_env
 		if ! __load_environ; then
-			#this shouldn't happen.
+			# this shouldn't happen.
 			die "failed to load ${T}/.tmp_env- fs is readonly?"
 		fi
 		unset PKGCORE_SUPPRESS_BASHRCS
 
-		rm "${T}/.temp_env"
+		rm "${T}"/.temp_env
 	fi
 
-	[[ -n "${EBUILD}" ]] && __timed_call __load_ebuild "${EBUILD}"
+	[[ -n ${EBUILD} ]] && __timed_call __load_ebuild "${EBUILD}"
 
-	if [[ ${PKGCORE_EBUILD_PHASE} != depend ]]; then
-		RESTRICT="${PKGCORE_FINALIZED_RESTRICT}"
+	if [[ ${PKGCORE_EBUILD_PHASE} != "depend" ]]; then
+		RESTRICT=${PKGCORE_FINALIZED_RESTRICT}
 		unset PKGCORE_FINALIZED_RESTRICT
 		unset CC CXX
-		[[ -n $OCC ]] && export CC="$OCC"
-		[[ -n $OCXX ]] && export CXX="$OCXX"
+		[[ -n ${OCC} ]] && export CC=${OCC}
+		[[ -n ${OCXX} ]] && export CXX=${OCXX}
 		unset OCC OCXX
 	fi
 
-	__ensure_PATH "$EXISTING_PATH"
-	if [[ -n "${T}" ]]; then
+	__ensure_PATH "${EXISTING_PATH}"
+	if [[ -n ${T} ]]; then
 		# use a file if possible; faster since bash does this lovely byte by byte reading if it's a pipe.
 		# having the file around is useful for debugging also.
-		__timed_call __environ_dump > "${T}/.initial_environ" || die "dump_environ > ${T}/.initial_environ return non zero"
+		__timed_call __environ_dump > "${T}"/.initial_environ || die "dump_environ > ${T}/.initial_environ return non zero"
 		echo "source ${T}/.initial_environ"
 	else
 		__timed_call __environ_dump || die "dump_environ returned non zero"
 	fi
 }
 
-__load_ebuild()
-{
-	local EBUILD="${1}"
+__load_ebuild() {
+	local EBUILD=$1
 	shift
 
-	SANDBOX_ON="1"
+	SANDBOX_ON=1
 	export S=${WORKDIR}/${P}
 
 	unset   IUSE   REQUIRED_USE   DEPEND   RDEPEND   PDEPEND
 	local E_IUSE E_REQUIRED_USE E_DEPEND E_RDEPEND E_PDEPEND
 
-	if [[ ! -f "${EBUILD}" ]]; then
-		echo "bailing, ebuild not found at '$EBUILD'"
+	if [[ ! -f ${EBUILD} ]]; then
+		echo "bailing, ebuild not found at '${EBUILD}'"
 		die "EBUILD=${EBUILD}; problem is, it doesn't exist.  bye." >&2
 	fi
 
 	__qa_invoke source "${EBUILD}" >&2
 
-	#a reasonable default for $S
-	if [[ -z "$S" ]]; then
+	# a reasonable default for $S
+	if [[ -z ${S} ]]; then
 		export S=${WORKDIR}/${P}
 	fi
 
-	#some users have $TMP/$TMPDIR to a custom dir in their home ...
-	#this will cause sandbox errors with some ./configure
-	#scripts, so set it to $T.
-	export TMP="${T}"
-	export TMPDIR="${T}"
+	# some users have $TMP/$TMPDIR to a custom dir in their home ...
+	# this will cause sandbox errors with some ./configure
+	# scripts, so set it to $T.
+	export TMP=${T}
+	export TMPDIR=${T}
 
 	# Note: this next line is not the same as export RDEPEND=${RDEPEND:-${DEPEND}}
 	# That will test for unset *or* NULL ("").  We want just to set for unset...
 
-	if __safe_has ${EAPI-0} 0 1 2 3; then
-		if [[ "${RDEPEND-unset}" == "unset" ]]; then
-			export RDEPEND="${DEPEND}"
+	if __safe_has "${EAPI-0}" 0 1 2 3; then
+		if [[ ${RDEPEND-unset} == "unset" ]]; then
+			export RDEPEND=${DEPEND}
 		fi
 	fi
 
-	#add in dependency info from eclasses
-	IUSE+="${IUSE:+ } ${E_IUSE}"
-	REQUIRED_USE+="${REQUIRED_USE:+ }${E_REQUIRED_USE}"
-	DEPEND+="${DEPEND:+ }${E_DEPEND}"
-	RDEPEND+="${RDEPEND:+ }${E_RDEPEND}"
-	PDEPEND+="${PDEPEND:+ }${E_PDEPEND}"
+	# add in dependency info from eclasses
+	IUSE+=${IUSE:+ }${E_IUSE}
+	REQUIRED_USE+=${REQUIRED_USE:+ }${E_REQUIRED_USE}
+	DEPEND+=${DEPEND:+ }${E_DEPEND}
+	RDEPEND+=${RDEPEND:+ }${E_RDEPEND}
+	PDEPEND+=${PDEPEND:+ }${E_PDEPEND}
 
-	EAPI="${EAPI-0}"
+	EAPI=${EAPI-0}
 }
 
 # short version.  think these should be sourced via at the daemons choice, rather then defacto.
 # note that exit-handling loads the die functions, thus the custom failure there.
-source "${PKGCORE_BIN_PATH}/exit-handling.lib" >&2 || { echo "ERROR: failed sourcing exit-handling.lib"; exit -1; }
-source "${PKGCORE_BIN_PATH}/ebuild-default-functions.lib" >&2 || die "failed sourcing ebuild-default-functions.lib"
-source "${PKGCORE_BIN_PATH}/ebuild-env-utils.lib" >&2 || die "failed sourcing ebuild-env-utils.lib"
+source "${PKGCORE_BIN_PATH}"/exit-handling.lib >&2 || { echo "ERROR: failed sourcing exit-handling.lib"; exit -1; }
+source "${PKGCORE_BIN_PATH}"/ebuild-default-functions.lib >&2 || die "failed sourcing ebuild-default-functions.lib"
+source "${PKGCORE_BIN_PATH}"/ebuild-env-utils.lib >&2 || die "failed sourcing ebuild-env-utils.lib"
 
-__run_ebuild_phase()
-{
-	[[ -n $PKGCORE_DEBUG ]] && set -x
-	__qa_run_function_if_exists __phase_default_pre_${1}
-	__qa_run_function_if_exists pre_${1}
+__run_ebuild_phase() {
+	[[ -n ${PKGCORE_DEBUG} ]] && set -x
+	__qa_run_function_if_exists __phase_default_pre_$1
+	__qa_run_function_if_exists pre_$1
 
 	local EBUILD_PHASE_FUNC
 	if ${PKGCORE_EBUILD_PHASE_FUNC}; then
-		EBUILD_PHASE_FUNC="$1"
+		EBUILD_PHASE_FUNC=$1
 	fi
-	if __is_function __dyn_${1}; then
-		__dyn_${1}
-	elif __is_function ${1}; then
-		__qa_invoke ${1}
+	if __is_function __dyn_$1; then
+		__dyn_$1
+	elif __is_function $1; then
+		__qa_invoke $1
 	else
-		__qa_run_function_if_exists __phase_default_${1}
+		__qa_run_function_if_exists __phase_default_$1
 	fi
 
-	__qa_run_function_if_exists post_${1}
-	__qa_run_function_if_exists __phase_default_post_${1}
-	[[ $PKGCORE_DEBUG -lt 2 ]] && set +x
+	__qa_run_function_if_exists post_$1
+	__qa_run_function_if_exists __phase_default_post_$1
+	[[ ${PKGCORE_DEBUG} -lt 2 ]] && set +x
 }
 
 # general func to call for phase execution.  this handles necessary env loading/dumping, and executing pre/post/dyn
@@ -309,12 +306,12 @@ __execute_phases() {
 
 	trap "exit 2" SIGINT
 	trap "exit 9" SIGQUIT
-	trap 'exit 1' SIGTERM
-	trap 'die "a helper failed, see above"' SIGUSR1
-	declare -rx PKGCORE_EBUILD_PROCESS_PID=$BASHPID
+	trap "exit 1" SIGTERM
+	trap "die 'a helper failed, see above'" SIGUSR1
+	declare -rx PKGCORE_EBUILD_PROCESS_PID=${BASHPID}
 
-	if __safe_has ${EAPI:-0} 0 1 2 3; then
-		declare -rx PKGCORE_NONFATAL_HELPER=1
+	if __safe_has "${EAPI:-0}" 0 1 2 3; then
+		declare -rx PKGCORE_NONFATAL_HELPER=true
 	fi
 
 	# local scope; this keeps it from bleeding further, and keeps
@@ -323,136 +320,136 @@ __execute_phases() {
 	local PKGCORE_IS_NOT_HELPER=1
 	local myarg ret
 	for myarg in $*; do
-		PKGCORE_EBUILD_PHASE="$myarg"
-		EBUILD_PHASE="$myarg"
+		PKGCORE_EBUILD_PHASE=${myarg}
+		EBUILD_PHASE=${myarg}
 
 		local PKGCORE_SAVE_ENV=true
 		local PKGCORE_DIE_OUTPUT_DETAILS=true
 		local PKGCORE_SUPPRESS_BASHRCS=false
 
-		case $EBUILD_PHASE in
-		nofetch|pretend)
-			PKGCORE_SUPPRESS_BASHRCS=true
-			__init_environ
-
-			PKGCORE_DIE_OUTPUT_DETAILS=false
-			__run_ebuild_phase pkg_${EBUILD_PHASE}
-			PKGCORE_SAVE_ENV=false
-			ret=0
-			;;
-		postrm)
-			PKGCORE_SAVE_ENV=false
-			# this is a fall thru; think of it as a select chunk w/out a break
-			# we just snag these phases to turn off env saving.
-			;&
-		prerm|preinst|postinst|config)
-			export SANDBOX_ON="0"
-
-			PKGCORE_TARGET_ENV="${T}/environment"
-			if ! __load_environ; then
-				#hokay.  this sucks.
-				ewarn
-				ewarn "failed to load env"
-				ewarn "this installed pkg may not behave correctly"
-				ewarn
-				sleep 10
-			fi
-
-			__run_ebuild_phase pkg_${EBUILD_PHASE}
-			ret=0
-			;;
-		unpack|prepare|configure|compile|test|install)
-			if [[ "${SANDBOX_DISABLED="0"}" == "0" ]]; then
-				export SANDBOX_ON="1"
-			else
-				export SANDBOX_ON="0"
-			fi
-
-			[[ $PKGCORE_DEBUG -ge 3 ]] && set -x
-			PKGCORE_TARGET_ENV="${T}/environment"
-			if ! __load_safe_environ; then
-				ewarn
-				ewarn "failed to load env.  This is bad, bailing."
-				die "unable to load saved env for phase $EBUILD_PHASE, unwilling to continue"
-			fi
-
-			[[ -z "${S}" ]] && die "S was null- ${S}, path=$PATH"
-
-			__run_ebuild_phase src_${EBUILD_PHASE}
-			ret=0
-			;;
-		setup|setup-binpkg)
-			#pkg_setup needs to be out of the sandbox for tmp file creation;
-			#for example, awking and piping a file in /tmp requires a temp file to be created
-			#in /etc.  If pkg_setup is in the sandbox, both our lilo and apache ebuilds break.
-
-			EBUILD_PHASE="setup"
-
-			# binpkgs don't need to reinitialize the env.
-			if [[ "$myarg"  == "setup" ]]; then
-				[[ ! -z "${DISTCC_LOG}" ]] && addwrite "$(dirname ${DISTCC_LOG})"
-
-				local x
-				# if they aren't set, then holy hell ensues.  deal.
-
-				if __feature_is_enabled ccache; then
-					[[ -z "${CCACHE_SIZE}" ]] && export CCACHE_SIZE="500M"
-					ccache -M ${CCACHE_SIZE} &> /dev/null
-				fi
-				[[ $PKGCORE_DEBUG == 2 ]] && set -x
+		case ${EBUILD_PHASE} in
+			nofetch|pretend)
+				PKGCORE_SUPPRESS_BASHRCS=true
 				__init_environ
-			else
-				PKGCORE_TARGET_ENV="${T}/environment"
+
+				PKGCORE_DIE_OUTPUT_DETAILS=false
+				__run_ebuild_phase pkg_${EBUILD_PHASE}
+				PKGCORE_SAVE_ENV=false
+				ret=0
+				;;
+			postrm)
+				PKGCORE_SAVE_ENV=false
+				# this is a fall thru; think of it as a select chunk w/out a break
+				# we just snag these phases to turn off env saving.
+				;&
+			prerm|preinst|postinst|config)
+				export SANDBOX_ON=0
+
+				PKGCORE_TARGET_ENV=${T}/environment
 				if ! __load_environ; then
-					die "failed loading saved env; at ${T}/environment"
+					# hokay.  this sucks.
+					ewarn
+					ewarn "failed to load env"
+					ewarn "this installed pkg may not behave correctly"
+					ewarn
+					sleep 10
 				fi
-			fi
 
-			export SANDBOX_ON="0"
-			__run_ebuild_phase pkg_${EBUILD_PHASE}
-			ret=0;
-
-			;;
-		depend|generate_env)
-			SANDBOX_ON="1"
-			PKGCORE_SAVE_ENV=false
-
-			PKGCORE_DIE_OUTPUT_DETAILS=false
-			if [[ -z "$QA_CONTROLLED_EXTERNALLY" ]]; then
-				__qa_interceptors_enable
-			fi
-
-			EBUILD_PHASE=depend
-			__load_ebuild "${EBUILD}"
-
-			if [[ -z "$QA_CONTROLLED_EXTERNALLY" ]]; then
-				__qa_interceptors_disable
-			fi
-			if [[ $myarg == depend ]]; then
-				__dump_metadata_keys
-			else
-				# Use gawk if at possible; it's a fair bit faster since bash likes to do byte by byte reading.
-				local __path=$(type -P gawk)
-				if [[ $? == 0 ]]; then
-					{ unset __path; __environ_dump; } | \
-					LC_ALL=C "${__path}" -F $'\0' 'BEGIN { content="";chars=0;RS="\0";ORS=""} {chars += length($0);content = content $0} END {printf("receive_env %i\n%s",chars, content)}' >&${PKGCORE_EBD_WRITE_FD}
+				__run_ebuild_phase pkg_${EBUILD_PHASE}
+				ret=0
+				;;
+			unpack|prepare|configure|compile|test|install)
+				if [[ ${SANDBOX_DISABLED=0} == 0 ]]; then
+					export SANDBOX_ON=1
 				else
-					local my_env="$(__environ_dump)"
-					__ebd_write_line "receive_env ${#my_env}"
-					__ebd_write_raw "${my_env}"
-					unset my_env __path
+					export SANDBOX_ON=0
 				fi
-				#__environ_dump | $(type -P gawk)  -F $'\0' 'BEGIN { content="";chars=0;RS="\0";ORS=""} {chars += length($0);content = content $0} END {printf("receive_env %i\n%s",chars, content)}' >&${PKGCORE_EBD_WRITE_FD}
-				#__environ_dump | $(type -P python) -c 'import sys;data=sys.stdin.read();sys.stdout.write("receive_env %i\n%s" % (len(data), data))' >&${PKGCORE_EBD_WRITE_FD}
-			fi
-			;;
-		*)
-			die "Please specify a valid command: $EBUILD_PHASE isn't valid."
-			;;
+
+				[[ ${PKGCORE_DEBUG} -ge 3 ]] && set -x
+				PKGCORE_TARGET_ENV=${T}/environment
+				if ! __load_safe_environ; then
+					ewarn
+					ewarn "failed to load env.  This is bad, bailing."
+					die "unable to load saved env for phase ${EBUILD_PHASE}, unwilling to continue"
+				fi
+
+				[[ -z ${S} ]] && die "S was null- ${S}, path=${PATH}"
+
+				__run_ebuild_phase src_${EBUILD_PHASE}
+				ret=0
+				;;
+			setup|setup-binpkg)
+				# pkg_setup needs to be out of the sandbox for tmp file creation;
+				# for example, awking and piping a file in /tmp requires a temp file to be created
+				# in /etc.  If pkg_setup is in the sandbox, both our lilo and apache ebuilds break.
+
+				EBUILD_PHASE="setup"
+
+				# binpkgs don't need to reinitialize the env.
+				if [[ ${myarg} == "setup" ]]; then
+					[[ -n ${DISTCC_LOG} ]] && addwrite "$(dirname ${DISTCC_LOG})"
+
+					local x
+					# if they aren't set, then holy hell ensues.  deal.
+
+					if __feature_is_enabled ccache; then
+						[[ -z ${CCACHE_SIZE} ]] && export CCACHE_SIZE="500M"
+						ccache -M ${CCACHE_SIZE} &> /dev/null
+					fi
+					[[ ${PKGCORE_DEBUG} == 2 ]] && set -x
+					__init_environ
+				else
+					PKGCORE_TARGET_ENV=${T}/environment
+					if ! __load_environ; then
+						die "failed loading saved env; at ${T}/environment"
+					fi
+				fi
+
+				export SANDBOX_ON=0
+				__run_ebuild_phase pkg_${EBUILD_PHASE}
+				ret=0;
+
+				;;
+			depend|generate_env)
+				SANDBOX_ON=1
+				PKGCORE_SAVE_ENV=false
+
+				PKGCORE_DIE_OUTPUT_DETAILS=false
+				if [[ -z ${QA_CONTROLLED_EXTERNALLY} ]]; then
+					__qa_interceptors_enable
+				fi
+
+				EBUILD_PHASE="depend"
+				__load_ebuild "${EBUILD}"
+
+				if [[ -z ${QA_CONTROLLED_EXTERNALLY} ]]; then
+					__qa_interceptors_disable
+				fi
+				if [[ ${myarg} == depend ]]; then
+					__dump_metadata_keys
+				else
+					# Use gawk if at possible; it's a fair bit faster since bash likes to do byte by byte reading.
+					local __path=$(type -P gawk)
+					if [[ $? == 0 ]]; then
+						{ unset __path; __environ_dump; } | \
+						LC_ALL=C "${__path}" -F $'\0' 'BEGIN { content="";chars=0;RS="\0";ORS=""} {chars += length($0);content = content $0} END {printf("receive_env %i\n%s",chars, content)}' >&${PKGCORE_EBD_WRITE_FD}
+					else
+						local my_env=$(__environ_dump)
+						__ebd_write_line "receive_env ${#my_env}"
+						__ebd_write_raw "${my_env}"
+						unset my_env __path
+					fi
+					#__environ_dump | $(type -P gawk) -F $'\0' 'BEGIN { content="";chars=0;RS="\0";ORS=""} {chars += length($0);content = content $0} END {printf("receive_env %i\n%s",chars, content)}' >&${PKGCORE_EBD_WRITE_FD}
+					#__environ_dump | $(type -P python) -c 'import sys;data=sys.stdin.read();sys.stdout.write("receive_env %i\n%s" % (len(data), data))' >&${PKGCORE_EBD_WRITE_FD}
+				fi
+				;;
+			*)
+				die "Please specify a valid command: ${EBUILD_PHASE} isn't valid."
+				;;
 		esac
 
 		${PKGCORE_SAVE_ENV} && PKGCORE_MUST_EXPORT_ENV=true
-		[[ $PKGCORE_DEBUG -lt 4 ]] && set +x
+		[[ ${PKGCORE_DEBUG} -lt 4 ]] && set +x
 	done
 
 	if ${PKGCORE_MUST_EXPORT_ENV}; then
@@ -471,7 +468,7 @@ __dump_metadata_keys() {
 		DESCRIPTION KEYWORDS INHERITED IUSE PDEPEND PROVIDE PROPERTIES REQUIRED_USE; do
 		# deref the val, if it's not empty/unset, then spit a key command to EBD
 		# after using echo to normalize whitespace (specifically removal of newlines)
-		if [[ "${!key:-unset}" != "unset" ]]; then
+		if [[ ${!key:-unset} != "unset" ]]; then
 			# note that we explicitly bypass the normal functions, and directly
 			# write to the FD.  This is done since it's about 25% faster for our usage;
 			# if we used the functions, we'd have to subshell the 'echo ${!key}', which
@@ -486,12 +483,12 @@ __dump_metadata_keys() {
 	local phases
 	for key in pkg_{pretend,configure,info,{pre,post}{rm,inst},setup} \
 		src_{unpack,prepare,configure,compile,test,install}; do
-			__is_function "${key}" && phases+="${phases:+ }${key}"
+			__is_function "${key}" && phases+=${phases:+ }${key}
 	done
 	__ebd_write_line "key DEFINED_PHASES=${phases:--}"
 }
 
-DONT_EXPORT_VARS="${DONT_EXPORT_VARS} $(declare | __filter_env --print-vars | __regex_filter_input ${ORIG_VARS} ${DONT_EXPORT_VARS})"
+DONT_EXPORT_VARS+=" $(declare | __filter_env --print-vars | __regex_filter_input ${ORIG_VARS} ${DONT_EXPORT_VARS})"
 
 set +f
 

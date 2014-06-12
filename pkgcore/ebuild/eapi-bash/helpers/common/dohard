@@ -2,19 +2,18 @@
 # Copyright: 2011 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD 3 clause
 
-
 check_args 2
 
 ln_option=
 src_prefix=
-if [[ ${HELPER_NAME} == dosym ]]; then
-	ln_option=sn
-	if [[ ${2} == */ ]] || [[ -d $2 && ! -L $2 ]]; then
+if [[ ${HELPER_NAME} == "dosym" ]]; then
+	ln_option="sn"
+	if [[ $2 == */ ]] || [[ -d $2 && ! -L $2 ]]; then
 		echo "QA: dosym target '$2' omits the filename target; see bug 379899" >&2
 	fi
 else
-	src_prefix="${ED}"
+	src_prefix=${ED}
 fi
 
 check_command_or_stop dodir "${2%/*}"
-check_command ln -${ln_option}f "${src_prefix}${1}" "${ED}${2}"
+check_command ln -${ln_option}f "${src_prefix}$1" "${ED}$2"

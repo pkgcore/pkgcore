@@ -3,16 +3,16 @@
 # Distributed under the terms of the GNU General Public License v2
 
 shopt -s extdebug
-source "${PKGCORE_BIN_PATH}/exit-handling.lib" || { echo "failed loading libs"; exit -127; }
+source "${PKGCORE_BIN_PATH}"/exit-handling.lib || { echo "failed loading libs"; exit -127; }
 
 if ! ${PKGCORE_PREFIX_SUPPORT:=false}; then
-	ED="${D}"
-elif [[ "${ED:-unset}" == "unset" ]]; then
+	ED=${D}
+elif [[ ${ED:-unset} == "unset" ]]; then
 	echo "The variable ED is missing from the environment, but is required for prefix mode; failing."
 	exit -1
 fi
 
-for x in $(find "${ED}" -name man -type d -printf '%P\n') ; do
+for x in $(find "${ED}" -name man -type d -printf '%P\n'); do
 	prepman ${x%/man}
-	export prepallman_banner=no
+	export prepallman_banner="no"
 done

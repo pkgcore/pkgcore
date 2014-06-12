@@ -3,15 +3,15 @@
 # Copyright: 1999-2005 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
 
-source "${PKGCORE_BIN_PATH}/exit-handling.lib" || { echo "failed loading libs"; exit -127; }
+source "${PKGCORE_BIN_PATH}"/exit-handling.lib || { echo "failed loading libs"; exit -127; }
 
-"${PKGCORE_BIN_PATH}/helpers/internals/prepallman"
+"${PKGCORE_BIN_PATH}"/helpers/internals/prepallman
 prepinfo
 prepallstrip
 
 if ! ${PKGCORE_PREFIX_SUPPORT:=false}; then
-	ED="${D}"
-elif [[ "${ED:-unset}" == "unset" ]]; then
+	ED=${D}
+elif [[ ${ED:-unset} == "unset" ]]; then
 	echo "The variable ED is missing from the environment, but is required for prefix mode; failing."
 	exit -1
 fi
@@ -19,12 +19,12 @@ fi
 # this should help to ensure that all (most?) shared libraries are executable
 # and that all libtool scripts / static libraries are not executable
 for i in "${ED}"opt/*/lib{,32,64} \
-		"${ED}"lib{,32,64}       \
-		"${ED}"usr/lib{,32,64}   \
-		"${ED}"usr/X11R6/lib{,32,64} ; do
+		 "${ED}"lib{,32,64}       \
+		 "${ED}"usr/lib{,32,64}   \
+		 "${ED}"usr/X11R6/lib{,32,64}; do
 	[[ ! -d ${i} ]] && continue
 
-	for j in "${i}"/*.so.* "${i}"/*.so ; do
+	for j in "${i}"/*.so.* "${i}"/*.so; do
 		[[ ! -e ${j} ]] && continue
 		[[ -L ${j} ]] && continue
 		[[ -x ${j} ]] && continue
@@ -32,7 +32,7 @@ for i in "${ED}"opt/*/lib{,32,64} \
 		chmod +x "${j}"
 	done
 
-	for j in "${i}"/*.a "${i}"/*.la ; do
+	for j in "${i}"/*.a "${i}"/*.la; do
 		[[ ! -e ${j} ]] && continue
 		[[ -L ${j} ]] && continue
 		[[ ! -x ${j} ]] && continue
@@ -45,11 +45,11 @@ done
 # /lib, we have to make sure we have a linker script in /usr/lib along side
 # the static library, or gcc will utilize the static lib when linking :(.
 # http://bugs.gentoo.org/4411
-for a in "${ED}"usr/lib*/*.a ; do
+for a in "${ED}"usr/lib*/*.a; do
 	s=${a%.a}.so
-	if [[ ! -e ${s} ]] ; then
+	if [[ ! -e ${s} ]]; then
 		s=${s%usr/*}${s##*/usr/}
-		if [[ -e ${s} ]] ; then
+		if [[ -e ${s} ]]; then
 			echo -e "\aQA Notice: missing gen_usr_ldscript for ${s##*/}\a"
  			sleep 1
 		fi
@@ -58,34 +58,34 @@ done
 
 # Make sure people don't store libtool files or static libs in /lib
 f=$(ls "${ED}"lib*/*.{a,la} 2>/dev/null)
-if [[ -n ${f} ]] ; then
+if [[ -n ${f} ]]; then
 	echo -e "\n\aQA Notice: excessive files found in the / partition\a"
 	echo "${f}"
 	sleep 1
 fi
 
 # Verify that the libtool files don't contain bogus $ED entries.
-for a in "${ED}"usr/lib*/*.la ; do
+for a in "${ED}"usr/lib*/*.la; do
 	s=${a##*/}
-	if grep -qs "${ED}" "${a}" ; then
+	if grep -qs "${ED}" "${a}"; then
 		echo -e "\n\aQA Notice: ${s} appears to contain PORTAGE_TMPDIR paths\a"
 		sleep 1
 	fi
 done
 
-if type -p scanelf > /dev/null ; then
+if type -p scanelf > /dev/null; then
 
 # Run some sanity checks on shared libraries
-for d in "${ED}"lib* "${ED}"usr/lib* ; do
+for d in "${ED}"lib* "${ED}"usr/lib*; do
 	f=$(scanelf -ByF '%S %p' "${d}"/lib*.so* | gawk '$2 == "" { print }')
-	if [[ -n ${f} ]] ; then
+	if [[ -n ${f} ]]; then
 		echo -e "\n\aQA Notice: the following shared libraries lack a SONAME\a"
 		echo "${f}"
 		sleep 1
 	fi
 
 	f=$(scanelf -ByF '%n %p' "${d}"/lib*.so* | gawk '$2 == "" { print }')
-	if [[ -n ${f} ]] ; then
+	if [[ -n ${f} ]]; then
 		echo -e "\n\aQA Notice: the following shared libraries lack NEEDED entries\a"
 		echo "${f}"
 		sleep 1

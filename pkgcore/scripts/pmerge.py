@@ -9,17 +9,18 @@ __all__ = ("argparser", "AmbiguousQuery", "NoMatches")
 
 from time import time
 
-from pkgcore.util import commandline, parserestrict, repo_utils, argparse
 from pkgcore.ebuild import resolver
-from pkgcore.operations import observer, format
 from pkgcore.ebuild.atom import atom
 from pkgcore.merge import errors as merge_errors
+from pkgcore.operations import observer, format
+from pkgcore.resolver.util import reduce_to_failures
 from pkgcore.restrictions import packages, values
 from pkgcore.restrictions.boolean import AndRestriction, OrRestriction
+from pkgcore.util import commandline, parserestrict, repo_utils, argparse
 
-from snakeoil import lists, currying
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
-from pkgcore.resolver.util import reduce_to_failures
+from snakeoil.currying import partial
+from snakeoil.lists import stable_unique
 
 argparser = commandline.mk_argparser(domain=True,
     description="pkgcore package merging and unmerging interface")
@@ -444,7 +445,7 @@ def main(options, out, err):
         out.error('No targets specified; nothing to do')
         return 1
 
-    atoms = lists.stable_unique(atoms)
+    atoms = stable_unique(atoms)
 
     if (not options.set or options.clean) and not options.oneshot:
         if world_set is None:
@@ -680,7 +681,7 @@ def main(options, out, err):
                     pkg_ops = domain.pkg_operations(pkg, observer=build_obs)
                     cleanup.append(buildop.cleanup)
 
-                cleanup.append(currying.partial(pkg_ops.run_if_supported, "cleanup"))
+                cleanup.append(partial(pkg_ops.run_if_supported, "cleanup"))
                 pkg = pkg_ops.run_if_supported("localize", or_return=pkg)
                 # wipe this to ensure we don't inadvertantly use it further down;
                 # we aren't resetting it after localizing, so could have the wrong

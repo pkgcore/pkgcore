@@ -170,8 +170,8 @@ __load_eapi_libs() {
 # do all profile, bashrc's, and ebuild sourcing.  Should only be called in setup phase, unless the
 # env is *completely* missing, as it is occasionally for ebuilds during prerm/postrm.
 __generate_initial_ebuild_environ() {
-	local OCC=${CC}
-	local OCXX=${CXX}
+	local ORIG_CC=${CC}
+	local ORIG_CXX=${CXX}
 	local EXISTING_PATH=${PATH}
 	local T=${T}
 
@@ -204,9 +204,9 @@ __generate_initial_ebuild_environ() {
 		RESTRICT=${PKGCORE_FINALIZED_RESTRICT}
 		unset PKGCORE_FINALIZED_RESTRICT
 		unset CC CXX
-		[[ -n ${OCC} ]] && export CC=${OCC}
-		[[ -n ${OCXX} ]] && export CXX=${OCXX}
-		unset OCC OCXX
+		[[ -n ${ORIG_CC} ]] && export CC=${ORIG_CC}
+		[[ -n ${ORIG_CXX} ]] && export CXX=${ORIG_CXX}
+		unset ORIG_CC ORIG_CXX
 	fi
 
 	__ensure_PATH "${EXISTING_PATH}"

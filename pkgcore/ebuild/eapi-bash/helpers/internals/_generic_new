@@ -16,7 +16,7 @@ if ${PKGCORE_NEW_READS_STDIN} && [[ $1 == "-" ]]; then
 	fi
 	check_command_or_stop cat > "${T}/$2"
 else
-	check_command_or_stop cp "$1" "${T}/$2"
+	check_command_or_stop cp -- "$1" "${T}/$2"
 fi
 invoke_script "do${HELPER_NAME#new}" "${T}/$2"
 rm -f "${T}/$2"

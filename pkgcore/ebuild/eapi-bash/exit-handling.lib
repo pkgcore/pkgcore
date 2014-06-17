@@ -40,7 +40,7 @@ die() {
 		fi
 		local x
 		for x in ${EBUILD_DEATH_HOOKS}; do
-			${x} "$@" >&2 1>&2
+			${x} >&2 1>&2
 		done
 	fi
 	echo >&2

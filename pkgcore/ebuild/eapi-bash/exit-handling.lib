@@ -15,11 +15,11 @@ die() {
 
 	local n filespacing=0 linespacing=0 sourcefile lineno
 	# setup spacing to make output easier to read
-	for ((n = ${#FUNCNAME[@]} - 1; n >= 0; --n)); do
+	for (( n = ${#FUNCNAME[@]} - 1 ; n >= 0 ; --n )); do
 		sourcefile=${BASH_SOURCE[${n}]} sourcefile=${sourcefile##*/}
 		lineno=${BASH_LINENO[${n}]}
-		((filespacing < ${#sourcefile})) && filespacing=${#sourcefile}
-		((linespacing < ${#lineno}))     && linespacing=${#lineno}
+		(( filespacing < ${#sourcefile} )) && filespacing=${#sourcefile}
+		(( linespacing < ${#lineno} ))     && linespacing=${#lineno}
 	done
 
 	echo >&2

@@ -44,8 +44,12 @@ die() {
 		done
 	fi
 	echo >&2
-	if [[ -z ${PKGCORE_IS_NOT_HELPER} ]] && [[ -n ${PKGCORE_EBUILD_PROCESS_PID} ]]; then
-		kill -10 ${PKGCORE_EBUILD_PROCESS_PID}
+	if [[ -n ${PKGCORE_EBUILD_PROCESS_PID} ]]; then
+		if [[ -z ${PKGCORE_IS_NOT_HELPER} ]]; then
+			kill -10 ${PKGCORE_EBUILD_PROCESS_PID}
+		elif [[ ${BASHPID} != ${PKGCORE_EBUILD_PROCESS_PID} ]]; then
+			kill -s SIGTERM ${PKGCORE_EBUILD_PROCESS_PID}
+		fi
 	fi
 	exit 1
 }

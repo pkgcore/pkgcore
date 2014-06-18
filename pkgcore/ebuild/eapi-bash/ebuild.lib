@@ -453,7 +453,7 @@ __execute_phases() {
 	done
 
 	if ${PKGCORE_MUST_EXPORT_ENV}; then
-		__timed_call __environ_save_to_file "${T}/environment"
+		__timed_call __environ_save_to_file "${T}"/environment
 	fi
 	return ${ret:-0}
 }

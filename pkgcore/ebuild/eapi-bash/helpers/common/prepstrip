@@ -7,7 +7,7 @@ shopt -s extdebug
 source "${PKGCORE_BIN_PATH}"/exit-handling.lib || { echo "failed loading libs"; exit -127; }
 
 source "${PKGCORE_BIN_PATH}"/isolated-functions.lib || {
-	echo "failed sourcing isolated-functions"
+	echo "failed sourcing isolated-functions.lib"
 	exit -1
 }
 
@@ -46,8 +46,7 @@ save_elf_sources() {
 # The existence of the section .symtab tells us that a binary is stripped.
 # We want to log already stripped binaries, as this may be a QA violation.
 # They prevent us from getting the splitdebug data.
-if ! __safe_has binchecks ${RESTRICT} && \
-	! __safe_has strip ${RESTRICT}; then
+if ! __safe_has binchecks ${RESTRICT} && ! __safe_has strip ${RESTRICT}; then
 	f=$(scanelf -yqRBF '#k%F' -k '!.symtab' "$@")
 	if [[ -n ${f} ]]; then
 		echo -e "\a\n"

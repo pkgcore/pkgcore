@@ -174,6 +174,8 @@ regen.add_argument("-t", "--threads", type=int,
     "available processors")
 regen.add_argument("--force", action='store_true', default=False,
     help="force regeneration to occur regardless of staleness checks")
+regen.add_argument("-v", "--verbose", action='store_true', default=False,
+    help="show verbose output")
 regen.add_argument("repo", action=commandline.StoreRepoObject,
     help="repository to regenerate caches for")
 @regen.bind_main_func
@@ -190,8 +192,9 @@ def regen_main(options, out, err):
         observer=observer.formatter_output(out), force=options.force,
             eclass_caching=(not options.disable_eclass_caching))
     end_time = time.time()
-    out.write("finished %d nodes in %.2f seconds" % (len(options.repo),
-        end_time - start_time))
+    if options.verbose:
+        out.write("finished %d nodes in %.2f seconds" % (len(options.repo),
+            end_time - start_time))
     return 0
 
 

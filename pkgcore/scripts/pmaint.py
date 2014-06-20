@@ -186,7 +186,7 @@ def regen_main(options, out, err):
 
     repo = options.repo
     if not repo.operations.supports("regen_cache"):
-        out.write("repository %s doesn't support cache regeneration" % (options.repo,))
+        out.write("repository %s doesn't support cache regeneration" % (repo,))
         return 0
 
     start_time = time.time()
@@ -195,13 +195,15 @@ def regen_main(options, out, err):
             eclass_caching=(not options.disable_eclass_caching))
     end_time = time.time()
     if options.verbose:
-        out.write("finished %d nodes in %.2f seconds" % (len(options.repo),
+        out.write("finished %d nodes in %.2f seconds" % (len(repo),
             end_time - start_time))
     if options.rsync:
+        timestamp = pjoin(repo.location, "metadata", "timestamp.chk")
         try:
-            with open(pjoin(repo.location, "metadata", "timestamp.chk"), "w") as f:
+            with open(timestamp, "w") as f:
                 f.write(time.strftime("%a, %d %b %Y %H:%M:%S +0000", time.gmtime()))
-        except IOError:
+        except IOError as e:
+            out.error("Unable to update timestamp file '%s': %s" % (timestamp, e.strerror))
             return os.EX_IOERR
     return 0
 

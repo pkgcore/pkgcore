@@ -174,6 +174,8 @@ regen.add_argument("-t", "--threads", type=int,
     "available processors")
 regen.add_argument("--force", action='store_true', default=False,
     help="force regeneration to occur regardless of staleness checks")
+regen.add_argument("--rsync", action='store_true', default=False,
+    help="perform actions necessary for rsync repos (update metadata/timestamp.chk)")
 regen.add_argument("-v", "--verbose", action='store_true', default=False,
     help="show verbose output")
 regen.add_argument("repo", action=commandline.StoreRepoObject,
@@ -195,6 +197,12 @@ def regen_main(options, out, err):
     if options.verbose:
         out.write("finished %d nodes in %.2f seconds" % (len(options.repo),
             end_time - start_time))
+    if options.rsync:
+        try:
+            with open(pjoin(repo.location, "metadata", "timestamp.chk"), "w") as f:
+                f.write(time.strftime("%a, %d %b %Y %H:%M:%S +0000", time.gmtime()))
+        except IOError:
+            return os.EX_IOERR
     return 0
 
 

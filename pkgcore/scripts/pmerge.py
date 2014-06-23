@@ -322,10 +322,10 @@ def _validate(parser, namespace):
 def parse_atom(restriction, repo, livefs_repos, return_none=False):
     """Use :obj:`parserestrict.parse_match` to produce a single atom.
 
-    This matches the restriction against the repo, if they belong to
-    multiple cat/pkgs matches the restriction against installed
-    repos, and finally raises AmbiguousQuery if they belong to
-    multiple installed cat/pkgs or returns the matched atom.
+    This matches the restriction against a repo. If multiple pkgs match, then
+    the restriction is applied against installed repos skipping pkgs from the
+    'virtual' category. If multiple pkgs still match the restriction,
+    AmbiguousQuery is raised otherwise the matched atom is returned.
 
     :param restriction: string to convert.
     :param repo: :obj:`pkgcore.repository.prototype.tree` instance to search in.
@@ -338,7 +338,8 @@ def parse_atom(restriction, repo, livefs_repos, return_none=False):
     if not key_matches:
         raise NoMatches(restriction)
     elif len(key_matches) > 1:
-        installed_matches = set(x.key for x in livefs_repos.itermatch(restriction))
+        installed_matches = set(x.key for x in livefs_repos.itermatch(restriction)
+                                if x.category != 'virtual')
         if len(installed_matches) == 1:
             restriction = atom(installed_matches.pop())
         else:

@@ -41,3 +41,11 @@ class AtomParsingTest(TestCase):
         a = pmerge.parse_atom(parse_match(u'=spork/foon-1'), repo, livefs_repos)
         self.assertEqual(a.key, 'spork/foon')
         self.assertTrue(isinstance(a.key, str))
+
+        # test pkg name collisions between real and virtual pkgs on livefs
+        # repos, the real pkg will be selected over the virtual
+        livefs_repos = util.SimpleTree({'foo': {'bar': ('1')}, 'virtual': {'bar': ('0')}})
+        repo = util.SimpleTree({'foo': {'bar': ('1',)}, 'virtual': {'bar': ('1',)}})
+        a = pmerge.parse_atom(parse_match("bar"), repo, livefs_repos)
+        self.assertEqual(a.key, 'foo/bar')
+        self.assertTrue(isinstance(a.key, str))

@@ -141,12 +141,6 @@ class ProfileNode(object):
         self.path = path
         self.pms_strict = pms_strict
 
-        # XXX: hack to provide a repo-id -> repo-location mapping for portage-2 profile format
-        if self.__class__._repo_map is None:
-            self.__class__._repo_map = ImmutableDict(
-                (r.repo_id, pjoin(r.location, 'profiles'))
-                for r in load_config().objects['raw_repo'].itervalues())
-
     def __str__(self):
         return "Profile at %r" % self.path
 
@@ -185,9 +179,11 @@ class ProfileNode(object):
                 if separator:
                     if repo_id:
                         try:
-                            repo_config = self._load_repoconfig_from_path(self._repo_map[repo_id])
+                            repo_config = self._repo_map[repo_id]
                         except KeyError:
                             raise ValueError("unknown repository name: %r" % repo_id)
+                        except TypeError:
+                            raise ValueError("repo mapping is unset")
                     l.append(abspath(pjoin(repo_config.location, 'profiles', path)))
                 else:
                     l.append(abspath(pjoin(self.path, repo_id)))
@@ -633,10 +629,18 @@ class ProfileStack(object):
 
 class OnDiskProfile(ProfileStack):
 
-    pkgcore_config_type = ConfigHint({'basepath':'str', 'profile':'str'},
-        required=('basepath', 'profile'), typename='profile')
+    pkgcore_config_type = ConfigHint(
+        {'basepath':'str', 'profile':'str'},
+        required=('basepath', 'profile'),
+        requires_config='config',
+        typename='profile',
+    )
 
-    def __init__(self, basepath, profile, load_profile_base=True):
+    def __init__(self, basepath, profile, config, load_profile_base=True):
+        # repo-id -> repo-config mapping for portage-2 profile support
+        ProfileNode._repo_map = ImmutableDict(
+            (repo_config.repo_id, repo_config) for repo_config
+            in config.objects['raw_repo'].itervalues())
         ProfileStack.__init__(self, pjoin(basepath, profile))
         self.basepath = basepath
         self.load_profile_base = load_profile_base
@@ -704,10 +708,12 @@ class UserProfile(OnDiskProfile):
     pkgcore_config_type = ConfigHint(
         {'user_path':'str', 'parent_path':'str', 'parent_profile':'str'},
         required=('user_path','parent_path', 'parent_profile'),
-        typename='profile')
+        requires_config='config',
+        typename='profile',
+    )
 
-    def __init__(self, user_path, parent_path, parent_profile, load_profile_base=True):
-        OnDiskProfile.__init__(self, parent_path, parent_profile, load_profile_base)
+    def __init__(self, user_path, parent_path, parent_profile, config, load_profile_base=True):
+        OnDiskProfile.__init__(self, parent_path, parent_profile, config, load_profile_base)
         self.node = UserProfileNode(user_path, pjoin(parent_path, parent_profile))
 
 

@@ -10,6 +10,7 @@ from snakeoil.currying import partial
 from snakeoil.osutils import pjoin, ensure_dirs, normpath
 from snakeoil.test.mixins import TempDirMixin
 
+from pkgcore.config import central
 from pkgcore.ebuild import const, profiles
 from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.cpv import CPV
@@ -698,7 +699,8 @@ class TestOnDiskProfile(profile_mixin, TestCase):
         _node_kls = ProfileNode
 
     def get_profile(self, profile, **kwds):
-        return self.kls(self.dir, profile, **kwds)
+        config = central.ConfigManager()
+        return self.kls(self.dir, profile, config, **kwds)
 
     def test_stacking(self):
         self.mk_profiles(

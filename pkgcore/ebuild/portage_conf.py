@@ -296,7 +296,7 @@ def mk_simple_cache(config_root, tree_loc):
     cache_parent_dir = tree_loc
     while not os.path.exists(cache_parent_dir):
         cache_parent_dir = os.path.dirname(cache_parent_dir)
-    readonly = (not access(cache_parent_dir, os.W_OK | os.X_OK))
+    readonly = (not access(cache_parent_dir, os.W_OK|os.X_OK))
 
     return basics.AutoConfigSection({
         'class': kls,

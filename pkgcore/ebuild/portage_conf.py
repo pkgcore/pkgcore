@@ -445,6 +445,18 @@ def config_from_make_conf(location="/etc/", profile_override=None):
             rsync_portdir_cache = False
 
     for tree_loc in repos:
+        # repo configs
+        conf = {
+            'class': 'pkgcore.ebuild.repo_objs.RepoConfig',
+            'location': tree_loc,
+        }
+        if 'sync:%s' % (tree_loc,) in new_config:
+            conf['syncer'] = 'sync:%s' % (tree_loc,)
+        if tree_loc == portdir:
+            conf['default'] = True
+        new_config['raw:' + tree_loc] = basics.AutoConfigSection(conf)
+
+        # repo trees
         kwds = {
             'inherit': ('ebuild-repo-common',),
             'raw_repo': ('raw:' + tree_loc),
@@ -473,16 +485,6 @@ def config_from_make_conf(location="/etc/", profile_override=None):
                 'repositories': tuple(reversed(repos))})
     else:
         new_config['repo-stack'] = basics.section_alias(portdir, 'repo')
-
-    for tree_loc in repos:
-        conf = {'class': 'pkgcore.ebuild.repo_objs.RepoConfig',
-                'location': tree_loc}
-        if 'sync:%s' % (tree_loc,) in new_config:
-            conf['syncer'] = 'sync:%s' % (tree_loc,)
-        if tree_loc == portdir:
-            conf['default'] = True
-        new_config['raw:' + tree_loc] = basics.AutoConfigSection(conf)
-
 
     new_config['vuln'] = basics.AutoConfigSection({
         'class': SecurityUpgradesViaProfile,

@@ -7,7 +7,7 @@ __all__ = ("ProfileError", "ProfileNode", "EmptyRootNode", "OnDiskProfile",
 import errno, os
 from itertools import chain
 
-from pkgcore.config import ConfigHint, load_config
+from pkgcore.config import ConfigHint
 from pkgcore.ebuild import const, ebuild_src, misc
 from pkgcore.ebuild.misc import (
     _build_cp_atom_payload, chunked_data, ChunkedDataDict, split_negations,
@@ -636,11 +636,12 @@ class OnDiskProfile(ProfileStack):
         typename='profile',
     )
 
-    def __init__(self, basepath, profile, config, load_profile_base=True):
+    def __init__(self, basepath, profile, config=None, load_profile_base=True):
         # repo-id -> repo-config mapping for portage-2 profile support
-        ProfileNode._repo_map = ImmutableDict(
-            (repo_config.repo_id, repo_config) for repo_config
-            in config.objects['raw_repo'].itervalues())
+        if config is not None:
+            ProfileNode._repo_map = ImmutableDict(
+                (repo_config.repo_id, repo_config) for repo_config
+                in config.objects['raw_repo'].itervalues())
         ProfileStack.__init__(self, pjoin(basepath, profile))
         self.basepath = basepath
         self.load_profile_base = load_profile_base

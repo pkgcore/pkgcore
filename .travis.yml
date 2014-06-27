@@ -3,6 +3,7 @@ python:
     - 2.7
     - 3.2
     - 3.3
+    - 3.4
 before_install:
     - sudo apt-get update -qq
     # install-info is used by the info regen trigger

@@ -3,6 +3,12 @@ python:
     - 2.7
     - 3.2
     - 3.3
+before_install:
+    - sudo apt-get update -qq
+    # install-info is used by the info regen trigger
+    - sudo apt-get install -y install-info
+    # don't output the "this is not dpkg install-info anymore, but GNU install-info..." warning
+    - sudo mv /usr/bin/ginstall-info /usr/bin/install-info
 install:
     - git clone git://github.com/pkgcore/snakeoil.git "${VIRTUAL_ENV}"/snakeoil
     - pushd "${VIRTUAL_ENV}"/snakeoil

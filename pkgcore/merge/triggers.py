@@ -425,12 +425,11 @@ class InfoRegen(base):
                 continue
 
             ret, data = spawn.spawn_get_output(
-                [binary, '--quiet', pjoin(basepath, x),
-                    '--dir-file', index],
+                [binary, '--quiet', pjoin(basepath, x), '--dir-file', index],
                 collect_fds=(1,2), split_lines=False)
 
             if not data or "already exists" in data or \
-                "warning: no info dir entry" in data:
+                    "warning: no info dir entry" in data:
                 continue
             yield pjoin(basepath, x)
 

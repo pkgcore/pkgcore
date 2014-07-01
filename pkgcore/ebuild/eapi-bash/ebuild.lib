@@ -242,6 +242,9 @@ __load_ebuild() {
 		export S=${WORKDIR}/${P}
 	fi
 
+	# default to EAPI=0 if unset
+	EAPI=${EAPI-0}
+
 	# some users have $TMP/$TMPDIR to a custom dir in their home ...
 	# this will cause sandbox errors with some ./configure
 	# scripts, so set it to $T.
@@ -251,7 +254,7 @@ __load_ebuild() {
 	# Note: this next line is not the same as export RDEPEND=${RDEPEND:-${DEPEND}}
 	# That will test for unset *or* NULL ("").  We want just to set for unset...
 
-	if __safe_has "${EAPI-0}" 0 1 2 3; then
+	if __safe_has "${EAPI}" 0 1 2 3; then
 		if [[ ${RDEPEND-unset} == "unset" ]]; then
 			export RDEPEND=${DEPEND}
 		fi
@@ -263,8 +266,6 @@ __load_ebuild() {
 	DEPEND+=${DEPEND:+ }${E_DEPEND}
 	RDEPEND+=${RDEPEND:+ }${E_RDEPEND}
 	PDEPEND+=${PDEPEND:+ }${E_PDEPEND}
-
-	EAPI=${EAPI-0}
 }
 
 # short version.  think these should be sourced via at the daemons choice, rather then defacto.

@@ -240,7 +240,7 @@ inherit() {
 		# while other PMs do has checks to keep this unique, we don't; no need,
 		# further up the stack (python side) we uniquify this.
 		# if you try to do it in bash rather than python, it's ~10% slower regen
-		INHERITED="${INHERITED} ${ECLASS}"
+		INHERITED+=" ${ECLASS}"
 
 		shift
 	done

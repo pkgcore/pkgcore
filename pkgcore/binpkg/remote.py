@@ -66,7 +66,7 @@ if type != cache.bulk.__metaclass__:
 
 class PackagesCacheV0(cache.bulk):
     """
-    Cache backend for writting binpkg Packages caches
+    Cache backend for writing binpkg Packages caches
 
     Note this follows version 0 semantics- not the most efficient, and
     doesn't bundle  certain useful keys like RESTRICt
@@ -266,7 +266,7 @@ class PackagesCacheV0(cache.bulk):
 class PackagesCacheV1(PackagesCacheV0):
 
     """
-    Cache backend for writting binpkg Packages caches in format version 1
+    Cache backend for writing binpkg Packages caches in format version 1
 
     See :py:class:`PackagesCacheV0` for usage information; this just writes
     a better ondisk format

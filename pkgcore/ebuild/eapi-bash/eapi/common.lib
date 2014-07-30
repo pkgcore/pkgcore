@@ -253,11 +253,12 @@ einstall() {
 		unset EI_DESTLIBDIR
 	fi
 
-	# Reset IFS for LOCAL_EXTRA_EINSTALL, should users be up to something.
-	local IFS=$' \t\n'
-	if [[ ! -f ./[mM]akefile ]] && [[ ! -f ./GNUmakefile ]]; then
+	if ! [[ -f Makefile || -f GNUmakefile || -f makefile ]]; then
 		die "no Makefile found"
 	fi
+
+	# Reset IFS for LOCAL_EXTRA_EINSTALL, should users be up to something.
+	local IFS=$' \t\n'
 	set -- \
 		${MAKE:-make} \
 		prefix="${ED}/usr" \

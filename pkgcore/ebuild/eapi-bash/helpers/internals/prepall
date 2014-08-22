@@ -74,22 +74,20 @@ for a in "${ED}"usr/lib*/*.la; do
 done
 
 if type -p scanelf > /dev/null; then
+	# Run some sanity checks on shared libraries
+	for d in "${ED}"lib* "${ED}"usr/lib*; do
+		f=$(scanelf -ByF '%S %p' "${d}"/lib*.so* | gawk '$2 == "" { print }')
+		if [[ -n ${f} ]]; then
+			echo -e "\n\aQA Notice: the following shared libraries lack a SONAME\a"
+			echo "${f}"
+			sleep 1
+		fi
 
-# Run some sanity checks on shared libraries
-for d in "${ED}"lib* "${ED}"usr/lib*; do
-	f=$(scanelf -ByF '%S %p' "${d}"/lib*.so* | gawk '$2 == "" { print }')
-	if [[ -n ${f} ]]; then
-		echo -e "\n\aQA Notice: the following shared libraries lack a SONAME\a"
-		echo "${f}"
-		sleep 1
-	fi
-
-	f=$(scanelf -ByF '%n %p' "${d}"/lib*.so* | gawk '$2 == "" { print }')
-	if [[ -n ${f} ]]; then
-		echo -e "\n\aQA Notice: the following shared libraries lack NEEDED entries\a"
-		echo "${f}"
-		sleep 1
-	fi
-done
-
+		f=$(scanelf -ByF '%n %p' "${d}"/lib*.so* | gawk '$2 == "" { print }')
+		if [[ -n ${f} ]]; then
+			echo -e "\n\aQA Notice: the following shared libraries lack NEEDED entries\a"
+			echo "${f}"
+			sleep 1
+		fi
+	done
 fi

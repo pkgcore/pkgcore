@@ -99,7 +99,7 @@ class ops_sequence(object):
     def __iter__(self):
         return iter(self._ops)
 
-    def __nonzeroo__(self):
+    def __nonzero__(self):
         return bool(self._ops)
 
     def run_sanity_checks(self, domain, observer=None):

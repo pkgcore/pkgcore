@@ -87,12 +87,17 @@ class package(ebuild_src.base):
 
     built = True
 
-    __slots__ = ('cbuild', 'chost', 'ctarget', 'use', 'environment', 'contents')
+    __slots__ = (
+        'cbuild', 'cflags', 'chost', 'contents', 'ctarget', 'cxxflags',
+        'environment', 'ldflags', 'use',
+    )
 
     _get_attr = dict(ebuild_src.package._get_attr)
 
     _get_attr.update((x, post_curry(passthrough, x))
                      for x in ("contents", "environment", "ebuild"))
+    _get_attr.update((x, lambda s:s.data.get(x.upper(), ""))
+                     for x in ("cflags", "cxxflags", "ldflags"))
     _get_attr['source_repository'] = passthrough_repo
     _get_attr['iuse_effective'] = lambda s:tuple(
         s.data.get("IUSE_EFFECTIVE", "").split())

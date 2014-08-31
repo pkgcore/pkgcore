@@ -216,10 +216,12 @@ common_metadata_keys = common_mandatory_metadata_keys + (
     "DEPEND", "RDEPEND", "PDEPEND", "PROVIDE", "RESTRICT",
     "DEFINED_PHASES", "PROPERTIES", "EAPI")
 
-common_tracked_attributes = ("depends", "rdepends", "post_rdepends", "provides",
-    "license", "fullslot", "keywords", "eapi_obj", "restrict", "description",
-    "iuse", "chost", "cbuild", "ctarget", "homepage", "properties", "inherited",
-    "defined_phases", "source_repository")
+common_tracked_attributes = (
+    "cflags", "cbuild", "chost", "ctarget", "cxxflags", "defined_phases",
+    "depends", "description", "eapi_obj", "fullslot", "homepage", "inherited",
+    "iuse", "keywords", "ldflags", "license", "post_rdepends", "properties",
+    "provides", "rdepends", "restrict", "source_repository",
+)
 
 common_env_optionals = mappings.ImmutableDict(dict.fromkeys(
     ("dodoc_allow_recursive", "doins_allow_symlinks",

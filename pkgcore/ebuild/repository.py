@@ -543,6 +543,8 @@ class _ConfiguredTree(configured.tree):
         scope_update = {'chost': chost}
         scope_update.update((x, domain_settings.get(x.upper(), chost))
             for x in ('cbuild', 'ctarget'))
+        scope_update.update((x, domain_settings[x.upper()])
+            for x in ('cflags', 'cxxflags', 'ldflags'))
         scope_update['operations_callback'] = self._generate_pkg_operations
 
         self.config_wrappables['iuse_effective'] = partial(

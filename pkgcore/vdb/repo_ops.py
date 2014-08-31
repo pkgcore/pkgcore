@@ -78,7 +78,7 @@ class install(repo_ops.install):
                 else:
                     s = v
                 with open(pjoin(dirpath, rewrite.get(k, k.upper())), "w", 32768) as f:
-                    f.write(s)
+                    f.write(s + "\n")
 
         # ebuild_data is the actual ebuild- no point in holding onto
         # it for built ebuilds, but if it's there, we store it.

@@ -178,7 +178,10 @@ def do_link(src, trg):
         os.link(src.location, trg.location)
         return True
     except EnvironmentError as e:
-        if e.errno != errno.EEXIST:
+        if e.errno == errno.EXDEV:
+            # hardlink is impossible, force copyfile
+            return False
+        elif e.errno != errno.EEXIST:
             raise
 
     path = trg.location + '#new'

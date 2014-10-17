@@ -5,9 +5,14 @@ python:
     - 3.3
     - 3.4
 before_install:
-    - sudo apt-get update -qq
+    # add users/groups for wheel and portage
+    - sudo useradd -g 10 wheel
+    - sudo useradd -u 250 -g 250 portage
+
     # install-info is used by the info regen trigger
+    - sudo apt-get update -qq
     - sudo apt-get install -y install-info
+
     # don't output the "this is not dpkg install-info anymore, but GNU install-info..." warning
     - sudo mv /usr/bin/ginstall-info /usr/bin/install-info
 install:

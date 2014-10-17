@@ -5,8 +5,9 @@ python:
     - 3.3
     - 3.4
 before_install:
-    # add users/groups for wheel and portage
-    - sudo useradd -g 10 wheel
+    # add user/group for portage and wheel
+    - sudo groupadd -g 10 wheel
+    - sudo groupadd -g 250 portage
     - sudo useradd -u 250 -g 250 portage
 
     # install-info is used by the info regen trigger

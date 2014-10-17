@@ -367,3 +367,17 @@ eapi5 = EAPI.register(
     )),
     ebd_env_options=eapi4.ebd_env_options,
 )
+
+eapi6 = EAPI.register(
+    magic="6",
+    parent=eapi5,
+    phases=eapi5.phases,
+    default_phases=eapi5.default_phases,
+    metadata_keys=eapi5.metadata_keys,
+    mandatory_keys=eapi5.mandatory_keys,
+    tracked_attributes=eapi5.tracked_attributes,
+    optionals=_combine_dicts(eapi5.options, dict(
+        is_supported=False,
+    )),
+    ebd_env_options=eapi5.ebd_env_options,
+)

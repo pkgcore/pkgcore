@@ -236,7 +236,12 @@ eapi0 = EAPI.register("0",
     common_metadata_keys,
     common_mandatory_metadata_keys,
     common_tracked_attributes,
-    dict(trust_defined_phases_cache=False, prefix_capable=False, has_AA=True, has_KV=True),
+    dict(
+        trust_defined_phases_cache=False,
+        prefix_capable=False,
+        has_AA=True,
+        has_KV=True,
+    ),
     ebd_env_options=common_env_optionals,
 )
 
@@ -256,9 +261,11 @@ eapi2 = EAPI.register("2",
     eapi1.metadata_keys,
     eapi1.mandatory_keys,
     eapi1.tracked_attributes,
-    combine_dicts(eapi1.options,
-        dict(doman_language_detect=True, transitive_use_atoms=True,
-             src_uri_renames=True, has_AA=True, has_KV=True)),
+    combine_dicts(eapi1.options, dict(
+        doman_language_detect=True,
+        transitive_use_atoms=True,
+        src_uri_renames=True,
+    )),
     ebd_env_options=eapi1.ebd_env_options,
 )
 
@@ -268,8 +275,9 @@ eapi3 = EAPI.register("3",
     eapi2.metadata_keys,
     eapi2.mandatory_keys,
     eapi2.tracked_attributes,
-    combine_dicts(eapi2.options,
-        dict(prefix_capable=True, has_AA=True, has_KV=True)),
+    combine_dicts(eapi2.options, dict(
+        prefix_capable=True,
+    )),
     ebd_env_options=eapi2.ebd_env_options,
 )
 

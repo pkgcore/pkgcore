@@ -6,7 +6,7 @@ python:
     - 3.4
 before_install:
     # add user/group for portage and wheel
-    - sudo groupadd -g 10 wheel
+    - sudo groupadd wheel
     - sudo groupadd -g 250 portage
     - sudo useradd -u 250 -g 250 portage
 

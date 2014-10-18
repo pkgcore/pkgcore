@@ -146,7 +146,7 @@ econf() {
 	fi
 
 	if ${PKGCORE_ECONF_DISABLE_DEPENDENCY_TRACKING} || ${PKGCORE_ECONF_DISABLE_SILENT_RULES}; then
-		local help_text=$("${CONF_SOURCE}/configure" --help 2> /dev/null)
+		local help_text=$("${ECONF_SOURCE}/configure" --help 2> /dev/null)
 		local extra_args=()
 
 		# EAPI 4 and up.

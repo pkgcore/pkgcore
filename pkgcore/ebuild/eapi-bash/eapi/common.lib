@@ -131,17 +131,8 @@ econf() {
 			CONF_PREFIX=/usr
 		fi
 		export CONF_PREFIX
-		[[ ${CONF_LIBDIR:0:1} != "/" ]] && CONF_LIBDIR="/${CONF_LIBDIR}"
-
-		local CONF_LIBDIR_RESULT=${CONF_PREFIX}${CONF_LIBDIR}
-		for X in 1 2 3; do
-			# The escaping is weird. It will break if you escape the last one.
-			CONF_LIBDIR_RESULT=${CONF_LIBDIR_RESULT//\/\///}
-		done
-		unset X
-
-		set -- --libdir="${CONF_LIBDIR_RESULT}" "$@"
-		unset CONF_LIBDIR_RESULT
+		[[ ${CONF_LIBDIR} != /* ]] && CONF_LIBDIR=/${CONF_LIBDIR}
+		set -- --libdir="$(__strip_duplicate_slashes "${CONF_PREFIX}${CONF_LIBDIR}")" "$@"
 	fi
 
 	if ${PKGCORE_ECONF_DISABLE_DEPENDENCY_TRACKING} || ${PKGCORE_ECONF_DISABLE_SILENT_RULES}; then

@@ -120,6 +120,16 @@ __directory_is_empty() {
 	return 0
 }
 
+__strip_duplicate_slashes() {
+	if [[ -n $1 ]]; then
+		local removed=$1
+		while [[ ${removed} == *//* ]]; do
+			removed=${removed//\/\///}
+		done
+		echo "${removed}"
+	fi
+}
+
 PKGCORE_SHOPT_STACK=()
 
 __shopt_push() {

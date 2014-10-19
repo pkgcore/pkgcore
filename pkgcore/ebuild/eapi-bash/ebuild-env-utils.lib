@@ -97,7 +97,7 @@ __environ_dump() {
 
 # dump environ to $1, optionally piping it through $2 and redirecting $2's output to $1.
 __environ_save_to_file() {
-	if [[ $# -ne 1 ]] && [[ $# -ne 2 ]]; then
+	if [[ $# -ne 1 && $# -ne 2 ]]; then
 		die "__environ_save_to_file requires at least one argument, two max; given $@"
 	fi
 

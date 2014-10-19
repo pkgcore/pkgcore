@@ -8,7 +8,7 @@
 PKGCORE_RUNTIME_FUNCS=( '__timed_call' )
 
 __set_perf_debug() {
-	if [[ ${PKGCORE_DEBUG} -ge 4 ]] || [[ -n ${PKGCORE_PERF_DEBUG} ]]; then
+	if [[ ${PKGCORE_DEBUG} -ge 4 || -n ${PKGCORE_PERF_DEBUG} ]]; then
 		__timed_call() {
 			echo "timing $*" >&2
 			time "$@"
@@ -211,7 +211,7 @@ __ebd_exec_main() {
 }
 
 __ebd_process_sandbox_results() {
-	if [[ -z ${SANDBOX_LOG} ]] || [[ ! -e ${SANDBOX_LOG} ]]; then
+	if [[ -z ${SANDBOX_LOG} || ! -e ${SANDBOX_LOG} ]]; then
 		return 0;
 	fi
 	echo "sandbox exists- ${SANDBOX_LOG}" >&2

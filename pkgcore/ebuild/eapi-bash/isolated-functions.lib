@@ -125,7 +125,7 @@ PKGCORE_SHOPT_STACK=()
 __shopt_push() {
 	PKGCORE_SHOPT_STACK[${#PKGCORE_SHOPT_STACK[@]}]=${BASHOPTS}
 	PKGCORE_SHOPT_STACK[${#PKGCORE_SHOPT_STACK[@]}]=$-
-	if [[ $1 == "-s" ]] || [[ $1 == "-u" ]]; then
+	if [[ $1 == -[su] ]]; then
 		# shopt modification
 		shopt "$@" || die "bad shopt options: $@"
 	elif [[ -n $@ ]]; then

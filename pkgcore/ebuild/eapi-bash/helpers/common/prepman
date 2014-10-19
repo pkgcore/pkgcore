@@ -61,7 +61,7 @@ for x in $(find "${z}"/ -type d 2>/dev/null); do
 				rm -f "${y}"
 			fi
 		else
-			if [[ ${y##*.} != ${suffix} ]] && [[ ! -d ${y} ]]; then
+			if [[ ${y##*.} != ${suffix} && ! -d ${y} ]]; then
 				echo "   compressing ${y##*/}"
 				"${PORTAGE_COMPRESS}" ${PORTAGE_COMPRESS_FLAGS} -f "${y}"
 			fi

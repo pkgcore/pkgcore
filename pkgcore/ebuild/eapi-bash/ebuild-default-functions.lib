@@ -164,7 +164,7 @@ __dyn_pkg_preinst() {
 	if __feature_is_enabled selinux; then
 		# only attempt to label if setfiles is executable
 		# and 'context' is available on selinuxfs.
-		if [[ -f /selinux/context ]] && [[ -x /usr/sbin/setfiles ]]; then
+		if [[ -f /selinux/context && -x /usr/sbin/setfiles ]]; then
 			echo ">>> Setting SELinux security labels"
 			if [[ -f ${POLICYDIR}/file_contexts/file_contexts ]]; then
 				cp -f "${POLICYDIR}"/file_contexts/file_contexts "${T}"

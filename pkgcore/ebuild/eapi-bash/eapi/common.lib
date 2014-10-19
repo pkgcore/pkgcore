@@ -111,9 +111,8 @@ econf() {
 
 	# if the profile defines a location to install libs to aside from default, pass it on.
 	# if the ebuild passes in --libdir, they're responsible for the conf_libdir fun.
-
 	LIBDIR_VAR="LIBDIR_${ABI}"
-	if [[ -n ${ABI} ]] && [[ -n ${!LIBDIR_VAR} ]]; then
+	if [[ -n ${ABI} && -n ${!LIBDIR_VAR} ]]; then
 		local CONF_LIBDIR=${!LIBDIR_VAR}
 	fi
 	unset LIBDIR_VAR
@@ -243,11 +242,11 @@ einstall() {
 	# CONF_PREFIX is only set if they didn't pass in libdir above
 	local LOCAL_EXTRA_EINSTALL=${EXTRA_EINSTALL}
 	local LIBDIR_VAR="LIBDIR_${ABI}"
-	if [[ -n ${ABI} ]] && [[ -n ${!LIBDIR_VAR} ]]; then
+	if [[ -n ${ABI} && -n ${!LIBDIR_VAR} ]]; then
 		CONF_LIBDIR=${!LIBDIR_VAR}
 	fi
 	unset LIBDIR_VAR
-	if [[ -n ${CONF_LIBDIR} ]] && [[ ${CONF_PREFIX:-unset} != "unset" ]]; then
+	if [[ -n ${CONF_LIBDIR} && ${CONF_PREFIX:-unset} != "unset" ]]; then
 		EI_DESTLIBDIR=${ED%%/}/${CONF_PREFIX%%/}/${CONF_LIBDIR%%/}/
 		LOCAL_EXTRA_EINSTALL="${LOCAL_EXTRA_EINSTALL} libdir=${EI_DESTLIBDIR}"
 		unset EI_DESTLIBDIR
@@ -300,7 +299,7 @@ __phase_common_src_compile() {
 			econf
 		fi
 	fi
-	if [[ -f Makefile ]] || [[ -f GNUmakefile ]] || [[ -f makefile ]]; then
+	if [[ -f Makefile || -f GNUmakefile || -f makefile ]]; then
 		emake || die "emake failed"
 	fi
 }

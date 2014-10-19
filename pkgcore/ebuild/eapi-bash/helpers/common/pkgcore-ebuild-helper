@@ -52,7 +52,7 @@ check_args() {
 	fi
 	max=$(( max ))
 
-	if [[ ${HELPER_ARG_COUNT} -ge ${min} ]] && [[ ${HELPER_ARG_COUNT} -le ${max} ]]; then
+	if [[ ${HELPER_ARG_COUNT} -ge ${min} && ${HELPER_ARG_COUNT} -le ${max} ]]; then
 		return 0
 	fi
 	if [[ ${min} -eq ${max} ]]; then

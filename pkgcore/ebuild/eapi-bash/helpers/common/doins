@@ -10,7 +10,7 @@ fi
 
 check_args 1 -
 
-if [[ -n ${INSDESTTREE} ]] && [[ -z ${INSDESTTREE%${ED}*} ]]; then
+if [[ -n ${INSDESTTREE} && -z ${INSDESTTREE%${ED}*} ]]; then
 	__helper_exit 2 "do not give \${D} nor \${ED} as part of the pathways to doins"
 fi
 

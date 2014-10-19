@@ -133,4 +133,5 @@ __set_perf_debug
 __shopt_pop
 __shopt_push
 __source_bashrcs
+__strip_duplicate_slashes
 __timed_call

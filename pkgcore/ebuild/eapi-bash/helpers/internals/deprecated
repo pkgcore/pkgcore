@@ -1,0 +1,9 @@
+#!/usr/bin/env pkgcore-ebuild-helper
+
+my_eapi=${HELPER_PATH%/*}
+my_eapi=${my_eapi##*/}
+eqawarn "QA Notice: '${HELPER_NAME}' is deprecated in EAPI '${my_eapi}'"
+
+# drop EAPI where command is deprecated from PATH and rerun command
+NEWPATH=${PATH/:${PKGCORE_BIN_PATH}\/helpers\/${my_eapi}/}
+PATH=${NEWPATH} $(basename "${BASH_SOURCE}") "$@"

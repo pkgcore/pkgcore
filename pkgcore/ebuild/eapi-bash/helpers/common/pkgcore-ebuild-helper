@@ -23,6 +23,8 @@ fi
 
 source "${PKGCORE_BIN_PATH}"/isolated-functions.lib || \
 	die "failed to load isolated-functions.lib"
+source "${PKGCORE_BIN_PATH}"/eapi/depend.lib >&2 || \
+	die "failed sourcing eapi/depend.lib"
 
 failed=false
 _helper_issues=()

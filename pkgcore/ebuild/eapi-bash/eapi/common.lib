@@ -5,7 +5,7 @@ use() {
 	local u=$1 found=0
 
 	# invert return values for '!flag' and strip prefix for EAPI 5 check
-	if [[ ${u:0:1} == "!" ]]; then
+	if [[ ${u} == "!"* ]]; then
 		u=${u:1}
 		found=1
 	fi
@@ -121,12 +121,12 @@ econf() {
 			local args=$(echo $*)
 			local -a pref=( $(echo ${args/*--exec-prefix[= ]}) )
 			CONF_PREFIX=${pref/--*}
-			[[ ${CONF_PREFIX:0:1} != "/" ]] && CONF_PREFIX="/${CONF_PREFIX}"
+			[[ ${CONF_PREFIX} != /* ]] && CONF_PREFIX=/${CONF_PREFIX}
 		elif [[ ${*/--prefix} != "$*" ]]; then
 			local args=$(echo $*)
 			local -a pref=( $(echo ${args/*--prefix[= ]}) )
 			CONF_PREFIX=${pref/--*}
-			[[ ${CONF_PREFIX:0:1} != "/" ]] && CONF_PREFIX="/${CONF_PREFIX}"
+			[[ ${CONF_PREFIX} != /* ]] && CONF_PREFIX=/${CONF_PREFIX}
 		else
 			CONF_PREFIX=/usr
 		fi
@@ -475,7 +475,7 @@ unpack() {
 		myfail="failure unpacking ${x}"
 		y=${x%.*}
 		y=${y##*.}
-		if [[ ${x:0:2} == "./" ]]; then
+		if [[ ${x} == "./"* ]]; then
 			srcdir=""
 		else
 			srcdir=${DISTDIR}

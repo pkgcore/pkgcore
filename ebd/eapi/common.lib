@@ -441,6 +441,13 @@ unpack() {
 				fi
 				tar xf "${srcdir}${file}" -I"${PORTAGE_XZ_COMMAND}" ${taropts} || die "${myfail}"
 				;;
+			*.txz)
+				if __safe_has "${EAPI}" 0 1 2 3 4 5; then
+					echo "unpacking *.txz archives is unsupported in EAPI ${EAPI}" >&2
+					continue;
+				fi
+				tar xf "${srcdir}${file}" -I"${PORTAGE_XZ_COMMAND}" ${taropts} || die "${myfail}"
+				;;
 			*.ZIP|*.zip|*.jar)
 				{ set +x; while :; do echo n || break; done } | \
 					unzip -qo "${srcdir}${file}" || die "${myfail}"

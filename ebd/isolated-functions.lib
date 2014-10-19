@@ -167,12 +167,12 @@ __shopt_pop() {
 	if [[ $- != ${set_val} ]]; then
 		set ${-:++${-}} ${set_val:+-${set_val}} || die "failed enforcing set state of ${set_val}"
 	fi
-	unset PKGCORE_SHOPT_STACK[${count}]
+	unset PKGCORE_SHOPT_STACK\[${count}\]
 
 	count=$(( count - 1 ))
 
 	local previous=${PKGCORE_SHOPT_STACK[${count}]}
-	unset PKGCORE_SHOPT_STACK[${count}]
+	unset PKGCORE_SHOPT_STACK\[${count}\]
 	[[ ${BASHOPTS} == ${previous} ]] && return 0
 
 	local IFS=' '
@@ -204,7 +204,7 @@ __IFS_pop() {
 	fi
 	IFS=${PKGCORE_SAVED_IFS[$(( ${#PKGCORE_SAVED_IFS[@]} - 1 ))]}
 	[[ ${IFS} == unset ]] && unset IFS
-	unset PKGCORE_SAVED_IFS[$(( ${#PKGCORE_SAVED_IFS[@]} - 1 ))]
+	unset PKGCORE_SAVED_IFS\[$(( ${#PKGCORE_SAVED_IFS[@]} - 1 ))\]
 	:
 }
 
@@ -270,7 +270,7 @@ __var_pop() {
 			export "${arg}" || die "${FUNCNAME}: failed to export '${arg}'"
 		fi
 
-		unset PKGCORE_VAR_STACK[$(( ${#PKGCORE_VAR_STACK[@]} - 1 ))]
+		unset PKGCORE_VAR_STACK\[$(( ${#PKGCORE_VAR_STACK[@]} - 1 ))\]
 	done
 }
 

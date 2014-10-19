@@ -247,7 +247,10 @@ __load_ebuild() {
 		die "EBUILD=${EBUILD}; problem is, it doesn't exist.  bye." >&2
 	fi
 
+	# EAPI 6 and up raise expansion errors on failed globbing in global scope.
+	${PKGCORE_GLOBAL_FAILGLOB} && __shopt_push -s failglob
 	__qa_invoke source "${EBUILD}" >&2
+	${PKGCORE_GLOBAL_FAILGLOB} && __shopt_pop
 
 	# a reasonable default for $S
 	if [[ -z ${S} ]]; then

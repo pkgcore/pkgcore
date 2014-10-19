@@ -38,6 +38,9 @@ eapi_optionals = mappings.ImmutableDict({
     # Controls whether REPLACING vars are exported to ebuilds; see PMS.
     "exports_replacing": False,
 
+    # Controls of whether failglob is enabled globally; see PMS.
+    "global_failglob": False,
+
     # Controls whether MERGE vars are exported to ebuilds; see PMS.
     "has_merge_type": False,
 
@@ -261,7 +264,8 @@ common_env_optionals = mappings.ImmutableDict(dict.fromkeys(
     ("dodoc_allow_recursive", "doins_allow_symlinks",
      "doman_language_detect", "doman_language_override", "ebuild_phase_func",
      "econf_disable_dependency_tracking", "econf_disable_silent_rules",
-     "econf_docdir_and_htmldir", "new_reads_stdin", "nonfatal", "profile_iuse_injection",),
+     "econf_docdir_and_htmldir", "global_failglob",
+     "new_reads_stdin", "nonfatal", "profile_iuse_injection",),
     lambda s: str(s).lower()))
 
 
@@ -381,6 +385,7 @@ eapi6 = EAPI.register(
     tracked_attributes=eapi5.tracked_attributes,
     optionals=_combine_dicts(eapi5.options, dict(
         econf_docdir_and_htmldir=True,
+        global_failglob=True,
         is_supported=False,
     )),
     ebd_env_options=eapi5.ebd_env_options,

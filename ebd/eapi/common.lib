@@ -123,7 +123,9 @@ econf() {
 		set -- --libdir="$(__strip_duplicate_slashes "${CONF_PREFIX}${CONF_LIBDIR}")" "$@"
 	fi
 
-	if ${PKGCORE_ECONF_DISABLE_DEPENDENCY_TRACKING} || ${PKGCORE_ECONF_DISABLE_SILENT_RULES}; then
+	if ${PKGCORE_ECONF_DISABLE_DEPENDENCY_TRACKING} || \
+			${PKGCORE_ECONF_DISABLE_SILENT_RULES} || \
+			${PKGCORE_ECONF_DOCDIR_AND_HTMLDIR}; then
 		local help_text=$("${ECONF_SOURCE}/configure" --help 2> /dev/null)
 		local extra_args=()
 
@@ -138,6 +140,17 @@ econf() {
 				[[ ${help_text} == *"--disable-silent-rules"* ]]; then
 			extra_args+=( --disable-silent-rules )
 		fi
+
+		# EAPI 6 and up.
+		if ${PKGCORE_ECONF_DOCDIR_AND_HTMLDIR}; then
+			if [[ ${help_text} == *"--docdir"* ]]; then
+				extra_args+=( --docdir="${EPREFIX}"/usr/share/doc/${PF} )
+			fi
+			if [[ ${help_text} == *"--htmldir"* ]]; then
+				extra_args+=( --htmldir="${EPREFIX}"/usr/share/doc/${PF}/html )
+			fi
+		fi
+
 		set -- "${extra_args[@]}" "$@"
 		unset extra_args
 		unset help_text

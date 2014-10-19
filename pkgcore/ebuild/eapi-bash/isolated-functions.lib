@@ -43,16 +43,16 @@ __colored_output_enable() {
 	export COLUMNS=${PKGCORE_RC_COLS}
 	PKGCORE_RC_COLS=$(( PKGCORE_RC_COLS - 8 )) # width of [ ok ] == 7
 
-	PKGCORE_RC_ENDCOL=$'\e[A\e['${PKGCORE_RC_COLS}'C'
+	export PKGCORE_RC_ENDCOL=$'\e[A\e['${PKGCORE_RC_COLS}'C'
 	# Now, ${PKGCORE_RC_ENDCOL} will move us to the end of the
 	# column;  irregardless of character width
 
-	PKGCORE_RC_GOOD=$'\e[32;01m'
-	PKGCORE_RC_WARN=$'\e[33;01m'
-	PKGCORE_RC_BAD=$'\e[31;01m'
-	PKGCORE_RC_HILITE=$'\e[36;01m'
-	PKGCORE_RC_BRACKET=$'\e[34;01m'
-	PKGCORE_RC_NORMAL=$'\e[0m'
+	export PKGCORE_RC_GOOD=$'\e[32;01m'
+	export PKGCORE_RC_WARN=$'\e[33;01m'
+	export PKGCORE_RC_BAD=$'\e[31;01m'
+	export PKGCORE_RC_HILITE=$'\e[36;01m'
+	export PKGCORE_RC_BRACKET=$'\e[34;01m'
+	export PKGCORE_RC_NORMAL=$'\e[0m'
 } &> /dev/null
 
 has() {
@@ -241,7 +241,5 @@ __qa_invoke() {
 	${pkgcore_should_fail} && die "invocation $@ modified globals and didn't clean up"
 	return $(( ret ))
 }
-
-__colored_output_disable
 
 :

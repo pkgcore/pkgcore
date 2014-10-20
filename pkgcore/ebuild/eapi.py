@@ -69,6 +69,9 @@ eapi_optionals = mappings.ImmutableDict({
     # Controls whether utilities die on failure; see PMS.
     'nonfatal': True,
 
+    # Controls whether die supports a nonfatal option; see PMS.
+    "nonfatal_die": False,
+
     # Controls whether this EAPI supports prefix related variables/settings;
     # prefix awareness basically. See PMS for full details.
     "prefix_capable": True,
@@ -265,7 +268,7 @@ common_env_optionals = mappings.ImmutableDict(dict.fromkeys(
      "doman_language_detect", "doman_language_override", "ebuild_phase_func",
      "econf_disable_dependency_tracking", "econf_disable_silent_rules",
      "econf_docdir_and_htmldir", "global_failglob",
-     "new_reads_stdin", "nonfatal", "profile_iuse_injection",),
+     "new_reads_stdin", "nonfatal", "nonfatal_die", "profile_iuse_injection",),
     lambda s: str(s).lower()))
 
 
@@ -386,6 +389,7 @@ eapi6 = EAPI.register(
     optionals=_combine_dicts(eapi5.options, dict(
         econf_docdir_and_htmldir=True,
         global_failglob=True,
+        nonfatal_die=True,
         is_supported=False,
     )),
     ebd_env_options=eapi5.ebd_env_options,

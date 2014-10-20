@@ -13,6 +13,14 @@ die() {
 		return
 	fi
 
+	if [[ ${PKGCORE_NONFATAL_DIE} && $1 == "-n" ]]; then
+		shift
+		if ${PKGCORE_NONFATAL}; then
+			[[ $# -gt 0 ]] && eerror "$*"
+			return 1
+		fi
+	fi
+
 	local n filespacing=0 linespacing=0 sourcefile lineno
 	# setup spacing to make output easier to read
 	for (( n = ${#FUNCNAME[@]} - 1 ; n >= 0 ; --n )); do

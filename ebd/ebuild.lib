@@ -161,7 +161,7 @@ __ensure_PATH() {
 }
 
 __load_eapi_libs() {
-	local PKGCORE_BANNED_FUNCS=()
+	local -a PKGCORE_BANNED_FUNCS
 
 	# reload depend; while it may've been loaded already, reload it so that callers can
 	# rely on this setting the env up as necessary

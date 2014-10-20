@@ -3,6 +3,7 @@
 
 source "${PKGCORE_EBD_PATH}"/eapi/5.lib
 
+PKGCORE_BANNED_FUNCS+=( einstall )
 PKGCORE_EAPPLY_USER=
 
 get_libdir() { __get_libdir lib; }

@@ -103,6 +103,9 @@ eapi_optionals = mappings.ImmutableDict({
     # If the EAPI didn't mandate this var, then we can do our inference, but generally will
     # invoke the phase in the absense of that metadata var since we have no other choice.
     "trust_defined_phases_cache": True,
+
+    # Controls whether unpack supports absolute paths; see PMS.
+    "unpack_absolute_paths": False,
 })
 
 
@@ -268,7 +271,8 @@ common_env_optionals = mappings.ImmutableDict(dict.fromkeys(
      "doman_language_detect", "doman_language_override", "ebuild_phase_func",
      "econf_disable_dependency_tracking", "econf_disable_silent_rules",
      "econf_docdir_and_htmldir", "global_failglob",
-     "new_reads_stdin", "nonfatal", "nonfatal_die", "profile_iuse_injection",),
+     "new_reads_stdin", "nonfatal", "nonfatal_die", "profile_iuse_injection",
+     "unpack_absolute_paths",),
     lambda s: str(s).lower()))
 
 
@@ -391,6 +395,7 @@ eapi6 = EAPI.register(
         global_failglob=True,
         nonfatal_die=True,
         is_supported=False,
+        unpack_absolute_paths=True,
     )),
     ebd_env_options=eapi5.ebd_env_options,
 )

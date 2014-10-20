@@ -406,18 +406,32 @@ unpack() {
 	for file in "$@"; do
 		echo ">>> Unpacking ${file} to ${PWD}"
 		myfail="failure unpacking ${file}"
-		if [[ ${file} == "./"* ]]; then
+
+		if [[ ${file} != */* ]]; then
+			# regular filename get prefixed with ${DISTDIR}/
+			srcdir=${DISTDIR}/
+		elif [[ ${file} == "./"* ]]; then
+			# relative paths get passed through
 			srcdir=""
 		else
-			srcdir=${DISTDIR}
+			srcdir=${DISTDIR}/
+
+			if ${PKGCORE_UNPACK_ABSOLUTE_PATHS}; then
+				# EAPI 6 and up allows absolute paths
+				srcdir=""
+				[[ ${file} == ${DISTDIR%%/}/* ]] && \
+					eqawarn "QA Notice: unpack() argument contains redundant \${DISTDIR}: ${file}"
+			elif [[ ${file} == ${DISTDIR%%/}/* ]]; then
+				die "Arguments to unpack() must not begin with \${DISTDIR}."
+			elif [[ ${file} == /* ]]; then
+				die "Arguments to unpack() must not be absolute paths."
+			else
+				die "Relative paths to unpack() must be prefixed with './' in EAPI ${EAPI}"
+			fi
 		fi
 
 		[[ ! -e ${srcdir}${file} ]] && die "${myfail}: file doesn't exist"
 		[[ ! -s ${srcdir}${file} ]] && die "${myfail}: empty file"
-		[[ ${file} == ${DISTDIR%%/}/* ]] && \
-			die "Arguments to unpack() must not begin with \${DISTDIR}."
-		[[ ${file} == /* ]] &&
-			die "Arguments to unpack() must not be absolute paths."
 
 		filename=${file##*/}
 

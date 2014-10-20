@@ -87,6 +87,7 @@ __execute_phases
 __feature_is_enabled
 __filter_env
 __generate_initial_ebuild_environ
+__get_func_code
 __helper_check_exit
 __helper_died
 __helper_exit

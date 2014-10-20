@@ -130,6 +130,16 @@ __strip_duplicate_slashes() {
 	fi
 }
 
+__get_func_code() {
+	__IFS_push $'\n'
+	local code=( $(declare -f "$1") )
+	__IFS_pop
+
+	# drop function name and surrounding brackets
+	code=( ${code[@]:2:${#code[@]}-3} )
+	echo "${code[@]}"
+}
+
 PKGCORE_SHOPT_STACK=()
 
 __shopt_push() {

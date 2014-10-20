@@ -226,8 +226,9 @@ common_tracked_attributes = (
 common_env_optionals = mappings.ImmutableDict(dict.fromkeys(
     ("dodoc_allow_recursive", "doins_allow_symlinks",
      "doman_language_detect", "doman_language_override",
-     "econf_disable_silent_rules", "profile_iuse_injection",),
-        convert_bool_to_bash_bool))
+     "econf_disable_dependency_tracking", "econf_disable_silent_rules",
+     "new_reads_stdin", "profile_iuse_injection",),
+    convert_bool_to_bash_bool))
 
 
 eapi0 = EAPI.register("0",

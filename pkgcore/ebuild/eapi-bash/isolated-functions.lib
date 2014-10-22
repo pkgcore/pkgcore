@@ -55,34 +55,6 @@ __colored_output_enable() {
 	export PKGCORE_RC_NORMAL=$'\e[0m'
 } &> /dev/null
 
-has() {
-	local needle=$1
-	shift
-
-	local IFS=$'\001'
-
-	# try fast mode first; no IFS match is guaranteed that the needle isn't there.
-	[[ "${IFS}${*}${IFS}" != *"${IFS}${needle}${IFS}"* ]] && return 1
-
-	# If we have a match, ensure it's not due to $@ already having \001 in it.
-	# unlikely, but better safe than sorry.
-	IFS=' '
-	[[ *$'\001'* != $* ]] && return 0
-
-	# \001 for some insane reason was in $@; fallback to the slow for loop.
-	# Suppress debug outut for this part however.
-	__shopt_push +x
-	local x
-	for x in "$@"; do
-		if [[ ${x} == ${needle} ]]; then
-			__shopt_pop
-			return 0
-		fi
-	done
-	__shopt_pop
-	return 1
-}
-
 __safe_has() {
 	# Version of has, only to be used when the invoker knows that that
 	# the needle/targets will never have \001 in them

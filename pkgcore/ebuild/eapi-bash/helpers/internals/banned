@@ -1,5 +1,3 @@
 #!/usr/bin/env pkgcore-ebuild-helper
 
-my_eapi=${HELPER_PATH%/*}
-my_eapi=${my_eapi##*/}
-die "'${HELPER_NAME}' is explicitly banned from usage in EAPI '${my_eapi}'"
+die "'${HELPER_NAME}' is explicitly banned from usage in EAPI '${HELPER_EAPI}'"

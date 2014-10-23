@@ -95,6 +95,8 @@ invoke_script() {
 	[[ $# -eq 0 ]] && die "internal error: invoke_script invoked incorrectly"
 	local HELPER_PATH=$1
 	local HELPER_NAME=${1##*/}
+	local HELPER_EAPI=${1%/*}
+	HELPER_EAPI=${HELPER_EAPI##*/}
 	shift
 	local HELPER_ARG_COUNT=$#
 	if [[ ! -e ${HELPER_PATH} ]]; then

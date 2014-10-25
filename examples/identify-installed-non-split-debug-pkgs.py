@@ -3,7 +3,7 @@ from pkgcore.config import load_config
 from pkgcore.util.file_type import file_identifier
 
 import re
-debug_paths = ["/usr/lib%s/debug" % (x,) for x in ("64", "32", "")]
+debug_paths = ["/usr/lib/debug"]
 
 fi = file_identifier()
 vdbs = load_config().get_default("domain").vdb

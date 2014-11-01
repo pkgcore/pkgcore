@@ -42,18 +42,14 @@ help:
 	@echo "  doctest    to run all doctests embedded in the documentation (if enabled)"
 
 clean:
-	-rm -rf $(BUILDDIR) api man news.rst
+	-rm -rf $(BUILDDIR) api man
 
-generated: api man_rsts news
+generated: api man_rsts
 
 man_rsts:
 	@echo "autogenerating man rsts..."
 	$(PYTHON) -m pkgcore.sphinx_utils.generate_man_rsts man \
 	   `$(PYTHON) -c 'import conf,sys;sys.stdout.write(" ".join(" ".join(x) for x in conf.generated_man_pages))'`
-
-news:
-	@echo "autogenerating news rst..."
-	$(PYTHON) -m snakeoil.sphinx_utils.generate_news_rst pkgcore ../NEWS news.rst 'git_release' 'git_tag'
 
 api:
 	@echo "autogenerating api rsts..."

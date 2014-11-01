@@ -2,7 +2,6 @@
 pkgcore
 =======
 
-
 What is pkgcore?
 ================
 
@@ -18,18 +17,17 @@ to the package script).
 What does pkgcore require?
 ==========================
 
-At least python verison 2.6, and snakeoil- snakeoil is a utility library with
-misc optimizations split out of pkgcore for others to use.  Available via
-http://snakeoil.googlecode.com/ .
+At least python verison 2.7, and snakeoil- snakeoil is a utility library with
+misc optimizations split out of pkgcore for others to use. Available via
+https://github.com/pkgcore/snakeoil/.
 
 
 Who to contact if I find a bug?
 ===============================
 
-Please submit a bug/ticket via http://pkgcore.googlecode.com/ . Barring that, please at
-least send the details via http://groups.google.com/group/pkgcore-dev.  Please do not use
-bugs.gentoo.org as the first step; any bugs, pkgcore devs should filter before
-passing up at this point.
+Please submit an issue via https://github.com/pkgcore/pkgcore/. Please do not
+use bugs.gentoo.org as the first step; any bugs, pkgcore devs should filter
+before passing up at this point.
 
 You can also stop by at #pkgcore on irc.freenode.net.
 
@@ -44,7 +42,7 @@ doc/getting-started.rst is a good introduction if you're just getting started.
 If you want to start hacking, take a look at dev-notes/developing.rst.
 
 In addition, html documentation is available at
-http://api.pkgcore.org/pkgcore/ , as is postscript and pdf.
+http://api.pkgcore.org/pkgcore/, as is postscript and pdf.
 
 
 Tools

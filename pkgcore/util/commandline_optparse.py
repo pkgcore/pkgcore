@@ -14,6 +14,8 @@ consistent exception handling.
 See dev-notes/commandline.rst for more complete documentation.
 """
 
+from __future__ import print_function
+
 __all__ = ("Values", "Option", "OptionParser",
     "read_file_callback", "config_callback",
     "domain_callback", "config_append_callback",
@@ -21,8 +23,6 @@ __all__ = ("Values", "Option", "OptionParser",
     "convert_bool_type",
     "optparse_parse", "MySystemExit",
 )
-
-from __future__ import print_function
 
 import sys
 import os.path

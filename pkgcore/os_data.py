@@ -7,10 +7,13 @@ Avoid using- os data- root uid/gid, pkgcore uid/gid, etc.
 
 This will be killed off and bound into configuration subsystem at some point
 """
-__all__ = ("ostype", "userland", "xargs", "root_uid", "root_gid", "wheelgid", "secpass",
-    "portage_uid", "portage_gid")
 
 from __future__ import print_function
+
+__all__ = (
+    "ostype", "portage_gid", "portage_uid", "root_gid", "root_uid", "secpass",
+    "userland", "wheelgid", "xargs",
+)
 
 import grp
 import os
@@ -53,7 +56,7 @@ try:
     if (not secpass) and (wheelgid in os.getgroups()):
         secpass = 1
 except KeyError:
-    print(textwrap.dedent((
+    print(textwrap.dedent(
         """
         portage initialization: your system doesn't have a 'wheel' group.
         Please fix this as it is a normal system requirement, 'wheel' is normally GID 10.

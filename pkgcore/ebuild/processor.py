@@ -18,6 +18,7 @@ design) reduces regen time by over 40% compared to portage-2.1
 # this needs work. it's been pruned heavily from what ebd used
 # originally, but it still isn't what I would define as 'right'
 
+from __future__ import print_function
 
 __all__ = (
     "request_ebuild_processor", "release_ebuild_processor", "EbuildProcessor",
@@ -38,8 +39,6 @@ except ImportError:
 
 inactive_ebp_list = []
 active_ebp_list = []
-
-from __future__ import print_function
 
 import contextlib
 import errno

@@ -9,6 +9,8 @@ Wraps :obj:`pkgcore.ebuild.processor` functionality into a higher level
 api, per phase methods for example
 """
 
+from __future__ import print_function
+
 __all__ = ("ebd", "setup_mixin", "install_op", "uninstall_op", "replace_op",
     "buildable", "binpkg_localize")
 
@@ -37,6 +39,7 @@ demandload(globals(),
     "pkgcore.log:logger",
     "pkgcore.package.mutated:MutatedPkg",
     'pkgcore:fetch',
+    'textwrap',
     "time",
 )
 
@@ -865,8 +868,15 @@ class ebuild_mixin(object):
             use = pkg.use
             for node in pkg.required_use:
                 if not node.match(use):
-                    print "REQUIRED_USE requirement wasn't met\nFailed to match: %s\nfrom: %s\nfor USE: %s\npkg: %s" % \
-                        (node, pkg.required_use, " ".join(use), pkg.cpvstr)
+                    print(textwrap.dedent(
+                        """
+                        REQUIRED_USE requirement wasn't met
+                        Failed to match: {}
+                        from: {}
+                        for USE: {}
+                        pkg: {}
+                        """.format(node, pkg.required_use, " ".join(use), pkg.cpvstr)
+                    ))
                     return False
         if 'pretend' not in pkg.mandatory_phases:
             return True

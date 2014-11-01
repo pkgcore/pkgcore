@@ -138,7 +138,7 @@ class rsync_syncer(base.ExternalSyncer):
                     "11; this is an out of space exit code")
            # need to do something here instead of just restarting...
            # else:
-           #     print ret
+           #     print(ret)
         raise base.syncer_exception(ret, "all attempts failed")
 
 

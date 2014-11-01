@@ -244,7 +244,7 @@ if __name__ == '__main__':
         import conf
         targets = getattr(conf, 'generated_man_pages', [])
     elif len(targets) % 2 != 0:
-        print "bad arguments given"
+        print("bad arguments given")
         sys.exit(1)
     else:
         targets = iter(targets)

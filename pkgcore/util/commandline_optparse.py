@@ -22,6 +22,8 @@ __all__ = ("Values", "Option", "OptionParser",
     "optparse_parse", "MySystemExit",
 )
 
+from __future__ import print_function
+
 import sys
 import os.path
 import logging
@@ -342,7 +344,7 @@ class OptionParser(optparse.OptionParser, object):
 
         Overridden because the optparse one is a noop if self.version is false.
         """
-        print >> file, self.get_version()
+        print(self.get_version, file=file)
 
     def _add_version_option(self):
         """Override this to be a no-op.

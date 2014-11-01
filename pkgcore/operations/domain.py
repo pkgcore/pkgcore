@@ -119,7 +119,7 @@ class base(object):
 
     def __del__(self):
         if getattr(self, 'underway', False):
-            print "warning: %s merge was underway, but wasn't completed" % (self,)
+            logger.warning("%s merge was underway, but wasn't completed" % (self,))
             self.lock.release_write_lock()
         self.clean_tempdir()
 
@@ -258,8 +258,7 @@ class uninstall(base):
 
     def __del__(self):
         if getattr(self, 'underway', False):
-            print "warning: %s unmerge was underway, but wasn't completed" % \
-                self.old_pkg
+            logger.warning("%s unmerge was underway, but wasn't completed" % self.old_pkg)
             self.lock.release_write_lock()
 
 
@@ -318,6 +317,6 @@ class replace(install, uninstall):
 
     def __del__(self):
         if getattr(self, 'underway', False):
-            print "warning: %s -> %s replacement was underway, " \
-                "but wasn't completed" % (self.old_pkg, self.new_pkg)
+            logger.warning("%s -> %s replacement was underway, "
+                "but wasn't completed" % (self.old_pkg, self.new_pkg))
             self.lock.release_write_lock()

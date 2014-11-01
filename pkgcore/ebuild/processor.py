@@ -39,6 +39,8 @@ except ImportError:
 inactive_ebp_list = []
 active_ebp_list = []
 
+from __future__ import print_function
+
 import contextlib
 import errno
 import os
@@ -96,7 +98,7 @@ def shutdown_all_processors():
                 pass
     except Exception as e:
         traceback.print_exc()
-        print e
+        print(e)
         raise
 
 pkgcore.spawn.atexit_register(shutdown_all_processors)
@@ -258,9 +260,7 @@ class EbuildProcessor(object):
 
         if fakeroot and (sandbox or not userpriv):
             traceback.print_stack()
-            print "warning, was asking to enable fakeroot but-"
-            print "sandbox", sandbox, "userpriv", userpriv
-            print "this isn't valid.  bailing"
+            logger.error("Both sandbox and fakeroot cannot be enabled at the same time")
             raise InitializationError("cannot initialize with sandbox and fakeroot")
 
         if userpriv:
@@ -330,7 +330,7 @@ class EbuildProcessor(object):
         # basically a quick "yo" to the daemon
         self.write("dude?")
         if not self.expect("dude!"):
-            print "error in server coms, bailing."
+            print("error in server coms, bailing.")
             raise InitializationError(
                 "expected 'dude!' response from ebd, which wasn't received. "
                 "likely a bug")
@@ -406,7 +406,7 @@ class EbuildProcessor(object):
             if append_newline:
                 if string != '\n':
                     string += "\n"
-            #print "wrote %i: %s" % (len(string), string)
+            #logger.debug("wrote %i: %s" % (len(string), string))
             self.ebd_write.write(string)
             if flush:
                 self.ebd_write.flush()
@@ -493,7 +493,7 @@ class EbuildProcessor(object):
         try:
             os.remove(self.__sandbox_log)
         except (IOError, OSError) as e:
-            print "exception caught when cleansing sandbox_log=%s" % str(e)
+            print("exception caught when cleansing sandbox_log=%s" % str(e))
         return 1
 
     def clear_preloaded_eclasses(self):
@@ -548,7 +548,7 @@ class EbuildProcessor(object):
         :return: boolean, True for success
         """
         if not os.path.exists(ec_file):
-            print "failed:",ec_file
+            print("failed: %s" % ec_file)
             return False
         self.write("preload_eclass %s" % ec_file)
         if self.expect("preload_eclass succeeded", async=async, flush=True):

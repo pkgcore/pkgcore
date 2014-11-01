@@ -27,9 +27,12 @@
 #    list is ignored)
 # dohtml -x CVS,SCCS,RCS -r <list-of-files-and-directories>
 #  - will do as 'dohtml -r', but ignore directories named CVS, SCCS, RCS
-#
+
+from __future__ import print_function
+
 import os
 import sys
+import textwrap
 
 def dodir(path):
     os.spawnlp(os.P_WAIT, "install", "install", "-d", path)
@@ -93,18 +96,21 @@ class OptionsClass:
 def print_help():
     opts = OptionsClass()
 
-    print "dohtml [-a .foo,.bar] [-A .foo,.bar] [-f foo,bar] [-x foo,bar]"
-    print "       [-r] [-V] <file> [file ...]"
-    print
-    print " -a   Set the list of allowed to those that are specified."
-    print "      Default:", ",".join(opts.allowed_exts)
-    print " -A   Extend the list of allowed file types."
-    print " -f   Set list of allowed extensionless file names."
-    print " -x   Set directories to be excluded from recursion."
-    print "      Default:", ",".join(opts.disallowed_dirs)
-    print " -r   Install files and directories recursively."
-    print " -V   Be verbose."
-    print
+    print(textwrap.dedent(
+        """
+        dohtml [-a .foo,.bar] [-A .foo,.bar] [-f foo,bar] [-x foo,bar]
+               [-r] [-V] <file> [file ...]
+
+            -a   Set the list of allowed to those that are specified.
+                 Default: {}
+            -A   Extend the list of allowed file types.
+            -f   Set list of allowed extensionless file names.
+            -x   Set directories to be excluded from recursion.
+                 Default: {}
+            -r   Install files and directories recursively.
+            -V   Be verbose.
+        """.format(", ".join(opts.allowed_exts), ", ".join(opts.disallowed_dirs))
+    ))
 
 def parse_args():
     options = OptionsClass()
@@ -152,9 +158,16 @@ def main():
         options.allowed_exts = options.allowed_exts.split(",")
 
     if options.verbose:
-        print "Allowed extensions:", options.allowed_exts
-        print "Document prefix : '" + options.doc_prefix     + "'"
-        print "Allowed files :", options.allowed_files
+        print(textwrap.dedent(
+            """
+            Allowed extensions: {}
+            Document prefix: '{}'
+            Allowed files: {}
+            """.format(
+                ", ".join(options.allowed_exts), options.doc_prefix,
+                ", ".join(options.allowed_files)
+            )
+        ))
 
     success = True
 

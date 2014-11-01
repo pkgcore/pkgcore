@@ -742,8 +742,8 @@ class merge_plan(object):
                 # vdb entry, replace.
                 if self.vdb_restrict.match(choices.current_pkg):
                     # we're replacing a vdb entry with a vdb entry?  wtf.
-                    print ("internal weirdness spotted- vdb restrict matches, "
-                           "but current doesn't, bailing")
+                    print("internal weirdness spotted- vdb restrict matches, "
+                          "but current doesn't, bailing")
                     raise Exception("internal weirdness- vdb restrict matches ",
                                     "but current doesn't. bailing- run w/ --debug")
                 conflicts = state.replace_op(choices, choices.current_pkg).apply(self.state)

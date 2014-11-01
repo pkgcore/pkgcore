@@ -75,7 +75,7 @@ pkgcore trunk:
 
 
 pkgcore 0.8.6 (2012-10-29)
-==========================
+--------------------------
 
 - Fix false positive test failure under py3k related to /etc/passwd
   encoding (gentoo bug 439800).
@@ -84,7 +84,7 @@ pkgcore 0.8.6 (2012-10-29)
 
 
 pkgcore 0.8.5 (2012-10-18)
-==========================
+--------------------------
 
 - pkgcore now matches the new PMS rules on package naming (specifically
   that the last component can't be a version at all, period).  Also
@@ -104,25 +104,25 @@ pkgcore 0.8.5 (2012-10-18)
 
 
 pkgcore 0.8.4 (2012-10-04)
-==========================
+--------------------------
 
 - Fix bad function reference in eapi3 guts.
 
 
 pkgcore 0.8.3 (2012-10-04)
-==========================
+--------------------------
 
 - Fixed bug where default phases weren't guranteed to be ran.
 
 
 pkgcore 0.8.2 (2012-10-01)
-==========================
+--------------------------
 
 - Fixed pmaint exception for when eclass preloading was enabled.
 
 
 pkgcore 0.8.1 (2012-09-29)
-==========================
+--------------------------
 
 - Pkgcore now requires snakeoil 0.5.1.
 
@@ -179,7 +179,7 @@ pkgcore 0.8.1 (2012-09-29)
 
 
 pkgcore 0.8 (2012-08-04)
-========================
+------------------------
 
 - Fix fetch support broken by gentoo's recent enabling of whirlpool
   checksum.
@@ -217,7 +217,7 @@ pkgcore 0.8 (2012-08-04)
 
 
 pkgcore 0.7.7.8 (2011-01-26)
-============================
+----------------------------
 
 - pkgcore's merger now will preserve any hardlinks specified in the
   merge set.  Merges straight from binpkgs don't current preserve
@@ -244,7 +244,7 @@ pkgcore 0.7.7.8 (2011-01-26)
 
 
 pkgcore 0.7.7.7 (2011-01-24)
-============================
+----------------------------
 
 - pkgcore resolver now understand weak blockers.  This fixes a long
   standing issue where portage/paludis would allow a transaction that
@@ -258,7 +258,7 @@ pkgcore 0.7.7.7 (2011-01-24)
 
 
 pkgcore 0.7.7.6 (2011-01-16)
-============================
+----------------------------
 
 - fix bug where REQUIRED_USE wasn't being stored during metadata
   regeneration.  Thanks to marienz for reporting it.
@@ -272,7 +272,7 @@ pkgcore 0.7.7.6 (2011-01-16)
 
 
 pkgcore 0.7.7.5 (2011-12-26)
-============================
+----------------------------
 
 - pkgcore no longer requires a manifest to exist if the repository uses
   thin-manifests, and there are no distfiles for a pkg.
@@ -317,7 +317,7 @@ pkgcore 0.7.7.5 (2011-12-26)
 
 
 pkgcore 0.7.7.4 (2011-12-14)
-============================
+----------------------------
 
 - pkgcore now requires snakeoil 0.4.6 and higher.
 
@@ -330,14 +330,14 @@ pkgcore 0.7.7.4 (2011-12-14)
 
 
 pkgcore 0.7.7.3 (2011-12-08)
-============================
+----------------------------
 
 - fixed merging error for gconf files named %gconf, and introduced
   better error messages for those sort of failures.
 
 
 pkgcore 0.7.7.2 (2011-12-07)
-============================
+----------------------------
 
 - `pquery --attr source_repository --vdb` now correctly returns the
   originating repository.
@@ -372,7 +372,7 @@ pkgcore 0.7.7.2 (2011-12-07)
 
 
 pkgcore 0.7.7.1 (2011-12-02)
-============================
+----------------------------
 
 - Fix eclass metadata var (IUSE for example) stacking in metadata
   phases.
@@ -381,7 +381,7 @@ pkgcore 0.7.7.1 (2011-12-02)
 
 
 pkgcore 0.7.7 (2011-12-02)
-==========================
+--------------------------
 
 - pmaint regen optimizations.  This is now >5x faster than 0.7.6,
   and ~3x faster than 0.7.2 (0.7.3 introduced a regression).
@@ -395,14 +395,14 @@ pkgcore 0.7.7 (2011-12-02)
 
 
 pkgcore 0.7.6.1 (2011-12-01)
-==============================
+------------------------------
 
 - fix portage_config generation bug in 0.7.6; in the process, forced
   overlay's eclass stacking onto PORTDIR is no longer done by default.
 
 
 pkgcore 0.7.6 (2011-11-30)
-==========================
+--------------------------
 
 - pplugincache now removes old caches when ran.
 
@@ -418,7 +418,7 @@ pkgcore 0.7.6 (2011-11-30)
 
 
 pkgcore 0.7.5 (2011-11-07)
-==========================
+--------------------------
 
 - pkgcore now extends masking rules to binpkg repositories; in addition,
   it now honors 'masters' for masking.  This means repositories that
@@ -435,13 +435,13 @@ pkgcore 0.7.5 (2011-11-07)
 
 
 pkgcore 0.7.4 (2011-10-27)
-==========================
+--------------------------
 
 - fix userprofile stacking for /etc/portage/profile; this fixes a traceback.
 
 
 pkgcore 0.7.3 (2011-10-26)
-==========================
+--------------------------
 
 - speed up directory walking; varies, but ~25% faster.
 
@@ -467,7 +467,7 @@ pkgcore 0.7.3 (2011-10-26)
 
 
 pkgcore 0.7.2 (2011-09-27)
-==========================
+--------------------------
 
 - bug fixes; fix to pebuild so it works again, bugs spotted by pyflakes,
   etc.  Basically codebase cleanup.
@@ -484,7 +484,7 @@ pkgcore 0.7.2 (2011-09-27)
 
 
 pkgcore 0.7.1 (2011-09-03)
-==========================
+--------------------------
 
 - add TIMESTAMP header to binpkg Packages cache.
 
@@ -502,7 +502,7 @@ pkgcore 0.7.1 (2011-09-03)
 
 
 pkgcore 0.7 (2011-09-02)
-========================
+------------------------
 
 - pmaint regen now supports regenerating binary and install repository
   caches.
@@ -541,7 +541,7 @@ pkgcore 0.7 (2011-09-02)
 
 
 pkgcore 0.6.6 (2011-07-11)
-==========================
+--------------------------
 
 - make use/useq/usev extremely obnoxious towards offending devs who use them
   in global scope when they're not supposed to.  Pretty much, I'm tired of
@@ -552,7 +552,7 @@ pkgcore 0.6.6 (2011-07-11)
 
 
 pkgcore 0.6.5 (2011-06-22)
-==========================
+--------------------------
 
 - Log an error, rather than throwing an exception when binpkg cache cannot
   be updated.  Needs refinement long term, but for average users, this is
@@ -586,7 +586,7 @@ pkgcore 0.6.5 (2011-06-22)
 
 
 pkgcore 0.6.4 (2011-06-05)
-==========================
+--------------------------
 
 - intercept and suppress exceptions from triggers unless the trigger
   explicitly disables it.
@@ -598,7 +598,7 @@ pkgcore 0.6.4 (2011-06-05)
 
 
 pkgcore 0.6.3 (2011-05-30)
-==========================
+--------------------------
 
 - support for /etc/portage/make.profile; Please Do Not Use it, while
   pkgcore is forced to support it, usage of it breaks most tools and is
@@ -617,7 +617,7 @@ pkgcore 0.6.3 (2011-05-30)
 
 
 pkgcore 0.6.2 (2011-05-27)
-==========================
+--------------------------
 
 - for EAPI<4, expose MERGE_TYPE info via EMERGE_FROM; do this for compatibility
   with non-spec compliant ebuilds, and eclasses like linux-mod.  This restores
@@ -638,7 +638,7 @@ pkgcore 0.6.2 (2011-05-27)
 
 
 pkgcore 0.6.1 (2011-05-27)
-==========================
+--------------------------
 
 - fix for "or_node.blocks" AttributeError, and related resolution
   miscalculations.
@@ -652,7 +652,7 @@ pkgcore 0.6.1 (2011-05-27)
 
 
 pkgcore 0.6 (2011-04-24)
-========================
+------------------------
 
 - Due to crazy work hours and moves, this release is fairly large, and frankly
   repeatedly delayed.  Future ones will be far more fine grained moving forward.
@@ -806,7 +806,7 @@ pkgcore 0.6 (2011-04-24)
 
 
 pkgcore 0.5.11.8 (2010-07-17)
-=============================
+-----------------------------
 
 - ticket #221; add --color=(n|y) support
 
@@ -830,7 +830,7 @@ pkgcore 0.5.11.8 (2010-07-17)
 
 
 pkgcore 0.5.11.7 (2010-06-20)
-=============================
+-----------------------------
 
 - use_enable/use_with; make use_enable/use_with 3rd arg form match pms in eapi4,
   match long standing portage behaviour for eapi's 0 through 3.
@@ -846,7 +846,7 @@ pkgcore 0.5.11.7 (2010-06-20)
 
 
 pkgcore 0.5.11.6 (2010-05-21)
-=============================
+-----------------------------
 
 - add a bit of a hack to tty detection tests; PlainTextFormatter is valid for
   broken terminfo entries.
@@ -855,13 +855,13 @@ pkgcore 0.5.11.6 (2010-05-21)
 
 
 pkgcore 0.5.11.5 (2010-04-22)
-=============================
+-----------------------------
 
 - fix yet *another* fucking distutils bit of idiocy.  Piece Of Shit.
 
 
 pkgcore 0.5.11.4 (2010-04-21)
-=============================
+-----------------------------
 
 - fix py3k regression when trying to hash a PackageRestriction.
 
@@ -871,7 +871,7 @@ pkgcore 0.5.11.4 (2010-04-21)
 
 
 pkgcore 0.5.11.3 (2010-03-22)
-=============================
+-----------------------------
 
 - force all einfo/elog/ewarn style bits to stderr.
 
@@ -880,13 +880,13 @@ pkgcore 0.5.11.3 (2010-03-22)
 
 
 pkgcore 0.5.11.2 (2010-03-16)
-=============================
+-----------------------------
 
 - silence spurious grep QA warnings during metadata sourcing.
 
 
 pkgcore 0.5.11.1 (2010-03-15)
-=============================
+-----------------------------
 
 - fix a major release bug; ebuild-env-utils.sh wasn't packaged in the
   released 0.5.11, this version adds the missing file.
@@ -900,7 +900,7 @@ pkgcore 0.5.11.1 (2010-03-15)
 
 
 pkgcore 0.5.11 (2010-03-14)
-===========================
+---------------------------
 
 - took me a full night of debugging, but traced down yet another portage
   incompatibility introduced.  gentoo bug 303369; if you've been seeing
@@ -928,7 +928,7 @@ pkgcore 0.5.11 (2010-03-14)
 
 
 pkgcore 0.5.10 (2010-02-07)
-===========================
+---------------------------
 
 - ticket 235; CBUILD/CTARGET values were being stomped w/ CHOST.
 
@@ -963,7 +963,7 @@ pkgcore 0.5.10 (2010-02-07)
 
 
 pkgcore 0.5.9 (2010-01-08)
-==========================
+--------------------------
 
 - this release of pkgcore requires snakeoil >=0.3.6
 
@@ -987,7 +987,7 @@ pkgcore 0.5.9 (2010-01-08)
 
 
 pkgcore 0.5.8 (2009-12-27)
-==========================
+--------------------------
 
 - >snakeoil-0.3.4 is required for this release.
 
@@ -1005,7 +1005,7 @@ pkgcore 0.5.8 (2009-12-27)
 
 
 pkgcore 0.5.7 (2009-12-22)
-==========================
+--------------------------
 
 - added pinspect script; used for basic reporting of metadata usage,
   and inspection of pkgsets.  Bit simple, but will be expanded down the line.
@@ -1034,7 +1034,7 @@ pkgcore 0.5.7 (2009-12-22)
 
 
 pkgcore 0.5.6 (2009-12-13)
-==========================
+--------------------------
 
 - tweak pkgcore configuration subsystem to tell you the parameter involved
   when it's passed an incorrectly typed object.
@@ -1043,7 +1043,7 @@ pkgcore 0.5.6 (2009-12-13)
 
 
 pkgcore 0.5.5 (2009-11-26)
-==========================
+--------------------------
 
 - portage changed their flat_hash support a while back, specifically
   how mtime was stored.  We match that now (although it's daft to do so)
@@ -1080,14 +1080,14 @@ pkgcore 0.5.5 (2009-11-26)
 
 
 pkgcore 0.5.4 (2009-10-30)
-==========================
+--------------------------
 
 - minor bug fix release fixing filter-env invocation (wasn't covered
   by tests)
 
 
 pkgcore 0.5.3 (2009-10-30)
-==========================
+--------------------------
 
 - filter-env grew a --print-vars option.  If you've been seeing
   "declare: write error: Broken pipe" from build operations, this should
@@ -1109,7 +1109,7 @@ pkgcore 0.5.3 (2009-10-30)
 
 
 pkgcore 0.5.2 (2009-10-28)
-==========================
+--------------------------
 
 - touch vdb root on vdb modification as a way to notify alternative PMs
   that their cache needs updating.  Gentoo bug #290428.  Just leaves paludis
@@ -1126,14 +1126,14 @@ pkgcore 0.5.2 (2009-10-28)
 
 
 pkgcore 0.5.1 (2009-10-22)
-==========================
+--------------------------
 
 - correct a python-2.6 incompatibility that rears it's head when doing
   repository operations (installing, uninstalling, etc).
 
 
 pkgcore 0.5 (2009-10-22)
-========================
+------------------------
 
 - add protection against multiple python versions, w/ the default python
   invocation being a different major version from what pkgcore was installed
@@ -1166,7 +1166,7 @@ pkgcore 0.5 (2009-10-22)
 
 
 pkgcore 0.4.7.16 (2009-03-24)
-=============================
+-----------------------------
 
 - pmerge is a bit more informative when there is nothing to merge,
   and doesn't ask if in --ask if the users wishes to proceed.
@@ -1209,7 +1209,7 @@ pkgcore 0.4.7.16 (2009-03-24)
 
 
 pkgcore 0.4.7.15 (2009-01-28)
-=============================
+-----------------------------
 
 - fix docutils-0.5 incompatibility in build_api_docs.py
 
@@ -1225,7 +1225,7 @@ pkgcore 0.4.7.15 (2009-01-28)
 
 
 pkgcore 0.4.7.14 (2008-12-18)
-=============================
+-----------------------------
 
 - profile awareness of eapi files, *including* strict validation.
 
@@ -1239,14 +1239,14 @@ pkgcore 0.4.7.14 (2008-12-18)
 
 
 pkgcore 0.4.7.13 (2008-10-29)
-=============================
+-----------------------------
 
 - bug fix for transitive use atoms; if || ( a/b[x?] ), DepSet wasn't detecting
   that there were conditionals w/in it, as such wasn't doing evaluation.
 
 
 pkgcore 0.4.7.12 (2008-10-10) (2 hours after 0.4.7.11 ;)
-========================================================
+--------------------------------------------------------
 
 - security fix; force cwd to something controlled for ebuild env.  This
   blocks an attack detailed in glsa 200810-02; namely that an ebuild invoking
@@ -1255,14 +1255,14 @@ pkgcore 0.4.7.12 (2008-10-10) (2 hours after 0.4.7.11 ;)
 
 
 pkgcore 0.4.7.11 (2008-10-10)
-=============================
+-----------------------------
 
 - fix EAPI2 issues: default related primarily, invoke src_prepare for
   >=EAPI2 instead of >EAPI2.
 
 
 pkgcore 0.4.7.10 (2008-10-07)
-=============================
+-----------------------------
 
 - fix in setup.py to install eapi/* files.
   die distutils, die.
@@ -1275,7 +1275,7 @@ pkgcore 0.4.7.10 (2008-10-07)
 
 
 pkgcore 0.4.7.9 (2008-10-06)
-============================
+----------------------------
 
 - eapi2 is now supported.
 
@@ -1296,7 +1296,7 @@ pkgcore 0.4.7.9 (2008-10-06)
 
 
 pkgcore 0.4.7.8 (2008-08-28)
-============================
+----------------------------
 
 - pkgcore now properly preserves ownership of symlinks on merging.
   ensure_perms plugins now need to handle symlinks (lchown at the least).
@@ -1312,7 +1312,7 @@ pkgcore 0.4.7.8 (2008-08-28)
 
 
 pkgcore 0.4.7.7 (2008-08-11)
-============================
+----------------------------
 
 - Disable fakeroot tests due to odd behaviour, and the fact it's currently
   unused.
@@ -1325,7 +1325,7 @@ pkgcore 0.4.7.7 (2008-08-11)
 
 
 pkgcore 0.4.7.6 (2008-08-10)
-============================
+----------------------------
 
 - fix sandbox complaint when PORT_LOGDIR is enabled- sandbox requires abspath
   for any SANDBOX_WRITE exemptions, if PORT_LOGDIR path includes symlinks,
@@ -1347,7 +1347,7 @@ pkgcore 0.4.7.6 (2008-08-10)
 
 
 pkgcore 0.4.7.5 (2008-07-06)
-============================
+----------------------------
 
 - incremental_expansion and friends have grown a cpython implementation-
   this speedup will show up if you are doing lots of profile work (pcheck
@@ -1388,14 +1388,14 @@ pkgcore 0.4.7.5 (2008-07-06)
 
 
 pkgcore 0.4.7.4 (2008-06-11)
-============================
+----------------------------
 
 - eapi1 bug fix; check for, and execute if found, ./configure if ECONF_SOURCE
   is unset.
 
 
 pkgcore 0.4.7.3 (2008-05-16)
-============================
+----------------------------
 
 - ticket #185; tweak the test to give better debug info.
 
@@ -1430,7 +1430,7 @@ pkgcore 0.4.7.3 (2008-05-16)
 
 
 pkgcore 0.4.7.2 (2008-05-07)
-============================
+----------------------------
 
 - new portage configuration feature- 'ignore-paludis-versioning'.  This
   directs pkgcore to ignore nonstandard -scm ebuilds instead of complaining
@@ -1471,14 +1471,14 @@ pkgcore 0.4.7.2 (2008-05-07)
 
 
 pkgcore 0.4.7.1 (2008-05-04)
-============================
+----------------------------
 
 - correct a flaw in repository searching that slipped past the test harness.
   effectively breaks via inverting the negate logic for any complex search.
 
 
 pkgcore 0.4.7 (2008-05-03)
-==========================
+--------------------------
 
 - prepstrip was updated to match current portage semantics, minus stripping
   and splitdebug functionality (we handle that via a trigger).  Via this,
@@ -1506,7 +1506,7 @@ pkgcore 0.4.7 (2008-05-03)
 
 
 pkgcore 0.4.6 (2008-04-29)
-==========================
+--------------------------
 
 - filelist sets (world file for example) are now sorted by atom comparison
   rules.  ticket #178.
@@ -1555,7 +1555,7 @@ pkgcore 0.4.6 (2008-04-29)
 
 
 pkgcore 0.4.5 (2008-04-09)
-==========================
+--------------------------
 
 - fix collision unprotect trigger exceptions (typically KeyError).
   ticket #165
@@ -1588,7 +1588,7 @@ pkgcore 0.4.5 (2008-04-09)
 
 
 pkgcore 0.4.4 (2008-04-06)
-==========================
+--------------------------
 
 - merging/replacing performance may be a bit slower in this release- the level
   of stats calls went up in comparison to previous releases, with several
@@ -1638,7 +1638,7 @@ pkgcore 0.4.4 (2008-04-06)
 
 
 pkgcore 0.4.3 (2008-03-31)
-==========================
+--------------------------
 
 - correct a corner case where a users bash_profile is noisy, specifically
   disable using $HOME/.bashrc from all spawn_bash calls.
@@ -1665,7 +1665,7 @@ pkgcore 0.4.3 (2008-03-31)
 
 
 pkgcore 0.4.2 (2008-03-30)
-==========================
+--------------------------
 
 - correct handling of ebuilds with explicit -r0 in filename, despite it being
   implicit.  Thanks to rbrown for violating gentoo-x86 policy out of the blue
@@ -1682,7 +1682,7 @@ pkgcore 0.4.2 (2008-03-30)
 
 
 pkgcore 0.4.1 (2008-03-20)
-==========================
+--------------------------
 
 - add tar contentsSet rewriting; tarballs sometimes leave out directories,
   and don't always have the fully resolved path- /usr/lib/blah, when
@@ -1699,7 +1699,7 @@ pkgcore 0.4.1 (2008-03-20)
 
 
 pkgcore 0.4 (2008-03-18)
-========================
+------------------------
 
 - resolver fixes: vdb loadup wasn't occuring for old style virtuals for
   rdepend blockers, now forces it.  It was possible for a node to be
@@ -1763,7 +1763,7 @@ pkgcore 0.4 (2008-03-18)
 
 
 pkgcore 0.3.4 (2007-12-26)
-==========================
+--------------------------
 
 - IUSEs were filtered, unstated were not respected though breaks with
   current portage tree, so re-enabling.
@@ -1771,7 +1771,7 @@ pkgcore 0.3.4 (2007-12-26)
 
 
 pkgcore 0.3.3 (2007-12-14)
-==========================
+--------------------------
 
 - IUSE defaults are respected now, so EAPI=1 implemented
 
@@ -1782,7 +1782,7 @@ pkgcore 0.3.3 (2007-12-14)
 
 
 pkgcore 0.3.2 (2007-11-03)
-==========================
+--------------------------
 
 - ticket 190746 from gentoo; basically need to force the perms of first level
   directory of an unpacked $DISTDIR to ensure it's at least readable/writable.
@@ -1828,7 +1828,7 @@ pkgcore 0.3.2 (2007-11-03)
 
 
 pkgcore 0.3.1 (2007-06-27)
-==========================
+--------------------------
 
 - ticket 86; export FILE for portage_conf FETCHCOMMAND/RESUMECOMMAND support,
   convert from spawn_bash to spawn, add some extra error detection
@@ -1843,7 +1843,7 @@ pkgcore 0.3.1 (2007-06-27)
 
 
 pkgcore 0.3 (2007-06-06)
-========================
+------------------------
 
 - pregen has moved into pmaint regen.
 
@@ -1905,7 +1905,7 @@ pkgcore 0.3 (2007-06-06)
 
 
 pkgcore 0.2.14 (2007-04-08)
-===========================
+---------------------------
 
 - correct potential for profile path calculation screwup.
 
@@ -1921,7 +1921,7 @@ pkgcore 0.2.14 (2007-04-08)
 
 
 pkgcore 0.2.13 (2007-03-30)
-===========================
+---------------------------
 
 - Added '~' to allowed shlex word chars.
 
@@ -1930,7 +1930,7 @@ pkgcore 0.2.13 (2007-03-30)
 
 
 pkgcore 0.2.12 (2007-03-29)
-===========================
+---------------------------
 
 - Ensure PackageRestriction._handle_exceptions filters the check down to
   just strings; if running pure python, this could trigger a traceback
@@ -1953,7 +1953,7 @@ pkgcore 0.2.12 (2007-03-29)
 
 
 pkgcore 0.2.11 (2007-03-27)
-===========================
+---------------------------
 
 - COLON_SEPARATED, not COLON_SEPERATED for env.d parsing.
 
@@ -1962,7 +1962,7 @@ pkgcore 0.2.11 (2007-03-27)
 
 
 pkgcore 0.2.10 (2007-03-27)
-===========================
+---------------------------
 
 - FEATURES=ccache now corrects perms as needed for when userpriv toggles.
 
@@ -1977,7 +1977,7 @@ pkgcore 0.2.10 (2007-03-27)
 
 
 pkgcore 0.2.9 (2007-03-19)
-==========================
+--------------------------
 
 - convert use.mask/package.use.mask, use.force/package.use.force stacking
   to match portage behaviour- basically stack use.* and package.* per profile
@@ -2003,7 +2003,7 @@ pkgcore 0.2.9 (2007-03-19)
 
 
 pkgcore 0.2.8 (2007-03-17)
-==========================
+--------------------------
 
 - fix bug so that 6_alpha == 6_alpha0 when native_CPV is in use; only possible
   way to have hit the bug is having all extensions disabled (CPY version gets it
@@ -2051,7 +2051,7 @@ pkgcore 0.2.8 (2007-03-17)
 
 
 pkgcore 0.2.7 (2007-03-04)
-==========================
+--------------------------
 
 - layman configuration (if available) is now read for portage configuration
   for sync URI for overlays.  tar syncer is currently unsupported; others may
@@ -2062,7 +2062,7 @@ pkgcore 0.2.7 (2007-03-04)
 
 
 pkgcore 0.2.6 (2007-03-04)
-==========================
+--------------------------
 
 - make intersecting ~ and =* atoms work again (used by pquery --revdep)
 
@@ -2125,7 +2125,7 @@ pkgcore 0.2.6 (2007-03-04)
 
 
 pkgcore 0.2.5 (2007-02-19)
-==========================
+--------------------------
 
 - handle corner case in depend cycle processing where a package directly
   depends upon itself; fixes processing of sys-devel/libtool specifically.
@@ -2149,7 +2149,7 @@ pkgcore 0.2.5 (2007-02-19)
 
 
 pkgcore 0.2.4 (2007-02-16)
-==========================
+--------------------------
 
 - refactoring of trigger implementations- cleanup and tests.  Additionally,
   eliminate a potential mtime based frace if the underlying fs (or python
@@ -2169,7 +2169,7 @@ pkgcore 0.2.4 (2007-02-16)
 
 
 pkgcore 0.2.3 (2007-02-12)
-==========================
+--------------------------
 
 - support for ** in package.keywords
 
@@ -2197,7 +2197,7 @@ pkgcore 0.2.3 (2007-02-12)
 
 
 pkgcore 0.2.2 (2007-01-30)
-==========================
+--------------------------
 
 - The terminfo db is now used for xterm title updates. If title updates
   worked in pkgcore 0.2 or 0.2.1 and no longer work in 0.2.2 file a bug and
@@ -2218,7 +2218,7 @@ pkgcore 0.2.2 (2007-01-30)
 
 
 pkgcore 0.2.1 (2007-01-24)
-==========================
+--------------------------
 
 - fix corner case for portage configuration support; old system (<=2004)
   installations may have /etc/portage/sets/world, which confused pmerges
@@ -2230,7 +2230,7 @@ pkgcore 0.2.1 (2007-01-24)
 
 
 pkgcore 0.2 (2007-01-22)
-========================
+------------------------
 
 - glsa pkgset will now include metadata/glsa from overlays.
 
@@ -2372,13 +2372,13 @@ pkgcore 0.2 (2007-01-22)
 
 
 pkgcore 0.1.4 (2006-10-24)
-==========================
+--------------------------
 
 - Compatibility with caches written by portage 2.1.2_pre3-r8.
 
 
 pkgcore 0.1.3 (2006-10-24)
-==========================
+--------------------------
 
 - Always process "|| ( a b )" in the right order.
 
@@ -2386,7 +2386,7 @@ pkgcore 0.1.3 (2006-10-24)
 
 
 pkgcore 0.1.2 (2006-10-10)
-==========================
+--------------------------
 
 - Make filter_env work on hppa (and possibly more architectures) where using
   python CFLAGS for this standalone binary does not work.
@@ -2405,7 +2405,7 @@ pkgcore 0.1.2 (2006-10-10)
 
 
 pkgcore 0.1.1 (2006-10-02)
-==========================
+--------------------------
 
 - hang fix for test_filter_env
 
@@ -2435,7 +2435,7 @@ pkgcore 0.1.1 (2006-10-02)
 
 
 pkgcore 0.1 (2006-09-30)
-========================
+------------------------
 
 - Initial release.
 

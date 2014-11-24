@@ -5,4 +5,63 @@ source "${PKGCORE_EBD_PATH}"/eapi/5.lib
 
 get_libdir() { __get_libdir lib; }
 
+eapply() {
+	local -a options files
+	local token end_options bad_options
+
+	for token in "${@}"; do
+		if [[ -n ${end_options} ]]; then
+			files+=( "${token}" )
+		elif [[ ${token} == -- ]]; then
+			[[ ${#files[@]} -eq 0 ]] || bad_options=1
+			end_options=1
+		elif [[ ${token} == -* ]]; then
+			[[ ${#files[@]} -eq 0 ]] || bad_options=1
+			options+=( "${token}" )
+		else
+			files+=( "${token}" )
+		fi
+	done
+
+	[[ -n ${bad_options} ]] && die "${FUNCNAME}: options must be specified before file arguments"
+	[[ ${#files[@]} -eq 0 ]] && die "${FUNCNAME}: no patches or directories specified"
+
+	__shopt_push -s nullglob
+	__var_push LC_COLLATE=POSIX
+
+	local -a paths patches
+	local path f
+	for path in "${files[@]}"; do
+		if [[ -d ${path} ]]; then
+			for f in "${path}"/*; do
+				[[ -f ${f} ]] && [[ ${f} == *.diff || ${f} == *.patch ]] && paths+=( "${f}" )
+			done
+			[[ ${#paths[@]} -eq 0 ]] && die "${FUNCNAME}: no patches in directory: ${path}"
+			patches+=( "${paths[@]}" )
+		else
+			patches+=( "${path}" )
+		fi
+	done
+
+	__var_pop
+	__shopt_pop
+
+	local ret
+	for f in "${patches[@]}"; do
+		if [[ ${PKGCORE_DEBUG} -ge 1 ]]; then
+			echo patch -p1 -f -s -g0 --no-backup-if-mismatch "${options[@]}" \< "${x}" 1>&2
+		else
+			ebegin "Applying ${f##*/}"
+		fi
+		patch -p1 -f -s -g0 --no-backup-if-mismatch "${options[@]}" < "${f}"
+		ret=$?
+		if ! eend "${ret}"; then
+			${PKGCORE_NONFATAL} && return "${ret}"
+			die "${FUNCNAME}: applying patch failed: ${f}"
+		fi
+	done
+
+	return 0
+}
+
 :

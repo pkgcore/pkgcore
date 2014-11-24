@@ -3,4 +3,6 @@
 
 source "${PKGCORE_EBD_PATH}"/eapi/5.lib
 
+get_libdir() { __get_libdir lib; }
+
 :

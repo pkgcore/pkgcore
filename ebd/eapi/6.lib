@@ -3,6 +3,8 @@
 
 source "${PKGCORE_EBD_PATH}"/eapi/5.lib
 
+PKGCORE_EAPPLY_USER=
+
 get_libdir() { __get_libdir lib; }
 
 eapply() {
@@ -62,6 +64,44 @@ eapply() {
 	done
 
 	return 0
+}
+
+eapply_user() {
+	# Apply valid user patches, filenames must match *.diff or
+	# *.patch to be included.
+	#
+	# valid patch directories:
+	#   - ${CATEGORY}/${PF}(:${SLOT})
+	#   - ${CATEGORY}/${P}(:${SLOT})
+	#   - ${CATEGORY}/${PN}(:${SLOT})
+
+	[[ ${EBUILD_PHASE} == "prepare" ]] || die "${FUNCNAME}: called during invalid phase: ${EBUILD_PHASE}"
+	# return if eapply_user has already been called
+	[[ -n ${PKGCORE_EAPPLY_USER} ]] && return
+	PKGCORE_EAPPLY_USER=0
+
+	local patchdir=${ROOT:-/}etc/portage/patches
+	local -a patches
+
+	__shopt_push -s nullglob
+	__var_push LC_COLLATE=POSIX
+	local dir f
+	for dir in "${patchdir}"/${CATEGORY}/{${PF},${P},${PN}}{,:${SLOT%/*}}; do
+		for f in "${dir}"/*; do
+			[[ -f ${f} ]] && [[ ${f} == *.diff || ${f} == *.patch ]] && patches+=( "${f}" )
+		done
+	done
+	__var_pop
+	__shopt_pop
+
+	if [[ ${#patches[@]} -gt 0 ]]; then
+		ewarn "Applying user patches"
+		eapply "${patches[@]}"
+	fi
+}
+
+__phase_post_src_prepare() {
+	[[ -z ${PKGCORE_EAPPLY_USER} ]] && die "eapply_user (or default) must be called in src_prepare()"
 }
 
 :

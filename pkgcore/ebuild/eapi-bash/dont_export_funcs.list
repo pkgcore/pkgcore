@@ -12,14 +12,6 @@ best_version
 debug-print
 debug-print-function
 debug-print-section
-default
-default_pkg_nofetch
-default_src_compile
-default_src_configure
-default_src_install
-default_src_prepare
-default_src_test
-default_src_unpack
 die
 diropts
 docinto
@@ -45,7 +37,6 @@ insinto
 insopts
 into
 libopts
-nonfatal
 portageq
 unpack
 use
@@ -103,7 +94,6 @@ __phase_common_pre_phase
 __phase_common_src_compile
 __phase_common_src_test
 __phase_common_src_unpack
-__phase_default_pkg_nofetch
 __phase_default_post_src_compile
 __phase_default_pre_src_compile
 __phase_default_pre_src_configure
@@ -111,15 +101,6 @@ __phase_default_pre_src_install
 __phase_default_pre_src_prepare
 __phase_default_pre_src_test
 __phase_default_pre_src_unpack
-__phase_default_src_compile
-__phase_default_src_configure
-__phase_default_src_install
-__phase_default_src_prepare
-__phase_default_src_test
-__phase_default_src_unpack
-__phase_eapi2_src_configure
-__phase_eapi2_src_prepare
-__phase_eapi4_src_install
 __qa_interceptors_disable
 __qa_interceptors_enable
 __qa_invoke

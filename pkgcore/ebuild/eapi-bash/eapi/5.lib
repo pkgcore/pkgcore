@@ -27,7 +27,4 @@ usex() {
 	return 0
 }
 
-# allow exporting eclass usex implementation for previous EAPIs
-INTERNAL_FUNCS+=( usex )
-
 :

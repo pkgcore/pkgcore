@@ -28,7 +28,7 @@ from pkgcore.spawn import (
     is_userpriv_capable, spawn_get_output)
 from pkgcore.os_data import xargs
 from pkgcore.operations import observer, format
-from pkgcore.ebuild import ebuild_built
+from pkgcore.ebuild import ebuild_built, const
 from snakeoil.currying import post_curry, pretty_docs, partial
 from snakeoil import klass
 from snakeoil.osutils import ensure_dirs, normpath, pjoin, listdir_files
@@ -120,6 +120,12 @@ class ebd(object):
             self.env["PKGCORE_PREFIX_SUPPORT"] = 'true'
 
         self.env.update(pkg.eapi_obj.get_ebd_env())
+
+        # generate a list of internally implemented EAPI specific functions that shouldn't be exported
+        ret, eapi_funcs = spawn_get_output([pjoin(const.EAPI_BIN_PATH, 'generate_eapi_func_list.bash'), str(pkg.eapi)])
+        if ret != 0:
+            raise Exception("failed to generate list of EAPI %s specific functions" % str(pkg.eapi))
+        self.env["PKGCORE_EAPI_FUNCS"] = ' '.join(x.strip() for x in eapi_funcs)
 
         self.env_data_source = env_data_source
         if env_data_source is not None and \

@@ -76,7 +76,7 @@ __filter_env() {
 # dump the environ to stdout.
 __environ_dump() {
 	__shopt_push -f
-	local __func_filters=( ${DONT_EXPORT_FUNCS} "${PKGCORE_PRELOADED_ECLASSES[@]}" )
+	local __func_filters=( ${DONT_EXPORT_FUNCS} ${PKGCORE_EAPI_FUNCS} "${PKGCORE_PRELOADED_ECLASSES[@]}" )
 	${__QA_INTERCEPTORS_ACTIVE:-false} && __func_filters+=( "${PKGCORE_QA_INTERCEPTORS[@]}" )
 
 	# Punt any regex chars...

@@ -41,7 +41,8 @@ export PKGCORE_PYTHON_BINARY=/bin/true
 
 forced_order_source="isolated-functions.lib exit-handling.lib eapi/common.lib ebuild-daemon.lib ebuild-daemon.bash"
 
-for x in ${forced_order_source} $(find . -name '*.lib' | sed -e 's:^\./::' | sort); do
+# skip EAPI specific libs since those need be sourced on demand depending on an ebuild's EAPI
+for x in ${forced_order_source} $(find . -name '*.lib' ! -name '[0-9].lib' | sed -e 's:^\./::' | sort); do
 	source "${x}"
 done
 
@@ -52,9 +53,6 @@ unset source
 # Sorting order; put PMS functionality first, then our internals.
 result=$(__environ_list_funcs | sort)
 result=$(echo "${result}" | grep -v "^__"; echo "${result}" | grep "^__")
-
-# remove internal functions with external variants that need to be exported for certain EAPI ranges (e.g. usex)
-[[ ${#INTERNAL_FUNCS[@]} -gt 0 ]] && result=$(echo "${result}" | grep -v "$(echo ${INTERNAL_FUNCS[@]} | tr ' ' '\n')")
 
 if [[ ${_FP} == '-' ]]; then
 	echo >&2

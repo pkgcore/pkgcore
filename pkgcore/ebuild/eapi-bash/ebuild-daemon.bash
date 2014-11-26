@@ -172,7 +172,7 @@ __ebd_exec_main() {
 
 	if ! source "${PKGCORE_BIN_PATH}"/ebuild-daemon.lib >&2; then
 		__ebd_write_line "failed"
-		die "failed source ${PKGCORE_BIN_PATH}/ebuild-daemon.lib"
+		die "failed sourcing ${PKGCORE_BIN_PATH}/ebuild-daemon.lib"
 	fi
 
 	__colored_output_disable

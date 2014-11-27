@@ -13,8 +13,8 @@ to the package script).
 What does pkgcore require?
 ==========================
 
-At least python verison 2.7, and snakeoil_ - snakeoil is a utility library with
-misc optimizations split out of pkgcore for others to use.
+At least python verison 2.7, and snakeoil_ — a utility library with misc
+optimizations split out of pkgcore for others to use.
 
 
 Who to contact if I find a bug?

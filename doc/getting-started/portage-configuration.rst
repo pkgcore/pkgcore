@@ -59,7 +59,6 @@ For ``/etc/portage/``, we don't support modules (define custom cache modules)
 due the fact our cache subsystem has grown a bit beyond what got imported into
 Portage in 2.1; additionally, we do not support ``package.provided``.
 
-
 For ``/etc/portage/package.*`` files, we support an extended atom syntax which
 can be used in place of normal atoms (It goes without saying Portage doesn't
 support the extension yet, thus introducing incompatibility if used) - read

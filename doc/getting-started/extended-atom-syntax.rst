@@ -27,7 +27,6 @@ dev-vcs/*bzr*tools*  category must be dev-vcs, and the globbing there is like
 =portage-1.0         match version 1.0 of any 'portage' package
 ==================== ==========================================================
 
-
 Additionally, pkgcore supports additional atom extensions that are more
 'pure' to the atom specification.
 

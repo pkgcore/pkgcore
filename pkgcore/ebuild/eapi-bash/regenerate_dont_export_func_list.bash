@@ -42,7 +42,7 @@ export PKGCORE_PYTHON_BINARY=/bin/true
 forced_order_source="isolated-functions.lib exit-handling.lib eapi/common.lib ebuild-daemon.lib ebuild-daemon.bash"
 
 # skip EAPI specific libs since those need be sourced on demand depending on an ebuild's EAPI
-for x in ${forced_order_source} $(find . -name '*.lib' ! -name '[0-9].lib' | sed -e 's:^\./::' | sort); do
+for x in ${forced_order_source} $(find . -name '*.lib' ! -regex ".*/[0-9]+\.lib" | sed -e 's:^\./::' | sort); do
 	source "${x}"
 done
 

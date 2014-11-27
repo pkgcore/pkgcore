@@ -361,6 +361,7 @@ class pkgcore_build_py(snk_distutils.build_py):
         base = os.path.join(self.build_lib, "pkgcore", "ebuild", "eapi-bash")
         self._recursive_chmod_files(os.path.join(base, "helpers"))
         self.set_chmod(os.path.join(base, "ebuild-daemon.bash"))
+        self.set_chmod(os.path.join(base, "generate_eapi_func_list.bash"))
         self.set_chmod(os.path.join(base, "regenerate_dont_export_func_list.bash"))
 
     def set_chmod(self, path):

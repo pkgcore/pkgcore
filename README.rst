@@ -22,7 +22,7 @@ Please submit an issue via `Github <https://github.com/pkgcore/pkgcore/issues>`_
 `Gentoo Bugzilla <https://bugs.gentoo.org>`_ as the first step; any bugs, pkgcore devs should filter
 before passing up at this point.
 
-You can also stop by at `#pkgcore <https://webchat.freenode.net?channels=%23pkgcore&uio=d4>`_  on
+You can also stop by at `#pkgcore <https://webchat.freenode.net?channels=%23pkgcore&uio=d4>`_ on
 Freenode.
 
 
@@ -48,11 +48,11 @@ Documentation
 Please take a look at either doc/ and dev-notes/ ; additionally, the code for the most part has
 docstrings, thus pydoc is a good reference.
 
-doc/getting-started.rst is a good introduction if you're just getting started.  If you want to start
-hacking, take a look at dev-notes/developing.rst.
+The `introduction <http://pkgcore.readthedocs.org/en/latest/getting-started.html>`_ docs are good if
+you're just getting started. If you want to start hacking, take a look at dev-notes/developing.rst.
 
-In addition, html documentation is available at http://api.pkgcore.org/pkgcore/, as is postscript
-and pdf.
+In addition, html documentation is available at http://pkgcore.readthedocs.org/, alternative formats
+are also available for `download <https://readthedocs.org/projects/pkgcore/downloads/>`_.
 
 
 Tests

@@ -4,10 +4,10 @@
 
 If you're just installing pkgcore from a released tarball, skip this section.
 
-To get the current (development) code with history, install git_
+To get the current (development) code with history, install git
 (``emerge git`` on gentoo) and run::
 
-  git clone git://pkgcore.org/pkgcore
+  git clone git://github.com/pkgcore/pkgcore.git
 
 ====================
  Installing pkgcore

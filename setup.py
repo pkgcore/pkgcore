@@ -445,7 +445,7 @@ core.setup(
     name=name,
     version=version,
     description='package managing framework',
-    url='http://pkgcore.googlecode.com/',
+    url='https://github.com/pkgcore/pkgcore',
     license='GPL-2',
     author='Brian Harring',
     author_email='ferringb@gmail.com',

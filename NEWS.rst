@@ -1271,7 +1271,7 @@ pkgcore 0.4.7.10 (2008-10-07)
   to not tell the consumer to lovingly 'die in a fire'.
 
 - correct a failure in EAPI=2 src_uri parsing complaining about
-  missing checksums for nonexistant files
+  missing checksums for nonexistent files
 
 
 pkgcore 0.4.7.9 (2008-10-06)
@@ -1384,7 +1384,7 @@ pkgcore 0.4.7.5 (2008-07-06)
 - don't show flags from previous versions of packages in --pretend output -
   it's confusing and doesn't match portage behaviour.
 
-- fix ticket 192: ignore non-existant files in config protect checking
+- fix ticket 192: ignore nonexistent files in config protect checking
 
 
 pkgcore 0.4.7.4 (2008-06-11)
@@ -2427,7 +2427,7 @@ pkgcore 0.1.1 (2006-10-02)
 - build fixes: make $A unique to avoid duplicate unpacks; force distdir
   creation regardless of whether or not the pkg has any stated SRC_URI
   (fixes cvs and subversion eclsas usage).  Fix sandbox execution to chdir
-  to an existant directory (sandbox will fail if ran from a nonexistant dir).
+  to an existent directory (sandbox will fail if ran from a nonexistent dir).
 
 - change DelayedInstantiation objects to track __class__ themselves; this
   fixes pquery to properly shutdown when ctrl+c'd (previously could swallow

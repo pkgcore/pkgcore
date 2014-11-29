@@ -17,7 +17,7 @@ for repo in vdbs:
         for obj in files:
             res = fi(obj.location)
             if res is None:
-                # nonexistant file.
+                # nonexistent file.
                 continue
             if res.startswith("ELF "):
                 break

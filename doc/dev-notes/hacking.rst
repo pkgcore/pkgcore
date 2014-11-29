@@ -150,7 +150,7 @@ existing file (but empty to avoid reading overhead)::
   python -m 'timeit' -s 'import os' $'try:open("dar").read()\nexcept IOError: pass'
   10000 loops, best of 3: 22 usec per loop
 
-nonexistant file::
+nonexistent file::
 
   rm foo
 

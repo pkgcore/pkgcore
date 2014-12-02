@@ -321,10 +321,8 @@ class PortageFormatter(CountingFormatter):
         out.autoline = False
 
         self.pkg_disabled_use = self.pkg_forced_use = set()
-        if hasattr(self, 'disabled_use'):
-            self.pkg_disabled_use = self.disabled_use.pull_data(op.pkg)
-        if hasattr(self, 'forced_use'):
-            self.pkg_forced_use = self.forced_use.pull_data(op.pkg)
+        if hasattr(self, 'pkg_get_use'):
+            self.pkg_forced_use, _, self.pkg_disabled_use = self.pkg_get_use(op.pkg)
 
         # This is for the summary at the end
         if self.quiet_repo_display:

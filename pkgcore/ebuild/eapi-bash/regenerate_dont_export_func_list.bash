@@ -47,8 +47,8 @@ for x in ${forced_order_source} $(find . -name '*.lib' ! -regex ".*/[0-9]+\.lib"
 done
 
 # wipe our custom funcs
-unset __source_was_seen
-unset source
+unset -f __source_was_seen
+unset -f source
 
 # Sorting order; put PMS functionality first, then our internals.
 result=$(__environ_list_funcs | sort)

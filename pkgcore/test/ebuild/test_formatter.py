@@ -2,7 +2,6 @@
 # License: GPL2
 
 import difflib
-import sys
 
 from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.formatter import (BasicFormatter, PkgcoreFormatter,
@@ -12,8 +11,6 @@ from pkgcore.test import TestCase
 from pkgcore.test.misc import FakePkg, FakeRepo
 from pkgcore.test.scripts.helpers import FakeStreamFormatter, Color, Reset, Bold
 
-if sys.version_info < (2, 6):
-    bytes = str
 
 # These two are probably unnecessary with ferringb's changes to
 # PkgcoreFormatter, but as he's the one that uses it there's no point fixing

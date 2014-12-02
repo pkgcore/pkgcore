@@ -4,14 +4,11 @@
 
 """Helpers for testing scripts."""
 
-import difflib, copy, sys
+import difflib, copy
 from snakeoil.formatters import PlainTextFormatter
 from snakeoil.caching import WeakInstMeta
 from pkgcore.config import central, basics, ConfigHint
 from pkgcore.util import commandline
-
-if sys.version_info < (2, 6):
-    bytes = str
 
 
 class Exit(Exception):

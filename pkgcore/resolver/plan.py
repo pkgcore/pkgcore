@@ -500,6 +500,7 @@ class merge_plan(object):
         return [atom] + failures
 
     def insert_providers(self, stack, atom, choices):
+        """legacy function to insert old virtual providers into the resolver"""
         for x in choices.provides:
             l = state.add_op(choices, x).apply(self.state)
             if l and l != [x]:

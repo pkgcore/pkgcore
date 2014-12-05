@@ -422,7 +422,7 @@ pkgcore 0.7.7 (2011-12-02)
 
 ----------------------------
 pkgcore 0.7.6.1 (2011-12-01)
-------------------------------
+----------------------------
 
 - fix portage_config generation bug in 0.7.6; in the process, forced
   overlay's eclass stacking onto PORTDIR is no longer done by default.

@@ -284,7 +284,7 @@ class ProfileNode(object):
 
     @load_property("package.use.stable.force", allow_recurse=True,
         eapi_optional='profile_stable_use')
-    def stable_pkg_use_force(self, data):
+    def pkg_use_stable_force(self, data):
         return self._parse_package_use(data)
 
     @load_property("use.mask", allow_recurse=True)
@@ -302,7 +302,7 @@ class ProfileNode(object):
 
     @load_property("package.use.stable.mask", allow_recurse=True,
         eapi_optional='profile_stable_use')
-    def stable_pkg_use_mask(self, data):
+    def pkg_use_stable_mask(self, data):
         return self._parse_package_use(data)
 
     @klass.jit_attr
@@ -323,9 +323,9 @@ class ProfileNode(object):
         if self.pkg_use_mask:
             c.update_from_stream(
                 chain.from_iterable(self.pkg_use_mask.itervalues()))
-        if self.stable_pkg_use_mask:
+        if self.pkg_use_stable_mask:
             c.update_from_stream(
-                chain.from_iterable(self.stable_pkg_use_mask.itervalues()))
+                chain.from_iterable(self.pkg_use_stable_mask.itervalues()))
         c.freeze()
         return c
 
@@ -347,9 +347,9 @@ class ProfileNode(object):
         if self.pkg_use_force:
             c.update_from_stream(
                 chain.from_iterable(self.pkg_use_force.itervalues()))
-        if self.stable_pkg_use_force:
+        if self.pkg_use_stable_force:
             c.update_from_stream(
-                chain.from_iterable(self.stable_pkg_use_force.itervalues()))
+                chain.from_iterable(self.pkg_use_stable_force.itervalues()))
         c.freeze()
         return c
 

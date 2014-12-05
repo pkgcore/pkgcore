@@ -83,10 +83,6 @@ Other
 - Pkgcore now parses EAPI from the ebuild itself, rather than from the
   metadata calculated value.
 
-- Packages with unsupported EAPIs are now automasked.  Longer term,
-  proper exposing of the masking reason will be implemented- in the interim,
-  this matches pkgcores normal behaviour.
-
 
 --------------------------
 pkgcore 0.8.6 (2012-10-29)

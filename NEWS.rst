@@ -8,26 +8,18 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 pkgcore master
 --------------
 
-- Add support for FEATURES=protect-owned (see make.conf man page for details).
+Features
+========
 
-- Fix granular license filtering support via /etc/portage/package.license.
+- Add support for FEATURES=protect-owned (see make.conf man page for details).
 
 - Add `pinspect query get_profiles` support.
 
 - Add support for COLLISION_IGNORE and UNINSTALL_IGNORE variables (see
   make.conf man page for details).
 
-- Don't localize file system paths by resolving symlinks to provide a
-  consistent view of merged files between pmerge output and the vdb.
-
 - Add support for FEATURES=test-fail-continue. This allows the remaining
   phases after src_test to continue executing if the test phase fails.
-
-- Deprecated pkgcore.chksum compatibility shim removed.
-
-- Fix installing symlinks via doins for >= EAPI-4.
-
-- Throw warnings for EAPI support in development instead of erroring out.
 
 - Add eqawarn support.
 
@@ -39,13 +31,6 @@ pkgcore master
 
 - Support the portage-2 profile format.
 
-- Define SLOT and USE for pkg_pretend (mirroring portage) so checking for
-  enabled use flags during pkg_pretend works as expected.
-
-- Apply use flags from make.defaults before package.use in profiles.
-
-- Run pkg_nofetch phase when any files in SRC_URI fail to be fetched.
-
 - Update pmerge's portage-like output to more closely approximate current
   portage releases.
 
@@ -56,24 +41,51 @@ pkgcore master
   package.unmask support and force the profile base to be loaded by default so
   related settings in the profile root dir are respected.
 
-- Define ${T} for pkg_pretend phase, allows things like check-reqs for disk
-  tempspace to work properly.
+Fixes
+=====
 
-- Support for multiple slots in a single atom dependency was removed;
-  never made it into a mainline EAPI and isn't useful these days.
+- Fix granular license filtering support via /etc/portage/package.license.
 
-- Packages with unsupported EAPIs are now automasked.  Longer term,
-  proper exposing of the masking reason will be implemented- in the interim,
-  this matches pkgcores normal behaviour.
+- Don't localize file system paths by resolving symlinks to provide a
+  consistent view of merged files between pmerge output and the vdb.
 
-- Pkgcore now parses EAPI from the ebuild itself, rather than from the
-  metadata calculated value.
+- Fix installing symlinks via doins for >= EAPI-4.
+
+- Define SLOT and USE for pkg_pretend (mirroring portage) so checking for
+  enabled use flags during pkg_pretend works as expected.
+
+- Run pkg_nofetch phase when any files in SRC_URI fail to be fetched.
+
+- Apply use flags from make.defaults before package.use in profiles.
+
+API Changes
+===========
+
+- Deprecated pkgcore.chksum compatibility shim removed.
 
 - .eapi attribute on packages is now mostly unsupported; should instead use
   .eapi_obj instead (an alias will be left in place for that long term).
 
 - format_magic attribute was dropped from ebuild repositories; shouldn't
   have been used (was always a hack).
+
+Other
+=====
+
+- Throw warnings for EAPI support in development instead of erroring out.
+
+- Define ${T} for pkg_pretend phase, allows things like check-reqs for disk
+  tempspace to work properly.
+
+- Support for multiple slots in a single atom dependency was removed;
+  never made it into a mainline EAPI and isn't useful these days.
+
+- Pkgcore now parses EAPI from the ebuild itself, rather than from the
+  metadata calculated value.
+
+- Packages with unsupported EAPIs are now automasked.  Longer term,
+  proper exposing of the masking reason will be implemented- in the interim,
+  this matches pkgcores normal behaviour.
 
 
 --------------------------

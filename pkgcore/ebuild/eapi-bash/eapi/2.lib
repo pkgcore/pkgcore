@@ -11,14 +11,6 @@ __phase_eapi2_src_prepare() {
 	:
 }
 
-for x in pkg_nofetch src_{unpack,compile,test}; do
-	eval "default_${x}() { __phase_common_${x}; }"
-done
-unset x
-
-default_src_configure() { __phase_eapi2_src_configure; }
-default_src_prepare()   { __phase_eapi2_src_prepare; }
-
 default() {
 	if __is_function default_pkg_${EBUILD_PHASE}; then
 		default_pkg_${EBUILD_PHASE}

@@ -2,6 +2,11 @@
 
 eqawarn "QA Notice: '${HELPER_NAME}' is deprecated in EAPI '${HELPER_EAPI}'"
 
-# drop EAPI where command is deprecated from PATH and rerun command
-NEWPATH=${PATH/:${PKGCORE_BIN_PATH}\/helpers\/${HELPER_EAPI}/}
-PATH=${NEWPATH} $(basename "${BASH_SOURCE}") "$@"
+# find original, nondeprecated helper and execute it by removing the EAPI where
+# it's deprecated from PATH and searching for the old implementation
+ORIG_PATH=${PATH}
+export PATH=${PATH/:${PKGCORE_BIN_PATH}\/helpers\/${HELPER_EAPI}/}
+ORIG_HELPER=$(type -P ${HELPER_NAME})
+export PATH=${ORIG_PATH}
+
+"${ORIG_HELPER}" "$@"

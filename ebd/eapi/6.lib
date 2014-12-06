@@ -7,6 +7,10 @@ PKGCORE_EAPPLY_USER=
 
 get_libdir() { __get_libdir lib; }
 
+in_iuse() {
+	[[ $1 =~ ${PKGCORE_IUSE_EFFECTIVE} ]]
+}
+
 einstalldocs() {
 	local docs PKGCORE_DOCDESTTREE=
 	if ! docs=$(declare -p DOCS 2> /dev/null); then

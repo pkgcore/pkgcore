@@ -398,7 +398,7 @@ __phase_pre_src_install() {
 }
 
 unpack() {
-	local file filename myfail srcdir taropts tar_subdir
+	local file file_match filename myfail srcdir taropts tar_subdir
 	taropts='--no-same-owner'
 
 	[[ $# -eq 0 ]] && die "Nothing passed to the 'unpack' command"
@@ -435,11 +435,14 @@ unpack() {
 
 		filename=${file##*/}
 
-		case ${file} in
+		file_match=${file}
+		${PKGCORE_UNPACK_CASE_INSENSITIVE} && file_match=$(LC_ALL=C tr "[:upper:]" "[:lower:]" <<< "${file}")
+
+		case ${file_match} in
 			*.tar)
 				tar xf "${srcdir}${file}" ${taropts} || die "${myfail}"
 				;;
-			*.tar.gz|*.tgz|*.tar.Z)
+			*.tar.gz|*.tgz|*.tar.Z|*.tar.z)
 				tar xf "${srcdir}${file}" -I"${PORTAGE_GZIP_COMMAND}" ${taropts} || die "${myfail}"
 				;;
 			*.tar.bz2|*.tbz2|*.tbz)

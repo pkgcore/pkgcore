@@ -4,15 +4,7 @@
 
 check_args 1 -
 
-if [[ -n ${ABI} ]]; then
-	libdir_abi="LIBDIR_${ABI}"
-	[[ -n ${!libdir_abi} ]] && CONF_LIBDIR=${!libdir_abi}
-	unset libdir_abi
-fi
-
-CONF_LIBDIR=${CONF_LIBDIR:-lib}
-
-libdir=${ED}${DESTTREE}/${CONF_LIBDIR}
+libdir=${ED}${DESTTREE}/$(__get_libdir lib)
 
 if [[ ${HELPER_NAME} == "dolib.so" ]]; then
 	LIBOPTIONS="-m0755"

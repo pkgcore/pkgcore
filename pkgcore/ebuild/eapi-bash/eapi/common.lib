@@ -445,11 +445,11 @@ __inject_phase_funcs() {
 	for x in "$@"; do
 		if ! __is_function "${x}"; then
 			eval "__phase_default_${x}() { ${pref}_${x}; }";
+		fi
 
-			# define default_${phase} funcs for EAPI 2 and up
-			if ! __safe_has "${EAPI:-0}" 0 1 ; then
-				eval "default_${x}() { ${pref}_${x}; }";
-			fi
+		# define default_${phase} funcs for EAPI 2 and up
+		if ! __safe_has "${EAPI:-0}" 0 1 ; then
+			eval "default_${x}() { ${pref}_${x}; }";
 		fi
 	done
 }

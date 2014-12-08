@@ -1,4 +1,9 @@
 #!/bin/bash
+#
+# Generates a list of EAPI specific functions to avoid exporting to the saved
+# ebuild environment. This script is run dynamically on initialization of the
+# build environment for each ebuild since different EAPIs require different
+# lists of functions to be skipped.
 
 EAPI=$1
 export PKGCORE_BIN_PATH=$(dirname "$0")

@@ -1,4 +1,7 @@
 #!/bin/bash
+#
+# Generates a file (or list) of functions defined in the various bash support
+# libs to avoid exporting to the saved ebuild environment.
 
 _FP=${1:-dont_export_funcs.list}
 

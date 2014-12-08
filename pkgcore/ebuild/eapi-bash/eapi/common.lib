@@ -45,23 +45,23 @@ use_with() {
 		return
 	fi
 
-	local UW_SUFFIX=""
+	local uw_suffix=""
 	if __safe_has "${EAPI:-0}" 0 1 2 3; then
-		UW_SUFFIX=${3:+=$3}
+		uw_suffix=${3:+=$3}
 	else
-		UW_SUFFIX=${3+=$3}
+		uw_suffix=${3+=$3}
 	fi
 
-	local UWORD=$2
-	if [[ -z ${UWORD} ]]; then
-		UWORD=$1
+	local uword=$2
+	if [[ -z ${uword} ]]; then
+		uword=$1
 	fi
 
 	if use $1; then
-		echo "--with-${UWORD}${UW_SUFFIX}"
+		echo "--with-${uword}${uw_suffix}"
 		return 0
 	fi
-	echo "--without-${UWORD}"
+	echo "--without-${uword}"
 	return 1
 }
 
@@ -72,23 +72,23 @@ use_enable() {
 		return
 	fi
 
-	local UE_SUFFIX=""
+	local ue_suffix=""
 	if __safe_has "${EAPI:-0}" 0 1 2 3; then
-		UE_SUFFIX=${3:+=$3}
+		ue_suffix=${3:+=$3}
 	else
-		UE_SUFFIX=${3+=$3}
+		ue_suffix=${3+=$3}
 	fi
 
-	local UWORD=$2
-	if [[ -z ${UWORD} ]]; then
-		UWORD=$1
+	local uword=$2
+	if [[ -z ${uword} ]]; then
+		uword=$1
 	fi
 
 	if use "$1"; then
-		echo "--enable-${UWORD}${UE_SUFFIX}"
+		echo "--enable-${uword}${ue_suffix}"
 		return 0
 	fi
-	echo "--disable-${UWORD}"
+	echo "--disable-${uword}"
 	return 1
 }
 

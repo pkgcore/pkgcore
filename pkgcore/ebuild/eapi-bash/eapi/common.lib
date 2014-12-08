@@ -391,8 +391,9 @@ __phase_default_pre_src_prepare() { __phase_common_pre_phase; }
 __phase_default_pre_src_test()    { __phase_common_pre_phase; }
 
 __phase_default_pre_src_configure() {
-	for x in C{BUILD,HOST,TARGET,C,XX} {AS,LD,{,LIB}C{,XX}}FLAGS; do
-		[[ -n ${!x+set} ]] && export ${x}="${!x}"
+	local var
+	for var in C{BUILD,HOST,TARGET,C,XX} {AS,LD,{,LIB}C{,XX}}FLAGS; do
+		[[ -n ${!var+set} ]] && export ${var}="${!var}"
 	done
 	__phase_common_pre_phase
 }
@@ -419,7 +420,6 @@ __phase_default_post_src_compile() {
 }
 
 __phase_default_pre_src_install() {
-	local x
 	export DESTTREE=/usr INSDESTTREE='' PKGCORE_EXEDESTTREE='' PKGCORE_DOCDESTTREE=''
 	export INSOPTIONS="-m0644" EXEOPTIONS="-m0755"
 	export LIBOPTIONS="-m0644" DIROPTIONS="-m0755"
@@ -440,16 +440,17 @@ __phase_default_pre_src_install() {
 }
 
 __inject_phase_funcs() {
-	local pref=$1 x
+	local pref=$1 func
 	shift
-	for x in "$@"; do
-		if ! __is_function "${x}"; then
-			eval "__phase_default_${x}() { ${pref}_${x}; }";
+
+	for func in "$@"; do
+		if ! __is_function "${func}"; then
+			eval "__phase_default_${func}() { ${pref}_${func}; }";
 		fi
 
 		# define default_${phase} funcs for EAPI 2 and up
 		if ! __safe_has "${EAPI:-0}" 0 1 ; then
-			eval "default_${x}() { ${pref}_${x}; }";
+			eval "default_${func}() { ${pref}_${func}; }";
 		fi
 	done
 }
@@ -459,90 +460,88 @@ __inject_common_phase_funcs() {
 }
 
 unpack() {
-	local x y myfail srcdir taropts tar_subdir name
+	local file filename myfail srcdir taropts tar_subdir
 	taropts='--no-same-owner'
 
 	[[ $# -eq 0 ]] && die "Nothing passed to the 'unpack' command"
 
-	for x in "$@"; do
-		echo ">>> Unpacking ${x} to ${PWD}"
-		myfail="failure unpacking ${x}"
-		y=${x%.*}
-		y=${y##*.}
-		if [[ ${x} == "./"* ]]; then
+	for file in "$@"; do
+		echo ">>> Unpacking ${file} to ${PWD}"
+		myfail="failure unpacking ${file}"
+		if [[ ${file} == "./"* ]]; then
 			srcdir=""
 		else
 			srcdir=${DISTDIR}
 		fi
 
-		[[ ! -e ${srcdir}${x} ]] && die "${myfail}: file doesn't exist"
-		[[ ! -s ${srcdir}${x} ]] && die "${myfail}: empty file"
-		[[ ${x} == ${DISTDIR%%/}/* ]] && \
+		[[ ! -e ${srcdir}${file} ]] && die "${myfail}: file doesn't exist"
+		[[ ! -s ${srcdir}${file} ]] && die "${myfail}: empty file"
+		[[ ${file} == ${DISTDIR%%/}/* ]] && \
 			die "Arguments to unpack() must not begin with \${DISTDIR}."
-		[[ ${x} == /* ]] &&
+		[[ ${file} == /* ]] &&
 			die "Arguments to unpack() must not be absolute paths."
 
-		name=${x##*/}
+		filename=${file##*/}
 
-		case ${x} in
+		case ${file} in
 			*.tar)
-				tar xf "${srcdir}${x}" ${taropts} || die "${myfail}"
+				tar xf "${srcdir}${file}" ${taropts} || die "${myfail}"
 				;;
 			*.tar.gz|*.tgz|*.tar.Z)
-				tar xf "${srcdir}${x}" -I"${PORTAGE_GZIP_COMMAND}" ${taropts} || die "${myfail}"
+				tar xf "${srcdir}${file}" -I"${PORTAGE_GZIP_COMMAND}" ${taropts} || die "${myfail}"
 				;;
 			*.tar.bz2|*.tbz2|*.tbz)
-				tar xf "${srcdir}${x}" -I"${PORTAGE_BZIP2_COMMAND}" ${taropts} || die "${myfail}"
+				tar xf "${srcdir}${file}" -I"${PORTAGE_BZIP2_COMMAND}" ${taropts} || die "${myfail}"
 				;;
 			*.tar.lzma)
-				tar xf "${srcdir}${x}" -Ilzma ${taropts} || die "${myfail}"
+				tar xf "${srcdir}${file}" -Ilzma ${taropts} || die "${myfail}"
 				;;
 			*.tar.xz)
 				if __safe_has "${EAPI}" 0 1 2; then
 					echo "xz is a supported extension in EAPI 3 and above only" >&2
 					continue;
 				fi
-				tar xf "${srcdir}${x}" -I"${PORTAGE_XZ_COMMAND}" ${taropts} || die "${myfail}"
+				tar xf "${srcdir}${file}" -I"${PORTAGE_XZ_COMMAND}" ${taropts} || die "${myfail}"
 				;;
 			*.ZIP|*.zip|*.jar)
 				{ set +x; while :; do echo n || break; done } | \
-					unzip -qo "${srcdir}${x}" || die "${myfail}"
+					unzip -qo "${srcdir}${file}" || die "${myfail}"
 				;;
 			*.gz|*.Z|*.z)
-				${PORTAGE_GUNZIP_COMMAND:-${PORTAGE_GZIP_COMMAND} -d} -c "${srcdir}${x}" > ${name%.*} || die "${myfail}"
+				${PORTAGE_GUNZIP_COMMAND:-${PORTAGE_GZIP_COMMAND} -d} -c "${srcdir}${file}" > ${filename%.*} || die "${myfail}"
 				;;
 			*.bz2|*.bz)
-				${PORTAGE_BUNZIP2_COMMAND:-${PORTAGE_BZIP2_COMMAND} -d} -c "${srcdir}${x}" > ${name%.*} || die "${myfail}"
+				${PORTAGE_BUNZIP2_COMMAND:-${PORTAGE_BZIP2_COMMAND} -d} -c "${srcdir}${file}" > ${filename%.*} || die "${myfail}"
 				;;
 			*.xz)
 				if __safe_has "${EAPI}" 0 1 2; then
 					echo "xz is a supported extension in EAPI 3 and above only" >&2
 					continue;
 				fi
-				${PORTAGE_UNXZ_COMMAND:-${PORTAGE_XZ_COMMAND} -d} < "${srcdir}${x}" > ${name%.*} || die "${myfail}"
+				${PORTAGE_UNXZ_COMMAND:-${PORTAGE_XZ_COMMAND} -d} < "${srcdir}${file}" > ${filename%.*} || die "${myfail}"
 				;;
 			*.7Z|*.7z)
 				local my_output
-				my_output=$(7z x -y "${srcdir}${x}")
+				my_output=$(7z x -y "${srcdir}${file}")
 				if [[ $? -ne 0 ]]; then
 					echo "${my_output}" >&2
 					die "${myfail}"
 				fi
 				;;
 			*.RAR|*.rar)
-				unrar x -idq -o+ "${srcdir}${x}" || die "${myfail}"
+				unrar x -idq -o+ "${srcdir}${file}" || die "${myfail}"
 				;;
 			*.LHa|*.LHA|*.lha|*.lzh)
-				lha xfq "${srcdir}${x}" || die "${myfail}"
+				lha xfq "${srcdir}${file}" || die "${myfail}"
 				;;
 			*.a|*.deb)
-				ar x "${srcdir}${x}" || die "${myfail}"
+				ar x "${srcdir}${file}" || die "${myfail}"
 				;;
 			*.lzma)
-				lzma -dc "${srcdir}${x}" > ${name%.*} || die "${myfail}"
+				lzma -dc "${srcdir}${file}" > ${filename%.*} || die "${myfail}"
 				;;
 			*)
-				echo "unpack ${x}: file format not recognized. Ignoring."
+				echo "unpack ${file}: file format not recognized. Ignoring."
 				;;
 		esac
 	done

@@ -38,9 +38,9 @@ die() {
 			echo "!!!" >&2
 			echo "!!! If you need support, post the topmost build error, and the call stack if relevant." >&2
 		fi
-		local x
-		for x in ${EBUILD_DEATH_HOOKS}; do
-			${x} >&2 1>&2
+		local hook
+		for hook in ${EBUILD_DEATH_HOOKS}; do
+			${hook} >&2 1>&2
 		done
 	fi
 	echo >&2

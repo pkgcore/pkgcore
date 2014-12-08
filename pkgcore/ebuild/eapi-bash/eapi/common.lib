@@ -227,11 +227,11 @@ debug-print-section() {
 einstall() {
 	${PKGCORE_PREFIX_SUPPORT} || local ED=${D}
 	# CONF_PREFIX is only set if they didn't pass in libdir above
-	local LOCAL_EXTRA_EINSTALL=${EXTRA_EINSTALL}
+	local LOCAL_EXTRA_EINSTALL=( ${EXTRA_EINSTALL} )
 	local CONF_LIBDIR=$(__get_libdir)
 	if [[ -n ${CONF_LIBDIR} && ${CONF_PREFIX:-unset} != "unset" ]]; then
 		EI_DESTLIBDIR=${ED%%/}/${CONF_PREFIX%%/}/${CONF_LIBDIR%%/}/
-		LOCAL_EXTRA_EINSTALL="${LOCAL_EXTRA_EINSTALL} libdir=${EI_DESTLIBDIR}"
+		LOCAL_EXTRA_EINSTALL+=( libdir=${EI_DESTLIBDIR} )
 		unset EI_DESTLIBDIR
 	fi
 
@@ -249,7 +249,7 @@ einstall() {
 		localstatedir="${ED}/var/lib" \
 		mandir="${ED}/usr/share/man" \
 		sysconfdir="${ED}/etc" \
-		${LOCAL_EXTRA_EINSTALL} \
+		${LOCAL_EXTRA_EINSTALL[@]} \
 		"$@" install
 	[[ ${PKGCORE_DEBUG} != 0 ]] && "$@" -n
 	"$@" || die "einstall failed"

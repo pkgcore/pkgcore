@@ -256,8 +256,8 @@ einstall() {
 }
 
 __get_libdir() {
-	local libdir=$1 libdir_abi="LIBDIR_${ABI}"
-	[[ -n ${ABI} && -n ${!libdir_abi} ]] && libdir=${!libdir_abi}
+	local libdir=$1 libdir_var="LIBDIR_${ABI}"
+	[[ -n ${ABI} && -n ${!libdir_var} ]] && libdir=${!libdir_var}
 	echo "${libdir}"
 }
 

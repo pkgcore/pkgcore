@@ -2,30 +2,20 @@
 # license GPL2/BSD 3
 
 use() {
-	local u=$1 found=0
-
-	# invert return values for '!flag' and strip prefix for EAPI 5 check
-	if [[ ${u} == "!"* ]]; then
-		u=${u:1}
-		found=1
-	fi
-
 	# EAPI 5 and up
 	if ${PKGCORE_PROFILE_IUSE_INJECTION} && \
-			[[ ! ${u} =~ ${PKGCORE_IUSE_EFFECTIVE} ]]; then
-		die "USE flag '${u}' not in IUSE for ${CATEGORY}/${PF}"
+			[[ ! ${1#!} =~ ${PKGCORE_IUSE_EFFECTIVE} ]]; then
+		die "USE flag '${1#!}' not in IUSE for ${CATEGORY}/${PF}"
 	fi
 
 	# Ensure USE is split on normal IFS.
-	__shopt_push -f
-	local IFS=$' \t\n' ret
-	if __safe_has "${u}" ${USE}; then
-		ret=${found}
+	local IFS=$' \t\n'
+
+	if [[ ${1:0:1} == "!" ]]; then
+		! __safe_has "${1#!}" ${USE}
 	else
-		ret=$(( !found ))
+		__safe_has "$1" ${USE}
 	fi
-	__shopt_pop
-	return "${ret}"
 }
 
 usev() {

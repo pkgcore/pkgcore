@@ -14,11 +14,13 @@ demandload.demandload(globals(),
 
 class SimpleTree(tree):
 
-    def __init__(self, cpv_dict, pkg_klass=None, livefs=False, frozen=True):
+    def __init__(self, cpv_dict, pkg_klass=None, livefs=False, frozen=True,
+                 repo_id=None):
         self.cpv_dict = cpv_dict
         if pkg_klass is None:
             pkg_klass = versioned_CPV
         self.livefs = livefs
+        self.repo_id = repo_id
         self.package_class = pkg_klass
         tree.__init__(self, frozen=frozen)
 

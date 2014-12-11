@@ -571,7 +571,7 @@ class ProfileStack(object):
                 []).append(pkg.fullver)
         intermediate_parent = PkgProvidedParent()
         obj = util.SimpleTree(d, pkg_klass=currying.partial(PkgProvided,
-            intermediate_parent), livefs=True, frozen=True)
+            intermediate_parent), livefs=True, frozen=True, repo_id='provided')
         intermediate_parent._parent_repo = obj
 
         if not d:

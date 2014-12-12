@@ -192,7 +192,7 @@ class defaults(_base):
                 continue
             if isinstance(val, tuple):
                 val = ' '.join(val)
-            out.write("%s=%s" % (key, val))
+            out.write('%s="%s"' % (key, val))
 
 
 class arch(_base):

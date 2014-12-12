@@ -11,16 +11,12 @@ demandload(globals(),
 )
 
 commands = []
-# parent
 # use
-# eapi
-# deprecated
-# defaults
-# provided
 # changelog, once a changelog parser is available
 # desc: possibly
 # info: desc, keywords known, known profiles (possibly putting it elsewhere)
 # global known flags, etc
+
 
 def mk_profile(value):
     return profiles.ProfileStack(commandline.existent_path(value))
@@ -42,6 +38,7 @@ class _base(commandline.ArgparseCommand):
 
 
 _register_command = commandline.register_command(commands)
+
 
 class parent(_base):
 
@@ -146,6 +143,54 @@ class masks(_base):
             sorted(namespace.profile.masks)))
 
 
+class unmasks(_base):
+
+    """Inspect package unmasks"""
+
+    __metaclass__ = _register_command
+
+    def __call__(self, namespace, out, err):
+        out.write("\n".join(str(x) for x in
+            sorted(namespace.profile.unmasks)))
+
+
+class bashrcs(_base):
+
+    """Show profile bashrcs"""
+
+    __metaclass__ = _register_command
+
+    def __call__(self, namespace, out, err):
+        for bashrc in namespace.profile.bashrcs:
+            out.write(bashrc.path)
+
+
+class keywords(_base):
+
+    """Show profile package.keywords"""
+
+    __metaclass__ = _register_command
+
+    def __call__(self, namespace, out, err):
+        for atom, keywords in namespace.profile.keywords:
+            out.write('%s: %s' % (atom, ' '.join(keywords)))
+
+
+class accept_keywords(_base):
+
+    """Show profile package.accept_keywords"""
+
+    __metaclass__ = _register_command
+
+    def __call__(self, namespace, out, err):
+        for atom, keywords in namespace.profile.accept_keywords:
+            out.write(atom, autoline=False)
+            if keywords:
+                out.write(': %s' % (' '.join(keywords)))
+            else:
+                out.write()
+
+
 class virtuals(_base):
 
     """Inspect old style virtuals (aliasing) default targets
@@ -207,6 +252,7 @@ class arch(_base):
 
 
 _color_parent = commandline.mk_argparser(color=True, domain=False, add_help=False)
+
 
 def bind_parser(parser, name):
     subparsers = parser.add_subparsers(help="%s commands" % (name,))

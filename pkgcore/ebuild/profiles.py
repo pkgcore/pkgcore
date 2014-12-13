@@ -1,10 +1,13 @@
 # Copyright: 2006-2011 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
-__all__ = ("ProfileError", "ProfileNode", "EmptyRootNode", "OnDiskProfile",
-    "UserProfile", "PkgProvided", "AliasedVirtuals")
+__all__ = (
+    "ProfileError", "ProfileNode", "EmptyRootNode", "OnDiskProfile",
+    "UserProfile", "PkgProvided", "AliasedVirtuals"
+)
 
-import errno, os
+import errno
+import os
 from itertools import chain
 
 from pkgcore.config import ConfigHint
@@ -22,11 +25,12 @@ from snakeoil.bash import iter_read_bash, read_bash_dict
 from snakeoil import klass, caching, currying, sequences
 from snakeoil import compatibility
 from snakeoil.demandload import demandload
-demandload(globals(),
+demandload(
+    globals(),
     'snakeoil.data_source:local_source',
     'pkgcore.ebuild:cpv,atom,repo_objs',
     'pkgcore.ebuild.eapi:get_eapi',
-    'pkgcore.repository:util',
+    'pkgcore.repository.util:SimpleTree',
     'pkgcore.restrictions:packages',
     'pkgcore.fs.livefs:iter_scan',
     'collections',
@@ -63,7 +67,8 @@ def load_property(filename, handler=iter_read_bash, fallback=(),
     """
     def f(func):
         f2 = klass.jit_attr_named('_%s' % (func.__name__,))
-        return f2(currying.partial(_load_and_invoke, func, filename, handler, fallback,
+        return f2(currying.partial(
+            _load_and_invoke, func, filename, handler, fallback,
             read_func, allow_recurse, eapi_optional))
     return f
 
@@ -167,7 +172,8 @@ class ProfileNode(object):
                     sys.append(self.eapi_atom(line[1:]))
                 else:
                     vis.append(self.eapi_atom(line, negate_vers=True))
-        return self._packages_kls((tuple(neg_sys), tuple(sys)),
+        return self._packages_kls(
+            (tuple(neg_sys), tuple(sys)),
             (tuple(neg_vis), tuple(vis)))
 
     @load_property("parent")
@@ -255,11 +261,10 @@ class ProfileNode(object):
             a = self.eapi_atom(l[0])
             if len(l) == 1:
                 raise Exception("malformed line- %r" % (line,))
-            d[a.key].append(chunked_data(a,
-                *split_negations(l[1:])))
+            d[a.key].append(chunked_data(a, *split_negations(l[1:])))
 
         return ImmutableDict((k, _build_cp_atom_payload(v, atom.atom(k)))
-            for k,v in d.iteritems())
+                             for k, v in d.iteritems())
 
     def _parse_use(self, data):
         c = ChunkedDataDict()
@@ -274,7 +279,7 @@ class ProfileNode(object):
         return self._parse_use(data)
 
     @load_property("use.stable.force", allow_recurse=True,
-        eapi_optional='profile_stable_use')
+                   eapi_optional='profile_stable_use')
     def use_stable_force(self, data):
         return self._parse_use(data)
 
@@ -283,7 +288,7 @@ class ProfileNode(object):
         return self._parse_package_use(data)
 
     @load_property("package.use.stable.force", allow_recurse=True,
-        eapi_optional='profile_stable_use')
+                   eapi_optional='profile_stable_use')
     def pkg_use_stable_force(self, data):
         return self._parse_package_use(data)
 
@@ -292,7 +297,7 @@ class ProfileNode(object):
         return self._parse_use(data)
 
     @load_property("use.stable.mask", allow_recurse=True,
-        eapi_optional='profile_stable_use')
+                   eapi_optional='profile_stable_use')
     def use_stable_mask(self, data):
         return self._parse_use(data)
 
@@ -301,7 +306,7 @@ class ProfileNode(object):
         return self._parse_package_use(data)
 
     @load_property("package.use.stable.mask", allow_recurse=True,
-        eapi_optional='profile_stable_use')
+                   eapi_optional='profile_stable_use')
     def pkg_use_stable_mask(self, data):
         return self._parse_package_use(data)
 
@@ -436,6 +441,7 @@ class EmptyRootNode(ProfileNode):
 def _empty_provides_iterable(*args, **kwds):
     return iter(())
 
+
 def _empty_provides_has_match(*args, **kwds):
     return False
 
@@ -509,7 +515,8 @@ class ProfileStack(object):
                 if incremental in const.incrementals_unfinalized:
                     d[incremental] = tuple(v)
                 else:
-                    v = misc.render_incrementals(v,
+                    v = misc.render_incrementals(
+                        v,
                         msg_prefix="While expanding %s, value %r: " %
                         (incremental, v))
                     if v:
@@ -568,9 +575,9 @@ class ProfileStack(object):
         d = {}
         for pkg in self._collapse_generic("pkg_provided"):
             d.setdefault(pkg.category, {}).setdefault(pkg.package,
-                []).append(pkg.fullver)
+                         []).append(pkg.fullver)
         intermediate_parent = PkgProvidedParent()
-        obj = util.SimpleTree(d, pkg_klass=currying.partial(PkgProvided,
+        obj = SimpleTree(d, pkg_klass=currying.partial(PkgProvided,
             intermediate_parent), livefs=True, frozen=True, repo_id='provided')
         intermediate_parent._parent_repo = obj
 
@@ -581,7 +588,8 @@ class ProfileStack(object):
 
     @klass.jit_attr
     def masks(self):
-        return frozenset(chain(self._collapse_generic("masks"),
+        return frozenset(chain(
+            self._collapse_generic("masks"),
             self._collapse_generic("visibility")))
 
     @klass.jit_attr
@@ -630,7 +638,7 @@ class ProfileStack(object):
 class OnDiskProfile(ProfileStack):
 
     pkgcore_config_type = ConfigHint(
-        {'basepath':'str', 'profile':'str'},
+        {'basepath': 'str', 'profile': 'str'},
         required=('basepath', 'profile'),
         requires_config='config',
         typename='profile',
@@ -707,8 +715,8 @@ class UserProfileNode(ProfileNode):
 class UserProfile(OnDiskProfile):
 
     pkgcore_config_type = ConfigHint(
-        {'user_path':'str', 'parent_path':'str', 'parent_profile':'str'},
-        required=('user_path','parent_path', 'parent_profile'),
+        {'user_path': 'str', 'parent_path': 'str', 'parent_profile': 'str'},
+        required=('user_path', 'parent_path', 'parent_profile'),
         requires_config='config',
         typename='profile',
     )

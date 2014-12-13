@@ -3,7 +3,7 @@
 # License: BSD/GPL2
 
 import os
-from textwrap import dedent
+import textwrap
 
 from snakeoil.osutils import ensure_dirs, pjoin
 from snakeoil.test.mixins import TempDirMixin
@@ -48,7 +48,7 @@ class UnconfiguredTreeTest(TempDirMixin):
     @silence_logging
     def test_thirdpartymirrors(self):
         with open(pjoin(self.pdir, 'thirdpartymirrors'), 'w') as f:
-            f.write(dedent('''\
+            f.write(textwrap.dedent('''\
                 spork http://sporks/ http://moresporks/
                 foon foon://foons/
             '''))
@@ -109,7 +109,7 @@ class UnconfiguredTreeTest(TempDirMixin):
     @silence_logging
     def test_package_mask(self):
         with open(pjoin(self.pdir, 'package.mask'), 'w') as f:
-            f.write(dedent('''\
+            f.write(textwrap.dedent('''\
                 # lalala
                 it-is/broken
                 <just/newer-than-42

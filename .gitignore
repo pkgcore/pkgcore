@@ -4,6 +4,7 @@ pkgcore/ebuild/*.so
 pkgcore/plugins/plugincache
 pkgcore/restrictions/*.so
 build
+cache
 dist
 _trial_temp
 /man/*.1

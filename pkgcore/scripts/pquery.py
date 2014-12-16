@@ -355,7 +355,7 @@ def print_packages_noversion(options, out, err, pkgs):
         versions = ' '.join(pkg.fullver for pkg in sorted(pkgs))
         out.write(green, '     versions: ', out.fg(), versions)
         # If we are already matching on all repos we do not need to duplicate.
-        if not (options.vdb or options.all_repos):
+        if not options.all_repos:
             versions = sorted(
                 pkg.fullver for vdb in options.domain.vdb
                 for pkg in vdb.itermatch(pkgs[0].unversioned_atom))
@@ -432,22 +432,17 @@ class RawAwareStoreRepoObject(commandline.StoreRepoObject):
 repo_mux.add_argument('--repo',
     action=RawAwareStoreRepoObject, priority=29,
     help='repo to use (default from domain if omitted).')
-repo_mux.add_argument('--vdb', action='store_true',
-    help='match only vdb (installed) packages.')
 repo_mux.add_argument('--all-repos', action='store_true',
     help='search all repos, vdb included')
 
 @argparser.bind_delayed_default(30, 'repos')
 def setup_repos(namespace, attr):
-    if namespace.contents or namespace._owns or namespace._owns_re:
-        namespace.vdb = True
-
     # Get repo(s) to operate on.
     if namespace.repo:
         # The store repo machinery handles --raw and --no-filters for
         # us, thus it being the first check.
         repos = [namespace.repo]
-    elif namespace.vdb:
+    elif namespace.contents or namespace._owns or namespace._owns_re:
         repos = namespace.domain.vdb
     elif namespace.no_filters:
         if namespace.all_repos:
@@ -706,7 +701,7 @@ one_attr_mux.add_argument('--force-one-attr',
     'supported names.')
 del one_attr_mux
 output.add_argument('--contents', action='store_true',
-    help='list files owned by the package. Implies --vdb.')
+    help='list files owned by the package')
 output.add_argument('-v', '--verbose', action='store_true',
     help='human-readable multi-line output per package')
 output.add_argument('--highlight-dep', action='append',

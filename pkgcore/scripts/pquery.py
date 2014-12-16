@@ -357,7 +357,7 @@ def print_packages_noversion(options, out, err, pkgs):
         # If we are already matching on all repos we do not need to duplicate.
         if not (options.vdb or options.all_repos):
             versions = sorted(
-                pkg.fullver for vdb in options.vdbs
+                pkg.fullver for vdb in options.domain.vdb
                 for pkg in vdb.itermatch(pkgs[0].unversioned_atom))
             out.write(green, '     installed: ', out.fg(), ' '.join(versions))
         for attr in options.attr:
@@ -439,12 +439,6 @@ repo_mux.add_argument('--all-repos', action='store_true',
 
 @argparser.bind_delayed_default(30, 'repos')
 def setup_repos(namespace, attr):
-    # Get the vdb if we need it.  This shouldn't be here...
-    if namespace.verbose and namespace.noversion:
-        namespace.vdbs = namespace.domain.vdb
-    else:
-        namespace.vdbs = None
-
     if namespace.contents or namespace._owns or namespace._owns_re:
         namespace.vdb = True
 

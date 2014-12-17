@@ -199,7 +199,7 @@ def match(options, out, err):
 
 
 @BaseCommand.make_command(bind=common_commands, root_default='/')
-def get_repositories(options, out, err):
+def get_repos(options, out, err):
     l = []
     for k, repo in options.config.repo.iteritems():
         repo_id = getattr(repo, 'repo_id', None)
@@ -239,8 +239,8 @@ def get_repo_path(options, out, err):
         return 0
     return 1
 
-get_repositories_path = BaseCommand.make_command("repo_id", bind=query_commands,
-    name='get_repositories_path')(get_repo_path.function)
+get_repo_path = BaseCommand.make_command("repo_id", bind=query_commands,
+    name='get_repo_path')(get_repo_path.function)
 
 
 @BaseCommand.make_command("repo_id", bind=portageq_commands)

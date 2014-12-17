@@ -158,7 +158,7 @@ class unmasks(_base):
 
 class bashrcs(_base):
 
-    """Show profile bashrcs"""
+    """Inspect profile bashrcs"""
 
     __metaclass__ = _register_command
 
@@ -169,7 +169,7 @@ class bashrcs(_base):
 
 class keywords(_base):
 
-    """Show profile package.keywords"""
+    """Inspect profile package.keywords"""
 
     __metaclass__ = _register_command
 
@@ -180,7 +180,7 @@ class keywords(_base):
 
 class accept_keywords(_base):
 
-    """Show profile package.accept_keywords"""
+    """Inspect profile package.accept_keywords"""
 
     __metaclass__ = _register_command
 
@@ -220,7 +220,7 @@ class _use(_base):
 
 class pkg_use(_use):
 
-    """Show profile package.use flags"""
+    """Inspect profile package.use flags"""
 
     __metaclass__ = _register_command
 
@@ -231,7 +231,7 @@ class pkg_use(_use):
 
 class masked_use(_use):
 
-    """Show profile masked use flags"""
+    """Inspect profile masked use flags"""
 
     __metaclass__ = _register_command
 
@@ -242,7 +242,7 @@ class masked_use(_use):
 
 class forced_use(_use):
 
-    """Show profile forced use flags"""
+    """Inspect profile forced use flags"""
 
     __metaclass__ = _register_command
 

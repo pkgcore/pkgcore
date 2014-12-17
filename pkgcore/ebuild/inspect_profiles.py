@@ -6,7 +6,7 @@ from pkgcore.util import commandline
 from snakeoil.demandload import demandload
 demandload(
     globals(),
-    'pkgcore.ebuild:profiles',
+    'pkgcore.ebuild:atom,profiles',
     'snakeoil:mappings',
     'operator',
     'itertools:chain',
@@ -174,8 +174,8 @@ class keywords(_base):
     __metaclass__ = _register_command
 
     def __call__(self, namespace, out, err):
-        for atom, keywords in namespace.profile.keywords:
-            out.write('%s: %s' % (atom, ' '.join(keywords)))
+        for pkg, keywords in namespace.profile.keywords:
+            out.write('%s: %s' % (pkg, ' '.join(keywords)))
 
 
 class accept_keywords(_base):
@@ -185,8 +185,8 @@ class accept_keywords(_base):
     __metaclass__ = _register_command
 
     def __call__(self, namespace, out, err):
-        for atom, keywords in namespace.profile.accept_keywords:
-            out.write(atom, autoline=False)
+        for pkg, keywords in namespace.profile.accept_keywords:
+            out.write(pkg, autoline=False)
             if keywords:
                 out.write(': %s' % (' '.join(keywords)))
             else:
@@ -201,10 +201,12 @@ class _use(_base):
 
         for k, v in self.use.render_to_dict().iteritems():
             if isinstance(k, basestring):
-                atom, use_neg, use_pos = v[-1]
+                pkg, use_neg, use_pos = v[-1]
+                if not isinstance(pkg, atom.atom):
+                    continue
                 neg = ('-' + x for x in use_neg)
                 pos = (x for x in use_pos)
-                pkg_use.append((atom, ', '.join(x for x in sorted(chain(neg, pos)))))
+                pkg_use.append((pkg, ', '.join(x for x in sorted(chain(neg, pos)))))
             else:
                 _, global_use_neg, global_use_pos = v[0]
                 neg = ('-' + x for x in global_use_neg)

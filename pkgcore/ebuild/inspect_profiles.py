@@ -111,7 +111,8 @@ class system(_base):
     __metaclass__ = _register_command
 
     def __call__(self, namespace, out, err):
-        out.write("\n".join(str(x) for x in sorted(namespace.profile.system)))
+        for pkg in sorted(namespace.profile.system):
+            out.write(str(pkg))
 
 
 class use_expand(_base):
@@ -139,8 +140,8 @@ class masks(_base):
     __metaclass__ = _register_command
 
     def __call__(self, namespace, out, err):
-        out.write("\n".join(str(x) for x in
-            sorted(namespace.profile.masks)))
+        for mask in sorted(namespace.profile.masks):
+            out.write(str(mask))
 
 
 class unmasks(_base):
@@ -150,8 +151,8 @@ class unmasks(_base):
     __metaclass__ = _register_command
 
     def __call__(self, namespace, out, err):
-        out.write("\n".join(str(x) for x in
-            sorted(namespace.profile.unmasks)))
+        for unmask in sorted(namespace.profile.unmasks):
+            out.write(str(unmask))
 
 
 class bashrcs(_base):

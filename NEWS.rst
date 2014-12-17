@@ -11,6 +11,10 @@ pkgcore master
 Features
 ========
 
+- Add unmasks, bashrcs, keywords, accept_keywords, pkg_use, masked_use, and
+  forced_use as `pinspect profile` subcommands. Also, note that 'profile' is
+  now used instead of 'profiles'.
+
 - Add support for FEATURES=protect-owned (see make.conf man page for details).
 
 - Add `pinspect query get_profiles` support.

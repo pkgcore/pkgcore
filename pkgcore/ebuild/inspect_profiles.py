@@ -4,14 +4,15 @@
 import collections
 from pkgcore.util import commandline
 from snakeoil.demandload import demandload
-demandload(globals(),
+demandload(
+    globals(),
     'pkgcore.ebuild:profiles',
     'snakeoil:mappings',
     'operator',
+    'itertools:chain',
 )
 
 commands = []
-# use
 # changelog, once a changelog parser is available
 # desc: possibly
 # info: desc, keywords known, known profiles (possibly putting it elsewhere)
@@ -190,6 +191,64 @@ class accept_keywords(_base):
                 out.write(': %s' % (' '.join(keywords)))
             else:
                 out.write()
+
+
+class _use(_base):
+
+    def __call__(self, namespace, out, err):
+        global_use = None
+        pkg_use = []
+
+        for k, v in self.use.render_to_dict().iteritems():
+            if isinstance(k, basestring):
+                atom, use_neg, use_pos = v[-1]
+                neg = ('-' + x for x in use_neg)
+                pos = (x for x in use_pos)
+                pkg_use.append((atom, ', '.join(x for x in sorted(chain(neg, pos)))))
+            else:
+                _, global_use_neg, global_use_pos = v[0]
+                neg = ('-' + x for x in global_use_neg)
+                pos = (x for x in global_use_pos)
+                global_use = ', '.join(x for x in sorted(chain(neg, pos)))
+
+        if global_use is not None:
+            out.write('GLOBAL: %s' % (global_use))
+        if pkg_use:
+            for pkg, use in sorted(pkg_use):
+                out.write('%s: %s' % (pkg, use))
+
+
+class pkg_use(_use):
+
+    """Show profile package.use flags"""
+
+    __metaclass__ = _register_command
+
+    def __call__(self, namespace, out, err):
+        self.use = namespace.profile.pkg_use
+        super(pkg_use, self).__call__(namespace, out, err)
+
+
+class masked_use(_use):
+
+    """Show profile masked use flags"""
+
+    __metaclass__ = _register_command
+
+    def __call__(self, namespace, out, err):
+        self.use = namespace.profile.stable_masked_use
+        super(masked_use, self).__call__(namespace, out, err)
+
+
+class forced_use(_use):
+
+    """Show profile forced use flags"""
+
+    __metaclass__ = _register_command
+
+    def __call__(self, namespace, out, err):
+        self.use = namespace.profile.stable_forced_use
+        super(forced_use, self).__call__(namespace, out, err)
 
 
 class virtuals(_base):

@@ -21,14 +21,14 @@ argparser.add_argument(
     "--no-auto", action='store_true', default=False,
     help="run just the specified phases; it's up to the invoker to get the order right")
 argparser.add_argument(
-    'atom', metavar='<atom|ebuild>',
-    help="atom to match a pkg to execute phases from")
+    'pkg', metavar='<atom|ebuild>',
+    help="atom or ebuild matching a pkg to execute phases from")
 argparser.add_argument('phase', nargs='+', help="phases to run")
 
 
 @argparser.bind_main_func
 def main(options, out, err):
-    pkg = options.atom
+    pkg = options.pkg
     repos = None
 
     if os.path.isfile(pkg) and pkg.endswith('.ebuild'):

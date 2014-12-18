@@ -98,6 +98,5 @@ def main(options, out, err):
     build._reload_state()
     phase_funcs = (getattr(build, x) for x in phases)
     for phase, f in izip(phases, phase_funcs):
-        out.write()
         out.write('executing phase %s' % (phase,))
         f(**kwds)

@@ -238,8 +238,19 @@ class masked_use(_use):
     __metaclass__ = _register_command
 
     def __call__(self, namespace, out, err):
-        self.use = namespace.profile.stable_masked_use
+        self.use = namespace.profile.masked_use
         super(masked_use, self).__call__(namespace, out, err)
+
+
+class stable_masked_use(_use):
+
+    """Inspect profile stable masked use flags"""
+
+    __metaclass__ = _register_command
+
+    def __call__(self, namespace, out, err):
+        self.use = namespace.profile.stable_masked_use
+        super(stable_masked_use, self).__call__(namespace, out, err)
 
 
 class forced_use(_use):
@@ -249,8 +260,19 @@ class forced_use(_use):
     __metaclass__ = _register_command
 
     def __call__(self, namespace, out, err):
-        self.use = namespace.profile.stable_forced_use
+        self.use = namespace.profile.forced_use
         super(forced_use, self).__call__(namespace, out, err)
+
+
+class stable_forced_use(_use):
+
+    """Inspect profile stable forced use flags"""
+
+    __metaclass__ = _register_command
+
+    def __call__(self, namespace, out, err):
+        self.use = namespace.profile.stable_forced_use
+        super(stable_forced_use, self).__call__(namespace, out, err)
 
 
 class virtuals(_base):

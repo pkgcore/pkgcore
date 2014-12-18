@@ -274,7 +274,7 @@ __qa_interceptors_enable() {
 
 	${__QA_INTERCEPTORS_ACTIVE} && return
 	# QA INTERCEPTORS
-	local FUNC_SRC BIN BODY BIN_PATH
+	local BIN BODY BIN_PATH
 	for BIN in "${PKGCORE_QA_INTERCEPTORS[@]}"; do
 		BIN_PATH=$(type -pf ${BIN})
 		if [[ $? != 0 ]]; then
@@ -282,7 +282,7 @@ __qa_interceptors_enable() {
 		else
 			BODY="${BIN_PATH} \"\$@\"; return \$?"
 		fi
-		FUNC_SRC="function ${BIN}() {
+		eval "${BIN}() {
 			echo -n \"QA Notice: ${BIN} in global scope: \" >&2
 			if [[ \${ECLASS_DEPTH} -gt 0 ]]; then
 				echo \"eclass \${ECLASS}\" >&2
@@ -290,8 +290,7 @@ __qa_interceptors_enable() {
 				echo \"\${CATEGORY}/\${PF}\" >&2
 			fi
 			${BODY}
-		}";
-		eval "${FUNC_SRC}" || echo "error creating QA interceptor ${BIN}" >&2
+		}" || echo "error creating QA interceptor ${BIN}" >&2
 	done
 	__QA_INTERCEPTORS_ACTIVE=true
 } &> /dev/null

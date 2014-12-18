@@ -158,7 +158,7 @@ __ensure_PATH() {
 }
 
 __load_eapi_libs() {
-	local BANNED_FUNCS DEPRECATED_FUNCS
+	local BANNED_FUNCS DEPRECATED_FUNCS funcname
 
 	# reload depend; while it may've been loaded already, reload it so that callers can
 	# rely on this setting the env up as necessary
@@ -170,20 +170,17 @@ __load_eapi_libs() {
 
 	# Hijack deprecated and banned functions to make them show QA warnings
 	# or failure messages, respectively.
-	local funcname func
 	for funcname in "${DEPRECATED_FUNCS[@]}"; do
 		local func_src=( $(__get_func_code ${funcname}) )
-		func="${funcname}() {
+		eval "${funcname}() {
 			eqawarn \"QA Notice: '${funcname}' is deprecated in EAPI ${EAPI:-0}\"
 			${func_src[@]}
-		}"
-		eval "${func}" || die "failed evaluating EAPI ${EAPI:-0} deprecated function '${funcname}'"
+		}" || die "failed evaluating deprecated function '${funcname}'"
 	done
 	for funcname in "${BANNED_FUNCS[@]}"; do
-		func="${funcname}() {
-			die \"'${funcname}' is explicitly banned in EAPI ${EAPI:-0}\"
-		}"
-		eval "${func}" || die "failed evaluating EAPI ${EAPI:-0} banned function '${funcname}'"
+		eval "${funcname}() {
+			die \"'${funcname}' is banned in EAPI ${EAPI:-0}\"
+		}" || die "failed evaluating banned function '${funcname}'"
 	done
 }
 

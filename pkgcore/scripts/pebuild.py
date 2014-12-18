@@ -8,28 +8,66 @@
 __all__ = ("argparser", "main")
 
 from itertools import izip
+import os
 
 from pkgcore.util import commandline
 from pkgcore.ebuild import atom
+from pkgcore.ebuild.errors import MalformedAtom
 from pkgcore.operations import observer
 
 
 argparser = commandline.mk_argparser(description=__doc__)
-argparser.add_argument("--no-auto", action='store_true', default=False,
+argparser.add_argument(
+    "--no-auto", action='store_true', default=False,
     help="run just the specified phases; it's up to the invoker to get the order right")
-argparser.add_argument('atom', type=atom.atom,
+argparser.add_argument(
+    'atom', metavar='<atom|ebuild>',
     help="atom to match a pkg to execute phases from")
-argparser.add_argument('phase', nargs='+',
-    help="phases to run")
+argparser.add_argument('phase', nargs='+', help="phases to run")
+
 
 @argparser.bind_main_func
 def main(options, out, err):
-    pkgs = options.domain.all_repos.match(options.atom)
+    pkg = options.atom
+    repos = None
+
+    if os.path.isfile(pkg) and pkg.endswith('.ebuild'):
+        ebuild_path = os.path.abspath(pkg)
+        repo_path = os.path.abspath(os.path.join(
+            pkg, os.pardir, os.pardir, os.pardir))
+
+        # find the ebuild's repo
+        # TODO: iterating through the repos feels wrong, we could use a
+        # multi-keyed dict with repo IDs and paths as keys with repo
+        # objects as values (same thing we need for better portage-2
+        # profile support)
+        for x in options.domain.repos:
+            if getattr(x, 'repository_type', None) == 'source' and \
+                    x.raw_repo.location == repo_path:
+                repos = x
+                break
+
+        if repos is None:
+            err.write('no configured repo contains: %s' % ebuild_path)
+            return 1
+
+        ebuild_P = os.path.basename(os.path.splitext(ebuild_path)[0])
+        ebuild_category = ebuild_path.split(os.sep)[-3]
+        pkg = atom.atom('=%s/%s' % (ebuild_category, ebuild_P))
+    else:
+        try:
+            pkg = atom.atom(pkg)
+            repos = options.domain.all_repos
+        except MalformedAtom:
+            err.write('not a valid atom or ebuild: "%s"' % pkg)
+            return 1
+
+    pkgs = repos.match(pkg)
     if not pkgs:
-        err.write('got no matches for %s\n' % (options.atom,))
+        err.write('got no matches for %s\n' % (pkg,))
         return 1
     if len(pkgs) > 1:
-        err.write('got multiple matches for %s:' % (options.atom,))
+        err.write('got multiple matches for %s:' % (pkg,))
         if len(set((pkg.slot, pkg.repo) for pkg in pkgs)) != 1:
             for pkg in sorted(pkgs):
                 err.write("repo %r, slot %r, %s" %
@@ -40,9 +78,10 @@ def main(options, out, err):
         pkgs = [max(pkgs)]
         err.write("choosing %r, slot %r, %s" % (getattr(pkgs[0].repo, 'repo_id', 'unknown'),
             pkgs[0].slot, pkgs[0].cpvstr), prefix='  ')
+
     kwds = {}
     build_obs = observer.build_observer(observer.formatter_output(out),
-        not options.debug)
+                                        not options.debug)
 
     phases = [x for x in options.phase if x != 'clean']
     clean = (len(phases) != len(options.phase))

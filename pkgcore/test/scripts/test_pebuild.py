@@ -16,6 +16,4 @@ class CommandlineTest(TestCase, helpers.ArgParseMixin):
     def test_parser(self):
         self.assertError('too few arguments')
         self.assertError('too few arguments', 'dev-util/diffball')
-        self.assertError("argument atom: invalid atom value: 'spork'",
-                         'spork', 'unpack')
         self.assertEqual(self.parse('foo/bar', 'baz', 'spork').phase, ['baz', 'spork'])

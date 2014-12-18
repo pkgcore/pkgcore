@@ -11,6 +11,10 @@ pkgcore master
 Features
 ========
 
+- Add support for pebuild to run against a given ebuild file target from a
+  configured repo. This is the standard workflow when using `ebuild` from
+  portage.
+
 - Add unmasks, bashrcs, keywords, accept_keywords, pkg_use, masked_use, and
   forced_use as `pinspect profile` subcommands. Also, note that 'profile' is
   now used instead of 'profiles'.

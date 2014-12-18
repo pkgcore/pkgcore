@@ -15,9 +15,9 @@ Features
   configured repo. This is the standard workflow when using `ebuild` from
   portage.
 
-- Add unmasks, bashrcs, keywords, accept_keywords, pkg_use, masked_use, and
-  forced_use as `pinspect profile` subcommands. Also, note that 'profile' is
-  now used instead of 'profiles'.
+- Add unmasks, bashrcs, keywords, accept_keywords, pkg_use, masked_use,
+  stable_masked_use, forced_use, and stable_forced_use as `pinspect profile`
+  subcommands. Also, note that 'profile' is now used instead of 'profiles'.
 
 - Add support for FEATURES=protect-owned (see make.conf man page for details).
 

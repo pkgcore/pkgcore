@@ -208,7 +208,7 @@ __generate_initial_ebuild_environ() {
 		PKGCORE_TARGET_ENV=${T}/.temp_env
 		if ! __load_environ; then
 			# this shouldn't happen.
-			die "failed to load ${T}/.tmp_env- fs is readonly?"
+			die "failed to load '${T}/.temp_env' -- fs is readonly?"
 		fi
 		unset PKGCORE_SUPPRESS_BASHRCS
 
@@ -230,7 +230,7 @@ __generate_initial_ebuild_environ() {
 	if [[ -n ${T} ]]; then
 		# use a file if possible; faster since bash does this lovely byte by byte reading if it's a pipe.
 		# having the file around is useful for debugging also.
-		__timed_call __environ_dump > "${T}"/.initial_environ || die "dump_environ > ${T}/.initial_environ return non zero"
+		__timed_call __environ_dump > "${T}"/.initial_environ || die "dump_environ > '${T}/.initial_environ' return non zero"
 		echo "source \"${T}\"/.initial_environ"
 	else
 		__timed_call __environ_dump || die "dump_environ returned non zero"
@@ -418,7 +418,7 @@ __execute_phases() {
 				else
 					PKGCORE_TARGET_ENV=${T}/environment
 					if ! __load_environ; then
-						die "failed loading saved env; at ${T}/environment"
+						die "failed loading saved env from '${T}/environment'"
 					fi
 				fi
 

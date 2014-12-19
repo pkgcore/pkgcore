@@ -105,13 +105,13 @@ econf() {
 	if [[ -n ${CONF_LIBDIR} && $* != *"--libdir="* ]]; then
 		if [[ $* == *"--exec-prefix="* ]]; then
 			local args=$(echo $*)
-			local -a pref=( $(echo ${args/*--exec-prefix[= ]}) )
-			CONF_PREFIX=${pref/--*}
+			local -a prefix=( $(echo ${args/*--exec-prefix[= ]}) )
+			CONF_PREFIX=${prefix/--*}
 			[[ ${CONF_PREFIX} != /* ]] && CONF_PREFIX=/${CONF_PREFIX}
 		elif [[ $* == *"--prefix="* ]]; then
 			local args=$(echo $*)
 			local -a pref=( $(echo ${args/*--prefix[= ]}) )
-			CONF_PREFIX=${pref/--*}
+			CONF_PREFIX=${prefix/--*}
 			[[ ${CONF_PREFIX} != /* ]] && CONF_PREFIX=/${CONF_PREFIX}
 		else
 			CONF_PREFIX=/usr
@@ -430,17 +430,17 @@ __phase_default_pre_src_install() {
 }
 
 __inject_phase_funcs() {
-	local pref=$1 func
+	local prefix=$1 func
 	shift
 
 	for func in "$@"; do
 		if ! __is_function "${func}"; then
-			eval "__phase_default_${func}() { ${pref}_${func}; }";
+			eval "__phase_default_${func}() { ${prefix}_${func}; }";
 		fi
 
 		# define default_${phase} funcs for EAPI 2 and up
 		if ! __safe_has "${EAPI:-0}" 0 1 ; then
-			eval "default_${func}() { ${pref}_${func}; }";
+			eval "default_${func}() { ${prefix}_${func}; }";
 		fi
 	done
 }

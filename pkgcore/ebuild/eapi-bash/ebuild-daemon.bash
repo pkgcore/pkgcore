@@ -343,29 +343,29 @@ __ebd_process_metadata() {
 	# note the local usage is redundant in light of it, but prefer to write it this
 	# way so that if someone ever drops the (), it'll still not bleed out.
 	(
-	# Heavy QA checks (IFS, shopt, etc) are suppressed for speed
-	declare -r PKGCORE_QA_SUPPRESSED=false
-	# Wipe __mode; it bleeds from our parent.
-	unset __mode
-	local __data
-	local __ret
-	__ebd_read_size "$1" __data
-	local IFS=$'\0'
-	eval "$__data"
-	__ret=$?
-	unset __data
-	[[ ${__ret} -ne 0 ]] && exit 1
-	unset __ret
-	local IFS=$' \t\n'
+		# Heavy QA checks (IFS, shopt, etc) are suppressed for speed
+		declare -r PKGCORE_QA_SUPPRESSED=false
+		# Wipe __mode; it bleeds from our parent.
+		unset __mode
+		local __data
+		local __ret
+		__ebd_read_size "$1" __data
+		local IFS=$'\0'
+		eval "$__data"
+		__ret=$?
+		unset __data
+		[[ ${__ret} -ne 0 ]] && exit 1
+		unset __ret
+		local IFS=$' \t\n'
 
-	if [[ -n ${PKGCORE_METADATA_PATH} ]]; then
-		export PATH=${PKGCORE_METADATA_PATH}
-	fi
+		if [[ -n ${PKGCORE_METADATA_PATH} ]]; then
+			export PATH=${PKGCORE_METADATA_PATH}
+		fi
 
-	PORTAGE_SANDBOX_PID=${PPID}
-	__execute_phases "${2:-depend}" && exit 0
-	__ebd_process_sandbox_results
-	exit 1
+		PORTAGE_SANDBOX_PID=${PPID}
+		__execute_phases "${2:-depend}" && exit 0
+		__ebd_process_sandbox_results
+		exit 1
 	)
 }
 

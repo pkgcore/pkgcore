@@ -107,6 +107,8 @@ __get_func_code() {
 	local code=( $(declare -f "$1") )
 	__IFS_pop
 
+	[[ -z ${code[@]} ]] && return
+
 	# drop function name and surrounding brackets
 	code=( ${code[@]:2:${#code[@]}-3} )
 	echo "${code[@]}"

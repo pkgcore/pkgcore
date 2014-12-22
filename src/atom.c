@@ -175,7 +175,7 @@ parse_use_deps(PyObject *atom_str, char **p_ptr, PyObject **use_ptr, int allow_d
 							continue;
 						}
 						Err_SetMalformedAtom(atom_str,
-							"invalid char in use dep; each flag must be a-Z0-9_@-+ follwed by an optional (+) or (-)");
+							"invalid char in use dep; each flag must be a-Z0-9_@-+ followed by an optional (+) or (-)");
 						return -1;
 					}
 					use_start++;

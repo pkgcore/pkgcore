@@ -562,6 +562,7 @@ class _ConfiguredTree(configured.tree):
         iuse_effective = [x.lstrip('-+') for x in pkg.iuse]
         use_expand = frozenset(profile.use_expand)
 
+        # EAPI 5 and above allow profile defined IUSE injection (see PMS)
         if pkg.eapi_obj.options.profile_iuse_injection:
             iuse_effective.extend(profile.iuse_implicit)
             use_expand_implicit = frozenset(profile.use_expand_implicit)

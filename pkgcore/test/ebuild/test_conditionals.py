@@ -312,9 +312,8 @@ class native_DepSetEvaluateTest(base):
                 " ".join(flag_set)),
             ("a/b[c,x0]", "a/b[c?,%s]" % (",".join(x + "?" for x in flag_set)), "c",
                 " ".join(flag_set[1:])),
-            ("a/b[c,%s]" % (','.join(flag_set),),
-                "a/b[c?,%s]" % (",".join(x + "?" for x in flag_set)), "c",
-                ""),
+            ("a/b[c]", "a/b[c?,%s]" % (",".join(x + "?" for x in flag_set)), "c",
+                " ".join(flag_set)),
             ):
 
             result = vals[0]

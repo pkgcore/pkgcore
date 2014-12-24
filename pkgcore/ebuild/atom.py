@@ -787,7 +787,7 @@ class transitive_use_atom(atom):
         new_flags = [use for use in self.use if use[-1] not in '?=']
         variable_flags = [use for use in self.use if use[-1] in '?=']
 
-        if tristate_filter is not None:
+        if tristate_filter:
             # note this updates the flags in place.
             self._evaluate_depset_qa_in_place(new_flags, variable_flags,
                 enabled, tristate_filter)

@@ -74,8 +74,10 @@ class MetadataXml(object):
     if loaded
     """
 
-    __slots__ = ("__weakref__", "_maintainers", "_herds", "_longdescription",
-        "_source")
+    __slots__ = (
+        "__weakref__", "_maintainers", "_herds", "_local_use",
+        "_longdescription", "_source",
+    )
 
     def __init__(self, source):
         self._source = source
@@ -85,7 +87,7 @@ class MetadataXml(object):
             self._parse_xml()
         return getattr(self, attr)
 
-    for attr in ("herds", "maintainers", "longdescription"):
+    for attr in ("herds", "maintainers", "local_use", "longdescription"):
         locals()[attr] = property(post_curry(_generic_attr, "_"+attr))
     del attr
 
@@ -93,6 +95,7 @@ class MetadataXml(object):
         if source is None:
             source = self._source.bytes_fileobj()
         tree = etree.parse(source)
+
         maintainers = []
         for x in tree.findall("maintainer"):
             name = email = description = None
@@ -104,7 +107,7 @@ class MetadataXml(object):
                 elif e.tag == 'description':
                     description = e.text
             maintainers.append(Maintainer(
-                    name=name, email=email, description=description))
+                name=name, email=email, description=description))
 
         self._maintainers = tuple(maintainers)
         self._herds = tuple(x.text for x in tree.findall("herd"))
@@ -115,6 +118,9 @@ class MetadataXml(object):
             longdesc = ' '.join(longdesc.split())
         self._longdescription = longdesc
         self._source = None
+
+        self._local_use = frozenset(
+            x.attrib['name'] for x in tree.findall('use/flag'))
 
 
 class LocalMetadataXml(MetadataXml):
@@ -129,6 +135,7 @@ class LocalMetadataXml(MetadataXml):
                 raise
             self._maintainers = ()
             self._herds = ()
+            self._local_use = frozenset()
             self._longdescription = None
             self._source = None
 
@@ -428,7 +435,7 @@ class RepoConfig(syncable.tree):
     def raw_use_local_desc(self):
         def converter(key):
             # todo: convert this to using a common exception base, with
-            # conversion of ValueErrors/atom exceptoins...
+            # conversion of ValueErrors/atom exceptions...
             chunks = key.split(':', 1)
             return (atom.atom(chunks[0]), chunks[1])
 

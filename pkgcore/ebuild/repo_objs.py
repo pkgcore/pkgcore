@@ -120,7 +120,9 @@ class MetadataXml(object):
         self._source = None
 
         self._local_use = frozenset(
-            x.attrib['name'] for x in tree.findall('use/flag'))
+            x.attrib['name'] for x in tree.findall('use/flag')
+            if 'name' in x.attrib
+        )
 
 
 class LocalMetadataXml(MetadataXml):

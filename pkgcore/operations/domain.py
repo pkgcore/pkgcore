@@ -270,11 +270,11 @@ class replace(install, uninstall):
     """
 
     stage_depends = {
-        "finish":"finalize_repo",
-        "finalize_repo":"repo_remove",
-        "repo_remove": "postinst",
+        "finish": "postinst",
         "postinst": "postrm",
-        "postrm": "remove",
+        "postrm": "finalize_repo",
+        "finalize_repo": "repo_remove",
+        "repo_remove": "remove",
         "remove": "prerm",
         "prerm": "repo_add",
         "repo_add": "create_repo_op",

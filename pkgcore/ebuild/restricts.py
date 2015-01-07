@@ -36,8 +36,13 @@ class VersionMatch(restriction.base):
     type = packages.package_type
     attr = "fullver"
 
-    _convert_op2str = {(-1,):"<", (-1, 0): "<=", (0,):"=",
-        (0, 1):">=", (1,):">"}
+    _convert_op2str = {
+        (-1,): "<",
+        (-1, 0): "<=",
+        (0,): "=",
+        (0, 1): ">=",
+        (1,): ">",
+    }
 
     _convert_str2op = {v: k for k, v in _convert_op2str.iteritems()}
 
@@ -59,8 +64,8 @@ class VersionMatch(restriction.base):
         sf(self, "ver", ver)
         sf(self, "rev", rev)
         if operator != "~" and operator not in self._convert_str2op:
-            raise errors.InvalidVersion(self.ver, self.rev,
-                                 "invalid operator, '%s'" % operator)
+            raise errors.InvalidVersion(
+                self.ver, self.rev, "invalid operator, '%s'" % operator)
 
         sf(self, "negate", negate)
         if operator == "~":
@@ -115,7 +120,7 @@ class VersionMatch(restriction.base):
             return True
         if isinstance(other, self.__class__):
             if self.droprev != other.droprev or self.ver != other.ver \
-                or self.rev != other.rev:
+                    or self.rev != other.rev:
                 return False
             return self._convert_ops(self) == self._convert_ops(other)
 
@@ -132,8 +137,8 @@ class SlotDep(packages.PackageRestriction):
 
     def __init__(self, slot, **kwds):
         v = values.StrExactMatch(slot)
-        return packages.PackageRestriction.__init__(self,
-            "slot", v, negate=kwds.get("negate", False))
+        return packages.PackageRestriction.__init__(
+            self, "slot", v, negate=kwds.get("negate", False))
 
 
 class SubSlotDep(packages.PackageRestriction):
@@ -143,8 +148,8 @@ class SubSlotDep(packages.PackageRestriction):
 
     def __init__(self, slot, **kwds):
         v = values.StrExactMatch(slot)
-        return packages.PackageRestriction.__init__(self,
-            "subslot", v, negate=kwds.get("negate", False))
+        return packages.PackageRestriction.__init__(
+            self, "subslot", v, negate=kwds.get("negate", False))
 
 
 class CategoryDep(packages.PackageRestriction):
@@ -153,8 +158,8 @@ class CategoryDep(packages.PackageRestriction):
     __instance_caching_ = True
 
     def __init__(self, category, negate=False):
-        packages.PackageRestriction.__init__(self,
-            "category",
+        packages.PackageRestriction.__init__(
+            self, "category",
             values.StrExactMatch(category, negate=negate))
 
 
@@ -164,8 +169,8 @@ class PackageDep(packages.PackageRestriction):
     __instance_caching_ = True
 
     def __init__(self, package, negate=False):
-        packages.PackageRestriction.__init__(self,
-            "package",
+        packages.PackageRestriction.__init__(
+            self, "package",
             values.StrExactMatch(package, negate=negate))
 
 
@@ -175,8 +180,8 @@ class RepositoryDep(packages.PackageRestriction):
     __instance_caching__ = True
 
     def __init__(self, repo_id, negate=False):
-        packages.PackageRestriction.__init__(self,
-            "repo.repo_id",
+        packages.PackageRestriction.__init__(
+            self, "repo.repo_id",
             values.StrExactMatch(repo_id), negate=negate)
 
 

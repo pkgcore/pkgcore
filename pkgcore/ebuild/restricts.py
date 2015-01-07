@@ -12,12 +12,12 @@ __all__ = ("VersionMatch",)
 
 from pkgcore.restrictions import packages, restriction, values
 from pkgcore.ebuild import cpv, errors
+
 from snakeoil.klass import generic_equality
-from snakeoil.compatibility import is_py3k
+
 
 # TODO: change values.EqualityMatch so it supports le, lt, gt, ge, eq,
 # ne ops, and convert this to it.
-
 class VersionMatch(restriction.base):
 
     """

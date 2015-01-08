@@ -113,7 +113,7 @@ invoke_script() {
 	source "${HELPER_PATH}"
 
 	if ${failed}; then
-		if ${PKGCORE_NONFATAL_HELPER}; then
+		if [[ -n ${PKGCORE_NONFATAL_HELPER} ]]; then
 			echo "WARNING: nonzero exitcode from ${HELPER_ERROR_PREFIX}" >&2
 			# need to track the exit code here...
 			return 1

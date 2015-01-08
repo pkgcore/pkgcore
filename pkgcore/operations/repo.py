@@ -5,20 +5,26 @@
 repository modifications (installing, removing, replacing)
 """
 
-__all__ = ("Failure", "base", "install", "uninstall", "replace",
-    "operations", "operations_proxy")
+__all__ = (
+    "Failure", "base", "install", "uninstall", "replace",
+    "operations", "operations_proxy"
+)
+
+from pkgcore import operations as _operations_mod
 
 from snakeoil.dependant_methods import ForcedDepends
 from snakeoil.weakrefs import WeakRefFinalizer
 from snakeoil.currying import partial, post_curry
 from snakeoil import klass
-from pkgcore import operations as _operations_mod
 from snakeoil.demandload import demandload
-demandload(globals(), "pkgcore.log:logger",
+
+demandload(
+    globals(),
+    "pkgcore.log:logger",
     "pkgcore.operations:observer@observer_mod,regen",
     "pkgcore.sync:base@_sync_base",
     "pkgcore.package.mutated:MutatedPkg",
-    )
+)
 
 
 class fake_lock(object):
@@ -70,10 +76,12 @@ class base(object):
 
 class install(base):
 
-    stage_depends = {'finish': '_notify_repo_add',
+    stage_depends = {
+        'finish': '_notify_repo_add',
         '_notify_repo_add': 'finalize_data',
         'finalize_data': 'add_data',
-        'add_data':'start'}
+        'add_data': 'start'
+    }
 
     description = "install"
 
@@ -89,16 +97,17 @@ class install(base):
         raise NotImplementedError(self, 'add_data')
 
     def _update_pkg_contents(self, contents):
-        self.new_pkg = MutatedPkg(self.new_pkg,
-            {"contents":contents})
+        self.new_pkg = MutatedPkg(self.new_pkg, {"contents": contents})
 
 
 class uninstall(base):
 
-    stage_depends = {'finish': '_notify_repo_remove',
+    stage_depends = {
+        'finish': '_notify_repo_remove',
         '_notify_repo_remove': 'finalize_data',
         'finalize_data': 'remove_data',
-        'remove_data':'start'}
+        'remove_data': 'start'
+    }
 
     description = "uninstall"
 
@@ -116,12 +125,14 @@ class uninstall(base):
 
 class replace(install, uninstall):
 
-    stage_depends = {'finish': '_notify_repo_add',
+    stage_depends = {
+        'finish': '_notify_repo_add',
         '_notify_repo_add': 'finalize_data',
         'finalize_data': ('add_data', '_notify_repo_remove'),
         '_notify_repo_remove': 'remove_data',
         'remove_data': 'start',
-        'add_data': 'start'}
+        'add_data': 'start'
+    }
 
     description = "replace"
 
@@ -167,7 +178,8 @@ class operations(sync_operations):
 
     def _disabled_if_frozen(self, command):
         if self.repo.frozen:
-            logger.debug("disabling repo(%r) command(%r) due to repo being frozen",
+            logger.debug(
+                "disabling repo(%r) command(%r) due to repo being frozen",
                 self.repo, command)
         return not self.repo.frozen
 
@@ -177,20 +189,20 @@ class operations(sync_operations):
         return observer
 
     def _cmd_api_install(self, pkg, observer=None):
-        return self._cmd_implementation_install(pkg,
-            self._get_observer(observer))
+        return self._cmd_implementation_install(
+            pkg, self._get_observer(observer))
 
     def _cmd_api_uninstall(self, pkg, observer=None):
-        return self._cmd_implementation_uninstall(pkg,
-            self._get_observer(observer))
+        return self._cmd_implementation_uninstall(
+            pkg, self._get_observer(observer))
 
     def _cmd_api_replace(self, oldpkg, newpkg, observer=None):
-        return self._cmd_implementation_replace(oldpkg, newpkg,
-            self._get_observer(observer))
+        return self._cmd_implementation_replace(
+            oldpkg, newpkg, self._get_observer(observer))
 
     def _cmd_api_install_or_replace(self, newpkg, observer=None):
-        return self._cmd_implementation_install_or_replace(newpkg,
-            self._get_observer(observer))
+        return self._cmd_implementation_install_or_replace(
+            newpkg, self._get_observer(observer))
 
     def _cmd_implementation_install_or_replace(self, newpkg, observer=None):
         match = self.repo.match(newpkg.versioned_atom)
@@ -206,8 +218,8 @@ class operations(sync_operations):
     del x
 
     def _cmd_api_configure(self, pkg, observer=None):
-        return self._cmd_implementation_configure(self.repository, pkg,
-            self._get_observer(observer))
+        return self._cmd_implementation_configure(
+            self.repository, pkg, self._get_observer(observer))
 
     @_operations_mod.is_standalone
     def _cmd_api_regen_cache(self, observer=None, threads=1, **options):
@@ -218,7 +230,8 @@ class operations(sync_operations):
         try:
             if sync_rate is not None:
                 cache.set_sync_rate(1000000)
-            return regen.regen_repository(self.repo,
+            return regen.regen_repository(
+                self.repo,
                 self._get_observer(observer), threads=threads, **options)
         finally:
             if sync_rate is not None:
@@ -242,8 +255,8 @@ class operations(sync_operations):
         if not matches:
             observer.debug("skipping digest of query %s; no matches\n" % (query,))
             return True
-        return self._cmd_implementation_digests(domain, matches,
-            observer, **options)
+        return self._cmd_implementation_digests(
+            domain, matches, observer, **options)
 
 
 class operations_proxy(operations):

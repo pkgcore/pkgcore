@@ -10,7 +10,10 @@ __all__ = ("Failure", "base", "install", "uninstall", "replace")
 from snakeoil.dependant_methods import ForcedDepends
 from snakeoil.weakrefs import WeakRefFinalizer
 from snakeoil.demandload import demandload
-demandload(globals(), "pkgcore.log:logger",
+
+demandload(
+    globals(),
+    "pkgcore.log:logger",
     "pkgcore.merge.engine:MergeEngine",
     "pkgcore.merge:errors@merge_errors",
     "pkgcore.package.mutated:MutatedPkg",
@@ -18,7 +21,7 @@ demandload(globals(), "pkgcore.log:logger",
     "shutil",
     "tempfile",
     'snakeoil:osutils',
-    )
+)
 
 
 class fake_lock(object):
@@ -70,8 +73,8 @@ class base(object):
     def _create_tempspace(self):
         location = self.domain._get_tempspace()
         osutils.ensure_dirs(location)
-        self.tempspace = tempfile.mkdtemp(dir=location,
-            prefix="merge-engine-tmp")
+        self.tempspace = tempfile.mkdtemp(
+            dir=location, prefix="merge-engine-tmp")
 
     def _add_triggers(self, engine):
         for trigger in self.triggers:
@@ -139,7 +142,7 @@ class install(base):
         "create_repo_op": "transfer",
         "transfer": "preinst",
         "preinst": "start"
-        }
+    }
 
     stage_hooks = ["merge_metadata", "postinst", "preinst", "transfer"]
     format_install_op_name = "_repo_install_op"
@@ -150,16 +153,18 @@ class install(base):
         base.__init__(self, domain, repo, observer, triggers, offset)
 
     def create_op(self):
-        self.format_op = getattr(self.new_pkg,
-            self.format_install_op_name)(self.domain, self.observer)
+        self.format_op = getattr(
+            self.new_pkg, self.format_install_op_name)(
+                self.domain, self.observer)
 
     def create_repo_op(self):
-        self.repo_op = self.repo.operations.install(self.new_pkg,
-            self.observer)
+        self.repo_op = self.repo.operations.install(
+            self.new_pkg, self.observer)
         return True
 
     def create_engine(self):
-        return self.engine_kls(self.tempspace, self.new_pkg,
+        return self.engine_kls(
+            self.tempspace, self.new_pkg,
             offset=self.offset, observer=self.observer)
 
     def preinst(self):
@@ -167,13 +172,12 @@ class install(base):
         return self.format_op.preinst()
 
     def _update_new_pkg(self, cset):
-        self.new_pkg = MutatedPkg(self.new_pkg,
-            {"contents":cset})
+        self.new_pkg = MutatedPkg(self.new_pkg, {"contents": cset})
 
     def transfer(self):
         """execute the actual transfer"""
         for merge_phase in (self.me.pre_merge, self.me.merge,
-            self.me.post_merge):
+                            self.me.post_merge):
             merge_phase()
         self._update_new_pkg(self.me.get_merged_cset())
         return True
@@ -201,13 +205,14 @@ class uninstall(base):
     """
 
     stage_depends = {
-        "finish":"postrm",
+        "finish": "postrm",
         "postrm": "finalize_repo",
         "finalize_repo": "repo_remove",
         "repo_remove": "remove",
         "remove": "prerm",
         "prerm": "create_repo_op",
-        "create_repo_op": "start"}
+        "create_repo_op": "start"
+    }
 
     stage_hooks = ["merge_metadata", "postrm", "prerm", "remove"]
     format_uninstall_op_name = "_repo_uninstall_op"
@@ -218,16 +223,19 @@ class uninstall(base):
         base.__init__(self, domain, repo, observer, triggers, offset)
 
     def create_op(self):
-        self.format_op = getattr(self.old_pkg,
+        self.format_op = getattr(
+            self.old_pkg,
             self.format_uninstall_op_name)(self.domain, self.observer)
 
     def create_repo_op(self):
-        self.repo_op = self.repo.operations.uninstall(self.old_pkg,
+        self.repo_op = self.repo.operations.uninstall(
+            self.old_pkg,
             self.observer)
         return True
 
     def create_engine(self):
-        return self.engine_kls(self.tempspace, self.old_pkg,
+        return self.engine_kls(
+            self.tempspace, self.old_pkg,
             offset=self.offset, observer=self.observer)
 
     def prerm(self):
@@ -237,7 +245,7 @@ class uninstall(base):
     def remove(self):
         """execute any removal steps required"""
         for unmerge_phase in (self.me.pre_unmerge, self.me.unmerge,
-            self.me.post_unmerge):
+                              self.me.post_unmerge):
             unmerge_phase()
         return True
 
@@ -280,7 +288,8 @@ class replace(install, uninstall):
         "repo_add": "create_repo_op",
         "create_repo_op": "transfer",
         "transfer": "preinst",
-        "preinst": "start"}
+        "preinst": "start"
+    }
 
     stage_hooks = [
         "merge_metadata", "unmerge_metadata", "postrm", "prerm", "postinst",
@@ -294,18 +303,19 @@ class replace(install, uninstall):
         base.__init__(self, domain, repo, observer, triggers, offset)
 
     def create_op(self):
-        self.format_op = getattr(self.new_pkg,
-            self.format_replace_op_name)(self.domain, self.old_pkg,
-                self.observer)
+        self.format_op = getattr(
+            self.new_pkg, self.format_replace_op_name)(
+                self.domain, self.old_pkg, self.observer)
         return True
 
     def create_repo_op(self):
-        self.repo_op = self.repo.operations.replace(self.old_pkg,
-            self.new_pkg, self.observer)
+        self.repo_op = self.repo.operations.replace(
+            self.old_pkg, self.new_pkg, self.observer)
         return True
 
     def create_engine(self):
-        return self.engine_kls(self.tempspace, self.old_pkg, self.new_pkg,
+        return self.engine_kls(
+            self.tempspace, self.old_pkg, self.new_pkg,
             offset=self.offset, observer=self.observer)
 
     def finish(self):

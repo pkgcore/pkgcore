@@ -498,78 +498,76 @@ class PortageFormatter(CountingFormatter):
         flags = []
         enabled = set(pkg_iuse) & set(pkg_use)
         disabled = set(pkg_iuse) - set(pkg_use)
+
+        # updating or rebuilding pkg
         if old_pkg_iuse is not None and old_pkg_use is not None:
-            # updating or rebuilding pkg
+
             old_enabled = set(old_pkg_iuse) & set(old_pkg_use)
             old_disabled = set(old_pkg_iuse) - set(old_pkg_use)
             removed = set(old_pkg_iuse) - set(pkg_iuse)
+
             for flag in sorted(enabled):
-                use_expand_flag = '_'.join((attr, flag)).lower() if attr != 'use' else None
+                expanded_flag = '_'.join((attr, flag)).lower() if attr != 'use' else flag
                 if flag in old_enabled:
                     # unchanged
                     if self.verbose:
-                        if use_expand_flag in self.pkg_forced_use or \
-                                use_expand_flag is None and flag in self.pkg_forced_use:
+                        if expanded_flag in self.pkg_forced_use:
                             flags.extend(('(', red, bold, flag, reset, ')', ' '))
                         else:
                             flags.extend((red, bold, flag, reset, ' '))
                 elif flag in old_disabled:
                     # toggled
-                    if use_expand_flag in self.pkg_forced_use or \
-                            use_expand_flag is None and flag in self.pkg_forced_use:
+                    if expanded_flag in self.pkg_forced_use:
                         flags.extend(('(', green, bold, flag, reset, '*)', ' '))
                     else:
                         flags.extend((green, bold, flag, reset, '*', ' '))
                 else:
                     # new
-                    if use_expand_flag in self.pkg_forced_use or \
-                            use_expand_flag is None and flag in self.pkg_forced_use:
+                    if expanded_flag in self.pkg_forced_use:
                         flags.extend(('(', yellow, bold, flag, reset, '%*)', ' '))
                     else:
                         flags.extend((yellow, bold, flag, reset, '%*', ' '))
+
             for flag in sorted(disabled):
-                use_expand_flag = '_'.join((attr, flag)).lower() if attr != 'use' else None
+                expanded_flag = '_'.join((attr, flag)).lower() if attr != 'use' else flag
                 if flag in old_disabled:
                     # unchanged
                     if self.verbose:
-                        if use_expand_flag in self.pkg_disabled_use or \
-                                use_expand_flag is None and flag in self.pkg_disabled_use:
+                        if expanded_flag in self.pkg_disabled_use:
                             flags.extend(('(', blue, bold, '-', flag, reset, ')', ' '))
                         else:
                             flags.extend((blue, bold, '-', flag, reset, ' '))
                 elif flag in old_enabled:
                     # toggled
-                    if use_expand_flag in self.pkg_disabled_use or \
-                            use_expand_flag is None and flag in self.pkg_disabled_use:
+                    if expanded_flag in self.pkg_disabled_use:
                         flags.extend(('(', green, bold, '-', flag, reset, '*)', ' '))
                     else:
                         flags.extend((green, bold, '-', flag, reset, '*', ' '))
                 else:
                     # new
-                    if use_expand_flag in self.pkg_disabled_use or \
-                            use_expand_flag is None and flag in self.pkg_disabled_use:
+                    if expanded_flag in self.pkg_disabled_use:
                         flags.extend(('(', yellow, bold, '-', flag, reset, '%)', ' '))
                     else:
                         flags.extend((yellow, bold, '-', flag, reset, '%', ' '))
+
             if self.verbose:
                 for flag in sorted(removed):
                     if flag in old_enabled:
                         flags.extend(('(', yellow, bold, '-', flag, reset, '%*)', ' '))
                     else:
                         flags.extend(('(', yellow, bold, '-', flag, reset, '%)', ' '))
+
+        # new pkg install
         else:
-            # new pkg install
             for flag in sorted(enabled):
-                use_expand_flag = '_'.join((attr, flag)).lower() if attr != 'use' else None
-                if use_expand_flag in self.pkg_forced_use or \
-                        use_expand_flag is None and flag in self.pkg_forced_use:
+                expanded_flag = '_'.join((attr, flag)).lower() if attr != 'use' else flag
+                if expanded_flag in self.pkg_forced_use:
                     flags.extend(('(', red, bold, flag, reset, ')', ' '))
                 else:
                     flags.extend((red, bold, flag, reset, ' '))
             for flag in sorted(disabled):
-                use_expand_flag = '_'.join((attr, flag)).lower() if attr != 'use' else None
-                if use_expand_flag in self.pkg_disabled_use or \
-                        use_expand_flag is None and flag in self.pkg_disabled_use:
+                expanded_flag = '_'.join((attr, flag)).lower() if attr != 'use' else flag
+                if expanded_flag in self.pkg_disabled_use:
                     flags.extend(('(', blue, bold, '-', flag, reset, ')', ' '))
                 else:
                     flags.extend((blue, bold, '-', flag, reset, ' '))

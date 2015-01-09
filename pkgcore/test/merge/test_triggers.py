@@ -397,6 +397,7 @@ END-INFO-DIR-ENTRY
             os.environ.pop("PATH", None)
             # shouldn't run if the binary is missing
             # although it should warn, and this code will explode when it does.
+            self.engine.phase = 'post_merge'
             self.assertEqual(None, self.trigger(self.engine, {}))
         finally:
             if cur is not self:

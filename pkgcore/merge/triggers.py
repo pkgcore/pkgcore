@@ -87,8 +87,7 @@ class base(object):
         """
         register with a MergeEngine
         """
-        if self._engine_types is not None and \
-            engine.mode not in self._engine_types:
+        if self._engine_types is not None and engine.mode not in self._engine_types:
             return
 
         # ok... so we care about this mode.
@@ -372,26 +371,24 @@ class InfoRegen(base):
             return None
 
     def trigger(self, engine):
-        bin_path = self.get_binary_path()
-        if bin_path is None:
-            return
-
-        offset = engine.offset
-
-        locs = [pjoin(offset, x.lstrip(os.path.sep)) for x in self.locations]
+        locations = [pjoin(engine.offset, x.lstrip(os.path.sep))
+                     for x in self.locations]
 
         if engine.phase.startswith('pre_'):
-            self.saved_mtimes.set_state(locs)
+            self.saved_mtimes.set_state(locations)
             return
-        elif engine.phase == 'post_merge' and \
-            engine.mode == const.REPLACE_MODE:
+        elif engine.phase == 'post_merge' and engine.mode == const.REPLACE_MODE:
             # skip post_merge for replace.
             # we catch it on unmerge...
             return
 
-        regens = set(x.location for x in self.saved_mtimes.get_changes(locs))
+        bin_path = self.get_binary_path()
+        if bin_path is None:
+            return
+
+        regens = set(x.location for x in self.saved_mtimes.get_changes(locations))
         # force regeneration of any directory lacking the info index.
-        regens.update(x for x in locs if not os.path.isfile(pjoin(x, 'dir')))
+        regens.update(x for x in locations if not os.path.isfile(pjoin(x, 'dir')))
 
         bad = []
         for x in regens:

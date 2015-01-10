@@ -3,9 +3,11 @@
 
 __all__ = ("svn_syncer",)
 
-from pkgcore.sync import base
-from pkgcore.spawn import spawn_get_output
 import os
+
+from pkgcore.spawn import spawn_get_output
+from pkgcore.sync import base
+
 
 class svn_syncer(base.ExternalSyncer):
 

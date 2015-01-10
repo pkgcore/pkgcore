@@ -11,10 +11,16 @@ attr from a package instance and hand it to their wrapped restriction
 (which is a value restriction).
 """
 
-from pkgcore.restrictions import restriction, boolean, packages
 from snakeoil.klass import generic_equality, reflective_hash
-from snakeoil import demandload
-demandload.demandload(globals(), 're', 'snakeoil:lists')
+from snakeoil.demandload import demandload
+
+from pkgcore.restrictions import restriction, boolean, packages
+
+demandload(
+    globals(),
+    're',
+    'snakeoil:lists',
+)
 
 # Backwards compatibility.
 value_type = restriction.value_type
@@ -23,6 +29,7 @@ try:
     from pkgcore.restrictions import _restrictions as extension
 except ImportError:
     extension = None
+
 
 class base(restriction.base):
     """Base restriction matching object for values.

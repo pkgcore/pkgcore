@@ -9,11 +9,12 @@ Right now, doesn't provide much, need to change that down the line
 
 __all__ = ("base", "wrapper", "dynamic_getattr_dict")
 
-from snakeoil.compatibility import cmp, raise_from, IGNORED_EXCEPTIONS
 from snakeoil import klass
+from snakeoil.compatibility import cmp, raise_from, IGNORED_EXCEPTIONS
 
 from pkgcore.operations import format
 from pkgcore.package.errors import MetadataException
+
 
 class base(object):
 

@@ -7,8 +7,15 @@ __all__ = (
 )
 
 import errno
-import os
 from itertools import chain
+import os
+
+from snakeoil import caching, compatibility, currying, klass, sequences
+from snakeoil.bash import iter_read_bash, read_bash_dict
+from snakeoil.containers import InvertedContains
+from snakeoil.demandload import demandload
+from snakeoil.fileutils import readlines_utf8
+from snakeoil.osutils import abspath, pjoin
 
 from pkgcore.config import ConfigHint
 from pkgcore.ebuild import const, ebuild_src, misc
@@ -18,23 +25,16 @@ from pkgcore.ebuild.misc import (
 from pkgcore.repository import virtual
 from pkgcore.util.parserestrict import parse_match
 
-from snakeoil.osutils import abspath, pjoin
-from snakeoil.fileutils import readlines_utf8
-from snakeoil.containers import InvertedContains
-from snakeoil.bash import iter_read_bash, read_bash_dict
-from snakeoil import klass, caching, currying, sequences
-from snakeoil import compatibility
-from snakeoil.demandload import demandload
 demandload(
     globals(),
+    'collections:defaultdict',
     'snakeoil.data_source:local_source',
+    'snakeoil.mappings:ImmutableDict',
     'pkgcore.ebuild:cpv,atom,repo_objs',
     'pkgcore.ebuild.eapi:get_eapi',
+    'pkgcore.fs.livefs:iter_scan',
     'pkgcore.repository.util:SimpleTree',
     'pkgcore.restrictions:packages',
-    'pkgcore.fs.livefs:iter_scan',
-    'collections',
-    'snakeoil.mappings:ImmutableDict',
 )
 
 
@@ -254,7 +254,7 @@ class ProfileNode(object):
         return data
 
     def _parse_package_use(self, data):
-        d = collections.defaultdict(list)
+        d = defaultdict(list)
         # split the data down ordered cat/pkg lines
         for line in data:
             l = line.split()

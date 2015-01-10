@@ -45,19 +45,21 @@ import errno
 import os
 import signal
 
-import pkgcore.spawn
 from pkgcore import const, os_data
 from pkgcore.ebuild import const as e_const
+import pkgcore.spawn
 
 from snakeoil import klass
-from snakeoil.currying import post_curry, partial, pretty_docs
+from snakeoil.currying import partial, pretty_docs
+from snakeoil.demandload import demandload
 from snakeoil.osutils import abspath, normpath, pjoin
 from snakeoil.weakrefs import WeakRefFinalizer
-from snakeoil.demandload import demandload
-demandload(globals(),
-    'pkgcore.log:logger',
-    'snakeoil:fileutils',
+
+demandload(
+    globals(),
     'traceback',
+    'snakeoil:fileutils',
+    'pkgcore.log:logger',
 )
 
 

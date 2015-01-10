@@ -5,17 +5,21 @@
 build operation
 """
 
-__all__ = ('build_base', 'install', 'uninstall', 'replace', 'fetch_base',
-    'empty_build_op', 'FailedDirectory', 'GenericBuildError', 'errors')
+__all__ = (
+    'build_base', 'install', 'uninstall', 'replace', 'fetch_base',
+    'empty_build_op', 'FailedDirectory', 'GenericBuildError', 'errors',
+)
+
+from snakeoil import klass
+from snakeoil.demandload import demandload
+from snakeoil.dependant_methods import ForcedDepends
 
 from pkgcore import operations as _operations_mod
-from snakeoil.dependant_methods import ForcedDepends
-from snakeoil import klass
 
-from snakeoil import demandload
-demandload.demandload(globals(),
-    'pkgcore:fetch@_fetch_module',
+demandload(
+    globals(),
     'snakeoil.lists:iflatten_instance',
+    'pkgcore:fetch@_fetch_module',
 )
 
 

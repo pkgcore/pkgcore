@@ -2,10 +2,10 @@
 # Copyright: 2005 Marien Zwart <marienz@gentoo.org>
 # License: BSD/GPL2
 
-
-from pkgcore.test import TestRestriction
-from pkgcore.restrictions import restriction
 from snakeoil.currying import partial
+
+from pkgcore.restrictions import restriction
+from pkgcore.test import TestRestriction
 
 
 class SillyBool(restriction.base):

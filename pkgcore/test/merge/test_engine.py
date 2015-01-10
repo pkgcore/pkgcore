@@ -2,13 +2,14 @@
 # License: GPL2/BSD
 
 import os
-from pkgcore.fs.contents import contentsSet
-from pkgcore.fs import livefs
-from pkgcore.merge import engine
-from snakeoil.osutils import pjoin
 
-from pkgcore.test import TestCase
+from snakeoil.osutils import pjoin
 from snakeoil.test.mixins import tempdir_decorator
+
+from pkgcore.fs import livefs
+from pkgcore.fs.contents import contentsSet
+from pkgcore.merge import engine
+from pkgcore.test import TestCase
 from pkgcore.test.fs.fs_util import fsFile, fsDir, fsSymlink
 from pkgcore.test.merge.util import fake_engine
 

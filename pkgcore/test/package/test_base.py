@@ -1,9 +1,11 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
-from pkgcore.test import TestCase, malleable_obj
 from snakeoil.currying import partial
+
 from pkgcore.package import base
+from pkgcore.test import TestCase, malleable_obj
+
 
 def fake_pkg(cat='dev-util', pkg='bsdiff', ver='1.0', **attrs):
     d = {}

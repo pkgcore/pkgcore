@@ -4,8 +4,8 @@
 from StringIO import StringIO
 import sys
 
-from pkgcore.test import TestCase
 from pkgcore.config import cparser, central, errors
+from pkgcore.test import TestCase
 
 
 class CaseSensitiveConfigParserTest(TestCase):

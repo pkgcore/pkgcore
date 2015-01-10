@@ -1,9 +1,10 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
-from pkgcore.test.cache import util, test_base
-from pkgcore.cache import flat_hash
 from snakeoil.test.mixins import TempDirMixin
+
+from pkgcore.cache import flat_hash
+from pkgcore.test.cache import util, test_base
 
 
 class db(flat_hash.database):

@@ -85,10 +85,6 @@ __all__ = [
 ]
 
 
-# to get an ordereddict implementation regardless of
-# python version
-from snakeoil import mappings as _mappings
-
 import copy as _copy
 import os as _os
 import re as _re
@@ -96,6 +92,10 @@ import sys as _sys
 import textwrap as _textwrap
 
 from gettext import gettext as _
+
+# to get an ordereddict implementation regardless of
+# python version
+from snakeoil import mappings as _mappings
 
 
 def _callable(obj):

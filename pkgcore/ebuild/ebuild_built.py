@@ -9,20 +9,21 @@ __all__ = ("package", "package_factory")
 
 from pkgcore.ebuild import ebuild_src, conditionals, eapi
 from pkgcore.package import metadata
-from snakeoil.data_source import local_source
 
-from snakeoil.mappings import IndeterminantDict
-from snakeoil.currying import post_curry, partial
-from snakeoil.obj import DelayedInstantiation
 from snakeoil.compatibility import raise_from
-
+from snakeoil.currying import post_curry, partial
+from snakeoil.data_source import local_source
 from snakeoil.demandload import demandload
-demandload(globals(),
-    'pkgcore.merge:engine',
-    'pkgcore.ebuild:triggers',
+from snakeoil.mappings import IndeterminantDict
+from snakeoil.obj import DelayedInstantiation
+
+demandload(
+    globals(),
     're',
+    'pkgcore.ebuild:triggers',
     'pkgcore.ebuild:ebd',
     'pkgcore.fs.livefs:scan',
+    'pkgcore.merge:engine',
 )
 
 

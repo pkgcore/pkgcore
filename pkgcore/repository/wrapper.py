@@ -9,10 +9,14 @@ __all__ = ("tree",)
 
 # icky.
 # ~harring
-from pkgcore.repository import prototype, errors
-from pkgcore.operations import repo
-from snakeoil.klass import GetAttrProxy
+
 from itertools import imap
+
+from snakeoil.klass import GetAttrProxy
+
+from pkgcore.operations import repo
+from pkgcore.repository import prototype, errors
+
 
 class tree(prototype.tree):
 

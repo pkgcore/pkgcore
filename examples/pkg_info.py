@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 
-import sys, itertools
+import itertools
+import sys
 
 try:
-    from pkgcore.util import commandline, parserestrict
-    from pkgcore.restrictions.packages import AlwaysTrue
+    from pkgcore.util import commandline
     from pkgcore.restrictions.boolean import OrRestriction
 except ImportError:
     print >> sys.stderr, 'Cannot import pkgcore!'
@@ -16,11 +16,13 @@ except ImportError:
         raise
     sys.exit(1)
 
+
 class OptionParser(commandline.OptionParser):
     def __init__(self, **kwargs):
         commandline.OptionParser.__init__(
             self, description=__doc__, usage='%prog <atom>',
             **kwargs)
+
     def check_values(self, values, args):
         values, args = commandline.OptionParser.check_values(
             self, values, args)
@@ -28,9 +30,11 @@ class OptionParser(commandline.OptionParser):
         values.restrict = OrRestriction(*commandline.convert_to_restrict(args))
         return values, ()
 
+
 def getter(pkg):
     return (pkg.key, getattr(pkg, "maintainers", None),
             getattr(pkg, "herds", None))
+
 
 def main(options, out, err):
     for t, pkgs in itertools.groupby(
@@ -43,7 +47,8 @@ def main(options, out, err):
         out.write()
         for item, values in zip(("maintainer", "herd"), t[1:]):
             if values:
-                out.write("%s(s): %s" %
+                out.write(
+                    "%s(s): %s" %
                     (item.title(), ', '.join((unicode(x) for x in values))))
         out.write()
         out.write()

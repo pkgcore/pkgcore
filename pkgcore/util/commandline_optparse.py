@@ -16,7 +16,8 @@ See dev-notes/commandline.rst for more complete documentation.
 
 from __future__ import print_function
 
-__all__ = ("Values", "Option", "OptionParser",
+__all__ = (
+    "Values", "Option", "OptionParser",
     "read_file_callback", "config_callback",
     "domain_callback", "config_append_callback",
     "debug_callback", "new_config_callback", "empty_config_callback",
@@ -24,21 +25,24 @@ __all__ = ("Values", "Option", "OptionParser",
     "optparse_parse", "MySystemExit",
 )
 
-import sys
-import os.path
+import copy
 import logging
+import optparse
+import os.path
+import sys
+
+from snakeoil import klass
+from snakeoil.demandload import demandload
 
 from pkgcore.config import load_config
-from snakeoil import demandload, klass
-import optparse
-import copy
 
-demandload.demandload(globals(),
+demandload(
+    globals(),
     'snakeoil.bash:iter_read_bash',
     'pkgcore:version',
     'pkgcore.config:basics',
-    'pkgcore.util:parserestrict',
     'pkgcore.ebuild:atom',
+    'pkgcore.util:parserestrict',
 )
 
 

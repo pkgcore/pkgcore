@@ -9,38 +9,40 @@ from __future__ import with_statement
 
 __all__ = ("base", "package", "package_factory", "virtual_ebuild")
 
-import os
 from itertools import imap, chain
+import os
 
-from pkgcore.package import metadata
-from pkgcore.package import errors as metadata_errors
-from pkgcore.ebuild.cpv import CPV
-from pkgcore.ebuild import conditionals
-from pkgcore.ebuild.atom import atom
 from pkgcore.cache import errors as cache_errors
-from pkgcore.restrictions.packages import AndRestriction
-from pkgcore.restrictions import boolean, values
-from pkgcore.package.errors import MissingChksum
-from pkgcore.fetch.errors import UnknownMirror
-from pkgcore.fetch import fetchable, mirror, uri_list, default_mirror
+from pkgcore.ebuild import conditionals
 from pkgcore.ebuild import processor
+from pkgcore.ebuild.atom import atom
+from pkgcore.ebuild.cpv import CPV
+from pkgcore.fetch import fetchable, mirror, uri_list, default_mirror
+from pkgcore.fetch.errors import UnknownMirror
+from pkgcore.package import errors as metadata_errors
+from pkgcore.package import metadata
+from pkgcore.package.errors import MissingChksum
+from pkgcore.restrictions import boolean, values
+from pkgcore.restrictions.packages import AndRestriction
 
-from snakeoil.mappings import IndeterminantDict
-from snakeoil.currying import partial
 from snakeoil import klass
 from snakeoil.compatibility import intern
+from snakeoil.currying import partial
+from snakeoil.demandload import demandload, demand_compile_regexp
+from snakeoil.mappings import IndeterminantDict
 
-from snakeoil import demandload
-demandload.demandload(globals(),
-    "pkgcore.log:logger",
-    "pkgcore.ebuild.eapi:get_eapi",
-    "snakeoil:data_source,fileutils",
+demandload(
+    globals(),
     "snakeoil:chksum",
+    "snakeoil:data_source,fileutils",
+    "pkgcore.ebuild.eapi:get_eapi",
+    "pkgcore.log:logger",
 )
 
-demandload.demand_compile_regexp(globals(),
-    '_parse_EAPI_RE',
-    r"^EAPI=(['\"]?)([A-Za-z0-9+_.-]*)\1[\t ]*(?:#.*)?")
+demand_compile_regexp(
+    globals(),
+    '_parse_EAPI_RE', r"^EAPI=(['\"]?)([A-Za-z0-9+_.-]*)\1[\t ]*(?:#.*)?"
+)
 
 
 def generate_depset(c, key, non_package_type, s, **kwds):

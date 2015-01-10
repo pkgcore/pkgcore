@@ -2,21 +2,19 @@
 # Copyright: 2006-2007 Marien Zwart <marienz@gentoo.org>
 # License: BSD/GPL2
 
-
-import os
 import gc
-import pty
 import optparse
+import os
+import pty
 import weakref
 
 from snakeoil import compatibility
-from pkgcore.test import TestCase, silence_logging
+from snakeoil.currying import partial
 
+from pkgcore.config import basics, central, configurable, errors
+from pkgcore.test import TestCase, silence_logging
 from pkgcore.test.scripts import helpers
 from pkgcore.util import commandline
-from pkgcore.config import basics, central, configurable, errors
-
-from snakeoil.currying import partial
 
 # Careful: the tests should not hit a load_config() call!
 
@@ -24,6 +22,7 @@ if compatibility.is_py3k:
     import io
 else:
     from StringIO import StringIO
+
 
 def sect():
     """Just a no-op to use as configurable class."""

@@ -16,16 +16,18 @@ __all__ = ("install", "uninstall", "replace", "operations")
 
 import os
 
-from pkgcore.operations import repo as repo_interfaces
-from pkgcore.fs import tar
-from pkgcore.binpkg import xpak
-from pkgcore.ebuild.conditionals import stringify_boolean
-
 from snakeoil.compression import compress_data
+from snakeoil.demandload import demandload
 from snakeoil.klass import steal_docs
 from snakeoil.osutils import pjoin, unlink_if_exists, ensure_dirs
-from snakeoil.demandload import demandload
+
+from pkgcore.binpkg import xpak
+from pkgcore.ebuild.conditionals import stringify_boolean
+from pkgcore.fs import tar
+from pkgcore.operations import repo as repo_interfaces
+
 demandload(globals(), "pkgcore.log:logger")
+
 
 def discern_loc(base, pkg, extension='.tbz2'):
     return pjoin(base, pkg.category,

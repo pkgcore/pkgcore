@@ -2,12 +2,13 @@
 # License: GPL2/BSD
 
 import os
-from pkgcore.test import TestCase
+
+from snakeoil.osutils import pjoin
+from snakeoil.test.mixins import TempDirMixin
 
 from pkgcore.fs import fs, livefs
 from pkgcore.fs.contents import contentsSet
-from snakeoil.test.mixins import TempDirMixin
-from snakeoil.osutils import pjoin
+from pkgcore.test import TestCase
 
 
 class FsObjsTest(TempDirMixin, TestCase):

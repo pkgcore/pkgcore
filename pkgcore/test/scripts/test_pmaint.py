@@ -2,20 +2,19 @@
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>: BSD/GPL2
 # License: BSD/GPL2
 
-from pkgcore.test import TestCase
 from snakeoil import compatibility
-from snakeoil.formatters import PlainTextFormatter
 from snakeoil.currying import partial
+from snakeoil.formatters import PlainTextFormatter
 from snakeoil.mappings import AttrAccessible
 
-from pkgcore.scripts import pmaint
-from pkgcore.test.scripts import helpers
 from pkgcore.config import basics, ConfigHint, configurable
-from pkgcore.repository import util, syncable
-from pkgcore.sync import base
 from pkgcore.ebuild.cpv import CPV
-from pkgcore.operations.repo import (install,
-    uninstall, replace, operations)
+from pkgcore.operations.repo import install, uninstall, replace, operations
+from pkgcore.repository import util, syncable
+from pkgcore.scripts import pmaint
+from pkgcore.sync import base
+from pkgcore.test import TestCase
+from pkgcore.test.scripts import helpers
 
 if compatibility.is_py3k:
     from io import BytesIO

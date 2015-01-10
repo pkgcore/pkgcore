@@ -1,15 +1,16 @@
 #!/usr/bin/env python
 
-import sys, os
+import os
+import sys
+
+from snakeoil.bash import iter_read_bash
+from snakeoil.osutils import listdir_files
 
 from pkgcore.config import load_config
-from pkgcore.util.packages import groupby_pkg
 from pkgcore.ebuild.atom import atom
 # we use a WorldFile since it *currently* forces unversioned atoms.
 from pkgcore.pkgsets.filelist import WorldFile
 
-from snakeoil.bash import iter_read_bash
-from snakeoil.osutils import listdir_files
 
 def main(target_repo, seen, moves):
     # could build the atom from categories/packages, but prefer this;
@@ -63,6 +64,7 @@ def apply_updates(moves, atom_set):
             atom_set.remove(src)
             atom_set.add(trg)
     return d
+
 
 def parse_moves(location):
     pjoin = os.path.join

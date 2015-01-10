@@ -13,10 +13,11 @@ import re
 
 from snakeoil.compatibility import raise_from, is_py3k
 
-from pkgcore.restrictions import packages, values, util
 from pkgcore.ebuild import atom, cpv, errors, restricts
+from pkgcore.restrictions import packages, values, util
 
 valid_globbing = re.compile(r"^(?:[\w+-.]+|(?<!\*)\*)+$").match
+
 
 class ParseError(ValueError):
     """Raised if parsing a restriction expression failed."""

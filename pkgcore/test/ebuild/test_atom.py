@@ -12,6 +12,7 @@ from pkgcore.ebuild.cpv import CPV
 from pkgcore.restrictions.boolean import AndRestriction
 from pkgcore.test.misc import FakePkg, FakeRepo
 
+
 class Test_native_atom(test.TestRestriction):
 
     class kls(atom.atom):

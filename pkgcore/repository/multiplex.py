@@ -8,15 +8,16 @@ repository that combines multiple repositories together
 __all__ = ("tree", "operations")
 
 from itertools import chain
-
 from operator import itemgetter
-from pkgcore.repository import prototype, errors
+
+from snakeoil import klass
+from snakeoil.compatibility import sorted_cmp
 from snakeoil.currying import partial, post_curry
 from snakeoil.iterables import iter_sort
-from snakeoil.compatibility import sorted_cmp
-from snakeoil import klass
-from pkgcore.operations import repo as repo_interface
+
 from pkgcore.config import configurable
+from pkgcore.operations import repo as repo_interface
+from pkgcore.repository import prototype, errors
 
 
 class operations(repo_interface.operations_proxy):

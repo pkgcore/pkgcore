@@ -3,13 +3,11 @@
 # Copyright: 2007 Charlie Shepherd <masterdriverz@gmail.com>
 # License: BSD/GPL-2
 
-import sys
 from os.path import basename
+import sys
 
-from snakeoil.osutils import listdir_files, pjoin
 from snakeoil.lists import iflatten_instance
-from snakeoil.currying import partial
-
+from snakeoil.osutils import listdir_files, pjoin
 
 try:
     from pkgcore.util import commandline
@@ -28,6 +26,7 @@ except ImportError:
     else:
         raise
     sys.exit(1)
+
 
 class OptionParser(commandline.OptionParser):
     def __init__(self, **kwargs):

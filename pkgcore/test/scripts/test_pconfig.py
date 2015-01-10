@@ -1,10 +1,11 @@
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
 # License: BSD/GPL2
 
-from pkgcore.test import TestCase
-from pkgcore.scripts import pconfig
-from pkgcore.test.scripts import helpers
 from pkgcore.config import configurable, basics, errors
+from pkgcore.scripts import pconfig
+from pkgcore.test import TestCase
+from pkgcore.test.scripts import helpers
+
 
 @configurable({'reff': 'ref:spork'})
 def spork(reff):

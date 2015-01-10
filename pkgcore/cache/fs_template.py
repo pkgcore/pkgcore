@@ -8,9 +8,11 @@ template for fs based backends
 __all__ = ("FsBased",)
 
 import os
+
+from snakeoil.osutils import ensure_dirs, pjoin
+
 from pkgcore.cache import base
 from pkgcore.os_data import portage_gid
-from snakeoil.osutils import ensure_dirs, pjoin
 
 
 class FsBased(base):

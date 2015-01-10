@@ -12,6 +12,7 @@ __all__ = ("MalformedAtom", "InvalidVersion", "InvalidCPV", "ParseError")
 
 from pkgcore.package import errors
 
+
 class MalformedAtom(errors.InvalidDependency):
 
     def __init__(self, atom, err=''):

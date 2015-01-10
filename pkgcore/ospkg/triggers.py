@@ -1,8 +1,9 @@
 # Copyright: 2010 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD 3 clause
 
-from pkgcore.merge import triggers
 from snakeoil.osutils import pjoin, ensure_dirs
+
+from pkgcore.merge import triggers
 from pkgcore.ospkg import deb
 
 

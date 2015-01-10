@@ -5,19 +5,17 @@
 # potentially use an intermediate base for user config errors,
 # separate base for instantiation?
 
-
 """Exceptions raised by the config code."""
 
-__all__ = ("BaseError", "TypeDefinitionError", "ConfigurationError", "ParsingError",
-    "CollapseInheritOnly", "ComplexInstantiationError", "QuoteInterpretationError",
-    "PermissionError", "PermissionDeniedError",
+__all__ = (
+    "BaseError", "TypeDefinitionError", "ConfigurationError", "ParsingError",
+    "CollapseInheritOnly", "ComplexInstantiationError",
+    "QuoteInterpretationError", "PermissionError", "PermissionDeniedError",
 )
 
-from snakeoil import compatibility
 from snakeoil.demandload import demandload
-demandload(globals(),
-    'snakeoil:currying',
-)
+
+demandload(globals(), 'snakeoil:currying')
 
 
 def _identify_functor_source(functor):

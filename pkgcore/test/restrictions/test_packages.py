@@ -2,14 +2,13 @@
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
 # License: BSD/GPL2
 
-from pkgcore.test import TestCase
+from snakeoil.mappings import AttrAccessible
 from snakeoil.test import mk_cpy_loadable_testcase
+
 from pkgcore import log
 from pkgcore.restrictions import packages, values
-from pkgcore.test import (silence_logging, TestRestriction, malleable_obj,
-    callback_logger)
-
-from snakeoil.mappings import AttrAccessible
+from pkgcore.test import (
+    silence_logging, TestRestriction, TestCase, malleable_obj, callback_logger)
 
 
 class AlwaysSelfIntersect(values.base):

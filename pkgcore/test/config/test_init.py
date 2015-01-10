@@ -3,11 +3,12 @@
 
 """tests for pkgcore.config's package __init__.py"""
 
-
 import operator
-from pkgcore.test import TestCase
-from pkgcore.config import load_config, configurable, basics
+
 from snakeoil.test.mixins import mk_named_tempfile
+
+from pkgcore.config import load_config, configurable, basics
+from pkgcore.test import TestCase
 
 
 @configurable(typename='foo')

@@ -1,12 +1,13 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
+from pkgcore.sync import base, bzr
 from pkgcore.test import TestCase
 from pkgcore.test.sync import make_bogus_syncer, make_valid_syncer
-from pkgcore.sync import base, bzr
 
 bogus = make_bogus_syncer(bzr.bzr_syncer)
 valid = make_valid_syncer(bzr.bzr_syncer)
+
 
 class TestBzrParsing(TestCase):
 

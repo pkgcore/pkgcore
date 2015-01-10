@@ -1,11 +1,12 @@
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
 # License: BSD/GPL2
 
-
 import operator
-from pkgcore.test import TestCase
-from pkgcore.cache import base, errors, bulk
+
 from snakeoil.chksum import LazilyHashedPath
+
+from pkgcore.cache import base, errors, bulk
+from pkgcore.test import TestCase
 
 
 def _mk_chf_obj(**kwargs):

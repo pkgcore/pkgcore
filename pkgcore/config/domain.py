@@ -11,14 +11,16 @@ __all__ = ("domain",)
 
 from snakeoil import klass
 from snakeoil.demandload import demandload
-demandload(globals(),
-    "pkgcore.repository:util@repo_utils",
+
+demandload(
+    globals(),
     "pkgcore.operations:domain@domain_ops",
+    "pkgcore.repository:util@repo_utils",
 )
+
 
 # yes this is basically empty. will fill it out as the base is better
 # identified.
-
 class domain(object):
 
     fetcher = None

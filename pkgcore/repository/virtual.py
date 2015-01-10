@@ -7,8 +7,8 @@ virtual repository, pkgs generated via callable
 
 __all__ = ("tree",)
 
-from pkgcore.repository import prototype
 from pkgcore.package import virtual
+from pkgcore.repository import prototype
 
 
 class tree(prototype.tree):

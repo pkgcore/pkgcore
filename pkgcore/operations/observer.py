@@ -1,16 +1,17 @@
 # Copyright: 2006-2011 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
-__all__ = ("null_output", "formatter_output", "file_handle_output",
+__all__ = (
+    "null_output", "formatter_output", "file_handle_output",
     "phase_observer", "build_observer", "repo_observer",
-    "decorate_build_method")
-
-from snakeoil.currying import pre_curry
-from snakeoil import klass
-from snakeoil.demandload import demandload
-demandload(globals(),
-    'threading',
+    "decorate_build_method",
 )
+
+from snakeoil import klass
+from snakeoil.currying import pre_curry
+from snakeoil.demandload import demandload
+
+demandload(globals(), 'threading')
 
 
 def _convert(msg, args=(), kwds={}):

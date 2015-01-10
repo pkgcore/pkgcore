@@ -3,8 +3,9 @@
 
 __all__ = ("choice_point",)
 
-from snakeoil.lists import iter_stable_unique
 from snakeoil import klass
+from snakeoil.lists import iter_stable_unique
+
 
 class choice_point(object):
 

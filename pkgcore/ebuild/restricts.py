@@ -10,10 +10,10 @@ atom version restrict
 
 __all__ = ("VersionMatch",)
 
-from pkgcore.restrictions import packages, restriction, values
-from pkgcore.ebuild import cpv, errors
-
 from snakeoil.klass import generic_equality
+
+from pkgcore.ebuild import cpv, errors
+from pkgcore.restrictions import packages, restriction, values
 
 
 # TODO: change values.EqualityMatch so it supports le, lt, gt, ge, eq,

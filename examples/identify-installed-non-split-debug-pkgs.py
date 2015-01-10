@@ -1,8 +1,8 @@
 #!/usr/bin/env python
+
 from pkgcore.config import load_config
 from pkgcore.util.file_type import file_identifier
 
-import re
 debug_paths = ["/usr/lib/debug"]
 
 fi = file_identifier()

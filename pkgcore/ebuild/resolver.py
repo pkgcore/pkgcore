@@ -7,13 +7,16 @@ resolver configuration to match portage behaviour (misbehaviour in a few spots)
 
 __all__ = ["upgrade_resolver", "min_install_resolver"]
 
+from snakeoil.demandload import demandload
+
 from pkgcore.repository import misc, multiplex
 from pkgcore.resolver import plan
 
-from snakeoil.demandload import demandload
-demandload(globals(),
+demandload(
+    globals(),
     'pkgcore.restrictions:packages,values',
 )
+
 
 def upgrade_resolver(vdbs, dbs, verify_vdb=True, nodeps=False,
                      force_replace=False, resolver_cls=plan.merge_plan,

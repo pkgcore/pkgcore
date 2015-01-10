@@ -16,20 +16,19 @@ __all__ = (
 from collections import defaultdict
 from itertools import chain
 
-from pkgcore.ebuild import atom
-from pkgcore.restrictions import packages, restriction, boolean
-from pkgcore.util.parserestrict import parse_match
-
 from snakeoil import compatibility, mappings
 from snakeoil.currying import partial
 from snakeoil.klass import generic_equality, alias_method
 from snakeoil.lists import iflatten_instance, stable_unique
 from snakeoil.sequences import namedtuple
-from snakeoil.demandload import demandload
 
+from pkgcore.ebuild import atom
+from pkgcore.restrictions import packages, restriction, boolean
+from pkgcore.util.parserestrict import parse_match
 
 restrict_payload = namedtuple("restrict_data", ["restrict", "data"])
 chunked_data = namedtuple("chunked_data", ("key", "neg", "pos"))
+
 
 def package_keywords_splitter(val):
     v = val.split()

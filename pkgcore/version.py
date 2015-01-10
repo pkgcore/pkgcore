@@ -10,6 +10,7 @@ from pkgcore import const
 
 _ver = None
 
+
 def _compatibility_version():
     version_info = None
     try:

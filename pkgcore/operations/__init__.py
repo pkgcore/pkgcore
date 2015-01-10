@@ -14,6 +14,7 @@ occur down the line if dependencies can be kept as minimal as possible.
 """
 
 from snakeoil import klass, currying, compatibility
+
 from pkgcore.operations import observer as _observer
 
 

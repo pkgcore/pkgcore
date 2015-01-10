@@ -7,14 +7,18 @@ XPAK container support
 
 __all__ = ("MalformedXpak", "Xpak")
 
-from snakeoil.compatibility import raise_from
+from snakeoil import compatibility, klass
 from snakeoil import struct_compat as struct
-from snakeoil.mappings import OrderedDict, autoconvert_py3k_methods_metaclass
-from snakeoil import klass, compatibility
+from snakeoil.compatibility import raise_from
 from snakeoil.demandload import demandload
-demandload(globals(), "os", "errno")
+from snakeoil.mappings import OrderedDict, autoconvert_py3k_methods_metaclass
 
-#
+demandload(
+    globals(),
+    "errno",
+    "os",
+)
+
 # format is:
 # XPAKPACKIIIIDDDD[index][data]XPAKSTOPOOOOSTOP
 # first; all ints/longs are big endian
@@ -28,7 +32,7 @@ demandload(globals(), "os", "errno")
 #   table.
 # finally, trailing magic, 4 bytes (positive) of the # of bytes to seek to
 #   reach the end of the magic, and 'STOP'.  offset is relative to EOS for Xpak
-#
+
 
 class MalformedXpak(Exception):
     def __init__(self, msg):

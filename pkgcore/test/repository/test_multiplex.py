@@ -1,15 +1,16 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
-from pkgcore.test import TestCase
-from snakeoil.mappings import OrderedDict
 from snakeoil.currying import partial
+from snakeoil.mappings import OrderedDict
 
 from pkgcore.repository.multiplex import tree
-from pkgcore.restrictions import packages, values
 from pkgcore.repository.util import SimpleTree
+from pkgcore.restrictions import packages, values
+from pkgcore.test import TestCase
 
 rev_sorted = partial(sorted, reverse=True)
+
 
 class TestMultiplex(TestCase):
 

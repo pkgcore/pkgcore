@@ -5,17 +5,19 @@
 base repository template
 """
 
-__all__ = ("CategoryIterValLazyDict", "PackageMapping", "VersionMapping",
-    "tree")
+__all__ = (
+    "CategoryIterValLazyDict", "PackageMapping", "VersionMapping", "tree"
+)
+
+from snakeoil.compatibility import is_py3k
+from snakeoil.lists import iflatten_instance
+from snakeoil.mappings import LazyValDict, DictMixin
 
 from pkgcore.ebuild.atom import atom
+from pkgcore.operations import repo
 from pkgcore.restrictions import values, boolean, restriction, packages
 from pkgcore.restrictions.util import collect_package_restrictions
 
-from snakeoil.mappings import LazyValDict, DictMixin
-from snakeoil.lists import iflatten_instance
-from snakeoil.compatibility import is_py3k
-from pkgcore.operations import repo
 
 class IterValLazyDict(LazyValDict):
 

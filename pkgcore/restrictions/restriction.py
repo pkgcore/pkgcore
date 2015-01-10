@@ -9,6 +9,7 @@ base restriction class
 from snakeoil import caching, klass
 from snakeoil.currying import partial, pretty_docs
 
+
 class base(object):
 
     """

@@ -25,29 +25,28 @@ __all__ = (
     "InfoRegen",
 )
 
-from pkgcore.merge import errors, const
-from pkgcore.config import ConfigHint
-import pkgcore.os_data
-
-from snakeoil.osutils import listdir_files, pjoin, ensure_dirs, normpath
-from snakeoil.demandload import demandload
 from snakeoil import compatibility
+from snakeoil.demandload import demandload
+from snakeoil.osutils import listdir_files, pjoin, ensure_dirs, normpath
 
-demandload(globals(),
-    'os',
+from pkgcore.config import ConfigHint
+from pkgcore.merge import errors, const
+
+demandload(
+    globals(),
     'errno',
-    'pkgcore.plugin:get_plugin',
-    'pkgcore:spawn',
-    'pkgcore.fs.livefs:gen_obj',
-    'pkgcore.fs:fs,contents',
-    'snakeoil.bash:iter_read_bash',
+    'math:floor',
+    'os',
     're',
     'time',
-    'math:floor',
-    'pkgcore.package.mutated:MutatedPkg',
-    'pkgcore.util:file_type,thread_pool',
-    'pkgcore:os_data',
+    'snakeoil.bash:iter_read_bash',
+    'pkgcore:os_data,spawn',
+    'pkgcore.fs:fs,contents',
+    'pkgcore.fs.livefs:gen_obj',
     'pkgcore.operations.observer:threadsafe_repo_observer',
+    'pkgcore.package.mutated:MutatedPkg',
+    'pkgcore.plugin:get_plugin',
+    'pkgcore.util:file_type,thread_pool',
 )
 
 UNINSTALLING_MODES = (const.REPLACE_MODE, const.UNINSTALL_MODE)
@@ -491,8 +490,8 @@ class fix_uid_perms(base):
     _hooks = ('pre_merge',)
     _engine_types = INSTALLING_MODES
 
-    def __init__(self, uid=pkgcore.os_data.portage_uid,
-                 replacement=pkgcore.os_data.root_uid):
+    def __init__(self, uid=os_data.portage_uid,
+                 replacement=os_data.root_uid):
         base.__init__(self)
         self.bad_uid = uid
         self.good_uid = replacement
@@ -510,8 +509,8 @@ class fix_gid_perms(base):
     _hooks = ('pre_merge',)
     _engine_types = INSTALLING_MODES
 
-    def __init__(self, gid=pkgcore.os_data.portage_gid,
-                 replacement=pkgcore.os_data.root_gid):
+    def __init__(self, gid=os_data.portage_gid,
+                 replacement=os_data.root_gid):
         base.__init__(self)
         self.bad_gid = gid
         self.good_gid = replacement

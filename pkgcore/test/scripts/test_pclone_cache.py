@@ -1,11 +1,10 @@
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
 # License: BSD/GPL2
 
-from pkgcore.test import TestCase
-
-from pkgcore.scripts import pclone_cache
-from pkgcore.test.scripts import helpers
 from pkgcore.config import basics, ConfigHint
+from pkgcore.scripts import pclone_cache
+from pkgcore.test import TestCase
+from pkgcore.test.scripts import helpers
 
 
 class Cache(object):

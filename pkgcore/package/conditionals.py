@@ -13,12 +13,13 @@ from operator import attrgetter
 
 from snakeoil.containers import LimitedChangeSet, Unchangable
 from snakeoil.currying import partial
+from snakeoil.demandload import demandload
 
 from pkgcore.package.base import wrapper
 
-from snakeoil.demandload import demandload
-demandload(globals(),
-    "copy",
+demandload(
+    globals(),
+    "copy:copy",
 )
 
 
@@ -234,7 +235,7 @@ def make_wrapper(configurable_attribute_name, attributes_to_wrap=(),
                 id(self))
 
         def freeze(self):
-            o = copy.copy(self)
+            o = copy(self)
             o.lock()
             return o
 

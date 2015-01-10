@@ -10,20 +10,20 @@ __all__ = (
     "operations", "operations_proxy"
 )
 
-from pkgcore import operations as _operations_mod
-
+from snakeoil import klass
+from snakeoil.currying import partial, post_curry
+from snakeoil.demandload import demandload
 from snakeoil.dependant_methods import ForcedDepends
 from snakeoil.weakrefs import WeakRefFinalizer
-from snakeoil.currying import partial, post_curry
-from snakeoil import klass
-from snakeoil.demandload import demandload
+
+from pkgcore import operations as _operations_mod
 
 demandload(
     globals(),
     "pkgcore.log:logger",
     "pkgcore.operations:observer@observer_mod,regen",
-    "pkgcore.sync:base@_sync_base",
     "pkgcore.package.mutated:MutatedPkg",
+    "pkgcore.sync:base@_sync_base",
 )
 
 

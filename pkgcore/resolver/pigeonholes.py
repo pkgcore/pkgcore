@@ -7,6 +7,7 @@ from pkgcore.restrictions import restriction
 
 # lil too getter/setter like for my tastes...
 
+
 class PigeonHoledSlots(object):
     """class for tracking slotting to a specific atom/obj key
     no atoms present, just prevents conflicts of obj.key; atom present, assumes

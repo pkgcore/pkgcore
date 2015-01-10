@@ -3,9 +3,11 @@
 
 __all__ = ("file_identifier",)
 
-from pkgcore.spawn import spawn_get_output
-from snakeoil.klass import jit_attr
 from snakeoil import compatibility
+from snakeoil.klass import jit_attr
+
+from pkgcore.spawn import spawn_get_output
+
 
 class file_identifier(object):
 

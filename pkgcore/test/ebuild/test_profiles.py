@@ -20,6 +20,7 @@ from pkgcore.test import TestCase, silence_logging
 
 atrue = packages.AlwaysTrue
 
+
 class ProfileNode(profiles.ProfileNode):
     # re-inherited to disable inst-caching
     pass

@@ -1,20 +1,22 @@
 # Copyright: 2007-2011 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
-import os, shutil, time
-from math import floor, ceil
 from itertools import izip
+from math import floor, ceil
+import os
+import shutil
+import time
 
-from pkgcore.test import TestCase, SkipTest
-from snakeoil.test import mixins
 from snakeoil.currying import post_curry
 from snakeoil.osutils import pjoin, ensure_dirs, normpath
+from snakeoil.test import mixins
 
-from pkgcore.fs import fs
 from pkgcore import spawn
+from pkgcore.fs import fs
 from pkgcore.merge import triggers, const
 from pkgcore.fs.contents import contentsSet
 from pkgcore.fs.livefs import gen_obj, scan
+from pkgcore.test import TestCase, SkipTest
 from pkgcore.test.merge.util import fake_trigger, fake_engine, fake_reporter
 
 

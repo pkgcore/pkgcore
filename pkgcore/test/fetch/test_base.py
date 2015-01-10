@@ -3,17 +3,18 @@
 
 import os
 
-from pkgcore.test import TestCase
-from snakeoil.currying import partial
-
-from snakeoil.chksum import get_handlers
-from pkgcore.fetch import base, fetchable, errors
 from snakeoil import data_source
+from snakeoil.chksum import get_handlers
+from snakeoil.currying import partial
 from snakeoil.test.mixins import TempDirMixin
+
+from pkgcore.fetch import base, fetchable, errors
+from pkgcore.test import TestCase
 
 repeating_str = 'asdf'
 data = repeating_str * 4000
 handlers = get_handlers()
+
 
 from snakeoil.mappings import LazyValDict
 def _callback(chf):

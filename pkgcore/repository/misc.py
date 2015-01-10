@@ -1,14 +1,15 @@
 # Copyright: 2006-2008 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
-from pkgcore.restrictions import packages
-from pkgcore.package.mutated import MutatedPkg
-from pkgcore.operations.repo import operations_proxy
-from snakeoil.iterables import caching_iter
-from snakeoil.klass import GetAttrProxy
-from snakeoil.iterables import iter_sort
-
 __all__ = ("nodeps_repo", "caching_repo")
+
+from snakeoil.iterables import caching_iter, iter_sort
+from snakeoil.klass import GetAttrProxy
+
+from pkgcore.operations.repo import operations_proxy
+from pkgcore.package.mutated import MutatedPkg
+from pkgcore.restrictions import packages
+
 
 class nodeps_repo(object):
 

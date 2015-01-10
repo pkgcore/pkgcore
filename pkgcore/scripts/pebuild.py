@@ -10,10 +10,10 @@ __all__ = ("argparser", "main")
 from itertools import izip
 import os
 
-from pkgcore.util import commandline
 from pkgcore.ebuild import atom
 from pkgcore.ebuild.errors import MalformedAtom
 from pkgcore.operations import observer
+from pkgcore.util import commandline
 
 
 argparser = commandline.mk_argparser(description=__doc__)

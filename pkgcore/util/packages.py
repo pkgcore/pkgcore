@@ -3,7 +3,9 @@
 
 __all__ = ("get_raw_pkg", "groupby_pkg")
 
-import itertools, operator
+import itertools
+import operator
+
 
 def get_raw_pkg(pkg):
     p = pkg

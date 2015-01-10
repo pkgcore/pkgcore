@@ -9,14 +9,13 @@ appropriate conditionals.
 
 __all__ = ("DepSet", "stringify_boolean")
 
-# TODO: move exceptions elsewhere, bind them to a base exception for pkgcore
-
-from pkgcore.restrictions import packages, values, boolean
+from snakeoil.compatibility import raise_from, IGNORED_EXCEPTIONS
 from snakeoil.iterables import expandable_chain
 from snakeoil.lists import iflatten_instance
+
 from pkgcore.ebuild.atom import atom, transitive_use_atom
 from pkgcore.ebuild.errors import ParseError
-from snakeoil.compatibility import raise_from, IGNORED_EXCEPTIONS
+from pkgcore.restrictions import packages, values, boolean
 
 try:
     from pkgcore.ebuild._depset import parse_depset

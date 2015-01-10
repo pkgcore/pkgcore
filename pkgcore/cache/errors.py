@@ -5,11 +5,15 @@
 cache subsystem exceptions
 """
 
-__all__ = ("CacheError", "InitializationError", "CacheCorruption",
-    "GeneralCacheCorruption", "ReadOnly")
+__all__ = (
+    "CacheError", "InitializationError", "CacheCorruption",
+    "GeneralCacheCorruption", "ReadOnly",
+)
+
 
 class CacheError(Exception):
     pass
+
 
 class InitializationError(CacheError):
     def __init__(self, class_name, error):

@@ -8,8 +8,8 @@ Shouldn't be accessed directly for the most part, use
 :mod:`pkgcore.plugins` to get at these ops.
 """
 
-import os
 import errno
+import os
 
 from snakeoil.currying import partial
 from snakeoil.osutils import ensure_dirs, pjoin, unlink_if_exists

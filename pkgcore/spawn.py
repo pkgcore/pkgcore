@@ -18,9 +18,9 @@ import os
 import signal
 import sys
 
-from snakeoil.osutils import listdir, access
 from snakeoil.mappings import ProtectedDict
-from snakeoil.process import get_proc_count, find_binary, CommandNotFound, closerange
+from snakeoil.osutils import access
+from snakeoil.process import find_binary, CommandNotFound, closerange
 
 from pkgcore.const import (
     BASH_BINARY, SANDBOX_BINARY, FAKED_PATH, LIBFAKEROOT_PATH)

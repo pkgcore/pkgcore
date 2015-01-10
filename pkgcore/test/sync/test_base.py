@@ -2,10 +2,11 @@
 # License: GPL2/BSD
 
 import pwd
-from pkgcore.test import TestCase, SkipTest
-from pkgcore.sync import base, svn
-from pkgcore.test.sync import make_bogus_syncer, make_valid_syncer
+
 from pkgcore.os_data import root_uid
+from pkgcore.sync import base, svn
+from pkgcore.test import TestCase, SkipTest
+from pkgcore.test.sync import make_bogus_syncer, make_valid_syncer
 
 valid = make_valid_syncer(base.ExternalSyncer)
 bogus = make_bogus_syncer(base.ExternalSyncer)

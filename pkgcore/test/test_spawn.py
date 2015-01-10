@@ -1,11 +1,16 @@
 # Copyright: 2006-2009 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
-import os, pwd, signal
-from pkgcore.test import TestCase, SkipTest
-from snakeoil.test.mixins import TempDirMixin
+import os
+import pwd
+import signal
+
 from snakeoil.currying import post_curry
+from snakeoil.test.mixins import TempDirMixin
+
 from pkgcore import spawn
+from pkgcore.test import TestCase, SkipTest
+
 
 def capability_based(capable, msg):
     def internal_f(f):

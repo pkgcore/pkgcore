@@ -1,9 +1,8 @@
 # Copyright: 2006-2007 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
-from pkgcore.test import TestCase
-from pkgcore.test import TestRestriction
 from pkgcore.restrictions import values
+from pkgcore.test import TestCase, TestRestriction
 
 
 class SillyBool(values.base):

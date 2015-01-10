@@ -3,8 +3,10 @@
 
 __all__ = ("hg_syncer",)
 
-from pkgcore.sync import base
 import os
+
+from pkgcore.sync import base
+
 
 class hg_syncer(base.dvcs_syncer):
 

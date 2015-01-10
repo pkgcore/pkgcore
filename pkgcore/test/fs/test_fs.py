@@ -2,12 +2,15 @@
 # License: GPL2/BSD
 
 import os
-from pkgcore.fs import fs
-from snakeoil.data_source import data_source
+
 from snakeoil.chksum import get_chksums
-from pkgcore.test import TestCase
-from snakeoil.test.mixins import tempdir_decorator
+from snakeoil.data_source import data_source
 from snakeoil.osutils import pjoin, normpath
+from snakeoil.test.mixins import tempdir_decorator
+
+from pkgcore.fs import fs
+from pkgcore.test import TestCase
+
 
 class base(object):
 

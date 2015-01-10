@@ -3,6 +3,7 @@
 
 from pkgcore import test, gpg
 
+
 class TestSkipSignatures(test.TestCase):
 
     def test_simple_skipping(self):

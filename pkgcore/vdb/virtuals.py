@@ -3,26 +3,30 @@
 
 __all__ = ("OldStyleVirtuals",)
 
-import os, stat
+import os
+import stat
 
-from pkgcore.restrictions import packages, values
-from pkgcore.ebuild.atom import atom
-from pkgcore.package.errors import InvalidDependency
-from pkgcore.os_data import portage_gid
-from pkgcore.repository import virtual
-
-from snakeoil.lists import iflatten_instance
-from snakeoil.osutils import listdir, ensure_dirs, pjoin
 from snakeoil.bash import read_dict
 from snakeoil.currying import partial
-from snakeoil.fileutils import AtomicWriteFile, readlines_ascii
 from snakeoil.demandload import demandload
-demandload(globals(),
+from snakeoil.fileutils import AtomicWriteFile, readlines_ascii
+from snakeoil.lists import iflatten_instance
+from snakeoil.osutils import listdir, ensure_dirs, pjoin
+
+from pkgcore.ebuild.atom import atom
+from pkgcore.os_data import portage_gid
+from pkgcore.package.errors import InvalidDependency
+from pkgcore.repository import virtual
+from pkgcore.restrictions import packages, values
+
+demandload(
+    globals(),
     'errno',
-    'pkgcore.log:logger')
+    'pkgcore.log:logger',
+)
+
 
 # generic functions.
-
 def _collect_virtuals(virtuals, iterable):
     for pkg in iterable:
         for virtualpkg in iflatten_instance(

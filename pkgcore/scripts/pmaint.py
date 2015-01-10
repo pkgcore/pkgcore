@@ -6,26 +6,32 @@
 repository maintainence
 """
 
-__all__ = ("sync", "sync_main", "copy", "copy_main", "regen", "regen_main",
-    "perl_rebuild", "perl_rebuild_main", "env_update", "env_update_main")
+__all__ = (
+    "sync", "sync_main", "copy", "copy_main", "regen", "regen_main",
+    "perl_rebuild", "perl_rebuild_main", "env_update", "env_update_main",
+)
+
+from snakeoil.demandload import demandload
 
 from pkgcore.util import commandline
-from snakeoil.demandload import demandload
-demandload(globals(),
-    'os',
+
+demandload(
+    globals(),
     'errno',
+    'os',
+    're',
     'time',
     'snakeoil.osutils:pjoin,listdir_dirs',
     'pkgcore:spawn',
-    'pkgcore.operations:observer',
-    'pkgcore.repository:multiplex',
-    'pkgcore.package:mutated',
-    'pkgcore.fs:contents,livefs',
     'pkgcore.ebuild:processor,triggers',
+    'pkgcore.fs:contents,livefs',
     'pkgcore.merge:triggers@merge_triggers',
+    'pkgcore.operations:observer',
+    'pkgcore.package:mutated',
+    'pkgcore.repository:multiplex',
     'pkgcore.sync:base@sync_base',
-    're',
 )
+
 
 def format_seq(seq, formatter=repr):
     if not seq:

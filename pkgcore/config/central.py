@@ -9,13 +9,16 @@ A lot of extra documentation on this is in dev-notes/config.rst.
 
 __all__ = ("CollapsedConfig", "ConfigManager",)
 
-import collections, weakref
+import collections
 from itertools import chain
+import weakref
 
-from pkgcore.config import errors, basics
 from snakeoil import mappings, compatibility, sequences, klass
 
+from pkgcore.config import errors, basics
+
 _section_data = sequences.namedtuple('_section_data', ['name', 'section'])
+
 
 class _ConfigMapping(mappings.DictMixin):
 

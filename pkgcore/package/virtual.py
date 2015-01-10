@@ -10,6 +10,7 @@ __all__ = ("package", "factory")
 from pkgcore.package import metadata
 from pkgcore.restrictions.packages import OrRestriction
 
+
 class package(metadata.package):
 
     """

@@ -9,6 +9,7 @@ testing.  Do not use it in non-test code.
 
 # we use pre_curry to preserve the docs for the wrapped target
 from snakeoil.currying import pre_curry
+
 from pkgcore.fs import fs
 
 # we're anal about del'ing here to prevent the vars from lingering around,
@@ -20,7 +21,7 @@ for key in dir(fs):
     # protection; issubclass pukes if it's not a class.
     # downside, this works on new style only
     if isinstance(val, type) and issubclass(val, fs.fsBase) and \
-        val is not fs.fsBase:
+            val is not fs.fsBase:
         locals()["_original_%s" % key] = val
         val = pre_curry(val, strict=False)
         val.__doc__ = locals()["_original_%s" % key].__doc__

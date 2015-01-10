@@ -3,6 +3,7 @@
 
 __all__ = ("group_attempts", "fails_filter", "reduce_to_failures",)
 
+
 def group_attempts(sequence, filter_func=None):
     if filter_func is None:
         filter_func = lambda x:True

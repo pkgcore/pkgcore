@@ -8,10 +8,9 @@ __all__ = ("argparser", "main")
 
 import sys
 
-from pkgcore.util import commandline
-# ordering here matters; commandline does a trick to copy to avoid the heavy inspect load.
 from pkgcore.ebuild import filter_env
 from pkgcore.log import logger
+from pkgcore.util import commandline
 
 argparser = commandline.mk_argparser(config=False, domain=False, color=False)
 argparser.add_argument('-V', '--var-match', action='store_true',
@@ -22,6 +21,7 @@ argparser.add_argument('-F', '--func-match', action='store_true',
     default=False,
     help="Invert the filtering- instead of removing a function if it matches "
     "remove all functions that do not match")
+
 
 def stdin_default(namespace, attr):
     if sys.stdin.isatty():

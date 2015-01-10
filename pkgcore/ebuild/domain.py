@@ -9,47 +9,51 @@ __all__ = ("MissingFile", "Failure", "domain")
 
 # XXX doc this up better...
 
-from itertools import chain, izip, imap
+from itertools import chain, izip
 import os.path
 
-import pkgcore.config.domain
-from pkgcore.config import ConfigHint
-from pkgcore.restrictions.delegated import delegate
-from pkgcore.restrictions import packages, values
-from pkgcore.ebuild.atom import generate_collapsed_restriction
-from pkgcore.repository import multiplex, visibility
+from snakeoil.bash import iter_read_bash
+from snakeoil.compatibility import raise_from
+from snakeoil.currying import partial
 from snakeoil.data_source import local_source
+from snakeoil.demandload import demandload
+from snakeoil.lists import unstable_unique, predicate_split
+from snakeoil.mappings import ProtectedDict
+from snakeoil.osutils import pjoin
+
+from pkgcore.config import ConfigHint
+import pkgcore.config.domain
 from pkgcore.config.errors import BaseError
 from pkgcore.ebuild import const
-from pkgcore.ebuild.misc import (collapsed_restrict_to_data,
-    non_incremental_collapsed_restrict_to_data, incremental_expansion,
-    incremental_expansion_license, optimize_incrementals,
-    ChunkedDataDict, chunked_data, split_negations,
-    package_keywords_splitter)
+from pkgcore.ebuild.atom import generate_collapsed_restriction
+from pkgcore.ebuild.misc import (
+    ChunkedDataDict, chunked_data, collapsed_restrict_to_data,
+    incremental_expansion, incremental_expansion_license,
+    non_incremental_collapsed_restrict_to_data, optimize_incrementals,
+    package_keywords_splitter, split_negations)
 from pkgcore.ebuild.repo_objs import OverlayedLicenses
+from pkgcore.repository import multiplex, visibility
+from pkgcore.restrictions import packages, values
+from pkgcore.restrictions.delegated import delegate
 from pkgcore.util.parserestrict import parse_match
 
-from snakeoil.lists import unstable_unique, predicate_split
-from snakeoil.compatibility import raise_from
-from snakeoil.mappings import ProtectedDict
-from snakeoil.bash import iter_read_bash
-from snakeoil.currying import partial
-from snakeoil.demandload import demandload
-from snakeoil.osutils import pjoin
-demandload(globals(),
+demandload(
+    globals(),
     'errno',
-    'pkgcore.fs.livefs:iter_scan',
-    're',
     'operator:itemgetter',
+    're',
     'pkgcore.ebuild.triggers:generate_triggers@ebuild_generate_triggers',
+    'pkgcore.fs.livefs:iter_scan',
 )
+
 
 class MissingFile(BaseError):
     def __init__(self, filename, setting):
         BaseError.__init__(self,
-                               "setting %s points at %s, which doesn't exist."
-                               % (setting, filename))
+                           "setting %s points at %s, which doesn't exist."
+                           % (setting, filename))
         self.file, self.setting = filename, setting
+
 
 class Failure(BaseError):
     def __init__(self, text):

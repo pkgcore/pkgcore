@@ -3,11 +3,14 @@
 
 __all__ = ("SimpleTree", "RepositoryGroup")
 
-from pkgcore.repository.prototype import tree
-from pkgcore.ebuild.cpv import versioned_CPV
-from snakeoil import klass, demandload
+from snakeoil import klass
+from snakeoil.demandload import demandload
 
-demandload.demandload(globals(),
+from pkgcore.ebuild.cpv import versioned_CPV
+from pkgcore.repository.prototype import tree
+
+demandload(
+    globals(),
     "pkgcore.repository:multiplex",
 )
 

@@ -11,6 +11,7 @@ from snakeoil.test.mixins import TempDirMixin
 from pkgcore.ebuild import eclass_cache
 from pkgcore.test import TestCase
 
+
 class FakeEclassCache(eclass_cache.base):
 
     def __init__(self, path):

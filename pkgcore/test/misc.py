@@ -4,20 +4,21 @@
 # misc things useful for tests.
 
 from itertools import ifilter, imap
+
 from snakeoil.mappings import AttrAccessible
-from pkgcore.ebuild.ebuild_src import package
-from pkgcore.ebuild.eapi import get_eapi
-from pkgcore.ebuild.cpv import CPV
-from pkgcore.ebuild.conditionals import DepSet
-from pkgcore.ebuild.atom import atom
-from pkgcore.repository.util import SimpleTree
-from pkgcore.package.metadata import factory
-from pkgcore.ebuild.misc import collapsed_restrict_to_data
-from pkgcore.restrictions.packages import AlwaysTrue
+
 from pkgcore import plugin
+from pkgcore.ebuild.atom import atom
+from pkgcore.ebuild.conditionals import DepSet
+from pkgcore.ebuild.cpv import CPV
+from pkgcore.ebuild.eapi import get_eapi
+from pkgcore.ebuild.ebuild_src import package
+from pkgcore.ebuild.misc import collapsed_restrict_to_data
+from pkgcore.package.metadata import factory
+from pkgcore.repository.util import SimpleTree
+from pkgcore.restrictions.packages import AlwaysTrue
 
 default_arches = set(["x86", "ppc", "amd64", "ia64"])
-
 
 Options = AttrAccessible
 

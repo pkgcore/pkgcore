@@ -2,10 +2,12 @@
 # License: GPL2/BSD
 
 import os
-from pkgcore.test import TestCase
+
 from snakeoil.currying import post_curry, partial
-from pkgcore.fs import fs, contents
 from snakeoil.osutils import pjoin
+
+from pkgcore.fs import fs, contents
+from pkgcore.test import TestCase
 
 mk_file = partial(fs.fsFile, strict=False)
 mk_dir  = partial(fs.fsDir, strict=False)
@@ -14,9 +16,10 @@ mk_dev  = partial(fs.fsDev, strict=False)
 mk_fifo = partial(fs.fsFifo, strict=False)
 
 for x in ("File", "Dir", "Link", "Dev", "Fifo"):
-    globals()["mk_" + x.lower()] = partial(getattr(fs, "fs%s" % x),
-        strict=False)
+    globals()["mk_" + x.lower()] = partial(
+        getattr(fs, "fs%s" % x), strict=False)
 del x
+
 
 class TestContentsSet(TestCase):
 

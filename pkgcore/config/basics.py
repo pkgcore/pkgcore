@@ -9,16 +9,18 @@ configuration subsystem primitives
 all callables can/may throw a :class:`pkgcore.config.errors.ConfigurationError`
 """
 
-__all__ = ("ConfigType", "LazySectionRef", "LazyNamedSectionRef", "ConfigSection",
+__all__ = (
+    "ConfigType", "LazySectionRef", "LazyNamedSectionRef", "ConfigSection",
     "DictConfigSection", "FakeIncrementalDictConfigSection", "convert_string",
-    "convert_asis", "convert_hybrid", "section_alias", "str_to_list", "str_to_str",
-    "str_to_bool", "str_to_int", "parse_config_file"
+    "convert_asis", "convert_hybrid", "section_alias", "str_to_list",
+    "str_to_str", "str_to_bool", "str_to_int", "parse_config_file",
 )
 
-from pkgcore.config import errors, configurable
-from snakeoil import currying
-from snakeoil import compatibility
+from snakeoil import compatibility, currying
 from snakeoil.demandload import demandload
+
+from pkgcore.config import errors, configurable
+
 demandload(globals(), "snakeoil:modules")
 
 type_names = ("list", "str", "bool", "int")
@@ -28,11 +30,11 @@ type_names = ("list", "str", "bool", "int")
 # Also documented in http://docs.python.org/ref/types.html.
 CO_VARARGS, CO_VARKEYWORDS = 4, 8
 
-
 if compatibility.is_py3k:
     _code_attrname = '__code__'
 else:
     _code_attrname = 'func_code'
+
 
 class ConfigType(object):
 

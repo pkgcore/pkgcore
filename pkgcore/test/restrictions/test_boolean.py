@@ -2,10 +2,8 @@
 # Copyright: 2005-2006 Marien Zwart <marienz@gentoo.org>
 # License: BSD/GPL2
 
-
-from pkgcore.test import TestCase
 from pkgcore.restrictions import boolean, restriction
-
+from pkgcore.test import TestCase
 
 true = restriction.AlwaysBool(node_type='foo', negate=True)
 false = restriction.AlwaysBool(node_type='foo', negate=False)

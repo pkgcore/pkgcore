@@ -2,7 +2,9 @@
 # License: GPL2/BSD
 
 from snakeoil.currying import partial
+
 from pkgcore.merge import triggers
+
 
 class fake_trigger(triggers.base):
 

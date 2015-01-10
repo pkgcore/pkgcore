@@ -8,8 +8,9 @@ restrictions on the fly
 """
 
 __all__ = ("delegate",)
-from pkgcore.restrictions import restriction
-from pkgcore.restrictions import packages
+
+from pkgcore.restrictions import packages, restriction
+
 
 class delegate(restriction.base):
 

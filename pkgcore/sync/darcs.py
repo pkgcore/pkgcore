@@ -5,6 +5,7 @@ __all__ = ("darcs_syncer",)
 
 from pkgcore.sync import base
 
+
 class darcs_syncer(base.dvcs_syncer):
 
     binary = "darcs"

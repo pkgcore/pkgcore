@@ -9,6 +9,7 @@ __all__ = ("MutatedPkg",)
 
 from pkgcore.package.base import wrapper
 
+
 class MutatedPkg(wrapper):
     __slots__ = ("_overrides",)
 

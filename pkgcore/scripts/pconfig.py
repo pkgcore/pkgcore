@@ -4,22 +4,24 @@
 
 """Configuration querying utility."""
 
-__all__ = ("get_classes", "dump", "dump_main", "classes", "classes_main",
+__all__ = (
+    "get_classes", "dump", "dump_main", "classes", "classes_main",
     "uncollapsable", "uncollapsable_main",
     "describe_class", "describe_class_main",
     "configurables", "configurables_main",
     "dump_uncollapsed", "dump_uncollapsed_main"
 )
 
-from pkgcore.config import errors, basics
-from pkgcore.plugin import get_plugins
-from pkgcore.util import commandline
-from pkgcore.ebuild import atom
 from snakeoil import currying
 from snakeoil.demandload import demandload
-demandload(globals(),
-    'traceback',
-)
+
+from pkgcore.config import errors, basics
+from pkgcore.ebuild import atom
+from pkgcore.plugin import get_plugins
+from pkgcore.util import commandline
+
+demandload(globals(), 'traceback')
+
 
 def dump_section(config, out):
     out.first_prefix.append('    ')

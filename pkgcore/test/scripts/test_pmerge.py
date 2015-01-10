@@ -1,19 +1,17 @@
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
 # License: BSD/GPL2
 
-from pkgcore.test import TestCase
-
-from pkgcore.scripts import pmerge
-from pkgcore.repository import util
-from pkgcore.ebuild import formatter
 from pkgcore.config import basics
+from pkgcore.ebuild import formatter
+from pkgcore.repository import util
+from pkgcore.scripts import pmerge
+from pkgcore.test import TestCase
 from pkgcore.util.parserestrict import parse_match
 
-
 default_formatter = basics.HardCodedConfigSection({
-        'class': formatter.basic_factory,
-        'default': True,
-        })
+    'class': formatter.basic_factory,
+    'default': True,
+})
 
 
 class AtomParsingTest(TestCase):

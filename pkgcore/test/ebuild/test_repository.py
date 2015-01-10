@@ -14,6 +14,7 @@ from pkgcore.ebuild.atom import atom
 from pkgcore.repository import errors
 from pkgcore.test import silence_logging
 
+
 class UnconfiguredTreeTest(TempDirMixin):
 
     def mk_tree(self, path, *args, **kwds):

@@ -11,8 +11,10 @@ __all__ = ("config_from_file",)
 import ConfigParser
 import sys
 
-from pkgcore.config import basics, errors
 from snakeoil import mappings
+
+from pkgcore.config import basics, errors
+
 
 class CaseSensitiveConfigParser(ConfigParser.ConfigParser):
     def optionxform(self, val):

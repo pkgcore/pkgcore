@@ -3,21 +3,23 @@
 
 __all__ = ("install", "uninstall", "replace", "operations")
 
-import os, shutil
+import os
+import shutil
 
-from pkgcore.operations import repo as repo_ops
+from snakeoil import compression
+from snakeoil.demandload import demandload
+from snakeoil.osutils import ensure_dirs, pjoin, normpath
 
 from pkgcore.const import VERSION
+from pkgcore.operations import repo as repo_ops
 
-from snakeoil.osutils import ensure_dirs, pjoin, normpath
-from snakeoil.demandload import demandload
-from snakeoil import compression
-demandload(globals(),
+demandload(
+    globals(),
     'time',
+    'snakeoil.data_source:local_source',
     'pkgcore.ebuild:conditionals',
     'pkgcore.log:logger',
     'pkgcore.vdb.contents:ContentsFile',
-    'snakeoil.data_source:local_source',
 )
 
 

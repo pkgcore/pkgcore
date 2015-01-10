@@ -5,29 +5,31 @@
 gentoo/ebuild specific triggers
 """
 
-__all__ = ("collapse_envd", "string_collapse_envd", "env_update",
+__all__ = (
+    "collapse_envd", "string_collapse_envd", "env_update",
     "ConfigProtectInstall", "ConfigProtectUninstall", "preinst_contents_reset",
-    "CollisionProtect", "ProtectOwned", "install_into_symdir_protect", "InfoRegen",
-    "SFPerms", "FixImageSymlinks", "generate_triggers")
+    "CollisionProtect", "ProtectOwned", "install_into_symdir_protect",
+    "InfoRegen", "SFPerms", "FixImageSymlinks", "generate_triggers",
+)
 
+import errno
+import os
 
-import os, errno
+from snakeoil.bash import read_bash_dict
+from snakeoil.demandload import demandload
+from snakeoil.fileutils import AtomicWriteFile
+from snakeoil.lists import stable_unique, iflatten_instance
+from snakeoil.osutils import listdir_files, normpath, pjoin
+
 from pkgcore.merge import triggers, const, errors
 from pkgcore.fs import livefs
 from pkgcore.restrictions import values
 
-from snakeoil.osutils import normpath
-from snakeoil.fileutils import AtomicWriteFile
-from snakeoil.bash import read_bash_dict
-from snakeoil.osutils import listdir_files
-from snakeoil.lists import stable_unique, iflatten_instance
-from snakeoil.osutils import pjoin
-
-from snakeoil.demandload import demandload
-demandload(globals(),
-    "fnmatch",
-    'pkgcore:os_data',
+demandload(
+    globals(),
+    'fnmatch',
     'snakeoil:compatibility',
+    'pkgcore:os_data',
 )
 
 colon_parsed = frozenset([
@@ -42,6 +44,7 @@ incrementals = frozenset([
     'MANPATH', 'PATH', 'PRELINK_PATH', 'PRELINK_PATH_MASK', 'PYTHONPATH',
     'ROOTPATH', 'PKG_CONFIG_PATH'
 ])
+
 
 def collapse_envd(base):
     collapsed_d = {}

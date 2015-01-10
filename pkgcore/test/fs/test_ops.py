@@ -1,12 +1,15 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
-import os, shutil
-from pkgcore.test import TestCase, SkipTest
-from snakeoil.test.mixins import TempDirMixin
-from snakeoil.osutils import pjoin
-from pkgcore.fs import ops, fs, livefs, contents
+import os
+import shutil
+
 from snakeoil.data_source import local_source
+from snakeoil.osutils import pjoin
+from snakeoil.test.mixins import TempDirMixin
+
+from pkgcore.fs import ops, fs, livefs, contents
+from pkgcore.test import TestCase, SkipTest
 
 
 class VerifyMixin(object):

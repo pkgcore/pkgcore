@@ -11,8 +11,11 @@ operations.
 __all__ = ("AndRestriction", "OrRestriction")
 
 from itertools import islice
-from pkgcore.restrictions import restriction
+
 from snakeoil.klass import generic_equality, cached_hash
+
+from pkgcore.restrictions import restriction
+
 
 class base(restriction.base):
 

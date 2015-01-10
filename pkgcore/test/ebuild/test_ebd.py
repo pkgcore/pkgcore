@@ -9,6 +9,7 @@ from snakeoil.osutils import pjoin
 from pkgcore.ebuild import const
 from pkgcore.test import TestCase
 
+
 class Test_DontExportFuncsList(TestCase):
     base_path = const.EAPI_BIN_PATH
 

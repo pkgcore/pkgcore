@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
-import datetime, os, errno, re
+import errno
+import os
+import re
 
 from snakeoil.currying import partial
 from snakeoil.modules import load_module

@@ -1,12 +1,14 @@
 # Copyright: 2006-2009 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
-import tempfile, os
-from pkgcore.test import TestCase, protect_logging, callback_logger
-from pkgcore.pkgsets import filelist
+import os
+import tempfile
+
+from pkgcore import log, os_data
 from pkgcore.ebuild.atom import atom
-from pkgcore import os_data
-from pkgcore import log
+from pkgcore.pkgsets import filelist
+from pkgcore.test import TestCase, protect_logging, callback_logger
+
 
 class TestFileList(TestCase):
 

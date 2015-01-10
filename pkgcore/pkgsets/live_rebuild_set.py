@@ -8,10 +8,8 @@
 Note: HACK. Quick proof of concept, could do with cleaning up.
 """
 
-
-from pkgcore.pkgsets.installed import VersionedInstalled
 from pkgcore.config import ConfigHint
-from snakeoil.currying import partial
+from pkgcore.pkgsets.installed import VersionedInstalled
 
 
 class EclassConsumerSet(VersionedInstalled):

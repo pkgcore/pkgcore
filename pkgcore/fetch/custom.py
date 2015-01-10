@@ -7,13 +7,17 @@ fetcher class that pulls files via executing another program to do the fetching
 
 __all__ = ("MalformedCommand", "fetcher",)
 
-import os, sys
+import os
+import sys
+
+from snakeoil.osutils import ensure_dirs, pjoin
+from snakeoil.compatibility import raise_from
+
 from pkgcore.spawn import spawn_bash, is_userpriv_capable
 from pkgcore.os_data import portage_uid, portage_gid
 from pkgcore.fetch import errors, base, fetchable
 from pkgcore.config import ConfigHint
-from snakeoil.osutils import ensure_dirs, pjoin
-from snakeoil.compatibility import raise_from
+
 
 class MalformedCommand(errors.base):
 

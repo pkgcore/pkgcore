@@ -8,15 +8,17 @@ cache backend designed for rsynced tree's pregenerated metadata.
 
 __all__ = ("database", "paludis_flat_list", "protective_database")
 
-import os
-import errno
 from itertools import izip
-from pkgcore.cache import flat_hash, errors
-from pkgcore.config import ConfigHint
-from pkgcore.ebuild import eclass_cache
+import errno
+import os
+
 from snakeoil.osutils import pjoin
 from snakeoil.compatibility import raise_from
 from snakeoil.mappings import ProtectedDict
+
+from pkgcore.cache import flat_hash, errors
+from pkgcore.config import ConfigHint
+from pkgcore.ebuild import eclass_cache
 
 
 # store the current key order *here*.

@@ -9,6 +9,7 @@ __all__ = ("fetchable", "mirror", "default_mirror", "uri_list")
 
 from snakeoil.klass import generic_equality
 
+
 class fetchable(object):
 
     """class representing uri sources for a file and chksum information."""

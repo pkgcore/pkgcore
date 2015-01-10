@@ -2,8 +2,8 @@
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
 # License: BSD/GPL2
 
-from pkgcore.config import basics
 from snakeoil.test.mixins import PythonNamespaceWalker
+
 
 class walker(PythonNamespaceWalker):
 
@@ -11,7 +11,7 @@ class walker(PythonNamespaceWalker):
 
     def _default_module_blacklister(self, target):
         if target.startswith("pkgcore.test.") or target.startswith('pkgcore.plugins.') \
-            or 'pkgcore.test' == target:
+                or 'pkgcore.test' == target:
             return True
         return PythonNamespaceWalker._default_module_blacklister(self, target)
 
@@ -25,4 +25,3 @@ for module in walker().walk_namespace('pkgcore'):
 pkgcore_plugins = {
     'configurable': targets
 }
-

@@ -8,10 +8,13 @@ prototype fetcher class, all fetchers should derive from this
 __all__ = ("fetcher",)
 
 import os
-from snakeoil.chksum import get_handlers, get_chksums
+
 from snakeoil import compatibility
-from pkgcore.fetch import errors
+from snakeoil.chksum import get_handlers, get_chksums
 from snakeoil.compatibility import cmp
+
+from pkgcore.fetch import errors
+
 
 class fetcher(object):
 

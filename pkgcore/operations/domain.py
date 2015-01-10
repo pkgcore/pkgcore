@@ -7,20 +7,20 @@ repository modifications (installing, removing, replacing)
 
 __all__ = ("Failure", "base", "install", "uninstall", "replace")
 
+from snakeoil.demandload import demandload
 from snakeoil.dependant_methods import ForcedDepends
 from snakeoil.weakrefs import WeakRefFinalizer
-from snakeoil.demandload import demandload
 
 demandload(
     globals(),
-    "pkgcore.log:logger",
-    "pkgcore.merge.engine:MergeEngine",
-    "pkgcore.merge:errors@merge_errors",
-    "pkgcore.package.mutated:MutatedPkg",
     'errno',
     "shutil",
     "tempfile",
     'snakeoil:osutils',
+    "pkgcore.log:logger",
+    "pkgcore.merge:errors@merge_errors",
+    "pkgcore.merge.engine:MergeEngine",
+    "pkgcore.package.mutated:MutatedPkg",
 )
 
 

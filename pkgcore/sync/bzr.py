@@ -3,9 +3,11 @@
 
 __all__ = ("bzr_syncer",)
 
-from pkgcore.sync import base
-from pkgcore.spawn import spawn_get_output
 import os
+
+from pkgcore.spawn import spawn_get_output
+from pkgcore.sync import base
+
 
 class bzr_syncer(base.dvcs_syncer):
 

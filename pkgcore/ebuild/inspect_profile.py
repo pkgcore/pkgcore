@@ -1,15 +1,17 @@
 # Copyright: 2011 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD 3 clause
 
-import collections
-from pkgcore.util import commandline
 from snakeoil.demandload import demandload
+
+from pkgcore.util import commandline
+
 demandload(
     globals(),
-    'pkgcore.ebuild:atom,profiles',
-    'snakeoil:mappings',
-    'operator',
+    'collections:defaultdict',
     'itertools:chain',
+    'operator',
+    'snakeoil:mappings',
+    'pkgcore.ebuild:atom,profiles',
 )
 
 commands = []
@@ -96,7 +98,7 @@ class provided(_base):
     """
 
     def __call__(self, namespace, out, err):
-        targets = collections.defaultdict(list)
+        targets = defaultdict(list)
         for pkg in namespace.profile.provides_repo:
             targets[pkg.key].append(pkg)
 

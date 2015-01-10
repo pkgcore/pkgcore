@@ -5,9 +5,9 @@
 filesystem entry abstractions
 """
 
+import fnmatch
 from os.path import sep as path_seperator, realpath, abspath, dirname, basename
 import stat
-import fnmatch
 
 from snakeoil import klass
 from snakeoil.chksum import get_handlers, get_chksums

@@ -5,6 +5,7 @@ __all__ = ("tree",)
 
 from pkgcore.operations.repo import sync_operations
 
+
 class tree(object):
 
     operations_kls = sync_operations

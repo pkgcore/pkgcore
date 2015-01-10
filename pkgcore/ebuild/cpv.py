@@ -8,31 +8,40 @@
 __all__ = ("CPV", "versioned_CPV", "unversioned_CPV")
 
 from itertools import izip
-from snakeoil.compatibility import cmp
-from snakeoil.klass import inject_richcmp_methods_from_cmp
-from pkgcore.ebuild.errors import InvalidCPV
 
-from pkgcore.package import base
-# do this to break the cycle.
+from snakeoil.compatibility import cmp
 from snakeoil.demandload import demandload, demand_compile_regexp
+from snakeoil.klass import inject_richcmp_methods_from_cmp
+
+from pkgcore.ebuild.errors import InvalidCPV
+from pkgcore.package import base
+
+# do this to break the cycle.
 demandload(globals(), "pkgcore.ebuild:atom")
 
-demand_compile_regexp(globals(), 'suffix_regexp',
-    '^(alpha|beta|rc|pre|p)(\\d*)$')
+demand_compile_regexp(
+    globals(),
+    'suffix_regexp', '^(alpha|beta|rc|pre|p)(\\d*)$')
+
 suffix_value = {"pre": -2, "p": 1, "alpha": -4, "beta": -3, "rc": -1}
 
 # while the package section looks fugly, there is a reason for it-
 # to prevent version chunks from showing up in the package
 
-demand_compile_regexp(globals(), 'isvalid_version_re',
+demand_compile_regexp(
+    globals(),
+    'isvalid_version_re',
     r"^(?:\d+)(?:\.\d+)*[a-zA-Z]?(?:_(p(?:re)?|beta|alpha|rc)\d*)*$")
 
-demand_compile_regexp(globals(), 'isvalid_cat_re',
-    r"^(?:[a-zA-Z0-9][-a-zA-Z0-9+._]*(?:/(?!$))?)+$")
+demand_compile_regexp(
+    globals(),
+    'isvalid_cat_re', r"^(?:[a-zA-Z0-9][-a-zA-Z0-9+._]*(?:/(?!$))?)+$")
 
-demand_compile_regexp(globals(), '_pkg_re',
-    #empty string is fine, means a -- was encounter.
-    r"^[a-zA-Z0-9+_]+$")
+# empty string is fine, means a -- was encounter.
+demand_compile_regexp(
+    globals(),
+    '_pkg_re', r"^[a-zA-Z0-9+_]+$")
+
 
 def isvalid_pkg_name(chunks):
     if not chunks[0] or chunks[0][0] == '+':

@@ -1,9 +1,10 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
-from pkgcore.test import TestCase
 from pkgcore.resolver.choice_point import choice_point
 from pkgcore.restrictions.boolean import AndRestriction, OrRestriction
+from pkgcore.test import TestCase
+
 
 class fake_package(object):
     def __init__(self, **kwds):

@@ -41,9 +41,10 @@ __all__ = ("config_from_file",)
 
 # The tests for this are in test_dhcpformat.
 
-from pkgcore.config import dhcpformat, errors
-from snakeoil import mappings
 import pyparsing as pyp
+from snakeoil import mappings
+
+from pkgcore.config import dhcpformat, errors
 
 
 _section_contents = pyp.Forward()

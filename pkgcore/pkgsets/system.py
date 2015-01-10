@@ -10,6 +10,7 @@ __all__ = ("SystemSet",)
 # yuck. :)
 from pkgcore.config import configurable
 
+
 @configurable({'profile': 'ref:profile'}, typename='pkgset')
 def SystemSet(profile):
     return frozenset(profile.system)

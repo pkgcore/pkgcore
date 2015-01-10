@@ -4,24 +4,30 @@
 
 """pmerge formatting module"""
 
-__all__ = ("NoChoice", "userquery", "Formatter", "use_expand_filter",
-    "BasicFormatter", "PkgcoreFormatter", "CountingFormatter", "PortageFormatter",
-    "PaludisFormatter", "basic_factory", "pkgcore_factory", "portage_factory",
-    "paludis_factory", "portage_verbose_factory")
+__all__ = (
+    "NoChoice", "userquery", "Formatter", "use_expand_filter",
+    "BasicFormatter", "PkgcoreFormatter", "CountingFormatter",
+    "PortageFormatter", "PaludisFormatter", "basic_factory", "pkgcore_factory",
+    "portage_factory", "paludis_factory", "portage_verbose_factory",
+)
 
 import operator
 
-from pkgcore.config import configurable
-from snakeoil.demandload import demandload
 from snakeoil.compatibility import raise_from
+from snakeoil.demandload import demandload
 from snakeoil.lists import iflatten_instance
-demandload(globals(),
+
+from pkgcore.config import configurable
+
+demandload(
+    globals(),
     'errno',
     'os',
-    'pkgcore.log:logger',
     'snakeoil.mappings:defaultdictkey',
     'snakeoil.osutils:pjoin',
+    'pkgcore.log:logger',
 )
+
 
 class NoChoice(KeyboardInterrupt):
     """Raised by :obj:`userquery` if no choice was made.

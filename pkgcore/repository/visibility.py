@@ -7,15 +7,19 @@ filtering repository
 
 __all__ = ("filterTree",)
 
+from itertools import ifilterfalse as filterfalse, ifilter
+
+from snakeoil import compatibility
+from snakeoil.klass import GetAttrProxy
+
+from pkgcore.operations.repo import operations_proxy
 from pkgcore.repository import prototype, errors
 from pkgcore.restrictions.restriction import base
-from pkgcore.operations.repo import operations_proxy
-from snakeoil.klass import GetAttrProxy
+
 # these tricks are to keep 2to3 from screwing up.
-from snakeoil import compatibility
-from itertools import ifilterfalse as filterfalse, ifilter
 if compatibility.is_py3k:
     ifilter = filter
+
 
 class filterTree(prototype.tree):
 

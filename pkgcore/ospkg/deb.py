@@ -3,8 +3,10 @@
 # License: GPL2/BSD
 
 import time
-from snakeoil.osutils import pjoin, unlink_if_exists
+
 from snakeoil.data_source import text_data_source
+from snakeoil.osutils import pjoin, unlink_if_exists
+
 from pkgcore.fs import tar, fs, contents
 from pkgcore.spawn import spawn
 
@@ -12,6 +14,7 @@ OPS = {
     '>=': (True, '>='),
     '!<': (False, '<<'),
 }
+
 
 def parsedeps(s):
 

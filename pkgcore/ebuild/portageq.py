@@ -1,10 +1,12 @@
 # Copyright: 2006-2011 Brian Harring <ferringb@gmail.com>
 # License: BSD/GPL2
 
+from snakeoil.demandload import demandload
+
 from pkgcore.util import commandline
 
-from snakeoil.demandload import demandload
-demandload(globals(),
+demandload(
+    globals(),
     'snakeoil:osutils,currying',
     "pkgcore.ebuild:atom,conditionals,eapi",
     "pkgcore.restrictions.boolean:AndRestriction",

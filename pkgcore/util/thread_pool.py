@@ -3,10 +3,12 @@
 
 import threading
 import Queue
-import time
+
 from snakeoil import compatibility
 from snakeoil.demandload import demandload
-demandload(globals(),
+
+demandload(
+    globals(),
     'snakeoil.process:get_proc_count',
 )
 

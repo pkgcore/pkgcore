@@ -2,11 +2,10 @@
 # Copyright: 2005 Marien Zwart <marienz@gentoo.org>
 # License: BSD/GPL2
 
-
-import operator
 from snakeoil.errors import walk_exception_chain
-from pkgcore.test import TestCase
+
 from pkgcore.config import central, basics, errors, configurable
+from pkgcore.test import TestCase
 
 
 # A bunch of functions used from various tests below.

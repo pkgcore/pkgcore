@@ -11,18 +11,23 @@ gentoo ebuild atom, should be generalized into an agnostic base
 __all__ = ("atom", "transitive_use_atom", "generate_collapsed_restriction")
 
 import string
-from pkgcore.restrictions import values, packages, boolean
-from pkgcore.ebuild import cpv, errors, const, restricts
+
 from snakeoil.compatibility import is_py3k, cmp, raise_from
-from snakeoil.klass import (generic_equality, inject_richcmp_methods_from_cmp,
-    reflective_hash, alias_attr)
-from snakeoil.demandload import demandload
 from snakeoil.currying import partial
-demandload(globals(),
+from snakeoil.demandload import demandload
+from snakeoil.klass import (
+    generic_equality, inject_richcmp_methods_from_cmp,
+    reflective_hash, alias_attr)
+
+from pkgcore.ebuild import cpv, errors, restricts
+from pkgcore.restrictions import values, packages, boolean
+
+demandload(
+    globals(),
+    'collections:defaultdict',
     "pkgcore.restrictions.delegated:delegate",
     'pkgcore.restrictions.packages:Conditional,AndRestriction@PkgAndRestriction',
     'pkgcore.restrictions.values:ContainmentMatch',
-    'collections:defaultdict',
 )
 
 # namespace compatibility...
@@ -44,6 +49,7 @@ alphanum = frozenset(alphanum)
 valid_use_chars = frozenset(valid_use_chars)
 valid_repo_chars = frozenset(valid_repo_chars)
 valid_slot_chars = frozenset(valid_slot_chars)
+
 
 def native_init(self, atom, negate_vers=False, eapi=-1):
     """

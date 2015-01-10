@@ -1,10 +1,11 @@
 # Copyright: 2011 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD 3 clause
 
-import time
 from snakeoil import compatibility
 from snakeoil.demandload import demandload
-demandload(globals(),
+
+demandload(
+    globals(),
     'pkgcore.util.thread_pool:map_async',
 )
 

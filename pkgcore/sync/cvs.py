@@ -3,8 +3,10 @@
 
 __all__ = ("cvs_syncer",)
 
-from pkgcore.sync import base
 import os
+
+from pkgcore.sync import base
+
 
 class cvs_syncer(base.dvcs_syncer):
 

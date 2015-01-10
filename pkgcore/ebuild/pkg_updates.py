@@ -1,18 +1,22 @@
 # Copyright: 2011 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD 3 clause
 
-from operator import itemgetter
 from collections import deque, defaultdict
-from snakeoil.osutils import listdir_files, pjoin
-from snakeoil.fileutils import readlines
-from pkgcore.ebuild.atom import atom
-from snakeoil.lists import iflatten_instance
-from snakeoil import demandload
-demandload.demandload(globals(),
-    'pkgcore.log:logger',
-)
+from operator import itemgetter
 
-demandload.demand_compile_regexp(globals(), "valid_updates_re", "^(\d)Q-(\d{4})$")
+from snakeoil.demandload import demandload, demand_compile_regexp
+from snakeoil.fileutils import readlines
+from snakeoil.lists import iflatten_instance
+from snakeoil.osutils import listdir_files, pjoin
+
+from pkgcore.ebuild.atom import atom
+
+demandload(globals(), 'pkgcore.log:logger')
+
+demand_compile_regexp(
+    globals(),
+    "valid_updates_re", "^(\d)Q-(\d{4})$"
+)
 
 
 def _scan_directory(path):

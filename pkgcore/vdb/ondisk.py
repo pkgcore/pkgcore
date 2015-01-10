@@ -3,30 +3,29 @@
 
 __all__ = ("tree", "ConfiguredTree")
 
-import os, stat, errno
+import errno
+import os
+import stat
 
-from pkgcore.repository import prototype, errors
-from pkgcore.vdb import virtuals
-from pkgcore.plugin import get_plugin
-from snakeoil import data_source
-from pkgcore.repository import multiplex
-from pkgcore.config import ConfigHint
-#needed to grab the PN
-from pkgcore.ebuild.cpv import versioned_CPV
-from pkgcore.ebuild import ebuild_built
-from pkgcore.ebuild.errors import InvalidCPV
-
-from snakeoil.osutils import pjoin
-from snakeoil.mappings import IndeterminantDict
+from snakeoil import compatibility, data_source, klass
 from snakeoil.currying import partial
-from snakeoil.osutils import listdir_dirs
-from snakeoil.fileutils import readfile
-from snakeoil import klass, compatibility
 from snakeoil.demandload import demandload
-demandload(globals(),
+from snakeoil.fileutils import readfile
+from snakeoil.mappings import IndeterminantDict
+from snakeoil.osutils import listdir_dirs, pjoin
+
+from pkgcore.config import ConfigHint
+from pkgcore.ebuild import ebuild_built
+from pkgcore.ebuild.cpv import versioned_CPV
+from pkgcore.ebuild.errors import InvalidCPV
+from pkgcore.repository import errors, multiplex, prototype
+from pkgcore.vdb import virtuals
+
+demandload(
+    globals(),
+    'pkgcore.log:logger',
     'pkgcore.vdb:repo_ops',
     'pkgcore.vdb.contents:ContentsFile',
-    'pkgcore.log:logger',
 )
 
 

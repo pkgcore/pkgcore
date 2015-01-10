@@ -15,22 +15,24 @@ __all__ = (
 import os
 import sys
 
+from snakeoil.compatibility import raise_from, IGNORED_EXCEPTIONS
+from snakeoil.demandload import demandload
+from snakeoil.osutils import access, normpath, abspath, listdir_files, pjoin, ensure_dirs
+
 from pkgcore.config import basics, configurable
 from pkgcore.ebuild import const
 from pkgcore.ebuild.repo_objs import RepoConfig
 from pkgcore.pkgsets.glsa import SecurityUpgrades
 
-from snakeoil.osutils import access, normpath, abspath, listdir_files, pjoin, ensure_dirs
-from snakeoil.compatibility import raise_from, IGNORED_EXCEPTIONS
-from snakeoil.demandload import demandload
-demandload(globals(),
+demandload(
+    globals(),
     'errno',
-    'pkgcore.config:errors',
-    'pkgcore.log:logger',
     'ConfigParser:ConfigParser',
     'snakeoil.bash:read_bash_dict',
-    'pkgcore.ebuild:profiles',
     'snakeoil.xml:etree',
+    'pkgcore.config:errors',
+    'pkgcore.ebuild:profiles',
+    'pkgcore.log:logger',
 )
 
 

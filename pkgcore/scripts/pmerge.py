@@ -14,16 +14,16 @@ from pkgcore.ebuild.atom import atom
 from pkgcore.merge import errors as merge_errors
 from pkgcore.operations import observer, format
 from pkgcore.resolver.util import reduce_to_failures
-from pkgcore.restrictions import packages, values
-from pkgcore.restrictions.boolean import AndRestriction, OrRestriction
+from pkgcore.restrictions import packages
+from pkgcore.restrictions.boolean import OrRestriction
 from pkgcore.util import commandline, parserestrict, repo_utils, argparse
 
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.currying import partial
 from snakeoil.lists import stable_unique
 
-argparser = commandline.mk_argparser(domain=True,
-    description="pkgcore package merging and unmerging interface")
+argparser = commandline.mk_argparser(
+    domain=True, description="pkgcore package merging and unmerging interface")
 
 
 class StoreTarget(argparse._AppendAction):

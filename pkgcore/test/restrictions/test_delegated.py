@@ -1,9 +1,9 @@
 # Copyright: 2007 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
-
-from pkgcore.test import TestRestriction
 from pkgcore.restrictions.delegated import delegate
+from pkgcore.test import TestRestriction
+
 
 class Test_delegate(TestRestriction):
 

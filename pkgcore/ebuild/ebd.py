@@ -14,33 +14,36 @@ from __future__ import print_function
 __all__ = ("ebd", "setup_mixin", "install_op", "uninstall_op", "replace_op",
     "buildable", "binpkg_localize")
 
-import os, errno, re, shutil, sys
+import errno
+import os
+import re
+import shutil
+import sys
 
-from snakeoil import data_source
+from snakeoil import data_source, klass
 from snakeoil.compatibility import raise_from, IGNORED_EXCEPTIONS
-from pkgcore.ebuild.processor import \
-    request_ebuild_processor, release_ebuild_processor, \
-    expected_ebuild_env, chuck_UnhandledCommand, \
-    inherit_handler
-from pkgcore.os_data import portage_gid, portage_uid
+from snakeoil.currying import post_curry, pretty_docs, partial
+from snakeoil.demandload import demandload
+from snakeoil.osutils import ensure_dirs, normpath, pjoin, listdir_files
+
+from pkgcore.ebuild import ebuild_built, const
+from pkgcore.ebuild.processor import (
+    request_ebuild_processor, release_ebuild_processor,
+    expected_ebuild_env, chuck_UnhandledCommand, inherit_handler)
+from pkgcore.operations import observer, format
+from pkgcore.os_data import portage_gid, portage_uid, xargs
 from pkgcore.spawn import (
     spawn_bash, spawn, is_sandbox_capable, is_fakeroot_capable,
     is_userpriv_capable, spawn_get_output)
-from pkgcore.os_data import xargs
-from pkgcore.operations import observer, format
-from pkgcore.ebuild import ebuild_built, const
-from snakeoil.currying import post_curry, pretty_docs, partial
-from snakeoil import klass
-from snakeoil.osutils import ensure_dirs, normpath, pjoin, listdir_files
 
-from snakeoil.demandload import demandload
-demandload(globals(),
-    'snakeoil.lists:iflatten_instance',
-    "pkgcore.log:logger",
-    "pkgcore.package.mutated:MutatedPkg",
-    'pkgcore:fetch',
+demandload(
+    globals(),
     'textwrap',
     "time",
+    'snakeoil.lists:iflatten_instance',
+    'pkgcore:fetch',
+    "pkgcore.log:logger",
+    "pkgcore.package.mutated:MutatedPkg",
 )
 
 

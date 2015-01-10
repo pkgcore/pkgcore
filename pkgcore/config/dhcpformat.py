@@ -40,10 +40,11 @@ Example of the supported format (not a complete config)::
 
 __all__ = ("config_from_file",)
 
-from pkgcore.config import basics, errors
 from snakeoil import mappings, modules
-
 import pyparsing as pyp
+
+from pkgcore.config import basics, errors
+
 
 # this is based on the 'BIND named.conf parser' on pyparsing's webpage
 

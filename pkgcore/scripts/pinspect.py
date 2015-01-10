@@ -1,24 +1,27 @@
 # Copyright: 2009-2011 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
-__all__ = ("pkgsets", "histo_data", "eapi_usage", "license_usage",
+__all__ = (
+    "pkgsets", "histo_data", "eapi_usage", "license_usage",
     "mirror_usage", "eclass_usage", "mirror_usage",
     "portageq", "query",
 )
 
-from pkgcore.util import commandline
-from pkgcore.ebuild import portageq as _portageq
-from pkgcore.ebuild import inspect_profile
 from snakeoil.demandload import demandload
 
-demandload(globals(),
-    'snakeoil.lists:iflatten_instance,unstable_unique',
+from pkgcore.ebuild import inspect_profile
+from pkgcore.ebuild import portageq as _portageq
+from pkgcore.util import commandline
+
+demandload(
+    globals(),
     'collections:defaultdict',
-    'pkgcore:fetch',
-    'pkgcore.restrictions:packages',
     'itertools:groupby,islice',
     'operator:attrgetter,itemgetter',
+    'snakeoil.lists:iflatten_instance,unstable_unique',
+    'pkgcore:fetch',
     'pkgcore.package:errors',
+    'pkgcore.restrictions:packages',
 )
 
 shared = (commandline.mk_argparser(domain=False, add_help=False),)

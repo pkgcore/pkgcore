@@ -4,8 +4,8 @@
 
 """pkgcore plugins package."""
 
-import sys
 import os.path
+import sys
 
 
 # XXX Having this function here is a bit of a wart: it is used by

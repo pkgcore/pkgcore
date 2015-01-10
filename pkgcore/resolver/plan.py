@@ -3,24 +3,25 @@
 
 __all__ = ("resolver_frame", "resolver_stack", "merge_plan")
 
-import operator, sys
-from itertools import chain, islice, ifilterfalse as filterfalse
 from collections import deque
-
-from pkgcore.resolver.choice_point import choice_point
-from pkgcore.restrictions import packages, values, restriction
-from pkgcore.repository import misc, multiplex, visibility
-from pkgcore.resolver import state
-
-# XXX: hack; see insert_blockers
-from pkgcore.ebuild import atom as _atom
+import operator
+from itertools import chain, islice, ifilterfalse as filterfalse
+import sys
 
 from snakeoil.currying import partial
 from snakeoil.compatibility import cmp, sort_cmp
 from snakeoil.iterables import caching_iter
 
+# XXX: hack; see insert_blockers
+from pkgcore.ebuild import atom as _atom
+from pkgcore.repository import misc, multiplex, visibility
+from pkgcore.resolver import state
+from pkgcore.resolver.choice_point import choice_point
+from pkgcore.restrictions import packages, values, restriction
 
-limiters = set(["cycle"])#, None])
+limiters = set(["cycle"])
+
+
 def dprint(handle, fmt, args=None, label=None):
     if None in limiters or label in limiters:
         if args:
@@ -29,11 +30,12 @@ def dprint(handle, fmt, args=None, label=None):
         handle.write("\n")
 
 
-#iter/pkg sorting functions for selection strategy
+# iter/pkg sorting functions for selection strategy
 pkg_sort_highest = partial(sorted, reverse=True)
 pkg_sort_lowest = sorted
 
 pkg_grabber = operator.itemgetter(0)
+
 
 def highest_iter_sort(l, pkg_grabber=pkg_grabber):
     """Sort a list of packages from highest to lowest.

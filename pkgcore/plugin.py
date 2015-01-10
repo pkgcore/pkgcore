@@ -18,20 +18,24 @@ __all__ = ("initialize_cache", "get_plugins", "get_plugin")
 # latter an installed plugin issue. May have to change this if it
 # causes problems.
 
-import collections
+from collections import defaultdict
 import operator
 import os.path
 
-from snakeoil import compatibility, demandload, mappings, modules, sequences
+from snakeoil import compatibility, mappings, modules, sequences
+from snakeoil.demandload import demandload
 from snakeoil.osutils import pjoin, listdir_files
-demandload.demandload(globals(),
-    'tempfile',
-    'errno',
-    'pkgcore.log:logger',
-    'snakeoil:fileutils,osutils',
-)
 
 from pkgcore import plugins
+
+demandload(
+    globals(),
+    'errno',
+    'tempfile',
+    'snakeoil:fileutils,osutils',
+    'pkgcore.log:logger',
+)
+
 
 _plugin_data = sequences.namedtuple("_plugin_data",
     ["key", "priority", "source", "target"])
@@ -173,7 +177,7 @@ def initialize_cache(package, force=False):
     Writes cache files if they are stale and writing is possible.
     """
     # package plugin cache, see above.
-    package_cache = collections.defaultdict(set)
+    package_cache = defaultdict(set)
     seen_modnames = set()
     for path in package.__path__:
         # Check if the path actually exists first.
@@ -197,7 +201,7 @@ def initialize_cache(package, force=False):
 
         cache_stale = False
         # Hunt for modules.
-        actual_cache = collections.defaultdict(set)
+        actual_cache = defaultdict(set)
         mtime_cache = mappings.defaultdictkey(lambda x:int(os.path.getmtime(x)))
         for modfullname in sorted(modlist):
             modname = os.path.splitext(modfullname)[0]

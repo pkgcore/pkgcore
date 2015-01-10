@@ -4,9 +4,12 @@
 
 """Helpers for testing scripts."""
 
-import difflib, copy
-from snakeoil.formatters import PlainTextFormatter
+from copy import copy
+import difflib
+
 from snakeoil.caching import WeakInstMeta
+from snakeoil.formatters import PlainTextFormatter
+
 from pkgcore.config import central, basics, ConfigHint
 from pkgcore.util import commandline
 
@@ -38,7 +41,7 @@ def noerror(msg=None):
 def mangle_parser(parser):
     """Make an OptionParser or argparser testable."""
     # copy it.  avoid the potential of inadvertently tainting what we're working on.
-    parser = copy.copy(parser)
+    parser = copy(parser)
     parser.exit = noexit
     parser.error = noerror
     return parser
@@ -224,7 +227,7 @@ class ArgParseMixin(MainMixin):
 
     @property
     def parser(self):
-        p = copy.copy(self._argparser)
+        p = copy(self._argparser)
         return mangle_parser(p)
 
     def get_main(self, namespace):

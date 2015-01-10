@@ -5,28 +5,32 @@
 package class for buildable ebuilds
 """
 
-__all__ = ("Maintainer", "MetadataXml", "LocalMetadataXml",
-    "SharedPkgData", "Licenses", "OverlayedLicenses")
+__all__ = (
+    "Maintainer", "MetadataXml", "LocalMetadataXml",
+    "SharedPkgData", "Licenses", "OverlayedLicenses"
+)
 
+from itertools import chain
+
+from snakeoil import compatibility, klass, mappings
 from snakeoil.caching import WeakInstMeta
-from snakeoil import compatibility
 from snakeoil.currying import post_curry
 from snakeoil.demandload import demandload
 from snakeoil.osutils import pjoin, listdir_files, listdir
 from snakeoil.sequences import namedtuple
-from snakeoil import mappings
-from snakeoil import klass
-from itertools import chain
+
 from pkgcore.config import ConfigHint
 from pkgcore.repository import syncable
-demandload(globals(),
+
+demandload(
+    globals(),
     'errno',
-    'snakeoil.xml:etree',
     'snakeoil.bash:BashParseError,iter_read_bash,read_dict',
     'snakeoil.fileutils:readfile,readlines_ascii',
     'snakeoil.lists:iter_stable_unique',
-    'pkgcore.log:logger',
+    'snakeoil.xml:etree',
     'pkgcore.ebuild:atom,profiles',
+    'pkgcore.log:logger',
     "pkgcore.restrictions:packages",
 )
 

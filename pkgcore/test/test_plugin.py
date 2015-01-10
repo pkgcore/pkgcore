@@ -2,17 +2,17 @@
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
 # License: BSD/GPL2
 
-import os
-import sys
-import shutil
-import tempfile
 import logging
+import os
+import shutil
+import sys
+import tempfile
 
 from snakeoil import lists
 from snakeoil.osutils import pjoin
 
-from pkgcore.test import silence_logging, TestCase
 from pkgcore import plugin
+from pkgcore.test import silence_logging, TestCase
 
 
 class LowPlug(object):

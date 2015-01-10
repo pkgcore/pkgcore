@@ -2,11 +2,11 @@
 # Copyright: 2005 Marien Zwart <marienz@gentoo.org>
 # License: BSD/GPL2
 
-
 import os
 import tempfile
-from pkgcore.test import TestCase
+
 from pkgcore.config import basics, errors, ConfigHint, configurable, central
+from pkgcore.test import TestCase
 
 
 def passthrough(*args, **kwargs):

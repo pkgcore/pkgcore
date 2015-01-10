@@ -9,36 +9,36 @@ __all__ = ("tree", "ConfiguredBinpkgTree", "force_unpacking")
 
 import os
 
-from pkgcore.repository import prototype, errors
-from pkgcore.merge import triggers
-from pkgcore.plugin import get_plugin
-from pkgcore.config import ConfigHint
-#needed to grab the PN
-from pkgcore.ebuild.cpv import versioned_CPV
-from pkgcore.ebuild import ebuild_built
-from pkgcore.ebuild.errors import InvalidCPV
-from pkgcore.binpkg import repo_ops
-
 from snakeoil.compatibility import raise_from
+from snakeoil.demandload import demandload
+from snakeoil.klass import jit_attr, jit_attr_named, alias_attr
 from snakeoil.mappings import DictMixin, StackedDict
 from snakeoil.osutils import listdir_dirs, listdir_files, access
 from snakeoil.osutils import pjoin
-from snakeoil.klass import jit_attr, jit_attr_named, alias_attr
 
-from snakeoil.demandload import demandload
-demandload(globals(),
-    "snakeoil:chksum",
-    "snakeoil.data_source:local_source,data_source",
-    "pkgcore.merge:engine",
-    "pkgcore.fs.livefs:scan",
-    "pkgcore.fs.contents:offset_rewriter,contentsSet",
-    "pkgcore.repository:wrapper",
-    "pkgcore.package:base@pkg_base",
-    "pkgcore.ebuild:ebd",
+from pkgcore.binpkg import repo_ops
+from pkgcore.config import ConfigHint
+from pkgcore.ebuild import ebuild_built
+from pkgcore.ebuild.cpv import versioned_CPV
+from pkgcore.ebuild.errors import InvalidCPV
+from pkgcore.merge import triggers
+from pkgcore.plugin import get_plugin
+from pkgcore.repository import prototype, errors
+
+demandload(
+    globals(),
     "errno",
-    "pkgcore.fs.tar:generate_contents",
-    "pkgcore.binpkg.xpak:Xpak",
+    "snakeoil:chksum",
     "snakeoil:compression",
+    "snakeoil.data_source:local_source,data_source",
+    "pkgcore.binpkg.xpak:Xpak",
+    "pkgcore.ebuild:ebd",
+    "pkgcore.fs.contents:offset_rewriter,contentsSet",
+    "pkgcore.fs.livefs:scan",
+    "pkgcore.fs.tar:generate_contents",
+    "pkgcore.merge:engine",
+    "pkgcore.package:base@pkg_base",
+    "pkgcore.repository:wrapper",
     'pkgcore.binpkg:remote',
 )
 

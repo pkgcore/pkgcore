@@ -2,22 +2,25 @@
 # License: GPL2/BSD
 
 
-__all__ = ("syncer_exception", "uri_exception", "generic_exception",
+__all__ = (
+    "syncer_exception", "uri_exception", "generic_exception",
     "missing_local_user", "missing_binary", "syncer", "ExternalSyncer",
     "dvcs_syncer", "GenericSyncer", "DisabledSyncer",
     "AutodetectSyncer",
 )
 
+from snakeoil import compatibility
+from snakeoil.demandload import demandload
+
 from pkgcore.config import ConfigHint, configurable
-from snakeoil import demandload, compatibility
-demandload.demandload(globals(),
+
+demandload(
+    globals(),
     'os',
     'pwd',
     'stat',
     'errno',
-    'pkgcore:spawn',
-    'pkgcore:plugin',
-    'pkgcore:os_data',
+    'pkgcore:os_data,plugin,spawn',
 )
 
 

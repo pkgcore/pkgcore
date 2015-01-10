@@ -14,32 +14,35 @@ consistent exception handling.
 See dev-notes/commandline.rst for more complete documentation.
 """
 
-__all__ = ("FormattingHandler", "Values", "Option", "OptionParser",
+__all__ = (
+    "FormattingHandler", "Values", "Option", "OptionParser",
     "MySystemExit", "main",
 )
 
-import sys
-import os.path
 import logging
+import optparse
+import os.path
+import sys
+
+from snakeoil import compatibility, formatters, currying, modules
+from snakeoil.demandload import demandload
 
 from pkgcore.config import load_config, errors
-from snakeoil import formatters, demandload, currying, modules
-from snakeoil import compatibility
-import optparse
 from pkgcore.util import argparse
 from pkgcore.util.commandline_optparse import *
 
-demandload.demandload(globals(),
+demandload(
+    globals(),
     'copy@_copy',
+    'traceback',
     'snakeoil:osutils',
     'snakeoil.errors:walk_exception_chain',
     'snakeoil.lists:iflatten_instance',
     'pkgcore:version@_version',
+    'pkgcore:operations',
     'pkgcore.config:basics',
     'pkgcore.restrictions:packages,restriction',
     'pkgcore.util:parserestrict',
-    'pkgcore:operations',
-    'traceback',
 )
 
 

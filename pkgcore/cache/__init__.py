@@ -11,15 +11,14 @@ import itertools
 import math
 import os
 import operator
-from pkgcore.cache import errors
-from snakeoil.mappings import (ProtectedDict, autoconvert_py3k_methods_metaclass,
-    make_SlottedDict_kls)
+
 from snakeoil import klass
 from snakeoil.compatibility import raise_from
+from snakeoil.mappings import (
+    ProtectedDict, autoconvert_py3k_methods_metaclass, make_SlottedDict_kls)
 
-# temp hack for .2
+from pkgcore.cache import errors
 from pkgcore.ebuild.const import metadata_keys
-metadata_keys = tuple(metadata_keys)
 
 
 class base(object):

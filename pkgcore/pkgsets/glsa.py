@@ -9,19 +9,21 @@ __all__ = ("GlsaDirSet", "SecurityUpgrades")
 
 import os
 
-from pkgcore.restrictions import packages, restriction, values
-from pkgcore.config import ConfigHint
-
-from snakeoil.osutils import listdir_files, pjoin
-from snakeoil.klass import generic_equality
-from snakeoil.iterables import caching_iter
 from snakeoil.demandload import demandload
-demandload(globals(),
-    'pkgcore.package:mutated',
+from snakeoil.iterables import caching_iter
+from snakeoil.klass import generic_equality
+from snakeoil.osutils import listdir_files, pjoin
+
+from pkgcore.config import ConfigHint
+from pkgcore.restrictions import packages, restriction, values
+
+demandload(
+    globals(),
+    'snakeoil.xml:etree',
     'pkgcore.ebuild:cpv,atom,restricts@atom_restricts',
     'pkgcore.log:logger',
+    'pkgcore.package:mutated',
     'pkgcore.util.repo_utils:get_virtual_repos',
-    'snakeoil.xml:etree',
 )
 
 

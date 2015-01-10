@@ -16,23 +16,24 @@ __all__ = ("alias_cset", "map_new_cset_livefs", "MergeEngine")
 import operator
 
 from pkgcore.fs import contents, livefs
-from pkgcore.plugin import get_plugins
 from pkgcore.merge import errors
-from pkgcore.operations import observer as observer_mod
 from pkgcore.merge.const import REPLACE_MODE, INSTALL_MODE, UNINSTALL_MODE
+from pkgcore.operations import observer as observer_mod
+from pkgcore.plugin import get_plugins
 
-from snakeoil import compatibility
+from snakeoil import compatibility, currying, data_source
+from snakeoil.demandload import demandload
 from snakeoil.mappings import LazyValDict, ImmutableDict, StackedDict
-from snakeoil import currying, data_source
 from snakeoil.osutils import normpath
 
-from snakeoil.demandload import demandload
-demandload(globals(),
+demandload(
+    globals(),
     "tempfile",
     "traceback",
-    "snakeoil:stringio",
     "snakeoil.process:get_proc_count",
+    "snakeoil:stringio",
 )
+
 
 def alias_cset(alias, engine, csets):
     """alias a cset to another"""

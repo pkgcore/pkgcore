@@ -5,10 +5,12 @@
 restriction classes designed for package level matching
 """
 
-from pkgcore.restrictions import restriction, boolean
 from snakeoil.compatibility import is_py3k, IGNORED_EXCEPTIONS
-from snakeoil.klass import generic_equality, static_attrgetter
 from snakeoil.demandload import demandload
+from snakeoil.klass import generic_equality, static_attrgetter
+
+from pkgcore.restrictions import restriction, boolean
+
 demandload(globals(), "pkgcore.log:logger")
 
 # Backwards compatibility.

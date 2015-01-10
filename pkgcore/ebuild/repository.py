@@ -7,42 +7,40 @@ ebuild repository, specific to gentoo ebuild trees (whether cvs or rsync)
 
 __all__ = ("tree", "slavedtree",)
 
-import os, stat
+import os
 from itertools import imap, ifilterfalse
-
-from pkgcore.repository import prototype, errors, configured
-from pkgcore.ebuild import eclass_cache as eclass_cache_module
-from pkgcore.ebuild import ebuild_src
-from pkgcore.config import ConfigHint, configurable
-from pkgcore.plugin import get_plugin
-from pkgcore.operations import repo as _repo_ops
+import stat
 
 from snakeoil import klass
-from snakeoil.fileutils import readlines
 from snakeoil.bash import iter_read_bash, read_dict
-from snakeoil.currying import partial
-from snakeoil.osutils import listdir_files, listdir_dirs, pjoin
-from snakeoil.fileutils import readfile
-from snakeoil.containers import InvertedContains
-from snakeoil.obj import make_kls
-from snakeoil.weakrefs import WeakValCache
 from snakeoil.compatibility import intern, raise_from
-
+from snakeoil.containers import InvertedContains
+from snakeoil.currying import partial
 from snakeoil.demandload import demandload
-demandload(globals(),
-    'pkgcore.ebuild:ebd',
-    'snakeoil.data_source:local_source',
-    'snakeoil.chksum:get_chksums',
-    'pkgcore.ebuild:digest,repo_objs,atom',
-    'pkgcore.ebuild:errors@ebuild_errors',
-    'pkgcore.ebuild:profiles,processor',
-    'pkgcore.package:errors@pkg_errors',
-    'pkgcore.util.packages:groupby_pkg',
-    'pkgcore.fs.livefs:iter_scan',
-    'pkgcore.log:logger',
+from snakeoil.fileutils import readlines
+from snakeoil.obj import make_kls
+from snakeoil.osutils import listdir_files, listdir_dirs, pjoin
+from snakeoil.weakrefs import WeakValCache
+
+from pkgcore.config import ConfigHint, configurable
+from pkgcore.ebuild import ebuild_src
+from pkgcore.ebuild import eclass_cache as eclass_cache_module
+from pkgcore.operations import repo as _repo_ops
+from pkgcore.repository import prototype, errors, configured
+
+demandload(
+    globals(),
+    'errno',
     'operator:attrgetter',
     'random:shuffle',
-    'errno',
+    'snakeoil.chksum:get_chksums',
+    'snakeoil.data_source:local_source',
+    'pkgcore.ebuild:ebd,digest,repo_objs,atom,profiles,processor',
+    'pkgcore.ebuild:errors@ebuild_errors',
+    'pkgcore.fs.livefs:iter_scan',
+    'pkgcore.log:logger',
+    'pkgcore.package:errors@pkg_errors',
+    'pkgcore.util.packages:groupby_pkg',
 )
 
 

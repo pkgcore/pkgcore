@@ -3,8 +3,10 @@
 
 __all__ = ("git_syncer",)
 
-from pkgcore.sync import base
 import os
+
+from pkgcore.sync import base
+
 
 class git_syncer(base.dvcs_syncer):
 

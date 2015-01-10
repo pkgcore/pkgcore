@@ -1,9 +1,7 @@
 # Copyright: 2005 Marien Zwart <marienz@gentoo.org>
 # License: BSD/GPL2
 
-
 from StringIO import StringIO
-from pkgcore.test import TestCase
 
 try:
     import pyparsing
@@ -17,6 +15,7 @@ else:
         from pkgcore.config import dhcpformat, mke2fsformat
 
 from pkgcore.config import central, errors, configurable
+from pkgcore.test import TestCase
 
 
 def passthrough(*args, **kwargs):

@@ -7,11 +7,12 @@ wrap a repository, binding configuration to pkgs returned from the repository
 
 __all__ = ("tree",)
 
-from pkgcore.repository import prototype
-from pkgcore.package.conditionals import make_wrapper
-from pkgcore.operations.repo import operations_proxy
 from snakeoil.currying import partial
 from snakeoil.klass import GetAttrProxy
+
+from pkgcore.operations.repo import operations_proxy
+from pkgcore.package.conditionals import make_wrapper
+from pkgcore.repository import prototype
 
 
 class tree(prototype.tree):

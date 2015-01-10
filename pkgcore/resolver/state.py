@@ -1,13 +1,15 @@
 # Copyright: 2006-2011 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
-__all__ = ("plan_state", "base_op_state", "add_op", "add_hardref_op",
+__all__ = (
+    "plan_state", "base_op_state", "add_op", "add_hardref_op",
     "add_backref_op", "remove_op", "replace_op", "blocker_base_op",
-    "incref_forward_block_op", "incref_forward_block_op", "decref_forward_block_op",
+    "incref_forward_block_op", "incref_forward_block_op",
+    "decref_forward_block_op",
 )
 
-
 from snakeoil.containers import RefCountingSet
+
 from pkgcore.resolver.pigeonholes import PigeonHoledSlots
 
 
@@ -54,8 +56,7 @@ class plan_state(object):
         # and just that.
         reversion_count = 0
         try:
-            for reversion_count, change in enumerate(
-                reversed(self.plan[state_pos:])):
+            for reversion_count, change in enumerate(reversed(self.plan[state_pos:])):
                 change.revert(self)
             reversion_count += 1
             assert len(self.plan) - reversion_count == state_pos

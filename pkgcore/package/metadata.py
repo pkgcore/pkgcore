@@ -8,11 +8,12 @@ package with its metadata accessible (think 'no longer abstract')
 
 __all__ = ("DeriveMetadataKls", "factory", "package")
 
+from snakeoil import klass, weakrefs
+
 from pkgcore.ebuild import cpv
 from pkgcore.ebuild.atom import atom
 from pkgcore.package import base
 
-from snakeoil import klass, weakrefs
 
 def DeriveMetadataKls(original_kls):
     if getattr(original_kls, "_derived_metadata_kls", False):

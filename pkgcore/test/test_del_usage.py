@@ -3,6 +3,7 @@
 
 from snakeoil.test import test_del_usage as module
 
+
 class Test(module.Test):
 
     target_namespace = "pkgcore"

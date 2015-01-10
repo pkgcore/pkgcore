@@ -9,20 +9,22 @@ __all__ = ("serialize_manifest", "parse_manifest", "Manifest")
 
 from itertools import izip
 import operator
-from os.path import basename, dirname
+from os.path import basename
 
+from snakeoil.compatibility import raise_from
 from snakeoil.chksum import get_handler
+from snakeoil.demandload import demandload
+from snakeoil.mappings import make_SlottedDict_kls
+
 from pkgcore import gpg
 from pkgcore.package import errors
 from pkgcore.fs.livefs import iter_scan
 
-from snakeoil.mappings import make_SlottedDict_kls
-from snakeoil.compatibility import raise_from
-from snakeoil.demandload import demandload
-demandload(globals(),
-    "snakeoil.lists:iflatten_instance",
-    'snakeoil:mappings',
+demandload(
+    globals(),
     "errno",
+    'snakeoil:mappings',
+    "snakeoil.lists:iflatten_instance",
 )
 
 

@@ -4,28 +4,31 @@
 """
 remote binpkg support
 
-Currently this primarily just holds the Packages cache used for remote, and local
-binpkg repositories
+Currently this primarily just holds the Packages cache used for remote, and
+local binpkg repositories
 """
 
 __all__ = ("PackagesCacheV0", "PackagesCacheV1", "write_index")
 
-
-from snakeoil.mappings import ImmutableDict, StackedDict
-from pkgcore import cache
-from snakeoil.weakrefs import WeakRefFinalizer
 from itertools import izip
 import os
+
 from snakeoil.demandload import demandload
-demandload(globals(), 'errno',
-    'snakeoil.chksum:get_chksums',
-    'snakeoil.fileutils:AtomicWriteFile',
-    'snakeoil.containers:RefCountingSet',
-    'snakeoil.fileutils:readlines',
+from snakeoil.mappings import ImmutableDict, StackedDict
+from snakeoil.weakrefs import WeakRefFinalizer
+
+from pkgcore import cache
+
+demandload(
+    globals(),
+    'errno',
     'operator:itemgetter',
+    'time:time',
+    'snakeoil.chksum:get_chksums',
+    'snakeoil.containers:RefCountingSet',
+    'snakeoil.fileutils:AtomicWriteFile,readlines',
     'pkgcore:log',
     'pkgcore.restrictions.packages:AlwaysTrue',
-    'time:time',
 )
 
 

@@ -5,16 +5,19 @@
 
 """Extract information from repositories."""
 
-from pkgcore.restrictions import packages, values, boolean, restriction
+from snakeoil.currying import partial
+from snakeoil.demandload import demandload
+from snakeoil.formatters import decorate_forced_wrapping
+
 from pkgcore.ebuild import conditionals, atom
+from pkgcore.restrictions import packages, values, boolean
 from pkgcore.util import (
     commandline, repo_utils, parserestrict, packages as pkgutils)
-from snakeoil.currying import partial
-from snakeoil.formatters import decorate_forced_wrapping
-from snakeoil.demandload import demandload
-demandload(globals(),
-    're',
+
+demandload(
+    globals(),
     'errno',
+    're',
     'snakeoil.lists:iter_stable_unique',
     'pkgcore.fs:fs@fs_module,contents@contents_module',
 )

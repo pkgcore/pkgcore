@@ -2,14 +2,12 @@
 
 # Copyright 2007 Charlie Shepherd
 
-import sys
 from operator import attrgetter
+import sys
 
 try:
     from pkgcore.util import commandline
     from pkgcore.restrictions.boolean import OrRestriction
-    from pkgcore.util.repo_utils import get_virtual_repos, get_raw_repos
-    from pkgcore.repository.multiplex import tree as multiplex_tree
 except ImportError:
     print >> sys.stderr, 'Cannot import pkgcore!'
     print >> sys.stderr, 'Verify it is properly installed and/or ' \
@@ -19,6 +17,7 @@ except ImportError:
     else:
         raise
     sys.exit(1)
+
 
 class OptionParser(commandline.OptionParser):
 

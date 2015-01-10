@@ -392,6 +392,10 @@ END-INFO-DIR-ENTRY
         return l
 
     def test_trigger(self):
+        if self.raw_kls().get_binary_path() is None:
+            raise SkipTest(
+                "can't verify regen behaviour due to install-info not being available")
+
         cur = os.environ.get("PATH", self)
         try:
             os.environ.pop("PATH", None)
@@ -409,7 +413,7 @@ END-INFO-DIR-ENTRY
         self.assertFalse(self.run_trigger('pre_merge', []))
         self.assertFalse(self.run_trigger('post_merge', [self.dir]))
 
-        # and an info, and verify it generated.
+        # add an info, and verify it generated.
         with open(pjoin(self.dir, 'foo.info'), 'w') as f:
             f.write(self.info_data)
         self.reset_objects()

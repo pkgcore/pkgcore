@@ -94,8 +94,8 @@ def _load_and_invoke(func, filename, handler, fallback, read_func,
             profile_len = len(profile_path) + 1
             try:
                 files = iter_scan(base)
-                files = (x.location for x in files if x.is_reg)
-                files = sorted(files)
+                files = sorted(x.location for x in files if x.is_reg
+                               and not x.basename.startswith('.'))
             except EnvironmentError as e:
                 if errno.ENOENT != e.errno:
                     raise

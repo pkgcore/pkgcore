@@ -672,6 +672,21 @@ class TestPortage1ProfileNode(TestPmsProfileNode):
             with open(pjoin(base, str(idx)), 'w') as f:
                 f.write(data)
 
+    def test_skip_dotfiles(self):
+        path = pjoin(self.dir, self.profile)
+
+        self.write_file("package.keywords", "dev-util/foo amd64")
+        with open(pjoin(path, "package.keywords", ".test"), 'w') as f:
+            f.write('dev-util/foo x86')
+        self.assertEqual(
+            self.klass(path).keywords,
+            ((atom("dev-util/foo"), ("amd64",)),))
+
+        self.write_file("package.keywords", "")
+        with open(pjoin(path, "package.keywords", ".test"), 'w') as f:
+            f.write('dev-util/foo x86')
+        self.assertEqual(self.klass(path).keywords, ())
+
 
 class TestPortage2ProfileNode(TestPortage1ProfileNode):
 

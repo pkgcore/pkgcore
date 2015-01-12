@@ -11,7 +11,8 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import sys, os
+import os
+import sys
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -29,7 +30,7 @@ extensions = [
     'sphinx.ext.extlinks',
     'sphinx.ext.autodoc', 'sphinx.ext.autosummary', 'sphinx.ext.doctest',
     'sphinx.ext.intersphinx', 'sphinx.ext.todo', 'sphinx.ext.coverage',
-    'sphinx.ext.ifconfig', 'sphinx.ext.viewcode'
+    'sphinx.ext.ifconfig', 'sphinx.ext.viewcode',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -46,7 +47,9 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'pkgcore'
-copyright = '2006-2014, Brian Harring, Marien Zwart, Tim Harder'
+authors_list = ['Brian Harring', 'Marien Zwart', 'Tim Harder']
+authors = ', '.join(authors_list)
+copyright = '2006-2015, ' + authors
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -184,7 +187,7 @@ htmlhelp_basename = 'pkgcoredoc'
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
   ('index', 'pkgcore.tex', 'pkgcore Documentation',
-   'Brian Harring, Marien Zwart, Tim Harder', 'manual'),
+   authors, 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -213,8 +216,10 @@ latex_documents = [
 
 # -- Options for manual page output --------------------------------------------
 
-generated_man_pages = [('pkgcore.scripts.' + s, s) for s in
-    "pclone_cache pconfig pebuild pinspect pmaint pmerge pplugincache pquery".split()]
+generated_man_pages = [
+    ('pkgcore.scripts.' + s, s) for s in
+    "pclone_cache pconfig pebuild pinspect pmaint pmerge pplugincache pquery".split()
+]
 # Note that filter-env is specially specified, since the command is installed as 'filter-env',
 # but due to python namespace contraints, it uses a '_' instead.
 generated_man_pages.append(('pkgcore.scripts.filter_env', 'filter-env'))
@@ -222,8 +227,7 @@ generated_man_pages.append(('pkgcore.scripts.filter_env', 'filter-env'))
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('man/%s' % x[1], x[1], '%s Documentation' % (x[1],),
-     ['Brian Harring', 'Marien Zwart', 'Tim Harder'], 1)
+    ('man/%s' % x[1], x[1], '%s Documentation' % (x[1],), authors_list, 1)
     for x in generated_man_pages
 ]
 
@@ -231,10 +235,10 @@ man_pages = [
 # -- Options for Epub output ---------------------------------------------------
 
 # Bibliographic Dublin Core info.
-epub_title = 'pkgcore'
-epub_author = 'Brian Harring, Marien Zwart, Tim Harder'
-epub_publisher = 'Brian Harring, Marien Zwart, Tim Harder'
-epub_copyright = '2006-2014, Brian Harring, Marien Zwart, Tim Harder'
+epub_title = project
+epub_author = authors
+epub_publisher = authors
+epub_copyright = copyright
 
 # The language of the text. It defaults to the language option
 # or en if the language is not set.
@@ -269,11 +273,13 @@ epub_copyright = '2006-2014, Brian Harring, Marien Zwart, Tim Harder'
 
 
 # Example configuration for intersphinx: refer to the Python standard library.
-intersphinx_mapping = {'python': ('http://docs.python.org/', None),
+intersphinx_mapping = {
+    'python': ('http://docs.python.org/', None),
     'snakeoil': ('http://docs.snakeoil.googlecode.com/git/', None),
 }
 autosummary_generate = False
-autodoc_default_flags = ["members", "show-inheritance", "inherited-members", "undoc-members"]
+autodoc_default_flags = [
+    "members", "show-inheritance", "inherited-members", "undoc-members"]
 
 extlinks = {
     'git_tag':('http://code.google.com/p/pkgcore/source/list?name=%s', 'git log '),

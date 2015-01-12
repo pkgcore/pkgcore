@@ -283,7 +283,5 @@ autodoc_default_flags = [
 
 extlinks = {
     'git_tag': ('https://github.com/pkgcore/pkgcore/releases/tag/%s', 'git log '),
-    'git_release': (
-        'https://github.com/pkgcore/pkgcore/archive/%s.tar.gz'
-        'release download ')
+    'git_release': ('https://github.com/pkgcore/pkgcore/archive/%s.tar.gz', 'release download ')
 }

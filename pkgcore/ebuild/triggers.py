@@ -69,7 +69,7 @@ def collapse_envd(base):
 
     # split out env.d defined incrementals..
     # update incrementals *and* colon parsed for colon_separated;
-    # incrementals on it's own is space separated.
+    # incrementals on its own is space separated.
 
     for x in collapsed_d.pop("COLON_SEPARATED", []):
         v = x.split()

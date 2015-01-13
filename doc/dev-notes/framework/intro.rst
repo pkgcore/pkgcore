@@ -2,7 +2,7 @@
 WARNING
 =======
 
-This is the original brain dump from harring; it *is* not guranteed to
+This is the original brain dump from harring; it *is* not guaranteed to
 be accurate to the current design, it's kept around to give an idea
 of where things came from to contrast to what is in place now.
 
@@ -88,7 +88,7 @@ Further, delegation of actions down to components *must* be abided by,
 example being repo + cache interaction. repo does what it can, but for
 searching the cache, let the cache do it. Assume what you're
 delegating to knows the best way to handle the request, and probably
-can do it's job better then some external caller (essentially).
+can do its job better then some external caller (essentially).
 
 Actual configuration is pretty heavily redesigned. Classes and
 functions that should be constructed based on data from the user's
@@ -472,7 +472,7 @@ is general info for using it, not designing a repository class
   much for pkgcore innards.
 .frozen
   boolean.  basically, does it account for things changing without
-  it's knowledge, or does it not.  frozen=True is faster for ebuild
+  its knowledge, or does it not.  frozen=True is faster for ebuild
   trees for example, single check for cache staleness. frozen=False
   is slower, and is what portage does now (meaning every lookup of a
   package, and instantiation of a package instance requires mtime
@@ -512,7 +512,7 @@ around/mangled by the pkgcore framework.
 
 What *isn't* obvious is that since a repository set gets handed
 instantiated repositories, each repo, *including* the set instance,
-can should be able to have it's own cache (this is assuming it's
+can should be able to have its own cache (this is assuming it's
 ebuild repos through and through). Why? Cache data doesn't change for
 the most part exempting which repo a cpv is from, and the eclass
 stacking. Handled individually, a cache bound to portdir *should* be
@@ -538,8 +538,8 @@ a fashion.
 
 Or... could do thus. repo + cache as a layer, wrapped with a 'regen'
 layer that handles cache regeneration as required. Via that, would
-give the repositoryset a way to override and use it's own specialized
-class that ensures each repo gets what's proper for it's layer. Think
+give the repositoryset a way to override and use its own specialized
+class that ensures each repo gets what's proper for its layer. Think
 raw_repo type trick.
 
 continuing on...
@@ -665,12 +665,12 @@ approach, allowing for more extensibility, flexibility and *speed*.
 
 Final restating- searchDesc is matching against cache data. The cache
 (whether flat_list, anydbm, sqlite, or a remote sql based cache) is
-the *authority* about the fastest way to do searches of it's data.
+the *authority* about the fastest way to do searches of its data.
 Programmers get pist off when users try and tell them how something
 internally should be implemented- it's fundamentally the same
-scenario. The cache class the user chooses knows how to do it's job
+scenario. The cache class the user chooses knows how to do its job
 the best, provide methods of handing control down to it, and let it do
-it's job (delegation). Otherwise you've got a backseat driver
+its job (delegation). Otherwise you've got a backseat driver
 situation, which doesn't let those in the know, do the deciding (cache
 knows, repo doesn't).
 

@@ -419,7 +419,7 @@ class test_package_factory(TestCase):
         cache2.readonly = True
         self.assertRaises(explode_kls, pf._get_metadata, pkg)
         self.assertEqual(cache2.keys(), [pkg.cpvstr])
-        # keep in mind the backend assumes it gets it's own copy of the data.
+        # keep in mind the backend assumes it gets its own copy of the data.
         # thus, modifying (popping _mtime_) _is_ valid
         self.assertEqual(cache2[pkg.cpvstr],
             {'_eclasses_':{'eclass1':(None, 100)}, 'marker':2, '_mtime_':200})

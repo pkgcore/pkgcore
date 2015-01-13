@@ -307,7 +307,7 @@ def get_cache_kls(version):
 
 def write_index(filepath, repo, version=-1):
     """
-    given a repository, serialize it's packages contents to a PackagesCache backend.
+    given a repository, serialize its packages contents to a PackagesCache backend.
 
     :param filepath: path to write the cache to
     :param repo: Repository instance to serialize

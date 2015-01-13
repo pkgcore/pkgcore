@@ -450,7 +450,7 @@ def run_generic_phase(pkg, phase, env, userpriv, sandbox, fakeroot,
     ebd = request_ebuild_processor(userpriv=userpriv, sandbox=sandbox,
         fakeroot=fakeroot)
     # this is a bit of a hack; used until ebd accepts observers that handle
-    # the output redirection on it's own.  Primary relevance is when
+    # the output redirection on its own.  Primary relevance is when
     # stdout/stderr are pointed at a file; we leave buffering on, just
     # force the flush for synchronization.
     sys.stdout.flush()

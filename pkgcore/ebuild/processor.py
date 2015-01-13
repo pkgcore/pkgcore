@@ -111,7 +111,7 @@ def request_ebuild_processor(userpriv=False, sandbox=None, fakeroot=False,
     request an ebuild_processor instance, creating a new one if needed.
 
     Note that fakeroot processes are B{never} reused due to the fact
-    the fakeroot env becomes localized to the pkg it's handling.
+    the fakeroot env becomes localized to the pkg its handling.
 
     :return: :obj:`EbuildProcessor`
     :param userpriv: should the processor be deprived to

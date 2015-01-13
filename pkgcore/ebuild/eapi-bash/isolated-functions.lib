@@ -206,7 +206,7 @@ __qa_invoke() {
 	fi
 
 	if [[ ${PKGCORE_SAVED_IFS[0]} != ${IFS-unset} ]]; then
-		echo "QA WARNING: invocation $@ manipulated IFS to ${IFS}, but didn't restore it to it's original value!"
+		echo "QA WARNING: invocation $@ manipulated IFS to ${IFS}, but didn't restore it to its original value!"
 	fi
 	__IFS_pop
 

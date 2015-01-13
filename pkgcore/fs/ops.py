@@ -49,7 +49,7 @@ def default_ensure_perms(d1, d2=None):
         do_mode = False
         try:
             if fs.isdir(d1) and fs.isdir(d2):
-                # if it's preexisting, keep it's perms.
+                # if it's preexisting, keep its perms.
                 do_mode = False
             else:
                 do_mode = (m is not None and m != d2.mode)

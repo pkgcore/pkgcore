@@ -422,7 +422,7 @@ pkgcore 0.7.7 (2011-12-02)
 
 - restore pmaint sync support for unsynced repositories.
 
-- support lookup of a repo by it's name, rather than just by path.
+- support lookup of a repo by its name, rather than just by path.
   This affects pquery --repo, pmaint sync, pmaint copy, pinspect, etc.
 
 - --debug now again enables full traceback output for config failures.
@@ -626,7 +626,7 @@ pkgcore 0.6.5 (2011-06-22)
 - use ${LIBDIR_${ABI}} for ccache/distcc pathways; gentoo bug 355283.
 
 - profile interpretation of make.defaults now has access to variables
-  defined by it's parents, per PMS.
+  defined by its parents, per PMS.
 
 
 --------------------------
@@ -818,7 +818,7 @@ pkgcore 0.6 (2011-04-24)
 
 - api's for installing pkgs has changed; now to install a pkg to a domain,
   you invoke domain.(install|uininstall|remove)_pkg.  To just modify a repo,
-  access it's operations for the appropriate operation.
+  access its operations for the appropriate operation.
 
 - pkgcore.interfaces was moved to pkgcore.operations
 
@@ -949,7 +949,7 @@ pkgcore 0.5.11.1 (2010-03-15)
   released 0.5.11, this version adds the missing file.
 
 - more declare related fixups; this one a regression from 0.5.10- in
-  sourcing /etc/profile.env, it's contents weren't being preserved
+  sourcing /etc/profile.env, its contents weren't being preserved
   fully due to declare.
 
 - add missing eapi3 phase support- basically just reuses eapi2's since
@@ -1196,7 +1196,7 @@ pkgcore 0.5.2 (2009-10-28)
 pkgcore 0.5.1 (2009-10-22)
 --------------------------
 
-- correct a python-2.6 incompatibility that rears it's head when doing
+- correct a python-2.6 incompatibility that rears its head when doing
   repository operations (installing, uninstalling, etc).
 
 
@@ -1226,7 +1226,7 @@ pkgcore 0.5 (2009-10-22)
 - comply with PMS corner cases for package names; gentoo bug 263787
 
 - serialization support for cpv derivatives.  Not great, but packages.g.o
-  relies on it, thus it's inclusion.
+  relies on it, thus its inclusion.
 
 - not surprising on the timing (or spotting it via ciaran spreading it
   via blog comments), gentoo bug 226505 revisited- change in phase ordering
@@ -1399,7 +1399,7 @@ pkgcore 0.4.7.7 (2008-08-11)
 - Fix installation issue for manpages for python2.4; os.path.join behaviour
   differs between 2.4 and 2.5.
 
-- Kill off large memory leak that reared it's head per pkg merge; still is
+- Kill off large memory leak that reared its head per pkg merge; still is
   a bit of a leak remaining, but nothing near as bad as before.
 
 
@@ -1611,7 +1611,7 @@ pkgcore 0.4.6 (2008-04-29)
 - ebuild domain now accepts triggers configuration directive.
 
 - FEATURES=unmerge-buildpkg was added; this effectively quickpkgs a pkg
-  before it's unmerged so you have a snapshot of it's last state before
+  before it's unmerged so you have a snapshot of its last state before
   it is replaced.
 
 - FEATURES=pristine-buildpkg was added; this is like FEATURES=buildpkg,
@@ -1632,7 +1632,7 @@ pkgcore 0.4.6 (2008-04-29)
 - dropped exporting of USER='portage' if id is portage.  Ancient var setting,
   can't find anything reliant on it thus punting it.
 
-- add SunOS to known OS's since it's lchown suffices for our needs.
+- add SunOS to known OS's since its lchown suffices for our needs.
 
 - added eapi awareness to atoms, so that an eapi1 atom only allows the
   slot extension for example.
@@ -1796,7 +1796,7 @@ pkgcore 0.4 (2008-03-18)
 
 - resolver fixes: vdb loadup wasn't occuring for old style virtuals for
   rdepend blockers, now forces it.  It was possible for a node to be
-  considered usable before it's rdepends blockers were leveled- now those
+  considered usable before its rdepends blockers were leveled- now those
   must be satisfied before being able to dep on the node.
 
 - resolver events cleanup; pmerge now gives far better info as to why a
@@ -2247,7 +2247,7 @@ pkgcore 0.2.5 (2007-02-19)
 - osutils extensions tests, correcting a few cpy differences in behaviour from
   native.
 
-- For unpacking a tarball that doesn't have it's files in a subdir, tar will
+- For unpacking a tarball that doesn't have its files in a subdir, tar will
   occasionally try to utime the cwd resulting in a failure- uid owner for
   WORKDIR was changed to allow tar to do the utime, thus succeed in unpacking.
   Only visible for userpriv and with oddball packages, gnuconfig for example.

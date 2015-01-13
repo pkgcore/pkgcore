@@ -486,7 +486,7 @@ class merge_plan(object):
         self.state.backtrack(stack.current_frame.start_point)
         # saving roll.  if we're allowed to drop cycles, try it again.
         # this needs to be *far* more fine grained also. it'll try
-        # regardless of if it's cycle issue
+        # regardless of if it's a cycle issue
         if not drop_cycles and self.drop_cycles:
             stack.add_event(("cycle", stack.current_frame, "trying to drop any cycles"),)
             self._dprint("trying saving throw for %s ignoring cycles",

@@ -291,7 +291,7 @@ class _UnconfiguredTree(prototype.tree):
             if cpv_inst.revision is None:
                 if '%s-r0' % cpv_inst.fullver in \
                     self.versions[(cpv_inst.category, cpv_inst.package)]:
-                    # ebuild on disk has an explicit -r0 in it's name
+                    # ebuild on disk has an explicit -r0 in its name
                     return cpv_inst
             raise KeyError(cpv)
         return cpv_inst

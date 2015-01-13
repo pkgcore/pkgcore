@@ -79,7 +79,7 @@ class BaseCommand(commandline.ArgparseCommand):
                 commandline._mk_domain(mux)
                 mux.add_argument('--domain-at-root',
                     action=commandline.DomainFromPath,
-                    dest="domain", help="specify the domain to use via it's root path")
+                    dest="domain", help="specify the domain to use via its root path")
 
         for token in self.arg_spec:
             kwds = {}

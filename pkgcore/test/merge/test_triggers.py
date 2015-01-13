@@ -194,7 +194,7 @@ class Test_mtime_watcher(mixins.TempDirMixin, TestCase):
         # demand is tricky.
         # hence the 10x loop; can trigger it pretty much each loop
         # for my 1ghz, so... it's a start.
-        # the race specifically will only rear it's head on extremely
+        # the race specifically will only rear its head on extremely
         # fast io (crazy hardware, or async mount), fs's lacking subsecond,
         # and just severely crappy chance.
         # faster the io actions, easier it is to trigger.

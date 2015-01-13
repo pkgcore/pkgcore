@@ -49,7 +49,7 @@ argparser = commandline.mk_argparser(suppress=True, parents=shared_options,
 subparsers = argparser.add_subparsers(description="general system maintenance")
 
 sync = subparsers.add_parser("sync", parents=shared_options,
-    description="synchronize a local repository with it's defined remote")
+    description="synchronize a local repository with its defined remote")
 sync.add_argument('repos', nargs='*', help="repositories to sync",
     action=commandline.StoreRepoObject, store_name=True, raw=True)
 @sync.bind_main_func

@@ -254,7 +254,7 @@ class replace_op(base_op_state):
         plan.vdb_filter.add(old)
 
     def revert(self, plan):
-        # far simpler, since the apply op generates multiple ops on it's own.
+        # far simpler, since the apply op generates multiple ops on its own.
         # all we have to care about is swap.
         plan.state.remove_slotting(self.pkg)
         l = plan.state.fill_slotting(self.old_pkg, force=self.force_old)

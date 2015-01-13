@@ -306,7 +306,7 @@ class StoreRepoObject(StoreConfigObject):
 
         # name wasn't found; search for it.
         for repo_name, repo in sections.iteritems():
-            if name in repo.aliases.values():
+            if name in repo.aliases:
                 name = repo_name
                 break
 

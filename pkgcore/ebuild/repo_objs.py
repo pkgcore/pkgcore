@@ -388,8 +388,8 @@ class RepoConfig(syncable.tree):
                     "is standalone.", self.location, self.repo_id)
         else:
             masters = tuple(iter_stable_unique(masters.split()))
-        sf(self, 'masters', masters)
-        sf(self, 'aliases', tuple(iter_stable_unique(data.get('aliases', '').split())))
+        aliases = data.get('aliases', '').split() + [self.repo_id, self.location]
+        sf(self, 'aliases', tuple(iter_stable_unique(aliases)))
         sf(self, 'eapis_deprecated', tuple(iter_stable_unique(data.get('eapis-deprecated', '').split())))
 
         v = set(data.get('cache-formats', 'pms').lower().split())

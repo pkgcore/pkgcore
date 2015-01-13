@@ -121,8 +121,11 @@ class ExternalSyncer(syncer):
 
     def __init__(self, path, uri, default_verbosity=0):
         syncer.__init__(self, path, uri, default_verbosity=default_verbosity)
+
         if not self.sets_env:
             self.env = {}
+        self.env['SSH_AUTH_SOCK'] = os.getenv('SSH_AUTH_SOCK', '')
+
         if not hasattr(self, 'binary_path'):
             self.binary_path = self.require_binary(self.binary)
 

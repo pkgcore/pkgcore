@@ -419,6 +419,8 @@ def config_from_make_conf(location="/etc/", profile_override=None):
     # used by PORTDIR syncer, and any layman defined syncers
     rsync_opts = isolate_rsync_opts(conf_dict)
     portdir_syncer = conf_dict.pop("SYNC", None)
+    if portdir_syncer is not None:
+        make_syncer(new_config, portdir, portdir_syncer, rsync_opts)
 
     if portdir_overlays and '-layman-sync' not in features:
         overlay_syncers = add_layman_syncers(new_config, rsync_opts,
@@ -475,10 +477,6 @@ def config_from_make_conf(location="/etc/", profile_override=None):
         new_config[tree_loc] = basics.AutoConfigSection(kwds)
 
     new_config['portdir'] = basics.section_alias(portdir, 'repo')
-
-    base_portdir_config = {}
-    if portdir_syncer is not None:
-        make_syncer(new_config, portdir, portdir_syncer, rsync_opts)
 
     if portdir_overlays:
         new_config['repo-stack'] = basics.FakeIncrementalDictConfigSection(

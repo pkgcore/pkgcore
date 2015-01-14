@@ -118,20 +118,15 @@ def add_layman_syncers(new_config, rsync_opts, overlay_paths, config_root='/',
 def isolate_rsync_opts(options):
     """
     pop the misc RSYNC related options littered in make.conf, returning
-    a base rsync dict, and the full SYNC config
+    a base rsync dict
     """
     base = {}
     extra_opts = []
 
     extra_opts.extend(options.pop('PORTAGE_RSYNC_EXTRA_OPTS', '').split())
 
-    ratelimit = options.pop('RSYNC_RATELIMIT', None)
-    if ratelimit is not None:
-        extra_opts.append('--bwlimit=%s' % ratelimit.strip())
 
-    # keep in mind this pops both potential vals.
-    retries = options.pop('PORTAGE_RSYNC_RETRIES',
-        options.pop('RSYNC_RETRIES', None))
+    retries = options.pop('PORTAGE_RSYNC_RETRIES', None)
     if retries is not None:
         try:
             retries = int(retries)
@@ -141,18 +136,9 @@ def isolate_rsync_opts(options):
         except ValueError:
             pass
 
-    timeout = options.pop('RSYNC_TIMEOUT', None)
-    if timeout is not None:
-        base['timeout'] = timeout.strip()
-
     proxy = options.pop('RSYNC_PROXY', None)
     if proxy is not None:
         base['proxy'] = proxy.strip()
-
-    excludes = options.pop('RSYNC_EXCLUDEFROM', None)
-    if excludes is not None:
-        extra_opts.extend('--exclude-from=%s' % x
-            for x in excludes.split())
 
     if extra_opts:
         base['extra_opts'] = tuple(extra_opts)

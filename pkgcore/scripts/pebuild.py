@@ -2,7 +2,6 @@
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
 # License: BSD/GPL2
 
-
 """Low-level ebuild operations."""
 
 __all__ = ("argparser", "main")

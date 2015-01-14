@@ -2,7 +2,6 @@
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
 # License: BSD/GPL2
 
-
 """Update the plugin cache."""
 
 __all__ = ("argparser", "main")
@@ -13,7 +12,7 @@ from pkgcore import plugin, plugins
 from pkgcore.util import commandline
 
 argparser = commandline.mk_argparser(config=False, domain=False, color=False,
-    description = __doc__)
+    description=__doc__)
 argparser.add_argument("packages", nargs="*", action='store',
     type=currying.partial(commandline.python_namespace_type, module=True),
     default=[plugins],

@@ -2,7 +2,7 @@
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
 # License: BSD/GPL2
 
-"""Commandline interface to :obj:`pkgcore.ebuild.filter_env`."""
+"""filter a bash environment dump"""
 
 __all__ = ("argparser", "main")
 
@@ -12,7 +12,9 @@ from pkgcore.ebuild import filter_env
 from pkgcore.log import logger
 from pkgcore.util import commandline
 
-argparser = commandline.mk_argparser(config=False, domain=False, color=False)
+argparser = commandline.mk_argparser(
+    config=False, domain=False, color=False,
+    description=__doc__)
 argparser.add_argument('-V', '--var-match', action='store_true',
     default=False,
     help="Invert the filtering- instead of removing a var if it matches "

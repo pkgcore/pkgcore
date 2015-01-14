@@ -3,7 +3,7 @@
 # License: BSD/GPL2
 
 """
-repository maintainence
+commandline access to various system/repository maintenance functionality
 """
 
 __all__ = (
@@ -45,7 +45,7 @@ def format_seq(seq, formatter=repr):
 
 shared_options = (commandline.mk_argparser(domain=False, add_help=False),)
 argparser = commandline.mk_argparser(suppress=True, parents=shared_options,
-    description="commandline access to various system/repository maintenance functionality")
+    description=__doc__)
 subparsers = argparser.add_subparsers(description="general system maintenance")
 
 sync = subparsers.add_parser("sync", parents=shared_options,

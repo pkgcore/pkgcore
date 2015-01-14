@@ -2,10 +2,10 @@
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
 # License: BSD/GPL2
 
+"""pkgcore package merging and unmerging interface"""
+
 # more should be doc'd...
 __all__ = ("argparser", "AmbiguousQuery", "NoMatches")
-
-"""Mess with the resolver and vdb."""
 
 from time import time
 
@@ -23,7 +23,7 @@ from snakeoil.currying import partial
 from snakeoil.lists import stable_unique
 
 argparser = commandline.mk_argparser(
-    domain=True, description="pkgcore package merging and unmerging interface")
+    domain=True, description=__doc__)
 
 
 class StoreTarget(argparse._AppendAction):

@@ -1,6 +1,8 @@
 # Copyright: 2009-2011 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
+"""pkgcore repository inspection interface"""
+
 __all__ = (
     "pkgsets", "histo_data", "eapi_usage", "license_usage",
     "mirror_usage", "eclass_usage", "mirror_usage",
@@ -27,7 +29,7 @@ demandload(
 shared = (commandline.mk_argparser(domain=False, add_help=False),)
 argparser = commandline.mk_argparser(
     suppress=True, parents=shared,
-    description="pkgcore repository inspection interface")
+    description=__doc__)
 subparsers = argparser.add_subparsers(description="report applets")
 
 pkgsets = subparsers.add_parser("pkgsets", description="pkgset related introspection")

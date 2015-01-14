@@ -2,8 +2,7 @@
 # Copyright: 2006-2007 Marien Zwart <marienz@gentoo.org>
 # License: BSD/GPL2
 
-
-"""Extract information from repositories."""
+"""pkgcore query interface"""
 
 from snakeoil.currying import partial
 from snakeoil.demandload import demandload
@@ -400,7 +399,7 @@ def print_packages_noversion(options, out, err, pkgs):
 #  default priority for DelayedValue; anything else is setup then.
 
 argparser = commandline.mk_argparser(domain=True,
-    description="pkgcore query interface")
+    description=__doc__)
 
 repo_group = argparser.add_argument_group('Repository matching options',
     'options controlling which repositories to inspect.')

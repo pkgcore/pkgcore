@@ -23,14 +23,17 @@ class rsync_syncer(base.ExternalSyncer):
 
     default_excludes = ["/distfiles", "/local", "/packages"]
     default_includes = []
+    default_conn_timeout = 15
     default_timeout = 180
-    default_opts = ["--recursive",
+    default_opts = [
+        "--recursive",
         "--delete-delay",
         "--perms",
         "--times",
         "--force",
         "--safe-links",
-        "--whole-file"] # this one probably shouldn't be a default.
+        "--whole-file", # this one probably shouldn't be a default.
+    ]
 
     default_retries = 5
     binary = "rsync"
@@ -50,13 +53,13 @@ class rsync_syncer(base.ExternalSyncer):
         cls.require_binary(proto[0])
         return proto[0], "rsync:%s" % proto[1]
 
-    pkgcore_config_type = ConfigHint({'basedir':'str', 'uri':'str',
-        'timeout':'str', 'compress':'bool', 'excludes':'list',
-        'includes':'list', 'retries':'str', 'extra_opts':'list',
-        'proxy':'str'},
+    pkgcore_config_type = ConfigHint({
+        'basedir': 'str', 'uri': 'str', 'conn_timeout': 'str',
+        'compress': 'bool', 'excludes': 'list', 'includes': 'list',
+        'retries': 'str', 'extra_opts': 'list', 'proxy': 'str'},
         typename='syncer')
 
-    def __init__(self, basedir, uri, timeout=default_timeout,
+    def __init__(self, basedir, uri, conn_timeout=default_conn_timeout,
                  compress=False, excludes=(), includes=(),
                  retries=default_retries, proxy=None,
                  extra_opts=()):
@@ -70,7 +73,8 @@ class rsync_syncer(base.ExternalSyncer):
         self.opts.extend(extra_opts)
         if compress:
             self.opts.append("--compress")
-        self.opts.append("--timeout=%i" % int(timeout))
+        self.opts.append("--timeout=%i" % int(self.default_timeout))
+        self.opts.append("--contimeout=%i" % int(conn_timeout))
         self.excludes = list(self.default_excludes) + list(excludes)
         self.includes = list(self.default_includes) + list(includes)
         self.retries = int(retries)

@@ -125,6 +125,9 @@ def isolate_rsync_opts(options):
 
     extra_opts.extend(options.pop('PORTAGE_RSYNC_EXTRA_OPTS', '').split())
 
+    timeout = options.pop('PORTAGE_RSYNC_INITIAL_TIMEOUT', None)
+    if timeout is not None:
+        base['connection_timeout'] = timeout
 
     retries = options.pop('PORTAGE_RSYNC_RETRIES', None)
     if retries is not None:

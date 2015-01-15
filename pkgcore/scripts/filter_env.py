@@ -15,11 +15,13 @@ from pkgcore.util import commandline
 argparser = commandline.mk_argparser(
     config=False, domain=False, color=False,
     description=__doc__.split('\n', 1)[0])
-argparser.add_argument('-V', '--var-match', action='store_true',
+argparser.add_argument(
+    '-V', '--var-match', action='store_true',
     default=False,
     help="Invert the filtering- instead of removing a var if it matches "
     "remove all vars that do not match")
-argparser.add_argument('-F', '--func-match', action='store_true',
+argparser.add_argument(
+    '-F', '--func-match', action='store_true',
     default=False,
     help="Invert the filtering- instead of removing a function if it matches "
     "remove all functions that do not match")
@@ -30,18 +32,23 @@ def stdin_default(namespace, attr):
         raise ValueError("Refusing to read from stdin since it's a TTY")
     setattr(namespace, attr, sys.stdin)
 
-argparser.add_argument('-i', '--input', action='store',
+argparser.add_argument(
+    '-i', '--input', action='store',
     type=commandline.argparse.FileType(), default=commandline.DelayedValue(stdin_default, 0),
     help='Filename to read the env from (uses stdin if omitted).')
 mux = argparser.add_mutually_exclusive_group()
 filtering = mux.add_argument_group("Environment filtering options")
-filtering.add_argument('-f', '--funcs', action='extend_comma',
+filtering.add_argument(
+    '-f', '--funcs', action='extend_comma',
     help="comma separated list of regexes to match function names against for filtering")
-filtering.add_argument('-v', '--vars', action='extend_comma',
+filtering.add_argument(
+    '-v', '--vars', action='extend_comma',
     help="comma separated list of regexes to match variable names against for filtering")
-mux.add_argument('--print-vars', action='store_true', default=False,
+mux.add_argument(
+    '--print-vars', action='store_true', default=False,
     help="print just the global scope environment variables.")
-mux.add_argument('--print-funcs', action='store_true', default=False,
+mux.add_argument(
+    '--print-funcs', action='store_true', default=False,
     help="print just the global scope functions.")
 
 @argparser.bind_main_func
@@ -75,10 +82,11 @@ def main(options, out, err):
             func_matches.append((level, name, body))
 
     # Hack: write to the stream directly.
-    filter_env.main_run(stream, options.input.read(), options.vars, options.funcs,
-                   options.var_match, options.func_match,
-                   global_envvar_callback=var_callback,
-                   func_callback=func_callback)
+    filter_env.main_run(
+        stream, options.input.read(), options.vars, options.funcs,
+        options.var_match, options.func_match,
+        global_envvar_callback=var_callback,
+        func_callback=func_callback)
 
     if options.print_vars:
         for var in sorted(var_matches):

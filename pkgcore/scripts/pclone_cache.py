@@ -12,13 +12,16 @@ from pkgcore.util import commandline
 
 argparser = commandline.mk_argparser(
     domain=False, description=__doc__.split('\n', 1)[0])
-argparser.add_argument("-v", "--verbose", action='store_true',
+argparser.add_argument(
+    "-v", "--verbose", action='store_true',
     help="print keys as they are processed")
-argparser.add_argument("source", config_type='cache',
+argparser.add_argument(
+    "source", config_type='cache',
     action=commandline.StoreConfigObject,
     priority=20,
     help="source cache to copy data from")
-argparser.add_argument("target", config_type='cache',
+argparser.add_argument(
+    "target", config_type='cache',
     action=commandline.StoreConfigObject, writable=True,
     priority=21,
     help="target cache to update.  Must be writable.")
@@ -27,7 +30,7 @@ argparser.add_argument("target", config_type='cache',
 def main(options, out, err):
     if options.target.readonly:
         out.error("can't update cache label '%s', it's marked readonly." %
-            (options.target,))
+                  (options.target,))
         return 1
 
     source, target = options.source, options.target

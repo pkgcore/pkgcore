@@ -401,18 +401,22 @@ def print_packages_noversion(options, out, err, pkgs):
 argparser = commandline.mk_argparser(
     domain=True, description=__doc__.split('\n', 1)[0])
 
-repo_group = argparser.add_argument_group('Repository matching options',
+repo_group = argparser.add_argument_group(
+    'Repository matching options',
     'options controlling which repositories to inspect.')
-repo_group.add_argument('--raw', action='store_true', default=False,
+repo_group.add_argument(
+    '--raw', action='store_true', default=False,
     help="With this switch enabled, no configuration is used, and no filtering "
          " is done.  This means you see the raw dependencies, rather than the "
          "dependencies rendered via your USE configuration.  Primarily useful "
          "for people who need to look under the hood- ebuild devs, PM tool "
          "authors, etc.  Note this option ignores --domain if is specified.")
-repo_group.add_argument('--no-filters', action='store_true', default=False,
+repo_group.add_argument(
+    '--no-filters', action='store_true', default=False,
     help="With this option enabled, all license filtering, visibility filtering"
          " (ACCEPT_KEYWORDS, package masking, etc) is turned off.")
-repo_group.add_argument('--virtuals', action='store', choices=('only', 'disable'),
+repo_group.add_argument(
+    '--virtuals', action='store', choices=('only', 'disable'),
     help='arg "only" for only matching virtuals, "disable" to not match '
         'virtuals at all. Default is to match everything.')
 
@@ -431,10 +435,11 @@ class RawAwareStoreRepoObject(commandline.StoreRepoObject):
         return commandline.StoreRepoObject._get_sections(
             self, config, namespace)
 
-repo_mux.add_argument('--repo',
-    action=RawAwareStoreRepoObject, priority=29,
+repo_mux.add_argument(
+    '--repo', action=RawAwareStoreRepoObject, priority=29,
     help='repo to use (default from domain if omitted).')
-repo_mux.add_argument('--all-repos', action='store_true',
+repo_mux.add_argument(
+    '--all-repos', action='store_true',
     help='search all repos, vdb included')
 
 @argparser.bind_delayed_default(30, 'repos')
@@ -506,21 +511,24 @@ add_query('--herd', action='append', dest='herd',
     type=parserestrict.comma_separated_containment('herds'),
     help='exact match on a herd.')
 
-query.add_argument('--revdep', nargs=1,
+query.add_argument(
+    '--revdep', nargs=1,
     action=commandline.Expansion,
     subst=(('--restrict-revdep', '%(0)s'), ('--print-revdep', '%(0)s')),
     help='shorthand for --restrict-revdep atom --print-revdep atom. '
         '--print-revdep is slow, use just --restrict-revdep if you just '
         'need a list.')
 
-query.add_argument('--revdep-pkgs', nargs=1,
+query.add_argument(
+    '--revdep-pkgs', nargs=1,
     action=commandline.Expansion,
     subst=(('--restrict-revdep-pkgs', '%(0)s'), ('--print-revdep', '%(0)s')),
     help='shorthand for --restrict-revdep-pkgs atom '
         '--print-revdep atom. --print-revdep is slow, use just '
         '--restrict-revdep if you just need a list.')
 
-@bind_add_query('--restrict-revdep', action='append',
+@bind_add_query(
+    '--restrict-revdep', action='append',
     default=[], dest='restrict_revdep',
     help='Dependency on an atom.')
 def parse_revdep(value):
@@ -533,13 +541,14 @@ def parse_revdep(value):
         atom.atom,
         values.AnyMatch(values.FunctionRestriction(targetatom.intersects)))
     return packages.OrRestriction(*list(
-            packages.PackageRestriction(dep, val_restrict)
-            for dep in ('depends', 'rdepends', 'post_rdepends')))
+        packages.PackageRestriction(dep, val_restrict)
+        for dep in ('depends', 'rdepends', 'post_rdepends')))
 
 def _revdep_pkgs_match(pkgs, value):
     return any(value.match(pkg) for pkg in pkgs)
 
-@bind_add_query('--restrict-revdep-pkgs', action='append', type=atom.atom,
+@bind_add_query(
+    '--restrict-revdep-pkgs', action='append', type=atom.atom,
     default=[], dest='restrict_revdep_pkgs',
     bind='final_converter',
     help='Dependency on pkgs that match a specific atom.')
@@ -557,16 +566,18 @@ def revdep_pkgs_finalize(sequence, namespace):
     return list(packages.PackageRestriction(dep, r)
         for dep in ('depends', 'rdepends', 'post_rdepends'))
 
-@bind_add_query('--description', '-S', action='append', dest='description',
+@bind_add_query(
+    '--description', '-S', action='append', dest='description',
     help='regexp search on description and longdescription.')
 def parse_description(value):
     """Value is used as a regexp matching description or longdescription."""
     matcher = mk_strregex(value, case_sensitive=False)
     return packages.OrRestriction(*list(
-            packages.PackageRestriction(attr, matcher)
-            for attr in ('description', 'longdescription')))
+        packages.PackageRestriction(attr, matcher)
+        for attr in ('description', 'longdescription')))
 
-@bind_add_query('--owns', action='append', dest='owns',
+@bind_add_query(
+    '--owns', action='append', dest='owns',
     help='exact match on an owned file/dir.')
 def parse_owns(value):
     "Value is a comma delimited set of paths to search contents for"
@@ -575,12 +586,14 @@ def parse_owns(value):
     # exposed to the commandline however.
     # the problem here is we don't want to trigger fs* module loadup
     # unless needed- hence this function.
-    parser = parserestrict.comma_separated_containment('contents',
+    parser = parserestrict.comma_separated_containment(
+        'contents',
         values_kls=contents_module.contentsSet,
         token_kls=partial(fs_module.fsBase, strict=False))
     return parser(value)
 
-@bind_add_query('--owns-re', action='append', dest='owns_re',
+@bind_add_query(
+    '--owns-re', action='append', dest='owns_re',
     help='like "owns" but using a regexp for matching.')
 def parse_ownsre(value):
     """Value is a regexp matched against the string form of an fs object.
@@ -588,34 +601,39 @@ def parse_ownsre(value):
     This means the object kind is prepended to the path the regexp has
     to match.
     """
-    return packages.PackageRestriction('contents',
+    return packages.PackageRestriction(
+        'contents',
         values.AnyMatch(values.GetAttrRestriction(
         'location', mk_strregex(value))))
 
-@bind_add_query('--maintainer', action='append', dest='maintainer',
-    help='comma-separated list of regexes to search for '
-        'maintainers.')
+@bind_add_query(
+    '--maintainer', action='append', dest='maintainer',
+    help='comma-separated list of regexes to search for maintainers.')
 def parse_maintainer(value):
     """
     Case insensitive Regex match on the combined 'name <email>' bit of
     metadata.xml's maintainer data.
     """
-    return packages.PackageRestriction('maintainers',
+    return packages.PackageRestriction(
+        'maintainers',
         values.AnyMatch(values.UnicodeConversion(
         mk_strregex(value.lower(), case_sensitive=False))))
 
-@bind_add_query('--maintainer-name', action='append', dest='maintainer_name',
+@bind_add_query(
+    '--maintainer-name', action='append', dest='maintainer_name',
     help='comma-separated list of maintainer name regexes to search for.')
 def parse_maintainer_name(value):
     """
     Case insensitive Regex match on the name bit of metadata.xml's
     maintainer data.
     """
-    return packages.PackageRestriction('maintainers',
+    return packages.PackageRestriction(
+        'maintainers',
         values.AnyMatch(values.GetAttrRestriction(
         'name', mk_strregex(value.lower(), case_sensitive=False))))
 
-@bind_add_query('--maintainer-email', action='append', dest='maintainer_email',
+@bind_add_query(
+    '--maintainer-email', action='append', dest='maintainer_email',
     help='comma-separated list of maintainer email regexes to search for.')
 def parse_maintainer_email(value):
     """
@@ -624,20 +642,22 @@ def parse_maintainer_email(value):
     """
     return packages.PackageRestriction(
         'maintainers', values.AnyMatch(values.GetAttrRestriction(
-                'email', mk_strregex(value.lower(),
-                case_sensitive=False))))
+            'email', mk_strregex(value.lower(),
+            case_sensitive=False))))
 
-@bind_add_query('--environment', action='append', dest='environment',
+@bind_add_query(
+    '--environment', action='append', dest='environment',
     help='regexp search in environment.bz2.')
 def parse_envmatch(value):
     """Apply a regexp to the environment."""
     return packages.PackageRestriction(
         'environment', DataSourceRestriction(values.AnyMatch(
-                mk_strregex(value))))
+            mk_strregex(value))))
 
 # note the type=str; this is to suppress the default
 # fallback of using match parsing.
-add_query('--pkgset', dest='pkgset',
+add_query(
+    '--pkgset', dest='pkgset',
     action=commandline.StoreConfigObject,
     type=str,
     priority=35,
@@ -654,65 +674,79 @@ def _add_all_if_needed(namespace, attr):
             break
     setattr(namespace, attr, val)
 
-argparser.set_defaults(_fallback_all=
-    commandline.DelayedValue(_add_all_if_needed, priority=89))
+argparser.set_defaults(
+    _fallback_all=commandline.DelayedValue(_add_all_if_needed, priority=89))
 
-argparser.set_defaults(query=
-    commandline.BooleanQuery(_query_items, klass_type='and',
-        priority=90))
+argparser.set_defaults(
+    query=commandline.BooleanQuery(_query_items, klass_type='and', priority=90))
 
 
 output = argparser.add_argument_group('Output formatting')
 
-output.add_argument('--early-out', action='store_true', dest='earlyout',
+output.add_argument(
+    '--early-out', action='store_true', dest='earlyout',
     help='stop when first match is found.')
 output_mux = output.add_mutually_exclusive_group()
-output_mux.add_argument('-n', '--no-version', action='store_true',
+output_mux.add_argument(
+    '-n', '--no-version', action='store_true',
     dest='noversion',
     help='collapse multiple matching versions together')
-output_mux.add_argument('--min', action='store_true',
+output_mux.add_argument(
+    '--min', action='store_true',
     help='show only the lowest version for each package.')
-output_mux.add_argument('--max', action='store_true',
+output_mux.add_argument(
+    '--max', action='store_true',
     help='show only the highest version for each package.')
 del output_mux
-output.add_argument('--cpv', action='store_true',
+output.add_argument(
+    '--cpv', action='store_true',
     help='Print the category/package-version. This is done '
     'by default, this option re-enables this if another '
     'output option (like --contents) disabled it.')
-output.add_argument('-a', '--atom', action=commandline.Expansion,
+output.add_argument(
+    '-a', '--atom', action=commandline.Expansion,
     subst=(('--cpv',),), nargs=0,
     help='print =cat/pkg-3 instead of cat/pkg-3. '
         'Implies --cpv, has no effect with --no-version')
-output.add_argument('--attr', action='append', choices=printable_attrs,
+output.add_argument(
+    '--attr', action='append', choices=printable_attrs,
     metavar='attribute', default=[],
     help="Print this attribute's value (can be specified more than "
     "once).  --attr=help will get you the list of valid attrs.")
-output.add_argument('--force-attr', action='append', dest='attr',
+output.add_argument(
+    '--force-attr', action='append', dest='attr',
     metavar='attribute', default=[],
     help='Like --attr but accepts any string as '
     'attribute name instead of only explicitly '
     'supported names.')
 one_attr_mux = output.add_mutually_exclusive_group()
-one_attr_mux.add_argument('--one-attr', choices=printable_attrs,
+one_attr_mux.add_argument(
+    '--one-attr', choices=printable_attrs,
     metavar='attribute',
     help="Print one attribute. Suppresses other output.")
-one_attr_mux.add_argument('--force-one-attr',
+one_attr_mux.add_argument(
+    '--force-one-attr',
     metavar='attribute',
     help='Like --one-attr but accepts any string as '
     'attribute name instead of only explicitly '
     'supported names.')
 del one_attr_mux
-output.add_argument('--contents', action='store_true',
+output.add_argument(
+    '--contents', action='store_true',
     help='list files owned by the package')
-output.add_argument('-v', '--verbose', action='store_true',
+output.add_argument(
+    '-v', '--verbose', action='store_true',
     help='human-readable multi-line output per package')
-output.add_argument('--highlight-dep', action='append',
+output.add_argument(
+    '--highlight-dep', action='append',
     type=atom.atom, default=[],
     help='highlight dependencies matching this atom')
-output.add_argument('--blame', action=commandline.Expansion, nargs=0,
+output.add_argument(
+    '--blame', action=commandline.Expansion, nargs=0,
     subst=(("--attr", "maintainers"), ("--attr", "herds")),
     help='shorthand for --attr maintainers --attr herds')
-output.add_argument('--print-revdep', action='append',
+output.add_argument(
+    '--print-revdep', action='append',
     type=atom.atom, default=[],
     help='print what condition(s) trigger a dep.')
 
@@ -736,19 +770,14 @@ def mangle_values(vals, err):
 
     if vals.noversion:
         if vals.contents:
-            error_out(
-                'both --no-version and --contents does not make sense.')
+            error_out('both --no-version and --contents does not make sense.')
         if vals.min or vals.max:
-            error_out(
-                '--no-version with --min or --max does not make sense.')
+            error_out('--no-version with --min or --max does not make sense.')
         if vals.print_revdep:
-            error_out(
-                '--print-revdep with --no-version does not make sense.')
+            error_out('--print-revdep with --no-version does not make sense.')
 
     if vals.one_attr and vals.print_revdep:
-        error_out(
-            '--print-revdep with --force-one-attr or --one-attr does not '
-            'make sense.')
+        error_out('--print-revdep with --force-one-attr or --one-attr does not make sense.')
 
     def process_attrs(sequence):
         for attr in sequence:
@@ -794,8 +823,7 @@ def main(options, out, err):
         return 0
     for repo in options.repos:
         try:
-            for pkgs in pkgutils.groupby_pkg(
-                repo.itermatch(options.query, sorter=sorted)):
+            for pkgs in pkgutils.groupby_pkg(repo.itermatch(options.query, sorter=sorted)):
                 pkgs = list(pkgs)
                 if options.noversion:
                     print_packages_noversion(options, out, err, pkgs)

@@ -14,11 +14,12 @@ from pkgcore.util import commandline
 argparser = commandline.mk_argparser(
     config=False, domain=False, color=False,
     description=__doc__.split('\n', 1)[0])
-argparser.add_argument("packages", nargs="*", action='store',
+argparser.add_argument(
+    "packages", nargs="*", action='store',
     type=currying.partial(commandline.python_namespace_type, module=True),
     default=[plugins],
     help="python namespace(s) to regenerate plugins for.  If none are "
-    "specified, pkgcore.plugins is updated")
+         "specified, pkgcore.plugins is updated")
 
 
 @argparser.bind_main_func

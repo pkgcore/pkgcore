@@ -104,7 +104,8 @@ shared_options = (commandline.mk_argparser(domain=False, add_help=False),)
 argparser = commandline.mk_argparser(
     suppress=True, parents=shared_options, description=__doc__.split('\n', 1)[0])
 subparsers = argparser.add_subparsers(description="configuration related subcommands")
-classes = subparsers.add_parser("classes", parents=shared_options,
+classes = subparsers.add_parser(
+    "classes", parents=shared_options,
     description="list all classes referenced by the config")
 @classes.bind_main_func
 def classes_main(options, out, err):
@@ -122,9 +123,11 @@ def classes_main(options, out, err):
         out.write(classname)
 
 
-describe_class = subparsers.add_parser("describe_class", parents=shared_options,
+describe_class = subparsers.add_parser(
+    "describe_class", parents=shared_options,
     description="describe the arguments a class needs, how to use it in a config")
-describe_class.add_argument("target_class", action='store',
+describe_class.add_argument(
+    "target_class", action='store',
     type=currying.partial(commandline.python_namespace_type, attribute=True),
     help="The class to inspect and output details about")
 @describe_class.bind_main_func
@@ -155,7 +158,8 @@ def write_type(out, type_obj):
             out.write(' (required)', autoline=False)
         out.write()
 
-uncollapsable = subparsers.add_parser("uncollapsable", parents=shared_options,
+uncollapsable = subparsers.add_parser(
+    "uncollapsable", parents=shared_options,
     description="Show configuration objects that could not be collapsed/instantiated")
 @uncollapsable.bind_main_func
 def uncollapsable_main(options, out, err):
@@ -175,15 +179,17 @@ def uncollapsable_main(options, out, err):
             out.write()
 
 
-dump = subparsers.add_parser("dump", parents=shared_options,
+dump = subparsers.add_parser(
+    "dump", parents=shared_options,
     description='Dump the entire configuration.  The format used is similar '
-        'to the ini-like default format, but do not rely on this to always '
-        'write a loadable config. There may be quoting issues.  With a '
-        'typename argument only that type is dumped.')
-dump.add_argument("typename", nargs="?", action="store",
+                'to the ini-like default format, but do not rely on this to always '
+                'write a loadable config. There may be quoting issues.  With a '
+                'typename argument only that type is dumped.')
+dump.add_argument(
+    "typename", nargs="?", action="store",
     default=None,
     help="if specified, limit output to just config directives of this type"
-        ".  If left off, all types are shown")
+         ".  If left off, all types are shown")
 @dump.bind_main_func
 def dump_main(options, out, err):
     """Dump the entire configuration."""
@@ -205,10 +211,12 @@ def dump_main(options, out, err):
         out.write()
 
 
-configurables = subparsers.add_parser("configurables", parents=shared_options,
+configurables = subparsers.add_parser(
+    "configurables", parents=shared_options,
     description=('List registered configurables (may not be complete).  '
         'With a typename argument only configurables of that type are listed.'))
-configurables.add_argument("typename", nargs='?', default=None, action='store',
+configurables.add_argument(
+    "typename", nargs='?', default=None, action='store',
     help="If specified, only output configurables of that type; else output "
     "all configurables")
 @configurables.bind_main_func
@@ -282,9 +290,10 @@ def _dump_uncollapsed_section(config, out, err, section):
         else:
             err.error('unsupported type %r' % (kind,))
 
-dump_uncollapsed = subparsers.add_parser("dump-uncollapsed", parents=shared_options,
+dump_uncollapsed = subparsers.add_parser(
+    "dump-uncollapsed", parents=shared_options,
     description="dump the configuration in a raw, uncollapsed form."
-        "Not directly usable as a configuration file, mainly used for inspection")
+                "Not directly usable as a configuration file, mainly used for inspection")
 @dump_uncollapsed.bind_main_func
 def dump_uncollapsed_main(options, out, err):
     """dump the configuration in a raw, uncollapsed form.
@@ -310,10 +319,11 @@ def dump_uncollapsed_main(options, out, err):
             _dump_uncollapsed_section(options.config, out, err, section)
             out.write()
 
-package = subparsers.add_parser("package",
-    parents=(commandline.mk_argparser(add_help=False),),
+package = subparsers.add_parser(
+    "package", parents=(commandline.mk_argparser(add_help=False),),
     description="invoke a packages custom configuration scripts")
-commandline.make_query(package, nargs='+', dest='query',
+commandline.make_query(
+    package, nargs='+', dest='query',
     help="restrictions/atoms; matching installed packages will be configured")
 @package.bind_main_func
 def package_func(options, out, err):
@@ -333,27 +343,30 @@ def package_func(options, out, err):
     return 1
 
 
-world = subparsers.add_parser("world",
-    parents=(commandline.mk_argparser(add_help=False),),
+world = subparsers.add_parser(
+    "world", parents=(commandline.mk_argparser(add_help=False),),
     description="Inspect and modify the world file.")
-world_modes = world.add_argument_group("Command modes",
+world_modes = world.add_argument_group(
+    "Command modes",
     "These options are directives for what to do with the world file.  You "
     "can do multiple operations in a single invocation. "
     "For example, you can have `--add x11-wm/fluxbox "
     "--remove gnome-base/gnome -l` to add fluxbox, remove gnome, and list the "
     "world file contents all in one call.")
-world_modes.add_argument('-l', '--list', action='store_true',
+world_modes.add_argument(
+    '-l', '--list', action='store_true',
     help="List the current world file contents for this domain.")
-world_modes.add_argument('-r', '--remove', action='append',
+world_modes.add_argument(
+    '-r', '--remove', action='append',
     type=atom.atom,
     help="Remove an entry from the world file.  Can be specified multiple times.")
-world_modes.add_argument('-a', '--add', action='append',
+world_modes.add_argument(
+    '-a', '--add', action='append',
     type=atom.atom,
     help="Add an entry to the world file.  Can be specified multiple times.")
 
-world.set_defaults(world=
-    commandline.StoreConfigObject.lazy_load_object(
-        'pkgset', 'world', 99))
+world.set_defaults(
+    world=commandline.StoreConfigObject.lazy_load_object('pkgset', 'world', 99))
 @world.bind_main_func
 def world_func(options, out, err):
     world_file = options.world

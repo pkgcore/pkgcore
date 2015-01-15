@@ -47,9 +47,11 @@ argparser = commandline.mk_argparser(
     description=__doc__.split('\n', 1)[0])
 subparsers = argparser.add_subparsers(description="general system maintenance")
 
-sync = subparsers.add_parser("sync", parents=shared_options,
+sync = subparsers.add_parser(
+    "sync", parents=shared_options,
     description="synchronize a local repository with its defined remote")
-sync.add_argument('repos', nargs='*', help="repositories to sync",
+sync.add_argument(
+    'repos', nargs='*', help="repositories to sync",
     action=commandline.StoreRepoObject, store_name=True, raw=True)
 @sync.bind_main_func
 def sync_main(options, out, err):
@@ -95,19 +97,24 @@ def sync_main(options, out, err):
     return 0
 
 
-copy = subparsers.add_parser("copy", parents=shared_options,
+copy = subparsers.add_parser(
+    "copy", parents=shared_options,
     description="copy binpkgs between repositories; primarily useful for "
     "quickpkging a livefs pkg")
-copy.add_argument('target_repo', action=commandline.StoreRepoObject,
+copy.add_argument(
+    'target_repo', action=commandline.StoreRepoObject,
     writable=True, help="repository to add packages to")
-copy.add_argument('-s', '--source-repo', default=None,
+copy.add_argument(
+    '-s', '--source-repo', default=None,
     action=commandline.StoreRepoObject,
     help="copy strictly from the supplied repository; else it copies from "
     "wherever a match is found")
-commandline.make_query(copy, nargs='+', dest='query',
+commandline.make_query(
+    copy, nargs='+', dest='query',
     help="packages matching any of these restrictions will be selected "
     "for copying")
-copy.add_argument('-i', '--ignore-existing', default=False, action='store_true',
+copy.add_argument(
+    '-i', '--ignore-existing', default=False, action='store_true',
     help="if a matching pkg already exists in the target, don't update it")
 
 @copy.bind_main_func
@@ -163,9 +170,11 @@ def _get_default_jobs(namespace, attr):
         val += 1
     setattr(namespace, attr, val)
 
-regen = subparsers.add_parser("regen", parents=shared_options,
+regen = subparsers.add_parser(
+    "regen", parents=shared_options,
     description="regenerate repository caches")
-regen.add_argument("--disable-eclass-caching", action='store_true',
+regen.add_argument(
+    "--disable-eclass-caching", action='store_true',
     default=False,
     help="For regen operation, pkgcore internally turns on an "
     "optimization that caches eclasses into individual functions "
@@ -173,17 +182,22 @@ regen.add_argument("--disable-eclass-caching", action='store_true',
     "this optimization via this option results in ~2x slower "
     "regeneration. Disable it only if you suspect the optimization "
     "is somehow causing issues.")
-regen.add_argument("-t", "--threads", type=int,
+regen.add_argument(
+    "-t", "--threads", type=int,
     default=commandline.DelayedValue(_get_default_jobs, 100),
     help="number of threads to use for regeneration.  Defaults to using all "
     "available processors")
-regen.add_argument("--force", action='store_true', default=False,
+regen.add_argument(
+    "--force", action='store_true', default=False,
     help="force regeneration to occur regardless of staleness checks")
-regen.add_argument("--rsync", action='store_true', default=False,
+regen.add_argument(
+    "--rsync", action='store_true', default=False,
     help="perform actions necessary for rsync repos (update metadata/timestamp.chk)")
-regen.add_argument("-v", "--verbose", action='store_true', default=False,
+regen.add_argument(
+    "-v", "--verbose", action='store_true', default=False,
     help="show verbose output")
-regen.add_argument("repo", action=commandline.StoreRepoObject,
+regen.add_argument(
+    "repo", action=commandline.StoreRepoObject,
     help="repository to regenerate caches for")
 @regen.bind_main_func
 def regen_main(options, out, err):
@@ -213,11 +227,11 @@ def regen_main(options, out, err):
     return 0
 
 
-perl_rebuild = subparsers.add_parser("perl-rebuild",
-    parents=(commandline.mk_argparser(add_help=False),),
+perl_rebuild = subparsers.add_parser(
+    "perl-rebuild", parents=(commandline.mk_argparser(add_help=False),),
     description="EXPERIMENTAL: perl-rebuild support for use after upgrading perl")
-perl_rebuild.add_argument("new_version",
-    help="the new perl version; 5.12.3 for example")
+perl_rebuild.add_argument(
+    "new_version", help="the new perl version; 5.12.3 for example")
 @perl_rebuild.bind_main_func
 def perl_rebuild_main(options, out, err):
 
@@ -251,9 +265,11 @@ def perl_rebuild_main(options, out, err):
     return 0
 
 
-env_update = subparsers.add_parser("env-update", description="update env.d and ldconfig",
+env_update = subparsers.add_parser(
+    "env-update", description="update env.d and ldconfig",
     parents=(commandline.mk_argparser(add_help=False),))
-env_update.add_argument("--skip-ldconfig", action='store_true', default=False,
+env_update.add_argument(
+    "--skip-ldconfig", action='store_true', default=False,
     help="do not update etc/ldso.conf and ld.so.cache")
 @env_update.bind_main_func
 def env_update_main(options, out, err):
@@ -271,15 +287,16 @@ def env_update_main(options, out, err):
     return 0
 
 
-mirror = subparsers.add_parser("mirror",
-    description="mirror the sources for a package in full- grab everything"
-    " that could be required",
+mirror = subparsers.add_parser(
+    "mirror",
+    description="mirror the sources for a package in full- grab everything that could be required",
     parents=(commandline.mk_argparser(add_help=False),))
-mirror.add_argument("-f", "--ignore-failures", action='store_true',
-    default=False,
+mirror.add_argument(
+    "-f", "--ignore-failures", action='store_true', default=False,
     help="if a failure occurs, keep going.  If this option isn't given, it'll"
-    " stop at the first failure encountered")
-commandline.make_query(mirror, nargs='+', dest='query',
+         " stop at the first failure encountered")
+commandline.make_query(
+    mirror, nargs='+', dest='query',
     help="query of which packages to mirror")
 @mirror.bind_main_func
 def mirror_main(options, out, err):
@@ -303,14 +320,17 @@ def mirror_main(options, out, err):
     return 0
 
 
-digest = subparsers.add_parser("digest",
+digest = subparsers.add_parser(
+    "digest",
     description="update a repositories package manifest/digest information",
     parents=(commandline.mk_argparser(add_help=False),))
-digest.add_argument("--repo", "--repository", help="repository to update",
+digest.add_argument(
+    "--repo", "--repository", help="repository to update",
     action=commandline.StoreRepoObject)
-commandline.make_query(digest, nargs='+', dest='query',
+commandline.make_query(
+    digest, nargs='+', dest='query',
     help="packages matching any of these restrictions will have their"
-    " manifest/digest updated")
+         " manifest/digest updated")
 @digest.bind_main_func
 def digest_main(options, out, err):
     domain = options.domain

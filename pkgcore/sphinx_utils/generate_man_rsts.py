@@ -221,6 +221,10 @@ class ManConverter(object):
         return filter(None, text.split("\n"))
 
     def process_parser(self, parser, name):
+        # subcommands all have names using the format "command subcommand ...",
+        # e.g. "pmaint sync" or "pinspect query get_profiles"
+        main_command = ' ' not in name
+
         l = ['.. _`%s manpage`:' % (name,), '']
         l.extend(_rst_header('=', name, leading=True))
 
@@ -237,7 +241,7 @@ class ManConverter(object):
         #
         # Note this is only done for the main commandline description, not
         # subcommands.
-        if ' ' not in name:
+        if main_command:
             section = []
             description = []
             for s in load_module('pkgcore.scripts.' + name.replace('-', '_')).__doc__.splitlines()[1:]:
@@ -256,6 +260,14 @@ class ManConverter(object):
             l += [val, '']
 
         l.extend(self.process_action_groups(parser, name))
+
+        if main_command:
+            l.extend(_rst_header("=", "REPORTING BUGS"))
+            l.append('Please submit an issue via github:')
+            l.append('')
+            l.append('https://github.com/pkgcore/pkgcore/issues')
+            l.append('')
+            l.append('You can also stop by #pkgcore on Freenode.')
 
         return l
 

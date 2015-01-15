@@ -60,10 +60,10 @@ merge_mode.add_argument(
     help='unmerge a package')
 merge_mode.add_argument(
     '--clean', action='store_true',
-    help='remove installed packages that are not referenced by any '
-         'target packages/sets; defaults to -s world -s system if no targets'
-         ' are specified.  Use with *caution*, this option used incorrectly '
-         'can render your system unusable.  Implies --deep')
+    help='Remove installed packages that are not referenced by any '
+         'target packages/sets; defaults to -s world -s system if no targets '
+         'are specified. Use with *caution*, this option used incorrectly '
+         'can render your system unusable. Note that this implies --deep.')
 merge_mode.add_argument(
     '-p', '--pretend', action='store_true',
     help="do the resolution, but don't merge/fetch anything")
@@ -95,17 +95,17 @@ resolution_options.add_argument(
     help='force the resolver to verify already installed dependencies')
 resolution_options.add_argument(
     '--preload-vdb-state', action='store_true',
-    help=("enable preloading of the installed packages database. "
-          "This causes the resolver to work with a complete graph, thus "
-          "disallowing actions that conflict with installed packages. If "
-          "disabled, it's possible for the requested action to conflict with "
-          "already installed dependencies that aren't involved in the graph of "
-          "the requested operation."))
+    help="Enable preloading of the installed packages database. "
+         "This causes the resolver to work with a complete graph, thus "
+         "disallowing actions that conflict with installed packages. If "
+         "disabled, it's possible for the requested action to conflict with "
+         "already installed dependencies that aren't involved in the graph of "
+         "the requested operation.")
 resolution_options.add_argument(
     '-i', '--ignore-cycles', action='store_true',
-    help=("ignore cycles if they're found to be unbreakable;"
-           "a depends on b, and b depends on a, with neither built is an "
-           "example"))
+    help="Ignore cycles if they're found to be unbreakable; "
+         "a depends on b, and b depends on a, with neither built is an "
+         "example.")
 resolution_options.add_argument(
     '-B', '--with-built-depends',
     action='store_true', default=False,

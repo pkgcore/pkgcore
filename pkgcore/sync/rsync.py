@@ -56,20 +56,20 @@ class rsync_syncer(base.ExternalSyncer):
     pkgcore_config_type = ConfigHint({
         'basedir': 'str', 'uri': 'str', 'conn_timeout': 'str',
         'compress': 'bool', 'excludes': 'list', 'includes': 'list',
-        'retries': 'str', 'extra_opts': 'list', 'proxy': 'str'},
+        'retries': 'str', 'opts': 'list', 'extra_opts': 'list', 'proxy': 'str'},
         typename='syncer')
 
     def __init__(self, basedir, uri, conn_timeout=default_conn_timeout,
                  compress=False, excludes=(), includes=(),
                  retries=default_retries, proxy=None,
-                 extra_opts=()):
+                 opts=(), extra_opts=()):
         uri = uri.rstrip(os.path.sep) + os.path.sep
         self.rsh, uri = self.parse_uri(uri)
         base.ExternalSyncer.__init__(self, basedir, uri, default_verbosity=1)
         self.hostname = self.parse_hostname(self.uri)
         if self.rsh:
             self.rsh = self.require_binary(self.rsh)
-        self.opts = list(self.default_opts)
+        self.opts = list(opts) if opts else list(self.default_opts)
         self.opts.extend(extra_opts)
         if compress:
             self.opts.append("--compress")

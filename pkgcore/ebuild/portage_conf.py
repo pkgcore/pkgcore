@@ -121,8 +121,10 @@ def isolate_rsync_opts(options):
     a base rsync dict
     """
     base = {}
+    opts = []
     extra_opts = []
 
+    opts.extend(options.pop('PORTAGE_RSYNC_OPTS', '').split())
     extra_opts.extend(options.pop('PORTAGE_RSYNC_EXTRA_OPTS', '').split())
 
     timeout = options.pop('PORTAGE_RSYNC_INITIAL_TIMEOUT', None)
@@ -143,6 +145,8 @@ def isolate_rsync_opts(options):
     if proxy is not None:
         base['proxy'] = proxy.strip()
 
+    if opts:
+        base['opts'] = tuple(opts)
     if extra_opts:
         base['extra_opts'] = tuple(extra_opts)
 

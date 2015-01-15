@@ -256,7 +256,8 @@ class ManConverter(object):
                 val = '\n\n'.join(description)
 
         if val:
-            l.extend(_rst_header("=", "DESCRIPTION"))
+            description = 'DESCRIPTION' if main_command else 'description'
+            l.extend(_rst_header("=", description))
             l += [val, '']
 
         l.extend(self.process_action_groups(parser, name))

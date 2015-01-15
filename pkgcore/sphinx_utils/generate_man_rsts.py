@@ -228,7 +228,7 @@ class ManConverter(object):
         l.extend(self.generate_usage(parser, name))
         l += ['']
 
-        val = getattr(parser, 'long_description', parser.description)
+        val = parser.description
 
         # Support grabbing a long description from a script's docstring where
         # the long description is defined as the lines following the initial

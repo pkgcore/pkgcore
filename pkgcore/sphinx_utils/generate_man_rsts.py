@@ -247,7 +247,7 @@ class ManConverter(object):
             for s in load_module('pkgcore.scripts.' + name.replace('-', '_')).__doc__.splitlines()[1:]:
                 if s != '':
                     section.append(s)
-                else:
+                elif section:
                     description.append(' '.join(section))
                     section = []
             if section:

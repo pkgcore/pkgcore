@@ -3,6 +3,7 @@
 import errno
 import os
 import re
+import sys
 
 from snakeoil.currying import partial
 from snakeoil.modules import load_module
@@ -259,7 +260,6 @@ class ManConverter(object):
         return l
 
 if __name__ == '__main__':
-    import sys
     output = sys.argv[1]
     targets = sys.argv[2:]
     if not targets:

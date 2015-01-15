@@ -22,9 +22,6 @@ from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.currying import partial
 from snakeoil.lists import stable_unique
 
-argparser = commandline.mk_argparser(
-    domain=True, description=__doc__.split('\n', 1)[0])
-
 
 class StoreTarget(argparse._AppendAction):
 
@@ -41,10 +38,13 @@ class StoreTarget(argparse._AppendAction):
                 argparse._AppendAction.__call__(self, parser, namespace,
                     parserestrict.parse_match(x), option_string=option_string)
 
-query_options = argparser.add_argument_group("Package querying options")
-
-query_options.add_argument(nargs='*', dest='targets', action=StoreTarget,
+argparser = commandline.mk_argparser(
+    domain=True, description=__doc__.split('\n', 1)[0])
+argparser.add_argument(
+    nargs='*', dest='targets', action=StoreTarget,
     help="extended atom matching of packages")
+
+query_options = argparser.add_argument_group("Package querying options")
 query_options.add_argument('-N', '--newuse', action='store_true',
     help="check for changed useflags in installed packages "
          "(implies -1)")
@@ -77,7 +77,6 @@ merge_mode.add_argument('-1', '--oneshot', action='store_true',
          "involved, defaults to forcing oneshot")
 
 resolution_options = argparser.add_argument_group("Resolver options")
-
 resolution_options.add_argument('-u', '--upgrade', action='store_true',
     help='try to upgrade already installed packages/dependencies')
 resolution_options.add_argument('-D', '--deep', action='store_true',

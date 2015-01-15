@@ -15,7 +15,7 @@ from pkgcore.operations import observer
 from pkgcore.util import commandline
 
 
-argparser = commandline.mk_argparser(description=__doc__)
+argparser = commandline.mk_argparser(description=__doc__.split('\n', 1)[0])
 argparser.add_argument(
     "--no-auto", action='store_true', default=False,
     help="run just the specified phases; it's up to the invoker to get the order right")

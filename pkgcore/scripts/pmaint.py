@@ -42,8 +42,9 @@ def format_seq(seq, formatter=repr):
 
 
 shared_options = (commandline.mk_argparser(domain=False, add_help=False),)
-argparser = commandline.mk_argparser(suppress=True, parents=shared_options,
-    description=__doc__)
+argparser = commandline.mk_argparser(
+    suppress=True, parents=shared_options,
+    description=__doc__.split('\n', 1)[0])
 subparsers = argparser.add_subparsers(description="general system maintenance")
 
 sync = subparsers.add_parser("sync", parents=shared_options,

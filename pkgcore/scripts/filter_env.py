@@ -14,7 +14,7 @@ from pkgcore.util import commandline
 
 argparser = commandline.mk_argparser(
     config=False, domain=False, color=False,
-    description=__doc__)
+    description=__doc__.split('\n', 1)[0])
 argparser.add_argument('-V', '--var-match', action='store_true',
     default=False,
     help="Invert the filtering- instead of removing a var if it matches "

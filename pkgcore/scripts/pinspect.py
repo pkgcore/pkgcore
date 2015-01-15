@@ -29,7 +29,7 @@ demandload(
 shared = (commandline.mk_argparser(domain=False, add_help=False),)
 argparser = commandline.mk_argparser(
     suppress=True, parents=shared,
-    description=__doc__)
+    description=__doc__.split('\n', 1)[0])
 subparsers = argparser.add_subparsers(description="report applets")
 
 pkgsets = subparsers.add_parser("pkgsets", description="pkgset related introspection")

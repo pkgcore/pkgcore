@@ -23,7 +23,7 @@ from snakeoil.currying import partial
 from snakeoil.lists import stable_unique
 
 argparser = commandline.mk_argparser(
-    domain=True, description=__doc__)
+    domain=True, description=__doc__.split('\n', 1)[0])
 
 
 class StoreTarget(argparse._AppendAction):

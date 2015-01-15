@@ -228,7 +228,7 @@ generated_man_pages.append(('pkgcore.scripts.filter_env', 'filter-env'))
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('man/%s' % x[1], x[1], import_module(x[0]).__doc__.splitlines()[0].strip(), authors_list, 1)
+    ('man/%s' % x[1], x[1], import_module(x[0]).__doc__.split('\n', 1)[0], authors_list, 1)
     for x in generated_man_pages
 ]
 

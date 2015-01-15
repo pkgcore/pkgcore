@@ -2,7 +2,7 @@
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
 # License: BSD/GPL2
 
-"""Low-level ebuild operations."""
+"""pkgcore low-level ebuild utility"""
 
 __all__ = ("argparser", "main")
 
@@ -13,7 +13,6 @@ from pkgcore.ebuild import atom
 from pkgcore.ebuild.errors import MalformedAtom
 from pkgcore.operations import observer
 from pkgcore.util import commandline
-
 
 argparser = commandline.mk_argparser(description=__doc__.split('\n', 1)[0])
 argparser.add_argument(

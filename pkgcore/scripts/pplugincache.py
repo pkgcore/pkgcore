@@ -2,7 +2,7 @@
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
 # License: BSD/GPL2
 
-"""Update the plugin cache."""
+"""pkgcore plugin cache update utility"""
 
 __all__ = ("argparser", "main")
 

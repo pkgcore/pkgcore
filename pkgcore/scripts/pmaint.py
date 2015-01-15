@@ -2,7 +2,7 @@
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
 # License: BSD/GPL2
 
-"""commandline access to various system/repository maintenance functionality"""
+"""pkgcore system/repository maintenance utility"""
 
 __all__ = (
     "sync", "sync_main", "copy", "copy_main", "regen", "regen_main",

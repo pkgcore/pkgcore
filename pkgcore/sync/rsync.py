@@ -24,7 +24,6 @@ class rsync_syncer(base.ExternalSyncer):
     default_excludes = ["/distfiles", "/local", "/packages"]
     default_includes = []
     default_conn_timeout = 15
-    default_timeout = 180
     default_opts = [
         "--recursive",
         "--delete-delay",
@@ -32,6 +31,7 @@ class rsync_syncer(base.ExternalSyncer):
         "--times",
         "--force",
         "--safe-links",
+        "--timeout=180",
         "--whole-file", # this one probably shouldn't be a default.
     ]
 
@@ -73,7 +73,6 @@ class rsync_syncer(base.ExternalSyncer):
         self.opts.extend(extra_opts)
         if compress:
             self.opts.append("--compress")
-        self.opts.append("--timeout=%i" % int(self.default_timeout))
         self.opts.append("--contimeout=%i" % int(conn_timeout))
         self.excludes = list(self.default_excludes) + list(excludes)
         self.includes = list(self.default_includes) + list(includes)

@@ -2,9 +2,7 @@
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
 # License: BSD/GPL2
 
-"""
-commandline access to various system/repository maintenance functionality
-"""
+"""commandline access to various system/repository maintenance functionality"""
 
 __all__ = (
     "sync", "sync_main", "copy", "copy_main", "regen", "regen_main",

@@ -228,6 +228,28 @@ class ManConverter(object):
         l += ['']
 
         val = getattr(parser, 'long_description', parser.description)
+
+        # Support grabbing a long description from a script's docstring where
+        # the long description is defined as the lines following the initial
+        # one line summary. If it doesn't exist we fall back to using the
+        # docstring summary line.
+        #
+        # Note this is only done for the main commandline description, not
+        # subcommands.
+        if ' ' not in name:
+            section = []
+            description = []
+            for s in load_module('pkgcore.scripts.' + name.replace('-', '_')).__doc__.splitlines()[1:]:
+                if s != '':
+                    section.append(s)
+                else:
+                    description.append(' '.join(section))
+                    section = []
+            if section:
+                description.append(' '.join(section))
+            if description:
+                val = '\n\n'.join(description)
+
         if val:
             l.extend(_rst_header("=", "DESCRIPTION"))
             l += [val, '']

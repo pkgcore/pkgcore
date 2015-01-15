@@ -256,14 +256,13 @@ class ManConverter(object):
                 val = '\n\n'.join(description)
 
         if val:
-            description = 'DESCRIPTION' if main_command else 'description'
-            l.extend(_rst_header("=", description))
+            l.extend(_rst_header("=", "description"))
             l += [val, '']
 
         l.extend(self.process_action_groups(parser, name))
 
         if main_command:
-            l.extend(_rst_header("=", "REPORTING BUGS"))
+            l.extend(_rst_header("=", "Reporting Bugs"))
             l.append('Please submit an issue via github:')
             l.append('')
             l.append('https://github.com/pkgcore/pkgcore/issues')

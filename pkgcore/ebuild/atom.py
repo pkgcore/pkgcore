@@ -24,8 +24,6 @@ from pkgcore.restrictions import values, packages, boolean
 
 demandload(
     globals(),
-    'collections:defaultdict',
-    "pkgcore.restrictions.delegated:delegate",
     'pkgcore.restrictions.packages:Conditional,AndRestriction@PkgAndRestriction',
     'pkgcore.restrictions.values:ContainmentMatch',
 )
@@ -836,16 +834,3 @@ class transitive_use_atom(atom):
 
 
 atom._transitive_use_atom = transitive_use_atom
-
-def _collapsed_restrict_match(data, pkg, mode):
-    # mode is ignored; non applicable.
-    for r in data.get(pkg.key, ()):
-        if r.match(pkg):
-            return True
-    return False
-
-def generate_collapsed_restriction(atoms, negate=False):
-    d = defaultdict(list)
-    for a in atoms:
-        d[a.key].append(a)
-    return delegate(partial(_collapsed_restrict_match, d), negate=negate)

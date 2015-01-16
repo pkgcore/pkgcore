@@ -25,7 +25,6 @@ from pkgcore.config import ConfigHint
 import pkgcore.config.domain
 from pkgcore.config.errors import BaseError
 from pkgcore.ebuild import const
-from pkgcore.ebuild.atom import generate_collapsed_restriction
 from pkgcore.ebuild.misc import (
     ChunkedDataDict, chunked_data, collapsed_restrict_to_data,
     incremental_expansion, incremental_expansion_license,
@@ -39,6 +38,7 @@ from pkgcore.util.parserestrict import parse_match
 
 demandload(
     globals(),
+    'collections:defaultdict',
     'errno',
     'operator:itemgetter',
     're',
@@ -73,17 +73,6 @@ def package_env_splitter(basedir, val):
 # should be redesigned to be a seperation of configuration
 # instantiation manglers, and then the ebuild specific chunk (which is
 # selected by config)
-# ~harring
-
-
-def generate_masking_restrict(masks):
-    # if it's masked, it's not a match
-    return generate_collapsed_restriction(masks, negate=True)
-
-def generate_unmasking_restrict(unmasks):
-    return generate_collapsed_restriction(unmasks)
-
-
 class domain(pkgcore.config.domain.domain):
 
     # XXX ouch, verify this crap and add defaults and stuff
@@ -338,17 +327,17 @@ class domain(pkgcore.config.domain.domain):
                         # we do this both since that's annoying, and since
                         # frankly there isn't any good course of action.
                         masters = ()
-                    masks = [repo_masks.get(master, [(), ()]) for master in masters]
-                    masks.append(repo_masks[repo.repo_id])
-                    masks.extend(profile_masks)
-                    mask_atoms = set()
-                    for neg, pos in masks:
-                        mask_atoms.difference_update(neg)
-                        mask_atoms.update(pos)
-                    mask_atoms.update(pkg_maskers)
-                    unmask_atoms = set(chain(pkg_unmaskers, *profile_unmasks))
-                    filtered = self.generate_filter(generate_masking_restrict(mask_atoms),
-                        generate_unmasking_restrict(unmask_atoms), *vfilters)
+                    global_masks = [repo_masks.get(master, [(), ()]) for master in masters]
+                    global_masks.append(repo_masks[repo.repo_id])
+                    global_masks.extend(profile_masks)
+                    masks = set()
+                    for neg, pos in global_masks:
+                        masks.difference_update(neg)
+                        masks.update(pos)
+                    masks.update(pkg_maskers)
+                    unmasks = set(chain(pkg_unmaskers, *profile_unmasks))
+                    filtered = self.generate_filter(self.make_masks_filter(masks, negate=True),
+                        self.make_masks_filter(unmasks), *vfilters)
                 if filtered:
                     wrapped_repo = visibility.filterTree(wrapped_repo,
                         filtered, True)
@@ -414,6 +403,20 @@ class domain(pkgcore.config.domain.domain):
             if accepted.issuperset(and_pair):
                 return True
         return False
+
+    @staticmethod
+    def apply_masks_filter(data, pkg, mode):
+        # mode is ignored; non applicable.
+        for r in data.get(pkg.key, ()):
+            if r.match(pkg):
+                return True
+        return False
+
+    def make_masks_filter(self, atoms, negate=False):
+        masks = defaultdict(list)
+        for a in atoms:
+            masks[a.key].append(a)
+        return delegate(partial(self.apply_masks_filter, masks), negate=negate)
 
     def make_keywords_filter(self, arch, default_keys, accept_keywords,
                              profile_keywords, incremental=False):

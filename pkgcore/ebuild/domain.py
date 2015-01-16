@@ -24,7 +24,7 @@ from snakeoil.osutils import pjoin
 from pkgcore.config import ConfigHint
 import pkgcore.config.domain
 from pkgcore.config.errors import BaseError
-from pkgcore.ebuild import const
+from pkgcore.ebuild import const, atom
 from pkgcore.ebuild.misc import (
     ChunkedDataDict, chunked_data, collapsed_restrict_to_data,
     incremental_expansion, incremental_expansion_license,
@@ -405,18 +405,22 @@ class domain(pkgcore.config.domain.domain):
         return False
 
     @staticmethod
-    def apply_masks_filter(data, pkg, mode):
+    def apply_masks_filter(globs, atoms, pkg, mode):
         # mode is ignored; non applicable.
-        for r in data.get(pkg.key, ()):
+        for r in chain(globs, atoms.get(pkg.key, ())):
             if r.match(pkg):
                 return True
         return False
 
-    def make_masks_filter(self, atoms, negate=False):
-        masks = defaultdict(list)
-        for a in atoms:
-            masks[a.key].append(a)
-        return delegate(partial(self.apply_masks_filter, masks), negate=negate)
+    def make_masks_filter(self, masks, negate=False):
+        atoms = defaultdict(list)
+        globs = []
+        for m in masks:
+            if isinstance(m, atom.atom):
+                atoms[m.key].append(m)
+            else:
+                globs.append(m)
+        return delegate(partial(self.apply_masks_filter, globs, atoms), negate=negate)
 
     def make_keywords_filter(self, arch, default_keys, accept_keywords,
                              profile_keywords, incremental=False):

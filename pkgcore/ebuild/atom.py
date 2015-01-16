@@ -8,12 +8,11 @@
 gentoo ebuild atom, should be generalized into an agnostic base
 """
 
-__all__ = ("atom", "transitive_use_atom", "generate_collapsed_restriction")
+__all__ = ("atom", "transitive_use_atom")
 
 import string
 
 from snakeoil.compatibility import is_py3k, cmp, raise_from
-from snakeoil.currying import partial
 from snakeoil.demandload import demandload
 from snakeoil.klass import (
     generic_equality, inject_richcmp_methods_from_cmp,

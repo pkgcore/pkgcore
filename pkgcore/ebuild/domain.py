@@ -365,19 +365,6 @@ class domain(pkgcore.config.domain.domain):
         if "prefix" in features or "force-prefix" in features:
             use_settings.add("prefix")
 
-    def generate_filter(self, masking, unmasking, *extra):
-        # note that we ignore unmasking if masking isn't specified.
-        # no point, mainly
-        r = ()
-        if masking:
-            if unmasking:
-                r = (packages.OrRestriction(masking, unmasking, disable_inst_caching=True),)
-            else:
-                r = (masking,)
-        vfilter = packages.AndRestriction(disable_inst_caching=True,
-            finalize=True, *(r + extra))
-        return vfilter
-
     def make_license_filter(self, master_license, pkg_licenses):
         """Generates a restrict that matches iff the licenses are allowed."""
         return delegate(partial(self.apply_license_filter, master_license, pkg_licenses))
@@ -403,6 +390,18 @@ class domain(pkgcore.config.domain.domain):
             if accepted.issuperset(and_pair):
                 return True
         return False
+
+    def generate_filter(self, masking, unmasking, *extra):
+        # note that we ignore unmasking if masking isn't specified.
+        # no point, mainly
+        r = ()
+        if masking:
+            if unmasking:
+                r = (packages.OrRestriction(masking, unmasking, disable_inst_caching=True),)
+            else:
+                r = (masking,)
+        vfilter = packages.AndRestriction(disable_inst_caching=True, finalize=True, *(r + extra))
+        return vfilter
 
     @staticmethod
     def apply_masks_filter(globs, atoms, pkg, mode):

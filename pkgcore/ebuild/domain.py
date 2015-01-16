@@ -66,6 +66,25 @@ def package_env_splitter(basedir, val):
     return parse_match(val[0]), local_source(pjoin(basedir, val[1]))
 
 
+def apply_masks_filter(globs, atoms, pkg, mode):
+    # mode is ignored; non applicable.
+    for r in chain(globs, atoms.get(pkg.key, ())):
+        if r.match(pkg):
+            return True
+    return False
+
+
+def make_masks_filter(masks, negate=False):
+    atoms = defaultdict(list)
+    globs = []
+    for m in masks:
+        if isinstance(m, atom.atom):
+            atoms[m.key].append(m)
+        else:
+            globs.append(m)
+    return delegate(partial(apply_masks_filter, globs, atoms), negate=negate)
+
+
 # ow ow ow ow ow ow....
 # this manages a *lot* of crap.  so... this is fun.
 #
@@ -336,11 +355,11 @@ class domain(pkgcore.config.domain.domain):
                         masks.update(pos)
                     masks.update(pkg_maskers)
                     unmasks = set(chain(pkg_unmaskers, *profile_unmasks))
-                    filtered = self.generate_filter(self.make_masks_filter(masks, negate=True),
-                        self.make_masks_filter(unmasks), *vfilters)
+                    filtered = self.generate_filter(
+                        make_masks_filter(masks, negate=True),
+                        make_masks_filter(unmasks), *vfilters)
                 if filtered:
-                    wrapped_repo = visibility.filterTree(wrapped_repo,
-                        filtered, True)
+                    wrapped_repo = visibility.filterTree(wrapped_repo, filtered, True)
                 self.repos_configured_filtered[key] = wrapped_repo
                 l.append(wrapped_repo)
 
@@ -402,24 +421,6 @@ class domain(pkgcore.config.domain.domain):
                 r = (masking,)
         vfilter = packages.AndRestriction(disable_inst_caching=True, finalize=True, *(r + extra))
         return vfilter
-
-    @staticmethod
-    def apply_masks_filter(globs, atoms, pkg, mode):
-        # mode is ignored; non applicable.
-        for r in chain(globs, atoms.get(pkg.key, ())):
-            if r.match(pkg):
-                return True
-        return False
-
-    def make_masks_filter(self, masks, negate=False):
-        atoms = defaultdict(list)
-        globs = []
-        for m in masks:
-            if isinstance(m, atom.atom):
-                atoms[m.key].append(m)
-            else:
-                globs.append(m)
-        return delegate(partial(self.apply_masks_filter, globs, atoms), negate=negate)
 
     def make_keywords_filter(self, arch, default_keys, accept_keywords,
                              profile_keywords, incremental=False):

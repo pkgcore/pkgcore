@@ -292,6 +292,9 @@ class EbuildProcessor(object):
         if "PKGCORE_SCRIPT_PATH" in os.environ:
             env["PATH"] = os.environ["PATH"] + os.pathsep + os.environ["PKGCORE_SCRIPT_PATH"]
 
+        if 'PYTHONPATH' in os.environ:
+            env["PYTHONPATH"] = os.environ['PYTHONPATH']
+
         args = []
         if sandbox:
             if not pkgcore.spawn.is_sandbox_capable():
@@ -338,8 +341,8 @@ class EbuildProcessor(object):
         self.write(e_const.EAPI_BIN_PATH)
         # send PKGCORE_PYTHON_BINARY...
         self.write(pkgcore.spawn.find_invoking_python())
-        self.write(normpath(abspath(pjoin(
-            pkgcore.__file__, os.pardir, os.pardir))))
+        self.write(
+            normpath(abspath(pjoin(pkgcore.__file__, os.pardir, os.pardir))))
         if self.__sandbox:
             self.write("sandbox_log?")
             self.__sandbox_log = self.read().split()[0]

@@ -56,7 +56,6 @@ from snakeoil.osutils import abspath, normpath, pjoin
 from snakeoil.weakrefs import WeakRefFinalizer
 
 demandload(
-    globals(),
     'traceback',
     'snakeoil:fileutils',
     'pkgcore.log:logger',

@@ -21,7 +21,6 @@ from pkgcore.package import errors
 from pkgcore.fs.livefs import iter_scan
 
 demandload(
-    globals(),
     "errno",
     'snakeoil:mappings',
     "snakeoil.lists:iflatten_instance",

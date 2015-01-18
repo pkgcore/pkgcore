@@ -11,7 +11,7 @@ from snakeoil import klass
 from snakeoil.currying import pre_curry
 from snakeoil.demandload import demandload
 
-demandload(globals(), 'threading')
+demandload('threading')
 
 
 def _convert(msg, args=(), kwds={}):

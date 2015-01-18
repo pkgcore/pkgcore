@@ -6,7 +6,6 @@ from snakeoil.demandload import demandload
 from pkgcore.util import commandline
 
 demandload(
-    globals(),
     'collections:defaultdict',
     'itertools:chain',
     'operator',

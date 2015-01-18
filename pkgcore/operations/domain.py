@@ -12,7 +12,6 @@ from snakeoil.dependant_methods import ForcedDepends
 from snakeoil.weakrefs import WeakRefFinalizer
 
 demandload(
-    globals(),
     'errno',
     "shutil",
     "tempfile",

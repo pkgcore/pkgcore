@@ -32,7 +32,6 @@ from snakeoil.demandload import demandload, demand_compile_regexp
 from snakeoil.mappings import IndeterminantDict
 
 demandload(
-    globals(),
     "snakeoil:chksum",
     "snakeoil:data_source,fileutils",
     "pkgcore.ebuild.eapi:get_eapi",
@@ -40,7 +39,6 @@ demandload(
 )
 
 demand_compile_regexp(
-    globals(),
     '_parse_EAPI_RE', r"^EAPI=(['\"]?)([A-Za-z0-9+_.-]*)\1[\t ]*(?:#.*)?"
 )
 

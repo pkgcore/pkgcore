@@ -6,7 +6,6 @@ from snakeoil.demandload import demandload
 from pkgcore.util import commandline
 
 demandload(
-    globals(),
     'snakeoil:osutils,currying',
     "pkgcore.ebuild:atom,conditionals,eapi",
     "pkgcore.restrictions.boolean:AndRestriction",

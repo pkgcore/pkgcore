@@ -11,7 +11,7 @@ from snakeoil.klass import generic_equality, static_attrgetter
 
 from pkgcore.restrictions import restriction, boolean
 
-demandload(globals(), "pkgcore.log:logger")
+demandload("pkgcore.log:logger")
 
 # Backwards compatibility.
 package_type = restriction.package_type

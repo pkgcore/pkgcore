@@ -14,7 +14,6 @@ from snakeoil.demandload import demandload
 from snakeoil.mappings import OrderedDict, autoconvert_py3k_methods_metaclass
 
 demandload(
-    globals(),
     "errno",
     "os",
 )

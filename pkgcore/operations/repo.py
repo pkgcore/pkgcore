@@ -19,7 +19,6 @@ from snakeoil.weakrefs import WeakRefFinalizer
 from pkgcore import operations as _operations_mod
 
 demandload(
-    globals(),
     "pkgcore.log:logger",
     "pkgcore.operations:observer@observer_mod,regen",
     "pkgcore.package.mutated:MutatedPkg",

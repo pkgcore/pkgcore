@@ -14,7 +14,6 @@ from pkgcore.util import (
     commandline, repo_utils, parserestrict, packages as pkgutils)
 
 demandload(
-    globals(),
     'errno',
     're',
     'snakeoil.lists:iter_stable_unique',

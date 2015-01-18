@@ -37,7 +37,6 @@ from pkgcore.spawn import (
     is_userpriv_capable, spawn_get_output)
 
 demandload(
-    globals(),
     'textwrap',
     "time",
     'snakeoil.lists:iflatten_instance',

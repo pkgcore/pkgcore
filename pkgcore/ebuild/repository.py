@@ -29,7 +29,6 @@ from pkgcore.operations import repo as _repo_ops
 from pkgcore.repository import prototype, errors, configured
 
 demandload(
-    globals(),
     'errno',
     'operator:attrgetter',
     'random:shuffle',

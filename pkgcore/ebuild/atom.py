@@ -22,7 +22,6 @@ from pkgcore.ebuild import cpv, errors, restricts
 from pkgcore.restrictions import values, packages, boolean
 
 demandload(
-    globals(),
     'pkgcore.restrictions.packages:Conditional,AndRestriction@PkgAndRestriction',
     'pkgcore.restrictions.values:ContainmentMatch',
 )

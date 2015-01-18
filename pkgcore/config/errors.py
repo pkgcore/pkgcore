@@ -15,7 +15,7 @@ __all__ = (
 
 from snakeoil.demandload import demandload
 
-demandload(globals(), 'snakeoil:currying')
+demandload('snakeoil:currying')
 
 
 def _identify_functor_source(functor):

@@ -8,7 +8,6 @@ from snakeoil import compatibility
 from snakeoil.demandload import demandload
 
 demandload(
-    globals(),
     'snakeoil.process:get_proc_count',
 )
 

@@ -37,7 +37,6 @@ from pkgcore.restrictions.delegated import delegate
 from pkgcore.util.parserestrict import parse_match
 
 demandload(
-    globals(),
     'collections:defaultdict',
     'errno',
     'operator:itemgetter',

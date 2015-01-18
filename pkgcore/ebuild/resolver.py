@@ -13,7 +13,6 @@ from pkgcore.repository import misc, multiplex
 from pkgcore.resolver import plan
 
 demandload(
-    globals(),
     'pkgcore.restrictions:packages,values',
 )
 

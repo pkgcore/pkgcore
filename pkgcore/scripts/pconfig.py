@@ -20,7 +20,7 @@ from pkgcore.ebuild import atom
 from pkgcore.plugin import get_plugins
 from pkgcore.util import commandline
 
-demandload(globals(), 'traceback')
+demandload('traceback')
 
 
 def dump_section(config, out):

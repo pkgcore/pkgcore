@@ -11,10 +11,9 @@ from snakeoil.osutils import listdir_files, pjoin
 
 from pkgcore.ebuild.atom import atom
 
-demandload(globals(), 'pkgcore.log:logger')
+demandload('pkgcore.log:logger')
 
 demand_compile_regexp(
-    globals(),
     "valid_updates_re", "^(\d)Q-(\d{4})$"
 )
 

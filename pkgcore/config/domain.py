@@ -13,7 +13,6 @@ from snakeoil import klass
 from snakeoil.demandload import demandload
 
 demandload(
-    globals(),
     "pkgcore.operations:domain@domain_ops",
     "pkgcore.repository:util@repo_utils",
 )

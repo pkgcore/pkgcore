@@ -16,7 +16,6 @@ from pkgcore.ebuild import portageq as _portageq
 from pkgcore.util import commandline
 
 demandload(
-    globals(),
     'collections:defaultdict',
     'itertools:groupby,islice',
     'operator:attrgetter,itemgetter',

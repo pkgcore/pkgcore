@@ -26,7 +26,6 @@ from pkgcore.repository import virtual
 from pkgcore.util.parserestrict import parse_match
 
 demandload(
-    globals(),
     'collections:defaultdict',
     'snakeoil.data_source:local_source',
     'snakeoil.mappings:ImmutableDict',

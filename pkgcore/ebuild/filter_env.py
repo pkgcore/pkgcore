@@ -10,7 +10,6 @@ __all__ = ("run",)
 from snakeoil.demandload import demandload
 
 demandload(
-    globals(),
     'cStringIO',
     're',
     'pkgcore.log:logger'

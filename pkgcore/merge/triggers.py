@@ -33,7 +33,6 @@ from pkgcore.config import ConfigHint
 from pkgcore.merge import errors, const
 
 demandload(
-    globals(),
     'errno',
     'math:floor',
     'os',

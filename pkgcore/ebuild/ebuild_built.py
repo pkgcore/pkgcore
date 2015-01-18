@@ -18,7 +18,6 @@ from snakeoil.mappings import IndeterminantDict
 from snakeoil.obj import DelayedInstantiation
 
 demandload(
-    globals(),
     're',
     'pkgcore.ebuild:triggers',
     'pkgcore.ebuild:ebd',

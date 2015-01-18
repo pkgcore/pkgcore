@@ -19,7 +19,6 @@ from snakeoil.weakrefs import WeakValCache
 from pkgcore.config import ConfigHint
 
 demandload(
-    globals(),
     "errno",
     "os",
     "snakeoil.mappings:StackedDict",

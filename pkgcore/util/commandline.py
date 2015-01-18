@@ -32,7 +32,6 @@ from pkgcore.util import argparse
 from pkgcore.util.commandline_optparse import *
 
 demandload(
-    globals(),
     'copy@_copy',
     'traceback',
     'snakeoil:osutils',

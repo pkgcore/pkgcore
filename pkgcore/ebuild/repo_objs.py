@@ -23,7 +23,6 @@ from pkgcore.config import ConfigHint
 from pkgcore.repository import syncable
 
 demandload(
-    globals(),
     'errno',
     'snakeoil.bash:BashParseError,iter_read_bash,read_dict',
     'snakeoil.fileutils:readfile,readlines_ascii',

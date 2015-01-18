@@ -18,7 +18,6 @@ from snakeoil.demandload import demandload
 from pkgcore.package.base import wrapper
 
 demandload(
-    globals(),
     "copy:copy",
 )
 

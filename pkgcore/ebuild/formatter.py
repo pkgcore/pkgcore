@@ -20,7 +20,6 @@ from snakeoil.lists import iflatten_instance
 from pkgcore.config import configurable
 
 demandload(
-    globals(),
     'errno',
     'os',
     'snakeoil.mappings:defaultdictkey',

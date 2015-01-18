@@ -26,7 +26,7 @@ from pkgcore.ebuild.conditionals import stringify_boolean
 from pkgcore.fs import tar
 from pkgcore.operations import repo as repo_interfaces
 
-demandload(globals(), "pkgcore.log:logger")
+demandload("pkgcore.log:logger")
 
 
 def discern_loc(base, pkg, extension='.tbz2'):

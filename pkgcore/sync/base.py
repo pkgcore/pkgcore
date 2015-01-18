@@ -15,7 +15,6 @@ from snakeoil.demandload import demandload
 from pkgcore.config import ConfigHint, configurable
 
 demandload(
-    globals(),
     'os',
     'pwd',
     'stat',

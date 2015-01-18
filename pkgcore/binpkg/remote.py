@@ -20,7 +20,6 @@ from snakeoil.weakrefs import WeakRefFinalizer
 from pkgcore import cache
 
 demandload(
-    globals(),
     'errno',
     'operator:itemgetter',
     'time:time',

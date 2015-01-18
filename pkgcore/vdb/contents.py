@@ -11,7 +11,6 @@ from pkgcore.fs import fs
 from pkgcore.fs.contents import contentsSet
 
 demandload(
-    globals(),
     'errno',
     'os',
     'stat',

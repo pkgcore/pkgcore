@@ -5,7 +5,6 @@ from snakeoil import mappings, weakrefs, klass
 from snakeoil.demandload import demandload
 
 demandload(
-    globals(),
     "snakeoil.currying:partial",
     "pkgcore.ebuild:atom",
     "pkgcore.log:logger",

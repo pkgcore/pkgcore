@@ -16,7 +16,6 @@ from pkgcore.ebuild.atom import atom
 from pkgcore.package.errors import InvalidDependency
 
 demandload(
-    globals(),
     'snakeoil.fileutils:AtomicWriteFile,readlines_ascii',
     'pkgcore:os_data',
     'pkgcore.log:logger',

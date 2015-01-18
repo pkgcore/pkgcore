@@ -27,7 +27,6 @@ from snakeoil.mappings import LazyValDict, ImmutableDict, StackedDict
 from snakeoil.osutils import normpath
 
 demandload(
-    globals(),
     "tempfile",
     "traceback",
     "snakeoil.process:get_proc_count",

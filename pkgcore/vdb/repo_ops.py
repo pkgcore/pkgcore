@@ -14,7 +14,6 @@ from pkgcore.const import VERSION
 from pkgcore.operations import repo as repo_ops
 
 demandload(
-    globals(),
     'time',
     'snakeoil.data_source:local_source',
     'pkgcore.ebuild:conditionals',

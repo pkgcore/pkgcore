@@ -10,7 +10,6 @@ from pkgcore.ebuild.cpv import versioned_CPV
 from pkgcore.repository.prototype import tree
 
 demandload(
-    globals(),
     "pkgcore.repository:multiplex",
 )
 

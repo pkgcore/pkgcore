@@ -25,7 +25,6 @@ from pkgcore.ebuild.repo_objs import RepoConfig
 from pkgcore.pkgsets.glsa import SecurityUpgrades
 
 demandload(
-    globals(),
     'errno',
     'ConfigParser:ConfigParser',
     'snakeoil.bash:read_bash_dict',

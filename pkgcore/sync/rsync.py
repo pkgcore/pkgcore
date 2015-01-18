@@ -10,7 +10,6 @@ from pkgcore.config import ConfigHint
 from pkgcore.sync import base
 
 demandload(
-    globals(),
     'errno',
     'os',
     'socket',

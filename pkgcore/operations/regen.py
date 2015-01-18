@@ -5,7 +5,6 @@ from snakeoil import compatibility
 from snakeoil.demandload import demandload
 
 demandload(
-    globals(),
     'pkgcore.util.thread_pool:map_async',
 )
 

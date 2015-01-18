@@ -22,7 +22,6 @@ from pkgcore.repository import errors, multiplex, prototype
 from pkgcore.vdb import virtuals
 
 demandload(
-    globals(),
     'pkgcore.log:logger',
     'pkgcore.vdb:repo_ops',
     'pkgcore.vdb.contents:ContentsFile',

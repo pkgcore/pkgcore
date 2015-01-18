@@ -26,7 +26,6 @@ from pkgcore.plugin import get_plugin
 from pkgcore.repository import prototype, errors
 
 demandload(
-    globals(),
     "errno",
     "snakeoil:chksum",
     "snakeoil:compression",

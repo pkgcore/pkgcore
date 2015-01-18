@@ -37,7 +37,6 @@ from snakeoil.demandload import demandload
 from pkgcore.config import load_config
 
 demandload(
-    globals(),
     'snakeoil.bash:iter_read_bash',
     'pkgcore:version',
     'pkgcore.config:basics',

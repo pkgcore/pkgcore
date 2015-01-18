@@ -29,7 +29,6 @@ from snakeoil.osutils import pjoin, listdir_files
 from pkgcore import plugins
 
 demandload(
-    globals(),
     'errno',
     'tempfile',
     'snakeoil:fileutils,osutils',

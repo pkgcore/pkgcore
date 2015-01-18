@@ -20,7 +20,6 @@ from pkgcore.repository import virtual
 from pkgcore.restrictions import packages, values
 
 demandload(
-    globals(),
     'errno',
     'pkgcore.log:logger',
 )

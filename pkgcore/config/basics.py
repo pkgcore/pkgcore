@@ -21,7 +21,7 @@ from snakeoil.demandload import demandload
 
 from pkgcore.config import errors, configurable
 
-demandload(globals(), "snakeoil:modules")
+demandload("snakeoil:modules")
 
 type_names = ("list", "str", "bool", "int")
 

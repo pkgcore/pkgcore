@@ -26,7 +26,6 @@ from pkgcore.fs import livefs
 from pkgcore.restrictions import values
 
 demandload(
-    globals(),
     'fnmatch',
     'snakeoil:compatibility',
     'pkgcore:os_data',

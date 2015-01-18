@@ -17,7 +17,6 @@ from snakeoil.demandload import demandload
 from pkgcore.restrictions import restriction, boolean, packages
 
 demandload(
-    globals(),
     're',
     'snakeoil:lists',
 )

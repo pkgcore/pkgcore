@@ -17,10 +17,9 @@ from pkgcore.ebuild.errors import InvalidCPV
 from pkgcore.package import base
 
 # do this to break the cycle.
-demandload(globals(), "pkgcore.ebuild:atom")
+demandload("pkgcore.ebuild:atom")
 
 demand_compile_regexp(
-    globals(),
     'suffix_regexp', '^(alpha|beta|rc|pre|p)(\\d*)$')
 
 suffix_value = {"pre": -2, "p": 1, "alpha": -4, "beta": -3, "rc": -1}
@@ -29,17 +28,14 @@ suffix_value = {"pre": -2, "p": 1, "alpha": -4, "beta": -3, "rc": -1}
 # to prevent version chunks from showing up in the package
 
 demand_compile_regexp(
-    globals(),
     'isvalid_version_re',
     r"^(?:\d+)(?:\.\d+)*[a-zA-Z]?(?:_(p(?:re)?|beta|alpha|rc)\d*)*$")
 
 demand_compile_regexp(
-    globals(),
     'isvalid_cat_re', r"^(?:[a-zA-Z0-9][-a-zA-Z0-9+._]*(?:/(?!$))?)+$")
 
 # empty string is fine, means a -- was encounter.
 demand_compile_regexp(
-    globals(),
     '_pkg_re', r"^[a-zA-Z0-9+_]+$")
 
 

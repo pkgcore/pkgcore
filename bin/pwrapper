@@ -13,21 +13,29 @@ import sys
 
 sys.path.insert(0, osp.dirname(osp.dirname(osp.abspath(__file__))))
 
-try:
-    from snakeoil import modules
-    from pkgcore.util import commandline
-except ImportError:
-    sys.stderr.write('Cannot import either snakeoil.modules or pkgcore.util.commandline!\n')
-    sys.stderr.write('Verify it is properly installed and/or ' \
-                'PYTHONPATH is set correctly for python version %s\n' %
-        (".".join(map(str, sys.version_info[:3])),))
-    if '--debug' in sys.argv:
-        raise
-    sys.exit(1)
-
 if __name__ == '__main__':
+    try:
+        from snakeoil import modules
+        from pkgcore.util import commandline
+    except ImportError:
+        sys.stderr.write('Cannot import either snakeoil or pkgcore!\n')
+        sys.stderr.write('Verify they are properly installed and/or '
+                         'PYTHONPATH is set correctly for python %s.\n' %
+                         (".".join(map(str, sys.version_info[:3])),))
+        if '--debug' in sys.argv:
+            raise
+        sys.stderr.write('Add --debug to the commandline for a traceback.\n')
+        sys.exit(1)
+
     os.environ["PKGCORE_SCRIPT_PATH"] = osp.dirname(osp.abspath(__file__))
     name = osp.basename(sys.argv[0]).replace("-", "_")
-    script = modules.load_module('pkgcore.scripts.%s' % (name,))
+    try:
+        script = modules.load_module('pkgcore.scripts.%s' % (name,))
+    except modules.FailedImport:
+        sys.stderr.write('Cannot load script %s.\n' % (name,))
+        if '--debug' in sys.argv:
+            raise
+        sys.stderr.write('Add --debug to the commandline for a traceback.\n')
+        sys.exit(1)
     subcommands = getattr(script, 'argparser', None)
     commandline.main(subcommands)

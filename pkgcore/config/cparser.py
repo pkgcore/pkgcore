@@ -8,15 +8,13 @@ ini based configuration format
 
 __all__ = ("config_from_file",)
 
-import ConfigParser
-import sys
-
 from snakeoil import mappings
+from snakeoil.compatibility import configparser
 
 from pkgcore.config import basics, errors
 
 
-class CaseSensitiveConfigParser(ConfigParser.ConfigParser):
+class CaseSensitiveConfigParser(configparser.ConfigParser):
     def optionxform(self, val):
         return val
 
@@ -30,11 +28,8 @@ def config_from_file(file_obj):
     """
     cparser = CaseSensitiveConfigParser()
     try:
-        if sys.hexversion < 0x03020000:
-            cparser.readfp(file_obj)
-        else:
-            cparser.read_file(file_obj)
-    except ConfigParser.ParsingError as pe:
+        cparser.read_file(file_obj)
+    except configparser.ParsingError as pe:
         raise errors.ParsingError("while parsing %s" % (file_obj,), pe)
     def get_section(section):
         return basics.ConfigSectionFromStringDict(dict(cparser.items(section)))

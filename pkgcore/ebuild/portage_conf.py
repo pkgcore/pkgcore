@@ -26,8 +26,8 @@ from pkgcore.pkgsets.glsa import SecurityUpgrades
 
 demandload(
     'errno',
-    'ConfigParser:ConfigParser',
     'snakeoil.bash:read_bash_dict',
+    'snakeoil.compatibility:configparser',
     'snakeoil.xml:etree',
     'pkgcore.config:errors',
     'pkgcore.ebuild:profiles',
@@ -64,18 +64,14 @@ def SecurityUpgradesViaProfile(ebuild_repo, vdb, profile):
 def add_layman_syncers(new_config, rsync_opts, overlay_paths, config_root='/',
                        default_loc="etc/layman/layman.cfg", default_conf='overlays.xml'):
     try:
-        f = open(pjoin(config_root, default_loc))
+        with open(pjoin(config_root, default_loc)) as f:
+            c = configparser.ConfigParser()
+            c.read_file(f)
     except IOError as ie:
         if ie.errno != errno.ENOENT:
             raise
         return {}
 
-    c = ConfigParser()
-    if sys.hexversion < 0x03020000:
-        c.readfp(f)
-    else:
-        c.read_file(f)
-    f.close()
     storage_loc = c.get('MAIN', 'storage')
     overlay_xml = pjoin(storage_loc, default_conf)
     del c

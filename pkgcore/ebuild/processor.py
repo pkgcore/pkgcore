@@ -290,7 +290,7 @@ class EbuildProcessor(object):
 
         # append script dir to PATH for git repo or unpacked tarball
         if "PKGCORE_SCRIPT_PATH" in os.environ:
-            env["PATH"] = os.environ["PATH"] + os.pathsep + os.environ["PKGCORE_SCRIPT_PATH"]
+            env["PATH"] = os.pathsep.join([os.environ["PATH"], os.environ["PKGCORE_SCRIPT_PATH"]])
 
         if 'PYTHONPATH' in os.environ:
             env["PYTHONPATH"] = os.environ['PYTHONPATH']

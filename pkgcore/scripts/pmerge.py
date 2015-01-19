@@ -656,7 +656,10 @@ def main(options, out, err):
 
     if options.pretend:
         if options.verbose:
-            out.write(out.bold, ' * ', out.reset, "resolver plan required %i ops\n" % (len(resolver_inst.state.plan),))
+            out.write(
+                out.bold, ' * ', out.reset,
+                "resolver plan required %i ops (%.2f seconds)\n" %
+                (len(resolver_inst.state.plan), resolve_time))
         return
 
     if (options.ask and not

@@ -422,11 +422,9 @@ class RepoConfig(syncable.tree):
     def stable_arches(self):
         arches = []
         for arch, profiles in self.profiles.arch_profiles.iteritems():
-            # XXX: hack to avoid adding amd64-fbsd due to its stable profile
-            if '-' not in arch:
-                for path, status in profiles:
-                    if status == 'stable':
-                        arches.append(arch)
+            for path, status in profiles:
+                if status == 'stable':
+                    arches.append(arch)
         return frozenset(arches)
 
     @klass.jit_attr

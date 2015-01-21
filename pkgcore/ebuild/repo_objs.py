@@ -161,7 +161,8 @@ class Licenses(object):
 
     __slots__ = ('_base', '_licenses', '_groups', 'license_groups_path', 'licenses_dir')
 
-    def __init__(self, repo_base, profile_base='profiles', licenses_dir='licenses', license_groups='profiles/license_groups'):
+    def __init__(self, repo_base, profile_base='profiles',
+                 licenses_dir='licenses', license_groups='profiles/license_groups'):
         object.__setattr__(self, '_base', repo_base)
         object.__setattr__(self, 'license_groups_path', pjoin(repo_base, license_groups))
         object.__setattr__(self, 'licenses_dir', pjoin(repo_base, licenses_dir))
@@ -184,12 +185,11 @@ class Licenses(object):
             logger.error("failed parsing license_groups: %s", pe)
             return mappings.ImmutableDict()
         self._expand_groups(d)
-        return mappings.ImmutableDict((k, tuple(v))
-            for (k,v) in d.iteritems())
+        return mappings.ImmutableDict((k, tuple(v)) for (k, v) in d.iteritems())
 
     def _expand_groups(self, groups):
         keep_going = True
-        for k,v in groups.iteritems():
+        for k, v in groups.iteritems():
             groups[k] = v.split()
         while keep_going:
             keep_going = False
@@ -202,12 +202,12 @@ class Licenses(object):
                     if v2[0] == '@':
                         v2 = v2[1:]
                         if not v2 or v2 not in groups:
-                            logger.error("invalid license group reference: %r in %s",
-                                v2, self)
+                            logger.error(
+                                "invalid license group reference: %r in %s", v2, self)
                             continue
                         elif v2 == k:
-                            logger.error("cyclic license group references for %r in %s",
-                                v2, self)
+                            logger.error(
+                                "cyclic license group references for %r in %s", v2, self)
                             continue
                         l.extend(groups[v2])
                     else:
@@ -219,7 +219,7 @@ class Licenses(object):
         self._groups = None
 
     def __getitem__(self, license):
-        if not license in self:
+        if license not in self:
             raise KeyError(license)
         try:
             return open(pjoin(self.licenses_dir, license)).read()
@@ -248,7 +248,7 @@ class OverlayedLicenses(Licenses):
     def groups(self):
         d = {}
         for li in self._license_instances:
-            for k,v in li.groups.iteritems():
+            for k, v in li.groups.iteritems():
                 if k in d:
                     d[k] += v
                 else:
@@ -280,8 +280,7 @@ class OverlayedLicenses(Licenses):
                 l.append(x)
             elif hasattr(x, 'licenses'):
                 l.append(x.licenses)
-        object.__setattr__(self, '_license_instances',
-            tuple(l))
+        object.__setattr__(self, '_license_instances', tuple(l))
 
 
 class _immutable_attr_dict(mappings.ImmutableDict):
@@ -314,7 +313,7 @@ class BundledProfiles(object):
                 except ValueError:
                     logger.error(
                         "%s: line doesn't follow 'key profile status' form: %s",
-                         fp, line)
+                        fp, line)
                     continue
                 # Normalize the profile name on the offchance someone slipped an extra /
                 # into it.
@@ -342,8 +341,9 @@ class RepoConfig(syncable.tree):
     __metaclass__ = WeakInstMeta
     __inst_caching__ = True
 
-    pkgcore_config_type = ConfigHint(typename='raw_repo',
-        types={'syncer':'lazy_ref:syncer'})
+    pkgcore_config_type = ConfigHint(
+        typename='raw_repo',
+        types={'syncer': 'lazy_ref:syncer'})
 
     def __init__(self, location, syncer=None, profiles_base='profiles'):
         object.__setattr__(self, 'location', location)
@@ -353,7 +353,8 @@ class RepoConfig(syncable.tree):
 
     def load_config(self):
         path = pjoin(self.location, self.layout_offset)
-        return read_dict(iter_read_bash(readlines_ascii(path, True, True)),
+        return read_dict(
+            iter_read_bash(readlines_ascii(path, True, True)),
             source_isiter=True, strip=True, filename=path)
 
     def parse_config(self):
@@ -370,11 +371,11 @@ class RepoConfig(syncable.tree):
 
         manifest_policy = data.get('use-manifests', 'strict').lower()
         d = {
-            'disabled':(manifest_policy == 'false'),
-            'strict':(manifest_policy == 'strict'),
-            'thin':(data.get('thin-manifests', '').lower() == 'true'),
-            'signed':(data.get('sign-manifests', 'true').lower() == 'true'),
-            'hashes':hashes,
+            'disabled': (manifest_policy == 'false'),
+            'strict': (manifest_policy == 'strict'),
+            'thin': (data.get('thin-manifests', '').lower() == 'true'),
+            'signed': (data.get('sign-manifests', 'true').lower() == 'true'),
+            'hashes': hashes,
         }
 
         sf(self, 'repo_name', data.get('repo-name'))
@@ -382,7 +383,8 @@ class RepoConfig(syncable.tree):
         masters = data.get('masters')
         if masters is None:
             if self.repo_id != 'gentoo' and not self.is_empty:
-                logger.warning("repository at %r, named %r, doesn't specify masters in metadata/layout.conf. "
+                logger.warning(
+                    "repository at %r, named %r, doesn't specify masters in metadata/layout.conf. "
                     "Defaulting to whatever repository is defined as 'default' (gentoo usually). "
                     "Please explicitly set the masters, or set masters = '' if the repository "
                     "is standalone.", self.location, self.repo_id)
@@ -476,7 +478,7 @@ class RepoConfig(syncable.tree):
         except EnvironmentError as e:
             if e.errno != errno.ENOENT:
                 raise
-        except ValueError as v:
+        except ValueError:
             if line is None:
                 raise
             compatibility.raise_from(
@@ -503,14 +505,15 @@ class RepoConfig(syncable.tree):
 
     @klass.jit_attr
     def repo_id(self):
+        # repo-name setting from metadata/layout.conf
+        # overrides profiles/repo_name if it exists
         if self.repo_name is not None:
             return self.repo_name
 
         val = readfile(pjoin(self.profiles_base, 'repo_name'), True)
         if val is None:
             if not self.is_empty:
-                logger.warning("repository at location %r lacks a defined repo_name",
-                    self.location)
+                logger.warning("repository at location %r lacks a defined repo_name", self.location)
             val = '<unlabeled repository %s>' % self.location
         return val.strip()
 

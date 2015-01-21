@@ -377,6 +377,7 @@ class RepoConfig(syncable.tree):
             'hashes':hashes,
         }
 
+        sf(self, 'repo_name', data.get('repo-name'))
         sf(self, 'manifests', _immutable_attr_dict(d))
         masters = data.get('masters')
         if masters is None:
@@ -502,6 +503,9 @@ class RepoConfig(syncable.tree):
 
     @klass.jit_attr
     def repo_id(self):
+        if self.repo_name is not None:
+            return self.repo_name
+
         val = readfile(pjoin(self.profiles_base, 'repo_name'), True)
         if val is None:
             if not self.is_empty:

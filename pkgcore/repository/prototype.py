@@ -131,8 +131,6 @@ class tree(object):
         yielding a configured form of the repository
     :ivar frozen_settable: bool controlling whether frozen is able to be set via
         __init__
-    :ivar aliases: dictionary of known aliases for this repository.  This is
-        typically {repo_id:said_id, location:on-disk-path}.
     """
 
     raw_repo = None
@@ -455,5 +453,5 @@ class tree(object):
 
     @property
     def aliases(self):
-        potentials = ((key, getattr(self, key, None)) for key in ('repo_id', 'location'))
-        return {k:v for k,v in potentials if v is not None}
+        potentials = (getattr(self, key, None) for key in ('repo_id', 'location'))
+        return tuple(x for x in potentials if x is not None)

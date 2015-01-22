@@ -183,12 +183,25 @@ class StoreConfigObject(argparse._StoreAction):
 
         super(StoreConfigObject, self).__init__(*args, **kwargs)
 
+    @staticmethod
+    def _options(sections):
+        """Yield available values for a given option."""
+        for k, v in sections.iteritems():
+            yield k
+
     def _load_obj(self, sections, name):
         try:
             val = sections[name]
         except KeyError:
-            raise argparse.ArgumentError(self, "couldn't find %s %r" %
-                (self.config_type, name))
+            options = ', '.join(self._options(sections))
+            if options:
+                available = ' (available %ss: %s)' % (self.config_type, options)
+            else:
+                available = ''
+
+            raise argparse.ArgumentError(
+                self, "couldn't find %s %r%s" %
+                (self.config_type, name, available))
 
         if self.writable and getattr(val, 'frozen', False):
             raise argparse.ArgumentError(self, "%s %r is readonly" %
@@ -298,6 +311,20 @@ class StoreRepoObject(StoreConfigObject):
         if domain is None:
             return StoreConfigObject._get_sections(self, config, namespace)
         return domain.repos_raw if self.raw else domain.repos_configured_filtered
+
+    @staticmethod
+    def _options(sections):
+        """Return the set of name: location mappings for available repos.
+
+        If a repo doesn't have a proper location just the name is returned.
+        """
+        repos = set()
+        for repo_name, repo in sections.iteritems():
+            if len(repo.aliases) == 2:
+                repos.add('%s: %s' % (repo.aliases[0], repo.location))
+            else:
+                repos.add(repo_name)
+        return sorted(repos)
 
     def _load_obj(self, sections, name):
         if not self.allow_name_lookup or name in sections:

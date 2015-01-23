@@ -62,7 +62,7 @@ def main(options, out, err):
         if current:
             current = current[0]
             oldflags = built.iuse & built.use
-            newflags = current.iuse & current.use
+            newflags = current.iuse & built.use
             if (newflags != oldflags) or (current.iuse ^ built.iuse):
                 changed_flags = (oldflags ^ newflags) | (current.iuse ^ built.iuse)
                 if options.quiet:

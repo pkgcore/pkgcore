@@ -60,7 +60,7 @@ sync.add_argument(
     help="show verbose output")
 @sync.bind_main_func
 def sync_main(options, out, err):
-    """Update a local repositories to match their remote parent"""
+    """Update local repositories to match their remote parents"""
     if options.quiet:
         options.verbose = 0
 
@@ -283,7 +283,7 @@ env_update.add_argument(
 def env_update_main(options, out, err):
     root = getattr(options.domain, 'root', None)
     if root is None:
-        err.write("domain specified lacks a root seting; is it a virtual or rmeote domain?")
+        err.write("domain specified lacks a root setting; is it a virtual or remote domain?")
         return 1
 
     out.write("updating env for %r..." % (root,))

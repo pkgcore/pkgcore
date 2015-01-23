@@ -28,8 +28,10 @@ class rsync_syncer(base.ExternalSyncer):
         "--delete-delay",
         "--perms",
         "--times",
+        "--compress",
         "--force",
         "--safe-links",
+        "--stats",
         "--timeout=180",
         "--whole-file", # this one probably shouldn't be a default.
     ]
@@ -120,10 +122,8 @@ class rsync_syncer(base.ExternalSyncer):
         if verbosity == 0:
             opts.append("--quiet")
         if verbosity >= 1:
-            opts.append("--stats")
-        if verbosity >= 2:
             opts.append("-v")
-        elif verbosity >= 3:
+        if verbosity >= 2:
             opts.append("-v")
 
         # zip limits to the shortest iterable.

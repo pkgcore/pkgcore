@@ -148,10 +148,10 @@ class sync_operations(_operations_mod.base):
         _operations_mod.base.__init__(self, disable_overrides, enable_overrides)
 
     @_operations_mod.is_standalone
-    def _cmd_api_sync(self, observer=None):
+    def _cmd_api_sync(self, observer=None, **kwargs):
         # often enough, the syncer is a lazy_ref
         syncer = self._get_syncer()
-        return syncer.sync()
+        return syncer.sync(**kwargs)
 
     def _get_syncer(self, lazy=False):
         singleton = object()

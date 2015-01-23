@@ -52,9 +52,18 @@ sync = subparsers.add_parser(
 sync.add_argument(
     'repos', nargs='*', help="repositories to sync",
     action=commandline.StoreRepoObject, store_name=True, raw=True)
+sync.add_argument(
+    "-q", "--quiet", action='store_true',
+    help="suppress non-error messages")
+sync.add_argument(
+    "-v", "--verbose", action='count',
+    help="show verbose output")
 @sync.bind_main_func
 def sync_main(options, out, err):
     """Update a local repositories to match their remote parent"""
+    if options.quiet:
+        options.verbose = 0
+
     succeeded, failed = [], []
     seen = set()
     for name, repo in options.repos:
@@ -74,7 +83,7 @@ def sync_main(options, out, err):
             continue
         out.write("*** syncing %r..." % name)
         try:
-            ret = ops.sync()
+            ret = ops.sync(verbosity=options.verbose)
         except sync_base.syncer_exception as se:
             out.write("*** failed syncing %r- caught exception %r" % (name, se))
             failed.append(name)

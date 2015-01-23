@@ -151,17 +151,19 @@ def copy_main(options, out, err):
                     new_contents.add(livefs.gen_obj(fsobj.location))
                 except OSError as oe:
                     if oe.errno != errno.ENOENT:
-                        err.write("failed accessing fs obj %r; %r\n"
+                        err.write(
+                            "failed accessing fs obj %r; %r\n"
                             "aborting this copy" %
                             (fsobj, oe))
                         failures = True
                         new_contents = None
                         break
-                    err.write("warning: dropping fs obj %r since it "
+                    err.write(
+                        "warning: dropping fs obj %r since it "
                         "doesn't exist" % fsobj)
             if new_contents is None:
                 continue
-            pkg = mutated.MutatedPkg(pkg, {'contents':new_contents})
+            pkg = mutated.MutatedPkg(pkg, {'contents': new_contents})
 
         trg_repo.operations.install_or_replace(pkg).finish()
 
@@ -217,13 +219,15 @@ def regen_main(options, out, err):
         return 0
 
     start_time = time.time()
-    repo.operations.regen_cache(threads=options.threads,
+    repo.operations.regen_cache(
+        threads=options.threads,
         observer=observer.formatter_output(out), force=options.force,
-            eclass_caching=(not options.disable_eclass_caching))
+        eclass_caching=(not options.disable_eclass_caching))
     end_time = time.time()
     if options.verbose:
-        out.write("finished %d nodes in %.2f seconds" % (len(repo),
-            end_time - start_time))
+        out.write(
+            "finished %d nodes in %.2f seconds" %
+            (len(repo), end_time - start_time))
     if options.rsync:
         timestamp = pjoin(repo.location, "metadata", "timestamp.chk")
         try:
@@ -246,7 +250,8 @@ def perl_rebuild_main(options, out, err):
     path = pjoin(options.domain.root, "usr/lib/perl5",
         options.new_version)
     if not os.path.exists(path):
-        err.write("version %s doesn't seem to be installed; can't find it at %r" %
+        err.write(
+            "version %s doesn't seem to be installed; can't find it at %r" %
             (options.new_version, path))
         return 1
 
@@ -258,7 +263,8 @@ def perl_rebuild_main(options, out, err):
         subpattern = potential_perl_versions[0]
     else:
         subpattern = "(?:%s)" % ("|".join(potential_perl_versions),)
-    matcher = re.compile("/usr/lib(?:64|32)?/perl5/(?:%s|vendor_perl/%s)" %
+    matcher = re.compile(
+        "/usr/lib(?:64|32)?/perl5/(?:%s|vendor_perl/%s)" %
         (subpattern, subpattern)).match
 
     for pkg in options.domain.all_livefs_repos:
@@ -287,8 +293,7 @@ def env_update_main(options, out, err):
         return 1
 
     out.write("updating env for %r..." % (root,))
-    triggers.perform_env_update(root,
-        skip_ldso_update=options.skip_ldconfig)
+    triggers.perform_env_update(root, skip_ldso_update=options.skip_ldconfig)
     if not options.skip_ldconfig:
         out.write("update ldso cache/elf hints for %r..." % (root,))
         merge_triggers.update_elf_hints(root)
@@ -346,7 +351,7 @@ def digest_main(options, out, err):
     if options.repo is None:
        repo = domain.all_repos
     repo_ops = repo.operations
-    obs=observer.formatter_output(out)
+    obs = observer.formatter_output(out)
     if not repo_ops.supports("digests"):
         out.write("no repository support for digests\n")
         return 1

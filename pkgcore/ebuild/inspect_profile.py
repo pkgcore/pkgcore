@@ -221,7 +221,7 @@ class _use(_base):
                 out.write('%s: %s' % (pkg, use))
 
 
-class pkg_use(_use):
+class use(_use):
 
     """Inspect profile package.use flags"""
 
@@ -229,7 +229,7 @@ class pkg_use(_use):
 
     def __call__(self, namespace, out, err):
         self.use = namespace.profile.pkg_use
-        super(pkg_use, self).__call__(namespace, out, err)
+        super(use, self).__call__(namespace, out, err)
 
 
 class masked_use(_use):

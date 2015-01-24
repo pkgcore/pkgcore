@@ -28,10 +28,9 @@ class _base(commandline.ArgparseCommand):
 
     def bind_to_parser(self, parser):
         commandline.ArgparseCommand.bind_to_parser(self, parser)
-        parser.add_argument("profile", help="path to the profile to inspect",
-            type=mk_profile)
+        parser.add_argument("profile", help="path to the profile to inspect", type=mk_profile)
         name = self.__class__.__name__
-        kwds = {('_%s_suppress' % name):commandline.DelayedDefault.wipe(('config', 'domain'), 50)}
+        kwds = {('_%s_suppress' % name): commandline.DelayedDefault.wipe(('config', 'domain'), 50)}
         parser.set_defaults(**kwds)
         self._subclass_bind(parser)
 
@@ -90,8 +89,8 @@ class provided(_base):
 
     """list all package.provided packages
 
-    Note that these are exact versions- if a dep requires a higher version, it is not
-    considered satifisfied.
+    Note that these are exact versions- if a dep requires a higher version,
+    it's not considered satisfied.
     """
 
     __metaclass__ = _register_command
@@ -102,7 +101,8 @@ class provided(_base):
             targets[pkg.key].append(pkg)
 
         for pkg_name, pkgs in sorted(targets.iteritems(), key=operator.itemgetter(0)):
-            out.write(out.fg("cyan"), pkg_name, out.reset, ": ",
+            out.write(
+                out.fg("cyan"), pkg_name, out.reset, ": ",
                 ", ".join(x.fullver for x in sorted(pkgs)))
 
 
@@ -129,9 +129,11 @@ class use_expand(_base):
     __metaclass__ = _register_command
 
     def __call__(self, namespace, out, err):
-        out.write("flags:  ",
+        out.write(
+            "flags: ",
             ', '.join(sorted(namespace.profile.use_expand)))
-        out.write("hidden: ",
+        out.write(
+            "hidden: ",
             ', '.join(sorted(namespace.profile.use_expand_hidden)))
 
 
@@ -287,8 +289,7 @@ class virtuals(_base):
     __metaclass__ = _register_command
 
     def __call__(self, namespace, out, err):
-        for key, val in sorted(namespace.profile.virtuals,
-            key=operator.itemgetter(0)):
+        for key, val in sorted(namespace.profile.virtuals, key=operator.itemgetter(0)):
             out.write("%s: %s" % (key, val))
 
 
@@ -302,10 +303,11 @@ class defaults(_base):
     __metaclass__ = _register_command
 
     def _subclass_bind(self, parser):
-        parser.add_argument("variables", nargs='*',
+        parser.add_argument(
+            "variables", nargs='*',
             help="if not specified, all settings are displayed"
-                ".  If given, output is limited to just those settings if "
-                "they exist")
+                 ". If given, output is limited to just those settings if "
+                 "they exist")
 
     def __call__(self, namespace, out, err):
         var_filter = namespace.variables

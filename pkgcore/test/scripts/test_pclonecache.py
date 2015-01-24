@@ -2,7 +2,7 @@
 # License: BSD/GPL2
 
 from pkgcore.config import basics, ConfigHint
-from pkgcore.scripts import pclone_cache
+from pkgcore.scripts import pclonecache
 from pkgcore.test import TestCase
 from pkgcore.test.scripts import helpers
 
@@ -17,7 +17,7 @@ class Cache(object):
 
 class CommandlineTest(TestCase, helpers.ArgParseMixin):
 
-    _argparser = pclone_cache.argparser
+    _argparser = pclonecache.argparser
 
     def test_parser(self):
         self.assertError(

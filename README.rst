@@ -30,7 +30,7 @@ You can also stop by at `#pkgcore`_ on Freenode.
 Tools
 =====
 
-**pclone_cache**: clone a repository cache
+**pclonecache**: clone a repository cache
 
 **pebuild**: low-level ebuild operations, go through phases manually
 

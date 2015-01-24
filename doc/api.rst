@@ -112,7 +112,7 @@ Modules
     pkgcore.restrictions.values
     pkgcore.scripts
     pkgcore.scripts.filter_env
-    pkgcore.scripts.pclone_cache
+    pkgcore.scripts.pclonecache
     pkgcore.scripts.pconfig
     pkgcore.scripts.pebuild
     pkgcore.scripts.pinspect

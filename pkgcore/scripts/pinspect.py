@@ -328,7 +328,7 @@ portageq = subparsers.add_parser(
 _portageq.bind_parser(portageq, compat=True)
 
 profile = subparsers.add_parser(
-    "profile", description="ebuild profile related querying")
+    "profile", description="profile related querying")
 inspect_profile.bind_parser(profile, 'profile')
 
 digests = subparsers.add_parser(

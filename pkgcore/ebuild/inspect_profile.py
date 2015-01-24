@@ -56,7 +56,7 @@ class parent(_base):
 
 class eapi(_base):
 
-    """output all eapi support required for reading this profile"""
+    """output EAPI support required for reading this profile"""
 
     __metaclass__ = _register_command
 
@@ -159,7 +159,7 @@ class unmasks(_base):
 
 class bashrcs(_base):
 
-    """Inspect profile bashrcs"""
+    """Inspect bashrcs"""
 
     __metaclass__ = _register_command
 
@@ -170,7 +170,7 @@ class bashrcs(_base):
 
 class keywords(_base):
 
-    """Inspect profile package.keywords"""
+    """Inspect package.keywords"""
 
     __metaclass__ = _register_command
 
@@ -181,7 +181,7 @@ class keywords(_base):
 
 class accept_keywords(_base):
 
-    """Inspect profile package.accept_keywords"""
+    """Inspect package.accept_keywords"""
 
     __metaclass__ = _register_command
 
@@ -223,7 +223,7 @@ class _use(_base):
 
 class use(_use):
 
-    """Inspect profile package.use flags"""
+    """Inspect package.use flags"""
 
     __metaclass__ = _register_command
 
@@ -234,7 +234,7 @@ class use(_use):
 
 class masked_use(_use):
 
-    """Inspect profile masked use flags"""
+    """Inspect masked use flags"""
 
     __metaclass__ = _register_command
 
@@ -245,7 +245,7 @@ class masked_use(_use):
 
 class stable_masked_use(_use):
 
-    """Inspect profile stable masked use flags"""
+    """Inspect stable masked use flags"""
 
     __metaclass__ = _register_command
 
@@ -256,7 +256,7 @@ class stable_masked_use(_use):
 
 class forced_use(_use):
 
-    """Inspect profile forced use flags"""
+    """Inspect forced use flags"""
 
     __metaclass__ = _register_command
 
@@ -267,7 +267,7 @@ class forced_use(_use):
 
 class stable_forced_use(_use):
 
-    """Inspect profile stable forced use flags"""
+    """Inspect stable forced use flags"""
 
     __metaclass__ = _register_command
 

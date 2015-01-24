@@ -184,7 +184,7 @@ class StoreConfigObject(argparse._StoreAction):
         super(StoreConfigObject, self).__init__(*args, **kwargs)
 
     @staticmethod
-    def _options(sections):
+    def _choices(sections):
         """Yield available values for a given option."""
         for k, v in sections.iteritems():
             yield k
@@ -193,9 +193,9 @@ class StoreConfigObject(argparse._StoreAction):
         try:
             val = sections[name]
         except KeyError:
-            options = ', '.join(self._options(sections))
-            if options:
-                available = ' (available %ss: %s)' % (self.config_type, options)
+            choices = ', '.join(self._choices(sections))
+            if choices:
+                available = ' (available %ss: %s)' % (self.config_type, choices)
             else:
                 available = ''
 
@@ -313,7 +313,7 @@ class StoreRepoObject(StoreConfigObject):
         return domain.repos_raw if self.raw else domain.repos_configured_filtered
 
     @staticmethod
-    def _options(sections):
+    def _choices(sections):
         """Return the set of name: location mappings for available repos.
 
         If a repo doesn't have a proper location just the name is returned.

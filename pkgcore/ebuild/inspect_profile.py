@@ -88,13 +88,13 @@ class deprecated(_base):
 
 class provided(_base):
 
-    __metaclass__ = _register_command
-
     """list all package.provided packages
 
     Note that these are exact versions- if a dep requires a higher version, it is not
     considered satifisfied.
     """
+
+    __metaclass__ = _register_command
 
     def __call__(self, namespace, out, err):
         targets = defaultdict(list)
@@ -342,6 +342,7 @@ _color_parent = commandline.mk_argparser(color=True, domain=False, add_help=Fals
 def bind_parser(parser, name):
     subparsers = parser.add_subparsers(help="%s commands" % (name,))
     for command in commands:
-        subparser = subparsers.add_parser(command.__name__.lower(),
-            help=command.__doc__, parents=[_color_parent])
+        subparser = subparsers.add_parser(
+            command.__name__.lower(),
+            help=command.__doc__.split('\n', 1)[0], parents=[_color_parent])
         command().bind_to_parser(subparser)

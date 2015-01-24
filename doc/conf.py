@@ -219,13 +219,15 @@ latex_documents = [
 
 # -- Options for manual page output --------------------------------------------
 
+bin_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'bin')
+scripts = [s for s in os.listdir(bin_path) if os.path.islink(os.path.join(bin_path, s))]
+
+# Note that filter-env is specially specified, since the command is installed
+# as 'filter-env', but due to python namespace contraints, it uses a '_'
+# instead.
 generated_man_pages = [
-    ('pkgcore.scripts.' + s, s) for s in
-    "pclone_cache pconfig pebuild pinspect pmaint pmerge pplugincache pquery".split()
+    ('pkgcore.scripts.' + s.replace('-', '_'), s) for s in scripts
 ]
-# Note that filter-env is specially specified, since the command is installed as 'filter-env',
-# but due to python namespace contraints, it uses a '_' instead.
-generated_man_pages.append(('pkgcore.scripts.filter_env', 'filter-env'))
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).

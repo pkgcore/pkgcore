@@ -41,7 +41,7 @@ def _deserialize_2d_array(data):
     else:
         lowest = min(candidates)
         return [(line[:lowest].strip(), line[lowest+2:].strip())
-            for line in lines]
+                for line in lines]
     raise Exception("Failed to parse %r" % (data,))
 
 
@@ -51,6 +51,7 @@ class ManConverter(object):
     positional_re = partial(positional_re.sub, '\g<1>:\g<2>:')
 
     arg_enumeration_re = re.compile("{([^}]+)}")
+
     def _rewrite_option(self, text):
         def f(match):
             string = match.group(1)
@@ -81,7 +82,7 @@ class ManConverter(object):
     def regen_if_needed(cls, base_path, src, out_name=None, force=False):
         if out_name is None:
             out_name = src.rsplit(".", 1)[-1]
-        out_path = pjoin(base_path, '%s.rst' % (out_name,))
+        out_path = pjoin(base_path, out_name)
         script_time = int(os.stat(__file__).st_mtime)
         module = load_module(src)
         cur_time = int(os.stat(module.__file__).st_mtime)
@@ -91,10 +92,10 @@ class ManConverter(object):
         except EnvironmentError as e:
             if e.errno != errno.ENOENT:
                 raise
-            trg_time = -1
+            trg_time = None
 
-        if cur_time != trg_time or force:
-            cls(base_path, out_name, module.argparser, mtime=cur_time).run()
+        if trg_time is None or cur_time > trg_time or force:
+            cls(out_path, out_name, module.argparser, mtime=cur_time).run()
 
     def __init__(self, base_path, name, parser, mtime=None, out_name=None):
         self.see_also = []
@@ -103,34 +104,27 @@ class ManConverter(object):
         if out_name is None:
             out_name = name
         self.out_name = out_name
-        self.out_path = pjoin(base_path, out_name + '.rst')
+        self.out_path = base_path
         self.name = name
         self.parser = parser
         self.mtime = mtime
 
-    def run(self, mtime=None):
-        if mtime is None:
-            mtime = self.mtime
+    def run(self):
+        if not os.path.exists(self.out_path):
+            os.mkdir(self.out_path)
+
         sys.stdout.write("regenerating rst for %s\n" % (self.name,))
-        data = self.generate_rst(self.name, self.parser)
-        with open(self.out_path, "w") as f:
-            f.write("\n".join(data))
+        for name, data in self.process_parser(self.parser, self.name.rsplit(".")[-1]):
+            with open(pjoin(self.out_path, '%s.rst' % name), "w") as f:
+                f.write("\n".join(data))
 
-        os.chmod(self.out_path, 0644)
-        if mtime:
-            os.utime(self.out_path, (mtime, mtime))
-
-    def generate_rst(self, python_name, parser):
-        self.see_also = []
-        try:
-            return self.process_parser(parser, python_name.rsplit(".")[-1])
-        finally:
-            self.see_also = []
+        if self.mtime:
+            os.utime(self.out_path, (self.mtime, self.mtime))
 
     @staticmethod
     def _get_formatter(parser, name):
-        return argparse.RawTextHelpFormatter(name, width=1000,
-            max_help_position=1000)
+        return argparse.RawTextHelpFormatter(
+            name, width=1000, max_help_position=1000)
 
     def process_positional(self, parser, name, action_group):
         l = []
@@ -155,25 +149,24 @@ class ManConverter(object):
             l.extend(_rst_header("=", action_group.title))
             if action_group.description:
                 l.extend(action_group.description.split("\n"))
-            #data = re.sub("(^|\n)\{[^\}]+\}($|\n)", "\g<1>\g<2>", data)
-            #data = re.sub("(^|\n)  ([^ ]+) +([^\n]+)",
-            #    "\g<1>:doc:`%s-\g<2>`:  \g<3>" % (name,), data)
-            base = pjoin(self.base_path, '%s-subcommands' % (self.name,))
-            try:
-                os.mkdir(base)
-            except EnvironmentError as e:
-                if e.errno != errno.EEXIST:
-                    raise
+
             for subcommand, parser in action_group._group_actions[0].choices.iteritems():
-                self.__class__(base, "%s %s" % (self.name, subcommand), parser, mtime=self.mtime,
-                    out_name=subcommand).run()
+                subdir_path = self.name.split()[1:]
+                base = pjoin(self.base_path, *subdir_path)
+                self.__class__(base, "%s %s" % (
+                    self.name, subcommand), parser, mtime=self.mtime, out_name=subcommand).run()
+
+                toc_path = self.name.split()
+                if subdir_path:
+                    toc_path = subdir_path
+
             l.append('')
             l.append(".. toctree::")
             l.append("    :maxdepth: 2")
             l.append('')
-            l.extend("    %s %s <%s-subcommands/%s>" % ((name, subcommand)*2) for subcommand in action_group._group_actions[0].choices)
-            l.append('')
-            #l.extend(data.split("\n"))
+            l.extend("    %s %s <%s>" %
+                     (name, subcommand, pjoin(*list(toc_path + [subcommand])))
+                     for subcommand in action_group._group_actions[0].choices)
             l.append('')
         return l
 
@@ -181,19 +174,15 @@ class ManConverter(object):
         l = []
         for action_group in parser._action_groups:
             if getattr(action_group, 'marker', '') == 'positional' or \
-                action_group.title == 'positional arguments':
+                    action_group.title == 'positional arguments':
                 l.extend(self.process_positional(parser, name, action_group))
                 continue
-            if any(isinstance(x, argparse._SubParsersAction)
-                for x in action_group._group_actions):
+            if any(isinstance(x, argparse._SubParsersAction) for x in action_group._group_actions):
                 assert len(action_group._group_actions) == 1
                 l.extend(self.process_subcommands(parser, name, action_group))
                 continue
             h = self._get_formatter(parser, name)
-            #h.start_section(action_group.title)
-            #h.add_text(action_group.description)
             h.add_arguments(action_group._group_actions)
-            #h.end_section()
             data = h.format_help()
             if not data:
                 continue
@@ -205,7 +194,7 @@ class ManConverter(object):
             array = _deserialize_2d_array(data)
             if array:
                 array = [(self._rewrite_option(x[0]), x[1]) for x in array]
-                min_length = max(len(x[0]) for x in array) +2
+                min_length = max(len(x[0]) for x in array) + 2
                 array = [(x[0].ljust(min_length, ' '), x[1]) for x in array]
                 l.extend(''.join(x) for x in array)
             l.append('')
@@ -224,51 +213,23 @@ class ManConverter(object):
         # e.g. "pmaint sync" or "pinspect query get_profiles"
         main_command = ' ' not in name
 
-        l = ['.. _`%s manpage`:' % (name,), '']
-        l.extend(_rst_header('=', name, leading=True))
-
-        l.extend(_rst_header('=', "synopsis"))
-        l.extend(self.generate_usage(parser, name))
-        l += ['']
-
-        val = parser.description
-
-        # Support grabbing a long description from a script's docstring where
-        # the long description is defined as the lines following the initial
-        # one line summary. If it doesn't exist we fall back to using the
-        # docstring summary line.
-        #
-        # Note this is only done for the main commandline description, not
-        # subcommands.
-        if main_command:
-            section = []
-            description = []
-            for s in load_module('pkgcore.scripts.' + name.replace('-', '_')).__doc__.splitlines()[1:]:
-                if s != '':
-                    section.append(s)
-                elif section:
-                    description.append(' '.join(section))
-                    section = []
-            if section:
-                description.append(' '.join(section))
-            if description:
-                val = '\n\n'.join(description)
-
-        if val:
-            l.extend(_rst_header("=", "description"))
-            l += [val, '']
-
-        l.extend(self.process_action_groups(parser, name))
+        synopsis = _rst_header('=', "synopsis")
+        synopsis.extend(self.generate_usage(parser, name))
+        options = self.process_action_groups(parser, name)
 
         if main_command:
-            l.extend(_rst_header("=", "Reporting Bugs"))
-            l.append('Please submit an issue via github:')
-            l.append('')
-            l.append('https://github.com/pkgcore/pkgcore/issues')
-            l.append('')
-            l.append('You can also stop by #pkgcore on Freenode.')
-
-        return l
+            yield ('main_synopsis', synopsis)
+            yield ('main_options', options)
+        else:
+            data = _rst_header('=', name, leading=True)
+            data.extend(synopsis)
+            data.append('')
+            if parser.description:
+                data.extend(_rst_header("=", "description"))
+                data.append(parser.description)
+                data.append('')
+            data.extend(options)
+            yield (name.rsplit(' ', 1)[1], data)
 
 if __name__ == '__main__':
     output = sys.argv[1]

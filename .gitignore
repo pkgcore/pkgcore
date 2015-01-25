@@ -7,10 +7,8 @@ pkgcore/restrictions/*.so
 /cache
 /dist
 _trial_temp
-/man/*.1
 /doc/dev-notes/index.rst
 /doc/dev-notes/*/index.rst
 /doc/doc/index.rst
 /doc/_build/
 /doc/api/
-/doc/man/

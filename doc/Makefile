@@ -42,13 +42,19 @@ help:
 	@echo "  doctest    to run all doctests embedded in the documentation (if enabled)"
 
 clean:
-	-rm -rf $(BUILDDIR) api man
+	-rm -rf $(BUILDDIR) api
+	@for file in man/*; do \
+		[ -L "$${file}" ] && rm -f "$${file}" || continue; \
+	done
 
 generated: api man_rsts
 
 man_rsts:
 	@echo "autogenerating man rsts..."
-	$(PYTHON) -m pkgcore.sphinx_utils.generate_man_rsts man \
+	@mkdir -p $(BUILDDIR)/generated
+	@$(PYTHON) -c 'import conf,sys;sys.stdout.write("\n".join(x for _, x in conf.generated_man_pages))' | \
+		xargs -I@ ln -sf ../$(BUILDDIR)/generated/@ man/@
+	@$(PYTHON) -m pkgcore.sphinx_utils.generate_man_rsts $(BUILDDIR)/generated \
 	   `$(PYTHON) -c 'import conf,sys;sys.stdout.write(" ".join(" ".join(x) for x in conf.generated_man_pages))'`
 
 api:

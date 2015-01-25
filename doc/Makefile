@@ -8,7 +8,7 @@ PYTHON        = python
 SPHINXOPTS    =
 SPHINXBUILD   = sphinx-build
 PAPER         =
-BUILDDIR      = _build
+BUILDDIR      = $(CURDIR)/_build
 
 # Internal variables.
 PAPEROPT_a4     = -D latex_paper_size=a4
@@ -53,7 +53,7 @@ man_rsts:
 	@echo "autogenerating man rsts..."
 	@mkdir -p $(BUILDDIR)/generated
 	@$(PYTHON) -c 'import conf,sys;sys.stdout.write("\n".join(x for _, x in conf.generated_man_pages))' | \
-		xargs -I@ ln -sf ../$(BUILDDIR)/generated/@ man/@
+		xargs -I@ ln -sf "$(BUILDDIR)/generated/@" "man/@"
 	@$(PYTHON) -m pkgcore.sphinx_utils.generate_man_rsts $(BUILDDIR)/generated \
 	   `$(PYTHON) -c 'import conf,sys;sys.stdout.write(" ".join(" ".join(x) for x in conf.generated_man_pages))'`
 

@@ -19,6 +19,7 @@ __all__ = (
     "MySystemExit", "main",
 )
 
+import argparse
 import logging
 import optparse
 import os.path
@@ -28,7 +29,6 @@ from snakeoil import compatibility, formatters, currying, modules
 from snakeoil.demandload import demandload
 
 from pkgcore.config import load_config, errors
-from pkgcore.util import argparse
 from pkgcore.util.commandline_optparse import *
 
 demandload(

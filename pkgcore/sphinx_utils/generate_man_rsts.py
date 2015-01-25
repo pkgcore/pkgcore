@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import argparse
 import errno
 import os
 import re
@@ -8,8 +9,6 @@ import sys
 from snakeoil.currying import partial
 from snakeoil.modules import load_module
 from snakeoil.osutils import pjoin
-
-from pkgcore.util import argparse
 
 
 def _rst_header(char, text, leading=False):

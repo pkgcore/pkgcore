@@ -28,6 +28,7 @@ matches the default colors and output structure that portage uses.
 # more should be doc'd...
 __all__ = ("argparser", "AmbiguousQuery", "NoMatches")
 
+import argparse
 from time import time
 
 from pkgcore.ebuild import resolver
@@ -37,7 +38,7 @@ from pkgcore.operations import observer, format
 from pkgcore.resolver.util import reduce_to_failures
 from pkgcore.restrictions import packages
 from pkgcore.restrictions.boolean import OrRestriction
-from pkgcore.util import commandline, parserestrict, repo_utils, argparse
+from pkgcore.util import commandline, parserestrict, repo_utils
 
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.currying import partial

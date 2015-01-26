@@ -1,0 +1,88 @@
+=======
+pkgcore
+=======
+
+Description
+===========
+
+pkgcore is a framework for package management; via the appropriate class
+plugins, the design should allow for almost any underlying repository, config,
+or format to be used. However, it's currently focused on providing support for
+ebuilds and the Gentoo ecosystem in general.
+
+Portage Compatibility
+=====================
+
+In general, pkgcore tries to remain somewhat compatible with much of the
+current portage configuration.
+
+Missing Functionality
+---------------------
+
+The following is a list of semi-major portage features that currently do not
+have a pkgcore equivalent. Some of them are planned to be added in the future
+while others are not (and are noted as such).
+
+This section mostly serves as a warning for the unwary that might expect
+everything to operate in the same fashion when switching between package
+managers.
+
+* /etc/portage/repos.conf
+
+  Support for parsing and using /etc/portage/repos.conf is missing so the
+  PORTDIR and PORTDIR_OVERLAY settings in make.conf must still be used for now.
+
+* FEATURES="preserve-libs"
+
+  Libraries *are not* preserved when sonames change during upgrades or
+  downgrades. This can easily render systems unworkable if major core system
+  library changes occur. Users will have to make use of revdep-rebuild(1) from
+  portage until an equivalent is added to pkgcore and/or support for preserved
+  libs is added.
+
+  Note that this also means there is no "preserved-rebuild" package set support
+  either.
+
+* dynamic deps
+
+  Dependency data for installed packages is always pulled from the vdb which is
+  only allowed to be altered during package install time and removed at
+  uninstall. Adding support for retrieving updated dependency data from unbuilt
+  ebuilds in source repositories will never be added in the current form found
+  in portage.
+
+Utilities
+=========
+
+**pclonecache(1)**
+  clone a repository cache
+
+**pebuild(1)**
+    low-level ebuild operations, go through phases manually
+
+**pinspect(1)**
+    generic utility for inspecting repository related info
+
+**pmaint(1)**
+    generic utility for repository maintenance (syncing, copying...)
+
+**pmerge(1)**
+    generic utility for doing resolution, fetching, merging/unmerging, etc.
+
+**pquery(1)**
+    generic utility for querying info about repositories, revdeps, pkg search,
+    vdb search, etc.
+
+Reporting Bugs
+==============
+
+Please submit an issue via github:
+
+https://github.com/pkgcore/pkgcore/issues
+
+You can also stop by #pkgcore on freenode.
+
+See Also
+========
+
+portage(5), make.conf(5)

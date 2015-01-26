@@ -236,6 +236,8 @@ man_pages = [
     for x in generated_man_pages
 ]
 
+man_pages.append(('man/pkgcore', 'pkgcore', 'a framework for package management', authors_list, 5))
+
 
 # -- Options for Epub output ---------------------------------------------------
 

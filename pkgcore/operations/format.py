@@ -105,30 +105,29 @@ class operations(_operations_mod.base):
         if not mirroring:
             return pkg.fetchables
         pkg = getattr(pkg, '_raw_pkg', pkg)
-        return tuple(iflatten_instance(pkg.fetchables,
-            _fetch_module.fetchable))
+        return tuple(iflatten_instance(pkg.fetchables, _fetch_module.fetchable))
 
     @klass.cached_property
     def _fetch_op(self):
-        return self._fetch_kls(self.domain, self.pkg,
+        return self._fetch_kls(
+            self.domain, self.pkg,
             self._generate_fetchables(),
             self._find_fetcher())
 
     @klass.cached_property
     def _mirror_op(self):
-        return self._fetch_kls(self.domain, self.pkg,
+        return self._fetch_kls(
+            self.domain, self.pkg,
             self._generate_fetchables(mirroring=True),
             self._find_fetcher())
 
     @_operations_mod.is_standalone
     def _cmd_api_fetch(self, observer=None):
-        return self._fetch_op.fetch_all(
-            self._get_observer(observer))
+        return self._fetch_op.fetch_all(self._get_observer(observer))
 
     @_operations_mod.is_standalone
     def _cmd_api_mirror(self, observer=None):
-        return self._mirror_op.fetch_all(
-            self._get_observer(observer))
+        return self._mirror_op.fetch_all(self._get_observer(observer))
 
     def _find_fetcher(self):
         fetcher = getattr(self.pkg.repo, 'fetcher', None)
@@ -142,7 +141,8 @@ class build_operations(operations):
     __required__ = frozenset(["build"])
 
     def _cmd_api_build(self, observer=None, clean=True, **format_options):
-        return self._cmd_implementation_build(self._get_observer(observer),
+        return self._cmd_implementation_build(
+            self._get_observer(observer),
             self._fetch_op.verified_files,
             clean=clean, format_options=format_options)
 
@@ -154,7 +154,7 @@ class build_operations(operations):
 
 
 class build_base(object):
-    stage_depends = {'finish':'start'}
+    stage_depends = {'finish': 'start'}
 
     __metaclass__ = ForcedDepends
 
@@ -171,14 +171,15 @@ class build_base(object):
 
 class build(build_base):
     stage_depends = {
-        "setup":"start",
-        "unpack":"setup",
-        "configure":"prepare",
-        "prepare":"unpack",
-        "compile":"configure",
-        "test":"compile",
-        "install":"test",
-        "finalize":"install"}
+        "setup": "start",
+        "unpack": "setup",
+        "configure": "prepare",
+        "prepare": "unpack",
+        "compile": "configure",
+        "test": "compile",
+        "install": "test",
+        "finalize": "install",
+    }
 
     def __init__(self, domain, pkg, verified_files, observer):
         build_base.__init__(self, domain, observer)
@@ -214,23 +215,24 @@ class build(build_base):
         """cleanup any working files/dirs created during building"""
         return True
 
-    for k in (
-        "setup", "unpack", "configure", "compile", "test", "install"):
+    for k in ("setup", "unpack", "configure", "compile", "test", "install"):
         locals()[k].__doc__ = (
             "execute any %s steps required; "
             "implementations of this interface should overide this as needed"
             % k)
-    for k in (
-        "setup", "unpack", "configure", "compile", "test", "install",
-        "finalize"):
+    for k in ("setup", "unpack", "configure", "compile", "test", "install", "finalize"):
         o = locals()[k]
         o.__doc__ = "\n".join(x.lstrip() for x in o.__doc__.split("\n") + [
-                ":return: True on success, False on failure"])
+                              ":return: True on success, False on failure"])
     del o, k
 
 
 class install(build_base):
-    stage_depends = {"preinst":"start", "postinst":"preinst", "finalize":"postinst"}
+    stage_depends = {
+        "preinst": "start",
+        "postinst": "preinst",
+        "finalize": "postinst",
+    }
 
     def __init__(self, domain, newpkg, observer):
         build_base.__init__(self, domain, observer)
@@ -253,7 +255,11 @@ class install(build_base):
 
 
 class uninstall(build_base):
-    stage_depends = {"prerm":"start", "postrm":"prerm", "finalize":"postrm"}
+    stage_depends = {
+        "prerm": "start",
+        "postrm": "prerm",
+        "finalize": "postrm",
+    }
 
     def __init__(self, domain, oldpkg, observer):
         build_base.__init__(self, domain, observer)
@@ -281,8 +287,13 @@ class uninstall(build_base):
 
 class replace(install, uninstall):
 
-    stage_depends = {"finalize":"postinst", "postinst":"postrm",
-        "postrm":"prerm", "prerm":"preinst", "preinst":"start"}
+    stage_depends = {
+        "finalize": "postinst",
+        "postinst": "postrm",
+        "postrm": "prerm",
+        "prerm": "preinst",
+        "preinst": "start",
+    }
 
     def __init__(self, domain, old_pkg, new_pkg, observer):
         build_base.__init__(self, domain, observer)
@@ -294,7 +305,7 @@ class empty_build_op(build_base):
 
     stage_depends = {}
 
-#	__metaclass__ = ForcedDepends
+    #__metaclass__ = ForcedDepends
 
     def __init__(self, pkg, observer=None, clean=False):
         build_base.__init__(self, observer)
@@ -309,6 +320,7 @@ class empty_build_op(build_base):
 
 class BuildError(Exception):
     pass
+
 
 class FailedDirectory(BuildError):
     def __init__(self, path, text):

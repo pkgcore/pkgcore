@@ -260,8 +260,8 @@ class operations(sync_operations):
 
 class operations_proxy(operations):
 
-    # cache this; this is to prevent the target operations mutating resulting in
-    # our proxy setup not matching the target.
+    # cache this; this is to prevent the target operations mutating resulting
+    # in our proxy setup not matching the target.
     @klass.cached_property
     def raw_operations(self):
         return self.repo.raw_repo.operations

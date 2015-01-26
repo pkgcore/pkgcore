@@ -17,19 +17,22 @@ demandload('threading')
 def _convert(msg, args=(), kwds={}):
     if args:
         if kwds:
-            raise TypeError("both position and optional args cannot be "
+            raise TypeError(
+                "both position and optional args cannot be "
                 "supplied: given msg(%r), args(%r), kwds(%r)"
                 % (msg, args, kwds))
         try:
             return msg % args
         except TypeError as e:
-            raise TypeError("observer interpolation error: %s, msg=%r, args=%r" %
-                (e, msg, args))
+            raise TypeError(
+                "observer interpolation error: %s, msg=%r, args=%r"
+                % (e, msg, args))
     try:
         return msg % kwds
     except TypeError as e:
-        raise TypeError("observer interpolation error: %s, msg=%r, kwds=%r" %
-            (e, msg, kwds))
+        raise TypeError(
+            "observer interpolation error: %s, msg=%r, kwds=%r"
+            % (e, msg, kwds))
 
 
 class null_output(object):
@@ -106,8 +109,8 @@ class phase_observer(object):
         if not self._semiquiet:
             self._output.debug(msg, *args, **kwds)
 
-    info  = klass.alias_attr("_output.info")
-    warn  = klass.alias_attr("_output.warn")
+    info = klass.alias_attr("_output.info")
+    warn = klass.alias_attr("_output.warn")
     error = klass.alias_attr("_output.error")
     write = klass.alias_attr("_output.write")
 
@@ -138,6 +141,7 @@ class repo_observer(phase_observer):
 
 def _reflection_func(attr, self, *args, **kwds):
     return self._invoke(attr, *args, **kwds)
+
 
 def _mk_observer_proxy(target):
     class foo(target):

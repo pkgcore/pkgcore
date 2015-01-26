@@ -24,9 +24,10 @@ def regen_iter(iterable, regen_func, observer, is_thread=False):
 def regen_repository(repo, observer, threads=1, pkg_attr='keywords', **options):
 
     helpers = []
+
     def _get_repo_helper():
         if not hasattr(repo, '_regen_operation_helper'):
-            return lambda pkg:getattr(pkg, 'keywords')
+            return lambda pkg: getattr(pkg, 'keywords')
         # for an actual helper, track it and invoke .finish if it exists.
         helper = repo._regen_operation_helper(**options)
         helpers.append(helper)

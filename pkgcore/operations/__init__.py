@@ -6,11 +6,11 @@ operation templates for package/repository/data source objects
 
 For new format implementations, new formats, and generally any new extension,
 an operation class will likely have to be defined.  While the implementations
-are a bit repetitive, the design of it is intentional to ensure that any derivative
-will be forced to adhere to the pkgcore internal api.
+are a bit repetitive, the design of it is intentional to ensure that any
+derivative will be forced to adhere to the pkgcore internal api.
 
-Basically it's a crappy form of zope interfaces; converting to zope.interfaces may
-occur down the line if dependencies can be kept as minimal as possible.
+Basically it's a crappy form of zope interfaces; converting to zope.interfaces
+may occur down the line if dependencies can be kept as minimal as possible.
 """
 
 from snakeoil import klass, currying, compatibility
@@ -47,7 +47,7 @@ class base(object):
     @klass.cached_property
     def raw_operations(self):
         return frozenset(x[len("_cmd_api_"):] for x in dir(self.__class__)
-            if x.startswith("_cmd_api_"))
+                         if x.startswith("_cmd_api_"))
 
     @klass.cached_property
     def enabled_operations(self):
@@ -71,19 +71,18 @@ class base(object):
             compatibility.raise_from(exc_class(name))
 
     def _wrap_exception(self, functor, name):
-        f = currying.partial(self._recast_exception_decorator,
-            self.__casting_exception__, name, functor)
+        f = currying.partial(
+            self._recast_exception_decorator, self.__casting_exception__, name, functor)
         return currying.pretty_docs(f)
 
     def _setup_api(self):
         recast_exc = self.__casting_exception__
         if recast_exc is None:
-            f = lambda x, y:x
+            f = lambda x, y: x
         else:
             f = self._wrap_exception
         for op in self.enabled_operations:
-            setattr(self, op,
-                f(getattr(self, '_cmd_api_%s' % op), op))
+            setattr(self, op, f(getattr(self, '_cmd_api_%s' % op), op))
 
     def _filter_disabled_commands(self, sequence):
         for command in sequence:
@@ -126,7 +125,8 @@ def is_standalone(functor):
     """decorator to mark a api operation method as containing the implementation
 
     This is primarily useful for commands that can contain all of the logic in
-    the template class itself, rather than requiring a glue method to be provided
+    the template class itself, rather than requiring a glue method to be
+    provided
     """
     functor._is_standalone = True
     return functor

@@ -576,6 +576,35 @@ class _SubParser(argparse._SubParsersAction):
             kwds["help"] = description
         return argparse._SubParsersAction.add_parser(self, name, **kwds)
 
+    def __call__(self, parser, namespace, values, option_string=None):
+        """override stdlib argparse to revert subparser namespace changes
+
+        Reverts the broken upstream change made in issue #9351 which causes
+        issue #23058. This can be dropped when the problem is fixed upstream.
+        """
+        parser_name = values[0]
+        arg_strings = values[1:]
+
+        # set the parser name if requested
+        if self.dest is not argparse.SUPPRESS:
+            setattr(namespace, self.dest, parser_name)
+
+        # select the parser
+        try:
+            parser = self._name_parser_map[parser_name]
+        except KeyError:
+            tup = parser_name, ', '.join(self._name_parser_map)
+            msg = _('unknown parser %r (choices: %s)') % tup
+            raise ArgumentError(self, msg)
+
+        # parse all the remaining options into the namespace
+        # store any unrecognized options on the object, so that the top
+        # level parser can decide what to do with them
+        namespace, arg_strings = parser.parse_known_args(arg_strings, namespace)
+        if arg_strings:
+            vars(namespace).setdefault(_UNRECOGNIZED_ARGS_ATTR, [])
+            getattr(namespace, _UNRECOGNIZED_ARGS_ATTR).extend(arg_strings)
+
 
 class ArgumentParser(argparse.ArgumentParser):
 

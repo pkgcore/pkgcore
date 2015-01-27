@@ -300,6 +300,9 @@ __ebd_process_ebuild_phases() {
 				fi
 				cont=2
 				;;
+			shutdown_daemon)
+				break
+				;;
 			*)
 				echo "received unknown com during phase processing: ${line}" >&2
 				exit 1

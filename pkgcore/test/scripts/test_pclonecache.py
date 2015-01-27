@@ -1,6 +1,8 @@
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
 # License: BSD/GPL2
 
+from snakeoil import compatibility
+
 from pkgcore.config import basics, ConfigHint
 from pkgcore.scripts import pclonecache
 from pkgcore.test import TestCase
@@ -20,9 +22,14 @@ class CommandlineTest(TestCase, helpers.ArgParseMixin):
     _argparser = pclonecache.argparser
 
     def test_parser(self):
-        self.assertError(
-            'too few arguments',
-            'spork')
+        if compatibility.is_py3k:
+            self.assertError(
+                'the following arguments are required: target',
+                'spork')
+        else:
+            self.assertError(
+                'too few arguments',
+                'spork')
         self.assertError(
             "argument source: couldn't find cache 'spork'",
             'spork', 'spork2')

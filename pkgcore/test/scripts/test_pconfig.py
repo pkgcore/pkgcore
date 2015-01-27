@@ -1,6 +1,8 @@
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
 # License: BSD/GPL2
 
+from snakeoil import compatibility
+
 from pkgcore.config import configurable, basics, errors
 from pkgcore.scripts import pconfig
 from pkgcore.test import TestCase
@@ -42,11 +44,15 @@ class DescribeClassTest(TestCase, helpers.ArgParseMixin):
     _argparser = pconfig.describe_class
 
     def test_parser(self):
+        if compatibility.is_py3k:
+            self.assertError(
+                'the following arguments are required: target_class')
+        else:
+            self.assertError(
+                'too few arguments')
         self.assertError(
             "argument target_class: Failed importing target 'pkgcore.spork': ''module' object has no attribute 'spork''",
             'pkgcore.spork')
-        self.assertError(
-            'too few arguments')
         self.assertError(
             "argument target_class: Failed importing target 'pkgcore.a': ''module' object has no attribute 'a''",
             'pkgcore.a', 'pkgcore.b')

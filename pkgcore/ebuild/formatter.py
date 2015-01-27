@@ -687,7 +687,7 @@ paludis_factory = formatter_factory_generator(PaludisFormatter)
 
 @configurable(typename='pmerge_formatter')
 def portage_verbose_factory():
-    """Version of portage-formatter that is always in verbose mode."""
+    """Version of portage formatter that is always in verbose mode."""
     def factory(**kwargs):
         kwargs['verbose'] = True
         return PortageFormatter(**kwargs)

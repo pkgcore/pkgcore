@@ -381,8 +381,7 @@ class EbuildProcessor(object):
         self.write("process_ebuild %s" % phase)
         if not self.send_env(env, tmpdir=tmpdir):
             return False
-        if sandbox:
-            self.set_sandbox_state(sandbox)
+        self.write("set_sandbox_state %i" % sandbox)
         if logging:
             if not self.set_logfile(logging):
                 return False
@@ -633,16 +632,6 @@ class EbuildProcessor(object):
         # currently, this assumes all went well.
         # which isn't always true.
         self.pid = None
-
-    def set_sandbox_state(self, state):
-        """
-        tell the daemon whether to enable the sandbox, or disable it
-        :param state: boolean, if True enable sandbox
-        """
-        if state:
-            self.write("set_sandbox_state 1")
-        else:
-            self.write("set_sandbox_state 0")
 
     def _generate_env_str(self, env_dict):
         data = []

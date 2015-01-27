@@ -17,7 +17,8 @@ from pkgcore.util import commandline
 argparser = commandline.mk_argparser(description=__doc__.split('\n', 1)[0])
 argparser.add_argument(
     "--no-auto", action='store_true', default=False,
-    help="run just the specified phases; it's up to the invoker to get the order right")
+    help="run just the specified phases; "
+         "it's up to the invoker to get the order right")
 argparser.add_argument(
     'pkg', metavar='<atom|ebuild>',
     help="atom or ebuild matching a pkg to execute phases from")
@@ -69,13 +70,15 @@ def main(options, out, err):
         if len(set((pkg.slot, pkg.repo) for pkg in pkgs)) != 1:
             for pkg in sorted(pkgs):
                 err.write("repo %r, slot %r, %s" %
-                    (getattr(pkg.repo, 'repo_id', 'unknown'), pkg.slot, pkg.cpvstr,), prefix="  ")
+                          (getattr(pkg.repo, 'repo_id', 'unknown'),
+                           pkg.slot, pkg.cpvstr,), prefix="  ")
             err.write()
-            err.write("please refine your restriction to match only one slot/repo pair\n");
+            err.write("please refine your restriction to match only one slot/repo pair\n")
             return 1
         pkgs = [max(pkgs)]
-        err.write("choosing %r, slot %r, %s" % (getattr(pkgs[0].repo, 'repo_id', 'unknown'),
-            pkgs[0].slot, pkgs[0].cpvstr), prefix='  ')
+        err.write("choosing %r, slot %r, %s" %
+                  (getattr(pkgs[0].repo, 'repo_id', 'unknown'),
+                   pkgs[0].slot, pkgs[0].cpvstr), prefix='  ')
 
     kwds = {}
     build_obs = observer.build_observer(observer.formatter_output(out),

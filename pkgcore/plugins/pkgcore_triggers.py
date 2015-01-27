@@ -2,7 +2,7 @@
 # License: GPL2/BSD
 
 pkgcore_plugins = {
-    'triggers':['pkgcore.merge.triggers.%s' % x for x in [
+    'triggers': ['pkgcore.merge.triggers.%s' % x for x in [
         'ldconfig',
         'merge',
         'unmerge',
@@ -13,5 +13,5 @@ pkgcore_plugins = {
         'InfoRegen',
         'CommonDirectoryModes',
         'BaseSystemUnmergeProtection',
-        ]],
-    }
+    ]],
+}

@@ -38,7 +38,8 @@ mux.add_argument(
     help="display info on all pkgsets")
 mux.add_argument(
     "pkgsets", nargs="*", metavar="pkgset", default=[],
-    action=commandline.StoreConfigObject, config_type='pkgset', store_name=True,
+    action=commandline.StoreConfigObject,
+    config_type='pkgset', store_name=True,
     help="pkgset to inspect")
 del mux
 @pkgsets.bind_main_func
@@ -46,7 +47,7 @@ def pkgsets_run(opts, out, err):
     if not opts.pkgsets:
         if not opts.all:
             out.write(out.bold, 'available pkgset(s): ', out.reset,
-                ', '.join(repr(x) for x in sorted(opts.config.pkgset)))
+                      ', '.join(repr(x) for x in sorted(opts.config.pkgset)))
             return 0
         else:
             opts.pkgsets = sorted(opts.config.pkgset)
@@ -78,8 +79,9 @@ def print_simple_histogram(data, out, format, total, sort_by_key=False,
         data = list(data)[-last:]
 
     for key, val in data:
-        out.write(format % {'key':str(key), 'val':val,
-            'percent':"%2.2f%%" % (val/total,)})
+        out.write(format %
+                  {'key': str(key), 'val': val,
+                   'percent': "%2.2f%%" % (val/total,)})
 
 
 class histo_data(commandline.ArgparseCommand):
@@ -146,7 +148,7 @@ class histo_data(commandline.ArgparseCommand):
                 out.write()
             position += 1
             out.write(out.bold, "repository", out.reset, ' ',
-                repr(repo_name), ':')
+                      repr(repo_name), ':')
             data, repo_total = self.get_data(repo, opts)
             detail_data = self.transform_data_to_detail(data)
             if not opts.no_detail:
@@ -166,7 +168,8 @@ class histo_data(commandline.ArgparseCommand):
 
             if not opts.repo_summary:
                 continue
-            out.write(out.bold, 'summary', out.reset, ': ',
+            out.write(
+                out.bold, 'summary', out.reset, ': ',
                 self.per_repo_summary %
                 self.transform_data_to_summary(data))
 
@@ -183,11 +186,9 @@ class histo_data(commandline.ArgparseCommand):
 
 class eapi_usage_kls(histo_data):
 
-    per_repo_format = ("eapi: %(key)r %(val)s pkgs found, %(percent)s of the "
-        "repository")
+    per_repo_format = ("eapi: %(key)r %(val)s pkgs found, %(percent)s of the repository")
 
-    summary_format = ("eapi: %(key)r %(val)s pkgs found, %(percent)s of all "
-        "repositories")
+    summary_format = ("eapi: %(key)r %(val)s pkgs found, %(percent)s of all repositories")
 
     def get_data(self, repo, options):
         eapis = {}
@@ -297,13 +298,13 @@ class distfiles_usage_kls(histo_data):
                     owners[fetchable.filename].add(key)
                     items[fetchable.filename] = fetchable.chksums.get("size", 0)
 
-        data = defaultdict(lambda:0)
+        data = defaultdict(lambda: 0)
         for filename, keys in owners.iteritems():
             for key in keys:
                 data[key] += items[filename]
         unique = sum(items.itervalues())
-        shared = sum(items[k] for (k,v) in owners.iteritems() if len(v) > 1)
-        return (data, {"total":unique, "shared":shared}), unique
+        shared = sum(items[k] for (k, v) in owners.iteritems() if len(v) > 1)
+        return (data, {"total": unique, "shared": shared}), unique
 
     def transform_data_to_detail(self, data):
         return data[0]
@@ -360,7 +361,7 @@ def digest_manifest(options, out, err):
             percent = (broken/count)
             percent *= 100
             out.write("%i out of %i the tree has broken checksum data "
-                "(%2.2f%%)" % (broken, count, percent))
+                      "(%2.2f%%)" % (broken, count, percent))
         else:
             out.write("repository has no packages")
 

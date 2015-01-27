@@ -10,7 +10,8 @@ subprocess related functionality
 
 __all__ = [
     "cleanup_pids", "spawn", "spawn_sandbox", "spawn_bash", "spawn_fakeroot",
-    "spawn_get_output", "find_binary"]
+    "spawn_get_output", "find_binary",
+]
 
 import atexit
 import itertools
@@ -148,7 +149,7 @@ def spawn(mycommand, env=None, name=None, fd_pipes=None, returnpid=False,
     # If we haven't been told what file descriptors to use
     # default to propogating our stdin, stdout and stderr.
     if fd_pipes is None:
-        fd_pipes = {0:0, 1:1, 2:2}
+        fd_pipes = {0: 0, 1: 1, 2: 2}
 
     # mypids will hold the pids of all processes created.
     mypids = []
@@ -226,7 +227,6 @@ def _exec(binary, mycommand, name, fd_pipes, env, gid, groups, uid, umask, cwd):
     # Set up the command's argument list.
     myargs = [name]
     myargs.extend(mycommand[1:])
-
 
     def _find_unused_pid(protected):
         for potential in itertools.count():
@@ -311,7 +311,7 @@ def spawn_fakeroot(mycommand, save_file, env=None, name=None,
         "--unknown-is-real", "--foreground", "--save-file", save_file]
 
     rd_fd, wr_fd = os.pipe()
-    daemon_fd_pipes = {1:wr_fd, 2:wr_fd}
+    daemon_fd_pipes = {1: wr_fd, 2: wr_fd}
     if os.path.exists(save_file):
         args.append("--load")
         daemon_fd_pipes[0] = os.open(save_file, os.O_RDONLY)
@@ -375,7 +375,7 @@ def spawn_get_output(mycommand, spawn_type=None, raw_exit_code=False, collect_fd
 
     pr, pw = None, None
     if fd_pipes is None:
-        fd_pipes = {0:0}
+        fd_pipes = {0: 0}
     else:
         fd_pipes = ProtectedDict(fd_pipes)
     try:
@@ -435,6 +435,7 @@ class ExecutionFailure(Exception):
     def __init__(self, msg):
         Exception.__init__(self, msg)
         self.msg = msg
+
     def __str__(self):
         return "Execution Failure: %s" % self.msg
 
@@ -450,8 +451,7 @@ def is_fakeroot_capable(force=False):
         res = False
     else:
         try:
-            r, s = spawn_get_output(["fakeroot", "--version"],
-                fd_pipes={2:1, 1:1})
+            r, s = spawn_get_output(["fakeroot", "--version"], fd_pipes={2: 1, 1: 1})
             res = (r == 0) and (len(s) == 1) and ("version 1." in s[0])
         except ExecutionFailure:
             res = False

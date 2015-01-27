@@ -43,8 +43,7 @@ class rsync_syncer(base.ExternalSyncer):
     def parse_uri(cls, raw_uri):
         if not raw_uri.startswith("rsync://") and \
             not raw_uri.startswith("rsync+"):
-            raise base.uri_exception(raw_uri,
-                "doesn't start with rsync:// nor rsync+")
+            raise base.uri_exception(raw_uri, "doesn't start with rsync:// nor rsync+")
 
         if raw_uri.startswith("rsync://"):
             return None, raw_uri
@@ -81,7 +80,7 @@ class rsync_syncer(base.ExternalSyncer):
         self.use_proxy = proxy is not None
         if self.use_proxy:
             self.sets_env = True
-            self.env = {'RSYNC_PROXY':proxy}
+            self.env = {'RSYNC_PROXY': proxy}
         self.is_ipv6 = "--ipv6" in self.opts or "-6" in self.opts
         self.is_ipv6 = self.is_ipv6 and socket.has_ipv6
 
@@ -110,9 +109,8 @@ class rsync_syncer(base.ExternalSyncer):
             compatibility.raise_from(
                 base.syncer_exception(self.hostname, af_fam, str(e)))
 
-
     def _sync(self, verbosity, output_fd):
-        fd_pipes = {1:output_fd, 2:output_fd}
+        fd_pipes = {1: output_fd, 2: output_fd}
         opts = list(self.opts)
         if self.rsh:
             opts.append("-e")
@@ -130,8 +128,8 @@ class rsync_syncer(base.ExternalSyncer):
         ret = None
         for count, ip in zip(xrange(self.retries), self._get_ips()):
             o = [self.binary_path,
-                self.uri.replace(self.hostname, ip, 1),
-                self.basedir] + opts
+                 self.uri.replace(self.hostname, ip, 1),
+                 self.basedir] + opts
 
             ret = self._spawn(o, fd_pipes)
             if ret == 0:
@@ -140,7 +138,8 @@ class rsync_syncer(base.ExternalSyncer):
                 # syntax error.
                 raise base.syncer_exception(o, "syntax error")
             elif ret == 11:
-                raise base.syncer_exception("rsync returned error code of "
+                raise base.syncer_exception(
+                    "rsync returned error code of "
                     "11; this is an out of space exit code")
            # need to do something here instead of just restarting...
            # else:
@@ -187,8 +186,8 @@ class rsync_timestamp_syncer(rsync_syncer):
             if not doit:
                 basedir = self.basedir
                 uri = self.uri
-                new_timestamp = pjoin(self.basedir, "metadata",
-                    ".tmp.timestamp.chk")
+                new_timestamp = pjoin(
+                    self.basedir, "metadata", ".tmp.timestamp.chk")
                 try:
                     self.basedir = new_timestamp
                     self.uri = pjoin(self.uri, "metadata", "timestamp.chk")

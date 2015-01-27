@@ -73,6 +73,7 @@ def _single_thread_allowed(functor):
     pretty_docs(_inner, name=functor.__name__)
     return _inner
 
+
 @_single_thread_allowed
 def forget_all_processors():
     active_ebp_list[:] = []
@@ -102,6 +103,7 @@ def shutdown_all_processors():
         raise
 
 pkgcore.spawn.atexit_register(shutdown_all_processors)
+
 
 @_single_thread_allowed
 def request_ebuild_processor(userpriv=False, sandbox=None, fakeroot=False,
@@ -137,6 +139,7 @@ def request_ebuild_processor(userpriv=False, sandbox=None, fakeroot=False,
     e = EbuildProcessor(userpriv, sandbox, fakeroot, save_file)
     active_ebp_list.append(e)
     return e
+
 
 @_single_thread_allowed
 def release_ebuild_processor(ebp):
@@ -190,12 +193,14 @@ def reuse_or_request(ebp=None, **request_kwds):
 class ProcessingInterruption(Exception):
     pass
 
+
 class FinishedProcessing(ProcessingInterruption):
 
     def __init__(self, val, msg=None):
         ProcessingInterruption.__init__(
             self, "Finished processing with val, %s" % (val,))
         self.val, self.msg = val, msg
+
 
 class UnhandledCommand(ProcessingInterruption):
 
@@ -204,6 +209,7 @@ class UnhandledCommand(ProcessingInterruption):
             self, "unhandled command, %s" % (line,))
         self.line = line
         self.args = (line,)
+
 
 class InternalError(ProcessingInterruption):
 
@@ -214,11 +220,14 @@ class InternalError(ProcessingInterruption):
         self.line, self.msg = line, msg
         self.args = (line, msg)
 
+
 def chuck_KeyboardInterrupt(*arg):
     raise KeyboardInterrupt("ctrl+c encountered")
 
+
 def chuck_UnhandledCommand(processor, line):
     raise UnhandledCommand(line)
+
 
 def chuck_StoppingCommand(val, processor, *args):
     if callable(val):
@@ -251,7 +260,7 @@ class EbuildProcessor(object):
 
         self.lock()
         self.ebd = e_const.EBUILD_DAEMON_PATH
-        spawn_opts = {'umask':0002}
+        spawn_opts = {'umask': 0002}
 
         self._preloaded_eclasses = {}
         self._eclass_caching = False
@@ -266,12 +275,13 @@ class EbuildProcessor(object):
         if userpriv:
             self.__userpriv = True
             spawn_opts.update({
-                    "uid":os_data.portage_uid, "gid":os_data.portage_gid,
-                    "groups":[os_data.portage_gid]})
+                "uid": os_data.portage_uid,
+                "gid": os_data.portage_gid,
+                "groups": [os_data.portage_gid]})
         else:
             if pkgcore.spawn.is_userpriv_capable():
-                spawn_opts.update({"gid":os_data.portage_gid,
-                                   "groups":[0, os_data.portage_gid]})
+                spawn_opts.update({"gid": os_data.portage_gid,
+                                   "groups": [0, os_data.portage_gid]})
             self.__userpriv = False
 
         # open the pipes to be used for chatting with the new daemon
@@ -289,7 +299,8 @@ class EbuildProcessor(object):
 
         # append script dir to PATH for git repo or unpacked tarball
         if "PKGCORE_SCRIPT_PATH" in os.environ:
-            env["PATH"] = os.pathsep.join([os.environ["PATH"], os.environ["PKGCORE_SCRIPT_PATH"]])
+            env["PATH"] = os.pathsep.join(
+                [os.environ["PATH"], os.environ["PKGCORE_SCRIPT_PATH"]])
 
         args = []
         if sandbox:
@@ -317,15 +328,17 @@ class EbuildProcessor(object):
         # nobody stupidly hits 'em.
         max_fd = min(pkgcore.spawn.max_fd_limit, 1024)
         env.update({
-            "PKGCORE_EBD_READ_FD": str(max_fd-2), "PKGCORE_EBD_WRITE_FD": str(max_fd-1)})
-        self.pid = spawn_func(["/bin/bash", self.ebd, "daemonize"], \
-            fd_pipes={0:0, 1:1, 2:2, max_fd-2:cread, max_fd-1:dwrite}, \
+            "PKGCORE_EBD_READ_FD": str(max_fd-2),
+            "PKGCORE_EBD_WRITE_FD": str(max_fd-1)})
+        self.pid = spawn_func(
+            ["/bin/bash", self.ebd, "daemonize"],
+            fd_pipes={0: 0, 1: 1, 2: 2, max_fd-2: cread, max_fd-1: dwrite},
             returnpid=True, env=env, *args, **spawn_opts)[0]
 
         os.close(cread)
         os.close(dwrite)
         self.ebd_write = os.fdopen(cwrite, "w")
-        self.ebd_read  = os.fdopen(dread, "r")
+        self.ebd_read = os.fdopen(dread, "r")
 
         # basically a quick "yo" to the daemon
         self.write("dude?")
@@ -479,19 +492,21 @@ class EbuildProcessor(object):
             with open(move_log) as myf:
                 for x in violations:
                     myf.write(x+"\n")
+
         # XXX this is fugly, use a colorizer or something
         # (but it is better than "from output import red" (portage's output))
         def red(text):
             return '\x1b[31;1m%s\x1b[39;49;00m' % (text,)
+
         self.ebd_write.write(red(
-                "--------------------------- ACCESS VIOLATION SUMMARY "
-                "---------------------------")+"\n")
+            "--------------------------- ACCESS VIOLATION SUMMARY "
+            "---------------------------")+"\n")
         self.ebd_write.write(red("LOG FILE = \"%s\"" % move_log)+"\n\n")
         for x in violations:
             self.ebd_write.write(x+"\n")
         self.write(red(
-                "-----------------------------------------------------"
-                "---------------------------")+"\n")
+            "-----------------------------------------------------"
+            "---------------------------")+"\n")
         self.write("end_sandbox_summary")
         try:
             os.remove(self.__sandbox_log)
@@ -640,7 +655,7 @@ class EbuildProcessor(object):
                 raise KeyError("%s: bash doesn't allow digits as the first char" % (key,))
             if not isinstance(val, basestring):
                 raise ValueError("_generate_env_str was fed a bad value; key=%s, val=%s"
-                    % (key, val))
+                                 % (key, val))
             if val.isalnum():
                 data.append("%s=%s" % (key, val))
             elif "'" not in val:
@@ -661,11 +676,11 @@ class EbuildProcessor(object):
         if tmpdir:
             path = pjoin(tmpdir, 'ebd-env-transfer')
             fileutils.write_file(path, 'wb', data)
-            self.write("start_receiving_env file %s\n" % (path,),
-                append_newline=False)
+            self.write("start_receiving_env file %s\n" %
+                       (path,), append_newline=False)
         else:
             self.write("start_receiving_env bytes %i\n%s" %
-                (len(data), data), append_newline=False)
+                       (len(data), data), append_newline=False)
         os.umask(old_umask)
         return self.expect("env_received", async=async, flush=True)
 
@@ -697,8 +712,7 @@ class EbuildProcessor(object):
         # filter here, so that a screwy default doesn't result in resetting it
         # every time.
         data = ':'.join(filter(None, paths))
-        self.write("set_metadata_path %i\n%s" % (len(data), data),
-            append_newline=False)
+        self.write("set_metadata_path %i\n%s" % (len(data), data), append_newline=False)
         if self.expect("metadata_path_received", flush=True):
             self._metadata_paths = paths
 
@@ -708,8 +722,7 @@ class EbuildProcessor(object):
 
         e = expected_ebuild_env(package_inst, depends=True)
         data = self._generate_env_str(e)
-        self.write("%s %i\n%s" % (command, len(data), data),
-            append_newline=False)
+        self.write("%s %i\n%s" % (command, len(data), data), append_newline=False)
 
         updates = None
         if self._eclass_caching:
@@ -738,6 +751,7 @@ class EbuildProcessor(object):
         """
 
         environ = []
+
         def receive_env(self, line):
             if environ:
                 raise InternalError(line, "receive_env was invoked twice.")
@@ -767,6 +781,7 @@ class EbuildProcessor(object):
         :return: dict when successful, None when failed
         """
         metadata_keys = {}
+
         def receive_key(self, line):
             line = line.split("=", 1)
             if len(line) != 2:
@@ -801,7 +816,7 @@ class EbuildProcessor(object):
         # be overridden, this func will just use this classes version.
         # so dig through self.__class__ for it. :P
 
-        handlers = {"request_sandbox_summary":self.__class__.sandbox_summary}
+        handlers = {"request_sandbox_summary": self.__class__.sandbox_summary}
         f = chuck_UnhandledCommand
         for x in ("prob", "env_receiving_failed", "failed"):
             handlers[x] = f
@@ -888,7 +903,7 @@ def expected_ebuild_env(pkg, d=None, env_source_override=None, depends=False):
         d = {}
     d["CATEGORY"] = pkg.category
     d["PF"] = "-".join((pkg.package, pkg.fullver))
-    d["P"]  = "-".join((pkg.package, pkg.version))
+    d["P"] = "-".join((pkg.package, pkg.version))
     d["PN"] = pkg.package
     d["PV"] = pkg.version
     if pkg.revision is None:

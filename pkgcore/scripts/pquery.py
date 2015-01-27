@@ -53,7 +53,7 @@ class DataSourceRestriction(values.base):
     __hash__ = object.__hash__
 
 
-dep_attrs = ['rdepends', 'depends', 'post_rdepends']
+dep_attrs = ['depends', 'rdepends', 'post_rdepends']
 metadata_attrs = dep_attrs
 dep_attrs += list('raw_%s' % x for x in dep_attrs)
 dep_formatted_attrs = dep_attrs + ['restrict']
@@ -106,12 +106,12 @@ def stringify_attr(config, pkg, attr):
         return 'MISSING'
 
     if attr in ('herds', 'iuse', 'maintainers', 'properties', 'defined_phases',
-        'inherited'):
+                'inherited'):
         return ' '.join(sorted(unicode(v) for v in value))
     if attr == 'longdescription':
         return unicode(value)
     if attr == 'keywords':
-        return ' '.join(sorted(value, key=lambda x:x.lstrip("~")))
+        return ' '.join(sorted(value, key=lambda x: x.lstrip("~")))
     if attr == 'environment':
         return value.text_fileobj().read()
     if attr == 'repo':
@@ -156,6 +156,7 @@ def format_depends(out, node, func=_default_formatter):
     # weird..
     return _internal_format_depends(out, node, func)
 
+
 def _internal_format_depends(out, node, func):
     prefix = None
     if isinstance(node, boolean.OrRestriction):
@@ -195,6 +196,7 @@ def _internal_format_depends(out, node, func):
             return True
     else:
         return func(out, node)
+
 
 def format_attr(config, out, pkg, attr):
     """Grab a package attr and print it through a formatter."""
@@ -268,8 +270,7 @@ def print_package(options, out, err, pkg):
                         green, '     revdep: ', out.fg(), name, ' on ',
                         str(revdep))
                     continue
-                for key, restricts in depset.find_cond_nodes(
-                    depset.restrictions, True):
+                for key, restricts in depset.find_cond_nodes(depset.restrictions, True):
                     if not restricts and key.intersects(revdep):
                         out.write(
                             green, '     revdep: ', out.fg(), name, ' on ',
@@ -327,24 +328,23 @@ def print_package(options, out, err, pkg):
                     # triggered by virtuals currently).
                     out.write(' %s on %s' % (name, revdep))
                     continue
-                for key, restricts in depset.find_cond_nodes(
-                    depset.restrictions, True):
+                for key, restricts in depset.find_cond_nodes(depset.restrictions, True):
                     if not restricts and key.intersects(revdep):
                         out.write(' %s on %s through %s' % (name, revdep, key))
                 for key, restricts in depset.node_conds.iteritems():
                     if key.intersects(revdep):
-                        out.write(' %s on %s through %s if USE %s,' % (
-                                name, revdep, key, ' or '.join(
-                                    str(r) for r in restricts)))
+                        out.write(' %s on %s through %s if USE %s,' %
+                                  (name, revdep, key, ' or '.join(
+                                      str(r) for r in restricts)))
         # If we printed anything at all print the newline now
         out.autoline = True
         if printed_something:
             out.write()
 
     if options.contents:
-        for location in sorted(obj.location
-            for obj in get_pkg_attr(pkg, 'contents', ())):
+        for location in sorted(obj.location for obj in get_pkg_attr(pkg, 'contents', ())):
             out.write(location)
+
 
 def print_packages_noversion(options, out, err, pkgs):
     """Print a summary of all versions for a single package."""
@@ -417,9 +417,10 @@ repo_group.add_argument(
 repo_group.add_argument(
     '--virtuals', action='store', choices=('only', 'disable'),
     help='arg "only" for only matching virtuals, "disable" to not match '
-        'virtuals at all. Default is to match everything.')
+         'virtuals at all. Default is to match everything.')
 
 repo_mux = repo_group.add_mutually_exclusive_group()
+
 
 class RawAwareStoreRepoObject(commandline.StoreRepoObject):
 
@@ -440,6 +441,7 @@ repo_mux.add_argument(
 repo_mux.add_argument(
     '--all-repos', action='store_true',
     help='search all repos, vdb included')
+
 
 @argparser.bind_delayed_default(30, 'repos')
 def setup_repos(namespace, attr):
@@ -468,7 +470,8 @@ def setup_repos(namespace, attr):
             repos, namespace.virtuals == 'only')
     setattr(namespace, attr, repos)
 
-query = argparser.add_argument_group('Package matching options',
+query = argparser.add_argument_group(
+    'Package matching options',
     'Each option specifies a restriction packages must match.  '
     'Specifying the same option twice means "or" unless stated '
     'otherwise. Specifying multiple types of restrictions means "and" '
@@ -494,19 +497,24 @@ def bind_add_query(*args, **kwds):
         return functor
     return f
 
-add_query(nargs='*', dest='matches',
+add_query(
+    nargs='*', dest='matches',
     help="extended atom matching of pkgs")
-add_query('--all', action='append_const', dest='all',
+add_query(
+    '--all', action='append_const', dest='all',
     const=packages.AlwaysTrue, type=None, suppress_nargs=True,
     help='Match all packages (equivalent to "pquery *").  '
-        'If no query options are specified, this option is enabled.')
-add_query('--has-use', action='append', dest='has_use',
+         'If no query options are specified, this option is enabled.')
+add_query(
+    '--has-use', action='append', dest='has_use',
     type=parserestrict.comma_separated_containment('iuse'),
     help='Exact string match on a USE flag.')
-add_query('--license', action='append', dest='license',
+add_query(
+    '--license', action='append', dest='license',
     type=parserestrict.comma_separated_containment('license'),
     help='exact match on a license.')
-add_query('--herd', action='append', dest='herd',
+add_query(
+    '--herd', action='append', dest='herd',
     type=parserestrict.comma_separated_containment('herds'),
     help='exact match on a herd.')
 
@@ -515,16 +523,16 @@ query.add_argument(
     action=commandline.Expansion,
     subst=(('--restrict-revdep', '%(0)s'), ('--print-revdep', '%(0)s')),
     help='shorthand for --restrict-revdep atom --print-revdep atom. '
-        '--print-revdep is slow, use just --restrict-revdep if you just '
-        'need a list.')
+         '--print-revdep is slow, use just --restrict-revdep if you just '
+         'need a list.')
 
 query.add_argument(
     '--revdep-pkgs', nargs=1,
     action=commandline.Expansion,
     subst=(('--restrict-revdep-pkgs', '%(0)s'), ('--print-revdep', '%(0)s')),
     help='shorthand for --restrict-revdep-pkgs atom '
-        '--print-revdep atom. --print-revdep is slow, use just '
-        '--restrict-revdep if you just need a list.')
+         '--print-revdep atom. --print-revdep is slow, use just '
+         '--restrict-revdep if you just need a list.')
 
 @bind_add_query(
     '--restrict-revdep', action='append',
@@ -559,11 +567,11 @@ def revdep_pkgs_finalize(sequence, namespace):
         for repo in namespace.repos:
             l.extend(repo.itermatch(atom_inst))
     # have our pkgs; now build the restrict.
-    any_restrict = values.AnyMatch(values.FunctionRestriction(
-            partial(_revdep_pkgs_match, tuple(l))))
+    any_restrict = values.AnyMatch(
+        values.FunctionRestriction(partial(_revdep_pkgs_match, tuple(l))))
     r = values.FlatteningRestriction(atom.atom, any_restrict)
     return list(packages.PackageRestriction(dep, r)
-        for dep in ('depends', 'rdepends', 'post_rdepends'))
+                for dep in ('depends', 'rdepends', 'post_rdepends'))
 
 @bind_add_query(
     '--description', '-S', action='append', dest='description',
@@ -603,7 +611,7 @@ def parse_ownsre(value):
     return packages.PackageRestriction(
         'contents',
         values.AnyMatch(values.GetAttrRestriction(
-        'location', mk_strregex(value))))
+            'location', mk_strregex(value))))
 
 @bind_add_query(
     '--maintainer', action='append', dest='maintainer',
@@ -616,7 +624,7 @@ def parse_maintainer(value):
     return packages.PackageRestriction(
         'maintainers',
         values.AnyMatch(values.UnicodeConversion(
-        mk_strregex(value.lower(), case_sensitive=False))))
+            mk_strregex(value.lower(), case_sensitive=False))))
 
 @bind_add_query(
     '--maintainer-name', action='append', dest='maintainer_name',
@@ -629,7 +637,7 @@ def parse_maintainer_name(value):
     return packages.PackageRestriction(
         'maintainers',
         values.AnyMatch(values.GetAttrRestriction(
-        'name', mk_strregex(value.lower(), case_sensitive=False))))
+            'name', mk_strregex(value.lower(), case_sensitive=False))))
 
 @bind_add_query(
     '--maintainer-email', action='append', dest='maintainer_email',
@@ -640,9 +648,9 @@ def parse_maintainer_email(value):
     maintainer data.
     """
     return packages.PackageRestriction(
-        'maintainers', values.AnyMatch(values.GetAttrRestriction(
-            'email', mk_strregex(value.lower(),
-            case_sensitive=False))))
+        'maintainers',
+        values.AnyMatch(values.GetAttrRestriction(
+            'email', mk_strregex(value.lower(), case_sensitive=False))))
 
 @bind_add_query(
     '--environment', action='append', dest='environment',
@@ -675,13 +683,10 @@ def _add_all_if_needed(namespace, attr):
 
 argparser.set_defaults(
     _fallback_all=commandline.DelayedValue(_add_all_if_needed, priority=89))
-
 argparser.set_defaults(
     query=commandline.BooleanQuery(_query_items, klass_type='and', priority=90))
 
-
 output = argparser.add_argument_group('Output formatting')
-
 output.add_argument(
     '--early-out', action='store_true', dest='earlyout',
     help='stop when first match is found.')
@@ -700,24 +705,24 @@ del output_mux
 output.add_argument(
     '--cpv', action='store_true',
     help='Print the category/package-version. This is done '
-    'by default, this option re-enables this if another '
-    'output option (like --contents) disabled it.')
+         'by default, this option re-enables this if another '
+         'output option (like --contents) disabled it.')
 output.add_argument(
     '-a', '--atom', action=commandline.Expansion,
     subst=(('--cpv',),), nargs=0,
     help='print =cat/pkg-3 instead of cat/pkg-3. '
-        'Implies --cpv, has no effect with --no-version')
+         'Implies --cpv, has no effect with --no-version')
 output.add_argument(
     '--attr', action='append', choices=printable_attrs,
     metavar='attribute', default=[],
     help="Print this attribute's value (can be specified more than "
-    "once).  --attr=help will get you the list of valid attrs.")
+         "once).  --attr=help will get you the list of valid attrs.")
 output.add_argument(
     '--force-attr', action='append', dest='attr',
     metavar='attribute', default=[],
     help='Like --attr but accepts any string as '
-    'attribute name instead of only explicitly '
-    'supported names.')
+         'attribute name instead of only explicitly '
+         'supported names.')
 one_attr_mux = output.add_mutually_exclusive_group()
 one_attr_mux.add_argument(
     '--one-attr', choices=printable_attrs,
@@ -727,8 +732,8 @@ one_attr_mux.add_argument(
     '--force-one-attr',
     metavar='attribute',
     help='Like --one-attr but accepts any string as '
-    'attribute name instead of only explicitly '
-    'supported names.')
+         'attribute name instead of only explicitly '
+         'supported names.')
 del one_attr_mux
 output.add_argument(
     '--contents', action='store_true',
@@ -792,7 +797,6 @@ def mangle_values(vals, err):
                 i = [attr]
             for attr in i:
                 yield attr
-
 
     attrs = ['repo', 'description', 'homepage'] if vals.verbose else []
     attrs.extend(process_attrs(vals.attr))

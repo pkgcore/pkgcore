@@ -51,6 +51,7 @@ mux.add_argument(
     '--print-funcs', action='store_true', default=False,
     help="print just the global scope functions.")
 
+
 @argparser.bind_main_func
 def main(options, out, err):
     if options.debug:
@@ -78,6 +79,7 @@ def main(options, out, err):
     if options.print_funcs:
         stream = None
         func_matches = []
+
         def func_callback(level, name, body):
             func_matches.append((level, name, body))
 

@@ -20,7 +20,10 @@ from pkgcore.ebuild import atom
 from pkgcore.plugin import get_plugins
 from pkgcore.util import commandline
 
-demandload('traceback')
+demandload(
+    'textwrap',
+    'traceback',
+)
 
 
 def dump_section(config, out):
@@ -49,8 +52,8 @@ def dump_section(config, out):
         elif typename == 'bool':
             out.write('%s %s;' % (key, bool(val)))
         elif typename == 'list':
-            out.write('%s %s;' % (
-                    key, ' '.join(repr(string) for string in val)))
+            out.write('%s %s;' %
+                      (key, ' '.join(repr(string) for string in val)))
         elif typename == 'callable':
             out.write('%s %s.%s;' % (key, val.__module__, val.__name__))
         elif typename.startswith('ref:'):
@@ -181,10 +184,11 @@ def uncollapsable_main(options, out, err):
 
 dump = subparsers.add_parser(
     "dump", parents=shared_options,
-    description='Dump the entire configuration.  The format used is similar '
-                'to the ini-like default format, but do not rely on this to always '
-                'write a loadable config. There may be quoting issues.  With a '
-                'typename argument only that type is dumped.')
+    description=(
+        'Dump the entire configuration.  The format used is similar '
+        'to the ini-like default format, but do not rely on this to always '
+        'write a loadable config. There may be quoting issues.  With a '
+        'typename argument only that type is dumped.'))
 dump.add_argument(
     "typename", nargs="?", action="store",
     default=None,
@@ -213,12 +217,13 @@ def dump_main(options, out, err):
 
 configurables = subparsers.add_parser(
     "configurables", parents=shared_options,
-    description=('List registered configurables (may not be complete).  '
-        'With a typename argument only configurables of that type are listed.'))
+    description=(
+        'List registered configurables (may not be complete). With a '
+        'typename argument only configurables of that type are listed.'))
 configurables.add_argument(
     "typename", nargs='?', default=None, action='store',
     help="If specified, only output configurables of that type; else output "
-    "all configurables")
+         "all configurables")
 @configurables.bind_main_func
 def configurables_main(options, out, err):
     """List registered configurables."""
@@ -226,14 +231,14 @@ def configurables_main(options, out, err):
     # try and sort this beast.
     def key_func(obj):
         return "%s.%s" % (getattr(obj, '__module__', ''),
-            getattr(obj, '__name__', ''))
+                          getattr(obj, '__name__', ''))
 
     for configurable in sorted(get_plugins('configurable'), key=key_func):
         type_obj = basics.ConfigType(configurable)
         if options.typename is not None and type_obj.name != options.typename:
             continue
-        out.write(out.bold, '%s.%s' % (
-                configurable.__module__, configurable.__name__))
+        out.write(out.bold, '%s.%s' %
+                  (configurable.__module__, configurable.__name__))
         write_type(out, type_obj)
         out.write()
         out.write()
@@ -299,14 +304,15 @@ def dump_uncollapsed_main(options, out, err):
     """dump the configuration in a raw, uncollapsed form.
     Not directly usable as a configuration file, mainly used for inspection
     """
-    out.write('''# Warning:
-# Do not copy this output to a configuration file directly,
-# because the types you see here are only guesses.
-# A value used as "list" in the collapsed config will often
-# show up as "string" here and may need to be converted
-# (for example from space-separated to comma-separated)
-# to work in a config file with a different format.
-''')
+    out.write(textwrap.dedent('''\
+        # Warning:
+        # Do not copy this output to a configuration file directly,
+        # because the types you see here are only guesses.
+        # A value used as "list" in the collapsed config will often
+        # show up as "string" here and may need to be converted
+        # (for example from space-separated to comma-separated)
+        # to work in a config file with a different format.
+        '''))
     for i, source in enumerate(options.config.configs):
         s = 'Source %s' % (i + 1,)
         out.write(out.bold, '*' * len(s))
@@ -333,8 +339,7 @@ def package_func(options, out, err):
         matched = True
         ops = domain.pkg_operations(pkg)
         if not ops.supports("configure"):
-            out.write("package %s: nothing to configure, ignoring" %
-                (pkg,))
+            out.write("package %s: nothing to configure, ignoring" % (pkg,))
             continue
         out.write("package %s: configuring..." % (pkg,))
         ops.configure()

@@ -247,8 +247,7 @@ perl_rebuild.add_argument(
 @perl_rebuild.bind_main_func
 def perl_rebuild_main(options, out, err):
 
-    path = pjoin(options.domain.root, "usr/lib/perl5",
-        options.new_version)
+    path = pjoin(options.domain.root, "usr/lib/perl5", options.new_version)
     if not os.path.exists(path):
         err.write(
             "version %s doesn't seem to be installed; can't find it at %r" %
@@ -256,7 +255,8 @@ def perl_rebuild_main(options, out, err):
         return 1
 
     base = pjoin(options.domain.root, "/usr/lib/perl5")
-    potential_perl_versions = [x.replace(".", "\.") for x in listdir_dirs(base)
+    potential_perl_versions = [
+        x.replace(".", "\.") for x in listdir_dirs(base)
         if x.startswith("5.") and x != options.new_version]
 
     if len(potential_perl_versions) == 1:

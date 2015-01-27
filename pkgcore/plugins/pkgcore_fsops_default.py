@@ -9,4 +9,4 @@ pkgcore_plugins = {
     'fs_ops.mkdir': [ops.default_mkdir],
     'fs_ops.merge_contents': [ops.merge_contents],
     'fs_ops.unmerge_contents': [ops.unmerge_contents],
-    }
+}

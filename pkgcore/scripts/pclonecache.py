@@ -26,6 +26,7 @@ argparser.add_argument(
     priority=21,
     help="target cache to update.  Must be writable.")
 
+
 @argparser.bind_main_func
 def main(options, out, err):
     if options.target.readonly:
@@ -51,7 +52,7 @@ def main(options, out, err):
             valid.add(k)
 
     for x in target.iterkeys():
-        if not x in valid:
+        if x not in valid:
             if options.verbose:
                 out.write("deleting %s" % (x,))
             del target[x]

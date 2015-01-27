@@ -38,10 +38,12 @@ class StoreTarget(argparse._AppendAction):
             if x.startswith('@'):
                 ret = parser._parse_known_args(['--set', x[1:]], namespace)
                 if ret[1]:
-                    raise RuntimeError("failed parsing %r, %r, got back %r"
-                        % (option_string, values, ret[1]))
+                    raise RuntimeError(
+                        "failed parsing %r, %r, got back %r" %
+                        (option_string, values, ret[1]))
             else:
-                argparse._AppendAction.__call__(self, parser, namespace,
+                argparse._AppendAction.__call__(
+                    self, parser, namespace,
                     parserestrict.parse_match(x), option_string=option_string)
 
 argparser = commandline.mk_argparser(
@@ -161,6 +163,7 @@ class AmbiguousQuery(parserestrict.ParseError):
         self.token = token
         self.keys = keys
 
+
 class NoMatches(parserestrict.ParseError):
     def __init__(self, token):
         parserestrict.ParseError.__init__(self, '%s: no matches' % (token,))
@@ -199,16 +202,15 @@ def unmerge(out, err, vdb, restrictions, options, formatter, world_set=None):
         out.write(match.cpvstr)
     out.prefix = []
 
-    repo_obs = observer.repo_observer(observer.formatter_output(out),
-        not options.debug)
+    repo_obs = observer.repo_observer(observer.formatter_output(out), not options.debug)
 
     if options.pretend:
         return
 
-    if (options.ask and not
-        formatter.ask("Would you like to unmerge these packages?")):
+    if (options.ask and not formatter.ask("Would you like to unmerge these packages?")):
         return
     return do_unmerge(options, out, err, vdb, matches, world_set, repo_obs)
+
 
 def do_unmerge(options, out, err, vdb, matches, world_set, repo_obs):
     if vdb.frozen:
@@ -251,10 +253,10 @@ def display_failures(out, sequence, first_level=True, debug=False):
                 display_failures(out, step, False, debug=debug)
             elif step[0] == 'reduce':
                 out.write("removing choices involving %s" %
-                    ','.join(str(x) for x in step[1]))
+                          ', '.join(str(x) for x in step[1]))
             elif step[0] == 'blocker':
                 out.write("blocker %s failed due to %s existing" % (step[1],
-                    ', '.join(str(x) for x in step[2])))
+                          ', '.join(str(x) for x in step[2])))
             elif step[0] == 'cycle':
                 out.write("%s cycle on %s: %s" % (step[1].mode, step[1].atom, step[2]))
             elif step[0] == 'viable' and not step[1]:
@@ -273,6 +275,7 @@ def display_failures(out, sequence, first_level=True, debug=False):
         for x in xrange(3):
             out.first_prefix.pop()
 
+
 def slotatom_if_slotted(repos, checkatom):
     """check repos for more than one slot of given atom"""
 
@@ -289,6 +292,7 @@ def slotatom_if_slotted(repos, checkatom):
 
     return checkatom
 
+
 def update_worldset(world_set, pkg, remove=False):
     """record/kill given atom in worldset"""
 
@@ -303,6 +307,7 @@ def update_worldset(world_set, pkg, remove=False):
     else:
         world_set.add(pkg)
     world_set.flush()
+
 
 @argparser.bind_final_check
 def _validate(parser, namespace):
@@ -319,8 +324,7 @@ def _validate(parser, namespace):
         if namespace.set or namespace.targets:
             parser.error("--clean currently cannot be used w/ any sets or "
                          "targets given")
-        namespace.set = [(x, namespace.config.pkgset[x])
-            for x in ('world', 'system')]
+        namespace.set = [(x, namespace.config.pkgset[x]) for x in ('world', 'system')]
         namespace.deep = True
         if namespace.usepkgonly or namespace.usepkg or namespace.source_only:
             parser.error(
@@ -385,6 +389,7 @@ def load_world(namespace, attr):
     setattr(namespace, attr, value)
     return value
 
+
 @argparser.bind_main_func
 def main(options, out, err):
     config = options.config
@@ -397,7 +402,8 @@ def main(options, out, err):
     if options.oneshot:
         world_set = None
 
-    formatter = options.formatter(out=out, err=err,
+    formatter = options.formatter(
+        out=out, err=err,
         unstable_arch=domain.unstable_arch,
         domain_settings=domain.settings,
         use_expand=domain.use_expand,
@@ -413,12 +419,10 @@ def main(options, out, err):
     if options.unmerge:
         if not options.oneshot:
             if world_set is None:
-                err.write("Disable world updating via --oneshot, or fix your "
-                    "configuration")
+                err.write("Disable world updating via --oneshot, or fix your configuration")
                 return 1
         try:
-            unmerge(
-                out, err, livefs_repos, options.targets, options, formatter, world_set)
+            unmerge(out, err, livefs_repos, options.targets, options, formatter, world_set)
         except (parserestrict.ParseError, Failure) as e:
             out.error(str(e))
             return 1
@@ -428,17 +432,19 @@ def main(options, out, err):
     installed_repos = domain.installed_repositories
 
     if options.usepkgonly:
-        source_repos = source_repos.change_repos(x for x in source_repos
+        source_repos = source_repos.change_repos(
+            x for x in source_repos
             if getattr(x, 'repository_type', None) != 'source')
     elif options.usepkg:
         repo_types = [(getattr(x, 'repository_type', None) == 'built', x)
-            for x in source_repos]
+                      for x in source_repos]
         source_repos = source_repos.change_repos(
             [x[1] for x in repo_types if x[0]] +
             [x[1] for x in repo_types if not x[0]]
         )
     elif options.source_only:
-        source_repos = source_repos.change_repos(x for x in source_repos
+        source_repos = source_repos.change_repos(
+            x for x in source_repos
             if getattr(x, 'repository_type', None) == 'source')
 
     atoms = []
@@ -478,8 +484,7 @@ def main(options, out, err):
 
     if (not options.set or options.clean) and not options.oneshot:
         if world_set is None:
-            err.write("Disable world updating via --oneshot, or fix your "
-                "configuration")
+            err.write("Disable world updating via --oneshot, or fix your configuration")
             return 1
 
     if options.upgrade:
@@ -575,15 +580,14 @@ def main(options, out, err):
         out.write(out.bold, ' * ', out.reset, 'Packages to be removed:')
         vset = set(installed_repos.combined)
         len_vset = len(vset)
-        vset.difference_update(y.pkg for y in
-            resolver_inst.state.iter_ops(True))
+        vset.difference_update(x.pkg for x in resolver_inst.state.iter_ops(True))
         wipes = sorted(x for x in vset if x.package_is_real)
         for x in wipes:
             out.write("Remove %s" % x)
         out.write()
         if wipes:
             out.write("removing %i packages of %i installed, %0.2f%%." %
-                (len(wipes), len_vset, 100*(len(wipes)/float(len_vset))))
+                      (len(wipes), len_vset, 100*(len(wipes)/float(len_vset))))
         else:
             out.write("no packages to remove")
         if options.pretend:
@@ -592,8 +596,7 @@ def main(options, out, err):
             if not formatter.ask("Do you wish to proceed?", default_answer=False):
                 return 1
             out.write()
-        repo_obs = observer.repo_observer(observer.formatter_output(out),
-            not options.debug)
+        repo_obs = observer.repo_observer(observer.formatter_output(out), not options.debug)
         do_unmerge(options, out, err, installed_repos.combined, wipes, world_set, repo_obs)
         return 0
 
@@ -610,10 +613,8 @@ def main(options, out, err):
 
     changes = resolver_inst.state.ops(only_real=True)
 
-    build_obs = observer.build_observer(observer.formatter_output(out),
-        not options.debug)
-    repo_obs = observer.repo_observer(observer.formatter_output(out),
-        not options.debug)
+    build_obs = observer.build_observer(observer.formatter_output(out), not options.debug)
+    repo_obs = observer.repo_observer(observer.formatter_output(out), not options.debug)
 
     if options.debug:
         out.write(out.bold, " * ", out.reset, "running sanity checks")
@@ -622,15 +623,15 @@ def main(options, out, err):
         out.error("sanity checks failed.  please resolve them and try again.")
         return 1
     if options.debug:
-        out.write(out.bold, " * ", out.reset, "finished sanity checks in %.2f seconds"
-            % (time() - start_time))
+        out.write(
+            out.bold, " * ", out.reset,
+            "finished sanity checks in %.2f seconds" % (time() - start_time))
         out.write()
 
     if options.ask or options.pretend:
         for op in changes:
             formatter.format(op)
         formatter.end()
-
 
     if vdb_time:
         out.write(out.bold, 'Took %.2f' % (vdb_time,), out.reset,
@@ -647,8 +648,7 @@ def main(options, out, err):
                 (len(resolver_inst.state.plan), resolve_time))
         return
 
-    if (options.ask and not
-        formatter.ask("Would you like to merge these packages?")):
+    if (options.ask and not formatter.ask("Would you like to merge these packages?")):
         return
 
     change_count = len(changes)
@@ -662,8 +662,7 @@ def main(options, out, err):
 
             cleanup = []
 
-            out.write("\nProcessing %i of %i: %s" % (count + 1, change_count,
-                op.pkg.cpvstr))
+            out.write("\nProcessing %i of %i: %s" % (count + 1, change_count, op.pkg.cpvstr))
             out.title("%i/%i: %s" % (count + 1, change_count, op.pkg.cpvstr))
             if op.desc != "remove":
                 cleanup = [op.pkg.release_cached_data]
@@ -682,8 +681,7 @@ def main(options, out, err):
                 if ret is not True:
                     if ret is False:
                         ret = None
-                    commandline.dump_error(out, ret,
-                       "\nfetching failed for %s" % (op.pkg.cpvstr,))
+                    commandline.dump_error(out, ret, "\nfetching failed for %s" % (op.pkg.cpvstr,))
                     if not options.ignore_failures:
                         return 1
                     continue

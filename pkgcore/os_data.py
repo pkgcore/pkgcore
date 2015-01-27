@@ -29,9 +29,11 @@ if ostype in ("Linux", "CYGWIN_NT-5.1"):
 elif ostype == "Darwin":
     userland = "Darwin"
     xargs = os.environ["XARGS"] = "xargs"
+
     def lchown(*pos_args, **key_args):
         pass
-elif ostype in ["FreeBSD", "OpenBSD", "NetBSD", "SunOS"]:
+
+elif ostype in ("FreeBSD", "OpenBSD", "NetBSD", "SunOS"):
     userland = "BSD"
     xargs = os.environ["XARGS"] = "xargs"
     lchown = os.lchown
@@ -41,7 +43,7 @@ else:
 
 #os.environ["USERLAND"] = userland
 
-#Secpass will be set to 1 if the user is root or in the portage group.
+# Secpass will be set to 1 if the user is root or in the portage group.
 secpass = 0
 
 uid = os.getuid()
@@ -59,19 +61,20 @@ except KeyError:
     print(textwrap.dedent(
         """
         portage initialization: your system doesn't have a 'wheel' group.
-        Please fix this as it is a normal system requirement, 'wheel' is normally GID 10.
-        Generally 'emerge baselayout' and an 'etc-update' should remedy this problem.
+        Please fix this as it is a normal system requirement, 'wheel' is
+        normally GID 10.  Generally 'emerge baselayout' and an 'etc-update'
+        should remedy this problem.
         """
     ))
 
-#Discover the uid and gid of the portage user/group
+# Discover the uid and gid of the portage user/group
 try:
     portage_uid = pwd.getpwnam("portage").pw_uid
     portage_gid = grp.getgrnam("portage").gr_gid
     portage_user_groups = tuple(x.gr_name for x in grp.getgrall()
-       if 'portage' in x.gr_mem)
+                                if 'portage' in x.gr_mem)
 
-    if (secpass == 0):
+    if secpass == 0:
         secpass = 1
 except KeyError:
     portage_uid = 0

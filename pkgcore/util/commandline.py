@@ -37,7 +37,7 @@ demandload(
     'snakeoil:osutils',
     'snakeoil.errors:walk_exception_chain',
     'snakeoil.lists:iflatten_instance',
-    'pkgcore:version@_version',
+    'pkgcore.version:get_version',
     'pkgcore:operations',
     'pkgcore.config:basics',
     'pkgcore.restrictions:packages,restriction',
@@ -544,25 +544,6 @@ def python_namespace_type(value, module=False, attribute=False):
         compatibility.raise_from(argparse.ArgumentTypeError(str(err)))
 
 
-class VersionFunc(argparse.Action):
-
-    def __init__(self, option_strings,
-                 dest=argparse.SUPPRESS, default=argparse.SUPPRESS,
-                 nargs=0,
-                 version_func=None):
-        super(VersionFunc, self).__init__(option_strings,
-            dest=dest,
-            default=default,
-            nargs=nargs,
-            help="show program's version number and exit")
-        self.version_func = version_func
-
-    def __call__(self, parser, namespace, values, option_string=None):
-        formatter = parser._get_formatter()
-        formatter.add_text(self.version_func())
-        parser.exit(message=formatter.format_help())
-
-
 class _SubParser(argparse._SubParsersAction):
 
     def add_parser(self, name, **kwds):
@@ -613,7 +594,6 @@ class ArgumentParser(argparse.ArgumentParser):
                  usage=None,
                  description=None,
                  epilog=None,
-                 version=None,
                  parents=[],
                  formatter_class=argparse.HelpFormatter,
                  prefix_chars='-',
@@ -623,7 +603,7 @@ class ArgumentParser(argparse.ArgumentParser):
                  add_help=True):
 
         super(ArgumentParser, self).__init__(prog=prog, usage=usage,
-            description=description, epilog=epilog, version=version,
+            description=description, epilog=epilog,
             parents=parents, formatter_class=formatter_class,
             prefix_chars=prefix_chars, fromfile_prefix_chars=fromfile_prefix_chars,
             argument_default=argument_default, conflict_handler=conflict_handler,
@@ -753,9 +733,6 @@ def existent_path(value):
 
 def mk_argparser(suppress=False, config=True, domain=True,
                  color=True, debug=True, version=True, **kwds):
-    if isinstance(version, basestring):
-        kwds["version"] = version
-        version = None
     p = ArgumentParser(**kwds)
     p.register('action', 'extend_comma', ExtendCommaDelimited)
 
@@ -763,10 +740,7 @@ def mk_argparser(suppress=False, config=True, domain=True,
         return p
 
     if version:
-        if not callable(version):
-            version = _version.get_version
-        p.add_argument('--version', action=VersionFunc,
-            version_func=version)
+        p.add_argument('--version', action='version', version=get_version())
     if debug:
         p.add_argument('--debug', action=EnableDebug, help="Enable debugging checks")
     if color:

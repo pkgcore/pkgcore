@@ -18,8 +18,6 @@ design) reduces regen time by over 40% compared to portage-2.1
 # this needs work. it's been pruned heavily from what ebd used
 # originally, but it still isn't what I would define as 'right'
 
-from __future__ import print_function
-
 __all__ = (
     "request_ebuild_processor", "release_ebuild_processor", "EbuildProcessor",
     "UnhandledCommand", "expected_ebuild_env")
@@ -99,7 +97,7 @@ def shutdown_all_processors():
                 pass
     except Exception as e:
         traceback.print_exc()
-        print(e)
+        logger.error(e)
         raise
 
 pkgcore.spawn.atexit_register(shutdown_all_processors)
@@ -343,7 +341,7 @@ class EbuildProcessor(object):
         # basically a quick "yo" to the daemon
         self.write("dude?")
         if not self.expect("dude!"):
-            print("error in server coms, bailing.")
+            logger.error("error in server coms, bailing.")
             raise InitializationError(
                 "expected 'dude!' response from ebd, which wasn't received. "
                 "likely a bug")
@@ -511,7 +509,7 @@ class EbuildProcessor(object):
         try:
             os.remove(self.__sandbox_log)
         except (IOError, OSError) as e:
-            print("exception caught when cleansing sandbox_log=%s" % str(e))
+            logger.error("exception caught when cleansing sandbox_log=%s", str(e))
         return 1
 
     def clear_preloaded_eclasses(self):
@@ -566,7 +564,7 @@ class EbuildProcessor(object):
         :return: boolean, True for success
         """
         if not os.path.exists(ec_file):
-            print("failed: %s" % ec_file)
+            logger.error("failed: %s", ec_file)
             return False
         self.write("preload_eclass %s" % ec_file)
         if self.expect("preload_eclass succeeded", async=async, flush=True):
@@ -732,7 +730,7 @@ class EbuildProcessor(object):
         val = self.generic_handler(additional_commands=commands)
 
         if not val:
-            logger.error("returned val from %s was '%s'" % (command, str(val)))
+            logger.error("returned val from %s was '%s'", command, str(val))
             raise Exception(val)
 
         if updates:
@@ -852,8 +850,7 @@ class EbuildProcessor(object):
                         s.append(None)
                     handlers[s[0]](self, s[1])
                 else:
-                    logger.error("unhandled command '%s', line '%s'" %
-                                 (s[0], line))
+                    logger.error("unhandled command '%s', line '%s'", s[0], line)
                     raise UnhandledCommand(line)
 
         except FinishedProcessing as fp:

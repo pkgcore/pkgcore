@@ -25,9 +25,6 @@ argparser.add_argument(
 @argparser.bind_main_func
 def main(options, out, err):
     """Update caches."""
-    if not options.packages:
-        from pkgcore import plugins
-        options.packages = [plugins]
     for package in lists.stable_unique(options.packages):
         out.write('Updating cache for %s...' % (package.__name__,))
         plugin.initialize_cache(package, force=True)

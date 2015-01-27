@@ -61,19 +61,48 @@ dep_formatted_attrs = frozenset(dep_attrs + ['restrict'])
 dep_attrs = tuple(sorted(dep_attrs))
 
 metadata_attrs += [
-    'provides', 'use', 'iuse', 'description', 'license', 'fetchables',
-    'slot', 'subslot', 'keywords', 'homepage', 'eapi', 'properties', 'defined_phases',
-    'restrict', 'required_use', 'inherited',]
+    'defined_phases',
+    'description',
+    'eapi',
+    'fetchables',
+    'homepage',
+    'inherited',
+    'iuse',
+    'keywords',
+    'license',
+    'properties',
+    'provides',
+    'required_use',
+    'restrict',
+    'slot',
+    'subslot',
+    'use',
+]
 metadata_attrs = tuple(sorted(metadata_attrs))
 
 printable_attrs = tuple(dep_formatted_attrs) + metadata_attrs
 printable_attrs += (
-    'alldepends', 'raw_alldepends',
-    'longdescription', 'herds', 'uris', 'files', 'category', 'package',
-    'maintainers', 'repo', 'source_repository', 'path', 'version',
-    'revision', 'fullver', 'environment',
-    'chost', 'cbuild', 'ctarget',
-    'all', 'allmetadata',
+    'all',
+    'alldepends',
+    'allmetadata',
+    'category',
+    'cbuild',
+    'chost',
+    'ctarget',
+    'environment',
+    'files',
+    'fullver',
+    'herds',
+    'longdescription',
+    'maintainers',
+    'package',
+    'path',
+    'raw_alldepends',
+    'repo',
+    'revision',
+    'source_repository',
+    'uris',
+    'version',
 )
 printable_attrs = tuple(sorted(set(printable_attrs)))
 

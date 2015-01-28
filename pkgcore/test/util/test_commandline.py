@@ -542,11 +542,16 @@ Use --help after a subcommand for more help.
                 commandline.main(
                     {None: (commandline.OptionParser, main)}, args, out, err)
             except commandline.MySystemExit as e:
-                # Important, without this master.read() blocks.
+                # Important, without this reading the master fd blocks.
                 out.close()
                 self.assertEqual(None, e.args[0])
+
                 # There can be an xterm title update after this.
-                out_name = master.read()
+                #
+                # XXX: Workaround py34 making it harder to read all data from a
+                # pty due to issue #21090 (http://bugs.python.org/issue21090).
+                out_name = os.read(master.fileno(), 128).decode()
+
                 master.close()
                 self.assertTrue(
                     out_name.startswith(out_kind) or out_name == 'PlainTextFormatter',

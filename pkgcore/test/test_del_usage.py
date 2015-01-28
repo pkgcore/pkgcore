@@ -8,4 +8,3 @@ class Test(module.Test):
 
     target_namespace = "pkgcore"
     ignore_all_import_failures = True
-

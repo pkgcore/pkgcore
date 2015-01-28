@@ -29,7 +29,8 @@ class MatchTest(TestCase):
 class TestExtendedRestrictionGeneration(TestCase):
 
     def assertInstance(self, restrict, kls, token):
-        TestCase.assertInstance(self, restrict, kls,
+        TestCase.assertInstance(
+            self, restrict, kls,
             msg="got %r, expected %r for %r" % (restrict, kls, token))
 
     def verify_text_glob(self, restrict, token):
@@ -84,7 +85,8 @@ class TestExtendedRestrictionGeneration(TestCase):
     test_package = post_curry(generic_single_restrict_check, False)
 
     def test_combined(self):
-        self.assertInstance(parserestrict.parse_match("dev-util/diffball"),
+        self.assertInstance(
+            parserestrict.parse_match("dev-util/diffball"),
             atom, "dev-util/diffball")
         for token in ("dev-*/util", "dev-*/util*", "dev-a/util*"):
             i = parserestrict.parse_match(token)
@@ -124,7 +126,8 @@ class TestExtendedRestrictionGeneration(TestCase):
             self.verify_restrict(i[1], attr, token.split("::")[0].split("/")[n])
 
     def test_atom_globbed(self):
-        self.assertInstance(parserestrict.parse_match("=sys-devel/gcc-4*"),
+        self.assertInstance(
+            parserestrict.parse_match("=sys-devel/gcc-4*"),
             atom, "=sys-devel/gcc-4*")
 
     def test_use_atom(self):
@@ -160,28 +163,27 @@ class ParsePVTest(TestCase):
 
     def setUp(self):
         self.repo = util.SimpleTree({
-                'spork': {
-                    'foon': ('1', '2'),
-                    'spork': ('1', '2'),
-                    },
-                'foon': {
-                    'foon': ('2', '3'),
-                    }})
-
+            'spork': {
+                'foon': ('1', '2'),
+                'spork': ('1', '2'),
+                },
+            'foon': {
+                'foon': ('2', '3'),
+                }})
 
     def test_parse_pv(self):
-        for input, output in [
-            ('spork/foon-3', 'spork/foon-3'),
-            ('spork-1', 'spork/spork-1'),
-            ('foon-3', 'foon/foon-3'),
-            ]:
+        for input, output in (
+                ('spork/foon-3', 'spork/foon-3'),
+                ('spork-1', 'spork/spork-1'),
+                ('foon-3', 'foon/foon-3'),
+                ):
             self.assertEqual(
                 output,
                 parserestrict.parse_pv(self.repo, input).cpvstr)
-        for bogus in [
-            'spork',
-            'foon-2',
-            ]:
+        for bogus in (
+                'spork',
+                'foon-2',
+                ):
             self.assertRaises(
                 parserestrict.ParseError,
                 parserestrict.parse_pv, self.repo, bogus)

@@ -35,8 +35,8 @@ def mk_config(*args, **kwds):
 class OptparseOptionsTest(TestCase):
 
     def test_empty_sequence(self):
-        parser = helpers.mangle_parser(commandline.OptionParser(option_list=[
-                    optparse.Option('--seq', action='append')]))
+        parser = helpers.mangle_parser(commandline.OptionParser(
+            option_list=[optparse.Option('--seq', action='append')]))
         options, values = parser.parse_args([])
         self.assertEqual([], list(options.seq))
 
@@ -44,6 +44,7 @@ class OptparseOptionsTest(TestCase):
     def test_debug(self):
         # Hack: we can modify this from inside the callback.
         confdict = {}
+
         def callback(option, opt_str, value, parser):
             section = parser.values.config.collapse_named_section('sect')
             # It would actually be better if debug was True here.
@@ -52,11 +53,11 @@ class OptparseOptionsTest(TestCase):
             confdict['sect'] = section
 
         parser = commandline.OptionParser(option_list=[
-                optparse.Option('-a', action='callback', callback=callback)])
+            optparse.Option('-a', action='callback', callback=callback)])
         parser = helpers.mangle_parser(parser)
         values = parser.get_default_values()
         values._config = mk_config([{
-                    'sect': basics.HardCodedConfigSection({'class': sect})}])
+            'sect': basics.HardCodedConfigSection({'class': sect})}])
 
         values, args = parser.parse_args(['-a', '--debug'], values)
         self.assertFalse(args)
@@ -65,7 +66,7 @@ class OptparseOptionsTest(TestCase):
 
         values = parser.get_default_values()
         values._config = mk_config([{
-                    'sect': basics.HardCodedConfigSection({'class': sect})}])
+            'sect': basics.HardCodedConfigSection({'class': sect})}])
         values, args = parser.parse_args(['-a'], values)
         self.assertFalse(args)
         self.assertFalse(values.debug)
@@ -76,15 +77,17 @@ class OptparseOptionsTest(TestCase):
         def test():
             return 'foon!'
         parser = helpers.mangle_parser(commandline.OptionParser())
-        parser.add_option('--spork', action='callback',
-                          callback=commandline.config_callback,
-                          type='string', callback_args=('foon',))
-        parser.add_option('--foon', action='callback',
-                          callback=commandline.config_callback,
-                          type='string', callback_args=('foon', 'utensil'))
+        parser.add_option(
+            '--spork', action='callback',
+            callback=commandline.config_callback,
+            type='string', callback_args=('foon',))
+        parser.add_option(
+            '--foon', action='callback',
+            callback=commandline.config_callback,
+            type='string', callback_args=('foon', 'utensil'))
         values = parser.get_default_values()
         values._config = mk_config([{
-                    'afoon': basics.HardCodedConfigSection({'class': test})}])
+            'afoon': basics.HardCodedConfigSection({'class': test})}])
 
         values, args = parser.parse_args(['--spork', 'afoon'], values)
         self.assertEqual('foon!', values.spork)
@@ -122,7 +125,6 @@ class OptparseOptionsTest(TestCase):
         self.assertFalse(args)
         self.assertEqual(list(values.arguments), ["asdf"])
 
-
     def test_copy_protections(self):
 
         class myparser(commandline.OptionParser):
@@ -130,7 +132,8 @@ class OptparseOptionsTest(TestCase):
 
         inst = myparser()
         self.assertNotIdentical(myparser.standard_option_list, inst.standard_option_list)
-        self.assertEqual(len(myparser.standard_option_list),
+        self.assertEqual(
+            len(myparser.standard_option_list),
             len(inst.standard_option_list))
 
         # verify that we didn't typo above...
@@ -174,20 +177,21 @@ class OptparseOptionsTest(TestCase):
 
     def test_bool_type(self):
         parser = helpers.mangle_parser(commandline.OptionParser())
-        parser.add_option("--testing", action='store', type='bool',
-            default=None)
+        parser.add_option("--testing", action='store', type='bool', default=None)
 
         for raw_val in ("n", "no", "false"):
             for allowed in (raw_val.upper(), raw_val.lower()):
                 values, args = parser.parse_args(['--testing=' + allowed])
-                self.assertEqual(values.testing, False,
+                self.assertEqual(
+                    values.testing, False,
                     msg="for --testing=%s, got %r, expected False" %
                         (allowed, values.testing))
 
         for raw_val in ("y", "yes", "true"):
             for allowed in (raw_val.upper(), raw_val.lower()):
                 values, args = parser.parse_args(['--testing=' + allowed])
-                self.assertEqual(values.testing, True,
+                self.assertEqual(
+                    values.testing, True,
                     msg="for --testing=%s, got %r, expected False" %
                         (allowed, values.testing))
 
@@ -241,7 +245,7 @@ class ArgparseOptionsTest(TestCase):
                           type='string', callback_args=('foon', 'utensil'))
         values = parser.get_default_values()
         values._config = mk_config([{
-                    'afoon': basics.HardCodedConfigSection({'class': test})}])
+            'afoon': basics.HardCodedConfigSection({'class': test})}])
 
         values, args = parser.parse_args(['--spork', 'afoon'], values)
         self.assertEqual('foon!', values.spork)
@@ -268,20 +272,22 @@ class ArgparseOptionsTest(TestCase):
 
     def test_bool_type(self):
         parser = helpers.mangle_parser(commandline.OptionParser())
-        parser.add_option("--testing", action='store', type='bool',
-            default=None)
+        parser.add_option(
+            "--testing", action='store', type='bool', default=None)
 
         for raw_val in ("n", "no", "false"):
             for allowed in (raw_val.upper(), raw_val.lower()):
                 values, args = parser.parse_args(['--testing=' + allowed])
-                self.assertEqual(values.testing, False,
+                self.assertEqual(
+                    values.testing, False,
                     msg="for --testing=%s, got %r, expected False" %
                         (allowed, values.testing))
 
         for raw_val in ("y", "yes", "true"):
             for allowed in (raw_val.upper(), raw_val.lower()):
                 values, args = parser.parse_args(['--testing=' + allowed])
-                self.assertEqual(values.testing, True,
+                self.assertEqual(
+                    values.testing, True,
                     msg="for --testing=%s, got %r, expected False" %
                         (allowed, values.testing))
 
@@ -333,7 +339,7 @@ class ModifyConfigTest(TestCase, helpers.MainMixin):
             'Configuration already loaded. If moving the option earlier on '
             'the commandline does not fix this report it as a bug.',
             '--empty-config', '--trigger',
-            '--new-config','foo', 'class', 'sect')
+            '--new-config', 'foo', 'class', 'sect')
         values = self.parse(
             '--empty-config', '--new-config',
             'foo', 'class', 'pkgcore.test.util.test_commandline.sect',
@@ -374,6 +380,7 @@ if compatibility.is_py3k:
     def _stream_and_getvalue():
         bio = io.BytesIO()
         f = io.TextIOWrapper(bio, line_buffering=True)
+
         def getvalue():
             return bio.getvalue().decode('ascii')
         return f, getvalue
@@ -393,7 +400,8 @@ class MainTest(TestCase):
         except commandline.MySystemExit as e:
             self.assertEqual(errtext, err_getvalue())
             self.assertEqual(outtext, out_getvalue())
-            self.assertEqual(status, e.args[0],
+            self.assertEqual(
+                status, e.args[0],
                 msg="expected status %r, got %r" % (status, e.args[0]))
         else:
             self.fail('no exception raised')
@@ -410,7 +418,7 @@ class MainTest(TestCase):
 
         self.assertMain(
             0, 'args: dar\n', '',
-            {None:newparser}, args=['--foon', 'dar'])
+            {None: newparser}, args=['--foon', 'dar'])
 
     def test_optparse_with_invalid_args(self):
         class WeirdParser(commandline.OptionParser):
@@ -441,27 +449,30 @@ Commands:
 Use --help after a subcommand for more help.
 '''
         self.assertMain(
-            1, '', txt % {"prog":"spork", "extra":""}, {
+            1, '', txt % {"prog": "spork", "extra": ""}, {
                 'one': (commandline.OptionParser, main_one),
                 'twoandahalf': (commandline.OptionParser, main_two),
                 'three': (commandline.OptionParser, main_three),
                 }, [], script_name='spork')
 
         cmds = {
-                'one': (commandline.OptionParser, main_one),
-                'twoandahalf': (commandline.OptionParser, main_two),
-                'three': (commandline.OptionParser, main_three),
-                }
-        self.assertMain(1, '', txt % {"prog":"spork", "extra":""}, cmds, [],
-                script_name='spork')
+            'one': (commandline.OptionParser, main_one),
+            'twoandahalf': (commandline.OptionParser, main_two),
+            'three': (commandline.OptionParser, main_three),
+        }
+        self.assertMain(
+            1, '', txt % {"prog": "spork", "extra": ""}, cmds, [],
+            script_name='spork')
 
         cmds['xz'] = cmds.copy()
         cmds['xz']['zyx'] = (commandline.OptionParser, main_three)
-        self.assertMain(1, '', txt % {"prog":"spork xz", "extra":"\n  zyx"}, cmds, ['xz'],
-                script_name='spork')
+        self.assertMain(
+            1, '', txt % {"prog": "spork xz", "extra": "\n  zyx"}, cmds,
+            ['xz'], script_name='spork')
 
-        self.assertMain(1, '', txt % {"prog":"spork",
-            "extra":"\n  xz           subcommands related to xz"},
+        self.assertMain(
+            1, '', txt %
+            {"prog": "spork", "extra": "\n  xz           subcommands related to xz"},
             cmds, [], script_name='spork')
 
     def test_subcommand(self):
@@ -472,6 +483,7 @@ Use --help after a subcommand for more help.
                 values.args = args
                 values.progname = self.prog
                 return values, ()
+
         def submain(status, options, out, err, subs=('sub',)):
             self.assertEqual(options.args, ['subarg'])
             self.assertEqual(options.progname, 'fo %s' % (' '.join(subs),))
@@ -479,22 +491,24 @@ Use --help after a subcommand for more help.
 
         self.assertMain(
             0, '', '',
-            {'sub': (SubParser, partial(submain,0))}, ['sub', 'subarg'], script_name='fo')
+            {'sub': (SubParser, partial(submain, 0))}, ['sub', 'subarg'], script_name='fo')
 
         self.assertMain(
             1, '', '',
             {'sub': {'sub2': (SubParser, partial(submain, 1, subs=('sub', 'sub2')))}},
-                ['sub', 'sub2', 'subarg'], script_name='fo')
+            ['sub', 'sub2', 'subarg'], script_name='fo')
 
     def test_configuration_error(self):
         def error_main(options, out, err):
             raise errors.ConfigurationError('bork')
+
         class NoLoadParser(commandline.OptionParser):
             """HACK: avoid the config load --debug triggers."""
             def get_default_values(self):
                 values = commandline.OptionParser.get_default_values(self)
                 values._config = mk_config()
                 return values
+
         self.assertMain(
             -10, '', 'Error in configuration:\n bork\n',
             {None: (NoLoadParser, error_main)}, [])
@@ -509,7 +523,6 @@ Use --help after a subcommand for more help.
             out = io.TextIOWrapper(out)
         return master, out
 
-
     def test_tty_detection(self):
         def main(options, out, err):
             for f in (out, err):
@@ -518,10 +531,10 @@ Use --help after a subcommand for more help.
                     name = name[len("native_"):]
                 f.write(name, autoline=False)
 
-        for args, out_kind, err_kind in [
-            ([], 'TerminfoFormatter', 'PlainTextFormatter'),
-            (['--nocolor'], 'PlainTextFormatter', 'PlainTextFormatter'),
-            ]:
+        for args, out_kind, err_kind in (
+                ([], 'TerminfoFormatter', 'PlainTextFormatter'),
+                (['--nocolor'], 'PlainTextFormatter', 'PlainTextFormatter'),
+                ):
             master, out = self._get_pty_pair()
             err, err_getvalue = _stream_and_getvalue()
 

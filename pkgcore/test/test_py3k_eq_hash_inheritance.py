@@ -9,6 +9,7 @@ except ImportError:
     class module(object):
         Test = object
 
+
 class Test(module.Test):
 
     target_namespace = "pkgcore"

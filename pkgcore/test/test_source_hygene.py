@@ -8,6 +8,7 @@ class TestDemandLoadUsage(test_demandload_usage.TestDemandLoadTargets):
     target_namespace = "pkgcore"
     ignore_all_import_failures = True
 
+
 class Test_modules(test_source_hygene.Test_modules):
     target_namespace = 'pkgcore'
     ignore_all_import_failures = True

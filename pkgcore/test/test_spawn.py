@@ -57,7 +57,7 @@ class SpawnTest(TempDirMixin, TestCase):
             [0, ["dar\n"], "echo dar\n", {}],
             [0, ["dar"], "echo -n dar", {}],
             [1, ["blah\n", "dar\n"], "echo blah\necho dar\nexit 1", {}],
-            [0, [], "echo dar 1>&2", {"fd_pipes":{1:1,2:self.null}}]]:
+            [0, [], "echo dar 1>&2", {"fd_pipes": {1: 1, 2: self.null}}]]:
 
             fp = self.generate_script(filename, text)
             self.assertEqual(
@@ -71,10 +71,12 @@ class SpawnTest(TempDirMixin, TestCase):
         fp = self.generate_script(
             "pkgcore-spawn-sandbox.sh", "echo $LD_PRELOAD")
         ret = spawn.spawn_get_output(fp, spawn_type=spawn.spawn_sandbox)
-        self.assertTrue(ret[1], msg="no output; exit code was %s; script "
+        self.assertTrue(
+            ret[1], msg="no output; exit code was %s; script "
             "location %s" % (ret[0], fp))
-        self.assertIn("libsandbox.so", [os.path.basename(x.strip()) for x in
-            ret[1][0].split()])
+        self.assertIn(
+            "libsandbox.so",
+            [os.path.basename(x.strip()) for x in ret[1][0].split()])
         os.unlink(fp)
 
 
@@ -96,9 +98,10 @@ class SpawnTest(TempDirMixin, TestCase):
         try:
             os.chdir(dpath)
             os.rmdir(dpath)
-            self.assertIn("libsandbox.so", [os.path.basename(x.strip()) for x in
-                spawn.spawn_get_output(
-                fp, spawn_type=spawn.spawn_sandbox, cwd='/')[1][0].split()])
+            self.assertIn(
+                "libsandbox.so",
+                [os.path.basename(x.strip()) for x in spawn.spawn_get_output(
+                    fp, spawn_type=spawn.spawn_sandbox, cwd='/')[1][0].split()])
             os.unlink(fp)
         finally:
             if cwd is not None:
@@ -113,7 +116,8 @@ class SpawnTest(TempDirMixin, TestCase):
             raise SkipTest(
                 "system lacks nobody user, thus can't test fakeroot")
         if 'LD_PRELOAD' in os.environ:
-            raise SkipTest("disabling test due to LD_PRELOAD setting, which "
+            raise SkipTest(
+                "disabling test due to LD_PRELOAD setting, which "
                 "fakeroot relies upon")
 
         nobody_uid = l[2]
@@ -121,35 +125,42 @@ class SpawnTest(TempDirMixin, TestCase):
 
         kw = {}
         if os.getuid() == 0:
-            kw = {"uid":l[2], "gid":l[3]}
+            kw = {"uid": l[2], "gid": l[3]}
 
-        fp2 = self.generate_script("pkgcore-spawn-fakeroot2.sh",
-                                   "#!%s\nimport os\ns=os.stat('/tmp')\n"
-                                   "print(s.st_uid)\nprint(s.st_gid)\n" %
-                                   spawn.find_binary("python"))
+        fp2 = self.generate_script(
+            "pkgcore-spawn-fakeroot2.sh",
+            "#!%s\nimport os\ns=os.stat('/tmp')\n"
+            "print(s.st_uid)\nprint(s.st_gid)\n" %
+            spawn.find_binary("python"))
 
-        fp1 = self.generate_script("pkgcore-spawn-fakeroot.sh",
+        fp1 = self.generate_script(
+            "pkgcore-spawn-fakeroot.sh",
             "#!%s\nchown %i:%i /tmp;%s;\n" % (
                 self.bash_path, nobody_uid, nobody_gid, fp2))
 
         savefile = os.path.join(self.dir, "fakeroot-savefile")
         self.assertNotEqual(long(os.stat("/tmp").st_uid), long(nobody_uid))
-        self.assertEqual([0, ["%s\n" % x for x in (nobody_uid, nobody_gid)]],
-            spawn.spawn_get_output([self.bash_path, fp1],
-            spawn_type=post_curry(spawn.spawn_fakeroot, savefile), **kw))
+        self.assertEqual(
+            [0, ["%s\n" % x for x in (nobody_uid, nobody_gid)]],
+            spawn.spawn_get_output(
+                [self.bash_path, fp1],
+                spawn_type=post_curry(spawn.spawn_fakeroot, savefile), **kw))
         self.assertNotEqual(
             long(os.stat("/tmp").st_uid), long(nobody_uid),
             "bad voodoo; we managed to change /tmp to nobody- "
             "this shouldn't occur!")
-        self.assertEqual(True, os.path.exists(savefile),
+        self.assertEqual(
+            True, os.path.exists(savefile),
             "no fakeroot file was created, either fakeroot differs or our" +
             " args passed to it are bad")
 
         # yes this is a bit ugly, but fakeroot requires an arg- so we
         # have to curry it
-        self.assertEqual([0, ["%s\n" % x for x in (nobody_uid, nobody_gid)]],
-            spawn.spawn_get_output([fp2],
-            spawn_type=post_curry(spawn.spawn_fakeroot, savefile), **kw))
+        self.assertEqual(
+            [0, ["%s\n" % x for x in (nobody_uid, nobody_gid)]],
+            spawn.spawn_get_output(
+                [fp2],
+                spawn_type=post_curry(spawn.spawn_fakeroot, savefile), **kw))
 
         os.unlink(fp1)
         os.unlink(fp2)
@@ -202,7 +213,8 @@ class SpawnTest(TempDirMixin, TestCase):
                 os.umask(desired)
             else:
                 desired = 0
-            self.assertEqual(str(desired).lstrip("0"),
+            self.assertEqual(
+                str(desired).lstrip("0"),
                 spawn.spawn_get_output(fp)[1][0].strip().lstrip("0"))
         finally:
             os.umask(old_umask)

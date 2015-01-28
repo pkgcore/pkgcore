@@ -18,6 +18,7 @@ from pkgcore.test import silence_logging, TestCase
 class LowPlug(object):
     priority = 1
 
+
 class ModulesTest(TestCase):
 
     def setUp(self):
@@ -132,8 +133,8 @@ pkgcore_plugins = {'plugtest': [HiddenPlug]}
         self.assertEqual('plug2:%s:\n' % (mtime,), lines[0])
         mtime = int(os.path.getmtime(pjoin(self.packdir, 'plug.py')))
         self.assertEqual(
-            'plug:%s:plugtest,7,1:plugtest,1,pkgcore.test.test_plugin.LowPlug:plugtest,0,0\n'
-                % (mtime,),
+            'plug:%s:plugtest,7,1:plugtest,1,pkgcore.test.test_plugin.LowPlug:'
+            'plugtest,0,0\n' % (mtime,),
             lines[1])
 
     def test_plug(self):
@@ -175,7 +176,7 @@ pkgcore_plugins = {'plugtest': [HiddenPlug]}
         plugin._global_cache.clear()
         self._test_plug()
         self.assertEqual(good_mtime, os.path.getmtime(
-                pjoin(self.packdir, plugin.CACHE_FILENAME)))
+            pjoin(self.packdir, plugin.CACHE_FILENAME)))
         self.assertNotEqual(good_mtime, corrupt_mtime)
 
     def test_rewrite_on_remove(self):

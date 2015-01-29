@@ -41,6 +41,7 @@ demandload(
     'errno',
     'operator:itemgetter',
     're',
+    'snakeoil.process:get_proc_count',
     'pkgcore.ebuild.triggers:generate_triggers@ebuild_generate_triggers',
     'pkgcore.fs.livefs:iter_scan',
 )
@@ -133,6 +134,10 @@ class domain(pkgcore.config.domain.domain):
 
         if 'CHOST' in settings and 'CBUILD' not in settings:
             settings['CBUILD'] = settings['CHOST']
+
+        # if unset, MAKEOPTS defaults to CPU thread count
+        if 'MAKEOPTS' not in settings:
+            settings['MAKEOPTS'] = '-j%i' % get_proc_count()
 
         # map out sectionname -> config manager immediately.
         repositories_collapsed = [r.collapse() for r in repositories]

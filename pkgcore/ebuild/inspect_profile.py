@@ -19,7 +19,7 @@ commands = []
 # global known flags, etc
 
 
-def mk_profile(value):
+def profile(value):
     return profiles.ProfileStack(commandline.existent_path(value))
 
 
@@ -27,7 +27,7 @@ class _base(commandline.ArgparseCommand):
 
     def bind_to_parser(self, parser):
         commandline.ArgparseCommand.bind_to_parser(self, parser)
-        parser.add_argument("profile", help="path to the profile to inspect", type=mk_profile)
+        parser.add_argument("profile", help="path to the profile to inspect", type=profile)
         name = self.__class__.__name__
         kwds = {('_%s_suppress' % name): commandline.DelayedDefault.wipe(('config', 'domain'), 50)}
         parser.set_defaults(**kwds)

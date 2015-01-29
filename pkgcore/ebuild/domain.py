@@ -65,7 +65,7 @@ def package_env_splitter(basedir, val):
     return parse_match(val[0]), local_source(pjoin(basedir, val[1]))
 
 
-def apply_masks_filter(globs, atoms, pkg, mode):
+def apply_mask_filter(globs, atoms, pkg, mode):
     # mode is ignored; non applicable.
     for r in chain(globs, atoms.get(pkg.key, ())):
         if r.match(pkg):
@@ -73,7 +73,7 @@ def apply_masks_filter(globs, atoms, pkg, mode):
     return False
 
 
-def make_masks_filter(masks, negate=False):
+def _mask_filter(masks, negate=False):
     atoms = defaultdict(list)
     globs = []
     for m in masks:
@@ -81,8 +81,10 @@ def make_masks_filter(masks, negate=False):
             atoms[m.key].append(m)
         else:
             globs.append(m)
-    return delegate(partial(apply_masks_filter, globs, atoms), negate=negate)
+    return delegate(partial(apply_mask_filter, globs, atoms), negate=negate)
 
+make_mask_filter = partial(_mask_filter, negate=True)
+make_unmask_filter = partial(_mask_filter, negate=False)
 
 # ow ow ow ow ow ow....
 # this manages a *lot* of crap.  so... this is fun.
@@ -355,8 +357,9 @@ class domain(pkgcore.config.domain.domain):
                     masks.update(pkg_maskers)
                     unmasks = set(chain(pkg_unmaskers, *profile_unmasks))
                     filtered = self.generate_filter(
-                        make_masks_filter(masks, negate=True),
-                        make_masks_filter(unmasks), *vfilters)
+                        make_mask_filter(masks),
+                        make_unmask_filter(unmasks),
+                        *vfilters)
                 if filtered:
                     wrapped_repo = visibility.filterTree(wrapped_repo, filtered, True)
                 self.repos_configured_filtered[key] = wrapped_repo

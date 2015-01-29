@@ -102,12 +102,11 @@ class empty_tree_merge_plan(plan.merge_plan):
         """
         plan.merge_plan.__init__(self, dbs, *args, **kwds)
         # XXX *cough*, hack.
-        self.default_dbs = multiplex.tree(*
-            [x for x in self.all_raw_dbs if not x.livefs])
+        self.default_dbs = multiplex.tree(
+            *[x for x in self.all_raw_dbs if not x.livefs])
 
 
 def generate_replace_resolver_kls(resolver_kls):
-
 
     class replace_resolver(resolver_kls):
         overriding_resolver_kls = resolver_kls
@@ -115,7 +114,7 @@ def generate_replace_resolver_kls(resolver_kls):
 
         def add_atoms(self, restricts, **kwds):
             restricts = [packages.KeyedAndRestriction(self._vdb_restriction, x, key=x.key)
-                for x in restricts]
+                         for x in restricts]
             return self.overriding_resolver_kls.add_atoms(self, restricts, **kwds)
 
     return replace_resolver

@@ -13,7 +13,6 @@ __all__ = (
 )
 
 import os
-import sys
 
 from snakeoil.compatibility import raise_from, IGNORED_EXCEPTIONS
 from snakeoil.demandload import demandload
@@ -193,7 +192,8 @@ def add_sets(config, root, portage_base_dir):
             # Potential for name clashes here, those will just make
             # the set not show up in config.
             if setname in ("system", "world"):
-                logger.warning("user defined set %s is disallowed; ignoring" %
+                logger.warning(
+                    "user defined set %s is disallowed; ignoring" %
                     pjoin(set_fp, setname))
                 continue
             config[setname] = basics.AutoConfigSection({
@@ -234,8 +234,8 @@ def add_profile(config, base_path, user_profile_path=None, profile_override=None
     paths = profiles.OnDiskProfile.split_abspath(profile)
     if paths is None:
         raise errors.ComplexInstantiationError(
-            '%s expands to %s, but no profile detected' % (
-                pjoin(base_path, 'make.profile'), profile))
+            '%s expands to %s, but no profile detected' %
+            (pjoin(base_path, 'make.profile'), profile))
 
     if os.path.isdir(user_profile_path):
         config["profile"] = basics.AutoConfigSection({
@@ -281,12 +281,12 @@ def mk_simple_cache(config_root, tree_loc):
         tree_loc = pjoin(config_root, tree_loc.lstrip('/'), 'metadata', 'md5-cache')
     else:
         kls = 'pkgcore.cache.flat_hash.database'
-        tree_loc = pjoin(config_root, 'var/cache/edb/dep', tree_loc.lstrip('/'))
+        tree_loc = pjoin(config_root, 'var', 'cache', 'edb', 'dep', tree_loc.lstrip('/'))
 
     cache_parent_dir = tree_loc
     while not os.path.exists(cache_parent_dir):
         cache_parent_dir = os.path.dirname(cache_parent_dir)
-    readonly = (not access(cache_parent_dir, os.W_OK|os.X_OK))
+    readonly = (not access(cache_parent_dir, os.W_OK | os.X_OK))
 
     return basics.AutoConfigSection({
         'class': kls,
@@ -301,8 +301,8 @@ def load_make_config(vars_dict, path, allow_sourcing=False, required=True,
     if allow_sourcing:
         sourcing_command = 'source'
     try:
-        new_vars = read_bash_dict(path, vars_dict=vars_dict,
-            sourcing_command=sourcing_command)
+        new_vars = read_bash_dict(
+            path, vars_dict=vars_dict, sourcing_command=sourcing_command)
     except EnvironmentError as ie:
         if ie.errno == errno.EACCES:
             raise_from(errors.PermissionDeniedError(path, write=False))
@@ -349,16 +349,19 @@ def config_from_make_conf(location="/etc/", profile_override=None):
         if not getattr(getattr(e, 'exc', None), 'errno', None) == errno.ENOENT:
            raise
         try:
-            load_make_config(conf_dict,
+            load_make_config(
+                conf_dict,
                 pjoin(config_root, 'usr/share/portage/config/make.globals'))
         except IGNORED_EXCEPTIONS:
             raise
         except:
             raise_from(errors.ParsingError(
                 "failed to find a usable make.globals"))
-    load_make_config(conf_dict, pjoin(base_path, 'make.conf'), required=False,
+    load_make_config(
+        conf_dict, pjoin(base_path, 'make.conf'), required=False,
         allow_sourcing=True, incrementals=True)
-    load_make_config(conf_dict, pjoin(portage_base, 'make.conf'), required=False,
+    load_make_config(
+        conf_dict, pjoin(portage_base, 'make.conf'), required=False,
         allow_sourcing=True, incrementals=True)
 
     root = os.environ.get("ROOT", conf_dict.get("ROOT", "/"))
@@ -386,7 +389,8 @@ def config_from_make_conf(location="/etc/", profile_override=None):
     kwds = {
         "class": "pkgcore.vdb.ondisk.tree",
         "location": pjoin(root, 'var', 'db', 'pkg'),
-        "cache_location": pjoin(config_root, 'var', 'cache', 'edb', 'dep', 'var', 'db', 'pkg'),
+        "cache_location": pjoin(
+            config_root, 'var', 'cache', 'edb', 'dep', 'var', 'db', 'pkg'),
     }
     new_config["vdb"] = basics.AutoConfigSection(kwds)
 
@@ -411,8 +415,8 @@ def config_from_make_conf(location="/etc/", profile_override=None):
         make_syncer(new_config, portdir, portdir_syncer, rsync_opts)
 
     if portdir_overlays and '-layman-sync' not in features:
-        overlay_syncers = add_layman_syncers(new_config, rsync_opts,
-            portdir_overlays, config_root=config_root)
+        overlay_syncers = add_layman_syncers(
+            new_config, rsync_opts, portdir_overlays, config_root=config_root)
     else:
         overlay_syncers = {}
     if portdir_overlays and '-autodetect-sync' not in features:
@@ -480,10 +484,10 @@ def config_from_make_conf(location="/etc/", profile_override=None):
         'vdb': 'vdb',
         'profile': 'profile',
     })
-    new_config['glsa'] = basics.section_alias('vuln',
-        SecurityUpgradesViaProfile.pkgcore_config_type.typename)
+    new_config['glsa'] = basics.section_alias(
+        'vuln', SecurityUpgradesViaProfile.pkgcore_config_type.typename)
 
-    #binpkg.
+    # binpkg.
     pkgdir = os.environ.get("PKGDIR", conf_dict.pop('PKGDIR', None))
     default_repos = list(reversed(repos))
     if pkgdir is not None:
@@ -517,16 +521,20 @@ def config_from_make_conf(location="/etc/", profile_override=None):
             default_repos.append('binpkg')
 
         if 'buildpkg' in features:
-            add_trigger('buildpkg_trigger', 'pkgcore.merge.triggers.SavePkg',
+            add_trigger(
+                'buildpkg_trigger', 'pkgcore.merge.triggers.SavePkg',
                 pristine='no', target_repo='binpkg')
         elif 'pristine-buildpkg' in features:
-            add_trigger('buildpkg_trigger', 'pkgcore.merge.triggers.SavePkg',
+            add_trigger(
+                'buildpkg_trigger', 'pkgcore.merge.triggers.SavePkg',
                 pristine='yes', target_repo='binpkg')
         elif 'buildsyspkg' in features:
-            add_trigger('buildpkg_system_trigger', 'pkgcore.merge.triggers.SavePkgIfInPkgset',
+            add_trigger(
+                'buildpkg_system_trigger', 'pkgcore.merge.triggers.SavePkgIfInPkgset',
                 pristine='yes', target_repo='binpkg', pkgset='system')
         elif 'unmerge-backup' in features:
-            add_trigger('unmerge_backup_trigger', 'pkgcore.merge.triggers.SavePkgUnmerging',
+            add_trigger(
+                'unmerge_backup_trigger', 'pkgcore.merge.triggers.SavePkgUnmerging',
                 target_repo='binpkg')
 
     if 'save-deb' in features:
@@ -534,7 +542,8 @@ def config_from_make_conf(location="/etc/", profile_override=None):
         if path is None:
             logger.warning("disabling save-deb; DEB_REPO_ROOT is unset")
         else:
-            add_trigger('save_deb_trigger', 'pkgcore.ospkg.triggers.SaveDeb',
+            add_trigger(
+                'save_deb_trigger', 'pkgcore.ospkg.triggers.SaveDeb',
                 basepath=normpath(path), maintainer=conf_dict.pop("DEB_MAINAINER", ''),
                 platform=conf_dict.pop("DEB_ARCHITECTURE", ""))
 
@@ -544,14 +553,17 @@ def config_from_make_conf(location="/etc/", profile_override=None):
         if 'compressdebug' in features:
             kwds['compress'] = 'true'
 
-        add_trigger('binary_debug_trigger', 'pkgcore.merge.triggers.BinaryDebug',
+        add_trigger(
+            'binary_debug_trigger', 'pkgcore.merge.triggers.BinaryDebug',
             mode='split', **kwds)
     elif 'strip' in features or 'nostrip' not in features:
-        add_trigger('binary_debug_trigger', 'pkgcore.merge.triggers.BinaryDebug',
+        add_trigger(
+            'binary_debug_trigger', 'pkgcore.merge.triggers.BinaryDebug',
             mode='strip')
 
     if '-fixlafiles' not in features:
-        add_trigger('lafilefixer_trigger',
+        add_trigger(
+            'lafilefixer_trigger',
             'pkgcore.system.libtool.FixLibtoolArchivesTrigger')
 
     # now add the fetcher- we delay it till here to clean out the environ
@@ -570,11 +582,12 @@ def config_from_make_conf(location="/etc/", profile_override=None):
         'vdb': ('vdb',),
         'profile': 'profile',
         'name': 'livefs domain',
-        'root':root,
+        'root': root,
     })
 
-    for f in ("package.mask", "package.unmask", "package.accept_keywords", "package.keywords",
-              "package.license", "package.use", "package.env", "env:ebuild_hook_dir", "bashrc"):
+    for f in ("package.mask", "package.unmask", "package.accept_keywords",
+              "package.keywords", "package.license", "package.use",
+              "package.env", "env:ebuild_hook_dir", "bashrc"):
         fp = pjoin(portage_base, f.split(":")[0])
         try:
             os.stat(fp)

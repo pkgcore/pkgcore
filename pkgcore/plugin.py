@@ -36,24 +36,28 @@ demandload(
 )
 
 
-_plugin_data = sequences.namedtuple("_plugin_data",
-    ["key", "priority", "source", "target"])
+_plugin_data = sequences.namedtuple(
+    "_plugin_data", ["key", "priority", "source", "target"])
 
 PLUGIN_ATTR = 'pkgcore_plugins'
 
 CACHE_HEADER = 'pkgcore plugin cache v3'
 CACHE_FILENAME = 'plugincache'
 
+
 def _clean_old_caches(path):
     for name in ('plugincache2',):
         try:
             osutils.unlink_if_exists(pjoin(path, name))
         except EnvironmentError as e:
-            logger.error("attempting to clean old plugin cache %r failed with %s",
+            logger.error(
+                "attempting to clean old plugin cache %r failed with %s",
                 pjoin(path, name), e)
 
+
 def sort_plugs(plugs):
-    return sorted(plugs, reverse=True, key=lambda x:(x.key, x.priority, x.source))
+    return sorted(plugs, reverse=True, key=lambda x: (x.key, x.priority, x.source))
+
 
 def _process_plugins(package, sequence, filter_disabled=False):
     for plug in sequence:
@@ -61,30 +65,35 @@ def _process_plugins(package, sequence, filter_disabled=False):
         if plug is not None:
             yield plug
 
+
 def _process_plugin(package, plug, filter_disabled=False):
     if isinstance(plug.target, basestring):
         try:
             plug = modules.load_any(plug.target)
         except modules.FailedImport as e:
-            logger.exception("plugin import for %s failed processing file %s, entry %s: %s",
+            logger.exception(
+                "plugin import for %s failed processing file %s, entry %s: %s",
                 package.__name__, plug.source, plug.target, e)
             return None
     elif isinstance(plug.target, int):
         try:
             module = modules.load_any(plug.source)
         except modules.FailedImport as e:
-            logger.exception("plugin import for %s failed processing file %s: %s",
+            logger.exception(
+                "plugin import for %s failed processing file %s: %s",
                 package.__name__, plug.source, e)
             return None
         plugs = getattr(module, PLUGIN_ATTR, {})
         plugs = plugs.get(plug.key, [])
         if len(plugs) <= plug.target:
-            logger.exception("plugin cache for %s, %s, %s is somehow wrong; no item at position %s",
+            logger.exception(
+                "plugin cache for %s, %s, %s is somehow wrong; no item at position %s",
                 package.__name__, plug.source, plug.key, plug.target)
             return None
         plug = plugs[plug.target]
     else:
-        logger.error("package %s, plug %s; non int, non string.  wtf?",
+        logger.error(
+            "package %s, plug %s; non int, non string.  wtf?",
             package.__name__, plug)
         return None
 
@@ -104,7 +113,8 @@ def _read_cache_file(package, cache_path):
     cache_data = list(fileutils.readlines_ascii(cache_path, True, True, False))
     if len(cache_data) >= 1:
         if cache_data[0] != CACHE_HEADER:
-            logger.warning("plugin cache has a wrong header: %r, regenerating",
+            logger.warning(
+                "plugin cache has a wrong header: %r, regenerating",
                 cache_data[0])
             cache_data = []
         else:
@@ -122,7 +132,8 @@ def _read_cache_file(package, cache_path):
                 entries = entries.replace(':', ',').split(',')
 
                 if not len(entries) % 3 == 0:
-                    logger.error("failed reading cache %s; entries field isn't "
+                    logger.error(
+                        "failed reading cache %s; entries field isn't "
                         "divisable by 3: %r", cache_path, entries)
                     continue
                 entries = iter(entries)
@@ -131,16 +142,17 @@ def _read_cache_file(package, cache_path):
                         val = int(val)
                     return val
                 entries = set(
-                    _plugin_data(key, int(priority), '%s.%s' % (package.__name__, module),
-                        f(target))
-                        for (key, priority, target) in zip(entries, entries, entries))
-            stored_cache[(module,mtime)] = entries
+                    _plugin_data(key, int(priority),
+                                 '%s.%s' % (package.__name__, module),
+                                 f(target))
+                    for (key, priority, target) in zip(entries, entries, entries))
+            stored_cache[(module, mtime)] = entries
 
     except compatibility.IGNORED_EXCEPTIONS:
         raise
     except Exception as e:
-      logger.warning("failed reading cache; exception %s.  Regenerating.", e)
-      stored_cache.clear()
+        logger.warning("failed reading cache; exception %s.  Regenerating.", e)
+        stored_cache.clear()
 
     return stored_cache
 
@@ -286,4 +298,3 @@ def get_plugin(key, package=plugins):
 # Global plugin cache. Mapping of package to package cache, which is a
 # mapping of plugin key to a list of module names.
 _global_cache = mappings.defaultdictkey(initialize_cache)
-

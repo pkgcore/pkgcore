@@ -9,7 +9,6 @@ demandload(
     'collections:defaultdict',
     'itertools:chain',
     'operator',
-    'snakeoil:mappings',
     'pkgcore.ebuild:atom,profiles',
 )
 

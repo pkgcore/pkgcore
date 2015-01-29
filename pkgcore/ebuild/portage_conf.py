@@ -400,6 +400,7 @@ def config_from_make_conf(location="/etc/", profile_override=None):
         "PORTDIR_OVERLAY", conf_dict.pop("PORTDIR_OVERLAY", "")).split()
     portdir_overlays = [normpath(x) for x in portdir_overlays]
     repos = [portdir] + portdir_overlays
+    default_repos = list(reversed(repos))
 
     new_config['ebuild-repo-common'] = basics.AutoConfigSection({
         'class': 'pkgcore.ebuild.repository.slavedtree',
@@ -474,7 +475,7 @@ def config_from_make_conf(location="/etc/", profile_override=None):
         new_config['repo-stack'] = basics.FakeIncrementalDictConfigSection(
             my_convert_hybrid, {
                 'class': 'pkgcore.repository.multiplex.config_tree',
-                'repositories': tuple(reversed(repos))})
+                'repositories': tuple(default_repos)})
     else:
         new_config['repo-stack'] = basics.section_alias(portdir, 'repo')
 
@@ -489,7 +490,6 @@ def config_from_make_conf(location="/etc/", profile_override=None):
 
     # binpkg.
     pkgdir = os.environ.get("PKGDIR", conf_dict.pop('PKGDIR', None))
-    default_repos = list(reversed(repos))
     if pkgdir is not None:
         try:
             pkgdir = abspath(pkgdir)

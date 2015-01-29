@@ -11,7 +11,17 @@ __all__ = ("ConfigHint", "configurable", "load_config")
 # keep these imports as minimal as possible; access to
 # pkgcore.config isn't uncommon, thus don't trigger till
 # actually needed
+
+from snakeoil.demandload import demandload
+
 from pkgcore.const import SYSTEM_CONF_FILE, USER_CONF_FILE
+
+demandload(
+    'os',
+    'pkgcore.config:central,cparser',
+    'pkgcore.ebuild.portage_conf:config_from_make_conf',
+    'pkgcore.plugin:get_plugins',
+)
 
 
 class ConfigHint(object):
@@ -75,10 +85,6 @@ def load_config(user_conf_file=USER_CONF_FILE,
         representing the system config.
     """
 
-    from pkgcore.config import central, cparser
-    from pkgcore.plugin import get_plugins
-    import os
-
     configs = list(prepend_sources)
     configs.extend(get_plugins('global_config'))
     if not skip_config_files:
@@ -93,7 +99,6 @@ def load_config(user_conf_file=USER_CONF_FILE,
                     configs.append(cparser.config_from_file(f))
         else:
             # make.conf...
-            from pkgcore.ebuild.portage_conf import config_from_make_conf
             configs.append(config_from_make_conf(
                 location=location, profile_override=profile_override))
     configs.extend(append_sources)

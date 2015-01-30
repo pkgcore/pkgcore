@@ -29,7 +29,7 @@ class _base(commandline.ArgparseCommand):
         commandline.ArgparseCommand.bind_to_parser(self, parser)
         parser.add_argument("profile", help="path to the profile to inspect", type=profile)
         name = self.__class__.__name__
-        kwds = {('_%s_suppress' % name): commandline.DelayedDefault.wipe(('config', 'domain'), 50)}
+        kwds = {('_%s_suppress' % name): commandline.DelayedDefault.wipe(('domain'), 50)}
         parser.set_defaults(**kwds)
         self._subclass_bind(parser)
 

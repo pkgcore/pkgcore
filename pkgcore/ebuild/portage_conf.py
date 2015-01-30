@@ -16,6 +16,7 @@ import os
 
 from snakeoil.compatibility import raise_from, IGNORED_EXCEPTIONS
 from snakeoil.demandload import demandload
+from snakeoil.mappings import ImmutableDict
 from snakeoil.osutils import access, normpath, abspath, listdir_files, pjoin, ensure_dirs
 
 from pkgcore.config import basics, configurable
@@ -441,7 +442,13 @@ def config_from_make_conf(location="/etc/", profile_override=None):
         else:
             rsync_portdir_cache = False
 
+    repo_map = {}
+
     for tree_loc in repos:
+        # XXX: Hack for portage-2 profile format support.
+        repo_config = RepoConfig(tree_loc)
+        repo_map[repo_config.repo_id] = repo_config
+
         # repo configs
         conf = {
             'class': 'pkgcore.ebuild.repo_objs.RepoConfig',
@@ -470,6 +477,10 @@ def config_from_make_conf(location="/etc/", profile_override=None):
         new_config[tree_loc] = basics.AutoConfigSection(kwds)
 
     new_config['portdir'] = basics.section_alias(portdir, 'repo')
+
+    # XXX: Hack for portage-2 profile format support. We need to figure out how
+    # to dynamically create this from the config at runtime on attr access.
+    profiles.ProfileNode._repo_map = ImmutableDict(repo_map)
 
     if portdir_overlays:
         new_config['repo-stack'] = basics.FakeIncrementalDictConfigSection(

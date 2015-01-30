@@ -639,16 +639,10 @@ class OnDiskProfile(ProfileStack):
     pkgcore_config_type = ConfigHint(
         {'basepath': 'str', 'profile': 'str'},
         required=('basepath', 'profile'),
-        requires_config='config',
         typename='profile',
     )
 
-    def __init__(self, basepath, profile, config=None, load_profile_base=True):
-        # repo-id -> repo-config mapping for portage-2 profile support
-        if config is not None:
-            ProfileNode._repo_map = ImmutableDict(
-                (repo_config.repo_id, repo_config) for repo_config
-                in config.objects['raw_repo'].itervalues())
+    def __init__(self, basepath, profile, load_profile_base=True):
         ProfileStack.__init__(self, pjoin(basepath, profile))
         self.basepath = basepath
         self.load_profile_base = load_profile_base
@@ -716,12 +710,11 @@ class UserProfile(OnDiskProfile):
     pkgcore_config_type = ConfigHint(
         {'user_path': 'str', 'parent_path': 'str', 'parent_profile': 'str'},
         required=('user_path', 'parent_path', 'parent_profile'),
-        requires_config='config',
         typename='profile',
     )
 
-    def __init__(self, user_path, parent_path, parent_profile, config, load_profile_base=True):
-        OnDiskProfile.__init__(self, parent_path, parent_profile, config, load_profile_base)
+    def __init__(self, user_path, parent_path, parent_profile, load_profile_base=True):
+        OnDiskProfile.__init__(self, parent_path, parent_profile, load_profile_base)
         self.node = UserProfileNode(user_path, pjoin(parent_path, parent_profile))
 
 

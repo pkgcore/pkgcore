@@ -53,11 +53,12 @@ class CacheEntry(StackedDict):
         except KeyError:
             return default
 
+
 def find_best_savings(stream, line_prefix):
     rcs = RefCountingSet(stream)
     line_overhead = len(line_prefix)
-    stream = ((k, v) for k,v in rcs.iteritems() if v != 1)
-    return max(stream, key=lambda (k, v):(len(k) + line_overhead) * v)[0]
+    stream = ((k, v) for k, v in rcs.iteritems() if v != 1)
+    return max(stream, key=lambda (k, v): (len(k) + line_overhead) * v)[0]
 
 
 cache_meta = WeakRefFinalizer
@@ -71,29 +72,37 @@ class PackagesCacheV0(cache.bulk):
     Cache backend for writing binpkg Packages caches
 
     Note this follows version 0 semantics- not the most efficient, and
-    doesn't bundle  certain useful keys like RESTRICt
+    doesn't bundle certain useful keys like RESTRICT
     """
 
     __metaclass__ = cache_meta
 
     _header_mangling_map = ImmutableDict({
-        'FEATURES':'UPSTREAM_FEATURES',
-        'ACCEPT_KEYWORDS':'KEYWORDS'})
+        'FEATURES': 'UPSTREAM_FEATURES',
+        'ACCEPT_KEYWORDS': 'KEYWORDS'})
 
     # this maps from literal keys in the cache to .data[key] expected forms
-    _deserialize_map = {'DESC':'DESCRIPTION', 'MTIME':'mtime', 'repo':'REPO'}
+    _deserialize_map = {
+        'DESC': 'DESCRIPTION',
+        'MTIME': 'mtime',
+        'repo': 'REPO'}
     # this maps from .attr to data items.
-    _serialize_map   = {"DEPENDS": "DEPEND", "RDEPENDS": "RDEPEND",
-        "POST_RDEPENDS":"POST_RDEPEND", "DESCRIPTION":"DESC", 'mtime':'MTIME',
-        "source_repository":"REPO"}
+    _serialize_map = {
+        "DEPENDS": "DEPEND",
+        "RDEPENDS": "RDEPEND",
+        "POST_RDEPENDS": "POST_RDEPEND",
+        "DESCRIPTION": "DESC",
+        'mtime': 'MTIME',
+        "source_repository": "REPO"}
     deserialized_inheritable = frozenset(('CBUILD', 'CHOST', 'source_repository'))
     _pkg_attr_sequences = ('use', 'keywords', 'iuse')
-    _deserialized_defaults = dict.fromkeys(('BUILD_TIME', 'DEPEND', 'IUSE', 'KEYWORDS',
+    _deserialized_defaults = dict.fromkeys((
+        'BUILD_TIME', 'DEPEND', 'IUSE', 'KEYWORDS',
         'LICENSE', 'PATH', 'PDEPEND', 'PROPERTIES', 'PROVIDE', 'RDEPEND',
         'USE', 'DEFINED_PHASES', 'CHOST', 'CBUILD', 'DESC', 'REPO',
         'DESCRIPTION'),
         '')
-    _deserialized_defaults.update({'EAPI':'0', 'SLOT':'0'})
+    _deserialized_defaults.update({'EAPI': '0', 'SLOT': '0'})
     _deserialized_defaults = ImmutableDict(_deserialized_defaults)
 
     _stored_chfs = ('size', 'sha1', 'md5', 'mtime')
@@ -115,7 +124,7 @@ class PackagesCacheV0(cache.bulk):
     def read_preamble(self, handle):
         return ImmutableDict(
             (self._header_mangling_map.get(k, k), v)
-            for k,v in _iter_till_empty_newline(handle))
+            for k, v in _iter_till_empty_newline(handle))
 
     def _read_data(self):
         try:
@@ -127,8 +136,8 @@ class PackagesCacheV0(cache.bulk):
         self.preamble = self.read_preamble(handle)
 
         defaults = dict(self._deserialized_defaults.iteritems())
-        defaults.update((k, v) for k,v in self.preamble.iteritems()
-            if k in self.deserialized_inheritable)
+        defaults.update((k, v) for k, v in self.preamble.iteritems()
+                        if k in self.deserialized_inheritable)
         defaults = ImmutableDict(defaults)
 
         pkgs = {}
@@ -157,8 +166,10 @@ class PackagesCacheV0(cache.bulk):
 
     @classmethod
     def _assemble_preamble_dict(cls, target_dicts):
-        preamble = {'VERSION':cls.version, 'PACKAGES':len(target_dicts),
-            'TIMESTAMP':str(int(time()))}
+        preamble = {
+            'VERSION': cls.version,
+            'PACKAGES': len(target_dicts),
+            'TIMESTAMP': str(int(time()))}
         for key in cls.deserialized_inheritable:
             try:
                 preamble[key] = find_best_savings(
@@ -201,7 +212,7 @@ class PackagesCacheV0(cache.bulk):
                 if e.errno != errno.EACCES:
                     raise
                 log.logger.error("failed writing binpkg Packages cache to %r; permissions issue %s",
-                   self._location, e)
+                                 self._location, e)
         finally:
             if handler is not None:
                 handler.discard()
@@ -223,7 +234,7 @@ class PackagesCacheV0(cache.bulk):
         for cpv, pkg_data in sorted(data, key=itemgetter(0)):
             handler.write("CPV:%s%s\n" % (spacer, cpv))
             data = [(convert_key(key, key), value)
-                for key, value in pkg_data.iteritems()]
+                    for key, value in pkg_data.iteritems()]
             for write_key, value in sorted(data):
                 if write_key not in vkeys:
                     continue
@@ -262,7 +273,6 @@ class PackagesCacheV0(cache.bulk):
 
     def __del__(self):
         self.commit()
-
 
 
 class PackagesCacheV1(PackagesCacheV0):
@@ -310,7 +320,7 @@ def write_index(filepath, repo, version=-1):
 
     :param filepath: path to write the cache to
     :param repo: Repository instance to serialize
-    :param version: if set, this is the format version to use.  Defaults to the
+    :param version: if set, this is the format version to use. Defaults to the
         most recent (currently v1)
     """
     if version == -1:

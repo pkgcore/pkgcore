@@ -71,8 +71,8 @@ class force_unpacking(triggers.base):
         # this rewrites the data_source to the ${D} loc.
         d = op.env["D"]
         fi = (x.change_attributes(data=local_source(
-                pjoin(d, x.location.lstrip('/'))))
-                for x in merge_cset.iterfiles())
+            pjoin(d, x.location.lstrip('/'))))
+            for x in merge_cset.iterfiles())
 
         if engine.offset:
             # we're using merge_cset above, which has the final offset loc
@@ -110,13 +110,17 @@ def wrap_factory(klass, *args, **kwds):
 
 
 class StackedXpakDict(DictMixin):
-    __slots__ = ("_xpak", "_parent", "_pkg", "contents",
-        "_wipes", "_chf_obj")
+    __slots__ = ("_xpak", "_parent", "_pkg", "contents", "_wipes", "_chf_obj")
 
     _metadata_rewrites = {
-        "depends":"DEPEND", "rdepends":"RDEPEND", "post_rdepends":"PDEPEND",
-        "provides":"PROVIDE", "use":"USE", "eapi":"EAPI",
-        "CONTENTS":"contents", "fullslot":"SLOT"
+        "depends": "DEPEND",
+        "rdepends": "RDEPEND",
+        "post_rdepends": "PDEPEND",
+        "provides": "PROVIDE",
+        "use": "USE",
+        "eapi": "EAPI",
+        "CONTENTS": "contents",
+        "fullslot": "SLOT",
     }
 
     def __init__(self, parent, pkg):
@@ -144,17 +148,17 @@ class StackedXpakDict(DictMixin):
         elif key == "environment":
             data = self.xpak.get("environment.bz2")
             if data is None:
-                data = data_source(self.xpak.get("environment"),
-                    mutable=True)
+                data = data_source(self.xpak.get("environment"), mutable=True)
                 if data is None:
                     raise KeyError(
                         "environment.bz2 not found in xpak segment, "
                         "malformed binpkg?")
             else:
-                data = data_source(compression.decompress_data('bzip2', data),
-                    mutable=True)
+                data = data_source(
+                    compression.decompress_data('bzip2', data), mutable=True)
         elif key == "ebuild":
-            data = self.xpak.get("%s-%s.ebuild" %
+            data = self.xpak.get(
+                "%s-%s.ebuild" %
                 (self._pkg.package, self._pkg.fullver), "")
             data = data_source(data)
         else:
@@ -163,7 +167,7 @@ class StackedXpakDict(DictMixin):
             except KeyError:
                 if key == '_eclasses_':
                     # hack...
-                    data ={}
+                    data = {}
                 else:
                     data = ''
         return data
@@ -223,8 +227,10 @@ class tree(prototype.tree):
     operations_kls = repo_ops.operations
     cache_name = "Packages"
 
-    pkgcore_config_type = ConfigHint({'location':'str',
-        'repo_id':'str', 'ignore_paludis_versioning':'bool'}, typename='repo')
+    pkgcore_config_type = ConfigHint({
+        'location': 'str',
+        'repo_id': 'str', 'ignore_paludis_versioning': 'bool'},
+        typename='repo')
 
     def __init__(self, location, repo_id=None, ignore_paludis_versioning=False,
                  cache_version='0'):
@@ -232,8 +238,8 @@ class tree(prototype.tree):
         :param location: root of the tbz2 repository
         :keyword repo_id: unique repository id to use; else defaults to
             the location
-        :keyword ignore_paludis_versioning: if False, error when -scm is seen.  If True,
-            silently ignore -scm ebuilds
+        :keyword ignore_paludis_versioning: if False, error when -scm is seen.
+            If True, silently ignore -scm ebuilds.
         """
         super(tree, self).__init__()
         self.base = location
@@ -244,15 +250,15 @@ class tree(prototype.tree):
         self.ignore_paludis_versioning = ignore_paludis_versioning
 
         # XXX rewrite this when snakeoil.osutils grows an access equivalent.
-        if not access(self.base, os.X_OK|os.R_OK):
+        if not access(self.base, os.X_OK | os.R_OK):
             # either it doesn't exist, or we don't have perms.
             if not os.path.exists(self.base):
                 raise errors.InitializationError(
                     "base %r doesn't exist: %s" % self.base)
             raise errors.InitializationError(
                 "base directory %r with mode 0%03o isn't readable/executable"
-                " by this user" % (self.base,
-                os.stat(self.base).st_mode & 04777))
+                " by this user" %
+                (self.base, os.stat(self.base).st_mode & 04777))
 
         self.cache = remote.get_cache_kls(cache_version)(pjoin(self.base, self.cache_name))
         self.package_class = wrap_factory(self.package_factory, self)
@@ -280,9 +286,9 @@ class tree(prototype.tree):
         try:
             for x in listdir_files(cpath):
                 # don't use lstat; symlinks may exist
-                if (x.endswith(".lockfile")
-                    or not x[-lext:].lower() == self.extension or
-                    x.startswith(".tmp.")):
+                if (x.endswith(".lockfile") or
+                        not x[-lext:].lower() == self.extension or
+                        x.startswith(".tmp.")):
                     continue
                 pv = x[:-lext]
                 try:
@@ -295,18 +301,21 @@ class tree(prototype.tree):
                     elif '-try' in pv:
                         bad = 'try'
                     else:
-                        raise InvalidCPV("%s/%s: no version component" %
+                        raise InvalidCPV(
+                            "%s/%s: no version component" %
                             (category, pv))
                     if self.ignore_paludis_versioning:
                         bad = False
                         continue
-                    raise InvalidCPV("%s/%s: -%s version component is "
+                    raise InvalidCPV(
+                        "%s/%s: -%s version component is "
                         "not standard." % (category, pv, bad))
                 l.add(pkg.package)
                 d.setdefault((category, pkg.package), []).append(pkg.fullver)
         except EnvironmentError as e:
-            raise_from(KeyError("failed fetching packages for category %s: %s" % \
-            (pjoin(self.base, category.lstrip(os.path.sep)), str(e))))
+            raise_from(KeyError(
+                "failed fetching packages for category %s: %s" %
+                (pjoin(self.base, category.lstrip(os.path.sep)), str(e))))
 
         self._versions_tmp_cache.update(d)
         return tuple(l)
@@ -374,7 +383,7 @@ class ConfiguredBinpkgTree(wrapper.tree):
 
     def _generate_operations(self, domain, pkg, **kwargs):
         pkg = pkg._raw_pkg
-        return ebd.built_operations(domain, pkg, initial_env=self.domain_settings,
-            **kwargs)
+        return ebd.built_operations(
+            domain, pkg, initial_env=self.domain_settings, **kwargs)
 
 tree.configure = ConfiguredBinpkgTree

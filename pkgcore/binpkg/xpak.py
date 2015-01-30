@@ -44,7 +44,7 @@ class Xpak(object):
 
     __metaclass__ = autoconvert_py3k_methods_metaclass
 
-    _reading_key_rewrites = {'repo':'REPO'}
+    _reading_key_rewrites = {'repo': 'REPO'}
 
     trailer_pre_magic = "XPAKSTOP"
     trailer_post_magic = "STOP"
@@ -58,7 +58,6 @@ class Xpak(object):
         trailer_post_magic = trailer_post_magic.encode("ascii")
         trailer_pre_magic = trailer_pre_magic.encode("ascii")
         header_pre_magic = header_pre_magic.encode("ascii")
-
 
     def __init__(self, source):
         self._source_is_path = isinstance(source, basestring)
@@ -112,7 +111,8 @@ class Xpak(object):
                 val = val.encode('utf8')
             if isinstance(key, unicode):
                 key = key.encode()
-            new_index.append(struct.pack(">L%isLL" % len(key),
+            new_index.append(struct.pack(
+                ">L%isLL" % len(key),
                 len(key), key, cur_pos, len(val)))
             new_data.append(val)
             cur_pos += len(val)
@@ -133,14 +133,15 @@ class Xpak(object):
         new_data = joiner.join(new_data)
 
         handle.seek(start, 0)
-        cls.header.write(handle, cls.header_pre_magic, len(new_index),
-            len(new_data))
+        cls.header.write(
+            handle, cls.header_pre_magic, len(new_index), len(new_data))
 
-        handle.write(struct.pack(">%is%is" % (len(new_index), len(new_data)),
-            new_index, new_data))
+        handle.write(struct.pack(
+            ">%is%is" % (len(new_index), len(new_data)), new_index, new_data))
 
         # the +8 is for the longs for new_index/new_data
-        cls.trailer.write(handle, cls.trailer_pre_magic,
+        cls.trailer.write(
+            handle, cls.trailer_pre_magic,
             len(new_index) + len(new_data) + cls.trailer.size + 8,
             cls.trailer_post_magic)
         handle.truncate()
@@ -170,7 +171,8 @@ class Xpak(object):
                     "key %i, tried reading data offset/len but hit EOF" % (
                         len(keys_dict) + 1)))
             key = key_rewrite(key, key)
-            keys_dict[key] = (data_start + offset, data_len,
+            keys_dict[key] = (
+                data_start + offset, data_len,
                 compatibility.is_py3k and not key.startswith("environment"))
             index_len -= (key_len + 12) # 12 for key_len, offset, data_len longs
 

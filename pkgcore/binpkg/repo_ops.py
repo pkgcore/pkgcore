@@ -7,9 +7,9 @@ Binpkg repository operations for modification, maintenance, etc.
 This modules specific operation implementations- said operations are
 derivatives of :py:mod:`pkgcore.operations.repo` classes.
 
-Generally speaking you only need to dig through this module if you're
-trying to modify a binpkg repository operation- changing how it installs,
-or changing how it uninstalls, or adding a new operation (cleaning/cache regen for example).
+Generally speaking you only need to dig through this module if you're trying to
+modify a binpkg repository operation- changing how it installs, or changing how
+it uninstalls, or adding a new operation (cleaning/cache regen for example).
 """
 
 __all__ = ("install", "uninstall", "replace", "operations")
@@ -30,15 +30,23 @@ demandload("pkgcore.log:logger")
 
 
 def discern_loc(base, pkg, extension='.tbz2'):
-    return pjoin(base, pkg.category,
+    return pjoin(
+        base, pkg.category,
         "%s-%s%s" % (pkg.package, pkg.fullver, extension))
 
 
 _metadata_rewrites = {
-    "depends":"DEPEND", "rdepends":"RDEPEND", "post_rdepends":"PDEPEND",
-    "use":"USE", "eapi_obj":"EAPI", "CONTENTS":"contents", "provides":"PROVIDE",
-    "source_repository":"repository", "fullslot":"SLOT"
+    "depends": "DEPEND",
+    "rdepends": "RDEPEND",
+    "post_rdepends": "PDEPEND",
+    "use": "USE",
+    "eapi_obj": "EAPI",
+    "CONTENTS": "contents",
+    "provides": "PROVIDE",
+    "source_repository": "repository",
+    "fullslot": "SLOT",
 }
+
 
 def generate_attr_dict(pkg, portage_compatible=True):
     d = {}
@@ -47,8 +55,8 @@ def generate_attr_dict(pkg, portage_compatible=True):
             continue
         v = getattr(pkg, k)
         if k == 'environment':
-            d['environment.bz2'] = compress_data('bzip2',
-                v.bytes_fileobj().read())
+            d['environment.bz2'] = compress_data(
+                'bzip2', v.bytes_fileobj().read())
             continue
         if k == 'provides':
             versionless_provides = lambda b: b.key
@@ -80,23 +88,26 @@ class install(repo_interfaces.install):
     @steal_docs(repo_interfaces.install)
     def add_data(self):
         if self.observer is None:
-            end = start = lambda x:None
+            end = start = lambda x: None
         else:
             start = self.observer.phase_start
             end = self.observer.phase_end
         pkg = self.new_pkg
         final_path = discern_loc(self.repo.base, pkg, self.repo.extension)
-        tmp_path = pjoin(os.path.dirname(final_path),
+        tmp_path = pjoin(
+            os.path.dirname(final_path),
             ".tmp.%i.%s" % (os.getpid(), os.path.basename(final_path)))
 
         self.tmp_path, self.final_path = tmp_path, final_path
 
         if not ensure_dirs(os.path.dirname(tmp_path), mode=0755):
-            raise repo_interfaces.Failure("failed creating directory %r" %
+            raise repo_interfaces.Failure(
+                "failed creating directory %r" %
                 os.path.dirname(tmp_path))
         try:
             start("generating tarball: %s" % tmp_path)
-            tar.write_set(pkg.contents, tmp_path, compressor='bzip2',
+            tar.write_set(
+                pkg.contents, tmp_path, compressor='bzip2',
                 parallelize=True)
             end("tarball created", True)
             start("writing Xpak")

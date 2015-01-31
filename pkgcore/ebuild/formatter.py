@@ -35,6 +35,7 @@ class NoChoice(KeyboardInterrupt):
     should do something reasonable.
     """
 
+
 def userquery(prompt, out, err, responses=None, default_answer=None, limit=3):
     """Ask the user to choose from a set of options.
 
@@ -110,8 +111,9 @@ def userquery(prompt, out, err, responses=None, default_answer=None, limit=3):
         if not results:
             err.write('Sorry, response "%s" not understood.' % (response,))
         elif len(results) > 1:
-            err.write('Response "%s" is ambiguous (%s)' % (
-                    response, ', '.join(key for key, val in results)))
+            err.write(
+                'Response "%s" is ambiguous (%s)' %
+                (response, ', '.join(key for key, val in results)))
         else:
             return list(results)[0][1][0]
 
@@ -144,8 +146,8 @@ class use_expand_filter(object):
             C{"video_cards_alsa"} becomes C{"{'video_cards': ['alsa']}"}).
         """
 
-        # XXX: note this is fairly slow- actually takes up more time then chunks of
-        # the resolver
+        # XXX: note this is fairly slow- actually takes up more time then
+        # chunks of the resolver
         ue_dict = {}
         usel = []
         ef = self.expand_filters
@@ -225,6 +227,7 @@ class PkgcoreFormatter(Formatter):
         else:
             self.out.write("%s %s" % (op.desc.ljust(7), p))
 
+
 class EmptyDict(object):
 
     def __getitem__(self, k):
@@ -236,6 +239,7 @@ class EmptyDict(object):
     def __delitem__(self, k):
         pass
 
+
 class CountingFormatter(Formatter):
 
     """Subclass for formatters that count packages"""
@@ -245,7 +249,7 @@ class CountingFormatter(Formatter):
     def __init__(self, **kwargs):
         kwargs.setdefault("verbose", False)
         Formatter.__init__(self, **kwargs)
-        self.package_data = defaultdictkey(lambda x:0)
+        self.package_data = defaultdictkey(lambda x: 0)
 
         # total download size for all pkgs to be merged
         self.download_size = 0
@@ -258,17 +262,17 @@ class CountingFormatter(Formatter):
         if self.verbose:
             total = sum(self.package_data.itervalues())
             self.out.write(
-                'Total: %d package%s' % (total, 's'[total==1:]),
+                'Total: %d package%s' % (total, 's'[total == 1:]),
                 autoline=False)
 
             d = dict(self.package_data.iteritems())
-            op_types = [
-                        ('add', 'new'),
-                        ('upgrade', 'upgrade'),
-                        ('downgrade', 'downgrade'),
-                        ('slotted_add', 'in new slot'),
-                        ('replace', 'reinstall')
-                       ]
+            op_types = (
+                ('add', 'new'),
+                ('upgrade', 'upgrade'),
+                ('downgrade', 'downgrade'),
+                ('slotted_add', 'in new slot'),
+                ('replace', 'reinstall'),
+            )
             op_list = []
             for op_type, op_str in op_types:
                 num_ops = d.pop(op_type, 0)
@@ -276,9 +280,9 @@ class CountingFormatter(Formatter):
                     if op_str == 'new':
                         op_list.append('%i %s' % (num_ops, op_str))
                     else:
-                        op_list.append('%i %s%s' % (num_ops, op_str, 's'[num_ops==1:]))
+                        op_list.append('%i %s%s' % (num_ops, op_str, 's'[num_ops == 1:]))
             if d:
-                op_list.append('%i other op%s' % (len(d), 's'[len(d)==1:]))
+                op_list.append('%i other op%s' % (len(d), 's'[len(d) == 1:]))
             if op_list:
                 self.out.write(' (' + ', '.join(op_list) + ')', autoline=False)
             if self.download_size:
@@ -298,8 +302,8 @@ class PortageFormatter(CountingFormatter):
         kwargs.setdefault("use_expand", set())
         kwargs.setdefault("use_expand_hidden", set())
         CountingFormatter.__init__(self, **kwargs)
-        self.use_splitter = use_expand_filter(self.use_expand,
-            self.use_expand_hidden)
+        self.use_splitter = use_expand_filter(
+            self.use_expand, self.use_expand_hidden)
         # Map repo location to an index.
         self.repos = {}
 
@@ -430,11 +434,13 @@ class PortageFormatter(CountingFormatter):
                 installed = ''.join(old_pkg)
         elif op_type == 'slotted_add':
             if self.verbose:
-                pkgs = sorted(['%s:%s' % (x.fullver, x.slot) for x in \
-                               self.livefs_repos.match(op.pkg.unversioned_atom)])
+                pkgs = sorted([
+                    '%s:%s' % (x.fullver, x.slot) for x in
+                    self.livefs_repos.match(op.pkg.unversioned_atom)])
             else:
-                pkgs = sorted([x.fullver for x in \
-                               self.livefs_repos.match(op.pkg.unversioned_atom)])
+                pkgs = sorted([
+                    x.fullver for x in
+                    self.livefs_repos.match(op.pkg.unversioned_atom)])
             installed = ', '.join(pkgs)
 
         if installed:
@@ -446,7 +452,8 @@ class PortageFormatter(CountingFormatter):
         # format_use which can take either 2 or 4 arguments.
         uses = ((), ())
         if op.desc == 'replace':
-            uses = (self.iuse_strip(op.pkg.iuse), op.pkg.use,
+            uses = (
+                self.iuse_strip(op.pkg.iuse), op.pkg.use,
                 self.iuse_strip(op.old_pkg.iuse), op.old_pkg.use)
         elif op.desc == 'add':
             uses = (self.iuse_strip(op.pkg.iuse), op.pkg.use)
@@ -462,12 +469,14 @@ class PortageFormatter(CountingFormatter):
 
         if self.verbose:
             if not op.pkg.built:
-                downloads = set(f.filename for f in op.pkg.fetchables
+                downloads = set(
+                    f.filename for f in op.pkg.fetchables
                     if not os.path.isfile(pjoin(self.distdir, f.filename)))
                 if downloads.difference(self.downloads):
                     self.downloads.update(downloads)
-                    size = sum(v.size for dist, v in
-                               op.pkg.manifest.distfiles.iteritems() if dist in downloads)
+                    size = sum(
+                        v.size for dist, v in
+                        op.pkg.manifest.distfiles.iteritems() if dist in downloads)
                     if size:
                         self.download_size += size
                         out.write(' ', sizeof_fmt(size))
@@ -638,13 +647,15 @@ class PaludisFormatter(CountingFormatter):
                     op_type = 'upgrade'
                 else:
                     op_type = 'downgrade'
-                out.write(out.fg('yellow'), "[%s %s]" % (
-                        op_type[0].upper(), op.old_pkg.fullver))
+                out.write(
+                    out.fg('yellow'), "[%s %s]" %
+                    (op_type[0].upper(), op.old_pkg.fullver))
             else:
                 out.write(out.fg('yellow'), "[R]")
         else:
             # Shouldn't reach here
-            logger.warning("unknown op type encountered: desc(%r), %r",
+            logger.warning(
+                "unknown op type encountered: desc(%r), %r",
                 (op.desc, op))
         self.visit_op(op_type)
 
@@ -685,6 +696,7 @@ pkgcore_factory = formatter_factory_generator(PkgcoreFormatter)
 portage_factory = formatter_factory_generator(PortageFormatter)
 paludis_factory = formatter_factory_generator(PaludisFormatter)
 
+
 @configurable(typename='pmerge_formatter')
 def portage_verbose_factory():
     """Version of portage formatter that is always in verbose mode."""
@@ -692,6 +704,7 @@ def portage_verbose_factory():
         kwargs['verbose'] = True
         return PortageFormatter(**kwargs)
     return factory
+
 
 def sizeof_fmt(size):
     for x in ['B', 'kB', 'MB', 'GB']:

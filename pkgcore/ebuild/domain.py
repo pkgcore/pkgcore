@@ -101,16 +101,16 @@ class domain(pkgcore.config.domain.domain):
     _types = {
         'profile': 'ref:profile', 'fetcher': 'ref:fetcher',
         'repositories': 'lazy_refs:repo', 'vdb': 'lazy_refs:repo',
-        'name': 'str', 'triggers':'lazy_refs:trigger',
-        }
+        'name': 'str', 'triggers': 'lazy_refs:trigger',
+    }
     for _thing in list(const.incrementals) + ['bashrc']:
         _types[_thing] = 'list'
-    for _thing in [
-        'package.mask', 'package.keywords', 'package.license', 'package.use',
-        'package.unmask', 'package.env', 'package.accept_keywords']:
+    for _thing in ('package.mask', 'package.keywords', 'package.license',
+                   'package.use', 'package.unmask', 'package.env',
+                   'package.accept_keywords'):
         _types[_thing] = 'list'
-    for _thing in ['root', 'CHOST', 'CBUILD', 'CTARGET', 'CFLAGS', 'PATH',
-        'PORTAGE_TMPDIR', 'DISTCC_PATH', 'DISTCC_DIR', 'CCACHE_DIR']:
+    for _thing in ('root', 'CHOST', 'CBUILD', 'CTARGET', 'CFLAGS', 'PATH',
+                   'PORTAGE_TMPDIR', 'DISTCC_PATH', 'DISTCC_DIR', 'CCACHE_DIR'):
         _types[_thing] = 'str'
 
     # TODO this is missing defaults
@@ -219,7 +219,8 @@ class domain(pkgcore.config.domain.domain):
             if incremental not in settings or incremental in ("USE", "ACCEPT_LICENSE"):
                 continue
             s = set()
-            incremental_expansion(s, settings[incremental],
+            incremental_expansion(
+                s, settings[incremental],
                 'While expanding %s ' % (incremental,))
             settings[incremental] = tuple(s)
 
@@ -236,12 +237,13 @@ class domain(pkgcore.config.domain.domain):
             u2 = u.lower()+"_"
             use.update(u2 + x for x in v.split())
 
-        if not 'ACCEPT_KEYWORDS' in settings:
+        if 'ACCEPT_KEYWORDS' not in settings:
             raise Failure("No ACCEPT_KEYWORDS setting detected from profile, "
                           "or user config")
         s = set()
         default_keywords = []
-        incremental_expansion(s, settings['ACCEPT_KEYWORDS'],
+        incremental_expansion(
+            s, settings['ACCEPT_KEYWORDS'],
             'while expanding ACCEPT_KEYWORDS')
         default_keywords.extend(s)
         settings['ACCEPT_KEYWORDS'] = set(default_keywords)
@@ -296,7 +298,8 @@ class domain(pkgcore.config.domain.domain):
         self.enabled_use = ChunkedDataDict()
         self.enabled_use.add_bare_global(*split_negations(self.use))
         self.enabled_use.merge(profile.pkg_use)
-        self.enabled_use.update_from_stream(chunked_data(k, *split_negations(v)) for k,v in pkg_use)
+        self.enabled_use.update_from_stream(
+            chunked_data(k, *split_negations(v)) for k, v in pkg_use)
 
         for attr in ('', 'stable_'):
              c = ChunkedDataDict()
@@ -371,7 +374,7 @@ class domain(pkgcore.config.domain.domain):
 
         if profile.virtuals:
             l = [x for x in (getattr(v, 'old_style_virtuals', None)
-                for v in self.vdb) if x is not None]
+                 for v in self.vdb) if x is not None]
             profile_repo = profile.make_virtuals_repo(
                 multiplex.tree(*repositories), *l)
             self.repos_raw["profile virtuals"] = profile_repo
@@ -379,7 +382,8 @@ class domain(pkgcore.config.domain.domain):
             self.repos_configured["profile virtuals"] = profile_repo
             self.repos = [profile_repo] + self.repos
 
-        self.use_expand_re = re.compile("^(?:[+-])?(%s)_(.*)$" %
+        self.use_expand_re = re.compile(
+            "^(?:[+-])?(%s)_(.*)$" %
             "|".join(x.lower() for x in sorted(profile.use_expand, reverse=True)))
 
     def _extend_use_for_features(self, use_settings, features):
@@ -409,7 +413,8 @@ class domain(pkgcore.config.domain.domain):
         license_manager = getattr(pkg.repo, 'licenses', self.default_licenses_manager)
 
         for and_pair in pkg.license.dnf_solutions():
-            accepted = incremental_expansion_license(and_pair, license_manager.groups,
+            accepted = incremental_expansion_license(
+                and_pair, license_manager.groups,
                 raw_accepted_licenses,
                 msg_prefix="while checking ACCEPT_LICENSE for %s" % (pkg,))
             if accepted.issuperset(and_pair):
@@ -494,7 +499,7 @@ class domain(pkgcore.config.domain.domain):
         return map(itemgetter(1), flags), [(x[0].groups(), x[1]) for x in ue_flags]
 
     def get_package_use_unconfigured(self, pkg, for_metadata=True):
-        # roughly, this alog should result in the following, evaluated l->r
+        # roughly, this should result in the following, evaluated l->r:
         # non USE_EXPAND; profiles, pkg iuse, global configuration, package.use configuration, commandline?
         # stack profiles + pkg iuse; split it into use and use_expanded use;
         # do global configuration + package.use configuration overriding of non-use_expand use
@@ -503,8 +508,8 @@ class domain(pkgcore.config.domain.domain):
         pre_defaults = [x[1:] for x in pkg.iuse if x[0] == '+']
         if pre_defaults:
             pre_defaults, ue_flags = self.split_use_expand_flags(pre_defaults)
-            pre_defaults.extend(x[1]
-                for x in ue_flags if x[0][0].upper() not in self.settings)
+            pre_defaults.extend(
+                x[1] for x in ue_flags if x[0][0].upper() not in self.settings)
 
         attr = 'stable_' if self.stable_arch in pkg.keywords \
             and self.unstable_arch not in self.settings['ACCEPT_KEYWORDS'] else ''
@@ -557,7 +562,7 @@ class domain(pkgcore.config.domain.domain):
         # matching portage behaviour... it's whacked.
         base = pjoin(self.ebuild_hook_dir, pkg.category)
         for fp in (pkg.package, "%s:%s" % (pkg.package, pkg.slot),
-            getattr(pkg, "P", "nonexistent"), getattr(pkg, "PF", "nonexistent")):
+                   getattr(pkg, "P", "nonexistent"), getattr(pkg, "PF", "nonexistent")):
             fp = pjoin(base, fp)
             if os.path.exists(fp):
                 yield local_source(fp)

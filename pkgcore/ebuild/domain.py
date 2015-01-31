@@ -128,8 +128,8 @@ class domain(pkgcore.config.domain.domain):
         # here has already, but still more to add)
         self._triggers = triggers
 
-        # prevent critical variables from being changed by the user in make.conf
-        for k in set(profile.profile_only_variables).intersection(settings.keys()):
+        # prevent critical variables from being changed in make.conf
+        for k in profile.profile_only_variables.intersection(settings.keys()):
             del settings[k]
 
         if 'CHOST' in settings and 'CBUILD' not in settings:

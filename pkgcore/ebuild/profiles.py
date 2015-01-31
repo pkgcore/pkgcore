@@ -593,24 +593,15 @@ class ProfileStack(object):
 
     @klass.jit_attr
     def unmasks(self):
-        s = set()
-        for profile in self.stack:
-            s.update(profile.unmasks)
-        return frozenset(s)
+        return frozenset(chain.from_iterable(x.unmasks for x in self.stack))
 
     @klass.jit_attr
     def keywords(self):
-        l = []
-        for profile in self.stack:
-            l.extend(profile.keywords)
-        return tuple(l)
+        return tuple(chain.from_iterable(x.keywords for x in self.stack))
 
     @klass.jit_attr
     def accept_keywords(self):
-        l = []
-        for profile in self.stack:
-            l.extend(profile.accept_keywords)
-        return tuple(l)
+        return tuple(chain.from_iterable(x.accept_keywords for x in self.stack))
 
     def _incremental_masks(self, stack_override=None):
         if stack_override is None:

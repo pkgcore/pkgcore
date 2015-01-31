@@ -24,7 +24,8 @@ from snakeoil.osutils import pjoin
 from pkgcore.config import ConfigHint
 import pkgcore.config.domain
 from pkgcore.config.errors import BaseError
-from pkgcore.ebuild import const, atom
+from pkgcore.ebuild import const
+from pkgcore.ebuild.atom import atom as _atom
 from pkgcore.ebuild.misc import (
     ChunkedDataDict, chunked_data, collapsed_restrict_to_data,
     incremental_expansion, incremental_expansion_license,
@@ -78,7 +79,7 @@ def _mask_filter(masks, negate=False):
     atoms = defaultdict(list)
     globs = []
     for m in masks:
-        if isinstance(m, atom.atom):
+        if isinstance(m, _atom):
             atoms[m.key].append(m)
         else:
             globs.append(m)

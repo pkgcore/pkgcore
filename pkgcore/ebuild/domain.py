@@ -228,8 +228,6 @@ class domain(pkgcore.config.domain.domain):
 
         self._extend_use_for_features(use, settings.get("FEATURES", ()))
 
-        self.use_expand = frozenset(profile.use_expand)
-        self.use_expand_hidden = frozenset(profile.use_expand_hidden)
         for u in profile.use_expand:
             v = settings.get(u)
             if v is None:
@@ -381,7 +379,7 @@ class domain(pkgcore.config.domain.domain):
             self.repos = [profile_repo] + self.repos
 
         self.use_expand_re = re.compile("^(?:[+-])?(%s)_(.*)$" %
-            "|".join(x.lower() for x in sorted(self.use_expand, reverse=True)))
+            "|".join(x.lower() for x in sorted(profile.use_expand, reverse=True)))
 
     def _extend_use_for_features(self, use_settings, features):
         # hackish implementation; if test is on, flip on the flag

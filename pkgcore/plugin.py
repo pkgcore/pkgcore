@@ -19,6 +19,7 @@ __all__ = ("initialize_cache", "get_plugins", "get_plugin")
 # causes problems.
 
 from collections import defaultdict
+from importlib import import_module
 import operator
 import os.path
 
@@ -220,8 +221,8 @@ def initialize_cache(package, force=False):
             entries = []
             qualname = '.'.join((package.__name__, modname))
             try:
-                module = modules.load_module(qualname)
-            except modules.FailedImport:
+                module = import_module(qualname)
+            except ImportError:
                 # This is a serious problem, but if we blow up
                 # here we cripple pkgcore entirely which may make
                 # fixing the problem impossible. So be noisy but

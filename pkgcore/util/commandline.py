@@ -536,11 +536,11 @@ def python_namespace_type(value, module=False, attribute=False):
     """
     try:
         if module:
-            return modules.load_module(value)
+            return import_module(value)
         elif attribute:
             return modules.load_attribute(value)
         return modules.load_any(value)
-    except modules.FailedImport as err:
+    except (ImportError, modules.FailedImport) as err:
         compatibility.raise_from(argparse.ArgumentTypeError(str(err)))
 
 

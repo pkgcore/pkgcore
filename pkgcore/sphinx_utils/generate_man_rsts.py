@@ -2,12 +2,12 @@
 
 import argparse
 import errno
+from importlib import import_module
 import os
 import re
 import sys
 
 from snakeoil.currying import partial
-from snakeoil.modules import load_module
 from snakeoil.osutils import pjoin
 
 
@@ -84,7 +84,7 @@ class ManConverter(object):
             out_name = src.rsplit(".", 1)[-1]
         out_path = pjoin(base_path, out_name)
         script_time = int(os.stat(__file__).st_mtime)
-        module = load_module(src)
+        module = import_module(src)
         cur_time = int(os.stat(module.__file__).st_mtime)
         cur_time = max([cur_time, script_time])
         try:

@@ -7,6 +7,7 @@ checkout or unpacked tarball. It adds the parent of that "bin" dir to
 sys.path unconditionally.
 """
 
+from importlib import import_module
 import os
 import os.path as osp
 import sys
@@ -15,7 +16,6 @@ sys.path.insert(1, osp.dirname(osp.dirname(osp.abspath(__file__))))
 
 if __name__ == '__main__':
     try:
-        from snakeoil import modules
         from pkgcore.util import commandline
     except ImportError:
         sys.stderr.write('Cannot import either snakeoil or pkgcore!\n')
@@ -30,8 +30,8 @@ if __name__ == '__main__':
     os.environ["PKGCORE_SCRIPT_PATH"] = osp.dirname(osp.abspath(__file__))
     name = osp.basename(sys.argv[0]).replace("-", "_")
     try:
-        script = modules.load_module('pkgcore.scripts.%s' % (name,))
-    except modules.FailedImport:
+        script = import_module('pkgcore.scripts.%s' % (name,))
+    except ImportError:
         sys.stderr.write('Cannot load script %s.\n' % (name,))
         if '--debug' in sys.argv:
             raise

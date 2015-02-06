@@ -2,12 +2,12 @@
 
 """Wrapper script that runs a pkgcore script from sys.path."""
 
+from importlib import import_module
 import os.path as osp
 import sys
 
 if __name__ == '__main__':
     try:
-        from snakeoil import modules
         from pkgcore.util import commandline
     except ImportError:
         sys.stderr.write('Cannot import either snakeoil or pkgcore!\n')
@@ -21,8 +21,8 @@ if __name__ == '__main__':
 
     name = osp.basename(sys.argv[0]).replace("-", "_")
     try:
-        script = modules.load_module('pkgcore.scripts.%s' % (name,))
-    except modules.FailedImport:
+        script = import_module('pkgcore.scripts.%s' % (name,))
+    except ImportError:
         sys.stderr.write('Cannot load script %s.\n' % (name,))
         if '--debug' in sys.argv:
             raise

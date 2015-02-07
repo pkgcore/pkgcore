@@ -9,24 +9,18 @@ import sys
 if __name__ == '__main__':
     try:
         from pkgcore.util import commandline
-    except ImportError:
-        sys.stderr.write('Cannot import either snakeoil or pkgcore!\n')
-        sys.stderr.write('Verify they are properly installed and/or '
-                         'PYTHONPATH is set correctly for python %s.\n' %
-                         (".".join(map(str, sys.version_info[:3])),))
+        name = osp.basename(sys.argv[0]).replace("-", "_")
+        script = import_module('pkgcore.scripts.%s' % (name,))
+    except ImportError as e:
+        sys.stderr.write(str(e) + '!\n')
+        sys.stderr.write(
+            'Verify that snakeoil and pkgcore are properly installed '
+            'and/or PYTHONPATH is set correctly for python %s.\n' %
+            (".".join(map(str, sys.version_info[:3])),))
         if '--debug' in sys.argv:
             raise
         sys.stderr.write('Add --debug to the commandline for a traceback.\n')
         sys.exit(1)
 
-    name = osp.basename(sys.argv[0]).replace("-", "_")
-    try:
-        script = import_module('pkgcore.scripts.%s' % (name,))
-    except ImportError:
-        sys.stderr.write('Cannot load script %s.\n' % (name,))
-        if '--debug' in sys.argv:
-            raise
-        sys.stderr.write('Add --debug to the commandline for a traceback.\n')
-        sys.exit(1)
     subcommands = getattr(script, 'argparser', None)
     commandline.main(subcommands)

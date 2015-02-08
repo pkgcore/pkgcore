@@ -448,8 +448,6 @@ def config_from_make_conf(location="/etc/", profile_override=None):
     except errors.ParsingError as e:
         if not getattr(getattr(e, 'exc', None), 'errno', None) == errno.ENOENT:
             raise
-        default_repo_opts, repo_opts = load_repos_conf(
-            pjoin(config_root, 'usr/share/portage/config/repos.conf'))
 
     if repo_opts:
         main_repo = repo_opts[default_repo_opts['main-repo']]['location']

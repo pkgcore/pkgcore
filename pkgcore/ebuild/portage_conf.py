@@ -31,6 +31,7 @@ demandload(
     'snakeoil.xml:etree',
     'pkgcore.config:errors',
     'pkgcore.ebuild:profiles',
+    'pkgcore.fs.livefs:iter_scan',
     'pkgcore.log:logger',
 )
 
@@ -319,6 +320,49 @@ def load_make_config(vars_dict, path, allow_sourcing=False, required=True,
     vars_dict.update(new_vars)
 
 
+def load_repos_conf(path):
+    """parse repos.conf files
+
+    :param path: path to the repos.conf which can be a regular file or
+        directory, if a directory is passed all the non-hidden files within
+        that directory are parsed in alphabetical order.
+    """
+    if os.path.isdir(path):
+        files = iter_scan(path)
+        files = sorted(x.location for x in files if x.is_reg
+                       and not x.basename.startswith('.'))
+    else:
+        files = [path]
+
+    defaults = {}
+    repo_opts = {}
+    for fp in files:
+        try:
+            with open(fp) as f:
+                config = configparser.ConfigParser()
+                config.read_file(f)
+        except EnvironmentError as e:
+            if e.errno == errno.EACCES:
+                raise_from(errors.PermissionDeniedError(fp, write=False))
+            raise_from(errors.ParsingError("parsing %r" % (fp,), exception=e))
+
+        defaults.update(config.defaults())
+        for repo in config.sections():
+            repo_opts[repo] = {k: v for k, v in config.items(repo)}
+
+            # only the location setting is strictly required
+            if 'location' not in repo_opts[repo]:
+                raise errors.ParsingError(
+                    "%s: repo '%s' missing location setting" % (fp, repo))
+
+    # default to gentoo as the master repo is unset
+    if 'main-repo' not in defaults:
+        defaults['main-repo'] = 'gentoo'
+
+    del config
+    return defaults, repo_opts
+
+
 @configurable({'location': 'str'}, typename='configsection')
 @errors.ParsingError.wrap_exception("while loading portage configuration")
 def config_from_make_conf(location="/etc/", profile_override=None):
@@ -395,12 +439,47 @@ def config_from_make_conf(location="/etc/", profile_override=None):
     }
     new_config["vdb"] = basics.AutoConfigSection(kwds)
 
-    portdir = normpath(os.environ.get(
-        "PORTDIR", conf_dict.pop("PORTDIR", "/usr/portage")).strip())
-    portdir_overlays = os.environ.get(
-        "PORTDIR_OVERLAY", conf_dict.pop("PORTDIR_OVERLAY", "")).split()
-    portdir_overlays = [normpath(x) for x in portdir_overlays]
-    repos = [portdir] + portdir_overlays
+    # options used by rsync-based syncers
+    rsync_opts = isolate_rsync_opts(conf_dict)
+
+    repo_opts = {}
+    overlay_syncers = {}
+    try:
+        default_repo_opts, repo_opts = load_repos_conf(
+            pjoin(portage_base, 'repos.conf'))
+    except errors.ParsingError as e:
+        if not getattr(getattr(e, 'exc', None), 'errno', None) == errno.ENOENT:
+            raise
+        default_repo_opts, repo_opts = load_repos_conf(
+            pjoin(config_root, 'usr/share/portage/config/repos.conf'))
+
+    if repo_opts:
+        main_repo = repo_opts[default_repo_opts['main-repo']]['location']
+        overlay_repos = [opts['location'] for repo, opts in repo_opts.iteritems()
+                         if opts['location'] != main_repo]
+    else:
+        # fallback to PORTDIR and PORTDIR_OVERLAY settings
+        main_repo = normpath(os.environ.get(
+            "PORTDIR", conf_dict.pop("PORTDIR", "/usr/portage")).strip())
+        overlay_repos = os.environ.get(
+            "PORTDIR_OVERLAY", conf_dict.pop("PORTDIR_OVERLAY", "")).split()
+
+        overlay_repos = [normpath(x) for x in overlay_repos]
+
+        main_syncer = conf_dict.pop("SYNC", None)
+        if main_syncer is not None:
+            make_syncer(new_config, main_repo, main_syncer, rsync_opts)
+
+        if overlay_repos and '-layman-sync' not in features:
+            overlay_syncers = add_layman_syncers(
+                new_config, rsync_opts, overlay_repos, config_root=config_root)
+
+    if overlay_repos and '-autodetect-sync' not in features:
+        for path in overlay_repos:
+            if path not in overlay_syncers:
+                overlay_syncers[path] = make_autodetect_syncer(new_config, path)
+
+    repos = [main_repo] + overlay_repos
     default_repos = list(reversed(repos))
 
     new_config['ebuild-repo-common'] = basics.AutoConfigSection({
@@ -410,33 +489,17 @@ def config_from_make_conf(location="/etc/", profile_override=None):
         'ignore_paludis_versioning': ('ignore-paludis-versioning' in features),
     })
 
-    # used by PORTDIR syncer, and any layman defined syncers
-    rsync_opts = isolate_rsync_opts(conf_dict)
-    portdir_syncer = conf_dict.pop("SYNC", None)
-    if portdir_syncer is not None:
-        make_syncer(new_config, portdir, portdir_syncer, rsync_opts)
-
-    if portdir_overlays and '-layman-sync' not in features:
-        overlay_syncers = add_layman_syncers(
-            new_config, rsync_opts, portdir_overlays, config_root=config_root)
-    else:
-        overlay_syncers = {}
-    if portdir_overlays and '-autodetect-sync' not in features:
-        for path in portdir_overlays:
-            if path not in overlay_syncers:
-                overlay_syncers[path] = make_autodetect_syncer(new_config, path)
-
     rsync_portdir_cache = 'metadata-transfer' not in features
     # if a metadata cache exists, use it.
     if rsync_portdir_cache:
         for cache_type, frag in (('flat_hash.md5_cache', 'md5-cache'),
                                  ('metadata.database', 'cache')):
-            if not os.path.exists(pjoin(portdir, 'metadata', frag)):
+            if not os.path.exists(pjoin(main_repo, 'metadata', frag)):
                 continue
-            new_config["cache:%s/metadata/cache" % (portdir,)] = basics.AutoConfigSection({
+            new_config["cache:%s/metadata/cache" % (main_repo,)] = basics.AutoConfigSection({
                 'class': 'pkgcore.cache.' + cache_type,
                 'readonly': True,
-                'location': portdir,
+                'location': main_repo,
             })
             break
         else:
@@ -456,7 +519,7 @@ def config_from_make_conf(location="/etc/", profile_override=None):
         }
         if 'sync:%s' % (tree_loc,) in new_config:
             conf['syncer'] = 'sync:%s' % (tree_loc,)
-        if tree_loc == portdir:
+        if tree_loc == main_repo:
             conf['default'] = True
         new_config['raw:' + tree_loc] = basics.AutoConfigSection(conf)
 
@@ -468,27 +531,27 @@ def config_from_make_conf(location="/etc/", profile_override=None):
         cache_name = 'cache:%s' % (tree_loc,)
         new_config[cache_name] = mk_simple_cache(config_root, tree_loc)
         kwds['cache'] = cache_name
-        if tree_loc == portdir:
+        if tree_loc == main_repo:
             kwds['class'] = 'pkgcore.ebuild.repository.tree'
             if rsync_portdir_cache:
-                kwds['cache'] = 'cache:%s/metadata/cache %s' % (portdir, cache_name)
+                kwds['cache'] = 'cache:%s/metadata/cache %s' % (main_repo, cache_name)
         else:
-            kwds['parent_repo'] = portdir
+            kwds['parent_repo'] = main_repo
         new_config[tree_loc] = basics.AutoConfigSection(kwds)
 
-    new_config['portdir'] = basics.section_alias(portdir, 'repo')
+    new_config['portdir'] = basics.section_alias(main_repo, 'repo')
 
     # XXX: Hack for portage-2 profile format support. We need to figure out how
     # to dynamically create this from the config at runtime on attr access.
     profiles.ProfileNode._repo_map = ImmutableDict(repo_map)
 
-    if portdir_overlays:
+    if overlay_repos:
         new_config['repo-stack'] = basics.FakeIncrementalDictConfigSection(
             my_convert_hybrid, {
                 'class': 'pkgcore.repository.multiplex.config_tree',
                 'repositories': tuple(default_repos)})
     else:
-        new_config['repo-stack'] = basics.section_alias(portdir, 'repo')
+        new_config['repo-stack'] = basics.section_alias(main_repo, 'repo')
 
     new_config['vuln'] = basics.AutoConfigSection({
         'class': SecurityUpgradesViaProfile,
@@ -581,7 +644,7 @@ def config_from_make_conf(location="/etc/", profile_override=None):
     # it passes to the command.
     # *everything* in the conf_dict must be str values also.
     distdir = normpath(os.environ.get(
-        "DISTDIR", conf_dict.pop("DISTDIR", pjoin(portdir, "distdir"))))
+        "DISTDIR", conf_dict.pop("DISTDIR", pjoin(main_repo, "distdir"))))
     add_fetcher(new_config, conf_dict, distdir)
 
     # finally... domain.

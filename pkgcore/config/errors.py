@@ -24,6 +24,7 @@ def _identify_functor_source(functor):
         return functor.__name__
     return '%s.%s' % (module, functor.__name__)
 
+
 class BaseError(Exception):
     pass
 
@@ -87,12 +88,12 @@ class ParsingError(ConfigurationError):
         self.exc = exception
 
     def __str__(self):
-        return "Parsing Failed: %s\n%s" % (self.message, self.exc)
+        return "Parsing failed: %s\n%s" % (self.message, self.exc)
 
     @classmethod
     def wrap_exception(cls, message):
-        return currying.wrap_exception(cls, message=message,
-            pass_error='exception')
+        return currying.wrap_exception(
+            cls, message=message, pass_error='exception')
 
 
 class CollapseInheritOnly(ConfigurationError):

@@ -40,9 +40,7 @@ def my_convert_hybrid(manager, val, arg_type):
     """Modified convert_hybrid using a sequence of strings for section_refs."""
     if arg_type.startswith('refs:'):
         subtype = 'ref:' + arg_type.split(':', 1)[1]
-        return list(
-            basics.LazyNamedSectionRef(manager, subtype, name)
-            for name in val)
+        return [basics.LazyNamedSectionRef(manager, subtype, name) for name in val]
     return basics.convert_hybrid(manager, val, arg_type)
 
 
@@ -68,8 +66,8 @@ def add_layman_syncers(new_config, rsync_opts, overlay_paths, config_root='/',
         with open(pjoin(config_root, default_loc)) as f:
             c = configparser.ConfigParser()
             c.read_file(f)
-    except IOError as ie:
-        if ie.errno != errno.ENOENT:
+    except IOError as e:
+        if e.errno != errno.ENOENT:
             raise
         return {}
 
@@ -79,8 +77,8 @@ def add_layman_syncers(new_config, rsync_opts, overlay_paths, config_root='/',
 
     try:
         xmlconf = etree.parse(overlay_xml)
-    except IOError as ie:
-        if ie.errno != errno.ENOENT:
+    except IOError as e:
+        if e.errno != errno.ENOENT:
             raise
         return {}
     overlays = xmlconf.getroot()
@@ -305,11 +303,11 @@ def load_make_config(vars_dict, path, allow_sourcing=False, required=True,
     try:
         new_vars = read_bash_dict(
             path, vars_dict=vars_dict, sourcing_command=sourcing_command)
-    except EnvironmentError as ie:
-        if ie.errno == errno.EACCES:
+    except EnvironmentError as e:
+        if e.errno == errno.EACCES:
             raise_from(errors.PermissionDeniedError(path, write=False))
-        if ie.errno != errno.ENOENT or required:
-            raise_from(errors.ParsingError("parsing %r" % (path,), exception=ie))
+        if e.errno != errno.ENOENT or required:
+            raise_from(errors.ParsingError("parsing %r" % (path,), exception=e))
         return
 
     if incrementals:
@@ -392,7 +390,7 @@ def config_from_make_conf(location="/etc/", profile_override=None):
         load_make_config(conf_dict, pjoin(base_path, 'make.globals'))
     except errors.ParsingError as e:
         if not getattr(getattr(e, 'exc', None), 'errno', None) == errno.ENOENT:
-           raise
+            raise
         try:
             load_make_config(
                 conf_dict,
@@ -410,8 +408,8 @@ def config_from_make_conf(location="/etc/", profile_override=None):
         allow_sourcing=True, incrementals=True)
 
     root = os.environ.get("ROOT", conf_dict.get("ROOT", "/"))
-    gentoo_mirrors = list(
-        x.rstrip("/")+"/distfiles" for x in conf_dict.pop("GENTOO_MIRRORS", "").split())
+    gentoo_mirrors = [
+        x.rstrip("/") + "/distfiles" for x in conf_dict.pop("GENTOO_MIRRORS", "").split()]
 
     # this is flawed... it'll pick up -some-feature
     features = conf_dict.get("FEATURES", "").split()

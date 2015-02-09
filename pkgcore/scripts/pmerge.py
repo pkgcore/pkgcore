@@ -90,7 +90,6 @@ merge_mode.add_argument(
     help="do only the fetch steps of the resolved plan")
 merge_mode.add_argument(
     '-1', '--oneshot', action='store_true',
-    default=False,
     help="do not record changes in the world file; if a set is "
          "involved, defaults to forcing oneshot")
 
@@ -115,16 +114,14 @@ resolution_options.add_argument(
          "a depends on b, and b depends on a, with neither built is an "
          "example.")
 resolution_options.add_argument(
-    '-B', '--with-built-depends',
-    action='store_true', default=False,
+    '-B', '--with-built-depends', action='store_true',
     help="whether or not to process build depends for pkgs that "
          "are already built; defaults to ignoring them")
 resolution_options.add_argument(
     '-O', '--nodeps', action='store_true',
     help='disable dependency resolution')
 resolution_options.add_argument(
-    '-n', '--noreplace', action='store_false',
-    dest='replace', default=True,
+    '-n', '--noreplace', action='store_false', dest='replace',
     help="don't reinstall target atoms if they're already installed")
 resolution_options.add_argument(
     '-k', '--usepkg', action='store_true',

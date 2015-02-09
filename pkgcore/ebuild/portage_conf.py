@@ -450,25 +450,26 @@ def config_from_make_conf(location="/etc/", profile_override=None, **kwargs):
             raise
 
     if repo_opts:
-        main_repo = repo_opts[default_repo_opts['main-repo']]['location']
+        main_repo_id = default_repo_opts['main-repo']
+        main_repo = repo_opts[main_repo_id]['location']
         overlay_repos = [opts['location'] for repo, opts in repo_opts.iteritems()
                          if opts['location'] != main_repo]
+        main_syncer = repo_opts[main_repo_id].get('sync-uri', None)
     else:
         # fallback to PORTDIR and PORTDIR_OVERLAY settings
         main_repo = normpath(os.environ.get(
             "PORTDIR", conf_dict.pop("PORTDIR", "/usr/portage")).strip())
         overlay_repos = os.environ.get(
             "PORTDIR_OVERLAY", conf_dict.pop("PORTDIR_OVERLAY", "")).split()
-
         overlay_repos = [normpath(x) for x in overlay_repos]
-
         main_syncer = conf_dict.pop("SYNC", None)
-        if main_syncer is not None:
-            make_syncer(new_config, main_repo, main_syncer, rsync_opts)
 
         if overlay_repos and '-layman-sync' not in features:
             overlay_syncers = add_layman_syncers(
                 new_config, rsync_opts, overlay_repos, config_root=config_root)
+
+    if main_syncer is not None:
+        make_syncer(new_config, main_repo, main_syncer, rsync_opts)
 
     if overlay_repos and '-autodetect-sync' not in features:
         for path in overlay_repos:

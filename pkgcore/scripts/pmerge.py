@@ -114,8 +114,8 @@ resolution_options.add_argument(
          "a depends on b, and b depends on a, with neither built is an "
          "example.")
 resolution_options.add_argument(
-    '-B', '--with-built-depends', action='store_true',
-    help="whether or not to process build depends for pkgs that "
+    '--with-bdeps', action='store_true',
+    help="whether or not to process build dependencies for pkgs that "
          "are already built; defaults to ignoring them")
 resolution_options.add_argument(
     '-O', '--nodeps', action='store_true',
@@ -520,7 +520,7 @@ def main(options, out, err):
         installed_repos.repositories, source_repos.repositories,
         verify_vdb=options.deep, nodeps=options.nodeps,
         drop_cycles=options.ignore_cycles, force_replace=options.replace,
-        process_built_depends=options.with_built_depends, **extra_kwargs)
+        process_built_depends=options.with_bdeps, **extra_kwargs)
 
     if options.preload_vdb_state:
         out.write(out.bold, ' * ', out.reset, 'Preloading vdb... ')

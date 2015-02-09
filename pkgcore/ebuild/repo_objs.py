@@ -400,17 +400,18 @@ class RepoConfig(syncable.tree):
             v = 'pms'
         sf(self, 'cache_format', list(v)[0])
 
-        v = set(data.get('profile-formats', 'pms').lower().split())
-        if not v:
-            # dumb ass overlay devs, treat it as missing.
-            v = set(['pms'])
-        unknown = v.difference(['pms', 'portage-1', 'portage-2'])
+        profile_formats = set(data.get('profile-formats', 'pms').lower().split())
+        if not profile_formats:
+            logger.warning("repository at %r has unset profile-formats, "
+                           "defaulting to pms")
+            profile_formats = set(['pms'])
+        unknown = profile_formats.difference(['pms', 'portage-1', 'portage-2'])
         if unknown:
             logger.warning(
-                "repository at %r has an unsupported profile format: %s" %
-                (self.location, ', '.join(repr(x) for x in sorted(v))))
-            v = 'pms'
-        sf(self, 'profile_format', list(v)[0])
+                "repository at %r has an unsupported profile format(s): %s" %
+                (self.location, ', '.join(repr(x) for x in sorted(unknown))))
+            profile_formats = set(['pms'])
+        sf(self, 'profile_formats', profile_formats)
 
     @klass.jit_attr
     def raw_known_arches(self):

@@ -178,7 +178,7 @@ class ProfileNode(object):
     @load_property("parent")
     def parent_paths(self, data):
         repo_config = self.repoconfig
-        if repo_config is not None and repo_config.profile_format == 'portage-2':
+        if repo_config is not None and 'portage-2' in repo_config.profile_formats:
             l = []
             for repo_id, separator, path in (x.partition(':') for x in data):
                 if separator:
@@ -415,7 +415,7 @@ class ProfileNode(object):
         # caching is a bit overprotective, even if pms_strict defaults to True,
         # cls(path) is not cls(path, pms_strict=True)
 
-        if repo_config is not None and repo_config.profile_format != 'pms':
+        if repo_config is not None and 'pms' not in repo_config.profile_formats:
             obj = cls(path, pms_strict=False)
         else:
             obj = cls(path)

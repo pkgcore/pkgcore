@@ -584,8 +584,8 @@ class _SubParser(argparse._SubParsersAction):
         # level parser can decide what to do with them
         namespace, arg_strings = parser.parse_known_args(arg_strings, namespace)
         if arg_strings:
-            vars(namespace).setdefault(_UNRECOGNIZED_ARGS_ATTR, [])
-            getattr(namespace, _UNRECOGNIZED_ARGS_ATTR).extend(arg_strings)
+            vars(namespace).setdefault(argparse._UNRECOGNIZED_ARGS_ATTR, [])
+            getattr(namespace, argparse._UNRECOGNIZED_ARGS_ATTR).extend(arg_strings)
 
 
 class ArgumentParser(argparse.ArgumentParser):

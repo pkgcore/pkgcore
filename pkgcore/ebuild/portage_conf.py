@@ -559,6 +559,7 @@ def config_from_make_conf(location="/etc/", profile_override=None, **kwargs):
         'vuln', SecurityUpgradesViaProfile.pkgcore_config_type.typename)
 
     # binpkg.
+    buildpkg = 'buildpkg' in features or kwargs.get('buildpkg', False)
     pkgdir = os.environ.get("PKGDIR", conf_dict.pop('PKGDIR', None))
     if pkgdir is not None:
         try:
@@ -566,8 +567,8 @@ def config_from_make_conf(location="/etc/", profile_override=None, **kwargs):
         except OSError as oe:
             if oe.errno != errno.ENOENT:
                 raise
-            if set(features).intersection(('buildpkg', 'pristine-buildpkg',
-                                           'buildsyspkg', 'unmerge-backup')):
+            if buildpkg or set(features).intersection(
+                    ('pristine-buildpkg', 'buildsyspkg', 'unmerge-backup')):
                 logger.warning("disabling buildpkg related features since PKGDIR doesn't exist")
             pkgdir = None
         else:
@@ -576,9 +577,9 @@ def config_from_make_conf(location="/etc/", profile_override=None, **kwargs):
                                "exist, or lacks 0755 minimal permissions")
                 pkgdir = None
     else:
-       if set(features).intersection(('buildpkg', 'pristine-buildpkg',
-                                      'buildsyspkg', 'unmerge-backup')):
-           logger.warning("disabling buildpkg related features since PKGDIR is unset")
+        if buildpkg or set(features).intersection(
+                ('pristine-buildpkg', 'buildsyspkg', 'unmerge-backup')):
+            logger.warning("disabling buildpkg related features since PKGDIR is unset")
 
     # yes, round two; may be disabled from above and massive else block sucks
     if pkgdir is not None:
@@ -590,7 +591,7 @@ def config_from_make_conf(location="/etc/", profile_override=None, **kwargs):
             })
             default_repos.append('binpkg')
 
-        if 'buildpkg' in features:
+        if buildpkg:
             add_trigger(
                 'buildpkg_trigger', 'pkgcore.merge.triggers.SavePkg',
                 pristine='no', target_repo='binpkg')

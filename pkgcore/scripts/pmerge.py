@@ -46,6 +46,7 @@ class StoreTarget(argparse._AppendAction):
                     self, parser, namespace,
                     parserestrict.parse_match(x), option_string=option_string)
 
+
 argparser = commandline.mk_argparser(
     domain=True, description=__doc__.split('\n', 1)[0])
 argparser.add_argument(
@@ -123,6 +124,9 @@ resolution_options.add_argument(
 resolution_options.add_argument(
     '-n', '--noreplace', action='store_false', dest='replace',
     help="don't reinstall target atoms if they're already installed")
+resolution_options.add_argument(
+    '-b', '--buildpkg', action='store_true',
+    help="build binary packages")
 resolution_options.add_argument(
     '-k', '--usepkg', action='store_true',
     help="prefer to use binpkgs")

@@ -3,13 +3,13 @@
 """Wrapper script that runs a pkgcore script from sys.path."""
 
 from importlib import import_module
-import os.path as osp
+import os
 import sys
 
 if __name__ == '__main__':
     try:
         from pkgcore.util import commandline
-        name = osp.basename(sys.argv[0]).replace("-", "_")
+        name = os.path.basename(sys.argv[0]).replace("-", "_")
         script = import_module('pkgcore.scripts.%s' % (name,))
     except ImportError as e:
         sys.stderr.write(str(e) + '!\n')

@@ -363,7 +363,7 @@ def load_repos_conf(path):
 
 @configurable({'location': 'str'}, typename='configsection')
 @errors.ParsingError.wrap_exception("while loading portage configuration")
-def config_from_make_conf(location="/etc/", profile_override=None):
+def config_from_make_conf(location="/etc/", profile_override=None, **kwargs):
     """
     generate a config from a file location
 

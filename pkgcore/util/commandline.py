@@ -711,9 +711,10 @@ def store_config(namespace, attr):
                 for section, vals in d.iteritems()}
                for d in configs if d]
 
-    config = load_config(skip_config_files=namespace.empty_config,
-        debug=getattr(namespace, 'debug', False),
-        append_sources=tuple(configs))
+    config = load_config(
+        skip_config_files=namespace.empty_config,
+        append_sources=tuple(configs),
+        **vars(namespace))
     setattr(namespace, attr, config)
 
 

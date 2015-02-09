@@ -67,7 +67,7 @@ def load_config(user_conf_file=USER_CONF_FILE,
                 system_conf_file=SYSTEM_CONF_FILE,
                 debug=False, prepend_sources=(), append_sources=(),
                 skip_config_files=False, profile_override=None,
-                location='/etc/'):
+                location='/etc/', **kwargs):
     """
     the main entry point for any code looking to use pkgcore.
 
@@ -100,6 +100,6 @@ def load_config(user_conf_file=USER_CONF_FILE,
         else:
             # make.conf...
             configs.append(config_from_make_conf(
-                location=location, profile_override=profile_override))
+                location=location, profile_override=profile_override, **kwargs))
     configs.extend(append_sources)
     return central.CompatConfigManager(central.ConfigManager(configs, debug=debug))

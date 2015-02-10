@@ -278,12 +278,13 @@ def mk_simple_cache(config_root, tree_loc):
 
     if repo_config.cache_format == 'md5-dict':
         kls = 'pkgcore.cache.flat_hash.md5_cache'
-        tree_loc = pjoin(config_root, tree_loc.lstrip('/'), 'metadata', 'md5-cache')
+        tree_loc = pjoin(config_root, tree_loc.lstrip('/'))
+        cache_parent_dir = pjoin(tree_loc, 'metadata', 'md5-cache')
     else:
         kls = 'pkgcore.cache.flat_hash.database'
         tree_loc = pjoin(config_root, 'var', 'cache', 'edb', 'dep', tree_loc.lstrip('/'))
+        cache_parent_dir = tree_loc
 
-    cache_parent_dir = tree_loc
     while not os.path.exists(cache_parent_dir):
         cache_parent_dir = os.path.dirname(cache_parent_dir)
     readonly = (not access(cache_parent_dir, os.W_OK | os.X_OK))

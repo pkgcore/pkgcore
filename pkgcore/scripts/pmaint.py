@@ -19,7 +19,7 @@ demandload(
     're',
     'time',
     'snakeoil.osutils:pjoin,listdir_dirs',
-    'pkgcore:spawn',
+    'snakeoil.process:get_proc_count',
     'pkgcore.ebuild:processor,triggers',
     'pkgcore.fs:contents,livefs',
     'pkgcore.merge:triggers@merge_triggers',
@@ -175,7 +175,7 @@ def copy_main(options, out, err):
 def _get_default_jobs(namespace, attr):
     # we intentionally overschedule for SMP; the main python thread
     # isn't too busy, thus we want to keep all bash workers going.
-    val = spawn.get_proc_count()
+    val = get_proc_count()
     if val > 1:
         val += 1
     setattr(namespace, attr, val)

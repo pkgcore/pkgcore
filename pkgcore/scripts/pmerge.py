@@ -126,16 +126,16 @@ resolution_options.add_argument(
     help="don't reinstall target atoms if they're already installed")
 resolution_options.add_argument(
     '-b', '--buildpkg', action='store_true',
-    help="build binary packages")
+    help="build binpkgs")
 resolution_options.add_argument(
     '-k', '--usepkg', action='store_true',
     help="prefer to use binpkgs")
 resolution_options.add_argument(
     '-K', '--usepkgonly', action='store_true',
-    help="use only built packages")
+    help="use only binpkgs")
 resolution_options.add_argument(
     '-S', '--source-only', action='store_true',
-    help="use source packages only; no pre-built packages used")
+    help="use only source packages, no binpkgs")
 resolution_options.add_argument(
     '-e', '--empty', action='store_true',
     help="force rebuilding of all involved packages, using installed "

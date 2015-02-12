@@ -393,9 +393,9 @@ def config_from_make_conf(location="/etc/", profile_override=None, **kwargs):
         if not getattr(getattr(e, 'exc', None), 'errno', None) == errno.ENOENT:
             raise
         try:
-            load_make_config(
-                conf_dict,
-                pjoin(config_root, 'usr/share/pkgcore/config/make.globals'))
+            config_path = os.environ.get(
+                'PKGCORE_CONFIG_PATH', pjoin(config_root, 'usr/share/pkgcore/config'))
+            load_make_config(conf_dict, pjoin(config_path, 'make.globals'))
         except IGNORED_EXCEPTIONS:
             raise
         except:

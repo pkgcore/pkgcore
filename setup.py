@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import glob
 import operator
 import os
 import subprocess
@@ -197,7 +198,7 @@ def _get_files(path):
     l = []
     for root, dirs, files in os.walk(path):
         l.extend(os.path.join(root, fn)[len(path):].lstrip('/')
-            for fn in files)
+                 for fn in files)
     return l
 
 
@@ -452,7 +453,10 @@ core.setup(
     packages=packages,
     package_data={
         'pkgcore': ['ebuild/eapi-bash/%s' % (x,) for x in
-                    _get_files('pkgcore/ebuild/eapi-bash')]
-        },
+                    _get_files('pkgcore/ebuild/eapi-bash')],
+    },
+    data_files=[
+        ('/usr/share/pkgcore/config', glob.glob('config/*')),
+    ],
     ext_modules=extensions, cmdclass=cmdclass, command_options=command_options,
-    )
+)

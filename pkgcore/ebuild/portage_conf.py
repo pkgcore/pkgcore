@@ -395,7 +395,7 @@ def config_from_make_conf(location="/etc/", profile_override=None, **kwargs):
         try:
             load_make_config(
                 conf_dict,
-                pjoin(config_root, 'usr/share/portage/config/make.globals'))
+                pjoin(config_root, 'usr/share/pkgcore/config/make.globals'))
         except IGNORED_EXCEPTIONS:
             raise
         except:

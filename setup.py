@@ -28,8 +28,7 @@ class mysdist(snk_distutils.sdist):
     package_namespace = 'pkgcore'
 
     negative_opt = snk_distutils.sdist.negative_opt.copy()
-    negative_opt.update({'no-build-docs':'build-docs'})
-
+    negative_opt.update({'no-build-docs': 'build-docs'})
 
     def initialize_options(self):
         snk_distutils.sdist.initialize_options(self)
@@ -60,7 +59,7 @@ class mysdist(snk_distutils.sdist):
                 raise errors.DistutilsExecError("build_docs failed")
             import shutil
             shutil.copytree(os.path.join(cwd, "build/sphinx/man"),
-                os.path.join(base_dir, "man"))
+                            os.path.join(base_dir, "man"))
         snk_distutils.sdist.make_release_tree(self, base_dir, files)
         self.cleanup_post_release_tree(base_dir)
 
@@ -77,21 +76,27 @@ class pkgcore_build_scripts(build_scripts.build_scripts):
 class pkgcore_build(build.build):
 
     user_options = build.build.user_options[:]
-    user_options.append(('enable-man-pages', None,
-        'Install man pages.  Defaults to enabled.'))
-    user_options.append(('disable-man-pages', None,
+    user_options.append((
+        'enable-man-pages', None,
+        'Install man pages. Defaults to enabled.'))
+    user_options.append((
+        'disable-man-pages', None,
         'Disable man page generation and installation.'))
-    user_options.append(('enable-html-docs', None,
+    user_options.append((
+        'enable-html-docs', None,
         'Install html docs.'))
-    user_options.append(('disable-html-docs', None,
-        'Disable installation of html docs.  This is the default.'))
+    user_options.append((
+        'disable-html-docs', None,
+        'Disable installation of html docs. This is the default.'))
 
     boolean_options = build.build.boolean_options[:]
     boolean_options.extend(['enable-man-pages', 'enable-html-docs'])
 
     negative_opt = dict(getattr(build.build, 'negative_opt', {}))
-    negative_opt.update({'disable-html-docs':'enable-html-docs',
-                        'disable-man-pages':'enable-man-pages'})
+    negative_opt.update({
+        'disable-html-docs': 'enable-html-docs',
+        'disable-man-pages': 'enable-man-pages',
+    })
 
     sub_commands = build.build.sub_commands[:]
     sub_commands.append(('pkgcore_build_scripts', None))
@@ -122,10 +127,10 @@ class pkgcore_install_scripts(core.Command):
 
     user_options = [
         ('install-dir=', 'd', "directory to install scripts to"),
-        ('build-dir=','b', "build directory (where to install from)"),
+        ('build-dir=', 'b', "build directory (where to install from)"),
         ('force', 'f', "force installation (overwrite existing files)"),
         ('skip-build', None, "skip the build steps"),
-        ]
+    ]
 
     boolean_options = ['force', 'skip-build']
 
@@ -137,14 +142,14 @@ class pkgcore_install_scripts(core.Command):
 
     def finalize_options(self):
         self.set_undefined_options('build', ('build_scripts', 'build_dir'))
-        self.set_undefined_options('install',
-                                   ('install_scripts', 'install_dir'),
-                                   ('force', 'force'),
-                                   ('skip_build', 'skip_build'),
-                                   )
-        self.scripts = [
-            path for path in os.listdir('bin')
-            if path not in ('pwrapper', 'pwrapper_installed')]
+        self.set_undefined_options(
+            'install',
+            ('install_scripts', 'install_dir'),
+            ('force', 'force'),
+            ('skip_build', 'skip_build'),
+        )
+        self.scripts = [path for path in os.listdir('bin')
+                        if path not in ('pwrapper', 'pwrapper_installed')]
 
     def run(self):
         if not self.skip_build:
@@ -208,7 +213,7 @@ class pkgcore_install_docs(core.Command):
 
     content_search_path = ('build/sphinx/html', 'html')
     user_options = [('path=', None,
-                        "Final path to install to; else it's calculated")]
+                     "Final path to install to; else it's calculated")]
     build_command = 'build_docs'
 
     def initialize_options(self):
@@ -219,19 +224,20 @@ class pkgcore_install_docs(core.Command):
         self.source_path = None
 
     def finalize_options(self):
-        self.set_undefined_options('install',
-                                   ('root', 'root'),
-                                   ('install_base', 'prefix'),
-                                   )
+        self.set_undefined_options(
+            'install',
+            ('root', 'root'),
+            ('install_base', 'prefix'),
+        )
         if not self.root:
             self.root = '/'
         if self.path is None:
-            self.path = os.path.join(self.root,
-                self.calculate_install_path().lstrip(os.path.sep))
+            self.path = os.path.join(
+                self.root, self.calculate_install_path().lstrip(os.path.sep))
 
     def calculate_install_path(self):
-        return os.path.join(self.prefix, 'share', 'doc',
-            'pkgcore-%s' % version, 'html')
+        return os.path.join(
+            self.prefix, 'share', 'doc', 'pkgcore-%s' % version, 'html')
 
     def find_content(self):
         cwd = os.path.dirname(os.path.abspath(__file__))
@@ -287,7 +293,7 @@ class pkgcore_install_man(pkgcore_install_docs):
 
     content_search_path = ('build/sphinx/man', 'man')
     user_options = [('path=', None,
-                        "Final path to install to; else it's calculated")]
+                     "Final path to install to; else it's calculated")]
     build_command = 'build_man'
 
     def calculate_install_path(self):
@@ -309,21 +315,27 @@ _base_install = getattr(snk_distutils, 'install', install.install)
 class pkgcore_install(_base_install):
 
     user_options = _base_install.user_options[:]
-    user_options.append(('enable-man-pages', None,
-        'Install man pages.  Defaults to enabled.'))
-    user_options.append(('disable-man-pages', None,
+    user_options.append((
+        'enable-man-pages', None,
+        'Install man pages. Defaults to enabled.'))
+    user_options.append((
+        'disable-man-pages', None,
         'Disable man page generation and installation.'))
-    user_options.append(('enable-html-docs', None,
+    user_options.append((
+        'enable-html-docs', None,
         'Install html docs.'))
-    user_options.append(('disable-html-docs', None,
-        'Disable installation of html docs.  This is the default.'))
+    user_options.append((
+        'disable-html-docs', None,
+        'Disable installation of html docs. This is the default.'))
 
     boolean_options = _base_install.boolean_options[:]
     boolean_options.extend(['enable-man-pages', 'enable-html-docs'])
 
     negative_opt = _base_install.negative_opt.copy()
-    negative_opt.update({'disable-html-docs':'enable-html-docs',
-                        'disable-man-pages':'enable-man-pages'})
+    negative_opt.update({
+        'disable-html-docs': 'enable-html-docs',
+        'disable-man-pages': 'enable-man-pages',
+    })
 
     def initialize_options(self):
         _base_install.initialize_options(self)
@@ -383,8 +395,8 @@ class test(snk_distutils.test):
 
 def _find_modules(location):
     return [root.replace(os.path.sep, '.')
-        for root, dirs, files in os.walk(location)
-        if '__init__.py' in files]
+            for root, dirs, files in os.walk(location)
+            if '__init__.py' in files]
 
 
 packages = _find_modules('pkgcore')
@@ -406,18 +418,17 @@ if not snk_distutils.is_py3k:
     ])
     if float(sys.version[:3]) >= 2.6:
         extensions.append(snk_distutils.OptionalExtension(
-                'pkgcore.ebuild._misc', ['src/misc.c']))
+            'pkgcore.ebuild._misc', ['src/misc.c']))
 
-name = 'pkgcore'
 from pkgcore.const import VERSION as version
 
-cmdclass={
+cmdclass = {
     'sdist': mysdist,
     'build': pkgcore_build,
     'build_py': pkgcore_build_py,
     'build_ext': snk_distutils.build_ext,
     'test': test,
-    'install':pkgcore_install,
+    'install': pkgcore_install,
     'pkgcore_build_scripts': pkgcore_build_scripts,
     'pkgcore_install_scripts': pkgcore_install_scripts,
     'install_man': pkgcore_install_man,
@@ -443,7 +454,7 @@ if BuildDoc:
         }
 
 core.setup(
-    name=name,
+    name='pkgcore',
     version=version,
     description='package managing framework',
     url='https://github.com/pkgcore/pkgcore',

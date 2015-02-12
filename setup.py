@@ -467,7 +467,7 @@ core.setup(
                     _get_files('pkgcore/ebuild/eapi-bash')],
     },
     data_files=[
-        ('/usr/share/pkgcore/config', glob.glob('config/*')),
+        ('share/pkgcore/config', glob.glob('config/*')),
     ],
     ext_modules=extensions, cmdclass=cmdclass, command_options=command_options,
 )

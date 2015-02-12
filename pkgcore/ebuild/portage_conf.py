@@ -13,6 +13,7 @@ __all__ = (
 )
 
 import os
+import sys
 
 from snakeoil.compatibility import raise_from, IGNORED_EXCEPTIONS
 from snakeoil.demandload import demandload
@@ -394,7 +395,8 @@ def config_from_make_conf(location="/etc/", profile_override=None, **kwargs):
             raise
         try:
             config_path = os.environ.get(
-                'PKGCORE_CONFIG_PATH', pjoin(config_root, 'usr/share/pkgcore/config'))
+                'PKGCORE_CONFIG_PATH',
+                pjoin(config_root, sys.prefix.lstrip('/'), 'share/pkgcore/config'))
             load_make_config(conf_dict, pjoin(config_path, 'make.globals'))
         except IGNORED_EXCEPTIONS:
             raise

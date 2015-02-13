@@ -583,22 +583,19 @@ class _ConfiguredTree(configured.tree):
 
     def _generate_iuse_effective(self, profile, pkg, *args):
         iuse_effective = [x.lstrip('-+') for x in pkg.iuse]
-        use_expand = frozenset(profile.use_expand)
 
         # EAPI 5 and above allow profile defined IUSE injection (see PMS)
         if pkg.eapi_obj.options.profile_iuse_injection:
             iuse_effective.extend(profile.iuse_implicit)
-            use_expand_implicit = frozenset(profile.use_expand_implicit)
-            use_expand_unprefixed = frozenset(profile.use_expand_unprefixed)
 
-            for v in use_expand_implicit.intersection(use_expand_unprefixed):
+            for v in profile.use_expand_implicit.intersection(profile.use_expand_unprefixed):
                 iuse_effective.extend(profile.default_env.get("USE_EXPAND_VALUES_" + v, "").split())
-            for v in use_expand.intersection(use_expand_implicit):
+            for v in profile.use_expand.intersection(profile.use_expand_implicit):
                 for x in profile.default_env.get("USE_EXPAND_VALUES_" + v, "").split():
                     iuse_effective.append(v.lower() + "_" + x)
         else:
             iuse_effective.extend(pkg.repo.config.known_arches)
-            iuse_effective.extend(x.lower() + "_.*" for x in use_expand)
+            iuse_effective.extend(x.lower() + "_.*" for x in profile.use_expand)
 
         return tuple(sorted(set(iuse_effective)))
 

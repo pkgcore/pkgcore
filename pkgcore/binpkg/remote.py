@@ -111,9 +111,8 @@ class PackagesCacheV0(cache.bulk):
 
     def __init__(self, location, *args, **kwds):
         self._location = location
-        vkeys = set(self._stored_chfs)
+        vkeys = {'CPV'}
         vkeys.update(self._deserialized_defaults)
-        vkeys.add("CPV")
         vkeys.update(x.upper() for x in self._stored_chfs)
         kwds["auxdbkeys"] = vkeys
         cache.bulk.__init__(self, *args, **kwds)

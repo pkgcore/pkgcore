@@ -26,7 +26,7 @@ demandload(
     'snakeoil.chksum:get_chksums',
     'snakeoil.containers:RefCountingSet',
     'snakeoil.fileutils:AtomicWriteFile,readlines',
-    'pkgcore:log',
+    'pkgcore.log:logger',
     'pkgcore.restrictions.packages:AlwaysTrue',
 )
 
@@ -193,7 +193,7 @@ class PackagesCacheV0(cache.bulk):
             d[cls._serialize_map.get(key, key)] = value
 
         for key, value in izip(cls._stored_chfs,
-            get_chksums(pkg.path, *cls._stored_chfs)):
+                               get_chksums(pkg.path, *cls._stored_chfs)):
             if key != 'size':
                 value = "%x" % (value,)
             d[key.upper()] = value
@@ -210,8 +210,9 @@ class PackagesCacheV0(cache.bulk):
             except EnvironmentError as e:
                 if e.errno != errno.EACCES:
                     raise
-                log.logger.error("failed writing binpkg Packages cache to %r; permissions issue %s",
-                                 self._location, e)
+                logger.error(
+                    "failed writing binpkg Packages cache to %r; permissions issue %s",
+                    self._location, e)
         finally:
             if handler is not None:
                 handler.discard()

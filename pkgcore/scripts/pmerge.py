@@ -116,8 +116,8 @@ resolution_options.add_argument(
          "example.")
 resolution_options.add_argument(
     '--with-bdeps', action='store_true',
-    help="whether or not to process build dependencies for pkgs that "
-         "are already built; defaults to ignoring them")
+    help="process build dependencies for built packages; "
+         "by default they're ignored")
 resolution_options.add_argument(
     '-O', '--nodeps', action='store_true',
     help='disable dependency resolution')

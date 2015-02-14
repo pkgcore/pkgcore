@@ -587,7 +587,6 @@ class _ConfiguredTree(configured.tree):
         # EAPI 5 and above allow profile defined IUSE injection (see PMS)
         if pkg.eapi_obj.options.profile_iuse_injection:
             iuse_effective.extend(profile.iuse_implicit)
-
             for v in profile.use_expand_implicit.intersection(profile.use_expand_unprefixed):
                 iuse_effective.extend(profile.default_env.get("USE_EXPAND_VALUES_" + v, "").split())
             for v in profile.use_expand.intersection(profile.use_expand_implicit):
@@ -597,7 +596,7 @@ class _ConfiguredTree(configured.tree):
             iuse_effective.extend(pkg.repo.config.known_arches)
             iuse_effective.extend(x.lower() + "_.*" for x in profile.use_expand)
 
-        return tuple(sorted(set(iuse_effective)))
+        return frozenset(iuse_effective)
 
     def _get_delayed_immutable(self, pkg, immutable):
         return InvertedContains(pkg.iuse.difference(immutable))

@@ -13,6 +13,7 @@ __all__ = ("alias_cset", "map_new_cset_livefs", "MergeEngine")
 # post merge triggers
 # ordering?
 
+from functools import partial
 import operator
 
 from pkgcore.fs import contents, livefs
@@ -21,7 +22,8 @@ from pkgcore.merge.const import REPLACE_MODE, INSTALL_MODE, UNINSTALL_MODE
 from pkgcore.operations import observer as observer_mod
 from pkgcore.plugin import get_plugins
 
-from snakeoil import compatibility, currying, data_source
+from snakeoil import compatibility, data_source
+from snakeoil.currying import post_curry
 from snakeoil.demandload import demandload
 from snakeoil.mappings import LazyValDict, ImmutableDict, StackedDict
 from snakeoil.osutils import normpath
@@ -62,13 +64,13 @@ class MergeEngine(object):
     install_csets = {
         "install_existing": "get_install_livefs_intersect",
         "resolved_install": map_new_cset_livefs,
-        'new_cset': currying.partial(alias_cset, 'raw_new_cset'),
-        "install": currying.partial(alias_cset, 'new_cset'),
-        "replace": currying.partial(alias_cset, 'new_cset'),
+        'new_cset': partial(alias_cset, 'raw_new_cset'),
+        "install": partial(alias_cset, 'new_cset'),
+        "replace": partial(alias_cset, 'new_cset'),
     }
     uninstall_csets = {
-        "uninstall_existing": currying.partial(alias_cset, "uninstall"),
-        "uninstall": currying.partial(alias_cset, "old_cset"),
+        "uninstall_existing": partial(alias_cset, "uninstall"),
+        "uninstall": partial(alias_cset, "old_cset"),
         "old_cset": "get_uninstall_livefs_intersect",
     }
     replace_csets = dict(install_csets)
@@ -138,7 +140,7 @@ class MergeEngine(object):
 
         self.regenerate_csets()
         for x in hooks:
-            setattr(self, x, currying.partial(self.execute_hook, x))
+            setattr(self, x, partial(self.execute_hook, x))
 
     @classmethod
     def install(cls, tempdir, pkg, offset=None, observer=None,
@@ -161,13 +163,13 @@ class MergeEngine(object):
 
         csets = dict(cls.install_csets)
         if "raw_new_cset" not in csets:
-            csets["raw_new_cset"] = currying.post_curry(cls.get_pkg_contents, pkg)
+            csets["raw_new_cset"] = post_curry(cls.get_pkg_contents, pkg)
         o = cls(INSTALL_MODE, tempdir, hooks, csets, cls.install_csets_preserve,
                 observer, offset=offset, disable_plugins=disable_plugins)
 
         if o.offset != '/':
             # wrap the results of new_cset to pass through an offset generator
-            o.cset_sources["raw_new_cset"] = currying.post_curry(
+            o.cset_sources["raw_new_cset"] = post_curry(
                 o.generate_offset_cset, o.cset_sources["raw_new_cset"])
 
         o.new = pkg
@@ -194,13 +196,13 @@ class MergeEngine(object):
         csets = dict(cls.uninstall_csets)
 
         if "raw_old_cset" not in csets:
-            csets["raw_old_cset"] = currying.post_curry(cls.get_pkg_contents, pkg)
+            csets["raw_old_cset"] = post_curry(cls.get_pkg_contents, pkg)
         o = cls(UNINSTALL_MODE, tempdir, hooks, csets, cls.uninstall_csets_preserve,
                 observer, offset=offset, disable_plugins=disable_plugins)
 
         if o.offset != '/':
             # wrap the results of new_cset to pass through an offset generator
-            o.cset_sources["old_cset"] = currying.post_curry(
+            o.cset_sources["old_cset"] = post_curry(
                 o.generate_offset_cset, o.cset_sources["old_cset"])
 
         o.old = pkg
@@ -229,8 +231,8 @@ class MergeEngine(object):
 
         csets = dict(cls.replace_csets)
 
-        csets.setdefault('raw_old_cset', currying.post_curry(cls.get_pkg_contents, old))
-        csets.setdefault('raw_new_cset', currying.post_curry(cls.get_pkg_contents, new))
+        csets.setdefault('raw_old_cset', post_curry(cls.get_pkg_contents, old))
+        csets.setdefault('raw_new_cset', post_curry(cls.get_pkg_contents, new))
 
         o = cls(REPLACE_MODE, tempdir, hooks, csets, cls.replace_csets_preserve,
                 observer, offset=offset, disable_plugins=disable_plugins)
@@ -239,7 +241,7 @@ class MergeEngine(object):
             for k in ("raw_old_cset", "raw_new_cset"):
                 # wrap the results of new_cset to pass through an
                 # offset generator
-                o.cset_sources[k] = currying.post_curry(
+                o.cset_sources[k] = post_curry(
                     o.generate_offset_cset, o.cset_sources[k])
 
         o.old = old

@@ -16,7 +16,9 @@ __all__ = (
     "str_to_str", "str_to_bool", "str_to_int", "parse_config_file",
 )
 
-from snakeoil import compatibility, currying
+from functools import partial
+
+from snakeoil import compatibility
 from snakeoil.demandload import demandload
 
 from pkgcore.config import errors, configurable
@@ -556,11 +558,11 @@ def convert_hybrid(central, value, arg_type):
 
 # "Invalid name" (pylint thinks these are module-level constants)
 # pylint: disable-msg=C0103
-HardCodedConfigSection = currying.partial(
+HardCodedConfigSection = partial(
     FakeIncrementalDictConfigSection, convert_asis)
-ConfigSectionFromStringDict = currying.partial(
+ConfigSectionFromStringDict = partial(
     FakeIncrementalDictConfigSection, convert_string)
-AutoConfigSection = currying.partial(
+AutoConfigSection = partial(
     FakeIncrementalDictConfigSection, convert_hybrid)
 
 

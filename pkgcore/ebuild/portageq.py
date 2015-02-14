@@ -6,7 +6,8 @@ from snakeoil.demandload import demandload
 from pkgcore.util import commandline
 
 demandload(
-    'snakeoil:osutils,currying',
+    'functools:partial',
+    'snakeoil:osutils',
     "pkgcore.ebuild:atom,conditionals,eapi",
     "pkgcore.restrictions.boolean:AndRestriction",
     "pkgcore.util:packages",
@@ -39,9 +40,7 @@ def default_portageq_args(parser):
 
 
 def make_atom(value):
-    return commandline.DelayedValue(
-        currying.partial(_render_atom, value),
-        100)
+    return commandline.DelayedValue(partial(_render_atom, value), 100)
 
 def _render_atom(value, namespace, attr):
     a = namespace.atom_kls(value)

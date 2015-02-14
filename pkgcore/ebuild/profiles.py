@@ -7,10 +7,11 @@ __all__ = (
 )
 
 import errno
+from functools import partial
 from itertools import chain
 import os
 
-from snakeoil import caching, compatibility, currying, klass, sequences
+from snakeoil import caching, compatibility, klass, sequences
 from snakeoil.bash import iter_read_bash, read_bash_dict
 from snakeoil.containers import InvertedContains
 from snakeoil.demandload import demandload
@@ -66,7 +67,7 @@ def load_property(filename, handler=iter_read_bash, fallback=(),
     """
     def f(func):
         f2 = klass.jit_attr_named('_%s' % (func.__name__,))
-        return f2(currying.partial(
+        return f2(partial(
             _load_and_invoke, func, filename, handler, fallback,
             read_func, allow_recurse, eapi_optional))
     return f
@@ -120,7 +121,7 @@ def _load_and_invoke(func, filename, handler, fallback, read_func,
         compatibility.raise_from(ProfileError(profile_path, filename, e))
 
 
-_make_incrementals_dict = currying.partial(IncrementalsDict, const.incrementals)
+_make_incrementals_dict = partial(IncrementalsDict, const.incrementals)
 
 def _open_utf8(path, *args):
     try:
@@ -567,7 +568,7 @@ class ProfileStack(object):
 
     @klass.jit_attr
     def make_virtuals_repo(self):
-        return currying.partial(AliasedVirtuals, self.virtuals)
+        return partial(AliasedVirtuals, self.virtuals)
 
     @klass.jit_attr
     def provides_repo(self):
@@ -576,8 +577,9 @@ class ProfileStack(object):
             d.setdefault(pkg.category, {}).setdefault(pkg.package,
                          []).append(pkg.fullver)
         intermediate_parent = PkgProvidedParent()
-        obj = SimpleTree(d, pkg_klass=currying.partial(PkgProvided,
-            intermediate_parent), livefs=True, frozen=True, repo_id='provided')
+        obj = SimpleTree(
+            d, pkg_klass=partial(PkgProvided, intermediate_parent),
+            livefs=True, frozen=True, repo_id='provided')
         intermediate_parent._parent_repo = obj
 
         if not d:

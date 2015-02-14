@@ -20,13 +20,14 @@ __all__ = (
 )
 
 import argparse
+from functools import partial
 from importlib import import_module
 import logging
 import optparse
 import os.path
 import sys
 
-from snakeoil import compatibility, formatters, currying, modules
+from snakeoil import compatibility, formatters, modules
 from snakeoil.demandload import demandload
 
 from pkgcore.config import load_config, errors
@@ -140,7 +141,7 @@ class Delayed(argparse.Action):
 
     def __call__(self, parser, namespace, values, option_string=None):
         setattr(namespace, self.dest, DelayedParse(
-            currying.partial(self.target, parser, namespace, values, option_string),
+            partial(self.target, parser, namespace, values, option_string),
             self.priority))
 
 
@@ -174,8 +175,9 @@ class StoreConfigObject(argparse._StoreAction):
             raise ValueError("config_type must specified, and be a string")
 
         if kwargs.pop("get_default", False):
-            kwargs["default"] = DelayedValue(currying.partial(self.store_default,
-                self.config_type, option_string=kwargs.get('option_strings', [None])[0]),
+            kwargs["default"] = DelayedValue(
+                partial(self.store_default, self.config_type,
+                        option_string=kwargs.get('option_strings', [None])[0]),
                 self.priority)
 
         self.store_name = kwargs.pop("store_name", False)
@@ -214,7 +216,7 @@ class StoreConfigObject(argparse._StoreAction):
 
     def __call__(self, parser, namespace, values, option_string=None):
         setattr(namespace, self.dest, DelayedParse(
-            currying.partial(self._real_call, parser, namespace, values, option_string),
+            partial(self._real_call, parser, namespace, values, option_string),
             self.priority))
 
     def _get_sections(self, config, namespace):
@@ -270,7 +272,7 @@ class StoreConfigObject(argparse._StoreAction):
         if priority is None:
             priority = cls.default_priority
         return DelayedValue(
-            currying.partial(cls._lazy_load_object, config_type, key),
+            partial(cls._lazy_load_object, config_type, key),
             priority)
 
     @staticmethod
@@ -385,7 +387,7 @@ class DelayedDefault(DelayedValue):
     def wipe(cls, attrs, priority):
         if isinstance(attrs, basestring):
             attrs = (attrs,)
-        return cls(currying.partial(cls._wipe, attrs), priority)
+        return cls(partial(cls._wipe, attrs), priority)
 
     @staticmethod
     def _wipe(attrs, namespace, triggering_attr):

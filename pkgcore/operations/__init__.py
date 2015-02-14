@@ -13,7 +13,10 @@ Basically it's a crappy form of zope interfaces; converting to zope.interfaces
 may occur down the line if dependencies can be kept as minimal as possible.
 """
 
-from snakeoil import klass, currying, compatibility
+from functools import partial
+
+from snakeoil import klass, compatibility
+from snakeoil.currying import pretty_docs
 
 from pkgcore.operations import observer as _observer
 
@@ -71,9 +74,9 @@ class base(object):
             compatibility.raise_from(exc_class(name))
 
     def _wrap_exception(self, functor, name):
-        f = currying.partial(
+        f = partial(
             self._recast_exception_decorator, self.__casting_exception__, name, functor)
-        return currying.pretty_docs(f)
+        return pretty_docs(f)
 
     def _setup_api(self):
         recast_exc = self.__casting_exception__

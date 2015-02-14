@@ -12,7 +12,8 @@ __all__ = (
     "dump_uncollapsed", "dump_uncollapsed_main"
 )
 
-from snakeoil import currying
+from functools import partial
+
 from snakeoil.demandload import demandload
 
 from pkgcore.config import errors, basics
@@ -131,7 +132,7 @@ describe_class = subparsers.add_parser(
     description="describe the arguments a class needs, how to use it in a config")
 describe_class.add_argument(
     "target_class", action='store',
-    type=currying.partial(commandline.python_namespace_type, attribute=True),
+    type=partial(commandline.python_namespace_type, attribute=True),
     help="The class to inspect and output details about")
 @describe_class.bind_main_func
 def describe_class_main(options, out, err):

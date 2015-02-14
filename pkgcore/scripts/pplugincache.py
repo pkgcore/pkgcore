@@ -6,7 +6,9 @@
 
 __all__ = ("argparser", "main")
 
-from snakeoil import lists, currying
+from functools import partial
+
+from snakeoil import lists
 
 from pkgcore import plugin, plugins
 from pkgcore.util import commandline
@@ -16,7 +18,7 @@ argparser = commandline.mk_argparser(
     description=__doc__.split('\n', 1)[0])
 argparser.add_argument(
     "packages", nargs="*", action='store',
-    type=currying.partial(commandline.python_namespace_type, module=True),
+    type=partial(commandline.python_namespace_type, module=True),
     default=[plugins],
     help="python namespace(s) to regenerate plugins for.  If none are "
          "specified, pkgcore.plugins is updated")

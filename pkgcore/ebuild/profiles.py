@@ -560,6 +560,29 @@ class ProfileStack(object):
         return frozenset(self.default_env.get("USE_EXPAND_UNPREFIXED", "").split())
 
     @klass.jit_attr
+    def iuse_effective(self):
+        # prefer main system profile and fallback on custom profile
+        for profile in reversed(self.stack):
+            if not isinstance(profile, UserProfileNode):
+                break
+
+        iuse_effective = []
+
+        # EAPI 5 and above allow profile defined IUSE injection (see PMS)
+        if profile.eapi_obj.options.profile_iuse_injection:
+            iuse_effective.extend(self.iuse_implicit)
+            for v in self.use_expand_implicit.intersection(self.use_expand_unprefixed):
+                iuse_effective.extend(self.default_env.get("USE_EXPAND_VALUES_" + v, "").split())
+            for v in self.use_expand.intersection(self.use_expand_implicit):
+                for x in self.default_env.get("USE_EXPAND_VALUES_" + v, "").split():
+                    iuse_effective.append(v.lower() + "_" + x)
+        else:
+            iuse_effective.extend(profile.repoconfig.known_arches)
+            iuse_effective.extend(x.lower() + "_.*" for x in self.use_expand)
+
+        return frozenset(iuse_effective)
+
+    @klass.jit_attr
     def virtuals(self):
         d = {}
         for profile in self.stack:

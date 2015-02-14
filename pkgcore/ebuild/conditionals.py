@@ -42,7 +42,8 @@ class DepSet(boolean.AndRestriction):
     if parse_depset is not None:
         parse_depset = staticmethod(parse_depset)
 
-    def __init__(self, restrictions, element_class, node_conds, known_conditionals=None):
+    def __init__(self, restrictions='', element_class=atom,
+                 node_conds=True, known_conditionals=None):
         sf = object.__setattr__
         sf(self, '_known_conditionals', known_conditionals)
         sf(self, 'element_class', element_class)

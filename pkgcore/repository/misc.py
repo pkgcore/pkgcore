@@ -6,6 +6,7 @@ __all__ = ("nodeps_repo", "caching_repo")
 from snakeoil.iterables import caching_iter, iter_sort
 from snakeoil.klass import GetAttrProxy
 
+from pkgcore.ebuild.conditionals import DepSet
 from pkgcore.operations.repo import operations_proxy
 from pkgcore.package.mutated import MutatedPkg
 from pkgcore.restrictions import packages
@@ -18,8 +19,7 @@ class nodeps_repo(object):
     :obj:`MutatedPkg` that have their depends/rdepends/post_rdepends wiped
     """
 
-    default_depends = default_rdepends = default_post_rdepends = \
-        packages.AndRestriction()
+    default_depends = default_rdepends = default_post_rdepends = DepSet()
 
     def __init__(self, repo):
         """

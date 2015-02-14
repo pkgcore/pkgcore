@@ -524,14 +524,14 @@ class domain(pkgcore.config.domain.domain):
         use_globs = [u for u in enabled if u.endswith('*')]
         enabled_use_globs = []
         for glob in use_globs:
-            for u in pkg.iuse:
+            for u in pkg.iuse_stripped:
                 if u.startswith(glob[:-1]):
                     enabled_use_globs.append(u)
         enabled.difference_update(use_globs)
         enabled.update(enabled_use_globs)
 
         if for_metadata:
-            preserves = set(x.lstrip('-+') for x in pkg.iuse)
+            preserves = pkg.iuse_stripped
             enabled.intersection_update(preserves)
             enabled.update(immutable)
             enabled.difference_update(disabled)

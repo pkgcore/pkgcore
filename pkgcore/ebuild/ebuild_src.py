@@ -241,6 +241,13 @@ class base(metadata.package):
     tracked_attributes = klass.alias_attr('eapi_obj.tracked_attributes')
 
     @property
+    def iuse_stripped(self):
+        if self.eapi > 0:
+            # EAPI 1 and up support IUSE defaults
+            return frozenset(x.lstrip('-+') for x in self.iuse)
+        return self.iuse
+
+    @property
     def eapi(self):
         eapi_obj = self.eapi_obj
         if eapi_obj is not None:

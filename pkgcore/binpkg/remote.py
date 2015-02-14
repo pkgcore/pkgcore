@@ -294,10 +294,9 @@ class PackagesCacheV1(PackagesCacheV0):
     def _assemble_pkg_dict(cls, pkg):
         # not the most efficient...
         d = PackagesCacheV0._assemble_pkg_dict(pkg)
-        use = set(pkg.use).intersection(x.lstrip("+-") for x in pkg.iuse)
+        use = set(pkg.use).intersection(pkg.iuse_stripped)
         d.pop("IUSE", None)
-        iuse_bits = [x.lstrip("+-") for x in pkg.iuse]
-        iuse_bits = ['-%s' % (x,) for x in iuse_bits if x not in use]
+        iuse_bits = ['-%s' % (x,) for x in pkg.iuse_stripped if x not in use]
         use.update(iuse_bits)
         d["USE"] = ' '.join(sorted(use))
         return d

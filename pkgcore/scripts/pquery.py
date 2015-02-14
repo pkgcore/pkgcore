@@ -127,7 +127,7 @@ def stringify_attr(config, pkg, attr):
         # Combine a list of all enabled (including irrelevant) and all
         # available flags into a "enabled -disabled" style string.
         use = set(get_pkg_attr(pkg, 'use', ()))
-        iuse = set(x.lstrip("-+") for x in get_pkg_attr(pkg, 'iuse', ()))
+        iuse = get_pkg_attr(pkg, 'iuse_stripped', ())
         result = sorted(iuse & use) + sorted('-' + val for val in (iuse - use))
         return ' '.join(result)
 

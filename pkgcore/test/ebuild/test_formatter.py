@@ -299,9 +299,9 @@ class TestPaludisFormatter(CountingFormatterTest, TestCase):
             Color('fg', 'blue'), "{:0} ", Color('fg', 'yellow'), "[R] ",
             Color('fg', 'red'), "-static")
 
-    def test_iuse_filter(self):
+    def test_iuse_stripped(self):
         self.formatter.format(
-            FakeOp(self.FakeEbuildSrc('app-arch/bzip2-1.0.3-r6', iuse=['+static', '-junk'], use=['static']),
+            FakeOp(self.FakeEbuildSrc('app-arch/bzip2-1.0.3-r6', eapi='1', iuse=['+static', '-junk'], use=['static']),
             FakeMutatedPkg('app-arch/bzip2-1.0.3-r6')))
         self.assertOut("* ", Color('fg', 'blue'), "app-arch/bzip2", "-1.0.3-r6", "::gentoo ",
             Color('fg', 'blue'), "{:0} ", Color('fg', 'yellow'), "[R] ",
@@ -413,9 +413,9 @@ class TestPortageFormatter(BaseFormatterTest, TestCase):
             Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6', Reset(),
             ' USE="', Color('fg', 'yellow'), Bold(), '-static', Reset(), '%"')
 
-    def test_iuse_filter(self):
+    def test_iuse_stripped(self):
         self.formatter.format(
-            FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6', iuse=['+static', '-junk'], use=['static']),
+            FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6', eapi='1', iuse=['+static', '-junk'], use=['static']),
             FakeMutatedPkg('app-arch/bzip2-1.0.3-r6')))
         self.assertOut('[', Color('fg', 'green'), 'ebuild', Reset(),
             '   ', Color('fg', 'yellow'), Bold(), 'R', Reset(), '    ] ',

@@ -75,7 +75,7 @@ def apply_mask_filter(globs, atoms, pkg, mode):
     return False
 
 
-def _mask_filter(masks, negate=False):
+def make_mask_filter(masks, negate=False):
     atoms = defaultdict(list)
     globs = []
     for m in masks:
@@ -85,8 +85,20 @@ def _mask_filter(masks, negate=False):
             globs.append(m)
     return delegate(partial(apply_mask_filter, globs, atoms), negate=negate)
 
-make_mask_filter = partial(_mask_filter, negate=True)
-make_unmask_filter = partial(_mask_filter, negate=False)
+
+def generate_filter(masks, unmasks, *extra):
+    # note that we ignore unmasking if masking isn't specified.
+    # no point, mainly
+    masking = make_mask_filter(masks, negate=True)
+    unmasking = make_mask_filter(unmasks, negate=False)
+    r = ()
+    if masking:
+        if unmasking:
+            r = (packages.OrRestriction(masking, unmasking, disable_inst_caching=True),)
+        else:
+            r = (masking,)
+    return packages.AndRestriction(disable_inst_caching=True, finalize=True, *(r + extra))
+
 
 # ow ow ow ow ow ow....
 # this manages a *lot* of crap.  so... this is fun.
@@ -363,10 +375,7 @@ class domain(pkgcore.config.domain.domain):
                         masks.update(pos)
                     masks.update(pkg_maskers)
                     unmasks = set(chain(pkg_unmaskers, *profile_unmasks))
-                    filtered = self.generate_filter(
-                        make_mask_filter(masks),
-                        make_unmask_filter(unmasks),
-                        *vfilters)
+                    filtered = generate_filter(masks, unmasks, *vfilters)
                 if filtered:
                     wrapped_repo = visibility.filterTree(wrapped_repo, filtered, True)
                 self.repos_configured_filtered[key] = wrapped_repo
@@ -420,18 +429,6 @@ class domain(pkgcore.config.domain.domain):
             if accepted.issuperset(and_pair):
                 return True
         return False
-
-    def generate_filter(self, masking, unmasking, *extra):
-        # note that we ignore unmasking if masking isn't specified.
-        # no point, mainly
-        r = ()
-        if masking:
-            if unmasking:
-                r = (packages.OrRestriction(masking, unmasking, disable_inst_caching=True),)
-            else:
-                r = (masking,)
-        vfilter = packages.AndRestriction(disable_inst_caching=True, finalize=True, *(r + extra))
-        return vfilter
 
     def make_keywords_filter(self, arch, default_keys, accept_keywords,
                              profile_keywords, incremental=False):

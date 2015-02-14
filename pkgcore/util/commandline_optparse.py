@@ -347,7 +347,7 @@ class OptionParser(optparse.OptionParser, object):
 
         Overridden because the optparse one is a noop if self.version is false.
         """
-        print(self.get_version, file=file)
+        print(self.get_version(), file=file)
 
     def _add_version_option(self):
         """Override this to be a no-op.

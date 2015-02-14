@@ -9,12 +9,12 @@ __all__ = ("MissingFile", "Failure", "domain")
 
 # XXX doc this up better...
 
+from functools import partial
 from itertools import chain, izip
 import os.path
 
 from snakeoil.bash import iter_read_bash
 from snakeoil.compatibility import raise_from
-from snakeoil.currying import partial
 from snakeoil.data_source import local_source
 from snakeoil.demandload import demandload
 from snakeoil.lists import unstable_unique, predicate_split

@@ -9,9 +9,9 @@ Shouldn't be accessed directly for the most part, use
 """
 
 import errno
+from functools import partial
 import os
 
-from snakeoil.currying import partial
 from snakeoil.osutils import ensure_dirs, pjoin, unlink_if_exists
 
 from pkgcore.const import COPY_BINARY

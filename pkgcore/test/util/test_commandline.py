@@ -2,6 +2,7 @@
 # Copyright: 2006-2007 Marien Zwart <marienz@gentoo.org>
 # License: BSD/GPL2
 
+from functools import partial
 import gc
 import optparse
 import os
@@ -9,7 +10,6 @@ import pty
 import weakref
 
 from snakeoil import compatibility
-from snakeoil.currying import partial
 
 from pkgcore.config import basics, central, configurable, errors
 from pkgcore.test import TestCase, silence_logging

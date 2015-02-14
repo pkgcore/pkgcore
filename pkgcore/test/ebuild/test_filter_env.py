@@ -3,8 +3,8 @@
 # License: BSD/GPL2
 
 import cStringIO
+from functools import partial
 
-from snakeoil.currying import partial
 from snakeoil.test import mk_cpy_loadable_testcase
 
 from pkgcore.ebuild import filter_env

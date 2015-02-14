@@ -1,8 +1,9 @@
 # Copyright: 2006-2011 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
+from functools import partial
+
 from snakeoil.compatibility import cmp
-from snakeoil.currying import partial
 from snakeoil.pickling import dumps, loads
 from snakeoil.test import mk_cpy_loadable_testcase
 

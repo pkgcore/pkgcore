@@ -9,10 +9,10 @@ Changing them triggering regen of other attributes on the package instance.
 
 __all__ = ("make_wrapper",)
 
+from functools import partial
 from operator import attrgetter
 
 from snakeoil.containers import LimitedChangeSet, Unchangable
-from snakeoil.currying import partial
 from snakeoil.demandload import demandload
 
 from pkgcore.package.base import wrapper

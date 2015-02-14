@@ -3,11 +3,11 @@
 
 __all__ = ("OldStyleVirtuals",)
 
+from functools import partial
 import os
 import stat
 
 from snakeoil.bash import read_dict
-from snakeoil.currying import partial
 from snakeoil.demandload import demandload
 from snakeoil.fileutils import AtomicWriteFile, readlines_ascii
 from snakeoil.lists import iflatten_instance

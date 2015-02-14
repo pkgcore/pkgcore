@@ -4,11 +4,11 @@
 __all__ = ("tree", "ConfiguredTree")
 
 import errno
+from functools import partial
 import os
 import stat
 
 from snakeoil import compatibility, data_source, klass
-from snakeoil.currying import partial
 from snakeoil.demandload import demandload
 from snakeoil.fileutils import readfile
 from snakeoil.mappings import IndeterminantDict

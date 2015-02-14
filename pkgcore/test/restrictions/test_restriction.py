@@ -2,7 +2,7 @@
 # Copyright: 2005 Marien Zwart <marienz@gentoo.org>
 # License: BSD/GPL2
 
-from snakeoil.currying import partial
+from functools import partial
 
 from pkgcore.restrictions import restriction
 from pkgcore.test import TestRestriction

@@ -5,10 +5,10 @@
 contents set- container of fs objects
 """
 
+from functools import partial
 from itertools import ifilter
 from operator import attrgetter
 
-from snakeoil.currying import partial
 from snakeoil.demandload import demandload
 from snakeoil.klass import generic_equality, alias_method
 from snakeoil.osutils import normpath, pjoin

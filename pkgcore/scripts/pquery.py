@@ -4,7 +4,8 @@
 
 """pkgcore query interface"""
 
-from snakeoil.currying import partial
+from functools import partial
+
 from snakeoil.demandload import demandload
 from snakeoil.formatters import decorate_forced_wrapping
 

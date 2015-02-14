@@ -1,8 +1,9 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
+from functools import partial
+
 from snakeoil.compatibility import cmp
-from snakeoil.currying import partial
 from snakeoil.klass import inject_richcmp_methods_from_cmp
 
 from pkgcore.package.base import base, dynamic_getattr_dict

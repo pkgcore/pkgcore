@@ -7,15 +7,15 @@ ebuild repository, specific to gentoo ebuild trees (whether cvs or rsync)
 
 __all__ = ("tree", "slavedtree",)
 
-import os
+from functools import partial
 from itertools import imap, ifilterfalse
+import os
 import stat
 
 from snakeoil import klass
 from snakeoil.bash import iter_read_bash, read_dict
 from snakeoil.compatibility import intern, raise_from
 from snakeoil.containers import InvertedContains
-from snakeoil.currying import partial
 from snakeoil.demandload import demandload
 from snakeoil.fileutils import readlines
 from snakeoil.obj import make_kls

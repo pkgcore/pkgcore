@@ -13,6 +13,7 @@ source or binary packages.
 __all__ = ("argparser", "AmbiguousQuery", "NoMatches")
 
 import argparse
+from functools import partial
 from time import time
 
 from pkgcore.ebuild import resolver
@@ -25,7 +26,6 @@ from pkgcore.restrictions.boolean import OrRestriction
 from pkgcore.util import commandline, parserestrict, repo_utils
 
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
-from snakeoil.currying import partial
 from snakeoil.lists import stable_unique
 
 

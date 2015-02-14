@@ -3,10 +3,10 @@
 
 import binascii
 import errno
+from functools import partial
 import os
 import shutil
 
-from snakeoil.currying import partial
 from snakeoil.osutils import pjoin, ensure_dirs, normpath
 from snakeoil.test.mixins import TempDirMixin
 

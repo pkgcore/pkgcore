@@ -10,8 +10,10 @@ __all__ = (
     "operations", "operations_proxy"
 )
 
+from functools import partial
+
 from snakeoil import klass
-from snakeoil.currying import partial, post_curry
+from snakeoil.currying import post_curry
 from snakeoil.demandload import demandload
 from snakeoil.dependant_methods import ForcedDepends
 from snakeoil.weakrefs import WeakRefFinalizer

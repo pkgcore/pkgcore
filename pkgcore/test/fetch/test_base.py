@@ -1,11 +1,11 @@
 # Copyright: 2006-2009 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
+from functools import partial
 import os
 
 from snakeoil import data_source
 from snakeoil.chksum import get_handlers
-from snakeoil.currying import partial
 from snakeoil.test.mixins import TempDirMixin
 
 from pkgcore.fetch import base, fetchable, errors

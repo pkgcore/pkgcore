@@ -1,7 +1,7 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
-from snakeoil.currying import partial
+from functools import partial
 
 from pkgcore.package import base
 from pkgcore.test import TestCase, malleable_obj

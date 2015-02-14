@@ -2,12 +2,12 @@
 
 import argparse
 import errno
+from functools import partial
 from importlib import import_module
 import os
 import re
 import sys
 
-from snakeoil.currying import partial
 from snakeoil.osutils import pjoin
 
 

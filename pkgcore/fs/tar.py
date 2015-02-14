@@ -5,12 +5,12 @@
 binpkg tar utilities
 """
 
+from functools import partial
 import os
 import stat
 
 from snakeoil import compression
 from snakeoil.compatibility import cmp, sorted_cmp
-from snakeoil.currying import partial
 from snakeoil.data_source import invokable_data_source
 from snakeoil.tar import tarfile
 

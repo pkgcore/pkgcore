@@ -40,6 +40,7 @@ active_ebp_list = []
 
 import contextlib
 import errno
+from functools import partial
 import os
 import signal
 
@@ -48,7 +49,7 @@ from pkgcore.ebuild import const as e_const
 import pkgcore.spawn
 
 from snakeoil import klass
-from snakeoil.currying import partial, pretty_docs
+from snakeoil.currying import pretty_docs
 from snakeoil.demandload import demandload
 from snakeoil.osutils import abspath, normpath, pjoin
 from snakeoil.weakrefs import WeakRefFinalizer

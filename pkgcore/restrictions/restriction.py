@@ -6,8 +6,10 @@
 base restriction class
 """
 
+from functools import partial
+
 from snakeoil import caching, klass
-from snakeoil.currying import partial, pretty_docs
+from snakeoil.currying import pretty_docs
 
 
 class base(object):

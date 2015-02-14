@@ -2,8 +2,9 @@
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>: BSD/GPL2
 # License: BSD/GPL2
 
+from functools import partial
+
 from snakeoil import compatibility
-from snakeoil.currying import partial
 from snakeoil.formatters import PlainTextFormatter
 from snakeoil.mappings import AttrAccessible
 

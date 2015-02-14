@@ -7,7 +7,8 @@ wrap a repository, binding configuration to pkgs returned from the repository
 
 __all__ = ("tree",)
 
-from snakeoil.currying import partial
+from functools import partial
+
 from snakeoil.klass import GetAttrProxy
 
 from pkgcore.operations.repo import operations_proxy

@@ -4,11 +4,11 @@
 __all__ = ("resolver_frame", "resolver_stack", "merge_plan")
 
 from collections import deque
+from functools import partial
 import operator
 from itertools import chain, islice, ifilterfalse as filterfalse
 import sys
 
-from snakeoil.currying import partial
 from snakeoil.compatibility import cmp, sort_cmp
 from snakeoil.iterables import caching_iter
 

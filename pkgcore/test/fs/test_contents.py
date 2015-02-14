@@ -1,9 +1,10 @@
 # Copyright: 2006-2011 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
+from functools import partial
 import os
 
-from snakeoil.currying import post_curry, partial
+from snakeoil.currying import post_curry
 from snakeoil.osutils import pjoin
 
 from pkgcore.fs import fs, contents

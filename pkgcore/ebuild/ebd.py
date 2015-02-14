@@ -15,6 +15,7 @@ __all__ = ("ebd", "setup_mixin", "install_op", "uninstall_op", "replace_op",
     "buildable", "binpkg_localize")
 
 import errno
+from functools import partial
 import os
 import re
 import shutil
@@ -22,7 +23,7 @@ import sys
 
 from snakeoil import data_source, klass
 from snakeoil.compatibility import raise_from, IGNORED_EXCEPTIONS
-from snakeoil.currying import post_curry, pretty_docs, partial
+from snakeoil.currying import post_curry, pretty_docs
 from snakeoil.demandload import demandload
 from snakeoil.osutils import ensure_dirs, normpath, pjoin, listdir_files
 

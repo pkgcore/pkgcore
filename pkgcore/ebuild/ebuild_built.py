@@ -7,11 +7,13 @@ built ebuild packages (vdb packages and binpkgs are derivatives of this)
 
 __all__ = ("package", "package_factory")
 
+from functools import partial
+
 from pkgcore.ebuild import ebuild_src, conditionals, eapi
 from pkgcore.package import metadata
 
 from snakeoil.compatibility import raise_from
-from snakeoil.currying import post_curry, partial
+from snakeoil.currying import post_curry
 from snakeoil.data_source import local_source
 from snakeoil.demandload import demandload
 from snakeoil.mappings import IndeterminantDict

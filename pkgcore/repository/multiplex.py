@@ -7,12 +7,13 @@ repository that combines multiple repositories together
 
 __all__ = ("tree", "operations")
 
+from functools import partial
 from itertools import chain
 from operator import itemgetter
 
 from snakeoil import klass
 from snakeoil.compatibility import sorted_cmp
-from snakeoil.currying import partial, post_curry
+from snakeoil.currying import post_curry
 from snakeoil.iterables import iter_sort
 
 from pkgcore.config import configurable

@@ -14,10 +14,10 @@ __all__ = (
 )
 
 from collections import defaultdict
+from functools import partial
 from itertools import chain
 
 from snakeoil import compatibility, mappings
-from snakeoil.currying import partial
 from snakeoil.klass import generic_equality, alias_method
 from snakeoil.lists import iflatten_instance, stable_unique
 from snakeoil.sequences import namedtuple

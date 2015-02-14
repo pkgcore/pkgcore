@@ -9,6 +9,7 @@ from __future__ import with_statement
 
 __all__ = ("base", "package", "package_factory", "virtual_ebuild")
 
+from functools import partial
 from itertools import imap, chain
 import os
 
@@ -27,7 +28,6 @@ from pkgcore.restrictions.packages import AndRestriction
 
 from snakeoil import klass
 from snakeoil.compatibility import intern
-from snakeoil.currying import partial
 from snakeoil.demandload import demandload, demand_compile_regexp
 from snakeoil.mappings import IndeterminantDict
 

@@ -20,20 +20,23 @@ demandload(
 
 class rsync_syncer(base.ExternalSyncer):
 
-    default_excludes = ["/distfiles", "/local", "/packages"]
+    default_excludes = ['/distfiles', '/local', '/packages']
     default_includes = []
     default_conn_timeout = 15
     default_opts = [
-        "--recursive",
-        "--delete-delay",
-        "--perms",
-        "--times",
-        "--compress",
-        "--force",
-        "--safe-links",
-        "--stats",
-        "--timeout=180",
-        "--whole-file", # this one probably shouldn't be a default.
+        '--recursive',
+        '--delete',
+        '--delete-delay',
+        '--perms',
+        '--times',
+        '--compress',
+        '--force',
+        '--links',
+        '--safe-links',
+        '--stats',
+        '--human-readable',
+        '--timeout=180',
+        '--whole-file', # this one probably shouldn't be a default.
     ]
 
     default_retries = 5

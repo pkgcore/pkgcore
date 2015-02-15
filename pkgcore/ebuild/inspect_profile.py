@@ -136,6 +136,17 @@ class use_expand(_base):
             ', '.join(sorted(namespace.profile.use_expand_hidden)))
 
 
+class iuse_effective(_base):
+
+    """Output the IUSE_EFFECTIVE value for this profile"""
+
+    __metaclass__ = _register_command
+
+    def __call__(self, namespace, out, err):
+        if namespace.profile.iuse_effective:
+            out.write(' '.join(sorted(namespace.profile.iuse_effective)))
+
+
 class masks(_base):
 
     """Inspect package masks"""

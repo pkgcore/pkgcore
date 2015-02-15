@@ -561,7 +561,7 @@ class ProfileStack(object):
 
     @klass.jit_attr
     def iuse_effective(self):
-        # prefer main system profile and fallback on custom profile
+        # prefer main system profile; otherwise, fallback to custom user profile
         for profile in reversed(self.stack):
             if not isinstance(profile, UserProfileNode):
                 break

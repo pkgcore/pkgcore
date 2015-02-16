@@ -8,7 +8,7 @@ ebuild repository, specific to gentoo ebuild trees (whether cvs or rsync)
 __all__ = ("tree", "slavedtree",)
 
 from functools import partial
-from itertools import chain, imap, ifilterfalse
+from itertools import imap, ifilterfalse
 import os
 import stat
 
@@ -570,7 +570,7 @@ class _ConfiguredTree(configured.tree):
         scope_update['operations_callback'] = self._generate_pkg_operations
 
         self.config_wrappables['iuse_effective'] = partial(
-            self._generate_iuse_effective, domain.profile)
+            self._generate_iuse_effective, domain.profile.iuse_effective)
         configured.tree.__init__(
             self, raw_repo, self.config_wrappables,
             pkg_kls_injections=scope_update)
@@ -582,8 +582,8 @@ class _ConfiguredTree(configured.tree):
             make_kls(InvertedContains), InvertedContains)
 
     @staticmethod
-    def _generate_iuse_effective(profile, pkg, *args):
-        return frozenset(chain.from_iterable((pkg.iuse_stripped, profile.iuse_effective)))
+    def _generate_iuse_effective(profile_iuse_effective, pkg_iuse_stripped, *args):
+        return profile_iuse_effective | pkg_iuse_stripped
 
     def _get_delayed_immutable(self, pkg, immutable):
         return InvertedContains(pkg.iuse.difference(immutable))

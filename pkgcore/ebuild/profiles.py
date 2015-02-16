@@ -30,7 +30,8 @@ demandload(
     'collections:defaultdict',
     'snakeoil.data_source:local_source',
     'snakeoil.mappings:ImmutableDict',
-    'pkgcore.ebuild:cpv,atom,repo_objs',
+    'pkgcore.ebuild:cpv,repo_objs',
+    'pkgcore.ebuild.atom:atom',
     'pkgcore.ebuild.eapi:get_eapi',
     'pkgcore.fs.livefs:iter_scan',
     'pkgcore.repository.util:SimpleTree',
@@ -263,7 +264,7 @@ class ProfileNode(object):
                 raise Exception("malformed line- %r" % (line,))
             d[a.key].append(chunked_data(a, *split_negations(l[1:])))
 
-        return ImmutableDict((k, _build_cp_atom_payload(v, atom.atom(k)))
+        return ImmutableDict((k, _build_cp_atom_payload(v, atom(k)))
                              for k, v in d.iteritems())
 
     def _parse_use(self, data):
@@ -821,9 +822,9 @@ class AliasedVirtuals(virtual.tree):
 
     def _fetch_metadata(self, pkg):
         data = self._virtuals[pkg.package]
-        if isinstance(data, atom.atom):
+        if isinstance(data, atom):
             data = [data]
-        data = [atom.atom("=%s-%s" % (x.key, pkg.fullver)) for x in data]
+        data = [atom("=%s-%s" % (x.key, pkg.fullver)) for x in data]
         if len(data) == 1:
             return data[0]
         return packages.OrRestriction(*data)

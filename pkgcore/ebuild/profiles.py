@@ -523,37 +523,37 @@ class ProfileStack(object):
                         d[incremental] = tuple(v)
         return ImmutableDict(d.iteritems())
 
-    @klass.jit_attr
+    @property
     def profile_only_variables(self):
         if "PROFILE_ONLY_VARIABLES" in const.incrementals:
             return frozenset(self.default_env.get("PROFILE_ONLY_VARIABLES", ()))
         return frozenset(self.default_env.get("PROFILE_ONLY_VARIABLES", "").split())
 
-    @klass.jit_attr
+    @property
     def use_expand(self):
         if "USE_EXPAND" in const.incrementals:
             return frozenset(self.default_env.get("USE_EXPAND", ()))
         return frozenset(self.default_env.get("USE_EXPAND", "").split())
 
-    @klass.jit_attr
+    @property
     def use_expand_hidden(self):
         if "USE_EXPAND_HIDDEN" in const.incrementals:
             return frozenset(self.default_env.get("USE_EXPAND_HIDDEN", ()))
         return frozenset(self.default_env.get("USE_EXPAND_HIDDEN", "").split())
 
-    @klass.jit_attr
+    @property
     def iuse_implicit(self):
         if "IUSE_IMPLICIT" in const.incrementals:
             return frozenset(self.default_env.get("IUSE_IMPLICIT", ()))
         return frozenset(self.default_env.get("IUSE_IMPLICIT", "").split())
 
-    @klass.jit_attr
+    @property
     def use_expand_implicit(self):
         if "USE_EXPAND_IMPLICIT" in const.incrementals:
             return frozenset(self.default_env.get("USE_EXPAND_IMPLICIT", ()))
         return frozenset(self.default_env.get("USE_EXPAND_IMPLICIT", "").split())
 
-    @klass.jit_attr
+    @property
     def use_expand_unprefixed(self):
         if "USE_EXPAND_UNPREFIXED" in const.incrementals:
             return frozenset(self.default_env.get("USE_EXPAND_UNPREFIXED", ()))

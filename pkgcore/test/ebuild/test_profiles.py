@@ -6,12 +6,19 @@ import errno
 from functools import partial
 import os
 import shutil
+import tempfile
+
+try:
+    from unittest import mock
+except ImportError:
+    import mock
+from mock import patch
 
 from snakeoil.osutils import pjoin, ensure_dirs, normpath
 from snakeoil.test.mixins import TempDirMixin
 
 from pkgcore.config import central
-from pkgcore.ebuild import const, profiles
+from pkgcore.ebuild import const, profiles, repo_objs
 from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.cpv import CPV
 from pkgcore.ebuild.misc import chunked_data
@@ -714,9 +721,11 @@ class TestOnDiskProfile(profile_mixin, TestCase):
     class kls(profiles.OnDiskProfile):
         _node_kls = ProfileNode
 
-    def get_profile(self, profile, **kwds):
+    def get_profile(self, profile, basepath=None, **kwds):
         config = central.ConfigManager()
-        return self.kls(self.dir, profile, config, **kwds)
+        if basepath is None:
+            basepath = self.dir
+        return self.kls(basepath, profile, config, **kwds)
 
     def test_stacking(self):
         self.mk_profiles(
@@ -1164,6 +1173,62 @@ class TestOnDiskProfile(profile_mixin, TestCase):
            {"USE_EXPAND":tuple('y')})
         self.assertEqual(self.get_profile('2').default_env,
            {'Y':'foo'})
+
+    def test_iuse_effective(self):
+        # TODO: add subprofiles for testing incrementals
+        self.mk_profiles(
+            {},
+            {'eapi': '0',
+             'make.defaults':
+                'IUSE_IMPLICIT="abi_x86_64 foo"\n'
+                'USE_EXPAND_IMPLICIT="ARCH ELIBC"\n'
+                'USE_EXPAND_UNPREFIXED="ARCH"\n'
+                'USE_EXPAND="ABI_X86 ELIBC"\n'
+                'USE_EXPAND_VALUES_ARCH="amd64 arm"\n'
+                'USE_EXPAND_VALUES_ELIBC="glibc uclibc"\n'},
+            {'eapi': '5',
+             'make.defaults':
+                'IUSE_IMPLICIT="abi_x86_64 foo"\n'
+                'USE_EXPAND_IMPLICIT="ARCH ELIBC"\n'
+                'USE_EXPAND_UNPREFIXED="ARCH"\n'
+                'USE_EXPAND="ABI_X86 ELIBC"\n'
+                'USE_EXPAND_VALUES_ARCH="amd64 arm"\n'
+                'USE_EXPAND_VALUES_ELIBC="glibc uclibc"\n'})
+
+        # create repo dir and symlink profiles into it, necessary since the
+        # repoconfig attr is used for EAPI < 5 to retrieve known arches and
+        # doesn't work without a proper repo dir including a 'profiles' subdir
+        repo = tempfile.mkdtemp()
+        os.mkdir(pjoin(repo, 'metadata'))
+        basepath = pjoin(repo, 'profiles')
+        os.symlink(self.dir, basepath)
+
+        # avoid RepoConfig warnings on initialization
+        with open(pjoin(repo, 'metadata', 'layout.conf'), 'w') as f:
+            f.write('repo-name = test\nmasters = gentoo\n')
+
+        class RepoConfig(repo_objs.RepoConfig):
+            # re-inherited to disable inst-caching
+            pass
+
+        # disable instance caching on RepoConfig otherwise the known arches
+        # value will be cached
+        with patch('pkgcore.ebuild.repo_objs.RepoConfig', RepoConfig):
+            self.assertEqual(
+                self.get_profile('0', basepath).iuse_effective, frozenset([]))
+            with open(pjoin(basepath, 'arch.list'), 'w') as f:
+                f.write('amd64\narm\n')
+            self.assertEqual(
+                self.get_profile('0', basepath).iuse_effective,
+                frozenset(['amd64', 'arm']))
+            self.assertEqual(
+                self.get_profile('1', basepath).iuse_effective,
+                frozenset(['amd64', 'arm', 'abi_x86_.*', 'elibc_.*']))
+            self.assertEqual(
+                self.get_profile('2', basepath).iuse_effective,
+                frozenset(['abi_x86_64', 'foo', 'amd64', 'arm', 'abi_x86_64',
+                           'elibc_glibc', 'elibc_uclibc']))
+        shutil.rmtree(repo)
 
     def test_provides_repo(self):
         self.mk_profiles({})

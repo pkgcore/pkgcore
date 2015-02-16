@@ -69,8 +69,14 @@ class test_base(TestCase):
         self.assertEqual(o.description, 'foon\n asdf')
 
     def test_iuse(self):
-        o = self.get_pkg({'IUSE':'build pkg foon'})
-        self.assertEqual(sorted(o.iuse), ['build', 'foon', 'pkg'])
+        o = self.get_pkg({'IUSE': 'build pkg foon'})
+        self.assertEqual(o.iuse, frozenset(['build', 'foon', 'pkg']))
+
+    def test_iuse_stripped(self):
+        o = self.get_pkg({'EAPI': '0', 'IUSE': 'build pkg foon'})
+        self.assertEqual(o.iuse_stripped, frozenset(['build', 'foon', 'pkg']))
+        o = self.get_pkg({'EAPI': '1', 'IUSE': '+build -pkg foon'})
+        self.assertEqual(o.iuse_stripped, frozenset(['build', 'foon', 'pkg']))
 
     def test_iuse_effective(self):
         o = self.get_pkg({'IUSE': 'build pkg foon'})

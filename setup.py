@@ -200,11 +200,9 @@ class pkgcore_install_scripts(core.Command):
 
 
 def _get_files(path):
-    l = []
     for root, dirs, files in os.walk(path):
-        l.extend(os.path.join(root, fn)[len(path):].lstrip('/')
-                 for fn in files)
-    return l
+        for f in files:
+            yield os.path.join(root, f)[len(path):].lstrip('/')
 
 
 class pkgcore_install_docs(core.Command):

@@ -204,6 +204,10 @@ def _get_files(path):
         for f in files:
             yield os.path.join(root, f)[len(path):].lstrip('/')
 
+def _get_data_mapping(host_path, path):
+    for x in os.walk(path):
+        yield (os.path.join(host_path, x[0].partition(path)[2].lstrip('/')),
+               map(lambda y: os.path.join(x[0], y), x[2]))
 
 class pkgcore_install_docs(core.Command):
 
@@ -360,31 +364,6 @@ class pkgcore_build_py(snk_distutils.build_py):
     package_namespace = 'pkgcore'
     generate_verinfo = True
 
-    def _recursive_chmod_files(self, base):
-        for f in os.listdir(base):
-            fp = os.path.join(base, f)
-            if os.path.isdir(fp):
-                self._recursive_chmod_files(fp)
-            elif os.path.isfile(fp):
-                self.set_chmod(fp)
-
-    def _inner_run(self, py3k_rebuilds):
-        base = os.path.join(self.build_lib, "pkgcore", "ebuild", "eapi-bash")
-        self._recursive_chmod_files(os.path.join(base, "helpers"))
-        self.set_chmod(os.path.join(base, "ebuild-daemon.bash"))
-        self.set_chmod(os.path.join(base, "generate_eapi_func_list.bash"))
-        self.set_chmod(os.path.join(base, "regenerate_dont_export_func_list.bash"))
-
-    def set_chmod(self, path):
-        if self.dry_run:
-            log.info("changing mode of %s", path)
-        else:
-            # note, we use the int here for python3k compatibility.
-            # 365 == 0555, 4095 = 0777
-            mode = ((os.stat(path)[ST_MODE]) | 365) & 4095
-            log.debug("changing mode of %s to %o", path, mode)
-            os.chmod(path, mode)
-
 
 class test(snk_distutils.test):
 
@@ -460,12 +439,8 @@ core.setup(
     author='Brian Harring',
     author_email='ferringb@gmail.com',
     packages=packages,
-    package_data={
-        'pkgcore': ['ebuild/eapi-bash/%s' % (x,) for x in
-                    _get_files('pkgcore/ebuild/eapi-bash')],
-    },
     data_files=[
         ('share/pkgcore/config', glob.glob('config/*')),
-    ],
+    ] + list(_get_data_mapping('lib/pkgcore', 'bash')),
     ext_modules=extensions, cmdclass=cmdclass, command_options=command_options,
 )

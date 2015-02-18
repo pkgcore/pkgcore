@@ -4,7 +4,10 @@
 """
 ebuild internal constants
 """
-from os import path
+
+import os
+from os.path import join as pjoin
+import sys
 
 incrementals = (
     "ACCEPT_KEYWORDS", "ACCEPT_LICENSE", "CONFIG_PROTECT",
@@ -21,10 +24,10 @@ metadata_keys = (
     "RDEPEND", "REQUIRED_USE", "RESTRICT", "SLOT", "SRC_URI", "_eclasses_",
 )
 
-WORLD_FILE           = '/var/lib/portage/world'
+WORLD_FILE          = '/var/lib/portage/world'
 
-EAPI_BIN_PATH        = path.join(path.dirname(path.abspath(__file__)), "eapi-bash")
-EBUILD_DAEMON_PATH   = path.join(EAPI_BIN_PATH, "ebuild-daemon.bash")
-EBUILD_HELPERS_PATH  = path.join(EAPI_BIN_PATH, "helpers")
+EAPI_BIN_PATH       = os.environ.get("PKGCORE_BASH_PATH", pjoin(sys.prefix, 'lib/pkgcore'))
+EBUILD_DAEMON_PATH  = pjoin(EAPI_BIN_PATH, "ebuild-daemon.bash")
+EBUILD_HELPERS_PATH = pjoin(EAPI_BIN_PATH, "helpers")
 
-PKGCORE_DEBUG_VARS   = ("PKGCORE_DEBUG", "PKGCORE_PERF_DEBUG")
+PKGCORE_DEBUG_VARS  = ("PKGCORE_DEBUG", "PKGCORE_PERF_DEBUG")

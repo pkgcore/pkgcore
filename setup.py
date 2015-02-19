@@ -207,7 +207,7 @@ def _get_files(path):
 def _get_data_mapping(host_path, path):
     for x in os.walk(path):
         yield (os.path.join(host_path, x[0].partition(path)[2].lstrip('/')),
-               map(lambda y: os.path.join(x[0], y), x[2]))
+               list(map(lambda y: os.path.join(x[0], y), x[2])))
 
 class pkgcore_install_docs(core.Command):
 

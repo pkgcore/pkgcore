@@ -26,8 +26,12 @@ metadata_keys = (
 
 WORLD_FILE          = '/var/lib/portage/world'
 
-EAPI_BIN_PATH       = os.environ.get("PKGCORE_BASH_PATH", pjoin(sys.prefix, 'lib/pkgcore'))
-EBUILD_DAEMON_PATH  = pjoin(EAPI_BIN_PATH, "ebuild-daemon.bash")
+if 'PKGCORE_REPO_PATH' in os.environ:
+    EAPI_BIN_PATH = pjoin(os.environ['PKGCORE_REPO_PATH'], 'bash')
+else:
+    EAPI_BIN_PATH = pjoin(sys.prefix, 'lib/pkgcore')
+
+EBUILD_DAEMON_PATH = pjoin(EAPI_BIN_PATH, "ebuild-daemon.bash")
 EBUILD_HELPERS_PATH = pjoin(EAPI_BIN_PATH, "helpers")
 
-PKGCORE_DEBUG_VARS  = ("PKGCORE_DEBUG", "PKGCORE_PERF_DEBUG")
+PKGCORE_DEBUG_VARS = ("PKGCORE_DEBUG", "PKGCORE_PERF_DEBUG")

@@ -29,12 +29,6 @@ if __name__ == '__main__':
         sys.stderr.write('Add --debug to the commandline for a traceback.\n')
         sys.exit(1)
 
-    os.environ.update({
-        'PKGCORE_SCRIPT_PATH': os.path.dirname(os.path.abspath(__file__)),
-        'PKGCORE_BASH_PATH': os.path.join(
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'bash'),
-        'PKGCORE_CONFIG_PATH': os.path.join(
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'config'),
-    })
+    os.environ['PKGCORE_REPO_PATH'] = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     subcommands = getattr(script, 'argparser', None)
     commandline.main(subcommands)

@@ -914,7 +914,7 @@ def expected_ebuild_env(pkg, d=None, env_source_override=None, depends=False):
         path.extend(const.HOST_ROOT_PATHS)
         if 'PKGCORE_REPO_PATH' in os.environ:
             path.append(pjoin(os.environ['PKGCORE_REPO_PATH'], 'bin'))
-        for eapi in range(pkg.eapi, -1, -1):
+        for eapi in xrange(pkg.eapi, -1, -1):
             eapi_helper_dir = pjoin(e_const.EBUILD_HELPERS_PATH, str(eapi))
             if os.path.exists(eapi_helper_dir):
                 path.append(eapi_helper_dir)

@@ -353,7 +353,7 @@ class PortageFormatter(CountingFormatter):
 
         # Order is important here - look at the above diagram
         op_type = op.desc
-        op_chars = [[' '] for x in range(7)]
+        op_chars = [[' '] for x in xrange(7)]
         if 'fetch' in op.pkg.restrict:
             fetched = [out.fg('red'), out.bold, 'F', out.reset]
             for fetchable in op.pkg.fetchables:

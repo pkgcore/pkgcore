@@ -367,8 +367,7 @@ class pkgcore_build_py(snk_distutils.build_py):
 
 class test(snk_distutils.test):
 
-    os.environ['PKGCORE_BASH_PATH'] = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), 'bash')
+    os.environ['PKGCORE_REPO_PATH'] = os.path.dirname(os.path.abspath(__file__))
     default_test_namespace = 'pkgcore.test'
 
 

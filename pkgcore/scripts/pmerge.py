@@ -17,7 +17,7 @@ from functools import partial
 from itertools import chain
 from time import time
 
-from pkgcore.ebuild import resolver
+from pkgcore.ebuild import resolver, restricts
 from pkgcore.ebuild.atom import atom
 from pkgcore.merge import errors as merge_errors
 from pkgcore.operations import observer, format
@@ -359,10 +359,12 @@ def _validate(parser, namespace):
 def parse_atom(restriction, repo, livefs_repos, return_none=False):
     """Use :obj:`parserestrict.parse_match` to produce a single atom.
 
-    This matches the restriction against a repo. If multiple pkgs match, then
-    the restriction is applied against installed repos skipping pkgs from the
-    'virtual' category. If multiple pkgs still match the restriction,
-    AmbiguousQuery is raised otherwise the matched atom is returned.
+    This matches the restriction against a repo. If multiple pkgs match and a
+    simple package name was provided, then the restriction is applied against
+    installed repos skipping pkgs from the 'virtual' category. If multiple pkgs
+    still match the restriction, AmbiguousQuery is raised otherwise the matched
+    atom is returned. On the other hand, if a globbed match was specified, all
+    repo matches are returned.
 
     :param restriction: string to convert.
     :param repo: :obj:`pkgcore.repository.prototype.tree` instance to search in.
@@ -373,18 +375,23 @@ def parse_atom(restriction, repo, livefs_repos, return_none=False):
     """
     key_matches = set(x.key for x in repo.itermatch(restriction))
     if not key_matches:
-        raise NoMatches(restriction)
+        return None
     elif len(key_matches) > 1:
-        installed_matches = set(x.key for x in livefs_repos.itermatch(restriction)
-                                if x.category != 'virtual')
-        if len(installed_matches) == 1:
-            restriction = atom(installed_matches.pop())
+        if isinstance(restriction, restricts.PackageDep):
+            # check for installed package name matches
+            installed_matches = set(x.key for x in livefs_repos.itermatch(restriction)
+                                    if x.category != 'virtual')
+            if len(installed_matches) == 1:
+                return [atom(installed_matches.pop())]
+            else:
+                raise AmbiguousQuery(restriction, sorted(key_matches))
         else:
-            raise AmbiguousQuery(restriction, sorted(key_matches))
+            # if a glob was specified then just return every match
+            return [atom(x) for x in key_matches]
     if isinstance(restriction, atom):
         # atom is guaranteed to be fine, since it's cat/pkg
-        return restriction
-    return packages.KeyedAndRestriction(restriction, key=key_matches.pop())
+        return [restriction]
+    return [packages.KeyedAndRestriction(restriction, key=key_matches.pop())]
 
 
 @argparser.bind_delayed_default(50, name='world')
@@ -469,7 +476,7 @@ def main(options, out, err):
             else:
                 return -1
         else:
-            atoms.append(a)
+            atoms.extend(a)
 
     if not atoms and not options.newuse:
         out.error('No targets specified; nothing to do')

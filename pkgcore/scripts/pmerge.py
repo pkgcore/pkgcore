@@ -43,8 +43,7 @@ class StoreTarget(argparse._AppendAction):
                 argparse._AppendAction.__call__(
                     self, parser, namespace,
                     parserestrict.parse_match(x), option_string=option_string)
-        if sets:
-            namespace.sets = sets
+        namespace.sets = sets
 
 
 argparser = commandline.mk_argparser(

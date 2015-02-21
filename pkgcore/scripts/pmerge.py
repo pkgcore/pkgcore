@@ -339,7 +339,7 @@ def _validate(parser, namespace):
         parser.error('--usepkg is redundant when --usepkgonly is used')
     elif (namespace.usepkgonly or namespace.usepkg) and namespace.source_only:
         parser.error("--source-only cannot be used with --usepkg nor --usepkgonly")
-    if namespace.sets and not namespace.oneshot:
+    if namespace.upgrade:
         namespace.replace = False
     if not namespace.targets and not namespace.newuse:
         parser.error('Need at least one atom/set')

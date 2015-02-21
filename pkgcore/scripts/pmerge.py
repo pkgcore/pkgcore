@@ -125,6 +125,9 @@ resolution_options.add_argument(
     '-b', '--buildpkg', action='store_true',
     help="build binpkgs")
 resolution_options.add_argument(
+    '-B', '--buildpkgonly', action='store_true',
+    help="only build binpkgs without merging them")
+resolution_options.add_argument(
     '-k', '--usepkg', action='store_true',
     help="prefer to use binpkgs")
 resolution_options.add_argument(
@@ -722,17 +725,21 @@ def main(options, out, err):
                 del pkg_ops
 
                 out.write()
-                if op.desc == "replace":
-                    if op.old_pkg == pkg:
-                        out.write(">>> Reinstalling %s" % (pkg.cpvstr))
-                    else:
-                        out.write(">>> Replacing %s with %s" % (
-                            op.old_pkg.cpvstr, pkg.cpvstr))
-                    i = domain.replace_pkg(op.old_pkg, pkg, repo_obs)
-                    cleanup.append(op.old_pkg.release_cached_data)
+                if options.buildpkgonly:
+                    # run SavePkg trigger here
+                    pass
                 else:
-                    out.write(">>> Installing %s" % (pkg.cpvstr,))
-                    i = domain.install_pkg(pkg, repo_obs)
+                    if op.desc == "replace":
+                        if op.old_pkg == pkg:
+                            out.write(">>> Reinstalling %s" % (pkg.cpvstr))
+                        else:
+                            out.write(">>> Replacing %s with %s" % (
+                                op.old_pkg.cpvstr, pkg.cpvstr))
+                        i = domain.replace_pkg(op.old_pkg, pkg, repo_obs)
+                        cleanup.append(op.old_pkg.release_cached_data)
+                    else:
+                        out.write(">>> Installing %s" % (pkg.cpvstr,))
+                        i = domain.install_pkg(pkg, repo_obs)
 
                 # force this explicitly- can hold onto a helluva lot more
                 # then we would like.

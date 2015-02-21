@@ -579,7 +579,9 @@ class ProfileStack(object):
                     iuse_effective.append(v.lower() + "_" + x)
         else:
             iuse_effective.extend(profile.repoconfig.known_arches)
-            iuse_effective.extend(x.lower() + "_.*" for x in self.use_expand)
+            for v in self.use_expand:
+                for x in self.default_env.get("USE_EXPAND_VALUES_" + v, "").split():
+                    iuse_effective.append(v.lower() + "_" + x)
 
         return frozenset(iuse_effective)
 

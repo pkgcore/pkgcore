@@ -1223,7 +1223,7 @@ class TestOnDiskProfile(profile_mixin, TestCase):
                 frozenset(['amd64', 'arm']))
             self.assertEqual(
                 self.get_profile('1', basepath).iuse_effective,
-                frozenset(['amd64', 'arm', 'abi_x86_.*', 'elibc_.*']))
+                frozenset(['amd64', 'arm', 'elibc_glibc', 'elibc_uclibc']))
             self.assertEqual(
                 self.get_profile('2', basepath).iuse_effective,
                 frozenset(['abi_x86_64', 'foo', 'amd64', 'arm', 'abi_x86_64',

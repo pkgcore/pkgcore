@@ -238,7 +238,7 @@ class domain(pkgcore.config.domain.domain):
 
         # use is collapsed; now stack use_expand.
         use = settings['USE'] = set(optimize_incrementals(
-            settings.get("USE", ())))
+            list(settings.get('USE', ())) + os.environ.get('USE', '').split()))
 
         self._extend_use_for_features(use, settings.get("FEATURES", ()))
 

@@ -375,7 +375,10 @@ def parse_target(restriction, repo, livefs_repos, return_none=False):
     """
     key_matches = set(x.key for x in repo.itermatch(restriction))
     if not key_matches:
-        return None
+        if return_none:
+            return None
+        else:
+            raise NoMatches(restriction)
     elif len(key_matches) > 1:
         if isinstance(restriction, restricts.PackageDep):
             # check for installed package name matches

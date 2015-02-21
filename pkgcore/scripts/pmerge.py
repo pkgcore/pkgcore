@@ -43,6 +43,8 @@ class StoreTarget(argparse._AppendAction):
                 argparse._AppendAction.__call__(
                     self, parser, namespace,
                     parserestrict.parse_match(x), option_string=option_string)
+        if namespace.targets is None:
+            namespace.targets = []
         namespace.sets = sets
 
 
@@ -311,8 +313,6 @@ def update_worldset(world_set, pkg, remove=False):
 @argparser.bind_final_check
 def _validate(parser, namespace):
     if namespace.sets:
-        if namespace.targets is None:
-            namespace.targets = []
         namespace.targets.extend(chain.from_iterable(
             namespace.config.pkgset[x] for x in namespace.sets))
     if namespace.unmerge:

@@ -401,7 +401,6 @@ def parse_target(restriction, repo, livefs_repos, return_none=False):
 def load_world(namespace, attr):
     value = namespace.config.pkgset['world']
     setattr(namespace, attr, value)
-    return value
 
 
 @argparser.bind_main_func

@@ -14,7 +14,7 @@ default_formatter = basics.HardCodedConfigSection({
 })
 
 
-class AtomParsingTest(TestCase):
+class TargetParsingTest(TestCase):
 
     def test_parse_target(self):
         repo = util.SimpleTree({'spork': {'foon': ('1', '1.0.1', '2')}})

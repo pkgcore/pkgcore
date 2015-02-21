@@ -333,7 +333,7 @@ def _validate(parser, namespace):
         namespace.deep = True
         if namespace.usepkgonly or namespace.usepkg or namespace.source_only:
             parser.error(
-                '--clean cannot be used with any of the following namespace: '
+                '--clean cannot be used with any of the following options: '
                 '--usepkg --usepkgonly --source-only')
     elif namespace.usepkgonly and namespace.usepkg:
         parser.error('--usepkg is redundant when --usepkgonly is used')
@@ -475,7 +475,7 @@ def main(options, out, err):
                     'that name. Use -s to specify a set.' % (token,))
                 return 2
             elif not options.ignore_failures:
-                out.error('No matches for %s; ignoring it' % token)
+                out.error('No matches for %s; ignoring it' % (token,))
             else:
                 return -1
         else:

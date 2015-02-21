@@ -14,6 +14,7 @@ __all__ = ("argparser", "AmbiguousQuery", "NoMatches")
 
 import argparse
 from functools import partial
+from itertools import chain
 from time import time
 
 from pkgcore.ebuild import resolver
@@ -32,19 +33,18 @@ from snakeoil.lists import stable_unique
 class StoreTarget(argparse._AppendAction):
 
     def __call__(self, parser, namespace, values, option_string=None):
+        sets = []
         if isinstance(values, basestring):
             values = [values]
         for x in values:
             if x.startswith('@'):
-                ret = parser._parse_known_args(['--set', x[1:]], namespace)
-                if ret[1]:
-                    raise RuntimeError(
-                        "failed parsing %r, %r, got back %r" %
-                        (option_string, values, ret[1]))
+                sets.append(x[1:])
             else:
                 argparse._AppendAction.__call__(
                     self, parser, namespace,
                     parserestrict.parse_match(x), option_string=option_string)
+        if sets:
+            namespace.sets = sets
 
 
 argparser = commandline.mk_argparser(
@@ -58,10 +58,6 @@ query_options.add_argument(
     '-N', '--newuse', action='store_true',
     help="check for changed useflags in installed packages "
          "(implies -1)")
-query_options.add_argument(
-    '-s', '--set', store_name=True,
-    action=commandline.StoreConfigObject, type=str, priority=35,
-    config_type='pkgset', help='specify a pkgset to use')
 
 merge_mode = argparser.add_argument_group('Available operations')
 merge_mode.add_argument(
@@ -315,8 +311,13 @@ def update_worldset(world_set, pkg, remove=False):
 
 @argparser.bind_final_check
 def _validate(parser, namespace):
+    if namespace.sets:
+        if namespace.targets is None:
+            namespace.targets = []
+        namespace.targets.extend(chain.from_iterable(
+            namespace.config.pkgset[x] for x in namespace.sets))
     if namespace.unmerge:
-        if namespace.set:
+        if namespace.sets:
             parser.error("Using sets with -C probably isn't wise, aborting")
         if namespace.upgrade:
             parser.error("Cannot upgrade and unmerge simultaneously")
@@ -325,10 +326,11 @@ def _validate(parser, namespace):
         if namespace.clean:
             parser.error("Cannot use -C with --clean")
     if namespace.clean:
-        if namespace.set or namespace.targets:
+        if namespace.sets or namespace.targets:
             parser.error("--clean currently cannot be used w/ any sets or "
                          "targets given")
-        namespace.set = [(x, namespace.config.pkgset[x]) for x in ('world', 'system')]
+        namespace.targets = chain.from_iterable(
+            namespace.config.pkgset[x] for x in ('world', 'system'))
         namespace.deep = True
         if namespace.usepkgonly or namespace.usepkg or namespace.source_only:
             parser.error(
@@ -338,9 +340,9 @@ def _validate(parser, namespace):
         parser.error('--usepkg is redundant when --usepkgonly is used')
     elif (namespace.usepkgonly or namespace.usepkg) and namespace.source_only:
         parser.error("--source-only cannot be used with --usepkg nor --usepkgonly")
-    if namespace.set:
+    if namespace.sets and not namespace.oneshot:
         namespace.replace = False
-    if not namespace.targets and not namespace.set and not namespace.newuse:
+    if not namespace.targets and not namespace.newuse:
         parser.error('Need at least one atom/set')
     if namespace.newuse:
         namespace.oneshot = True
@@ -353,7 +355,6 @@ def _validate(parser, namespace):
             return [val]
         return val
     namespace.targets = f(namespace.targets)
-    namespace.set = f(namespace.set)
 
 
 def parse_atom(restriction, repo, livefs_repos, return_none=False):
@@ -452,15 +453,6 @@ def main(options, out, err):
             if getattr(x, 'repository_type', None) == 'source')
 
     atoms = []
-    for setname, pkgset in options.set:
-        if pkgset is None:
-            return 1
-        l = list(pkgset)
-        if not l:
-            out.write("skipping set %s: set is empty, nothing to update" % setname)
-        else:
-            atoms.extend(l)
-
     for token in options.targets:
         try:
             a = parse_atom(token, source_repos.combined, livefs_repos, return_none=True)
@@ -486,7 +478,7 @@ def main(options, out, err):
 
     atoms = stable_unique(atoms)
 
-    if (not options.set or options.clean) and not options.oneshot:
+    if options.clean and not options.oneshot:
         if world_set is None:
             err.write("Disable world updating via --oneshot, or fix your configuration")
             return 1

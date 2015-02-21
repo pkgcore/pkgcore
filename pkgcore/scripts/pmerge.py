@@ -356,8 +356,8 @@ def _validate(parser, namespace):
     namespace.targets = f(namespace.targets)
 
 
-def parse_atom(restriction, repo, livefs_repos, return_none=False):
-    """Use :obj:`parserestrict.parse_match` to produce a single atom.
+def parse_target(restriction, repo, livefs_repos, return_none=False):
+    """Use :obj:`parserestrict.parse_match` to produce a list of matches.
 
     This matches the restriction against a repo. If multiple pkgs match and a
     simple package name was provided, then the restriction is applied against
@@ -371,7 +371,7 @@ def parse_atom(restriction, repo, livefs_repos, return_none=False):
     :param livefs_repos: :obj:`pkgcore.config.domain.all_livefs_repos` instance to search in.
     :param return_none: indicates if no matches raises or returns C{None}
 
-    :return: an atom or C{None}.
+    :return: a list of matches or C{None}.
     """
     key_matches = set(x.key for x in repo.itermatch(restriction))
     if not key_matches:
@@ -461,11 +461,11 @@ def main(options, out, err):
     atoms = []
     for token in options.targets:
         try:
-            a = parse_atom(token, source_repos.combined, livefs_repos, return_none=True)
+            matches = parse_target(token, source_repos.combined, livefs_repos, return_none=True)
         except parserestrict.ParseError as e:
             out.error(str(e))
             return 1
-        if a is None:
+        if matches is None:
             if token in config.pkgset:
                 out.error(
                     'No package matches %s, but there is a set with '
@@ -476,7 +476,7 @@ def main(options, out, err):
             else:
                 return -1
         else:
-            atoms.extend(a)
+            atoms.extend(matches)
 
     if not atoms and not options.newuse:
         out.error('No targets specified; nothing to do')

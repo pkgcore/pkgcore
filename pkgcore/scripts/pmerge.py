@@ -468,11 +468,11 @@ def main(options, out, err):
         if a is None:
             if token in config.pkgset:
                 out.error(
-                    'No package matches %r, but there is a set with '
+                    'No package matches %s, but there is a set with '
                     'that name. Use -s to specify a set.' % (token,))
                 return 2
             elif not options.ignore_failures:
-                out.error('No matches for %r; ignoring it' % token)
+                out.error('No matches for %s; ignoring it' % token)
             else:
                 return -1
         else:

@@ -119,6 +119,9 @@ resolution_options.add_argument(
     '-O', '--nodeps', action='store_true',
     help='disable dependency resolution')
 resolution_options.add_argument(
+    '-o', '--onlydeps', action='store_true',
+    help='only consider target dependencies and not targets themselves')
+resolution_options.add_argument(
     '-n', '--noreplace', action='store_false', dest='replace',
     help="don't reinstall target atoms if they're already installed")
 resolution_options.add_argument(
@@ -411,6 +414,11 @@ def main(options, out, err):
         resolver.plan.limiters.add(None)
 
     domain = options.domain
+
+    if options.onlydeps:
+        # create fake vdb here for hidden pkgs and append to domain.vdbs
+        pass
+
     livefs_repos = domain.all_livefs_repos
     world_set = world_list = options.world
     if options.oneshot:

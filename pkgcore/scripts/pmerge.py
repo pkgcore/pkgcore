@@ -66,9 +66,9 @@ merge_mode.add_argument(
     help='unmerge a package')
 merge_mode.add_argument(
     '--clean', action='store_true',
-    help='Remove installed packages that are not referenced by any '
-         'target packages/sets; defaults to -s world -s system if no targets '
-         'are specified. Use with *caution*, this option used incorrectly '
+    help='Remove installed packages that are not referenced by any target '
+         'packages/sets; defaults to using the world and system sets if no '
+         'targets are specified. Use with *caution*, this option used incorrectly '
          'can render your system unusable. Note that this implies --deep.')
 merge_mode.add_argument(
     '-p', '--pretend', action='store_true',
@@ -472,7 +472,7 @@ def main(options, out, err):
             if token in config.pkgset:
                 out.error(
                     'No package matches %s, but there is a set with '
-                    'that name. Use -s to specify a set.' % (token,))
+                    'that name. Use @set to specify a set.' % (token,))
                 return 2
             elif not options.ignore_failures:
                 out.error('No matches for %s; ignoring it' % (token,))

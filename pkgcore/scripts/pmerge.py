@@ -338,8 +338,11 @@ def _validate(parser, namespace):
         parser.error("--source-only cannot be used with --usepkg nor --usepkgonly")
 
     if namespace.sets:
-        namespace.targets.extend(chain.from_iterable(
-            namespace.config.pkgset[x] for x in namespace.sets))
+        for pkgset in namespace.sets:
+            if pkgset not in namespace.config.pkgset:
+                parser.error("unknown pkgset '%s' (available pkgsets: %s" % (
+                    pkgset, ', '.join(sorted(x for x in namespace.config.pkgset))))
+            namespace.targets.extend(namespace.config.pkgset[pkgset])
     if namespace.upgrade:
         namespace.replace = False
     if not namespace.targets and not namespace.newuse:

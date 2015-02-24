@@ -312,9 +312,6 @@ def update_worldset(world_set, pkg, remove=False):
 
 @argparser.bind_final_check
 def _validate(parser, namespace):
-    if namespace.sets:
-        namespace.targets.extend(chain.from_iterable(
-            namespace.config.pkgset[x] for x in namespace.sets))
     if namespace.unmerge:
         if namespace.sets:
             parser.error("Using sets with -C probably isn't wise, aborting")
@@ -324,12 +321,12 @@ def _validate(parser, namespace):
             parser.error("You must provide at least one atom")
         if namespace.clean:
             parser.error("Cannot use -C with --clean")
+
     if namespace.clean:
         if namespace.sets or namespace.targets:
             parser.error("--clean currently cannot be used w/ any sets or "
                          "targets given")
-        namespace.targets = chain.from_iterable(
-            namespace.config.pkgset[x] for x in ('world', 'system'))
+        namespace.sets = ('world', 'system')
         namespace.deep = True
         if namespace.usepkgonly or namespace.usepkg or namespace.source_only:
             parser.error(
@@ -339,6 +336,10 @@ def _validate(parser, namespace):
         parser.error('--usepkg is redundant when --usepkgonly is used')
     elif (namespace.usepkgonly or namespace.usepkg) and namespace.source_only:
         parser.error("--source-only cannot be used with --usepkg nor --usepkgonly")
+
+    if namespace.sets:
+        namespace.targets.extend(chain.from_iterable(
+            namespace.config.pkgset[x] for x in namespace.sets))
     if namespace.upgrade:
         namespace.replace = False
     if not namespace.targets and not namespace.newuse:

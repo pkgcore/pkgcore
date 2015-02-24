@@ -345,8 +345,8 @@ def _validate(parser, namespace):
             namespace.targets.extend(namespace.config.pkgset[pkgset])
     if namespace.upgrade:
         namespace.replace = False
-    if not namespace.targets and not namespace.newuse:
-        parser.error('Need at least one atom/set')
+    if not namespace.targets:
+        parser.error('please specify at least one atom or nonempty pkgset')
     if namespace.newuse:
         namespace.oneshot = True
 

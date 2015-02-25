@@ -20,11 +20,8 @@ optimizations split out of pkgcore for others to use.
 Who to contact if I find a bug?
 ===============================
 
-Please submit an issue via Github_. Please do not use `Gentoo Bugzilla`_ as the
-first step; any bugs, pkgcore devs should filter before passing up at this
-point.
-
-You can also stop by at `#pkgcore`_ on Freenode.
+Please submit an issue via Github_. You can also stop by at `#pkgcore`_ on
+Freenode.
 
 
 Tools
@@ -38,8 +35,8 @@ Tools
 
 **pmaint**: generic utility for repository maintenance (syncing, copying...)
 
-**pmerge**: generic utility for doing resolution, fetching, merging/unmerging,
-etc.
+**pmerge**: generic utility for doing dependency resolution, fetching,
+(un)merging, etc.
 
 **pquery**: generic utility for querying info about repositories, revdeps, pkg
 search, vdb search, etc.

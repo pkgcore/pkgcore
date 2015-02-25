@@ -14,7 +14,6 @@ __all__ = ("argparser", "AmbiguousQuery", "NoMatches")
 
 import argparse
 from functools import partial
-from itertools import chain
 from time import time
 
 from pkgcore.ebuild import resolver, restricts
@@ -340,13 +339,13 @@ def _validate(parser, namespace):
     if namespace.sets:
         for pkgset in namespace.sets:
             if pkgset not in namespace.config.pkgset:
-                parser.error("unknown pkgset '%s' (available pkgsets: %s" % (
+                parser.error("unknown set '%s' (available sets: %s)" % (
                     pkgset, ', '.join(sorted(x for x in namespace.config.pkgset))))
             namespace.targets.extend(namespace.config.pkgset[pkgset])
     if namespace.upgrade:
         namespace.replace = False
     if not namespace.targets:
-        parser.error('please specify at least one atom or nonempty pkgset')
+        parser.error('please specify at least one atom or nonempty set')
     if namespace.newuse:
         namespace.oneshot = True
 
@@ -386,8 +385,9 @@ def parse_target(restriction, repo, livefs_repos, return_none=False):
     elif len(key_matches) > 1:
         if isinstance(restriction, restricts.PackageDep):
             # check for installed package name matches
-            installed_matches = set(x.key for x in livefs_repos.itermatch(restriction)
-                                    if x.category != 'virtual')
+            installed_matches = set(
+                x.key for x in livefs_repos.itermatch(restriction)
+                if x.category != 'virtual')
             if len(installed_matches) == 1:
                 return [atom(installed_matches.pop())]
             else:
@@ -436,7 +436,8 @@ def main(options, out, err):
     if options.unmerge:
         if not options.oneshot:
             if world_set is None:
-                err.write("Disable world updating via --oneshot, or fix your configuration")
+                err.write("Disable world updating via --oneshot, "
+                          "or fix your configuration")
                 return 1
         try:
             unmerge(out, err, livefs_repos, options.targets, options, formatter, world_set)
@@ -777,8 +778,8 @@ def main(options, out, err):
         pass
 
     # the final run from the loop above doesn't invoke cleanups;
-    # we could ignore it, but better to run it to ensure nothing is inadvertantly
-    # held on the way out of this function.
+    # we could ignore it, but better to run it to ensure nothing is
+    # inadvertantly held on the way out of this function.
     # makes heappy analysis easier if we're careful about it.
     for func in cleanup:
         func()

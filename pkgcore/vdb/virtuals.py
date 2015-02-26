@@ -63,10 +63,14 @@ def _get_mtimes(loc):
     # yes, listdir here makes sense due to the stating, and the
     # potential for listdir_dirs to do it's own statting if the
     # underlying FS doesn't support dt_type...
-    for x in listdir(loc):
-        st = os.stat(pjoin(loc, x))
-        if sdir(st.st_mode):
-            d[x] = st.st_mtime
+    try:
+        for x in listdir(loc):
+            st = os.stat(pjoin(loc, x))
+            if sdir(st.st_mode):
+                d[x] = st.st_mtime
+    except OSError as e:
+        if e.errno != errno.ENOENT:
+            raise
     return d
 
 def _write_mtime_cache(mtimes, data, location):

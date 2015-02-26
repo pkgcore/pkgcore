@@ -61,9 +61,10 @@ class tree(prototype.tree):
                 raise errors.InitializationError(
                     "base lacks read/executable: %r" % self.location)
 
-        except OSError:
-            compatibility.raise_from(errors.InitializationError(
-                "lstat failed on base %r" % self.location))
+        except OSError as e:
+            if e.errno != errno.ENOENT:
+                compatibility.raise_from(errors.InitializationError(
+                    "lstat failed on base %r" % self.location))
 
         self.package_class = self.package_factory(self)
 

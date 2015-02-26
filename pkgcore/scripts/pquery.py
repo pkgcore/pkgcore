@@ -466,7 +466,7 @@ class RawAwareStoreRepoObject(commandline.StoreRepoObject):
             self, config, namespace)
 
 repo_mux.add_argument(
-    '--repo', action=RawAwareStoreRepoObject, priority=29,
+    '-r', '--repo', action=RawAwareStoreRepoObject, priority=29,
     help='repo to use (default from domain if omitted).')
 repo_mux.add_argument(
     '--all-repos', action='store_true',

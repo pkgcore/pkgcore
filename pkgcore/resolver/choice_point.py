@@ -11,7 +11,7 @@ class choice_point(object):
 
     __slots__ = (
         "__weakref__", "atom", "matches", "matches_cur", "solution_filters",
-        "_prdeps", "_rdeps", "_deps", "_provides")
+        "_prdeps", "_rdeps", "_deps")
 
     def __init__(self, a, matches):
         self.atom = a
@@ -22,7 +22,6 @@ class choice_point(object):
         self._deps = None
         self._rdeps = None
         self._prdeps = None
-        self._provides = None
 
     @property
     def state(self):
@@ -97,14 +96,13 @@ class choice_point(object):
 
     def _reset_iters(self):
         """
-        Reset depends, rdepends, post_rdepends, and provides properties
+        Reset depends, rdepends, and post_rdepends properties
         to current matches' related attributes.
         """
         cur = self.matches_cur
         self._deps = cur.depends.cnf_solutions()
         self._rdeps = cur.rdepends.cnf_solutions()
         self._prdeps = cur.post_rdepends.cnf_solutions()
-        self._provides = tuple(iter_stable_unique(cur.provides))
 
     slot = klass.alias_attr("current_pkg.slot")
     key = klass.alias_attr("current_pkg.key")
@@ -154,13 +152,6 @@ class choice_point(object):
         if not self:
             raise IndexError("no more solutions remain")
         return self._prdeps
-
-    @property
-    def provides(self):
-        """Deprecated package provides."""
-        if not self:
-            raise IndexError("no more solutions remain")
-        return self._provides
 
     def __nonzero__(self):
         if self.matches_cur is None:

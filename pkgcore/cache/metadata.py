@@ -47,9 +47,9 @@ class database(flat_hash.database):
     complete_eclass_entries = True
 
     auxdbkeys_order = ('DEPEND', 'RDEPEND', 'SLOT', 'SRC_URI',
-        'RESTRICT',  'HOMEPAGE',  'LICENSE', 'DESCRIPTION',
-        'KEYWORDS',  '_eclasses_', 'IUSE', 'REQUIRED_USE',
-        'PDEPEND',   'PROVIDE', 'EAPI', 'PROPERTIES',
+        'RESTRICT', 'HOMEPAGE',  'LICENSE', 'DESCRIPTION',
+        'KEYWORDS', '_eclasses_', 'IUSE', 'REQUIRED_USE',
+        'PDEPEND', 'EAPI', 'PROPERTIES',
         'DEFINED_PHASES')
 
     # this is the old cache format, flat_list.  hardcoded, and must

@@ -16,7 +16,6 @@ generic_data = \
         ('KEYWORDS', '~amd64 ~ppc ~x86'),
         ('LICENSE', 'GPL-2'),
         ('PDEPEND', ''),
-        ('PROVIDE', ''),
         ('RDEPEND', 'virtual/libc dev-lang/perl'),
         ('RESTRICT', ''),
         ('SLOT', '0'),
@@ -36,7 +35,7 @@ generic_data = \
 class GenericCacheMixin(TestCase):
 
     cache_keys = ("DEPENDS", "RDEPEND", "EAPI", "HOMEPAGE", "KEYWORDS",
-        "LICENSE", "PDEPEND", "PROVIDE", "RESTRICT", "SLOT", "SRC_URI",
+        "LICENSE", "PDEPEND", "RESTRICT", "SLOT", "SRC_URI",
         "_eclasses_", "_mtime_")
 
     # truncating the original metadata we grabbed for 80 char...

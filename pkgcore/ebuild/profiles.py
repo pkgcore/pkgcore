@@ -3,7 +3,7 @@
 
 __all__ = (
     "ProfileError", "ProfileNode", "EmptyRootNode", "OnDiskProfile",
-    "UserProfile", "PkgProvided", "AliasedVirtuals"
+    "UserProfile", "PkgProvided",
 )
 
 import errno
@@ -23,7 +23,6 @@ from pkgcore.ebuild import const, ebuild_src, misc
 from pkgcore.ebuild.misc import (
     _build_cp_atom_payload, chunked_data, ChunkedDataDict, split_negations,
     IncrementalsDict, package_keywords_splitter)
-from pkgcore.repository import virtual
 from pkgcore.util.parserestrict import parse_match
 
 demandload(
@@ -205,16 +204,6 @@ class ProfileNode(object):
     @load_property("package.provided", allow_recurse=True)
     def pkg_provided(self, data):
         return split_negations(data, cpv.versioned_CPV)
-
-    @load_property("virtuals")
-    def virtuals(self, data):
-        d = {}
-        for line in data:
-            l = line.split()
-            if len(l) != 2:
-                raise ValueError("%r is malformed" % line)
-            d[cpv.CPV.unversioned(l[0]).package] = self.eapi_atom(l[1])
-        return ImmutableDict(d)
 
     @load_property("package.mask", allow_recurse=True)
     def masks(self, data):
@@ -435,7 +424,7 @@ class EmptyRootNode(ProfileNode):
     deprecated = None
     pkg_use = masked_use = stable_masked_use = forced_use = stable_forced_use = ChunkedDataDict()
     forced_use.freeze()
-    virtuals = pkg_use_force = pkg_use_mask = ImmutableDict()
+    pkg_use_force = pkg_use_mask = ImmutableDict()
     pkg_provided = visibility = system = ((), ())
 
 
@@ -584,17 +573,6 @@ class ProfileStack(object):
                     iuse_effective.append(v.lower() + "_" + x)
 
         return frozenset(iuse_effective)
-
-    @klass.jit_attr
-    def virtuals(self):
-        d = {}
-        for profile in self.stack:
-            d.update(profile.virtuals)
-        return ImmutableDict(d)
-
-    @klass.jit_attr
-    def make_virtuals_repo(self):
-        return partial(AliasedVirtuals, self.virtuals)
 
     @klass.jit_attr
     def provides_repo(self):
@@ -759,74 +737,3 @@ class PkgProvided(ebuild_src.base):
         object.__setattr__(self, "use", [])
         object.__setattr__(self, "data", {})
         object.__setattr__(self, "eapi_obj", get_eapi('0'))
-
-
-class AliasedVirtuals(virtual.tree):
-
-    """
-    repository generated from a profiles default virtuals
-    """
-
-    def __init__(self, virtuals, repo, *overrides):
-        """
-        :param virtuals: dict of virtual -> providers
-        :param repo: :obj:`pkgcore.ebuild.repository.UnconfiguredTree` parent repo
-        :keyword overrides: mapping of virtual pkgname -> matches to override defaults
-        """
-        virtual.tree.__init__(self, livefs=False)
-        self._original_virtuals = virtuals
-        self._overrides = tuple(overrides)
-        if not overrides:
-            # no point in delaying.
-            self.packages._cache['virtuals'] = tuple(virtuals.iterkeys())
-            self._virtuals = virtuals
-        self.aliased_repo = repo
-        self._versions_map = {}
-
-    def _load_data(self):
-        self._virtuals = self._delay_apply_overrides(self._original_virtuals,
-            self._overrides)
-        self.packages._cache['virtual'] = tuple(self._virtuals.iterkeys())
-
-    @staticmethod
-    def _delay_apply_overrides(virtuals, overrides):
-        d = {}
-        for vtree in overrides:
-            for virt, provider in vtree.default_providers.iteritems():
-                if virt in d:
-                    d[virt] &= d[virt] & provider
-                else:
-                    d[virt] = provider
-
-        if not d:
-            return virtuals
-        for k, v in d.iteritems():
-            if len(v) == 1:
-                d[k] = tuple(v)[0]
-            else:
-                d[k] = packages.OrRestriction(*v)
-        virtuals = virtuals.copy()
-        virtuals.update(d)
-        return virtuals
-
-    def _get_versions(self, catpkg):
-        if catpkg[0] != "virtual":
-            raise KeyError("no %s package in this repository" % catpkg)
-        vers = set()
-        for pkg in self.aliased_repo.itermatch(self._virtuals[catpkg[1]]):
-            self._versions_map.setdefault(catpkg[1], {}).setdefault(pkg.fullver, []).append(
-                pkg.versioned_atom)
-            vers.add(pkg.fullver)
-        return tuple(vers)
-
-    def _expand_vers(self, cp, ver):
-        return self._versions_map.get(cp[1], {}).get(ver, ())
-
-    def _fetch_metadata(self, pkg):
-        data = self._virtuals[pkg.package]
-        if isinstance(data, atom):
-            data = [data]
-        data = [atom("=%s-%s" % (x.key, pkg.fullver)) for x in data]
-        if len(data) == 1:
-            return data[0]
-        return packages.OrRestriction(*data)

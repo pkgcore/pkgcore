@@ -189,10 +189,6 @@ class test_base(TestCase):
         'dev-util/diffball x86? ( virtual/boo )',
         'post_rdepends', data_name='PDEPEND')
 
-    test_provides = post_curry(generic_check_depends,
-        'virtual/foo x86? ( virtual/boo )',
-        'provides', expected='virtual/foo-0.1-r1 x86? ( virtual/boo-0.1-r1 )')
-
     def test_fetchables(self):
         l = []
         def f(self, cpv, allow_missing=False):

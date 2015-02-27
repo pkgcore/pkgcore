@@ -381,16 +381,6 @@ class domain(pkgcore.config.domain.domain):
                 self.repos_configured_filtered[key] = wrapped_repo
                 l.append(wrapped_repo)
 
-        if profile.virtuals:
-            l = [x for x in (getattr(v, 'old_style_virtuals', None)
-                 for v in self.vdb) if x is not None]
-            profile_repo = profile.make_virtuals_repo(
-                multiplex.tree(*repositories), *l)
-            self.repos_raw["profile virtuals"] = profile_repo
-            self.repos_configured_filtered["profile virtuals"] = profile_repo
-            self.repos_configured["profile virtuals"] = profile_repo
-            self.repos = [profile_repo] + self.repos
-
         self.use_expand_re = re.compile(
             "^(?:[+-])?(%s)_(.*)$" %
             "|".join(x.lower() for x in sorted(profile.use_expand, reverse=True)))

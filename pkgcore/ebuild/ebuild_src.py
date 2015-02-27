@@ -7,7 +7,7 @@ package class for buildable ebuilds
 
 from __future__ import with_statement
 
-__all__ = ("base", "package", "package_factory", "virtual_ebuild")
+__all__ = ("base", "package", "package_factory")
 
 from functools import partial
 from itertools import imap, chain
@@ -76,17 +76,6 @@ def generate_required_use(self):
         values.ContainmentMatch, operators=operators,
         element_func=_mk_required_use_node,
         )
-
-def generate_providers(self):
-    rdep = AndRestriction(self.versioned_atom)
-    func = partial(virtual_ebuild, self._parent, self,
-        {"rdepends":rdep, "slot":"%s-%s" % (self.category, self.version)})
-    # re-enable license at some point.
-    #, "license":self.license})
-
-    return conditionals.DepSet.parse(
-        self.data.pop("PROVIDE", ""), virtual_ebuild, element_func=func,
-        operators={"":boolean.AndRestriction})
 
 def generate_fetchables(self, allow_missing_checksums=False):
     chksums_can_be_missing = allow_missing_checksums or \
@@ -200,11 +189,10 @@ class base(metadata.package):
     _config_wrappables = {
         x: klass.alias_method("evaluate_depset")
         for x in ("depends", "rdepends", "post_rdepends", "fetchables",
-                  "license", "src_uri", "provides", "restrict", "required_use")
+                  "license", "src_uri", "restrict", "required_use")
     }
 
     _get_attr = dict(metadata.package._get_attr)
-    _get_attr["provides"] = generate_providers
     _get_attr["depends"] = partial(generate_depset, atom, "DEPEND", False)
     _get_attr["rdepends"] = partial(generate_depset, atom, "RDEPEND", False)
     _get_attr["post_rdepends"] = partial(generate_depset, atom, "PDEPEND", False)
@@ -436,47 +424,3 @@ class package_factory(metadata.factory):
 
 
 generate_new_factory = package_factory
-
-
-class virtual_ebuild(metadata.package):
-
-    """
-    PROVIDES generated fake packages
-    """
-
-    package_is_real = False
-    built = True
-
-    __slots__ = ("_orig_data", "provider", "eapi_obj")
-
-    def __init__(self, parent_repository, pkg, data, cpvstr):
-        """
-        :param cpvstr: cpv for the new pkg
-        :param parent_repository: actual repository that this pkg should
-            claim it belongs to
-        :param pkg: parent pkg that is generating this pkg
-        :param data: mapping of data to push to use in __getattr__ access
-        """
-        c = CPV.unversioned(cpvstr)
-        if c.fullver is None:
-            cpvstr = cpvstr + "-" + pkg.fullver
-
-        metadata.package.__init__(self, parent_repository, cpvstr)
-        sfunc = object.__setattr__
-        sfunc(self, "data", IndeterminantDict(lambda *a: str(), data))
-        sfunc(self, "_orig_data", data)
-        sfunc(self, "provider", pkg.versioned_atom)
-        sfunc(self, "eapi_obj", get_eapi("0"))
-
-    def __getattr__(self, attr):
-        if attr in self._orig_data:
-            return self._orig_data[attr]
-        return metadata.package.__getattr__(self, attr)
-
-    _get_attr = package._get_attr.copy()
-
-    # we have to duplicate this here since the virtual
-    # doesn't directly derive from base
-    @property
-    def eapi(self):
-        return int(self.eapi_obj.magic)

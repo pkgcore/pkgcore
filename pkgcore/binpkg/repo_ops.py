@@ -42,7 +42,6 @@ _metadata_rewrites = {
     "use": "USE",
     "eapi_obj": "EAPI",
     "CONTENTS": "contents",
-    "provides": "PROVIDE",
     "source_repository": "repository",
     "fullslot": "SLOT",
 }
@@ -58,9 +57,6 @@ def generate_attr_dict(pkg, portage_compatible=True):
             d['environment.bz2'] = compress_data(
                 'bzip2', v.bytes_fileobj().read())
             continue
-        if k == 'provides':
-            versionless_provides = lambda b: b.key
-            s = stringify_boolean(v, func=versionless_provides)
         elif k == 'eapi_obj':
             s = v.magic
         elif not isinstance(v, basestring):

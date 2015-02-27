@@ -61,11 +61,7 @@ class install(repo_ops.install):
                 del data
             else:
                 v = getattr(self.new_pkg, k)
-                if k == 'provides':
-                    versionless_providers = lambda b:b.key
-                    s = conditionals.stringify_boolean(v,
-                        func=versionless_providers)
-                elif k == 'eapi_obj':
+                if k == 'eapi_obj':
                     # hackity hack.
                     s = v.magic
                     k = 'eapi'

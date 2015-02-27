@@ -116,7 +116,6 @@ class StackedXpakDict(DictMixin):
         "depends": "DEPEND",
         "rdepends": "RDEPEND",
         "post_rdepends": "PDEPEND",
-        "provides": "PROVIDE",
         "use": "USE",
         "eapi": "EAPI",
         "CONTENTS": "contents",

@@ -539,7 +539,7 @@ class _ConfiguredTree(configured.tree):
     config_wrappables = {
         x: klass.alias_method("evaluate_depset")
         for x in ("depends", "rdepends", "post_rdepends", "fetchables",
-                  "license", "src_uri", "provides", "restrict", "required_use")}
+                  "license", "src_uri", "restrict", "required_use")}
 
     def __init__(self, raw_repo, domain, domain_settings, fetcher=None):
         """

@@ -288,21 +288,6 @@ class stable_forced_use(_use):
         super(stable_forced_use, self).__call__(namespace, out, err)
 
 
-class virtuals(_base):
-
-    """Inspect old style virtuals (aliasing) default targets
-
-    In the absence of any package PROVIDE'ing one of these virtuals,
-    the defined target will be used instead.
-    """
-
-    __metaclass__ = _register_command
-
-    def __call__(self, namespace, out, err):
-        for key, val in sorted(namespace.profile.virtuals, key=operator.itemgetter(0)):
-            out.write("%s: %s" % (key, val))
-
-
 class defaults(_base):
 
     """Inspect defined configuration for this profile

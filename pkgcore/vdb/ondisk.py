@@ -19,7 +19,6 @@ from pkgcore.ebuild import ebuild_built
 from pkgcore.ebuild.cpv import versioned_CPV
 from pkgcore.ebuild.errors import InvalidCPV
 from pkgcore.repository import errors, multiplex, prototype
-from pkgcore.vdb import virtuals
 
 demandload(
     'pkgcore.log:logger',
@@ -135,7 +134,7 @@ class tree(prototype.tree):
 
     _metadata_rewrites = {
         "depends":"DEPEND", "rdepends":"RDEPEND", "post_rdepends":"PDEPEND",
-        "use":"USE", "eapi":"EAPI", "CONTENTS":"contents", "provides":"PROVIDE",
+        "use":"USE", "eapi":"EAPI", "CONTENTS":"contents",
         "source_repository":"repository", "fullslot":"SLOT"
     }
 
@@ -200,12 +199,7 @@ class ConfiguredTree(multiplex.tree):
         self.domain = domain
         self.domain_settings = domain_settings
         self.raw_vdb = raw_vdb
-        if raw_vdb.cache_location is not None:
-            self.old_style_virtuals = virtuals.caching_virtuals(raw_vdb,
-                raw_vdb.cache_location)
-        else:
-            self.old_style_virtuals = virtuals.non_caching_virtuals(raw_vdb)
-        multiplex.tree.__init__(self, raw_vdb, self.old_style_virtuals)
+        multiplex.tree.__init__(self, raw_vdb)
 
     frozen = klass.alias_attr("raw_vdb.frozen")
 

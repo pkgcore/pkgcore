@@ -598,17 +598,6 @@ class TestPmsProfileNode(profile_mixin, TestCase):
         self.assertEqual(1, len(p.parents))
         self.assertEqual(p.parents[0].path, path)
 
-    def test_virtuals(self):
-        path = pjoin(self.dir, self.profile)
-        self.assertEqual(self.klass(path).virtuals, {})
-        self.parsing_checks("virtuals", "virtuals")
-        self.write_file("virtuals", "virtual/alsa media-sound/alsalib")
-        self.assertEqual(self.klass(path).virtuals,
-            {'alsa':atom("media-sound/alsalib")})
-        self.simple_eapi_awareness_check('virtuals', 'virtuals',
-            bad_data='virtual/al =de/bs-1:1\nvirtual/foo da/bs',
-            good_data='virtual/al =de/bs-1\nvirtual/foo da/bs')
-
     def test_default_env(self):
         path = pjoin(self.dir, self.profile)
         self.assertEqual(self.klass(path).default_env, {})
@@ -737,7 +726,6 @@ class TestOnDiskProfile(profile_mixin, TestCase):
             [self.dir, pjoin(self.dir, "0")])
         self.assertEqual(len(base.system), 0)
         self.assertEqual(len(base.masks), 0)
-        self.assertEqual(base.virtuals, {})
         self.assertEqual(base.default_env, {})
         self.assertFalse(base.masked_use)
         self.assertFalse(base.forced_use)
@@ -794,20 +782,6 @@ class TestOnDiskProfile(profile_mixin, TestCase):
         self.assertEqual(len(self.get_profile("0").bashrc), 1)
         self.assertEqual(len(self.get_profile("1").bashrc), 1)
         self.assertEqual(len(self.get_profile("2").bashrc), 2)
-
-    def test_virtuals(self):
-        self.mk_profiles(
-            {"virtuals":"virtual/alsa\tdev-util/foo1\nvirtual/blah\tdev-util/blah"},
-            {},
-            {"virtuals":"virtual/alsa\tdev-util/foo2\nvirtual/dar\tdev-util/foo2"}
-        )
-        self.assertEqual(sorted(self.get_profile("0").virtuals.iteritems()),
-            sorted([("alsa", atom("dev-util/foo1")), ("blah", atom("dev-util/blah"))]))
-        self.assertEqual(sorted(self.get_profile("1").virtuals.iteritems()),
-            sorted([("alsa", atom("dev-util/foo1")), ("blah", atom("dev-util/blah"))]))
-        self.assertEqual(sorted(self.get_profile("2").virtuals.iteritems()),
-            sorted([("alsa", atom("dev-util/foo2")), ("blah", atom("dev-util/blah")),
-                ("dar", atom("dev-util/foo2"))]))
 
     def test_pkg_keywords(self):
         self.mk_profiles({})

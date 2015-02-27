@@ -72,7 +72,6 @@ metadata_attrs += [
     'keywords',
     'license',
     'properties',
-    'provides',
     'required_use',
     'restrict',
     'slot',

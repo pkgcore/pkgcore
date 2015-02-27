@@ -27,7 +27,7 @@ ORIG_FUNCS=$(declare -F | cut -s -d ' ' -f 3)
 DONT_EXPORT_VARS="ORIG_VARS GROUPS ORIG_FUNCS FUNCNAME CCACHE.* DISTCC.* SYNC
 (TMP)?DIR FEATURES CONFIG_PROTECT.* WORKDIR RSYNC_.* GENTOO_MIRRORS
 (DIST|FILES|RPM|ECLASS)DIR HOME MUST_EXPORT_ENV QA_CONTROLLED_EXTERNALLY HOSTNAME
-myarg SANDBOX_ON SANDBOX_(DEBUG(_LOG)?|VERBOSE|BASHRC|PID|LIB)
+myarg SANDBOX_(DEBUG(_LOG)?|ON|VERBOSE|BASHRC|PID|LIB)
 BASH.* EUID PPID SHELLOPTS UID ACCEPT_(KEYWORDS|LICENSE) BUILD(_PREFIX|DIR) T DIRSTACK
 (PKGCORE_)?EBUILD_PHASE PKGCORE_.* PORTAGE_.* SUDO_.* LD_PRELOAD ret line phases D IMAGE
 PORT(_LOGDIR|DIR(_OVERLAY)?) ROOT _ done e PROFILE_.* EBUILD ECLASS LINENO
@@ -68,8 +68,10 @@ shopt -s expand_aliases
 # Unset some variables that break things.
 unset GZIP BZIP BZIP2 CDPATH GREP_OPTIONS GREP_COLOR GLOB_IGNORE
 
-# gentoo bug 309369; nasty alias, but it exists due to portage using declare's in env dumping.  declare statements are implicitly local.
-# as such, the sourcing statement has to be in the same scope as the invoker of __load_environ for that scope to get the changes
+# gentoo bug 309369; nasty alias, but it exists due to portage using declare's
+# in env dumping.  declare statements are implicitly local.  as such, the
+# sourcing statement has to be in the same scope as the invoker of
+# __load_environ for that scope to get the changes
 alias __load_environ='{
 	[[ -z ${PKGCORE_TARGET_ENV} ]] && die "__load_environ was invoked w/out PKGCORE_TARGET_ENV set";
 	[[ -z ${T} ]] && die "__load_environ requires \$T to be set";
@@ -90,8 +92,8 @@ alias __load_environ='{
 	unset -v EXISTING_PATH;
 }'
 
-# Invoke this when we know that this version of pkgcore generated the env dump; this bypasses
-# The safeties in loading.
+# Invoke this when we know that this version of pkgcore generated the env dump;
+# this bypasses the safeties in loading.
 alias __load_safe_environ='{
 	[[ -z ${PKGCORE_TARGET_ENV} ]] && die "__load_safe_environ was invoked w/out PKGCORE_TARGET_ENV set";
 	[[ -z ${T} ]] && die "__load_safe_environ requires \$T to be set";
@@ -228,8 +230,9 @@ __generate_initial_ebuild_environ() {
 
 	__ensure_PATH "${EXISTING_PATH}"
 	if [[ -n ${T} ]]; then
-		# use a file if possible; faster since bash does this lovely byte by byte reading if it's a pipe.
-		# having the file around is useful for debugging also.
+		# Use a file if possible; faster since bash does this lovely byte by
+		# byte reading if it's a pipe. Having the file around is useful for
+		# debugging also.
 		__timed_call __environ_dump > "${T}"/.initial_environ || die "dump_environ > '${T}/.initial_environ' return non zero"
 		echo "source \"${T}\"/.initial_environ"
 	else
@@ -445,7 +448,8 @@ __execute_phases() {
 				if [[ ${myarg} == depend ]]; then
 					__dump_metadata_keys
 				else
-					# Use gawk if at possible; it's a fair bit faster since bash likes to do byte by byte reading.
+					# Use gawk if at possible; it's a fair bit faster since
+					# bash likes to do byte by byte reading.
 					local __path=$(type -P gawk)
 					if [[ $? == 0 ]]; then
 						{ unset __path; __environ_dump; } | \

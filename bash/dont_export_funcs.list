@@ -84,6 +84,7 @@ __helper_check_exit
 __helper_died
 __helper_exit
 __inject_common_phase_funcs
+__inject_func_code
 __inject_phase_funcs
 __internal_inherit
 __is_function

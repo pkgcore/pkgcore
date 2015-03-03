@@ -141,7 +141,7 @@ econf() {
 		unset help_text
 	fi
 
-	# Reset IFS since we're interpretting user supplied EXTRA_ECONF.
+	# Reset IFS since we're interpreting user supplied EXTRA_ECONF.
 	local IFS=$' \t\n'
 	set -- "${ECONF_SOURCE}/configure" \
 		--prefix=/usr \

@@ -160,8 +160,6 @@ __ensure_PATH() {
 }
 
 __load_eapi_libs() {
-	local BANNED_FUNCS DEPRECATED_FUNCS funcname code
-
 	# reload depend; while it may've been loaded already, reload it so that callers can
 	# rely on this setting the env up as necessary
 	# finally, update the filters with functionality loaded from here-
@@ -169,17 +167,6 @@ __load_eapi_libs() {
 	source "${PKGCORE_BIN_PATH}"/eapi/common.lib || die "failed sourcing eapi/common.lib"
 	source "${PKGCORE_BIN_PATH}/eapi/${PKGCORE_EAPI-${EAPI}}.lib" || \
 		die "failed loading eapi/${PKGCORE_EAPI-${EAPI}}.lib"
-
-	# Hijack deprecated and banned functions to make them show QA warnings
-	# or failure messages, respectively.
-	for funcname in "${DEPRECATED_FUNCS[@]}"; do
-		code="eqawarn \"QA Notice: '${funcname}' is deprecated in EAPI ${EAPI:-0}\""
-		__inject_func_code "${funcname}" "${code}" 1
-	done
-	for funcname in "${BANNED_FUNCS[@]}"; do
-		code="die \"'${funcname}' is banned in EAPI ${EAPI:-0}\""
-		__inject_func_code "${funcname}" "${code}"
-	done
 }
 
 # do all profile, bashrc's, and ebuild sourcing.  Should only be called in setup phase, unless the

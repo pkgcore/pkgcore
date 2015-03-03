@@ -127,13 +127,13 @@ econf() {
 
 		# EAPI 4 and up.
 		if ${PKGCORE_ECONF_DISABLE_DEPENDENCY_TRACKING} && \
-				[[ ${help_text} =~ "--disable-dependency-tracking" ]]; then
+				[[ ${help_text} == *"--disable-dependency-tracking"* ]]; then
 			extra_args+=( --disable-dependency-tracking )
 		fi
 
 		# EAPI 5 and up.
 		if ${PKGCORE_ECONF_DISABLE_SILENT_RULES} && \
-				[[ ${help_text} =~ "--disable-silent-rules" ]]; then
+				[[ ${help_text} == *"--disable-silent-rules"* ]]; then
 			extra_args+=( --disable-silent-rules )
 		fi
 		set -- "${extra_args[@]}" "$@"

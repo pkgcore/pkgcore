@@ -337,14 +337,16 @@ def _validate(parser, namespace):
         parser.error("--source-only cannot be used with --usepkg nor --usepkgonly")
 
     if namespace.sets:
-        for pkgset in namespace.sets:
-            if pkgset not in namespace.config.pkgset:
-                parser.error("unknown set '%s' (available sets: %s)" % (
-                    pkgset, ', '.join(sorted(x for x in namespace.config.pkgset))))
-            namespace.targets.extend(namespace.config.pkgset[pkgset])
+        unknown_sets = set(namespace.sets).difference(namespace.config.pkgset)
+        if unknown_sets:
+            parser.error("unknown set%s %s (available sets: %s)" % (
+                's'[len(unknown_sets) == 1:],
+                ', '.join(sorted(unknown_sets)),
+                ', '.join(sorted(namespace.config.pkgset))))
+        namespace.sets = [(x, namespace.config.pkgset[x]) for x in namespace.sets]
     if namespace.upgrade:
         namespace.replace = False
-    if not namespace.targets:
+    if not namespace.targets and not namespace.sets:
         parser.error('please specify at least one atom or nonempty set')
     if namespace.newuse:
         namespace.oneshot = True
@@ -357,6 +359,7 @@ def _validate(parser, namespace):
             return [val]
         return val
     namespace.targets = f(namespace.targets)
+    namespace.sets = f(namespace.sets)
 
 
 def parse_target(restriction, repo, livefs_repos, return_none=False):
@@ -466,6 +469,15 @@ def main(options, out, err):
             if getattr(x, 'repository_type', None) == 'source')
 
     atoms = []
+    for setname, pkgset in options.sets:
+        if pkgset is None:
+            return 1
+        l = list(pkgset)
+        if not l:
+            out.write("skipping set %s: set is empty, nothing to update" % setname)
+        else:
+            atoms.extend(l)
+
     for token in options.targets:
         try:
             matches = parse_target(token, source_repos.combined, livefs_repos, return_none=True)

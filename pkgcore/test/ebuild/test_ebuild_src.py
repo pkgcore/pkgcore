@@ -90,6 +90,14 @@ class test_base(TestCase):
         o = self.get_pkg({'EAPI': '1', 'IUSE': '+build -pkg foon'})
         self.assertEqual(o.iuse_effective, frozenset(['build', 'foon', 'pkg']))
 
+    def test_properties(self):
+        o = self.get_pkg({})
+        self.assertEqual(o.properties, frozenset())
+        o = self.get_pkg({'PROPERTIES': ''})
+        self.assertEqual(o.properties, frozenset())
+        o = self.get_pkg({'PROPERTIES': 'interactive'})
+        self.assertEqual(o.properties, frozenset(['interactive']))
+
     def test_homepage(self):
         o = self.get_pkg({'HOMEPAGE': ' http://slashdot/ '})
         self.assertEqual(o.homepage, 'http://slashdot/')

@@ -43,8 +43,8 @@ class StoreTarget(argparse._AppendAction):
                     argparse._AppendAction.__call__(
                         self, parser, namespace,
                         (x, parserestrict.parse_match(x)), option_string=option_string)
-                except Exception as e:
-                    parser.error(e.message)
+                except parserestrict.ParseError as e:
+                    parser.error(e)
         if namespace.targets is None:
             namespace.targets = []
         namespace.sets = sets

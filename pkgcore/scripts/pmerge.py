@@ -173,10 +173,10 @@ class Failure(ValueError):
     """Raised internally to indicate an "expected" failure condition."""
 
 
-def unmerge(out, err, vdb, restrictions, options, formatter, world_set=None):
+def unmerge(out, err, vdb, targets, options, formatter, world_set=None):
     """Unmerge tokens. hackish, should be rolled back into the resolver"""
     all_matches = set()
-    for restriction in restrictions:
+    for token, restriction in targets:
         # Catch restrictions matching across more than one category.
         # Multiple matches in the same category are acceptable.
 
@@ -191,8 +191,8 @@ def unmerge(out, err, vdb, restrictions, options, formatter, world_set=None):
         categories = set(pkg.category for pkg in matches)
         if len(categories) > 1:
             raise parserestrict.ParseError(
-                '%s is in multiple categories (%s)' % (
-                    restriction, ', '.join(set(pkg.key for pkg in matches))))
+                "'%s' is in multiple categories (%s)" % (
+                    token, ', '.join(sorted(set(pkg.key for pkg in matches)))))
         all_matches.update(matches)
 
     matches = sorted(all_matches)
@@ -443,8 +443,7 @@ def main(options, out, err):
                           "or fix your configuration")
                 return 1
         try:
-            restrictions = (r for _token, r in options.targets)
-            unmerge(out, err, livefs_repos, restrictions, options, formatter, world_set)
+            unmerge(out, err, livefs_repos, options.targets, options, formatter, world_set)
         except (parserestrict.ParseError, Failure) as e:
             out.error(str(e))
             return 1

@@ -41,7 +41,7 @@ class StoreTarget(argparse._AppendAction):
             else:
                 argparse._AppendAction.__call__(
                     self, parser, namespace,
-                    parserestrict.parse_match(x), option_string=option_string)
+                    (x, parserestrict.parse_match(x)), option_string=option_string)
         if namespace.targets is None:
             namespace.targets = []
         namespace.sets = sets
@@ -443,7 +443,8 @@ def main(options, out, err):
                           "or fix your configuration")
                 return 1
         try:
-            unmerge(out, err, livefs_repos, options.targets, options, formatter, world_set)
+            restrictions = (r for _token, r in options.targets)
+            unmerge(out, err, livefs_repos, restrictions, options, formatter, world_set)
         except (parserestrict.ParseError, Failure) as e:
             out.error(str(e))
             return 1
@@ -478,20 +479,20 @@ def main(options, out, err):
         else:
             atoms.extend(l)
 
-    for token in options.targets:
+    for token, restriction in options.targets:
         try:
-            matches = parse_target(token, source_repos.combined, livefs_repos, return_none=True)
+            matches = parse_target(restriction, source_repos.combined, livefs_repos, return_none=True)
         except parserestrict.ParseError as e:
             out.error(str(e))
             return 1
         if matches is None:
             if token in config.pkgset:
                 out.error(
-                    'No package matches %s, but there is a set with '
+                    "No package matches '%s', but there is a set with "
                     'that name. Use @set to specify a set.' % (token,))
                 return 2
             elif not options.ignore_failures:
-                out.error('No matches for %s; ignoring it' % (token,))
+                out.error("No matches for '%s'; ignoring it" % (token,))
             else:
                 return -1
         else:

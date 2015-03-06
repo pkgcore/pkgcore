@@ -39,9 +39,12 @@ class StoreTarget(argparse._AppendAction):
             if x.startswith('@'):
                 sets.append(x[1:])
             else:
-                argparse._AppendAction.__call__(
-                    self, parser, namespace,
-                    (x, parserestrict.parse_match(x)), option_string=option_string)
+                try:
+                    argparse._AppendAction.__call__(
+                        self, parser, namespace,
+                        (x, parserestrict.parse_match(x)), option_string=option_string)
+                except Exception as e:
+                    parser.error(e.message)
         if namespace.targets is None:
             namespace.targets = []
         namespace.sets = sets

@@ -234,7 +234,8 @@ def do_unmerge(options, out, err, vdb, matches, world_set, repo_obs):
             if not options.ignore_failures:
                 raise Failure('failed unmerging %s' % (match,))
             out.write(out.fg('red'), 'failed unmerging ', match)
-        update_worldset(world_set, match, remove=True)
+        pkg = slotatom_if_slotted(vdb, match.versioned_atom)
+        update_worldset(world_set, pkg, remove=True)
     out.write("finished; removed %i packages" % len(matches))
 
 

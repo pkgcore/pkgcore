@@ -190,7 +190,7 @@ def unmerge(out, err, vdb, targets, options, formatter, world_set=None):
         # explicit wildcards.
         matches = vdb.match(restriction)
         if not matches:
-            raise Failure('Nothing matches %s' % (restriction,))
+            raise Failure("Nothing matches '%s'" % (token,))
         categories = set(pkg.category for pkg in matches)
         if len(categories) > 1:
             raise parserestrict.ParseError(

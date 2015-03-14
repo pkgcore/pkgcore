@@ -35,6 +35,7 @@ from pkgcore.util.commandline_optparse import *
 
 demandload(
     'copy@_copy',
+    'signal',
     'traceback',
     'snakeoil:osutils',
     'snakeoil.errors:walk_exception_chain',
@@ -874,10 +875,11 @@ def main(subcommands, args=None, outfile=None, errfile=None, script_name=None):
         logging.root.addHandler(FormattingHandler(err))
         exitstatus = main_func(options, out, err)
     except KeyboardInterrupt:
-        if getattr(options, 'debug', False):
-            raise
         errfile.write("keyboard interrupted- exiting\n")
-        exitstatus = 1
+        if getattr(options, 'debug', False):
+            traceback.print_tb(sys.exc_info()[-1])
+        signal.signal(signal.SIGINT, signal.SIG_DFL)
+        os.killpg(os.getpgid(0), signal.SIGINT)
     except compatibility.IGNORED_EXCEPTIONS:
         raise
     except errors.ConfigurationError as e:

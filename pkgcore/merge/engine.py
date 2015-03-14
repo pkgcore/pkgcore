@@ -73,7 +73,7 @@ class MergeEngine(object):
         "uninstall": partial(alias_cset, "old_cset"),
         "old_cset": "get_uninstall_livefs_intersect",
     }
-    replace_csets = dict(install_csets)
+    replace_csets = install_csets.copy()
     replace_csets.update(uninstall_csets)
     replace_csets["modifying"] = (
         lambda e, c: c["resolved_install"].intersection(c["uninstall"]))
@@ -161,7 +161,7 @@ class MergeEngine(object):
         hooks = {k: [y() for y in v]
                  for (k, v) in cls.install_hooks.iteritems()}
 
-        csets = dict(cls.install_csets)
+        csets = cls.install_csets.copy()
         if "raw_new_cset" not in csets:
             csets["raw_new_cset"] = post_curry(cls.get_pkg_contents, pkg)
         o = cls(INSTALL_MODE, tempdir, hooks, csets, cls.install_csets_preserve,
@@ -193,7 +193,7 @@ class MergeEngine(object):
 
         hooks = {k: [y() for y in v]
                  for (k, v) in cls.uninstall_hooks.iteritems()}
-        csets = dict(cls.uninstall_csets)
+        csets = cls.uninstall_csets.copy()
 
         if "raw_old_cset" not in csets:
             csets["raw_old_cset"] = post_curry(cls.get_pkg_contents, pkg)
@@ -229,7 +229,7 @@ class MergeEngine(object):
         hooks = {k: [y() for y in v]
                  for (k, v) in cls.replace_hooks.iteritems()}
 
-        csets = dict(cls.replace_csets)
+        csets = cls.replace_csets.copy()
 
         csets.setdefault('raw_old_cset', post_curry(cls.get_pkg_contents, old))
         csets.setdefault('raw_new_cset', post_curry(cls.get_pkg_contents, new))

@@ -6,6 +6,7 @@ binpkg tar utilities
 """
 
 from functools import partial
+import itertools
 import os
 import stat
 
@@ -17,8 +18,10 @@ from snakeoil.tar import tarfile
 from pkgcore.fs import contents
 from pkgcore.fs.fs import fsFile, fsDir, fsSymlink, fsFifo, fsDev
 
+_unique_inode = itertools.count(2**32).next
 
-known_compressors = {"bz2": tarfile.TarFile.bz2open,
+known_compressors = {
+    "bz2": tarfile.TarFile.bz2open,
     "gz": tarfile.TarFile.gzopen,
     None: tarfile.TarFile.open}
 
@@ -47,32 +50,66 @@ def add_contents_to_tarfile(contents_set, tar_fd, absolute_paths=False):
     for x in dirs:
         tar_fd.addfile(fsobj_to_tarinfo(x, absolute_paths))
     del dirs
+    inodes = {}
     for x in contents_set.iterdirs(invert=True):
         t = fsobj_to_tarinfo(x, absolute_paths)
         if t.isreg():
-            tar_fd.addfile(t, fileobj=x.data.bytes_fileobj())
+            key = (x.dev, x.inode)
+            existing = inodes.get(key)
+            data = None
+            if existing is not None:
+                if x._can_be_hardlinked(existing):
+                    t.type = tarfile.LNKTYPE
+                    t.linkname = './%s' % existing.location.lstrip('/')
+                    t.size = 0L
+            else:
+                inodes[key] = x
+                data = x.data.bytes_fileobj()
+            tar_fd.addfile(t, fileobj=data)
+            #tar_fd.addfile(t, fileobj=x.data.bytes_fileobj())
         else:
             tar_fd.addfile(t)
 
 
 def archive_to_fsobj(src_tar):
     psep = os.path.sep
+    dev = _unique_inode()
+    # inode cache used for supporting hardlinks.
+    # Since the tarfile specifies a hardlink target by path (rather than internally
+    # consistent inode numbers), we have to normalize the path lookup into this cache
+    # via abspath(os.path.join('/', key))...
+    inodes = {}
     for member in src_tar:
         d = {
             "uid":member.uid, "gid":member.gid,
             "mtime":member.mtime, "mode":member.mode}
-        location = psep + member.name.strip(psep)
+        location = os.path.abspath(os.path.join(psep, member.name.strip(psep)))
         if member.isdir():
             if member.name.strip(psep) == ".":
                 continue
             yield fsDir(location, **d)
-        elif member.isreg():
+        elif member.isreg() or member.islnk():
+            d["dev"] = dev
+            if member.islnk():
+                target = os.path.abspath(os.path.join(psep, member.linkname))
+                inode = inodes.get(target)
+                if inode is None:
+                    raise AssertionError(
+                        "Tarfile file %r is a hardlink to %r, but we can't "
+                        "find the resolved hardlink target %r in the archive.  "
+                        "This means either a bug in pkgcore, or a malformed "
+                        "tarball." % (member.name, member.linkname, target))
+                d["inode"] = inode
+            else:
+                d["inode"] = inode = _unique_inode()
+            # Add the new file to the inode cache even if we're currently processing a
+            # hardlink; tar allows for hardlink chains of x -> y -> z; thus we have
+            # to ensure 'y' is in the cache alongside it's target z to support 'x'
+            # later lookup.
+            inodes[location] = inode
             d["data"] = invokable_data_source.wrap_function(partial(
-                    src_tar.extractfile, member.name), returns_text=False,
-                    returns_handle=True)
-            # suppress hardlinks until the rest of pkgcore is updated for it.
-            d["dev"] = None
-            d["inode"] = None
+                src_tar.extractfile, member.name), returns_text=False,
+                returns_handle=True)
             yield fsFile(location, **d)
         elif member.issym() or member.islnk():
             yield fsSymlink(location, member.linkname, **d)

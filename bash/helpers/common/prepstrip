@@ -22,10 +22,10 @@ elif [[ ${ED:-unset} == "unset" ]]; then
 	exit -1
 fi
 
-for x in debugedit scanelf rsync sort; do
+for x in debugedit scanelf rsync; do
 	if ! type -P ${x} >/dev/null; then
 		ewarn "FEATURES=installsources is enabled but the ${x} binary could not"
-	    ewarn "be found. This feature will not work unless debugedit is installed!"
+		ewarn "be found. This feature will not work unless ${x} is installed!"
 		exit 0
 	fi
 done

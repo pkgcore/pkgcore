@@ -339,6 +339,11 @@ class TestPortageFormatter(BaseFormatterTest, TestCase):
         kwargs.setdefault('livefs_repos', self.livefs)
         return BaseFormatterTest.newFormatter(self, **kwargs)
 
+    def repo_id(self, repo):
+        if getattr(self.formatter, 'verbose', False):
+            return '::' + repo.repo_id
+        return ''
+
     def test_new(self):
         self.formatter.format(
             FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.4')))
@@ -377,7 +382,7 @@ class TestPortageFormatter(BaseFormatterTest, TestCase):
             FakeMutatedPkg('app-arch/bzip2-1.0.3-r6', repo=self.repo1)))
         self.assertOut('[', Color('fg', 'green'), 'ebuild', Reset(),
             '   ', Color('fg', 'yellow'), Bold(), 'R', Reset(), '    ] ',
-            Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6', Reset())
+            Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6%s' % self.repo_id(self.repo1), Reset())
 
     def test_reinstall_from_new_repo(self):
         self.formatter.format(
@@ -385,8 +390,8 @@ class TestPortageFormatter(BaseFormatterTest, TestCase):
             FakeMutatedPkg('app-arch/bzip2-1.0.3-r6', repo=self.repo2)))
         self.assertOut('[', Color('fg', 'green'), 'ebuild', Reset(),
             '   ', Color('fg', 'yellow'), Bold(), 'R', Reset(), '    ] ',
-            Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6', Reset(),
-            ' ', Color('fg', 'blue'), Bold(), '[1.0.3-r6]', Reset())
+            Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6%s' % self.repo_id(self.repo1), Reset(),
+            ' ', Color('fg', 'blue'), Bold(), '[1.0.3-r6%s]' % self.repo_id(self.repo2), Reset())
 
     def test_new_use(self):
         self.formatter.format(
@@ -552,15 +557,6 @@ class TestPortageVerboseFormatter(TestPortageFormatter):
         kwargs.setdefault("domain_settings", {"ACCEPT_KEYWORDS": ("amd64",)})
         return TestPortageFormatter.newFormatter(self, **kwargs)
 
-    def test_reinstall_from_new_repo(self):
-        self.formatter.format(
-            FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6', repo=self.repo1),
-            FakeMutatedPkg('app-arch/bzip2-1.0.3-r6', repo=self.repo2)))
-        self.assertOut('[', Color('fg', 'green'), 'ebuild', Reset(),
-            '   ', Color('fg', 'yellow'), Bold(), 'R', Reset(), '    ] ',
-            Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6', Reset(),
-            ' ', Color('fg', 'blue'), Bold(), '[1.0.3-r6::fakerepo]', Reset())
-
     def test_install_symbols(self):
         # unkeyworded
         self.formatter.format(
@@ -568,7 +564,7 @@ class TestPortageVerboseFormatter(TestPortageFormatter):
         self.assertOut('[', Color('fg', 'green'), 'ebuild', Reset(),
             '  ', Color('fg', 'green'), Bold(), 'N', Reset(), '    ',
             Color('fg', 'red'), Bold(), '*', Reset(), '] ',
-            Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6', Reset())
+            Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6%s' % self.repo_id(self.repo1), Reset())
 
         # unstable arch
         self.formatter.format(
@@ -576,7 +572,7 @@ class TestPortageVerboseFormatter(TestPortageFormatter):
         self.assertOut('[', Color('fg', 'green'), 'ebuild', Reset(),
             '  ', Color('fg', 'green'), Bold(), 'N', Reset(), '    ',
             Color('fg', 'yellow'), Bold(), '~', Reset(), '] ',
-            Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6', Reset())
+            Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6%s' % self.repo_id(self.repo1), Reset())
 
         # masked
         self.formatter.format(
@@ -584,13 +580,13 @@ class TestPortageVerboseFormatter(TestPortageFormatter):
         self.assertOut('[', Color('fg', 'green'), 'ebuild', Reset(),
            '  ', Color('fg', 'green'), Bold(), 'N', Reset(), '    ',
            Color('fg', 'red'), Bold(), '#', Reset(), '] ',
-           Color('fg', 'green'), 'app-arch/bzip2-2.1', Reset())
+           Color('fg', 'green'), 'app-arch/bzip2-2.1%s' % self.repo_id(self.repo1), Reset())
 
     def test_repo_id(self):
         self.formatter.format(FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6', repo=self.repo1)))
         self.assertOut('[', Color('fg', 'green'), 'ebuild', Reset(),
             '  ', Color('fg', 'green'), Bold(), 'N', Reset(), '     ] ',
-            Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6', Reset())
+            Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6::gentoo', Reset())
         self.formatter.format(FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6', repo=self.repo2)))
         self.assertOut('[', Color('fg', 'green'), 'ebuild', Reset(),
             '  ', Color('fg', 'green'), Bold(), 'N', Reset(), '     ] ',
@@ -600,8 +596,8 @@ class TestPortageVerboseFormatter(TestPortageFormatter):
             FakeMutatedPkg('app-arch/bzip2-1.0.3-r6', repo=self.repo1)))
         self.assertOut('[', Color('fg', 'green'), 'ebuild', Reset(),
             '     ', Color('fg', 'cyan'), Bold(), 'U', Reset(), '  ] ',
-            Color('fg', 'green'), 'app-arch/bzip2-1.0.4', Reset(), ' ',
-            Color('fg', 'blue'), Bold(), '[1.0.3-r6]', Reset())
+            Color('fg', 'green'), 'app-arch/bzip2-1.0.4::gentoo', Reset(), ' ',
+            Color('fg', 'blue'), Bold(), '[1.0.3-r6::gentoo]', Reset())
         self.formatter.format(
             FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.4', repo=self.repo2),
             FakeMutatedPkg('app-arch/bzip2-1.0.3-r6', repo=self.repo1)))
@@ -723,6 +719,9 @@ class TestPortageVerboseRepoIdFormatter(TestPortageVerboseFormatter):
     def newFormatter(self, **kwargs):
         kwargs.setdefault("quiet_repo_display", True)
         return TestPortageVerboseFormatter.newFormatter(self, **kwargs)
+
+    def repo_id(self, repo):
+        return ''
 
     def test_repo_id(self):
         self.formatter.format(FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6', repo=self.repo1)))

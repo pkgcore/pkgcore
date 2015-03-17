@@ -205,9 +205,9 @@ def _get_files(path):
             yield os.path.join(root, f)[len(path):].lstrip('/')
 
 def _get_data_mapping(host_path, path):
-    for x in os.walk(path):
-        yield (os.path.join(host_path, x[0].partition(path)[2].lstrip('/')),
-               list(map(lambda y: os.path.join(x[0], y), x[2])))
+    for root, dirs, files in os.walk(path):
+        yield (os.path.join(host_path, root.partition(path)[2].lstrip('/')),
+               [os.path.join(root, x) for x in files])
 
 class pkgcore_install_docs(core.Command):
 

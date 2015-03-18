@@ -14,7 +14,7 @@ What does pkgcore require?
 ==========================
 
 At least python version 2.7, and snakeoil_ — a utility library with misc
-optimizations split out of pkgcore for others to use.  For unittests, mock is
+optimizations split out of pkgcore for others to use.  For unittests, mock_ is
 required if you're using anything less than python 3.3.
 
 
@@ -103,3 +103,4 @@ To install::
 .. _development docs: http://pkgcore.readthedocs.org/en/latest/dev-notes/developing.html
 .. _readthedocs: http://pkgcore.readthedocs.org/
 .. _download: https://readthedocs.org/projects/pkgcore/downloads/
+.. _mock: https://pypi.python.org/pypi/mock

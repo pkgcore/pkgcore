@@ -436,7 +436,7 @@ core.setup(
     version=version,
     description='package managing framework',
     url='https://github.com/pkgcore/pkgcore',
-    license='GPL-2',
+    license='BSD/GPLv2',
     author='Brian Harring',
     author_email='ferringb@gmail.com',
     packages=packages,
@@ -444,4 +444,8 @@ core.setup(
         ('share/pkgcore/config', glob.glob('config/*')),
     ] + list(_get_data_mapping('lib/pkgcore', 'bash')),
     ext_modules=extensions, cmdclass=cmdclass, command_options=command_options,
+    classifiers=[
+        'License :: OSI Approved :: BSD License',
+        'License :: OSI Approved :: GNU General Public License v2 (GPLv2)',
+    ],
 )

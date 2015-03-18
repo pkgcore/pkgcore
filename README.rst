@@ -13,8 +13,9 @@ to the package script).
 What does pkgcore require?
 ==========================
 
-At least python verison 2.7, and snakeoil_ — a utility library with misc
-optimizations split out of pkgcore for others to use.
+At least python version 2.7, and snakeoil_ — a utility library with misc
+optimizations split out of pkgcore for others to use.  For unittests, mock is
+required if you're using anything less than python 3.3.
 
 
 Who to contact if I find a bug?

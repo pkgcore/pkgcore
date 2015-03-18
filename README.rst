@@ -1,3 +1,5 @@
+|test|
+
 What is pkgcore?
 ================
 
@@ -104,3 +106,6 @@ To install::
 .. _readthedocs: http://pkgcore.readthedocs.org/
 .. _download: https://readthedocs.org/projects/pkgcore/downloads/
 .. _mock: https://pypi.python.org/pypi/mock
+
+.. |test| image:: https://travis-ci.org/pkgcore/pkgcore.svg?branch=master
+    :target: https://travis-ci.org/pkgcore/pkgcore

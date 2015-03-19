@@ -99,7 +99,7 @@ class pkgcore_build(build.build):
     })
 
     sub_commands = build.build.sub_commands[:]
-    sub_commands.append(('pkgcore_build_scripts', None))
+    sub_commands.append(('build_scripts', None))
     sub_commands.append(('build_docs', operator.attrgetter('enable_html_docs')))
     sub_commands.append(('build_man', operator.attrgetter('enable_man_pages')))
 
@@ -153,7 +153,7 @@ class pkgcore_install_scripts(core.Command):
 
     def run(self):
         if not self.skip_build:
-            self.run_command('pkgcore_build_scripts')
+            self.run_command('build_scripts')
         self.mkpath(self.install_dir)
         if os.name == 'posix':
             # Copy the wrapper once.
@@ -354,7 +354,7 @@ class pkgcore_install(_base_install):
         _base_install.finalize_options(self)
 
     sub_commands = _base_install.sub_commands[:]
-    sub_commands.append(('pkgcore_install_scripts', None))
+    sub_commands.append(('install_scripts', None))
     sub_commands.append(('install_man', operator.attrgetter('enable_man_pages')))
     sub_commands.append(('install_docs', operator.attrgetter('enable_html_docs')))
 
@@ -407,8 +407,8 @@ cmdclass = {
     'build_ext': snk_distutils.build_ext,
     'test': test,
     'install': pkgcore_install,
-    'pkgcore_build_scripts': pkgcore_build_scripts,
-    'pkgcore_install_scripts': pkgcore_install_scripts,
+    'build_scripts': pkgcore_build_scripts,
+    'install_scripts': pkgcore_install_scripts,
     'install_man': pkgcore_install_man,
     'install_docs': pkgcore_install_docs,
 }

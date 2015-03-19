@@ -175,7 +175,9 @@ class ThreadedTrigger(base):
         observer = threadsafe_repo_observer(observer)
         args = (observer,) + self.threading_get_args(engine, *csets)
         kwargs = self.threading_get_kwargs(engine, *csets)
-        kwargs['threads'] = engine.parallelism
+        # Grab PKGCORE_TRIGGER_PARALLEISM to make development easier
+        kwargs['threads'] = int(
+            os.environ.get("PKGCORE_TRIGGER_PARALLELISM", engine.parallelism))
 
         work = list(self.identify_work(engine, *csets))
         thread_pool.map_async(work, self.thread_trigger, *args, **kwargs)

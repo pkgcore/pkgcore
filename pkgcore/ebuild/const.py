@@ -8,6 +8,8 @@ ebuild internal constants
 import os
 from os.path import join as pjoin
 import sys
+from pkgcore import const
+
 
 incrementals = (
     "ACCEPT_KEYWORDS", "ACCEPT_LICENSE", "CONFIG_PROTECT",
@@ -26,12 +28,12 @@ metadata_keys = (
 
 WORLD_FILE          = '/var/lib/portage/world'
 
-if 'PKGCORE_REPO_PATH' in os.environ:
-    EAPI_BIN_PATH = pjoin(os.environ['PKGCORE_REPO_PATH'], 'bash')
-else:
-    EAPI_BIN_PATH = pjoin(sys.prefix, 'lib/pkgcore')
-
+EAPI_BIN_PATH = const._GET_CONST('EBD_PATH', '%(DATA_PATH)s/bash')
 EBUILD_DAEMON_PATH = pjoin(EAPI_BIN_PATH, "ebuild-daemon.bash")
 EBUILD_HELPERS_PATH = pjoin(EAPI_BIN_PATH, "helpers")
 
 PKGCORE_DEBUG_VARS = ("PKGCORE_DEBUG", "PKGCORE_PERF_DEBUG")
+
+MAKE_GLOBALS = os.path.join(
+    const._GET_CONST('CONFIG_PATH', '%(DATA_PATH)s/config'),
+    'make.globals')

@@ -12,6 +12,11 @@ from stat import ST_MODE
 
 from snakeoil import distutils_extensions as snk_distutils
 
+# These offsets control where we install the pkgcore make.globals configuration,
+# and the EBD bits relative to the install-data path given to the install subcmd.
+CONFIG_DATA_INSTALL_OFFSET = 'share/pkgcore/config'
+EBD_DATA_INSTALL_OFFSET = 'lib/pkgcore'
+
 
 class mysdist(snk_distutils.sdist):
 
@@ -311,7 +316,6 @@ class pkgcore_install_man(pkgcore_install_docs):
                 d[x] = 'man%s/%s' % (x[-1], os.path.basename(x))
         return d
 
-
 _base_install = getattr(snk_distutils, 'install', install.install)
 
 class pkgcore_install(_base_install):
@@ -358,6 +362,31 @@ class pkgcore_install(_base_install):
     sub_commands.append(('install_man', operator.attrgetter('enable_man_pages')))
     sub_commands.append(('install_docs', operator.attrgetter('enable_html_docs')))
 
+    def run(self):
+        _base_install.run(self)
+        target = self.install_data
+        if target.startswith(self.root) and self.root != '/':
+            target = os.path.join('/', os.path.relpath(target, self.root))
+        if not self.dry_run:
+            # Install configuration data so pkgcore knows where to find it's content,
+            # rather than assuming it is running from a tarball/git repo.
+            write_pkgcore_lookup_configs(self.install_purelib, target)
+
+
+def write_pkgcore_lookup_configs(python_base, data_path, injected_bin_path=()):
+    path = os.path.join(python_base, "pkgcore", "_const.py")
+    log.info("Writing lookup configuration to %s" % path)
+    with open(path, "w") as f:
+        os.chmod(path, 0o644)
+        f.write("DATA_PATH=%r\n" % data_path)
+        f.write("EBD_PATH=%r\n" %
+                os.path.join(data_path, EBD_DATA_INSTALL_OFFSET))
+        f.write("CONFIG_PATH=%r\n" %
+                os.path.join(data_path, CONFIG_DATA_INSTALL_OFFSET))
+        # This is added to suppress the default behaviour of looking
+        # within the repo for a bin subdir.
+        f.write("INJECTED_BIN_PATH=%r\n" % (tuple(injected_bin_path),))
+
 
 class pkgcore_build_py(snk_distutils.build_py):
 
@@ -367,8 +396,22 @@ class pkgcore_build_py(snk_distutils.build_py):
 
 class test(snk_distutils.test):
 
-    os.environ['PKGCORE_REPO_PATH'] = os.path.dirname(os.path.abspath(__file__))
     default_test_namespace = 'pkgcore.test'
+
+    def run(self):
+        # This is fairly hacky, but is done to ensure that the tests
+        # are ran purely from what's in build, reflecting back to the source
+        # only for misc bash scripts or config data.
+        key = 'PKGCORE_OVERRIDE_DATA_PATH'
+        original = os.environ.get(key)
+        try:
+            os.environ[key] = os.path.dirname(os.path.realpath(__file__))
+            return snk_distutils.test.run(self)
+        finally:
+            if original is not None:
+                os.environ[key] = original
+            else:
+                os.environ.pop(key, None)
 
 
 def _find_modules(location):
@@ -431,6 +474,7 @@ if BuildDoc:
         'builder': ('setup.py', 'man'),
         }
 
+
 core.setup(
     name='pkgcore',
     version=version,
@@ -441,8 +485,8 @@ core.setup(
     author_email='ferringb@gmail.com',
     packages=packages,
     data_files=[
-        ('share/pkgcore/config', glob.glob('config/*')),
-    ] + list(_get_data_mapping('lib/pkgcore', 'bash')),
+        (CONFIG_DATA_INSTALL_OFFSET, glob.glob('config/*')),
+    ] + list(_get_data_mapping(EBD_DATA_INSTALL_OFFSET, 'bash')),
     ext_modules=extensions, cmdclass=cmdclass, command_options=command_options,
     classifiers=[
         'License :: OSI Approved :: BSD License',

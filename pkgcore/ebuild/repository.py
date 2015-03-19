@@ -72,7 +72,7 @@ class repo_operations(_repo_ops.operations):
                             "pkg %s doesn't support fetching, can't generate manifest/digest info\n",
                             pkg)
                     if not pkg_ops.mirror(observer):
-                        observer.error("failed fetching for pkg %s" % (pkg,))
+                        observer.error("failed fetching for pkg %s", pkg)
                         return False
 
                     fetchables = pkg_ops._mirror_op.verified_files

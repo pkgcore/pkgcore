@@ -337,11 +337,11 @@ class MergeEngine(object):
                         raise
                     except errors.BlockModification as e:
                         self.observer.error("modification was blocked by "
-                            "trigger %r: %s" % (trigger, e))
+                            "trigger %r: %s", trigger, e)
                         raise
                     except errors.ModificationError as e:
                         self.observer.error("modification error occurred "
-                            "during trigger %r: %s" % (trigger,e))
+                            "during trigger %r: %s", trigger, e)
                         raise
                     except Exception as e:
                         if not trigger.suppress_exceptions:
@@ -351,7 +351,7 @@ class MergeEngine(object):
                         traceback.print_exc(file=handle)
 
                         self.observer.warn("unhandled exception caught and "
-                            "suppressed:\n%s" % (handle.getvalue(),))
+                            "suppressed:\n%s", handle.getvalue())
                 finally:
                     self.observer.trigger_end(hook, trigger)
         finally:

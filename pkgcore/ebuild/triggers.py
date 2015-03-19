@@ -562,13 +562,13 @@ class SFPerms(triggers.base):
                 if x.mode & 0044:
                     engine.observer.warn(
                         "sfperms: dropping group/world read "
-                        "due to SetGID: %r" % x)
+                        "due to SetGID: %r", x)
                     resets.append(x.change_attributes(mode=x.mode & ~044))
             if x.mode & 02000:
                 if x.mode & 0004:
                     engine.observer.warn(
                         "sfperms: dropping world read "
-                        "due to SetUID: %r" % x)
+                        "due to SetUID: %r", x)
                     resets.append(x.change_attributes(mode=x.mode & ~004))
         cset.update(resets)
 
@@ -613,8 +613,8 @@ class FixImageSymlinks(triggers.base):
             o = engine.observer
             for x in l:
                 o.warn(
-                    "correcting %s sym pointing into $D: %s" %
-                    (x.location, x.target))
+                    "correcting %s sym pointing into $D: %s",
+                    x.location, x.target)
         d_len = len(d)
 
         # drop the leading ${D}, and force an abspath via '/'

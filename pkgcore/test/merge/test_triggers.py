@@ -1,6 +1,7 @@
 # Copyright: 2007-2011 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
+from functools import partial
 from itertools import izip
 from math import floor, ceil
 import os
@@ -19,6 +20,14 @@ from pkgcore.fs.livefs import gen_obj, scan
 from pkgcore.test import TestCase, SkipTest
 from pkgcore.test.merge.util import fake_trigger, fake_engine, fake_reporter
 
+
+def _render_msg(func, msg, *args, **kwargs):
+    func(msg % (args if args else kwargs))
+
+def make_fake_reporter(**kwargs):
+    kwargs = dict((key, partial(_render_msg, val))
+                  for key, val in kwargs.iteritems())
+    return fake_reporter(**kwargs)
 
 class TestBase(TestCase):
 
@@ -383,9 +392,7 @@ END-INFO-DIR-ENTRY
 
     def run_trigger(self, phase, expected_regen=[]):
         l = []
-        class foo:
-            warn = staticmethod(l.append)
-        self.engine.observer = foo()
+        self.engine.observer = make_fake_reporter(warn=l.append)
         self.trigger._passed_in_args = []
         self.engine.phase = phase
         self.trigger(self.engine, {})
@@ -574,7 +581,7 @@ class Test_detect_world_writable(single_attr_change_base, TestCase):
 
     def test_observer_warn(self):
         warnings = []
-        engine = fake_engine(observer=fake_reporter(warn=warnings.append))
+        engine = fake_engine(observer=make_fake_reporter(warn=warnings.append))
 
         self._trigger_override = self.kls()
 
@@ -630,7 +637,7 @@ class TestPruneFiles(TestCase):
 
         # check noisyness.
         info = []
-        engine = fake_engine(observer=fake_reporter(info=info.append),
+        engine = fake_engine(observer=make_fake_reporter(info=info.append),
             mode=const.REPLACE_MODE)
 
         run(lambda s:False)

@@ -18,7 +18,7 @@ def regen_iter(iterable, regen_func, observer, is_thread=False):
                 return
             raise
         except Exception as e:
-            observer.error("caught exception %s while processing %s" % (e, x))
+            observer.error("caught exception %s while processing %s", e, x)
 
 
 def regen_repository(repo, observer, threads=1, pkg_attr='keywords', **options):

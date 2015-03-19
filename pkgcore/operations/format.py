@@ -58,7 +58,7 @@ class fetch_base(object):
         build_ops = self.domain.build_pkg(self.pkg, observer)
         build_ops.nofetch()
         build_ops.cleanup(force=True)
-        observer.error("failed fetching %s" % (fetchable,))
+        observer.error("failed fetching %s", fetchable)
 
 
 class operations(_operations_mod.base):

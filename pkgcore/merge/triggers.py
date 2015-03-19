@@ -342,7 +342,7 @@ class ldconfig(base):
     def regen(self, engine):
         ret = update_elf_hints(engine.offset)
         if ret != 0:
-            engine.observer.warn("ldconfig returned %i from execution" % (ret,))
+            engine.observer.warn("ldconfig returned %i from execution", ret)
 
 
 class InfoRegen(base):
@@ -393,7 +393,7 @@ class InfoRegen(base):
             bad.extend(self.regen(bin_path, x))
 
         if bad and engine.observer is not None:
-            engine.observer.warn("bad info files: %r" % sorted(bad))
+            engine.observer.warn("bad info files: %r", sorted(bad))
 
     def should_skip_directory(self, basepath, files):
         return False
@@ -538,12 +538,12 @@ class fix_set_bits(base):
             for x in l:
                 if x.mode & 04000:
                     reporter.warn(
-                        "correcting unsafe world writable SetGID: %s" %
-                            (x.location,))
+                        "correcting unsafe world writable SetGID: %s",
+                            x.location)
                 else:
                     reporter.warn(
-                        "correcting unsafe world writable SetUID: %s" %
-                            (x.location,))
+                        "correcting unsafe world writable SetUID: %s",
+                            x.location)
 
         if l:
             # wipe setgid/setuid
@@ -569,7 +569,7 @@ class detect_world_writable(base):
         l = [x for x in cset.iterlinks(True) if x.mode & 0002]
         if reporter is not None:
             for x in l:
-                reporter.warn("world writable file: %s" % x.location)
+                reporter.warn("world writable file: %s", x.location)
         if self.fix_perms:
             cset.update(x.change_attributes(mode=x.mode & ~0002) for x in l)
 
@@ -594,7 +594,7 @@ class PruneFiles(base):
         removal = filter(self.sentinel, cset)
         if engine.observer:
             for x in removal:
-                engine.observer.info("pruning: %s" % x.location)
+                engine.observer.info("pruning: %s", x.location)
         cset.difference_update(removal)
 
 
@@ -621,8 +621,8 @@ class CommonDirectoryModes(base):
             if x.location not in self.directories:
                 continue
             if x.mode != 0755:
-                r.warn('%s path has mode %s, should be 0755' %
-                    (x.location, oct(x.mode)))
+                r.warn('%s path has mode %s, should be 0755',
+                       x.location, oct(x.mode))
 
 
 class BlockFileType(base):
@@ -648,7 +648,7 @@ class BlockFileType(base):
         # this won't play perfectly w/ binpkgs
         for x in (x for x in cset.iterfiles() if filter_re(x.location)):
             if bad_pat(file_typer(x.data)):
-                engine.observer.warn("disallowed file type: %r" % x)
+                engine.observer.warn("disallowed file type: %r", x)
                 bad_files.append(x)
         if self.fatal and bad_files:
             raise errors.BlockModification(self,
@@ -689,8 +689,7 @@ class SavePkg(base):
         else:
             txt = 'installing'
             op = self.target_repo.operations.install(wrapped_pkg)
-        engine.observer.info("%s %s to %s" %
-            (txt, pkg, self.target_repo))
+        engine.observer.info("%s %s to %s", txt, pkg, self.target_repo)
         op.finish()
 
 
@@ -786,10 +785,10 @@ class BinaryDebug(ThreadedTrigger):
         elif "current ar archive" in ftype:
             args = ['-g']
         if not quiet:
-            reporter.info("stripping: %s %s" % (fs_obj, ' '.join(args)))
+            reporter.info("stripping: %s %s", fs_obj, ' '.join(args))
         ret = spawn.spawn([self.strip_binary] + args + [fs_obj.data.path])
         if ret != 0:
-            reporter.warn("stripping %s, type %s failed" % (fs_obj, ftype))
+            reporter.warn("stripping %s, type %s failed", fs_obj, ftype)
         # need to update chksums here...
         return fs_obj
 
@@ -809,7 +808,7 @@ class BinaryDebug(ThreadedTrigger):
 
     def _strip_setup(self, engine, cset):
         if 'strip' in getattr(engine.new, 'restrict', ()):
-            engine.observer.info("stripping disabled for %s" % engine.new)
+            engine.observer.info("stripping disabled for %s", engine.new)
             return False
         self._initialize_paths(engine.new)
         self._modified = set()
@@ -838,7 +837,7 @@ class BinaryDebug(ThreadedTrigger):
                     skip = True
                     break
         if skip:
-            engine.observer.info("splitdebug disabled for %s, skipping splitdebug" % engine.new)
+            engine.observer.info("splitdebug disabled for %s, skipping splitdebug", engine.new)
             return False
 
         self._initialize_paths(engine.new)
@@ -866,11 +865,11 @@ class BinaryDebug(ThreadedTrigger):
             debug_ondisk = pjoin(os.path.dirname(fpath), os.path.basename(fpath) + ".debug")
 
             # note that we tell the UI the final pathway- not the intermediate one.
-            observer.info("splitdebug'ing %s into %s" % (fs_obj.location, debug_loc))
+            observer.info("splitdebug'ing %s into %s", fs_obj.location, debug_loc)
 
             ret = spawn.spawn(objcopy_args + [fpath, debug_ondisk])
             if ret != 0:
-                observer.warn("splitdebug'ing %s failed w/ exitcode %s" % (fs_obj.location, ret))
+                observer.warn("splitdebug'ing %s failed w/ exitcode %s", fs_obj.location, ret)
                 continue
 
             # note that the given pathway to the debug file /must/ be relative to ${D};
@@ -879,7 +878,7 @@ class BinaryDebug(ThreadedTrigger):
                 '--add-gnu-debuglink', debug_ondisk, fpath])
             if ret != 0:
                 observer.warn("splitdebug created debug file %r, but "
-                    "failed adding links to %r (%r)" % (debug_ondisk, fpath, ret))
+                    "failed adding links to %r (%r)", debug_ondisk, fpath, ret)
                 observer.debug("failed splitdebug command was %r",
                     (self.objcopy_binary, '--add-gnu-debuglink', debug_ondisk, fpath))
                 continue
@@ -896,7 +895,7 @@ class BinaryDebug(ThreadedTrigger):
             for fs_obj in fs_objs[1:]:
                 debug_loc = pjoin(debug_store, fs_obj.location.lstrip('/') + ".debug")
                 linked_debug_obj = debug_obj.change_attributes(location=debug_loc)
-                observer.info("splitdebug hardlinking %s to %s" % (debug_obj.location, debug_loc))
+                observer.info("splitdebug hardlinking %s to %s", debug_obj.location, debug_loc)
                 self._modified.add(linked_debug_obj)
                 self._modified.add(stripped_fsobj.change_attributes(location=fs_obj.location))
 

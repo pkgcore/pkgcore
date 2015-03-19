@@ -280,15 +280,19 @@ def merge_contents(cset, offset=None, callback=None):
 
                 if x.is_reg:
                     key = (x.dev, x.inode)
-                    link_target = merged_inodes.get(key)
-                    if link_target is not None and \
-                        link_target._can_be_hardlinked(x):
-                        if do_link(link_target, x):
-                            continue
-                        # TODO: should notify that hardlinking failed.
-                    merged_inodes.setdefault(key, x)
+                    # This logic could be made smarter- instead of
+                    # blindly trying candidates, we could inspect the st_dev
+                    # of the final location.  This however can be broken by
+                    # overlayfs's potentially.  Brute force is in use either
+                    # way.
+                    candidates = merged_inodes.setdefault(key, [])
+                    if any(target._can_be_hardlinked(x) and do_link(target, x)
+                            for target in candidates):
+                        continue
+                    candidates.append(x)
 
                 copyfile(x, mkdirs=True)
+
             break
         except CannotOverwrite as cf:
             if not fs.issym(x):

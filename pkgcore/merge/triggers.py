@@ -820,8 +820,10 @@ class BinaryDebug(ThreadedTrigger):
             # new objects data.
             stripped = self._strip_fsobj(fs_objs[0], ftype, observer)
             self._modified.add(stripped)
-            self._modified.update(stripped.change_attributes(location=fs_obj.data.path)
-                for fs_obj in fs_objs[1:])
+            if len(fs_objs) > 1:
+                self._modified.update(
+                    stripped.change_attributes(location=fs_obj.location)
+                    for fs_obj in fs_objs[1:])
 
     def _strip_finish(self, engine, cset):
         if hasattr(self, '_modified'):

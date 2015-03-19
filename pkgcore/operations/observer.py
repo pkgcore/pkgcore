@@ -15,6 +15,8 @@ demandload('threading')
 
 
 def _convert(msg, args=(), kwds={}):
+    # Note for interpolation, ValueError can be thrown by '%2(s'
+    # TypeError by "%i" % "2", and KeyError via what you would expect.
     if args:
         if kwds:
             raise TypeError(
@@ -23,13 +25,13 @@ def _convert(msg, args=(), kwds={}):
                 % (msg, args, kwds))
         try:
             return msg % args
-        except TypeError as e:
+        except (ValueError, TypeError) as e:
             raise TypeError(
                 "observer interpolation error: %s, msg=%r, args=%r"
                 % (e, msg, args))
     try:
         return msg % kwds
-    except TypeError as e:
+    except (KeyError, TypeError, ValueError) as e:
         raise TypeError(
             "observer interpolation error: %s, msg=%r, kwds=%r"
             % (e, msg, kwds))

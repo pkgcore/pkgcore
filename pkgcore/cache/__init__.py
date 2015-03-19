@@ -71,12 +71,7 @@ class base(object):
         if chf == 'eclassdir':
             return lambda data: os.path.dirname(data.path)
         if chf == 'mtime':
-            def f(data):
-                if isinstance(data, (tuple, str)):
-                    import pdb;pdb.set_trace()
-                return '%.0f' % math.floor(data.mtime)
-            return f
-            return lambda data:'%.0f' % math.floor(data.mtime)
+            return lambda data: '%.0f' % math.floor(data.mtime)
         # Skip the leading 0x...
         getter = operator.attrgetter(chf)
         return lambda data: hex(getter(data))[2:].rstrip('L')

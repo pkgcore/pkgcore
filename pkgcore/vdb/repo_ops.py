@@ -69,7 +69,7 @@ class install(repo_ops.install):
                     s = v.slotdep_str(domain)
                 elif not isinstance(v, basestring):
                     try:
-                        s = ' '.join(sorted(v))
+                        s = ' '.join(v)
                     except TypeError:
                         s = str(v)
                 else:

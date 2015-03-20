@@ -78,15 +78,6 @@ class FormattingHandler(logging.Handler):
                 self.out.first_prefix.pop()
 
 
-def string_bool(value):
-    value = value.lower()
-    if value in ('y', 'yes', 'true'):
-        return True
-    elif value in ('n', 'no', 'false'):
-        return False
-    raise ValueError(value)
-
-
 class ExtendCommaDelimited(argparse._AppendAction):
 
     def __call__(self, parser, namespace, values, option_string=None):

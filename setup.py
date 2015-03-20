@@ -365,8 +365,9 @@ class pkgcore_install(_base_install):
     def run(self):
         _base_install.run(self)
         target = self.install_data
-        if target.startswith(self.root) and self.root != '/':
-            target = os.path.join('/', os.path.relpath(target, self.root))
+        root = self.root or '/'
+        if target.startswith(root):
+            target = os.path.join('/', os.path.relpath(target, root))
         if not self.dry_run:
             # Install configuration data so pkgcore knows where to find it's content,
             # rather than assuming it is running from a tarball/git repo.

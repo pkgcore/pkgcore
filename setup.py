@@ -8,6 +8,7 @@ import sys
 
 from distutils import core, log, errors
 from distutils.command import build, build_scripts, install
+from distutils.util import byte_compile
 from stat import ST_MODE
 
 from snakeoil import distutils_extensions as snk_distutils
@@ -387,6 +388,8 @@ def write_pkgcore_lookup_configs(python_base, data_path, injected_bin_path=()):
         # This is added to suppress the default behaviour of looking
         # within the repo for a bin subdir.
         f.write("INJECTED_BIN_PATH=%r\n" % (tuple(injected_bin_path),))
+    byte_compile([path], prefix=python_base)
+    byte_compile([path], optimize=2, prefix=python_base)
 
 
 class pkgcore_build_py(snk_distutils.build_py):

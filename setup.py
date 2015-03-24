@@ -23,8 +23,6 @@ class mysdist(snk_distutils.sdist):
 
     """sdist command specifying the right files and generating ChangeLog."""
 
-    old_verinfo = False
-
     user_options = snk_distutils.sdist.user_options + [
         ('build-docs', None, 'build docs [default]'),
         ('no-build-docs', None, 'do not build docs'),
@@ -39,17 +37,6 @@ class mysdist(snk_distutils.sdist):
     def initialize_options(self):
         snk_distutils.sdist.initialize_options(self)
         self.build_docs = True
-
-    def _add_to_file_list(self):
-        self.filelist.include_pattern('doc/*')
-        self.filelist.include_pattern('doc/doc/*')
-        self.filelist.include_pattern('doc/dev-notes/*')
-        self.filelist.include_pattern('man/*')
-        self.filelist.append('build_api_docs.sh')
-        self.filelist.exclude_pattern("doc/_build")
-        self.filelist.exclude_pattern("build")
-        self.filelist.include_pattern('examples/*')
-        self.filelist.include_pattern('bin/*')
 
     def make_release_tree(self, base_dir, files):
         """Create and populate the directory tree that is put in source tars.
@@ -67,7 +54,6 @@ class mysdist(snk_distutils.sdist):
             shutil.copytree(os.path.join(cwd, "build/sphinx/man"),
                             os.path.join(base_dir, "man"))
         snk_distutils.sdist.make_release_tree(self, base_dir, files)
-        self.cleanup_post_release_tree(base_dir)
 
 
 class pkgcore_build_scripts(build_scripts.build_scripts):

@@ -464,15 +464,18 @@ if BuildDoc:
         'builder': ('setup.py', 'man'),
         }
 
+with open('README.rst', 'r') as f:
+    readme = f.read()
 
 core.setup(
     name='pkgcore',
     version=version,
     description='package managing framework',
+    long_description=readme,
     url='https://github.com/pkgcore/pkgcore',
     license='BSD/GPLv2',
-    author='Brian Harring',
-    author_email='ferringb@gmail.com',
+    author='Brian Harring, Tim Harder',
+    author_email='pkgcore-dev@googlegroups.com',
     packages=packages,
     data_files=[
         (CONFIG_DATA_INSTALL_OFFSET, glob.glob('config/*')),
@@ -481,5 +484,6 @@ core.setup(
     classifiers=[
         'License :: OSI Approved :: BSD License',
         'License :: OSI Approved :: GNU General Public License v2 (GPLv2)',
+        'Programming Language :: Python :: 2.7',
     ],
 )

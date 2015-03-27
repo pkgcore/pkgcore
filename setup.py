@@ -426,10 +426,9 @@ if not snk_distutils.is_py3k:
                 'src/filter_env.c', 'src/bmh_search.c']),
         snk_distutils.OptionalExtension(
             'pkgcore.restrictions._restrictions', ['src/restrictions.c']),
+        snk_distutils.OptionalExtension(
+            'pkgcore.ebuild._misc', ['src/misc.c']),
     ])
-    if float(sys.version[:3]) >= 2.6:
-        extensions.append(snk_distutils.OptionalExtension(
-            'pkgcore.ebuild._misc', ['src/misc.c']))
 
 from pkgcore.const import VERSION as version
 

@@ -11,7 +11,6 @@ before_install:
     - sudo useradd -u 250 -g 250 portage
 
     # install-info is used by the info regen trigger
-    - sudo apt-get update -qq
     - sudo apt-get install -y install-info
 
     # don't output the "this is not dpkg install-info anymore, but GNU install-info..." warning

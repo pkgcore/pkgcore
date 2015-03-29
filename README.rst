@@ -65,13 +65,13 @@ A standalone test runner is integrated in setup.py; to run, just execute::
 
     python setup.py test
 
-Aside from that, our runner of choice is twisted's trial; ran via::
+In addition, a tox config is provided so the testsuite can be run in a
+virtualenv setup against all supported python versions. To run tests for all
+environments just execute **tox** in the root directory of a repo or unpacked
+tarball. Otherwise, for a specific python version execute something similar to
+the following::
 
-    trial pkgcore
-
-If you're doing development, trial is significantly friendlier; the standalone
-runner is designed to be mainly used for installations of pkgcore, where all
-tests must pass, else installation is aborted.
+    tox -e py27
 
 
 Installing

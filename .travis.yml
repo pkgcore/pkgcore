@@ -3,6 +3,7 @@ python:
     - 2.7
     - 3.3
     - 3.4
+env: TOXENV=py${TRAVIS_PYTHON_VERSION/\./}
 before_install:
     # add user/group for portage and wheel
     - sudo groupadd wheel
@@ -15,7 +16,7 @@ before_install:
     # don't output the "this is not dpkg install-info anymore, but GNU install-info..." warning
     - sudo mv /usr/bin/ginstall-info /usr/bin/install-info
 install: pip install tox coveralls
-script: tox -e py${TRAVIS_PYTHON_VERSION/\./}
+script: tox -e ${TOXENV}
 after_success:
     # upload coverage data to coveralls.io
     - pushd .tox/${TOXENV}/lib/python*/site-packages

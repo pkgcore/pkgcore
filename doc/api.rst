@@ -142,5 +142,4 @@ Modules
     pkgcore.vdb.contents
     pkgcore.vdb.ondisk
     pkgcore.vdb.repo_ops
-    pkgcore.vdb.virtuals
     pkgcore.version

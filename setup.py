@@ -46,6 +46,10 @@ class mysdist(snk_distutils.sdist):
         exist in a working tree.
         """
         if self.build_docs:
+            # need to make sure we're using a built version of pkgcore for the
+            # current python version since doc/conf.py imports pkgcore modules
+            build_py = self.get_finalized_command('build_py')
+            build_py.run()
             # this is icky, but covers up cwd changing issues.
             cwd = os.getcwd()
             if subprocess.call([sys.executable, 'setup.py', 'build_docs', '--builder=man'], cwd=cwd):

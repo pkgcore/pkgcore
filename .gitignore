@@ -6,6 +6,7 @@ pkgcore/restrictions/*.so
 /build
 /cache
 /dist
+/.tox
 _trial_temp
 /doc/dev-notes/index.rst
 /doc/dev-notes/*/index.rst

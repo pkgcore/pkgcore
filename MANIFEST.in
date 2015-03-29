@@ -1,5 +1,5 @@
 include AUTHORS BSD GPL2 LICENSE *.rst
-include build_api_docs.sh
+include build_api_docs.sh tox.ini
 recursive-include bin *
 recursive-include doc *
 recursive-include examples *

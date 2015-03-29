@@ -99,7 +99,6 @@ To install::
 
 .. _snakeoil: https://github.com/pkgcore/snakeoil
 .. _Github: https://github.com/pkgcore/pkgcore/issues
-.. _Gentoo Bugzilla: https://bugs.gentoo.org
 .. _#pkgcore: https://webchat.freenode.net?channels=%23pkgcore&uio=d4
 .. _introduction docs: http://pkgcore.readthedocs.org/en/latest/getting-started.html
 .. _development docs: http://pkgcore.readthedocs.org/en/latest/dev-notes/developing.html

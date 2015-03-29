@@ -1,4 +1,4 @@
-|test|
+|test| |coverage|
 
 What is pkgcore?
 ================
@@ -108,3 +108,5 @@ To install::
 
 .. |test| image:: https://travis-ci.org/pkgcore/pkgcore.svg?branch=master
     :target: https://travis-ci.org/pkgcore/pkgcore
+.. |coverage| image:: https://coveralls.io/repos/pkgcore/pkgcore/badge.png?branch=master
+    :target: https://coveralls.io/r/pkgcore/pkgcore?branch=master

@@ -43,9 +43,6 @@ help:
 
 clean:
 	-rm -rf $(BUILDDIR) api
-	@for file in man/*; do \
-		[ -L "$${file}" ] && rm -f "$${file}" || continue; \
-	done
 
 generated: api man_rsts
 
@@ -56,6 +53,9 @@ man_rsts:
 		xargs -I@ ln -sf "$(BUILDDIR)/generated/@" "man/@"
 	@$(PYTHON) -m pkgcore.sphinx_utils.generate_man_rsts $(BUILDDIR)/generated \
 	   `$(PYTHON) -c 'import conf,sys;sys.stdout.write(" ".join(" ".join(x) for x in conf.generated_man_pages))'`
+	@for file in man/*; do \
+		[ -L "$${file}" ] && rm -f "$${file}" || continue; \
+	done
 
 api:
 	@echo "autogenerating api rsts..."

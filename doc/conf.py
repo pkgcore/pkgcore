@@ -52,7 +52,7 @@ master_doc = 'index'
 project = 'pkgcore'
 authors_list = ['Brian Harring', 'Marien Zwart', 'Tim Harder']
 authors = ', '.join(authors_list)
-copyright = '2006-2015, ' + authors
+copyright = '2006-2015, pkgcore contributors'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the

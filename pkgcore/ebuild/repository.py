@@ -53,13 +53,18 @@ class repo_operations(_repo_ops.operations):
         required = manifest_config.hashes
         ret = False
         for key_query in sorted(set(match.unversioned_atom for match in matches)):
-            observer.info("generating digests for %s for repo %s", key_query, self.repo)
             packages = self.repo.match(key_query, sorter=sorted)
             if packages:
                 observer.info("generating digests for %s for repo %s", key_query, self.repo)
+            else:
+                observer.info("no digests to regenerate for %s for repo %s", key_query, self.repo)
             pkgdir_fetchables = {}
             try:
                 for pkg in packages:
+                    if pkg.ebuild.path is None:
+                        observer.error("pkg %s doesn't exist on disk; can't generate manifest/digest\n",
+                                       pkg)
+                        return False
                     # XXX: needs modification to grab all sources, and also to not
                     # bail if digests are missing
                     pkg.release_cached_data(all=True)
@@ -84,7 +89,7 @@ class repo_operations(_repo_ops.operations):
 
                 pkgdir_fetchables = sorted(pkgdir_fetchables.itervalues())
                 digest.serialize_manifest(
-                    os.path.dirname(pkg.ebuild.get_path()),
+                    os.path.dirname(pkg.ebuild.path),
                     pkgdir_fetchables, chfs=required, thin=manifest_config.thin)
                 ret = True
             finally:

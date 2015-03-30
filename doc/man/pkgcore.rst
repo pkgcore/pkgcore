@@ -29,8 +29,10 @@ managers.
 
 * /etc/portage/repos.conf
 
-  Support for parsing and using /etc/portage/repos.conf is missing so the
-  PORTDIR and PORTDIR_OVERLAY settings in make.conf must still be used for now.
+  Minimal support is provided for /etc/portage/repos.conf so most of the
+  attributes supported by portage aren't available. Support for more attributes
+  will be added in the future, but pkgcore is unlikely to ever support the full
+  set used by portage.
 
 * FEATURES="preserve-libs"
 
@@ -40,16 +42,15 @@ managers.
   portage until an equivalent is added to pkgcore and/or support for preserved
   libs is added.
 
-  Note that this also means there is no "preserved-rebuild" package set support
+  Note that this also means there is no preserved-rebuild package set support
   either.
 
 * dynamic deps
 
   Dependency data for installed packages is always pulled from the vdb which is
-  only allowed to be altered during package install time and removed at
-  uninstall. Adding support for retrieving updated dependency data from unbuilt
-  ebuilds in source repositories will never be added in the current form found
-  in portage.
+  only allowed to be altered on install and removed at uninstall. There is no
+  plan to support retrieving updated dependency data from unbuilt ebuilds in
+  source repositories and updating the vdb.
 
 Utilities
 =========

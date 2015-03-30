@@ -16,7 +16,7 @@ pkgcore 0.9 (2015-03-30)
 Features
 ========
 
-- Hardlinks are now preserved for merging and binpkgs.
+- Hardlinks are now preserved during merging and when creating binpkgs.
 
 - Add pmerge support for globbed targets, this means that commands such as
   **pmerge "*"** or slightly more sane **pmerge "dev-python/*::repo"** will

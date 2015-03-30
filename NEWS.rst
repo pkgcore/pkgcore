@@ -10,7 +10,7 @@ pkgcore master
 
 
 ------------------------
-pkgcore 0.9 (2015-03-30)
+pkgcore 0.9 (2015-??-??)
 ------------------------
 
 Features
@@ -99,6 +99,15 @@ API Changes
 
 Other
 =====
+
+- Add tox config to allow running the testsuite across all supported python
+  versions.
+
+- Handle SIGINT signals better with regards to spawned processes that might
+  alter them. Now hitting Ctrl-C once should force pkgcore to exit as expected
+  instead of having to hit Ctrl-C multiple times at certain points during
+  package builds such as when a spawned python process is running and captures
+  the signal instead of relaying it to its children.
 
 - Old virtuals support deprecated by GLEP 37 has been dropped.
 

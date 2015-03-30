@@ -3,4 +3,7 @@ include build_api_docs.sh tox.ini
 recursive-include bin *
 recursive-include doc *
 recursive-include examples *
+recursive-include bash *
+recursive-include config *
+recursive-include src *.[ch]
 global-exclude *.pyc *.pyo __pycache__

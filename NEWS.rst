@@ -8,16 +8,36 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 pkgcore master
 --------------
 
+
+------------------------
+pkgcore 0.9 (2015-03-30)
+------------------------
+
 Features
 ========
+
+- Hardlinks are now preserved for merging and binpkgs.
+
+- Add pmerge support for globbed targets, this means that commands such as
+  **pmerge "*"** or slightly more sane **pmerge "dev-python/*::repo"** will
+  work. Note that this usage is apt to run into blockers and other resolver
+  issues, but it can be handy in certain cases.
+
+- Drop pmerge support for -s/--set in favor of @pkgset syntax.
+
+- Add pmerge support for -b/--buildpkg and change --with-built-depends to
+  --with-bdeps to match emerge.
+
+- Nearly complete EAPI=5 support just missing subslot rebuilds.
 
 - Add support for pebuild to run against a given ebuild file target from a
   configured repo. This is the standard workflow when using `ebuild` from
   portage.
 
-- Add unmasks, bashrcs, keywords, accept_keywords, pkg_use, masked_use,
-  stable_masked_use, forced_use, and stable_forced_use as `pinspect profile`
-  subcommands. Also, note that 'profile' is now used instead of 'profiles'.
+- Add unmasks, iuse_effective, bashrcs, keywords, accept_keywords, pkg_use,
+  masked_use, stable_masked_use, forced_use, and stable_forced_use as `pinspect
+  profile` subcommands. Also, note that 'profile' is now used instead of
+  'profiles'.
 
 - Add support for FEATURES=protect-owned (see make.conf man page for details).
 
@@ -79,6 +99,12 @@ API Changes
 
 Other
 =====
+
+- Old virtuals support deprecated by GLEP 37 has been dropped.
+
+- No longer depend on config files from portage. Global config files are now
+  stored in /usr/share/pkgcore/config and bash-related functionality is stored
+  in /usr/lib/pkgcore instead of each pkgcore module's namespace.
 
 - Throw warnings for EAPI support in development instead of erroring out.
 

@@ -12,7 +12,6 @@ try:
     from unittest import mock
 except ImportError:
     import mock
-from mock import patch
 
 from snakeoil.osutils import pjoin, ensure_dirs, normpath
 from snakeoil.test.mixins import TempDirMixin
@@ -1187,7 +1186,7 @@ class TestOnDiskProfile(profile_mixin, TestCase):
 
         # disable instance caching on RepoConfig otherwise the known arches
         # value will be cached
-        with patch('pkgcore.ebuild.repo_objs.RepoConfig', RepoConfig):
+        with mock.patch('pkgcore.ebuild.repo_objs.RepoConfig', RepoConfig):
             self.assertEqual(
                 self.get_profile('0', basepath).iuse_effective, frozenset([]))
             with open(pjoin(basepath, 'arch.list'), 'w') as f:

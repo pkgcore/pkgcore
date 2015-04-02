@@ -402,11 +402,6 @@ class test(snk_distutils.test):
             os.environ[key] = os.path.dirname(os.path.realpath(__file__))
             return snk_distutils.test.run(self)
         finally:
-            build_py = self.get_finalized_command('build_py')
-            plugincache = os.path.join(build_py.build_lib, 'pkgcore/plugins/plugincache')
-            # remove temporary plugincache so it isn't installed
-            if os.path.exists(plugincache):
-                os.remove(plugincache)
             if original is not None:
                 os.environ[key] = original
             else:

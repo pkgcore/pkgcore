@@ -1,4 +1,4 @@
-|test| |coverage|
+|pypi| |test| |coverage| |docs|
 
 What is pkgcore?
 ================
@@ -99,7 +99,12 @@ To install::
 .. _download: https://readthedocs.org/projects/pkgcore/downloads/
 .. _mock: https://pypi.python.org/pypi/mock
 
+.. |pypi| image:: https://img.shields.io/pypi/v/pkgcore.svg
+    :target: https://pypi.python.org/pypi/pkgcore
 .. |test| image:: https://travis-ci.org/pkgcore/pkgcore.svg?branch=master
     :target: https://travis-ci.org/pkgcore/pkgcore
 .. |coverage| image:: https://coveralls.io/repos/pkgcore/pkgcore/badge.png?branch=master
     :target: https://coveralls.io/r/pkgcore/pkgcore?branch=master
+.. |docs| image:: https://readthedocs.org/projects/pkgcore/badge/?version=latest
+    :target: https://readthedocs.org/projects/pkgcore/?badge=latest
+    :alt: Documentation Status

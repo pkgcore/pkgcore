@@ -480,7 +480,7 @@ core.setup(
     author='Brian Harring, Tim Harder',
     author_email='pkgcore-dev@googlegroups.com',
     packages=packages,
-    requires=['snakeoil (>=0.6.2)'],
+    requires=['snakeoil (>=0.6.3)'],
     data_files=[
         (CONFIG_DATA_INSTALL_OFFSET, glob.glob('config/*')),
     ] + list(_get_data_mapping(EBD_DATA_INSTALL_OFFSET, 'bash')),

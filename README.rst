@@ -83,13 +83,6 @@ To build::
     cd pkgcore-0.XX
     python setup.py build
 
-Run tests::
-
-    cd pkgcore-0.xx
-    python setup.py test
-     or
-    trial pkgcore
-
 To install::
 
     cd pkgcore-0.xx

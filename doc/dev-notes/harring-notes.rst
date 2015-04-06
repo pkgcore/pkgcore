@@ -30,10 +30,3 @@ need to find a way to clone a stack, getting a standalone config stack if
 possible for the resolver- specifically so it can do resets as needed, track
 what is involved (use dep forcing) w/out influencing preexisting access to
 that tree, nor being affected by said usage.
-
-
-hardlink merge
-==============
-
-no comments, just need to get around to it.
-

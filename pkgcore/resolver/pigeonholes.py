@@ -58,7 +58,7 @@ class PigeonHoledSlots(object):
         return self.find_atom_matches(atom, key=key)
 
     def check_limiters(self, obj):
-        """return any limiters conflicting w/ the psased in obj"""
+        """return any limiters conflicting w/ the passed in obj"""
         key = obj.key
         return [x for x in self.limiters.get(key, ()) if x.match(obj)]
 

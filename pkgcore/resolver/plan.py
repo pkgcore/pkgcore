@@ -38,7 +38,7 @@ pkg_grabber = operator.itemgetter(0)
 
 
 def highest_iter_sort(l, pkg_grabber=pkg_grabber):
-    """Sort a list of packages from highest to lowest.
+    """Sort a list of packages from highest to lowest and prefer livefs.
 
     :param l: list of packages
     :param pkg_grabber: function to use as an attrgetter

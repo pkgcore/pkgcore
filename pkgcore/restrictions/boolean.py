@@ -96,7 +96,7 @@ class base(restriction.base):
 
     def add_restriction(self, *new_restrictions):
         """
-        add an more restriction(s)
+        add more restriction(s)
 
         :param new_restrictions: if node_type is enforced,
             restrictions must be of that type.

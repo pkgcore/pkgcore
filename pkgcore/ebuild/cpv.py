@@ -390,12 +390,6 @@ except ImportError:
     cpy_builtin = False
     CPV = CPV_base = native_CPV
 
-def unversioned_CPV(*args):
-    return CPV.unversioned(*args)
-
-def versioned_CPV(*args):
-    return CPV.versioned(*args)
-
 versioned_CPV = CPV.versioned
 unversioned_CPV = CPV.unversioned
 

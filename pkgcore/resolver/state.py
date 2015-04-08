@@ -4,8 +4,7 @@
 __all__ = (
     "plan_state", "base_op_state", "add_op", "add_hardref_op",
     "add_backref_op", "remove_op", "replace_op", "blocker_base_op",
-    "incref_forward_block_op", "incref_forward_block_op",
-    "decref_forward_block_op",
+    "incref_forward_block_op", "decref_forward_block_op",
 )
 
 from snakeoil.containers import RefCountingSet

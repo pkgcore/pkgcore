@@ -1,1 +1,1 @@
--e https://github.com/pkgcore/snakeoil.git#egg=snakeoil
+-e git+https://github.com/pkgcore/snakeoil.git#egg=snakeoil

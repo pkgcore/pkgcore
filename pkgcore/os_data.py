@@ -65,7 +65,7 @@ except KeyError:
         Please fix this as it is a normal system requirement, 'wheel' is
         normally GID 10.  Generally 'emerge baselayout' and an 'etc-update'
         should remedy this problem.
-        """, file=sys.stderr))
+        """), file=sys.stderr)
 
 # Discover the uid and gid of the portage user/group
 try:
@@ -91,4 +91,4 @@ except KeyError:
         For the defaults, line 1 goes into passwd, and 2 into group.
         portage:x:250:250:portage:/var/tmp/portage:/bin/false
         portage::250:portage
-        """, file=sys.stderr))
+        """), file=sys.stderr)

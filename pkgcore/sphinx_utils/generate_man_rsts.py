@@ -8,8 +8,6 @@ import os
 import re
 import sys
 
-from snakeoil.osutils import pjoin
-
 
 def _rst_header(char, text, leading=False):
     s = char * len(text)
@@ -82,7 +80,7 @@ class ManConverter(object):
     def regen_if_needed(cls, base_path, src, out_name=None, force=False):
         if out_name is None:
             out_name = src.rsplit(".", 1)[-1]
-        out_path = pjoin(base_path, out_name)
+        out_path = os.path.join(base_path, out_name)
         script_time = int(os.stat(__file__).st_mtime)
         module = import_module(src)
         cur_time = int(os.stat(module.__file__).st_mtime)
@@ -115,7 +113,7 @@ class ManConverter(object):
 
         sys.stdout.write("regenerating rst for %s\n" % (self.name,))
         for name, data in self.process_parser(self.parser, self.name.rsplit(".")[-1]):
-            with open(pjoin(self.out_path, '%s.rst' % name), "w") as f:
+            with open(os.path.join(self.out_path, '%s.rst' % name), "w") as f:
                 f.write("\n".join(data))
 
         if self.mtime:
@@ -152,7 +150,7 @@ class ManConverter(object):
 
             for subcommand, parser in action_group._group_actions[0].choices.iteritems():
                 subdir_path = self.name.split()[1:]
-                base = pjoin(self.base_path, *subdir_path)
+                base = os.path.join(self.base_path, *subdir_path)
                 self.__class__(base, "%s %s" % (
                     self.name, subcommand), parser, mtime=self.mtime, out_name=subcommand).run()
 
@@ -165,7 +163,7 @@ class ManConverter(object):
             l.append("    :maxdepth: 2")
             l.append('')
             l.extend("    %s %s <%s>" %
-                     (name, subcommand, pjoin(*list(toc_path + [subcommand])))
+                     (name, subcommand, os.path.join(*list(toc_path + [subcommand])))
                      for subcommand in action_group._group_actions[0].choices)
             l.append('')
         return l

@@ -11,8 +11,10 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
+import errno
 from importlib import import_module
 import os
+import subprocess
 import sys
 
 # If extensions (or modules to document with autodoc) are in another directory,
@@ -21,6 +23,25 @@ import sys
 sys.path.insert(1, os.path.abspath('..'))
 
 from pkgcore.const import VERSION as pkgcore_version
+from pkgcore.sphinx_utils.generate_man_rsts import ManConverter
+
+
+def generate_docs():
+    """Generate various supporting files for building docs"""
+    try:
+        os.mkdir('generated')
+    except OSError as e:
+        if e.errno != errno.ENOENT:
+            raise
+
+    # generate man page option docs
+    for module, script in generated_man_pages:
+        os.symlink(os.path.join(os.pardir, 'generated', script), os.path.join('man', script))
+        ManConverter.regen_if_needed('generated', module, out_name=script)
+
+    # generate API docs
+    subprocess.call(['sphinx-apidoc', '-Tef', '-o', 'api', '../pkgcore', '../pkgcore/test'])
+
 
 # -- General configuration -----------------------------------------------------
 
@@ -232,12 +253,13 @@ generated_man_pages = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('man/%s' % x[1], x[1], import_module(x[0]).__doc__.split('\n', 1)[0], authors_list, 1)
-    for x in generated_man_pages
+    ('man/%s' % script, script, import_module(module).__doc__.split('\n', 1)[0], authors_list, 1)
+    for module, script in generated_man_pages
 ]
 
 man_pages.append(('man/pkgcore', 'pkgcore', 'a framework for package management', authors_list, 5))
 
+generate_docs()
 
 # -- Options for Epub output ---------------------------------------------------
 

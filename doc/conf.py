@@ -31,8 +31,9 @@ def generate_docs():
     try:
         os.mkdir('generated')
     except OSError as e:
-        if e.errno != errno.ENOENT:
-            raise
+        if e.errno == errno.EEXIST:
+            return
+        raise
 
     # generate man page option docs
     for module, script in generated_man_pages:

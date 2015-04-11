@@ -52,7 +52,7 @@ class StoreTarget(argparse._AppendAction):
 argparser = commandline.mk_argparser(
     domain=True, description=__doc__.split('\n', 1)[0])
 argparser.add_argument(
-    nargs='*', dest='targets', action=StoreTarget,
+    nargs='*', dest='targets', metavar='TARGET', action=StoreTarget,
     help="extended atom matching of packages")
 
 query_options = argparser.add_argument_group("Package querying options")

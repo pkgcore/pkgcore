@@ -32,22 +32,21 @@ from snakeoil.lists import stable_unique
 class StoreTarget(argparse._AppendAction):
 
     def __call__(self, parser, namespace, values, option_string=None):
-        sets = []
+        namespace.sets = []
         if isinstance(values, basestring):
             values = [values]
-        for x in values:
-            if x.startswith('@'):
-                sets.append(x[1:])
+        for token in values:
+            if token.startswith('@'):
+                namespace.sets.append(token[1:])
             else:
                 try:
                     argparse._AppendAction.__call__(
                         self, parser, namespace,
-                        (x, parserestrict.parse_match(x)), option_string=option_string)
+                        (token, parserestrict.parse_match(token)), option_string=option_string)
                 except parserestrict.ParseError as e:
                     parser.error(e)
         if namespace.targets is None:
             namespace.targets = []
-        namespace.sets = sets
 
 
 argparser = commandline.mk_argparser(

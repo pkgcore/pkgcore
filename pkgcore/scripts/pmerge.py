@@ -370,10 +370,11 @@ def parse_target(restriction, repo, livefs_repos, return_none=False):
 
     This matches the restriction against a repo. If multiple pkgs match and a
     simple package name was provided, then the restriction is applied against
-    installed repos skipping pkgs from the 'virtual' category. If multiple pkgs
-    still match the restriction, AmbiguousQuery is raised otherwise the matched
-    atom is returned. On the other hand, if a globbed match was specified, all
-    repo matches are returned.
+    installed repos. If multiple matches still exist then pkgs from the
+    'virtual' category are skipped. If multiple pkgs still match the
+    restriction, AmbiguousQuery is raised otherwise the matched atom is
+    returned. On the other hand, if a globbed match was specified, all repo
+    matches are returned.
 
     :param restriction: string to convert.
     :param repo: :obj:`pkgcore.repository.prototype.tree` instance to search in.
@@ -382,22 +383,21 @@ def parse_target(restriction, repo, livefs_repos, return_none=False):
 
     :return: a list of matches or C{None}.
     """
-    key_matches = set(x.key for x in repo.itermatch(restriction))
+    key_matches = {x.key for x in repo.itermatch(restriction)}
     if not key_matches:
         if return_none:
             return None
-        else:
-            raise NoMatches(restriction)
+        raise NoMatches(restriction)
     elif len(key_matches) > 1:
         if isinstance(restriction, restricts.PackageDep):
-            # check for installed package name matches
-            installed_matches = set(
-                x.key for x in livefs_repos.itermatch(restriction)
-                if x.category != 'virtual')
+            # check for installed package matches
+            installed_matches = {x.key for x in livefs_repos.itermatch(restriction)}
+            if len(installed_matches) > 1:
+                # try removing virtuals if there are multiple matches
+                installed_matches = {x for x in installed_matches if not x.startswith('virtual/')}
             if len(installed_matches) == 1:
                 return [atom(installed_matches.pop())]
-            else:
-                raise AmbiguousQuery(restriction, sorted(key_matches))
+            raise AmbiguousQuery(restriction, sorted(key_matches))
         else:
             # if a glob was specified then just return every match
             return [atom(x) for x in key_matches]

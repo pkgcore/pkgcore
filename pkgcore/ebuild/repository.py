@@ -394,7 +394,7 @@ class _UnconfiguredTree(prototype.tree):
         except EnvironmentError as e:
             raise_from(KeyError(
                 "failed fetching versions for package %s: %s" %
-                (pjoin(self.base, catpkg.lstrip(os.path.sep)), str(e))))
+                (pjoin(self.base, '/'.join(catpkg)), str(e))))
 
     def _get_ebuild_path(self, pkg):
         if pkg.revision is None:

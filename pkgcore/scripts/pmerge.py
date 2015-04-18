@@ -330,6 +330,7 @@ def _validate(parser, namespace):
                          "targets given")
         namespace.sets = ('world', 'system')
         namespace.deep = True
+        namespace.replace = False
         if namespace.usepkgonly or namespace.usepkg or namespace.source_only:
             parser.error(
                 '--clean cannot be used with any of the following options: '

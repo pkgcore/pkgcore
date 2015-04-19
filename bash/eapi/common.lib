@@ -21,7 +21,9 @@ use() {
 usev() {
 	if use "$1"; then
 		echo "${1#!}"
+		return 0
 	fi
+	return 1
 }
 
 useq() {

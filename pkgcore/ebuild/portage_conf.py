@@ -28,7 +28,7 @@ from pkgcore.pkgsets.glsa import SecurityUpgrades
 demandload(
     'errno',
     'snakeoil.bash:read_bash_dict',
-    'snakeoil.compatibility:configparser',
+    'snakeoil.compatibility:ConfigParser',
     'snakeoil.xml:etree',
     'pkgcore.config:errors',
     'pkgcore.ebuild:profiles',
@@ -65,7 +65,7 @@ def add_layman_syncers(new_config, rsync_opts, overlay_paths, config_root='/',
                        default_loc="etc/layman/layman.cfg", default_conf='overlays.xml'):
     try:
         with open(pjoin(config_root, default_loc)) as f:
-            c = configparser.ConfigParser()
+            c = ConfigParser()
             c.read_file(f)
     except IOError as e:
         if e.errno != errno.ENOENT:
@@ -339,7 +339,7 @@ def load_repos_conf(path):
     for fp in files:
         try:
             with open(fp) as f:
-                config = configparser.ConfigParser()
+                config = ConfigParser()
                 config.read_file(f)
         except EnvironmentError as e:
             if e.errno == errno.EACCES:

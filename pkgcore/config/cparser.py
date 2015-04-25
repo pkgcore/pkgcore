@@ -8,13 +8,15 @@ ini based configuration format
 
 __all__ = ("config_from_file",)
 
+import ConfigParser as configparser
+
 from snakeoil import mappings
-from snakeoil.compatibility import configparser
+from snakeoil.compatibility import ConfigParser
 
 from pkgcore.config import basics, errors
 
 
-class CaseSensitiveConfigParser(configparser.ConfigParser):
+class CaseSensitiveConfigParser(ConfigParser):
     def optionxform(self, val):
         return val
 

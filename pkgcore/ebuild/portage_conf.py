@@ -455,6 +455,9 @@ def config_from_make_conf(location="/etc/", profile_override=None, **kwargs):
         overlay_repos = [opts['location'] for repo, opts in repo_opts.iteritems()
                          if opts['location'] != main_repo]
         main_syncer = repo_opts[main_repo_id].get('sync-uri', None)
+        # cheap hack to get pkgcore moving with git repo
+        if repo_opts[main_repo_id].get('sync-type') == 'git':
+            main_syncer = 'git+' + main_syncer
     else:
         # fallback to PORTDIR and PORTDIR_OVERLAY settings
         main_repo = normpath(os.environ.get(

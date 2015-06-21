@@ -7,8 +7,8 @@ Converts portage configuration files into :obj:`pkgcore.config` form.
 """
 
 __all__ = (
-    "SecurityUpgradesViaProfile", "add_layman_syncers", "make_syncer",
-    "add_sets", "add_profile", "add_fetcher", "mk_simple_cache",
+    "SecurityUpgradesViaProfile", "make_syncer",
+    "add_sets", "add_profile", "add_fetcher", "make_cache",
     "config_from_make_conf",
 )
 
@@ -20,8 +20,9 @@ from snakeoil.demandload import demandload
 from snakeoil.mappings import ImmutableDict
 from snakeoil.osutils import access, normpath, abspath, listdir_files, pjoin, ensure_dirs
 
+from pkgcore import const
 from pkgcore.config import basics, configurable
-from pkgcore.ebuild import const
+from pkgcore.ebuild import const as econst
 from pkgcore.ebuild.repo_objs import RepoConfig
 from pkgcore.pkgsets.glsa import SecurityUpgrades
 
@@ -59,55 +60,6 @@ def SecurityUpgradesViaProfile(ebuild_repo, vdb, profile):
     if arch is None:
         raise errors.ComplexInstantiationError("arch wasn't set in profiles")
     return SecurityUpgrades(ebuild_repo, vdb, arch)
-
-
-def add_layman_syncers(new_config, rsync_opts, overlay_paths, config_root='/',
-                       default_loc="etc/layman/layman.cfg", default_conf='overlays.xml'):
-    try:
-        with open(pjoin(config_root, default_loc)) as f:
-            c = ConfigParser()
-            c.read_file(f)
-    except IOError as e:
-        if e.errno != errno.ENOENT:
-            raise
-        return {}
-
-    storage_loc = c.get('MAIN', 'storage')
-    overlay_xml = pjoin(storage_loc, default_conf)
-    del c
-
-    try:
-        xmlconf = etree.parse(overlay_xml)
-    except IOError as e:
-        if e.errno != errno.ENOENT:
-            raise
-        return {}
-    overlays = xmlconf.getroot()
-    if overlays.tag != 'overlays':
-        return {}
-
-    new_syncers = {}
-    for overlay in overlays.findall('overlay'):
-        name = overlay.get('name')
-        src_type = overlay.get('type')
-        uri = overlay.get('src')
-        if None in (src_type, uri, name):
-            continue
-        path = pjoin(storage_loc, name)
-        if not os.path.exists(path):
-            continue
-        elif path not in overlay_paths:
-            continue
-        if src_type == 'tar':
-            continue
-        elif src_type == 'svn':
-            if uri.startswith('http://') or uri.startswith('https://'):
-                uri = 'svn+' + uri
-        elif src_type != 'rsync':
-            uri = '%s+%s' % (src_type, uri)
-
-        new_syncers[path] = make_syncer(new_config, path, uri, rsync_opts, False)
-    return new_syncers
 
 
 def isolate_rsync_opts(options):
@@ -148,35 +100,41 @@ def isolate_rsync_opts(options):
     return base
 
 
-def make_syncer(new_config, basedir, sync_uri, rsync_opts,
-                allow_timestamps=True):
-    d = {'basedir': basedir, 'uri': sync_uri}
-    if sync_uri.startswith('rsync'):
-        d.update(rsync_opts)
-        if allow_timestamps:
-            d['class'] = 'pkgcore.sync.rsync.rsync_timestamp_syncer'
+def make_syncer(new_config, repo_name, repo_opts, rsync_opts, allow_timestamps=True):
+    d = {'basedir': repo_opts['location']}
+
+    sync_type = repo_opts.get('sync-type', None)
+    sync_uri = repo_opts.get('sync-uri', None)
+
+    if sync_uri:
+        # prefix non-native protocols
+        if (sync_type is not None and not sync_uri.startswith(sync_type)):
+            sync_uri = '%s+%s' % (sync_type, sync_uri)
+        d['uri'] = sync_uri
+        if sync_type == 'rsync':
+            d.update(rsync_opts)
+            if allow_timestamps:
+                d['class'] = 'pkgcore.sync.rsync.rsync_timestamp_syncer'
+            else:
+                d['class'] = 'pkgcore.sync.rsync.rsync_syncer'
         else:
-            d['class'] = 'pkgcore.sync.rsync.rsync_syncer'
+            d['class'] = 'pkgcore.sync.base.GenericSyncer'
+    elif sync_uri is None:
+        # try to autodetect syncing mechanism if sync-uri is missing
+        d['class'] = 'pkgcore.sync.base.AutodetectSyncer'
     else:
-        d['class'] = 'pkgcore.sync.base.GenericSyncer'
+        # disable syncing if sync-uri is explicitly unset
+        d['class'] = 'pkgcore.sync.base.DisabledSyncer'
 
-    name = 'sync:%s' % basedir
+    name = 'sync:%s' % repo_opts['location']
     new_config[name] = basics.AutoConfigSection(d)
-    return name
-
-
-def make_autodetect_syncer(new_config, basedir):
-    name = 'sync:%s' % basedir
-    new_config[name] = basics.AutoConfigSection({
-        'class': 'pkgcore.sync.base.AutodetectSyncer',
-        'basedir': basedir})
     return name
 
 
 def add_sets(config, root, portage_base_dir):
     config["world"] = basics.AutoConfigSection({
         "class": "pkgcore.pkgsets.filelist.WorldFile",
-        "location": pjoin(root, const.WORLD_FILE)})
+        "location": pjoin(root, econst.WORLD_FILE)})
     config["system"] = basics.AutoConfigSection({
         "class": "pkgcore.pkgsets.system.SystemSet",
         "profile": "profile"})
@@ -272,12 +230,15 @@ def add_fetcher(config, conf_dict, distdir):
     config["fetcher"] = basics.AutoConfigSection(fetcher_dict)
 
 
-def mk_simple_cache(config_root, tree_loc):
+def make_cache(config_root, tree_loc):
     # TODO: probably should pull RepoConfig objects dynamically from the config
     # instead of regenerating them
     repo_config = RepoConfig(tree_loc)
 
-    if repo_config.cache_format == 'md5-dict':
+    # Use md5 cache if it exists or the option is selected, otherwise default to
+    # the old flat hash format in /var/cache/edb/dep/*.
+    if (os.path.exists(pjoin(tree_loc, 'metadata', 'md5-cache')) or
+            repo_config.cache_format == 'md5-dict'):
         kls = 'pkgcore.cache.flat_hash.md5_cache'
         tree_loc = pjoin(config_root, tree_loc.lstrip('/'))
         cache_parent_dir = pjoin(tree_loc, 'metadata', 'md5-cache')
@@ -313,7 +274,7 @@ def load_make_config(vars_dict, path, allow_sourcing=False, required=True,
         return
 
     if incrementals:
-        for key in const.incrementals:
+        for key in econst.incrementals:
             if key in vars_dict and key in new_vars:
                 new_vars[key] = "%s %s" % (vars_dict[key], new_vars[key])
     # quirk of read_bash_dict; it returns only what was mutated.
@@ -334,7 +295,7 @@ def load_repos_conf(path):
     else:
         files = [path]
 
-    defaults = {}
+    default_opts = {}
     repo_opts = {}
     for fp in files:
         try:
@@ -346,21 +307,32 @@ def load_repos_conf(path):
                 raise_from(errors.PermissionDeniedError(fp, write=False))
             raise_from(errors.ParsingError("parsing %r" % (fp,), exception=e))
 
-        defaults.update(config.defaults())
+        default_opts.update(config.defaults())
         for repo in config.sections():
             repo_opts[repo] = {k: v for k, v in config.items(repo)}
+
+            # repo priority defaults to zero if unset
+            priority = repo_opts[repo].get('priority', 0)
+            try:
+                repo_opts[repo]['priority'] = int(priority)
+            except ValueError:
+                raise errors.ParsingError(
+                    "%s: repo '%s' has invalid priority setting: %s" % (fp, repo, priority))
 
             # only the location setting is strictly required
             if 'location' not in repo_opts[repo]:
                 raise errors.ParsingError(
                     "%s: repo '%s' missing location setting" % (fp, repo))
 
-    # default to gentoo as the master repo is unset
-    if 'main-repo' not in defaults:
-        defaults['main-repo'] = 'gentoo'
+    # the default repo is gentoo if unset
+    default_repo = default_opts.get('main-repo', 'gentoo')
+
+    # the default repo has a high priority if unset or zero
+    if repo_opts[default_repo]['priority'] == 0:
+        repo_opts[default_repo]['priority'] = 9999
 
     del config
-    return defaults, repo_opts
+    return default_opts, repo_opts
 
 
 @configurable({'location': 'str'}, typename='configsection')
@@ -394,7 +366,7 @@ def config_from_make_conf(location="/etc/", profile_override=None, **kwargs):
         if not getattr(getattr(e, 'exc', None), 'errno', None) == errno.ENOENT:
             raise
         try:
-            load_make_config(conf_dict, const.MAKE_GLOBALS)
+            load_make_config(conf_dict, pjoin(const.CONFIG_PATH, 'make.globals'))
         except IGNORED_EXCEPTIONS:
             raise
         except:
@@ -440,44 +412,22 @@ def config_from_make_conf(location="/etc/", profile_override=None, **kwargs):
     # options used by rsync-based syncers
     rsync_opts = isolate_rsync_opts(conf_dict)
 
-    repo_opts = {}
-    overlay_syncers = {}
+    # only repos.conf is supported
     try:
-        default_repo_opts, repo_opts = load_repos_conf(
+        default_opts, repo_opts = load_repos_conf(
             pjoin(portage_base, 'repos.conf'))
     except errors.ParsingError as e:
         if not getattr(getattr(e, 'exc', None), 'errno', None) == errno.ENOENT:
             raise
+        default_opts, repo_opts = load_repos_conf(
+            pjoin(const.CONFIG_PATH, 'repos.conf'))
 
-    if repo_opts:
-        main_repo_id = default_repo_opts['main-repo']
-        main_repo = repo_opts[main_repo_id]['location']
-        overlay_repos = [opts['location'] for repo, opts in repo_opts.iteritems()
-                         if opts['location'] != main_repo]
-        main_syncer = repo_opts[main_repo_id].get('sync-uri', None)
-    else:
-        # fallback to PORTDIR and PORTDIR_OVERLAY settings
-        main_repo = normpath(os.environ.get(
-            "PORTDIR", conf_dict.pop("PORTDIR", "/usr/portage")).strip())
-        overlay_repos = os.environ.get(
-            "PORTDIR_OVERLAY", conf_dict.pop("PORTDIR_OVERLAY", "")).split()
-        overlay_repos = [normpath(x) for x in overlay_repos]
-        main_syncer = conf_dict.pop("SYNC", None)
+    for repo, opts in repo_opts.iteritems():
+        make_syncer(new_config, repo, opts, rsync_opts)
 
-        if overlay_repos and '-layman-sync' not in features:
-            overlay_syncers = add_layman_syncers(
-                new_config, rsync_opts, overlay_repos, config_root=config_root)
-
-    if main_syncer is not None:
-        make_syncer(new_config, main_repo, main_syncer, rsync_opts)
-
-    if overlay_repos and '-autodetect-sync' not in features:
-        for path in overlay_repos:
-            if path not in overlay_syncers:
-                overlay_syncers[path] = make_autodetect_syncer(new_config, path)
-
-    repos = [main_repo] + overlay_repos
-    default_repos = list(reversed(repos))
+    # sort repos via priority
+    repos = [opts['location'] for _, opts in
+             sorted(repo_opts.iteritems(), key=lambda d: d[1]['priority'])]
 
     new_config['ebuild-repo-common'] = basics.AutoConfigSection({
         'class': 'pkgcore.ebuild.repository.slavedtree',
@@ -485,22 +435,6 @@ def config_from_make_conf(location="/etc/", profile_override=None, **kwargs):
         'inherit-only': True,
         'ignore_paludis_versioning': ('ignore-paludis-versioning' in features),
     })
-
-    rsync_portdir_cache = 'metadata-transfer' not in features
-    # if a metadata cache exists, use it.
-    if rsync_portdir_cache:
-        for cache_type, frag in (('flat_hash.md5_cache', 'md5-cache'),
-                                 ('metadata.database', 'cache')):
-            if not os.path.exists(pjoin(main_repo, 'metadata', frag)):
-                continue
-            new_config["cache:%s/metadata/cache" % (main_repo,)] = basics.AutoConfigSection({
-                'class': 'pkgcore.cache.' + cache_type,
-                'readonly': True,
-                'location': main_repo,
-            })
-            break
-        else:
-            rsync_portdir_cache = False
 
     repo_map = {}
 
@@ -516,39 +450,30 @@ def config_from_make_conf(location="/etc/", profile_override=None, **kwargs):
         }
         if 'sync:%s' % (tree_loc,) in new_config:
             conf['syncer'] = 'sync:%s' % (tree_loc,)
-        if tree_loc == main_repo:
-            conf['default'] = True
         new_config['raw:' + tree_loc] = basics.AutoConfigSection(conf)
+
+        # metadata cache
+        cache_name = 'cache:%s' % (tree_loc,)
+        new_config[cache_name] = make_cache(config_root, tree_loc)
 
         # repo trees
         kwds = {
             'inherit': ('ebuild-repo-common',),
             'raw_repo': ('raw:' + tree_loc),
+            'class': 'pkgcore.ebuild.repository.tree',
+            'cache': cache_name,
         }
-        cache_name = 'cache:%s' % (tree_loc,)
-        new_config[cache_name] = mk_simple_cache(config_root, tree_loc)
-        kwds['cache'] = cache_name
-        if tree_loc == main_repo:
-            kwds['class'] = 'pkgcore.ebuild.repository.tree'
-            if rsync_portdir_cache:
-                kwds['cache'] = 'cache:%s/metadata/cache %s' % (main_repo, cache_name)
-        else:
-            kwds['parent_repo'] = main_repo
-        new_config[tree_loc] = basics.AutoConfigSection(kwds)
 
-    new_config['portdir'] = basics.section_alias(main_repo, 'repo')
+        new_config[tree_loc] = basics.AutoConfigSection(kwds)
 
     # XXX: Hack for portage-2 profile format support. We need to figure out how
     # to dynamically create this from the config at runtime on attr access.
     profiles.ProfileNode._repo_map = ImmutableDict(repo_map)
 
-    if overlay_repos:
-        new_config['repo-stack'] = basics.FakeIncrementalDictConfigSection(
-            my_convert_hybrid, {
-                'class': 'pkgcore.repository.multiplex.config_tree',
-                'repositories': tuple(default_repos)})
-    else:
-        new_config['repo-stack'] = basics.section_alias(main_repo, 'repo')
+    new_config['repo-stack'] = basics.FakeIncrementalDictConfigSection(
+        my_convert_hybrid, {
+            'class': 'pkgcore.repository.multiplex.config_tree',
+            'repositories': tuple(repos)})
 
     new_config['vuln'] = basics.AutoConfigSection({
         'class': SecurityUpgradesViaProfile,
@@ -590,7 +515,7 @@ def config_from_make_conf(location="/etc/", profile_override=None, **kwargs):
                 'location': pkgdir,
                 'ignore_paludis_versioning': str('ignore-paludis-versioning' in features),
             })
-            default_repos.append('binpkg')
+            repos.append('binpkg')
 
         if buildpkg:
             add_trigger(
@@ -642,13 +567,13 @@ def config_from_make_conf(location="/etc/", profile_override=None, **kwargs):
     # it passes to the command.
     # *everything* in the conf_dict must be str values also.
     distdir = normpath(os.environ.get(
-        "DISTDIR", conf_dict.pop("DISTDIR", pjoin(main_repo, "distdir"))))
+        "DISTDIR", conf_dict.pop("DISTDIR")))
     add_fetcher(new_config, conf_dict, distdir)
 
     # finally... domain.
     conf_dict.update({
         'class': 'pkgcore.ebuild.domain.domain',
-        'repositories': tuple(default_repos),
+        'repositories': tuple(repos),
         'fetcher': 'fetcher',
         'default': True,
         'vdb': ('vdb',),

@@ -8,6 +8,9 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 pkgcore master
 --------------
 
+- Support for PORTDIR and PORTDIR_OVERLAY in make.conf has been dropped, only
+  repos.conf is supported.
+
 
 ------------------------
 pkgcore 0.9 (2015-04-01)

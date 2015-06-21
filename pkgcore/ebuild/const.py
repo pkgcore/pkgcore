@@ -33,7 +33,3 @@ EBUILD_DAEMON_PATH = pjoin(EAPI_BIN_PATH, "ebuild-daemon.bash")
 EBUILD_HELPERS_PATH = pjoin(EAPI_BIN_PATH, "helpers")
 
 PKGCORE_DEBUG_VARS = ("PKGCORE_DEBUG", "PKGCORE_PERF_DEBUG")
-
-MAKE_GLOBALS = os.path.join(
-    const._GET_CONST('CONFIG_PATH', '%(DATA_PATH)s/config'),
-    'make.globals')

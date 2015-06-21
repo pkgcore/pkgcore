@@ -112,7 +112,7 @@ class domain(pkgcore.config.domain.domain):
     # XXX ouch, verify this crap and add defaults and stuff
     _types = {
         'profile': 'ref:profile', 'fetcher': 'ref:fetcher',
-        'repositories': 'lazy_refs:repo', 'vdb': 'lazy_refs:repo',
+        'repos': 'lazy_refs:repo', 'vdb': 'lazy_refs:repo',
         'name': 'str', 'triggers': 'lazy_refs:trigger',
     }
     for _thing in list(const.incrementals) + ['bashrc']:
@@ -128,12 +128,12 @@ class domain(pkgcore.config.domain.domain):
     # TODO this is missing defaults
     pkgcore_config_type = ConfigHint(
         _types, typename='domain',
-        required=['repositories', 'profile', 'vdb', 'fetcher', 'name'],
+        required=['repos', 'profile', 'vdb', 'fetcher', 'name'],
         allow_unknowns=True)
 
     del _types, _thing
 
-    def __init__(self, profile, repositories, vdb, name=None,
+    def __init__(self, profile, repos, vdb, name=None,
                  root='/', prefix='/', incrementals=const.incrementals,
                  triggers=(), **settings):
         # voodoo, unfortunately (so it goes)
@@ -152,35 +152,18 @@ class domain(pkgcore.config.domain.domain):
         if 'MAKEOPTS' not in settings:
             settings['MAKEOPTS'] = '-j%i' % get_proc_count()
 
-        # map out sectionname -> config manager immediately.
-        repositories_collapsed = [r.collapse() for r in repositories]
-        repositories = [r.instantiate() for r in repositories_collapsed]
-
         self.fetcher = settings.pop("fetcher")
-
-        self.default_licenses_manager = OverlayedLicenses(*repositories)
-        vdb_collapsed = [r.collapse() for r in vdb]
-        vdb = [r.instantiate() for r in vdb_collapsed]
-        self.repos_raw = {
-            collapsed.name: repo for (collapsed, repo) in izip(
-                repositories_collapsed, repositories)}
-        self.repos_raw.update(
-            (collapsed.name, repo) for (collapsed, repo) in izip(
-                vdb_collapsed, vdb))
-        self.repos_raw.pop(None, None)
-        if profile.provides_repo is not None:
-            self.repos_raw['package.provided'] = profile.provides_repo
-            vdb.append(profile.provides_repo)
-
         self.profile = profile
-        pkg_maskers, pkg_unmaskers, pkg_keywords, pkg_licenses = [], [], [], []
+        self.ebuild_hook_dir = settings.pop("ebuild_hook_dir", None)
+        self.name = name
+        settings.setdefault("PKGCORE_DOMAIN", name)
+
+        pkg_masks, pkg_unmasks, pkg_keywords, pkg_licenses = [], [], [], []
         pkg_use, self.bashrcs = [], []
 
-        self.ebuild_hook_dir = settings.pop("ebuild_hook_dir", None)
-
         for key, val, action in (
-            ("package.mask", pkg_maskers, parse_match),
-            ("package.unmask", pkg_unmaskers, parse_match),
+            ("package.mask", pkg_masks, parse_match),
+            ("package.unmask", pkg_unmasks, parse_match),
             ("package.keywords", pkg_keywords, package_keywords_splitter),
             ("package.accept_keywords", pkg_keywords, package_keywords_splitter),
             ("package.license", pkg_licenses, package_keywords_splitter),
@@ -206,8 +189,6 @@ class domain(pkgcore.config.domain.domain):
                 except ValueError as e:
                     raise_from(Failure("failed reading '%s': %s" % (fp, e)))
 
-        self.name = name
-        settings.setdefault("PKGCORE_DOMAIN", name)
         for x in incrementals:
             if isinstance(settings.get(x), basestring):
                 settings[x] = tuple(settings[x].split())
@@ -323,67 +304,83 @@ class domain(pkgcore.config.domain.domain):
              c.merge(getattr(profile, attr + 'masked_use'))
              setattr(self, attr + 'disabled_use', c)
 
-        self.repos = []
-        self.vdb = []
+        self.profile_masks = self.profile._incremental_masks()
+        self.profile_unmasks = self.profile._incremental_unmasks()
+
+        repos_collapsed = [r.collapse() for r in repos]
+        repos = [r.instantiate() for r in repos_collapsed]
+
+        self.default_licenses_manager = OverlayedLicenses(*repos)
+        vdb_collapsed = [r.collapse() for r in vdb]
+        vdb = [r.instantiate() for r in vdb_collapsed]
+        self.repos_raw = {
+            collapsed.name: repo for (collapsed, repo) in izip(
+                repos_collapsed, repos)}
+        self.repos_raw.update(
+            (collapsed.name, repo) for (collapsed, repo) in izip(
+                vdb_collapsed, vdb))
+        self.repos_raw.pop(None, None)
+        if profile.provides_repo is not None:
+            self.repos_raw['package.provided'] = profile.provides_repo
+            vdb.append(profile.provides_repo)
+
         self.repos_configured = {}
         self.repos_configured_filtered = {}
-
-        rev_names = {repo: name for name, repo in self.repos_raw.iteritems()}
-
-        profile_masks = profile._incremental_masks()
-        profile_unmasks = profile._incremental_unmasks()
-        repo_masks = {r.repo_id: r._visibility_limiters() for r in repositories}
-
-        for l, repos, filtered in ((self.repos, repositories, True),
-                                   (self.vdb, vdb, False)):
-            for repo in repos:
-                if not repo.configured:
-                    pargs = [repo]
-                    try:
-                        for x in repo.configurables:
-                            if x == "domain":
-                                pargs.append(self)
-                            elif x == "settings":
-                                pargs.append(settings)
-                            elif x == "profile":
-                                pargs.append(profile)
-                            else:
-                                pargs.append(getattr(self, x))
-                    except AttributeError as ae:
-                        raise_from(Failure("failed configuring repo '%s': "
-                                           "configurable missing: %s" % (repo, ae)))
-                    wrapped_repo = repo.configure(*pargs)
-                else:
-                    wrapped_repo = repo
-                key = rev_names.get(repo)
-                self.repos_configured[key] = wrapped_repo
-                if filtered:
-                    config = getattr(repo, 'config', None)
-                    masters = getattr(config, 'masters', ())
-                    if masters is None:
-                        # tough cookies.  If a user has an overlay, no masters
-                        # defined, we're not applying the portdir masks.
-                        # we do this both since that's annoying, and since
-                        # frankly there isn't any good course of action.
-                        masters = ()
-                    global_masks = [repo_masks.get(master, [(), ()]) for master in masters]
-                    global_masks.append(repo_masks[repo.repo_id])
-                    global_masks.extend(profile_masks)
-                    masks = set()
-                    for neg, pos in global_masks:
-                        masks.difference_update(neg)
-                        masks.update(pos)
-                    masks.update(pkg_maskers)
-                    unmasks = set(chain(pkg_unmaskers, *profile_unmasks))
-                    filtered = generate_filter(masks, unmasks, *vfilters)
-                if filtered:
-                    wrapped_repo = visibility.filterTree(wrapped_repo, filtered, True)
-                self.repos_configured_filtered[key] = wrapped_repo
-                l.append(wrapped_repo)
+        self.repos = self._wrap_repos(repos, pkg_masks, pkg_unmasks, vfilters)
+        self.vdb = self._wrap_repos(vdb, pkg_masks, pkg_unmasks, vfilters, filtered=False)
 
         self.use_expand_re = re.compile(
             "^(?:[+-])?(%s)_(.*)$" %
             "|".join(x.lower() for x in sorted(profile.use_expand, reverse=True)))
+
+    def _wrap_repos(self, repos, pkg_masks, pkg_unmasks, vfilters, filtered=True):
+        """Configure and filter repos."""
+        wrapped_repos = []
+        repo_masks = {r.repo_id: r._visibility_limiters() for r in repos}
+
+        for repo in repos:
+            if not repo.configured:
+                pargs = [repo]
+                try:
+                    for x in repo.configurables:
+                        if x == "domain":
+                            pargs.append(self)
+                        elif x == "settings":
+                            pargs.append(self.settings)
+                        elif x == "profile":
+                            pargs.append(self.profile)
+                        else:
+                            pargs.append(getattr(self, x))
+                except AttributeError as e:
+                    raise_from(Failure("failed configuring repo '%s': "
+                                       "configurable missing: %s" % (repo, e)))
+                wrapped_repo = repo.configure(*pargs)
+            else:
+                wrapped_repo = repo
+            self.repos_configured[repo.repo_id] = wrapped_repo
+
+            if filtered:
+                config = getattr(repo, 'config', None)
+                masters = getattr(config, 'masters', ())
+                if masters is None:
+                    # no parent repo masks are applied if masters is undefined
+                    masters = ()
+                master_masks = [repo_masks.get(master, [(), ()]) for master in masters]
+                master_masks.append(repo_masks[repo.repo_id])
+                master_masks.extend(self.profile_masks)
+                masks = set()
+                for neg, pos in master_masks:
+                    masks.difference_update(neg)
+                    masks.update(pos)
+                masks.update(pkg_masks)
+                unmasks = set(chain(pkg_unmasks, *self.profile_unmasks))
+                filters = generate_filter(masks, unmasks, *vfilters)
+                wrapped_repo = visibility.filterTree(wrapped_repo, filters, True)
+                self.repos_configured_filtered[repo.repo_id] = wrapped_repo
+
+            wrapped_repos.append(wrapped_repo)
+
+        return wrapped_repos
 
     def _extend_use_for_features(self, use_settings, features):
         # hackish implementation; if test is on, flip on the flag

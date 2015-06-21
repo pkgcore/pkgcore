@@ -35,9 +35,11 @@ class tree(prototype.tree):
     package_factory = staticmethod(ebuild_built.generate_new_factory)
     operations_kls = repo_ops.operations
 
-    pkgcore_config_type = ConfigHint({'location': 'str',
-        'cache_location': 'str', 'repo_id':'str',
-        'disable_cache': 'bool'}, typename='repo')
+    pkgcore_config_type = ConfigHint(
+        {'location': 'str',
+         'cache_location': 'str', 'repo_id': 'str',
+         'disable_cache': 'bool'},
+        typename='repo')
 
     def __init__(self, location, cache_location=None, repo_id='vdb',
                  disable_cache=False):
@@ -47,8 +49,7 @@ class tree(prototype.tree):
         if disable_cache:
             cache_location = None
         elif cache_location is None:
-            cache_location = pjoin("/var/cache/edb/dep",
-                location.lstrip("/"))
+            cache_location = pjoin("/var/cache/edb/dep", location.lstrip("/"))
         self.cache_location = cache_location
         self._versions_tmp_cache = {}
         try:
@@ -76,7 +77,8 @@ class tree(prototype.tree):
                 return tuple(x for x in listdir_dirs(self.location) if not
                              x.startswith('.'))
             except EnvironmentError as e:
-                compatibility.raise_from(KeyError("failed fetching categories: %s" % str(e)))
+                compatibility.raise_from(KeyError(
+                    "failed fetching categories: %s" % str(e)))
         finally:
             pass
 
@@ -88,10 +90,10 @@ class tree(prototype.tree):
         try:
             for x in listdir_dirs(cpath):
                 if x.startswith(".tmp.") or x.endswith(".lockfile") \
-                    or x.startswith("-MERGING-"):
+                        or x.startswith("-MERGING-"):
                     continue
                 try:
-                    pkg = versioned_CPV(category+"/"+x)
+                    pkg = versioned_CPV(category + "/" + x)
                 except InvalidCPV:
                     bad = True
                 if bad or not pkg.fullver:
@@ -100,9 +102,11 @@ class tree(prototype.tree):
                     elif '-try' in x:
                         bad = 'try'
                     else:
-                        raise InvalidCPV("%s/%s: no version component" %
+                        raise InvalidCPV(
+                            "%s/%s: no version component" %
                             (category, x))
-                    logger.error("merged -%s pkg detected: %s/%s. "
+                    logger.error(
+                        "merged -%s pkg detected: %s/%s. "
                         "throwing exception due to -%s not being a valid"
                         " version component.  Silently ignoring that "
                         "specific version is not viable either since it "
@@ -111,13 +115,15 @@ class tree(prototype.tree):
                         "This is why embrace and extend is bad, mm'kay.  "
                         "Use the offending pkg manager that merged it to "
                         "unmerge it." % (bad, category, x, bad, bad))
-                    raise InvalidCPV("%s/%s: -%s version component is "
+                    raise InvalidCPV(
+                        "%s/%s: -%s version component is "
                         "not standard." % (category, x, bad))
                 l.add(pkg.package)
                 d.setdefault((category, pkg.package), []).append(pkg.fullver)
         except EnvironmentError as e:
-            compatibility.raise_from(KeyError("failed fetching packages for category %s: %s" % \
-            (pjoin(self.location, category.lstrip(os.path.sep)), str(e))))
+            compatibility.raise_from(KeyError(
+                "failed fetching packages for category %s: %s" %
+                (pjoin(self.location, category.lstrip(os.path.sep)), str(e))))
 
         self._versions_tmp_cache.update(d)
         return tuple(l)
@@ -127,21 +133,22 @@ class tree(prototype.tree):
 
     def _get_ebuild_path(self, pkg):
         s = "%s-%s" % (pkg.package, pkg.fullver)
-        return pjoin(self.location, pkg.category, s, s+".ebuild")
+        return pjoin(self.location, pkg.category, s, s + ".ebuild")
 
     def _get_path(self, pkg):
         s = "%s-%s" % (pkg.package, pkg.fullver)
         return pjoin(self.location, pkg.category, s)
 
     _metadata_rewrites = {
-        "depends":"DEPEND", "rdepends":"RDEPEND", "post_rdepends":"PDEPEND",
-        "use":"USE", "eapi":"EAPI", "CONTENTS":"contents",
-        "source_repository":"repository", "fullslot":"SLOT"
+        "depends": "DEPEND", "rdepends": "RDEPEND", "post_rdepends": "PDEPEND",
+        "use": "USE", "eapi": "EAPI", "CONTENTS": "contents",
+        "source_repository": "repository", "fullslot": "SLOT"
     }
 
     def _get_metadata(self, pkg):
-        return IndeterminantDict(partial(self._internal_load_key,
-            pjoin(self.location, pkg.category,
+        return IndeterminantDict(
+            partial(self._internal_load_key, pjoin(
+                self.location, pkg.category,
                 "%s-%s" % (pkg.package, pkg.fullver))))
 
     def _internal_load_key(self, path, key):
@@ -150,16 +157,15 @@ class tree(prototype.tree):
             data = ContentsFile(pjoin(path, "CONTENTS"), mutable=True)
         elif key == "environment":
             fp = pjoin(path, key)
-            if not os.path.exists(fp+".bz2"):
+            if not os.path.exists(fp + ".bz2"):
                 if not os.path.exists(fp):
                     # icky.
                     raise KeyError("environment: no environment file found")
                 data = data_source.local_source(fp)
             else:
-                data = data_source.bz2_source(fp+".bz2")
+                data = data_source.bz2_source(fp + ".bz2")
         elif key == "ebuild":
-            fp = pjoin(path,
-                os.path.basename(path.rstrip(os.path.sep))+".ebuild")
+            fp = pjoin(path, os.path.basename(path.rstrip(os.path.sep)) + ".ebuild")
             data = data_source.local_source(fp)
         elif key == 'repo':
             # try both, for portage/paludis compatibility.

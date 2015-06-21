@@ -15,7 +15,7 @@ class bzr_syncer(base.dvcs_syncer):
 
     supported_uris = (
         ('bzr+', 5),
-        )
+    )
 
     @classmethod
     def is_usable_on_filepath(cls, path):

@@ -16,9 +16,7 @@ class svn_syncer(base.ExternalSyncer):
     supported_uris = (
         ('svn://', 5),
         ('svn+', 5),
-        ('http+svn://',5),
-        ('https+svn://',5)
-        )
+    )
 
     @classmethod
     def is_usable_on_filepath(cls, path):
@@ -60,8 +58,9 @@ class svn_syncer(base.ExternalSyncer):
         elif uri.startswith('svn+https://'):
             uri = uri.replace('svn+https://', 'https://')
         if not os.path.exists(self.basedir):
-            return 0 == self._spawn([self.binary_path, "co",
-                uri, self.basedir], {1:output_fd, 2:output_fd, 0:0})
-        return 0 == self._spawn([self.binary_path, "update"],
-            {1:output_fd, 2:output_fd, 0:0}, cwd=self.basedir)
-
+            return 0 == self._spawn(
+                [self.binary_path, "co", uri, self.basedir],
+                {1: output_fd, 2: output_fd, 0: 0})
+        return 0 == self._spawn(
+            [self.binary_path, "update"],
+            {1: output_fd, 2: output_fd, 0: 0}, cwd=self.basedir)

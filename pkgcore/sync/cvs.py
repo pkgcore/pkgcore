@@ -16,7 +16,7 @@ class cvs_syncer(base.dvcs_syncer):
     supported_uris = (
         ('cvs+', 5),
         ('cvs://', 5),
-        )
+    )
 
     @classmethod
     def is_usable_on_filepath(cls, path):
@@ -28,14 +28,14 @@ class cvs_syncer(base.dvcs_syncer):
     @classmethod
     def parse_uri(cls, raw_uri):
         if not raw_uri.startswith("cvs") and \
-            not raw_uri.startswith("cvs+"):
+                not raw_uri.startswith("cvs+"):
             raise base.uri_exception(raw_uri, "must be cvs:// or cvs+${RSH}")
         if raw_uri.startswith("cvs://"):
             return None, raw_uri[len("cvs://"):]
         proto = raw_uri[len("cvs+"):].split(":", 1)
         if not proto[0]:
-            raise base.uri_exception(raw_uri,
-                "cvs+ requires the rsh alternative to be specified")
+            raise base.uri_exception(
+                raw_uri, "cvs+ requires the rsh alternative to be specified")
         if proto[0] == "anon":
             proto[0] = None
         elif proto[0] != "pserver":
@@ -57,7 +57,7 @@ class cvs_syncer(base.dvcs_syncer):
 
     @property
     def env(self):
-        k = {"CVSROOT":self.uri}
+        k = {"CVSROOT": self.uri}
         if self.rsh is not None:
             k["CVS_RSH"] = self.rsh
         return k

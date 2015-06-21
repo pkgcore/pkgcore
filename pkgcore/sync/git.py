@@ -15,7 +15,7 @@ class git_syncer(base.dvcs_syncer):
     supported_uris = (
         ('git://', 5),
         ('git+', 5),
-        )
+    )
 
     @classmethod
     def is_usable_on_filepath(cls, path):
@@ -27,12 +27,12 @@ class git_syncer(base.dvcs_syncer):
     @staticmethod
     def parse_uri(raw_uri):
         if not raw_uri.startswith("git+") and not raw_uri.startswith("git://"):
-            raise base.uri_exception(raw_uri,
-                "doesn't start with git+ nor git://")
+            raise base.uri_exception(
+                raw_uri, "doesn't start with git+ nor git://")
         if raw_uri.startswith("git+"):
             if raw_uri.startswith("git+:"):
-                raise base.uri_exception(raw_uri,
-                    "need to specify the sub protocol if using git+")
+                raise base.uri_exception(
+                    raw_uri, "need to specify the sub protocol if using git+")
             return raw_uri[4:]
         return raw_uri
 

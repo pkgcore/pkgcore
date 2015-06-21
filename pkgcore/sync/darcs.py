@@ -12,7 +12,7 @@ class darcs_syncer(base.dvcs_syncer):
 
     supported_uris = (
         ('darcs+', 5),
-        )
+    )
 
     @staticmethod
     def parse_uri(raw_uri):
@@ -28,4 +28,4 @@ class darcs_syncer(base.dvcs_syncer):
         return [self.binary_path, "clone", self.uri, self.basedir]
 
     def _update_existing(self):
-        return [self.binary_path, "pull",  self.uri]
+        return [self.binary_path, "pull", self.uri]

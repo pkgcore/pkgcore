@@ -26,14 +26,18 @@ demandload(
 class syncer_exception(Exception):
     pass
 
+
 class uri_exception(syncer_exception):
     pass
+
 
 class generic_exception(syncer_exception):
     pass
 
+
 class missing_local_user(syncer_exception):
     pass
+
 
 class missing_binary(syncer_exception):
     pass
@@ -49,7 +53,7 @@ class syncer(object):
     disabled = False
 
     pkgcore_config_type = ConfigHint(
-        {'path':'str', 'uri':'str'}, typename='syncer')
+        {'path': 'str', 'uri': 'str'}, typename='syncer')
 
     @classmethod
     def is_usable_on_filepath(cls, path):
@@ -100,8 +104,8 @@ class syncer(object):
         raise NotImplementedError(self, "_sync")
 
     def __str__(self):
-        return "%s syncer: %s, %s" % (self.__class__,
-            self.basedir, self.uri)
+        return "%s syncer: %s, %s" % (
+            self.__class__, self.basedir, self.uri)
 
     @classmethod
     def supports_uri(cls, uri):
@@ -156,8 +160,8 @@ class ExternalSyncer(syncer):
         self.binary_path = self.require_binary(self.binary)
 
     def _spawn(self, command, pipes, **kwargs):
-        return spawn.spawn(command, fd_pipes=pipes, uid=self.local_user,
-            env=self.env, **kwargs)
+        return spawn.spawn(
+            command, fd_pipes=pipes, uid=self.local_user, env=self.env, **kwargs)
 
     @staticmethod
     def _rewrite_uri_from_stat(path, uri):
@@ -165,9 +169,8 @@ class ExternalSyncer(syncer):
         if len(chunks) == 1:
             return uri
         try:
-            return "%s//%s::%s" % (chunks[0],
-                 pwd.getpwuid(os.stat(path).st_uid)[0],
-                 chunks[1])
+            return "%s//%s::%s" % (
+                chunks[0], pwd.getpwuid(os.stat(path).st_uid)[0], chunks[1])
         except KeyError:
             # invalid uid, reuse the uri
             return uri
@@ -178,20 +181,19 @@ class dvcs_syncer(ExternalSyncer):
     def _sync(self, verbosity, output_fd):
         try:
             st = os.stat(self.basedir)
-        except EnvironmentError as ie:
-            if ie.errno != errno.ENOENT:
-                compatibility.raise_from(generic_exception(self, self.basedir, ie))
+        except EnvironmentError as e:
+            if e.errno != errno.ENOENT:
+                compatibility.raise_from(generic_exception(self, self.basedir, e))
             command = self._initial_pull()
             chdir = None
         else:
             if not stat.S_ISDIR(st.st_mode):
-                raise generic_exception(self, self.basedir,
-                    "isn't a directory")
+                raise generic_exception(self, self.basedir, "isn't a directory")
             command = self._update_existing()
             chdir = self.basedir
 
-        ret = self._spawn(command, {1:output_fd, 2:output_fd, 0:0},
-            cwd=chdir)
+        ret = self._spawn(command, {1: output_fd, 2: output_fd, 0: 0},
+                          cwd=chdir)
         return ret == 0
 
     def _initial_pull(self):
@@ -200,13 +202,13 @@ class dvcs_syncer(ExternalSyncer):
     def _update_existing(self):
         raise NotImplementedError(self, "_update_existing")
 
-@configurable({'basedir':'str', 'uri':'str'}, typename='syncer')
+@configurable({'basedir': 'str', 'uri': 'str'}, typename='syncer')
 def GenericSyncer(basedir, uri, default_verbosity=0):
     """Syncer using the plugin system to find a syncer based on uri."""
     plugins = list(
         (plug.supports_uri(uri), plug)
         for plug in plugin.get_plugins('syncer'))
-    plugins.sort(key=lambda x:x[0])
+    plugins.sort(key=lambda x: x[0])
     if not plugins or plugins[-1][0] <= 0:
         raise uri_exception('no known syncer supports %r' % (uri,))
     # XXX this is random if there is a tie. Should we raise an exception?
@@ -223,11 +225,10 @@ class DisabledSyncer(syncer):
         return True
 
 
-@configurable({'basedir':'str'}, typename='syncer')
+@configurable({'basedir': 'str'}, typename='syncer')
 def AutodetectSyncer(basedir, default_verbosity=0):
     for plug in plugin.get_plugins('syncer'):
         ret = plug.is_usable_on_filepath(basedir)
         if ret is not None:
             return plug(basedir, default_verbosity=default_verbosity, *ret)
     return DisabledSyncer(basedir, '')
-

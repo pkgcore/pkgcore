@@ -15,7 +15,7 @@ class hg_syncer(base.dvcs_syncer):
     supported_uris = (
         ('hg+', 5),
         ('mercurial+', 5),
-        )
+    )
 
     @classmethod
     def is_usable_on_filepath(cls, path):
@@ -30,8 +30,8 @@ class hg_syncer(base.dvcs_syncer):
             return raw_uri[3:]
         elif raw_uri.startswith("mercurial+"):
             return raw_uri[len("mercurial+"):]
-        raise base.uri_exception(raw_uri, "doesn't start with hg+"
-            " nor mercurial+")
+        raise base.uri_exception(
+            raw_uri, "doesn't start with hg+  nor mercurial+")
 
     def __init__(self, basedir, uri, **kwargs):
         uri = self.parse_uri(uri)

@@ -382,7 +382,7 @@ class RepoConfig(syncable.tree):
         sf(self, 'manifests', _immutable_attr_dict(d))
         masters = data.get('masters')
         if masters is None:
-            if self.repo_id != 'gentoo' and not self.is_empty:
+            if not self.is_empty:
                 logger.warning(
                     "repository at %r, named %r, doesn't specify masters in metadata/layout.conf. "
                     "Defaulting to whatever repository is defined as 'default' (gentoo usually). "

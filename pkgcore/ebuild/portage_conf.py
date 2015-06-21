@@ -13,7 +13,6 @@ __all__ = (
 )
 
 import os
-import sys
 
 from snakeoil.compatibility import raise_from, IGNORED_EXCEPTIONS
 from snakeoil.demandload import demandload

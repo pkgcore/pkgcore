@@ -5,9 +5,7 @@
 ebuild internal constants
 """
 
-import os
-from os.path import join as pjoin
-import sys
+from snakeoil.osutils import pjoin
 from pkgcore import const
 
 
@@ -26,7 +24,7 @@ metadata_keys = (
     "RDEPEND", "REQUIRED_USE", "RESTRICT", "SLOT", "SRC_URI", "_eclasses_",
 )
 
-WORLD_FILE          = '/var/lib/portage/world'
+WORLD_FILE = '/var/lib/portage/world'
 
 EAPI_BIN_PATH = const._GET_CONST('EBD_PATH', '%(DATA_PATH)s/bash')
 EBUILD_DAEMON_PATH = pjoin(EAPI_BIN_PATH, "ebuild-daemon.bash")

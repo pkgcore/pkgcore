@@ -56,15 +56,15 @@ class tree(prototype.tree):
             st = os.stat(self.location)
             if not stat.S_ISDIR(st.st_mode):
                 raise errors.InitializationError(
-                    "base not a dir: %r" % self.location)
-            elif not st.st_mode & (os.X_OK|os.R_OK):
+                    "vdb base not a dir: %r" % self.location)
+            elif not st.st_mode & (os.X_OK | os.R_OK):
                 raise errors.InitializationError(
-                    "base lacks read/executable: %r" % self.location)
+                    "vdb base lacks read/executable: %r" % self.location)
 
         except OSError as e:
             if e.errno != errno.ENOENT:
                 compatibility.raise_from(errors.InitializationError(
-                    "lstat failed on base %r" % self.location))
+                    "lstat failed on vdb: %r" % self.location))
 
         self.package_class = self.package_factory(self)
 

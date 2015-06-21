@@ -261,20 +261,20 @@ class _UnconfiguredTree(prototype.tree):
             repo_config = repo_objs.RepoConfig(location)
         self.config = repo_config
         self._repo_id = override_repo_id
-        self.base = self.location = location
+        self.location = location
         try:
-            if not stat.S_ISDIR(os.stat(self.base).st_mode):
+            if not stat.S_ISDIR(os.stat(self.location).st_mode):
                 raise errors.InitializationError(
-                    "base not a dir: %s" % self.base)
+                    "repo base not a dir: %s" % self.location)
 
         except OSError:
             raise_from(errors.InitializationError(
-                "lstat failed on base %s" % (self.base,)))
+                "lstat failed on repo base %s" % (self.location,)))
         self.eclass_cache = eclass_cache
 
         self.licenses = repo_objs.Licenses(location)
 
-        fp = pjoin(self.base, metadata_offset, "thirdpartymirrors")
+        fp = pjoin(self.location, metadata_offset, "thirdpartymirrors")
         mirrors = {}
         try:
             for k, v in read_dict(fp, splitter=None).iteritems():
@@ -330,7 +330,7 @@ class _UnconfiguredTree(prototype.tree):
     def hardcoded_categories(self):
         # try reading $LOC/profiles/categories if it's available.
         cats = readlines(
-            pjoin(self.base, 'profiles', 'categories'),
+            pjoin(self.location, 'profiles', 'categories'),
             True, True, True)
         if cats is not None:
             cats = tuple(imap(intern, cats))
@@ -348,12 +348,12 @@ class _UnconfiguredTree(prototype.tree):
         try:
             return tuple(imap(intern, ifilterfalse(
                 self.false_categories.__contains__,
-                (x for x in listdir_dirs(self.base) if x[0:1] != "."))))
+                (x for x in listdir_dirs(self.location) if x[0:1] != "."))))
         except EnvironmentError as e:
             raise_from(KeyError("failed fetching categories: %s" % str(e)))
 
     def _get_packages(self, category):
-        cpath = pjoin(self.base, category.lstrip(os.path.sep))
+        cpath = pjoin(self.location, category.lstrip(os.path.sep))
         try:
             return tuple(ifilterfalse(
                 self.false_packages.__contains__, listdir_dirs(cpath)))
@@ -365,10 +365,10 @@ class _UnconfiguredTree(prototype.tree):
                     return ()
             raise_from(KeyError(
                 "failed fetching packages for category %s: %s" %
-                (pjoin(self.base, category.lstrip(os.path.sep)), str(e))))
+                (pjoin(self.location, category.lstrip(os.path.sep)), str(e))))
 
     def _get_versions(self, catpkg):
-        cppath = pjoin(self.base, catpkg[0], catpkg[1])
+        cppath = pjoin(self.location, catpkg[0], catpkg[1])
         pkg = catpkg[-1] + "-"
         lp = len(pkg)
         extension = self.extension
@@ -394,17 +394,17 @@ class _UnconfiguredTree(prototype.tree):
         except EnvironmentError as e:
             raise_from(KeyError(
                 "failed fetching versions for package %s: %s" %
-                (pjoin(self.base, '/'.join(catpkg)), str(e))))
+                (pjoin(self.location, '/'.join(catpkg)), str(e))))
 
     def _get_ebuild_path(self, pkg):
         if pkg.revision is None:
             if pkg.fullver not in self.versions[(pkg.category, pkg.package)]:
                 # daft explicit -r0 on disk.
                 return pjoin(
-                    self.base, pkg.category, pkg.package,
+                    self.location, pkg.category, pkg.package,
                     "%s-%s-r0%s" % (pkg.package, pkg.fullver, self.extension))
         return pjoin(
-            self.base, pkg.category, pkg.package,
+            self.location, pkg.category, pkg.package,
             "%s-%s%s" % (pkg.package, pkg.fullver, self.extension))
 
     def _get_ebuild_src(self, pkg):
@@ -422,11 +422,11 @@ class _UnconfiguredTree(prototype.tree):
 
     def _get_metadata_xml(self, category, package):
         return repo_objs.LocalMetadataXml(pjoin(
-            self.base, category, package, "metadata.xml"))
+            self.location, category, package, "metadata.xml"))
 
     def _get_manifest(self, category, package):
         return digest.Manifest(pjoin(
-            self.base, category, package, "Manifest"),
+            self.location, category, package, "Manifest"),
             thin=self.config.manifests.thin,
             enforce_gpg=self.enable_gpg)
 
@@ -443,14 +443,14 @@ class _UnconfiguredTree(prototype.tree):
 
     def __str__(self):
         return "%s.%s: location %s" % (
-            self.__class__.__module__, self.__class__.__name__, self.base)
+            self.__class__.__module__, self.__class__.__name__, self.location)
 
     def __repr__(self):
         return "<ebuild %s location=%r @%#8x>" % (
-            self.__class__.__name__, self.base, id(self))
+            self.__class__.__name__, self.location, id(self))
 
     def _visibility_limiters(self):
-        path = pjoin(self.base, 'profiles', 'package.mask')
+        path = pjoin(self.location, 'profiles', 'package.mask')
         pos, neg = [], []
         try:
             if not self.config.profile_formats.intersection(['pms', 'portage-2']):
@@ -462,7 +462,7 @@ class _UnconfiguredTree(prototype.tree):
                     line = line.strip()
                     if line in ('-', ''):
                         raise profiles.ProfileError(
-                            pjoin(self.base, 'profiles'),
+                            pjoin(self.location, 'profiles'),
                             'package.mask', "encountered empty negation: -")
                     if line.startswith('-'):
                         neg.append(atom.atom(line[1:]))
@@ -473,7 +473,7 @@ class _UnconfiguredTree(prototype.tree):
                 raise
         except ebuild_errors.MalformedAtom as ma:
             raise_from(profiles.ProfileError(
-                pjoin(self.base, 'profiles'),
+                pjoin(self.location, 'profiles'),
                 'package.mask', ma))
         return [neg, pos]
 

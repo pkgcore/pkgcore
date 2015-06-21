@@ -241,7 +241,7 @@ class tree(prototype.tree):
             If True, silently ignore -scm ebuilds.
         """
         super(tree, self).__init__()
-        self.base = location
+        self.location = location
         if repo_id is None:
             repo_id = location
         self.repo_id = repo_id
@@ -249,17 +249,17 @@ class tree(prototype.tree):
         self.ignore_paludis_versioning = ignore_paludis_versioning
 
         # XXX rewrite this when snakeoil.osutils grows an access equivalent.
-        if not access(self.base, os.X_OK | os.R_OK):
+        if not access(self.location, os.X_OK | os.R_OK):
             # either it doesn't exist, or we don't have perms.
-            if not os.path.exists(self.base):
+            if not os.path.exists(self.location):
                 raise errors.InitializationError(
-                    "base %r doesn't exist: %s" % self.base)
+                    "binpkg repo doesn't exist: %r" % self.location)
             raise errors.InitializationError(
                 "base directory %r with mode 0%03o isn't readable/executable"
                 " by this user" %
-                (self.base, os.stat(self.base).st_mode & 04777))
+                (self.location, os.stat(self.location).st_mode & 04777))
 
-        self.cache = remote.get_cache_kls(cache_version)(pjoin(self.base, self.cache_name))
+        self.cache = remote.get_cache_kls(cache_version)(pjoin(self.location, self.cache_name))
         self.package_class = wrap_factory(self.package_factory, self)
 
     def __str__(self):
@@ -271,13 +271,13 @@ class tree(prototype.tree):
             return {}
         try:
             return tuple(
-                x for x in listdir_dirs(self.base)
+                x for x in listdir_dirs(self.location)
                 if x.lower() != "all")
         except EnvironmentError as e:
             raise_from(KeyError("failed fetching categories: %s" % str(e)))
 
     def _get_packages(self, category):
-        cpath = pjoin(self.base, category.lstrip(os.path.sep))
+        cpath = pjoin(self.location, category.lstrip(os.path.sep))
         l = set()
         d = {}
         lext = len(self.extension)
@@ -314,7 +314,7 @@ class tree(prototype.tree):
         except EnvironmentError as e:
             raise_from(KeyError(
                 "failed fetching packages for category %s: %s" %
-                (pjoin(self.base, category.lstrip(os.path.sep)), str(e))))
+                (pjoin(self.location, category.lstrip(os.path.sep)), str(e))))
 
         self._versions_tmp_cache.update(d)
         return tuple(l)
@@ -324,7 +324,7 @@ class tree(prototype.tree):
 
     def _get_path(self, pkg):
         s = "%s-%s" % (pkg.package, pkg.fullver)
-        return pjoin(self.base, pkg.category, s+".tbz2")
+        return pjoin(self.location, pkg.category, s+".tbz2")
 
     _get_ebuild_path = _get_path
 
@@ -350,7 +350,7 @@ class tree(prototype.tree):
     def notify_remove_package(self, pkg):
         prototype.tree.notify_remove_package(self, pkg)
         try:
-            os.rmdir(pjoin(self.base, pkg.category))
+            os.rmdir(pjoin(self.location, pkg.category))
         except OSError as oe:
             if oe.errno != errno.ENOTEMPTY:
                 raise

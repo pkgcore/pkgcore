@@ -2,7 +2,7 @@
 Rough TODO
 ==========
 
-- rip out use.* code from pkgcore_checks.addons.UseAddon.__init__, and
+- rip out use.* code from pkgcheck.addons.UseAddon.__init__, and
   generalize it into pkgcore.ebuild.repository
 
 - not hugely important, but... make a cpython version of SlottedDict from

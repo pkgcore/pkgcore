@@ -46,7 +46,7 @@ class bzr_syncer(base.dvcs_syncer):
         base.dvcs_syncer.__init__(self, basedir, uri, **kwargs)
 
     def _initial_pull(self):
-        return [self.binary_path, "get", self.basedir, self.uri]
+        return [self.binary_path, "branch", self.uri, self.basedir]
 
     def _update_existing(self):
         return [self.binary_path, "pull", self.uri]

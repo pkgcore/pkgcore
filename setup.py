@@ -6,8 +6,18 @@ import os
 import subprocess
 import sys
 
-from distutils import core, log, errors
-from distutils.command import build, build_scripts, install
+try:
+    import setuptools as core
+except ImportError:
+    from distutils import core
+    from distutils.command import install
+else:
+    # we need to use setuptools-specific install command,
+    # otherwise implicit setuptools injection in pip does not work
+    from setuptools.command import install
+
+from distutils import log, errors
+from distutils.command import build, build_scripts
 from distutils.util import byte_compile
 from stat import ST_MODE
 

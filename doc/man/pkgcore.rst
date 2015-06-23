@@ -16,8 +16,8 @@ Portage Compatibility
 In general, pkgcore tries to remain somewhat compatible with much of the
 current portage configuration.
 
-Missing Functionality
----------------------
+Missing or differing functionality
+----------------------------------
 
 The following is a list of semi-major portage features that currently do not
 have a pkgcore equivalent. Some of them are planned to be added in the future
@@ -29,10 +29,20 @@ managers.
 
 * /etc/portage/repos.conf
 
-  Minimal support is provided for /etc/portage/repos.conf so most of the
-  attributes supported by portage aren't available. Support for more attributes
-  will be added in the future, but pkgcore is unlikely to ever support the full
-  set used by portage.
+  The only way to add repos to pkgcore is to use repos.conf, PORTDIR and
+  PORTDIR_OVERLAY settings in make.conf are not respected anymore.
+
+  In addition, not all fields that portage supports are used by pkgcore.
+  Currently in repo sections the only supported fields are 'location',
+  'priority', 'sync-type', and 'sync-uri' while 'main-repo' is the only
+  supported field in the default section. Support for more attributes will be
+  added in the future, but pkgcore is unlikely to ever support the full set
+  used by portage.
+
+* /etc/make.conf
+
+  Config values are only loaded from /etc/portage/make.conf, the deprecated
+  /etc/make.conf location is not checked anymore.
 
 * FEATURES="preserve-libs"
 

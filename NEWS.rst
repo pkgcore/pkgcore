@@ -11,6 +11,9 @@ pkgcore master
 - Support for PORTDIR and PORTDIR_OVERLAY in make.conf has been dropped, only
   repos.conf is supported.
 
+- Drop deprecated support for /etc/make.conf, only /etc/portage/make.conf is
+  used now.
+
 
 ------------------------
 pkgcore 0.9 (2015-04-01)

@@ -41,9 +41,6 @@ elif ostype in ("FreeBSD", "OpenBSD", "NetBSD", "SunOS"):
 else:
     raise Exception("Operating system unsupported, '%s'" % ostype)
 
-
-#os.environ["USERLAND"] = userland
-
 # Secpass will be set to 1 if the user is root or in the portage group.
 secpass = 0
 

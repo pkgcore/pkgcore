@@ -7,7 +7,7 @@ Converts portage configuration files into :obj:`pkgcore.config` form.
 """
 
 __all__ = (
-    "SecurityUpgradesViaProfile", "make_syncer",
+    "SecurityUpgradesViaProfile", "make_repo_syncers",
     "add_sets", "add_profile", "add_fetcher", "make_cache",
     "config_from_make_conf",
 )
@@ -100,35 +100,43 @@ def isolate_rsync_opts(options):
     return base
 
 
-def make_syncer(new_config, repo_name, repo_opts, rsync_opts, allow_timestamps=True):
-    d = {'basedir': repo_opts['location']}
+def make_repo_syncers(new_config, conf_dict, repos_conf_opts, allow_timestamps=True):
+    """generate syncing configs for known repos"""
+    rsync_opts = None
 
-    sync_type = repo_opts.get('sync-type', None)
-    sync_uri = repo_opts.get('sync-uri', None)
+    for repo_opts in repos_conf_opts.itervalues():
+        d = {'basedir': repo_opts['location']}
 
-    if sync_uri:
-        # prefix non-native protocols
-        if (sync_type is not None and not sync_uri.startswith(sync_type)):
-            sync_uri = '%s+%s' % (sync_type, sync_uri)
-        d['uri'] = sync_uri
-        if sync_type == 'rsync':
-            d.update(rsync_opts)
-            if allow_timestamps:
-                d['class'] = 'pkgcore.sync.rsync.rsync_timestamp_syncer'
+        sync_type = repo_opts.get('sync-type', None)
+        sync_uri = repo_opts.get('sync-uri', None)
+
+        if sync_uri:
+            # prefix non-native protocols
+            if (sync_type is not None and not sync_uri.startswith(sync_type)):
+                sync_uri = '%s+%s' % (sync_type, sync_uri)
+
+            d['uri'] = sync_uri
+
+            if sync_type == 'rsync':
+                if rsync_opts is None:
+                    # various make.conf options used by rsync-based syncers
+                    rsync_opts = isolate_rsync_opts(conf_dict)
+                d.update(rsync_opts)
+                if allow_timestamps:
+                    d['class'] = 'pkgcore.sync.rsync.rsync_timestamp_syncer'
+                else:
+                    d['class'] = 'pkgcore.sync.rsync.rsync_syncer'
             else:
-                d['class'] = 'pkgcore.sync.rsync.rsync_syncer'
+                d['class'] = 'pkgcore.sync.base.GenericSyncer'
+        elif sync_uri is None:
+            # try to autodetect syncing mechanism if sync-uri is missing
+            d['class'] = 'pkgcore.sync.base.AutodetectSyncer'
         else:
-            d['class'] = 'pkgcore.sync.base.GenericSyncer'
-    elif sync_uri is None:
-        # try to autodetect syncing mechanism if sync-uri is missing
-        d['class'] = 'pkgcore.sync.base.AutodetectSyncer'
-    else:
-        # disable syncing if sync-uri is explicitly unset
-        d['class'] = 'pkgcore.sync.base.DisabledSyncer'
+            # disable syncing if sync-uri is explicitly unset
+            d['class'] = 'pkgcore.sync.base.DisabledSyncer'
 
-    name = 'sync:%s' % repo_opts['location']
-    new_config[name] = basics.AutoConfigSection(d)
-    return name
+        name = 'sync:%s' % repo_opts['location']
+        new_config[name] = basics.AutoConfigSection(d)
 
 
 def add_sets(config, root, portage_base_dir):
@@ -295,8 +303,8 @@ def load_repos_conf(path):
     else:
         files = [path]
 
-    default_opts = {}
-    repo_opts = {}
+    defaults = {}
+    repos = {}
     for fp in files:
         try:
             with open(fp) as f:
@@ -307,32 +315,32 @@ def load_repos_conf(path):
                 raise_from(errors.PermissionDeniedError(fp, write=False))
             raise_from(errors.ParsingError("parsing %r" % (fp,), exception=e))
 
-        default_opts.update(config.defaults())
-        for repo in config.sections():
-            repo_opts[repo] = {k: v for k, v in config.items(repo)}
+        defaults.update(config.defaults())
+        for repo_name in config.sections():
+            repos[repo_name] = {k: v for k, v in config.items(repo_name)}
 
             # repo priority defaults to zero if unset
-            priority = repo_opts[repo].get('priority', 0)
+            priority = repos[repo_name].get('priority', 0)
             try:
-                repo_opts[repo]['priority'] = int(priority)
+                repos[repo_name]['priority'] = int(priority)
             except ValueError:
                 raise errors.ParsingError(
-                    "%s: repo '%s' has invalid priority setting: %s" % (fp, repo, priority))
+                    "%s: repo '%s' has invalid priority setting: %s" % (fp, repo_name, priority))
 
             # only the location setting is strictly required
-            if 'location' not in repo_opts[repo]:
+            if 'location' not in repos[repo_name]:
                 raise errors.ParsingError(
-                    "%s: repo '%s' missing location setting" % (fp, repo))
+                    "%s: repo '%s' missing location setting" % (fp, repo_name))
 
     # the default repo is gentoo if unset
-    default_repo = default_opts.get('main-repo', 'gentoo')
+    default_repo = defaults.get('main-repo', 'gentoo')
 
     # the default repo has a high priority if unset or zero
-    if repo_opts[default_repo]['priority'] == 0:
-        repo_opts[default_repo]['priority'] = 9999
+    if repos[default_repo]['priority'] == 0:
+        repos[default_repo]['priority'] = 9999
 
     del config
-    return default_opts, repo_opts
+    return repos
 
 
 @configurable({'location': 'str'}, typename='configsection')
@@ -366,6 +374,7 @@ def config_from_make_conf(location="/etc/", profile_override=None, **kwargs):
         if not getattr(getattr(e, 'exc', None), 'errno', None) == errno.ENOENT:
             raise
         try:
+            # fallback to defaults provided by pkgcore
             load_make_config(conf_dict, pjoin(const.CONFIG_PATH, 'make.globals'))
         except IGNORED_EXCEPTIONS:
             raise
@@ -409,25 +418,26 @@ def config_from_make_conf(location="/etc/", profile_override=None, **kwargs):
     }
     new_config["vdb"] = basics.AutoConfigSection(kwds)
 
-    # options used by rsync-based syncers
-    rsync_opts = isolate_rsync_opts(conf_dict)
-
-    # only repos.conf is supported
     try:
-        default_opts, repo_opts = load_repos_conf(
-            pjoin(portage_base, 'repos.conf'))
+        repos_conf_opts = load_repos_conf(pjoin(portage_base, 'repos.conf'))
     except errors.ParsingError as e:
         if not getattr(getattr(e, 'exc', None), 'errno', None) == errno.ENOENT:
             raise
-        default_opts, repo_opts = load_repos_conf(
-            pjoin(const.CONFIG_PATH, 'repos.conf'))
+        try:
+            # fallback to defaults provided by pkgcore
+            repos_conf_opts = load_repos_conf(
+                pjoin(const.CONFIG_PATH, 'repos.conf'))
+        except IGNORED_EXCEPTIONS:
+            raise
+        except:
+            raise_from(errors.ParsingError(
+                "failed to find a usable repos.conf"))
 
-    for repo, opts in repo_opts.iteritems():
-        make_syncer(new_config, repo, opts, rsync_opts)
+    make_repo_syncers(new_config, conf_dict, repos_conf_opts)
 
     # sort repos via priority
-    repos = [opts['location'] for _, opts in
-             sorted(repo_opts.iteritems(), key=lambda d: d[1]['priority'])]
+    repos = [repo_opts['location'] for repo_opts in
+             sorted(repos_conf_opts.itervalues(), key=lambda d: d['priority'])]
 
     new_config['ebuild-repo-common'] = basics.AutoConfigSection({
         'class': 'pkgcore.ebuild.repository.slavedtree',

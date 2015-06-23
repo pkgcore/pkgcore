@@ -15,7 +15,7 @@ from pkgcore.test import TestCase
 class FakeEclassCache(eclass_cache.base):
 
     def __init__(self, path):
-        eclass_cache.base.__init__(self, portdir=path, eclassdir=path)
+        eclass_cache.base.__init__(self, location=path, eclassdir=path)
         self.eclasses = {
             "eclass1":LazilyHashedPath(path, mtime=100),
             "eclass2":LazilyHashedPath(path, mtime=200)}

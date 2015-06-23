@@ -14,7 +14,7 @@ those packages. It is important to understand that the information printing and
 repository selection options are almost completely separate from the
 restriction options. The only exception to that is that restrictions on
 contents automatically select the vdb (installed packages) repository, since
-running them on the portdir repository makes no sense.
+running them on source repos makes no sense.
 
 Another switch that could do with some extra explanation is ``--raw``.
 Specifying ``--raw`` makes your configuration not affect the results. Example: ::

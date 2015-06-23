@@ -31,11 +31,11 @@ class base(object):
     Maintains the cache information about eclasses available to an ebuild.
     """
 
-    def __init__(self, portdir=None, eclassdir=None):
+    def __init__(self, location=None, eclassdir=None):
         self._eclass_data_inst_cache = WeakValCache()
         # generate this.
         # self.eclasses = {} # {"Name": ("location", "_mtime_")}
-        self.portdir = portdir
+        self.location = location
         self.eclassdir = eclassdir
 
     def get_eclass_data(self, inherits):
@@ -85,14 +85,14 @@ class base(object):
 
 class cache(base):
 
-    pkgcore_config_type = ConfigHint({"path":"str", "portdir":"str"},
+    pkgcore_config_type = ConfigHint({"path":"str", "location":"str"},
                                      typename='eclass_cache')
 
-    def __init__(self, path, portdir=None):
+    def __init__(self, path, location=None):
         """
-        :param portdir: ondisk location of the tree we're working with
+        :param location: ondisk location of the tree we're working with
         """
-        base.__init__(self, portdir=portdir, eclassdir=normpath(path))
+        base.__init__(self, location=location, eclassdir=normpath(path))
 
     def _load_eclasses(self):
         """Force an update of the internal view of on disk/remote eclasses."""
@@ -122,7 +122,7 @@ class StackedCaches(base):
     """
 
     pkgcore_config_type = ConfigHint(
-        {'caches': 'refs:eclass_cache', 'portdir': 'str', 'eclassdir': 'str'},
+        {'caches': 'refs:eclass_cache', 'location': 'str', 'eclassdir': 'str'},
         typename='eclass_cache')
 
     def __init__(self, caches, **kwds):
@@ -138,7 +138,7 @@ class StackedCaches(base):
                 "%s requires at least two eclass_caches" % self.__class__)
 
         kwds.setdefault("eclassdir", caches[0].eclassdir)
-        kwds.setdefault("portdir",
+        kwds.setdefault("location",
             os.path.dirname(kwds["eclassdir"].rstrip(os.path.sep)))
         self._caches = caches
         base.__init__(self, **kwds)

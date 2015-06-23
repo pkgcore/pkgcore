@@ -382,10 +382,6 @@ class ConfigManager(object):
             if section_stack is None:
                 if not raise_on_missing:
                     return None
-                if name == "portdir":
-                    # gentoo-related usability --jokey
-                    raise errors.ConfigurationError(
-                        "no section called %r, maybe you didn't add autoload-portage to your file" % (name,))
                 raise errors.ConfigurationError(
                    'no section called %r' % (name,))
             try:

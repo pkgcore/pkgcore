@@ -104,25 +104,25 @@ def _sort_eclasses(config, raw_repo, eclasses):
     if eclasses:
         return eclasses
 
-    loc = raw_repo.location
+    repo_path = raw_repo.location
     masters = raw_repo.masters
     eclasses = []
-    default = portdir = config.get_default('raw_repo')
-    if portdir is None:
-        portdir = loc
+    default = config.get_default('raw_repo')
+    if default is None:
+        location = repo_path
     else:
-        portdir = portdir.location
+        location = default.location
 
     if not masters:
-        if masters is None and raw_repo.repo_id != 'gentoo':
+        if masters is None:
             # if it's None, that means it's not a standalone, and is PMS, or misconfigured.
             # empty tuple means it's a standalone repository
             if default is None:
                 raise Exception(
                     "repository %r named %r wants the default repository "
-                    "(portdir for example), but no repository is marked as the default. "
-                    "Fix your configuration." % (loc, raw_repo.repo_id))
-            eclasses = [default.location]
+                    "(gentoo for example), but no repository is marked as the default. "
+                    "Fix your configuration." % (repo_path, raw_repo.repo_id))
+            eclasses = [location]
     else:
         repo_map = {r.repo_id: r.location for r in
                     config.objects['raw_repo'].itervalues()}
@@ -132,18 +132,18 @@ def _sort_eclasses(config, raw_repo, eclasses):
             missing = ', '.join(sorted(missing))
             raise Exception(
                 "repo %r at path %r has masters %s; we cannot find "
-                "the following repositories: %s"
-                % (raw_repo.repo_id, loc, ', '.join(map(repr, masters)), missing))
+                "the following repos: %s"
+                % (raw_repo.repo_id, repo_path, ', '.join(map(repr, masters)), missing))
         eclasses = [repo_map[x] for x in masters]
 
     # add the repositories eclasses directories if it's not specified.
     # do it in this fashion so that the repositories masters can actually interpose
     # this repositories eclasses in between others.
     # admittedly an odd thing to do, but it has some benefits
-    if loc not in eclasses:
-        eclasses.append(loc)
+    if repo_path not in eclasses:
+        eclasses.append(repo_path)
 
-    eclasses = [eclass_cache_module.cache(pjoin(x, 'eclass'), portdir=portdir)
+    eclasses = [eclass_cache_module.cache(pjoin(x, 'eclass'), location=location)
                 for x in eclasses]
 
     if len(eclasses) == 1:
@@ -151,7 +151,7 @@ def _sort_eclasses(config, raw_repo, eclasses):
     else:
         eclasses = list(reversed(eclasses))
         eclasses = eclass_cache_module.StackedCaches(
-            eclasses, portdir=portdir, eclassdir=portdir)
+            eclasses, location=location, eclassdir=location)
     return eclasses
 
 

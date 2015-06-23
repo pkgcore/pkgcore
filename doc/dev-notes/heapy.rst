@@ -60,7 +60,7 @@ get later.
 
 Now do your memory-intensive thing::
 
- >>> l = list(x for x in c.repo["portdir"] if x.data)
+ >>> l = list(x for x in c.repo["gentoo"] if x.data)
 
 Keep an eye on system memory consumption. You want to use up a lot but
 not all of your system ram for nicer statistics. The python process

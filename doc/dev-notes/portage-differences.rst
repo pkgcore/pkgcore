@@ -59,13 +59,14 @@ Pkgcore internally uses a sane/uniform repository abstraction- the benefits
 of this are:
 
 - repository class (which implements the accessing of the on disk/remote tree)
-  is pluggable.  Remote vdb/portdir is doable, as is having your repository
-  tree ran strictly from downloaded metadata (for example), or running from a
-  tree stored in a tarball/zip file (mildly crazy, but it's doable).
+  is pluggable.  Remote source or installed repos are doable, as is having your
+  repository tree ran strictly from downloaded metadata (for example), or
+  running from a tree stored in a tarball/zip file (mildly crazy, but it's
+  doable).
 
-- seperated repository instances.  We've not thrown out overlays (as paludis
+- separated repository instances.  We've not thrown out overlays (as paludis
   did), but pkgcore doesn't force every new repository to be an overlay of the
-  'master' PORTDIR as portage does.
+  default 'master' repo as portage does.
 
 - optimized repository classes- for the usual vdb and ebuild repository
   (those being on disk backwards compatible with portage 2.x), the number of

@@ -136,9 +136,9 @@ def _sort_eclasses(config, raw_repo, eclasses):
                 % (raw_repo.repo_id, repo_path, ', '.join(map(repr, masters)), missing))
         eclasses = [repo_map[x] for x in masters]
 
-    # add the repositories eclasses directories if it's not specified.
-    # do it in this fashion so that the repositories masters can actually interpose
-    # this repositories eclasses in between others.
+    # add the repo's eclasses directories if it's not specified.
+    # do it in this fashion so that the repo's masters can actually interpose
+    # this repo's eclasses in between others.
     # admittedly an odd thing to do, but it has some benefits
     if repo_path not in eclasses:
         eclasses.append(repo_path)

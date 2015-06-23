@@ -5,7 +5,7 @@
 remote binpkg support
 
 Currently this primarily just holds the Packages cache used for remote, and
-local binpkg repositories
+local binpkg repos
 """
 
 __all__ = ("PackagesCacheV0", "PackagesCacheV1", "write_index")

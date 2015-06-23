@@ -126,7 +126,7 @@ class histo_data(commandline.ArgparseCommand):
             "repos", metavar='repo', nargs='*',
             action=commandline.StoreRepoObject, store_name=True,
             default=commandline.CONFIG_ALL_DEFAULT,
-            help="repositories to inspect")
+            help="repos to inspect")
 
         commandline.ArgparseCommand.bind_to_parser(self, parser)
 
@@ -188,7 +188,7 @@ class eapi_usage_kls(histo_data):
 
     per_repo_format = ("eapi: %(key)r %(val)s pkgs found, %(percent)s of the repository")
 
-    summary_format = ("eapi: %(key)r %(val)s pkgs found, %(percent)s of all repositories")
+    summary_format = ("eapi: %(key)r %(val)s pkgs found, %(percent)s of all repos")
 
     def get_data(self, repo, options):
         eapis = {}
@@ -199,7 +199,7 @@ class eapi_usage_kls(histo_data):
         return eapis, pos + 1
 
 eapi_usage = subparsers.add_parser(
-    "eapi_usage", description="report of eapi usage for targeted repositories")
+    "eapi_usage", description="report of eapi usage for targeted repos")
 eapi_usage.bind_class(eapi_usage_kls())
 
 
@@ -207,7 +207,7 @@ class license_usage_kls(histo_data):
 
     per_repo_format = "license: %(key)r %(val)s pkgs found, %(percent)s of the repository"
 
-    summary_format = "license: %(key)r %(val)s pkgs found, %(percent)s of all repositories"
+    summary_format = "license: %(key)r %(val)s pkgs found, %(percent)s of all repos"
 
     def get_data(self, repo, options):
         data = {}
@@ -219,7 +219,7 @@ class license_usage_kls(histo_data):
         return data, pos + 1
 
 license_usage = subparsers.add_parser(
-    "license_usage", description="report of license usage for targeted repositories")
+    "license_usage", description="report of license usage for targeted repos")
 license_usage.bind_class(license_usage_kls())
 
 
@@ -227,7 +227,7 @@ class eclass_usage_kls(histo_data):
 
     per_repo_format = "eclass: %(key)r %(val)s pkgs found, %(percent)s of the repository"
 
-    summary_format = "eclass: %(key)r %(val)s pkgs found, %(percent)s of all repositories"
+    summary_format = "eclass: %(key)r %(val)s pkgs found, %(percent)s of all repos"
 
     def get_data(self, repo, options):
         pos, data = 0, defaultdict(lambda:0)
@@ -237,7 +237,7 @@ class eclass_usage_kls(histo_data):
         return data, pos + 1
 
 eclass_usage = subparsers.add_parser(
-    "eclass_usage", description="report of eclass usage for targeted repositories")
+    "eclass_usage", description="report of eclass usage for targeted repos")
 eclass_usage.bind_class(eclass_usage_kls())
 
 
@@ -245,7 +245,7 @@ class mirror_usage_kls(histo_data):
 
     per_repo_format = "mirror: %(key)r %(val)s pkgs found, %(percent)s of the repository"
 
-    summary_format = "mirror: %(key)r %(val)s pkgs found, %(percent)s of all repositories"
+    summary_format = "mirror: %(key)r %(val)s pkgs found, %(percent)s of all repos"
 
     def get_data(self, repo, options):
         data = {}
@@ -261,7 +261,7 @@ class mirror_usage_kls(histo_data):
         return data, pos + 1
 
 mirror_usage = subparsers.add_parser(
-    "mirror_usage", description="report of SRC_URI mirror usage for targeted repositories")
+    "mirror_usage", description="report of SRC_URI mirror usage for targeted repos")
 mirror_usage.bind_class(mirror_usage_kls())
 
 
@@ -271,7 +271,7 @@ class distfiles_usage_kls(histo_data):
 
     per_repo_summary = "unique total %(total)i bytes, sharing %(shared)i bytes"
 
-    summary_format = "package: %(key)r %(val)s pkgs found, %(percent)s of all repositories"
+    summary_format = "package: %(key)r %(val)s pkgs found, %(percent)s of all repos"
 
     allow_no_detail = True
 
@@ -315,7 +315,7 @@ class distfiles_usage_kls(histo_data):
 
 distfiles_usage = subparsers.add_parser(
     "distfiles_usage",
-    description="report detailing distfiles space usage for targeted repositories")
+    description="report detailing distfiles space usage for targeted repos")
 distfiles_usage.bind_class(distfiles_usage_kls())
 
 

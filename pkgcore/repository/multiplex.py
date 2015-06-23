@@ -2,7 +2,7 @@
 # License: GPL2/BSD
 
 """
-repository that combines multiple repositories together
+repository that combines multiple repos together
 """
 
 __all__ = ("tree", "operations")
@@ -60,13 +60,13 @@ class operations(repo_interface.operations_proxy):
         return ret
 
 
-@configurable({'repositories': 'refs:repo'}, typename='repo')
-def config_tree(repositories):
-    return tree(*repositories)
+@configurable({'repos': 'refs:repo'}, typename='repo')
+def config_tree(repos):
+    return tree(*repos)
 
 class tree(prototype.tree):
 
-    """repository combining multiple repositories into one"""
+    """repository combining multiple repos into one"""
 
     zero_index_grabber = itemgetter(0)
     frozen_settable = False

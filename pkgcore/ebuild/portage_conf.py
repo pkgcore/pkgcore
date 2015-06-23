@@ -496,7 +496,7 @@ def config_from_make_conf(location="/etc/", profile_override=None, **kwargs):
         config['repo-stack'] = basics.FakeIncrementalDictConfigSection(
             my_convert_hybrid, {
                 'class': 'pkgcore.repository.multiplex.config_tree',
-                'repositories': tuple(repos)})
+                'repos': tuple(repos)})
     else:
         config['repo-stack'] = basics.section_alias(repos[0], 'repo')
 
@@ -597,7 +597,7 @@ def config_from_make_conf(location="/etc/", profile_override=None, **kwargs):
     # finally... domain.
     make_conf.update({
         'class': 'pkgcore.ebuild.domain.domain',
-        'repositories': tuple(repos),
+        'repos': tuple(repos),
         'fetcher': 'fetcher',
         'default': True,
         'vdb': ('vdb',),

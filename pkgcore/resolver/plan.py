@@ -832,7 +832,7 @@ class merge_plan(object):
         :param dbs: db list to walk
         :param just_vdb: if None, no filtering; if True, just vdb, if False,
           non-vdb only
-        :return: yields repositories in requested ordering
+        :return: yields repos in requested ordering
         """
         return chain(cls.just_livefs_dbs(dbs), cls.just_nonlivefs_dbs(dbs))
 

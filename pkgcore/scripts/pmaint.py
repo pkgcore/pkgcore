@@ -50,7 +50,7 @@ sync = subparsers.add_parser(
     "sync", parents=shared_options,
     description="synchronize a local repository with its defined remote")
 sync.add_argument(
-    'repos', nargs='*', help="repositories to sync",
+    'repos', nargs='*', help="repos to sync",
     action=commandline.StoreRepoObject, store_name=True, raw=True)
 sync.add_argument(
     "-q", "--quiet", action='store_true',
@@ -60,7 +60,7 @@ sync.add_argument(
     help="show verbose output")
 @sync.bind_main_func
 def sync_main(options, out, err):
-    """Update local repositories to match their remote parents"""
+    """Update local repos to match their remote parents"""
     if options.quiet:
         options.verbose = 0
 
@@ -107,7 +107,7 @@ def sync_main(options, out, err):
 
 copy = subparsers.add_parser(
     "copy", parents=shared_options,
-    description="copy binpkgs between repositories; primarily useful for "
+    description="copy binpkgs between repos; primarily useful for "
     "quickpkging a livefs pkg")
 copy.add_argument(
     'target_repo', action=commandline.StoreRepoObject,
@@ -127,7 +127,7 @@ copy.add_argument(
 
 @copy.bind_main_func
 def copy_main(options, out, err):
-    """Copy pkgs between repositories."""
+    """Copy pkgs between repos."""
 
     src_repo = options.source_repo
     if src_repo is None:
@@ -335,7 +335,7 @@ def mirror_main(options, out, err):
 
 digest = subparsers.add_parser(
     "digest",
-    description="update a repositories package manifest/digest information",
+    description="update a repo's package manifest/digest information",
     parents=(commandline.mk_argparser(add_help=False),))
 digest.add_argument(
     "--repo", "--repository", help="repository to update",

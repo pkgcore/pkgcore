@@ -35,15 +35,15 @@ class domain(object):
         return tuple(l)
 
     @klass.jit_attr
-    def source_repositories(self):
+    def source_repos(self):
         return repo_utils.RepositoryGroup(self.repos)
 
     @klass.jit_attr
-    def installed_repositories(self):
+    def installed_repos(self):
         return repo_utils.RepositoryGroup(self.vdb)
 
-    all_repos = klass.alias_attr("source_repositories.combined")
-    all_livefs_repos = klass.alias_attr("installed_repositories.combined")
+    all_repos = klass.alias_attr("source_repos.combined")
+    all_livefs_repos = klass.alias_attr("installed_repos.combined")
 
     def pkg_operations(self, pkg, observer=None):
         return pkg.operations(self, observer=observer)

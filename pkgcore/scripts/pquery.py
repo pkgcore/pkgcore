@@ -416,7 +416,7 @@ def print_packages_noversion(options, out, err, pkgs):
 # priority 0 (commandline sets this):
 #  basically, sort the config first (additions/removals/etc),
 # priority 30:
-#   sort the repositories
+#   sort the repos
 # priority 50:
 #  sort the query args individually (potentially accessing the config) along
 #  or lines for each (thus multiple revdep args are or'd together)
@@ -431,7 +431,7 @@ argparser = commandline.mk_argparser(
 
 repo_group = argparser.add_argument_group(
     'Repository matching options',
-    'options controlling which repositories to inspect.')
+    'options controlling which repos to inspect.')
 repo_group.add_argument(
     '--raw', action='store_true', default=False,
     help="With this switch enabled, no configuration is used, and no filtering "

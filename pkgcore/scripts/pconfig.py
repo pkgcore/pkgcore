@@ -336,7 +336,7 @@ commandline.make_query(
 def package_func(options, out, err):
     matched = True
     domain = options.domain
-    for pkg in domain.installed_repositories.combined.itermatch(options.query):
+    for pkg in domain.installed_repos.combined.itermatch(options.query):
         matched = True
         ops = domain.pkg_operations(pkg)
         if not ops.supports("configure"):

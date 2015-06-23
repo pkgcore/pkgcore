@@ -56,13 +56,13 @@ class SimpleTree(tree):
 
 class RepositoryGroup(object):
 
-    def __init__(self, repositories, combined=None):
-        self.repositories = tuple(repositories)
+    def __init__(self, repos, combined=None):
+        self.repos = tuple(repos)
         if combined is None:
-            if len(self.repositories) == 1:
-                combined = self.repositories[0]
+            if len(self.repos) == 1:
+                combined = self.repos[0]
             else:
-                combined = multiplex.tree(*self.repositories)
+                combined = multiplex.tree(*self.repos)
         self.combined = combined
 
     itermatch = klass.alias_attr("combined.itermatch")
@@ -70,8 +70,8 @@ class RepositoryGroup(object):
     match = klass.alias_attr("combined.match")
 
     def __iter__(self):
-        return iter(self.repositories)
+        return iter(self.repos)
 
     @classmethod
-    def change_repos(cls, repositories):
-        return cls(repositories)
+    def change_repos(cls, repos):
+        return cls(repos)

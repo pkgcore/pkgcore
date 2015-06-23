@@ -23,7 +23,7 @@ Example of the supported format (not a complete config)::
         package.keywords = "/etc/portage/package.keywords"
         default = yes
         # this is a section reference, with a nested anonymous section.
-        repositories = {
+        repos = {
             type = repo
             class = pkgcore.ebuild.repository.tree
             location = /usr/portage

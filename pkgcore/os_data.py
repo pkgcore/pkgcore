@@ -18,7 +18,6 @@ __all__ = (
 import grp
 import os
 import pwd
-import sys
 
 ostype = os.uname()[0]
 

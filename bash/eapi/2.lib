@@ -1,6 +1,8 @@
 # Copyright: 2011-2012 Brian Harring <ferringb@gmail.com>
 # license GPL2/BSD 3
 
+source "${PKGCORE_BIN_PATH}"/eapi/1.lib
+
 __phase_eapi2_src_configure() {
 	if [[ -x ${ECONF_SOURCE:-.}/configure ]]; then
 		econf
@@ -22,6 +24,5 @@ default() {
 }
 
 __inject_phase_funcs __phase_eapi2 src_{configure,prepare}
-__inject_common_phase_funcs
 
 :

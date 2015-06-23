@@ -19,7 +19,7 @@ source "${PKGCORE_BIN_PATH}/isolated-functions.lib" \
 	|| { echo "failed loading isolated-functions.lib" >&2; exit 1; }
 
 # pull in common.lib for various functions used in EAPI libs, currently
-# __inject_common_phase_funcs() and __inject_phase_funcs() in particular
+# __inject_phase_funcs() in particular
 source "${PKGCORE_BIN_PATH}/eapi/common.lib" \
 	|| { echo "failed loading eapi/common.lib" >&2; exit 1; }
 

@@ -447,10 +447,6 @@ __inject_phase_funcs() {
 	done
 }
 
-__inject_common_phase_funcs() {
-	__inject_phase_funcs __phase_common pkg_nofetch src_{unpack,compile,test}
-}
-
 unpack() {
 	local file filename myfail srcdir taropts tar_subdir
 	taropts='--no-same-owner'

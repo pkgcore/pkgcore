@@ -5,7 +5,7 @@
 # build environment for each ebuild since different EAPIs require different
 # lists of functions to be skipped.
 
-EAPI=$1
+EAPI=${1:-0}
 export PKGCORE_BIN_PATH=$(dirname "$0")
 
 # without this var, parsing certain things can fail; force to true

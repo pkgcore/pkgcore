@@ -100,11 +100,11 @@ def isolate_rsync_opts(options):
     return base
 
 
-def make_repo_syncers(new_config, conf_dict, repos_conf_opts, allow_timestamps=True):
+def make_repo_syncers(config, repos_conf, make_conf, allow_timestamps=True):
     """generate syncing configs for known repos"""
     rsync_opts = None
 
-    for repo_opts in repos_conf_opts.itervalues():
+    for repo_opts in repos_conf.itervalues():
         d = {'basedir': repo_opts['location']}
 
         sync_type = repo_opts.get('sync-type', None)
@@ -120,7 +120,7 @@ def make_repo_syncers(new_config, conf_dict, repos_conf_opts, allow_timestamps=T
             if sync_type == 'rsync':
                 if rsync_opts is None:
                     # various make.conf options used by rsync-based syncers
-                    rsync_opts = isolate_rsync_opts(conf_dict)
+                    rsync_opts = isolate_rsync_opts(make_conf)
                 d.update(rsync_opts)
                 if allow_timestamps:
                     d['class'] = 'pkgcore.sync.rsync.rsync_timestamp_syncer'
@@ -136,7 +136,7 @@ def make_repo_syncers(new_config, conf_dict, repos_conf_opts, allow_timestamps=T
             d['class'] = 'pkgcore.sync.base.DisabledSyncer'
 
         name = 'sync:%s' % repo_opts['location']
-        new_config[name] = basics.AutoConfigSection(d)
+        config[name] = basics.AutoConfigSection(d)
 
 
 def add_sets(config, root, portage_base_dir):
@@ -219,13 +219,13 @@ def add_profile(config, base_path, user_profile_path=None, profile_override=None
         })
 
 
-def add_fetcher(config, conf_dict, distdir):
-    fetchcommand = conf_dict.pop("FETCHCOMMAND")
-    resumecommand = conf_dict.pop("RESUMECOMMAND", fetchcommand)
+def add_fetcher(config, make_conf, distdir):
+    fetchcommand = make_conf.pop("FETCHCOMMAND")
+    resumecommand = make_conf.pop("RESUMECOMMAND", fetchcommand)
 
     # copy it to prevent modification.
     # map a config arg to an obj arg, pop a few values
-    fetcher_dict = dict(conf_dict)
+    fetcher_dict = dict(make_conf)
     if "FETCH_ATTEMPTS" in fetcher_dict:
         fetcher_dict["attempts"] = fetcher_dict.pop("FETCH_ATTEMPTS")
     fetcher_dict.pop("readonly", None)
@@ -238,22 +238,22 @@ def add_fetcher(config, conf_dict, distdir):
     config["fetcher"] = basics.AutoConfigSection(fetcher_dict)
 
 
-def make_cache(config_root, tree_loc):
+def make_cache(config_root, repo_path):
     # TODO: probably should pull RepoConfig objects dynamically from the config
     # instead of regenerating them
-    repo_config = RepoConfig(tree_loc)
+    repo_config = RepoConfig(repo_path)
 
     # Use md5 cache if it exists or the option is selected, otherwise default to
     # the old flat hash format in /var/cache/edb/dep/*.
-    if (os.path.exists(pjoin(tree_loc, 'metadata', 'md5-cache')) or
+    if (os.path.exists(pjoin(repo_path, 'metadata', 'md5-cache')) or
             repo_config.cache_format == 'md5-dict'):
         kls = 'pkgcore.cache.flat_hash.md5_cache'
-        tree_loc = pjoin(config_root, tree_loc.lstrip('/'))
-        cache_parent_dir = pjoin(tree_loc, 'metadata', 'md5-cache')
+        repo_path = pjoin(config_root, repo_path.lstrip('/'))
+        cache_parent_dir = pjoin(repo_path, 'metadata', 'md5-cache')
     else:
         kls = 'pkgcore.cache.flat_hash.database'
-        tree_loc = pjoin(config_root, 'var', 'cache', 'edb', 'dep', tree_loc.lstrip('/'))
-        cache_parent_dir = tree_loc
+        repo_path = pjoin(config_root, 'var', 'cache', 'edb', 'dep', repo_path.lstrip('/'))
+        cache_parent_dir = repo_path
 
     while not os.path.exists(cache_parent_dir):
         cache_parent_dir = os.path.dirname(cache_parent_dir)
@@ -261,12 +261,12 @@ def make_cache(config_root, tree_loc):
 
     return basics.AutoConfigSection({
         'class': kls,
-        'location': tree_loc,
+        'location': repo_path,
         'readonly': readonly
     })
 
 
-def load_make_config(vars_dict, path, allow_sourcing=False, required=True,
+def load_make_conf(vars_dict, path, allow_sourcing=False, required=True,
                      incrementals=False):
     sourcing_command = None
     if allow_sourcing:
@@ -367,48 +367,48 @@ def config_from_make_conf(location="/etc/", profile_override=None, **kwargs):
     # this isn't preserving incremental behaviour for features/use
     # unfortunately
 
-    conf_dict = {}
+    make_conf = {}
     try:
-        load_make_config(conf_dict, pjoin(base_path, 'make.globals'))
+        load_make_conf(make_conf, pjoin(base_path, 'make.globals'))
     except errors.ParsingError as e:
         if not getattr(getattr(e, 'exc', None), 'errno', None) == errno.ENOENT:
             raise
         try:
             # fallback to defaults provided by pkgcore
-            load_make_config(conf_dict, pjoin(const.CONFIG_PATH, 'make.globals'))
+            load_make_conf(make_conf, pjoin(const.CONFIG_PATH, 'make.globals'))
         except IGNORED_EXCEPTIONS:
             raise
         except:
             raise_from(errors.ParsingError(
                 "failed to find a usable make.globals"))
-    load_make_config(
-        conf_dict, pjoin(base_path, 'make.conf'), required=False,
+    load_make_conf(
+        make_conf, pjoin(base_path, 'make.conf'), required=False,
         allow_sourcing=True, incrementals=True)
-    load_make_config(
-        conf_dict, pjoin(portage_base, 'make.conf'), required=False,
+    load_make_conf(
+        make_conf, pjoin(portage_base, 'make.conf'), required=False,
         allow_sourcing=True, incrementals=True)
 
-    root = os.environ.get("ROOT", conf_dict.get("ROOT", "/"))
+    root = os.environ.get("ROOT", make_conf.get("ROOT", "/"))
     gentoo_mirrors = [
-        x.rstrip("/") + "/distfiles" for x in conf_dict.pop("GENTOO_MIRRORS", "").split()]
+        x.rstrip("/") + "/distfiles" for x in make_conf.pop("GENTOO_MIRRORS", "").split()]
 
     # this is flawed... it'll pick up -some-feature
-    features = conf_dict.get("FEATURES", "").split()
+    features = make_conf.get("FEATURES", "").split()
 
-    new_config = {}
+    config = {}
     triggers = []
 
     def add_trigger(name, kls_path, **extra_args):
         d = extra_args.copy()
         d['class'] = kls_path
-        new_config[name] = basics.ConfigSectionFromStringDict(d)
+        config[name] = basics.ConfigSectionFromStringDict(d)
         triggers.append(name)
 
     # sets...
-    add_sets(new_config, root, portage_base)
+    add_sets(config, root, portage_base)
 
     user_profile_path = pjoin(base_path, "portage", "profile")
-    add_profile(new_config, base_path, user_profile_path, profile_override)
+    add_profile(config, base_path, user_profile_path, profile_override)
 
     kwds = {
         "class": "pkgcore.vdb.ondisk.tree",
@@ -416,16 +416,16 @@ def config_from_make_conf(location="/etc/", profile_override=None, **kwargs):
         "cache_location": pjoin(
             config_root, 'var', 'cache', 'edb', 'dep', 'var', 'db', 'pkg'),
     }
-    new_config["vdb"] = basics.AutoConfigSection(kwds)
+    config["vdb"] = basics.AutoConfigSection(kwds)
 
     try:
-        repos_conf_opts = load_repos_conf(pjoin(portage_base, 'repos.conf'))
+        repos_conf = load_repos_conf(pjoin(portage_base, 'repos.conf'))
     except errors.ParsingError as e:
         if not getattr(getattr(e, 'exc', None), 'errno', None) == errno.ENOENT:
             raise
         try:
             # fallback to defaults provided by pkgcore
-            repos_conf_opts = load_repos_conf(
+            repos_conf = load_repos_conf(
                 pjoin(const.CONFIG_PATH, 'repos.conf'))
         except IGNORED_EXCEPTIONS:
             raise
@@ -433,13 +433,13 @@ def config_from_make_conf(location="/etc/", profile_override=None, **kwargs):
             raise_from(errors.ParsingError(
                 "failed to find a usable repos.conf"))
 
-    make_repo_syncers(new_config, conf_dict, repos_conf_opts)
+    make_repo_syncers(config, repos_conf, make_conf)
 
     # sort repos via priority
     repos = [repo_opts['location'] for repo_opts in
-             sorted(repos_conf_opts.itervalues(), key=lambda d: d['priority'])]
+             sorted(repos_conf.itervalues(), key=lambda d: d['priority'])]
 
-    new_config['ebuild-repo-common'] = basics.AutoConfigSection({
+    config['ebuild-repo-common'] = basics.AutoConfigSection({
         'class': 'pkgcore.ebuild.repository.slavedtree',
         'default_mirrors': gentoo_mirrors,
         'inherit-only': True,
@@ -448,55 +448,55 @@ def config_from_make_conf(location="/etc/", profile_override=None, **kwargs):
 
     repo_map = {}
 
-    for tree_loc in repos:
+    for repo_path in repos:
         # XXX: Hack for portage-2 profile format support.
-        repo_config = RepoConfig(tree_loc)
+        repo_config = RepoConfig(repo_path)
         repo_map[repo_config.repo_id] = repo_config
 
         # repo configs
         conf = {
             'class': 'pkgcore.ebuild.repo_objs.RepoConfig',
-            'location': tree_loc,
+            'location': repo_path,
         }
-        if 'sync:%s' % (tree_loc,) in new_config:
-            conf['syncer'] = 'sync:%s' % (tree_loc,)
-        new_config['raw:' + tree_loc] = basics.AutoConfigSection(conf)
+        if 'sync:%s' % (repo_path,) in config:
+            conf['syncer'] = 'sync:%s' % (repo_path,)
+        config['raw:' + repo_path] = basics.AutoConfigSection(conf)
 
         # metadata cache
-        cache_name = 'cache:%s' % (tree_loc,)
-        new_config[cache_name] = make_cache(config_root, tree_loc)
+        cache_name = 'cache:%s' % (repo_path,)
+        config[cache_name] = make_cache(config_root, repo_path)
 
         # repo trees
         kwds = {
             'inherit': ('ebuild-repo-common',),
-            'raw_repo': ('raw:' + tree_loc),
+            'raw_repo': ('raw:' + repo_path),
             'class': 'pkgcore.ebuild.repository.tree',
             'cache': cache_name,
         }
 
-        new_config[tree_loc] = basics.AutoConfigSection(kwds)
+        config[repo_path] = basics.AutoConfigSection(kwds)
 
     # XXX: Hack for portage-2 profile format support. We need to figure out how
     # to dynamically create this from the config at runtime on attr access.
     profiles.ProfileNode._repo_map = ImmutableDict(repo_map)
 
-    new_config['repo-stack'] = basics.FakeIncrementalDictConfigSection(
+    config['repo-stack'] = basics.FakeIncrementalDictConfigSection(
         my_convert_hybrid, {
             'class': 'pkgcore.repository.multiplex.config_tree',
             'repositories': tuple(repos)})
 
-    new_config['vuln'] = basics.AutoConfigSection({
+    config['vuln'] = basics.AutoConfigSection({
         'class': SecurityUpgradesViaProfile,
         'ebuild_repo': 'repo-stack',
         'vdb': 'vdb',
         'profile': 'profile',
     })
-    new_config['glsa'] = basics.section_alias(
+    config['glsa'] = basics.section_alias(
         'vuln', SecurityUpgradesViaProfile.pkgcore_config_type.typename)
 
     # binpkg.
     buildpkg = 'buildpkg' in features or kwargs.get('buildpkg', False)
-    pkgdir = os.environ.get("PKGDIR", conf_dict.pop('PKGDIR', None))
+    pkgdir = os.environ.get("PKGDIR", make_conf.pop('PKGDIR', None))
     if pkgdir is not None:
         try:
             pkgdir = abspath(pkgdir)
@@ -520,7 +520,7 @@ def config_from_make_conf(location="/etc/", profile_override=None, **kwargs):
     # yes, round two; may be disabled from above and massive else block sucks
     if pkgdir is not None:
         if pkgdir and os.path.isdir(pkgdir):
-            new_config['binpkg'] = basics.ConfigSectionFromStringDict({
+            config['binpkg'] = basics.ConfigSectionFromStringDict({
                 'class': 'pkgcore.binpkg.repository.tree',
                 'location': pkgdir,
                 'ignore_paludis_versioning': str('ignore-paludis-versioning' in features),
@@ -545,14 +545,14 @@ def config_from_make_conf(location="/etc/", profile_override=None, **kwargs):
                 target_repo='binpkg')
 
     if 'save-deb' in features:
-        path = conf_dict.pop("DEB_REPO_ROOT", None)
+        path = make_conf.pop("DEB_REPO_ROOT", None)
         if path is None:
             logger.warning("disabling save-deb; DEB_REPO_ROOT is unset")
         else:
             add_trigger(
                 'save_deb_trigger', 'pkgcore.ospkg.triggers.SaveDeb',
-                basepath=normpath(path), maintainer=conf_dict.pop("DEB_MAINAINER", ''),
-                platform=conf_dict.pop("DEB_ARCHITECTURE", ""))
+                basepath=normpath(path), maintainer=make_conf.pop("DEB_MAINAINER", ''),
+                platform=make_conf.pop("DEB_ARCHITECTURE", ""))
 
     if 'splitdebug' in features:
         kwds = {}
@@ -575,13 +575,13 @@ def config_from_make_conf(location="/etc/", profile_override=None, **kwargs):
 
     # now add the fetcher- we delay it till here to clean out the environ
     # it passes to the command.
-    # *everything* in the conf_dict must be str values also.
+    # *everything* in make_conf must be str values also.
     distdir = normpath(os.environ.get(
-        "DISTDIR", conf_dict.pop("DISTDIR")))
-    add_fetcher(new_config, conf_dict, distdir)
+        "DISTDIR", make_conf.pop("DISTDIR")))
+    add_fetcher(config, make_conf, distdir)
 
     # finally... domain.
-    conf_dict.update({
+    make_conf.update({
         'class': 'pkgcore.ebuild.domain.domain',
         'repositories': tuple(repos),
         'fetcher': 'fetcher',
@@ -602,11 +602,11 @@ def config_from_make_conf(location="/etc/", profile_override=None, **kwargs):
             if oe.errno != errno.ENOENT:
                 raise
         else:
-            conf_dict[f.split(":")[-1]] = fp
+            make_conf[f.split(":")[-1]] = fp
 
     if triggers:
-        conf_dict['triggers'] = tuple(triggers)
-    new_config['livefs domain'] = basics.FakeIncrementalDictConfigSection(
-        my_convert_hybrid, conf_dict)
+        make_conf['triggers'] = tuple(triggers)
+    config['livefs domain'] = basics.FakeIncrementalDictConfigSection(
+        my_convert_hybrid, make_conf)
 
-    return new_config
+    return config

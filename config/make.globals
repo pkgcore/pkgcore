@@ -8,8 +8,8 @@ ACCEPT_LICENSE="* -@EULA"
 ACCEPT_PROPERTIES="*"
 ACCEPT_RESTRICT="*"
 
-DISTDIR="/usr/portage/distfiles"
-PKGDIR="/usr/portage/packages"
+DISTDIR="/var/gentoo/dist"
+PKGDIR="/var/gentoo/pkgs"
 
 PORTAGE_TMPDIR="/var/tmp"
 

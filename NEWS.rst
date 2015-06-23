@@ -14,6 +14,10 @@ pkgcore master
 - Drop deprecated support for /etc/make.conf, only /etc/portage/make.conf is
   used now.
 
+- Change default locations for DISTDIR, PKGDIR, and repos to be
+  /var/gentoo/dist, /var/gentoo/pkgs, and /var/gentoo/repos/* (e.g. the main
+  gentoo repo would be at /var/gentoo/repos/gentoo), respectively.
+
 
 ------------------------
 pkgcore 0.9 (2015-04-01)

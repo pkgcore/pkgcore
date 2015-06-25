@@ -455,9 +455,8 @@ def config_from_make_conf(location="/etc/", profile_override=None, **kwargs):
         conf = {
             'class': 'pkgcore.ebuild.repo_objs.RepoConfig',
             'location': repo_path,
+            'syncer': 'sync:%s' % (repo_path,)
         }
-        if 'sync:%s' % (repo_path,) in config:
-            conf['syncer'] = 'sync:%s' % (repo_path,)
         config['raw:' + repo_path] = basics.AutoConfigSection(conf)
 
         # metadata cache

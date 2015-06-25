@@ -324,19 +324,21 @@ def load_repos_conf(path):
                 repos[repo_name]['priority'] = int(priority)
             except ValueError:
                 raise errors.ParsingError(
-                    "%s: repo '%s' has invalid priority setting: %s" % (fp, repo_name, priority))
+                    "%s: repo '%s' has invalid priority setting: %s" %
+                    (fp, repo_name, priority))
 
             # only the location setting is strictly required
             if 'location' not in repos[repo_name]:
                 raise errors.ParsingError(
-                    "%s: repo '%s' missing location setting" % (fp, repo_name))
+                    "%s: repo '%s' missing location setting" %
+                    (fp, repo_name))
 
     # the default repo is gentoo if unset
     default_repo = defaults.get('main-repo', 'gentoo')
 
-    # the default repo has a high priority if unset or zero
+    # the default repo has a low priority if unset or zero
     if repos[default_repo]['priority'] == 0:
-        repos[default_repo]['priority'] = 9999
+        repos[default_repo]['priority'] = -9999
 
     del config
     return repos
@@ -431,9 +433,9 @@ def config_from_make_conf(location="/etc/", profile_override=None, **kwargs):
 
     make_repo_syncers(config, repos_conf, make_conf)
 
-    # sort repos via priority
+    # sort repos via priority, in this case high values map to high priorities
     repos = [repo_opts['location'] for repo_opts in
-             sorted(repos_conf.itervalues(), key=lambda d: d['priority'])]
+             sorted(repos_conf.itervalues(), key=lambda d: d['priority'], reverse=True)]
 
     config['ebuild-repo-common'] = basics.AutoConfigSection({
         'class': 'pkgcore.ebuild.repository.slavedtree',

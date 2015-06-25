@@ -316,7 +316,7 @@ def load_repos_conf(path):
 
         defaults.update(config.defaults())
         for repo_name in config.sections():
-            repos[repo_name] = {k: v for k, v in config.items(repo_name)}
+            repos[repo_name] = dict(config.items(repo_name))
 
             # repo priority defaults to zero if unset
             priority = repos[repo_name].get('priority', 0)

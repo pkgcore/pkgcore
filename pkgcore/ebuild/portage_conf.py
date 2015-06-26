@@ -141,7 +141,7 @@ def make_repo_syncers(config, repos_conf, make_conf, allow_timestamps=True):
 def add_sets(config, root, portage_base_dir):
     config["world"] = basics.AutoConfigSection({
         "class": "pkgcore.pkgsets.filelist.WorldFile",
-        "location": pjoin(root, econst.WORLD_FILE)})
+        "location": pjoin(root, econst.WORLD_FILE.lstrip('/'))})
     config["system"] = basics.AutoConfigSection({
         "class": "pkgcore.pkgsets.system.SystemSet",
         "profile": "profile"})

@@ -14,7 +14,7 @@ before_install:
 
     # don't output the "this is not dpkg install-info anymore, but GNU install-info..." warning
     - sudo mv /usr/bin/ginstall-info /usr/bin/install-info
-install: pip install tox coveralls
+install: pip install 'tox<2' coveralls
 script: tox -e py${TRAVIS_PYTHON_VERSION/\./}
 after_success:
     # upload coverage data to coveralls.io

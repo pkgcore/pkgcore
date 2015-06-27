@@ -341,7 +341,7 @@ def load_repos_conf(path):
         repos[default_repo]['priority'] = -9999
 
     del config
-    return repos
+    return defaults, repos
 
 
 @configurable({'location': 'str'}, typename='configsection')
@@ -417,13 +417,13 @@ def config_from_make_conf(location="/etc/", profile_override=None, **kwargs):
     config["vdb"] = basics.AutoConfigSection(kwds)
 
     try:
-        repos_conf = load_repos_conf(pjoin(portage_base, 'repos.conf'))
+        defaults, repos_conf = load_repos_conf(pjoin(portage_base, 'repos.conf'))
     except errors.ParsingError as e:
         if not getattr(getattr(e, 'exc', None), 'errno', None) == errno.ENOENT:
             raise
         try:
             # fallback to defaults provided by pkgcore
-            repos_conf = load_repos_conf(
+            defaults, repos_conf = load_repos_conf(
                 pjoin(const.CONFIG_PATH, 'repos.conf'))
         except IGNORED_EXCEPTIONS:
             raise
@@ -436,6 +436,7 @@ def config_from_make_conf(location="/etc/", profile_override=None, **kwargs):
     # sort repos via priority, in this case high values map to high priorities
     repos = [repo_opts['location'] for repo_opts in
              sorted(repos_conf.itervalues(), key=lambda d: d['priority'], reverse=True)]
+    default_repo = repos_conf[defaults['main-repo']]['location']
 
     config['ebuild-repo-common'] = basics.AutoConfigSection({
         'class': 'pkgcore.ebuild.repository.slavedtree',
@@ -457,7 +458,6 @@ def config_from_make_conf(location="/etc/", profile_override=None, **kwargs):
             'location': repo_path,
             'syncer': 'sync:%s' % (repo_path,)
         }
-        config['raw:' + repo_path] = basics.AutoConfigSection(conf)
 
         # metadata cache
         cache_name = 'cache:%s' % (repo_path,)
@@ -467,10 +467,19 @@ def config_from_make_conf(location="/etc/", profile_override=None, **kwargs):
         kwds = {
             'inherit': ('ebuild-repo-common',),
             'raw_repo': ('raw:' + repo_path),
-            'class': 'pkgcore.ebuild.repository.tree',
             'cache': cache_name,
         }
 
+        # if masters is missing default use the value of main-repo from
+        # repos.conf for a master
+        if repo_config.masters is None:
+            kwds['parent_repo'] = default_repo
+
+        if repo_path == default_repo:
+            conf['default'] = True
+            kwds['class'] = 'pkgcore.ebuild.repository.tree'
+
+        config['raw:' + repo_path] = basics.AutoConfigSection(conf)
         config[repo_path] = basics.AutoConfigSection(kwds)
 
     # XXX: Hack for portage-2 profile format support. We need to figure out how

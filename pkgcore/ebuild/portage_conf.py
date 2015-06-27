@@ -470,14 +470,11 @@ def config_from_make_conf(location="/etc/", profile_override=None, **kwargs):
             'cache': cache_name,
         }
 
-        # if masters is missing default use the value of main-repo from
-        # repos.conf for a master
-        if repo_config.masters is None:
-            kwds['parent_repo'] = default_repo
-
         if repo_path == default_repo:
             conf['default'] = True
             kwds['class'] = 'pkgcore.ebuild.repository.tree'
+        else:
+            kwds['parent_repo'] = default_repo
 
         config['raw:' + repo_path] = basics.AutoConfigSection(conf)
         config[repo_path] = basics.AutoConfigSection(kwds)

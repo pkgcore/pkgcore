@@ -483,10 +483,13 @@ def config_from_make_conf(location="/etc/", profile_override=None, **kwargs):
     # to dynamically create this from the config at runtime on attr access.
     profiles.ProfileNode._repo_map = ImmutableDict(repo_map)
 
-    config['repo-stack'] = basics.FakeIncrementalDictConfigSection(
-        my_convert_hybrid, {
-            'class': 'pkgcore.repository.multiplex.config_tree',
-            'repositories': tuple(repos)})
+    if len(repos) > 1:
+        config['repo-stack'] = basics.FakeIncrementalDictConfigSection(
+            my_convert_hybrid, {
+                'class': 'pkgcore.repository.multiplex.config_tree',
+                'repositories': tuple(repos)})
+    else:
+        config['repo-stack'] = basics.section_alias(default_repo, 'repo')
 
     config['vuln'] = basics.AutoConfigSection({
         'class': SecurityUpgradesViaProfile,

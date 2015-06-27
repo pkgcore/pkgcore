@@ -5,8 +5,10 @@
 errors fetch subsystem may throw
 """
 
-__all__ = ("base", "distdirPerms", "UnmodifiableFile", "UnknownMirror",
-    "RequiredChksumDataMissing")
+__all__ = (
+    "base", "distdirPerms", "UnmodifiableFile", "UnknownMirror",
+    "RequiredChksumDataMissing"
+)
 
 
 class base(Exception):
@@ -30,7 +32,7 @@ class UnmodifiableFile(base):
 
 class UnknownMirror(base):
     def __init__(self, host, uri):
-        base.__init__(self, "uri mirror://%s/%s is has no known mirror tier"
+        base.__init__(self, "uri mirror://%s/%s isn't a known mirror tier"
                       % (host, uri))
         self.host, self.uri = host, uri
 

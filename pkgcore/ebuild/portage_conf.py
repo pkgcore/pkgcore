@@ -337,8 +337,15 @@ def load_repos_conf(path):
         raise errors.ConfigurationError(
             "No repos are defined, please fix your repos.conf settings")
 
-    # the default repo is gentoo if unset
+    # the default repo is gentoo if unset and gentoo exists
     default_repo = defaults.get('main-repo', 'gentoo')
+    if default_repo not in repos:
+        raise errors.ConfigurationError(
+            "The main repo is undefined or invalid, "
+            "please fix your repos.conf settings")
+
+    if 'main-repo' not in defaults:
+        defaults['main-repo'] = default_repo
 
     # the default repo has a low priority if unset or zero
     if repos[default_repo]['priority'] == 0:

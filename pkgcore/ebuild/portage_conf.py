@@ -333,6 +333,10 @@ def load_repos_conf(path):
                     "%s: repo '%s' missing location setting" %
                     (fp, repo_name))
 
+    if not repos:
+        raise errors.ConfigurationError(
+            "No repos are defined, please fix your repos.conf settings")
+
     # the default repo is gentoo if unset
     default_repo = defaults.get('main-repo', 'gentoo')
 

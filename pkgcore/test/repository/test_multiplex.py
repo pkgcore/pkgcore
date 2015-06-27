@@ -1,9 +1,8 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
+from collections import OrderedDict
 from functools import partial
-
-from snakeoil.mappings import OrderedDict
 
 from pkgcore.repository.multiplex import tree
 from pkgcore.repository.util import SimpleTree

@@ -1,10 +1,10 @@
 # Copyright: 2006-2009 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
+from collections import OrderedDict
 from functools import partial
 
 from snakeoil.currying import post_curry
-from snakeoil.mappings import OrderedDict
 
 from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.cpv import versioned_CPV

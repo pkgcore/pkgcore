@@ -7,11 +7,13 @@ XPAK container support
 
 __all__ = ("MalformedXpak", "Xpak")
 
+from collections import OrderedDict
+
 from snakeoil import compatibility, klass
 from snakeoil import struct_compat as struct
 from snakeoil.compatibility import raise_from
 from snakeoil.demandload import demandload
-from snakeoil.mappings import OrderedDict, autoconvert_py3k_methods_metaclass
+from snakeoil.mappings import autoconvert_py3k_methods_metaclass
 
 demandload(
     "errno",

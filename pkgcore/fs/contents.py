@@ -16,10 +16,9 @@ from snakeoil.osutils import normpath, pjoin
 from pkgcore.fs import fs
 
 demandload(
-    'collections:defaultdict',
+    'collections:defaultdict,OrderedDict',
     'os:path',
     'time',
-    'snakeoil.mappings:OrderedDict',
 )
 
 

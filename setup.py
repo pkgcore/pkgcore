@@ -6,8 +6,15 @@ import os
 import subprocess
 import sys
 
-from distutils import core, log, errors
-from distutils.command import build, build_scripts, install
+try:
+    from setuptools import Command, setup
+    from setuptools.command import install
+except ImportError:
+    from distutils.core import Command, setup
+    from distutils.command import install
+
+from distutils import log, errors
+from distutils.command import build, build_scripts
 from distutils.util import byte_compile
 from stat import ST_MODE
 
@@ -114,7 +121,7 @@ class pkgcore_build(build.build):
             self.enable_html_docs = False
 
 
-class pkgcore_install_scripts(core.Command):
+class pkgcore_install_scripts(Command):
 
     """Install symlinks to the pwrapper_installed script.
 
@@ -205,7 +212,7 @@ def _get_data_mapping(host_path, path):
         yield (os.path.join(host_path, root.partition(path)[2].lstrip('/')),
                [os.path.join(root, x) for x in files])
 
-class pkgcore_install_docs(core.Command):
+class pkgcore_install_docs(Command):
 
     """Install html documentation"""
 
@@ -470,7 +477,7 @@ if BuildDoc:
 with open('README.rst', 'r') as f:
     readme = f.read()
 
-core.setup(
+setup(
     name='pkgcore',
     version=version,
     description='package managing framework',

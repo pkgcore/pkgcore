@@ -12,6 +12,7 @@ __all__ = (
     "config_from_make_conf",
 )
 
+from collections import OrderedDict
 import os
 
 from snakeoil.compatibility import raise_from, IGNORED_EXCEPTIONS
@@ -351,6 +352,11 @@ def load_repos_conf(path):
     if repos[default_repo]['priority'] == 0:
         repos[default_repo]['priority'] = -9999
 
+    # sort repos via priority, in this case high values map to high priorities
+    repos = OrderedDict(
+        (k, v) for k, v in
+        sorted(repos.iteritems(), key=lambda d: d[1]['priority'], reverse=True))
+
     del config
     return defaults, repos
 
@@ -444,11 +450,6 @@ def config_from_make_conf(location="/etc/", profile_override=None, **kwargs):
 
     make_repo_syncers(config, repos_conf, make_conf)
 
-    # sort repos via priority, in this case high values map to high priorities
-    repos = [repo_opts['location'] for repo_opts in
-             sorted(repos_conf.itervalues(), key=lambda d: d['priority'], reverse=True)]
-    default_repo = repos_conf[defaults['main-repo']]['location']
-
     config['ebuild-repo-common'] = basics.AutoConfigSection({
         'class': 'pkgcore.ebuild.repository.slavedtree',
         'default_mirrors': gentoo_mirrors,
@@ -456,9 +457,12 @@ def config_from_make_conf(location="/etc/", profile_override=None, **kwargs):
         'ignore_paludis_versioning': ('ignore-paludis-versioning' in features),
     })
 
+    default_repo = repos_conf[defaults['main-repo']]['location']
     repo_map = {}
 
-    for repo_path in repos:
+    for repo_opts in repos_conf.itervalues():
+        repo_path = repo_opts['location']
+
         # XXX: Hack for portage-2 profile format support.
         repo_config = RepoConfig(repo_path)
         repo_map[repo_config.repo_id] = repo_config
@@ -467,7 +471,7 @@ def config_from_make_conf(location="/etc/", profile_override=None, **kwargs):
         conf = {
             'class': 'pkgcore.ebuild.repo_objs.RepoConfig',
             'location': repo_path,
-            'syncer': 'sync:%s' % (repo_path,)
+            'syncer': 'sync:%s' % (repo_path,),
         }
 
         # metadata cache
@@ -494,13 +498,14 @@ def config_from_make_conf(location="/etc/", profile_override=None, **kwargs):
     # to dynamically create this from the config at runtime on attr access.
     profiles.ProfileNode._repo_map = ImmutableDict(repo_map)
 
+    repos = [repo_opts['location'] for repo_opts in repos_conf.itervalues()]
     if len(repos) > 1:
         config['repo-stack'] = basics.FakeIncrementalDictConfigSection(
             my_convert_hybrid, {
                 'class': 'pkgcore.repository.multiplex.config_tree',
                 'repositories': tuple(repos)})
     else:
-        config['repo-stack'] = basics.section_alias(default_repo, 'repo')
+        config['repo-stack'] = basics.section_alias(repos[0], 'repo')
 
     config['vuln'] = basics.AutoConfigSection({
         'class': SecurityUpgradesViaProfile,

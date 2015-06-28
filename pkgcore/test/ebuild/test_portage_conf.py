@@ -1,7 +1,9 @@
 # Copyright: 2015 Tim Harder
 # License: GPL2/BSD
 
+import os
 import shutil
+import stat
 from tempfile import NamedTemporaryFile
 
 from snakeoil.osutils import pjoin
@@ -31,6 +33,14 @@ class TestPortageConfig(TempDirMixin, TestCase):
         # should return empty dict when not required
         load_make_conf(d, pjoin(self.dir, 'make.conf'), required=False)
         self.assertEqual({}, d)
+
+        # unreadable file
+        d = {}
+        with NamedTemporaryFile() as f:
+            shutil.copyfile(pjoin(const.CONFIG_PATH, 'make.globals'), f.name)
+            os.chmod(f.name, stat.S_IWUSR)
+            self.assertRaises(
+                errors.PermissionDeniedError, load_make_conf, d, f.name)
 
         # overrides and incrementals
         with NamedTemporaryFile() as f:

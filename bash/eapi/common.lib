@@ -38,7 +38,7 @@ use_with() {
 	fi
 
 	local uw_suffix=""
-	if __safe_has "${EAPI:-0}" 0 1 2 3; then
+	if __safe_has "${EAPI}" 0 1 2 3; then
 		uw_suffix=${3:+=$3}
 	else
 		uw_suffix=${3+=$3}
@@ -65,7 +65,7 @@ use_enable() {
 	fi
 
 	local ue_suffix=""
-	if __safe_has "${EAPI:-0}" 0 1 2 3; then
+	if __safe_has "${EAPI}" 0 1 2 3; then
 		ue_suffix=${3:+=$3}
 	else
 		ue_suffix=${3+=$3}
@@ -273,8 +273,8 @@ __phase_common_src_unpack() {
 
 __phase_common_src_compile() {
 	# only eapi 0/1 invoke configure...
-	if __safe_has "${EAPI:-0}" 0 1; then
-		if [[ ${EAPI:-0} == 0 ]]; then
+	if __safe_has "${EAPI}" 0 1; then
+		if [[ ${EAPI} == 0 ]]; then
 			[[ -x ./configure ]] && econf
 		elif [[ -x ${ECONF_SOURCE:-.}/configure ]]; then
 			econf
@@ -441,7 +441,7 @@ __inject_phase_funcs() {
 		fi
 
 		# define default_${phase} funcs for EAPI 2 and up
-		if ! __safe_has "${EAPI:-0}" 0 1 ; then
+		if ! __safe_has "${EAPI}" 0 1 ; then
 			eval "default_${func}() { ${prefix}_${func}; }";
 		fi
 	done

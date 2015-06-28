@@ -15,24 +15,21 @@ __all__ = (
 from collections import OrderedDict
 import os
 
-from snakeoil.compatibility import raise_from, IGNORED_EXCEPTIONS
+from snakeoil.bash import read_bash_dict
+from snakeoil.compatibility import raise_from, ConfigParser, IGNORED_EXCEPTIONS
 from snakeoil.demandload import demandload
 from snakeoil.mappings import ImmutableDict
 from snakeoil.osutils import access, normpath, abspath, listdir_files, pjoin, ensure_dirs
 
 from pkgcore import const
 from pkgcore.config import basics, configurable
-from pkgcore.ebuild import const as econst
+from pkgcore.ebuild import const as econst, profiles
 from pkgcore.ebuild.repo_objs import RepoConfig
 from pkgcore.pkgsets.glsa import SecurityUpgrades
 
 demandload(
     'errno',
-    'snakeoil.bash:read_bash_dict',
-    'snakeoil.compatibility:ConfigParser',
-    'snakeoil.xml:etree',
     'pkgcore.config:errors',
-    'pkgcore.ebuild:profiles',
     'pkgcore.fs.livefs:iter_scan',
     'pkgcore.log:logger',
 )
@@ -267,7 +264,7 @@ def make_cache(config_root, repo_path):
 
 
 def load_make_conf(vars_dict, path, allow_sourcing=False, required=True,
-                     incrementals=False):
+                   incrementals=False):
     sourcing_command = None
     if allow_sourcing:
         sourcing_command = 'source'

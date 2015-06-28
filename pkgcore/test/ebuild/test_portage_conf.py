@@ -5,6 +5,7 @@ import os
 import shutil
 import stat
 from tempfile import NamedTemporaryFile
+import textwrap
 
 from snakeoil.osutils import pjoin
 from snakeoil.test.mixins import TempDirMixin
@@ -55,8 +56,8 @@ class TestPortageConfig(TempDirMixin, TestCase):
                 d['ACCEPT_LICENSE'])
 
         # load files from dir
-        with NamedTemporaryFile(prefix='aaa', dir=self.dir) as f:
-            with NamedTemporaryFile(prefix='zzz', dir=self.dir) as g:
+        with NamedTemporaryFile(prefix='a', dir=self.dir) as f:
+            with NamedTemporaryFile(prefix='z', dir=self.dir) as g:
                 shutil.copyfile(pjoin(const.CONFIG_PATH, 'make.globals'), f.name)
                 g.write('DISTDIR=foo\n')
                 g.flush()
@@ -89,4 +90,37 @@ class TestPortageConfig(TempDirMixin, TestCase):
             self.assertRaises(
                 errors.ConfigurationError, load_repos_conf, f.name)
 
-        # TODO: priority sorting
+        # missing location parameter
+        with NamedTemporaryFile() as f:
+            f.write(textwrap.dedent('''\
+                [foo]
+                sync-uri = git://foo.git'''))
+            f.flush()
+            self.assertRaises(
+                errors.ParsingError, load_repos_conf, f.name)
+
+        # undefined main repo with 'gentoo' missing
+        with NamedTemporaryFile() as f:
+            f.write(textwrap.dedent('''\
+                [foo]
+                location = /var/gentoo/repos/foo'''))
+            f.flush()
+            self.assertRaises(
+                errors.ConfigurationError, load_repos_conf, f.name)
+
+        # repo priority sorting
+        with NamedTemporaryFile(prefix='a', dir=self.dir) as f:
+            with NamedTemporaryFile(prefix='z', dir=self.dir) as g:
+                shutil.copyfile(pjoin(const.CONFIG_PATH, 'repos.conf'), f.name)
+                g.write(textwrap.dedent('''\
+                    [bar]
+                    location = /var/gentoo/repos/bar
+
+                    [foo]
+                    location = /var/gentoo/repos/foo
+                    priority = 10'''))
+                g.flush()
+
+                defaults, repos = load_repos_conf(self.dir)
+                self.assertEqual('gentoo', defaults['main-repo'])
+                self.assertEqual(['foo', 'bar', 'gentoo'], repos.keys())

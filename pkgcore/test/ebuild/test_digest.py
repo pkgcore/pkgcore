@@ -27,10 +27,6 @@ digest_chksum = (
     ("sha256", long("e163b95ee56819c0f3c58ef9278c30b9e49302c2f1a1917680ca894d33929f7e", 16))
 )
 
-
-files = ["Python-2.4.2.tar.bz2", "python-2.4-patches-1.tar.bz2"]
-
-
 # ripped straight from the glep
 pure_manifest2 = \
 """AUX ldif-buffer-overflow-fix.diff 5007 RMD160 1354a6bd2687430b628b78aaf43f5c793d2f0704 SHA1 424e1dfca06488f605b9611160020227ecdd03ac
@@ -96,4 +92,3 @@ class TestManifest(TestCase):
 
 class TestManifestDataSource(TestManifest):
     convert_source = staticmethod(lambda x: local_source(x))
-

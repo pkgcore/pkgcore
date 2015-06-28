@@ -77,6 +77,13 @@ class TestPortageConfig(TempDirMixin, TestCase):
             errors.ParsingError, load_repos_conf,
             pjoin(self.dir, 'repos.conf'))
 
+        # unreadable file
+        with NamedTemporaryFile() as f:
+            shutil.copyfile(pjoin(const.CONFIG_PATH, 'repos.conf'), f.name)
+            os.chmod(f.name, stat.S_IWUSR)
+            self.assertRaises(
+                errors.PermissionDeniedError, load_repos_conf, f.name)
+
         # blank file
         with NamedTemporaryFile() as f:
             self.assertRaises(

@@ -129,7 +129,7 @@ def _open_utf8(path, *args):
             return open(path, 'r', encoding='utf8')
         return open(path, 'r')
     except EnvironmentError as e:
-        if errno.ENOENT != e.errno:
+        if e.errno != errno.ENOENT:
             raise
         return None
 

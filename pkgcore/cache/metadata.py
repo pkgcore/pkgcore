@@ -109,7 +109,7 @@ class database(flat_hash.database):
         try:
             myf = open(fp, "w")
         except EnvironmentError as e:
-            if errno.ENOENT != e.errno:
+            if e.errno != errno.ENOENT:
                 raise_from(errors.CacheCorruption(cpv, e))
             try:
                 self._ensure_dirs(cpv)

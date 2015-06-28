@@ -9,7 +9,7 @@ Converts portage configuration files into :obj:`pkgcore.config` form.
 __all__ = (
     "SecurityUpgradesViaProfile", "make_repo_syncers",
     "add_sets", "add_profile", "add_fetcher", "make_cache",
-    "config_from_make_conf",
+    "load_make_conf", "load_repos_conf", "config_from_make_conf",
 )
 
 from collections import OrderedDict

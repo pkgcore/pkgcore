@@ -8,10 +8,9 @@ import os.path
 import sys
 
 
-# XXX Having this function here is a bit of a wart: it is used by
-# other plugin packages (like the pkgcore-check one), but we cannot
-# put it in pkgcore.plugin because that imports this package (circular
-# import).
+# XXX Having this function here is a bit of a wart: it is used by other plugin
+# packages (like the pkgcheck one), but we cannot put it in pkgcore.plugin
+# because that imports this package (circular import).
 
 def extend_path(path, name):
     """Simpler version of the stdlib's :obj:`pkgutil.extend_path`.

@@ -45,7 +45,7 @@ class TestPortageConfig(TempDirMixin, TestCase):
 
         # overrides and incrementals
         with NamedTemporaryFile() as f:
-            f.write('DISTDIR=foo\nACCEPT_LICENSE=foo\n')
+            f.write(b'DISTDIR=foo\nACCEPT_LICENSE=foo\n')
             f.flush()
             d = {}
             load_make_conf(d, pjoin(const.CONFIG_PATH, 'make.globals'))
@@ -59,7 +59,7 @@ class TestPortageConfig(TempDirMixin, TestCase):
         with NamedTemporaryFile(prefix='a', dir=self.dir) as f:
             with NamedTemporaryFile(prefix='z', dir=self.dir) as g:
                 shutil.copyfile(pjoin(const.CONFIG_PATH, 'make.globals'), f.name)
-                g.write('DISTDIR=foo\n')
+                g.write(b'DISTDIR=foo\n')
                 g.flush()
                 d = {}
                 load_make_conf(d, self.dir)
@@ -94,7 +94,7 @@ class TestPortageConfig(TempDirMixin, TestCase):
         with NamedTemporaryFile() as f:
             f.write(textwrap.dedent('''\
                 [foo]
-                sync-uri = git://foo.git'''))
+                sync-uri = git://foo.git''').encode())
             f.flush()
             self.assertRaises(
                 errors.ParsingError, load_repos_conf, f.name)
@@ -103,7 +103,7 @@ class TestPortageConfig(TempDirMixin, TestCase):
         with NamedTemporaryFile() as f:
             f.write(textwrap.dedent('''\
                 [foo]
-                location = /var/gentoo/repos/foo'''))
+                location = /var/gentoo/repos/foo''').encode())
             f.flush()
             self.assertRaises(
                 errors.ConfigurationError, load_repos_conf, f.name)
@@ -118,7 +118,7 @@ class TestPortageConfig(TempDirMixin, TestCase):
 
                     [foo]
                     location = /var/gentoo/repos/foo
-                    priority = 10'''))
+                    priority = 10''').encode())
                 g.flush()
 
                 defaults, repos = load_repos_conf(self.dir)

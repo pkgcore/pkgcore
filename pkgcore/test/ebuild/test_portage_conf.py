@@ -99,6 +99,16 @@ class TestPortageConfig(TempDirMixin, TestCase):
             self.assertRaises(
                 errors.ParsingError, load_repos_conf, f.name)
 
+        # bad priority value
+        with NamedTemporaryFile() as f:
+            f.write(textwrap.dedent('''\
+                [foo]
+                priority = foo
+                location = /var/gentoo/repos/foo''').encode())
+            f.flush()
+            self.assertRaises(
+                errors.ParsingError, load_repos_conf, f.name)
+
         # undefined main repo with 'gentoo' missing
         with NamedTemporaryFile() as f:
             f.write(textwrap.dedent('''\
@@ -108,7 +118,19 @@ class TestPortageConfig(TempDirMixin, TestCase):
             self.assertRaises(
                 errors.ConfigurationError, load_repos_conf, f.name)
 
-        # repo priority sorting
+        # default section isn't required as long as gentoo repo exists
+        with NamedTemporaryFile() as f:
+            f.write(textwrap.dedent('''\
+                [foo]
+                location = /var/gentoo/repos/foo
+                [gentoo]
+                location = /var/gentoo/repos/gentoo''').encode())
+            f.flush()
+            defaults, repos = load_repos_conf(f.name)
+            self.assertEqual('gentoo', defaults['main-repo'])
+            self.assertEqual(['foo', 'gentoo'], repos.keys())
+
+        # repo priority sorting and dir scanning
         with NamedTemporaryFile(prefix='a', dir=self.dir) as f:
             with NamedTemporaryFile(prefix='z', dir=self.dir) as g:
                 shutil.copyfile(pjoin(const.CONFIG_PATH, 'repos.conf'), f.name)

@@ -265,25 +265,34 @@ def make_cache(config_root, repo_path):
 
 def load_make_conf(vars_dict, path, allow_sourcing=False, required=True,
                    incrementals=False):
+    """parse make.conf files
+
+    :param vars_dict: dictionary to add parsed variables to
+    :param path: path to the make.conf which can be a regular file or
+        directory, if a directory is passed all the non-hidden files within
+        that directory are parsed in alphabetical order.
+    """
     sourcing_command = None
     if allow_sourcing:
         sourcing_command = 'source'
-    try:
-        new_vars = read_bash_dict(
-            path, vars_dict=vars_dict, sourcing_command=sourcing_command)
-    except EnvironmentError as e:
-        if e.errno == errno.EACCES:
-            raise_from(errors.PermissionDeniedError(path, write=False))
-        if e.errno != errno.ENOENT or required:
-            raise_from(errors.ParsingError("parsing %r" % (path,), exception=e))
-        return
 
-    if incrementals:
-        for key in econst.incrementals:
-            if key in vars_dict and key in new_vars:
-                new_vars[key] = "%s %s" % (vars_dict[key], new_vars[key])
-    # quirk of read_bash_dict; it returns only what was mutated.
-    vars_dict.update(new_vars)
+    for fp in sorted_scan(path, nonexistent=True):
+        try:
+            new_vars = read_bash_dict(
+                fp, vars_dict=vars_dict, sourcing_command=sourcing_command)
+        except EnvironmentError as e:
+            if e.errno == errno.EACCES:
+                raise_from(errors.PermissionDeniedError(fp, write=False))
+            if e.errno != errno.ENOENT or required:
+                raise_from(errors.ParsingError("parsing %r" % (fp,), exception=e))
+            return
+
+        if incrementals:
+            for key in econst.incrementals:
+                if key in vars_dict and key in new_vars:
+                    new_vars[key] = "%s %s" % (vars_dict[key], new_vars[key])
+        # quirk of read_bash_dict; it returns only what was mutated.
+        vars_dict.update(new_vars)
 
 
 def load_repos_conf(path):

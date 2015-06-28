@@ -4,14 +4,8 @@ python:
     - 3.3
     - 3.4
 before_install:
-    # add user/group for portage and wheel
-    - sudo groupadd wheel
-    - sudo groupadd -g 250 portage
-    - sudo useradd -u 250 -g 250 portage
-
     # install-info is used by the info regen trigger
     - sudo apt-get install -y install-info
-
     # don't output the "this is not dpkg install-info anymore, but GNU install-info..." warning
     - sudo mv /usr/bin/ginstall-info /usr/bin/install-info
 install: pip install 'tox<2' coveralls

@@ -343,7 +343,7 @@ class pkgcore_install(_base_install):
 
     def initialize_options(self):
         _base_install.initialize_options(self)
-        self.enable_man_pages = True
+        self.enable_man_pages = False
         self.enable_html_docs = False
 
     def finalize_options(self):

@@ -384,18 +384,11 @@ def config_from_make_conf(location="/etc/", profile_override=None, **kwargs):
 
     make_conf = {}
     try:
-        load_make_conf(make_conf, pjoin(base_path, 'make.globals'))
-    except errors.ParsingError as e:
-        if not getattr(getattr(e, 'exc', None), 'errno', None) == errno.ENOENT:
-            raise
-        try:
-            # fallback to defaults provided by pkgcore
-            load_make_conf(make_conf, pjoin(const.CONFIG_PATH, 'make.globals'))
-        except IGNORED_EXCEPTIONS:
-            raise
-        except:
-            raise_from(errors.ParsingError(
-                "failed to find a usable make.globals"))
+        load_make_conf(make_conf, pjoin(const.CONFIG_PATH, 'make.globals'))
+    except IGNORED_EXCEPTIONS:
+        raise
+    except:
+        raise_from(errors.ParsingError("failed to load make.globals"))
     load_make_conf(
         make_conf, pjoin(portage_base, 'make.conf'), required=False,
         allow_sourcing=True, incrementals=True)

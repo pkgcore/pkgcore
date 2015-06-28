@@ -10,7 +10,7 @@ pkgcore master
 
 
 --------------------------
-pkgcore 0.9.1 (2015-04-28)
+pkgcore 0.9.1 (2015-06-28)
 --------------------------
 
 - Fix installing via pip by using setuptools when available; however, note that

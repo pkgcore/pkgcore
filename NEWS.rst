@@ -8,8 +8,26 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 pkgcore master
 --------------
 
+
+--------------------------
+pkgcore 0.9.1 (2015-04-28)
+--------------------------
+
+- Fix installing via pip by using setuptools when available; however, note that
+  snakeoil must still be installed manually first since pkgcore's setup.py
+  script currently depends on snakeoil modules.
+
+- Improve support for syncing repos defined in repos.conf, add syncers
+  supported by pkgcore should work as expected.
+
 - Support for PORTDIR and PORTDIR_OVERLAY in make.conf has been dropped, only
   repos.conf is supported.
+
+- Drop deprecated support for /etc/make.globals, only make.globals provided by
+  pkgcore is used now.
+
+- Add support for /etc/portage/make.conf as a directory. All regular, nonhidden
+  files under it will be parsed in alphabetical order.
 
 - Drop deprecated support for /etc/make.conf, only /etc/portage/make.conf is
   used now.

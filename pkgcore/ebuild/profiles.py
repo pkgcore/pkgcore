@@ -32,7 +32,7 @@ demandload(
     'pkgcore.ebuild:cpv,repo_objs',
     'pkgcore.ebuild.atom:atom',
     'pkgcore.ebuild.eapi:get_eapi',
-    'pkgcore.fs.livefs:iter_scan',
+    'pkgcore.fs.livefs:sorted_scan',
     'pkgcore.repository.util:SimpleTree',
     'pkgcore.restrictions:packages',
 )
@@ -92,14 +92,7 @@ def _load_and_invoke(func, filename, handler, fallback, read_func,
         else:
             data = []
             profile_len = len(profile_path) + 1
-            try:
-                files = iter_scan(base)
-                files = sorted(x.location for x in files if x.is_reg
-                               and not x.basename.startswith('.'))
-            except EnvironmentError as e:
-                if errno.ENOENT != e.errno:
-                    raise
-                files = []
+            files = sorted_scan(base)
             if not files:
                 data = None
             else:

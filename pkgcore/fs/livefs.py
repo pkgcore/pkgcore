@@ -20,7 +20,7 @@ from pkgcore.fs.contents import contentsSet
 from pkgcore.fs.fs import (
     fsFile, fsDir, fsSymlink, fsDev, fsFifo, get_major_minor, fsBase)
 
-__all__ = ["gen_obj", "scan", "iter_scan"]
+__all__ = ["gen_obj", "scan", "iter_scan", "sorted_scan"]
 
 
 def gen_chksums(handlers, location):
@@ -150,6 +150,31 @@ def iter_scan(path, offset=None, follow_symlinks=False, chksum_types=None):
     if offset is None:
         return _internal_iter_scan(path, chksum_handlers, stat_func)
     return _internal_offset_iter_scan(path, chksum_handlers, offset, stat_func)
+
+
+def sorted_scan(path, nonexistent=False, *args, **kwargs):
+    """
+    Recursively scan a path for regular, nonhidden files.
+
+    :return: a list of regular, nonhidden file locations accessible under the
+        given path
+
+    :param path: str path of what directory to scan in the livefs
+    :param nonexistent: return nonexistent given path if True, else return
+        an empty list
+
+    Look at :py:func:`iter_scan` for other valid args.
+    """
+    files = [path] if nonexistent else []
+
+    try:
+        files = sorted(x.location for x in iter_scan(path, *args, **kwargs)
+                       if x.is_reg and not x.basename.startswith('.'))
+    except EnvironmentError as e:
+        if e.errno != errno.ENOENT:
+            raise
+
+    return files
 
 
 def scan(*a, **kw):

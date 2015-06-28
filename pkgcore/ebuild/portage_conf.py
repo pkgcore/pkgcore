@@ -25,12 +25,12 @@ from pkgcore import const
 from pkgcore.config import basics, configurable
 from pkgcore.ebuild import const as econst, profiles
 from pkgcore.ebuild.repo_objs import RepoConfig
+from pkgcore.fs.livefs import sorted_scan
 from pkgcore.pkgsets.glsa import SecurityUpgrades
 
 demandload(
     'errno',
     'pkgcore.config:errors',
-    'pkgcore.fs.livefs:iter_scan',
     'pkgcore.log:logger',
 )
 
@@ -293,16 +293,10 @@ def load_repos_conf(path):
         directory, if a directory is passed all the non-hidden files within
         that directory are parsed in alphabetical order.
     """
-    if os.path.isdir(path):
-        files = iter_scan(path)
-        files = sorted(x.location for x in files if x.is_reg
-                       and not x.basename.startswith('.'))
-    else:
-        files = [path]
-
     defaults = {}
     repos = {}
-    for fp in files:
+
+    for fp in sorted_scan(path, nonexistent=True):
         try:
             with open(fp) as f:
                 config = ConfigParser()
@@ -588,8 +582,7 @@ def config_from_make_conf(location="/etc/", profile_override=None, **kwargs):
     # now add the fetcher- we delay it till here to clean out the environ
     # it passes to the command.
     # *everything* in make_conf must be str values also.
-    distdir = normpath(os.environ.get(
-        "DISTDIR", make_conf.pop("DISTDIR")))
+    distdir = normpath(os.environ.get("DISTDIR", make_conf.pop("DISTDIR")))
     add_fetcher(config, make_conf, distdir)
 
     # finally... domain.

@@ -103,6 +103,30 @@ class FsObjsTest(TempDirMixin, TestCase):
             seen.append(obj.location)
         self.assertEqual((files[0],), tuple(sorted(seen)))
 
+    def test_sorted_scan(self):
+        path = os.path.join(self.dir, "sorted_scan")
+        os.mkdir(path)
+        files = [os.path.normpath(os.path.join(path, x)) for x in
+                 ["tmp", "blah", "dar", ".foo", ".bar"]]
+        # cheap version of a touch.
+        map(lambda x: open(x, "w").close(), files)
+        dirs = [os.path.normpath(os.path.join(path, x)) for x in [
+                "a", "b", "c"]]
+        map(os.mkdir, dirs)
+
+        # regular directory scanning
+        sorted_files = livefs.sorted_scan(path)
+        self.assertEqual(
+            list(map(lambda x: pjoin(path, x), ['blah', 'dar', 'tmp'])),
+            sorted_files)
+
+        # nonexistent paths
+        nonexistent_path = os.path.join(self.dir, 'foobar')
+        sorted_files = livefs.sorted_scan(nonexistent_path)
+        self.assertEqual(sorted_files, [])
+        sorted_files = livefs.sorted_scan(nonexistent_path, nonexistent=True)
+        self.assertEqual(sorted_files, [nonexistent_path])
+
 
     def test_relative_sym(self):
         f = os.path.join(self.dir, "relative-symlink-test")

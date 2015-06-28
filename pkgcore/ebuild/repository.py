@@ -36,7 +36,7 @@ demandload(
     'snakeoil.data_source:local_source',
     'pkgcore.ebuild:ebd,digest,repo_objs,atom,profiles,processor',
     'pkgcore.ebuild:errors@ebuild_errors',
-    'pkgcore.fs.livefs:iter_scan',
+    'pkgcore.fs.livefs:sorted_scan',
     'pkgcore.log:logger',
     'pkgcore.package:errors@pkg_errors',
     'pkgcore.util.packages:groupby_pkg',
@@ -454,8 +454,7 @@ class _UnconfiguredTree(prototype.tree):
         pos, neg = [], []
         try:
             if not self.config.profile_formats.intersection(['pms', 'portage-2']):
-                paths = sorted(x.location for x in iter_scan(path)
-                               if x.is_reg)
+                paths = sorted_scan(path)
             else:
                 paths = [path]
             for path in paths:

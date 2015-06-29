@@ -158,12 +158,11 @@ def parse_args():
             args.append(sys.argv[x])
         x += 1
 
-    return (options, args)
+    return options, args
 
 
 def main():
-
-    (options, args) = parse_args()
+    options, args = parse_args()
 
     if isinstance(options.allowed_exts, basestring):
         options.allowed_exts = options.allowed_exts.split(",")

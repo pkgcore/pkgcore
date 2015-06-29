@@ -19,12 +19,17 @@ import os
 import signal
 import sys
 
+from snakeoil.demandload import demandload
 from snakeoil.mappings import ProtectedDict
 from snakeoil.osutils import access
 from snakeoil.process import find_binary, CommandNotFound, closerange
 
 from pkgcore.const import (
     BASH_BINARY, SANDBOX_BINARY, FAKED_PATH, LIBFAKEROOT_PATH)
+
+demandload(
+    'pkgcore.log:logger',
+)
 
 try:
     import resource
@@ -219,8 +224,15 @@ def _exec(binary, mycommand, name, fd_pipes, env, gid, groups, uid, umask, cwd):
     atexit handlers run twice).
     """
 
+    logger.debug(
+        'executing %s: %s%s%s',
+        binary,
+        ' '.join('%s="%s"' % (k, v) for k, v in env.iteritems()),
+        ' '[len(env) == 0:],
+        ' '.join(mycommand))
+
     # If the process we're creating hasn't been given a name
-    # assign it the name of the name.
+    # assign it the name of the binary.
     if not name:
         name = os.path.basename(binary)
 
@@ -257,7 +269,7 @@ def _exec(binary, mycommand, name, fd_pipes, env, gid, groups, uid, umask, cwd):
     for trg_fd, src_fd in my_fds.iteritems():
         os.dup2(src_fd, trg_fd)
 
-    # Then close _all_ fds that haven't been explictly
+    # Then close _all_ fds that haven't been explicitly
     # requested to be kept open.
     last = 0
     for fd in sorted(fd_pipes):

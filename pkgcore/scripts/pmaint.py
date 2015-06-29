@@ -50,7 +50,7 @@ sync = subparsers.add_parser(
     "sync", parents=shared_options,
     description="synchronize a local repository with its defined remote")
 sync.add_argument(
-    'repos', nargs='*', help="repositories to sync",
+    'repos', metavar='repo', nargs='*', help="repo(s) to sync",
     action=commandline.StoreRepoObject, store_name=True, raw=True)
 sync.add_argument(
     "-q", "--quiet", action='store_true',

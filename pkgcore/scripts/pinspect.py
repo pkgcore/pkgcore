@@ -126,7 +126,7 @@ class histo_data(commandline.ArgparseCommand):
             "repos", metavar='repo', nargs='*',
             action=commandline.StoreRepoObject, store_name=True,
             default=commandline.CONFIG_ALL_DEFAULT,
-            help="repositories to inspect")
+            help="repo(s) to inspect")
 
         commandline.ArgparseCommand.bind_to_parser(self, parser)
 

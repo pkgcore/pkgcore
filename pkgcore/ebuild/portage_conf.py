@@ -245,7 +245,6 @@ def make_cache(config_root, repo_path):
     if (os.path.exists(pjoin(repo_path, 'metadata', 'md5-cache')) or
             repo_config.cache_format == 'md5-dict'):
         kls = 'pkgcore.cache.flat_hash.md5_cache'
-        repo_path = pjoin(config_root, repo_path.lstrip('/'))
         cache_parent_dir = pjoin(repo_path, 'metadata', 'md5-cache')
     else:
         kls = 'pkgcore.cache.flat_hash.database'

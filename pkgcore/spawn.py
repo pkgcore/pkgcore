@@ -225,10 +225,11 @@ def _exec(binary, mycommand, name, fd_pipes, env, gid, groups, uid, umask, cwd):
     """
 
     logger.debug(
-        'executing %s: %s%s%s',
+        'executing %s%s: %s%s%s',
         binary,
+        ' in %s' % cwd.rstrip('/') if cwd else '',
         ' '.join('%s="%s"' % (k, v) for k, v in env.iteritems()),
-        ' '[len(env) == 0:],
+        ' ' if len(env) else '',
         ' '.join(mycommand))
 
     # If the process we're creating hasn't been given a name

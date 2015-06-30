@@ -60,10 +60,11 @@ def sync_main(options, out, err):
     seen = set()
     repos = [x for x in options.repos if x not in seen and not seen.add(x)]
 
-    for name, repo in repos:
-        repo_name = getattr(repo, 'repo_id', None)
-        if repo_name is None:
-            repo_name = name
+    for repo_name, repo in repos:
+        # rewrite the name if it has the usual prefix
+        if repo_name.startswith("raw:"):
+            if repo_name.startswith("raw:"):
+                repo_name = repo_name[4:]
 
         if not repo.operations.supports("sync"):
             continue

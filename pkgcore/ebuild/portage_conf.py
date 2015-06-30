@@ -317,6 +317,8 @@ def load_repos_conf(path):
 
         defaults.update(config.defaults())
         for repo_name in config.sections():
+            # note we don't check for duplicate entries so older matching
+            # repos will be overridden
             repos[repo_name] = dict(config.items(repo_name))
 
             # repo priority defaults to zero if unset
@@ -453,7 +455,7 @@ def config_from_make_conf(location="/etc/", profile_override=None, **kwargs):
     default_repo = repos_conf[defaults['main-repo']]['location']
     repo_map = {}
 
-    for repo_opts in repos_conf.itervalues():
+    for repo_name, repo_opts in repos_conf.iteritems():
         repo_path = repo_opts['location']
 
         # XXX: Hack for portage-2 profile format support.
@@ -474,7 +476,7 @@ def config_from_make_conf(location="/etc/", profile_override=None, **kwargs):
         # repo trees
         kwds = {
             'inherit': ('ebuild-repo-common',),
-            'raw_repo': ('raw:' + repo_path),
+            'raw_repo': 'raw:%s' % repo_name,
             'cache': cache_name,
         }
 
@@ -484,7 +486,7 @@ def config_from_make_conf(location="/etc/", profile_override=None, **kwargs):
         else:
             kwds['parent_repo'] = default_repo
 
-        config['raw:' + repo_path] = basics.AutoConfigSection(conf)
+        config['raw:%s' % repo_name] = basics.AutoConfigSection(conf)
         config[repo_path] = basics.AutoConfigSection(kwds)
 
     # XXX: Hack for portage-2 profile format support. We need to figure out how

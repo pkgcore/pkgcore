@@ -120,12 +120,10 @@ class rsync_syncer(base.ExternalSyncer):
             opts.append(self.rsh)
         opts.extend("--exclude=%s" % x for x in self.excludes)
         opts.extend("--include=%s" % x for x in self.includes)
-        if verbosity == 0:
+        if verbosity < 0:
             opts.append("--quiet")
-        if verbosity >= 1:
-            opts.append("-v")
-        if verbosity >= 2:
-            opts.append("-v")
+        elif verbosity > 0:
+            opts.extend('-v' for x in xrange(verbosity))
 
         # zip limits to the shortest iterable.
         ret = None

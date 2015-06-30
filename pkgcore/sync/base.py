@@ -192,6 +192,12 @@ class dvcs_syncer(ExternalSyncer):
             command = self._update_existing()
             chdir = self.basedir
 
+        # we assume syncers support -v and -q for verbose and quiet output
+        if verbosity < 0:
+            command.append('-q')
+        elif verbosity > 0:
+            command.append('-' + 'v' * verbosity)
+
         ret = self._spawn(command, {1: output_fd, 2: output_fd, 0: 0},
                           cwd=chdir)
         return ret == 0

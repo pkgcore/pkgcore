@@ -62,7 +62,7 @@ sync.add_argument(
 def sync_main(options, out, err):
     """Update local repositories to match their remote parents"""
     if options.quiet:
-        options.verbose = 0
+        options.verbose = -1
 
     succeeded, failed = [], []
     seen = set()

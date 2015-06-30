@@ -30,16 +30,6 @@ demandload(
 )
 
 
-def format_seq(seq, formatter=repr):
-    if not seq:
-        seq = None
-    elif len(seq) == 1:
-        seq = seq[0]
-    else:
-        seq = tuple(sorted(str(x) for x in seq))
-    return formatter(seq)
-
-
 shared_options = (commandline.mk_argparser(domain=False, add_help=False),)
 argparser = commandline.mk_argparser(
     suppress=True, parents=shared_options,
@@ -66,28 +56,36 @@ def sync_main(options, out, err):
 
     succeeded, failed = [], []
 
-    for _, repo in set(options.repos):
+    # remove duplicates while preserving order
+    seen = set()
+    repos = [x for x in options.repos if x not in seen and not seen.add(x)]
+
+    for name, repo in repos:
+        repo_name = getattr(repo, 'repo_id', None)
+        if repo_name is None:
+            repo_name = name
+
         if not repo.operations.supports("sync"):
             continue
-        out.write("*** syncing %r ..." % repo.repo_id)
+        out.write("*** syncing %s" % repo_name)
         ret = False
         try:
             ret = repo.operations.sync(verbosity=options.verbose)
         except OperationError:
             pass
         if not ret:
-            out.write("*** failed syncing %r" % repo.repo_id)
-            failed.append(repo.repo_id)
+            out.write("*** failed syncing %s" % repo_name)
+            failed.append(repo_name)
         else:
-            succeeded.append(repo.repo_id)
-            out.write("*** synced %r" % repo.repo_id)
+            succeeded.append(repo_name)
+            out.write("*** synced %s" % repo_name)
 
     total = len(succeeded) + len(failed)
     if total > 1:
         if succeeded:
-            out.write("*** synced %s" % format_seq(sorted(succeeded)))
+            out.write("*** synced %s" % ', '.join(sorted(succeeded)))
         if failed:
-            err.write("!!! failed syncing %s" % format_seq(sorted(failed)))
+            err.write("!!! failed syncing %s" % ', '.join(sorted(failed)))
     if failed:
         return 1
     return 0

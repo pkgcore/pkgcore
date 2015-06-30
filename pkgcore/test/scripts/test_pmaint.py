@@ -67,26 +67,26 @@ class TestSync(TestCase, helpers.ArgParseMixin):
     def test_sync(self):
         config = self.assertOut(
             [
-                "*** syncing 'myrepo'...",
-                "*** synced 'myrepo'",
+                "*** syncing myrepo",
+                "*** synced myrepo",
                 ],
             myrepo=success_section)
         self.assertTrue(config.raw_repo['myrepo']._syncer.synced)
         self.assertOut(
             [
-                "*** syncing 'myrepo'...",
-                "*** failed syncing 'myrepo'",
+                "*** syncing myrepo",
+                "*** failed syncing myrepo",
                 ],
             myrepo=failure_section)
         self.assertOutAndErr(
             [
-                "*** syncing 'goodrepo'...",
-                "*** synced 'goodrepo'",
-                "*** syncing 'badrepo'...",
-                "*** failed syncing 'badrepo'",
-                "*** synced 'goodrepo'",
+                "*** syncing goodrepo",
+                "*** synced goodrepo",
+                "*** syncing badrepo",
+                "*** failed syncing badrepo",
+                "*** synced goodrepo",
                 ], [
-                "!!! failed sync'ing 'badrepo'",
+                "!!! failed syncing badrepo",
                 ],
             'goodrepo', 'badrepo',
             goodrepo=success_section, badrepo=failure_section)

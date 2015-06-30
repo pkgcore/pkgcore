@@ -114,7 +114,7 @@ class ebd(object):
         if self.prefix_mode:
             self.env['EROOT'] = normpath(self.domain.root)
             self.prefix = self.domain.prefix.lstrip("/")
-            eprefix = normpath(pjoin(self.env["EROOT"], self.prefix))
+            eprefix = self.prefix
             if eprefix == '/':
                 # Set eprefix to '' if it's basically empty; this keeps certain crappy builds
                 # (cmake for example) from puking over //usr/blah pathways

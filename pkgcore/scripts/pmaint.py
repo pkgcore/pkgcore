@@ -12,6 +12,7 @@ __all__ = (
 from snakeoil.demandload import demandload
 
 from pkgcore.util import commandline
+from pkgcore.operations import OperationError
 
 demandload(
     'errno',
@@ -26,7 +27,6 @@ demandload(
     'pkgcore.operations:observer',
     'pkgcore.package:mutated',
     'pkgcore.repository:multiplex',
-    'pkgcore.sync:base@sync_base',
 )
 
 
@@ -60,46 +60,34 @@ sync.add_argument(
     help="show verbose output")
 @sync.bind_main_func
 def sync_main(options, out, err):
-    """Update local repositories to match their remote parents"""
+    """Update local repositories to match their remotes"""
     if options.quiet:
         options.verbose = -1
 
     succeeded, failed = [], []
-    seen = set()
-    for name, repo in options.repos:
-        # rewrite the name if it has the usual prefix
-        if name.startswith("raw:"):
-            name = name[len("raw:"):]
-        repo_id = getattr(repo, 'repo_id', None)
-        if repo in seen or repo_id in seen:
-            out.write("*** skipping %r, already synced" % name)
-            continue
 
-        if repo_id:
-            seen.add(repo_id)
-        seen.add(repo)
-        ops = repo.operations
-        if not ops.supports("sync"):
+    for _, repo in set(options.repos):
+        if not repo.operations.supports("sync"):
             continue
-        out.write("*** syncing %r..." % name)
+        out.write("*** syncing %r ..." % repo.repo_id)
+        ret = False
         try:
-            ret = ops.sync(verbosity=options.verbose)
-        except sync_base.syncer_exception as se:
-            out.write("*** failed syncing %r- caught exception %r" % (name, se))
-            failed.append(name)
-            continue
+            ret = repo.operations.sync(verbosity=options.verbose)
+        except OperationError:
+            pass
         if not ret:
-            out.write("*** failed syncing %r" % name)
-            failed.append(name)
+            out.write("*** failed syncing %r" % repo.repo_id)
+            failed.append(repo.repo_id)
         else:
-            succeeded.append(name)
-            out.write("*** synced %r" % name)
+            succeeded.append(repo.repo_id)
+            out.write("*** synced %r" % repo.repo_id)
+
     total = len(succeeded) + len(failed)
     if total > 1:
         if succeeded:
             out.write("*** synced %s" % format_seq(sorted(succeeded)))
         if failed:
-            err.write("!!! failed sync'ing %s" % format_seq(sorted(failed)))
+            err.write("!!! failed syncing %s" % format_seq(sorted(failed)))
     if failed:
         return 1
     return 0

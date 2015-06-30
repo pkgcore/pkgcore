@@ -82,8 +82,7 @@ class rsync_syncer(base.ExternalSyncer):
         self.retries = int(retries)
         self.use_proxy = proxy is not None
         if self.use_proxy:
-            self.sets_env = True
-            self.env = {'RSYNC_PROXY': proxy}
+            self.env['RSYNC_PROXY'] = proxy
         self.is_ipv6 = "--ipv6" in self.opts or "-6" in self.opts
         self.is_ipv6 = self.is_ipv6 and socket.has_ipv6
 

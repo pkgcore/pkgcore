@@ -119,15 +119,16 @@ class ExternalSyncer(syncer):
 
     """Base class for syncers that spawn a binary to do the the actual work."""
 
-    sets_env = False
     binary = None
+
+    # external env settings passed through to syncing commands
+    env_whitelist = (
+        'SSH_AUTH_SOCK',
+    )
 
     def __init__(self, path, uri, default_verbosity=0):
         syncer.__init__(self, path, uri, default_verbosity=default_verbosity)
-
-        if not self.sets_env:
-            self.env = {}
-        self.env['SSH_AUTH_SOCK'] = os.getenv('SSH_AUTH_SOCK', '')
+        self.env = {v: os.environ[v] for v in self.env_whitelist if v in os.environ}
 
         if not hasattr(self, 'binary_path'):
             self.binary_path = self.require_binary(self.binary)

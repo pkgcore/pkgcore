@@ -10,7 +10,6 @@ from pkgcore.sync import base
 
 class cvs_syncer(base.dvcs_syncer):
 
-    sets_env = True
     binary = "cvs"
 
     supported_uris = (
@@ -55,12 +54,9 @@ class cvs_syncer(base.dvcs_syncer):
         host, self.module = uri.rsplit(":", 1)
         base.dvcs_syncer.__init__(self, basedir, host, **kwargs)
 
-    @property
-    def env(self):
-        k = {"CVSROOT": self.uri}
+        self.env['CVSROOT'] = self.uri
         if self.rsh is not None:
-            k["CVS_RSH"] = self.rsh
-        return k
+            self.env['CVS_RSH'] = self.rsh
 
     def _update_existing(self):
         return [self.binary_path, "up"]

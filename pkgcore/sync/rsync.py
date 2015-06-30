@@ -3,7 +3,6 @@
 
 __all__ = ("rsync_syncer", "rsync_timestamp_syncer",)
 
-from snakeoil import compatibility
 from snakeoil.demandload import demandload
 
 from pkgcore.config import ConfigHint
@@ -14,6 +13,7 @@ demandload(
     'os',
     'socket',
     'time',
+    'snakeoil.compatibility:raise_from',
     'snakeoil.osutils:pjoin',
 )
 
@@ -108,8 +108,7 @@ class rsync_syncer(base.ExternalSyncer):
                     yield ipaddr[4][0]
 
         except socket.error as e:
-            compatibility.raise_from(
-                base.syncer_exception(self.hostname, af_fam, str(e)))
+            raise_from(base.syncer_exception(self.hostname, af_fam, str(e)))
 
     def _sync(self, verbosity, output_fd):
         fd_pipes = {1: output_fd, 2: output_fd}

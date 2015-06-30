@@ -235,7 +235,7 @@ def add_fetcher(config, make_conf, distdir):
     config["fetcher"] = basics.AutoConfigSection(fetcher_dict)
 
 
-def make_cache(config_root, repo_path):
+def make_cache(repo_path):
     # TODO: probably should pull RepoConfig objects dynamically from the config
     # instead of regenerating them
     repo_config = RepoConfig(repo_path)
@@ -248,7 +248,7 @@ def make_cache(config_root, repo_path):
         cache_parent_dir = pjoin(repo_path, 'metadata', 'md5-cache')
     else:
         kls = 'pkgcore.cache.flat_hash.database'
-        repo_path = pjoin(config_root, 'var', 'cache', 'edb', 'dep', repo_path.lstrip('/'))
+        repo_path = pjoin('/var/cache/edb/dep', repo_path.lstrip('/'))
         cache_parent_dir = repo_path
 
     while not os.path.exists(cache_parent_dir):
@@ -379,8 +379,7 @@ def config_from_make_conf(location="/etc/", profile_override=None, **kwargs):
     # make.globals to provide vars used in make.conf, portage keeps
     # them separate (kind of annoying)
 
-    config_root = os.environ.get("PORTAGE_CONFIGROOT", "/")
-    base_path = pjoin(config_root, location.strip("/"))
+    base_path = pjoin(os.environ.get("PORTAGE_CONFIGROOT", "/"), location.strip("/"))
     portage_base = pjoin(base_path, "portage")
 
     # this isn't preserving incremental behaviour for features/use
@@ -422,8 +421,7 @@ def config_from_make_conf(location="/etc/", profile_override=None, **kwargs):
     kwds = {
         "class": "pkgcore.vdb.ondisk.tree",
         "location": pjoin(root, 'var', 'db', 'pkg'),
-        "cache_location": pjoin(
-            config_root, 'var', 'cache', 'edb', 'dep', 'var', 'db', 'pkg'),
+        "cache_location": '/var/cache/edb/dep/var/db/pkg',
     }
     config["vdb"] = basics.AutoConfigSection(kwds)
 
@@ -470,7 +468,7 @@ def config_from_make_conf(location="/etc/", profile_override=None, **kwargs):
 
         # metadata cache
         cache_name = 'cache:%s' % (repo_path,)
-        config[cache_name] = make_cache(config_root, repo_path)
+        config[cache_name] = make_cache(repo_path)
 
         # repo trees
         kwds = {

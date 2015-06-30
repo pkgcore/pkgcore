@@ -63,8 +63,7 @@ def sync_main(options, out, err):
     for repo_name, repo in repos:
         # rewrite the name if it has the usual prefix
         if repo_name.startswith("raw:"):
-            if repo_name.startswith("raw:"):
-                repo_name = repo_name[4:]
+            repo_name = repo_name[4:]
 
         if not repo.operations.supports("sync"):
             continue

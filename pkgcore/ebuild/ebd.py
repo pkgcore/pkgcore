@@ -112,9 +112,10 @@ class ebd(object):
         self.env["PKGCORE_PREFIX_SUPPORT"] = 'false'
         self.prefix = '/'
         if self.prefix_mode:
-            self.prefix = self.domain.prefix.lstrip('/')
-            self.env['EPREFIX'] = self.prefix
-            self.env['EROOT'] = abspath(pjoin(self.domain.root, self.prefix)).rstrip('/') + '/'
+            self.prefix = self.domain.prefix
+            self.env['EPREFIX'] = self.prefix.rstrip('/')
+            self.env['EROOT'] = abspath(
+                pjoin(self.domain.root, self.prefix.lstrip('/'))).rstrip('/') + '/'
             self.env["PKGCORE_PREFIX_SUPPORT"] = 'true'
 
         self.env.update(pkg.eapi_obj.get_ebd_env())
@@ -210,7 +211,8 @@ class ebd(object):
         # XXX: note that this is just eapi3 support, not yet prefix
         # full awareness.
         if self.prefix_mode:
-            self.env["ED"] = normpath(pjoin(self.env["D"], self.prefix)) + "/"
+            self.env["ED"] = normpath(
+                pjoin(self.env["D"], self.prefix.lstrip('/'))) + "/"
 
     def get_env_source(self):
         with open(pjoin(self.env["T"], "environment"), "rb") as f:

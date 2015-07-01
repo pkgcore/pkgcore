@@ -25,7 +25,7 @@ from snakeoil import data_source, klass
 from snakeoil.compatibility import raise_from, IGNORED_EXCEPTIONS
 from snakeoil.currying import post_curry, pretty_docs
 from snakeoil.demandload import demandload
-from snakeoil.osutils import ensure_dirs, normpath, pjoin, listdir_files
+from snakeoil.osutils import ensure_dirs, abspath, normpath, pjoin, listdir_files
 
 from pkgcore.ebuild import ebuild_built, const
 from pkgcore.ebuild.processor import (
@@ -112,14 +112,9 @@ class ebd(object):
         self.env["PKGCORE_PREFIX_SUPPORT"] = 'false'
         self.prefix = '/'
         if self.prefix_mode:
-            self.env['EROOT'] = normpath(self.domain.root)
-            self.prefix = self.domain.prefix.lstrip("/")
-            eprefix = normpath(pjoin(self.env["EROOT"], self.prefix))
-            if eprefix == '/':
-                # Set eprefix to '' if it's basically empty; this keeps certain crappy builds
-                # (cmake for example) from puking over //usr/blah pathways
-                eprefix = ''
-            self.env["EPREFIX"] = eprefix
+            self.prefix = self.domain.prefix.lstrip('/')
+            self.env['EPREFIX'] = self.prefix
+            self.env['EROOT'] = abspath(pjoin(self.domain.root, self.prefix)).rstrip('/') + '/'
             self.env["PKGCORE_PREFIX_SUPPORT"] = 'true'
 
         self.env.update(pkg.eapi_obj.get_ebd_env())

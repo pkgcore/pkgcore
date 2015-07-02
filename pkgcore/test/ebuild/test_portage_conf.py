@@ -46,7 +46,6 @@ class TestPortageConfig(TempDirMixin, TestCase):
         # unreadable file
         d = {}
         with NamedTemporaryFile() as f:
-            shutil.copyfile(pjoin(const.CONFIG_PATH, 'make.globals'), f.name)
             os.chmod(f.name, stat.S_IWUSR)
             self.assertRaises(
                 errors.PermissionDeniedError, load_make_conf, d, f.name)
@@ -64,27 +63,27 @@ class TestPortageConfig(TempDirMixin, TestCase):
                 d['ACCEPT_LICENSE'])
 
     def test_load_make_conf_dir(self):
+        # load files from dir and symlinked dir
+
         make_conf_dir = pjoin(self.dir, 'make.conf')
         os.mkdir(make_conf_dir)
         make_conf_sym = pjoin(self.dir, 'make.conf.sym')
         os.symlink(make_conf_dir, make_conf_sym)
 
-        # load files from dir and symlinked dir
         with open(pjoin(make_conf_dir, 'a'), 'w') as f:
-            with open(pjoin(make_conf_dir, 'z'), 'w') as g:
-                f.write('DISTDIR=foo\n')
-                f.flush()
+            f.write('DISTDIR=foo\n')
+            f.flush()
 
-                d = {}
-                load_make_conf(d, pjoin(const.CONFIG_PATH, 'make.globals'))
-                sym_d = d.copy()
-                load_make_conf(d, make_conf_dir)
-                load_make_conf(sym_d, make_conf_sym)
+            d = {}
+            load_make_conf(d, pjoin(const.CONFIG_PATH, 'make.globals'))
+            sym_d = d.copy()
+            load_make_conf(d, make_conf_dir)
+            load_make_conf(sym_d, make_conf_sym)
 
-                self.assertEqual(d, sym_d)
-                self.assertEqual(
-                    self.make_globals['ACCEPT_LICENSE'], d['ACCEPT_LICENSE'])
-                self.assertEqual('foo', d['DISTDIR'])
+            self.assertEqual(d, sym_d)
+            self.assertEqual(
+                self.make_globals['ACCEPT_LICENSE'], d['ACCEPT_LICENSE'])
+            self.assertEqual('foo', d['DISTDIR'])
 
     def test_load_repos_conf(self):
         self.assertIn('gentoo', self.global_repos_conf)
@@ -96,7 +95,6 @@ class TestPortageConfig(TempDirMixin, TestCase):
 
         # unreadable file
         with NamedTemporaryFile() as f:
-            shutil.copyfile(pjoin(const.CONFIG_PATH, 'repos.conf'), f.name)
             os.chmod(f.name, stat.S_IWUSR)
             self.assertRaises(
                 errors.PermissionDeniedError, load_repos_conf, f.name)
@@ -147,28 +145,32 @@ class TestPortageConfig(TempDirMixin, TestCase):
             self.assertEqual(['foo', 'gentoo'], repos.keys())
 
     def test_load_repos_conf_dir(self):
+        # repo priority sorting and dir/symlink scanning
+
         repos_conf_dir = pjoin(self.dir, 'repos.conf')
         os.mkdir(repos_conf_dir)
         repos_conf_sym = pjoin(self.dir, 'repos.conf.sym')
         os.symlink(repos_conf_dir, repos_conf_sym)
 
-        # repo priority sorting and dir scanning
-        with open(pjoin(repos_conf_dir, 'a'), 'w') as f:
-            with open(pjoin(repos_conf_dir, 'z'), 'w') as g:
-                shutil.copyfile(pjoin(const.CONFIG_PATH, 'repos.conf'), f.name)
-                g.write(textwrap.dedent('''\
-                    [bar]
-                    location = /var/gentoo/repos/bar
+        # add global repos.conf
+        shutil.copyfile(
+            pjoin(const.CONFIG_PATH, 'repos.conf'),
+            pjoin(repos_conf_dir, 'repos.conf'))
 
-                    [foo]
-                    location = /var/gentoo/repos/foo
-                    priority = 10'''))
-                g.flush()
+        with open(pjoin(repos_conf_dir, 'z'), 'w') as f:
+            f.write(textwrap.dedent('''\
+                [bar]
+                location = /var/gentoo/repos/bar
 
-                defaults, repos = load_repos_conf(repos_conf_dir)
-                sym_defaults, sym_repos = load_repos_conf(repos_conf_sym)
+                [foo]
+                location = /var/gentoo/repos/foo
+                priority = 10'''))
+            f.flush()
 
-                self.assertEqual(defaults, sym_defaults)
-                self.assertEqual(repos, sym_repos)
-                self.assertEqual('gentoo', defaults['main-repo'])
-                self.assertEqual(['foo', 'bar', 'gentoo'], repos.keys())
+        defaults, repos = load_repos_conf(repos_conf_dir)
+        sym_defaults, sym_repos = load_repos_conf(repos_conf_sym)
+
+        self.assertEqual(defaults, sym_defaults)
+        self.assertEqual(repos, sym_repos)
+        self.assertEqual('gentoo', defaults['main-repo'])
+        self.assertEqual(['foo', 'bar', 'gentoo'], repos.keys())

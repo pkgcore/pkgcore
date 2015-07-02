@@ -132,7 +132,7 @@ def make_repo_syncers(config, repos_conf, make_conf, allow_timestamps=True):
             # disable syncing if sync-uri is explicitly unset
             d['class'] = 'pkgcore.sync.base.DisabledSyncer'
 
-        name = 'sync:%s' % repo_opts['location']
+        name = 'sync:' + repo_opts['location']
         config[name] = basics.AutoConfigSection(d)
 
 
@@ -463,17 +463,17 @@ def config_from_make_conf(location="/etc/", profile_override=None, **kwargs):
         conf = {
             'class': 'pkgcore.ebuild.repo_objs.RepoConfig',
             'location': repo_path,
-            'syncer': 'sync:%s' % (repo_path,),
+            'syncer': 'sync:' + repo_path,
         }
 
         # metadata cache
-        cache_name = 'cache:%s' % (repo_path,)
+        cache_name = 'cache:' + repo_path
         config[cache_name] = make_cache(repo_path)
 
         # repo trees
         kwds = {
             'inherit': ('ebuild-repo-common',),
-            'raw_repo': 'raw:%s' % repo_name,
+            'raw_repo': 'raw:' + repo_name,
             'cache': cache_name,
         }
 
@@ -483,7 +483,7 @@ def config_from_make_conf(location="/etc/", profile_override=None, **kwargs):
         else:
             kwds['parent_repo'] = default_repo
 
-        config['raw:%s' % repo_name] = basics.AutoConfigSection(conf)
+        config['raw:' + repo_name] = basics.AutoConfigSection(conf)
         config[repo_path] = basics.AutoConfigSection(kwds)
 
     # XXX: Hack for portage-2 profile format support. We need to figure out how

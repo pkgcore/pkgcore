@@ -18,12 +18,20 @@ from pkgcore.test import TestCase
 
 class TestPortageConfig(TempDirMixin, TestCase):
 
-    def test_load_make_conf(self):
-        # default file
-        default_make_conf = {}
+    def __init__(self, *args, **kwargs):
+        TempDirMixin.__init__(self, *args, **kwargs)
+        TestCase.__init__(self, *args, **kwargs)
+
+        # default files
+        self.make_globals = {}
         load_make_conf(
-            default_make_conf, pjoin(const.CONFIG_PATH, 'make.globals'))
-        self.assertIn('PORTAGE_TMPDIR', default_make_conf)
+            self.make_globals, pjoin(const.CONFIG_PATH, 'make.globals'))
+
+        self.global_repos_defaults, self.global_repos_conf = load_repos_conf(
+            pjoin(const.CONFIG_PATH, 'repos.conf'))
+
+    def test_load_make_conf(self):
+        self.assertIn('PORTAGE_TMPDIR', self.make_globals)
 
         # nonexistent file
         d = {}
@@ -52,26 +60,34 @@ class TestPortageConfig(TempDirMixin, TestCase):
             load_make_conf(d, f.name, allow_sourcing=True, incrementals=True)
             self.assertEqual('foo', d['DISTDIR'])
             self.assertEqual(
-                ' '.join([default_make_conf['ACCEPT_LICENSE'], 'foo']),
+                ' '.join([self.make_globals['ACCEPT_LICENSE'], 'foo']),
                 d['ACCEPT_LICENSE'])
 
-        # load files from dir
-        with NamedTemporaryFile(prefix='a', dir=self.dir) as f:
-            with NamedTemporaryFile(prefix='z', dir=self.dir) as g:
-                shutil.copyfile(pjoin(const.CONFIG_PATH, 'make.globals'), f.name)
-                g.write(b'DISTDIR=foo\n')
-                g.flush()
+    def test_load_make_conf_dir(self):
+        make_conf_dir = pjoin(self.dir, 'make.conf')
+        os.mkdir(make_conf_dir)
+        make_conf_sym = pjoin(self.dir, 'make.conf.sym')
+        os.symlink(make_conf_dir, make_conf_sym)
+
+        # load files from dir and symlinked dir
+        with open(pjoin(make_conf_dir, 'a'), 'w') as f:
+            with open(pjoin(make_conf_dir, 'z'), 'w') as g:
+                f.write('DISTDIR=foo\n')
+                f.flush()
+
                 d = {}
-                load_make_conf(d, self.dir)
+                load_make_conf(d, pjoin(const.CONFIG_PATH, 'make.globals'))
+                sym_d = d.copy()
+                load_make_conf(d, make_conf_dir)
+                load_make_conf(sym_d, make_conf_sym)
+
+                self.assertEqual(d, sym_d)
                 self.assertEqual(
-                    default_make_conf['ACCEPT_LICENSE'], d['ACCEPT_LICENSE'])
+                    self.make_globals['ACCEPT_LICENSE'], d['ACCEPT_LICENSE'])
                 self.assertEqual('foo', d['DISTDIR'])
 
     def test_load_repos_conf(self):
-        # default file
-        defaults, repos_conf = load_repos_conf(
-            pjoin(const.CONFIG_PATH, 'repos.conf'))
-        self.assertIn('gentoo', repos_conf)
+        self.assertIn('gentoo', self.global_repos_conf)
 
         # nonexistent file
         self.assertRaises(
@@ -130,9 +146,15 @@ class TestPortageConfig(TempDirMixin, TestCase):
             self.assertEqual('gentoo', defaults['main-repo'])
             self.assertEqual(['foo', 'gentoo'], repos.keys())
 
+    def test_load_repos_conf_dir(self):
+        repos_conf_dir = pjoin(self.dir, 'repos.conf')
+        os.mkdir(repos_conf_dir)
+        repos_conf_sym = pjoin(self.dir, 'repos.conf.sym')
+        os.symlink(repos_conf_dir, repos_conf_sym)
+
         # repo priority sorting and dir scanning
-        with NamedTemporaryFile(prefix='a', dir=self.dir) as f:
-            with NamedTemporaryFile(prefix='z', dir=self.dir) as g:
+        with open(pjoin(repos_conf_dir, 'a'), 'w') as f:
+            with open(pjoin(repos_conf_dir, 'z'), 'w') as g:
                 shutil.copyfile(pjoin(const.CONFIG_PATH, 'repos.conf'), f.name)
                 g.write(textwrap.dedent('''\
                     [bar]
@@ -140,9 +162,13 @@ class TestPortageConfig(TempDirMixin, TestCase):
 
                     [foo]
                     location = /var/gentoo/repos/foo
-                    priority = 10''').encode())
+                    priority = 10'''))
                 g.flush()
 
-                defaults, repos = load_repos_conf(self.dir)
+                defaults, repos = load_repos_conf(repos_conf_dir)
+                sym_defaults, sym_repos = load_repos_conf(repos_conf_sym)
+
+                self.assertEqual(defaults, sym_defaults)
+                self.assertEqual(repos, sym_repos)
                 self.assertEqual('gentoo', defaults['main-repo'])
                 self.assertEqual(['foo', 'bar', 'gentoo'], repos.keys())

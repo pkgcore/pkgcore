@@ -275,7 +275,7 @@ def load_make_conf(vars_dict, path, allow_sourcing=False, required=True,
     if allow_sourcing:
         sourcing_command = 'source'
 
-    for fp in sorted_scan(path, nonexistent=True):
+    for fp in sorted_scan(os.path.realpath(path), follow_symlinks=True, nonexistent=True):
         try:
             new_vars = read_bash_dict(
                 fp, vars_dict=vars_dict, sourcing_command=sourcing_command)
@@ -304,7 +304,7 @@ def load_repos_conf(path):
     defaults = {}
     repos = {}
 
-    for fp in sorted_scan(path, nonexistent=True):
+    for fp in sorted_scan(os.path.realpath(path), follow_symlinks=True, nonexistent=True):
         try:
             with open(fp) as f:
                 config = ConfigParser()

@@ -410,7 +410,8 @@ class RepoConfig(syncable.tree):
             logger.warning(
                 "repository at %r has an unsupported profile format(s): %s" %
                 (self.location, ', '.join(repr(x) for x in sorted(unknown))))
-            profile_formats = set(['pms'])
+            profile_formats.difference_update(unknown)
+            profile_formats.add('pms')
         sf(self, 'profile_formats', profile_formats)
 
     @klass.jit_attr

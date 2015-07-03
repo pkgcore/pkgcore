@@ -186,10 +186,7 @@ class StoreConfigObject(argparse._StoreAction):
 
     def _load_obj(self, sections, name):
         metavar = self.metavar if self.metavar is not None else self.config_type
-        if metavar is None:
-            metavar = ''
-        else:
-            metavar = metavar.lower() + ' '
+        metavar = metavar.lower() + ' ' if metavar is not None else ''
 
         try:
             val = sections[name]

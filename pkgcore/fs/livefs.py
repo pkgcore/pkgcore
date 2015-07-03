@@ -141,8 +141,10 @@ def iter_scan(path, offset=None, follow_symlinks=False, chksum_types=None):
     :return: an iterator of :obj:`pkgcore.fs.fs.fsBase` objects.
 
     :param path: str path of what directory to scan in the livefs
+    :type path: str
     :param offset: if not None, prefix to strip from each objects location.
         if offset is /tmp, /tmp/blah becomes /blah
+    :type nonexistent: str or None
     """
     chksum_handlers = get_handlers(chksum_types)
 
@@ -156,14 +158,18 @@ def sorted_scan(path, nonexistent=False, *args, **kwargs):
     """
     Recursively scan a path for regular, nonhidden files.
 
-    :return: a list of regular, nonhidden file locations accessible under the
-        given path
-
-    :param path: str path of what directory to scan in the livefs
+    :param path: path to directory to scan in the livefs
+    :type path: str
     :param nonexistent: return nonexistent given path if True, else return
         an empty list
+    :type nonexistent: bool
 
-    Look at :py:func:`iter_scan` for other valid args.
+    :return: an alphabetically sorted list of regular, nonhidden file locations
+        accessible under the given path
+
+    :raise EnvironmentError: on permission errors
+
+    See :py:func:`iter_scan` for other valid args.
     """
     files = [path] if nonexistent else []
 

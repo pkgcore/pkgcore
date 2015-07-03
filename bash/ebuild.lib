@@ -29,7 +29,7 @@ DONT_EXPORT_VARS="ORIG_VARS GROUPS ORIG_FUNCS FUNCNAME CCACHE.* DISTCC.* SYNC
 (DIST|FILES|RPM|ECLASS)DIR HOME MUST_EXPORT_ENV QA_CONTROLLED_EXTERNALLY HOSTNAME
 myarg SANDBOX_(DEBUG(_LOG)?|ON|VERBOSE|BASHRC|PID|LIB)
 BASH.* EUID PPID SHELLOPTS UID ACCEPT_(KEYWORDS|LICENSE) BUILD(_PREFIX|DIR) T DIRSTACK
-(PKGCORE_)?EBUILD_PHASE PKGCORE_.* PORTAGE_.* SUDO_.* LD_PRELOAD ret line phases D IMAGE
+EBUILD_PHASE PKGCORE_.* PORTAGE_.* SUDO_.* LD_PRELOAD ret line phases D IMAGE
 PORT(_LOGDIR|DIR(_OVERLAY)?) ROOT _ done e PROFILE_.* EBUILD ECLASS LINENO
 HILITE TMP HISTCMD OPTIND RANDOM (OLD)?PWD IFS PIPESTATUS LINENO FUNCNAME _pipestatus
 SHELL SHLVL EMERGE_(WARNING_DELAY|FROM) MERGE_TYPE REPLACING_VERSIONS REPLACED_BY_VERSION (RESUME|FETCH)COMMAND(_.*)?
@@ -177,7 +177,7 @@ __generate_initial_ebuild_environ() {
 	local EXISTING_PATH=${PATH}
 	local T=${T}
 
-	if [[ ${PKGCORE_EBUILD_PHASE} == "setup" ]]; then
+	if [[ ${EBUILD_PHASE} == "setup" ]]; then
 		# we specifically save the env so it's not stomped on by sourcing.
 		# bug 51552
 		__timed_call __environ_save_to_file "${T}"/.temp_env
@@ -202,7 +202,7 @@ __generate_initial_ebuild_environ() {
 
 	[[ -n ${EBUILD} ]] && __timed_call __load_ebuild "${EBUILD}"
 
-	if [[ ${PKGCORE_EBUILD_PHASE} != "depend" ]]; then
+	if [[ ${EBUILD_PHASE} != "depend" ]]; then
 		RESTRICT=${PKGCORE_FINALIZED_RESTRICT}
 		unset PKGCORE_FINALIZED_RESTRICT
 		unset CC CXX
@@ -324,7 +324,6 @@ __execute_phases() {
 	local PKGCORE_IS_NOT_HELPER=1
 	local myarg ret
 	for myarg in $*; do
-		PKGCORE_EBUILD_PHASE=${myarg}
 		EBUILD_PHASE=${myarg}
 
 		local PKGCORE_SAVE_ENV=true

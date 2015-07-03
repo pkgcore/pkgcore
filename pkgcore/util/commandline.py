@@ -185,22 +185,28 @@ class StoreConfigObject(argparse._StoreAction):
             yield k
 
     def _load_obj(self, sections, name):
+        metavar = self.metavar if self.metavar is not None else self.config_type
+        if metavar is None:
+            metavar = ''
+        else:
+            metavar = metavar.lower() + ' '
+
         try:
             val = sections[name]
         except KeyError:
             choices = ', '.join(self._choices(sections))
             if choices:
-                available = ' (available %ss: %s)' % (self.config_type, choices)
+                available = ' (available: %s)' % choices
             else:
                 available = ''
 
             raise argparse.ArgumentError(
-                self, "couldn't find %s %r%s" %
-                (self.config_type, name, available))
+                self, "couldn't find %s%r%s" %
+                (metavar, name, available))
 
         if self.writable and getattr(val, 'frozen', False):
-            raise argparse.ArgumentError(self, "%s %r is readonly" %
-                (self.config_type, name))
+            raise argparse.ArgumentError(self, "%s%r is readonly" %
+                (metavar, name))
 
         if self.store_name:
             return name, val

@@ -34,7 +34,7 @@ class CommandlineTest(TestCase, helpers.ArgParseMixin):
             "argument source: couldn't find cache 'spork'",
             'spork', 'spork2')
         self.assertError(
-            "argument target: couldn't find cache 'spork2' (available caches: spork)",
+            "argument target: couldn't find cache 'spork2' (available: spork)",
             'spork', 'spork2',
             spork=basics.HardCodedConfigSection({'class': Cache}))
         self.assertError(

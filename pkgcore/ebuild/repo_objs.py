@@ -335,6 +335,8 @@ class RepoConfig(syncable.tree):
     layout_offset = "metadata/layout.conf"
 
     default_hashes = ('size', 'sha256', 'sha512', 'whirlpool')
+    supported_profile_formats = ('pms', 'portage-1', 'portage-2')
+    supported_cache_formats = ('pms', 'md5-dict')
 
     klass.inject_immutable_instance(locals())
 
@@ -396,7 +398,7 @@ class RepoConfig(syncable.tree):
         sf(self, 'eapis_deprecated', tuple(iter_stable_unique(data.get('eapis-deprecated', '').split())))
 
         v = set(data.get('cache-formats', 'pms').lower().split())
-        if not v.intersection(['pms', 'md5-dict']):
+        if not v.intersection(self.supported_cache_formats):
             v = 'pms'
         sf(self, 'cache_format', list(v)[0])
 
@@ -405,10 +407,10 @@ class RepoConfig(syncable.tree):
             logger.warning("repository at %r has unset profile-formats, "
                            "defaulting to pms")
             profile_formats = set(['pms'])
-        unknown = profile_formats.difference(['pms', 'portage-1', 'portage-2'])
+        unknown = profile_formats.difference(self.supported_profile_formats)
         if unknown:
             logger.warning(
-                "repository at %r has an unsupported profile format(s): %s" %
+                "repository at %r has unsupported profile format(s): %s" %
                 (self.location, ', '.join(repr(x) for x in sorted(unknown))))
             profile_formats.difference_update(unknown)
             profile_formats.add('pms')

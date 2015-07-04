@@ -136,7 +136,7 @@ def make_repo_syncers(config, repos_conf, make_conf, allow_timestamps=True):
         config[name] = basics.AutoConfigSection(d)
 
 
-def add_sets(config, root, portage_base_dir):
+def add_sets(config, root, config_dir):
     config["world"] = basics.AutoConfigSection({
         "class": "pkgcore.pkgsets.filelist.WorldFile",
         "location": pjoin(root, econst.WORLD_FILE.lstrip('/'))})
@@ -150,7 +150,7 @@ def add_sets(config, root, portage_base_dir):
         "class": "pkgcore.pkgsets.installed.VersionedInstalled",
         "vdb": "vdb"})
 
-    set_fp = pjoin(portage_base_dir, "sets")
+    set_fp = pjoin(config_dir, "sets")
     try:
         for setname in listdir_files(set_fp):
             # Potential for name clashes here, those will just make
@@ -167,28 +167,22 @@ def add_sets(config, root, portage_base_dir):
         if e.errno != errno.ENOENT:
             raise
 
-def _find_profile_link(base_path, portage_compat=False):
-    make_profile = pjoin(base_path, 'make.profile')
+def _find_profile_link(config_dir):
+    make_profile = pjoin(config_dir, 'make.profile')
     try:
         return normpath(abspath(
-            pjoin(base_path, os.readlink(make_profile))))
+            pjoin(config_dir, os.readlink(make_profile))))
     except EnvironmentError as oe:
         if oe.errno in (errno.ENOENT, errno.EINVAL):
-            if oe.errno == errno.ENOENT:
-                if portage_compat:
-                    return None
-                profile = _find_profile_link(pjoin(base_path, 'portage'), True)
-                if profile is not None:
-                    return profile
             raise_from(errors.ComplexInstantiationError(
                 "%s must be a symlink pointing to a real target" % (
                     make_profile,)))
         raise_from(errors.ComplexInstantiationError(
             "%s: unexpected error- %s" % (make_profile, oe.strerror)))
 
-def add_profile(config, base_path, user_profile_path=None, profile_override=None):
+def add_profile(config, config_dir, profile_override=None):
     if profile_override is None:
-        profile = _find_profile_link(base_path)
+        profile = _find_profile_link(config_dir)
     else:
         profile = normpath(abspath(profile_override))
         if not os.path.exists(profile):
@@ -201,6 +195,7 @@ def add_profile(config, base_path, user_profile_path=None, profile_override=None
             '%s expands to %s, but no profile detected' %
             (pjoin(base_path, 'make.profile'), profile))
 
+    user_profile_path = pjoin(config_dir, 'profile')
     if os.path.isdir(user_profile_path):
         config["profile"] = basics.AutoConfigSection({
             "class": "pkgcore.ebuild.profiles.UserProfile",
@@ -357,25 +352,25 @@ def load_repos_conf(path):
     return defaults, repos
 
 
-@configurable({'location': 'str'}, typename='configsection')
+@configurable({'config_dir': 'str'}, typename='configsection')
 @errors.ParsingError.wrap_exception("while loading portage configuration")
-def config_from_make_conf(location="/etc/", profile_override=None, **kwargs):
+def config_from_make_conf(location=None, profile_override=None, **kwargs):
     """
-    generate a config from a file location
+    generate a config using portage's configuration files
 
-    :param location: location the portage configuration is based in,
-        defaults to /etc
+    :param location: path to the portage configuration directory,
+        (defaults to /etc/portage)
     :param profile_override: profile to use instead of the current system
-        profile, i.e. the target of the /etc/portage/make.profile
-        (or deprecated /etc/make.profile) symlink
+        profile, i.e. the target of the /etc/portage/make.profile symlink
     """
 
     # this actually differs from portage parsing- we allow
     # make.globals to provide vars used in make.conf, portage keeps
     # them separate (kind of annoying)
 
-    base_path = pjoin(os.environ.get("PORTAGE_CONFIGROOT", "/"), location.strip("/"))
-    portage_base = pjoin(base_path, "portage")
+    config_dir = location if location is not None else '/etc/portage'
+    config_dir = pjoin(
+        os.environ.get('PORTAGE_CONFIGROOT', '/'), config_dir.lstrip('/'))
 
     # this isn't preserving incremental behaviour for features/use
     # unfortunately
@@ -388,7 +383,7 @@ def config_from_make_conf(location="/etc/", profile_override=None, **kwargs):
     except:
         raise_from(errors.ParsingError("failed to load make.globals"))
     load_make_conf(
-        make_conf, pjoin(portage_base, 'make.conf'), required=False,
+        make_conf, pjoin(config_dir, 'make.conf'), required=False,
         allow_sourcing=True, incrementals=True)
 
     root = os.environ.get("ROOT", make_conf.get("ROOT", "/"))
@@ -408,10 +403,9 @@ def config_from_make_conf(location="/etc/", profile_override=None, **kwargs):
         triggers.append(name)
 
     # sets...
-    add_sets(config, root, portage_base)
+    add_sets(config, root, config_dir)
 
-    user_profile_path = pjoin(base_path, "portage", "profile")
-    add_profile(config, base_path, user_profile_path, profile_override)
+    add_profile(config, config_dir, profile_override)
 
     kwds = {
         "class": "pkgcore.vdb.ondisk.tree",
@@ -421,7 +415,7 @@ def config_from_make_conf(location="/etc/", profile_override=None, **kwargs):
     config["vdb"] = basics.AutoConfigSection(kwds)
 
     try:
-        defaults, repos_conf = load_repos_conf(pjoin(portage_base, 'repos.conf'))
+        defaults, repos_conf = load_repos_conf(pjoin(config_dir, 'repos.conf'))
     except errors.ParsingError as e:
         if not getattr(getattr(e, 'exc', None), 'errno', None) == errno.ENOENT:
             raise
@@ -602,7 +596,7 @@ def config_from_make_conf(location="/etc/", profile_override=None, **kwargs):
     for f in ("package.mask", "package.unmask", "package.accept_keywords",
               "package.keywords", "package.license", "package.use",
               "package.env", "env:ebuild_hook_dir", "bashrc"):
-        fp = pjoin(portage_base, f.split(":")[0])
+        fp = pjoin(config_dir, f.split(":")[0])
         try:
             os.stat(fp)
         except OSError as oe:

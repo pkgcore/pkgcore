@@ -170,18 +170,18 @@ regen = subparsers.add_parser(
     "regen", parents=shared_options,
     description="regenerate repository caches")
 regen.add_argument(
-    "--disable-eclass-caching", action='store_true',
-    default=False,
-    help="For regen operation, pkgcore internally turns on an "
-    "optimization that caches eclasses into individual functions "
-    "thus parsing the eclass only twice max per EBD processor.  Disabling "
-    "this optimization via this option results in ~2x slower "
-    "regeneration. Disable it only if you suspect the optimization "
-    "is somehow causing issues.")
+    "--disable-eclass-caching", action='store_true', default=False,
+    help="""
+        For regen operation, pkgcore internally turns on an optimization that
+        caches eclasses into individual functions thus parsing the eclass only
+        twice max per EBD processor. Disabling this optimization via this
+        option results in ~2x slower regeneration. Disable it only if you
+        suspect the optimization is somehow causing issues.
+    """)
 regen.add_argument(
     "-t", "--threads", type=int,
     default=commandline.DelayedValue(_get_default_jobs, 100),
-    help="number of threads to use for regeneration.  Defaults to using all "
+    help="number of threads to use for regeneration. Defaults to using all "
     "available processors")
 regen.add_argument(
     "--force", action='store_true', default=False,
@@ -193,35 +193,35 @@ regen.add_argument(
     "-v", "--verbose", action='store_true', default=False,
     help="show verbose output")
 regen.add_argument(
-    "repo", action=commandline.StoreRepoObject,
-    help="repository to regenerate caches for")
+    'repos', metavar='repo', nargs='*', action=commandline.StoreRepoObject,
+    help="repo(s) to regenerate caches for")
 @regen.bind_main_func
 def regen_main(options, out, err):
     """Regenerate a repository cache."""
 
-    repo = options.repo
-    if not repo.operations.supports("regen_cache"):
-        out.write("repository %s doesn't support cache regeneration" % (repo,))
-        return 0
+    for repo in options.repos:
+        if not repo.operations.supports("regen_cache"):
+            out.write("repository %s doesn't support cache regeneration" % (repo,))
+            continue
 
-    start_time = time.time()
-    repo.operations.regen_cache(
-        threads=options.threads,
-        observer=observer.formatter_output(out), force=options.force,
-        eclass_caching=(not options.disable_eclass_caching))
-    end_time = time.time()
-    if options.verbose:
-        out.write(
-            "finished %d nodes in %.2f seconds" %
-            (len(repo), end_time - start_time))
-    if options.rsync:
-        timestamp = pjoin(repo.location, "metadata", "timestamp.chk")
-        try:
-            with open(timestamp, "w") as f:
-                f.write(time.strftime("%a, %d %b %Y %H:%M:%S +0000", time.gmtime()))
-        except IOError as e:
-            out.error("Unable to update timestamp file '%s': %s" % (timestamp, e.strerror))
-            return os.EX_IOERR
+        start_time = time.time()
+        repo.operations.regen_cache(
+            threads=options.threads,
+            observer=observer.formatter_output(out), force=options.force,
+            eclass_caching=(not options.disable_eclass_caching))
+        end_time = time.time()
+        if options.verbose:
+            out.write(
+                "finished %d nodes in %.2f seconds" %
+                (len(repo), end_time - start_time))
+        if options.rsync:
+            timestamp = pjoin(repo.location, "metadata", "timestamp.chk")
+            try:
+                with open(timestamp, "w") as f:
+                    f.write(time.strftime("%a, %d %b %Y %H:%M:%S +0000", time.gmtime()))
+            except IOError as e:
+                out.error("Unable to update timestamp file '%s': %s" % (timestamp, e.strerror))
+                return os.EX_IOERR
     return 0
 
 

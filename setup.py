@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import glob
+from itertools import chain
 import operator
 import os
 import subprocess
@@ -20,10 +21,11 @@ from stat import ST_MODE
 
 from snakeoil import distutils_extensions as snk_distutils
 
-# These offsets control where we install the pkgcore make.globals configuration,
-# and the EBD bits relative to the install-data path given to the install subcmd.
-CONFIG_DATA_INSTALL_OFFSET = 'share/pkgcore/config'
-EBD_DATA_INSTALL_OFFSET = 'lib/pkgcore'
+# These offsets control where we install the pkgcore config files and the EBD
+# bits relative to the install-data path given to the install subcmd.
+DATA_INSTALL_OFFSET = 'share/pkgcore'
+CONFIG_INSTALL_OFFSET = os.path.join(DATA_INSTALL_OFFSET, 'config')
+EBD_INSTALL_OFFSET = 'lib/pkgcore'
 
 
 class mysdist(snk_distutils.sdist):
@@ -372,16 +374,18 @@ class pkgcore_install(_base_install):
             write_pkgcore_lookup_configs(self.install_purelib, target)
 
 
-def write_pkgcore_lookup_configs(python_base, data_path, injected_bin_path=()):
+def write_pkgcore_lookup_configs(python_base, install_prefix, injected_bin_path=()):
     path = os.path.join(python_base, "pkgcore", "_const.py")
     log.info("Writing lookup configuration to %s" % path)
     with open(path, "w") as f:
         os.chmod(path, 0o644)
-        f.write("DATA_PATH=%r\n" % data_path)
-        f.write("EBD_PATH=%r\n" %
-                os.path.join(data_path, EBD_DATA_INSTALL_OFFSET))
+        f.write("INSTALL_PREFIX=%r\n" % install_prefix)
+        f.write("DATA_PATH=%r\n" %
+                os.path.join(install_prefix, DATA_INSTALL_OFFSET))
         f.write("CONFIG_PATH=%r\n" %
-                os.path.join(data_path, CONFIG_DATA_INSTALL_OFFSET))
+                os.path.join(install_prefix, CONFIG_INSTALL_OFFSET))
+        f.write("EBD_PATH=%r\n" %
+                os.path.join(install_prefix, EBD_INSTALL_OFFSET))
         # This is added to suppress the default behaviour of looking
         # within the repo for a bin subdir.
         f.write("INJECTED_BIN_PATH=%r\n" % (tuple(injected_bin_path),))
@@ -488,9 +492,10 @@ setup(
     author_email='pkgcore-dev@googlegroups.com',
     packages=packages,
     requires=['snakeoil (>=0.6.4)'],
-    data_files=[
-        (CONFIG_DATA_INSTALL_OFFSET, glob.glob('config/*')),
-    ] + list(_get_data_mapping(EBD_DATA_INSTALL_OFFSET, 'bash')),
+    data_files=list(chain(
+        _get_data_mapping(CONFIG_INSTALL_OFFSET, 'config'),
+        _get_data_mapping(EBD_INSTALL_OFFSET, 'bash'),
+    )),
     ext_modules=extensions, cmdclass=cmdclass, command_options=command_options,
     classifiers=[
         'License :: OSI Approved :: BSD License',

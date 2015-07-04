@@ -216,22 +216,17 @@ def add_profile(config, base_path, user_profile_path=None, profile_override=None
         })
 
 
-def add_fetcher(config, make_conf, distdir):
+def add_fetcher(config, make_conf):
     fetchcommand = make_conf.pop("FETCHCOMMAND")
     resumecommand = make_conf.pop("RESUMECOMMAND", fetchcommand)
 
-    # copy it to prevent modification.
-    # map a config arg to an obj arg, pop a few values
-    fetcher_dict = dict(make_conf)
-    if "FETCH_ATTEMPTS" in fetcher_dict:
-        fetcher_dict["attempts"] = fetcher_dict.pop("FETCH_ATTEMPTS")
-    fetcher_dict.pop("readonly", None)
-    fetcher_dict.update({
+    fetcher_dict = {
         "class": "pkgcore.fetch.custom.fetcher",
-        "distdir": distdir,
+        "distdir": normpath(os.environ.get("DISTDIR", make_conf.pop("DISTDIR"))),
         "command": fetchcommand,
         "resume_command": resumecommand,
-    })
+        "attempts": make_conf.pop("FETCH_ATTEMPTS", '10'),
+    }
     config["fetcher"] = basics.AutoConfigSection(fetcher_dict)
 
 
@@ -590,8 +585,7 @@ def config_from_make_conf(location="/etc/", profile_override=None, **kwargs):
     # now add the fetcher- we delay it till here to clean out the environ
     # it passes to the command.
     # *everything* in make_conf must be str values also.
-    distdir = normpath(os.environ.get("DISTDIR", make_conf.pop("DISTDIR")))
-    add_fetcher(config, make_conf, distdir)
+    add_fetcher(config, make_conf)
 
     # finally... domain.
     make_conf.update({

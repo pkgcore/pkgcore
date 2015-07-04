@@ -67,19 +67,14 @@ def load_config(user_conf_file=USER_CONF_FILE,
                 system_conf_file=SYSTEM_CONF_FILE,
                 debug=False, prepend_sources=(), append_sources=(),
                 skip_config_files=False, profile_override=None,
-                location='/etc/', **kwargs):
+                location=None, **kwargs):
     """
     the main entry point for any code looking to use pkgcore.
 
     :param user_conf_file: file to attempt to load, else defaults to trying to
-        load portage 2 style configs (/etc/portage/make.conf and
-        /etc/portage/make.profile or the deprecated /etc/make.conf and
-        /etc/make.profile locations)
-    :param location: location the portage configuration is based in,
-        defaults to /etc
-    :param profile_override: profile to use instead of the current system
-        profile, i.e. the target path of the /etc/portage/make.profile
-        (or deprecated /etc/make.profile) symlink
+        load portage configs from /etc/portage
+    :param profile_override: targetted profile instead of system setting
+    :param location: path to pkgcore config file or portage config directory
 
     :return: :obj:`pkgcore.config.central.ConfigManager` instance
         representing the system config.
@@ -88,17 +83,13 @@ def load_config(user_conf_file=USER_CONF_FILE,
     configs = list(prepend_sources)
     configs.extend(get_plugins('global_config'))
     if not skip_config_files:
-        have_system_conf = os.path.isfile(system_conf_file)
-        have_user_conf = os.path.isfile(user_conf_file)
-        if have_system_conf or have_user_conf:
-            if have_system_conf:
-                with open(system_conf_file) as f:
+        for config in (location, user_conf_file, system_conf_file):
+            if config is not None and os.path.isfile(config):
+                with open(config) as f:
                     configs.append(cparser.config_from_file(f))
-            if have_user_conf:
-                with open(user_conf_file) as f:
-                    configs.append(cparser.config_from_file(f))
+                break
         else:
-            # make.conf...
+            # load portage config
             configs.append(config_from_make_conf(
                 location=location, profile_override=profile_override, **kwargs))
     configs.extend(append_sources)

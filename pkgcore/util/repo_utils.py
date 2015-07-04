@@ -27,6 +27,7 @@ def get_raw_repos(repo):
         return l
     return [repo]
 
+
 def get_virtual_repos(repo, sentinel=True):
     """
     select only virtual repos

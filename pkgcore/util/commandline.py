@@ -127,7 +127,8 @@ class Delayed(argparse.Action):
 
         self.priority = int(priority)
         self.target = target(option_strings=option_strings, dest=dest, **kwds.copy())
-        super(Delayed, self).__init__(option_strings=option_strings[:],
+        super(Delayed, self).__init__(
+            option_strings=option_strings[:],
             dest=dest, nargs=kwds.get("nargs", None), required=kwds.get("required", None),
             help=kwds.get("help", None), metavar=kwds.get("metavar", None))
 
@@ -143,8 +144,8 @@ CONFIG_ALL_DEFAULT = object()
 class EnableDebug(argparse._StoreTrueAction):
 
     def __call__(self, parser, namespace, values, option_string=None):
-        super(EnableDebug, self).__call__(parser, namespace, values,
-            option_string=option_string)
+        super(EnableDebug, self).__call__(
+            parser, namespace, values, option_string=option_string)
         logging.root.setLevel(logging.DEBUG)
 
 
@@ -202,8 +203,8 @@ class StoreConfigObject(argparse._StoreAction):
                 (metavar, name, available))
 
         if self.writable and getattr(val, 'frozen', False):
-            raise argparse.ArgumentError(self, "%s%r is readonly" %
-                (metavar, name))
+            raise argparse.ArgumentError(
+                self, "%s%r is readonly" % (metavar, name))
 
         if self.store_name:
             return name, val
@@ -275,10 +276,10 @@ class StoreConfigObject(argparse._StoreAction):
         try:
             obj = getattr(namespace.config, config_type)[key]
         except KeyError:
-            raise ConfigError("Failed loading object %s of type %s"
-                % (config_type, key))
-            raise argparse.ArgumentError(self, "couldn't find %s %r" %
-                (self.config_type, name))
+            raise ConfigError(
+                "Failed loading object %s of type %s" % (config_type, key))
+            raise argparse.ArgumentError(
+                self, "couldn't find %s %r" % (self.config_type, name))
         setattr(namespace, attr, obj)
 
 
@@ -286,7 +287,8 @@ class StoreRepoObject(StoreConfigObject):
 
     def __init__(self, *args, **kwargs):
         if 'config_type' in kwargs:
-            raise ValueError("StoreRepoObject: config_type keyword is redundant: got %s"
+            raise ValueError(
+                "StoreRepoObject: config_type keyword is redundant: got %s"
                 % (kwargs['config_type'],))
         self.raw = kwargs.pop("raw", False)
         self.domain_forced = 'domain' in kwargs
@@ -348,7 +350,8 @@ class DomainFromPath(StoreConfigObject):
         if not targets:
             raise ValueError("couldn't find domain at path %r" % (requested_path,))
         elif len(targets) != 1:
-            raise ValueError("multiple domains claim root %r: domains %s" %
+            raise ValueError(
+                "multiple domains claim root %r: domains %s" %
                 (requested_path, ', '.join(repr(x[0]) for x in targets)))
         return targets[0][1]
 
@@ -422,11 +425,13 @@ class BooleanQuery(DelayedValue):
         elif callable(klass_type):
             self.klass = klass
         else:
-            raise ValueError("klass_type either needs to be 'or', 'and', "
+            raise ValueError(
+                "klass_type either needs to be 'or', 'and', "
                 "or a callable.  Got %r" % (klass_type,))
 
         if converter is not None and not callable(converter):
-            raise ValueError("converter either needs to be None, or a callable;"
+            raise ValueError(
+                "converter either needs to be None, or a callable;"
                 " got %r" % (converter,))
 
         self.converter = converter
@@ -470,16 +475,16 @@ def make_query(parser, *args, **kwargs):
     else:
         kwargs.setdefault("type", parse_restriction)
     kwargs.setdefault("metavar", dest)
-    final_priority  = kwargs.pop("final_priority", None)
+    final_priority = kwargs.pop("final_priority", None)
     final_converter = kwargs.pop("final_converter", None)
     parser.add_argument(*args, **kwargs)
-    bool_kwargs = {'converter':final_converter}
+    bool_kwargs = {'converter': final_converter}
     if final_priority is not None:
         bool_kwargs['priority'] = final_priority
     obj = BooleanQuery(list(attrs) + [subattr], klass_type=klass_type, **bool_kwargs)
     # note that dict expansion has to be used here; dest=obj would just set a
     # default named 'dest'
-    parser.set_defaults(**{dest:obj})
+    parser.set_defaults(**{dest: obj})
 
 
 class Expansion(argparse.Action):
@@ -489,7 +494,8 @@ class Expansion(argparse.Action):
         if subst is None:
             raise TypeError("resultant_string must be set")
 
-        super(Expansion, self).__init__(option_strings=option_strings,
+        super(Expansion, self).__init__(
+            option_strings=option_strings,
             dest=dest,
             help=help,
             required=required,
@@ -506,7 +512,7 @@ class Expansion(argparse.Action):
         dvals = {str(idx): val for idx, val in enumerate(vals)}
         dvals['*'] = ' '.join(vals)
 
-        for action in parser._actions:
+        for action in actions:
             action_map.update((option, action) for option in action.option_strings)
 
         for chunk in self.subst:
@@ -514,7 +520,9 @@ class Expansion(argparse.Action):
             action = action_map.get(option)
             args = [x % dvals for x in args]
             if not action:
-                raise ValueError("unable to find option %r for %r" (option, self.option_strings))
+                raise ValueError(
+                    "unable to find option %r for %r" %
+                    (option, self.option_strings))
             if action.type is not None:
                 args = map(action.type, args)
             if action.nargs in (1, None):
@@ -545,7 +553,7 @@ def python_namespace_type(value, module=False, attribute=False):
 class _SubParser(argparse._SubParsersAction):
 
     def add_parser(self, name, **kwds):
-        """modified version of argparse._SubParsersAction, linking description/help if one is specified"""
+        """argparser subparser that links description/help if one is specified"""
         description = kwds.get("description")
         help_txt = kwds.get("help")
         if description is None:
@@ -600,7 +608,8 @@ class ArgumentParser(argparse.ArgumentParser):
                  conflict_handler='error',
                  add_help=True):
 
-        super(ArgumentParser, self).__init__(prog=prog, usage=usage,
+        super(ArgumentParser, self).__init__(
+            prog=prog, usage=usage,
             description=description, epilog=epilog,
             parents=parents, formatter_class=formatter_class,
             prefix_chars=prefix_chars, fromfile_prefix_chars=fromfile_prefix_chars,
@@ -624,15 +633,15 @@ class ArgumentParser(argparse.ArgumentParser):
         # just work.
 
         i = ((attr, val) for attr, val in args.__dict__.iteritems()
-            if isinstance(val, DelayedDefault))
-        for attr, functor in sorted(i, key=lambda val:val[1].priority):
+             if isinstance(val, DelayedDefault))
+        for attr, functor in sorted(i, key=lambda val: val[1].priority):
             functor(args, attr)
 
         # now run the delays.
         i = ((attr, val) for attr, val in args.__dict__.iteritems()
-            if isinstance(val, DelayedValue))
+             if isinstance(val, DelayedValue))
         try:
-            for attr, delayed in sorted(i, key=lambda val:val[1].priority):
+            for attr, delayed in sorted(i, key=lambda val: val[1].priority):
                 delayed(args, attr)
         except (TypeError, ValueError) as err:
             self.error("failed loading/parsing %s: %s" % (attr, str(err)))
@@ -652,7 +661,8 @@ class ArgumentParser(argparse.ArgumentParser):
 
     def bind_class(self, obj):
         if not isinstance(obj, ArgparseCommand):
-            raise ValueError("expected obj to be an instance of "
+            raise ValueError(
+                "expected obj to be an instance of "
                 "ArgparseCommand; got %r" % (obj,))
         obj.bind_to_parser(self)
         return self
@@ -661,7 +671,7 @@ class ArgumentParser(argparse.ArgumentParser):
         def f(functor, name=name):
             if name is None:
                 name = functor.__name__
-            self.set_defaults(**{name:DelayedValue(functor, priority)})
+            self.set_defaults(**{name: DelayedValue(functor, priority)})
             return functor
         return f
 
@@ -682,12 +692,14 @@ class ArgparseCommand(object):
     def __call__(self, namespace, out, err):
         raise NotImplementedError(self, '__call__')
 
+
 def register_command(commands, real_type=type):
     def f(name, bases, scope, real_type=real_type, commands=commands):
         o = real_type(name, bases, scope)
         commands.append(o)
         return o
     return f
+
 
 def _convert_config_mods(iterable):
     d = {}
@@ -697,9 +709,10 @@ def _convert_config_mods(iterable):
         d.setdefault(section, {})[key] = value
     return d
 
+
 def store_config(namespace, attr):
-    configs = map(_convert_config_mods,
-        [namespace.new_config, namespace.add_config])
+    configs = map(
+        _convert_config_mods, [namespace.new_config, namespace.add_config])
     # add necessary inherits for add_config
     for key, vals in configs[1].iteritems():
         vals.setdefault('inherit', key)
@@ -717,9 +730,11 @@ def store_config(namespace, attr):
 
 
 def _mk_domain(parser):
-    parser.add_argument('--domain', get_default=True, config_type='domain',
+    parser.add_argument(
+        '--domain', get_default=True, config_type='domain',
         action=StoreConfigObject,
         help="domain to use for this operation")
+
 
 def existent_path(value):
     if not os.path.exists(value):
@@ -728,8 +743,10 @@ def existent_path(value):
         return osutils.abspath(value)
     except EnvironmentError as e:
         compatibility.raise_from(
-            ValueError("while resolving path %r, encountered error: %r" %
+            ValueError(
+                "while resolving path %r, encountered error: %r" %
                 (value, e)))
+
 
 def mk_argparser(suppress=False, config=True, domain=True,
                  color=True, debug=True, version=True, **kwds):
@@ -742,22 +759,28 @@ def mk_argparser(suppress=False, config=True, domain=True,
     if version:
         p.add_argument('--version', action='version', version=get_version())
     if debug:
-        p.add_argument('--debug', action=EnableDebug, help="Enable debugging checks")
+        p.add_argument(
+            '--debug', action=EnableDebug, help="Enable debugging checks")
     if color:
-        p.add_argument('--color', action=StoreBool,
+        p.add_argument(
+            '--color', action=StoreBool,
             default=True,
             help="Enable or disable color support.")
 
     if config:
-        p.add_argument('--add-config', nargs=3, action='append',
+        p.add_argument(
+            '--add-config', nargs=3, action='append',
             metavar=("SECTION", "KEY", "VALUE"),
             help="modify an existing configuration section.")
-        p.add_argument('--new-config', nargs=3, action='append',
+        p.add_argument(
+            '--new-config', nargs=3, action='append',
             metavar=("SECTION", "KEY", "VALUE"),
             help="add a new configuration section.")
-        p.add_argument('--empty-config', action='store_true', default=False,
+        p.add_argument(
+            '--empty-config', action='store_true', default=False,
             help="Do not load user/system configuration.")
-        p.add_argument('--override-config', metavar="PATH",
+        p.add_argument(
+            '--override-config', metavar="PATH",
             help="Override location of config files")
 
         p.set_defaults(config=DelayedValue(store_config, 0))
@@ -771,10 +794,12 @@ def argparse_parse(parser, args, namespace=None):
     namespace = parser.parse_args(args, namespace=namespace)
     main = getattr(namespace, 'main_func', None)
     if main is None:
-        raise Exception("parser %r lacks a main method- internal bug.\nGot namespace %r\n"
+        raise Exception(
+            "parser %r lacks a main method- internal bug.\nGot namespace %r\n"
             % (parser, namespace))
     namespace.prog = parser.prog
     return main, namespace
+
 
 def convert_to_restrict(sequence, default=packages.AlwaysTrue):
     """Convert an iterable to a list of atoms, or return the default"""
@@ -784,8 +809,8 @@ def convert_to_restrict(sequence, default=packages.AlwaysTrue):
             l.append(parserestrict.parse_match(x))
     except parserestrict.ParseError as e:
         compatibility.raise_from(
-            optparse.OptionValueError("arg %r isn't a valid atom: %s"
-                % (x, e)))
+            optparse.OptionValueError(
+                "arg %r isn't a valid atom: %s" % (x, e)))
     return l or [default]
 
 
@@ -842,8 +867,8 @@ def main(subcommands, args=None, outfile=None, errfile=None, script_name=None):
     if out_fd is not None and err_fd is not None:
         out_stat, err_stat = os.fstat(out_fd), os.fstat(err_fd)
         if out_stat.st_dev == err_stat.st_dev \
-            and out_stat.st_ino == err_stat.st_ino and \
-            not errfile.isatty():
+                and out_stat.st_ino == err_stat.st_ino and \
+                not errfile.isatty():
             # they're the same underlying fd.  thus
             # point the handles at the same so we don't
             # get intermixed buffering issues.
@@ -853,8 +878,8 @@ def main(subcommands, args=None, outfile=None, errfile=None, script_name=None):
     exitstatus = -10
     try:
         if isinstance(subcommands, dict):
-            main_func, options = optparse_parse(subcommands, args=args, script_name=script_name,
-                errfile=errfile)
+            main_func, options = optparse_parse(
+                subcommands, args=args, script_name=script_name, errfile=errfile)
         else:
             options = argparse.Namespace()
             main_func, options = argparse_parse(subcommands, args, options)
@@ -900,6 +925,7 @@ def main(subcommands, args=None, outfile=None, errfile=None, script_name=None):
             out.title('%s succeeded' % (options.prog,))
     raise MySystemExit(exitstatus)
 
+
 def dump_error(handle, raw_exc, context_msg=None, tb=None):
     prefix = ''
     if context_msg:
@@ -912,7 +938,8 @@ def dump_error(handle, raw_exc, context_msg=None, tb=None):
     exc_strings = []
     if raw_exc is not None:
         for exc in walk_exception_chain(raw_exc):
-            exc_strings.extend('%s%s' % (prefix, x.strip())
+            exc_strings.extend(
+                '%s%s' % (prefix, x.strip())
                 for x in filter(None, str(exc).split("\n")))
     if exc_strings:
         handle.write("\n".join(exc_strings))

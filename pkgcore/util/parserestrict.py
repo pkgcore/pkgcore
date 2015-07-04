@@ -14,7 +14,8 @@ import re
 from snakeoil.compatibility import raise_from, is_py3k
 
 from pkgcore.ebuild import atom, cpv, errors, restricts
-from pkgcore.restrictions import packages, values, util
+from pkgcore.restrictions import packages, values
+from pkgcore.restrictions.util import collect_package_restrictions
 
 valid_globbing = re.compile(r"^(?:[\w+-.]+|(?<!\*)\*)+$").match
 
@@ -32,8 +33,8 @@ def comma_separated_containment(attr, values_kls=frozenset, token_kls=str):
         have any of those values in the attribute passed to this function.
     """
     def _parse(value):
-        return packages.PackageRestriction(attr,
-            values.ContainmentMatch2(
+        return packages.PackageRestriction(
+            attr, values.ContainmentMatch2(
                 values_kls(token_kls(piece.strip()) for piece in value.split(','))
             )
         )
@@ -46,16 +47,19 @@ def convert_glob(token):
     elif '*' not in token:
         return values.StrExactMatch(token)
     elif not valid_globbing(token):
-        raise ParseError("globs must be composed of [\w-.+], with optional "
+        raise ParseError(
+            "globs must be composed of [\w-.+], with optional "
             "'*'- '%s' is disallowed however" % token)
     pattern = "^%s$" % (re.escape(token).replace("\*", ".*"),)
     return values.StrRegex(pattern, match=True)
+
 
 def collect_ops(text):
     i = 0
     while i < len(text) and text[i] in ("<", "=", ">", "~"):
         i += 1
     return text[0:i], text[i:]
+
 
 def parse_match(text):
     """generate appropriate restriction for text
@@ -116,9 +120,9 @@ def parse_match(text):
                     orig_text,))
         # ok... fake category.  whee.
         try:
-            r = list(util.collect_package_restrictions(
-                    atom.atom("%scategory/%s" % (ops, text)).restrictions,
-                    attrs=("category",), invert=True))
+            r = list(collect_package_restrictions(
+                     atom.atom("%scategory/%s" % (ops, text)).restrictions,
+                     attrs=("category",), invert=True))
         except errors.MalformedAtom as e:
             raise_from(ParseError(str(e)))
         if len(r) == 1:
@@ -163,8 +167,9 @@ def parse_pv(repo, text):
         result = None
         for match in repo.itermatch(restrict):
             if result is not None:
-                raise ParseError('multiple matches for %s (%s, %s)' % (
-                        text, result.cpvstr, match.cpvstr))
+                raise ParseError(
+                    'multiple matches for %s (%s, %s)' %
+                    (text, result.cpvstr, match.cpvstr))
             result = match
         if result is None:
             raise ParseError('no matches for %s' % (text,))
@@ -173,4 +178,4 @@ def parse_pv(repo, text):
 
 parse_funcs = {
     'match': parse_match,
-    }
+}

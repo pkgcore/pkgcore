@@ -711,6 +711,7 @@ def store_config(namespace, attr):
     config = load_config(
         skip_config_files=namespace.empty_config,
         append_sources=tuple(configs),
+        location=namespace.override_config,
         **vars(namespace))
     setattr(namespace, attr, config)
 
@@ -756,6 +757,8 @@ def mk_argparser(suppress=False, config=True, domain=True,
             help="add a new configuration section.")
         p.add_argument('--empty-config', action='store_true', default=False,
             help="Do not load user/system configuration.")
+        p.add_argument('--override-config', metavar="PATH",
+            help="Override location of config files")
 
         p.set_defaults(config=DelayedValue(store_config, 0))
 

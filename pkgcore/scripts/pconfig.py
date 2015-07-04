@@ -298,7 +298,7 @@ def _dump_uncollapsed_section(config, out, err, section):
 
 dump_uncollapsed = subparsers.add_parser(
     "dump-uncollapsed", parents=shared_options,
-    description="dump the configuration in a raw, uncollapsed form."
+    description="dump the configuration in a raw, uncollapsed form. "
                 "Not directly usable as a configuration file, mainly used for inspection")
 @dump_uncollapsed.bind_main_func
 def dump_uncollapsed_main(options, out, err):

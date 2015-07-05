@@ -233,5 +233,5 @@ class TestRegen(TestCase, helpers.ArgParseMixin):
             'spork', '--threads', '2', spork=basics.HardCodedConfigSection(
                 {'class': fake_repo}))
         self.assertEqual(
-            [options.repo.__class__, options.threads],
+            [options.repos[0].__class__, options.threads],
             [TestSimpleTree, 2])

@@ -345,9 +345,13 @@ class RepoConfig(syncable.tree):
 
     pkgcore_config_type = ConfigHint(
         typename='raw_repo',
-        types={'syncer': 'lazy_ref:syncer'})
+        types={
+            'config_name': 'str',
+            'syncer': 'lazy_ref:syncer',
+        })
 
-    def __init__(self, location, syncer=None, profiles_base='profiles'):
+    def __init__(self, location, config_name=None, syncer=None, profiles_base='profiles'):
+        object.__setattr__(self, 'config_name', config_name)
         object.__setattr__(self, 'location', location)
         object.__setattr__(self, 'profiles_base', pjoin(self.location, profiles_base))
         syncable.tree.__init__(self, syncer)

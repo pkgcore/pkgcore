@@ -451,6 +451,7 @@ def config_from_make_conf(location=None, profile_override=None, **kwargs):
         # repo configs
         conf = {
             'class': 'pkgcore.ebuild.repo_objs.RepoConfig',
+            'config_name': repo_name,
             'location': repo_path,
             'syncer': 'sync:' + repo_path,
         }

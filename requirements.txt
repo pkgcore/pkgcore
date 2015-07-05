@@ -1,1 +1,1 @@
--e git+https://github.com/pkgcore/snakeoil.git#egg=snakeoil
+https://github.com/pkgcore/snakeoil/archive/master.tar.gz#egg=snakeoil

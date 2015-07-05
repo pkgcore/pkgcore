@@ -225,15 +225,11 @@ def add_fetcher(config, make_conf):
     config["fetcher"] = basics.AutoConfigSection(fetcher_dict)
 
 
-def make_cache(repo_path):
-    # TODO: probably should pull RepoConfig objects dynamically from the config
-    # instead of regenerating them
-    repo_config = RepoConfig(repo_path)
-
-    # Use md5 cache if it exists or the option is selected, otherwise default to
-    # the old flat hash format in /var/cache/edb/dep/*.
+def make_cache(cache_format, repo_path):
+    # Use md5 cache if it exists or the option is selected, otherwise default
+    # to the old flat hash format in /var/cache/edb/dep/*.
     if (os.path.exists(pjoin(repo_path, 'metadata', 'md5-cache')) or
-            repo_config.cache_format == 'md5-dict'):
+            cache_format == 'md5-dict'):
         kls = 'pkgcore.cache.flat_hash.md5_cache'
         cache_parent_dir = pjoin(repo_path, 'metadata', 'md5-cache')
     else:
@@ -458,7 +454,7 @@ def config_from_make_conf(location=None, profile_override=None, **kwargs):
 
         # metadata cache
         cache_name = 'cache:' + repo_path
-        config[cache_name] = make_cache(repo_path)
+        config[cache_name] = make_cache(repo_config.cache_format, repo_path)
 
         # repo trees
         kwds = {

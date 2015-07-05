@@ -20,6 +20,7 @@ demandload(
     're',
     'time',
     'snakeoil.osutils:pjoin,listdir_dirs',
+    'snakeoil.lists:iter_stable_unique',
     'snakeoil.process:get_proc_count',
     'pkgcore.ebuild:processor,triggers',
     'pkgcore.fs:contents,livefs',
@@ -56,11 +57,7 @@ def sync_main(options, out, err):
 
     succeeded, failed = [], []
 
-    # remove duplicates while preserving order
-    seen = set()
-    repos = [x for x in options.repos if x not in seen and not seen.add(x)]
-
-    for repo_name, repo in repos:
+    for repo_name, repo in iter_stable_unique(options.repos):
         # rewrite the name if it has the usual prefix
         if repo_name.startswith("raw:"):
             repo_name = repo_name[4:]
@@ -110,7 +107,6 @@ commandline.make_query(
 copy.add_argument(
     '-i', '--ignore-existing', default=False, action='store_true',
     help="if a matching pkg already exists in the target, don't update it")
-
 @copy.bind_main_func
 def copy_main(options, out, err):
     """Copy pkgs between repositories."""
@@ -199,7 +195,7 @@ regen.add_argument(
 def regen_main(options, out, err):
     """Regenerate a repository cache."""
 
-    for repo in options.repos:
+    for repo in iter_stable_unique(options.repos):
         if not repo.operations.supports("regen_cache"):
             out.write("repository %s doesn't support cache regeneration" % (repo,))
             continue

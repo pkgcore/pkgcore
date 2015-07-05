@@ -39,7 +39,7 @@ demandload(
     'traceback',
     'snakeoil:osutils',
     'snakeoil.errors:walk_exception_chain',
-    'snakeoil.lists:iflatten_instance',
+    'snakeoil.lists:iflatten_instance,unstable_unique',
     'pkgcore.version:get_version',
     'pkgcore:operations',
     'pkgcore.config:basics',
@@ -194,13 +194,11 @@ class StoreConfigObject(argparse._StoreAction):
         except KeyError:
             choices = ', '.join(self._choices(sections))
             if choices:
-                available = ' (available: %s)' % choices
-            else:
-                available = ''
+                choices = ' (available: %s)' % choices
 
             raise argparse.ArgumentError(
                 self, "couldn't find %s%r%s" %
-                (metavar, name, available))
+                (metavar, name, choices))
 
         if self.writable and getattr(val, 'frozen', False):
             raise argparse.ArgumentError(
@@ -314,17 +312,15 @@ class StoreRepoObject(StoreConfigObject):
 
     @staticmethod
     def _choices(sections):
-        """Return the set of name: location mappings for available repos.
+        """Return an iterable of name: location mappings for available repos.
 
         If a repo doesn't have a proper location just the name is returned.
         """
-        repos = set()
-        for repo_name, repo in sections.iteritems():
+        for repo_name, repo in sorted(unstable_unique(sections.iteritems())):
             if len(repo.aliases) == 2:
-                repos.add('%s: %s' % (repo.aliases[0], repo.location))
+                yield '%s: %s' % (repo.aliases[0], repo.location)
             else:
-                repos.add(repo_name)
-        return sorted(repos)
+                yield repo_name
 
     def _load_obj(self, sections, name):
         if not self.allow_name_lookup or name in sections:

@@ -332,7 +332,8 @@ class StoreRepoObject(StoreConfigObject):
 
         # name wasn't found; search for it.
         for repo_name, repo in sections.iteritems():
-            if name == repo.config_name or name in repo.aliases:
+            config_name = getattr(repo, 'config_name', None)
+            if name == config_name or name in repo.aliases:
                 name = repo_name
                 break
 

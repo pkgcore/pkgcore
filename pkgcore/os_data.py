@@ -11,7 +11,7 @@ This will be killed off and bound into configuration subsystem at some point
 from __future__ import print_function
 
 __all__ = (
-    "ostype", "portage_gid", "portage_uid", "root_gid", "root_uid", "secpass",
+    "ostype", "portage_gid", "portage_uid", "root_gid", "root_uid",
     "userland", "wheelgid", "xargs",
 )
 
@@ -39,20 +39,13 @@ elif ostype in ("FreeBSD", "OpenBSD", "NetBSD", "SunOS"):
 else:
     raise Exception("Operating system unsupported, '%s'" % ostype)
 
-# Secpass will be set to 1 if the user is root or in the portage group.
-secpass = 0
-
 uid = os.getuid()
 # hard coding sucks.
 root_uid = 0
 root_gid = wheelgid = 0
 
-if uid == 0:
-    secpass = 2
 try:
     wheelgid = grp.getgrnam("wheel").gr_gid
-    if (not secpass) and (wheelgid in os.getgroups()):
-        secpass = 1
 except KeyError:
     pass
 
@@ -62,9 +55,6 @@ try:
     portage_gid = grp.getgrnam("portage").gr_gid
     portage_user_groups = tuple(x.gr_name for x in grp.getgrall()
                                 if 'portage' in x.gr_mem)
-
-    if secpass == 0:
-        secpass = 1
 except KeyError:
     portage_uid = 0
     portage_gid = wheelgid

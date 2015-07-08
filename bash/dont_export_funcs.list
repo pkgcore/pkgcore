@@ -118,3 +118,5 @@ __shopt_push
 __source_bashrcs
 __strip_duplicate_slashes
 __timed_call
+__var_pop
+__var_push

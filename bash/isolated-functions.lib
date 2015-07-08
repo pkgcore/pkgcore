@@ -204,6 +204,70 @@ __IFS_pop() {
 	:
 }
 
+declare -a PKGCORE_VAR_STACK
+
+__var_push() {
+	[[ $# -eq 0 ]] && die "${FUNCNAME}: invoked with no arguments"
+
+	local arg var orig_val
+	for arg in "$@"; do
+		var=${arg%%=*}
+
+		# If the specified variable currently has a value we save it;
+		# otherwise, just push the variable name onto the stack.
+		if orig_val=$(declare -p ${var} 2>/dev/null); then
+			# We can't directly use the declare version because that forces
+			# scope to be localized to the function resetting the values.
+			#
+			# Posix mode needed so set only lists defined variables and not
+			# functions too.
+			__shopt_push -o posix
+			orig_val=$(set | grep "^${var}=")
+			__shopt_pop
+		else
+			orig_val=${var}
+		fi
+
+		# toss the current value
+		unset ${var} 2>/dev/null || die "${FUNCNAME}: '${var}' is readonly"
+
+		# export a new value if one was specified
+		if [[ ${arg} == *=* ]]; then
+			export "${arg}" || die "${FUNCNAME}: failed to export '${arg}'"
+		fi
+
+		PKGCORE_VAR_STACK[${#PKGCORE_VAR_STACK[@]}]=${orig_val}
+	done
+}
+
+__var_pop() {
+	[[ ${#PKGCORE_VAR_STACK[@]} -gt 0 ]] \
+		|| die "${FUNCNAME}: invoked with nothing on the stack"
+
+	local count=$1
+	case $# in
+		0) count=1;;
+		1) [[ ${count} == *[!0-9]* ]] && die "${FUNCNAME}: arg must be a number: $*";;
+		*) die "${FUNCNAME}: only accepts one arg: $*";;
+	esac
+
+	local var arg
+	while (( count-- )); do
+		arg=${PKGCORE_VAR_STACK[$(( ${#PKGCORE_VAR_STACK[@]} - 1 ))]}
+		var=${arg%%=*}
+
+		# unset the variable on the top of the stack
+		unset ${var} 2>/dev/null || die "${FUNCNAME}: '${var}' is readonly"
+
+		# reset its value if one was stored
+		if [[ ${arg} == *=* ]]; then
+			export "${arg}" || die "${FUNCNAME}: failed to export '${arg}'"
+		fi
+
+		unset PKGCORE_VAR_STACK[$(( ${#PKGCORE_VAR_STACK[@]} - 1 ))]
+	done
+}
+
 __qa_invoke() {
 	if ${PKGCORE_QA_SUPPRESSED:-false}; then
 		"$@"

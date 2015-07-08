@@ -155,9 +155,9 @@ __shopt_push() {
 } &> /dev/null
 
 __shopt_pop() {
-	[[ $# -ne 0 ]] && die "bad invocation of __shopt_pop; no args should be supplied, got $@"
+	[[ $# -ne 0 ]] && die "${FUNCNAME} accepts no args, got $@"
 	local count=$(( ${#PKGCORE_SHOPT_STACK[@]} - 1 ))
-	[[ ${count} -le 0 ]] && die "bad __shopt_pop invocation; no matching push, stack was empty"
+	[[ ${count} -le 0 ]] && die "${FUNCNAME} invoked with nothing on the stack"
 
 	local set_val=${PKGCORE_SHOPT_STACK[${count}]}
 	if [[ $- != ${set_val} ]]; then
@@ -196,7 +196,7 @@ __IFS_push() {
 
 __IFS_pop() {
 	if [[ ${#PKGCORE_SAVED_IFS[@]} -eq 0 ]]; then
-		die "__IFS_pop invoked with nothing on the stack..."
+		die "${FUNCNAME} invoked with nothing on the stack"
 	fi
 	IFS=${PKGCORE_SAVED_IFS[$(( ${#PKGCORE_SAVED_IFS[@]} - 1 ))]}
 	[[ ${IFS} == unset ]] && unset IFS

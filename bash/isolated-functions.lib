@@ -216,10 +216,7 @@ __var_push() {
 		# If the specified variable currently has a value we save it;
 		# otherwise, just push the variable name onto the stack.
 		if orig_val=$(declare -p ${var} 2>/dev/null); then
-			# We can't directly use the declare version because that forces
-			# scope to be localized to the function resetting the values.
-			#
-			# Posix mode needed so set only lists defined variables and not
+			# Posix mode needed so only defined variables are listed and not
 			# functions too.
 			__shopt_push -o posix
 			orig_val=$(set | grep "^${var}=")

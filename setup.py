@@ -382,8 +382,8 @@ def write_pkgcore_ebd_funclists(ebd_dir):
     log.info("Writing ebd function lists to %s" % os.path.join(ebd_dir, 'funcnames'))
     with open(os.devnull, 'w') as devnull:
         if subprocess.call(
-                ['bash', 'regenerate_dont_export_func_list.bash',
-                    os.path.join(ebd_dir, 'funcnames', 'global')],
+                [os.path.join(os.getcwd(), 'bash', 'regenerate_dont_export_func_list.bash'),
+                 os.path.join(ebd_dir, 'funcnames', 'global')],
                 cwd=ebd_dir, stderr=devnull):
             raise errors.DistutilsExecError("generating global list failed")
 
@@ -392,7 +392,7 @@ def write_pkgcore_ebd_funclists(ebd_dir):
     for eapi in sorted(eapis):
         with open(os.path.join(ebd_dir, 'funcnames', eapi), 'w') as f:
             if subprocess.call(
-                    ['bash', 'generate_eapi_func_list.bash', eapi],
+                    [os.path.join(os.getcwd(), 'bash', 'generate_eapi_func_list.bash'), eapi],
                     cwd=ebd_dir, stdout=f):
                 raise errors.DistutilsExecError(
                     "generating EAPI %s list failed" % eapi)

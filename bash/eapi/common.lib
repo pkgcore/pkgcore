@@ -253,53 +253,6 @@ __get_libdir() {
 	echo "${libdir}"
 }
 
-__phase_common_pkg_nofetch() {
-	[[ -z ${SRC_URI} ]] && return
-
-	echo "!!! The following are listed in SRC_URI for ${PN}:"
-	local fp
-	__shopt_push -f
-	for fp in ${SRC_URI}; do
-		echo "!!! ${fp}"
-	done
-	__shopt_pop
-}
-
-__phase_common_src_unpack() {
-	if [[ -n ${A} ]]; then
-		unpack ${A}
-	fi
-}
-
-__phase_common_src_compile() {
-	# only eapi 0/1 invoke configure...
-	if __safe_has "${EAPI}" 0 1; then
-		if [[ ${EAPI} == 0 ]]; then
-			[[ -x ./configure ]] && econf
-		elif [[ -x ${ECONF_SOURCE:-.}/configure ]]; then
-			econf
-		fi
-	fi
-	if [[ -f Makefile || -f GNUmakefile || -f makefile ]]; then
-		emake || die "emake failed"
-	fi
-}
-
-__phase_common_src_test() {
-	addpredict /
-	local extra_args=( ${EXTRA_EMAKE} )
-	${PKGCORE_ALLOW_PARALLEL_SRC_TEST} || extra_args+=( -j1 )
-	if make check -n &> /dev/null; then
-		echo ">>> Test phase [check]: ${CATEGORY}/${PF}"
-		emake "${extra_args[@]}" check || die "Make check failed. See above for details."
-	elif make test -n &> /dev/null; then
-		emake "${extra_args[@]}" test || die "Make test failed. See above for details."
-	else
-		echo ">>> Test phase [none]: ${CATEGORY}/${PF}"
-	fi
-	SANDBOX_PREDICT=${SANDBOX_PREDICT%:/}
-}
-
 into() {
 	${PKGCORE_PREFIX_SUPPORT} || local ED=${D}
 	if [[ $1 == "/" ]]; then
@@ -348,7 +301,7 @@ docinto() {
 	fi
 }
 
-__phase_common_pre_phase() {
+__phase_pre_phase() {
 	if [[ -d ${S} ]]; then
 		cd "${S}"
 	elif __safe_has "${EAPI}" 0 1 2 3; then
@@ -371,7 +324,7 @@ __phase_common_pre_phase() {
 	fi
 }
 
-__phase_default_pre_src_unpack() {
+__phase_pre_src_unpack() {
 	export PORTAGE_GZIP_COMMAND=${PORTAGE_GZIP_COMMAND:-gzip}
 	export PORTAGE_BZIP2_COMMAND=${PORTAGE_BZIP2_COMMAND:-bzip2}
 	export PORTAGE_XZ_COMMAND=${PORTAGE_XZ_COMMAND:-xz}
@@ -379,21 +332,21 @@ __phase_default_pre_src_unpack() {
 	cd "${WORKDIR}"
 }
 
-__phase_default_pre_src_prepare() { __phase_common_pre_phase; }
-__phase_default_pre_src_test()    { __phase_common_pre_phase; }
+__phase_pre_src_prepare() { __phase_pre_phase; }
+__phase_pre_src_test()    { __phase_pre_phase; }
 
-__phase_default_pre_src_configure() {
+__phase_pre_src_configure() {
 	local var
 	for var in C{BUILD,HOST,TARGET,C,XX} {AS,LD,{,LIB}C{,XX}}FLAGS; do
 		[[ -n ${!var+set} ]] && export ${var}="${!var}"
 	done
-	__phase_common_pre_phase
+	__phase_pre_phase
 }
 
-__phase_default_pre_src_compile() {
+__phase_pre_src_compile() {
 	# just reuse the default_pre_src_configure; this means we don't have to care
 	# if the eapi has configure or not.
-	__phase_default_pre_src_configure
+	__phase_pre_src_configure
 
 	if __feature_is_enabled distcc; then
 		[[ -n ${DISTCC_DIR} ]] && addwrite "${DISTCC_DIR}"
@@ -404,14 +357,14 @@ __phase_default_pre_src_compile() {
 	fi
 }
 
-__phase_default_post_src_compile() {
+__phase_post_src_compile() {
 	if __feature_is_enabled distcc && __feature_is_enabled distcc-pump; then
 		pump --shutdown
 		trap - EXIT
 	fi
 }
 
-__phase_default_pre_src_install() {
+__phase_pre_src_install() {
 	export DESTTREE=/usr INSDESTTREE='' PKGCORE_EXEDESTTREE='' PKGCORE_DOCDESTTREE=''
 	export INSOPTIONS="-m0644" EXEOPTIONS="-m0755"
 	export LIBOPTIONS="-m0644" DIROPTIONS="-m0755"
@@ -428,21 +381,19 @@ __phase_default_pre_src_install() {
 	else
 		mkdir "${D}"
 	fi
-	__phase_common_pre_phase
+	__phase_pre_phase
 }
 
-__inject_phase_funcs() {
-	local prefix=$1 func
-	shift
+__inject_default_phase_funcs() {
+	local prefix="__phase_" func
 
 	for func in "$@"; do
-		if ! __is_function "${func}"; then
-			eval "__phase_default_${func}() { ${prefix}_${func}; }";
-		fi
+		# skip non-phase functions
+		[[ ${func} == ${prefix}* ]] || continue
 
 		# define default_${phase} funcs for EAPI 2 and up
 		if ! __safe_has "${EAPI}" 0 1 ; then
-			eval "default_${func}() { ${prefix}_${func}; }";
+			eval "default_${func#${prefix}}() { ${func}; }";
 		fi
 	done
 }

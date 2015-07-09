@@ -31,7 +31,7 @@ __dyn_src_install() {
 	if __is_function src_install; then
 		__qa_invoke src_install
 	else
-		__qa_run_function_if_exists __phase_default_src_install
+		__qa_run_function_if_exists __phase_src_install
 	fi
 
 	"${PKGCORE_BIN_PATH}"/helpers/internals/prepall
@@ -123,7 +123,7 @@ __dyn_pkg_preinst() {
 	if __is_function pkg_preinst; then
 		__qa_invoke pkg_preinst
 	else
-		__qa_run_function_if_exists __phase_default_pkg_preinst
+		__qa_run_function_if_exists __phase_pkg_preinst
 	fi
 
 	${PKGCORE_PREFIX_SUPPORT} || local ED=${D}

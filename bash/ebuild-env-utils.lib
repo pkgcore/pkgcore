@@ -49,7 +49,7 @@ __environ_list_funcs() {
 	declare() {
 		echo "$2"
 	}
-	eval "${__content}" || die "${FUNCNAME} eval failed" >&2
+	eval "${__content}" || die "${FUNCNAME}: eval failed" >&2
 	unset -f declare
 	:
 }
@@ -60,7 +60,7 @@ __environ_list_vars() {
 		[[ $2 != ${__ret} ]] && echo "${__ret}"
 		:
 	}
-	eval "$(builtin declare -p)" || die "${FUNCNAME} eval failed" >&2
+	eval "$(builtin declare -p)" || die "${FUNCNAME}: eval failed" >&2
 	unset -f declare
 	:
 }
@@ -98,7 +98,7 @@ __environ_dump() {
 # dump environ to $1, optionally piping it through $2 and redirecting $2's output to $1.
 __environ_save_to_file() {
 	if [[ $# -ne 1 && $# -ne 2 ]]; then
-		die "${FUNCNAME} requires at least one argument, two max; given $@"
+		die "${FUNCNAME}: requires at least one argument, two max; given $@"
 	fi
 
 	# the spaces on both sides are important- otherwise, the later ${DONT_EXPORT_VARS/ temp_umask /} won't match.
@@ -132,7 +132,7 @@ __environ_sanitize_saved_env() {
 		die "scrub_environ called with wrong args, only one can be given: $@"
 	fi
 
-	[[ ! -f $1 ]] && die "${FUNCNAME} called with a nonexist env: $1"
+	[[ ! -f $1 ]] && die "${FUNCNAME}: called with a nonexist env: $1"
 
 	src=$1
 

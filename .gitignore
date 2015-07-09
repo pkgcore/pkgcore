@@ -4,6 +4,9 @@
 # C extensions
 *.so
 
+# generated function lists
+bash/funcnames
+
 pkgcore/plugins/plugincache
 /build
 /cache

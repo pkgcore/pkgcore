@@ -47,6 +47,28 @@ class mysdist(snk_distutils.sdist):
         snk_distutils.sdist.initialize_options(self)
         self.build_docs = True
 
+    def run(self):
+        # generate function lists used in env cleaning
+        bash_dir = os.path.join(os.getcwd(), 'bash')
+        with open(os.devnull, 'w') as devnull:
+            if subprocess.call(
+                    ['bash', 'regenerate_dont_export_func_list.bash',
+                     os.path.join(bash_dir, 'funcnames', 'global')],
+                    cwd=bash_dir, stderr=devnull):
+                raise errors.DistutilsExecError("generating global list failed")
+
+        eapis = (x.split('.')[0] for x in os.listdir(os.path.join(bash_dir, 'eapi'))
+                 if x.split('.')[0].isdigit())
+        for eapi in sorted(eapis):
+            with open(os.path.join(bash_dir, 'funcnames', eapi), 'w') as f:
+                if subprocess.call(
+                        ['bash', 'generate_eapi_func_list.bash', eapi],
+                        cwd=bash_dir, stdout=f):
+                    raise errors.DistutilsExecError(
+                        "generating EAPI %s list failed" % eapi)
+
+        snk_distutils.sdist.run(self)
+
     def make_release_tree(self, base_dir, files):
         """Create and populate the directory tree that is put in source tars.
 

@@ -3,9 +3,9 @@
 # Generates a file (or list) of functions defined in the various bash support
 # libs to avoid exporting to the saved ebuild environment.
 
-_FP=${1:-dont_export_funcs.list}
-
 export PKGCORE_BIN_PATH=$(dirname "$0")
+_FP=${1:-${PKGCORE_BIN_PATH}/funcnames/global}
+
 if [[ -z ${PKGCORE_CLEAN_ENV} ]]; then
 	exec env -i PKGCORE_PYTHON_PATH=${PKGCORE_PYTHON_PATH} PKGCORE_CLEAN_ENV=1 /bin/bash "$0" "${_FP}"
 fi
@@ -61,5 +61,6 @@ if [[ ${_FP} == '-' ]]; then
 	echo >&2
 	echo "${result}"
 else
-	echo "${result}" > dont_export_funcs.list
+	mkdir -p "$(dirname ${_FP})"
+	echo "${result}" > "${_FP}"
 fi

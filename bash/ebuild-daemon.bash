@@ -183,10 +183,10 @@ __ebd_exec_main() {
 
 	# finally, load the master list of pkgcore funcs. fallback to
 	# regenerating it if needed.
-	if [[ -e ${PKGCORE_BIN_PATH}/dont_export_funcs.list ]]; then
-		DONT_EXPORT_FUNCS+=" $(<"${PKGCORE_BIN_PATH}"/dont_export_funcs.list)"
+	if [[ -e ${PKGCORE_BIN_PATH}/funcnames/global ]]; then
+		DONT_EXPORT_FUNCS+=" $(<"${PKGCORE_BIN_PATH}"/funcnames/global)"
 	else
-		DONT_EXPORT_FUNCS+=" $("${PKGCORE_BIN_PATH}"/regenerate_dont_export_func_list.bash 2> /dev/null)"
+		DONT_EXPORT_FUNCS+=" $("${PKGCORE_BIN_PATH}"/regenerate_dont_export_func_list.bash - 2> /dev/null)"
 	fi
 
 	DONT_EXPORT_FUNCS+=" ${PORTAGE_PRELOADED_ECLASSES}"

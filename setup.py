@@ -47,6 +47,28 @@ class mysdist(snk_distutils.sdist):
         snk_distutils.sdist.initialize_options(self)
         self.build_docs = True
 
+    def run(self):
+        # generate function lists used in env cleaning
+        bash_dir = os.path.join(os.getcwd(), 'bash')
+        with open(os.devnull, 'w') as devnull:
+            if subprocess.call(
+                    ['bash', 'regenerate_dont_export_func_list.bash',
+                     os.path.join(bash_dir, 'funcnames', 'global')],
+                    cwd=bash_dir, stderr=devnull):
+                raise errors.DistutilsExecError("generating global list failed")
+
+        eapis = (x.split('.')[0] for x in os.listdir(os.path.join(bash_dir, 'eapi'))
+                 if x.split('.')[0].isdigit())
+        for eapi in sorted(eapis):
+            with open(os.path.join(bash_dir, 'funcnames', eapi), 'w') as f:
+                if subprocess.call(
+                        ['bash', 'generate_eapi_func_list.bash', eapi],
+                        cwd=bash_dir, stdout=f):
+                    raise errors.DistutilsExecError(
+                        "generating EAPI %s list failed" % eapi)
+
+        snk_distutils.sdist.run(self)
+
     def make_release_tree(self, base_dir, files):
         """Create and populate the directory tree that is put in source tars.
 
@@ -372,32 +394,6 @@ class pkgcore_install(_base_install):
             # Install configuration data so pkgcore knows where to find it's content,
             # rather than assuming it is running from a tarball/git repo.
             write_pkgcore_lookup_configs(self.install_purelib, target)
-
-            # Generate ebd function lists used for environment filtering.
-            print(self.root)
-            print(self.install_data)
-            print(os.path.join(self.install, target, EBD_INSTALL_OFFSET))
-            write_pkgcore_ebd_funclists(os.path.join(root, target, EBD_INSTALL_OFFSET))
-
-
-def write_pkgcore_ebd_funclists(ebd_dir):
-    log.info("Writing ebd function lists to %s" % os.path.join(ebd_dir, 'funcnames'))
-    with open(os.devnull, 'w') as devnull:
-        if subprocess.call(
-                ['bash', 'regenerate_dont_export_func_list.bash',
-                    os.path.join(ebd_dir, 'funcnames', 'global')],
-                cwd=ebd_dir, stderr=devnull):
-            raise errors.DistutilsExecError("generating global list failed")
-
-    eapis = (x.split('.')[0] for x in os.listdir(os.path.join(ebd_dir, 'eapi'))
-                if x.split('.')[0].isdigit())
-    for eapi in sorted(eapis):
-        with open(os.path.join(ebd_dir, 'funcnames', eapi), 'w') as f:
-            if subprocess.call(
-                    ['bash', 'generate_eapi_func_list.bash', eapi],
-                    cwd=ebd_dir, stdout=f):
-                raise errors.DistutilsExecError(
-                    "generating EAPI %s list failed" % eapi)
 
 
 def write_pkgcore_lookup_configs(python_base, install_prefix, injected_bin_path=()):

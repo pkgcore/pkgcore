@@ -8,6 +8,17 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 pkgcore master
 --------------
 
+- Drop deprecated support for /etc/make.profile, only /etc/portage/make.profile
+  is supported now when using portage config files.
+
+- A commandline option '--override-config' allows the user to override the
+  location of config files. If set to a file location it assumes it's a pkgcore
+  config file; otherwise, if it's set to a directory it assumes its a portage
+  config directory (e.g. /etc/portage).
+
+- Use correct EPREFIX and EROOT settings. This fixes non-prefix builds when ROOT
+  is non-null.
+
 
 --------------------------
 pkgcore 0.9.1 (2015-06-28)

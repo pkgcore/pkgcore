@@ -11,9 +11,6 @@ demandload(
 )
 
 eapi_optionals = mappings.ImmutableDict({
-    # Controls whether -j1 is forced for emake tests
-    'allow_parallel_src_test':False,
-
     # Controls whether -r is allowed for dodoc
     "dodoc_allow_recursive":False,
 
@@ -310,7 +307,6 @@ eapi5 = EAPI.register("5",
     eapi4.mandatory_keys,
     eapi4.tracked_attributes | frozenset(["iuse_effective"]),
     combine_dicts(eapi4.options, dict(
-        allow_parallel_src_test=True,
         ebuild_phase_func=True,
         econf_disable_silent_rules=True,
         profile_iuse_injection=True,

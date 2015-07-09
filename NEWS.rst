@@ -316,7 +316,7 @@ pkgcore 0.7.7.8 (2011-01-26)
 ----------------------------
 
 - pkgcore's merger now will preserve any hardlinks specified in the
-  merge set.  Merges straight from binpkgs don't current preserve
+  merge set.  Merges straight from binpkgs don't currently preserve
   hardlinks.
 
 - added hardlink awareness to splitdebug and stripping.  For pkgs

@@ -14,8 +14,9 @@ except ImportError:
     from distutils.core import Command, setup
     from distutils.command import install
 
-from distutils import log, errors
+from distutils import log
 from distutils.command import build, build_scripts
+from distutils.errors import DistutilsExecError
 from distutils.util import byte_compile
 from stat import ST_MODE
 
@@ -62,7 +63,7 @@ class mysdist(snk_distutils.sdist):
             # this is icky, but covers up cwd changing issues.
             cwd = os.getcwd()
             if subprocess.call([sys.executable, 'setup.py', 'build_docs', '--builder=man'], cwd=cwd):
-                raise errors.DistutilsExecError("build_docs failed")
+                raise DistutilsExecError("build_docs failed")
             import shutil
             shutil.copytree(os.path.join(cwd, "build/sphinx/man"),
                             os.path.join(base_dir, "man"))
@@ -266,7 +267,7 @@ class pkgcore_install_docs(Command):
         self.source_path = self.find_content()
         if self.source_path is None:
             if not firstrun:
-                raise errors.DistutilsExecError(
+                raise DistutilsExecError(
                     "no pregenerated sphinx content, and sphinx isn't available "
                     "to generate it; bailing")
             self.run_command(self.build_command)
@@ -380,22 +381,25 @@ class pkgcore_install(_base_install):
 
 def write_pkgcore_ebd_funclists(ebd_dir):
     log.info("Writing ebd function lists to %s" % os.path.join(ebd_dir, 'funcnames'))
+
+    # generate global function list
     with open(os.devnull, 'w') as devnull:
         if subprocess.call(
                 [os.path.join(os.getcwd(), 'bash', 'regenerate_dont_export_func_list.bash'),
                  os.path.join(ebd_dir, 'funcnames', 'global')],
                 cwd=ebd_dir, stderr=devnull):
-            raise errors.DistutilsExecError("generating global list failed")
+            raise DistutilsExecError("generating global function list failed")
 
+    # generate EAPI specific function lists
     eapis = (x.split('.')[0] for x in os.listdir(os.path.join(ebd_dir, 'eapi'))
-                if x.split('.')[0].isdigit())
+             if x.split('.')[0].isdigit())
     for eapi in sorted(eapis):
         with open(os.path.join(ebd_dir, 'funcnames', eapi), 'w') as f:
             if subprocess.call(
                     [os.path.join(os.getcwd(), 'bash', 'generate_eapi_func_list.bash'), eapi],
                     cwd=ebd_dir, stdout=f):
-                raise errors.DistutilsExecError(
-                    "generating EAPI %s list failed" % eapi)
+                raise DistutilsExecError(
+                    "generating EAPI %s function list failed" % eapi)
 
 
 def write_pkgcore_lookup_configs(python_base, install_prefix, injected_bin_path=()):

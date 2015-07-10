@@ -27,7 +27,6 @@ SANDBOX_BINARY     = "/usr/bin/sandbox"
 # should lift these from configuration, or PATH inspection.
 BASH_BINARY        = "/bin/bash"
 COPY_BINARY        = "/bin/cp"
-PRELINK_BINARY     = "/usr/sbin/prelink"
 
 HOST_NONROOT_PATHS = ("/usr/local/bin", "/usr/bin", "/bin")
 HOST_ROOT_PATHS    = ("/usr/local/sbin", "/usr/local/bin", "/usr/sbin",

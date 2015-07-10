@@ -204,7 +204,7 @@ class SpawnTest(TempDirMixin, TestCase):
 
     def test_umask(self):
         fp = self.generate_script(
-            "portage_spawn_umask.sh", "#!%s\numask" % self.bash_path)
+            "pkgcore-spawn-umask.sh", "#!%s\numask" % self.bash_path)
         try:
             old_umask = os.umask(0)
             if old_umask == 0:

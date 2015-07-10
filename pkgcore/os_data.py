@@ -8,8 +8,6 @@ Avoid using- os data- root uid/gid, pkgcore uid/gid, etc.
 This will be killed off and bound into configuration subsystem at some point
 """
 
-from __future__ import print_function
-
 __all__ = (
     "ostype", "portage_gid", "portage_uid", "root_gid", "root_uid",
     "userland", "wheelgid", "xargs",

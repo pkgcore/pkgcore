@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Generates a list of EAPI specific functions to avoid exporting to the saved
 # ebuild environment. This script is run dynamically on initialization of the

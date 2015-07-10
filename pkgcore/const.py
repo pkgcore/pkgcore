@@ -9,6 +9,7 @@ import os
 osp = os.path
 import sys
 from snakeoil import mappings, compatibility
+from snakeoil.process import find_binary
 try:
     # This is a file written during pkgcore installation;
     # if it exists, we defer to it.  If it doesn't, then we're
@@ -22,11 +23,9 @@ PKGCORE_BASE_PATH  = osp.dirname(osp.abspath(__file__))
 SYSTEM_CONF_FILE   = '/etc/pkgcore.conf'
 USER_CONF_FILE     = osp.expanduser('~/.pkgcore.conf')
 
-SANDBOX_BINARY     = "/usr/bin/sandbox"
-
-# should lift these from configuration, or PATH inspection.
-BASH_BINARY        = "/bin/bash"
-COPY_BINARY        = "/bin/cp"
+SANDBOX_BINARY     = '/usr/bin/sandbox'
+BASH_BINARY        = find_binary('bash')
+COPY_BINARY        = find_binary('cp')
 
 HOST_NONROOT_PATHS = ("/usr/local/bin", "/usr/bin", "/bin")
 HOST_ROOT_PATHS    = ("/usr/local/sbin", "/usr/local/bin", "/usr/sbin",

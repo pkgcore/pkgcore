@@ -159,6 +159,8 @@ __ensure_PATH() {
 }
 
 __load_eapi_libs() {
+	local PKGCORE_BANNED_FUNCS=()
+
 	# reload depend; while it may've been loaded already, reload it so that callers can
 	# rely on this setting the env up as necessary
 	# finally, update the filters with functionality loaded from here-
@@ -169,6 +171,12 @@ __load_eapi_libs() {
 
 	# create default_* functions
 	__inject_default_phase_funcs ${PKGCORE_EAPI_FUNCS}
+
+	# override banned functions
+	local func
+	for func in "${PKGCORE_BANNED_FUNCS[@]}"; do
+		eval "${func}() { die \"'${func}' is banned in EAPI ${EAPI}\"; }"
+	done
 }
 
 # do all profile, bashrc's, and ebuild sourcing.  Should only be called in setup phase, unless the

@@ -140,6 +140,7 @@ class domain(pkgcore.config.domain.domain):
         # break this up into chunks once it's stabilized (most of code
         # here has already, but still more to add)
         self._triggers = triggers
+        self.name = name
 
         # prevent critical variables from being changed in make.conf
         for k in profile.profile_only_variables.intersection(settings.keys()):
@@ -206,8 +207,6 @@ class domain(pkgcore.config.domain.domain):
                 except ValueError as e:
                     raise_from(Failure("failed reading '%s': %s" % (fp, e)))
 
-        self.name = name
-        settings.setdefault("PKGCORE_DOMAIN", name)
         for x in incrementals:
             if isinstance(settings.get(x), basestring):
                 settings[x] = tuple(settings[x].split())

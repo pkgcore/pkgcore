@@ -173,14 +173,14 @@ class domain(pkgcore.config.domain.domain):
             vdb.append(profile.provides_repo)
 
         self.profile = profile
-        pkg_maskers, pkg_unmaskers, pkg_keywords, pkg_licenses = [], [], [], []
+        pkg_masks, pkg_unmasks, pkg_keywords, pkg_licenses = [], [], [], []
         pkg_use, self.bashrcs = [], []
 
         self.ebuild_hook_dir = settings.pop("ebuild_hook_dir", None)
 
         for key, val, action in (
-            ("package.mask", pkg_maskers, parse_match),
-            ("package.unmask", pkg_unmaskers, parse_match),
+            ("package.mask", pkg_masks, parse_match),
+            ("package.unmask", pkg_unmasks, parse_match),
             ("package.keywords", pkg_keywords, package_keywords_splitter),
             ("package.accept_keywords", pkg_keywords, package_keywords_splitter),
             ("package.license", pkg_licenses, package_keywords_splitter),
@@ -373,8 +373,8 @@ class domain(pkgcore.config.domain.domain):
                     for neg, pos in global_masks:
                         masks.difference_update(neg)
                         masks.update(pos)
-                    masks.update(pkg_maskers)
-                    unmasks = set(chain(pkg_unmaskers, *profile_unmasks))
+                    masks.update(pkg_masks)
+                    unmasks = set(chain(pkg_unmasks, *profile_unmasks))
                     filtered = generate_filter(masks, unmasks, *vfilters)
                 if filtered:
                     wrapped_repo = visibility.filterTree(wrapped_repo, filtered, True)

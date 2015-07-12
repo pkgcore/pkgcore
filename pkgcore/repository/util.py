@@ -73,7 +73,16 @@ class RepositoryGroup(object):
         return iter(self.repos)
 
     def __add__(self, other):
+        if not isinstance(other, RepositoryGroup):
+            raise TypeError("cannot add 'RepositoryGroup' and '%s' objects"
+                            % other.__class__.__name__)
         return RepositoryGroup(self.repos + other.repos)
+
+    def __radd__(self, other):
+        if not isinstance(other, RepositoryGroup):
+            raise TypeError("cannot add '%s' and 'RepositoryGroup' objects"
+                            % other.__class__.__name__)
+        return RepositoryGroup(other.repos + self.repos)
 
     @classmethod
     def change_repos(cls, repos):

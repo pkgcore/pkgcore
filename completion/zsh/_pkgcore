@@ -1,0 +1,99 @@
+#compdef pebuild pinspect pmaint pmerge pquery
+
+cli_common_args=(
+  '(- :)'--version'[show version information and exit]'
+  '(- :)'{-h,--help}'[show help information and exit]'
+  '(--debug --help -h --version)--debug[enable debugging output]'
+  '--add-config[modify an existing configuration section]'
+  '--new-config[add a new configuration section]'
+  '--override-config[override location of config files]:config path:_files'
+  "--color=[Color output]:yes/no:((y\:'yes' n\:'no'))"
+)
+
+_pebuild() {
+  local ret=1
+
+  if (( CURRENT == 2 )); then
+    _arguments \
+      '*:ebuild:_files -g \*.ebuild' \
+      && ret=0
+  elif (( CURRENT > 2 )); then
+    _values 'phase' \
+      'clean' \
+      'setup' \
+      'unpack' \
+      'prepare' \
+      'configure' \
+      'compile' \
+      'test' \
+      'install'
+  fi
+  return ret
+}
+
+_pinspect() {
+  local state ret=1
+
+  _arguments -C \
+    "${cli_common_args[@]}" \
+    ': :->command' && ret=0
+
+  case $state in
+    (command)
+      declare -a commands
+
+      commands=(
+        pkgsets:'pkgset related introspection'
+        eapi_usage:'report of eapi usage for targeted repos'
+        license_usage:'report of license usage for targeted repos'
+        eclass_usage:'report of eclass usage for targeted repos'
+        mirror_usage:'report of SRC_URI mirror usage for targeted repos'
+        distfiles_usage:'report detailing distfiles space usage for targeted repos'
+        query:'auxiliary access to ebuild/repository info via portageq akin API'
+        portageq:'portageq compatible interface to query commands'
+        profile:'profile related querying'
+        digests:'identify what packages are missing digest info'
+      )
+
+      _describe -t commands command commands && ret=0
+      ;;
+    (option-or_argument)
+      _nothing
+    (*)
+      _nothing
+      ;;
+  esac
+  return ret
+}
+
+_pmaint() {
+  _nothing
+}
+
+_pmerge() {
+  _nothing
+}
+
+_pquery() {
+  _nothing
+}
+
+case $service in
+  pebuild)
+    _pebuild "$@" && return 0
+    ;;
+  pinspect)
+    _pinspect "$@" && return 0
+    ;;
+  pmaint)
+    _pmaint "$@" && return 0
+    ;;
+  pmerge)
+    _pmerge "$@" && return 0
+    ;;
+  pquery)
+    _pquery "$@" && return 0
+    ;;
+esac
+
+# vim: set et sw=2 ts=2 ft=zsh:

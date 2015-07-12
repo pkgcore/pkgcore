@@ -28,6 +28,9 @@ DATA_INSTALL_OFFSET = 'share/pkgcore'
 CONFIG_INSTALL_OFFSET = os.path.join(DATA_INSTALL_OFFSET, 'config')
 EBD_INSTALL_OFFSET = 'lib/pkgcore'
 
+# top level repo/tarball directory
+TOPDIR = os.path.dirname(os.path.abspath(__file__))
+
 
 class mysdist(snk_distutils.sdist):
 
@@ -155,7 +158,7 @@ class pkgcore_install_scripts(Command):
             ('skip_build', 'skip_build'),
         )
         self.scripts = [path for path in os.listdir('bin')
-                        if path not in ('pwrapper', 'pwrapper_installed')]
+                        if os.path.islink(os.path.join(TOPDIR, 'bin', path))]
 
     def run(self):
         if not self.skip_build:
@@ -248,9 +251,8 @@ class pkgcore_install_docs(Command):
             self.prefix, 'share', 'doc', 'pkgcore-%s' % version, 'html')
 
     def find_content(self):
-        cwd = os.path.dirname(os.path.abspath(__file__))
         for possible_path in self.content_search_path:
-            possible_path = os.path.join(cwd, possible_path)
+            possible_path = os.path.join(TOPDIR, possible_path)
             if os.path.isdir(possible_path):
                 return possible_path
         else:

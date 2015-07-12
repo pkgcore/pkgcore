@@ -301,25 +301,25 @@ def load_repos_conf(path):
             raise_from(errors.ParsingError("parsing %r" % (fp,), exception=e))
 
         defaults.update(config.defaults())
-        for repo_name in config.sections():
+        for name in config.sections():
             # note we don't check for duplicate entries so older matching
             # repos will be overridden
-            repos[repo_name] = dict(config.items(repo_name))
+            repos[name] = dict(config.items(name))
 
             # repo priority defaults to zero if unset
-            priority = repos[repo_name].get('priority', 0)
+            priority = repos[name].get('priority', 0)
             try:
-                repos[repo_name]['priority'] = int(priority)
+                repos[name]['priority'] = int(priority)
             except ValueError:
                 raise errors.ParsingError(
                     "%s: repo '%s' has invalid priority setting: %s" %
-                    (fp, repo_name, priority))
+                    (fp, name, priority))
 
             # only the location setting is strictly required
-            if 'location' not in repos[repo_name]:
+            if 'location' not in repos[name]:
                 raise errors.ParsingError(
                     "%s: repo '%s' missing location setting" %
-                    (fp, repo_name))
+                    (fp, name))
 
     if not repos:
         raise errors.ConfigurationError(
@@ -411,13 +411,13 @@ def config_from_make_conf(location=None, profile_override=None, **kwargs):
     config["vdb"] = basics.AutoConfigSection(kwds)
 
     try:
-        defaults, repos_conf = load_repos_conf(pjoin(config_dir, 'repos.conf'))
+        repos_conf_defaults, repos_conf = load_repos_conf(pjoin(config_dir, 'repos.conf'))
     except errors.ParsingError as e:
         if not getattr(getattr(e, 'exc', None), 'errno', None) == errno.ENOENT:
             raise
         try:
             # fallback to defaults provided by pkgcore
-            defaults, repos_conf = load_repos_conf(
+            repos_conf_defaults, repos_conf = load_repos_conf(
                 pjoin(const.CONFIG_PATH, 'repos.conf'))
         except IGNORED_EXCEPTIONS:
             raise
@@ -434,7 +434,7 @@ def config_from_make_conf(location=None, profile_override=None, **kwargs):
         'ignore_paludis_versioning': ('ignore-paludis-versioning' in features),
     })
 
-    default_repo = repos_conf[defaults['main-repo']]['location']
+    default_repo_path = repos_conf[repos_conf_defaults['main-repo']]['location']
     repo_map = {}
 
     for repo_name, repo_opts in repos_conf.iteritems():
@@ -463,11 +463,11 @@ def config_from_make_conf(location=None, profile_override=None, **kwargs):
             'cache': cache_name,
         }
 
-        if repo_path == default_repo:
+        if repo_path == default_repo_path:
             conf['default'] = True
             kwds['class'] = 'pkgcore.ebuild.repository.tree'
         else:
-            kwds['parent_repo'] = default_repo
+            kwds['parent_repo'] = repos_conf_defaults['main-repo']
 
         config['raw:' + repo_name] = basics.AutoConfigSection(conf)
         config[repo_path] = basics.AutoConfigSection(kwds)

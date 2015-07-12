@@ -101,7 +101,7 @@ def make_repo_syncers(config, repos_conf, make_conf, allow_timestamps=True):
     """generate syncing configs for known repos"""
     rsync_opts = None
 
-    for repo_opts in repos_conf.itervalues():
+    for repo_name, repo_opts in repos_conf.iteritems():
         d = {'basedir': repo_opts['location']}
 
         sync_type = repo_opts.get('sync-type', None)
@@ -132,7 +132,7 @@ def make_repo_syncers(config, repos_conf, make_conf, allow_timestamps=True):
             # disable syncing if sync-uri is explicitly unset
             d['class'] = 'pkgcore.sync.base.DisabledSyncer'
 
-        name = 'sync:' + repo_opts['location']
+        name = 'sync:' + repo_name
         config[name] = basics.AutoConfigSection(d)
 
 
@@ -449,11 +449,11 @@ def config_from_make_conf(location=None, profile_override=None, **kwargs):
             'class': 'pkgcore.ebuild.repo_objs.RepoConfig',
             'config_name': repo_name,
             'location': repo_path,
-            'syncer': 'sync:' + repo_path,
+            'syncer': 'sync:' + repo_name,
         }
 
         # metadata cache
-        cache_name = 'cache:' + repo_path
+        cache_name = 'cache:' + repo_name
         config[cache_name] = make_cache(repo_config.cache_format, repo_path)
 
         # repo trees
@@ -470,13 +470,13 @@ def config_from_make_conf(location=None, profile_override=None, **kwargs):
             kwds['parent_repo'] = repos_conf_defaults['main-repo']
 
         config['raw:' + repo_name] = basics.AutoConfigSection(conf)
-        config[repo_path] = basics.AutoConfigSection(kwds)
+        config[repo_name] = basics.AutoConfigSection(kwds)
 
     # XXX: Hack for portage-2 profile format support. We need to figure out how
     # to dynamically create this from the config at runtime on attr access.
     profiles.ProfileNode._repo_map = ImmutableDict(repo_map)
 
-    repos = [repo_opts['location'] for repo_opts in repos_conf.itervalues()]
+    repos = [name for name in repos_conf.iterkeys()]
     if len(repos) > 1:
         config['repo-stack'] = basics.FakeIncrementalDictConfigSection(
             my_convert_hybrid, {

@@ -40,9 +40,8 @@ def main(options, out, err):
         # multi-keyed dict with repo IDs and paths as keys with repo
         # objects as values (same thing we need for better portage-2
         # profile support)
-        for x in options.domain.repos:
-            if getattr(x, 'repository_type', None) == 'source' and \
-                    x.raw_repo.location == repo_path:
+        for x in options.domain.ebuild_repos:
+            if x.raw_repo.location == repo_path:
                 repos = x
                 break
 

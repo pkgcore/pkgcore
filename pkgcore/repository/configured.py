@@ -39,7 +39,8 @@ class tree(prototype.tree):
         self._klass = self._mk_kls(pkg_kls_injections)
 
     def _mk_kls(self, pkg_kls_injections):
-        return make_wrapper(self.configurable, self.wrapped_attrs,
+        return make_wrapper(
+            self.configurable, self.wrapped_attrs,
             kls_injections=pkg_kls_injections)
 
     def _get_pkg_kwds(self, pkg):
@@ -57,7 +58,8 @@ class tree(prototype.tree):
             kwds["pkg_klass_override"] = partial(self.package_class, o)
         else:
             kwds["pkg_klass_override"] = self.package_class
-        return (x for x in self.raw_repo.itermatch(restrict, **kwds) if x.is_supported)
+        return (x for x in self.raw_repo.itermatch(restrict, **kwds)
+                if x.is_supported)
 
     itermatch.__doc__ = prototype.tree.itermatch.__doc__.replace(
         "@param", "@keyword").replace(":keyword restrict:", ":param restrict:")

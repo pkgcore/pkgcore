@@ -19,4 +19,3 @@ class tree(object):
 
     def get_operations(self, observer=None):
         return self.operations_kls(self)
-

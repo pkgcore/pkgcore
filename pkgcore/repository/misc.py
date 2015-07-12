@@ -28,11 +28,12 @@ class nodeps_repo(object):
         self.raw_repo = repo
 
     def itermatch(self, *a, **kwds):
-        return (MutatedPkg(x,
-            overrides={"depends":self.default_depends,
-                "rdepends":self.default_rdepends,
-                "post_rdepends":self.default_post_rdepends})
-                for x in self.raw_repo.itermatch(*a, **kwds))
+        return (MutatedPkg(
+            x, overrides={"depends": self.default_depends,
+                          "rdepends": self.default_rdepends,
+                          "post_rdepends": self.default_post_rdepends}
+            )
+            for x in self.raw_repo.itermatch(*a, **kwds))
 
     def match(self, *a, **kwds):
         return list(self.itermatch(*a, **kwds))
@@ -81,8 +82,8 @@ class caching_repo(object):
         v = self.__cache__.get(restrict)
         if v is None:
             v = self.__cache__[restrict] = \
-                caching_iter(self.__db__.itermatch(restrict,
-                    sorter=self.__strategy__))
+                caching_iter(
+                    self.__db__.itermatch(restrict, sorter=self.__strategy__))
         return v
 
     def itermatch(self, restrict):
@@ -101,8 +102,9 @@ class multiplex_sorting_repo(object):
         self.__sorter__ = sorter
 
     def itermatch(self, restrict):
-        return iter_sort(self.__sorter__,
-            *[repo.itermatch(restrict) for repo in self.__repos__])
+        return iter_sort(
+            self.__sorter__, *[repo.itermatch(restrict)
+                               for repo in self.__repos__])
 
     def match(self, restrict):
         return list(self.itermatch(restrict))

@@ -49,9 +49,8 @@ class filterTree(prototype.tree):
         # the repo, determine what can be done without cost
         # (determined by repo's attributes) versus what does cost
         # (metadata pull for example).
-        return self._filterfunc(self.restriction.match,
-            self.raw_repo.itermatch(restrict, **kwds))
-
+        return self._filterfunc(
+            self.restriction.match, self.raw_repo.itermatch(restrict, **kwds))
 
     itermatch.__doc__ = prototype.tree.itermatch.__doc__.replace(
         "@param", "@keyword").replace(":keyword restrict:", ":param restrict:")

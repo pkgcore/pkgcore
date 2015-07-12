@@ -49,8 +49,8 @@ class SimpleTree(tree):
         tree.notify_remove_package(self, pkg)
 
     def notify_add_package(self, pkg):
-        self.cpv_dict.setdefault(pkg.category,
-            {}).setdefault(pkg.package, []).append(pkg.fullver)
+        self.cpv_dict.setdefault(
+            pkg.category, {}).setdefault(pkg.package, []).append(pkg.fullver)
         tree.notify_add_package(self, pkg)
 
 

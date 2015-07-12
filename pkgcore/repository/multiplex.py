@@ -23,18 +23,18 @@ from pkgcore.repository import prototype, errors
 
 class operations(repo_interface.operations_proxy):
 
-    ops_stop_after_first_supported = frozenset(["install", "uninstall",
-        "replace"])
+    ops_stop_after_first_supported = frozenset(
+        ["install", "uninstall", "replace"])
 
     @klass.cached_property
     def raw_operations(self):
-        return frozenset(chain.from_iterable(tree.operations.raw_operations
-            for tree in self.repo.trees))
+        return frozenset(chain.from_iterable(
+            tree.operations.raw_operations for tree in self.repo.trees))
 
     @klass.cached_property
     def enabled_operations(self):
-        s = set(chain.from_iterable(tree.operations.enabled_operations
-            for tree in self.repo.trees))
+        s = set(chain.from_iterable(
+            tree.operations.enabled_operations for tree in self.repo.trees))
         return frozenset(self._apply_overrides(s))
 
     def _setup_api(self):
@@ -63,6 +63,7 @@ class operations(repo_interface.operations_proxy):
 @configurable({'repositories': 'refs:repo'}, typename='repo')
 def config_tree(repositories):
     return tree(*repositories)
+
 
 class tree(prototype.tree):
 
@@ -136,7 +137,8 @@ class tree(prototype.tree):
         sorter = kwds.get("sorter", iter)
         if sorter is iter:
             return (match for repo in self.trees
-                for match in repo.itermatch(restrict, **kwds))
+                    for match in repo.itermatch(restrict, **kwds))
+
         # ugly, and a bit slow, but works.
         def f(x, y):
             l = sorter([x, y])
@@ -144,8 +146,8 @@ class tree(prototype.tree):
                 return 1
             return -1
         f = post_curry(sorted_cmp, f, key=self.zero_index_grabber)
-        return iter_sort(f,
-            *[repo.itermatch(restrict, **kwds) for repo in self.trees])
+        return iter_sort(
+            f, *[repo.itermatch(restrict, **kwds) for repo in self.trees])
 
     itermatch.__doc__ = prototype.tree.itermatch.__doc__.replace(
         "@param", "@keyword").replace(":keyword restrict:", ":param restrict:")

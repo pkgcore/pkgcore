@@ -31,9 +31,10 @@ class tree(prototype.tree):
     def _internal_gen_candidates(self, candidates, sorter):
         pkls = self.package_class
         for cp in candidates:
-            for pkg in sorter(pkls(provider, cp[0], cp[1], ver)
-                for ver in self.versions.get(cp, ())
-                for provider in self._expand_vers(cp, ver)):
+            for pkg in sorter(
+                    pkls(provider, cp[0], cp[1], ver)
+                    for ver in self.versions.get(cp, ())
+                    for provider in self._expand_vers(cp, ver)):
                 yield pkg
 
     def _get_categories(self, *optional_category):

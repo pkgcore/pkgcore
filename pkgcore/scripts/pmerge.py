@@ -148,8 +148,8 @@ output_options.add_argument(
     help="be verbose in output")
 output_options.add_argument(
     '--quiet-repo-display', action='store_true',
-    help="In the package merge list display, suppress ::repository "
-         "output, and instead use numbers to indicate which repositories "
+    help="In the package merge list display, suppress ::repo "
+         "output, and instead use numbers to indicate which repos "
          "packages come from.")
 output_options.add_argument(
     '-F', '--formatter', priority=90,
@@ -453,24 +453,15 @@ def main(options, out, err):
             return 1
         return
 
-    source_repos = domain.source_repositories
-    installed_repos = domain.installed_repositories
+    source_repos = domain.source_repos
+    installed_repos = domain.installed_repos
 
     if options.usepkgonly:
-        source_repos = source_repos.change_repos(
-            x for x in source_repos
-            if getattr(x, 'repository_type', None) != 'source')
+        source_repos = domain.binary_repos
     elif options.usepkg:
-        repo_types = [(getattr(x, 'repository_type', None) == 'built', x)
-                      for x in source_repos]
-        source_repos = source_repos.change_repos(
-            [x[1] for x in repo_types if x[0]] +
-            [x[1] for x in repo_types if not x[0]]
-        )
+        source_repos = domain.binary_repos + domain.ebuild_repos
     elif options.source_only:
-        source_repos = source_repos.change_repos(
-            x for x in source_repos
-            if getattr(x, 'repository_type', None) == 'source')
+        source_repos = domain.ebuild_repos
 
     atoms = []
     for setname, pkgset in options.sets:
@@ -545,7 +536,7 @@ def main(options, out, err):
 #    hp.setrelheap()
 
     resolver_inst = resolver_kls(
-        installed_repos.repositories, source_repos.repositories,
+        vdbs=installed_repos, dbs=source_repos,
         verify_vdb=options.deep, nodeps=options.nodeps,
         drop_cycles=options.ignore_cycles, force_replace=options.replace,
         process_built_depends=options.with_bdeps, **extra_kwargs)
@@ -587,14 +578,14 @@ def main(options, out, err):
             out.error("failed '%s'" % (restrict,))
             out.write('potentials:')
             match_count = 0
-            for r in repo_utils.get_raw_repos(source_repos.repositories):
+            for r in repo_utils.get_raw_repos(source_repos):
                 l = r.match(restrict)
                 if l:
                     out.write(
                         "repo %s: [ %s ]" % (r, ", ".join(str(x) for x in l)))
                     match_count += len(l)
             if not match_count:
-                out.write("No matches found in %s" % (source_repos.repositories,))
+                out.write("No matches found in %s" % (source_repos,))
             out.write()
             if not options.ignore_failures:
                 return 1

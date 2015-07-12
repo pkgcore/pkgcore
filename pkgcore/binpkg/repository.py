@@ -213,8 +213,6 @@ class StackedCache(StackedDict):
 
 class tree(prototype.tree):
 
-    # This attributes needs to be replaced/removed; it's a hack for pmerge.
-    repository_type = 'built'
     package_factory = staticmethod(ebuild_built.generate_new_factory)
 
     # yes, the period is required. no, do not try and remove it

@@ -218,8 +218,6 @@ class _UnconfiguredTree(prototype.tree):
     configurables = ("domain", "settings")
     configure = None
     package_factory = staticmethod(ebuild_src.generate_new_factory)
-    # This attributes needs to be replaced/removed; it's a hack for pmerge.
-    repository_type = 'source'
     enable_gpg = False
     extension = '.ebuild'
 

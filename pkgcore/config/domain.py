@@ -15,6 +15,8 @@ from snakeoil.demandload import demandload
 demandload(
     "pkgcore.operations:domain@domain_ops",
     "pkgcore.repository:util@repo_utils",
+    "pkgcore.ebuild:repository@ebuild_repo",
+    "pkgcore.binpkg:repository@binary_repo",
 )
 
 
@@ -35,15 +37,27 @@ class domain(object):
         return tuple(l)
 
     @klass.jit_attr
-    def source_repositories(self):
+    def source_repos(self):
         return repo_utils.RepositoryGroup(self.repos)
 
     @klass.jit_attr
-    def installed_repositories(self):
+    def ebuild_repos(self):
+        repos = [x for x in self.repos
+                 if isinstance(x.raw_repo, ebuild_repo._ConfiguredTree)]
+        return repo_utils.RepositoryGroup(repos)
+
+    @klass.jit_attr
+    def binary_repos(self):
+        repos = [x for x in self.repos
+                 if isinstance(x.raw_repo, binary_repo.ConfiguredBinpkgTree)]
+        return repo_utils.RepositoryGroup(repos)
+
+    @klass.jit_attr
+    def installed_repos(self):
         return repo_utils.RepositoryGroup(self.vdb)
 
-    all_repos = klass.alias_attr("source_repositories.combined")
-    all_livefs_repos = klass.alias_attr("installed_repositories.combined")
+    all_repos = klass.alias_attr("source_repos.combined")
+    all_livefs_repos = klass.alias_attr("installed_repos.combined")
 
     def pkg_operations(self, pkg, observer=None):
         return pkg.operations(self, observer=observer)

@@ -913,7 +913,7 @@ def main(subcommands, args=None, outfile=None, errfile=None, script_name=None):
         tb = sys.exc_info()[-1]
         if not getattr(options, 'debug', False):
             tb = None
-        dump_error(errfile, e, "Unhandled Exception occurred", tb=tb)
+        dump_error(errfile, e, "Unhandled exception occurred", tb=tb)
     if out is not None:
         if exitstatus:
             out.title('%s failed' % (options.prog,))
@@ -930,7 +930,7 @@ def dump_error(handle, raw_exc, context_msg=None, tb=None):
         if tb:
             handle.write("Traceback follows:\n")
             traceback.print_tb(tb, file=handle)
-            handle.write("\nError was:\n")
+            handle.write("\n%s:\n" % raw_exc.__class__.__name__)
     exc_strings = []
     if raw_exc is not None:
         for exc in walk_exception_chain(raw_exc):

@@ -586,7 +586,7 @@ def config_from_make_conf(location=None, profile_override=None, **kwargs):
         'default': True,
         'vdb': ('vdb',),
         'profile': 'profile',
-        'name': 'livefs domain',
+        'name': 'livefs',
         'root': root,
     })
 
@@ -604,7 +604,7 @@ def config_from_make_conf(location=None, profile_override=None, **kwargs):
 
     if triggers:
         make_conf['triggers'] = tuple(triggers)
-    config['livefs domain'] = basics.FakeIncrementalDictConfigSection(
+    config['livefs'] = basics.FakeIncrementalDictConfigSection(
         my_convert_hybrid, make_conf)
 
     return config

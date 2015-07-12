@@ -13,21 +13,45 @@ cli_common_args=(
 _pebuild() {
   local ret=1
 
-  if (( CURRENT == 2 )); then
-    _arguments \
-      '*:ebuild:_files -g \*.ebuild' \
-      && ret=0
-  elif (( CURRENT > 2 )); then
-    _values 'phase' \
-      'clean' \
-      'setup' \
-      'unpack' \
-      'prepare' \
-      'configure' \
-      'compile' \
-      'test' \
-      'install'
-  fi
+  common_args=(
+    ${cli_common_args[@]}
+    "--no-auto[run just the specified phases; it's up to the invoker to get the order right]"
+  )
+
+  _arguments -C \
+    "${common_args[@]}" \
+    ': :->atom-or-ebuild' \
+    '*:: :->phase' \
+    && ret=0
+
+  case $state in
+    (atom-or-ebuild)
+      _arguments \
+        '*:ebuild:_files -g \*.ebuild' \
+        && ret=0
+      ;;
+    (phase)
+      declare -a phases
+
+      phases=(
+        clean
+        setup
+        unpack
+        prepare
+        configure
+        compile
+        test
+        install
+      )
+
+      _describe -t phases phase phases && ret=0
+      ;;
+
+    (*)
+      _nothing
+      ;;
+  esac
+
   return ret
 }
 
@@ -36,7 +60,8 @@ _pinspect() {
 
   _arguments -C \
     "${cli_common_args[@]}" \
-    ': :->command' && ret=0
+    ': :->command' \
+    && ret=0
 
   case $state in
     (command)

@@ -523,7 +523,9 @@ class RepoConfig(syncable.tree):
         if val is None:
             if not self.is_empty:
                 logger.warning("repository at location %r lacks a defined repo_name", self.location)
-            val = '<unlabeled repository %s>' % self.location
+            val = getattr(self, 'config_name', None)
+            if val is None:
+                val = '<unlabeled repository %s>' % self.location
         return val.strip()
 
     arch_profiles = klass.alias_attr('profiles.arch_profiles')

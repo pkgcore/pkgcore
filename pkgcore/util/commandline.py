@@ -317,7 +317,7 @@ class StoreRepoObject(StoreConfigObject):
         If a repo doesn't have a proper location just the name is returned.
         """
         for repo_name, repo in sorted(unstable_unique(sections.iteritems())):
-            if len(repo.aliases) == 2:
+            if len(repo.aliases) > 1 and hasattr(repo, 'location'):
                 yield '%s: %s' % (repo.aliases[0], repo.location)
             else:
                 yield repo_name
@@ -328,7 +328,7 @@ class StoreRepoObject(StoreConfigObject):
 
         # name wasn't found; search for it.
         for repo_name, repo in sections.iteritems():
-            if name == repo_name[4:] or name in repo.aliases:
+            if name in repo.aliases:
                 name = repo_name
                 break
 

@@ -65,6 +65,22 @@ the following::
 Installing
 ==========
 
+Installing pkgcore in a virtualenv should work as expected. One thing to note
+is that pkgcore's setup script uses snakeoil so it needs to be manually
+installed before pkgcore.
+
+Installing latest pypi release in a virtualenv::
+
+    pip install snakeoil
+    pip install pkgcore
+
+Installing from git in a virtualenv::
+
+    pip install https://github.com/pkgcore/snakeoil/archive/master.tar.gz
+    pip install https://github.com/pkgcore/pkgcore/archive/master.tar.gz
+
+For manually installing from a tarball or repo checkout see the commands below.
+
 To build::
 
     tar jxf pkgcore-0.XX.tar.bz2

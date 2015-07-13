@@ -12,6 +12,8 @@ pkgcore/plugins/plugincache
 /cache
 /dist
 /.tox
+/.coverage
+/*.egg-info
 _trial_temp
 /doc/dev-notes/index.rst
 /doc/dev-notes/*/index.rst

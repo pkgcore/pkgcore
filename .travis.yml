@@ -1,8 +1,13 @@
 language: python
 python:
-    - 2.7
-    - 3.3
-    - 3.4
+  - 2.7
+  - 3.3
+  - 3.4
+  - nightly
+matrix:
+  fast_finish: true
+  allow_failures:
+    - python: nightly
 sudo: false
 addons:
   apt:
@@ -13,15 +18,15 @@ cache:
     - $HOME/.cache/pip
 install: pip install 'tox<2' coveralls
 before_script:
-    # Make sure the actual install-info binary is first in PATH since
-    # Debian-based distros use a wrapper script that outputs warnings and
-    # breaks the info file merge trigger test.
-    - mkdir texinfo
-    - ln -s /usr/bin/ginstall-info texinfo/install-info
-    - export PATH=$PWD/texinfo:$PATH
+  # Make sure the actual install-info binary is first in PATH since
+  # Debian-based distros use a wrapper script that outputs warnings and
+  # breaks the info file merge trigger test.
+  - mkdir texinfo
+  - ln -s /usr/bin/ginstall-info texinfo/install-info
+  - export PATH=$PWD/texinfo:$PATH
 script: tox -e py${TRAVIS_PYTHON_VERSION/\./}
 after_success:
-    # upload coverage data to coveralls.io
-    - pushd .tox/py${TRAVIS_PYTHON_VERSION/\./}/lib/python*/site-packages
-    - coveralls
-    - popd
+  # upload coverage data to coveralls.io
+  - pushd .tox/py${TRAVIS_PYTHON_VERSION/\./}/lib/python*/site-packages
+  - coveralls
+  - popd

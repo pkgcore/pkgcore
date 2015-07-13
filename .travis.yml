@@ -3,12 +3,19 @@ python:
     - 2.7
     - 3.3
     - 3.4
-before_install:
-    # install-info is used by the info regen trigger
-    - sudo apt-get install -y install-info
-    # don't output the "this is not dpkg install-info anymore, but GNU install-info..." warning
-    - sudo mv /usr/bin/ginstall-info /usr/bin/install-info
+sudo: false
+addons:
+  apt:
+    packages:
+      - install-info
 install: pip install 'tox<2' coveralls
+before_script:
+    # Make sure the actual install-info binary is first in PATH since
+    # Debian-based distros use a wrapper script that outputs warnings and
+    # breaks the info file merge trigger test.
+    - mkdir texinfo
+    - ln -s /usr/bin/ginstall-info texinfo/install-info
+    - export PATH=$PWD/texinfo:$PATH
 script: tox -e py${TRAVIS_PYTHON_VERSION/\./}
 after_success:
     # upload coverage data to coveralls.io

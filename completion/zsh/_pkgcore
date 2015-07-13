@@ -34,14 +34,14 @@ _pebuild() {
       declare -a phases
 
       phases=(
-        clean
-        setup
-        unpack
-        prepare
-        configure
-        compile
-        test
-        install
+        clean:"remove the package's temporary directory"
+        setup:'run package specific setup actions or checks'
+        unpack:'unpack all the sources to the workdir'
+        prepare:'preparation of all sources such as applying patches'
+        configure:'run configuration steps'
+        compile:'run compilation steps'
+        test:'run test steps'
+        install:'install the package to the temp directory'
       )
 
       _describe -t phases phase phases && ret=0

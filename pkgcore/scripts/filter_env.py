@@ -36,20 +36,26 @@ argparser.add_argument(
     '-i', '--input', action='store',
     type=commandline.argparse.FileType(), default=commandline.DelayedValue(stdin_default, 0),
     help='Filename to read the env from (uses stdin if omitted).')
-mux = argparser.add_mutually_exclusive_group()
-filtering = mux.add_argument_group("Environment filtering options")
+filtering = argparser.add_argument_group("Environment filtering options")
 filtering.add_argument(
     '-f', '--funcs', action='extend_comma',
     help="comma separated list of regexes to match function names against for filtering")
 filtering.add_argument(
     '-v', '--vars', action='extend_comma',
     help="comma separated list of regexes to match variable names against for filtering")
-mux.add_argument(
+filtering.add_argument(
     '--print-vars', action='store_true', default=False,
     help="print just the global scope environment variables.")
-mux.add_argument(
+filtering.add_argument(
     '--print-funcs', action='store_true', default=False,
     help="print just the global scope functions.")
+
+
+@argparser.bind_final_check
+def _validate_args(parser, namespace):
+    if (namespace.funcs or namespace.args) and \
+            (namespace.print_vars or namespace.print_funcs):
+        parser.error('--funcs or --vars cannot be used with --print-funcs or --print-vars')
 
 
 @argparser.bind_main_func

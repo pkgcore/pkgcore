@@ -60,8 +60,9 @@ __reset_sandbox() {
 # Make sure it's before everything so we don't mess aliases that follow.
 unalias -a
 
-# We need this next line for "die" and "assert". It expands
-# It _must_ preceed all the calls to die and assert.
+# This is needed for calling __load_environ, __load_safe_environ, and
+# __init_environ. If those can ever be moved into functions this can be
+# dropped.
 shopt -s expand_aliases
 
 # Unset some variables that break things.
@@ -497,7 +498,8 @@ __dump_metadata_keys() {
 	__ebd_write_line "key DEFINED_PHASES=${phases:--}"
 }
 
-DONT_EXPORT_VARS+=" $(declare | __filter_env --print-vars | __regex_filter_input ${ORIG_VARS} ${DONT_EXPORT_VARS})"
+DONT_EXPORT_VARS+=" $(declare | __filter_env --print-vars | \
+	__regex_filter_input ${ORIG_VARS} ${DONT_EXPORT_VARS})"
 
 set +f
 

@@ -305,6 +305,9 @@ __ebd_process_ebuild_phases() {
 			shutdown_daemon)
 				break
 				;;
+			alive)
+				__ebd_write_line "yep!"
+				;;
 			*)
 				echo "received unknown com during phase processing: ${line}" >&2
 				exit 1
@@ -441,6 +444,9 @@ __ebd_main_loop() {
 				else
 					__ebd_write_line "phases failed"
 				fi
+				;;
+			alive)
+				__ebd_write_line "yep!"
 				;;
 			*)
 				echo "received unknown com: ${com}" >&2

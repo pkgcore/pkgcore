@@ -8,6 +8,8 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 pkgcore master
 --------------
 
+- Calling die() now works as expected from within subshells.
+
 - Drop deprecated support for /etc/make.profile, only /etc/portage/make.profile
   is supported now when using portage config files.
 

@@ -220,6 +220,10 @@ class InternalError(ProcessingInterruption):
         self.args = (line, msg)
 
 
+def chuck_TermInterrupt(*arg):
+    raise FinishedProcessing(False)
+
+
 def chuck_KeyboardInterrupt(*arg):
     raise KeyboardInterrupt("ctrl+c encountered")
 
@@ -232,6 +236,10 @@ def chuck_StoppingCommand(val, processor, *args):
     if callable(val):
         raise FinishedProcessing(val(args[0]))
     raise FinishedProcessing(val)
+
+
+class TimeoutError(Exception):
+    pass
 
 
 class InitializationError(Exception):
@@ -334,6 +342,10 @@ class EbuildProcessor(object):
             [const.BASH_BINARY, self.ebd, "daemonize"],
             fd_pipes={0: 0, 1: 1, 2: 2, max_fd-2: cread, max_fd-1: dwrite},
             returnpid=True, env=env, *args, **spawn_opts)[0]
+
+        # Each ebuild processor is the process group leader for all its spawned
+        # children so everything can be terminated easily if necessary.
+        os.setpgid(self.pid, 0)
 
         os.close(cread)
         os.close(dwrite)
@@ -446,19 +458,35 @@ class EbuildProcessor(object):
         self._outstanding_expects = []
         return ret
 
-    def expect(self, want, async=False, flush=False):
+    def _timeout_ebp(self, signum, frame):
+        logger.debug("ebp for pid '%i' appears dead, timing out" % self.pid)
+        raise TimeoutError()
+
+    def expect(self, want, async=False, flush=False, timeout=0):
         """read from the daemon, check if the returned string is expected.
 
         :param want: string we're expecting
         :return: boolean, was what was read == want?
         """
+        if timeout:
+            signal.signal(signal.SIGALRM, self._timeout_ebp)
+            signal.setitimer(signal.ITIMER_REAL, timeout)
+
         if async:
             self._outstanding_expects.append((flush, want))
             return True
         if flush:
             self.ebd_write.flush()
         if not self._outstanding_expects:
-            return want == self.read().rstrip('\n')
+            try:
+                return want == self.read().rstrip('\n')
+            except TimeoutError:
+                return False
+            finally:
+                if timeout:
+                    signal.signal(signal.SIGALRM, signal.SIG_DFL)
+                    signal.alarm(0)
+
         self._outstanding_expects.append((flush, want))
         return self._consume_async_expects()
 
@@ -467,8 +495,9 @@ class EbuildProcessor(object):
         while lines > 0:
             mydata.append(self.ebd_read.readline())
             if mydata[-1].startswith("killed"):
-#                self.shutdown_processor()
                 chuck_KeyboardInterrupt()
+            elif mydata[-1].startswith('term'):
+                chuck_TermInterrupt()
             lines -= 1
         return mydata
 
@@ -607,6 +636,9 @@ class EbuildProcessor(object):
                 return False
             try:
                 os.kill(self.pid, 0)
+                self.write("alive", disable_runtime_exceptions=True)
+                if not self.expect("yep!", timeout=0.1):
+                    return False
                 return True
             except OSError:
                 # pid is dead.
@@ -622,19 +654,26 @@ class EbuildProcessor(object):
         """
         tell the daemon to shut itself down, and mark this instance as dead
         """
+        kill = False
         try:
-            if self.is_alive:
+            if self.pid is None:
+                return
+            elif self.is_alive:
                 self.write("shutdown_daemon", disable_runtime_exceptions=True)
                 self.ebd_write.close()
                 self.ebd_read.close()
             else:
-                return
+                kill = True
         except (EnvironmentError, ValueError):
-            os.kill(self.pid, signal.SIGTERM)
+            kill = True
 
-        # now we wait.
+        if kill:
+            os.killpg(self.pid, signal.SIGTERM)
+            os.killpg(self.pid, signal.SIGCONT)
+
+        # now we wait for the process group
         try:
-            os.waitpid(self.pid, 0)
+            os.waitpid(-self.pid, 0)
         except KeyboardInterrupt:
             if not ignore_keyboard_interrupt:
                 raise
@@ -823,6 +862,7 @@ class EbuildProcessor(object):
             chuck_StoppingCommand, lambda f: f.lower().strip() == "succeeded")
 
         handlers["killed"] = chuck_KeyboardInterrupt
+        handlers["term"] = chuck_TermInterrupt
 
         if additional_commands is not None:
             for x in additional_commands:

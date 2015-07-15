@@ -6,18 +6,20 @@ __regex_filter_input() {
 	local IFS='|'
 	local regex="^(${*})$"
 	# use egrep if possible... tis faster.
-	local l
+	local l ret=0
 	if l=$(type -P gsed || type -P sed); then
 		"${l}" -re "/${regex}/d"
-		local ret=$?
+		ret=$?
 		[[ ${ret} != 0 ]] && die "got failing return code (${ret}) invoking ${l} -e '/${regex}/d'"
 	elif l=$(type -P egrep); then
 		# use type -p; qa_interceptors may be active.
 		"${l}" -v "${regex}"
-		local ret=$?
+		ret=$?
+		# return status is 1 for no matches and 2 for errors
 		[[ ${ret} -gt 1 ]] && die "got failing return code (${ret}) ${l} -v '${regex}'"
+		ret=0 # reset the return status if there are no matches, it isn't a error
 	elif [[ -x ${PKGCORE_PYTHON_BINARY} ]]; then
-		# We check for the binary on the offchance an ebuild operation
+		# We check for the binary on the off chance an ebuild operation
 		# just removed it under our feet.
 		"${PKGCORE_PYTHON_BINARY}" -c \
 			'import sys;import re;r=re.compile(sys.argv[1]).match;sys.stdout.write("\n".join(x for x in sys.stdin.read().splitlines() if r(x) is None))' \
@@ -29,6 +31,7 @@ __regex_filter_input() {
 			[[ ${l} =~ ${regex} ]] || echo "${l}"
 		done
 	fi
+	return ${ret}
 }
 
 __escape_regex_array() {

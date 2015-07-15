@@ -35,7 +35,6 @@ SHELL SHLVL EMERGE_(WARNING_DELAY|FROM) MERGE_TYPE REPLACING_VERSIONS REPLACED_B
 AUTOCLEAN CLEAN_DELAY USE_ORDER XARGS
 COLORTERM LESS(OPEN)? DISPLAY EDITOR LS_COLORS PAGER TERM TERMCAP (ftp|http)_proxy USER(NAME)?"
 
-
 if [[ -z ${PKGCORE_BIN_PATH} ]]; then
 	echo "PKGCORE_BIN_PATH is unset!"
 	exit 1
@@ -137,6 +136,10 @@ umask 022
 
 # the sandbox is disabled by default except when overridden in the relevant stages
 export SANDBOX_ON=0
+
+# Used to track if we're subshelled w/in the main ebd instance, or if we're in
+# a literal child process.
+PKGCORE_IS_NOT_HELPER=1
 
 # ensure the passed in PATH has its components in $PATH
 __ensure_PATH() {
@@ -325,10 +328,6 @@ __execute_phases() {
 		declare -rx PKGCORE_NONFATAL_HELPER=true
 	fi
 
-	# local scope; this keeps it from bleeding further, and keeps
-	# it from being exported- we use it to track if we're subshelled w/in the main
-	# ebd instance, or if we're in a literal child process.
-	local PKGCORE_IS_NOT_HELPER=1
 	local myarg ret
 	for myarg in $*; do
 		EBUILD_PHASE=${myarg}

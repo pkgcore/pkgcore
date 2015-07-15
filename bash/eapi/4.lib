@@ -33,4 +33,6 @@ __phase_src_install() {
 	fi
 }
 
+default_src_install() { __phase_src_install; }
+
 :

@@ -169,9 +169,6 @@ __load_eapi_libs() {
 	source "${PKGCORE_BIN_PATH}/eapi/${PKGCORE_EAPI-${EAPI}}.lib" || \
 		die "failed loading eapi/${PKGCORE_EAPI-${EAPI}}.lib"
 
-	# create default_* functions
-	__inject_default_phase_funcs ${PKGCORE_EAPI_FUNCS}
-
 	# override banned functions
 	local func
 	for func in "${PKGCORE_BANNED_FUNCS[@]}"; do

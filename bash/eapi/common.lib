@@ -384,20 +384,6 @@ __phase_pre_src_install() {
 	__phase_pre_phase
 }
 
-__inject_default_phase_funcs() {
-	local prefix="__phase_" func
-
-	for func in "$@"; do
-		# skip non-phase functions
-		[[ ${func} == ${prefix}* ]] || continue
-
-		# define default_${phase} funcs for EAPI 2 and up
-		if ! __safe_has "${EAPI}" 0 1 ; then
-			eval "default_${func#${prefix}}() { ${func}; }";
-		fi
-	done
-}
-
 unpack() {
 	local file filename myfail srcdir taropts tar_subdir
 	taropts='--no-same-owner'

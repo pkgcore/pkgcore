@@ -124,6 +124,9 @@ __ebd_exec_main() {
 	__ebd_read_line PKGCORE_BIN_PATH
 	[[ -z ${PKGCORE_BIN_PATH} ]] && { __ebd_write_line "empty PKGCORE_BIN_PATH;"; exit 1; }
 
+	__ebd_read_line PKGCORE_DEBUG
+	[[ -z ${PKGCORE_DEBUG} ]] && { __ebd_write_line "empty PKGCORE_DEBUG;"; exit 1; }
+
 	if ! source "${PKGCORE_BIN_PATH}"/exit-handling.lib; then
 		__ebd_write_line "failed sourcing exit handling functionality"
 		exit 2

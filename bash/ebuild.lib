@@ -286,7 +286,7 @@ source "${PKGCORE_BIN_PATH}"/ebuild-default-functions.lib >&2 || die "failed sou
 source "${PKGCORE_BIN_PATH}"/ebuild-env-utils.lib >&2 || die "failed sourcing ebuild-env-utils.lib"
 
 __run_ebuild_phase() {
-	[[ -n ${PKGCORE_DEBUG} ]] && set -x
+	[[ ${PKGCORE_DEBUG} -ge 2 ]] && set -x
 	__qa_run_function_if_exists __phase_pre_$1
 	__qa_run_function_if_exists pre_$1
 
@@ -303,7 +303,7 @@ __run_ebuild_phase() {
 
 	__qa_run_function_if_exists post_$1
 	__qa_run_function_if_exists __phase_post_$1
-	[[ ${PKGCORE_DEBUG} -lt 2 ]] && set +x
+	[[ ${PKGCORE_DEBUG} -lt 4 ]] && set +x
 }
 
 # general func to call for phase execution.  this handles necessary env loading/dumping, and executing pre/post/dyn
@@ -405,7 +405,7 @@ __execute_phases() {
 						[[ -z ${CCACHE_SIZE} ]] && export CCACHE_SIZE="500M"
 						ccache -M ${CCACHE_SIZE} &> /dev/null
 					fi
-					[[ ${PKGCORE_DEBUG} == 2 ]] && set -x
+					[[ ${PKGCORE_DEBUG} -ge 2 ]] && set -x
 					__init_environ
 				else
 					PKGCORE_TARGET_ENV=${T}/environment

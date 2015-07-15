@@ -100,8 +100,6 @@ class ebd(object):
 
         if "PYTHONPATH" in os.environ:
             self.env["PYTHONPATH"] = os.environ["PYTHONPATH"]
-        if "PKGCORE_DEBUG" in os.environ:
-            self.env["PKGCORE_DEBUG"] = str(int(os.environ["PKGCORE_DEBUG"]))
 
         if features is None:
             features = self.env.get("FEATURES", ())

@@ -348,6 +348,14 @@ class EbuildProcessor(object):
                 "expected 'dude!' response from ebd, which wasn't received. "
                 "likely a bug")
         self.write(e_const.EAPI_BIN_PATH)
+
+        # send debug level so we can debug things in the global scope
+        try:
+            debug = int(os.environ.get('PKGCORE_DEBUG', 0))
+        except ValueError:
+            debug = 0
+        self.write(str(debug))
+
         # send PKGCORE_PYTHON_BINARY...
         self.write(pkgcore.spawn.find_invoking_python())
         self.write(

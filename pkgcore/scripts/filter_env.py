@@ -53,7 +53,7 @@ filtering.add_argument(
 
 @argparser.bind_final_check
 def _validate_args(parser, namespace):
-    if (namespace.funcs or namespace.args) and \
+    if (namespace.funcs or namespace.vars) and \
             (namespace.print_vars or namespace.print_funcs):
         parser.error('--funcs or --vars cannot be used with --print-funcs or --print-vars')
 

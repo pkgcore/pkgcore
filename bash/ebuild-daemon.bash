@@ -365,7 +365,7 @@ __ebd_process_metadata() {
 			export PATH=${PKGCORE_METADATA_PATH}
 		fi
 
-		PORTAGE_SANDBOX_PID=${PPID}
+		PKGCORE_SANDBOX_PID=${PPID}
 		__execute_phases "${2:-depend}" && exit 0
 		__ebd_process_sandbox_results
 		exit 1
@@ -391,7 +391,7 @@ __ebd_main_loop() {
 			process_ebuild*)
 				# cleanse whitespace.
 				local phases=$(echo ${com#process_ebuild})
-				PORTAGE_SANDBOX_PID=${PPID}
+				PKGCORE_SANDBOX_PID=${PPID}
 				__ebd_process_ebuild_phases ${phases}
 				# tell python if it succeeded or not.
 				if [[ $? -ne 0 ]]; then

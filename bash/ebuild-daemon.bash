@@ -189,7 +189,6 @@ __ebd_exec_main() {
 		DONT_EXPORT_FUNCS+=" $("${PKGCORE_BIN_PATH}"/regenerate_dont_export_func_list.bash - 2> /dev/null)"
 	fi
 
-	DONT_EXPORT_FUNCS+=" ${PORTAGE_PRELOADED_ECLASSES}"
 	for x in ${DONT_EXPORT_FUNCS}; do
 		__is_function "${x}" || continue
 		if ! __safe_has "${x}" "${PKGCORE_RUNTIME_FUNCS[@]}"; then

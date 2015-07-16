@@ -95,7 +95,7 @@ as strictly repository id matching, and must be the last token in the atom.
 
 If you need to do slot matching in addition, it would be
 
-  sys-devel/gcc:3.3:gentoo
+  sys-devel/gcc:3.3::gentoo
 
 which would match slot '3.3' from repository 'gentoo' (defined in
 profiles/repo_name) of sys-devel/gcc.

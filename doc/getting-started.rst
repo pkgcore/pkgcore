@@ -11,8 +11,4 @@ Content
     :glob:
     :maxdepth: 2
 
-    getting-started/getting-started
-    getting-started/config
-    getting-started/portage-configuration
-    getting-started/pquery-usage
-    getting-started/extended-atom-syntax
+    getting-started/*

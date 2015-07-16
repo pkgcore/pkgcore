@@ -55,6 +55,7 @@ from snakeoil.osutils import abspath, normpath, pjoin
 from snakeoil.weakrefs import WeakRefFinalizer
 
 demandload(
+    'itertools:chain',
     'traceback',
     'snakeoil:fileutils',
     'pkgcore.log:logger',
@@ -225,7 +226,13 @@ def chuck_TermInterrupt(*arg):
 
 
 def chuck_KeyboardInterrupt(*arg):
+    signal.signal(signal.SIGPIPE, signal.SIG_DFL)
+    signal.signal(signal.SIGINT, signal.SIG_DFL)
+    for ebp in chain(active_ebp_list, inactive_ebp_list):
+        os.killpg(ebp.pid, signal.SIGINT)
     raise KeyboardInterrupt("ctrl+c encountered")
+
+signal.signal(signal.SIGINT, chuck_KeyboardInterrupt)
 
 
 def chuck_UnhandledCommand(processor, line):
@@ -646,7 +653,7 @@ class EbuildProcessor(object):
             self.pid = None
             return False
 
-        except AttributeError:
+        except (AttributeError, KeyboardInterrupt):
             # thrown only if failure occurred instantiation.
             return False
 

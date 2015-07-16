@@ -2,7 +2,7 @@
 Overview
 ========
 
-Pkgcore supports several configuration formats, Portage's ``/etc/make.conf``
+Pkgcore supports several configuration formats, Portage's ``/etc/portage/make.conf``
 included. This file documents the current state of the support.
 
 FEATURES

@@ -39,7 +39,7 @@ managers.
   added in the future, but pkgcore is unlikely to ever support the full set
   used by portage.
 
-* /etc/make.conf
+* /etc/portage/make.conf
 
   Config values are only loaded from /etc/portage/make.conf, the deprecated
   /etc/make.conf location is not checked anymore.

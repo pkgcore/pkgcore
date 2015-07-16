@@ -84,7 +84,7 @@ Portage compatibility mode
 
 If you do not have a global (``/etc/pkgcore.conf``) or local
 (``~/.pkgcore.conf``) configuration file pkgcore will automatically fall back to
-reading ``/etc/make.conf`` and the other Portage configuration files.  A
+reading ``/etc/portage/make.conf`` and the other Portage configuration files.  A
 noticable difference is pkgcore does not support picking up variables like USE
 from the environment, so you can't run commands like ``USE="foo" pmerge
 package``. Apart from that things should just work the way you're used to.
@@ -118,7 +118,7 @@ Section names are usually arbitrary but sections that load extra configuration
 data are an exception: they have to start with "autoload" or they will not be
 processed. If you change the section name to just "portage" you will still see
 it show up in ``pconfig dump`` but all other things defined in
-``/etc/make.conf`` will disappear.
+``/etc/portage/make.conf`` will disappear.
 
 ``pconfig`` can tell you what arguments a class takes::
 
@@ -129,7 +129,7 @@ it show up in ``pconfig dump`` but all other things defined in
  path: str (required)
 
 If you wanted to remove the overlay mentioned at the top of this document from
-``/etc/make.conf`` but keep it available to pkgcore you would add::
+``/etc/portage/make.conf`` but keep it available to pkgcore you would add::
 
  [/usr/local/portage/private]
  class=pkgcore.ebuild.repository.UnconfiguredTree
@@ -209,9 +209,9 @@ portage_conf. For example, if ``.pkgcore.dhcpconf`` looks like::
      class pkgcore.ebuild.portage_conf.config_from_make_conf;
  }
 
-it will load ``/etc/make.conf``.
+it will load ``/etc/portage/make.conf``.
 
-If you want to get rid of ``/etc/make.conf`` entirely you can start from the
+If you want to get rid of ``/etc/portage/make.conf`` entirely you can start from the
 output of ``pconfig dump``. But be careful: ``pconfig`` does not escape strings
 exactly the same way dhcpformat parses them, so make sure you check the dump
 after you disable portage_conf for mistakes.

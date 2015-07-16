@@ -188,7 +188,7 @@ Overview from load_config() to instantiated repo
 ------------------------------------------------
 
 When you call load_config() it looks up what config files are
-available (/etc/pkgcore.conf, ~/.pkgcore.conf, /etc/make.conf) and
+available (/etc/pkgcore.conf, ~/.pkgcore.conf, /etc/portage/make.conf) and
 loads them. This produces a dict mapping section names to
 ConfigSection instances. For the ini-format pkgcore.conf files this is
 straightforward, for make.conf this is a lot of work done in

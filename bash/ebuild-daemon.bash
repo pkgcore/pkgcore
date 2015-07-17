@@ -31,9 +31,10 @@ die() {
 	exit 1
 }
 
-STARTING_PID=${BASHPID}
-# use ebd_read/ebd_write for talking to the running portage instance instead of echo'ing to the fd yourself.
-# this allows us to move the open fd's w/out issues down the line.
+PKGCORE_EBD_PID=${BASHPID}
+# Use ebd_read/ebd_write for talking to the running pkgcore instance instead of
+# echo'ing to the fd yourself. This allows us to move the open fd's w/out
+# issues down the line.
 __ebd_read_line_nonfatal() {
 	read -u ${PKGCORE_EBD_READ_FD} $1
 }
@@ -42,7 +43,7 @@ __ebd_read_line() {
 	__ebd_read_line_nonfatal "$@"
 	local ret=$?
 	[[ ${ret} -ne 0 ]] && \
-		die "coms error in ${STARTING_PID}, read_line $@ failed w/ ${ret}: backing out of daemon."
+		die "coms error in ${PKGCORE_EBD_PID}, read_line $@ failed w/ ${ret}: backing out of daemon."
 }
 
 # are we running a version of bash (4.1 or so) that does -N?
@@ -52,7 +53,7 @@ if echo 'y' | read -N 1 &> /dev/null; then
 		read -u ${PKGCORE_EBD_READ_FD} -r -N $1 $2
 		local ret=$?
 		[[ ${ret} -ne 0 ]] && \
-			die "coms error in ${STARTING_PID}, read_size $@ failed w/ ${ret}: backing out of daemon."
+			die "coms error in ${PKGCORE_EBD_PID}, read_size $@ failed w/ ${ret}: backing out of daemon."
 	}
 else
 	# fallback to a *icky icky* but working alternative.
@@ -60,7 +61,7 @@ else
 		eval "${2}=\$(dd bs=1 count=$1 <&${PKGCORE_EBD_READ_FD} 2> /dev/null)"
 		local ret=$?
 		[[ ${ret} -ne 0 ]] && \
-			die "coms error in ${STARTING_PID}, read_size $@ failed w/ ${ret}: backing out of daemon."
+			die "coms error in ${PKGCORE_EBD_PID}, read_size $@ failed w/ ${ret}: backing out of daemon."
 	}
 fi
 
@@ -386,7 +387,7 @@ __make_preloaded_eclass_func() {
 }
 
 __ebd_main_loop() {
-	DONT_EXPORT_VARS+=" com phases line cont DONT_EXPORT_FUNCS STARTING_PID"
+	DONT_EXPORT_VARS+=" com phases line cont DONT_EXPORT_FUNCS"
 	SANDBOX_ON=1
 	while :; do
 		local com=''

@@ -186,8 +186,8 @@ class StoreConfigObject(argparse._StoreAction):
             yield k
 
     def _load_obj(self, sections, name):
-        metavar = self.metavar if self.metavar is not None else self.config_type
-        metavar = metavar.lower() + ' ' if metavar is not None else ''
+        obj_type = self.metavar if self.metavar is not None else self.config_type
+        obj_type = obj_type.lower() + ' ' if obj_type is not None else ''
 
         try:
             val = sections[name]
@@ -198,11 +198,11 @@ class StoreConfigObject(argparse._StoreAction):
 
             raise argparse.ArgumentError(
                 self, "couldn't find %s%r%s" %
-                (metavar, name, choices))
+                (obj_type, name, choices))
 
         if self.writable and getattr(val, 'frozen', False):
             raise argparse.ArgumentError(
-                self, "%s%r is readonly" % (metavar, name))
+                self, "%s%r is readonly" % (obj_type, name))
 
         if self.store_name:
             return name, val

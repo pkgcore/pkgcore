@@ -632,18 +632,6 @@ def main(options, out, err):
     build_obs = observer.build_observer(observer.formatter_output(out), not options.debug)
     repo_obs = observer.repo_observer(observer.formatter_output(out), not options.debug)
 
-    if options.debug:
-        out.write(out.bold, " * ", out.reset, "running sanity checks")
-        start_time = time()
-    if not changes.run_sanity_checks(domain, build_obs):
-        out.error("sanity checks failed.  please resolve them and try again.")
-        return 1
-    if options.debug:
-        out.write(
-            out.bold, " * ", out.reset,
-            "finished sanity checks in %.2f seconds" % (time() - start_time))
-        out.write()
-
     if options.ask or options.pretend:
         for op in changes:
             formatter.format(op)
@@ -666,6 +654,18 @@ def main(options, out, err):
 
     if (options.ask and not formatter.ask("Would you like to merge these packages?")):
         return
+
+    if options.debug:
+        out.write(out.bold, " * ", out.reset, "running sanity checks")
+        start_time = time()
+    if not changes.run_sanity_checks(domain, build_obs):
+        out.error("sanity checks failed.  please resolve them and try again.")
+        return 1
+    if options.debug:
+        out.write(
+            out.bold, " * ", out.reset,
+            "finished sanity checks in %.2f seconds" % (time() - start_time))
+        out.write()
 
     change_count = len(changes)
 

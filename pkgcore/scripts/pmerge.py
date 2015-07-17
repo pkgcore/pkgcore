@@ -152,7 +152,7 @@ output_options.add_argument(
          "output, and instead use numbers to indicate which repos "
          "packages come from.")
 output_options.add_argument(
-    '-F', '--formatter', priority=90,
+    '-F', '--formatter', priority=90, metavar='FORMATTER',
     action=commandline.StoreConfigObject, get_default=True,
     config_type='pmerge_formatter',
     help='which formatter to output --pretend or --ask output through.')

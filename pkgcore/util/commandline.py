@@ -889,6 +889,9 @@ def main(subcommands, args=None, outfile=None, errfile=None, script_name=None):
             formatter_factory = formatters.get_formatter
         else:
             formatter_factory = formatters.PlainTextFormatter
+            # pass down color setting to the bash side
+            if 'PKGCORE_NOCOLOR' not in os.environ:
+                os.environ['PKGCORE_NOCOLOR'] = '1'
         out = formatter_factory(outfile)
         err = formatter_factory(errfile)
         if logging.root.handlers:

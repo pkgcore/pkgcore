@@ -23,20 +23,20 @@ die() {
 	done
 
 	echo >&2
-	echo "!!! ERROR: ${CATEGORY}/${PF} failed." >&2
-	echo "!!! die invoked from directory $(pwd)" >&2
+	echo "${PKGCORE_RC_BAD}!!!${PKGCORE_RC_NORMAL} ERROR: ${CATEGORY}/${PF} failed." >&2
+	echo "${PKGCORE_RC_BAD}!!!${PKGCORE_RC_NORMAL} die invoked from directory $(pwd)" >&2
 	if [[ -z ${PKGCORE_IS_NOT_HELPER} ]]; then
-		echo "!!! was running helper: ${HELPER_ERROR_PREFIX}"
+		echo "${PKGCORE_RC_BAD}!!!${PKGCORE_RC_NORMAL} was running helper: ${HELPER_ERROR_PREFIX}"
 	else
 		__dump_trace 2 ${filespacing} ${linespacing} >&2
-		echo "!!!   $(printf "%${filespacing}s" "${BASH_SOURCE[1]##*/}"), line $(printf "%${linespacing}s" "${BASH_LINENO[0]}"):  Called die" >&2
+		echo "${PKGCORE_RC_BAD}!!!${PKGCORE_RC_NORMAL}   $(printf "%${filespacing}s" "${BASH_SOURCE[1]##*/}"), line $(printf "%${linespacing}s" "${BASH_LINENO[0]}"):  Called die" >&2
 	fi
-	echo "!!! The die message:" >&2
-	echo "!!!  ${*:-(no error message)}" >&2
+	echo "${PKGCORE_RC_BAD}!!!${PKGCORE_RC_NORMAL} The die message:" >&2
+	echo "${PKGCORE_RC_BAD}!!!${PKGCORE_RC_NORMAL}  ${*:-(no error message)}" >&2
 	if ${PKGCORE_DIE_OUTPUT_DETAILS-true}; then
 		if [[ -n ${PKGCORE_IS_NOT_HELPER} ]]; then
-			echo "!!!" >&2
-			echo "!!! If you need support, post the topmost build error, and the call stack if relevant." >&2
+			echo "${PKGCORE_RC_BAD}!!!${PKGCORE_RC_NORMAL}" >&2
+			echo "${PKGCORE_RC_BAD}!!!${PKGCORE_RC_NORMAL} If you need support, post the topmost build error, and the call stack if relevant." >&2
 		fi
 		local hook
 		for hook in ${EBUILD_DEATH_HOOKS}; do
@@ -76,7 +76,7 @@ __dump_trace() {
 	if [[ -n $1 ]]; then
 		strip=$(( $1 ))
 	fi
-	echo "!!! Call stack:"
+	echo "${PKGCORE_RC_BAD}!!!${PKGCORE_RC_NORMAL} Call stack:"
 	local filespacing=$2 linespacing=$3
 	local n p
 	for (( n = ${#FUNCNAME[@]} - 1, p = ${#BASH_ARGV[@]} ; n > ${strip} ; n-- )); do
@@ -93,7 +93,7 @@ __dump_trace() {
 			done
 			(( p -= ${BASH_ARGC[${n} - 1]} ))
 		fi
-		echo "!!!   $(printf "%${filespacing}s" "${sourcefile}"), line $(printf "%${linespacing}s" "${lineno}"):  Called ${funcname}${args:+ ${args}}"
+		echo "${PKGCORE_RC_BAD}!!!${PKGCORE_RC_NORMAL}   $(printf "%${filespacing}s" "${sourcefile}"), line $(printf "%${linespacing}s" "${lineno}"):  Called ${funcname}${args:+ ${args}}"
 	done
 }
 

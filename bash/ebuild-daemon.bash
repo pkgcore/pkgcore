@@ -318,7 +318,7 @@ __ebd_process_ebuild_phases() {
 
 	[[ -n ${PORTAGE_LOGFILE} ]] && addwrite "$(readlink -f "${PORTAGE_LOGFILE}")"
 
-	[[ -z ${RC_NOCOLOR} ]] && __colored_output_enable
+	[[ -z ${PKGCORE_NOCOLOR} ]] && __colored_output_enable
 
 	[[ -n ${PORTAGE_TMPDIR} ]] && {
 		addpredict "${PORTAGE_TMPDIR}"

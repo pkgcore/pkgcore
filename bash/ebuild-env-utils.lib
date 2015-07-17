@@ -17,7 +17,7 @@ __regex_filter_input() {
 		ret=$?
 		# return status is 1 for no matches and 2 for errors
 		[[ ${ret} -gt 1 ]] && die "got failing return code (${ret}) ${l} -v '${regex}'"
-		ret=0 # reset the return status if there are no matches, it isn't a error
+		ret=0 # reset the return status if there are no matches, it isn't an error
 	elif [[ -x ${PKGCORE_PYTHON_BINARY} ]]; then
 		# We check for the binary on the off chance an ebuild operation
 		# just removed it under our feet.
@@ -107,8 +107,6 @@ __environ_save_to_file() {
 	# the spaces on both sides are important- otherwise, the later ${DONT_EXPORT_VARS/ temp_umask /} won't match.
 	# we use spaces on both sides, to ensure we don't remove part of a variable w/ the same name-
 	# ex: temp_umask_for_some_app == _for_some_app.
-	#Do it with spaces on both sides.
-
 	DONT_EXPORT_VARS+=" temp_umask "
 	local temp_umask=$(umask)
 	umask 0002
@@ -144,7 +142,6 @@ __environ_sanitize_saved_env() {
 	# __environ_dump from within to get a clean dump from that env, and load it into
 	# the parent eval.
 	(
-
 		# protect the core vars and functions needed to do a __environ_dump
 		# some of these are already readonly- we still are forcing it to be safe.
 		declare -r PKGCORE_PYTHONPATH=${PKGCORE_PYTHONPATH} &> /dev/null
@@ -179,13 +176,6 @@ __environ_sanitize_saved_env() {
 
 		[[ -s ${T}/.pre-scrubbed-env ]] || die "empty pre-scrubbed-env file.  pkgcore bug?"
 		source "${T}"/.pre-scrubbed-env >&2 || die "failed sourcing scrubbed env"
-
-
-		# if reinstate_loaded_env_attributes exists, run it to add to the vars.
-		# old pkgcore env saving approach, long before portage/paludis were around...
-		type reinstate_loaded_env_attributes &> /dev/null && \
-			reinstate_loaded_env_attributes
-		unset -f reinstate_loaded_env_attributes
 
 		# ok. it's loaded into this subshell... now we use our dump mechanism (which we trust)
 		# to output it- this mechanism is far more bulletproof then the load filtering (since

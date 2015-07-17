@@ -678,7 +678,6 @@ class EbuildProcessor(object):
 
         if kill:
             os.killpg(self.pid, signal.SIGTERM)
-            os.killpg(self.pid, signal.SIGCONT)
 
         # now we wait for the process group
         try:

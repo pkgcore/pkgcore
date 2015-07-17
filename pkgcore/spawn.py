@@ -66,8 +66,6 @@ def spawn_sandbox(mycommand, name=None, **keywords):
         args.extend(mycommand)
     if not name:
         name = os.path.basename(args[1])
-    # sandbox stderr is generally unwanted
-    keywords['fd_pipes'][2] = os.open(os.devnull, os.O_RDONLY)
     return spawn(args, name=name, **keywords)
 
 _exithandlers = []

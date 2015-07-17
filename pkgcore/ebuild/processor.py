@@ -221,7 +221,9 @@ class InternalError(ProcessingInterruption):
         self.args = (line, msg)
 
 
-def chuck_TermInterrupt(*arg):
+def chuck_TermInterrupt(scope=None, *arg):
+    if scope == 'ebd':
+        raise SystemExit(1)
     raise FinishedProcessing(False)
 
 
@@ -504,7 +506,7 @@ class EbuildProcessor(object):
             if mydata[-1].startswith("killed"):
                 chuck_KeyboardInterrupt()
             elif mydata[-1].startswith('term'):
-                chuck_TermInterrupt()
+                chuck_TermInterrupt(mydata[-1].strip().split()[-1])
             lines -= 1
         return mydata
 

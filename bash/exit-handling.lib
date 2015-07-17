@@ -44,19 +44,28 @@ die() {
 		done
 	fi
 	echo >&2
-	if [[ -n ${PKGCORE_EBUILD_PROCESS_PID} ]]; then
-		if [[ -z ${PKGCORE_IS_NOT_HELPER} ]]; then
-			kill -10 ${PKGCORE_EBUILD_PROCESS_PID}
-		fi
-		if [[ ${BASHPID} != ${PKGCORE_EBUILD_PROCESS_PID} ]]; then
-			# We're in a child process so signal the python side that it should
-			# terminate the related ebd instance. Then signal the ebd process
-			# group to stop in order to stop execution in the current phase.
-			# This forces die() to work in subshell environments.
-			__ebd_write_line "term"
-			kill -s SIGSTOP -${PPID}
-		fi
+
+	if [[ -z ${PKGCORE_IS_NOT_HELPER} ]]; then
+		# We're in a helper so enable helper specific output.
+		kill -10 ${PKGCORE_EBUILD_PROCESS_PID}
 	fi
+	
+	if [[ ${BASHPID} != ${PKGCORE_EBUILD_PROCESS_PID} ]]; then
+		local scope
+		if [[ -z ${PKGCORE_EBUILD_PROCESS_PID} ]]; then
+			scope="ebd"
+		else
+			scope="ebuild"
+		fi
+
+		# Signal the python side that it should terminate the related ebd
+		# instance. Then signal the ebd process group to stop in order to stop
+		# execution in the current phase.  This forces die() to work in
+		# subshell environments.
+		__ebd_write_line "term ${scope}"
+		kill -s SIGSTOP -${PPID}
+	fi
+
 	exit 1
 }
 

@@ -104,13 +104,13 @@ class StoreBool(argparse._StoreAction):
             dest=dest,
             const=const,
             default=default,
-            type=self.convert_bool,
+            type=self.boolean,
             required=required,
             help=help,
             metavar=metavar)
 
     @staticmethod
-    def convert_bool(value):
+    def boolean(value):
         value = value.lower()
         if value in ('y', 'yes', 'true'):
             return True

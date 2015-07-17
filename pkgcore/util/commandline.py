@@ -776,7 +776,8 @@ def mk_argparser(suppress=False, config=True, domain=True,
             '--empty-config', action='store_true', default=False,
             help="Do not load user/system configuration.")
         p.add_argument(
-            '--override-config', metavar="PATH",
+            '--config', metavar="PATH", dest='override_config',
+            type=existent_path,
             help="Override location of config files")
 
         p.set_defaults(config=DelayedValue(store_config, 0))

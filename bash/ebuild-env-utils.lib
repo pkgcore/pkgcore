@@ -70,7 +70,7 @@ __environ_list_vars() {
 
 __filter_env() {
 	local opts
-	[[ ${PKGCORE_DEBUG} -ge 3 ]] && opts="--debug"
+	[[ ${PKGCORE_DEBUG} -ge 1 ]] && opts="--debug"
 	PYTHONPATH="${PKGCORE_PYTHONPATH}" "${PKGCORE_PYTHON_BINARY}" \
 		$(type -P filter-env) ${opts} "$@" || die "filter-env invocation failed"
 }

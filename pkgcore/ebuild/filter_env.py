@@ -10,8 +10,8 @@ __all__ = ("run",)
 from snakeoil.demandload import demandload
 
 demandload(
-    'cStringIO',
     're',
+    'snakeoil:stringio',
     'pkgcore.log:logger'
 )
 
@@ -26,8 +26,8 @@ def native_run(out, file_buff, var_match, func_match,
     :param out: file-like object to write to.
     :param file_buff: string containing the environment to filter.
         Should end in '\0'.
-    :param vsr: result of build_regex_string or C{None}, for variables.
-    :param vsr: result of build_regex_string or C{None}, for functions.
+    :param var_match: result of build_regex_string or C{None}, for variables.
+    :param func_match: result of build_regex_string or C{None}, for functions.
     """
 
     process_scope(out, file_buff, 0, var_match, func_match, '\0',
@@ -131,7 +131,7 @@ def process_scope(out, buff, pos, var_match, func_match, endchar,
         # Wander forward to the next non space.
         if window_end is not None:
             if out is not None:
-                out.write(buff[window_start:window_end])
+                out.write(buff[window_start:window_end].encode('utf-8'))
             window_start = pos
             window_end = None
         com_start = pos
@@ -209,7 +209,7 @@ def process_scope(out, buff, pos, var_match, func_match, endchar,
             window_end = pos
         if window_end > end:
             window_end = end
-        out.write(buff[window_start:window_end])
+        out.write(buff[window_start:window_end].encode('utf-8'))
 
     return pos
 
@@ -437,6 +437,6 @@ def main_run(out_handle, data, vars_to_filter=(), funcs_to_filter=(), vars_is_wh
         _parser = run
 
     if out_handle is None:
-        out_handle = cStringIO.StringIO()
+        out_handle = stringio.bytes_writable()
 
     _parser(out_handle, data, vars, funcs, **kwds)

@@ -50,6 +50,7 @@ import pkgcore.spawn
 
 from snakeoil import klass
 from snakeoil.currying import pretty_docs
+from snakeoil.data_source import text_data_source
 from snakeoil.demandload import demandload
 from snakeoil.osutils import abspath, normpath, pjoin
 from snakeoil.weakrefs import WeakRefFinalizer
@@ -687,7 +688,7 @@ class EbuildProcessor(object):
         # which isn't always true.
         self.pid = None
 
-    def _generate_env_str(self, env_dict):
+    def _generate_env_data(self, env_dict):
         data = []
         for key, val in env_dict.iteritems():
             if key in self.dont_export_vars:
@@ -695,7 +696,7 @@ class EbuildProcessor(object):
             if not key[0].isalpha():
                 raise KeyError("%s: bash doesn't allow digits as the first char" % (key,))
             if not isinstance(val, basestring):
-                raise ValueError("_generate_env_str was fed a bad value; key=%s, val=%s"
+                raise ValueError("_generate_env_data was fed a bad value; key=%s, val=%s"
                                  % (key, val))
             if val.isalnum():
                 data.append("%s=%s" % (key, val))
@@ -703,7 +704,8 @@ class EbuildProcessor(object):
                 data.append("%s='%s'" % (key, val))
             else:
                 data.append("%s=$'%s'" % (key, val.replace("'", "\\'")))
-        return 'export %s' % (' '.join(data),)
+        data = text_data_source('export %s' % (' '.join(data),))
+        return data.bytes_fileobj()
 
     def send_env(self, env_dict, async=False, tmpdir=None):
         """
@@ -712,7 +714,7 @@ class EbuildProcessor(object):
         :type env_dict: mapping with string keys and values.
         :param env_dict: the bash env.
         """
-        data = self._generate_env_str(env_dict)
+        data = self._generate_env_data(env_dict)
         old_umask = os.umask(0002)
         if tmpdir:
             path = pjoin(tmpdir, 'ebd-env-transfer')
@@ -762,7 +764,7 @@ class EbuildProcessor(object):
         self._ensure_metadata_paths(const.HOST_NONROOT_PATHS)
 
         e = expected_ebuild_env(package_inst, depends=True)
-        data = self._generate_env_str(e)
+        data = self._generate_env_data(e)
         self.write("%s %i\n%s" % (command, len(data), data), append_newline=False)
 
         updates = None

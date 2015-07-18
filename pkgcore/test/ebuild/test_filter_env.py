@@ -2,9 +2,9 @@
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
 # License: BSD/GPL2
 
-import cStringIO
 from functools import partial
 
+from snakeoil import stringio
 from snakeoil.test import mk_cpy_loadable_testcase
 
 from pkgcore.ebuild import filter_env
@@ -17,14 +17,14 @@ class NativeFilterEnvTest(TestCase):
 
     def get_output(self, raw_data, funcs=None, vars=None, preserve_funcs=False,
                    preserve_vars=False, debug=False, global_envvar_callback=None):
-        out = cStringIO.StringIO()
+        out = stringio.bytes_writable()
         if funcs:
             funcs = funcs.split(',')
         if vars:
             vars = vars.split(',')
         self.filter_env(out, raw_data, vars, funcs, preserve_vars, preserve_funcs,
             global_envvar_callback=global_envvar_callback)
-        return out.getvalue()
+        return out.getvalue().decode('utf-8')
 
     def test_function_foo(self):
         ret = ''.join(self.get_output("function foo() {:;}", funcs="foo"))

@@ -148,6 +148,10 @@ class EnableDebug(argparse._StoreTrueAction):
             parser, namespace, values, option_string=option_string)
         logging.root.setLevel(logging.DEBUG)
 
+        # pass down debug setting to the bash side
+        if 'PKGCORE_DEBUG' not in os.environ:
+            os.environ['PKGCORE_DEBUG'] = '1'
+
 
 class ConfigError(Exception):
     pass

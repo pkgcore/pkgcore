@@ -311,8 +311,11 @@ class EbuildProcessor(object):
         # sandbox or fakeroot fex), we ensure the bashrc is invalid.
         env = {x: "/etc/portage/spork/not/valid/ha/ha"
                for x in ("BASHRC", "BASH_ENV")}
-        if int(os.environ.get('PKGCORE_PERF_DEBUG', 1)) > 1:
+
+        if int(os.environ.get('PKGCORE_PERF_DEBUG', 0)):
             env["PKGCORE_PERF_DEBUG"] = os.environ['PKGCORE_PERF_DEBUG']
+        if int(os.environ.get('PKGCORE_DEBUG', 0)):
+            env["PKGCORE_DEBUG"] = os.environ['PKGCORE_DEBUG']
 
         # append script dir to PATH for git repo or unpacked tarball
         if const.PATH_FORCED_PREPEND:
@@ -370,14 +373,6 @@ class EbuildProcessor(object):
                 "expected 'dude!' response from ebd, which wasn't received. "
                 "likely a bug")
         self.write(e_const.EAPI_BIN_PATH)
-
-        # send debug level so we can debug things in the global scope
-        debug = logging.getLevelName(logging.root.getEffectiveLevel()) == 'DEBUG'
-        try:
-            debug = int(os.environ.get('PKGCORE_DEBUG', debug))
-        except ValueError:
-            debug = 0
-        self.write(str(debug))
 
         # send PKGCORE_PYTHON_BINARY...
         self.write(pkgcore.spawn.find_invoking_python())

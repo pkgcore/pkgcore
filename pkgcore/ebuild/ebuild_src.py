@@ -5,8 +5,6 @@
 package class for buildable ebuilds
 """
 
-from __future__ import with_statement
-
 __all__ = ("base", "package", "package_factory")
 
 from functools import partial
@@ -17,19 +15,16 @@ from pkgcore.cache import errors as cache_errors
 from pkgcore.ebuild import conditionals
 from pkgcore.ebuild import processor
 from pkgcore.ebuild.atom import atom
-from pkgcore.ebuild.cpv import CPV
 from pkgcore.fetch import fetchable, mirror, uri_list, default_mirror
 from pkgcore.fetch.errors import UnknownMirror
 from pkgcore.package import errors as metadata_errors
 from pkgcore.package import metadata
 from pkgcore.package.errors import MissingChksum
 from pkgcore.restrictions import boolean, values
-from pkgcore.restrictions.packages import AndRestriction
 
 from snakeoil import klass
 from snakeoil.compatibility import intern
 from snakeoil.demandload import demandload, demand_compile_regexp
-from snakeoil.mappings import IndeterminantDict
 
 demandload(
     "snakeoil:chksum",

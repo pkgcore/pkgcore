@@ -55,6 +55,7 @@ from snakeoil.osutils import abspath, normpath, pjoin
 from snakeoil.weakrefs import WeakRefFinalizer
 
 demandload(
+    'logging',
     'itertools:chain',
     'traceback',
     'snakeoil:fileutils',
@@ -371,8 +372,9 @@ class EbuildProcessor(object):
         self.write(e_const.EAPI_BIN_PATH)
 
         # send debug level so we can debug things in the global scope
+        debug = logging.getLevelName(logging.root.getEffectiveLevel()) == 'DEBUG'
         try:
-            debug = int(os.environ.get('PKGCORE_DEBUG', 0))
+            debug = int(os.environ.get('PKGCORE_DEBUG', debug))
         except ValueError:
             debug = 0
         self.write(str(debug))

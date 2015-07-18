@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import glob
+import io
 from itertools import chain
 import operator
 import os
@@ -508,7 +509,7 @@ if BuildDoc:
         'builder': ('setup.py', 'man'),
         }
 
-with open('README.rst', 'r') as f:
+with io.open('README.rst', 'r', encoding='utf8') as f:
     readme = f.read()
 
 setup(

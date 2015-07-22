@@ -1,26 +1,21 @@
 #!/usr/bin/env python
 
-import glob
 from itertools import chain
 import operator
 import os
 import subprocess
+from stat import ST_MODE
 import sys
-
-try:
-    from setuptools import Command, setup
-    from setuptools.command import install
-except ImportError:
-    from distutils.core import Command, setup
-    from distutils.command import install
 
 from distutils import log
 from distutils.command import build, build_scripts
 from distutils.errors import DistutilsExecError
 from distutils.util import byte_compile
-from stat import ST_MODE
 
-from snakeoil import distutils_extensions as snk_distutils
+from setuptools import Command, setup
+from setuptools.command import install
+
+from pkgdist import distutils_extensions as pkg_distutils
 
 # These offsets control where we install the pkgcore config files and the EBD
 # bits relative to the install-data path given to the install subcmd.
@@ -32,23 +27,23 @@ EBD_INSTALL_OFFSET = 'lib/pkgcore'
 TOPDIR = os.path.dirname(os.path.abspath(__file__))
 
 
-class mysdist(snk_distutils.sdist):
+class mysdist(pkg_distutils.sdist):
 
     """sdist command specifying the right files and generating ChangeLog."""
 
-    user_options = snk_distutils.sdist.user_options + [
+    user_options = pkg_distutils.sdist.user_options + [
         ('build-docs', None, 'build docs [default]'),
         ('no-build-docs', None, 'do not build docs'),
         ]
 
-    boolean_options = snk_distutils.sdist.boolean_options + ['build-docs']
+    boolean_options = pkg_distutils.sdist.boolean_options + ['build-docs']
     package_namespace = 'pkgcore'
 
-    negative_opt = snk_distutils.sdist.negative_opt.copy()
+    negative_opt = pkg_distutils.sdist.negative_opt.copy()
     negative_opt.update({'no-build-docs': 'build-docs'})
 
     def initialize_options(self):
-        snk_distutils.sdist.initialize_options(self)
+        pkg_distutils.sdist.initialize_options(self)
         self.build_docs = True
 
     def make_release_tree(self, base_dir, files):
@@ -70,7 +65,7 @@ class mysdist(snk_distutils.sdist):
             import shutil
             shutil.copytree(os.path.join(cwd, "build/sphinx/man"),
                             os.path.join(base_dir, "man"))
-        snk_distutils.sdist.make_release_tree(self, base_dir, files)
+        pkg_distutils.sdist.make_release_tree(self, base_dir, files)
 
 
 class pkgcore_build_scripts(build_scripts.build_scripts):
@@ -248,7 +243,7 @@ class pkgcore_install_docs(Command):
 
     def calculate_install_path(self):
         return os.path.join(
-            self.prefix, 'share', 'doc', 'pkgcore-%s' % version, 'html')
+            self.prefix, 'share', 'doc', 'pkgcore-%s' % __version__, 'html')
 
     def find_content(self):
         for possible_path in self.content_search_path:
@@ -319,7 +314,7 @@ class pkgcore_install_man(pkgcore_install_docs):
                 d[x] = 'man%s/%s' % (x[-1], os.path.basename(x))
         return d
 
-_base_install = getattr(snk_distutils, 'install', install.install)
+_base_install = getattr(pkg_distutils, 'install', install.install)
 
 class pkgcore_install(_base_install):
 
@@ -423,13 +418,13 @@ def write_pkgcore_lookup_configs(python_base, install_prefix, injected_bin_path=
     byte_compile([path], optimize=2, prefix=python_base)
 
 
-class pkgcore_build_py(snk_distutils.build_py):
+class pkgcore_build_py(pkg_distutils.build_py):
 
     package_namespace = 'pkgcore'
     generate_verinfo = True
 
 
-class test(snk_distutils.test):
+class test(pkg_distutils.test):
 
     default_test_namespace = 'pkgcore.test'
 
@@ -441,7 +436,7 @@ class test(snk_distutils.test):
         original = os.environ.get(key)
         try:
             os.environ[key] = os.path.dirname(os.path.realpath(__file__))
-            return snk_distutils.test.run(self)
+            return pkg_distutils.test.run(self)
         finally:
             if original is not None:
                 os.environ[key] = original
@@ -458,30 +453,30 @@ def _find_modules(location):
 packages = _find_modules('pkgcore')
 
 extensions = []
-if not snk_distutils.is_py3k:
+if not pkg_distutils.is_py3k:
     extensions.extend([
-        snk_distutils.OptionalExtension(
+        pkg_distutils.OptionalExtension(
             'pkgcore.ebuild._atom', ['src/atom.c']),
-        snk_distutils.OptionalExtension(
+        pkg_distutils.OptionalExtension(
             'pkgcore.ebuild._cpv', ['src/cpv.c']),
-        snk_distutils.OptionalExtension(
+        pkg_distutils.OptionalExtension(
             'pkgcore.ebuild._depset', ['src/depset.c']),
-        snk_distutils.OptionalExtension(
+        pkg_distutils.OptionalExtension(
             'pkgcore.ebuild._filter_env', [
                 'src/filter_env.c', 'src/bmh_search.c']),
-        snk_distutils.OptionalExtension(
+        pkg_distutils.OptionalExtension(
             'pkgcore.restrictions._restrictions', ['src/restrictions.c']),
-        snk_distutils.OptionalExtension(
+        pkg_distutils.OptionalExtension(
             'pkgcore.ebuild._misc', ['src/misc.c']),
     ])
 
-from pkgcore.const import VERSION as version
+from pkgcore import __version__
 
 cmdclass = {
     'sdist': mysdist,
     'build': pkgcore_build,
     'build_py': pkgcore_build_py,
-    'build_ext': snk_distutils.build_ext,
+    'build_ext': pkg_distutils.build_ext,
     'test': test,
     'install': pkgcore_install,
     'build_scripts': pkgcore_build_scripts,
@@ -494,16 +489,16 @@ command_options = {}
 # All versions of snakeoil past 0.4.6 now return a class
 # by default, that is a failure if invoked; this code is
 # left in place for <=0.4.6 compatibility.
-BuildDoc = snk_distutils.sphinx_build_docs()
+BuildDoc = pkg_distutils.sphinx_build_docs()
 if BuildDoc:
     cmdclass['build_docs'] = BuildDoc
     command_options['build_docs'] = {
-        'version': ('setup.py', version),
+        'version': ('setup.py', __version__),
         'source_dir': ('setup.py', 'doc'),
         }
     cmdclass['build_man'] = BuildDoc
     command_options['build_man'] = {
-        'version': ('setup.py', version),
+        'version': ('setup.py', __version__),
         'source_dir': ('setup.py', 'doc'),
         'builder': ('setup.py', 'man'),
         }
@@ -513,7 +508,7 @@ with open('README.rst', 'r') as f:
 
 setup(
     name='pkgcore',
-    version=version,
+    version=__version__,
     description='package managing framework',
     long_description=readme,
     url='https://github.com/pkgcore/pkgcore',
@@ -521,7 +516,7 @@ setup(
     author='Brian Harring, Tim Harder',
     author_email='pkgcore-dev@googlegroups.com',
     packages=packages,
-    requires=['snakeoil (>=0.6.4)'],
+    install_requires=['snakeoil>=0.6.4'],
     data_files=list(chain(
         _get_data_mapping(CONFIG_INSTALL_OFFSET, 'config'),
         _get_data_mapping(EBD_INSTALL_OFFSET, 'bash'),

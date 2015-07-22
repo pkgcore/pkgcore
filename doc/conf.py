@@ -22,7 +22,7 @@ import sys
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 sys.path.insert(1, os.path.abspath('..'))
 
-from pkgcore.const import VERSION as pkgcore_version
+from pkgcore import __version__
 from pkgcore.sphinx_utils.generate_man_rsts import ManConverter
 
 
@@ -81,7 +81,7 @@ copyright = '2006-2015, pkgcore contributors'
 # built documents.
 #
 # The short X.Y version.
-version = pkgcore_version
+version = __version__
 # The full version, including alpha/beta/rc tags.
 release = 'trunk'
 

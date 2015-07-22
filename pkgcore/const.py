@@ -35,7 +35,6 @@ HOST_ROOT_PATHS    = ("/usr/local/sbin", "/usr/local/bin", "/usr/sbin",
 LIBFAKEROOT_PATH   = "/usr/lib/libfakeroot.so"
 FAKED_PATH         = "/usr/bin/faked"
 
-VERSION            = '0.9.2'
 
 def _GET_CONST(attr, default_value, allow_environment_override=False):
     consts = mappings.ProxiedAttrs(sys.modules[__name__])

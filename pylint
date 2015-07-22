@@ -1,0 +1,16 @@
+#!/usr/bin/env python
+
+"""Wrapper that adds our custom pylintrc and plugin."""
+
+import sys
+from os.path import dirname, join as pjoin
+
+path = pjoin(dirname(__file__), 'lintplugin')
+sys.path.insert(0, path)
+
+from pylint import lint
+
+try:
+    lint.Run(['--rcfile', pjoin(path, 'pylintrc')] + sys.argv[1:])
+except KeyboardInterrupt:
+    sys.exit(1)

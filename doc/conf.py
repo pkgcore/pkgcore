@@ -23,7 +23,7 @@ import sys
 sys.path.insert(1, os.path.abspath('..'))
 
 from pkgcore import __version__
-from pkgcore.sphinx_utils.generate_man_rsts import ManConverter
+from pkgdist.generate_man_rsts import ManConverter
 
 
 def generate_docs():

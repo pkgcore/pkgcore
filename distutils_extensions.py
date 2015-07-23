@@ -23,8 +23,6 @@ from distutils.command import (
     build as dst_build)
 from distutils.spawn import find_executable
 
-from . import unittest_extensions
-
 
 class OptionalExtension(core.Extension):
     """python extension that is optional to build.
@@ -265,6 +263,8 @@ class test(core.Command):
             self.namespaces = ()
 
     def run(self):
+        from snakeoil.test import unittest_extensions
+
         build_ext = self.reinitialize_command('build_ext')
         build_py = self.reinitialize_command('build_py')
         build_ext.inplace = build_py.inplace = self.inplace

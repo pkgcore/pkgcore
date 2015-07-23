@@ -60,8 +60,8 @@ class mysdist(pkg_distutils.sdist):
             build_py.run()
             # this is icky, but covers up cwd changing issues.
             cwd = os.getcwd()
-            if subprocess.call([sys.executable, 'setup.py', 'build_docs', '--builder=man'], cwd=cwd):
-                raise DistutilsExecError("build_docs failed")
+            if subprocess.call([sys.executable, 'setup.py', 'build_man'], cwd=cwd):
+                raise DistutilsExecError("build_man failed")
             import shutil
             shutil.copytree(os.path.join(cwd, "build/sphinx/man"),
                             os.path.join(base_dir, "man"))
@@ -485,23 +485,6 @@ cmdclass = {
     'install_docs': pkgcore_install_docs,
 }
 command_options = {}
-
-# All versions of snakeoil past 0.4.6 now return a class
-# by default, that is a failure if invoked; this code is
-# left in place for <=0.4.6 compatibility.
-BuildDoc = pkg_distutils.sphinx_build_docs()
-if BuildDoc:
-    cmdclass['build_docs'] = BuildDoc
-    command_options['build_docs'] = {
-        'version': ('setup.py', __version__),
-        'source_dir': ('setup.py', 'doc'),
-        }
-    cmdclass['build_man'] = BuildDoc
-    command_options['build_man'] = {
-        'version': ('setup.py', __version__),
-        'source_dir': ('setup.py', 'doc'),
-        'builder': ('setup.py', 'man'),
-        }
 
 with open('README.rst', 'r') as f:
     readme = f.read()

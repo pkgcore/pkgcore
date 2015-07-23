@@ -153,7 +153,7 @@ class pkgcore_install_scripts(Command):
             ('skip_build', 'skip_build'),
         )
         self.scripts = [path for path in os.listdir('bin')
-                        if os.path.islink(os.path.join(TOPDIR, 'bin', path))]
+                        if path not in ('pwrapper', 'pwrapper_installed')]
 
     def run(self):
         if not self.skip_build:
@@ -509,7 +509,5 @@ setup(
         'License :: OSI Approved :: BSD License',
         'License :: OSI Approved :: GNU General Public License v2 (GPLv2)',
         'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3.3',
-        'Programming Language :: Python :: 3.4',
     ],
 )

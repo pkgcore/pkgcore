@@ -263,7 +263,7 @@ class test(core.Command):
             self.namespaces = ()
 
     def run(self):
-        from snakeoil.test import unittest_extensions
+        from snakeoil import unittest_extensions
 
         build_ext = self.reinitialize_command('build_ext')
         build_py = self.reinitialize_command('build_py')

@@ -11,17 +11,15 @@ Generally speaking, you should flip through this modules src.
 
 import math
 import os
-import subprocess
 import sys
 
 os.environ["SNAKEOIL_DEMANDLOAD_PROTECTION"] = 'n'
 os.environ["SNAKEOIL_DEMANDLOAD_WARN"] = 'n'
 
-from distutils import core, log, errors, cmd
+from distutils import core, log, errors
 from distutils.command import (
     sdist as dst_sdist, build_ext as dst_build_ext, build_py as dst_build_py,
     build as dst_build)
-from distutils.spawn import find_executable
 
 
 class OptionalExtension(core.Extension):
@@ -323,93 +321,3 @@ def get_number_of_processors():
         return val
     except EnvironmentError:
         return 1
-
-
-class BuildDocs(core.Command):
-
-    user_options = [
-        ('version=', None, "version we're building for"),
-        ('source-dir=', None, "source directory run in"),
-        ('build-dir=', None, "build directory"),
-        ('builder=', None, "which sphinx builder to run.  Defaults to html"),
-    ]
-
-    def initialize_options(self):
-        self.builder = None
-        self.source_dir = None
-        self.build_dir = None
-        self.version = None
-
-    def finalize_options(self):
-        self.source_dir = os.path.abspath(self.source_dir)
-        if self.build_dir is None:
-            self.set_undefined_options('build', ('build_base', 'build_dir'))
-            self.build_dir = os.path.join(self.build_dir, 'sphinx')
-        self.build_dir = os.path.abspath(self.build_dir)
-
-        if self.builder is None:
-            self.builder = 'html'
-
-    @staticmethod
-    def find_sphinx_build():
-        sphinx_build = find_executable('sphinx-build')
-        if sphinx_build:
-            return sphinx_build
-        else:
-            raise Exception("Couldn't find sphinx-build w/in PATH=%r" % os.environ.get('PATH'))
-
-    def run(self):
-        env = os.environ.copy()
-        syspath = [os.path.abspath(x) for x in sys.path]
-        if self.build_dir:
-            syspath.insert(0, os.path.abspath(
-                os.path.join(self.build_dir, '..', 'lib')))
-        syspath = ':'.join(syspath)
-        cmd = ['make', 'PYTHON=%s' % sys.executable, 'PYTHONPATH=%s' % syspath,
-               'SPHINXBUILD=%s %s' % (sys.executable, self.find_sphinx_build()),
-               str(self.builder)]
-        opts = []
-        if self.version:
-            opts.append('-D version=%s' % self.version)
-        if self.build_dir:
-            cmd.append('BUILDDIR=%s' % (self.build_dir,))
-        if opts:
-            cmd.append('SPHINXOPTS=%s' % (' '.join(opts),))
-        cwd = self.source_dir
-        if not cwd:
-            cwd = os.getcwd()
-        if subprocess.call(cmd, cwd=cwd, env=env):
-            raise errors.DistutilsExecError("doc generation failed")
-
-    @classmethod
-    def setup_kls(cls):
-        try:
-            from sphinx.setup_command import BuildDoc as _BuildDoc
-        except ImportError:
-            return None
-        class BuildDoc(_BuildDoc, cls):
-            _kls = _BuildDoc
-            user_options = list(_BuildDoc.user_options) \
-                + [('generate', None, 'force autogeneration of intermediate docs')]
-            # annoying.
-            for x in "initialize_options run".split():
-                locals()[x] = getattr(cls, x)
-
-        return BuildDoc
-
-
-class _sphinx_missing(cmd.Command):
-
-    user_options = []
-
-    def initialize_options(self):
-        raise errors.DistutilsExecError("sphinx is not available")
-
-
-def sphinx_build_docs():
-    try:
-        import sphinx # pylint: disable=unused-variable
-    except ImportError:
-        return _sphinx_missing
-
-    return BuildDocs

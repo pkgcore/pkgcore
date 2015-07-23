@@ -32,7 +32,7 @@ class mysdist(pkg_distutils.sdist):
     """sdist command specifying the right files and generating ChangeLog."""
 
     user_options = pkg_distutils.sdist.user_options + [
-        ('build-docs', None, 'build docs [default]'),
+        ('build-docs', None, 'build docs (default)'),
         ('no-build-docs', None, 'do not build docs'),
         ]
 
@@ -44,7 +44,7 @@ class mysdist(pkg_distutils.sdist):
 
     def initialize_options(self):
         pkg_distutils.sdist.initialize_options(self)
-        self.build_docs = True
+        self.build_docs = False
 
     def make_release_tree(self, base_dir, files):
         """Create and populate the directory tree that is put in source tars.
@@ -82,16 +82,16 @@ class pkgcore_build(build.build):
     user_options = build.build.user_options[:]
     user_options.append((
         'enable-man-pages', None,
-        'Install man pages. Defaults to enabled.'))
+        'install man pages (default)'))
     user_options.append((
         'disable-man-pages', None,
-        'Disable man page generation and installation.'))
+        'disable man page generation and installation'))
     user_options.append((
         'enable-html-docs', None,
-        'Install html docs.'))
+        'install html docs'))
     user_options.append((
         'disable-html-docs', None,
-        'Disable installation of html docs. This is the default.'))
+        'disable installation of html docs (default)'))
 
     boolean_options = build.build.boolean_options[:]
     boolean_options.extend(['enable-man-pages', 'enable-html-docs'])
@@ -109,8 +109,8 @@ class pkgcore_build(build.build):
 
     def initialize_options(self):
         build.build.initialize_options(self)
-        self.enable_man_pages = None
-        self.enable_html_docs = None
+        self.enable_man_pages = False
+        self.enable_html_docs = False
 
     def finalize_options(self):
         build.build.finalize_options(self)
@@ -321,16 +321,16 @@ class pkgcore_install(_base_install):
     user_options = _base_install.user_options[:]
     user_options.append((
         'enable-man-pages', None,
-        'Install man pages. Defaults to enabled.'))
+        'install man pages'))
     user_options.append((
         'disable-man-pages', None,
-        'Disable man page generation and installation.'))
+        'disable man page generation and installation (default)'))
     user_options.append((
         'enable-html-docs', None,
         'Install html docs.'))
     user_options.append((
         'disable-html-docs', None,
-        'Disable installation of html docs. This is the default.'))
+        'disable installation of html docs (default)'))
 
     boolean_options = _base_install.boolean_options[:]
     boolean_options.extend(['enable-man-pages', 'enable-html-docs'])

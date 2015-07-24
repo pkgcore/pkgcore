@@ -38,7 +38,7 @@ from pkgcore.config import load_config
 
 demandload(
     'snakeoil.bash:iter_read_bash',
-    'pkgcore:version',
+    'snakeoil:version',
     'pkgcore.config:basics',
     'pkgcore.ebuild:atom',
     'pkgcore.util:parserestrict',
@@ -337,7 +337,7 @@ class OptionParser(optparse.OptionParser, object):
     def get_version(self):
         """Add pkgcore's version to the version information."""
         ver = optparse.OptionParser.get_version(self)
-        pkgcore_ver = version.get_version()
+        pkgcore_ver = version.get_version('pkgcore', __file__)
         if ver:
             return '\n'.join((ver, pkgcore_ver))
         return pkgcore_ver

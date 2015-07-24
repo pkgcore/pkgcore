@@ -40,7 +40,7 @@ demandload(
     'snakeoil:osutils',
     'snakeoil.errors:walk_exception_chain',
     'snakeoil.lists:iflatten_instance,unstable_unique',
-    'pkgcore.version:get_version',
+    'snakeoil.version:get_version',
     'pkgcore:operations',
     'pkgcore.config:basics',
     'pkgcore.restrictions:packages,restriction',
@@ -757,7 +757,7 @@ def mk_argparser(suppress=False, config=True, domain=True,
         return p
 
     if version:
-        p.add_argument('--version', action='version', version=get_version())
+        p.add_argument('--version', action='version', version=get_version('pkgcore', __file__))
     if debug:
         p.add_argument(
             '--debug', action=EnableDebug, help="Enable debugging checks")

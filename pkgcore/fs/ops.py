@@ -249,11 +249,11 @@ def merge_contents(cset, offset=None, callback=None):
             # we pass in the stat ourselves, using stat instead of
             # lstat gen_obj uses internally; this is the equivalent of
             # "deference that link"
-            obj = gen_obj(x.location,  stat=os.stat(x.location))
+            obj = gen_obj(x.location, stat=os.stat(x.location))
             if not fs.isdir(obj):
-                raise Exception(
-                    "%s exists and needs to be a dir, but is a %s" %
-                        (x.location, obj))
+                # according to the spec, dirs can't be merged over files
+                # that aren't dirs or symlinks to dirs
+                raise CannotOverwrite(x.location, obj)
             ensure_perms(x, obj)
         except OSError as oe:
             if oe.errno != errno.ENOENT:

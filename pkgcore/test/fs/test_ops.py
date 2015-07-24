@@ -213,6 +213,15 @@ class Test_merge_contents(ContentsMixin):
         os.mkdir(fp)
         ops.merge_contents(cset)
 
+    def test_dir_over_file(self):
+        # according to the spec, dirs can't be merged over files that
+        # aren't dirs or symlinks to dirs
+        path = pjoin(self.dir, "file2dir")
+        open(path, 'w').close()
+        d = fs.fsDir(path, mode=0755, mtime=0, uid=os.getuid(), gid=os.getgid())
+        cset = contents.contentsSet([d])
+        self.assertRaises(ops.CannotOverwrite, ops.merge_contents, cset)
+
 
 class Test_unmerge_contents(ContentsMixin):
 

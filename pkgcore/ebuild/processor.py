@@ -317,11 +317,10 @@ class EbuildProcessor(object):
         if int(os.environ.get('PKGCORE_DEBUG', 0)):
             env["PKGCORE_DEBUG"] = os.environ['PKGCORE_DEBUG']
 
-        # prepend script dir to PATH for git repo or unpacked tarball
-        if const.PATH_FORCED_PREPEND:
-            env["PATH"] = os.pathsep.join(
-                list(const.PATH_FORCED_PREPEND) +
-                [os.environ["PATH"]])
+        # prepend script dir to PATH for git repo or unpacked tarball, for
+        # installed versions it's empty
+        env["PATH"] = os.pathsep.join(
+            list(const.PATH_FORCED_PREPEND) + [os.environ["PATH"]])
 
         args = []
         if sandbox:
@@ -964,9 +963,7 @@ def expected_ebuild_env(pkg, d=None, env_source_override=None, depends=False):
             d["EBUILD"] = ""
 
     if not depends:
-        path = list()
-        if const.PATH_FORCED_PREPEND:
-            path.extend(list(const.PATH_FORCED_PREPEND))
+        path = list(const.PATH_FORCED_PREPEND)
         path.extend(const.HOST_ROOT_PATHS)
         for eapi in xrange(pkg.eapi, -1, -1):
             eapi_helper_dir = pjoin(e_const.EBUILD_HELPERS_PATH, str(eapi))
@@ -974,7 +971,7 @@ def expected_ebuild_env(pkg, d=None, env_source_override=None, depends=False):
                 path.append(eapi_helper_dir)
         path.append(pjoin(e_const.EBUILD_HELPERS_PATH, "common"))
         path.extend(d.get("PATH", "").split(":"))
-        d["PATH"] = ":".join(filter(None, path))
+        d["PATH"] = os.pathsep.join(filter(None, path))
         d["PKGCORE_EAPI"] = pkg.eapi_obj.magic
         d["INHERITED"] = ' '.join(pkg.data.get("_eclasses_", ()))
         d["USE"] = ' '.join(str(x) for x in pkg.use)

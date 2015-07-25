@@ -30,7 +30,7 @@ def get_git_version(cwd):
         stdout, ret = _run_git(cwd, ["log", "--format=%H\n%ad", "HEAD^..HEAD"])
 
         if ret != 0:
-            return {}
+            return None
 
         data = stdout.decode("ascii").splitlines()
 

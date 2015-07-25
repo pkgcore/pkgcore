@@ -445,7 +445,7 @@ def config_from_make_conf(location=None, profile_override=None, **kwargs):
         repo_map[repo_config.repo_id] = repo_config
 
         # repo configs
-        conf = {
+        repo_conf = {
             'class': 'pkgcore.ebuild.repo_objs.RepoConfig',
             'config_name': repo_name,
             'location': repo_path,
@@ -457,20 +457,20 @@ def config_from_make_conf(location=None, profile_override=None, **kwargs):
         config[cache_name] = make_cache(repo_config.cache_format, repo_path)
 
         # repo trees
-        kwds = {
+        repo = {
             'inherit': ('ebuild-repo-common',),
             'raw_repo': 'raw:' + repo_name,
             'cache': cache_name,
         }
 
         if repo_path == default_repo_path:
-            conf['default'] = True
-            kwds['class'] = 'pkgcore.ebuild.repository.tree'
+            repo_conf['default'] = True
+            repo['class'] = 'pkgcore.ebuild.repository.tree'
         else:
-            kwds['parent_repo'] = repos_conf_defaults['main-repo']
+            repo['parent_repo'] = repos_conf_defaults['main-repo']
 
-        config['raw:' + repo_name] = basics.AutoConfigSection(conf)
-        config[repo_name] = basics.AutoConfigSection(kwds)
+        config['raw:' + repo_name] = basics.AutoConfigSection(repo_conf)
+        config[repo_name] = basics.AutoConfigSection(repo)
 
     # XXX: Hack for portage-2 profile format support. We need to figure out how
     # to dynamically create this from the config at runtime on attr access.

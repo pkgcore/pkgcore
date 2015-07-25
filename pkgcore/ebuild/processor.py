@@ -317,11 +317,11 @@ class EbuildProcessor(object):
         if int(os.environ.get('PKGCORE_DEBUG', 0)):
             env["PKGCORE_DEBUG"] = os.environ['PKGCORE_DEBUG']
 
-        # append script dir to PATH for git repo or unpacked tarball
+        # prepend script dir to PATH for git repo or unpacked tarball
         if const.PATH_FORCED_PREPEND:
             env["PATH"] = os.pathsep.join(
-                [os.environ["PATH"]] +
-                list(const.PATH_FORCED_PREPEND))
+                list(const.PATH_FORCED_PREPEND) +
+                [os.environ["PATH"]])
 
         args = []
         if sandbox:
@@ -965,11 +965,9 @@ def expected_ebuild_env(pkg, d=None, env_source_override=None, depends=False):
 
     if not depends:
         path = list()
-        path.extend(const.HOST_ROOT_PATHS)
         if const.PATH_FORCED_PREPEND:
-            d["PATH"] = os.pathsep.join(
-                [os.environ["PATH"]] +
-                list(const.PATH_FORCED_PREPEND))
+            path.extend(list(const.PATH_FORCED_PREPEND))
+        path.extend(const.HOST_ROOT_PATHS)
         for eapi in xrange(pkg.eapi, -1, -1):
             eapi_helper_dir = pjoin(e_const.EBUILD_HELPERS_PATH, str(eapi))
             if os.path.exists(eapi_helper_dir):

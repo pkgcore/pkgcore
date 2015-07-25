@@ -631,7 +631,7 @@ class buildable(ebd, setup_mixin, format.build):
                     if s+y in self.env:
                         del self.env[s+y]
         path = [piece for piece in path if piece]
-        self.env["PATH"] = ":".join(path)
+        self.env["PATH"] = os.pathsep.join(path)
         self.env["A"] = ' '.join(set(x.filename
             for x in pkg.fetchables))
 

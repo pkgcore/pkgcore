@@ -187,7 +187,7 @@ __ebd_exec_main() {
 	if [[ -e ${PKGCORE_BIN_PATH}/funcnames/global ]]; then
 		DONT_EXPORT_FUNCS+=" $(<"${PKGCORE_BIN_PATH}"/funcnames/global)"
 	else
-		DONT_EXPORT_FUNCS+=" $("${PKGCORE_BIN_PATH}"/regenerate_dont_export_func_list.bash - 2> /dev/null)"
+		DONT_EXPORT_FUNCS+=" $("${PKGCORE_BIN_PATH}"/generate_global_func_list.bash - 2> /dev/null)"
 	fi
 
 	for x in ${DONT_EXPORT_FUNCS}; do

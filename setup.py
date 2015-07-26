@@ -8,7 +8,6 @@ import sys
 
 from distutils import log
 from distutils.command.build import build
-from distutils.command.install_scripts import install_scripts
 from distutils.errors import DistutilsExecError
 from distutils.util import byte_compile
 
@@ -269,7 +268,6 @@ class pkgcore_install(_base_install):
         _base_install.finalize_options(self)
 
     sub_commands = _base_install.sub_commands[:]
-    sub_commands.append(('install_scripts', None))
     sub_commands.append(('install_man', operator.attrgetter('enable_man_pages')))
     sub_commands.append(('install_docs', operator.attrgetter('enable_html_docs')))
 
@@ -388,7 +386,6 @@ cmdclass = {
     'test': test,
     'install': pkgcore_install,
     'build_scripts': pkg_dist.build_scripts,
-    'install_scripts': install_scripts,
     'install_man': pkgcore_install_man,
     'install_docs': pkgcore_install_docs,
 }
@@ -408,6 +405,7 @@ setup(
     author_email='pkgcore-dev@googlegroups.com',
     packages=find_packages(exclude=['pkgdist']),
     install_requires=['snakeoil>=0.6.4'],
+    scripts=os.listdir('bin'),
     data_files=list(chain(
         _get_data_mapping(CONFIG_INSTALL_OFFSET, 'config'),
         _get_data_mapping(EBD_INSTALL_OFFSET, 'bash'),

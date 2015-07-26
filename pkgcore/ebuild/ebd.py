@@ -125,7 +125,7 @@ class ebd(object):
                 eapi_funcs = f.readlines()
         else:
             ret, eapi_funcs = spawn_get_output(
-                [pjoin(const.EAPI_BIN_PATH, 'generate_eapi_func_list.bash'), str(pkg.eapi), '-'])
+                [pjoin(const.EAPI_BIN_PATH, 'generate_eapi_func_list.bash'), str(pkg.eapi)])
             if ret != 0:
                 raise Exception("failed to generate list of EAPI %s specific functions" % str(pkg.eapi))
         self.env["PKGCORE_EAPI_FUNCS"] = ' '.join(x.strip() for x in eapi_funcs)

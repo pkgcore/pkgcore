@@ -314,14 +314,15 @@ def write_pkgcore_ebd_funclists(root, target):
     if root != '/':
         ebd_dir = os.path.join(root, os.path.abspath(target).lstrip('/'))
     log.info("Writing ebd function lists to %s" % os.path.join(ebd_dir, 'funcnames'))
+    os.makedirs(os.path.join(ebd_dir, 'funcnames'))
 
     # generate global function list
     with open(os.devnull, 'w') as devnull:
-        if subprocess.call(
-                [os.path.join(os.getcwd(), 'bash', 'generate_global_func_list.bash'),
-                 os.path.abspath(os.path.join(ebd_dir, 'funcnames', 'global'))],
-                cwd=ebd_dir, stderr=devnull):
-            raise DistutilsExecError("generating global function list failed")
+        with open(os.path.join(ebd_dir, 'funcnames', 'globals'), 'w') as f:
+            if subprocess.call(
+                    [os.path.join(os.getcwd(), 'bash', 'generate_global_func_list.bash')],
+                    cwd=ebd_dir, stderr=devnull, stdout=f):
+                raise DistutilsExecError("generating global function list failed")
 
     # generate EAPI specific function lists
     eapis = (x.split('.')[0] for x in os.listdir(os.path.join(ebd_dir, 'eapi'))
@@ -329,8 +330,7 @@ def write_pkgcore_ebd_funclists(root, target):
     for eapi in sorted(eapis):
         with open(os.path.join(ebd_dir, 'funcnames', eapi), 'w') as f:
             if subprocess.call(
-                    [os.path.join(os.getcwd(), 'bash', 'generate_eapi_func_list.bash'), eapi,
-                     os.path.abspath(os.path.join(ebd_dir, 'funcnames', eapi))],
+                    [os.path.join(os.getcwd(), 'bash', 'generate_eapi_func_list.bash'), eapi],
                     cwd=ebd_dir, stdout=f):
                 raise DistutilsExecError(
                     "generating EAPI %s function list failed" % eapi)

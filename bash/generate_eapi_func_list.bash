@@ -7,7 +7,6 @@
 
 EAPI=${1:-0}
 export PKGCORE_BIN_PATH=$(dirname "$0")
-_FP=${2:-${PKGCORE_BIN_PATH}/funcnames/${EAPI}}
 
 # without this var, parsing certain things can fail; force to true
 # so any code that tried accessing it thinks it succeeded
@@ -25,10 +24,4 @@ result=$(eval "${__content}") || { echo "generate EAPI func list eval failed" >&
 result=$(echo "${result}" | grep -v "^__"; echo "${result}" | grep "^__")
 unset -f declare
 
-if [[ ${_FP} == '-' ]]; then
-	echo >&2
-	echo "${result}"
-else
-	mkdir -p "$(dirname ${_FP})"
-	echo "${result}" > "${_FP}"
-fi
+echo "${result}"

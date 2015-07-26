@@ -14,7 +14,7 @@ if __name__ == '__main__':
     sys.path.insert(1, repo_path)
 
     try:
-        scripts = import_module('.scripts', os.path.basename(repo_path))
+        scripts = import_module('%s.scripts' % os.path.basename(repo_path))
     except ImportError as e:
         raise
 

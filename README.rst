@@ -74,17 +74,8 @@ Installing from git in a virtualenv (note that snakeoil should be used from git)
     pip install https://github.com/pkgcore/snakeoil/archive/master.tar.gz
     pip install https://github.com/pkgcore/pkgcore/archive/master.tar.gz
 
-For manually installing from a tarball or repo checkout see the commands below.
+Installing from a tarball or git repo::
 
-To build::
-
-    tar xf pkgcore-*.tar.gz
-    cd pkgcore-*
-    python setup.py build
-
-To install::
-
-    cd pkgcore-*
     python setup.py install
     pplugincache
 

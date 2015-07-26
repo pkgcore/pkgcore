@@ -14,7 +14,6 @@ export LC_ALL=C # avoid any potential issues of unicode sorting for whacked func
 # export this so that scripts will behave as libs
 export PKGCORE_SOURCING_FOR_REGEN_FUNCS_LIST=1
 set -f # shell expansion can bite us in the ass during the echo below
-cd "${PKGCORE_BIN_PATH}" || { echo "!!! failed cd'ing to ${PKGCORE_BIN_PATH}" >&2; exit 1; }
 
 # force some ordering.
 
@@ -45,7 +44,7 @@ export PKGCORE_PYTHON_BINARY=/bin/true
 forced_order_source="isolated-functions.lib exit-handling.lib eapi/common.lib ebuild-daemon.lib ebuild-daemon.bash"
 
 # skip EAPI specific libs since those need be sourced on demand depending on an ebuild's EAPI
-for x in ${forced_order_source} $(find . -name '*.lib' ! -regex ".*/[0-9]+\.lib" | sed -e 's:^\./::' | sort); do
+for x in ${forced_order_source} $(find "${PKGCORE_BIN_PATH}" -name '*.lib' ! -regex ".*/[0-9]+\.lib" | sed -e 's:^\./::' | sort); do
 	source "${x}"
 done
 

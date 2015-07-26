@@ -306,18 +306,20 @@ class pkgcore_install(_base_install):
             write_pkgcore_lookup_configs(self.install_purelib, target)
 
             # Generate ebd function lists used for environment filtering.
-            write_pkgcore_ebd_funclists(
-                os.path.join(root, target.lstrip('/'), EBD_INSTALL_OFFSET))
+            write_pkgcore_ebd_funclists(root, os.path.join(target, EBD_INSTALL_OFFSET))
 
 
-def write_pkgcore_ebd_funclists(ebd_dir):
+def write_pkgcore_ebd_funclists(root, target):
+    ebd_dir = target
+    if root != '/':
+        ebd_dir = os.path.join(root, os.path.abspath(target).lstrip('/'))
     log.info("Writing ebd function lists to %s" % os.path.join(ebd_dir, 'funcnames'))
 
     # generate global function list
     with open(os.devnull, 'w') as devnull:
         if subprocess.call(
                 [os.path.join(os.getcwd(), 'bash', 'generate_global_func_list.bash'),
-                 os.path.join(ebd_dir, 'funcnames', 'global')],
+                 os.path.abspath(os.path.join(ebd_dir, 'funcnames', 'global'))],
                 cwd=ebd_dir, stderr=devnull):
             raise DistutilsExecError("generating global function list failed")
 
@@ -327,7 +329,8 @@ def write_pkgcore_ebd_funclists(ebd_dir):
     for eapi in sorted(eapis):
         with open(os.path.join(ebd_dir, 'funcnames', eapi), 'w') as f:
             if subprocess.call(
-                    [os.path.join(os.getcwd(), 'bash', 'generate_eapi_func_list.bash'), eapi],
+                    [os.path.join(os.getcwd(), 'bash', 'generate_eapi_func_list.bash'), eapi,
+                     os.path.abspath(os.path.join(ebd_dir, 'funcnames', eapi))],
                     cwd=ebd_dir, stdout=f):
                 raise DistutilsExecError(
                     "generating EAPI %s function list failed" % eapi)

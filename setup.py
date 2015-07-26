@@ -4,11 +4,13 @@ from itertools import chain
 import operator
 import os
 import subprocess
-from stat import ST_MODE
 import sys
+import textwrap
 
 from distutils import log
-from distutils.command import build, build_scripts
+from distutils.command.build import build
+from distutils.command.build_scripts import build_scripts
+from distutils.command.install_scripts import install_scripts
 from distutils.errors import DistutilsExecError
 from distutils.util import byte_compile
 
@@ -68,18 +70,28 @@ class mysdist(pkg_distutils.sdist):
         pkg_distutils.sdist.make_release_tree(self, base_dir, files)
 
 
-class pkgcore_build_scripts(build_scripts.build_scripts):
+class pkgcore_build_scripts(build_scripts):
 
-    """Build (modify #! line) the pwrapper_installed script."""
+    """Create and build (copy and modify #! line) the wrapper scripts."""
 
-    def finalize_options(self):
-        build_scripts.build_scripts.finalize_options(self)
-        self.scripts = [os.path.join('bin', 'pwrapper_installed')]
+    def run(self):
+        script_dir = os.path.join(
+            os.path.dirname(self.build_dir), '.generated_scripts')
+        self.mkpath(script_dir)
+        for script in os.listdir('bin'):
+            with open(os.path.join(script_dir, script), 'w') as f:
+                f.write(textwrap.dedent("""\
+                    #!/usr/bin/env python
+                    from pkgcore import scripts
+                    scripts.main('%s')
+                    """ % script))
+        self.scripts = [os.path.join(script_dir, x) for x in os.listdir('bin')]
+        self.copy_scripts()
 
 
-class pkgcore_build(build.build):
+class pkgcore_build(build):
 
-    user_options = build.build.user_options[:]
+    user_options = build.user_options[:]
     user_options.append((
         'enable-man-pages', None,
         'install man pages (default)'))
@@ -93,27 +105,27 @@ class pkgcore_build(build.build):
         'disable-html-docs', None,
         'disable installation of html docs (default)'))
 
-    boolean_options = build.build.boolean_options[:]
+    boolean_options = build.boolean_options[:]
     boolean_options.extend(['enable-man-pages', 'enable-html-docs'])
 
-    negative_opt = dict(getattr(build.build, 'negative_opt', {}))
+    negative_opt = dict(getattr(build, 'negative_opt', {}))
     negative_opt.update({
         'disable-html-docs': 'enable-html-docs',
         'disable-man-pages': 'enable-man-pages',
     })
 
-    sub_commands = build.build.sub_commands[:]
+    sub_commands = build.sub_commands[:]
     sub_commands.append(('build_scripts', None))
     sub_commands.append(('build_docs', operator.attrgetter('enable_html_docs')))
     sub_commands.append(('build_man', operator.attrgetter('enable_man_pages')))
 
     def initialize_options(self):
-        build.build.initialize_options(self)
+        build.initialize_options(self)
         self.enable_man_pages = False
         self.enable_html_docs = False
 
     def finalize_options(self):
-        build.build.finalize_options(self)
+        build.finalize_options(self)
         if self.enable_man_pages is None:
             path = os.path.dirname(os.path.abspath(__file__))
             self.enable_man_pages = not os.path.exists(os.path.join(path, 'man'))
@@ -122,96 +134,17 @@ class pkgcore_build(build.build):
             self.enable_html_docs = False
 
 
-class pkgcore_install_scripts(Command):
-
-    """Install symlinks to the pwrapper_installed script.
-
-    Adapted from distutils install_scripts.
-    """
-
-    user_options = [
-        ('install-dir=', 'd', "directory to install scripts to"),
-        ('build-dir=', 'b', "build directory (where to install from)"),
-        ('force', 'f', "force installation (overwrite existing files)"),
-        ('skip-build', None, "skip the build steps"),
-    ]
-
-    boolean_options = ['force', 'skip-build']
-
-    def initialize_options(self):
-        self.install_dir = None
-        self.force = 0
-        self.build_dir = None
-        self.skip_build = None
-
-    def finalize_options(self):
-        self.set_undefined_options('build', ('build_scripts', 'build_dir'))
-        self.set_undefined_options(
-            'install',
-            ('install_scripts', 'install_dir'),
-            ('force', 'force'),
-            ('skip_build', 'skip_build'),
-        )
-        self.scripts = [path for path in os.listdir('bin')
-                        if path not in ('pwrapper', 'pwrapper_installed')]
-
-    def run(self):
-        if not self.skip_build:
-            self.run_command('build_scripts')
-        self.mkpath(self.install_dir)
-        if os.name == 'posix':
-            # Copy the wrapper once.
-            copyname = os.path.join(self.install_dir, self.scripts[0])
-            self.copy_file(os.path.join(self.build_dir, 'pwrapper_installed'),
-                           copyname)
-            # Set the executable bits (owner, group, and world).
-            if self.dry_run:
-                log.info("changing mode of %s", copyname)
-            else:
-                # note, we use the int here for python3k compatibility.
-                # 365 == 0555, 4095 = 0777
-                mode = ((os.stat(copyname)[ST_MODE]) | 365) & 4095
-                log.debug("changing mode of %s to %o", copyname, mode)
-                os.chmod(copyname, mode)
-            # Use symlinks for the other scripts.
-            for script in self.scripts[1:]:
-                # We do not use self.copy_file(link='sym') because we
-                # want to make a relative link and copy_file requires
-                # the "source" to be an actual file.
-                dest = os.path.join(self.install_dir, script)
-                log.info('symlinking %s to %s', dest, self.scripts[0])
-                try:
-                    os.symlink(self.scripts[0], dest)
-                except EnvironmentError:
-                    # yes, it would be best to examine the exception...
-                    # but that makes this script non py3k sourcable
-                    if not os.path.exists(dest):
-                        raise
-                    os.remove(dest)
-                    os.symlink(self.scripts[0], dest)
-        else:
-            # Just copy all the scripts.
-            for script in self.scripts:
-                self.copy_file(
-                    os.path.join(self.build_dir, 'pwrapper_installed'),
-                    os.path.join(self.install_dir, script))
-
-    def get_inputs(self):
-        return self.scripts
-
-    def get_outputs(self):
-        return self.scripts
-
-
 def _get_files(path):
     for root, dirs, files in os.walk(path):
         for f in files:
             yield os.path.join(root, f)[len(path):].lstrip('/')
 
+
 def _get_data_mapping(host_path, path):
     for root, dirs, files in os.walk(path):
         yield (os.path.join(host_path, root.partition(path)[2].lstrip('/')),
                [os.path.join(root, x) for x in files])
+
 
 class pkgcore_install_docs(Command):
 
@@ -315,6 +248,7 @@ class pkgcore_install_man(pkgcore_install_docs):
         return d
 
 _base_install = getattr(pkg_distutils, 'install', install.install)
+
 
 class pkgcore_install(_base_install):
 
@@ -480,7 +414,7 @@ cmdclass = {
     'test': test,
     'install': pkgcore_install,
     'build_scripts': pkgcore_build_scripts,
-    'install_scripts': pkgcore_install_scripts,
+    'install_scripts': install_scripts,
     'install_man': pkgcore_install_man,
     'install_docs': pkgcore_install_docs,
 }

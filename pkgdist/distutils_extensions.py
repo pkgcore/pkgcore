@@ -12,6 +12,7 @@ Generally speaking, you should flip through this modules src.
 import math
 import os
 import sys
+import textwrap
 
 os.environ["SNAKEOIL_DEMANDLOAD_PROTECTION"] = 'n'
 os.environ["SNAKEOIL_DEMANDLOAD_WARN"] = 'n'
@@ -19,7 +20,9 @@ os.environ["SNAKEOIL_DEMANDLOAD_WARN"] = 'n'
 from distutils import core, log, errors
 from distutils.command import (
     sdist as dst_sdist, build_ext as dst_build_ext, build_py as dst_build_py,
-    build as dst_build)
+    build as dst_build, build_scripts as dst_build_scripts)
+
+from pkgdist.wrapper import project
 
 
 class OptionalExtension(core.Extension):
@@ -215,6 +218,25 @@ class build_ext(dst_build_ext.build_ext):
                 if "-fno-strict-aliasing" not in val:
                     val.append("-fno-strict-aliasing")
         return dst_build_ext.build_ext.build_extensions(self)
+
+
+class build_scripts(dst_build_scripts.build_scripts):
+
+    """Create and build (copy and modify #! line) the wrapper scripts."""
+
+    def run(self):
+        script_dir = os.path.join(
+            os.path.dirname(self.build_dir), '.generated_scripts')
+        self.mkpath(script_dir)
+        for script in os.listdir('bin'):
+            with open(os.path.join(script_dir, script), 'w') as f:
+                f.write(textwrap.dedent("""\
+                    #!/usr/bin/env python
+                    from %s import scripts
+                    scripts.main('%s')
+                """ % (project(), script)))
+        self.scripts = [os.path.join(script_dir, x) for x in os.listdir('bin')]
+        self.copy_scripts()
 
 
 class test(core.Command):

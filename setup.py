@@ -5,11 +5,9 @@ import operator
 import os
 import subprocess
 import sys
-import textwrap
 
 from distutils import log
 from distutils.command.build import build
-from distutils.command.build_scripts import build_scripts
 from distutils.command.install_scripts import install_scripts
 from distutils.errors import DistutilsExecError
 from distutils.util import byte_compile
@@ -17,7 +15,7 @@ from distutils.util import byte_compile
 from setuptools import Command, setup, find_packages
 from setuptools.command import install
 
-from pkgdist import distutils_extensions as pkg_distutils
+from pkgdist import distutils_extensions as pkg_dist
 
 # These offsets control where we install the pkgcore config files and the EBD
 # bits relative to the install-data path given to the install subcmd.
@@ -29,23 +27,23 @@ EBD_INSTALL_OFFSET = 'lib/pkgcore'
 TOPDIR = os.path.dirname(os.path.abspath(__file__))
 
 
-class mysdist(pkg_distutils.sdist):
+class mysdist(pkg_dist.sdist):
 
     """sdist command specifying the right files and generating ChangeLog."""
 
-    user_options = pkg_distutils.sdist.user_options + [
+    user_options = pkg_dist.sdist.user_options + [
         ('build-docs', None, 'build docs (default)'),
         ('no-build-docs', None, 'do not build docs'),
         ]
 
-    boolean_options = pkg_distutils.sdist.boolean_options + ['build-docs']
+    boolean_options = pkg_dist.sdist.boolean_options + ['build-docs']
     package_namespace = 'pkgcore'
 
-    negative_opt = pkg_distutils.sdist.negative_opt.copy()
+    negative_opt = pkg_dist.sdist.negative_opt.copy()
     negative_opt.update({'no-build-docs': 'build-docs'})
 
     def initialize_options(self):
-        pkg_distutils.sdist.initialize_options(self)
+        pkg_dist.sdist.initialize_options(self)
         self.build_docs = False
 
     def make_release_tree(self, base_dir, files):
@@ -67,26 +65,7 @@ class mysdist(pkg_distutils.sdist):
             import shutil
             shutil.copytree(os.path.join(cwd, "build/sphinx/man"),
                             os.path.join(base_dir, "man"))
-        pkg_distutils.sdist.make_release_tree(self, base_dir, files)
-
-
-class pkgcore_build_scripts(build_scripts):
-
-    """Create and build (copy and modify #! line) the wrapper scripts."""
-
-    def run(self):
-        script_dir = os.path.join(
-            os.path.dirname(self.build_dir), '.generated_scripts')
-        self.mkpath(script_dir)
-        for script in os.listdir('bin'):
-            with open(os.path.join(script_dir, script), 'w') as f:
-                f.write(textwrap.dedent("""\
-                    #!/usr/bin/env python
-                    from pkgcore import scripts
-                    scripts.main('%s')
-                """ % script))
-        self.scripts = [os.path.join(script_dir, x) for x in os.listdir('bin')]
-        self.copy_scripts()
+        pkg_dist.sdist.make_release_tree(self, base_dir, files)
 
 
 class pkgcore_build(build):
@@ -247,7 +226,7 @@ class pkgcore_install_man(pkgcore_install_docs):
                 d[x] = 'man%s/%s' % (x[-1], os.path.basename(x))
         return d
 
-_base_install = getattr(pkg_distutils, 'install', install.install)
+_base_install = getattr(pkg_dist, 'install', install.install)
 
 
 class pkgcore_install(_base_install):
@@ -355,13 +334,13 @@ def write_pkgcore_lookup_configs(python_base, install_prefix, injected_bin_path=
     byte_compile([path], optimize=2, prefix=python_base)
 
 
-class pkgcore_build_py(pkg_distutils.build_py):
+class pkgcore_build_py(pkg_dist.build_py):
 
     package_namespace = 'pkgcore'
     generate_verinfo = True
 
 
-class test(pkg_distutils.test):
+class test(pkg_dist.test):
 
     default_test_namespace = 'pkgcore.test'
 
@@ -373,7 +352,7 @@ class test(pkg_distutils.test):
         original = os.environ.get(key)
         try:
             os.environ[key] = os.path.dirname(os.path.realpath(__file__))
-            return pkg_distutils.test.run(self)
+            return pkg_dist.test.run(self)
         finally:
             if original is not None:
                 os.environ[key] = original
@@ -382,20 +361,20 @@ class test(pkg_distutils.test):
 
 
 extensions = []
-if not pkg_distutils.is_py3k:
+if not pkg_dist.is_py3k:
     extensions.extend([
-        pkg_distutils.OptionalExtension(
+        pkg_dist.OptionalExtension(
             'pkgcore.ebuild._atom', ['src/atom.c']),
-        pkg_distutils.OptionalExtension(
+        pkg_dist.OptionalExtension(
             'pkgcore.ebuild._cpv', ['src/cpv.c']),
-        pkg_distutils.OptionalExtension(
+        pkg_dist.OptionalExtension(
             'pkgcore.ebuild._depset', ['src/depset.c']),
-        pkg_distutils.OptionalExtension(
+        pkg_dist.OptionalExtension(
             'pkgcore.ebuild._filter_env', [
                 'src/filter_env.c', 'src/bmh_search.c']),
-        pkg_distutils.OptionalExtension(
+        pkg_dist.OptionalExtension(
             'pkgcore.restrictions._restrictions', ['src/restrictions.c']),
-        pkg_distutils.OptionalExtension(
+        pkg_dist.OptionalExtension(
             'pkgcore.ebuild._misc', ['src/misc.c']),
     ])
 
@@ -405,10 +384,10 @@ cmdclass = {
     'sdist': mysdist,
     'build': pkgcore_build,
     'build_py': pkgcore_build_py,
-    'build_ext': pkg_distutils.build_ext,
+    'build_ext': pkg_dist.build_ext,
     'test': test,
     'install': pkgcore_install,
-    'build_scripts': pkgcore_build_scripts,
+    'build_scripts': pkg_dist.build_scripts,
     'install_scripts': install_scripts,
     'install_man': pkgcore_install_man,
     'install_docs': pkgcore_install_docs,

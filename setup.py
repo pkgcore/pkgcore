@@ -14,7 +14,7 @@ from distutils.command.install_scripts import install_scripts
 from distutils.errors import DistutilsExecError
 from distutils.util import byte_compile
 
-from setuptools import Command, setup
+from setuptools import Command, setup, find_packages
 from setuptools.command import install
 
 from pkgdist import distutils_extensions as pkg_distutils
@@ -84,7 +84,7 @@ class pkgcore_build_scripts(build_scripts):
                     #!/usr/bin/env python
                     from pkgcore import scripts
                     scripts.main('%s')
-                    """ % script))
+                """ % script))
         self.scripts = [os.path.join(script_dir, x) for x in os.listdir('bin')]
         self.copy_scripts()
 
@@ -381,14 +381,6 @@ class test(pkg_distutils.test):
                 os.environ.pop(key, None)
 
 
-def _find_modules(location):
-    return [root.replace(os.path.sep, '.')
-            for root, dirs, files in os.walk(location)
-            if '__init__.py' in files]
-
-
-packages = _find_modules('pkgcore')
-
 extensions = []
 if not pkg_distutils.is_py3k:
     extensions.extend([
@@ -435,7 +427,7 @@ setup(
     license='BSD/GPLv2',
     author='Brian Harring, Tim Harder',
     author_email='pkgcore-dev@googlegroups.com',
-    packages=packages,
+    packages=find_packages(exclude=['pkgdist']),
     install_requires=['snakeoil>=0.6.4'],
     data_files=list(chain(
         _get_data_mapping(CONFIG_INSTALL_OFFSET, 'config'),

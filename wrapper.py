@@ -9,17 +9,23 @@ import os
 import sys
 
 
-def project():
+def find_project():
     toplevel = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
     toplevel_depth = len(toplevel.split('/'))
 
+    # look for a top-level module that isn't pkgdist
     for root, dirs, files in os.walk(toplevel):
         if len(root.split('/')) > toplevel_depth + 1:
             continue
         if '__init__.py' in files and not \
-                os.path.abspath(root).startswith(os.path.dirname(os.path.realpath(__file__))):
+                os.path.abspath(root).startswith(
+                    os.path.dirname(os.path.realpath(__file__))):
             return os.path.basename(root)
+
     raise ValueError('No project module found')
+
+
+project = find_project()
 
 
 if __name__ == '__main__':
@@ -27,7 +33,7 @@ if __name__ == '__main__':
     sys.path.insert(1, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
     try:
-        scripts = import_module('%s.scripts' % os.path.basename(project()))
+        scripts = import_module('%s.scripts' % os.path.basename(project))
     except ImportError as e:
         raise
 

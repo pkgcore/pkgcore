@@ -234,7 +234,7 @@ class build_scripts(dst_build_scripts.build_scripts):
                     #!/usr/bin/env python
                     from %s import scripts
                     scripts.main('%s')
-                """ % (project(), script)))
+                """ % (project, script)))
         self.scripts = [os.path.join(script_dir, x) for x in os.listdir('bin')]
         self.copy_scripts()
 

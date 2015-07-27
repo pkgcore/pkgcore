@@ -40,7 +40,7 @@ class sdist(dst_sdist.sdist):
 
     """sdist command wrapper to generate version info file"""
 
-    package_namespace = None
+    package_namespace = project
 
     def generate_verinfo(self, base_dir):
         log.info('generating _verinfo')
@@ -67,8 +67,8 @@ class build_py(dst_build_py.build_py):
 
     user_options = dst_build_py.build_py.user_options + [("inplace", "i", "do any source conversions in place")]
 
-    package_namespace = None
-    generate_verinfo = False
+    package_namespace = project
+    generate_verinfo = True
 
     def initialize_options(self):
         dst_build_py.build_py.initialize_options(self)
@@ -260,7 +260,7 @@ class test(core.Command):
         ("include-dirs=", "I", "include dirs for build_ext if needed"),
     ]
 
-    default_test_namespace = None
+    default_test_namespace = '%s.test' % project
 
     def initialize_options(self):
         self.inplace = False

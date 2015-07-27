@@ -34,7 +34,7 @@ if __name__ == '__main__':
 
     try:
         scripts = import_module('%s.scripts' % os.path.basename(project))
-    except ImportError as e:
+    except ImportError:
         raise
 
     scripts.main(os.path.basename(__file__))

@@ -14,6 +14,7 @@ from distutils.util import byte_compile
 from setuptools import Command, setup, find_packages
 from setuptools.command import install
 
+from pkgcore import __version__
 from pkgdist import distutils_extensions as pkg_dist
 
 # These offsets control where we install the pkgcore config files and the EBD
@@ -28,7 +29,7 @@ TOPDIR = os.path.dirname(os.path.abspath(__file__))
 
 class mysdist(pkg_dist.sdist):
 
-    """sdist command specifying the right files and generating ChangeLog."""
+    """sdist command specifying the right files."""
 
     user_options = pkg_dist.sdist.user_options + [
         ('build-docs', None, 'build docs (default)'),
@@ -36,7 +37,6 @@ class mysdist(pkg_dist.sdist):
         ]
 
     boolean_options = pkg_dist.sdist.boolean_options + ['build-docs']
-    package_namespace = 'pkgcore'
 
     negative_opt = pkg_dist.sdist.negative_opt.copy()
     negative_opt.update({'no-build-docs': 'build-docs'})
@@ -332,15 +332,7 @@ def write_pkgcore_lookup_configs(python_base, install_prefix, injected_bin_path=
     byte_compile([path], optimize=2, prefix=python_base)
 
 
-class pkgcore_build_py(pkg_dist.build_py):
-
-    package_namespace = 'pkgcore'
-    generate_verinfo = True
-
-
 class test(pkg_dist.test):
-
-    default_test_namespace = 'pkgcore.test'
 
     def run(self):
         # This is fairly hacky, but is done to ensure that the tests
@@ -376,12 +368,10 @@ if not pkg_dist.is_py3k:
             'pkgcore.ebuild._misc', ['src/misc.c']),
     ])
 
-from pkgcore import __version__
-
 cmdclass = {
     'sdist': mysdist,
     'build': pkgcore_build,
-    'build_py': pkgcore_build_py,
+    'build_py': pkg_dist.build_py,
     'build_ext': pkg_dist.build_ext,
     'test': test,
     'install': pkgcore_install,

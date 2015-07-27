@@ -17,19 +17,21 @@ import textwrap
 os.environ["SNAKEOIL_DEMANDLOAD_PROTECTION"] = 'n'
 os.environ["SNAKEOIL_DEMANDLOAD_WARN"] = 'n'
 
-from distutils import core, log, errors
+from distutils import log, errors
+from distutils.core import Command, Extension
 from distutils.command import (
     sdist as dst_sdist, build_ext as dst_build_ext, build_py as dst_build_py,
     build as dst_build, build_scripts as dst_build_scripts)
 
+from pkgdist.version import get_git_version
 from pkgdist.wrapper import project
 
 
-class OptionalExtension(core.Extension):
+class OptionalExtension(Extension):
     """python extension that is optional to build.
 
     If it's not required to have the exception built, just preferable,
-    use this class instead of :py:class:`core.Extension` since the machinery
+    use this class instead of :py:class:`Extension` since the machinery
     in this module relies on isinstance to identify what absolutely must
     be built vs what would be nice to have built.
     """
@@ -44,7 +46,6 @@ class sdist(dst_sdist.sdist):
 
     def generate_verinfo(self, base_dir):
         log.info('generating _verinfo')
-        from .version import get_git_version
         data = get_git_version(base_dir)
         if not data:
             return
@@ -108,15 +109,14 @@ class build_py(dst_build_py.build_py):
         # this should check mtime...
         if not os.path.exists(ver_path):
             log.info('generating _verinfo')
-            from . import version
             with open(ver_path, 'w') as f:
-                f.write("version_info=%r" % (version.get_git_version('.'),))
+                f.write("version_info=%r" % (get_git_version('.'),))
             self.byte_compile([ver_path])
             py3k_rebuilds.append((ver_path, os.lstat(ver_path).st_mtime))
 
     def get_py2to3_converter(self, options=None, proc_count=0):
         from lib2to3 import refactor as ref_mod
-        from . import caching_2to3
+        from pkgdist import caching_2to3
 
         if ((sys.version_info >= (3, 0) and sys.version_info < (3, 1, 2)) or
                 (sys.version_info >= (2, 6) and sys.version_info < (2, 6, 5))):
@@ -239,7 +239,7 @@ class build_scripts(dst_build_scripts.build_scripts):
         self.copy_scripts()
 
 
-class test(core.Command):
+class test(Command):
 
     """Run our unit tests in a built copy.
 

@@ -228,14 +228,15 @@ class build_scripts(dst_build_scripts.build_scripts):
         script_dir = os.path.join(
             os.path.dirname(self.build_dir), '.generated_scripts')
         self.mkpath(script_dir)
-        for script in os.listdir('bin'):
-            with open(os.path.join(script_dir, script), 'w') as f:
+        self.scripts = [os.path.join(script_dir, x) for x in os.listdir('bin')]
+        for script in self.scripts:
+            with open(script, 'w') as f:
                 f.write(textwrap.dedent("""\
                     #!/usr/bin/env python
+                    from os.path import basename
                     from %s import scripts
-                    scripts.main('%s')
-                """ % (project, script)))
-        self.scripts = [os.path.join(script_dir, x) for x in os.listdir('bin')]
+                    scripts.main(basename(__file__))
+                """ % project))
         self.copy_scripts()
 
 

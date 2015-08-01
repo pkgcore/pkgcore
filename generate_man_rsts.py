@@ -133,8 +133,9 @@ class ManConverter(object):
             l.extend(_rst_header("=", action_group.title))
             if action_group.description:
                 l.extend(action_group.description.split("\n"))
-            l.extend(self.positional_re(data).split("\n"))
-            l.append('')
+            for x in self.positional_re(data).split("\n"):
+                l.append(x)
+                l.append('')
         return l
 
     def process_subcommands(self, parser, name, action_group):
@@ -194,7 +195,9 @@ class ManConverter(object):
                 array = [(self._rewrite_option(x[0]), x[1]) for x in array]
                 min_length = max(len(x[0]) for x in array) + 2
                 array = [(x[0].ljust(min_length, ' '), x[1]) for x in array]
-                l.extend(''.join(x) for x in array)
+                for x in array:
+                    l.append(''.join(x))
+                    l.append('')
             l.append('')
         return l
 

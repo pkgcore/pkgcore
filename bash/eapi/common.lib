@@ -502,14 +502,16 @@ portageq() {
 	fi
 	local command=$1
 	shift
+
+	local opts pinspect portageq_str="portageq"
+	[[ ${PKGCORE_DEBUG} -ge 1 ]] && opts="--debug"
+	${PKGCORE_DISABLE_COMPAT-false} && portageq_str="query"
+	pinspect=$(type -P pinspect) || die "${FUNCNAME}: pinspect missing from PATH"
+
 	# suppress sandbox for the invocation; do this to avoid things like .pyc generation
 	# being snagged by the sandbox
-	local opts
-	[[ ${PKGCORE_DEBUG} -ge 1 ]] && opts="--debug"
-	local portageq_str="portageq"
-	${PKGCORE_DISABLE_COMPAT-false} && portageq_str="query"
 	SANDBOX_ON=0 PYTHONPATH="${PKGCORE_PYTHONPATH}" "${PKGCORE_PYTHON_BINARY}" \
-		$(type -P pinspect) ${opts} ${portageq_str} "${command}" \
+		"${pinspect}" ${opts} ${portageq_str} "${command}" \
 		--eapi "${EAPI:--1}" --use "${USE}" "$@"
 	local ret=$?
 	[[ ${ret} == 127 ]] && die "pinspect couldn't be found; broken pkgcore installation?"

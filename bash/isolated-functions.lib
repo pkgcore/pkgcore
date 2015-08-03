@@ -69,6 +69,10 @@ __feature_is_enabled() {
 	__safe_has "$1" ${FEATURES}
 } &> /dev/null
 
+__which() {
+	[[ -z $1 ]] && die "${FUNCNAME}: requires a single command name argument"
+	type -P "$1" || die "'$1' not found in PATH"
+}
 
 __is_function() {
 	declare -F "$1" &> /dev/null

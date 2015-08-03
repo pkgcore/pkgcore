@@ -183,7 +183,9 @@ class pkgcore_install_docs(Command):
                 raise DistutilsExecError(
                     "no pregenerated sphinx content, and sphinx isn't available "
                     "to generate it; bailing")
-            self.run_command(self.build_command)
+            cwd = os.getcwd()
+            if subprocess.call([sys.executable, 'setup.py', self.build_command], cwd=cwd):
+                raise DistutilsExecError("%s failed" % self.build_command)
             return self.run(False)
 
         content = self.scan_content()

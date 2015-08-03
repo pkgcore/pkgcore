@@ -129,14 +129,17 @@ class pkgcore_install_docs(Command):
     """Install html documentation"""
 
     content_search_path = ('build/sphinx/html', 'html')
-    user_options = [('path=', None,
-                     "Final path to install to; else it's calculated")]
+    user_options = [
+        ('path=', None, "final path to install to; else it's calculated"),
+        ('build-dir=', None, "build directory"),
+    ]
     build_command = 'build_docs'
 
     def initialize_options(self):
         self.root = None
         self.prefix = None
         self.path = None
+        self.build_dir = None
         self.content = []
         self.source_path = None
 
@@ -158,6 +161,8 @@ class pkgcore_install_docs(Command):
 
     def find_content(self):
         for possible_path in self.content_search_path:
+            if self.build_dir is not None:
+                possible_path = os.path.join(self.build_dir, possible_path)
             possible_path = os.path.join(TOPDIR, possible_path)
             if os.path.isdir(possible_path):
                 return possible_path
@@ -208,8 +213,6 @@ class pkgcore_install_man(pkgcore_install_docs):
     """Install man pages"""
 
     content_search_path = ('build/sphinx/man', 'man')
-    user_options = [('path=', None,
-                     "Final path to install to; else it's calculated")]
     build_command = 'build_man'
 
     def calculate_install_path(self):

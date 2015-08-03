@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
 # License: BSD/GPL2
 
@@ -40,3 +41,9 @@ def main(script_name=None):
 
     subcommands = getattr(script, 'argparser', None)
     commandline.main(subcommands)
+
+
+if __name__ == '__main__':
+    # we're in a git repo or tarball so add the base dir to the system path
+    sys.path.insert(1, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    main(os.path.basename(__file__))

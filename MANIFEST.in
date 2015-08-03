@@ -5,6 +5,5 @@ recursive-include doc *
 recursive-include examples *
 recursive-include bash *
 recursive-include config *
-recursive-include pkgdist *
 recursive-include src *.[ch]
 global-exclude *.pyc *.pyo __pycache__

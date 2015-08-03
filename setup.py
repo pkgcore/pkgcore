@@ -13,9 +13,9 @@ from distutils.util import byte_compile
 
 from setuptools import Command, setup, find_packages
 from setuptools.command import install
+from snakeoil.dist import distutils_extensions as pkg_dist
 
 from pkgcore import __version__
-from pkgdist import distutils_extensions as pkg_dist
 
 # These offsets control where we install the pkgcore config files and the EBD
 # bits relative to the install-data path given to the install subcmd.
@@ -398,7 +398,8 @@ setup(
     license='BSD/GPLv2',
     author='Brian Harring, Tim Harder',
     author_email='pkgcore-dev@googlegroups.com',
-    packages=find_packages(exclude=['pkgdist']),
+    packages=find_packages(),
+    setup_requires=['snakeoil>=0.6.4'],
     install_requires=['snakeoil>=0.6.4'],
     scripts=os.listdir('bin'),
     data_files=list(chain(

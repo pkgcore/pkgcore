@@ -70,7 +70,7 @@ __feature_is_enabled() {
 } &> /dev/null
 
 __which() {
-	[[ -z $1 ]] && die "${FUNCNAME}: requires a single command name argument"
+	[[ $# -ne 1 ]] && die "${FUNCNAME}: requires a single command name arg, got $@"
 	type -P "$1" || die "'$1' not found in PATH"
 }
 

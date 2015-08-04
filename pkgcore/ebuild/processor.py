@@ -975,6 +975,7 @@ def expected_ebuild_env(pkg, d=None, env_source_override=None, depends=False):
                 path.append(eapi_helper_dir)
         path.append(pjoin(e_const.EBUILD_HELPERS_PATH, "common"))
         path.extend(d.get("PATH", "").split(":"))
+        path.extend(os.environ.get("PATH", "").split(":"))
         d["PATH"] = os.pathsep.join(filter(None, path))
         d["PKGCORE_EAPI"] = pkg.eapi_obj.magic
         d["INHERITED"] = ' '.join(pkg.data.get("_eclasses_", ()))

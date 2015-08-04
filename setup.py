@@ -399,8 +399,8 @@ setup(
     author='Brian Harring, Tim Harder',
     author_email='pkgcore-dev@googlegroups.com',
     packages=find_packages(),
-    setup_requires=['snakeoil>=0.6.4'],
-    install_requires=['snakeoil>=0.6.4'],
+    setup_requires=['snakeoil>=0.6.5'],
+    install_requires=['snakeoil>=0.6.5'],
     scripts=os.listdir('bin'),
     data_files=list(chain(
         _get_data_mapping(CONFIG_INSTALL_OFFSET, 'config'),

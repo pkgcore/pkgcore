@@ -6,7 +6,7 @@
 export PKGCORE_BIN_PATH=$(dirname "$0")
 
 if [[ -z ${PKGCORE_CLEAN_ENV} ]]; then
-	exec env -i PKGCORE_PYTHON_PATH=${PKGCORE_PYTHON_PATH} PKGCORE_CLEAN_ENV=1 "$0"
+	exec env -i PKGCORE_PYTHON_PATH=${PKGCORE_PYTHON_PATH} PATH=${PATH} PKGCORE_CLEAN_ENV=1 "$0"
 fi
 
 export LC_ALL=C # avoid any potential issues of unicode sorting for whacked func names

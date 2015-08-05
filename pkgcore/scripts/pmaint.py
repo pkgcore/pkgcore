@@ -43,18 +43,10 @@ sync = subparsers.add_parser(
 sync.add_argument(
     'repos', metavar='repo', nargs='*', help="repo(s) to sync",
     action=commandline.StoreRepoObject, store_name=True, raw=True)
-sync.add_argument(
-    "-q", "--quiet", action='store_true',
-    help="suppress non-error messages")
-sync.add_argument(
-    "-v", "--verbose", action='count',
-    help="show verbose output")
 @sync.bind_main_func
 def sync_main(options, out, err):
     """Update local repositories to match their remotes"""
-    if options.quiet:
-        options.verbose = -1
-
+    verbosity = -1 if options.quiet else options.verbose
     succeeded, failed = [], []
 
     for repo_name, repo in iter_stable_unique(options.repos):
@@ -67,7 +59,7 @@ def sync_main(options, out, err):
         out.write("*** syncing %s" % repo_name)
         ret = False
         try:
-            ret = repo.operations.sync(verbosity=options.verbose)
+            ret = repo.operations.sync(verbosity=verbosity)
         except OperationError:
             pass
         if not ret:
@@ -185,9 +177,6 @@ regen.add_argument(
 regen.add_argument(
     "--rsync", action='store_true', default=False,
     help="perform actions necessary for rsync repos (update metadata/timestamp.chk)")
-regen.add_argument(
-    "-v", "--verbose", action='store_true', default=False,
-    help="show verbose output")
 regen.add_argument(
     'repos', metavar='repo', nargs='*', action=commandline.StoreRepoObject,
     help="repo(s) to regenerate caches for")

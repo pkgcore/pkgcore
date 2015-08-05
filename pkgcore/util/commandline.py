@@ -148,10 +148,6 @@ class EnableDebug(argparse._StoreTrueAction):
             parser, namespace, values, option_string=option_string)
         logging.root.setLevel(logging.DEBUG)
 
-        # pass down debug setting to the bash side
-        if 'PKGCORE_DEBUG' not in os.environ:
-            os.environ['PKGCORE_DEBUG'] = '1'
-
 
 class ConfigError(Exception):
     pass
@@ -749,7 +745,8 @@ def existent_path(value):
 
 
 def mk_argparser(suppress=False, config=True, domain=True,
-                 color=True, debug=True, version=True, **kwds):
+                 color=True, debug=True, quiet=True, verbose=True,
+                 version=True, **kwds):
     p = ArgumentParser(**kwds)
     p.register('action', 'extend_comma', ExtendCommaDelimited)
 
@@ -757,32 +754,41 @@ def mk_argparser(suppress=False, config=True, domain=True,
         return p
 
     if version:
-        p.add_argument('--version', action='version', version=get_version('pkgcore', __file__))
+        p.add_argument(
+            '--version', action='version', version=get_version('pkgcore', __file__))
     if debug:
         p.add_argument(
-            '--debug', action=EnableDebug, help="Enable debugging checks")
+            '--debug', action=EnableDebug, help='enable debugging checks')
+    if quiet:
+        p.add_argument(
+            '-q', '--quiet', action='store_true',
+            help='suppress non-error messages')
+    if verbose:
+        p.add_argument(
+            '-v', '--verbose', action='count',
+            help='show verbose output')
     if color:
         p.add_argument(
             '--color', action=StoreBool,
             default=True,
-            help="Enable or disable color support.")
+            help='enable/disable color support')
 
     if config:
         p.add_argument(
             '--add-config', nargs=3, action='append',
-            metavar=("SECTION", "KEY", "VALUE"),
-            help="modify an existing configuration section.")
+            metavar=('SECTION', 'KEY', 'VALUE'),
+            help='modify an existing configuration section')
         p.add_argument(
             '--new-config', nargs=3, action='append',
-            metavar=("SECTION", "KEY", "VALUE"),
-            help="add a new configuration section.")
+            metavar=('SECTION', 'KEY', 'VALUE'),
+            help='add a new configuration section')
         p.add_argument(
             '--empty-config', action='store_true', default=False,
-            help="Do not load user/system configuration.")
+            help='do not load user/system configuration')
         p.add_argument(
-            '--config', metavar="PATH", dest='override_config',
+            '--config', metavar='PATH', dest='override_config',
             type=existent_path,
-            help="Override location of config files")
+            help='override location of config files')
 
         p.set_defaults(config=DelayedValue(store_config, 0))
 
@@ -884,6 +890,12 @@ def main(subcommands, args=None, outfile=None, errfile=None, script_name=None):
         else:
             options = argparse.Namespace()
             main_func, options = argparse_parse(subcommands, args, options)
+
+        if options.debug:
+            # verbosity level affects debug output
+            debug_verbosity = options.verbose if options.verbose is not None else 1
+            # pass down debug setting to the bash side
+            os.environ['PKGCORE_DEBUG'] = str(debug_verbosity)
 
         if getattr(options, 'color', True):
             formatter_factory = formatters.get_formatter

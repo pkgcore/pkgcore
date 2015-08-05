@@ -141,12 +141,6 @@ resolution_options.add_argument(
 
 output_options = argparser.add_argument_group("Output related options")
 output_options.add_argument(
-    '-q', '--quiet', action='store_true',
-    help="suppress most output")
-output_options.add_argument(
-    '-v', '--verbose', action='store_true',
-    help="be verbose in output")
-output_options.add_argument(
     '--quiet-repo-display', action='store_true',
     help="In the package merge list display, suppress ::repo "
          "output, and instead use numbers to indicate which repos "

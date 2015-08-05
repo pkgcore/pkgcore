@@ -768,9 +768,6 @@ output.add_argument(
     '--contents', action='store_true',
     help='list files owned by the package')
 output.add_argument(
-    '-v', '--verbose', action='store_true',
-    help='human-readable multi-line output per package')
-output.add_argument(
     '--highlight-dep', action='append',
     type=atom.atom, default=[],
     help='highlight dependencies matching this atom')

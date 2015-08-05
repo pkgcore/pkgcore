@@ -15,7 +15,7 @@ class CommandlineTest(TestCase, helpers.ArgParseMixin):
         self.assertError(
             "argument -i/--input: can't open 'foo': [Errno 2] No such file or directory: 'foo'",
             '-i', 'foo')
-        options = self.parse('-Vf', 'spork,,foon', '-i', __file__)
+        options = self.parse('-V', '--funcs', 'spork,,foon', '-i', __file__)
         self.assertEqual(['spork', 'foon'], options.funcs)
         self.assertFalse(options.func_match)
         self.assertTrue(options.var_match)

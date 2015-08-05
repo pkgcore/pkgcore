@@ -32,14 +32,10 @@ class mysdist(pkg_dist.sdist):
     """sdist command specifying the right files."""
 
     user_options = pkg_dist.sdist.user_options + [
-        ('build-docs', None, 'build docs (default)'),
-        ('no-build-docs', None, 'do not build docs'),
+        ('build-docs', None, 'build docs'),
         ]
 
     boolean_options = pkg_dist.sdist.boolean_options + ['build-docs']
-
-    negative_opt = pkg_dist.sdist.negative_opt.copy()
-    negative_opt.update({'no-build-docs': 'build-docs'})
 
     def initialize_options(self):
         pkg_dist.sdist.initialize_options(self)
@@ -70,27 +66,11 @@ class mysdist(pkg_dist.sdist):
 class pkgcore_build(build):
 
     user_options = build.user_options[:]
-    user_options.append((
-        'enable-man-pages', None,
-        'install man pages (default)'))
-    user_options.append((
-        'disable-man-pages', None,
-        'disable man page generation and installation'))
-    user_options.append((
-        'enable-html-docs', None,
-        'install html docs'))
-    user_options.append((
-        'disable-html-docs', None,
-        'disable installation of html docs (default)'))
+    user_options.append(('enable-man-pages', None, 'build man pages'))
+    user_options.append(('enable-html-docs', None, 'build html docs'))
 
     boolean_options = build.boolean_options[:]
     boolean_options.extend(['enable-man-pages', 'enable-html-docs'])
-
-    negative_opt = dict(getattr(build, 'negative_opt', {}))
-    negative_opt.update({
-        'disable-html-docs': 'enable-html-docs',
-        'disable-man-pages': 'enable-man-pages',
-    })
 
     sub_commands = build.sub_commands[:]
     sub_commands.append(('build_scripts', None))
@@ -236,27 +216,11 @@ _base_install = getattr(pkg_dist, 'install', install.install)
 class pkgcore_install(_base_install):
 
     user_options = _base_install.user_options[:]
-    user_options.append((
-        'enable-man-pages', None,
-        'install man pages'))
-    user_options.append((
-        'disable-man-pages', None,
-        'disable man page generation and installation (default)'))
-    user_options.append((
-        'enable-html-docs', None,
-        'Install html docs.'))
-    user_options.append((
-        'disable-html-docs', None,
-        'disable installation of html docs (default)'))
+    user_options.append(('enable-man-pages', None, 'install man pages'))
+    user_options.append(('enable-html-docs', None, 'install html docs'))
 
     boolean_options = _base_install.boolean_options[:]
     boolean_options.extend(['enable-man-pages', 'enable-html-docs'])
-
-    negative_opt = _base_install.negative_opt.copy()
-    negative_opt.update({
-        'disable-html-docs': 'enable-html-docs',
-        'disable-man-pages': 'enable-man-pages',
-    })
 
     def initialize_options(self):
         _base_install.initialize_options(self)

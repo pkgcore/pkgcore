@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 
+import io
 from itertools import chain
 import operator
 import os
+import re
 import subprocess
 import sys
 
@@ -14,8 +16,6 @@ from distutils.util import byte_compile
 from setuptools import Command, setup, find_packages
 from setuptools.command import install
 from snakeoil.dist import distutils_extensions as pkg_dist
-
-from pkgcore import __version__
 
 # These offsets control where we install the pkgcore config files and the EBD
 # bits relative to the install-data path given to the install subcmd.
@@ -386,12 +386,21 @@ cmdclass = {
 }
 command_options = {}
 
-with open('README.rst', 'r') as f:
+version = ''
+with io.open('pkgcore/__init__.py', encoding='utf-8') as f:
+    version = re.search(r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]',
+                        f.read(), re.MULTILINE).group(1)
+
+if not version:
+    raise RuntimeError('Cannot find version')
+
+
+with io.open('README.rst', encoding='utf-8') as f:
     readme = f.read()
 
 setup(
     name='pkgcore',
-    version=__version__,
+    version=version,
     description='package managing framework',
     long_description=readme,
     url='https://github.com/pkgcore/pkgcore',

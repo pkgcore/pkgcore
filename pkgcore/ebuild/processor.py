@@ -469,8 +469,7 @@ class EbuildProcessor(object):
         return ret
 
     def _timeout_ebp(self, signum, frame):
-        logger.debug("ebp for pid '%i' appears dead, timing out" % self.pid)
-        raise TimeoutError()
+        raise TimeoutError("ebp for pid '%i' appears dead, timing out" % self.pid)
 
     def expect(self, want, async=False, flush=False, timeout=0):
         """read from the daemon, check if the returned string is expected.
@@ -648,7 +647,7 @@ class EbuildProcessor(object):
                 os.kill(self.pid, 0)
                 os.fstat(self.ebd_bash_read)
                 self.write("alive", disable_runtime_exceptions=True)
-                if not self.expect("yep!", timeout=0.1):
+                if not self.expect("yep!", timeout=10):
                     return False
                 return True
             except OSError as e:

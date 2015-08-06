@@ -433,6 +433,7 @@ class _UnconfiguredTree(prototype.tree):
             return True, {}
         try:
             manifest = pkg._shared_pkg_data.manifest
+            manifest.allow_missing = allow_missing
             return allow_missing, manifest.distfiles
         except pkg_errors.ParseChksumError as e:
             if e.missing and allow_missing:

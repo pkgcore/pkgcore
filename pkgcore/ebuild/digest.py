@@ -153,9 +153,10 @@ def parse_manifest(source, ignore_gpg=True):
 class Manifest(object):
 
 
-    def __init__(self, source, enforce_gpg=False, thin=False):
+    def __init__(self, source, enforce_gpg=False, thin=False, allow_missing=False):
         self._source = (source, not enforce_gpg)
         self.thin = thin
+        self.allow_missing = allow_missing
 
     def _pull_manifest(self):
         if self._source is None:
@@ -164,7 +165,7 @@ class Manifest(object):
         try:
             data = parse_manifest(source, ignore_gpg=gpg)
         except EnvironmentError as e:
-            if not self.thin or e.errno != errno.ENOENT:
+            if not (self.thin or self.allow_missing) or e.errno != errno.ENOENT:
                 raise_from(errors.ParseChksumError(source, e))
             data = {}, {}, {}, {}
         self._dist, self._aux, self._ebuild, self._misc = data

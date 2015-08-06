@@ -56,6 +56,9 @@ die() {
 			scope="ebuild"
 		fi
 
+		# Close the ebd read pipe to help the python side know its dying.
+		__ebd_read_close
+
 		# Tell the python side we're terminating the ebd process group so it
 		# should handle cleanup. This forces die() to work in subshell
 		# environments.

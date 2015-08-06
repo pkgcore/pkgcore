@@ -13,7 +13,7 @@ from pkgcore.log import logger
 from pkgcore.util import commandline
 
 argparser = commandline.mk_argparser(
-    config=False, domain=False, color=False,
+    config=False, domain=False, verbose=False, color=False,
     description=__doc__.split('\n', 1)[0])
 argparser.add_argument(
     '-V', '--var-match', action='store_true',
@@ -38,10 +38,10 @@ argparser.add_argument(
     help='Filename to read the env from (uses stdin if omitted).')
 filtering = argparser.add_argument_group("Environment filtering options")
 filtering.add_argument(
-    '--funcs', action='extend_comma',
+    '-f', '--funcs', action='extend_comma',
     help="comma separated list of regexes to match function names against for filtering")
 filtering.add_argument(
-    '--vars', action='extend_comma',
+    '-v', '--vars', action='extend_comma',
     help="comma separated list of regexes to match variable names against for filtering")
 filtering.add_argument(
     '--print-vars', action='store_true', default=False,

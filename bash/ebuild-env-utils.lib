@@ -169,8 +169,8 @@ __environ_sanitize_saved_env() {
 		rm -f "${T}"/.pre-scrubbed-env || die "failed rm'ing"
 		# run the filtered env.
 		__filter_env \
-			-f "${PKGCORE_FUNC_ARRAY}" \
-			-v "${PKGCORE_VAR_ARRAY}" \
+			--funcs "${PKGCORE_FUNC_ARRAY}" \
+			--vars "${PKGCORE_VAR_ARRAY}" \
 			-i "${src}" \
 			> "${T}"/.pre-scrubbed-env || die "failed first step of scrubbing the env to load"
 

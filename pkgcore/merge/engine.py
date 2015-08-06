@@ -29,9 +29,9 @@ from snakeoil.mappings import LazyValDict, ImmutableDict, StackedDict
 from snakeoil.osutils import normpath
 
 demandload(
+    "multiprocessing:cpu_count",
     "tempfile",
     "traceback",
-    "snakeoil.process:get_proc_count",
     "snakeoil:stringio",
 )
 
@@ -99,7 +99,7 @@ class MergeEngine(object):
         self.tempdir = tempdir
 
         if parallelism is None:
-            parallelism = get_proc_count()
+            parallelism = cpu_count()
 
         self.parallelism = parallelism
 

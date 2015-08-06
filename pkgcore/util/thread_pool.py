@@ -8,7 +8,7 @@ from snakeoil import compatibility
 from snakeoil.demandload import demandload
 
 demandload(
-    'snakeoil.process:get_proc_count',
+    'multiprocessing:cpu_count',
 )
 
 
@@ -28,7 +28,7 @@ def map_async(iterable, functor, *args, **kwds):
     per_thread_kwds = kwds.pop("per_thread_kwds", lambda: {})
     parallelism = kwds.pop("threads", None)
     if parallelism is None:
-        parallelism = get_proc_count()
+        parallelism = cpu_count()
 
     if hasattr(iterable, '__len__'):
         # if there are less items than parallelism, don't

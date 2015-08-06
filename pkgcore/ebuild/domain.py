@@ -40,9 +40,9 @@ from pkgcore.util.parserestrict import parse_match
 demandload(
     'collections:defaultdict',
     'errno',
+    'multiprocessing:cpu_count',
     'operator:itemgetter',
     're',
-    'snakeoil.process:get_proc_count',
     'pkgcore.ebuild.triggers:generate_triggers@ebuild_generate_triggers',
     'pkgcore.fs.livefs:iter_scan',
 )
@@ -151,7 +151,7 @@ class domain(pkgcore.config.domain.domain):
 
         # if unset, MAKEOPTS defaults to CPU thread count
         if 'MAKEOPTS' not in settings:
-            settings['MAKEOPTS'] = '-j%i' % get_proc_count()
+            settings['MAKEOPTS'] = '-j%i' % cpu_count()
 
         # map out sectionname -> config manager immediately.
         repositories_collapsed = [r.collapse() for r in repositories]

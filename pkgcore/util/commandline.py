@@ -891,9 +891,10 @@ def main(subcommands, args=None, outfile=None, errfile=None, script_name=None):
             options = argparse.Namespace()
             main_func, options = argparse_parse(subcommands, args, options)
 
-        if options.debug:
+        if getattr(options, 'debug', False):
             # verbosity level affects debug output
-            debug_verbosity = options.verbose if options.verbose is not None else 1
+            verbose = getattr(options, 'verbose', None)
+            debug_verbosity = verbose if verbose is not None else 1
             # pass down debug setting to the bash side
             os.environ['PKGCORE_DEBUG'] = str(debug_verbosity)
 
@@ -904,6 +905,7 @@ def main(subcommands, args=None, outfile=None, errfile=None, script_name=None):
             # pass down color setting to the bash side
             if 'PKGCORE_NOCOLOR' not in os.environ:
                 os.environ['PKGCORE_NOCOLOR'] = '1'
+
         out = formatter_factory(outfile)
         err = formatter_factory(errfile)
         if logging.root.handlers:

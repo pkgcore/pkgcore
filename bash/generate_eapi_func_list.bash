@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
 #
 # Generates a list of EAPI specific functions to avoid exporting to the saved
-# ebuild environment. This script is run dynamically on initialization of the
-# build environment for each ebuild since different EAPIs require different
-# lists of functions to be skipped.
+# ebuild environment.
+#
+# This script is run dynamically in a repo or tarball layout on initialization
+# of the build environment for each ebuild since different EAPIs require
+# different lists of functions to be skipped. For installed versions, static
+# function lists are generated at install time and used instead.
 
 EAPI=${1:-0}
 export PKGCORE_BIN_PATH=$(dirname "$0")

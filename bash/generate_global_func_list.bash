@@ -2,6 +2,10 @@
 #
 # Generates a list of functions defined in the various bash support
 # libs to avoid exporting to the saved ebuild environment.
+#
+# This script is run dynamically in a repo or tarball layout on initialization
+# of the build environment. For installed versions, a static function list is
+# generated at install time and used instead.
 
 export PKGCORE_BIN_PATH=$(dirname "$0")
 

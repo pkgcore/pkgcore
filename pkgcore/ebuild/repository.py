@@ -48,22 +48,22 @@ class repo_operations(_repo_ops.operations):
     def _cmd_implementation_digests(self, domain, matches, observer, **options):
         manifest_config = self.repo.config.manifests
         if manifest_config.disabled:
-            observer.info("repo %s has manifests diabled" % (self.repo,))
+            observer.info("repo %s has manifests disabled", self.repo.repo_id)
             return
         required = manifest_config.hashes
         ret = False
         for key_query in sorted(set(match.unversioned_atom for match in matches)):
             packages = self.repo.match(key_query, sorter=sorted)
             if packages:
-                observer.info("generating digests for %s for repo %s", key_query, self.repo)
+                observer.info("generating manifest: %s::%s", key_query, self.repo.repo_id)
             else:
-                observer.info("no digests to regenerate for %s for repo %s", key_query, self.repo)
+                observer.info("no manifest to regenerate: %s::%s", key_query, self.repo.repo_id)
             pkgdir_fetchables = {}
             try:
                 for pkg in packages:
                     if pkg.ebuild.path is None:
-                        observer.error("pkg %s doesn't exist on disk; can't generate manifest/digest\n",
-                                       pkg)
+                        observer.error(
+                            "pkg %s doesn't exist on disk; can't generate manifest", pkg)
                         return False
                     # XXX: needs modification to grab all sources, and also to not
                     # bail if digests are missing
@@ -74,8 +74,7 @@ class repo_operations(_repo_ops.operations):
                     pkg_ops = domain.pkg_operations(pkg, observer=observer)
                     if not pkg_ops.supports("fetch"):
                         observer.error(
-                            "pkg %s doesn't support fetching, can't generate manifest/digest info\n",
-                            pkg)
+                            "pkg %s doesn't support fetching, can't generate manifest", pkg)
                     if not pkg_ops.mirror(observer):
                         observer.error("failed fetching for pkg %s", pkg)
                         return False

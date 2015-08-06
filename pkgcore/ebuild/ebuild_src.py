@@ -372,7 +372,8 @@ class package_factory(metadata.factory):
         eapi = get_eapi(mydata["EAPI"])
         if parsed_eapi != eapi:
             raise metadata_errors.MetadataException(
-                pkg, 'eapi', "parsed eapi doesn't match sourced eapi")
+                pkg, 'eapi', "parsed eapi '%s' doesn't match sourced eapi '%s'"
+                % (parsed_eapi.magic, eapi.magic))
         wipes = set(mydata)
 
         wipes.difference_update(eapi.metadata_keys)

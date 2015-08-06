@@ -254,7 +254,9 @@ class operations(sync_operations):
         observer = self._get_observer(observer)
         matches = self.repo.match(query)
         if not matches:
-            observer.debug("skipping digest of query %s; no matches\n", query)
+            observer.debug(
+                "skipping digest of query %s; no matches in %s repo",
+                query, self.repo.repo_id)
             return True
         return self._cmd_implementation_digests(
             domain, matches, observer, **options)

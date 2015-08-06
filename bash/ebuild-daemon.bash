@@ -69,14 +69,6 @@ __ebd_read_cat_size() {
 	dd bs=$1 count=1 <&${PKGCORE_EBD_READ_FD}
 }
 
-__ebd_read_close() {
-	exec ${PKGCORE_EBD_READ_FD} <&-
-}
-
-__ebd_write_close() {
-	exec ${PKGCORE_EBD_WRITE_FD} >&-
-}
-
 __ebd_write_line() {
 	echo "$*" >&${PKGCORE_EBD_WRITE_FD}
 	local ret=$?

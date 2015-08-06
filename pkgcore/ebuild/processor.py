@@ -365,7 +365,6 @@ class EbuildProcessor(object):
 
         os.close(cread)
         os.close(dwrite)
-        self.ebd_bash_read = cread
         self.ebd_write = os.fdopen(cwrite, "w")
         self.ebd_read = os.fdopen(dread, "r")
 
@@ -645,15 +644,13 @@ class EbuildProcessor(object):
                 return False
             try:
                 os.kill(self.pid, 0)
-                os.fstat(self.ebd_bash_read)
                 self.write("alive", disable_runtime_exceptions=True)
                 if not self.expect("yep!", timeout=10):
                     return False
                 return True
             except OSError as e:
-                if e.errno == errno.ESRCH:
-                    # pid is dead and gone
-                    self.pid = None
+                # pid is dead and gone
+                self.pid = None
             return False
 
         except (AttributeError, KeyboardInterrupt):

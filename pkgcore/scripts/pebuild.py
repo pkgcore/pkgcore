@@ -54,7 +54,7 @@ def main(options, out, err):
     if len(pkgs) > 1:
         err.write("got multiple matches for '%s':" % (target,))
         if len(set((p.slot, p.repo) for p in pkgs)) != 1:
-            for p in sorted(pkgs):
+            for p in pkgs:
                 err.write(
                     "%s:%s::%s" % (p.cpvstr, p.slot,
                                    getattr(p.repo, 'repo_id', 'unknown')), prefix='  ')

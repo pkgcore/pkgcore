@@ -42,9 +42,10 @@ help:
 	@echo "  doctest    to run all doctests embedded in the documentation (if enabled)"
 
 clean:
-	-rm -rf $(BUILDDIR) api generated
+	-rm -rf $(BUILDDIR) api generated *.pyc
 
 html:
+	$(CURDIR)/generate_docs.py --html
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
@@ -117,6 +118,7 @@ text:
 	@echo "Build finished. The text files are in $(BUILDDIR)/text."
 
 man:
+	$(CURDIR)/generate_docs.py --man
 	$(SPHINXBUILD) -b man $(ALLSPHINXOPTS) $(BUILDDIR)/man
 	@for file in man/*; do \
 		[ -L "$${file}" ] && rm -f "$${file}" || continue; \

@@ -11,38 +11,31 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import errno
 from importlib import import_module
 import os
-import subprocess
 import sys
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-sys.path.insert(1, os.path.abspath('..'))
+sys.path.insert(1, os.path.abspath('.'))
+sys.path.insert(2, os.path.abspath('..'))
 
 from pkgcore import __version__
-from snakeoil.dist.generate_man_rsts import ManConverter
+from generate_docs import generate_man, generate_html
 
+on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
 
-def generate_docs():
-    """Generate various supporting files for building docs"""
-    try:
-        os.mkdir('generated')
-    except OSError as e:
-        if e.errno == errno.EEXIST:
-            return
-        raise
+# auto-generate required files for RTD build environment
+if on_rtd:
+    generate_man()
+    generate_html()
 
-    # generate man page option docs
-    for module, script in generated_man_pages:
-        os.symlink(os.path.join(os.pardir, 'generated', script), os.path.join('man', script))
-        ManConverter.regen_if_needed('generated', module, out_name=script)
-
-    # generate API docs
-    subprocess.call(['sphinx-apidoc', '-Tef', '-o', 'api', '../pkgcore', '../pkgcore/test'])
-
+# handle auto-generation for setup.py
+if 'build_man' in sys.argv[1:]:
+    generate_man()
+if 'build_docs' in sys.argv[1:]:
+    generate_html()
 
 # -- General configuration -----------------------------------------------------
 
@@ -242,7 +235,7 @@ latex_documents = [
 # -- Options for manual page output --------------------------------------------
 
 bin_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'bin')
-scripts = [s for s in os.listdir(bin_path) if os.path.islink(os.path.join(bin_path, s))]
+scripts = os.listdir(bin_path)
 
 # Note that filter-env is specially specified, since the command is installed
 # as 'filter-env', but due to python namespace contraints, it uses a '_'
@@ -259,8 +252,6 @@ man_pages = [
 ]
 
 man_pages.append(('man/pkgcore', 'pkgcore', 'a framework for package management', authors_list, 5))
-
-generate_docs()
 
 # -- Options for Epub output ---------------------------------------------------
 

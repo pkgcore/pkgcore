@@ -14,9 +14,7 @@ from snakeoil.demandload import demandload
 
 demandload(
     "pkgcore.operations:domain@domain_ops",
-    "pkgcore.repository:util@repo_utils",
-    "pkgcore.ebuild:repository@ebuild_repo",
-    "pkgcore.binpkg:repository@binary_repo",
+    "pkgcore.repository.util:RepositoryGroup",
 )
 
 
@@ -38,44 +36,20 @@ class domain(object):
 
     @klass.jit_attr
     def source_repos(self):
-        return repo_utils.RepositoryGroup(self.repos)
+        return RepositoryGroup(self.repos)
 
     @klass.jit_attr
     def source_repos_raw(self):
         repos = [x for x in self.repos_raw.itervalues()]
-        return repo_utils.RepositoryGroup(repos)
-
-    @klass.jit_attr
-    def ebuild_repos(self):
-        repos = [x for x in self.repos
-                 if isinstance(x.raw_repo, ebuild_repo._ConfiguredTree)]
-        return repo_utils.RepositoryGroup(repos)
-
-    @klass.jit_attr
-    def ebuild_repos_raw(self):
-        return repo_utils.RepositoryGroup(x.raw_repo for x in self.ebuild_repos)
-
-    @klass.jit_attr
-    def binary_repos(self):
-        repos = [x for x in self.repos
-                 if isinstance(x.raw_repo, binary_repo.ConfiguredBinpkgTree)]
-        return repo_utils.RepositoryGroup(repos)
-
-    @klass.jit_attr
-    def binary_repos_raw(self):
-        return repo_utils.RepositoryGroup(x.raw_repo for x in self.binary_repos)
+        return RepositoryGroup(repos)
 
     @klass.jit_attr
     def installed_repos(self):
-        return repo_utils.RepositoryGroup(self.vdb)
+        return RepositoryGroup(self.vdb)
 
     # multiplexed repos
     all_repos = klass.alias_attr("source_repos.combined")
     all_raw_repos = klass.alias_attr("source_repos_raw.combined")
-    all_ebuild_repos = klass.alias_attr("ebuild_repos.combined")
-    all_raw_ebuild_repos = klass.alias_attr("ebuild_repos_raw.combined")
-    all_binary_repos = klass.alias_attr("binary_repos.combined")
-    all_raw_binary_repos = klass.alias_attr("binary_repos_raw.combined")
     all_livefs_repos = klass.alias_attr("installed_repos.combined")
 
     def pkg_operations(self, pkg, observer=None):

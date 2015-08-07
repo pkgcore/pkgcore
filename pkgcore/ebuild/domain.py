@@ -13,6 +13,7 @@ from functools import partial
 from itertools import chain, izip
 import os.path
 
+from snakeoil import klass
 from snakeoil.bash import iter_read_bash
 from snakeoil.compatibility import raise_from
 from snakeoil.data_source import local_source
@@ -22,7 +23,7 @@ from snakeoil.mappings import ProtectedDict
 from snakeoil.osutils import pjoin
 
 from pkgcore.config import ConfigHint
-import pkgcore.config.domain
+from pkgcore.config.domain import domain as config_domain
 from pkgcore.config.errors import BaseError
 from pkgcore.ebuild import const
 from pkgcore.ebuild.atom import atom as _atom
@@ -32,7 +33,7 @@ from pkgcore.ebuild.misc import (
     non_incremental_collapsed_restrict_to_data, optimize_incrementals,
     package_keywords_splitter, split_negations)
 from pkgcore.ebuild.repo_objs import OverlayedLicenses
-from pkgcore.repository import multiplex, visibility
+from pkgcore.repository import visibility
 from pkgcore.restrictions import packages, values
 from pkgcore.restrictions.delegated import delegate
 from pkgcore.util.parserestrict import parse_match
@@ -43,8 +44,11 @@ demandload(
     'multiprocessing:cpu_count',
     'operator:itemgetter',
     're',
+    'pkgcore.binpkg:repository@binary_repo',
+    'pkgcore.ebuild:repository@ebuild_repo',
     'pkgcore.ebuild.triggers:generate_triggers@ebuild_generate_triggers',
     'pkgcore.fs.livefs:iter_scan',
+    "pkgcore.repository.util:RepositoryGroup",
 )
 
 
@@ -107,7 +111,7 @@ def generate_filter(masks, unmasks, *extra):
 # should be redesigned to be a seperation of configuration
 # instantiation manglers, and then the ebuild specific chunk (which is
 # selected by config)
-class domain(pkgcore.config.domain.domain):
+class domain(config_domain):
 
     # XXX ouch, verify this crap and add defaults and stuff
     _types = {
@@ -561,3 +565,29 @@ class domain(pkgcore.config.domain.domain):
         if path is not None:
             path = pjoin(path, 'portage')
         return path
+
+    @klass.jit_attr
+    def ebuild_repos(self):
+        repos = [x for x in self.repos
+                 if isinstance(x.raw_repo, ebuild_repo._ConfiguredTree)]
+        return RepositoryGroup(repos)
+
+    @klass.jit_attr
+    def ebuild_repos_raw(self):
+        return RepositoryGroup(x.raw_repo for x in self.ebuild_repos)
+
+    @klass.jit_attr
+    def binary_repos(self):
+        repos = [x for x in self.repos
+                 if isinstance(x.raw_repo, binary_repo.ConfiguredBinpkgTree)]
+        return RepositoryGroup(repos)
+
+    @klass.jit_attr
+    def binary_repos_raw(self):
+        return RepositoryGroup(x.raw_repo for x in self.binary_repos)
+
+    # multiplexed repos
+    all_ebuild_repos = klass.alias_attr("ebuild_repos.combined")
+    all_raw_ebuild_repos = klass.alias_attr("ebuild_repos_raw.combined")
+    all_binary_repos = klass.alias_attr("binary_repos.combined")
+    all_raw_binary_repos = klass.alias_attr("binary_repos_raw.combined")

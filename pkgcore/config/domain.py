@@ -40,8 +40,7 @@ class domain(object):
 
     @klass.jit_attr
     def source_repos_raw(self):
-        repos = [x for x in self.repos_raw.itervalues()]
-        return RepositoryGroup(repos)
+        return RepositoryGroup(self.repos_raw.itervalues())
 
     @klass.jit_attr
     def installed_repos(self):

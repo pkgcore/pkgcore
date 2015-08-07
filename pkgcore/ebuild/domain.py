@@ -568,9 +568,9 @@ class domain(config_domain):
 
     @klass.jit_attr
     def ebuild_repos(self):
-        repos = [x for x in self.repos
-                 if isinstance(x.raw_repo, ebuild_repo._ConfiguredTree)]
-        return RepositoryGroup(repos)
+        return RepositoryGroup(
+            x for x in self.repos
+            if isinstance(x.raw_repo, ebuild_repo._ConfiguredTree))
 
     @klass.jit_attr
     def ebuild_repos_raw(self):
@@ -578,9 +578,9 @@ class domain(config_domain):
 
     @klass.jit_attr
     def binary_repos(self):
-        repos = [x for x in self.repos
-                 if isinstance(x.raw_repo, binary_repo.ConfiguredBinpkgTree)]
-        return RepositoryGroup(repos)
+        return RepositoryGroup(
+            x for x in self.repos
+            if isinstance(x.raw_repo, binary_repo.ConfiguredBinpkgTree))
 
     @klass.jit_attr
     def binary_repos_raw(self):

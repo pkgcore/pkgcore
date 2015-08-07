@@ -239,7 +239,7 @@ class tree(prototype.tree):
             If True, silently ignore -scm ebuilds.
         """
         super(tree, self).__init__()
-        self.base = location
+        self.base = self.location = location
         if repo_id is None:
             repo_id = location
         self.repo_id = repo_id

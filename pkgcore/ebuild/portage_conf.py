@@ -316,10 +316,12 @@ def load_repos_conf(path):
                     (fp, name, priority))
 
             # only the location setting is strictly required
-            if 'location' not in repos[name]:
+            location = repos[name].get('location', None)
+            if location is None:
                 raise errors.ParsingError(
                     "%s: repo '%s' missing location setting" %
                     (fp, name))
+            repos[name]['location'] = os.path.abspath(location)
 
     if not repos:
         raise errors.ConfigurationError(

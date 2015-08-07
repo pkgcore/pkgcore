@@ -28,39 +28,20 @@ argparser.add_argument('phase', nargs='+', help="phases to run")
 @argparser.bind_main_func
 def main(options, out, err):
     pkg = options.pkg
-    repos = None
 
     if os.path.isfile(pkg) and pkg.endswith('.ebuild'):
-        ebuild_path = os.path.abspath(pkg)
-        repo_path = os.path.abspath(os.path.join(
-            pkg, os.pardir, os.pardir, os.pardir))
-
-        # find the ebuild's repo
-        # TODO: iterating through the repos feels wrong, we could use a
-        # multi-keyed dict with repo IDs and paths as keys with repo
-        # objects as values (same thing we need for better portage-2
-        # profile support)
-        for x in options.domain.ebuild_repos:
-            if x.raw_repo.location == repo_path:
-                repos = x
-                break
-
-        if repos is None:
-            err.write('no configured repo contains: %s' % ebuild_path)
+        try:
+            pkgs = options.domain.atom_from_path(pkg)
+        except ValueError as e:
+            err.write(str(e))
             return 1
-
-        ebuild_P = os.path.basename(os.path.splitext(ebuild_path)[0])
-        ebuild_category = ebuild_path.split(os.sep)[-3]
-        pkg = atom.atom('=%s/%s' % (ebuild_category, ebuild_P))
     else:
         try:
-            pkg = atom.atom(pkg)
-            repos = options.domain.all_repos
+            pkgs = options.domain.all_repos.match(atom.atom(pkg))
         except MalformedAtom:
-            err.write('not a valid atom or ebuild: "%s"' % pkg)
+            err.write('not a valid atom or ebuild: %s' % pkg)
             return 1
 
-    pkgs = repos.match(pkg)
     if not pkgs:
         err.write('got no matches for %s\n' % (pkg,))
         return 1

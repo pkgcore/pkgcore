@@ -306,28 +306,28 @@ def mirror_main(options, out, err):
 
 digest = subparsers.add_parser(
     "digest",
-    description="update a repositories package manifest/digest information",
+    description="update package manifests",
     parents=(commandline.mk_argparser(add_help=False),))
 digest.add_argument(
-    "--repo", "--repository", help="repository to update",
-    action=commandline.StoreRepoObject)
+    "-r", "--repo", help="target repository",
+    action=commandline.StoreRepoObject, raw=True)
 commandline.make_query(
     digest, nargs='+', dest='query',
-    help="packages matching any of these restrictions will have their"
-         " manifest/digest updated")
+    help="packages matching any of these restrictions will have their "
+         "manifest/digest updated")
 @digest.bind_main_func
 def digest_main(options, out, err):
     domain = options.domain
     repo = options.repo
-    if options.repo is None:
-       repo = domain.all_repos
+    if repo is None:
+       repo = domain.all_raw_ebuild_repos
     repo_ops = repo.operations
     obs = observer.formatter_output(out)
     if not repo_ops.supports("digests"):
-        out.write("no repository support for digests\n")
+        out.write("no repository support for digests")
         return 1
     elif not repo.has_match(options.query):
-        out.write("query %s doesn't match anything\n" % (options.query,))
+        out.write("query %s doesn't match anything" % (options.query,))
         return 1
     if not repo_ops.digests(domain, options.query, observer=obs):
         out.write("some errors were encountered...")

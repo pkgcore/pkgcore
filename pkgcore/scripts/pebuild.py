@@ -20,45 +20,50 @@ argparser.add_argument(
     help="run just the specified phases; "
          "it's up to the invoker to get the order right")
 argparser.add_argument(
-    'pkg', metavar='<atom|ebuild>',
+    'target', metavar='<atom|ebuild>',
     help="atom or ebuild matching a pkg to execute phases from")
 argparser.add_argument('phase', nargs='+', help="phases to run")
 
 
 @argparser.bind_main_func
 def main(options, out, err):
-    pkg = options.pkg
+    target = options.target
 
-    if os.path.isfile(pkg) and pkg.endswith('.ebuild'):
+    if os.path.isfile(target):
+        if not target.endswith('.ebuild'):
+            err.write("file not an ebuild: '%s'" % target)
+            return 1
+
         try:
-            pkgs = options.domain.atom_from_path(pkg)
+            pkgs = options.domain.restrict_from_path(target)
         except ValueError as e:
             err.write(str(e))
             return 1
     else:
         try:
-            pkgs = options.domain.all_repos.match(atom.atom(pkg))
+            pkgs = options.domain.all_repos.match(atom.atom(target))
         except MalformedAtom:
-            err.write('not a valid atom or ebuild: %s' % pkg)
+            err.write("not a valid atom or ebuild: '%s'" % target)
             return 1
 
     if not pkgs:
-        err.write('got no matches for %s\n' % (pkg,))
+        err.write("no matches for '%s'" % (target,))
         return 1
+
+    pkg = max(pkgs)
     if len(pkgs) > 1:
-        err.write('got multiple matches for %s:' % (pkg,))
-        if len(set((pkg.slot, pkg.repo) for pkg in pkgs)) != 1:
-            for pkg in sorted(pkgs):
-                err.write("repo %r, slot %r, %s" %
-                          (getattr(pkg.repo, 'repo_id', 'unknown'),
-                           pkg.slot, pkg.cpvstr,), prefix="  ")
+        err.write("got multiple matches for '%s':" % (target,))
+        if len(set((p.slot, p.repo) for p in pkgs)) != 1:
+            for p in sorted(pkgs):
+                err.write(
+                    "%s:%s::%s" % (p.cpvstr, p.slot,
+                                   getattr(p.repo, 'repo_id', 'unknown')), prefix='  ')
             err.write()
-            err.write("please refine your restriction to match only one slot/repo pair\n")
+            err.write("please refine your restriction to one match")
             return 1
-        pkgs = [max(pkgs)]
-        err.write("choosing %r, slot %r, %s" %
-                  (getattr(pkgs[0].repo, 'repo_id', 'unknown'),
-                   pkgs[0].slot, pkgs[0].cpvstr), prefix='  ')
+        err.write(
+            "choosing %s:%s::%s" %
+            (pkg.cpvstr, pkg.slot, getattr(pkg.repo, 'repo_id', 'unknown')), prefix='  ')
 
     kwds = {}
     phase_obs = observer.phase_observer(observer.formatter_output(out),
@@ -73,7 +78,7 @@ def main(options, out, err):
             phases.insert(0, "fetch")
     # by default turn off startup cleans; we clean by ourselves if
     # told to do so via an arg
-    build = options.domain.build_pkg(pkgs[0], phase_obs, clean=False, allow_fetching=True)
+    build = options.domain.build_pkg(pkg, phase_obs, clean=False, allow_fetching=True)
     if clean:
         build.cleanup(force=True)
     build._reload_state()

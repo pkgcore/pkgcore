@@ -34,11 +34,12 @@ demandload(
     'random:shuffle',
     'snakeoil.chksum:get_chksums',
     'snakeoil.data_source:local_source',
-    'pkgcore.ebuild:ebd,digest,repo_objs,atom,profiles,processor',
+    'pkgcore.ebuild:cpv,digest,ebd,repo_objs,atom,restricts,profiles,processor',
     'pkgcore.ebuild:errors@ebuild_errors',
     'pkgcore.fs.livefs:sorted_scan',
     'pkgcore.log:logger',
     'pkgcore.package:errors@pkg_errors',
+    'pkgcore.restrictions:packages',
     'pkgcore.util.packages:groupby_pkg',
 )
 
@@ -297,6 +298,32 @@ class _UnconfiguredTree(prototype.tree):
         self._shared_pkg_cache = WeakValCache()
 
     repo_id = klass.alias_attr("config.repo_id")
+
+    def path_restrict(self, path):
+        """Return a restriction from a given path in a repo.
+
+        :param path: path inside a repo
+        :return: a package restriction if possible
+        """
+        abspath = os.path.abspath(path)
+
+        if not self.contains(abspath):
+            raise ValueError("repo doesn't contain: '%s'" % path)
+
+        # extract relative repo path
+        repo_path = abspath[len(self.location):].strip('/').split(os.path.sep)
+        restrictions = []
+
+        # add restrictions until path components run out
+        try:
+            restrictions.append(restricts.RepositoryDep(self.repo_id))
+            restrictions.append(restricts.CategoryDep(repo_path[0]))
+            restrictions.append(restricts.PackageDep(repo_path[1]))
+            base = cpv.versioned_CPV("%s/%s" % (repo_path[0], os.path.splitext(repo_path[2])[0]))
+            restrictions.append(restricts.VersionMatch('=', base.version, rev=base.revision))
+        except IndexError:
+            pass
+        return packages.AndRestriction(*restrictions)
 
     def __getitem__(self, cpv):
         cpv_inst = self.package_class(*cpv)

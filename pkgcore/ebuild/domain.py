@@ -610,30 +610,6 @@ class domain(config_domain):
             ebuild_path, os.pardir, os.pardir, os.pardir))
 
         for repo in self.ebuild_repos:
-            if repo.raw_repo.location == repo_path:
+            if repo.location == repo_path:
                 return repo
         return None
-
-    def restrict_from_path(self, path):
-        """Return a package restriction from a given path to an ebuild or binpkg.
-
-        :param path: path to an ebuild or binpkg
-        :return: a package restriction if possible
-        """
-        pkg_path = os.path.abspath(path)
-        repo = self.repo_containing_path(pkg_path)
-
-        if repo is None:
-            raise ValueError("no configured repo contains: '%s'" % path)
-
-        # XXX: This is hacky and should be fixed when a new binary repo format
-        # is spec'd out and implemented.
-        if repo in self.binary_repos:
-            category = pkg_path.split(os.path.sep)[-2]
-        else:
-            category = pkg_path.split(os.path.sep)[-3]
-
-        P = os.path.basename(os.path.splitext(pkg_path)[0])
-        atom = _atom('=%s/%s' % (category, P))
-
-        return repo.match(atom)

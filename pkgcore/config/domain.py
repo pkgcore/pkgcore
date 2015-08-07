@@ -74,15 +74,3 @@ class domain(object):
 
     def _get_tempspace(self):
         return None
-
-    def repo_containing_path(self, path):
-        """Determine if a path is in a configured repo.
-
-        :param path: path in the filesystem
-        :return: configured repo object if a matching repo is found, otherwise None.
-        """
-        path = os.path.abspath(path)
-        for repo in self.source_repos:
-            if path.startswith(repo.raw_repo.location):
-                return repo
-        return None

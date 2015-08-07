@@ -9,6 +9,8 @@ __all__ = (
     "CategoryIterValLazyDict", "PackageMapping", "VersionMapping", "tree"
 )
 
+import os
+
 from snakeoil.compatibility import is_py3k
 from snakeoil.lists import iflatten_instance
 from snakeoil.mappings import LazyValDict, DictMixin
@@ -184,6 +186,17 @@ class tree(object):
 
     def __len__(self):
         return sum(len(v) for v in self.versions.itervalues())
+
+    def contains(self, path):
+        """Determine if a path is in a repo.
+
+        :param path: path in the filesystem
+        :return: True if path is in repo, otherwise False
+        """
+        path = os.path.abspath(path)
+        if os.path.exists(path) and path.startswith(getattr(self, 'location', ())):
+            return True
+        return False
 
     def has_match(self, atom, **kwds):
 

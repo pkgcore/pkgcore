@@ -68,6 +68,7 @@ class RepositoryGroup(object):
     itermatch = klass.alias_attr("combined.itermatch")
     has_match = klass.alias_attr("combined.has_match")
     match = klass.alias_attr("combined.match")
+    path_restrict = klass.alias_attr("combined.path_restrict")
 
     def __iter__(self):
         return iter(self.repos)

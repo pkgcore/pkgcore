@@ -28,6 +28,7 @@ argparser.add_argument('phase', nargs='+', help="phases to run")
 @argparser.bind_main_func
 def main(options, out, err):
     target = options.target
+    domain = options.domain
 
     if os.path.isfile(target):
         if not target.endswith('.ebuild'):
@@ -35,17 +36,18 @@ def main(options, out, err):
             return 1
 
         try:
-            pkgs = options.domain.restrict_from_path(target)
-        except ValueError as e:
-            err.write(str(e))
+            restriction = domain.ebuild_repos.path_restrict(target)
+        except ValueError:
+            err.write("no configured ebuild repo contains: '%s'" % target)
             return 1
     else:
         try:
-            pkgs = options.domain.all_repos.match(atom.atom(target))
+            restriction = atom.atom(target)
         except MalformedAtom:
             err.write("not a valid atom or ebuild: '%s'" % target)
             return 1
 
+    pkgs = domain.ebuild_repos.match(restriction)
     if not pkgs:
         err.write("no matches for '%s'" % (target,))
         return 1
@@ -78,7 +80,7 @@ def main(options, out, err):
             phases.insert(0, "fetch")
     # by default turn off startup cleans; we clean by ourselves if
     # told to do so via an arg
-    build = options.domain.build_pkg(pkg, phase_obs, clean=False, allow_fetching=True)
+    build = domain.build_pkg(pkg, phase_obs, clean=False, allow_fetching=True)
     if clean:
         build.cleanup(force=True)
     build._reload_state()

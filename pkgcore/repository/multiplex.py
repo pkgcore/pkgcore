@@ -133,6 +133,20 @@ class tree(prototype.tree):
             raise KeyError("category '%s' not found" % package)
         return tuple(d)
 
+    def path_restrict(self, path):
+        """Return a package restriction from a given path.
+
+        :param path: file path, usually to an ebuild or binpkg
+        :return: a package restriction if possible
+        """
+        for repo in self.trees:
+            try:
+                return repo.path_restrict(path)
+            except ValueError:
+                continue
+
+        raise ValueError("no repo contains: '%s'" % path)
+
     def itermatch(self, restrict, **kwds):
         sorter = kwds.get("sorter", iter)
         if sorter is iter:

@@ -80,7 +80,7 @@ def main(options, out, err):
                    pkgs[0].slot, pkgs[0].cpvstr), prefix='  ')
 
     kwds = {}
-    build_obs = observer.build_observer(observer.formatter_output(out),
+    phase_obs = observer.phase_observer(observer.formatter_output(out),
                                         not options.debug)
 
     phases = [x for x in options.phase if x != 'clean']
@@ -92,7 +92,7 @@ def main(options, out, err):
             phases.insert(0, "fetch")
     # by default turn off startup cleans; we clean by ourselves if
     # told to do so via an arg
-    build = options.domain.build_pkg(pkgs[0], build_obs, clean=False, allow_fetching=True)
+    build = options.domain.build_pkg(pkgs[0], phase_obs, clean=False, allow_fetching=True)
     if clean:
         build.cleanup(force=True)
     build._reload_state()

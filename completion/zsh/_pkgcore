@@ -1,27 +1,35 @@
 #compdef pebuild pinspect pmaint pmerge pquery
 
-cli_common_args=(
+cli_common_main_args=(
   '(- :)'--version'[show version information and exit]'
-  '(- :)'{-h,--help}'[show help information and exit]'
-  '(--debug --help -h --version)--debug[enable debugging output]'
   '--add-config[modify an existing configuration section]'
   '--new-config[add a new configuration section]'
-  '--override-config[override location of config files]:config path:_files'
+  '--empty-config[do not load user/system configuration]'
+  '--config[override location of config files]:config path:_files'
   "--color=[Color output]:yes/no:((y\:'yes' n\:'no'))"
 )
 
-_pebuild() {
-  local ret=1
+cli_common_output_args=(
+  '(- :)'{-h,--help}'[show help information and exit]'
+  '(--debug --help -h)--debug[enable debugging output]'
+  '(--quiet -q --verbose -v)'{-q,--quiet}'[suppress non-error output]'
+  '(--verbose -v --quiet -q)'{-v,--verbose}'[show verbose output]'
+)
 
-  common_args=(
-    ${cli_common_args[@]}
-    "--no-auto[run just the specified phases; it's up to the invoker to get the order right]"
-  )
+cli_common_args=(
+  $cli_common_main_args
+  $cli_common_output_args
+)
+
+_pebuild() {
+  local curcontext=$curcontext state state_descr line ret=1
+  typeset -A opt_args
 
   _arguments -C \
-    "${common_args[@]}" \
-    ': :->atom-or-ebuild' \
-    '*:: :->phase' \
+    $cli_common_args \
+    "--no-auto[run just the specified phases; it's up to the invoker to get the order right]" \
+    '(-): :->atom-or-ebuild' \
+    '(-)*:: :->phase' \
     && ret=0
 
   case $state in
@@ -31,7 +39,7 @@ _pebuild() {
         && ret=0
       ;;
     (phase)
-      declare -a phases
+      typeset -a phases
 
       phases=(
         clean:"remove the package's temporary directory"
@@ -56,18 +64,20 @@ _pebuild() {
 }
 
 _pinspect() {
-  local state ret=1
+  local curcontext=$curcontext state state_descr line ret=1
+  typeset -A opt_args
 
   _arguments -C \
-    "${cli_common_args[@]}" \
-    ': :->command' \
+    $cli_common_args \
+    '(-): :->command' \
+    '(-)*:: :->subcommand' \
     && ret=0
 
   case $state in
     (command)
-      declare -a commands
+      typeset -a subcommands
 
-      commands=(
+      subcommands=(
         pkgsets:'pkgset related introspection'
         eapi_usage:'report of eapi usage for targeted repos'
         license_usage:'report of license usage for targeted repos'
@@ -80,19 +90,106 @@ _pinspect() {
         digests:'identify what packages are missing digest info'
       )
 
-      _describe -t commands command commands && ret=0
+      _describe -t subcommands subcommand subcommands && ret=0
       ;;
-    (option-or_argument)
-      _nothing
-    (*)
-      _nothing
+    (subcommand)
+      curcontext=${curcontext%:*}-$line[1]:
+
+      case $line[1] in
+        (pkgsets)
+          ;;
+        (eapi_usage)
+          ;;
+        (license_usage)
+          ;;
+        (eclass_usage)
+          ;;
+        (mirror_usage)
+          ;;
+        (distfiles_usage)
+          ;;
+        (query)
+          ;;
+        (portageq)
+          ;;
+        (profile)
+          ;;
+        (digests)
+          ;;
+        (*)
+          _nothing
+          ;;
+      esac
       ;;
   esac
   return ret
 }
 
 _pmaint() {
-  _nothing
+  local curcontext=$curcontext state state_descr line ret=1
+  typeset -A opt_args
+
+  _arguments -C \
+    $cli_common_args \
+    '(-): :->command' \
+    '(-)*:: :->subcommand' \
+    && ret=0
+
+  case $state in
+    (command)
+      typeset -a subcommands
+
+      subcommands=(
+        sync:'synchronize a local repository with its defined remote'
+        copy:'copy binpkgs between repositories; primarily useful for quickpkging a livefs pkg'
+        regen:'regenerate repository caches'
+        env-update:'update env.d and ldconfig'
+        mirror:'mirror the sources for a package in full'
+        digest:'update package manifests'
+      )
+
+      _describe -t subcommands subcommand subcommands && ret=0
+      ;;
+    (subcommand)
+      curcontext=${curcontext%:*}-$line[1]:
+
+      case $line[1] in
+        (sync)
+          _arguments -C \
+            $cli_common_output_args \
+            '*:repos:__repos' \
+            && ret=0
+          ;;
+        (copy)
+          _arguments -C -w -S -s \
+            $cli_common_output_args \
+            {'(--source-repo)-s','(-s)--source-repo'}'[copy strictly from the supplied repository]:repo:__repos' \
+            {'(--ignore-missing)-i','(-i)--ignore-missing'}"[if a matching pkg already exists in the target, don't update it]" \
+            ':target repo:__repos' \
+            ':query:' \
+            && ret=0
+          ;;
+        (regen)
+          ;;
+        (env-update)
+          ;;
+        (mirror)
+          ;;
+        (digest)
+          _arguments -C -w -S -s \
+            $cli_common_output_args \
+            {'(--repo)-r','(-r)--repo'}'[target repository]:repo:__repos' \
+            '*::ebuild:_files -g \*.ebuild' \
+            && ret=0
+          ;;
+        (*)
+          _nothing
+          ;;
+      esac
+      ;;
+  esac
+
+  return ret
 }
 
 _pmerge() {
@@ -103,22 +200,23 @@ _pquery() {
   _nothing
 }
 
-case $service in
-  pebuild)
-    _pebuild "$@" && return 0
-    ;;
-  pinspect)
-    _pinspect "$@" && return 0
-    ;;
-  pmaint)
-    _pmaint "$@" && return 0
-    ;;
-  pmerge)
-    _pmerge "$@" && return 0
-    ;;
-  pquery)
-    _pquery "$@" && return 0
-    ;;
-esac
+__repos() {
+  local file insection section
+  typeset -a repos
+
+  repos=( $(pinspect portageq get_repos) )
+
+  _describe -t repos 'repos' repos $*
+}
+
+_pkgcore() {
+  local ret=1
+
+  _call_function ret _$service
+
+  return ret
+}
+
+_pkgcore
 
 # vim: set et sw=2 ts=2 ft=zsh:

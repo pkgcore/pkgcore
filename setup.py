@@ -281,7 +281,7 @@ def write_pkgcore_ebd_funclists(root, target, scripts_dir):
 
     # generate global function list
     with open(os.devnull, 'w') as devnull:
-        with open(os.path.join(ebd_dir, 'funcnames', 'globals'), 'w') as f:
+        with open(os.path.join(ebd_dir, 'funcnames', 'global'), 'w') as f:
             if subprocess.call(
                     [os.path.join(os.getcwd(), 'bash', 'generate_global_func_list.bash')],
                     cwd=ebd_dir, env=env, stderr=devnull, stdout=f):

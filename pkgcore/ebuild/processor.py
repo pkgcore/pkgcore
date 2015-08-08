@@ -639,12 +639,10 @@ class EbuildProcessor(object):
             if self.pid is None:
                 return False
             try:
-                if not process.is_running(self.pid):
-                    return False
-                self.write("alive", disable_runtime_exceptions=True)
-                if not self.expect("yep!", timeout=10):
-                    return False
-                return True
+                if process.is_running(self.pid):
+                    self.write("alive", disable_runtime_exceptions=True)
+                    if self.expect("yep!", timeout=10):
+                        return True
             except process.ProcessNotFound:
                 # pid doesn't exist
                 self.pid = None

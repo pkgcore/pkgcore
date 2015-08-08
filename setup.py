@@ -264,7 +264,7 @@ class pkgcore_install(_base_install):
 
             # Generate ebd function lists used for environment filtering if
             # they don't exist (release tarballs contain pre-generated files).
-            if not os.path.exists(os.getcwd(), 'bash', 'funcnames'):
+            if not os.path.exists(os.path.join(os.getcwd(), 'bash', 'funcnames')):
                 write_pkgcore_ebd_funclists(
                     root, os.path.join(target, EBD_INSTALL_OFFSET), self.install_scripts)
 

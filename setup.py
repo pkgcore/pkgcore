@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import glob
 import io
 from itertools import chain
 import operator
@@ -48,16 +49,24 @@ class mysdist(pkg_dist.sdist):
         into the release and adds generated files that should not
         exist in a working tree.
         """
+        import shutil
+
+        # this is icky, but covers up cwd changing issues.
+        cwd = os.getcwd()
+
+        # generate bash function lists so they don't need to be created at
+        # install time
+        write_pkgcore_ebd_funclists('/', 'bash', os.path.join(cwd, 'bin'))
+        shutil.copytree(os.path.join(cwd, 'bash', 'funcnames'),
+                        os.path.join(base_dir, 'bash', 'funcnames'))
+
         if self.build_docs:
             # need to make sure we're using a built version of pkgcore for the
             # current python version since doc/conf.py imports pkgcore modules
             build_py = self.get_finalized_command('build_py')
             build_py.run()
-            # this is icky, but covers up cwd changing issues.
-            cwd = os.getcwd()
             if subprocess.call([sys.executable, 'setup.py', 'build_man'], cwd=cwd):
                 raise DistutilsExecError("build_man failed")
-            import shutil
             shutil.copytree(os.path.join(cwd, "build/sphinx/man"),
                             os.path.join(base_dir, "man"))
         pkg_dist.sdist.make_release_tree(self, base_dir, files)
@@ -98,10 +107,12 @@ def _get_files(path):
             yield os.path.join(root, f)[len(path):].lstrip('/')
 
 
-def _get_data_mapping(host_path, path):
+def _get_data_mapping(host_path, path, skip=None):
+    skip = list(skip) if skip is not None else []
     for root, dirs, files in os.walk(path):
         yield (os.path.join(host_path, root.partition(path)[2].lstrip('/')),
-               [os.path.join(root, x) for x in files])
+               [os.path.join(root, x) for x in files
+                if os.path.join(root, x) not in skip])
 
 
 class pkgcore_install_docs(Command):
@@ -251,9 +262,11 @@ class pkgcore_install(_base_install):
             # rather than assuming it is running from a tarball/git repo.
             write_pkgcore_lookup_configs(self.install_purelib, target)
 
-            # Generate ebd function lists used for environment filtering.
-            write_pkgcore_ebd_funclists(
-                root, os.path.join(target, EBD_INSTALL_OFFSET), self.install_scripts)
+            # Generate ebd function lists used for environment filtering if
+            # they don't exist (release tarballs contain pre-generated files).
+            if not os.path.exists(os.getcwd(), 'bash', 'funcnames'):
+                write_pkgcore_ebd_funclists(
+                    root, os.path.join(target, EBD_INSTALL_OFFSET), self.install_scripts)
 
 
 def write_pkgcore_ebd_funclists(root, target, scripts_dir):
@@ -381,7 +394,8 @@ setup(
     scripts=os.listdir('bin'),
     data_files=list(chain(
         _get_data_mapping(CONFIG_INSTALL_OFFSET, 'config'),
-        _get_data_mapping(EBD_INSTALL_OFFSET, 'bash'),
+        _get_data_mapping(EBD_INSTALL_OFFSET, 'bash',
+                          glob.iglob('bash/generate_*_func_list.bash')),
     )),
     ext_modules=extensions, cmdclass=cmdclass, command_options=command_options,
     classifiers=[

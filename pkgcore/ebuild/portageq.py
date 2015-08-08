@@ -201,10 +201,9 @@ def match(options, out, err):
 @BaseCommand.make_command(bind=common_commands, root_default='/')
 def get_repos(options, out, err):
     l = []
-    for k, repo in options.config.repo.iteritems():
-        repo_id = getattr(repo, 'repo_id', None)
-        if repo_id is not None:
-            l.append(repo_id)
+    for repo in options.domain.ebuild_repos_raw:
+        repo_id = getattr(repo, 'repo_id', getattr(repo, 'location', None))
+        l.append(repo_id)
     for x in sorted(set(l)):
         out.write(x)
     return 0

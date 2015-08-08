@@ -9,7 +9,8 @@ from snakeoil.dist.generate_man_rsts import ManConverter
 
 
 def generate_man():
-    """Generate various supporting files for building docs"""
+    print('Generating option and synopsis files for man pages')
+
     try:
         os.mkdir('generated')
     except OSError as e:
@@ -34,7 +35,7 @@ def generate_man():
 
 
 def generate_html():
-    """Generate API docs"""
+    print('Generating API docs')
     subprocess.call(['sphinx-apidoc', '-Tef', '-o', 'api', '../pkgcore', '../pkgcore/test'])
 
 

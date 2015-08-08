@@ -35,6 +35,7 @@ if on_rtd:
 if 'build_man' in sys.argv[1:]:
     generate_man()
 if 'build_docs' in sys.argv[1:]:
+    generate_man()
     generate_html()
 
 # -- General configuration -----------------------------------------------------

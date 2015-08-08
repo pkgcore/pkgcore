@@ -48,7 +48,7 @@ demandload(
     'pkgcore.ebuild:repository@ebuild_repo',
     'pkgcore.ebuild.triggers:generate_triggers@ebuild_generate_triggers',
     'pkgcore.fs.livefs:iter_scan',
-    "pkgcore.repository.util:RepositoryGroup",
+    "pkgcore.repository:util",
 )
 
 
@@ -568,23 +568,23 @@ class domain(config_domain):
 
     @klass.jit_attr
     def ebuild_repos(self):
-        return RepositoryGroup(
+        return util.RepositoryGroup(
             x for x in self.repos
             if isinstance(x.raw_repo, ebuild_repo._ConfiguredTree))
 
     @klass.jit_attr
     def ebuild_repos_raw(self):
-        return RepositoryGroup(x.raw_repo for x in self.ebuild_repos)
+        return util.RepositoryGroup(x.raw_repo for x in self.ebuild_repos)
 
     @klass.jit_attr
     def binary_repos(self):
-        return RepositoryGroup(
+        return util.RepositoryGroup(
             x for x in self.repos
             if isinstance(x.raw_repo, binary_repo.ConfiguredBinpkgTree))
 
     @klass.jit_attr
     def binary_repos_raw(self):
-        return RepositoryGroup(x.raw_repo for x in self.binary_repos)
+        return util.RepositoryGroup(x.raw_repo for x in self.binary_repos)
 
     # multiplexed repos
     all_ebuild_repos = klass.alias_attr("ebuild_repos.combined")

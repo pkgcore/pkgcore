@@ -59,6 +59,7 @@ demandload(
     'itertools:chain',
     'traceback',
     'snakeoil:fileutils',
+    'snakeoil:process',
     'pkgcore.log:logger',
 )
 
@@ -633,23 +634,19 @@ class EbuildProcessor(object):
 
     @property
     def is_alive(self):
-        """
-        returns if it's known if the processor has been shutdown.
-
-        Currently doesn't check to ensure the pid is still running,
-        yet it should.
-        """
+        """Returns if it's known if the processor has been shutdown."""
         try:
             if self.pid is None:
                 return False
             try:
-                os.kill(self.pid, 0)
+                if not process.is_running(self.pid):
+                    return False
                 self.write("alive", disable_runtime_exceptions=True)
                 if not self.expect("yep!", timeout=10):
                     return False
                 return True
-            except OSError as e:
-                # pid is dead and gone
+            except process.ProcessNotFound:
+                # pid doesn't exist
                 self.pid = None
             return False
 

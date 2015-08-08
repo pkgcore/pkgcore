@@ -157,7 +157,7 @@ _pmaint() {
         (sync)
           _arguments -C \
             $cli_common_output_args \
-            '*:repos:__repos' \
+            '*:repo:__repos' \
             && ret=0
           ;;
         (copy)
@@ -201,10 +201,25 @@ _pquery() {
 }
 
 __repos() {
-  local file insection section
+  local file
   typeset -a repos
 
-  repos=( $(pinspect portageq get_repos) )
+  if [[ -e /etc/portage/repos.conf ]]; then
+    repos_conf_files=( /etc/portage/repos.conf /etc/portage/repos.conf/** )
+  else
+    repos_conf_files=( /usr/share/pkgcore/config/repos.conf )
+  fi
+
+  for file in "${repos_conf_files[@]}"; do
+    [[ -f ${file} ]] || continue
+    IFS='= '
+    while read -r name value; do
+      [[ -z ${name} || ${name} == '#'* ]] && continue
+      if [[ (${name} == '['*']') && -z ${value} ]]; then
+        repos+=(${name//(\[|\])})
+      fi
+    done < ${file}
+  done
 
   _describe -t repos 'repos' repos $*
 }

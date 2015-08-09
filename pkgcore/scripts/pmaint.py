@@ -31,11 +31,13 @@ demandload(
 )
 
 
-shared_options = (commandline.mk_argparser(domain=False, add_help=False),)
 argparser = commandline.mk_argparser(
-    suppress=True, parents=shared_options,
+    suppress=True,
+    parents=(commandline.mk_argparser(add_help=False),),
     description=__doc__.split('\n', 1)[0])
 subparsers = argparser.add_subparsers(description="general system maintenance")
+shared_options = (commandline.mk_argparser(
+    config=False, color=False, version=False, domain=False, add_help=False),)
 
 sync = subparsers.add_parser(
     "sync", parents=shared_options,
@@ -87,16 +89,17 @@ copy = subparsers.add_parser(
 copy.add_argument(
     'target_repo', action=commandline.StoreRepoObject,
     writable=True, help="repository to add packages to")
-copy.add_argument(
-    '-s', '--source-repo', default=None,
-    action=commandline.StoreRepoObject,
-    help="copy strictly from the supplied repository; else it copies from "
-    "wherever a match is found")
 commandline.make_query(
     copy, nargs='+', dest='query',
     help="packages matching any of these restrictions will be selected "
     "for copying")
-copy.add_argument(
+copy_opts = copy.add_argument_group("subcommand options")
+copy_opts.add_argument(
+    '-s', '--source-repo', default=None,
+    action=commandline.StoreRepoObject,
+    help="copy strictly from the supplied repository; else it copies from "
+    "wherever a match is found")
+copy_opts.add_argument(
     '-i', '--ignore-existing', default=False, action='store_true',
     help="if a matching pkg already exists in the target, don't update it")
 @copy.bind_main_func
@@ -158,6 +161,10 @@ regen = subparsers.add_parser(
     "regen", parents=shared_options,
     description="regenerate repository caches")
 regen.add_argument(
+    'repos', metavar='repo', nargs='*', action=commandline.StoreRepoObject,
+    help="repo(s) to regenerate caches for")
+regen_opts = regen.add_argument_group("subcommand options")
+regen_opts.add_argument(
     "--disable-eclass-caching", action='store_true', default=False,
     help="""
         For regen operation, pkgcore internally turns on an optimization that
@@ -166,20 +173,17 @@ regen.add_argument(
         option results in ~2x slower regeneration. Disable it only if you
         suspect the optimization is somehow causing issues.
     """)
-regen.add_argument(
+regen_opts.add_argument(
     "-t", "--threads", type=int,
     default=commandline.DelayedValue(_get_default_jobs, 100),
     help="number of threads to use for regeneration. Defaults to using all "
     "available processors")
-regen.add_argument(
+regen_opts.add_argument(
     "--force", action='store_true', default=False,
     help="force regeneration to occur regardless of staleness checks")
-regen.add_argument(
+regen_opts.add_argument(
     "--rsync", action='store_true', default=False,
     help="perform actions necessary for rsync repos (update metadata/timestamp.chk)")
-regen.add_argument(
-    'repos', metavar='repo', nargs='*', action=commandline.StoreRepoObject,
-    help="repo(s) to regenerate caches for")
 @regen.bind_main_func
 def regen_main(options, out, err):
     """Regenerate a repository cache."""
@@ -211,7 +215,7 @@ def regen_main(options, out, err):
 
 
 perl_rebuild = subparsers.add_parser(
-    "perl-rebuild", parents=(commandline.mk_argparser(add_help=False),),
+    "perl-rebuild", parents=shared_options,
     description="EXPERIMENTAL: perl-rebuild support for use after upgrading perl")
 perl_rebuild.add_argument(
     "new_version", help="the new perl version; 5.12.3 for example")
@@ -252,8 +256,9 @@ def perl_rebuild_main(options, out, err):
 
 env_update = subparsers.add_parser(
     "env-update", description="update env.d and ldconfig",
-    parents=(commandline.mk_argparser(add_help=False),))
-env_update.add_argument(
+    parents=shared_options)
+env_update_opts = env_update.add_argument_group("subcommand options")
+env_update_opts.add_argument(
     "--skip-ldconfig", action='store_true', default=False,
     help="do not update etc/ldso.conf and ld.so.cache")
 @env_update.bind_main_func
@@ -274,14 +279,15 @@ def env_update_main(options, out, err):
 mirror = subparsers.add_parser(
     "mirror",
     description="mirror the sources for a package in full- grab everything that could be required",
-    parents=(commandline.mk_argparser(add_help=False),))
-mirror.add_argument(
-    "-f", "--ignore-failures", action='store_true', default=False,
-    help="if a failure occurs, keep going.  If this option isn't given, it'll"
-         " stop at the first failure encountered")
+    parents=shared_options)
 commandline.make_query(
     mirror, nargs='+', dest='query',
     help="query of which packages to mirror")
+mirror_opts = mirror.add_argument_group("subcommand options")
+mirror_opts.add_argument(
+    "-f", "--ignore-failures", action='store_true', default=False,
+    help="if a failure occurs, keep going.  If this option isn't given, it'll"
+         " stop at the first failure encountered")
 @mirror.bind_main_func
 def mirror_main(options, out, err):
     domain = options.domain
@@ -307,14 +313,15 @@ def mirror_main(options, out, err):
 digest = subparsers.add_parser(
     "digest",
     description="update package manifests",
-    parents=(commandline.mk_argparser(add_help=False),))
-digest.add_argument(
-    "-r", "--repo", help="target repository",
-    action=commandline.StoreRepoObject, raw=True)
+    parents=shared_options)
 commandline.make_query(
     digest, nargs='+', dest='query',
     help="packages matching any of these restrictions will have their "
          "manifest/digest updated")
+digest_opts = digest.add_argument_group("subcommand options")
+digest_opts.add_argument(
+    "-r", "--repo", help="target repository",
+    action=commandline.StoreRepoObject, raw=True)
 @digest.bind_main_func
 def digest_main(options, out, err):
     domain = options.domain

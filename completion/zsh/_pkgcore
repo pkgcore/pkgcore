@@ -307,10 +307,7 @@ _repos() {
         [[ ${repo_name} != "DEFAULT" ]] && repos+=(${repo_name})
         typeset -A ${repo_name}
       else
-        typeset -A insert
-        set -A insert ${(kvP)repo_name}
-        insert[${name}]=${value}
-        set -A ${repo_name} ${(kv)insert}
+        eval "${repo_name}[${name}]=\"${value}\""
       fi
     done < ${file}
   done
@@ -318,16 +315,12 @@ _repos() {
   if [[ -n $opts[(I)-v] ]]; then
     section=${opts[-v]%%:*}
     value=${opts[-v]##*:}
-    typeset -A extract
-    set -A extract ${(kvP)section}
-    output=${extract[$value]}
+    eval "output=\${${section}[${value}]}"
   elif [[ -n $opts[(I)-l] ]]; then
     # repo paths
     output_type="repo paths"
     for repo in $repos; do
-      typeset -A extract
-      set -A extract ${(kvP)repo}
-      output+=(${extract[location]})
+      eval "output+=(\${${repo}[location]})"
     done
   else
     output_type="repos"

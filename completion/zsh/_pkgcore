@@ -108,19 +108,19 @@ _pinspect() {
 
       case $line[1] in
         (pkgsets)
-          _arguments -C -w -S -s -A '-*' \
+          _arguments -C -A '-*' \
             '(- :)'{-h,--help}'[show help information and exit]' \
             '--all[display info on all pkgsets]' \
             ':pkgset:' \
             && ret=0
           ;;
         ((eapi|license|eclass|mirror)_usage)
-          _arguments -C -w -S -s -A '-*' \
+          _arguments -C -A '-*' \
             $historical_repo_data_opts \
             && ret=0
           ;;
         (distfiles_usage)
-          _arguments -C -w -S -s -A '-*' \
+          _arguments -C -A '-*' \
             '--no-repo-summary[disable outputting repo summaries]' \
             '--no-detail[disable outputting a detail view of all repos]' \
             '--include-nonmirrored[if set, nonmirrored distfiles will be included in the total]' \
@@ -164,7 +164,7 @@ _pinspect() {
             && ret=0
           ;;
         (digests)
-          _arguments -C -w -S -s -A '-*' \
+          _arguments -C -A '-*' \
             '(- :)'{-h,--help}'[show help information and exit]' \
             ':repo:_repos' \
             && ret=0

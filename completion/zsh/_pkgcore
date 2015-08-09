@@ -103,7 +103,7 @@ _pinspect() {
         '--sort-by-name[sort output by name, rather then by frequency]'
         '--first[show only the first N detail items]:number'
         '--last[show only the last N detail items]:number'
-        '*:repo:__repos'
+        '*:repo:_repos'
       )
 
       case $line[1] in
@@ -160,13 +160,13 @@ _pinspect() {
           _arguments -C -w -S -s -A '-*' \
             '(- :)'{-h,--help}'[show help information and exit]' \
             '1:profile attribute:(($profile_attrs))' \
-            '2:profile:__profiles' \
+            '2:profile:_profiles -f' \
             && ret=0
           ;;
         (digests)
           _arguments -C -w -S -s -A '-*' \
             '(- :)'{-h,--help}'[show help information and exit]' \
-            ':repo:__repos' \
+            ':repo:_repos' \
             && ret=0
           ;;
         (*)
@@ -211,15 +211,15 @@ _pmaint() {
         (sync)
           _arguments -C -w -S -s -A '-*' \
             $cli_common_output_args \
-            '*:repo:__repos' \
+            '*:repo:_repos' \
             && ret=0
           ;;
         (copy)
           _arguments -C -w -S -s -A '-*' \
             $cli_common_output_args \
-            {'(--source-repo)-s','(-s)--source-repo'}'[copy strictly from the supplied repository]:repo:__repos' \
+            {'(--source-repo)-s','(-s)--source-repo'}'[copy strictly from the supplied repository]:repo:_repos' \
             {'(--ignore-missing)-i','(-i)--ignore-missing'}"[if a matching pkg already exists in the target, don't update it]" \
-            ':target repo:__repos' \
+            ':target repo:_repos' \
             ':query:' \
             && ret=0
           ;;
@@ -230,7 +230,7 @@ _pmaint() {
             {'(--threads)-t','(-t)--threads'}'[number of threads to use for regeneration (defaults to using all available processors]:number' \
             '--force[force regeneration to occur regardless of staleness checks]' \
             '--rsync[update timestamps for rsync repos]' \
-            '*:repo:__repos' \
+            '*:repo:_repos' \
             && ret=0
           ;;
         (perl-rebuild)
@@ -255,7 +255,7 @@ _pmaint() {
         (digest)
           _arguments -C -w -S -s -A '-*' \
             $cli_common_output_args \
-            {'(--repo)-r','(-r)--repo'}'[target repository]:repo:__repos' \
+            {'(--repo)-r','(-r)--repo'}'[target repository]:repo:_repos' \
             '*::ebuild:_files -g \*.ebuild' \
             && ret=0
           ;;
@@ -277,9 +277,16 @@ _pquery() {
   _nothing
 }
 
-__repos() {
-  local file
-  typeset -a repos
+_repos() {
+  # optional args
+  # -c output completion format
+  # -v section:key
+  # -p print the output instead of using completion
+  # -l use repo locations instead of repo_ids
+  zparseopts -E -A opts c l p v:
+
+  local repo_name output_type
+  typeset -a repos output
 
   if [[ -e /etc/portage/repos.conf ]]; then
     repos_conf_files=( /etc/portage/repos.conf /etc/portage/repos.conf/** )
@@ -287,18 +294,73 @@ __repos() {
     repos_conf_files=( /usr/share/pkgcore/config/repos.conf )
   fi
 
+  IFS='= '
+
+  local file
   for file in "${repos_conf_files[@]}"; do
     [[ -f ${file} ]] || continue
-    IFS='= '
     while read -r name value; do
+      # skip comments and empty lines
       [[ -z ${name} || ${name} == '#'* ]] && continue
       if [[ (${name} == '['*']') && -z ${value} ]]; then
-        repos+=(${name//(\[|\])})
+        repo_name=${name//(\[|\])}
+        [[ ${repo_name} != "DEFAULT" ]] && repos+=(${repo_name})
+        typeset -A ${repo_name}
+      else
+        typeset -A insert
+        set -A insert ${(kvP)repo_name}
+        insert[${name}]=${value}
+        set -A ${repo_name} ${(kv)insert}
       fi
     done < ${file}
   done
 
-  _describe -t repos 'repos' repos $*
+  if [[ -n $opts[(I)-v] ]]; then
+    section=${opts[-v]%%:*}
+    value=${opts[-v]##*:}
+    typeset -A extract
+    set -A extract ${(kvP)section}
+    output=${extract[$value]}
+  elif [[ -n $opts[(I)-l] ]]; then
+    # repo paths
+    output_type="repo paths"
+    for repo in $repos; do
+      typeset -A extract
+      set -A extract ${(kvP)repo}
+      output+=(${extract[location]})
+    done
+  else
+    output_type="repos"
+    # repo names
+    output=(${repos})
+  fi
+
+  if [[ -n $opts[(I)-p] ]]; then
+    print $output
+  else
+    _describe -t repos ${output_type} output
+  fi
+}
+
+_arches() {
+  # optional args
+  # -s STATUS -> output a certain status of arch, e.g. -v stable outputs stable arches only
+  # -p print the output instead of using completion
+  # -P output prefix arches
+  zparseopts -E -A opts s: p P
+
+  local arch_status
+  typeset -a arches
+
+  arches=($(_profiles -p -a $*))
+
+  arch_status=${opts[-s]:-arches}
+
+  if [[ -n $opts[(I)-p] ]]; then
+    print $arches
+  else
+    _describe -t arches 'arches' arches
+  fi
 }
 
 __profiles() {

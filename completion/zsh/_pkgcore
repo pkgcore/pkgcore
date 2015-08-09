@@ -363,12 +363,48 @@ _arches() {
   fi
 }
 
-__profiles() {
-  typeset -a profiles
+_profiles() {
+  # optional args
+  # -a output arches instead of profiles
+  # -r specify the repo to use; otherwise the default repo is used
+  # -p print the output instead of using completion
+  # -f output full profile paths instead of with the main repo path prefix removed
+  zparseopts -E -A opts a p f r:
 
-  profiles=( $(pinspect query get_profiles all) )
+  local file repo repo_path arch path pstatus
+  typeset -a arches profiles output
 
-  _describe -t profiles 'profiles' profiles $*
+  if [[ -n $opts[(I)-r] ]]; then
+    repo=$opts[-r]
+  else
+    repo=$(_repos -p -v DEFAULT:main-repo)
+  fi
+
+  repo_path=$(_repos -p -v "${repo}:location")
+  file=${repo_path}/profiles/profiles.desc
+
+  if [[ -f ${file} ]]; then
+    while read -r arch path pstatus; do
+      # skip comments and empty lines
+      [[ -z ${arch} || ${arch} == '#'* ]] && continue
+      arches+=($arch)
+      [[ -n $opts[(I)-f] ]] && path=$repo_path/profiles/$path
+      profiles+=(${path})
+    done < ${file}
+  fi
+
+  if [[ -n $opts[(I)-a] ]]; then
+    print ${arches}
+    return
+  fi
+
+  #profiles=( $(pinspect query get_profiles all) )
+
+  if [[ -n $opts[(I)-p] ]]; then
+    print $profiles
+  else
+    _describe -t profiles 'profiles' profiles $*
+  fi
 }
 
 _pkgcore() {

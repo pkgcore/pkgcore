@@ -248,6 +248,14 @@ __repos() {
   _describe -t repos 'repos' repos $*
 }
 
+__profiles() {
+  typeset -a profiles
+
+  profiles=( $(pinspect query get_profiles all) )
+
+  _describe -t profiles 'profiles' profiles $*
+}
+
 _pkgcore() {
   local ret=1
 

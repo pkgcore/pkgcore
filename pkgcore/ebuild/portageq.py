@@ -6,6 +6,7 @@ from snakeoil.demandload import demandload
 from pkgcore.util import commandline
 
 demandload(
+    'os',
     'functools:partial',
     'snakeoil:osutils',
     "pkgcore.ebuild:atom,conditionals,eapi",
@@ -208,18 +209,16 @@ def get_repos(options, out, err):
         out.write(x)
     return 0
 
-def find_repo_by_repo_id(config, repo_id):
-    for k, repo in config.repo.iteritems():
-        if getattr(repo, 'repo_id', None) == repo_id:
-            yield repo
 
-def find_profile_paths_by_repo_id(config, repo_id):
-    for repo in find_repo_by_repo_id(config, repo_id):
-        if getattr(repo, 'location', None) is not None:
-            profiles = repo.config.profiles.arch_profiles
-            for arch in profiles.iterkeys():
-                for path, stability in profiles[arch]:
-                    yield path
+def find_profile_paths_by_repo_id(config, repo_id, fullpath=False):
+    repo = config.repo.get(repo_id, None)
+    if repo is not None and getattr(repo, 'location', None) is not None:
+        profiles = repo.config.profiles.arch_profiles
+        for arch in profiles.iterkeys():
+            for path, stability in profiles[arch]:
+                if fullpath:
+                    path = os.path.join(repo.location, path)
+                yield path
 
 
 @BaseCommand.make_command("repo_id", bind=query_commands)
@@ -232,22 +231,21 @@ def get_profiles(options, out, err):
 
 @BaseCommand.make_command("repo_id", bind=portageq_commands)
 def get_repo_path(options, out, err):
-    for repo in find_repo_by_repo_id(options.config, options.repo_id):
-        if getattr(repo, 'location', None) is not None:
-            out.write(repo.location)
+    repo = options.config.repo.get(options.repo_id, None)
+    if repo is not None and getattr(repo, 'location', None) is not None:
+        out.write(repo.location)
         return 0
     return 1
 
-get_repo_path = BaseCommand.make_command("repo_id", bind=query_commands,
-    name='get_repo_path')(get_repo_path.function)
+get_repo_path = BaseCommand.make_command(
+    "repo_id", bind=query_commands, name='get_repo_path')(get_repo_path.function)
 
 
 @BaseCommand.make_command("repo_id", bind=portageq_commands)
 def get_repo_news_path(options, out, err):
-    for repo in find_repo_by_repo_id(options.config, options.repo_id):
-        if getattr(repo, 'location', None) is not None:
-            out.write(osutils.normpath(
-                osutils.pjoin(repo.location, 'metadata', 'news')))
+    repo = options.config.repo.get(options.repo_id, None)
+    if repo is not None and getattr(repo, 'location', None) is not None:
+        out.write(osutils.normpath(osutils.pjoin(repo.location, 'metadata', 'news')))
         return 0
     return 1
 

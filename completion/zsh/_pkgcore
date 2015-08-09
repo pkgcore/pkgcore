@@ -337,22 +337,21 @@ _repos() {
 
 _arches() {
   # optional args
-  # -s STATUS -> output a certain status of arch, e.g. -v stable outputs stable arches only
+  # -s type -> output a certain type of arch, e.g. -v stable outputs stable arches only
   # -p print the output instead of using completion
-  # -P output prefix arches
-  zparseopts -E -A opts s: p P
+  zparseopts -E -A opts s: p
 
-  local arch_status
+  local arch_type
   typeset -a arches
 
   arches=($(_profiles -p -a $*))
 
-  arch_status=${opts[-s]:-arches}
+  arch_type=${opts[-s]:-arches}
 
   if [[ -n $opts[(I)-p] ]]; then
     print $arches
   else
-    _describe -t arches 'arches' arches
+    _describe -t arches ${arch_type} arches
   fi
 }
 
@@ -361,11 +360,11 @@ _profiles() {
   # -a output arches instead of profiles
   # -r specify the repo to use; otherwise the default repo is used
   # -p print the output instead of using completion
-  # -f output full profile paths instead of with the main repo path prefix removed
+  # -f output full, absolute profile paths
   zparseopts -E -A opts a p f r:
 
   local file repo repo_path arch path pstatus
-  typeset -a arches profiles output
+  typeset -a arches profiles
 
   if [[ -n $opts[(I)-r] ]]; then
     repo=$opts[-r]
@@ -387,7 +386,7 @@ _profiles() {
   fi
 
   if [[ -n $opts[(I)-a] ]]; then
-    print ${arches}
+    print ${(u)arches}
     return
   fi
 

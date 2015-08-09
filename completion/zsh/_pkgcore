@@ -398,8 +398,6 @@ _profiles() {
     return
   fi
 
-  #profiles=( $(pinspect query get_profiles all) )
-
   if [[ -n $opts[(I)-p] ]]; then
     print $profiles
   else

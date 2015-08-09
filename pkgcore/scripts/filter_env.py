@@ -15,17 +15,6 @@ from pkgcore.util import commandline
 argparser = commandline.mk_argparser(
     config=False, domain=False, verbose=False, color=False,
     description=__doc__.split('\n', 1)[0])
-argparser.add_argument(
-    '-V', '--var-match', action='store_true',
-    default=False,
-    help="Invert the filtering- instead of removing a var if it matches "
-    "remove all vars that do not match")
-argparser.add_argument(
-    '-F', '--func-match', action='store_true',
-    default=False,
-    help="Invert the filtering- instead of removing a function if it matches "
-    "remove all functions that do not match")
-
 
 def stdin_default(namespace, attr):
     if sys.stdin.isatty():
@@ -37,6 +26,16 @@ argparser.add_argument(
     type=commandline.argparse.FileType(), default=commandline.DelayedValue(stdin_default, 0),
     help='Filename to read the env from (uses stdin if omitted).')
 filtering = argparser.add_argument_group("Environment filtering options")
+filtering.add_argument(
+    '-V', '--var-match', action='store_true',
+    default=False,
+    help="Invert the filtering- instead of removing a var if it matches "
+    "remove all vars that do not match")
+filtering.add_argument(
+    '-F', '--func-match', action='store_true',
+    default=False,
+    help="Invert the filtering- instead of removing a function if it matches "
+    "remove all functions that do not match")
 filtering.add_argument(
     '-f', '--funcs', action='extend_comma',
     help="comma separated list of regexes to match function names against for filtering")

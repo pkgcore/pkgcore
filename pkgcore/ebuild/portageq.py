@@ -223,7 +223,12 @@ def find_profile_paths_by_repo_id(config, repo_id, fullpath=False):
 
 @BaseCommand.make_command("repo_id", bind=query_commands)
 def get_profiles(options, out, err):
-    profiles = find_profile_paths_by_repo_id(options.config, options.repo_id)
+    if options.repo_id == 'all':
+        profiles = (
+            profile for repo in options.domain.ebuild_repos_raw
+            for profile in find_profile_paths_by_repo_id(options.config, repo.repo_id, fullpath=True))
+    else:
+        profiles = find_profile_paths_by_repo_id(options.config, options.repo_id)
     for x in sorted(set(profiles)):
         out.write(x)
     return 0

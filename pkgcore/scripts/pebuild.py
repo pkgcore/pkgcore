@@ -16,13 +16,14 @@ from pkgcore.util import commandline
 
 argparser = commandline.mk_argparser(description=__doc__.split('\n', 1)[0])
 argparser.add_argument(
-    "--no-auto", action='store_true', default=False,
-    help="run just the specified phases; "
-         "it's up to the invoker to get the order right")
-argparser.add_argument(
     'target', metavar='<atom|ebuild>',
     help="atom or ebuild matching a pkg to execute phases from")
 argparser.add_argument('phase', nargs='+', help="phases to run")
+phase_opts = argparser.add_argument_group("phase options")
+phase_opts.add_argument(
+    "--no-auto", action='store_true', default=False,
+    help="run just the specified phases; "
+         "it's up to the invoker to get the order right")
 
 
 @argparser.bind_main_func

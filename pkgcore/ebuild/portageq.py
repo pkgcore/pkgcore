@@ -217,7 +217,7 @@ def find_profile_paths_by_repo_id(config, repo_id, fullpath=False):
         for arch in profiles.iterkeys():
             for path, stability in profiles[arch]:
                 if fullpath:
-                    path = os.path.join(repo.location, path)
+                    path = os.path.join(repo.location, 'profiles', path)
                 yield path
 
 

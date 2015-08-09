@@ -90,7 +90,7 @@ class database(fs_template.FsBased):
         if self._mtime_used:
             if not self.mtime_in_entry:
                 mtime = values['_mtime_']
-        for k, v in values.iteritems():
+        for k, v in sorted(values.iteritems()):
             myf.writelines("%s=%s\n" % (k, v))
 
         myf.close()

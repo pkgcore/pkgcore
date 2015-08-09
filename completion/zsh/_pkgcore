@@ -143,6 +143,7 @@ _pmaint() {
         sync:'synchronize a local repository with its defined remote'
         copy:'copy binpkgs between repositories; primarily useful for quickpkging a livefs pkg'
         regen:'regenerate repository caches'
+        perl-rebuild:'perl-rebuild support for use after upgrading perl (experimental)'
         env-update:'update env.d and ldconfig'
         mirror:'mirror the sources for a package in full'
         digest:'update package manifests'
@@ -155,13 +156,13 @@ _pmaint() {
 
       case $line[1] in
         (sync)
-          _arguments -C \
+          _arguments -C -w -S -s -A '-*' \
             $cli_common_output_args \
             '*:repo:__repos' \
             && ret=0
           ;;
         (copy)
-          _arguments -C -w -S -s \
+          _arguments -C -w -S -s -A '-*' \
             $cli_common_output_args \
             {'(--source-repo)-s','(-s)--source-repo'}'[copy strictly from the supplied repository]:repo:__repos' \
             {'(--ignore-missing)-i','(-i)--ignore-missing'}"[if a matching pkg already exists in the target, don't update it]" \
@@ -170,13 +171,36 @@ _pmaint() {
             && ret=0
           ;;
         (regen)
+          _arguments -C -w -S -s -A '-*' \
+            $cli_common_output_args \
+            '--disable-eclass-caching[disable caching eclasses into functions (results in a ~2x slower regen process, only disable when debugging)]' \
+            {'(--threads)-t','(-t)--threads'}'[number of threads to use for regeneration (defaults to using all available processors]:number' \
+            '--force[force regeneration to occur regardless of staleness checks]' \
+            '--rsync[update timestamps for rsync repos]' \
+            '*:repo:__repos' \
+            && ret=0
+          ;;
+        (perl-rebuild)
+          _arguments -C -w -S -s -A '-*' \
+            $cli_common_output_args \
+            ':new perl version (e.g. 5.22.0):' \
+            && ret=0
           ;;
         (env-update)
+          _arguments -C -w -S -s -A '-*' \
+            $cli_common_output_args \
+            '--skip-ldconfig[do not update etc/ldso.conf and ld.so.cache]' \
+            && ret=0
           ;;
         (mirror)
+          _arguments -C -w -S -s -A '-*' \
+            $cli_common_output_args \
+            {'(--ignore-failures)-f','(-f)--ignore-failures'}'[if a failure occurs, keep going]' \
+            ':query:' \
+            && ret=0
           ;;
         (digest)
-          _arguments -C -w -S -s \
+          _arguments -C -w -S -s -A '-*' \
             $cli_common_output_args \
             {'(--repo)-r','(-r)--repo'}'[target repository]:repo:__repos' \
             '*::ebuild:_files -g \*.ebuild' \

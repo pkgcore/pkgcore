@@ -13,6 +13,7 @@ import os
 import operator
 
 from snakeoil import klass
+from snakeoil.chksum import get_handler
 from snakeoil.compatibility import raise_from
 from snakeoil.mappings import (
     ProtectedDict, autoconvert_py3k_methods_metaclass, make_SlottedDict_kls)
@@ -74,7 +75,7 @@ class base(object):
             return lambda data: '%.0f' % math.floor(data.mtime)
         # Skip the leading 0x...
         getter = operator.attrgetter(chf)
-        return lambda data: hex(getter(data))[2:].rstrip('L')
+        return lambda data: get_handler(chf).long2str(getter(data))
 
     @staticmethod
     def _get_chf_deserializer(chf):

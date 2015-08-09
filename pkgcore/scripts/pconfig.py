@@ -104,9 +104,11 @@ def get_classes(configs):
     return classes
 
 
-shared_options = (commandline.mk_argparser(domain=False, add_help=False),)
+shared_options = (commandline.mk_argparser(
+    config=False, color=False, version=False, domain=False, add_help=False),)
 argparser = commandline.mk_argparser(
-    suppress=True, parents=shared_options, description=__doc__.split('\n', 1)[0])
+    suppress=True, parents=(commandline.mk_argparser(domain=False, add_help=False),),
+    description=__doc__.split('\n', 1)[0])
 subparsers = argparser.add_subparsers(description="configuration related subcommands")
 classes = subparsers.add_parser(
     "classes", parents=shared_options,
@@ -326,8 +328,10 @@ def dump_uncollapsed_main(options, out, err):
             _dump_uncollapsed_section(options.config, out, err, section)
             out.write()
 
+shared_options_domain = (commandline.mk_argparser(
+    config=False, color=False, version=False, add_help=False),)
 package = subparsers.add_parser(
-    "package", parents=(commandline.mk_argparser(add_help=False),),
+    "package", parents=shared_options_domain,
     description="invoke a packages custom configuration scripts")
 commandline.make_query(
     package, nargs='+', dest='query',
@@ -350,7 +354,7 @@ def package_func(options, out, err):
 
 
 world = subparsers.add_parser(
-    "world", parents=(commandline.mk_argparser(add_help=False),),
+    "world", parents=shared_options_domain,
     description="Inspect and modify the world file.")
 world_modes = world.add_argument_group(
     "Command modes",

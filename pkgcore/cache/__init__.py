@@ -212,7 +212,7 @@ class base(object):
         """takes a dict, returns a string representing said dict"""
         l = []
         converters = self.eclass_chf_serializers
-        for eclass, data in eclass_dict.iteritems():
+        for eclass, data in sorted(eclass_dict.iteritems()):
             l.append(eclass)
             l.extend(f(data) for f in converters)
         return self.eclass_splitter.join(l)

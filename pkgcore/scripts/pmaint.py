@@ -33,11 +33,14 @@ demandload(
 
 argparser = commandline.mk_argparser(
     suppress=True,
-    parents=(commandline.mk_argparser(add_help=False),),
+    parents=(commandline.mk_argparser(domain=False, add_help=False),),
     description=__doc__.split('\n', 1)[0])
 subparsers = argparser.add_subparsers(description="general system maintenance")
+
 shared_options = (commandline.mk_argparser(
     config=False, color=False, version=False, domain=False, add_help=False),)
+domain_shared_options = (commandline.mk_argparser(
+    config=False, color=False, version=False, domain=True, add_help=False),)
 
 sync = subparsers.add_parser(
     "sync", parents=shared_options,
@@ -215,7 +218,7 @@ def regen_main(options, out, err):
 
 
 perl_rebuild = subparsers.add_parser(
-    "perl-rebuild", parents=shared_options,
+    "perl-rebuild", parents=domain_shared_options,
     description="EXPERIMENTAL: perl-rebuild support for use after upgrading perl")
 perl_rebuild.add_argument(
     "new_version", help="the new perl version; 5.12.3 for example")
@@ -256,7 +259,7 @@ def perl_rebuild_main(options, out, err):
 
 env_update = subparsers.add_parser(
     "env-update", description="update env.d and ldconfig",
-    parents=shared_options)
+    parents=domain_shared_options)
 env_update_opts = env_update.add_argument_group("subcommand options")
 env_update_opts.add_argument(
     "--skip-ldconfig", action='store_true', default=False,
@@ -277,9 +280,8 @@ def env_update_main(options, out, err):
 
 
 mirror = subparsers.add_parser(
-    "mirror",
-    description="mirror the sources for a package in full- grab everything that could be required",
-    parents=shared_options)
+    "mirror", parents=domain_shared_options,
+    description="mirror the sources for a package in full- grab everything that could be required")
 commandline.make_query(
     mirror, nargs='+', dest='query',
     help="query of which packages to mirror")
@@ -311,9 +313,8 @@ def mirror_main(options, out, err):
 
 
 digest = subparsers.add_parser(
-    "digest",
-    description="update package manifests",
-    parents=shared_options)
+    "digest", parents=domain_shared_options,
+    description="update package manifests")
 commandline.make_query(
     digest, nargs='+', dest='query',
     help="packages matching any of these restrictions will have their "

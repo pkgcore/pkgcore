@@ -91,30 +91,83 @@ _pinspect() {
       )
 
       _describe -t subcommands subcommand subcommands && ret=0
+
       ;;
     (subcommand)
       curcontext=${curcontext%:*}-$line[1]:
 
+      typeset -a historical_repo_data_opts
+      historical_repo_data_opts=(
+        '(- :)'{-h,--help}'[show help information and exit]'
+        '--no-final-summary[disable outputting a summary of data across all repos]'
+        '--sort-by-name[sort output by name, rather then by frequency]'
+        '--first[show only the first N detail items]:number'
+        '--last[show only the last N detail items]:number'
+        '*:repo:__repos'
+      )
+
       case $line[1] in
         (pkgsets)
+          _arguments -C -w -S -s -A '-*' \
+            '(- :)'{-h,--help}'[show help information and exit]' \
+            '--all[display info on all pkgsets]' \
+            ':pkgset:' \
+            && ret=0
           ;;
-        (eapi_usage)
-          ;;
-        (license_usage)
-          ;;
-        (eclass_usage)
-          ;;
-        (mirror_usage)
+        ((eapi|license|eclass|mirror)_usage)
+          _arguments -C -w -S -s -A '-*' \
+            $historical_repo_data_opts \
+            && ret=0
           ;;
         (distfiles_usage)
+          _arguments -C -w -S -s -A '-*' \
+            '--no-repo-summary[disable outputting repo summaries]' \
+            '--no-detail[disable outputting a detail view of all repos]' \
+            '--include-nonmirrored[if set, nonmirrored distfiles will be included in the total]' \
+            '--include-restricted[if set, fetch restricted distfiles will be included in the total]' \
+            $historical_repo_data_opts \
+            && ret=0
           ;;
         (query)
           ;;
         (portageq)
           ;;
         (profile)
+          typeset -a profile_attrs
+
+          profile_attrs=(
+            parent:'output the linearized tree of inherited parents'
+            eapi:'output EAPI support required for reading this profile'
+            deprecated:'dump deprecation notices, if any'
+            provided:'list all package.provided packages'
+            system:'output the system package set'
+            use_expand:'output the USE_EXPAND configuration for this profile'
+            iuse_effective:'output the IUSE_EFFECTIVE value for this profile'
+            masks:'inspect package masks'
+            unmasks:'inspect package unmasks'
+            bashrcs:'inspect bashrcs'
+            keywords:'inspect package.keywords'
+            accept_keywords:'inspect package.accept_keywords'
+            use:'inspect package.use'
+            masked_use:'inspect masked use flags'
+            stable_masked_use:'inspect stable masked use flags'
+            forced_use:'inspect forced use flags'
+            stable_forced_use:'inspect stable forced use flags'
+            defaults:'inspect defined configuration for this profile'
+            arch:'output the arch defined for this profile'
+          )
+
+          _arguments -C -w -S -s -A '-*' \
+            '(- :)'{-h,--help}'[show help information and exit]' \
+            '1:profile attribute:(($profile_attrs))' \
+            '2:profile:__profiles' \
+            && ret=0
           ;;
         (digests)
+          _arguments -C -w -S -s -A '-*' \
+            '(- :)'{-h,--help}'[show help information and exit]' \
+            ':repo:__repos' \
+            && ret=0
           ;;
         (*)
           _nothing

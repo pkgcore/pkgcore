@@ -4,9 +4,16 @@ Release Notes
 
 See ChangeLog for full commit logs; this is summarized/major changes.
 
---------------
-pkgcore master
---------------
+--------------------------
+pkgcore 0.9.2 (2015-0?-??)
+--------------------------
+
+- pmaint digest now ignores various repo visibility filters, this makes it
+  possible for regular usage such as generating manifests for ~arch ebuilds on
+  a stable system.
+
+- pmerge: pkg_pretend phases are now run after dep resolution similar to
+  portage. Previously they were run before displaying the resolved dep tree.
 
 - Calling die() now works as expected from within subshells.
 
@@ -18,9 +25,14 @@ pkgcore master
   file; otherwise, if it's set to a directory it assumes its a portage config
   directory (e.g. /etc/portage).
 
+- pkgcore.config: The location parameter to load_config(), if set, can now
+  either point to an alternative pkgcore config file or portage config
+  directory. Previously it only supported an alternative portage config
+  directory's parent as an argument. External usage should be fixed to use the
+  full path to the config directory, e.g. /etc/portage instead of only /etc.
+
 - Use correct EPREFIX and EROOT settings. This fixes non-prefix builds when ROOT
   is non-null.
-
 
 --------------------------
 pkgcore 0.9.1 (2015-06-28)

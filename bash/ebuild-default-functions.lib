@@ -255,10 +255,10 @@ EXPORT_FUNCTIONS() {
 		echo "EXPORT_FUNCTIONS without a defined ECLASS" >&2
 		exit 1
 	fi
-	while [[ -n $1 ]]; do
-		debug-print "EXPORT_FUNCTIONS: $1 -> ${ECLASS}_$1"
-		eval "$1() { ${ECLASS}_$1 "\$@" ; }" > /dev/null
-		shift
+	local phase_func
+	for phase_func in $*; do
+		debug-print "EXPORT_FUNCTIONS: ${phase_func} -> ${ECLASS}_${phase_func}"
+		eval "${phase_func}() { ${ECLASS}_${phase_func} "\$@" ; }" > /dev/null
 	done
 }
 

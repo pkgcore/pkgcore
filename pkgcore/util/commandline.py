@@ -916,8 +916,9 @@ def main(subcommands, args=None, outfile=None, errfile=None, script_name=None):
     except KeyboardInterrupt:
         errfile.write("keyboard interrupted- exiting\n")
         if getattr(options, 'debug', False):
-            raise
-        exitstatus = 1
+            traceback.print_tb(sys.exc_info()[-1])
+        signal.signal(signal.SIGINT, signal.SIG_DFL)
+        os.killpg(os.getpgid(0), signal.SIGINT)
     except compatibility.IGNORED_EXCEPTIONS:
         raise
     except errors.ConfigurationError as e:

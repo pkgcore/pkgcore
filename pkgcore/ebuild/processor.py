@@ -230,10 +230,8 @@ def chuck_TermInterrupt(scope=None, *arg):
 
 
 def chuck_KeyboardInterrupt(*arg):
-    signal.signal(signal.SIGPIPE, signal.SIG_DFL)
-    signal.signal(signal.SIGINT, signal.SIG_DFL)
     for ebp in chain(active_ebp_list, inactive_ebp_list):
-        os.killpg(ebp.pid, signal.SIGINT)
+        os.killpg(ebp.pid, signal.SIGKILL)
     raise KeyboardInterrupt("ctrl+c encountered")
 
 signal.signal(signal.SIGINT, chuck_KeyboardInterrupt)

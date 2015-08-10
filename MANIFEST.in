@@ -4,6 +4,7 @@ recursive-include bin *
 recursive-include doc *
 recursive-include examples *
 recursive-include bash *
+recursive-include completion *
 recursive-include config *
 recursive-include src *.[ch]
 global-exclude *.pyc *.pyo __pycache__

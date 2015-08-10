@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import errno
 import io
 from itertools import chain
 import operator
@@ -273,7 +274,11 @@ def write_pkgcore_ebd_funclists(root, target, scripts_dir):
     if root != '/':
         ebd_dir = os.path.join(root, os.path.abspath(target).lstrip('/'))
     log.info("Writing ebd function lists to %s" % os.path.join(ebd_dir, 'funcnames'))
-    os.makedirs(os.path.join(ebd_dir, 'funcnames'))
+    try:
+        os.makedirs(os.path.join(ebd_dir, 'funcnames'))
+    except OSError as e:
+        if e.errno != errno.EEXIST:
+            raise
 
     # add scripts dir to PATH for filter-env usage in global scope
     env = {'PATH': os.pathsep.join([scripts_dir, os.environ.get('PATH', '')])}

@@ -329,15 +329,14 @@ def digest_main(options, out, err):
     repo = options.repo
     if repo is None:
        repo = domain.all_raw_ebuild_repos
-    repo_ops = repo.operations
     obs = observer.formatter_output(out)
-    if not repo_ops.supports("digests"):
+    if not repo.operations.supports("digests"):
         out.write("no repository support for digests")
         return 1
     elif not repo.has_match(options.query):
         out.write("query %s doesn't match anything" % (options.query,))
         return 1
-    if not repo_ops.digests(domain, options.query, observer=obs):
+    if not repo.operations.digests(domain, options.query, observer=obs):
         out.write("some errors were encountered...")
         return 1
     return 0

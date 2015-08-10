@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-import glob
 import io
 from itertools import chain
 import operator
@@ -394,8 +393,7 @@ setup(
     scripts=os.listdir('bin'),
     data_files=list(chain(
         _get_data_mapping(CONFIG_INSTALL_OFFSET, 'config'),
-        _get_data_mapping(EBD_INSTALL_OFFSET, 'bash',
-                          glob.iglob('bash/generate_*_func_list.bash')),
+        _get_data_mapping(EBD_INSTALL_OFFSET, 'bash'),
     )),
     ext_modules=extensions, cmdclass=cmdclass, command_options=command_options,
     classifiers=[

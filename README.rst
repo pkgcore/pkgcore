@@ -67,6 +67,7 @@ Installing
 
 Installing latest pypi release in a virtualenv::
 
+    pip install snakeoil
     pip install pkgcore
 
 Installing from git in a virtualenv (note that snakeoil should be used from git)::

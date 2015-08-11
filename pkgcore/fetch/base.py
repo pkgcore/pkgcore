@@ -39,15 +39,13 @@ class fetcher(object):
         if handlers is None:
             try:
                 handlers = get_handlers(target.chksums)
-            except KeyError as e:
-                compatibility.raise_from(
-                    errors.FetchFailed(file_location,
-                        "Couldn't find a required checksum handler"))
+            except KeyError:
+                compatibility.raise_from(errors.FetchFailed(
+                    file_location, "Couldn't find a required checksum handler"))
         if all_chksums:
             missing = set(target.chksums).difference(handlers)
             if missing:
-                raise errors.RequiredChksumDataMissing(target,
-                    *sorted(missing))
+                raise errors.RequiredChksumDataMissing(target, *sorted(missing))
 
         if "size" in handlers:
             val = handlers["size"](file_location)
@@ -57,11 +55,11 @@ class fetcher(object):
             if c:
                 resumable = (c < 0)
                 if resumable:
-                  msg = "File is too small."
+                    msg = "File is too small."
                 else:
-                  msg = "File is too big."
-                raise errors.FetchFailed(file_location,
-                    msg, resumable=resumable)
+                    msg = "File is too big."
+                raise errors.FetchFailed(
+                    file_location, msg, resumable=resumable)
         elif not os.path.exists(file_location):
             raise errors.MissingDistfile(file_location)
 
@@ -72,17 +70,19 @@ class fetcher(object):
             for x in chfs:
                 val = handlers[x](file_location)
                 if val != target.chksums[x]:
-                    raise errors.FetchFailed(file_location,
-                        "Validation handler %s: expected %s, got %s" % (
-                        x, target.chksums[x], val))
+                    raise errors.FetchFailed(
+                        file_location,
+                        "Validation handler %s: expected %s, got %s" %
+                        (x, target.chksums[x], val))
         else:
             desired_vals = [target.chksums[x] for x in chfs]
             calced = get_chksums(file_location, *chfs)
             for desired, got, chf in zip(desired_vals, calced, chfs):
                 if desired != got:
-                    raise errors.FetchFailed(file_location,
-                        "Validation handler %s: expected %s, got %s" % (
-                        chf, desired, got))
+                    raise errors.FetchFailed(
+                        file_location,
+                        "Validation handler %s: expected %s, got %s" %
+                        (chf, desired, got))
 
     def __call__(self, fetchable):
         if not fetchable.uri:

@@ -123,8 +123,8 @@ class uri_list(object):
                     yield "%s/%s" % (base_uri.rstrip('/'), fname)
 
     def __str__(self):
-        return "file: %s, uri: %s" % (self.filename,
-            ', '.join(str(x) for x in self._uri_source))
+        return "file: %s, uri: %s" % (
+            self.filename, ', '.join(str(x) for x in self._uri_source))
 
     def __nonzero__(self):
         # implemented this way on the off chance an empty sublist is handed in
@@ -135,7 +135,7 @@ class uri_list(object):
     def __len__(self):
         # we do it this way since each item may be a sublist, and to reuse
         # __iter__
-        count =0
+        count = 0
         for entry in self:
             count += 1
         return count

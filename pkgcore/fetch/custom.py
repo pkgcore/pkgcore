@@ -22,8 +22,7 @@ from pkgcore.config import ConfigHint
 class MalformedCommand(errors.base):
 
     def __init__(self, command):
-        errors.base.__init__(self,
-            "fetchcommand is malformed: %s" % (command,))
+        errors.base.__init__(self, "fetchcommand is malformed: %s" % (command,))
         self.command = command
 
 
@@ -32,7 +31,7 @@ class fetcher(base.fetcher):
     pkgcore_config_type = ConfigHint(
         {'userpriv': 'bool', 'required_chksums': 'list',
          'distdir': 'str', 'command': 'str', 'resume_command': 'str'},
-         allow_unknowns=True)
+        allow_unknowns=True)
 
     def __init__(self, distdir, command, resume_command=None,
                  required_chksums=None, userpriv=True, attempts=10,
@@ -61,6 +60,7 @@ class fetcher(base.fetcher):
             self.required_chksums = None
         else:
             self.required_chksums = required_chksums
+
         def rewrite_command(string):
             new_command = string.replace("${DISTDIR}", self.distdir)
             new_command = new_command.replace("$DISTDIR", self.distdir)
@@ -71,7 +71,7 @@ class fetcher(base.fetcher):
             if new_command == string:
                 raise MalformedCommand(string)
             try:
-                new_command % {"URI":"blah", "FILE":"blah"}
+                new_command % {"URI": "blah", "FILE": "blah"}
             except KeyError as k:
                 raise MalformedCommand("%s: unexpected key %s" % (command, k.args[0]))
             return new_command
@@ -100,7 +100,7 @@ class fetcher(base.fetcher):
             raise TypeError(
                 "target must be fetchable instance/derivative: %s" % target)
 
-        kw = {"mode":0775}
+        kw = {"mode": 0775}
         if self.readonly:
             kw["mode"] = 0555
         if self.userpriv:
@@ -117,7 +117,7 @@ class fetcher(base.fetcher):
 
         uri = iter(target.uri)
         if self.userpriv and is_userpriv_capable():
-            extra = {"uid":portage_uid, "gid":portage_gid}
+            extra = {"uid": portage_uid, "gid": portage_gid}
         else:
             extra = {}
         extra["umask"] = 0002
@@ -150,7 +150,7 @@ class fetcher(base.fetcher):
                     # verify portion of the loop handles this. iow,
                     # don't trust their exit code. trust our chksums
                     # instead.
-                    spawn_bash(command % {"URI":u, "FILE":filename}, **extra)
+                    spawn_bash(command % {"URI": u, "FILE": filename}, **extra)
                 attempts -= 1
             assert last_exc is not None
             raise last_exc[0], last_exc[1], last_exc[2]

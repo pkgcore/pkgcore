@@ -372,7 +372,7 @@ _profiles() {
     repo=$(_repos -p -v DEFAULT:main-repo)
   fi
 
-  repo_path=$(_repos -p -v "${repo}:location")
+  repo_path=${$(_repos -p -v "${repo}:location")%/}
   file=${repo_path}/profiles/profiles.desc
 
   if [[ -f ${file} ]]; then

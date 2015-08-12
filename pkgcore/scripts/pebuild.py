@@ -24,8 +24,6 @@ phase_opts.add_argument(
     "--no-auto", action='store_true', default=False,
     help="run just the specified phases; "
          "it's up to the invoker to get the order right")
-
-
 @argparser.bind_main_func
 def main(options, out, err):
     target = options.target
@@ -37,7 +35,7 @@ def main(options, out, err):
             return 1
 
         try:
-            restriction = domain.ebuild_repos.path_restrict(target)
+            restriction = domain.ebuild_repos_raw.path_restrict(target)
         except ValueError:
             err.write("no configured ebuild repo contains: '%s'" % target)
             return 1
@@ -48,7 +46,7 @@ def main(options, out, err):
             err.write("not a valid atom or ebuild: '%s'" % target)
             return 1
 
-    pkgs = domain.ebuild_repos.match(restriction)
+    pkgs = domain.ebuild_repos_raw.match(restriction)
     if not pkgs:
         err.write("no matches for '%s'" % (target,))
         return 1

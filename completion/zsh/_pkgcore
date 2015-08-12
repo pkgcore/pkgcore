@@ -335,6 +335,31 @@ _repos() {
   fi
 }
 
+_categories() {
+  # optional args
+  #
+  # -r repo  specify the repo to use; otherwise the default repo is used
+  # -p       print the output instead of using completion
+  zparseopts -E -A opts p r:
+
+  typeset -a categories
+
+  if [[ -n $opts[(I)-r] ]]; then
+    repo=$opts[-r]
+  else
+    repo=$(_repos -p -v DEFAULT:main-repo)
+  fi
+
+  repo_path=${$(_repos -p -v "${repo}:location")%/}
+  categories=(${${(f)"$(<${repo_path}/profiles/categories)"}:#\#*})
+
+  if [[ -n $opts[(I)-p] ]]; then
+    print $categories
+  else
+    _describe -t categories 'categories' categories
+  fi
+}
+
 _arches() {
   # optional args
   #

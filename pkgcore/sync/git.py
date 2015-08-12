@@ -22,6 +22,9 @@ class git_syncer(base.dvcs_syncer):
         git_path = os.path.join(path, '.git')
         if cls.disabled or not os.path.isdir(git_path):
             return None
+        # defer to git-svn plugin
+        if os.path.isdir(os.path.join(git_path, 'svn')):
+            return None
         return (cls._rewrite_uri_from_stat(git_path, "git://"),)
 
     @staticmethod

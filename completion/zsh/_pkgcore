@@ -342,7 +342,7 @@ _use_global() {
   # -p       print the output instead of using completion
   zparseopts -E -A opts p r:
 
-  typeset -a use_flags use_desc raw_use use
+  typeset -a use
 
   if [[ -n $opts[(I)-r] ]]; then
     repo=$opts[-r]

@@ -344,7 +344,9 @@ _arches() {
   local arch_type
   typeset -a arches
 
-  arches=($(_profiles -p -a $*))
+  repo=$(_repos -p -v DEFAULT:main-repo)
+  repo_path=${$(_repos -p -v "${repo}:location")%/}
+  arches=(${${(f)"$(<${repo_path}/profiles/arch.list)"}:#\#*})
 
   arch_type=${opts[-s]:-arches}
 
@@ -357,14 +359,13 @@ _arches() {
 
 _profiles() {
   # optional args
-  # -a output arches instead of profiles
   # -r specify the repo to use; otherwise the default repo is used
   # -p print the output instead of using completion
   # -f output full, absolute profile paths
   zparseopts -E -A opts a p f r:
 
   local file repo repo_path arch path pstatus
-  typeset -a arches profiles
+  typeset -a profiles
 
   if [[ -n $opts[(I)-r] ]]; then
     repo=$opts[-r]
@@ -379,15 +380,9 @@ _profiles() {
     while read -r arch path pstatus; do
       # skip comments and empty lines
       [[ -z ${arch} || ${arch} == '#'* ]] && continue
-      arches+=($arch)
       [[ -n $opts[(I)-f] ]] && path=$repo_path/profiles/$path
       profiles+=(${path})
     done < ${file}
-  fi
-
-  if [[ -n $opts[(I)-a] ]]; then
-    print ${(u)arches}
-    return
   fi
 
   if [[ -n $opts[(I)-p] ]]; then

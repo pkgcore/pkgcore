@@ -339,11 +339,9 @@ _arches() {
   # optional args
   #
   # -r repo  specify the repo to use; otherwise the default repo is used
-  # -s type  output a certain type of arch, e.g. -v stable outputs stable arches only
   # -p       print the output instead of using completion
-  zparseopts -E -A opts s: p r:
+  zparseopts -E -A opts p r:
 
-  local arch_type
   typeset -a arches
 
   if [[ -n $opts[(I)-r] ]]; then
@@ -355,12 +353,10 @@ _arches() {
   repo_path=${$(_repos -p -v "${repo}:location")%/}
   arches=(${${(f)"$(<${repo_path}/profiles/arch.list)"}:#\#*})
 
-  arch_type=${opts[-s]:-arches}
-
   if [[ -n $opts[(I)-p] ]]; then
     print $arches
   else
-    _describe -t arches ${arch_type} arches
+    _describe -t arches 'arches' arches
   fi
 }
 

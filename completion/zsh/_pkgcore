@@ -351,7 +351,7 @@ _use_global() {
   fi
 
   repo_path=${$(_repos -p -v "${repo}:location")%/}
-  use=(${(S)${${(f)"$(<${repo_path}/profiles/use.desc)"}:#\#*}/ - /:})
+  [[ -f $repo_path/profiles/use.desc ]] && use=(${(S)${${(f)"$(<${repo_path}/profiles/use.desc)"}:#\#*}/ - /:})
 
   if [[ -n $opts[(I)-p] ]]; then
     print $use
@@ -376,7 +376,7 @@ _categories() {
   fi
 
   repo_path=${$(_repos -p -v "${repo}:location")%/}
-  categories=(${${(f)"$(<${repo_path}/profiles/categories)"}:#\#*})
+  [[ -f $repo_path/profiles/categories ]] && categories=(${${(f)"$(<${repo_path}/profiles/categories)"}:#\#*})
 
   if [[ -n $opts[(I)-p] ]]; then
     print $categories
@@ -401,7 +401,7 @@ _arches() {
   fi
 
   repo_path=${$(_repos -p -v "${repo}:location")%/}
-  arches=(${${(f)"$(<${repo_path}/profiles/arch.list)"}:#\#*})
+  [[ -f $repo_path/profiles/arch.list ]] && arches=(${${(f)"$(<${repo_path}/profiles/arch.list)"}:#\#*})
 
   if [[ -n $opts[(I)-p] ]]; then
     print $arches

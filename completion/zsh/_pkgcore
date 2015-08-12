@@ -335,6 +335,37 @@ _repos() {
   fi
 }
 
+_use_global() {
+  # optional args
+  #
+  # -r repo  specify the repo to use; otherwise the default repo is used
+  # -p       print the output instead of using completion
+  zparseopts -E -A opts p r:
+
+  typeset -a use_flags use_desc raw_use use
+
+  if [[ -n $opts[(I)-r] ]]; then
+    repo=$opts[-r]
+  else
+    repo=$(_repos -p -v DEFAULT:main-repo)
+  fi
+
+  repo_path=${$(_repos -p -v "${repo}:location")%/}
+  raw_use=(${${(f)"$(<${repo_path}/profiles/use.desc)"}:#\#*})
+  use_flags=(${(S)raw_use## -*})
+  use_desc=(${(S)raw_use#*- })
+
+  # XXX: must be a better way to merge arrays
+  local i
+  for ((i=0; i<${#use_flags[*]}; ++i)); do use+=( ${use_flags[$i]}:${use_desc[$i]} ); done
+
+  if [[ -n $opts[(I)-p] ]]; then
+    print $use
+  else
+    _describe -t use 'use flags' use
+  fi
+}
+
 _categories() {
   # optional args
   #

@@ -47,7 +47,7 @@ update::
 Force new binpkgs to be built for the entire system set using a custom
 configuration directory::
 
-    pmerge -uDpeb --config /home/foo/portage @system
+    pmerge -uDSeb --config /home/foo/portage @system
 
 See Also
 ========

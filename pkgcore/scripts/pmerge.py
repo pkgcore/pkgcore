@@ -14,6 +14,7 @@ __all__ = ("argparser", "AmbiguousQuery", "NoMatches")
 
 import argparse
 from functools import partial
+import sys
 from time import time
 
 from pkgcore.ebuild import resolver, restricts
@@ -546,8 +547,9 @@ def main(options, out, err):
 
     failures = []
     resolve_time = time()
-    out.title('Resolving...')
-    out.write(out.bold, ' * ', out.reset, 'Resolving...')
+    if sys.stdout.isatty():
+        out.title('Resolving...')
+        out.write(out.bold, ' * ', out.reset, 'Resolving...')
     ret = resolver_inst.add_atoms(atoms, finalize=True)
     while ret:
         out.error('resolution failed')

@@ -15,6 +15,7 @@ from pkgcore.util import commandline
 from pkgcore.operations import OperationError
 
 demandload(
+    'collections',
     'errno',
     'multiprocessing:cpu_count',
     'os',
@@ -192,6 +193,9 @@ regen_opts.add_argument(
 regen_opts.add_argument(
     "--use-local-desc", action='store_true', default=False,
     help="update local USE flag description cache (profiles/use.local.desc)")
+regen_opts.add_argument(
+    "--pkg-desc-index", action='store_true', default=False,
+    help="update package description cache (metadata/pkg_desc_index)")
 @regen.bind_main_func
 def regen_main(options, out, err):
     """Regenerate a repository cache."""
@@ -246,6 +250,27 @@ def regen_main(options, out, err):
                         f.write(('%s - %s\n' % (':'.join(k), v)).encode('utf8'))
             except IOError as e:
                 out.error("Unable to update use.local.desc file '%s': %s" % (use_local_desc, e.strerror))
+                return os.EX_IOERR
+        if options.pkg_desc_index:
+            pkg_desc_index = pjoin(repo.location, "metadata", "pkg_desc_index")
+            try:
+                with open(pkg_desc_index, "w") as f:
+                    res = collections.defaultdict(dict)
+                    for p in repo:
+                        try:
+                            res[p.key][p] = p.description
+                        except compatibility.IGNORED_EXCEPTIONS as e:
+                            if isinstance(e, KeyboardInterrupt):
+                                return
+                            raise
+                        except Exception as e:
+                            out_observer.error("caught exception %s while processing %s", e, p)
+                            ret = os.EX_DATAERR
+                    for key in sorted(res):
+                        packages = sorted(res[key])
+                        f.write('%s %s: %s\n' % (key, ' '.join(p.fullver for p in packages), packages[-1].description))
+            except IOError as e:
+                out.error("Unable to update pkg_desc_index file '%s': %s" % (pkg_desc_index, e.strerror))
                 return os.EX_IOERR
     return ret
 

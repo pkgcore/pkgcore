@@ -122,8 +122,9 @@ class MetadataXml(object):
         self._longdescription = longdesc
         self._source = None
 
-        self._local_use = frozenset(
-            x.attrib['name'] for x in tree.findall('use/flag')
+        self._local_use = mappings.ImmutableDict(
+            (x.attrib['name'], ' '.join(''.join(x.itertext()).split()))
+            for x in tree.findall('use/flag')
             if 'name' in x.attrib
         )
 
@@ -140,7 +141,7 @@ class LocalMetadataXml(MetadataXml):
                 raise
             self._maintainers = ()
             self._herds = ()
-            self._local_use = frozenset()
+            self._local_use = mappings.ImmutableDict()
             self._longdescription = None
             self._source = None
 

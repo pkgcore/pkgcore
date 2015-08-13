@@ -19,7 +19,9 @@ demandload(
     'multiprocessing:cpu_count',
     'os',
     're',
+    'textwrap',
     'time',
+    'snakeoil:compatibility',
     'snakeoil.osutils:pjoin,listdir_dirs',
     'snakeoil.lists:iter_stable_unique',
     'pkgcore.ebuild:processor,triggers',
@@ -187,19 +189,25 @@ regen_opts.add_argument(
 regen_opts.add_argument(
     "--rsync", action='store_true', default=False,
     help="perform actions necessary for rsync repos (update metadata/timestamp.chk)")
+regen_opts.add_argument(
+    "--use-local-desc", action='store_true', default=False,
+    help="update local USE flag description cache (profiles/use.local.desc)")
 @regen.bind_main_func
 def regen_main(options, out, err):
     """Regenerate a repository cache."""
 
+    ret = 0
     for repo in iter_stable_unique(options.repos):
         if not repo.operations.supports("regen_cache"):
             out.write("repository %s doesn't support cache regeneration" % (repo,))
             continue
 
+        out_observer = observer.formatter_output(out)
+
         start_time = time.time()
         repo.operations.regen_cache(
             threads=options.threads,
-            observer=observer.formatter_output(out), force=options.force,
+            observer=out_observer, force=options.force,
             eclass_caching=(not options.disable_eclass_caching))
         end_time = time.time()
         if options.verbose:
@@ -214,7 +222,32 @@ def regen_main(options, out, err):
             except IOError as e:
                 out.error("Unable to update timestamp file '%s': %s" % (timestamp, e.strerror))
                 return os.EX_IOERR
-    return 0
+        if options.use_local_desc:
+            use_local_desc = pjoin(repo.location, "profiles", "use.local.desc")
+            try:
+                with open(use_local_desc, "w") as f:
+                    f.write(textwrap.dedent('''\
+                        # This file is deprecated as per GLEP 56 in favor of metadata.xml. Please add
+                        # your descriptions to your package's metadata.xml ONLY.
+                        # * generated automatically using pmaint *\n\n'''))
+                    res = {}
+                    for p in repo:
+                        try:
+                            for flag, desc in p.local_use.iteritems():
+                                res[(p.key, flag)] = desc
+                        except compatibility.IGNORED_EXCEPTIONS as e:
+                            if isinstance(e, KeyboardInterrupt):
+                                return
+                            raise
+                        except Exception as e:
+                            out_observer.error("caught exception %s while processing %s", e, p)
+                            ret = os.EX_DATAERR
+                    for k, v in sorted(res.items()):
+                        f.write(('%s - %s\n' % (':'.join(k), v)).encode('utf8'))
+            except IOError as e:
+                out.error("Unable to update use.local.desc file '%s': %s" % (use_local_desc, e.strerror))
+                return os.EX_IOERR
+    return ret
 
 
 perl_rebuild = subparsers.add_parser(

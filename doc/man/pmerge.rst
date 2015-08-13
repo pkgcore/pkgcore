@@ -32,6 +32,23 @@ matches the default colors and output structure that portage uses.
 
 .. include:: pmerge/main_options.rst
 
+Example Usage
+=============
+
+Merge pkgcore from the gentoo repo::
+
+    pmerge sys-apps/pkgcore::gentoo
+
+Output a simple list of package atoms that would be updated for a global
+update::
+
+    pmerge -uDp --formatter basic @world
+
+Force new binpkgs to be built for the entire system set using a custom
+configuration directory::
+
+    pmerge -uDpeb --config /home/foo/portage @system
+
 See Also
 ========
 

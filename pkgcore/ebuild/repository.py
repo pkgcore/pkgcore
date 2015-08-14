@@ -306,12 +306,12 @@ class _UnconfiguredTree(prototype.tree):
         :return: a package restriction if possible
         """
         abspath = os.path.abspath(path)
+        relpath = abspath[len(self.location):].strip('/')
 
         if not self.contains(abspath):
             raise ValueError("repo doesn't contain: '%s'" % path)
 
-        # extract relative repo path
-        repo_path = abspath[len(self.location):].strip('/').split(os.path.sep)
+        repo_path = relpath.split(os.path.sep) if relpath else []
         restrictions = []
 
         # add restrictions until path components run out

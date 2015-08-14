@@ -42,7 +42,6 @@ _pebuild() {
       typeset -a phases
 
       phases=(
-        clean:"remove the package's temporary directory"
         setup:'run package specific setup actions or checks'
         unpack:'unpack all the sources to the workdir'
         prepare:'preparation of all sources such as applying patches'
@@ -50,9 +49,10 @@ _pebuild() {
         compile:'run compilation steps'
         test:'run test steps'
         install:'install the package to the temp directory'
+        clean:"remove the package's temporary directory"
       )
 
-      _describe -t phases phase phases && ret=0
+      _describe -V -t phases phase phases && ret=0
       ;;
 
     (*)

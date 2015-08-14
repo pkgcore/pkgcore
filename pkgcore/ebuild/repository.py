@@ -302,25 +302,29 @@ class _UnconfiguredTree(prototype.tree):
     def path_restrict(self, path):
         """Return a restriction from a given path in a repo.
 
-        :param path: path inside a repo
-        :return: a package restriction if possible
+        :param path: full or partial path to an ebuild
+        :return: a package restriction matching the given path if possible
         """
         abspath = os.path.abspath(path)
-        relpath = abspath[len(self.location):].strip('/')
 
         if not self.contains(abspath):
-            raise ValueError("repo doesn't contain: '%s'" % path)
+            raise ValueError("'%s' repo doesn't contain: '%s'" % (self.repo_id, path))
 
+        if os.path.isfile(abspath) and not path.endswith('.ebuild'):
+            raise ValueError("file is not an ebuild: '%s'" % (path,))
+
+        relpath = abspath[len(self.location):].strip('/')
         repo_path = relpath.split(os.path.sep) if relpath else []
         restrictions = []
 
         # add restrictions until path components run out
         try:
             restrictions.append(restricts.RepositoryDep(self.repo_id))
-            restrictions.append(restricts.CategoryDep(repo_path[0]))
-            restrictions.append(restricts.PackageDep(repo_path[1]))
-            base = cpv.versioned_CPV("%s/%s" % (repo_path[0], os.path.splitext(repo_path[2])[0]))
-            restrictions.append(restricts.VersionMatch('=', base.version, rev=base.revision))
+            if repo_path[0] in self.categories:
+                restrictions.append(restricts.CategoryDep(repo_path[0]))
+                restrictions.append(restricts.PackageDep(repo_path[1]))
+                base = cpv.versioned_CPV("%s/%s" % (repo_path[0], os.path.splitext(repo_path[2])[0]))
+                restrictions.append(restricts.VersionMatch('=', base.version, rev=base.revision))
         except IndexError:
             pass
         return packages.AndRestriction(*restrictions)

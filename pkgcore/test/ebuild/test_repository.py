@@ -5,11 +5,12 @@
 import os
 import textwrap
 
+from snakeoil.fileutils import touch
 from snakeoil.osutils import ensure_dirs, pjoin
 from snakeoil.test.mixins import TempDirMixin
 
 from pkgcore.ebuild import errors as ebuild_errors
-from pkgcore.ebuild import repository, eclass_cache
+from pkgcore.ebuild import repository, restricts, eclass_cache
 from pkgcore.ebuild.atom import atom
 from pkgcore.repository import errors
 from pkgcore.test import silence_logging
@@ -76,14 +77,54 @@ class UnconfiguredTreeTest(TempDirMixin):
         repo = self.mk_tree(dir2)
         self.assertEqual('testrepo', repo.repo_id)
 
+    def test_path_restrict(self):
+        repo_dir = pjoin(self.dir, 'repo')
+        ensure_dirs(pjoin(repo_dir, 'profiles'))
+        with open(pjoin(repo_dir, 'profiles', 'repo_name'), 'w') as f:
+            f.write('testrepo\n')
+        repo = self.mk_tree(repo_dir)
+        ensure_dirs(pjoin(repo_dir, 'cat', 'foo'))
+        touch(pjoin(repo_dir, 'cat', 'foo', 'foo-1.ebuild'))
+        touch(pjoin(repo_dir, 'cat', 'foo', 'Manifest'))
+
+        with open(pjoin(repo_dir, 'profiles', 'categories'), 'w') as f:
+            f.write('cat\n')
+
+        for path in (self.dir,  # path not in repo
+                     pjoin(repo_dir, 'a'),  # nonexistent category dir
+                     pjoin(repo_dir, 'profiles'),  # non-category dir
+                     pjoin(repo_dir, 'cat', 'a'),  # nonexistent package dir
+                     pjoin(repo_dir, 'cat', 'foo', 'foo-2.ebuild'),  # nonexistent ebuild file
+                     pjoin(repo_dir, 'cat', 'foo', 'Manifest')):  # non-ebuild file
+            self.assertRaises(ValueError, repo.path_restrict, path)
+
+        # repo dir
+        restriction = repo.path_restrict(repo_dir)
+        self.assertEqual(len(restriction), 1)
+        self.assertInstance(restriction[0], restricts.RepositoryDep)
+
+        # category dir
+        restriction = repo.path_restrict(pjoin(repo_dir, 'cat'))
+        self.assertEqual(len(restriction), 2)
+        self.assertInstance(restriction[1], restricts.CategoryDep)
+
+        # package dir
+        restriction = repo.path_restrict(pjoin(repo_dir, 'cat', 'foo'))
+        self.assertEqual(len(restriction), 3)
+        self.assertInstance(restriction[2], restricts.PackageDep)
+
+        # ebuild file
+        restriction = repo.path_restrict(pjoin(repo_dir, 'cat', 'foo', 'foo-1.ebuild'))
+        self.assertEqual(len(restriction), 4)
+        self.assertInstance(restriction[3], restricts.VersionMatch)
+
     @silence_logging
     def test_categories_packages(self):
         ensure_dirs(pjoin(self.dir, 'cat', 'pkg'))
         ensure_dirs(pjoin(self.dir, 'empty', 'empty'))
         ensure_dirs(pjoin(self.dir, 'scripts', 'pkg'))
         ensure_dirs(pjoin(self.dir, 'notcat', 'CVS'))
-        # "touch"
-        open(pjoin(self.dir, 'cat', 'pkg', 'pkg-3.ebuild'), 'w').close()
+        touch(pjoin(self.dir, 'cat', 'pkg', 'pkg-3.ebuild'))
         repo = self.mk_tree(self.dir)
         self.assertEqual(
             {'cat': (), 'notcat': (), 'empty': ()}, dict(repo.categories))

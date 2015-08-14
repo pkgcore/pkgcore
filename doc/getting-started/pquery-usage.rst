@@ -88,15 +88,3 @@ No equivalent                ``pquery --maintainer seemant``           list all 
 It can also do some things equery/emerge do not let you do, like restricting
 based on maintainer or herd and printing various other package attributes. See
 ``--help`` for those. If you miss a query file a ticket.
-
-Freeform Restrictions
-=====================
-
-One possibly interesting feature is:
-
-``pquery --expr "and(or(herd(python), maintainer(me)), match('dev-*/*'))"``
-
-which matches packages in a category starting with dev that are either
-maintained by "me" or in the python herd. This code is not heavily tested and
-the "not" boolean is currently broken. Should be fixed for the next release
-though.

@@ -86,6 +86,7 @@ class UnconfiguredTreeTest(TempDirMixin):
         ensure_dirs(pjoin(repo_dir, 'cat', 'foo'))
         ensure_dirs(pjoin(repo_dir, 'cat', 'bar'))
         ensure_dirs(pjoin(repo_dir, 'tac', 'oof'))
+        touch(pjoin(repo_dir, 'skel.ebuild'))
         touch(pjoin(repo_dir, 'cat', 'foo', 'foo-1.ebuild'))
         touch(pjoin(repo_dir, 'cat', 'foo', 'foo-2.ebuild'))
         touch(pjoin(repo_dir, 'cat', 'foo', 'Manifest'))
@@ -100,6 +101,7 @@ class UnconfiguredTreeTest(TempDirMixin):
         for path in (self.dir,  # path not in repo
                      pjoin(repo_dir, 'a'),  # nonexistent category dir
                      pjoin(repo_dir, 'profiles'),  # non-category dir
+                     pjoin(repo_dir, 'skel.ebuild'),  # not in the correct cat/PN dir layout
                      pjoin(repo_dir, 'cat', 'a'),  # nonexistent package dir
                      pjoin(repo_dir, 'cat', 'foo', 'foo-0.ebuild'),  # nonexistent ebuild file
                      pjoin(repo_dir, 'cat', 'foo', 'Manifest')):  # non-ebuild file

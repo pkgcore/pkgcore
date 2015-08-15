@@ -144,8 +144,7 @@ class tree(prototype.tree):
                 return repo.path_restrict(path)
             except ValueError:
                 continue
-
-        raise ValueError("no repo contains: '%s'" % path)
+        raise
 
     def itermatch(self, restrict, **kwds):
         sorter = kwds.get("sorter", iter)

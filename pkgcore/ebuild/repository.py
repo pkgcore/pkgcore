@@ -310,12 +310,15 @@ class _UnconfiguredTree(prototype.tree):
         if not self.contains(abspath):
             raise ValueError("'%s' repo doesn't contain: '%s'" % (self.repo_id, path))
 
-        if os.path.isfile(abspath) and not path.endswith('.ebuild'):
-            raise ValueError("file is not an ebuild: '%s'" % (path,))
-
         relpath = abspath[len(self.location):].strip('/')
         repo_path = relpath.split(os.path.sep) if relpath else []
         restrictions = []
+
+        if os.path.isfile(abspath):
+            if not path.endswith('.ebuild'):
+                raise ValueError("file is not an ebuild: '%s'" % (path,))
+            elif len(repo_path) != 3:
+                raise ValueError("ebuild not in the correct cat/PN dir layout: '%s'" % (path,))
 
         # add restrictions until path components run out
         try:

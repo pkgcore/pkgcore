@@ -36,8 +36,8 @@ def main(options, out, err):
 
         try:
             restriction = domain.ebuild_repos_raw.path_restrict(target)
-        except ValueError:
-            err.write("no configured ebuild repo contains: '%s'" % target)
+        except ValueError as e:
+            err.write(e)
             return 1
     else:
         try:

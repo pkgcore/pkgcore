@@ -70,9 +70,9 @@ argparser.add_argument(
         extended globbing
             This allows you perform craziness such as ``pmerge "*"`` which will
             probably just stress the resolver out, run into blockers, or
-            otherwise blow things up. Otherwise it can perhaps be used for
-            slightly more sane things like ``pmerge "dev-python/*::repo"``
-            which would install all the python packages from a specific repo.
+            otherwise blow things up. It can perhaps be used for slightly more
+            sane things including ``pmerge "dev-python/*::repo"`` which would
+            install all the python packages from a specific repo.
     """)
 
 query_options = argparser.add_argument_group("Package querying options")

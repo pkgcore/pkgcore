@@ -87,17 +87,22 @@ merge_mode.add_argument(
     help='unmerge a package')
 merge_mode.add_argument(
     '--clean', action='store_true',
-    help='Remove installed packages that are not referenced by any target '
-         'packages/sets; defaults to using the world and system sets if no '
-         'targets are specified. Use with *caution*, this option used incorrectly '
-         'can render your system unusable. Note that this implies --deep.')
+    help='remove installed packages that are not referenced by any target packages/sets',
+    docs="""
+        Defaults to using the world and system sets if no
+        targets are specified. Use with *caution*, this option used incorrectly
+        can render your system unusable. Note that this implies --deep.
+    """)
 merge_mode.add_argument(
     '-p', '--pretend', action='store_true',
     help="do the resolution, but don't merge/fetch anything")
 merge_mode.add_argument(
     '--ignore-failures', action='store_true',
-    help='ignore failures while running all types of tasks including the following: '
-         'sanity checks (pkg_pretend), fetching, dep resolution, and (un)merging')
+    help='ignore failures while running all types of tasks',
+    docs="""
+        This will skip the failures during the following phases: sanity checks
+        (pkg_pretend), fetching, dep resolution, and (un)merging.'
+    """)
 merge_mode.add_argument(
     '-a', '--ask', action='store_true',
     help="do the resolution, but ask to merge/fetch anything")
@@ -122,12 +127,14 @@ resolution_options.add_argument(
     help='force the resolver to verify already installed dependencies')
 resolution_options.add_argument(
     '--preload-vdb-state', action='store_true',
-    help="Enable preloading of the installed packages database. "
-         "This causes the resolver to work with a complete graph, thus "
-         "disallowing actions that conflict with installed packages. If "
-         "disabled, it's possible for the requested action to conflict with "
-         "already installed dependencies that aren't involved in the graph of "
-         "the requested operation.")
+    help="enable preloading of the installed packages database",
+    docs="""
+        This causes the resolver to work with a complete graph, thus
+        disallowing actions that conflict with installed packages. If
+        disabled, it's possible for the requested action to conflict with
+        already installed dependencies that aren't involved in the graph of
+        the requested operation.
+    """)
 resolution_options.add_argument(
     '-i', '--ignore-cycles', action='store_true',
     help="Ignore cycles if they're found to be unbreakable; "

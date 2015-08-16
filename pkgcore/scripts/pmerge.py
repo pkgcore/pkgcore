@@ -101,7 +101,7 @@ merge_mode.add_argument(
     help='ignore failures while running all types of tasks',
     docs="""
         This will skip the failures during the following phases: sanity checks
-        (pkg_pretend), fetching, dep resolution, and (un)merging.'
+        (pkg_pretend), fetching, dep resolution, and (un)merging.
     """)
 merge_mode.add_argument(
     '-a', '--ask', action='store_true',

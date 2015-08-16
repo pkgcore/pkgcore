@@ -54,7 +54,26 @@ argparser = commandline.mk_argparser(
     domain=True, description=__doc__.split('\n', 1)[0])
 argparser.add_argument(
     nargs='*', dest='targets', metavar='TARGET', action=StoreTarget,
-    help="extended atom matching of packages")
+    help="extended matching of packages",
+    docs="""
+        pmerge supports various different possible target arguments including
+        regular atoms, package sets, and an extended globbing syntax.
+
+        atom
+            PMS defined atom syntax, see ebuild(5) for more details.
+
+        package set
+            Used to define lists of packages, the syntax used for these is
+            @pkgset. For example, pmerge supports the usual @system and @world
+            package sets.
+
+        extended globbing
+            This allows you perform craziness such as ``pmerge "*"`` which will
+            probably just stress the resolver out, run into blockers, or
+            otherwise blow things up. Otherwise it can perhaps be used for
+            slightly more sane things like ``pmerge "dev-python/*::repo"``
+            which would install all the python packages from a specific repo.
+    """)
 
 query_options = argparser.add_argument_group("Package querying options")
 query_options.add_argument(

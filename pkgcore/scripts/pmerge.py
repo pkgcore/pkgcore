@@ -68,7 +68,7 @@ argparser.add_argument(
             package sets.
 
         extended globbing
-            This allows you perform craziness such as ``pmerge "*"`` which will
+            This allows craziness such as ``pmerge "*"`` which will
             probably just stress the resolver out, run into blockers, or
             otherwise blow things up. It can perhaps be used for slightly more
             sane things including ``pmerge "dev-python/*::repo"`` which would

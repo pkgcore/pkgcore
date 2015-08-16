@@ -1,6 +1,8 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
+import re
+
 from snakeoil.data_source import data_source
 
 from pkgcore.ebuild import repo_objs
@@ -10,7 +12,7 @@ from pkgcore.test import TestCase
 class TestMetadataXml(TestCase):
 
     @staticmethod
-    def get_metadata_xml(herds=(), maintainers=(), local_use=(), longdescription=None):
+    def get_metadata_xml(herds=(), maintainers=(), local_use={}, longdescription=None):
         hs = ms = us = ls = ""
         if herds:
             hs = "<herd>%s</herd>\n" % "</herd><herd>".join(herds)
@@ -24,8 +26,8 @@ class TestMetadataXml(TestCase):
                 "</maintainer><maintainer>".join(ms)
         if local_use:
             us = ['<use>']
-            for flag in local_use:
-                us.append('<flag name="%s">use flag description</flag>' % flag)
+            for flag, desc in local_use.iteritems():
+                us.append('<flag name="%s">%s</flag>' % (flag, desc))
             us.append('</use>')
             us = '\n'.join(us)
         if longdescription:
@@ -65,11 +67,18 @@ class TestMetadataXml(TestCase):
 
     def test_local_use(self):
         # empty...
-        self.assertEqual(frozenset(), self.get_metadata_xml().local_use)
+        self.assertEqual(dict(), self.get_metadata_xml().local_use)
 
-        local_use = ("foo", "bar")
-        self.assertEqual(sorted(local_use),
-            sorted(self.get_metadata_xml(local_use=local_use).local_use))
+        local_use = {
+            "foo": "description for foo",
+            "bar": "description for bar (<pkg>app-foo/bar</pkg> required)",
+        }
+        metadata_xml = self.get_metadata_xml(local_use=local_use)
+        pkg_tag_re = re.compile(r'</?pkg>')
+        local_use = dict(
+                (k, pkg_tag_re.sub('', v))
+                for k, v in local_use.iteritems())
+        self.assertEqual(local_use, metadata_xml.local_use)
 
     def test_longdesc(self):
         # empty...

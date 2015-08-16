@@ -27,7 +27,7 @@ import optparse
 import os.path
 import sys
 
-from snakeoil import compatibility, formatters, modules
+from snakeoil import cli, compatibility, formatters, modules
 from snakeoil.demandload import demandload
 
 from pkgcore.config import load_config, errors
@@ -591,9 +591,6 @@ class _SubParser(argparse._SubParsersAction):
 
 class ArgumentParser(argparse.ArgumentParser):
 
-    # flag for man page and doc generation
-    _generate_docs = False
-
     def __init__(self,
                  prog=None,
                  usage=None,
@@ -681,22 +678,6 @@ class ArgumentParser(argparse.ArgumentParser):
     def bind_final_check(self, functor):
         self.set_defaults(final_check=functor)
         return functor
-
-
-orig_add_argument = argparse._ActionsContainer.add_argument
-def add_argument(self, *args, **kwargs):
-    """Enable docs keyword args support for arguments.
-
-    This is used to add extended, rST-formatted docs to man pages without
-    affecting the regular help output for scripts.
-    """
-    docs = kwargs.pop('docs', None)
-    action = orig_add_argument(self, *args, **kwargs)
-    # only enable support when generating docs, otherwise its discarded
-    if docs is not None and ArgumentParser._generate_docs:
-        action.docs = docs
-    return action
-argparse._ActionsContainer.add_argument = add_argument
 
 
 class ArgparseCommand(object):

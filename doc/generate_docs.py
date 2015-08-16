@@ -42,8 +42,6 @@ def generate_html():
 
 if __name__ == '__main__':
     sys.path.insert(1, os.path.abspath('..'))
-    from pkgcore.util.commandline import ArgumentParser
-    ArgumentParser._generate_docs = True
 
     argparser = argparse.ArgumentParser(description='generate docs')
     argparser.add_argument('--man', action='store_true', help='generate man files')

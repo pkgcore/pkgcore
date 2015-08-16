@@ -230,6 +230,8 @@ _pmaint() {
             {'(--threads)-t','(-t)--threads'}'[number of threads to use for regeneration (defaults to using all available processors]:number' \
             '--force[force regeneration to occur regardless of staleness checks]' \
             '--rsync[update timestamps for rsync repos]' \
+            '--use-local-desc[update local USE flag description cache (profiles/use.local.desc)]' \
+            '--pkg-desc-index[update package description cache (metadata/pkg_desc_index)]' \
             '*:repo:_repos' \
             && ret=0
           ;;

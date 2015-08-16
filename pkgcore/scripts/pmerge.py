@@ -2,7 +2,7 @@
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
 # License: BSD/GPL2
 
-"""pkgcore package merging and unmerging interface
+"""package merging and unmerging interface
 
 pmerge is the main command-line utility for merging and unmerging packages on a
 system. It provides an interface to install, update, and uninstall ebuilds from

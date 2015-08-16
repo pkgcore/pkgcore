@@ -2,7 +2,7 @@
 # Copyright: 2006-2007 Marien Zwart <marienz@gentoo.org>
 # License: BSD/GPL2
 
-"""pkgcore query interface"""
+"""query interface"""
 
 from functools import partial
 

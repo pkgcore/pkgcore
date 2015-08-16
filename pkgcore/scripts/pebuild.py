@@ -2,7 +2,7 @@
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
 # License: BSD/GPL2
 
-"""pkgcore low-level ebuild utility"""
+"""low-level ebuild utility"""
 
 __all__ = ("argparser", "main")
 

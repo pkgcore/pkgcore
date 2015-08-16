@@ -2,7 +2,7 @@
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
 # License: BSD/GPL2
 
-"""pkgcore repository cache clone utility"""
+"""repository cache clone utility"""
 
 __all__ = ("argparser", "main")
 

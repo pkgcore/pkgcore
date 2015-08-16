@@ -2,7 +2,7 @@
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
 # License: BSD/GPL2
 
-"""pkgcore configuration querying utility"""
+"""configuration querying utility"""
 
 __all__ = (
     "get_classes", "dump", "dump_main", "classes", "classes_main",

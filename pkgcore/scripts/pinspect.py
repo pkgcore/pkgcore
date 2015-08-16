@@ -1,7 +1,7 @@
 # Copyright: 2009-2011 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
-"""pkgcore repository inspection interface"""
+"""repository inspection interface"""
 
 __all__ = (
     "pkgsets", "histo_data", "eapi_usage", "license_usage",

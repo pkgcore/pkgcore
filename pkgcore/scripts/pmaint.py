@@ -184,16 +184,16 @@ def update_use_local_desc(repo, out, err):
                         return
                     raise
                 except Exception as e:
-                    err.write("caught exception '%s' while processing '%s'" % (e, p))
+                    err_msg = "caught exception '%s' while processing '%s'" % (e, p)
                     ret = os.EX_DATAERR
             for k, v in sorted(res.items()):
                 f.write(('%s - %s\n' % (':'.join(k), v)).encode('utf8'))
     except IOError as e:
-        err.write("Unable to update use.local.desc file '%s': %s" % (use_local_desc, e.strerror))
+        err_msg = "Unable to update use.local.desc file '%s': %s" % (use_local_desc, e.strerror)
         ret = os.EX_IOERR
 
     if ret != 0:
-        raise IOError(ret, "Error while processing local USE description cache: '%s'" % use_local_desc)
+        raise IOError(ret, err_msg)
 
 
 def update_pkg_desc_index(repo, out, err):
@@ -211,17 +211,17 @@ def update_pkg_desc_index(repo, out, err):
                         return
                     raise
                 except Exception as e:
-                    err.write("caught exception '%s' while processing '%s'", (e, p))
+                    err_msg = "caught exception '%s' while processing '%s'" % (e, p)
                     ret = os.EX_DATAERR
             for key in sorted(res):
                 packages = sorted(res[key])
                 f.write('%s %s: %s\n' % (key, ' '.join(p.fullver for p in packages), packages[-1].description))
     except IOError as e:
-        err.write("Unable to update pkg_desc_index file '%s': %s" % (pkg_desc_index, e.strerror))
+        err_msg = "Unable to update pkg_desc_index file '%s': %s" % (pkg_desc_index, e.strerror)
         ret = os.EX_IOERR
 
     if ret != 0:
-        raise IOError(ret, "Error while processing package description cache: '%s'" % pkg_desc_index)
+        raise IOError(ret, err_msg)
 
 
 regen = subparsers.add_parser(

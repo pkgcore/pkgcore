@@ -192,7 +192,8 @@ def update_use_local_desc(repo, out, err):
         err.write("Unable to update use.local.desc file '%s': %s" % (use_local_desc, e.strerror))
         ret = os.EX_IOERR
 
-    return ret
+    if ret != 0:
+        raise IOError(ret, "Error while processing local USE description cache: '%s'" % use_local_desc)
 
 
 def update_pkg_desc_index(repo, out, err):
@@ -219,7 +220,8 @@ def update_pkg_desc_index(repo, out, err):
         err.write("Unable to update pkg_desc_index file '%s': %s" % (pkg_desc_index, e.strerror))
         ret = os.EX_IOERR
 
-    return ret
+    if ret != 0:
+        raise IOError(ret, "Error while processing package description cache: '%s'" % pkg_desc_index)
 
 
 regen = subparsers.add_parser(
@@ -286,12 +288,14 @@ def regen_main(options, out, err):
                 err.write("Unable to update timestamp file '%s': %s" % (timestamp, e.strerror))
                 return os.EX_IOERR
 
-        if options.use_local_desc:
-            ret = update_use_local_desc(repo, out, err)
-            if ret != 0:
-                return ret
-        if options.pkg_desc_index:
-            ret = update_pkg_desc_index(repo, out, err)
+        try:
+            if options.use_local_desc:
+                update_use_local_desc(repo, out, err)
+            if options.pkg_desc_index:
+                update_pkg_desc_index(repo, out, err)
+        except IOError as e:
+            err.write(e.strerror)
+            ret = e.errno
 
     return ret
 

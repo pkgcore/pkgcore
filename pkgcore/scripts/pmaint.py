@@ -288,6 +288,8 @@ def regen_main(options, out, err):
 
         if options.use_local_desc:
             ret = update_use_local_desc(repo, out, err)
+            if ret != 0:
+                return ret
         if options.pkg_desc_index:
             ret = update_pkg_desc_index(repo, out, err)
 

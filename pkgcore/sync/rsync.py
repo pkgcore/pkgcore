@@ -188,21 +188,28 @@ class rsync_timestamp_syncer(rsync_syncer):
                 new_timestamp = pjoin(
                     self.basedir, "metadata", ".tmp.timestamp.chk")
                 try:
-                    self.basedir = new_timestamp
-                    self.uri = pjoin(self.uri, "metadata", "timestamp.chk")
-                    ret = rsync_syncer._sync(self, verbosity, output_fd)
-                finally:
-                    self.basedir = basedir
-                    self.uri = uri
-                if not ret:
-                    doit = True
-                else:
-                    delta = self.current_timestamp(new_timestamp) - \
-                        self.last_timestamp
-                    if delta >= 0:
-                        doit = delta > self.forward_sync_delay
+                    try:
+                        self.basedir = new_timestamp
+                        self.uri = pjoin(self.uri, "metadata", "timestamp.chk")
+                        ret = rsync_syncer._sync(self, verbosity, output_fd)
+                    finally:
+                        self.basedir = basedir
+                        self.uri = uri
+                    if not ret:
+                        doit = True
                     else:
-                        doit = delta > self.negative_sync_delay
+                        delta = self.current_timestamp(new_timestamp) - \
+                            self.last_timestamp
+                        if delta >= 0:
+                            doit = delta > self.forward_sync_delay
+                        else:
+                            doit = delta > self.negative_sync_delay
+                finally:
+                    try:
+                        os.remove(new_timestamp)
+                    except OSError as e:
+                        if e.errno != errno.ENOENT:
+                            raise
             if not doit:
                 return True
             ret = rsync_syncer._sync(self, verbosity, output_fd)

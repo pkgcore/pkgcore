@@ -184,16 +184,15 @@ def update_use_local_desc(repo, out, err):
                         return
                     raise
                 except Exception as e:
-                    err_msg = "caught exception '%s' while processing '%s'" % (e, p)
+                    err.write("caught exception '%s' while processing '%s'" % (e, p))
                     ret = os.EX_DATAERR
             for k, v in sorted(res.items()):
                 f.write(('%s - %s\n' % (':'.join(k), v)).encode('utf8'))
     except IOError as e:
-        err_msg = "Unable to update use.local.desc file '%s': %s" % (use_local_desc, e.strerror)
+        err.write("Unable to update use.local.desc file '%s': %s" % (use_local_desc, e.strerror))
         ret = os.EX_IOERR
 
-    if ret != 0:
-        raise IOError(ret, err_msg)
+    return ret
 
 
 def update_pkg_desc_index(repo, out, err):
@@ -211,17 +210,16 @@ def update_pkg_desc_index(repo, out, err):
                         return
                     raise
                 except Exception as e:
-                    err_msg = "caught exception '%s' while processing '%s'" % (e, p)
+                    err.write("caught exception '%s' while processing '%s'", (e, p))
                     ret = os.EX_DATAERR
             for key in sorted(res):
                 packages = sorted(res[key])
                 f.write('%s %s: %s\n' % (key, ' '.join(p.fullver for p in packages), packages[-1].description))
     except IOError as e:
-        err_msg = "Unable to update pkg_desc_index file '%s': %s" % (pkg_desc_index, e.strerror)
+        err.write("Unable to update pkg_desc_index file '%s': %s" % (pkg_desc_index, e.strerror))
         ret = os.EX_IOERR
 
-    if ret != 0:
-        raise IOError(ret, err_msg)
+    return ret
 
 
 regen = subparsers.add_parser(
@@ -260,7 +258,7 @@ regen_opts.add_argument(
 @regen.bind_main_func
 def regen_main(options, out, err):
     """Regenerate a repository cache."""
-    ret = 0
+    ret = []
 
     for repo in iter_stable_unique(options.repos):
         if not repo.operations.supports("regen_cache"):
@@ -286,18 +284,14 @@ def regen_main(options, out, err):
                     f.write(time.strftime("%a, %d %b %Y %H:%M:%S +0000", time.gmtime()))
             except IOError as e:
                 err.write("Unable to update timestamp file '%s': %s" % (timestamp, e.strerror))
-                return os.EX_IOERR
+                ret.append(os.EX_IOERR)
 
-        try:
-            if options.use_local_desc:
-                update_use_local_desc(repo, out, err)
-            if options.pkg_desc_index:
-                update_pkg_desc_index(repo, out, err)
-        except IOError as e:
-            err.write(e.strerror)
-            ret = e.errno
+        if options.use_local_desc:
+            ret.append(update_use_local_desc(repo, out, err))
+        if options.pkg_desc_index:
+            ret.append(update_pkg_desc_index(repo, out, err))
 
-    return ret
+    return int(any(ret))
 
 
 perl_rebuild = subparsers.add_parser(

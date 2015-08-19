@@ -50,7 +50,7 @@ def spawn_bash(mycommand, debug=False, name=None, **keywords):
         args.append(mycommand)
     else:
         args.extend(mycommand)
-    if not name:
+    if name is None:
         name = os.path.basename(args[3])
     return spawn(args, name=name, **keywords)
 
@@ -64,7 +64,7 @@ def spawn_sandbox(mycommand, name=None, **keywords):
         args.extend(mycommand.split())
     else:
         args.extend(mycommand)
-    if not name:
+    if name is None:
         name = os.path.basename(args[1])
     return spawn(args, name=name, **keywords)
 
@@ -141,8 +141,6 @@ def spawn(mycommand, env=None, name=None, fd_pipes=None, returnpid=False,
     :param returnpid: controls whether spawn waits for the process to finish,
         or returns the pid.
     """
-    if env is None:
-        env = {}
     # mycommand is either a str or a list
     if isinstance(mycommand, str):
         mycommand = mycommand.split()
@@ -150,11 +148,6 @@ def spawn(mycommand, env=None, name=None, fd_pipes=None, returnpid=False,
     # If an absolute path to an name file isn't given
     # search for it unless we've been told not to.
     binary = find_binary(mycommand[0])
-
-    # If we haven't been told what file descriptors to use
-    # default to propogating our stdin, stdout and stderr.
-    if fd_pipes is None:
-        fd_pipes = {0: 0, 1: 1, 2: 2}
 
     # mypids will hold the pids of all processes created.
     mypids = []
@@ -215,7 +208,8 @@ def spawn(mycommand, env=None, name=None, fd_pipes=None, returnpid=False,
     # Everything succeeded
     return 0
 
-def _exec(binary, mycommand, name, fd_pipes, env, gid, groups, uid, umask, cwd, pgid):
+def _exec(binary, mycommand, name=None, fd_pipes=None, env=None, gid=None,
+          groups=None, uid=None, umask=None, cwd=None, pgid=None):
     """internal function to handle exec'ing the child process.
 
     If it succeeds this function does not return. It might raise an
@@ -223,6 +217,8 @@ def _exec(binary, mycommand, name, fd_pipes, env, gid, groups, uid, umask, cwd, 
     make sure this is caught and os._exit is called if it does (or
     atexit handlers run twice).
     """
+    if env is None:
+        env = {}
 
     logger.debug(
         'executing %s%s: %s%s',
@@ -233,7 +229,7 @@ def _exec(binary, mycommand, name, fd_pipes, env, gid, groups, uid, umask, cwd, 
 
     # If the process we're creating hasn't been given a name
     # assign it the name of the binary.
-    if not name:
+    if name is None:
         name = os.path.basename(binary)
 
     # Set up the command's argument list.
@@ -245,6 +241,11 @@ def _exec(binary, mycommand, name, fd_pipes, env, gid, groups, uid, umask, cwd, 
             if potential not in protected:
                 protected.add(potential)
                 yield potential
+
+    # If we haven't been told what file descriptors to use
+    # default to propogating our stdin, stdout and stderr.
+    if fd_pipes is None:
+        fd_pipes = {0: 0, 1: 1, 2: 2}
 
     # Set up the command's pipes.
     my_fds = {}
@@ -283,13 +284,13 @@ def _exec(binary, mycommand, name, fd_pipes, env, gid, groups, uid, umask, cwd, 
         os.chdir(cwd)
 
     # Set requested process permissions.
-    if gid:
+    if gid is not None:
         os.setgid(gid)
-    if groups:
+    if groups is not None:
         os.setgroups(groups)
-    if uid:
+    if uid is not None:
         os.setuid(uid)
-    if umask:
+    if umask is not None:
         os.umask(umask)
     if pgid is not None:
         os.setpgid(0, pgid)

@@ -128,7 +128,7 @@ def cleanup_pids(pids=None):
                 pass
 
 def spawn(mycommand, env=None, name=None, fd_pipes=None, returnpid=False,
-          uid=None, gid=None, groups=None, umask=None, cwd=None):
+          uid=None, gid=None, groups=None, umask=None, cwd=None, pgid=None):
 
     """wrapper around execve
 
@@ -166,7 +166,7 @@ def spawn(mycommand, env=None, name=None, fd_pipes=None, returnpid=False,
         # pylint: disable-msg=W0703
         try:
             _exec(binary, mycommand, name, fd_pipes, env, gid, groups,
-                  uid, umask, cwd)
+                  uid, umask, cwd, pgid)
         except Exception as e:
             # We need to catch _any_ exception so that it doesn't
             # propogate out of this function and cause exiting
@@ -215,7 +215,7 @@ def spawn(mycommand, env=None, name=None, fd_pipes=None, returnpid=False,
     # Everything succeeded
     return 0
 
-def _exec(binary, mycommand, name, fd_pipes, env, gid, groups, uid, umask, cwd):
+def _exec(binary, mycommand, name, fd_pipes, env, gid, groups, uid, umask, cwd, pgid):
     """internal function to handle exec'ing the child process.
 
     If it succeeds this function does not return. It might raise an
@@ -291,6 +291,8 @@ def _exec(binary, mycommand, name, fd_pipes, env, gid, groups, uid, umask, cwd):
         os.setuid(uid)
     if umask:
         os.umask(umask)
+    if pgid is not None:
+        os.setpgid(0, pgid)
 
     # finally, we reset the signal handlers that python screws with back to defaults.
     # gentoo bug #309001, #289486

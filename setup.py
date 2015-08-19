@@ -13,10 +13,10 @@ from distutils import log
 from distutils.command.build import build
 from distutils.errors import DistutilsExecError
 from distutils.util import byte_compile
-
 from setuptools import Command, setup, find_packages
 from setuptools.command import install
-from snakeoil.dist import distutils_extensions as pkg_dist
+
+import pkgdist
 
 # These offsets control where we install the pkgcore config files and the EBD
 # bits relative to the install-data path given to the install subcmd.
@@ -28,18 +28,18 @@ EBD_INSTALL_OFFSET = 'lib/pkgcore'
 TOPDIR = os.path.dirname(os.path.abspath(__file__))
 
 
-class mysdist(pkg_dist.sdist):
+class mysdist(pkgdist.sdist):
 
     """sdist command specifying the right files."""
 
-    user_options = pkg_dist.sdist.user_options + [
+    user_options = pkgdist.sdist.user_options + [
         ('build-docs', None, 'build docs'),
         ]
 
-    boolean_options = pkg_dist.sdist.boolean_options + ['build-docs']
+    boolean_options = pkgdist.sdist.boolean_options + ['build-docs']
 
     def initialize_options(self):
-        pkg_dist.sdist.initialize_options(self)
+        pkgdist.sdist.initialize_options(self)
         self.build_docs = False
 
     def make_release_tree(self, base_dir, files):
@@ -69,7 +69,7 @@ class mysdist(pkg_dist.sdist):
                 raise DistutilsExecError("build_man failed")
             shutil.copytree(os.path.join(cwd, "build/sphinx/man"),
                             os.path.join(base_dir, "man"))
-        pkg_dist.sdist.make_release_tree(self, base_dir, files)
+        pkgdist.sdist.make_release_tree(self, base_dir, files)
 
 
 class pkgcore_build(build):
@@ -221,7 +221,7 @@ class pkgcore_install_man(pkgcore_install_docs):
                 d[x] = 'man%s/%s' % (x[-1], os.path.basename(x))
         return d
 
-_base_install = getattr(pkg_dist, 'install', install.install)
+_base_install = getattr(pkgdist, 'install', install.install)
 
 
 class pkgcore_install(_base_install):
@@ -322,7 +322,7 @@ def write_pkgcore_lookup_configs(python_base, install_prefix, injected_bin_path=
     byte_compile([path], optimize=2, prefix=python_base)
 
 
-class test(pkg_dist.test):
+class test(pkgdist.test):
 
     def run(self):
         # This is fairly hacky, but is done to ensure that the tests
@@ -332,7 +332,7 @@ class test(pkg_dist.test):
         original = os.environ.get(key)
         try:
             os.environ[key] = os.path.dirname(os.path.realpath(__file__))
-            return pkg_dist.test.run(self)
+            return pkgdist.test.run(self)
         finally:
             if original is not None:
                 os.environ[key] = original
@@ -341,31 +341,31 @@ class test(pkg_dist.test):
 
 
 extensions = []
-if not pkg_dist.is_py3k:
+if not pkgdist.is_py3k:
     extensions.extend([
-        pkg_dist.OptionalExtension(
+        pkgdist.OptionalExtension(
             'pkgcore.ebuild._atom', ['src/atom.c']),
-        pkg_dist.OptionalExtension(
+        pkgdist.OptionalExtension(
             'pkgcore.ebuild._cpv', ['src/cpv.c']),
-        pkg_dist.OptionalExtension(
+        pkgdist.OptionalExtension(
             'pkgcore.ebuild._depset', ['src/depset.c']),
-        pkg_dist.OptionalExtension(
+        pkgdist.OptionalExtension(
             'pkgcore.ebuild._filter_env', [
                 'src/filter_env.c', 'src/bmh_search.c']),
-        pkg_dist.OptionalExtension(
+        pkgdist.OptionalExtension(
             'pkgcore.restrictions._restrictions', ['src/restrictions.c']),
-        pkg_dist.OptionalExtension(
+        pkgdist.OptionalExtension(
             'pkgcore.ebuild._misc', ['src/misc.c']),
     ])
 
 cmdclass = {
     'sdist': mysdist,
     'build': pkgcore_build,
-    'build_py': pkg_dist.build_py,
-    'build_ext': pkg_dist.build_ext,
+    'build_py': pkgdist.build_py,
+    'build_ext': pkgdist.build_ext,
     'test': test,
     'install': pkgcore_install,
-    'build_scripts': pkg_dist.build_scripts,
+    'build_scripts': pkgdist.build_scripts,
     'install_man': pkgcore_install_man,
     'install_docs': pkgcore_install_docs,
 }

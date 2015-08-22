@@ -34,7 +34,6 @@ from pkgcore.config import load_config, errors
 from pkgcore.util.commandline_optparse import *
 
 demandload(
-    'copy@_copy',
     'inspect',
     'signal',
     'traceback',
@@ -82,7 +81,7 @@ class FormattingHandler(logging.Handler):
 class ExtendCommaDelimited(argparse._AppendAction):
 
     def __call__(self, parser, namespace, values, option_string=None):
-        items = _copy.copy(argparse._ensure_value(namespace, self.dest, []))
+        items = []
         if not self.nargs or self.nargs < 1:
             items.extend(filter(None, values.split(',')))
         else:

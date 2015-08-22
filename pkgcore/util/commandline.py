@@ -35,6 +35,7 @@ from pkgcore.util.commandline_optparse import *
 
 demandload(
     'copy@_copy',
+    'inspect',
     'signal',
     'traceback',
     'snakeoil:osutils',
@@ -754,8 +755,12 @@ def mk_argparser(suppress=False, config=True, domain=True,
         return p
 
     if version:
+        # get calling script's module and project names
+        script = inspect.stack(0)[1][0].f_globals['__name__']
+        project = script.split('.')[0]
         p.add_argument(
-            '--version', action='version', version=get_version('pkgcore', __file__))
+            '--version', action='version',
+            version=get_version(project, os.path.abspath(script)))
     if debug:
         p.add_argument(
             '--debug', action=EnableDebug, help='enable debugging checks')

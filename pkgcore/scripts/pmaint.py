@@ -23,6 +23,7 @@ demandload(
     'textwrap',
     'time',
     'snakeoil:compatibility',
+    'snakeoil.fileutils:AtomicWriteFile',
     'snakeoil.osutils:pjoin,listdir_dirs',
     'snakeoil.lists:iter_stable_unique',
     'pkgcore.ebuild:processor,triggers',
@@ -168,29 +169,34 @@ def update_use_local_desc(repo, out, err):
     """Update a repo's local USE flag description cache (profiles/use.local.desc)"""
     ret = 0
     use_local_desc = pjoin(repo.location, "profiles", "use.local.desc")
+    f = None
     try:
-        with open(use_local_desc, "w") as f:
-            f.write(textwrap.dedent('''\
-                # This file is deprecated as per GLEP 56 in favor of metadata.xml.
-                # Please add your descriptions to your package's metadata.xml ONLY.
-                # * generated automatically using pmaint *\n\n'''))
-            res = {}
-            for p in repo:
-                try:
-                    for flag, desc in p.local_use.iteritems():
-                        res[(p.key, flag)] = desc
-                except compatibility.IGNORED_EXCEPTIONS as e:
-                    if isinstance(e, KeyboardInterrupt):
-                        return
-                    raise
-                except Exception as e:
-                    err.write("caught exception '%s' while processing '%s'" % (e, p))
-                    ret = os.EX_DATAERR
-            for k, v in sorted(res.items()):
-                f.write(('%s - %s\n' % (':'.join(k), v)).encode('utf8'))
+        f = AtomicWriteFile(use_local_desc)
+        f.write(textwrap.dedent('''\
+            # This file is deprecated as per GLEP 56 in favor of metadata.xml.
+            # Please add your descriptions to your package's metadata.xml ONLY.
+            # * generated automatically using pmaint *\n\n'''))
+        res = {}
+        for p in repo:
+            try:
+                for flag, desc in p.local_use.iteritems():
+                    res[(p.key, flag)] = desc
+            except compatibility.IGNORED_EXCEPTIONS as e:
+                if isinstance(e, KeyboardInterrupt):
+                    return
+                raise
+            except Exception as e:
+                err.write("caught exception '%s' while processing '%s'" % (e, p))
+                ret = os.EX_DATAERR
+        for k, v in sorted(res.items()):
+            f.write(('%s - %s\n' % (':'.join(k), v)).encode('utf8'))
+        f.close()
     except IOError as e:
         err.write("Unable to update use.local.desc file '%s': %s" % (use_local_desc, e.strerror))
         ret = os.EX_IOERR
+    finally:
+        if f is not None:
+            f.discard()
 
     return ret
 
@@ -199,25 +205,30 @@ def update_pkg_desc_index(repo, out, err):
     """Update a repo's package description cache (metadata/pkg_desc_index)"""
     ret = 0
     pkg_desc_index = pjoin(repo.location, "metadata", "pkg_desc_index")
+    f = None
     try:
-        with open(pkg_desc_index, "w") as f:
-            res = defaultdict(dict)
-            for p in repo:
-                try:
-                    res[p.key][p] = p.description
-                except compatibility.IGNORED_EXCEPTIONS as e:
-                    if isinstance(e, KeyboardInterrupt):
-                        return
-                    raise
-                except Exception as e:
-                    err.write("caught exception '%s' while processing '%s'", (e, p))
-                    ret = os.EX_DATAERR
-            for key in sorted(res):
-                packages = sorted(res[key])
-                f.write('%s %s: %s\n' % (key, ' '.join(p.fullver for p in packages), packages[-1].description))
+        f = AtomicWriteFile(pkg_desc_index)
+        res = defaultdict(dict)
+        for p in repo:
+            try:
+                res[p.key][p] = p.description
+            except compatibility.IGNORED_EXCEPTIONS as e:
+                if isinstance(e, KeyboardInterrupt):
+                    return
+                raise
+            except Exception as e:
+                err.write("caught exception '%s' while processing '%s'", (e, p))
+                ret = os.EX_DATAERR
+        for key in sorted(res):
+            packages = sorted(res[key])
+            f.write('%s %s: %s\n' % (key, ' '.join(p.fullver for p in packages), packages[-1].description))
+        f.close()
     except IOError as e:
         err.write("Unable to update pkg_desc_index file '%s': %s" % (pkg_desc_index, e.strerror))
         ret = os.EX_IOERR
+    finally:
+        if f is not None:
+            f.discard()
 
     return ret
 

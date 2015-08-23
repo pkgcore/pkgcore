@@ -73,6 +73,13 @@ def main(options, out, err):
     phases = [x for x in options.phase if x != 'clean']
     clean = (len(phases) != len(options.phase))
 
+    unknown_phases = set(phases).difference(pkg.defined_phases)
+    if unknown_phases:
+        err.write(
+            "unknown phase%s: %s" %
+            ('s'[len(unknown_phases) == 1:], ', '.join(unknown_phases)))
+        return 1
+
     if options.no_auto:
         kwds["ignore_deps"] = True
         if "setup" in phases:

@@ -22,6 +22,7 @@ from pkgcore.fs.livefs import iter_scan
 
 demandload(
     "errno",
+    "os",
     'snakeoil:mappings',
     "snakeoil.lists:iflatten_instance",
 )
@@ -44,6 +45,7 @@ def serialize_manifest(pkgdir, fetchables, chfs=None, thin=False):
 
     excludes = frozenset(["CVS", ".svn", "Manifest"])
     aux, ebuild, misc = {}, {}, {}
+    mtimes = []
     if not thin:
         filesdir = '/files/'
         for obj in iter_scan('/', offset=pkgdir, chksum_types=chfs):
@@ -65,6 +67,15 @@ def serialize_manifest(pkgdir, fetchables, chfs=None, thin=False):
                 raise Exception("Unexpected directory found in %r; %r"
                     % (pkgdir, obj.dirname))
             d[pathname] = dict(obj.chksums)
+            mtimes.append(obj.mtime)
+
+    try:
+        # append old Manifest's mtime in case we're thickening
+        # a thin Manifest with only DIST entries changed
+        mtimes.append(os.stat(pkgdir + '/Manifest').st_mtime)
+    except OSError as e:
+        if e.errno != errno.ENOENT:
+            raise
 
     handle = open(pkgdir + '/Manifest', 'w')
     # write it in alphabetical order; aux gets flushed now.
@@ -80,6 +91,13 @@ def serialize_manifest(pkgdir, fetchables, chfs=None, thin=False):
     for mtype, inst in (("EBUILD", ebuild), ("MISC", misc)):
         for path, chksum in sorted(inst.iteritems(), key=_key_sort):
             _write_manifest(handle, mtype, path, chksum)
+
+    handle.close()
+
+    # set mtime of Manifest to that of newest Manifested file
+    if mtimes:
+        max_mtime = max(mtimes)
+        os.utime(pkgdir + '/Manifest', (max_mtime, max_mtime))
 
 
 def _write_manifest(handle, chf, filename, chksums):

@@ -2,6 +2,8 @@
 
 # Copyright 2007 Charlie Shepherd
 
+from __future__ import print_function
+
 from operator import attrgetter
 import sys
 
@@ -9,11 +11,10 @@ try:
     from pkgcore.util import commandline
     from pkgcore.restrictions.boolean import OrRestriction
 except ImportError:
-    print >> sys.stderr, 'Cannot import pkgcore!'
-    print >> sys.stderr, 'Verify it is properly installed and/or ' \
-        'PYTHONPATH is set correctly.'
+    print('Cannot import pkgcore!', file=sys.stderr)
+    print('Verify it is properly installed and/or PYTHONPATH is set correctly.', file=sys.stderr)
     if '--debug' not in sys.argv:
-        print >> sys.stderr, 'Add --debug to the commandline for a traceback.'
+        print('Add --debug to the commandline for a traceback.', file=sys.stderr)
     else:
         raise
     sys.exit(1)

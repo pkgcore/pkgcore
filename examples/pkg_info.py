@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+
 import itertools
 import sys
 
@@ -7,11 +9,10 @@ try:
     from pkgcore.util import commandline
     from pkgcore.restrictions.boolean import OrRestriction
 except ImportError:
-    print >> sys.stderr, 'Cannot import pkgcore!'
-    print >> sys.stderr, 'Verify it is properly installed and/or ' \
-        'PYTHONPATH is set correctly.'
+    print('Cannot import pkgcore!', file=sys.stderr)
+    print('Verify it is properly installed and/or PYTHONPATH is set correctly.', file=sys.stderr)
     if '--debug' not in sys.argv:
-        print >> sys.stderr, 'Add --debug to the commandline for a traceback.'
+        print('Add --debug to the commandline for a traceback.', file=sys.stderr)
     else:
         raise
     sys.exit(1)
@@ -26,7 +27,7 @@ class OptionParser(commandline.OptionParser):
     def check_values(self, values, args):
         values, args = commandline.OptionParser.check_values(
             self, values, args)
-        values.repo = values.config.get_default('domain').repos[1]
+        values.repo = values.config.get_default('domain').ebuild_repos
         values.restrict = OrRestriction(*commandline.convert_to_restrict(args))
         return values, ()
 

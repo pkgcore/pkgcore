@@ -73,13 +73,6 @@ def main(options, out, err):
     phases = [x for x in options.phase if x != 'clean']
     clean = (len(phases) != len(options.phase))
 
-    unknown_phases = set(phases).difference(pkg.defined_phases)
-    if unknown_phases:
-        err.write(
-            "unknown phase%s: %s" %
-            ('s'[len(unknown_phases) == 1:], ', '.join(unknown_phases)))
-        return 1
-
     if options.no_auto:
         kwds["ignore_deps"] = True
         if "setup" in phases:
@@ -90,7 +83,15 @@ def main(options, out, err):
     if clean:
         build.cleanup(force=True)
     build._reload_state()
-    phase_funcs = (getattr(build, x) for x in phases)
+
+    phase_funcs = []
+    for phase in phases:
+        p = getattr(build, phase, None)
+        if p is None:
+            err.write("unknown phase: '%s'" % phase)
+            return 1
+        phase_funcs.append(p)
+
     for phase, f in izip(phases, phase_funcs):
         out.write('executing phase %s' % (phase,))
         f(**kwds)

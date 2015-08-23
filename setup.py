@@ -32,16 +32,6 @@ class mysdist(pkgdist.sdist):
 
     """sdist command specifying the right files."""
 
-    user_options = pkgdist.sdist.user_options + [
-        ('build-docs', None, 'build docs'),
-        ]
-
-    boolean_options = pkgdist.sdist.boolean_options + ['build-docs']
-
-    def initialize_options(self):
-        pkgdist.sdist.initialize_options(self)
-        self.build_docs = False
-
     def make_release_tree(self, base_dir, files):
         """Create and populate the directory tree that is put in source tars.
 
@@ -60,15 +50,6 @@ class mysdist(pkgdist.sdist):
         shutil.copytree(os.path.join(cwd, 'bash', 'funcnames'),
                         os.path.join(base_dir, 'bash', 'funcnames'))
 
-        if self.build_docs:
-            # need to make sure we're using a built version of pkgcore for the
-            # current python version since doc/conf.py imports pkgcore modules
-            build_py = self.get_finalized_command('build_py')
-            build_py.run()
-            if subprocess.call([sys.executable, 'setup.py', 'build_man'], cwd=cwd):
-                raise DistutilsExecError("build_man failed")
-            shutil.copytree(os.path.join(cwd, "build/sphinx/man"),
-                            os.path.join(base_dir, "man"))
         pkgdist.sdist.make_release_tree(self, base_dir, files)
 
 

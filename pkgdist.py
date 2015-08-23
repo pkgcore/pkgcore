@@ -13,6 +13,7 @@ import inspect
 import math
 import os
 import sys
+import subprocess
 import textwrap
 
 os.environ["SNAKEOIL_DEMANDLOAD_PROTECTION"] = 'n'
@@ -60,6 +61,16 @@ class sdist(dst_sdist.sdist):
 
     package_namespace = project
 
+    user_options = dst_sdist.sdist.user_options + [
+        ('build-docs', None, 'build docs'),
+    ]
+
+    boolean_options = dst_sdist.sdist.boolean_options + ['build-docs']
+
+    def initialize_options(self):
+        dst_sdist.sdist.initialize_options(self)
+        self.build_docs = False
+
     def generate_verinfo(self, base_dir):
         from snakeoil.version import get_git_version
         log.info('generating _verinfo')
@@ -77,6 +88,19 @@ class sdist(dst_sdist.sdist):
         into the release and adds generated files that should not
         exist in a working tree.
         """
+
+        if self.build_docs:
+            import shutil
+            cwd = os.getcwd()
+            # need to make sure we're using a built version of pkgcore for the
+            # current python version since doc/conf.py imports pkgcore modules
+            build_py = self.get_finalized_command('build_py')
+            build_py.run()
+            if subprocess.call([sys.executable, 'setup.py', 'build_man'], cwd=cwd):
+                raise errors.DistutilsExecError("build_man failed")
+            shutil.copytree(os.path.join(cwd, "build/sphinx/man"),
+                            os.path.join(base_dir, "man"))
+
         dst_sdist.sdist.make_release_tree(self, base_dir, files)
         self.generate_verinfo(base_dir)
 

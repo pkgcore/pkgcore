@@ -18,18 +18,16 @@ except ImportError:
     sys.exit(1)
 
 
-class OptionParser(commandline.OptionParser):
-    def __init__(self, **kwargs):
-        commandline.OptionParser.__init__(
-            self, description=__doc__, usage='%prog <atom>',
-            **kwargs)
+argparser = commandline.mk_argparser(color=False, version=False)
+argparser.add_argument(
+    'target', nargs='+', help='target package atoms')
 
-    def check_values(self, values, args):
-        values, args = commandline.OptionParser.check_values(
-            self, values, args)
-        values.repo = values.config.get_default('domain').ebuild_repos
-        values.restrict = OrRestriction(*commandline.convert_to_restrict(args))
-        return values, ()
+
+@argparser.bind_final_check
+def check_args(parser, namespace):
+    namespace.repo = namespace.domain.ebuild_repos
+    namespace.restrict = OrRestriction(
+        *commandline.convert_to_restrict(namespace.target))
 
 
 def getter(pkg):
@@ -37,6 +35,7 @@ def getter(pkg):
             getattr(pkg, "herds", None))
 
 
+@argparser.bind_main_func
 def main(options, out, err):
     for t, pkgs in itertools.groupby(
             options.repo.itermatch(options.restrict, sorter=sorted), getter):
@@ -55,4 +54,4 @@ def main(options, out, err):
         out.write()
 
 if __name__ == '__main__':
-    commandline.main({None: (OptionParser, main)})
+    commandline.main(argparser)

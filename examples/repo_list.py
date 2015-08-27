@@ -18,31 +18,23 @@ except ImportError:
     sys.exit(1)
 
 
-class OptionParser(commandline.OptionParser):
+argparser = commandline.mk_argparser(color=False, version=False)
+argparser.add_argument(
+    '-r', '--repo', action=commandline.StoreRepoObject,
+    help='repo to give info about (default from domain if omitted)')
 
-    def __init__(self, **kwargs):
-        commandline.OptionParser.__init__(
-            self, description=__doc__, usage='%prog [options]',
-            **kwargs)
-        self.add_option("--repo", "-r", action='callback', type='string',
-            callback=commandline.config_callback, callback_args=('repo',),
-            help='repo to give info about (default from domain if omitted)')
 
-    def check_values(self, values, args):
-        values, args = commandline.OptionParser.check_values(
-            self, values, args)
+@argparser.bind_final_check
+def check_args(parser, namespace):
+    # Get repo(s) to operate on.
+    if namespace.repo:
+        repos = (namespace.repo,)
+    else:
+        repos = namespace.domain.repos
+    namespace.repos = get_virtual_repos(get_raw_repos(repos), False)
 
-        if args: self.error("This script takes no arguments")
 
-        # Get repo(s) to operate on.
-        if values.repo:
-            repos = (values.repo,)
-        else:
-            repos = values.config.get_default('domain').repos
-        values.repos = get_virtual_repos(get_raw_repos(repos), False)
-
-        return values, ()
-
+@argparser.bind_main_func
 def main(options, out, err):
     for repo in options.repos:
         out.write("Repo ID: %s" % repo.repo_id)
@@ -55,5 +47,6 @@ def main(options, out, err):
         out.write("%d categories" % len(repo.packages))
         out.write()
 
+
 if __name__ == '__main__':
-    commandline.main({None: (OptionParser, main)})
+    commandline.main(argparser)

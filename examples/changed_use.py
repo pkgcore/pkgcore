@@ -1,10 +1,10 @@
 #!/usr/bin/env python
-
 # Copyright 2007 Charlie Shepherd
 
 from __future__ import print_function
 
 from operator import attrgetter
+import os
 import sys
 
 try:
@@ -19,43 +19,34 @@ except ImportError:
         raise
     sys.exit(1)
 
+argparser = commandline.mk_argparser(color=False, version=False)
+argparser.add_argument(
+    'target', nargs='+', help='target package atoms')
+argparser.add_argument(
+    '--repo', action=commandline.StoreRepoObject,
+    help='repo to use (default from domain if omitted).')
+argparser.add_argument(
+    '--print_type', '-t', default="cpvstr",
+    choices=("slotted_atom", "versioned_atom", "cpvstr"),
+    help='''type of atom to output:
+                'versioned_atom' : a valid versioned atom,
+                'slotted_atom'   : a valid slotted atom,
+                'cpvstr'         : the cpv of the package''')
 
-class OptionParser(commandline.OptionParser):
 
-    def __init__(self, **kwargs):
-        commandline.OptionParser.__init__(
-            self, description=__doc__, usage='%prog [options]',
-            **kwargs)
-        self.add_option('--repo', action='callback', type='string',
-            callback=commandline.config_callback,
-            callback_args=('repo',),
-            help='repo to use (default from domain if omitted).')
-        self.add_option('--verbose', '-v', action='store_true', default=False,
-            help='print packages that have not changed too')
-        self.add_option('--quiet', '-q', action='store_true', default=False,
-            help="don't print changed useflags")
-        self.add_option('--print_type', '-t',
-            type="choice",
-            choices=("slotted_atom", "versioned_atom", "cpvstr"),
-            default="cpvstr",
-            help='''type of atom to output:
-                       'versioned_atom' : a valid versioned atom,
-                       'slotted_atom'   : a valid slotted atom,
-                       'cpvstr'         : the cpv of the package''')
+@argparser.bind_final_check
+def check_args(parser, namespace):
+    domain = namespace.domain
+    namespace.vdb = domain.vdb[0]
+    if not namespace.repo:
+        namespace.repo = domain.repos[1]
 
-    def check_values(self, values, args):
-        values, args = commandline.OptionParser.check_values(
-            self, values, args)
+    namespace.restrict = OrRestriction(
+        *commandline.convert_to_restrict(namespace.target))
+    namespace.outputter = attrgetter(namespace.print_type)
 
-        domain = values.config.get_default('domain')
-        values.vdb = domain.vdb[0]
-        if not values.repo:
-            values.repo = domain.repos[1]
 
-        values.restrict = OrRestriction(*commandline.convert_to_restrict(args))
-        values.outputter = attrgetter(values.print_type)
-        return values, ()
-
+@argparser.bind_main_func
 def main(options, out, err):
     repo = options.repo
     for built in options.vdb.itermatch(options.restrict):
@@ -69,11 +60,12 @@ def main(options, out, err):
                 if options.quiet:
                     out.write(options.outputter(current))
                 else:
-                    out.write("for package %s, %d flags have changed:\n\t%s" %
-                          (current.cpvstr, len(changed_flags), ' '.join(changed_flags)))
+                    out.write(
+                        "for package %s, %d flags have changed:\n\t%s" %
+                        (current.cpvstr, len(changed_flags), ' '.join(changed_flags)))
             else:
                 if options.verbose:
                     out.write("%s is the same as it was before" % current.cpvstr)
 
 if __name__ == '__main__':
-    commandline.main({None: (OptionParser, main)})
+    commandline.main(argparser)

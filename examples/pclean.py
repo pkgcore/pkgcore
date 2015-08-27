@@ -5,6 +5,7 @@
 
 from __future__ import print_function
 
+import argparse
 from os.path import basename
 import sys
 
@@ -29,34 +30,35 @@ except ImportError:
     sys.exit(1)
 
 
-class OptionParser(commandline.OptionParser):
-    def __init__(self, **kwargs):
-        commandline.OptionParser.__init__(self, description=__doc__, **kwargs)
-        self.add_option("--exclude", "-e", action='append', dest='excludes')
-        self.add_option("--exclude-file", "-E", action='callback', dest='excludes',
-            callback=commandline.read_file_callback, type="string",
-            help='path to the exclusion file')
-        self.add_option("--ignore-failures", "-i", action="store_true",
-            default=False, help="ignore checksum parsing errors")
+argparser = commandline.mk_argparser(color=False, version=False)
+argparser.add_argument(
+    "--exclude", "-e", action='append', dest='excludes')
+argparser.add_argument(
+    "--exclude-file", "-E",
+    type=argparse.FileType('r'),
+    help='path to the exclusion file')
+argparser.add_argument(
+    "--ignore-failures", "-i", action="store_true",
+    default=False, help="ignore checksum parsing errors")
 
-    def check_values(self, values, args):
-        values, args = commandline.OptionParser.check_values(
-            self, values, args)
 
-        if args:
-            self.error("This script takes no arguments")
-        domain = values.config.get_default('domain')
-        values.vdb = domain.vdb
-        values.repo = multiplex_tree(*get_virtual_repos(domain.repos, False))
-        values.distdir = domain.fetcher.distdir
-        restrict = commandline.convert_to_restrict(values.excludes, default=None)
-        if restrict != [None]:
-            values.restrict = OrRestriction(negate=True, *restrict)
-        else:
-            values.restrict = packages.AlwaysTrue
+@argparser.bind_final_check
+def check_args(parser, namespace):
+    domain = namespace.domain
+    namespace.vdb = domain.vdb
+    namespace.repo = multiplex_tree(*get_virtual_repos(domain.repos, False))
+    namespace.distdir = domain.fetcher.distdir
+    excludes = namespace.excludes if namespace.excludes is not None else []
+    if namespace.exclude_file is not None:
+        excludes.extend(namespace.exclude_file.read().split('\n'))
+    restrict = commandline.convert_to_restrict(excludes, default=None)
+    if restrict != [None]:
+        namespace.restrict = OrRestriction(negate=True, *restrict)
+    else:
+        namespace.restrict = packages.AlwaysTrue
 
-        return values, ()
 
+@argparser.bind_main_func
 def main(options, out, err):
     if options.debug:
         out.write('starting scanning distdir %s...' % options.distdir)
@@ -68,10 +70,12 @@ def main(options, out, err):
     pfiles = set()
     for pkg in options.repo.itermatch(options.restrict, sorter=sorted):
         try:
-            pfiles.update(fetchable.filename for fetchable in
-                        iflatten_instance(pkg.fetchables, fetchable_kls))
+            pfiles.update(
+                fetchable.filename for fetchable in
+                iflatten_instance(pkg.fetchables, fetchable_kls))
         except ParseChksumError as e:
-            err.write("got corruption error '%s', with package %s " %
+            err.write(
+                "got corruption error '%s', with package %s " %
                 (e, pkg.cpvstr))
             if options.ignore_failures:
                 err.write("skipping...")
@@ -80,7 +84,8 @@ def main(options, out, err):
                 err.write("aborting...")
                 return 1
         except Exception as e:
-            err.write("got error '%s', parsing package %s in repo '%s'" %
+            err.write(
+                "got error '%s', parsing package %s in repo '%s'" %
                 (e, pkg.cpvstr, pkg.repo))
             raise
 
@@ -89,4 +94,4 @@ def main(options, out, err):
         out.write(pjoin(d, file))
 
 if __name__ == '__main__':
-    commandline.main({None: (OptionParser, main)})
+    commandline.main(argparser)

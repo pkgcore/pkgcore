@@ -802,7 +802,13 @@ def mk_argparser(suppress=False, config=True, domain=True,
 
 
 def argparse_parse(parser, args, namespace=None):
-    namespace = parser.parse_args(args, namespace=namespace)
+    try:
+        namespace = parser.parse_args(args, namespace=namespace)
+    except:
+        # enable tracebacks for any argument parsing failure
+        namespace.debug = True
+        raise
+
     main = getattr(namespace, 'main_func', None)
     if main is None:
         raise Exception(

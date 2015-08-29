@@ -1,9 +1,9 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
+import os
 import pwd
 
-from pkgcore.os_data import root_uid
 from pkgcore.sync import base, svn
 from pkgcore.test import TestCase, SkipTest
 from pkgcore.test.sync import make_bogus_syncer, make_valid_syncer
@@ -18,10 +18,11 @@ existing_uid = pwd.getpwnam(existing_user).pw_uid
 class TestBase(TestCase):
 
     def test_init(self):
-        self.assertRaises(base.syncer_exception, bogus,
+        self.assertRaises(
+            base.syncer_exception, bogus,
             "/tmp/foon", "http://dar")
         o = valid("/tmp/foon", "http://dar")
-        self.assertEqual(o.local_user, root_uid)
+        self.assertEqual(o.local_user, os.getuid())
         self.assertEqual(o.uri, "http://dar")
 
         o = valid("/tmp/foon", "http://%s::@site" % existing_user)

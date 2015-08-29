@@ -70,12 +70,12 @@ class syncer(object):
         :param raw_uri: string uri to split users from; harring::ferringb:pass
           for example is local user 'harring', remote 'ferringb',
           password 'pass'
-        :return: (local user, remote user, remote pass), defaults to root_uid
-          if no local user specified
+        :return: (local user, remote user, remote pass), defaults to the
+            current process's uid if no local user specified
         """
         uri = raw_uri.split("::", 1)
         if len(uri) == 1:
-            return os_data.root_uid, raw_uri
+            return os.getuid(), raw_uri
         try:
             if uri[1].startswith("@"):
                 uri[1] = uri[1][1:]

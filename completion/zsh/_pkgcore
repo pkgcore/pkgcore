@@ -290,9 +290,19 @@ _pmerge() {
 _pquery() {
   local curcontext=$curcontext state state_descr line ret=1
   typeset -A opt_args
+  typeset -a repo
+
+  repo=(
+    '--raw[disable configuration and filtering]'
+    '--no-filters[disable all license filtering and visibility filtering]'
+    "--virtuals[specific virtuals handling (everything is matched by default)]:options:((only\:'only match virtuals' disable\:'no matching virtuals'))"
+    {'(--repo)-r','(-r)--repo'}'[target repository]:repo:_repos'
+    '--all-repos[search all repos including the vdb]'
+  )
 
   _arguments -C \
     $domain_common_args \
+    $repo \
     && ret=0
 
   return ret

@@ -21,12 +21,17 @@ cli_common_args=(
   $cli_common_output_args
 )
 
+cli_domain_common_args=(
+  $cli_common_args
+  '--domain[domain to use for this operation]'
+)
+
 _pebuild() {
   local curcontext=$curcontext state state_descr line ret=1
   typeset -A opt_args
 
   _arguments -C \
-    $cli_common_args \
+    $cli_domain_common_args \
     "--no-auto[run just the specified phases; it's up to the invoker to get the order right]" \
     '(-): :->atom-or-ebuild' \
     '(-)*:: :->phase' \
@@ -276,8 +281,7 @@ _pmerge() {
   typeset -A opt_args
 
   _arguments -C \
-    $cli_common_args \
-    '--domain[domain to use for this operation]' \
+    $cli_domain_common_args \
     && ret=0
 
   return ret
@@ -288,8 +292,7 @@ _pquery() {
   typeset -A opt_args
 
   _arguments -C \
-    $cli_common_args \
-    '--domain[domain to use for this operation]' \
+    $cli_domain_common_args \
     && ret=0
 
   return ret

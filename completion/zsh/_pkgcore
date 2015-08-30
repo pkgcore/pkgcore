@@ -1,6 +1,6 @@
 #compdef pebuild pinspect pmaint pmerge pquery
 
-cli_common_main_args=(
+common_main_args=(
   '(- :)'--version'[show version information and exit]'
   '--add-config[modify an existing configuration section]'
   '--new-config[add a new configuration section]'
@@ -9,20 +9,20 @@ cli_common_main_args=(
   "--color=[Color output]:yes/no:((y\:'yes' n\:'no'))"
 )
 
-cli_common_output_args=(
+common_output_args=(
   '(- :)'{-h,--help}'[show help information and exit]'
   '(--debug --help -h)--debug[enable debugging output]'
   '(--quiet -q --verbose -v)'{-q,--quiet}'[suppress non-error output]'
   '(--verbose -v --quiet -q)'{-v,--verbose}'[show verbose output]'
 )
 
-cli_common_args=(
-  $cli_common_main_args
-  $cli_common_output_args
+common_args=(
+  $common_main_args
+  $common_output_args
 )
 
-cli_domain_common_args=(
-  $cli_common_args
+domain_common_args=(
+  $common_args
   '--domain[domain to use for this operation]'
 )
 
@@ -31,7 +31,7 @@ _pebuild() {
   typeset -A opt_args
 
   _arguments -C \
-    $cli_domain_common_args \
+    $domain_common_args \
     "--no-auto[run just the specified phases; it's up to the invoker to get the order right]" \
     '(-): :->atom-or-ebuild' \
     '(-)*:: :->phase' \
@@ -73,7 +73,7 @@ _pinspect() {
   typeset -A opt_args
 
   _arguments -C \
-    $cli_common_args \
+    $common_args \
     '(-): :->command' \
     '(-)*:: :->subcommand' \
     && ret=0
@@ -188,7 +188,7 @@ _pmaint() {
   typeset -A opt_args
 
   _arguments -C \
-    $cli_common_args \
+    $common_args \
     '(-): :->command' \
     '(-)*:: :->subcommand' \
     && ret=0
@@ -215,13 +215,13 @@ _pmaint() {
       case $line[1] in
         (sync)
           _arguments -C -w -S -s -A '-*' \
-            $cli_common_output_args \
+            $common_output_args \
             '*:repo:_repos' \
             && ret=0
           ;;
         (copy)
           _arguments -C -w -S -s -A '-*' \
-            $cli_common_output_args \
+            $common_output_args \
             {'(--source-repo)-s','(-s)--source-repo'}'[copy strictly from the supplied repository]:repo:_repos' \
             {'(--ignore-missing)-i','(-i)--ignore-missing'}"[if a matching pkg already exists in the target, don't update it]" \
             ':target repo:_repos' \
@@ -230,7 +230,7 @@ _pmaint() {
           ;;
         (regen)
           _arguments -C -w -S -s -A '-*' \
-            $cli_common_output_args \
+            $common_output_args \
             '--disable-eclass-caching[disable caching eclasses into functions (results in a ~2x slower regen process, only disable when debugging)]' \
             {'(--threads)-t','(-t)--threads'}'[number of threads to use for regeneration (defaults to using all available processors]:number' \
             '--force[force regeneration to occur regardless of staleness checks]' \
@@ -242,26 +242,26 @@ _pmaint() {
           ;;
         (perl-rebuild)
           _arguments -C -w -S -s -A '-*' \
-            $cli_common_output_args \
+            $common_output_args \
             ':new perl version (e.g. 5.22.0):' \
             && ret=0
           ;;
         (env-update)
           _arguments -C -w -S -s -A '-*' \
-            $cli_common_output_args \
+            $common_output_args \
             '--skip-ldconfig[do not update etc/ldso.conf and ld.so.cache]' \
             && ret=0
           ;;
         (mirror)
           _arguments -C -w -S -s -A '-*' \
-            $cli_common_output_args \
+            $common_output_args \
             {'(--ignore-failures)-f','(-f)--ignore-failures'}'[if a failure occurs, keep going]' \
             ':query:' \
             && ret=0
           ;;
         (digest)
           _arguments -C -w -S -s -A '-*' \
-            $cli_common_output_args \
+            $common_output_args \
             {'(--repo)-r','(-r)--repo'}'[target repository]:repo:_repos' \
             '*::ebuild:_files -g \*.ebuild' \
             && ret=0
@@ -281,7 +281,7 @@ _pmerge() {
   typeset -A opt_args
 
   _arguments -C \
-    $cli_domain_common_args \
+    $domain_common_args \
     && ret=0
 
   return ret
@@ -292,7 +292,7 @@ _pquery() {
   typeset -A opt_args
 
   _arguments -C \
-    $cli_domain_common_args \
+    $domain_common_args \
     && ret=0
 
   return ret

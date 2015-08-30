@@ -272,11 +272,27 @@ _pmaint() {
 }
 
 _pmerge() {
-  _nothing
+  local curcontext=$curcontext state state_descr line ret=1
+  typeset -A opt_args
+
+  _arguments -C \
+    $cli_common_args \
+    '--domain[domain to use for this operation]' \
+    && ret=0
+
+  return ret
 }
 
 _pquery() {
-  _nothing
+  local curcontext=$curcontext state state_descr line ret=1
+  typeset -A opt_args
+
+  _arguments -C \
+    $cli_common_args \
+    '--domain[domain to use for this operation]' \
+    && ret=0
+
+  return ret
 }
 
 _repos() {

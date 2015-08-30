@@ -2,7 +2,7 @@
 # Copyright: 2006-2007 Marien Zwart <marienz@gentoo.org>
 # License: BSD/GPL2
 
-"""query interface"""
+"""package querying interface"""
 
 from functools import partial
 
@@ -431,22 +431,27 @@ argparser = commandline.mk_argparser(
 
 repo_group = argparser.add_argument_group(
     'Repository matching options',
-    'options controlling which repositories to inspect.')
+    'options controlling which repositories to inspect')
 repo_group.add_argument(
     '--raw', action='store_true', default=False,
-    help="With this switch enabled, no configuration is used, and no filtering "
-         " is done.  This means you see the raw dependencies, rather than the "
-         "dependencies rendered via your USE configuration.  Primarily useful "
-         "for people who need to look under the hood- ebuild devs, PM tool "
-         "authors, etc.  Note this option ignores --domain if is specified.")
+    help="disable configuration and filtering ",
+    docs="""
+        This means you see the raw dependencies, rather than the
+        dependencies rendered via your USE configuration. Primarily useful
+        for people who need to look under the hood- ebuild devs, PM tool
+        authors, etc. Note this option ignores --domain if is specified.
+    """)
 repo_group.add_argument(
     '--no-filters', action='store_true', default=False,
-    help="With this option enabled, all license filtering, visibility filtering"
-         " (ACCEPT_KEYWORDS, package masking, etc) is turned off.")
+    help="disable all license filtering and visibility filtering",
+    docs="""
+        This means all package filtering mechanisms such as ACCEPT_KEYWORDS and
+        package.mask are disabled.
+    """)
 repo_group.add_argument(
     '--virtuals', action='store', choices=('only', 'disable'),
     help='arg "only" for only matching virtuals, "disable" to not match '
-         'virtuals at all. Default is to match everything.')
+         'virtuals at all (default is to match everything)')
 
 repo_mux = repo_group.add_mutually_exclusive_group()
 
@@ -466,7 +471,7 @@ class RawAwareStoreRepoObject(commandline.StoreRepoObject):
 
 repo_mux.add_argument(
     '-r', '--repo', action=RawAwareStoreRepoObject, priority=29,
-    help='repo to use (default from domain if omitted).')
+    help='repo to use (default from domain if omitted)')
 repo_mux.add_argument(
     '--all-repos', action='store_true',
     help='search all repos, vdb included')
@@ -532,41 +537,47 @@ add_query(
 add_query(
     '--all', action='append_const', dest='all',
     const=packages.AlwaysTrue, type=None, suppress_nargs=True,
-    help='Match all packages (equivalent to "pquery *").  '
-         'If no query options are specified, this option is enabled.')
+    help='match all packages (equivalent to "pquery *")',
+    docs="""
+        If no query options are specified, this option is enabled.
+    """)
 add_query(
     '--has-use', action='append', dest='has_use',
     type=parserestrict.comma_separated_containment('iuse'),
-    help='Exact string match on a USE flag.')
+    help='exact string match on a USE flag')
 add_query(
     '--license', action='append', dest='license',
     type=parserestrict.comma_separated_containment('license'),
-    help='exact match on a license.')
+    help='exact match on a license')
 add_query(
     '--herd', action='append', dest='herd',
     type=parserestrict.comma_separated_containment('herds'),
-    help='exact match on a herd.')
+    help='exact match on a herd')
 
 query.add_argument(
     '--revdep', nargs=1,
     action=commandline.Expansion,
     subst=(('--restrict-revdep', '%(0)s'), ('--print-revdep', '%(0)s')),
-    help='shorthand for --restrict-revdep atom --print-revdep atom. '
-         '--print-revdep is slow, use just --restrict-revdep if you just '
-         'need a list.')
+    help='shorthand for --restrict-revdep atom --print-revdep atom',
+    docs="""
+         Note that --print-revdep is slow, use --restrict-revdep if you
+         just need a list.
+    """)
 
 query.add_argument(
     '--revdep-pkgs', nargs=1,
     action=commandline.Expansion,
     subst=(('--restrict-revdep-pkgs', '%(0)s'), ('--print-revdep', '%(0)s')),
-    help='shorthand for --restrict-revdep-pkgs atom '
-         '--print-revdep atom. --print-revdep is slow, use just '
-         '--restrict-revdep if you just need a list.')
+    help='shorthand for --restrict-revdep-pkgs atom --print-revdep atom',
+    docs="""
+        Note that --print-revdep is slow, use --restrict-revdep if you
+        just need a list.
+    """)
 
 @bind_add_query(
     '--restrict-revdep', action='append',
     default=[], dest='restrict_revdep',
-    help='Dependency on an atom.')
+    help='dependency on an atom')
 def parse_revdep(value):
     """Value should be an atom, packages with deps intersecting that match."""
     try:
@@ -587,7 +598,7 @@ def _revdep_pkgs_match(pkgs, value):
     '--restrict-revdep-pkgs', action='append', type=atom.atom,
     default=[], dest='restrict_revdep_pkgs',
     bind='final_converter',
-    help='Dependency on pkgs that match a specific atom.')
+    help='dependency on pkgs that match a specific atom')
 def revdep_pkgs_finalize(sequence, namespace):
     if not sequence:
         return []
@@ -604,7 +615,7 @@ def revdep_pkgs_finalize(sequence, namespace):
 
 @bind_add_query(
     '--description', '-S', action='append', dest='description',
-    help='regexp search on description and longdescription.')
+    help='regexp search on description and longdescription')
 def parse_description(value):
     """Value is used as a regexp matching description or longdescription."""
     matcher = mk_strregex(value, case_sensitive=False)
@@ -614,7 +625,7 @@ def parse_description(value):
 
 @bind_add_query(
     '--owns', action='append', dest='owns',
-    help='exact match on an owned file/dir.')
+    help='exact match on an owned file/dir')
 def parse_owns(value):
     "Value is a comma delimited set of paths to search contents for"
     # yes it would be easier to do this without using parserestrict-
@@ -630,7 +641,7 @@ def parse_owns(value):
 
 @bind_add_query(
     '--owns-re', action='append', dest='owns_re',
-    help='like "owns" but using a regexp for matching.')
+    help='like "owns" but using a regexp for matching')
 def parse_ownsre(value):
     """Value is a regexp matched against the string form of an fs object.
 
@@ -644,7 +655,7 @@ def parse_ownsre(value):
 
 @bind_add_query(
     '--maintainer', action='append', dest='maintainer',
-    help='comma-separated list of regexes to search for maintainers.')
+    help='comma-separated list of regexes to search for maintainers')
 def parse_maintainer(value):
     """
     Case insensitive Regex match on the combined 'name <email>' bit of
@@ -657,7 +668,7 @@ def parse_maintainer(value):
 
 @bind_add_query(
     '--maintainer-name', action='append', dest='maintainer_name',
-    help='comma-separated list of maintainer name regexes to search for.')
+    help='comma-separated list of maintainer name regexes to search for')
 def parse_maintainer_name(value):
     """
     Case insensitive Regex match on the name bit of metadata.xml's
@@ -670,7 +681,7 @@ def parse_maintainer_name(value):
 
 @bind_add_query(
     '--maintainer-email', action='append', dest='maintainer_email',
-    help='comma-separated list of maintainer email regexes to search for.')
+    help='comma-separated list of maintainer email regexes to search for')
 def parse_maintainer_email(value):
     """
     Case insensitive Regex match on the email bit of metadata.xml's
@@ -683,7 +694,7 @@ def parse_maintainer_email(value):
 
 @bind_add_query(
     '--environment', action='append', dest='environment',
-    help='regexp search in environment.bz2.')
+    help='regexp search in environment.bz2')
 def parse_envmatch(value):
     """Apply a regexp to the environment."""
     return packages.PackageRestriction(
@@ -698,7 +709,7 @@ add_query(
     type=str,
     priority=35,
     config_type='pkgset',
-    help='find packages that match the given package set (world for example).')
+    help='find packages that match the given package set (world for example)')
 
 # add a fallback if no restrictions are specified.
 _query_items.append('_fallback_all')
@@ -718,7 +729,7 @@ argparser.set_defaults(
 output = argparser.add_argument_group('Output formatting')
 output.add_argument(
     '--early-out', action='store_true', dest='earlyout',
-    help='stop when first match is found.')
+    help='stop when first match is found')
 output_mux = output.add_mutually_exclusive_group()
 output_mux.add_argument(
     '-n', '--no-version', action='store_true',
@@ -726,16 +737,18 @@ output_mux.add_argument(
     help='collapse multiple matching versions together')
 output_mux.add_argument(
     '--min', action='store_true',
-    help='show only the lowest version for each package.')
+    help='show only the lowest version for each package')
 output_mux.add_argument(
     '--max', action='store_true',
-    help='show only the highest version for each package.')
+    help='show only the highest version for each package')
 del output_mux
 output.add_argument(
     '--cpv', action='store_true',
-    help='Print the category/package-version. This is done '
-         'by default, this option re-enables this if another '
-         'output option (like --contents) disabled it.')
+    help='print the category/package-version',
+    docs="""
+        This is done by default, this option re-enables this if another output
+        option (like --contents) disabled it.
+    """)
 output.add_argument(
     '-a', '--atom', action=commandline.Expansion,
     subst=(('--cpv',),), nargs=0,
@@ -744,25 +757,25 @@ output.add_argument(
 output.add_argument(
     '--attr', action='append', choices=printable_attrs,
     metavar='attribute', default=[],
-    help="Print this attribute's value (can be specified more than "
+    help="print this attribute's value (can be specified more than "
          "once).  --attr=help will get you the list of valid attrs.")
 output.add_argument(
     '--force-attr', action='append', dest='attr',
     metavar='attribute', default=[],
-    help='Like --attr but accepts any string as '
+    help='like --attr but accepts any string as '
          'attribute name instead of only explicitly '
-         'supported names.')
+         'supported names')
 one_attr_mux = output.add_mutually_exclusive_group()
 one_attr_mux.add_argument(
     '--one-attr', choices=printable_attrs,
     metavar='attribute',
-    help="Print one attribute. Suppresses other output.")
+    help="print one attribute, suppresses other output")
 one_attr_mux.add_argument(
     '--force-one-attr',
     metavar='attribute',
-    help='Like --one-attr but accepts any string as '
+    help='like --one-attr but accepts any string as '
          'attribute name instead of only explicitly '
-         'supported names.')
+         'supported names')
 del one_attr_mux
 output.add_argument(
     '--contents', action='store_true',
@@ -778,7 +791,7 @@ output.add_argument(
 output.add_argument(
     '--print-revdep', action='append',
     type=atom.atom, default=[],
-    help='print what condition(s) trigger a dep.')
+    help='print what condition(s) trigger a dep')
 
 
 def get_pkg_attr(pkg, attr, fallback=None):

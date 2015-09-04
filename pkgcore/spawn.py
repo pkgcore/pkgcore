@@ -492,16 +492,29 @@ def is_userpriv_capable(force=False):
     res = is_userpriv_capable.cached_result = (os.getuid() == 0)
     return res
 
+_invoking_python = None
+
 def find_invoking_python():
     # roughly... use sys.executable if possible, then major ver variations-
     # look for python2.5, python2, then just python, for example
+    # NOTE: sys.executable in unreliable if the interpreter is embedded
+    global _invoking_python
+    if _invoking_python is not None and os.path.exists(_invoking_python):
+        return _invoking_python
     if os.path.exists(sys.executable):
-        return sys.executable
+        test_input = "oh hai"
+        returncode, output = spawn_get_output([sys.executable,
+            '-c', 'print("%s")' % test_input], collect_fds=(1, 2))
+        if output and output[0].strip() == test_input:
+            _invoking_python = sys.executable
+            return _invoking_python
+
     chunks = list(str(x) for x in sys.version_info[:2])
     for potential in (chunks, chunks[:-1], ''):
         try:
             command_name = 'python%s' % '.'.join(potential)
-            return find_binary(command_name)
+            _invoking_python = find_binary(command_name)
+            return _invoking_python
         except CommandNotFound:
             continue
     raise CommandNotFound('python')

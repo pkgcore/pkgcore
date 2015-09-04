@@ -34,11 +34,7 @@ def regen_repository(repo, observer, threads=1, pkg_attr='keywords', **options):
         return helper
 
     if threads == 1:
-        def passthru(iterable):
-            global count
-            for x in iterable:
-                yield x
-        regen_iter(passthru(repo), _get_repo_helper(), observer)
+        regen_iter(iter(repo), _get_repo_helper(), observer)
     else:
         def get_args():
             return (_get_repo_helper(), observer, True)

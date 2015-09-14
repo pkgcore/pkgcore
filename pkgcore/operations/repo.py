@@ -224,11 +224,14 @@ class operations(sync_operations):
 
     def _cmd_implementation_clean_cache(self):
         """ Clean stale cache entries up """
+        caches = [x for x in self._get_caches() if not x.readonly]
+        if not caches:
+            return
         pkgs = frozenset(x.cpvstr for x in self.repo)
-        for c in self._get_caches():
-            cache_pkgs = frozenset(c.keys())
+        for cache in caches:
+            cache_pkgs = frozenset(cache)
             for p in cache_pkgs - pkgs:
-                del c[p]
+                del cache[p]
 
     @_operations_mod.is_standalone
     def _cmd_api_regen_cache(self, observer=None, threads=1, **options):

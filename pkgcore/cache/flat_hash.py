@@ -124,13 +124,26 @@ class database(fs_template.FsBased):
         """generator for walking the dir struct"""
         dirs = [self.location]
         len_base = len(self.location)
+        # Note: the misc try/except clauses are to protect against concurrent
+        # modification of the cache resulting in transient errors.
         while dirs:
             d = dirs.pop(0)
+            try:
+                subdirs = os.listdir(d)
+            except EnvironmentError as e:
+                if e.errno != errno.ENOENT:
+                    raise KeyError(cpv, "failed accessing due to %s".format(e))
+                continue
             for l in os.listdir(d):
                 if l.endswith(".cpickle"):
                     continue
                 p = pjoin(d, l)
-                st = os.lstat(p)
+                try:
+                    st = os.lstat(p)
+                except EnvironmentError as e:
+                    if e.errno != errno.ENOENT:
+                        raise KeyError(cpv, "Unhandled IO error: %s".format(e))
+                    continue
                 if stat.S_ISDIR(st.st_mode):
                     dirs.append(p)
                     continue

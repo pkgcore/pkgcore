@@ -222,6 +222,17 @@ class operations(sync_operations):
         return self._cmd_implementation_configure(
             self.repository, pkg, self._get_observer(observer))
 
+    def _cmd_implementation_clean_cache(self):
+        """ Clean stale cache entries up """
+        caches = [x for x in self._get_caches() if not x.readonly]
+        if not caches:
+            return
+        pkgs = frozenset(x.cpvstr for x in self.repo)
+        for cache in caches:
+            cache_pkgs = frozenset(cache)
+            for p in cache_pkgs - pkgs:
+                del cache[p]
+
     @_operations_mod.is_standalone
     def _cmd_api_regen_cache(self, observer=None, threads=1, **options):
         if getattr(self, '_regen_disable_threads', False):
@@ -231,9 +242,11 @@ class operations(sync_operations):
         try:
             if sync_rate is not None:
                 cache.set_sync_rate(1000000)
-            return regen.regen_repository(
+            ret = regen.regen_repository(
                 self.repo,
                 self._get_observer(observer), threads=threads, **options)
+            self._cmd_implementation_clean_cache()
+            return ret
         finally:
             if sync_rate is not None:
                 cache.set_sync_rate(sync_rate)

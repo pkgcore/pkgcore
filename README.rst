@@ -21,8 +21,8 @@ required if you're using anything less than python 3.3.
 Who to contact if I find a bug?
 ===============================
 
-Please submit an issue via Github_. You can also stop by at `#pkgcore`_ on
-Freenode.
+Please submit an issue via Github_. You can also send an email to the dev list
+(pkgcore-dev@googlegroups.com) or stop by `#pkgcore`_ on Freenode.
 
 Tools
 =====

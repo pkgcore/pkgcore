@@ -25,7 +25,7 @@ Usage
 =====
 
 Another switch that could do with some extra explanation is ``--raw``.
-Specifying ``--raw`` makes your configuration not affect the results. Example: ::
+Specifying ``--raw`` makes your configuration not affect the results. Example::
 
  $ pquery --attr alldepends -m dbus --max -v
  * sys-apps/dbus-0.62-r1
@@ -41,7 +41,6 @@ Specifying ``--raw`` makes your configuration not affect the results. Example: :
                   virtual/x11 ) >=x11-libs/gtk+-2.6 >=dev-lang/python-2.4
                   >=dev-python/pyrex-0.9.3-r2 >=dev-libs/expat-1.95.8
      post_rdepends:
- $
 
 This is the highest unmasked package on the system. Also notice there are no
 references to USE flags or qt in the dependencies. That is because qt is not in
@@ -57,7 +56,6 @@ USE for this configuration, so those dependencies do not apply.::
                   >=dev-libs/dbus-qt3-old-0.70 ) gtk? (
                   >=dev-libs/dbus-glib-0.71 ) !<sys-apps/dbus-0.91
      post_rdepends:
- $
 
 This version is in ``package.mask``, and we can see the use-conditional flags now.
 

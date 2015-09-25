@@ -177,7 +177,16 @@ output_options.add_argument(
     '-F', '--formatter', priority=90, metavar='FORMATTER',
     action=commandline.StoreConfigObject, get_default=True,
     config_type='pmerge_formatter',
-    help='which formatter to output --pretend or --ask output through.')
+    help='output formatter to use',
+    docs="""
+        Used for text formatting of --pretend or --ask output, currently
+        available formatters include the following: basic, pkgcore, portage,
+        portage-verbose, and paludis.
+
+        The basic formatter is the nearest to simple text output and is
+        intended for scripting while the portage/portage-verbose formatter
+        closely emulates portage output and is used by default.
+    """)
 
 
 class AmbiguousQuery(parserestrict.ParseError):

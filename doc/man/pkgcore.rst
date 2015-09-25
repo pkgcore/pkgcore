@@ -94,8 +94,11 @@ Unsupported misc:
 Unsupported, unlikely to be implemented:
 
 * noauto  (too tool-specific)
-* mirror  (it's possible to implement it via a custom fetcher,
-           but there are better ways; use ``mirror-dist`` if you want a mirror)
+* mirror
+
+  It's possible to implement it via a custom fetcher, but there are better
+  ways; use ``mirror-dist`` if you want a mirror)
+
 * lmirror (same)
 
 * preserve-libs

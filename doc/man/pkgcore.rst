@@ -97,15 +97,14 @@ Unsupported, unlikely to be implemented:
 * mirror
 
   It's possible to implement it via a custom fetcher, but there are better
-  ways; use ``mirror-dist`` if you want a mirror)
+  ways; use ``mirror-dist`` if you want a mirror.
 
 * lmirror (same)
-
 * preserve-libs
 
   Libraries *are not* preserved when sonames change during upgrades or
   downgrades. This can easily render systems unworkable if major core system
-  library changes occur. Users will have to make use of revdep-rebuild(1) from
+  library changes occur. Users will have to make use of ``revdep-rebuild(1)`` from
   portage until an equivalent is added to pkgcore and/or support for preserved
   libs is added.
 
@@ -480,4 +479,4 @@ You can also stop by #pkgcore on freenode.
 See Also
 ========
 
-portage(5), make.conf(5), pconfig(1)
+portage(5), make.conf(5)

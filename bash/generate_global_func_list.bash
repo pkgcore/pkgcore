@@ -10,13 +10,21 @@
 export PKGCORE_BIN_PATH=$(dirname "$0")
 
 if [[ -z ${PKGCORE_CLEAN_ENV} ]]; then
-	exec env -i PKGCORE_PYTHON_PATH=${PKGCORE_PYTHON_PATH} PATH=${PATH} PKGCORE_CLEAN_ENV=1 "$0"
+	exec env -i PKGCORE_PYTHON_PATH=${PKGCORE_PYTHON_PATH} PATH=${PATH} PKGCORE_CLEAN_ENV=1 "$0" "$@"
 fi
 
 export LC_ALL=C # avoid any potential issues of unicode sorting for whacked func names
 # export this so that scripts will behave as libs
 export PKGCORE_SOURCING_FOR_REGEN_FUNCS_LIST=1
 set -f # shell expansion can bite us in the ass during the echo below
+DEBUG=false
+
+while getopts ":d" opt; do
+	case $opt in
+		d) DEBUG=true ;;
+		*) ;;
+	esac
+done
 
 # force some ordering.
 
@@ -34,7 +42,7 @@ source() {
 	# die relies on these vars; we reuse them.
 	local CATEGORY=${PKGCORE_BIN_PATH}
 	local PF=$1
-	echo "sourcing ${x}" >&2
+	${DEBUG} && echo "sourcing ${x}" >&2
 	. "$@" || { echo "!!! failed sourcing ${x}; exit $?" >&2; exit 3; }
 	seen[${#seen[@]}]=${fp}
 	return 0
@@ -59,5 +67,5 @@ unset -f source
 result=$(__environ_list_funcs | sort)
 result=$(echo "${result}" | grep -v "^__"; echo "${result}" | grep "^__")
 
-echo >&2
+${DEBUG} && echo >&2
 echo "${result}"

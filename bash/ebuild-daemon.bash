@@ -261,9 +261,7 @@ __ebd_process_ebuild_phases() {
 						cont=$?
 						__IFS_pop
 						;;
-					lines)
-						;&
-					*)
+					lines|*)
 						while __ebd_read_line line && [[ ${line} != "end_receiving_env" ]]; do
 							__IFS_push $'\0'
 							eval "${line}"

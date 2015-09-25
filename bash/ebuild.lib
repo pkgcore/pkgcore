@@ -346,12 +346,8 @@ __execute_phases() {
 				PKGCORE_SAVE_ENV=false
 				ret=0
 				;;
-			postrm)
-				PKGCORE_SAVE_ENV=false
-				# this is a fall thru; think of it as a select chunk w/out a break
-				# we just snag these phases to turn off env saving.
-				;&
-			prerm|preinst|postinst|config)
+			prerm|postrm|preinst|postinst|config)
+				[[ ${EBUILD_PHASE} == postrm ]] && PKGCORE_SAVE_ENV=false
 				export SANDBOX_ON=0
 
 				PKGCORE_TARGET_ENV=${T}/environment

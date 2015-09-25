@@ -44,7 +44,61 @@ managers.
   Config values are only loaded from /etc/portage/make.conf, the deprecated
   /etc/make.conf location is not checked anymore.
 
-* FEATURES="preserve-libs"
+* dynamic deps
+
+  Dependency data for installed packages is always pulled from the vdb which is
+  only allowed to be altered on install and removed at uninstall. There is no
+  plan to support retrieving updated dependency data from unbuilt ebuilds in
+  source repositories and updating the vdb.
+
+FEATURES
+--------
+
+Supported:
+
+* ccache
+* distcc
+* sandbox
+* usersandbox
+* userpriv
+* test
+* nodoc
+* noinfo
+* noman
+* userfetch (forced on)
+* collision-protect
+* metadata-transfer (does not do the actual transfer however)
+* nostrip
+
+Partially supported:
+
+* strict (mostly there, just missing a few additions)
+
+Unsupported digest-related:
+
+* assume-digests
+* cvs
+* digest
+
+Unsupported misc:
+
+* severe
+* keeptemp
+* keepwork
+* distlocks
+* selinux
+* sesandbox (selinux context sandbox)
+* fixpackages
+* notitles
+
+Unsupported, unlikely to be implemented:
+
+* noauto  (too tool-specific)
+* mirror  (it's possible to implement it via a custom fetcher,
+           but there are better ways; use ``mirror-dist`` if you want a mirror)
+* lmirror (same)
+
+* preserve-libs
 
   Libraries *are not* preserved when sonames change during upgrades or
   downgrades. This can easily render systems unworkable if major core system
@@ -55,12 +109,17 @@ managers.
   Note that this also means there is no preserved-rebuild package set support
   either.
 
-* dynamic deps
+Aside from that... everything else make.conf wise should be supported with
+out issue- if not, please open an issue.
 
-  Dependency data for installed packages is always pulled from the vdb which is
-  only allowed to be altered on install and removed at uninstall. There is no
-  plan to support retrieving updated dependency data from unbuilt ebuilds in
-  source repositories and updating the vdb.
+For ``/etc/portage/``, we don't support modules (define custom cache modules)
+due the fact our cache subsystem has grown a bit beyond what got imported into
+Portage in 2.1.
+
+For ``/etc/portage/package.*`` files, we support an extended atom syntax which
+can be used in place of normal atoms (It goes without saying Portage doesn't
+support the extension yet, thus introducing incompatibility if used) - read
+extended-atom-syntax.rst for the details.
 
 Configuration
 =============

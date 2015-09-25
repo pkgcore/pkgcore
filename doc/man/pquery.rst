@@ -43,9 +43,9 @@ Specifying ``--raw`` makes your configuration not affect the results. Example: :
      post_rdepends:
  $
 
-This is the highest unmasked package on my system. Also notice there are no
-references to USE flags or qt in the dependencies. That is because I do not
-have qt in USE in my configuration, so those dependencies do not apply.::
+This is the highest unmasked package on the system. Also notice there are no
+references to USE flags or qt in the dependencies. That is because qt is not in
+USE for this configuration, so those dependencies do not apply.::
 
  $ pquery --attr alldepends -m dbus --max -v --raw
  * sys-apps/dbus-0.91
@@ -75,7 +75,7 @@ Examples
 ========
 
 ============================ ========================================= ========================================================================
-other tool                   pquery                                    comments
+Other tool                   pquery                                    Comments
 ============================ ========================================= ========================================================================
 ``equery belongs /bin/ls``   ``pquery --owns /bin/ls``
 ``equery check``             not implemented (yet?)
@@ -88,8 +88,8 @@ other tool                   pquery                                    comments
 ``equery uses python``       ``pquery --attr use -m python``           less information, but is an output option so mixes with any restriction
 ``emerge -s python``         ``pquery -vnm '*python*'``
 ``emerge -S python``         ``pquery -vnS python``                    searches through longdescription (from metadata.xml) too
-No equivalent                ``pquery --license GPL-2 --vdb``          list all installed GPL-2 packages
-No equivalent                ``pquery --maintainer radhermit``         list all packages that are maintained by radhermit
+no equivalent                ``pquery --license GPL-2 --vdb``          list all installed GPL-2 packages
+no equivalent                ``pquery --maintainer radhermit``         list all packages that are maintained by radhermit
 ============================ ========================================= ========================================================================
 
 It can also do some things equery/emerge do not let you do, like restricting

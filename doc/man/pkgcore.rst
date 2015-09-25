@@ -131,14 +131,14 @@ Note for Portage users
 ----------------------
 
 If you already know how to configure Portage you can probably just skip this
-file. As long as you do not have an ``/etc/pkgcore.conf`` or ``~/.pkgcore.conf``
+section. As long as you do not have an ``/etc/pkgcore.conf`` or ``~/.pkgcore.conf``
 pkgcore will read Portage's configuration files.
 
 Basics, querying
 ----------------
 
 There are multiple ways to configure pkgcore. No matter which method you pick,
-the ``pconfig`` utility will allow you to check if pkgcore interprets the
+the ``pconfig(1)`` utility will allow you to check if pkgcore interprets the
 configuration the way you intend. Part of a configuration dump could look
 like::
 
@@ -480,4 +480,4 @@ You can also stop by #pkgcore on freenode.
 See Also
 ========
 
-portage(5), make.conf(5)
+portage(5), make.conf(5), pconfig(1)

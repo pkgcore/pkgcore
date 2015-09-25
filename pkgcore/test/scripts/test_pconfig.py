@@ -55,7 +55,7 @@ class DescribeClassTest(TestCase, helpers.ArgParseMixin):
 
         if sys.hexversion >= 0x03050000:
             module = "module 'pkgcore'"
-        else
+        else:
             module = "'module' object"
 
         self.assertError(

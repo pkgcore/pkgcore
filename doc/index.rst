@@ -22,7 +22,6 @@ Contents:
    :titlesonly:
    :maxdepth: 1
 
-   getting-started
    news
    api
    man

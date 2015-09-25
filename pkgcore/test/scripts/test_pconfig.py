@@ -1,6 +1,8 @@
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
 # License: BSD/GPL2
 
+import sys
+
 from snakeoil import compatibility
 
 from pkgcore.config import configurable, basics, errors
@@ -50,11 +52,17 @@ class DescribeClassTest(TestCase, helpers.ArgParseMixin):
         else:
             self.assertError(
                 'too few arguments')
+
+        if sys.hexversion >= 0x03050000:
+            module = "module 'pkgcore'"
+        else
+            module = "'module' object"
+
         self.assertError(
-            "argument target_class: Failed importing target 'pkgcore.spork': ''module' object has no attribute 'spork''",
+            "argument target_class: Failed importing target 'pkgcore.spork': '%s has no attribute 'spork''" % module,
             'pkgcore.spork')
         self.assertError(
-            "argument target_class: Failed importing target 'pkgcore.a': ''module' object has no attribute 'a''",
+            "argument target_class: Failed importing target 'pkgcore.a': '%s has no attribute 'a''" % module,
             'pkgcore.a', 'pkgcore.b')
         self.parse('pkgcore.scripts')
 

@@ -931,6 +931,9 @@ def main(subcommands, args=None, outfile=None, errfile=None, script_name=None):
             traceback.print_tb(sys.exc_info()[-1])
         signal.signal(signal.SIGINT, signal.SIG_DFL)
         os.killpg(os.getpgid(0), signal.SIGINT)
+    except SystemExit:
+        # use our own exit status
+        pass
     except compatibility.IGNORED_EXCEPTIONS:
         raise
     except errors.ConfigurationError as e:
@@ -953,7 +956,7 @@ def main(subcommands, args=None, outfile=None, errfile=None, script_name=None):
             out.title('%s failed' % (options.prog,))
         else:
             out.title('%s succeeded' % (options.prog,))
-    raise MySystemExit(exitstatus)
+    raise SystemExit(exitstatus)
 
 
 def dump_error(handle, raw_exc, context_msg=None, tb=None):

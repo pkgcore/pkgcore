@@ -249,6 +249,7 @@ class MainTest(TestCase):
             except SystemExit as e:
                 # Important, without this reading the master fd blocks.
                 out.close()
+                self.assertEqual(None, e.args[0])
 
                 # There can be an xterm title update after this.
                 #

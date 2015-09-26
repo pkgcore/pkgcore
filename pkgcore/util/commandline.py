@@ -806,6 +806,8 @@ def argparse_parse(parser, args, namespace=None):
         namespace = parser.parse_args(args, namespace=namespace)
     except:
         # enable tracebacks for any argument parsing failure
+        if namespace is None:
+            namespace = argparse.Namespace()
         namespace.debug = True
         raise
 

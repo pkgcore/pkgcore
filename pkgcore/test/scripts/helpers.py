@@ -23,6 +23,7 @@ class Exit(Exception):
         self.status = status
         self.msg = msg
 
+
 class Error(Exception):
 
     """Used to catch parser.error."""
@@ -35,12 +36,14 @@ class Error(Exception):
 def noexit(status=0, msg=None):
     raise Exit(status, msg)
 
+
 def noerror(msg=None):
     raise Error(msg)
 
+
 def mangle_parser(parser):
-    """Make an OptionParser or argparser testable."""
-    # copy it.  avoid the potential of inadvertently tainting what we're working on.
+    """Make an argparser testable."""
+    # Return a copy to avoid the potential of modifying what we're working on.
     parser = copy(parser)
     parser.exit = noexit
     parser.error = noerror
@@ -115,15 +118,18 @@ class FakeStreamFormatter(PlainTextFormatter):
     def get_text_stream(self):
         return b''.join([x for x in self.stream if not isinstance(x, FormatterObject)]).decode('ascii')
 
-class MainMixin(object):
+
+class ArgParseMixin(object):
 
     """Provide some utility methods for testing the parser and main.
 
-    :cvar parser: OptionParser subclass to test.
+    :cvar parser: ArgumentParser subclass to test.
     :cvar main: main function to test.
     """
 
     requires_compat_config_manager = True
+    suppress_domain = False
+    has_config = True
 
     def _mk_config(self, *args, **kwds):
         config = central.ConfigManager(*args, **kwds)
@@ -136,16 +142,25 @@ class MainMixin(object):
 
         args are passed to parse_args, keyword args are used as config keys.
         """
-        values = self.parser.get_default_values()
-        values._config = self._mk_config([kwargs], debug=True)
-        # optparse needs a list (it does make a copy, but it uses [:]
-        # to do it, which is a noop on a tuple).
-        options, args = self.parser.parse_args(list(args), values)
-        self.assertFalse(args)
-        return options
+        namespace = None
+        if self.has_config:
+            namespace = commandline.argparse.Namespace()
+            if kwargs.pop("suppress_domain", self.suppress_domain):
+                kwargs["default_domain"] = default_domain
+            namespace.config = self._mk_config([kwargs], debug=True)
+        namespace = self.parser.parse_args(list(args), namespace=namespace)
+        return namespace
+
+    @property
+    def parser(self):
+        p = copy(self._argparser)
+        return mangle_parser(p)
+
+    def get_main(self, namespace):
+        return namespace.main_func
 
     def assertError(self, message, *args, **kwargs):
-        """Pass args to the option parser and assert it errors message."""
+        """Pass args to the argument parser and assert it errors message."""
         try:
             self.parse(*args, **kwargs)
         except Error as e:
@@ -171,13 +186,10 @@ class MainMixin(object):
         """Like :obj:`assertOutAndErr` but without out."""
         return self.assertOutAndErr((), err, *args, **kwargs)
 
-    def get_main(self, options):
-        return self.main
-
     def assertOutAndErr(self, out, err, *args, **kwargs):
         """Parse options and run main.
 
-        Extra arguments are parsed by the option parser.
+        Extra arguments are parsed by the argument parser.
         Keyword arguments are config sections.
 
         :param out: list of strings produced as output on stdout.
@@ -199,36 +211,8 @@ class MainMixin(object):
                 expected = ''
             if expected != actual:
                 diffs.extend(difflib.unified_diff(
-                        strings, actual.split('\n')[:-1],
-                        'expected %s' % (name,), 'actual', lineterm=''))
+                    strings, actual.split('\n')[:-1],
+                    'expected %s' % (name,), 'actual', lineterm=''))
         if diffs:
             self.fail('\n' + '\n'.join(diffs))
         return options.config
-
-
-class ArgParseMixin(MainMixin):
-
-    suppress_domain = False
-    has_config = True
-
-    def parse(self, *args, **kwargs):
-        """Parse a commandline and return the Values object.
-
-        args are passed to parse_args, keyword args are used as config keys.
-        """
-        namespace = None
-        if self.has_config:
-            namespace = commandline.argparse.Namespace()
-            if kwargs.pop("suppress_domain", self.suppress_domain):
-                kwargs["default_domain"] = default_domain
-            namespace.config = self._mk_config([kwargs], debug=True)
-        namespace = self.parser.parse_args(list(args), namespace=namespace)
-        return namespace
-
-    @property
-    def parser(self):
-        p = copy(self._argparser)
-        return mangle_parser(p)
-
-    def get_main(self, namespace):
-        return namespace.main_func

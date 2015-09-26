@@ -5,7 +5,7 @@
 
 """Utilities for writing commandline utilities.
 
-pkgcore scripts should use the :obj:`OptionParser` subclass here for a
+pkgcore scripts should use the :obj:`ArgumentParser` subclass here for a
 consistent commandline "look and feel" (and it tries to make life a
 bit easier too). They will probably want to use :obj:`main` from an C{if
 __name__ == '__main__'} block too: it will take care of things like
@@ -15,15 +15,13 @@ See dev-notes/commandline.rst for more complete documentation.
 """
 
 __all__ = (
-    "FormattingHandler", "Values", "Option", "OptionParser",
-    "MySystemExit", "main",
+    "FormattingHandler", "main",
 )
 
 import argparse
 from functools import partial
 from importlib import import_module
 import logging
-import optparse
 import os.path
 import sys
 
@@ -31,7 +29,6 @@ from snakeoil import cli, compatibility, formatters, modules
 from snakeoil.demandload import demandload
 
 from pkgcore.config import load_config, errors
-from pkgcore.util.commandline_optparse import *
 
 demandload(
     'inspect',
@@ -828,24 +825,24 @@ def convert_to_restrict(sequence, default=packages.AlwaysTrue):
             l.append(parserestrict.parse_match(x))
     except parserestrict.ParseError as e:
         compatibility.raise_from(
-            optparse.OptionValueError(
+            argparse.ArgumentError(
                 "arg %r isn't a valid atom: %s" % (x, e)))
     return l or [default]
 
 
-def main(subcommands, args=None, outfile=None, errfile=None, script_name=None):
+def main(subcommands, args=None, outfile=None, errfile=None):
     """Function to use in an "if __name__ == '__main__'" block in a script.
 
-    Takes one or more combinations of option parser and main func and
+    Takes one or more combinations of argparser and main func and
     runs them, taking care of exception handling and some other things.
 
     Any ConfigurationErrors raised from your function (by the config
     manager) are handled. Other exceptions are not (trigger a traceback).
 
-    :type subcommands: mapping of string => (OptionParser class, main func)
+    :type subcommands: mapping of string => (ArgumentParser class, main func)
     :param subcommands: available commands.
         The keys are a subcommand name or None for other/unknown/no subcommand.
-        The values are tuples of OptionParser subclasses and functions called
+        The values are tuples of ArgumentParser subclasses and functions called
         as main_func(config, out, err) with a :obj:`Values` instance, two
         :obj:`snakeoil.formatters.Formatter` instances for output (stdout)
         and errors (stderr). It should return an integer used as
@@ -856,9 +853,6 @@ def main(subcommands, args=None, outfile=None, errfile=None, script_name=None):
     :param outfile: File to use for stdout, defaults to C{sys.stdout}.
     :type errfile: file-like object
     :param errfile: File to use for stderr, defaults to C{sys.stderr}.
-    :type script_name: string
-    :param script_name: basename of this script, defaults to the basename
-        of C{sys.argv[0]}.
     """
     exitstatus = 1
 
@@ -896,12 +890,7 @@ def main(subcommands, args=None, outfile=None, errfile=None, script_name=None):
     out = options = None
     exitstatus = -10
     try:
-        if isinstance(subcommands, dict):
-            main_func, options = optparse_parse(
-                subcommands, args=args, script_name=script_name, errfile=errfile)
-        else:
-            options = argparse.Namespace()
-            main_func, options = argparse_parse(subcommands, args, options)
+        main_func, options = argparse_parse(subcommands, args, options)
 
         if getattr(options, 'debug', False):
             # verbosity level affects debug output

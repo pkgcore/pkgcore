@@ -3,6 +3,7 @@
 # License: BSD/GPL2
 
 import argparse
+import errno
 from functools import partial
 import os
 import pty
@@ -227,7 +228,8 @@ class MainTest(TestCase):
 
     def test_tty_detection(self):
         argparser = commandline.mk_argparser(
-            domain=False, debug=False, quiet=False, verbose=False, version=False)
+            config=False, domain=False, color=True, debug=False,
+            quiet=False, verbose=False, version=False)
 
         @argparser.bind_main_func
         def main(options, out, err):
@@ -255,7 +257,15 @@ class MainTest(TestCase):
                 #
                 # XXX: Workaround py34 making it harder to read all data from a
                 # pty due to issue #21090 (http://bugs.python.org/issue21090).
-                out_name = os.read(master.fileno(), 128).decode()
+                out_name = ''
+                try:
+                    while True:
+                        out_name += os.read(master.fileno(), 1).decode()
+                except OSError as e:
+                    if e.errno == errno.EIO:
+                        pass
+                    else:
+                        raise
 
                 master.close()
                 self.assertTrue(

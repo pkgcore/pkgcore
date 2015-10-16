@@ -369,6 +369,32 @@ _repos() {
   fi
 }
 
+_licenses() {
+  # optional args
+  #
+  # -r repo  specify the repo to use; otherwise the default repo is used
+  # -p       print the output instead of using completion
+  typeset -A opts
+  zparseopts -E -A opts p r:
+
+  typeset -a licenses
+
+  if [[ -n $opts[(I)-r] ]]; then
+    repo=$opts[-r]
+  else
+    repo=$(_repos -p -v DEFAULT:main-repo)
+  fi
+
+  repo_path=${$(_repos -p -v "${repo}:location")%/}
+  licenses=("${repo_path}"/licenses/*(.:t))
+
+  if [[ -n $opts[(I)-p] ]]; then
+    print $licenses
+  else
+    _describe -t licenses 'licenses' licenses
+  fi
+}
+
 _use() {
   # optional args
   #

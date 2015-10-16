@@ -1,5 +1,7 @@
 #compdef pebuild pinspect pmaint pmerge pquery
 
+typeset -a common_main_args common_output_args common_args domain_common_args
+
 common_main_args=(
   '(- :)'--version'[show version information and exit]'
   '--add-config[modify an existing configuration section]'
@@ -314,6 +316,7 @@ _repos() {
   # -v section:key
   # -p print the output instead of using completion
   # -l use repo locations instead of repo_ids
+  typeset -A opts
   zparseopts -E -A opts c l p v:
 
   local repo_name output_type
@@ -371,6 +374,7 @@ _use_global() {
   #
   # -r repo  specify the repo to use; otherwise the default repo is used
   # -p       print the output instead of using completion
+  typeset -A opts
   zparseopts -E -A opts p r:
 
   typeset -a use
@@ -396,6 +400,7 @@ _categories() {
   #
   # -r repo  specify the repo to use; otherwise the default repo is used
   # -p       print the output instead of using completion
+  typeset -A opts
   zparseopts -E -A opts p r:
 
   typeset -a categories
@@ -421,6 +426,7 @@ _arches() {
   #
   # -r repo  specify the repo to use; otherwise the default repo is used
   # -p       print the output instead of using completion
+  typeset -A opts
   zparseopts -E -A opts p r:
 
   typeset -a arches
@@ -447,6 +453,7 @@ _profiles() {
   # -r repo  specify the repo to use; otherwise the default repo is used
   # -p       print the output instead of using completion
   # -f       output full, absolute profile paths
+  typeset -A opts
   zparseopts -E -A opts a p f r:
 
   local file repo repo_path arch path pstatus
@@ -485,6 +492,7 @@ _pkgcore() {
   # would call the internal "repos" function with the "-l" argument causing the
   # repo location list to be returned for completion.
 
+  typeset -A opts
   local ret=1
 
   if [[ $service =~ (pebuild|pinspect|pmaint|pmerge|pquery) ]]; then

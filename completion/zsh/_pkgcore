@@ -304,7 +304,7 @@ _pquery() {
 
   pkg=(
     '--all[match all packages (equivalent to "pquery *")]'
-    '--has-use[exact string match on a USE flag]:use flag:_use'
+    '--has-use[exact string match on a USE flag]:use flag:_use -o'
     '--license[exact match on a license]:license:_licenses'
     '--herd[exact match on a herd]:herd:'
     '--revdep[shorthand for --restrict-revdep atom --print-revdep atom]:pkg atom:'
@@ -422,8 +422,9 @@ _use() {
   # -p       print the output instead of using completion
   # -g       only show global use flags
   # -l       only show local use flags
+  # -o       don't show use flag descriptions
   typeset -A opts
-  zparseopts -E -A opts p r:
+  zparseopts -E -A opts o p r:
 
   local desc
   typeset -a use use_global use_local
@@ -449,10 +450,15 @@ _use() {
     desc='local '
   fi
 
+  # strip use flag descriptions
+  if [[ -n $opts[(I)-o] ]]; then
+    use=(${^use/:*/})
+  fi
+
   if [[ -n $opts[(I)-p] ]]; then
     print $use
   else
-    _describe -t use "${desc}use flags" use
+    _describe -t use "${desc}use flag" use
   fi
 }
 

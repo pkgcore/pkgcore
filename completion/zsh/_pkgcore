@@ -292,7 +292,7 @@ _pmerge() {
 _pquery() {
   local curcontext=$curcontext state state_descr line ret=1
   typeset -A opt_args
-  typeset -a repo
+  typeset -a repo pkg
 
   repo=(
     '--raw[disable configuration and filtering]'
@@ -302,9 +302,29 @@ _pquery() {
     '--all-repos[search all repos including the vdb]'
   )
 
+  pkg=(
+    '--all[match all packages (equivalent to "pquery *")]'
+    '--has-use[exact string match on a USE flag]:use flag:_use'
+    '--license[exact match on a license]:license:_licenses'
+    '--herd[exact match on a herd]:herd:'
+    '--revdep[shorthand for --restrict-revdep atom --print-revdep atom]:pkg atom:'
+    '--revdep-pkgs[shorthand for --restrict-revdep-pkgs atom --print-revdep atom]:pkg atom:'
+    '--restrict-revdep[dependency on an atom]:pkg atom:'
+    '--restrict-revdep-pkgs[dependency on pkgs that match a specific atom]:pkg atom:'
+    {'(--description)-S','(-S)--description'}'[regexp search on description and longdescription]:description regex'
+    '--owns[exact match on an owned file/dir]:path:_files'
+    '--owns-re[like "owns" but using a regexp for matching]:path regex:_files'
+    '--maintainer[comma-separated list of regexes to search for maintainers]'
+    '--maintainer-name[comma-separated list of maintainer name regexes to search for]'
+    '--maintainer-email[comma-separated list of maintainer email regexes to search for]'
+    '--environment[regexp search in environment.bz2]'
+    '--pkgset[find packages that match the given package set]'
+  )
+
   _arguments -C \
     $domain_common_args \
     $repo \
+    $pkg \
     && ret=0
 
   return ret

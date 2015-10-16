@@ -292,7 +292,7 @@ _pmerge() {
 _pquery() {
   local curcontext=$curcontext state state_descr line ret=1
   typeset -A opt_args
-  typeset -a repo pkg
+  typeset -a repo pkg output
 
   repo=(
     '--raw[disable configuration and filtering]'
@@ -321,10 +321,29 @@ _pquery() {
     '--pkgset[find packages that match the given package set]'
   )
 
+  output=(
+    '--early-out[stop when first match is found]'
+    {'(--no-version)-n','(-n)--no-version'}'[collapse multiple matching versions together]'
+    '--min[show only the lowest version for each package]'
+    '--max[show only the highest version for each package]'
+    '--cpv[print the category/package-version]'
+    {'(--atom)-a','(-a)--atom'}'[print =cat/pkg-3 instead of cat/pkg-3 (implies --cpv, has no effect with --no-version)]'
+    "--attr[print this attribute's value (can be specified more than once)]"
+    '--force-attr[like --attr but accepts any string as attribute name instead of only explicitly supported names]'
+    '--one-attr[print one attribute, suppresses other output]'
+    '--force-one-attr[like --one-attr but accepts any string as attribute name instead of only explicitly supported names]'
+    '--one-attr[print one attribute, suppresses other output]'
+    '--contents[list files owned by the package]'
+    '--highlight-dep[highlight dependencies matching this atom]'
+    '--blame[shorthand for --attr maintainers --attr herds]'
+    '--print-revdep[print what condition(s) trigger a dep]'
+  )
+
   _arguments -C \
     $domain_common_args \
     $repo \
     $pkg \
+    $output \
     && ret=0
 
   return ret

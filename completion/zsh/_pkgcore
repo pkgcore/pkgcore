@@ -437,7 +437,7 @@ _use() {
 
   repo_path=${$(_repos -p -v "${repo}:location")%/}
   [[ -f $repo_path/profiles/use.desc ]] && use_global=(${(S)${${(f)"$(<${repo_path}/profiles/use.desc)"}:#\#*}/ - /:})
-  [[ -f $repo_path/profiles/use.local.desc ]] && use_local=(${(S)${${(f)"$(<${repo_path}/profiles/use.local.desc)"}:#\#*}/ - /:})
+  [[ -f $repo_path/profiles/use.local.desc ]] && use_local=(${(S)${(S)${${(f)"$(<${repo_path}/profiles/use.local.desc)"}:#\#*}/*:/}/ - /:})
 
   if [[ -z $opts[(I)-g] && -z $opts[(I)-l] ]]; then
     # both global and local use flags are shown by default

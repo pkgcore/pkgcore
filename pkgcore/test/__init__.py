@@ -7,11 +7,9 @@
 
 __all__ = ('TestCase', 'SkipTest', 'Todo')
 
-from snakeoil.test import TestCase as orig_TestCase, SkipTest, Todo
+from snakeoil.test import TestCase, SkipTest, Todo
 
 from pkgcore import log
-
-TestCase = orig_TestCase
 
 
 class QuietLogger(log.logging.Handler):

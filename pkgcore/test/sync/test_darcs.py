@@ -9,9 +9,9 @@ bogus = make_bogus_syncer(darcs.darcs_syncer)
 valid = make_valid_syncer(darcs.darcs_syncer)
 
 
-class TestdarcsParsing(TestCase):
+class TestDarcsSyncer(TestCase):
 
-    def test_parse(self):
+    def test_uri_parse(self):
         self.assertEqual(darcs.darcs_syncer.parse_uri("darcs+http://dar"),
             "http://dar")
         self.assertRaises(base.uri_exception, darcs.darcs_syncer.parse_uri,

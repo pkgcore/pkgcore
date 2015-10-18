@@ -9,9 +9,9 @@ bogus = make_bogus_syncer(rsync.rsync_syncer)
 valid = make_valid_syncer(rsync.rsync_syncer)
 
 
-class TestrsyncParsing(TestCase):
+class TestRsyncSyncer(TestCase):
 
-    def test_parse(self):
+    def test_uri_parse(self):
         self.assertRaises(base.syncer_exception, bogus,
             "/tmp/foon", "rsync+hopefully_nonexistent_binary://foon.com/dar")
         o = valid("/tmp/foon", "rsync://dar/module")

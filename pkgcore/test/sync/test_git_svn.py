@@ -10,9 +10,9 @@ bogus = make_bogus_syncer(git_svn.git_svn_syncer)
 valid = make_valid_syncer(git_svn.git_svn_syncer)
 
 
-class TestgitsvnParsing(TestCase):
+class TestGitSVNSyncer(TestCase):
 
-    def test_parse(self):
+    def test_uri_parse(self):
         self.assertEqual(
             git_svn.git_svn_syncer.parse_uri("git+svn+http://dar"),
             "http://dar")

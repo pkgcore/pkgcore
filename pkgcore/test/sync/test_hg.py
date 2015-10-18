@@ -9,9 +9,9 @@ bogus = make_bogus_syncer(hg.hg_syncer)
 valid = make_valid_syncer(hg.hg_syncer)
 
 
-class TestHgParsing(TestCase):
+class TestHgSyncer(TestCase):
 
-    def test_parse(self):
+    def test_uri_parse(self):
         self.assertEqual(hg.hg_syncer.parse_uri("hg+http://dar"),
             "http://dar")
         self.assertEqual(hg.hg_syncer.parse_uri("mercurial+http://dar"),

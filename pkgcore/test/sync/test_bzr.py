@@ -9,9 +9,9 @@ bogus = make_bogus_syncer(bzr.bzr_syncer)
 valid = make_valid_syncer(bzr.bzr_syncer)
 
 
-class TestBzrParsing(TestCase):
+class TestBzrSyncer(TestCase):
 
-    def test_parse(self):
+    def test_uri_parse(self):
         self.assertEqual(bzr.bzr_syncer.parse_uri("bzr+http://dar"),
             "http://dar")
         self.assertRaises(base.uri_exception, bzr.bzr_syncer.parse_uri,

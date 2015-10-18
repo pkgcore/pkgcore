@@ -9,9 +9,9 @@ bogus = make_bogus_syncer(cvs.cvs_syncer)
 valid = make_valid_syncer(cvs.cvs_syncer)
 
 
-class TestcvsParsing(TestCase):
+class TestCVSSyncer(TestCase):
 
-    def test_parse(self):
+    def test_uri_parse(self):
         self.assertRaises(
             base.syncer_exception, bogus,
             "/tmp/foon", "cvs+hopefully_nonexistent_binary://foon.com/dar")

@@ -157,7 +157,7 @@ class fetcher(base.fetcher):
 
         except StopIteration:
             # ran out of uris
-            return errors.FetchFailed(fp, "Ran out of urls to fetch from")
+            raise errors.FetchFailed(fp, "Ran out of urls to fetch from")
 
     def get_path(self, fetchable):
         fp = pjoin(self.distdir, fetchable.filename)

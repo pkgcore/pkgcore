@@ -386,8 +386,13 @@ def print_package(options, out, err, pkg):
             out.write()
 
     if options.contents:
-        for location in sorted(obj.location for obj in get_pkg_attr(pkg, 'contents', ())):
-            out.write(location)
+        for obj in sorted(obj for obj in get_pkg_attr(pkg, 'contents', ())):
+            color = []
+            if isinstance(obj, fs_module.fsDir):
+                color = [out.bold, out.fg('blue')]
+            elif isinstance(obj, fs_module.fsLink):
+                color = [out.bold, out.fg('cyan')]
+            out.write(*(color + [obj.location] + [out.reset]))
 
 
 def print_packages_noversion(options, out, err, pkgs):

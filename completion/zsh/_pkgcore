@@ -110,7 +110,7 @@ _pinspect() {
         '--sort-by-name[sort output by name, rather then by frequency]'
         '--first[show only the first N detail items]:number'
         '--last[show only the last N detail items]:number'
-        '*:repo:_repos'
+        '*:repo:_repos -i'
       )
 
       case $line[1] in
@@ -298,7 +298,7 @@ _pquery() {
     '--raw[disable configuration and filtering]'
     '--no-filters[disable all license filtering and visibility filtering]'
     "--virtuals[specific virtuals handling (everything is matched by default)]:options:((only\:'only match virtuals' disable\:'no matching virtuals'))"
-    {'(--repo)-r','(-r)--repo'}'[target repository]:repo:_repos'
+    {'(--repo)-r','(-r)--repo'}'[target repository]:repo:_repos -e -i'
     '--all-repos[search all repos including the vdb]'
   )
 
@@ -352,11 +352,13 @@ _pquery() {
 _repos() {
   # optional args
   # -c output completion format
+  # -e add package.provided "repo" to the list
+  # -i add vdb "repo" to the list
   # -v section:key
   # -p print the output instead of using completion
   # -l use repo locations instead of repo_ids
   typeset -A opts
-  zparseopts -E -A opts c l p v:
+  zparseopts -E -A opts c e i l p v:
 
   local repo_name output_type
   typeset -a repos output
@@ -396,8 +398,10 @@ _repos() {
       eval "output+=(\${${repo}[location]})"
     done
   else
-    output_type="repos"
     # repo names
+    output_type="repos"
+    [[ -n $opts[(I)-e] ]] && repos+=( provided )
+    [[ -n $opts[(I)-i] ]] && repos+=( vdb )
     output=(${repos})
   fi
 

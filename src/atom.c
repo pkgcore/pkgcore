@@ -384,7 +384,7 @@ parse_cpv(PyObject *atom_str, PyObject *cpv_str, PyObject *self,
 		if(!tmp)
 			return 1;
 
-		Err_SetMalformedAtom(atom_str, PyString_AsString(tmp));
+		Err_SetMalformedAtom(atom_str, "");
 		Py_DECREF(tmp);
 		return 1;
 	}

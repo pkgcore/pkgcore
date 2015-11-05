@@ -16,8 +16,9 @@ from pkgcore.package import errors
 class MalformedAtom(errors.InvalidDependency):
 
     def __init__(self, atom, err=''):
+        err = ': ' + err if err else ''
         errors.InvalidDependency.__init__(
-            self, "atom '%s' is malformed: error %s" % (atom, err))
+            self, "atom '%s' is malformed%s" % (atom, err))
         self.atom, self.err = atom, err
 
 

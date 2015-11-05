@@ -94,7 +94,7 @@ def parse_match(text):
     orig_text = text = text.strip()
     if "!" in text:
         raise ParseError(
-            "!, or any form of blockers make no sense in this usage: %s" % (
+            "'!' or any form of blockers make no sense in this usage: '%s'" % (
                 text,))
 
     tsplit = text.rsplit("/", 1)

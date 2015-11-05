@@ -242,7 +242,7 @@ def native_init(self, atom, negate_vers=False, eapi=-1):
     try:
         c = cpv.CPV(self.cpvstr, versioned=bool(self.op))
     except errors.InvalidCPV as e:
-        raise_from(errors.MalformedAtom(orig_atom, str(e)))
+        raise_from(errors.MalformedAtom(orig_atom))
     sf(self, "key", c.key)
     sf(self, "package", c.package)
     sf(self, "category", c.category)

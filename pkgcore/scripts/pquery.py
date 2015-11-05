@@ -583,7 +583,7 @@ def parse_revdep(value):
     try:
         targetatom = atom.atom(value)
     except atom.MalformedAtom as e:
-        raise argparser.error(e)
+        raise argparser.only_error(e)
     val_restrict = values.FlatteningRestriction(
         atom.atom,
         values.AnyMatch(values.FunctionRestriction(targetatom.intersects)))

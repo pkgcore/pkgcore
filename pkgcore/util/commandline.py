@@ -648,6 +648,13 @@ class ArgumentParser(argparse.ArgumentParser):
             final_check(self, args)
         return args
 
+    def only_error(self, message):
+        """Print an error message and exit.
+
+        Similar to error() except usage information is not shown.
+        """
+        self.exit(2, '%s: error: %s\n' % (self.prog, message))
+
     def bind_main_func(self, functor):
         self.set_defaults(main_func=functor)
         return functor

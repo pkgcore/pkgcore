@@ -45,7 +45,7 @@ class StoreTarget(argparse._AppendAction):
                         self, parser, namespace,
                         (token, parserestrict.parse_match(token)), option_string=option_string)
                 except parserestrict.ParseError as e:
-                    parser.error(e)
+                    parser.only_error(e)
         if namespace.targets is None:
             namespace.targets = []
 

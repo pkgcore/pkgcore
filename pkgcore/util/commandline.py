@@ -798,15 +798,14 @@ def mk_argparser(suppress=False, config=True, domain=True,
     return p
 
 
-def argparse_parse(parser, args, namespace=None):
+def argparse_parse(errfile, parser, args, namespace=None):
     try:
         namespace = parser.parse_args(args, namespace=namespace)
-    except:
+    except Exception as e:
         # enable tracebacks for any argument parsing failure
-        if namespace is None:
-            namespace = argparse.Namespace()
-        namespace.debug = True
-        raise
+        tb = sys.exc_info()[-1]
+        dump_error(errfile, e, "Unhandled exception occurred", tb=tb)
+        raise SystemExit
 
     main = getattr(namespace, 'main_func', None)
     if main is None:
@@ -890,7 +889,7 @@ def main(subcommands, args=None, outfile=None, errfile=None):
     out = options = None
     exitstatus = -10
     try:
-        main_func, options = argparse_parse(subcommands, args, options)
+        main_func, options = argparse_parse(errfile, subcommands, args, options)
 
         if getattr(options, 'debug', False):
             # verbosity level affects debug output

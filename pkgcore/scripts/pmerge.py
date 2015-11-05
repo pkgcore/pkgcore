@@ -374,7 +374,7 @@ def _validate(parser, namespace):
     if namespace.sets:
         unknown_sets = set(namespace.sets).difference(namespace.config.pkgset)
         if unknown_sets:
-            parser.only_error("unknown set%s %s (available sets: %s)" % (
+            parser.only_error("unknown set%s '%s' (available sets: %s)" % (
                 's'[len(unknown_sets) == 1:],
                 ', '.join(sorted(unknown_sets)),
                 ', '.join(sorted(namespace.config.pkgset))))
@@ -500,7 +500,7 @@ def main(options, out, err):
             return 1
         l = list(pkgset)
         if not l:
-            out.write("skipping set %s: set is empty, nothing to update" % setname)
+            out.write("skipping set '%s': set is empty, nothing to update" % setname)
         else:
             atoms.extend(l)
 

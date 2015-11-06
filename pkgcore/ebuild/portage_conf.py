@@ -193,7 +193,7 @@ def add_profile(config, config_dir, profile_override=None):
     if paths is None:
         raise errors.ComplexInstantiationError(
             '%s expands to %s, but no profile detected' %
-            (pjoin(base_path, 'make.profile'), profile))
+            (pjoin(config_dir, 'make.profile'), profile))
 
     user_profile_path = pjoin(config_dir, 'profile')
     if os.path.isdir(user_profile_path):

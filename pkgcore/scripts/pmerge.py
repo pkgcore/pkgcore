@@ -191,7 +191,7 @@ output_options.add_argument(
 class AmbiguousQuery(parserestrict.ParseError):
     def __init__(self, token, keys):
         parserestrict.ParseError.__init__(
-            self, '%s: multiple matches (%s)' % (token, ', '.join(keys)))
+            self, 'multiple matches for "%s": %s' % (token, ', '.join(keys)))
         self.token = token
         self.keys = keys
 
@@ -396,7 +396,7 @@ def _validate(parser, namespace):
     namespace.sets = f(namespace.sets)
 
 
-def parse_target(restriction, repo, livefs_repos, return_none=False):
+def parse_target(token, restriction, repo, livefs_repos, return_none=False):
     """Use :obj:`parserestrict.parse_match` to produce a list of matches.
 
     This matches the restriction against a repo. If multiple pkgs match and a
@@ -428,7 +428,7 @@ def parse_target(restriction, repo, livefs_repos, return_none=False):
                 installed_matches = {x for x in installed_matches if not x.startswith('virtual/')}
             if len(installed_matches) == 1:
                 return [atom(installed_matches.pop())]
-            raise AmbiguousQuery(restriction, sorted(key_matches))
+            raise AmbiguousQuery(token, sorted(key_matches))
         else:
             # if a glob was specified then just return every match
             return [atom(x) for x in key_matches]
@@ -505,7 +505,7 @@ def main(options, out, err):
 
     for token, restriction in options.targets:
         try:
-            matches = parse_target(restriction, source_repos.combined, livefs_repos, return_none=True)
+            matches = parse_target(token, restriction, source_repos.combined, livefs_repos, return_none=True)
         except parserestrict.ParseError as e:
             out.error(str(e))
             return 1

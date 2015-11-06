@@ -378,15 +378,11 @@ dev-vcs/\*bzr*tools\* category must be dev-vcs, and the globbing there is like
 Additionally, pkgcore supports additional atom extensions that are more
 'pure' to the atom specification.
 
-Use Dep atoms
--------------
+Use flag dependencies
+---------------------
 
-http://bugs.gentoo.org/2272 has the details, but a use dep atom is basically a
-normal atom that is able to force/disable flags on the target atom.  Portage
-currently doesn't support use deps, although pkgcore and paludis do.
-
-Note: Although paludis supports use deps, the syntax is different to what
-pkgcore uses.
+http://bugs.gentoo.org/2272 has the details, but a use dependency is basically
+a normal atom that is able to force/disable flags on the target atom.
 
 Syntax:
 
@@ -402,30 +398,28 @@ Forcing 'build' off while forcing 'doc' on would be:
 
   sys-apps/portage[-build,doc]
 
-Slot dep atoms
---------------
+Slot dependencies
+-----------------
 
-Slot dep atoms allow for finer grained matching of packages- portage as of
-2.1.2 supports them, but they're currently unable to be used in the tree.
+Slot dependencies allow for finer grained matching of packages.
 
 Syntax:
 
   normal-atom:slot1,slot2,slot3
 
-Matching just python in slot '2.3':
+Matching just python in slot '2.7':
 
-  dev-lang/python:2.3
+  dev-lang/python:2.7
 
-Matching python in slot '2.3' or '2.4'
+Matching python in slot '3.4' or '3.5'
 
-  dev-lang/python:2.3,2.4
+  dev-lang/python:3.4,3.5
 
-repo_id atoms
--------------
+Repo dependencies
+-----------------
 
 The main usage of this form is to limit an atom to match only within a specific
-repository - for example, to state "I need python from the gentoo-x86
-repository _only_"
+repo - for example, to state "I need python from the gentoo repo _only_."
 
 syntax:
 
@@ -440,9 +434,9 @@ as strictly repository id matching, and must be the last token in the atom.
 
 If you need to do slot matching in addition, it would be
 
-  sys-devel/gcc:3.3::gentoo
+  sys-devel/gcc:4.9::gentoo
 
-which would match slot '3.3' from repository 'gentoo' (defined in
+which would match slot '4.9' from repository 'gentoo' (defined in
 profiles/repo_name) of sys-devel/gcc.
 
 Utilities

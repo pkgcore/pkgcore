@@ -480,6 +480,12 @@ def is_sandbox_capable(force=False):
         except AttributeError:
             pass
     res = os.path.isfile(SANDBOX_BINARY) and access(SANDBOX_BINARY, os.X_OK)
+    if res:
+        try:
+            r, s = spawn_get_output([SANDBOX_BINARY, "--version"])
+            res = (r == 0) and ("gentoo" in s[0].lower())
+        except ExecutionFailure:
+            res = False
     is_sandbox_capable.cached_result = res
     return res
 

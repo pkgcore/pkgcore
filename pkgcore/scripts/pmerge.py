@@ -59,11 +59,8 @@ argparser.add_argument(
         pmerge supports various target arguments including the following:
 
         atom
-            PMS defined atom syntax, see ebuild(5) for more details.
-
-        package name
-            Simple package names are supported along with some of the operators
-            used with full atoms.
+            An extended atom syntax is supported, see the related section
+            in pkgcore(5).
 
         package set
             Used to define lists of packages, the syntax used for these is

@@ -27,7 +27,7 @@ from pkgcore.restrictions.boolean import OrRestriction
 from pkgcore.util import commandline, parserestrict, repo_utils
 
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
-from snakeoil.lists import stable_unique
+from snakeoil.lists import iflatten_instance, stable_unique
 
 
 class StoreTarget(argparse._AppendAction):
@@ -421,7 +421,7 @@ def parse_target(restriction, repo, livefs_repos, return_none=False):
             return None
         raise NoMatches(restriction)
     elif len(key_matches) > 1:
-        if isinstance(restriction, restricts.PackageDep):
+        if any(isinstance(r, restricts.PackageDep) for r in iflatten_instance([restriction])):
             # check for installed package matches
             installed_matches = {x.key for x in livefs_repos.itermatch(restriction)}
             if len(installed_matches) > 1:

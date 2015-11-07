@@ -53,16 +53,17 @@ class syncer(object):
     disabled = False
 
     pkgcore_config_type = ConfigHint(
-        {'path': 'str', 'uri': 'str'}, typename='syncer')
+        {'path': 'str', 'uri': 'str', 'opts': 'str'}, typename='syncer')
 
     @classmethod
     def is_usable_on_filepath(cls, path):
         return None
 
-    def __init__(self, path, uri, default_verbosity=0):
+    def __init__(self, path, uri, default_verbosity=0, opts=''):
         self.verbose = default_verbosity
         self.basedir = path.rstrip(os.path.sep) + os.path.sep
         self.local_user, self.uri = self.split_users(uri)
+        self.opts = opts.split()
 
     @staticmethod
     def split_users(raw_uri):
@@ -126,8 +127,8 @@ class ExternalSyncer(syncer):
         'SSH_AUTH_SOCK',
     )
 
-    def __init__(self, path, uri, default_verbosity=0):
-        syncer.__init__(self, path, uri, default_verbosity=default_verbosity)
+    def __init__(self, *args, **kwargs):
+        syncer.__init__(self, *args, **kwargs)
         self.env = {v: os.environ[v] for v in self.env_whitelist if v in os.environ}
 
         if not hasattr(self, 'binary_path'):
@@ -185,12 +186,12 @@ class dvcs_syncer(ExternalSyncer):
         except EnvironmentError as e:
             if e.errno != errno.ENOENT:
                 compatibility.raise_from(generic_exception(self, self.basedir, e))
-            command = self._initial_pull()
+            command = self._initial_pull() + self.opts
             chdir = None
         else:
             if not stat.S_ISDIR(st.st_mode):
                 raise generic_exception(self, self.basedir, "isn't a directory")
-            command = self._update_existing()
+            command = self._update_existing() + self.opts
             chdir = self.basedir
 
         # we assume syncers support -v and -q for verbose and quiet output
@@ -209,8 +210,8 @@ class dvcs_syncer(ExternalSyncer):
     def _update_existing(self):
         raise NotImplementedError(self, "_update_existing")
 
-@configurable({'basedir': 'str', 'uri': 'str'}, typename='syncer')
-def GenericSyncer(basedir, uri, default_verbosity=0):
+@configurable({'basedir': 'str', 'uri': 'str', 'opts': 'str'}, typename='syncer')
+def GenericSyncer(basedir, uri, **kwargs):
     """Syncer using the plugin system to find a syncer based on uri."""
     plugins = list(
         (plug.supports_uri(uri), plug)
@@ -219,13 +220,13 @@ def GenericSyncer(basedir, uri, default_verbosity=0):
     if not plugins or plugins[-1][0] <= 0:
         raise uri_exception('no known syncer supports %r' % (uri,))
     # XXX this is random if there is a tie. Should we raise an exception?
-    return plugins[-1][1](basedir, uri, default_verbosity=default_verbosity)
+    return plugins[-1][1](basedir, uri, **kwargs)
 
 
 class DisabledSyncer(syncer):
 
-    def __init__(self, basedir, default_verbosity=0):
-        syncer.__init__(self, basedir, '', default_verbosity=default_verbosity)
+    def __init__(self, basedir, **kwargs):
+        syncer.__init__(self, basedir, uri='', **kwargs)
 
     @staticmethod
     def disabled():
@@ -233,9 +234,9 @@ class DisabledSyncer(syncer):
 
 
 @configurable({'basedir': 'str'}, typename='syncer')
-def AutodetectSyncer(basedir, default_verbosity=0):
+def AutodetectSyncer(basedir, **kwargs):
     for plug in plugin.get_plugins('syncer'):
         ret = plug.is_usable_on_filepath(basedir)
         if ret is not None:
-            return plug(basedir, default_verbosity=default_verbosity, *ret)
-    return DisabledSyncer(basedir, '')
+            return plug(basedir, *ret, **kwargs)
+    return DisabledSyncer(basedir, **kwargs)

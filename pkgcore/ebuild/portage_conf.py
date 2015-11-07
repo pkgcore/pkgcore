@@ -113,6 +113,7 @@ def make_repo_syncers(config, repos_conf, make_conf, allow_timestamps=True):
                 sync_uri = '%s+%s' % (sync_type, sync_uri)
 
             d['uri'] = sync_uri
+            d['opts'] = repo_opts.get('sync-opts', '')
 
             if sync_type == 'rsync':
                 if rsync_opts is None:

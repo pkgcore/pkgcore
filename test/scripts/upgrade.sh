@@ -14,8 +14,6 @@ SNAKEOIL_ORIG=${1:-0.6.4}
 PKGCORE_ORIG=${2:-0.9.1}
 SNAKEOIL_NEW=${3:-9999}
 PKGCORE_NEW=${4:-9999}
-SNAKEOIL_GIT=v${SNAKEOIL_ORIG}
-PKGCORE_GIT=v${PKGCORE_ORIG}
 BUILD_LOG=/tmp/pkgcore.log
 
 CHROOT=$(mktemp -p /tmp -d chroot-XXXXXX)
@@ -42,10 +40,10 @@ git clone https://github.com/pkgcore/pkgcore.git "${CHROOT}${PKGCORE_PATH}"
 git clone --depth 1 https://github.com/gentoo-mirror/gentoo.git "${CHROOT}${GENTOO}"
 
 pushd "${CHROOT}${SNAKEOIL_PATH}" >/dev/null
-git checkout ${SNAKEOIL_GIT}
+git checkout v${SNAKEOIL_ORIG}
 popd >/dev/null
 pushd "${CHROOT}${PKGCORE_PATH}" >/dev/null
-git checkout ${PKGCORE_GIT}
+git checkout v${PKGCORE_ORIG}
 popd >/dev/null
 
 cat <<-EOF >"${CHROOT}"/etc/portage/package.accept_keywords
@@ -68,13 +66,11 @@ sudo pychroot "${CHROOT}" /bin/bash -c "
 	popd >/dev/null
 "
 
-[[ ${SNAKEOIL_NEW} == 9999 ]] && SNAKEOIL_GIT=master || SNAKEOIL_GIT=v${SNAKEOIL_NEW}
-[[ ${PKGCORE_NEW} == 9999 ]] && PKGCORE_GIT=master || PKGCORE_GIT=v${PKGCORE_NEW}
 pushd "${CHROOT}${SNAKEOIL_PATH}" >/dev/null
-git checkout ${SNAKEOIL_GIT}
+git checkout master
 popd >/dev/null
 pushd "${CHROOT}${PKGCORE_PATH}" >/dev/null
-git checkout ${PKGCORE_GIT}
+git checkout master
 popd >/dev/null
 
 sudo pychroot "${CHROOT}" /bin/bash -c "

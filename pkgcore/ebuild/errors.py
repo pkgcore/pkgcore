@@ -49,10 +49,10 @@ class ParseError(errors.InvalidDependency):
         if self.msg is None:
             str_msg = ''
         else:
-            str_msg = ': %s' % msg
+            str_msg = ': %s' % self.msg
 
         if self.token is not None:
             return "%s is unparseable%s\nflagged token- %s" % \
-                (s, str_msg, token)
+                (self.dep_str, str_msg, self.token)
         else:
-            return "%s is unparseable%s" % (s, str_msg)
+            return "%s is unparseable%s" % (self.dep_str, str_msg)

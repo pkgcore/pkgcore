@@ -22,10 +22,10 @@ generic_data = \
         ('SRC_URI', 'http://pages.stern.nyu.edu/~marriaga/software/blah.tgz'),
         ('_eclasses_',
             {
-                'toolchain-funcs': LazilyHashedPath('/usr/portage/eclass', mtime=1155996352L),
-                'multilib': LazilyHashedPath('/usr/portage/eclass', mtime=1156014349L),
-                'eutils': LazilyHashedPath('/usr/portage/eclass', mtime=1155996352L),
-                'portability': LazilyHashedPath('/usr/portage/eclass', mtime=1141850196L)
+                'toolchain-funcs': LazilyHashedPath('/var/gentoo/repos/gentoo/eclass', mtime=1155996352L),
+                'multilib': LazilyHashedPath('/var/gentoo/repos/gentoo/eclass', mtime=1156014349L),
+                'eutils': LazilyHashedPath('/var/gentoo/repos/gentoo/eclass', mtime=1155996352L),
+                'portability': LazilyHashedPath('/var/gentoo/repos/gentoo/eclass', mtime=1141850196L)
             }
         ),
         ('_mtime_', 1000),

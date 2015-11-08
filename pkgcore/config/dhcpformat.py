@@ -13,7 +13,7 @@ Example of the supported format (not a complete config)::
         class pkgcore.cache.metadata.database;
         # true, yes or 1 for boolean True (case-insensitive).
         readonly true;
-        location /usr/portage/
+        location /var/gentoo/repos/gentoo
     }
 
     # this needs to be quoted because it has a space in it
@@ -26,14 +26,14 @@ Example of the supported format (not a complete config)::
         repositories {
             type repo;
             class pkgcore.ebuild.repository.tree;
-            location /usr/portage;
+            location /var/gentoo/repos/gentoo;
             # this is also a section reference, but instead of a nested section
             # we refer to the named metadata section above
             cache metadata;
         };
         fetcher {
             type fetcher;
-            distdir /usr/portage/distfiles;
+            distdir /var/gentoo/dist;
         }
     }
 """

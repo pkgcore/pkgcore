@@ -145,12 +145,12 @@ class TestPkgcoreFormatter(BaseFormatterTest, TestCase):
         self.assertOut("add     dev-util/diffball-1.0")
 
         self.formatter.format(FakeOp(FakeEbuildSrc('dev-util/diffball-1.0',
-            repo=FakeRepo(repo_id='gentoo', location='/usr/portage'))))
+            repo=FakeRepo(repo_id='gentoo', location='/var/gentoo/repos/gentoo'))))
         self.assertOut("add     dev-util/diffball-1.0::gentoo")
 
         self.formatter.format(
             FakeOp(FakeEbuildSrc('dev-util/diffball-1.2',
-                   repo=FakeRepo(repo_id='gentoo', location='/usr/portage')),
+                   repo=FakeRepo(repo_id='gentoo', location='/var/gentoo/repos/gentoo')),
                 FakeMutatedPkg('dev-util/diffball-1.1')))
         self.assertOut(
             "replace dev-util/diffball-1.1, "
@@ -264,7 +264,7 @@ class TestPaludisFormatter(CountingFormatterTest, TestCase):
 
     def setUp(self):
         BaseFormatterTest.setUp(self)
-        self.repo = FakeRepo(repo_id='gentoo', location='/usr/portage')
+        self.repo = FakeRepo(repo_id='gentoo', location='/var/gentoo/repos/gentoo')
 
     def FakeEbuildSrc(self, *args, **kwargs):
         kwargs.setdefault("repo", self.repo)
@@ -329,7 +329,7 @@ class TestPortageFormatter(BaseFormatterTest, TestCase):
     def setUp(self):
         pkg = FakeMutatedPkg('app-arch/bzip2-1.0.1-r1', slot='0')
         masked_atom = atom('>=app-arch/bzip2-2.0')
-        self.repo1 = FakeRepo(repo_id='gentoo', location='/usr/portage', masks=(masked_atom,))
+        self.repo1 = FakeRepo(repo_id='gentoo', location='/var/gentoo/repos/gentoo', masks=(masked_atom,))
         self.repo2 = FakeRepo(repo_id='fakerepo', location='/var/gentoo/repos/fakerepo')
         self.livefs = FakeRepo(repo_id='vdb', pkgs=[pkg])
         BaseFormatterTest.setUp(self)
@@ -736,7 +736,7 @@ class TestPortageVerboseRepoIdFormatter(TestPortageVerboseFormatter):
         self.fakeout.resetstream()
         self.formatter.end()
         self.assertOut('\nTotal: 3 packages (3 new)\n\n',
-            ' ', Color('fg', 'cyan'), '[1]', Reset(),' gentoo (/usr/portage)\n',
+            ' ', Color('fg', 'cyan'), '[1]', Reset(),' gentoo (/var/gentoo/repos/gentoo)\n',
             ' ', Color('fg', 'cyan'), '[2]', Reset(),' fakerepo (/var/gentoo/repos/fakerepo)\n',
             ' ', Color('fg', 'cyan'), '[3]', Reset(),' /usr/local/portage\n',
             suffix=[''])

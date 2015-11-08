@@ -54,7 +54,7 @@ domain
   flags, cflags, etc).  config data + repositories effectively.
 
 repository
-  trees.  ebuild tree (/usr/portage), binpkg tree, vdb tree, etc.
+  trees.  ebuild tree, binpkg tree, vdb tree, etc.
 
 protocol
   python name for design/api.  iter() fex, is a protocol; for iter(o)

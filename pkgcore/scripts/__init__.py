@@ -20,10 +20,7 @@ import os
 import sys
 
 
-def main(script_name=None):
-    if script_name is None:
-        script_name = os.path.basename(sys.argv[0])
-
+def main(script_name):
     try:
         from pkgcore.util import commandline
         script = import_module(

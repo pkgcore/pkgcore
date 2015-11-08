@@ -79,10 +79,12 @@ class UnconfiguredTreeTest(TempDirMixin):
 
     def test_path_restrict(self):
         repo_dir = pjoin(self.dir, 'repo')
+        sym_repo_dir = pjoin(self.dir, 'sym_repo')
+        os.symlink(repo_dir, sym_repo_dir)
+
         ensure_dirs(pjoin(repo_dir, 'profiles'))
         with open(pjoin(repo_dir, 'profiles', 'repo_name'), 'w') as f:
             f.write('testrepo\n')
-        repo = self.mk_tree(repo_dir)
         ensure_dirs(pjoin(repo_dir, 'cat', 'foo'))
         ensure_dirs(pjoin(repo_dir, 'cat', 'bar'))
         ensure_dirs(pjoin(repo_dir, 'tac', 'oof'))
@@ -98,42 +100,54 @@ class UnconfiguredTreeTest(TempDirMixin):
             f.write('cat\n')
             f.write('tac\n')
 
-        for path in (self.dir,  # path not in repo
-                     pjoin(repo_dir, 'a'),  # nonexistent category dir
-                     pjoin(repo_dir, 'profiles'),  # non-category dir
-                     pjoin(repo_dir, 'skel.ebuild'),  # not in the correct cat/PN dir layout
-                     pjoin(repo_dir, 'cat', 'a'),  # nonexistent package dir
-                     pjoin(repo_dir, 'cat', 'foo', 'foo-0.ebuild'),  # nonexistent ebuild file
-                     pjoin(repo_dir, 'cat', 'foo', 'Manifest')):  # non-ebuild file
-            self.assertRaises(ValueError, repo.path_restrict, path)
+        for d in (repo_dir, sym_repo_dir):
+            repo = self.mk_tree(d)
+            for path in (self.dir,  # path not in repo
+                        pjoin(repo.location, 'a'),  # nonexistent category dir
+                        pjoin(repo.location, 'profiles'),  # non-category dir
+                        pjoin(repo.location, 'skel.ebuild'),  # not in the correct cat/PN dir layout
+                        pjoin(repo.location, 'cat', 'a'),  # nonexistent package dir
+                        pjoin(repo.location, 'cat', 'foo', 'foo-0.ebuild'),  # nonexistent ebuild file
+                        pjoin(repo.location, 'cat', 'foo', 'Manifest')):  # non-ebuild file
+                self.assertRaises(ValueError, repo.path_restrict, path)
 
-        # repo dir
-        restriction = repo.path_restrict(repo_dir)
-        self.assertEqual(len(restriction), 1)
-        self.assertInstance(restriction[0], restricts.RepositoryDep)
-        # matches all 4 ebuilds in the repo
-        self.assertEqual(len(repo.match(restriction)), 4)
+            # repo dir
+            restriction = repo.path_restrict(repo.location)
+            self.assertEqual(len(restriction), 1)
+            self.assertInstance(restriction[0], restricts.RepositoryDep)
+            # matches all 4 ebuilds in the repo
+            self.assertEqual(len(repo.match(restriction)), 4)
 
-        # category dir
-        restriction = repo.path_restrict(pjoin(repo_dir, 'cat'))
-        self.assertEqual(len(restriction), 2)
-        self.assertInstance(restriction[1], restricts.CategoryDep)
-        # matches all 3 ebuilds in the category
-        self.assertEqual(len(repo.match(restriction)), 3)
+            # category dir
+            restriction = repo.path_restrict(pjoin(repo.location, 'cat'))
+            self.assertEqual(len(restriction), 2)
+            self.assertInstance(restriction[1], restricts.CategoryDep)
+            # matches all 3 ebuilds in the category
+            self.assertEqual(len(repo.match(restriction)), 3)
 
-        # package dir
-        restriction = repo.path_restrict(pjoin(repo_dir, 'cat', 'foo'))
-        self.assertEqual(len(restriction), 3)
-        self.assertInstance(restriction[2], restricts.PackageDep)
-        # matches both ebuilds in the package dir
-        self.assertEqual(len(repo.match(restriction)), 2)
+            # package dir
+            restriction = repo.path_restrict(pjoin(repo.location, 'cat', 'foo'))
+            self.assertEqual(len(restriction), 3)
+            self.assertInstance(restriction[2], restricts.PackageDep)
+            # matches both ebuilds in the package dir
+            self.assertEqual(len(repo.match(restriction)), 2)
 
-        # ebuild file
-        restriction = repo.path_restrict(pjoin(repo_dir, 'cat', 'foo', 'foo-1.ebuild'))
-        self.assertEqual(len(restriction), 4)
-        self.assertInstance(restriction[3], restricts.VersionMatch)
-        # specific ebuild version match
-        self.assertEqual(len(repo.match(restriction)), 1)
+            # ebuild file
+            restriction = repo.path_restrict(pjoin(repo.location, 'cat', 'foo', 'foo-1.ebuild'))
+            self.assertEqual(len(restriction), 4)
+            self.assertInstance(restriction[3], restricts.VersionMatch)
+            # specific ebuild version match
+            self.assertEqual(len(repo.match(restriction)), 1)
+
+            # relative ebuild file path
+            orig_cwd = os.getcwd()
+            os.chdir(pjoin(repo.location, 'cat', 'foo'))
+            restriction = repo.path_restrict('./foo-1.ebuild')
+            self.assertEqual(len(restriction), 4)
+            self.assertInstance(restriction[3], restricts.VersionMatch)
+            # specific ebuild version match
+            self.assertEqual(len(repo.match(restriction)), 1)
+            os.chdir(orig_cwd)
 
     @silence_logging
     def test_categories_packages(self):

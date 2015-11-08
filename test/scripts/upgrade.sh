@@ -9,6 +9,7 @@
 # TODO:
 #	* use local git repos instead of re-cloning them for git upgrades
 #	* get rid of sudo usage
+#	* use custom, minimized stage3 tarballs
 
 SNAKEOIL_ORIG=${1:-0.6.4}
 PKGCORE_ORIG=${2:-0.9.1}
@@ -19,7 +20,7 @@ BUILD_LOG=/tmp/pkgcore.log
 CHROOT=$(mktemp -p /tmp -d chroot-XXXXXX)
 SNAKEOIL_PATH=/home/test/snakeoil
 PKGCORE_PATH=/home/test/pkgcore
-GENTOO=/usr/portage
+GENTOO=/var/gentoo/repos/gentoo
 STAGE3=$(curl -Ss http://distfiles.gentoo.org/releases/amd64/autobuilds/latest-stage3-amd64-nomultilib.txt | awk '/^[^#]/ {print $1}')
 
 # wipe chroot on exit
@@ -46,6 +47,10 @@ pushd "${CHROOT}${PKGCORE_PATH}" >/dev/null
 git checkout v${PKGCORE_ORIG}
 popd >/dev/null
 
+ln -sfn "${GENTOO}"/profiles/default/linux/amd64/13.0/no-multilib "${CHROOT}"/etc/portage/make.profile
+rm -rf "${CHROOT}"/usr/portage
+ln -sfn "${GENTOO}" "${CHROOT}"/usr/portage
+
 cat <<-EOF >"${CHROOT}"/etc/portage/package.accept_keywords
 	dev-python/snakeoil ~amd64 **
 	sys-apps/pkgcore ~amd64 **
@@ -64,21 +69,6 @@ sudo pychroot "${CHROOT}" /bin/bash -c "
 	./pmerge \=sys-apps/pkgcore-${PKGCORE_ORIG} >> ${BUILD_LOG}
 	echo BOOTSTRAP: snakeoil-${SNAKEOIL_ORIG} pkgcore-${PKGCORE_ORIG} | tee -a ${BUILD_LOG}
 	popd >/dev/null
-"
-
-pushd "${CHROOT}${SNAKEOIL_PATH}" >/dev/null
-git checkout master
-popd >/dev/null
-pushd "${CHROOT}${PKGCORE_PATH}" >/dev/null
-git checkout master
-popd >/dev/null
-
-sudo pychroot "${CHROOT}" /bin/bash -c "
-	set -e
-
-	# fetch everything
-	pmerge -f \=dev-python/snakeoil-${SNAKEOIL_ORIG} \=sys-apps/pkgcore-${PKGCORE_ORIG}
-	pmerge -f \=dev-python/snakeoil-${SNAKEOIL_NEW} \=sys-apps/pkgcore-${PKGCORE_NEW}
 
 	pmerge -1 \=dev-python/snakeoil-${SNAKEOIL_ORIG} \=sys-apps/pkgcore-${PKGCORE_ORIG} >> ${BUILD_LOG}
 	echo REINSTALL: snakeoil-${SNAKEOIL_ORIG} pkgcore-${PKGCORE_ORIG} | tee -a ${BUILD_LOG}

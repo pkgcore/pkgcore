@@ -193,8 +193,14 @@ class tree(object):
         :param path: path in the filesystem
         :return: True if path is in repo, otherwise False
         """
-        path = os.path.abspath(path)
-        if os.path.exists(path) and path.startswith(getattr(self, 'location', ())):
+        path = os.path.realpath(path)
+
+        try:
+            repo_path = os.path.realpath(getattr(self, 'location'))
+        except AttributeError:
+            return False
+
+        if os.path.exists(path) and path.startswith(repo_path):
             return True
         return False
 

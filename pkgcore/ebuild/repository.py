@@ -305,16 +305,16 @@ class _UnconfiguredTree(prototype.tree):
         :param path: full or partial path to an ebuild
         :return: a package restriction matching the given path if possible
         """
-        abspath = os.path.abspath(path)
+        realpath = os.path.realpath(path)
 
-        if not self.contains(abspath):
+        if not self.contains(realpath):
             raise ValueError("'%s' repo doesn't contain: '%s'" % (self.repo_id, path))
 
-        relpath = abspath[len(self.location):].strip('/')
+        relpath = realpath[len(os.path.realpath(self.location)):].strip('/')
         repo_path = relpath.split(os.path.sep) if relpath else []
         restrictions = []
 
-        if os.path.isfile(abspath):
+        if os.path.isfile(realpath):
             if not path.endswith('.ebuild'):
                 raise ValueError("file is not an ebuild: '%s'" % (path,))
             elif len(repo_path) != 3:

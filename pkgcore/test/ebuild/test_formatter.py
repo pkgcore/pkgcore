@@ -330,7 +330,7 @@ class TestPortageFormatter(BaseFormatterTest, TestCase):
         pkg = FakeMutatedPkg('app-arch/bzip2-1.0.1-r1', slot='0')
         masked_atom = atom('>=app-arch/bzip2-2.0')
         self.repo1 = FakeRepo(repo_id='gentoo', location='/var/gentoo/repos/gentoo', masks=(masked_atom,))
-        self.repo2 = FakeRepo(repo_id='fakerepo', location='/var/gentoo/repos/fakerepo')
+        self.repo2 = FakeRepo(repo_id='repo2', location='/var/gentoo/repos/repo2')
         self.livefs = FakeRepo(repo_id='vdb', pkgs=[pkg])
         BaseFormatterTest.setUp(self)
 
@@ -590,7 +590,7 @@ class TestPortageVerboseFormatter(TestPortageFormatter):
         self.formatter.format(FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6', repo=self.repo2)))
         self.assertOut('[', Color('fg', 'green'), 'ebuild', Reset(),
             '  ', Color('fg', 'green'), Bold(), 'N', Reset(), '     ] ',
-            Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6::fakerepo', Reset())
+            Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6::repo2', Reset())
         self.formatter.format(
             FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.4', repo=self.repo1),
             FakeMutatedPkg('app-arch/bzip2-1.0.3-r6', repo=self.repo1)))
@@ -603,7 +603,7 @@ class TestPortageVerboseFormatter(TestPortageFormatter):
             FakeMutatedPkg('app-arch/bzip2-1.0.3-r6', repo=self.repo1)))
         self.assertOut('[', Color('fg', 'green'), 'ebuild', Reset(),
             '     ', Color('fg', 'cyan'), Bold(), 'U', Reset(), '  ] ',
-            Color('fg', 'green'), 'app-arch/bzip2-1.0.4::fakerepo', Reset(), ' ',
+            Color('fg', 'green'), 'app-arch/bzip2-1.0.4::repo2', Reset(), ' ',
             Color('fg', 'blue'), Bold(), '[1.0.3-r6::gentoo]', Reset())
         self.formatter.format(
             FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.4', repo=self.repo1),
@@ -611,14 +611,14 @@ class TestPortageVerboseFormatter(TestPortageFormatter):
         self.assertOut('[', Color('fg', 'green'), 'ebuild', Reset(),
             '     ', Color('fg', 'cyan'), Bold(), 'U', Reset(), '  ] ',
             Color('fg', 'green'), 'app-arch/bzip2-1.0.4::gentoo', Reset(), ' ',
-            Color('fg', 'blue'), Bold(), '[1.0.3-r6::fakerepo]', Reset())
+            Color('fg', 'blue'), Bold(), '[1.0.3-r6::repo2]', Reset())
         self.formatter.format(
             FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.4', repo=self.repo2),
             FakeMutatedPkg('app-arch/bzip2-1.0.3-r6', repo=self.repo2)))
         self.assertOut('[', Color('fg', 'green'), 'ebuild', Reset(),
             '     ', Color('fg', 'cyan'), Bold(), 'U', Reset(), '  ] ',
-            Color('fg', 'green'), 'app-arch/bzip2-1.0.4::fakerepo', Reset(), ' ',
-            Color('fg', 'blue'), Bold(), '[1.0.3-r6::fakerepo]', Reset())
+            Color('fg', 'green'), 'app-arch/bzip2-1.0.4::repo2', Reset(), ' ',
+            Color('fg', 'blue'), Bold(), '[1.0.3-r6::repo2]', Reset())
 
     def test_misc(self):
         self.formatter.format(FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6', slot='0')))
@@ -714,7 +714,7 @@ class TestPortageVerboseRepoIdFormatter(TestPortageVerboseFormatter):
 
     def setUp(self):
         TestPortageVerboseFormatter.setUp(self)
-        self.repo3 = FakeRepo(location='/usr/local/portage')
+        self.repo3 = FakeRepo(location='/var/gentoo/repos/repo3')
 
     def newFormatter(self, **kwargs):
         kwargs.setdefault("quiet_repo_display", True)
@@ -737,6 +737,6 @@ class TestPortageVerboseRepoIdFormatter(TestPortageVerboseFormatter):
         self.formatter.end()
         self.assertOut('\nTotal: 3 packages (3 new)\n\n',
             ' ', Color('fg', 'cyan'), '[1]', Reset(),' gentoo (/var/gentoo/repos/gentoo)\n',
-            ' ', Color('fg', 'cyan'), '[2]', Reset(),' fakerepo (/var/gentoo/repos/fakerepo)\n',
-            ' ', Color('fg', 'cyan'), '[3]', Reset(),' /usr/local/portage\n',
+            ' ', Color('fg', 'cyan'), '[2]', Reset(),' repo2 (/var/gentoo/repos/repo2)\n',
+            ' ', Color('fg', 'cyan'), '[3]', Reset(),' /var/gentoo/repos/repo3\n',
             suffix=[''])

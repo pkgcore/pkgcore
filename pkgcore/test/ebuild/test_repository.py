@@ -5,6 +5,11 @@
 import os
 import textwrap
 
+try:
+    from unittest import mock
+except ImportError:
+    import mock
+
 from snakeoil.fileutils import touch
 from snakeoil.osutils import ensure_dirs, pjoin
 from snakeoil.test.mixins import TempDirMixin
@@ -140,14 +145,12 @@ class UnconfiguredTreeTest(TempDirMixin):
             self.assertEqual(len(repo.match(restriction)), 1)
 
             # relative ebuild file path
-            orig_cwd = os.getcwd()
-            os.chdir(pjoin(repo.location, 'cat', 'foo'))
-            restriction = repo.path_restrict('./foo-1.ebuild')
-            self.assertEqual(len(restriction), 4)
-            self.assertInstance(restriction[3], restricts.VersionMatch)
-            # specific ebuild version match
-            self.assertEqual(len(repo.match(restriction)), 1)
-            os.chdir(orig_cwd)
+            with mock.patch('os.getcwd', return_value=os.path.realpath(pjoin(repo.location, 'cat', 'foo'))):
+                restriction = repo.path_restrict('./foo-1.ebuild')
+                self.assertEqual(len(restriction), 4)
+                self.assertInstance(restriction[3], restricts.VersionMatch)
+                # specific ebuild version match
+                self.assertEqual(len(repo.match(restriction)), 1)
 
     @silence_logging
     def test_categories_packages(self):

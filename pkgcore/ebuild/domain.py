@@ -568,22 +568,26 @@ class domain(config_domain):
 
     @klass.jit_attr
     def ebuild_repos(self):
+        """Group of all ebuild repos bound with configuration data."""
         return util.RepositoryGroup(
             x for x in self.repos
             if isinstance(x.raw_repo, ebuild_repo._ConfiguredTree))
 
     @klass.jit_attr
     def ebuild_repos_raw(self):
+        """Group of all ebuild repos."""
         return util.RepositoryGroup(x.raw_repo for x in self.ebuild_repos)
 
     @klass.jit_attr
     def binary_repos(self):
+        """Group of all binary repos bound with configuration data."""
         return util.RepositoryGroup(
             x for x in self.repos
             if isinstance(x.raw_repo, binary_repo.ConfiguredBinpkgTree))
 
     @klass.jit_attr
     def binary_repos_raw(self):
+        """Group of all binary repos."""
         return util.RepositoryGroup(x.raw_repo for x in self.binary_repos)
 
     # multiplexed repos
@@ -593,7 +597,7 @@ class domain(config_domain):
     all_raw_binary_repos = klass.alias_attr("binary_repos_raw.combined")
 
     def repo_containing_ebuild(self, path):
-        """Determine if an ebuild is in a configured repo.
+        """Determine if an ebuild is in a repo.
 
         Note that this will only return a repo if the ebuild is properly placed
         in the proper category/PN directory structure.

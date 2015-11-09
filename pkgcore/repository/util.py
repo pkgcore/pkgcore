@@ -15,6 +15,15 @@ demandload(
 
 
 class SimpleTree(tree):
+    """Fake, in-memory repository.
+
+    Args:
+        cpv_dict (dict): CPVs to populate the repo with
+        pkg_klass: class of packages in repo
+        livefs (bool): regular repo if False, vdb if True
+        frozen (bool): repo is modifiable if False, otherwise readonly
+        repo_id (str): repo ID
+    """
 
     def __init__(self, cpv_dict, pkg_klass=None, livefs=False, frozen=True,
                  repo_id=None):
@@ -55,6 +64,12 @@ class SimpleTree(tree):
 
 
 class RepositoryGroup(object):
+    """Group of repositories as a single unit.
+
+    Args:
+        repos (list): repo instances
+        combined: combined repo, if None a multiplex repo is created
+    """
 
     def __init__(self, repos, combined=None):
         self.repos = tuple(repos)

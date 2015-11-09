@@ -120,19 +120,28 @@ class VersionMapping(DictMixin):
 
 
 class tree(object):
-    """
-    repository template
+    """Template for all repository variants.
 
-    :ivar raw_repo: if wrapping a repo, set raw_repo per instance to it
-    :ivar livefs: boolean, set it to True if it's a repository representing
-        a livefs
-    :ivar package_class: callable to generate a package instance, must override
-    :ivar configured: if a repo is unusable for merging/unmerging
-        without being configured, set it to False
-    :ivar configure: if the repository isn't configured, must be a callable
-        yielding a configured form of the repository
-    :ivar frozen_settable: bool controlling whether frozen is able to be set
-        via __init__
+    Args:
+        frozen (bool): controls whether the repository is mutable or immutable
+
+    Attributes:
+        raw_repo: if wrapping a repo, set raw_repo per instance to it
+        livefs (bool): set it to True if it's a repository representing a livefs
+        package_class: callable to generate a package instance, must override
+        configured (bool): if a repo is unusable for merging/unmerging
+            without being configured, set it to False
+        configure: if the repository isn't configured, must be a callable
+            yielding a configured form of the repository
+        frozen_settable (bool): controls whether frozen is able to be set
+            on initialization
+        operations_kls: callable to generate a repo operations instance
+
+        categories (dict): available categories in the repo
+        packages (dict): mapping of packages to categories in the repo
+        versions (dict): mapping of versions to packages in the repo
+        frozen (bool): repository mutability status
+        lock: TODO
     """
 
     raw_repo = None
@@ -144,10 +153,6 @@ class tree(object):
     operations_kls = repo.operations
 
     def __init__(self, frozen=False):
-        """
-        :keyword frozen: controls whether the repository is mutable or immutable
-        """
-
         self.categories = CategoryIterValLazyDict(
             self._get_categories, self._get_categories)
         self.packages = PackageMapping(self.categories, self._get_packages)
@@ -190,8 +195,11 @@ class tree(object):
     def contains(self, path):
         """Determine if a path is in a repo.
 
-        :param path: path in the filesystem
-        :return: True if path is in repo, otherwise False
+        Args:
+            path (str): path in the filesystem
+
+        Returns:
+            bool: True if path is in repo, otherwise False.
         """
         path = os.path.realpath(path)
 

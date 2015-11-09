@@ -66,18 +66,24 @@ def config_tree(repositories):
 
 
 class tree(prototype.tree):
+    """Repository combining multiple repositories together.
 
-    """repository combining multiple repositories into one"""
+    Args:
+        trees (list): :obj:`pkgcore.repository.prototype.tree` instances
+
+    Attributes:
+        frozen_settable (bool): controls whether frozen is able to be set
+            on initialization
+        operations_kls: callable to generate a repo operations instance
+
+        trees (list): :obj:`pkgcore.repository.prototype.tree` instances
+    """
 
     zero_index_grabber = itemgetter(0)
     frozen_settable = False
     operations_kls = operations
 
     def __init__(self, *trees):
-        """
-        :param trees: :obj:`pkgcore.repository.prototype.tree` instances
-            to combines into one
-        """
         super(tree, self).__init__()
         for x in trees:
             if not hasattr(x, 'itermatch'):
@@ -134,10 +140,17 @@ class tree(prototype.tree):
         return tuple(d)
 
     def path_restrict(self, path):
-        """Return a package restriction from a given path.
+        """Create a package restriction from a given path within a repo.
 
-        :param path: file path, usually to an ebuild or binpkg
-        :return: a package restriction if possible
+        Args:
+            path (str): file path, usually to an ebuild or binpkg
+
+        Returns:
+            package restriction
+
+        Raises:
+            ValueError: path doesn't conform to correct repo layout
+                format or isn't within the repo
         """
         for repo in self.trees:
             if not repo.contains(path):
@@ -199,4 +212,5 @@ class tree(prototype.tree):
 
     @property
     def frozen(self):
+        """bool: Repository mutability status."""
         return all(x.frozen for x in self.trees)

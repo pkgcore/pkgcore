@@ -79,7 +79,6 @@ class tree(prototype.tree):
         trees (list): :obj:`pkgcore.repository.prototype.tree` instances
     """
 
-    zero_index_grabber = itemgetter(0)
     frozen_settable = False
     operations_kls = operations
 
@@ -173,7 +172,7 @@ class tree(prototype.tree):
             if l[0] == y:
                 return 1
             return -1
-        f = post_curry(sorted_cmp, f, key=self.zero_index_grabber)
+        f = post_curry(sorted_cmp, f, key=itemgetter(0))
         return iter_sort(
             f, *[repo.itermatch(restrict, **kwds) for repo in self.trees])
 

@@ -29,17 +29,17 @@ Tools
 
 **pclonecache**: clone a repository cache
 
+**pconfig**: query configuration info
+
 **pebuild**: low-level ebuild operations, go through phases manually
 
-**pinspect**: generic utility for inspecting repository related info
+**pinspect**: inspect repository related info
 
-**pmaint**: generic utility for repository maintenance (syncing, copying...)
+**pmaint**: repository maintenance (syncing, copying...)
 
-**pmerge**: generic utility for doing dependency resolution, fetching,
-(un)merging, etc.
+**pmerge**: dependency resolution, fetching, (un)merging, etc.
 
-**pquery**: generic utility for querying info about repositories, revdeps, pkg
-search, vdb search, etc.
+**pquery**: query repository info, revdeps, pkg search, vdb search, etc.
 
 Documentation
 =============

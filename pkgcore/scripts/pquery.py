@@ -453,8 +453,6 @@ repo_group.add_argument(
     help='arg "only" for only matching virtuals, "disable" to not match '
          'virtuals at all (default is to match everything)')
 
-repo_mux = repo_group.add_mutually_exclusive_group()
-
 
 class RawAwareStoreRepoObject(commandline.StoreRepoObject):
 
@@ -469,9 +467,16 @@ class RawAwareStoreRepoObject(commandline.StoreRepoObject):
         return commandline.StoreRepoObject._get_sections(
             self, config, namespace)
 
+repo_mux = repo_group.add_mutually_exclusive_group()
 repo_mux.add_argument(
     '-r', '--repo', action=RawAwareStoreRepoObject, priority=29,
     help='repo to use (default from domain if omitted)')
+repo_mux.add_argument(
+    '--ebuild-repos', action='store_true',
+    help='search all ebuild repos')
+repo_mux.add_argument(
+    '--binary-repos', action='store_true',
+    help='search all binary repos')
 repo_mux.add_argument(
     '--all-repos', action='store_true',
     help='search all repos, vdb included')
@@ -490,10 +495,18 @@ def setup_repos(namespace, attr):
         if namespace.all_repos:
             repos = list(namespace.domain.vdb)
             repos.extend(namespace.domain.repos_configured.itervalues())
+        elif namespace.ebuild_repos:
+            repos = namespace.domain.ebuild_repos_raw
+        elif namespace.binary_repos:
+            repos = namespace.domain.binary_repos_raw
         else:
             repos = namespace.domain.repos_configured.values()
     elif namespace.all_repos:
         repos = namespace.domain.repos + namespace.domain.vdb
+    elif namespace.ebuild_repos:
+        repos = namespace.domain.ebuild_repos
+    elif namespace.binary_repos:
+        repos = namespace.domain.binary_repos
     else:
         repos = namespace.domain.repos
 

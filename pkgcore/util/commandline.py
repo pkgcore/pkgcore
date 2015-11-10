@@ -315,7 +315,7 @@ class StoreRepoObject(StoreConfigObject):
         """
         for repo_name, repo in sorted(unstable_unique(sections.iteritems())):
             if len(repo.aliases) > 1 and hasattr(repo, 'location'):
-                yield '%s: %s' % (repo.aliases[0], repo.location)
+                yield '%s:%s' % (repo.aliases[0], repo.location)
             else:
                 yield repo_name
 

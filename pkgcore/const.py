@@ -28,8 +28,6 @@ BASH_BINARY        = find_binary('bash')
 COPY_BINARY        = find_binary('cp')
 
 HOST_NONROOT_PATHS = ("/usr/local/bin", "/usr/bin", "/bin")
-HOST_ROOT_PATHS    = ("/usr/local/sbin", "/usr/local/bin", "/usr/sbin",
-                      "/usr/bin", "/sbin", "/bin")
 
 # no longer used.
 LIBFAKEROOT_PATH   = "/usr/lib/libfakeroot.so"

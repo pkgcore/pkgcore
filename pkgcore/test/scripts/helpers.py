@@ -47,6 +47,7 @@ def mangle_parser(parser):
     parser = copy(parser)
     parser.exit = noexit
     parser.error = noerror
+    parser.only_error = noerror
     return parser
 
 

@@ -14,11 +14,14 @@ from operator import itemgetter
 from snakeoil import klass
 from snakeoil.compatibility import sorted_cmp
 from snakeoil.currying import post_curry
+from snakeoil.demandload import demandload
 from snakeoil.iterables import iter_sort
 
 from pkgcore.config import configurable
 from pkgcore.operations import repo as repo_interface
 from pkgcore.repository import prototype, errors
+
+demandload('os')
 
 
 class operations(repo_interface.operations_proxy):
@@ -159,6 +162,28 @@ class tree(prototype.tree):
             except ValueError:
                 raise
         raise ValueError("no repo contains: '%s'" % path)
+
+    def repo_containing_path(self, path):
+        """Find the repo containing a path.
+
+        Args:
+            path (str): path in the filesystem
+
+        Returns:
+            repo object if a matching repo is found, otherwise None.
+
+        Raises:
+            ValueError: path matches multiple repos
+        """
+        realpath = os.path.realpath(path)
+        repos = [r for r in self.trees if r.contains(realpath)]
+
+        if len(repos) == 1:
+            return repos[0]
+        elif len(repos) > 1:
+            raise ValueError("multiple repos contain: '%s'" % path)
+        else:
+            return None
 
     def itermatch(self, restrict, **kwds):
         sorter = kwds.get("sorter", iter)

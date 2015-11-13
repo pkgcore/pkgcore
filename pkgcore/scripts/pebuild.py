@@ -28,6 +28,7 @@ phase_opts.add_argument(
 def main(options, out, err):
     target = options.target
     domain = options.domain
+    repo = domain.ebuild_repos_raw
 
     if os.path.isfile(target):
         if not target.endswith('.ebuild'):
@@ -35,7 +36,7 @@ def main(options, out, err):
             return 1
 
         try:
-            restriction = domain.ebuild_repos_raw.path_restrict(target)
+            restriction = repo.path_restrict(target)
         except ValueError as e:
             err.write(e)
             return 1
@@ -43,10 +44,10 @@ def main(options, out, err):
         try:
             restriction = atom.atom(target)
         except MalformedAtom:
-            err.write("not a valid atom or ebuild: '%s'" % target)
+            err.write("invalid package atom: '%s'" % target)
             return 1
 
-    pkgs = domain.ebuild_repos_raw.match(restriction)
+    pkgs = repo.match(restriction)
     if not pkgs:
         err.write("no matches for '%s'" % (target,))
         return 1

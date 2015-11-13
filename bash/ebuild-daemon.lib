@@ -19,8 +19,8 @@ __internal_inherit() {
 	if [[ $# -ne 1 ]]; then
 		die "internal_inherit accepts one arg, requested eclass location.  $* is a bit much"
 	fi
-	if [[ -n ${PKGCORE_PRELOADED_ECLASSES[$1]} ]]; then
-		__qa_invoke "${PKGCORE_PRELOADED_ECLASSES[$1]}"
+	if __safe_has "__preloaded_eclass_$1" "${PKGCORE_PRELOADED_ECLASSES[@]}"; then
+		__qa_invoke "__preloaded_eclass_$1"
 		return
 	fi
 	__ebd_write_line "request_inherit $1"

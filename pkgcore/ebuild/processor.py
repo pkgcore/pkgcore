@@ -347,17 +347,18 @@ class EbuildProcessor(object):
         # force to a neutral dir so that sandbox/fakeroot won't explode if
         # ran from a nonexistent dir
         spawn_opts["cwd"] = e_const.EAPI_BIN_PATH
-        # little trick. we force the pipes to be high up fd wise so
-        # nobody stupidly hits 'em.
+        # Force the pipes to be high up fd wise so nobody stupidly hits 'em, we
+        # start from max-3 to avoid a bug in older bash where it doesn't check
+        # if an fd is in use before claiming it.
         max_fd = min(pkgcore.spawn.max_fd_limit, 1024)
         env.update({
-            "PKGCORE_EBD_READ_FD": str(max_fd-2),
-            "PKGCORE_EBD_WRITE_FD": str(max_fd-1)})
+            "PKGCORE_EBD_READ_FD": str(max_fd-4),
+            "PKGCORE_EBD_WRITE_FD": str(max_fd-3)})
         # pgid=0: Each ebuild processor is the process group leader for all its
         # spawned children so everything can be terminated easily if necessary.
         self.pid = spawn_func(
             [const.BASH_BINARY, self.ebd, "daemonize"],
-            fd_pipes={0: 0, 1: 1, 2: 2, max_fd-2: cread, max_fd-1: dwrite},
+            fd_pipes={0: 0, 1: 1, 2: 2, max_fd-4: cread, max_fd-3: dwrite},
             returnpid=True, env=env, pgid=0, *args, **spawn_opts)[0]
 
         os.close(cread)

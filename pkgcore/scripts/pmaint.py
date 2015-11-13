@@ -32,6 +32,8 @@ demandload(
     'pkgcore.operations:observer',
     'pkgcore.package:mutated',
     'pkgcore.repository:multiplex',
+    'pkgcore.restrictions:packages',
+    'pkgcore.util.parserestrict:parse_match',
 )
 
 
@@ -220,8 +222,8 @@ def update_pkg_desc_index(repo, out, err):
                 err.write("caught exception '%s' while processing '%s'", (e, p))
                 ret = os.EX_DATAERR
         for key in sorted(res):
-            packages = sorted(res[key])
-            f.write('%s %s: %s\n' % (key, ' '.join(p.fullver for p in packages), packages[-1].description))
+            pkgs = sorted(res[key])
+            f.write('%s %s: %s\n' % (key, ' '.join(p.fullver for p in pkgs), pkgs[-1].description))
         f.close()
     except IOError as e:
         err.write("Unable to update pkg_desc_index file '%s': %s" % (pkg_desc_index, e.strerror))
@@ -403,8 +405,8 @@ def mirror_main(options, out, err):
 digest = subparsers.add_parser(
     "digest", parents=domain_shared_options,
     description="update package manifests")
-commandline.make_query(
-    digest, nargs='+', dest='query',
+digest.add_argument(
+    'target', nargs='*', default=[os.getcwd()],
     help="packages matching any of these restrictions will have their "
          "manifest/digest updated")
 digest_opts = digest.add_argument_group("subcommand options")
@@ -415,16 +417,36 @@ digest_opts.add_argument(
 def digest_main(options, out, err):
     domain = options.domain
     repo = options.repo
+    targets = options.target
     if repo is None:
-       repo = domain.all_raw_ebuild_repos
+        repo = domain.all_raw_ebuild_repos
     obs = observer.formatter_output(out)
     if not repo.operations.supports("digests"):
         out.write("no repository support for digests")
         return 1
-    elif not repo.has_match(options.query):
-        out.write("query %s doesn't match anything" % (options.query,))
+
+    restrictions = []
+    for target in targets:
+        if os.path.exists(target):
+            try:
+                restriction = repo.path_restrict(target)
+                repo = repo.repo_containing_path(target)
+            except ValueError as e:
+                err.write(e)
+                return 1
+        else:
+            try:
+                restriction = parse_match(target)
+            except ValueError:
+                err.write("invalid atom or ebuild: '%s'" % target)
+                return 1
+        restrictions.append(restriction)
+
+    pkgs = repo.match(packages.OrRestriction(*restrictions))
+    if not pkgs:
+        out.write("no matches for '%s'" % (target,))
         return 1
-    if not repo.operations.digests(domain, options.query, observer=obs):
+    if not repo.operations.digests(domain, pkgs, observer=obs):
         out.write("some errors were encountered...")
         return 1
     return 0

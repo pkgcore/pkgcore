@@ -28,7 +28,7 @@ phase_opts.add_argument(
 def main(options, out, err):
     target = options.target
     domain = options.domain
-    repo = domain.ebuild_repos_raw
+    repo = domain.ebuild_repos_unfiltered
 
     if os.path.isfile(target):
         if not target.endswith('.ebuild'):

@@ -425,24 +425,22 @@ def digest_main(options, out, err):
         out.write("no repository support for digests")
         return 1
 
-    restrictions = []
+    pkgs = []
     for target in targets:
         if os.path.exists(target):
             try:
                 restriction = repo.path_restrict(target)
-                repo = repo.repo_containing_path(target)
+                pkgs.append(repo.repo_containing_path(target).match(restriction))
             except ValueError as e:
                 err.write(e)
                 return 1
         else:
             try:
-                restriction = parse_match(target)
+                pkgs.append(repo.match(parse_match(target)))
             except ValueError:
-                err.write("invalid atom or ebuild: '%s'" % target)
+                err.write("invalid atom: '%s'" % target)
                 return 1
-        restrictions.append(restriction)
 
-    pkgs = repo.match(packages.OrRestriction(*restrictions))
     if not pkgs:
         out.write("no matches for '%s'" % (target,))
         return 1

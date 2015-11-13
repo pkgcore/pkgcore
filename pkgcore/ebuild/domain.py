@@ -582,8 +582,8 @@ class domain(config_domain):
 
     @klass.jit_attr
     def ebuild_repos_raw(self):
-        """Group of all ebuild repos."""
-        return util.RepositoryGroup(x.raw_repo for x in self.ebuild_repos)
+        """Group of all raw ebuild repos."""
+        return util.RepositoryGroup(x.raw_repo.raw_repo for x in self.ebuild_repos)
 
     @klass.jit_attr
     def binary_repos(self):
@@ -602,7 +602,7 @@ class domain(config_domain):
     @klass.jit_attr
     def binary_repos_raw(self):
         """Group of all binary repos."""
-        return util.RepositoryGroup(x.raw_repo for x in self.binary_repos)
+        return util.RepositoryGroup(x.raw_repo.raw_repo for x in self.binary_repos)
 
     # multiplexed repos
     all_ebuild_repos = klass.alias_attr("ebuild_repos.combined")

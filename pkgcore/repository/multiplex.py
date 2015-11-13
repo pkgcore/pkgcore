@@ -175,8 +175,7 @@ class tree(prototype.tree):
         Raises:
             ValueError: path matches multiple repos
         """
-        realpath = os.path.realpath(path)
-        repos = [r for r in self.trees if r.contains(realpath)]
+        repos = [r for r in self.trees if r.contains(path)]
 
         if len(repos) == 1:
             return repos[0]

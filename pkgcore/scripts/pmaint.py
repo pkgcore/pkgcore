@@ -430,13 +430,13 @@ def digest_main(options, out, err):
         if os.path.exists(target):
             try:
                 restriction = repo.path_restrict(target)
-                pkgs.append(repo.repo_containing_path(target).match(restriction))
+                pkgs.extend(repo.match(restriction))
             except ValueError as e:
                 err.write(e)
                 return 1
         else:
             try:
-                pkgs.append(repo.match(parse_match(target)))
+                pkgs.extend(repo.match(parse_match(target)))
             except ValueError:
                 err.write("invalid atom: '%s'" % target)
                 return 1

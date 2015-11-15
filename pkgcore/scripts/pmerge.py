@@ -665,20 +665,22 @@ def main(options, out, err):
     build_obs = observer.build_observer(observer.formatter_output(out), not options.debug)
     repo_obs = observer.repo_observer(observer.formatter_output(out), not options.debug)
 
-    if options.debug:
-        out.write(out.bold, " * ", out.reset, "running sanity checks")
-        start_time = time()
-    if not changes.run_sanity_checks(domain, build_obs):
-        out.error("sanity checks failed.  please resolve them and try again.")
-        if not options.ignore_failures:
-            return 1
-        else:
+    # don't run pkg_pretend if only fetching
+    if not options.fetchonly:
+        if options.debug:
+            out.write(out.bold, " * ", out.reset, "running sanity checks")
+            start_time = time()
+        if not changes.run_sanity_checks(domain, build_obs):
+            out.error("sanity checks failed.  please resolve them and try again.")
+            if not options.ignore_failures:
+                return 1
+            else:
+                out.write()
+        if options.debug:
+            out.write(
+                out.bold, " * ", out.reset,
+                "finished sanity checks in %.2f seconds" % (time() - start_time))
             out.write()
-    if options.debug:
-        out.write(
-            out.bold, " * ", out.reset,
-            "finished sanity checks in %.2f seconds" % (time() - start_time))
-        out.write()
 
     if options.ask or options.pretend:
         for op in changes:

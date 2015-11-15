@@ -114,7 +114,6 @@ copy_opts.add_argument(
 @copy.bind_main_func
 def copy_main(options, out, err):
     """Copy pkgs between repositories."""
-
     src_repo = options.source_repo
     if src_repo is None:
         src_repo = multiplex.tree(*options.config.repo.values())
@@ -314,7 +313,6 @@ perl_rebuild.add_argument(
     "new_version", help="the new perl version; 5.12.3 for example")
 @perl_rebuild.bind_main_func
 def perl_rebuild_main(options, out, err):
-
     path = pjoin(options.domain.root, "usr/lib/perl5", options.new_version)
     if not os.path.exists(path):
         err.write(
@@ -422,7 +420,6 @@ def _digest_validate(parser, namespace):
     else:
         if not namespace.target:
             parser.only_error('specifying a repo also requires a target query')
-
     if not namespace.target:
         namespace.target = [os.getcwd()]
 

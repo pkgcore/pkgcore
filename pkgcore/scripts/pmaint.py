@@ -406,20 +406,32 @@ digest = subparsers.add_parser(
     "digest", parents=domain_shared_options,
     description="update package manifests")
 digest.add_argument(
-    'target', nargs='*', default=[os.getcwd()],
+    'target', nargs='*',
     help="packages matching any of these restrictions will have their "
          "manifest/digest updated")
 digest_opts = digest.add_argument_group("subcommand options")
 digest_opts.add_argument(
     "-r", "--repo", help="target repository",
     action=commandline.StoreRepoObject, raw=True)
+
+
+@digest.bind_final_check
+def _digest_validate(parser, namespace):
+    if namespace.repo is None:
+        namespace.repo = namespace.domain.all_raw_ebuild_repos
+    else:
+        if not namespace.target:
+            parser.only_error('specifying a repo also requires a target query')
+
+    if not namespace.target:
+        namespace.target = [os.getcwd()]
+
+
 @digest.bind_main_func
 def digest_main(options, out, err):
     domain = options.domain
     repo = options.repo
     targets = options.target
-    if repo is None:
-        repo = domain.all_raw_ebuild_repos
     obs = observer.formatter_output(out)
     if not repo.operations.supports("digests"):
         out.write("no repository support for digests")

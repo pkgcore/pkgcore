@@ -46,51 +46,57 @@ demandload(
 
 class repo_operations(_repo_ops.operations):
 
-    def _cmd_implementation_digests(self, domain, pkgs, observer, **options):
+    def _cmd_implementation_digests(self, domain, matches, observer, **options):
         manifest_config = self.repo.config.manifests
         if manifest_config.disabled:
             observer.info("repo %s has manifests disabled", self.repo.repo_id)
             return
         required = manifest_config.hashes
         ret = False
-        pkgdir_fetchables = {}
-        try:
-            for pkg in pkgs:
-                if pkg.ebuild.path is None:
-                    observer.error(
-                        "pkg %s doesn't exist on disk; can't generate manifest", pkg)
-                    return False
-                # XXX: needs modification to grab all sources, and also to not
-                # bail if digests are missing
-                pkg.release_cached_data(all=True)
-                # heinous.
-                fetchables = pkg._get_attr['fetchables'](pkg, allow_missing_checksums=True)
-                object.__setattr__(pkg, 'fetchables', fetchables)
-                pkg_ops = domain.pkg_operations(pkg, observer=observer)
-                if not pkg_ops.supports("fetch"):
-                    observer.error(
-                        "pkg %s doesn't support fetching, can't generate manifest", pkg)
-                if not pkg_ops.mirror(observer):
-                    observer.error("failed fetching for pkg %s", pkg)
-                    return False
+        for key_query in sorted(set(match.unversioned_atom for match in matches)):
+            pkgs = self.repo.match(key_query)
+            if pkgs:
+                observer.info("generating manifest: %s::%s", key_query, self.repo.repo_id)
+            else:
+                return
+            pkgdir_fetchables = {}
+            try:
+                for pkg in pkgs:
+                    if pkg.ebuild.path is None:
+                        observer.error(
+                            "pkg %s doesn't exist on disk; can't generate manifest", pkg)
+                        return False
+                    # XXX: needs modification to grab all sources, and also to not
+                    # bail if digests are missing
+                    pkg.release_cached_data(all=True)
+                    # heinous.
+                    fetchables = pkg._get_attr['fetchables'](pkg, allow_missing_checksums=True)
+                    object.__setattr__(pkg, 'fetchables', fetchables)
+                    pkg_ops = domain.pkg_operations(pkg, observer=observer)
+                    if not pkg_ops.supports("fetch"):
+                        observer.error(
+                            "pkg %s doesn't support fetching, can't generate manifest", pkg)
+                    if not pkg_ops.mirror(observer):
+                        observer.error("failed fetching for pkg %s", pkg)
+                        return False
 
-                fetchables = pkg_ops._mirror_op.verified_files
-                for path, fetchable in fetchables.iteritems():
-                    d = dict(zip(required, get_chksums(path, *required)))
-                    fetchable.chksums = d
-                # should report on conflicts here...
-                pkgdir_fetchables.update(fetchables.iteritems())
+                    fetchables = pkg_ops._mirror_op.verified_files
+                    for path, fetchable in fetchables.iteritems():
+                        d = dict(zip(required, get_chksums(path, *required)))
+                        fetchable.chksums = d
+                    # should report on conflicts here...
+                    pkgdir_fetchables.update(fetchables.iteritems())
 
-            pkgdir_fetchables = sorted(pkgdir_fetchables.itervalues())
-            digest.serialize_manifest(
-                os.path.dirname(pkg.ebuild.path),
-                pkgdir_fetchables, chfs=required, thin=manifest_config.thin)
-            ret = True
-        finally:
-            for pkg in pkgs:
-                # done since we do hackish shit above
-                # should be uneeded once this is cleaned up
-                pkg.release_cached_data(all=True)
+                pkgdir_fetchables = sorted(pkgdir_fetchables.itervalues())
+                digest.serialize_manifest(
+                    os.path.dirname(pkg.ebuild.path),
+                    pkgdir_fetchables, chfs=required, thin=manifest_config.thin)
+                ret = True
+            finally:
+                for pkg in pkgs:
+                    # done since we do hackish shit above
+                    # should be uneeded once this is cleaned up
+                    pkg.release_cached_data(all=True)
         return ret
 
 

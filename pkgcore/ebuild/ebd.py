@@ -88,16 +88,6 @@ class ebd(object):
         else:
             self.env = {}
 
-        # temp hack.
-        for x in ('chost', 'cbuild', 'ctarget'):
-            val = getattr(pkg, x)
-            if val is not None:
-                self.env[x.upper()] = val
-        # special note... if CTARGET is the same as CHOST, suppress it.
-        # certain ebuilds (nano for example) will misbehave w/ it.
-        if pkg.ctarget is not None and pkg.ctarget == pkg.chost:
-            self.env.pop("CTARGET")
-
         if "PYTHONPATH" in os.environ:
             self.env["PYTHONPATH"] = os.environ["PYTHONPATH"]
 

@@ -971,6 +971,16 @@ def expected_ebuild_env(pkg, d=None, env_source_override=None, depends=False):
         d["USE"] = ' '.join(str(x) for x in pkg.use)
         d["SLOT"] = pkg.fullslot
 
+        # temp hack.
+        for x in ('chost', 'cbuild', 'ctarget'):
+            val = getattr(pkg, x)
+            if val is not None:
+                d[x.upper()] = val
+        # special note... if CTARGET is the same as CHOST, suppress it.
+        # certain ebuilds (nano for example) will misbehave w/ it.
+        if pkg.ctarget is not None and pkg.ctarget == pkg.chost:
+            d.pop("CTARGET")
+
     for key in e_const.PKGCORE_DEBUG_VARS:
         val = os.environ.get(key)
         if val is not None:

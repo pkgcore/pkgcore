@@ -55,9 +55,7 @@ class repo_operations(_repo_ops.operations):
         ret = False
         for key_query in sorted(set(match.unversioned_atom for match in matches)):
             pkgs = self.repo.match(key_query)
-            if pkgs:
-                observer.info("generating manifest: %s::%s", key_query, self.repo.repo_id)
-            else:
+            if not pkgs:
                 return
             pkgdir_fetchables = {}
             try:
@@ -87,6 +85,7 @@ class repo_operations(_repo_ops.operations):
                     # should report on conflicts here...
                     pkgdir_fetchables.update(fetchables.iteritems())
 
+                observer.info("generating manifest: %s::%s", key_query, self.repo.repo_id)
                 pkgdir_fetchables = sorted(pkgdir_fetchables.itervalues())
                 digest.serialize_manifest(
                     os.path.dirname(pkg.ebuild.path),

@@ -177,7 +177,7 @@ __ebd_exec_main() {
 	fi
 
 	__colored_output_disable
-	declare -A PKGCORE_PRELOADED_ECLASSES
+	declare -a PKGCORE_PRELOADED_ECLASSES
 
 	trap __ebd_sigint_handler SIGINT
 	trap __ebd_sigkill_handler SIGKILL
@@ -379,7 +379,7 @@ __make_preloaded_eclass_func() {
 	eval "__preloaded_eclass_$1() {
 		$2
 	}"
-	PKGCORE_PRELOADED_ECLASSES[$1]=__preloaded_eclass_$1
+	PKGCORE_PRELOADED_ECLASSES+=( __preloaded_eclass_$1 )
 }
 
 __ebd_main_loop() {
@@ -424,7 +424,7 @@ __ebd_main_loop() {
 				;;
 			clear_preloaded_eclasses)
 				unset PKGCORE_PRELOADED_ECLASSES
-				declare -A PKGCORE_PRELOADED_ECLASSES
+				declare -a PKGCORE_PRELOADED_ECLASSES
 				__ebd_write_line "clear_preloaded_eclasses succeeded"
 				;;
 			set_metadata_path\ *)

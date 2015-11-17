@@ -4,11 +4,12 @@
 __regex_filter_input() {
 	# We don't need to reset IFS in this context, thus skip the pop.
 	local IFS='|'
-	local regex="^(${*})$"
+	local regex=${*}
+	local regex="^\(${regex//|/\\|}\)$"
 	# use egrep if possible... tis faster.
 	local l ret=0
 	if l=$(type -P gsed || type -P sed); then
-		"${l}" -re "/${regex}/d"
+		"${l}" -e "/${regex}/d"
 		ret=$?
 		[[ ${ret} != 0 ]] && die "got failing return code (${ret}) invoking ${l} -e '/${regex}/d'"
 	elif l=$(type -P egrep); then

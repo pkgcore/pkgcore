@@ -30,11 +30,10 @@ def main(options, out, err):
     domain = options.domain
     repo = domain.ebuild_repos_unfiltered
 
-    if os.path.isfile(target):
-        if not target.endswith('.ebuild'):
-            err.write("file not an ebuild: '%s'" % target)
+    if target.endswith('.ebuild'):
+        if not os.path.isfile(target):
+            err.write("ebuild doesn't exist: '%s'" % target)
             return 1
-
         try:
             restriction = repo.path_restrict(target)
         except ValueError as e:
@@ -44,12 +43,15 @@ def main(options, out, err):
         try:
             restriction = atom.atom(target)
         except MalformedAtom:
-            err.write("invalid package atom: '%s'" % target)
+            if os.path.isfile(target):
+                err.write("file not an ebuild: '%s'" % target)
+            else:
+                err.write("invalid package atom: '%s'" % target)
             return 1
 
     pkgs = repo.match(restriction)
     if not pkgs:
-        err.write("no matches for '%s'" % (target,))
+        err.write("no matches: '%s'" % (target,))
         return 1
 
     pkg = max(pkgs)

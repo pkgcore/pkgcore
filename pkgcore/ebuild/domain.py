@@ -54,9 +54,9 @@ demandload(
 
 class MissingFile(BaseError):
     def __init__(self, filename, setting):
-        BaseError.__init__(self,
-                           "setting %s points at %s, which doesn't exist."
-                           % (setting, filename))
+        BaseError.__init__(
+            self, "setting %s points at %s, which doesn't exist."
+            % (setting, filename))
         self.file, self.setting = filename, setting
 
 

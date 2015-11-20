@@ -394,7 +394,7 @@ class setup_mixin(object):
 
     setup_is_for_src = True
 
-    def setup(self,  setup_phase_override=None):
+    def setup(self, setup_phase_override=None):
         self.setup_logging()
 
         additional_commands = {}

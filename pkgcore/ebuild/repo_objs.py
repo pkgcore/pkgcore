@@ -345,7 +345,7 @@ class RepoConfig(syncable.tree):
     __inst_caching__ = True
 
     pkgcore_config_type = ConfigHint(
-        typename='raw_repo',
+        typename='repo_config',
         types={
             'config_name': 'str',
             'syncer': 'lazy_ref:syncer',

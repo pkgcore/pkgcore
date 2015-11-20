@@ -462,7 +462,7 @@ def config_from_make_conf(location=None, profile_override=None, **kwargs):
         # repo trees
         repo = {
             'inherit': ('ebuild-repo-common',),
-            'raw_repo': 'raw:' + repo_name,
+            'repo_config': 'conf:' + repo_name,
             'cache': cache_name,
         }
 
@@ -472,7 +472,7 @@ def config_from_make_conf(location=None, profile_override=None, **kwargs):
         else:
             repo['parent_repo'] = repos_conf_defaults['main-repo']
 
-        config['raw:' + repo_name] = basics.AutoConfigSection(repo_conf)
+        config['conf:' + repo_name] = basics.AutoConfigSection(repo_conf)
         config[repo_name] = basics.AutoConfigSection(repo)
 
     # XXX: Hack for portage-2 profile format support. We need to figure out how

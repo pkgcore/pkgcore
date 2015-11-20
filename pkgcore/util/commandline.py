@@ -289,7 +289,7 @@ class StoreRepoObject(StoreConfigObject):
         self.domain_forced = 'domain' in kwargs
         self.domain = kwargs.pop('domain', 'domain')
         if self.raw:
-            kwargs['config_type'] = 'raw_repo'
+            kwargs['config_type'] = 'repo_config'
         else:
             kwargs['config_type'] = 'repo'
         self.allow_name_lookup = kwargs.pop("allow_name_lookup", True)

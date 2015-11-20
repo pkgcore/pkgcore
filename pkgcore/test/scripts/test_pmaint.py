@@ -40,7 +40,7 @@ class FakeSyncer(base.syncer):
 
 class SyncableRepo(syncable.tree, util.SimpleTree):
 
-    pkgcore_config_type = ConfigHint(typename='raw_repo')
+    pkgcore_config_type = ConfigHint(typename='repo_config')
 
     def __init__(self, succeed=True):
         util.SimpleTree.__init__(self, {})
@@ -71,7 +71,7 @@ class TestSync(TestCase, helpers.ArgParseMixin):
                 "*** synced myrepo",
                 ],
             myrepo=success_section)
-        self.assertTrue(config.raw_repo['myrepo']._syncer.synced)
+        self.assertTrue(config.repo_config['myrepo']._syncer.synced)
         self.assertOut(
             [
                 "*** syncing myrepo",

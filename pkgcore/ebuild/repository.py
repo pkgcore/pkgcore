@@ -99,14 +99,14 @@ class repo_operations(_repo_ops.operations):
         return ret
 
 
-def _sort_eclasses(config, raw_repo, eclasses):
+def _sort_eclasses(config, repo_config, eclasses):
     if eclasses:
         return eclasses
 
-    repo_path = raw_repo.location
-    masters = raw_repo.masters
+    repo_path = repo_config.location
+    masters = repo_config.masters
     eclasses = []
-    default = config.get_default('raw_repo')
+    default = config.get_default('repo_config')
     if default is None:
         location = repo_path
     else:
@@ -120,19 +120,19 @@ def _sort_eclasses(config, raw_repo, eclasses):
                 raise Exception(
                     "repository %r named %r wants the default repository "
                     "(gentoo for example), but no repository is marked as the default. "
-                    "Fix your configuration." % (repo_path, raw_repo.repo_id))
+                    "Fix your configuration." % (repo_path, repo_config.repo_id))
             eclasses = [location]
     else:
         repo_map = {r.repo_id: r.location for r in
-                    config.objects['raw_repo'].itervalues()}
+                    config.objects['repo_config'].itervalues()}
 
-        missing = set(raw_repo.masters).difference(repo_map)
+        missing = set(repo_config.masters).difference(repo_map)
         if missing:
             missing = ', '.join(sorted(missing))
             raise Exception(
                 "repo %r at path %r has masters %s; we cannot find "
                 "the following repos: %s"
-                % (raw_repo.repo_id, repo_path, ', '.join(map(repr, masters)), missing))
+                % (repo_config.repo_id, repo_path, ', '.join(map(repr, masters)), missing))
         eclasses = [repo_map[x] for x in masters]
 
     # add the repo's eclass directories if it's not specified.
@@ -157,28 +157,28 @@ def _sort_eclasses(config, raw_repo, eclasses):
 @configurable(
     typename='repo',
     types={
-        'raw_repo': 'ref:raw_repo', 'cache': 'refs:cache',
+        'repo_config': 'ref:repo_config', 'cache': 'refs:cache',
         'eclass_override': 'ref:eclass_cache',
         'default_mirrors': 'list',
         'override_repo_id': 'str',
         'ignore_paludis_versioning': 'bool',
         'allow_missing_manifests': 'bool'},
     requires_config='config')
-def tree(config, raw_repo, cache=(), eclass_override=None, default_mirrors=None,
+def tree(config, repo_config, cache=(), eclass_override=None, default_mirrors=None,
          ignore_paludis_versioning=False, allow_missing_manifests=False):
-    eclass_override = _sort_eclasses(config, raw_repo, eclass_override)
+    eclass_override = _sort_eclasses(config, repo_config, eclass_override)
 
     return _UnconfiguredTree(
-        raw_repo.location, eclass_override, cache=cache,
+        repo_config.location, eclass_override, cache=cache,
         default_mirrors=default_mirrors,
         ignore_paludis_versioning=ignore_paludis_versioning,
         allow_missing_manifests=allow_missing_manifests,
-        repo_config=raw_repo)
+        repo_config=repo_config)
 
 @configurable(
     typename='repo',
     types={
-        'raw_repo': 'ref:raw_repo', 'cache': 'refs:cache',
+        'repo_config': 'ref:repo_config', 'cache': 'refs:cache',
         'parent_repo': 'ref:repo',
         'eclass_override': 'ref:eclass_cache',
         'default_mirrors': 'list',
@@ -186,16 +186,16 @@ def tree(config, raw_repo, cache=(), eclass_override=None, default_mirrors=None,
         'ignore_paludis_versioning': 'bool',
         'allow_missing_manifests': 'bool'},
     requires_config='config')
-def slavedtree(config, raw_repo, parent_repo, cache=(), eclass_override=None, default_mirrors=None,
+def slavedtree(config, repo_config, parent_repo, cache=(), eclass_override=None, default_mirrors=None,
                ignore_paludis_versioning=False, allow_missing_manifests=False):
-    eclass_override = _sort_eclasses(config, raw_repo, eclass_override)
+    eclass_override = _sort_eclasses(config, repo_config, eclass_override)
 
     return _SlavedTree(
-        parent_repo, raw_repo.location, eclass_override, cache=cache,
+        parent_repo, repo_config.location, eclass_override, cache=cache,
         default_mirrors=default_mirrors,
         ignore_paludis_versioning=ignore_paludis_versioning,
         allow_missing_manifests=allow_missing_manifests,
-        repo_config=raw_repo)
+        repo_config=repo_config)
 
 
 metadata_offset = "profiles"
@@ -229,7 +229,7 @@ class _UnconfiguredTree(prototype.tree):
         'override_repo_id': 'str',
         'ignore_paludis_versioning': 'bool',
         'allow_missing_manifests': 'bool',
-        'repo_config': 'ref:raw_repo',
+        'repo_config': 'ref:repo_config',
         },
         typename='repo')
 

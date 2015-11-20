@@ -62,8 +62,8 @@ def sync_main(options, out, err):
 
     for repo_name, repo in iter_stable_unique(options.repos):
         # rewrite the name if it has the usual prefix
-        if repo_name.startswith("raw:"):
-            repo_name = repo_name[4:]
+        if repo_name.startswith("conf:"):
+            repo_name = repo_name[5:]
 
         if not repo.operations.supports("sync"):
             continue

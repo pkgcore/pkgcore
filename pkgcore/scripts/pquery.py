@@ -814,26 +814,18 @@ def get_pkg_attr(pkg, attr, fallback=None):
     return getattr(pkg, attr, fallback)
 
 
-class _Fail(Exception):
-    pass
+@argparser.bind_final_check
+def _validate_args(parser, namespace):
+    if namespace.noversion:
+        if namespace.contents:
+            parser.only_error('both --no-version and --contents does not make sense')
+        if namespace.min or namespace.max:
+            parser.only_error('--no-version with --min or --max does not make sense')
+        if namespace.print_revdep:
+            parser.only_error('--print-revdep with --no-version does not make sense')
 
-
-def mangle_values(vals, err):
-
-    def error_out(*args, **kwds):
-        err.write(*args, **kwds)
-        raise _Fail()
-
-    if vals.noversion:
-        if vals.contents:
-            error_out('both --no-version and --contents does not make sense.')
-        if vals.min or vals.max:
-            error_out('--no-version with --min or --max does not make sense.')
-        if vals.print_revdep:
-            error_out('--print-revdep with --no-version does not make sense.')
-
-    if vals.one_attr and vals.print_revdep:
-        error_out('--print-revdep with --force-one-attr or --one-attr does not make sense.')
+    if namespace.one_attr and namespace.print_revdep:
+        parser.only_error('--print-revdep with --force-one-attr or --one-attr does not make sense')
 
     def process_attrs(sequence):
         for attr in sequence:
@@ -850,24 +842,16 @@ def mangle_values(vals, err):
             for attr in i:
                 yield attr
 
-    attrs = ['repo', 'description', 'homepage'] if vals.verbose else []
-    attrs.extend(process_attrs(vals.attr))
+    attrs = ['repo', 'description', 'homepage'] if namespace.verbose else []
+    attrs.extend(process_attrs(namespace.attr))
 
     # finally, uniquify the attrs.
-    vals.attr = list(iter_stable_unique(attrs))
-
-    return vals, ()
+    namespace.attr = list(iter_stable_unique(attrs))
 
 
 @argparser.bind_main_func
 def main(options, out, err):
     """Run a query."""
-
-    try:
-        mangle_values(options, err)
-    except _Fail:
-        return -1
-
     if options.debug:
         for repo in options.repos:
             out.write('repo: %r' % (repo,))

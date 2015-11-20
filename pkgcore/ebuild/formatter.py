@@ -222,23 +222,9 @@ class PkgcoreFormatter(Formatter):
             self.out.write("%s %s" % (op.desc.ljust(7), p))
 
 
-class EmptyDict(object):
-
-    def __getitem__(self, k):
-        return k
-
-    def __setitem__(self, k, v):
-        pass
-
-    def __delitem__(self, k):
-        pass
-
-
 class CountingFormatter(Formatter):
 
     """Subclass for formatters that count packages"""
-
-    mappings = EmptyDict()
 
     def __init__(self, **kwargs):
         kwargs.setdefault("verbose", False)

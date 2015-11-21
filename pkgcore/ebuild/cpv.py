@@ -108,12 +108,12 @@ class _native_CPV(object):
             raise TypeError(self.cpvstr)
 
         try:
-            categories, pkgver  = cpvstr.rsplit("/", 1)
+            categories, pkgver = cpvstr.rsplit("/", 1)
         except ValueError:
             # occurs if the rsplit yields only one item
-            raise InvalidCPV(cpvstr)
+            raise InvalidCPV('%s: no package or version components' % cpvstr)
         if not isvalid_cat_re.match(categories):
-            raise InvalidCPV(cpvstr)
+            raise InvalidCPV('%s: invalid category name' % cpvstr)
         sf = object.__setattr__
         sf(self, 'category', categories)
         sf(self, 'cpvstr', cpvstr)
@@ -121,11 +121,11 @@ class _native_CPV(object):
         lpkg_chunks = len(pkg_chunks)
         if versioned:
             if lpkg_chunks == 1:
-                raise InvalidCPV(cpvstr)
+                raise InvalidCPV('%s: missing package version' % cpvstr)
             if isvalid_rev(pkg_chunks[-1]):
                 if lpkg_chunks < 3:
                     # needs at least ('pkg', 'ver', 'rev')
-                    raise InvalidCPV(cpvstr)
+                    raise InvalidCPV('%s: missing package name, version, and/or revision' % cpvstr)
                 rev = int(pkg_chunks.pop(-1)[1:])
                 if not rev:
                     rev = None
@@ -137,7 +137,7 @@ class _native_CPV(object):
                 sf(self, 'revision', None)
 
             if not isvalid_version_re.match(pkg_chunks[-1]):
-                raise InvalidCPV(cpvstr)
+                raise InvalidCPV("%s: invalid version '%s'" % (cpvstr, pkg_chunks[-1]))
             sf(self, 'version', pkg_chunks.pop(-1))
             if self.revision:
                 sf(self, 'fullver', "%s-r%s" % (self.version, self.revision))
@@ -145,12 +145,12 @@ class _native_CPV(object):
                 sf(self, 'fullver', self.version)
 
             if not isvalid_pkg_name(pkg_chunks):
-                raise InvalidCPV(cpvstr)
+                raise InvalidCPV('%s: invalid package name' % cpvstr)
             sf(self, 'package', '-'.join(pkg_chunks))
             sf(self, 'key', "%s/%s" % (categories, self.package))
         else:
             if not isvalid_pkg_name(pkg_chunks):
-                raise InvalidCPV(cpvstr)
+                raise InvalidCPV('%s: invalid package name' % cpvstr)
             sf(self, 'revision', None)
             sf(self, 'fullver', None)
             sf(self, 'version', None)

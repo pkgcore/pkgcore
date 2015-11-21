@@ -399,6 +399,8 @@ class RepoConfig(syncable.tree):
             masters = tuple(iter_stable_unique(masters.split()))
         sf(self, 'masters', masters)
         aliases = data.get('aliases', '').split() + [self.repo_id, self.location]
+        if self.config_name is not None:
+            aliases.append(self.config_name)
         sf(self, 'aliases', tuple(iter_stable_unique(aliases)))
         sf(self, 'eapis_deprecated', tuple(iter_stable_unique(data.get('eapis-deprecated', '').split())))
 
@@ -524,9 +526,7 @@ class RepoConfig(syncable.tree):
         if val is None:
             if not self.is_empty:
                 logger.warning("repository at location %r lacks a defined repo_name", self.location)
-            val = getattr(self, 'config_name', None)
-            if val is None:
-                val = '<unlabeled repository %s>' % self.location
+            val = '<unlabeled repository %s>' % self.location
         return val.strip()
 
     arch_profiles = klass.alias_attr('profiles.arch_profiles')

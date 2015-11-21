@@ -124,6 +124,7 @@ def parse_match(text):
                      atom.atom("%scategory/%s" % (ops, text)).restrictions,
                      attrs=("category",), invert=True))
         except errors.MalformedAtom as e:
+            e.atom = orig_text
             raise_from(ParseError(str(e)))
         if len(r) == 1:
             return r[0]

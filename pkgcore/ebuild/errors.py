@@ -17,9 +17,11 @@ class MalformedAtom(errors.InvalidDependency):
 
     def __init__(self, atom, err=''):
         err = ': ' + err if err else ''
-        errors.InvalidDependency.__init__(
-            self, "atom '%s' is malformed%s" % (atom, err))
         self.atom, self.err = atom, err
+        errors.InvalidDependency.__init__(self, str(self))
+
+    def __str__(self):
+        return "invalid package atom: '%s'%s" % (self.atom, self.err)
 
 
 class InvalidVersion(errors.InvalidDependency):

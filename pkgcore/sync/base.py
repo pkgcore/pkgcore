@@ -19,7 +19,7 @@ demandload(
     'pwd',
     'stat',
     'errno',
-    'snakeoil.process:find_binary,CommandNotFound',
+    'snakeoil:process',
     'pkgcore:os_data,plugin,spawn',
 )
 
@@ -136,10 +136,10 @@ class ExternalSyncer(syncer):
             self.binary_path = self.require_binary(self.binary)
 
     @staticmethod
-    def require_binary(bin_name, fatal=True):
+    def require_binary(bin_name, fatal=False):
         try:
-            return find_binary(bin_name)
-        except CommandNotFound as e:
+            return process.find_binary(bin_name)
+        except process.CommandNotFound as e:
             if fatal:
                 raise missing_binary(bin_name, e)
             return None

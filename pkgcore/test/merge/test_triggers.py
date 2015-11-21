@@ -8,9 +8,9 @@ import os
 import shutil
 import time
 
+from snakeoil import process
 from snakeoil.currying import post_curry
 from snakeoil.osutils import pjoin, ensure_dirs, normpath
-from snakeoil.process import find_binary, CommandNotFound
 from snakeoil.test import mixins
 
 from pkgcore.fs import fs
@@ -350,8 +350,8 @@ END-INFO-DIR-ENTRY
         existing = os.environ.get("PATH", self)
         try:
             try:
-                path = find_binary('install-info')
-            except CommandNotFound:
+                path = process.find_binary('install-info')
+            except process.CommandNotFound:
                 path = None
             self.assertEqual(path, self.trigger.get_binary_path())
             if path is not self:

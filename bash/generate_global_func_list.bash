@@ -64,7 +64,7 @@ unset -f __source_was_seen
 unset -f source
 
 # Sorting order; put PMS functionality first, then our internals.
-result=$(__environ_list_funcs | sort)
+result=$(compgen -A function | sort)
 result=$(echo "${result}" | grep -v "^__"; echo "${result}" | grep "^__")
 
 ${DEBUG} && echo >&2

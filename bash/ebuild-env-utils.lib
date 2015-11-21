@@ -45,18 +45,6 @@ __escape_regex_array() {
 	eval $1='( "${__tmp_array[@]}" )'
 } &> /dev/null
 
-__environ_list_funcs() {
-	# Grab the vars /before/ adding our custom declare function, else it'll
-	# show up in the list of functions.
-	local __content=$(builtin declare -F)
-	declare() {
-		echo "$2"
-	}
-	eval "${__content}" || die "${FUNCNAME}: eval failed" >&2
-	unset -f declare
-	:
-}
-
 __environ_list_vars() {
 	declare() {
 		local __ret=${2%%=*}
@@ -84,7 +72,7 @@ __environ_dump() {
 
 	# Punt any regex chars...
 	__escape_regex_array __func_filters
-	__PKGCORE_TARGETS=( $(__environ_list_funcs | __regex_filter_input "${__func_filters[@]}" ) )
+	__PKGCORE_TARGETS=( $(compgen -A function | __regex_filter_input "${__func_filters[@]}" ) )
 	unset __func_filters
 	if [[ ${#__PKGCORE_TARGETS[@]} -ne 0 ]]; then
 		declare -f "${__PKGCORE_TARGETS[@]}" || die "failed outputting funcs ${__PKGCORE_TARGETS[@]}" >&2

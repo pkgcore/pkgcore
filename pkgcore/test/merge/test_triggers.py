@@ -10,9 +10,9 @@ import time
 
 from snakeoil.currying import post_curry
 from snakeoil.osutils import pjoin, ensure_dirs, normpath
+from snakeoil.process import find_binary, CommandNotFound
 from snakeoil.test import mixins
 
-from pkgcore import spawn
 from pkgcore.fs import fs
 from pkgcore.merge import triggers, const
 from pkgcore.fs.contents import contentsSet
@@ -350,8 +350,8 @@ END-INFO-DIR-ENTRY
         existing = os.environ.get("PATH", self)
         try:
             try:
-                path = spawn.find_binary('install-info')
-            except spawn.CommandNotFound:
+                path = find_binary('install-info')
+            except CommandNotFound:
                 path = None
             self.assertEqual(path, self.trigger.get_binary_path())
             if path is not self:

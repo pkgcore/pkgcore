@@ -6,6 +6,7 @@ import pwd
 import signal
 
 from snakeoil.currying import post_curry
+from snakeoil.process import find_binary, CommandNotFound
 from snakeoil.test.mixins import TempDirMixin
 
 from pkgcore import spawn
@@ -24,10 +25,10 @@ class SpawnTest(TempDirMixin, TestCase):
 
     def __init__(self, *a, **kw):
         try:
-            self.bash_path = spawn.find_binary("bash")
+            self.bash_path = find_binary("bash")
             self.null_file = open("/dev/null", "w")
             self.null = self.null_file.fileno()
-        except spawn.CommandNotFound:
+        except CommandNotFound:
             self.skip = "bash wasn't found.  this will be ugly."
         super(SpawnTest, self).__init__(*a, **kw)
 
@@ -131,7 +132,7 @@ class SpawnTest(TempDirMixin, TestCase):
             "pkgcore-spawn-fakeroot2.sh",
             "#!%s\nimport os\ns=os.stat('/tmp')\n"
             "print(s.st_uid)\nprint(s.st_gid)\n" %
-            spawn.find_binary("python"))
+            find_binary("python"))
 
         fp1 = self.generate_script(
             "pkgcore-spawn-fakeroot.sh",
@@ -175,7 +176,7 @@ class SpawnTest(TempDirMixin, TestCase):
     def generate_background_pid(self):
         try:
             return spawn.spawn(["sleep", "60s"], returnpid=True)[0]
-        except spawn.CommandNotFound:
+        except CommandNotFound:
             raise SkipTest(
                 "can't complete the test, sleep binary doesn't exist")
 

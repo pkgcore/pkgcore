@@ -39,6 +39,7 @@ demandload(
     're',
     'time',
     'snakeoil.bash:iter_read_bash',
+    'snakeoil.process:find_binary,CommandNotFound',
     'pkgcore:os_data,spawn',
     'pkgcore.fs:fs,contents',
     'pkgcore.fs.livefs:gen_obj',
@@ -365,8 +366,8 @@ class InfoRegen(base):
 
     def get_binary_path(self):
         try:
-            return spawn.find_binary('install-info')
-        except spawn.CommandNotFound:
+            return find_binary('install-info')
+        except CommandNotFound:
             # swallow it.
             return None
 
@@ -775,9 +776,9 @@ class BinaryDebug(ThreadedTrigger):
             obj = getattr(self, "_%s_binary" % x)
             if obj is None:
                 try:
-                    obj = spawn.find_binary("%s-%s" % (pkg.chost, x))
-                except spawn.CommandNotFound:
-                    obj = spawn.find_binary(x)
+                    obj = find_binary("%s-%s" % (pkg.chost, x))
+                except CommandNotFound:
+                    obj = find_binary(x)
             setattr(self, '%s_binary' % x, obj)
 
     def _strip_fsobj(self, fs_obj, ftype, reporter, quiet=False):

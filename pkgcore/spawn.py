@@ -10,7 +10,7 @@ subprocess related functionality
 
 __all__ = [
     "cleanup_pids", "spawn", "spawn_sandbox", "spawn_bash", "spawn_fakeroot",
-    "spawn_get_output", "find_binary",
+    "spawn_get_output",
 ]
 
 import atexit

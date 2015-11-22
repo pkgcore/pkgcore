@@ -456,7 +456,7 @@ repo_group.add_argument(
 
 class RawAwareStoreRepoObject(commandline.StoreRepoObject):
 
-    """Custom implementation that is aware of the --raw flag."""
+    """Custom implementation that is aware of the --raw and --no-filters options."""
 
     def _get_sections(self, config, namespace):
         if namespace.raw:

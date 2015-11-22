@@ -108,7 +108,7 @@ shared_options = (commandline.mk_argparser(
     config=False, color=False, version=False, domain=False, add_help=False),)
 argparser = commandline.mk_argparser(
     suppress=True, parents=(commandline.mk_argparser(domain=False, add_help=False),),
-    description=__doc__.split('\n', 1)[0])
+    description=__doc__)
 subparsers = argparser.add_subparsers(description="configuration related subcommands")
 classes = subparsers.add_parser(
     "classes", parents=shared_options,

@@ -50,8 +50,7 @@ class StoreTarget(argparse._AppendAction):
             namespace.targets = []
 
 
-argparser = commandline.mk_argparser(
-    domain=True, description=__doc__.split('\n', 1)[0])
+argparser = commandline.mk_argparser(domain=True, description=__doc__)
 argparser.add_argument(
     nargs='*', dest='targets', metavar='TARGET', action=StoreTarget,
     help="extended package matching",

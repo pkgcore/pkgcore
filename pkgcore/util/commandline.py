@@ -601,6 +601,12 @@ class ArgumentParser(argparse.ArgumentParser):
                  conflict_handler='error',
                  add_help=True):
 
+        self.long_description = None
+        if description is not None:
+            description_lines = description.split('\n')
+            description = description_lines[0]
+            self.long_description = ' '.join(description_lines[1:]).strip()
+
         super(ArgumentParser, self).__init__(
             prog=prog, usage=usage,
             description=description, epilog=epilog,

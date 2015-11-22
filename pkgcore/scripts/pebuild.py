@@ -14,7 +14,7 @@ from pkgcore.ebuild.errors import MalformedAtom
 from pkgcore.operations import observer
 from pkgcore.util import commandline
 
-argparser = commandline.mk_argparser(description=__doc__.split('\n', 1)[0])
+argparser = commandline.mk_argparser(description=__doc__)
 argparser.add_argument(
     'target', metavar='<atom|ebuild>',
     help="atom or ebuild matching a pkg to execute phases from")

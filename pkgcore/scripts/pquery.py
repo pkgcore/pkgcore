@@ -426,8 +426,7 @@ def print_packages_noversion(options, out, err, pkgs):
 # priority 100:
 #  default priority for DelayedValue; anything else is setup then.
 
-argparser = commandline.mk_argparser(
-    domain=True, description=__doc__.split('\n', 1)[0])
+argparser = commandline.mk_argparser(domain=True, description=__doc__)
 
 repo_group = argparser.add_argument_group(
     'Repository matching options',

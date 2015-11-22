@@ -38,9 +38,8 @@ demandload(
 
 
 argparser = commandline.mk_argparser(
-    suppress=True,
-    parents=(commandline.mk_argparser(domain=False, add_help=False),),
-    description=__doc__.split('\n', 1)[0])
+    suppress=True, description=__doc__,
+    parents=(commandline.mk_argparser(domain=False, add_help=False),))
 subparsers = argparser.add_subparsers(description="general system maintenance")
 
 shared_options = (commandline.mk_argparser(

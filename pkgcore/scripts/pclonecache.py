@@ -11,7 +11,7 @@ import time
 from pkgcore.util import commandline
 
 argparser = commandline.mk_argparser(
-    domain=False, description=__doc__.split('\n', 1)[0])
+    domain=False, description=__doc__)
 argparser.add_argument(
     "source", config_type='cache',
     action=commandline.StoreConfigObject,

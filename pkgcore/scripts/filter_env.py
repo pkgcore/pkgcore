@@ -14,7 +14,7 @@ from pkgcore.util import commandline
 
 argparser = commandline.mk_argparser(
     config=False, domain=False, verbose=False, color=False,
-    description=__doc__.split('\n', 1)[0])
+    description=__doc__)
 
 def stdin_default(namespace, attr):
     if sys.stdin.isatty():

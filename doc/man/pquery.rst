@@ -3,22 +3,7 @@ pquery
 ======
 
 .. include:: pquery/main_synopsis.rst
-
-Description
-===========
-
-pquery is used to extract various kinds of information about either installed
-or uninstalled packages. As you probably guessed from the name it is similar to
-equery, but it can do things equery cannot do and is a bit more flexible.
-
-What pquery does is select packages from one or more "repositories" that match
-a boolean combination of restrictions, then print selected information about
-those packages. It is important to understand that the information printing and
-repository selection options are almost completely separate from the
-restriction options. The only exception to that is that restrictions on
-contents automatically select the vdb (installed packages) repository, since
-running them on source repos makes no sense.
-
+.. include:: pquery/main_description.rst
 .. include:: pquery/main_options.rst
 
 Usage

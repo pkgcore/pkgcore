@@ -442,7 +442,7 @@ repo_group.add_argument(
         authors, etc. Note this option ignores --domain if is specified.
     """)
 repo_group.add_argument(
-    '--no-filters', action='store_true', default=False,
+    '--unfiltered', action='store_true', default=False,
     help="disable all license filtering and visibility filtering",
     docs="""
         This means all package filtering mechanisms such as ACCEPT_KEYWORDS and
@@ -456,13 +456,13 @@ repo_group.add_argument(
 
 class RawAwareStoreRepoObject(commandline.StoreRepoObject):
 
-    """Custom implementation that is aware of the --raw and --no-filters options."""
+    """Custom implementation that is aware of the --raw and --unfiltered options."""
 
     def _get_sections(self, config, namespace):
         if namespace.raw:
             return commandline.StoreConfigObject._get_sections(
                 self, config, namespace)
-        elif namespace.no_filters:
+        elif namespace.unfiltered:
             return namespace.domain.repos_configured
         return commandline.StoreRepoObject._get_sections(
             self, config, namespace)
@@ -486,12 +486,12 @@ repo_mux.add_argument(
 def setup_repos(namespace, attr):
     # Get repo(s) to operate on.
     if namespace.repo:
-        # The store repo machinery handles --raw and --no-filters for
+        # The store repo machinery handles --raw and --unfiltered for
         # us, thus it being the first check.
         repos = [namespace.repo]
     elif namespace.contents or namespace._owns or namespace._owns_re:
         repos = namespace.domain.vdb
-    elif namespace.no_filters:
+    elif namespace.unfiltered:
         if namespace.all_repos:
             repos = list(namespace.domain.vdb)
             repos.extend(namespace.domain.repos_configured.itervalues())

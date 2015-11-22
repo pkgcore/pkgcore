@@ -518,12 +518,26 @@ __dump_metadata_keys() {
 	set +f
 
 	# defined phases... fun one.
-	local phases
+	local phases exp_funcs func tmp
 	for key in pkg_{pretend,configure,info,{pre,post}{rm,inst},setup} \
 		src_{unpack,prepare,configure,compile,test,install}; do
-			__is_function "${key}" && phases+=${phases:+ }${key}
+			if __is_function "${key}"; then
+				phases+=${phases:+ }${key}
+				if [[ $(declare -F "${key}") == *ebuild-default-functions.lib ]]; then
+					# eclass exported function
+					tmp=$(declare -f "${key}")
+					tmp=${tmp#*\{}
+					tmp=${tmp%_${key}*}
+					func=( ${tmp} )
+				else
+					# ebuild exported function
+					func=-
+				fi
+				exp_funcs+="${exp_funcs:+ }${key}:${func}"
+			fi
 	done
 	__ebd_write_line "key DEFINED_PHASES=${phases:--}"
+	__ebd_write_line "key _EXPORTED_FUNCS=${exp_funcs:--}"
 }
 
 set +f

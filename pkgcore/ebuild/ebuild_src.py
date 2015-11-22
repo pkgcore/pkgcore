@@ -395,6 +395,8 @@ class package_factory(metadata.factory):
         if inherited:
             mydata["_eclasses_"] = self._ecache.get_eclass_data(
                 inherited.split())
+        # TODO: proper types
+        mydata["_eclass_exported_funcs"] = mydata["_EXPORTED_FUNCS"]
         mydata['_chf_'] = chksum.LazilyHashedPath(pkg.path)
 
         for x in wipes:

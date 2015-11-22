@@ -160,7 +160,6 @@ def _sort_eclasses(config, repo_config, eclasses):
         'repo_config': 'ref:repo_config', 'cache': 'refs:cache',
         'eclass_override': 'ref:eclass_cache',
         'default_mirrors': 'list',
-        'override_repo_id': 'str',
         'ignore_paludis_versioning': 'bool',
         'allow_missing_manifests': 'bool'},
     requires_config='config')
@@ -182,7 +181,6 @@ def tree(config, repo_config, cache=(), eclass_override=None, default_mirrors=No
         'parent_repo': 'ref:repo',
         'eclass_override': 'ref:eclass_cache',
         'default_mirrors': 'list',
-        'override_repo_id': 'str',
         'ignore_paludis_versioning': 'bool',
         'allow_missing_manifests': 'bool'},
     requires_config='config')
@@ -226,7 +224,6 @@ class _UnconfiguredTree(prototype.tree):
         'location': 'str', 'cache': 'refs:cache',
         'eclass_cache': 'ref:eclass_cache',
         'default_mirrors': 'list',
-        'override_repo_id': 'str',
         'ignore_paludis_versioning': 'bool',
         'allow_missing_manifests': 'bool',
         'repo_config': 'ref:repo_config',
@@ -234,9 +231,8 @@ class _UnconfiguredTree(prototype.tree):
         typename='repo')
 
     def __init__(self, location, eclass_cache, cache=(),
-                 default_mirrors=None, override_repo_id=None,
-                 ignore_paludis_versioning=False, allow_missing_manifests=False,
-                 repo_config=None):
+                 default_mirrors=None, ignore_paludis_versioning=False,
+                 allow_missing_manifests=False, repo_config=None):
 
         """
         :param location: on disk location of the tree
@@ -247,8 +243,6 @@ class _UnconfiguredTree(prototype.tree):
             if None, generates the eclass_cache itself
         :param default_mirrors: Either None, or sequence of mirrors to try
             fetching from first, then falling back to other uri
-        :param override_repo_id: Either None, or string to force as the
-            repository unique id
         :param ignore_paludis_versioning: If False, fail when -scm is encountred.  if True,
             silently ignore -scm ebuilds.
         """
@@ -257,7 +251,6 @@ class _UnconfiguredTree(prototype.tree):
         if repo_config is None:
             repo_config = repo_objs.RepoConfig(location)
         self.config = repo_config
-        self._repo_id = override_repo_id
         self.base = self.location = location
         try:
             if not stat.S_ISDIR(os.stat(self.base).st_mode):

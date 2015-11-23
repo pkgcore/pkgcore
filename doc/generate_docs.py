@@ -10,7 +10,7 @@ from snakeoil.dist.generate_man_rsts import ManConverter
 
 
 def generate_man():
-    print('Generating option and synopsis files for man pages')
+    print('Generating files for man pages')
 
     try:
         os.mkdir('generated')

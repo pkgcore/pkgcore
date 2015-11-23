@@ -5,6 +5,7 @@ import errno
 import os
 import subprocess
 import sys
+import textwrap
 
 from snakeoil.dist.generate_man_rsts import ManConverter
 
@@ -29,8 +30,21 @@ def generate_man():
         ('pkgcore.scripts.' + s.replace('-', '_'), s) for s in scripts
     ]
 
-    # generate man page option docs
     for module, script in generated_man_pages:
+        rst = script + '.rst'
+        # generate missing, generic man pages
+        if not os.path.isfile(os.path.join('man', rst)):
+            with open(os.path.join('generated', rst), 'w') as f:
+                f.write(textwrap.dedent("""\
+                    {header}
+                    {script}
+                    {header}
+
+                    .. include:: {script}/main_synopsis.rst
+                    .. include:: {script}/main_description.rst
+                    .. include:: {script}/main_options.rst
+                """.format(header=('=' * len(script)), script=script)))
+            os.symlink(os.path.join(os.pardir, 'generated', rst), os.path.join('man', rst))
         os.symlink(os.path.join(os.pardir, 'generated', script), os.path.join('man', script))
         ManConverter.regen_if_needed('generated', module, out_name=script)
 

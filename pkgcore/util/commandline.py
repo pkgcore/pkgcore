@@ -605,7 +605,7 @@ class ArgumentParser(argparse.ArgumentParser):
         if description is not None:
             description_lines = description.split('\n')
             description = description_lines[0]
-            self.long_description = ' '.join(description_lines[1:]).strip()
+            self.long_description = description_lines[1:]
 
         super(ArgumentParser, self).__init__(
             prog=prog, usage=usage,

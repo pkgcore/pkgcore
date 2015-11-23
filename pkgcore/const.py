@@ -29,10 +29,6 @@ COPY_BINARY        = find_binary('cp')
 
 HOST_NONROOT_PATHS = ("/usr/local/bin", "/usr/bin", "/bin")
 
-# no longer used.
-LIBFAKEROOT_PATH   = "/usr/lib/libfakeroot.so"
-FAKED_PATH         = "/usr/bin/faked"
-
 
 def _GET_CONST(attr, default_value, allow_environment_override=False):
     consts = mappings.ProxiedAttrs(sys.modules[__name__])

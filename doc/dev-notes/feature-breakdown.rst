@@ -35,7 +35,6 @@ relevant list of features
 * suidctl
 * test
 * userpriv
-* userpriv_fakeroot
 * usersandbox
 
 Undefined
@@ -55,8 +54,7 @@ Build
 -----
 
 * keeptemp, keepwork, noclean, ccache, distcc
-* sandbox, userpriv, fakeroot
-* userpriv_fakeroot becomes fakeroot
+* sandbox, userpriv
 * confcache
 * noauto (fun one)
 * test

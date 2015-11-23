@@ -108,37 +108,29 @@ pkgcore.spawn.atexit_register(shutdown_all_processors)
 
 
 @_single_thread_allowed
-def request_ebuild_processor(userpriv=False, sandbox=None, fakeroot=False,
-                             save_file=None):
+def request_ebuild_processor(userpriv=False, sandbox=None):
     """
     request an ebuild_processor instance, creating a new one if needed.
-
-    Note that fakeroot processes are B{never} reused due to the fact
-    the fakeroot env becomes localized to the pkg its handling.
 
     :return: :obj:`EbuildProcessor`
     :param userpriv: should the processor be deprived to
         :obj:`pkgcore.os_data.portage_gid` and :obj:`pkgcore.os_data.portage_uid`?
     :param sandbox: should the processor be sandboxed?
-    :param fakeroot: should the processor be fakerooted?  This option is
-        mutually exclusive to sandbox, and requires save_file to be set.
-    :param save_file: location to store fakeroot state dumps
     """
 
     if sandbox is None:
         sandbox = pkgcore.spawn.is_sandbox_capable()
 
-    if not fakeroot:
-        for x in inactive_ebp_list:
-            if x.userprived() == userpriv and (x.sandboxed() or not sandbox):
-                if not x.is_alive:
-                    inactive_ebp_list.remove(x)
-                    continue
+    for x in inactive_ebp_list:
+        if x.userprived() == userpriv and (x.sandboxed() or not sandbox):
+            if not x.is_alive:
                 inactive_ebp_list.remove(x)
-                active_ebp_list.append(x)
-                return x
+                continue
+            inactive_ebp_list.remove(x)
+            active_ebp_list.append(x)
+            return x
 
-    e = EbuildProcessor(userpriv, sandbox, fakeroot, save_file)
+    e = EbuildProcessor(userpriv, sandbox)
     active_ebp_list.append(e)
     return e
 
@@ -150,7 +142,6 @@ def release_ebuild_processor(ebp):
 
     Any processor requested via request_ebuild_processor B{must} be released
     via this function once it's no longer in use.
-    This includes fakerooted processors.
 
     :param ebp: :obj:`EbuildProcessor` instance
     :return: boolean indicating release results- if the processor isn't known
@@ -165,9 +156,7 @@ def release_ebuild_processor(ebp):
         return False
 
     assert ebp not in inactive_ebp_list
-    # if it's a fakeroot'd process, we throw it away.
-    # it's not useful outside of a chain of calls
-    if ebp.onetime() or ebp.locked:
+    if ebp.locked:
         # ok, so the thing is not reusable either way.
         ebp.shutdown_processor()
     else:
@@ -264,14 +253,10 @@ class EbuildProcessor(object):
 
     __metaclass__ = WeakRefFinalizer
 
-    def __init__(self, userpriv, sandbox, fakeroot, save_file):
+    def __init__(self, userpriv, sandbox):
         """
         :param sandbox: enables a sandboxed processor
         :param userpriv: enables a userpriv'd processor
-        :param fakeroot: enables a fakeroot'd processor-
-            this is a mutually exclusive option to sandbox, and
-            requires userpriv to be enabled. Violating this will
-            result in nastiness.
         """
 
         self.lock()
@@ -282,11 +267,6 @@ class EbuildProcessor(object):
         self._eclass_caching = False
         self._outstanding_expects = []
         self._metadata_paths = None
-
-        if fakeroot and (sandbox or not userpriv):
-            traceback.print_stack()
-            logger.error("Both sandbox and fakeroot cannot be enabled at the same time")
-            raise InitializationError("cannot initialize with sandbox and fakeroot")
 
         if userpriv:
             self.__userpriv = True
@@ -304,10 +284,9 @@ class EbuildProcessor(object):
         cread, cwrite = os.pipe()
         dread, dwrite = os.pipe()
         self.__sandbox = False
-        self.__fakeroot = False
 
         # since it's questionable which spawn method we'll use (if
-        # sandbox or fakeroot fex), we ensure the bashrc is invalid.
+        # sandbox fex), we ensure the bashrc is invalid.
         env = {x: "/etc/portage/spork/not/valid/ha/ha"
                for x in ("BASHRC", "BASH_ENV")}
 
@@ -329,22 +308,13 @@ class EbuildProcessor(object):
         if sandbox:
             if not pkgcore.spawn.is_sandbox_capable():
                 raise ValueError("spawn lacks sandbox capabilities")
-            if fakeroot:
-                raise InitializationError('fakeroot was on, but sandbox was also on')
             self.__sandbox = True
             spawn_func = pkgcore.spawn.spawn_sandbox
 #            env.update({"SANDBOX_DEBUG":"1", "SANDBOX_DEBUG_LOG":"/var/tmp/test"})
-
-        elif fakeroot:
-            if not pkgcore.spawn.is_fakeroot_capable():
-                raise ValueError("spawn lacks fakeroot capabilities")
-            self.__fakeroot = True
-            spawn_func = pkgcore.spawn.spawn_fakeroot
-            args.append(save_file)
         else:
             spawn_func = pkgcore.spawn.spawn
 
-        # force to a neutral dir so that sandbox/fakeroot won't explode if
+        # force to a neutral dir so that sandbox won't explode if
         # ran from a nonexistent dir
         spawn_opts["cwd"] = e_const.EAPI_BIN_PATH
         # Force the pipes to be high up fd wise so nobody stupidly hits 'em, we
@@ -424,14 +394,6 @@ class EbuildProcessor(object):
     def userprived(self):
         """is this instance userprived?"""
         return self.__userpriv
-
-    def fakerooted(self):
-        """is this instance fakerooted?"""
-        return self.__fakeroot
-
-    def onetime(self):
-        """Is this instance going to be discarded after usage (fakerooted)?"""
-        return self.__fakeroot
 
     def write(self, string, flush=True, disable_runtime_exceptions=False,
               append_newline=True):

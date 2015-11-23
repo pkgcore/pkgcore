@@ -49,12 +49,6 @@ Rough TODO
   _cpv is in use;
   'nuff said, look in pkgcore.ebuild.cpv.cpy_ver_cmp
 
-- testing of fakeroot integration
-
-  it was working back in the ebd branch days; things have changed since then
-  (heavily), enabling/disabling should work fine, but will need to take a look
-  at the contentset generation to ensure perms/gid leaks through correctly.
-
 - modify repository.prototype.tree.match to take an optional comparison
 
   reasoning being that if we're just going to do a max, pass in the max so it

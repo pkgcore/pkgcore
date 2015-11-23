@@ -7,7 +7,6 @@ tag a 'x' in front of stuff that's been implemented
 unhandled (eg, figure these out) vars/features
 
 - (user)?sandbox
-- userpriv(_fakeroot)?
 - digest
 - cvs (this option is a hack)
 - fixpackages , which probably should be a sync thing (would need to

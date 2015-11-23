@@ -9,7 +9,7 @@ subprocess related functionality
 """
 
 __all__ = [
-    "cleanup_pids", "spawn", "spawn_sandbox", "spawn_bash", "spawn_fakeroot",
+    "cleanup_pids", "spawn", "spawn_sandbox", "spawn_bash",
     "spawn_get_output",
 ]
 
@@ -24,8 +24,7 @@ from snakeoil.mappings import ProtectedDict
 from snakeoil.osutils import access
 from snakeoil.process import find_binary, CommandNotFound, closerange
 
-from pkgcore.const import (
-    BASH_BINARY, SANDBOX_BINARY, FAKED_PATH, LIBFAKEROOT_PATH)
+from pkgcore.const import BASH_BINARY, SANDBOX_BINARY
 
 demandload(
     'pkgcore.log:logger',
@@ -307,81 +306,13 @@ def _exec(binary, mycommand, name=None, fd_pipes=None, env=None, gid=None,
     os.execve(binary, myargs, env)
 
 
-def spawn_fakeroot(mycommand, save_file, env=None, name=None,
-                   returnpid=False, **keywords):
-    """spawn a process via fakeroot
-
-    refer to the fakeroot manpage for specifics of using fakeroot
-    """
-    if env is None:
-        env = {}
-    else:
-        env = ProtectedDict(env)
-
-    if name is None:
-        name = "fakeroot %s" % mycommand
-
-    args = [
-        FAKED_PATH,
-        "--unknown-is-real", "--foreground", "--save-file", save_file]
-
-    rd_fd, wr_fd = os.pipe()
-    daemon_fd_pipes = {1: wr_fd, 2: wr_fd}
-    if os.path.exists(save_file):
-        args.append("--load")
-        daemon_fd_pipes[0] = os.open(save_file, os.O_RDONLY)
-    else:
-        daemon_fd_pipes[0] = os.open("/dev/null", os.O_RDONLY)
-
-    pids = None
-    pids = spawn(args, fd_pipes=daemon_fd_pipes, returnpid=True)
-    try:
-        try:
-            rd_f = os.fdopen(rd_fd)
-            line = rd_f.readline()
-            rd_f.close()
-            rd_fd = None
-        except:
-            cleanup_pids(pids)
-            raise
-    finally:
-        for x in (rd_fd, wr_fd, daemon_fd_pipes[0]):
-            if x is not None:
-                try:
-                    os.close(x)
-                except OSError:
-                    pass
-
-    line = line.strip()
-
-    try:
-        fakekey, fakepid = map(int, line.split(":"))
-    except ValueError:
-        raise ExecutionFailure("output from faked was unparsable- %s" % line)
-
-    # by now we have our very own daemonized faked.  yay.
-    env["FAKEROOTKEY"] = str(fakekey)
-    paths = [LIBFAKEROOT_PATH] + env.get("LD_PRELOAD", "").split(":")
-    env["LD_PRELOAD"] = ":".join(x for x in paths if x)
-
-    try:
-        ret = spawn(
-            mycommand, name=name, env=env, returnpid=returnpid,
-            **keywords)
-        if returnpid:
-            return ret + [fakepid] + pids
-        return ret
-    finally:
-        if not returnpid:
-            cleanup_pids([fakepid] + pids)
-
 def spawn_get_output(mycommand, spawn_type=None, raw_exit_code=False, collect_fds=(1,),
                      fd_pipes=None, split_lines=True, **keywords):
 
     """Call spawn, collecting the output to fd's specified in collect_fds list.
 
-    :param spawn_type: the passed in function to call- typically :func:`spawn_bash`,
-       :func:`spawn`, :func:`spawn_sandbox`, or :func:`spawn_fakeroot`.
+    :param spawn_type: the passed in function to call- typically :func:`spawn_bash`
+       :func:`spawn`, or :func:`spawn_sandbox`.
        Defaults to :func:`spawn`.
     """
 
@@ -455,23 +386,6 @@ class ExecutionFailure(Exception):
         return "Execution Failure: %s" % self.msg
 
 # cached capabilities
-
-def is_fakeroot_capable(force=False):
-    if not force:
-        try:
-            return is_fakeroot_capable.cached_result
-        except AttributeError:
-            pass
-    if not (os.path.exists(FAKED_PATH) and os.path.exists(LIBFAKEROOT_PATH)):
-        res = False
-    else:
-        try:
-            r, s = spawn_get_output(["fakeroot", "--version"], fd_pipes={2: 1, 1: 1})
-            res = (r == 0) and (len(s) == 1) and ("version 1." in s[0])
-        except ExecutionFailure:
-            res = False
-    is_fakeroot_capable.cached_result = res
-    return res
 
 def is_sandbox_capable(force=False):
     if not force:

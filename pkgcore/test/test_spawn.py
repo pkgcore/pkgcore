@@ -108,66 +108,6 @@ class SpawnTest(TempDirMixin, TestCase):
             if cwd is not None:
                 os.chdir(cwd)
 
-    @capability_based(spawn.is_fakeroot_capable,
-                      "fakeroot binary wasn't found")
-    def test_fakeroot(self):
-        try:
-            l = pwd.getpwnam("nobody")
-        except KeyError:
-            raise SkipTest(
-                "system lacks nobody user, thus can't test fakeroot")
-        if 'LD_PRELOAD' in os.environ:
-            raise SkipTest(
-                "disabling test due to LD_PRELOAD setting, which "
-                "fakeroot relies upon")
-
-        nobody_uid = l[2]
-        nobody_gid = l[3]
-
-        kw = {}
-        if os.getuid() == 0:
-            kw = {"uid": l[2], "gid": l[3]}
-
-        fp2 = self.generate_script(
-            "pkgcore-spawn-fakeroot2.sh",
-            "#!%s\nimport os\ns=os.stat('/tmp')\n"
-            "print(s.st_uid)\nprint(s.st_gid)\n" %
-            process.find_binary("python"))
-
-        fp1 = self.generate_script(
-            "pkgcore-spawn-fakeroot.sh",
-            "#!%s\nchown %i:%i /tmp;%s;\n" % (
-                self.bash_path, nobody_uid, nobody_gid, fp2))
-
-        savefile = os.path.join(self.dir, "fakeroot-savefile")
-        self.assertNotEqual(long(os.stat("/tmp").st_uid), long(nobody_uid))
-        self.assertEqual(
-            [0, ["%s\n" % x for x in (nobody_uid, nobody_gid)]],
-            spawn.spawn_get_output(
-                [self.bash_path, fp1],
-                spawn_type=post_curry(spawn.spawn_fakeroot, savefile), **kw))
-        self.assertNotEqual(
-            long(os.stat("/tmp").st_uid), long(nobody_uid),
-            "bad voodoo; we managed to change /tmp to nobody- "
-            "this shouldn't occur!")
-        self.assertEqual(
-            True, os.path.exists(savefile),
-            "no fakeroot file was created, either fakeroot differs or our" +
-            " args passed to it are bad")
-
-        # yes this is a bit ugly, but fakeroot requires an arg- so we
-        # have to curry it
-        self.assertEqual(
-            [0, ["%s\n" % x for x in (nobody_uid, nobody_gid)]],
-            spawn.spawn_get_output(
-                [fp2],
-                spawn_type=post_curry(spawn.spawn_fakeroot, savefile), **kw))
-
-        os.unlink(fp1)
-        os.unlink(fp2)
-        os.unlink(savefile)
-    test_fakeroot.skip = "test is flakey w/ recent versions of fakeroot; capabilities unused atm also"
-
     def test_process_exit_code(self):
         self.assertEqual(0, spawn.process_exit_code(0), "exit code failed")
         self.assertEqual(

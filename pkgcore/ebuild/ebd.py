@@ -34,8 +34,7 @@ from pkgcore.ebuild.processor import (
 from pkgcore.operations import observer, format
 from pkgcore.os_data import portage_gid, portage_uid, xargs
 from pkgcore.spawn import (
-    spawn_bash, spawn, is_sandbox_capable, is_fakeroot_capable,
-    is_userpriv_capable, spawn_get_output)
+    spawn_bash, spawn, is_sandbox_capable, is_userpriv_capable, spawn_get_output)
 
 demandload(
     'textwrap',
@@ -143,12 +142,8 @@ class ebd(object):
 
         self.restrict = pkg.restrict
 
-        for x in ("sandbox", "userpriv", "fakeroot"):
+        for x in ("sandbox", "userpriv"):
             setattr(self, x, self.feat_or_bool(x) and not (x in self.restrict))
-        if self.fakeroot:
-            logger.warning("disabling fakeroot; unusable till coreutils/fakeroot" +
-                " interaction is fixed")
-            self.fakeroot = False
         if self.userpriv and os.getuid() != 0:
             self.userpriv = False
 
@@ -271,17 +266,14 @@ class ebd(object):
                 logger.warning("%s ( %s ) is setgid" % (self.env[k], k))
 
 
-    def _generic_phase(self, phase, userpriv, sandbox, fakeroot,
-                       extra_handlers={}, failure_allowed=False,
-                       suppress_bashrc=False):
+    def _generic_phase(self, phase, userpriv, sandbox, extra_handlers={},
+                       failure_allowed=False, suppress_bashrc=False):
         """
         :param phase: phase to execute
         :param userpriv: will we drop to
             :obj:`pkgcore.os_data.portage_uid` and
             :obj:`pkgcore.os_data.portage_gid` access for this phase?
         :param sandbox: should this phase be sandboxed?
-        :param fakeroot: should the phase be fakeroot'd?  Only really useful
-            for install phase, and is mutually exclusive with sandbox
         """
         if phase not in self.pkg.mandatory_phases:
             # TODO(ferringb): Note the preinst hack; this will be removed once dyn_pkg_preinst
@@ -292,13 +284,12 @@ class ebd(object):
                 return True
         userpriv = self.userpriv and userpriv
         sandbox = self.sandbox and sandbox
-        fakeroot = self.fakeroot and fakeroot
         self._set_per_phase_env(phase, self.env)
         extra_handlers = extra_handlers.copy()
         if not suppress_bashrc:
             extra_handlers.setdefault("request_bashrcs", self._request_bashrcs)
-        return run_generic_phase(self.pkg, phase, self.env,
-            userpriv, sandbox, fakeroot,
+        return run_generic_phase(
+            self.pkg, phase, self.env, userpriv, sandbox,
             extra_handlers=extra_handlers, failure_allowed=failure_allowed,
             logging=self.logging)
 
@@ -408,11 +399,11 @@ class setup_mixin(object):
             additional_commands["request_inherit"] = partial(inherit_handler,
                 self.eclass_cache)
 
-        return self._generic_phase(phase_name, False, True, False,
-            extra_handlers=additional_commands)
+        return self._generic_phase(
+            phase_name, False, True, extra_handlers=additional_commands)
 
 
-def run_generic_phase(pkg, phase, env, userpriv, sandbox, fakeroot,
+def run_generic_phase(pkg, phase, env, userpriv, sandbox,
                       extra_handlers=None, failure_allowed=False, logging=None):
     """
     :param phase: phase to execute
@@ -421,8 +412,6 @@ def run_generic_phase(pkg, phase, env, userpriv, sandbox, fakeroot,
         :obj:`pkgcore.os_data.portage_uid` and
         :obj:`pkgcore.os_data.portage_gid` access for this phase?
     :param sandbox: should this phase be sandboxed?
-    :param fakeroot: should the phase be fakeroot'd?  Only really useful
-        for install phase, and is mutually exclusive with sandbox
     :param extra_handlers: extra command handlers
     :type extra_handlers: mapping from string to callable
     :param failure_allowed: allow failure without raising error
@@ -433,13 +422,11 @@ def run_generic_phase(pkg, phase, env, userpriv, sandbox, fakeroot,
 
     userpriv = userpriv and is_userpriv_capable()
     sandbox = sandbox and is_sandbox_capable()
-    fakeroot = fakeroot and is_fakeroot_capable()
 
     if env is None:
         env = expected_ebuild_env(pkg)
 
-    ebd = request_ebuild_processor(userpriv=userpriv, sandbox=sandbox,
-        fakeroot=fakeroot)
+    ebd = request_ebuild_processor(userpriv=userpriv, sandbox=sandbox)
     # this is a bit of a hack; used until ebd accepts observers that handle
     # the output redirection on its own.  Primary relevance is when
     # stdout/stderr are pointed at a file; we leave buffering on, just
@@ -479,12 +466,12 @@ class install_op(ebd, format.install):
     preinst = pretty_docs(
         observer.decorate_build_method("preinst")(
             post_curry(
-            ebd._generic_phase, "preinst", False, False, False)),
+            ebd._generic_phase, "preinst", False, False)),
             "run the postinst phase")
     postinst = pretty_docs(
         observer.decorate_build_method("postinst")(
             post_curry(
-            ebd._generic_phase, "postinst", False, False, False)),
+            ebd._generic_phase, "postinst", False, False)),
             "run the postinst phase")
 
     def add_triggers(self, domain_op, engine):
@@ -503,12 +490,12 @@ class uninstall_op(ebd, format.uninstall):
     prerm = pretty_docs(
         observer.decorate_build_method("prerm")(
             post_curry(
-            ebd._generic_phase, "prerm", False, False, False)),
+            ebd._generic_phase, "prerm", False, False)),
             "run the prerm phase")
     postrm = pretty_docs(
         observer.decorate_build_method("postrm")(
             post_curry(
-            ebd._generic_phase, "postrm", False, False, False,
+                ebd._generic_phase, "postrm", False, False,
                 failure_allowed=True)),
             "run the postrm phase")
 
@@ -769,7 +756,7 @@ class buildable(ebd, setup_mixin, format.build):
         separated configure phase).
         """
         if "configure" in self.eapi_obj.phases:
-            return self._generic_phase("configure", True, True, False)
+            return self._generic_phase("configure", True, True)
         return True
 
     def prepare(self):
@@ -779,7 +766,7 @@ class buildable(ebd, setup_mixin, format.build):
         does nothing if the pkg's EAPI is less than 2
         """
         if "prepare" in self.eapi_obj.phases:
-            return self._generic_phase("prepare", True, True, False)
+            return self._generic_phase("prepare", True, True)
         return True
 
     def nofetch(self):
@@ -802,29 +789,26 @@ class buildable(ebd, setup_mixin, format.build):
                 raise_from(format.GenericBuildError(
                     "failed forcing %i uid for WORKDIR: %s" %
                         (portage_uid, str(oe))))
-        return self._generic_phase("unpack", True, True, False)
+        return self._generic_phase("unpack", True, True)
 
     compile = pretty_docs(
         observer.decorate_build_method("compile")(
             post_curry(
-            ebd._generic_phase, "compile", True, True, False)),
+            ebd._generic_phase, "compile", True, True)),
             "run the compile phase (maps to src_compile)")
 
     @observer.decorate_build_method("install")
     def install(self):
         """run the install phase (maps to src_install)"""
-        if self.fakeroot:
-            return self._generic_phase("install", True, False, True)
-        else:
-            return self._generic_phase("install", False, True, False)
+        return self._generic_phase("install", False, True)
 
     @observer.decorate_build_method("test")
     def test(self):
         """run the test phase (if enabled), maps to src_test"""
         if not self.run_test:
             return True
-        return self._generic_phase("test", True, True, False,
-                                   failure_allowed=self.allow_failed_test)
+        return self._generic_phase(
+            "test", True, True, failure_allowed=self.allow_failed_test)
 
     def finalize(self):
         """
@@ -893,8 +877,8 @@ class ebuild_mixin(object):
         try:
             logger.debug("running ebuild pkg_pretend sanity check for %s", pkg.cpvstr)
             start = time.time()
-            ret = run_generic_phase(pkg, "pretend", env, userpriv=True, sandbox=True,
-                                    fakeroot=False, extra_handlers=commands)
+            ret = run_generic_phase(
+                pkg, "pretend", env, userpriv=True, sandbox=True, extra_handlers=commands)
             logger.debug("pkg_pretend sanity check for %s took %2.2f seconds",
                 pkg.cpvstr, time.time() - start)
             return ret
@@ -937,10 +921,10 @@ class misc_operations(ebd):
         ebd.__init__(self, *args, **kwds)
 
     def configure(self, observer=None):
-        return self._generic_phase('config', False, True, False)
+        return self._generic_phase('config', False, True)
 
     def info(self, observer=None):
-        return self._generic_phase('info', True, True, False)
+        return self._generic_phase('info', True, True)
 
 
 class built_operations(ebuild_mixin, format.operations):

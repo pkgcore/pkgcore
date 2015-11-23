@@ -349,15 +349,16 @@ class EbuildProcessor(object):
         spawn_opts["cwd"] = e_const.EAPI_BIN_PATH
         # little trick. we force the pipes to be high up fd wise so
         # nobody stupidly hits 'em.
+        # fds start from max-1 due to a bug in older bash
         max_fd = min(pkgcore.spawn.max_fd_limit, 1024)
         env.update({
-            "PKGCORE_EBD_READ_FD": str(max_fd-2),
-            "PKGCORE_EBD_WRITE_FD": str(max_fd-1)})
+            "PKGCORE_EBD_READ_FD": str(max_fd-3),
+            "PKGCORE_EBD_WRITE_FD": str(max_fd-2)})
         # pgid=0: Each ebuild processor is the process group leader for all its
         # spawned children so everything can be terminated easily if necessary.
         self.pid = spawn_func(
             [const.BASH_BINARY, self.ebd, "daemonize"],
-            fd_pipes={0: 0, 1: 1, 2: 2, max_fd-2: cread, max_fd-1: dwrite},
+            fd_pipes={0: 0, 1: 1, 2: 2, max_fd-3: cread, max_fd-2: dwrite},
             returnpid=True, env=env, pgid=0, *args, **spawn_opts)[0]
 
         os.close(cread)

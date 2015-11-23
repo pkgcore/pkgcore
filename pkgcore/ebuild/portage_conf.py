@@ -316,8 +316,17 @@ def load_repos_conf(path):
             # repos will be overridden
             repos[name] = dict(config.items(name))
 
-            # repo priority defaults to zero if unset
-            priority = repos[name].get('priority', 0)
+            # untyped repos default to ebuild
+            repos[name].setdefault('repo-type', 'ebuild')
+
+            # Ebuild repo priority defaults to zero and binpkg repo priority to
+            # -100 if unset. This forces the main repo to be used before binary
+            # repos by default.
+            if repos[name]['repo-type'] == 'binpkg':
+                priority = repos[name].get('priority', -100)
+            else:
+                priority = repos[name].get('priority', 0)
+
             try:
                 repos[name]['priority'] = int(priority)
             except ValueError:
@@ -349,7 +358,7 @@ def load_repos_conf(path):
 
     # the default repo has a low priority if unset or zero
     if repos[default_repo]['priority'] == 0:
-        repos[default_repo]['priority'] = -9999
+        repos[default_repo]['priority'] = -50
 
     # sort repos via priority, in this case high values map to high priorities
     repos = OrderedDict(
@@ -452,6 +461,11 @@ def config_from_make_conf(location=None, profile_override=None, **kwargs):
         'inherit-only': True,
         'ignore_paludis_versioning': ('ignore-paludis-versioning' in features),
     })
+    config['binary-repo-common'] = basics.AutoConfigSection({
+        'class': 'pkgcore.binpkg.repository.tree',
+        'inherit-only': True,
+        'ignore_paludis_versioning': ('ignore-paludis-versioning' in features),
+    })
 
     default_repo_path = repos_conf[repos_conf_defaults['main-repo']]['location']
     repo_map = {}
@@ -459,36 +473,42 @@ def config_from_make_conf(location=None, profile_override=None, **kwargs):
     for repo_name, repo_opts in repos_conf.iteritems():
         repo_path = repo_opts['location']
 
-        # XXX: Hack for portage-2 profile format support.
-        repo_config = RepoConfig(repo_path, repo_name)
-        repo_map[repo_config.repo_id] = repo_config
-
-        # repo configs
-        repo_conf = {
-            'class': 'pkgcore.ebuild.repo_objs.RepoConfig',
-            'config_name': repo_name,
-            'location': repo_path,
-            'syncer': 'sync:' + repo_name,
-        }
-
-        # metadata cache
-        cache_name = 'cache:' + repo_name
-        config[cache_name] = make_cache(repo_config.cache_format, repo_path)
-
-        # repo trees
-        repo = {
-            'inherit': ('ebuild-repo-common',),
-            'repo_config': 'conf:' + repo_name,
-            'cache': cache_name,
-        }
-
-        if repo_path == default_repo_path:
-            repo_conf['default'] = True
-            repo['class'] = 'pkgcore.ebuild.repository.tree'
+        if repo_opts['repo-type'] == 'binpkg':
+            repo = {
+                'inherit': ('binary-repo-common',),
+                'location': repo_path,
+            }
         else:
-            repo['parent_repo'] = repos_conf_defaults['main-repo']
+            # XXX: Hack for portage-2 profile format support.
+            repo_config = RepoConfig(repo_path, repo_name)
+            repo_map[repo_config.repo_id] = repo_config
 
-        config['conf:' + repo_name] = basics.AutoConfigSection(repo_conf)
+            # repo configs
+            repo_conf = {
+                'class': 'pkgcore.ebuild.repo_objs.RepoConfig',
+                'config_name': repo_name,
+                'location': repo_path,
+                'syncer': 'sync:' + repo_name,
+            }
+
+            # metadata cache
+            cache_name = 'cache:' + repo_name
+            config[cache_name] = make_cache(repo_config.cache_format, repo_path)
+
+            # repo trees
+            repo = {
+                'inherit': ('ebuild-repo-common',),
+                'repo_config': 'conf:' + repo_name,
+                'cache': cache_name,
+            }
+
+            if repo_path == default_repo_path:
+                repo_conf['default'] = True
+                repo['class'] = 'pkgcore.ebuild.repository.tree'
+            else:
+                repo['parent_repo'] = repos_conf_defaults['main-repo']
+
+            config['conf:' + repo_name] = basics.AutoConfigSection(repo_conf)
         config[repo_name] = basics.AutoConfigSection(repo)
 
     # XXX: Hack for portage-2 profile format support. We need to figure out how
@@ -496,6 +516,8 @@ def config_from_make_conf(location=None, profile_override=None, **kwargs):
     profiles.ProfileNode._repo_map = ImmutableDict(repo_map)
 
     repos = [name for name in repos_conf.iterkeys()]
+    binary_repos = [name for name, opts in repos_conf.iteritems()
+                    if opts['repo-type'] == 'binpkg']
     if len(repos) > 1:
         config['repo-stack'] = basics.FakeIncrementalDictConfigSection(
             my_convert_hybrid, {
@@ -515,54 +537,51 @@ def config_from_make_conf(location=None, profile_override=None, **kwargs):
 
     # binpkg.
     buildpkg = 'buildpkg' in features or kwargs.pop('buildpkg', False)
-    pkgdir = os.environ.get("PKGDIR", make_conf.pop('PKGDIR', None))
-    if pkgdir is not None:
+    pkgdir = None
+    if binary_repos:
         try:
-            pkgdir = abspath(pkgdir)
+            pkgdir = abspath(repos_conf[binary_repos[0]]['location'])
         except OSError as oe:
             if oe.errno != errno.ENOENT:
                 raise
             if buildpkg or set(features).intersection(
                     ('pristine-buildpkg', 'buildsyspkg', 'unmerge-backup')):
-                logger.warning("disabling buildpkg related features since PKGDIR doesn't exist")
+                logger.warning(
+                    "disabling buildpkg related features since the "
+                    "default binpkg repo doesn't exist: '%s'" % pkgdir)
             pkgdir = None
         else:
             if not ensure_dirs(pkgdir, mode=0755, minimal=True):
-                logger.warning("disabling buildpkg related features since PKGDIR either doesn't "
-                               "exist, or lacks 0755 minimal permissions")
+                logger.warning(
+                    "disabling buildpkg related features since the default "
+                    "binpkg repo either doesn't exist, or lacks 0755 minimal "
+                    "permissions: '%s'" % pkgdir)
                 pkgdir = None
     else:
         if buildpkg or set(features).intersection(
                 ('pristine-buildpkg', 'buildsyspkg', 'unmerge-backup')):
-            logger.warning("disabling buildpkg related features since PKGDIR is unset")
+            logger.warning(
+                "disabling buildpkg related features since no binpkg repos "
+                "are configured")
 
     # yes, round two; may be disabled from above and massive else block sucks
     if pkgdir is not None:
-        if pkgdir and os.path.isdir(pkgdir):
-            config['binpkg'] = basics.ConfigSectionFromStringDict({
-                'class': 'pkgcore.binpkg.repository.tree',
-                'repo_id': 'binpkg',
-                'location': pkgdir,
-                'ignore_paludis_versioning': str('ignore-paludis-versioning' in features),
-            })
-            repos.append('binpkg')
-
         if buildpkg:
             add_trigger(
                 'buildpkg_trigger', 'pkgcore.merge.triggers.SavePkg',
-                pristine='no', target_repo='binpkg')
+                pristine='no', target_repo=binary_repos[0])
         elif 'pristine-buildpkg' in features:
             add_trigger(
                 'buildpkg_trigger', 'pkgcore.merge.triggers.SavePkg',
-                pristine='yes', target_repo='binpkg')
+                pristine='yes', target_repo=binary_repos[0])
         elif 'buildsyspkg' in features:
             add_trigger(
                 'buildpkg_system_trigger', 'pkgcore.merge.triggers.SavePkgIfInPkgset',
-                pristine='yes', target_repo='binpkg', pkgset='system')
+                pristine='yes', target_repo=binary_repos[0], pkgset='system')
         elif 'unmerge-backup' in features:
             add_trigger(
                 'unmerge_backup_trigger', 'pkgcore.merge.triggers.SavePkgUnmerging',
-                target_repo='binpkg')
+                target_repo=binary_repos[0])
 
     if 'save-deb' in features:
         path = make_conf.pop("DEB_REPO_ROOT", None)

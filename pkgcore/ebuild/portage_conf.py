@@ -520,14 +520,14 @@ def config_from_make_conf(location=None, profile_override=None, **kwargs):
     # to dynamically create this from the config at runtime on attr access.
     profiles.ProfileNode._repo_map = ImmutableDict(repo_map)
 
-    repos = [name for name in repos_conf.iterkeys()]
+    repos = tuple(name for name in repos_conf.iterkeys())
     binary_repos = [name for name, opts in repos_conf.iteritems()
                     if opts['repo-type'] == 'binpkg']
     if len(repos) > 1:
         config['repo-stack'] = basics.FakeIncrementalDictConfigSection(
             my_convert_hybrid, {
                 'class': 'pkgcore.repository.multiplex.config_tree',
-                'repositories': tuple(repos)})
+                'repositories': repos})
     else:
         config['repo-stack'] = basics.section_alias(repos[0], 'repo')
 
@@ -625,7 +625,7 @@ def config_from_make_conf(location=None, profile_override=None, **kwargs):
     # finally... domain.
     make_conf.update({
         'class': 'pkgcore.ebuild.domain.domain',
-        'repositories': tuple(repos),
+        'repositories': repos,
         'fetcher': 'fetcher',
         'default': True,
         'vdb': ('vdb',),

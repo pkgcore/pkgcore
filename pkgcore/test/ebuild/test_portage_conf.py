@@ -113,6 +113,16 @@ class TestPortageConfig(TempDirMixin, TestCase):
             self.assertRaises(
                 errors.ParsingError, load_repos_conf, f.name)
 
+        # bad repo-type
+        with NamedTemporaryFile() as f:
+            f.write(textwrap.dedent('''\
+                [foo]
+                location = /var/gentoo/repos/foo
+                repo-type = blah''').encode())
+            f.flush()
+            self.assertRaises(
+                errors.ParsingError, load_repos_conf, f.name)
+
         # bad priority value
         with NamedTemporaryFile() as f:
             f.write(textwrap.dedent('''\

@@ -318,14 +318,19 @@ def load_repos_conf(path):
 
             # untyped repos default to ebuild
             repos[name].setdefault('repo-type', 'ebuild')
+            repo_type = repos[name]['repo-type']
 
             # Ebuild repo priority defaults to zero and binpkg repo priority to
-            # -100 if unset. This forces the main repo to be used before binary
+            # -100 if unset. This forces ebuild repos to be used before binary
             # repos by default.
-            if repos[name]['repo-type'] == 'binpkg':
+            if repo_type == 'ebuild':
+                priority = repos[name].get('priority', 0)
+            elif repo_type == 'binpkg':
                 priority = repos[name].get('priority', -100)
             else:
-                priority = repos[name].get('priority', 0)
+                raise errors.ParsingError(
+                    "%s: repo '%s' has invalid type: '%s'" %
+                    (fp, name, repo_type))
 
             try:
                 repos[name]['priority'] = int(priority)

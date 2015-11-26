@@ -3,6 +3,7 @@
 
 from snakeoil.demandload import demandload
 
+from pkgcore.ebuild import profiles
 from pkgcore.util import commandline
 
 demandload(
@@ -10,7 +11,7 @@ demandload(
     'itertools:chain',
     'operator',
     'snakeoil.osutils:pjoin',
-    'pkgcore.ebuild:atom,profiles',
+    'pkgcore.ebuild:atom',
 )
 
 commands = []
@@ -18,15 +19,15 @@ commands = []
 # global known flags, etc
 
 
-def profile(value):
-    return profiles.ProfileStack(commandline.existent_path(value))
+def profile_stack(path):
+    return profiles.ProfileStack(commandline.existent_path(path))
 
 
 class _base(commandline.ArgparseCommand):
 
     def bind_to_parser(self, parser):
         commandline.ArgparseCommand.bind_to_parser(self, parser)
-        parser.add_argument("profile", help="path to the profile to inspect", type=profile)
+        parser.add_argument("profile", help="path to the profile to inspect", type=profile_stack)
         name = self.__class__.__name__
         kwds = {('_%s_suppress' % name): commandline.DelayedDefault.wipe(('domain'), 50)}
         parser.set_defaults(**kwds)

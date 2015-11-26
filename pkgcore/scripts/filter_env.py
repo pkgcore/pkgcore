@@ -27,13 +27,11 @@ argparser.add_argument(
     help='Filename to read the env from (uses stdin if omitted).')
 filtering = argparser.add_argument_group("Environment filtering options")
 filtering.add_argument(
-    '-V', '--var-match', action='store_true',
-    default=False,
+    '-V', '--var-match', action='store_true', default=False,
     help="Invert the filtering- instead of removing a var if it matches "
     "remove all vars that do not match")
 filtering.add_argument(
-    '-F', '--func-match', action='store_true',
-    default=False,
+    '-F', '--func-match', action='store_true', default=False,
     help="Invert the filtering- instead of removing a function if it matches "
     "remove all functions that do not match")
 filtering.add_argument(

@@ -13,14 +13,12 @@ from pkgcore.util import commandline
 argparser = commandline.mk_argparser(
     domain=False, description=__doc__)
 argparser.add_argument(
-    "source", config_type='cache',
+    "source", config_type='cache', priority=20,
     action=commandline.StoreConfigObject,
-    priority=20,
     help="source cache to copy data from")
 argparser.add_argument(
-    "target", config_type='cache',
+    "target", config_type='cache', priority=21,
     action=commandline.StoreConfigObject, writable=True,
-    priority=21,
     help="target cache to update.  Must be writable.")
 
 

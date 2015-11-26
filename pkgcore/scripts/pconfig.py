@@ -193,8 +193,7 @@ dump = subparsers.add_parser(
         'write a loadable config. There may be quoting issues.  With a '
         'typename argument only that type is dumped.'))
 dump.add_argument(
-    "typename", nargs="?", action="store",
-    default=None,
+    "typename", nargs="?", action="store", default=None,
     help="if specified, limit output to just config directives of this type"
          ".  If left off, all types are shown")
 @dump.bind_main_func
@@ -367,12 +366,10 @@ world_modes.add_argument(
     '-l', '--list', action='store_true',
     help="List the current world file contents for this domain.")
 world_modes.add_argument(
-    '-r', '--remove', action='append',
-    type=atom.atom,
+    '-r', '--remove', action='append', type=atom.atom,
     help="Remove an entry from the world file.  Can be specified multiple times.")
 world_modes.add_argument(
-    '-a', '--add', action='append',
-    type=atom.atom,
+    '-a', '--add', action='append', type=atom.atom,
     help="Add an entry to the world file.  Can be specified multiple times.")
 
 world.set_defaults(

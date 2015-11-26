@@ -359,7 +359,7 @@ _repos() {
   # -p print the output instead of using completion
   # -l use repo locations instead of repo_ids
   typeset -A opts
-  zparseopts -E -A opts c e i l p v:
+  zparseopts -E -A opts c e i s l p v:
 
   local repo_name output_type
   typeset -a repos output

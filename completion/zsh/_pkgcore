@@ -162,6 +162,7 @@ _pinspect() {
             stable_forced_use:'inspect stable forced use flags'
             defaults:'inspect defined configuration for this profile'
             arch:'output the arch defined for this profile'
+            status:'output the status of this profile'
           )
 
           _arguments -C -w -S -s -A '-*' \

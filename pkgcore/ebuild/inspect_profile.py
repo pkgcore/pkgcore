@@ -9,13 +9,12 @@ demandload(
     'collections:defaultdict',
     'itertools:chain',
     'operator',
+    'snakeoil.osutils:pjoin',
     'pkgcore.ebuild:atom,profiles',
 )
 
 commands = []
-# changelog, once a changelog parser is available
-# desc: possibly
-# info: desc, keywords known, known profiles (possibly putting it elsewhere)
+# info: keywords known, known profiles (possibly putting it elsewhere)
 # global known flags, etc
 
 
@@ -61,6 +60,22 @@ class eapi(_base):
     def __call__(self, namespace, out, err):
         eapis = set(x.eapi_obj.magic for x in namespace.profile.stack)
         out.write("\n".join(sorted(eapis)))
+
+
+class status(_base):
+
+    """output profile status"""
+
+    __metaclass__ = _register_command
+
+    def __call__(self, namespace, out, err):
+        if namespace.profile.arch is not None:
+            profiles_dir = pjoin(namespace.profile.node.repoconfig.location, 'profiles')
+            profile_rel_path = namespace.profile.path[len(profiles_dir):].lstrip('/')
+            status = [status for path, status in namespace.profile.node.repoconfig.arch_profiles[namespace.profile.arch]
+                      if path == profile_rel_path]
+            if status:
+                out.write(status[0])
 
 
 class deprecated(_base):

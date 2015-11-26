@@ -414,13 +414,13 @@ digest_opts.add_argument(
 
 @digest.bind_final_check
 def _digest_validate(parser, namespace):
-    if namespace.repo is None:
-        namespace.repo = namespace.domain.all_raw_ebuild_repos
-    else:
+    if namespace.repo is not None:
         if not namespace.target:
             namespace.target = [namespace.repo.location]
-    if not namespace.target:
-        namespace.target = [os.getcwd()]
+    else:
+        namespace.repo = namespace.domain.all_raw_ebuild_repos
+        if not namespace.target:
+            namespace.target = [os.getcwd()]
 
 
 @digest.bind_main_func

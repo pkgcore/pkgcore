@@ -317,7 +317,7 @@ class StoreRepoObject(StoreConfigObject):
             if len(repo.aliases) > 1 and hasattr(repo, 'location'):
                 yield '%s:%s' % (repo.aliases[0], repo.location)
             else:
-                yield repo_name
+                yield getattr(repo, 'repo_id', repo_name)
 
     def _load_obj(self, sections, name):
         if not self.allow_name_lookup or name in sections:

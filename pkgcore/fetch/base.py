@@ -62,7 +62,7 @@ class fetcher(object):
                     file_location, msg, resumable=resumable)
         elif not os.path.exists(file_location):
             raise errors.MissingDistfile(file_location)
-        elif not os.path.getsize(file_location):
+        elif not os.stat(file_location).st_size:
             raise errors.FetchFailed(
                 file_location, 'file is empty', resumable=False)
 

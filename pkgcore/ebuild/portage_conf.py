@@ -525,6 +525,7 @@ def config_from_make_conf(location=None, profile_override=None, **kwargs):
         if pkgdir and os.path.isdir(pkgdir):
             config['binpkg'] = basics.ConfigSectionFromStringDict({
                 'class': 'pkgcore.binpkg.repository.tree',
+                'repo_id': 'binpkg',
                 'location': pkgdir,
                 'ignore_paludis_versioning': str('ignore-paludis-versioning' in features),
             })

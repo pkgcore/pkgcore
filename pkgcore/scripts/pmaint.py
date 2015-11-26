@@ -418,7 +418,7 @@ def _digest_validate(parser, namespace):
         namespace.repo = namespace.domain.all_raw_ebuild_repos
     else:
         if not namespace.target:
-            parser.only_error('specifying a repo also requires a target query')
+            namespace.target = [namespace.repo.location]
     if not namespace.target:
         namespace.target = [os.getcwd()]
 

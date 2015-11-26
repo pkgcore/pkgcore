@@ -34,7 +34,7 @@ class _base(commandline.ArgparseCommand):
         self._subclass_bind(parser)
 
     def _subclass_bind(self, parser):
-        pass
+        """override to add more command line options"""
 
 
 _register_command = commandline.register_command(commands)
@@ -89,8 +89,7 @@ class deprecated(_base):
     __metaclass__ = _register_command
 
     def __call__(self, namespace, out, err):
-        deprecated = [x for x in namespace.profile.stack if x.deprecated]
-        for idx, profile in enumerate(deprecated):
+        for idx, profile in enumerate(x for x in namespace.profile.stack if x.deprecated):
             if idx:
                 out.write()
             out.write(out.bold, out.fg("cyan"), profile.path, out.reset, ":")
@@ -231,7 +230,7 @@ class _use(_base):
         global_use = None
         pkg_use = []
 
-        for k, v in self.use.render_to_dict().iteritems():
+        for k, v in namespace.use.render_to_dict().iteritems():
             if isinstance(k, basestring):
                 pkg, use_neg, use_pos = v[-1]
                 if not isinstance(pkg, atom.atom):
@@ -259,7 +258,7 @@ class use(_use):
     __metaclass__ = _register_command
 
     def __call__(self, namespace, out, err):
-        self.use = namespace.profile.pkg_use
+        namespace.use = namespace.profile.pkg_use
         super(use, self).__call__(namespace, out, err)
 
 
@@ -270,7 +269,7 @@ class masked_use(_use):
     __metaclass__ = _register_command
 
     def __call__(self, namespace, out, err):
-        self.use = namespace.profile.masked_use
+        namespace.use = namespace.profile.masked_use
         super(masked_use, self).__call__(namespace, out, err)
 
 
@@ -281,7 +280,7 @@ class stable_masked_use(_use):
     __metaclass__ = _register_command
 
     def __call__(self, namespace, out, err):
-        self.use = namespace.profile.stable_masked_use
+        namespace.use = namespace.profile.stable_masked_use
         super(stable_masked_use, self).__call__(namespace, out, err)
 
 
@@ -292,7 +291,7 @@ class forced_use(_use):
     __metaclass__ = _register_command
 
     def __call__(self, namespace, out, err):
-        self.use = namespace.profile.forced_use
+        namespace.use = namespace.profile.forced_use
         super(forced_use, self).__call__(namespace, out, err)
 
 
@@ -303,7 +302,7 @@ class stable_forced_use(_use):
     __metaclass__ = _register_command
 
     def __call__(self, namespace, out, err):
-        self.use = namespace.profile.stable_forced_use
+        namespace.use = namespace.profile.stable_forced_use
         super(stable_forced_use, self).__call__(namespace, out, err)
 
 

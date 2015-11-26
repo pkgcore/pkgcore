@@ -69,13 +69,16 @@ class status(_base):
     __metaclass__ = _register_command
 
     def __call__(self, namespace, out, err):
-        if namespace.profile.arch is not None:
-            profiles_dir = pjoin(namespace.profile.node.repoconfig.location, 'profiles')
-            profile_rel_path = namespace.profile.path[len(profiles_dir):].lstrip('/')
-            status = [status for path, status in namespace.profile.node.repoconfig.arch_profiles[namespace.profile.arch]
-                      if path == profile_rel_path]
-            if status:
-                out.write(status[0])
+        profiles_dir = pjoin(namespace.profile.node.repoconfig.location, 'profiles')
+        profile_rel_path = namespace.profile.path[len(profiles_dir):].lstrip('/')
+        arch_profiles = namespace.profile.node.repoconfig.arch_profiles
+        statuses = [(path, status) for path, status in arch_profiles.itervalues()
+                    if path.startswith(profile_rel_path)]
+        if len(statuses) > 1:
+            for path, status in sorted(statuses):
+                out.write('%s: %s' % (path, status))
+        elif statuses:
+            out.write(statuses[0][1])
 
 
 class deprecated(_base):

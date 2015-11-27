@@ -73,7 +73,7 @@ class status(_base):
         profiles_dir = pjoin(namespace.profile.node.repoconfig.location, 'profiles')
         profile_rel_path = namespace.profile.path[len(profiles_dir):].lstrip('/')
         arch_profiles = namespace.profile.node.repoconfig.arch_profiles
-        statuses = [(path, status) for path, status in arch_profiles.itervalues()
+        statuses = [(path, status) for path, status in chain.from_iterable(arch_profiles.itervalues())
                     if path.startswith(profile_rel_path)]
         if len(statuses) > 1:
             for path, status in sorted(statuses):

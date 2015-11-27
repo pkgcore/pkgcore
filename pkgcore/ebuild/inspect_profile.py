@@ -23,7 +23,11 @@ class _base(commandline.ArgparseCommand):
 
     @staticmethod
     def profile(path):
-        return profiles.ProfileStack(commandline.existent_path(path))
+        """Profile stack type for argparse"""
+        stack = profiles.ProfileStack(commandline.existent_path(path))
+        if stack.node.repoconfig is None:
+            raise ValueError('invalid profile path')
+        return stack
 
     def bind_to_parser(self, parser):
         commandline.ArgparseCommand.bind_to_parser(self, parser)

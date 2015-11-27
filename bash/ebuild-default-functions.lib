@@ -115,7 +115,6 @@ __dyn_src_install() {
 	fi
 
 	echo ">>> Completed installing ${PF} into ${ED}"
-	echo
 	unset dir
 }
 

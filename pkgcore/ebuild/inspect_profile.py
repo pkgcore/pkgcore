@@ -22,19 +22,20 @@ commands = []
 class _base(commandline.ArgparseCommand):
 
     @staticmethod
-    def profile(path):
-        """Profile stack type for argparse"""
+    def _validate_args(parser, namespace):
+        path = namespace.profile
         stack = profiles.ProfileStack(commandline.existent_path(path))
         if stack.node.repoconfig is None:
-            raise ValueError('invalid profile path')
-        return stack
+            parser.only_error("invalid profile path: '%s'" % path)
+        namespace.profile = stack
 
     def bind_to_parser(self, parser):
         commandline.ArgparseCommand.bind_to_parser(self, parser)
-        parser.add_argument("profile", help="path to the profile to inspect", type=self.profile)
+        parser.add_argument('profile', help='path to the profile to inspect')
         name = self.__class__.__name__
         kwds = {('_%s_suppress' % name): commandline.DelayedDefault.wipe(('domain'), 50)}
         parser.set_defaults(**kwds)
+        parser.bind_final_check(self._validate_args)
         self._subclass_bind(parser)
 
     def _subclass_bind(self, parser):

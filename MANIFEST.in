@@ -4,7 +4,6 @@ recursive-include bin *
 recursive-include doc *
 recursive-include examples *
 recursive-include bash *
-recursive-include completion *
 recursive-include config *
 recursive-include shell *
 recursive-include src *.[ch]

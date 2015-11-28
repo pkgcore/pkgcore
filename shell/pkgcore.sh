@@ -4,6 +4,36 @@
 # Note that most functions currently use non-POSIX features so bash or zsh are
 # basically required.
 
+_ebuild_path() {
+	if [[ -z $1 || ${1:0:1} == "-" ]]; then
+		echo "Enter a valid package name." >&2
+		return 1
+	fi
+	repo=$2
+
+	local -a pkg
+	local p
+
+	if [[ -n ${repo} ]]; then
+		pkg=( $(pquery -r "${repo}" --raw "$1" --cpv --one-attr path -n) )
+	else
+		pkg=( $(pquery --ebuild-repos --raw "$1" --cpv --one-attr path -n) )
+	fi
+	[[ $? != 0 ]] && return 1
+
+	if [[ -z ${pkg[@]} ]]; then
+		echo "No matches found." >&2
+		return 1
+	elif [[ ${#pkg[@]} > 1 ]]; then
+		echo "Multiple matches found:" >&2
+		for p in ${pkg[@]}; do
+			echo ${p%:*} >&2
+		done
+		return 1
+	fi
+	echo ${pkg#*:}
+}
+
 # change to a package directory
 #
 # usage: pcd pkg [repo]
@@ -18,37 +48,13 @@
 # use this to enter the repos for installed or binpkgs via 'vdb' or 'binpkg'
 # repo arguments, respectively.
 pcd() {
-	if [[ -z $1 || ${1:0:1} == "-" ]]; then
-		echo "Enter a valid package name."
-		return 1
-	fi
-	repo=$2
-
-	local pkg p dirpath
-
-	if [[ -n ${repo} ]]; then
-		pkg=( $(pquery -r "${repo}" --raw "$1" --cpv --one-attr path -n) )
-	else
-		pkg=( $(pquery --ebuild-repos --raw "$1" --cpv --one-attr path -n) )
-	fi
-	[[ $? != 0 ]] && return 1
-
-	if [[ -z ${pkg} ]]; then
-		echo "No matches found."
-		return 1
-	elif [[ ${#pkg} > 1 ]]; then
-		echo "Multiple matches found:"
-		for p in ${pkg}; do
-			echo ${p%:*}
-		done
-		return 1
-	fi
+	local pkgpath=$(_ebuild_path "$@")
+	[[ -z ${pkgpath} ]] && return 1
 
 	# find the nearest parent directory
-	dirpath=${pkg#*:}
-	while [[ ! -d ${dirpath} ]]; do
-		dirpath=$(dirname "${dirpath}")
+	while [[ ! -d ${pkgpath} ]]; do
+		pkgpath=$(dirname "${pkgpath}")
 	done
 
-	pushd "${dirpath}"
+	pushd "${pkgpath}" >/dev/null
 }

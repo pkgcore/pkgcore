@@ -5,21 +5,23 @@
 # basically required.
 
 _ebuild_path() {
-	if [[ -z $1 || ${1:0:1} == "-" ]]; then
+	if [[ -z $1 ]]; then
 		echo "Enter a valid package name." >&2
 		return 1
 	fi
-	repo=$2
 
 	local -a pkg
-	local p
+	local p repo=$2
 
 	if [[ -n ${repo} ]]; then
-		pkg=( $(pquery -r "${repo}" --raw "$1" --cpv --one-attr path -n) )
+		pkg=( $(pquery -r "${repo}" --raw --cpv --one-attr path -n -- "$1" 2>/dev/null) )
 	else
-		pkg=( $(pquery --ebuild-repos --raw "$1" --cpv --one-attr path -n) )
+		pkg=( $(pquery --ebuild-repos --raw --cpv --one-attr path -n -- "$1" 2>/dev/null) )
 	fi
-	[[ $? != 0 ]] && return 1
+	if [[ $? != 0 ]]; then
+		echo "Invalid package atom: '$1'" >&2
+		return 1
+	fi
 
 	if [[ -z ${pkg[@]} ]]; then
 		echo "No matches found." >&2

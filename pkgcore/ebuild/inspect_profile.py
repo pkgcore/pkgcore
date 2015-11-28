@@ -15,7 +15,7 @@ demandload(
 )
 
 commands = []
-# info: keywords known, known profiles (possibly putting it elsewhere)
+# info: keywords known
 # global known flags, etc
 
 

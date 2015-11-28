@@ -147,9 +147,11 @@ def stringify_attr(config, pkg, attr):
     if value is None:
         return 'MISSING'
 
-    if attr in ('herds', 'iuse', 'maintainers', 'properties', 'defined_phases',
+    if attr in ('iuse', 'properties', 'defined_phases',
                 'inherited'):
         return ' '.join(sorted(unicode(v) for v in value))
+    if attr in ('herds', 'maintainers'):
+        return ' '.join(unicode(v) for v in value)
     if attr == 'longdescription':
         return unicode(value)
     if attr == 'keywords':

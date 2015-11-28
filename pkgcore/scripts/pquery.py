@@ -616,14 +616,29 @@ query.add_argument(
         just need a list.
     """)
 
+def _split_revdep_types(s):
+    default_types = set(dep_attrs)
+    types, separator, pkg = s.partition(':')
+    if separator:
+        types = set(types.split(','))
+        unknown = types.difference(default_types)
+        if unknown:
+            raise argparser.only_error(
+                'unknown revdep type%s: %s' % ('s'[len(unknown) == 1:], ', '.join(unknown)))
+    else:
+        pkg = types
+        types = default_types
+    return types, pkg
+
 @bind_add_query(
     '--restrict-revdep', action='append',
     default=[], dest='restrict_revdep',
     help='dependency on an atom')
 def parse_revdep(value):
     """Value should be an atom, packages with deps intersecting that match."""
+    dep_types, pkg = _split_revdep_types(value)
     try:
-        targetatom = atom.atom(value)
+        targetatom = atom.atom(pkg)
     except atom.MalformedAtom as e:
         raise argparser.only_error(e)
     val_restrict = values.FlatteningRestriction(
@@ -631,7 +646,7 @@ def parse_revdep(value):
         values.AnyMatch(values.FunctionRestriction(targetatom.intersects)))
     return packages.OrRestriction(*list(
         packages.PackageRestriction(dep, val_restrict)
-        for dep in ('depends', 'rdepends', 'post_rdepends')))
+        for dep in dep_types))
 
 def _revdep_pkgs_match(pkgs, value):
     return any(value.match(pkg) for pkg in pkgs)
@@ -653,7 +668,7 @@ def revdep_pkgs_finalize(sequence, namespace):
         values.FunctionRestriction(partial(_revdep_pkgs_match, tuple(l))))
     r = values.FlatteningRestriction(atom.atom, any_restrict)
     return list(packages.PackageRestriction(dep, r)
-                for dep in ('depends', 'rdepends', 'post_rdepends'))
+                for dep in dep_attrs)
 
 @bind_add_query(
     '--description', '-S', action='append', dest='description',

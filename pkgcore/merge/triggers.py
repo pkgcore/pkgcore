@@ -692,7 +692,7 @@ class SavePkg(base):
         else:
             txt = 'installing'
             op = self.target_repo.operations.install(wrapped_pkg)
-        engine.observer.info("%s %s to %s", txt, pkg, self.target_repo)
+        engine.observer.info("%s %s to %s", txt, pkg, self.target_repo.location)
         op.finish()
 
 

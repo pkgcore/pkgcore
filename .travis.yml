@@ -16,7 +16,7 @@ addons:
 cache:
   directories:
     - $HOME/.cache/pip
-install: pip install tox coveralls
+install: pip install tox coveralls codecov
 before_script:
   # Make sure the actual install-info binary is first in PATH since
   # Debian-based distros use a wrapper script that outputs warnings and
@@ -29,4 +29,5 @@ after_success:
   # upload coverage data
   - pushd .tox/travis/lib/python*/site-packages
   - coveralls
+  - codecov
   - popd

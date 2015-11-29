@@ -4,7 +4,7 @@
 # Note that most functions currently use non-POSIX features so bash or zsh are
 # basically required.
 
-_ebuild_path() {
+_pkgpath() {
 	if [[ -z $1 ]]; then
 		echo "Enter a valid package name." >&2
 		return 1
@@ -50,7 +50,7 @@ _ebuild_path() {
 # use this to enter the repos for installed or binpkgs via 'vdb' or 'binpkg'
 # repo arguments, respectively.
 pcd() {
-	local pkgpath=$(_ebuild_path "$@")
+	local pkgpath=$(_pkgpath "$@")
 	[[ -z ${pkgpath} ]] && return 1
 
 	# find the nearest parent directory

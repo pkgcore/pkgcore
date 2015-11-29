@@ -27,4 +27,6 @@ before_script:
 script: tox -e travis
 after_success:
   # upload coverage data
+  - pushd .tox/travis/lib/python*/site-packages
   - coveralls
+  - popd

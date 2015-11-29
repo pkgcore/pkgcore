@@ -501,16 +501,16 @@ repo_mux.add_argument(
     '-r', '--repo', action=RawAwareStoreRepoObject, priority=29,
     help='repo to use (default from domain if omitted)')
 repo_mux.add_argument(
-    '--ebuild-repos', action='store_true',
+    '-E', '--ebuild-repos', action='store_true',
     help='search all ebuild repos')
 repo_mux.add_argument(
-    '--binary-repos', action='store_true',
+    '-B', '--binary-repos', action='store_true',
     help='search all binary repos')
 repo_mux.add_argument(
-    '--installed', action='store_true',
+    '-I', '--installed', action='store_true',
     help='search all ebuild repos')
 repo_mux.add_argument(
-    '--all-repos', action='store_true',
+    '-A', '--all-repos', action='store_true',
     help='search all repos, vdb included')
 
 

@@ -791,6 +791,18 @@ output = argparser.add_argument_group('Output formatting')
 output.add_argument(
     '--early-out', action='store_true', dest='earlyout',
     help='stop when first match is found')
+output.add_argument(
+    '-a', '--atom', action=commandline.Expansion,
+    subst=(('--cpv',),), nargs=0,
+    help='print =cat/pkg-3 instead of cat/pkg-3. '
+         'Implies --cpv, has no effect with --no-version')
+output.add_argument(
+    '--cpv', action='store_true',
+    help='print the category/package-version',
+    docs="""
+        This is done by default, this option re-enables this if another output
+        option (like --contents) disabled it.
+    """)
 output_mux = output.add_mutually_exclusive_group()
 output_mux.add_argument(
     '-n', '--no-version', action='store_true',
@@ -803,18 +815,6 @@ output_mux.add_argument(
     '--max', action='store_true',
     help='show only the highest version for each package')
 del output_mux
-output.add_argument(
-    '--cpv', action='store_true',
-    help='print the category/package-version',
-    docs="""
-        This is done by default, this option re-enables this if another output
-        option (like --contents) disabled it.
-    """)
-output.add_argument(
-    '-a', '--atom', action=commandline.Expansion,
-    subst=(('--cpv',),), nargs=0,
-    help='print =cat/pkg-3 instead of cat/pkg-3. '
-         'Implies --cpv, has no effect with --no-version')
 output.add_argument(
     '--attr', action='append', choices=printable_attrs,
     metavar='attribute', default=[],
@@ -839,6 +839,10 @@ one_attr_mux.add_argument(
          'supported names')
 del one_attr_mux
 output.add_argument(
+    '--blame', action=commandline.Expansion, nargs=0,
+    subst=(("--attr", "maintainers"), ("--attr", "herds")),
+    help='shorthand for --attr maintainers --attr herds')
+output.add_argument(
     '--contents', action='store_true',
     help='list files owned by the package')
 output.add_argument(
@@ -848,10 +852,6 @@ output.add_argument(
     '--highlight-dep', action='append',
     type=atom.atom, default=[],
     help='highlight dependencies matching this atom')
-output.add_argument(
-    '--blame', action=commandline.Expansion, nargs=0,
-    subst=(("--attr", "maintainers"), ("--attr", "herds")),
-    help='shorthand for --attr maintainers --attr herds')
 output.add_argument(
     '--print-revdep', action='append',
     type=atom.atom, default=[],

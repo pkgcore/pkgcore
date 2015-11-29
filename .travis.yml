@@ -16,7 +16,7 @@ addons:
 cache:
   directories:
     - $HOME/.cache/pip
-install: pip install 'tox<2' 'coveralls>=0.5'
+install: pip install tox 'coveralls>=0.5'
 before_script:
   # Make sure the actual install-info binary is first in PATH since
   # Debian-based distros use a wrapper script that outputs warnings and

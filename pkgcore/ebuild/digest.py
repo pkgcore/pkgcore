@@ -153,23 +153,24 @@ def parse_manifest(source, ignore_gpg=True):
 class Manifest(object):
 
 
-    def __init__(self, source, enforce_gpg=False, thin=False, allow_missing=False):
-        self._source = (source, not enforce_gpg)
+    def __init__(self, path, enforce_gpg=False, thin=False, allow_missing=False):
+        self.path = path
         self.thin = thin
         self.allow_missing = allow_missing
+        self._gpg = enforce_gpg
+        self._sourced = False
 
     def _pull_manifest(self):
-        if self._source is None:
+        if self._sourced:
             return
-        source, gpg = self._source
         try:
-            data = parse_manifest(source, ignore_gpg=gpg)
+            data = parse_manifest(self.path, ignore_gpg=self._gpg)
         except EnvironmentError as e:
             if not (self.thin or self.allow_missing) or e.errno != errno.ENOENT:
-                raise_from(errors.ParseChksumError(source, e))
+                raise_from(errors.ParseChksumError(self.path, e))
             data = {}, {}, {}, {}
         self._dist, self._aux, self._ebuild, self._misc = data
-        self._source = None
+        self._sourced = True
 
     @property
     def required_files(self):

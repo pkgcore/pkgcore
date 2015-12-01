@@ -72,7 +72,8 @@ def generate_required_use(self):
         element_func=_mk_required_use_node,
         )
 
-def generate_fetchables(self, allow_missing_checksums=False):
+def generate_fetchables(self, allow_missing_checksums=False,
+                        ignore_unknown_mirrors=False):
     chksums_can_be_missing = allow_missing_checksums or \
         bool(getattr(self.repo, '_allow_missing_chksums', False))
     chksums_can_be_missing, chksums = self.repo._get_digests(self,
@@ -82,7 +83,8 @@ def generate_fetchables(self, allow_missing_checksums=False):
     default_mirrors = getattr(self._parent, "default_mirrors", None)
     common = {}
     func = partial(create_fetchable_from_uri, self, chksums,
-        chksums_can_be_missing, mirrors, default_mirrors, common)
+        chksums_can_be_missing, ignore_unknown_mirrors,
+        mirrors, default_mirrors, common)
     d = conditionals.DepSet.parse(
         self.data.pop("SRC_URI", ""), fetchable, operators={},
         element_func=func,
@@ -92,8 +94,8 @@ def generate_fetchables(self, allow_missing_checksums=False):
     return d
 
 # utility func.
-def create_fetchable_from_uri(pkg, chksums, ignore_missing_chksums, mirrors,
-                              default_mirrors, common_files, uri, filename=None):
+def create_fetchable_from_uri(pkg, chksums, ignore_missing_chksums, ignore_unknown_mirrors,
+                              mirrors, default_mirrors, common_files, uri, filename=None):
     if filename is None:
         filename = os.path.basename(uri)
 
@@ -118,9 +120,10 @@ def create_fetchable_from_uri(pkg, chksums, ignore_missing_chksums, mirrors,
             tier, remaining_uri = uri[9:].split("/", 1)
 
             if tier not in mirrors:
-                raise UnknownMirror(tier, remaining_uri)
-
-            uris.add_mirror(mirrors[tier], remaining_uri)
+                if not ignore_unknown_mirrors:
+                    raise UnknownMirror(tier, remaining_uri)
+            else:
+                uris.add_mirror(mirrors[tier], remaining_uri)
 
         else:
             uris.add_uri(uri)

@@ -448,7 +448,7 @@ repo_group = argparser.add_argument_group(
     'options controlling which repositories to inspect')
 repo_group.add_argument(
     '--raw', action='store_true', default=False,
-    help="disable configuration filtering ",
+    help="disable configuration filtering",
     docs="""
         This forces raw dependencies to be used, rather than the dependencies
         rendered via your USE configuration. Primarily useful for people who
@@ -587,8 +587,8 @@ query.add_argument(
     subst=(('--restrict-revdep', '%(0)s'), ('--print-revdep', '%(0)s')),
     help='shorthand for --restrict-revdep atom --print-revdep atom',
     docs="""
-         Note that --print-revdep is slow, use --restrict-revdep if you
-         just need a list.
+        Note that --print-revdep is slow, use --restrict-revdep if you
+        just need a list.
     """)
 
 query.add_argument(

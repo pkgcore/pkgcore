@@ -314,10 +314,11 @@ class StoreRepoObject(StoreConfigObject):
         If a repo doesn't have a proper location just the name is returned.
         """
         for repo_name, repo in sorted(unstable_unique(sections.iteritems())):
-            if len(repo.aliases) > 1 and hasattr(repo, 'location'):
-                yield '%s:%s' % (repo.repo_id, repo.location)
+            repo_name = getattr(repo, 'repo_id', repo_name)
+            if hasattr(repo, 'location'):
+                yield '%s:%s' % (repo_name, repo.location)
             else:
-                yield getattr(repo, 'repo_id', repo_name)
+                yield repo_name
 
     def _load_obj(self, sections, name):
         if not self.allow_name_lookup or name in sections:

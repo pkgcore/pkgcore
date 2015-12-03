@@ -399,8 +399,6 @@ class RepoConfig(syncable.tree):
             masters = tuple(iter_stable_unique(masters.split()))
         sf(self, 'masters', masters)
         aliases = data.get('aliases', '').split() + [self.repo_id, self.location]
-        if self.config_name is not None:
-            aliases.append(self.config_name)
         sf(self, 'aliases', tuple(iter_stable_unique(aliases)))
         sf(self, 'eapis_deprecated', tuple(iter_stable_unique(data.get('eapis-deprecated', '').split())))
 
@@ -517,6 +515,10 @@ class RepoConfig(syncable.tree):
 
     @klass.jit_attr
     def repo_id(self):
+        # repos.conf name overrides everything
+        if self.config_name is not None:
+            return self.config_name
+
         # repo-name setting from metadata/layout.conf
         # overrides profiles/repo_name if it exists
         if self.repo_name is not None:

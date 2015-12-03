@@ -448,19 +448,19 @@ repo_group = argparser.add_argument_group(
     'options controlling which repositories to inspect')
 repo_group.add_argument(
     '--raw', action='store_true', default=False,
-    help="disable configuration and filtering ",
+    help="disable configuration filtering ",
     docs="""
-        This means you see the raw dependencies, rather than the
-        dependencies rendered via your USE configuration. Primarily useful
-        for people who need to look under the hood- ebuild devs, PM tool
-        authors, etc. Note this option ignores --domain if is specified.
+        This forces raw dependencies to be used, rather than the dependencies
+        rendered via your USE configuration. Primarily useful for people who
+        need to look under the hood- ebuild devs, PM tool authors, etc. Note
+        this option ignores --domain if is specified.
     """)
 repo_group.add_argument(
     '--unfiltered', action='store_true', default=False,
-    help="disable all license filtering and visibility filtering",
+    help="disable all license and visibility filtering",
     docs="""
-        This means all package filtering mechanisms such as ACCEPT_KEYWORDS and
-        package.mask are disabled.
+        Disables all package filtering mechanisms such as ACCEPT_KEYWORDS,
+        ACCEPT_LICENSE, and package.mask.
     """)
 repo_group.add_argument(
     '--virtuals', action='store', choices=('only', 'disable'),

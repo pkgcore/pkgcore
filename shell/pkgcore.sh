@@ -14,9 +14,9 @@ _pkgpath() {
 	local p repo=$2
 
 	if [[ -n ${repo} ]]; then
-		pkg=( $(pquery -r "${repo}" --raw --cpv --one-attr path -n -- "$1" 2>/dev/null) )
+		pkg=( $(pquery -r "${repo}" --raw --unfiltered --cpv --one-attr path -n -- "$1" 2>/dev/null) )
 	else
-		pkg=( $(pquery --ebuild-repos --raw --cpv --one-attr path -n -- "$1" 2>/dev/null) )
+		pkg=( $(pquery --ebuild-repos --raw --unfiltered --cpv --one-attr path -n -- "$1" 2>/dev/null) )
 	fi
 	if [[ $? != 0 ]]; then
 		echo "Invalid package atom: '$1'" >&2

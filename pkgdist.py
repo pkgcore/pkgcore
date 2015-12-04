@@ -72,6 +72,11 @@ class sdist(dst_sdist.sdist):
         self.build_docs = False
 
     def generate_verinfo(self, base_dir):
+        """Generate project version module.
+
+        This is used by the --version option in interactive programs among
+        other things.
+        """
         from snakeoil.version import get_git_version
         log.info('generating _verinfo')
         data = get_git_version(base_dir)
@@ -303,19 +308,22 @@ class build_scripts(dst_build_scripts.build_scripts):
 
     """Create and build (copy and modify #! line) the wrapper scripts."""
 
-    def run(self):
+    def finalize_options(self):
+        dst_build_scripts.build_scripts.finalize_options(self)
         script_dir = os.path.join(
             os.path.dirname(self.build_dir), '.generated_scripts')
         self.mkpath(script_dir)
         self.scripts = [os.path.join(script_dir, x) for x in os.listdir('bin')]
+
+    def run(self):
         for script in self.scripts:
             with open(script, 'w') as f:
                 f.write(textwrap.dedent("""\
-                    #!/usr/bin/env python
+                    #!%s
                     from os.path import basename
                     from %s import scripts
                     scripts.main(basename(__file__))
-                """ % project))
+                """ % (sys.executable, project)))
         self.copy_scripts()
 
 

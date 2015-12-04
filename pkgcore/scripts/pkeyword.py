@@ -12,13 +12,21 @@ from pkgcore.repository.util import RepositoryGroup
 class StoreTarget(argparse._AppendAction):
 
     def __call__(self, parser, namespace, values, option_string=None):
-        targets = []
-        try:
-            for x in values:
-                targets.append((x, parserestrict.parse_match(x)))
-        except parserestrict.ParseError as e:
-            parser.only_error(e)
-        setattr(namespace, self.dest, targets)
+        namespace.sets = []
+        if isinstance(values, basestring):
+            values = [values]
+        for token in values:
+            if token.startswith('@'):
+                namespace.sets.append(token[1:])
+            else:
+                try:
+                    argparse._AppendAction.__call__(
+                        self, parser, namespace,
+                        (token, parserestrict.parse_match(token)), option_string=option_string)
+                except parserestrict.ParseError as e:
+                    parser.only_error(e)
+        if namespace.targets is None:
+            namespace.targets = []
 
 
 argparser = commandline.mk_argparser(description=__doc__)

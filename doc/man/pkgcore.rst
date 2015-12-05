@@ -442,24 +442,24 @@ profiles/repo_name) of sys-devel/gcc.
 Utilities
 =========
 
-**pclonecache(1)**
+**pclonecache**\(1)
   clone a repository cache
 
-**pebuild(1)**
-    low-level ebuild operations, go through phases manually
+**pebuild**\(1)
+  low-level ebuild operations, go through phases manually
 
-**pinspect(1)**
-    generic utility for inspecting repository related info
+**pinspect**\(1)
+  generic utility for inspecting repository related info
 
-**pmaint(1)**
-    generic utility for repository maintenance (syncing, copying...)
+**pmaint**\(1)
+  generic utility for repository maintenance (syncing, copying...)
 
-**pmerge(1)**
-    generic utility for doing resolution, fetching, merging/unmerging, etc.
+**pmerge**\(1)
+  generic utility for doing resolution, fetching, merging/unmerging, etc.
 
-**pquery(1)**
-    generic utility for querying info about repositories, revdeps, pkg search,
-    vdb search, etc.
+**pquery**\(1)
+  generic utility for querying info about repositories, revdeps, pkg search,
+  vdb search, etc.
 
 Reporting Bugs
 ==============
@@ -473,4 +473,5 @@ You can also stop by #pkgcore on freenode.
 See Also
 ========
 
-**portage**\(5), **make.conf**\(5)
+**portage**\(5), **make.conf**\(5), **pclonecache**\(1), **pebuild**\(1),
+**pinspect**\(1), **pmaint**\(1), **pmerge**\(1), **pquery**\(1)

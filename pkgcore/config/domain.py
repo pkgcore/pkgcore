@@ -9,8 +9,6 @@ Bit empty at the moment
 
 __all__ = ("domain",)
 
-import os
-
 from snakeoil import klass
 from snakeoil.demandload import demandload
 

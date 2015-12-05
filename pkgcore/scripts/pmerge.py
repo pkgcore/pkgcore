@@ -30,29 +30,9 @@ from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.lists import iflatten_instance, stable_unique
 
 
-class StoreTarget(argparse._AppendAction):
-
-    def __call__(self, parser, namespace, values, option_string=None):
-        namespace.sets = []
-        if isinstance(values, basestring):
-            values = [values]
-        for token in values:
-            if token.startswith('@'):
-                namespace.sets.append(token[1:])
-            else:
-                try:
-                    argparse._AppendAction.__call__(
-                        self, parser, namespace,
-                        (token, parserestrict.parse_match(token)), option_string=option_string)
-                except parserestrict.ParseError as e:
-                    parser.only_error(e)
-        if namespace.targets is None:
-            namespace.targets = []
-
-
 argparser = commandline.mk_argparser(domain=True, description=__doc__)
 argparser.add_argument(
-    nargs='*', dest='targets', metavar='TARGET', action=StoreTarget,
+    nargs='*', dest='targets', metavar='TARGET', action=commandline.StoreTarget,
     help="extended package matching",
     docs="""
         pmerge supports various target arguments including the following:

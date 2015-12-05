@@ -357,7 +357,7 @@ examples are provided below.
 
 This form can be used in configuration files, but in doing so portage will have
 issues with the syntax. To maintain configuration compatibility, limit extended
-syntax usage to the the commandline only.
+syntax usage to the commandline only.
 
 ===================== ==========================================================
 Token                 Result

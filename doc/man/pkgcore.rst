@@ -351,11 +351,13 @@ you write your own configuration.
 Atom Syntax
 ===========
 
-pkgcore supports an extended form of atom syntax- examples are provided below.
+In addition to the atom specification enhancements defined in various supported
+EAPIs, pkgcore provides several syntax extensions mostly relating to globbing-
+examples are provided below.
 
 This form can be used in configuration files, but in doing so portage will have
-issues with the syntax, so if you want to maintain configuration
-compatibility, limit your usage of the extended syntax to the commandline only.
+issues with the syntax. To maintain configuration compatibility, limit extended
+syntax usage to the the commandline only.
 
 ===================== ==========================================================
 Token                 Result

@@ -88,14 +88,19 @@ class ExtendCommaDelimited(argparse._AppendAction):
 
 
 class StoreTarget(argparse._AppendAction):
-    """Parse extended package atom syntax and set arguments."""
+    """Parse extended package atom syntax and optionally set arguments."""
+
+    def __init__(self, sets=True, *args, **kwargs):
+        super(StoreTarget, self).__init__(*args, **kwargs)
+        self.sets = sets
 
     def __call__(self, parser, namespace, values, option_string=None):
-        namespace.sets = []
+        if self.sets:
+            namespace.sets = []
         if isinstance(values, basestring):
             values = [values]
         for token in values:
-            if token.startswith('@'):
+            if self.sets and token.startswith('@'):
                 namespace.sets.append(token[1:])
             else:
                 try:

@@ -36,14 +36,17 @@ class domain(object):
 
     @klass.jit_attr
     def source_repos(self):
+        """Group of all repos."""
         return RepositoryGroup(self.repos)
 
     @klass.jit_attr
     def source_repos_raw(self):
+        """Group of all repos without filtering."""
         return RepositoryGroup(self.repos_raw.itervalues())
 
     @klass.jit_attr
     def installed_repos(self):
+        """Group of all installed repos (vdb)."""
         return RepositoryGroup(self.vdb)
 
     # multiplexed repos

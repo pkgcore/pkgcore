@@ -53,6 +53,7 @@ demandload(
 
 
 class MissingFile(BaseError):
+    """Required file is missing."""
     def __init__(self, filename, setting):
         BaseError.__init__(
             self, "setting %s points at %s, which doesn't exist."
@@ -61,6 +62,7 @@ class MissingFile(BaseError):
 
 
 class Failure(BaseError):
+    """Generic domain failure."""
     def __init__(self, text):
         BaseError.__init__(self, "domain failure: %s" % (text,))
         self.text = text
@@ -489,11 +491,24 @@ class domain(config_domain):
         return map(itemgetter(1), flags), [(x[0].groups(), x[1]) for x in ue_flags]
 
     def get_package_use_unconfigured(self, pkg, for_metadata=True):
-        # roughly, this should result in the following, evaluated l->r:
-        # non USE_EXPAND; profiles, pkg iuse, global configuration, package.use configuration, commandline?
-        # stack profiles + pkg iuse; split it into use and use_expanded use;
-        # do global configuration + package.use configuration overriding of non-use_expand use
-        # if global configuration has a setting for use_expand,
+        """Determine use flags for a given package.
+
+        Roughly, this should result in the following, evaluated l->r: non
+        USE_EXPAND; profiles, pkg iuse, global configuration, package.use
+        configuration, commandline?  stack profiles + pkg iuse; split it into
+        use and use_expanded use; do global configuration + package.use
+        configuration overriding of non-use_expand use if global configuration
+        has a setting for use_expand.
+
+        Args:
+            pkg: package object
+            for_metadata (bool): if True, we're doing use flag retrieval for
+                metadata generation; otherwise, we're just requesting the raw use flags
+
+        Returns:
+            Three groups of use flags for the package in the following order:
+            immutable flags, enabled flags, and disabled flags.
+        """
 
         pre_defaults = [x[1:] for x in pkg.iuse if x[0] == '+']
         if pre_defaults:
@@ -606,9 +621,11 @@ class domain(config_domain):
         Note that this will only return a repo if the ebuild is properly placed
         in the proper category/PN directory structure.
 
-        :param path: path to ebuild
-        :return: configured ebuild repo object if a matching repo is found,
-            otherwise None.
+        Args:
+            path (str): path to ebuild file
+
+        Returns:
+            configured ebuild repo object if a matching repo is found, otherwise None.
         """
         ebuild_path = os.path.abspath(path)
         if not (os.path.isfile(ebuild_path) and ebuild_path.endswith('.ebuild')):

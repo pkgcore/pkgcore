@@ -9,7 +9,7 @@ Portage Compatibility
 =====================
 
 With regards to portage compatibility, pmerge provides much of the same
-functionality that emerge does. In general, it should be possible to use
+functionality that **emerge**\(1) does. In general, it should be possible to use
 both pmerge and emerge on the same system in a sane fashion. For example,
 pmerge can be used to install packages and then emerge should be able to
 upgrade or uninstall them, or vice versa. Also, binary packages created using
@@ -46,4 +46,4 @@ configuration directory::
 See Also
 ========
 
-emerge(1), pmaint(1), pebuild(1), pquery(1)
+**emerge**\(1)

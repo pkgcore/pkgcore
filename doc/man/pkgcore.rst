@@ -14,7 +14,7 @@ Portage Compatibility
 =====================
 
 In general, pkgcore tries to remain somewhat compatible with much of the
-current portage configuration.
+current **portage**\(5) configuration.
 
 Missing or differing functionality
 ----------------------------------
@@ -30,7 +30,7 @@ managers.
 * /etc/portage/repos.conf
 
   The only way to add repos to pkgcore is to use repos.conf, PORTDIR and
-  PORTDIR_OVERLAY settings in make.conf are not respected anymore.
+  PORTDIR_OVERLAY settings in **make.conf**\(5) are not respected anymore.
 
   In addition, not all fields that portage supports are used by pkgcore.
   Currently in repo sections the only supported fields are 'location',
@@ -473,4 +473,4 @@ You can also stop by #pkgcore on freenode.
 See Also
 ========
 
-portage(5), make.conf(5)
+**portage**\(5), **make.conf**\(5)

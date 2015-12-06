@@ -34,7 +34,7 @@ argparser = commandline.mk_argparser(domain=True, description=__doc__)
 argparser.add_argument(
     nargs='*', dest='targets', metavar='TARGET', action=commandline.StoreTarget,
     help="extended package matching",
-    docs=commandline.StoreTarget.__doc__.split('\n', 1)[1:])
+    docs=commandline.StoreTarget.__doc__.split('\n')[1:])
 
 query_options = argparser.add_argument_group("Package querying options")
 query_options.add_argument(

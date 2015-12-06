@@ -1,4 +1,4 @@
-#compdef pconfig pebuild pinspect pmaint pmerge pquery psite pcd
+#compdef pclean pconfig pebuild pinspect pmaint pmerge pquery psite pcd
 
 # repo path
 SHELL_LIB=${${(%):-%x}:A:h}/../pkgcore.zsh
@@ -34,6 +34,84 @@ domain_common_args=(
   $common_args
   '--domain[domain to use for this operation]'
 )
+
+_pclean() {
+  local curcontext=$curcontext state state_descr line ret=1
+  typeset -A opt_args
+
+  _arguments -C \
+    $common_args \
+    '(-): :->command' \
+    '(-)*:: :->subcommand' \
+    && ret=0
+
+  case $state in
+    (command)
+      typeset -a subcommands
+
+      subcommands=(
+        dist:'remove distfiles'
+        pkg:'remove binpkgs'
+        tmp:'remove tmpdir entries'
+      )
+
+      _describe -t subcommands subcommand subcommands && ret=0
+
+      ;;
+    (subcommand)
+      curcontext=${curcontext%:*}-$line[1]:
+      typeset -a shared_opts file_opts repo_opts
+
+      shared_opts=(
+        {'(--pretend)-p','(-p)--pretend'}'[dry run without performing any changes]'
+        {'(--exclude)-x','(-x)--exclude'}'[list of packages to exclude from removal]'
+        {'(--exclude-file)-X','(-X)--exclude-file'}'[path to exclusion file]'
+        '*:target:'
+      )
+
+      file_opts=(
+        {'(--modified)-m','(-m)--modified'}'[skip files that have been modified since a given time]'
+        {'(--size)-s','(-s)--size'}'[skip files bigger than a given size]'
+      )
+
+      repo_opts=(
+        {'(--installed)-I','(-I)--installed'}'[skip files for packages that are currently installed]'
+        {'(--fetch-restricted)-f','(-f)--fetch-restricted'}'[skip fetch-restricted files]'
+      )
+
+      case $line[1] in
+        (dist)
+          _arguments -C -A '-*' \
+            $domain_common_args \
+            $shared_opts \
+            $file_opts \
+            $repo_opts \
+            {'(--ignore-failures)-i','(-i)--ignore-failures'}'[ignore checksum parsing errors]' \
+            && ret=0
+          ;;
+        (pkg)
+          _arguments -C -A '-*' \
+            $domain_common_args \
+            $shared_opts \
+            $file_opts \
+            $repo_opts \
+            && ret=0
+          ;;
+        (tmp)
+          _arguments -C -A '-*' \
+            $domain_common_args \
+            $shared_opts \
+            && ret=0
+          ;;
+        (*)
+          _nothing
+          ;;
+      esac
+      ;;
+  esac
+
+  return ret
+}
 
 _pconfig() {
   local curcontext=$curcontext state state_descr line ret=1
@@ -648,7 +726,7 @@ _psite() {
 _pkgcore() {
   local ret=1
 
-  if [[ $service =~ (pconfig|pebuild|pinspect|pmaint|pmerge|pquery|psite|pcd) ]]; then
+  if [[ $service =~ (pclean|pconfig|pebuild|pinspect|pmaint|pmerge|pquery|psite|pcd) ]]; then
     _call_function ret _$service
   fi
 

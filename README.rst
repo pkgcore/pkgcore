@@ -27,6 +27,8 @@ Please submit an issue via Github_. You can also send an email to the dev list
 Tools
 =====
 
+**pclean**: clean distfiles, binpkgs, and builds dirs
+
 **pclonecache**: clone a repository cache
 
 **pconfig**: query configuration info

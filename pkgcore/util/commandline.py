@@ -88,7 +88,25 @@ class ExtendCommaDelimited(argparse._AppendAction):
 
 
 class StoreTarget(argparse._AppendAction):
-    """Parse extended package atom syntax and optionally set arguments."""
+    """Parse extended package atom syntax and optionally set arguments.
+
+    Various target arguments are supported including the following:
+
+    atom
+        An extended atom syntax is supported, see the related section
+        in pkgcore(5).
+
+    package set
+        Used to define lists of packages, the syntax used for these is
+        @pkgset. For example, the @system and @world package sets are
+        supported.
+
+    extended globbing
+        Globbing package names or atoms allows for use cases such as
+        ``'far*'`` (merge every package starting with 'far'),
+        ``'dev-python/*::gentoo'`` (merge every package in the dev-python
+        category from the gentoo repo), or even '*' (merge everything).
+    """
 
     def __init__(self, sets=True, *args, **kwargs):
         super(StoreTarget, self).__init__(*args, **kwargs)

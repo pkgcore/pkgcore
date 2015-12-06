@@ -34,24 +34,7 @@ argparser = commandline.mk_argparser(domain=True, description=__doc__)
 argparser.add_argument(
     nargs='*', dest='targets', metavar='TARGET', action=commandline.StoreTarget,
     help="extended package matching",
-    docs="""
-        pmerge supports various target arguments including the following:
-
-        atom
-            An extended atom syntax is supported, see the related section
-            in pkgcore(5).
-
-        package set
-            Used to define lists of packages, the syntax used for these is
-            @pkgset. For example, the @system and @world package sets are
-            supported.
-
-        extended globbing
-            Globbing package names or atoms allows for use cases such as
-            ``'far*'`` (merge every package starting with 'far'),
-            ``'dev-python/*::gentoo'`` (merge every package in the dev-python
-            category from the gentoo repo), or even '*' (merge everything).
-    """)
+    docs=commandline.StoreTarget.__doc__.split('\n', 1)[1:])
 
 query_options = argparser.add_argument_group("Package querying options")
 query_options.add_argument(

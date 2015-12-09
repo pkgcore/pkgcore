@@ -856,13 +856,13 @@ def mk_argparser(suppress=False, config=True, domain=True,
     return p
 
 
-def argparse_parse(errfile, parser, args, namespace=None):
+def argparse_parse(parser, args, namespace=None):
     try:
         namespace = parser.parse_args(args, namespace=namespace)
     except Exception as e:
         # enable tracebacks for any argument parsing failure
         tb = sys.exc_info()[-1]
-        dump_error(errfile, e, "Unhandled exception occurred", tb=tb)
+        dump_error(e, "Unhandled exception occurred", tb=tb)
         raise SystemExit
 
     main = getattr(namespace, 'main_func', None)
@@ -947,7 +947,7 @@ def main(subcommands, args=None, outfile=None, errfile=None):
     out = options = None
     exitstatus = -10
     try:
-        main_func, options = argparse_parse(errfile, subcommands, args, options)
+        main_func, options = argparse_parse(subcommands, args, options)
 
         if getattr(options, 'debug', False):
             # verbosity level affects debug output
@@ -986,17 +986,17 @@ def main(subcommands, args=None, outfile=None, errfile=None):
         tb = sys.exc_info()[-1]
         if not getattr(options, 'debug', False):
             tb = None
-        dump_error(errfile, e, "Error in configuration", tb=tb)
+        dump_error(e, "Error in configuration", handle=errfile, tb=tb)
     except operations.OperationError as e:
         tb = sys.exc_info()[-1]
         if not getattr(options, 'debug', False):
             tb = None
-        dump_error(errfile, e, "Error running an operation", tb=tb)
+        dump_error(e, "Error running an operation", handle=errfile, tb=tb)
     except Exception as e:
         tb = sys.exc_info()[-1]
         if not getattr(options, 'debug', False):
             tb = None
-        dump_error(errfile, e, "Unhandled exception occurred", tb=tb)
+        dump_error(e, "Unhandled exception occurred", handle=errfile, tb=tb)
     if out is not None:
         if exitstatus:
             out.title('%s failed' % (options.prog,))
@@ -1005,11 +1005,11 @@ def main(subcommands, args=None, outfile=None, errfile=None):
     raise SystemExit(exitstatus)
 
 
-def dump_error(handle, raw_exc, context_msg=None, tb=None):
+def dump_error(raw_exc, msg=None, handle=sys.stderr, tb=None):
     prefix = ''
-    if context_msg:
+    if msg:
         prefix = ' '
-        handle.write(context_msg.rstrip("\n") + ":\n")
+        handle.write(msg.rstrip("\n") + ":\n")
         if tb:
             handle.write("Traceback follows:\n")
             traceback.print_tb(tb, file=handle)

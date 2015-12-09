@@ -178,7 +178,7 @@ def uncollapsable_main(options, out, err):
             pass
         except errors.ConfigurationError as e:
             out.autoline = False
-            commandline.dump_error(out, e, "section %s" % (name,))
+            commandline.dump_error(e, "section %s" % (name,), handle=out)
             if options.debug:
                 traceback.print_exc()
             out.autoline = True

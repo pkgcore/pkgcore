@@ -1020,6 +1020,7 @@ def dump_error(raw_exc, msg=None, handle=sys.stderr, tb=None):
                 '%s%s' % (prefix, x.strip())
                 for x in filter(None, str(exc).split("\n")))
     if exc_strings:
-        handle.write("\n%s:\n" % raw_exc.__class__.__name__)
+        if msg and tb:
+            handle.write("\n%s:\n" % raw_exc.__class__.__name__)
         handle.write("\n".join(exc_strings))
         handle.write("\n")

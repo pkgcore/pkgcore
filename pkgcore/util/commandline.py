@@ -1013,7 +1013,6 @@ def dump_error(raw_exc, msg=None, handle=sys.stderr, tb=None):
         if tb:
             handle.write("Traceback follows:\n")
             traceback.print_tb(tb, file=handle)
-            handle.write("\n%s:\n" % raw_exc.__class__.__name__)
     exc_strings = []
     if raw_exc is not None:
         for exc in walk_exception_chain(raw_exc):
@@ -1021,5 +1020,6 @@ def dump_error(raw_exc, msg=None, handle=sys.stderr, tb=None):
                 '%s%s' % (prefix, x.strip())
                 for x in filter(None, str(exc).split("\n")))
     if exc_strings:
+        handle.write("\n%s:\n" % raw_exc.__class__.__name__)
         handle.write("\n".join(exc_strings))
         handle.write("\n")

@@ -24,7 +24,10 @@ class _base(commandline.ArgparseCommand):
     @staticmethod
     def _validate_args(parser, namespace):
         path = namespace.profile
-        stack = profiles.ProfileStack(commandline.existent_path(path))
+        try:
+            stack = profiles.ProfileStack(commandline.existent_path(path))
+        except ValueError as e:
+            parser.only_error(e)
         if stack.node.repoconfig is None:
             parser.only_error("invalid profile path: '%s'" % path)
         namespace.profile = stack

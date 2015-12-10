@@ -24,6 +24,9 @@ class _base(commandline.ArgparseCommand):
     @staticmethod
     def _validate_args(parser, namespace):
         path = namespace.profile
+        if namespace.repo is not None and getattr(namespace.repo, 'location', False):
+            if not path.startswith('/'):
+                path = pjoin(namespace.repo.location, 'profiles', path)
         try:
             stack = profiles.ProfileStack(commandline.existent_path(path))
         except ValueError as e:

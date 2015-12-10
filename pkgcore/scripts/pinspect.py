@@ -329,6 +329,11 @@ _portageq.bind_parser(portageq, compat=True)
 
 profile = subparsers.add_parser(
     "profile", description="profile related querying")
+# TODO: restrict to ebuild repos
+profile_opts = profile.add_argument_group('subcommand options')
+profile_opts.add_argument(
+    '-r', '--repo', metavar='REPO', help='target repo',
+    action=commandline.StoreRepoObject, raw=True)
 inspect_profile.bind_parser(profile, 'profile')
 
 digests = subparsers.add_parser(

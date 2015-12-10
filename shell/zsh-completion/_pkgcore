@@ -141,6 +141,7 @@ _pinspect() {
           ;;
         (profile)
           typeset -a profile_attrs
+          local profile_opts='-f'
 
           profile_attrs=(
             parent:'output the linearized tree of inherited parents'
@@ -165,10 +166,17 @@ _pinspect() {
             status:'output the status of this profile'
           )
 
-          _arguments -C -w -S -s -A '-*' \
+          # only complete profiles from the specified repo
+          if (( words[(I)-r|--repo] )); then
+            local repo=${words[(( $words[(I)-r|--repo] + 1 ))]}
+            profile_opts="-r ${repo}"
+          fi
+
+          _arguments -C -A '-*' \
             '(- :)'{-h,--help}'[show help information and exit]' \
+            {'(--repo)-r','(-r)--repo'}'[target repository]:repo:_repos' \
             '1:profile attribute:(($profile_attrs))' \
-            '2:profile:_profiles -f' \
+            "2:profile:_profiles ${profile_opts}" \
             && ret=0
           ;;
         (digests)

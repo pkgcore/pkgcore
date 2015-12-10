@@ -256,7 +256,7 @@ class _use(_base):
                 global_use = ', '.join(x for x in sorted(chain(neg, pos)))
 
         if global_use is not None:
-            out.write('GLOBAL: %s' % (global_use))
+            out.write('*/*: %s' % (global_use))
         if pkg_use:
             for pkg, use in sorted(pkg_use):
                 out.write('%s: %s' % (pkg, use))

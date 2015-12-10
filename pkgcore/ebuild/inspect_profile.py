@@ -248,12 +248,12 @@ class _use(_base):
                     continue
                 neg = ('-' + x for x in use_neg)
                 pos = (x for x in use_pos)
-                pkg_use.append((pkg, ', '.join(x for x in sorted(chain(neg, pos)))))
+                pkg_use.append((pkg, ' '.join(x for x in sorted(chain(neg, pos)))))
             else:
                 _, global_use_neg, global_use_pos = v[0]
                 neg = ('-' + x for x in global_use_neg)
                 pos = (x for x in global_use_pos)
-                global_use = ', '.join(x for x in sorted(chain(neg, pos)))
+                global_use = ' '.join(x for x in sorted(chain(neg, pos)))
 
         if global_use is not None:
             out.write('*/*: %s' % (global_use))

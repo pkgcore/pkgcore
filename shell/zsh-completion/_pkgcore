@@ -136,6 +136,73 @@ _pinspect() {
             && ret=0
           ;;
         (query)
+          _arguments -C \
+            '(- :)'{-h,--help}'[show help information and exit]' \
+            '(-): :->command' \
+            '(-)*:: :->subcommand' \
+            && ret=0
+
+          case $state in
+            (command)
+              typeset -a subcommands
+
+              subcommands=(
+                best_version:'return the maximum visble version for a given atom'
+                env_var:'return configuration defined variables'
+                get_profiles:'show available profiles for a given repo'
+                get_repo_path:'show repo path for a given repo'
+                get_repos:'return list of configured repos'
+                has_version:'return 0 if an atom is merged, 1 if not'
+                mass_best_version:'multiple best version calls'
+              )
+
+              _describe -t subcommands subcommand subcommands && ret=0
+              ;;
+            (subcommand)
+              curcontext=${curcontext%:*}-$line[1]:
+
+              typeset -a query_subcmd_opts
+              query_subcmd_opts=(
+                '(- :)'{-h,--help}'[show help information and exit]'
+                '--eapi[limit all operations to just what the given EAPI supports]:EAPI'
+                '--use[override the use flags used for transitive USE deps]:USE'
+                '--domain[domain to use for this operation]:domain'
+                '--domain-at-root[specify the domain to use via its root path]:path'
+              )
+
+              case $line[1] in
+                (best_version|has_version|mass_best_version)
+                  _arguments -C -A '-*' \
+                    $query_subcmd_opts \
+                    '*:package atom' \
+                    && ret=0
+                  ;;
+                (env_var)
+                  _arguments -C -A '-*' \
+                    $query_subcmd_opts \
+                    '*:variable' \
+                    && ret=0
+                  ;;
+                (get_profiles|get_repo_path)
+                  _arguments -C -A '-*' \
+                    $query_subcmd_opts \
+                    ':repo:_repos' \
+                    && ret=0
+                  ;;
+                (get_repos)
+                  _arguments -C -A '-*' \
+                    $query_subcmd_opts \
+                    && ret=0
+                  ;;
+                (*)
+                  _nothing
+                  ;;
+               esac
+               ;;
+            (*)
+              _nothing
+              ;;
+          esac
           ;;
         (portageq)
           ;;

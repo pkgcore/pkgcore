@@ -809,12 +809,13 @@ def mk_argparser(suppress=False, config=True, domain=True,
         return p
 
     if version:
-        # get calling script's module and project names
-        script = inspect.stack(0)[1][0].f_globals['__name__']
-        project = script.split('.')[0]
+        # Get the calling script's module and project names, this assumes a
+        # project layout similar to pkgcore's where scripts are located in the
+        # project.scripts.script namespace.
+        script = inspect.stack(0)[1][0].f_globals['__file__']
+        project = script.split(os.path.sep)[-3]
         p.add_argument(
-            '--version', action='version',
-            version=get_version(project, os.path.abspath(script)))
+            '--version', action='version', version=get_version(project, script))
     if debug:
         p.add_argument(
             '--debug', action=EnableDebug, help='enable debugging checks')

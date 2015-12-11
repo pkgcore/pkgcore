@@ -859,8 +859,15 @@ def mk_argparser(suppress=False, config=True, domain=True,
 def argparse_parse(parser, args, namespace=None):
     try:
         namespace = parser.parse_args(args, namespace=namespace)
+    except errors.ParsingError as e:
+        if '--debug' in sys.argv[1:]:
+            tb = sys.exc_info()[-1]
+            dump_error(e, 'Error while parsing arguments', tb=tb)
+            raise SystemExit
+        else:
+            parser.only_error(e)
     except Exception as e:
-        # enable tracebacks for any argument parsing failure
+        # enable tracebacks for unhandled argument parsing errors
         tb = sys.exc_info()[-1]
         dump_error(e, "Unhandled exception occurred", tb=tb)
         raise SystemExit

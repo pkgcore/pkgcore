@@ -637,6 +637,7 @@ class ArgumentParser(argparse.ArgumentParser):
                  prog=None,
                  usage=None,
                  description=None,
+                 docs=None,
                  epilog=None,
                  parents=[],
                  formatter_class=argparse.HelpFormatter,
@@ -646,11 +647,13 @@ class ArgumentParser(argparse.ArgumentParser):
                  conflict_handler='error',
                  add_help=True):
 
-        self.long_description = None
         if description is not None:
-            description_lines = description.split('\n')
+            description_lines = description.split('\n', 1)
             description = description_lines[0]
-            self.long_description = description_lines[1:]
+            if docs is None and len(description_lines) == 2:
+                docs = description_lines[1]
+
+        self.docs = docs
 
         super(ArgumentParser, self).__init__(
             prog=prog, usage=usage,

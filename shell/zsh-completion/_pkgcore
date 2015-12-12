@@ -1,4 +1,4 @@
-#compdef pebuild pinspect pmaint pmerge pquery
+#compdef pconfig pebuild pinspect pmaint pmerge pquery
 
 typeset -a common_main_args common_output_args common_args domain_common_args
 
@@ -27,6 +27,79 @@ domain_common_args=(
   $common_args
   '--domain[domain to use for this operation]'
 )
+
+_pconfig() {
+  local curcontext=$curcontext state state_descr line ret=1
+  typeset -A opt_args
+
+  _arguments -C \
+    $common_args \
+    '(-): :->command' \
+    '(-)*:: :->subcommand' \
+    && ret=0
+
+  case $state in
+    (command)
+      typeset -a subcommands
+
+      subcommands=(
+        classes:'list all classes referenced by the config'
+        describe_class:'describe the arguments a class needs, how to use it in a config'
+        uncollapsable:'show configuration objects that could not be collapsed/instantiated'
+        dump:'dump the entire configuration'
+        configurables:'list registered configurables (may not be complete)'
+        dump-uncollapsed:'dump the configuration in a raw, uncollapsed form'
+        package:"invoke a package's custom configuration scripts"
+        world:'inspect and modify the world file'
+      )
+
+      _describe -t subcommands subcommand subcommands && ret=0
+
+      ;;
+    (subcommand)
+      curcontext=${curcontext%:*}-$line[1]:
+
+      case $line[1] in
+        (classes|uncollapsable|dump-uncollapsed)
+          _arguments -C -A '-*' \
+            $common_output_args \
+            && ret=0
+          ;;
+        (describe_class)
+          _arguments -C -A '-*' \
+            $common_output_args \
+            '*:classes' \
+            && ret=0
+          ;;
+        (dump|configurables)
+          _arguments -C -A '-*' \
+            $common_output_args \
+            '*:type' \
+            && ret=0
+          ;;
+        (package)
+          _arguments -C -A '-*' \
+            $domain_common_args \
+            '*:restriction or atom' \
+            && ret=0
+          ;;
+        (world)
+          _arguments -C -A '-*' \
+            $domain_common_args \
+            '(- :)'{-l,--list}'[list the current world file contents for this domain]' \
+            '*'{-r,--remove}'[remove an entry from the world file]:package atom:' \
+            '*'{-a,--add}'[add an entry to the world file]:package atom:' \
+            && ret=0
+          ;;
+        (*)
+          _nothing
+          ;;
+      esac
+      ;;
+  esac
+
+  return ret
+}
 
 _pebuild() {
   local curcontext=$curcontext state state_descr line ret=1
@@ -733,7 +806,7 @@ _pkgcore() {
   typeset -A opts
   local ret=1
 
-  if [[ $service =~ (pebuild|pinspect|pmaint|pmerge|pquery) ]]; then
+  if [[ $service =~ (pconfig|pebuild|pinspect|pmaint|pmerge|pquery) ]]; then
     _call_function ret _$service
   else
     zparseopts -E -D -A opts f:

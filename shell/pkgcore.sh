@@ -4,22 +4,22 @@
 # Note that most functions currently use non-POSIX features so bash or zsh are
 # basically required.
 
-_pkgpath() {
-	if [[ -z $1 ]]; then
+_pkgattr() {
+	local pkg_attr=$1 pkg_atom=$2 repo=$3 p
+	local -a pkg
+
+	if [[ -z ${pkg_atom} ]]; then
 		echo "Enter a valid package name." >&2
 		return 1
 	fi
 
-	local -a pkg
-	local p repo=$2
-
 	if [[ -n ${repo} ]]; then
-		pkg=( $(pquery -r "${repo}" --raw --unfiltered --cpv --one-attr path -n -- "$1" 2>/dev/null) )
+		pkg=( $(pquery -r "${repo}" --raw --unfiltered --cpv --one-attr "${pkg_attr}" -n -- "${pkg_atom}" 2>/dev/null) )
 	else
-		pkg=( $(pquery --ebuild-repos --raw --unfiltered --cpv --one-attr path -n -- "$1" 2>/dev/null) )
+		pkg=( $(pquery --ebuild-repos --raw --unfiltered --cpv --one-attr "${pkg_attr}" -n -- "${pkg_atom}" 2>/dev/null) )
 	fi
 	if [[ $? != 0 ]]; then
-		echo "Invalid package atom: '$1'" >&2
+		echo "Invalid package atom: '${pkg_atom}'" >&2
 		return 1
 	fi
 
@@ -50,7 +50,7 @@ _pkgpath() {
 # use this to enter the repos for installed or binpkgs via 'vdb' or 'binpkg'
 # repo arguments, respectively.
 pcd() {
-	local pkgpath=$(_pkgpath "$@")
+	local pkgpath=$(_pkgattr path "$@")
 	[[ -z ${pkgpath} ]] && return 1
 
 	# find the nearest parent directory
@@ -59,4 +59,17 @@ pcd() {
 	done
 
 	pushd "${pkgpath}" >/dev/null
+}
+
+# open a package's homepage in a browser
+#
+# usage: esite pkg [repo]
+# example: esite sys-devel/gcc gentoo
+#
+# Note that this requires xdg-utils to be installed for xdg-open.
+esite() {
+	local homepage=$(_pkgattr homepage "$@")
+	[[ -z ${homepage} ]] && return 1
+
+	xdg-open "${homepage}"
 }

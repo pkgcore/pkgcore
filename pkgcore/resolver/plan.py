@@ -805,7 +805,7 @@ class merge_plan(object):
                     non_vdb.append(atom)
                 elif self.state.match_atom(atom):
                     vdb.append(atom)
-                elif self.livefs_dbs.has_match(atom):
+                elif atom in self.livefs_dbs:
                     vdb.append(atom)
                 else:
                     non_vdb.append(atom)

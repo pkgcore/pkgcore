@@ -192,25 +192,23 @@ class tree(object):
     def __len__(self):
         return sum(len(v) for v in self.versions.itervalues())
 
-    def __contains__(self, path):
-        """Determine if a path is in a repo.
+    def __contains__(self, obj):
+        """Determine if a path or a package is in a repo."""
+        if isinstance(obj, basestring):
+            path = os.path.realpath(obj)
 
-        Args:
-            path (str): path in the filesystem
+            try:
+                repo_path = os.path.realpath(getattr(self, 'location'))
+            except AttributeError:
+                return False
 
-        Returns:
-            bool: True if path is in repo, otherwise False.
-        """
-        path = os.path.realpath(path)
-
-        try:
-            repo_path = os.path.realpath(getattr(self, 'location'))
-        except AttributeError:
+            if os.path.exists(path) and path.startswith(repo_path):
+                return True
             return False
-
-        if os.path.exists(path) and path.startswith(repo_path):
-            return True
-        return False
+        else:
+            for pkg in self.itermatch(obj):
+                return True
+            return False
 
     def has_match(self, atom, **kwds):
 

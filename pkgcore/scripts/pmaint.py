@@ -122,7 +122,7 @@ def copy_main(options, out, err):
     failures = False
 
     for pkg in src_repo.itermatch(options.query):
-        if options.ignore_existing and trg_repo.has_match(pkg.versioned_atom):
+        if options.ignore_existing and pkg.versioned_atom in trg_repo:
             out.write("skipping %s; it exists already." % (pkg,))
             continue
 
@@ -449,7 +449,7 @@ def digest_main(options, out, err):
                 return 1
 
     restrictions = packages.OrRestriction(*restrictions)
-    if not repo.has_match(restrictions):
+    if restrictions not in repo:
         out.write("no matches for '%s'" % (' '.join(targets),))
         return 1
     elif not repo.operations.digests(domain, restrictions, observer=obs):

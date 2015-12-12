@@ -155,7 +155,7 @@ def has_version(options, out, err):
     """
     Return 0 if an atom is merged, 1 if not.
     """
-    if options.domain.all_livefs_repos.has_match(options.atom):
+    if options.atom in options.domain.all_livefs_repos:
         return 0
     return 1
 

@@ -14,9 +14,9 @@ _pkgattr() {
 	fi
 
 	if [[ -n ${repo} ]]; then
-		pkg=( $(pquery -r "${repo}" --raw --unfiltered --cpv --one-attr "${pkg_attr}" -n -- "${pkg_atom}" 2>/dev/null) )
+		IFS=$'\n' pkg=( $(pquery -r "${repo}" --raw --unfiltered --cpv --one-attr "${pkg_attr}" -n -- "${pkg_atom}" 2>/dev/null) )
 	else
-		pkg=( $(pquery --ebuild-repos --raw --unfiltered --cpv --one-attr "${pkg_attr}" -n -- "${pkg_atom}" 2>/dev/null) )
+		IFS=$'\n' pkg=( $(pquery --ebuild-repos --raw --unfiltered --cpv --one-attr "${pkg_attr}" -n -- "${pkg_atom}" 2>/dev/null) )
 	fi
 	if [[ $? != 0 ]]; then
 		echo "Invalid package atom: '${pkg_atom}'" >&2
@@ -66,9 +66,13 @@ pcd() {
 # usage: esite pkg [repo]
 # example: esite sys-devel/gcc gentoo
 #
+# If a package has more than one homepage listed the first is selected.
+#
 # Note that this requires xdg-utils to be installed for xdg-open.
 esite() {
 	local homepage=$(_pkgattr homepage "$@")
+	# only select the first homepage in a list
+	homepage=${homepage%% *}
 	[[ -z ${homepage} ]] && return 1
 
 	xdg-open "${homepage}"

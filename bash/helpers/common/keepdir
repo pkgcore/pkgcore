@@ -14,7 +14,10 @@ check_args 1 -
 dodir "$@"
 
 if ${recursive}; then
-	check_command_or_stop find "$@" -type d -printf "${ED}/%p/.keep_${CATEGORY}_${PN}-${SLOT%/*}\0" | ${XARGS} -0 -n100 touch
+	for x in "$@"; do
+		basedir=$(echo "${x}" | cut -d/ -f 2)
+		check_command_or_stop find "${ED}/${basedir}" -type d -printf "%p/.keep_${CATEGORY}_${PN}-${SLOT%/*}\0" | ${XARGS} -0 -n100 touch
+	done
 else
 	for x in "$@"; do
 		check_command_or_stop touch "${ED}/${x}/.keep_${CATEGORY}_${PN}-${SLOT%/*}"

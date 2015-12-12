@@ -166,7 +166,7 @@ def write_type(out, type_obj):
 
 uncollapsable = subparsers.add_parser(
     "uncollapsable", parents=shared_options,
-    description="Show configuration objects that could not be collapsed/instantiated")
+    description="show configuration objects that could not be collapsed/instantiated")
 @uncollapsable.bind_main_func
 def uncollapsable_main(options, out, err):
     """Show things that could not be collapsed."""
@@ -187,15 +187,16 @@ def uncollapsable_main(options, out, err):
 
 dump = subparsers.add_parser(
     "dump", parents=shared_options,
-    description=(
-        'Dump the entire configuration.  The format used is similar '
-        'to the ini-like default format, but do not rely on this to always '
-        'write a loadable config. There may be quoting issues.  With a '
-        'typename argument only that type is dumped.'))
+    description='dump the entire configuration',
+    docs="""
+        The format used is similar to the ini-like default format, but do not
+        rely on this to always write a loadable config. There may be quoting
+        issues. With a typename argument only that type is dumped.
+    """)
 dump.add_argument(
     "typename", nargs="?", action="store", default=None,
-    help="if specified, limit output to just config directives of this type"
-         ".  If left off, all types are shown")
+    help="if specified, limit output to just config directives of this "
+         "type (defaults to showing all types)")
 @dump.bind_main_func
 def dump_main(options, out, err):
     """Dump the entire configuration."""
@@ -219,12 +220,10 @@ def dump_main(options, out, err):
 
 configurables = subparsers.add_parser(
     "configurables", parents=shared_options,
-    description=(
-        'List registered configurables (may not be complete). With a '
-        'typename argument only configurables of that type are listed.'))
+    description='list registered configurables (may not be complete)')
 configurables.add_argument(
     "typename", nargs='?', default=None, action='store',
-    help="If specified, only output configurables of that type; else output "
+    help="if specified, only output configurables of that type; else output "
          "all configurables")
 @configurables.bind_main_func
 def configurables_main(options, out, err):
@@ -299,8 +298,10 @@ def _dump_uncollapsed_section(config, out, err, section):
 
 dump_uncollapsed = subparsers.add_parser(
     "dump-uncollapsed", parents=shared_options,
-    description="dump the configuration in a raw, uncollapsed form. "
-                "Not directly usable as a configuration file, mainly used for inspection")
+    description="dump the configuration in a raw, uncollapsed form",
+    docs="""
+        Not directly usable as a configuration file, mainly used for inspection.
+    """)
 @dump_uncollapsed.bind_main_func
 def dump_uncollapsed_main(options, out, err):
     """dump the configuration in a raw, uncollapsed form.
@@ -354,7 +355,7 @@ def package_func(options, out, err):
 
 world = subparsers.add_parser(
     "world", parents=shared_options_domain,
-    description="Inspect and modify the world file.")
+    description="inspect and modify the world file")
 world_modes = world.add_argument_group(
     "Command modes",
     "These options are directives for what to do with the world file.  You "

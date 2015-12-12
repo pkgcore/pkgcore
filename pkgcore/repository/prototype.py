@@ -192,7 +192,7 @@ class tree(object):
     def __len__(self):
         return sum(len(v) for v in self.versions.itervalues())
 
-    def contains(self, path):
+    def __contains__(self, path):
         """Determine if a path is in a repo.
 
         Args:

@@ -299,7 +299,7 @@ class _UnconfiguredTree(prototype.tree):
         """
         realpath = os.path.realpath(path)
 
-        if not self.contains(realpath):
+        if realpath not in self:
             raise ValueError("'%s' repo doesn't contain: '%s'" % (self.repo_id, path))
 
         relpath = realpath[len(os.path.realpath(self.location)):].strip('/')

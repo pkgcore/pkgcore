@@ -155,7 +155,7 @@ class tree(prototype.tree):
                 format or isn't within the repo
         """
         for repo in self.trees:
-            if not repo.contains(path):
+            if path not in repo:
                 continue
             try:
                 return repo.path_restrict(path)
@@ -175,7 +175,7 @@ class tree(prototype.tree):
         Raises:
             ValueError: path matches multiple repos
         """
-        repos = [r for r in self.trees if r.contains(path)]
+        repos = [r for r in self.trees if path in r]
 
         if len(repos) == 1:
             return repos[0]

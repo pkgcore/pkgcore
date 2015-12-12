@@ -209,6 +209,24 @@ class tree(prototype.tree):
     def __len__(self):
         return sum(len(repo) for repo in self.trees)
 
+    def __contains__(self, obj):
+        if isinstance(obj, basestring):
+            path = os.path.realpath(obj)
+            if not os.path.exists(path):
+                return False
+            for repo in self.trees:
+                try:
+                    repo_path = os.path.realpath(getattr(repo, 'location'))
+                except AttributeError:
+                    continue
+                if path.startswith(repo_path):
+                    return True
+            return False
+        else:
+            for pkg in self.itermatch(obj):
+                return True
+            return False
+
     def __getitem__(self, key):
         for t in self.trees:
             try:

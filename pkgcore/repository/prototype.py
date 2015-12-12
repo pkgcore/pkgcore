@@ -196,13 +196,15 @@ class tree(object):
         """Determine if a path or a package is in a repo."""
         if isinstance(obj, basestring):
             path = os.path.realpath(obj)
+            if not os.path.exists(path):
+                return False
 
             try:
                 repo_path = os.path.realpath(getattr(self, 'location'))
             except AttributeError:
                 return False
 
-            if os.path.exists(path) and path.startswith(repo_path):
+            if path.startswith(repo_path):
                 return True
             return False
         else:

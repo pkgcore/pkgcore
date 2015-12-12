@@ -500,9 +500,49 @@ _pmaint() {
 _pmerge() {
   local curcontext=$curcontext state state_descr line ret=1
   typeset -A opt_args
+  typeset -a pkg ops resolver output
 
-  _arguments -C \
+  pkg=(
+    {'(--newuse)-N','(-N)--newuse'}'[check for changed useflags in installed packages (implies -1)]'
+  )
+
+  ops=(
+    {'(--unmerge)-C','(-C)--unmerge'}'[unmerge a package]'
+    '--clean[remove installed packages not referenced by any target packages/sets]'
+    {'(--pretend)-p','(-p)--pretend'}"[do the resolution, but don't merge/fetch anything]"
+    '--ignore-failures[ignore failures while running all types of tasks]'
+    {'(--ask)-a','(-a)--ask'}'[do the resolution, but ask to merge/fetch anything]'
+    "--force[force merging to a repo, regardless of if it's frozen]"
+    {'(--fetchonly)-f','(-f)--fetchonly'}'[do only the fetch steps of the resolved plan]'
+    {'(--oneshot)-1','(-1)--oneshot'}'[do not record changes in the world file]'
+  )
+
+  resolver=(
+    {'(--upgrade)-u','(-u)--upgrade'}'[try to upgrade already installed packages/dependencies]'
+    {'(--deep)-D','(-D)--deep'}'[force the resolver to verify already installed dependencies]'
+    '--preload-vdb-state[enable preloading of the installed packages database]'
+    {'(--ignore-cycles)-i','(-i)--ignore-cycles'}"[ignore cycles if they're found to be unbreakable]"
+    "--with-bdeps[process build dependencies for built packages (by default they're ignored]"
+    {'(--nodeps)-O','(-O)--nodeps'}'[disable dependency resolution]'
+    {'(--noreplace)-n','(-n)--noreplace'}"[don't reinstall target atoms if they're already installed]"
+    {'(--buildpkg)-b','(-b)--buildpkg'}'[build binpkgs]'
+    {'(--usepkg)-k','(-k)--usepkg'}'[prefer to use binpkgs]'
+    {'(--usepkgonly)-K','(-K)--usepkgonly'}'[use only binpkgs]'
+    {'(--source-only)-S','(-S)--source-only'}'[use only source packages, no binpkgs]'
+    {'(--empty)-e','(-e)--empty'}'[force rebuilding of all involved packages]'
+  )
+
+  output=(
+    "--quiet-repo-display[use numbers to indicate repos instead of ::repo output in the package merge list]"
+    {'(--formatter)-F','(-F)--formatter'}'[output formatter to use]:formatter:((basic pkgcore portage portage-verbose paludis))'
+  )
+
+  _arguments -C -w -S -s -A '-*' \
     $domain_common_args \
+    $pkg \
+    $ops \
+    $resolver \
+    $output \
     && ret=0
 
   return ret

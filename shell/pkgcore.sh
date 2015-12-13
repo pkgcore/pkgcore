@@ -4,6 +4,7 @@
 # Note that most functions currently use non-POSIX features so bash or zsh are
 # basically required.
 
+# get an attribute for a given package
 _pkgattr() {
 	local pkg_attr=$1 pkg_atom=$2 repo=$3 p
 	local -a pkg
@@ -34,6 +35,19 @@ _pkgattr() {
 		return 1
 	fi
 	echo ${pkg#*:}
+}
+
+# cross-shell compatible PATH searching
+_which() {
+	local shell=$(basename ${SHELL})
+	if [[ ${shell} == "bash" ]]; then
+		type -P "$1" >/dev/null
+	elif [[ ${shell} == "zsh" ]]; then
+		whence -p "$1" >/dev/null
+	else
+		which "$1" >/dev/null
+	fi
+	return $?
 }
 
 # change to a package directory
@@ -74,6 +88,11 @@ esite() {
 	# only select the first homepage in a list
 	homepage=${homepage%% *}
 	[[ -z ${homepage} ]] && return 1
+
+	if ! _which xdg-open; then
+		echo "xdg-open missing, install xdg-utils"
+		return 1
+	fi
 
 	xdg-open "${homepage}"
 }

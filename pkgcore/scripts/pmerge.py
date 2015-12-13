@@ -660,7 +660,7 @@ def main(options, out, err):
         if options.verbose:
             out.write(
                 out.bold, ' * ', out.reset,
-                "resolver plan required %i ops (%.2f seconds)\n" %
+                "resolver plan required %i ops (%.2f seconds)" %
                 (len(resolver_inst.state.plan), resolve_time))
         return
 

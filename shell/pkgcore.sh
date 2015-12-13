@@ -94,5 +94,5 @@ esite() {
 		return 1
 	fi
 
-	xdg-open "${homepage}"
+	(xdg-open "${homepage}" &>/dev/null &)
 }

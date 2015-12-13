@@ -12,7 +12,6 @@ source or binary packages.
 # more should be doc'd...
 __all__ = ("argparser", "AmbiguousQuery", "NoMatches")
 
-import argparse
 from functools import partial
 import sys
 from time import time

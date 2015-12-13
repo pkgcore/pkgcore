@@ -983,7 +983,7 @@ def main(subcommands, args=None, outfile=None, errfile=None):
         logging.root.addHandler(FormattingHandler(err))
         exitstatus = main_func(options, out, err)
     except KeyboardInterrupt:
-        errfile.write("keyboard interrupted- exiting\n")
+        errfile.write("keyboard interrupted- exiting")
         if getattr(options, 'debug', False):
             traceback.print_tb(sys.exc_info()[-1])
         signal.signal(signal.SIGINT, signal.SIG_DFL)

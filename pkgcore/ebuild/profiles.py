@@ -61,7 +61,7 @@ def load_property(filename, handler=iter_read_bash, fallback=(),
         of files, rather than just a file.  Only is consulted if we're parsing the profile
         in non pms strict mode.
     :keyword eapi_optional: If given, the EAPI for this profile node is checked to see if
-        the given optional evalutes to True; if so, then parsing occurs.  If False, then
+        the given optional evaluates to True; if so, then parsing occurs.  If False, then
         the fallback is returned and no ondisk activity occurs.
     :return: A :py:`klass.jit.attr_named` property instance.
     """

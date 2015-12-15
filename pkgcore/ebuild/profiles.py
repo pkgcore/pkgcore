@@ -44,8 +44,8 @@ class ProfileError(Exception):
         self.path, self.filename, self.error = path, filename, error
 
     def __str__(self):
-        return "failed parsing profile %r, file %r. error: %s" % (self.path,
-            self.filename, self.error)
+        return "failed parsing %r in %r: %s" % (
+            self.filename, self.path, self.error)
 
 
 def load_property(filename, handler=iter_read_bash, fallback=(),

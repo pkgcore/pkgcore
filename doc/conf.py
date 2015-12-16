@@ -18,6 +18,9 @@ import sys
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
+lib_dir = os.path.abspath(os.path.join('..', 'build', 'lib'))
+if os.path.exists(lib_dir):
+    sys.path.insert(0, lib_dir)
 sys.path.insert(1, os.path.abspath('.'))
 sys.path.insert(2, os.path.abspath('..'))
 

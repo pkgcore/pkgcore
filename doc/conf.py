@@ -18,28 +18,16 @@ import sys
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-lib_dir = os.path.abspath(os.path.join('..', 'build', 'lib'))
-if os.path.exists(lib_dir):
-    sys.path.insert(0, lib_dir)
-sys.path.insert(1, os.path.abspath('.'))
-sys.path.insert(2, os.path.abspath('..'))
+libdir = os.path.abspath(os.path.join('..', 'build', 'lib'))
+if os.path.exists(libdir):
+    sys.path.insert(0, libdir)
+sys.path.insert(1, os.path.abspath('..'))
 
 from pkgcore import __version__
-from generate_docs import generate_man, generate_html
+from snakeoil.dist.generate_docs import generate_man, generate_html
 
 on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
 
-# auto-generate required files for RTD build environment
-if on_rtd:
-    generate_man()
-    generate_html()
-
-# handle auto-generation for setup.py
-if 'build_man' in sys.argv[1:]:
-    generate_man()
-if 'build_docs' in sys.argv[1:]:
-    generate_man()
-    generate_html()
 
 # -- General configuration -----------------------------------------------------
 
@@ -116,6 +104,18 @@ pygments_style = 'sphinx'
 # A list of ignored prefixes for module index sorting.
 #modindex_common_prefix = []
 
+# auto-generate required files for RTD build environment
+project_dir = os.path.abspath('..')
+if on_rtd:
+    generate_man(project, project_dir)
+    generate_html(project)
+
+# handle auto-generation for setup.py
+if 'build_man' in sys.argv[1:]:
+    generate_man(project, project_dir)
+if 'build_docs' in sys.argv[1:]:
+    generate_man(project, project_dir)
+    generate_html(project)
 
 # -- Options for HTML output ---------------------------------------------------
 

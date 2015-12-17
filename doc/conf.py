@@ -245,7 +245,7 @@ scripts = os.listdir(bin_path)
 # as 'filter-env', but due to python namespace contraints, it uses a '_'
 # instead.
 generated_man_pages = [
-    ('pkgcore.scripts.' + s.replace('-', '_'), s) for s in scripts
+    ('%s.scripts.' % (project,) + s.replace('-', '_'), s) for s in scripts
 ]
 
 # One entry per manual page. List of tuples

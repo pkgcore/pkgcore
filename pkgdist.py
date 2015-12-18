@@ -258,22 +258,21 @@ class build_man(Command):
     directory.
     """
 
-    user_options = [
-        ('build-base=', 'b', "base directory for build library"),
-    ]
+    user_options = []
 
     def initialize_options(self):
-        self.build_base = None
+        pass
 
     def finalize_options(self):
-        self.set_undefined_options('build', ('build_base', 'build_base'))
+        pass
 
     def run(self):
         # need to make sure we're using a built version since the man page
         # generation process imports the script modules
+        build_py = self.distribution.get_command_obj('build_py')
         self.run_command('build_py')
         syspath = sys.path[:]
-        sys.path.insert(0, os.path.abspath(os.path.join(self.build_base, 'lib')))
+        sys.path.insert(0, os.path.abspath(build_py.build_lib))
         build_sphinx = self.distribution.get_command_obj('build_sphinx')
         build_sphinx.builder = 'man'
         self.run_command('build_sphinx')

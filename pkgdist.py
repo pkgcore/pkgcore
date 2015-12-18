@@ -95,15 +95,9 @@ class sdist(dst_sdist.sdist):
         """
 
         if self.build_docs:
+            self.run_command('build_man')
             import shutil
-            cwd = os.getcwd()
-            # need to make sure we're using a built version of pkgcore for the
-            # current python version since doc/conf.py imports pkgcore modules
-            build_py = self.get_finalized_command('build_py')
-            build_py.run()
-            if subprocess.call([sys.executable, 'setup.py', 'build_man'], cwd=cwd):
-                raise errors.DistutilsExecError("build_man failed")
-            shutil.copytree(os.path.join(cwd, "build/sphinx/man"),
+            shutil.copytree(os.path.join(os.getcwd(), "build/sphinx/man"),
                             os.path.join(base_dir, "man"))
 
         dst_sdist.sdist.make_release_tree(self, base_dir, files)
@@ -254,6 +248,36 @@ class build_py3(build_py):
         for path, mtime in py2k_rebuilds:
             os.utime(path, (-1, mtime))
         log.info("completed py2k conversions")
+
+
+class build_man(Command):
+    """Override the module search path before running sphinx.
+
+    Fixes generating man pages for scripts that need to import modules
+    generated via 2to3 or other conversions instead of straight from the build
+    directory.
+    """
+
+    user_options = [
+        ('build-base=', 'b', "base directory for build library"),
+    ]
+
+    def initialize_options(self):
+        self.build_base = None
+
+    def finalize_options(self):
+        self.set_undefined_options('build', ('build_base', 'build_base'))
+
+    def run(self):
+        # need to make sure we're using a built version since the man page
+        # generation process imports the script modules
+        self.run_command('build_py')
+        syspath = sys.path[:]
+        sys.path.insert(0, os.path.abspath(os.path.join(self.build_base, 'lib')))
+        build_sphinx = self.distribution.get_command_obj('build_sphinx')
+        build_sphinx.builder = 'man'
+        self.run_command('build_sphinx')
+        sys.path = syspath
 
 
 class build_ext(dst_build_ext.build_ext):

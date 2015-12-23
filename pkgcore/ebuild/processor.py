@@ -540,12 +540,12 @@ class EbuildProcessor(object):
         def red(text):
             return '\x1b[31;1m%s\x1b[39;49;00m' % (text,)
 
-        self.ebd_write.write(red(
+        self.write(red(
             "--------------------------- ACCESS VIOLATION SUMMARY "
             "---------------------------")+"\n")
-        self.ebd_write.write(red("LOG FILE = \"%s\"" % move_log)+"\n\n")
+        self.write(red("LOG FILE = \"%s\"" % move_log)+"\n\n")
         for x in violations:
-            self.ebd_write.write(x+"\n")
+            self.write(x+"\n")
         self.write(red(
             "-----------------------------------------------------"
             "---------------------------")+"\n")

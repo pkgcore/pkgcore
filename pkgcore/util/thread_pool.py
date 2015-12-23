@@ -38,7 +38,7 @@ def map_async(iterable, functor, *args, **kwds):
     # note we allow an infinite queue since .put below is blocking, and won't
     # return till it succeeds (regardless of signal) as such, we do it this way
     # to ensure the put succeeds, then the keyboardinterrupt can be seen.
-    queue = Queue.Queue()
+    q = Queue.Queue()
     kill = threading.Event()
     kill.clear()
 
@@ -55,7 +55,7 @@ def map_async(iterable, functor, *args, **kwds):
     for x in xrange(parallelism):
         tkwds = kwds.copy()
         tkwds.update(per_thread_kwds())
-        targs = (iter_queue(kill, queue, empty_signal),) + args + per_thread_args()
+        targs = (iter_queue(kill, q, empty_signal),) + args + per_thread_args()
         threads.append(threading.Thread(target=functor, args=targs, kwargs=tkwds))
     try:
         try:
@@ -64,14 +64,14 @@ def map_async(iterable, functor, *args, **kwds):
                 x.start()
             # now we feed the queue.
             for data in iterable:
-                queue.put(data)
+                q.put(data)
         except:
             kill.set()
             raise
     finally:
         for x in xrange(parallelism):
-            queue.put(empty_signal)
+            q.put(empty_signal)
 
         reclaim_threads(threads)
 
-    assert queue.empty()
+    assert q.empty()

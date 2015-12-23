@@ -709,7 +709,7 @@ class EbuildProcessor(object):
         old_umask = os.umask(0002)
         if tmpdir:
             path = pjoin(tmpdir, 'ebd-env-transfer')
-            fileutils.write_file(path, 'wb', data)
+            fileutils.write_file(path, 'wb', data.encode())
             self.write("start_receiving_env file %s\n" %
                        (path,), append_newline=False)
         else:

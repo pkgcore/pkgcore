@@ -731,7 +731,10 @@ class ArgumentParser(argparse.ArgumentParser):
 
     def add_subparsers(self, **kwargs):
         kwargs.setdefault('title', 'subcommands')
-        return argparse.ArgumentParser.add_subparsers(self, **kwargs)
+        kwargs.setdefault('dest', 'subcommand')
+        subparsers = argparse.ArgumentParser.add_subparsers(self, **kwargs)
+        subparsers.required = True
+        return subparsers
 
     def bind_final_check(self, functor):
         self.set_defaults(final_check=functor)

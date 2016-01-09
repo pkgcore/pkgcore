@@ -42,6 +42,9 @@ class fetchable(object):
             self.__class__.__name__, self.filename, self.uri, self.chksums,
             id(self))
 
+    def __lt__(self, other):
+        return self.filename < other.filename
+
 
 class mirror(object):
     """

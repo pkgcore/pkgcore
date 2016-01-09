@@ -8,6 +8,8 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 pkgcore 0.9.3 (2016-??-??)
 --------------------------
 
+- Officially support python3 (3.3 and up).
+
 - Remove FEATURES=fakeroot support, it hasn't fully worked for years, doesn't
   work with with sandbox, and should be replaced with some namespacing support.
 

@@ -945,7 +945,7 @@ def main(parser, args=None, outfile=None, errfile=None):
     try:
         main_func, options = argparse_parse(parser, args, options)
 
-        if getattr(options, 'debug', False):
+        if debug:
             # verbosity level affects debug output
             verbose = getattr(options, 'verbose', None)
             debug_verbosity = verbose if verbose is not None else 1

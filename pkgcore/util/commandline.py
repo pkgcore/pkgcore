@@ -864,21 +864,7 @@ def mk_argparser(suppress=False, config=True, domain=True,
 
 
 def argparse_parse(parser, args, namespace=None):
-    try:
-        namespace = parser.parse_args(args, namespace=namespace)
-    except errors.ParsingError as e:
-        if '--debug' in sys.argv[1:]:
-            tb = sys.exc_info()[-1]
-            dump_error(e, 'Error while parsing arguments', tb=tb)
-            raise SystemExit
-        else:
-            parser.only_error(e)
-    except Exception as e:
-        # enable tracebacks for unhandled argument parsing errors
-        tb = sys.exc_info()[-1]
-        dump_error(e, "Unhandled exception occurred", tb=tb)
-        raise SystemExit
-
+    namespace = parser.parse_args(args, namespace=namespace)
     main = getattr(namespace, 'main_func', None)
     if main is None:
         raise Exception(
@@ -901,23 +887,17 @@ def convert_to_restrict(sequence, default=packages.AlwaysTrue):
     return l or [default]
 
 
-def main(subcommands, args=None, outfile=None, errfile=None):
+def main(parser, args=None, outfile=None, errfile=None):
     """Function to use in an "if __name__ == '__main__'" block in a script.
 
-    Takes one or more combinations of argparser and main func and
-    runs them, taking care of exception handling and some other things.
+    Takes an argparser instance and runs it against available args, them,
+    taking care of exception handling and some other things.
 
     Any ConfigurationErrors raised from your function (by the config
     manager) are handled. Other exceptions are not (trigger a traceback).
 
-    :type subcommands: mapping of string => (ArgumentParser class, main func)
-    :param subcommands: available commands.
-        The keys are a subcommand name or None for other/unknown/no subcommand.
-        The values are tuples of ArgumentParser subclasses and functions called
-        as main_func(config, out, err) with a :obj:`Values` instance, two
-        :obj:`snakeoil.formatters.Formatter` instances for output (stdout)
-        and errors (stderr). It should return an integer used as
-        exit status or None as synonym for 0.
+    :type parser: ArgumentParser instance
+    :param parser: Argument parser for external commands or scripts.
     :type args: sequence of strings
     :param args: arguments to parse, defaulting to C{sys.argv[1:]}.
     :type outfile: file-like object
@@ -960,8 +940,10 @@ def main(subcommands, args=None, outfile=None, errfile=None):
 
     out = options = None
     exitstatus = -10
+    # can't use options.debug since argparsing might fail
+    debug = '--debug' in sys.argv[1:]
     try:
-        main_func, options = argparse_parse(subcommands, args, options)
+        main_func, options = argparse_parse(parser, args, options)
 
         if getattr(options, 'debug', False):
             # verbosity level affects debug output
@@ -987,7 +969,7 @@ def main(subcommands, args=None, outfile=None, errfile=None):
         exitstatus = main_func(options, out, err)
     except KeyboardInterrupt:
         errfile.write("keyboard interrupted- exiting")
-        if getattr(options, 'debug', False):
+        if debug:
             traceback.print_tb(sys.exc_info()[-1])
         signal.signal(signal.SIGINT, signal.SIG_DFL)
         os.killpg(os.getpgid(0), signal.SIGINT)
@@ -996,20 +978,25 @@ def main(subcommands, args=None, outfile=None, errfile=None):
         pass
     except compatibility.IGNORED_EXCEPTIONS:
         raise
+    except errors.ParsingError as e:
+        if debug:
+            tb = sys.exc_info()[-1]
+            dump_error(e, 'Error while parsing arguments', tb=tb)
+        else:
+            parser.only_error(e)
     except errors.ConfigurationError as e:
         tb = sys.exc_info()[-1]
-        if not getattr(options, 'debug', False):
+        if not debug:
             tb = None
         dump_error(e, "Error in configuration", handle=errfile, tb=tb)
     except operations.OperationError as e:
         tb = sys.exc_info()[-1]
-        if not getattr(options, 'debug', False):
+        if not debug:
             tb = None
         dump_error(e, "Error running an operation", handle=errfile, tb=tb)
     except Exception as e:
+        # force tracebacks for unhandled exceptions
         tb = sys.exc_info()[-1]
-        if not getattr(options, 'debug', False):
-            tb = None
         dump_error(e, "Unhandled exception occurred", handle=errfile, tb=tb)
     if out is not None:
         if exitstatus:

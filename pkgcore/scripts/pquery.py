@@ -564,9 +564,10 @@ add_query(
 add_query(
     '--all', action='append_const', dest='all',
     const=packages.AlwaysTrue, type=None, suppress_nargs=True,
-    help='match all packages (equivalent to "pquery *")',
+    help='match all packages',
     docs="""
-        If no query options are specified, this option is enabled.
+        This is equivalent to "pquery \*". Note that if no query options are
+        specified, this option is enabled.
     """)
 add_query(
     '--has-use', action='append', dest='has_use',

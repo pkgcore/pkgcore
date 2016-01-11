@@ -40,9 +40,12 @@ demand_compile_regexp(
 
 def generate_depset(c, key, non_package_type, s, **kwds):
     if non_package_type:
-        return conditionals.DepSet.parse(s.data.pop(key, ""), c,
-            operators={"||":boolean.OrRestriction,
-            "":boolean.AndRestriction}, **kwds)
+        return conditionals.DepSet.parse(
+            s.data.pop(key, ""), c,
+            operators={
+                "||":boolean.OrRestriction,
+                "":boolean.AndRestriction},
+            **kwds)
     eapi_obj = s.eapi_obj
     if not eapi_obj.is_supported:
         raise metadata_errors.MetadataException(s, "eapi", "unsupported eapi: %s" % eapi_obj.magic)
@@ -67,22 +70,23 @@ def generate_required_use(self):
     if self.eapi_obj.options.required_use_one_of:
         operators['??'] = boolean.AtMostOneOfRestriction
 
-    return conditionals.DepSet.parse(data,
+    return conditionals.DepSet.parse(
+        data,
         values.ContainmentMatch, operators=operators,
-        element_func=_mk_required_use_node,
-        )
+        element_func=_mk_required_use_node)
 
 def generate_fetchables(self, allow_missing_checksums=False,
                         ignore_unknown_mirrors=False):
     chksums_can_be_missing = allow_missing_checksums or \
         bool(getattr(self.repo, '_allow_missing_chksums', False))
-    chksums_can_be_missing, chksums = self.repo._get_digests(self,
-        allow_missing=chksums_can_be_missing)
+    chksums_can_be_missing, chksums = self.repo._get_digests(
+        self, allow_missing=chksums_can_be_missing)
 
     mirrors = getattr(self._parent, "mirrors", {})
     default_mirrors = getattr(self._parent, "default_mirrors", None)
     common = {}
-    func = partial(create_fetchable_from_uri, self, chksums,
+    func = partial(
+        create_fetchable_from_uri, self, chksums,
         chksums_can_be_missing, ignore_unknown_mirrors,
         mirrors, default_mirrors, common)
     d = conditionals.DepSet.parse(
@@ -158,7 +162,7 @@ def get_slot(self):
     return o.strip()
 
 def get_subslot(self):
-    slot, separator, subslot = self.fullslot.partition('/')
+    slot, _sep, subslot = self.fullslot.partition('/')
     if not subslot:
         return slot
     return subslot
@@ -194,27 +198,28 @@ class base(metadata.package):
     _get_attr["depends"] = partial(generate_depset, atom, "DEPEND", False)
     _get_attr["rdepends"] = partial(generate_depset, atom, "RDEPEND", False)
     _get_attr["post_rdepends"] = partial(generate_depset, atom, "PDEPEND", False)
-    _get_attr["license"] = partial(generate_depset, str,
+    _get_attr["license"] = partial(
+        generate_depset, str,
         "LICENSE", True, element_func=intern)
     _get_attr["fullslot"] = get_slot
-    _get_attr["slot"] = lambda s:s.fullslot.partition('/')[0]
+    _get_attr["slot"] = lambda s: s.fullslot.partition('/')[0]
     _get_attr["subslot"] = get_subslot
     _get_attr["fetchables"] = generate_fetchables
-    _get_attr["description"] = lambda s:s.data.pop("DESCRIPTION", "").strip()
-    _get_attr["keywords"] = lambda s:tuple(map(intern,
-        s.data.pop("KEYWORDS", "").split()))
-    _get_attr["restrict"] = lambda s:conditionals.DepSet.parse(
+    _get_attr["description"] = lambda s: s.data.pop("DESCRIPTION", "").strip()
+    _get_attr["keywords"] = lambda s: tuple(
+        imap(intern, s.data.pop("KEYWORDS", "").split()))
+    _get_attr["restrict"] = lambda s: conditionals.DepSet.parse(
         s.data.pop("RESTRICT", ''), str, operators={},
         element_func=rewrite_restrict)
     _get_attr["eapi_obj"] = get_parsed_eapi
-    _get_attr["iuse"] = lambda s:frozenset(imap(intern,
-        s.data.pop("IUSE", "").split()))
-    _get_attr["iuse_effective"] = lambda s:s.iuse_stripped
-    _get_attr["properties"] = lambda s:frozenset(imap(intern,
-        s.data.pop("PROPERTIES", "").split()))
-    _get_attr["defined_phases"] = lambda s:s.eapi_obj.interpret_cache_defined_phases(imap(intern,
-        s.data.pop("DEFINED_PHASES", "").split()))
-    _get_attr["homepage"] = lambda s:s.data.pop("HOMEPAGE", "").strip()
+    _get_attr["iuse"] = lambda s: frozenset(
+        imap(intern, s.data.pop("IUSE", "").split()))
+    _get_attr["iuse_effective"] = lambda s: s.iuse_stripped
+    _get_attr["properties"] = lambda s: frozenset(
+        imap(intern, s.data.pop("PROPERTIES", "").split()))
+    _get_attr["defined_phases"] = lambda s: s.eapi_obj.interpret_cache_defined_phases(
+        imap(intern, s.data.pop("DEFINED_PHASES", "").split()))
+    _get_attr["homepage"] = lambda s: s.data.pop("HOMEPAGE", "").strip()
     _get_attr["inherited"] = get_inherited
     _get_attr["required_use"] = generate_required_use
     _get_attr["source_repository"] = get_repo_id
@@ -325,8 +330,7 @@ class package_factory(metadata.factory):
 
         self.mirrors = mirrors
         if default_mirrors:
-            self.default_mirrors = default_mirror(default_mirrors,
-                "conf. default mirror")
+            self.default_mirrors = default_mirror(default_mirrors, "conf. default mirror")
         else:
             self.default_mirrors = None
 
@@ -354,9 +358,9 @@ class package_factory(metadata.factory):
                         del cache[pkg.cpvstr]
                 except KeyError:
                     continue
-                except cache_errors.CacheError as ce:
-                    logger.warning("caught cache error: %s" % ce)
-                    del ce
+                except cache_errors.CacheError as e:
+                    logger.warning("caught cache error: %s" % e)
+                    del e
                     continue
 
         # no cache entries, regen
@@ -402,9 +406,9 @@ class package_factory(metadata.factory):
                 if not cache.readonly:
                     try:
                         cache[pkg.cpvstr] = mydata
-                    except cache_errors.CacheError as ce:
-                        logger.warning("caught cache error: %s" % ce)
-                        del ce
+                    except cache_errors.CacheError as e:
+                        logger.warning("caught cache error: %s" % e)
+                        del e
                         continue
                     break
 

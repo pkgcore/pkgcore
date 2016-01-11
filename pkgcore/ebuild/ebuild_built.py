@@ -51,8 +51,7 @@ def wrap_inst(self, wrap, inst):
     return wrap(inst(self), self.use)
 
 
-_empty_fetchable = conditionals.DepSet.parse('', ebuild_src.fetchable,
-    operators={})
+_empty_fetchable = conditionals.DepSet.parse('', ebuild_src.fetchable, operators={})
 
 
 def generate_eapi_obj(self):
@@ -98,27 +97,28 @@ class package(ebuild_src.base):
 
     _get_attr.update((x, post_curry(passthrough, x))
                      for x in ("contents", "environment", "ebuild"))
-    _get_attr.update((x, lambda s:s.data.get(x.upper(), ""))
+    _get_attr.update((x, lambda s: s.data.get(x.upper(), ""))
                      for x in ("cflags", "cxxflags", "ldflags"))
     _get_attr['source_repository'] = passthrough_repo
-    _get_attr['iuse_effective'] = lambda s:tuple(
+    _get_attr['iuse_effective'] = lambda s: tuple(
         s.data.get("IUSE_EFFECTIVE", "").split())
 
-    _get_attr['fetchables'] = lambda self:_empty_fetchable
+    _get_attr['fetchables'] = lambda self: _empty_fetchable
 
-    _get_attr["use"] = lambda s:DelayedInstantiation(frozenset,
-        lambda: frozenset(s.data["USE"].split()))
+    _get_attr["use"] = lambda s: DelayedInstantiation(
+        frozenset, lambda: frozenset(s.data["USE"].split()))
 
-    _get_attr["inherited"] = lambda s:tuple(sorted(
+    _get_attr["inherited"] = lambda s: tuple(sorted(
         s.data.get("INHERITED", "").split()))
     _get_attr["eapi_obj"] = generate_eapi_obj
 
     def __init__(self, *args, **kwargs):
         super(package, self).__init__(*args, **kwargs)
         self._get_attr.update(
-            (k, post_curry(wrap_inst,
-                        ebuild_src.package._config_wrappables[k],
-                        ebuild_src.package._get_attr[k]))
+            (k, post_curry(
+                wrap_inst,
+                ebuild_src.package._config_wrappables[k],
+                ebuild_src.package._get_attr[k]))
             for k in ebuild_src.package._config_wrappables
             if k in super(package, self).tracked_attributes)
 
@@ -181,7 +181,7 @@ class fresh_built_package(package):
 
 def generic_format_triggers(self, pkg, op_inst, format_op_inst, engine_inst):
     if (engine_inst.mode in (engine.REPLACE_MODE, engine.INSTALL_MODE)
-        and pkg == engine_inst.new and pkg.repo is engine_inst.new.repo):
+            and pkg == engine_inst.new and pkg.repo is engine_inst.new.repo):
         if 'preinst' in pkg.mandatory_phases:
             t = triggers.preinst_contents_reset(format_op_inst)
             t.register(engine_inst)
@@ -218,10 +218,10 @@ class package_factory(metadata.factory):
     def _get_ebuild_path(self, pkg):
         return self._parent_repo._get_path(pkg)
 
-    _generate_format_install_op   = _generic_format_install_op
+    _generate_format_install_op = _generic_format_install_op
     _generate_format_uninstall_op = _generic_format_uninstall_op
-    _generate_format_replace_op   = _generic_format_replace_op
-    _add_format_triggers          = generic_format_triggers
+    _generate_format_replace_op = _generic_format_replace_op
+    _add_format_triggers = generic_format_triggers
 
 
 class fake_package_factory(package_factory):
@@ -273,10 +273,10 @@ class fake_package_factory(package_factory):
             except AttributeError:
                 raise_from(KeyError(key))
 
-    _generate_format_install_op   = _generic_format_install_op
+    _generate_format_install_op = _generic_format_install_op
     _generate_format_uninstall_op = _generic_format_uninstall_op
-    _generate_format_replace_op   = _generic_format_replace_op
-    _add_format_triggers          = generic_format_triggers
+    _generate_format_replace_op = _generic_format_replace_op
+    _add_format_triggers = generic_format_triggers
 
 
 generate_new_factory = package_factory

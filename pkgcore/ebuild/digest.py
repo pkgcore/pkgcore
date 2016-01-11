@@ -62,8 +62,7 @@ def serialize_manifest(pkgdir, fetchables, chfs=None, thin=False):
                 else:
                     d = misc
             else:
-                raise Exception("Unexpected directory found in %r; %r"
-                    % (pkgdir, obj.dirname))
+                raise Exception("Unexpected directory found in %r; %r" % (pkgdir, obj.dirname))
             d[pathname] = dict(obj.chksums)
 
     handle = open(pkgdir + '/Manifest', 'w')
@@ -73,8 +72,7 @@ def serialize_manifest(pkgdir, fetchables, chfs=None, thin=False):
 
     # next dist...
     for fetchable in sorted(fetchables, key=operator.attrgetter('filename')):
-        _write_manifest(handle, 'DIST', basename(fetchable.filename),
-            dict(fetchable.chksums))
+        _write_manifest(handle, 'DIST', basename(fetchable.filename), dict(fetchable.chksums))
 
     # then ebuild and misc
     for mtype, inst in (("EBUILD", ebuild), ("MISC", misc)):
@@ -125,10 +123,11 @@ def parse_manifest(source, ignore_gpg=True):
                 continue
             d = types.get(line[0])
             if d is None:
-                raise errors.ParseChksumError(source,
-                    "unknown manifest type: %s: %r" % (line[0], line))
+                raise errors.ParseChksumError(
+                    source, "unknown manifest type: %s: %r" % (line[0], line))
             if len(line) % 2 != 1:
-                raise errors.ParseChksumError(source,
+                raise errors.ParseChksumError(
+                    source,
                     "manifest 2 entry doesn't have right "
                     "number of tokens, %i: %r" %
                     (len(line), line))
@@ -136,8 +135,7 @@ def parse_manifest(source, ignore_gpg=True):
             # this is a trick to do pairwise collapsing;
             # [size, 1] becomes [(size, 1)]
             i = iter(line[3:])
-            d[line[1]] = [("size", long(line[2]))] + \
-                list(convert_chksums(izip(i, i)))
+            d[line[1]] = [("size", long(line[2]))] + list(convert_chksums(izip(i, i)))
     finally:
         if f is not None and f.close:
             f.close()

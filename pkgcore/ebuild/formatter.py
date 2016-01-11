@@ -278,8 +278,8 @@ class PortageFormatter(CountingFormatter):
             logger.warning("unformattable op type: desc(%r), %r", (op.desc, op))
 
         if self.verbose:
-            if self.unstable_arch in op.pkg.keywords and \
-                    self.unstable_arch not in self.domain_settings['ACCEPT_KEYWORDS']:
+            if (self.unstable_arch in op.pkg.keywords and
+                    self.unstable_arch not in self.domain_settings['ACCEPT_KEYWORDS']):
                 op_chars[6] = [out.fg('yellow'), out.bold, '~', out.reset]
             elif not op.pkg.keywords:
                 op_chars[6] = [out.fg('red'), out.bold, '*', out.reset]
@@ -486,14 +486,16 @@ class PortageFormatter(CountingFormatter):
                 repos = self.repos.items()
                 repos.sort(key=operator.itemgetter(1))
                 for k, v in repos:
-                   reponame = getattr(k, 'repo_id', 'unknown repo id')
-                   location = getattr(k, 'location', 'unspecified location')
-                   if reponame != location:
-                       self.out.write(' ', self.out.fg('cyan'), "[%d]" % v,
-                           self.out.reset, " %s (%s)" % (reponame, location))
-                   else:
-                       self.out.write(' ', self.out.fg('cyan'), "[%d]" % v,
-                           self.out.reset, " %s" % location)
+                    reponame = getattr(k, 'repo_id', 'unknown repo id')
+                    location = getattr(k, 'location', 'unspecified location')
+                    if reponame != location:
+                        self.out.write(
+                            ' ', self.out.fg('cyan'), "[%d]" % v,
+                            self.out.reset, " %s (%s)" % (reponame, location))
+                    else:
+                        self.out.write(
+                            ' ', self.out.fg('cyan'), "[%d]" % v,
+                            self.out.reset, " %s" % location)
 
 
 class PaludisFormatter(CountingFormatter):

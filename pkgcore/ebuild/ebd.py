@@ -11,7 +11,8 @@ api, per phase methods for example
 
 from __future__ import print_function
 
-__all__ = ("ebd", "setup_mixin", "install_op", "uninstall_op", "replace_op",
+__all__ = (
+    "ebd", "setup_mixin", "install_op", "uninstall_op", "replace_op",
     "buildable", "binpkg_localize")
 
 import errno
@@ -148,8 +149,10 @@ class ebd(object):
             self.userpriv = False
 
         if "PORT_LOGDIR" in self.env:
-            self.logging = pjoin(self.env["PORT_LOGDIR"],
-                "%s:%s:%s.log" % (pkg.cpvstr, self.__class__.__name__,
+            self.logging = pjoin(
+                self.env["PORT_LOGDIR"],
+                "%s:%s:%s.log" % (
+                    pkg.cpvstr, self.__class__.__name__,
                     time.strftime("%Y%m%d-%H%M%S", time.localtime())))
             del self.env["PORT_LOGDIR"]
         else:
@@ -185,13 +188,13 @@ class ebd(object):
         # don't fool with this, without fooling with setup.
         self.tmpdir = normpath(self.domain._get_tempspace())
         if tmp_offset:
-            self.tmpdir = pjoin(self.tmpdir,
-                tmp_offset.strip(os.path.sep))
+            self.tmpdir = pjoin(self.tmpdir, tmp_offset.strip(os.path.sep))
 
-        self.builddir = pjoin(self.tmpdir, self.env["CATEGORY"],
-            self.env["PF"])
-        for x, y in (("T", "temp"), ("WORKDIR", "work"), ("D", "image"),
-            ("HOME", "homedir")):
+        self.builddir = pjoin(self.tmpdir, self.env["CATEGORY"], self.env["PF"])
+        for x, y in (("T", "temp"),
+                     ("WORKDIR", "work"),
+                     ("D", "image"),
+                     ("HOME", "homedir")):
             self.env[x] = normpath(pjoin(self.builddir, y))
         self.env["D"] += "/"
         self.env["IMAGE"] = self.env["D"]
@@ -208,11 +211,11 @@ class ebd(object):
             return data_source.bytes_data_source(f.read())
 
     def setup_env_data_source(self):
-        if not ensure_dirs(self.env["T"], mode=0770, gid=portage_gid,
-            minimal=True):
-            raise format.FailedDirectory(self.env['T'],
+        if not ensure_dirs(self.env["T"], mode=0770, gid=portage_gid, minimal=True):
+            raise format.FailedDirectory(
+                self.env['T'],
                 "%s doesn't fulfill minimum mode %o and gid %i" % (
-                self.env['T'], 0770, portage_gid))
+                    self.env['T'], 0770, portage_gid))
 
         if self.env_data_source is not None:
             fp = pjoin(self.env["T"], "environment")
@@ -255,12 +258,10 @@ class ebd(object):
     def setup_workdir(self):
         # ensure dirs.
         for k in ("HOME", "T", "WORKDIR", "D"):
-            if not ensure_dirs(self.env[k], mode=04770,
-                gid=portage_gid, minimal=True):
+            if not ensure_dirs(self.env[k], mode=04770, gid=portage_gid, minimal=True):
                 raise format.FailedDirectory(
                     self.env[k],
-                    "%s doesn't fulfill minimum mode %o and gid %i" % (
-                        k, 0770, portage_gid))
+                    "%s doesn't fulfill minimum mode %o and gid %i" % (k, 0770, portage_gid))
             # XXX hack, just 'til pkgcore controls these directories
             if (os.stat(self.env[k]).st_mode & 02000):
                 logger.warning("%s ( %s ) is setgid" % (self.env[k], k))
@@ -340,9 +341,9 @@ class ebd(object):
             except EnvironmentError as e:
                 if e.errno != errno.ENOTEMPTY:
                     raise
-        except EnvironmentError as oe:
+        except EnvironmentError as e:
             raise_from(format.GenericBuildError(
-                "clean: Caught exception while cleansing: %s" % (oe,)))
+                "clean: Caught exception while cleansing: %s" % (e,)))
         return True
 
     def feat_or_bool(self, name, extra_env=None):
@@ -374,8 +375,8 @@ class ebd(object):
 
     def _reload_state(self):
         try:
-            self.__set_stage_state__([x[1:]
-                for x in listdir_files(self.builddir) if x.startswith(".")])
+            self.__set_stage_state__(
+                [x[1:] for x in listdir_files(self.builddir) if x.startswith(".")])
         except EnvironmentError as e:
             if e.errno not in (errno.ENOTDIR, errno.ENOENT):
                 raise
@@ -396,8 +397,7 @@ class setup_mixin(object):
             phase_name = setup_phase_override
 
         if self.setup_is_for_src:
-            additional_commands["request_inherit"] = partial(inherit_handler,
-                self.eclass_cache)
+            additional_commands["request_inherit"] = partial(inherit_handler, self.eclass_cache)
 
         return self._generic_phase(
             phase_name, False, True, extra_handlers=additional_commands)
@@ -435,8 +435,7 @@ def run_generic_phase(pkg, phase, env, userpriv, sandbox,
     sys.stderr.flush()
     try:
         if not ebd.run_phase(phase, env, env.get('T'), sandbox=sandbox,
-                       logging=logging,
-                       additional_commands=extra_handlers):
+                             logging=logging, additional_commands=extra_handlers):
             if not failure_allowed:
                 raise format.GenericBuildError(
                     phase + ": Failed building (False/0 return from handler)")
@@ -460,19 +459,18 @@ class install_op(ebd, format.install):
 
     def __init__(self, domain, pkg, observer):
         format.install.__init__(self, domain, pkg, observer)
-        ebd.__init__(self, pkg, observer=observer, initial_env=domain.settings,
+        ebd.__init__(
+            self, pkg, observer=observer, initial_env=domain.settings,
             env_data_source=pkg.environment, clean=False)
 
     preinst = pretty_docs(
         observer.decorate_build_method("preinst")(
-            post_curry(
-            ebd._generic_phase, "preinst", False, False)),
-            "run the postinst phase")
+            post_curry(ebd._generic_phase, "preinst", False, False)),
+        "run the postinst phase")
     postinst = pretty_docs(
         observer.decorate_build_method("postinst")(
-            post_curry(
-            ebd._generic_phase, "postinst", False, False)),
-            "run the postinst phase")
+            post_curry(ebd._generic_phase, "postinst", False, False)),
+        "run the postinst phase")
 
     def add_triggers(self, domain_op, engine):
         self.new_pkg.add_format_triggers(domain_op, self, engine)
@@ -483,21 +481,21 @@ class uninstall_op(ebd, format.uninstall):
 
     def __init__(self, domain, pkg, observer):
         format.uninstall.__init__(self, domain, pkg, observer)
-        ebd.__init__(self, pkg, observer=observer, initial_env=domain.settings,
+        ebd.__init__(
+            self, pkg, observer=observer, initial_env=domain.settings,
             env_data_source=pkg.environment, clean=False,
             tmp_offset="unmerge")
 
     prerm = pretty_docs(
         observer.decorate_build_method("prerm")(
-            post_curry(
-            ebd._generic_phase, "prerm", False, False)),
-            "run the prerm phase")
+            post_curry(ebd._generic_phase, "prerm", False, False)),
+        "run the prerm phase")
     postrm = pretty_docs(
         observer.decorate_build_method("postrm")(
             post_curry(
                 ebd._generic_phase, "postrm", False, False,
                 failure_allowed=True)),
-            "run the postrm phase")
+        "run the postrm phase")
 
     def add_triggers(self, domain_op, engine):
         self.old_pkg.add_format_triggers(domain_op, self, engine)
@@ -605,17 +603,16 @@ class buildable(ebd, setup_mixin, format.build):
                 path.insert(0, "/usr/%s/%s/bin" % (libdir, s.lower()))
             else:
                 for y in ("_PATH", "_DIR"):
-                    if s+y in self.env:
+                    if s + y in self.env:
                         del self.env[s+y]
         path = [piece for piece in path if piece]
         self.env["PATH"] = os.pathsep.join(path)
-        self.env["A"] = ' '.join(set(x.filename
-            for x in pkg.fetchables))
+        self.env["A"] = ' '.join(set(x.filename for x in pkg.fetchables))
 
         if self.eapi_obj.options.has_AA:
             pkg = getattr(self.pkg, '_raw_pkg', self.pkg)
-            self.env["AA"] = ' '.join(set(x.filename
-                for x in iflatten_instance(pkg.fetchables, fetch.fetchable)))
+            self.env["AA"] = ' '.join(set(
+                x.filename for x in iflatten_instance(pkg.fetchables, fetch.fetchable)))
 
         if self.eapi_obj.options.has_KV:
             ret = spawn_get_output(['uname', '-r'])
@@ -632,7 +629,8 @@ class buildable(ebd, setup_mixin, format.build):
         # cvs/svn ebuilds need to die.
         distdir_write = self.domain.fetcher.get_storage_path()
         if distdir_write is None:
-            raise format.GenericBuildError("no usable distdir was found "
+            raise format.GenericBuildError(
+                "no usable distdir was found "
                 "for PORTAGE_ACTUAL_DISTDIR from fetcher %s" % self.domain.fetcher)
         self.env["PORTAGE_ACTUAL_DISTDIR"] = distdir_write
         self.env["DISTDIR"] = normpath(
@@ -642,8 +640,7 @@ class buildable(ebd, setup_mixin, format.build):
 
     def setup_distfiles(self):
         if not self.verified_files and self.allow_fetching:
-            ops = self.domain.pkg_operations(self.pkg,
-                observer=self.observer)
+            ops = self.domain.pkg_operations(self.pkg, observer=self.observer)
             if not ops.fetch():
                 raise format.BuildError("failed fetching required distfiles")
             self.verified_files = ops._fetch_op.verified_files
@@ -652,33 +649,32 @@ class buildable(ebd, setup_mixin, format.build):
             try:
                 if os.path.exists(self.env["DISTDIR"]):
                     if (os.path.isdir(self.env["DISTDIR"])
-                        and not os.path.islink(self.env["DISTDIR"])):
+                            and not os.path.islink(self.env["DISTDIR"])):
                         shutil.rmtree(self.env["DISTDIR"])
                     else:
                         os.unlink(self.env["DISTDIR"])
 
-            except EnvironmentError as oe:
+            except EnvironmentError as e:
                 raise_from(format.FailedDirectory(
                     self.env["DISTDIR"],
                     "failed removing existing file/dir/link at: exception %s"
-                    % oe))
+                    % e))
 
-            if not ensure_dirs(self.env["DISTDIR"], mode=0770,
-                               gid=portage_gid):
+            if not ensure_dirs(self.env["DISTDIR"], mode=0770, gid=portage_gid):
                 raise format.FailedDirectory(
                     self.env["DISTDIR"],
                     "failed creating distdir symlink directory")
 
             try:
                 for src, dest in [
-                    (k, pjoin(self.env["DISTDIR"], v.filename))
-                    for (k, v) in self.verified_files.iteritems()]:
+                        (k, pjoin(self.env["DISTDIR"], v.filename))
+                        for (k, v) in self.verified_files.iteritems()]:
                     os.symlink(src, dest)
 
-            except EnvironmentError as oe:
+            except EnvironmentError as e:
                 raise_from(format.GenericBuildError(
                     "Failed symlinking in distfiles for src %s -> %s: %s" % (
-                        src, dest, str(oe))))
+                        src, dest, e)))
 
     @observer.decorate_build_method("setup")
     def setup(self):
@@ -721,20 +717,20 @@ class buildable(ebd, setup_mixin, format.build):
                         os.chmod(self.env["CCACHE_DIR"], 02775)
                         os.chown(self.env["CCACHE_DIR"], -1, portage_gid)
                         os.chdir(cwd)
-                        if 0 != spawn(["chgrp", "-R", str(portage_gid),
-                            self.env["CCACHE_DIR"]]):
+                        if 0 != spawn(
+                                ["chgrp", "-R", str(portage_gid), self.env["CCACHE_DIR"]]):
                             raise format.FailedDirectory(
                                 self.env["CCACHE_DIR"],
                                 "failed changing ownership for CCACHE_DIR")
                         if 0 != spawn_bash(
-                            "find '%s' -type d -print0 | %s --null chmod 02775"
+                                "find '%s' -type d -print0 | %s --null chmod 02775"
                                 % (self.env["CCACHE_DIR"], xargs)):
                             raise format.FailedDirectory(
                                 self.env["CCACHE_DIR"],
                                 "failed correcting perms for CCACHE_DIR")
 
                         if 0 != spawn_bash(
-                            "find '%s' -type f -print0 | %s --null chmod 0775"
+                                "find '%s' -type f -print0 | %s --null chmod 0775"
                                 % (self.env["CCACHE_DIR"], xargs)):
                             raise format.FailedDirectory(
                                 self.env["CCACHE_DIR"],
@@ -785,17 +781,16 @@ class buildable(ebd, setup_mixin, format.build):
         if self.userpriv:
             try:
                 os.chown(self.env["WORKDIR"], portage_uid, -1)
-            except OSError as oe:
+            except OSError as e:
                 raise_from(format.GenericBuildError(
                     "failed forcing %i uid for WORKDIR: %s" %
-                        (portage_uid, str(oe))))
+                        (portage_uid, e)))
         return self._generic_phase("unpack", True, True)
 
     compile = pretty_docs(
         observer.decorate_build_method("compile")(
-            post_curry(
-            ebd._generic_phase, "compile", True, True)),
-            "run the compile phase (maps to src_compile)")
+            post_curry(ebd._generic_phase, "compile", True, True)),
+        "run the compile phase (maps to src_compile)")
 
     @observer.decorate_build_method("install")
     def install(self):
@@ -822,8 +817,8 @@ class buildable(ebd, setup_mixin, format.build):
         :return: :obj:`pkgcore.ebuild.ebuild_built.package` instance
         """
         factory = ebuild_built.fake_package_factory(self._built_class)
-        return factory.new_package(self.pkg,
-            self.env["IMAGE"], pjoin(self.env["T"], "environment"))
+        return factory.new_package(
+            self.pkg, self.env["IMAGE"], pjoin(self.env["T"], "environment"))
 
 
 class binpkg_localize(ebd, setup_mixin, format.build):
@@ -834,13 +829,13 @@ class binpkg_localize(ebd, setup_mixin, format.build):
     _built_class = ebuild_built.package
 
     def __init__(self, domain, pkg, **kwargs):
-        format.build.__init__(self, domain, pkg, {}, observer=kwargs.get("observer",None))
+        format.build.__init__(self, domain, pkg, {}, observer=kwargs.get("observer", None))
         ebd.__init__(self, pkg, **kwargs)
         if self.eapi_obj.options.has_merge_type:
             self.env["MERGE_TYPE"] = "binpkg"
 
     def finalize(self):
-        return MutatedPkg(self.pkg, {"environment":self.get_env_source()})
+        return MutatedPkg(self.pkg, {"environment": self.get_env_source()})
 
 
 class ebuild_mixin(object):
@@ -879,11 +874,13 @@ class ebuild_mixin(object):
             start = time.time()
             ret = run_generic_phase(
                 pkg, "pretend", env, userpriv=True, sandbox=True, extra_handlers=commands)
-            logger.debug("pkg_pretend sanity check for %s took %2.2f seconds",
+            logger.debug(
+                "pkg_pretend sanity check for %s took %2.2f seconds",
                 pkg.cpvstr, time.time() - start)
             return ret
         except format.GenericBuildError as e:
-            logger.error("pkg_pretend sanity check for %s failed with exception %r"
+            logger.error(
+                "pkg_pretend sanity check for %s failed with exception %r"
                 % (pkg.cpvstr, e))
             return False
         finally:
@@ -908,7 +905,8 @@ class src_operations(ebuild_mixin, format.build_operations):
         if format_options is None:
             format_options = {}
         allow_fetching = format_options.get("allow_fetching", False)
-        return buildable(self.domain, self.pkg, verified_files,
+        return buildable(
+            self.domain, self.pkg, verified_files,
             self._eclass_cache,
             use_override=self._use_override,
             clean=clean, allow_fetching=allow_fetching)
@@ -938,7 +936,8 @@ class built_operations(ebuild_mixin, format.operations):
     def _cmd_implementation_localize(self, observer, force=False):
         if not force and getattr(self.pkg, '_is_from_source', False):
             return self.pkg
-        self._localized_ebd = op = binpkg_localize(self.domain, self.pkg, clean=False,
+        self._localized_ebd = op = binpkg_localize(
+            self.domain, self.pkg, clean=False,
             initial_env=self._initial_env, env_data_source=self.pkg.environment,
             observer=observer)
         return op.finalize()
@@ -955,7 +954,8 @@ class built_operations(ebuild_mixin, format.operations):
         return True
 
     def _cmd_implementation_configure(self, observer):
-        misc = misc_operations(self.domain, self.pkg, env_data_source=self.pkg.environment, clean=True)
+        misc = misc_operations(
+            self.domain, self.pkg, env_data_source=self.pkg.environment, clean=True)
         try:
             misc.start()
             misc.configure()

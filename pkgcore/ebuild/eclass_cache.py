@@ -108,8 +108,8 @@ class cache(base):
             if not y.endswith(".eclass"):
                 continue
             ys = y[:-eclass_len]
-            ec[intern(ys)] = LazilyHashedPath(pjoin(self.eclassdir, y),
-                                              eclassdir=self.eclassdir)
+            ec[intern(ys)] = LazilyHashedPath(
+                pjoin(self.eclassdir, y), eclassdir=self.eclassdir)
         return ImmutableDict(ec)
 
 
@@ -138,8 +138,7 @@ class StackedCaches(base):
                 "%s requires at least two eclass_caches" % self.__class__)
 
         kwds.setdefault("eclassdir", caches[0].eclassdir)
-        kwds.setdefault("location",
-            os.path.dirname(kwds["eclassdir"].rstrip(os.path.sep)))
+        kwds.setdefault("location", os.path.dirname(kwds["eclassdir"].rstrip(os.path.sep)))
         self._caches = caches
         base.__init__(self, **kwds)
 

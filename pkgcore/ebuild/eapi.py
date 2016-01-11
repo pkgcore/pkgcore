@@ -12,54 +12,54 @@ demandload(
 
 eapi_optionals = mappings.ImmutableDict({
     # Controls whether -r is allowed for dodoc
-    "dodoc_allow_recursive":False,
+    "dodoc_allow_recursive": False,
 
     # Controls whether doins recurses symlinks
-    "doins_allow_symlinks":False,
+    "doins_allow_symlinks": False,
 
     # Controls the language awareness of doman; see PMS
-    "doman_language_detect":False,
+    "doman_language_detect": False,
 
     # Controls whether -i18n option is allowed.
-    "doman_language_override":False,
+    "doman_language_override": False,
 
     # Controls --disable-silent-rules passing for econf.
-    'econf_disable_silent_rules':False,
+    'econf_disable_silent_rules': False,
 
     # Controls --disable-dependency-tracking passing for econf.
-    'econf_disable_dependency_tracking':False,
+    'econf_disable_dependency_tracking': False,
 
     # Controls whether an ebuild_phase function exists for ebuild consumption
-    'ebuild_phase_func':False,
+    'ebuild_phase_func': False,
 
     # Controls whether REPLACING vars are exported to ebuilds; see PMS.
-    "exports_replacing":False,
+    "exports_replacing": False,
 
     # Controls whether MERGE vars are exported to ebuilds; see PMS.
-    "has_merge_type":False,
+    "has_merge_type": False,
 
     # Controls whether REQUIRED_USE is supported, enforcing constraints on
     # allowed use configuration states
-    "has_required_use":False,
+    "has_required_use": False,
 
     # Controls whether AA env var is exported to ebuilds; this is a flattened
     # listing of each filename in SRC_URI
-    "has_AA":False,
+    "has_AA": False,
 
     # Controls whether KV (kernel version; see PMS for details) is exported
-    "has_KV":False,
+    "has_KV": False,
 
     # Controls whether or not pkgcore, or extensions loaded, actually fully support
     # this EAPI.
-    'is_supported':True,
+    'is_supported': True,
 
     # Controls whether new* style bash functions can take their content input from
     # stdin, rather than an explicit ondisk file.
-    'new_reads_stdin':False,
+    'new_reads_stdin': False,
 
     # Controls whether this EAPI supports prefix related variables/settings; prefix
     # awareness basically.  See PMS for full details.
-    "prefix_capable":True,
+    "prefix_capable": True,
 
     # Controls whether profile-defined IUSE injection is supported.
     "profile_iuse_injection": False,
@@ -69,25 +69,25 @@ eapi_optionals = mappings.ImmutableDict({
 
     # Controls whether SLOT values can actually be multi-part; see PMS EAPI5.  This is
     # related to ABI breakage detection.
-    'sub_slotting':False,
+    'sub_slotting': False,
 
     # Controls whether REQUIRED_USE supports the ?? operator.
-    'required_use_one_of':False,
+    'required_use_one_of': False,
 
     # Controls whether SRC_URI supports the '->' operator for url filename renaming.
-    "src_uri_renames":False,
+    "src_uri_renames": False,
 
     # Controls whether or not use dependency atoms are able to control their enforced
     # value relative to another; standard use deps just enforce either on or off; EAPIs
     # supporting this allow syntax that can enforce (for example) X to be on if Y is on.
     # See PMS EAPI4 for full details.
-    "transitive_use_atoms":False,
+    "transitive_use_atoms": False,
 
     # Controls whether or DEFINED_PHASES is mandated for this EAPI; if so, then we can
     # trust the cache definition and skip invoking those phases if they're not defined.
     # If the EAPI didn't mandate this var, then we can do our inference, but generally will
     # invoke the phase in the absense of that metadata var since we have no other choice.
-    "trust_defined_phases_cache":True,
+    "trust_defined_phases_cache": True,
 })
 
 
@@ -109,8 +109,8 @@ class EAPI(object):
         sf(self, "magic", magic)
 
         sf(self, "phases", mappings.ImmutableDict(phases))
-        sf(self, "phases_rev", mappings.ImmutableDict((v, k) for k,v in
-            self.phases.iteritems()))
+        sf(self, "phases_rev", mappings.ImmutableDict((v, k) for k, v in
+           self.phases.iteritems()))
 
         # we track the phases that have a default implementation-
         # this is primarily due to DEFINED_PHASES cache values
@@ -148,7 +148,7 @@ class EAPI(object):
 
     @classmethod
     def get_unsupported_eapi(cls, magic):
-        return cls(magic, (), (), (), (), (), {'is_supported':False})
+        return cls(magic, (), (), (), (), (), {'is_supported': False})
 
     @klass.jit_attr
     def atom_kls(self):
@@ -200,14 +200,17 @@ def convert_bool_to_bash_bool(val):
     return str(bool(val)).lower()
 
 # Note that pkg_setup is forced by default since this is how our env setup occurs.
-common_default_phases = tuple(shorten_phase_name(x)
-    for x in ("pkg_setup", "src_unpack", "src_compile", "src_test", "pkg_nofetch"))
+common_default_phases = tuple(
+    shorten_phase_name(x) for x in
+    ("pkg_setup", "src_unpack", "src_compile", "src_test", "pkg_nofetch"))
 
-common_phases = ("pkg_setup", "pkg_config", "pkg_info", "pkg_nofetch",
+common_phases = (
+    "pkg_setup", "pkg_config", "pkg_info", "pkg_nofetch",
     "pkg_prerm", "pkg_postrm", "pkg_preinst", "pkg_postinst",
     "src_unpack", "src_compile", "src_test", "src_install")
 
-common_mandatory_metadata_keys = ("DESCRIPTION", "HOMEPAGE", "IUSE",
+common_mandatory_metadata_keys = (
+    "DESCRIPTION", "HOMEPAGE", "IUSE",
     "KEYWORDS", "LICENSE", "SLOT", "SRC_URI")
 
 common_metadata_keys = common_mandatory_metadata_keys + (
@@ -229,7 +232,8 @@ common_env_optionals = mappings.ImmutableDict(dict.fromkeys(
     convert_bool_to_bash_bool))
 
 
-eapi0 = EAPI.register("0",
+eapi0 = EAPI.register(
+    "0",
     mk_phase_func_map(*common_phases),
     mk_phase_func_map(*common_default_phases),
     common_metadata_keys,
@@ -244,7 +248,8 @@ eapi0 = EAPI.register("0",
     ebd_env_options=common_env_optionals,
 )
 
-eapi1 = EAPI.register("1",
+eapi1 = EAPI.register(
+    "1",
     eapi0.phases,
     eapi0.default_phases,
     eapi0.metadata_keys,
@@ -254,7 +259,8 @@ eapi1 = EAPI.register("1",
     ebd_env_options=eapi0.ebd_env_options,
 )
 
-eapi2 = EAPI.register("2",
+eapi2 = EAPI.register(
+    "2",
     combine_dicts(eapi1.phases, mk_phase_func_map("src_prepare", "src_configure")),
     eapi1.default_phases.union(map(shorten_phase_name, ["src_prepare", "src_configure"])),
     eapi1.metadata_keys,
@@ -268,7 +274,8 @@ eapi2 = EAPI.register("2",
     ebd_env_options=eapi1.ebd_env_options,
 )
 
-eapi3 = EAPI.register("3",
+eapi3 = EAPI.register(
+    "3",
     eapi2.phases,
     eapi2.default_phases,
     eapi2.metadata_keys,
@@ -280,7 +287,8 @@ eapi3 = EAPI.register("3",
     ebd_env_options=eapi2.ebd_env_options,
 )
 
-eapi4 = EAPI.register("4",
+eapi4 = EAPI.register(
+    "4",
     combine_dicts(eapi3.phases, mk_phase_func_map("pkg_pretend")),
     eapi3.default_phases.union([shorten_phase_name('src_install')]),
     eapi3.metadata_keys | frozenset(["REQUIRED_USE"]),
@@ -300,7 +308,8 @@ eapi4 = EAPI.register("4",
     ebd_env_options=eapi3.ebd_env_options,
 )
 
-eapi5 = EAPI.register("5",
+eapi5 = EAPI.register(
+    "5",
     eapi4.phases,
     eapi4.default_phases,
     eapi4.metadata_keys,

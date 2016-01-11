@@ -205,7 +205,9 @@ def dump_main(options, out, err):
         names = config.sections()
     else:
         names = getattr(config, options.typename).iterkeys()
-    for name in sorted(names):
+    for i, name in enumerate(sorted(names)):
+        if i > 0:
+            out.write()
         try:
             section = config.collapse_named_section(name)
         except errors.CollapseInheritOnly:
@@ -215,7 +217,6 @@ def dump_main(options, out, err):
         out.write('%r {' % (name,))
         dump_section(section, out)
         out.write('}')
-        out.write()
 
 
 configurables = subparsers.add_parser(

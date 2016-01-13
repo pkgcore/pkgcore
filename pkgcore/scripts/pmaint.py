@@ -171,11 +171,11 @@ def update_use_local_desc(repo, out, err):
     use_local_desc = pjoin(repo.location, "profiles", "use.local.desc")
     f = None
     try:
-        f = AtomicWriteFile(use_local_desc)
+        f = AtomicWriteFile(use_local_desc, binary=True)
         f.write(textwrap.dedent('''\
             # This file is deprecated as per GLEP 56 in favor of metadata.xml.
             # Please add your descriptions to your package's metadata.xml ONLY.
-            # * generated automatically using pmaint *\n\n'''))
+            # * generated automatically using pmaint *\n\n''').encode('utf8'))
         res = {}
         for p in repo:
             try:
@@ -189,7 +189,7 @@ def update_use_local_desc(repo, out, err):
                 err.write("caught exception '%s' while processing '%s'" % (e, p))
                 ret = os.EX_DATAERR
         for k, v in sorted(res.items()):
-            f.write('%s - %s\n' % (':'.join(k), v))
+            f.write(('%s - %s\n' % (':'.join(k), v)).encode('utf8'))
         f.close()
     except IOError as e:
         err.write("Unable to update use.local.desc file '%s': %s" % (use_local_desc, e.strerror))

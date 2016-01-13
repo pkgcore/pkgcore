@@ -250,11 +250,11 @@ class PortageFormatter(CountingFormatter):
         op_type = op.desc
         op_chars = [[' '] for x in xrange(7)]
         if 'fetch' in op.pkg.restrict:
-            fetched = [out.fg('red'), out.bold, 'F', out.reset]
-            for fetchable in op.pkg.fetchables:
-                if not os.path.isfile(pjoin(self.distdir, fetchable.filename)):
-                    break
+            if all(os.path.isfile(pjoin(self.distdir, f.filename))
+                   for f in op.pkg.fetchables):
                 fetched = [out.fg('green'), out.bold, 'f', out.reset]
+            else:
+                fetched = [out.fg('red'), out.bold, 'F', out.reset]
             op_chars[3] = fetched
 
         if op.desc == "add":

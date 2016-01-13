@@ -455,13 +455,16 @@ class TestPortageFormatter(BaseFormatterTest, TestCase):
             Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6', Reset(),
             ' ', Color('fg', 'blue'), Bold(), '[1.0.1-r1]', Reset())
 
+    def test_fetch_restrict(self):
+        # no fetchables
         self.formatter.format(FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6', restrict='fetch')))
         self.assertOut('[', Color('fg', 'green'), 'ebuild', Reset(),
             '  ', Color('fg', 'green'), Bold(), 'N', Reset(),
-            ' ', Color('fg', 'red'), Bold(), 'F', Reset(), '   ] ',
+            ' ', Color('fg', 'green'), Bold(), 'f', Reset(), '   ] ',
             Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6', Reset())
 
-        # TODO: add test for fetch restricted ebuild with already downloaded files
+        # TODO: add tests for fetch restricted ebuilds with required fetchables
+        # for both pre-fetched and missing fetchables cases
 
     def test_changed_use(self):
         self.formatter.format(

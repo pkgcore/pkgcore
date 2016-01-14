@@ -23,7 +23,7 @@ PKGCORE_BASE_PATH  = osp.dirname(osp.abspath(__file__))
 SYSTEM_CONF_FILE   = '/etc/pkgcore.conf'
 USER_CONF_FILE     = osp.expanduser('~/.pkgcore.conf')
 
-SANDBOX_BINARY     = '/usr/bin/sandbox'
+SANDBOX_BINARY     = find_binary('sandbox')
 BASH_BINARY        = find_binary('bash')
 COPY_BINARY        = find_binary('cp')
 

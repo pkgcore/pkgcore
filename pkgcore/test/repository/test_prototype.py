@@ -18,11 +18,11 @@ from pkgcore.test import TestCase, malleable_obj
 class TestPrototype(TestCase):
 
     def setUp(self):
-        # we an orderreddict here specifically to trigger any sorter
+        # we use an OrderedDict here specifically to trigger any sorter
         # related bugs
-        d = {"dev-util":{
-                "diffball":["1.0", "0.7"], "bsdiff":["0.4.1", "0.4.2"]},
-            "dev-lib":{"fake":["1.0", "1.0-r1"]}}
+        d = {
+            "dev-util": {"diffball": ["1.0", "0.7"], "bsdiff": ["0.4.1", "0.4.2"]},
+            "dev-lib": {"fake": ["1.0", "1.0-r1"]}}
         self.repo = SimpleTree(
             OrderedDict((k, d[k]) for k in sorted(d, reverse=True)))
 
@@ -43,14 +43,15 @@ class TestPrototype(TestCase):
             sorted(["dev-lib", "dev-util"]))
         self.assertEqual(
             sorted(map("/".join, self.repo.versions)),
-                sorted([x for x in
-                ["dev-util/diffball", "dev-util/bsdiff", "dev-lib/fake"]]))
+            sorted([x for x in ["dev-util/diffball", "dev-util/bsdiff", "dev-lib/fake"]]))
         self.assertEqual(
-            sorted("%s/%s-%s" % (cp[0], cp[1], v)
+            sorted(
+                "%s/%s-%s" % (cp[0], cp[1], v)
                 for cp, t in self.repo.versions.iteritems() for v in t),
-            sorted(["dev-util/diffball-1.0", "dev-util/diffball-0.7",
-                    "dev-util/bsdiff-0.4.1", "dev-util/bsdiff-0.4.2",
-                    "dev-lib/fake-1.0", "dev-lib/fake-1.0-r1"]))
+            sorted([
+                "dev-util/diffball-1.0", "dev-util/diffball-0.7",
+                "dev-util/bsdiff-0.4.1", "dev-util/bsdiff-0.4.2",
+                "dev-lib/fake-1.0", "dev-lib/fake-1.0-r1"]))
 
     def test_simple_query(self):
         a = atom("=dev-util/diffball-1.0")
@@ -73,12 +74,12 @@ class TestPrototype(TestCase):
         self.assertEqual(
             self.repo.match(packages.OrRestriction(rc, rp), sorter=sorted),
             sorted(versioned_CPV(x) for x in (
-                    "dev-util/diffball-0.7", "dev-util/diffball-1.0",
-                    "dev-util/bsdiff-0.4.1", "dev-util/bsdiff-0.4.2")))
+                "dev-util/diffball-0.7", "dev-util/diffball-1.0",
+                "dev-util/bsdiff-0.4.1", "dev-util/bsdiff-0.4.2")))
         self.assertEqual(
             sorted(self.repo.itermatch(packages.AndRestriction(rc, rp))),
             sorted(versioned_CPV(x) for x in (
-                    "dev-util/diffball-0.7", "dev-util/diffball-1.0")))
+                "dev-util/diffball-0.7", "dev-util/diffball-1.0")))
         self.assertEqual(
             sorted(self.repo),
             self.repo.match(packages.AlwaysTrue, sorter=sorted))
@@ -87,8 +88,8 @@ class TestPrototype(TestCase):
         self.assertEqual(
             sorted(self.repo, reverse=True),
             self.repo.match(packages.OrRestriction(
-                    rc, rp, packages.AlwaysTrue),
-                    sorter=partial(sorted, reverse=True)))
+                rc, rp, packages.AlwaysTrue),
+                sorter=partial(sorted, reverse=True)))
         rc2 = packages.PackageRestriction(
             "category", values.StrExactMatch("dev-lib"))
         self.assertEqual(
@@ -100,44 +101,44 @@ class TestPrototype(TestCase):
         self.assertEqual(
             sorted(self.repo.itermatch(packages.OrRestriction(rp, rc2))),
             sorted(versioned_CPV(x) for x in (
-                    "dev-util/diffball-0.7", "dev-util/diffball-1.0",
-                    "dev-lib/fake-1.0", "dev-lib/fake-1.0-r1")))
+                "dev-util/diffball-0.7", "dev-util/diffball-1.0",
+                "dev-lib/fake-1.0", "dev-lib/fake-1.0-r1")))
 
         # this is similar to the test above, but mixes a cat/pkg
         # candidate with a pkg candidate
         rp2 = packages.PackageRestriction(
             "package", values.StrExactMatch("fake"))
         r = packages.OrRestriction(atom("dev-util/diffball"), rp2)
-        self.assertEqual(sorted(self.repo.itermatch(r)),
-            sorted(versioned_CPV(x) for x in (
-                    "dev-util/diffball-0.7", "dev-util/diffball-1.0",
-                    "dev-lib/fake-1.0", "dev-lib/fake-1.0-r1")))
-
         self.assertEqual(
-            sorted(self.repo.itermatch(
-                    packages.OrRestriction(packages.AlwaysTrue, rp2))),
+            sorted(self.repo.itermatch(r)),
             sorted(versioned_CPV(x) for x in (
-                    "dev-util/diffball-0.7", "dev-util/diffball-1.0",
-                    "dev-util/bsdiff-0.4.1", "dev-util/bsdiff-0.4.2",
-                    "dev-lib/fake-1.0", "dev-lib/fake-1.0-r1")))
-
-        self.assertEqual(
-            sorted(self.repo.itermatch(
-                packages.PackageRestriction('category',
-                    values.StrExactMatch('dev-util',negate=True)))),
-            sorted(versioned_CPV(x) for x in (
+                "dev-util/diffball-0.7", "dev-util/diffball-1.0",
                 "dev-lib/fake-1.0", "dev-lib/fake-1.0-r1")))
 
+        self.assertEqual(
+            sorted(self.repo.itermatch(
+                packages.OrRestriction(packages.AlwaysTrue, rp2))),
+            sorted(versioned_CPV(x) for x in (
+                "dev-util/diffball-0.7", "dev-util/diffball-1.0",
+                "dev-util/bsdiff-0.4.1", "dev-util/bsdiff-0.4.2",
+                "dev-lib/fake-1.0", "dev-lib/fake-1.0-r1")))
+
+        self.assertEqual(
+            sorted(self.repo.itermatch(
+                packages.PackageRestriction(
+                    'category', values.StrExactMatch('dev-util', negate=True)))),
+            sorted(versioned_CPV(x) for x in ("dev-lib/fake-1.0", "dev-lib/fake-1.0-r1")))
+
         obj = malleable_obj(livefs=False)
-        pkg_kls_override = post_curry(MutatedPkg, {'repo':obj})
+        pkg_kls_override = post_curry(MutatedPkg, {'repo': obj})
         self.assertEqual(
             sorted(self.repo.itermatch(
                 boolean.AndRestriction(
                     boolean.OrRestriction(
-                        packages.PackageRestriction("repo.livefs",
-                            values.EqualityMatch(False)),
-                        packages.PackageRestriction("category",
-                            values.StrExactMatch("virtual"))),
+                        packages.PackageRestriction(
+                            "repo.livefs", values.EqualityMatch(False)),
+                        packages.PackageRestriction(
+                            "category", values.StrExactMatch("virtual"))),
                     atom("dev-lib/fake")),
                 pkg_klass_override=pkg_kls_override)),
             sorted(versioned_CPV(x) for x in (
@@ -145,28 +146,27 @@ class TestPrototype(TestCase):
 
         self.assertEqual(
             sorted(self.repo.itermatch(
-                packages.PackageRestriction('category',
-                    values.StrExactMatch('dev-lib', negate=True),
-                        negate=True))),
+                packages.PackageRestriction(
+                    'category', values.StrExactMatch('dev-lib', negate=True),
+                    negate=True))),
             sorted(versioned_CPV(x) for x in (
                 "dev-lib/fake-1.0", "dev-lib/fake-1.0-r1")))
 
         self.assertEqual(
             sorted(self.repo.itermatch(
-                packages.PackageRestriction('category',
-                    values.StrExactMatch('dev-lib', negate=True),
-                        negate=True))),
+                packages.PackageRestriction(
+                    'category', values.StrExactMatch('dev-lib', negate=True),
+                    negate=True))),
             sorted(versioned_CPV(x) for x in (
                 "dev-lib/fake-1.0", "dev-lib/fake-1.0-r1")))
-
 
     def test_iter(self):
         self.assertEqual(
             sorted(self.repo),
             sorted(versioned_CPV(x) for x in (
-                    "dev-util/diffball-1.0", "dev-util/diffball-0.7",
-                    "dev-util/bsdiff-0.4.1", "dev-util/bsdiff-0.4.2",
-                    "dev-lib/fake-1.0", "dev-lib/fake-1.0-r1")))
+                "dev-util/diffball-1.0", "dev-util/diffball-0.7",
+                "dev-util/bsdiff-0.4.1", "dev-util/bsdiff-0.4.2",
+                "dev-lib/fake-1.0", "dev-lib/fake-1.0-r1")))
 
     def test_notify_remove(self):
         pkg = versioned_CPV("dev-util/diffball-1.0")
@@ -211,6 +211,7 @@ class TestPrototype(TestCase):
     def _simple_redirect_test(self, attr, arg1='=dev-util/diffball-1.0', arg2=None):
         l = []
         uniq_obj = object()
+
         def f(*a, **kw):
             a = a[1:-1]
             l.extend((a, kw))
@@ -225,16 +226,18 @@ class TestPrototype(TestCase):
             args.append(versioned_CPV(arg2))
         self.repo.frozen = False
         op = getattr(self.repo.operations, attr)
+
         def simple_check(op, args, **kw):
             l[:] = []
             self.assertEqual(op(*args, **kw), uniq_obj)
             self.assertEqual(len(l), 2)
             self.assertEqual(list(l[0]), args)
             self.assertTrue(l)
+
         self.assertTrue(self.repo.operations.supports(attr))
         simple_check(op, args)
         self.assertFalse(l[1])
-        simple_check(op, args)#, force=True)
+        simple_check(op, args)
         self.assertNotIn('force', l[1])
         self.repo.frozen = True
         self.assertFalse(self.repo.operations.supports(attr))

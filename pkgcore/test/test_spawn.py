@@ -2,11 +2,9 @@
 # License: GPL2/BSD
 
 import os
-import pwd
 import signal
 
 from snakeoil import process
-from snakeoil.currying import post_curry
 from snakeoil.test.mixins import TempDirMixin
 
 from pkgcore import spawn
@@ -54,11 +52,11 @@ class SpawnTest(TempDirMixin, TestCase):
 
     def test_get_output(self):
         filename = "pkgcore-spawn-getoutput.sh"
-        for r, s, text, args in [
-            [0, ["dar\n"], "echo dar\n", {}],
-            [0, ["dar"], "echo -n dar", {}],
-            [1, ["blah\n", "dar\n"], "echo blah\necho dar\nexit 1", {}],
-            [0, [], "echo dar 1>&2", {"fd_pipes": {1: 1, 2: self.null}}]]:
+        for r, s, text, args in (
+                [0, ["dar\n"], "echo dar\n", {}],
+                [0, ["dar"], "echo -n dar", {}],
+                [1, ["blah\n", "dar\n"], "echo blah\necho dar\nexit 1", {}],
+                [0, [], "echo dar 1>&2", {"fd_pipes": {1: 1, 2: self.null}}]):
 
             fp = self.generate_script(filename, text)
             self.assertEqual(
@@ -79,7 +77,6 @@ class SpawnTest(TempDirMixin, TestCase):
             "libsandbox.so",
             [os.path.basename(x.strip()) for x in ret[1][0].split()])
         os.unlink(fp)
-
 
     @capability_based(spawn.is_sandbox_capable, "sandbox binary wasn't found")
     def test_sandbox_empty_dir(self):
@@ -159,4 +156,3 @@ class SpawnTest(TempDirMixin, TestCase):
                 spawn.spawn_get_output(fp)[1][0].strip().lstrip("0"))
         finally:
             os.umask(old_umask)
-

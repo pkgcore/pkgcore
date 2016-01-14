@@ -37,18 +37,17 @@ class FakePkgBase(package):
         data.setdefault("KEYWORDS", ' '.join(default_arches))
 
         cpv = CPV(cpvstr, versioned=True)
-        package.__init__(self, shared, repo, cpv.category, cpv.package,
-            cpv.fullver)
+        package.__init__(self, shared, repo, cpv.category, cpv.package, cpv.fullver)
         object.__setattr__(self, "data", data)
 
 
 class FakeProfile(object):
 
     def __init__(self, masked_use={}, forced_use={},
-        provides={}, masks=[], virtuals={}, arch='x86', name='none'):
+                 provides={}, masks=[], virtuals={}, arch='x86', name='none'):
         self.provides_repo = SimpleTree(provides)
-        self.masked_use = {atom(k): v for k,v in masked_use.iteritems()}
-        self.forced_use = {atom(k): v for k,v in forced_use.iteritems()}
+        self.masked_use = {atom(k): v for k, v in masked_use.iteritems()}
+        self.forced_use = {atom(k): v for k, v in forced_use.iteritems()}
         self.masks = tuple(map(atom, masks))
         self.virtuals = SimpleTree(virtuals)
         self.arch = arch
@@ -77,9 +76,8 @@ class FakeRepo(object):
         for k, v in kwds.iteritems():
             setattr(self, k, v)
 
-    def itermatch(self, restrict, sorter=iter, pkg_klass_override=lambda x:x):
-        return ifilter(restrict.match,
-            imap(pkg_klass_override, sorter(self.pkgs)))
+    def itermatch(self, restrict, sorter=iter, pkg_klass_override=lambda x: x):
+        return ifilter(restrict.match, imap(pkg_klass_override, sorter(self.pkgs)))
 
     def match(self, restrict, **kwargs):
         return list(self.itermatch(restrict, **kwargs))
@@ -121,7 +119,7 @@ class DisablePlugins(object):
         self._plugin_orig_cache = plugin._cache.copy()
         if self.wipe_plugin_state:
             plugin._cache = {}
-        plugin.initialize_cache = lambda p:()
+        plugin.initialize_cache = lambda p: ()
 
     def tearDown(self):
         plugin._cache = self._plugin_orig_cache

@@ -361,6 +361,8 @@ def config_from_make_conf(location=None, profile_override=None, **kwargs):
         (defaults to /etc/portage)
     :param profile_override: profile to use instead of the current system
         profile, i.e. the target of the /etc/portage/make.profile symlink
+    :param configroot: location for various portage configuration files (defaults to /)
+    :param root: target root filesystem (defaults to /)
     """
 
     # this actually differs from portage parsing- we allow
@@ -369,7 +371,7 @@ def config_from_make_conf(location=None, profile_override=None, **kwargs):
 
     config_dir = location if location is not None else '/etc/portage'
     config_dir = pjoin(
-        os.environ.get('PORTAGE_CONFIGROOT', '/'), config_dir.lstrip('/'))
+        os.environ.get('PORTAGE_CONFIGROOT', kwargs.pop('configroot', '/')), config_dir.lstrip('/'))
 
     # this isn't preserving incremental behaviour for features/use
     # unfortunately
@@ -385,7 +387,7 @@ def config_from_make_conf(location=None, profile_override=None, **kwargs):
         make_conf, pjoin(config_dir, 'make.conf'), required=False,
         allow_sourcing=True, incrementals=True)
 
-    root = os.environ.get("ROOT", make_conf.get("ROOT", "/"))
+    root = os.environ.get("ROOT", kwargs.pop('root', make_conf.get("ROOT", "/")))
     gentoo_mirrors = [
         x.rstrip("/") + "/distfiles" for x in make_conf.pop("GENTOO_MIRRORS", "").split()]
 

@@ -68,28 +68,29 @@ def load_config(user_conf_file=USER_CONF_FILE,
                 debug=False, prepend_sources=(), append_sources=(),
                 skip_config_files=False, profile_override=None,
                 location=None, **kwargs):
+    """The main entry point for any code looking to use pkgcore.
+
+    Args:
+        user_conf_file (str): pkgcore user config file path
+        system_conf_file (str): system pkgcore config file path
+        profile_override (str): targeted profile instead of system setting
+        location (str): path to pkgcore config file or portage config directory
+        skip_config_files (str): don't attempt to load any config files
+
+    Returns:
+        :obj:`pkgcore.config.central.ConfigManager` instance: system config
     """
-    the main entry point for any code looking to use pkgcore.
-
-    :param user_conf_file: file to attempt to load, else defaults to trying to
-        load portage configs from /etc/portage
-    :param profile_override: targetted profile instead of system setting
-    :param location: path to pkgcore config file or portage config directory
-
-    :return: :obj:`pkgcore.config.central.ConfigManager` instance
-        representing the system config.
-    """
-
     configs = list(prepend_sources)
     configs.extend(get_plugins('global_config'))
     if not skip_config_files:
+        # load a pkgcore config file if one exists
         for config in (location, user_conf_file, system_conf_file):
             if config is not None and os.path.isfile(config):
                 with open(config) as f:
                     configs.append(cparser.config_from_file(f))
                 break
+        # otherwise load the portage config
         else:
-            # load portage config
             configs.append(config_from_make_conf(
                 location=location, profile_override=profile_override, **kwargs))
     configs.extend(append_sources)

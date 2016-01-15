@@ -3,7 +3,7 @@
 
 """make.conf translator.
 
-Converts portage configuration files into :obj:`pkgcore.config` form.
+Converts portage config files into :obj:`pkgcore.config` form.
 """
 
 __all__ = (
@@ -46,12 +46,15 @@ def my_convert_hybrid(manager, val, arg_type):
 @configurable({'ebuild_repo': 'ref:repo', 'vdb': 'ref:repo',
                'profile': 'ref:profile'}, typename='pkgset')
 def SecurityUpgradesViaProfile(ebuild_repo, vdb, profile):
-    """
-    generate a GLSA vuln. pkgset limited by profile
+    """generate a GLSA vuln. pkgset limited by profile
 
-    :param ebuild_repo: :obj:`pkgcore.ebuild.repository.UnconfiguredTree` instance
-    :param vdb: :obj:`pkgcore.repository.prototype.tree` instance that is the livefs
-    :param profile: :obj:`pkgcore.ebuild.profiles` instance
+    Args:
+        ebuild_repo (:obj:`pkgcore.ebuild.repository.UnconfiguredTree`): target repo
+        vdb (:obj:`pkgcore.repository.prototype.tree`): livefs
+        profile (:obj:`pkgcore.ebuild.profiles`): target profile
+
+    Returns:
+        pkgset of relevant security upgrades
     """
     arch = profile.arch
     if arch is None:
@@ -253,10 +256,11 @@ def load_make_conf(vars_dict, path, allow_sourcing=False, required=True,
                    incrementals=False):
     """parse make.conf files
 
-    :param vars_dict: dictionary to add parsed variables to
-    :param path: path to the make.conf which can be a regular file or
-        directory, if a directory is passed all the non-hidden files within
-        that directory are parsed in alphabetical order.
+    Args:
+        vars_dict (dict): dictionary to add parsed variables to
+        path (str): path to the make.conf which can be a regular file or
+            directory, if a directory is passed all the non-hidden files within
+            that directory are parsed in alphabetical order.
     """
     sourcing_command = None
     if allow_sourcing:
@@ -284,9 +288,14 @@ def load_make_conf(vars_dict, path, allow_sourcing=False, required=True,
 def load_repos_conf(path):
     """parse repos.conf files
 
-    :param path: path to the repos.conf which can be a regular file or
-        directory, if a directory is passed all the non-hidden files within
-        that directory are parsed in alphabetical order.
+    Args:
+        path (str): path to the repos.conf which can be a regular file or
+            directory, if a directory is passed all the non-hidden files within
+            that directory are parsed in alphabetical order.
+
+    Returns:
+        dict: global repo settings
+        dict: repo settings
     """
     defaults = {}
     repos = {}
@@ -352,17 +361,22 @@ def load_repos_conf(path):
 
 
 @configurable({'config_dir': 'str'}, typename='configsection')
-@errors.ParsingError.wrap_exception("while loading portage configuration")
+@errors.ParsingError.wrap_exception("while loading portage config")
 def config_from_make_conf(location=None, profile_override=None, **kwargs):
-    """
-    generate a config using portage's configuration files
+    """generate a config using portage's config files
 
-    :param location: path to the portage configuration directory,
-        (defaults to /etc/portage)
-    :param profile_override: profile to use instead of the current system
-        profile, i.e. the target of the /etc/portage/make.profile symlink
-    :param configroot: location for various portage configuration files (defaults to /)
-    :param root: target root filesystem (defaults to /)
+    Args:
+        location (str): path to the portage config directory,
+            (defaults to /etc/portage)
+        profile_override (str): profile to use instead of the current system
+            profile, i.e. the target of the /etc/portage/make.profile symlink
+        configroot (str): location for various portage config files (defaults to /)
+        root (str): target root filesystem (defaults to /)
+        buildpkg (bool): forcibly disable/enable building binpkgs, otherwise
+            FEATURES=buildpkg from make.conf is used
+
+    Returns:
+        dict: config settings
     """
 
     # this actually differs from portage parsing- we allow
@@ -371,10 +385,10 @@ def config_from_make_conf(location=None, profile_override=None, **kwargs):
 
     config_dir = location if location is not None else '/etc/portage'
     config_dir = pjoin(
-        os.environ.get('PORTAGE_CONFIGROOT', kwargs.pop('configroot', '/')), config_dir.lstrip('/'))
+        os.environ.get('PORTAGE_CONFIGROOT', kwargs.pop('configroot', '/')),
+        config_dir.lstrip('/'))
 
-    # this isn't preserving incremental behaviour for features/use
-    # unfortunately
+    # this isn't preserving incremental behaviour for features/use unfortunately
 
     make_conf = {}
     try:
@@ -500,7 +514,7 @@ def config_from_make_conf(location=None, profile_override=None, **kwargs):
         'vuln', SecurityUpgradesViaProfile.pkgcore_config_type.typename)
 
     # binpkg.
-    buildpkg = 'buildpkg' in features or kwargs.get('buildpkg', False)
+    buildpkg = 'buildpkg' in features or kwargs.pop('buildpkg', False)
     pkgdir = os.environ.get("PKGDIR", make_conf.pop('PKGDIR', None))
     if pkgdir is not None:
         try:

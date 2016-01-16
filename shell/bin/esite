@@ -1,0 +1,21 @@
+#!/usr/bin/env pkgcore-sh-helper
+# open a package's homepage in a browser
+#
+# usage: esite pkg [repo]
+# example: esite sys-devel/gcc gentoo
+#
+# If a package has more than one homepage listed the first is selected.
+#
+# Note that this requires xdg-utils to be installed for xdg-open.
+
+homepage=$(_pkgattr homepage "$@")
+# only select the first homepage in a list
+homepage=${homepage%% *}
+[[ -z ${homepage} ]] && return 1
+
+if ! _which xdg-open; then
+	echo "xdg-open missing, install xdg-utils"
+	return 1
+fi
+
+(xdg-open "${homepage}" &>/dev/null &)

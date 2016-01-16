@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+SCRIPT=$1
+shift
+
+SHELL=$(ps -p $(ps -o ppid= -p $$) -ocomm=)
+if [[ ${SHELL} != "bash" && ${SHELL} != "zsh" ]]; then
+	echo "$(basename ${SCRIPT}): unsupported shell: ${SHELL}"
+	exit 1
+fi
+
+exec ${SHELL} -c "source \"$(dirname ${0})/../${SHELL}/pkgcore.${SHELL}\" && source \"${SCRIPT}\" "$@""

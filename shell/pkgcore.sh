@@ -18,6 +18,7 @@ fi
 source "${SCRIPTDIR}"/${PKGSHELL}/pkgcore.${PKGSHELL}
 
 export PATH=${SCRIPTDIR}/bin:${PATH}
+unset PKGSHELL SCRIPTDIR
 
 # change to a package directory
 #

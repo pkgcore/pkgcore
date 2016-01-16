@@ -9,7 +9,13 @@ if [[ ${PKGSHELL} != "bash" && ${PKGSHELL} != "zsh" ]]; then
 	echo "$(basename ${0}): unsupported shell: ${PKGSHELL}" >&2
 	exit 1
 fi
-source "$(dirname ${0})/${PKGSHELL}/pkgcore.${PKGSHELL}"
+
+if [[ ${PKGSHELL} == "bash" ]]; then
+	SCRIPTDIR=$(dirname ${BASH_SOURCE[0]})
+else
+	SCRIPTDIR=$(dirname ${(%):-%N})
+fi
+source "${SCRIPTDIR}/${PKGSHELL}/pkgcore.${PKGSHELL}"
 
 export PATH="$(dirname ${0})"/bin:${PATH}
 

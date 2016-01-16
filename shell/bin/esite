@@ -8,10 +8,16 @@
 #
 # Note that this requires xdg-utils to be installed for xdg-open.
 
-homepage=$(_pkgattr homepage "$@")
-# only select the first homepage in a list
-homepage=${homepage%% *}
-[[ -z ${homepage} ]] && return 1
+homepage=( $(_pkgattr homepage "$@") )
+
+if [[ -z ${homepage[@]} ]]; then
+	exit 1
+elif [[ ${#homepage[@]} -gt 1 ]]; then
+	echo "Multiple homepages found:"
+	choice=$(_choose "${homepage[@]}")
+	[[ $? -ne 0 ]] && exit 1
+	homepage=${homepage[choice]}
+fi
 
 if ! _which xdg-open; then
 	echo "xdg-open missing, install xdg-utils"

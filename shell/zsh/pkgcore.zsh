@@ -3,7 +3,7 @@
 
 # get an attribute for a given package
 _pkgattr() {
-	local pkg_attr=$1 pkg_atom=$2 repo=$3 p
+	local pkg_attr=$1 pkg_atom=$2 repo=$3
 	local -a pkg
 
 	if [[ -z ${pkg_atom} ]]; then
@@ -21,17 +21,27 @@ _pkgattr() {
 		return 1
 	fi
 
+	local choice
 	if [[ -z ${pkg[@]} ]]; then
 		echo "No matches found." >&2
 		return 1
 	elif [[ ${#pkg[@]} > 1 ]]; then
 		echo "Multiple matches found:" >&2
+		local p i=1
 		for p in ${pkg[@]}; do
-			echo ${p%%:*} >&2
+			echo "  ${i}: ${p%%:*}" >&2
+			(( i++ ))
 		done
-		return 1
+		echo -n "Please select one: " >&2
+		read choice
+		if [[ ${choice} -lt 1 || ${choice} -gt ${#pkg} ]]; then
+			echo "Invalid choice!" >&2
+			exit 1
+		fi
+	else
+		choice=1
 	fi
-	echo ${pkg#*:}
+	echo ${pkg[${choice}]#*:}
 }
 
 # cross-shell compatible PATH searching

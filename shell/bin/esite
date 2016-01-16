@@ -18,4 +18,4 @@ if ! _which xdg-open; then
 	return 1
 fi
 
-(xdg-open "${homepage}" &>/dev/null &)
+xdg-open "${homepage}" &>/dev/null &

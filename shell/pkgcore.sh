@@ -15,9 +15,9 @@ if [[ ${PKGSHELL} == "bash" ]]; then
 else
 	SCRIPTDIR=$(dirname ${(%):-%N})
 fi
-source "${SCRIPTDIR}/${PKGSHELL}/pkgcore.${PKGSHELL}"
+source "${SCRIPTDIR}"/${PKGSHELL}/pkgcore.${PKGSHELL}
 
-export PATH="$(dirname ${0})"/bin:${PATH}
+export PATH=${SCRIPTDIR}/bin:${PATH}
 
 # change to a package directory
 #

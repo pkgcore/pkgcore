@@ -366,13 +366,13 @@ def config_from_make_conf(location=None, profile_override=None, **kwargs):
     """generate a config using portage's config files
 
     Args:
-        location (str): path to the portage config directory,
+        location (optional[str]): path to the portage config directory,
             (defaults to /etc/portage)
-        profile_override (str): profile to use instead of the current system
+        profile_override (optional[str]): profile to use instead of the current system
             profile, i.e. the target of the /etc/portage/make.profile symlink
-        configroot (str): location for various portage config files (defaults to /)
-        root (str): target root filesystem (defaults to /)
-        buildpkg (bool): forcibly disable/enable building binpkgs, otherwise
+        configroot (optional[str]): location for various portage config files (defaults to /)
+        root (optional[str]): target root filesystem (defaults to /)
+        buildpkg (optional[bool]): forcibly disable/enable building binpkgs, otherwise
             FEATURES=buildpkg from make.conf is used
 
     Returns:

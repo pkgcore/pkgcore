@@ -71,11 +71,11 @@ def load_config(user_conf_file=USER_CONF_FILE,
     """The main entry point for any code looking to use pkgcore.
 
     Args:
-        user_conf_file (str): pkgcore user config file path
-        system_conf_file (str): system pkgcore config file path
-        profile_override (str): targeted profile instead of system setting
-        location (str): path to pkgcore config file or portage config directory
-        skip_config_files (str): don't attempt to load any config files
+        user_conf_file (optional[str]): pkgcore user config file path
+        system_conf_file (optional[str]): system pkgcore config file path
+        profile_override (optional[str]): targeted profile instead of system setting
+        location (optional[str]): path to pkgcore config file or portage config directory
+        skip_config_files (optional[str]): don't attempt to load any config files
 
     Returns:
         :obj:`pkgcore.config.central.ConfigManager` instance: system config

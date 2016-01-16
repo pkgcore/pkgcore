@@ -15,8 +15,24 @@ if [[ ${PKGSHELL} == "bash" ]]; then
 else
 	SCRIPTDIR=$(dirname ${(%):-%N})
 fi
-source "${SCRIPTDIR}"/${PKGSHELL}/pkgcore.${PKGSHELL}
 
+# choose from an array
+_choose() {
+	local choice x i=1
+	for x in $@; do
+		echo "  ${i}: ${x}" >&2
+		(( i++ ))
+	done
+	echo -n "Please select one: " >&2
+	read choice
+	if [[ ${choice} -lt 1 || ${choice} -gt ${#@} ]]; then
+		echo "Invalid choice!" >&2
+		return 1
+	fi
+	echo ${choice}
+}
+
+source "${SCRIPTDIR}"/${PKGSHELL}/pkgcore.${PKGSHELL}
 export PATH=${SCRIPTDIR}/bin:${PATH}
 unset PKGSHELL SCRIPTDIR
 

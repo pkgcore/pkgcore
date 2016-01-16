@@ -27,17 +27,8 @@ _pkgattr() {
 		return 1
 	elif [[ ${#pkg[@]} > 1 ]]; then
 		echo "Multiple matches found:" >&2
-		local p i=1
-		for p in ${pkg[@]}; do
-			echo "  ${i}: ${p%%:*}" >&2
-			(( i++ ))
-		done
-		echo -n "Please select one: " >&2
-		read choice
-		if [[ ${choice} -lt 1 || ${choice} -gt ${#pkg} ]]; then
-			echo "Invalid choice!" >&2
-			exit 1
-		fi
+		choice=$(_choose "${pkg[@]%%:*}")
+		[[ $? -ne 0 ]] && return 1
 		# bash array indexing starts at 0
 		(( choice-- ))
 	else

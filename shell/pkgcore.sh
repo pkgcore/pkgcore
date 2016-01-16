@@ -6,8 +6,8 @@
 
 PKGSHELL=$(ps -p $$ -ocomm=)
 if [[ ${PKGSHELL} != "bash" && ${PKGSHELL} != "zsh" ]]; then
-	echo "$(basename ${0}): unsupported shell: ${PKGSHELL}" >&2
-	exit 1
+	echo "pkgcore.sh: unsupported shell: ${PKGSHELL}" >&2
+	return 1
 fi
 
 if [[ ${PKGSHELL} == "bash" ]]; then

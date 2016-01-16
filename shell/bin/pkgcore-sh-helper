@@ -9,4 +9,4 @@ if [[ ${SHELL} != "bash" && ${SHELL} != "zsh" ]]; then
 	exit 1
 fi
 
-exec ${SHELL} -c "source \"$(dirname ${0})/../${SHELL}/pkgcore.${SHELL}\" && source \"${SCRIPT}\" "$@""
+exec ${SHELL} -c "source \"$(dirname ${0})\"/../pkgcore.sh && source \"${SCRIPT}\" "$@""

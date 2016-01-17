@@ -44,7 +44,7 @@ class SpawnTest(TempDirMixin, TestCase):
         if not os.path.isabs(filename):
             fp = os.path.join(self.dir, filename)
         with open(fp, "w") as f:
-            f.write("#!/bin/bash\n")
+            f.write("#!/usr/bin/env bash\n")
             f.write(text)
         os.chmod(fp, 0750)
         self.assertEqual(os.stat(fp).st_mode & 0750, 0750)

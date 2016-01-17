@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Test pkgcore upgrading between releases. Currently requires sudo, curl, git,
 # and pychroot to be installed.
@@ -61,7 +61,7 @@ cat <<-EOF >"${CHROOT}"/etc/portage/package.use/git
 EOF
 
 # drop sudo when network namespacing is added for non-root users
-sudo pychroot "${CHROOT}" /bin/bash -c "
+sudo pychroot "${CHROOT}" bash -c "
 	set -e
 	eselect python set python2.7
 	pushd ${PKGCORE_PATH}/bin >/dev/null

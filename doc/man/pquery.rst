@@ -12,7 +12,7 @@ Usage
 Another switch that could do with some extra explanation is ``--raw``.
 Specifying ``--raw`` makes your configuration not affect the results. Example::
 
- $ pquery --attr alldepends -m dbus --max -v
+ $ pquery --attr alldepends sys-apps/dbus --max -v
  * sys-apps/dbus-0.62-r1
      description: A message bus system, a simple way for applications to talk
                   to each other
@@ -31,7 +31,7 @@ This is the highest unmasked package on the system. Also notice there are no
 references to USE flags or qt in the dependencies. That is because qt is not in
 USE for this configuration, so those dependencies do not apply.::
 
- $ pquery --attr alldepends -m dbus --max -v --raw
+ $ pquery --attr alldepends sys-apps/dbus --max -v --raw
  * sys-apps/dbus-0.91
      description: Meta package for D-Bus
      homepage: http://dbus.freedesktop.org/
@@ -64,11 +64,11 @@ Other tool                   pquery                                    Comments
 ``equery check``             not implemented (yet?)
 ``equery depends python``    ``pquery --vdb --revdep dev-lang/python`` omitting ``--vdb`` makes it equivalent to ``equery depends -a``
 ``equery depgraph``          not implemented (yet?)
-``equery files python``      ``pquery --contents -m python``           ``--contents`` is an output option, can be combined with any restriction
+``equery files python``      ``pquery --contents python``              ``--contents`` is an output option, can be combined with any restriction
 ``equery hasuse python``     ``pquery --vdb --has-use python``
-``equery list python``       ``pquery --vdb -m '*python*'``            this is in ExtendedAtomSyntax
+``equery list python``       ``pquery --vdb '*python*'``               this is in ExtendedAtomSyntax
 ``equery size``              ``not implemented (yet?)``
-``equery uses python``       ``pquery --attr use -m python``           less information, but is an output option so mixes with any restriction
+``equery uses python``       ``pquery --attr use python``              less information, but is an output option so mixes with any restriction
 ``emerge -s python``         ``pquery -vnm '*python*'``
 ``emerge -S python``         ``pquery -vnS python``                    searches through longdescription (from metadata.xml) too
 no equivalent                ``pquery --license GPL-2 --vdb``          list all installed GPL-2 packages

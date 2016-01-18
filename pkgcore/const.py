@@ -18,8 +18,6 @@ try:
 except ImportError:
     _defaults = object()
 
-# the pkgcore package directory
-PKGCORE_BASE_PATH  = osp.dirname(osp.abspath(__file__))
 SYSTEM_CONF_FILE   = '/etc/pkgcore.conf'
 USER_CONF_FILE     = osp.expanduser('~/.pkgcore.conf')
 

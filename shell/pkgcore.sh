@@ -1,9 +1,9 @@
 # Common library of useful shell functions leveraging pkgcore functionality.
 # Source this file from your .bashrc, .zshrc, or similar.
 #
-# Note that most functions currently use non-POSIX features so bash or zsh are
-# basically required.
+# Only bash and zsh are currently supported.
 
+# determine interactive parent shell
 PKGSHELL=$(ps -p $$ -ocomm=)
 if [[ ${PKGSHELL} != "bash" && ${PKGSHELL} != "zsh" ]]; then
 	echo "pkgcore.sh: unsupported shell: ${PKGSHELL}" >&2
@@ -16,7 +16,10 @@ else
 	SCRIPTDIR=$(dirname ${(%):-%N})
 fi
 
-# choose from an array
+# interactively choose a value from an array
+#
+# usage: _choose "${array[@]}"
+# returns: index of array choice (assuming array indexing starts at 1)
 _choose() {
 	local choice x i=1
 	for x in $@; do
@@ -41,14 +44,15 @@ unset PKGSHELL SCRIPTDIR
 # usage: pcd pkg [repo]
 # example: pcd sys-devel/gcc gentoo
 #
-# This will change the CWD to the sys-devel/gcc directory in the gentoo repo.
-# Note that pkgcore's extended atom syntax is supported so one can also
-# abbreviate the command to `pcd gcc gentoo` assuming there is only one package
-# with a name of 'gcc' in the gentoo repo.
+# This will change the current working directory to the sys-devel/gcc directory
+# in the gentoo repo. Note that pkgcore's extended atom syntax is supported so
+# one can also abbreviate the command to `pcd gcc gentoo` assuming there is
+# only one package with a name of 'gcc' in the gentoo repo. In the case where
+# multiple matches are found the list of choices is returned to select from.
 #
-# Note that this should work for any local repo type on disk, e.g. one can also
-# use this to enter the repos for installed or binpkgs via 'vdb' or 'binpkg'
-# repo arguments, respectively.
+# This should work for any local repo type on disk, e.g. one can also use this
+# to enter the repos for installed or binpkgs via 'vdb' or 'binpkg' repo
+# arguments, respectively.
 pcd() {
 	local pkgpath=$(_pkgattr path "$@")
 	[[ -z ${pkgpath} ]] && return 1

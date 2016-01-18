@@ -1007,6 +1007,10 @@ def main(parser, args=None, outfile=None, errfile=None):
 
 
 def dump_error(raw_exc, msg=None, handle=sys.stderr, tb=None):
+    # force default output for exceptions
+    if getattr(handle, 'reset', False):
+        handle.write(handle.reset)
+
     prefix = ''
     if msg:
         prefix = ' '

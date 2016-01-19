@@ -447,12 +447,6 @@ class DelayedParse(DelayedValue):
         self.invokable()
 
 
-def parse_restriction(value):
-    # this should be eliminated, and directly accessing the actual function.
-    # note it throws ValueErrors...
-    return parserestrict.parse_match(value)
-
-
 class BooleanQuery(DelayedValue):
 
     def __init__(self, attrs, klass_type=None, priority=100, converter=None):
@@ -511,7 +505,7 @@ def make_query(parser, *args, **kwargs):
     if kwargs.get('type', False) is None:
         del kwargs['type']
     else:
-        kwargs.setdefault("type", parse_restriction)
+        kwargs.setdefault("type", parserestrict.parse_match)
     kwargs.setdefault("metavar", dest)
     final_priority = kwargs.pop("final_priority", None)
     final_converter = kwargs.pop("final_converter", None)

@@ -13,7 +13,7 @@ fi
 if [[ ${PKGSHELL} == "bash" ]]; then
 	SCRIPTDIR=$(dirname ${BASH_SOURCE[0]})
 else
-	SCRIPTDIR=$(dirname ${(%):-%N})
+	SCRIPTDIR=$(dirname ${(%):-%x})
 fi
 
 # interactively choose a value from an array

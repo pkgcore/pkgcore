@@ -46,11 +46,10 @@ class mysdist(pkgdist.sdist):
         # this is icky, but covers up cwd changing issues.
         cwd = os.getcwd()
 
-        # generate bash function lists so they don't need to be created at
-        # install time
-        write_pkgcore_ebd_funclists('/', 'bash', os.path.join(cwd, 'bin'))
-        shutil.copytree(os.path.join(cwd, 'bash', 'funcnames'),
-                        os.path.join(base_dir, 'bash', 'funcnames'))
+        # generate function lists so they don't need to be created on install
+        write_pkgcore_ebd_funclists('/', 'ebd', os.path.join(cwd, 'bin'))
+        shutil.copytree(os.path.join(cwd, 'ebd', 'funcnames'),
+                        os.path.join(base_dir, 'ebd', 'funcnames'))
 
         pkgdist.sdist.make_release_tree(self, base_dir, files)
 
@@ -248,7 +247,7 @@ class pkgcore_install(_base_install):
 
             # Generate ebd function lists used for environment filtering if
             # they don't exist (release tarballs contain pre-generated files).
-            if not os.path.exists(os.path.join(os.getcwd(), 'bash', 'funcnames')):
+            if not os.path.exists(os.path.join(os.getcwd(), 'ebd', 'funcnames')):
                 write_pkgcore_ebd_funclists(
                     root, os.path.join(target, EBD_INSTALL_OFFSET), self.install_scripts)
 
@@ -271,17 +270,17 @@ def write_pkgcore_ebd_funclists(root, target, scripts_dir):
     with open(os.devnull, 'w') as devnull:
         with open(os.path.join(ebd_dir, 'funcnames', 'global'), 'w') as f:
             if subprocess.call(
-                    [os.path.join(os.getcwd(), 'bash', 'generate_global_func_list.bash')],
+                    [os.path.join(os.getcwd(), 'ebd', 'generate_global_func_list.bash')],
                     cwd=ebd_dir, env=env, stdout=f):
                 raise DistutilsExecError("generating global function list failed")
 
     # generate EAPI specific function lists
-    eapis = (x.split('.')[0] for x in os.listdir(os.path.join(ebd_dir, 'eapi'))
+    eapis = (x.split('.')[0] for x in os.listdir(os.path.join(os.getcwd(), 'ebd', 'eapi'))
              if x.split('.')[0].isdigit())
     for eapi in sorted(eapis):
         with open(os.path.join(ebd_dir, 'funcnames', eapi), 'w') as f:
             if subprocess.call(
-                    [os.path.join(os.getcwd(), 'bash', 'generate_eapi_func_list.bash'), eapi],
+                    [os.path.join(os.getcwd(), 'ebd', 'generate_eapi_func_list.bash'), eapi],
                     cwd=ebd_dir, env=env, stdout=f):
                 raise DistutilsExecError(
                     "generating EAPI %s function list failed" % eapi)
@@ -384,7 +383,7 @@ setup(
     install_requires=['snakeoil>=0.6.6'],
     scripts=os.listdir('bin'),
     data_files=list(chain(
-        _get_data_mapping(EBD_INSTALL_OFFSET, 'bash'),
+        _get_data_mapping(EBD_INSTALL_OFFSET, 'ebd'),
         _get_data_mapping(CONFIG_INSTALL_OFFSET, 'config'),
         _get_data_mapping(
             os.path.join(LIBDIR_INSTALL_OFFSET, 'shell'), 'shell',

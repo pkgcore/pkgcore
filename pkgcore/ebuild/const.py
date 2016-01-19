@@ -26,7 +26,7 @@ metadata_keys = (
 
 WORLD_FILE = '/var/lib/portage/world'
 
-EAPI_BIN_PATH = const._GET_CONST('EBD_PATH', '%(DATA_PATH)s/bash')
+EAPI_BIN_PATH = const._GET_CONST('EBD_PATH', '%(DATA_PATH)s/ebd')
 EBUILD_DAEMON_PATH = pjoin(EAPI_BIN_PATH, "ebuild-daemon.bash")
 EBUILD_HELPERS_PATH = pjoin(EAPI_BIN_PATH, "helpers")
 

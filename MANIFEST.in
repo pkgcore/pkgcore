@@ -1,10 +1,10 @@
 include AUTHORS BSD GPL2 LICENSE *.py *.rst
 include build_api_docs.sh requirements.txt tox.ini .coveragerc
 recursive-include bin *
-recursive-include doc *
-recursive-include examples *
-recursive-include bash *
 recursive-include config *
+recursive-include doc *
+recursive-include ebd *
+recursive-include examples *
 recursive-include shell *
 recursive-include src *.[ch]
 global-exclude *.pyc *.pyo __pycache__

@@ -559,7 +559,7 @@ def bind_add_query(*args, **kwds):
     return f
 
 add_query(
-    nargs='*', dest='matches',
+    nargs='*', dest='matches', metavar='target',
     help="extended atom matching of pkgs")
 add_query(
     '--all', action='append_const', dest='all',

@@ -1,7 +1,5 @@
 #compdef pconfig pebuild pinspect pmaint pmerge pquery
 
-typeset -a common_main_args common_output_args common_args domain_common_args
-
 common_main_args=(
   '(- :)'--version'[show version information and exit]'
   '--add-config[modify an existing configuration section]'

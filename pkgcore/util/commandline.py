@@ -505,7 +505,9 @@ def make_query(parser, *args, **kwargs):
     if kwargs.get('type', False) is None:
         del kwargs['type']
     else:
-        kwargs.setdefault("type", parserestrict.parse_match)
+        def query(value):
+            return parserestrict.parse_match(value)
+        kwargs.setdefault("type", query)
     kwargs.setdefault("metavar", dest)
     final_priority = kwargs.pop("final_priority", None)
     final_converter = kwargs.pop("final_converter", None)

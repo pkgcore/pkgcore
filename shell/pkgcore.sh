@@ -11,9 +11,9 @@ if [[ ${PKGSHELL} != "bash" && ${PKGSHELL} != "zsh" ]]; then
 fi
 
 if [[ ${PKGSHELL} == "bash" ]]; then
-	SCRIPTDIR=$(dirname ${BASH_SOURCE[0]})
+	SCRIPTDIR=$(dirname $(realpath ${BASH_SOURCE[0]}))
 else
-	SCRIPTDIR=$(dirname ${(%):-%x})
+	SCRIPTDIR=$(dirname $(realpath ${(%):-%x}))
 fi
 
 # interactively choose a value from an array

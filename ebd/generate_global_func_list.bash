@@ -53,10 +53,13 @@ source() {
 export PKGCORE_PYTHON_BINARY=/bin/true
 
 forced_order_source="isolated-functions.lib exit-handling.lib eapi/common.lib ebuild-daemon.lib ebuild-daemon.bash"
+pushd "${PKGCORE_BIN_PATH}" >/dev/null
+remaining_libs=$(find . -name '*.lib' ! -regex ".*/[0-9]+\.lib" | sed -e 's:^\./::' | sort)
+popd >/dev/null
 
 # skip EAPI specific libs since those need be sourced on demand depending on an ebuild's EAPI
-for x in ${forced_order_source} $(find "${PKGCORE_BIN_PATH}" -name '*.lib' ! -regex ".*/[0-9]+\.lib" | sed -e 's:^\./::' | sort); do
-	source "${x}"
+for x in ${forced_order_source} ${remaining_libs}; do
+	source "${PKGCORE_BIN_PATH}/${x}"
 done
 
 # wipe our custom funcs

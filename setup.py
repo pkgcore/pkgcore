@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import errno
+import glob
 import io
 from itertools import chain
 import operator
@@ -92,9 +93,10 @@ def _get_files(path):
 def _get_data_mapping(host_path, path, skip=None):
     skip = list(skip) if skip is not None else []
     for root, dirs, files in os.walk(path):
-        yield (os.path.join(host_path, root.partition(path)[2].lstrip('/')),
-               [os.path.join(root, x) for x in files
-                if os.path.join(root, x) not in skip])
+        if os.path.join(path, root.partition(path)[2].lstrip('/')) not in skip:
+            yield (os.path.join(host_path, root.partition(path)[2].lstrip('/')),
+                   [os.path.join(root, x) for x in files
+                    if os.path.join(root, x) not in skip])
 
 
 class pkgcore_install_docs(Command):
@@ -382,8 +384,11 @@ setup(
     install_requires=['snakeoil>=0.6.6'],
     scripts=os.listdir('bin'),
     data_files=list(chain(
-        _get_data_mapping(CONFIG_INSTALL_OFFSET, 'config'),
         _get_data_mapping(EBD_INSTALL_OFFSET, 'bash'),
+        _get_data_mapping(CONFIG_INSTALL_OFFSET, 'config'),
+        _get_data_mapping(
+            os.path.join(LIBDIR_INSTALL_OFFSET, 'shell'), 'shell',
+            skip=glob.glob('shell/*/completion')),
     )),
     ext_modules=extensions, cmdclass=cmdclass, command_options=command_options,
     classifiers=[

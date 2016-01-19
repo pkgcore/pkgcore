@@ -264,7 +264,7 @@ def write_pkgcore_ebd_funclists(root, target, scripts_dir):
             raise
 
     # add scripts dir to PATH for filter-env usage in global scope
-    env = {'PATH': os.pathsep.join([scripts_dir, os.environ.get('PATH', '')])}
+    env = {'PATH': os.pathsep.join([os.path.abspath(scripts_dir), os.environ.get('PATH', '')])}
 
     # generate global function list
     with open(os.devnull, 'w') as devnull:

@@ -22,7 +22,8 @@ import pkgdist
 # bits relative to the install-data path given to the install subcmd.
 DATA_INSTALL_OFFSET = 'share/pkgcore'
 CONFIG_INSTALL_OFFSET = os.path.join(DATA_INSTALL_OFFSET, 'config')
-EBD_INSTALL_OFFSET = 'lib/pkgcore'
+LIBDIR_INSTALL_OFFSET = 'lib/pkgcore'
+EBD_INSTALL_OFFSET = os.path.join(LIBDIR_INSTALL_OFFSET, 'ebd')
 
 # top level repo/tarball directory
 TOPDIR = os.path.dirname(os.path.abspath(__file__))
@@ -294,6 +295,8 @@ def write_pkgcore_lookup_configs(python_base, install_prefix, injected_bin_path=
                 os.path.join(install_prefix, DATA_INSTALL_OFFSET))
         f.write("CONFIG_PATH=%r\n" %
                 os.path.join(install_prefix, CONFIG_INSTALL_OFFSET))
+        f.write("LIBDIR_PATH=%r\n" %
+                os.path.join(install_prefix, LIBDIR_INSTALL_OFFSET))
         f.write("EBD_PATH=%r\n" %
                 os.path.join(install_prefix, EBD_INSTALL_OFFSET))
         # This is added to suppress the default behaviour of looking

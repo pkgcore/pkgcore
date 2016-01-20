@@ -11,9 +11,9 @@
 EAPI=${1:-0}
 export PKGCORE_BIN_PATH=$(dirname "$0")
 
-# without this var, parsing certain things can fail; force to true
-# so any code that tried accessing it thinks it succeeded
-export PKGCORE_PYTHON_BINARY=/bin/true
+# without this var, parsing certain things can fail; force to true if unset or
+# null so any code that tried accessing it thinks it succeeded
+export PKGCORE_PYTHON_BINARY=${PKGCORE_PYTHON_BINARY:-/bin/true}
 
 source "${PKGCORE_BIN_PATH}/eapi/${EAPI}.lib" \
 	|| { echo "failed loading eapi/${EAPI}.lib" >&2; exit 1; }

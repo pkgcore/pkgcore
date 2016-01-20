@@ -10,7 +10,12 @@
 export PKGCORE_BIN_PATH=$(dirname "$0")
 
 if [[ -z ${PKGCORE_CLEAN_ENV} ]]; then
-	exec env -i PKGCORE_PYTHON_PATH="${PKGCORE_PYTHON_PATH}" PATH="${PATH}" PKGCORE_CLEAN_ENV=1 "$0" "$@"
+	exec env -i \
+		PKGCORE_PYTHON_BINARY="${PKGCORE_PYTHON_BINARY}" \
+		PKGCORE_PYTHONPATH="${PKGCORE_PYTHONPATH}" \
+		PATH="${PATH}" \
+		PKGCORE_CLEAN_ENV=1 \
+		"$0" "$@"
 fi
 
 export LC_ALL=C # avoid any potential issues of unicode sorting for whacked func names
@@ -48,9 +53,9 @@ source() {
 	return 0
 }
 
-# without this var, parsing certain things can fail; force to true
-# so any code that tried accessing it thinks it succeeded
-export PKGCORE_PYTHON_BINARY=/bin/true
+# without this var, parsing certain things can fail; force to true if unset or
+# null so any code that tried accessing it thinks it succeeded
+export PKGCORE_PYTHON_BINARY=${PKGCORE_PYTHON_BINARY:-/bin/true}
 
 forced_order_source="isolated-functions.lib exit-handling.lib eapi/common.lib ebuild-daemon.lib ebuild-daemon.bash"
 pushd "${PKGCORE_BIN_PATH}" >/dev/null

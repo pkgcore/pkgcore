@@ -386,6 +386,7 @@ setup(
     data_files=list(chain(
         _get_data_mapping(EBD_INSTALL_OFFSET, 'ebd'),
         _get_data_mapping(CONFIG_INSTALL_OFFSET, 'config'),
+        _get_data_mapping('share/zsh/site-functions', 'shell/zsh/completion'),
         _get_data_mapping(
             os.path.join(LIBDIR_INSTALL_OFFSET, 'shell'), 'shell',
             skip=glob.glob('shell/*/completion')),

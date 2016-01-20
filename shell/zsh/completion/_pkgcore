@@ -616,23 +616,10 @@ _pquery() {
 }
 
 _pkgcore() {
-  # optional args
-  # -f       call an internal completion function (used to run non-service functions externally)
-  #
-  # Example usage: Using "_pkgcore -f repos -l" in an external completion file
-  # would call the internal "repos" function with the "-l" argument causing the
-  # repo location list to be returned for completion.
-
-  typeset -A opts
   local ret=1
 
   if [[ $service =~ (pconfig|pebuild|pinspect|pmaint|pmerge|pquery) ]]; then
     _call_function ret _$service
-  else
-    zparseopts -E -D -A opts f:
-    if [[ -n $opts[(I)-f] ]]; then
-      _call_function ret _${opts[-f]} $@
-    fi
   fi
 
   return ret

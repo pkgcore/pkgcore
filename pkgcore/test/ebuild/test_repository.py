@@ -246,13 +246,32 @@ class SlavedTreeTest(UnconfiguredTreeTest):
         self.dir = self.dir_orig
         TempDirMixin.tearDown(self)
 
-    def test_inherit_parent_categories(self):
-        for cats in ((('sys-apps', 'foo-bar'), ('cat', 'foo-bar')),
-                     (('cat', 'sys-apps', 'foo-bar'), ()),
-                     ((), ('cat', 'foo-bar', 'sys-apps'))):
-            with open(pjoin(self.master_pdir, 'categories'), 'w') as f:
-                f.write('\n'.join(cats[0]))
-            with open(pjoin(self.slave_pdir, 'categories'), 'w') as f:
-                f.write('\n'.join(cats[1]))
-            repo = self.mk_tree(self.dir)
-            self.assertEqual(tuple(sorted(repo.categories)), ('cat', 'foo-bar', 'sys-apps'))
+    def _create_categories(self, master, slave, write=True):
+        with open(pjoin(self.master_pdir, 'categories'), 'w') as f:
+            f.write('\n'.join(master))
+        with open(pjoin(self.slave_pdir, 'categories'), 'w') as f:
+            f.write('\n'.join(slave))
+        for cat in master:
+            os.mkdir(pjoin(self.dir_master, cat), 0755)
+        for cat in slave:
+            os.mkdir(pjoin(self.dir_slave, cat), 0755)
+        return self.mk_tree(self.dir)
+
+    def test_categories(self):
+        # categories are not overlaid on top of parent repo categories
+        for master, slave, expected in (
+                (('cat',), (), ()),
+                ((), ('cat',), ('cat',)),
+                (('sys-apps', 'foo'), ('cat', 'foo'), ('cat', 'foo'))):
+            # profiles/categories files exist along with category dirs
+            self.setUp()
+            repo = self._create_categories(master, slave)
+            self.assertEqual(tuple(sorted(repo.categories)), expected)
+            self.tearDown()
+
+            # no profiles/categories files created, only category dirs
+            self.setUp()
+            repo = self._create_categories(master, slave, write=False)
+            self.assertEqual(tuple(sorted(repo.categories)), expected)
+            self.tearDown()
+        self.setUp()

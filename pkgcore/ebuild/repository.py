@@ -383,8 +383,7 @@ class _UnconfiguredTree(prototype.tree):
                 self.false_packages.__contains__, listdir_dirs(cpath)))
         except EnvironmentError as e:
             if e.errno == errno.ENOENT:
-                if self.hardcoded_categories and category in self.hardcoded_categories or \
-                        isinstance(self, _SlavedTree) and category in self.parent_repo.categories:
+                if self.hardcoded_categories and category in self.hardcoded_categories:
                     # ignore it, since it's PMS mandated that it be allowed.
                     return ()
             raise_from(KeyError(
@@ -551,11 +550,6 @@ class _SlavedTree(_UnconfiguredTree):
         self.package_class = self.package_factory(
             self, self.cache, self.eclass_cache, self.mirrors,
             self.default_mirrors)
-        self.parent_repo = parent_repo
-
-    def _get_categories(self, *optional_category):
-        categories = super(_SlavedTree, self)._get_categories(*optional_category)
-        return tuple(set(categories + tuple(self.parent_repo.categories)))
 
 
 class _ConfiguredTree(configured.tree):

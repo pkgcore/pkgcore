@@ -12,12 +12,13 @@ _pkgattr() {
 	fi
 
 	if [[ -n ${repo} ]]; then
-		pkg=("${(@f)$(pquery -r "${repo}" --raw --unfiltered --cpv --one-attr "${pkg_attr}" -n -- "${pkg_atom}" 2>/dev/null)}")
+		pkg=("${(@f)$(pquery -r "${repo}" --raw --unfiltered --cpv --one-attr "${pkg_attr}" -n -- "${pkg_atom}" 2>&1)}")
 	else
-		pkg=("${(@f)$(pquery --ebuild-repos --raw --unfiltered --cpv --one-attr "${pkg_attr}" -n -- "${pkg_atom}" 2>/dev/null)}")
+		pkg=("${(@f)$(pquery --ebuild-repos --raw --unfiltered --cpv --one-attr "${pkg_attr}" -n -- "${pkg_atom}" 2>&1)}")
 	fi
 	if [[ $? != 0 ]]; then
-		echo "Invalid package atom: '${pkg_atom}'" >&2
+		# show pquery error message
+		echo "${pkg[-1]}" >&2
 		return 1
 	fi
 

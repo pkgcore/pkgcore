@@ -1,4 +1,5 @@
-# Common library of useful shell functions leveraging pkgcore functionality.
+# Common library of shell functions for parsing various Gentoo-related data
+# and leveraging pkgcore functionality.
 
 # get an attribute for a given package
 _pkgattr() {
@@ -41,15 +42,20 @@ _which() {
 
 ## Completion related functions ##
 
+# configured repo info
+#
+# Note that this only supports the repos.conf format (i.e. PORTDIR(_OVERLAY)
+# are not considered).
+#
+# optional args:
+#  -c output completion format
+#  -e add package.provided "repo" to the list
+#  -i add vdb "repo" to the list
+#  -s add repo-stack "repo" to the list
+#  -v section:key
+#  -p print the output instead of using completion
+#  -l use repo locations instead of repo_ids
 _repos() {
-  # optional args
-  # -c output completion format
-  # -e add package.provided "repo" to the list
-  # -i add vdb "repo" to the list
-  # -s add repo-stack "repo" to the list
-  # -v section:key
-  # -p print the output instead of using completion
-  # -l use repo locations instead of repo_ids
   typeset -A opts
   zparseopts -E -A opts c e i s l p v:
 
@@ -106,11 +112,12 @@ _repos() {
   fi
 }
 
+# available licenses
+#
+# optional args:
+#  -r repo  specify the repo to use; otherwise the default repo is used
+#  -p       print the output instead of using completion
 _licenses() {
-  # optional args
-  #
-  # -r repo  specify the repo to use; otherwise the default repo is used
-  # -p       print the output instead of using completion
   typeset -A opts
   zparseopts -E -A opts p r:
 
@@ -132,14 +139,15 @@ _licenses() {
   fi
 }
 
+# global/local USE flag info
+#
+# optional args
+#  -r repo  specify the repo to use; otherwise the default repo is used
+#  -p       print the output instead of using completion
+#  -g       only show global use flags
+#  -l       only show local use flags
+#  -o       don't show use flag descriptions
 _use() {
-  # optional args
-  #
-  # -r repo  specify the repo to use; otherwise the default repo is used
-  # -p       print the output instead of using completion
-  # -g       only show global use flags
-  # -l       only show local use flags
-  # -o       don't show use flag descriptions
   typeset -A opts
   zparseopts -E -A opts o p r:
 
@@ -179,11 +187,12 @@ _use() {
   fi
 }
 
+# package categories provided by repos
+#
+# optional args
+#  -r repo  specify the repo to use; otherwise the default repo is used
+#  -p       print the output instead of using completion
 _categories() {
-  # optional args
-  #
-  # -r repo  specify the repo to use; otherwise the default repo is used
-  # -p       print the output instead of using completion
   typeset -A opts
   zparseopts -E -A opts p r:
 
@@ -205,11 +214,12 @@ _categories() {
   fi
 }
 
+# arches provided by repos
+#
+# optional args
+#  -r repo  specify the repo to use; otherwise the default repo is used
+#  -p       print the output instead of using completion
 _arches() {
-  # optional args
-  #
-  # -r repo  specify the repo to use; otherwise the default repo is used
-  # -p       print the output instead of using completion
   typeset -A opts
   zparseopts -E -A opts p r:
 
@@ -231,12 +241,13 @@ _arches() {
   fi
 }
 
+# profiles provided by repos
+#
+# optional args
+#  -r repo  specify the repo to use; otherwise the default repo is used
+#  -p       print the output instead of using completion
+#  -f       output full, absolute profile paths
 _profiles() {
-  # optional args
-  #
-  # -r repo  specify the repo to use; otherwise the default repo is used
-  # -p       print the output instead of using completion
-  # -f       output full, absolute profile paths
   typeset -A opts
   zparseopts -E -A opts a p f r:
 

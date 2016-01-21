@@ -3,7 +3,7 @@
 SCRIPT=$1
 shift
 
-SHELL=$(ps -p $(ps -o ppid= -p $$) -ocomm=)
+SHELL=$(ps -p $(ps -p $$ -o ppid=) -o comm=)
 if [[ ${SHELL} != "bash" && ${SHELL} != "zsh" ]]; then
 	echo "$(basename ${SCRIPT}): unsupported shell: ${SHELL}"
 	exit 1

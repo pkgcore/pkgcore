@@ -4,7 +4,9 @@
 # usage: esite pkg [repo]
 # example: esite sys-devel/gcc gentoo
 #
-# If a package has more than one homepage listed the first is selected.
+# For queries returning multiple packages, a list of options is presented to
+# the user to choose from. In the same manner, if a package has multiple
+# homepages listed, a list of homepages is outputted for selection.
 #
 # Note that this requires xdg-utils to be installed for xdg-open.
 

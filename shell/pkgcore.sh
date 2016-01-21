@@ -3,19 +3,6 @@
 #
 # Only bash and zsh are currently supported.
 
-# determine interactive parent shell
-PKGSHELL=$(ps -p $$ -ocomm=)
-if [[ ${PKGSHELL} != "bash" && ${PKGSHELL} != "zsh" ]]; then
-	echo "pkgcore.sh: unsupported shell: ${PKGSHELL}" >&2
-	return 1
-fi
-
-if [[ ${PKGSHELL} == "bash" ]]; then
-	SCRIPTDIR=$(dirname $(realpath ${BASH_SOURCE[0]}))
-else
-	SCRIPTDIR=$(dirname $(realpath ${(%):-%x}))
-fi
-
 # interactively choose a value from an array
 #
 # usage: _choose "${array[@]}"
@@ -35,6 +22,21 @@ _choose() {
 	echo ${choice}
 }
 
+# determine interactive parent shell
+PKGSHELL=$(ps -p $$ -ocomm=)
+if [[ ${PKGSHELL} != "bash" && ${PKGSHELL} != "zsh" ]]; then
+	echo "pkgcore.sh: unsupported shell: ${PKGSHELL}" >&2
+	return 1
+fi
+
+# determine where this script is located
+if [[ ${PKGSHELL} == "bash" ]]; then
+	SCRIPTDIR=$(dirname $(realpath ${BASH_SOURCE[0]}))
+else
+	SCRIPTDIR=$(dirname $(realpath ${(%):-%x}))
+fi
+
+# pull in shell specific support
 source "${SCRIPTDIR}"/${PKGSHELL}/pkgcore.${PKGSHELL}
 export PATH=${SCRIPTDIR}/bin:${PATH}
 unset PKGSHELL SCRIPTDIR

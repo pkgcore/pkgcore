@@ -1,4 +1,5 @@
-# Common library of useful shell functions leveraging pkgcore functionality.
+# Common library of shell functions for parsing various Gentoo-related data
+# and leveraging pkgcore functionality.
 
 # get an attribute for a given package
 _pkgattr() {
@@ -16,7 +17,8 @@ _pkgattr() {
 		IFS=$'\n' pkg=( $(pquery --ebuild-repos --raw --unfiltered --cpv --one-attr "${pkg_attr}" -n -- "${pkg_atom}" 2>/dev/null) )
 	fi
 	if [[ $? != 0 ]]; then
-		echo "Invalid package atom: '${pkg_atom}'" >&2
+		# show pquery error message
+		echo "${pkg[-1]}" >&2
 		return 1
 	fi
 

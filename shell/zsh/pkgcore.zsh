@@ -105,10 +105,10 @@ _repos() {
     output=(${repos})
   fi
 
-  if [[ -n $opts[(I)-p] ]]; then
-    print $output
-  else
+  if [[ -n ${compstate} ]] && [[ -z $opts[(I)-p] ]]; then
     _describe -t repos ${output_type} output
+  else
+    print $output
   fi
 }
 
@@ -132,10 +132,10 @@ _licenses() {
   repo_path=${$(_repos -p -v "${repo}:location")%/}
   licenses=("${repo_path}"/licenses/*(.:t))
 
-  if [[ -n $opts[(I)-p] ]]; then
-    print $licenses
-  else
+  if [[ -n ${compstate} ]] && [[ -z $opts[(I)-p] ]]; then
     _describe -t licenses 'licenses' licenses
+  else
+    print $licenses
   fi
 }
 
@@ -180,10 +180,10 @@ _use() {
     use=(${^use/:*/})
   fi
 
-  if [[ -n $opts[(I)-p] ]]; then
-    print $use
-  else
+  if [[ -n ${compstate} ]] && [[ -z $opts[(I)-p] ]]; then
     _describe -t use "${desc}use flag" use
+  else
+    print $use
   fi
 }
 
@@ -207,10 +207,10 @@ _categories() {
   repo_path=${$(_repos -p -v "${repo}:location")%/}
   [[ -f $repo_path/profiles/categories ]] && categories=(${${(f)"$(<${repo_path}/profiles/categories)"}:#\#*})
 
-  if [[ -n $opts[(I)-p] ]]; then
-    print $categories
-  else
+  if [[ -n ${compstate} ]] && [[ -z $opts[(I)-p] ]]; then
     _describe -t categories 'categories' categories
+  else
+    print $categories
   fi
 }
 
@@ -234,10 +234,10 @@ _arches() {
   repo_path=${$(_repos -p -v "${repo}:location")%/}
   [[ -f $repo_path/profiles/arch.list ]] && arches=(${${(f)"$(<${repo_path}/profiles/arch.list)"}:#\#*})
 
-  if [[ -n $opts[(I)-p] ]]; then
-    print $arches
-  else
+  if [[ -n ${compstate} ]] && [[ -z $opts[(I)-p] ]]; then
     _describe -t arches 'arches' arches
+  else
+    print $arches
   fi
 }
 
@@ -272,9 +272,9 @@ _profiles() {
     done < ${file}
   fi
 
-  if [[ -n $opts[(I)-p] ]]; then
-    print $profiles
-  else
+  if [[ -n ${compstate} ]] && [[ -z $opts[(I)-p] ]]; then
     _describe -t profiles 'profiles' profiles $*
+  else
+    print $profiles
   fi
 }

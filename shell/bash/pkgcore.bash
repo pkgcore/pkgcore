@@ -1,4 +1,3 @@
-#!/usr/bin/env bash
 # Common library of useful shell functions leveraging pkgcore functionality.
 
 # get an attribute for a given package

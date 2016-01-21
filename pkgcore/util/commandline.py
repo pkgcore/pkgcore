@@ -949,7 +949,9 @@ def main(parser, args=None, outfile=None, errfile=None):
             os.environ['PKGCORE_DEBUG'] = str(debug_verbosity)
 
         if getattr(options, 'color', True):
-            formatter_factory = formatters.get_formatter
+            # have to check for --color in sys.argv since it's on by default
+            force_color = '--color' in sys.argv[1:] and getattr(options, 'color', False)
+            formatter_factory = partial(formatters.get_formatter, force_color=force_color)
         else:
             formatter_factory = formatters.PlainTextFormatter
             # pass down color setting to the bash side

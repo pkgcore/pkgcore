@@ -11,14 +11,18 @@ _pkgattr() {
 		return 1
 	fi
 
+	local tmpfile=$(mktemp)
+	trap "rm -f '${tmpfile}'" EXIT HUP INT TERM
+
 	if [[ -n ${repo} ]]; then
-		pkg=("${(@f)$(pquery -r "${repo}" --raw --unfiltered --cpv --one-attr "${pkg_attr}" -n -- "${pkg_atom}" 2>&1)}")
+		pkg=("${(@f)$(pquery -r "${repo}" --raw --unfiltered --cpv --one-attr "${pkg_attr}" -n -- "${pkg_atom}" 2>"${tmpfile}")}")
 	else
-		pkg=("${(@f)$(pquery --ebuild-repos --raw --unfiltered --cpv --one-attr "${pkg_attr}" -n -- "${pkg_atom}" 2>&1)}")
+		pkg=("${(@f)$(pquery --ebuild-repos --raw --unfiltered --cpv --one-attr "${pkg_attr}" -n -- "${pkg_atom}" 2>"${tmpfile}")}")
 	fi
 	if [[ $? != 0 ]]; then
 		# show pquery error message
-		echo "${pkg[-1]}" >&2
+		local error=("${(@f)$(<"${tmpfile}")}")
+		echo "${error[-1]}" >&2
 		return 1
 	fi
 

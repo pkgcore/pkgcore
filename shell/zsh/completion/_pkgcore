@@ -15,7 +15,7 @@ common_main_args=(
   '--new-config[add a new configuration section]'
   '--empty-config[do not load user/system configuration]'
   '--config[override location of config files]:config path:_files'
-  "--color=[Color output]:yes/no:((y\:'yes' n\:'no'))"
+  "--color[Color output]:yes/no:((y\:'yes' n\:'no'))"
 )
 
 common_output_args=(

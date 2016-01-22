@@ -30,10 +30,8 @@ _pkgattr() {
 		echo "Multiple matches found:" >&2
 		choice=$(_choose "${pkg[@]%%:*}")
 		[[ $? -ne 0 ]] && return 1
-		# bash array indexing starts at 0
-		(( choice-- ))
 	else
-		choice=0
+		choice=-1
 	fi
 	echo ${pkg[${choice}]#*:}
 }
@@ -41,4 +39,10 @@ _pkgattr() {
 # cross-shell compatible PATH searching
 _which() {
 	type -P "$1" >/dev/null
+}
+
+# cross-shell compatible array index helper
+# bash arrays start at 0
+_array_index() {
+	echo $1
 }

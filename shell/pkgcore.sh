@@ -36,7 +36,9 @@ _choose() {
 		echo "Invalid choice!" >&2
 		return 1
 	fi
-	echo ${choice}
+	# default to array indexes starting at 0
+	(( choice-- ))
+	echo $(_array_index ${choice})
 }
 
 # change to a package directory

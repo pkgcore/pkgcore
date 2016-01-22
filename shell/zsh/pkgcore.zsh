@@ -31,7 +31,7 @@ _pkgattr() {
 		choice=$(_choose "${pkg[@]%%:*}")
 		[[ $? -ne 0 ]] && return 1
 	else
-		choice=1
+		choice=-1
 	fi
 	echo ${pkg[${choice}]#*:}
 }
@@ -39,6 +39,13 @@ _pkgattr() {
 # cross-shell compatible PATH searching
 _which() {
 	whence -p "$1" >/dev/null
+}
+
+# cross-shell compatible array index helper
+# zsh arrays start at 1
+_array_index() {
+	index=$1
+	echo $(( ++index ))
 }
 
 ## Completion related functions ##

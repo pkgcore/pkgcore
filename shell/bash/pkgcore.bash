@@ -4,24 +4,37 @@
 # get an attribute for a given package
 _pkgattr() {
 	local pkg_attr=$1 pkg_atom=$2 repo=$3
-	local -a pkg
+	local ret=0 pid fdout fderr
+	local -a pkg error
 
 	if [[ -z ${pkg_atom} ]]; then
 		echo "Enter a valid package name." >&2
 		return 1
 	fi
 
-	local tmpfile=$(mktemp)
-	trap "rm -f '${tmpfile}'" EXIT HUP INT TERM
+	# setup pipes for stdout/stderr capture
+	local tmpdir=$(mktemp -d)
+	trap "rm -rf '${tmpdir}'" EXIT HUP INT TERM
+	mkfifo "${tmpdir}"/{stdout,stderr}
 
 	if [[ -n ${repo} ]]; then
-		IFS=$'\n' pkg=( $(pquery -r "${repo}" --raw --unfiltered --cpv --one-attr "${pkg_attr}" -n -- "${pkg_atom}" 2>"${tmpfile}") )
+		pquery -r "${repo}" --raw --unfiltered --cpv --one-attr "${pkg_attr}" -n -- "${pkg_atom}" >"${tmpdir}"/stdout 2>"${tmpdir}"/stderr &
 	else
-		IFS=$'\n' pkg=( $(pquery --ebuild-repos --raw --unfiltered --cpv --one-attr "${pkg_attr}" -n -- "${pkg_atom}" 2>"${tmpfile}") )
+		pquery --ebuild-repos --raw --unfiltered --cpv --one-attr "${pkg_attr}" -n -- "${pkg_atom}" >"${tmpdir}"/stdout 2>"${tmpdir}"/stderr &
 	fi
-	if [[ $? != 0 ]]; then
+
+	# capture pquery stdout/stderr into separate vars
+	pid=$!
+	exec {fdout}<"${tmpdir}"/stdout {fderr}<"${tmpdir}"/stderr
+	rm -rf "${tmpdir}"
+	IFS=$'\n' pkg=( $(cat <&${fdout}) )
+	IFS=$'\n' error=( $(cat <&${fderr}) )
+	wait ${pid}
+	ret=$?
+	exec {fdout}<&- {fderr}<&-
+
+	if [[ ${ret} != 0 ]]; then
 		# show pquery error message
-		local error=( $(<"${tmpfile}") )
 		echo "${error[-1]}" >&2
 		return 1
 	fi

@@ -25,10 +25,9 @@ unset PKGSHELL SCRIPTDIR
 # usage: _choose "${array[@]}"
 # returns: index of array choice (assuming array indexing starts at 1)
 _choose() {
-	local choice x i=1
+	local choice x i=0
 	for x in $@; do
-		echo "  ${i}: ${x}" >&2
-		(( i++ ))
+		echo "  $(( ++i )): ${x}" >&2
 	done
 	echo -n "Please select one: " >&2
 	read choice

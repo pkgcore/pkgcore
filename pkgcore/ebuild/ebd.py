@@ -841,8 +841,11 @@ class binpkg_localize(ebd, setup_mixin, format.build):
 class ebuild_mixin(object):
 
     def _cmd_implementation_sanity_check(self, domain):
+        """Various ebuild sanity checks (REQUIRED_USE, pkg_pretend)."""
         pkg = self.pkg
         eapi = pkg.eapi_obj
+
+        # perform REQUIRED_USE checks
         if eapi.options.has_required_use:
             use = pkg.use
             for node in pkg.required_use:
@@ -857,8 +860,12 @@ class ebuild_mixin(object):
                         """.format(node, pkg.required_use, " ".join(use), pkg.cpvstr)
                     ))
                     return False
+
+        # return if running pkg_pretend is not required
         if 'pretend' not in pkg.mandatory_phases:
             return True
+
+        # run pkg_pretend phase
         commands = None
         if not pkg.built:
             commands = {"request_inherit": partial(inherit_handler, self._eclass_cache)}

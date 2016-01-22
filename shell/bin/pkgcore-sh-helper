@@ -2,6 +2,7 @@
 
 SCRIPT=$1
 shift
+args=$@
 
 SHELL=$(ps -p $(ps -p $$ -o ppid=) -o comm=)
 if [[ ${SHELL} != "bash" && ${SHELL} != "zsh" ]]; then
@@ -9,4 +10,4 @@ if [[ ${SHELL} != "bash" && ${SHELL} != "zsh" ]]; then
 	exit 1
 fi
 
-exec ${SHELL} -c "source \"$(dirname ${0})\"/../pkgcore.sh && source \"${SCRIPT}\" \"$@\""
+exec ${SHELL} -c "source \"$(dirname ${0})\"/../pkgcore.sh && source \"${SCRIPT}\" ${args[@]}"

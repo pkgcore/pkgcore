@@ -9,9 +9,12 @@ passing in distutils.
 Generally speaking, you should flip through this modules src.
 """
 
+import errno
 import inspect
+import io
 import math
 import os
+import re
 import sys
 import subprocess
 import textwrap
@@ -41,7 +44,31 @@ def find_project(repo_file):
 
 
 # determine the project we're being imported into
-project = find_project(inspect.stack(0)[1][1])
+PROJECT = find_project(inspect.stack(0)[1][1])
+
+
+def version(project=PROJECT):
+    """Determine a project's version.
+
+    Based on the assumption that a project defines __version__ in it's main
+    module.
+    """
+    version = None
+    try:
+        with io.open(os.path.join(project, '__init__.py'), encoding='utf-8') as f:
+            version = re.search(
+                r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]',
+                f.read(), re.MULTILINE).group(1)
+    except IOError as e:
+        if e.errno == errno.ENOENT:
+            pass
+        else:
+            raise
+
+    if version is None:
+        raise RuntimeError('Cannot find version for project: %s' % (project,))
+
+    return version
 
 
 def data_mapping(host_prefix, path, skip=None):
@@ -70,7 +97,7 @@ class sdist(dst_sdist.sdist):
 
     """sdist command wrapper to generate version info file"""
 
-    package_namespace = project
+    package_namespace = PROJECT
 
     user_options = dst_sdist.sdist.user_options + [
         ('build-docs', None, 'build docs'),
@@ -119,7 +146,7 @@ class build_py(dst_build_py.build_py):
 
     user_options = dst_build_py.build_py.user_options + [("inplace", "i", "do any source conversions in place")]
 
-    package_namespace = project
+    package_namespace = PROJECT
     generate_verinfo = True
 
     def initialize_options(self):
@@ -357,7 +384,7 @@ class build_scripts(dst_build_scripts.build_scripts):
                     from os.path import basename
                     from %s import scripts
                     scripts.main(basename(__file__))
-                """ % (sys.executable, project)))
+                """ % (sys.executable, PROJECT)))
         self.copy_scripts()
 
 
@@ -382,7 +409,7 @@ class test(Command):
         ("include-dirs=", "I", "include dirs for build_ext if needed"),
     ]
 
-    default_test_namespace = '%s.test' % project
+    default_test_namespace = '%s.test' % PROJECT
 
     def initialize_options(self):
         self.inplace = False

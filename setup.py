@@ -6,7 +6,6 @@ import io
 from itertools import chain
 import operator
 import os
-import re
 import subprocess
 import sys
 
@@ -354,21 +353,12 @@ cmdclass = {
 }
 command_options = {}
 
-version = ''
-with io.open('pkgcore/__init__.py', encoding='utf-8') as f:
-    version = re.search(r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]',
-                        f.read(), re.MULTILINE).group(1)
-
-if not version:
-    raise RuntimeError('Cannot find version')
-
-
 with io.open('README.rst', encoding='utf-8') as f:
     readme = f.read()
 
 setup(
     name='pkgcore',
-    version=version,
+    version=pkgdist.version(),
     description='package managing framework',
     long_description=readme,
     url='https://github.com/pkgcore/pkgcore',

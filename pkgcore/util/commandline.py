@@ -832,7 +832,7 @@ def mk_argparser(suppress=False, config=True, domain=True,
     if color:
         p.add_argument(
             '--color', action=StoreBool,
-            default=True,
+            default=sys.stdout.isatty(),
             help='enable/disable color support')
 
     if config:
@@ -949,9 +949,8 @@ def main(parser, args=None, outfile=None, errfile=None):
             os.environ['PKGCORE_DEBUG'] = str(debug_verbosity)
 
         if getattr(options, 'color', True):
-            # have to check for --color in sys.argv since it's on by default
-            force_color = '--color' in sys.argv[1:] and getattr(options, 'color', False)
-            formatter_factory = partial(formatters.get_formatter, force_color=force_color)
+            formatter_factory = partial(
+                formatters.get_formatter, force_color=getattr(options, 'color', False))
         else:
             formatter_factory = formatters.PlainTextFormatter
             # pass down color setting to the bash side

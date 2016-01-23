@@ -9,8 +9,6 @@ Wraps :obj:`pkgcore.ebuild.processor` functionality into a higher level
 api, per phase methods for example
 """
 
-from __future__ import print_function
-
 __all__ = (
     "ebd", "setup_mixin", "install_op", "uninstall_op", "replace_op",
     "buildable", "binpkg_localize")
@@ -840,7 +838,7 @@ class binpkg_localize(ebd, setup_mixin, format.build):
 
 class ebuild_mixin(object):
 
-    def _cmd_implementation_sanity_check(self, domain):
+    def _cmd_implementation_sanity_check(self, domain, observer):
         """Various ebuild sanity checks (REQUIRED_USE, pkg_pretend)."""
         pkg = self.pkg
         eapi = pkg.eapi_obj
@@ -850,7 +848,7 @@ class ebuild_mixin(object):
             use = pkg.use
             for node in pkg.required_use:
                 if not node.match(use):
-                    print(textwrap.dedent(
+                    observer.info(textwrap.dedent(
                         """
                         REQUIRED_USE requirement wasn't met
                         Failed to match: {}

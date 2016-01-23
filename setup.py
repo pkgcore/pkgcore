@@ -89,16 +89,6 @@ def _get_files(path):
             yield os.path.join(root, f)[len(path):].lstrip('/')
 
 
-def _get_data_mapping(host_prefix, path, skip=None):
-    skip = list(skip) if skip is not None else []
-    for root, dirs, files in os.walk(path):
-        host_path = os.path.join(host_prefix, root.partition(path)[2].lstrip('/'))
-        repo_path = os.path.join(path, root.partition(path)[2].lstrip('/'))
-        if repo_path not in skip:
-            yield (host_path, [os.path.join(root, x) for x in files
-                               if os.path.join(root, x) not in skip])
-
-
 class pkgcore_install_docs(Command):
 
     """Install html documentation"""
@@ -390,10 +380,10 @@ setup(
     install_requires=['snakeoil>=0.6.6'],
     scripts=os.listdir('bin'),
     data_files=list(chain(
-        _get_data_mapping(EBD_INSTALL_OFFSET, 'ebd'),
-        _get_data_mapping(CONFIG_INSTALL_OFFSET, 'config'),
-        _get_data_mapping('share/zsh/site-functions', 'shell/zsh/completion'),
-        _get_data_mapping(
+        pkgdist.data_mapping(EBD_INSTALL_OFFSET, 'ebd'),
+        pkgdist.data_mapping(CONFIG_INSTALL_OFFSET, 'config'),
+        pkgdist.data_mapping('share/zsh/site-functions', 'shell/zsh/completion'),
+        pkgdist.data_mapping(
             os.path.join(LIBDIR_INSTALL_OFFSET, 'shell'), 'shell',
             skip=glob.glob('shell/*/completion')),
     )),

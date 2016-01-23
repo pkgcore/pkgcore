@@ -121,7 +121,7 @@ class pkgcore_install_docs(Command):
 
     def calculate_install_path(self):
         return os.path.join(
-            self.prefix, 'share', 'doc', 'pkgcore-%s' % __version__, 'html')
+            self.prefix, 'share', 'doc', 'pkgcore-%s' % pkgdist.version(), 'html')
 
     def find_content(self):
         for possible_path in self.content_search_path:

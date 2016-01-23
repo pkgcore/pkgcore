@@ -10,7 +10,6 @@ Generally speaking, you should flip through this modules src.
 """
 
 import errno
-import inspect
 import io
 import math
 import os
@@ -22,8 +21,9 @@ import textwrap
 os.environ["SNAKEOIL_DEMANDLOAD_PROTECTION"] = 'n'
 os.environ["SNAKEOIL_DEMANDLOAD_WARN"] = 'n'
 
-from distutils import log, errors
+from distutils import log
 from distutils.core import Command, Extension
+from distutils.errors import DistutilsExecError
 from distutils.command import (
     sdist as dst_sdist, build_ext as dst_build_ext, build_py as dst_build_py,
     build as dst_build, build_scripts as dst_build_scripts)
@@ -44,7 +44,9 @@ def find_project(repo_file):
 
 
 # determine the project we're being imported into
-PROJECT = find_project(inspect.stack(0)[1][1])
+PROJECT = find_project(os.path.abspath(__file__))
+# top level repo/tarball directory
+TOPDIR = os.path.dirname(os.path.abspath(__file__))
 
 
 def version(project=PROJECT):
@@ -69,6 +71,12 @@ def version(project=PROJECT):
         raise RuntimeError('Cannot find version for project: %s' % (project,))
 
     return version
+
+
+def get_file_paths(path):
+    for root, dirs, files in os.walk(path):
+        for f in files:
+            yield os.path.join(root, f)[len(path):].lstrip('/')
 
 
 def data_mapping(host_prefix, path, skip=None):
@@ -388,6 +396,113 @@ class build_scripts(dst_build_scripts.build_scripts):
         self.copy_scripts()
 
 
+class install_docs(Command):
+
+    """Install html documentation"""
+
+    content_search_path = ('build/sphinx/html', 'html')
+    user_options = [
+        ('path=', None, "final path to install to; else it's calculated"),
+        ('build-dir=', None, "build directory"),
+    ]
+    build_command = 'build_docs'
+
+    def initialize_options(self):
+        self.root = None
+        self.prefix = None
+        self.path = None
+        self.build_dir = None
+        self.content = []
+        self.source_path = None
+
+    def finalize_options(self):
+        self.set_undefined_options(
+            'install',
+            ('root', 'root'),
+            ('install_base', 'prefix'),
+        )
+        if not self.root:
+            self.root = '/'
+        if self.path is None:
+            self.path = os.path.join(
+                self.root, self.calculate_install_path().lstrip(os.path.sep))
+
+    def calculate_install_path(self):
+        return os.path.join(
+            os.path.abspath(self.prefix), 'share', 'doc', PROJECT + '-%s' % version(), 'html')
+
+    def find_content(self):
+        for possible_path in self.content_search_path:
+            if self.build_dir is not None:
+                possible_path = os.path.join(self.build_dir, possible_path)
+            possible_path = os.path.join(TOPDIR, possible_path)
+            if os.path.isdir(possible_path):
+                return possible_path
+        else:
+            return None
+
+    def _map_paths(self, content):
+        return {x: x for x in content}
+
+    def scan_content(self):
+        self.content = self._map_paths(get_file_paths(self.source_path))
+        return self.content
+
+    def run(self, firstrun=True):
+        self.source_path = self.find_content()
+        if self.source_path is None:
+            if not firstrun:
+                raise DistutilsExecError(
+                    "no pregenerated sphinx content, and sphinx isn't available "
+                    "to generate it; bailing")
+            cwd = os.getcwd()
+            if subprocess.call([sys.executable, 'setup.py', self.build_command], cwd=cwd):
+                raise DistutilsExecError("%s failed" % self.build_command)
+            return self.run(False)
+
+        content = self.scan_content()
+
+        content = self.content
+        directories = set(map(os.path.dirname, content.values()))
+        directories.discard('')
+        for x in sorted(directories):
+            self.mkpath(os.path.join(self.path, x))
+
+        for src, dst in sorted(content.items()):
+            self.copy_file(
+                os.path.join(self.source_path, src),
+                os.path.join(self.path, dst))
+
+    def get_inputs(self):
+        # Py3k compatibility- force list so behaviour is the same.
+        return list(self.content)
+
+    def get_outputs(self):
+        # Py3k compatibility- force list so behaviour is the same.
+        return list(self.content.values())
+
+
+class install_man(install_docs):
+
+    """Install man pages"""
+
+    content_search_path = ('build/sphinx/man', 'man')
+    build_command = 'build_man'
+
+    def calculate_install_path(self):
+        return os.path.join(self.prefix, 'share', 'man')
+
+    def _map_paths(self, content):
+        d = {}
+        for x in content:
+            if len(x) >= 3 and x[-2] == '.' and x[-1].isdigit():
+                # Only consider extensions .1, .2, .3, etc, and files that
+                # have at least a single char beyond the extension (thus ignore
+                # .1, but allow a.1).
+                d[x] = 'man%s/%s' % (x[-1], os.path.basename(x))
+        return d
+
+
 class test(Command):
 
     """Run our unit tests in a built copy.
@@ -475,7 +590,7 @@ class test(Command):
             os.remove(plugincache)
 
         if retval:
-            raise errors.DistutilsExecError("tests failed; return %i" % (retval,))
+            raise DistutilsExecError("tests failed; return %i" % (retval,))
 
 
 # yes these are in snakeoil.compatibility; we can't rely on that module however

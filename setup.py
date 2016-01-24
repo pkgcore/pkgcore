@@ -143,12 +143,11 @@ def write_pkgcore_ebd_funclists(root, target, scripts_dir, python_base='.'):
     }
 
     # generate global function list
-    with open(os.devnull, 'w') as devnull:
-        with open(os.path.join(ebd_dir, 'funcnames', 'global'), 'w') as f:
-            if subprocess.call(
-                    [os.path.join(os.getcwd(), 'ebd', 'generate_global_func_list.bash')],
-                    cwd=ebd_dir, env=env, stdout=f):
-                raise DistutilsExecError("generating global function list failed")
+    with open(os.path.join(ebd_dir, 'funcnames', 'global'), 'w') as f:
+        if subprocess.call(
+                [os.path.join(os.getcwd(), 'ebd', 'generate_global_func_list.bash')],
+                cwd=ebd_dir, env=env, stdout=f):
+            raise DistutilsExecError("generating global function list failed")
 
     # generate EAPI specific function lists
     eapis = (x.split('.')[0] for x in os.listdir(os.path.join(os.getcwd(), 'ebd', 'eapi'))

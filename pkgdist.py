@@ -10,6 +10,7 @@ Generally speaking, you should flip through this modules src.
 """
 
 import errno
+import inspect
 import io
 import math
 import os
@@ -44,9 +45,9 @@ def find_project(repo_file):
 
 
 # determine the project we're being imported into
-PROJECT = find_project(os.path.abspath(__file__))
+PROJECT = find_project(inspect.stack(0)[1][1])
 # top level repo/tarball directory
-TOPDIR = os.path.dirname(os.path.abspath(__file__))
+TOPDIR = os.path.abspath(os.path.dirname(inspect.stack(0)[1][1]))
 
 
 def version(project=PROJECT):
@@ -107,15 +108,8 @@ class sdist(dst_sdist.sdist):
 
     package_namespace = PROJECT
 
-    user_options = dst_sdist.sdist.user_options + [
-        ('build-docs', None, 'build docs'),
-    ]
-
-    boolean_options = dst_sdist.sdist.boolean_options + ['build-docs']
-
     def initialize_options(self):
         dst_sdist.sdist.initialize_options(self)
-        self.build_docs = False
 
     def generate_verinfo(self, base_dir):
         """Generate project version module.
@@ -140,7 +134,7 @@ class sdist(dst_sdist.sdist):
         exist in a working tree.
         """
 
-        if self.build_docs:
+        if 'build_man' in self.distribution.cmdclass:
             self.run_command('build_man')
             import shutil
             shutil.copytree(os.path.join(os.getcwd(), "build/sphinx/man"),
@@ -319,6 +313,8 @@ class build_man(Command):
         self.run_command('build_py')
         syspath = sys.path[:]
         sys.path.insert(0, os.path.abspath(build_py.build_lib))
+        from snakeoil.dist.generate_docs import generate_man
+        generate_man(PROJECT, TOPDIR)
         build_sphinx = self.distribution.get_command_obj('build_sphinx')
         build_sphinx.builder = 'man'
         self.run_command('build_sphinx')

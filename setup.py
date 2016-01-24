@@ -27,16 +27,10 @@ EBD_INSTALL_OFFSET = os.path.join(LIBDIR_INSTALL_OFFSET, 'ebd')
 
 
 class mysdist(pkgdist.sdist):
-
-    """sdist command specifying the right files."""
+    """sdist command wrapper to bundle generated files for release."""
 
     def make_release_tree(self, base_dir, files):
-        """Create and populate the directory tree that is put in source tars.
-
-        This copies or hardlinks "normal" source files that should go
-        into the release and adds generated files that should not
-        exist in a working tree.
-        """
+        """Generate bash function lists for releases."""
         import shutil
 
         # this is icky, but covers up cwd changing issues.

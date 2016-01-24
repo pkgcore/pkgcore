@@ -103,8 +103,7 @@ class OptionalExtension(Extension):
 
 
 class sdist(dst_sdist.sdist):
-
-    """sdist command wrapper to generate version info file"""
+    """sdist command wrapper to bundle generated files for release."""
 
     package_namespace = PROJECT
 

@@ -354,7 +354,7 @@ class build_docs(build_man):
 
             # generate API docs
             from snakeoil.dist.generate_docs import generate_html
-            generate_html(PROJECT)
+            generate_html(PROJECT, TOPDIR)
 
             # generate html docs -- allow build_sphinx cmd to run again
             self.distribution.reinitialize_command('build_sphinx')

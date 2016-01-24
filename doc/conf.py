@@ -108,7 +108,7 @@ pygments_style = 'sphinx'
 project_dir = os.path.abspath('..')
 if on_rtd:
     generate_man(project, project_dir)
-    generate_html(project)
+    generate_html(project, project_dir)
 
 # -- Options for HTML output ---------------------------------------------------
 

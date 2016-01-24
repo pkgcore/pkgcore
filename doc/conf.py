@@ -110,11 +110,6 @@ if on_rtd:
     generate_man(project, project_dir)
     generate_html(project)
 
-# handle auto-generation for setup.py
-if 'build_docs' in sys.argv[1:]:
-    generate_man(project, project_dir)
-    generate_html(project)
-
 # -- Options for HTML output ---------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for

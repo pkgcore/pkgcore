@@ -224,6 +224,7 @@ cmdclass = {
     'build_py': pkgdist.build_py,
     'build_ext': pkgdist.build_ext,
     'build_man': pkgdist.build_man,
+    'build_docs': pkgdist.build_docs,
     'test': test,
     'install': pkgcore_install,
     'build_scripts': pkgdist.build_scripts,

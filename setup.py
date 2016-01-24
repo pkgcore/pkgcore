@@ -125,10 +125,10 @@ class pkgcore_install(_base_install):
             if not os.path.exists(os.path.join(os.getcwd(), 'ebd', 'funcnames')):
                 write_pkgcore_ebd_funclists(
                     root, os.path.join(target, EBD_INSTALL_OFFSET),
-                    self.install_purelib, self.install_scripts)
+                    self.install_scripts, self.install_purelib)
 
 
-def write_pkgcore_ebd_funclists(root, target, python_base, scripts_dir):
+def write_pkgcore_ebd_funclists(root, target, scripts_dir, python_base='.'):
     ebd_dir = target
     if root != '/':
         ebd_dir = os.path.join(root, os.path.abspath(target).lstrip('/'))
@@ -144,7 +144,7 @@ def write_pkgcore_ebd_funclists(root, target, python_base, scripts_dir):
     env = {
         'PATH': os.pathsep.join([os.path.abspath(scripts_dir), os.environ.get('PATH', '')]),
         'PKGCORE_PYTHON_BINARY': sys.executable,
-        'PKGCORE_PYTHONPATH': python_base,
+        'PKGCORE_PYTHONPATH': os.path.abspath(python_base),
     }
 
     # generate global function list

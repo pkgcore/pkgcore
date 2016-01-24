@@ -6,7 +6,7 @@ A collection of distutils extensions adding things like automatic 2to3
 translation, a test runner, and working around broken stdlib extensions CFLAG
 passing in distutils.
 
-Generally speaking, you should flip through this modules src.
+Specifically, this module is only meant to be imported in setup.py scripts.
 """
 
 import errno
@@ -29,14 +29,16 @@ from distutils.command import (
     sdist as dst_sdist, build_ext as dst_build_ext, build_py as dst_build_py,
     build as dst_build, build_scripts as dst_build_scripts)
 
+# top level repo/tarball directory
+TOPDIR = os.path.dirname(os.path.abspath(inspect.stack(0)[1][1]))
 
-def find_project(repo_file):
-    toplevel = os.path.dirname(os.path.realpath(repo_file))
-    toplevel_depth = len(toplevel.split('/'))
+
+def find_project(topdir=TOPDIR):
+    topdir_depth = len(topdir.split('/'))
 
     # look for a top-level module
-    for root, dirs, files in os.walk(toplevel):
-        if len(root.split('/')) > toplevel_depth + 1:
+    for root, dirs, files in os.walk(topdir):
+        if len(root.split('/')) > topdir_depth + 1:
             continue
         if '__init__.py' in files:
             return os.path.basename(root)
@@ -45,9 +47,7 @@ def find_project(repo_file):
 
 
 # determine the project we're being imported into
-PROJECT = find_project(inspect.stack(0)[1][1])
-# top level repo/tarball directory
-TOPDIR = os.path.abspath(os.path.dirname(inspect.stack(0)[1][1]))
+PROJECT = find_project()
 
 
 def version(project=PROJECT):
@@ -306,6 +306,11 @@ class build_man(Command):
         pass
 
     def run(self):
+        # don't rebuild man pages if one of the output dirs exist
+        if any(os.path.exists(x) for x in install_man.content_search_path):
+            log.info('man pages already built, skipping regeneration...')
+            return True
+
         # Use a built version for the man page generation process that imports
         # script modules.
         build_py = self.distribution.get_command_obj('build_py')

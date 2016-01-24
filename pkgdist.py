@@ -306,14 +306,19 @@ class build_man(Command):
         pass
 
     def run(self):
-        # need to make sure we're using a built version since the man page
-        # generation process imports the script modules
+        # Use a built version for the man page generation process that imports
+        # script modules.
         build_py = self.distribution.get_command_obj('build_py')
         self.run_command('build_py')
         syspath = sys.path[:]
         sys.path.insert(0, os.path.abspath(build_py.build_lib))
-        from snakeoil.dist.generate_docs import generate_man
-        generate_man(PROJECT, TOPDIR)
+
+        # generate man page content for scripts we create
+        if 'build_scripts' in self.distribution.cmdclass:
+            from snakeoil.dist.generate_docs import generate_man
+            generate_man(PROJECT, TOPDIR)
+
+        # generate man pages
         build_sphinx = self.distribution.get_command_obj('build_sphinx')
         build_sphinx.builder = 'man'
         self.run_command('build_sphinx')

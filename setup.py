@@ -124,9 +124,10 @@ class pkgcore_install(_base_install):
 
 
 def write_pkgcore_ebd_funclists(root, target, scripts_dir, python_base='.'):
+    "Generate bash function lists from ebd implementation for env filtering."""
     ebd_dir = target
     if root != '/':
-        ebd_dir = os.path.join(root, os.path.abspath(target).lstrip('/'))
+        ebd_dir = os.path.join(root, target.lstrip('/'))
     log.info("Writing ebd function lists to %s" % os.path.join(ebd_dir, 'funcnames'))
     try:
         os.makedirs(os.path.join(ebd_dir, 'funcnames'))
@@ -162,6 +163,7 @@ def write_pkgcore_ebd_funclists(root, target, scripts_dir, python_base='.'):
 
 
 def write_pkgcore_lookup_configs(python_base, install_prefix, injected_bin_path=()):
+    """Generate file of install path constants."""
     path = os.path.join(python_base, "pkgcore", "_const.py")
     log.info("Writing lookup configuration to %s" % path)
     with open(path, "w") as f:

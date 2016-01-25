@@ -405,11 +405,23 @@ digest = subparsers.add_parser(
 digest.add_argument(
     'target', nargs='*',
     help="packages matching any of these restrictions will have their "
-         "manifest/digest updated")
+         "manifest/digest updated",
+    docs="""
+        If no target is specified one of two cases occur:
+            - If a repo is specified, the entire repo is manifested.
+            - If a repo isn't specified, a path restriction is created based on
+              the current working directory. In other words, if `pmaint digest`
+              is run without an ebuild's directory, all the ebuilds within that
+              directory will be manifested.
+    """)
 digest_opts = digest.add_argument_group("subcommand options")
 digest_opts.add_argument(
     "-r", "--repo", help="target repository",
-    action=commandline.StoreRepoObject, raw=True)
+    action=commandline.StoreRepoObject, raw=True,
+    docs="""
+        If a repo is specified without a target the entire repo is manifested.
+        On the other hand, if no repo is specified all ebuild repos are used.
+    """)
 
 
 @digest.bind_final_check

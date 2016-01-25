@@ -314,7 +314,7 @@ perl_rebuild.add_argument(
 def perl_rebuild_main(options, out, err):
     path = pjoin(options.domain.root, "usr/lib/perl5", options.new_version)
     if not os.path.exists(path):
-        err.write(
+        perl_rebuild.error(
             "version %s doesn't seem to be installed; can't find it at %r" %
             (options.new_version, path))
         return 1
@@ -355,7 +355,7 @@ env_update_opts.add_argument(
 def env_update_main(options, out, err):
     root = getattr(options.domain, 'root', None)
     if root is None:
-        err.write("domain specified lacks a root setting; is it a virtual or remote domain?")
+        env_update.error("domain specified lacks a root setting; is it a virtual or remote domain?")
         return 1
 
     out.write("updating env for %r..." % (root,))
@@ -442,7 +442,7 @@ def digest_main(options, out, err):
     targets = options.target
     obs = observer.formatter_output(out)
     if not repo.operations.supports("digests"):
-        out.write("no repository support for digests")
+        digest.error("no repository support for digests")
         return 1
 
     restrictions = []
@@ -451,20 +451,20 @@ def digest_main(options, out, err):
             try:
                 restrictions.append(repo.path_restrict(target))
             except ValueError as e:
-                err.write(e)
+                digest.error(str(e))
                 return 1
         else:
             try:
                 restrictions.append(parse_match(target))
             except ValueError:
-                err.write("invalid atom: '%s'" % target)
+                digest.error("invalid atom: '%s'" % (target,))
                 return 1
 
     restrictions = packages.OrRestriction(*restrictions)
     if restrictions not in repo:
-        out.write("no matches for '%s'" % (' '.join(targets),))
+        digest.error("no matches for '%s'" % (' '.join(targets),))
         return 1
     elif not repo.operations.digests(domain, restrictions, observer=obs):
-        out.write("some errors were encountered...")
+        digest.error("some errors were encountered...")
         return 1
     return 0

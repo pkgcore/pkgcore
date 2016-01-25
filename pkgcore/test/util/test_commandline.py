@@ -104,7 +104,7 @@ class _Trigger(argparse.Action):
 
 class ModifyConfigTest(TestCase, helpers.ArgParseMixin):
 
-    parser = commandline.mk_argparser(domain=False)
+    parser = commandline.mk_argparser(domain=False, version=False)
     parser.add_argument('--trigger', nargs=0, action=_Trigger)
 
     def parse(self, *args, **kwargs):

@@ -126,7 +126,7 @@ class StoreTarget(argparse._AppendAction):
                         self, parser, namespace,
                         (token, parserestrict.parse_match(token)), option_string=option_string)
                 except parserestrict.ParseError as e:
-                    parser.only_error(e)
+                    parser.error(e)
         if getattr(namespace, self.dest) is None:
             setattr(namespace, self.dest, [])
 
@@ -698,10 +698,11 @@ class ArgumentParser(argparse.ArgumentParser):
             final_check(self, args)
         return args
 
-    def only_error(self, message):
+    def error(self, message):
         """Print an error message and exit.
 
-        Similar to error() except usage information is not shown.
+        Similar to argparse's error() except usage information is not shown by
+        default.
         """
         self.exit(2, '%s: error: %s\n' % (self.prog, message))
 
@@ -980,7 +981,7 @@ def main(parser, args=None, outfile=None, errfile=None):
             tb = sys.exc_info()[-1]
             dump_error(e, 'Error while parsing arguments', tb=tb)
         else:
-            parser.only_error(e)
+            parser.error(e)
     except errors.ConfigurationError as e:
         tb = sys.exc_info()[-1]
         if not debug:

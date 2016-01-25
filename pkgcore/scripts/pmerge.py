@@ -308,34 +308,34 @@ def update_worldset(world_set, pkg, remove=False):
 def _validate(parser, namespace):
     if namespace.unmerge:
         if namespace.sets:
-            parser.only_error("using sets with -C probably isn't wise, aborting")
+            parser.error("using sets with -C probably isn't wise, aborting")
         if namespace.upgrade:
-            parser.only_error("cannot upgrade and unmerge simultaneously")
+            parser.error("cannot upgrade and unmerge simultaneously")
         if not namespace.targets:
-            parser.only_error("you must provide at least one atom")
+            parser.error("you must provide at least one atom")
         if namespace.clean:
-            parser.only_error("cannot use -C with --clean")
+            parser.error("cannot use -C with --clean")
 
     if namespace.clean:
         if namespace.sets or namespace.targets:
-            parser.only_error(
+            parser.error(
                 "--clean currently cannot be used w/ any sets or targets given")
         namespace.sets = ('world', 'system')
         namespace.deep = True
         namespace.replace = False
         if namespace.usepkgonly or namespace.usepkg or namespace.source_only:
-            parser.only_error(
+            parser.error(
                 '--clean cannot be used with any of the following options: '
                 '--usepkg --usepkgonly --source-only')
     elif namespace.usepkgonly and namespace.usepkg:
-        parser.only_error('--usepkg is redundant when --usepkgonly is used')
+        parser.error('--usepkg is redundant when --usepkgonly is used')
     elif (namespace.usepkgonly or namespace.usepkg) and namespace.source_only:
-        parser.only_error("--source-only cannot be used with --usepkg nor --usepkgonly")
+        parser.error("--source-only cannot be used with --usepkg nor --usepkgonly")
 
     if namespace.sets:
         unknown_sets = set(namespace.sets).difference(namespace.config.pkgset)
         if unknown_sets:
-            parser.only_error("unknown set%s '%s' (available sets: %s)" % (
+            parser.error("unknown set%s '%s' (available sets: %s)" % (
                 's'[len(unknown_sets) == 1:],
                 ', '.join(sorted(unknown_sets)),
                 ', '.join(sorted(namespace.config.pkgset))))
@@ -343,7 +343,7 @@ def _validate(parser, namespace):
     if namespace.upgrade:
         namespace.replace = False
     if not namespace.targets and not namespace.sets:
-        parser.only_error('please specify at least one atom or nonempty set')
+        parser.error('please specify at least one atom or nonempty set')
     if namespace.newuse:
         namespace.oneshot = True
 

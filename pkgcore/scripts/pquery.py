@@ -606,7 +606,7 @@ def parse_revdep(value):
     try:
         targetatom = atom.atom(value)
     except atom.MalformedAtom as e:
-        raise argparser.only_error(e)
+        raise argparser.error(e)
     val_restrict = values.FlatteningRestriction(
         atom.atom,
         values.AnyMatch(values.FunctionRestriction(targetatom.intersects)))
@@ -828,14 +828,14 @@ def get_pkg_attr(pkg, attr, fallback=None):
 def _validate_args(parser, namespace):
     if namespace.noversion:
         if namespace.contents:
-            parser.only_error('both --no-version and --contents does not make sense')
+            parser.error('both --no-version and --contents does not make sense')
         if namespace.min or namespace.max:
-            parser.only_error('--no-version with --min or --max does not make sense')
+            parser.error('--no-version with --min or --max does not make sense')
         if namespace.print_revdep:
-            parser.only_error('--print-revdep with --no-version does not make sense')
+            parser.error('--print-revdep with --no-version does not make sense')
 
     if namespace.one_attr and namespace.print_revdep:
-        parser.only_error('--print-revdep with --force-one-attr or --one-attr does not make sense')
+        parser.error('--print-revdep with --force-one-attr or --one-attr does not make sense')
 
     def process_attrs(sequence):
         for attr in sequence:

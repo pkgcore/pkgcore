@@ -30,9 +30,9 @@ class _base(commandline.ArgparseCommand):
         try:
             stack = profiles.ProfileStack(commandline.existent_path(path))
         except ValueError as e:
-            parser.only_error(e)
+            parser.error(e)
         if stack.node.repoconfig is None:
-            parser.only_error("invalid profile path: '%s'" % path)
+            parser.error("invalid profile path: '%s'" % path)
         namespace.profile = stack
 
     def bind_to_parser(self, parser):

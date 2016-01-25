@@ -31,8 +31,7 @@ def check_args(parser, namespace):
 
 
 def getter(pkg):
-    return (pkg.key, getattr(pkg, "maintainers", None),
-            getattr(pkg, "herds", None))
+    return (pkg.key, getattr(pkg, "maintainers", None))
 
 
 @argparser.bind_main_func
@@ -42,14 +41,15 @@ def main(options, out, err):
         out.write(t[0])
         out.first_prefix = "    "
         for pkg in pkgs:
-            out.write(pkg.cpvstr)
+            out.write('%s::%s' % (pkg.cpvstr, pkg.repo.repo_id))
         out.first_prefix = ""
         out.write()
-        for item, values in zip(("maintainer", "herd"), t[1:]):
-            if values:
-                out.write(
-                    "%s(s): %s" %
-                    (item.title(), ', '.join((unicode(x) for x in values))))
+        item = 'maintainer'
+        values = t[1]
+        if values:
+            out.write(
+                "%s%s: %s" %
+                (item.title(), 's'[len(values) == 1:], ', '.join((unicode(x) for x in values))))
         out.write()
         out.write()
 

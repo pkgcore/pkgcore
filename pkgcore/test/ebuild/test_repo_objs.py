@@ -12,10 +12,8 @@ from pkgcore.test import TestCase
 class TestMetadataXml(TestCase):
 
     @staticmethod
-    def get_metadata_xml(herds=(), maintainers=(), local_use={}, longdescription=None):
+    def get_metadata_xml(maintainers=(), local_use={}, longdescription=None):
         hs = ms = us = ls = ""
-        if herds:
-            hs = "<herd>%s</herd>\n" % "</herd><herd>".join(herds)
         if maintainers:
             ms = []
             for x in maintainers:
@@ -56,14 +54,6 @@ class TestMetadataXml(TestCase):
                          tuple(unicode(m) for m in mx.maintainers))
         self.assertEqual("funkymonkey@gmail.com", mx.maintainers[0].email)
         self.assertEqual(u"funky monkey \N{SNOWMAN}", mx.maintainers[0].name)
-
-    def test_herds(self):
-        # empty...
-        self.assertEqual((), self.get_metadata_xml().herds)
-
-        herds = ("video", "sound")
-        self.assertEqual(sorted(herds),
-            sorted(self.get_metadata_xml(herds=herds).herds))
 
     def test_local_use(self):
         # empty...

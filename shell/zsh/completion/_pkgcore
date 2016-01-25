@@ -572,7 +572,6 @@ _pquery() {
     '--all[match all packages (equivalent to "pquery *")]'
     '--has-use[exact string match on a USE flag]:use flag:_use -o'
     '--license[exact match on a license]:license:_licenses'
-    '--herd[exact match on a herd]:herd:'
     '--revdep[shorthand for --restrict-revdep atom --print-revdep atom]:pkg atom:'
     '--revdep-pkgs[shorthand for --restrict-revdep-pkgs atom --print-revdep atom]:pkg atom:'
     '--restrict-revdep[dependency on an atom]:pkg atom:'
@@ -601,7 +600,7 @@ _pquery() {
     '--one-attr[print one attribute, suppresses other output]'
     '--contents[list files owned by the package]'
     '--highlight-dep[highlight dependencies matching this atom]'
-    '--blame[shorthand for --attr maintainers --attr herds]'
+    '--blame[shorthand for --attr maintainers]'
     '--print-revdep[print what condition(s) trigger a dep]'
   )
 

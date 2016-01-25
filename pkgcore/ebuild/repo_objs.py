@@ -78,7 +78,7 @@ class MetadataXml(object):
     """
 
     __slots__ = (
-        "__weakref__", "_maintainers", "_herds", "_local_use",
+        "__weakref__", "_maintainers", "_local_use",
         "_longdescription", "_source",
     )
 
@@ -90,7 +90,7 @@ class MetadataXml(object):
             self._parse_xml()
         return getattr(self, attr)
 
-    for attr in ("herds", "maintainers", "local_use", "longdescription"):
+    for attr in ("maintainers", "local_use", "longdescription"):
         locals()[attr] = property(post_curry(_generic_attr, "_"+attr))
     del attr
 
@@ -113,7 +113,6 @@ class MetadataXml(object):
                 name=name, email=email, description=description))
 
         self._maintainers = tuple(maintainers)
-        self._herds = tuple(x.text for x in tree.findall("herd"))
 
         # Could be unicode!
         longdesc = tree.findtext("longdescription")
@@ -140,7 +139,6 @@ class LocalMetadataXml(MetadataXml):
             if oe.errno != errno.ENOENT:
                 raise
             self._maintainers = ()
-            self._herds = ()
             self._local_use = mappings.ImmutableDict()
             self._longdescription = None
             self._source = None

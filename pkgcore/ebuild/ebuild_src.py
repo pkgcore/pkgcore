@@ -294,7 +294,6 @@ class package(base):
         object.__setattr__(self, "_shared_pkg_data", shared_pkg_data)
 
     maintainers = klass.alias_attr("_shared_pkg_data.metadata_xml.maintainers")
-    herds = klass.alias_attr("_shared_pkg_data.metadata_xml.herds")
     local_use = klass.alias_attr("_shared_pkg_data.metadata_xml.local_use")
     longdescription = klass.alias_attr("_shared_pkg_data.metadata_xml.longdescription")
     manifest = klass.alias_attr("_shared_pkg_data.manifest")

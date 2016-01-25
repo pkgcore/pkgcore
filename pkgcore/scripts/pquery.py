@@ -105,7 +105,6 @@ printable_attrs += (
     'environment',
     'files',
     'fullver',
-    'herds',
     'longdescription',
     'maintainers',
     'package',
@@ -150,7 +149,7 @@ def stringify_attr(config, pkg, attr):
     if attr in ('iuse', 'properties', 'defined_phases',
                 'inherited'):
         return ' '.join(sorted(unicode(v) for v in value))
-    if attr in ('herds', 'maintainers'):
+    if attr == 'maintainers':
         return ' '.join(unicode(v) for v in value)
     if attr == 'longdescription':
         return unicode(value)
@@ -577,10 +576,6 @@ add_query(
     '--license', action='append', dest='license',
     type=parserestrict.comma_separated_containment('license'),
     help='exact match on a license')
-add_query(
-    '--herd', action='append', dest='herd',
-    type=parserestrict.comma_separated_containment('herds'),
-    help='exact match on a herd')
 
 query.add_argument(
     '--revdep', nargs=1,
@@ -814,8 +809,8 @@ output.add_argument(
     help='highlight dependencies matching this atom')
 output.add_argument(
     '--blame', action=commandline.Expansion, nargs=0,
-    subst=(("--attr", "maintainers"), ("--attr", "herds")),
-    help='shorthand for --attr maintainers --attr herds')
+    subst=(("--attr", "maintainers")),
+    help='shorthand for --attr maintainers')
 output.add_argument(
     '--print-revdep', action='append',
     type=atom.atom, default=[],

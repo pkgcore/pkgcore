@@ -337,7 +337,7 @@ class test_package(test_base):
         o = self.make_shared_pkg_data(metadata_xml=m)
         self.assertEqual(getattr(o, attr), "foon")
 
-    for x in ("longdescription", "maintainers", "herds"):
+    for x in ("longdescription", "maintainers"):
         locals()["test_%s" % x] = post_curry(generic_metadata_xml, x)
     del x
 

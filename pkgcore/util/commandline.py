@@ -708,6 +708,8 @@ class ArgumentParser(argparse.ArgumentParser):
 
     def bind_main_func(self, functor):
         self.set_defaults(main_func=functor)
+        # override main prog with subcmd prog
+        self.set_defaults(prog=self.prog)
         return functor
 
     def bind_class(self, obj):
@@ -867,7 +869,6 @@ def argparse_parse(parser, args, namespace=None):
         raise Exception(
             "parser %r lacks a main method- internal bug.\nGot namespace %r\n"
             % (parser, namespace))
-    namespace.prog = parser.prog
     return main, namespace
 
 

@@ -449,16 +449,17 @@ repo_group.add_argument(
     '--raw', action='store_true', default=False,
     help="disable configuration filtering",
     docs="""
-        This forces raw dependencies to be used, rather than the dependencies
-        rendered via your USE configuration. Primarily useful for people who
-        need to look under the hood- ebuild devs, PM tool authors, etc. Note
-        this option ignores --domain if is specified.
+        Disable configuration filtering that forces raw dependencies to be
+        used, rather than the dependencies rendered via your USE configuration.
+        Primarily useful for people who need to look under the hood- ebuild
+        devs, PM tool authors, etc. Note this option ignores --domain if is
+        specified.
     """)
 repo_group.add_argument(
     '--unfiltered', action='store_true', default=False,
     help="disable all license and visibility filtering",
     docs="""
-        Disables all package filtering mechanisms such as ACCEPT_KEYWORDS,
+        Disable all package filtering mechanisms such as ACCEPT_KEYWORDS,
         ACCEPT_LICENSE, and package.mask.
     """)
 repo_group.add_argument(
@@ -565,8 +566,8 @@ add_query(
     const=packages.AlwaysTrue, type=None, suppress_nargs=True,
     help='match all packages',
     docs="""
-        This is equivalent to "pquery \*". Note that if no query options are
-        specified, this option is enabled.
+        Match all packages which is equivalent to "pquery \*". Note that if no
+        query options are specified, this option is enabled.
     """)
 add_query(
     '--has-use', action='append', dest='has_use',
@@ -583,8 +584,9 @@ query.add_argument(
     subst=(('--restrict-revdep', '%(0)s'), ('--print-revdep', '%(0)s')),
     help='shorthand for --restrict-revdep atom --print-revdep atom',
     docs="""
-        Note that --print-revdep is slow, use --restrict-revdep if you
-        just need a list.
+        An alias for '--restrict-revdep atom --print-revdep atom', but note
+        that --print-revdep is slow so use --restrict-revdep if you just need a
+        list.
     """)
 
 query.add_argument(
@@ -593,8 +595,9 @@ query.add_argument(
     subst=(('--restrict-revdep-pkgs', '%(0)s'), ('--print-revdep', '%(0)s')),
     help='shorthand for --restrict-revdep-pkgs atom --print-revdep atom',
     docs="""
-        Note that --print-revdep is slow, use --restrict-revdep if you
-        just need a list.
+        An alias for '--restrict-revdep-pkgs atom --print-revdep atom', but
+        note that --print-revdep is slow so use --restrict-revdep if you just
+        need a list.
     """)
 
 @bind_add_query(
@@ -769,8 +772,9 @@ output.add_argument(
     '--cpv', action='store_true',
     help='print the category/package-version',
     docs="""
-        This is done by default, this option re-enables this if another output
-        option (like --contents) disabled it.
+        Display output in the format of 'category/package-version' which is
+        done by default, this option forces the output format if another output
+        option (such as --contents) alters it.
     """)
 output.add_argument(
     '-a', '--atom', action=commandline.Expansion,

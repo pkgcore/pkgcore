@@ -189,9 +189,10 @@ dump = subparsers.add_parser(
     "dump", parents=shared_options,
     description='dump the entire configuration',
     docs="""
-        The format used is similar to the ini-like default format, but do not
-        rely on this to always write a loadable config. There may be quoting
-        issues. With a typename argument only that type is dumped.
+        Dump the entire configuration in a format similar to the ini-like
+        default format; however, do not rely on this to always write a loadable
+        config. There may be quoting issues. With a typename argument only that
+        type is dumped.
     """)
 dump.add_argument(
     "typename", nargs="?", action="store", default=None,
@@ -301,7 +302,8 @@ dump_uncollapsed = subparsers.add_parser(
     "dump-uncollapsed", parents=shared_options,
     description="dump the configuration in a raw, uncollapsed form",
     docs="""
-        Not directly usable as a configuration file, mainly used for inspection.
+        Dump the configuration in a raw, uncollapsed form not directly usable
+        as a configuration file, mainly used for inspection.
     """)
 @dump_uncollapsed.bind_main_func
 def dump_uncollapsed_main(options, out, err):

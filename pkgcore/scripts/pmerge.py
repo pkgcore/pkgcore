@@ -49,9 +49,12 @@ merge_mode.add_argument(
     '--clean', action='store_true',
     help='remove installed packages that are not referenced by any target packages/sets',
     docs="""
-        Defaults to using the world and system sets if no
-        targets are specified. Use with *caution*, this option used incorrectly
-        can render your system unusable. Note that this implies --deep.
+        Remove installed packages that aren't referenced by any target packages
+        or sets. This defaults to using the world and system sets if no targets are
+        specified.
+
+        Use with *caution*, this option used incorrectly can render your system
+        unusable. Note that this implies --deep.
     """)
 merge_mode.add_argument(
     '-p', '--pretend', action='store_true',
@@ -60,7 +63,7 @@ merge_mode.add_argument(
     '--ignore-failures', action='store_true',
     help='ignore failures while running all types of tasks',
     docs="""
-        This will skip the failures during the following phases: sanity checks
+        Skips failures during the following phases: sanity checks
         (pkg_pretend), fetching, dep resolution, and (un)merging.
     """)
 merge_mode.add_argument(
@@ -89,11 +92,11 @@ resolution_options.add_argument(
     '--preload-vdb-state', action='store_true',
     help="enable preloading of the installed packages database",
     docs="""
-        This causes the resolver to work with a complete graph, thus
-        disallowing actions that conflict with installed packages. If
-        disabled, it's possible for the requested action to conflict with
-        already installed dependencies that aren't involved in the graph of
-        the requested operation.
+        Preload the installed package database which causes the resolver to
+        work with a complete graph, thus disallowing actions that conflict with
+        installed packages. If disabled, it's possible for the requested action
+        to conflict with already installed dependencies that aren't involved in
+        the graph of the requested operation.
     """)
 resolution_options.add_argument(
     '-i', '--ignore-cycles', action='store_true',
@@ -139,9 +142,9 @@ output_options.add_argument(
     config_type='pmerge_formatter',
     help='output formatter to use',
     docs="""
-        Used for text formatting of --pretend or --ask output, currently
-        available formatters include the following: basic, pkgcore, portage,
-        portage-verbose, and paludis.
+        Select an output formatter to use for text formatting of --pretend or
+        --ask output, currently available formatters include the following:
+        basic, pkgcore, portage, portage-verbose, and paludis.
 
         The basic formatter is the nearest to simple text output and is
         intended for scripting while the portage/portage-verbose formatter

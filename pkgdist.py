@@ -303,14 +303,16 @@ class build_man(Command):
     2to3 or other conversions instead of straight from the build directory.
     """
 
-    user_options = []
+    user_options = [
+        ("force", "f", "force build as needed"),
+    ]
     content_search_path = ('build/sphinx/man', 'man')
 
     def initialize_options(self):
-        pass
+        self.force = False
 
     def finalize_options(self):
-        pass
+        self.force = bool(self.force)
 
     def skip(self):
         # don't rebuild if one of the output dirs exist
@@ -321,7 +323,7 @@ class build_man(Command):
         return False
 
     def run(self):
-        if not self.skip():
+        if self.force or not self.skip():
             # Use a built version for the man page generation process that
             # imports script modules.
             build_py = self.distribution.get_command_obj('build_py')
@@ -346,17 +348,19 @@ class build_man(Command):
 class build_docs(build_man):
     """Build html docs."""
 
-    user_options = []
+    user_options = [
+        ("force", "f", "force build as needed"),
+    ]
     content_search_path = ('build/sphinx/html', 'html')
 
     def initialize_options(self):
-        pass
+        self.force = False
 
     def finalize_options(self):
-        pass
+        self.force = bool(self.force)
 
     def run(self):
-        if not self.skip():
+        if self.force or not self.skip():
             # generate man pages -- html versions of man pages are provided
             self.run_command('build_man')
 

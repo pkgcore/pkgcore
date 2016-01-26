@@ -2,11 +2,10 @@
 # License: GPL2/BSD
 
 """
-EBuild Daemon (ebd), main high level interface to ebuild execution env
-(ebuild.sh being part of it).
+EBuild Daemon (ebd), main high level interface to ebuild execution env.
 
 Wraps :obj:`pkgcore.ebuild.processor` functionality into a higher level
-api, per phase methods for example
+api, for example per phase methods.
 """
 
 __all__ = (

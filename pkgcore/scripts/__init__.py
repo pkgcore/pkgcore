@@ -23,8 +23,9 @@ import sys
 def main(script_name):
     try:
         from pkgcore.util import commandline
+        scripts_module = '.'.join(os.path.realpath(__file__).split('/')[-3:-1])
         script = import_module(
-            'pkgcore.scripts.%s' % script_name.replace("-", "_"))
+            '.'.join((scripts_module, script_name.replace("-", "_"))))
     except ImportError as e:
         sys.stderr.write(str(e) + '!\n')
         sys.stderr.write(

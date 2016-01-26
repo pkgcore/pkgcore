@@ -873,8 +873,11 @@ class ebuild_mixin(object):
         ensure_dirs(pkg_tmpdir, mode=0770, gid=portage_gid, minimal=True)
         env["ROOT"] = domain.root
         env["T"] = pkg_tmpdir
+        # TODO: make colored output easier to achieve from observers
+        msg = ['>>> Running pkg_pretend for ', observer._output._out.fg('green'),
+               pkg.cpvstr, observer._output._out.reset]
         try:
-            logger.debug("running ebuild pkg_pretend sanity check for %s", pkg.cpvstr)
+            observer._output._out.write(*msg)
             start = time.time()
             ret = run_generic_phase(
                 pkg, "pretend", env, userpriv=True, sandbox=True, extra_handlers=commands)

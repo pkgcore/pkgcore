@@ -43,5 +43,5 @@ def main(script_name):
 
 if __name__ == '__main__':
     # we're in a git repo or tarball so add the base dir to the system path
-    sys.path.insert(1, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     main(os.path.basename(__file__))

@@ -33,6 +33,11 @@ TOPDIR = os.path.dirname(os.path.abspath(inspect.stack(0)[1][1]))
 
 
 def find_project(topdir=TOPDIR):
+    """Determine a project's name.
+
+    Based on the assumption that the project is only distributing one main
+    module.
+    """
     topdir_depth = len(topdir.split('/'))
 
     # look for a top-level module
@@ -52,7 +57,7 @@ PROJECT = find_project()
 def version(project=PROJECT):
     """Determine a project's version.
 
-    Based on the assumption that a project defines __version__ in it's main
+    Based on the assumption that a project defines __version__ in its main
     module.
     """
     version = None
@@ -74,6 +79,7 @@ def version(project=PROJECT):
 
 
 def get_file_paths(path):
+    """Get list of all file paths under a given path."""
     for root, dirs, files in os.walk(path):
         for f in files:
             yield os.path.join(root, f)[len(path):].lstrip('/')
@@ -143,8 +149,10 @@ class sdist(dst_sdist.sdist):
 
 
 class build_py(dst_build_py.build_py):
+    """build_py command wrapper that runs 2to3 for py3 targets."""
 
-    user_options = dst_build_py.build_py.user_options + [("inplace", "i", "do any source conversions in place")]
+    user_options = dst_build_py.build_py.user_options + \
+        [("inplace", "i", "do any source conversions in place")]
 
     package_namespace = PROJECT
     generate_verinfo = True
@@ -251,8 +259,7 @@ class build_py(dst_build_py.build_py):
 
 
 class build_py3(build_py):
-
-    """build command wrapper for running 3to2 for py2 targets"""
+    """build_py command wrapper that runs 3to2 for py2 targets."""
 
     def run(self):
         py2k_rebuilds = []
@@ -328,9 +335,10 @@ class build_man(Command):
                 generate_man(PROJECT, TOPDIR)
 
             # generate man pages
+            self.distribution.reinitialize_command('build_sphinx')
             build_sphinx = self.distribution.get_command_obj('build_sphinx')
             build_sphinx.builder = 'man'
-            build_sphinx.finalize_options()
+            build_sphinx.ensure_finalized()
             self.run_command('build_sphinx')
             sys.path = syspath
 
@@ -413,7 +421,6 @@ class build_ext(dst_build_ext.build_ext):
 
 
 class build_scripts(dst_build_scripts.build_scripts):
-
     """Create and build (copy and modify #! line) the wrapper scripts."""
 
     def finalize_options(self):
@@ -436,8 +443,7 @@ class build_scripts(dst_build_scripts.build_scripts):
 
 
 class install_docs(Command):
-
-    """Install html documentation"""
+    """Install html documentation."""
 
     content_search_path = build_docs.content_search_path
     user_options = [
@@ -520,8 +526,7 @@ class install_docs(Command):
 
 
 class install_man(install_docs):
-
-    """Install man pages"""
+    """Install man pages."""
 
     content_search_path = build_man.content_search_path
     build_command = 'build_man'
@@ -541,7 +546,6 @@ class install_man(install_docs):
 
 
 class test(Command):
-
     """Run our unit tests in a built copy.
 
     Based on code from setuptools.
@@ -590,6 +594,8 @@ class test(Command):
         build_py = self.reinitialize_command('build_py')
         build_ext.inplace = build_py.inplace = self.inplace
         build_ext.force = build_py.force = self.force
+        build_ext.ensure_finalized()
+        build_py.ensure_finalized()
 
         if self.include_dirs:
             build_ext.include_dirs = self.include_dirs

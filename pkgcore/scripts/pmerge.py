@@ -43,26 +43,36 @@ query_options.add_argument(
 merge_mode = argparser.add_argument_group('Available operations')
 merge_mode.add_argument(
     '-C', '--unmerge', action='store_true',
-    help='unmerge a package')
+    help='unmerge packages',
+    docs="""
+        Target packages for unmerging from the system.
+
+        WARNING: This does not ask for user confirmation for any targets so
+        it's possible to quickly break a system.
+    """)
 merge_mode.add_argument(
     '--clean', action='store_true',
-    help='remove installed packages that are not referenced by any target packages/sets',
+    help='remove installed packages not referenced by any target pkgs/sets',
     docs="""
         Remove installed packages that aren't referenced by any target packages
-        or sets. This defaults to using the world and system sets if no targets are
-        specified.
+        or sets. This defaults to using the world and system sets if no targets
+        are specified.
 
         Use with *caution*, this option used incorrectly can render your system
         unusable. Note that this implies --deep.
     """)
 merge_mode.add_argument(
     '-p', '--pretend', action='store_true',
-    help="do the resolution, but don't merge/fetch anything")
+    help="only perform the dep resolution",
+    docs="""
+        Resolve package dependencies and display the results without performing
+        any merges.
+    """)
 merge_mode.add_argument(
     '--ignore-failures', action='store_true',
     help='ignore failures while running all types of tasks',
     docs="""
-        Skips failures during the following phases: sanity checks
+        Skip failures during the following phases: sanity checks
         (pkg_pretend), fetching, dep resolution, and (un)merging.
     """)
 merge_mode.add_argument(
@@ -132,27 +142,46 @@ resolution_options.add_argument(
     """)
 resolution_options.add_argument(
     '-b', '--buildpkg', action='store_true',
-    help="build binpkgs")
+    help="build binpkgs",
+    docs="""
+        Force binary packages to be built for all merged packages.
+    """)
 resolution_options.add_argument(
     '-k', '--usepkg', action='store_true',
-    help="prefer to use binpkgs")
+    help="prefer to use binpkgs",
+    docs="""
+        Binary packages are preferred over ebuilds when performing dependency
+        resolution.
+    """)
 resolution_options.add_argument(
     '-K', '--usepkgonly', action='store_true',
-    help="use only binpkgs")
+    help="use only binpkgs",
+    docs="""
+        Only binary packages are considered when performing dependency
+        resolution.
+    """)
 resolution_options.add_argument(
     '-S', '--source-only', action='store_true',
-    help="use only source packages, no binpkgs")
+    help="use only ebuilds, no binpkgs",
+    docs="""
+        Only ebuilds are considered when performing dependency
+        resolution.
+    """)
 resolution_options.add_argument(
     '-e', '--empty', action='store_true',
-    help="force rebuilding of all involved packages, using installed "
-         "packages only to satisfy building the replacements")
+    help="force rebuilding of all involved packages",
+    docs="""
+        Force all targets and their dependencies to be rebuilt.
+    """)
 
 output_options = argparser.add_argument_group("Output related options")
 output_options.add_argument(
     '--quiet-repo-display', action='store_true',
-    help="In the package merge list display, suppress ::repo "
-         "output, and instead use numbers to indicate which repos "
-         "packages come from.")
+    help="use indexes instead of ::repo suffixes in dep resolution output",
+    docs="""
+        In the package merge list display, suppress ::repo output and instead
+        use index numbers to indicate which repos packages come from.
+    """)
 output_options.add_argument(
     '-F', '--formatter', priority=90, metavar='FORMATTER',
     action=commandline.StoreConfigObject, get_default=True,

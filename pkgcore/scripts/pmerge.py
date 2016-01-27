@@ -67,7 +67,12 @@ merge_mode.add_argument(
     """)
 merge_mode.add_argument(
     '-a', '--ask', action='store_true',
-    help="do the resolution, but ask to merge/fetch anything")
+    help="ask for user confirmation after dep resolution",
+    docs="""
+        Perform the dependency resolution, but ask for user confirmation before
+        beginning the fetch/build/merge process. The choice defaults to yes so
+        pressing the "Enter" key will trigger acceptance.
+    """)
 merge_mode.add_argument(
     '--force', action='store_true',
     dest='force',
@@ -99,19 +104,32 @@ resolution_options.add_argument(
     """)
 resolution_options.add_argument(
     '-i', '--ignore-cycles', action='store_true',
-    help="Ignore cycles if they're found to be unbreakable; "
-         "a depends on b, and b depends on a, with neither built is an "
-         "example.")
+    help="ignore unbreakable dep cycles",
+    docs="""
+        Ignore dependency cycles if they're found to be unbreakable; for
+        example: a depends on b, and b depends on a, with neither built.
+    """)
 resolution_options.add_argument(
     '--with-bdeps', action='store_true',
-    help="process build dependencies for built packages; "
-         "by default they're ignored")
+    help="process build deps for built packages",
+    docs="""
+        Pull in build time dependencies for built packages during dependency
+        resolution, by default they're ignored.
+    """)
 resolution_options.add_argument(
     '-O', '--nodeps', action='store_true',
-    help='disable dependency resolution')
+    help='disable dependency resolution',
+    docs="""
+        Build and merge packages without resolving any dependencies.
+    """)
 resolution_options.add_argument(
     '-n', '--noreplace', action='store_false', dest='replace',
-    help="don't reinstall target atoms if they're already installed")
+    help="don't reinstall target pkgs that are already installed",
+    docs="""
+        Skip packages that are already installed. By default when running
+        without this option, any specified target packages will be remerged
+        regardless of if they are already installed.
+    """)
 resolution_options.add_argument(
     '-b', '--buildpkg', action='store_true',
     help="build binpkgs")

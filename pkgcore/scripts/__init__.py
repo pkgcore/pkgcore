@@ -23,11 +23,12 @@ import sys
 def main(script_name):
     try:
         from pkgcore.util import commandline
-        scripts_module = '.'.join(os.path.realpath(__file__).split('/')[-3:-1])
-        script = import_module(
-            '.'.join((scripts_module, script_name.replace("-", "_"))))
+        script_module = '.'.join(
+            os.path.realpath(__file__).split('/')[-3:-1] +
+            [script_name.replace("-", "_")])
+        script = import_module(script_module)
     except ImportError as e:
-        sys.stderr.write(str(e) + '!\n')
+        sys.stderr.write("Failed importing '%s': %s!\n" % (script_module, str(e)))
         sys.stderr.write(
             'Verify that snakeoil and pkgcore are properly installed '
             'and/or PYTHONPATH is set correctly for python %s.\n' %

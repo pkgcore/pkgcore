@@ -25,7 +25,6 @@ from pkgcore.restrictions import packages
 from pkgcore.restrictions.boolean import OrRestriction
 from pkgcore.util import commandline, parserestrict, repo_utils
 
-from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.lists import iflatten_instance, stable_unique
 
 

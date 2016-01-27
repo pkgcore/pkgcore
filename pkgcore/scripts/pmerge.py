@@ -476,15 +476,26 @@ def main(options, out, err):
             out.error(str(e))
             return 1
         if matches is None:
-            if token in config.pkgset:
-                out.error(
-                    "No package matches '%s', but there is a set with "
-                    'that name. Use @set to specify a set.' % (token,))
-                return 2
-            elif not options.ignore_failures:
-                out.error("No matches for '%s'; ignoring it" % (token,))
-            else:
-                return -1
+            if not options.ignore_failures:
+                pkg_type = 'ebuilds'
+                if options.usepkgonly:
+                    pkg_type = 'binpkgs'
+                elif options.usepkg:
+                    pkg_type = 'ebuilds or binpkgs'
+                out.error("No matching {}: {}".format(pkg_type, token))
+
+                if token in config.pkgset:
+                    out.error(
+                        "There is a package set matching '{0}', "
+                        "use @{0} instead to specify the set.".format(token))
+                elif options.usepkgonly:
+                    matches = parse_target(
+                        restriction, domain.ebuild_repos.combined, livefs_repos, return_none=True)
+                    if matches:
+                        out.error(
+                            "Try re-running {} without -K/--usepkgonly enabled "
+                            "to rebuild from source.".format(options.prog, token))
+                return 1
         else:
             atoms.extend(matches)
 

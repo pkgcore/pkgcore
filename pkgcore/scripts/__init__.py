@@ -25,14 +25,14 @@ def main(script_name):
         from pkgcore.util import commandline
         script_module = '.'.join(
             os.path.realpath(__file__).split('/')[-3:-1] +
-            [script_name.replace("-", "_")])
+            [script_name.replace('-', '_')])
         script = import_module(script_module)
     except ImportError as e:
-        sys.stderr.write("Failed importing '%s': %s!\n" % (script_module, str(e)))
+        sys.stderr.write('Failed importing: %s!\n' % str(e))
         sys.stderr.write(
             'Verify that snakeoil and pkgcore are properly installed '
             'and/or PYTHONPATH is set correctly for python %s.\n' %
-            (".".join(map(str, sys.version_info[:3])),))
+            ('.'.join(map(str, sys.version_info[:3])),))
         if '--debug' in sys.argv:
             raise
         sys.stderr.write('Add --debug to the commandline for a traceback.\n')

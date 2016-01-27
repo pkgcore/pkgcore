@@ -89,19 +89,37 @@ merge_mode.add_argument(
     help="force merging to a repo, regardless of if it's frozen")
 merge_mode.add_argument(
     '-f', '--fetchonly', action='store_true',
-    help="do only the fetch steps of the resolved plan")
+    help="do only the fetch steps of the resolved plan",
+    docs="""
+        Only perform fetching of all targets from SRC_URI based on the current
+        USE configuration.
+    """)
 merge_mode.add_argument(
     '-1', '--oneshot', action='store_true',
-    help="do not record changes in the world file; if a set is "
-         "involved, defaults to forcing oneshot")
+    help="do not record changes in the world file",
+    docs="""
+        Build and merge packages normally, but do not add any targets to the
+        world file. Note that this is forcibly enabled if a package set is
+        specified.
+    """)
 
 resolution_options = argparser.add_argument_group("Resolver options")
 resolution_options.add_argument(
     '-u', '--upgrade', action='store_true',
-    help='try to upgrade already installed packages/dependencies')
+    help='try to upgrade installed pkgs/deps',
+    docs="""
+        Try to upgrade specified targets to the latest visible version. Note
+        that altered package visibility due to keywording or masking can often
+        hide the latest versions of packages, especially for stable
+        configurations.
+    """)
 resolution_options.add_argument(
     '-D', '--deep', action='store_true',
-    help='force the resolver to verify already installed dependencies')
+    help='force the resolver to verify installed deps',
+    docs="""
+        Force dependency resolution across the entire dependency tree for all
+        specified targets.
+    """)
 resolution_options.add_argument(
     '--preload-vdb-state', action='store_true',
     help="enable preloading of the installed packages database",

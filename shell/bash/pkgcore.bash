@@ -27,8 +27,8 @@ _pkgattr() {
 	pid=$!
 	exec {fdout}<"${tmpdir}"/stdout {fderr}<"${tmpdir}"/stderr
 	rm -rf "${tmpdir}"
-	IFS=$'\n' pkg=( $(cat <&${fdout}) )
-	IFS=$'\n' error=( $(cat <&${fderr}) )
+	mapfile -t -u ${fdout} pkg
+	mapfile -t -u ${fderr} error
 	wait ${pid}
 	ret=$?
 	exec {fdout}<&- {fderr}<&-

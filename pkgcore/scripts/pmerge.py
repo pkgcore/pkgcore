@@ -496,11 +496,14 @@ def main(options, out, err):
 
     source_repos = domain.source_repos
     installed_repos = domain.installed_repos
+    pkg_type = 'ebuilds'
 
     if options.usepkgonly:
         source_repos = domain.binary_repos
+        pkg_type = 'binpkgs'
     elif options.usepkg:
         source_repos = domain.binary_repos + domain.ebuild_repos
+        pkg_type = 'ebuilds or binpkgs'
     elif options.source_only:
         source_repos = domain.ebuild_repos
 
@@ -523,13 +526,7 @@ def main(options, out, err):
             return 1
         if matches is None:
             if not options.ignore_failures:
-                pkg_type = 'ebuilds'
-                if options.usepkgonly:
-                    pkg_type = 'binpkgs'
-                elif options.usepkg:
-                    pkg_type = 'ebuilds or binpkgs'
                 out.error("No matching {}: {}".format(pkg_type, token))
-
                 if token in config.pkgset:
                     out.error(
                         "There is a package set matching '{0}', "

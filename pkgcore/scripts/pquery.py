@@ -405,7 +405,8 @@ def print_packages_noversion(options, out, err, pkgs):
             versions = sorted(
                 pkg.fullver for vdb in options.domain.vdb
                 for pkg in vdb.itermatch(pkgs[0].unversioned_atom))
-            out.write(green, '     installed: ', out.fg(), ' '.join(versions))
+            if versions:
+                out.write(green, '     installed: ', out.fg(), ' '.join(versions))
         for attr in options.attr:
             out.write(green, '     %s: ' % (attr,), out.fg(),
                       stringify_attr(options, pkgs[-1], attr))

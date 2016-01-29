@@ -512,17 +512,17 @@ def setup_repos(namespace, attr):
             repos = list(namespace.domain.vdb)
             repos.extend(namespace.domain.repos_configured.itervalues())
         elif namespace.ebuild_repos:
-            repos = namespace.domain.ebuild_repos_raw
+            repos = namespace.domain.ebuild_repos_raw.repos
         elif namespace.binary_repos:
-            repos = namespace.domain.binary_repos_raw
+            repos = namespace.domain.binary_repos_raw.repos
         else:
             repos = namespace.domain.repos_configured.values()
     elif namespace.all_repos:
         repos = namespace.domain.repos + namespace.domain.vdb
     elif namespace.ebuild_repos:
-        repos = namespace.domain.ebuild_repos
+        repos = namespace.domain.ebuild_repos.repos
     elif namespace.binary_repos:
-        repos = namespace.domain.binary_repos
+        repos = namespace.domain.binary_repos.repos
     else:
         repos = namespace.domain.repos
 

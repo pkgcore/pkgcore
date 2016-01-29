@@ -738,7 +738,11 @@ def main(options, out, err):
                 (len(resolver_inst.state.plan), resolve_time))
         return
 
-    if (options.ask and not formatter.ask("Would you like to merge these packages?")):
+    action = 'merge'
+    if options.fetchonly:
+        action = 'fetch'
+    if (options.ask and not formatter.ask(
+            "Would you like to {} these packages?".format(action))):
         return
 
     change_count = len(changes)

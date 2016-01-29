@@ -252,8 +252,11 @@ regen_opts.add_argument(
 regen_opts.add_argument(
     "-t", "--threads", type=int,
     default=commandline.DelayedValue(_get_default_jobs, 100),
-    help="number of threads to use for regeneration. Defaults to using all "
-    "available processors")
+    help="number of threads to use",
+    docs="""
+        Number of threads to use for regeneration, defaults to using all
+        available processors.
+    """)
 regen_opts.add_argument(
     "--force", action='store_true', default=False,
     help="force regeneration to occur regardless of staleness checks")
@@ -375,8 +378,11 @@ commandline.make_query(
 mirror_opts = mirror.add_argument_group("subcommand options")
 mirror_opts.add_argument(
     "-f", "--ignore-failures", action='store_true', default=False,
-    help="if a failure occurs, keep going.  If this option isn't given, it'll"
-         " stop at the first failure encountered")
+    help="if a failure occurs, keep going",
+    docs="""
+        Keep going even if a failure occurs. By default, the first failure
+        encountered stops the process.
+    """)
 @mirror.bind_main_func
 def mirror_main(options, out, err):
     domain = options.domain

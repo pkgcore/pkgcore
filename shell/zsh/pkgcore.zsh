@@ -8,7 +8,7 @@ _pkgattr() {
 	local -a pkg error
 
 	if [[ -z ${pkg_atom} ]]; then
-		echo "Enter a valid package name." >&2
+		echo "Enter a valid package name or repo path." >&2
 		return 1
 	fi
 

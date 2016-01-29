@@ -481,10 +481,11 @@ class BooleanQuery(DelayedValue):
             else:
                 l.extend(val)
 
-        l = list(iflatten_instance(l, (restriction.base,)))
-
         if self.converter:
             l = self.converter(l, namespace)
+
+        l = list(iflatten_instance(l, (restriction.base,)))
+
         if len(l) > 1:
             val = self.klass(*l)
         elif l:

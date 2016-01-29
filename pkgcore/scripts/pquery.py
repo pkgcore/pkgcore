@@ -29,9 +29,11 @@ from pkgcore.util import (
 
 demandload(
     'errno',
+    'os',
     're',
     'snakeoil.lists:iter_stable_unique',
     'pkgcore.fs:fs@fs_module,contents@contents_module',
+    'pkgcore.repository:multiplex',
 )
 
 
@@ -558,9 +560,28 @@ def bind_add_query(*args, **kwds):
         return functor
     return f
 
-add_query(
+@bind_add_query(
     nargs='*', dest='matches', metavar='target',
+    bind='final_converter', type=None,
     help="extended atom matching of pkgs")
+def matches_finalize(targets, namespace):
+    repos = multiplex.tree(*namespace.repos)
+    restrictions = []
+    for target in targets:
+        try:
+            restrictions.append(parserestrict.parse_match(target))
+        except parserestrict.ParseError as e:
+            if os.path.exists(target):
+                try:
+                    restrictions.append(repos.path_restrict(target))
+                except ValueError as e:
+                    argparser.error(e)
+            else:
+                raise argparser.error(e)
+    if restrictions:
+        return packages.OrRestriction(*restrictions)
+    return []
+
 add_query(
     '--all', action='append_const', dest='all',
     const=packages.AlwaysTrue, type=None, suppress_nargs=True,

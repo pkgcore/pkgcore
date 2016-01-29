@@ -10,12 +10,14 @@ if [[ ${PKGSHELL} != "bash" && ${PKGSHELL} != "zsh" ]]; then
 	return 1
 fi
 
+# determine the directory path where this script exists
 if [[ ${PKGSHELL} == "bash" ]]; then
 	SCRIPTDIR=$(dirname $(realpath ${BASH_SOURCE[0]}))
 else
 	SCRIPTDIR=$(dirname $(realpath ${(%):-%x}))
 fi
 
+# source bash/zsh specific support
 source "${SCRIPTDIR}"/${PKGSHELL}/pkgcore.${PKGSHELL}
 export PATH=${SCRIPTDIR}/bin:${PATH}
 unset PKGSHELL SCRIPTDIR

@@ -62,7 +62,6 @@ class ebd(object):
             will be broken down at some point
         """
 
-
         if use_override is not None:
             use = use_override
         else:
@@ -118,8 +117,8 @@ class ebd(object):
         self.env["PKGCORE_EAPI_FUNCS"] = ' '.join(x.strip() for x in eapi_funcs)
 
         self.env_data_source = env_data_source
-        if env_data_source is not None and \
-            not isinstance(env_data_source, data_source.base):
+        if (env_data_source is not None and
+                not isinstance(env_data_source, data_source.base)):
             raise TypeError(
                 "env_data_source must be None, or a pkgcore.data_source.base "
                 "derivative: %s: %s" % (
@@ -230,8 +229,8 @@ class ebd(object):
     def _setup_merge_type(self, phase, env):
         # only allowed in pkg_ phases.
 
-        if not self.eapi_obj.phases.get(phase, "").startswith("pkg_") \
-            and not phase == 'setup-binpkg':
+        if (not self.eapi_obj.phases.get(phase, "").startswith("pkg_") and
+                not phase == 'setup-binpkg'):
             return
 
         # note all pkgs have this attribute
@@ -262,7 +261,6 @@ class ebd(object):
             # XXX hack, just 'til pkgcore controls these directories
             if (os.stat(self.env[k]).st_mode & 02000):
                 logger.warning("%s ( %s ) is setgid" % (self.env[k], k))
-
 
     def _generic_phase(self, phase, userpriv, sandbox, extra_handlers={},
                        failure_allowed=False, suppress_bashrc=False):
@@ -443,9 +441,8 @@ def run_generic_phase(pkg, phase, env, userpriv, sandbox,
         release_ebuild_processor(ebd)
         if isinstance(e, IGNORED_EXCEPTIONS + (format.GenericBuildError,)):
             raise
-        raise_from(
-            format.GenericBuildError("Executing phase %s: Caught exception: "
-                "%s" % (phase, e)))
+        raise_from(format.GenericBuildError(
+            "Executing phase %s: Caught exception: %s" % (phase, e)))
 
     release_ebuild_processor(ebd)
     return True
@@ -581,8 +578,8 @@ class buildable(ebd, setup_mixin, format.build):
         path = self.env["PATH"].split(":")
 
         for s, default in (("DISTCC", ".distcc"), ("CCACHE", "ccache")):
-            b = (self.feat_or_bool(s, domain_settings)
-                 and not s in self.restrict)
+            b = (self.feat_or_bool(s, domain_settings) and
+                 s not in self.restrict)
             setattr(self, s.lower(), b)
             if b:
                 # looks weird I realize, but
@@ -645,8 +642,8 @@ class buildable(ebd, setup_mixin, format.build):
         if self.verified_files:
             try:
                 if os.path.exists(self.env["DISTDIR"]):
-                    if (os.path.isdir(self.env["DISTDIR"])
-                            and not os.path.islink(self.env["DISTDIR"])):
+                    if (os.path.isdir(self.env["DISTDIR"]) and
+                            not os.path.islink(self.env["DISTDIR"])):
                         shutil.rmtree(self.env["DISTDIR"])
                     else:
                         os.unlink(self.env["DISTDIR"])
@@ -781,7 +778,7 @@ class buildable(ebd, setup_mixin, format.build):
             except OSError as e:
                 raise_from(format.GenericBuildError(
                     "failed forcing %i uid for WORKDIR: %s" %
-                        (portage_uid, e)))
+                    (portage_uid, e)))
         return self._generic_phase("unpack", True, True)
 
     compile = pretty_docs(
@@ -820,7 +817,7 @@ class buildable(ebd, setup_mixin, format.build):
 
 class binpkg_localize(ebd, setup_mixin, format.build):
 
-    stage_depends = {"finalize":"setup", "setup":"start"}
+    stage_depends = {"finalize": "setup", "setup": "start"}
     setup_is_for_src = False
 
     _built_class = ebuild_built.package
@@ -873,11 +870,13 @@ class ebuild_mixin(object):
         ensure_dirs(pkg_tmpdir, mode=0770, gid=portage_gid, minimal=True)
         env["ROOT"] = domain.root
         env["T"] = pkg_tmpdir
+
         # TODO: make colored output easier to achieve from observers
         msg = ['>>> Running pkg_pretend for ', observer._output._out.fg('green'),
                pkg.cpvstr, observer._output._out.reset]
+        observer._output._out.write(*msg)
+
         try:
-            observer._output._out.write(*msg)
             start = time.time()
             ret = run_generic_phase(
                 pkg, "pretend", env, userpriv=True, sandbox=True, extra_handlers=commands)

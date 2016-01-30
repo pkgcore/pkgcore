@@ -368,7 +368,9 @@ _color_parent = commandline.mk_argparser(color=True, domain=False, add_help=Fals
 def bind_parser(parser, name):
     subparsers = parser.add_subparsers(help="%s commands" % (name,))
     for command in commands:
+        # Split docstrings into summaries and extended docs.
+        help, _, docs = command.__doc__.partition('\n')
         subparser = subparsers.add_parser(
             command.__name__.lower(),
-            help=command.__doc__.split('\n', 1)[0], parents=[_color_parent])
+            help=help, docs=docs, parents=[_color_parent])
         command().bind_to_parser(subparser)

@@ -52,10 +52,10 @@ _register_command = commandline.register_command(commands)
 
 
 class parent(_base):
-
     """output the linearized tree of inherited parents
 
-    later lines override earlier lines"""
+    later lines override earlier lines
+    """
 
     __metaclass__ = _register_command
 
@@ -64,7 +64,6 @@ class parent(_base):
 
 
 class eapi(_base):
-
     """output EAPI support required for reading this profile"""
 
     __metaclass__ = _register_command
@@ -75,7 +74,6 @@ class eapi(_base):
 
 
 class status(_base):
-
     """output profile status"""
 
     __metaclass__ = _register_command
@@ -94,7 +92,6 @@ class status(_base):
 
 
 class deprecated(_base):
-
     """dump deprecation notices, if any"""
 
     __metaclass__ = _register_command
@@ -114,7 +111,6 @@ class deprecated(_base):
 
 
 class provided(_base):
-
     """list all package.provided packages
 
     Note that these are exact versions- if a dep requires a higher version,
@@ -135,8 +131,7 @@ class provided(_base):
 
 
 class system(_base):
-
-    """Output the system package set."""
+    """output the system package set"""
 
     __metaclass__ = _register_command
 
@@ -146,8 +141,7 @@ class system(_base):
 
 
 class use_expand(_base):
-
-    """Output the USE_EXPAND configuration for this profile
+    """output the USE_EXPAND configuration for this profile
 
     Outputs two fields of interest; USE_EXPAND (pseudo use groups), and
     USE_EXPAND_HIDDEN which is immutable by user configuration and use deps
@@ -166,8 +160,7 @@ class use_expand(_base):
 
 
 class iuse_effective(_base):
-
-    """Output the IUSE_EFFECTIVE value for this profile"""
+    """output the IUSE_EFFECTIVE value for this profile"""
 
     __metaclass__ = _register_command
 
@@ -177,8 +170,7 @@ class iuse_effective(_base):
 
 
 class masks(_base):
-
-    """Inspect package masks"""
+    """inspect package masks"""
 
     __metaclass__ = _register_command
 
@@ -188,8 +180,7 @@ class masks(_base):
 
 
 class unmasks(_base):
-
-    """Inspect package unmasks"""
+    """inspect package unmasks"""
 
     __metaclass__ = _register_command
 
@@ -199,8 +190,7 @@ class unmasks(_base):
 
 
 class bashrcs(_base):
-
-    """Inspect bashrcs"""
+    """inspect bashrcs"""
 
     __metaclass__ = _register_command
 
@@ -210,8 +200,7 @@ class bashrcs(_base):
 
 
 class keywords(_base):
-
-    """Inspect package.keywords"""
+    """inspect package.keywords"""
 
     __metaclass__ = _register_command
 
@@ -221,8 +210,7 @@ class keywords(_base):
 
 
 class accept_keywords(_base):
-
-    """Inspect package.accept_keywords"""
+    """inspect package.accept_keywords"""
 
     __metaclass__ = _register_command
 
@@ -263,8 +251,7 @@ class _use(_base):
 
 
 class use(_use):
-
-    """Inspect package.use flags"""
+    """inspect package.use flags"""
 
     __metaclass__ = _register_command
 
@@ -274,8 +261,7 @@ class use(_use):
 
 
 class masked_use(_use):
-
-    """Inspect masked use flags"""
+    """inspect masked use flags"""
 
     __metaclass__ = _register_command
 
@@ -285,8 +271,7 @@ class masked_use(_use):
 
 
 class stable_masked_use(_use):
-
-    """Inspect stable masked use flags"""
+    """inspect stable masked use flags"""
 
     __metaclass__ = _register_command
 
@@ -296,8 +281,7 @@ class stable_masked_use(_use):
 
 
 class forced_use(_use):
-
-    """Inspect forced use flags"""
+    """inspect forced use flags"""
 
     __metaclass__ = _register_command
 
@@ -307,8 +291,7 @@ class forced_use(_use):
 
 
 class stable_forced_use(_use):
-
-    """Inspect stable forced use flags"""
+    """inspect stable forced use flags"""
 
     __metaclass__ = _register_command
 
@@ -318,10 +301,10 @@ class stable_forced_use(_use):
 
 
 class defaults(_base):
+    """inspect defined configuration for this profile
 
-    """Inspect defined configuration for this profile
-
-    This is data parsed from make.defaults, containing things like ACCEPT_KEYWORDS.
+    This is data parsed from make.defaults, containing things like
+    ACCEPT_KEYWORDS.
     """
 
     __metaclass__ = _register_command
@@ -352,8 +335,7 @@ class defaults(_base):
 
 
 class arch(_base):
-
-    """Output the arch defined for this profile"""
+    """output the arch defined for this profile"""
 
     __metaclass__ = _register_command
 

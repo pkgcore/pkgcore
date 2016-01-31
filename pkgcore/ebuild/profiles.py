@@ -21,8 +21,9 @@ from snakeoil.osutils import abspath, pjoin
 from pkgcore.config import ConfigHint
 from pkgcore.ebuild import const, ebuild_src, misc
 from pkgcore.ebuild.misc import (
-    _build_cp_atom_payload, chunked_data, ChunkedDataDict, split_negations,
+    _build_cp_atom_payload, chunked_data, ChunkedDataDict,
     IncrementalsDict, package_keywords_splitter)
+from pkgcore.util import split_negations
 from pkgcore.util.parserestrict import parse_match
 
 demandload(

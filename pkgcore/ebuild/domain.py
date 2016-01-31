@@ -31,11 +31,12 @@ from pkgcore.ebuild.misc import (
     ChunkedDataDict, chunked_data, collapsed_restrict_to_data,
     incremental_expansion, incremental_expansion_license,
     non_incremental_collapsed_restrict_to_data, optimize_incrementals,
-    package_keywords_splitter, split_negations)
+    package_keywords_splitter)
 from pkgcore.ebuild.repo_objs import OverlayedLicenses
 from pkgcore.repository import visibility
 from pkgcore.restrictions import packages, values
 from pkgcore.restrictions.delegated import delegate
+from pkgcore.util import split_negations
 from pkgcore.util.parserestrict import parse_match
 
 demandload(

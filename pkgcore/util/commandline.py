@@ -41,7 +41,7 @@ demandload(
     'pkgcore:operations',
     'pkgcore.config:basics',
     'pkgcore.restrictions:packages,restriction',
-    'pkgcore.util:parserestrict',
+    'pkgcore.util:parserestrict,split_negations',
 )
 
 
@@ -85,6 +85,19 @@ class ExtendCommaDelimited(argparse._AppendAction):
             for value in values:
                 items.extend(filter(None, value.split(',')))
         setattr(namespace, self.dest, items)
+
+
+class ExtendCommaDelimitedToggle(argparse._AppendAction):
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        disabled, enabled = [], []
+        if not self.nargs or self.nargs < 1:
+            values = [values]
+        for value in values:
+            neg, pos = split_negations(filter(None, value.split(',')))
+            disabled.extend(neg)
+            enabled.extend(pos)
+        setattr(namespace, self.dest, (tuple(disabled), tuple(enabled)))
 
 
 class StoreTarget(argparse._AppendAction):
@@ -810,6 +823,7 @@ def mk_argparser(suppress=False, config=True, domain=True,
                  version=True, **kwds):
     p = ArgumentParser(**kwds)
     p.register('action', 'extend_comma', ExtendCommaDelimited)
+    p.register('action', 'extend_comma_toggle', ExtendCommaDelimitedToggle)
 
     if suppress:
         return p

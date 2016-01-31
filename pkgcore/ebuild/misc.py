@@ -10,7 +10,7 @@ __all__ = (
     "chunked_data", "collapsed_restrict_to_data", "incremental_chunked",
     "incremental_expansion", "incremental_expansion_license",
     "non_incremental_collapsed_restrict_to_data", "optimize_incrementals",
-    "package_keywords_splitter", "split_negations"
+    "package_keywords_splitter",
 )
 
 from collections import defaultdict
@@ -34,16 +34,6 @@ def package_keywords_splitter(val):
     v = val.split()
     return parse_match(v[0]), tuple(stable_unique(v[1:]))
 
-def split_negations(data, func=str):
-    neg, pos = [], []
-    for line in data:
-        if line[0] == '-':
-            if len(line) == 1:
-                raise ValueError("'-' negation without a token")
-            neg.append(func(line[1:]))
-        else:
-            pos.append(func(line))
-    return (tuple(neg), tuple(pos))
 
 def optimize_incrementals(sequence):
     # roughly the algorithm walks sequences right->left,

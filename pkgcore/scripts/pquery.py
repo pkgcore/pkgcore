@@ -467,8 +467,14 @@ repo_group.add_argument(
     """)
 repo_group.add_argument(
     '--virtuals', action='store', choices=('only', 'disable'),
-    help='arg "only" for only matching virtuals, "disable" to not match '
-         'virtuals at all (default is to match everything)')
+    help='only match virtuals or disable virtuals matching entirely',
+    docs="""
+        This option requires one of two arguments, either 'only' or 'disable',
+        which causes only virtuals to be matched or disables virtuals matching
+        entirely, respectively.
+
+        By default, virtuals are included during matching.
+    """)
 
 
 class RawAwareStoreRepoObject(commandline.StoreRepoObject):
@@ -485,9 +491,19 @@ class RawAwareStoreRepoObject(commandline.StoreRepoObject):
             self, config, namespace)
 
 repo_mux = repo_group.add_mutually_exclusive_group()
+# TODO: update docs when binpkg/vdb repos are configured via repos.conf
 repo_mux.add_argument(
     '-r', '--repo', action=RawAwareStoreRepoObject, priority=29,
-    help='repo to use (default from domain if omitted)')
+    help='repo to search (default from domain if omitted)',
+    docs="""
+        Select the repo to search in for matches. This includes all the
+        configured repos in repos.conf as well as the special keywords binpkg,
+        provided, and vdb that search the configured binary package repo,
+        package.provided, and installed packages, respectively.
+
+        By default, all configured repos except the vdb will be searched when
+        this option isn't specified.
+    """)
 repo_mux.add_argument(
     '--ebuild-repos', action='store_true',
     help='search all ebuild repos')
@@ -536,7 +552,7 @@ def setup_repos(namespace, attr):
 
 query = argparser.add_argument_group(
     'Package matching options',
-    'Each option specifies a restriction packages must match.  '
+    'Each option specifies a restriction packages must match. '
     'Specifying the same option twice means "or" unless stated '
     'otherwise. Specifying multiple types of restrictions means "and" '
     'unless stated otherwise.')

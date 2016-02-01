@@ -578,7 +578,7 @@ def matches_finalize(targets, namespace):
                 except ValueError as e:
                     argparser.error(e)
             else:
-                raise argparser.error(e)
+                argparser.error(e)
     if restrictions:
         return packages.OrRestriction(*restrictions)
     return []

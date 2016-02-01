@@ -359,7 +359,6 @@ def env_update_main(options, out, err):
     root = getattr(options.domain, 'root', None)
     if root is None:
         env_update.error("domain specified lacks a root setting; is it a virtual or remote domain?")
-        return 1
 
     out.write("updating env for %r..." % (root,))
     triggers.perform_env_update(root, skip_ldso_update=options.skip_ldconfig)
@@ -452,7 +451,6 @@ def digest_main(options, out, err):
     obs = observer.formatter_output(out)
     if not repo.operations.supports("digests"):
         digest.error("no repository support for digests")
-        return 1
 
     restrictions = []
     for target in targets:
@@ -460,20 +458,16 @@ def digest_main(options, out, err):
             try:
                 restrictions.append(repo.path_restrict(target))
             except ValueError as e:
-                digest.error(str(e))
-                return 1
+                digest.error(e)
         else:
             try:
                 restrictions.append(parse_match(target))
             except ValueError:
                 digest.error("invalid atom: '%s'" % (target,))
-                return 1
 
     restrictions = packages.OrRestriction(*restrictions)
     if restrictions not in repo:
         digest.error("no matches for '%s'" % (' '.join(targets),))
-        return 1
     elif not repo.operations.digests(domain, restrictions, observer=obs):
         digest.error("some errors were encountered...")
-        return 1
     return 0

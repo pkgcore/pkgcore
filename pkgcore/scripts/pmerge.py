@@ -37,8 +37,18 @@ argparser.add_argument(
 query_options = argparser.add_argument_group("Package querying options")
 query_options.add_argument(
     '-N', '--newuse', action='store_true',
-    help="check for changed useflags in installed packages "
-         "(implies -1)")
+    help="add installed pkgs with changed useflags to targets",
+    docs="""
+        Include installed packages with USE flag changes in the list of viable
+        targets for rebuilding.
+
+        USE flag changes include flags being added, removed, enabled, or
+        disabled with regards to a package. USE flag changes can occur via
+        ebuild alterations, profile updates, or local configuration
+        modifications.
+
+        Note that this option implies -1/--oneshot.
+    """)
 
 merge_mode = argparser.add_argument_group('Available operations')
 merge_mode.add_argument(
@@ -86,7 +96,10 @@ merge_mode.add_argument(
 merge_mode.add_argument(
     '--force', action='store_true',
     dest='force',
-    help="force merging to a repo, regardless of if it's frozen")
+    help="force changes to a repo, regardless of if it's frozen",
+    docs="""
+        Force (un)merging on the livefs (vdb), regardless of if it's frozen.
+    """)
 merge_mode.add_argument(
     '-f', '--fetchonly', action='store_true',
     help="do only the fetch steps of the resolved plan",

@@ -42,7 +42,7 @@ help:
 	@echo "  doctest    to run all doctests embedded in the documentation (if enabled)"
 
 clean:
-	-rm -rf $(BUILDDIR) api generated *.pyc
+	-rm -rf $(BUILDDIR) api generated
 
 html:
 	$(PYTHON) -m snakeoil.dist.generate_docs --html ../ pkgcore

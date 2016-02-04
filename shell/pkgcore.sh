@@ -14,7 +14,7 @@ fi
 if [[ ${PKGSHELL} == "bash" ]]; then
 	SCRIPTDIR=$(dirname $(realpath ${BASH_SOURCE[0]}))
 else
-	SCRIPTDIR=$(dirname $(realpath ${(%):-%x}))
+	SCRIPTDIR=${${(%):-%x}:A:h}
 fi
 
 # source bash/zsh specific support

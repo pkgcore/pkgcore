@@ -1,7 +1,7 @@
 #compdef pconfig pebuild pinspect pmaint pmerge pquery
 
 # repo path
-SHELL_LIB=$(dirname $(realpath ${(%):-%x}))/../pkgcore.zsh
+SHELL_LIB=${${(%):-%x}:A:h}/../pkgcore.zsh
 if [[ ! -e ${SHELL_LIB} ]]; then
   # system path
   SHELL_LIB=$(python -c 'import pkgcore._const as const; print(const.LIBDIR_PATH)')/shell/zsh/pkgcore.zsh

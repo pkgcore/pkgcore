@@ -247,7 +247,7 @@ _pinspect() {
                 '--eapi[limit all operations to just what the given EAPI supports]:EAPI'
                 '--use[override the use flags used for transitive USE deps]:USE'
                 '--domain[domain to use for this operation]:domain'
-                '--domain-at-root[specify the domain to use via its root path]:path'
+                '--domain-at-root[specify the domain to use via its root path]:root path:_path_files -/'
               )
 
               case $line[1] in
@@ -323,21 +323,21 @@ _pinspect() {
                 (best_version|has_version|mass_best_version|match)
                   _arguments -C -A '-*' \
                     $subcmd_opts \
-                    '1:root path' \
+                    '1:root path:_path_files -/' \
                     '2:package atom' \
                     && ret=0
                   ;;
                 (envvar|envvar2)
                   _arguments -C -A '-*' \
                     $subcmd_opts \
-                    '1:root path' \
+                    '1:root path:_path_files -/' \
                     '2:variable' \
                     && ret=0
                   ;;
                 (get_repo_path|get_repo_news_path)
                   _arguments -C -A '-*' \
                     $subcmd_opts \
-                    '1:root path' \
+                    '1:root path:_path_files -/' \
                     '2:repo:_repos' \
                     && ret=0
                   ;;

@@ -286,7 +286,8 @@ class mtime_watcher(object):
 
 
 def update_elf_hints(root):
-    return spawn.spawn(["/sbin/ldconfig", "-r", root], fd_pipes={1:1, 2:2})
+    return spawn.spawn(["/sbin/ldconfig", "-X", "-r", root],
+        fd_pipes={1:1, 2:2})
 
 
 class ldconfig(base):

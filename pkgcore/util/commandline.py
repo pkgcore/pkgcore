@@ -46,7 +46,6 @@ demandload(
 
 
 class FormattingHandler(logging.Handler):
-
     """Logging handler printing through a formatter."""
 
     def __init__(self, formatter):
@@ -76,6 +75,7 @@ class FormattingHandler(logging.Handler):
 
 
 class ExtendCommaDelimited(argparse._AppendAction):
+    """Parse comma-separated values into a list."""
 
     def __call__(self, parser, namespace, values, option_string=None):
         items = []
@@ -88,6 +88,14 @@ class ExtendCommaDelimited(argparse._AppendAction):
 
 
 class ExtendCommaDelimitedToggle(argparse._AppendAction):
+    """Parse comma-separated enabled and disabled values.
+
+    Disabled values are prefixed with "-" while enabled values are entered as
+    is.
+
+    For example, from the sequence "-a,b,c,-d" would result in "a" and "d"
+    being registered as disabled while "b" and "c" are enabled.
+    """
 
     def __call__(self, parser, namespace, values, option_string=None):
         disabled, enabled = [], []

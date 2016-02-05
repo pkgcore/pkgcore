@@ -168,6 +168,9 @@ class EAPI(object):
         phases.discard("-")
         return frozenset(phases)
 
+    def __str__(self):
+        return str(self.magic)
+
     def get_ebd_env(self):
         d = {}
         for k, converter in self.ebd_env_options.iteritems():

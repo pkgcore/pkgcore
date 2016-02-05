@@ -835,23 +835,32 @@ def mk_argparser(suppress=False, config=True, domain=True,
         script = inspect.stack(0)[1][0].f_globals['__file__']
         project = script.split(os.path.sep)[-3]
         p.add_argument(
-            '--version', action='version', version=get_version(project, script))
+            '--version', action='version', version=get_version(project, script),
+            docs="Show this program's version number and exit.")
     if debug:
         p.add_argument(
-            '--debug', action=EnableDebug, help='enable debugging checks')
+            '--debug', action=EnableDebug, help='enable debugging checks',
+            docs='Enable debug checks and show verbose debug output.')
     if quiet:
         p.add_argument(
             '-q', '--quiet', action='store_true',
-            help='suppress non-error messages')
+            help='suppress non-error messages',
+            docs="Suppress non-error, informational messages.")
     if verbose:
         p.add_argument(
             '-v', '--verbose', action='count',
-            help='show verbose output')
+            help='show verbose output',
+            docs="Increase the verbosity of various output.")
     if color:
         p.add_argument(
             '--color', action=StoreBool,
             default=sys.stdout.isatty(),
-            help='enable/disable color support')
+            help='enable/disable color support',
+            docs="""
+                Toggle colored output support. This can be used to forcibly
+                enable color support when piping output or other sitations
+                where stdout is not a tty.
+            """)
 
     if config:
         p.add_argument(

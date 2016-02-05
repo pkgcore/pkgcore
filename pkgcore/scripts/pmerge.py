@@ -34,7 +34,7 @@ argparser.add_argument(
     help="extended package matching",
     docs=commandline.StoreTarget.__doc__.split('\n')[1:])
 
-query_options = argparser.add_argument_group("Package querying options")
+query_options = argparser.add_argument_group("package querying options")
 query_options.add_argument(
     '-N', '--newuse', action='store_true',
     help="add installed pkgs with changed useflags to targets",
@@ -50,7 +50,7 @@ query_options.add_argument(
         Note that this option implies -1/--oneshot.
     """)
 
-merge_mode = argparser.add_argument_group('Available operations')
+merge_mode = argparser.add_argument_group('available operations')
 merge_mode.add_argument(
     '-C', '--unmerge', action='store_true',
     help='unmerge packages',
@@ -116,7 +116,7 @@ merge_mode.add_argument(
         specified.
     """)
 
-resolution_options = argparser.add_argument_group("Resolver options")
+resolution_options = argparser.add_argument_group("resolver options")
 resolution_options.add_argument(
     '-u', '--upgrade', action='store_true',
     help='try to upgrade installed pkgs/deps',
@@ -205,7 +205,7 @@ resolution_options.add_argument(
         Force all targets and their dependencies to be rebuilt.
     """)
 
-output_options = argparser.add_argument_group("Output related options")
+output_options = argparser.add_argument_group("output related options")
 output_options.add_argument(
     '--quiet-repo-display', action='store_true',
     help="use indexes instead of ::repo suffixes in dep resolution output",

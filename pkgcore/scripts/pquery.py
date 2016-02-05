@@ -446,8 +446,8 @@ def print_packages_noversion(options, out, err, pkgs):
 argparser = commandline.mk_argparser(domain=True, description=__doc__)
 
 repo_group = argparser.add_argument_group(
-    'Repository matching options',
-    'options controlling which repositories to inspect')
+    'repository matching options',
+    description='options controlling which repositories to inspect')
 repo_group.add_argument(
     '--raw', action='store_true', default=False,
     help="disable configuration filtering",
@@ -551,11 +551,12 @@ def setup_repos(namespace, attr):
     setattr(namespace, attr, repos)
 
 query = argparser.add_argument_group(
-    'Package matching options',
-    'Each option specifies a restriction packages must match. '
-    'Specifying the same option twice means "or" unless stated '
-    'otherwise. Specifying multiple types of restrictions means "and" '
-    'unless stated otherwise.')
+    'package matching options',
+    description="""
+        Each option specifies a restriction packages must match. Specifying
+        the same option twice means "or" unless stated otherwise. Specifying
+        multiple types of restrictions means "and" unless stated otherwise.
+    """)
 
 # for queries, use add_query always; this has the bookkeeping
 # necessary to ensure the sub-query gets bound into the
@@ -790,7 +791,7 @@ argparser.set_defaults(
 argparser.set_defaults(
     query=commandline.BooleanQuery(_query_items, klass_type='and', priority=90))
 
-output = argparser.add_argument_group('Output formatting')
+output = argparser.add_argument_group('output formatting')
 output.add_argument(
     '--early-out', action='store_true', dest='earlyout',
     help='stop when first match is found')

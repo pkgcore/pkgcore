@@ -360,12 +360,14 @@ world = subparsers.add_parser(
     "world", parents=shared_options_domain,
     description="inspect and modify the world file")
 world_modes = world.add_argument_group(
-    "Command modes",
-    "These options are directives for what to do with the world file.  You "
-    "can do multiple operations in a single invocation. "
-    "For example, you can have `--add x11-wm/fluxbox "
-    "--remove gnome-base/gnome -l` to add fluxbox, remove gnome, and list the "
-    "world file contents all in one call.")
+    "command modes",
+    description="""
+        These options are directives for what to do with the world file. You
+        can do multiple operations in a single invocation.  For example, you
+        can have `--add x11-wm/fluxbox --remove gnome-base/gnome -l` to add
+        fluxbox, remove gnome, and list the world file contents all in one
+        call.
+    """)
 world_modes.add_argument(
     '-l', '--list', action='store_true',
     help="List the current world file contents for this domain.")

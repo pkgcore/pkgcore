@@ -776,8 +776,8 @@ class BinaryDebug(ThreadedTrigger):
         self._debug_storage = debug_storage
         self._compress = compress
 
-    def _initialize_paths(self, pkg):
-        for x in ("strip", "objcopy"):
+    def _initialize_paths(self, pkg, progs):
+        for x in progs:
             obj = getattr(self, "_%s_binary" % x)
             if obj is None:
                 try:
@@ -818,7 +818,7 @@ class BinaryDebug(ThreadedTrigger):
         if 'strip' in getattr(engine.new, 'restrict', ()):
             engine.observer.info("stripping disabled for %s", engine.new)
             return False
-        self._initialize_paths(engine.new)
+        self._initialize_paths(engine.new, ("strip",))
         self._modified = set()
         return True
 
@@ -850,7 +850,7 @@ class BinaryDebug(ThreadedTrigger):
             engine.observer.info("splitdebug disabled for %s, skipping splitdebug", engine.new)
             return False
 
-        self._initialize_paths(engine.new)
+        self._initialize_paths(engine.new, ("strip", "objcopy"))
         self._modified = contents.contentsSet()
         return True
 

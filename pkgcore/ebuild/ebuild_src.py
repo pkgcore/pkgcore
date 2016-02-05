@@ -233,8 +233,7 @@ class base(metadata.package):
 
     @property
     def iuse_stripped(self):
-        if self.eapi > 0:
-            # EAPI 1 and up support IUSE defaults
+        if self.eapi_obj.options.iuse_defaults:
             return frozenset(x.lstrip('-+') for x in self.iuse)
         return self.iuse
 

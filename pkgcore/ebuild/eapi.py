@@ -53,6 +53,9 @@ eapi_optionals = mappings.ImmutableDict({
     # this EAPI.
     'is_supported': True,
 
+    # Controls whether IUSE defaults are supported; see PMS.
+    'iuse_defaults': False,
+
     # Controls whether new* style bash functions can take their content input from
     # stdin, rather than an explicit ondisk file.
     'new_reads_stdin': False,
@@ -255,7 +258,9 @@ eapi1 = EAPI.register(
     eapi0.metadata_keys,
     eapi0.mandatory_keys,
     eapi0.tracked_attributes,
-    eapi0.options,
+    combine_dicts(eapi0.options, dict(
+        iuse_defaults=True,
+    )),
     ebd_env_options=eapi0.ebd_env_options,
 )
 

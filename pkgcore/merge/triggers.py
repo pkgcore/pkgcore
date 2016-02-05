@@ -36,6 +36,7 @@ demandload(
     'errno',
     'math:floor',
     'os',
+    "platform",
     're',
     'time',
     'snakeoil:process',
@@ -333,6 +334,10 @@ class ldconfig(base):
             compatibility.raise_from(errors.BlockModification(self, e))
 
     def trigger(self, engine):
+        # ldconfig is only meaningful in GNU/Linux
+        if platform.system() != 'Linux':
+            return
+
         locations = self.read_ld_so_conf(engine.offset)
         if engine.phase.startswith('pre_'):
             self.saved_mtimes.set_state(locations)

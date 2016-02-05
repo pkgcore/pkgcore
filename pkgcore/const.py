@@ -9,7 +9,7 @@ import os
 osp = os.path
 import sys
 from snakeoil import mappings, compatibility
-from snakeoil.process import find_binary
+from snakeoil.process import find_binary, CommandNotFound
 try:
     # This is a file written during pkgcore installation;
     # if it exists, we defer to it.  If it doesn't, then we're
@@ -21,7 +21,10 @@ except ImportError:
 SYSTEM_CONF_FILE   = '/etc/pkgcore.conf'
 USER_CONF_FILE     = osp.expanduser('~/.pkgcore.conf')
 
-SANDBOX_BINARY     = find_binary('sandbox')
+try:
+    SANDBOX_BINARY = find_binary('sandbox')
+except CommandNotFound:
+    SANDBOX_BINARY = None
 BASH_BINARY        = find_binary('bash')
 COPY_BINARY        = find_binary('cp')
 

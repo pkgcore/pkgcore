@@ -39,8 +39,6 @@ _metadata_rewrites = {
     "depends": "DEPEND",
     "rdepends": "RDEPEND",
     "post_rdepends": "PDEPEND",
-    "use": "USE",
-    "eapi": "EAPI",
     "CONTENTS": "contents",
     "source_repository": "repository",
     "fullslot": "SLOT",

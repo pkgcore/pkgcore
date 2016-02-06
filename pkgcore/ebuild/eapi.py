@@ -94,7 +94,7 @@ eapi_optionals = mappings.ImmutableDict({
 })
 
 
-class optionals_cls(mappings.ImmutableDict):
+class _optionals_cls(mappings.ImmutableDict):
 
     mappings.inject_getitem_as_getattr(locals())
 
@@ -125,7 +125,7 @@ class EAPI(object):
         sf(self, "tracked_attributes", frozenset(tracked_attributes))
         d = dict(eapi_optionals)
         d.update(optionals)
-        sf(self, 'options', optionals_cls(d))
+        sf(self, 'options', _optionals_cls(d))
         if ebd_env_options is None:
             ebd_env_options = {}
         sf(self, "ebd_env_options", mappings.ImmutableDict(ebd_env_options))
@@ -201,33 +201,34 @@ def get_eapi(magic, suppress_unsupported=True):
     return ret
 
 
-def shorten_phase_name(func_name):
+def _shorten_phase_name(func_name):
     if func_name.startswith("src_") or func_name.startswith("pkg_"):
         return func_name[4:]
     return func_name
 
 
-def mk_phase_func_map(*sequence):
+def _mk_phase_func_map(*sequence):
     d = {}
     for x in sequence:
-        d[shorten_phase_name(x)] = x
+        d[_shorten_phase_name(x)] = x
     return d
 
 
-def combine_dicts(*sequence_of_mappings):
+def _combine_dicts(*sequence_of_mappings):
     d = {}
     for mapping in sequence_of_mappings:
         d.update(mapping)
     return d
 
 
-def convert_bool_to_bash_bool(val):
+def _convert_bool_to_bash_bool(val):
+    """Convert Python boolean value to bash boolean values."""
     return str(bool(val)).lower()
 
 
 # Note that pkg_setup is forced by default since this is how our env setup occurs.
 common_default_phases = tuple(
-    shorten_phase_name(x) for x in
+    _shorten_phase_name(x) for x in
     ("pkg_setup", "src_unpack", "src_compile", "src_test", "pkg_nofetch"))
 
 common_phases = (
@@ -255,14 +256,14 @@ common_env_optionals = mappings.ImmutableDict(dict.fromkeys(
      "doman_language_detect", "doman_language_override",
      "econf_disable_dependency_tracking", "econf_disable_silent_rules",
      "new_reads_stdin", "profile_iuse_injection",),
-    convert_bool_to_bash_bool))
+    _convert_bool_to_bash_bool))
 
 
 eapi0 = EAPI.register(
     magic="0",
     parent=None,
-    phases=mk_phase_func_map(*common_phases),
-    default_phases=mk_phase_func_map(*common_default_phases),
+    phases=_mk_phase_func_map(*common_phases),
+    default_phases=_mk_phase_func_map(*common_default_phases),
     metadata_keys=common_metadata_keys,
     mandatory_keys=common_mandatory_metadata_keys,
     tracked_attributes=common_tracked_attributes,
@@ -283,7 +284,7 @@ eapi1 = EAPI.register(
     metadata_keys=eapi0.metadata_keys,
     mandatory_keys=eapi0.mandatory_keys,
     tracked_attributes=eapi0.tracked_attributes,
-    optionals=combine_dicts(eapi0.options, dict(
+    optionals=_combine_dicts(eapi0.options, dict(
         iuse_defaults=True,
     )),
     ebd_env_options=eapi0.ebd_env_options,
@@ -292,14 +293,14 @@ eapi1 = EAPI.register(
 eapi2 = EAPI.register(
     magic="2",
     parent=eapi1,
-    phases=combine_dicts(
-        eapi1.phases, mk_phase_func_map("src_prepare", "src_configure")),
+    phases=_combine_dicts(
+        eapi1.phases, _mk_phase_func_map("src_prepare", "src_configure")),
     default_phases=eapi1.default_phases.union(
-        map(shorten_phase_name, ["src_prepare", "src_configure"])),
+        map(_shorten_phase_name, ["src_prepare", "src_configure"])),
     metadata_keys=eapi1.metadata_keys,
     mandatory_keys=eapi1.mandatory_keys,
     tracked_attributes=eapi1.tracked_attributes,
-    optionals=combine_dicts(eapi1.options, dict(
+    optionals=_combine_dicts(eapi1.options, dict(
         doman_language_detect=True,
         transitive_use_atoms=True,
         src_uri_renames=True,
@@ -315,7 +316,7 @@ eapi3 = EAPI.register(
     metadata_keys=eapi2.metadata_keys,
     mandatory_keys=eapi2.mandatory_keys,
     tracked_attributes=eapi2.tracked_attributes,
-    optionals=combine_dicts(eapi2.options, dict(
+    optionals=_combine_dicts(eapi2.options, dict(
         prefix_capable=True,
     )),
     ebd_env_options=eapi2.ebd_env_options,
@@ -324,12 +325,12 @@ eapi3 = EAPI.register(
 eapi4 = EAPI.register(
     magic="4",
     parent=eapi3,
-    phases=combine_dicts(eapi3.phases, mk_phase_func_map("pkg_pretend")),
-    default_phases=eapi3.default_phases.union([shorten_phase_name('src_install')]),
+    phases=_combine_dicts(eapi3.phases, _mk_phase_func_map("pkg_pretend")),
+    default_phases=eapi3.default_phases.union([_shorten_phase_name('src_install')]),
     metadata_keys=eapi3.metadata_keys | frozenset(["REQUIRED_USE"]),
     mandatory_keys=eapi3.mandatory_keys,
     tracked_attributes=eapi3.tracked_attributes,
-    optionals=combine_dicts(eapi3.options, dict(
+    optionals=_combine_dicts(eapi3.options, dict(
         dodoc_allow_recursive=True,
         doins_allow_symlinks=True,
         doman_language_override=True,
@@ -351,7 +352,7 @@ eapi5 = EAPI.register(
     metadata_keys=eapi4.metadata_keys,
     mandatory_keys=eapi4.mandatory_keys,
     tracked_attributes=eapi4.tracked_attributes | frozenset(["iuse_effective"]),
-    optionals=combine_dicts(eapi4.options, dict(
+    optionals=_combine_dicts(eapi4.options, dict(
         ebuild_phase_func=True,
         econf_disable_silent_rules=True,
         profile_iuse_injection=True,

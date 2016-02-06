@@ -635,17 +635,17 @@ pkgcore_atom_init(PyObject *self, PyObject *args, PyObject *kwds)
 			goto pkgcore_atom_parse_error;
 		} else if(Py_None != slot) {
 			Err_SetMalformedAtom(atom_str,
-				"slot deps aren't allowed in eapi 0");
+				"slot deps aren't allowed in EAPI 0");
 			goto pkgcore_atom_parse_error;
 		} else if(Py_None != repo_id) {
 			Err_SetMalformedAtom(atom_str,
-				"repository deps aren't allowed in eapi 0");
+				"repository deps aren't allowed in EAPI 0");
 			goto pkgcore_atom_parse_error;
 		}
 	} else if(1 == eapi_int) {
 		if(Py_None != use) {
 			Err_SetMalformedAtom(atom_str,
-				"use deps aren't allowed in eapi 1");
+				"use deps aren't allowed in EAPI 1");
 			goto pkgcore_atom_parse_error;
 		}
 	}

@@ -28,13 +28,13 @@ def str_pkg(pkg):
 def get_atom_kls(value):
     eapi_obj = eapi.get_eapi(value)
     if eapi_obj is None:
-        raise ValueError("eapi %s isn't known/supported" % (value,))
+        raise ValueError("EAPI %s isn't known/supported" % (value,))
     return eapi_obj.atom_kls
 
 def default_portageq_args(parser):
     parser.add_argument("--eapi", dest='atom_kls', type=get_atom_kls,
         default=atom.atom,
-        help="limit all operations to just what the given eapi supports.")
+        help="limit all operations to just what the given EAPI supports.")
     parser.add_argument("--use", default=None,
         help="override the use flags used for transititive USE deps- "
        "dev-lang/python[threads=] for example")

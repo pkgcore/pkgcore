@@ -137,7 +137,7 @@ class EAPI(object):
         ret = cls(*args, **kwds)
         pre_existing = cls.known_eapis.get(ret.magic)
         if pre_existing is not None:
-            raise ValueError("eapi magic %s is already known/instantiated- %r" %
+            raise ValueError("EAPI %s is already known/instantiated- %r" %
                 (ret.magic, pre_existing))
         cls.known_eapis[ret.magic] = ret
         return ret

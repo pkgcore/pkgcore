@@ -373,11 +373,11 @@ class package_factory(metadata.factory):
             mydata = my_proc.get_keys(pkg, self._ecache)
 
         inherited = mydata.pop("INHERITED", None)
-        # rewrite defined_phases as needed, since we now know the eapi.
+        # Rewrite defined_phases as needed, since we now know the EAPI.
         eapi = get_eapi(mydata["EAPI"])
         if parsed_eapi != eapi:
             raise metadata_errors.MetadataException(
-                pkg, 'eapi', "parsed eapi '%s' doesn't match sourced eapi '%s'"
+                pkg, 'eapi', "parsed EAPI '%s' doesn't match sourced EAPI '%s'"
                 % (parsed_eapi.magic, eapi.magic))
         wipes = set(mydata)
 
@@ -386,8 +386,8 @@ class package_factory(metadata.factory):
             phases = mydata["DEFINED_PHASES"].split()
             d = eapi.phases_rev
             phases = set(d.get(x) for x in phases)
-            # discard is required should we have gotten
-            # a phase that isn't actually in this eapi
+            # Discard is required should we have gotten
+            # a phase that isn't actually in this EAPI.
             phases.discard(None)
             mydata["DEFINED_PHASES"] = ' '.join(sorted(phases))
 

@@ -154,7 +154,7 @@ def native_init(self, atom, negate_vers=False, eapi=-1):
             elif eapi == 0:
                 raise errors.MalformedAtom(
                     orig_atom,
-                    "slot dependencies aren't allowed in EAPI0")
+                    "slot dependencies aren't allowed in EAPI 0")
 
             for chunk in slots:
                 if not chunk:
@@ -224,17 +224,17 @@ def native_init(self, atom, negate_vers=False, eapi=-1):
             if getattr(self, x) is not None:
                 raise errors.MalformedAtom(
                     orig_atom,
-                    "%s atoms aren't supported for eapi 0" % x)
+                    "%s atoms aren't supported for EAPI 0" % x)
     elif eapi == 1:
         if self.use is not None:
             raise errors.MalformedAtom(
                 orig_atom,
-                "use atoms aren't supported for eapi < 2")
+                "use atoms aren't supported for EAPI < 2")
     if eapi != -1:
         if self.repo_id is not None:
             raise errors.MalformedAtom(
                 orig_atom,
-                "repo_id atoms aren't supported for eapi %i" % eapi)
+                "repo_id atoms aren't supported for EAPI %i" % eapi)
     if use_start != -1 and slot_start != -1 and use_start < slot_start:
         raise errors.MalformedAtom(
             orig_atom,

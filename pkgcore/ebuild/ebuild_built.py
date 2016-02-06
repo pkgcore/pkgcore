@@ -57,7 +57,7 @@ _empty_fetchable = conditionals.DepSet.parse('', ebuild_src.fetchable, operators
 def generate_eapi_obj(self):
     eapi_magic = self.data.pop("EAPI", "0")
     if not eapi_magic:
-        # "" means '0' eapi
+        # "" means EAPI 0
         eapi_magic = '0'
     eapi_obj = eapi.get_eapi(str(eapi_magic).strip())
     # this can return None... definitely the wrong thing right now

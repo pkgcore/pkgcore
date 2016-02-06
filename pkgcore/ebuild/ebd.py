@@ -90,7 +90,7 @@ class ebd(object):
         if features is None:
             features = self.env.get("FEATURES", ())
 
-        # XXX: note this is just eapi3 compatibility; not full prefix, soon..
+        # XXX: note this is just EAPI 3 compatibility; not full prefix, soon..
         self.env["ROOT"] = self.domain.root
         self.prefix_mode = pkg.eapi_obj.options.prefix_capable or 'force-prefix' in features
         self.env["PKGCORE_PREFIX_SUPPORT"] = 'false'
@@ -196,7 +196,7 @@ class ebd(object):
         self.env["IMAGE"] = self.env["D"]
         self.env["PORTAGE_LOGFILE"] = normpath(pjoin(self.env["T"], "build.log"))
 
-        # XXX: note that this is just eapi3 support, not yet prefix
+        # XXX: Note that this is just EAPI 3 support, not yet prefix
         # full awareness.
         if self.prefix_mode:
             self.env["ED"] = normpath(

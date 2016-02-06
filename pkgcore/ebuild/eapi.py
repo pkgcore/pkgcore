@@ -104,12 +104,13 @@ class EAPI(object):
     known_eapis = weakrefs.WeakValCache()
     __metaclass__ = klass.immutable_instance
 
-    def __init__(self, magic, phases, default_phases, metadata_keys, mandatory_keys,
+    def __init__(self, magic, parent, phases, default_phases, metadata_keys, mandatory_keys,
                  tracked_attributes, optionals, ebd_env_options=None):
 
         sf = object.__setattr__
 
         sf(self, "magic", magic)
+        sf(self, "parent", parent)
 
         sf(self, "phases", mappings.ImmutableDict(phases))
         sf(self, "phases_rev", mappings.ImmutableDict((v, k) for k, v in
@@ -170,6 +171,18 @@ class EAPI(object):
 
     def __str__(self):
         return str(self.magic)
+
+    @property
+    def inherits(self):
+        """Yield an EAPI's inheritance tree.
+
+        Note that this assumes a simple, linear inheritance tree.
+        """
+        yield self
+        parent = self.parent
+        while parent is not None:
+            yield parent
+            parent = parent.parent
 
     def get_ebd_env(self):
         d = {}
@@ -240,6 +253,7 @@ common_env_optionals = mappings.ImmutableDict(dict.fromkeys(
 
 eapi0 = EAPI.register(
     "0",
+    None,
     mk_phase_func_map(*common_phases),
     mk_phase_func_map(*common_default_phases),
     common_metadata_keys,
@@ -256,6 +270,7 @@ eapi0 = EAPI.register(
 
 eapi1 = EAPI.register(
     "1",
+    eapi0,
     eapi0.phases,
     eapi0.default_phases,
     eapi0.metadata_keys,
@@ -269,6 +284,7 @@ eapi1 = EAPI.register(
 
 eapi2 = EAPI.register(
     "2",
+    eapi1,
     combine_dicts(eapi1.phases, mk_phase_func_map("src_prepare", "src_configure")),
     eapi1.default_phases.union(map(shorten_phase_name, ["src_prepare", "src_configure"])),
     eapi1.metadata_keys,
@@ -284,6 +300,7 @@ eapi2 = EAPI.register(
 
 eapi3 = EAPI.register(
     "3",
+    eapi2,
     eapi2.phases,
     eapi2.default_phases,
     eapi2.metadata_keys,
@@ -297,6 +314,7 @@ eapi3 = EAPI.register(
 
 eapi4 = EAPI.register(
     "4",
+    eapi3,
     combine_dicts(eapi3.phases, mk_phase_func_map("pkg_pretend")),
     eapi3.default_phases.union([shorten_phase_name('src_install')]),
     eapi3.metadata_keys | frozenset(["REQUIRED_USE"]),
@@ -318,6 +336,7 @@ eapi4 = EAPI.register(
 
 eapi5 = EAPI.register(
     "5",
+    eapi4,
     eapi4.phases,
     eapi4.default_phases,
     eapi4.metadata_keys,

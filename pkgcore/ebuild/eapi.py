@@ -151,7 +151,10 @@ class EAPI(object):
 
     @classmethod
     def get_unsupported_eapi(cls, magic):
-        return cls(magic, (), (), (), (), (), {'is_supported': False})
+        return cls(
+            magic=magic, parent=None, phases=(), default_phases=(),
+            metadata_keys=(), mandatory_keys=(), tracked_attributes=(),
+            optionals={'is_supported': False})
 
     @klass.jit_attr
     def atom_kls(self):

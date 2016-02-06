@@ -21,11 +21,12 @@ class test_base(TestCase):
     kls = ebuild_src.base
 
     def get_pkg(self, data=None, cpv='dev-util/diffball-0.1-r1', repo=None,
-                pre_args=()):
+                pre_args=(), suppress_unsupported=True):
         o = self.kls(*(list(pre_args) + [repo, cpv]))
         if data is not None:
             eapi_data = str(data.pop('EAPI', 0))
-            object.__setattr__(o, 'eapi', get_eapi(eapi_data, False))
+            object.__setattr__(o, 'eapi', get_eapi(
+                eapi_data, suppress_unsupported=suppress_unsupported))
             object.__setattr__(o, 'data', data)
         return o
 
@@ -152,7 +153,9 @@ class test_base(TestCase):
     def test_eapi(self):
         self.assertEqual(str(self.get_pkg({'EAPI': '0'}).eapi), '0')
         self.assertTrue(self.get_pkg({'EAPI': '0'}).eapi.is_supported)
-        self.assertEqual(self.get_pkg({'EAPI': 'foon'}).eapi, None)
+        self.assertFalse(self.get_pkg({'EAPI': '-1'}).eapi.is_supported)
+        self.assertEqual(
+            self.get_pkg({'EAPI': 'foon'}, suppress_unsupported=False).eapi, None)
         self.assertRaises(errors.MetadataException, getattr,
             self.get_pkg({'EAPI':0, 'DEPEND':"d/b:0"}), 'depends')
         self.assertRaises(errors.MetadataException, getattr,

@@ -11,7 +11,7 @@
 # for env filtering for restoration and reloading, note the updates to DONT_EXPORT_(VARS|FUNCS).
 # those vars are basically used to track what shouldn't be saved/restored.  Whitespace separated,
 # those vars can support posix (think egrep) regex.  They should hold all vars/funcs that are internal
-# ebuild.sh vars.  Basically, filter all vars/funcs that are specific to ebuild.sh, not the ebuild.
+# ebd vars.  Basically, filter all vars/funcs that are specific to ebd, not the ebuild.
 #
 # after loading the env, user defined pre hooks are executed, __dyn_${EBUILD_PHASE} is executed,
 # and the post hooks are executed.  If the env needs to be flushed to disk, MUST_EXPORT_ENV is set to

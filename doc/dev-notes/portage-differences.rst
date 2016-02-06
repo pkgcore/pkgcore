@@ -32,7 +32,17 @@ machine.
   the env on each phase change), pkgcore does it fully. As such, pkgcore is
   capable of glep33, while portage is not (env fixes are the basis of glep33).
 
-- ebuild.sh now protects itself from basic fiddling. Ebuild generated state
+- ebuild.sh is daemonized into a daemon (ebd). The upshot of this is that regen
+  is roughly 2x faster (careful reuse of ebd instances rather then forcing bash
+  to spawn all over).  Additional upshot of this is that their are
+  bidirectional communication pipes between ebd and the python parent- env
+  inspection, logging, passing requests up to the python side
+  (has_version/best_version for example) are now handled within the existing
+  processes.  Design of it from the python side is that of an extensible event
+  handler, as such it's extremely easy to add new commands in, or special case
+  certain things.
+
+- The ebd now protects itself from basic fiddling. Ebuild generated state
   **must** work as long as the EAPI is the same, regardless of the generating
   portage version, and the portage version that later uses the saved state
   (simple example, generated with portage-2.51, if portage 3 is EAPI compliant
@@ -41,15 +51,6 @@ machine.
   portage/pkgcore functionality, hasq/useq for example. Those functions that
   are read-only also are not saved in the ebuild env (they should be supplied
   by the portage/pkgcore instance reloading the env).
-
-- ebuild.sh is daemonized. The upshot of this is that regen is roughly 2x faster
-  (careful reuse of ebuild.sh instances rather then forcing bash to spawn
-  all over).  Additional upshot of this is that their are bidirectional
-  communication pipes between ebuild.sh and the python parent- env inspection,
-  logging, passing requests up to the python side (has_version/best_version
-  for example) are now handled within the existing processes.  Design of it
-  from the python side is that of an extensible event handler, as such it's
-  extremely easy to add new commands in, or special case certain things.
 
 -----------------------
 Repository Enhancements

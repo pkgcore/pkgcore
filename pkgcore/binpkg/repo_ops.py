@@ -40,7 +40,7 @@ _metadata_rewrites = {
     "rdepends": "RDEPEND",
     "post_rdepends": "PDEPEND",
     "use": "USE",
-    "eapi_obj": "EAPI",
+    "eapi": "EAPI",
     "CONTENTS": "contents",
     "source_repository": "repository",
     "fullslot": "SLOT",
@@ -57,8 +57,6 @@ def generate_attr_dict(pkg, portage_compatible=True):
             d['environment.bz2'] = compress_data(
                 'bzip2', v.bytes_fileobj().read())
             continue
-        elif k == 'eapi_obj':
-            s = v.magic
         elif not isinstance(v, basestring):
             try:
                 s = ' '.join(v)

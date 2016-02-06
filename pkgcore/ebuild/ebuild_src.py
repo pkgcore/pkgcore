@@ -46,11 +46,11 @@ def generate_depset(c, key, non_package_type, s, **kwds):
                 "||":boolean.OrRestriction,
                 "":boolean.AndRestriction},
             **kwds)
-    eapi_obj = s.eapi_obj
-    if not eapi_obj.is_supported:
-        raise metadata_errors.MetadataException(s, "eapi", "unsupported eapi: %s" % eapi_obj.magic)
-    kwds['element_func'] = eapi_obj.atom_kls
-    kwds['transitive_use_atoms'] = eapi_obj.options.transitive_use_atoms
+    eapi = s.eapi
+    if not eapi.is_supported:
+        raise metadata_errors.MetadataException(s, "eapi", "unsupported EAPI: %s" % (eapi,))
+    kwds['element_func'] = eapi.atom_kls
+    kwds['transitive_use_atoms'] = eapi.options.transitive_use_atoms
     return conditionals.DepSet.parse(s.data.pop(key, ""), c, **kwds)
 
 def _mk_required_use_node(data):
@@ -60,14 +60,14 @@ def _mk_required_use_node(data):
 
 def generate_required_use(self):
     data = self.data.pop("REQUIRED_USE", "")
-    if not self.eapi_obj.options.has_required_use:
+    if not self.eapi.options.has_required_use:
         data = ''
     operators = {
         "||":boolean.OrRestriction,
         "":boolean.AndRestriction,
         "^^":boolean.JustOneRestriction
     }
-    if self.eapi_obj.options.required_use_one_of:
+    if self.eapi.options.required_use_one_of:
         operators['??'] = boolean.AtMostOneOfRestriction
 
     return conditionals.DepSet.parse(
@@ -92,7 +92,7 @@ def generate_fetchables(self, allow_missing_checksums=False,
     d = conditionals.DepSet.parse(
         self.data.pop("SRC_URI", ""), fetchable, operators={},
         element_func=func,
-        allow_src_uri_file_renames=self.eapi_obj.options.src_uri_renames)
+        allow_src_uri_file_renames=self.eapi.options.src_uri_renames)
     for v in common.itervalues():
         v.uri.finalize()
     return d
@@ -211,13 +211,13 @@ class base(metadata.package):
     _get_attr["restrict"] = lambda s: conditionals.DepSet.parse(
         s.data.pop("RESTRICT", ''), str, operators={},
         element_func=rewrite_restrict)
-    _get_attr["eapi_obj"] = get_parsed_eapi
+    _get_attr["eapi"] = get_parsed_eapi
     _get_attr["iuse"] = lambda s: frozenset(
         imap(intern, s.data.pop("IUSE", "").split()))
     _get_attr["iuse_effective"] = lambda s: s.iuse_stripped
     _get_attr["properties"] = lambda s: frozenset(
         imap(intern, s.data.pop("PROPERTIES", "").split()))
-    _get_attr["defined_phases"] = lambda s: s.eapi_obj.interpret_cache_defined_phases(
+    _get_attr["defined_phases"] = lambda s: s.eapi.interpret_cache_defined_phases(
         imap(intern, s.data.pop("DEFINED_PHASES", "").split()))
     _get_attr["homepage"] = lambda s: s.data.pop("HOMEPAGE", "").strip()
     _get_attr["inherited"] = get_inherited
@@ -228,26 +228,19 @@ class base(metadata.package):
 
     PN = klass.alias_attr("package")
     repo_id = klass.alias_attr("repo.repo_id")
-    is_supported = klass.alias_attr('eapi_obj.is_supported')
-    tracked_attributes = klass.alias_attr('eapi_obj.tracked_attributes')
+    is_supported = klass.alias_attr('eapi.is_supported')
+    tracked_attributes = klass.alias_attr('eapi.tracked_attributes')
 
     @property
     def iuse_stripped(self):
-        if self.eapi_obj.options.iuse_defaults:
+        if self.eapi.options.iuse_defaults:
             return frozenset(x.lstrip('-+') for x in self.iuse)
         return self.iuse
 
     @property
-    def eapi(self):
-        eapi_obj = self.eapi_obj
-        if eapi_obj is not None:
-            return int(eapi_obj.magic)
-        return "unsupported"
-
-    @property
     def mandatory_phases(self):
         return frozenset(
-            chain(self.defined_phases, self.eapi_obj.default_phases))
+            chain(self.defined_phases, self.eapi.default_phases))
 
     @property
     def P(self):
@@ -365,9 +358,9 @@ class package_factory(metadata.factory):
         return self._update_metadata(pkg, ebp=ebp)
 
     def _update_metadata(self, pkg, ebp=None):
-        parsed_eapi = pkg.eapi_obj
+        parsed_eapi = pkg.eapi
         if not parsed_eapi.is_supported:
-            return {'EAPI':parsed_eapi.magic}
+            return {'EAPI': str(parsed_eapi)}
 
         with processor.reuse_or_request(ebp) as my_proc:
             mydata = my_proc.get_keys(pkg, self._ecache)
@@ -378,7 +371,7 @@ class package_factory(metadata.factory):
         if parsed_eapi != eapi:
             raise metadata_errors.MetadataException(
                 pkg, 'eapi', "parsed EAPI '%s' doesn't match sourced EAPI '%s'"
-                % (parsed_eapi.magic, eapi.magic))
+                % (parsed_eapi, eapi))
         wipes = set(mydata)
 
         wipes.difference_update(eapi.metadata_keys)

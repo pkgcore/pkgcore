@@ -9,9 +9,10 @@ demandload(
     'os',
     'functools:partial',
     'snakeoil:osutils',
-    "pkgcore.ebuild:atom,conditionals,eapi",
-    "pkgcore.restrictions.boolean:AndRestriction",
-    "pkgcore.util:packages",
+    'pkgcore.ebuild:atom,conditionals',
+    'pkgcore.ebuild.eapi:get_eapi',
+    'pkgcore.restrictions.boolean:AndRestriction',
+    'pkgcore.util:packages',
 )
 
 def str_pkg(pkg):
@@ -26,10 +27,10 @@ def str_pkg(pkg):
 
 
 def get_atom_kls(value):
-    eapi_obj = eapi.get_eapi(value)
-    if eapi_obj is None:
+    eapi = get_eapi(value)
+    if eapi is None:
         raise ValueError("EAPI %s isn't known/supported" % (value,))
-    return eapi_obj.atom_kls
+    return eapi.atom_kls
 
 def default_portageq_args(parser):
     parser.add_argument("--eapi", dest='atom_kls', type=get_atom_kls,

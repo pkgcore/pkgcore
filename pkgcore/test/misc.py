@@ -101,7 +101,7 @@ class FakePkg(FakePkgBase):
         object.__setattr__(self, "fetchables", [])
         object.__setattr__(self, "use", set(use))
         object.__setattr__(self, "iuse", set(iuse))
-        object.__setattr__(self, 'eapi_obj', get_eapi(eapi, False))
+        object.__setattr__(self, 'eapi', get_eapi(eapi, False))
 
 
 class DisablePlugins(object):

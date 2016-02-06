@@ -148,9 +148,9 @@ class TestPmsProfileNode(profile_mixin, TestCase):
 
     def test_eapi(self):
         path = pjoin(self.dir, self.profile)
-        self.assertEqual(self.klass(path).eapi, '0')
+        self.assertEqual(str(self.klass(path).eapi), '0')
         self.write_file("eapi", "1")
-        self.assertEqual(self.klass(path).eapi, '1')
+        self.assertEqual(str(self.klass(path).eapi), '1')
         self.write_file("eapi", "some-random-eapi-adsfafa")
         self.assertRaises(profiles.ProfileError, getattr,
             self.klass(path), 'eapi')

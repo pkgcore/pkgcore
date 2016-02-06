@@ -69,7 +69,7 @@ class eapi(_base):
     __metaclass__ = _register_command
 
     def __call__(self, namespace, out, err):
-        eapis = set(x.eapi_obj.magic for x in namespace.profile.stack)
+        eapis = set(str(x.eapi) for x in namespace.profile.stack)
         out.write("\n".join(sorted(eapis)))
 
 

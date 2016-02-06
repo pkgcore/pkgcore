@@ -109,8 +109,8 @@ class EAPI(object):
 
         sf = object.__setattr__
 
-        sf(self, "magic", magic)
-        sf(self, "parent", parent)
+        sf(self, "_magic", magic)
+        sf(self, "_parent", parent)
 
         sf(self, "phases", mappings.ImmutableDict(phases))
         sf(self, "phases_rev", mappings.ImmutableDict((v, k) for k, v in
@@ -135,18 +135,18 @@ class EAPI(object):
     @classmethod
     def register(cls, *args, **kwds):
         ret = cls(*args, **kwds)
-        pre_existing = cls.known_eapis.get(ret.magic)
+        pre_existing = cls.known_eapis.get(ret._magic)
         if pre_existing is not None:
             raise ValueError("EAPI %s is already known/instantiated- %r" %
-                (ret.magic, pre_existing))
-        cls.known_eapis[ret.magic] = ret
+                (ret._magic, pre_existing))
+        cls.known_eapis[ret._magic] = ret
         return ret
 
     @klass.jit_attr
     def is_supported(self):
-        if EAPI.known_eapis.get(self.magic) is not None:
+        if EAPI.known_eapis.get(self._magic) is not None:
             if not self.options.is_supported:
-                logger.warning("EAPI %s isn't fully supported" % self.magic)
+                logger.warning("EAPI %s isn't fully supported" % self)
             return True
         return False
 
@@ -156,7 +156,7 @@ class EAPI(object):
 
     @klass.jit_attr
     def atom_kls(self):
-        return partial(atom.atom, eapi=int(self.magic))
+        return partial(atom.atom, eapi=int(self._magic))
 
     def interpret_cache_defined_phases(self, sequence):
         phases = set(sequence)
@@ -170,7 +170,7 @@ class EAPI(object):
         return frozenset(phases)
 
     def __str__(self):
-        return str(self.magic)
+        return str(self._magic)
 
     @property
     def inherits(self):
@@ -179,16 +179,16 @@ class EAPI(object):
         Note that this assumes a simple, linear inheritance tree.
         """
         yield self
-        parent = self.parent
+        parent = self._parent
         while parent is not None:
             yield parent
-            parent = parent.parent
+            parent = parent._parent
 
     def get_ebd_env(self):
         d = {}
         for k, converter in self.ebd_env_options.iteritems():
             d["PKGCORE_%s" % (k.upper(),)] = converter(getattr(self.options, k))
-        d["EAPI"] = str(self.magic)
+        d["EAPI"] = self._magic
         return d
 
 
@@ -238,7 +238,7 @@ common_metadata_keys = common_mandatory_metadata_keys + (
 
 common_tracked_attributes = (
     "cflags", "cbuild", "chost", "ctarget", "cxxflags", "defined_phases",
-    "depends", "description", "eapi_obj", "fullslot", "homepage", "inherited",
+    "depends", "description", "eapi", "fullslot", "homepage", "inherited",
     "iuse", "keywords", "ldflags", "license", "post_rdepends", "properties",
     "rdepends", "restrict", "source_repository",
 )

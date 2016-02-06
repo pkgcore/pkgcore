@@ -9,7 +9,8 @@ __all__ = ("package", "package_factory")
 
 from functools import partial
 
-from pkgcore.ebuild import ebuild_src, conditionals, eapi
+from pkgcore.ebuild import ebuild_src, conditionals
+from pkgcore.ebuild.eapi import get_eapi
 from pkgcore.package import metadata
 
 from snakeoil.compatibility import raise_from
@@ -54,15 +55,15 @@ def wrap_inst(self, wrap, inst):
 _empty_fetchable = conditionals.DepSet.parse('', ebuild_src.fetchable, operators={})
 
 
-def generate_eapi_obj(self):
+def generate_eapi(self):
     eapi_magic = self.data.pop("EAPI", "0")
     if not eapi_magic:
         # "" means EAPI 0
         eapi_magic = '0'
-    eapi_obj = eapi.get_eapi(str(eapi_magic).strip())
-    # this can return None... definitely the wrong thing right now
-    # for an unsupported eapi.  Fix it later.
-    return eapi_obj
+    eapi = get_eapi(str(eapi_magic).strip())
+    # This can return None... definitely the wrong thing right now
+    # for an unsupported eapi. Fix it later.
+    return eapi
 
 
 class package(ebuild_src.base):
@@ -110,7 +111,7 @@ class package(ebuild_src.base):
 
     _get_attr["inherited"] = lambda s: tuple(sorted(
         s.data.get("INHERITED", "").split()))
-    _get_attr["eapi_obj"] = generate_eapi_obj
+    _get_attr["eapi"] = generate_eapi
 
     def __init__(self, *args, **kwargs):
         super(package, self).__init__(*args, **kwargs)

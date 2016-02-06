@@ -76,7 +76,7 @@ def load_property(filename, handler=iter_read_bash, fallback=(),
 def _load_and_invoke(func, filename, handler, fallback, read_func,
                      allow_recurse, eapi_optional, self):
     profile_path = self.path.rstrip('/')
-    if eapi_optional is not None and not getattr(self.eapi_obj.options, eapi_optional, None):
+    if eapi_optional is not None and not getattr(self.eapi.options, eapi_optional, None):
             return fallback
     try:
         base = pjoin(profile_path, filename)
@@ -361,7 +361,7 @@ class ProfileNode(object):
         return None
 
     @load_property('eapi', fallback=('0',))
-    def eapi_obj(self, data):
+    def eapi(self, data):
         data = [x.strip() for x in data]
         data = filter(None, data)
         if len(data) != 1:
@@ -371,8 +371,7 @@ class ProfileNode(object):
             raise ProfileError(self.path, 'eapi', 'unsupported eapi: %s' % data[0])
         return obj
 
-    eapi = klass.alias_attr("eapi_obj.magic")
-    eapi_atom = klass.alias_attr("eapi_obj.atom_kls")
+    eapi_atom = klass.alias_attr("eapi.atom_kls")
 
     @klass.jit_attr
     def repoconfig(self):
@@ -553,7 +552,7 @@ class ProfileStack(object):
         iuse_effective = []
 
         # EAPI 5 and above allow profile defined IUSE injection (see PMS)
-        if profile.eapi_obj.options.profile_iuse_injection:
+        if profile.eapi.options.profile_iuse_injection:
             iuse_effective.extend(self.iuse_implicit)
             for v in self.use_expand_implicit.intersection(self.use_expand_unprefixed):
                 iuse_effective.extend(self.default_env.get("USE_EXPAND_VALUES_" + v, "").split())
@@ -730,4 +729,4 @@ class PkgProvided(ebuild_src.base):
         ebuild_src.base.__init__(self, *a, **kwds)
         object.__setattr__(self, "use", [])
         object.__setattr__(self, "data", {})
-        object.__setattr__(self, "eapi_obj", get_eapi('0'))
+        object.__setattr__(self, "eapi", get_eapi('0'))

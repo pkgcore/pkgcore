@@ -61,11 +61,7 @@ class install(repo_ops.install):
                 del data
             else:
                 v = getattr(self.new_pkg, k)
-                if k == 'eapi_obj':
-                    # hackity hack.
-                    s = v.magic
-                    k = 'eapi'
-                elif k == 'depends' or k == 'rdepends':
+                if k == 'depends' or k == 'rdepends':
                     s = v.slotdep_str(domain)
                 elif not isinstance(v, basestring):
                     try:

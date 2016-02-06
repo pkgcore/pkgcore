@@ -9,7 +9,8 @@ from snakeoil.osutils import pjoin
 from snakeoil.test.mixins import tempdir_decorator
 
 from pkgcore import fetch
-from pkgcore.ebuild import ebuild_src, digest, repo_objs, eapi
+from pkgcore.ebuild import ebuild_src, digest, repo_objs
+from pkgcore.ebuild.eapi import get_eapi
 from pkgcore.package import errors
 from pkgcore.test import TestCase, malleable_obj
 from pkgcore.test.ebuild.test_eclass_cache import FakeEclassCache
@@ -24,7 +25,7 @@ class test_base(TestCase):
         o = self.kls(*(list(pre_args) + [repo, cpv]))
         if data is not None:
             eapi_data = str(data.pop('EAPI', 0))
-            object.__setattr__(o, 'eapi_obj', eapi.get_eapi(eapi_data, False))
+            object.__setattr__(o, 'eapi', get_eapi(eapi_data, False))
             object.__setattr__(o, 'data', data)
         return o
 
@@ -149,12 +150,9 @@ class test_base(TestCase):
             self.get_pkg({'RESTRICT':'|| ( foon dar )'}), 'restrict')
 
     def test_eapi(self):
-        # Verify .eapi works, although it'll be converted into an alias for eapi_obj
-        # in 0.9
-        self.assertEqual(self.get_pkg({'EAPI': '0'}).eapi, 0)
-        self.assertEqual(self.get_pkg({'EAPI': '0'}).eapi_obj.magic, '0')
-        self.assertTrue(self.get_pkg({'EAPI': '0'}).eapi_obj.is_supported)
-        self.assertEqual(self.get_pkg({'EAPI': 'foon'}).eapi_obj, None)
+        self.assertEqual(str(self.get_pkg({'EAPI': '0'}).eapi), '0')
+        self.assertTrue(self.get_pkg({'EAPI': '0'}).eapi.is_supported)
+        self.assertEqual(self.get_pkg({'EAPI': 'foon'}).eapi, None)
         self.assertRaises(errors.MetadataException, getattr,
             self.get_pkg({'EAPI':0, 'DEPEND':"d/b:0"}), 'depends')
         self.assertRaises(errors.MetadataException, getattr,

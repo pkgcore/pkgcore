@@ -71,7 +71,7 @@ class ebd(object):
 
         if not hasattr(self, "observer"):
             self.observer = observer
-        if not pkg.eapi_obj.is_supported:
+        if not pkg.eapi.is_supported:
             raise TypeError(
                 "package %s uses an unsupported eapi: %s" % (pkg, pkg.eapi))
 
@@ -92,7 +92,7 @@ class ebd(object):
 
         # XXX: note this is just EAPI 3 compatibility; not full prefix, soon..
         self.env["ROOT"] = self.domain.root
-        self.prefix_mode = pkg.eapi_obj.options.prefix_capable or 'force-prefix' in features
+        self.prefix_mode = pkg.eapi.options.prefix_capable or 'force-prefix' in features
         self.env["PKGCORE_PREFIX_SUPPORT"] = 'false'
         self.prefix = '/'
         if self.prefix_mode:
@@ -102,7 +102,7 @@ class ebd(object):
                 pjoin(self.domain.root, self.prefix.lstrip('/'))).rstrip('/') + '/'
             self.env["PKGCORE_PREFIX_SUPPORT"] = 'true'
 
-        self.env.update(pkg.eapi_obj.get_ebd_env())
+        self.env.update(pkg.eapi.get_ebd_env())
 
         # set the list of internally implemented EAPI specific functions that
         # shouldn't be exported
@@ -160,7 +160,6 @@ class ebd(object):
 
         self.pkg = pkg
         self.eapi = pkg.eapi
-        self.eapi_obj = pkg.eapi_obj
         wipes = [k for k, v in self.env.iteritems()
                  if not isinstance(v, basestring)]
         for k in wipes:
@@ -229,14 +228,14 @@ class ebd(object):
     def _setup_merge_type(self, phase, env):
         # only allowed in pkg_ phases.
 
-        if (not self.eapi_obj.phases.get(phase, "").startswith("pkg_") and
+        if (not self.eapi.phases.get(phase, "").startswith("pkg_") and
                 not phase == 'setup-binpkg'):
             return
 
         # note all pkgs have this attribute
         is_source = getattr(self.pkg, '_is_from_source', True)
 
-        if self.eapi_obj.options.has_merge_type:
+        if self.eapi.options.has_merge_type:
             env["MERGE_TYPE"] = (is_source and "source") or "binary"
         else:
             # we still must export this, just via the portage var name w/
@@ -309,11 +308,11 @@ class ebd(object):
         ebd.write("end_request")
 
     def set_is_replacing(self, *pkgs):
-        if self.eapi_obj.options.exports_replacing:
+        if self.eapi.options.exports_replacing:
             self.env['REPLACING_VERSIONS'] = " ".join(x.cpvstr for x in pkgs)
 
     def set_is_being_replaced_by(self, pkg=None):
-        if self.eapi_obj.options.exports_replacing and pkg is not None:
+        if self.eapi.options.exports_replacing and pkg is not None:
             self.env['REPLACED_BY_VERSION'] = pkg.cpvstr
 
     def cleanup(self, disable_observer=False, force=False):
@@ -603,17 +602,17 @@ class buildable(ebd, setup_mixin, format.build):
         self.env["PATH"] = os.pathsep.join(path)
         self.env["A"] = ' '.join(set(x.filename for x in pkg.fetchables))
 
-        if self.eapi_obj.options.has_AA:
+        if self.eapi.options.has_AA:
             pkg = getattr(self.pkg, '_raw_pkg', self.pkg)
             self.env["AA"] = ' '.join(set(
                 x.filename for x in iflatten_instance(pkg.fetchables, fetch.fetchable)))
 
-        if self.eapi_obj.options.has_KV:
+        if self.eapi.options.has_KV:
             ret = spawn_get_output(['uname', '-r'])
             if ret[0] == 0:
                 self.env["KV"] = ret[1][0].strip()
 
-        if self.eapi_obj.options.has_merge_type:
+        if self.eapi.options.has_merge_type:
             self.env["MERGE_TYPE"] = "source"
 
         if self.setup_is_for_src:
@@ -745,7 +744,7 @@ class buildable(ebd, setup_mixin, format.build):
         does nothing if the pkg's EAPI is less than 2 (that spec lacks a
         separated configure phase).
         """
-        if "configure" in self.eapi_obj.phases:
+        if "configure" in self.eapi.phases:
             return self._generic_phase("configure", True, True)
         return True
 
@@ -755,7 +754,7 @@ class buildable(ebd, setup_mixin, format.build):
 
         does nothing if the pkg's EAPI is less than 2
         """
-        if "prepare" in self.eapi_obj.phases:
+        if "prepare" in self.eapi.phases:
             return self._generic_phase("prepare", True, True)
         return True
 
@@ -825,7 +824,7 @@ class binpkg_localize(ebd, setup_mixin, format.build):
     def __init__(self, domain, pkg, **kwargs):
         format.build.__init__(self, domain, pkg, {}, observer=kwargs.get("observer", None))
         ebd.__init__(self, pkg, **kwargs)
-        if self.eapi_obj.options.has_merge_type:
+        if self.eapi.options.has_merge_type:
             self.env["MERGE_TYPE"] = "binpkg"
 
     def finalize(self):
@@ -837,7 +836,7 @@ class ebuild_mixin(object):
     def _cmd_implementation_sanity_check(self, domain, observer):
         """Various ebuild sanity checks (REQUIRED_USE, pkg_pretend)."""
         pkg = self.pkg
-        eapi = pkg.eapi_obj
+        eapi = pkg.eapi
 
         # perform REQUIRED_USE checks
         if eapi.options.has_required_use:

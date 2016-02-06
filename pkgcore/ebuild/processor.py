@@ -84,7 +84,7 @@ def forget_all_processors():
 
 @_single_thread_allowed
 def shutdown_all_processors():
-    """kill off all known processors"""
+    """Kill off all known processors."""
     try:
         while active_ebp_list:
             try:
@@ -109,8 +109,7 @@ pkgcore.spawn.atexit_register(shutdown_all_processors)
 
 @_single_thread_allowed
 def request_ebuild_processor(userpriv=False, sandbox=None):
-    """
-    request an ebuild_processor instance, creating a new one if needed.
+    """Request an ebuild_processor instance, creating a new one if needed.
 
     :return: :obj:`EbuildProcessor`
     :param userpriv: should the processor be deprived to
@@ -137,8 +136,7 @@ def request_ebuild_processor(userpriv=False, sandbox=None):
 
 @_single_thread_allowed
 def release_ebuild_processor(ebp):
-    """
-    the inverse of request_ebuild_processor.
+    """The inverse of request_ebuild_processor.
 
     Any processor requested via request_ebuild_processor B{must} be released
     via this function once it's no longer in use.
@@ -245,8 +243,7 @@ class InitializationError(Exception):
 
 
 class EbuildProcessor(object):
-
-    """abstraction of a running ebuild.sh instance.
+    """Abstraction of a running ebd instance.
 
     Contains the env, functions, etc that ebuilds expect.
     """
@@ -361,8 +358,7 @@ class EbuildProcessor(object):
 
     def run_phase(self, phase, env, tmpdir, logging=None,
                   additional_commands=None, sandbox=True):
-        """
-        Utility function, to initialize the processor for a phase.
+        """Utility function, to initialize the processor for a phase.
 
         Used to combine multiple calls into one, leaving the processor
         in a state where all that remains is a call start_processing
@@ -397,7 +393,7 @@ class EbuildProcessor(object):
 
     def write(self, string, flush=True, disable_runtime_exceptions=False,
               append_newline=True):
-        """send something to the bash side.
+        """Send something to the bash side.
 
         :param string: string to write to the bash processor.
             All strings written are automatically \\n terminated.
@@ -431,7 +427,7 @@ class EbuildProcessor(object):
         raise TimeoutError("ebp for pid '%i' appears dead, timing out" % self.pid)
 
     def expect(self, want, async=False, flush=False, timeout=0):
-        """read from the daemon, check if the returned string is expected.
+        """Read from the daemon, check if the returned string is expected.
 
         :param want: string we're expecting
         :return: boolean, was what was read == want?
@@ -470,17 +466,16 @@ class EbuildProcessor(object):
         return mydata
 
     def read(self, lines=1, ignore_killed=False):
-        """
-        read data from the daemon.  Shouldn't be called except internally
+        """Read data from the daemon.
+
+        Shouldn't be called except internally.
         """
         return "\n".join(self.readlines(lines, ignore_killed=ignore_killed))
 
     def sandbox_summary(self, move_log=False):
-        """
-        if the instance is sandboxed, print the sandbox access summary
+        """If the instance is sandboxed, print the sandbox access summary.
 
-        :param move_log: location to move the sandbox log to if a failure
-            occurred
+        :param move_log: location to move the sandbox log to if a failure occurred
         """
         if not os.path.exists(self.__sandbox_log):
             self.write("end_sandbox_summary")
@@ -528,8 +523,7 @@ class EbuildProcessor(object):
         return True
 
     def preload_eclasses(self, cache, async=False, limited_to=None):
-        """
-        Preload an eclass stack's eclasses into bash functions.
+        """Preload an eclass stack's eclasses into bash functions.
 
         Avoids the cost of going to disk on inherit. Preloading eutils
         (which is heavily inherited) speeds up regen times for
@@ -559,8 +553,7 @@ class EbuildProcessor(object):
         self._eclass_caching = False
 
     def _preload_eclass(self, ec_file, async=False):
-        """
-        Preload an eclass into a bash function.
+        """Preload an eclass into a bash function.
 
         Avoids the cost of going to disk on inherit. Preloading eutils
         (which is heavily inherited) speeds up regen times for
@@ -578,15 +571,14 @@ class EbuildProcessor(object):
         return False
 
     def lock(self):
-        """
-        lock the processor.  Currently doesn't block any access, but will
+        """Lock the processor.
+
+        Currently doesn't block any access, but will.
         """
         self.processing_lock = True
 
     def unlock(self):
-        """
-        unlock the processor
-        """
+        """Unlock the processor."""
         self.processing_lock = False
 
     locked = klass.alias_attr('processing_lock')
@@ -612,9 +604,7 @@ class EbuildProcessor(object):
             return False
 
     def shutdown_processor(self, ignore_keyboard_interrupt=False):
-        """
-        tell the daemon to shut itself down, and mark this instance as dead
-        """
+        """Tell the daemon to shut itself down, and mark this instance as dead."""
         kill = False
         try:
             if self.pid is None:
@@ -661,8 +651,7 @@ class EbuildProcessor(object):
         return 'export %s' % (' '.join(data),)
 
     def send_env(self, env_dict, async=False, tmpdir=None):
-        """
-        transfer the ebuild's desired env (env_dict) to the running daemon
+        """Transfer the ebuild's desired env (env_dict) to the running daemon.
 
         :type env_dict: mapping with string keys and values.
         :param env_dict: the bash env.
@@ -716,8 +705,8 @@ class EbuildProcessor(object):
                                extra_commands={}):
         self._ensure_metadata_paths(const.HOST_NONROOT_PATHS)
 
-        e = expected_ebuild_env(package_inst, depends=True)
-        data = self._generate_env_str(e)
+        env = expected_ebuild_env(package_inst, depends=True)
+        data = self._generate_env_str(env)
         self.write("%s %i\n%s" % (command, len(data), data), append_newline=False)
 
         updates = None
@@ -792,8 +781,7 @@ class EbuildProcessor(object):
     # this basically handles all hijacks from the daemon, whether
     # confcache or portageq.
     def generic_handler(self, additional_commands=None):
-        """
-        internal event handler responding to the running processor's requests.
+        """Internal event handler responding to the running processor's requests.
 
         :type additional_commands: mapping from string to callable.
         :param additional_commands: Extra command handlers.
@@ -858,8 +846,7 @@ class EbuildProcessor(object):
             return v
 
 def inherit_handler(ecache, ebp, line, updates=None):
-    """
-    Callback for implementing inherit digging into eclass_cache.
+    """Callback for implementing inherit digging into eclass_cache.
 
     Not for normal consumption.
     """
@@ -889,8 +876,7 @@ def inherit_handler(ecache, ebp, line, updates=None):
 
 
 def expected_ebuild_env(pkg, d=None, env_source_override=None, depends=False):
-    """
-    setup expected ebuild vars
+    """Setup expected ebuild vars.
 
     :param d: if None, generates a dict, else modifies a passed in mapping
     :return: mapping

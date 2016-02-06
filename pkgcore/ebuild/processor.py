@@ -920,7 +920,7 @@ def expected_ebuild_env(pkg, d=None, env_source_override=None, depends=False):
 
     if not depends:
         path = list(const.PATH_FORCED_PREPEND)
-        for eapi in xrange(pkg.eapi, -1, -1):
+        for eapi in pkg.eapi_obj.inherits:
             eapi_helper_dir = pjoin(e_const.EBUILD_HELPERS_PATH, str(eapi))
             if os.path.exists(eapi_helper_dir):
                 path.append(eapi_helper_dir)

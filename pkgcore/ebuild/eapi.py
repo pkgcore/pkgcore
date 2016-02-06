@@ -116,9 +116,8 @@ class EAPI(object):
         sf(self, "phases_rev", mappings.ImmutableDict((v, k) for k, v in
            self.phases.iteritems()))
 
-        # we track the phases that have a default implementation-
-        # this is primarily due to DEFINED_PHASES cache values
-        # not including it.
+        # We track the phases that have a default implementation- this is
+        # primarily due to DEFINED_PHASES cache values not including it.
 
         sf(self, "default_phases", frozenset(default_phases))
 
@@ -170,7 +169,7 @@ class EAPI(object):
         return frozenset(phases)
 
     def __str__(self):
-        return str(self._magic)
+        return self._magic
 
     @property
     def inherits(self):
@@ -252,14 +251,14 @@ common_env_optionals = mappings.ImmutableDict(dict.fromkeys(
 
 
 eapi0 = EAPI.register(
-    "0",
-    None,
-    mk_phase_func_map(*common_phases),
-    mk_phase_func_map(*common_default_phases),
-    common_metadata_keys,
-    common_mandatory_metadata_keys,
-    common_tracked_attributes,
-    dict(
+    magic="0",
+    parent=None,
+    phases=mk_phase_func_map(*common_phases),
+    default_phases=mk_phase_func_map(*common_default_phases),
+    metadata_keys=common_metadata_keys,
+    mandatory_keys=common_mandatory_metadata_keys,
+    tracked_attributes=common_tracked_attributes,
+    optionals=dict(
         trust_defined_phases_cache=False,
         prefix_capable=False,
         has_AA=True,
@@ -269,28 +268,28 @@ eapi0 = EAPI.register(
 )
 
 eapi1 = EAPI.register(
-    "1",
-    eapi0,
-    eapi0.phases,
-    eapi0.default_phases,
-    eapi0.metadata_keys,
-    eapi0.mandatory_keys,
-    eapi0.tracked_attributes,
-    combine_dicts(eapi0.options, dict(
+    magic="1",
+    parent=eapi0,
+    phases=eapi0.phases,
+    default_phases=eapi0.default_phases,
+    metadata_keys=eapi0.metadata_keys,
+    mandatory_keys=eapi0.mandatory_keys,
+    tracked_attributes=eapi0.tracked_attributes,
+    optionals=combine_dicts(eapi0.options, dict(
         iuse_defaults=True,
     )),
     ebd_env_options=eapi0.ebd_env_options,
 )
 
 eapi2 = EAPI.register(
-    "2",
-    eapi1,
-    combine_dicts(eapi1.phases, mk_phase_func_map("src_prepare", "src_configure")),
-    eapi1.default_phases.union(map(shorten_phase_name, ["src_prepare", "src_configure"])),
-    eapi1.metadata_keys,
-    eapi1.mandatory_keys,
-    eapi1.tracked_attributes,
-    combine_dicts(eapi1.options, dict(
+    magic="2",
+    parent=eapi1,
+    phases=combine_dicts(eapi1.phases, mk_phase_func_map("src_prepare", "src_configure")),
+    default_phases=eapi1.default_phases.union(map(shorten_phase_name, ["src_prepare", "src_configure"])),
+    metadata_keys=eapi1.metadata_keys,
+    mandatory_keys=eapi1.mandatory_keys,
+    tracked_attributes=eapi1.tracked_attributes,
+    optionals=combine_dicts(eapi1.options, dict(
         doman_language_detect=True,
         transitive_use_atoms=True,
         src_uri_renames=True,
@@ -299,28 +298,28 @@ eapi2 = EAPI.register(
 )
 
 eapi3 = EAPI.register(
-    "3",
-    eapi2,
-    eapi2.phases,
-    eapi2.default_phases,
-    eapi2.metadata_keys,
-    eapi2.mandatory_keys,
-    eapi2.tracked_attributes,
-    combine_dicts(eapi2.options, dict(
+    magic="3",
+    parent=eapi2,
+    phases=eapi2.phases,
+    default_phases=eapi2.default_phases,
+    metadata_keys=eapi2.metadata_keys,
+    mandatory_keys=eapi2.mandatory_keys,
+    tracked_attributes=eapi2.tracked_attributes,
+    optionals=combine_dicts(eapi2.options, dict(
         prefix_capable=True,
     )),
     ebd_env_options=eapi2.ebd_env_options,
 )
 
 eapi4 = EAPI.register(
-    "4",
-    eapi3,
-    combine_dicts(eapi3.phases, mk_phase_func_map("pkg_pretend")),
-    eapi3.default_phases.union([shorten_phase_name('src_install')]),
-    eapi3.metadata_keys | frozenset(["REQUIRED_USE"]),
-    eapi3.mandatory_keys,
-    eapi3.tracked_attributes,
-    combine_dicts(eapi3.options, dict(
+    magic="4",
+    parent=eapi3,
+    phases=combine_dicts(eapi3.phases, mk_phase_func_map("pkg_pretend")),
+    default_phases=eapi3.default_phases.union([shorten_phase_name('src_install')]),
+    metadata_keys=eapi3.metadata_keys | frozenset(["REQUIRED_USE"]),
+    mandatory_keys=eapi3.mandatory_keys,
+    tracked_attributes=eapi3.tracked_attributes,
+    optionals=combine_dicts(eapi3.options, dict(
         dodoc_allow_recursive=True,
         doins_allow_symlinks=True,
         doman_language_override=True,
@@ -335,14 +334,14 @@ eapi4 = EAPI.register(
 )
 
 eapi5 = EAPI.register(
-    "5",
-    eapi4,
-    eapi4.phases,
-    eapi4.default_phases,
-    eapi4.metadata_keys,
-    eapi4.mandatory_keys,
-    eapi4.tracked_attributes | frozenset(["iuse_effective"]),
-    combine_dicts(eapi4.options, dict(
+    magic="5",
+    parent=eapi4,
+    phases=eapi4.phases,
+    default_phases=eapi4.default_phases,
+    metadata_keys=eapi4.metadata_keys,
+    mandatory_keys=eapi4.mandatory_keys,
+    tracked_attributes=eapi4.tracked_attributes | frozenset(["iuse_effective"]),
+    optionals=combine_dicts(eapi4.options, dict(
         ebuild_phase_func=True,
         econf_disable_silent_rules=True,
         profile_iuse_injection=True,

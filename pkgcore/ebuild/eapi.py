@@ -11,13 +11,13 @@ demandload(
 )
 
 eapi_optionals = mappings.ImmutableDict({
-    # Controls whether -r is allowed for dodoc
+    # Controls whether -r is allowed for dodoc.
     "dodoc_allow_recursive": False,
 
-    # Controls whether doins recurses symlinks
+    # Controls whether doins recurses symlinks.
     "doins_allow_symlinks": False,
 
-    # Controls the language awareness of doman; see PMS
+    # Controls the language awareness of doman; see PMS.
     "doman_language_detect": False,
 
     # Controls whether -i18n option is allowed.
@@ -29,7 +29,7 @@ eapi_optionals = mappings.ImmutableDict({
     # Controls --disable-dependency-tracking passing for econf.
     'econf_disable_dependency_tracking': False,
 
-    # Controls whether an ebuild_phase function exists for ebuild consumption
+    # Controls whether an ebuild_phase function exists for ebuild consumption.
     'ebuild_phase_func': False,
 
     # Controls whether REPLACING vars are exported to ebuilds; see PMS.
@@ -39,29 +39,29 @@ eapi_optionals = mappings.ImmutableDict({
     "has_merge_type": False,
 
     # Controls whether REQUIRED_USE is supported, enforcing constraints on
-    # allowed use configuration states
+    # allowed use configuration states.
     "has_required_use": False,
 
     # Controls whether AA env var is exported to ebuilds; this is a flattened
-    # listing of each filename in SRC_URI
+    # listing of each filename in SRC_URI.
     "has_AA": False,
 
-    # Controls whether KV (kernel version; see PMS for details) is exported
+    # Controls whether KV (kernel version; see PMS for details) is exported.
     "has_KV": False,
 
-    # Controls whether or not pkgcore, or extensions loaded, actually fully support
-    # this EAPI.
+    # Controls whether or not pkgcore, or extensions loaded, actually fully
+    # support this EAPI.
     'is_supported': True,
 
     # Controls whether IUSE defaults are supported; see PMS.
     'iuse_defaults': False,
 
-    # Controls whether new* style bash functions can take their content input from
-    # stdin, rather than an explicit ondisk file.
+    # Controls whether new* style bash functions can take their content input
+    # from stdin, rather than an explicit ondisk file.
     'new_reads_stdin': False,
 
-    # Controls whether this EAPI supports prefix related variables/settings; prefix
-    # awareness basically.  See PMS for full details.
+    # Controls whether this EAPI supports prefix related variables/settings;
+    # prefix awareness basically. See PMS for full details.
     "prefix_capable": True,
 
     # Controls whether profile-defined IUSE injection is supported.
@@ -70,8 +70,8 @@ eapi_optionals = mappings.ImmutableDict({
     # Controls whether profiles support package.use.stable.* and use.stable.* files.
     "profile_stable_use": False,
 
-    # Controls whether SLOT values can actually be multi-part; see PMS EAPI5.  This is
-    # related to ABI breakage detection.
+    # Controls whether SLOT values can actually be multi-part; see PMS EAPI 5.
+    # This is related to ABI breakage detection.
     'sub_slotting': False,
 
     # Controls whether REQUIRED_USE supports the ?? operator.
@@ -83,7 +83,7 @@ eapi_optionals = mappings.ImmutableDict({
     # Controls whether or not use dependency atoms are able to control their enforced
     # value relative to another; standard use deps just enforce either on or off; EAPIs
     # supporting this allow syntax that can enforce (for example) X to be on if Y is on.
-    # See PMS EAPI4 for full details.
+    # See PMS EAPI 4 for full details.
     "transitive_use_atoms": False,
 
     # Controls whether or DEFINED_PHASES is mandated for this EAPI; if so, then we can
@@ -106,7 +106,6 @@ class EAPI(object):
 
     def __init__(self, magic, parent, phases, default_phases, metadata_keys, mandatory_keys,
                  tracked_attributes, optionals, ebd_env_options=None):
-
         sf = object.__setattr__
 
         sf(self, "_magic", magic)
@@ -136,7 +135,8 @@ class EAPI(object):
         ret = cls(*args, **kwds)
         pre_existing = cls.known_eapis.get(ret._magic)
         if pre_existing is not None:
-            raise ValueError("EAPI %s is already known/instantiated- %r" %
+            raise ValueError(
+                "EAPI %s is already known/instantiated- %r" %
                 (ret._magic, pre_existing))
         cls.known_eapis[ret._magic] = ret
         return ret
@@ -197,10 +197,12 @@ def get_eapi(magic, suppress_unsupported=True):
         return EAPI.get_unsupported_eapi(magic)
     return ret
 
+
 def shorten_phase_name(func_name):
     if func_name.startswith("src_") or func_name.startswith("pkg_"):
         return func_name[4:]
     return func_name
+
 
 def mk_phase_func_map(*sequence):
     d = {}
@@ -208,14 +210,17 @@ def mk_phase_func_map(*sequence):
         d[shorten_phase_name(x)] = x
     return d
 
+
 def combine_dicts(*sequence_of_mappings):
     d = {}
     for mapping in sequence_of_mappings:
         d.update(mapping)
     return d
 
+
 def convert_bool_to_bash_bool(val):
     return str(bool(val)).lower()
+
 
 # Note that pkg_setup is forced by default since this is how our env setup occurs.
 common_default_phases = tuple(
@@ -284,8 +289,10 @@ eapi1 = EAPI.register(
 eapi2 = EAPI.register(
     magic="2",
     parent=eapi1,
-    phases=combine_dicts(eapi1.phases, mk_phase_func_map("src_prepare", "src_configure")),
-    default_phases=eapi1.default_phases.union(map(shorten_phase_name, ["src_prepare", "src_configure"])),
+    phases=combine_dicts(
+        eapi1.phases, mk_phase_func_map("src_prepare", "src_configure")),
+    default_phases=eapi1.default_phases.union(
+        map(shorten_phase_name, ["src_prepare", "src_configure"])),
     metadata_keys=eapi1.metadata_keys,
     mandatory_keys=eapi1.mandatory_keys,
     tracked_attributes=eapi1.tracked_attributes,

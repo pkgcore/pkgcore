@@ -3,17 +3,17 @@
 # License: GPL2/BSD 3 clause
 
 # protect against env screwups.
-if [[ -z ${PKGCORE_BIN_PATH} ]]; then
-	PKGCORE_BIN_PATH=$(readlink -f "${0}")
+if [[ -z ${PKGCORE_EBD_PATH} ]]; then
+	PKGCORE_EBD_PATH=$(readlink -f "${0}")
 	# and go up 3, out of helpers.
-	PKGCORE_BIN_PATH=${PKGCORE_BIN_PATH%/*}
-	PKGCORE_BIN_PATH=${PKGCORE_BIN_PATH%/*}
-	PKGCORE_BIN_PATH=${PKGCORE_BIN_PATH%/*}
+	PKGCORE_EBD_PATH=${PKGCORE_EBD_PATH%/*}
+	PKGCORE_EBD_PATH=${PKGCORE_EBD_PATH%/*}
+	PKGCORE_EBD_PATH=${PKGCORE_EBD_PATH%/*}
 fi
-export PKGCORE_BIN_PATH
+export PKGCORE_EBD_PATH
 
-source "${PKGCORE_BIN_PATH}"/exit-handling.lib || {
-	echo "failed to load exit-handling library: PKGCORE_BIN_PATH=${PKGCORE_BIN_PATH}" >&2
+source "${PKGCORE_EBD_PATH}"/exit-handling.lib || {
+	echo "failed to load exit-handling library: PKGCORE_EBD_PATH=${PKGCORE_EBD_PATH}" >&2
 	exit -127
 }
 
@@ -21,11 +21,11 @@ if [[ $# -lt 1 ]]; then
 	die "ebuild-helper invoked without a target helper; no args given."
 fi
 
-source "${PKGCORE_BIN_PATH}"/isolated-functions.lib || \
+source "${PKGCORE_EBD_PATH}"/isolated-functions.lib || \
 	die "failed to load isolated-functions.lib"
-source "${PKGCORE_BIN_PATH}"/eapi/depend.lib >&2 || \
+source "${PKGCORE_EBD_PATH}"/eapi/depend.lib >&2 || \
 	die "failed sourcing eapi/depend.lib"
-source "${PKGCORE_BIN_PATH}"/eapi/common.lib >&2 || \
+source "${PKGCORE_EBD_PATH}"/eapi/common.lib >&2 || \
 	die "failed sourcing eapi/common.lib"
 
 failed=false

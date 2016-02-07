@@ -313,7 +313,7 @@ class EbuildProcessor(object):
 
         # force to a neutral dir so that sandbox won't explode if
         # ran from a nonexistent dir
-        spawn_opts["cwd"] = e_const.EAPI_BIN_PATH
+        spawn_opts["cwd"] = e_const.EBD_PATH
         # Force the pipes to be high up fd wise so nobody stupidly hits 'em, we
         # start from max-3 to avoid a bug in older bash where it doesn't check
         # if an fd is in use before claiming it.
@@ -340,7 +340,7 @@ class EbuildProcessor(object):
             raise InitializationError(
                 "expected 'dude!' response from ebd, which wasn't received. "
                 "likely a bug")
-        self.write(e_const.EAPI_BIN_PATH)
+        self.write(e_const.EBD_PATH)
 
         # send PKGCORE_PYTHON_BINARY...
         self.write(pkgcore.spawn.find_invoking_python())

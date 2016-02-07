@@ -34,7 +34,7 @@ __dyn_src_install() {
 		__qa_run_function_if_exists __phase_src_install
 	fi
 
-	"${PKGCORE_BIN_PATH}"/helpers/internals/prepall
+	"${PKGCORE_EBD_PATH}"/helpers/internals/prepall
 	${PKGCORE_PREFIX_SUPPORT} || local ED=${D}
 	cd "${ED}"
 

@@ -26,8 +26,8 @@ metadata_keys = (
 
 WORLD_FILE = '/var/lib/portage/world'
 
-EAPI_BIN_PATH = const._GET_CONST('EBD_PATH', '%(DATA_PATH)s/ebd')
-EBUILD_DAEMON_PATH = pjoin(EAPI_BIN_PATH, "ebuild-daemon.bash")
-EBUILD_HELPERS_PATH = pjoin(EAPI_BIN_PATH, "helpers")
+EBD_PATH = const._GET_CONST('EBD_PATH', '%(DATA_PATH)s/ebd')
+EBUILD_DAEMON_PATH = pjoin(EBD_PATH, "ebuild-daemon.bash")
+EBUILD_HELPERS_PATH = pjoin(EBD_PATH, "helpers")
 
 PKGCORE_DEBUG_VARS = ("PKGCORE_DEBUG", "PKGCORE_PERF_DEBUG")

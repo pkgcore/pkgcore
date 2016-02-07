@@ -122,16 +122,16 @@ __ebd_exec_main() {
 		exit 1
 	fi
 	__ebd_write_line "dude!"
-	__ebd_read_line PKGCORE_BIN_PATH
-	[[ -z ${PKGCORE_BIN_PATH} ]] && { __ebd_write_line "empty PKGCORE_BIN_PATH;"; exit 1; }
+	__ebd_read_line PKGCORE_EBD_PATH
+	[[ -z ${PKGCORE_EBD_PATH} ]] && { __ebd_write_line "empty PKGCORE_EBD_PATH;"; exit 1; }
 
-	if ! source "${PKGCORE_BIN_PATH}"/exit-handling.lib; then
+	if ! source "${PKGCORE_EBD_PATH}"/exit-handling.lib; then
 		__ebd_write_line "failed sourcing exit handling functionality"
 		exit 2
 	fi
 
 	# get our die functionality now.
-	if ! source "${PKGCORE_BIN_PATH}"/isolated-functions.lib; then
+	if ! source "${PKGCORE_EBD_PATH}"/isolated-functions.lib; then
 		__ebd_write_line "failed sourcing isolated-functions.lib"
 		exit 2
 	fi
@@ -141,9 +141,9 @@ __ebd_exec_main() {
 	__ebd_read_line PKGCORE_PYTHONPATH
 	[[ -z ${PKGCORE_PYTHONPATH} ]] && die "empty PKGCORE_PYTHONPATH, bailing"
 
-	if ! source "${PKGCORE_BIN_PATH}"/ebuild.lib >&2; then
+	if ! source "${PKGCORE_EBD_PATH}"/ebuild.lib >&2; then
 		__ebd_write_line "failed"
-		die "failed sourcing ${PKGCORE_BIN_PATH}/ebuild.lib"
+		die "failed sourcing ${PKGCORE_EBD_PATH}/ebuild.lib"
 	fi
 
 	if [[ -n ${SANDBOX_LOG} ]]; then
@@ -167,13 +167,13 @@ __ebd_exec_main() {
 	unset x re
 
 	# protect ourselves.
-	declare -rx PKGCORE_BIN_PATH=${PKGCORE_BIN_PATH}
+	declare -rx PKGCORE_EBD_PATH=${PKGCORE_EBD_PATH}
 	declare -rx PKGCORE_PYTHON_BINARY=${PKGCORE_PYTHON_BINARY}
 	declare -rx PKGCORE_PYTHONPATH=${PKGCORE_PYTHONPATH}
 
-	if ! source "${PKGCORE_BIN_PATH}"/ebuild-daemon.lib >&2; then
+	if ! source "${PKGCORE_EBD_PATH}"/ebuild-daemon.lib >&2; then
 		__ebd_write_line "failed"
-		die "failed sourcing ${PKGCORE_BIN_PATH}/ebuild-daemon.lib"
+		die "failed sourcing ${PKGCORE_EBD_PATH}/ebuild-daemon.lib"
 	fi
 
 	__colored_output_disable
@@ -184,10 +184,10 @@ __ebd_exec_main() {
 
 	# finally, load the master list of pkgcore funcs. fallback to
 	# regenerating it if needed.
-	if [[ -e ${PKGCORE_BIN_PATH}/funcnames/global ]]; then
-		DONT_EXPORT_FUNCS+=" $(<"${PKGCORE_BIN_PATH}"/funcnames/global)"
+	if [[ -e ${PKGCORE_EBD_PATH}/funcnames/global ]]; then
+		DONT_EXPORT_FUNCS+=" $(<"${PKGCORE_EBD_PATH}"/funcnames/global)"
 	else
-		DONT_EXPORT_FUNCS+=" $("${PKGCORE_BIN_PATH}"/generate_global_func_list.bash 2> /dev/null)"
+		DONT_EXPORT_FUNCS+=" $("${PKGCORE_EBD_PATH}"/generate_global_func_list.bash 2> /dev/null)"
 	fi
 	[[ $? -eq 0 ]] || die "failed reading the global function skip list"
 
@@ -206,7 +206,7 @@ __ebd_exec_main() {
 	export QA_CONTROLLED_EXTERNALLY="yes"
 	__qa_interceptors_enable
 
-	source "${PKGCORE_BIN_PATH}"/eapi/depend.lib >&2 || die "failed sourcing eapi/depend.lib"
+	source "${PKGCORE_EBD_PATH}"/eapi/depend.lib >&2 || die "failed sourcing eapi/depend.lib"
 	__ebd_main_loop
 	exit 0
 }

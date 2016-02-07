@@ -35,8 +35,8 @@ SHELL SHLVL EMERGE_(WARNING_DELAY|FROM) MERGE_TYPE REPLACING_VERSIONS REPLACED_B
 AUTOCLEAN CLEAN_DELAY USE_ORDER XARGS
 COLORTERM LESS(OPEN)? DISPLAY EDITOR LS_COLORS PAGER TERM TERMCAP (ftp|http)_proxy USER(NAME)?"
 
-if [[ -z ${PKGCORE_BIN_PATH} ]]; then
-	echo "PKGCORE_BIN_PATH is unset!"
+if [[ -z ${PKGCORE_EBD_PATH} ]]; then
+	echo "PKGCORE_EBD_PATH is unset!"
 	exit 1
 fi
 
@@ -169,8 +169,8 @@ __load_eapi_libs() {
 	# rely on this setting the env up as necessary
 	# finally, update the filters with functionality loaded from here-
 	# always, always, *always* use our own functionality
-	source "${PKGCORE_BIN_PATH}"/eapi/common.lib || die "failed sourcing eapi/common.lib"
-	source "${PKGCORE_BIN_PATH}/eapi/${PKGCORE_EAPI-${EAPI}}.lib" || \
+	source "${PKGCORE_EBD_PATH}"/eapi/common.lib || die "failed sourcing eapi/common.lib"
+	source "${PKGCORE_EBD_PATH}/eapi/${PKGCORE_EAPI-${EAPI}}.lib" || \
 		die "failed loading eapi/${PKGCORE_EAPI-${EAPI}}.lib"
 
 	# override banned functions
@@ -284,9 +284,9 @@ __load_ebuild() {
 
 # short version.  think these should be sourced via at the daemons choice, rather then defacto.
 # note that exit-handling loads the die functions, thus the custom failure there.
-source "${PKGCORE_BIN_PATH}"/exit-handling.lib >&2 || { echo "ERROR: failed sourcing exit-handling.lib"; exit -1; }
-source "${PKGCORE_BIN_PATH}"/ebuild-default-functions.lib >&2 || die "failed sourcing ebuild-default-functions.lib"
-source "${PKGCORE_BIN_PATH}"/ebuild-env-utils.lib >&2 || die "failed sourcing ebuild-env-utils.lib"
+source "${PKGCORE_EBD_PATH}"/exit-handling.lib >&2 || { echo "ERROR: failed sourcing exit-handling.lib"; exit -1; }
+source "${PKGCORE_EBD_PATH}"/ebuild-default-functions.lib >&2 || die "failed sourcing ebuild-default-functions.lib"
+source "${PKGCORE_EBD_PATH}"/ebuild-env-utils.lib >&2 || die "failed sourcing ebuild-env-utils.lib"
 
 __run_ebuild_phase() {
 	[[ ${PKGCORE_DEBUG} -ge 2 ]] && set -x

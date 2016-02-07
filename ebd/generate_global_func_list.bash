@@ -7,7 +7,7 @@
 # of the build environment. For installed versions, a static function list is
 # generated at install time and used instead.
 
-export PKGCORE_BIN_PATH=$(dirname "$0")
+export PKGCORE_EBD_PATH=$(dirname "$0")
 
 if [[ -z ${PKGCORE_CLEAN_ENV} ]]; then
 	exec env -i \
@@ -45,7 +45,7 @@ source() {
 	local fp=$(readlink -f "$1")
 	__source_was_seen "${fp}" && return 0
 	# die relies on these vars; we reuse them.
-	local CATEGORY=${PKGCORE_BIN_PATH}
+	local CATEGORY=${PKGCORE_EBD_PATH}
 	local PF=$1
 	${DEBUG} && echo "sourcing ${x}" >&2
 	. "$@" || { echo "!!! failed sourcing ${x}; exit $?" >&2; exit 3; }
@@ -58,13 +58,13 @@ source() {
 export PKGCORE_PYTHON_BINARY=${PKGCORE_PYTHON_BINARY:-/bin/true}
 
 forced_order_source="isolated-functions.lib exit-handling.lib eapi/common.lib ebuild-daemon.lib ebuild-daemon.bash"
-pushd "${PKGCORE_BIN_PATH}" >/dev/null
+pushd "${PKGCORE_EBD_PATH}" >/dev/null
 remaining_libs=$(find . -name '*.lib' ! -regex ".*/[0-9]+\.lib" | sed -e 's:^\./::' | sort)
 popd >/dev/null
 
 # skip EAPI specific libs since those need be sourced on demand depending on an ebuild's EAPI
 for x in ${forced_order_source} ${remaining_libs}; do
-	source "${PKGCORE_BIN_PATH}/${x}"
+	source "${PKGCORE_EBD_PATH}/${x}"
 done
 
 # wipe our custom funcs

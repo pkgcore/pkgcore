@@ -106,12 +106,12 @@ class ebd(object):
 
         # set the list of internally implemented EAPI specific functions that
         # shouldn't be exported
-        if os.path.exists(pjoin(const.EAPI_BIN_PATH, 'funcnames', str(pkg.eapi))):
-            with open(pjoin(const.EAPI_BIN_PATH, 'funcnames', str(pkg.eapi)), 'r') as f:
+        if os.path.exists(pjoin(const.EBD_PATH, 'funcnames', str(pkg.eapi))):
+            with open(pjoin(const.EBD_PATH, 'funcnames', str(pkg.eapi)), 'r') as f:
                 eapi_funcs = f.readlines()
         else:
             ret, eapi_funcs = spawn_get_output(
-                [pjoin(const.EAPI_BIN_PATH, 'generate_eapi_func_list.bash'), str(pkg.eapi)])
+                [pjoin(const.EBD_PATH, 'generate_eapi_func_list.bash'), str(pkg.eapi)])
             if ret != 0:
                 raise Exception("failed to generate list of EAPI %s specific functions" % str(pkg.eapi))
         self.env["PKGCORE_EAPI_FUNCS"] = ' '.join(x.strip() for x in eapi_funcs)

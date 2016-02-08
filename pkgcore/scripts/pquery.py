@@ -565,7 +565,8 @@ _query_items = []
 def add_query(*args, **kwds):
     _query_items.append(kwds["dest"])
     kwds.setdefault('final_priority', 50)
-    kwds.setdefault('default', [])
+    if kwds.get('action', None) == 'append':
+        kwds.setdefault('default', [])
     commandline.make_query(query, *args, **kwds)
 
 def bind_add_query(*args, **kwds):

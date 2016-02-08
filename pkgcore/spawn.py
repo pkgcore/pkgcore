@@ -393,7 +393,8 @@ def is_sandbox_capable(force=False):
             return is_sandbox_capable.cached_result
         except AttributeError:
             pass
-    if not (os.path.isfile(SANDBOX_BINARY) and access(SANDBOX_BINARY, os.X_OK)):
+    if not (SANDBOX_BINARY is not None and os.path.isfile(SANDBOX_BINARY)
+            and access(SANDBOX_BINARY, os.X_OK)):
         res = False
     else:
         try:

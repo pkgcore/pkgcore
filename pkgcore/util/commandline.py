@@ -683,6 +683,10 @@ class ArgumentParser(argparse.ArgumentParser):
         # register our own subparser
         self.register('action', 'parsers', _SubParser)
 
+        # register custom actions
+        self.register('action', 'extend_comma', ExtendCommaDelimited)
+        self.register('action', 'extend_comma_toggle', ExtendCommaDelimitedToggle)
+
     def parse_args(self, args=None, namespace=None):
         args = argparse.ArgumentParser.parse_args(self, args, namespace)
 
@@ -830,8 +834,6 @@ def mk_argparser(suppress=False, config=True, domain=True,
                  color=True, debug=True, quiet=True, verbose=True,
                  version=True, **kwds):
     p = ArgumentParser(**kwds)
-    p.register('action', 'extend_comma', ExtendCommaDelimited)
-    p.register('action', 'extend_comma_toggle', ExtendCommaDelimitedToggle)
 
     if suppress:
         return p

@@ -588,6 +588,8 @@ def bind_add_query(*args, **kwds):
     bind='final_converter', type=None,
     help="extended atom matching of pkgs")
 def matches_finalize(targets, namespace):
+    if not targets:
+        return []
     repos = multiplex.tree(*namespace.repos)
     restrictions = []
     for target in targets:

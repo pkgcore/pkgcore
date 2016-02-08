@@ -530,7 +530,10 @@ def make_query(parser, *args, **kwargs):
         def query(value):
             return parserestrict.parse_match(value)
         kwargs.setdefault("type", query)
-    kwargs.setdefault("metavar", dest)
+    if kwargs.get('metavar', False) is None:
+        del kwargs['metavar']
+    else:
+        kwargs.setdefault("metavar", dest)
     final_priority = kwargs.pop("final_priority", None)
     final_converter = kwargs.pop("final_converter", None)
     parser.add_argument(*args, **kwargs)

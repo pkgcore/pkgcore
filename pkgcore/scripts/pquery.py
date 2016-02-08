@@ -563,7 +563,14 @@ query = argparser.add_argument_group(
 # finalized query
 _query_items = []
 def add_query(*args, **kwds):
-    _query_items.append(kwds["dest"])
+    if 'dest' not in kwds:
+        # auto-determine destination name from long option(s)
+        dest = [x for x in args if x.startswith(argparser.prefix_chars * 2) and len(x) > 2]
+        if not dest:
+            raise ValueError('no valid options for query dest names: %s' % ', '.join(args))
+        dest = dest[0].lstrip(argparser.prefix_chars)
+        kwds['dest'] = dest.replace('-', '_')
+    _query_items.append(kwds['dest'])
     kwds.setdefault('final_priority', 50)
     if kwds.get('action', None) == 'append':
         kwds.setdefault('default', [])
@@ -599,7 +606,7 @@ def matches_finalize(targets, namespace):
     return []
 
 add_query(
-    '--all', action='append_const', dest='all',
+    '--all', action='append_const',
     const=packages.AlwaysTrue, type=None,
     help='match all packages',
     docs="""
@@ -607,11 +614,11 @@ add_query(
         query options are specified, this option is enabled.
     """)
 add_query(
-    '--has-use', action='append', dest='has_use',
+    '--has-use', action='append',
     type=parserestrict.comma_separated_containment('iuse'),
     help='exact string match on a USE flag')
 add_query(
-    '--license', action='append', dest='license',
+    '--license', action='append',
     type=parserestrict.comma_separated_containment('license'),
     help='exact match on a license')
 
@@ -638,8 +645,7 @@ query.add_argument(
     """)
 
 @bind_add_query(
-    '--restrict-revdep', action='append',
-    default=[], dest='restrict_revdep',
+    '--restrict-revdep', action='append', default=[],
     help='dependency on an atom')
 def parse_revdep(value):
     """Value should be an atom, packages with deps intersecting that match."""
@@ -659,8 +665,7 @@ def _revdep_pkgs_match(pkgs, value):
 
 @bind_add_query(
     '--restrict-revdep-pkgs', action='append', type=atom.atom,
-    default=[], dest='restrict_revdep_pkgs',
-    bind='final_converter',
+    default=[], bind='final_converter',
     help='dependency on pkgs that match a specific atom')
 def revdep_pkgs_finalize(sequence, namespace):
     if not sequence:
@@ -677,7 +682,7 @@ def revdep_pkgs_finalize(sequence, namespace):
                 for dep in ('depends', 'rdepends', 'post_rdepends'))
 
 @bind_add_query(
-    '--description', '-S', action='append', dest='description',
+    '-S', '--description', action='append',
     help='regexp search on description and longdescription')
 def parse_description(value):
     """Value is used as a regexp matching description or longdescription."""
@@ -687,7 +692,7 @@ def parse_description(value):
         for attr in ('description', 'longdescription')))
 
 @bind_add_query(
-    '--owns', action='append', dest='owns',
+    '--owns', action='append',
     help='exact match on an owned file/dir')
 def parse_owns(value):
     "Value is a comma delimited set of paths to search contents for"
@@ -703,7 +708,7 @@ def parse_owns(value):
     return parser(value)
 
 @bind_add_query(
-    '--owns-re', action='append', dest='owns_re',
+    '--owns-re', action='append',
     help='like "owns" but using a regexp for matching')
 def parse_ownsre(value):
     """Value is a regexp matched against the string form of an fs object.
@@ -717,7 +722,7 @@ def parse_ownsre(value):
             'location', mk_strregex(value))))
 
 @bind_add_query(
-    '--maintainer', action='append', dest='maintainer',
+    '--maintainer', action='append',
     help='comma-separated list of regexes to search for maintainers')
 def parse_maintainer(value):
     """
@@ -730,7 +735,7 @@ def parse_maintainer(value):
             mk_strregex(value.lower(), case_sensitive=False))))
 
 @bind_add_query(
-    '--maintainer-name', action='append', dest='maintainer_name',
+    '--maintainer-name', action='append',
     help='comma-separated list of maintainer name regexes to search for')
 def parse_maintainer_name(value):
     """
@@ -743,7 +748,7 @@ def parse_maintainer_name(value):
             'name', mk_strregex(value.lower(), case_sensitive=False))))
 
 @bind_add_query(
-    '--maintainer-email', action='append', dest='maintainer_email',
+    '--maintainer-email', action='append',
     help='comma-separated list of maintainer email regexes to search for')
 def parse_maintainer_email(value):
     """
@@ -756,7 +761,7 @@ def parse_maintainer_email(value):
             'email', mk_strregex(value.lower(), case_sensitive=False))))
 
 @bind_add_query(
-    '--environment', action='append', dest='environment',
+    '--environment', action='append',
     help='regexp search in environment.bz2')
 def parse_envmatch(value):
     """Apply a regexp to the environment."""
@@ -767,8 +772,7 @@ def parse_envmatch(value):
 # note the type=str; this is to suppress the default
 # fallback of using match parsing.
 add_query(
-    '--pkgset', dest='pkgset',
-    action=commandline.StoreConfigObject,
+    '--pkgset', action=commandline.StoreConfigObject,
     nargs=1, type=str, priority=35, config_type='pkgset',
     help='find packages that match the given package set (world for example)')
 

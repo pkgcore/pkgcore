@@ -566,9 +566,6 @@ def add_query(*args, **kwds):
     _query_items.append(kwds["dest"])
     kwds.setdefault('final_priority', 50)
     kwds.setdefault('default', [])
-    if not kwds.pop('suppress_nargs', False):
-        if kwds.get('action', None) != 'append':
-            kwds.setdefault('nargs', 1)
     commandline.make_query(query, *args, **kwds)
 
 def bind_add_query(*args, **kwds):
@@ -602,7 +599,7 @@ def matches_finalize(targets, namespace):
 
 add_query(
     '--all', action='append_const', dest='all',
-    const=packages.AlwaysTrue, type=None, suppress_nargs=True,
+    const=packages.AlwaysTrue, type=None,
     help='match all packages',
     docs="""
         Match all packages which is equivalent to "pquery \*". Note that if no
@@ -771,9 +768,7 @@ def parse_envmatch(value):
 add_query(
     '--pkgset', dest='pkgset',
     action=commandline.StoreConfigObject,
-    type=str,
-    priority=35,
-    config_type='pkgset',
+    nargs=1, type=str, priority=35, config_type='pkgset',
     help='find packages that match the given package set (world for example)')
 
 # add a fallback if no restrictions are specified.

@@ -21,7 +21,7 @@ except ImportError:
 SYSTEM_CONF_FILE   = '/etc/pkgcore.conf'
 USER_CONF_FILE     = osp.expanduser('~/.pkgcore.conf')
 
-SANDBOX_BINARY     = find_binary('sandbox')
+SANDBOX_BINARY     = '/usr/bin/sandbox'
 BASH_BINARY        = find_binary('bash')
 COPY_BINARY        = find_binary('cp')
 

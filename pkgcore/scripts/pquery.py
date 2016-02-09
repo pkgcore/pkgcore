@@ -865,8 +865,8 @@ output.add_argument(
     type=atom.atom, default=[],
     help='highlight dependencies matching this atom')
 output.add_argument(
-    '--blame', action=commandline.Expansion, nargs=0,
-    subst=(("--attr", "maintainers")),
+    '--blame', action=commandline.Expansion,
+    subst=(("--attr", "maintainers"),),
     help='shorthand for --attr maintainers')
 output.add_argument(
     '--print-revdep', action='append',

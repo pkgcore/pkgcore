@@ -505,6 +505,14 @@ repo_mux.add_argument(
         this option isn't specified.
     """)
 repo_mux.add_argument(
+    '-i', '--installed', action=commandline.Expansion,
+    subst=(('--repo', 'vdb'),),
+    help='search installed packages',
+    docs="""
+        Search within installed packages (vdb) for matches (alias for '--repo
+        vdb').
+    """)
+repo_mux.add_argument(
     '--ebuild-repos', action='store_true',
     help='search all ebuild repos')
 repo_mux.add_argument(

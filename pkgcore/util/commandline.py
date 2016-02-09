@@ -555,7 +555,10 @@ class Expansion(argparse.Action):
     def __init__(self, option_strings, dest, nargs=None, help=None,
                  required=None, subst=None):
         if subst is None:
-            raise TypeError("resultant_string must be set")
+            raise TypeError("substitution string must be set")
+        # simple aliases with no required arguments shouldn't need to specify nargs
+        if nargs is None:
+            nargs = 0
 
         super(Expansion, self).__init__(
             option_strings=option_strings,

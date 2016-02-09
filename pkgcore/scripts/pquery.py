@@ -831,7 +831,7 @@ output.add_argument(
     """)
 output.add_argument(
     '-a', '--atom', action=commandline.Expansion,
-    subst=(('--cpv',),), nargs=0,
+    subst=(('--cpv',),),
     help='print =cat/pkg-3 instead of cat/pkg-3. '
          'Implies --cpv, has no effect with --no-version')
 output.add_argument(

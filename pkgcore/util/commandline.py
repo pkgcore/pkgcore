@@ -497,7 +497,11 @@ class BooleanQuery(DelayedValue):
             val = getattr(namespace, x, None)
             if val is None:
                 continue
-            if isinstance(val, restriction.base):
+            if isinstance(val, bool):
+                # Skip converter call for disabled boolean actions
+                if not val:
+                    self.converter = False
+            elif isinstance(val, restriction.base):
                 l.append(val)
             else:
                 l.extend(val)

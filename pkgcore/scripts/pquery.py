@@ -788,6 +788,18 @@ def _add_all_if_needed(namespace, attr):
             break
     setattr(namespace, attr, val)
 
+@bind_add_query(
+    '-u', '--upgrade', action='store_true',
+    metavar=None, type=None, bind='final_converter',
+    help='match installed packages without best slotted version')
+def pkg_upgrade(_value, namespace):
+    pkgs = []
+    for pkg in namespace.domain.all_livefs_repos:
+        matches = sorted(namespace.domain.all_repos.match(pkg.slotted_atom))
+        if matches and matches[-1] != pkg:
+            pkgs.append(matches[-1].versioned_atom)
+    return packages.OrRestriction(*pkgs)
+
 argparser.set_defaults(
     _fallback_all=commandline.DelayedValue(_add_all_if_needed, priority=89))
 argparser.set_defaults(

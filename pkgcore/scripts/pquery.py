@@ -393,7 +393,10 @@ def print_package(options, out, err, pkg):
                 color = [out.bold, out.fg('blue')]
             elif isinstance(obj, fs_module.fsLink):
                 color = [out.bold, out.fg('cyan')]
-            out.write(*(color + [obj] + [out.reset]))
+            if options.color:
+                out.write(*(color + [obj] + [out.reset]))
+            else:
+                out.write('%r' % (obj,))
 
 
 def print_packages_noversion(options, out, err, pkgs):

@@ -589,7 +589,7 @@ def bind_add_query(*args, **kwds):
     return f
 
 @bind_add_query(
-    nargs='*', dest='matches', metavar='target',
+    nargs='*', dest='matches', metavar='TARGET',
     bind='final_converter', type=None,
     help="extended atom matching of pkgs")
 def matches_finalize(targets, namespace):

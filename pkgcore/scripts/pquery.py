@@ -505,17 +505,17 @@ repo_mux.add_argument(
         this option isn't specified.
     """)
 repo_mux.add_argument(
-    '--ebuild-repos', action='store_true',
+    '-E', '--ebuild-repos', action='store_true',
     help='search all ebuild repos')
 repo_mux.add_argument(
-    '--binary-repos', action='store_true',
+    '-B', '--binary-repos', action='store_true',
     help='search all binary repos')
 repo_mux.add_argument(
-    '-i', '--installed', action='store_true',
+    '-I', '--installed', action='store_true',
     help='search installed packages',
     docs="Search within installed packages (alias for '--repo vdb').")
 repo_mux.add_argument(
-    '--all-repos', action='store_true',
+    '-A', '--all-repos', action='store_true',
     help='search all repos, vdb included')
 
 

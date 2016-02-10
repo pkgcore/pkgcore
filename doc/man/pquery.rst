@@ -62,16 +62,16 @@ Other tool                   pquery                                    Comments
 ============================ ========================================= ========================================================================
 ``equery belongs /bin/ls``   ``pquery --owns /bin/ls``
 ``equery check``             not implemented (yet?)
-``equery depends python``    ``pquery -i --revdep dev-lang/python``    omitting ``-i`` makes it equivalent to ``equery depends -a``
+``equery depends python``    ``pquery -I --revdep dev-lang/python``    omitting ``-I`` makes it equivalent to ``equery depends -a``
 ``equery depgraph``          not implemented (yet?)
 ``equery files python``      ``pquery --contents python``              ``--contents`` is an output option, can be combined with any restriction
-``equery hasuse python``     ``pquery -i --has-use python``
-``equery list python``       ``pquery -i '*python*'``                  this is in ExtendedAtomSyntax
+``equery hasuse python``     ``pquery -I --has-use python``
+``equery list python``       ``pquery -I '*python*'``                  this is in ExtendedAtomSyntax
 ``equery size``              ``not implemented (yet?)``
 ``equery uses python``       ``pquery --attr use python``              less information, but is an output option so mixes with any restriction
 ``emerge -s python``         ``pquery -vnm '*python*'``
 ``emerge -S python``         ``pquery -vnS python``                    searches through longdescription (from metadata.xml) too
-no equivalent                ``pquery --license GPL-2 -i``             list all installed GPL-2 packages
+no equivalent                ``pquery --license GPL-2 -I``             list all installed GPL-2 packages
 no equivalent                ``pquery --maintainer radhermit``         list all packages that are maintained by radhermit
 ============================ ========================================= ========================================================================
 

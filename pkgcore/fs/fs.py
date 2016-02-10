@@ -137,6 +137,9 @@ class fsBase(object):
     def __cmp__(self, other):
         return cmp(self.location, other.location)
 
+    def __str__(self):
+        return self.location
+
 
 class _LazyChksums(LazyFullValLoadDict):
     __slots__ = ()
@@ -252,6 +255,9 @@ class fsLink(fsBase):
         if isinstance(other, self.__class__):
             return cmp(self.target, other.target)
         return 0
+
+    def __str__(self):
+        return '%s -> %s' % (self.location, self.target)
 
     def __repr__(self):
         return "symlink:%s->%s" % (self.location, self.target)

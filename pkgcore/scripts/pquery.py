@@ -505,19 +505,15 @@ repo_mux.add_argument(
         this option isn't specified.
     """)
 repo_mux.add_argument(
-    '-i', '--installed', action=commandline.Expansion,
-    subst=(('--repo', 'vdb'),),
-    help='search installed packages',
-    docs="""
-        Search within installed packages (vdb) for matches (alias for '--repo
-        vdb').
-    """)
-repo_mux.add_argument(
     '--ebuild-repos', action='store_true',
     help='search all ebuild repos')
 repo_mux.add_argument(
     '--binary-repos', action='store_true',
     help='search all binary repos')
+repo_mux.add_argument(
+    '-i', '--installed', action='store_true',
+    help='search installed packages',
+    docs="Search within installed packages (alias for '--repo vdb').")
 repo_mux.add_argument(
     '--all-repos', action='store_true',
     help='search all repos, vdb included')
@@ -530,7 +526,8 @@ def setup_repos(namespace, attr):
         # The store repo machinery handles --raw and --unfiltered for
         # us, thus it being the first check.
         repos = [namespace.repo]
-    elif namespace.contents or namespace._owns or namespace._owns_re:
+    elif namespace.contents or namespace._owns or namespace._owns_re or \
+            namespace.installed:
         repos = namespace.domain.vdb
     elif namespace.unfiltered:
         if namespace.all_repos:

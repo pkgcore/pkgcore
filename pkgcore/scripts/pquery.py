@@ -387,14 +387,13 @@ def print_package(options, out, err, pkg):
             out.write()
 
     if options.contents:
+        color = {
+            fs_module.fsDir: [out.bold, out.fg('blue')],
+            fs_module.fsLink: [out.bold, out.fg('cyan')],
+        }
         for obj in sorted(obj for obj in get_pkg_attr(pkg, 'contents', ())):
-            color = []
-            if isinstance(obj, fs_module.fsDir):
-                color = [out.bold, out.fg('blue')]
-            elif isinstance(obj, fs_module.fsLink):
-                color = [out.bold, out.fg('cyan')]
             if options.color:
-                out.write(*(color + [obj] + [out.reset]))
+                out.write(*(color.get(obj.__class__, []) + [obj] + [out.reset]))
             else:
                 out.write('%r' % (obj,))
 

@@ -814,6 +814,46 @@ output = argparser.add_argument_group('output formatting')
 output.add_argument(
     '--early-out', action='store_true', dest='earlyout',
     help='stop when first match is found')
+output.add_argument(
+    '-a', '--atom', action=commandline.Expansion,
+    subst=(('--cpv',),),
+    help='print =cat/pkg-3 instead of cat/pkg-3. '
+         'Implies --cpv, has no effect with --no-version')
+output.add_argument(
+    '--cpv', action='store_true',
+    help='print the category/package-version',
+    docs="""
+        Display output in the format of 'category/package-version' which is
+        done by default, this option forces the output format if another output
+        option (such as --contents) alters it.
+    """)
+output.add_argument(
+    '--attr', action='append', choices=printable_attrs,
+    metavar='attribute', default=[],
+    help="print this attribute's value (can be specified more than "
+         "once).  --attr=help will get you the list of valid attrs.")
+output.add_argument(
+    '--force-attr', action='append', dest='attr',
+    metavar='attribute', default=[],
+    help='like --attr but accepts any string as '
+         'attribute name instead of only explicitly '
+         'supported names')
+output.add_argument(
+    '--blame', action=commandline.Expansion,
+    subst=(("--attr", "maintainers"),),
+    help='shorthand for --attr maintainers')
+output.add_argument(
+    '--contents', action='store_true',
+    help='list files owned by the package')
+output.add_argument(
+    '--highlight-dep', action='append',
+    type=atom.atom, default=[],
+    help='highlight dependencies matching this atom')
+output.add_argument(
+    '--print-revdep', action='append',
+    type=atom.atom, default=[],
+    help='print what condition(s) trigger a dep')
+
 output_mux = output.add_mutually_exclusive_group()
 output_mux.add_argument(
     '-n', '--no-version', action='store_true',
@@ -826,30 +866,7 @@ output_mux.add_argument(
     '--max', action='store_true',
     help='show only the highest version for each package')
 del output_mux
-output.add_argument(
-    '--cpv', action='store_true',
-    help='print the category/package-version',
-    docs="""
-        Display output in the format of 'category/package-version' which is
-        done by default, this option forces the output format if another output
-        option (such as --contents) alters it.
-    """)
-output.add_argument(
-    '-a', '--atom', action=commandline.Expansion,
-    subst=(('--cpv',),),
-    help='print =cat/pkg-3 instead of cat/pkg-3. '
-         'Implies --cpv, has no effect with --no-version')
-output.add_argument(
-    '--attr', action='append', choices=printable_attrs,
-    metavar='attribute', default=[],
-    help="print this attribute's value (can be specified more than "
-         "once).  --attr=help will get you the list of valid attrs.")
-output.add_argument(
-    '--force-attr', action='append', dest='attr',
-    metavar='attribute', default=[],
-    help='like --attr but accepts any string as '
-         'attribute name instead of only explicitly '
-         'supported names')
+
 one_attr_mux = output.add_mutually_exclusive_group()
 one_attr_mux.add_argument(
     '--one-attr', choices=printable_attrs,
@@ -862,21 +879,6 @@ one_attr_mux.add_argument(
          'attribute name instead of only explicitly '
          'supported names')
 del one_attr_mux
-output.add_argument(
-    '--contents', action='store_true',
-    help='list files owned by the package')
-output.add_argument(
-    '--highlight-dep', action='append',
-    type=atom.atom, default=[],
-    help='highlight dependencies matching this atom')
-output.add_argument(
-    '--blame', action=commandline.Expansion,
-    subst=(("--attr", "maintainers"),),
-    help='shorthand for --attr maintainers')
-output.add_argument(
-    '--print-revdep', action='append',
-    type=atom.atom, default=[],
-    help='print what condition(s) trigger a dep')
 
 
 def get_pkg_attr(pkg, attr, fallback=None):

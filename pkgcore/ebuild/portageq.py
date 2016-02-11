@@ -190,11 +190,8 @@ def best_version(options, out, err):
 
 @BaseCommand.make_command("atom", bind=portageq_commands)
 def match(options, out, err):
-    """
-    Shorthand for `pquery --vdb`
-    """
-    i = options.domain.all_livefs_repos.itermatch(options.atom,
-        sorter=sorted)
+    """shorthand for `pquery --installed`"""
+    i = options.domain.all_livefs_repos.itermatch(options.atom, sorter=sorted)
     for pkg in i:
         out.write(str_pkg(pkg))
     return 0

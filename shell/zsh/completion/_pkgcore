@@ -304,7 +304,7 @@ _pinspect() {
                 get_repos:'return list of configured repos'
                 has_version:'return 0 if an atom is merged, 1 if not'
                 mass_best_version:'multiple best_version calls'
-                match:'shorthand for `pquery --vdb`'
+                match:'shorthand for `pquery --installed`'
               )
 
               _describe -t subcommands subcommand subcommands && ret=0

@@ -837,8 +837,13 @@ output.add_argument(
 output.add_argument(
     '--attr', action='append', choices=printable_attrs,
     metavar='attribute', default=[],
-    help="print this attribute's value (can be specified more than "
-         "once).  --attr=help will get you the list of valid attrs.")
+    help="print this attribute's value (can be specified more than once)",
+    docs="""
+        Print the given attribute's value. This option can be specified
+        multiple times.
+
+        Valid attributes: {}
+    """.format(', '.join(printable_attrs)))
 output.add_argument(
     '--force-attr', action='append', dest='attr',
     metavar='attribute', default=[],

@@ -565,7 +565,10 @@ _pquery() {
     '--no-filters[disable all license filtering and visibility filtering]'
     "--virtuals[specific virtuals handling (everything is matched by default)]:options:((only\:'only match virtuals' disable\:'no matching virtuals'))"
     {'(--repo)-r','(-r)--repo'}'[target repository]:repo:_repos -e -i'
-    '--all-repos[search all repos including the vdb]'
+    {'(--ebuild-repos)-E','(-E)--ebuild-repos'}'[search all ebuild repos]'
+    {'(--binary-repos)-B','(-B)--binary-repos'}'[search all binary repos]'
+    {'(--installed)-I','(-I)--installed'}'[search installed pkgs]'
+    {'(--all-repos)-A','(-A)--all-repos'}'[search all repos including the vdb]'
   )
 
   pkg=(
@@ -584,6 +587,7 @@ _pquery() {
     '--maintainer-email[comma-separated list of maintainer email regexes to search for]'
     '--environment[regexp search in environment.bz2]'
     '--pkgset[find packages that match the given package set]'
+    {'(--upgrade)-u','(-u)--upgrade'}'[matched installed packages without best slotted version]'
   )
 
   output=(

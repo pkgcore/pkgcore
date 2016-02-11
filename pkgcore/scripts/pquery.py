@@ -824,8 +824,13 @@ output.add_argument(
 output.add_argument(
     '-a', '--atom', action=commandline.Expansion,
     subst=(('--cpv',),),
-    help='print =cat/pkg-3 instead of cat/pkg-3. '
-         'Implies --cpv, has no effect with --no-version')
+    help='print =cat/pkg-3 instead of cat/pkg-3.',
+    docs="""
+        Output valid package atoms, e.g. =cat/pkg-3 instead of cat/pkg-3.
+
+        Note that this option implies --cpv and has no effect if used with
+        --no-version.
+    """)
 output.add_argument(
     '--cpv', action='store_true',
     help='print the category/package-version',

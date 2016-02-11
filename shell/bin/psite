@@ -1,8 +1,8 @@
 #!/usr/bin/env pkgcore-sh-helper
 # open a package's homepage in a browser
 #
-# usage: esite pkg [repo]
-# example: esite sys-devel/gcc gentoo
+# usage: psite pkg [repo]
+# example: psite sys-devel/gcc gentoo
 #
 # For queries returning multiple packages, a list of options is presented to
 # the user to choose from. In the same manner, if a package has multiple

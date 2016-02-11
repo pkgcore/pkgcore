@@ -834,22 +834,20 @@ output.add_argument(
         done by default, this option forces the output format if another output
         option (such as --contents) alters it.
     """)
-output.add_argument(
-    '--attr', action='append', choices=printable_attrs,
-    metavar='attribute', default=[],
-    help="print this attribute's value (can be specified more than once)",
-    docs="""
-        Print the given attribute's value. This option can be specified
-        multiple times.
 
-        Valid attributes: {}
-    """.format(', '.join(printable_attrs)))
-output.add_argument(
-    '--force-attr', action='append', dest='attr',
-    metavar='attribute', default=[],
-    help='like --attr but accepts any string as '
-         'attribute name instead of only explicitly '
-         'supported names')
+output_mux = output.add_mutually_exclusive_group()
+output_mux.add_argument(
+    '-n', '--no-version', action='store_true',
+    dest='noversion',
+    help='collapse multiple matching versions together')
+output_mux.add_argument(
+    '--min', action='store_true',
+    help='show only the lowest version for each package')
+output_mux.add_argument(
+    '--max', action='store_true',
+    help='show only the highest version for each package')
+del output_mux
+
 output.add_argument(
     '--blame', action=commandline.Expansion,
     subst=(("--attr", "maintainers"),),
@@ -866,19 +864,22 @@ output.add_argument(
     type=atom.atom, default=[],
     help='print what condition(s) trigger a dep')
 
-output_mux = output.add_mutually_exclusive_group()
-output_mux.add_argument(
-    '-n', '--no-version', action='store_true',
-    dest='noversion',
-    help='collapse multiple matching versions together')
-output_mux.add_argument(
-    '--min', action='store_true',
-    help='show only the lowest version for each package')
-output_mux.add_argument(
-    '--max', action='store_true',
-    help='show only the highest version for each package')
-del output_mux
+output.add_argument(
+    '--attr', action='append', choices=printable_attrs,
+    metavar='attribute', default=[],
+    help="print this attribute's value (can be specified more than once)",
+    docs="""
+        Print the given attribute's value. This option can be specified
+        multiple times.
 
+        Valid attributes: {}
+    """.format(', '.join(printable_attrs)))
+output.add_argument(
+    '--force-attr', action='append', dest='attr',
+    metavar='attribute', default=[],
+    help='like --attr but accepts any string as '
+         'attribute name instead of only explicitly '
+         'supported names')
 one_attr_mux = output.add_mutually_exclusive_group()
 one_attr_mux.add_argument(
     '--one-attr', choices=printable_attrs,

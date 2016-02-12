@@ -30,8 +30,7 @@ while getopts ":d" opt; do
 	esac
 done
 
-# force some ordering.
-
+# force some ordering
 __source_was_seen() {
 	local x
 	for x in "${seen[@]}"; do
@@ -52,19 +51,19 @@ source() {
 	return 0
 }
 
-# without this var, parsing certain things can fail; force to true if unset or
-# null so any code that tried accessing it thinks it succeeded
+# Without this var, parsing certain things can fail; force to true if unset or
+# null so any code that tried accessing it thinks it succeeded.
 export PKGCORE_PYTHON_BINARY=${PKGCORE_PYTHON_BINARY:-/bin/true}
 
 forced_order_source="isolated-functions.lib exit-handling.lib eapi/depend.lib eapi/common.lib ebuild-daemon.lib ebuild-daemon.bash"
-pushd "${PKGCORE_EBD_PATH}" >/dev/null
-remaining_libs=$(find . -maxdepth 1 -name '*.lib' | sed -e 's:^\./::' | sort)
-popd >/dev/null
 
-# skip EAPI specific libs since those need be sourced on demand depending on an ebuild's EAPI
-for x in ${forced_order_source} ${remaining_libs}; do
+# EAPI specific libs are skipped since those need be sourced on demand
+# depending on an ebuild's EAPI.
+pushd "${PKGCORE_EBD_PATH}" >/dev/null
+for x in ${forced_order_source} *.lib; do
 	source "${PKGCORE_EBD_PATH}/${x}"
 done
+popd >/dev/null
 
 # wipe our custom funcs
 unset -f __source_was_seen

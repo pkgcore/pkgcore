@@ -564,7 +564,7 @@ def setup_repos(namespace, attr):
 
 query = argparser.add_argument_group(
     'package matching options',
-    description="""
+    docs="""
         Each option specifies a restriction packages must match. Specifying
         the same option twice means "or" unless stated otherwise. Specifying
         multiple types of restrictions means "and" unless stated otherwise.

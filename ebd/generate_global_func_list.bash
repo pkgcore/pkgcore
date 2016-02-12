@@ -7,7 +7,7 @@
 # of the build environment. For installed versions, a static function list is
 # generated at install time and used instead.
 
-export PKGCORE_EBD_PATH=$(realpath $(dirname "$0"))
+export PKGCORE_EBD_PATH=$(dirname "$0")
 
 if [[ -z ${PKGCORE_CLEAN_ENV} ]]; then
 	exec env -i \

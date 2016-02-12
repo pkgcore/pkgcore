@@ -21,7 +21,6 @@ fi
 export LC_ALL=C # avoid any potential issues of unicode sorting for whacked func names
 # export this so that scripts will behave as libs
 export PKGCORE_SOURCING_FOR_REGEN_FUNCS_LIST=1
-set -f # shell expansion can bite us in the ass during the echo below
 DEBUG=false
 
 while getopts ":d" opt; do

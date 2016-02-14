@@ -202,6 +202,14 @@ class test(pkgdist.test):
                 os.environ.pop(key, None)
 
 
+class config(pkgdist.config):
+    if not pkgdist.is_py3k:
+        @pkgdist.check_define('HAVE_RAWMEMCHR')
+        @pkgdist.print_check("Checking for rawmemchr()")
+        def check_HAVE_RAWMEMCHR(self):
+            return self.check_func('rawmemchr', decl=True, call=True)
+
+
 extensions = []
 if not pkgdist.is_py3k:
     extensions.extend([
@@ -227,6 +235,7 @@ cmdclass = {
     'build_ext': pkgdist.build_ext,
     'build_man': pkgdist.build_man,
     'build_docs': pkgdist.build_docs,
+    'config': config,
     'test': test,
     'install': pkgcore_install,
     'build_scripts': pkgdist.build_scripts,

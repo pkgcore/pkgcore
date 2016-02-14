@@ -67,6 +67,22 @@ typedef struct {
 static PyObject *pkgcore_InvalidCPV_Exc = NULL;
 
 
+#ifndef HAVE_RAWMEMCHR
+/* Compatibility for GNU rawmemchr() function
+ * (yes, it has terrible declaration...) */
+void *
+rawmemchr(const void *haystack, int needle)
+{
+	unsigned const char *p = haystack;
+
+	while (*p != needle)
+		++p;
+
+	return (void*) p;
+}
+#endif
+
+
 static int
 pkgcore_cpv_set_cpvstr(pkgcore_cpv *self, PyObject *v, void *closure)
 {

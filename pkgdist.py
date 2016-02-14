@@ -15,6 +15,8 @@ import io
 import math
 import os
 import re
+import shutil
+import subprocess
 import sys
 import textwrap
 
@@ -26,7 +28,7 @@ from distutils.core import Command, Extension
 from distutils.errors import DistutilsExecError
 from distutils.command import (
     sdist as dst_sdist, build_ext as dst_build_ext, build_py as dst_build_py,
-    build as dst_build, build_scripts as dst_build_scripts)
+    build as dst_build, build_scripts as dst_build_scripts, config as dst_config)
 
 # top level repo/tarball directory
 TOPDIR = os.path.dirname(os.path.abspath(inspect.stack(0)[1][1]))
@@ -140,7 +142,6 @@ class sdist(dst_sdist.sdist):
 
         if 'build_man' in self.distribution.cmdclass:
             self.run_command('build_man')
-            import shutil
             shutil.copytree(os.path.join(os.getcwd(), "build/sphinx/man"),
                             os.path.join(base_dir, "man"))
 
@@ -326,7 +327,8 @@ class build_man(Command):
         if self.force or not self.skip():
             # Use a built version for the man page generation process that
             # imports script modules.
-            build_py = self.distribution.get_command_obj('build_py')
+            build_py = self.reinitialize_command('build_py')
+            build_py.ensure_finalized()
             self.run_command('build_py')
             syspath = sys.path[:]
             sys.path.insert(0, os.path.abspath(build_py.build_lib))
@@ -337,8 +339,7 @@ class build_man(Command):
                 generate_man(PROJECT, TOPDIR)
 
             # generate man pages
-            self.distribution.reinitialize_command('build_sphinx')
-            build_sphinx = self.distribution.get_command_obj('build_sphinx')
+            build_sphinx = self.reinitialize_command('build_sphinx')
             build_sphinx.builder = 'man'
             build_sphinx.ensure_finalized()
             self.run_command('build_sphinx')
@@ -369,8 +370,7 @@ class build_docs(build_man):
             generate_html(PROJECT, TOPDIR)
 
             # generate html docs -- allow build_sphinx cmd to run again
-            self.distribution.reinitialize_command('build_sphinx')
-            build_sphinx = self.distribution.get_command_obj('build_sphinx')
+            build_sphinx = self.reinitialize_command('build_sphinx')
             build_sphinx.builder = 'html'
             build_sphinx.ensure_finalized()
             self.run_command('build_sphinx')
@@ -409,18 +409,29 @@ class build_ext(dst_build_ext.build_ext):
                 if self.default_header_install_dir not in e.include_dirs:
                     e.include_dirs.append(self.default_header_install_dir)
 
+    def run(self):
+        # ensure that the platform checks were performed
+        self.run_command('config')
+        return dst_build_ext.build_ext.run(self)
+
     def build_extensions(self):
-        if self.debug:
-            # say it with me kids... distutils sucks!
-            for x in ("compiler_so", "compiler", "compiler_cxx"):
+        # say it with me kids... distutils sucks!
+        for x in ("compiler_so", "compiler", "compiler_cxx"):
+            if self.debug:
                 l = [y for y in getattr(self.compiler, x) if y != '-DNDEBUG']
                 l.append('-Wall')
                 setattr(self.compiler, x, l)
-        if not self.disable_distutils_flag_fixing:
-            for x in ("compiler_so", "compiler", "compiler_cxx"):
+            if not self.disable_distutils_flag_fixing:
                 val = getattr(self.compiler, x)
                 if "-fno-strict-aliasing" not in val:
                     val.append("-fno-strict-aliasing")
+            if getattr(self.distribution, 'check_defines', None):
+                val = getattr(self.compiler, x)
+                for d, result in self.distribution.check_defines.items():
+                    if result:
+                        val.append('-D%s=1' % d)
+                    else:
+                        val.append('-U%s' % d)
         return dst_build_ext.build_ext.build_extensions(self)
 
 
@@ -638,6 +649,198 @@ class test(Command):
 
         if retval:
             raise DistutilsExecError("tests failed; return %i" % (retval,))
+
+
+class PyTest(Command):
+    """Run tests using pytest against a built copy."""
+
+    user_options = [
+        ('pytest-args=', 'a', 'arguments to pass to py.test'),
+        ('coverage', 'c', 'generate coverage info'),
+        ('report=', 'r', 'generate and/or show a coverage report'),
+        ('jobs=', 'j', 'run X parallel tests at once'),
+        ('match=', 'k', 'run only tests that match the provided expressions'),
+    ]
+
+    default_test_dir = os.path.join(PROJECT, 'test')
+
+    def initialize_options(self):
+        self.pytest_args = ''
+        self.coverage = False
+        self.match = None
+        self.jobs = None
+        self.report = None
+
+    def finalize_options(self):
+        self.test_args = [self.default_test_dir]
+        self.coverage = bool(self.coverage)
+        if self.match is not None:
+            self.match = tuple(set(self.match.split(',')))
+
+        if self.coverage:
+            try:
+                import pytest_cov
+                self.test_args.extend(['--cov', PROJECT])
+            except ImportError:
+                sys.stderr.write('error: install pytest-cov for coverage support\n')
+                sys.exit(1)
+
+            if self.report is None:
+                # disable coverage report output
+                self.test_args.extend(['--cov-report='])
+            else:
+                self.test_args.extend(['--cov-report', self.report])
+
+        if self.jobs is not None:
+            try:
+                import xdist
+                self.test_args.extend(['-n', self.jobs])
+            except ImportError:
+                sys.stderr.write('error: install pytest-xdist for -j/--jobs support\n')
+                sys.exit(1)
+
+        # add custom pytest args
+        self.test_args.extend(self.pytest_args.split())
+
+    def run(self):
+        import pytest
+
+        # build extensions and byte-compile python
+        build_ext = self.reinitialize_command('build_ext')
+        build_py = self.reinitialize_command('build_py')
+        build_ext.ensure_finalized()
+        build_py.ensure_finalized()
+        self.run_command('build_ext')
+        self.run_command('build_py')
+
+        # Change the current working directory to the builddir during testing
+        # so coverage paths are correct.
+        builddir = os.path.abspath(build_py.build_lib)
+        if self.coverage and os.path.exists(os.path.join(TOPDIR, '.coveragerc')):
+            shutil.copyfile(os.path.join(TOPDIR, '.coveragerc'),
+                            os.path.join(builddir, '.coveragerc'))
+        os.chdir(builddir)
+        ret = subprocess.call([sys.executable, '-m', 'pytest'] + self.test_args)
+        os.chdir(TOPDIR)
+        sys.exit(ret)
+
+
+def print_check(message, if_yes='found', if_no='not found'):
+    """Decorator to print pre/post-check messages"""
+    def sub_decorator(f):
+        def sub_func(*args, **kwargs):
+            sys.stderr.write('-- %s\n' % (message,))
+            result = f(*args, **kwargs)
+            sys.stderr.write('-- %s -- %s\n' % (message,
+                if_yes if result else if_no))
+            return result
+        sub_func.pkgdist_config_decorated = True
+        return sub_func
+    return sub_decorator
+
+
+def cache_check(cache_key):
+    """Method decorate to cache check result"""
+    def sub_decorator(f):
+        def sub_func(self, *args, **kwargs):
+            if cache_key in self.cache:
+                return self.cache[cache_key]
+            result = f(self, *args, **kwargs)
+            self.cache[cache_key] = result
+            return result
+        sub_func.pkgdist_config_decorated = True
+        return sub_func
+    return sub_decorator
+
+
+def check_define(define_name):
+    """Method decorator to store check result"""
+    def sub_decorator(f):
+        @cache_check(define_name)
+        def sub_func(self, *args, **kwargs):
+            result = f(self, *args, **kwargs)
+            self.check_defines[define_name] = result
+            return result
+        sub_func.pkgdist_config_decorated = True
+        return sub_func
+    return sub_decorator
+
+
+class config(dst_config.config):
+    """Perform platform checks for extension build"""
+
+    user_options = dst_config.config.user_options + [
+        ("cache-path", "C", "path to read/write configuration cache"),
+    ]
+
+    def initialize_options(self):
+        self.cache_path = None
+        self.build_base = None
+        dst_config.config.initialize_options(self)
+
+    def finalize_options(self):
+        if self.cache_path is None:
+            self.set_undefined_options('build',
+                                       ('build_base', 'build_base'))
+            self.cache_path = os.path.join(self.build_base, 'config.cache')
+        dst_config.config.finalize_options(self)
+
+    def _cache_env_key(self):
+        return (self.cc, self.include_dirs, self.libraries, self.library_dirs)
+
+    @cache_check('_sanity_check')
+    @print_check('Performing basic C toolchain sanity check', 'works', 'broken')
+    def _sanity_check(self):
+        return self.try_link("int main(int argc, char *argv[]) { return 0; }")
+
+    def run(self):
+        from snakeoil.pickling import dump, load
+
+        # try to load the cached results
+        try:
+            with open(self.cache_path, 'rb') as f:
+                cache_db = load(f)
+        except (OSError, IOError):
+            cache_db = {}
+        else:
+            if self._cache_env_key() == cache_db.get('env_key'):
+                sys.stderr.write('-- Using cache from %s\n' % self.cache_path)
+            else:
+                sys.stderr.write('-- Build environment changed, discarding cache\n')
+                cache_db = {}
+
+        self.cache = cache_db.get('cache', {})
+        self.check_defines = {}
+
+        if not self._sanity_check():
+            sys.stderr.write('The C toolchain is unable to compile & link a simple C program!\n')
+            sys.exit(1)
+
+        # run all decorated methods
+        for k in dir(self):
+            if k.startswith('_'):
+                continue
+            if hasattr(getattr(self, k), 'pkgdist_config_decorated'):
+                getattr(self, k)()
+
+        # store results in Distribution instance
+        self.distribution.check_defines = self.check_defines
+        # store updated cache
+        cache_db = {
+            'cache': self.cache,
+            'env_key': self._cache_env_key(),
+        }
+        self.mkpath(os.path.dirname(self.cache_path))
+        with open(self.cache_path, 'wb') as f:
+            dump(cache_db, f)
+
+    # == methods for custom checks ==
+    def check_struct_member(self, typename, member, headers=None,
+            include_dirs=None, lang="c"):
+        """Check whether type typename (which needs to be struct
+        or union) has the named member."""
+        return self.try_compile('int main() { %s x; (void) x.%s; return 0; }'
+                % (typename, member), headers, include_dirs, lang)
 
 
 # yes these are in snakeoil.compatibility; we can't rely on that module however

@@ -265,7 +265,7 @@ pkgcore_cpv_valid_package(pkgcore_cpv *self, char *start, char *end)
 {
 	char *tok_start, *p;
 	if(!end) {
-		end = rawmemchr(start, '\0');
+		end = start + strlen(start);
 	}
 	tok_start = p = start;
 	if(end == p)
@@ -386,7 +386,7 @@ pkgcore_cpv_parse_from_components(pkgcore_cpv *self, PyObject *category,
 
 		while('\0' != *rev_start && '-' != *rev_start)
 			rev_start++;
-		version_end = rawmemchr(rev_start, '\0');
+		version_end = rev_start + strlen(rev_start);
 
 		if(version_end == rev_start) {
 			// no revision...
@@ -460,7 +460,7 @@ pkgcore_cpv_parse_from_cpvstr(pkgcore_cpv *self, PyObject *cpvstr,
 	char *cpv_pos = NULL;
 	int ret = 0;
 	char *raw_cpvstr = PyString_AsString(cpvstr);
-	char *cpv_end = rawmemchr(raw_cpvstr, '\0');
+	char *cpv_end = raw_cpvstr + strlen(raw_cpvstr);
 
 	pkg_start = pkgcore_cpv_parse_category(raw_cpvstr, 0);
 	if(!pkg_start || '/' != *pkg_start) {

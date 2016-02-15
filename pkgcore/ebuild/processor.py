@@ -451,8 +451,8 @@ class EbuildProcessor(object):
                 return False
             finally:
                 if timeout:
-                    signal.signal(signal.SIGALRM, signal.SIG_DFL)
                     signal.setitimer(signal.ITIMER_REAL, 0)
+                    signal.signal(signal.SIGALRM, signal.SIG_DFL)
 
         self._outstanding_expects.append((flush, want))
         return self._consume_async_expects()

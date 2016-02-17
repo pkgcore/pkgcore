@@ -513,17 +513,20 @@ repo_mux.add_argument(
     """)
 repo_mux.add_argument(
     '-E', '--ebuild-repos', action='store_true',
-    help='search all ebuild repos')
+    help='search all ebuild repos',
+    docs="Search within all ebuild repos, all non-ebuild repos are skipped.")
 repo_mux.add_argument(
     '-B', '--binary-repos', action='store_true',
-    help='search all binary repos')
+    help='search all binary repos',
+    docs="Search within all binary repos, all non-binary repos are skipped.")
 repo_mux.add_argument(
     '-I', '--installed', action='store_true',
     help='search installed packages',
     docs="Search within installed packages (alias for '--repo vdb').")
 repo_mux.add_argument(
     '-A', '--all-repos', action='store_true',
-    help='search all repos, vdb included')
+    help='search all repos',
+    docs="Search all available repos including the vdb.")
 
 
 @argparser.bind_delayed_default(30, 'repos')

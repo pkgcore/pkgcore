@@ -15,6 +15,8 @@ import io
 import math
 import os
 import re
+import shutil
+import subprocess
 import sys
 import textwrap
 
@@ -27,6 +29,9 @@ from distutils.errors import DistutilsExecError
 from distutils.command import (
     sdist as dst_sdist, build_ext as dst_build_ext, build_py as dst_build_py,
     build as dst_build, build_scripts as dst_build_scripts)
+
+# getting built by readthedocs
+READTHEDOCS = os.environ.get('READTHEDOCS', None) == 'True'
 
 # top level repo/tarball directory
 TOPDIR = os.path.dirname(os.path.abspath(inspect.stack(0)[1][1]))
@@ -140,7 +145,6 @@ class sdist(dst_sdist.sdist):
 
         if 'build_man' in self.distribution.cmdclass:
             self.run_command('build_man')
-            import shutil
             shutil.copytree(os.path.join(os.getcwd(), "build/sphinx/man"),
                             os.path.join(base_dir, "man"))
 
@@ -326,7 +330,8 @@ class build_man(Command):
         if self.force or not self.skip():
             # Use a built version for the man page generation process that
             # imports script modules.
-            build_py = self.distribution.get_command_obj('build_py')
+            build_py = self.reinitialize_command('build_py')
+            build_py.ensure_finalized()
             self.run_command('build_py')
             syspath = sys.path[:]
             sys.path.insert(0, os.path.abspath(build_py.build_lib))
@@ -337,8 +342,7 @@ class build_man(Command):
                 generate_man(PROJECT, TOPDIR)
 
             # generate man pages
-            self.distribution.reinitialize_command('build_sphinx')
-            build_sphinx = self.distribution.get_command_obj('build_sphinx')
+            build_sphinx = self.reinitialize_command('build_sphinx')
             build_sphinx.builder = 'man'
             build_sphinx.ensure_finalized()
             self.run_command('build_sphinx')
@@ -369,8 +373,7 @@ class build_docs(build_man):
             generate_html(PROJECT, TOPDIR)
 
             # generate html docs -- allow build_sphinx cmd to run again
-            self.distribution.reinitialize_command('build_sphinx')
-            build_sphinx = self.distribution.get_command_obj('build_sphinx')
+            build_sphinx = self.reinitialize_command('build_sphinx')
             build_sphinx.builder = 'html'
             build_sphinx.ensure_finalized()
             self.run_command('build_sphinx')
@@ -394,10 +397,11 @@ class build_ext(dst_build_ext.build_ext):
 
     def finalize_options(self):
         dst_build_ext.build_ext.finalize_options(self)
-        if self.build_optional is None:
+        if self.build_optional is None and not READTHEDOCS:
             self.build_optional = True
+        self.build_optional = bool(self.build_optional)
         if not self.build_optional:
-            self.extensions = [ext for ext in self.extensions if not isinstance(ext, OptionalExtension)] or None
+            self.extensions = [ext for ext in self.extensions if not isinstance(ext, OptionalExtension)]
 
         # add header install dir to the search path
         # (fixes virtualenv builds for consumer extensions)
@@ -638,6 +642,80 @@ class test(Command):
 
         if retval:
             raise DistutilsExecError("tests failed; return %i" % (retval,))
+
+
+class PyTest(Command):
+    """Run tests using pytest against a built copy."""
+
+    user_options = [
+        ('pytest-args=', 'a', 'arguments to pass to py.test'),
+        ('coverage', 'c', 'generate coverage info'),
+        ('report=', 'r', 'generate and/or show a coverage report'),
+        ('jobs=', 'j', 'run X parallel tests at once'),
+        ('match=', 'k', 'run only tests that match the provided expressions'),
+    ]
+
+    default_test_dir = os.path.join(PROJECT, 'test')
+
+    def initialize_options(self):
+        self.pytest_args = ''
+        self.coverage = False
+        self.match = None
+        self.jobs = None
+        self.report = None
+
+    def finalize_options(self):
+        self.test_args = [self.default_test_dir]
+        self.coverage = bool(self.coverage)
+        if self.match is not None:
+            self.match = tuple(set(self.match.split(',')))
+
+        if self.coverage:
+            try:
+                import pytest_cov
+                self.test_args.extend(['--cov', PROJECT])
+            except ImportError:
+                sys.stderr.write('error: install pytest-cov for coverage support\n')
+                sys.exit(1)
+
+            if self.report is None:
+                # disable coverage report output
+                self.test_args.extend(['--cov-report='])
+            else:
+                self.test_args.extend(['--cov-report', self.report])
+
+        if self.jobs is not None:
+            try:
+                import xdist
+                self.test_args.extend(['-n', self.jobs])
+            except ImportError:
+                sys.stderr.write('error: install pytest-xdist for -j/--jobs support\n')
+                sys.exit(1)
+
+        # add custom pytest args
+        self.test_args.extend(self.pytest_args.split())
+
+    def run(self):
+        import pytest
+
+        # build extensions and byte-compile python
+        build_ext = self.reinitialize_command('build_ext')
+        build_py = self.reinitialize_command('build_py')
+        build_ext.ensure_finalized()
+        build_py.ensure_finalized()
+        self.run_command('build_ext')
+        self.run_command('build_py')
+
+        # Change the current working directory to the builddir during testing
+        # so coverage paths are correct.
+        builddir = os.path.abspath(build_py.build_lib)
+        if self.coverage and os.path.exists(os.path.join(TOPDIR, '.coveragerc')):
+            shutil.copyfile(os.path.join(TOPDIR, '.coveragerc'),
+                            os.path.join(builddir, '.coveragerc'))
+        os.chdir(builddir)
+        ret = subprocess.call([sys.executable, '-m', 'pytest'] + self.test_args)
+        os.chdir(TOPDIR)
+        sys.exit(ret)
 
 
 # yes these are in snakeoil.compatibility; we can't rely on that module however

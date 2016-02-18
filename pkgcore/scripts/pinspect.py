@@ -1,7 +1,21 @@
 # Copyright: 2009-2011 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
-"""repository inspection interface"""
+"""repository inspection interface
+
+pinspect is used to extract various information from repositories. For example,
+it can perform aggregated EAPI, license, eclass, and mirror usage queries
+across specified repositories. Any repository type can be queried, e.g. ebuild,
+binary, or vdb.
+
+It also provides an interface to all profile specific metadata, e.g. package
+masks, inheritance trees, etc. This makes it easier to inspect profile
+differences without sorting through the inheritance tree and reading the raw
+files.
+
+Finally, a portageq compatible interface is provided for several commands that
+were historically used in ebuilds.
+"""
 
 __all__ = (
     "pkgsets", "histo_data", "eapi_usage", "license_usage",

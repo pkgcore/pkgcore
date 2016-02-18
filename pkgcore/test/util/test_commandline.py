@@ -12,7 +12,7 @@ import textwrap
 from snakeoil import compatibility
 
 from pkgcore.config import central, errors
-from pkgcore.test import TestCase, silence_logging
+from pkgcore.test import SkipTest, TestCase, silence_logging
 from pkgcore.test.scripts import helpers
 from pkgcore.util import commandline
 
@@ -227,6 +227,9 @@ class MainTest(TestCase):
         return master, out
 
     def test_tty_detection(self):
+        if os.uname()[0].lower() != 'linux':
+            raise SkipTest('Test hangs on non-Linux systems')
+
         argparser = commandline.mk_argparser(
             config=False, domain=False, color=True, debug=False,
             quiet=False, verbose=False, version=False)

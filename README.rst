@@ -96,5 +96,5 @@ Installing from a tarball or git repo::
 .. |coverage| image:: https://coveralls.io/repos/pkgcore/pkgcore/badge.png?branch=master
     :target: https://coveralls.io/r/pkgcore/pkgcore?branch=master
 .. |docs| image:: https://readthedocs.org/projects/pkgcore/badge/?version=latest
-    :target: https://readthedocs.org/projects/pkgcore/?badge=latest
+    :target: http://pkgcore.readthedocs.org/en/latest/
     :alt: Documentation Status

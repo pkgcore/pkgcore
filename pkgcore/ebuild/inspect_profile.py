@@ -226,25 +226,23 @@ class accept_keywords(_base):
 class _use(_base):
 
     def __call__(self, namespace, out, err):
-        global_use = None
+        global_use = []
         pkg_use = []
 
         for k, v in namespace.use.render_to_dict().iteritems():
             if isinstance(k, basestring):
-                pkg, use_neg, use_pos = v[-1]
+                pkg, neg, pos = v[-1]
                 if not isinstance(pkg, atom.atom):
                     continue
-                neg = ('-' + x for x in use_neg)
-                pos = (x for x in use_pos)
-                pkg_use.append((pkg, ' '.join(x for x in sorted(chain(neg, pos)))))
+                neg = ('-' + x for x in neg)
+                pkg_use.append((pkg, ' '.join(sorted(chain(neg, pos)))))
             else:
-                _, global_use_neg, global_use_pos = v[0]
-                neg = ('-' + x for x in global_use_neg)
-                pos = (x for x in global_use_pos)
-                global_use = ' '.join(x for x in sorted(chain(neg, pos)))
+                _, neg, pos = v[0]
+                neg = ('-' + x for x in neg)
+                global_use = ' '.join(sorted(chain(neg, pos)))
 
-        if global_use is not None:
-            out.write('*/*: %s' % (global_use))
+        if global_use:
+            out.write('*/*: %s' % (global_use,))
         if pkg_use:
             for pkg, use in sorted(pkg_use):
                 out.write('%s: %s' % (pkg, use))

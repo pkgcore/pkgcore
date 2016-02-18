@@ -23,7 +23,7 @@ if os.path.exists(libdir):
     sys.path.insert(0, libdir)
 sys.path.insert(1, os.path.abspath('..'))
 
-from pkgcore import __version__
+from pkgcore import __version__, const
 from snakeoil.dist.generate_docs import generate_man, generate_html
 
 on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
@@ -105,10 +105,9 @@ pygments_style = 'sphinx'
 #modindex_common_prefix = []
 
 # auto-generate required files for RTD build environment
-project_dir = os.path.abspath('..')
 if on_rtd:
-    generate_man(project, project_dir)
-    generate_html(project, project_dir)
+    generate_man(project, const.DATA_PATH)
+    generate_html(project, const.DATA_PATH)
 
 # -- Options for HTML output ---------------------------------------------------
 

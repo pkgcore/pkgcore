@@ -22,26 +22,25 @@ import argparse
 from functools import partial
 from importlib import import_module
 import logging
-import os.path
+import os
 import sys
 
-from snakeoil import cli, compatibility, formatters, modules
+from snakeoil import compatibility, formatters, modules
+from snakeoil.cli import arghparse
 from snakeoil.demandload import demandload
 
 from pkgcore.config import load_config, errors
 
 demandload(
-    'inspect',
     'signal',
     'traceback',
     'snakeoil:osutils',
     'snakeoil.errors:walk_exception_chain',
     'snakeoil.lists:iflatten_instance,unstable_unique',
-    'snakeoil.version:get_version',
     'pkgcore:operations',
     'pkgcore.config:basics',
     'pkgcore.restrictions:packages,restriction',
-    'pkgcore.util:parserestrict,split_negations',
+    'pkgcore.util:parserestrict',
 )
 
 
@@ -72,40 +71,6 @@ class FormattingHandler(logging.Handler):
             self.out.later_prefix.pop()
             for i in xrange(len(first_prefix)):
                 self.out.first_prefix.pop()
-
-
-class ExtendCommaDelimited(argparse._AppendAction):
-    """Parse comma-separated values into a list."""
-
-    def __call__(self, parser, namespace, values, option_string=None):
-        items = []
-        if not self.nargs or self.nargs < 1:
-            items.extend(filter(None, values.split(',')))
-        else:
-            for value in values:
-                items.extend(filter(None, value.split(',')))
-        setattr(namespace, self.dest, items)
-
-
-class ExtendCommaDelimitedToggle(argparse._AppendAction):
-    """Parse comma-separated enabled and disabled values.
-
-    Disabled values are prefixed with "-" while enabled values are entered as
-    is.
-
-    For example, from the sequence "-a,b,c,-d" would result in "a" and "d"
-    being registered as disabled while "b" and "c" are enabled.
-    """
-
-    def __call__(self, parser, namespace, values, option_string=None):
-        disabled, enabled = [], []
-        if not self.nargs or self.nargs < 1:
-            values = [values]
-        for value in values:
-            neg, pos = split_negations(filter(None, value.split(',')))
-            disabled.extend(neg)
-            enabled.extend(pos)
-        setattr(namespace, self.dest, (tuple(disabled), tuple(enabled)))
 
 
 class StoreTarget(argparse._AppendAction):
@@ -152,70 +117,10 @@ class StoreTarget(argparse._AppendAction):
             setattr(namespace, self.dest, [])
 
 
-class StoreBool(argparse._StoreAction):
-    def __init__(self,
-                 option_strings,
-                 dest,
-                 const=None,
-                 default=None,
-                 required=False,
-                 help=None,
-                 metavar='BOOLEAN'):
-        super(StoreBool, self).__init__(
-            option_strings=option_strings,
-            dest=dest,
-            const=const,
-            default=default,
-            type=self.boolean,
-            required=required,
-            help=help,
-            metavar=metavar)
-
-    @staticmethod
-    def boolean(value):
-        value = value.lower()
-        if value in ('y', 'yes', 'true'):
-            return True
-        elif value in ('n', 'no', 'false'):
-            return False
-        raise ValueError("value %r must be [y|yes|true|n|no|false]" % (value,))
-
-
-class Delayed(argparse.Action):
-
-    def __init__(self, option_strings, dest, target=None, priority=0, **kwds):
-        if target is None:
-            raise ValueError("target must be non None for Delayed")
-
-        self.priority = int(priority)
-        self.target = target(option_strings=option_strings, dest=dest, **kwds.copy())
-        super(Delayed, self).__init__(
-            option_strings=option_strings[:],
-            dest=dest, nargs=kwds.get("nargs", None), required=kwds.get("required", None),
-            help=kwds.get("help", None), metavar=kwds.get("metavar", None))
-
-    def __call__(self, parser, namespace, values, option_string=None):
-        setattr(namespace, self.dest, DelayedParse(
-            partial(self.target, parser, namespace, values, option_string),
-            self.priority))
-
-
 CONFIG_ALL_DEFAULT = object()
 
 
-class EnableDebug(argparse._StoreTrueAction):
-
-    def __call__(self, parser, namespace, values, option_string=None):
-        super(EnableDebug, self).__call__(
-            parser, namespace, values, option_string=option_string)
-        logging.root.setLevel(logging.DEBUG)
-
-
-class ConfigError(Exception):
-    pass
-
-
-class NoDefaultConfigError(ConfigError):
+class NoDefaultConfigError(arghparse.ArgumentError):
     pass
 
 
@@ -230,7 +135,7 @@ class StoreConfigObject(argparse._StoreAction):
             raise ValueError("config_type must specified, and be a string")
 
         if kwargs.pop("get_default", False):
-            kwargs["default"] = DelayedValue(
+            kwargs["default"] = arghparse.DelayedValue(
                 partial(self.store_default, self.config_type,
                         option_string=kwargs.get('option_strings', [None])[0]),
                 self.priority)
@@ -271,7 +176,7 @@ class StoreConfigObject(argparse._StoreAction):
         return val
 
     def __call__(self, parser, namespace, values, option_string=None):
-        setattr(namespace, self.dest, DelayedParse(
+        setattr(namespace, self.dest, arghparse.DelayedParse(
             partial(self._real_call, parser, namespace, values, option_string),
             self.priority))
 
@@ -300,7 +205,7 @@ class StoreConfigObject(argparse._StoreAction):
     def store_default(config_type, namespace, attr, option_string=None):
         config = getattr(namespace, 'config', None)
         if config is None:
-            raise ConfigError("no config found.  Internal bug, or broken on disk configuration.")
+            raise arghparse.ArgumentError("no config found.  Internal bug, or broken on disk configuration.")
         obj = config.get_default(config_type)
         if obj is None:
             known_objs = sorted(getattr(config, config_type).keys())
@@ -327,7 +232,7 @@ class StoreConfigObject(argparse._StoreAction):
     def lazy_load_object(cls, config_type, key, priority=None):
         if priority is None:
             priority = cls.default_priority
-        return DelayedValue(
+        return arghparse.DelayedValue(
             partial(cls._lazy_load_object, config_type, key),
             priority)
 
@@ -336,7 +241,7 @@ class StoreConfigObject(argparse._StoreAction):
         try:
             obj = getattr(namespace.config, config_type)[key]
         except KeyError:
-            raise ConfigError(
+            raise arghparse.ArgumentError(
                 "Failed loading object %s of type %s" % (config_type, key))
             raise argparse.ArgumentError(
                 self, "couldn't find %s %r" % (self.config_type, name))
@@ -365,7 +270,7 @@ class StoreRepoObject(StoreConfigObject):
         if self.domain:
             domain = getattr(namespace, self.domain, None)
             if domain is None and self.domain_forced:
-                raise ConfigError(
+                raise arghparse.ArgumentError(
                     "No domain found, but one was forced for %s; "
                     "internal bug.  NS=%s" % (self, namespace))
         if domain is None:
@@ -426,49 +331,7 @@ def find_domains_from_path(sections, path):
             yield name, domain
 
 
-class DelayedValue(object):
-
-    def __init__(self, invokable, priority):
-        self.priority = priority
-        if not callable(invokable):
-            raise TypeError("invokable must be callable")
-        self.invokable = invokable
-
-    def __call__(self, namespace, attr):
-        self.invokable(namespace, attr)
-
-
-class DelayedDefault(DelayedValue):
-
-    @classmethod
-    def wipe(cls, attrs, priority):
-        if isinstance(attrs, basestring):
-            attrs = (attrs,)
-        return cls(partial(cls._wipe, attrs), priority)
-
-    @staticmethod
-    def _wipe(attrs, namespace, triggering_attr):
-        for attr in attrs:
-            try:
-                delattr(namespace, attr)
-            except AttributeError:
-                pass
-        try:
-            delattr(namespace, triggering_attr)
-        except AttributeError:
-            pass
-
-
-class DelayedParse(DelayedValue):
-
-    def __init__(self, invokable, priority):
-        DelayedValue.__init__(self, invokable, priority)
-
-    def __call__(self, namespace, attr):
-        self.invokable()
-
-
-class BooleanQuery(DelayedValue):
+class BooleanQuery(arghparse.DelayedValue):
 
     def __init__(self, attrs, klass_type=None, priority=100, converter=None):
         if klass_type == 'and':
@@ -550,53 +413,6 @@ def make_query(parser, *args, **kwargs):
     parser.set_defaults(**{dest: obj})
 
 
-class Expansion(argparse.Action):
-
-    def __init__(self, option_strings, dest, nargs=None, help=None,
-                 required=None, subst=None):
-        if subst is None:
-            raise TypeError("substitution string must be set")
-        # simple aliases with no required arguments shouldn't need to specify nargs
-        if nargs is None:
-            nargs = 0
-
-        super(Expansion, self).__init__(
-            option_strings=option_strings,
-            dest=dest,
-            help=help,
-            required=required,
-            default=False,
-            nargs=nargs)
-        self.subst = tuple(subst)
-
-    def __call__(self, parser, namespace, values, option_string=None):
-        actions = parser._actions
-        action_map = {}
-        vals = values
-        if isinstance(values, basestring):
-            vals = [vals]
-        dvals = {str(idx): val for idx, val in enumerate(vals)}
-        dvals['*'] = ' '.join(vals)
-
-        for action in actions:
-            action_map.update((option, action) for option in action.option_strings)
-
-        for chunk in self.subst:
-            option, args = chunk[0], chunk[1:]
-            action = action_map.get(option)
-            args = [x % dvals for x in args]
-            if not action:
-                raise ValueError(
-                    "unable to find option %r for %r" %
-                    (option, self.option_strings))
-            if action.type is not None:
-                args = map(action.type, args)
-            if action.nargs in (1, None):
-                args = args[0]
-            action(parser, namespace, args, option_string=option_string)
-        setattr(namespace, self.dest, True)
-
-
 def python_namespace_type(value, module=False, attribute=False):
     """
     return the object from python namespace that value specifies
@@ -614,175 +430,6 @@ def python_namespace_type(value, module=False, attribute=False):
         return modules.load_any(value)
     except (ImportError, modules.FailedImport) as err:
         compatibility.raise_from(argparse.ArgumentTypeError(str(err)))
-
-
-class _SubParser(argparse._SubParsersAction):
-
-    def add_parser(self, name, **kwds):
-        """argparser subparser that links description/help if one is specified"""
-        description = kwds.get("description")
-        help_txt = kwds.get("help")
-        if description is None:
-            if help_txt is not None:
-                kwds["description"] = help_txt
-        elif help_txt is None:
-            kwds["help"] = description
-        return argparse._SubParsersAction.add_parser(self, name, **kwds)
-
-    def __call__(self, parser, namespace, values, option_string=None):
-        """override stdlib argparse to revert subparser namespace changes
-
-        Reverts the broken upstream change made in issue #9351 which causes
-        issue #23058. This can be dropped when the problem is fixed upstream.
-        """
-        parser_name = values[0]
-        arg_strings = values[1:]
-
-        # set the parser name if requested
-        if self.dest is not argparse.SUPPRESS:
-            setattr(namespace, self.dest, parser_name)
-
-        # select the parser
-        try:
-            parser = self._name_parser_map[parser_name]
-        except KeyError:
-            tup = parser_name, ', '.join(self._name_parser_map)
-            msg = _('unknown parser %r (choices: %s)') % tup
-            raise ArgumentError(self, msg)
-
-        # parse all the remaining options into the namespace
-        # store any unrecognized options on the object, so that the top
-        # level parser can decide what to do with them
-        namespace, arg_strings = parser.parse_known_args(arg_strings, namespace)
-        if arg_strings:
-            vars(namespace).setdefault(argparse._UNRECOGNIZED_ARGS_ATTR, [])
-            getattr(namespace, argparse._UNRECOGNIZED_ARGS_ATTR).extend(arg_strings)
-
-
-class ArgumentParser(argparse.ArgumentParser):
-
-    def __init__(self,
-                 prog=None,
-                 usage=None,
-                 description=None,
-                 docs=None,
-                 epilog=None,
-                 parents=[],
-                 formatter_class=argparse.HelpFormatter,
-                 prefix_chars='-',
-                 fromfile_prefix_chars=None,
-                 argument_default=None,
-                 conflict_handler='error',
-                 add_help=True):
-
-        if description is not None:
-            description_lines = description.split('\n', 1)
-            description = description_lines[0]
-            if docs is None and len(description_lines) == 2:
-                docs = description_lines[1]
-
-        self.docs = docs
-
-        super(ArgumentParser, self).__init__(
-            prog=prog, usage=usage,
-            description=description, epilog=epilog,
-            parents=parents, formatter_class=formatter_class,
-            prefix_chars=prefix_chars, fromfile_prefix_chars=fromfile_prefix_chars,
-            argument_default=argument_default, conflict_handler=conflict_handler,
-            add_help=add_help)
-        # register our own subparser
-        self.register('action', 'parsers', _SubParser)
-
-        # register custom actions
-        self.register('action', 'extend_comma', ExtendCommaDelimited)
-        self.register('action', 'extend_comma_toggle', ExtendCommaDelimitedToggle)
-
-    def parse_args(self, args=None, namespace=None):
-        args = argparse.ArgumentParser.parse_args(self, args, namespace)
-
-        # two runs are required; first, handle any suppression defaults
-        # introduced.  subparsers defaults cannot override the parent parser,
-        # as such a subparser can't turn off config/domain for example.
-        # so we first find all DelayedDefault
-        # run them, then rescan for delayeds to run.
-        # this allows subparsers to introduce a default named for themselves
-        # that suppresses the parent.
-
-        # intentionally no protection of suppression code; this should
-        # just work.
-
-        i = ((attr, val) for attr, val in args.__dict__.iteritems()
-             if isinstance(val, DelayedDefault))
-        for attr, functor in sorted(i, key=lambda val: val[1].priority):
-            functor(args, attr)
-
-        # now run the delays.
-        i = ((attr, val) for attr, val in args.__dict__.iteritems()
-             if isinstance(val, DelayedValue))
-        try:
-            for attr, delayed in sorted(i, key=lambda val: val[1].priority):
-                delayed(args, attr)
-        except (TypeError, ValueError) as err:
-            self.error("failed loading/parsing %s: %s" % (attr, str(err)))
-        except (ConfigError, argparse.ArgumentError):
-            err = sys.exc_info()[1]
-            self.error(str(err))
-
-        final_check = getattr(args, 'final_check', None)
-        if final_check is not None:
-            del args.final_check
-            final_check(self, args)
-        return args
-
-    def error(self, message):
-        """Print an error message and exit.
-
-        Similar to argparse's error() except usage information is not shown by
-        default.
-        """
-        self.exit(2, '%s: error: %s\n' % (self.prog, message))
-
-    def bind_main_func(self, functor):
-        self.set_defaults(main_func=functor)
-        # override main prog with subcmd prog
-        self.set_defaults(prog=self.prog)
-        return functor
-
-    def bind_class(self, obj):
-        if not isinstance(obj, ArgparseCommand):
-            raise ValueError(
-                "expected obj to be an instance of "
-                "ArgparseCommand; got %r" % (obj,))
-        obj.bind_to_parser(self)
-        return self
-
-    def bind_delayed_default(self, priority, name=None):
-        def f(functor, name=name):
-            if name is None:
-                name = functor.__name__
-            self.set_defaults(**{name: DelayedValue(functor, priority)})
-            return functor
-        return f
-
-    def add_subparsers(self, **kwargs):
-        kwargs.setdefault('title', 'subcommands')
-        kwargs.setdefault('dest', 'subcommand')
-        subparsers = argparse.ArgumentParser.add_subparsers(self, **kwargs)
-        subparsers.required = True
-        return subparsers
-
-    def bind_final_check(self, functor):
-        self.set_defaults(final_check=functor)
-        return functor
-
-
-class ArgparseCommand(object):
-
-    def bind_to_parser(self, parser):
-        parser.bind_main_func(self)
-
-    def __call__(self, namespace, out, err):
-        raise NotImplementedError(self, '__call__')
 
 
 def register_command(commands, real_type=type):
@@ -828,92 +475,33 @@ def _mk_domain(parser):
         help="domain to use for this operation")
 
 
-def existent_path(value):
-    if not os.path.exists(value):
-        raise ValueError("path %r doesn't exist on disk" % (value,))
-    try:
-        return osutils.abspath(value)
-    except EnvironmentError as e:
-        compatibility.raise_from(
-            ValueError(
-                "while resolving path %r, encountered error: %r" %
-                (value, e)))
+class ArgumentParser(arghparse.ArgumentParser):
 
+    def __init__(self, config=True, domain=True, **kwds):
+        super(ArgumentParser, self).__init__(**kwds)
 
-def mk_argparser(suppress=False, config=True, domain=True,
-                 color=True, debug=True, quiet=True, verbose=True,
-                 version=True, **kwds):
-    p = ArgumentParser(**kwds)
+        if not self.suppress:
+            if config:
+                self.add_argument(
+                    '--add-config', nargs=3, action='append',
+                    metavar=('SECTION', 'KEY', 'VALUE'),
+                    help='modify an existing configuration section')
+                self.add_argument(
+                    '--new-config', nargs=3, action='append',
+                    metavar=('SECTION', 'KEY', 'VALUE'),
+                    help='add a new configuration section')
+                self.add_argument(
+                    '--empty-config', action='store_true', default=False,
+                    help='do not load user/system configuration')
+                self.add_argument(
+                    '--config', metavar='PATH', dest='override_config',
+                    type=arghparse.existent_path,
+                    help='override location of config files')
 
-    if suppress:
-        return p
+                self.set_defaults(config=arghparse.DelayedValue(store_config, 0))
 
-    if version:
-        # Get the calling script's module and project names, this assumes a
-        # project layout similar to pkgcore's where scripts are located in the
-        # project.scripts.script namespace.
-        script = inspect.stack(0)[1][0].f_globals['__file__']
-        project = script.split(os.path.sep)[-3]
-        p.add_argument(
-            '--version', action='version', version=get_version(project, script),
-            docs="Show this program's version number and exit.")
-    if debug:
-        p.add_argument(
-            '--debug', action=EnableDebug, help='enable debugging checks',
-            docs='Enable debug checks and show verbose debug output.')
-    if quiet:
-        p.add_argument(
-            '-q', '--quiet', action='store_true',
-            help='suppress non-error messages',
-            docs="Suppress non-error, informational messages.")
-    if verbose:
-        p.add_argument(
-            '-v', '--verbose', action='count',
-            help='show verbose output',
-            docs="Increase the verbosity of various output.")
-    if color:
-        p.add_argument(
-            '--color', action=StoreBool,
-            default=sys.stdout.isatty(),
-            help='enable/disable color support',
-            docs="""
-                Toggle colored output support. This can be used to forcibly
-                enable color support when piping output or other sitations
-                where stdout is not a tty.
-            """)
-
-    if config:
-        p.add_argument(
-            '--add-config', nargs=3, action='append',
-            metavar=('SECTION', 'KEY', 'VALUE'),
-            help='modify an existing configuration section')
-        p.add_argument(
-            '--new-config', nargs=3, action='append',
-            metavar=('SECTION', 'KEY', 'VALUE'),
-            help='add a new configuration section')
-        p.add_argument(
-            '--empty-config', action='store_true', default=False,
-            help='do not load user/system configuration')
-        p.add_argument(
-            '--config', metavar='PATH', dest='override_config',
-            type=existent_path,
-            help='override location of config files')
-
-        p.set_defaults(config=DelayedValue(store_config, 0))
-
-    if domain:
-        _mk_domain(p)
-    return p
-
-
-def argparse_parse(parser, args, namespace=None):
-    namespace = parser.parse_args(args, namespace=namespace)
-    main = getattr(namespace, 'main_func', None)
-    if main is None:
-        raise Exception(
-            "parser %r lacks a main method- internal bug.\nGot namespace %r\n"
-            % (parser, namespace))
-    return main, namespace
+            if domain:
+                _mk_domain(self)
 
 
 def convert_to_restrict(sequence, default=packages.AlwaysTrue):
@@ -985,7 +573,12 @@ def main(parser, args=None, outfile=None, errfile=None):
     # can't use options.debug since argparsing might fail
     debug = '--debug' in sys.argv[1:]
     try:
-        main_func, options = argparse_parse(parser, args, options)
+        options = parser.parse_args(args, options)
+        main_func = getattr(options, 'main_func', None)
+        if main_func is None:
+            raise Exception(
+                "parser %r lacks a main method- internal bug.\nGot namespace %r\n"
+                % (parser, options))
 
         if debug:
             # verbosity level affects debug output

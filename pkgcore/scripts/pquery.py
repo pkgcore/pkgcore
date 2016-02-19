@@ -19,6 +19,7 @@ running them on source repos makes no sense.
 
 from functools import partial
 
+from snakeoil.cli import arghparse
 from snakeoil.demandload import demandload
 from snakeoil.formatters import decorate_forced_wrapping
 
@@ -450,7 +451,7 @@ def print_packages_noversion(options, out, err, pkgs):
 # priority 100:
 #  default priority for DelayedValue; anything else is setup then.
 
-argparser = commandline.mk_argparser(domain=True, description=__doc__)
+argparser = commandline.ArgumentParser(domain=True, description=__doc__)
 
 repo_group = argparser.add_argument_group(
     'repository matching options',
@@ -641,7 +642,7 @@ add_query(
 
 query.add_argument(
     '--revdep', nargs=1,
-    action=commandline.Expansion,
+    action=arghparse.Expansion,
     subst=(('--restrict-revdep', '%(0)s'), ('--print-revdep', '%(0)s')),
     help='shorthand for --restrict-revdep atom --print-revdep atom',
     docs="""
@@ -652,7 +653,7 @@ query.add_argument(
 
 query.add_argument(
     '--revdep-pkgs', nargs=1,
-    action=commandline.Expansion,
+    action=arghparse.Expansion,
     subst=(('--restrict-revdep-pkgs', '%(0)s'), ('--print-revdep', '%(0)s')),
     help='shorthand for --restrict-revdep-pkgs atom --print-revdep atom',
     docs="""
@@ -816,7 +817,7 @@ def pkg_upgrade(_value, namespace):
     return packages.OrRestriction(*pkgs)
 
 argparser.set_defaults(
-    _fallback_all=commandline.DelayedValue(_add_all_if_needed, priority=89))
+    _fallback_all=arghparse.DelayedValue(_add_all_if_needed, priority=89))
 argparser.set_defaults(
     query=commandline.BooleanQuery(_query_items, klass_type='and', priority=90))
 
@@ -825,7 +826,7 @@ output.add_argument(
     '--early-out', action='store_true', dest='earlyout',
     help='stop when first match is found')
 output.add_argument(
-    '-a', '--atom', action=commandline.Expansion,
+    '-a', '--atom', action=arghparse.Expansion,
     subst=(('--cpv',),),
     help='print =cat/pkg-3 instead of cat/pkg-3.',
     docs="""
@@ -857,7 +858,7 @@ output_mux.add_argument(
 del output_mux
 
 output.add_argument(
-    '--blame', action=commandline.Expansion,
+    '--blame', action=arghparse.Expansion,
     subst=(("--attr", "maintainers"),),
     help='shorthand for --attr maintainers')
 output.add_argument(

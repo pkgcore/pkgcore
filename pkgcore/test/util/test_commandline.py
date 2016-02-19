@@ -10,6 +10,7 @@ import pty
 import textwrap
 
 from snakeoil import compatibility
+from snakeoil.cli import arghparse
 
 from pkgcore.config import central, errors
 from pkgcore.test import TestCase, silence_logging
@@ -35,7 +36,7 @@ def mk_config(*args, **kwds):
 
 class ArgparseOptionsTest(TestCase):
 
-    _parser_func = staticmethod(commandline.mk_argparser)
+    _parser_func = staticmethod(commandline.ArgumentParser)
 
     def _parser(self, **kwargs):
         # suppress config/domain by default.
@@ -65,7 +66,7 @@ class ArgparseOptionsTest(TestCase):
     def test_bool_type(self):
         parser = helpers.mangle_parser(commandline.ArgumentParser())
         parser.add_argument(
-            "--testing", action=commandline.StoreBool, default=None)
+            "--testing", action=arghparse.StoreBool, default=None)
 
         for raw_val in ("n", "no", "false"):
             for allowed in (raw_val.upper(), raw_val.lower()):
@@ -104,7 +105,7 @@ class _Trigger(argparse.Action):
 
 class ModifyConfigTest(TestCase, helpers.ArgParseMixin):
 
-    parser = commandline.mk_argparser(domain=False, version=False)
+    parser = commandline.ArgumentParser(domain=False, version=False)
     parser.add_argument('--trigger', nargs=0, action=_Trigger)
 
     def parse(self, *args, **kwargs):
@@ -183,7 +184,7 @@ class MainTest(TestCase):
             self.fail('no exception raised')
 
     def test_method_run(self):
-        argparser = commandline.mk_argparser(suppress=True)
+        argparser = commandline.ArgumentParser(suppress=True)
         argparser.add_argument("--foon")
 
         @argparser.bind_main_func
@@ -196,7 +197,7 @@ class MainTest(TestCase):
             argparser, args=['--foon', 'dar'])
 
     def test_argparse_with_invalid_args(self):
-        argparser = commandline.mk_argparser(suppress=True, add_help=False)
+        argparser = commandline.ArgumentParser(suppress=True, add_help=False)
 
         @argparser.bind_main_func
         def main(options, out, err):
@@ -207,7 +208,7 @@ class MainTest(TestCase):
         self.assertMain(-10, '', '', argparser, ['1'])
 
     def test_configuration_error(self):
-        argparser = commandline.mk_argparser(suppress=True)
+        argparser = commandline.ArgumentParser(suppress=True)
 
         @argparser.bind_main_func
         def error_main(options, out, err):
@@ -227,7 +228,7 @@ class MainTest(TestCase):
         return master, out
 
     def test_tty_detection(self):
-        argparser = commandline.mk_argparser(
+        argparser = commandline.ArgumentParser(
             config=False, domain=False, color=True, debug=False,
             quiet=False, verbose=False, version=False)
 

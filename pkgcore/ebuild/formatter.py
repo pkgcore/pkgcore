@@ -13,7 +13,7 @@ __all__ = (
 
 import operator
 
-from snakeoil.cli import userquery
+from snakeoil.cli.input import userquery
 from snakeoil.compatibility import raise_from
 from snakeoil.demandload import demandload
 from snakeoil.lists import iflatten_instance

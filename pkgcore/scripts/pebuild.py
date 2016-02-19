@@ -4,8 +4,6 @@
 
 """low-level ebuild utility"""
 
-__all__ = ("argparser", "main")
-
 from itertools import izip
 import os
 
@@ -14,7 +12,8 @@ from pkgcore.ebuild.errors import MalformedAtom
 from pkgcore.operations import observer
 from pkgcore.util import commandline
 
-argparser = commandline.mk_argparser(description=__doc__)
+
+argparser = commandline.ArgumentParser(description=__doc__)
 argparser.add_argument(
     'target', metavar='<atom|ebuild>',
     help="atom or ebuild matching a pkg to execute phases from")

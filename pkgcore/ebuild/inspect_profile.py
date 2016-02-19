@@ -1,6 +1,7 @@
 # Copyright: 2011 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD 3 clause
 
+from snakeoil.cli import arghparse
 from snakeoil.demandload import demandload
 
 from pkgcore.ebuild import profiles
@@ -19,7 +20,7 @@ commands = []
 # global known flags, etc
 
 
-class _base(commandline.ArgparseCommand):
+class _base(arghparse.ArgparseCommand):
 
     @staticmethod
     def _validate_args(parser, namespace):
@@ -28,7 +29,7 @@ class _base(commandline.ArgparseCommand):
             if not path.startswith('/'):
                 path = pjoin(namespace.repo.location, 'profiles', path)
         try:
-            stack = profiles.ProfileStack(commandline.existent_path(path))
+            stack = profiles.ProfileStack(arghparse.existent_path(path))
         except ValueError as e:
             parser.error(e)
         if stack.node.repoconfig is None:
@@ -36,10 +37,10 @@ class _base(commandline.ArgparseCommand):
         namespace.profile = stack
 
     def bind_to_parser(self, parser):
-        commandline.ArgparseCommand.bind_to_parser(self, parser)
+        arghparse.ArgparseCommand.bind_to_parser(self, parser)
         parser.add_argument('profile', help='path to the profile to inspect')
         name = self.__class__.__name__
-        kwds = {('_%s_suppress' % name): commandline.DelayedDefault.wipe(('domain'), 50)}
+        kwds = {('_%s_suppress' % name): arghparse.DelayedDefault.wipe(('domain'), 50)}
         parser.set_defaults(**kwds)
         parser.bind_final_check(self._validate_args)
         self._subclass_bind(parser)
@@ -342,9 +343,6 @@ class arch(_base):
             out.write(namespace.profile.arch)
 
 
-_color_parent = commandline.mk_argparser(color=True, domain=False, add_help=False)
-
-
 def bind_parser(parser, name):
     subparsers = parser.add_subparsers(help="%s commands" % (name,))
     for command in commands:
@@ -352,5 +350,5 @@ def bind_parser(parser, name):
         help, _, docs = command.__doc__.partition('\n')
         subparser = subparsers.add_parser(
             command.__name__.lower(),
-            help=help, docs=docs, parents=[_color_parent])
+            help=help, docs=docs)
         command().bind_to_parser(subparser)

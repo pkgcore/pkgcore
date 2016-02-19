@@ -6,8 +6,8 @@
 
 Scripts in here are accessible through this module. They should have a C{main}
 attribute that is a function usable with :obj:`pkgcore.util.commandline.main`
-and use :obj:`pkgcore.util.commandline.mk_argparser` (a wrapper around
-C{ArgumentParser}) to handle argument parsing.
+and use an :obj:`pkgcore.util.commandline.ArgumentParser` instance to handle
+argument parsing.
 
 The goal of this is avoiding boilerplate and making sure the scripts have a
 similar look and feel. If your script needs to do something

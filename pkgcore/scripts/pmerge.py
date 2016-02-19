@@ -10,7 +10,7 @@ source or binary packages.
 """
 
 # more should be doc'd...
-__all__ = ("argparser", "AmbiguousQuery", "NoMatches")
+__all__ = ("AmbiguousQuery", "NoMatches")
 
 from functools import partial
 import sys
@@ -28,7 +28,7 @@ from pkgcore.util import commandline, parserestrict, repo_utils
 from snakeoil.lists import iflatten_instance, stable_unique
 
 
-argparser = commandline.mk_argparser(domain=True, description=__doc__)
+argparser = commandline.ArgumentParser(domain=True, description=__doc__)
 argparser.add_argument(
     nargs='*', dest='targets', metavar='TARGET', action=commandline.StoreTarget,
     help="extended package matching",

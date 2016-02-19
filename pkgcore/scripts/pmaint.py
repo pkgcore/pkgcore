@@ -9,6 +9,7 @@ __all__ = (
     "perl_rebuild", "perl_rebuild_main", "env_update", "env_update_main",
 )
 
+from snakeoil.cli import arghparse
 from snakeoil.demandload import demandload
 
 from pkgcore.util import commandline
@@ -37,15 +38,15 @@ demandload(
 )
 
 
-argparser = commandline.mk_argparser(
+argparser = arghparse.ArgumentParser(
     suppress=True, description=__doc__,
-    parents=(commandline.mk_argparser(domain=False, add_help=False),))
+    parents=(commandline.ArgumentParser(domain=False, add_help=False),))
 subparsers = argparser.add_subparsers(description="general system maintenance")
 
-shared_options = (commandline.mk_argparser(
-    config=False, color=False, version=False, domain=False, add_help=False),)
-domain_shared_options = (commandline.mk_argparser(
-    config=False, color=False, version=False, domain=True, add_help=False),)
+shared_options = (commandline.ArgumentParser(
+    config=False, color=False, debug=False, quiet=False, verbose=False, version=False, domain=False, add_help=False),)
+shared_options_domain = (commandline.ArgumentParser(
+    config=False, color=False, debug=False, quiet=False, verbose=False, version=False, domain=True, add_help=False),)
 
 sync = subparsers.add_parser(
     "sync", parents=shared_options,
@@ -251,7 +252,7 @@ regen_opts.add_argument(
     """)
 regen_opts.add_argument(
     "-t", "--threads", type=int,
-    default=commandline.DelayedValue(_get_default_jobs, 100),
+    default=arghparse.DelayedValue(_get_default_jobs, 100),
     help="number of threads to use",
     docs="""
         Number of threads to use for regeneration, defaults to using all
@@ -309,7 +310,7 @@ def regen_main(options, out, err):
 
 
 perl_rebuild = subparsers.add_parser(
-    "perl-rebuild", parents=domain_shared_options,
+    "perl-rebuild", parents=shared_options_domain,
     description="EXPERIMENTAL: perl-rebuild support for use after upgrading perl")
 perl_rebuild.add_argument(
     "new_version", help="the new perl version; 5.12.3 for example")
@@ -349,7 +350,7 @@ def perl_rebuild_main(options, out, err):
 
 env_update = subparsers.add_parser(
     "env-update", description="update env.d and ldconfig",
-    parents=domain_shared_options)
+    parents=shared_options_domain)
 env_update_opts = env_update.add_argument_group("subcommand options")
 env_update_opts.add_argument(
     "--skip-ldconfig", action='store_true', default=False,
@@ -369,7 +370,7 @@ def env_update_main(options, out, err):
 
 
 mirror = subparsers.add_parser(
-    "mirror", parents=domain_shared_options,
+    "mirror", parents=shared_options_domain,
     description="mirror the sources for a package in full- grab everything that could be required")
 commandline.make_query(
     mirror, nargs='+', dest='query',
@@ -405,7 +406,7 @@ def mirror_main(options, out, err):
 
 
 digest = subparsers.add_parser(
-    "digest", parents=domain_shared_options,
+    "digest", parents=shared_options_domain,
     description="update package manifests")
 digest.add_argument(
     'target', nargs='*',

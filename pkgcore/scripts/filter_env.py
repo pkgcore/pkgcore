@@ -4,17 +4,17 @@
 
 """filter a bash environment dump"""
 
-__all__ = ("argparser", "main")
-
+import argparse
 import sys
 
 from pkgcore.ebuild import filter_env
 from pkgcore.log import logger
-from pkgcore.util import commandline
 
-argparser = commandline.mk_argparser(
-    config=False, domain=False, verbose=False, color=False,
-    description=__doc__)
+from snakeoil.cli import arghparse
+
+
+argparser = arghparse.ArgumentParser(
+    verbose=False, color=False, description=__doc__)
 
 def stdin_default(namespace, attr):
     if sys.stdin.isatty():
@@ -23,7 +23,7 @@ def stdin_default(namespace, attr):
 
 argparser.add_argument(
     '-i', '--input', action='store',
-    type=commandline.argparse.FileType(), default=commandline.DelayedValue(stdin_default, 0),
+    type=argparse.FileType(), default=arghparse.DelayedValue(stdin_default, 0),
     help='Filename to read the env from (uses stdin if omitted).')
 filtering = argparser.add_argument_group("Environment filtering options")
 filtering.add_argument(

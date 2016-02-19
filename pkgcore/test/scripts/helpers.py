@@ -4,6 +4,7 @@
 
 """Helpers for testing scripts."""
 
+import argparse
 from copy import copy
 import difflib
 
@@ -11,7 +12,6 @@ from snakeoil.caching import WeakInstMeta
 from snakeoil.formatters import PlainTextFormatter
 
 from pkgcore.config import central, basics, ConfigHint
-from pkgcore.util import commandline
 
 
 class Exit(Exception):
@@ -144,7 +144,7 @@ class ArgParseMixin(object):
         """
         namespace = None
         if self.has_config:
-            namespace = commandline.argparse.Namespace()
+            namespace = argparse.Namespace()
             if kwargs.pop("suppress_domain", self.suppress_domain):
                 kwargs["default_domain"] = default_domain
             namespace.config = self._mk_config([kwargs], debug=True)

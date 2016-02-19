@@ -23,6 +23,7 @@ __all__ = (
     "portageq", "query",
 )
 
+from snakeoil.cli import arghparse
 from snakeoil.demandload import demandload
 
 from pkgcore.ebuild import inspect_profile
@@ -39,12 +40,13 @@ demandload(
     'pkgcore.restrictions:packages',
 )
 
-shared = (commandline.mk_argparser(domain=False, add_help=False),)
-argparser = commandline.mk_argparser(
-    suppress=True, parents=shared, description=__doc__)
+shared_options = (commandline.ArgumentParser(domain=False, add_help=False),)
+argparser = arghparse.ArgumentParser(
+    suppress=True, description=__doc__, parents=shared_options)
 subparsers = argparser.add_subparsers(description="report applets")
 
-pkgsets = subparsers.add_parser("pkgsets", description="pkgset related introspection")
+pkgsets = subparsers.add_parser(
+    "pkgsets", description="pkgset related introspection")
 mux = pkgsets.add_mutually_exclusive_group()
 mux.add_argument(
     "--all", action='store_true', default=False,
@@ -97,7 +99,7 @@ def print_simple_histogram(data, out, format, total, sort_by_key=False,
                    'percent': "%2.2f%%" % (val/total,)})
 
 
-class histo_data(commandline.ArgparseCommand):
+class histo_data(arghparse.ArgparseCommand):
 
     per_repo_summary = None
     allow_no_detail = False
@@ -141,7 +143,7 @@ class histo_data(commandline.ArgparseCommand):
             default=commandline.CONFIG_ALL_DEFAULT,
             help="repo(s) to inspect")
 
-        commandline.ArgparseCommand.bind_to_parser(self, parser)
+        arghparse.ArgparseCommand.bind_to_parser(self, parser)
 
     def get_data(self, repo, options):
         raise NotImplementedError()
@@ -330,7 +332,6 @@ distfiles_usage = subparsers.add_parser(
     "distfiles_usage",
     description="report detailing distfiles space usage for targeted repositories")
 distfiles_usage.bind_class(distfiles_usage_kls())
-
 
 query = subparsers.add_parser(
     "query",

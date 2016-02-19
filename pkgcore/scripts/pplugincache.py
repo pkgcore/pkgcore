@@ -4,8 +4,6 @@
 
 """plugin cache update utility"""
 
-__all__ = ("argparser", "main")
-
 from functools import partial
 
 from snakeoil import lists
@@ -13,7 +11,7 @@ from snakeoil import lists
 from pkgcore import plugin, plugins
 from pkgcore.util import commandline
 
-argparser = commandline.mk_argparser(
+argparser = commandline.ArgumentParser(
     config=False, domain=False, color=False, description=__doc__)
 argparser.add_argument(
     "packages", nargs="*", action='store', default=[plugins],

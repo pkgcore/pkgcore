@@ -1,6 +1,7 @@
 # Copyright: 2006-2011 Brian Harring <ferringb@gmail.com>
 # License: BSD/GPL2
 
+from snakeoil.cli import arghparse
 from snakeoil.demandload import demandload
 
 from pkgcore.util import commandline
@@ -42,7 +43,7 @@ def default_portageq_args(parser):
 
 
 def make_atom(value):
-    return commandline.DelayedValue(partial(_render_atom, value), 100)
+    return arghparse.DelayedValue(partial(_render_atom, value), 100)
 
 def _render_atom(value, namespace, attr):
     a = namespace.atom_kls(value)
@@ -55,14 +56,14 @@ def _render_atom(value, namespace, attr):
     setattr(namespace, attr, a)
 
 
-class BaseCommand(commandline.ArgparseCommand):
+class BaseCommand(arghparse.ArgparseCommand):
 
     required_arg_count = 0
     has_optional_args = False
     arg_spec = ()
 
     def bind_to_parser(self, parser, compat=False):
-        commandline.ArgparseCommand.bind_to_parser(self, parser)
+        arghparse.ArgparseCommand.bind_to_parser(self, parser)
         default_portageq_args(parser)
 
         if self.requires_root:

@@ -30,7 +30,7 @@ except ImportError:
     sys.exit(1)
 
 
-argparser = commandline.mk_argparser(color=False, version=False)
+argparser = commandline.ArgumentParser(color=False, version=False)
 argparser.add_argument(
     "--exclude", "-e", action='append', dest='excludes')
 argparser.add_argument(

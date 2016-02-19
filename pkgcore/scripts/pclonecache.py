@@ -4,14 +4,11 @@
 
 """repository cache clone utility"""
 
-__all__ = ("argparser", "main")
-
 import time
 
 from pkgcore.util import commandline
 
-argparser = commandline.mk_argparser(
-    domain=False, description=__doc__)
+argparser = commandline.ArgumentParser(domain=False, description=__doc__)
 argparser.add_argument(
     "source", config_type='cache', priority=20,
     action=commandline.StoreConfigObject,

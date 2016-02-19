@@ -18,7 +18,7 @@ except ImportError:
     sys.exit(1)
 
 
-argparser = commandline.mk_argparser(color=False, version=False)
+argparser = commandline.ArgumentParser(color=False, version=False)
 argparser.add_argument(
     '-r', '--repo', action=commandline.StoreRepoObject,
     help='repo to give info about (default from domain if omitted)')

@@ -14,6 +14,7 @@ __all__ = (
 
 from functools import partial
 
+from snakeoil.cli import arghparse
 from snakeoil.demandload import demandload
 
 from pkgcore.config import errors, basics
@@ -104,11 +105,14 @@ def get_classes(configs):
     return classes
 
 
-shared_options = (commandline.mk_argparser(
-    config=False, color=False, version=False, domain=False, add_help=False),)
-argparser = commandline.mk_argparser(
-    suppress=True, parents=(commandline.mk_argparser(domain=False, add_help=False),),
-    description=__doc__)
+shared_options = (commandline.ArgumentParser(
+    config=False, color=False, debug=False, quiet=False, verbose=False, version=False, domain=False, add_help=False),)
+shared_options_domain = (commandline.ArgumentParser(
+    config=False, color=False, debug=False, quiet=False, verbose=False, version=False, domain=True, add_help=False),)
+
+argparser = arghparse.ArgumentParser(
+        suppress=True, description=__doc__,
+        parents=(commandline.ArgumentParser(domain=False, add_help=False),))
 subparsers = argparser.add_subparsers(description="configuration related subcommands")
 classes = subparsers.add_parser(
     "classes", parents=shared_options,
@@ -331,8 +335,6 @@ def dump_uncollapsed_main(options, out, err):
             _dump_uncollapsed_section(options.config, out, err, section)
             out.write()
 
-shared_options_domain = (commandline.mk_argparser(
-    config=False, color=False, version=False, add_help=False),)
 package = subparsers.add_parser(
     "package", parents=shared_options_domain,
     description="invoke a packages custom configuration scripts")

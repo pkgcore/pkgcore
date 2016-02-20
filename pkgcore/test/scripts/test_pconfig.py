@@ -8,7 +8,7 @@ from snakeoil import compatibility
 from pkgcore.config import configurable, basics, errors
 from pkgcore.scripts import pconfig
 from pkgcore.test import TestCase
-from pkgcore.test.scripts import helpers
+from pkgcore.test.scripts.helpers import ArgParseMixin
 
 
 @configurable({'reff': 'ref:spork'})
@@ -41,7 +41,7 @@ def increment(inc=()):
     """Noop."""
 
 
-class DescribeClassTest(TestCase, helpers.ArgParseMixin):
+class DescribeClassTest(TestCase, ArgParseMixin):
 
     _argparser = pconfig.describe_class
 
@@ -87,7 +87,7 @@ class DescribeClassTest(TestCase, helpers.ArgParseMixin):
             'pkgcore.test.scripts.test_pconfig.broken_type')
 
 
-class ClassesTest(TestCase, helpers.ArgParseMixin):
+class ClassesTest(TestCase, ArgParseMixin):
 
     _argparser = pconfig.classes
 
@@ -129,7 +129,7 @@ class ClassesTest(TestCase, helpers.ArgParseMixin):
                             'class': pseudospork})}))
 
 
-class DumpTest(TestCase, helpers.ArgParseMixin):
+class DumpTest(TestCase, ArgParseMixin):
 
     _argparser = pconfig.dump
 
@@ -230,7 +230,7 @@ class DumpTest(TestCase, helpers.ArgParseMixin):
             )
 
 
-class UncollapsableTest(TestCase, helpers.ArgParseMixin):
+class UncollapsableTest(TestCase, ArgParseMixin):
 
     _argparser = pconfig.uncollapsable
 
@@ -253,7 +253,7 @@ class UncollapsableTest(TestCase, helpers.ArgParseMixin):
             )
 
 
-class ConfigurablesTest(TestCase, helpers.ArgParseMixin):
+class ConfigurablesTest(TestCase, ArgParseMixin):
 
     _argparser = pconfig.configurables
 
@@ -281,7 +281,7 @@ class WeirdSection(basics.ConfigSection):
             None, None]
 
 
-class DumpUncollapsedTest(TestCase, helpers.ArgParseMixin):
+class DumpUncollapsedTest(TestCase, ArgParseMixin):
 
     _argparser = pconfig.dump_uncollapsed
 

@@ -7,7 +7,7 @@ from pkgcore.ebuild import atom
 from pkgcore.repository import util
 from pkgcore.scripts import pquery
 from pkgcore.test import TestCase
-from pkgcore.test.scripts import helpers
+from pkgcore.test.scripts.helpers import ArgParseMixin
 
 
 class FakeDomain(object):
@@ -40,7 +40,7 @@ domain_config = basics.HardCodedConfigSection({
         })
 
 
-class CommandlineTest(TestCase, helpers.ArgParseMixin):
+class CommandlineTest(TestCase, ArgParseMixin):
 
     _argparser = pquery.argparser
 

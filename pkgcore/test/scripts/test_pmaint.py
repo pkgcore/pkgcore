@@ -15,7 +15,7 @@ from pkgcore.repository import util, syncable
 from pkgcore.scripts import pmaint
 from pkgcore.sync import base
 from pkgcore.test import TestCase
-from pkgcore.test.scripts import helpers
+from pkgcore.test.scripts.helpers import ArgParseMixin
 
 if compatibility.is_py3k:
     from io import BytesIO
@@ -54,7 +54,7 @@ failure_section = basics.HardCodedConfigSection({'class': SyncableRepo,
                                                  'succeed': False})
 
 
-class TestSync(TestCase, helpers.ArgParseMixin):
+class TestSync(TestCase, ArgParseMixin):
 
     _argparser = pmaint.sync
 
@@ -149,7 +149,7 @@ def make_repo_config(repo_data, livefs=False, frozen=False):
     return basics.HardCodedConfigSection({'class':repo})
 
 
-class TestCopy(TestCase, helpers.ArgParseMixin):
+class TestCopy(TestCase, ArgParseMixin):
 
     _argparser = pmaint.copy
 
@@ -215,7 +215,7 @@ class TestCopy(TestCase, helpers.ArgParseMixin):
             msg="uninstalled should be the same as replaced; empty")
 
 
-class TestRegen(TestCase, helpers.ArgParseMixin):
+class TestRegen(TestCase, ArgParseMixin):
 
     _argparser = pmaint.regen
 

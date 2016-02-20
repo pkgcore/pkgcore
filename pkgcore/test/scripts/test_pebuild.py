@@ -5,10 +5,10 @@ from snakeoil import compatibility
 
 from pkgcore.scripts import pebuild
 from pkgcore.test import TestCase
-from pkgcore.test.scripts import helpers
+from pkgcore.test.scripts.helpers import ArgParseMixin
 
 
-class CommandlineTest(TestCase, helpers.ArgParseMixin):
+class CommandlineTest(TestCase, ArgParseMixin):
 
     _argparser = pebuild.argparser
 

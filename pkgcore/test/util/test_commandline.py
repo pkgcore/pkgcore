@@ -4,17 +4,14 @@
 
 import argparse
 import errno
-from functools import partial
 import os
 import pty
-import textwrap
 
 from snakeoil import compatibility
-from snakeoil.cli import arghparse
 
 from pkgcore.config import central, errors
-from pkgcore.test import TestCase, silence_logging
-from pkgcore.test.scripts import helpers
+from pkgcore.test import TestCase
+from pkgcore.test.scripts.helpers import ArgParseMixin
 from pkgcore.util import commandline
 
 # Careful: the tests should not hit a load_config() call!
@@ -34,64 +31,6 @@ def mk_config(*args, **kwds):
         central.ConfigManager(*args, **kwds))
 
 
-class ArgparseOptionsTest(TestCase):
-
-    _parser_func = staticmethod(commandline.ArgumentParser)
-
-    def _parser(self, **kwargs):
-        # suppress config/domain by default.
-        kwargs.setdefault("domain", False)
-        kwargs.setdefault("config", False)
-        return self._parser_func(**kwargs)
-
-    @silence_logging
-    def test_debug(self):
-        namespace = self._parser().parse_args(["--debug"])
-        self.assertTrue(namespace.debug)
-        namespace = self._parser().parse_args([])
-        self.assertFalse(namespace.debug)
-
-        # ensure the option isn't there if disabled.
-        namespace = self._parser(debug=False).parse_args([])
-        self.assertFalse(hasattr(namespace, 'debug'))
-
-        # ensure debug is pushed down into config.
-        namespace = self._parser(config=True).parse_args(["--empty-config"])
-        self.assertFalse(namespace.config.debug)
-
-        namespace = self._parser(config=True).parse_args(
-            ["--empty-config", "--debug"])
-        self.assertTrue(namespace.config.debug)
-
-    def test_bool_type(self):
-        parser = helpers.mangle_parser(commandline.ArgumentParser())
-        parser.add_argument(
-            "--testing", action=arghparse.StoreBool, default=None)
-
-        for raw_val in ("n", "no", "false"):
-            for allowed in (raw_val.upper(), raw_val.lower()):
-                namespace = parser.parse_args(['--testing=' + allowed])
-                self.assertEqual(
-                    namespace.testing, False,
-                    msg="for --testing=%s, got %r, expected False" %
-                        (allowed, namespace.testing))
-
-        for raw_val in ("y", "yes", "true"):
-            for allowed in (raw_val.upper(), raw_val.lower()):
-                namespace = parser.parse_args(['--testing=' + allowed])
-                self.assertEqual(
-                    namespace.testing, True,
-                    msg="for --testing=%s, got %r, expected False" %
-                        (allowed, namespace.testing))
-
-        try:
-            parser.parse_args(["--testing=invalid"])
-        except helpers.Error:
-            pass
-        else:
-            self.fail("no error message thrown for --testing=invalid")
-
-
 class _Trigger(argparse.Action):
 
     def __call__(self, parser, namespace, values, option_string=None):
@@ -103,7 +42,7 @@ class _Trigger(argparse.Action):
         namespace.empty_config = True
 
 
-class ModifyConfigTest(TestCase, helpers.ArgParseMixin):
+class ModifyConfigTest(TestCase, ArgParseMixin):
 
     parser = commandline.ArgumentParser(domain=False, version=False)
     parser.add_argument('--trigger', nargs=0, action=_Trigger)

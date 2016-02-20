@@ -592,9 +592,15 @@ def portage_verbose_factory():
     return factory
 
 
-def sizeof_fmt(size):
-    for x in ['B', 'kB', 'MB', 'GB']:
-        if size < 1024.0:
+def sizeof_fmt(size, binary=True):
+    if binary:
+        units = ('B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB')
+        increment = 1024.0
+    else:
+        units = ('B', 'kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB')
+        increment = 1000.0
+
+    for i, x in enumerate(units):
+        if size < increment or i == len(units):
             return "%3.1f %s" % (size, x)
-        size /= 1024.0
-    return "%3.1f %s" % (size, 'TB')
+        size /= increment

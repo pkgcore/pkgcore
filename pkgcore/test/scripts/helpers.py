@@ -1,7 +1,6 @@
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
 # License: BSD/GPL2
 
-
 """Helpers for testing scripts."""
 
 import argparse
@@ -52,6 +51,7 @@ def mangle_parser(parser):
 
 class fake_domain(object):
     pkgcore_config_type = ConfigHint(typename='domain')
+
     def __init__(self):
         pass
 

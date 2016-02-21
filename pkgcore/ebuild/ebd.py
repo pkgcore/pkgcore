@@ -333,7 +333,10 @@ class ebd(object):
             try:
                 os.rmdir(os.path.dirname(self.builddir))
             except EnvironmentError as e:
-                if e.errno != errno.ENOTEMPTY:
+                # POSIX specifies either ENOTEMPTY or EEXIST for non-empty dir
+                # in particular, Solaris uses EEXIST in that case.
+                # https://github.com/pkgcore/pkgcore/pull/181
+                if e.errno not in (errno.ENOTEMPTY, errno.EEXIST):
                     raise
         except EnvironmentError as e:
             raise_from(format.GenericBuildError(
@@ -894,7 +897,10 @@ class ebuild_mixin(object):
             try:
                 os.rmdir(os.path.dirname(builddir))
             except EnvironmentError as e:
-                if e.errno != errno.ENOTEMPTY:
+                # POSIX specifies either ENOTEMPTY or EEXIST for non-empty dir
+                # in particular, Solaris uses EEXIST in that case.
+                # https://github.com/pkgcore/pkgcore/pull/181
+                if e.errno not in (errno.ENOTEMPTY, errno.EEXIST):
                     raise
 
 

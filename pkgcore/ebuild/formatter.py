@@ -14,7 +14,6 @@ __all__ = (
 import operator
 
 from snakeoil.cli.input import userquery
-from snakeoil.compatibility import raise_from
 from snakeoil.demandload import demandload
 from snakeoil.lists import iflatten_instance
 
@@ -24,7 +23,7 @@ demandload(
     'errno',
     'os',
     'snakeoil.mappings:defaultdictkey',
-    'snakeoil.osutils:pjoin',
+    'snakeoil.osutils:pjoin,sizeof_fmt',
     'pkgcore.log:logger',
 )
 
@@ -590,17 +589,3 @@ def portage_verbose_factory():
         kwargs['verbose'] = True
         return PortageFormatter(**kwargs)
     return factory
-
-
-def sizeof_fmt(size, binary=True):
-    if binary:
-        units = ('B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB')
-        increment = 1024.0
-    else:
-        units = ('B', 'kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB')
-        increment = 1000.0
-
-    for i, x in enumerate(units):
-        if size < increment or i == len(units):
-            return "%3.1f %s" % (size, x)
-        size /= increment

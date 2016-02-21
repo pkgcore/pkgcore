@@ -33,6 +33,7 @@ demandload(
     'os',
     're',
     'snakeoil.lists:iter_stable_unique',
+    'snakeoil.osutils:sizeof_fmt',
     'pkgcore.fs:fs@fs_module,contents@contents_module',
     'pkgcore.repository:multiplex',
 )
@@ -398,6 +399,15 @@ def print_package(options, out, err, pkg):
             else:
                 out.write('%r' % (obj,))
 
+    if options.size:
+        size = 0
+        files = 0
+        for location in (obj.location for obj in get_pkg_attr(pkg, 'contents', ())):
+            files += 1
+            size += os.lstat(location).st_size
+        out.write('Total files: %d' % (files,))
+        out.write('Total size: %s' % (sizeof_fmt(size),))
+
 
 def print_packages_noversion(options, out, err, pkgs):
     """Print a summary of all versions for a single package."""
@@ -537,8 +547,8 @@ def setup_repos(namespace, attr):
         # The store repo machinery handles --raw and --unfiltered for
         # us, thus it being the first check.
         repos = [namespace.repo]
-    elif namespace.contents or namespace._owns or namespace._owns_re or \
-            namespace.installed:
+    elif (namespace.contents or namespace.size or namespace._owns or
+            namespace._owns_re or namespace.installed):
         repos = namespace.domain.vdb
     elif namespace.unfiltered:
         if namespace.all_repos:
@@ -861,6 +871,9 @@ output.add_argument(
     '--blame', action=arghparse.Expansion,
     subst=(("--attr", "maintainers"),),
     help='shorthand for --attr maintainers')
+output.add_argument(
+    '--size', action='store_true',
+    help='display size of all files owned by the package')
 output.add_argument(
     '--contents', action='store_true',
     help='list files owned by the package')

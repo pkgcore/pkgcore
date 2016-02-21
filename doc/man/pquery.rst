@@ -67,7 +67,7 @@ Other tool                   pquery                                    Comments
 ``equery files python``      ``pquery --contents python``              ``--contents`` is an output option, can be combined with any restriction
 ``equery hasuse python``     ``pquery -I --has-use python``
 ``equery list python``       ``pquery -I '*python*'``                  this is in ExtendedAtomSyntax
-``equery size``              ``not implemented (yet?)``
+``equery size python``       ``pquery --size python``
 ``equery uses python``       ``pquery --attr use python``              less information, but is an output option so mixes with any restriction
 ``emerge -s python``         ``pquery -vnm '*python*'``
 ``emerge -S python``         ``pquery -vnS python``                    searches through longdescription (from metadata.xml) too

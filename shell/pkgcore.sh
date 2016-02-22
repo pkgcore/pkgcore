@@ -44,9 +44,6 @@ _choose() {
 
 # change to a package directory
 #
-# usage: pcd pkg [repo]
-# example: pcd sys-devel/gcc gentoo
-#
 # This will change the current working directory to the sys-devel/gcc directory
 # in the gentoo repo. Note that pkgcore's extended atom syntax is supported so
 # one can also abbreviate the command to `pcd gcc gentoo` assuming there is
@@ -57,6 +54,16 @@ _choose() {
 # to enter the repos for installed or binpkgs via 'vdb' or 'binpkg' repo
 # arguments, respectively.
 pcd() {
+	if [[ $1 == "-h" || $1 == "--help" ]]; then
+		cat <<-EOF
+			pcd: change to a package directory
+			usage: pcd pkg [repo]
+			example: pcd gcc gentoo -- change to the sys-devel/gcc directory in the gentoo repo
+			example: pcd coreutils vdb -- change to the sys-apps/coreutils dir in the vdb
+		EOF
+		return 0
+	fi
+
 	local pkgpath=$(_pkgattr path "$@")
 	[[ -z ${pkgpath} ]] && return 1
 

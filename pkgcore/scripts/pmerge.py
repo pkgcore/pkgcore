@@ -230,6 +230,7 @@ output_options.add_argument(
 
 
 class AmbiguousQuery(parserestrict.ParseError):
+    """Exception for multiple matches where a single match is required."""
     def __init__(self, token, keys):
         self.token = token
         self.keys = keys
@@ -239,6 +240,7 @@ class AmbiguousQuery(parserestrict.ParseError):
 
 
 class NoMatches(parserestrict.ParseError):
+    """Exception for no matches where at least one match is required."""
     def __init__(self, token):
         parserestrict.ParseError.__init__(self, '%s: no matches' % (token,))
 

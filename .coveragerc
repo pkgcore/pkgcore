@@ -1,7 +1,9 @@
 [run]
 source = pkgcore
 branch = True
-omit = pkgcore/test/*
+omit =
+	pkgcore/test/*
+	pkgcore/_verinfo.py
 
 [report]
 show_missing = True

@@ -6,6 +6,8 @@ import argparse
 import errno
 import os
 import pty
+import sys
+import unittest
 
 from snakeoil import compatibility
 
@@ -166,6 +168,7 @@ class MainTest(TestCase):
             out = io.TextIOWrapper(out)
         return master, out
 
+    @unittest.skipUnless(sys.platform.startswith('linux'), 'test hangs on non-Linux systems')
     def test_tty_detection(self):
         argparser = commandline.ArgumentParser(
             config=False, domain=False, color=True, debug=False,

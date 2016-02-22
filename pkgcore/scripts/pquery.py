@@ -643,7 +643,7 @@ add_query(
     """)
 add_query(
     '--has-use', action='append',
-    type=parserestrict.comma_separated_containment('iuse'),
+    type=parserestrict.comma_separated_containment('iuse_stripped'),
     help='exact string match on a USE flag')
 add_query(
     '--license', action='append',

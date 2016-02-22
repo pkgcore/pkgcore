@@ -602,6 +602,7 @@ _pquery() {
     '--one-attr[print one attribute, suppresses other output]'
     '--force-one-attr[like --one-attr but accepts any string as attribute name instead of only explicitly supported names]'
     '--one-attr[print one attribute, suppresses other output]'
+    '--size[display size of all files owned by the package]'
     '--contents[list files owned by the package]'
     '--highlight-dep[highlight dependencies matching this atom]'
     '--blame[shorthand for --attr maintainers]'

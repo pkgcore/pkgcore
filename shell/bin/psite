@@ -10,6 +10,10 @@
 #
 # Note that this requires xdg-utils to be installed for xdg-open.
 
+# Default to the current working directory if no argument is passed so psite
+# can be run with no arguments from within an ebuild's directory.
+[[ $# -eq 0 ]] && set -- "${PWD}" "$@"
+
 homepage=( $(_pkgattr homepage "$@") )
 
 if [[ -z ${homepage[@]} ]]; then

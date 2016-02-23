@@ -73,7 +73,6 @@ _array_index() {
 # are not considered).
 #
 # optional args:
-#  -c output completion format
 #  -e add package.provided "repo" to the list
 #  -i add vdb "repo" to the list
 #  -s add repo-stack "repo" to the list

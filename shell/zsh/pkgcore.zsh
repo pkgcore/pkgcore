@@ -249,7 +249,7 @@ _arches() {
 
 	typeset -a arches
 
-	if [[ -n ${opts[(I)-r] ]]}; then
+	if [[ -n ${opts[(I)-r]} ]]; then
 		repo=${opts[-r]}
 	else
 		repo=$(_repos -p -v DEFAULT:main-repo)

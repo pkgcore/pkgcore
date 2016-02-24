@@ -260,7 +260,7 @@ def portageq_get_repo_news_path(options, out, err):
     return get_repo_news_path.function(options, out, err)
 
 def bind_parser(parser, compat=False, name='portageq'):
-    subparsers = parser.add_subparsers(help="%s commands" % (name,))
+    subparsers = parser.add_subparsers(description="%s commands" % (name,))
     l = common_commands[:]
     if compat:
         l += portageq_commands

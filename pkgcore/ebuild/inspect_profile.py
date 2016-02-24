@@ -344,7 +344,7 @@ class arch(_base):
 
 
 def bind_parser(parser, name):
-    subparsers = parser.add_subparsers(help="%s commands" % (name,))
+    subparsers = parser.add_subparsers(description="%s commands" % (name,))
     for command in commands:
         # Split docstrings into summaries and extended docs.
         help, _, docs = command.__doc__.partition('\n')

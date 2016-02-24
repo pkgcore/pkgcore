@@ -13,6 +13,7 @@ import errno
 import inspect
 import io
 import math
+import operator
 import os
 import re
 import shlex
@@ -45,15 +46,22 @@ def find_project(topdir=TOPDIR):
     module.
     """
     topdir_depth = len(topdir.split('/'))
+    modules = []
 
     # look for a top-level module
     for root, dirs, files in os.walk(topdir):
+        # only descend at most one level
         if len(root.split('/')) > topdir_depth + 1:
             continue
         if '__init__.py' in files:
-            return os.path.basename(root)
+            modules.append(os.path.basename(root))
 
-    raise ValueError('No project module found')
+    if not modules:
+        raise ValueError('No project module found')
+    elif len(modules) > 1:
+        raise ValueError('Multiple project modules found: %s' % (', '.join(modules)))
+
+    return modules[0]
 
 
 # determine the project we're being imported into
@@ -210,15 +218,7 @@ class build_py(dst_build_py.build_py):
         from lib2to3 import refactor as ref_mod
         from snakeoil.dist import caching_2to3
 
-        if ((sys.version_info >= (3, 0) and sys.version_info < (3, 1, 2)) or
-                (sys.version_info >= (2, 6) and sys.version_info < (2, 6, 5))):
-            if proc_count not in (0, 1):
-                log.warn(
-                    "disabling parallelization: you're running a python version "
-                    "with a broken multiprocessing.queue.JoinableQueue.put "
-                    "(python bug 4660).")
-            proc_count = 1
-        elif proc_count == 0:
+        if proc_count == 0:
             import multiprocessing
             proc_count = multiprocessing.cpu_count()
 
@@ -462,6 +462,37 @@ class build_scripts(dst_build_scripts.build_scripts):
                     scripts.main(basename(__file__))
                 """ % (sys.executable, PROJECT)))
         self.copy_scripts()
+
+
+class build(dst_build.build):
+
+    user_options = dst_build.build.user_options[:]
+    user_options.append(('enable-man-pages', None, 'build man pages'))
+    user_options.append(('enable-html-docs', None, 'build html docs'))
+
+    boolean_options = dst_build.build.boolean_options[:]
+    boolean_options.extend(['enable-man-pages', 'enable-html-docs'])
+
+    sub_commands = dst_build.build.sub_commands[:]
+    sub_commands.append(('build_ext', None))
+    sub_commands.append(('build_py', None))
+    sub_commands.append(('build_scripts', None))
+    sub_commands.append(('build_docs', operator.attrgetter('enable_html_docs')))
+    sub_commands.append(('build_man', operator.attrgetter('enable_man_pages')))
+
+    def initialize_options(self):
+        dst_build.build.initialize_options(self)
+        self.enable_man_pages = False
+        self.enable_html_docs = False
+
+    def finalize_options(self):
+        dst_build.build.finalize_options(self)
+        if self.enable_man_pages is None:
+            path = os.path.dirname(os.path.abspath(__file__))
+            self.enable_man_pages = not os.path.exists(os.path.join(path, 'man'))
+
+        if self.enable_html_docs is None:
+            self.enable_html_docs = False
 
 
 class install_docs(Command):

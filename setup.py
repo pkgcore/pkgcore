@@ -10,7 +10,6 @@ import subprocess
 import sys
 
 from distutils import log
-from distutils.command.build import build
 from distutils.errors import DistutilsExecError
 from distutils.util import byte_compile
 from setuptools import setup, find_packages
@@ -42,35 +41,6 @@ class mysdist(pkgdist.sdist):
                         os.path.join(base_dir, 'ebd', 'funcnames'))
 
         pkgdist.sdist.make_release_tree(self, base_dir, files)
-
-
-class pkgcore_build(build):
-
-    user_options = build.user_options[:]
-    user_options.append(('enable-man-pages', None, 'build man pages'))
-    user_options.append(('enable-html-docs', None, 'build html docs'))
-
-    boolean_options = build.boolean_options[:]
-    boolean_options.extend(['enable-man-pages', 'enable-html-docs'])
-
-    sub_commands = build.sub_commands[:]
-    sub_commands.append(('build_scripts', None))
-    sub_commands.append(('build_docs', operator.attrgetter('enable_html_docs')))
-    sub_commands.append(('build_man', operator.attrgetter('enable_man_pages')))
-
-    def initialize_options(self):
-        build.initialize_options(self)
-        self.enable_man_pages = False
-        self.enable_html_docs = False
-
-    def finalize_options(self):
-        build.finalize_options(self)
-        if self.enable_man_pages is None:
-            path = os.path.dirname(os.path.abspath(__file__))
-            self.enable_man_pages = not os.path.exists(os.path.join(path, 'man'))
-
-        if self.enable_html_docs is None:
-            self.enable_html_docs = False
 
 
 _base_install = getattr(pkgdist, 'install', install.install)
@@ -222,14 +192,14 @@ if not pkgdist.is_py3k:
 
 cmdclass = {
     'sdist': mysdist,
-    'build': pkgcore_build,
+    'build': pkgdist.build,
     'build_py': pkgdist.build_py,
     'build_ext': pkgdist.build_ext,
+    'build_scripts': pkgdist.build_scripts,
     'build_man': pkgdist.build_man,
     'build_docs': pkgdist.build_docs,
     'test': test,
     'install': pkgcore_install,
-    'build_scripts': pkgdist.build_scripts,
     'install_man': pkgdist.install_man,
     'install_docs': pkgdist.install_docs,
 }

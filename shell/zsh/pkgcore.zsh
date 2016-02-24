@@ -42,10 +42,10 @@ _pkgattr() {
 
 	local choice
 	if [[ -z ${pkg[@]} ]]; then
-		echo "${prog}: no matches found" >&2
+		echo "${prog}: no matches found: ${pkg_atom}" >&2
 		return 1
 	elif [[ ${#pkg[@]} > 1 ]]; then
-		echo "${prog}: multiple matches found:" >&2
+		echo "${prog}: multiple matches found: ${pkg_atom}" >&2
 		choice=$(_choose "${pkg[@]%%:*}")
 		[[ $? -ne 0 ]] && return 1
 	else

@@ -18,8 +18,11 @@ try:
 except ImportError:
     _defaults = object()
 
-SYSTEM_CONF_FILE   = '/etc/pkgcore.conf'
-USER_CONF_FILE     = osp.expanduser('~/.pkgcore.conf')
+SYSTEM_CONF_FILE   = '/etc/pkgcore/pkgcore.conf'
+USER_CONF_FILE     = osp.expanduser('~/.config/pkgcore/pkgcore.conf')
+# TODO: deprecated, drop support in 0.10
+OLD_SYSTEM_CONF_FILE   = '/etc/pkgcore.conf'
+OLD_USER_CONF_FILE = osp.expanduser('~/.pkgcore.conf')
 
 SANDBOX_BINARY     = '/usr/bin/sandbox'
 BASH_BINARY        = find_binary('bash')

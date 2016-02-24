@@ -14,12 +14,13 @@ __all__ = ("ConfigHint", "configurable", "load_config")
 
 from snakeoil.demandload import demandload
 
-from pkgcore.const import SYSTEM_CONF_FILE, USER_CONF_FILE
+from pkgcore import const
 
 demandload(
     'os',
     'pkgcore.config:central,cparser',
     'pkgcore.ebuild.portage_conf:config_from_make_conf',
+    'pkgcore.log:logger',
     'pkgcore.plugin:get_plugins',
 )
 
@@ -63,8 +64,8 @@ def configurable(*args, **kwargs):
     return decorator
 
 
-def load_config(user_conf_file=USER_CONF_FILE,
-                system_conf_file=SYSTEM_CONF_FILE,
+def load_config(user_conf_file=const.USER_CONF_FILE,
+                system_conf_file=const.SYSTEM_CONF_FILE,
                 debug=False, prepend_sources=(), append_sources=(),
                 skip_config_files=False, profile_override=None,
                 location=None, **kwargs):
@@ -84,8 +85,16 @@ def load_config(user_conf_file=USER_CONF_FILE,
     configs.extend(get_plugins('global_config'))
     if not skip_config_files:
         # load a pkgcore config file if one exists
-        for config in (location, user_conf_file, system_conf_file):
+        for config in (location,
+                       user_conf_file, const.OLD_USER_CONF_FILE,
+                       system_conf_file, const.OLD_SYSTEM_CONF_FILE):
             if config is not None and os.path.isfile(config):
+                # TODO: drop the deprecation notice for 0.10
+                if config in (const.OLD_USER_CONF_FILE, const.OLD_SYSTEM_CONF_FILE):
+                    logger.warning(
+                        'The config file location %s is deprecated, please move '
+                        'the file to %s for user configs or %s for system configs.',
+                        config, const.USER_CONF_FILE, const.SYSTEM_CONF_FILE)
                 with open(config) as f:
                     configs.append(cparser.config_from_file(f))
                 break

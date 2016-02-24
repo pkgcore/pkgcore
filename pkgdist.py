@@ -25,13 +25,14 @@ import textwrap
 os.environ["SNAKEOIL_DEMANDLOAD_PROTECTION"] = 'n'
 os.environ["SNAKEOIL_DEMANDLOAD_WARN"] = 'n'
 
+from setuptools.command import install as dst_install
+
 from distutils import log
 from distutils.core import Command, Extension
 from distutils.errors import DistutilsExecError
 from distutils.command import (
     sdist as dst_sdist, build_ext as dst_build_ext, build_py as dst_build_py,
-    build as dst_build, build_scripts as dst_build_scripts, config as dst_config,
-    install as dst_install)
+    build as dst_build, build_scripts as dst_build_scripts, config as dst_config)
 
 # getting built by readthedocs
 READTHEDOCS = os.environ.get('READTHEDOCS', None) == 'True'

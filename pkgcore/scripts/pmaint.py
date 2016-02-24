@@ -40,7 +40,7 @@ demandload(
 
 argparser = arghparse.ArgumentParser(
     suppress=True, description=__doc__,
-    parents=(commandline.ArgumentParser(domain=False, add_help=False),))
+    parents=(commandline.ArgumentParser(domain=False),))
 subparsers = argparser.add_subparsers(description="general system maintenance")
 
 shared_options = (commandline.ArgumentParser(

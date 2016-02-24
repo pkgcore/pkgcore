@@ -112,7 +112,7 @@ shared_options_domain = (commandline.ArgumentParser(
 
 argparser = arghparse.ArgumentParser(
         suppress=True, description=__doc__,
-        parents=(commandline.ArgumentParser(domain=False, add_help=False),))
+        parents=(commandline.ArgumentParser(domain=False),))
 subparsers = argparser.add_subparsers(description="configuration related subcommands")
 classes = subparsers.add_parser(
     "classes", parents=shared_options,

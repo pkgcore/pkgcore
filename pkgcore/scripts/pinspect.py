@@ -40,9 +40,9 @@ demandload(
     'pkgcore.restrictions:packages',
 )
 
-shared_options = (commandline.ArgumentParser(domain=False, add_help=False),)
 argparser = arghparse.ArgumentParser(
-    suppress=True, description=__doc__, parents=shared_options)
+    suppress=True, description=__doc__,
+    parents=(commandline.ArgumentParser(domain=False),))
 subparsers = argparser.add_subparsers(description="report applets")
 
 pkgsets = subparsers.add_parser(

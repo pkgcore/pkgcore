@@ -3,12 +3,13 @@
 
 # get an attribute for a given package
 _pkgattr() {
+	local prog=${${funcstack[-1]}:t}
 	local pkg_attr=$1 pkg_atom=$2 repo=$3
 	local ret=0 pid fdout fderr
 	local -a pkg error
 
 	if [[ -z ${pkg_atom} ]]; then
-		echo "Enter a valid package name or repo path." >&2
+		echo "${prog}: enter a valid package name or repo path" >&2
 		return 1
 	fi
 
@@ -41,10 +42,10 @@ _pkgattr() {
 
 	local choice
 	if [[ -z ${pkg[@]} ]]; then
-		echo "No matches found." >&2
+		echo "${prog}: no matches found" >&2
 		return 1
 	elif [[ ${#pkg[@]} > 1 ]]; then
-		echo "Multiple matches found:" >&2
+		echo "${prog}: multiple matches found:" >&2
 		choice=$(_choose "${pkg[@]%%:*}")
 		[[ $? -ne 0 ]] && return 1
 	else

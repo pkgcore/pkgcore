@@ -41,7 +41,7 @@ _pkgattr() {
 
 	if [[ ${ret} != 0 ]]; then
 		# show pquery error message
-		echo "${error[-1]}" >&2
+		echo "${prog}: ${error[-1]#pquery: error: }" >&2
 		return 1
 	fi
 

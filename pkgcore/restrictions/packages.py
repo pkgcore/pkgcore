@@ -311,6 +311,8 @@ AlwaysBool = restriction.curry_node_type(restriction.AlwaysBool,
 
 class KeyedAndRestriction(boolean.AndRestriction):
 
+    __inst_caching__ = True
+
     type = package_type
 
     def __init__(self, *a, **kwds):

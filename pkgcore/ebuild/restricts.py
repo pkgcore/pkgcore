@@ -133,7 +133,7 @@ class VersionMatch(restriction.base):
 class SlotDep(packages.PackageRestriction):
 
     __slots__ = ()
-    __instance_caching__ = True
+    __inst_caching__ = True
 
     def __init__(self, slot, **kwds):
         v = values.StrExactMatch(slot)
@@ -144,7 +144,7 @@ class SlotDep(packages.PackageRestriction):
 class SubSlotDep(packages.PackageRestriction):
 
     __slots__ = ()
-    __instance_caching__ = True
+    __inst_caching__ = True
 
     def __init__(self, slot, **kwds):
         v = values.StrExactMatch(slot)
@@ -155,7 +155,7 @@ class SubSlotDep(packages.PackageRestriction):
 class CategoryDep(packages.PackageRestriction):
 
     __slots__ = ()
-    __instance_caching_ = True
+    __inst_caching__ = True
 
     def __init__(self, category, negate=False):
         packages.PackageRestriction.__init__(
@@ -166,7 +166,7 @@ class CategoryDep(packages.PackageRestriction):
 class PackageDep(packages.PackageRestriction):
 
     __slots__ = ()
-    __instance_caching_ = True
+    __inst_caching__ = True
 
     def __init__(self, package, negate=False):
         packages.PackageRestriction.__init__(
@@ -177,7 +177,7 @@ class PackageDep(packages.PackageRestriction):
 class RepositoryDep(packages.PackageRestriction):
 
     __slots__ = ()
-    __instance_caching__ = True
+    __inst_caching__ = True
 
     def __init__(self, repo_id, negate=False):
         packages.PackageRestriction.__init__(
@@ -188,7 +188,7 @@ class RepositoryDep(packages.PackageRestriction):
 class StaticUseDep(packages.PackageRestriction):
 
     __slots__ = ()
-    __instance_caching__ = True
+    __inst_caching__ = True
 
     def __init__(self, false_use, true_use):
         v = []
@@ -266,7 +266,7 @@ class _UseDepDefaultContainment(values.ContainmentMatch):
 class UseDepDefault(packages.PackageRestrictionMulti):
 
     __slots__ = ()
-    __instance_caching__ = True
+    __inst_caching__ = True
 
     def __init__(self, if_missing, false_use, true_use):
         v = []
@@ -305,6 +305,9 @@ def _parse_nontransitive_use(sequence):
             trg[1].append(token)
 
     r = []
+    normal = (tuple(normal[0]), tuple(normal[1]))
+    default_on = (tuple(default_on[0]), tuple(default_on[1]))
+    default_off = (tuple(default_off[0]), tuple(default_off[1]))
     if normal[0] or normal[1]:
         r.append(StaticUseDep(*normal))
     if default_off[0] or default_off[1]:

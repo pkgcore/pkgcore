@@ -396,8 +396,6 @@ class merge_plan(object):
         assert hasattr(dbs, 'itermatch')
         limit_to_vdb = dbs == self.livefs_dbs
 
-        depth = stack.depth
-
         matches = self._viable(stack, mode, atom, dbs, drop_cycles, limit_to_vdb)
         if matches is None:
             stack.pop_frame(False)
@@ -406,6 +404,8 @@ class merge_plan(object):
             stack.pop_frame(True)
             return None
         choices, matches = matches
+
+        depth = stack.depth
 
         if stack:
             if limit_to_vdb:

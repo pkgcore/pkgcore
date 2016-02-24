@@ -13,7 +13,6 @@ from distutils import log
 from distutils.errors import DistutilsExecError
 from distutils.util import byte_compile
 from setuptools import setup, find_packages
-from setuptools.command import install
 
 import pkgdist
 
@@ -25,8 +24,8 @@ LIBDIR_INSTALL_OFFSET = 'lib/pkgcore'
 EBD_INSTALL_OFFSET = os.path.join(LIBDIR_INSTALL_OFFSET, 'ebd')
 
 
-class mysdist(pkgdist.sdist):
-    """sdist command wrapper to bundle generated files for release."""
+class sdist(pkgdist.sdist):
+    """sdist wrapper to bundle generated files for release."""
 
     def make_release_tree(self, base_dir, files):
         """Generate bash function lists for releases."""
@@ -43,38 +42,11 @@ class mysdist(pkgdist.sdist):
         pkgdist.sdist.make_release_tree(self, base_dir, files)
 
 
-_base_install = getattr(pkgdist, 'install', install.install)
-
-
-class pkgcore_install(_base_install):
-
-    user_options = _base_install.user_options[:]
-    user_options.append(('enable-man-pages', None, 'install man pages'))
-    user_options.append(('enable-html-docs', None, 'install html docs'))
-
-    boolean_options = _base_install.boolean_options[:]
-    boolean_options.extend(['enable-man-pages', 'enable-html-docs'])
-
-    def initialize_options(self):
-        _base_install.initialize_options(self)
-        self.enable_man_pages = False
-        self.enable_html_docs = False
-
-    def finalize_options(self):
-        build_options = self.distribution.command_options.setdefault('build', {})
-        build_options['enable_html_docs'] = ('command_line', self.enable_html_docs and 1 or 0)
-        man_pages = self.enable_man_pages
-        if man_pages and os.path.exists('man'):
-            man_pages = False
-        build_options['enable_man_pages'] = ('command_line', man_pages and 1 or 0)
-        _base_install.finalize_options(self)
-
-    sub_commands = _base_install.sub_commands[:]
-    sub_commands.append(('install_man', operator.attrgetter('enable_man_pages')))
-    sub_commands.append(('install_docs', operator.attrgetter('enable_html_docs')))
+class install(pkgdist.install):
+    """install wrapper to generate and install pkgcore-related files."""
 
     def run(self):
-        _base_install.run(self)
+        pkgdist.install.run(self)
         target = self.install_data
         root = self.root or '/'
         if target.startswith(root):
@@ -155,6 +127,7 @@ def write_pkgcore_lookup_configs(python_base, install_prefix, injected_bin_path=
 
 
 class test(pkgdist.test):
+    """test wrapper to enforce testing against built version."""
 
     def run(self):
         # This is fairly hacky, but is done to ensure that the tests
@@ -191,7 +164,7 @@ if not pkgdist.is_py3k:
     ])
 
 cmdclass = {
-    'sdist': mysdist,
+    'sdist': sdist,
     'build': pkgdist.build,
     'build_py': pkgdist.build_py,
     'build_ext': pkgdist.build_ext,
@@ -199,7 +172,7 @@ cmdclass = {
     'build_man': pkgdist.build_man,
     'build_docs': pkgdist.build_docs,
     'test': test,
-    'install': pkgcore_install,
+    'install': install,
     'install_man': pkgdist.install_man,
     'install_docs': pkgdist.install_docs,
 }

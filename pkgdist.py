@@ -30,7 +30,8 @@ from distutils.core import Command, Extension
 from distutils.errors import DistutilsExecError
 from distutils.command import (
     sdist as dst_sdist, build_ext as dst_build_ext, build_py as dst_build_py,
-    build as dst_build, build_scripts as dst_build_scripts, config as dst_config)
+    build as dst_build, build_scripts as dst_build_scripts, config as dst_config,
+    install as dst_install)
 
 # getting built by readthedocs
 READTHEDOCS = os.environ.get('READTHEDOCS', None) == 'True'
@@ -465,6 +466,7 @@ class build_scripts(dst_build_scripts.build_scripts):
 
 
 class build(dst_build.build):
+    """Generic build command."""
 
     user_options = dst_build.build.user_options[:]
     user_options.append(('enable-man-pages', None, 'build man pages'))
@@ -596,6 +598,35 @@ class install_man(install_docs):
                 # .1, but allow a.1).
                 d[x] = 'man%s/%s' % (x[-1], os.path.basename(x))
         return d
+
+
+class install(dst_install.install):
+    """Generic install command."""
+
+    user_options = dst_install.install.user_options[:]
+    user_options.append(('enable-man-pages', None, 'install man pages'))
+    user_options.append(('enable-html-docs', None, 'install html docs'))
+
+    boolean_options = dst_install.install.boolean_options[:]
+    boolean_options.extend(['enable-man-pages', 'enable-html-docs'])
+
+    def initialize_options(self):
+        dst_install.install.initialize_options(self)
+        self.enable_man_pages = False
+        self.enable_html_docs = False
+
+    def finalize_options(self):
+        build_options = self.distribution.command_options.setdefault('build', {})
+        build_options['enable_html_docs'] = ('command_line', self.enable_html_docs and 1 or 0)
+        man_pages = self.enable_man_pages
+        if man_pages and os.path.exists('man'):
+            man_pages = False
+        build_options['enable_man_pages'] = ('command_line', man_pages and 1 or 0)
+        dst_install.install.finalize_options(self)
+
+    sub_commands = dst_install.install.sub_commands[:]
+    sub_commands.append(('install_man', operator.attrgetter('enable_man_pages')))
+    sub_commands.append(('install_docs', operator.attrgetter('enable_html_docs')))
 
 
 class test(Command):

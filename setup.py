@@ -53,7 +53,7 @@ class install(pkgdist.install):
             target = os.path.join('/', os.path.relpath(target, root))
         target = os.path.abspath(target)
         if not self.dry_run:
-            # Install configuration data so pkgcore knows where to find it's content,
+            # Install configuration data so pkgcore knows where to find its content,
             # rather than assuming it is running from a tarball/git repo.
             write_pkgcore_lookup_configs(self.install_purelib, target)
 

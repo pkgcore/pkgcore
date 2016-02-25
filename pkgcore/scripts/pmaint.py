@@ -420,8 +420,9 @@ digest.add_argument(
         - If a repo is specified, the entire repo is manifested.
         - If a repo isn't specified, a path restriction is created based on the
           current working directory. In other words, if `pmaint digest` is run
-          without an ebuild's directory, all the ebuilds within that directory
-          will be manifested.
+          within an ebuild's directory, all the ebuilds within that directory
+          will be manifested. If the current working directory isn't
+          within any configured repo, all repos are manifested.
     """)
 digest_opts = digest.add_argument_group("subcommand options")
 digest_opts.add_argument(
@@ -435,25 +436,24 @@ digest_opts.add_argument(
 
 @digest.bind_final_check
 def _digest_validate(parser, namespace):
-    if namespace.repo is not None:
-        if not namespace.target:
-            namespace.target = [namespace.repo.location]
+    repo = namespace.repo
+    targets = namespace.target
+    restrictions = []
+    if repo is not None:
+        if not targets:
+            restrictions = repo.path_restrict(repo.location)
     else:
-        namespace.repo = namespace.domain.all_raw_ebuild_repos
-        if not namespace.target:
-            namespace.target = [os.getcwd()]
+        repo = namespace.domain.all_raw_ebuild_repos
+        if not targets:
+            try:
+                restrictions = repo.path_restrict(os.getcwd())
+            except ValueError:
+                # we're not in a configured repo so manifest everything
+                restrictions = [repo.path_restrict(x.location) for x in repo.trees]
 
-
-@digest.bind_main_func
-def digest_main(options, out, err):
-    domain = options.domain
-    repo = options.repo
-    targets = options.target
-    obs = observer.formatter_output(out)
     if not repo.operations.supports("digests"):
         digest.error("no repository support for digests")
 
-    restrictions = []
     for target in targets:
         if os.path.exists(target):
             try:
@@ -469,6 +469,17 @@ def digest_main(options, out, err):
     restrictions = packages.OrRestriction(*restrictions)
     if restrictions not in repo:
         digest.error("no matches for '%s'" % (' '.join(targets),))
-    elif not repo.operations.digests(domain, restrictions, observer=obs):
+    namespace.restrictions = restrictions
+    namespace.repo = repo
+
+
+@digest.bind_main_func
+def digest_main(options, out, err):
+    domain = options.domain
+    repo = options.repo
+    restrictions = options.restrictions
+    obs = observer.formatter_output(out)
+
+    if not repo.operations.digests(domain, restrictions, observer=obs):
         digest.error("some errors were encountered...")
     return 0

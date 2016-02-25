@@ -209,8 +209,8 @@ class eapi_usage_kls(histo_data):
         eapis = {}
         pos = 0
         for pos, pkg in enumerate(repo):
-            eapis.setdefault(pkg.eapi, 0)
-            eapis[pkg.eapi] += 1
+            eapis.setdefault(str(pkg.eapi), 0)
+            eapis[str(pkg.eapi)] += 1
         return eapis, pos + 1
 
 eapi_usage = subparsers.add_parser(

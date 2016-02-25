@@ -16,6 +16,8 @@ from functools import partial
 import sys
 from time import time
 
+from snakeoil.lists import iflatten_instance, stable_unique
+
 from pkgcore.ebuild import resolver, restricts
 from pkgcore.ebuild.atom import atom
 from pkgcore.merge import errors as merge_errors
@@ -24,8 +26,6 @@ from pkgcore.resolver.util import reduce_to_failures
 from pkgcore.restrictions import packages
 from pkgcore.restrictions.boolean import OrRestriction
 from pkgcore.util import commandline, parserestrict, repo_utils
-
-from snakeoil.lists import iflatten_instance, stable_unique
 
 
 argparser = commandline.ArgumentParser(domain=True, description=__doc__)

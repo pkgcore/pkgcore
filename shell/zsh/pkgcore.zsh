@@ -74,19 +74,40 @@ _array_index() {
 # are not considered).
 #
 # optional args:
-#  -e add package.provided "repo" to the list
-#  -i add vdb "repo" to the list
-#  -b add binpkg repos to the list
-#  -a add repo-stack "repo" to the list
+#  -r repo_types -- show specific repo types (defaults to showing source repos)
+#    The repo_types parameter can be any of the following characters in combination:
+#      e: package.provided "repo"
+#      i: vdb "repo"
+#      s: all source repos (default if the -r option isn't passed)
+#      b: all binary repos
+#      a: repo-stack "repo"
+#    For example, `_repos -r sbi` will return the list of source, binary, and
+#    installed repos.
 #  -v section:key
 #  -p print the output instead of using completion
 #  -l use repo locations instead of repo_ids
 _repos() {
 	typeset -A opts
-	zparseopts -E -A opts b c e i a l p v:
+	zparseopts -E -A opts r: l p v:
 
 	local repo_name output_type
-	typeset -a repos output
+	typeset -a repos repo_types output
+
+	# verify selected repo types
+	if [[ -n ${opts[(I)-r]} ]]; then
+		local -a accepted_repo_types=(e i s b a)
+		repo_types=(${(s::)opts[-r]})
+		for type in ${repo_types[@]}; do
+			if [[ ! ${type} =~ [${accepted_repo_types[@]}] ]]; then
+				echo "_repos: invalid repo type argument to -r: ${type}" >&2
+				echo "accepted types: ${accepted_repo_types[@]} (see docs)" >&2
+				return 1
+			fi
+		done
+	else
+		# default to showing source repos
+		repo_types=(s)
+	fi
 
 	if [[ -e /etc/portage/repos.conf ]]; then
 		repos_conf_files=( /etc/portage/repos.conf /etc/portage/repos.conf/** )
@@ -125,12 +146,12 @@ _repos() {
 	else
 		# repo names
 		output_type="repos"
-		local -a output_repos=(${repos[@]})
-		[[ -n ${opts[(I)-e]} ]] && output_repos+=( provided )
-		[[ -n ${opts[(I)-i]} ]] && output_repos+=( vdb )
-		[[ -n ${opts[(I)-b]} ]] && output_repos+=( binpkg )
-		[[ -n ${opts[(I)-a]} ]] && output_repos+=( repo-stack )
-		output=${output_repos[@]}
+
+		[[ ${repo_types} =~ "s" ]] && output+=(${repos[@]})
+		[[ ${repo_types} =~ "e" ]] && output+=( provided )
+		[[ ${repo_types} =~ "i" ]] && output+=( vdb )
+		[[ ${repo_types} =~ "b" ]] && output+=( binpkg )
+		[[ ${repo_types} =~ "a" ]] && output+=( repo-stack )
 	fi
 
 	if [[ -n ${compstate} ]] && [[ -z ${opts[(I)-p]} ]]; then

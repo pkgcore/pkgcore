@@ -74,32 +74,32 @@ _array_index() {
 # are not considered).
 #
 # optional args:
-#  -r repo_types -- show specific repo types (defaults to showing source repos)
+#  -t repo_types -- show specific repo types (defaults to showing source repos)
 #    The repo_types parameter can be any of the following characters in combination:
 #      e: package.provided "repo"
 #      i: vdb "repo"
-#      s: all source repos (default if the -r option isn't passed)
+#      s: all source repos (default if the -t option isn't passed)
 #      b: all binary repos
 #      a: repo-stack "repo"
-#    For example, `_repos -r sbi` will return the list of source, binary, and
+#    For example, `_repos -t sbi` will return the list of source, binary, and
 #    installed repos.
 #  -v section:key
 #  -p print the output instead of using completion
 #  -l use repo locations instead of repo_ids
 _repos() {
 	typeset -A opts
-	zparseopts -E -A opts r: l p v:
+	zparseopts -E -A opts t: l p v:
 
 	local repo_name output_type
 	typeset -a repos repo_types output
 
 	# verify selected repo types
-	if [[ -n ${opts[(I)-r]} ]]; then
+	if [[ -n ${opts[(I)-t]} ]]; then
 		local -a accepted_repo_types=(e i s b a)
-		repo_types=(${(s::)opts[-r]})
+		repo_types=(${(s::)opts[-t]})
 		for type in ${repo_types[@]}; do
 			if [[ ! ${type} =~ [${accepted_repo_types[@]}] ]]; then
-				echo "_repos: invalid repo type argument to -r: ${type}" >&2
+				echo "_repos: invalid repo type argument to -t: ${type}" >&2
 				echo "accepted types: ${accepted_repo_types[@]} (see docs)" >&2
 				return 1
 			fi

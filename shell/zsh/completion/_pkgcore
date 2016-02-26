@@ -190,7 +190,7 @@ _pinspect() {
         '--sort-by-name[sort output by name, rather then by frequency]'
         '--first[show only the first N detail items]:number'
         '--last[show only the last N detail items]:number'
-        '*:repo:_repos -r sia'
+        '*:repo:_repos -t sia'
       )
 
       case $line[1] in
@@ -564,7 +564,7 @@ _pquery() {
     '--raw[disable configuration and filtering]'
     '--no-filters[disable all license filtering and visibility filtering]'
     "--virtuals[specific virtuals handling (everything is matched by default)]:options:((only\:'only match virtuals' disable\:'no matching virtuals'))"
-    {'(--repo)-r','(-r)--repo'}'[target repository]:repo:_repos -r sei'
+    {'(--repo)-r','(-r)--repo'}'[target repository]:repo:_repos -t sei'
     {'(--ebuild-repos)-E','(-E)--ebuild-repos'}'[search all ebuild repos]'
     {'(--binary-repos)-B','(-B)--binary-repos'}'[search all binary repos]'
     {'(--installed)-I','(-I)--installed'}'[search installed pkgs]'
@@ -626,7 +626,7 @@ _pcd() {
   _arguments -C \
     '(- :)'{-h,--help}'[show help information and exit]' \
     '1:package atom' \
-    '2:repo:_repos -r sib' \
+    '2:repo:_repos -t sib' \
     && ret=0
 
   return ret
@@ -639,7 +639,7 @@ _psite() {
   _arguments -C \
     '(- :)'{-h,--help}'[show help information and exit]' \
     '1:package atom' \
-    '2:repo:_repos -r sib' \
+    '2:repo:_repos -t sib' \
     && ret=0
 
   return ret

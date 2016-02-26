@@ -77,13 +77,13 @@ _array_index() {
 #  -e add package.provided "repo" to the list
 #  -i add vdb "repo" to the list
 #  -b add binpkg repos to the list
-#  -s add repo-stack "repo" to the list
+#  -a add repo-stack "repo" to the list
 #  -v section:key
 #  -p print the output instead of using completion
 #  -l use repo locations instead of repo_ids
 _repos() {
 	typeset -A opts
-	zparseopts -E -A opts b c e i s l p v:
+	zparseopts -E -A opts b c e i a l p v:
 
 	local repo_name output_type
 	typeset -a repos output
@@ -125,11 +125,12 @@ _repos() {
 	else
 		# repo names
 		output_type="repos"
-		[[ -n ${opts[(I)-e]} ]] && repos+=( provided )
-		[[ -n ${opts[(I)-i]} ]] && repos+=( vdb )
-		[[ -n ${opts[(I)-b]} ]] && repos+=( binpkg )
-		[[ -n ${opts[(I)-s]} ]] && repos+=( repo-stack )
-		output=(${repos[@]})
+		local -a output_repos=(${repos[@]})
+		[[ -n ${opts[(I)-e]} ]] && output_repos+=( provided )
+		[[ -n ${opts[(I)-i]} ]] && output_repos+=( vdb )
+		[[ -n ${opts[(I)-b]} ]] && output_repos+=( binpkg )
+		[[ -n ${opts[(I)-a]} ]] && output_repos+=( repo-stack )
+		output=${output_repos[@]}
 	fi
 
 	if [[ -n ${compstate} ]] && [[ -z ${opts[(I)-p]} ]]; then

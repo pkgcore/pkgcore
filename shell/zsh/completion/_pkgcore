@@ -190,7 +190,7 @@ _pinspect() {
         '--sort-by-name[sort output by name, rather then by frequency]'
         '--first[show only the first N detail items]:number'
         '--last[show only the last N detail items]:number'
-        '*:repo:_repos -i -s'
+        '*:repo:_repos -i -a'
       )
 
       case $line[1] in

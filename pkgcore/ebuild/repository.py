@@ -51,7 +51,7 @@ class repo_operations(_repo_ops.operations):
         if manifest_config.disabled:
             observer.info("repo %s has manifests disabled", self.repo.repo_id)
             return
-        required = manifest_config.hashes
+        required_chksums = manifest_config.hashes
         ret = False
         for key_query in sorted(set(match.unversioned_atom for match in matches)):
             pkgs = self.repo.match(key_query)
@@ -80,7 +80,7 @@ class repo_operations(_repo_ops.operations):
 
                     fetchables = pkg_ops._mirror_op.verified_files
                     for path, fetchable in fetchables.iteritems():
-                        d = dict(zip(required, get_chksums(path, *required)))
+                        d = dict(zip(required_chksums, get_chksums(path, *required_chksums)))
                         fetchable.chksums = d
                     # should report on conflicts here...
                     pkgdir_fetchables.update(fetchables.iteritems())
@@ -89,7 +89,7 @@ class repo_operations(_repo_ops.operations):
                 pkgdir_fetchables = sorted(pkgdir_fetchables.itervalues())
                 digest.serialize_manifest(
                     os.path.dirname(pkg.ebuild.path),
-                    pkgdir_fetchables, chfs=required, thin=manifest_config.thin)
+                    pkgdir_fetchables, chfs=required_chksums, thin=manifest_config.thin)
                 ret = True
             finally:
                 for pkg in pkgs:

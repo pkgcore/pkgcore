@@ -95,12 +95,12 @@ _repos() {
 
 	# verify selected repo types
 	if [[ -n ${opts[(I)-t]} ]]; then
-		local -a accepted_repo_types=(e i s b a)
+		local -a supported_repo_types=(e i s b a)
 		repo_types=(${(s::)opts[-t]})
 		for type in ${repo_types[@]}; do
-			if [[ ! ${type} =~ [${accepted_repo_types[@]}] ]]; then
-				echo "_repos: invalid repo type argument to -t: ${type}" >&2
-				echo "accepted types: ${accepted_repo_types[@]} (see docs)" >&2
+			if [[ ! ${type} =~ [${supported_repo_types[@]}] ]]; then
+				echo "${funcstack[1]}: invalid repo type: ${type}" >&2
+				echo "supported types: ${supported_repo_types[@]} (see docs)" >&2
 				return 1
 			fi
 		done

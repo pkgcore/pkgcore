@@ -1,9 +1,6 @@
 #!/usr/bin/env pkgcore-sh-helper
 # open a package's homepage in a browser
 #
-# usage: psite pkg [repo]
-# example: psite sys-devel/gcc gentoo
-#
 # For queries returning multiple packages, a list of options is presented to
 # the user to choose from. In the same manner, if a package has multiple
 # homepages listed, a list of homepages is outputted for selection.
@@ -12,7 +9,17 @@
 
 # Default to the current working directory if no argument is passed so psite
 # can be run with no arguments from within an ebuild's directory.
-[[ $# -eq 0 ]] && set -- "${PWD}" "$@"
+if [[ $# -eq 0 ]]; then
+	set -- "${PWD}" "$@"
+elif [[ $1 == "-h" || $1 == "--help" ]]; then
+	cat <<-EOF
+		psite: open a package's homepage in a browser
+		usage: psite pkg [repo]
+		example: psite gcc -- open gcc's HOMEPAGE in a browser
+		example: psite coreutils gentoo -- open the coreutils::gentoo HOMEPAGE
+	EOF
+	exit
+fi
 
 homepage=( $(_pkgattr homepage "$@") )
 

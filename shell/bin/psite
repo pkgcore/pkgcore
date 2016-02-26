@@ -15,8 +15,8 @@ elif [[ $1 == "-h" || $1 == "--help" ]]; then
 	cat <<-EOF
 		psite: open a package's homepage in a browser
 		usage: psite pkg [repo]
-		example: psite gcc -- open gcc's HOMEPAGE in a browser
-		example: psite coreutils gentoo -- open the coreutils::gentoo HOMEPAGE
+		example: psite gcc -- open gcc's homepage
+		example: psite coreutils gentoo -- open the coreutils::gentoo homepage
 	EOF
 	exit
 fi

@@ -1,4 +1,4 @@
-#compdef pconfig pebuild pinspect pmaint pmerge pquery
+#compdef pconfig pebuild pinspect pmaint pmerge pquery psite pcd
 
 # repo path
 SHELL_LIB=${${(%):-%x}:A:h}/../pkgcore.zsh
@@ -619,10 +619,36 @@ _pquery() {
   return ret
 }
 
+_pcd() {
+  local curcontext=$curcontext state state_descr line ret=1
+  typeset -A opt_args
+
+  _arguments -C \
+    '(- :)'{-h,--help}'[show help information and exit]' \
+    '1:package atom' \
+    '2:repo:_repos -i -b' \
+    && ret=0
+
+  return ret
+}
+
+_psite() {
+  local curcontext=$curcontext state state_descr line ret=1
+  typeset -A opt_args
+
+  _arguments -C \
+    '(- :)'{-h,--help}'[show help information and exit]' \
+    '1:package atom' \
+    '2:repo:_repos -i -b' \
+    && ret=0
+
+  return ret
+}
+
 _pkgcore() {
   local ret=1
 
-  if [[ $service =~ (pconfig|pebuild|pinspect|pmaint|pmerge|pquery) ]]; then
+  if [[ $service =~ (pconfig|pebuild|pinspect|pmaint|pmerge|pquery|psite|pcd) ]]; then
     _call_function ret _$service
   fi
 

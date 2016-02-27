@@ -669,10 +669,10 @@ def main(options, out, err):
                         "repo %s: [ %s ]" % (r, ", ".join(str(x) for x in l)))
                     match_count += len(l)
             if not match_count:
-                out.write("No matches found in %s" % (source_repos.repos,))
-            out.write()
+                out.write("No matches found")
             if not options.ignore_failures:
                 return 1
+            out.write()
 
     resolver_inst.free_caches()
 

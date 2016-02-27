@@ -7,16 +7,16 @@
 #
 # Note that this requires xdg-utils to be installed for xdg-open.
 
-# Default to the current working directory if no argument is passed so psite
-# can be run with no arguments from within an ebuild's directory.
+# Default to the current working directory if no argument is passed so this can
+# be run with no arguments from within an ebuild's directory.
 if [[ $# -eq 0 ]]; then
 	set -- "${PWD}" "$@"
 elif [[ $1 == "-h" || $1 == "--help" ]]; then
 	cat <<-EOF
-		psite: open a package's homepage in a browser
-		usage: psite pkg [repo]
-		example: psite gcc -- open gcc's homepage
-		example: psite coreutils gentoo -- open the coreutils::gentoo homepage
+		${SCRIPT}: open a package's homepage in a browser
+		usage: ${SCRIPT} pkg [repo]
+		example: ${SCRIPT} gcc -- open gcc's homepage
+		example: ${SCRIPT} coreutils gentoo -- open the coreutils::gentoo homepage
 	EOF
 	exit
 fi
@@ -24,16 +24,17 @@ fi
 homepage=( $(_pkgattr homepage "$@") )
 
 if [[ -z ${homepage[@]} ]]; then
+	echo "${SCRIPT}: no homepage found" >&2
 	exit 1
 elif [[ ${#homepage[@]} -gt 1 ]]; then
-	echo "Multiple homepages found:"
+	echo "${SCRIPT}: multiple homepages found:" >&2
 	choice=$(_choose "${homepage[@]}")
 	[[ $? -ne 0 ]] && exit 1
 	homepage=${homepage[choice]}
 fi
 
 if ! _which xdg-open; then
-	echo "xdg-open missing, install xdg-utils"
+	echo "${SCRIPT}: xdg-open missing, install xdg-utils" >&2
 	return 1
 fi
 

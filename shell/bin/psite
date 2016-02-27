@@ -24,7 +24,7 @@ fi
 homepage=( $(_pkgattr homepage "$@") )
 
 if [[ -z ${homepage[@]} ]]; then
-	echo "${SCRIPT}: no homepage found" >&2
+	echo "${SCRIPT}: no homepage found: $1" >&2
 	exit 1
 elif [[ ${#homepage[@]} -gt 1 ]]; then
 	echo "${SCRIPT}: multiple homepages found:" >&2

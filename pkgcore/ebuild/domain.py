@@ -206,7 +206,9 @@ class domain(config_domain):
                     for fs_obj in iter_scan(fp, follow_symlinks=True):
                         if not fs_obj.is_reg or '/.' in fs_obj.location:
                             continue
-                        val.extend(action(x) for x in iter_read_bash(fs_obj.location))
+                        val.extend(
+                            action(x) for x in
+                            iter_read_bash(fs_obj.location, allow_line_cont=True))
                 except EnvironmentError as e:
                     if e.errno == errno.ENOENT:
                         raise MissingFile(fp, key)

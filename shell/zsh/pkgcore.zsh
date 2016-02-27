@@ -3,7 +3,7 @@
 
 # get an attribute for a given package
 _pkgattr() {
-	local prog=${${funcstack[-1]}:t}
+	local prog=$(_get_caller)
 	local pkg_attr=$1 pkg_atom=$2 repo=$3
 	local ret=0 pid fdout fderr
 	local -a pkg error
@@ -52,6 +52,11 @@ _pkgattr() {
 		choice=-1
 	fi
 	echo ${pkg[${choice}]#*:}
+}
+
+# get the caller of the current function
+_get_caller() {
+	echo ${${funcstack[-1]}:t}
 }
 
 # cross-shell compatible PATH searching

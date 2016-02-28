@@ -8,7 +8,7 @@ Currently this primarily just holds the Packages cache used for remote, and
 local binpkg repositories
 """
 
-__all__ = ("PackagesCacheV0", "PackagesCacheV1", "write_index")
+__all__ = ("PackagesCacheV0", "PackagesCacheV1")
 
 from itertools import izip
 import os
@@ -311,21 +311,3 @@ def get_cache_kls(version):
     elif version in ('1', '-1'):
         return PackagesCacheV1
     raise KeyError("cache version %s unsupported" % (version,))
-
-
-def write_index(filepath, repo, version=-1):
-    """
-    given a repository, serialize its packages contents to a PackagesCache backend.
-
-    :param filepath: path to write the cache to
-    :param repo: Repository instance to serialize
-    :param version: if set, this is the format version to use. Defaults to the
-        most recent (currently v1)
-    """
-    if version == -1:
-        version = 1
-    try:
-        cls = globals()['PackagesCacheV%i' % version]
-    except KeyError:
-        raise ValueError("unknown version")
-    return cls.write_repo(filepath, repo)

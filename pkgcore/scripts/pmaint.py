@@ -432,8 +432,6 @@ digest_opts.add_argument(
         Target repository to search for matches. If no repo is specified all
         ebuild repos are used.
     """)
-
-
 @digest.bind_final_check
 def _digest_validate(parser, namespace):
     repo = namespace.repo
@@ -441,15 +439,15 @@ def _digest_validate(parser, namespace):
     restrictions = []
     if repo is not None:
         if not targets:
-            restrictions = repo.path_restrict(repo.location)
+            restrictions.append(repo.path_restrict(repo.location))
     else:
         repo = namespace.domain.all_raw_ebuild_repos
         if not targets:
             try:
-                restrictions = repo.path_restrict(os.getcwd())
+                restrictions.append(repo.path_restrict(os.getcwd()))
             except ValueError:
                 # we're not in a configured repo so manifest everything
-                restrictions = [repo.path_restrict(x.location) for x in repo.trees]
+                restrictions.extend(repo.path_restrict(x.location) for x in repo.trees)
 
     if not repo.operations.supports("digests"):
         digest.error("no repository support for digests")

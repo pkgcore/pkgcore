@@ -187,7 +187,10 @@ class tree(prototype.tree):
             try:
                 os.rmdir(pjoin(self.location, pkg.category))
             except OSError as oe:
-                if oe.errno != errno.ENOTEMPTY:
+                # POSIX specifies either ENOTEMPTY or EEXIST for non-empty dir
+                # in particular, Solaris uses EEXIST in that case
+                # https://github.com/pkgcore/pkgcore/pull/181
+                if oe.errno not in (errno.ENOTEMPTY, errno.EEXIST):
                     raise
                 # silently swallow it;
                 del oe

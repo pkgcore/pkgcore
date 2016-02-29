@@ -101,6 +101,7 @@ _pclean() {
           _arguments -C -A '-*' \
             $domain_common_args \
             $shared_opts \
+            {'(--all)-a','(-a)--all'}'[wipe the entire tmpdir]' \
             && ret=0
           ;;
         (*)

@@ -200,8 +200,9 @@ _pebuild() {
 
   case $state in
     (atom-or-ebuild)
+      zstyle ':completion:*' file-patterns '*%p(^-/):other-files:ebuilds *(-/):directories:directories'
       _arguments \
-        '*:ebuild:_files -g \*.ebuild' \
+        '*:ebuilds:_files -g \*.ebuild' \
         && ret=0
       ;;
     (phase)
@@ -567,10 +568,11 @@ _pmaint() {
             && ret=0
           ;;
         (digest)
+          zstyle ':completion:*' file-patterns '*%p(^-/):other-files:ebuilds *(-/):directories:directories'
           _arguments -C -w -S -s -A '-*' \
             $common_output_args \
             {'(--repo)-r','(-r)--repo'}'[target repository]:repo:_repos' \
-            '*::ebuild:_files -g \*.ebuild' \
+            '*::ebuilds:_files -g \*.ebuild' \
             && ret=0
           ;;
         (*)

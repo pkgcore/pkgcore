@@ -253,13 +253,21 @@ def _pkg_validate_args(parser, namespace):
 tmp = subparsers.add_parser(
     'tmp', parents=(shared_opts,),
     description='remove tmpdir entries')
+tmp_opts = tmp.add_argument_group('tmpfile options')
+tmp_opts.add_argument(
+    '-a', '--all', dest='wipeall', action='store_true',
+    help='wipe the entire tmpdir',
+    docs="""
+        Force the entire tmpdir to be wiped. Note that this overrides any
+        restrictions that have been specified.
+    """)
 @tmp.bind_final_check
 def _tmp_validate_args(parser, namespace):
     tmpdir = namespace.domain._get_tempspace()
     dirs = ()
     files = ()
 
-    if namespace.restrict:
+    if namespace.restrict and not namespace.wipeall:
         # create a fake repo from tmpdir entries and pull matches from it
         pkgs = {}
         for x in glob.glob(pjoin(tmpdir, '*', '*')):

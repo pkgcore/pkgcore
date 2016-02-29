@@ -1,14 +1,13 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 
 SCRIPT_PATH=$1
 SCRIPT=$(basename ${SCRIPT_PATH})
 shift
-args=$@
 
 SHELL=$(ps -p $(ps -p $$ -o ppid=) -o comm=)
-if [[ ${SHELL} != "bash" && ${SHELL} != "zsh" ]]; then
+if [ "${SHELL}" != "bash" ] && [ "${SHELL}" != "zsh" ]; then
 	echo "${SCRIPT}: unsupported shell: ${SHELL}" >&2
 	exit 1
 fi
 
-exec ${SHELL} -c "source \"$(dirname ${0})\"/../pkgcore.sh && SCRIPT=${SCRIPT} source \"${SCRIPT_PATH}\" ${args[@]}"
+exec ${SHELL} -c "source \"$(dirname ${0})\"/../pkgcore.sh && SCRIPT=${SCRIPT} source \"${SCRIPT_PATH}\" $@"

@@ -631,6 +631,7 @@ _pmerge() {
     $ops \
     $resolver \
     $output \
+    '*:target:' \
     && ret=0
 
   return ret
@@ -695,6 +696,7 @@ _pquery() {
     $repo \
     $pkg \
     $output \
+    '*:target:' \
     && ret=0
 
   return ret

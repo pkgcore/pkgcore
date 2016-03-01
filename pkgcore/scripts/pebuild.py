@@ -31,27 +31,23 @@ def main(options, out, err):
 
     if target.endswith('.ebuild'):
         if not os.path.isfile(target):
-            err.write("ebuild doesn't exist: '%s'" % target)
-            return 1
+            argparser.error("ebuild doesn't exist: '%s'" % target, exit=False)
         try:
             restriction = repo.path_restrict(target)
         except ValueError as e:
-            err.write(e)
-            return 1
+            argparser.error(e)
     else:
         try:
             restriction = atom.atom(target)
         except MalformedAtom:
             if os.path.isfile(target):
-                err.write("file not an ebuild: '%s'" % target)
+                argparser.error("file not an ebuild: '%s'" % target)
             else:
-                err.write("invalid package atom: '%s'" % target)
-            return 1
+                argparser.error("invalid package atom: '%s'" % target)
 
     pkgs = repo.match(restriction)
     if not pkgs:
-        err.write("no matches: '%s'" % (target,))
-        return 1
+        argparser.error("no matches: '%s'" % (target,))
 
     pkg = max(pkgs)
     if len(pkgs) > 1:
@@ -62,8 +58,7 @@ def main(options, out, err):
                     "%s:%s::%s" % (p.cpvstr, p.slot,
                                    getattr(p.repo, 'repo_id', 'unknown')), prefix='  ')
             err.write()
-            err.write("please refine your restriction to one match")
-            return 1
+            argparser.error("please refine your restriction to one match")
         err.write(
             "choosing %s:%s::%s" %
             (pkg.cpvstr, pkg.slot, getattr(pkg.repo, 'repo_id', 'unknown')), prefix='  ')
@@ -90,8 +85,7 @@ def main(options, out, err):
     for phase in phases:
         p = getattr(build, phase, None)
         if p is None:
-            err.write("unknown phase: '%s'" % phase)
-            return 1
+            argparser.error("unknown phase: '%s'" % phase)
         phase_funcs.append(p)
 
     for phase, f in izip(phases, phase_funcs):

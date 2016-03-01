@@ -321,7 +321,6 @@ def perl_rebuild_main(options, out, err):
         perl_rebuild.error(
             "version %s doesn't seem to be installed; can't find it at %r" %
             (options.new_version, path))
-        return 1
 
     base = pjoin(options.domain.root, "/usr/lib/perl5")
     potential_perl_versions = [

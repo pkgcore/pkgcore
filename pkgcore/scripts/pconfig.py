@@ -146,8 +146,7 @@ def describe_class_main(options, out, err):
     try:
         type_obj = basics.ConfigType(options.target_class)
     except errors.TypeDefinitionError:
-        err.write('Not a valid type!')
-        return 1
+        describe_class.error('not a valid type: %s' % (options.target_class,))
     write_type(out, type_obj)
 
 def write_type(out, type_obj):

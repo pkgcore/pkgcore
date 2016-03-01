@@ -31,7 +31,7 @@ def main(options, out, err):
 
     if target.endswith('.ebuild'):
         if not os.path.isfile(target):
-            argparser.error("ebuild doesn't exist: '%s'" % target, exit=False)
+            argparser.error("ebuild doesn't exist: '%s'" % target)
         try:
             restriction = repo.path_restrict(target)
         except ValueError as e:

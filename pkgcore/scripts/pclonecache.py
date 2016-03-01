@@ -22,9 +22,9 @@ argparser.add_argument(
 @argparser.bind_main_func
 def main(options, out, err):
     if options.target.readonly:
-        out.error("can't update cache label '%s', it's marked readonly." %
-                  (options.target,))
-        return 1
+        argparser.error(
+            "can't update cache label '%s', it's marked readonly." %
+            (options.target,))
 
     source, target = options.source, options.target
     if not target.autocommits:

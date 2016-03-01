@@ -144,9 +144,10 @@ class MainTest(TestCase):
         def main(options, out, err):
             pass
 
-        # this is specifically asserting that if given a positional arg (the '1'),
-        # which isn't valid in our argparse setup, it returns exit code -10.
-        self.assertMain(-10, '', '', argparser, ['1'])
+        # This is specifically asserting that if given a positional arg (the
+        # '1'), which isn't valid in our argparse setup, it returns exit code 2
+        # (standard argparse error() exit status).
+        self.assertMain(2, '', '', argparser, ['1'])
 
     def test_configuration_error(self):
         argparser = commandline.ArgumentParser(suppress=True)

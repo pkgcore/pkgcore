@@ -609,9 +609,6 @@ def main(parser, args=None, outfile=None, errfile=None):
             traceback.print_tb(sys.exc_info()[-1])
         signal.signal(signal.SIGINT, signal.SIG_DFL)
         os.killpg(os.getpgid(0), signal.SIGINT)
-    except SystemExit:
-        # use our own exit status
-        pass
     except compatibility.IGNORED_EXCEPTIONS:
         raise
     except errors.ParsingError as e:

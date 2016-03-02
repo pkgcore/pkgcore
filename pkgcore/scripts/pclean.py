@@ -269,14 +269,14 @@ def _tmp_validate_args(parser, namespace):
 
     if namespace.restrict and not namespace.wipeall:
         # create a fake repo from tmpdir entries and pull matches from it
-        pkgs = {}
-        for x in glob.glob(pjoin(tmpdir, '*', '*')):
+        pkg_map = {}
+        for pkg_build_dir in glob.glob(pjoin(tmpdir, '*', '*')):
             try:
-                pkg = atom.atom('=' + x[len(tmpdir):].lstrip(os.path.sep))
+                pkg = atom.atom('=' + pkg_build_dir[len(tmpdir):].lstrip(os.path.sep))
             except atom.MalformedAtom:
                 continue
-            pkgs.setdefault(pkg.category, {}).setdefault(pkg.package, []).append(pkg.fullver)
-        repo = SimpleTree(pkgs)
+            pkg_map.setdefault(pkg.category, {}).setdefault(pkg.package, []).append(pkg.fullver)
+        repo = SimpleTree(pkg_map)
         dirs = ((partial(shutil.rmtree), pjoin(tmpdir, pkg.cpvstr))
                 for pkg in repo.itermatch(namespace.restrict))
     else:

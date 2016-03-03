@@ -108,7 +108,7 @@ class EAPI(object):
                  tracked_attributes, optionals, ebd_env_options=None):
         sf = object.__setattr__
 
-        sf(self, "_magic", magic)
+        sf(self, "_magic", str(magic))
         sf(self, "_parent", parent)
 
         sf(self, "phases", mappings.ImmutableDict(phases))

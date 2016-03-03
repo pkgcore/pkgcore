@@ -133,14 +133,14 @@ class EAPI(object):
 
     @classmethod
     def register(cls, *args, **kwds):
-        ret = cls(*args, **kwds)
-        pre_existing = cls.known_eapis.get(ret._magic)
+        eapi = cls(*args, **kwds)
+        pre_existing = cls.known_eapis.get(eapi._magic)
         if pre_existing is not None:
             raise ValueError(
                 "EAPI %s is already known/instantiated- %r" %
-                (ret._magic, pre_existing))
-        cls.known_eapis[ret._magic] = ret
-        return ret
+                (eapi._magic, pre_existing))
+        cls.known_eapis[eapi._magic] = eapi
+        return eapi
 
     @klass.jit_attr
     def is_supported(self):
@@ -200,10 +200,10 @@ class EAPI(object):
 
 
 def get_eapi(magic, suppress_unsupported=True):
-    ret = EAPI.known_eapis.get(magic)
-    if ret is None and suppress_unsupported:
+    eapi = EAPI.known_eapis.get(magic)
+    if eapi is None and suppress_unsupported:
         return EAPI.get_unsupported_eapi(magic)
-    return ret
+    return eapi
 
 
 def _shorten_phase_name(func_name):

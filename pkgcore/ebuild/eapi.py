@@ -102,6 +102,7 @@ class _optionals_cls(mappings.ImmutableDict):
 class EAPI(object):
 
     known_eapis = weakrefs.WeakValCache()
+    unknown_eapis = weakrefs.WeakValCache()
     __metaclass__ = klass.immutable_instance
 
     def __init__(self, magic, parent, phases, default_phases, metadata_keys, mandatory_keys,
@@ -151,10 +152,14 @@ class EAPI(object):
 
     @classmethod
     def get_unsupported_eapi(cls, magic):
-        return cls(
-            magic=magic, parent=None, phases=(), default_phases=(),
-            metadata_keys=(), mandatory_keys=(), tracked_attributes=(),
-            optionals={'is_supported': False})
+        eapi = cls.unknown_eapis.get(magic)
+        if eapi is None:
+            eapi = cls(
+                magic=magic, parent=None, phases=(), default_phases=(),
+                metadata_keys=(), mandatory_keys=(), tracked_attributes=(),
+                optionals={'is_supported': False})
+            cls.unknown_eapis[eapi._magic] = eapi
+        return eapi
 
     @klass.jit_attr
     def atom_kls(self):

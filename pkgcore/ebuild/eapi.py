@@ -225,7 +225,7 @@ def _combine_dicts(*sequence_of_mappings):
 
 
 def _convert_bool_to_bash_bool(val):
-    """Convert Python boolean value to bash boolean values."""
+    """Convert Python boolean value to bash boolean value."""
     return str(bool(val)).lower()
 
 

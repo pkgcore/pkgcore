@@ -144,6 +144,7 @@ class EAPI(object):
 
     @klass.jit_attr
     def is_supported(self):
+        """Check if an EAPI is supported."""
         if EAPI.known_eapis.get(self._magic) is not None:
             if not self.options.is_supported:
                 logger.warning("EAPI %s isn't fully supported" % self)
@@ -181,6 +182,7 @@ class EAPI(object):
             parent = parent._parent
 
     def get_ebd_env(self):
+        """Return EAPI options passed to the ebd environment."""
         d = {}
         for k, converter in self.ebd_env_options.iteritems():
             d["PKGCORE_%s" % (k.upper(),)] = converter(getattr(self.options, k))
@@ -189,6 +191,7 @@ class EAPI(object):
 
 
 def get_eapi(magic, suppress_unsupported=True):
+    """Return EAPI object for a given identifier."""
     eapi = EAPI.known_eapis.get(magic)
     if eapi is None and suppress_unsupported:
         eapi = EAPI.unknown_eapis.get(magic)

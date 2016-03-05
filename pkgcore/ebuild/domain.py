@@ -21,6 +21,7 @@ from snakeoil.demandload import demandload
 from snakeoil.lists import unstable_unique, predicate_split
 from snakeoil.mappings import ProtectedDict
 from snakeoil.osutils import pjoin
+from snakeoil.sequences import split_negations
 
 from pkgcore.config import ConfigHint
 from pkgcore.config.domain import domain as config_domain
@@ -36,7 +37,6 @@ from pkgcore.ebuild.repo_objs import OverlayedLicenses
 from pkgcore.repository import visibility
 from pkgcore.restrictions import packages, values
 from pkgcore.restrictions.delegated import delegate
-from pkgcore.util import split_negations
 from pkgcore.util.parserestrict import parse_match
 
 demandload(

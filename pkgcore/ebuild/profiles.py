@@ -17,13 +17,13 @@ from snakeoil.containers import InvertedContains
 from snakeoil.demandload import demandload
 from snakeoil.fileutils import readlines_utf8
 from snakeoil.osutils import abspath, pjoin
+from snakeoil.sequences import split_negations
 
 from pkgcore.config import ConfigHint
 from pkgcore.ebuild import const, ebuild_src, misc
 from pkgcore.ebuild.misc import (
     _build_cp_atom_payload, chunked_data, ChunkedDataDict,
     IncrementalsDict, package_keywords_splitter)
-from pkgcore.util import split_negations
 from pkgcore.util.parserestrict import parse_match
 
 demandload(

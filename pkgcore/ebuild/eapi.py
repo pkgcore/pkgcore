@@ -205,7 +205,7 @@ def get_eapi(magic, suppress_unsupported=True):
 
 
 def _shorten_phase_name(func_name):
-    if func_name.startswith("src_") or func_name.startswith("pkg_"):
+    if func_name.startswith(('src_', 'pkg_')):
         return func_name[4:]
     return func_name
 

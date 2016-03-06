@@ -1,7 +1,8 @@
 |pypi| |test| |coverage| |docs|
 
-What is pkgcore?
-================
+=======
+pkgcore
+=======
 
 pkgcore is a framework for package management; via the appropriate class
 plugins, the design should allow for any underlying repository/config/format to
@@ -11,18 +12,19 @@ manager in each package (pkgcore *does* require being able to treat the pkg as
 data, instead of autopackage's method of handing resolution/all manager ops off
 to the package script).
 
-What does pkgcore require?
-==========================
+Requirements
+============
 
 At least python version 2.7, and snakeoil_ — a utility library with misc
 optimizations split out of pkgcore for others to use.  For unittests, mock_ is
 required if you're using anything less than python 3.3.
 
-Who to contact if I find a bug?
-===============================
+Contact
+=======
 
-Please submit an issue via Github_. You can also send an email to the dev list
-(pkgcore-dev@googlegroups.com) or stop by `#pkgcore`_ on Freenode.
+For support and development inquiries join `#pkgcore`_ on Freenode.
+
+For bugs and feature requests please create an issue on Github_.
 
 Tools
 =====
@@ -46,8 +48,8 @@ Tools
 Documentation
 =============
 
-The official documentation can be found on readthedocs_ with alternative
-formats also available for download_.
+Official documentation is provided on readthedocs_ with alternative
+formats available for download_.
 
 Tests
 =====

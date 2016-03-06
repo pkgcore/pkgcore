@@ -12,8 +12,8 @@ __all__ = (
 import os
 
 from snakeoil.compatibility import is_py3k
-from snakeoil.lists import iflatten_instance
 from snakeoil.mappings import LazyValDict, DictMixin
+from snakeoil.sequences import iflatten_instance
 
 from pkgcore.ebuild.atom import atom
 from pkgcore.operations import repo

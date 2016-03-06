@@ -18,7 +18,7 @@ from pkgcore.restrictions import restriction, boolean, packages
 
 demandload(
     're',
-    'snakeoil:lists',
+    'snakeoil.sequences:iflatten_instance',
 )
 
 # Backwards compatibility.
@@ -536,7 +536,7 @@ class FlatteningRestriction(base):
 
         :type dont_iter: type or tuple of types
         :param dont_iter: type(s) not to flatten.
-                          Passed to :obj:`snakeoil.lists.iflatten_instance`.
+                          Passed to :obj:`snakeoil.sequences.iflatten_instance`.
         :type childrestriction: restriction
         :param childrestriction: restriction applied to the flattened list.
         """
@@ -546,7 +546,7 @@ class FlatteningRestriction(base):
 
     def match(self, val):
         return self.restriction.match(
-            lists.iflatten_instance(val, self.dont_iter)) != self.negate
+            iflatten_instance(val, self.dont_iter)) != self.negate
 
     def __str__(self):
         return 'flattening_restriction: dont_iter = %s, restriction = %s' % (

@@ -6,8 +6,8 @@ from operator import itemgetter
 
 from snakeoil.demandload import demandload, demand_compile_regexp
 from snakeoil.fileutils import readlines
-from snakeoil.lists import iflatten_instance
 from snakeoil.osutils import listdir_files, pjoin
+from snakeoil.sequences import iflatten_instance
 
 from pkgcore.ebuild.atom import atom
 

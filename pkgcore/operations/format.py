@@ -17,7 +17,7 @@ from snakeoil.dependant_methods import ForcedDepends
 from pkgcore import operations as _operations_mod
 
 demandload(
-    'snakeoil.lists:iflatten_instance',
+    'snakeoil.sequences:iflatten_instance',
     'pkgcore:fetch@_fetch_module',
 )
 

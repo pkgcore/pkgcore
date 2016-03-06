@@ -11,7 +11,7 @@ __all__ = ("DepSet", "stringify_boolean")
 
 from snakeoil.compatibility import raise_from, IGNORED_EXCEPTIONS
 from snakeoil.iterables import expandable_chain
-from snakeoil.lists import iflatten_instance
+from snakeoil.sequences import iflatten_instance
 
 from pkgcore.ebuild.atom import atom, transitive_use_atom
 from pkgcore.ebuild.errors import ParseError

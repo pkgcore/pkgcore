@@ -36,7 +36,7 @@ demandload(
     'traceback',
     'snakeoil:osutils',
     'snakeoil.errors:walk_exception_chain',
-    'snakeoil.lists:iflatten_instance,unstable_unique',
+    'snakeoil.sequences:iflatten_instance,unstable_unique',
     'pkgcore:operations',
     'pkgcore.config:basics',
     'pkgcore.restrictions:packages,restriction',

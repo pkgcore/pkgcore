@@ -26,7 +26,7 @@ demandload(
     'errno',
     'snakeoil.bash:BashParseError,iter_read_bash,read_dict',
     'snakeoil.fileutils:readfile,readlines_ascii',
-    'snakeoil.lists:iter_stable_unique',
+    'snakeoil.sequences:iter_stable_unique',
     'snakeoil.xml:etree',
     'pkgcore.ebuild:atom,profiles',
     'pkgcore.log:logger',

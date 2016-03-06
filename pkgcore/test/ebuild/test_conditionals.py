@@ -3,7 +3,7 @@
 
 from snakeoil.currying import post_curry
 from snakeoil.iterables import expandable_chain
-from snakeoil.lists import iflatten_instance
+from snakeoil.sequences import iflatten_instance
 from snakeoil.test import mk_cpy_loadable_testcase
 
 from pkgcore.ebuild import conditionals

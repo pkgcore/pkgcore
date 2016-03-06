@@ -5,7 +5,7 @@
 restriction related utilities
 """
 
-from snakeoil.lists import iflatten_func
+from snakeoil.sequences import iflatten_func
 
 from pkgcore.restrictions import packages, boolean, restriction
 

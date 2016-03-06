@@ -26,7 +26,7 @@ demandload(
     'snakeoil:compatibility',
     'snakeoil.fileutils:AtomicWriteFile',
     'snakeoil.osutils:pjoin,listdir_dirs',
-    'snakeoil.lists:iter_stable_unique',
+    'snakeoil.sequences:iter_stable_unique',
     'pkgcore.ebuild:processor,triggers',
     'pkgcore.fs:contents,livefs',
     'pkgcore.merge:triggers@merge_triggers',

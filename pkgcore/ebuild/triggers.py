@@ -18,8 +18,8 @@ import os
 from snakeoil.bash import read_bash_dict
 from snakeoil.demandload import demandload
 from snakeoil.fileutils import AtomicWriteFile
-from snakeoil.lists import stable_unique, iflatten_instance
 from snakeoil.osutils import listdir_files, normpath, pjoin
+from snakeoil.sequences import stable_unique, iflatten_instance
 
 from pkgcore.merge import triggers, const, errors
 from pkgcore.fs import livefs

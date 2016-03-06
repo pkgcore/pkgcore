@@ -7,8 +7,8 @@ from functools import partial
 from os.path import basename, dirname
 import re
 
-from snakeoil.lists import stable_unique
 from snakeoil.currying import post_curry
+from snakeoil.sequences import stable_unique
 
 from pkgcore.merge import triggers
 

@@ -34,7 +34,7 @@ demandload(
     'collections:defaultdict',
     'itertools:groupby,islice',
     'operator:attrgetter,itemgetter',
-    'snakeoil.lists:iflatten_instance,unstable_unique',
+    'snakeoil.sequences:iflatten_instance,unstable_unique',
     'pkgcore:fetch',
     'pkgcore.package:errors',
     'pkgcore.restrictions:packages',

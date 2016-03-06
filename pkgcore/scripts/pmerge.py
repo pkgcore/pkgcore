@@ -16,7 +16,7 @@ from functools import partial
 import sys
 from time import time
 
-from snakeoil.lists import iflatten_instance, stable_unique
+from snakeoil.sequences import iflatten_instance, stable_unique
 
 from pkgcore.ebuild import resolver, restricts
 from pkgcore.ebuild.atom import atom

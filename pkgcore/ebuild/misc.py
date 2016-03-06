@@ -19,8 +19,7 @@ from itertools import chain
 
 from snakeoil import compatibility, mappings
 from snakeoil.klass import generic_equality, alias_method
-from snakeoil.lists import iflatten_instance, stable_unique
-from snakeoil.sequences import namedtuple
+from snakeoil.sequences import namedtuple, iflatten_instance, stable_unique
 
 from pkgcore.ebuild import atom
 from pkgcore.restrictions import packages, restriction, boolean

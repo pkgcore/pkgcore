@@ -18,10 +18,9 @@ from snakeoil.bash import iter_read_bash
 from snakeoil.compatibility import raise_from
 from snakeoil.data_source import local_source
 from snakeoil.demandload import demandload
-from snakeoil.lists import unstable_unique, predicate_split
 from snakeoil.mappings import ProtectedDict
 from snakeoil.osutils import pjoin
-from snakeoil.sequences import split_negations
+from snakeoil.sequences import split_negations, unstable_unique, predicate_split
 
 from pkgcore.config import ConfigHint
 from pkgcore.config.domain import domain as config_domain

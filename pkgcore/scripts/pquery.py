@@ -32,8 +32,8 @@ demandload(
     'errno',
     'os',
     're',
-    'snakeoil.lists:iter_stable_unique',
     'snakeoil.osutils:sizeof_fmt',
+    'snakeoil.sequences:iter_stable_unique',
     'pkgcore.fs:fs@fs_module,contents@contents_module',
     'pkgcore.repository:multiplex',
 )

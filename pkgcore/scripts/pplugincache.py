@@ -6,7 +6,7 @@
 
 from functools import partial
 
-from snakeoil import lists
+from snakeoil.sequences import stable_unique
 
 from pkgcore import plugin, plugins
 from pkgcore.util import commandline
@@ -23,6 +23,6 @@ argparser.add_argument(
 @argparser.bind_main_func
 def main(options, out, err):
     """Update caches."""
-    for package in lists.stable_unique(options.packages):
+    for package in stable_unique(options.packages):
         out.write('Updating cache for %s...' % (package.__name__,))
         plugin.initialize_cache(package, force=True)

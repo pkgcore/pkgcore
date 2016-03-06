@@ -8,8 +8,8 @@ import shutil
 import sys
 import tempfile
 
-from snakeoil import lists
 from snakeoil.osutils import pjoin
+from snakeoil.sequences import stable_unique
 
 from pkgcore import plugin
 from pkgcore.test import silence_logging, TestCase
@@ -92,7 +92,7 @@ pkgcore_plugins = {'plugtest': [HiddenPlug]}
 
     def test_extend_path(self):
         import mod_testplug
-        expected = lists.stable_unique(
+        expected = stable_unique(
             pjoin(p, 'mod_testplug')
             for p in sys.path if os.path.isdir(p))
         self.assertEqual(

@@ -37,7 +37,7 @@ from pkgcore.spawn import (
 demandload(
     'textwrap',
     "time",
-    'snakeoil.lists:iflatten_instance',
+    'snakeoil.sequences:iflatten_instance',
     'pkgcore:fetch',
     "pkgcore.log:logger",
     "pkgcore.package.mutated:MutatedPkg",

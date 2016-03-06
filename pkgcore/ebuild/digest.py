@@ -23,7 +23,7 @@ from pkgcore.fs.livefs import iter_scan
 demandload(
     "errno",
     'snakeoil:mappings',
-    "snakeoil.lists:iflatten_instance",
+    "snakeoil.sequences:iflatten_instance",
 )
 
 

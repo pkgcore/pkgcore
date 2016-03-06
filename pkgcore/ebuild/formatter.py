@@ -15,7 +15,7 @@ import operator
 
 from snakeoil.cli.input import userquery
 from snakeoil.demandload import demandload
-from snakeoil.lists import iflatten_instance
+from snakeoil.sequences import iflatten_instance
 
 from pkgcore.config import configurable
 

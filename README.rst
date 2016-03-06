@@ -12,20 +12,6 @@ manager in each package (pkgcore *does* require being able to treat the pkg as
 data, instead of autopackage's method of handing resolution/all manager ops off
 to the package script).
 
-Requirements
-============
-
-At least python version 2.7, and snakeoil_ — a utility library with misc
-optimizations split out of pkgcore for others to use.  For unittests, mock_ is
-required if you're using anything less than python 3.3.
-
-Contact
-=======
-
-For support and development inquiries join `#pkgcore`_ on Freenode.
-
-For bugs and feature requests please create an issue on Github_.
-
 Tools
 =====
 
@@ -44,6 +30,30 @@ Tools
 **pmerge**: dependency resolution, fetching, (un)merging, etc.
 
 **pquery**: query repository info, revdeps, pkg search, vdb search, etc.
+
+Requirements
+============
+
+At least python version 2.7, and snakeoil_ — a utility library with misc
+optimizations split out of pkgcore for others to use.  For unittests, mock_ is
+required if you're using anything less than python 3.3.
+
+Installing
+==========
+
+Installing latest pypi release in a virtualenv::
+
+    pip install pkgcore
+
+Installing from git in a virtualenv (note that snakeoil should be used from git)::
+
+    pip install https://github.com/pkgcore/snakeoil/archive/master.tar.gz
+    pip install https://github.com/pkgcore/pkgcore/archive/master.tar.gz
+
+Installing from a tarball or git repo::
+
+    python setup.py install
+    pplugincache
 
 Documentation
 =============
@@ -66,22 +76,12 @@ the following::
 
     tox -e py27
 
-Installing
-==========
+Contact
+=======
 
-Installing latest pypi release in a virtualenv::
+For support and development inquiries join `#pkgcore`_ on Freenode.
 
-    pip install pkgcore
-
-Installing from git in a virtualenv (note that snakeoil should be used from git)::
-
-    pip install https://github.com/pkgcore/snakeoil/archive/master.tar.gz
-    pip install https://github.com/pkgcore/pkgcore/archive/master.tar.gz
-
-Installing from a tarball or git repo::
-
-    python setup.py install
-    pplugincache
+For bugs and feature requests please create an issue on Github_.
 
 
 .. _snakeoil: https://github.com/pkgcore/snakeoil

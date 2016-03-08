@@ -18,9 +18,7 @@ package_type = restriction.package_type
 
 
 class native_PackageRestriction(object):
-    __slots__ = ('_pull_attr_func', '_attr_split', 'restriction', 'ignore_missing',
-        'negate')
-
+    __slots__ = ('_pull_attr_func', '_attr_split', 'restriction', 'ignore_missing', 'negate')
     __attr_comparison__ = ("__class__", "negate", "_attr_split", "restriction")
     __metaclass__ = generic_equality
 
@@ -83,8 +81,9 @@ class PackageRestriction_mixin(restriction.base):
     def _handle_exception(self, pkg, exc, attr_split):
         if isinstance(exc, AttributeError):
             if not self.ignore_missing:
-                logger.exception("failed getting attribute %s from %s, "
-                              "exception %s" % ('.'.join(attr_split), str(pkg), str(exc)))
+                logger.exception(
+                    "failed getting attribute %s from %s, "
+                    "exception %s" % ('.'.join(attr_split), str(pkg), str(exc)))
 
             eargs = [x for x in exc.args if isinstance(x, basestring)]
             if any(x in attr_split for x in eargs):
@@ -96,7 +95,8 @@ class PackageRestriction_mixin(restriction.base):
                 # text.
                 # if it doesn't match, exception is thrown.
                 return False
-        logger.exception("caught unexpected exception accessing %s from %s, "
+        logger.exception(
+            "caught unexpected exception accessing %s from %s, "
             "exception %s" % ('.'.join(attr_split), str(pkg), str(exc)))
         return True
 
@@ -156,8 +156,7 @@ class native_PackageRestrictionMulti(native_PackageRestriction):
         return tuple('.'.join(x) for x in self._attr_split)
 
     def _parse_attr(self, attrs):
-        object.__setattr__(self, '_pull_attr_func',
-            tuple(map(static_attrgetter, attrs)))
+        object.__setattr__(self, '_pull_attr_func', tuple(map(static_attrgetter, attrs)))
         object.__setattr__(self, '_attr_split', tuple(x.split('.') for x in attrs))
 
     def _pull_attr(self, pkg):
@@ -168,8 +167,7 @@ class native_PackageRestrictionMulti(native_PackageRestriction):
         except IGNORED_EXCEPTIONS:
             raise
         except Exception as e:
-            if self._handle_exception(pkg, e,
-                self._attr_split[len(val)]):
+            if self._handle_exception(pkg, e, self._attr_split[len(val)]):
                 raise
             return self.__sentinel__
         return val
@@ -219,8 +217,7 @@ class PackageRestriction(PackageRestriction_base, PackageRestriction_mixin):
         __eq__ = PackageRestriction_base.__eq__
 
 
-class PackageRestrictionMulti(PackageRestrictionMulti_base,
-    PackageRestrictionMulti_mixin):
+class PackageRestrictionMulti(PackageRestrictionMulti_base, PackageRestrictionMulti_mixin):
 
     __slots__ = ()
     __inst_caching__ = True
@@ -231,17 +228,14 @@ class PackageRestrictionMulti(PackageRestrictionMulti_base,
 
 
 class Conditional(PackageRestriction):
+    """Base object representing a conditional package restriction.
 
-    """
-    base object representing a conditional package restriction
-
-    used to control whether a payload of restrictions are accessible or not
+    Used to control whether a payload of restrictions are accessible or not.
     """
 
     __slots__ = ('payload',)
 
-    __attr_comparison__ = ("__class__", "negate", "attr", "restriction",
-        "payload")
+    __attr_comparison__ = ("__class__", "negate", "attr", "restriction", "payload")
     __metaclass__ = generic_equality
     conditional = True
 
@@ -293,9 +287,8 @@ class Conditional(PackageRestriction):
             return
 
         if self.payload:
-            boolean.AndRestriction(*self.payload).evaluate_conditionals(parent_cls, parent_seq,
-                enabled, tristate_locked)
-
+            boolean.AndRestriction(*self.payload).evaluate_conditionals(
+                parent_cls, parent_seq, enabled, tristate_locked)
 
 
 # "Invalid name" (pylint uses the module const regexp, not the class regexp)
@@ -308,6 +301,7 @@ OrRestriction = restriction.curry_node_type(boolean.OrRestriction,
 
 AlwaysBool = restriction.curry_node_type(restriction.AlwaysBool,
                                          restriction.package_type)
+
 
 class KeyedAndRestriction(boolean.AndRestriction):
 

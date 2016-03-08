@@ -182,6 +182,7 @@ class native_StrExactMatch(object):
         sf(self, "_hash", hash((self.exact, self.negate, self.case_sensitive)))
 
     def match(self, value):
+        value = str(value)
         if self.case_sensitive:
             return (self.exact == value) != self.negate
         else:

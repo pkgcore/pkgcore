@@ -718,6 +718,15 @@ def parse_description(value):
         for attr in ('description', 'longdescription')))
 
 @bind_add_query(
+    '--eapi', action='append',
+    help='match packages using a given EAPI')
+def parse_eapi(value):
+    """Value is matched against package EAPI versions."""
+    return packages.PackageRestriction(
+        'eapi',
+        values.StrExactMatch(value))
+
+@bind_add_query(
     '--owns', action='append',
     help='exact match on an owned file/dir')
 def parse_owns(value):

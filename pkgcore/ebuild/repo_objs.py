@@ -35,7 +35,6 @@ demandload(
 
 
 class Maintainer(object):
-
     """Data on a single maintainer.
 
     At least one of email and name is not C{None}.
@@ -73,8 +72,8 @@ class Maintainer(object):
 class MetadataXml(object):
     """metadata.xml parsed results
 
-    attributes are set to -1 if unloaded, None if no entry, or the value
-    if loaded
+    Attributes are set to -1 if unloaded, None if no entry, or the value
+    if loaded.
     """
 
     __slots__ = (
@@ -91,7 +90,7 @@ class MetadataXml(object):
         return getattr(self, attr)
 
     for attr in ("maintainers", "local_use", "longdescription"):
-        locals()[attr] = property(post_curry(_generic_attr, "_"+attr))
+        locals()[attr] = property(post_curry(_generic_attr, "_" + attr))
     del attr
 
     def _parse_xml(self, source=None):

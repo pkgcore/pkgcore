@@ -40,12 +40,10 @@ def _iter_till_empty_newline(data):
 
 
 class CacheEntry(StackedDict):
-
-    """
-    customized version of StackedDict blocking pop from modifying the target
+    """Customized version of StackedDict blocking pop from modifying the target.
 
     Note that this pop doesn't through KeyError if something is missing- just
-    returns None instead.  This is likely to be changed.
+    returns None instead. This is likely to be changed.
     """
     def pop(self, key, default=None):
         try:
@@ -68,8 +66,7 @@ if type != cache.bulk.__metaclass__:
 
 
 class PackagesCacheV0(cache.bulk):
-    """
-    Cache backend for writing binpkg Packages caches
+    """Cache backend for writing binpkg Packages caches
 
     Note this follows version 0 semantics- not the most efficient, and
     doesn't bundle certain useful keys like RESTRICT
@@ -276,12 +273,10 @@ class PackagesCacheV0(cache.bulk):
 
 
 class PackagesCacheV1(PackagesCacheV0):
-
-    """
-    Cache backend for writing binpkg Packages caches in format version 1
+    """Cache backend for writing binpkg Packages caches in format version 1.
 
     See :py:class:`PackagesCacheV0` for usage information; this just writes
-    a better ondisk format
+    a better ondisk format.
     """
 
     deserialized_inheritable = PackagesCacheV0.deserialized_inheritable.union(

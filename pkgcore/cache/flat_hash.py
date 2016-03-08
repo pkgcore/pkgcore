@@ -20,19 +20,15 @@ from pkgcore.config import ConfigHint
 
 
 class database(fs_template.FsBased):
+    """Stores cache entries in key=value form, stripping newlines."""
 
-    """
-    stores cache entries in key=value form, stripping newlines
-    """
-
-    # TODO different way of passing in default auxdbkeys and location
+    # TODO: different way of passing in default auxdbkeys and location
     pkgcore_config_type = ConfigHint(
         {'readonly': 'bool', 'location': 'str', 'label': 'str',
          'auxdbkeys': 'list'},
         required=['location'],
         positional=['location'],
         typename='cache')
-
 
     autocommits = True
     mtime_in_entry = True
@@ -69,8 +65,7 @@ class database(fs_template.FsBased):
         # might seem weird, but we rely on the trailing +1; this
         # makes it behave properly for any cache depth (including no depth)
         s = cpv.rfind("/") + 1
-        fp = pjoin(self.location,
-            cpv[:s], ".update.%i.%s" % (os.getpid(), cpv[s:]))
+        fp = pjoin(self.location, cpv[:s], ".update.%i.%s" % (os.getpid(), cpv[s:]))
         try:
             myf = open(fp, "w", 32768)
         except IOError as ie:
@@ -99,8 +94,7 @@ class database(fs_template.FsBased):
         else:
             self._ensure_access(fp)
 
-        #update written.  now we move it.
-
+        # update written, now we move it
         new_fp = pjoin(self.location, cpv)
         try:
             os.rename(fp, new_fp)

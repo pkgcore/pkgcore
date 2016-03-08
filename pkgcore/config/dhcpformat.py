@@ -67,7 +67,6 @@ parser = (
 
 
 class ConfigSection(basics.ConfigSection):
-
     """Expose a section_contents from pyparsing as a ConfigSection.
 
     mke2fsformat also uses this.

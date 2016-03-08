@@ -47,7 +47,6 @@ def mk_strregex(value, **kwds):
 
 
 class DataSourceRestriction(values.base):
-
     """Turn a data_source into a line iterator and apply a restriction."""
 
     def __init__(self, childrestriction, **kwargs):
@@ -496,7 +495,6 @@ repo_group.add_argument(
 
 
 class RawAwareStoreRepoObject(commandline.StoreRepoObject):
-
     """Custom implementation that is aware of the --raw and --unfiltered options."""
 
     def _get_sections(self, config, namespace):

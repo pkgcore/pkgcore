@@ -23,8 +23,7 @@ from pkgcore.ebuild import eclass_cache
 
 # store the current key order *here*.
 class database(flat_hash.database):
-    """
-    Compatibility with (older) portage-generated caches.
+    """Compatibility with (older) portage-generated caches.
 
     Autodetects per entry if it is a
     :class:`flat_hash.database` or PMS compliant cache entry,
@@ -34,11 +33,10 @@ class database(flat_hash.database):
 
     pkgcore_config_type = ConfigHint(
         {'readonly': 'bool', 'location': 'str', 'label': 'str',
-        'eclasses':'ref:eclass_cache'},
+         'eclasses': 'ref:eclass_cache'},
         required=['location'],
         positional=['location'],
         typename='cache')
-
 
     # No eclass validation data is stored.
     eclass_chf_types = []
@@ -46,11 +44,13 @@ class database(flat_hash.database):
     chf_type = 'mtime'
     complete_eclass_entries = True
 
-    auxdbkeys_order = ('DEPEND', 'RDEPEND', 'SLOT', 'SRC_URI',
+    auxdbkeys_order = (
+        'DEPEND', 'RDEPEND', 'SLOT', 'SRC_URI',
         'RESTRICT', 'HOMEPAGE',  'LICENSE', 'DESCRIPTION',
         'KEYWORDS', '_eclasses_', 'IUSE', 'REQUIRED_USE',
         'PDEPEND', 'EAPI', 'PROPERTIES',
-        'DEFINED_PHASES')
+        'DEFINED_PHASES',
+    )
 
     # this is the old cache format, flat_list.  hardcoded, and must
     # remain that way.
@@ -67,29 +67,29 @@ class database(flat_hash.database):
         self.mtime_in_entry = config.pop('mtime_in_entry', True)
         location = pjoin(location, 'metadata', 'cache')
         super(database, self).__init__(location, *args, **config)
-        self.hardcoded_auxdbkeys_order = tuple((idx, key)
+        self.hardcoded_auxdbkeys_order = tuple(
+            (idx, key)
             for idx, key in enumerate(self.auxdbkeys_order)
-                if key in self._known_keys)
+            if key in self._known_keys)
         self.hardcoded_auxdbkeys_processing = tuple(
             (key in self._known_keys and key or None)
-                for key in self.auxdbkeys_order)
+            for key in self.auxdbkeys_order)
 
     __init__.__doc__ = flat_hash.database.__init__.__doc__.replace(
         "@keyword location", "@param location")
 
     def _parse_data(self, data, mtime):
         i = iter(self.hardcoded_auxdbkeys_processing)
-        d = self._cdict_kls([(key, val) for (key, val) in
-            izip(i, data) if key])
+        d = self._cdict_kls([(key, val) for (key, val) in izip(i, data) if key])
         # sadly, this is faster then doing a .next() and snagging the
         # exception
         for x in i:
             # if we reach here, then bad things occurred.
             raise errors.GeneralCacheCorruption(
                 "wrong line count, requires %i" %
-                    (self.magic_line_count,))
+                (self.magic_line_count,))
 
-        if self._mtime_used: # and not self.mtime_in_entry:
+        if self._mtime_used:  # and not self.mtime_in_entry:
             d["_mtime_"] = long(mtime)
         return d
 
@@ -126,7 +126,7 @@ class database(flat_hash.database):
         myf.close()
         self._set_mtime(fp, values, eclasses)
 
-        #update written.  now we move it.
+        # update written, now we move it
         new_fp = pjoin(self.location, cpv)
         try:
             os.rename(fp, new_fp)
@@ -140,12 +140,11 @@ class database(flat_hash.database):
 
 
 class paludis_flat_list(database):
+    """(Hopefully) write a paludis specific form of flat_list format cache.
 
-    """
-    (Hopefully) write a paludis specific form of flat_list format cache.
     Not very well tested.
 
-    difference from a normal flat_list cache is that mtime is set to ebuild
+    Difference from a normal flat_list cache is that mtime is set to ebuild
     for normal, for paludis it's max mtime of eclasses/ebuild involved.
     """
 

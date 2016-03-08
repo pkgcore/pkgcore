@@ -39,7 +39,6 @@ else:
 
 
 class ConfigType(object):
-
     """A configurable type.
 
     :ivar name: string specifying the protocol the instantiated object
@@ -89,7 +88,8 @@ class ConfigType(object):
                 code = getattr(func_obj, _code_attrname)
             except AttributeError:
                 if func_obj != object.__init__:
-                    raise TypeError("func %s has no %r attribute; likely a "
+                    raise TypeError(
+                        "func %s has no %r attribute; likely a "
                         "builtin object which can't be introspected without hints"
                         % (original_func_obj, _code_attrname))
             else:
@@ -105,10 +105,11 @@ class ConfigType(object):
                 # iterate through defaults backwards, so they match up to argnames
                 for i, default in enumerate(reversed(defaults)):
                     argname = args[-1 - i]
-                    for typeobj, typename in [(bool, 'bool'),
-                                      (tuple, 'list'),
-                                      (str, 'str'),
-                                      ((int, long), 'int')]:
+                    for typeobj, typename in [
+                            (bool, 'bool'),
+                            (tuple, 'list'),
+                            (str, 'str'),
+                            ((int, long), 'int')]:
                         if isinstance(default, typeobj):
                             self.types[argname] = typename
                             break
@@ -156,7 +157,6 @@ class ConfigType(object):
 
 
 class LazySectionRef(object):
-
     """Abstract base class for lazy-loaded section references."""
 
     def __init__(self, central, typename):
@@ -204,9 +204,7 @@ class LazyUnnamedSectionRef(LazySectionRef):
 
 
 class ConfigSection(object):
-
-    """
-    Single Config section, returning typed values from a key.
+    """Single Config section, returning typed values from a key.
 
     Not much of an object this, if we were using zope.interface it'd
     be an Interface.
@@ -226,7 +224,6 @@ class ConfigSection(object):
 
 
 class DictConfigSection(ConfigSection):
-
     """Turns a dict and a conversion function into a ConfigSection."""
 
     def __init__(self, conversion_func, source_dict):
@@ -255,11 +252,10 @@ class DictConfigSection(ConfigSection):
         except Exception:
             compatibility.raise_from(errors.ConfigurationError(
                 "Failed converting argument %r to %s"
-                    % (name, arg_type)))
+                % (name, arg_type)))
 
 
 class FakeIncrementalDictConfigSection(ConfigSection):
-
     """Turns a dict and a conversion function into a ConfigSection."""
 
     def __init__(self, conversion_func, source_dict):
@@ -312,7 +308,7 @@ class FakeIncrementalDictConfigSection(ConfigSection):
                     except Exception:
                         compatibility.raise_from(errors.ConfigurationError(
                             "Failed converting argument %r to %s"
-                                % (subname, arg_type)))
+                            % (subname, arg_type)))
                 result.append(val)
             if result[0] is result[1] is result[2] is None:
                 raise KeyError(name)
@@ -367,19 +363,22 @@ class FakeIncrementalDictConfigSection(ConfigSection):
                 kind, val = val
                 if kind == 'ref':
                     if target_kind != 'refs':
-                        raise ValueError("Internal issue detected: kind(ref), "
+                        raise ValueError(
+                            "Internal issue detected: kind(ref), "
                             "target_kind(%r), name(%r), val(%r), arg_type(%r)"
                             % (target_kind, name, val, arg_type))
                     converted.append([val])
                 elif kind == 'refs':
                     if target_kind != 'refs':
-                        raise ValueError("Internal issue detected: kind(refs), "
+                        raise ValueError(
+                            "Internal issue detected: kind(refs), "
                             "target_kind(%r), name(%r), val(%r), arg_type(%r)"
                             % (target_kind, name, val, arg_type))
                     converted.append(val)
                 elif kind == 'list':
                     if target_kind == 'str':
-                        raise ValueError("Internal issue detected: kind(str), "
+                        raise ValueError(
+                            "Internal issue detected: kind(str), "
                             "target_kind(%r), name(%r), val(%r), arg_type(%r)"
                             % (target_kind, name, val, arg_type))
                     converted.append(val)
@@ -409,7 +408,7 @@ class FakeIncrementalDictConfigSection(ConfigSection):
 
 
 def str_to_list(string):
-    """split on whitespace honoring quoting for new tokens"""
+    """Split on whitespace honoring quoting for new tokens."""
     l = []
     i = 0
     e = len(string)
@@ -445,15 +444,17 @@ def str_to_list(string):
         i += 1
     return l
 
+
 def str_to_str(string):
-    """yank leading/trailing whitespace and quotation, along with newlines"""
+    """Yank leading/trailing whitespace and quotation, along with newlines."""
     s = string.strip()
     if len(s) > 1 and s[0] in '"\'' and s[0] == s[-1]:
         s = s[1:-1]
     return s.replace('\n', ' ').replace('\t', ' ')
 
+
 def str_to_bool(string):
-    """convert a string to a boolean"""
+    """Convert a string to a boolean."""
     s = str_to_str(string).lower()
     if s in ("no", "false", "0"):
         return False
@@ -461,8 +462,9 @@ def str_to_bool(string):
         return True
     raise errors.ConfigurationError('%r is not a boolean' % s)
 
+
 def str_to_int(string):
-    """convert a string to a integer"""
+    """Convert a string to a integer."""
     string = str_to_str(string)
     try:
         return int(string)
@@ -476,10 +478,12 @@ _str_converters = {
     'int': str_to_int
 }
 
+
 def convert_string(central, value, arg_type):
     """Conversion func for a string-based DictConfigSection."""
     if not isinstance(value, basestring):
-        raise ValueError('convert_string invoked with non basestring instance:'
+        raise ValueError(
+            'convert_string invoked with non basestring instance:'
             ' val(%r), arg_type(%r)' % (value, arg_type))
     if arg_type == 'callable':
         try:
@@ -501,6 +505,7 @@ def convert_string(central, value, arg_type):
     if func is None:
         raise errors.ConfigurationError('Unknown type %r' % (arg_type,))
     return func(value)
+
 
 def convert_asis(central, value, arg_type):
     """"Conversion" func assuming the types are already correct."""
@@ -543,6 +548,7 @@ def convert_asis(central, value, arg_type):
             '%r does not have type %r' % (value, arg_type))
     return value
 
+
 def convert_hybrid(central, value, arg_type):
     """Automagically switch between :obj:`convert_string` and :obj:`convert_asis`.
 
@@ -582,7 +588,7 @@ def section_alias(target, typename):
 def parse_config_file(path, parser):
     try:
         f = open(path, 'r')
-    except (IOError, OSError) as e:
+    except (IOError, OSError):
         raise errors.InstantiationError("Failed opening %r" % (path,))
     try:
         return parser(f)
@@ -593,6 +599,7 @@ def parse_config_file(path, parser):
 class ConfigSource(object):
 
     description = "No description available"
+
     def sections(self):
         raise NotImplementedError(self, 'sections')
 

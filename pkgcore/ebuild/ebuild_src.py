@@ -172,12 +172,6 @@ def rewrite_restrict(restrict):
         return restrict[2:]
     return restrict
 
-def get_repo_id(self):
-    return self.repo.repo_id
-
-def get_inherited(self):
-    return tuple(sorted(self.data.get('_eclasses_', {})))
-
 
 class base(metadata.package):
 
@@ -220,9 +214,10 @@ class base(metadata.package):
     _get_attr["defined_phases"] = lambda s: s.eapi.interpret_cache_defined_phases(
         imap(intern, s.data.pop("DEFINED_PHASES", "").split()))
     _get_attr["homepage"] = lambda s: s.data.pop("HOMEPAGE", "").strip()
-    _get_attr["inherited"] = get_inherited
+    _get_attr["inherited"] = lambda s: tuple(sorted(s.data.get('_eclasses_', {})))
+
     _get_attr["required_use"] = generate_required_use
-    _get_attr["source_repository"] = get_repo_id
+    _get_attr["source_repository"] = lambda s: s.repo.repo_id
 
     __slots__ = tuple(_get_attr.keys() + ["_pkg_metadata_shared"])
 

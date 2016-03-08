@@ -790,7 +790,7 @@ def parse_maintainer_email(value):
     '--maintainer-needed', action='store_true',
     metavar=None, type=None, bind='final_converter',
     help='match packages without a maintainer')
-def orphaned(_value, namespace):
+def maintainer_needed(_value, _namespace):
     return packages.PackageRestriction(
         'maintainers',
         values.EqualityMatch(()))

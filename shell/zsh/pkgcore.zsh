@@ -75,8 +75,8 @@ _array_index() {
 
 # configured repo info
 #
-# Note that this only supports the repos.conf format (i.e. PORTDIR(_OVERLAY)
-# are not considered).
+# Note that this only supports the repos.conf format,
+# PORTDIR/PORTDIR_OVERLAY in make.conf are not supported.
 #
 # optional args:
 #  -t repo_types -- show specific repo types (defaults to showing source repos)

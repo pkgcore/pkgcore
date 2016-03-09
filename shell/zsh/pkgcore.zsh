@@ -76,7 +76,7 @@ _array_index() {
 # configured repo info
 #
 # Note that this only supports the repos.conf format,
-# PORTDIR/PORTDIR_OVERLAY in make.conf are not supported.
+# PORTDIR and PORTDIR_OVERLAY are not supported.
 #
 # optional args:
 #  -t repo_types -- show specific repo types (defaults to showing source repos)
@@ -330,5 +330,40 @@ _profiles() {
 		_describe -t profiles 'profiles' profiles $*
 	else
 		print ${profiles}
+	fi
+}
+
+# available binpkgs
+#
+# Note that this only supports the repos.conf format,
+# PKGDIR and PORTAGE_BINHOST are not considered.
+#
+# optional args
+#  -r repo  specify the repo to use; otherwise the all repos are used
+#  -p       print the output instead of using completion
+#  -f       output full, absolute profile paths
+_binpkgs() {
+	typeset -A opts
+	zparseopts -E -A opts a p f r:
+
+	local repo repo_path
+	typeset -a repos binpkgs
+
+	if [[ -n ${opts[(I)-r]} ]]; then
+		repos=(${opts[-r]})
+	else
+		repos=($(_repos -p -t b))
+	fi
+
+	for repo in "${repos[@]}"; do
+		repo_path=${$(_repos -p -v "${repo}:location")%/}
+		[[ -z ${repo_path} ]] && continue
+		binpkgs+=(_path_files -g \*.tbz2 -W "${repo_path}/*")
+	done
+
+	if [[ -n ${compstate} ]] && [[ -z ${opts[(I)-p]} ]]; then
+		_describe -t binpkgs 'binpkgs' binpkgs
+	else
+		print ${binpkgs}
 	fi
 }

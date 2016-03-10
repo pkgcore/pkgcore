@@ -57,8 +57,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'pkgcore'
-authors_list = ['Brian Harring', 'Marien Zwart', 'Tim Harder']
-authors = ', '.join(authors_list)
+authors = ''
 copyright = '2006-2016, pkgcore contributors'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -96,7 +95,7 @@ exclude_patterns = ['_build', 'generated']
 
 # If true, sectionauthor and moduleauthor directives will be shown in the
 # output. They are ignored by default.
-#show_authors = False
+show_authors = False
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
@@ -243,11 +242,11 @@ generated_man_pages = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('man/%s' % script, script, import_module(module).__doc__.split('\n', 1)[0], authors_list, 1)
+    ('man/%s' % script, script, import_module(module).__doc__.split('\n', 1)[0], [], 1)
     for module, script in generated_man_pages
 ]
 
-man_pages.append(('man/pkgcore', 'pkgcore', 'a framework for package management', authors_list, 5))
+man_pages.append(('man/pkgcore', 'pkgcore', 'a framework for package management', [], 5))
 
 # -- Options for Epub output ---------------------------------------------------
 

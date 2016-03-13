@@ -164,7 +164,7 @@ def parse_args():
 def main():
     options, args = parse_args()
 
-    if isinstance(options.allowed_exts, basestring):
+    if not isinstance(options.allowed_exts, list):
         options.allowed_exts = options.allowed_exts.split(",")
 
     if options.verbose:

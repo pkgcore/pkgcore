@@ -150,13 +150,21 @@ def _setup_restrictions(namespace, attr):
     repo = namespace.domain.all_repos
     target_restrictions = []
 
+    # If no targets are passed, create a restriction from the current working
+    # directory if inside a known repo.
+    cwd = os.getcwd()
+    if not namespace.targets and cwd in repo:
+        namespace.targets = [cwd]
+
     for target in namespace.targets:
         try:
             target_restrictions.append(parserestrict.parse_match(target))
         except parserestrict.ParseError as e:
             if os.path.exists(target):
                 try:
-                    target_restrictions.append(repo.path_restrict(target))
+                    restrict = repo.path_restrict(target)
+                    # toss the repo restriction, keep the rest
+                    target_restrictions.append(boolean.AndRestriction(*restrict[1:]))
                 except ValueError as e:
                     argparser.error(e)
             else:
@@ -164,17 +172,6 @@ def _setup_restrictions(namespace, attr):
 
     if target_restrictions:
         namespace.restrict.append(boolean.OrRestriction(*target_restrictions))
-
-    # If no targets are passed, try to create a restriction from the current
-    # working directory.
-    if not namespace.targets:
-        try:
-            restrict = repo.path_restrict(os.getcwd())
-            # toss the repo restriction, keep the rest
-            namespace.restrict.append(boolean.AndRestriction(*restrict[1:]))
-        except ValueError:
-            pass
-
     if namespace.restrict:
         namespace.restrict = boolean.AndRestriction(*namespace.restrict)
 

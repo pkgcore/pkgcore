@@ -227,10 +227,10 @@ __generate_initial_ebuild_environ() {
 		# Use a file if possible; faster since bash does this lovely byte by
 		# byte reading if it's a pipe. Having the file around is useful for
 		# debugging also.
-		__timed_call __environ_dump > "${T}"/.initial_environ || die "dump_environ > '${T}/.initial_environ' return non zero"
+		__timed_call __environ_save_to_file "${T}"/.initial_environ || die "failed dumping env to '${T}/.initial_environ'"
 		echo "source \"${T}\"/.initial_environ"
 	else
-		__timed_call __environ_dump || die "dump_environ returned non zero"
+		__timed_call __environ_dump || die "failed dumping env"
 	fi
 }
 

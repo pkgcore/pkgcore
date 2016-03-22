@@ -1,1 +1,37 @@
-2.lib
+# Copyright: 2011-2012 Brian Harring <ferringb@gmail.com>
+# license GPL2/BSD 3
+
+source "${PKGCORE_EBD_PATH}"/eapi/1.lib
+
+__phase_src_prepare() { :; }
+
+__phase_src_configure() {
+	if [[ -x ${ECONF_SOURCE:-.}/configure ]]; then
+		econf
+	fi
+}
+
+__phase_src_compile() {
+	if [[ -f Makefile || -f GNUmakefile || -f makefile ]]; then
+		emake || die "emake failed"
+	fi
+}
+
+default_pkg_nofetch() { __phase_pkg_nofetch; }
+default_src_unpack() { __phase_src_unpack; }
+default_src_prepare() { __phase_src_prepare; }
+default_src_configure() { __phase_src_configure; }
+default_src_compile() { __phase_src_compile; }
+default_src_test() { __phase_src_test; }
+
+default() {
+	if __is_function default_pkg_${EBUILD_PHASE}; then
+		default_pkg_${EBUILD_PHASE}
+	elif __is_function default_src_${EBUILD_PHASE}; then
+		default_src_${EBUILD_PHASE}
+	else
+		die "default is not available in ebuild phase '${EBUILD_PHASE}'"
+	fi
+}
+
+:

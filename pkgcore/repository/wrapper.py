@@ -37,7 +37,8 @@ class tree(prototype.tree):
         self.raw_repo = repo
 
     def itermatch(self, *args, **kwargs):
-        return imap(self.package_class, self.raw_repo.itermatch(*args, **kwargs))
+        pkgs = (x for x in self.raw_repo.itermatch(*args, **kwargs) if x.is_supported)
+        return imap(self.package_class, pkgs)
 
     __getattr__ = GetAttrProxy("raw_repo")
 

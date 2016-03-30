@@ -182,25 +182,6 @@ __dyn_pkg_preinst() {
 	fi
 }
 
-__internal_inherit() {
-	# default, backwards compatible beast.
-	local location overlay
-	location=${ECLASSDIR}/${1}.eclass
-
-	if [[ -n ${PORTDIR_OVERLAY} ]]; then
-		local overlay
-		for overlay in ${PORTDIR_OVERLAY}; do
-			if [[ -e ${overlay}/eclass/${1}.eclass ]]; then
-				location=${overlay}/eclass/${1}.eclass
-				debug-print "  eclass exists: ${location}"
-			fi
-		done
-	fi
-	debug-print "inherit: $1 -> ${location}"
-	__qa_invoke source "${location}" >&2 || die "died sourcing ${location} in inherit()"
-	return 0
-}
-
 inherit() {
 	local ECLASS_DEPTH=$(( ${ECLASS_DEPTH-0} + 1 ))
 

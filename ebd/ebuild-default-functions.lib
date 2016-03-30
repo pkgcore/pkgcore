@@ -226,7 +226,7 @@ inherit() {
 
 		unset IUSE REQUIRED_USE DEPEND RDEPEND PDEPEND
 
-		__internal_inherit "$1" || die "failed sourcing $1 in inherit()"
+		__internal_inherit "$1" || die "${FUNCNAME}: failed sourcing $1"
 
 		# If each var has a value, append it to the global variable E_* to
 		# be applied after everything is finished. New incremental behavior.

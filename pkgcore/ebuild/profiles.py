@@ -244,7 +244,7 @@ class ProfileNode(object):
             l = line.split()
             a = self.eapi_atom(l[0])
             if len(l) == 1:
-                raise Exception("malformed line- %r" % (line,))
+                raise Exception("malformed line, missing USE flag(s): %r" % (line,))
             d[a.key].append(chunked_data(a, *split_negations(l[1:])))
 
         return ImmutableDict((k, _build_cp_atom_payload(v, atom(k)))

@@ -366,10 +366,10 @@ class ProfileNode(object):
         data = filter(None, data)
         if len(data) != 1:
             raise ProfileError(self.path, 'eapi', "multiple lines detected")
-        obj = get_eapi(data[0])
-        if not obj.is_supported:
+        eapi = get_eapi(data[0])
+        if not eapi.is_supported:
             raise ProfileError(self.path, 'eapi', 'unsupported eapi: %s' % data[0])
-        return obj
+        return eapi
 
     eapi_atom = klass.alias_attr("eapi.atom_kls")
 
@@ -400,13 +400,13 @@ class ProfileNode(object):
         # cls(path) is not cls(path, pms_strict=True)
 
         if repo_config is not None and 'pms' not in repo_config.profile_formats:
-            obj = cls(path, pms_strict=False)
+            profile = cls(path, pms_strict=False)
         else:
-            obj = cls(path)
+            profile = cls(path)
 
         # optimization to avoid re-parsing what we already did.
-        object.__setattr__(obj, '_repoconfig', repo_config)
-        return obj
+        object.__setattr__(profile, '_repoconfig', repo_config)
+        return profile
 
 
 class EmptyRootNode(ProfileNode):
@@ -574,15 +574,15 @@ class ProfileStack(object):
             d.setdefault(pkg.category, {}).setdefault(pkg.package,
                          []).append(pkg.fullver)
         intermediate_parent = PkgProvidedParent()
-        obj = SimpleTree(
+        repo = SimpleTree(
             d, pkg_klass=partial(PkgProvided, intermediate_parent),
             livefs=True, frozen=True, repo_id='provided')
-        intermediate_parent._parent_repo = obj
+        intermediate_parent._parent_repo = repo
 
         if not d:
-            obj.match = obj.itermatch = _empty_provides_iterable
-            obj.has_match = _empty_provides_has_match
-        return obj
+            repo.match = repo.itermatch = _empty_provides_iterable
+            repo.has_match = _empty_provides_has_match
+        return repo
 
     @klass.jit_attr
     def masks(self):

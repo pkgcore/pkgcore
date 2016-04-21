@@ -367,7 +367,7 @@ class ProfileNode(object):
         if len(data) != 1:
             raise ProfileError(self.path, 'eapi', "multiple lines detected")
         obj = get_eapi(data[0])
-        if obj is None:
+        if not obj.is_supported:
             raise ProfileError(self.path, 'eapi', 'unsupported eapi: %s' % data[0])
         return obj
 

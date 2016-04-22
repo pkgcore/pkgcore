@@ -38,7 +38,7 @@ has() {
 	[[ *$'\001'* != $* ]] && return 0
 
 	# \001 for some insane reason was in $@; fallback to the slow for loop.
-	# Suppress debug outut for this part however.
+	# Suppress debug output for this part however.
 	__shopt_push +x
 	local x
 	for x in "$@"; do

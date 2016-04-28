@@ -102,8 +102,6 @@ class ebd(object):
                 pjoin(self.domain.root, self.prefix.lstrip('/'))).rstrip('/') + '/'
             self.env["PKGCORE_PREFIX_SUPPORT"] = 'true'
 
-        self.env.update(pkg.eapi.get_ebd_env())
-
         # set the list of internally implemented EAPI specific functions that
         # shouldn't be exported
         if os.path.exists(pjoin(const.EBD_PATH, 'funcnames', str(pkg.eapi))):

@@ -917,7 +917,6 @@ def expected_ebuild_env(pkg, d=None, env_source_override=None, depends=False):
         path.extend(d.get("PATH", "").split(":"))
         path.extend(os.environ.get("PATH", "").split(":"))
         d["PATH"] = os.pathsep.join(filter(None, path))
-        d["PKGCORE_EAPI"] = str(pkg.eapi)
         d["INHERITED"] = ' '.join(pkg.data.get("_eclasses_", ()))
         d["USE"] = ' '.join(str(x) for x in pkg.use)
         d["SLOT"] = pkg.fullslot

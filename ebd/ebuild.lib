@@ -85,7 +85,6 @@ alias __load_environ='{
 	fi
 	[[ $? == 0 ]] || die "sourcing saved env failed";
 	__ensure_PATH "${EXISTING_PATH}";
-	export EAPI=${PKGCORE_EAPI-${EAPI}}
 	__timed_call __load_eapi_libs
 	__timed_call __source_bashrcs
 	unset -v EXISTING_PATH;
@@ -106,7 +105,6 @@ alias __load_safe_environ='{
 	fi
 	[[ $? == 0 ]] || die "sourcing saved env failed";
 	__ensure_PATH "${EXISTING_PATH}";
-	export EAPI=${PKGCORE_EAPI-${EAPI}}
 	__timed_call __load_eapi_libs
 	__timed_call __source_bashrcs
 	unset -v EXISTING_PATH;
@@ -170,8 +168,8 @@ __load_eapi_libs() {
 	# finally, update the filters with functionality loaded from here-
 	# always, always, *always* use our own functionality
 	source "${PKGCORE_EBD_PATH}"/eapi/common.lib || die "failed sourcing eapi/common.lib"
-	source "${PKGCORE_EBD_PATH}/eapi/${PKGCORE_EAPI-${EAPI}}.lib" || \
-		die "failed loading eapi/${PKGCORE_EAPI-${EAPI}}.lib"
+	source "${PKGCORE_EBD_PATH}/eapi/${EAPI}.lib" || \
+		die "failed loading eapi/${EAPI}.lib"
 
 	# override banned functions
 	local func
@@ -255,9 +253,6 @@ __load_ebuild() {
 	if [[ -z ${S} ]]; then
 		export S=${WORKDIR}/${P}
 	fi
-
-	# default to EAPI=0 if unset
-	EAPI=${EAPI-0}
 
 	# some users have $TMP/$TMPDIR to a custom dir in their home ...
 	# this will cause sandbox errors with some ./configure

@@ -254,9 +254,11 @@ common_tracked_attributes = (
     "rdepends", "restrict", "source_repository",
 )
 
+# Boolean variables exported to the bash side, e.g. ebuild_phase_func is
+# exported as PKGCORE_EBUILD_PHASE_FUNC.
 common_env_optionals = mappings.ImmutableDict(dict.fromkeys(
     ("dodoc_allow_recursive", "doins_allow_symlinks",
-     "doman_language_detect", "doman_language_override",
+     "doman_language_detect", "doman_language_override", "ebuild_phase_func",
      "econf_disable_dependency_tracking", "econf_disable_silent_rules",
      "new_reads_stdin", "profile_iuse_injection",),
     _convert_bool_to_bash_bool))

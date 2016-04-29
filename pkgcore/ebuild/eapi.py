@@ -224,11 +224,6 @@ def _combine_dicts(*sequence_of_mappings):
     return d
 
 
-def _convert_bool_to_bash_bool(val):
-    """Convert Python boolean value to bash boolean value."""
-    return str(bool(val)).lower()
-
-
 # Note that pkg_setup is forced by default since this is how our env setup occurs.
 common_default_phases = tuple(
     _shorten_phase_name(x) for x in
@@ -261,7 +256,7 @@ common_env_optionals = mappings.ImmutableDict(dict.fromkeys(
      "doman_language_detect", "doman_language_override", "ebuild_phase_func",
      "econf_disable_dependency_tracking", "econf_disable_silent_rules",
      "new_reads_stdin", "profile_iuse_injection",),
-    _convert_bool_to_bash_bool))
+    lambda s: str(s).lower()))
 
 
 eapi0 = EAPI.register(

@@ -171,6 +171,9 @@ __load_eapi_libs() {
 	source "${PKGCORE_EBD_PATH}/eapi/${EAPI}.lib" || \
 		die "failed loading eapi/${EAPI}.lib"
 
+	# verify active bash version
+	__check_bash_version
+
 	# override banned functions
 	local func
 	for func in "${PKGCORE_BANNED_FUNCS[@]}"; do
@@ -232,6 +235,34 @@ __generate_initial_ebuild_environ() {
 	fi
 }
 
+# Check if the current bash version is compatible with a package's EAPI version.
+__check_bash_version() {
+	[[ -z ${PKGCORE_BASH_COMPAT} ]] && return
+	local maj=${PKGCORE_BASH_COMPAT%.*} min=${PKGCORE_BASH_COMPAT#*.}
+
+	if [[ ${BASH_VERSINFO[0]} -lt ${maj} ]] || \
+			[[ ${BASH_VERSINFO[0]} -eq ${maj} && ${BASH_VERSINFO[1]} -lt ${min} ]]; then
+		die "EAPI ${EAPI} requires >=bash-${maj}.${min}"
+	fi
+}
+
+# Set up the bash version compatibility level. This does not disable features
+# when running with a newer version, but makes it so that when bash changes
+# behavior in an incompatible way, the older behavior is used instead.
+__export_bash_compat() {
+	[[ -z ${PKGCORE_BASH_COMPAT} ]] && return
+
+	# Set compat level only for the ebuild environment, this won't affect
+	# external shell scripts.
+	__var_push -n BASH_COMPAT=${PKGCORE_BASH_COMPAT}
+
+	# BASH_COMPAT was introduced in bash-4.3, for older versions a compat
+	# option must be used.
+	if [[ ${PKGCORE_BASH_COMPAT} == "3.2" && ${BASH_VERSINFO[0]} -gt 3 ]]; then
+		__shopt_push -s compat32
+	fi
+}
+
 __load_ebuild() {
 	local EBUILD=$1
 	shift
@@ -247,10 +278,15 @@ __load_ebuild() {
 		die "EBUILD=${EBUILD}; problem is, it doesn't exist.  bye." >&2
 	fi
 
+	__env_push
+	__export_bash_compat
+
 	# EAPI 6 and up raise expansion errors on failed globbing in global scope.
 	${PKGCORE_GLOBAL_FAILGLOB} && __shopt_push -s failglob
+
 	__qa_invoke source "${EBUILD}" >&2
-	${PKGCORE_GLOBAL_FAILGLOB} && __shopt_pop
+
+	__env_pop
 
 	# a reasonable default for $S
 	if [[ -z ${S} ]]; then
@@ -288,11 +324,13 @@ source "${PKGCORE_EBD_PATH}"/ebuild-env-utils.lib >&2 || die "failed sourcing eb
 
 __run_ebuild_phase() {
 	[[ ${PKGCORE_DEBUG} -ge 2 ]] && set -x
+
+	__env_push
+	__export_bash_compat
+	${PKGCORE_EBUILD_PHASE_FUNC} && __var_push -n EBUILD_PHASE_FUNC=$1
+
 	__qa_run_function_if_exists __phase_pre_$1
 	__qa_run_function_if_exists pre_$1
-
-	local EBUILD_PHASE_FUNC
-	${PKGCORE_EBUILD_PHASE_FUNC} && EBUILD_PHASE_FUNC=$1
 
 	if __is_function __dyn_$1; then
 		__dyn_$1
@@ -304,6 +342,9 @@ __run_ebuild_phase() {
 
 	__qa_run_function_if_exists post_$1
 	__qa_run_function_if_exists __phase_post_$1
+
+	__env_pop
+
 	[[ ${PKGCORE_DEBUG} -lt 4 ]] && set +x
 }
 

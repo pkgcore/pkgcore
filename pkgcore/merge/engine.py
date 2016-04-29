@@ -326,8 +326,7 @@ class MergeEngine(object):
         try:
             self.phase = hook
             self.regenerate_csets()
-            for trigger in sorted(self.hooks[hook],
-                key=operator.attrgetter("priority")):
+            for trigger in sorted(self.hooks[hook], key=operator.attrgetter("priority")):
                 # error checking needed here.
                 self.observer.trigger_start(hook, trigger)
                 try:
@@ -336,12 +335,12 @@ class MergeEngine(object):
                     except compatibility.IGNORED_EXCEPTIONS:
                         raise
                     except errors.BlockModification as e:
-                        self.observer.error("modification was blocked by "
-                            "trigger %r: %s", trigger, e)
+                        self.observer.error(
+                            "modification was blocked by trigger %r: %s", trigger, e)
                         raise
                     except errors.ModificationError as e:
-                        self.observer.error("modification error occurred "
-                            "during trigger %r: %s", trigger, e)
+                        self.observer.error(
+                            "modification error occurred during trigger %r: %s", trigger, e)
                         raise
                     except Exception as e:
                         if not trigger.suppress_exceptions:
@@ -350,8 +349,8 @@ class MergeEngine(object):
                         handle = stringio.text_writable()
                         traceback.print_exc(file=handle)
 
-                        self.observer.warn("unhandled exception caught and "
-                            "suppressed:\n%s", handle.getvalue())
+                        self.observer.warn(
+                            "unhandled exception caught and suppressed:\n%s", handle.getvalue())
                 finally:
                     self.observer.trigger_end(hook, trigger)
         finally:
@@ -380,8 +379,7 @@ class MergeEngine(object):
     @staticmethod
     def _get_livefs_intersect_cset(engine, csets, cset_name, realpath=False):
         """generates the livefs intersection against a cset"""
-        return contents.contentsSet(livefs.intersect(csets[cset_name],
-            realpath=realpath))
+        return contents.contentsSet(livefs.intersect(csets[cset_name], realpath=realpath))
 
     @staticmethod
     def get_install_livefs_intersect(engine, csets):
@@ -419,8 +417,7 @@ class MergeEngine(object):
 
             if path:
                 # ok, it's tempspace, and reusable.
-                obj = data_source.local_source(path, True,
-                    encoding=source.encoding)
+                obj = data_source.local_source(path, True, encoding=source.encoding)
 
                 if empty:
                     obj.bytes_fileobj(True).truncate(0)
@@ -436,8 +433,8 @@ class MergeEngine(object):
         # so we create it ourselves.  Annoying, but so it goes.
         # just touch the filepath.
         open(path, 'w').close()
-        new_source = data_source.local_source(path, True,
-            encoding=getattr(fsobj, 'encoding', None))
+        new_source = data_source.local_source(
+            path, True, encoding=getattr(fsobj, 'encoding', None))
 
         if source and not empty:
             data_source.transfer(source.bytes_fsobj(), new_source.bytes_fsobj(True))

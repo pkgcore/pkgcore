@@ -17,10 +17,10 @@ install_paths() {
 
 	for x in "${@}"; do
 		if [[ ! -e ${x} ]]; then
-			error "file '${x}' doesn't exist"
+			error "nonexistent file: ${x}"
 		elif [[ -d ${x} ]]; then
 			if ! ${recursive}; then
-				error "'${x}' is a directory$($PKGCORE_DODOC_ALLOW_RECURSIVE && echo ", perhaps you forgot -r?")"
+				error "'${x}' is a directory$(${PKGCORE_DODOC_ALLOW_RECURSIVE} && echo ", perhaps you forgot -r?")"
 				continue
 			fi
 			__directory_is_empty "${x}" && continue

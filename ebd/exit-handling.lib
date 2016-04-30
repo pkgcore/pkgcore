@@ -43,7 +43,6 @@ die() {
 			${hook} >&2 1>&2
 		done
 	fi
-	echo >&2
 
 	if [[ -z ${PKGCORE_IS_NOT_HELPER} ]]; then
 		# We're in a helper so enable helper specific output.

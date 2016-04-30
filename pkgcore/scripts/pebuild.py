@@ -9,7 +9,7 @@ import os
 
 from pkgcore.ebuild import atom
 from pkgcore.ebuild.errors import MalformedAtom
-from pkgcore.operations import observer
+from pkgcore.operations import observer, format
 from pkgcore.util import commandline
 
 
@@ -88,6 +88,9 @@ def main(options, out, err):
             argparser.error("unknown phase: '%s'" % phase)
         phase_funcs.append(p)
 
-    for phase, f in izip(phases, phase_funcs):
-        out.write('executing phase %s' % (phase,))
-        f(**kwds)
+    try:
+        for phase, f in izip(phases, phase_funcs):
+            out.write('executing phase %s' % (phase,))
+            f(**kwds)
+    except format.errors:
+        return 1

@@ -722,7 +722,6 @@ def main(options, out, err):
             out.write(out.bold, " * ", out.reset, "running sanity checks")
             start_time = time()
         if not changes.run_sanity_checks(domain, build_obs):
-            out.error("sanity checks failed.  please resolve them and try again.")
             if not options.ignore_failures:
                 return 1
             else:

@@ -885,9 +885,6 @@ class ebuild_mixin(object):
                 pkg.cpvstr, time.time() - start)
             return ret
         except format.GenericBuildError as e:
-            logger.error(
-                "pkg_pretend sanity check for %s failed with exception %r"
-                % (pkg.cpvstr, e))
             return False
         finally:
             shutil.rmtree(builddir)

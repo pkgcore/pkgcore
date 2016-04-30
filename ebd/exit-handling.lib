@@ -99,7 +99,7 @@ __dump_trace() {
 
 __helper_exit() {
 	[[ $1 == 0 ]] && exit 0
-	if ${PKGCORE_NONFATAL_HELPER}; then
+	if ${PKGCORE_NONFATAL}; then
 		echo "WARNING: exitcode $1 from ${HELPER_ERROR_PREFIX}" >&2
 		exit $1
 	fi

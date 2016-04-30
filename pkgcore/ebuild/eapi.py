@@ -60,6 +60,9 @@ eapi_optionals = mappings.ImmutableDict({
     # from stdin, rather than an explicit ondisk file.
     'new_reads_stdin': False,
 
+    # Controls whether utilities die on failure; see PMS.
+    'nonfatal': True,
+
     # Controls whether this EAPI supports prefix related variables/settings;
     # prefix awareness basically. See PMS for full details.
     "prefix_capable": True,
@@ -255,7 +258,7 @@ common_env_optionals = mappings.ImmutableDict(dict.fromkeys(
     ("dodoc_allow_recursive", "doins_allow_symlinks",
      "doman_language_detect", "doman_language_override", "ebuild_phase_func",
      "econf_disable_dependency_tracking", "econf_disable_silent_rules",
-     "new_reads_stdin", "profile_iuse_injection",),
+     "new_reads_stdin", "nonfatal", "profile_iuse_injection",),
     lambda s: str(s).lower()))
 
 
@@ -334,6 +337,7 @@ eapi4 = EAPI.register(
         dodoc_allow_recursive=True,
         doins_allow_symlinks=True,
         doman_language_override=True,
+        nonfatal=False,
         econf_disable_dependency_tracking=True,
         exports_replacing=True,
         has_AA=False, has_KV=False,

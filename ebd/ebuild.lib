@@ -319,10 +319,6 @@ __execute_phases() {
 	trap "die 'a helper failed, see above'" SIGUSR1
 	declare -rx PKGCORE_EBUILD_PROCESS_PID=${BASHPID}
 
-	if __safe_has "${EAPI:-0}" 0 1 2 3; then
-		declare -rx PKGCORE_NONFATAL_HELPER=true
-	fi
-
 	local myarg ret
 	for myarg in $*; do
 		EBUILD_PHASE=${myarg}

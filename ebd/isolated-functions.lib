@@ -211,6 +211,11 @@ __IFS_pop() {
 declare -a PKGCORE_VAR_STACK
 
 __var_push() {
+	local export_opts
+	if [[ $1 == -n ]]; then
+		export_opts="-n"
+		shift
+	fi
 	[[ $# -eq 0 ]] && die "${FUNCNAME}: invoked with no arguments"
 
 	local arg var orig_val
@@ -234,7 +239,7 @@ __var_push() {
 
 		# export a new value if one was specified
 		if [[ ${arg} == *=* ]]; then
-			export "${arg}" || die "${FUNCNAME}: failed to export '${arg}'"
+			export ${export_opts} "${arg}" || die "${FUNCNAME}: failed to export '${arg}'"
 		fi
 
 		PKGCORE_VAR_STACK[${#PKGCORE_VAR_STACK[@]}]=${orig_val}

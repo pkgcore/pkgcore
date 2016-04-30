@@ -269,6 +269,31 @@ __var_pop() {
 	done
 }
 
+declare -a PKGCORE_RESET_STACK
+
+__env_push() {
+	PKGCORE_RESET_STACK[${#PKGCORE_RESET_STACK[@]}]=${#PKGCORE_SHOPT_STACK[@]}
+	PKGCORE_RESET_STACK[${#PKGCORE_RESET_STACK[@]}]=${#PKGCORE_VAR_STACK[@]}
+}
+
+__env_pop() {
+	if [[ ${#PKGCORE_RESET_STACK[@]} -lt 2 ]]; then
+		die "${FUNCNAME}: not enough values on the stack"
+	fi
+
+	local var_stack_reset=${PKGCORE_RESET_STACK[$(( ${#PKGCORE_RESET_STACK[@]} - 1 ))]}
+	unset PKGCORE_RESET_STACK\[$(( ${#PKGCORE_RESET_STACK[@]} - 1 ))\]
+	local shopt_stack_reset=${PKGCORE_RESET_STACK[$(( ${#PKGCORE_RESET_STACK[@]} - 1 ))]}
+	unset PKGCORE_RESET_STACK\[$(( ${#PKGCORE_RESET_STACK[@]} - 1 ))\]
+
+	while [[ ${#PKGCORE_VAR_STACK[@]} -gt ${var_stack_reset} ]]; do
+		__var_pop
+	done
+	while [[ ${#PKGCORE_SHOPT_STACK[@]} -gt ${shopt_stack_reset} ]]; do
+		__shopt_pop
+	done
+}
+
 __qa_invoke() {
 	if ${PKGCORE_QA_SUPPRESSED:-false}; then
 		"$@"

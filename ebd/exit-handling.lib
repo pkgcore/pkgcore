@@ -24,7 +24,7 @@ die() {
 
 	local phase_str=
 	[[ -n ${EBUILD_PHASE} ]] && phase_str=" (${EBUILD_PHASE} phase)"
-	eerror "ERROR: ${CATEGORY}/${PF}::${PKGCORE_REPO_NAME} failed${phase_str}:"
+	eerror "ERROR: ${CATEGORY}/${PF} failed${phase_str}:"
 	eerror "  ${*:-(no error message)}"
 	if [[ -n ${PKGCORE_IS_NOT_HELPER} ]]; then
 		eerror

@@ -888,7 +888,6 @@ def expected_ebuild_env(pkg, d=None, env_source_override=None, depends=False):
     d["P"] = "-".join((pkg.package, pkg.version))
     d["PN"] = pkg.package
     d["PV"] = pkg.version
-    d["PKGCORE_REPO_NAME"] = pkg.repo.repo_id
     if pkg.revision is None:
         d["PR"] = "r0"
     else:

@@ -44,7 +44,6 @@ die() {
 
 	eerror
 	eerror "Working directory: '$(pwd)'"
-	eerror "S: '${S}'"
 
 	if [[ ${BASHPID} != ${PKGCORE_EBUILD_PROCESS_PID} ]]; then
 		local scope

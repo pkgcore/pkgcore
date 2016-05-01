@@ -94,7 +94,7 @@ elif [[ ${ED:-unset} == "unset" ]]; then
 fi
 
 invoke_script() {
-	[[ $# -eq 0 ]] && die "internal error: invoke_script invoked incorrectly"
+	[[ $# -eq 0 ]] && die "${FUNCNAME}: missing required arguments"
 	local HELPER_PATH=$1
 	local HELPER_NAME=${1##*/}
 	local HELPER_EAPI=${1%/*}
@@ -118,7 +118,8 @@ invoke_script() {
 			# need to track the exit code here...
 			return 1
 		fi
-		die "Failures encountered.  See proceeding output for details"
+		kill -10 ${PKGCORE_EBUILD_PROCESS_PID}
+		exit 1
 	fi
 	return 0
 }

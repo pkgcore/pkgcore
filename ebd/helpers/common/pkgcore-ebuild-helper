@@ -118,7 +118,7 @@ invoke_script() {
 			# need to track the exit code here...
 			return 1
 		fi
-		kill -10 ${PKGCORE_EBUILD_PROCESS_PID}
+		kill -s SIGUSR1 ${PKGCORE_EBUILD_PROCESS_PID}
 		exit 1
 	fi
 	return 0

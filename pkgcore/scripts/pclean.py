@@ -15,6 +15,7 @@ from pkgcore.util import commandline
 from pkgcore.util.repo_utils import get_virtual_repos
 
 demandload(
+    'errno',
     'functools:partial',
     'glob',
     're',
@@ -274,7 +275,19 @@ def _tmp_validate_args(parser, namespace):
                 continue
             pkg_map.setdefault(pkg.category, {}).setdefault(pkg.package, []).append(pkg.fullver)
         repo = SimpleTree(pkg_map)
-        dirs = ((partial(shutil.rmtree), pjoin(tmpdir, pkg.cpvstr))
+
+        def _remove_dir_and_empty_parent(d):
+            """Remove a given directory tree and its parent directory, if empty."""
+            shutil.rmtree(d)
+            try:
+                os.rmdir(os.path.dirname(d))
+            except OSError as e:
+                # POSIX specifies either ENOTEMPTY or EEXIST for non-empty dir
+                # in particular, Solaris uses EEXIST in that case.
+                if e.errno not in (errno.ENOTEMPTY, errno.EEXIST):
+                    raise
+
+        dirs = ((partial(_remove_dir_and_empty_parent), pjoin(tmpdir, pkg.cpvstr))
                 for pkg in repo.itermatch(namespace.restrict))
     else:
         # not in a configured repo dir, remove all tmpdir entries

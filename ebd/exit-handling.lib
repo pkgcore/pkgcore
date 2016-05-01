@@ -83,7 +83,7 @@ __dump_trace() {
 		# Display function arguments
 		local args= newargs=
 		local j
-		if [[ -n ${BASH_ARGV[@]} ]]; then
+		if [[ ${#BASH_ARGV[@]} -gt 0 ]]; then
 			for (( j = 0 ; j < ${BASH_ARGC[${n} - 1]} ; ++j )); do
 				newarg=${BASH_ARGV[$(( p - j - 1 ))]}
 				args="${args:+${args} }'${newarg}'"

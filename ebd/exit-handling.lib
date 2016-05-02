@@ -76,25 +76,38 @@ die() {
 # whitespacing for filenames
 # whitespacing for line numbers
 __dump_trace() {
-	declare -i strip=1
-
-	if [[ -n $1 ]]; then
-		strip=$(( $1 ))
-	fi
-	eerror "Call stack:"
+	declare -i strip=${1:-1}
 	local filespacing=$2 linespacing=$3
 	local n p
-	for (( n = ${#FUNCNAME[@]} - 1, p = ${#BASH_ARGV[@]} ; n > ${strip} ; n-- )); do
-		local funcname=${FUNCNAME[${n} - 1]}
-		local sourcefile=$(basename ${BASH_SOURCE[${n}]})
-		local lineno=${BASH_LINENO[${n} - 1]}
+
+	(( n = ${#FUNCNAME[@]} - 1 ))
+	(( p = ${#BASH_ARGV[@]} ))
+	# Drop internals up to the __qa_invoke() call when debugging isn't enabled.
+	if [[ -z ${PKGCORE_DEBUG} ]]; then
+		while (( n > 0 )); do
+			[[ ${FUNCNAME[${n}]} == __qa_invoke ]] && break
+			(( p -= ${BASH_ARGC[${n} - 1]} ))
+			(( n-- ))
+		done
+		if (( n == 0 )); then
+			(( n = ${#FUNCNAME[@]} - 1 ))
+			(( p = ${#BASH_ARGV[@]} ))
+		fi
+	fi
+
+	eerror "Call stack:"
+	local funcname= sourcefile= lineno=
+	for (( n; n > ${strip}; n-- )); do
+		funcname=${FUNCNAME[${n} - 1]}
+		sourcefile=$(basename ${BASH_SOURCE[${n}]})
+		lineno=${BASH_LINENO[${n} - 1]}
 		# Display function arguments
 		local args= newargs=
 		local j
 		if [[ ${#BASH_ARGV[@]} -gt 0 ]]; then
 			for (( j = 0 ; j < ${BASH_ARGC[${n} - 1]} ; ++j )); do
-				newarg=${BASH_ARGV[$(( p - j - 1 ))]}
-				args="${args:+${args} }'${newarg}'"
+				newargs=${BASH_ARGV[$(( p - j - 1 ))]}
+				args="${args:+${args} }'${newargs}'"
 			done
 			(( p -= ${BASH_ARGC[${n} - 1]} ))
 		fi

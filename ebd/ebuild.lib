@@ -21,7 +21,7 @@
 # readonly.  This limits users, but also helps to ensure that reloaded envs from older portages don't
 # overwrite an internal ebd.sh function that has since changed.
 
-ORIG_VARS=$(declare | grep -E '^[^[:space:]{}()]+=' | cut -s -d '=' -f 1)
+ORIG_VARS=$(compgen -v)
 
 DONT_EXPORT_VARS="ORIG_VARS GROUPS FUNCNAME CCACHE.* DISTCC.* SYNC
 (TMP)?DIR FEATURES CONFIG_PROTECT.* WORKDIR RSYNC_.* GENTOO_MIRRORS

@@ -250,7 +250,7 @@ __check_bash_version() {
 # when running with a newer version, but makes it so that when bash changes
 # behavior in an incompatible way, the older behavior is used instead.
 __export_bash_compat() {
-	[[ -z ${PKGCORE_BASH_COMPAT} ]] && return
+	[[ -z ${PKGCORE_BASH_COMPAT} ]] && die "PKGCORE_BASH_COMPAT isn't set!"
 
 	# Set compat level only for the ebuild environment, this won't affect
 	# external shell scripts.

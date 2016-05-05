@@ -261,6 +261,13 @@ __export_bash_compat() {
 	if [[ ${PKGCORE_BASH_COMPAT} == "3.2" && ${BASH_VERSINFO[0]} -gt 3 ]]; then
 		__shopt_push -s compat32
 	fi
+
+	# Explicitly set shell option (it's automatically enabled by setting
+	# BASH_COMPAT) so it gets properly disabled once leaving scope. Otherwise,
+	# __qa_invoke() can throw warnings when the compat42 option enabled
+	# internally by bash bleeds out of scope which seems to be caused when
+	# ebuilds or eclasses alter shopt options.
+	[[ ${PKGCORE_BASH_COMPAT} == "4.2" ]] && __shopt_push -s compat42
 }
 
 __load_ebuild() {

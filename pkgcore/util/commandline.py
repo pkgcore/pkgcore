@@ -92,6 +92,8 @@ class StoreTarget(argparse._AppendAction):
         ``'far*'`` (merge every package starting with 'far'),
         ``'dev-python/*::gentoo'`` (merge every package in the dev-python
         category from the gentoo repo), or even '*' (merge everything).
+
+    Also, the target '-' allows targets to be read from standard input.
     """
 
     def __init__(self, sets=True, *args, **kwargs):
@@ -101,8 +103,17 @@ class StoreTarget(argparse._AppendAction):
     def __call__(self, parser, namespace, values, option_string=None):
         if self.sets:
             namespace.sets = []
+
         if isinstance(values, basestring):
             values = [values]
+        elif values is not None and len(values) == 1 and values[0] == '-':
+            if not sys.stdin.isatty():
+                values = [x.strip() for x in sys.stdin.readlines() if x.strip() != '']
+                # reassign stdin to allow interactivity (currently only works for unix)
+                sys.stdin = open('/dev/tty')
+            else:
+                raise argparse.ArgumentError(self, "'-' is only valid when piping data in")
+
         for token in values:
             if self.sets and token.startswith('@'):
                 namespace.sets.append(token[1:])

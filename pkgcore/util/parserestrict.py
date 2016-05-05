@@ -82,6 +82,8 @@ def parse_match(text):
       'portage'
     - `>=portage-2.1`: atom syntax, package 'portage', version greater then or
       equal to '2.1'
+    - dev-qt/*:5: all Qt 5 libs
+    - boost:0/1.60: all packages named boost with a slot/subslot of 0/1.60.0
 
     :param text: string to attempt to parse
     :type text: string
@@ -97,15 +99,23 @@ def parse_match(text):
             "'!' or any form of blockers make no sense in this usage: '%s'" % (
                 text,))
 
+    restrictions = []
+    if '::' in text:
+        text, repo_id = text.rsplit('::', 1)
+        restrictions.append(restricts.RepositoryDep(repo_id))
+    if ':' in text:
+        text, slot = text.rsplit(':', 1)
+        slot, _sep, subslot = slot.partition('/')
+        if slot:
+            restrictions.append(restricts.SlotDep(slot))
+        if subslot:
+            restrictions.append(restricts.SubSlotDep(subslot))
+
     tsplit = text.rsplit("/", 1)
     if len(tsplit) == 1:
         ops, text = collect_ops(text)
         if not ops:
             if "*" in text:
-                restrictions = []
-                if '::' in text:
-                    text, repo_id = text.rsplit('::', 1)
-                    restrictions.append(restricts.RepositoryDep(repo_id))
                 r = convert_glob(text)
                 if r is None:
                     restrictions.append(packages.AlwaysTrue)
@@ -126,19 +136,16 @@ def parse_match(text):
         except errors.MalformedAtom as e:
             e.atom = orig_text
             raise_from(ParseError(str(e)))
-        if len(r) == 1:
+        if not restrictions and len(r) == 1:
             return r[0]
-        return packages.AndRestriction(*r)
+        restrictions.extend(r)
+        return packages.AndRestriction(*restrictions)
     elif text[0] in "=<>~" or "*" not in text:
         try:
-            return atom.atom(text)
+            return atom.atom(orig_text)
         except errors.MalformedAtom as e:
             raise_from(ParseError(str(e)))
 
-    restrictions = []
-    if '::' in tsplit[1]:
-        tsplit[1], repo_id = tsplit[1].rsplit('::', 1)
-        restrictions.append(restricts.RepositoryDep(repo_id))
     r = map(convert_glob, tsplit)
     if not r[0] and not r[1]:
         restrictions.append(packages.AlwaysTrue)

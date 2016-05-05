@@ -1,8 +1,6 @@
 # Copyright: 2012 Brian Harring <ferringb@gmail.com>
 # license GPL2/BSD 3
 
-PKGCORE_BASH_COMPAT=3.2
-
 __phase_pkg_nofetch() {
 	[[ -z ${SRC_URI} ]] && return
 

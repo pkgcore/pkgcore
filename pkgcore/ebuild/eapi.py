@@ -11,6 +11,9 @@ demandload(
 )
 
 eapi_optionals = mappings.ImmutableDict({
+    # Controls what version of bash compatibility to force; see PMS.
+    "bash_compat": '3.2',
+
     # Controls whether -r is allowed for dodoc.
     "dodoc_allow_recursive": False,
 
@@ -270,7 +273,7 @@ common_tracked_attributes = (
 # Boolean variables exported to the bash side, e.g. ebuild_phase_func is
 # exported as PKGCORE_EBUILD_PHASE_FUNC.
 common_env_optionals = mappings.ImmutableDict(dict.fromkeys(
-    ("dodoc_allow_recursive", "doins_allow_symlinks",
+    ("bash_compat", "dodoc_allow_recursive", "doins_allow_symlinks",
      "doman_language_detect", "doman_language_override", "ebuild_phase_func",
      "econf_disable_dependency_tracking", "econf_disable_silent_rules",
      "econf_docdir_and_htmldir", "global_failglob",
@@ -400,6 +403,7 @@ eapi6 = EAPI.register(
         is_supported=False,
         unpack_absolute_paths=True,
         unpack_case_insensitive=True,
+        bash_compat='4.2',
     )),
     ebd_env_options=eapi5.ebd_env_options,
 )

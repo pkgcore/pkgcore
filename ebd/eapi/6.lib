@@ -3,7 +3,6 @@
 
 source "${PKGCORE_EBD_PATH}"/eapi/5.lib
 
-PKGCORE_BASH_COMPAT=4.2
 PKGCORE_BANNED_FUNCS+=( einstall )
 PKGCORE_EAPPLY_USER=
 

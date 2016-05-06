@@ -227,8 +227,13 @@ def _dist_validate_args(parser, namespace):
         ifilter(namespace.filters.run, distfiles))
 
 
+pkg_opts = commandline.ArgumentParser(suppress=True)
+pkg_cleaning_opts = pkg_opts.add_argument_group('binpkg cleaning options')
+pkg_cleaning_opts.add_argument(
+    '--source-repo', metavar='REPO',
+    help='remove binpkgs with matching source repo')
 pkg = subparsers.add_parser(
-    'pkg', parents=(shared_opts, file_opts, repo_opts),
+    'pkg', parents=(shared_opts, file_opts, repo_opts, pkg_opts),
     description='remove binpkgs')
 @pkg.bind_final_check
 def _pkg_validate_args(parser, namespace):
@@ -243,6 +248,8 @@ def _pkg_validate_args(parser, namespace):
         pkgs = (pkg for pkg in pkgs if pkg.versioned_atom not in namespace.installed)
     if namespace.fetch_restricted:
         pkgs = (pkg for pkg in pkgs if 'fetch' not in pkg.restrict)
+    if namespace.source_repo is not None:
+        pkgs = (pkg for pkg in pkgs if namespace.source_repo == pkg.source_repository)
     namespace.remove = (
         (partial(os.remove), binpkg) for binpkg in
         ifilter(namespace.filters.run, (pkg.path for pkg in pkgs)))

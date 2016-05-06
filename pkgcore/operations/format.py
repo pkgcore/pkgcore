@@ -55,9 +55,11 @@ class fetch_base(object):
         return True
 
     def failed_fetch(self, fetchable, observer):
-        build_ops = self.domain.build_pkg(self.pkg, observer)
-        build_ops.nofetch()
-        build_ops.cleanup(force=True)
+        # run pkg_nofetch phase for fetch restricted pkgs
+        if 'fetch' in self.pkg.restrict:
+            build_ops = self.domain.build_pkg(self.pkg, observer)
+            build_ops.nofetch()
+            build_ops.cleanup(force=True)
         observer.error("failed fetching %s", fetchable)
 
 

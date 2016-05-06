@@ -465,10 +465,6 @@ class _UnconfiguredTree(prototype.tree):
                 return allow_missing, {}
             raise
 
-    def __str__(self):
-        return "%s.%s: location %s" % (
-            self.__class__.__module__, self.__class__.__name__, self.base)
-
     def __repr__(self):
         return "<ebuild %s location=%r @%#8x>" % (
             self.__class__.__name__, self.base, id(self))

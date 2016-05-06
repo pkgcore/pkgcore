@@ -482,6 +482,9 @@ class tree(object):
     def _visibility_limiters(self):
         return [(), ()]
 
+    def __str__(self):
+        return self.aliases[0]
+
     @property
     def aliases(self):
         potentials = (getattr(self, key, None) for key in ('repo_id', 'location'))

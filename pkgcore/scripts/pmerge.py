@@ -770,7 +770,7 @@ def main(options, out, err):
 
             cleanup = []
 
-            out.write("\nProcessing %i of %i: %s" % (count + 1, change_count, op.pkg.cpvstr))
+            out.write("\nProcessing %i of %i: %s::%s" % (count + 1, change_count, op.pkg.cpvstr, op.pkg.repo))
             out.title("%i/%i: %s" % (count + 1, change_count, op.pkg.cpvstr))
             if op.desc != "remove":
                 cleanup = [op.pkg.release_cached_data]

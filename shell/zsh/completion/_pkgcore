@@ -79,6 +79,10 @@ _pclean() {
         {'(--fetch-restricted)-f','(-f)--fetch-restricted'}'[skip fetch-restricted files]'
       )
 
+      pkg_opts=(
+        '--source-repo[remove binpkgs with matching source repo]'
+      )
+
       case $line[1] in
         (dist)
           _arguments -C -A '-*' \
@@ -95,6 +99,7 @@ _pclean() {
             $shared_opts \
             $file_opts \
             $repo_opts \
+            $pkg_opts \
             && ret=0
           ;;
         (tmp)

@@ -33,7 +33,7 @@ _choose() {
 	done
 	echo -n "Please select one: " >&2
 	read choice
-	if [[ ! ${choice} =~ "[0-9]+" || ${choice} -lt 1 || ${choice} -gt ${#@} ]]; then
+	if [[ ! ${choice} =~ [0-9]+ || ${choice} -lt 1 || ${choice} -gt ${#@} ]]; then
 		echo "Invalid choice!" >&2
 		return 1
 	fi

@@ -1,5 +1,8 @@
 #!/usr/bin/env sh
 
+# exit out if not running via an external script
+[ -z "$1" ] && exit 1
+
 SCRIPT_PATH=$1
 SCRIPT=$(basename ${SCRIPT_PATH})
 shift

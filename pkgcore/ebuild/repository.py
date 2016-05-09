@@ -46,7 +46,8 @@ demandload(
 
 class repo_operations(_repo_ops.operations):
 
-    def _cmd_implementation_digests(self, domain, matches, observer, **options):
+    def _cmd_implementation_digests(self, domain, matches, observer,
+                                    skip_default_mirrors=False):
         manifest_config = self.repo.config.manifests
         if manifest_config.disabled:
             observer.info("repo %s has manifests disabled", self.repo.repo_id)
@@ -68,7 +69,9 @@ class repo_operations(_repo_ops.operations):
                     # bail if digests are missing
                     pkg.release_cached_data(all=True)
                     # heinous.
-                    fetchables = pkg._get_attr['fetchables'](pkg, allow_missing_checksums=True)
+                    fetchables = pkg._get_attr['fetchables'](
+                        pkg, allow_missing_checksums=True,
+                        skip_default_mirrors=skip_default_mirrors)
                     object.__setattr__(pkg, 'fetchables', fetchables)
                     pkg_ops = domain.pkg_operations(pkg, observer=observer)
                     if not pkg_ops.supports("fetch"):

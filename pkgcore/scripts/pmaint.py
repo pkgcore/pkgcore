@@ -431,6 +431,14 @@ digest_opts.add_argument(
         Target repository to search for matches. If no repo is specified all
         ebuild repos are used.
     """)
+digest_opts.add_argument(
+    "-s", "--skip-default-mirrors", help="skip default mirrors when fetching SRC_URI targets",
+    action='store_true',
+    docs="""
+        Skip checking Gentoo mirrors for distfiles. This is useful when
+        manifesting ebuilds with new distfile targets that aren't on Gentoo
+        mirrors yet.
+    """)
 @digest.bind_final_check
 def _digest_validate(parser, namespace):
     repo = namespace.repo
@@ -472,11 +480,12 @@ def _digest_validate(parser, namespace):
 
 @digest.bind_main_func
 def digest_main(options, out, err):
-    domain = options.domain
     repo = options.repo
-    restrictions = options.restrictions
-    obs = observer.formatter_output(out)
 
-    if not repo.operations.digests(domain, restrictions, observer=obs):
+    if not repo.operations.digests(
+            domain=options.domain,
+            restriction=options.restrictions,
+            observer=observer.formatter_output(out),
+            skip_default_mirrors=options.skip_default_mirrors):
         digest.error("some errors were encountered...")
     return 0

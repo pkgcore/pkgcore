@@ -76,14 +76,17 @@ def generate_required_use(self):
         element_func=_mk_required_use_node)
 
 def generate_fetchables(self, allow_missing_checksums=False,
-                        ignore_unknown_mirrors=False):
+                        ignore_unknown_mirrors=False, skip_default_mirrors=False):
     chksums_can_be_missing = allow_missing_checksums or \
         bool(getattr(self.repo, '_allow_missing_chksums', False))
     chksums_can_be_missing, chksums = self.repo._get_digests(
         self, allow_missing=chksums_can_be_missing)
 
     mirrors = getattr(self._parent, "mirrors", {})
-    default_mirrors = getattr(self._parent, "default_mirrors", None)
+    if skip_default_mirrors:
+        default_mirrors = None
+    else:
+        default_mirrors = getattr(self._parent, "default_mirrors", None)
     common = {}
     func = partial(
         create_fetchable_from_uri, self, chksums,

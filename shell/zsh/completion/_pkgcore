@@ -581,6 +581,7 @@ _pmaint() {
           _arguments -C -w -S -s -A '-*' \
             $common_output_args \
             {'(--repo)-r','(-r)--repo'}'[target repository]:repo:_repos' \
+            {'(--skip-default-mirrors)-s','(-s)--skip-default-mirrors'}'[skip fetching from Gentoo mirrors]' \
             '*::ebuilds:_files -g \*.ebuild' \
             && ret=0
           ;;

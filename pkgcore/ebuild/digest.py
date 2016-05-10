@@ -5,7 +5,7 @@
 ebuild tree manifest/digest support
 """
 
-__all__ = ("serialize_manifest", "parse_manifest", "Manifest")
+__all__ = ("parse_manifest", "Manifest")
 
 from itertools import izip
 import operator

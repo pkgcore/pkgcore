@@ -742,11 +742,7 @@ _psite() {
 
 _pkgcore() {
   local ret=1
-
-  if [[ $service =~ (pclean|pconfig|pebuild|pinspect|pmaint|pmerge|pquery|psite|pcd) ]]; then
-    _call_function ret _$service
-  fi
-
+  _call_function ret _$service
   return ret
 }
 

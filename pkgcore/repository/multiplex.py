@@ -55,7 +55,7 @@ class operations(repo_interface.operations_proxy):
             if ret is singleton:
                 ret = ret2
             else:
-                ret = ret or ret2
+                ret = ret and ret2
             if op_name in self.ops_stop_after_first_supported:
                 return ret
         if ret is singleton:

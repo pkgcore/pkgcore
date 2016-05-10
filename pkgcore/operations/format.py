@@ -60,7 +60,7 @@ class fetch_base(object):
             build_ops = self.domain.build_pkg(self.pkg, observer)
             build_ops.nofetch()
             build_ops.cleanup(force=True)
-        observer.error("failed fetching %s", fetchable)
+        observer.error("failed fetching %s", fetchable.filename)
 
 
 class operations(_operations_mod.base):
@@ -124,8 +124,8 @@ class operations(_operations_mod.base):
             self._find_fetcher())
 
     @_operations_mod.is_standalone
-    def _cmd_api_fetch(self, observer=None):
-        return self._fetch_op.fetch_all(self._get_observer(observer))
+    def _cmd_api_fetch(self, fetchable, observer=None):
+        return self._fetch_op.fetch_one(fetchable, self._get_observer(observer))
 
     @_operations_mod.is_standalone
     def _cmd_api_mirror(self, observer=None):

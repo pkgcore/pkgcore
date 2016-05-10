@@ -34,6 +34,8 @@ demandload(
     'random:shuffle',
     'snakeoil.chksum:get_chksums',
     'snakeoil.data_source:local_source',
+    'snakeoil.sequences:iflatten_instance',
+    'pkgcore:fetch',
     'pkgcore.ebuild:cpv,digest,ebd,repo_objs,atom,restricts,profiles,processor',
     'pkgcore.ebuild:errors@ebuild_errors',
     'pkgcore.fs.livefs:sorted_scan',
@@ -47,58 +49,76 @@ demandload(
 class repo_operations(_repo_ops.operations):
 
     def _cmd_implementation_digests(self, domain, matches, observer,
-                                    skip_default_mirrors=False):
+                                    mirrors=False, force=False):
         manifest_config = self.repo.config.manifests
         if manifest_config.disabled:
             observer.info("repo %s has manifests disabled", self.repo.repo_id)
             return
         required_chksums = manifest_config.hashes
-        ret = False
+        ret = True
+
         for key_query in sorted(set(match.unversioned_atom for match in matches)):
             pkgs = self.repo.match(key_query)
             if not pkgs:
-                return
+                continue
+
+            manifest = pkgs[0].manifest
+
+            # all pkgdir fetchables
             pkgdir_fetchables = {}
-            try:
-                for pkg in pkgs:
-                    if pkg.ebuild.path is None:
-                        observer.error(
-                            "pkg %s doesn't exist on disk; can't generate manifest", pkg)
-                        return False
-                    # XXX: needs modification to grab all sources, and also to not
-                    # bail if digests are missing
-                    pkg.release_cached_data(all=True)
-                    # heinous.
-                    fetchables = pkg._get_attr['fetchables'](
+            for pkg in pkgs:
+                pkgdir_fetchables.update({
+                    fetchable.filename: fetchable for fetchable in
+                    iflatten_instance(pkg._get_attr['fetchables'](
                         pkg, allow_missing_checksums=True,
-                        skip_default_mirrors=skip_default_mirrors)
-                    object.__setattr__(pkg, 'fetchables', fetchables)
-                    pkg_ops = domain.pkg_operations(pkg, observer=observer)
-                    if not pkg_ops.supports("fetch"):
+                        skip_default_mirrors=(not mirrors)),
+                        fetch.fetchable)
+                    })
+
+            # fetchables targeted for manifest generation
+            fetchables = {filename: fetchable for filename, fetchable in pkgdir_fetchables.iteritems()
+                          if force or filename not in manifest.distfiles}
+
+            # Manifest file is current and not forcing a refresh
+            manifest_current = set(manifest.distfiles.iterkeys()) == set(pkgdir_fetchables.iterkeys())
+            if manifest_config.thin and not fetchables and manifest_current:
+                # Manifest files aren't necessary with thin manifests and no distfiles
+                if os.path.exists(manifest.path) and not pkgdir_fetchables:
+                    try:
+                        os.remove(manifest.path)
+                    except:
                         observer.error(
-                            "pkg %s doesn't support fetching, can't generate manifest", pkg)
-                    if not pkg_ops.mirror(observer):
-                        observer.error("failed fetching for pkg %s", pkg)
-                        return False
+                            "failed removing old manifest: %s::%s",
+                            key_query, self.repo.repo_id)
+                        ret = False
+                continue
 
-                    fetchables = pkg_ops._mirror_op.verified_files
-                    for path, fetchable in fetchables.iteritems():
-                        d = dict(zip(required_chksums, get_chksums(path, *required_chksums)))
-                        fetchable.chksums = d
-                    # should report on conflicts here...
-                    pkgdir_fetchables.update(fetchables.iteritems())
+            pkg_ops = domain.pkg_operations(pkgs[0], observer=observer)
+            if not pkg_ops.supports("fetch"):
+                observer.error("pkg %s doesn't support fetching, can't generate manifest", pkg)
+                ret = False
+                continue
 
-                observer.info("generating manifest: %s::%s", key_query, self.repo.repo_id)
-                pkgdir_fetchables = sorted(pkgdir_fetchables.itervalues())
-                digest.serialize_manifest(
-                    os.path.dirname(pkg.ebuild.path),
-                    pkgdir_fetchables, chfs=required_chksums, thin=manifest_config.thin)
-                ret = True
-            finally:
-                for pkg in pkgs:
-                    # done since we do hackish shit above
-                    # should be uneeded once this is cleaned up
-                    pkg.release_cached_data(all=True)
+            # fetch distfiles
+            for fetchable in fetchables.itervalues():
+                if not pkg_ops.fetch(fetchable, observer):
+                    ret = False
+                    continue
+            if not ret:
+                continue
+
+            # calculate checksums for fetched distfiles
+            distdir = domain.fetcher.distdir
+            for fetchable in fetchables.itervalues():
+                d = dict(zip(
+                    required_chksums,
+                    get_chksums(pjoin(distdir, fetchable.filename), *required_chksums)))
+                fetchable.chksums = d
+
+            fetchables.update(pkgdir_fetchables)
+            observer.info("generating manifest: %s::%s", key_query, self.repo.repo_id)
+            manifest.update(sorted(fetchables.itervalues()), chfs=required_chksums)
+
         return ret
 
 

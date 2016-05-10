@@ -425,6 +425,13 @@ digest.add_argument(
     """)
 digest_opts = digest.add_argument_group("subcommand options")
 digest_opts.add_argument(
+    "-f", "--force", help="forcibly remanifest specified packages",
+    action='store_true',
+    docs="""
+        Force package manifest files to be rewritten. Note that this requires
+        downloading all required distfiles.
+    """)
+digest_opts.add_argument(
     "-r", "--repo", help="target repository",
     action=commandline.StoreRepoObject, raw=True,
     docs="""
@@ -432,12 +439,12 @@ digest_opts.add_argument(
         ebuild repos are used.
     """)
 digest_opts.add_argument(
-    "-s", "--skip-default-mirrors", help="skip default mirrors when fetching SRC_URI targets",
+    "-m", "--mirrors", help="enable fetching from Gentoo mirrors",
     action='store_true',
     docs="""
-        Skip checking Gentoo mirrors for distfiles. This is useful when
-        manifesting ebuilds with new distfile targets that aren't on Gentoo
-        mirrors yet.
+        Enable checking Gentoo mirrors first for distfiles. This is disabled by
+        default because most manifest generation is done for new distfile
+        targets that aren't on Gentoo mirrors yet.
     """)
 @digest.bind_final_check
 def _digest_validate(parser, namespace):
@@ -471,10 +478,10 @@ def _digest_validate(parser, namespace):
             except ValueError:
                 digest.error("invalid atom: '%s'" % (target,))
 
-    restrictions = packages.OrRestriction(*restrictions)
-    if restrictions not in repo:
+    restriction = packages.OrRestriction(*restrictions)
+    if restriction not in repo:
         digest.error("no matches for '%s'" % (' '.join(targets),))
-    namespace.restrictions = restrictions
+    namespace.restriction = restriction
     namespace.repo = repo
 
 
@@ -482,10 +489,11 @@ def _digest_validate(parser, namespace):
 def digest_main(options, out, err):
     repo = options.repo
 
-    if not repo.operations.digests(
-            domain=options.domain,
-            restriction=options.restrictions,
-            observer=observer.formatter_output(out),
-            skip_default_mirrors=options.skip_default_mirrors):
-        digest.error("some errors were encountered...")
-    return 0
+    ret = repo.operations.digests(
+        domain=options.domain,
+        restriction=options.restriction,
+        observer=observer.formatter_output(out),
+        mirrors=options.mirrors,
+        force=options.force)
+
+    return int(not ret)

@@ -9,7 +9,7 @@ __all__ = ("serialize_manifest", "parse_manifest", "Manifest")
 
 from itertools import izip
 import operator
-from os.path import basename
+from os.path import basename, dirname
 
 from snakeoil.compatibility import raise_from
 from snakeoil.chksum import get_handler
@@ -25,59 +25,6 @@ demandload(
     'snakeoil:mappings',
     "snakeoil.sequences:iflatten_instance",
 )
-
-
-def serialize_manifest(pkgdir, fetchables, chfs=None, thin=False):
-    """
-    Write a manifest given a pkg_instance
-
-    :param pkgdir: the location of the package dir
-    :param fetchables: the fetchables of the package
-    """
-
-    if thin and not fetchables:
-        # thin doesn't require a manifest to be written
-        # if there is no fetchables.
-        return
-
-    _key_sort = operator.itemgetter(0)
-
-    excludes = frozenset(["CVS", ".svn", "Manifest"])
-    aux, ebuild, misc = {}, {}, {}
-    if not thin:
-        filesdir = '/files/'
-        for obj in iter_scan('/', offset=pkgdir, chksum_types=chfs):
-            if not obj.is_reg:
-                continue
-            pathname = obj.location
-            if excludes.intersection(pathname.split('/')):
-                continue
-            if pathname.startswith(filesdir):
-                d = aux
-                pathname = pathname[len(filesdir):]
-            elif obj.dirname == '/':
-                pathname = pathname[1:]
-                if obj.location[-7:] == '.ebuild':
-                    d = ebuild
-                else:
-                    d = misc
-            else:
-                raise Exception("Unexpected directory found in %r; %r" % (pkgdir, obj.dirname))
-            d[pathname] = dict(obj.chksums)
-
-    handle = open(pkgdir + '/Manifest', 'w')
-    # write it in alphabetical order; aux gets flushed now.
-    for path, chksums in sorted(aux.iteritems(), key=_key_sort):
-        _write_manifest(handle, 'AUX', path, chksums)
-
-    # next dist...
-    for fetchable in sorted(fetchables, key=operator.attrgetter('filename')):
-        _write_manifest(handle, 'DIST', basename(fetchable.filename), dict(fetchable.chksums))
-
-    # then ebuild and misc
-    for mtype, inst in (("EBUILD", ebuild), ("MISC", misc)):
-        for path, chksum in sorted(inst.iteritems(), key=_key_sort):
-            _write_manifest(handle, mtype, path, chksum)
 
 
 def _write_manifest(handle, chf, filename, chksums):
@@ -150,7 +97,6 @@ def parse_manifest(source, ignore_gpg=True):
 
 class Manifest(object):
 
-
     def __init__(self, path, enforce_gpg=False, thin=False, allow_missing=False):
         self.path = path
         self.thin = thin
@@ -170,10 +116,56 @@ class Manifest(object):
         self._dist, self._aux, self._ebuild, self._misc = data
         self._sourced = True
 
-    @property
-    def required_files(self):
-        self._pull_manifest()
-        return mappings.StackedDict(self._ebuild, self._misc)
+    def update(self, fetchables, chfs=None):
+        """Update the related Manifest file.
+
+        :param fetchables: fetchables of the package
+        """
+
+        if self.thin and not fetchables:
+            # thin doesn't require a manifest to be written
+            # if there is no fetchables.
+            return
+
+        _key_sort = operator.itemgetter(0)
+
+        excludes = frozenset(["CVS", ".svn", "Manifest"])
+        aux, ebuild, misc = {}, {}, {}
+        if not self.thin:
+            filesdir = '/files/'
+            for obj in iter_scan('/', offset=dirname(self.path), chksum_types=chfs):
+                if not obj.is_reg:
+                    continue
+                pathname = obj.location
+                if excludes.intersection(pathname.split('/')):
+                    continue
+                if pathname.startswith(filesdir):
+                    d = aux
+                    pathname = pathname[len(filesdir):]
+                elif obj.dirname == '/':
+                    pathname = pathname[1:]
+                    if obj.location[-7:] == '.ebuild':
+                        d = ebuild
+                    else:
+                        d = misc
+                else:
+                    raise Exception("Unexpected directory found in %r; %r" % (self.path, obj.dirname))
+                d[pathname] = dict(obj.chksums)
+
+        handle = open(self.path, 'w')
+            
+        # write it in alphabetical order; aux gets flushed now.
+        for path, chksums in sorted(aux.iteritems(), key=_key_sort):
+            _write_manifest(handle, 'AUX', path, chksums)
+
+        # next dist...
+        for fetchable in sorted(fetchables, key=operator.attrgetter('filename')):
+            _write_manifest(handle, 'DIST', basename(fetchable.filename), dict(fetchable.chksums))
+
+        # then ebuild and misc
+        for mtype, inst in (("EBUILD", ebuild), ("MISC", misc)):
+            for path, chksum in sorted(inst.iteritems(), key=_key_sort):
+                _write_manifest(handle, mtype, path, chksum)
 
     @property
     def aux_files(self):

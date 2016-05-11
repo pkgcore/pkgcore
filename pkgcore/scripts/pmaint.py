@@ -429,7 +429,15 @@ digest_opts.add_argument(
     action='store_true',
     docs="""
         Force package manifest files to be rewritten. Note that this requires
-        downloading all required distfiles.
+        downloading all distfiles.
+    """)
+digest_opts.add_argument(
+    "-m", "--mirrors", help="enable fetching from Gentoo mirrors",
+    action='store_true',
+    docs="""
+        Enable checking Gentoo mirrors first for distfiles. This is disabled by
+        default because manifest generation is often performed when adding new
+        ebuilds with distfiles that aren't on Gentoo mirrors yet.
     """)
 digest_opts.add_argument(
     "-r", "--repo", help="target repository",
@@ -437,14 +445,6 @@ digest_opts.add_argument(
     docs="""
         Target repository to search for matches. If no repo is specified all
         ebuild repos are used.
-    """)
-digest_opts.add_argument(
-    "-m", "--mirrors", help="enable fetching from Gentoo mirrors",
-    action='store_true',
-    docs="""
-        Enable checking Gentoo mirrors first for distfiles. This is disabled by
-        default because most manifest generation is done for new distfile
-        targets that aren't on Gentoo mirrors yet.
     """)
 @digest.bind_final_check
 def _digest_validate(parser, namespace):

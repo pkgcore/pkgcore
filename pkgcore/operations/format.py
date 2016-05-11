@@ -124,8 +124,10 @@ class operations(_operations_mod.base):
             self._find_fetcher())
 
     @_operations_mod.is_standalone
-    def _cmd_api_fetch(self, fetchable, observer=None):
-        return self._fetch_op.fetch_one(fetchable, self._get_observer(observer))
+    def _cmd_api_fetch(self, fetchable=None, observer=None):
+        if fetchable is not None:
+            return self._fetch_op.fetch_one(fetchable, self._get_observer(observer))
+        return self._fetch_op.fetch_all(self._get_observer(observer))
 
     @_operations_mod.is_standalone
     def _cmd_api_mirror(self, observer=None):

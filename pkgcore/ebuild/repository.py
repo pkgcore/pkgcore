@@ -2,7 +2,7 @@
 # License: GPL2/BSD
 
 """
-ebuild repository, specific to gentoo ebuild trees (whether cvs or rsync)
+ebuild repository, specific to gentoo ebuild trees
 """
 
 __all__ = ("tree", "slavedtree",)

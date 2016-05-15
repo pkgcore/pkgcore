@@ -400,7 +400,6 @@ eapi6 = EAPI.register(
         econf_docdir_and_htmldir=True,
         global_failglob=True,
         nonfatal_die=True,
-        is_supported=False,
         unpack_absolute_paths=True,
         unpack_case_insensitive=True,
         bash_compat='4.2',

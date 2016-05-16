@@ -8,6 +8,14 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 pkgcore 0.9.3 (2016-??-??)
 --------------------------
 
+- pquery: Add --size, --upgrade, --eapi, and --maintainer-needed options to
+  show installed package size or search for packages matching available
+  upgrades, a given EAPI, and without any maintainers, respectively.
+
+- pmerge: Add support for reading targets from stdin when *-* is the target
+  which supports usage such as **pquery -I 'dev-qt/*:5' | pmerge -1av -**
+  instead of forcing command substitution to be used.
+
 - pmaint digest: Skips remanifesting sources for previous distfiles and doesn't
   use Gentoo mirrors for new distfiles by default and adds -f/--force and
   -m/--mirrors options to force remanifesting and force using Gentoo mirrors,

@@ -222,8 +222,9 @@ def _dist_validate_args(parser, namespace):
                 (e, pkg.cpvstr, pkg.repo))
 
     distfiles = (pjoin(distdir, f) for f in files.intersection(pfiles))
+    removal_func = partial(os.remove)
     namespace.remove = (
-        (partial(os.remove), distfile) for distfile in
+        (removal_func, distfile) for distfile in
         ifilter(namespace.filters.run, distfiles))
 
 
@@ -250,8 +251,9 @@ def _pkg_validate_args(parser, namespace):
         pkgs = (pkg for pkg in pkgs if 'fetch' not in pkg.restrict)
     if namespace.source_repo is not None:
         pkgs = (pkg for pkg in pkgs if namespace.source_repo == pkg.source_repository)
+    removal_func = partial(os.remove)
     namespace.remove = (
-        (partial(os.remove), binpkg) for binpkg in
+        (removal_func, binpkg) for binpkg in
         ifilter(namespace.filters.run, (pkg.path for pkg in pkgs)))
 
 
@@ -294,12 +296,15 @@ def _tmp_validate_args(parser, namespace):
                 if e.errno not in (errno.ENOTEMPTY, errno.EEXIST):
                     raise
 
-        dirs = ((partial(_remove_dir_and_empty_parent), pjoin(tmpdir, pkg.cpvstr))
+        removal_func = partial(_remove_dir_and_empty_parent)
+        dirs = ((removal_func, pjoin(tmpdir, pkg.cpvstr))
                 for pkg in repo.itermatch(namespace.restrict))
     else:
         # not in a configured repo dir, remove all tmpdir entries
-        dirs = ((partial(shutil.rmtree), pjoin(tmpdir, d)) for d in listdir_dirs(tmpdir))
-        files = ((partial(os.remove), pjoin(tmpdir, f)) for f in listdir_files(tmpdir))
+        dir_removal_func = partial(shutil.rmtree)
+        dirs = ((dir_removal_func, pjoin(tmpdir, d)) for d in listdir_dirs(tmpdir))
+        file_removal_func = partial(os.remove)
+        files = ((file_removal_func, pjoin(tmpdir, f)) for f in listdir_files(tmpdir))
 
     namespace.remove = chain(dirs, files)
 

@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 #
-# Generates a list of functions defined in the various bash support
-# libs to avoid exporting to the saved ebuild environment.
+# Generate the list of globally defined functions.
 #
 # This script is run dynamically in a repo or tarball layout on initialization
 # of the build environment. For installed versions, a static function list is

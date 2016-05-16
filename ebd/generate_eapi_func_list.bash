@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 #
-# Generates a list of EAPI specific functions to avoid exporting to the saved
-# ebuild environment.
+# Generate the list of functions specific to an EAPI version.
 #
 # This script is run dynamically in a repo or tarball layout on initialization
 # of the build environment for each ebuild since different EAPIs require

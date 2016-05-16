@@ -15,12 +15,12 @@ pkgcore 0.9.3 (2016-??-??)
 
 - Add support for PN:slot/subslot and slotted glob targets. This allows for
   targets to pmerge, pquery, and related utilities to accept targets such as
-  'dev-qt/\*:5' and 'boost:0/1.60.0' that signify all Qt 5 libs and all
-  packages named 'boost' with a slot/subslot of 0/1.60.0, respectively.
+  **dev-qt/*:5** and **boost:0/1.60.0** that signify all Qt 5 libs and all
+  packages named *boost* with a slot/subslot of 0/1.60.0, respectively.
 
 - Add initial shell utilities and libraries (bash/zsh), currently available
-  tools are 'pcd' for changing to a package's directory in any repo
-  (vdb/ebuild/binpkg) and 'psite' for opening a package's homepage in the
+  tools are *pcd* for changing to a package's directory in any repo
+  (vdb/ebuild/binpkg) and *psite* for opening a package's homepage in the
   configured browser using xdg-open.
 
 - EAPI 6 support.

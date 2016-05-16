@@ -312,9 +312,11 @@ def _remove(options, out, err):
     ret = 0
     # TODO: parallelize this
     for func, target in options.remove:
+        if options.pretend:
+            out.write('Would remove %s' % target)
+        elif options.verbose:
+            out.write('Removing %s' % target)
         try:
-            if options.verbose or options.pretend:
-                out.write('removing %s' % target)
             if not options.pretend:
                 func(target)
         except OSError as e:

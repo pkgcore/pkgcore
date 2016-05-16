@@ -8,6 +8,28 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 pkgcore 0.9.3 (2016-??-??)
 --------------------------
 
+- pmaint digest: Skips remanifesting sources for previous distfiles and doesn't
+  use Gentoo mirrors for new distfiles by default and adds -f/--force and
+  -m/--mirrors options to force remanifesting and force using Gentoo mirrors,
+  respectively.
+
+- Add support for PN:slot/subslot and slotted glob targets. This allows for
+  targets to pmerge, pquery, and related utilities to accept targets such as
+  'dev-qt/\*:5' and 'boost:0/1.60.0' that signify all Qt 5 libs and all
+  packages named 'boost' with a slot/subslot of 0/1.60.0, respectively.
+
+- Add initial shell utilities and libraries (bash/zsh), currently available
+  tools are 'pcd' for changing to a package's directory in any repo
+  (vdb/ebuild/binpkg) and 'psite' for opening a package's homepage in the
+  configured browser using xdg-open.
+
+- EAPI 6 support.
+
+- Additional zsh completion support for most of the remaining tools.
+
+- pclean: New utility currently supporting cleaning distfiles, binpkgs, and
+  tmpfiles.
+
 - Officially support python3 (3.3 and up).
 
 - Remove FEATURES=fakeroot support, it hasn't fully worked for years, doesn't

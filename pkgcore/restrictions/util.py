@@ -11,8 +11,9 @@ from pkgcore.restrictions import packages, boolean, restriction
 
 
 def _is_package_instance(inst):
-    return (getattr(inst, "type", None) == packages.package_type
-            and not isinstance(inst, boolean.base))
+    return (getattr(inst, "type", None) == packages.package_type and not
+            isinstance(inst, boolean.base))
+
 
 def collect_package_restrictions(restrict, attrs=None, invert=False):
     """Collect PackageRestriction instances inside a restriction.

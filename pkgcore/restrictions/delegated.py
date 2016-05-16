@@ -13,9 +13,7 @@ from pkgcore.restrictions import packages, restriction
 
 
 class delegate(restriction.base):
-
-    """
-    hand off matching to a handed in prototype
+    """hand off matching to a handed in prototype
 
     Example usage of this class should be available in
     :obj:`pkgcore.ebuild.domain`.
@@ -28,7 +26,6 @@ class delegate(restriction.base):
 
     def __init__(self, transform_func, negate=False):
         """
-
         :param transform_func: callable invoked with data, pkg, and mode
             mode may be "match", "force_True", or "force_False"
         """
@@ -38,7 +35,6 @@ class delegate(restriction.base):
 
         object.__setattr__(self, "negate", negate)
         object.__setattr__(self, "_transform", transform_func)
-
 
     def match(self, pkginst):
         return self._transform(pkginst, "match") != self.negate

@@ -13,9 +13,7 @@ from snakeoil.currying import pretty_docs
 
 
 class base(object):
-
-    """
-    base restriction matching object.
+    """base restriction matching object.
 
     all derivatives *should* be __slot__ based (lot of instances may
     wind up in memory).
@@ -44,9 +42,8 @@ class base(object):
 
 
 class AlwaysBool(base):
-    """
-    restriction that always yields a specific boolean
-    """
+    """restriction that always yields a specific boolean"""
+
     __slots__ = ("type", "negate")
 
     __inst_caching__ = True
@@ -82,10 +79,7 @@ class AlwaysBool(base):
 
 
 class Negate(base):
-
-    """
-    wrap and negate a restriction instance
-    """
+    """wrap and negate a restriction instance"""
 
     __slots__ = ("type", "_restrict")
     __inst_caching__ = False
@@ -107,10 +101,7 @@ class Negate(base):
 
 
 class FakeType(base):
-
-    """
-    wrapper to wrap and fake a node_type
-    """
+    """wrapper to wrap and fake a node_type"""
 
     __slots__ = ("type", "_restrict")
     __inst_caching__ = False
@@ -133,7 +124,6 @@ class FakeType(base):
 
 
 class AnyMatch(base):
-
     """Apply a nested restriction to every item in a sequence."""
 
     __slots__ = ('restriction', 'type', 'negate')
@@ -165,13 +155,13 @@ class AnyMatch(base):
             self.__class__.__name__, self.restriction, id(self))
 
 
-def curry_node_type(klass, node_type, extradoc=None):
+def curry_node_type(cls, node_type, extradoc=None):
     """Helper function for creating restrictions of a certain type.
 
     This uses :obj:`partial` to pass a node_type to the wrapped class,
     and extends the docstring.
 
-    :param klass: callable (usually a class) that is wrapped.
+    :param cls: callable (usually a class) that is wrapped.
     :param node_type: value passed as node_type.
     :param extradoc: addition to the docstring. Defaults to
         "Automatically set to %s type." % node_type
@@ -180,8 +170,8 @@ def curry_node_type(klass, node_type, extradoc=None):
     """
     if extradoc is None:
         extradoc = "Automatically set to %s type." % (node_type,)
-    doc = klass.__doc__
-    result = partial(klass, node_type=node_type)
+    doc = cls.__doc__
+    result = partial(cls, node_type=node_type)
     if doc is None:
         doc = ''
     else:

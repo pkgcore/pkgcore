@@ -158,6 +158,7 @@ class build_operations(operations):
 
 
 class build_base(object):
+
     stage_depends = {'finish': 'start'}
 
     __metaclass__ = ForcedDepends
@@ -174,6 +175,7 @@ class build_base(object):
 
 
 class build(build_base):
+
     stage_depends = {
         "setup": "start",
         "unpack": "setup",
@@ -232,6 +234,7 @@ class build(build_base):
 
 
 class install(build_base):
+
     stage_depends = {
         "preinst": "start",
         "postinst": "preinst",
@@ -259,6 +262,7 @@ class install(build_base):
 
 
 class uninstall(build_base):
+
     stage_depends = {
         "prerm": "start",
         "postrm": "prerm",
@@ -308,8 +312,6 @@ class replace(install, uninstall):
 class empty_build_op(build_base):
 
     stage_depends = {}
-
-    #__metaclass__ = ForcedDepends
 
     def __init__(self, pkg, observer=None, clean=False):
         build_base.__init__(self, observer)

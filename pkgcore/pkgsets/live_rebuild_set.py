@@ -2,7 +2,6 @@
 # Copyright: 2010 Marien Zwart <marien.zwart@gmail.com>
 # License: BSD
 
-
 """A pkgset hack to provide a live-rebuild equivalent.
 
 Note: HACK. Quick proof of concept, could do with cleaning up.

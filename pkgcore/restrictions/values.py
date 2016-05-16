@@ -2,10 +2,9 @@
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
 # License: BSD/GPL2
 
-"""
-value restrictions
+"""value restrictions
 
-works hand in hand with :obj:`pkgcore.restrictions.packages`, these
+Works hand in hand with :obj:`pkgcore.restrictions.packages`, these
 classes match against a value handed in, package restrictions pull the
 attr from a package instance and hand it to their wrapped restriction
 (which is a value restriction).
@@ -59,7 +58,6 @@ def hashed_base(name, bases, scope):
 
 
 class GetAttrRestriction(packages.PackageRestriction):
-
     """Restriction pulling an attribute and applying a child restriction."""
 
     __slots__ = ()
@@ -91,17 +89,13 @@ class VersionRestriction(base):
 
 
 class StrRegex(base):
-
-    """
-    regex based matching
-    """
+    """regex based matching"""
 
     __slots__ = ('_hash', 'flags', 'regex', '_matchfunc', 'ismatch', 'negate')
     __metaclass__ = hashed_base
     __inst_caching__ = True
 
     def __init__(self, regex, case_sensitive=True, match=False, negate=False):
-
         """
         :param regex: regex pattern to match
         :param case_sensitive: should the match be case sensitive?
@@ -156,16 +150,12 @@ class StrRegex(base):
 
 
 class native_StrExactMatch(object):
-
-    """
-    exact string comparison match
-    """
+    """exact string comparison match"""
 
     __slots__ = __attr_comparison__ = ('_hash', 'exact', 'case_sensitive', 'negate')
     __metaclass__ = generic_equality
 
     def __init__(self, exact, case_sensitive=True, negate=False):
-
         """
         :param exact: exact string to match
         :param case_sensitive: should the match be case sensitive?
@@ -195,6 +185,7 @@ if extension is None:
 else:
     base_StrExactMatch = extension.StrExactMatch
 
+
 # these are broken out so that it is easier to
 # generate native/cpy version of the class for
 # testing each.
@@ -210,6 +201,7 @@ def _StrExact_intersect(self, other):
         return self
     return None
 
+
 def _StrExact__repr__(self):
     if self.negate:
         string = '<%s %r negated @%#8x>'
@@ -217,10 +209,12 @@ def _StrExact__repr__(self):
         string = '<%s %r @%#8x>'
     return string % (self.__class__.__name__, self.exact, id(self))
 
+
 def _StrExact__str__(self):
     if self.negate:
         return "!= "+self.exact
     return "== "+self.exact
+
 
 class StrExactMatch(base_StrExactMatch, base):
 
@@ -233,17 +227,13 @@ class StrExactMatch(base_StrExactMatch, base):
 
 
 class StrGlobMatch(base):
-
-    """
-    globbing matches; essentially startswith and endswith matches
-    """
+    """globbing matches; essentially startswith and endswith matches"""
 
     __slots__ = ('_hash', 'glob', 'prefix', 'negate', 'flags')
     __metaclass__ = hashed_base
     __inst_caching__ = True
 
     def __init__(self, glob, case_sensitive=True, prefix=True, negate=False):
-
         """
         :param glob: string chunk that must be matched
         :param case_sensitive: should the match be case sensitive?
@@ -282,7 +272,8 @@ class StrGlobMatch(base):
             g = self.glob + ".*"
         else:
             g = ".*" + self.glob
-        return string % (self.__class__.__name__, g,
+        return string % (
+            self.__class__.__name__, g,
             self.flags == re.I and True or False,
             id(self))
 
@@ -302,7 +293,6 @@ class EqualityMatch(base):
     __attr_comparison__ = __slots__
 
     def __init__(self, data, negate=False):
-
         """
         :param data: data to base comparison against
         :param negate: should the results be negated?
@@ -329,13 +319,13 @@ class EqualityMatch(base):
 
 
 class ContainmentMatch2(base):
+    """Used for an 'in' style operation.
 
-    """
-    used for an 'in' style operation, 'x86' in ['x86', '~x86'] for example
-    note that negation of this *does* not result in a true NAND when all is on.
+    For example, 'x86' in ['x86', '~x86']. Note that negation of this *does*
+    not result in a true NAND when all is on.
 
-    Note that ContainmentMatch will be removed in favor of this class.  When that
-    occurs an alias will be left in place for compatibility.
+    Note that ContainmentMatch will be removed in favor of this class. When
+    that occurs an alias will be left in place for compatibility.
     """
 
     __slots__ = ('_hash', 'vals', 'all', 'negate')
@@ -343,7 +333,6 @@ class ContainmentMatch2(base):
     __inst_caching__ = True
 
     def __init__(self, vals, match_all=False, negate=False):
-
         """
         :param vals: what values to look for during match
         :keyword all: must all vals be present, or just one for a match
@@ -399,8 +388,7 @@ class ContainmentMatch2(base):
             vals = self.vals
 
         # XXX pretty much positive this isn't working.
-        if isinstance(val, basestring) or not getattr(pkg, 'configurable',
-            False):
+        if isinstance(val, basestring) or not getattr(pkg, 'configurable', False):
             # unchangable
             return not self.match(val)
 
@@ -416,8 +404,8 @@ class ContainmentMatch2(base):
                 truths = [x in val for x in vals]
 
                 for x in boolean.iterative_quad_toggling(
-                    pkg, None, list(vals), 0, len(vals), truths,
-                    filter, desired_false=false, desired_true=true):
+                        pkg, None, list(vals), 0, len(vals), truths,
+                        filter, desired_false=false, desired_true=true):
                     return True
             elif pkg.request_disable(attr, *vals):
                     return True
@@ -426,13 +414,13 @@ class ContainmentMatch2(base):
         if not self.all:
             return pkg.request_disable(attr, *vals)
         l = len(vals)
-        def filter(truths):     return truths.count(True) < l
-        def true(r, pvals):     return pkg.request_enable(attr, r)
-        def false(r, pvals):    return pkg.request_disable(attr, r)
+        def filter(truths): return truths.count(True) < l
+        def true(r, pvals): return pkg.request_enable(attr, r)
+        def false(r, pvals): return pkg.request_disable(attr, r)
         truths = [x in val for x in vals]
         for x in boolean.iterative_quad_toggling(
-            pkg, None, list(vals), 0, l, truths, filter,
-            desired_false=false, desired_true=true):
+                pkg, None, list(vals), 0, l, truths, filter,
+                desired_false=false, desired_true=true):
             return True
         return False
 
@@ -447,8 +435,7 @@ class ContainmentMatch2(base):
         if _values_override is None:
             vals = self.vals
 
-        if isinstance(val, basestring) or not getattr(pkg, 'configurable',
-            False):
+        if isinstance(val, basestring) or not getattr(pkg, 'configurable', False):
             # unchangable
             return self.match(val)
 
@@ -464,8 +451,8 @@ class ContainmentMatch2(base):
                 truths = [x in val for x in vals]
 
                 for x in boolean.iterative_quad_toggling(
-                    pkg, None, list(vals), 0, len(vals), truths,
-                    filter, desired_false=false, desired_true=true):
+                        pkg, None, list(vals), 0, len(vals), truths,
+                        filter, desired_false=false, desired_true=true):
                     return True
             else:
                 if pkg.request_enable(attr, *vals):
@@ -477,13 +464,13 @@ class ContainmentMatch2(base):
             if pkg.request_disable(attr, *vals):
                 return True
         else:
-            def filter(truths):     return True not in truths
-            def true(r, pvals):     return pkg.request_enable(attr, r)
-            def false(r, pvals):    return pkg.request_disable(attr, r)
+            def filter(truths): return True not in truths
+            def true(r, pvals): return pkg.request_enable(attr, r)
+            def false(r, pvals): return pkg.request_disable(attr, r)
             truths = [x in val for x in vals]
             for x in boolean.iterative_quad_toggling(
-                pkg, None, list(vals), 0, len(vals), truths, filter,
-                desired_false=false, desired_true=true):
+                    pkg, None, list(vals), 0, len(vals), truths, filter,
+                    desired_false=false, desired_true=true):
                 return True
         return False
 
@@ -504,10 +491,10 @@ class ContainmentMatch2(base):
 
 
 class ContainmentMatch(ContainmentMatch2):
+    """Used for an 'in' style operation.
 
-    """
-    used for an 'in' style operation, 'x86' in ['x86', '~x86'] for example
-    note that negation of this *does* not result in a true NAND when all is on.
+    For example, 'x86' in ['x86', '~x86']. Note that negation of this *does*
+    not result in a true NAND when all is on.
 
     Deprecated in favor of ContainmentMatch2.
     """
@@ -525,7 +512,6 @@ class ContainmentMatch(ContainmentMatch2):
 
 
 class FlatteningRestriction(base):
-
     """Flatten the values passed in and apply the nested restriction."""
 
     __slots__ = __attr_comparison__ = ('dont_iter', 'restriction', 'negate')
@@ -533,8 +519,7 @@ class FlatteningRestriction(base):
     __metaclass__ = generic_equality
 
     def __init__(self, dont_iter, childrestriction, negate=False):
-        """Initialize.
-
+        """
         :type dont_iter: type or tuple of types
         :param dont_iter: type(s) not to flatten.
                           Passed to :obj:`snakeoil.sequences.iflatten_instance`.
@@ -561,7 +546,6 @@ class FlatteningRestriction(base):
 
 
 class FunctionRestriction(base):
-
     """Convenience class for creating special restrictions."""
 
     __attr_comparison__ = __slots__ = ('func', 'negate')
@@ -569,8 +553,7 @@ class FunctionRestriction(base):
     __metaclass__ = generic_equality
 
     def __init__(self, func, negate=False):
-        """Initialize.
-
+        """
         C{func} is used as match function.
 
         It will usually be impossible for the backend to optimize this
@@ -590,7 +573,6 @@ class FunctionRestriction(base):
 
 
 class StrConversion(base):
-
     """convert passed in data to a str object"""
 
     __hash__ = object.__hash__
@@ -605,7 +587,6 @@ class StrConversion(base):
 
 
 class UnicodeConversion(StrConversion):
-
     """convert passed in data to a unicode obj"""
 
     __slots__ = ()

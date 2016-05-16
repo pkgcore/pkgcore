@@ -127,7 +127,6 @@ class base(object):
 
 
 class install(base):
-
     """base interface for installing a pkg into a livefs repo.
 
     repositories should override as needed.
@@ -196,7 +195,6 @@ class install(base):
 
 
 class uninstall(base):
-
     """base interface for uninstalling a pkg from a livefs repo.
 
     Repositories should override as needed.
@@ -268,7 +266,6 @@ class uninstall(base):
 
 
 class replace(install, uninstall):
-
     """base interface for replacing a pkg in a livefs repo with another.
 
     Repositories should override as needed.

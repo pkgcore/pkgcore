@@ -18,6 +18,7 @@ package_type = restriction.package_type
 
 
 class native_PackageRestriction(object):
+
     __slots__ = ('_pull_attr_func', '_attr_split', 'restriction', 'ignore_missing', 'negate')
     __attr_comparison__ = ("__class__", "negate", "_attr_split", "restriction")
     __metaclass__ = generic_equality

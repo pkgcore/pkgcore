@@ -18,7 +18,6 @@ from pkgcore.restrictions import restriction
 
 
 class base(restriction.base):
-
     """base template for boolean restrictions"""
 
     __metaclass__ = generic_equality
@@ -35,7 +34,6 @@ class base(restriction.base):
         return hash(tuple(getattr(self, x) for x in self.__attr_comparison__))
 
     def __init__(self, *restrictions, **kwds):
-
         """
         :keyword node_type: type of restriction this accepts
             (:obj:`pkgcore.restrictions.packages.package_type` and
@@ -79,24 +77,21 @@ class base(restriction.base):
         if kwds:
             kwds.pop("disable_inst_caching", None)
             if kwds:
-                raise TypeError("unknown keywords to %s: %s" %
+                raise TypeError(
+                    "unknown keywords to %s: %s" %
                     (self.__class__, kwds))
 
     def change_restrictions(self, *restrictions, **kwds):
-        """
-        return a new instance of self.__class__, using supplied restrictions
-
-        """
+        """return a new instance of self.__class__, using supplied restrictions"""
         if self.type is not None:
             if self.__class__.type not in restriction.valid_types or \
-                self.__class__.type != self.type:
+                    self.__class__.type != self.type:
                 kwds["node_type"] = self.type
         kwds.setdefault("negate", self.negate)
         return self.__class__(*restrictions, **kwds)
 
     def add_restriction(self, *new_restrictions):
-        """
-        add more restriction(s)
+        """add more restriction(s)
 
         :param new_restrictions: if node_type is enforced,
             restrictions must be of that type.
@@ -123,9 +118,7 @@ class base(restriction.base):
             raise TypeError("%r is finalized" % self)
 
     def finalize(self):
-        """
-        finalize the restriction instance, disallowing adding restrictions.
-        """
+        """finalize the restriction instance, disallowing adding restrictions."""
         object.__setattr__(self, "restrictions", tuple(self.restrictions))
 
     def __repr__(self):
@@ -172,9 +165,9 @@ class base(restriction.base):
                 f(self.__class__, l, enabled, tristate_locked)
 
         if not self._evaluate_wipe_empty or l:
-            if force_collapse or \
-                (issubclass(parent_cls, self.__class__) and self._evaluate_collapsible) \
-                or len(l) <= 1:
+            if force_collapse or (
+                    (issubclass(parent_cls, self.__class__) and self._evaluate_collapsible) or
+                    len(l) <= 1):
                 parent_seq.extend(l)
             else:
                 parent_seq.append(self.__class__(*l))
@@ -185,9 +178,9 @@ def iterative_quad_toggling(pkg, pvals, restrictions, starting, end, truths,
                             filter_func, desired_false=None, desired_true=None,
                             kill_switch=None):
     if desired_false is None:
-        desired_false = lambda r, a:r.force_False(*a)
+        desired_false = lambda r, a: r.force_False(*a)
     if desired_true is None:
-        desired_true = lambda r, a:r.force_True(*a)
+        desired_true = lambda r, a: r.force_True(*a)
 
     reset = True
     if starting == 0:
@@ -205,9 +198,9 @@ def iterative_quad_toggling(pkg, pvals, restrictions, starting, end, truths,
                 if filter_func(t):
                     yield True
                 for i in iterative_quad_toggling(
-                    pkg, pvals, restrictions, index + 1, end, t, filter_func,
-                    desired_false=desired_false, desired_true=desired_true,
-                    kill_switch=kill_switch):
+                        pkg, pvals, restrictions, index + 1, end, t, filter_func,
+                        desired_false=desired_false, desired_true=desired_true,
+                        kill_switch=kill_switch):
                     yield True
                 reset = True
             else:
@@ -221,8 +214,8 @@ def iterative_quad_toggling(pkg, pvals, restrictions, starting, end, truths,
                 if filter_func(t):
                     yield True
                 for x in iterative_quad_toggling(
-                    pkg, pvals, restrictions, index + 1, end, t, filter_func,
-                    desired_false=desired_false, desired_true=desired_true):
+                        pkg, pvals, restrictions, index + 1, end, t, filter_func,
+                        desired_false=desired_false, desired_true=desired_true):
                     yield True
                 reset = True
             elif index == end:
@@ -266,6 +259,7 @@ class AndRestriction(base):
         # XXX this is quadratic. patches welcome to dodge the
         # requirement to push through all potential truths.
         truths = [r.match(*pvals) for r in self.restrictions]
+
         def filter_func(truths):
             return False in truths
 
@@ -293,6 +287,7 @@ class AndRestriction(base):
         # XXX this is quadratic. patches welcome to dodge the
         # requirement to push through all potential truths.
         truths = [r.match(*pvals) for r in self.restrictions]
+
         def filter_func(truths):
             return False in truths
         for i in iterative_quad_toggling(pkg, pvals, self.restrictions, 0,
@@ -302,8 +297,7 @@ class AndRestriction(base):
         return False
 
     def iter_dnf_solutions(self, full_solution_expansion=False):
-        """
-        generater yielding DNF (disjunctive normalized form) of this instance.
+        """generater yielding DNF (disjunctive normalized form) of this instance.
 
         :param full_solution_expansion: controls whether to expand everything
             (break apart atoms for example); this isn't likely what you want
@@ -334,6 +328,7 @@ class AndRestriction(base):
                     hardreqs.extend(s2[0])
                 else:
                     optionals.append(s2)
+
         def f(arg, *others):
             if others:
                 for node in arg:
@@ -348,15 +343,11 @@ class AndRestriction(base):
             yield solution
 
     def dnf_solutions(self, *args, **kwds):
-        """
-        list form of :obj:`iter_dnf_solutions`, see iter_dnf_solutions for args
-        """
+        """list form of :obj:`iter_dnf_solutions`, see iter_dnf_solutions for args"""
         return list(self.iter_dnf_solutions(*args, **kwds))
 
     def iter_cnf_solutions(self, full_solution_expansion=False):
-
-        """
-        returns solutions in CNF (conjunctive normalized form) of this instance
+        """returns solutions in CNF (conjunctive normalized form) of this instance
 
         :param full_solution_expansion: controls whether to expand everything
             (break apart atoms for example); this isn't likely what you want
@@ -374,9 +365,7 @@ class AndRestriction(base):
                     yield y
 
     def cnf_solutions(self, full_solution_expansion=False):
-
-        """
-        returns solutions in CNF (conjunctive normalized form) of this instance
+        """returns solutions in CNF (conjunctive normalized form) of this instance
 
         :param full_solution_expansion: controls whether to expand everything
             (break apart atoms for example); this isn't likely what you want
@@ -413,8 +402,7 @@ class OrRestriction(base):
         return self.negate
 
     def cnf_solutions(self, full_solution_expansion=False):
-        """
-        returns alist in CNF (conjunctive normalized form) for of this instance
+        """returns alist in CNF (conjunctive normalized form) for of this instance
 
         :param full_solution_expansion: controls whether to expand everything
             (break apart atoms for example); this isn't likely what you want
@@ -451,8 +439,7 @@ class OrRestriction(base):
         return dcnf
 
     def iter_dnf_solutions(self, full_solution_expansion=False):
-        """
-        returns a list in DNF (disjunctive normalized form) for of this instance
+        """returns a list in DNF (disjunctive normalized form) for of this instance
 
         :param full_solution_expansion: controls whether to expand everything
             (break apart atoms for example); this isn't likely what you want
@@ -476,9 +463,7 @@ class OrRestriction(base):
                     yield y
 
     def dnf_solutions(self, *args, **kwds):
-        """
-        see dnf_solutions, iterates yielding DNF solutions
-        """
+        """see dnf_solutions, iterates yielding DNF solutions"""
         return list(self.iter_dnf_solutions(*args, **kwds))
 
     def force_True(self, pkg, *vals):
@@ -499,6 +484,7 @@ class OrRestriction(base):
         # XXX this is quadratic. patches welcome to dodge the
         # requirement to push through all potential truths.
         truths = [r.match(*pvals) for r in self.restrictions]
+
         def filter_func(truths):
             return True in truths
         for i in iterative_quad_toggling(pkg, pvals, self.restrictions, 0,
@@ -526,13 +512,13 @@ class OrRestriction(base):
         # XXX this is quadratic. patches welcome to dodge the
         # requirement to push through all potential truths.
         truths = [r.match(*pvals) for r in self.restrictions]
+
         def filter_func(truths):
             return True in truths
         for i in iterative_quad_toggling(pkg, pvals, self.restrictions, 0,
                                          len(self.restrictions), truths,
                                          filter_func):
             yield True
-
 
     def __str__(self):
         if self.negate:
@@ -542,6 +528,7 @@ class OrRestriction(base):
 
 class JustOneRestriction(base):
     """Exactly one must match, or there must be no restrictions"""
+
     __slots__ = ()
 
     _evaluate_collapsable = True
@@ -570,6 +557,7 @@ class JustOneRestriction(base):
 
 class AtMostOneOfRestriction(base):
     """Either none, or exactly one match must occur."""
+
     __slots__ = ()
 
     _evaluate_collapsable = True

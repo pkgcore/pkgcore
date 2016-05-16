@@ -22,7 +22,6 @@ def regen_iter(iterable, regen_func, observer, is_thread=False):
 
 
 def regen_repository(repo, observer, threads=1, pkg_attr='keywords', **options):
-
     helpers = []
 
     def _get_repo_helper():

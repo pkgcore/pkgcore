@@ -57,7 +57,11 @@ class fetch_base(object):
     def failed_fetch(self, fetchable, observer):
         # run pkg_nofetch phase for fetch restricted pkgs
         if 'fetch' in self.pkg.restrict:
-            build_ops = self.domain.build_pkg(self.pkg, observer)
+            # we need wrapped package from configured tree here,
+            # otherwise we can't get buildable and run nofetch phase
+            configured_repo = self.domain.repos_configured[self.pkg.repo_id]
+            pkgwrap = configured_repo.package_class(self.pkg)
+            build_ops = self.domain.build_pkg(pkgwrap, observer)
             build_ops.nofetch()
             build_ops.cleanup(force=True)
         observer.error("failed fetching %s", fetchable.filename)

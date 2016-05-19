@@ -62,6 +62,7 @@ class CommandlineTest(TestCase, ArgParseMixin):
              '     repo: MISSING',
              '     description: MISSING',
              '     homepage: MISSING',
+             '     license: MISSING',
              '',
              ],
             '-v', '--max', '--all',

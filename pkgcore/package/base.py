@@ -80,6 +80,7 @@ class wrapper(base):
     versioned_atom = klass.alias_attr("_raw_pkg.versioned_atom")
     unversioned_atom = klass.alias_attr("_raw_pkg.unversioned_atom")
     is_supported = klass.alias_attr('_raw_pkg.is_supported')
+    repo_id = klass.alias_attr("_raw_pkg.repo_id")
 
     def __hash__(self):
         return hash(self._raw_pkg)

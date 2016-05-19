@@ -967,7 +967,7 @@ def _validate_args(parser, namespace):
             for attr in i:
                 yield attr
 
-    attrs = ['repo', 'description', 'homepage'] if namespace.verbose else []
+    attrs = ['repo', 'description', 'homepage', 'license'] if namespace.verbose else []
     attrs.extend(process_attrs(namespace.attr))
 
     # finally, uniquify the attrs.

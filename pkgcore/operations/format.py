@@ -45,7 +45,8 @@ class fetch_base(object):
         # XXX hack atm, could use better logic but works for now
         try:
             fp = self.fetcher(fetchable)
-        except Exception:
+        except Exception as e:
+            observer.error(str(e))
             fp = None
         if fp is None:
             self.failed_fetch(fetchable, observer)

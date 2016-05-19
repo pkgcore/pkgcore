@@ -12,12 +12,14 @@ import sys
 
 from snakeoil.osutils import ensure_dirs, pjoin
 from snakeoil.compatibility import raise_from
+from snakeoil.demandload import demandload
 
 from pkgcore.spawn import spawn_bash, is_userpriv_capable
 from pkgcore.os_data import portage_uid, portage_gid
 from pkgcore.fetch import errors, base, fetchable
 from pkgcore.config import ConfigHint
 
+demandload("pkgcore.log:logger")
 
 class MalformedCommand(errors.base):
 
@@ -115,49 +117,36 @@ class fetcher(base.fetcher):
         fp = pjoin(self.distdir, target.filename)
         filename = os.path.basename(fp)
 
-        uri = iter(target.uri)
         if self.userpriv and is_userpriv_capable():
             extra = {"uid": portage_uid, "gid": portage_gid}
         else:
             extra = {}
         extra["umask"] = 0002
         extra["env"] = self.extra_env
-        attempts = self.attempts
-        last_exc = None
-        try:
-            while attempts >= 0:
-                try:
-                    c = self._verify(fp, target)
-                    return fp
-                except errors.MissingDistfile:
-                    command = self.command
-                    last_exc = sys.exc_info()
-                except errors.FetchFailed as e:
-                    last_exc = sys.exc_info()
-                    if not e.resumable:
-                       try:
-                            os.unlink(fp)
-                            command = self.command
-                       except OSError as oe:
-                            raise_from(errors.UnmodifiableFile(fp, oe))
-                    else:
-                        command = self.resume_command
-
-                # yeah, it's funky, but it works.
-                if attempts > 0:
-                    u = uri.next()
-                    # note we're not even checking the results. the
-                    # verify portion of the loop handles this. iow,
-                    # don't trust their exit code. trust our chksums
-                    # instead.
-                    spawn_bash(command % {"URI": u, "FILE": filename}, **extra)
-                attempts -= 1
-            assert last_exc is not None
-            raise last_exc[0], last_exc[1], last_exc[2]
-
-        except StopIteration:
-            # ran out of uris
-            raise errors.FetchFailed(fp, "Ran out of urls to fetch from")
+        command = self.command
+        for attempt, uri in enumerate(iter(target.uri)):
+            if (attempt + 1) > self.attempts: break
+            try:
+                spawn_bash(command % {"URI": uri, "FILE": filename}, **extra)
+                self._verify(fp, target)
+                return fp
+            except (errors.MissingDistfile,\
+                    errors.FetchFailed,\
+                    errors.RequiredChksumDataMissing
+                    ) as e:
+                logger.error(str(e), exc_info=1)
+                if not e.resumable:
+                    try:
+                        os.unlink(fp)
+                        command = self.command
+                    except OSError as oe:
+                        logger.error(str(oe), exc_info=1)
+                        logger.error('Unable to unlink file: %s\n' % fp)
+                else:
+                    command = self.resume_command
+            except Exception as e:
+                logger.error("spawn_bash error occured: %s\n" % e)
+        raise errors.FetchFailed(fp, "Ran out of urls to fetch from")
 
     def get_path(self, fetchable):
         fp = pjoin(self.distdir, fetchable.filename)

@@ -636,7 +636,7 @@ class buildable(ebd, setup_mixin, format.build):
         if not self.verified_files and self.allow_fetching:
             ops = self.domain.pkg_operations(self.pkg, observer=self.observer)
             if not ops.fetch():
-                raise format.BuildError("failed fetching required distfiles")
+                raise format.GenericBuildError("failed fetching required distfiles")
             self.verified_files = ops._fetch_op.verified_files
 
         if self.verified_files:

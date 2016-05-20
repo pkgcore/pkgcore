@@ -407,7 +407,7 @@ class RepoConfig(syncable.tree):
 
         v = set(data.get('cache-formats', 'pms').lower().split())
         if not v.intersection(self.supported_cache_formats):
-            v = 'pms'
+            v = ['pms']
         sf(self, 'cache_format', list(v)[0])
 
         profile_formats = set(data.get('profile-formats', 'pms').lower().split())

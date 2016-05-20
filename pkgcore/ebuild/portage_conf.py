@@ -471,16 +471,17 @@ def config_from_make_conf(location=None, profile_override=None, **kwargs):
             'syncer': 'sync:' + repo_name,
         }
 
-        # metadata cache
-        cache_name = 'cache:' + repo_name
-        config[cache_name] = make_cache(repo_config.cache_format, repo_path)
-
         # repo trees
         repo = {
             'inherit': ('ebuild-repo-common',),
             'repo_config': 'conf:' + repo_name,
-            'cache': cache_name,
         }
+
+        # metadata cache
+        if repo_config.cache_format is not None:
+            cache_name = 'cache:' + repo_name
+            config[cache_name] = make_cache(repo_config.cache_format, repo_path)
+            repo['cache'] = cache_name
 
         if repo_path == default_repo_path:
             repo_conf['default'] = True

@@ -406,7 +406,9 @@ class RepoConfig(syncable.tree):
         sf(self, 'eapis_deprecated', tuple(iter_stable_unique(data.get('eapis-deprecated', '').split())))
 
         v = set(data.get('cache-formats', 'pms').lower().split())
-        if not v.intersection(self.supported_cache_formats):
+        if not v:
+            v = [None]
+        elif not v.intersection(self.supported_cache_formats):
             v = ['pms']
         sf(self, 'cache_format', list(v)[0])
 

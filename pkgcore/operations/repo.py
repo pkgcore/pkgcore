@@ -238,6 +238,8 @@ class operations(sync_operations):
         if getattr(self, '_regen_disable_threads', False):
             threads = 1
         cache = getattr(self.repo, 'cache', None)
+        if not cache:
+            return
         sync_rate = getattr(cache, 'sync_rate', None)
         try:
             if sync_rate is not None:

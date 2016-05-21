@@ -407,9 +407,13 @@ class package_factory(metadata.factory):
         inst = self._cached_instances.get(args)
         if inst is None:
             # key being cat/pkg
-            mxml = self._parent_repo._get_shared_pkg_data(args[0], args[1])
-            inst = self._cached_instances[args] = self.child_class(
-                mxml, self, *args)
+            try:
+                mxml = self._parent_repo._get_shared_pkg_data(args[0], args[1])
+                inst = self.child_class(mxml, self, *args)
+                self._cached_instances[args] = inst
+            except Exception as e:
+                logger.error("caught exception while creating new package instance: %s" % e)
+                logger.error("new_package: %s" % str(args))
         return inst
 
 

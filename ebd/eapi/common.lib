@@ -220,7 +220,7 @@ debug-print() {
 # The following 2 functions are debug-print() wrappers
 
 debug-print-function() {
-	str="$1: entering function"
+	local str="$1: entering function"
 	shift
 	debug-print "${str}, parameters: $*"
 }

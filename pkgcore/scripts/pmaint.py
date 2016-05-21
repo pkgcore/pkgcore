@@ -279,6 +279,9 @@ def regen_main(options, out, err):
         if not repo.operations.supports("regen_cache"):
             out.write("repository %s doesn't support cache regeneration" % (repo,))
             continue
+        elif not repo.cache:
+            out.write("skipping repo %s: cache disabled" % (repo,))
+            continue
 
         start_time = time.time()
         repo.operations.regen_cache(

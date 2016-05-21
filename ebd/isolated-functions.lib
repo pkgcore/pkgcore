@@ -167,12 +167,12 @@ __shopt_pop() {
 	if [[ $- != ${set_val} ]]; then
 		set ${-:++${-}} ${set_val:+-${set_val}} || die "failed enforcing set state of ${set_val}"
 	fi
-	unset PKGCORE_SHOPT_STACK\[${count}\]
+	unset -v PKGCORE_SHOPT_STACK\[${count}\]
 
 	count=$(( count - 1 ))
 
 	local previous=${PKGCORE_SHOPT_STACK[${count}]}
-	unset PKGCORE_SHOPT_STACK\[${count}\]
+	unset -v PKGCORE_SHOPT_STACK\[${count}\]
 	[[ ${BASHOPTS} == ${previous} ]] && return 0
 
 	local IFS=' '
@@ -191,7 +191,7 @@ declare -a PKGCORE_SAVED_IFS
 __IFS_push() {
 	PKGCORE_SAVED_IFS[${#PKGCORE_SAVED_IFS[@]}]=${IFS-unset}
 	if [[ $1 == unset ]]; then
-		unset IFS
+		unset -v IFS
 	else
 		IFS=$1
 	fi
@@ -203,8 +203,8 @@ __IFS_pop() {
 		die "${FUNCNAME}: invoked with nothing on the stack"
 	fi
 	IFS=${PKGCORE_SAVED_IFS[$(( ${#PKGCORE_SAVED_IFS[@]} - 1 ))]}
-	[[ ${IFS} == unset ]] && unset IFS
-	unset PKGCORE_SAVED_IFS\[$(( ${#PKGCORE_SAVED_IFS[@]} - 1 ))\]
+	[[ ${IFS} == unset ]] && unset -v IFS
+	unset -v PKGCORE_SAVED_IFS\[$(( ${#PKGCORE_SAVED_IFS[@]} - 1 ))\]
 	:
 }
 
@@ -235,7 +235,7 @@ __var_push() {
 		fi
 
 		# toss the current value
-		unset ${var} 2>/dev/null || die "${FUNCNAME}: '${var}' is readonly"
+		unset -v ${var} 2>/dev/null || die "${FUNCNAME}: '${var}' is readonly"
 
 		# export a new value if one was specified
 		if [[ ${arg} == *=* ]]; then
@@ -263,14 +263,14 @@ __var_pop() {
 		var=${arg%%=*}
 
 		# unset the variable on the top of the stack
-		unset ${var} 2>/dev/null || die "${FUNCNAME}: '${var}' is readonly"
+		unset -v ${var} 2>/dev/null || die "${FUNCNAME}: '${var}' is readonly"
 
 		# reset its value if one was stored
 		if [[ ${arg} == *=* ]]; then
 			export "${arg}" || die "${FUNCNAME}: failed to export '${arg}'"
 		fi
 
-		unset PKGCORE_VAR_STACK\[$(( ${#PKGCORE_VAR_STACK[@]} - 1 ))\]
+		unset -v PKGCORE_VAR_STACK\[$(( ${#PKGCORE_VAR_STACK[@]} - 1 ))\]
 	done
 }
 
@@ -287,9 +287,9 @@ __env_pop() {
 	fi
 
 	local var_stack_reset=${PKGCORE_RESET_STACK[$(( ${#PKGCORE_RESET_STACK[@]} - 1 ))]}
-	unset PKGCORE_RESET_STACK\[$(( ${#PKGCORE_RESET_STACK[@]} - 1 ))\]
+	unset -v PKGCORE_RESET_STACK\[$(( ${#PKGCORE_RESET_STACK[@]} - 1 ))\]
 	local shopt_stack_reset=${PKGCORE_RESET_STACK[$(( ${#PKGCORE_RESET_STACK[@]} - 1 ))]}
-	unset PKGCORE_RESET_STACK\[$(( ${#PKGCORE_RESET_STACK[@]} - 1 ))\]
+	unset -v PKGCORE_RESET_STACK\[$(( ${#PKGCORE_RESET_STACK[@]} - 1 ))\]
 
 	while [[ ${#PKGCORE_VAR_STACK[@]} -gt ${var_stack_reset} ]]; do
 		__var_pop

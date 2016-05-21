@@ -65,7 +65,7 @@ unalias -a
 shopt -s expand_aliases
 
 # Unset some variables that break things.
-unset GZIP BZIP BZIP2 CDPATH GREP_OPTIONS GREP_COLOR GLOB_IGNORE
+unset -v GZIP BZIP BZIP2 CDPATH GREP_OPTIONS GREP_COLOR GLOB_IGNORE
 
 # gentoo bug 309369; nasty alias, but it exists due to portage using declare's
 # in env dumping.  declare statements are implicitly local.  as such, the
@@ -207,7 +207,7 @@ __generate_initial_ebuild_environ() {
 			# this shouldn't happen.
 			die "failed to load '${T}/.temp_env' -- fs is readonly?"
 		fi
-		unset PKGCORE_SUPPRESS_BASHRCS
+		unset -v PKGCORE_SUPPRESS_BASHRCS
 
 		rm "${T}"/.temp_env
 	fi
@@ -216,11 +216,11 @@ __generate_initial_ebuild_environ() {
 
 	if [[ ${EBUILD_PHASE} != "depend" ]]; then
 		RESTRICT=${PKGCORE_FINALIZED_RESTRICT}
-		unset PKGCORE_FINALIZED_RESTRICT
-		unset CC CXX
+		unset -v PKGCORE_FINALIZED_RESTRICT
+		unset -v CC CXX
 		[[ -n ${ORIG_CC} ]] && export CC=${ORIG_CC}
 		[[ -n ${ORIG_CXX} ]] && export CXX=${ORIG_CXX}
-		unset ORIG_CC ORIG_CXX
+		unset -v ORIG_CC ORIG_CXX
 	fi
 
 	__ensure_PATH "${EXISTING_PATH}"
@@ -277,8 +277,8 @@ __load_ebuild() {
 	SANDBOX_ON=1
 	export S=${WORKDIR}/${P}
 
-	unset   IUSE   REQUIRED_USE   DEPEND   RDEPEND   PDEPEND
-	local E_IUSE E_REQUIRED_USE E_DEPEND E_RDEPEND E_PDEPEND
+	unset -v IUSE   REQUIRED_USE   DEPEND   RDEPEND   PDEPEND
+	local  E_IUSE E_REQUIRED_USE E_DEPEND E_RDEPEND E_PDEPEND
 
 	if [[ ! -f ${EBUILD} ]]; then
 		echo "bailing, ebuild not found at '${EBUILD}'"
@@ -478,13 +478,13 @@ __execute_phases() {
 					# bash likes to do byte by byte reading.
 					local __path=$(type -P gawk)
 					if [[ $? == 0 ]]; then
-						{ unset __path; __environ_dump; } | \
+						{ unset -v __path; __environ_dump; } | \
 							LC_ALL=C "${__path}" -F $'\0' 'BEGIN { content="";chars=0;RS="\0";ORS=""} {chars += length($0);content = content $0} END {printf("receive_env %i\n%s",chars, content)}' >&${PKGCORE_EBD_WRITE_FD}
 					else
 						local my_env=$(__environ_dump)
 						__ebd_write_line "receive_env ${#my_env}"
 						__ebd_write_raw "${my_env}"
-						unset my_env __path
+						unset -v my_env __path
 					fi
 				fi
 				;;

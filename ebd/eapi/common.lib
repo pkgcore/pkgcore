@@ -152,8 +152,8 @@ econf() {
 		fi
 
 		set -- "${extra_args[@]}" "$@"
-		unset extra_args
-		unset help_text
+		unset -v extra_args
+		unset -v help_text
 	fi
 
 	# Reset IFS since we're interpreting user supplied EXTRA_ECONF.
@@ -235,9 +235,9 @@ einstall() {
 	local LOCAL_EXTRA_EINSTALL=( ${EXTRA_EINSTALL} )
 	local CONF_LIBDIR=$(__get_libdir)
 	if [[ -n ${CONF_LIBDIR} && ${CONF_PREFIX:-unset} != "unset" ]]; then
-		EI_DESTLIBDIR=${ED%%/}/${CONF_PREFIX%%/}/${CONF_LIBDIR%%/}/
+		local EI_DESTLIBDIR=${ED%%/}/${CONF_PREFIX%%/}/${CONF_LIBDIR%%/}/
 		LOCAL_EXTRA_EINSTALL+=( libdir=${EI_DESTLIBDIR} )
-		unset EI_DESTLIBDIR
+		unset -v EI_DESTLIBDIR
 	fi
 
 	if ! [[ -f Makefile || -f GNUmakefile || -f makefile ]]; then

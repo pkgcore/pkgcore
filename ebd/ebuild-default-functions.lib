@@ -115,7 +115,7 @@ __dyn_src_install() {
 	fi
 
 	echo ">>> Completed installing ${PF} into ${ED}"
-	unset dir
+	unset -v dir
 }
 
 __dyn_pkg_preinst() {
@@ -205,7 +205,7 @@ inherit() {
 			fi
 		fi
 
-		unset IUSE REQUIRED_USE DEPEND RDEPEND PDEPEND
+		unset -v IUSE REQUIRED_USE DEPEND RDEPEND PDEPEND
 
 		__internal_inherit "$1" || die "${FUNCNAME}: failed sourcing $1"
 

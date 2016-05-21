@@ -83,7 +83,7 @@ __ebd_write_raw() {
 for x in ebd_read_{line,{cat_,}size} __ebd_write_line __set_perf_debug; do
 	declare -rf ${x}
 done
-unset x
+unset -v x
 declare -r PKGCORE_EBD_WRITE_FD PKGCORE_EBD_READ_FD
 
 __ebd_sigint_handler() {
@@ -164,7 +164,7 @@ __ebd_exec_main() {
 		fi
 	done
 	__ebd_write_line ${re}
-	unset x re
+	unset -v x re
 
 	# protect ourselves.
 	declare -rx PKGCORE_EBD_PATH=${PKGCORE_EBD_PATH}
@@ -197,7 +197,7 @@ __ebd_exec_main() {
 			declare -fr ${x} &> /dev/null
 		fi
 	done
-	unset x
+	unset -v x
 
 	# depend's speed up.  turn on qa interceptors by default, instead of flipping them on for each depends;
 	# same for loading depends .lib
@@ -352,16 +352,16 @@ __ebd_process_metadata() {
 		# Heavy QA checks (IFS, shopt, etc) are suppressed for speed
 		declare -r PKGCORE_QA_SUPPRESSED=false
 		# Wipe __mode; it bleeds from our parent.
-		unset __mode
+		unset -v __mode
 		local __data
 		local __ret
 		__ebd_read_size "$1" __data
 		local IFS=$'\0'
 		eval "$__data"
 		__ret=$?
-		unset __data
+		unset -v __data
 		[[ ${__ret} -ne 0 ]] && exit 1
-		unset __ret
+		unset -v __ret
 		local IFS=$' \t\n'
 
 		if [[ -n ${PKGCORE_METADATA_PATH} ]]; then
@@ -420,10 +420,10 @@ __ebd_main_loop() {
 					__make_preloaded_eclass_func "${x}" "$(< "${e}")"
 				done
 				__ebd_write_line "preload_eclass ${success}"
-				unset e x success
+				unset -v e x success
 				;;
 			clear_preloaded_eclasses)
-				unset PKGCORE_PRELOADED_ECLASSES
+				unset -v PKGCORE_PRELOADED_ECLASSES
 				declare -A PKGCORE_PRELOADED_ECLASSES
 				__ebd_write_line "clear_preloaded_eclasses succeeded"
 				;;

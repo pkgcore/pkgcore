@@ -238,7 +238,7 @@ class operations(sync_operations):
         if getattr(self, '_regen_disable_threads', False):
             threads = 1
         cache = getattr(self.repo, 'cache', None)
-        if not cache:
+        if not cache and not options.get('force', False):
             return
         sync_rate = getattr(cache, 'sync_rate', None)
         try:

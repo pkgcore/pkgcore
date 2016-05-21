@@ -260,7 +260,7 @@ regen_opts.add_argument(
     """)
 regen_opts.add_argument(
     "--force", action='store_true', default=False,
-    help="force regeneration to occur regardless of staleness checks")
+    help="force regeneration to occur regardless of staleness checks or repo settings")
 regen_opts.add_argument(
     "--rsync", action='store_true', default=False,
     help="perform actions necessary for rsync repos (update metadata/timestamp.chk)")
@@ -279,7 +279,7 @@ def regen_main(options, out, err):
         if not repo.operations.supports("regen_cache"):
             out.write("repository %s doesn't support cache regeneration" % (repo,))
             continue
-        elif not repo.cache:
+        elif not repo.cache and not options.force:
             out.write("skipping repo %s: cache disabled" % (repo,))
             continue
 

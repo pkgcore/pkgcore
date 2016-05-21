@@ -383,7 +383,7 @@ __make_preloaded_eclass_func() {
 }
 
 __ebd_main_loop() {
-	DONT_EXPORT_VARS+=" com phases line cont DONT_EXPORT_FUNCS"
+	DONT_EXPORT_VARS+=" __mode com is_depends phases line cont DONT_EXPORT_FUNCS"
 	SANDBOX_ON=1
 	while :; do
 		local com=''

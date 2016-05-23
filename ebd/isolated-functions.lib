@@ -1,7 +1,7 @@
 # Copyright 2006-2012 Brian Harring <ferringb@gmail.com>
 # License GPL2/BSD3
 
-# Internal logging function, don't use this in ebuilds
+# Internal logging function, don't use this in ebuilds.
 __elog_base() {
 	local messagetype
 	[[ -z $1 || -z ${T} || ! -d ${T}/logging ]] && return 1
@@ -55,9 +55,9 @@ __colored_output_enable() {
 	export PKGCORE_RC_NORMAL=$'\e[0m'
 } &> /dev/null
 
+# Version of has, only to be used when the invoker knows that the targets will
+# never have \001 in them.
 __safe_has() {
-	# Version of has, only to be used when the invoker knows that that
-	# the needle/targets will never have \001 in them
 	local needle=$1
 	shift
 	local IFS=$'\001'
@@ -88,6 +88,8 @@ __qa_run_function_if_exists() {
 	__qa_invoke "$@"
 }
 
+# Check if a directory is empty.
+# Returns: 0 if empty, 1 otherwise.
 __directory_is_empty() {
 	__shopt_push -s dotglob nullglob
 	local files=( ${1}/* )
@@ -146,6 +148,8 @@ __inject_func_code() {
 
 declare -a PKGCORE_SHOPT_STACK
 
+# Save the current shell option state and set a shell option.
+# Returns: 0 on success, dies on failure.
 __shopt_push() {
 	PKGCORE_SHOPT_STACK[${#PKGCORE_SHOPT_STACK[@]}]=${BASHOPTS}
 	PKGCORE_SHOPT_STACK[${#PKGCORE_SHOPT_STACK[@]}]=$-
@@ -158,6 +162,8 @@ __shopt_push() {
 	return 0
 } &> /dev/null
 
+# Revert to the most recent shell option state.
+# Returns: 0 on success, dies on failure.
 __shopt_pop() {
 	[[ $# -ne 0 ]] && die "${FUNCNAME}: accepts no args, got $@"
 	local count=$(( ${#PKGCORE_SHOPT_STACK[@]} - 1 ))
@@ -188,6 +194,8 @@ __shopt_pop() {
 
 declare -a PKGCORE_SAVED_IFS
 
+# Save the current IFS value and set a new one.
+# Returns: 0 on success, dies on failure.
 __IFS_push() {
 	PKGCORE_SAVED_IFS[${#PKGCORE_SAVED_IFS[@]}]=${IFS-unset}
 	if [[ $1 == unset ]]; then
@@ -198,6 +206,8 @@ __IFS_push() {
 	:
 }
 
+# Revert to the most recent IFS setting.
+# Returns: 0 on success, dies on failure.
 __IFS_pop() {
 	if [[ ${#PKGCORE_SAVED_IFS[@]} -eq 0 ]]; then
 		die "${FUNCNAME}: invoked with nothing on the stack"
@@ -210,6 +220,8 @@ __IFS_pop() {
 
 declare -a PKGCORE_VAR_STACK
 
+# Save the given variable's value and set a new one.
+# Returns: 0 on success, dies on failure.
 __var_push() {
 	local export_opts
 	if [[ $1 == -n ]]; then
@@ -243,6 +255,8 @@ __var_push() {
 	done
 }
 
+# Revert the most recent variable value change.
+# Returns: 0 on success, dies on failure.
 __var_pop() {
 	[[ ${#PKGCORE_VAR_STACK[@]} -gt 0 ]] \
 		|| die "${FUNCNAME}: invoked with nothing on the stack"

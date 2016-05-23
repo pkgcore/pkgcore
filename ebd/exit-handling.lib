@@ -1,11 +1,14 @@
 # Copyright 2005-2012 Brian Harring <ferringb@gmail.com>: BSD/GPL2
 # Copyright 2004-2005 Gentoo Foundation: GPL2
 
+# Check whether any command in the most recently executed foreground pipe
+# returned non-zero and if so calls die passing along any given parameters. 
 assert() {
 	local pipestatus=${PIPESTATUS[*]}
 	[[ -z ${pipestatus//[ 0]/} ]] || die "$@ (pipestatus: ${pipestatus})"
 }
 
+# Abort the current build process (see PMS for details).
 die() {
 	set +x
 	# if we were signaled to die...

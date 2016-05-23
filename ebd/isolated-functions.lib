@@ -314,8 +314,7 @@ __qa_invoke() {
 	local ret=$?
 
 	if [[ ${#PKGCORE_SAVED_IFS[@]} -ne 1 ]]; then
-		echo "QA warning: unbalanced __IFS_push/__IFS_pop detected.  internal error?" \
-			" count was ${#PKGCORE_SAVED_IFS[@]}"
+		echo "QA warning: unbalanced __IFS_push/__IFS_pop detected.  internal error? count was ${#PKGCORE_SAVED_IFS[@]}"
 		pkgcore_should_fail=true
 	fi
 	if [[ ${#PKGCORE_SHOPT_STACK[@]} -ne 2 ]]; then
@@ -328,9 +327,9 @@ __qa_invoke() {
 	fi
 	__IFS_pop
 
-	# while these echo statements are ugly, written this way to ensure bash does it as a single write-
-	# aka, keep it within the size of atomic writes for pipes.
-	# relevant for threaded output straight to term
+	# While these echo statements are ugly, written this way to ensure bash
+	# does it as a single write- aka, keep it within the size of atomic writes
+	# for pipes, relevant for threaded output straight to term.
 	if [[ ${PKGCORE_SHOPT_STACK[0]} != ${BASHOPTS} ]]; then
 		echo "QA warning: shopt modification bled out of invocation $@"$'\n'"          : was ${PKGCORE_SHOPT_STACK[0]}"$'\n'"          : now ${BASHOPTS}" >&2
 	fi

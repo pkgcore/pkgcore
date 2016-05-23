@@ -50,8 +50,10 @@ die() {
 		done
 	fi
 
-	eerror
-	eerror "Working directory: '$(pwd)'"
+	if [[ ${EBUILD_PHASE} != pretend ]]; then
+		eerror
+		eerror "Working directory: '$(pwd)'"
+	fi
 
 	if [[ ${BASHPID} != ${PKGCORE_EBUILD_PROCESS_PID} ]]; then
 		local scope

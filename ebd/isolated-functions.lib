@@ -173,12 +173,12 @@ __shopt_pop() {
 	if [[ $- != ${set_val} ]]; then
 		set ${-:++${-}} ${set_val:+-${set_val}} || die "failed enforcing set state of ${set_val}"
 	fi
-	unset -v PKGCORE_SHOPT_STACK\[${count}\]
+	unset -v PKGCORE_SHOPT_STACK\[${count}\] || die "${FUNCNAME}: readonly shopt stack"
 
 	count=$(( count - 1 ))
 
 	local previous=${PKGCORE_SHOPT_STACK[${count}]}
-	unset -v PKGCORE_SHOPT_STACK\[${count}\]
+	unset -v PKGCORE_SHOPT_STACK\[${count}\] || die "${FUNCNAME}: readonly shopt stack"
 	[[ ${BASHOPTS} == ${previous} ]] && return 0
 
 	local IFS=' '
@@ -199,7 +199,7 @@ declare -a PKGCORE_SAVED_IFS
 __IFS_push() {
 	PKGCORE_SAVED_IFS[${#PKGCORE_SAVED_IFS[@]}]=${IFS-unset}
 	if [[ $1 == unset ]]; then
-		unset -v IFS
+		unset -v IFS || die "${FUNCNAME}: IFS is readonly"
 	else
 		IFS=$1
 	fi
@@ -213,8 +213,10 @@ __IFS_pop() {
 		die "${FUNCNAME}: invoked with nothing on the stack"
 	fi
 	IFS=${PKGCORE_SAVED_IFS[$(( ${#PKGCORE_SAVED_IFS[@]} - 1 ))]}
-	[[ ${IFS} == unset ]] && unset -v IFS
-	unset -v PKGCORE_SAVED_IFS\[$(( ${#PKGCORE_SAVED_IFS[@]} - 1 ))\]
+	if [[ ${IFS} == unset ]]; then
+		unset -v IFS || die "${FUNCNAME}: IFS is readonly"
+	fi
+	unset -v PKGCORE_SAVED_IFS\[$(( ${#PKGCORE_SAVED_IFS[@]} - 1 ))\] || die "${FUNCNAME}: readonly IFS stack"
 	:
 }
 
@@ -281,26 +283,30 @@ __var_pop() {
 			export "${arg}" || die "${FUNCNAME}: failed to export '${arg}'"
 		fi
 
-		unset -v PKGCORE_VAR_STACK\[$(( ${#PKGCORE_VAR_STACK[@]} - 1 ))\]
+		unset -v PKGCORE_VAR_STACK\[$(( ${#PKGCORE_VAR_STACK[@]} - 1 ))\] || die "${FUNCNAME}: readonly variable stack"
 	done
 }
 
 declare -a PKGCORE_RESET_STACK
 
+# Save the current shell option and variable stack states.
+# Returns: 0
 __env_push() {
 	PKGCORE_RESET_STACK[${#PKGCORE_RESET_STACK[@]}]=${#PKGCORE_SHOPT_STACK[@]}
 	PKGCORE_RESET_STACK[${#PKGCORE_RESET_STACK[@]}]=${#PKGCORE_VAR_STACK[@]}
 }
 
+# Revert to the last marked shell option and variable stack states.
+# Returns: 0 on success, dies on failure.
 __env_pop() {
 	if [[ ${#PKGCORE_RESET_STACK[@]} -lt 2 ]]; then
 		die "${FUNCNAME}: not enough values on the stack"
 	fi
 
 	local var_stack_reset=${PKGCORE_RESET_STACK[$(( ${#PKGCORE_RESET_STACK[@]} - 1 ))]}
-	unset -v PKGCORE_RESET_STACK\[$(( ${#PKGCORE_RESET_STACK[@]} - 1 ))\]
+	unset -v PKGCORE_RESET_STACK\[$(( ${#PKGCORE_RESET_STACK[@]} - 1 ))\] || die "${FUNCNAME}: readonly env stack"
 	local shopt_stack_reset=${PKGCORE_RESET_STACK[$(( ${#PKGCORE_RESET_STACK[@]} - 1 ))]}
-	unset -v PKGCORE_RESET_STACK\[$(( ${#PKGCORE_RESET_STACK[@]} - 1 ))\]
+	unset -v PKGCORE_RESET_STACK\[$(( ${#PKGCORE_RESET_STACK[@]} - 1 ))\] || die "${FUNCNAME}: readonly env stack"
 
 	while [[ ${#PKGCORE_VAR_STACK[@]} -gt ${var_stack_reset} ]]; do
 		__var_pop

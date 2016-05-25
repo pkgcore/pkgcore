@@ -53,9 +53,10 @@ die() {
 		done
 	fi
 
-	if [[ ${EBUILD_PHASE} != pretend ]]; then
+	local working_dir=$(pwd)
+	if [[ ${PKGCORE_EBD_PATH} != ${working_dir} ]]; then
 		eerror
-		eerror "Working directory: '$(pwd)'"
+		eerror "Working directory: '${working_dir}'"
 	fi
 
 	if [[ ${BASHPID} != ${PKGCORE_EBUILD_PROCESS_PID} ]]; then

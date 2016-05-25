@@ -23,6 +23,7 @@ demandload(
 class domain(object):
 
     fetcher = None
+    tmpdir = None
     _triggers = ()
 
     def _mk_nonconfig_triggers(self):
@@ -72,6 +73,3 @@ class domain(object):
     def replace_pkg(self, oldpkg, newpkg, observer):
         return domain_ops.replace(self, self.all_livefs_repos, oldpkg, newpkg,
             observer, self.triggers, self.root)
-
-    def _get_tempspace(self):
-        return None

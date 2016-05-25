@@ -577,7 +577,8 @@ class domain(config_domain):
     def _mk_nonconfig_triggers(self):
         return ebuild_generate_triggers(self)
 
-    def _get_tempspace(self):
+    @klass.jit_attr
+    def tmpdir(self):
         path = self.settings.get("PORTAGE_TMPDIR", None)
         if path is not None:
             path = pjoin(path, 'portage')

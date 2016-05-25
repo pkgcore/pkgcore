@@ -179,7 +179,7 @@ class ebd(object):
 
     def set_op_vars(self, tmp_offset):
         # don't fool with this, without fooling with setup.
-        self.tmpdir = normpath(self.domain._get_tempspace())
+        self.tmpdir = self.domain.tmpdir
         if tmp_offset:
             self.tmpdir = pjoin(self.tmpdir, tmp_offset.strip(os.path.sep))
 
@@ -864,8 +864,7 @@ class ebuild_mixin(object):
         if not pkg.built:
             commands = {"request_inherit": partial(inherit_handler, self._eclass_cache)}
         env = expected_ebuild_env(pkg)
-        tmpdir = normpath(domain._get_tempspace())
-        builddir = pjoin(tmpdir, env["CATEGORY"], env["PF"])
+        builddir = pjoin(domain.tmpdir, env["CATEGORY"], env["PF"])
         pkg_tmpdir = normpath(pjoin(builddir, "temp"))
         ensure_dirs(pkg_tmpdir, mode=0770, gid=portage_gid, minimal=True)
         env["ROOT"] = domain.root

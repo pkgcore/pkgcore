@@ -270,7 +270,7 @@ tmp_opts.add_argument(
     """)
 @tmp.bind_final_check
 def _tmp_validate_args(parser, namespace):
-    tmpdir = namespace.domain._get_tempspace()
+    tmpdir = namespace.domain.tmpdir
     dirs = ()
     files = ()
 

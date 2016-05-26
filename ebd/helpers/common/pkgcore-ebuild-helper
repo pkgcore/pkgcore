@@ -12,6 +12,11 @@ if [[ -z ${PKGCORE_EBD_PATH} ]]; then
 fi
 export PKGCORE_EBD_PATH
 
+source "${PKGCORE_EBD_ENV}" || {
+	echo "failed to load ebd env: ${PKGCORE_EBD_ENV}" >&2
+	exit -127
+}
+
 source "${PKGCORE_EBD_PATH}"/exit-handling.lib || {
 	echo "failed to load exit-handling library: PKGCORE_EBD_PATH=${PKGCORE_EBD_PATH}" >&2
 	exit -127

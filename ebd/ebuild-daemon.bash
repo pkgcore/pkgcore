@@ -166,10 +166,13 @@ __ebd_exec_main() {
 	__ebd_write_line ${re}
 	unset -v x re
 
-	# protect ourselves.
+	# protect ourselves
 	declare -rx PKGCORE_EBD_PATH=${PKGCORE_EBD_PATH}
 	declare -rx PKGCORE_PYTHON_BINARY=${PKGCORE_PYTHON_BINARY}
 	declare -rx PKGCORE_PYTHONPATH=${PKGCORE_PYTHONPATH}
+
+	# export env path for helpers
+	declare -x PKGCORE_EBD_ENV
 
 	if ! source "${PKGCORE_EBD_PATH}"/ebuild-daemon.lib >&2; then
 		__ebd_write_line "failed"
@@ -250,7 +253,8 @@ __ebd_process_ebuild_phases() {
 				case ${line} in
 					file*)
 						line=${line#file }
-						source "${line}"
+						PKGCORE_EBD_ENV=${line}
+						source "${PKGCORE_EBD_ENV}"
 						cont=$?
 						;;
 					bytes*)

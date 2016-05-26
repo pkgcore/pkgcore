@@ -615,9 +615,10 @@ def main(parser, args=None, outfile=None, errfile=None):
         logging.root.addHandler(FormattingHandler(err))
         exitstatus = main_func(options, out, err)
     except KeyboardInterrupt:
-        errfile.write("keyboard interrupted- exiting")
+        errfile.write('keyboard interrupted- exiting')
         if debug:
-            traceback.print_tb(sys.exc_info()[-1])
+            errfile.write('\n')
+            traceback.print_exc()
         signal.signal(signal.SIGINT, signal.SIG_DFL)
         os.killpg(os.getpgid(0), signal.SIGINT)
     except compatibility.IGNORED_EXCEPTIONS:

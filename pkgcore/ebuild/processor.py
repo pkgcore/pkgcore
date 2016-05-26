@@ -636,7 +636,7 @@ class EbuildProcessor(object):
         internal_data = []
         exported_data = []
         # variables exported to external programs
-        exported_vars = ('HOME', 'TMPDIR')
+        exported_vars = ('HOME',)
 
         internal_env = env_dict.copy()
         exported_env = {}

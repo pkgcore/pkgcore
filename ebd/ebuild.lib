@@ -300,12 +300,6 @@ __load_ebuild() {
 		export S=${WORKDIR}/${P}
 	fi
 
-	# some users have $TMP/$TMPDIR to a custom dir in their home ...
-	# this will cause sandbox errors with some ./configure
-	# scripts, so set it to $T.
-	export TMP=${T}
-	export TMPDIR=${T}
-
 	# Note: this next line is not the same as export RDEPEND=${RDEPEND:-${DEPEND}}
 	# That will test for unset *or* NULL ("").  We want just to set for unset...
 
@@ -331,6 +325,12 @@ source "${PKGCORE_EBD_PATH}"/ebuild-env-utils.lib >&2 || die "failed sourcing eb
 
 __run_ebuild_phase() {
 	[[ ${PKGCORE_DEBUG} -ge 2 ]] && set -x
+
+	# some users have $TMP/$TMPDIR to a custom dir in their home ...
+	# this will cause sandbox errors with some ./configure
+	# scripts, so set it to $T.
+	local -x TMP=${T}
+	local -x TMPDIR=${T}
 
 	__env_push
 	__export_bash_compat

@@ -633,22 +633,39 @@ class EbuildProcessor(object):
         self.pid = None
 
     def _generate_env_str(self, env_dict):
-        data = []
-        for key, val in env_dict.iteritems():
-            if key in self.dont_export_vars:
-                continue
-            if not key[0].isalpha():
-                raise KeyError("%s: bash doesn't allow digits as the first char" % (key,))
-            if not isinstance(val, basestring):
-                raise ValueError("_generate_env_str was fed a bad value; key=%s, val=%s"
-                                 % (key, val))
-            if val.isalnum():
-                data.append("%s=%s" % (key, val))
-            elif "'" not in val:
-                data.append("%s='%s'" % (key, val))
-            else:
-                data.append("%s=$'%s'" % (key, val.replace("'", "\\'")))
-        return 'export -n %s' % (' '.join(data),)
+        internal_data = []
+        exported_data = []
+        # variables exported to external programs
+        exported_vars = ('HOME', 'TMPDIR')
+
+        internal_env = env_dict.copy()
+        exported_env = {}
+        for k in exported_vars:
+            if k in env_dict:
+                exported_env[k] = env_dict[k]
+                del internal_env[k]
+
+        for d, data in ((internal_env, internal_data),
+                        (exported_env, exported_data)):
+            for key, val in d.iteritems():
+                if key in self.dont_export_vars:
+                    continue
+                if not key[0].isalpha():
+                    raise KeyError("%s: bash doesn't allow digits as the first char" % (key,))
+                if not isinstance(val, basestring):
+                    raise ValueError("_generate_env_str was fed a bad value; key=%s, val=%s"
+                                     % (key, val))
+                if val.isalnum():
+                    data.append("%s=%s" % (key, val))
+                elif "'" not in val:
+                    data.append("%s='%s'" % (key, val))
+                else:
+                    data.append("%s=$'%s'" % (key, val.replace("'", "\\'")))
+
+        env_str = [' '.join(internal_data)]
+        if exported_data:
+            env_str.append('export %s' % (' '.join(exported_data),))
+        return '\n'.join(env_str)
 
     def send_env(self, env_dict, async=False, tmpdir=None):
         """Transfer the ebuild's desired env (env_dict) to the running daemon.

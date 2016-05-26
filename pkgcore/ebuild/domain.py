@@ -44,10 +44,12 @@ demandload(
     'multiprocessing:cpu_count',
     'operator:itemgetter',
     're',
+    'tempfile',
     'pkgcore.binpkg:repository@binary_repo',
     'pkgcore.ebuild:repository@ebuild_repo',
     'pkgcore.ebuild.triggers:generate_triggers@ebuild_generate_triggers',
     'pkgcore.fs.livefs:iter_scan',
+    'pkgcore.log:logger',
     "pkgcore.repository:util",
 )
 
@@ -579,10 +581,11 @@ class domain(config_domain):
 
     @klass.jit_attr
     def tmpdir(self):
-        path = self.settings.get("PORTAGE_TMPDIR", None)
-        if path is not None:
-            path = pjoin(path, 'portage')
-        return path
+        path = self.settings.get('PORTAGE_TMPDIR', '')
+        if not os.path.exists(path):
+            path = tempfile.gettempdir()
+            logger.warning('nonexistent PORTAGE_TMPDIR path, defaulting to %s', path)
+        return os.path.normpath(pjoin(path, 'portage'))
 
     @klass.jit_attr
     def ebuild_repos(self):

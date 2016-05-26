@@ -190,7 +190,6 @@ class ebd(object):
                      ("HOME", "homedir")):
             self.env[x] = normpath(pjoin(self.builddir, y))
         self.env["D"] += "/"
-        self.env["IMAGE"] = self.env["D"]
         self.env["PORTAGE_LOGFILE"] = normpath(pjoin(self.env["T"], "build.log"))
 
         # XXX: Note that this is just EAPI 3 support, not yet prefix
@@ -812,7 +811,7 @@ class buildable(ebd, setup_mixin, format.build):
         """
         factory = ebuild_built.fake_package_factory(self._built_class)
         return factory.new_package(
-            self.pkg, self.env["IMAGE"], pjoin(self.env["T"], "environment"))
+            self.pkg, self.env["D"], pjoin(self.env["T"], "environment"))
 
 
 class binpkg_localize(ebd, setup_mixin, format.build):

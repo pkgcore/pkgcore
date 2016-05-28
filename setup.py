@@ -4,7 +4,6 @@ import errno
 import glob
 import io
 from itertools import chain
-import operator
 import os
 import subprocess
 import sys
@@ -191,7 +190,6 @@ setup(
     author='Brian Harring, Tim Harder',
     author_email='pkgcore-dev@googlegroups.com',
     packages=find_packages(),
-    setup_requires=['snakeoil>=0.7.0'],
     install_requires=['snakeoil>=0.7.0'],
     scripts=os.listdir('bin'),
     data_files=list(chain(

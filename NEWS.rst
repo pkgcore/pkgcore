@@ -5,6 +5,12 @@ Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 --------------------------
+pkgcore 0.9.4 (2016-05-29)
+--------------------------
+
+- Fix new installs using pip.
+
+--------------------------
 pkgcore 0.9.3 (2016-05-28)
 --------------------------
 

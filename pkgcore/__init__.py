@@ -5,7 +5,7 @@
 Pkgcore manager base module.
 """
 
-__version__ = '0.9.4'
+__version__ = '0.9.5'
 
 # XXX yes; this location sucks, but we need some way to castrate the sandbox
 # if we're ever invoked w/in it.

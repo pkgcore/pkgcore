@@ -14,7 +14,7 @@ import os
 
 from snakeoil.osutils import ensure_dirs, pjoin, unlink_if_exists
 
-from pkgcore.const import COPY_BINARY
+from pkgcore.const import CP_BINARY
 from pkgcore.fs import contents, fs
 from pkgcore.fs.livefs import gen_obj
 from pkgcore.plugin import get_plugin
@@ -163,7 +163,7 @@ def default_copyfile(obj, mkdirs=False):
         dev = os.makedev(obj.major, obj.minor)
         os.mknod(fp, obj.mode, dev)
     else:
-        ret = spawn([COPY_BINARY, "-Rp", obj.location, fp])
+        ret = spawn([CP_BINARY, "-Rp", obj.location, fp])
         if ret != 0:
             raise FailedCopy(obj, "got %i from %s -Rp" % ret)
 

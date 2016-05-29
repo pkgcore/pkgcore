@@ -9,7 +9,6 @@ import os
 osp = os.path
 import sys
 from snakeoil import mappings, compatibility
-from snakeoil.process import find_binary
 try:
     # This is a file written during pkgcore installation;
     # if it exists, we defer to it.  If it doesn't, then we're
@@ -23,10 +22,6 @@ USER_CONF_FILE     = osp.expanduser('~/.config/pkgcore/pkgcore.conf')
 # TODO: deprecated, drop support in 0.10
 OLD_SYSTEM_CONF_FILE   = '/etc/pkgcore.conf'
 OLD_USER_CONF_FILE = osp.expanduser('~/.pkgcore.conf')
-
-SANDBOX_BINARY     = '/usr/bin/sandbox'
-BASH_BINARY        = find_binary('bash')
-COPY_BINARY        = find_binary('cp')
 
 HOST_NONROOT_PATHS = ("/usr/local/bin", "/usr/bin", "/bin")
 
@@ -53,3 +48,7 @@ DATA_PATH = _GET_CONST('DATA_PATH', osp.dirname(osp.dirname(osp.realpath(__file_
                        allow_environment_override=True)
 CONFIG_PATH = _GET_CONST('CONFIG_PATH', '%(DATA_PATH)s/config')
 PATH_FORCED_PREPEND = _GET_CONST('INJECTED_BIN_PATH', ('%(DATA_PATH)s/bin',))
+
+SANDBOX_BINARY = _GET_CONST('SANDBOX_BINARY', '/usr/bin/sandbox')
+BASH_BINARY = _GET_CONST('BASH_BINARY', '/bin/bash')
+CP_BINARY = _GET_CONST('CP_BINARY', '/bin/cp')

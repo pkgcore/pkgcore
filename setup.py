@@ -106,7 +106,7 @@ def write_pkgcore_ebd_funclists(root, target, scripts_dir, python_base='.'):
 def write_pkgcore_lookup_configs(python_base, install_prefix, injected_bin_path=()):
     """Generate file of install path constants."""
     path = os.path.join(python_base, "pkgcore", "_const.py")
-    log.info("Writing lookup configuration to %s" % path)
+    log.info("writing lookup config to %r" % path)
     with open(path, "w") as f:
         os.chmod(path, 0o644)
         f.write("INSTALL_PREFIX=%r\n" % install_prefix)
@@ -118,9 +118,28 @@ def write_pkgcore_lookup_configs(python_base, install_prefix, injected_bin_path=
                 os.path.join(install_prefix, LIBDIR_INSTALL_OFFSET))
         f.write("EBD_PATH=%r\n" %
                 os.path.join(install_prefix, EBD_INSTALL_OFFSET))
+
         # This is added to suppress the default behaviour of looking
         # within the repo for a bin subdir.
         f.write("INJECTED_BIN_PATH=%r\n" % (tuple(injected_bin_path),))
+
+        # Static paths for various utilities.
+        from snakeoil import process
+        try:
+            sandbox = process.find_binary('sandboxsdf')
+        except process.CommandNotFound:
+            sandbox = ''
+        f.write("SANDBOX_BINARY=%r\n" % (sandbox,))
+
+        required_progs = ('bash', 'cp')
+        try:
+            for prog in required_progs:
+                prog_path = process.find_binary(prog)
+                f.write("%s_BINARY=%r\n" % (prog.upper(), prog_path))
+        except process.CommandNotFound:
+            raise DistutilsExecError(
+                "generating lookup config failed: required utility %r missing from PATH" % (prog,))
+
     byte_compile([path], prefix=python_base)
     byte_compile([path], optimize=2, prefix=python_base)
 

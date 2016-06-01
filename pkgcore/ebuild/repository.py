@@ -2,7 +2,7 @@
 # License: GPL2/BSD
 
 """
-ebuild repository, specific to gentoo ebuild trees
+Ebuild repository, specific to gentoo ebuild trees.
 """
 
 __all__ = ("tree", "slavedtree",)
@@ -197,6 +197,7 @@ def tree(config, repo_config, cache=(), eclass_override=None, default_mirrors=No
         allow_missing_manifests=allow_missing_manifests,
         repo_config=repo_config)
 
+
 @configurable(
     typename='repo',
     types={
@@ -223,11 +224,9 @@ metadata_offset = "profiles"
 
 
 class _UnconfiguredTree(prototype.tree):
+    """Raw implementation supporting standard ebuild tree.
 
-    """
-    raw implementation supporting standard ebuild tree.
-
-    return packages don't have USE configuration bound to them.
+    Return packages don't have USE configuration bound to them.
     """
 
     false_packages = frozenset(["CVS", ".svn"])
@@ -360,13 +359,10 @@ class _UnconfiguredTree(prototype.tree):
         return cpv_inst
 
     def rebind(self, **kwds):
-
-        """
-        generate a new tree instance with the same location using new keywords.
+        """Generate a new tree instance with the same location using new keywords.
 
         :param kwds: see __init__ for valid values
         """
-
         o = self.__class__(self.location, **kwds)
         o.categories = self.categories
         o.packages = self.packages
@@ -546,12 +542,10 @@ class _RegenOpHelper(object):
 
 
 class _SlavedTree(_UnconfiguredTree):
+    """Repository that pulls repo metadata from a parent repo.
 
+    Mirrors being the main metadata pulled at this point.
     """
-    repository that pulls repo metadata from a parent repo; mirrors
-    being the main metadata pulled at this point
-    """
-
     orig_hint = _UnconfiguredTree.pkgcore_config_type
     d = dict(orig_hint.types.iteritems())
     d["parent_repo"] = 'ref:repo'
@@ -572,10 +566,7 @@ class _SlavedTree(_UnconfiguredTree):
 
 
 class _ConfiguredTree(configured.tree):
-
-    """
-    wrapper around a :obj:`_UnconfiguredTree` binding build/configuration data (USE)
-    """
+    """Wrapper around a :obj:`_UnconfiguredTree` binding build/configuration data (USE)."""
 
     configurable = "use"
     config_wrappables = {

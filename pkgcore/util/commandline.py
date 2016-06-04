@@ -548,6 +548,9 @@ def main(parser, args=None, outfile=None, errfile=None):
     """
     exitstatus = 1
 
+    # ignore broken pipes
+    signal.signal(signal.SIGPIPE, signal.SIG_DFL)
+
     if outfile is None:
         outfile = sys.stdout
     if errfile is None:

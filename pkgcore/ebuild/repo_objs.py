@@ -395,9 +395,9 @@ class RepoConfig(syncable.tree):
             if not self.is_empty:
                 logger.warning(
                     "repository at %r, named %r, doesn't specify masters in metadata/layout.conf. "
-                    "Defaulting to whatever repository is defined as 'default' (gentoo usually). "
-                    "Please explicitly set the masters, or set masters = '' if the repository "
-                    "is standalone.", self.location, self.repo_id)
+                    "Please explicitly set masters (use \"masters =\" if the repository "
+                    "is standalone).", self.location, self.repo_id)
+            masters = ()
         else:
             masters = tuple(iter_stable_unique(masters.split()))
         sf(self, 'masters', masters)

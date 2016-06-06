@@ -486,8 +486,6 @@ def config_from_make_conf(location=None, profile_override=None, **kwargs):
         if repo_path == default_repo_path:
             repo_conf['default'] = True
             repo['class'] = 'pkgcore.ebuild.repository.tree'
-        else:
-            repo['parent_repo'] = repos_conf_defaults['main-repo']
 
         config['conf:' + repo_name] = basics.AutoConfigSection(repo_conf)
         config[repo_name] = basics.AutoConfigSection(repo)

@@ -202,18 +202,19 @@ def tree(config, repo_config, cache=(), eclass_override=None, default_mirrors=No
     typename='repo',
     types={
         'repo_config': 'ref:repo_config', 'cache': 'refs:cache',
-        'parent_repo': 'ref:repo',
         'eclass_override': 'ref:eclass_cache',
         'default_mirrors': 'list',
         'ignore_paludis_versioning': 'bool',
         'allow_missing_manifests': 'bool'},
     requires_config='config')
-def slavedtree(config, repo_config, parent_repo, cache=(), eclass_override=None, default_mirrors=None,
+def slavedtree(config, repo_config, cache=(), eclass_override=None, default_mirrors=None,
                ignore_paludis_versioning=False, allow_missing_manifests=False):
     eclass_override = _sort_eclasses(config, repo_config, eclass_override)
 
+    masters = tuple(config.objects['repo'][r] for r in repo_config.masters)
+
     return _SlavedTree(
-        parent_repo, repo_config.location, eclass_override, cache=cache,
+        masters, repo_config.location, eclass_override, cache=cache,
         default_mirrors=default_mirrors,
         ignore_paludis_versioning=ignore_paludis_versioning,
         allow_missing_manifests=allow_missing_manifests,
@@ -542,24 +543,25 @@ class _RegenOpHelper(object):
 
 
 class _SlavedTree(_UnconfiguredTree):
-    """Repository that pulls repo metadata from a parent repo.
+    """Repository that pulls repo metadata from one or more master repos.
 
     Mirrors being the main metadata pulled at this point.
     """
     orig_hint = _UnconfiguredTree.pkgcore_config_type
     d = dict(orig_hint.types.iteritems())
-    d["parent_repo"] = 'ref:repo'
+    d['masters'] = 'refs:repo'
     pkgcore_config_type = orig_hint.clone(
         types=d,
-        required=list(orig_hint.required) + ["parent_repo"],
-        positional=list(orig_hint.positional) + ["parent_repo"])
+        required=list(orig_hint.required) + ['masters'],
+        positional=list(orig_hint.positional) + ['masters'])
     del d, orig_hint
 
-    def __init__(self, parent_repo, *args, **kwds):
+    def __init__(self, masters, *args, **kwds):
         _UnconfiguredTree.__init__(self, *args, **kwds)
-        for k, v in parent_repo.mirrors.iteritems():
-            if k not in self.mirrors:
-                self.mirrors[k] = v
+        for master in masters:
+            for k, v in master.mirrors.iteritems():
+                if k not in self.mirrors:
+                    self.mirrors[k] = v
         self.package_class = self.package_factory(
             self, self.cache, self.eclass_cache, self.mirrors,
             self.default_mirrors)

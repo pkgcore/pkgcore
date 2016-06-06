@@ -566,6 +566,8 @@ class _SlavedTree(_UnconfiguredTree):
             self, self.cache, self.eclass_cache, self.mirrors,
             self.default_mirrors)
 
+        self.licenses = repo_objs.OverlayedLicenses(*[self] + list(masters))
+
 
 class _ConfiguredTree(configured.tree):
     """Wrapper around a :obj:`_UnconfiguredTree` binding build/configuration data (USE)."""

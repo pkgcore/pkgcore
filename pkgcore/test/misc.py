@@ -85,12 +85,12 @@ class FakeRepo(object):
 
 class FakePkg(FakePkgBase):
     def __init__(self, cpv, eapi="0", slot="0", subslot=None, iuse=(), use=(),
-                 repo=FakeRepo(), restrict='', keywords=None):
+                 repo=FakeRepo(), restrict='', keywords=None, **kwargs):
         if isinstance(repo, str):
             repo = FakeRepo(repo)
         elif isinstance(repo, (tuple, list)) and len(repo) < 3:
             repo = FakeRepo(*repo)
-        FakePkgBase.__init__(self, cpv, repo=factory(repo))
+        FakePkgBase.__init__(self, cpv, repo=factory(repo), **kwargs)
         if keywords is not None:
             object.__setattr__(self, "keywords", set(keywords))
         object.__setattr__(self, "slot", str(slot))

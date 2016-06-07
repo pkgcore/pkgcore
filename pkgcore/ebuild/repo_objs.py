@@ -226,6 +226,9 @@ class Licenses(object):
                 raise KeyError(license)
             raise
 
+    def __len__(self):
+        return len(self.licenses)
+
     def __iter__(self):
         return iter(self.licenses)
 

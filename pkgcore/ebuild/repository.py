@@ -266,7 +266,7 @@ class _UnconfiguredTree(prototype.tree):
             if None, generates the eclass_cache itself
         :param default_mirrors: Either None, or sequence of mirrors to try
             fetching from first, then falling back to other uri
-        :param ignore_paludis_versioning: If False, fail when -scm is encountred.  if True,
+        :param ignore_paludis_versioning: If False, fail when -scm is encountered.  if True,
             silently ignore -scm ebuilds.
         """
 

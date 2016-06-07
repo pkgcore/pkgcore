@@ -384,7 +384,7 @@ class _UnconfiguredTree(prototype.tree):
         # why the auto return? current porttrees don't allow/support
         # categories deeper then one dir.
         if optional_category:
-            #raise KeyError
+            # raise KeyError
             return ()
         cats = self.hardcoded_categories
         if cats is not None:
@@ -403,7 +403,7 @@ class _UnconfiguredTree(prototype.tree):
                 self.false_packages.__contains__, listdir_dirs(cpath)))
         except EnvironmentError as e:
             if e.errno == errno.ENOENT:
-                if self.hardcoded_categories and category in self.hardcoded_categories:
+                if category in self.categories:
                     # ignore it, since it's PMS mandated that it be allowed.
                     return ()
             raise_from(KeyError(
@@ -566,7 +566,14 @@ class _SlavedTree(_UnconfiguredTree):
             self, self.cache, self.eclass_cache, self.mirrors,
             self.default_mirrors)
 
+        self.masters = masters
         self.licenses = repo_objs.OverlayedLicenses(*[self] + list(masters))
+
+    def _get_categories(self, *optional_category):
+        categories = set(super(_SlavedTree, self)._get_categories(*optional_category))
+        for master in self.masters:
+            categories.update(tuple(master.categories))
+        return tuple(sorted(categories))
 
 
 class _ConfiguredTree(configured.tree):

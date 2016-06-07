@@ -212,7 +212,8 @@ class SlavedTreeTest(UnconfiguredTreeTest):
             eclasses = eclass_cache.cache(epath)
 
         master_repo = repository._UnconfiguredTree(self.dir_master, eclasses, *args, **kwds)
-        return repository._SlavedTree(master_repo, self.dir_slave, eclasses, *args, **kwds)
+        masters = (master_repo,)
+        return repository._SlavedTree(masters, self.dir_slave, eclasses, *args, **kwds)
 
     def setUp(self):
         TempDirMixin.setUp(self)
@@ -258,11 +259,11 @@ class SlavedTreeTest(UnconfiguredTreeTest):
         return self.mk_tree(self.dir)
 
     def test_categories(self):
-        # categories are not overlaid on top of parent repo categories
+        # categories are inherited from masters
         for master, slave, expected in (
-                (('cat',), (), ()),
+                (('cat',), (), ('cat',)),
                 ((), ('cat',), ('cat',)),
-                (('sys-apps', 'foo'), ('cat', 'foo'), ('cat', 'foo'))):
+                (('sys-apps', 'foo'), ('cat', 'foo'), ('cat', 'foo', 'sys-apps'))):
             # profiles/categories files exist along with category dirs
             self.setUp()
             repo = self._create_categories(master, slave)

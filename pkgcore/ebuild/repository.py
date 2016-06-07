@@ -211,7 +211,13 @@ def slavedtree(config, repo_config, cache=(), eclass_override=None, default_mirr
                ignore_paludis_versioning=False, allow_missing_manifests=False):
     eclass_override = _sort_eclasses(config, repo_config, eclass_override)
 
-    masters = tuple(config.objects['repo'][r] for r in repo_config.masters)
+    try:
+        masters = tuple(config.objects['repo'][r] for r in repo_config.masters)
+    except RuntimeError as e:
+        # migrate to RecursionError when going >=py3.5
+        if e.message == 'maximum recursion depth exceeded':
+            raise errors.InitializationError("masters are cyclic for repo: %s" % (repo_config.repo_id,))
+        raise
 
     return _SlavedTree(
         masters, repo_config.location, eclass_override, cache=cache,

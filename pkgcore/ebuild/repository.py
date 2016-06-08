@@ -309,6 +309,7 @@ class _UnconfiguredTree(prototype.tree):
         else:
             cache = (cache,)
 
+        self.masters = ()
         self.mirrors = mirrors
         self.default_mirrors = default_mirrors
         self.cache = cache

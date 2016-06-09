@@ -33,7 +33,6 @@ demandload(
     'tempfile',
     'snakeoil:fileutils,osutils',
     'pkgcore.log:logger',
-    'pkgcore:plugins',
 )
 
 
@@ -271,7 +270,7 @@ def get_plugins(key, package=None):
     Plugins with a C{disabled} attribute evaluating to C{True} are skipped.
     """
     if package is None:
-        package = plugins
+        package = import_module('.plugins', __name__.split('.')[0])
 
     cache = _global_cache[package]
     for plug in _process_plugins(package, cache.get(key, ()), filter_disabled=True):
@@ -287,7 +286,7 @@ def get_plugin(key, package=None):
     :return: highest-priority plugin or None if no plugin available.
     """
     if package is None:
-        package = plugins
+        package = import_module('.plugins', __name__.split('.')[0])
 
     cache = _global_cache[package]
     for plug in _process_plugins(package, cache.get(key, ()), filter_disabled=True):

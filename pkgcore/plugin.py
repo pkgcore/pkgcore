@@ -22,18 +22,18 @@ from collections import defaultdict
 from importlib import import_module
 import operator
 import os.path
+import sys
 
 from snakeoil import compatibility, mappings, modules, sequences
 from snakeoil.demandload import demandload
 from snakeoil.osutils import pjoin, listdir_files
-
-from pkgcore import plugins
 
 demandload(
     'errno',
     'tempfile',
     'snakeoil:fileutils,osutils',
     'pkgcore.log:logger',
+    'pkgcore:plugins',
 )
 
 
@@ -265,17 +265,20 @@ def initialize_cache(package, force=False):
     return mappings.ImmutableDict((k, sort_plugs(v)) for k, v in package_cache.iteritems())
 
 
-def get_plugins(key, package=plugins):
+def get_plugins(key, package=None):
     """Return all enabled plugins matching "key".
 
     Plugins with a C{disabled} attribute evaluating to C{True} are skipped.
     """
+    if package is None:
+        package = plugins
+
     cache = _global_cache[package]
     for plug in _process_plugins(package, cache.get(key, ()), filter_disabled=True):
         yield plug
 
 
-def get_plugin(key, package=plugins):
+def get_plugin(key, package=None):
     """Get a single plugin matching this key.
 
     This assumes all plugins for this key have a priority attribute.
@@ -283,11 +286,42 @@ def get_plugin(key, package=plugins):
 
     :return: highest-priority plugin or None if no plugin available.
     """
+    if package is None:
+        package = plugins
+
     cache = _global_cache[package]
     for plug in _process_plugins(package, cache.get(key, ()), filter_disabled=True):
         # first returned will be the highest.
         return plug
     return None
+
+
+def extend_path(path, name):
+    """Simpler version of the stdlib's :obj:`pkgutil.extend_path`.
+
+    It does not support ".pkg" files, and it does not require an
+    __init__.py (this is important: we want only one thing (pkgcore
+    itself) to install the __init__.py to avoid name clashes).
+
+    It also modifies the "path" list in place (and returns C{None})
+    instead of copying it and returning the modified copy.
+    """
+    if not isinstance(path, list):
+        # This could happen e.g. when this is called from inside a
+        # frozen package.  Return the path unchanged in that case.
+        return
+    # Reconstitute as relative path.
+    pname = os.path.join(*name.split('.'))
+
+    for entry in sys.path:
+        if not isinstance(entry, basestring) or not os.path.isdir(entry):
+            continue
+        subdir = os.path.join(entry, pname)
+        # XXX This may still add duplicate entries to path on
+        # case-insensitive filesystems
+        if subdir not in path:
+            path.append(subdir)
+
 
 # Global plugin cache. Mapping of package to package cache, which is a
 # mapping of plugin key to a list of module names.

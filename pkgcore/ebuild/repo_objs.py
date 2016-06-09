@@ -423,8 +423,8 @@ class RepoConfig(syncable.tree):
         unknown = profile_formats.difference(self.supported_profile_formats)
         if unknown:
             logger.warning(
-                "repository at %r has unsupported profile format(s): %s" %
-                (self.location, ', '.join(repr(x) for x in sorted(unknown))))
+                "repository at %r has unsupported profile format%s: %s" %
+                ('s'[len(unknown) == 1:], self.location, ', '.join(sorted(unknown))))
             profile_formats.difference_update(unknown)
             profile_formats.add('pms')
         sf(self, 'profile_formats', profile_formats)

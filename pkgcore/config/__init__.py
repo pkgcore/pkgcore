@@ -21,7 +21,6 @@ demandload(
     'pkgcore.config:central,cparser',
     'pkgcore.ebuild.portage_conf:config_from_make_conf',
     'pkgcore.log:logger',
-    'pkgcore.plugin:get_plugins',
 )
 
 
@@ -82,7 +81,6 @@ def load_config(user_conf_file=const.USER_CONF_FILE,
         :obj:`pkgcore.config.central.ConfigManager` instance: system config
     """
     configs = list(prepend_sources)
-    configs.extend(get_plugins('global_config'))
     if not skip_config_files:
         # load a pkgcore config file if one exists
         for config in (location,

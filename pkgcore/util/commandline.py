@@ -39,6 +39,7 @@ demandload(
     'snakeoil.sequences:iflatten_instance,unstable_unique',
     'pkgcore:operations',
     'pkgcore.config:basics',
+    'pkgcore.plugin:get_plugins',
     'pkgcore.restrictions:packages,restriction',
     'pkgcore.util:parserestrict',
 )
@@ -460,7 +461,7 @@ def _convert_config_mods(iterable):
     return d
 
 
-def store_config(namespace, attr):
+def store_config(project, namespace, attr):
     configs = map(
         _convert_config_mods, [namespace.new_config, namespace.add_config])
     # add necessary inherits for add_config
@@ -471,8 +472,13 @@ def store_config(namespace, attr):
                 for section, vals in d.iteritems()}
                for d in configs if d]
 
+    # XXX: Figure out a better method for plugin registry/loading.
+    module_plugins = import_module('.plugins', project)
+    global_config = get_plugins('global_config', module_plugins)
+
     config = load_config(
         skip_config_files=namespace.empty_config,
+        prepend_sources=tuple(global_config),
         append_sources=tuple(configs),
         location=namespace.override_config,
         **vars(namespace))
@@ -488,7 +494,7 @@ def _mk_domain(parser):
 
 class ArgumentParser(arghparse.ArgumentParser):
 
-    def __init__(self, config=True, domain=True, **kwds):
+    def __init__(self, config=True, domain=True, project=__name__.split('.')[0], **kwds):
         super(ArgumentParser, self).__init__(**kwds)
 
         if not self.suppress:
@@ -509,7 +515,7 @@ class ArgumentParser(arghparse.ArgumentParser):
                     type=arghparse.existent_path,
                     help='override location of config files')
 
-                self.set_defaults(config=arghparse.DelayedValue(store_config, 0))
+                self.set_defaults(config=arghparse.DelayedValue(partial(store_config, project), 0))
 
             if domain:
                 _mk_domain(self)

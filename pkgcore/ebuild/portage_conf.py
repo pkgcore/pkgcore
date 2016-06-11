@@ -447,7 +447,7 @@ def config_from_make_conf(location=None, profile_override=None, **kwargs):
     make_repo_syncers(config, repos_conf, make_conf)
 
     config['ebuild-repo-common'] = basics.AutoConfigSection({
-        'class': 'pkgcore.ebuild.repository.slavedtree',
+        'class': 'pkgcore.ebuild.repository.tree',
         'default_mirrors': gentoo_mirrors,
         'inherit-only': True,
         'ignore_paludis_versioning': ('ignore-paludis-versioning' in features),
@@ -485,7 +485,6 @@ def config_from_make_conf(location=None, profile_override=None, **kwargs):
 
         if repo_path == default_repo_path:
             repo_conf['default'] = True
-            repo['class'] = 'pkgcore.ebuild.repository.tree'
 
         config['conf:' + repo_name] = basics.AutoConfigSection(repo_conf)
         config[repo_name] = basics.AutoConfigSection(repo)

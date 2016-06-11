@@ -5,7 +5,7 @@
 Ebuild repository, specific to gentoo ebuild trees.
 """
 
-__all__ = ("tree", "slavedtree",)
+__all__ = ("tree",)
 
 from functools import partial
 from itertools import imap, ifilterfalse
@@ -190,27 +190,6 @@ def tree(config, repo_config, cache=(), eclass_override=None, default_mirrors=No
          ignore_paludis_versioning=False, allow_missing_manifests=False):
     eclass_override = _sort_eclasses(config, repo_config, eclass_override)
 
-    return _UnconfiguredTree(
-        repo_config.location, eclass_override, cache=cache,
-        default_mirrors=default_mirrors,
-        ignore_paludis_versioning=ignore_paludis_versioning,
-        allow_missing_manifests=allow_missing_manifests,
-        repo_config=repo_config)
-
-
-@configurable(
-    typename='repo',
-    types={
-        'repo_config': 'ref:repo_config', 'cache': 'refs:cache',
-        'eclass_override': 'ref:eclass_cache',
-        'default_mirrors': 'list',
-        'ignore_paludis_versioning': 'bool',
-        'allow_missing_manifests': 'bool'},
-    requires_config='config')
-def slavedtree(config, repo_config, cache=(), eclass_override=None, default_mirrors=None,
-               ignore_paludis_versioning=False, allow_missing_manifests=False):
-    eclass_override = _sort_eclasses(config, repo_config, eclass_override)
-
     try:
         masters = tuple(config.objects['repo'][r] for r in repo_config.masters)
     except RuntimeError as e:
@@ -219,8 +198,8 @@ def slavedtree(config, repo_config, cache=(), eclass_override=None, default_mirr
             raise errors.InitializationError("masters are cyclic for repo: %s" % (repo_config.repo_id,))
         raise
 
-    return _SlavedTree(
-        masters, repo_config.location, eclass_override, cache=cache,
+    return _UnconfiguredTree(
+        repo_config.location, eclass_override, masters=masters, cache=cache,
         default_mirrors=default_mirrors,
         ignore_paludis_versioning=ignore_paludis_versioning,
         allow_missing_manifests=allow_missing_manifests,
@@ -250,8 +229,10 @@ class _UnconfiguredTree(prototype.tree):
     operations_kls = repo_operations
 
     pkgcore_config_type = ConfigHint({
-        'location': 'str', 'cache': 'refs:cache',
+        'location': 'str',
         'eclass_cache': 'ref:eclass_cache',
+        'masters': 'refs:repo',
+        'cache': 'refs:cache',
         'default_mirrors': 'list',
         'ignore_paludis_versioning': 'bool',
         'allow_missing_manifests': 'bool',
@@ -259,7 +240,7 @@ class _UnconfiguredTree(prototype.tree):
         },
         typename='repo')
 
-    def __init__(self, location, eclass_cache, cache=(),
+    def __init__(self, location, eclass_cache, masters=(), cache=(),
                  default_mirrors=None, ignore_paludis_versioning=False,
                  allow_missing_manifests=False, repo_config=None):
 
@@ -267,6 +248,7 @@ class _UnconfiguredTree(prototype.tree):
         :param location: on disk location of the tree
         :param cache: sequence of :obj:`pkgcore.cache.template.database` instances
             to use for storing metadata
+        :param masters: repo masters this repo inherits from
         :param eclass_cache: If not None, :obj:`pkgcore.ebuild.eclass_cache`
             instance representing the eclasses available,
             if None, generates the eclass_cache itself
@@ -291,25 +273,26 @@ class _UnconfiguredTree(prototype.tree):
                 "lstat failed on base %s" % (self.base,)))
         self.eclass_cache = eclass_cache
 
-        self.licenses = repo_objs.Licenses(location)
+        self.licenses = repo_objs.OverlayedLicenses(*[self] + list(masters))
 
-        fp = pjoin(self.base, metadata_offset, "thirdpartymirrors")
         mirrors = {}
-        try:
-            for k, v in read_dict(fp, splitter=None).iteritems():
-                v = v.split()
-                shuffle(v)
-                mirrors[k] = v
-        except EnvironmentError as ee:
-            if ee.errno != errno.ENOENT:
-                raise
+        for repo in list(masters) + [self]:
+            fp = pjoin(repo.location, metadata_offset, "thirdpartymirrors")
+            try:
+                for k, v in read_dict(fp, splitter=None).iteritems():
+                    v = v.split()
+                    shuffle(v)
+                    mirrors[k] = v
+            except EnvironmentError as ee:
+                if ee.errno != errno.ENOENT:
+                    raise
 
         if isinstance(cache, (tuple, list)):
             cache = tuple(cache)
         else:
             cache = (cache,)
 
-        self.masters = ()
+        self.masters = masters
         self.mirrors = mirrors
         self.default_mirrors = default_mirrors
         self.cache = cache
@@ -393,9 +376,12 @@ class _UnconfiguredTree(prototype.tree):
         if optional_category:
             # raise KeyError
             return ()
-        cats = self.hardcoded_categories
-        if cats is not None:
-            return cats
+        categories = set()
+        for repo in list(self.masters) + [self]:
+            if repo.hardcoded_categories is not None:
+                categories.update(repo.hardcoded_categories)
+        if categories:
+            return tuple(categories)
         try:
             return tuple(imap(intern, ifilterfalse(
                 self.false_categories.__contains__,
@@ -549,40 +535,6 @@ class _RegenOpHelper(object):
         self.ebp = None
 
 
-class _SlavedTree(_UnconfiguredTree):
-    """Repository that pulls repo metadata from one or more master repos.
-
-    Mirrors being the main metadata pulled at this point.
-    """
-    orig_hint = _UnconfiguredTree.pkgcore_config_type
-    d = dict(orig_hint.types.iteritems())
-    d['masters'] = 'refs:repo'
-    pkgcore_config_type = orig_hint.clone(
-        types=d,
-        required=list(orig_hint.required) + ['masters'],
-        positional=list(orig_hint.positional) + ['masters'])
-    del d, orig_hint
-
-    def __init__(self, masters, *args, **kwds):
-        _UnconfiguredTree.__init__(self, *args, **kwds)
-        for master in masters:
-            for k, v in master.mirrors.iteritems():
-                if k not in self.mirrors:
-                    self.mirrors[k] = v
-        self.package_class = self.package_factory(
-            self, self.cache, self.eclass_cache, self.mirrors,
-            self.default_mirrors)
-
-        self.masters = masters
-        self.licenses = repo_objs.OverlayedLicenses(*[self] + list(masters))
-
-    def _get_categories(self, *optional_category):
-        categories = set(super(_SlavedTree, self)._get_categories(*optional_category))
-        for master in self.masters:
-            categories.update(tuple(master.categories))
-        return tuple(sorted(categories))
-
-
 class _ConfiguredTree(configured.tree):
     """Wrapper around a :obj:`_UnconfiguredTree` binding build/configuration data (USE)."""
 
@@ -658,5 +610,4 @@ class _ConfiguredTree(configured.tree):
 _UnconfiguredTree.configure = _ConfiguredTree
 
 # XXX compatibility hacks for pcheck
-SlavedTree = _SlavedTree
 UnconfiguredTree = _UnconfiguredTree

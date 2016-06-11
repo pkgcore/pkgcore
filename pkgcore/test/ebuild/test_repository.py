@@ -213,7 +213,7 @@ class SlavedTreeTest(UnconfiguredTreeTest):
 
         master_repo = repository._UnconfiguredTree(self.dir_master, eclasses, *args, **kwds)
         masters = (master_repo,)
-        return repository._SlavedTree(masters, self.dir_slave, eclasses, *args, **kwds)
+        return repository._UnconfiguredTree(self.dir_slave, eclasses, masters=masters, *args, **kwds)
 
     def setUp(self):
         TempDirMixin.setUp(self)

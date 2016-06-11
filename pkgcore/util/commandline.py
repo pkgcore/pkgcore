@@ -461,7 +461,7 @@ def _convert_config_mods(iterable):
     return d
 
 
-def store_config(project, namespace, attr):
+def store_config(namespace, attr, global_config=()):
     configs = map(
         _convert_config_mods, [namespace.new_config, namespace.add_config])
     # add necessary inherits for add_config
@@ -471,10 +471,6 @@ def store_config(project, namespace, attr):
     configs = [{section: basics.ConfigSectionFromStringDict(vals)
                 for section, vals in d.iteritems()}
                for d in configs if d]
-
-    # XXX: Figure out a better method for plugin registry/loading.
-    module_plugins = import_module('.plugins', project)
-    global_config = get_plugins('global_config', module_plugins)
 
     config = load_config(
         skip_config_files=namespace.empty_config,
@@ -515,7 +511,12 @@ class ArgumentParser(arghparse.ArgumentParser):
                     type=arghparse.existent_path,
                     help='override location of config files')
 
-                self.set_defaults(config=arghparse.DelayedValue(partial(store_config, project), 0))
+                # XXX: Figure out a better method for plugin registry/loading.
+                plugins = import_module('.plugins', project)
+                global_config = get_plugins('global_config', plugins)
+
+                self.set_defaults(config=arghparse.DelayedValue(
+                    partial(store_config, global_config=global_config), 0))
 
             if domain:
                 _mk_domain(self)

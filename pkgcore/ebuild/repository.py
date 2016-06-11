@@ -363,12 +363,12 @@ class _UnconfiguredTree(prototype.tree):
     @klass.jit_attr
     def hardcoded_categories(self):
         # try reading $LOC/profiles/categories if it's available.
-        cats = readlines(
+        categories = readlines(
             pjoin(self.base, 'profiles', 'categories'),
             True, True, True)
-        if cats is not None:
-            cats = tuple(imap(intern, cats))
-        return cats
+        if categories is not None:
+            categories = tuple(imap(intern, categories))
+        return categories
 
     def _get_categories(self, *optional_category):
         # why the auto return? current porttrees don't allow/support

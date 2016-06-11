@@ -252,6 +252,10 @@ class tree(prototype.tree):
         return [list(neg), list(pos)]
 
     @property
+    def location(self):
+        return tuple(x.location for x in self.trees)
+
+    @property
     def frozen(self):
         """bool: Repository mutability status."""
         return all(x.frozen for x in self.trees)

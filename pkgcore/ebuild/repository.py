@@ -10,7 +10,6 @@ __all__ = ("tree",)
 from functools import partial
 from itertools import imap, ifilterfalse
 import os
-import stat
 
 from snakeoil import klass
 from snakeoil.bash import iter_read_bash, read_dict
@@ -263,14 +262,6 @@ class _UnconfiguredTree(prototype.tree):
             repo_config = repo_objs.RepoConfig(location)
         self.config = repo_config
         self.base = self.location = location
-        try:
-            if not stat.S_ISDIR(os.stat(self.base).st_mode):
-                raise errors.InitializationError(
-                    "base not a dir: %s" % self.base)
-
-        except OSError:
-            raise_from(errors.InitializationError(
-                "lstat failed on base %s" % (self.base,)))
         self.eclass_cache = eclass_cache
 
         self.masters = masters

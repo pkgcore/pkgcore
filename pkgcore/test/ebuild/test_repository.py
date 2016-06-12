@@ -18,7 +18,6 @@ from pkgcore.ebuild import errors as ebuild_errors
 from pkgcore.ebuild import repository, restricts, eclass_cache
 from pkgcore.ebuild.atom import atom
 from pkgcore.repository import errors
-from pkgcore.test import silence_logging
 
 
 class UnconfiguredTreeTest(TempDirMixin):
@@ -36,23 +35,22 @@ class UnconfiguredTreeTest(TempDirMixin):
         self.pdir = pjoin(self.dir, 'profiles')
         ensure_dirs(self.pdir)
 
-    @silence_logging
     def test_basics(self):
+        repo = self.mk_tree(self.dir)
+        # Just make sure these do not raise.
+        self.assertTrue(str(repo))
+        self.assertTrue(repr(repo))
+
         self.assertRaises(
             errors.InitializationError,
             self.mk_tree, pjoin(self.dir, 'missing'))
+
         with open(pjoin(self.dir, 'random'), 'w') as f:
             f.write('random')
         self.assertRaises(
             errors.InitializationError,
             self.mk_tree, pjoin(self.dir, 'random'))
 
-        repo = self.mk_tree(self.dir)
-        # Just make sure these do not raise.
-        self.assertTrue(str(repo))
-        self.assertTrue(repr(repo))
-
-    @silence_logging
     def test_thirdpartymirrors(self):
         with open(pjoin(self.pdir, 'thirdpartymirrors'), 'w') as f:
             f.write(textwrap.dedent('''\
@@ -66,10 +64,8 @@ class UnconfiguredTreeTest(TempDirMixin):
             sorted(mirrors['spork']))
         with open(pjoin(self.pdir, 'thirdpartymirrors'), 'w') as f:
             f.write("foon  dar\n")
-        self.assertEqual(self.mk_tree(self.dir).mirrors.keys(),
-            ['foon'])
+        self.assertEqual(self.mk_tree(self.dir).mirrors.keys(), ['foon'])
 
-    @silence_logging
     def test_repo_id(self):
         dir1 = pjoin(self.dir, '1')
         os.mkdir(dir1, 0755)
@@ -164,7 +160,6 @@ class UnconfiguredTreeTest(TempDirMixin):
                 # specific ebuild version match
                 self.assertEqual(len(repo.match(restriction)), 1)
 
-    @silence_logging
     def test_categories_packages(self):
         ensure_dirs(pjoin(self.dir, 'cat', 'pkg'))
         ensure_dirs(pjoin(self.dir, 'empty', 'empty'))
@@ -194,7 +189,6 @@ class UnconfiguredTreeTest(TempDirMixin):
                     repo.itermatch(atom('cat/pkg'))), ['cat/pkg-3'])
                 os.unlink(fp)
 
-    @silence_logging
     def test_package_mask(self):
         with open(pjoin(self.pdir, 'package.mask'), 'w') as f:
             f.write(textwrap.dedent('''\

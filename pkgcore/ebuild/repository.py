@@ -273,6 +273,7 @@ class _UnconfiguredTree(prototype.tree):
                 "lstat failed on base %s" % (self.base,)))
         self.eclass_cache = eclass_cache
 
+        self.masters = masters
         self._trees = tuple(masters) + (self,)
         self.licenses = repo_objs.Licenses(self.location)
         if masters:

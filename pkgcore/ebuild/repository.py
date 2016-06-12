@@ -276,16 +276,21 @@ class _UnconfiguredTree(prototype.tree):
         self.licenses = repo_objs.OverlayedLicenses(*[self] + list(masters))
 
         mirrors = {}
-        for repo in list(masters) + [self]:
-            fp = pjoin(repo.location, metadata_offset, "thirdpartymirrors")
-            try:
-                for k, v in read_dict(fp, splitter=None).iteritems():
-                    v = v.split()
-                    shuffle(v)
+        fp = pjoin(self.location, metadata_offset, "thirdpartymirrors")
+        try:
+            for k, v in read_dict(fp, splitter=None).iteritems():
+                v = v.split()
+                shuffle(v)
+                mirrors[k] = v
+        except EnvironmentError as ee:
+            if ee.errno != errno.ENOENT:
+                raise
+
+        # use mirrors from masters if not defined in the repo
+        for master in masters:
+            for k, v in master.mirrors.iteritems():
+                if k not in mirrors:
                     mirrors[k] = v
-            except EnvironmentError as ee:
-                if ee.errno != errno.ENOENT:
-                    raise
 
         if isinstance(cache, (tuple, list)):
             cache = tuple(cache)

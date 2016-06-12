@@ -82,6 +82,18 @@ class UnconfiguredTreeTest(TempDirMixin):
         repo = self.mk_tree(dir2)
         self.assertEqual('testrepo', repo.repo_id)
 
+    def test_licenses(self):
+        licenses = ('GPL-2', 'GPL-3+', 'BSD')
+        ensure_dirs(pjoin(self.dir, 'licenses'))
+        for license in licenses:
+            touch(pjoin(self.dir, 'licenses', license))
+        repo = self.mk_tree(self.dir)
+        self.assertEqual(sorted(repo.licenses), sorted(licenses))
+
+    def test_masters(self):
+        repo = self.mk_tree(self.dir)
+        self.assertEqual(repo.masters, ())
+
     def test_path_restrict(self):
         repo_dir = pjoin(self.dir, 'repo')
         sym_repo_dir = pjoin(self.dir, 'sym_repo')
@@ -211,8 +223,8 @@ class SlavedTreeTest(UnconfiguredTreeTest):
             ensure_dirs(epath)
             eclasses = eclass_cache.cache(epath)
 
-        master_repo = repository._UnconfiguredTree(self.dir_master, eclasses, *args, **kwds)
-        masters = (master_repo,)
+        self.master_repo = repository._UnconfiguredTree(self.dir_master, eclasses, *args, **kwds)
+        masters = (self.master_repo,)
         return repository._UnconfiguredTree(self.dir_slave, eclasses, masters=masters, *args, **kwds)
 
     def setUp(self):
@@ -276,3 +288,19 @@ class SlavedTreeTest(UnconfiguredTreeTest):
             self.assertEqual(tuple(sorted(repo.categories)), expected)
             self.tearDown()
         self.setUp()
+
+    def test_licenses(self):
+        master_licenses = ('GPL-2', 'GPL-3+', 'BSD')
+        slave_licenses = ('BSD-2', 'MIT')
+        ensure_dirs(pjoin(self.dir_slave, 'licenses'))
+        ensure_dirs(pjoin(self.dir_master, 'licenses'))
+        for license in master_licenses:
+            touch(pjoin(self.dir_master, 'licenses', license))
+        for license in slave_licenses:
+            touch(pjoin(self.dir_slave, 'licenses', license))
+        repo = self.mk_tree(self.dir)
+        self.assertEqual(sorted(repo.licenses), sorted(master_licenses + slave_licenses))
+
+    def test_masters(self):
+        repo = self.mk_tree(self.dir)
+        self.assertEqual(repo.masters, (self.master_repo,))

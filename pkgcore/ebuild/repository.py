@@ -273,7 +273,10 @@ class _UnconfiguredTree(prototype.tree):
                 "lstat failed on base %s" % (self.base,)))
         self.eclass_cache = eclass_cache
 
-        self.licenses = repo_objs.OverlayedLicenses(*[self] + list(masters))
+        self._trees = tuple(masters) + (self,)
+        self.licenses = repo_objs.Licenses(self.location)
+        if masters:
+            self.licenses = repo_objs.OverlayedLicenses(*self._trees)
 
         mirrors = {}
         fp = pjoin(self.location, metadata_offset, "thirdpartymirrors")
@@ -297,7 +300,6 @@ class _UnconfiguredTree(prototype.tree):
         else:
             cache = (cache,)
 
-        self.masters = masters
         self.mirrors = mirrors
         self.default_mirrors = default_mirrors
         self.cache = cache
@@ -382,7 +384,7 @@ class _UnconfiguredTree(prototype.tree):
             # raise KeyError
             return ()
         categories = set()
-        for repo in list(self.masters) + [self]:
+        for repo in self._trees:
             if repo.hardcoded_categories is not None:
                 categories.update(repo.hardcoded_categories)
         if categories:

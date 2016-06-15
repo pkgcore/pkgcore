@@ -13,7 +13,8 @@ import collections
 from itertools import chain
 import weakref
 
-from snakeoil import mappings, compatibility, sequences, klass
+from snakeoil import mappings, sequences, klass
+from snakeoil.compatibility import IGNORED_EXCEPTIONS
 
 from pkgcore.config import errors, basics
 
@@ -140,10 +141,10 @@ class CollapsedConfig(object):
         if self._instance is None:
             try:
                 self._instance = self._instantiate()
-            except compatibility.IGNORED_EXCEPTIONS:
+            except IGNORED_EXCEPTIONS:
                 raise
             except Exception as e:
-                compatibility.raise_from(errors.InstantiationError(self.name))
+                raise errors.InstantiationError(self.name) from e
         return self._instance
 
     def _instantiate(self):
@@ -174,11 +175,11 @@ class CollapsedConfig(object):
                     final_val = []
                     for ref in val:
                         final_val.append(ref.instantiate())
-                except compatibility.IGNORED_EXCEPTIONS:
+                except IGNORED_EXCEPTIONS:
                     raise
                 except Exception as e:
-                    compatibility.raise_from(errors.ConfigurationError(
-                        "Instantiating reference %r pointing at %r" % (name, ref.name)))
+                    raise errors.ConfigurationError(
+                        "Instantiating reference %r pointing at %r" % (name, ref.name)) from e
                 if unlist_it:
                     final_val = final_val[0]
                 config[name] = final_val
@@ -207,11 +208,11 @@ class CollapsedConfig(object):
         configdict = dict(config)
         try:
             self._instance = callable_obj(*pargs, **configdict)
-        except compatibility.IGNORED_EXCEPTIONS:
+        except IGNORED_EXCEPTIONS:
             raise
         except Exception as e:
-            compatibility.raise_from(errors.InstantiationError(self.name,
-                "exception caught from %r" % (errors._identify_functor_source(self.type.callable),)))
+            raise errors.InstantiationError(self.name,
+                "exception caught from %r" % (errors._identify_functor_source(self.type.callable),)) from e
         if self._instance is None:
             raise errors.ComplexInstantiationError(
                 'No object returned', callable_obj=callable_obj, pargs=pargs,
@@ -339,11 +340,11 @@ class ConfigManager(object):
 
             try:
                 collapsed = self.collapse_named_section(name)
-            except compatibility.IGNORED_EXCEPTIONS:
+            except IGNORED_EXCEPTIONS:
                 raise
-            except Exception:
-                compatibility.raise_from(errors.ConfigurationError(
-                    "Failed collapsing autoload section %r" % (name,)))
+            except Exception as e:
+                raise errors.ConfigurationError(
+                    "Failed collapsing autoload section %r" % (name,)) from e
 
             if collapsed.type.name != 'configsection':
                 raise errors.ConfigurationError(
@@ -351,10 +352,10 @@ class ConfigManager(object):
                    'configsection' % (name, collapsed.type.name))
             try:
                 instance = collapsed.instantiate()
-            except compatibility.IGNORED_EXCEPTIONS:
-                compatibility.raise_from(errors.AutoloadInstantiationError(name))
-            except Exception:
-                compatibility.raise_from(errors.AutoloadInstantiationError(name))
+            except IGNORED_EXCEPTIONS:
+                raise
+            except Exception as e:
+                raise errors.AutoloadInstantiationError(name) from e
             if collapsed.type.name == 'configsection':
                 self.add_config_source(instance)
 
@@ -387,11 +388,11 @@ class ConfigManager(object):
             try:
                 result = self.collapse_section(section_stack, name)
                 result.name = name
-            except compatibility.IGNORED_EXCEPTIONS:
+            except IGNORED_EXCEPTIONS:
                 raise
-            except Exception:
-                compatibility.raise_from(errors.ConfigurationError(
-                    "Collapsing section named %r" % (name,)))
+            except Exception as e:
+                raise errors.ConfigurationError(
+                    "Collapsing section named %r" % (name,)) from e
             self.rendered_sections[name] = result
             return result
         finally:
@@ -511,11 +512,11 @@ class ConfigManager(object):
             if is_refs:
                 try:
                     result = [ref.collapse() for ref in result]
-                except compatibility.IGNORED_EXCEPTIONS:
+                except IGNORED_EXCEPTIONS:
                     raise
-                except Exception:
-                    compatibility.raise_from(errors.ConfigurationError(
-                        "Failed collapsing section key %r" % (key,)))
+                except Exception as e:
+                    raise errors.ConfigurationError(
+                        "Failed collapsing section key %r" % (key,)) from e
             if is_ref:
                 result = result[0]
 
@@ -539,11 +540,11 @@ class ConfigManager(object):
         """
         try:
             defaults = self.types.get(type_name, {}).iteritems()
-        except compatibility.IGNORED_EXCEPTIONS:
+        except IGNORED_EXCEPTIONS:
             raise
-        except Exception:
-            compatibility.raise_from(errors.ConfigurationError(
-                "Collapsing defaults for %r" % (type_name,)))
+        except Exception as e:
+            raise errors.ConfigurationError(
+                "Collapsing defaults for %r" % (type_name,)) from e
         defaults = [(name, section) for name, section in defaults if section.default]
 
         if not defaults:
@@ -557,9 +558,9 @@ class ConfigManager(object):
 
         try:
             return defaults[0][1].instantiate()
-        except compatibility.IGNORED_EXCEPTIONS:
+        except IGNORED_EXCEPTIONS:
             raise
-        except Exception:
-            compatibility.raise_from(errors.ConfigurationError(
-                "Failed instantiating default %s %r" % (type_name, defaults[0][0])))
+        except Exception as e:
+            raise errors.ConfigurationError(
+                "Failed instantiating default %s %r" % (type_name, defaults[0][0])) from e
         return None

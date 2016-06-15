@@ -6,7 +6,6 @@ from pkgcore.scripts import pebuild
 from pkgcore.test.misc import FakePkg, FakeRepo
 from pkgcore.test.scripts.helpers import ArgParseMixin
 
-from snakeoil import compatibility
 from snakeoil.test import TestCase
 
 
@@ -44,13 +43,8 @@ class CommandlineTest(TestCase, ArgParseMixin):
     _argparser = pebuild.argparser
 
     def test_parser(self):
-        if compatibility.is_py3k:
-            self.assertError('the following arguments are required: target, phase')
-            self.assertError('the following arguments are required: phase', 'dev-util/diffball')
-        else:
-            self.assertError('too few arguments')
-            self.assertError('too few arguments', 'dev-util/diffball')
-
+        self.assertError('the following arguments are required: target, phase')
+        self.assertError('the following arguments are required: phase', 'dev-util/diffball')
         self.assertError("no matches: 'foo/bar'", 'foo/bar', 'baz', 'spork', domain=domain_config)
 
         # select highest version of a package with multiple versions

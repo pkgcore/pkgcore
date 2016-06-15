@@ -4,12 +4,11 @@
 
 import argparse
 import errno
+import io
 import os
 import pty
 import sys
 import unittest
-
-from snakeoil import compatibility
 
 from pkgcore.config import central, errors
 from pkgcore.test.scripts.helpers import ArgParseMixin
@@ -17,11 +16,6 @@ from pkgcore.util import commandline
 from snakeoil.test import TestCase
 
 # Careful: the tests should not hit a load_config() call!
-
-if compatibility.is_py3k:
-    import io
-else:
-    from StringIO import StringIO
 
 
 def sect():
@@ -89,23 +83,18 @@ class ModifyConfigTest(TestCase, ArgParseMixin):
             namespace.config.collapse_named_section, 'foo')
 
 
-if compatibility.is_py3k:
-    # This dance is currently necessary because commandline.main wants
-    # an object it can write text to (to write error messages) and
-    # pass to PlainTextFormatter, which wants an object it can write
-    # bytes to. If we pass it a TextIOWrapper then the formatter can
-    # unwrap it to get at the byte stream (a BytesIO in our case).
-    def _stream_and_getvalue():
-        bio = io.BytesIO()
-        f = io.TextIOWrapper(bio, line_buffering=True)
+# This dance is currently necessary because commandline.main wants
+# an object it can write text to (to write error messages) and
+# pass to PlainTextFormatter, which wants an object it can write
+# bytes to. If we pass it a TextIOWrapper then the formatter can
+# unwrap it to get at the byte stream (a BytesIO in our case).
+def _stream_and_getvalue():
+    bio = io.BytesIO()
+    f = io.TextIOWrapper(bio, line_buffering=True)
 
-        def getvalue():
-            return bio.getvalue().decode('ascii')
-        return f, getvalue
-else:
-    def _stream_and_getvalue():
-        bio = StringIO()
-        return bio, bio.getvalue
+    def getvalue():
+        return bio.getvalue().decode('ascii')
+    return f, getvalue
 
 
 class MainTest(TestCase):
@@ -164,10 +153,8 @@ class MainTest(TestCase):
         master_fd, slave_fd = pty.openpty()
         master = os.fdopen(master_fd, 'rb', 0)
         out = os.fdopen(slave_fd, 'wb', 0)
-        if compatibility.is_py3k:
-            # note that 2to3 converts the global StringIO import to io
-            master = io.TextIOWrapper(master)
-            out = io.TextIOWrapper(out)
+        master = io.TextIOWrapper(master)
+        out = io.TextIOWrapper(out)
         return master, out
 
     @unittest.skipUnless(sys.platform.startswith('linux'), 'test hangs on non-Linux systems')

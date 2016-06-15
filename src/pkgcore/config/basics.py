@@ -18,7 +18,7 @@ __all__ = (
 
 from functools import partial
 
-from snakeoil import compatibility
+from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.demandload import demandload
 
 from pkgcore.config import errors, configurable
@@ -32,10 +32,7 @@ type_names = ("list", "str", "bool", "int")
 # Also documented in http://docs.python.org/ref/types.html.
 CO_VARARGS, CO_VARKEYWORDS = 4, 8
 
-if compatibility.is_py3k:
-    _code_attrname = '__code__'
-else:
-    _code_attrname = 'func_code'
+_code_attrname = '__code__'
 
 
 class ConfigType(object):
@@ -247,12 +244,12 @@ class DictConfigSection(ConfigSection):
     def render_value(self, central, name, arg_type):
         try:
             return self.func(central, self.dict[name], arg_type)
-        except compatibility.IGNORED_EXCEPTIONS:
+        except IGNORED_EXCEPTIONS:
             raise
-        except Exception:
-            compatibility.raise_from(errors.ConfigurationError(
+        except Exception as e:
+            raise errors.ConfigurationError(
                 "Failed converting argument %r to %s"
-                % (name, arg_type)))
+                % (name, arg_type)) from e
 
 
 class FakeIncrementalDictConfigSection(ConfigSection):
@@ -303,12 +300,12 @@ class FakeIncrementalDictConfigSection(ConfigSection):
                 else:
                     try:
                         val = self.func(central, val, arg_type)
-                    except compatibility.IGNORED_EXCEPTIONS:
+                    except IGNORED_EXCEPTIONS:
                         raise
-                    except Exception:
-                        compatibility.raise_from(errors.ConfigurationError(
+                    except Exception as e:
+                        raise errors.ConfigurationError(
                             "Failed converting argument %r to %s"
-                            % (subname, arg_type)))
+                            % (subname, arg_type)) from e
                 result.append(val)
             if result[0] is result[1] is result[2] is None:
                 raise KeyError(name)
@@ -400,11 +397,11 @@ class FakeIncrementalDictConfigSection(ConfigSection):
         # Not incremental.
         try:
             return self.func(central, self.dict[name], arg_type)
-        except compatibility.IGNORED_EXCEPTIONS:
+        except IGNORED_EXCEPTIONS:
             raise
-        except Exception:
-            compatibility.raise_from(errors.ConfigurationError(
-                "Failed converting argument %r to %s" % (name, arg_type)))
+        except Exception as e:
+            raise errors.ConfigurationError(
+                "Failed converting argument %r to %s" % (name, arg_type)) from e
 
 
 def str_to_list(string):
@@ -488,9 +485,8 @@ def convert_string(central, value, arg_type):
     if arg_type == 'callable':
         try:
             func = modules.load_attribute(value)
-        except modules.FailedImport:
-            compatibility.raise_from(
-                errors.ConfigurationError('Cannot import %r' % (value,)))
+        except modules.FailedImport as e:
+            raise errors.ConfigurationError('Cannot import %r' % (value,)) from e
         if not callable(func):
             raise errors.ConfigurationError('%r is not callable' % (value,))
         return func

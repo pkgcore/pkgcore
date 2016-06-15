@@ -3,8 +3,8 @@
 # License: BSD/GPL2
 
 from functools import partial
+from io import BytesIO
 
-from snakeoil import compatibility
 from snakeoil.formatters import PlainTextFormatter
 from snakeoil.mappings import AttrAccessible
 from snakeoil.test import TestCase
@@ -17,10 +17,6 @@ from pkgcore.scripts import pmaint
 from pkgcore.sync import base
 from pkgcore.test.scripts.helpers import ArgParseMixin
 
-if compatibility.is_py3k:
-    from io import BytesIO
-else:
-    from StringIO import StringIO as BytesIO
 
 
 Options = AttrAccessible

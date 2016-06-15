@@ -10,7 +10,7 @@ Right now, doesn't provide much, need to change that down the line
 __all__ = ("base", "wrapper", "dynamic_getattr_dict")
 
 from snakeoil import klass
-from snakeoil.compatibility import cmp, raise_from, IGNORED_EXCEPTIONS
+from snakeoil.compatibility import cmp, IGNORED_EXCEPTIONS
 
 from pkgcore.operations import format
 from pkgcore.package.errors import MetadataException
@@ -95,6 +95,6 @@ def dynamic_getattr_dict(self, attr):
     except MetadataException as e:
         if e.attr == attr:
             raise
-        raise_from(MetadataException(self, attr, str(e)))
+        raise MetadataException(self, attr, str(e)) from e
     except Exception as e:
-        raise_from(MetadataException(self, attr, str(e)))
+        raise MetadataException(self, attr, str(e)) from e

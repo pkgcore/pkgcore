@@ -9,9 +9,7 @@ __all__ = ("fetcher",)
 
 import os
 
-from snakeoil import compatibility
 from snakeoil.chksum import get_handlers, get_chksums, MissingChksumHandler
-from snakeoil.compatibility import cmp
 
 from pkgcore.fetch import errors
 
@@ -51,9 +49,8 @@ class fetcher(object):
             val = handlers["size"](file_location)
             if val == -1:
                 raise errors.MissingDistfile(file_location)
-            c = cmp(val, target.chksums["size"])
-            if c:
-                resumable = (c < 0)
+            if val != target.chksums["size"]:
+                resumable = val < target.chksums["size"]
                 if resumable:
                     msg = "File is too small."
                 else:

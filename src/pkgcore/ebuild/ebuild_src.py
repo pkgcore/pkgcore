@@ -10,6 +10,7 @@ __all__ = ("base", "package", "package_factory")
 from functools import partial
 from itertools import imap, chain
 import os
+from sys import intern
 
 from pkgcore.cache import errors as cache_errors
 from pkgcore.ebuild import conditionals
@@ -21,7 +22,6 @@ from pkgcore.package.errors import MissingChksum
 from pkgcore.restrictions import boolean, values
 
 from snakeoil import klass
-from snakeoil.compatibility import intern
 from snakeoil.demandload import demandload, demand_compile_regexp
 
 demandload(

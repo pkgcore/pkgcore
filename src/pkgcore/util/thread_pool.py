@@ -4,7 +4,7 @@
 import threading
 import Queue
 
-from snakeoil import compatibility
+from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.demandload import demandload
 
 demandload(
@@ -16,7 +16,7 @@ def reclaim_threads(threads):
     for x in threads:
         try:
             x.join()
-        except compatibility.IGNORED_EXCEPTIONS:
+        except IGNORED_EXCEPTIONS:
             raise
         except Exception as e:
             # should do something better here

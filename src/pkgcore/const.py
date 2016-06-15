@@ -8,7 +8,7 @@ Internal constants.
 import os
 osp = os.path
 import sys
-from snakeoil import mappings, compatibility
+from snakeoil import mappings
 try:
     # This is a file written during pkgcore installation;
     # if it exists, we defer to it.  If it doesn't, then we're
@@ -23,10 +23,7 @@ USER_CONF_FILE     = osp.expanduser('~/.config/pkgcore/pkgcore.conf')
 
 def _GET_CONST(attr, default_value, allow_environment_override=False):
     consts = mappings.ProxiedAttrs(sys.modules[__name__])
-    if compatibility.is_py3k:
-        is_tuple = not isinstance(default_value, str)
-    else:
-        is_tuple = not isinstance(default_value, basestring)
+    is_tuple = not isinstance(default_value, str)
     if is_tuple:
         default_value = tuple(x % consts for x in default_value)
     else:

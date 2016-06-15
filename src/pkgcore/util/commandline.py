@@ -23,7 +23,8 @@ from importlib import import_module
 import os
 import sys
 
-from snakeoil import compatibility, modules
+from snakeoil import formatters, modules
+from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.cli import arghparse, tool
 from snakeoil.demandload import demandload
 from snakeoil.osutils import pjoin
@@ -490,7 +491,7 @@ def python_namespace_type(value, module=False, attribute=False):
             return modules.load_attribute(value)
         return modules.load_any(value)
     except (ImportError, modules.FailedImport) as err:
-        compatibility.raise_from(argparse.ArgumentTypeError(str(err)))
+        raise argparse.ArgumentTypeError(str(err)) from err
 
 
 def register_command(commands, real_type=type):
@@ -601,9 +602,7 @@ def convert_to_restrict(sequence, default=packages.AlwaysTrue):
         for x in sequence:
             l.append(parserestrict.parse_match(x))
     except parserestrict.ParseError as e:
-        compatibility.raise_from(
-            argparse.ArgumentError(
-                self, "arg %r isn't a valid atom: %s" % (x, e)))
+        raise argparse.ArgumentError("arg %r isn't a valid atom: %s" % (x, e)) from e
     return l or [default]
 
 

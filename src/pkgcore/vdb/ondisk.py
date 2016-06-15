@@ -8,7 +8,7 @@ from functools import partial
 import os
 import stat
 
-from snakeoil import compatibility, data_source, klass
+from snakeoil import data_source, klass
 from snakeoil.demandload import demandload
 from snakeoil.fileutils import readfile
 from snakeoil.mappings import IndeterminantDict
@@ -65,8 +65,8 @@ class tree(prototype.tree):
 
         except OSError as e:
             if e.errno != errno.ENOENT:
-                compatibility.raise_from(errors.InitializationError(
-                    "lstat failed on base %r" % self.location))
+                raise errors.InitializationError(
+                    "lstat failed on base %r" % self.location) from e
 
         self.package_class = self.package_factory(self)
 
@@ -79,8 +79,7 @@ class tree(prototype.tree):
                 return tuple(x for x in listdir_dirs(self.location) if not
                              x.startswith('.'))
             except EnvironmentError as e:
-                compatibility.raise_from(KeyError(
-                    "failed fetching categories: %s" % str(e)))
+                raise KeyError("failed fetching categories: %s" % str(e))) from e
         finally:
             pass
 
@@ -123,9 +122,9 @@ class tree(prototype.tree):
                 l.add(pkg.package)
                 d.setdefault((category, pkg.package), []).append(pkg.fullver)
         except EnvironmentError as e:
-            compatibility.raise_from(KeyError(
+            raise KeyError(
                 "failed fetching packages for category %s: %s" %
-                (pjoin(self.location, category.lstrip(os.path.sep)), str(e))))
+                (pjoin(self.location, category.lstrip(os.path.sep)), str(e))) from e
 
         self._versions_tmp_cache.update(d)
         return tuple(l)

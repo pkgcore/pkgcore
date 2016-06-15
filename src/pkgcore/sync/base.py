@@ -9,7 +9,6 @@ __all__ = (
     "AutodetectSyncer",
 )
 
-from snakeoil import compatibility
 from snakeoil.demandload import demandload
 
 from pkgcore.config import ConfigHint, configurable
@@ -186,7 +185,7 @@ class dvcs_syncer(ExternalSyncer):
             st = os.stat(self.basedir)
         except EnvironmentError as e:
             if e.errno != errno.ENOENT:
-                compatibility.raise_from(generic_exception(self, self.basedir, e))
+                raise generic_exception(self, self.basedir, e) from e
             command = self._initial_pull() + self.opts
             chdir = None
         else:

@@ -11,8 +11,9 @@ from functools import partial
 from itertools import chain, ifilter
 import os
 
-from snakeoil import caching, compatibility, klass, sequences
+from snakeoil import caching, klass, sequences
 from snakeoil.bash import iter_read_bash, read_bash_dict
+from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.containers import InvertedContains
 from snakeoil.demandload import demandload
 from snakeoil.fileutils import readlines_utf8
@@ -93,10 +94,10 @@ def _load_and_invoke(func, filename, handler, fallback, read_func,
                 data = read_func(base, True, True, True)
             except EnvironmentError as e:
                 if errno.EISDIR == e.errno:
-                    compatibility.raise_from(ProfileError(self.path, filename,
+                    raise ProfileError(self.path, filename,
                         "path is a directory, but this profile is PMS format- "
                         "directories aren't allowed.  See layout.conf profile-formats "
-                        "to enable directory support"))
+                        "to enable directory support") from e
                 raise
         else:
             data = []
@@ -114,22 +115,20 @@ def _load_and_invoke(func, filename, handler, fallback, read_func,
         if handler:
             data = handler(data)
         return func(self, data)
-    except compatibility.IGNORED_EXCEPTIONS:
+    except IGNORED_EXCEPTIONS:
         raise
     except ProfileError:
         # no point in wrapping/throwing..
         raise
     except Exception as e:
-        compatibility.raise_from(ProfileError(profile_path, filename, e))
+        raise ProfileError(profile_path, filename, e) from e
 
 
 _make_incrementals_dict = partial(IncrementalsDict, const.incrementals)
 
 def _open_utf8(path, *args):
     try:
-        if compatibility.is_py3k:
-            return open(path, 'r', encoding='utf8')
-        return open(path, 'r')
+        return open(path, 'r', encoding='utf8')
     except EnvironmentError as e:
         if e.errno != errno.ENOENT:
             raise

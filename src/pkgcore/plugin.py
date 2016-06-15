@@ -24,7 +24,8 @@ import operator
 import os.path
 import sys
 
-from snakeoil import compatibility, mappings, modules, sequences
+from snakeoil import mappings, modules, sequences
+from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.demandload import demandload
 from snakeoil.osutils import pjoin, listdir_files
 
@@ -147,7 +148,7 @@ def _read_cache_file(package, cache_path):
                     for (key, priority, target) in zip(entries, entries, entries))
             stored_cache[(module, mtime)] = entries
 
-    except compatibility.IGNORED_EXCEPTIONS:
+    except IGNORED_EXCEPTIONS:
         raise
     except Exception as e:
         logger.warning("failed reading cache; exception %s, regenerating.", e)

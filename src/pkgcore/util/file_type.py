@@ -3,7 +3,7 @@
 
 __all__ = ("file_identifier",)
 
-from snakeoil import compatibility
+from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.klass import jit_attr
 
 from snakeoil.process.spawn import spawn_get_output
@@ -36,7 +36,7 @@ class file_identifier(object):
             ret = obj.load()
             if ret == 0:
                 return obj.file
-        except compatibility.IGNORED_EXCEPTIONS:
+        except IGNORED_EXCEPTIONS:
             raise
         except Exception:
             pass # POS of library.

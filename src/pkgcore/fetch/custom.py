@@ -11,7 +11,6 @@ import os
 import sys
 
 from snakeoil.osutils import ensure_dirs, pjoin
-from snakeoil.compatibility import raise_from
 from snakeoil.process.spawn import spawn_bash, is_userpriv_capable
 
 from pkgcore.os_data import portage_uid, portage_gid
@@ -138,8 +137,8 @@ class fetcher(base.fetcher):
                         try:
                             os.unlink(fp)
                             command = self.command
-                        except OSError as oe:
-                            raise_from(errors.UnmodifiableFile(fp, oe))
+                       except OSError as e:
+                            raise errors.UnmodifiableFile(fp, oe) from e
                     else:
                         command = self.resume_command
 

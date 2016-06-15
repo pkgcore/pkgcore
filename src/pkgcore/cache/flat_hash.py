@@ -11,7 +11,6 @@ import errno
 import os
 import stat
 
-from snakeoil.compatibility import raise_from
 from snakeoil.fileutils import readlines_ascii
 from snakeoil.osutils import pjoin
 
@@ -42,7 +41,7 @@ class database(fs_template.FsBased):
                 raise KeyError(cpv)
             return self._parse_data(data, data.mtime)
         except (EnvironmentError, ValueError) as e:
-            raise_from(errors.CacheCorruption(cpv, e))
+            raise errors.CacheCorruption(cpv, e) from e
 
     def _parse_data(self, data, mtime):
         d = self._cdict_kls()
@@ -76,11 +75,11 @@ class database(fs_template.FsBased):
                 try:
                     myf = open(fp, "w", 32768)
                 except EnvironmentError as e:
-                    raise_from(errors.CacheCorruption(cpv, e))
+                    raise errors.CacheCorruption(cpv, e) from e
             else:
-                raise_from(errors.CacheCorruption(cpv, ie))
+                raise errors.CacheCorruption(cpv, ie) from ie
         except OSError as e:
-            raise_from(errors.CacheCorruption(cpv, e))
+            raise errors.CacheCorruption(cpv, e) from e
 
         if self._mtime_used:
             if not self.mtime_in_entry:
@@ -100,7 +99,7 @@ class database(fs_template.FsBased):
             os.rename(fp, new_fp)
         except EnvironmentError as e:
             os.remove(fp)
-            raise_from(errors.CacheCorruption(cpv, e))
+            raise errors.CacheCorruption(cpv, e) from e
 
     def _delitem(self, cpv):
         try:
@@ -109,7 +108,7 @@ class database(fs_template.FsBased):
             if e.errno == errno.ENOENT:
                 raise KeyError(cpv)
             else:
-                raise_from(errors.CacheCorruption(cpv, e))
+                raise errors.CacheCorruption(cpv, e) from e
 
     def __contains__(self, cpv):
         return os.path.exists(pjoin(self.location, cpv))

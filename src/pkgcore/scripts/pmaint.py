@@ -23,7 +23,7 @@ demandload(
     're',
     'textwrap',
     'time',
-    'snakeoil:compatibility',
+    'snakeoil.compatibility:IGNORED_EXCEPTIONS',
     'snakeoil.fileutils:AtomicWriteFile',
     'snakeoil.osutils:pjoin,listdir_dirs',
     'snakeoil.sequences:iter_stable_unique',
@@ -191,7 +191,7 @@ def update_use_local_desc(repo, out, err):
             try:
                 for flag, desc in p.local_use.iteritems():
                     res[(p.key, flag)] = desc
-            except compatibility.IGNORED_EXCEPTIONS as e:
+            except IGNORED_EXCEPTIONS as e:
                 if isinstance(e, KeyboardInterrupt):
                     return
                 raise
@@ -222,7 +222,7 @@ def update_pkg_desc_index(repo, out, err):
         for p in repo:
             try:
                 res[p.key][p] = p.description
-            except compatibility.IGNORED_EXCEPTIONS as e:
+            except IGNORED_EXCEPTIONS as e:
                 if isinstance(e, KeyboardInterrupt):
                     return
                 raise

@@ -16,7 +16,7 @@ from collections import defaultdict
 from functools import partial
 from itertools import chain
 
-from snakeoil import compatibility, mappings
+from snakeoil import mappings
 from snakeoil.klass import generic_equality, alias_method
 from snakeoil.sequences import namedtuple, iflatten_instance
 
@@ -148,9 +148,7 @@ class IncrementalsDict(mappings.DictMixin):
     for x in "getitem delitem len iter".split():
         x = '__%s__' % x
         locals()[x] = alias_method("_dict.%s" % x)
-    s = "pop clear keys items values"
-    if compatibility.is_py3k:
-        s += " iterkeys iteritems itervalues"
+    s = "pop clear keys items values iterkeys iteritems itervalues"
     for x in s.split():
         locals()[x] = alias_method("_dict.%s" % x)
     del x, s

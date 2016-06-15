@@ -1,7 +1,7 @@
 # Copyright: 2011 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD 3 clause
 
-from snakeoil import compatibility
+from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.demandload import demandload
 
 demandload(
@@ -13,7 +13,7 @@ def regen_iter(iterable, regen_func, observer, is_thread=False):
     for x in iterable:
         try:
             regen_func(x)
-        except compatibility.IGNORED_EXCEPTIONS as e:
+        except IGNORED_EXCEPTIONS as e:
             if isinstance(e, KeyboardInterrupt):
                 return
             raise

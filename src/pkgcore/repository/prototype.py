@@ -11,7 +11,6 @@ __all__ = (
 
 import os
 
-from snakeoil.compatibility import is_py3k
 from snakeoil.mappings import LazyValDict, DictMixin
 from snakeoil.sequences import iflatten_instance
 
@@ -49,11 +48,7 @@ class CategoryIterValLazyDict(IterValLazyDict):
         if key in self:
             self._keys = tuple(x for x in self._keys if x != key)
 
-    # 2to3 doesn't pick this one up due to class level, best I can figure.
-    if is_py3k:
-        __iter__ = IterValLazyDict.keys
-    else:
-        __iter__ = IterValLazyDict.iterkeys
+    __iter__ = IterValLazyDict.keys
 
     def __contains__(self, key):
         if self._keys_func is not None:

@@ -11,8 +11,6 @@ __all__ = ("parse_match", "ParseError",)
 
 import re
 
-from snakeoil.compatibility import raise_from, is_py3k
-
 from pkgcore.ebuild import atom, cpv, errors, restricts
 from pkgcore.restrictions import packages, values
 from pkgcore.restrictions.util import collect_package_restrictions
@@ -90,9 +88,6 @@ def parse_match(text):
     :return: :obj:`pkgcore.restrictions.packages` derivative
     """
 
-    # Ensure the text var is a string if we're under py3k.
-    if not is_py3k:
-        text = text.encode('ascii')
     orig_text = text = text.strip()
     if "!" in text:
         raise ParseError(
@@ -135,7 +130,7 @@ def parse_match(text):
                      attrs=("category",), invert=True))
         except errors.MalformedAtom as e:
             e.atom = orig_text
-            raise_from(ParseError(str(e)))
+            raise ParseError(str(e)) from e
         if not restrictions and len(r) == 1:
             return r[0]
         restrictions.extend(r)
@@ -144,7 +139,7 @@ def parse_match(text):
         try:
             return atom.atom(orig_text)
         except errors.MalformedAtom as e:
-            raise_from(ParseError(str(e)))
+            raise ParseError(str(e)) from e
 
     r = map(convert_glob, tsplit)
     if not r[0] and not r[1]:

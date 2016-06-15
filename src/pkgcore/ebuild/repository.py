@@ -11,10 +11,10 @@ from functools import partial, wraps
 from itertools import imap, ifilterfalse
 import os
 import stat
+from sys import intern
 
 from snakeoil import klass
 from snakeoil.bash import iter_read_bash, read_dict
-from snakeoil.compatibility import intern, raise_from
 from snakeoil.containers import InvertedContains
 from snakeoil.demandload import demandload
 from snakeoil.fileutils import readlines
@@ -250,9 +250,9 @@ def tree(config, repo_config, cache=(), eclass_override=None, default_mirrors=No
     except RuntimeError as e:
         # TODO: migrate to RecursionError when going >=py3.5
         if e.message.startswith('maximum recursion depth exceeded'):
-            raise_from(errors.InitializationError(
+            raise errors.InitializationError(
                 "'%s' repo has cyclic masters: %s" % (
-                    repo_config.repo_id, ', '.join(repo_config.masters))))
+                    repo_config.repo_id, ', '.join(repo_config.masters))) from e
         raise
 
     return _UnconfiguredTree(
@@ -321,9 +321,8 @@ class _UnconfiguredTree(prototype.tree):
             if not stat.S_ISDIR(os.stat(self.base).st_mode):
                 raise errors.InitializationError(
                     "base not a dir: %s" % self.base)
-        except OSError:
-            raise_from(errors.InitializationError(
-                "lstat failed on base %s" % (self.base,)))
+        except OSError as e:
+            raise errors.InitializationError("lstat failed on base %s" % (self.base,)) from e
         if repo_config is None:
             repo_config = repo_objs.RepoConfig(location)
         self.config = repo_config
@@ -457,7 +456,7 @@ class _UnconfiguredTree(prototype.tree):
                 self.false_categories.__contains__,
                 (x for x in listdir_dirs(self.base) if x[0:1] != "."))))
         except EnvironmentError as e:
-            raise_from(KeyError("failed fetching categories: %s" % str(e)))
+            raise KeyError("failed fetching categories: %s" % str(e)) from e
 
     def _get_packages(self, category):
         cpath = pjoin(self.base, category.lstrip(os.path.sep))
@@ -469,9 +468,9 @@ class _UnconfiguredTree(prototype.tree):
                 if category in self.categories:
                     # ignore it, since it's PMS mandated that it be allowed.
                     return ()
-            raise_from(KeyError(
+            raise KeyError(
                 "failed fetching packages for category %s: %s" %
-                (pjoin(self.base, category.lstrip(os.path.sep)), str(e))))
+                (pjoin(self.base, category.lstrip(os.path.sep)), str(e))) from e
 
     def _get_versions(self, catpkg):
         cppath = pjoin(self.base, catpkg[0], catpkg[1])
@@ -498,9 +497,9 @@ class _UnconfiguredTree(prototype.tree):
                              if ('scm' not in x and 'try' not in x))
             return ret
         except EnvironmentError as e:
-            raise_from(KeyError(
+            raise KeyError(
                 "failed fetching versions for package %s: %s" %
-                (pjoin(self.base, '/'.join(catpkg)), str(e))))
+                (pjoin(self.base, '/'.join(catpkg)), str(e))) from e
 
     def _get_ebuild_path(self, pkg):
         if pkg.revision is None:
@@ -575,10 +574,9 @@ class _UnconfiguredTree(prototype.tree):
         except IOError as i:
             if i.errno != errno.ENOENT:
                 raise
-        except ebuild_errors.MalformedAtom as ma:
-            raise_from(profiles.ProfileError(
-                pjoin(self.base, 'profiles'),
-                'package.mask', ma))
+        except ebuild_errors.MalformedAtom as e:
+            raise profiles.ProfileError(
+                pjoin(self.base, 'profiles'), 'package.mask', e) from e
         return tuple(neg), tuple(pos)
 
     def _regen_operation_helper(self, **kwds):

@@ -5,7 +5,7 @@
 restriction classes designed for package level matching
 """
 
-from snakeoil.compatibility import is_py3k, IGNORED_EXCEPTIONS
+from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.demandload import demandload
 from snakeoil.klass import generic_equality, static_attrgetter
 
@@ -213,9 +213,8 @@ class PackageRestriction(PackageRestriction_base, PackageRestriction_mixin):
     __slots__ = ()
     __inst_caching__ = True
 
-    if is_py3k:
-        __hash__ = PackageRestriction_mixin.__hash__
-        __eq__ = PackageRestriction_base.__eq__
+    __hash__ = PackageRestriction_mixin.__hash__
+    __eq__ = PackageRestriction_base.__eq__
 
 
 class PackageRestrictionMulti(PackageRestrictionMulti_base, PackageRestrictionMulti_mixin):
@@ -223,9 +222,8 @@ class PackageRestrictionMulti(PackageRestrictionMulti_base, PackageRestrictionMu
     __slots__ = ()
     __inst_caching__ = True
 
-    if is_py3k:
-        __hash__ = PackageRestriction_mixin.__hash__
-        __eq__ = PackageRestriction_base.__eq__
+    __hash__ = PackageRestriction_mixin.__hash__
+    __eq__ = PackageRestriction_base.__eq__
 
 
 class Conditional(PackageRestriction):

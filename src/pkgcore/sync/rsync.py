@@ -14,7 +14,6 @@ demandload(
     'socket',
     'tempfile',
     'time',
-    'snakeoil.compatibility:raise_from',
     'snakeoil.osutils:pjoin',
 )
 
@@ -109,7 +108,7 @@ class rsync_syncer(base.ExternalSyncer):
                     yield ipaddr[4][0]
 
         except socket.error as e:
-            raise_from(base.syncer_exception(self.hostname, af_fam, str(e)))
+            raise base.syncer_exception(self.hostname, af_fam, str(e)) from e
 
     def _sync(self, verbosity, output_fd):
         fd_pipes = {1: output_fd, 2: output_fd}

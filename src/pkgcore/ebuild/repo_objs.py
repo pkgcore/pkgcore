@@ -12,7 +12,7 @@ __all__ = (
 
 from itertools import chain
 
-from snakeoil import compatibility, klass, mappings
+from snakeoil import klass, mappings
 from snakeoil.caching import WeakInstMeta
 from snakeoil.currying import post_curry
 from snakeoil.demandload import demandload
@@ -543,11 +543,10 @@ class RepoConfig(syncable.tree):
         except EnvironmentError as e:
             if e.errno != errno.ENOENT:
                 raise
-        except ValueError:
+        except ValueError as e:
             if line is None:
                 raise
-            compatibility.raise_from(
-                ValueError("Failed parsing %r: line was %r" % (fp, line)))
+            raise ValueError("Failed parsing %r: line was %r" % (fp, line)) from e
 
     known_arches = klass.alias_attr('raw_known_arches')
     use_desc = klass.alias_attr('raw_use_desc')

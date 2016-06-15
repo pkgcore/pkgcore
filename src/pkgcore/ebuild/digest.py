@@ -11,7 +11,6 @@ from itertools import izip
 import operator
 from os.path import basename, dirname
 
-from snakeoil.compatibility import raise_from
 from snakeoil.chksum import get_handler
 from snakeoil.demandload import demandload
 from snakeoil.mappings import make_SlottedDict_kls
@@ -111,7 +110,7 @@ class Manifest(object):
             data = parse_manifest(self.path, ignore_gpg=self._gpg)
         except EnvironmentError as e:
             if not (self.thin or self.allow_missing) or e.errno != errno.ENOENT:
-                raise_from(errors.ParseChksumError(self.path, e))
+                raise errors.ParseChksumError(self.path, e) from e
             data = {}, {}, {}, {}
         self._dist, self._aux, self._ebuild, self._misc = data
         self._sourced = True

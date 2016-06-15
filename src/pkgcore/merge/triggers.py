@@ -25,7 +25,7 @@ __all__ = (
     "InfoRegen",
 )
 
-from snakeoil import compatibility
+from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.demandload import demandload
 from snakeoil.osutils import listdir_files, pjoin, ensure_dirs, normpath
 
@@ -157,7 +157,7 @@ class ThreadedTrigger(base):
     def _run_job(self, observer, functor, args, kwds):
         try:
             functor(*args, **kwds)
-        except compatibility.IGNORED_EXCEPTIONS as e:
+        except IGNORED_EXCEPTIONS as e:
             if isinstance(e, KeyboardInterrupt):
                 return
             raise
@@ -332,7 +332,7 @@ class ldconfig(base):
         try:
             open(fp, 'w').close()
         except EnvironmentError as e:
-            compatibility.raise_from(errors.BlockModification(self, e))
+            raise errors.BlockModification(self, e) from e
 
     def trigger(self, engine):
         # ldconfig is only meaningful in GNU/Linux
@@ -619,8 +619,6 @@ class CommonDirectoryModes(base):
     directories.extend('/usr/share/man/man%i' % x for x in xrange(1, 10))
     directories.extend(['/lib', '/lib32', '/lib64', '/etc', '/bin', '/sbin', '/var'])
     directories = frozenset(map(normpath, directories))
-    if not compatibility.is_py3k:
-        del x
 
     def trigger(self, engine, cset):
         r = engine.observer

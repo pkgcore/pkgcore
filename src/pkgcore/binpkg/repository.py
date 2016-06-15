@@ -9,7 +9,6 @@ __all__ = ("tree", "ConfiguredTree", "force_unpacking")
 
 import os
 
-from snakeoil.compatibility import raise_from
 from snakeoil.demandload import demandload
 from snakeoil.klass import jit_attr, jit_attr_named, alias_attr
 from snakeoil.mappings import DictMixin, StackedDict
@@ -271,7 +270,7 @@ class tree(prototype.tree):
                 x for x in listdir_dirs(self.base)
                 if x.lower() != "all")
         except EnvironmentError as e:
-            raise_from(KeyError("failed fetching categories: %s" % str(e)))
+            raise KeyError("failed fetching categories: %s" % str(e)) from e
 
     def _get_packages(self, category):
         cpath = pjoin(self.base, category.lstrip(os.path.sep))
@@ -309,9 +308,9 @@ class tree(prototype.tree):
                 l.add(pkg.package)
                 d.setdefault((category, pkg.package), []).append(pkg.fullver)
         except EnvironmentError as e:
-            raise_from(KeyError(
+            raise KeyError(
                 "failed fetching packages for category %s: %s" %
-                (pjoin(self.base, category.lstrip(os.path.sep)), str(e))))
+                (pjoin(self.base, category.lstrip(os.path.sep)), str(e))) from e
 
         self._versions_tmp_cache.update(d)
         return tuple(l)

@@ -22,7 +22,7 @@ import shutil
 import sys
 
 from snakeoil import data_source, klass
-from snakeoil.compatibility import raise_from, IGNORED_EXCEPTIONS
+from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.currying import post_curry, pretty_docs
 from snakeoil.demandload import demandload
 from snakeoil.osutils import ensure_dirs, abspath, normpath, pjoin, listdir_files
@@ -338,8 +338,8 @@ class ebd(object):
                 if e.errno not in (errno.ENOTEMPTY, errno.EEXIST):
                     raise
         except EnvironmentError as e:
-            raise_from(format.GenericBuildError(
-                "clean: Caught exception while cleansing: %s" % (e,)))
+            raise format.GenericBuildError(
+                "clean: Caught exception while cleansing: %s" % (e,)) from e
         return True
 
     def feat_or_bool(self, name, extra_env=None):
@@ -442,8 +442,8 @@ def run_generic_phase(pkg, phase, env, userpriv, sandbox, fd_pipes=None,
         release_ebuild_processor(ebd)
         if isinstance(e, IGNORED_EXCEPTIONS + (format.GenericBuildError,)):
             raise
-        raise_from(format.GenericBuildError(
-            "Executing phase %s: Caught exception: %s" % (phase, e)))
+        raise format.GenericBuildError(
+            "Executing phase %s: Caught exception: %s" % (phase, e)) from e
 
     release_ebuild_processor(ebd)
     return True
@@ -654,10 +654,9 @@ class buildable(ebd, setup_mixin, format.build):
                         os.unlink(self.env["DISTDIR"])
 
             except EnvironmentError as e:
-                raise_from(format.FailedDirectory(
+                raise format.FailedDirectory(
                     self.env["DISTDIR"],
-                    "failed removing existing file/dir/link at: exception %s"
-                    % e))
+                    "failed removing existing file/dir/link at: exception %s" % e) from e
 
             if not ensure_dirs(self.env["DISTDIR"], mode=0770, gid=portage_gid):
                 raise format.FailedDirectory(
@@ -671,9 +670,9 @@ class buildable(ebd, setup_mixin, format.build):
                     os.symlink(src, dest)
 
             except EnvironmentError as e:
-                raise_from(format.GenericBuildError(
+                raise format.GenericBuildError(
                     "Failed symlinking in distfiles for src %s -> %s: %s" % (
-                        src, dest, e)))
+                        src, dest, e)) from e
 
     @observer.decorate_build_method("setup")
     def setup(self):
@@ -695,13 +694,13 @@ class buildable(ebd, setup_mixin, format.build):
             st = None
             try:
                 st = os.stat(self.env["CCACHE_DIR"])
-            except OSError:
+            except OSError as e:
                 st = None
                 if not ensure_dirs(self.env["CCACHE_DIR"], mode=02775,
                                    gid=portage_gid):
-                    raise_from(format.FailedDirectory(
+                    raise format.FailedDirectory(
                         self.env["CCACHE_DIR"],
-                        "failed creation of ccache dir"))
+                        "failed creation of ccache dir") from e
 
                 # XXX this is more then mildly stupid.
                 st = os.stat(self.env["CCACHE_DIR"])
@@ -736,10 +735,10 @@ class buildable(ebd, setup_mixin, format.build):
                                 "failed correcting perms for CCACHE_DIR")
                     finally:
                         os.chdir(cwd)
-            except OSError:
-                raise_from(format.FailedDirectory(
+            except OSError as e:
+                raise format.FailedDirectory(
                     self.env["CCACHE_DIR"],
-                    "failed ensuring perms/group owner for CCACHE_DIR"))
+                    "failed ensuring perms/group owner for CCACHE_DIR") from e
 
         return setup_mixin.setup(self)
 
@@ -781,9 +780,9 @@ class buildable(ebd, setup_mixin, format.build):
             try:
                 os.chown(self.env["WORKDIR"], portage_uid, -1)
             except OSError as e:
-                raise_from(format.GenericBuildError(
+                raise format.GenericBuildError(
                     "failed forcing %i uid for WORKDIR: %s" %
-                    (portage_uid, e)))
+                    (portage_uid, e)) as e
         return self._generic_phase("unpack", True, True)
 
     compile = pretty_docs(

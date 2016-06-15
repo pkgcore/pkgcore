@@ -15,7 +15,6 @@ import os
 
 from snakeoil import klass
 from snakeoil.bash import iter_read_bash
-from snakeoil.compatibility import raise_from
 from snakeoil.data_source import local_source
 from snakeoil.demandload import demandload
 from snakeoil.mappings import ProtectedDict, ImmutableDict
@@ -158,7 +157,7 @@ def _read_config_file(path):
                 yield line, lineno, fs_obj.location
     except EnvironmentError as e:
         if e.errno != errno.ENOENT:
-            raise_from(Failure("failed reading %r: %s" % (filename, e)))
+            raise Failure("failed reading %r: %s" % (filename, e)) from e
 
 
 # ow ow ow ow ow ow....
@@ -639,8 +638,8 @@ class domain(config_domain):
                     else:
                         pargs.append(getattr(self, x))
             except AttributeError as e:
-                raise_from(Failure("failed configuring repo '%s': "
-                                   "configurable missing: %s" % (repo, e)))
+                raise Failure("failed configuring repo '%s': "
+                              "configurable missing: %s" % (repo, e)) from e
             configured_repo = repo.configure(*pargs)
         return configured_repo
 

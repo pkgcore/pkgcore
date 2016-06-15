@@ -22,7 +22,8 @@ from pkgcore.merge.const import REPLACE_MODE, INSTALL_MODE, UNINSTALL_MODE
 from pkgcore.operations import observer as observer_mod
 from pkgcore.plugin import get_plugins
 
-from snakeoil import compatibility, data_source
+from snakeoil import data_source
+from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.currying import post_curry
 from snakeoil.demandload import demandload
 from snakeoil.mappings import LazyValDict, ImmutableDict, StackedDict
@@ -332,7 +333,7 @@ class MergeEngine(object):
                 try:
                     try:
                         trigger(self, self.csets)
-                    except compatibility.IGNORED_EXCEPTIONS:
+                    except IGNORED_EXCEPTIONS:
                         raise
                     except errors.BlockModification as e:
                         self.observer.error(

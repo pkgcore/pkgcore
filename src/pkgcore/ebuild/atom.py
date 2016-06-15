@@ -12,7 +12,7 @@ __all__ = ("atom", "transitive_use_atom")
 
 import string
 
-from snakeoil.compatibility import is_py3k, cmp, raise_from
+from snakeoil.compatibility import cmp
 from snakeoil.demandload import demandload
 from snakeoil.klass import (
     generic_equality, inject_richcmp_methods_from_cmp,
@@ -30,10 +30,7 @@ demandload(
 MalformedAtom = errors.MalformedAtom
 
 alphanum = set(string.digits)
-if is_py3k:
-    alphanum.update(string.ascii_letters)
-else:
-    alphanum.update(string.letters)
+alphanum.update(string.ascii_letters)
 
 valid_repo_chars = set(alphanum)
 valid_repo_chars.update("_-")
@@ -242,7 +239,7 @@ def native_init(self, atom, negate_vers=False, eapi=-1):
     try:
         c = cpv.CPV(self.cpvstr, versioned=bool(self.op))
     except errors.InvalidCPV as e:
-        raise_from(errors.MalformedAtom(orig_atom))
+        raise errors.MalformedAtom(orig_atom) from e
     sf(self, "key", c.key)
     sf(self, "package", c.package)
     sf(self, "category", c.category)

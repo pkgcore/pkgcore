@@ -9,7 +9,7 @@ appropriate conditionals.
 
 __all__ = ("DepSet", "stringify_boolean")
 
-from snakeoil.compatibility import raise_from, IGNORED_EXCEPTIONS
+from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.iterables import expandable_chain
 from snakeoil.sequences import iflatten_instance
 
@@ -182,7 +182,7 @@ class DepSet(boolean.AndRestriction):
                 raise
             raise ParseError(dep_str, k)
         except Exception as e:
-            raise_from(ParseError(dep_str, e))
+            raise ParseError(dep_str, e) from e
 
         # check if any closures required
         if len(depsets) != 1:

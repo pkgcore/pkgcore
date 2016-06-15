@@ -3,7 +3,6 @@
 
 import sys
 
-from snakeoil import compatibility
 from snakeoil.test import TestCase
 
 from pkgcore.config import configurable, basics, errors
@@ -46,12 +45,8 @@ class DescribeClassTest(TestCase, ArgParseMixin):
     _argparser = pconfig.describe_class
 
     def test_parser(self):
-        if compatibility.is_py3k:
-            self.assertError(
-                'the following arguments are required: target_class')
-        else:
-            self.assertError(
-                'too few arguments')
+        self.assertError(
+            'the following arguments are required: target_class')
 
         if sys.hexversion >= 0x03050000:
             module = "module 'pkgcore'"

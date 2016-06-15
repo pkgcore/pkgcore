@@ -12,13 +12,13 @@ __all__ = (
     "load_make_conf", "load_repos_conf", "config_from_make_conf",
 )
 
-import ConfigParser as configparser
+import configParser
 from collections import OrderedDict
 import os
 
 from snakeoil.bash import read_bash_dict
 from snakeoil.currying import wrap_exception
-from snakeoil.compatibility import raise_from, ConfigParser, IGNORED_EXCEPTIONS
+from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.demandload import demandload
 from snakeoil.mappings import ImmutableDict
 from snakeoil.osutils import access, normpath, abspath, listdir_files, pjoin, ensure_dirs
@@ -178,13 +178,13 @@ def _find_profile_link(config_dir):
     try:
         return normpath(abspath(
             pjoin(config_dir, os.readlink(make_profile))))
-    except EnvironmentError as oe:
+    except EnvironmentError as e:
         if oe.errno in (errno.ENOENT, errno.EINVAL):
-            raise_from(errors.ComplexInstantiationError(
+            raise errors.ComplexInstantiationError(
                 "%s must be a symlink pointing to a real target" % (
-                    make_profile,)))
-        raise_from(errors.ComplexInstantiationError(
-            "%s: unexpected error- %s" % (make_profile, oe.strerror)))
+                    make_profile,)) from e
+        raise errors.ComplexInstantiationError(
+            "%s: unexpected error- %s" % (make_profile, e.strerror)) from e
 
 def add_profile(config, config_dir, profile_override=None):
     if profile_override is None:
@@ -192,8 +192,8 @@ def add_profile(config, config_dir, profile_override=None):
     else:
         profile = normpath(abspath(profile_override))
         if not os.path.exists(profile):
-            raise_from(errors.ComplexInstantiationError(
-                "%s doesn't exist" % (profile,)))
+            raise errors.ComplexInstantiationError(
+                "%s doesn't exist" % (profile,))
 
     paths = profiles.OnDiskProfile.split_abspath(profile)
     if paths is None:
@@ -279,9 +279,9 @@ def load_make_conf(vars_dict, path, allow_sourcing=False, required=True,
                 fp, vars_dict=vars_dict, sourcing_command=sourcing_command)
         except EnvironmentError as e:
             if e.errno == errno.EACCES:
-                raise_from(errors.PermissionDeniedError(fp, write=False))
+                raise errors.PermissionDeniedError(fp, write=False) from e
             if e.errno != errno.ENOENT or required:
-                raise_from(errors.ParsingError("parsing %r" % (fp,), exception=e))
+                raise errors.ParsingError("parsing %r" % (fp,), exception=e) from e
             return
 
         if incrementals:
@@ -308,16 +308,16 @@ def load_repos_conf(path):
     repos = {}
 
     for fp in sorted_scan(os.path.realpath(path), follow_symlinks=True, nonexistent=True):
-        config = ConfigParser()
+        config = configparser.ConfigParser()
         try:
             with open(fp) as f:
                 config.read_file(f)
         except EnvironmentError as e:
             if e.errno == errno.EACCES:
-                raise_from(errors.PermissionDeniedError(fp))
-            raise_from(errors.ParsingError("repos.conf: '%s'" % (fp,), exception=e))
-        except ConfigParser.exceptions as e:
-            raise_from(errors.ParsingError("repos.conf: '%s'" % (fp,), exception=e))
+                raise errors.PermissionDeniedError(fp, write=False) from e
+            raise errors.ParsingError("parsing %r" % (fp,), exception=e) from e
+        except configParser.Error as e:
+            raise errors.ParsingError("repos.conf: '%s'" % (fp,), exception=e) from e
 
         defaults_data = config.defaults()
         if defaults_data and defaults:
@@ -412,8 +412,8 @@ def config_from_make_conf(location=None, profile_override=None, **kwargs):
         load_make_conf(make_conf, pjoin(const.CONFIG_PATH, 'make.globals'))
     except IGNORED_EXCEPTIONS:
         raise
-    except:
-        raise_from(errors.ParsingError("failed to load make.globals"))
+    except Exception as e:
+        raise errors.ParsingError("failed to load make.globals") from e
     load_make_conf(
         make_conf, pjoin(config_dir, 'make.conf'), required=False,
         allow_sourcing=True, incrementals=True)
@@ -450,9 +450,8 @@ def config_from_make_conf(location=None, profile_override=None, **kwargs):
                 pjoin(const.CONFIG_PATH, 'repos.conf'))
         except IGNORED_EXCEPTIONS:
             raise
-        except:
-            raise_from(errors.ParsingError(
-                "failed to find a usable repos.conf"))
+        except Exception as e:
+            raise errors.ParsingError("failed to find a usable repos.conf") from e
 
     make_repo_syncers(config, repos_conf, make_conf)
 

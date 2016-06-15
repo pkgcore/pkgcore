@@ -9,9 +9,8 @@ __all__ = ("MalformedXpak", "Xpak")
 
 from collections import OrderedDict
 
-from snakeoil import compatibility, klass
+from snakeoil import klass
 from snakeoil import struct_compat as struct
-from snakeoil.compatibility import raise_from
 from snakeoil.demandload import demandload
 from snakeoil.mappings import autoconvert_py3k_methods_metaclass
 
@@ -56,10 +55,9 @@ class Xpak(object):
     header_pre_magic = "XPAKPACK"
     header = struct.Struct(">%isLL" % (len(header_pre_magic),))
 
-    if compatibility.is_py3k:
-        trailer_post_magic = trailer_post_magic.encode("ascii")
-        trailer_pre_magic = trailer_pre_magic.encode("ascii")
-        header_pre_magic = header_pre_magic.encode("ascii")
+    trailer_post_magic = trailer_post_magic.encode("ascii")
+    trailer_pre_magic = trailer_pre_magic.encode("ascii")
+    header_pre_magic = header_pre_magic.encode("ascii")
 
     def __init__(self, source):
         self._source_is_path = isinstance(source, basestring)
@@ -125,12 +123,7 @@ class Xpak(object):
         else:
             handle = target_source.bytes_fileobj(writable=True)
 
-        joiner = ''
-        if compatibility.is_py3k:
-            # can't do str.join(bytes), thus this.
-            # written this way since the py3k translator doesn't allow us to
-            # just do b''
-            joiner = joiner.encode()
+        joiner = b''
         new_index = joiner.join(new_index)
         new_data = joiner.join(new_data)
 
@@ -160,22 +153,21 @@ class Xpak(object):
         while index_len:
             key_len = struct.unpack(">L", fd.read(4))[0]
             key = fd.read(key_len)
-            if compatibility.is_py3k:
-                key = key.decode('ascii')
+            key = key.decode('ascii')
             if len(key) != key_len:
                 raise MalformedXpak(
                     "tried reading key %i of len %i, but hit EOF" % (
                         len(keys_dict) + 1, key_len))
             try:
                 offset, data_len = struct.unpack(">LL", fd.read(8))
-            except struct.error:
-                raise_from(MalformedXpak(
+            except struct.error as e:
+                raise MalformedXpak(
                     "key %i, tried reading data offset/len but hit EOF" % (
-                        len(keys_dict) + 1)))
+                        len(keys_dict) + 1)) from e
             key = key_rewrite(key, key)
             keys_dict[key] = (
                 data_start + offset, data_len,
-                compatibility.is_py3k and not key.startswith("environment"))
+                not key.startswith("environment"))
             index_len -= (key_len + 12) # 12 for key_len, offset, data_len longs
 
         return keys_dict
@@ -187,9 +179,9 @@ class Xpak(object):
             if pre != self.trailer_pre_magic or post != self.trailer_post_magic:
                 raise MalformedXpak(
                     "not an xpak segment, trailer didn't match: %r" % fd)
-        except struct.error:
-            raise_from(MalformedXpak(
-                "not an xpak segment, failed parsing trailer: %r" % fd))
+        except struct.error as e:
+            raise MalformedXpak(
+                "not an xpak segment, failed parsing trailer: %r" % fd) from e
 
         # this is a bit daft, but the format seems to intentionally
         # have an off by 8 in the offset address. presumably cause the
@@ -202,9 +194,9 @@ class Xpak(object):
             if pre != self.header_pre_magic:
                 raise MalformedXpak(
                     "not an xpak segment, header didn't match: %r" % fd)
-        except struct.error:
-            raise_from(MalformedXpak(
-                "not an xpak segment, failed parsing header: %r" % fd))
+        except struct.error as e:
+            raise MalformedXpak(
+                "not an xpak segment, failed parsing header: %r" % fd) from e
 
         return self.xpak_start + self.header.size, index_len, data_len
 

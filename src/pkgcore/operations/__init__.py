@@ -15,7 +15,8 @@ may occur down the line if dependencies can be kept as minimal as possible.
 
 from functools import partial
 
-from snakeoil import klass, compatibility
+from snakeoil import klass
+from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.currying import pretty_docs
 
 from pkgcore.operations import observer as _observer
@@ -66,12 +67,12 @@ class base(object):
     def _recast_exception_decorator(exc_class, name, functor, *args, **kwds):
         try:
             return functor(*args, **kwds)
-        except compatibility.IGNORED_EXCEPTIONS:
+        except IGNORED_EXCEPTIONS:
             raise
-        except Exception as exc:
-            if isinstance(exc, exc_class):
+        except Exception as e:
+            if isinstance(e, exc_class):
                 raise
-            compatibility.raise_from(exc_class(name))
+            raise exc_class(name) from e
 
     def _wrap_exception(self, functor, name):
         f = partial(

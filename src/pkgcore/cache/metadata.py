@@ -13,7 +13,6 @@ import errno
 import os
 
 from snakeoil.osutils import pjoin
-from snakeoil.compatibility import raise_from
 from snakeoil.mappings import ProtectedDict
 
 from pkgcore.cache import flat_hash, errors
@@ -110,12 +109,12 @@ class database(flat_hash.database):
             myf = open(fp, "w")
         except EnvironmentError as e:
             if e.errno != errno.ENOENT:
-                raise_from(errors.CacheCorruption(cpv, e))
+                raise errors.CacheCorruption(cpv, e) from e
             try:
                 self._ensure_dirs(cpv)
                 myf = open(fp, "w")
             except EnvironmentError as e:
-                raise_from(errors.CacheCorruption(cpv, e))
+                raise errors.CacheCorruption(cpv, e) from e
 
         count = 0
         for idx, key in self.hardcoded_auxdbkeys_order:
@@ -132,7 +131,7 @@ class database(flat_hash.database):
             os.rename(fp, new_fp)
         except EnvironmentError as e:
             os.remove(fp)
-            raise_from(errors.CacheCorruption(cpv, e))
+            raise errors.CacheCorruption(cpv, e) from e
 
     def _set_mtime(self, fp, values, eclasses):
         if self._mtime_used:

@@ -14,7 +14,6 @@ from pkgcore.ebuild import ebuild_src, conditionals
 from pkgcore.ebuild.eapi import get_eapi
 from pkgcore.package import metadata
 
-from snakeoil.compatibility import raise_from
 from snakeoil.currying import post_curry
 from snakeoil.data_source import local_source
 from snakeoil.demandload import demandload
@@ -262,8 +261,8 @@ class fake_package_factory(package_factory):
         else:
             try:
                 return getattr(self.pkg, key)
-            except AttributeError:
-                raise_from(KeyError(key))
+            except AttributeError as e:
+                raise KeyError(key) from e
 
     _generate_format_install_op = _generic_format_install_op
     _generate_format_uninstall_op = _generic_format_uninstall_op

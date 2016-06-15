@@ -14,7 +14,6 @@ import operator
 
 from snakeoil import klass
 from snakeoil.chksum import get_handler
-from snakeoil.compatibility import raise_from
 from snakeoil.mappings import (
     ProtectedDict, autoconvert_py3k_methods_metaclass, make_SlottedDict_kls)
 
@@ -252,9 +251,9 @@ class base(object):
         try:
             return [(eclass, tuple(self._deserialize_eclass_chfs(i)))
                 for eclass in i]
-        except ValueError:
-            raise_from(errors.CacheCorruption(
-                cpv, 'ValueError reading %r' % (eclass_string,)))
+        except ValueError as e:
+            raise errors.CacheCorruption(
+                cpv, 'ValueError reading %r' % (eclass_string,)) from e
 
     def validate_entry(self, cache_item, ebuild_hash_item, eclass_db):
         chf_hash = cache_item.get(self._chf_key)

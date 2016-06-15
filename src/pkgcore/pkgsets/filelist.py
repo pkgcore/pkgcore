@@ -7,7 +7,7 @@ pkgset based around loading a list of atoms from a world file
 
 __all__ = ("FileList", "WorldFile")
 
-from snakeoil import compatibility, klass
+from snakeoil import klass
 from snakeoil.demandload import demandload
 
 from pkgcore.config import ConfigHint, errors
@@ -51,8 +51,7 @@ class FileList(object):
                     continue
                 s.add(atom(x))
         except InvalidDependency as e:
-            compatibility.raise_from(
-                errors.ParsingError("parsing %r" % self.path, exception=e))
+            raise errors.ParsingError("parsing %r" % self.path, exception=e) from e
 
         return s
 

@@ -204,7 +204,7 @@ class sdist(dst_sdist.sdist):
 
 
 class build_py(dst_build_py.build_py):
-    """build_py command wrapper that runs 2to3 for py3 targets."""
+    """build_py command wrapper."""
 
     user_options = dst_build_py.build_py.user_options + \
         [("inplace", "i", "do any source conversions in place")]
@@ -221,6 +221,29 @@ class build_py(dst_build_py.build_py):
         if self.inplace:
             self.build_lib = '.'
         dst_build_py.build_py.finalize_options(self)
+
+    def _run_generate_verinfo(self, rebuilds=None):
+        from snakeoil.version import get_git_version
+        ver_path = self.get_module_outfile(
+            self.build_lib, (self.package_namespace,), '_verinfo')
+        # this should check mtime...
+        if not os.path.exists(ver_path):
+            log.info('generating _verinfo')
+            with open(ver_path, 'w') as f:
+                f.write("version_info=%r" % (get_git_version('.'),))
+            self.byte_compile([ver_path])
+            if rebuilds is not None:
+                rebuilds.append((ver_path, os.lstat(ver_path).st_mtime))
+
+    def run(self):
+        dst_build_py.build_py.run(self)
+
+        if self.generate_verinfo:
+            self._run_generate_verinfo()
+
+
+class build_py2to3(build_py):
+    """build_py command wrapper that runs 2to3 for py3 targets."""
 
     def _compute_rebuilds(self, force=False):
         for base, mod_name, path in self.find_all_modules():
@@ -243,18 +266,6 @@ class build_py(dst_build_py.build_py):
 
     def _inner_run(self, rebuilds):
         pass
-
-    def _run_generate_verinfo(self, rebuilds):
-        from snakeoil.version import get_git_version
-        ver_path = self.get_module_outfile(
-            self.build_lib, (self.package_namespace,), '_verinfo')
-        # this should check mtime...
-        if not os.path.exists(ver_path):
-            log.info('generating _verinfo')
-            with open(ver_path, 'w') as f:
-                f.write("version_info=%r" % (get_git_version('.'),))
-            self.byte_compile([ver_path])
-            rebuilds.append((ver_path, os.lstat(ver_path).st_mtime))
 
     def get_py2to3_converter(self, options=None, proc_count=0):
         from lib2to3 import refactor as ref_mod
@@ -285,8 +296,7 @@ class build_py(dst_build_py.build_py):
         py3k_rebuilds = []
         if not self.inplace:
             if is_py3k:
-                py3k_rebuilds = list(self._compute_rebuilds(
-                    self.force))
+                py3k_rebuilds = list(self._compute_rebuilds(self.force))
             dst_build_py.build_py.run(self)
 
         if self.generate_verinfo:
@@ -305,7 +315,7 @@ class build_py(dst_build_py.build_py):
         log.info("completed py3k conversions")
 
 
-class build_py3(build_py):
+class build_py3to2(build_py2to3):
     """build_py command wrapper that runs 3to2 for py2 targets."""
 
     def run(self):

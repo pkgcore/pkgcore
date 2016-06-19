@@ -7,7 +7,7 @@ misc. repository related tools
 
 __all__ = ("get_raw_repos", "get_virtual_repos")
 
-from pkgcore.repository import virtual
+from pkgcore.repository import virtual, multiplex
 
 
 def get_raw_repos(repo):
@@ -21,7 +21,7 @@ def get_raw_repos(repo):
         return l
     while getattr(repo, "raw_repo", None) is not None:
         repo = repo.raw_repo
-    if hasattr(repo, "trees"):
+    if isinstance(repo, multiplex.tree):
         l = []
         map(l.extend, (get_raw_repos(x) for x in repo.trees))
         return l

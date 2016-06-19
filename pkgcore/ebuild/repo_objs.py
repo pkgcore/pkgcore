@@ -11,7 +11,6 @@ __all__ = (
 )
 
 from itertools import chain
-import os
 
 from snakeoil import compatibility, klass, mappings
 from snakeoil.caching import WeakInstMeta
@@ -21,11 +20,10 @@ from snakeoil.osutils import pjoin, listdir_files, listdir
 from snakeoil.sequences import namedtuple
 
 from pkgcore.config import ConfigHint
-from pkgcore.repository import syncable, errors
+from pkgcore.repository import syncable
 
 demandload(
     'errno',
-    'stat',
     'snakeoil.bash:BashParseError,iter_read_bash,read_dict',
     'snakeoil.fileutils:readfile,readlines_ascii',
     'snakeoil.sequences:iter_stable_unique',
@@ -360,14 +358,6 @@ class RepoConfig(syncable.tree):
         })
 
     def __init__(self, location, config_name=None, syncer=None, profiles_base='profiles'):
-        try:
-            if not stat.S_ISDIR(os.stat(location).st_mode):
-                raise errors.InitializationError(
-                    "location not a dir: %s" % (location,))
-        except OSError:
-            compatibility.raise_from(errors.InitializationError(
-                "lstat failed on location %s" % (location,)))
-
         object.__setattr__(self, 'config_name', config_name)
         object.__setattr__(self, 'location', location)
         object.__setattr__(self, 'profiles_base', pjoin(self.location, profiles_base))

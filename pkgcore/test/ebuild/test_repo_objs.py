@@ -89,3 +89,11 @@ Blake-light tragedy among the scholars of war.
 
         self.assertEqual(" ".join(s.split()),
             self.get_metadata_xml(longdescription=s).longdescription)
+
+
+class TestRepoConfig(TestCase):
+
+    def test_nonexistent_repo(self):
+        # Newly configured, nonexistent repos shouldn't cause issues.
+        repo_config = repo_objs.RepoConfig('nonexistent')
+        self.assertEqual(repo_config.location, 'nonexistent')

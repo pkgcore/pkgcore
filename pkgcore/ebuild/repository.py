@@ -273,10 +273,10 @@ class _UnconfiguredTree(prototype.tree):
         self.eclass_cache = eclass_cache
 
         self.masters = masters
-        self._trees = tuple(masters) + (self,)
+        self.trees = tuple(masters) + (self,)
         self.licenses = repo_objs.Licenses(self.location)
         if masters:
-            self.licenses = repo_objs.OverlayedLicenses(*self._trees)
+            self.licenses = repo_objs.OverlayedLicenses(*self.trees)
 
         mirrors = {}
         fp = pjoin(self.location, metadata_offset, "thirdpartymirrors")
@@ -384,7 +384,7 @@ class _UnconfiguredTree(prototype.tree):
             # raise KeyError
             return ()
         categories = set()
-        for repo in self._trees:
+        for repo in self.trees:
             if repo.hardcoded_categories is not None:
                 categories.update(repo.hardcoded_categories)
         if categories:

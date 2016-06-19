@@ -240,7 +240,7 @@ class _UnconfiguredTree(prototype.tree):
         },
         typename='repo')
 
-    def __init__(self, location, eclass_cache, masters=(), cache=(),
+    def __init__(self, location, eclass_cache=None, masters=(), cache=(),
                  default_mirrors=None, ignore_paludis_versioning=False,
                  allow_missing_manifests=False, repo_config=None):
 
@@ -270,6 +270,8 @@ class _UnconfiguredTree(prototype.tree):
             raise_from(errors.InitializationError(
                 "lstat failed on base %s" % (self.base,)))
         self.config = repo_config
+        if eclass_cache is None:
+            eclass_cache = eclass_cache_module.cache(pjoin(self.location, 'eclass'))
         self.eclass_cache = eclass_cache
 
         self.masters = masters

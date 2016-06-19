@@ -261,14 +261,14 @@ class _UnconfiguredTree(prototype.tree):
         prototype.tree.__init__(self)
         self.base = self.location = location
         try:
-            if repo_config is None:
-                repo_config = repo_objs.RepoConfig(location)
             if not stat.S_ISDIR(os.stat(self.base).st_mode):
                 raise errors.InitializationError(
                     "base not a dir: %s" % self.base)
         except OSError:
             raise_from(errors.InitializationError(
                 "lstat failed on base %s" % (self.base,)))
+        if repo_config is None:
+            repo_config = repo_objs.RepoConfig(location)
         self.config = repo_config
         if eclass_cache is None:
             eclass_cache = eclass_cache_module.cache(pjoin(self.location, 'eclass'))

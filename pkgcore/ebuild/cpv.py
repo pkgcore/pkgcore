@@ -378,9 +378,8 @@ def mk_cpv_cls(base_cls):
 native_CPV = mk_cpv_cls(_native_CPV)
 
 try:
-    # No name in module
-    # pylint: disable-msg=E0611
-    from pkgcore.ebuild._cpv import CPV as cpy_CPV
+    from libebuild.cpv import cpv as cpy_CPV
+    from libebuild.version import version_cmp_ext as cpy_ver_cmp
     CPV_base = cpy_CPV
     ver_cmp = cpy_ver_cmp
     cpy_builtin = True

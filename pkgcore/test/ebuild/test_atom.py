@@ -232,8 +232,8 @@ class Test_native_atom(test.TestRestriction):
         # shouldn't puke, but has, thus checking"
         self.kls("sys-libs/db:4.4")
         self.kls("%s:azAZ.-+_09" % astr)
-        self.kls("%s:_bar" % astr) # According to PMS, underscore and plus-sign are
-        self.kls("%s:+bar" % astr) # not invalid first chars in a slot dep
+        self.kls("%s:_bar" % astr) # According to PMS, underscore is a
+        self.kls("%s:_+bar" % astr) # valid first char in a slot dep
         self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/foo:")
         self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/foo:1,,0")
         self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/foo:1:")
@@ -548,5 +548,5 @@ class Test_cpy_atom(Test_native_atom):
     if atom.atom_overrides is atom.native_atom_overrides:
         skip = "extension isn't available"
 
-test_cpy_used = mk_cpy_loadable_testcase('pkgcore.ebuild._atom',
-    "pkgcore.ebuild.atom", "atom_overrides", "overrides")
+#test_cpy_used = mk_cpy_loadable_testcase('libebuild.atom',
+#    "pkgcore.ebuild.atom", "atom_overrides.__init__", "catom_init")

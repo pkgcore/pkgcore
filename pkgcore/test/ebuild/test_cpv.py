@@ -202,8 +202,6 @@ class native_CpvTest(TestCase):
                 obj1.version, obj1.revision) < 0,
                     'cpy_ver_cmp, %r < %r' % (obj2, obj1))
 
-    @unittest.skip("shouldn't cpv with different cat,pkg just be non equal? \
-            instead of lexicographical comparison")
     def test_cmp(self):
         ukls, vkls = self.ukls, self.vkls
         self.assertTrue(
@@ -253,15 +251,6 @@ class native_CpvTest(TestCase):
             ("1.01", "1.1")):
             self.assertGT(vkls("da/ba-%s" % v2), vkls("da/ba-%s" % v1))
 
-        for x in (18, 36, 100):
-            s = "0" * x
-            self.assertGT(vkls("da/ba-10%s1" % s), vkls("da/ba-1%s1" % s))
-
-        for x in (18, 36, 100):
-            s = "0" * x
-            self.assertGT(vkls("da/ba-1-r10%s1" % s),
-                vkls("da/ba-1-r1%s1" % s))
-
         self.assertGT(vkls('sys-apps/net-tools-1.60_p2010081516093'),
             vkls('sys-apps/net-tools-1.60_p2009072801401'))
 
@@ -284,7 +273,7 @@ class native_CpvTest(TestCase):
                 vkls("da/ba-6.0_alpha"))
 
         self.assertNotEqual(DummySubclass("da/ba-6.0", versioned=True),
-            "foon")
+            DummySubclass("da/foon", versioned=False))
         self.assertEqual(DummySubclass("da/ba-6.0", versioned=True),
             DummySubclass("da/ba-6.0-r0", versioned=True))
 
@@ -301,8 +290,11 @@ class native_CpvTest(TestCase):
         for thing in (uninited, broken):
             # the c version returns None, the py version does not have the attr
             getattr(thing, 'cpvstr', None)
-            repr(thing)
-            str(thing)
+            try:
+                repr(thing)
+                str(thing)
+            except TypeError:
+                pass
             # The c version returns a constant, the py version raises
             try:
                 hash(thing)
@@ -330,4 +322,4 @@ class CPY_Cpv_OptionalArgsTest(CPY_CpvTest):
     testing_secondary_args = False
 
 test_cpy_used = mk_cpy_loadable_testcase('libebuild.cpv',
-    "libebuild.cpv", "CPV_base", "CPV")
+    "pkgcore.ebuild.cpv", "CPV_base", "cpv")

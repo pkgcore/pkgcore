@@ -321,6 +321,13 @@ def cpy_ver_cmp(ver1, rev1, ver2, rev2):
         return c
     return cmp(rev1, rev2)
 
+try:
+    from libebuild.cpv import cpv as cpy_CPV
+    ver_cmp = cpy_ver_cmp
+    cpy_builtin = True
+except ImportError:
+    ver_cmp = native_ver_cmp
+    cpy_builtin = False
 
 def mk_cpv_cls(base_cls):
     class CPV(base.base, base_cls):
@@ -340,7 +347,8 @@ def mk_cpv_cls(base_cls):
 
         __slots__ = ()
 
-        inject_richcmp_methods_from_cmp(locals())
+        if not cpy_builtin:
+            inject_richcmp_methods_from_cmp(locals())
 #       __metaclass__ = WeakInstMeta
 
 #       __inst_caching__ = True
@@ -375,19 +383,14 @@ def mk_cpv_cls(base_cls):
 
     return CPV
 
-native_CPV = mk_cpv_cls(_native_CPV)
-
-try:
-    from libebuild.cpv import cpv as cpy_CPV
-    from libebuild.version import version_cmp_ext as cpy_ver_cmp
-    CPV_base = cpy_CPV
-    ver_cmp = cpy_ver_cmp
-    cpy_builtin = True
-    cpy_CPV = CPV = mk_cpv_cls(cpy_CPV)
-except ImportError:
-    ver_cmp = native_ver_cmp
+if cpy_builtin:
+    CPV = mk_cpv_cls(cpy_CPV)
     cpy_builtin = False
-    CPV = CPV_base = native_CPV
+    native_CPV = mk_cpv_cls(_native_CPV)
+    cpy_builtin = True
+else:
+    native_CPV = mk_cpv_cls(_native_CPV)
+    CPV = native_CPV
 
 versioned_CPV = CPV.versioned
 unversioned_CPV = CPV.unversioned

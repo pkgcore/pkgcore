@@ -310,49 +310,17 @@ native_atom_overrides = {
 }
 
 try:
-    from pkgcore.ebuild._atom import overrides as atom_overrides
+    from libebuild.atom import catom_init
 
-    # python issue 4230 complicates things pretty heavily since
-    # __getattr__ either supports descriptor or doesn't.
-    # so we test it.
-    class test(object):
-        __getattr__ = atom_overrides['__getattr__desc']
+    def cython_init(self, atom, negate_vers=False, eapi=6):
+        catom_init(self, atom, negate_vers, eapi)
 
-    try:
-        test().asdf
-    except TypeError:
+    catom_overrides = {
+        "__init__": cython_init,
+        "__getattr__": native__getattr__,
+    }
 
-        # function was invoked incorrectly- self and attr were passed in
-        # to the meth_o variant.  meaning no __getattr__ descriptor support.
-
-        try:
-            class test2(object):
-                __getattr__ = atom_overrides['__getattr__nondesc']
-            test2().asdf
-
-        except SystemError:
-            # ...or there was a screwup in the cpy implementation and it's
-            # bitching about the passed in 'attr' key being the wrong type.
-            # retrigger the exception.
-            test().asdf
-
-        except AttributeError:
-            # old form works.  See the 'else' for why we do this
-            atom_overrides['__getattr__'] = atom_overrides['__getattr__nondesc']
-
-        del test2
-
-    except AttributeError:
-        # function invocation succeeded, but blew up due to our test object
-        # missing expected attributes.  This is fine- it was invocable at
-        # least.  Means this python version doesn't support descriptor for
-        # __getattr__
-        pass
-    atom_overrides.setdefault('__getattr__', atom_overrides['__getattr__desc'])
-    del atom_overrides['__getattr__desc']
-    del atom_overrides['__getattr__nondesc']
-    del test
-
+    atom_overrides = catom_overrides
 except ImportError:
     atom_overrides = native_atom_overrides
 

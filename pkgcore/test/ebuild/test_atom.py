@@ -548,5 +548,5 @@ class Test_cpy_atom(Test_native_atom):
     if atom.atom_overrides is atom.native_atom_overrides:
         skip = "extension isn't available"
 
-#test_cpy_used = mk_cpy_loadable_testcase('libebuild.atom',
-#    "pkgcore.ebuild.atom", "atom_overrides.__init__", "catom_init")
+test_cpy_used = mk_cpy_loadable_testcase('pkgcore.ebuild._atom',
+    "pkgcore.ebuild.atom", "catom_init", "catom_init")

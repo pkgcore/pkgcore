@@ -169,10 +169,6 @@ extensions = []
 if not pkgdist.is_py3k:
     extensions.extend([
         pkgdist.OptionalExtension(
-            'pkgcore.ebuild._atom', ['src/atom.c']),
-        pkgdist.OptionalExtension(
-            'pkgcore.ebuild._cpv', ['src/cpv.c']),
-        pkgdist.OptionalExtension(
             'pkgcore.ebuild._depset', ['src/depset.c']),
         pkgdist.OptionalExtension(
             'pkgcore.ebuild._filter_env', [
@@ -182,6 +178,17 @@ if not pkgdist.is_py3k:
         pkgdist.OptionalExtension(
             'pkgcore.ebuild._misc', ['src/misc.c']),
     ])
+
+from Cython.Build import cythonize
+libebuild_modules = [
+    pkgdist.OptionalExtension("pkgcore.ebuild._cpv",
+             ["src/_cpv.pyx", "src/cpv.c", "src/validate.c", "src/version.c", "src/error.c"]),
+    pkgdist.OptionalExtension("pkgcore.ebuild._atom",
+             ["src/_atom.pyx", "src/atom.c", "src/validate.c", "src/version.c", "src/error.c"]),
+    pkgdist.OptionalExtension("pkgcore.ebuild._version",
+             ["src/_version.pyx", "src/version.c", "src/validate.c", "src/error.c"]),
+]
+extensions.extend(cythonize(libebuild_modules))
 
 cmdclass = {
     'sdist': sdist,

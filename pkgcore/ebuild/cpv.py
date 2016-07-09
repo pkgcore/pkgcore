@@ -308,8 +308,8 @@ def native_ver_cmp(ver1, rev1, ver2, rev2):
 
 
 try:
-    from libebuild.cpv import cpv as cpy_CPV
-    from libebuild.version import version_cmp_ext as cpy_ver_cmp
+    from pkgcore.ebuild._cpv import cpv as cpy_CPV
+    from pkgcore.ebuild._version import version_cmp_ext as cpy_ver_cmp
     ver_cmp = cpy_ver_cmp
     cpy_builtin = True
 except ImportError:

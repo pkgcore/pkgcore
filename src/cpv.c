@@ -1,1059 +1,277 @@
-/*
- * Copyright: 2006-2011 Brian Harring <ferringb@gmail.com>
- * License: GPL2/BSD
- *
- * C version of cpv class for speed.
- */
+#include "elib.h"
+#define cpv_error(cpv_ptr, code) \
+    do { \
+        set_ebuild_errno(code); \
+        cpv_free(cpv_ptr); \
+        return NULL; \
+    } while(0)
 
-/* This does not really do anything since we do not use the "#"
- * specifier in a PyArg_Parse or similar call, but hey, not using it
- * means we are Py_ssize_t-clean too!
- */
-
-#define PY_SSIZE_T_CLEAN
-
-#include <snakeoil/common.h>
-#include <structmember.h>
-#include <string.h>
-#include <ctype.h>
-
-// dev-util/diffball-2006.0_alpha1_alpha2
-// dev-util/diffball
-
-
-typedef enum { SUF_ALPHA=0, SUF_BETA, SUF_PRE, SUF_RC, SUF_NORM, SUF_P }
-	version_suffixes;
-const char * const version_suffixes_str[] = \
-	{"alpha", "beta", "pre", "rc", "", "p", NULL};
-
-struct suffix_ver {
-	const char *str;
-	int str_len;
-	int val;
-};
-
-static struct suffix_ver pkgcore_ebuild_suffixes[] = {
-	{"alpha", 5, 0},
-	{"beta", 4, 1},
-	{"pre", 3, 2},
-	{"rc", 2, 3},
-	// note we skipped 4.  4 is the default.
-	{"p", 1, 5},
-	{NULL, 0, 6},
-};
-
-static const Py_ssize_t pkgcore_ebuild_default_suffixes[] = {4, 0};
-#define PKGCORE_EBUILD_SUFFIX_DEFAULT_SUF 4
-#define PKGCORE_EBUILD_SUFFIX_DEFAULT_VAL 0
-
-
-/*
-  all attrs are strings, and immutable by everything by
-  the cpy... thus no GC registration.
-*/
-
-typedef struct {
-	PyObject_HEAD
-	PyObject *category;
-	PyObject *package;
-	PyObject *key;
-	PyObject *fullver;
-	PyObject *version;
-	PyObject *revision;
-	Py_ssize_t *suffixes;
-	long hash_val;
-} pkgcore_cpv;
-
-static PyObject *pkgcore_InvalidCPV_Exc = NULL;
-
-
-static int
-pkgcore_cpv_set_cpvstr(pkgcore_cpv *self, PyObject *v, void *closure)
+void cpv_print(const CPV *cpv)
 {
-	PyErr_SetString(PyExc_AttributeError, "cpvstr is immutable");
-	return -1;
+    if (!cpv) {
+        printf("NULL\n");
+        return;
+    }
+    printf("P: %s\n", cpv->P);
+    printf("PN: %s\n", cpv->PN);
+    printf("PV: %s\n", cpv->PV);
+    printf("PR: %lld\n", cpv->PR_int);
+    printf("PVR: %s\n", cpv->PVR);
+    printf("PF: %s\n", cpv->PF);
+    printf("CATEGORY: %s\n", cpv->CATEGORY);
+    printf("letter: %c\n", cpv->letter);
+    printf("suffixes: ");
+    int i;
+    for (i = 0; cpv->suffixes[i].suffix != SUF_NORM; ++i) {
+        printf("%s", version_suffixes_str[cpv->suffixes[i].suffix]);
+        printf("%lu ", cpv->suffixes[i].val);
+    }
+    printf("\n");
 }
 
-static PyObject *
-pkgcore_cpv_get_cpvstr(pkgcore_cpv *self, void *closure)
+static CPV *cpv_alloc_versioned(const char *cpv_string)
 {
-	if (!self->category || !self->package) {
-		Py_RETURN_NONE;
-	}
-	if (!self->fullver) {
-		PyObject *tmp = self->key;
-		Py_INCREF(tmp);
-		return tmp;
-	}
-	return PyString_FromFormat("%s/%s-%s",
-		PyString_AsString(self->category),
-		PyString_AsString(self->package),
-		PyString_AsString(self->fullver));
+    CPV *ret;
+    char *ptr, *tmp_ptr, *end_ptr;
+    size_t m_len, cpv_len, cpv_string_len;
+    int id, sid, sid_len;
+    ebuild_errno = E_OK;
+
+    // CPV + P + PF + PVR + (CATEGORY,PN,PV,PR)
+    cpv_len = sizeof(CPV);
+    cpv_string_len = strlen(cpv_string) + 1;
+    m_len = cpv_len + cpv_string_len * 4;
+
+    ret = malloc(m_len);
+    if (ret == NULL)
+        cpv_error(ret, E_NOMEM);
+    memset(ret, 0, m_len);
+
+    ptr = (char*)ret;
+    ret->P = ptr + cpv_len;
+    ret->PF = ret->P + cpv_string_len;
+    ret->PVR = ret->PF + cpv_string_len; 
+    ret->CATEGORY = ret->PVR + cpv_string_len;
+    strcpy(ret->CATEGORY, cpv_string);
+
+    // category
+    ptr = ret->CATEGORY;
+    end_ptr = ptr + cpv_string_len - 2;
+    if (INVALID_FIRST_CHAR(*ptr))
+        cpv_error(ret, E_INVALID_CATEGORY_FIRST_CHAR);
+    while (*++ptr != '/')
+        if (!VALID_CHAR(*ptr))
+            cpv_error(ret, E_INVALID_CATEGORY);
+
+    *ptr = '\0';
+    ret->PN = ptr + 1;
+    if (INVALID_FIRST_CHAR(*(ret->PN)))
+        cpv_error(ret, E_INVALID_PN_FIRST_CHAR);
+    strcpy(ret->PF, ret->PN);
+
+    tmp_ptr = NULL;
+    ptr = end_ptr;
+    ret->PV = end_ptr + 1;
+    ret->PR_int = 0;
+ 
+    // version
+    while (ptr > ret->PN) {
+        if (ptr[0] == '-' && isdigit(ptr[1])) {
+            end_ptr = ptr;
+            ret->PV = &ptr[1];
+            break;
+        }
+        ptr--;
+    }
+    if (!isvalid_version(ret->PV))
+        cpv_error(ret, E_INVALID_VERSION);
+    else {
+        // revision
+        if (ptr = strchr(ret->PV, '-')) {
+            ret->PR_int = atoll(&ptr[2]);
+            if (ret->PR_int) {
+                strcpy(ret->PVR, ret->PV);
+                ptr[0] = '\0';
+            } else {
+                ptr[0] = '\0';
+                strcpy(ret->PVR, ret->PV);
+            }
+            tmp_ptr = ptr - 1;
+        } else
+            strcpy(ret->PVR, ret->PV);
+        strcpy(ret->P, ret->PN);
+        *end_ptr = '\0';
+    }
+
+    ptr = ret->PN;
+    while (*++ptr)
+        if (!VALID_CHAR(*ptr))
+            cpv_error(ret, E_INVALID_PN);
+        // pkgname shouldn't end with a hyphen followed by a valid version
+        else if (ptr[0] == '-' && isdigit(ptr[1]) && isvalid_version(&ptr[1]))
+            cpv_error(ret, E_INVALID_PN_VERSIONED_SUF);
+
+    // optional version letter
+    if (ptr = strchr(ret->PV, '_')) {
+        if (isalpha(ptr[-1]))
+            ret->letter = ptr[-1];
+    } else if (tmp_ptr) {
+        if (isalpha(*tmp_ptr))
+            ret->letter = *tmp_ptr;
+    } else if ((tmp_ptr = &ret->PV[strlen(ret->PV)-1]) && (isalpha(*tmp_ptr)))
+        ret->letter = *tmp_ptr;
+
+    // suffixes
+    id = 0;
+    ret->suffixes = realloc(ret->suffixes, sizeof(suffix_ver) * (id + 1));
+    if (ret->suffixes == NULL)
+        cpv_error(ret, E_NOMEM);
+    ret->suffixes[id].suffix = SUF_NORM;
+    ret->suffixes[id].val = 0;
+
+    while (ptr && *ptr) {
+        if (!(tmp_ptr = strchr(&ptr[1], '_')))
+            tmp_ptr = ptr + strlen(ptr);
+
+        sid = getsuffix(&ptr[1]);
+        ret->suffixes[id].suffix = sid;
+        sid_len = strlen(version_suffixes_str[sid]);
+        ptr += sid_len;
+
+        char num[tmp_ptr - ptr];
+        strncpy(num, &ptr[1], tmp_ptr - ptr - 1);
+        num[tmp_ptr - ptr] = '\0';
+        ret->suffixes[id].val = atoll(num);
+
+        id++;
+        ret->suffixes = realloc(ret->suffixes, sizeof(suffix_ver) * (id + 1));
+        if (ret->suffixes == NULL)
+            cpv_error(ret, E_NOMEM);
+        ret->suffixes[id].suffix = SUF_NORM;
+        ret->suffixes[id].val = 0;
+
+        ptr = tmp_ptr;
+    }
+
+    return ret;
 }
 
-
-static PyGetSetDef pkgcore_cpv_getsetters[] = {
-snakeoil_GETSET(pkgcore_cpv, "cpvstr", cpvstr),
-	{NULL}
-};
-
-static PyMemberDef pkgcore_cpv_members[] = {
-	{"category", T_OBJECT, offsetof(pkgcore_cpv, category), READONLY},
-	{"package", T_OBJECT, offsetof(pkgcore_cpv, package), READONLY},
-	{"key", T_OBJECT, offsetof(pkgcore_cpv, key), READONLY},
-	{"fullver", T_OBJECT, offsetof(pkgcore_cpv, fullver), READONLY},
-	{"version", T_OBJECT, offsetof(pkgcore_cpv, version), READONLY},
-	{"revision", T_OBJECT, offsetof(pkgcore_cpv, revision), READONLY},
-	{NULL}
-};
-
-static char *
-pkgcore_cpv_parse_category(const char *start, int null_is_end)
+static CPV *cpv_alloc_unversioned(const char *cpv_string)
 {
-	char *p = (char *)start;
-	if(NULL == start)
-		return NULL;
-	if(!null_is_end) {
-		char *end = NULL;
-		/* first char must be alnum, after that it's opened up. */
-		while('\0' != *p) {
-			if(!isalnum(*p))
-				return NULL;
-			p++;
-			while(isalnum(*p) || '+' == *p || '-' == *p || '.' == *p || '_' == *p)
-				p++;
-			if('/' == *p) {
-				end = p;
-				p++;
-				if('/' == *p)
-					return NULL;
-			} else {
-				break;
-			}
-		}
-		if(end) {
-			p = end;
-		} else {
-			// no '/', must be '\0'
-			if('\0' != *p)
-				return NULL;
-	   }
-	} else {
-		for (;;) {
-			if(!isalnum(*p))
-				return NULL;
-			p++;
-			while('\0' != *p && (isalnum(*p) || '+' == *p || '-' == *p \
-			      || '.' == *p || '_' == *p))
-				p++;
-			if('/' == *p) {
-				p++;
-				if('/' == *p)
-					return NULL;
-			} else if('\0' == *p)
-				break;
-			else
-				return NULL;
-		}
-	}
-	if(p == start)
-	   return NULL;
-	return p;
+    CPV *ret;
+    char *ptr, *tmp_ptr;
+    size_t m_len, cpv_len, cpv_string_len;
+    ebuild_errno = E_OK;
+
+    // CPV + PF + (CATEGORY,PN)
+    cpv_len = sizeof(CPV);
+    cpv_string_len = strlen(cpv_string) + 1;
+    m_len = cpv_len + cpv_string_len * 2;
+
+    ret = malloc(m_len);
+    if (ret == NULL)
+        cpv_error(ret, E_NOMEM);
+    memset(ret, 0, m_len);
+
+    ptr = (char*)ret;
+    ret->PF = ptr + cpv_len;
+    ret->CATEGORY = ret->PF + cpv_string_len;
+    strcpy(ret->CATEGORY, cpv_string);
+
+    ptr = ret->CATEGORY;
+    // set empty version
+    ret->P = ptr + cpv_string_len - 1;
+    ret->PV = ret->P;
+    ret->PR_int = 0;
+    ret->PVR = ret->P;
+
+    // category
+    if (INVALID_FIRST_CHAR(*ptr))
+        cpv_error(ret, E_INVALID_CATEGORY);
+    while (*++ptr != '/')
+        if (!VALID_CHAR(*ptr))
+            cpv_error(ret, E_INVALID_CATEGORY);
+
+    *ptr = '\0';
+    ret->PN = ptr + 1;
+    if (INVALID_FIRST_CHAR(*(ret->PN)))
+        cpv_error(ret, E_INVALID_PN);
+    strcpy(ret->PF, ret->PN);
+
+    ptr = ret->PN;
+    while (*++ptr)
+        if (!VALID_CHAR(*ptr))
+            cpv_error(ret, E_INVALID_PN);
+        // pkgname shouldn't end with a hyphen followed by a valid version
+        else if (ptr[0] == '-' && isdigit(ptr[1]) && isvalid_version(&ptr[1]))
+            cpv_error(ret, E_INVALID_PN_VERSIONED_SUF);
+
+    ret->suffixes = malloc(sizeof(suffix_ver));
+    if (ret->suffixes == NULL)
+        cpv_error(ret, E_NOMEM);
+    ret->suffixes[0].suffix = SUF_NORM;
+    ret->suffixes[0].val = 0;
+
+    return ret;
 }
 
-static int
-pkgcore_cpv_parse_version(pkgcore_cpv *self, char *ver_start,
-	char *ver_end, int do_assign)
+CPV *cpv_alloc(const char *cpv_string, int versioned)
 {
-	// version parsing.
-	// "(?:-(?P<fullver>(?P<version>(?:\\d+)(?:\\.\\d+)*[a-z]?(?:_(p(?:re)?|beta|alpha|rc)\\d*)*)" +
-	// "(?:-r(?P<revision>\\d+))?))?$")
-	char *p = ver_start;
-
-	// suffixes _have_ to have versions; do it now to avoid
-	if('_' == *p)
-		return 1;
-
-	// (\d+)(\.\d+)*[a-z]?
-	for(;;) {
-		while(isdigit(*p))
-			p++;
-		// safe due to our checks from above, but just in case...
-		if(ver_start == p || '.' == p[-1]) {
-			return 1;
-		}
-		if(isalpha(*p)) {
-			p++;
-			if('\0' != *p && '_' != *p && '-' != *p)
-				return 1;
-			break;
-		} else if('.' == *p) {
-			p++;
-		} else if('\0' == *p || '_' == *p || '-' == *p) {
-			break;
-		} else {
-			return 1;
-		}
-	}
-	if('_' == *p) {
-		// suffixes.  yay.
-		char *orig_p = (char *)p;
-		unsigned int suffix_count = 0;
-		unsigned int pos;
-		struct suffix_ver *sv;
-		do {
-			suffix_count++;
-			p = strchr(p + 1, '_');
-		} while(NULL != p);
-
-		// trailing is 0 0
-
-		p = orig_p;
-		if (do_assign) {
-			self->suffixes = PyObject_Malloc(sizeof(Py_ssize_t) * (suffix_count + 1) * 2);
-			if(NULL == self->suffixes) {
-				// wanker.
-				PyErr_NoMemory();
-				return 2;
-			}
-		}
-		suffix_count *= 2;
-		for(pos = 0; pos < suffix_count; pos += 2) {
-			p += 1; // skip the leading _
-			if('\0' == *p)
-				return 1;
-			for(sv = pkgcore_ebuild_suffixes; NULL != sv->str; sv++) {
-				if(0 == strncmp(p, sv->str, sv->str_len)) {
-					if (do_assign) {
-						self->suffixes[pos] = sv->val;
-					}
-					p += sv->str_len;
-					Py_ssize_t suffix_val = 0;
-					while(isdigit(*p)) {
-						suffix_val = (suffix_val * 10) + *p - '0';
-						p++;
-					}
-					if('\0' != *p && '_' != *p && '-'  != *p)
-						return 1;
-					if (do_assign) {
-						self->suffixes[pos + 1] = suffix_val;
-					}
-					break;
-				}
-			}
-			if(NULL == sv->str) {
-				// that means it didn't find the suffix.
-				return 1;
-			}
-		}
-		if (do_assign) {
-			self->suffixes[pos] = PKGCORE_EBUILD_SUFFIX_DEFAULT_SUF;
-			self->suffixes[pos + 1] = PKGCORE_EBUILD_SUFFIX_DEFAULT_VAL;
-		}
-	} else {
-		if (do_assign) {
-			self->suffixes = (Py_ssize_t *)pkgcore_ebuild_default_suffixes;
-		}
-	}
-	if(p != ver_end)
-		return 1;
-	return 0;
+    if (versioned)
+        return cpv_alloc_versioned(cpv_string);
+    else
+        return cpv_alloc_unversioned(cpv_string);
 }
 
-static int
-pkgcore_cpv_valid_package(pkgcore_cpv *self, char *start, char *end)
+void cpv_free(CPV *cpv)
 {
-	char *tok_start, *p;
-	if(!end) {
-		end = start + strlen(start);
-	}
-	tok_start = p = start;
-	if(end == p)
-		return 1;
-	if ('-' == *p || '+' == *p) {
-		return 1;
-	}
-	while(end != p) {
-		while((isalnum(*p) || '_' == *p || '+' == *p) && end != p)
-			p++;
-		if(end == p) {
-			if (tok_start == start)
-				return 0;
-			break;
-		} else if('-' != *p) {
-			return 1;
-		} else if (tok_start == p) {
-			// cannot have aa--f, nor -a
-			return 1;
-		}
-		p++;
-		tok_start = p;
-	}
-	// revalidate the last token to ensure it's not a version component.
-	int ret = pkgcore_cpv_parse_version(self, tok_start, end, 0);
-	// if it's a valid version, that's a failure; if it's a memory error,
-	// return that; else it passes.
-	if (0 == ret)
-		return 1;
-	else if (1 != ret)
-		return ret;
-	return 0;
+    if (!cpv) return;
+    free(cpv->suffixes);
+    free(cpv);
 }
 
-static int
-pkgcore_cpv_valid_revision(pkgcore_cpv *self, char *rev_start, char *rev_end)
+cmp_code cpv_cmp(const CPV *c1, const CPV *c2)
 {
-	char *pos = rev_start;
-	PyObject *revision = NULL, *tmp = NULL;
+    if (!c1 || !c2)
+        return ERROR;
 
-	if(rev_start == rev_end || rev_start +1 == rev_end)
-		return 1;
-
-	if('r' != *pos) {
-		// not a revision; revision is store as NULL
-		return 1;
-	}
-	pos++;
-	if(19 >= rev_end - pos) {
-		unsigned long long revision_val = 0;
-		while(pos != rev_end) {
-			if(!isdigit(*pos)) {
-				// not a digit? invalid revision then.
-				return 1;
-			}
-			revision_val = (revision_val * 10) + *pos - '0';
-			pos++;
-		}
-		if(revision_val) {
-			if(!(revision = PyLong_FromLongLong(revision_val))) {
-				// XXX... this gets swallowed unfortunately due to the code flow.
-				return 2;
-			}
-		}
-	} else {
-		// verify it's all digits, then hand it over to the slower
-		// pythong long machinery
-		char *char_p = pos, non_zero = 0;
-		while(char_p != rev_end) {
-			if(!isdigit(*char_p))
-				return 1;
-			else if ('0' != *char_p)
-				non_zero = 1;
-			char_p++;
-		}
-		// ok... all digits.
-		if(non_zero) {
-			// and an actual value instead of some dev being an ass
-			if(!(revision = PyLong_FromString(pos, NULL, 10))) {
-				return 2;
-			}
-		}
-	}
-	if(!revision) {
-		Py_CLEAR(self->revision);
-	} else {
-		tmp = self->revision;
-		self->revision = revision;
-		Py_XDECREF(tmp);
-	}
-	return 0;
+    int ret;
+    if (ret = strcmp(c1->CATEGORY, c2->CATEGORY))
+        return ret > 0 ? NEWER : OLDER;
+    if (ret = strcmp(c1->PN, c2->PN))
+        return ret > 0 ? NEWER : OLDER;
+    if (!*c1->PVR) {
+        if (!*c2->PVR)
+            return EQUAL;
+        else
+            return OLDER;
+    } else if (!*c2->PVR)
+        return NEWER;
+    return version_cmp(c1->PVR, c2->PVR);
 }
 
-static int
-pkgcore_cpv_parse_from_components(pkgcore_cpv *self, PyObject *category,
-	PyObject *package, PyObject *fullver, int versioned)
+cmp_code cpv_cmp_str(const char *s1, const char *s2)
 {
-	PyObject *tmp = NULL, *tmp2 = NULL;
-	int ret = 0;
-	if(!pkgcore_cpv_parse_category(PyString_AsString(category), 1)) {
-		return 1;
-	}
-	tmp = self->category;
-	Py_INCREF(category);
-	self->category = category;
-	Py_XDECREF(tmp);
-	if(0 != (ret = pkgcore_cpv_valid_package(self, PyString_AsString(package), NULL))) {
-		return ret;
-	}
-	tmp = self->package;
-	Py_INCREF(package);
-	self->package = package;
-	Py_XDECREF(tmp);
-	if(versioned) {
-		char *version_start = PyString_AsString(fullver);
-		char *rev_start = version_start;
-		char *version_end = NULL;
+    cmp_code ret;
+    char *ptr;
+    CPV *c1, *c2;
 
-		while('\0' != *rev_start && '-' != *rev_start)
-			rev_start++;
-		version_end = rev_start + strlen(rev_start);
+    if (!(c1 = cpv_alloc(s1, 1)))
+        c1 = cpv_alloc(s1, 0);
+    if (!c1)
+        return ERROR;
 
-		if(version_end == rev_start) {
-			// no revision...
-			Py_CLEAR(self->revision);
-		} else {
-			if(0 != (ret = pkgcore_cpv_valid_revision(self, rev_start + 1, version_end))) {
-				return ret;
-			}
-		}
+    if (!(c2 = cpv_alloc(s2, 1)))
+        c2 = cpv_alloc(s2, 0);
+    if (!c2)
+        goto cpv_error;
 
-		if(0 != (ret = pkgcore_cpv_parse_version(self, version_start, rev_start, 1))) {
-			return ret; // either memory, or parse error.
-		}
+    ret = cpv_cmp(c1, c2);
 
-		if(rev_start == version_end) {
-			// no revision;
-			Py_INCREF(fullver);
-			tmp = self->version;
-			self->version = fullver;
-			Py_XDECREF(tmp);
-		} else {
-			if(!(tmp = PyString_FromStringAndSize(version_start,
-				rev_start - version_start))) {
-				return 2;
-			}
-			tmp2 = self->version;
-			self->version = tmp;
-			Py_XDECREF(tmp2);
-		}
-		// bit of a hack. regardless of revision processing above, rely
-		// on the stored revision value for deciding which to ref-
-		// this is done to handle the case of -r0 being stripped
-		tmp = self->revision ? fullver : self->version;
-		Py_INCREF(tmp);
-		tmp2 = self->fullver;
-		self->fullver = tmp;
-		Py_XDECREF(tmp2);
-
-	} else {
-		// unversioned
-		Py_CLEAR(self->fullver);
-		Py_CLEAR(self->version);
-		Py_CLEAR(self->revision);
-	}
-
-	if(!(tmp = PyString_FromFormat("%s/%s", PyString_AsString(self->category),
-		PyString_AsString(self->package)))) {
-		return 2;
-	}
-	tmp2 = self->key;
-	self->key = tmp;
-	Py_XDECREF(tmp2);
-
-	if(!versioned) {
-		// we know that key is all that's needed... so hash it now.
-		self->hash_val = PyObject_Hash(self->key);
-		if(self->hash_val == -1) {
-			return 2;
-		}
-	}
-
-	return 0;
+    cpv_free(c2);
+cpv_error:
+    cpv_free(c1);
+    return ret;
 }
 
-static int
-pkgcore_cpv_parse_from_cpvstr(pkgcore_cpv *self, PyObject *cpvstr,
-	int versioned)
-{
-	PyObject *tmp = NULL, *tmp2 = NULL;;
-	char *pkg_start = NULL;
-	char *cpv_pos = NULL;
-	int ret = 0;
-	char *raw_cpvstr = PyString_AsString(cpvstr);
-	char *cpv_end = raw_cpvstr + strlen(raw_cpvstr);
-
-	pkg_start = pkgcore_cpv_parse_category(raw_cpvstr, 0);
-	if(!pkg_start || '/' != *pkg_start) {
-		return 1;
-	}
-	if(!(tmp = PyString_FromStringAndSize(raw_cpvstr, pkg_start - raw_cpvstr))) {
-		return 2;
-	}
-
-	PyString_InternInPlace(&tmp);
-	tmp2 = self->category;
-	self->category = tmp;
-	Py_CLEAR(tmp2);
-
-	pkg_start++;
-
-	if(versioned) {
-
-		char *version_end = cpv_end;
-		// try stripping off the revision.
-
-		cpv_pos = version_end;
-		while(cpv_pos > pkg_start && '-' != *cpv_pos)
-			cpv_pos--;
-
-		if(2 == (ret = pkgcore_cpv_valid_revision(self, cpv_pos + 1, cpv_end))) {
-			// mem error...
-			return ret;
-		} else if (1 == ret) {
-			// either there is no rev, or it's a bad rev.
-			// check if it's a valid version.
-			if(0 != (ret = pkgcore_cpv_parse_version(self, cpv_pos + 1, cpv_end, 1))) {
-				return ret; // either memory, or parse error.
-			}
-			// ok... no rev.
-			Py_CLEAR(self->revision);
-		} else {
-			// revision exists, grab the next token for version
-			version_end = cpv_pos;
-			cpv_pos--;
-			while(cpv_pos > pkg_start && '-' != *cpv_pos) {
-				cpv_pos--;
-			}
-			if(cpv_pos == raw_cpvstr) {
-				return 1;
-			}
-			if(0 != (ret = pkgcore_cpv_parse_version(self, cpv_pos + 1,
-				version_end, 1))) {
-				// invalid version, or mem error.
-				return ret;
-			}
-		}
-
-		if(!(tmp = PyString_FromStringAndSize(cpv_pos + 1,
-			version_end - (cpv_pos + 1)))) {
-			return 2;
-		}
-
-		tmp2 = self->version;
-		self->version = tmp;
-		Py_CLEAR(tmp2);
-
-		if(version_end == cpv_end || ! self->revision) {
-			tmp = self->version;
-			Py_INCREF(tmp);
-		} else {
-			if(!(tmp = PyString_FromString(cpv_pos +1))) {
-				return 2;
-			}
-		}
-
-		tmp2 = self->fullver;
-		self->fullver = tmp;
-		Py_XDECREF(tmp2);
-		// version/rev/fullver handled.
-	} else {
-		// if not versioned, entire string must be a valid package name
-		cpv_pos = cpv_end;
-	}
-	// validate package name finally.
-	if(0 != (ret = pkgcore_cpv_valid_package(self, pkg_start, cpv_pos))) {
-		return ret;
-	}
-	if(!(tmp = PyString_FromStringAndSize(pkg_start, cpv_pos - pkg_start))) {
-		return 2;
-	}
-	PyString_InternInPlace(&tmp);
-	tmp2 = self->package;
-	self->package = tmp;
-	Py_CLEAR(tmp2);
-
-	if(versioned) {
-		if(!(tmp = PyString_FromFormat("%s/%s", PyString_AsString(self->category),
-			PyString_AsString(self->package)))) {
-			return 2;
-		}
-	} else {
-		if(-1 == (self->hash_val = PyObject_Hash(cpvstr)))
-			return 2;
-		tmp = cpvstr;
-		Py_INCREF(tmp);
-	}
-
-	PyString_InternInPlace(&tmp);
-	tmp2 = self->key;
-	self->key = tmp;
-	Py_XDECREF(tmp2);
-
-	return 0;
-}
-
-
-static int
-pkgcore_cpv_init(pkgcore_cpv *self, PyObject *args, PyObject *kwds)
-{
-	int result = 0;
-	int versioned = 1;
-	PyObject *category = NULL,  *package = NULL, *fullver = NULL, *cpvstr = NULL;
-
-	if(!PyArg_UnpackTuple(args, "CPV", 1, 3, &category, &package, &fullver))
-		return -1;
-
-	if(!kwds) {
-		versioned = -1;
-	} else {
-		Py_ssize_t len = PyObject_Length(kwds);
-		if(len > 1) {
-			PyErr_SetString(PyExc_TypeError,
-				"cpv accepts only one keyword argument- versioned");
-			goto cleanup;
-		} else if (len) {
-			// borrowed ref.
-			PyObject *versioned_obj = PyDict_GetItemString(kwds, "versioned");
-			if(!versioned_obj) {
-				PyErr_SetString(PyExc_TypeError,
-					"cpv only accepts a keyword of 'versioned'");
-				goto cleanup;
-			}
-			if(-1 == (versioned = PyObject_IsTrue(versioned_obj))) {
-				goto cleanup;
-			}
-		} else {
-			if(!package) {
-				PyErr_SetString(PyExc_TypeError,
-					"versioned keyword is required for single arg invocation");
-				goto cleanup;
-			}
-		}
-	}
-
-	self->hash_val = -1;
-
-	if(package) {
-		if(!fullver || !PyString_CheckExact(category) ||
-			!PyString_CheckExact(package) || !PyString_CheckExact(fullver)) {
-			PyObject *err_msg = PyString_FromString(
-				"cpv accepts either 1 arg (cpvstr), or 3 (category, package, "
-				"version); all must be strings: got %r");
-			if(err_msg) {
-				PyObject *new_args = PyTuple_Pack(1, args);
-				if(new_args) {
-					PyObject *s = PyString_Format(err_msg, new_args);
-					if(s) {
-						PyErr_SetString(PyExc_TypeError, PyString_AsString(s));
-						Py_CLEAR(s);
-					}
-					Py_CLEAR(new_args);
-				}
-				Py_CLEAR(err_msg);
-			}
-			goto cleanup;
-		}
-		result = pkgcore_cpv_parse_from_components(self, category, package,
-			fullver, versioned);
-	} else {
-		if (!PyString_CheckExact(category)) {
-			PyObject *err_msg = PyString_FromString(
-				"cpv accepts either 1 arg (cpvstr), or 3 (category, package, "
-				"version); all must be strings: got extra arg %r");
-			if(err_msg) {
-				PyObject *new_args = PyTuple_Pack(1, args);
-				if(new_args) {
-					PyObject *s = PyString_Format(err_msg, new_args);
-					if(s) {
-						PyErr_SetString(PyExc_TypeError, PyString_AsString(s));
-						Py_CLEAR(s);
-					}
-					Py_CLEAR(new_args);
-				}
-				Py_CLEAR(err_msg);
-			}
-			goto cleanup;
-		}
-		result = pkgcore_cpv_parse_from_cpvstr(self, category, versioned);
-	}
-	if(result == 2)
-		goto cleanup;
-	else if (result == 1)
-		goto parse_error;
-
-	return 0;
-
-parse_error:
-	// yay.  well, set an exception.
-	// if an error from trying to call, let it propagate.  meanwhile, we
-	// cleanup our own
-	if(package) {
-		if(PySequence_Length(fullver) != 0) {
-			cpvstr = PyString_FromFormat("%s/%s-%s", PyString_AsString(category),
-				PyString_AsString(package), PyString_AsString(fullver));
-		} else {
-			cpvstr = PyString_FromFormat("%s/%s", PyString_AsString(category),
-				PyString_AsString(package));
-		}
-		if(!cpvstr)
-			goto cleanup;
-	} else {
-		cpvstr = category;
-	}
-	PyObject *tmp = PyObject_CallFunctionObjArgs(pkgcore_InvalidCPV_Exc, cpvstr, NULL);
-	if(package) {
-		Py_DECREF(cpvstr);
-	}
-	if(NULL != tmp) {
-		PyErr_SetObject(pkgcore_InvalidCPV_Exc, tmp);
-		Py_DECREF(tmp);
-	}
-
-cleanup:
-	Py_CLEAR(self->category);
-	Py_CLEAR(self->package);
-	Py_CLEAR(self->key);
-	Py_CLEAR(self->version);
-	Py_CLEAR(self->revision);
-	Py_CLEAR(self->fullver);
-
-	if(NULL != self->suffixes) {
-		// if we're not using the communal val...
-		if(PKGCORE_EBUILD_SUFFIX_DEFAULT_SUF != self->suffixes[0]) {
-			PyObject_Free(self->suffixes);
-		}
-		self->suffixes = NULL;
-	}
-	return -1;
-}
-
-
-static void
-pkgcore_cpv_dealloc(pkgcore_cpv *self)
-{
-	Py_CLEAR(self->category);
-	Py_CLEAR(self->package);
-	Py_CLEAR(self->key);
-	Py_CLEAR(self->version);
-	Py_CLEAR(self->revision);
-	Py_CLEAR(self->fullver);
-
-	if(NULL != self->suffixes) {
-		if(PKGCORE_EBUILD_SUFFIX_DEFAULT_SUF != self->suffixes[0]) {
-			PyObject_Free(self->suffixes);
-		}
-		self->suffixes = NULL;
-	}
-	self->ob_type->tp_free((PyObject *)self);
-}
-
-
-static int
-pkgcore_nullsafe_compare(PyObject *this, PyObject *other)
-{
-	if ((this == NULL || this == Py_None) &&
-		(other == NULL || other == Py_None)) {
-		return 0;
-	}
-	if (this == NULL || this == Py_None) {
-		return -1;
-	}
-	if (other == NULL || other == Py_None) {
-		return +1;
-	}
-	return PyObject_Compare(this, other);
-}
-
-
-static int
-pkgcore_cpv_compare(pkgcore_cpv *self, pkgcore_cpv *other)
-{
-	int c;
-	c = pkgcore_nullsafe_compare(self->category, other->category);
-	if(PyErr_Occurred())
-		return -1;
-	if(c != 0)
-		return c;
-	c = pkgcore_nullsafe_compare(self->package, other->package);
-	if(PyErr_Occurred())
-		return -1;
-	if(c != 0)
-		return c;
-	if(self->version == NULL)
-		return other->version == NULL ? 0 : -1;
-	if(other->version == NULL)
-		return 1;
-
-	char *s1, *o1;
-	s1 = PyString_AsString(self->version);
-	if(!s1)
-		return -1;
-	o1 = PyString_AsString(other->version);
-	if (!o1)
-		return -1;
-
-	while('_' != *s1 && '\0' != *s1 && '_' != *o1 && '\0' != *o1) {
-		if('0' == *s1 || '0' == *o1) {
-			// float comparison rules.
-			do {
-				if(*s1 > *o1)
-					return 1;
-				else if (*s1 < *o1)
-					return -1;
-				s1++; o1++;
-			} while (isdigit(*s1) && isdigit(*o1));
-
-			while(isdigit(*s1)) {
-				if('0' != *s1)
-					return +1;
-				s1++;
-			}
-			while(isdigit(*o1)) {
-				if('0' != *o1)
-					return -1;
-				o1++;
-			}
-		} else {
-			// int comparison rules.
-			char *s_start = s1, *o_start = o1;
-
-			while(isdigit(*s1))
-				s1++;
-			while(isdigit(*o1))
-				o1++;
-
-			if((s1 - s_start) < (o1 - o_start))
-				return -1;
-			else if((s1 - s_start) > (o1 - o_start))
-				return 1;
-
-			char *s_end = s1;
-
-			for(s1 = s_start, o1 = o_start; s1 != s_end; s1++, o1++) {
-				if(*s1 < *o1)
-					return -1;
-				else if (*s1 > *o1)
-					return 1;
-			}
-		}
-		if(isalpha(*s1)) {
-			if(isalpha(*o1)) {
-				if(*s1 < *o1) {
-					return -1;
-				} else if(*s1 > *o1) {
-					return 1;
-				}
-				o1++;
-			} else if('.'  == *o1) {
-				return -1;
-			} else {
-				return 1;
-			}
-			s1++;
-		} else if(isalpha(*o1)) {
-			if('.' == *s1) {
-				return +1;
-			}
-			return -1;
-		}
-
-		if('.' == *s1)
-			s1++;
-		if('.' == *o1)
-			o1++;
-		// hokay.  no resolution there.
-	}
-	// ok.  one of the two just ran out of vers; test on suffixes
-	if(isdigit(*s1)) {
-		return +1;
-	} else if(isdigit(*o1)) {
-		return -1;
-	}
-	// bugger.  exact same version string up to suffix pt.
-	int x;
-	for(x=0;;) {
-		// cmp suffix type.
-		if(self->suffixes[x] < other->suffixes[x])
-			return -1;
-		else if(self->suffixes[x] > other->suffixes[x])
-			return +1;
-		else if(PKGCORE_EBUILD_SUFFIX_DEFAULT_SUF == self->suffixes[x]) {
-			// terminator.  one remaining element, but little point in testing
-			// it.  to have hit here requires them to be the same also (for
-			// those wondering why we're not testing)
-			break;
-		}
-		x++;
-		// cmp suffix val
-		if(self->suffixes[x] < other->suffixes[x])
-			return -1;
-		else if(self->suffixes[x] > other->suffixes[x])
-			return +1;
-		x++;
-	}
-	// all that remains is revision.
-	return pkgcore_nullsafe_compare(self->revision, other->revision);
-}
-
-
-static long
-pkgcore_cpv_hash(pkgcore_cpv *self)
-{
-	if (self->hash_val == -1) {
-		PyObject *s = PyObject_GetAttrString((PyObject *)self, "cpvstr");
-		if(!s)
-			return -1;
-		self->hash_val = PyObject_Hash(s);
-		Py_DECREF(s);
-	}
-	return self->hash_val;
-}
-
-
-static PyObject *
-pkgcore_cpv_str(pkgcore_cpv *self)
-{
-	PyObject *s = PyObject_GetAttrString((PyObject *)self, "cpvstr");
-	if(!s)
-		return NULL;
-	if(s != Py_None) {
-		return s;
-	}
-	PyObject *s2 = PyObject_Str(s);
-	Py_DECREF(s);
-	return s2;
-}
-
-
-static PyObject *
-pkgcore_cpv_repr(pkgcore_cpv *self)
-{
-	PyObject *s, *cpv;
-	cpv = PyObject_GetAttrString((PyObject *)self, "cpvstr");
-	if(!cpv)
-		return NULL;
-	s = PyObject_Repr(cpv);
-	Py_DECREF(cpv);
-	if(!s)
-		return NULL;
-	char *str = PyString_AsString(s);
-	if(!s) {
-		Py_DECREF(s);
-		return NULL;
-	}
-	PyObject *s2 = PyString_FromFormat("CPV(%s)", str);
-	Py_DECREF(s);
-	return s2;
-}
-
-static PyTypeObject pkgcore_cpvType = {
-	PyObject_HEAD_INIT(NULL)
-	0,								/* ob_size */
-	"CPV",
-	sizeof(pkgcore_cpv),			  /* tp_basicsize */
-	0,								/* tp_itemsize */
-	(destructor)pkgcore_cpv_dealloc,  /* tp_dealloc */
-	0,								/* tp_print */
-	0,								/* tp_getattr */
-	0,								/* tp_setattr */
-	(cmpfunc)pkgcore_cpv_compare,	 /* tp_compare */
-	(reprfunc)pkgcore_cpv_repr,	   /* tp_repr */
-	0,								/* tp_as_number */
-	0,								/* tp_as_sequence */
-	0,								/* tp_as_mapping */
-	(hashfunc)pkgcore_cpv_hash,	   /* tp_hash */
-	0,								/* tp_call */
-	(reprfunc)pkgcore_cpv_str,		/* tp_str */
-	0,								/* tp_getattro */
-	0,								/* tp_setattro */
-	0,								/* tp_as_buffer */
-	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /* tp_flags */
-	0,								/* tp_doc */
-	0,								/* tp_traverse */
-	0,								/* tp_clear */
-	0,								/* tp_richcompare */
-	0,								/* tp_weaklistoffset */
-	0,								/* tp_iter */
-	0,								/* tp_iternext */
-	0,								/* tp_methods */
-	pkgcore_cpv_members,			  /* tp_members */
-	pkgcore_cpv_getsetters,		   /* tp_getset */
-	0,								/* tp_base */
-	0,								/* tp_dict */
-	0,								/* tp_descr_get */
-	0,								/* tp_descr_set */
-	0,								/* tp_dictoffset */
-	(initproc)pkgcore_cpv_init,	   /* tp_init */
-	0,								/* tp_alloc */
-	PyType_GenericNew,				/* tp_new */
-};
-
-PyDoc_STRVAR(
-	pkgcore_cpv_documentation,
-	"C reimplementation of pkgcore.ebuild.cpv.");
-
-/* Copied from stdtypes.c in guppy */
-#define VISIT(SLOT) \
-	if (SLOT) { \
-		err = visit((PyObject *)(SLOT), arg); \
-		if (err) \
-			return err; \
-	}
-
-#define ATTR(name) \
-	if ((PyObject *)v->name == r->tgt &&								\
-		(r->visit(NYHR_ATTRIBUTE, PyString_FromString(#name), r)))	  \
-		return 1;
-
-static int
-pkgcore_cpv_heapytraverse(NyHeapTraverse* traverse)
-{
-	pkgcore_cpv *cpv = (pkgcore_cpv*)traverse->obj;
-	void *arg = traverse->arg;
-	visitproc visit = traverse->visit;
-	int err;
-	VISIT(cpv->category);
-	VISIT(cpv->package);
-	VISIT(cpv->key);
-	VISIT(cpv->fullver);
-	VISIT(cpv->version);
-	VISIT(cpv->revision);
-	return 0;
-}
-
-static int
-pkgcore_cpv_heapyrelate(NyHeapRelate *r)
-{
-	pkgcore_cpv *v = (pkgcore_cpv*)r->src;
-	ATTR(category);
-	ATTR(package);
-	ATTR(key);
-	ATTR(fullver);
-	ATTR(version);
-	ATTR(revision);
-	return 0;
-}
-
-static NyHeapDef pkgcore_cpv_heapdefs[] = {
-	{
-		0,							/* flags */
-		&pkgcore_cpvType,			 /* type */
-		0,							/* size */
-		pkgcore_cpv_heapytraverse,	/* traverse */
-		pkgcore_cpv_heapyrelate	   /* relate */
-	},
-	{0}
-};
-
-
-PyMODINIT_FUNC
-init_cpv(void)
-{
-	PyObject *m;
-
-	m = Py_InitModule3("_cpv", NULL, pkgcore_cpv_documentation);
-	if (!m)
-		return;
-
-	snakeoil_LOAD_SINGLE_ATTR(pkgcore_InvalidCPV_Exc, "pkgcore.ebuild.errors",
-		"InvalidCPV");
-
-	pkgcore_cpvType.ob_type = &PyType_Type;
-
-	if (PyType_Ready(&pkgcore_cpvType) < 0)
-		return;
-
-	Py_INCREF(&pkgcore_cpvType);
-	if (PyModule_AddObject(m, "CPV", (PyObject *)&pkgcore_cpvType) == -1)
-		return;
-
-	PyObject *cobject = PyCObject_FromVoidPtrAndDesc(
-		&pkgcore_cpv_heapdefs, "NyHeapDef[] v1.0", 0);
-	if (!cobject)
-		return;
-
-	if (PyModule_AddObject(m, "_NyHeapDefs_", cobject) == -1)
-		return;
-
-	/* Success! */
-}
+#undef cpv_error

@@ -321,5 +321,5 @@ class CPY_Cpv_OptionalArgsTest(CPY_CpvTest):
 
     testing_secondary_args = False
 
-test_cpy_used = mk_cpy_loadable_testcase('libebuild.cpv',
-    "pkgcore.ebuild.cpv", "CPV_base", "cpv")
+test_cpy_used = mk_cpy_loadable_testcase('pkgcore.ebuild._cpv',
+    "pkgcore.ebuild.cpv", "cpy_CPV", "cpv")

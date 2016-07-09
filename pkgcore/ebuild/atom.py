@@ -310,7 +310,7 @@ native_atom_overrides = {
 }
 
 try:
-    from libebuild.atom import catom_init
+    from pkgcore.ebuild._atom import catom_init
 
     def cython_init(self, atom, negate_vers=False, eapi=6):
         catom_init(self, atom, negate_vers, eapi)

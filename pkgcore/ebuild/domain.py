@@ -74,7 +74,7 @@ def package_env_splitter(basedir, val):
     val = val.split()
     if len(val) == 1:
         raise ValueError("package.env files require atoms followed by env file names, got %s" % val)
-    return [(parse_match(val[0]), local_source(pjoin(basedir, env_file))) for env_file in val[1:]]
+    return parse_match(val[0]), tuple(local_source(pjoin(basedir, env_file)) for env_file in val[1:])
 
 
 def apply_mask_filter(globs, atoms, pkg, mode):

@@ -90,13 +90,22 @@ class base(restriction.base):
         kwds.setdefault("negate", self.negate)
         return self.__class__(*restrictions, **kwds)
 
+    def remove_restriction(self, restriction_types=(), *restrictions):
+        """return a new instance of self.__class__, dropping supplied restrictions or types"""
+        new_restrictions = tuple(
+            r for r in self.restrictions if
+            not isinstance(r, tuple(restriction_types))
+            and r not in restrictions)
+        if new_restrictions != self.restrictions:
+            return self.change_restrictions(*new_restrictions)
+        return self
+
     def add_restriction(self, *new_restrictions):
         """add more restriction(s)
 
         :param new_restrictions: if node_type is enforced,
             restrictions must be of that type.
         """
-
         if not new_restrictions:
             raise TypeError("need at least one restriction handed in")
         if self.type is not None:

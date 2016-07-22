@@ -465,6 +465,9 @@ def parse_target(restriction, repo, livefs_repos, return_none=False):
         raise NoMatches(restriction)
     elif len(key_matches) > 1:
         if any(isinstance(r, restricts.PackageDep) for r in iflatten_instance([restriction])):
+            if len(restriction) > 1:
+                # drop repo specific restrictions, ebuild repos will not match installed (vdb) repo
+                restriction = restriction.remove_restriction(restriction_types=(restricts.RepositoryDep,))
             # check for installed package matches
             installed_matches = {x.key for x in livefs_repos.itermatch(restriction)}
             if len(installed_matches) > 1:

@@ -483,7 +483,9 @@ class tree(object):
         return [(), ()]
 
     def __str__(self):
-        return self.aliases[0]
+        if self.aliases:
+            return self.aliases[0]
+        return repr(self)
 
     @property
     def aliases(self):

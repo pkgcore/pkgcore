@@ -11,6 +11,7 @@ gentoo ebuild atom, should be generalized into an agnostic base
 __all__ = ("atom", "transitive_use_atom")
 
 import string
+from itertools import product
 
 from snakeoil.compatibility import is_py3k, cmp, raise_from
 from snakeoil.demandload import demandload
@@ -696,67 +697,38 @@ class transitive_use_atom(atom):
 
     is_simple = False
 
+    @staticmethod
+    def all_conditional_use_combo(variable_use):
+        """Generates all possible configurations of 4 style use dependencies,
+        :param variable_use: iterable of conditional USE dependencies
+        """
+        permutations = []
+        for x in variable_use:
+            flag = x.lstrip("!").rstrip("?=")
+            if x[0] == "!":
+                simple_state = "-" + flag
+            else:
+                simple_state = flag
+            if x[-1] == "?":
+                inverted_state = ""
+            else:
+                inverted_state = flag if simple_state[0] == "-" else "-" + flag
+            permutations.append((simple_state, inverted_state))
+        for combo in product(*permutations):
+            yield filter(None, combo)
+
+    def __iter__(self):
+        bare_atom = self._stripped_use()
+        static_use, variable_use = [], []
+        for x in self.use:
+            variable_use.append(x) if x[-1] in "?=" else static_use.append(x)
+        for var_use_configured in self.all_conditional_use_combo(variable_use):
+            s = ','.join(var_use_configured + tuple(static_use))
+            if s: s = '[%s]' % s
+            yield self._nontransitive_use_atom(bare_atom + s)
+
     def _stripped_use(self):
         return str(self).split("[", 1)[0]
-
-    @staticmethod
-    def _mk_conditional(flag, payload, negate=False):
-        return Conditional('use', ContainmentMatch(flag, negate=negate), payload)
-
-    def _recurse_transitive_use_conds(self, atom_str, forced_use, varied):
-        if not varied:
-            s = ','.join(forced_use)
-            if s:
-                s = '[%s]' % s
-            return (self._nontransitive_use_atom(atom_str + s), )
-
-        flag = varied[0]
-        use = flag.lstrip('!').rstrip('?=')
-        varied = varied[1:]
-        if flag[-1] == '?':
-            # a[x?] == x? ( a[x] ) !x? ( a )
-            # a[!x?] == x? ( a ) !x? ( a[-x] )
-            if flag[0] != '!':
-                return (self._mk_conditional(use,
-                        self._recurse_transitive_use_conds(
-                            atom_str, forced_use + [use], varied)),
-                        self._mk_conditional(
-                            use, self._recurse_transitive_use_conds(
-                                atom_str, forced_use, varied), negate=True))
-            return (self._mk_conditional(
-                    use, self._recurse_transitive_use_conds(
-                        atom_str, forced_use, varied)),
-                    self._mk_conditional(
-                        use, self._recurse_transitive_use_conds(
-                            atom_str, forced_use + ['-' + use], varied), negate=True))
-
-        # a[x=] == x? ( a[x] ) !x? ( a[-x] )
-        # a[!x=] == x? ( a[-x] ) !x? ( a[x] )
-        if flag[0] != '!':
-            use_states = [[use], ['-' + use]]
-        else:
-            use_states = [['-' + use], [use]]
-
-        return (self._mk_conditional(
-                use, self._recurse_transitive_use_conds(
-                    atom_str, forced_use + use_states[0], varied)),
-                self._mk_conditional(
-                    use, self._recurse_transitive_use_conds(
-                        atom_str, forced_use + use_states[1], varied), negate=True))
-
-    def __getattr__(self, attr):
-        if attr != 'restrictions':
-            return atom.__getattr__(self, attr)
-        obj = self.convert_to_conditionals()
-        object.__setattr__(self, 'restrictions', obj)
-        return obj
-
-    def convert_to_conditionals(self):
-        static_use = [use for use in self.use if use[-1] not in '?=']
-        variable = [use for use in self.use if use[-1] in '?=']
-        return PkgAndRestriction(
-            *self._recurse_transitive_use_conds(
-                self._stripped_use(), static_use, variable))
 
     def _evaluate_depset_qa_in_place(self, flags, variable_flags, enabled, tristate):
         # note this mutates flags

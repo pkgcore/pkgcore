@@ -15,6 +15,7 @@ __all__ = ("AmbiguousQuery", "NoMatches")
 from functools import partial
 import sys
 from time import time
+from os import geteuid
 
 from snakeoil.sequences import iflatten_instance, stable_unique
 
@@ -516,6 +517,10 @@ def main(options, out, err):
         distdir=domain.fetcher.get_storage_path(),
         quiet_repo_display=options.quiet_repo_display)
 
+    if not options.pretend and geteuid():
+        out.write("This action likely requires superuser permissions...")
+        options.pretend = formatter.ask("Would you like to add --pretend option?", default_answer=False)
+
     # This mode does not care about sets and packages so bypass all that.
     if options.unmerge:
         if not options.oneshot:
@@ -527,6 +532,9 @@ def main(options, out, err):
             unmerge(out, err, livefs_repos, options.targets, options, formatter, world_set)
         except (parserestrict.ParseError, Failure) as e:
             out.error(str(e))
+            return 1
+        except Exception as e:
+            out.error(e)
             return 1
         return
 
@@ -844,6 +852,9 @@ def main(options, out, err):
                 if not options.ignore_failures:
                     return 1
                 continue
+            except Exception as e:
+                out.error(e)
+                return
 
             # while this does get handled through each loop, wipe it now; we don't need
             # that data, thus we punt it now to keep memory down.

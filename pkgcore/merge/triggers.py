@@ -73,7 +73,7 @@ class base(object):
     _engine_types = None
     priority = 50
 
-    suppress_exceptions = True
+    suppress_exceptions = False
 
     pkgcore_config_type = ConfigHint(typename='trigger')
 

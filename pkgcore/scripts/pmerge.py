@@ -438,6 +438,8 @@ def _validate(parser, namespace):
         return val
     namespace.targets = f(namespace.targets)
     namespace.sets = f(namespace.sets)
+    if namespace.preload_vdb_state:
+        namespace.replace = False
 
 
 def parse_target(restriction, repo, livefs_repos, return_none=False):

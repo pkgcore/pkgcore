@@ -10,6 +10,7 @@ passing in distutils.
 Specifically, this module is only meant to be imported in setup.py scripts.
 """
 
+import copy
 import errno
 import inspect
 import io
@@ -79,7 +80,7 @@ def version(project=PROJECT):
     """
     version = None
     try:
-        with io.open(os.path.join(project, '__init__.py'), encoding='utf-8') as f:
+        with io.open(os.path.join(TOPDIR, project, '__init__.py'), encoding='utf-8') as f:
             version = re.search(
                 r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]',
                 f.read(), re.MULTILINE).group(1)
@@ -93,6 +94,21 @@ def version(project=PROJECT):
         raise RuntimeError('Cannot find version for project: %s' % (project,))
 
     return version
+
+
+def readme(project=PROJECT):
+    """Determine a project's long description."""
+    for doc in ('README.rst', 'README'):
+        try:
+            with io.open(os.path.join(TOPDIR, doc), encoding='utf-8') as f:
+                return f.read()
+        except IOError as e:
+            if e.errno == errno.ENOENT:
+                pass
+            else:
+                raise
+
+    return None
 
 
 def get_file_paths(path):
@@ -196,12 +212,28 @@ class sdist(dst_sdist.sdist):
         """
 
         if 'build_man' in self.distribution.cmdclass:
+            build_man = self.reinitialize_command('build_man')
+            build_man.ensure_finalized()
             self.run_command('build_man')
-            shutil.copytree(os.path.join(os.getcwd(), "build/sphinx/man"),
-                            os.path.join(base_dir, "man"))
+            shutil.copytree(os.path.join(os.getcwd(), build_man.content_search_path[0]),
+                            os.path.join(base_dir, build_man.content_search_path[1]))
 
         dst_sdist.sdist.make_release_tree(self, base_dir, files)
         self.generate_verinfo(base_dir)
+
+    def run(self):
+        build_ext = self.reinitialize_command('build_ext')
+        build_ext.ensure_finalized()
+
+        # generate cython extensions if any exist
+        cython = any(
+            os.path.splitext(f)[1] == '.pyx' for e in
+            build_ext.extensions for f in e.sources)
+        if cython:
+            from Cython.Build import cythonize
+            cythonize(build_ext.extensions)
+
+        dst_sdist.sdist.run(self)
 
 
 class build_py(dst_build_py.build_py):
@@ -469,9 +501,55 @@ class build_ext(dst_build_ext.build_ext):
                 if self.default_header_install_dir not in e.include_dirs:
                     e.include_dirs.append(self.default_header_install_dir)
 
+    @staticmethod
+    def determine_ext_lang(ext_path):
+        """Determine file extensions for generated cython extensions."""
+        with open(ext_path) as f:
+            for line in f:
+                line = line.lstrip()
+                if not line:
+                    continue
+                elif line[0] != '#':
+                    return None
+                line = line[1:].lstrip()
+                if line[:10] == 'distutils:':
+                    key, _, value = [s.strip() for s in line[10:].partition('=')]
+                    if key == 'language':
+                        return value
+            else:
+                return None
+
+    def no_cythonize(self):
+        """Determine file paths for generated cython extensions."""
+        extensions = copy.deepcopy(self.extensions)
+        for extension in extensions:
+            sources = []
+            for sfile in extension.sources:
+                path, ext = os.path.splitext(sfile)
+                if ext in ('.pyx', '.py'):
+                    lang = build_ext.determine_ext_lang(sfile)
+                    if lang == 'c++':
+                        ext = '.cpp'
+                    else:
+                        ext = '.c'
+                    sfile = path + ext
+                sources.append(sfile)
+            extension.sources[:] = sources
+        return extensions
+
     def run(self):
         # ensure that the platform checks were performed
         self.run_command('config')
+
+        # only regenerate cython extensions if requested or required
+        use_cython = (
+            os.environ.get('USE_CYTHON', False) or
+            any(not os.path.exists(x) for ext in self.no_cythonize() for x in ext.sources))
+        if use_cython:
+            from Cython.Build import cythonize
+            cythonize(self.extensions)
+
+        self.extensions = self.no_cythonize()
         return dst_build_ext.build_ext.run(self)
 
     def build_extensions(self):
@@ -783,7 +861,7 @@ class PyTest(Command):
         ('match=', 'k', 'run only tests that match the provided expressions'),
     ]
 
-    default_test_dir = os.path.join(PROJECT, 'test')
+    default_test_dir = os.path.join(TOPDIR, PROJECT, 'test')
 
     def initialize_options(self):
         self.pytest_args = ''

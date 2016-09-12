@@ -198,14 +198,11 @@ cmdclass = {
 }
 command_options = {}
 
-with io.open('README.rst', encoding='utf-8') as f:
-    readme = f.read()
-
 setup(
     name='pkgcore',
     version=pkgdist.version(),
     description='package managing framework',
-    long_description=readme,
+    long_description=pkgdist.readme(),
     url='https://github.com/pkgcore/pkgcore',
     license='BSD/GPLv2',
     author='Brian Harring, Tim Harder',

@@ -154,23 +154,27 @@ class GlsaDirSet(object):
             base = base[:-1]
         base = cpv.versioned_CPV("cat/pkg-%s" % base)
         restrict = self.op_translate[op.lstrip("r")]
-        if op.startswith("r"):
-            if glob:
+        if glob:
+            if op != "eq":
                 raise ValueError("glob cannot be used with %s ops" % op)
-            elif not base.revision:
-                if '=' not in restrict:
+            return packages.PackageRestriction(
+                "fullver", values.StrGlobMatch(base.fullver))
+        if op.startswith("r"):
+            if not base.revision:
+                if op == "rlt": # rlt -r0 can never match
                     # this is a non-range.
                     raise ValueError(
                         "range %s version %s is a guaranteed empty set" %
                         (op, str(node.text.strip())))
-                return atom_restricts.VersionMatch("~", base.version, negate=negate)
+                elif op == "rle": # rle -r0 -> = -r0
+                    return atom_restricts.VersionMatch("=", base.version, negate=negate)
+                elif op == "rge": # rge -r0 -> ~
+                    return atom_restricts.VersionMatch("~", base.version, negate=negate)
+                # rgt -r0 passes through to regular ~ + >
             return packages.AndRestriction(
                 atom_restricts.VersionMatch("~", base.version),
                 atom_restricts.VersionMatch(restrict, base.version, rev=base.revision),
                 negate=negate)
-        if glob:
-            return packages.PackageRestriction(
-                "fullver", values.StrGlobMatch(base.fullver))
         return atom_restricts.VersionMatch(
             restrict, base.version, rev=base.revision, negate=negate)
 

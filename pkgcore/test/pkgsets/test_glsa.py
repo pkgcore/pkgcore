@@ -8,6 +8,7 @@ from snakeoil.test.mixins import TempDirMixin
 from pkgcore.ebuild import cpv
 from pkgcore.pkgsets import glsa
 from pkgcore.restrictions.packages import OrRestriction
+from pkgcore.restrictions.restriction import AlwaysBool
 from pkgcore.test import TestCase
 
 # misc setup code for generating glsas for testing
@@ -103,6 +104,8 @@ class TestGlsaDirSet(TempDirMixin, TestCase):
     def check_range(self, vuln_range, ver_matches, ver_nonmatches):
         self.mk_glsa([("dev-util/diffball", ([], [vuln_range]))])
         restrict = list(OrRestriction(*tuple(glsa.GlsaDirSet(self.dir))))
+        if len(restrict) == 0: # exception thrown
+            restrict.append(AlwaysBool(negate=False))
         self.assertEqual(len(restrict), 1)
         restrict = restrict[0]
         for ver in ver_matches:
@@ -137,6 +140,14 @@ class TestGlsaDirSet(TempDirMixin, TestCase):
         ["1-r2", "1", "1-r1"], ["2", "0.9", "1-r3"])
     test_range_rlt = post_curry(check_range, "~<1-r2",
         ["1", "1-r1"], ["2", "0.9", "1-r2"])
+    test_range_rge_r0 = post_curry(check_range, "~>=2",
+        ["2", "2-r1"], ["1", "2_p1", "2.1", "3"])
+    test_range_rgt_r0 = post_curry(check_range, "~>2",
+        ["2-r1", "2-r2"], ["1", "2", "2_p1", "2.1"])
+    test_range_rle_r0 = post_curry(check_range, "~<=2",
+        ["2"], ["1", "2-r1", "2_p1", "3"])
+    test_range_rlt_r0 = post_curry(check_range, "~<2",
+        [], ["1", "2", "2-r1", "2.1", "3"])
 
     def test_iter(self):
         self.mk_glsa(pkgs_set)

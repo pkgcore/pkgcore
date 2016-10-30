@@ -35,8 +35,7 @@ Requirements
 ============
 
 At least python version 2.7, and snakeoil_ — a utility library with misc
-optimizations split out of pkgcore for others to use.  For unittests, mock_ is
-required if you're using anything less than python 3.3.
+optimizations split out of pkgcore for others to use.
 
 Installing
 ==========
@@ -75,6 +74,8 @@ tarball. Otherwise, for a specific python version execute something similar to
 the following::
 
     tox -e py27
+
+Note that mock_ is required for tests when using python-2.7.
 
 Contact
 =======

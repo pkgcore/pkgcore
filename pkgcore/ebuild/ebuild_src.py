@@ -43,8 +43,8 @@ def generate_depset(c, key, non_package_type, s, **kwds):
         return conditionals.DepSet.parse(
             s.data.pop(key, ""), c,
             operators={
-                "||":boolean.OrRestriction,
-                "":boolean.AndRestriction},
+                "||": boolean.OrRestriction,
+                "": boolean.AndRestriction},
             **kwds)
     eapi = s.eapi
     if not eapi.is_supported:
@@ -63,9 +63,9 @@ def generate_required_use(self):
     if not self.eapi.options.has_required_use:
         data = ''
     operators = {
-        "||":boolean.OrRestriction,
-        "":boolean.AndRestriction,
-        "^^":boolean.JustOneRestriction
+        "||": boolean.OrRestriction,
+        "": boolean.AndRestriction,
+        "^^": boolean.JustOneRestriction
     }
     if self.eapi.options.required_use_one_of:
         operators['??'] = boolean.AtMostOneOfRestriction

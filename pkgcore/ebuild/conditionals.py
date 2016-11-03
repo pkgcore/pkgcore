@@ -76,16 +76,17 @@ class DepSet(boolean.AndRestriction):
         if cls.parse_depset is not None and not (allow_src_uri_file_renames):
             restrictions = None
             if operators is None:
-                has_conditionals, restrictions = cls.parse_depset(dep_str,
-                    element_func, boolean.AndRestriction,
-                    boolean.OrRestriction)
+                has_conditionals, restrictions = cls.parse_depset(
+                    dep_str, element_func,
+                    boolean.AndRestriction, boolean.OrRestriction)
             else:
                 for x in operators:
                     if x not in ("", "||"):
                         break
                 else:
-                    has_conditionals, restrictions = cls.parse_depset(dep_str,
-                        element_func, operators.get(""), operators.get("||"))
+                    has_conditionals, restrictions = cls.parse_depset(
+                        dep_str, element_func,
+                        operators.get(""), operators.get("||"))
 
             if restrictions is not None:
                 if not has_conditionals and transitive_use_atoms:
@@ -94,7 +95,7 @@ class DepSet(boolean.AndRestriction):
 
         restrictions = []
         if operators is None:
-            operators = {"||":boolean.OrRestriction, "":boolean.AndRestriction}
+            operators = {"||": boolean.OrRestriction, "": boolean.AndRestriction}
 
         raw_conditionals = []
         depsets = [restrictions]
@@ -174,7 +175,6 @@ class DepSet(boolean.AndRestriction):
                     # node/element.
                     depsets[-1].append(element_func(k))
 
-
         except IGNORED_EXCEPTIONS:
             raise
         except IndexError:
@@ -221,7 +221,8 @@ class DepSet(boolean.AndRestriction):
             return self
 
         results = []
-        self.evaluate_conditionals(self.__class__, results,
+        self.evaluate_conditionals(
+            self.__class__, results,
             cond_dict, tristate_filter, force_collapse=True)
 
         return self.__class__(tuple(results), self.element_class, False)
@@ -236,8 +237,8 @@ class DepSet(boolean.AndRestriction):
                 new_set.appendleft(list(cur_node.payload) + [None])
             elif isinstance(cur_node, transitive_use_atom):
                 new_set.appendleft(cur_node.convert_to_conditionals())
-            elif (isinstance(cur_node, boolean.base)
-                  and not isinstance(cur_node, atom)):
+            elif (isinstance(cur_node, boolean.base) and
+                    not isinstance(cur_node, atom)):
                 new_set.appendleft(cur_node.restrictions)
             elif cur_node is None:
                 conditions_stack.pop()
@@ -253,8 +254,7 @@ class DepSet(boolean.AndRestriction):
 
             always_required = set()
 
-            for payload, restrictions in self.find_cond_nodes(
-                self.restrictions, True):
+            for payload, restrictions in self.find_cond_nodes(self.restrictions, True):
                 if not restrictions:
                     always_required.add(payload)
                 else:
@@ -285,8 +285,7 @@ class DepSet(boolean.AndRestriction):
             return frozenset()
         if self._known_conditionals is None:
             kc = set()
-            for payload, restrictions in self.find_cond_nodes(
-                self.restrictions):
+            for payload, restrictions in self.find_cond_nodes(self.restrictions):
                 kc.update(iflatten_instance(x.vals for x in restrictions))
             kc = frozenset(kc)
             object.__setattr__(self, "_known_conditionals", kc)
@@ -327,8 +326,8 @@ def _internal_stringify_boolean(node, domain, func, visit):
     if isinstance(node, boolean.OrRestriction):
         visit("|| (")
         iterable = node.restrictions
-    elif isinstance(node, boolean.AndRestriction) and \
-        not isinstance(node, atom):
+    elif (isinstance(node, boolean.AndRestriction) and
+            not isinstance(node, atom)):
         visit("(")
         iterable = node.restrictions
     elif isinstance(node, packages.Conditional):
@@ -338,8 +337,8 @@ def _internal_stringify_boolean(node, domain, func, visit):
             node.restriction.negate and "!" or "",
             list(node.restriction.vals)[0]))
     else:
-        if domain is not None and \
-                (isinstance(node, atom) and node.slot_operator == '='):
+        if (domain is not None and
+                (isinstance(node, atom) and node.slot_operator == '=')):
             pkg = max(sorted(domain.all_livefs_repos.itermatch(node)))
             object.__setattr__(node, "slot", pkg.slot)
             object.__setattr__(node, "subslot", pkg.subslot)

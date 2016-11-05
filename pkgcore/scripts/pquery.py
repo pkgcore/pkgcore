@@ -32,6 +32,7 @@ demandload(
     'errno',
     'os',
     're',
+    'sys',
     'snakeoil.osutils:sizeof_fmt',
     'snakeoil.sequences:iter_stable_unique',
     'pkgcore.fs:fs@fs_module,contents@contents_module',
@@ -614,6 +615,11 @@ def bind_add_query(*args, **kwds):
 def matches_finalize(targets, namespace):
     if not targets:
         return []
+    if len(targets) == 1 and targets[0] == '-':
+        if not sys.stdin.isatty():
+            targets = (x.strip() for x in sys.stdin.readlines() if x.strip() != '')
+        else:
+            raise argparser.error("'-' is only valid when piping data in")
     repos = multiplex.tree(*namespace.repos)
     restrictions = []
     for target in targets:

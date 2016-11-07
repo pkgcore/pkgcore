@@ -98,6 +98,7 @@ class MetadataXml(object):
             source = self._source.bytes_fileobj()
         tree = etree.parse(source)
 
+        # TODO: handle i18n properly
         maintainers = []
         for x in tree.findall("maintainer"):
             name = email = description = None
@@ -106,7 +107,7 @@ class MetadataXml(object):
                     name = e.text
                 elif e.tag == "email":
                     email = e.text
-                elif e.tag == 'description':
+                elif e.tag == 'description' and e.get('lang', 'en') == 'en':
                     description = e.text
             maintainers.append(Maintainer(
                 name=name, email=email, description=description))
@@ -114,17 +115,28 @@ class MetadataXml(object):
         self._maintainers = tuple(maintainers)
 
         # Could be unicode!
-        longdesc = tree.findtext("longdescription")
-        if longdesc:
-            longdesc = ' '.join(longdesc.split())
-        self._longdescription = longdesc
+        self._longdescription = None
+        for x in tree.findall("longdescription"):
+            if x.get('lang', 'en') != 'en':
+                continue
+            longdesc = x.text
+            if longdesc:
+                self._longdescription = ' '.join(longdesc.split())
+            break
+
         self._source = None
 
-        self._local_use = mappings.ImmutableDict(
-            (x.attrib['name'], ' '.join(''.join(x.itertext()).split()))
-            for x in tree.findall('use/flag')
-            if 'name' in x.attrib
-        )
+        # lang="" is property of <use/>
+        self._local_use = mappings.ImmutableDict()
+        for x in tree.findall("use"):
+            if x.get('lang', 'en') != 'en':
+                continue
+            self._local_use = mappings.ImmutableDict(
+                (e.attrib['name'], ' '.join(''.join(e.itertext()).split()))
+                for e in x.findall('flag')
+                if 'name' in e.attrib
+            )
+            break
 
 
 class LocalMetadataXml(MetadataXml):

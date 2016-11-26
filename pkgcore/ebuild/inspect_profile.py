@@ -1,6 +1,8 @@
 # Copyright: 2011 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD 3 clause
 
+import argparse
+
 from snakeoil.cli import arghparse
 from snakeoil.demandload import demandload
 
@@ -8,7 +10,6 @@ from pkgcore.ebuild import profiles
 from pkgcore.util import commandline
 
 demandload(
-    'argparse',
     'collections:defaultdict',
     'itertools:chain',
     'operator',

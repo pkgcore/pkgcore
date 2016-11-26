@@ -26,8 +26,12 @@ class _base(arghparse.ArgparseCommand):
     def _validate_args(parser, namespace):
         path = namespace.profile
         if path is None:
-            # default to system profile if none is selected
-            path = namespace.config.get_default("domain").profile.profile
+            if namespace.repo is not None:
+                # default to the repo's main profiles dir
+                path = pjoin(namespace.repo.location, 'profiles')
+            else:
+                # default to the configured system profile if none is selected
+                path = namespace.config.get_default("domain").profile.profile
         else:
             if namespace.repo is not None and getattr(namespace.repo, 'location', False):
                 if not path.startswith('/'):

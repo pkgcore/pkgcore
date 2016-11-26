@@ -25,9 +25,13 @@ class _base(arghparse.ArgparseCommand):
     @staticmethod
     def _validate_args(parser, namespace):
         path = namespace.profile
-        if namespace.repo is not None and getattr(namespace.repo, 'location', False):
-            if not path.startswith('/'):
-                path = pjoin(namespace.repo.location, 'profiles', path)
+        if path is None:
+            # default to system profile if none is selected
+            path = namespace.config.get_default("domain").profile.profile
+        else:
+            if namespace.repo is not None and getattr(namespace.repo, 'location', False):
+                if not path.startswith('/'):
+                    path = pjoin(namespace.repo.location, 'profiles', path)
         try:
             stack = profiles.ProfileStack(arghparse.existent_path(path))
         except ValueError as e:
@@ -38,7 +42,7 @@ class _base(arghparse.ArgparseCommand):
 
     def bind_to_parser(self, parser):
         arghparse.ArgparseCommand.bind_to_parser(self, parser)
-        parser.add_argument('profile', help='path to the profile to inspect')
+        parser.add_argument('profile', nargs='?', help='path to the profile to inspect')
         name = self.__class__.__name__
         kwds = {('_%s_suppress' % name): arghparse.DelayedDefault.wipe(('domain'), 50)}
         parser.set_defaults(**kwds)

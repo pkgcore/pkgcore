@@ -8,6 +8,7 @@ from pkgcore.ebuild import profiles
 from pkgcore.util import commandline
 
 demandload(
+    'argparse',
     'collections:defaultdict',
     'itertools:chain',
     'operator',
@@ -38,7 +39,7 @@ class _base(arghparse.ArgparseCommand):
                     path = pjoin(namespace.repo.location, 'profiles', path)
         try:
             stack = profiles.ProfileStack(arghparse.existent_path(path))
-        except ValueError as e:
+        except argparse.ArgumentTypeError as e:
             parser.error(e)
         if stack.node.repoconfig is None:
             parser.error("invalid profile path: '%s'" % path)

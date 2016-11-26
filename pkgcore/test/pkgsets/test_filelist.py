@@ -19,7 +19,10 @@ class TestFileList(TestCase):
         grps = os.getgroups()
         if os_data.portage_gid in grps:
             return os_data.portage_gid
-        return grps[0]
+        try:
+            return grps[0]
+        except IndexError:
+            return os.getgid()
 
     def setUp(self):
         self.fd, self.fn = tempfile.mkstemp()

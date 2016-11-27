@@ -71,7 +71,12 @@ class parent(_base):
     __metaclass__ = _register_command
 
     def __call__(self, namespace, out, err):
-        out.write("\n".join(x.path for x in namespace.profile.stack))
+        if namespace.repo is None:
+            out.write("\n".join(x.path for x in namespace.profile.stack))
+        else:
+            repo_dir = pjoin(namespace.repo.location, 'profiles')
+            for x in namespace.profile.stack:
+                out.write(x.path[len(repo_dir):].lstrip('/'))
 
 
 class eapi(_base):

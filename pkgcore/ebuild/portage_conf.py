@@ -349,7 +349,7 @@ def load_repos_conf(path):
 
     # the default repo has a low priority if unset or zero
     if repos[default_repo]['priority'] == 0:
-        repos[default_repo]['priority'] = -9999
+        repos[default_repo]['priority'] = -1000
 
     # sort repos via priority, in this case high values map to high priorities
     repos = OrderedDict(

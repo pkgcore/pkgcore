@@ -176,3 +176,13 @@ class Manifest(object):
     def distfiles(self):
         self._pull_manifest()
         return self._dist
+
+    @property
+    def ebuilds(self):
+        self._pull_manifest()
+        return self._ebuild
+
+    @property
+    def misc(self):
+        self._pull_manifest()
+        return self._misc

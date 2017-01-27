@@ -47,11 +47,11 @@ def convert_chksums(iterable):
 
 
 def parse_manifest(source, ignore_gpg=True):
-    types = {"DIST":{}, "AUX":{}, "EBUILD":{}, "MISC":{}}
+    types = {"DIST": {}, "AUX": {}, "EBUILD": {}, "MISC": {}}
     # manifest v2 format: (see glep 44 for exact rules)
     # TYPE filename size (CHF sum)+
     # example 'type' entry, all one line
-    #MISC metadata.xml 219 RMD160 613195ece366b33606e71ff1753be048f2507841 SHA1 d162fb909241ef50b95a3539bdfcde95429bdf81 SHA256 cbd3a20e5c89a48a842f7132fe705bf39959f02c1025052efce8aad8a8baa8dc
+    # MISC metadata.xml 219 RMD160 613195ece366b33606e71ff1753be048f2507841 SHA1 d162fb909241ef50b95a3539bdfcde95429bdf81 SHA256 cbd3a20e5c89a48a842f7132fe705bf39959f02c1025052efce8aad8a8baa8dc
     # manifest v1 format is
     # CHF sum filename size
     # note that we do _not_ support manifest1
@@ -153,7 +153,7 @@ class Manifest(object):
                 d[pathname] = dict(obj.chksums)
 
         handle = open(self.path, 'w')
-            
+
         # write it in alphabetical order; aux gets flushed now.
         for path, chksums in sorted(aux.iteritems(), key=_key_sort):
             _write_manifest(handle, 'AUX', path, chksums)

@@ -56,6 +56,7 @@ def optimize_incrementals(sequence):
                 yield item
                 finalized.add(item)
 
+
 def incremental_chunked(orig, iterables):
     for cinst in iterables:
         orig.difference_update(cinst.neg)
@@ -79,7 +80,8 @@ def native_incremental_expansion(orig, iterable, msg_prefix='', finalize=True):
         if token[0] == '-':
             i = token[1:]
             if not i:
-                raise ValueError("%sencountered an incomplete negation, '-'"
+                raise ValueError(
+                    "%sencountered an incomplete negation, '-'"
                     % (msg_prefix,))
             if i == '*':
                 orig.clear()
@@ -96,13 +98,15 @@ try:
 except ImportError:
     incremental_expansion = native_incremental_expansion
 
+
 def incremental_expansion_license(licenses, license_groups, iterable, msg_prefix=''):
     seen = set()
     for token in iterable:
         if token[0] == '-':
             i = token[1:]
             if not i:
-                raise ValueError("%sencountered an incomplete negation, '-'"
+                raise ValueError(
+                    "%sencountered an incomplete negation, '-'"
                     % (msg_prefix,))
             if i == '*':
                 seen.clear()
@@ -110,7 +114,8 @@ def incremental_expansion_license(licenses, license_groups, iterable, msg_prefix
                 if i[0] == '@':
                     i = i[1:]
                     if not i:
-                        raise ValueError("%sencountered an incomplete negation"
+                        raise ValueError(
+                            "%sencountered an incomplete negation"
                             " of a license group, '-@'" % (msg_prefix,))
                     seen.difference_update(license_groups.get(i, ()))
                 else:
@@ -118,7 +123,8 @@ def incremental_expansion_license(licenses, license_groups, iterable, msg_prefix
         elif token[0] == '@':
             i = token[1:]
             if not i:
-                raise ValueError("%sencountered an incomplete license group"
+                raise ValueError(
+                    "%sencountered an incomplete license group"
                     ", '@'" % (msg_prefix,))
             seen.update(license_groups.get(i, ()))
         elif token == '*':
@@ -205,22 +211,22 @@ class collapsed_restrict_to_data(object):
                     elif a.attr == "repo.repo_id":
                         repo.append((a, data))
                     else:
-                        raise ValueError("%r doesn't operate on package/category/repo: "
+                        raise ValueError(
+                            "%r doesn't operate on package/category/repo: "
                             "data %r" % (a, data))
                 else:
-                    raise ValueError("%r is not an AlwaysBool, PackageRestriction, "
+                    raise ValueError(
+                        "%r is not an AlwaysBool, PackageRestriction, "
                         "or atom: data %r" % (a, data))
 
         if always:
             s = set()
-            incremental_expansion(s, always,
-                finalize=kwds.get("finalize_defaults", True))
+            incremental_expansion(s, always, finalize=kwds.get("finalize_defaults", True))
             always = s
         else:
             always = set()
         self.defaults = always
-        self.defaults_finalized = set(x for x in self.defaults
-            if not x.startswith("-"))
+        self.defaults_finalized = set(x for x in self.defaults if not x.startswith("-"))
         self.freeform = tuple(x for x in (repo, cat, pkg, multi) if x)
         self.atoms = atom_d
 
@@ -290,6 +296,7 @@ class non_incremental_collapsed_restrict_to_data(collapsed_restrict_to_data):
             return iter(self.defaults)
         return iflatten_instance(l)
 
+
 def _cached_build_cp_atom_payload(cache, sequence, restrict, payload_form=False):
     sequence = list(sequence)
     key = (payload_form, restrict, tuple(sequence))
@@ -297,6 +304,7 @@ def _cached_build_cp_atom_payload(cache, sequence, restrict, payload_form=False)
     if val is None:
         val = cache[key] = _build_cp_atom_payload(sequence, restrict, payload_form=payload_form)
     return val
+
 
 def _build_cp_atom_payload(sequence, restrict, payload_form=False):
 
@@ -309,8 +317,7 @@ def _build_cp_atom_payload(sequence, restrict, payload_form=False):
 
     if payload_form:
         def f(r, neg, pos):
-            return restrict_payload(r,
-                tuple(chain(('-' + x for x in neg), pos)))
+            return restrict_payload(r, tuple(chain(('-' + x for x in neg), pos)))
     else:
         f = chunked_data
 
@@ -343,10 +350,11 @@ def _build_cp_atom_payload(sequence, restrict, payload_form=False):
         # all is specific/non-simple, just reverse and return
         return tuple(f(*vals) for vals in reversed(l))
 
-    new_l = [f(restrict,
-        tuple(k for k,v in locked.iteritems() if not v), #neg
-        tuple(k for k,v in locked.iteritems() if v) #pos
-        )]
+    new_l = [f(
+        restrict,
+        tuple(k for k, v in locked.iteritems() if not v),  # neg
+        tuple(k for k, v in locked.iteritems() if v)  # pos
+    )]
     # we exploit a few things this time around in reusing the algo from above
     # we know there is only going to be one global (which we just added),
     # and that everything is specific.
@@ -413,10 +421,12 @@ class ChunkedDataDict(object):
 
     def merge(self, cdict):
         if not isinstance(cdict, ChunkedDataDict):
-            raise TypeError("merge expects a ChunkedDataDict instance; "
+            raise TypeError(
+                "merge expects a ChunkedDataDict instance; "
                 "got type %s, %r" % (type(cdict), cdict,))
         if isinstance(cdict, PayloadDict) and not isinstance(self, PayloadDict):
-            raise TypeError("merge expects a PayloadDataDict instance; "
+            raise TypeError(
+                "merge expects a PayloadDataDict instance; "
                 "got type %s, %r" % (type(cdict), cdict,))
         # straight extensions for this, rather than update_from_stream.
         d = self._dict
@@ -440,8 +450,7 @@ class ChunkedDataDict(object):
         # reversed doesn't like chain, so we just modify the list and do it this way.
         self._global_settings.extend(new_globals)
         self._global_settings[:] = list(
-            _build_cp_atom_payload(self._global_settings,
-                 packages.AlwaysTrue))
+            _build_cp_atom_payload(self._global_settings, packages.AlwaysTrue))
 
     def add(self, cinst):
         self.update_from_stream([cinst])
@@ -461,21 +470,26 @@ class ChunkedDataDict(object):
 
     def freeze(self):
         if not isinstance(self._dict, mappings.ImmutableDict):
-            self._dict = mappings.ImmutableDict((k, tuple(v))
-                for k,v in self._dict.iteritems())
+            self._dict = mappings.ImmutableDict(
+                (k, tuple(v))
+                for k, v in self._dict.iteritems())
             self._global_settings = tuple(self._global_settings)
 
     def optimize(self, cache=None):
         if cache is None:
-            d_stream = ((k, _build_cp_atom_payload(v, atom.atom(k), False))
-                for k,v in self._dict.iteritems())
-            g_stream = (_build_cp_atom_payload(self._global_settings,
-                    packages.AlwaysTrue, payload_form=isinstance(self, PayloadDict)))
+            d_stream = (
+                (k, _build_cp_atom_payload(v, atom.atom(k), False))
+                for k, v in self._dict.iteritems())
+            g_stream = (_build_cp_atom_payload(
+                self._global_settings,
+                packages.AlwaysTrue, payload_form=isinstance(self, PayloadDict)))
         else:
-            d_stream = ((k, _cached_build_cp_atom_payload(cache, v, atom.atom(k), False))
-                for k,v in self._dict.iteritems())
-            g_stream = (_cached_build_cp_atom_payload(cache, self._global_settings,
-                    packages.AlwaysTrue, payload_form=isinstance(self, PayloadDict)))
+            d_stream = ((k, _cached_build_cp_atom_payload(
+                cache, v, atom.atom(k), False))
+                for k, v in self._dict.iteritems())
+            g_stream = (_cached_build_cp_atom_payload(
+                cache, self._global_settings,
+                packages.AlwaysTrue, payload_form=isinstance(self, PayloadDict)))
 
         if self.frozen:
             self._dict = mappings.ImmutableDict(d_stream)
@@ -493,9 +507,10 @@ class ChunkedDataDict(object):
     def render_to_payload(self):
         d = PayloadDict()
         d = {atom.atom(k): _build_cp_atom_payload(v, atom.atom(k), True)
-             for k,v in self._dict.iteritems()}
+             for k, v in self._dict.iteritems()}
         if self._global_settings:
-            data = _build_cp_atom_payload(self._global_settings,
+            data = _build_cp_atom_payload(
+                self._global_settings,
                 packages.AlwaysTrue, payload_form=True)
             d[packages.AlwaysTrue] = tuple(data)
         return d
@@ -520,8 +535,7 @@ class ChunkedDataDict(object):
 class PayloadDict(ChunkedDataDict):
 
     def mk_item(self, key, neg, pos):
-        return restrict_payload(key,
-            tuple(chain(("-" + x for x in neg), pos)))
+        return restrict_payload(key, tuple(chain(("-" + x for x in neg), pos)))
 
     def add_bare_global(self, payload):
         neg = [x[1:] for x in payload if x[0] == '-']
@@ -531,8 +545,7 @@ class PayloadDict(ChunkedDataDict):
     def add_global(self, pinst):
         neg = [x[1:] for x in pinst.data if x[0] == '-']
         pos = [x for x in pinst.data if x[0] != '-']
-        return ChunkedDataDict.add_global(self,
-            chunked_data(pinst.restrict, neg, pos))
+        return ChunkedDataDict.add_global(self, chunked_data(pinst.restrict, neg, pos))
 
     def update_from_stream(self, stream):
         for pinst in stream:
@@ -549,9 +562,10 @@ class PayloadDict(ChunkedDataDict):
         if items is None:
             items = self._global_settings
         s = set(pre_defaults)
-        incremental_expansion(s,
-            chain.from_iterable(item.data for item in items
-                if item.restrict.match(pkg)))
+        incremental_expansion(
+            s,
+            chain.from_iterable(
+                item.data for item in items if item.restrict.match(pkg)))
         return s
 
     pull_data = render_pkg

@@ -503,6 +503,9 @@ class ChunkedDataDict(object):
     def __nonzero__(self):
         return bool(self._global_settings) or bool(self._dict)
 
+    def __str__(self):
+        return str(self.render_to_dict())
+
     def render_pkg(self, pkg, pre_defaults=()):
         items = self._dict.get(pkg.key)
         if items is None:

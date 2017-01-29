@@ -325,14 +325,14 @@ class domain(config_domain):
             chunked_data(k, *split_negations(v)) for k, v in pkg_use)
 
         for attr in ('', 'stable_'):
-             c = ChunkedDataDict()
-             c.merge(getattr(profile, attr + 'forced_use'))
-             c.add_bare_global((), (self.arch,))
-             setattr(self, attr + 'forced_use', c)
+            c = ChunkedDataDict()
+            c.merge(getattr(profile, attr + 'forced_use'))
+            c.add_bare_global((), (self.arch,))
+            setattr(self, attr + 'forced_use', c)
 
-             c = ChunkedDataDict()
-             c.merge(getattr(profile, attr + 'masked_use'))
-             setattr(self, attr + 'disabled_use', c)
+            c = ChunkedDataDict()
+            c.merge(getattr(profile, attr + 'masked_use'))
+            setattr(self, attr + 'disabled_use', c)
 
         self.repos = []
         self.vdb = []

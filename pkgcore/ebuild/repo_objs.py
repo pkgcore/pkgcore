@@ -403,7 +403,15 @@ class RepoConfig(syncable.tree):
             'hashes': hashes,
         }
 
-        sf(self, 'repo_name', data.get('repo-name'))
+        # complain if profiles/repo_name is missing
+        repo_name = readfile(pjoin(self.profiles_base, 'repo_name'), True)
+        if repo_name is None:
+            if not self.is_empty:
+                logger.warning("repository lacks a defined repo_name: %r", self.location)
+            repo_name = '<unlabeled repository %s>' % self.location
+        # repo-name setting from metadata/layout.conf overrides profiles/repo_name if it exists
+        sf(self, 'repo_name', data.get('repo-name', repo_name.strip()))
+
         sf(self, 'manifests', _immutable_attr_dict(d))
         masters = data.get('masters')
         if masters is None:
@@ -535,21 +543,10 @@ class RepoConfig(syncable.tree):
 
     @klass.jit_attr
     def repo_id(self):
-        # repos.conf name overrides everything
+        # repos.conf name overrides repo-name profile settings
         if self.config_name is not None:
             return self.config_name
-
-        # repo-name setting from metadata/layout.conf
-        # overrides profiles/repo_name if it exists
-        if self.repo_name is not None:
-            return self.repo_name
-
-        val = readfile(pjoin(self.profiles_base, 'repo_name'), True)
-        if val is None:
-            if not self.is_empty:
-                logger.warning("repository at location %r lacks a defined repo_name", self.location)
-            val = '<unlabeled repository %s>' % self.location
-        return val.strip()
+        return self.repo_name
 
     arch_profiles = klass.alias_attr('profiles.arch_profiles')
 

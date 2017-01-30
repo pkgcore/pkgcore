@@ -443,7 +443,7 @@ class ChunkedDataDict(object):
             updates.difference_update(cdict._dict)
             for key in updates:
                 d[key].extend(new_globals)
-        self._expand_globals(new_globals)
+            self._expand_globals(new_globals)
 
     def _expand_globals(self, new_globals):
         # while a chain seems obvious here, reversed is used w/in _build_cp_atom;

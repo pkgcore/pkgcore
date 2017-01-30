@@ -405,8 +405,8 @@ class RepoConfig(syncable.tree):
         repo_name = readfile(pjoin(self.profiles_base, 'repo_name'), True)
         if repo_name is None:
             if not self.is_empty:
-                logger.warning("repository lacks a defined repo_name: %r", self.location)
-            repo_name = '<unlabeled repository %s>' % self.location
+                logger.warning("repo lacks a defined name: %r", self.location)
+            repo_name = '<unlabeled repo %s>' % self.location
         # repo-name setting from metadata/layout.conf overrides profiles/repo_name if it exists
         sf(self, 'repo_name', data.get('repo-name', repo_name.strip()))
 
@@ -415,8 +415,8 @@ class RepoConfig(syncable.tree):
         if masters is None:
             if not self.is_empty:
                 logger.warning(
-                    "repository at %r, named %r, doesn't specify masters in metadata/layout.conf. "
-                    "Please explicitly set masters (use \"masters =\" if the repository "
+                    "repo at %r, named %r, doesn't specify masters in metadata/layout.conf. "
+                    "Please explicitly set masters (use \"masters =\" if the repo "
                     "is standalone).", self.location, self.repo_id)
             masters = ()
         else:
@@ -435,14 +435,13 @@ class RepoConfig(syncable.tree):
 
         profile_formats = set(data.get('profile-formats', 'pms').lower().split())
         if not profile_formats:
-            logger.warning("repository at %r has unset profile-formats, "
-                           "defaulting to pms")
+            logger.warning("repo at %r has unset profile-formats, defaulting to pms")
             profile_formats = set(['pms'])
         unknown = profile_formats.difference(self.supported_profile_formats)
         if unknown:
             logger.warning(
-                "repository at %r has unsupported profile format%s: %s" %
-                (self.location, 's'[len(unknown) == 1:], ', '.join(sorted(unknown))))
+                "repo at %r has unsupported profile format%s: %s",
+                self.location, 's'[len(unknown) == 1:], ', '.join(sorted(unknown)))
             profile_formats.difference_update(unknown)
             profile_formats.add('pms')
         sf(self, 'profile_formats', profile_formats)
@@ -536,7 +535,7 @@ class RepoConfig(syncable.tree):
                 raise
 
         if result:
-            logger.debug("repository at %r is empty" % (self.location,))
+            logger.debug("repo is empty: %r", self.location)
         return result
 
     @klass.jit_attr

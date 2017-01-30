@@ -376,14 +376,15 @@ class RepoConfig(syncable.tree):
         syncable.tree.__init__(self, syncer)
         self.parse_config()
 
-    def load_config(self):
+    def _load_config(self):
+        """Load data from the repo's metadata/layout.conf file."""
         path = pjoin(self.location, self.layout_offset)
         return read_dict(
             iter_read_bash(readlines_ascii(path, True, True)),
             source_isiter=True, strip=True, filename=path)
 
     def parse_config(self):
-        data = self.load_config()
+        data = self._load_config()
 
         sf = object.__setattr__
 

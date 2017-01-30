@@ -307,9 +307,6 @@ def _cached_build_cp_atom_payload(cache, sequence, restrict, payload_form=False)
 
 
 def _build_cp_atom_payload(sequence, restrict, payload_form=False):
-
-    atrue = packages.AlwaysTrue
-
     locked = {}
     ldefault = locked.setdefault
 
@@ -330,7 +327,7 @@ def _build_cp_atom_payload(sequence, restrict, payload_form=False):
     i = reversed(i)
 
     for data in i:
-        if data.key == atrue or getattr(data.key, 'is_simple', False):
+        if data.key == packages.AlwaysTrue or getattr(data.key, 'is_simple', False):
             for n in data.neg:
                 ldefault(n, False)
             for p in data.pos:

@@ -449,8 +449,9 @@ class ChunkedDataDict(object):
         # while a chain seems obvious here, reversed is used w/in _build_cp_atom;
         # reversed doesn't like chain, so we just modify the list and do it this way.
         self._global_settings.extend(new_globals)
+        restrict = getattr(new_globals[0], 'key', packages.AlwaysTrue)
         self._global_settings[:] = list(
-            _build_cp_atom_payload(self._global_settings, packages.AlwaysTrue))
+            _build_cp_atom_payload(self._global_settings, restrict))
 
     def add(self, cinst):
         self.update_from_stream([cinst])

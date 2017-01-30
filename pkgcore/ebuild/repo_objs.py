@@ -27,6 +27,7 @@ demandload(
     'snakeoil.bash:BashParseError,iter_read_bash,read_dict',
     'snakeoil.fileutils:readfile,readlines_ascii',
     'snakeoil.sequences:iter_stable_unique',
+    'snakeoil.strings:pluralism',
     'snakeoil.xml:etree',
     'pkgcore.ebuild:atom,profiles',
     'pkgcore.log:logger',
@@ -441,7 +442,7 @@ class RepoConfig(syncable.tree):
         if unknown:
             logger.warning(
                 "repo at %r has unsupported profile format%s: %s",
-                self.location, 's'[len(unknown) == 1:], ', '.join(sorted(unknown)))
+                self.location, pluralism(unknown), ', '.join(sorted(unknown)))
             profile_formats.difference_update(unknown)
             profile_formats.add('pms')
         sf(self, 'profile_formats', profile_formats)

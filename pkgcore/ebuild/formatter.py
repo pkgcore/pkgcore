@@ -24,6 +24,7 @@ demandload(
     'os',
     'snakeoil.mappings:defaultdictkey',
     'snakeoil.osutils:pjoin,sizeof_fmt',
+    'snakeoil.strings:pluralism',
     'pkgcore.log:logger',
 )
 
@@ -150,7 +151,7 @@ class CountingFormatter(Formatter):
         if self.verbose:
             total = sum(self.package_data.itervalues())
             self.out.write(
-                'Total: %d package%s' % (total, 's'[total == 1:]),
+                'Total: %d package%s' % (total, pluralism(total)),
                 autoline=False)
 
             d = dict(self.package_data.iteritems())
@@ -168,9 +169,9 @@ class CountingFormatter(Formatter):
                     if op_str == 'new':
                         op_list.append('%i %s' % (num_ops, op_str))
                     else:
-                        op_list.append('%i %s%s' % (num_ops, op_str, 's'[num_ops == 1:]))
+                        op_list.append('%i %s%s' % (num_ops, op_str, pluralism(num_ops)))
             if d:
-                op_list.append('%i other op%s' % (len(d), 's'[len(d) == 1:]))
+                op_list.append('%i other op%s' % (len(d), pluralism(d)))
             if op_list:
                 self.out.write(' (' + ', '.join(op_list) + ')', autoline=False)
             if self.download_size:

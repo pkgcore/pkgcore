@@ -17,6 +17,7 @@ import sys
 from time import time
 
 from snakeoil.sequences import iflatten_instance, stable_unique
+from snakeoil.strings import pluralism
 
 from pkgcore.ebuild import resolver, restricts
 from pkgcore.ebuild.atom import atom
@@ -418,7 +419,7 @@ def _validate(parser, namespace):
         unknown_sets = set(namespace.sets).difference(namespace.config.pkgset)
         if unknown_sets:
             parser.error("unknown set%s '%s' (available sets: %s)" % (
-                's'[len(unknown_sets) == 1:],
+                pluralism(unknown_sets),
                 ', '.join(sorted(unknown_sets)),
                 ', '.join(sorted(namespace.config.pkgset))))
         namespace.sets = [(x, namespace.config.pkgset[x]) for x in namespace.sets]

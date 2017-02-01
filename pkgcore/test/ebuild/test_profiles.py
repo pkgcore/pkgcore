@@ -702,6 +702,30 @@ class TestPortage2ProfileNode(TestPortage1ProfileNode):
             self.setup_repo()
 
 
+class TestProfileSetProfileNode(TestPmsProfileNode):
+
+    def setup_repo(self):
+        self.repo_name = str(binascii.b2a_hex(os.urandom(10)))
+        with open(pjoin(self.dir, "profiles", "repo_name"), "w") as f:
+            f.write(self.repo_name)
+        ensure_dirs(pjoin(self.dir, "metadata"))
+        metadata = "masters = ''\nprofile-formats = profile-set"
+        with open(pjoin(self.dir, "metadata", "layout.conf"), "w") as f:
+            f.write(metadata)
+
+    def setUp(self, default=True):
+        TempDirMixin.setUp(self)
+        if default:
+            self.profile = pjoin("profiles", "default")
+            self.mk_profile(self.profile)
+            self.setup_repo()
+
+    def test_packages(self):
+        self.write_file("packages", "dev-sys/atom\n-dev-sys/atom2\n")
+        p = self.klass(pjoin(self.dir, self.profile))
+        self.assertEqual(p.system, ((atom("dev-sys/atom2"),), (atom("dev-sys/atom"),)))
+
+
 class TestOnDiskProfile(profile_mixin, TestCase):
 
     # use a derivative, using the inst caching disabled ProfileNode kls

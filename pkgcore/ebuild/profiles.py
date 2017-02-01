@@ -153,17 +153,23 @@ class ProfileNode(object):
 
     @load_property("packages")
     def packages(self, data):
+        repo_config = self.repoconfig
+        profile_set = repo_config is not None and 'profile-set' in repo_config.profile_formats
         # sys packages and visibility
         sys, neg_sys, vis, neg_vis = [], [], [], []
         for line in data:
             if line[0] == '-':
                 if line[1] == '*':
                     neg_sys.append(self.eapi_atom(line[2:]))
+                elif profile_set:
+                    neg_sys.append(self.eapi_atom(line[1:]))
                 else:
                     neg_vis.append(self.eapi_atom(line[1:], negate_vers=True))
             else:
                 if line[0] == '*':
                     sys.append(self.eapi_atom(line[1:]))
+                elif profile_set:
+                    sys.append(self.eapi_atom(line))
                 else:
                     vis.append(self.eapi_atom(line, negate_vers=True))
         return self._packages_kls(

@@ -312,6 +312,7 @@ class _UnconfiguredTree(prototype.tree):
         self._shared_pkg_cache = WeakValCache()
 
     repo_id = klass.alias_attr("config.repo_id")
+    repo_name = klass.alias_attr("config.repo_name")
 
     def path_restrict(self, path):
         """Return a restriction from a given path in a repo.

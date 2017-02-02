@@ -180,6 +180,7 @@ class Licenses(object):
 
     @klass.jit_attr_none
     def licenses(self):
+        """Return the set of all defined licenses in a repo."""
         try:
             content = listdir_files(self.licenses_dir)
         except EnvironmentError:
@@ -188,6 +189,7 @@ class Licenses(object):
 
     @klass.jit_attr_none
     def groups(self):
+        """Return the mapping of defined license groups to licenses for a repo."""
         try:
             d = read_dict(self.license_groups_path, splitter=' ')
         except EnvironmentError:
@@ -317,6 +319,7 @@ class BundledProfiles(object):
 
     @klass.jit_attr
     def arch_profiles(self):
+        """Return the mapping of arches to profiles for a repo."""
         d = mappings.defaultdict(list)
         fp = pjoin(self.profile_base, 'profiles.desc')
         try:
@@ -347,6 +350,7 @@ class BundledProfiles(object):
                 yield profile
 
     def create_profile(self, node):
+        """Return profile object for a given path."""
         return profiles.OnDiskProfile(self.profile_base, node)
 
 

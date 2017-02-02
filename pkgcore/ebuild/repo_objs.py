@@ -449,6 +449,7 @@ class RepoConfig(syncable.tree):
 
     @klass.jit_attr
     def raw_known_arches(self):
+        """All valid KEYWORDS for the repo."""
         try:
             return frozenset(iter_read_bash(
                 pjoin(self.profiles_base, 'arch.list')))
@@ -459,6 +460,7 @@ class RepoConfig(syncable.tree):
 
     @klass.jit_attr
     def stable_arches(self):
+        """All arches with stable profiles defined in the repo."""
         arches = []
         for arch, profiles in self.profiles.arch_profiles.iteritems():
             for path, status in profiles:
@@ -468,6 +470,7 @@ class RepoConfig(syncable.tree):
 
     @klass.jit_attr
     def raw_use_desc(self):
+        """Global USE flags for the repo."""
         # todo: convert this to using a common exception base, with
         # conversion of ValueErrors...
         def converter(key):
@@ -476,6 +479,7 @@ class RepoConfig(syncable.tree):
 
     @klass.jit_attr
     def raw_use_local_desc(self):
+        """Local USE flags for the repo."""
         def converter(key):
             # todo: convert this to using a common exception base, with
             # conversion of ValueErrors/atom exceptions...
@@ -486,6 +490,7 @@ class RepoConfig(syncable.tree):
 
     @klass.jit_attr
     def raw_use_expand_desc(self):
+        """USE_EXPAND settings for the repo."""
         base = pjoin(self.profiles_base, 'desc')
         try:
             targets = sorted(listdir_files(base))
@@ -497,10 +502,13 @@ class RepoConfig(syncable.tree):
         def f():
             for use_group in targets:
                 group = use_group.split('.', 1)[0] + "_"
+
                 def converter(key):
                     return (packages.AlwaysTrue, group + key)
-                for blah in self._split_use_desc_file('desc/%s' % use_group, converter):
-                    yield blah
+
+                for x in self._split_use_desc_file('desc/%s' % use_group, converter):
+                    yield x
+
         return tuple(f())
 
     def _split_use_desc_file(self, name, converter):
@@ -527,6 +535,7 @@ class RepoConfig(syncable.tree):
 
     @klass.jit_attr
     def is_empty(self):
+        """Return boolean related to if the repo has files in it."""
         result = True
         try:
             # any files existing means it's not empty
@@ -541,7 +550,11 @@ class RepoConfig(syncable.tree):
 
     @klass.jit_attr
     def repo_id(self):
-        # repos.conf name overrides repo-name profile settings
+        """Main identifier for the repo.
+
+        The name set in repos.conf for a repo overrides any repo-name settings
+        in the repo.
+        """
         if self.config_name is not None:
             return self.config_name
         return self.repo_name

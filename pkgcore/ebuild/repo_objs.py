@@ -343,6 +343,15 @@ class BundledProfiles(object):
         return mappings.ImmutableDict(
             (k, tuple(sorted(v))) for k, v in d.iteritems())
 
+    def arches(self, status=None):
+        """All arches with profiles defined in the repo."""
+        arches = []
+        for arch, profiles in self.arch_profiles.iteritems():
+            for _profile_path, profile_status in profiles:
+                if status is None or profile_status == status:
+                    arches.append(arch)
+        return frozenset(arches)
+
     def paths(self, status=None):
         """Yield profile paths optionally matching a given status."""
         for profile_path, profile_status in chain.from_iterable(self.arch_profiles.itervalues()):
@@ -461,16 +470,6 @@ class RepoConfig(syncable.tree):
             if e.errno != errno.ENOENT:
                 raise
             return frozenset()
-
-    @klass.jit_attr
-    def profile_arches(self, status=None):
-        """All arches with profiles defined in the repo."""
-        arches = []
-        for arch, profiles in self.profiles.arch_profiles.iteritems():
-            for _profile_path, profile_status in profiles:
-                if status is None or profile_status == status:
-                    arches.append(arch)
-        return frozenset(arches)
 
     @klass.jit_attr
     def raw_use_desc(self):

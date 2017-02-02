@@ -343,11 +343,11 @@ class BundledProfiles(object):
         return mappings.ImmutableDict(
             (k, tuple(sorted(v))) for k, v in d.iteritems())
 
-    def status_profiles(self, status):
-        """Yield profiles matching a given status."""
-        for profile, s in chain.from_iterable(self.arch_profiles.itervalues()):
-            if status == s:
-                yield profile
+    def paths(self, status=None):
+        """Yield profile paths optionally matching a given status."""
+        for profile_path, profile_status in chain.from_iterable(self.arch_profiles.itervalues()):
+            if status is None or status == profile_status:
+                yield profile_path
 
     def create_profile(self, node):
         """Return profile object for a given path."""

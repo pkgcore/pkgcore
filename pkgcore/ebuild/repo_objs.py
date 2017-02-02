@@ -463,17 +463,12 @@ class RepoConfig(syncable.tree):
             return frozenset()
 
     @klass.jit_attr
-    def profile_arches(self):
+    def profile_arches(self, status=None):
         """All arches with profiles defined in the repo."""
-        return frozenset(self.profiles.arch_profiles.iterkeys())
-
-    @klass.jit_attr
-    def stable_arches(self):
-        """All arches with stable profiles defined in the repo."""
         arches = []
         for arch, profiles in self.profiles.arch_profiles.iteritems():
-            for path, status in profiles:
-                if status == 'stable':
+            for _profile_path, profile_status in profiles:
+                if status is None or profile_status == status:
                     arches.append(arch)
         return frozenset(arches)
 

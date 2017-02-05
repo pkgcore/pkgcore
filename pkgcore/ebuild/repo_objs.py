@@ -24,6 +24,7 @@ from pkgcore.repository import syncable
 
 demandload(
     'errno',
+    'os',
     'snakeoil.bash:BashParseError,iter_read_bash,read_dict',
     'snakeoil.fileutils:readfile,readlines_ascii',
     'snakeoil.sequences:iter_stable_unique',
@@ -357,6 +358,17 @@ class BundledProfiles(object):
         for profile_path, profile_status in chain.from_iterable(self.arch_profiles.itervalues()):
             if status is None or status == profile_status:
                 yield profile_path
+
+    def paths(self, status=None):
+        """Yield profile paths optionally matching a given status."""
+        if status == 'deprecated':
+            for root, dirs, files in os.walk(self.profile_base):
+                if os.path.exists(pjoin(root, 'deprecated')):
+                    yield root[len(self.profile_base) + 1:]
+        else:
+            for profile_path, profile_status in chain.from_iterable(self.arch_profiles.itervalues()):
+                if status is None or status == profile_status:
+                    yield profile_path
 
     def create_profile(self, node):
         """Return profile object for a given path."""

@@ -393,7 +393,10 @@ def is_sandbox_capable(force=False):
             return is_sandbox_capable.cached_result
         except AttributeError:
             pass
-    if not (os.path.isfile(SANDBOX_BINARY) and access(SANDBOX_BINARY, os.X_OK)):
+    if 'SANDBOX_ACTIVE' in os.environ:
+        # we can not spawn a sandbox inside another one
+        res = False
+    elif not (os.path.isfile(SANDBOX_BINARY) and access(SANDBOX_BINARY, os.X_OK)):
         res = False
     else:
         try:

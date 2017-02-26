@@ -43,8 +43,8 @@ class test_base(TestCase):
         self.assertEqual(o.PN, 'diffball')
         self.assertEqual(o.P, 'diffball-0.1')
         self.assertEqual(o.PF, 'diffball-0.1-r1')
-        self.assertEqual(o.PR, 1)
-        self.assertEqual(self.get_pkg({}, 'dev-util/diffball-0.1').PR, 0)
+        self.assertEqual(o.PR, 'r1')
+        self.assertEqual(self.get_pkg({}, 'dev-util/diffball-0.1').PR, 'r0')
 
     def test_ebuild(self):
         l = []

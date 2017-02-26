@@ -252,8 +252,8 @@ class base(metadata.package):
     def PR(self):
         r = self.revision
         if r is not None:
-            return r
-        return 0
+            return 'r%s' % r
+        return 'r0'
 
     @property
     def path(self):

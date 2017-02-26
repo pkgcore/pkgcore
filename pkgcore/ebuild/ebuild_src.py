@@ -225,6 +225,9 @@ class base(metadata.package):
     __slots__ = tuple(_get_attr.keys() + ["_pkg_metadata_shared"])
 
     PN = klass.alias_attr("package")
+    PV = klass.alias_attr("version")
+    PVR = klass.alias_attr("fullver")
+
     repo_id = klass.alias_attr("repo.repo_id")
     is_supported = klass.alias_attr('eapi.is_supported')
     tracked_attributes = klass.alias_attr('eapi.tracked_attributes')

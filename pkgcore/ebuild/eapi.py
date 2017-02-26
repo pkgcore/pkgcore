@@ -112,6 +112,9 @@ eapi_optionals = mappings.ImmutableDict({
 
     # Controls whether unpack supports absolute paths; see PMS.
     "unpack_case_insensitive": False,
+
+    # Controls whether user patches are supported.
+    "user_patches": False,
 })
 
 
@@ -395,13 +398,14 @@ eapi6 = EAPI.register(
     default_phases=eapi5.default_phases,
     metadata_keys=eapi5.metadata_keys,
     mandatory_keys=eapi5.mandatory_keys,
-    tracked_attributes=eapi5.tracked_attributes,
+    tracked_attributes=eapi5.tracked_attributes | frozenset(["user_patches"]),
     optionals=_combine_dicts(eapi5.options, dict(
         econf_docdir_and_htmldir=True,
         global_failglob=True,
         nonfatal_die=True,
         unpack_absolute_paths=True,
         unpack_case_insensitive=True,
+        user_patches=True,
         bash_compat='4.2',
     )),
     ebd_env_options=eapi5.ebd_env_options,

@@ -615,6 +615,10 @@ class buildable(ebd, setup_mixin, format.build):
         if self.eapi.options.has_merge_type:
             self.env["MERGE_TYPE"] = "source"
 
+        # available user patches for >= EAPI 6
+        if self.eapi.options.user_patches:
+            self.env["PKGCORE_USER_PATCHES"] = pkg.user_patches
+
         if self.setup_is_for_src:
             self.init_distfiles_env()
 

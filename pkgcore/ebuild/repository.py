@@ -584,6 +584,8 @@ class _ConfiguredTree(configured.tree):
 
         self.config_wrappables['iuse_effective'] = partial(
             self._generate_iuse_effective, domain.profile.iuse_effective)
+        self.config_wrappables['user_patches'] = partial(
+            self._generate_user_patches, domain.config_dir)
         configured.tree.__init__(
             self, raw_repo, self.config_wrappables,
             pkg_kls_injections=scope_update)
@@ -597,6 +599,25 @@ class _ConfiguredTree(configured.tree):
     @staticmethod
     def _generate_iuse_effective(profile_iuse_effective, pkg_iuse_stripped, *args):
         return profile_iuse_effective | pkg_iuse_stripped
+
+    def _generate_user_patches(self, config_dir, pkg, *args):
+        # determine available user patches for >= EAPI 6
+        if pkg.eapi.options.user_patches:
+            patches = []
+            patchroot = pjoin(config_dir, 'patches')
+            patch_dirs = [
+                pkg.PF,
+                '%s:%s' % (pkg.PF, pkg.slot),
+                pkg.P,
+                '%s:%s' % (pkg.P, pkg.slot),
+                pkg.PN,
+                '%s:%s' % (pkg.PN, pkg.slot),
+            ]
+            for d in patch_dirs:
+                for root, dirs, files in os.walk(pjoin(patchroot, pkg.category, d)):
+                    patches.extend([pjoin(root, f) for f in files if f.endswith(('.diff', '.patch'))])
+            return tuple(patches)
+        return None
 
     def _get_delayed_immutable(self, pkg, immutable):
         return InvertedContains(pkg.iuse.difference(immutable))

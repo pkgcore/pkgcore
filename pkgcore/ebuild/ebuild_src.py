@@ -158,6 +158,12 @@ def get_parsed_eapi(self):
         break
     return get_eapi(eapi.group(2) if eapi is not None else '0', True)
 
+def get_user_patches(self):
+    # TODO: hack, figure out how to implicitly pass pkg instances to wrapped attrs
+    if self.eapi.options.user_patches:
+        return self
+    return None
+
 def get_slot(self):
     o = self.data.pop("SLOT", "0")
     if o is None:
@@ -211,6 +217,7 @@ class base(metadata.package):
     _get_attr["eapi"] = get_parsed_eapi
     _get_attr["iuse"] = lambda s: frozenset(
         imap(intern, s.data.pop("IUSE", "").split()))
+    _get_attr["user_patches"] = get_user_patches
     _get_attr["iuse_effective"] = lambda s: s.iuse_stripped
     _get_attr["properties"] = lambda s: frozenset(
         imap(intern, s.data.pop("PROPERTIES", "").split()))

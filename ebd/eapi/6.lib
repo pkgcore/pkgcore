@@ -99,38 +99,16 @@ eapply() {
 }
 
 eapply_user() {
-	# Apply valid user patches, filenames must match *.diff or
-	# *.patch to be included.
-	#
-	# valid patch directories:
-	#   - ${CATEGORY}/${PF}(:${SLOT})
-	#   - ${CATEGORY}/${P}(:${SLOT})
-	#   - ${CATEGORY}/${PN}(:${SLOT})
-
 	[[ ${EBUILD_PHASE} == "prepare" ]] || die "${FUNCNAME}: called during invalid phase: ${EBUILD_PHASE}"
 	# return if eapply_user has already been called
 	${PKGCORE_EAPPLY_USER} && return
 	PKGCORE_EAPPLY_USER=true
 
-	local patchroot=${ROOT:-/}etc/portage/patches
-	local -a patches
-
-	__shopt_push -s nullglob
-	__var_push LC_COLLATE=POSIX
-	local dir f
-	for dir in "${patchroot}"/${CATEGORY}/{${PF},${P},${PN}}{,:${SLOT%/*}}; do
-		for f in "${dir}"/*; do
-			[[ -f ${f} ]] && [[ ${f} == *.diff || ${f} == *.patch ]] && patches+=( "${f}" )
-		done
-	done
-	__var_pop
-	__shopt_pop
-
-	if [[ ${#patches[@]} -gt 0 ]]; then
+	if [[ ${#PKGCORE_USER_PATCHES[@]} -gt 0 ]]; then
 		echo
 		einfo "Applying user patches"
 		einfo "---------------------"
-		eapply "${patches[@]}"
+		eapply "${PKGCORE_USER_PATCHES[@]}"
 		echo
 	fi
 }

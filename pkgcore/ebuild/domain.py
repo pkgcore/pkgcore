@@ -131,7 +131,7 @@ class domain(config_domain):
                    'package.use', 'package.unmask', 'package.env',
                    'package.accept_keywords'):
         _types[_thing] = 'list'
-    for _thing in ('root', 'CHOST', 'CBUILD', 'CTARGET', 'CFLAGS', 'PATH',
+    for _thing in ('root', 'config_dir', 'CHOST', 'CBUILD', 'CTARGET', 'CFLAGS', 'PATH',
                    'PORTAGE_TMPDIR', 'DISTCC_PATH', 'DISTCC_DIR', 'CCACHE_DIR'):
         _types[_thing] = 'str'
 
@@ -144,7 +144,8 @@ class domain(config_domain):
     del _types, _thing
 
     def __init__(self, profile, repositories, vdb, name=None,
-                 root='/', prefix='/', incrementals=const.incrementals,
+                 root='/', config_dir='/etc/portage', prefix='/',
+                 incrementals=const.incrementals,
                  triggers=(), **settings):
         # voodoo, unfortunately (so it goes)
         # break this up into chunks once it's stabilized (most of code
@@ -305,6 +306,7 @@ class domain(config_domain):
         # if it's made it this far...
 
         self.root = settings["ROOT"] = root
+        self.config_dir = config_dir
         self.prefix = prefix
         self.settings = ProtectedDict(settings)
 

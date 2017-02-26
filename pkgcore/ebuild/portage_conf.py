@@ -606,6 +606,7 @@ def config_from_make_conf(location=None, profile_override=None, **kwargs):
         'profile': 'profile',
         'name': 'livefs',
         'root': root,
+        'config_dir': config_dir,
     })
 
     for f in ("package.mask", "package.unmask", "package.accept_keywords",

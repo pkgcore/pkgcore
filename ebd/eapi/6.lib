@@ -86,12 +86,8 @@ eapply() {
 
 	local ret
 	for f in "${patches[@]}"; do
-		if [[ ${PKGCORE_DEBUG} -ge 1 ]]; then
-			echo patch -p1 -f -s -g0 --no-backup-if-mismatch "${options[@]}" \< "${x}" 1>&2
-		else
-			ebegin "Applying ${f##*/}"
-		fi
-		patch -p1 -f -s -g0 --no-backup-if-mismatch "${options[@]}" < "${f}"
+		[[ ! ${PKGCORE_DEBUG} -ge 1 ]] && ebegin "${f##*/}"
+		__debug_and_run "patch -p1 -f -s -g0 --no-backup-if-mismatch ${options[@]} < \"${f}\""
 		ret=$?
 		if ! eend "${ret}"; then
 			${PKGCORE_NONFATAL} && return "${ret}"

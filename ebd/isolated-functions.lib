@@ -316,6 +316,18 @@ __env_pop() {
 	done
 }
 
+# Echo a given command to stderr if debugging is enabled and then run it.
+__debug_and_run() {
+	[[ ${PKGCORE_DEBUG} -ge 1 ]] && echo $1 1>&2
+	eval $1
+}
+
+# Echo a given command to stderr and then run it.
+__echo_and_run() {
+	[[ ! ${PKGCORE_DEBUG} -ge 1 ]] && local -x PKGCORE_DEBUG=1
+	__debug_and_run "$1"
+}
+
 __qa_invoke() {
 	if ${PKGCORE_QA_SUPPRESSED:-false}; then
 		"$@"

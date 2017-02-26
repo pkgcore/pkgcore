@@ -30,6 +30,7 @@ from pkgcore.repository import prototype, errors, configured
 
 demandload(
     'errno',
+    'locale',
     'operator:attrgetter',
     'random:shuffle',
     'snakeoil.chksum:get_chksums',
@@ -614,8 +615,9 @@ class _ConfiguredTree(configured.tree):
                 '%s:%s' % (pkg.PN, pkg.slot),
             ]
             for d in patch_dirs:
-                for root, dirs, files in os.walk(pjoin(patchroot, pkg.category, d)):
-                    patches.extend([pjoin(root, f) for f in files if f.endswith(('.diff', '.patch'))])
+                for root, _dirs, files in os.walk(pjoin(patchroot, pkg.category, d)):
+                    patches.extend([pjoin(root, f) for f in sorted(files, key=locale.strxfrm)
+                                    if f.endswith(('.diff', '.patch'))])
             return tuple(patches)
         return None
 

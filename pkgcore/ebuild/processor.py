@@ -905,15 +905,12 @@ def expected_ebuild_env(pkg, d=None, env_source_override=None, depends=False):
     if d is None:
         d = {}
     d["CATEGORY"] = pkg.category
-    d["PF"] = "-".join((pkg.package, pkg.fullver))
-    d["P"] = "-".join((pkg.package, pkg.version))
-    d["PN"] = pkg.package
-    d["PV"] = pkg.version
-    if pkg.revision is None:
-        d["PR"] = "r0"
-    else:
-        d["PR"] = "r%i" % pkg.revision
-    d["PVR"] = pkg.fullver
+    d["PF"] = pkg.PF
+    d["P"] = pkg.P
+    d["PN"] = pkg.PN
+    d["PV"] = pkg.PV
+    d["PR"] = pkg.PR
+    d["PVR"] = pkg.PVR
     if env_source_override:
         path = env_source_override.path
         if path is not None:

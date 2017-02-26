@@ -652,10 +652,14 @@ class EbuildProcessor(object):
                     continue
                 if not key[0].isalpha():
                     raise KeyError("%s: bash doesn't allow digits as the first char" % (key,))
-                if not isinstance(val, basestring):
+                if not isinstance(val, (basestring, list, tuple)):
                     raise ValueError("_generate_env_str was fed a bad value; key=%s, val=%s"
                                      % (key, val))
-                if val.isalnum():
+
+                if isinstance(val, (list, tuple)):
+                    data.append("%s=(%s)" % (key, ' '.join(
+                        '[%s]="%s"' % (i, value) for i, value in enumerate(val))))
+                elif val.isalnum():
                     data.append("%s=%s" % (key, val))
                 elif "'" not in val:
                     data.append("%s='%s'" % (key, val))

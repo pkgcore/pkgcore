@@ -146,16 +146,24 @@ __ebd_exec_main() {
 		die "failed sourcing ${PKGCORE_EBD_PATH}/ebuild.lib"
 	fi
 
-	if [[ -n ${SANDBOX_LOG} ]]; then
-		__ebd_read_line com
-		if [[ ${com} != "sandbox_log?" ]]; then
+	__ebd_read_line com
+	case ${com} in
+		"sandbox_log?")
+			if [[ ! ${SANDBOX_LOG} ]]; then
+				echo "sandbox enabled but no SANDBOX_LOG?!"
+				exit 1
+			fi
+			__ebd_write_line "${SANDBOX_LOG}"
+			declare -rx SANDBOX_LOG=${SANDBOX_LOG}
+			addwrite "${SANDBOX_LOG}"
+			;;
+		no_sandbox)
+			;;
+		*)
 			echo "unknown com '${com}'"
 			exit 1
-		fi
-		__ebd_write_line "${SANDBOX_LOG}"
-		declare -rx SANDBOX_LOG=${SANDBOX_LOG}
-		addwrite "${SANDBOX_LOG}"
-	fi
+			;;
+	esac
 
 	re=$(readonly | cut -s -d '=' -f 1 | cut -s -d ' ' -f 3)
 	for x in ${re}; do

@@ -6,11 +6,3 @@ Pkgcore manager base module.
 """
 
 __version__ = '0.9.5'
-
-# XXX yes; this location sucks, but we need some way to castrate the sandbox
-# if we're ever invoked w/in it.
-import os
-
-if os.environ.get("SANDBOX_ON", 0) and not \
-        os.environ.get("PKGCORE_INTENTIONALLY_SANDBOXED", False):
-    os.environ["SANDBOX_ON"] = '0'

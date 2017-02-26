@@ -127,8 +127,11 @@ eapply_user() {
 	__shopt_pop
 
 	if [[ ${#patches[@]} -gt 0 ]]; then
-		ewarn "Applying user patches"
+		echo
+		einfo "Applying user patches"
+		einfo "---------------------"
 		eapply "${patches[@]}"
+		echo
 	fi
 }
 

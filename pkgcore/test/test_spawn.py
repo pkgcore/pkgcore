@@ -67,8 +67,6 @@ class SpawnTest(TempDirMixin, TestCase):
 
     @capability_based(spawn.is_sandbox_capable, "sandbox binary wasn't found")
     def test_sandbox(self):
-        if os.environ.get('SANDBOX_ON', False):
-            raise SkipTest("sandbox doesn't like running inside itself")
         fp = self.generate_script(
             "pkgcore-spawn-sandbox.sh", "echo $LD_PRELOAD")
         ret = spawn.spawn_get_output(fp, spawn_type=spawn.spawn_sandbox)
@@ -86,8 +84,6 @@ class SpawnTest(TempDirMixin, TestCase):
 
         this verifies our fix works.
         """
-        if os.environ.get('SANDBOX_ON', False):
-            raise SkipTest("sandbox doesn't like running inside itself")
         fp = self.generate_script(
             "pkgcore-spawn-sandbox.sh", "echo $LD_PRELOAD")
         dpath = os.path.join(self.dir, "dar")

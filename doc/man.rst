@@ -1,9 +1,8 @@
 Man Pages
 =========
 
-Pkgcore installs a set of man pages relating to the tools (e.g. pmerge) it
-provides as well as ones detailing configuration, development, and other
-general information.
+pkgcore provides a set of man pages relating to its tools (e.g. pmerge) as well
+as ones detailing configuration, development, and other general information.
 
 .. toctree::
     :glob:

@@ -24,6 +24,8 @@ from snakeoil.compatibility import raise_from, IGNORED_EXCEPTIONS
 from snakeoil.currying import post_curry, pretty_docs
 from snakeoil.demandload import demandload
 from snakeoil.osutils import ensure_dirs, abspath, normpath, pjoin, listdir_files
+from snakeoil.process.spawn import (
+    spawn_bash, spawn, is_sandbox_capable, is_userpriv_capable, spawn_get_output)
 
 from pkgcore.ebuild import ebuild_built, const
 from pkgcore.ebuild.processor import (
@@ -31,8 +33,6 @@ from pkgcore.ebuild.processor import (
     expected_ebuild_env, chuck_UnhandledCommand, inherit_handler)
 from pkgcore.operations import observer, format
 from pkgcore.os_data import portage_gid, portage_uid, xargs
-from pkgcore.spawn import (
-    spawn_bash, spawn, is_sandbox_capable, is_userpriv_capable, spawn_get_output)
 
 demandload(
     'textwrap',

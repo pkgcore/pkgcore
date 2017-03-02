@@ -5,7 +5,7 @@ __all__ = ("bzr_syncer",)
 
 import os
 
-from pkgcore.spawn import spawn_get_output
+from snakeoil.process.spawn import spawn_get_output
 from pkgcore.sync import base
 
 

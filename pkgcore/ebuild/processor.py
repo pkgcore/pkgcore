@@ -44,9 +44,9 @@ from functools import partial
 import os
 import signal
 
+import pkgcore
 from pkgcore import const, os_data
 from pkgcore.ebuild import const as e_const
-import pkgcore.spawn
 
 from snakeoil import klass
 from snakeoil.currying import pretty_docs
@@ -60,6 +60,7 @@ demandload(
     'traceback',
     'snakeoil:fileutils',
     'snakeoil:process',
+    'snakeoil.process:spawn',
     'pkgcore.log:logger',
 )
 
@@ -104,7 +105,7 @@ def shutdown_all_processors():
         logger.error(e)
         raise
 
-pkgcore.spawn.atexit_register(shutdown_all_processors)
+spawn.atexit_register(shutdown_all_processors)
 
 
 @_single_thread_allowed
@@ -118,7 +119,7 @@ def request_ebuild_processor(userpriv=False, sandbox=None):
     """
 
     if sandbox is None:
-        sandbox = pkgcore.spawn.is_sandbox_capable()
+        sandbox = spawn.is_sandbox_capable()
 
     for x in inactive_ebp_list:
         if x.userprived() == userpriv and (x.sandboxed() or not sandbox):
@@ -272,7 +273,7 @@ class EbuildProcessor(object):
                 "gid": os_data.portage_gid,
                 "groups": [os_data.portage_gid]})
         else:
-            if pkgcore.spawn.is_userpriv_capable():
+            if spawn.is_userpriv_capable():
                 spawn_opts.update({"gid": os_data.portage_gid,
                                    "groups": [0, os_data.portage_gid]})
             self.__userpriv = False
@@ -303,13 +304,13 @@ class EbuildProcessor(object):
 
         args = []
         if sandbox:
-            if not pkgcore.spawn.is_sandbox_capable():
+            if not spawn.is_sandbox_capable():
                 raise ValueError("spawn lacks sandbox capabilities")
             self.__sandbox = True
-            spawn_func = pkgcore.spawn.spawn_sandbox
+            spawn_func = spawn.spawn_sandbox
 #            env.update({"SANDBOX_DEBUG":"1", "SANDBOX_DEBUG_LOG":"/var/tmp/test"})
         else:
-            spawn_func = pkgcore.spawn.spawn
+            spawn_func = spawn.spawn
 
         # force to a neutral dir so that sandbox won't explode if
         # ran from a nonexistent dir
@@ -317,14 +318,14 @@ class EbuildProcessor(object):
         # Force the pipes to be high up fd wise so nobody stupidly hits 'em, we
         # start from max-3 to avoid a bug in older bash where it doesn't check
         # if an fd is in use before claiming it.
-        max_fd = min(pkgcore.spawn.max_fd_limit, 1024)
+        max_fd = min(spawn.max_fd_limit, 1024)
         env.update({
             "PKGCORE_EBD_READ_FD": str(max_fd-4),
             "PKGCORE_EBD_WRITE_FD": str(max_fd-3)})
         # pgid=0: Each ebuild processor is the process group leader for all its
         # spawned children so everything can be terminated easily if necessary.
         self.pid = spawn_func(
-            [const.BASH_BINARY, self.ebd, "daemonize"],
+            [spawn.BASH_BINARY, self.ebd, "daemonize"],
             fd_pipes={0: 0, 1: 1, 2: 2, max_fd-4: cread, max_fd-3: dwrite},
             returnpid=True, env=env, pgid=0, *args, **spawn_opts)[0]
 
@@ -343,7 +344,7 @@ class EbuildProcessor(object):
         self.write(e_const.EBD_PATH)
 
         # send PKGCORE_PYTHON_BINARY...
-        self.write(pkgcore.spawn.find_invoking_python())
+        self.write(spawn.find_invoking_python())
         self.write(
             os.pathsep.join([
                 normpath(abspath(pjoin(pkgcore.__file__, os.pardir, os.pardir))),

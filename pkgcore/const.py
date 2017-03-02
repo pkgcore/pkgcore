@@ -49,6 +49,4 @@ DATA_PATH = _GET_CONST('DATA_PATH', osp.dirname(osp.dirname(osp.realpath(__file_
 CONFIG_PATH = _GET_CONST('CONFIG_PATH', '%(DATA_PATH)s/config')
 PATH_FORCED_PREPEND = _GET_CONST('INJECTED_BIN_PATH', ('%(DATA_PATH)s/bin',))
 
-SANDBOX_BINARY = _GET_CONST('SANDBOX_BINARY', '/usr/bin/sandbox')
-BASH_BINARY = _GET_CONST('BASH_BINARY', '/bin/bash')
 CP_BINARY = _GET_CONST('CP_BINARY', '/bin/cp')

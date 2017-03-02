@@ -13,12 +13,12 @@ from functools import partial
 import os
 
 from snakeoil.osutils import ensure_dirs, pjoin, unlink_if_exists
+from snakeoil.process.spawn import spawn
 
 from pkgcore.const import CP_BINARY
 from pkgcore.fs import contents, fs
 from pkgcore.fs.livefs import gen_obj
 from pkgcore.plugin import get_plugin
-from pkgcore.spawn import spawn
 
 
 __all__ = [

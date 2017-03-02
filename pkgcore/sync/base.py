@@ -20,7 +20,7 @@ demandload(
     'stat',
     'errno',
     'snakeoil:process',
-    'pkgcore:os_data,plugin,spawn',
+    'pkgcore:os_data,plugin',
 )
 
 
@@ -163,7 +163,7 @@ class ExternalSyncer(syncer):
         self.binary_path = self.require_binary(self.binary)
 
     def _spawn(self, command, pipes, **kwargs):
-        return spawn.spawn(
+        return process.spawn.spawn(
             command, fd_pipes=pipes, uid=self.local_user, env=self.env, **kwargs)
 
     @staticmethod

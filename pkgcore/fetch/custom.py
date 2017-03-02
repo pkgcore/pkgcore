@@ -12,8 +12,8 @@ import sys
 
 from snakeoil.osutils import ensure_dirs, pjoin
 from snakeoil.compatibility import raise_from
+from snakeoil.process.spawn import spawn_bash, is_userpriv_capable
 
-from pkgcore.spawn import spawn_bash, is_userpriv_capable
 from pkgcore.os_data import portage_uid, portage_gid
 from pkgcore.fetch import errors, base, fetchable
 from pkgcore.config import ConfigHint

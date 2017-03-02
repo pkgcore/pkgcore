@@ -6,7 +6,7 @@ __all__ = ("file_identifier",)
 from snakeoil import compatibility
 from snakeoil.klass import jit_attr
 
-from pkgcore.spawn import spawn_get_output
+from snakeoil.process.spawn import spawn_get_output
 
 
 class file_identifier(object):

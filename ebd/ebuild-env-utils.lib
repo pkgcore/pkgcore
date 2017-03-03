@@ -82,13 +82,6 @@ __environ_save_to_file() {
 		die "${FUNCNAME}: requires at least one argument, two max; given $@"
 	fi
 
-	# the spaces on both sides are important- otherwise, the later ${DONT_EXPORT_VARS/ temp_umask /} won't match.
-	# we use spaces on both sides, to ensure we don't remove part of a variable w/ the same name-
-	# ex: temp_umask_for_some_app == _for_some_app.
-	DONT_EXPORT_VARS+=( temp_umask )
-	local temp_umask=$(umask)
-	umask 0002
-
 	if [[ $# -eq 1 ]]; then
 		__environ_dump > "$1"
 	else
@@ -96,10 +89,6 @@ __environ_save_to_file() {
 	fi
 	chown portage:portage "$1" &> /dev/null
 	chmod 0664 "$1" &> /dev/null
-
-	DONT_EXPORT_VARS=( "${DONT_EXPORT_VARS[@]/temp_umask}" )
-
-	umask ${temp_umask}
 }
 
 # reload a saved env, applying usual filters to the env prior to eval'ing it.

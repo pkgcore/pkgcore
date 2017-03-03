@@ -122,17 +122,9 @@ __environ_sanitize_saved_env() {
 	(
 		# protect the core vars and functions needed to do a __environ_dump
 		# some of these are already readonly- we still are forcing it to be safe.
-		declare -r PKGCORE_PYTHONPATH=${PKGCORE_PYTHONPATH} &> /dev/null
-		declare -r PKGCORE_PYTHON_BINARY=${PKGCORE_PYTHON_BINARY} &> /dev/null
-		declare -r DONT_EXPORT_VARS=( "${DONT_EXPORT_VARS[@]}" ) &> /dev/null
-		declare -ar DONT_EXPORT_FUNCS=( "${DONT_EXPORT_FUNCS[@]}" ) &> /dev/null
-		declare -r SANDBOX_ON=${SANDBOX_ON} &> /dev/null
-		declare -r T=${T} &> /dev/null
-#		declare -rx PATH=${PATH} &> /dev/null
-
-		readonly -f __filter_env &> /dev/null
-		readonly -f __environ_dump &> /dev/null
-		readonly -f __regex_filter_input &> /dev/null
+		readonly PKGCORE_PYTHONPATH PKGCORE_PYTHON_BINARY SANDBOX_ON T
+		readonly -a DONT_EXPORT_VARS DONT_EXPORT_FUNCS
+		readonly -f __filter_env __environ_dump __regex_filter_input
 
 		__shopt_push -f
 		IFS=$' \t\n'

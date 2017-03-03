@@ -114,7 +114,7 @@ __environ_save_to_file() {
 
 # reload a saved env, applying usual filters to the env prior to eval'ing it.
 __environ_sanitize_saved_env() {
-	local src e ret EXISTING_PATH
+	local src e ret PKGCORE_EXISTING_PATH
 	# localize these so the reload doesn't have the ability to change them
 
 	if [[ $# -ne 1 ]]; then
@@ -170,7 +170,7 @@ __environ_sanitize_saved_env() {
 		# declare and friends can set vars via many, many different ways), thus we use it
 		# as the final filtering.
 
-		unset -v EXISTING_PATH old_phase
+		unset -v PKGCORE_EXISTING_PATH old_phase
 
 		rm -f "${T}"/.scrubbed-env
 		__environ_dump > "${T}"/.scrubbed-env || die "dumping environment failed"

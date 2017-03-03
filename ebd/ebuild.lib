@@ -75,7 +75,7 @@ unset -v GZIP BZIP BZIP2 CDPATH GREP_OPTIONS GREP_COLOR GLOB_IGNORE
 alias __load_environ='{
 	[[ -z ${PKGCORE_TARGET_ENV} ]] && die "__load_environ was invoked w/out PKGCORE_TARGET_ENV set";
 	[[ -z ${T} ]] && die "__load_environ requires \$T to be set";
-	EXISTING_PATH=${PATH};
+	PKGCORE_EXISTING_PATH=${PATH};
 	__timed_call __environ_sanitize_saved_env "${PKGCORE_TARGET_ENV}"
 	if [[ -n ${PKGCORE_PERF_DEBUG} ]]; then
 		echo "timing source ${PKGCORE_TARGET_ENV}" >&2
@@ -85,10 +85,10 @@ alias __load_environ='{
 		source "${PKGCORE_TARGET_ENV}" >&2
 	fi
 	[[ $? == 0 ]] || die "sourcing saved env failed";
-	__ensure_PATH "${EXISTING_PATH}";
+	__ensure_PATH "${PKGCORE_EXISTING_PATH}";
 	__timed_call __load_eapi_libs
 	__timed_call __source_bashrcs
-	unset -v EXISTING_PATH;
+	unset -v PKGCORE_EXISTING_PATH;
 }'
 
 # Invoke this when we know that this version of pkgcore generated the env dump;
@@ -96,7 +96,7 @@ alias __load_environ='{
 alias __load_safe_environ='{
 	[[ -z ${PKGCORE_TARGET_ENV} ]] && die "__load_safe_environ was invoked w/out PKGCORE_TARGET_ENV set";
 	[[ -z ${T} ]] && die "__load_safe_environ requires \$T to be set";
-	EXISTING_PATH=${PATH};
+	PKGCORE_EXISTING_PATH=${PATH};
 	if [[ -n ${PKGCORE_PERF_DEBUG} ]]; then
 		echo "timing source ${PKGCORE_TARGET_ENV}" >&2
 		time source "${PKGCORE_TARGET_ENV}" >&2
@@ -105,14 +105,14 @@ alias __load_safe_environ='{
 		source "${PKGCORE_TARGET_ENV}" >&2
 	fi
 	[[ $? == 0 ]] || die "sourcing saved env failed";
-	__ensure_PATH "${EXISTING_PATH}";
+	__ensure_PATH "${PKGCORE_EXISTING_PATH}";
 	__timed_call __load_eapi_libs
 	__timed_call __source_bashrcs
-	unset -v EXISTING_PATH;
+	unset -v PKGCORE_EXISTING_PATH;
 }'
 
 alias __init_environ='{
-	EXISTING_PATH=${PATH};
+	PKGCORE_EXISTING_PATH=${PATH};
 	__timed_call __load_eapi_libs
 	if [[ -n ${PKGCORE_PERF_DEBUG} ]]; then
 		echo "timing eval \$(__generate_initial_ebuild_environ)" >&2
@@ -122,9 +122,9 @@ alias __init_environ='{
 		eval "$(__generate_initial_ebuild_environ)"
 	fi
 	[[ $? == 0 ]] || die "failed loading initialized environment";
-	__ensure_PATH "${EXISTING_PATH}";
+	__ensure_PATH "${PKGCORE_EXISTING_PATH}";
 	__timed_call __source_bashrcs
-	unset -v EXISTING_PATH;
+	unset -v PKGCORE_EXISTING_PATH;
 }'
 
 shopt -s extdebug &> /dev/null
@@ -142,14 +142,14 @@ PKGCORE_IS_NOT_HELPER=1
 
 # ensure the passed in PATH has its components in $PATH
 __ensure_PATH() {
-	local EXISTING_PATH=$1
+	local PKGCORE_EXISTING_PATH=$1
 	local adds
 	# note this isolates the adds in the same order they appear in
 	# the passed in path, maintaining that order.
-	if [[ ${EXISTING_PATH} != ${PATH} ]]; then
+	if [[ ${PKGCORE_EXISTING_PATH} != ${PATH} ]]; then
 		local IFS=:
 		local p
-		for p in ${EXISTING_PATH}; do
+		for p in ${PKGCORE_EXISTING_PATH}; do
 			# keep in mind PATH=":foon" is a valid way to say "cwd"
 			[[ -z ${p} ]] && continue
 			if ! __safe_has "${p}" ${PATH} && ! __safe_has "${p}" ${adds}; then
@@ -187,7 +187,7 @@ __load_eapi_libs() {
 __generate_initial_ebuild_environ() {
 	local ORIG_CC=${CC}
 	local ORIG_CXX=${CXX}
-	local EXISTING_PATH=${PATH}
+	local PKGCORE_EXISTING_PATH=${PATH}
 	local T=${T}
 
 	if [[ ${EBUILD_PHASE} == "setup" ]]; then
@@ -198,7 +198,7 @@ __generate_initial_ebuild_environ() {
 		if [[ ${USERLAND} == "GNU" ]]; then
 			local PORTAGE_SHIFTED_PATH=${PATH}
 			__timed_call __qa_invoke source /etc/profile.env
-			__ensure_PATH "${EXISTING_PATH}"
+			__ensure_PATH "${PKGCORE_EXISTING_PATH}"
 		fi
 
 		# restore the saved env vars.
@@ -224,7 +224,7 @@ __generate_initial_ebuild_environ() {
 		unset -v ORIG_CC ORIG_CXX
 	fi
 
-	__ensure_PATH "${EXISTING_PATH}"
+	__ensure_PATH "${PKGCORE_EXISTING_PATH}"
 	if [[ -n ${T} ]]; then
 		# Use a file if possible; faster since bash does this lovely byte by
 		# byte reading if it's a pipe. Having the file around is useful for

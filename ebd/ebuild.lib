@@ -459,14 +459,14 @@ __execute_phases() {
 				PKGCORE_SAVE_ENV=false
 
 				PKGCORE_DIE_OUTPUT_DETAILS=false
-				if [[ -z ${QA_CONTROLLED_EXTERNALLY} ]]; then
+				if [[ -z ${PKGCORE_ENABLE_QA} ]]; then
 					__qa_interceptors_enable
 				fi
 
 				EBUILD_PHASE="depend"
 				__load_ebuild "${EBUILD}"
 
-				if [[ -z ${QA_CONTROLLED_EXTERNALLY} ]]; then
+				if [[ -z ${PKGCORE_ENABLE_QA} ]]; then
 					__qa_interceptors_disable
 				fi
 				if [[ ${myarg} == depend ]]; then

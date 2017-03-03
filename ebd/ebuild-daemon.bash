@@ -217,7 +217,7 @@ __ebd_exec_main() {
 	# same for loading depends .lib
 	# important- this needs be loaded after the declare -fr so it doesn't get marked as readonly.
 	# call.
-	export QA_CONTROLLED_EXTERNALLY="yes"
+	export PKGCORE_ENABLE_QA="yes"
 	__qa_interceptors_enable
 
 	source "${PKGCORE_EBD_PATH}"/eapi/depend.lib >&2 || die "failed sourcing eapi/depend.lib"

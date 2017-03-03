@@ -757,7 +757,9 @@ class TestOnDiskProfile(profile_mixin, TestCase):
     def test_packages(self):
         self.mk_profiles(
             {"packages":"*dev-util/diffball\ndev-util/foo\ndev-util/foo2\n"},
-            {"packages":"*dev-util/foo\n-*dev-util/diffball\n-dev-util/foo2\n"}
+            {"packages":"*dev-util/foo\n-*dev-util/diffball\n-dev-util/foo2\n"},
+            {"packages":"*dev-util/foo\n", "parent":"0"},
+            {"packages":"-*\n*dev-util/foo\n", "parent":"0"}
         )
         p = self.get_profile("0")
         self.assertEqual(sorted(p.system), sorted([atom("dev-util/diffball")]))
@@ -768,6 +770,13 @@ class TestOnDiskProfile(profile_mixin, TestCase):
         self.assertEqual(sorted(p.system), sorted([atom("dev-util/foo")]))
         self.assertEqual(sorted(p.masks),
             [atom("dev-util/foo", negate_vers=True)])
+
+        p = self.get_profile("2")
+        self.assertEqual(sorted(p.system),
+            sorted([atom("dev-util/diffball"), atom("dev-util/foo")]))
+
+        p = self.get_profile("3")
+        self.assertEqual(sorted(p.system), sorted([atom("dev-util/foo")]))
 
     def test_masks(self):
         self.mk_profiles(

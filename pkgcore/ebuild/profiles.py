@@ -157,9 +157,12 @@ class ProfileNode(object):
         profile_set = repo_config is not None and 'profile-set' in repo_config.profile_formats
         # sys packages and visibility
         sys, neg_sys, vis, neg_vis = [], [], [], []
+        neg_sys_wildcard = False
         for line in data:
             if line[0] == '-':
-                if line[1] == '*':
+                if line == '-*':
+                    neg_sys_wildcard = True
+                elif line[1] == '*':
                     neg_sys.append(self.eapi_atom(line[2:]))
                 elif profile_set:
                     neg_sys.append(self.eapi_atom(line[1:]))
@@ -172,8 +175,11 @@ class ProfileNode(object):
                     sys.append(self.eapi_atom(line))
                 else:
                     vis.append(self.eapi_atom(line, negate_vers=True))
+        system = [tuple(neg_sys), tuple(sys)]
+        if neg_sys_wildcard:
+            system.append(neg_sys_wildcard)
         return self._packages_kls(
-            (tuple(neg_sys), tuple(sys)),
+            tuple(system),
             (tuple(neg_vis), tuple(vis)))
 
     @load_property("parent")
@@ -491,6 +497,8 @@ class ProfileStack(object):
         s = set()
         for node in self.stack:
             val = getattr(node, attr)
+            if len(val) > 2 and val[2]:
+                s.clear()
             s.difference_update(val[0])
             s.update(val[1])
         return s

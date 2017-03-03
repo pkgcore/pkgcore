@@ -152,14 +152,14 @@ PKGCORE_IS_NOT_HELPER=1
 
 # ensure the passed in PATH has its components in $PATH
 __ensure_PATH() {
-	local PKGCORE_EXISTING_PATH=$1
+	local existing_path=$1
 	local adds
 	# note this isolates the adds in the same order they appear in
 	# the passed in path, maintaining that order.
-	if [[ ${PKGCORE_EXISTING_PATH} != ${PATH} ]]; then
+	if [[ ${existing_path} != ${PATH} ]]; then
 		local IFS=:
 		local p
-		for p in ${PKGCORE_EXISTING_PATH}; do
+		for p in ${existing_path}; do
 			# keep in mind PATH=":foon" is a valid way to say "cwd"
 			[[ -z ${p} ]] && continue
 			if ! __safe_has "${p}" ${PATH} && ! __safe_has "${p}" ${adds}; then

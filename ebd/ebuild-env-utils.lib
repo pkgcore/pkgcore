@@ -93,8 +93,7 @@ __environ_save_to_file() {
 
 # reload a saved env, applying usual filters to the env prior to eval'ing it.
 __environ_sanitize_saved_env() {
-	local src e ret PKGCORE_EXISTING_PATH
-	# localize these so the reload doesn't have the ability to change them
+	local src
 
 	if [[ $# -ne 1 ]]; then
 		die "scrub_environ called with wrong args, only one can be given: $@"
@@ -111,14 +110,14 @@ __environ_sanitize_saved_env() {
 	(
 		# protect the core vars and functions needed to do a __environ_dump
 		# some of these are already readonly- we still are forcing it to be safe.
-		readonly PKGCORE_PYTHONPATH PKGCORE_PYTHON_BINARY SANDBOX_ON T
+		readonly PKGCORE_PYTHONPATH PKGCORE_PYTHON_BINARY PKGCORE_EXISTING_PATH SANDBOX_ON T
 		readonly -a DONT_EXPORT_VARS DONT_EXPORT_FUNCS
 		readonly -f __filter_env __environ_dump __regex_filter_input
 
 		__shopt_push -f
 		IFS=$' \t\n'
 		declare -a PKGCORE_FUNC_ARRAY=( "${DONT_EXPORT_FUNCS[@]}" )
-		declare -a PKGCORE_VAR_ARRAY=( "${DONT_EXPORT_VARS[@]}" src x )
+		declare -a PKGCORE_VAR_ARRAY=( "${DONT_EXPORT_VARS[@]}" src )
 		IFS=,
 		PKGCORE_FUNC_ARRAY=${PKGCORE_FUNC_ARRAY[*]}
 		PKGCORE_VAR_ARRAY=${PKGCORE_VAR_ARRAY[*]}

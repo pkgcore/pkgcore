@@ -45,17 +45,6 @@ __escape_regex_array() {
 	eval $1='( "${__tmp_array[@]}" )'
 } &> /dev/null
 
-__environ_list_vars() {
-	declare() {
-		local __ret=${2%%=*}
-		[[ $2 != ${__ret} ]] && echo "${__ret}"
-		:
-	}
-	eval "$(builtin declare -p)" || die "${FUNCNAME}: eval failed" >&2
-	unset -f declare
-	:
-}
-
 __filter_env() {
 	local opts
 	[[ ${PKGCORE_DEBUG} -ge 1 ]] && opts="--debug"
@@ -67,20 +56,21 @@ __filter_env() {
 # dump the environ to stdout.
 __environ_dump() {
 	__shopt_push -f
-	local __func_filters=( ${DONT_EXPORT_FUNCS} ${PKGCORE_EAPI_FUNCS} "${PKGCORE_PRELOADED_ECLASSES[@]}" )
-	${__QA_INTERCEPTORS_ACTIVE:-false} && __func_filters+=( "${PKGCORE_QA_INTERCEPTORS[@]}" )
 
-	# Punt any regex chars...
-	__escape_regex_array __func_filters
-	__PKGCORE_TARGETS=( $(compgen -A function | __regex_filter_input "${__func_filters[@]}" ) )
-	unset -v __func_filters
-	if [[ ${#__PKGCORE_TARGETS[@]} -ne 0 ]]; then
-		declare -f "${__PKGCORE_TARGETS[@]}" || die "failed outputting funcs ${__PKGCORE_TARGETS[@]}" >&2
+	# dump variables first so no local variables get picked up
+	local exported_vars=( $(compgen -v | __regex_filter_input ${DONT_EXPORT_VARS[@]}) )
+	if [[ ${#exported_vars[@]} -ne 0 ]]; then
+		declare -p "${exported_vars[@]}" || die "failed outputting env vars ${exported_vars[@]}" >&2
 	fi
 
-	__PKGCORE_TARGETS=( $(__environ_list_vars | __regex_filter_input ${DONT_EXPORT_VARS} __PKGCORE_TARGETS) )
-	if [[ ${#__PKGCORE_TARGETS[@]} -ne 0 ]]; then
-		declare -p "${__PKGCORE_TARGETS[@]}" || die "failed outputting env vars ${__PKGCORE_TARGETS[@]}" >&2
+	local func_filters=( "${DONT_EXPORT_FUNCS[@]}" ${PKGCORE_EAPI_FUNCS} "${PKGCORE_PRELOADED_ECLASSES[@]}" )
+	${__QA_INTERCEPTORS_ACTIVE:-false} && func_filters+=( "${PKGCORE_QA_INTERCEPTORS[@]}" )
+
+	# Punt any regex chars...
+	__escape_regex_array ___func_filters
+	local exported_funcs=( $(compgen -A function | __regex_filter_input "${func_filters[@]}" ) )
+	if [[ ${#exported_funcs[@]} -ne 0 ]]; then
+		declare -f "${exported_funcs[@]}" || die "failed outputting funcs ${exported_funcs[@]}" >&2
 	fi
 
 	__shopt_pop

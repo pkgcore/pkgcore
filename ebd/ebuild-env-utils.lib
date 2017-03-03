@@ -151,9 +151,6 @@ __environ_sanitize_saved_env() {
 		# to output it- this mechanism is far more bulletproof then the load filtering (since
 		# declare and friends can set vars via many, many different ways), thus we use it
 		# as the final filtering.
-
-		unset -v PKGCORE_EXISTING_PATH old_phase
-
 		rm -f "${T}"/.scrubbed-env
 		__environ_dump > "${T}"/.scrubbed-env || die "dumping environment failed"
 	) && return

@@ -13,24 +13,37 @@
 # those vars can support posix (think egrep) regex.  They should hold all vars/funcs that are internal
 # ebd vars.  Basically, filter all vars/funcs that are specific to ebd, not the ebuild.
 #
-# after loading the env, user defined pre hooks are executed, __dyn_${EBUILD_PHASE} is executed,
-# and the post hooks are executed.  If the env needs to be flushed to disk, MUST_EXPORT_ENV is set to
-# "yes", and __execute_phases will dump it to ${T}/environment.
+# after loading the env, user defined pre hooks are executed,
+# __dyn_${EBUILD_PHASE} is executed, and the post hooks are executed.  If the
+# env needs to be flushed to disk, PKGCORE_MUST_EXPORT_ENV is set to "yes", and
+# __execute_phases will dump it to ${T}/environment.
 #
 # few notes on general env stuff- if it's not ebuild specific or a user option, it's typically marked
 # readonly.  This limits users, but also helps to ensure that reloaded envs from older portages don't
 # overwrite an internal ebd.sh function that has since changed.
 
 DONT_EXPORT_VARS=(
-	"${PKGCORE_BASH_VARS[@]}" BASH._* OLDPWD SANDBOX_.*
-	"CCACHE.*" "DISTCC.*" SYNC DIR FEATURES
-	"CONFIG_PROTECT.*" WORKDIR "RSYNC_.*" GENTOO_MIRRORS "(DIST|FILES|RPM|ECLASS)DIR"
-	MUST_EXPORT_ENV QA_CONTROLLED_EXTERNALLY myarg
-	"ACCEPT_(KEYWORDS|LICENSE)" "BUILD(_PREFIX|DIR)" T
-	EBUILD_PHASE "___.*" "PKGCORE_.*" "PORTAGE_.*" "SUDO_.*" ret line phases D
-	"PORT(_LOGDIR|DIR(_OVERLAY)?)" ROOT done e "PROFILE_.*" EBUILD ECLASS TMP
-	"EMERGE_(WARNING_DELAY|FROM)" MERGE_TYPE REPLACING_VERSIONS REPLACED_BY_VERSION
-	"(RESUME|FETCH)COMMAND(_.*)?" XARGS COLORTERM "LESS(OPEN)?" "(ftp|http)_proxy"
+	# bash-related
+	"${PKGCORE_BASH_VARS[@]}" "BASH_.*" COLUMNS OLDPWD
+
+	# external programs
+	"SANDBOX_.*" "CCACHE.*" "DISTCC.*" "SUDO_.*"
+
+	# internals
+	"___.*" "PKGCORE_.*" ret
+
+	# portage-compat
+	"PORTAGE_.*" "EMERGE_.*" FEATURES EMERGE_FROM
+	"CONFIG_PROTECT.*" "RSYNC_.*" GENTOO_MIRRORS "(DIST|FILES|RPM|ECLASS)DIR"
+	"ACCEPT_(PROPERTIES|RESTRICT)" COLLISION_IGNORE
+	"(RESUME|FETCH)COMMAND(_.*)?" XARGS SYNC DIR
+	"ACCEPT_(KEYWORDS|LICENSE)" "BUILD(_PREFIX|DIR)"
+	"PORT(_LOGDIR|DIR(_OVERLAY)?)" "PROFILE_.*" ECLASS TMP
+
+	# PMS
+	CATEGORY PF P PN PV PR PVR EBUILD A EBUILD_PHASE
+	T WORKDIR D ED ROOT EROOT EPREFIX HOME
+	MERGE_TYPE REPLACING_VERSIONS REPLACED_BY_VERSION
 )
 
 if [[ -z ${PKGCORE_EBD_PATH} ]]; then
@@ -368,10 +381,8 @@ __execute_phases() {
 	trap __helper_failed SIGUSR1
 	declare -rx PKGCORE_EBUILD_PROCESS_PID=${BASHPID}
 
-	local myarg ret
-	for myarg in $*; do
-		EBUILD_PHASE=${myarg}
-
+	local ret
+	for EBUILD_PHASE in $*; do
 		PKGCORE_SAVE_ENV=true
 		PKGCORE_DIE_OUTPUT_DETAILS=true
 		PKGCORE_SUPPRESS_BASHRCS=false
@@ -431,7 +442,7 @@ __execute_phases() {
 				EBUILD_PHASE="setup"
 
 				# binpkgs don't need to reinitialize the env.
-				if [[ ${myarg} == "setup" ]]; then
+				if [[ ${EBUILD_PHASE} == "setup" ]]; then
 					[[ -n ${DISTCC_LOG} ]] && addwrite "$(dirname ${DISTCC_LOG})"
 
 					# if they aren't set, then holy hell ensues.  deal.
@@ -469,7 +480,7 @@ __execute_phases() {
 				if [[ -z ${PKGCORE_ENABLE_QA} ]]; then
 					__qa_interceptors_disable
 				fi
-				if [[ ${myarg} == depend ]]; then
+				if [[ ${EBUILD_PHASE} == depend ]]; then
 					__dump_metadata_keys
 				else
 					# Use gawk if at possible; it's a fair bit faster since

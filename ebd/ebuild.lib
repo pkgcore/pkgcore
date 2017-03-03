@@ -21,11 +21,9 @@
 # readonly.  This limits users, but also helps to ensure that reloaded envs from older portages don't
 # overwrite an internal ebd.sh function that has since changed.
 
-ORIG_VARS=( $(compgen -v) )
-
 DONT_EXPORT_VARS=(
 	"${PKGCORE_BASH_VARS[@]}" BASH._* OLDPWD SANDBOX_.*
-	ORIG_VARS "CCACHE.*" "DISTCC.*" SYNC DIR FEATURES
+	"CCACHE.*" "DISTCC.*" SYNC DIR FEATURES
 	"CONFIG_PROTECT.*" WORKDIR "RSYNC_.*" GENTOO_MIRRORS "(DIST|FILES|RPM|ECLASS)DIR"
 	MUST_EXPORT_ENV QA_CONTROLLED_EXTERNALLY myarg
 	"ACCEPT_(KEYWORDS|LICENSE)" "BUILD(_PREFIX|DIR)" T
@@ -533,8 +531,7 @@ __dump_metadata_keys() {
 	__ebd_write_line "key DEFINED_PHASES=${phases:--}"
 }
 
-DONT_EXPORT_VARS+=( $(declare | __filter_env --print-vars | \
-	__regex_filter_input ${ORIG_VARS[@]} ${DONT_EXPORT_VARS[@]}) )
+DONT_EXPORT_VARS+=( $(compgen -v | __regex_filter_input ${DONT_EXPORT_VARS[@]}) )
 
 set +f
 

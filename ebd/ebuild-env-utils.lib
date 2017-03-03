@@ -95,7 +95,7 @@ __environ_save_to_file() {
 	# the spaces on both sides are important- otherwise, the later ${DONT_EXPORT_VARS/ temp_umask /} won't match.
 	# we use spaces on both sides, to ensure we don't remove part of a variable w/ the same name-
 	# ex: temp_umask_for_some_app == _for_some_app.
-	DONT_EXPORT_VARS+=" temp_umask "
+	DONT_EXPORT_VARS+=( temp_umask )
 	local temp_umask=$(umask)
 	umask 0002
 
@@ -107,7 +107,7 @@ __environ_save_to_file() {
 	chown portage:portage "$1" &> /dev/null
 	chmod 0664 "$1" &> /dev/null
 
-	DONT_EXPORT_VARS=${DONT_EXPORT_VARS/ temp_umask /}
+	DONT_EXPORT_VARS=( "${DONT_EXPORT_VARS[@]/temp_umask}" )
 
 	umask ${temp_umask}
 }
@@ -134,8 +134,8 @@ __environ_sanitize_saved_env() {
 		# some of these are already readonly- we still are forcing it to be safe.
 		declare -r PKGCORE_PYTHONPATH=${PKGCORE_PYTHONPATH} &> /dev/null
 		declare -r PKGCORE_PYTHON_BINARY=${PKGCORE_PYTHON_BINARY} &> /dev/null
-		declare -r DONT_EXPORT_VARS=${DONT_EXPORT_VARS} &> /dev/null
-		declare -r DONT_EXPORT_FUNCS=${DONT_EXPORT_FUNCS} &> /dev/null
+		declare -r DONT_EXPORT_VARS=( "${DONT_EXPORT_VARS[@]}" ) &> /dev/null
+		declare -ar DONT_EXPORT_FUNCS=( "${DONT_EXPORT_FUNCS[@]}" ) &> /dev/null
 		declare -r SANDBOX_ON=${SANDBOX_ON} &> /dev/null
 		declare -r T=${T} &> /dev/null
 #		declare -rx PATH=${PATH} &> /dev/null
@@ -146,8 +146,8 @@ __environ_sanitize_saved_env() {
 
 		__shopt_push -f
 		IFS=$' \t\n'
-		declare -a PKGCORE_FUNC_ARRAY=( ${DONT_EXPORT_FUNCS} )
-		declare -a PKGCORE_VAR_ARRAY=( ${DONT_EXPORT_VARS} src x EXISTING_PATH )
+		declare -a PKGCORE_FUNC_ARRAY=( "${DONT_EXPORT_FUNCS[@]}" )
+		declare -a PKGCORE_VAR_ARRAY=( "${DONT_EXPORT_VARS[@]}" src x )
 		IFS=,
 		PKGCORE_FUNC_ARRAY=${PKGCORE_FUNC_ARRAY[*]}
 		PKGCORE_VAR_ARRAY=${PKGCORE_VAR_ARRAY[*]}

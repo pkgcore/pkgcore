@@ -172,6 +172,7 @@ __ensure_PATH() {
 }
 
 __load_eapi_libs() {
+	# EAPI libs append function names to this array to ban usage
 	local -a PKGCORE_BANNED_FUNCS
 
 	# reload depend; while it may've been loaded already, reload it so that callers can

@@ -8,7 +8,7 @@
 # found for phases setup -> merge, it bails (theres no way the env should be missing- exemption is
 # setup phase).
 #
-# for env filtering for restoration and reloading, note the updates to DONT_EXPORT_(VARS|FUNCS).
+# for env filtering for restoration and reloading, note the updates to PKGCORE_BLACKLIST_(VARS|FUNCS).
 # those vars are basically used to track what shouldn't be saved/restored. Whitespace separated,
 # those vars can support posix (think egrep) regex. They should hold all vars/funcs that are
 # internal ebd vars. Basically, filter all vars/funcs that are specific to ebd, not the ebuild.
@@ -21,7 +21,7 @@
 # marked readonly. This limits users, but also helps to ensure that reloaded envs from older
 # portages don't overwrite an internal ebd.sh function that has since changed.
 
-DONT_EXPORT_VARS=(
+PKGCORE_BLACKLIST_VARS=(
 	# bash-related
 	"${PKGCORE_BASH_VARS[@]}" "BASH_.*" COLUMNS OLDPWD
 
@@ -525,8 +525,6 @@ __dump_metadata_keys() {
 	done
 	__ebd_write_line "key DEFINED_PHASES=${phases:--}"
 }
-
-DONT_EXPORT_VARS+=( $(compgen -v | __regex_filter_input ${DONT_EXPORT_VARS[@]}) )
 
 set +f
 

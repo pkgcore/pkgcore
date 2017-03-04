@@ -171,8 +171,8 @@ __ebd_exec_main() {
 
 	re=$(readonly | cut -s -d '=' -f 1 | cut -s -d ' ' -f 3)
 	for x in ${re}; do
-		if ! __safe_has "${x}" "${DONT_EXPORT_VARS[@]}"; then
-			DONT_EXPORT_VARS+=( ${x} )
+		if ! __safe_has "${x}" "${PKGCORE_BLACKLIST_VARS[@]}"; then
+			PKGCORE_BLACKLIST_VARS+=( ${x} )
 		fi
 	done
 	__ebd_write_line ${re}
@@ -200,13 +200,13 @@ __ebd_exec_main() {
 	# finally, load the master list of pkgcore funcs. fallback to
 	# regenerating it if needed.
 	if [[ -e ${PKGCORE_EBD_PATH}/funcnames/global ]]; then
-		DONT_EXPORT_FUNCS+=( $(<"${PKGCORE_EBD_PATH}"/funcnames/global) )
+		PKGCORE_BLACKLIST_FUNCS+=( $(<"${PKGCORE_EBD_PATH}"/funcnames/global) )
 	else
-		DONT_EXPORT_FUNCS+=( $("${PKGCORE_EBD_PATH}"/generate_global_func_list.bash 2> /dev/null) )
+		PKGCORE_BLACKLIST_FUNCS+=( $("${PKGCORE_EBD_PATH}"/generate_global_func_list.bash 2> /dev/null) )
 	fi
 	[[ $? -eq 0 ]] || die "failed reading the global function skip list"
 
-	for x in "${DONT_EXPORT_FUNCS[@]}"; do
+	for x in "${PKGCORE_BLACKLIST_FUNCS[@]}"; do
 		__is_function "${x}" || continue
 		if ! __safe_has "${x}" "${PKGCORE_RUNTIME_FUNCS[@]}"; then
 			declare -fr ${x} &> /dev/null
@@ -399,7 +399,7 @@ __make_preloaded_eclass_func() {
 }
 
 __ebd_main_loop() {
-	DONT_EXPORT_VARS+=( __mode com is_depends phases line cont DONT_EXPORT_FUNCS )
+	PKGCORE_BLACKLIST_VARS+=( __mode com is_depends phases line cont )
 	SANDBOX_ON=1
 	while :; do
 		local com=''

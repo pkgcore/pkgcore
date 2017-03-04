@@ -58,12 +58,12 @@ __environ_dump() {
 	__shopt_push -f
 
 	# dump variables first so no local variables get picked up
-	local exported_vars=( $(compgen -v | __regex_filter_input ${DONT_EXPORT_VARS[@]}) )
+	local exported_vars=( $(compgen -v | __regex_filter_input ${PKGCORE_BLACKLIST_VARS[@]}) )
 	if [[ ${#exported_vars[@]} -ne 0 ]]; then
 		declare -p "${exported_vars[@]}" || die "failed outputting env vars ${exported_vars[@]}" >&2
 	fi
 
-	local func_filters=( "${DONT_EXPORT_FUNCS[@]}" ${PKGCORE_EAPI_FUNCS} "${PKGCORE_PRELOADED_ECLASSES[@]}" )
+	local func_filters=( "${PKGCORE_BLACKLIST_FUNCS[@]}" ${PKGCORE_EAPI_FUNCS} "${PKGCORE_PRELOADED_ECLASSES[@]}" )
 	${__QA_INTERCEPTORS_ACTIVE:-false} && func_filters+=( "${PKGCORE_QA_INTERCEPTORS[@]}" )
 
 	# Punt any regex chars...
@@ -111,13 +111,13 @@ __environ_sanitize_saved_env() {
 		# protect the core vars and functions needed to do a __environ_dump
 		# some of these are already readonly- we still are forcing it to be safe.
 		readonly PKGCORE_PYTHONPATH PKGCORE_PYTHON_BINARY PKGCORE_EXISTING_PATH SANDBOX_ON T
-		readonly -a DONT_EXPORT_VARS DONT_EXPORT_FUNCS
+		readonly -a PKGCORE_BLACKLIST_VARS PKGCORE_BLACKLIST_FUNCS
 		readonly -f __filter_env __environ_dump __regex_filter_input
 
 		__shopt_push -f
 		IFS=$' \t\n'
-		declare -a PKGCORE_FUNC_ARRAY=( "${DONT_EXPORT_FUNCS[@]}" )
-		declare -a PKGCORE_VAR_ARRAY=( "${DONT_EXPORT_VARS[@]}" src )
+		declare -a PKGCORE_FUNC_ARRAY=( "${PKGCORE_BLACKLIST_FUNCS[@]}" )
+		declare -a PKGCORE_VAR_ARRAY=( "${PKGCORE_BLACKLIST_VARS[@]}" src )
 		IFS=,
 		PKGCORE_FUNC_ARRAY=${PKGCORE_FUNC_ARRAY[*]}
 		PKGCORE_VAR_ARRAY=${PKGCORE_VAR_ARRAY[*]}

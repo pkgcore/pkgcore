@@ -403,14 +403,7 @@ __execute_phases() {
 				export SANDBOX_ON=0
 
 				PKGCORE_TARGET_ENV=${T}/environment
-				if ! __load_environ; then
-					# hokay.  this sucks.
-					ewarn
-					ewarn "failed to load env"
-					ewarn "this installed pkg may not behave correctly"
-					ewarn
-					sleep 10
-				fi
+				__load_environ || die "failed to load env during ${EBUILD_PHASE} phase"
 
 				__run_ebuild_phase pkg_${EBUILD_PHASE}
 				ret=0

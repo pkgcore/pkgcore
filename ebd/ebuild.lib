@@ -329,7 +329,7 @@ __load_ebuild() {
 	PDEPEND+=${PDEPEND:+ }${E_PDEPEND}
 }
 
-# short version.  think these should be sourced via at the daemons choice, rather then defacto.
+# short version.  think these should be sourced via at the daemon's choice, rather then defacto.
 # note that exit-handling loads the die functions, thus the custom failure there.
 source "${PKGCORE_EBD_PATH}"/exit-handling.lib >&2 || { echo "ERROR: failed sourcing exit-handling.lib"; exit -1; }
 source "${PKGCORE_EBD_PATH}"/ebuild-default-functions.lib >&2 || die "failed sourcing ebuild-default-functions.lib"

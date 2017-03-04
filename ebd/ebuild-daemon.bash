@@ -128,12 +128,12 @@ __ebd_exec_main() {
 	__ebd_read_line PKGCORE_EBD_PATH
 	[[ -z ${PKGCORE_EBD_PATH} ]] && { __ebd_write_line "empty PKGCORE_EBD_PATH;"; exit 1; }
 
+	# get our die functionality now.
 	if ! source "${PKGCORE_EBD_PATH}"/exit-handling.lib; then
 		__ebd_write_line "failed sourcing exit handling functionality"
 		exit 2
 	fi
 
-	# get our die functionality now.
 	if ! source "${PKGCORE_EBD_PATH}"/isolated-functions.lib; then
 		__ebd_write_line "failed sourcing isolated-functions.lib"
 		exit 2

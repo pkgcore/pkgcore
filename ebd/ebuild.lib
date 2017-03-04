@@ -2,25 +2,24 @@
 # ebuild.lib; ebuild phase processing, env handling
 # Copyright 2005-2012 Brian Harring <ferringb@gmail.com>: BSD/GPL2
 
-# general phase execution path-
-# __execute_phases is called, which sets EBUILD_PHASE, and then depending on the phase,
-# loads or initializes.  Env is init'd for non src based stages if the env isn't found- otherwise
-# it loads the environ via __load_environ call.  In cases where env isn't found for phases setup -> merge,
-# it bails (theres no way the env should be missing- exemption is setup phase).
+# general phase execution path- __execute_phases is called, which sets EBUILD_PHASE, and then
+# depending on the phase, loads or initializes. Env is init'd for non src based stages if the env
+# isn't found- otherwise it loads the environ via __load_environ call. In cases where env isn't
+# found for phases setup -> merge, it bails (theres no way the env should be missing- exemption is
+# setup phase).
 #
 # for env filtering for restoration and reloading, note the updates to DONT_EXPORT_(VARS|FUNCS).
-# those vars are basically used to track what shouldn't be saved/restored.  Whitespace separated,
-# those vars can support posix (think egrep) regex.  They should hold all vars/funcs that are internal
-# ebd vars.  Basically, filter all vars/funcs that are specific to ebd, not the ebuild.
+# those vars are basically used to track what shouldn't be saved/restored. Whitespace separated,
+# those vars can support posix (think egrep) regex. They should hold all vars/funcs that are
+# internal ebd vars. Basically, filter all vars/funcs that are specific to ebd, not the ebuild.
 #
-# after loading the env, user defined pre hooks are executed,
-# __dyn_${EBUILD_PHASE} is executed, and the post hooks are executed.  If the
-# env needs to be flushed to disk, PKGCORE_MUST_EXPORT_ENV is set to "yes", and
-# __execute_phases will dump it to ${T}/environment.
+# after loading the env, user defined pre hooks are executed, __dyn_${EBUILD_PHASE} is executed, and
+# the post hooks are executed. If the env needs to be flushed to disk, PKGCORE_MUST_EXPORT_ENV is
+# set to "yes", and __execute_phases will dump it to ${T}/environment.
 #
-# few notes on general env stuff- if it's not ebuild specific or a user option, it's typically marked
-# readonly.  This limits users, but also helps to ensure that reloaded envs from older portages don't
-# overwrite an internal ebd.sh function that has since changed.
+# few notes on general env stuff- if it's not ebuild specific or a user option, it's typically
+# marked readonly. This limits users, but also helps to ensure that reloaded envs from older
+# portages don't overwrite an internal ebd.sh function that has since changed.
 
 DONT_EXPORT_VARS=(
 	# bash-related
@@ -79,7 +78,7 @@ shopt -s expand_aliases
 unset -v GZIP BZIP BZIP2 CDPATH GREP_OPTIONS GREP_COLOR GLOB_IGNORE
 
 # gentoo bug 309369; nasty alias, but it exists due to portage using declare's
-# in env dumping.  declare statements are implicitly local.  as such, the
+# in env dumping. declare statements are implicitly local. as such, the
 # sourcing statement has to be in the same scope as the invoker of
 # __load_environ for that scope to get the changes
 alias __load_environ='{
@@ -193,7 +192,7 @@ __load_eapi_libs() {
 	done
 }
 
-# do all profile, bashrc's, and ebuild sourcing.  Should only be called in setup phase, unless the
+# do all profile, bashrc's, and ebuild sourcing. Should only be called in setup phase, unless the
 # env is *completely* missing, as it is occasionally for ebuilds during prerm/postrm.
 __generate_initial_ebuild_environ() {
 	local ORIG_CC=${CC}
@@ -312,9 +311,8 @@ __load_ebuild() {
 		export S=${WORKDIR}/${P}
 	fi
 
-	# Note: this next line is not the same as export RDEPEND=${RDEPEND:-${DEPEND}}
-	# That will test for unset *or* NULL ("").  We want just to set for unset...
-
+	# Note that this is not the same as `export RDEPEND=${RDEPEND:-${DEPEND}}`
+	# That will test for unset *or* NULL (""), we want just to set if unset.
 	if __safe_has "${EAPI}" 0 1 2 3; then
 		if [[ ${RDEPEND-unset} == "unset" ]]; then
 			export RDEPEND=${DEPEND}
@@ -329,7 +327,7 @@ __load_ebuild() {
 	PDEPEND+=${PDEPEND:+ }${E_PDEPEND}
 }
 
-# short version.  think these should be sourced via at the daemon's choice, rather then defacto.
+# short version. think these should be sourced via at the daemon's choice, rather then defacto.
 # note that exit-handling loads the die functions, thus the custom failure there.
 source "${PKGCORE_EBD_PATH}"/exit-handling.lib >&2 || { echo "ERROR: failed sourcing exit-handling.lib"; exit -1; }
 source "${PKGCORE_EBD_PATH}"/ebuild-default-functions.lib >&2 || die "failed sourcing ebuild-default-functions.lib"
@@ -367,8 +365,8 @@ __run_ebuild_phase() {
 	[[ ${PKGCORE_DEBUG} -lt 4 ]] && set +x
 }
 
-# general func to call for phase execution.  this handles necessary env loading/dumping, and executing pre/post/dyn
-# calls.
+# general func to call for phase execution. this handles necessary env
+# loading/dumping, and executing pre/post/dyn calls.
 __execute_phases() {
 	local PKGCORE_DIE_OUTPUT_DETAILS PKGCORE_SUPPRESS_BASHRCS
 	local PKGCORE_SAVE_ENV PKGCORE_TARGET_ENV PKGCORE_MUST_EXPORT_ENV=false
@@ -403,7 +401,7 @@ __execute_phases() {
 				export SANDBOX_ON=0
 
 				PKGCORE_TARGET_ENV=${T}/environment
-				__load_environ || die "failed to load env during ${EBUILD_PHASE} phase"
+				__load_environ || die "failed loading env during ${EBUILD_PHASE} phase"
 
 				__run_ebuild_phase pkg_${EBUILD_PHASE}
 				ret=0
@@ -417,42 +415,39 @@ __execute_phases() {
 
 				[[ ${PKGCORE_DEBUG} -ge 3 ]] && set -x
 				PKGCORE_TARGET_ENV=${T}/environment
-				__load_safe_environ || die "failed to load env during ${EBUILD_PHASE} phase"
+				__load_safe_environ || die "failed loading env during ${EBUILD_PHASE} phase"
 				[[ -z ${S} ]] && die "\$S was null, path=${PATH}"
 
 				__run_ebuild_phase src_${EBUILD_PHASE}
 				ret=0
 				;;
 			setup|setup-binpkg)
-				# pkg_setup needs to be out of the sandbox for tmp file creation;
-				# for example, awking and piping a file in /tmp requires a temp file to be created
-				# in /etc.  If pkg_setup is in the sandbox, both our lilo and apache ebuilds break.
-
 				EBUILD_PHASE="setup"
 
 				# binpkgs don't need to reinitialize the env.
 				if [[ ${EBUILD_PHASE} == "setup" ]]; then
 					[[ -n ${DISTCC_LOG} ]] && addwrite "$(dirname ${DISTCC_LOG})"
 
-					# if they aren't set, then holy hell ensues.  deal.
-
 					if __feature_is_enabled ccache; then
 						[[ -z ${CCACHE_SIZE} ]] && export CCACHE_SIZE="500M"
 						ccache -M ${CCACHE_SIZE} &> /dev/null
 					fi
+
 					[[ ${PKGCORE_DEBUG} -ge 2 ]] && set -x
 					__init_environ
 				else
 					PKGCORE_TARGET_ENV=${T}/environment
-					if ! __load_environ; then
-						die "failed loading saved env from '${T}/environment'"
-					fi
+					__load_environ || die "failed loading env during ${EBUILD_PHASE} phase"
 				fi
 
+				# pkg_setup needs to be run outside the sandbox for tmp file
+				# creation; for example, awking and piping a file in /tmp
+				# requires a temp file to be created in /etc. If pkg_setup is
+				# in the sandbox, both our lilo and apache ebuilds break.
 				export SANDBOX_ON=0
+
 				__run_ebuild_phase pkg_${EBUILD_PHASE}
 				ret=0;
-
 				;;
 			depend|generate_env)
 				SANDBOX_ON=1
@@ -513,7 +508,7 @@ __dump_metadata_keys() {
 		# after using echo to normalize whitespace (specifically removal of newlines)
 		if [[ ${!key:-unset} != "unset" ]]; then
 			# note that we explicitly bypass the normal functions, and directly
-			# write to the FD.  This is done since it's about 25% faster for our usage;
+			# write to the FD. This is done since it's about 25% faster for our usage;
 			# if we used the functions, we'd have to subshell the 'echo ${!key}', which
 			# because of bash behaviour, means the content would be read byte by byte.
 			echo -n "key ${key}=" >&${PKGCORE_EBD_WRITE_FD}

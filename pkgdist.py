@@ -1,4 +1,4 @@
-# Copyright: 2015-2016 Tim Harder <radhermit@gmail.com>
+# Copyright: 2015-2017 Tim Harder <radhermit@gmail.com>
 # Copyright: 2008-2011 Brian Harring <ferringb@gmail.com>
 # License: BSD/GPL2
 
@@ -12,7 +12,6 @@ Specifically, this module is only meant to be imported in setup.py scripts.
 
 import copy
 import errno
-import inspect
 import io
 import math
 import operator
@@ -40,7 +39,7 @@ from distutils.command import (
 READTHEDOCS = os.environ.get('READTHEDOCS', None) == 'True'
 
 # top level repo/tarball directory
-TOPDIR = os.path.dirname(os.path.abspath(inspect.stack(0)[1][1]))
+TOPDIR = os.path.dirname(os.path.abspath(__file__))
 
 
 def find_project(topdir=TOPDIR):
@@ -63,7 +62,7 @@ def find_project(topdir=TOPDIR):
     if not modules:
         raise ValueError('No project module found')
     elif len(modules) > 1:
-        raise ValueError('Multiple project modules found: %s' % (', '.join(modules)))
+        raise ValueError('Multiple project modules found in %r: %s' % (topdir, ', '.join(modules)))
 
     return modules[0]
 
@@ -169,6 +168,16 @@ def pkg_config(*packages, **kw):
     return kw
 
 
+def cython_exts(path=PROJECT):
+    """Return all available cython extensions under a given path."""
+    cython_exts = []
+    for root, _dirs, files in os.walk(path):
+        for f in files:
+            if f.endswith('.pyx'):
+                cython_exts.append(os.path.join(root, f))
+    return cython_exts
+
+
 class OptionalExtension(Extension):
     """Python extension that is optional to build.
 
@@ -226,12 +235,10 @@ class sdist(dst_sdist.sdist):
         build_ext.ensure_finalized()
 
         # generate cython extensions if any exist
-        cython = any(
-            os.path.splitext(f)[1] == '.pyx' for e in
-            build_ext.extensions for f in e.sources)
-        if cython:
+        extensions = cython_exts()
+        if extensions:
             from Cython.Build import cythonize
-            cythonize(build_ext.extensions)
+            cythonize(extensions)
 
         dst_sdist.sdist.run(self)
 
@@ -851,11 +858,12 @@ class test(Command):
 
 
 class PyTest(Command):
-    """Run tests using pytest against a built copy."""
+    """Run tests using pytest."""
 
     user_options = [
         ('pytest-args=', 'a', 'arguments to pass to py.test'),
         ('coverage', 'c', 'generate coverage info'),
+        ('skip-build', 's', 'skip building the module'),
         ('report=', 'r', 'generate and/or show a coverage report'),
         ('jobs=', 'j', 'run X parallel tests at once'),
         ('match=', 'k', 'run only tests that match the provided expressions'),
@@ -866,6 +874,7 @@ class PyTest(Command):
     def initialize_options(self):
         self.pytest_args = ''
         self.coverage = False
+        self.skip_build = False
         self.match = None
         self.jobs = None
         self.report = None
@@ -873,6 +882,7 @@ class PyTest(Command):
     def finalize_options(self):
         self.test_args = [self.default_test_dir]
         self.coverage = bool(self.coverage)
+        self.skip_build = bool(self.skip_build)
         if self.match is not None:
             self.test_args.extend(['-k', self.match])
 
@@ -908,20 +918,25 @@ class PyTest(Command):
             sys.stderr.write('error: pytest is not installed\n')
             sys.exit(1)
 
-        # build extensions and byte-compile python
-        build_ext = self.reinitialize_command('build_ext')
-        build_py = self.reinitialize_command('build_py')
-        build_ext.ensure_finalized()
-        build_py.ensure_finalized()
-        self.run_command('build_ext')
-        self.run_command('build_py')
+        if self.skip_build:
+            # run tests from the parent directory to the local dir isn't used for module imports
+            builddir = os.path.abspath('..')
+        else:
+            # build extensions and byte-compile python
+            build_ext = self.reinitialize_command('build_ext')
+            build_py = self.reinitialize_command('build_py')
+            build_ext.ensure_finalized()
+            build_py.ensure_finalized()
+            self.run_command('build_ext')
+            self.run_command('build_py')
 
-        # Change the current working directory to the builddir during testing
-        # so coverage paths are correct.
-        builddir = os.path.abspath(build_py.build_lib)
-        if self.coverage and os.path.exists(os.path.join(TOPDIR, '.coveragerc')):
-            shutil.copyfile(os.path.join(TOPDIR, '.coveragerc'),
-                            os.path.join(builddir, '.coveragerc'))
+            # Change the current working directory to the builddir during testing
+            # so coverage paths are correct.
+            builddir = os.path.abspath(build_py.build_lib)
+            if self.coverage and os.path.exists(os.path.join(TOPDIR, '.coveragerc')):
+                shutil.copyfile(os.path.join(TOPDIR, '.coveragerc'),
+                                os.path.join(builddir, '.coveragerc'))
+
         ret = subprocess.call([sys.executable, '-m', 'pytest'] + self.test_args, cwd=builddir)
         sys.exit(ret)
 

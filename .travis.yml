@@ -4,10 +4,6 @@ python:
   - 3.4
   - 3.5
   - 3.6
-matrix:
-  fast_finish: true
-  allow_failures:
-    - python: nightly
 sudo: false
 addons:
   apt:

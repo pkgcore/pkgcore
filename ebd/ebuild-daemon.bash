@@ -169,14 +169,20 @@ __ebd_exec_main() {
 			;;
 	esac
 
-	re=$(readonly | cut -s -d '=' -f 1 | cut -s -d ' ' -f 3)
-	for x in ${re}; do
+	__IFS_push $'\n'
+	readonly_vars=( $(readonly) )
+	__IFS_pop
+	# extract variable names from declarations
+	readonly_vars=( "${readonly_vars[@]/%=*/}" )
+	readonly_vars=( "${readonly_vars[@]/#* * /}" )
+
+	for x in "${readonly_vars[@]}"; do
 		if ! __safe_has "${x}" "${PKGCORE_BLACKLIST_VARS[@]}"; then
 			PKGCORE_BLACKLIST_VARS+=( ${x} )
 		fi
 	done
-	__ebd_write_line ${re}
-	unset -v x re
+	__ebd_write_line ${readonly_vars[@]}
+	unset -v x readonly_vars
 
 	# protect ourselves
 	declare -rx PKGCORE_EBD_PATH=${PKGCORE_EBD_PATH}

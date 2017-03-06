@@ -23,7 +23,7 @@
 
 PKGCORE_BLACKLIST_VARS=(
 	# bash-related
-	"${PKGCORE_BASH_VARS[@]}" "BASH_.*" COLUMNS OLDPWD
+	$(compgen -v) "BASH_.*" COLUMNS OLDPWD
 
 	# external programs
 	"SANDBOX_.*" "CCACHE.*" "DISTCC.*" "SUDO_.*"

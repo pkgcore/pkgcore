@@ -114,9 +114,6 @@ __ebd_sigkill_handler() {
 }
 
 __ebd_exec_main() {
-	# Bash, sandbox, and other environment variables to discard from saved env files.
-	PKGCORE_BASH_VARS=( $(compgen -v) )
-
 	# ensure the other side is still there.  Well, this moreso is for the python side to ensure
 	# loading up the intermediate funcs succeeded.
 	local com

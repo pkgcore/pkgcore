@@ -1,11 +1,6 @@
 #compdef pclean pconfig pebuild pinspect pmaint pmerge pquery psite pcd
 
-# repo path
-SHELL_LIB=${${(%):-%x}:A:h}/../pkgcore.zsh
-if [[ ! -e ${SHELL_LIB} ]]; then
-  # system path
-  SHELL_LIB=$(python -c 'from pkgcore import const; print(const.LIBDIR_PATH)')/shell/zsh/pkgcore.zsh
-fi
+SHELL_LIB=$(python -c 'from pkgcore import const; print(const.LIBDIR_PATH)')/shell/zsh/pkgcore.zsh
 source "${SHELL_LIB}" || print "$0: failed to load '${SHELL_LIB}'" >&2
 unset SHELL_LIB
 

@@ -44,9 +44,10 @@ def _GET_CONST(attr, default_value, allow_environment_override=False):
         result = tuple(result)
     return result
 
-DATA_PATH = _GET_CONST('DATA_PATH', osp.dirname(osp.dirname(osp.realpath(__file__))),
-                       allow_environment_override=True)
+
+_reporoot = osp.dirname(osp.dirname(osp.realpath(__file__)))
+DATA_PATH = _GET_CONST('DATA_PATH', _reporoot, allow_environment_override=True)
+LIBDIR_PATH = _GET_CONST('LIBDIR_PATH', _reporoot)
 CONFIG_PATH = _GET_CONST('CONFIG_PATH', '%(DATA_PATH)s/config')
 PATH_FORCED_PREPEND = _GET_CONST('INJECTED_BIN_PATH', ('%(DATA_PATH)s/bin',))
-
 CP_BINARY = _GET_CONST('CP_BINARY', '/bin/cp')

@@ -81,7 +81,7 @@ def native_incremental_expansion(orig, iterable, msg_prefix='', finalize=True):
             i = token[1:]
             if not i:
                 raise ValueError(
-                    "%sencountered an incomplete negation, '-'"
+                    "%s encountered an incomplete negation, '-'"
                     % (msg_prefix,))
             if i == '*':
                 orig.clear()

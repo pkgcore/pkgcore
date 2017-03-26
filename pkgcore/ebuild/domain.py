@@ -248,7 +248,7 @@ class domain(config_domain):
             s = set()
             incremental_expansion(
                 s, settings[incremental],
-                'While expanding %s ' % (incremental,))
+                'while expanding %s' % (incremental,))
             settings[incremental] = tuple(s)
 
         # append FEATURES and environment defined USE flags

@@ -520,9 +520,22 @@ class ProfileStack(object):
 
     @property
     def use_expand(self):
+        """USE_EXPAND variables defined by the profile."""
         if "USE_EXPAND" in const.incrementals:
             return frozenset(self.default_env.get("USE_EXPAND", ()))
         return frozenset(self.default_env.get("USE_EXPAND", "").split())
+
+    @klass.jit_attr
+    def use(self):
+        """USE flag settings for the profile."""
+        use = list(self.default_env.get('USE', ()))
+        for u in self.use_expand:
+            value = self.default_env.get(u)
+            if value is None:
+                continue
+            u2 = u.lower() + '_'
+            use.extend(u2 + x for x in value.split())
+        return tuple(use)
 
     @property
     def use_expand_hidden(self):

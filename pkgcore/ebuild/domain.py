@@ -227,6 +227,9 @@ class domain(config_domain):
         # roughly... all incremental stacks should be interpreted left -> right
         # as such we start with the profile settings, and append ours onto it.
         for k, v in profile.default_env.iteritems():
+            # use profile-defined USE flags with USE_EXPAND values added
+            if k == 'USE':
+                v = profile.use
             if k not in settings:
                 settings[k] = v
                 continue
@@ -248,18 +251,11 @@ class domain(config_domain):
                 'While expanding %s ' % (incremental,))
             settings[incremental] = tuple(s)
 
-        # use is collapsed; now stack use_expand.
-        use = settings['USE'] = set(optimize_incrementals(
-            list(settings.get('USE', ())) + os.environ.get('USE', '').split()))
-
-        self._extend_use_for_features(use, settings.get("FEATURES", ()))
-
-        for u in profile.use_expand:
-            v = settings.get(u)
-            if v is None:
-                continue
-            u2 = u.lower()+"_"
-            use.update(u2 + x for x in v.split())
+        # append FEATURES and environment defined USE flags
+        self.use = list(settings.get('USE', ()))
+        self._extend_use_for_features(settings.get("FEATURES", ()))
+        self.use = settings['USE'] = set(optimize_incrementals(
+            self.use + os.environ.get('USE', '').split()))
 
         if 'ACCEPT_KEYWORDS' not in settings:
             raise Failure("No ACCEPT_KEYWORDS setting detected from profile, "
@@ -271,8 +267,6 @@ class domain(config_domain):
             'while expanding ACCEPT_KEYWORDS')
         default_keywords.extend(s)
         settings['ACCEPT_KEYWORDS'] = set(default_keywords)
-
-        self.use = use
 
         if "ARCH" not in settings:
             raise Failure(
@@ -398,13 +392,13 @@ class domain(config_domain):
             "^(?:[+-])?(%s)_(.*)$" %
             "|".join(x.lower() for x in sorted(profile.use_expand, reverse=True)))
 
-    def _extend_use_for_features(self, use_settings, features):
+    def _extend_use_for_features(self, features):
         # hackish implementation; if test is on, flip on the flag
         if "test" in features:
-            use_settings.add("test")
+            self.use.append("test")
 
         if "prefix" in features or "force-prefix" in features:
-            use_settings.add("prefix")
+            self.use.append("prefix")
 
     def make_license_filter(self, master_license, pkg_licenses):
         """Generates a restrict that matches iff the licenses are allowed."""

@@ -15,7 +15,7 @@ else:
         from pkgcore.config import dhcpformat, mke2fsformat
 
 from pkgcore.config import central, errors, configurable
-from pkgcore.test import TestCase
+from snakeoil.test import TestCase
 
 
 def passthrough(*args, **kwargs):

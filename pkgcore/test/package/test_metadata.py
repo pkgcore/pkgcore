@@ -2,7 +2,7 @@
 # License: GPL2/BSD
 
 from pkgcore.package import metadata, base
-from pkgcore.test import TestCase
+from snakeoil.test import TestCase
 
 
 def make_pkg_kls(attrs=(), callbacks={}):

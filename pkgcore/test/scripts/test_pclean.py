@@ -4,8 +4,8 @@
 from snakeoil import compatibility
 
 from pkgcore.scripts import pclean
-from pkgcore.test import TestCase
 from pkgcore.test.scripts.helpers import ArgParseMixin
+from snakeoil.test import TestCase
 
 
 class CommandlineTest(TestCase, ArgParseMixin):

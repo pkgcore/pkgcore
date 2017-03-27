@@ -7,7 +7,7 @@ from functools import partial
 from pkgcore.repository.multiplex import tree
 from pkgcore.repository.util import SimpleTree
 from pkgcore.restrictions import packages, values
-from pkgcore.test import TestCase
+from snakeoil.test import TestCase
 
 rev_sorted = partial(sorted, reverse=True)
 

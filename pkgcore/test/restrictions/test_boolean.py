@@ -3,7 +3,7 @@
 # License: BSD/GPL2
 
 from pkgcore.restrictions import boolean, restriction
-from pkgcore.test import TestCase
+from snakeoil.test import TestCase
 
 true = restriction.AlwaysBool(node_type='foo', negate=True)
 false = restriction.AlwaysBool(node_type='foo', negate=False)

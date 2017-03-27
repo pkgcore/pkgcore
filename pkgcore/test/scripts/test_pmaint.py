@@ -7,6 +7,7 @@ from functools import partial
 from snakeoil import compatibility
 from snakeoil.formatters import PlainTextFormatter
 from snakeoil.mappings import AttrAccessible
+from snakeoil.test import TestCase
 
 from pkgcore.config import basics, ConfigHint, configurable
 from pkgcore.ebuild.cpv import CPV
@@ -14,7 +15,6 @@ from pkgcore.operations.repo import install, uninstall, replace, operations
 from pkgcore.repository import util, syncable
 from pkgcore.scripts import pmaint
 from pkgcore.sync import base
-from pkgcore.test import TestCase
 from pkgcore.test.scripts.helpers import ArgParseMixin
 
 if compatibility.is_py3k:

@@ -6,13 +6,14 @@ import os
 
 from snakeoil.currying import post_curry
 from snakeoil.osutils import pjoin
+from snakeoil.test import TestCase
 from snakeoil.test.mixins import tempdir_decorator
 
 from pkgcore import fetch
 from pkgcore.ebuild import ebuild_src, digest, repo_objs
 from pkgcore.ebuild.eapi import get_eapi
 from pkgcore.package import errors
-from pkgcore.test import TestCase, malleable_obj
+from pkgcore.test import malleable_obj
 from pkgcore.test.ebuild.test_eclass_cache import FakeEclassCache
 
 

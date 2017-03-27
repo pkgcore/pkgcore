@@ -6,10 +6,10 @@ import os
 
 from snakeoil import data_source
 from snakeoil.chksum import get_handlers
+from snakeoil.test import TestCase
 from snakeoil.test.mixins import TempDirMixin
 
 from pkgcore.fetch import base, fetchable, errors
-from pkgcore.test import TestCase
 
 repeating_str = 'asdf'
 data = repeating_str * 4000

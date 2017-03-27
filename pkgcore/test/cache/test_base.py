@@ -6,7 +6,7 @@ import operator
 from snakeoil.chksum import LazilyHashedPath
 
 from pkgcore.cache import base, errors, bulk
-from pkgcore.test import TestCase
+from snakeoil.test import TestCase
 
 
 def _mk_chf_obj(**kwargs):

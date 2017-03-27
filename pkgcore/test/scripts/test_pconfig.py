@@ -4,10 +4,10 @@
 import sys
 
 from snakeoil import compatibility
+from snakeoil.test import TestCase
 
 from pkgcore.config import configurable, basics, errors
 from pkgcore.scripts import pconfig
-from pkgcore.test import TestCase
 from pkgcore.test.scripts.helpers import ArgParseMixin
 
 

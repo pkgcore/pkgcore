@@ -4,7 +4,7 @@
 from snakeoil.chksum import LazilyHashedPath
 
 from pkgcore.cache import errors
-from pkgcore.test import TestCase
+from snakeoil.test import TestCase
 
 generic_data = \
     ("sys-libs/libtrash-2.4",

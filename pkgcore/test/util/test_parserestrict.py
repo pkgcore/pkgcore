@@ -8,8 +8,8 @@ from pkgcore.ebuild import restricts
 from pkgcore.ebuild.atom import atom
 from pkgcore.repository import util
 from pkgcore.restrictions import packages, values, boolean, restriction
-from pkgcore.test import TestCase
 from pkgcore.util import parserestrict
+from snakeoil.test import TestCase
 
 
 class MatchTest(TestCase):

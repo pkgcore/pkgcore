@@ -2,9 +2,9 @@
 # License: GPL2/BSD
 
 from snakeoil.sequences import iflatten_instance
+from snakeoil.test import TestCase
 
 from pkgcore import fetch
-from pkgcore.test import TestCase
 
 
 class base(TestCase):

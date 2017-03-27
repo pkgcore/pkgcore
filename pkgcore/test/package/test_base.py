@@ -4,7 +4,8 @@
 from functools import partial
 
 from pkgcore.package import base
-from pkgcore.test import TestCase, malleable_obj
+from pkgcore.test import malleable_obj
+from snakeoil.test import TestCase
 
 
 def fake_pkg(cat='dev-util', pkg='bsdiff', ver='1.0', **attrs):

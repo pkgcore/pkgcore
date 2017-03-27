@@ -5,8 +5,8 @@ from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.cpv import versioned_CPV
 from pkgcore.repository.visibility import filterTree
 from pkgcore.restrictions import packages, values
-from pkgcore.test import TestCase
 from pkgcore.test.repository.test_prototype import SimpleTree
+from snakeoil.test import TestCase
 
 
 class TestVisibility(TestCase):

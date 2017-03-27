@@ -5,10 +5,10 @@ from functools import partial
 
 from snakeoil.compatibility import cmp
 from snakeoil.klass import inject_richcmp_methods_from_cmp
+from snakeoil.test import TestCase
 
 from pkgcore.package.base import base, dynamic_getattr_dict
 from pkgcore.package.mutated import MutatedPkg
-from pkgcore.test import TestCase
 
 
 def passthru(val, self):

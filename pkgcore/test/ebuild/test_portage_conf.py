@@ -8,12 +8,12 @@ from tempfile import NamedTemporaryFile
 import textwrap
 
 from snakeoil.osutils import pjoin
+from snakeoil.test import TestCase
 from snakeoil.test.mixins import TempDirMixin
 
 from pkgcore import const
 from pkgcore.config import errors
 from pkgcore.ebuild.portage_conf import load_make_conf, load_repos_conf
-from pkgcore.test import TestCase
 
 
 class TestPortageConfig(TempDirMixin, TestCase):

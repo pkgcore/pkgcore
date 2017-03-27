@@ -2,8 +2,8 @@
 # License: GPL2/BSD
 
 from pkgcore.sync import base, rsync
-from pkgcore.test import TestCase
 from pkgcore.test.sync import make_bogus_syncer, make_valid_syncer
+from snakeoil.test import TestCase
 
 bogus = make_bogus_syncer(rsync.rsync_syncer)
 valid = make_valid_syncer(rsync.rsync_syncer)

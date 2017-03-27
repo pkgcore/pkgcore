@@ -5,10 +5,9 @@
 from functools import partial
 
 from snakeoil import stringio
-from snakeoil.test import mk_cpy_loadable_testcase
+from snakeoil.test import TestCase, mk_cpy_loadable_testcase
 
 from pkgcore.ebuild import filter_env
-from pkgcore.test import TestCase
 
 
 class NativeFilterEnvTest(TestCase):

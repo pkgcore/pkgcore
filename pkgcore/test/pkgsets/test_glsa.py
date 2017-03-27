@@ -3,13 +3,13 @@
 
 from snakeoil.currying import post_curry
 from snakeoil.osutils import pjoin
+from snakeoil.test import TestCase
 from snakeoil.test.mixins import TempDirMixin
 
 from pkgcore.ebuild import cpv
 from pkgcore.pkgsets import glsa
 from pkgcore.restrictions.packages import OrRestriction
 from pkgcore.restrictions.restriction import AlwaysBool
-from pkgcore.test import TestCase
 
 # misc setup code for generating glsas for testing
 

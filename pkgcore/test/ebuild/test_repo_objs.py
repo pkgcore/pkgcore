@@ -4,9 +4,9 @@
 import re
 
 from snakeoil.data_source import data_source
+from snakeoil.test import TestCase
 
 from pkgcore.ebuild import repo_objs
-from pkgcore.test import TestCase
 
 
 class TestMetadataXml(TestCase):

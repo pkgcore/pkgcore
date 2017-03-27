@@ -7,7 +7,8 @@ import tempfile
 from pkgcore import log, os_data
 from pkgcore.ebuild.atom import atom
 from pkgcore.pkgsets import filelist
-from pkgcore.test import TestCase, protect_logging, callback_logger
+from pkgcore.test import protect_logging, callback_logger
+from snakeoil.test import TestCase
 
 
 class TestFileList(TestCase):

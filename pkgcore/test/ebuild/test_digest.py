@@ -5,10 +5,10 @@ import os
 import tempfile
 
 from snakeoil.data_source import local_source
+from snakeoil.test import TestCase
 
 from pkgcore import gpg
 from pkgcore.ebuild import digest
-from pkgcore.test import TestCase
 
 # "Line too long" (and our custom more aggressive version of that)
 # pylint: disable-msg=C0301,CPC01

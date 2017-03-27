@@ -5,6 +5,7 @@ from collections import OrderedDict
 from functools import partial
 
 from snakeoil.currying import post_curry
+from snakeoil.test import TestCase
 
 from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.cpv import versioned_CPV
@@ -12,7 +13,7 @@ from pkgcore.operations.repo import operations
 from pkgcore.package.mutated import MutatedPkg
 from pkgcore.repository.util import SimpleTree
 from pkgcore.restrictions import packages, values, boolean
-from pkgcore.test import TestCase, malleable_obj
+from pkgcore.test import malleable_obj
 
 
 class TestPrototype(TestCase):

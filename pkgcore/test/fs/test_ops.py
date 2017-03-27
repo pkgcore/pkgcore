@@ -6,10 +6,10 @@ import shutil
 
 from snakeoil.data_source import local_source
 from snakeoil.osutils import pjoin
+from snakeoil.test import TestCase, SkipTest
 from snakeoil.test.mixins import TempDirMixin
 
 from pkgcore.fs import ops, fs, livefs, contents
-from pkgcore.test import TestCase, SkipTest
 
 
 class VerifyMixin(object):

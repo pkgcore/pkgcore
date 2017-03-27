@@ -3,12 +3,12 @@
 
 import difflib
 
+from snakeoil.test import TestCase
 from snakeoil.test.argparse_helpers import FakeStreamFormatter, Color, Reset, Bold
 
 from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.formatter import (
     BasicFormatter, PkgcoreFormatter, PortageFormatter, PaludisFormatter)
-from pkgcore.test import TestCase
 from pkgcore.test.misc import FakePkg, FakeRepo
 
 

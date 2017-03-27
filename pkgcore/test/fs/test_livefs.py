@@ -4,11 +4,11 @@
 import os
 
 from snakeoil.osutils import pjoin
+from snakeoil.test import TestCase
 from snakeoil.test.mixins import TempDirMixin
 
 from pkgcore.fs import fs, livefs
 from pkgcore.fs.contents import contentsSet
-from pkgcore.test import TestCase
 
 
 class FsObjsTest(TempDirMixin, TestCase):

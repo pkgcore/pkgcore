@@ -3,8 +3,8 @@
 # License: GPL2/BSD
 
 from pkgcore.sync import base, git_svn
-from pkgcore.test import TestCase
 from pkgcore.test.sync import make_bogus_syncer, make_valid_syncer
+from snakeoil.test import TestCase
 
 bogus = make_bogus_syncer(git_svn.git_svn_syncer)
 valid = make_valid_syncer(git_svn.git_svn_syncer)

@@ -6,10 +6,10 @@ import os
 from snakeoil.chksum import get_chksums
 from snakeoil.data_source import data_source
 from snakeoil.osutils import pjoin, normpath
+from snakeoil.test import TestCase
 from snakeoil.test.mixins import tempdir_decorator
 
 from pkgcore.fs import fs
-from pkgcore.test import TestCase
 
 
 class base(object):

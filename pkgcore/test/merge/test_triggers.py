@@ -11,13 +11,12 @@ import time
 from snakeoil import process
 from snakeoil.currying import post_curry
 from snakeoil.osutils import pjoin, ensure_dirs, normpath
-from snakeoil.test import mixins
+from snakeoil.test import mixins, TestCase, SkipTest
 
 from pkgcore.fs import fs
 from pkgcore.merge import triggers, const
 from pkgcore.fs.contents import contentsSet
 from pkgcore.fs.livefs import gen_obj, scan
-from pkgcore.test import TestCase, SkipTest
 from pkgcore.test.merge.util import fake_trigger, fake_engine, fake_reporter
 
 

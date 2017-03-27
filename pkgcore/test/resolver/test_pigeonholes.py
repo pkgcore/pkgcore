@@ -3,8 +3,8 @@
 
 from pkgcore.resolver.pigeonholes import PigeonHoledSlots
 from pkgcore.restrictions import restriction
-from pkgcore.test import TestCase
 from pkgcore.test.resolver.test_choice_point import fake_package
+from snakeoil.test import TestCase
 
 
 class fake_blocker(restriction.base):

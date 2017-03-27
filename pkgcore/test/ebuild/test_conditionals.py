@@ -4,13 +4,12 @@
 from snakeoil.currying import post_curry
 from snakeoil.iterables import expandable_chain
 from snakeoil.sequences import iflatten_instance
-from snakeoil.test import mk_cpy_loadable_testcase
+from snakeoil.test import TestCase, mk_cpy_loadable_testcase
 
 from pkgcore.ebuild import conditionals
 from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.errors import ParseError
 from pkgcore.restrictions import boolean, packages
-from pkgcore.test import TestCase
 
 
 class base(TestCase):

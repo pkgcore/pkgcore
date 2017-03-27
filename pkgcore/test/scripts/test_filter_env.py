@@ -3,8 +3,8 @@
 # License: BSD/GPL2
 
 from pkgcore.scripts import filter_env
-from pkgcore.test import TestCase
 from pkgcore.test.scripts.helpers import ArgParseMixin
+from snakeoil.test import TestCase
 
 
 class CommandlineTest(TestCase, ArgParseMixin):

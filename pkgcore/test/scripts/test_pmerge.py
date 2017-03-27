@@ -5,8 +5,8 @@ from pkgcore.config import basics
 from pkgcore.ebuild import formatter
 from pkgcore.repository import util
 from pkgcore.scripts import pmerge
-from pkgcore.test import TestCase
 from pkgcore.util.parserestrict import parse_match
+from snakeoil.test import TestCase
 
 default_formatter = basics.HardCodedConfigSection({
     'class': formatter.basic_factory,

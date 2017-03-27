@@ -3,7 +3,7 @@
 
 from pkgcore.pkgsets import installed
 from pkgcore.repository.util import SimpleTree
-from pkgcore.test import TestCase
+from snakeoil.test import TestCase
 
 
 class FakePkg(object):

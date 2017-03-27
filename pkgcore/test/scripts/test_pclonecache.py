@@ -5,8 +5,8 @@ from snakeoil import compatibility
 
 from pkgcore.config import basics, ConfigHint
 from pkgcore.scripts import pclonecache
-from pkgcore.test import TestCase
 from pkgcore.test.scripts.helpers import ArgParseMixin
+from snakeoil.test import TestCase
 
 
 class Cache(object):

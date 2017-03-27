@@ -6,7 +6,7 @@ import os
 import tempfile
 
 from pkgcore.config import basics, errors, ConfigHint, configurable, central
-from pkgcore.test import TestCase
+from snakeoil.test import TestCase
 
 
 def passthrough(*args, **kwargs):

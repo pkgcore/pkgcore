@@ -12,9 +12,9 @@ import unittest
 from snakeoil import compatibility
 
 from pkgcore.config import central, errors
-from pkgcore.test import TestCase
 from pkgcore.test.scripts.helpers import ArgParseMixin
 from pkgcore.util import commandline
+from snakeoil.test import TestCase
 
 # Careful: the tests should not hit a load_config() call!
 

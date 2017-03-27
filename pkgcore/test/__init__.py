@@ -4,9 +4,7 @@
 
 """Our unittest extensions."""
 
-__all__ = ('TestCase', 'SkipTest', 'Todo')
-
-from snakeoil.test import TestCase, SkipTest, Todo
+from snakeoil.test import TestCase
 
 from pkgcore import log
 

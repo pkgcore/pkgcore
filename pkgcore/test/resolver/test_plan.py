@@ -2,9 +2,9 @@
 # License: GPL2/BSD
 
 from snakeoil.currying import post_curry
+from snakeoil.test import TestCase
 
 from pkgcore.resolver import plan
-from pkgcore.test import TestCase
 from pkgcore.test.misc import FakePkg
 
 

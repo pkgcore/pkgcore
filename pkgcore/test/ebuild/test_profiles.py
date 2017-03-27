@@ -14,6 +14,7 @@ except ImportError:
     import mock
 
 from snakeoil.osutils import pjoin, ensure_dirs, normpath
+from snakeoil.test import TestCase
 from snakeoil.test.mixins import TempDirMixin
 
 from pkgcore.config import central
@@ -22,7 +23,7 @@ from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.cpv import CPV
 from pkgcore.ebuild.misc import chunked_data
 from pkgcore.restrictions import packages
-from pkgcore.test import TestCase, silence_logging
+from pkgcore.test import silence_logging
 
 atrue = packages.AlwaysTrue
 

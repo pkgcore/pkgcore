@@ -5,7 +5,7 @@ from StringIO import StringIO
 import sys
 
 from pkgcore.config import cparser, central, errors
-from pkgcore.test import TestCase
+from snakeoil.test import TestCase
 
 
 class CaseSensitiveConfigParserTest(TestCase):

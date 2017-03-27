@@ -39,13 +39,6 @@ demandload(
 )
 
 
-def mk_strregex(value, **kwds):
-    try:
-        return values.StrRegex(value, **kwds)
-    except re.error as e:
-        raise ValueError("invalid regex: %r, %s" % (value, e))
-
-
 class DataSourceRestriction(values.base):
     """Turn a data_source into a line iterator and apply a restriction."""
 
@@ -712,7 +705,7 @@ def revdep_pkgs_finalize(sequence, namespace):
     help='regexp search on description and longdescription')
 def parse_description(value):
     """Value is used as a regexp matching description or longdescription."""
-    matcher = mk_strregex(value, case_sensitive=False)
+    matcher = values.StrRegex(value, case_sensitive=False)
     return packages.OrRestriction(*list(
         packages.PackageRestriction(attr, matcher)
         for attr in ('description', 'longdescription')))
@@ -754,7 +747,7 @@ def parse_ownsre(value):
     return packages.PackageRestriction(
         'contents',
         values.AnyMatch(values.GetAttrRestriction(
-            'location', mk_strregex(value))))
+            'location', values.StrRegex(value))))
 
 @bind_add_query(
     '--maintainer', action='append',
@@ -767,7 +760,7 @@ def parse_maintainer(value):
     return packages.PackageRestriction(
         'maintainers',
         values.AnyMatch(values.UnicodeConversion(
-            mk_strregex(value.lower(), case_sensitive=False))))
+            values.StrRegex(value.lower(), case_sensitive=False))))
 
 @bind_add_query(
     '--maintainer-name', action='append',
@@ -780,7 +773,7 @@ def parse_maintainer_name(value):
     return packages.PackageRestriction(
         'maintainers',
         values.AnyMatch(values.GetAttrRestriction(
-            'name', mk_strregex(value.lower(), case_sensitive=False))))
+            'name', values.StrRegex(value.lower(), case_sensitive=False))))
 
 @bind_add_query(
     '--maintainer-email', action='append',
@@ -793,7 +786,7 @@ def parse_maintainer_email(value):
     return packages.PackageRestriction(
         'maintainers',
         values.AnyMatch(values.GetAttrRestriction(
-            'email', mk_strregex(value.lower(), case_sensitive=False))))
+            'email', values.StrRegex(value.lower(), case_sensitive=False))))
 
 @bind_add_query(
     '--maintainer-needed', action='store_true',
@@ -811,7 +804,7 @@ def parse_envmatch(value):
     """Apply a regexp to the environment."""
     return packages.PackageRestriction(
         'environment', DataSourceRestriction(values.AnyMatch(
-            mk_strregex(value))))
+            values.StrRegex(value))))
 
 # note the type=str; this is to suppress the default
 # fallback of using match parsing.

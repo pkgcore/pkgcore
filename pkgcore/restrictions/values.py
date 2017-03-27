@@ -111,7 +111,10 @@ class StrRegex(base):
         if not case_sensitive:
             flags = re.I
         sf(self, "flags", flags)
-        compiled_re = re.compile(regex, flags)
+        try:
+            compiled_re = re.compile(regex, flags)
+        except re.error as e:
+            raise ValueError("invalid regex: %r, %s" % (regex, e))
         if match:
             sf(self, "_matchfunc", compiled_re.match)
         else:

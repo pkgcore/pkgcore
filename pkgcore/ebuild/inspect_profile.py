@@ -14,7 +14,9 @@ demandload(
     'itertools:chain',
     'operator',
     'snakeoil.osutils:pjoin',
+    'snakeoil.sequences:split_negations',
     'pkgcore.ebuild:atom',
+    'pkgcore.ebuild.misc:ChunkedDataDict',
 )
 
 commands = []
@@ -265,12 +267,18 @@ class _use(_base):
 
 
 class use(_use):
-    """inspect package.use flags"""
+    """inspect enabled USE flags
+
+    Including USE, USE_EXPAND, and package.use settings.
+    """
 
     __metaclass__ = _register_command
 
     def __call__(self, namespace, out, err):
-        namespace.use = namespace.profile.pkg_use
+        u = ChunkedDataDict()
+        u.add_bare_global(*split_negations(namespace.profile.use))
+        u.merge(namespace.profile.pkg_use)
+        namespace.use = u
         super(use, self).__call__(namespace, out, err)
 
 

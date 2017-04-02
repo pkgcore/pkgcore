@@ -528,9 +528,16 @@ class ProfileStack(object):
     @klass.jit_attr
     def use(self):
         """USE flag settings for the profile."""
-        use = list(self.default_env.get('USE', ()))
+        return tuple(list(self.default_env.get('USE', ())) + list(self.expand_use()))
+
+    def expand_use(self, env=None):
+        """Expand USE_EXPAND settings to USE flags."""
+        if env is None:
+            env = self.default_env
+
+        use = []
         for u in self.use_expand:
-            value = self.default_env.get(u)
+            value = env.get(u)
             if value is None:
                 continue
             u2 = u.lower() + '_'

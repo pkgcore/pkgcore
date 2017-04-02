@@ -251,8 +251,8 @@ class domain(config_domain):
                 'while expanding %s' % (incremental,))
             settings[incremental] = tuple(s)
 
-        # append FEATURES and environment defined USE flags
-        self.use = list(settings.get('USE', ()))
+        # append expanded use, FEATURES, and environment defined USE flags
+        self.use = list(settings.get('USE', ())) + list(profile.expand_use(settings))
         self._extend_use_for_features(settings.get("FEATURES", ()))
         self.use = settings['USE'] = set(optimize_incrementals(
             self.use + os.environ.get('USE', '').split()))

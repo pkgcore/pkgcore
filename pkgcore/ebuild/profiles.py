@@ -20,10 +20,10 @@ from snakeoil.osutils import abspath, pjoin
 from snakeoil.sequences import split_negations
 
 from pkgcore.config import ConfigHint
-from pkgcore.ebuild import const, ebuild_src, misc
+from pkgcore.ebuild import const, ebuild_src
 from pkgcore.ebuild.misc import (
     _build_cp_atom_payload, chunked_data, ChunkedDataDict,
-    IncrementalsDict, package_keywords_splitter)
+    IncrementalsDict, package_keywords_splitter, render_incrementals)
 from pkgcore.util.parserestrict import parse_match
 
 demandload(
@@ -504,7 +504,7 @@ class ProfileStack(object):
                 if incremental in const.incrementals_unfinalized:
                     d[incremental] = tuple(v)
                 else:
-                    v = misc.render_incrementals(
+                    v = render_incrementals(
                         v,
                         msg_prefix="While expanding %s, value %r: " %
                         (incremental, v))

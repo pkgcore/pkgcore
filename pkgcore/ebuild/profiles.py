@@ -19,7 +19,7 @@ from snakeoil.fileutils import readlines_utf8
 from snakeoil.osutils import abspath, pjoin
 from snakeoil.sequences import split_negations
 
-from pkgcore.config import ConfigHint
+from pkgcore.config import ConfigHint, errors
 from pkgcore.ebuild import const, ebuild_src
 from pkgcore.ebuild.misc import (
     _build_cp_atom_payload, chunked_data, ChunkedDataDict,
@@ -39,7 +39,7 @@ demandload(
 )
 
 
-class ProfileError(Exception):
+class ProfileError(errors.ParsingError):
 
     def __init__(self, path, filename, error):
         self.path, self.filename, self.error = path, filename, error

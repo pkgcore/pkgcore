@@ -591,8 +591,6 @@ def main(parser, args=None, outfile=None, errfile=None):
 
     out = options = None
     exitstatus = -10
-    # can't use options.debug since argparsing might fail
-    debug = '--debug' in sys.argv[1:]
     try:
         options = parser.parse_args(args, options)
         main_func = getattr(options, 'main_func', None)
@@ -601,7 +599,7 @@ def main(parser, args=None, outfile=None, errfile=None):
                 "parser %r lacks a main method- internal bug.\nGot namespace %r\n"
                 % (parser, options))
 
-        if debug:
+        if parser.debug:
             # verbosity level affects debug output
             verbose = getattr(options, 'verbose', None)
             debug_verbosity = verbose if verbose is not None else 1
@@ -626,7 +624,7 @@ def main(parser, args=None, outfile=None, errfile=None):
         exitstatus = main_func(options, out, err)
     except KeyboardInterrupt:
         errfile.write('keyboard interrupted- exiting')
-        if debug:
+        if parser.debug:
             errfile.write('\n')
             traceback.print_exc()
         signal.signal(signal.SIGINT, signal.SIG_DFL)
@@ -634,19 +632,19 @@ def main(parser, args=None, outfile=None, errfile=None):
     except compatibility.IGNORED_EXCEPTIONS:
         raise
     except errors.ParsingError as e:
-        if debug:
+        if parser.debug:
             tb = sys.exc_info()[-1]
             dump_error(e, 'Error while parsing arguments', tb=tb)
         else:
             parser.error(e)
     except errors.ConfigurationError as e:
         tb = sys.exc_info()[-1]
-        if not debug:
+        if not parser.debug:
             tb = None
         dump_error(e, "Error in configuration", handle=errfile, tb=tb)
     except operations.OperationError as e:
         tb = sys.exc_info()[-1]
-        if not debug:
+        if not parser.debug:
             tb = None
         dump_error(e, "Error running an operation", handle=errfile, tb=tb)
     except Exception as e:

@@ -35,24 +35,8 @@ argparser.add_argument(
     help="extended package matching",
     docs=commandline.StoreTarget.__doc__.split('\n')[1:])
 
-query_options = argparser.add_argument_group("package querying options")
-query_options.add_argument(
-    '-N', '--newuse', action='store_true',
-    help="add installed pkgs with changed useflags to targets",
-    docs="""
-        Include installed packages with USE flag changes in the list of viable
-        targets for rebuilding.
-
-        USE flag changes include flags being added, removed, enabled, or
-        disabled with regards to a package. USE flag changes can occur via
-        ebuild alterations, profile updates, or local configuration
-        modifications.
-
-        Note that this option implies -1/--oneshot.
-    """)
-
-merge_mode = argparser.add_argument_group('available operations')
-merge_mode.add_argument(
+operation_options = argparser.add_argument_group('operations')
+operation_options.add_argument(
     '-C', '--unmerge', action='store_true',
     help='unmerge packages',
     docs="""
@@ -61,7 +45,7 @@ merge_mode.add_argument(
         WARNING: This does not ask for user confirmation for any targets so
         it's possible to quickly break a system.
     """)
-merge_mode.add_argument(
+operation_options.add_argument(
     '--clean', action='store_true',
     help='remove installed packages not referenced by any target pkgs/sets',
     docs="""
@@ -72,21 +56,16 @@ merge_mode.add_argument(
         Use with *caution*, this option used incorrectly can render your system
         unusable. Note that this implies --deep.
     """)
-merge_mode.add_argument(
+
+resolution_options = argparser.add_argument_group("resolver options")
+resolution_options.add_argument(
     '-p', '--pretend', action='store_true',
     help="only perform the dep resolution",
     docs="""
         Resolve package dependencies and display the results without performing
         any merges.
     """)
-merge_mode.add_argument(
-    '--ignore-failures', action='store_true',
-    help='ignore failures while running all types of tasks',
-    docs="""
-        Skip failures during the following phases: sanity checks
-        (pkg_pretend), fetching, dep resolution, and (un)merging.
-    """)
-merge_mode.add_argument(
+resolution_options.add_argument(
     '-a', '--ask', action='store_true',
     help="ask for user confirmation after dep resolution",
     docs="""
@@ -94,21 +73,14 @@ merge_mode.add_argument(
         beginning the fetch/build/merge process. The choice defaults to yes so
         pressing the "Enter" key will trigger acceptance.
     """)
-merge_mode.add_argument(
-    '--force', action='store_true',
-    dest='force',
-    help="force changes to a repo, regardless of if it's frozen",
-    docs="""
-        Force (un)merging on the livefs (vdb), regardless of if it's frozen.
-    """)
-merge_mode.add_argument(
+resolution_options.add_argument(
     '-f', '--fetchonly', action='store_true',
     help="do only the fetch steps of the resolved plan",
     docs="""
         Only perform fetching of all targets from SRC_URI based on the current
         USE configuration.
     """)
-merge_mode.add_argument(
+resolution_options.add_argument(
     '-1', '--oneshot', action='store_true',
     help="do not record changes in the world file",
     docs="""
@@ -116,8 +88,6 @@ merge_mode.add_argument(
         world file. Note that this is forcibly enabled if a package set is
         specified.
     """)
-
-resolution_options = argparser.add_argument_group("resolver options")
 resolution_options.add_argument(
     '-u', '--upgrade', action='store_true',
     help='try to upgrade installed pkgs/deps',
@@ -135,14 +105,18 @@ resolution_options.add_argument(
         specified targets.
     """)
 resolution_options.add_argument(
-    '--preload-vdb-state', action='store_true',
-    help="enable preloading of the installed packages database",
+    '-N', '--newuse', action='store_true',
+    help="add installed pkgs with changed useflags to targets",
     docs="""
-        Preload the installed package database which causes the resolver to
-        work with a complete graph, thus disallowing actions that conflict with
-        installed packages. If disabled, it's possible for the requested action
-        to conflict with already installed dependencies that aren't involved in
-        the graph of the requested operation.
+        Include installed packages with USE flag changes in the list of viable
+        targets for rebuilding.
+
+        USE flag changes include flags being added, removed, enabled, or
+        disabled with regards to a package. USE flag changes can occur via
+        ebuild alterations, profile updates, or local configuration
+        modifications.
+
+        Note that this option implies -1/--oneshot.
     """)
 resolution_options.add_argument(
     '-i', '--ignore-cycles', action='store_true',
@@ -204,6 +178,30 @@ resolution_options.add_argument(
     help="force rebuilding of all involved packages",
     docs="""
         Force all targets and their dependencies to be rebuilt.
+    """)
+resolution_options.add_argument(
+    '--ignore-failures', action='store_true',
+    help='ignore failures while running all types of tasks',
+    docs="""
+        Skip failures during the following phases: sanity checks
+        (pkg_pretend), fetching, dep resolution, and (un)merging.
+    """)
+resolution_options.add_argument(
+    '--force', action='store_true',
+    dest='force',
+    help="force changes to a repo, regardless of if it's frozen",
+    docs="""
+        Force (un)merging on the livefs (vdb), regardless of if it's frozen.
+    """)
+resolution_options.add_argument(
+    '--preload-vdb-state', action='store_true',
+    help="enable preloading of the installed packages database",
+    docs="""
+        Preload the installed package database which causes the resolver to
+        work with a complete graph, thus disallowing actions that conflict with
+        installed packages. If disabled, it's possible for the requested action
+        to conflict with already installed dependencies that aren't involved in
+        the graph of the requested operation.
     """)
 
 output_options = argparser.add_argument_group("output related options")

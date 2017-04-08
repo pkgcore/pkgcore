@@ -35,7 +35,8 @@ argparser.add_argument(
     help="extended package matching",
     docs=commandline.StoreTarget.__doc__.split('\n')[1:])
 
-operation_options = argparser.add_argument_group('operations')
+operation_args = argparser.add_argument_group('operations')
+operation_options = operation_args.add_mutually_exclusive_group()
 operation_options.add_argument(
     '-C', '--unmerge', action='store_true',
     help='unmerge packages',

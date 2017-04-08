@@ -38,6 +38,15 @@ argparser.add_argument(
 operation_args = argparser.add_argument_group('operations')
 operation_options = operation_args.add_mutually_exclusive_group()
 operation_options.add_argument(
+    '-u', '--upgrade', action='store_true',
+    help='try to upgrade installed pkgs/deps',
+    docs="""
+        Try to upgrade specified targets to the latest visible version. Note
+        that altered package visibility due to keywording or masking can often
+        hide the latest versions of packages, especially for stable
+        configurations.
+    """)
+operation_options.add_argument(
     '-C', '--unmerge', action='store_true',
     help='unmerge packages',
     docs="""
@@ -88,15 +97,6 @@ resolution_options.add_argument(
         Build and merge packages normally, but do not add any targets to the
         world file. Note that this is forcibly enabled if a package set is
         specified.
-    """)
-resolution_options.add_argument(
-    '-u', '--upgrade', action='store_true',
-    help='try to upgrade installed pkgs/deps',
-    docs="""
-        Try to upgrade specified targets to the latest visible version. Note
-        that altered package visibility due to keywording or masking can often
-        hide the latest versions of packages, especially for stable
-        configurations.
     """)
 resolution_options.add_argument(
     '-D', '--deep', action='store_true',

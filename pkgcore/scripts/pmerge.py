@@ -66,6 +66,9 @@ operation_options.add_argument(
         Use with *caution*, this option used incorrectly can render your system
         unusable. Note that this implies --deep.
     """)
+operation_options.add_argument(
+    '--list-sets', action='store_true',
+    help='display the list of available package sets')
 
 resolution_options = argparser.add_argument_group("resolver options")
 resolution_options.add_argument(
@@ -388,6 +391,10 @@ def update_worldset(world_set, pkg, remove=False):
 
 @argparser.bind_final_check
 def _validate(parser, namespace):
+    # nothing to validate if listing pkgsets
+    if namespace.list_sets:
+        return
+
     if namespace.unmerge:
         if namespace.sets:
             parser.error("using sets with -C probably isn't wise, aborting")
@@ -489,6 +496,10 @@ def load_world(namespace, attr):
 
 @argparser.bind_main_func
 def main(options, out, err):
+    if options.list_sets:
+        out.write('\n'.join(sorted(options.config.pkgset.iterkeys())))
+        return 0
+
     config = options.config
     if options.debug:
         resolver.plan.limiters.add(None)

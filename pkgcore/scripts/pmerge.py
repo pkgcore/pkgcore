@@ -391,12 +391,8 @@ def _validate(parser, namespace):
     if namespace.unmerge:
         if namespace.sets:
             parser.error("using sets with -C probably isn't wise, aborting")
-        if namespace.upgrade:
-            parser.error("cannot upgrade and unmerge simultaneously")
         if not namespace.targets:
             parser.error("you must provide at least one atom")
-        if namespace.clean:
-            parser.error("cannot use -C with --clean")
 
     if namespace.clean:
         if namespace.sets or namespace.targets:

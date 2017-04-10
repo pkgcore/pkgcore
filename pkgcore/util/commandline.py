@@ -132,7 +132,7 @@ class StoreTarget(argparse._AppendAction):
 CONFIG_ALL_DEFAULT = object()
 
 
-class NoDefaultConfigError(arghparse.ArgumentError):
+class NoDefaultConfigError(argparse.ArgumentError):
     pass
 
 
@@ -217,7 +217,7 @@ class StoreConfigObject(argparse._StoreAction):
     def store_default(config_type, namespace, attr, option_string=None):
         config = getattr(namespace, 'config', None)
         if config is None:
-            raise arghparse.ArgumentError("no config found.  Internal bug, or broken on disk configuration.")
+            raise argparse.ArgumentError(None, "no config found.  Internal bug, or broken on disk configuration.")
         obj = config.get_default(config_type)
         if obj is None:
             known_objs = sorted(getattr(config, config_type).keys())
@@ -229,7 +229,7 @@ class StoreConfigObject(argparse._StoreAction):
                     "via the %s option." % (config_type, option_string)
             if known_objs:
                 msg += "Known %ss: %s" % (config_type, ', '.join(map(repr, known_objs)))
-            raise NoDefaultConfigError(msg)
+            raise NoDefaultConfigError(None, msg)
         setattr(namespace, attr, obj)
 
     @staticmethod
@@ -253,10 +253,8 @@ class StoreConfigObject(argparse._StoreAction):
         try:
             obj = getattr(namespace.config, config_type)[key]
         except KeyError:
-            raise arghparse.ArgumentError(
-                "Failed loading object %s of type %s" % (config_type, key))
             raise argparse.ArgumentError(
-                self, "couldn't find %s %r" % (self.config_type, name))
+                None, "couldn't find %s %r" % (config_type, attr))
         setattr(namespace, attr, obj)
 
 
@@ -282,7 +280,8 @@ class StoreRepoObject(StoreConfigObject):
         if self.domain:
             domain = getattr(namespace, self.domain, None)
             if domain is None and self.domain_forced:
-                raise arghparse.ArgumentError(
+                raise argparse.ArgumentError(
+                    self,
                     "No domain found, but one was forced for %s; "
                     "internal bug.  NS=%s" % (self, namespace))
         if domain is None:
@@ -493,7 +492,7 @@ class ArgumentParser(arghparse.ArgumentParser):
     def __init__(self, config=True, domain=True, project=__name__.split('.')[0], **kwds):
         super(ArgumentParser, self).__init__(**kwds)
 
-        if not self.suppress:
+        if not self._suppress:
             if config:
                 self.add_argument(
                     '--add-config', nargs=3, action='append',

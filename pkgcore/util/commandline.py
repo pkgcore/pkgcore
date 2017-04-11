@@ -489,10 +489,11 @@ def _mk_domain(parser):
 
 class ArgumentParser(arghparse.ArgumentParser):
 
-    def __init__(self, config=True, domain=True, project=__name__.split('.')[0], **kwds):
-        super(ArgumentParser, self).__init__(**kwds)
+    def __init__(self, suppress=False, config=True, domain=True,
+                 project=__name__.split('.')[0], **kwds):
+        super(ArgumentParser, self).__init__(suppress=suppress, **kwds)
 
-        if not self._suppress:
+        if not suppress:
             if config:
                 self.add_argument(
                     '--add-config', nargs=3, action='append',

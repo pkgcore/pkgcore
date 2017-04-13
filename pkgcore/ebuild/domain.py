@@ -227,9 +227,6 @@ class domain(config_domain):
         # roughly... all incremental stacks should be interpreted left -> right
         # as such we start with the profile settings, and append ours onto it.
         for k, v in profile.default_env.iteritems():
-            # use profile-defined USE flags with USE_EXPAND values added
-            if k == 'USE':
-                v = profile.use
             if k not in settings:
                 settings[k] = v
                 continue

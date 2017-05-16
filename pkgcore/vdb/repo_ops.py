@@ -91,7 +91,7 @@ class install(repo_ops.install):
             f.write(o)
 
         # install NEEDED and NEEDED.ELF.2 files from tmpdir if they exist
-        pkg_tmpdir = normpath(pjoin(domain.tmpdir, self.new_pkg.category,
+        pkg_tmpdir = normpath(pjoin(domain.pm_tmpdir, self.new_pkg.category,
                                     self.new_pkg.PF, 'temp'))
         for f in ['NEEDED', 'NEEDED.ELF.2']:
             fp = pjoin(pkg_tmpdir, f)

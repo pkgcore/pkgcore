@@ -580,7 +580,11 @@ class domain(config_domain):
         if not os.path.exists(path):
             path = tempfile.gettempdir()
             logger.warning('nonexistent PORTAGE_TMPDIR path, defaulting to %s', path)
-        return os.path.normpath(pjoin(path, 'portage'))
+        return os.path.normpath(path)
+
+    @klass.jit_attr
+    def pm_tmpdir(self):
+        return pjoin(self.tmpdir, 'portage')
 
     @klass.jit_attr
     def ebuild_repos(self):

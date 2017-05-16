@@ -70,7 +70,7 @@ class base(object):
         raise NotImplementedError(self, 'create_repo_op')
 
     def _create_tempspace(self):
-        location = self.domain.tmpdir
+        location = self.domain.pm_tmpdir
         osutils.ensure_dirs(location)
         self.tempspace = tempfile.mkdtemp(
             dir=location, prefix="merge-engine-tmp")

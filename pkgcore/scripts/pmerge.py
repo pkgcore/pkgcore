@@ -503,6 +503,9 @@ def display_pkgsets(out, options):
             out.write(name)
             out.write('\n'.join('  ' + dedent(x) for x in kls.__doc__.split('\n')))
             out.write()
+            if options.verbose > 1:
+                out.write('\n'.join('  ' + str(pkg) for pkg in sorted(kls)))
+                out.write()
         else:
             out.write(name)
 

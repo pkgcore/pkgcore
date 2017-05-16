@@ -584,7 +584,7 @@ class buildable(ebd, setup_mixin, format.build):
                 # looks weird I realize, but
                 # pjoin("/foor/bar", "/barr/foo") == "/barr/foo"
                 # and pjoin("/foo/bar", ".asdf") == "/foo/bar/.asdf"
-                self.env.setdefault(s+"_DIR", pjoin(self.tmpdir, default))
+                self.env.setdefault(s + "_DIR", pjoin(self.domain.tmpdir, default))
                 # gentoo bug 355283
                 libdir = self.env.get("ABI")
                 if libdir is not None:

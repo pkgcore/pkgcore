@@ -428,6 +428,7 @@ __execute_phases() {
 					[[ -n ${DISTCC_LOG} ]] && addwrite "$(dirname ${DISTCC_LOG})"
 
 					if __feature_is_enabled ccache; then
+						export CCACHE_DIR
 						[[ -n ${CCACHE_SIZE} ]] && ccache -M ${CCACHE_SIZE} &> /dev/null
 					fi
 

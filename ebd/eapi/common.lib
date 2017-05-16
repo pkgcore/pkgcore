@@ -350,7 +350,7 @@ __phase_pre_src_test()    { __phase_pre_phase; }
 
 __phase_pre_src_configure() {
 	local var
-	for var in C{BUILD,HOST,TARGET,C,XX} {AS,LD,{,LIB}C{,XX}}FLAGS; do
+	for var in C{BUILD,HOST,TARGET,C,XX} {AS,LD,{,LIB}C{,XX}}FLAGS CCACHE_DIR; do
 		[[ -n ${!var+set} ]] && export ${var}="${!var}"
 	done
 	__phase_pre_phase

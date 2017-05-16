@@ -428,8 +428,7 @@ __execute_phases() {
 					[[ -n ${DISTCC_LOG} ]] && addwrite "$(dirname ${DISTCC_LOG})"
 
 					if __feature_is_enabled ccache; then
-						[[ -z ${CCACHE_SIZE} ]] && export CCACHE_SIZE="500M"
-						ccache -M ${CCACHE_SIZE} &> /dev/null
+						[[ -n ${CCACHE_SIZE} ]] && ccache -M ${CCACHE_SIZE} &> /dev/null
 					fi
 
 					[[ ${PKGCORE_DEBUG} -ge 2 ]] && set -x

@@ -210,10 +210,7 @@ def find_vulnerable_repo_pkgs(glsa_src, repo, grouped=False, arch=None):
 
 
 class SecurityUpgrades(object):
-    """pkgset that can be used directly from pkgcore configuration.
-
-    generates set of restrictions of required upgrades.
-    """
+    """Set of packages for available security upgrades."""
 
     pkgcore_config_type = ConfigHint({'ebuild_repo': 'ref:repo',
                                       'vdb': 'ref:vdb'},

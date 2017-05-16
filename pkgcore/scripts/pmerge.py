@@ -16,6 +16,7 @@ from functools import partial
 import sys
 from time import time
 
+from snakeoil.demandload import demandload
 from snakeoil.sequences import iflatten_instance, stable_unique
 from snakeoil.strings import pluralism
 
@@ -27,6 +28,8 @@ from pkgcore.resolver.util import reduce_to_failures
 from pkgcore.restrictions import packages
 from pkgcore.restrictions.boolean import OrRestriction
 from pkgcore.util import commandline, parserestrict, repo_utils
+
+demandload('textwrap:dedent')
 
 
 argparser = commandline.ArgumentParser(domain=True, description=__doc__)
@@ -494,10 +497,20 @@ def load_world(namespace, attr):
     setattr(namespace, attr, value)
 
 
+def display_pkgsets(out, options):
+    for name, kls in sorted(options.config.pkgset.iteritems()):
+        if options.verbose:
+            out.write(name)
+            out.write('\n'.join('  ' + dedent(x) for x in kls.__doc__.split('\n')))
+            out.write()
+        else:
+            out.write(name)
+
+
 @argparser.bind_main_func
 def main(options, out, err):
     if options.list_sets:
-        out.write('\n'.join(sorted(options.config.pkgset.iterkeys())))
+        display_pkgsets(out, options)
         return 0
 
     config = options.config

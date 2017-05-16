@@ -84,6 +84,7 @@ class FileList(object):
 
 
 class WorldFile(FileList):
+    """Set of packages contained in the world file."""
     pkgcore_config_type = ConfigHint(typename='pkgset')
     error_on_subsets = False
 

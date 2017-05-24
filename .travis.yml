@@ -4,7 +4,16 @@ python:
   - 3.4
   - 3.5
   - 3.6
-sudo: false
+env:
+  global:
+    - secure: "fshMWOnicLwv1XTkO+As2wiDHtI6vO4PmY2fGp0u9T4L7xaenLETyrkVyL7zUjjgphAOOUKT8jJTMT2mjW/KmsbrEbtde2jmsmi3o+VlfVy7H03yUqiAU4dLjDjvzM6vVoxPg4ySaem3h0b5u15QLUv6OmCKrP41bmMGI5j5mLc="
+    - secure: "gwdAGVKF97mY3vdE8VTR249auCYQwX4kTVWHll9t7Ll4czJcBYVkuSFr4iLL+RX+x5dtYvLOLd50HNnGkE9BkKnjb07qxjTBjW2w31/xolxrAjqz2fKgpQn1aOi3yDgb5FIlw3B6gMqBsI3ACEz8a/oCrtjZ/uiR74X0J670Mb8="
+    - CIBW_PLATFORM=linux
+    - CIBW_SKIP="cp26-* cp33-*"
+    - CIBW_BEFORE_BUILD="{pip} install -r requirements.txt"
+sudo: required
+services:
+  - docker
 addons:
   apt:
     packages:
@@ -16,13 +25,17 @@ install:
   - pip install --upgrade pip
   - pip install --only-binary ":all:" tox codecov
 before_script:
+  - git clone https://github.com/pkgcore/pkgdist.git
+
   # Make sure the actual install-info binary is first in PATH since
   # Debian-based distros use a wrapper script that outputs warnings and
   # breaks the info file merge trigger test.
   - mkdir texinfo
   - ln -s /usr/bin/ginstall-info texinfo/install-info
   - export PATH=$PWD/texinfo:$PATH
-script: tox -e travis
+script:
+  - tox -e travis
+  - pkgdist/build-dist-files.sh
 after_success:
   # upload coverage data
   - pushd .tox/travis/lib/python*/site-packages

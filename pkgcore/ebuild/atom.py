@@ -541,10 +541,17 @@ class atom(boolean.AndRestriction):
         # Our "key" (cat/pkg) must match exactly:
         if self.key != other.key:
             return False
+
         # Slot dep only matters if we both have one. If we do they
         # must be identical:
         if (self.slot is not None and other.slot is not None and
                 self.slot != other.slot):
+            return False
+
+        # Subslot dep only matters if we both have one. If we do they
+        # must be identical:
+        if (self.subslot is not None and other.subslot is not None and
+                self.subslot != other.subslot):
             return False
 
         if (self.repo_id is not None and other.repo_id is not None and

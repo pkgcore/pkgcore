@@ -1,6 +1,8 @@
 # Copyright: 2011 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD 3 clause
 
+import re
+
 from snakeoil import mappings, weakrefs, klass
 from snakeoil.demandload import demandload
 
@@ -130,7 +132,7 @@ class EAPI(object):
     __metaclass__ = klass.immutable_instance
 
     def __init__(self, magic, parent, phases, default_phases, metadata_keys, mandatory_keys,
-                 tracked_attributes, optionals, ebd_env_options=None):
+                 tracked_attributes, archive_suffixes, optionals, ebd_env_options=None):
         sf = object.__setattr__
 
         sf(self, "_magic", str(magic))
@@ -142,12 +144,14 @@ class EAPI(object):
 
         # We track the phases that have a default implementation- this is
         # primarily due to DEFINED_PHASES cache values not including it.
-
         sf(self, "default_phases", frozenset(default_phases))
 
         sf(self, "mandatory_keys", frozenset(mandatory_keys))
         sf(self, "metadata_keys", frozenset(metadata_keys))
         sf(self, "tracked_attributes", frozenset(tracked_attributes))
+        sf(self, "archive_suffixes", frozenset(archive_suffixes))
+        sf(self, "archive_suffixes_re", '(?:%s)' % '|'.join(map(re.escape, archive_suffixes)))
+
         d = dict(eapi_optionals)
         d.update(optionals)
         sf(self, 'options', _optionals_cls(d))
@@ -223,7 +227,7 @@ def get_eapi(magic, suppress_unsupported=True):
             eapi = EAPI(
                 magic=magic, parent=None, phases=(), default_phases=(),
                 metadata_keys=(), mandatory_keys=(), tracked_attributes=(),
-                optionals={'is_supported': False})
+                archive_suffixes=(), optionals={'is_supported': False})
             EAPI.unknown_eapis[eapi._magic] = eapi
     return eapi
 
@@ -273,6 +277,21 @@ common_tracked_attributes = (
     "rdepends", "restrict", "source_repository",
 )
 
+common_archive_suffixes = (
+    "tar",
+    "tar.gz", "tgz", "tar.Z", "tar.z",
+    "tar.bz2", "tbz2", "tbz",
+    "zip", "ZIP", "jar",
+    "gz", "Z", "z",
+    "bz2",
+    "rar", "RAR",
+    "lha", "LHa", "LHA", "lzh",
+    "a", "deb",
+    "tar.lzma",
+    "lzma",
+    "7z", "7Z",
+)
+
 # Boolean variables exported to the bash side, e.g. ebuild_phase_func is
 # exported as PKGCORE_EBUILD_PHASE_FUNC.
 common_env_optionals = mappings.ImmutableDict(dict.fromkeys(
@@ -293,6 +312,7 @@ eapi0 = EAPI.register(
     metadata_keys=common_metadata_keys,
     mandatory_keys=common_mandatory_metadata_keys,
     tracked_attributes=common_tracked_attributes,
+    archive_suffixes=common_archive_suffixes,
     optionals=dict(
         trust_defined_phases_cache=False,
         prefix_capable=False,
@@ -310,6 +330,7 @@ eapi1 = EAPI.register(
     metadata_keys=eapi0.metadata_keys,
     mandatory_keys=eapi0.mandatory_keys,
     tracked_attributes=eapi0.tracked_attributes,
+    archive_suffixes=eapi0.archive_suffixes,
     optionals=_combine_dicts(eapi0.options, dict(
         iuse_defaults=True,
     )),
@@ -326,6 +347,7 @@ eapi2 = EAPI.register(
     metadata_keys=eapi1.metadata_keys,
     mandatory_keys=eapi1.mandatory_keys,
     tracked_attributes=eapi1.tracked_attributes,
+    archive_suffixes=eapi1.archive_suffixes,
     optionals=_combine_dicts(eapi1.options, dict(
         doman_language_detect=True,
         transitive_use_atoms=True,
@@ -342,6 +364,7 @@ eapi3 = EAPI.register(
     metadata_keys=eapi2.metadata_keys,
     mandatory_keys=eapi2.mandatory_keys,
     tracked_attributes=eapi2.tracked_attributes,
+    archive_suffixes=eapi2.archive_suffixes | frozenset(["tar.xz", "xz"]),
     optionals=_combine_dicts(eapi2.options, dict(
         prefix_capable=True,
     )),
@@ -356,6 +379,7 @@ eapi4 = EAPI.register(
     metadata_keys=eapi3.metadata_keys | frozenset(["REQUIRED_USE"]),
     mandatory_keys=eapi3.mandatory_keys,
     tracked_attributes=eapi3.tracked_attributes,
+    archive_suffixes=eapi3.archive_suffixes,
     optionals=_combine_dicts(eapi3.options, dict(
         dodoc_allow_recursive=True,
         doins_allow_symlinks=True,
@@ -379,6 +403,7 @@ eapi5 = EAPI.register(
     metadata_keys=eapi4.metadata_keys,
     mandatory_keys=eapi4.mandatory_keys,
     tracked_attributes=eapi4.tracked_attributes | frozenset(["iuse_effective"]),
+    archive_suffixes=eapi4.archive_suffixes,
     optionals=_combine_dicts(eapi4.options, dict(
         ebuild_phase_func=True,
         econf_disable_silent_rules=True,
@@ -399,6 +424,7 @@ eapi6 = EAPI.register(
     metadata_keys=eapi5.metadata_keys,
     mandatory_keys=eapi5.mandatory_keys,
     tracked_attributes=eapi5.tracked_attributes | frozenset(["user_patches"]),
+    archive_suffixes=eapi5.archive_suffixes | frozenset(["txz"]),
     optionals=_combine_dicts(eapi5.options, dict(
         econf_docdir_and_htmldir=True,
         global_failglob=True,

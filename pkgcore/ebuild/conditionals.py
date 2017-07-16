@@ -118,9 +118,6 @@ class DepSet(boolean.AndRestriction):
                     elif raw_conditionals[-1] in operators:
                         if len(depsets[-1]) == 1:
                             depsets[-2].append(depsets[-1][0])
-                        elif raw_conditionals[-1] == '' and (len(raw_conditionals) == 1 or ('' == raw_conditionals[-2])):
-                            # if the frame is an and and the parent is an and, collapse it in.
-                            depsets[-2].extend(depsets[-1])
                         else:
                             depsets[-2].append(
                                 operators[raw_conditionals[-1]](*depsets[-1]))

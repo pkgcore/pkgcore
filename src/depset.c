@@ -154,9 +154,6 @@ internal_parse_depset(PyObject *dep_str, char **ptr, int *has_conditionals,
 				goto internal_parse_depset_error;
 			} else if(!PyTuple_CheckExact(tmp)) {
 				item = tmp;
-			} else if (parent_func && and_func == parent_func) {
-				item = tmp;
-				item_size = PyTuple_GET_SIZE(item);
 			} else {
 				item = PyObject_CallObject(and_func, tmp);
 				Py_DECREF(tmp);

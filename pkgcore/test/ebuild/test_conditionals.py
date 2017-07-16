@@ -127,7 +127,7 @@ class native_DepSetParsingTest(base):
         "a b",
         ( "",   []),
 
-        ( "( a b )", ("a", "b")),
+        ( "( a b )", ("&&", "(", "a", "b", ")")),
 
         "|| ( a b )",
 
@@ -137,14 +137,11 @@ class native_DepSetParsingTest(base):
         ( " x? ( a  b )",
             (["x"], "(", "a", "b", ")")),
 
-        # at some point, this should collapse it
         ( "x? ( y? ( a ) )",
             (["x"], "(", ["x", "y"], "(", "a", ")", ")")),
 
-        # at some point, this should collapse it
         ("|| ( || ( a b ) )", ["||", "(", "a", "b", ")"]),
 
-        # at some point, this should collapse it
         "|| ( || ( a b ) c )",
 
         ( "x? ( a !y? ( || ( b c ) d ) e ) f1 f? ( g h ) i",

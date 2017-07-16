@@ -103,7 +103,7 @@ class native_DepSetParsingTest(base):
         got = list(self.flatten_restricts(func(self, s)))
         wanted = list(v)
         self.assertEqual(got, v, msg="given %r\nexpected %r but got %r" %
-            (s, got, wanted))
+            (s, wanted, got))
 
     def check_str(self, s, func=base.gen_depset):
         if isinstance(s, (list, tuple)):

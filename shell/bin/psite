@@ -34,9 +34,14 @@ elif [[ ${#homepage[@]} -gt 1 ]]; then
 	homepage=${homepage[choice]}
 fi
 
-if ! _which xdg-open; then
-	echo "${SCRIPT}: xdg-open missing, install xdg-utils" >&2
+# fallback to xdg-open if $BROWSER is unset
+if [[ -z ${BROWSER} ]]; then
+	BROWSER=xdg-open
+fi
+
+if ! _which ${BROWSER}; then
+	echo "${SCRIPT}: ${BROWSER} not available" >&2
 	return 1
 fi
 
-xdg-open "${homepage}" &>/dev/null &
+${BROWSER} "${homepage}" &>/dev/null &

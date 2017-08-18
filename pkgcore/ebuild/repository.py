@@ -56,8 +56,8 @@ class repo_operations(_repo_ops.operations):
             observer.info("repo %s has manifests disabled", self.repo.repo_id)
             return
         required_chksums = manifest_config.hashes
-        ret = True
         distdir = domain.fetcher.distdir
+        ret = []
 
         for key_query in sorted(set(match.unversioned_atom for match in matches)):
             pkgs = self.repo.match(key_query)
@@ -92,19 +92,19 @@ class repo_operations(_repo_ops.operations):
                         observer.error(
                             "failed removing old manifest: %s::%s",
                             key_query, self.repo.repo_id)
-                        ret = False
+                        ret.append(key_query)
                 continue
 
             pkg_ops = domain.pkg_operations(pkgs[0], observer=observer)
             if not pkg_ops.supports("fetch"):
                 observer.error("pkg %s doesn't support fetching, can't generate manifest", pkg)
-                ret = False
+                ret.append(key_query)
                 continue
 
             # fetch distfiles
             for fetchable in fetchables.itervalues():
                 if not pkg_ops.fetch(fetchable, observer):
-                    ret = False
+                    ret.append(key_query)
                     continue
             if not ret:
                 continue

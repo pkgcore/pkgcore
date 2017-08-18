@@ -54,7 +54,6 @@ class use_expand_filter(object):
             value (with the use-expanded bit stripped off, so
             C{"video_cards_alsa"} becomes C{"{'video_cards': ['alsa']}"}).
         """
-
         # XXX: note this is fairly slow- actually takes up more time then
         # chunks of the resolver
         ue_dict = {}
@@ -93,7 +92,6 @@ class use_expand_filter(object):
 
 
 class Formatter(object):
-
     """Base Formatter class: All formatters should be subclasses of this."""
 
     def __init__(self, **kwargs):
@@ -113,12 +111,14 @@ class Formatter(object):
 
 class BasicFormatter(Formatter):
     """A basic formatter, intended for scripts"""
+
     def format(self, op):
         self.out.write(op.pkg.key)
 
 
 class PkgcoreFormatter(Formatter):
     """The original pkgcore output"""
+
     def format(self, op):
         repo = getattr(op.pkg.repo, 'repo_id', None)
         if not repo:
@@ -132,7 +132,6 @@ class PkgcoreFormatter(Formatter):
 
 
 class CountingFormatter(Formatter):
-
     """Subclass for formatters that count packages"""
 
     def __init__(self, **kwargs):
@@ -182,7 +181,6 @@ class CountingFormatter(Formatter):
 
 
 class PortageFormatter(CountingFormatter):
-
     """Portage formatter
 
     A Formatter designed to resemble Portage's output
@@ -508,7 +506,6 @@ class PortageFormatter(CountingFormatter):
 
 
 class PaludisFormatter(CountingFormatter):
-
     """Paludis formatter
 
     A Formatter designed to resemble Paludis' output

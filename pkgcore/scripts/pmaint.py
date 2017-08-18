@@ -33,7 +33,8 @@ demandload(
     'pkgcore.merge:triggers@merge_triggers',
     'pkgcore.operations:observer',
     'pkgcore.package:mutated',
-    'pkgcore.repository:multiplex,repo_containing_path',
+    'pkgcore.repository:multiplex',
+    'pkgcore.repository.util:repo_containing_path',
     'pkgcore.restrictions:packages',
     'pkgcore.util.parserestrict:parse_match',
 )

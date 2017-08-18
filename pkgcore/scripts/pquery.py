@@ -24,9 +24,9 @@ from snakeoil.demandload import demandload
 from snakeoil.formatters import decorate_forced_wrapping
 
 from pkgcore.ebuild import conditionals, atom
+from pkgcore.repository.util import get_raw_repos, get_virtual_repos
 from pkgcore.restrictions import packages, values, boolean
-from pkgcore.util import (
-    commandline, repo_utils, parserestrict, packages as pkgutils)
+from pkgcore.util import commandline, parserestrict, packages as pkgutils
 
 demandload(
     'errno',
@@ -561,9 +561,9 @@ def setup_repos(namespace, attr):
         repos = namespace.domain.repos
 
     if namespace.raw or namespace.virtuals:
-        repos = repo_utils.get_raw_repos(repos)
+        repos = get_raw_repos(repos)
     if namespace.virtuals:
-        repos = repo_utils.get_virtual_repos(
+        repos = get_virtual_repos(
             repos, namespace.virtuals == 'only')
     setattr(namespace, attr, repos)
 

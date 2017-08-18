@@ -22,7 +22,7 @@ demandload(
     'pkgcore.ebuild:cpv,atom,restricts@atom_restricts',
     'pkgcore.log:logger',
     'pkgcore.package:mutated',
-    'pkgcore.util.repo_utils:get_virtual_repos',
+    'pkgcore.repository.util:get_virtual_repos',
 )
 
 

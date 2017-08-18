@@ -1,7 +1,10 @@
 # Copyright: 2006-2011 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
-__all__ = ("SimpleTree", "RepositoryGroup")
+__all__ = (
+    "SimpleTree", "RepositoryGroup",
+    "repo_containing_path", "get_raw_repos", "get_virtual_repos",
+)
 
 from snakeoil import klass
 from snakeoil.demandload import demandload
@@ -10,7 +13,7 @@ from pkgcore.ebuild.cpv import versioned_CPV
 from pkgcore.repository.prototype import tree
 
 demandload(
-    "pkgcore.repository:multiplex",
+    "pkgcore.repository:multiplex,virtual",
 )
 
 
@@ -103,3 +106,46 @@ class RepositoryGroup(object):
     @classmethod
     def change_repos(cls, repos):
         return cls(repos)
+
+
+def repo_containing_path(repos, path):
+    """Find the repo containing a path.
+
+    Args:
+        repos (iterable): iterable of repo objects
+        path (str): path in the filesystem
+
+    Returns:
+        repo object if a matching repo is found, otherwise None.
+    """
+    for repo in repos:
+        if path in repo:
+            return repo
+    return None
+
+def get_raw_repos(repos):
+    """Returns a list of raw repos found.
+
+    repos can be either a repo instance, or a list of repos
+    """
+    if isinstance(repos, (list, tuple)):
+        l = []
+        map(l.extend, (get_raw_repos(x) for x in repos))
+        return l
+    while getattr(repos, "raw_repo", None) is not None:
+        repos = repos.raw_repo
+    if isinstance(repos, multiplex.tree):
+        l = []
+        map(l.extend, (get_raw_repos(x) for x in repos.trees))
+        return l
+    return [repos]
+
+def get_virtual_repos(repos, sentinel=True):
+    """Select only virtual repos.
+
+    repos can be either a list of repos, or a repo to descend through.
+    if sentinel is False, will select all non virtual repos
+    """
+    if not isinstance(repos, (tuple, list)):
+        repos = get_raw_repos(repos)
+    return [x for x in repos if isinstance(x, virtual.tree) == sentinel]

@@ -24,10 +24,11 @@ from pkgcore.ebuild import resolver, restricts
 from pkgcore.ebuild.atom import atom
 from pkgcore.merge import errors as merge_errors
 from pkgcore.operations import observer, format
+from pkgcore.repository.util import get_raw_repos
 from pkgcore.resolver.util import reduce_to_failures
 from pkgcore.restrictions import packages
 from pkgcore.restrictions.boolean import OrRestriction
-from pkgcore.util import commandline, parserestrict, repo_utils
+from pkgcore.util import commandline, parserestrict
 
 demandload('textwrap:dedent')
 
@@ -688,7 +689,7 @@ def main(options, out, err):
             out.error("failed '%s'" % (restrict,))
             out.write('potentials:')
             match_count = 0
-            for r in repo_utils.get_raw_repos(source_repos.repos):
+            for r in get_raw_repos(source_repos.repos):
                 l = r.match(restrict)
                 if l:
                     out.write(

@@ -11,8 +11,8 @@ from snakeoil.demandload import demandload
 
 from pkgcore.restrictions import boolean, packages
 from pkgcore.repository import multiplex
+from pkgcore.repository.util import get_virtual_repos
 from pkgcore.util import commandline
-from pkgcore.util.repo_utils import get_virtual_repos
 
 demandload(
     'errno',

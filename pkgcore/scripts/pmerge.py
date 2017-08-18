@@ -270,7 +270,7 @@ def unmerge(out, err, vdb, targets, options, formatter, world_set=None):
         # explicit wildcards.
         matches = vdb.match(restriction)
         if not matches:
-            raise Failure("Nothing matches '%s'" % (token,))
+            raise Failure("nothing matches '%s'" % (token,))
         categories = set(pkg.category for pkg in matches)
         if len(categories) > 1:
             raise parserestrict.ParseError(
@@ -550,14 +550,11 @@ def main(options, out, err):
     if options.unmerge:
         if not options.oneshot:
             if world_set is None:
-                err.write("Disable world updating via --oneshot, "
-                          "or fix your configuration")
-                return 1
+                argparser.error("disable world updating via --oneshot, or fix your configuration")
         try:
             unmerge(out, err, livefs_repos, options.targets, options, formatter, world_set)
         except (parserestrict.ParseError, Failure) as e:
-            out.error(str(e))
-            return 1
+            argparser.error(str(e))
         return
 
     source_repos = domain.source_repos
@@ -588,36 +585,29 @@ def main(options, out, err):
             matches = parse_target(restriction, source_repos.combined, livefs_repos, return_none=True)
         except parserestrict.ParseError as e:
             e.token = token
-            out.error(str(e))
-            return 1
+            argparser.error(str(e))
         if matches is None:
             if not options.ignore_failures:
-                out.error("No matching {}: {}".format(pkg_type, token))
+                error_msg = ["no matching {}: '{}'".format(pkg_type, token)]
                 if token in config.pkgset:
-                    out.error(
-                        "There is a package set matching '{0}', "
-                        "use @{0} instead to specify the set.".format(token))
+                    error_msg.append("use '@{0}' instead for the package set".format(token))
                 elif options.usepkgonly:
                     matches = parse_target(
                         restriction, domain.ebuild_repos.combined, livefs_repos, return_none=True)
                     if matches:
-                        out.error(
-                            "Try re-running {} without -K/--usepkgonly enabled "
-                            "to rebuild from source.".format(options.prog, token))
-                return 1
+                        error_msg.append("try re-running without -K/--usepkgonly enabled to rebuild from source")
+                argparser.error(' -- '.join(error_msg))
         else:
             atoms.extend(matches)
 
     if not atoms and not options.newuse:
-        out.error('No targets specified; nothing to do')
-        return 1
+        argparser.error('no targets specified; nothing to do')
 
     atoms = stable_unique(atoms)
 
     if options.clean and not options.oneshot:
         if world_set is None:
-            err.write("Disable world updating via --oneshot, or fix your configuration")
-            return 1
+            argparser.error("disable world updating via --oneshot, or fix your configuration")
 
     if options.upgrade:
         resolver_kls = resolver.upgrade_resolver

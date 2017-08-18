@@ -144,9 +144,11 @@ class CountingFormatter(Formatter):
         self.download_size = 0
 
     def visit_op(self, op_type):
+        """Track the number of package operations of each type."""
         self.package_data[op_type] += 1
 
     def end(self):
+        """Output total package, operation, and download size counts."""
         self.out.write()
         if self.verbose:
             total = sum(self.package_data.itervalues())
@@ -327,6 +329,7 @@ class PortageFormatter(CountingFormatter):
                     self.livefs_repos.match(op.pkg.unversioned_atom)])
             installed = ', '.join(pkgs)
 
+        # output currently installed versions
         if installed:
             out.write(' ', out.fg('blue'), out.bold, '[%s]' % installed, out.reset)
 
@@ -346,11 +349,16 @@ class PortageFormatter(CountingFormatter):
         # Convert the list of tuples to a list of lists and a list of
         # dicts (both length 2 or 4).
         uselists, usedicts = zip(*stuff)
+
+        # output USE flags
         self.format_use('use', *uselists)
+
+        # output USE_EXPAND flags
         for expand in sorted(self.use_expand - self.use_expand_hidden):
             flaglists = [d.get(expand, ()) for d in usedicts]
             self.format_use(expand, *flaglists)
 
+        # output download size
         if self.verbose:
             if not op.pkg.built:
                 downloads = set(
@@ -478,6 +486,7 @@ class PortageFormatter(CountingFormatter):
             out.write('"')
 
     def end(self):
+        """Output package repository list."""
         out = self.out
         if self.verbose:
             super(PortageFormatter, self).end()

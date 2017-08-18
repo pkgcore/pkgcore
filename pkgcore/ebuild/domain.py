@@ -619,27 +619,3 @@ class domain(config_domain):
     all_raw_ebuild_repos = klass.alias_attr("ebuild_repos_raw.combined")
     all_binary_repos = klass.alias_attr("binary_repos.combined")
     all_raw_binary_repos = klass.alias_attr("binary_repos_raw.combined")
-
-    def repo_containing_ebuild(self, path):
-        """Determine if an ebuild is in a repo.
-
-        Note that this will only return a repo if the ebuild is properly placed
-        in the proper category/PN directory structure.
-
-        Args:
-            path (str): path to ebuild file
-
-        Returns:
-            configured ebuild repo object if a matching repo is found, otherwise None.
-        """
-        ebuild_path = os.path.abspath(path)
-        if not (os.path.isfile(ebuild_path) and ebuild_path.endswith('.ebuild')):
-            raise ValueError("'%s' is not an ebuild" % path)
-
-        repo_path = os.path.abspath(os.path.join(
-            ebuild_path, os.pardir, os.pardir, os.pardir))
-
-        for repo in self.ebuild_repos:
-            if repo.location == repo_path:
-                return repo
-        return None

@@ -163,27 +163,6 @@ class tree(prototype.tree):
                 raise
         raise ValueError("no repo contains: '%s'" % path)
 
-    def repo_containing_path(self, path):
-        """Find the repo containing a path.
-
-        Args:
-            path (str): path in the filesystem
-
-        Returns:
-            repo object if a matching repo is found, otherwise None.
-
-        Raises:
-            ValueError: path matches multiple repos
-        """
-        repos = [r for r in self.trees if path in r]
-
-        if len(repos) == 1:
-            return repos[0]
-        elif len(repos) > 1:
-            raise ValueError("multiple repos contain: '%s'" % path)
-        else:
-            return None
-
     def itermatch(self, restrict, **kwds):
         sorter = kwds.get("sorter", iter)
         if sorter is iter:

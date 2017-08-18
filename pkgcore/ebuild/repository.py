@@ -107,10 +107,9 @@ class repo_operations(_repo_ops.operations):
                 continue
 
             # fetch distfiles
-            for fetchable in fetchables.itervalues():
-                if not pkg_ops.fetch(fetchable, observer):
-                    ret.append(key_query)
-                    continue
+            if not pkg_ops.fetch(list(fetchables.itervalues()), observer):
+                ret.append(key_query)
+                continue
 
             # calculate checksums for fetched distfiles
             for fetchable in fetchables.itervalues():

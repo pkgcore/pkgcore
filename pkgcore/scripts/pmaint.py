@@ -32,7 +32,7 @@ demandload(
     'pkgcore.merge:triggers@merge_triggers',
     'pkgcore.operations:observer',
     'pkgcore.package:mutated',
-    'pkgcore.repository:multiplex',
+    'pkgcore.repository:multiplex,repo_containing_path',
     'pkgcore.restrictions:packages',
     'pkgcore.util.parserestrict:parse_match',
 )
@@ -458,7 +458,11 @@ def _digest_validate(parser, namespace):
         if not targets:
             restrictions.append(repo.path_restrict(repo.location))
     else:
-        repo = namespace.domain.all_raw_ebuild_repos
+        # if we're currently in a known ebuild repo use it, otherwise use all ebuild repos
+        repo = repo_containing_path(namespace.domain.ebuild_repos_raw, os.getcwd())
+        if repo is None:
+            repo = namespace.domain.all_raw_ebuild_repos
+
         if not targets:
             try:
                 restrictions.append(repo.path_restrict(os.getcwd()))

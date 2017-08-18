@@ -741,7 +741,7 @@ class EbuildProcessor(object):
         val = self.generic_handler(additional_commands=commands)
 
         if not val:
-            logger.error("returned val from %s was '%s'", command, str(val))
+            logger.debug("returned val from %s was '%s'", command, str(val))
             raise Exception(val)
 
         if updates:

@@ -27,6 +27,7 @@ demandload(
     'snakeoil.fileutils:AtomicWriteFile',
     'snakeoil.osutils:pjoin,listdir_dirs',
     'snakeoil.sequences:iter_stable_unique',
+    'snakeoil.strings:pluralism',
     'pkgcore.ebuild:processor,triggers',
     'pkgcore.fs:contents,livefs',
     'pkgcore.merge:triggers@merge_triggers',
@@ -496,11 +497,14 @@ def _digest_validate(parser, namespace):
 def digest_main(options, out, err):
     repo = options.repo
 
-    ret = repo.operations.digests(
+    failures = repo.operations.digests(
         domain=options.domain,
         restriction=options.restriction,
         observer=observer.formatter_output(out),
         mirrors=options.mirrors,
         force=options.force)
+    if failures:
+        digest.error('failed generating manifest%s: %s' % (
+            pluralism(failures), ', '.join(str(x) for x in failures)))
 
-    return int(not ret)
+    return 0

@@ -68,14 +68,19 @@ class repo_operations(_repo_ops.operations):
 
             # all pkgdir fetchables
             pkgdir_fetchables = {}
-            for pkg in pkgs:
-                pkgdir_fetchables.update({
-                    fetchable.filename: fetchable for fetchable in
-                    iflatten_instance(pkg._get_attr['fetchables'](
-                        pkg, allow_missing_checksums=True,
-                        skip_default_mirrors=(not mirrors)),
-                        fetch.fetchable)
-                    })
+            try:
+                for pkg in pkgs:
+                    pkgdir_fetchables.update({
+                        fetchable.filename: fetchable for fetchable in
+                        iflatten_instance(pkg._get_attr['fetchables'](
+                            pkg, allow_missing_checksums=True,
+                            skip_default_mirrors=(not mirrors)),
+                            fetch.fetchable)
+                        })
+            except pkg_errors.MetadataException as e:
+                observer.error("failed sourcing %s", pkg.cpvstr)
+                ret.append(key_query)
+                continue
 
             # fetchables targeted for manifest generation
             fetchables = {filename: fetchable for filename, fetchable in pkgdir_fetchables.iteritems()

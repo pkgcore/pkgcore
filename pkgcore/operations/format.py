@@ -133,8 +133,10 @@ class operations(_operations_mod.base):
         if fetchables is not None:
             if not isinstance(fetchables, (tuple, list)):
                 fetchables = [fetchables]
+            ret = []
             for fetchable in fetchables:
-                return self._fetch_op.fetch_one(fetchable, self._get_observer(observer))
+                ret.append(self._fetch_op.fetch_one(fetchable, self._get_observer(observer)))
+            return all(ret)
         return self._fetch_op.fetch_all(self._get_observer(observer))
 
     @_operations_mod.is_standalone

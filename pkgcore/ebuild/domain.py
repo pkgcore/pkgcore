@@ -590,29 +590,29 @@ class domain(config_domain):
     def ebuild_repos(self):
         """Group of all ebuild repos bound with configuration data."""
         return util.RepositoryGroup(
-            x for x in self.repos
-            if isinstance(x.raw_repo, ebuild_repo._ConfiguredTree))
+            x for x in self.repos_configured.itervalues()
+            if isinstance(x, ebuild_repo._ConfiguredTree))
 
     @klass.jit_attr
     def ebuild_repos_raw(self):
         """Group of all ebuild repos without filtering."""
         return util.RepositoryGroup(
-            x for x in self.repos_configured.itervalues()
-            if isinstance(x.raw_repo, ebuild_repo._UnconfiguredTree))
+            x for x in self.repos_raw.itervalues()
+            if isinstance(x, ebuild_repo._UnconfiguredTree))
 
     @klass.jit_attr
     def binary_repos(self):
         """Group of all binary repos bound with configuration data."""
         return util.RepositoryGroup(
-            x for x in self.repos
-            if isinstance(x.raw_repo, binary_repo.ConfiguredBinpkgTree))
+            x for x in self.repos_configured.itervalues()
+            if isinstance(x, binary_repo.ConfiguredBinpkgTree))
 
     @klass.jit_attr
     def binary_repos_raw(self):
         """Group of all binary repos without filtering."""
         return util.RepositoryGroup(
-            x for x in self.repos_configured.itervalues()
-            if isinstance(x.raw_repo, binary_repo.tree))
+            x for x in self.repos_raw.itervalues()
+            if isinstance(x, binary_repo.tree))
 
     # multiplexed repos
     all_ebuild_repos = klass.alias_attr("ebuild_repos.combined")

@@ -475,13 +475,19 @@ def parse_target(restriction, repo, livefs_repos, return_none=False):
             if len(restriction) > 1:
                 # drop repo specific restrictions, ebuild repos will not match installed (vdb) repo
                 restriction = restriction.remove_restriction(restriction_types=(restricts.RepositoryDep,))
-            # check for installed package matches
-            installed_matches = {x.key for x in livefs_repos.itermatch(restriction)}
-            if len(installed_matches) > 1:
-                # try removing virtuals if there are multiple matches
-                installed_matches = {x for x in installed_matches if not x.startswith('virtual/')}
-            if len(installed_matches) == 1:
-                return [atom(installed_matches.pop())]
+
+            # find installed package matches
+            matches = {x.key for x in livefs_repos.itermatch(restriction)}
+
+            # try removing virtuals if there are multiple installed matches or none at all
+            if not matches:
+                matches = {x for x in key_matches if not x.startswith('virtual/')}
+            elif len(matches) > 1:
+                matches = {x for x in matches if not x.startswith('virtual/')}
+
+            if len(matches) == 1:
+                return [atom(matches.pop())]
+
             raise AmbiguousQuery(restriction, sorted(key_matches))
         else:
             # if a glob was specified then just return every match

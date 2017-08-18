@@ -51,6 +51,15 @@ class TargetParsingTest(TestCase):
         a = pmerge.parse_target(parse_match(u'*/foon'), repo, livefs_repos)
         self.assertEqual(len(a), 2)
 
+        # test pkg name collisions between real and virtual pkgs in a repo, but not installed
+        # repos, the real pkg will be selected over the virtual
+        livefs_repos = util.SimpleTree({'foo': {'baz': ('1')}})
+        repo = util.SimpleTree({'foo': {'bar': ('1',)}, 'virtual': {'bar': ('1',)}})
+        a = pmerge.parse_target(parse_match("bar"), repo, livefs_repos)
+        self.assertEqual(len(a), 1)
+        self.assertEqual(a[0].key, 'foo/bar')
+        self.assertTrue(isinstance(a[0].key, str))
+
         # test pkg name collisions between real and virtual pkgs on livefs
         # repos, the real pkg will be selected over the virtual
         livefs_repos = util.SimpleTree({'foo': {'bar': ('1')}, 'virtual': {'bar': ('0')}})

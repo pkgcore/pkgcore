@@ -57,6 +57,7 @@ class repo_operations(_repo_ops.operations):
             return
         required_chksums = manifest_config.hashes
         ret = True
+        distdir = domain.fetcher.distdir
 
         for key_query in sorted(set(match.unversioned_atom for match in matches)):
             pkgs = self.repo.match(key_query)
@@ -109,7 +110,6 @@ class repo_operations(_repo_ops.operations):
                 continue
 
             # calculate checksums for fetched distfiles
-            distdir = domain.fetcher.distdir
             for fetchable in fetchables.itervalues():
                 d = dict(zip(
                     required_chksums,

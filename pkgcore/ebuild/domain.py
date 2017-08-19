@@ -576,6 +576,10 @@ class domain(config_domain):
 
     @klass.jit_attr
     def tmpdir(self):
+        """Temporary directory for the system.
+
+        Uses PORTAGE_TMPDIR setting and falls back to using the system's TMPDIR if unset.
+        """
         path = self.settings.get('PORTAGE_TMPDIR', '')
         if not os.path.exists(path):
             path = tempfile.gettempdir()
@@ -584,6 +588,7 @@ class domain(config_domain):
 
     @klass.jit_attr
     def pm_tmpdir(self):
+        """Temporary directory for the package manager."""
         return pjoin(self.tmpdir, 'portage')
 
     @klass.jit_attr

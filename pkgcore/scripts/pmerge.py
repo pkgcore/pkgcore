@@ -819,7 +819,7 @@ def main(options, out, err):
                     try:
                         result = buildop.finalize()
                     except format.errors as e:
-                        out.error("caught exception building %s: % s" % (op.pkg.cpvstr, e))
+                        out.error("caught exception building %s: %s" % (op.pkg.cpvstr, e))
                     else:
                         if result is False:
                             out.error("failed building %s" % (op.pkg.cpvstr,))

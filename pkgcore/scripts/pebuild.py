@@ -92,5 +92,6 @@ def main(options, out, err):
         for phase, f in izip(phases, phase_funcs):
             out.write('executing phase %s' % (phase,))
             f(**kwds)
-    except format.errors:
+    except format.errors as e:
+        out.error("caught exception executing phase %s: %s" % (phase, e))
         return 1

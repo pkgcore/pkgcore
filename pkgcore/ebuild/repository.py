@@ -322,6 +322,9 @@ class _UnconfiguredTree(prototype.tree):
 
         :param path: full or partial path to an ebuild
         :return: a package restriction matching the given path if possible
+        :raises ValueError: if the repo doesn't contain the given path, the
+            path relates to a file that isn't an ebuild, or the ebuild isn't in the
+            proper directory layout
         """
         realpath = os.path.realpath(path)
 

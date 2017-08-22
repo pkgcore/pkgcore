@@ -597,7 +597,7 @@ class build_scripts(dst_build_scripts.build_scripts):
                     #!%s
                     from os.path import basename
                     from %s import scripts
-                    scripts.main(basename(__file__))
+                    scripts.run(basename(__file__))
                 """ % (sys.executable, PROJECT)))
         self.copy_scripts()
 

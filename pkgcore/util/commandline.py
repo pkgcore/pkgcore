@@ -2,7 +2,6 @@
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
 # License: BSD/GPL2
 
-
 """Utilities for writing commandline utilities.
 
 pkgcore scripts should use the :obj:`ArgumentParser` subclass here for a
@@ -15,18 +14,18 @@ See dev-notes/commandline.rst for more complete documentation.
 """
 
 __all__ = (
-    "FormattingHandler", "main",
+    "Tool", "main",
 )
 
 import argparse
 from functools import partial
 from importlib import import_module
-import logging
 import os
 import sys
 
-from snakeoil import compatibility, formatters, modules
+from snakeoil import compatibility, modules
 from snakeoil.cli import arghparse
+from snakeoil.cli.tool import dump_error, Tool as BaseTool
 from snakeoil.demandload import demandload
 
 from pkgcore.config import load_config, errors
@@ -35,7 +34,6 @@ demandload(
     'signal',
     'traceback',
     'snakeoil:osutils',
-    'snakeoil.errors:walk_exception_chain',
     'snakeoil.sequences:iflatten_instance,unstable_unique',
     'pkgcore:operations',
     'pkgcore.config:basics',
@@ -43,35 +41,6 @@ demandload(
     'pkgcore.restrictions:packages,restriction',
     'pkgcore.util:parserestrict',
 )
-
-
-class FormattingHandler(logging.Handler):
-    """Logging handler printing through a formatter."""
-
-    def __init__(self, formatter):
-        logging.Handler.__init__(self)
-        # "formatter" clashes with a Handler attribute.
-        self.out = formatter
-
-    def emit(self, record):
-        if record.levelno >= logging.ERROR:
-            color = 'red'
-        elif record.levelno >= logging.WARNING:
-            color = 'yellow'
-        else:
-            color = 'cyan'
-        first_prefix = (self.out.fg(color), self.out.bold, record.levelname,
-                        self.out.reset, ' ', record.name, ': ')
-        later_prefix = (len(record.levelname) + len(record.name)) * ' ' + ' : '
-        self.out.first_prefix.extend(first_prefix)
-        self.out.later_prefix.append(later_prefix)
-        try:
-            for line in self.format(record).split('\n'):
-                self.out.write(line, wrap=True)
-        finally:
-            self.out.later_prefix.pop()
-            for i in xrange(len(first_prefix)):
-                self.out.first_prefix.pop()
 
 
 class StoreTarget(argparse._AppendAction):
@@ -535,6 +504,50 @@ def convert_to_restrict(sequence, default=packages.AlwaysTrue):
     return l or [default]
 
 
+class Tool(BaseTool):
+    """Pkgcore-specific commandline utility functionality."""
+
+    def parse_args(self, *args, **kwargs):
+        """Pass down pkgcore-specific settings to the bash side."""
+        options = super(Tool, self).parse_args(*args, **kwargs)
+
+        if self.parser.debug:
+            # verbosity level affects debug output
+            verbose = getattr(options, 'verbose', None)
+            debug_verbosity = verbose if verbose is not None else 1
+            # pass down debug setting
+            os.environ['PKGCORE_DEBUG'] = str(debug_verbosity)
+
+        if not getattr(options, 'color', True):
+            # pass down color setting
+            if 'PKGCORE_NOCOLOR' not in os.environ:
+                os.environ['PKGCORE_NOCOLOR'] = '1'
+
+        return options
+
+    def handle_exec_exception(self, e):
+        """Handle pkgcore-specific runtime exceptions."""
+        if isinstance(e, errors.ParsingError):
+            if self.parser.debug:
+                tb = sys.exc_info()[-1]
+                dump_error(e, 'Error while parsing arguments', tb=tb)
+            else:
+                self.parser.error(e)
+        elif isinstance(e, errors.ConfigurationError):
+            tb = sys.exc_info()[-1]
+            if not self.parser.debug:
+                tb = None
+            dump_error(e, "Error in configuration", handle=self._errfile, tb=tb)
+        elif isinstance(e, operations.OperationError):
+            tb = sys.exc_info()[-1]
+            if not self.parser.debug:
+                tb = None
+            dump_error(e, "Error running an operation", handle=self._errfile, tb=tb)
+        else:
+            # exception is unhandled here, fallback to generic handling
+            super(Tool, self).handle_exec_exception(e)
+
+
 def main(parser, args=None, outfile=None, errfile=None):
     """Function to use in an "if __name__ == '__main__'" block in a script.
 
@@ -553,132 +566,5 @@ def main(parser, args=None, outfile=None, errfile=None):
     :type errfile: file-like object
     :param errfile: File to use for stderr, defaults to C{sys.stderr}.
     """
-    exitstatus = 1
-
-    # ignore broken pipes
-    signal.signal(signal.SIGPIPE, signal.SIG_DFL)
-
-    if outfile is None:
-        outfile = sys.stdout
-    if errfile is None:
-        errfile = sys.stderr
-
-    out_fd = err_fd = None
-    if hasattr(outfile, 'fileno') and hasattr(errfile, 'fileno'):
-        if compatibility.is_py3k:
-            # annoyingly, fileno can exist but through unsupport
-            import io
-            try:
-                out_fd, err_fd = outfile.fileno(), errfile.fileno()
-            except (io.UnsupportedOperation, IOError):
-                pass
-        else:
-            try:
-                out_fd, err_fd = outfile.fileno(), errfile.fileno()
-            except IOError:
-                # shouldn't be possible, but docs claim it, thus protect.
-                pass
-
-    if out_fd is not None and err_fd is not None:
-        out_stat, err_stat = os.fstat(out_fd), os.fstat(err_fd)
-        if out_stat.st_dev == err_stat.st_dev \
-                and out_stat.st_ino == err_stat.st_ino and \
-                not errfile.isatty():
-            # they're the same underlying fd.  thus
-            # point the handles at the same so we don't
-            # get intermixed buffering issues.
-            errfile = outfile
-
-    out = options = None
-    exitstatus = -10
-    try:
-        options = parser.parse_args(args, options)
-        main_func = getattr(options, 'main_func', None)
-        if main_func is None:
-            raise Exception(
-                "parser %r lacks a main method- internal bug.\nGot namespace %r\n"
-                % (parser, options))
-
-        if parser.debug:
-            # verbosity level affects debug output
-            verbose = getattr(options, 'verbose', None)
-            debug_verbosity = verbose if verbose is not None else 1
-            # pass down debug setting to the bash side
-            os.environ['PKGCORE_DEBUG'] = str(debug_verbosity)
-
-        if getattr(options, 'color', True):
-            formatter_factory = partial(
-                formatters.get_formatter, force_color=getattr(options, 'color', False))
-        else:
-            formatter_factory = formatters.PlainTextFormatter
-            # pass down color setting to the bash side
-            if 'PKGCORE_NOCOLOR' not in os.environ:
-                os.environ['PKGCORE_NOCOLOR'] = '1'
-
-        out = formatter_factory(outfile)
-        err = formatter_factory(errfile)
-        if logging.root.handlers:
-            # Remove the default handler.
-            logging.root.handlers.pop(0)
-        logging.root.addHandler(FormattingHandler(err))
-        exitstatus = main_func(options, out, err)
-    except KeyboardInterrupt:
-        errfile.write('keyboard interrupted- exiting')
-        if parser.debug:
-            errfile.write('\n')
-            traceback.print_exc()
-        signal.signal(signal.SIGINT, signal.SIG_DFL)
-        os.killpg(os.getpgid(0), signal.SIGINT)
-    except compatibility.IGNORED_EXCEPTIONS:
-        raise
-    except errors.ParsingError as e:
-        if parser.debug:
-            tb = sys.exc_info()[-1]
-            dump_error(e, 'Error while parsing arguments', tb=tb)
-        else:
-            parser.error(e)
-    except errors.ConfigurationError as e:
-        tb = sys.exc_info()[-1]
-        if not parser.debug:
-            tb = None
-        dump_error(e, "Error in configuration", handle=errfile, tb=tb)
-    except operations.OperationError as e:
-        tb = sys.exc_info()[-1]
-        if not parser.debug:
-            tb = None
-        dump_error(e, "Error running an operation", handle=errfile, tb=tb)
-    except Exception as e:
-        # force tracebacks for unhandled exceptions
-        tb = sys.exc_info()[-1]
-        dump_error(e, "Unhandled exception occurred", handle=errfile, tb=tb)
-    if out is not None:
-        if exitstatus:
-            out.title('%s failed' % (options.prog,))
-        else:
-            out.title('%s succeeded' % (options.prog,))
-    raise SystemExit(exitstatus)
-
-
-def dump_error(raw_exc, msg=None, handle=sys.stderr, tb=None):
-    # force default output for exceptions
-    if getattr(handle, 'reset', False):
-        handle.write(handle.reset)
-
-    prefix = ''
-    if msg:
-        prefix = ' '
-        handle.write(msg.rstrip("\n") + ":\n")
-        if tb:
-            handle.write("Traceback follows:\n")
-            traceback.print_tb(tb, file=handle)
-    exc_strings = []
-    if raw_exc is not None:
-        for exc in walk_exception_chain(raw_exc):
-            exc_strings.extend(
-                '%s%s' % (prefix, x.strip())
-                for x in filter(None, str(exc).split("\n")))
-    if exc_strings:
-        if msg and tb:
-            handle.write("\n%s:\n" % raw_exc.__class__.__name__)
-        handle.write("\n".join(exc_strings))
-        handle.write("\n")
+    t = Tool(parser, args=args, outfile=outfile, errfile=errfile)
+    t.main()

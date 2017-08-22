@@ -23,47 +23,55 @@ phase_opts.add_argument(
     "--no-auto", action='store_true', default=False,
     help="run just the specified phases; "
          "it's up to the invoker to get the order right")
-@argparser.bind_main_func
-def main(options, out, err):
-    target = options.target
-    domain = options.domain
-    repo = domain.ebuild_repos_raw
+
+
+@argparser.bind_final_check
+def _validate_args(parser, namespace):
+    target = namespace.target
+    repo = namespace.domain.ebuild_repos_raw
 
     if target.endswith('.ebuild'):
         if not os.path.exists(target):
-            argparser.error("nonexistent ebuild: '%s'" % target)
+            parser.error("nonexistent ebuild: '%s'" % target)
         elif not os.path.isfile(target):
-            argparser.error("invalid ebuild: '%s'" % target)
+            parser.error("invalid ebuild: '%s'" % target)
         try:
             restriction = repo.path_restrict(target)
         except ValueError as e:
-            argparser.error(e)
+            parser.error(e)
     else:
         try:
             restriction = atom.atom(target)
         except MalformedAtom:
             if os.path.isfile(target):
-                argparser.error("file not an ebuild: '%s'" % target)
+                parser.error("file not an ebuild: '%s'" % target)
             else:
-                argparser.error("invalid package atom: '%s'" % target)
+                parser.error("invalid package atom: '%s'" % target)
 
     pkgs = repo.match(restriction)
     if not pkgs:
-        argparser.error("no matches: '%s'" % (target,))
+        parser.error("no matches: '%s'" % (target,))
 
     pkg = max(pkgs)
     if len(pkgs) > 1:
-        err.write("got multiple matches for '%s':" % (target,))
+        parser.err.write("got multiple matches for '%s':" % (target,))
         if len(set((p.slot, p.repo) for p in pkgs)) != 1:
             for p in pkgs:
-                err.write(
+                parser.err.write(
                     "%s:%s::%s" % (p.cpvstr, p.slot,
                                    getattr(p.repo, 'repo_id', 'unknown')), prefix='  ')
-            err.write()
-            argparser.error("please refine your restriction to one match")
-        err.write(
+            parser.err.write()
+            parser.error("please refine your restriction to one match")
+        parser.err.write(
             "choosing %s:%s::%s" %
             (pkg.cpvstr, pkg.slot, getattr(pkg.repo, 'repo_id', 'unknown')), prefix='  ')
+
+    namespace.pkg = pkg
+
+
+@argparser.bind_main_func
+def main(options, out, err):
+    domain = options.domain
 
     kwds = {}
     phase_obs = observer.phase_observer(observer.formatter_output(out),
@@ -78,7 +86,7 @@ def main(options, out, err):
             phases.insert(0, "fetch")
     # by default turn off startup cleans; we clean by ourselves if
     # told to do so via an arg
-    build = domain.build_pkg(pkg, phase_obs, clean=False, allow_fetching=True)
+    build = domain.build_pkg(options.pkg, phase_obs, clean=False, allow_fetching=True)
     if clean:
         build.cleanup(force=True)
     build._reload_state()

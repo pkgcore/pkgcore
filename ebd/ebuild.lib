@@ -148,7 +148,8 @@ export SANDBOX_ON=0
 # a literal child process.
 PKGCORE_IS_NOT_HELPER=1
 
-# ensure the passed in PATH has its components in $PATH
+# ensure the passed in PATH has its components in $PATH and that they aren't
+# overridden by new entries
 __ensure_PATH() {
 	local existing_path=$1
 	local adds
@@ -164,7 +165,7 @@ __ensure_PATH() {
 				adds=${adds:+${adds}:}${p}
 			fi
 		done
-		[[ -n ${adds} ]] && PATH=${PATH}${PATH:+:}${adds}
+		[[ -n ${adds} ]] && PATH=${adds}${PATH:+:${PATH}}
 	fi
 	export PATH
 }

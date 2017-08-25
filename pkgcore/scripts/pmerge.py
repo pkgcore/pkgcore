@@ -147,6 +147,12 @@ resolution_options.add_argument(
         Build and merge packages without resolving any dependencies.
     """)
 resolution_options.add_argument(
+    '-o', '--onlydeps', action='store_true',
+    help='only merge the deps of the specified packages',
+    docs="""
+        Build and merge only the dependencies for the packages specified.
+    """)
+resolution_options.add_argument(
     '-n', '--noreplace', action='store_false', dest='replace',
     help="don't reinstall target pkgs that are already installed",
     docs="""
@@ -420,6 +426,8 @@ def _validate(parser, namespace):
         parser.error('--usepkg is redundant when --usepkgonly is used')
     elif (namespace.usepkgonly or namespace.usepkg) and namespace.source_only:
         parser.error("--source-only cannot be used with --usepkg nor --usepkgonly")
+    elif namespace.nodeps and namespace.onlydeps:
+        parser.error("-O/--nodeps cannot be used with -o/--onlydeps (it's a no-op)")
 
     if namespace.sets:
         unknown_sets = set(namespace.sets).difference(namespace.config.pkgset)
@@ -657,10 +665,11 @@ def main(options, out, err):
 
     failures = []
     resolve_time = time()
+    skipdeps = atoms if options.onlydeps else ()
     if sys.stdout.isatty():
         out.title('Resolving...')
         out.write(out.bold, ' * ', out.reset, 'Resolving...')
-    ret = resolver_inst.add_atoms(atoms, finalize=True)
+    ret = resolver_inst.add_atoms(atoms, skipdeps=skipdeps, finalize=True)
     while ret:
         out.error('resolution failed')
         restrict = ret[0][0]

@@ -37,7 +37,7 @@ from pkgcore.os_data import portage_gid, portage_uid, xargs
 demandload(
     'textwrap',
     "time",
-    'snakeoil.sequences:iflatten_instance',
+    'snakeoil.sequences:iflatten_instance,iter_stable_unique',
     'pkgcore:fetch',
     "pkgcore.log:logger",
     "pkgcore.package.mutated:MutatedPkg",
@@ -599,7 +599,9 @@ class buildable(ebd, setup_mixin, format.build):
                     if s + y in self.env:
                         del self.env[s+y]
         self.env["PATH"] = os.pathsep.join(path)
-        self.env["A"] = ' '.join(set(x.filename for x in pkg.fetchables))
+
+        # ordering must match appearance order in SRC_URI per PMS
+        self.env["A"] = ' '.join(iter_stable_unique(x.filename for x in pkg.fetchables))
 
         if self.eapi.options.has_AA:
             pkg = getattr(self.pkg, '_raw_pkg', self.pkg)

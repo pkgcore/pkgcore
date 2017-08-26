@@ -45,9 +45,8 @@ class ArgParseMixin(argparse_helpers.ArgParseMixin):
 
         args are passed to parse_args, keyword args are used as config keys.
         """
-        namespace = None
+        namespace = kwargs.get('namespace', argparse.Namespace())
         if self.has_config:
-            namespace = argparse.Namespace()
             if kwargs.pop("suppress_domain", self.suppress_domain):
                 kwargs["default_domain"] = default_domain
             namespace.config = self._mk_config([kwargs], debug=True)

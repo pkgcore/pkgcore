@@ -217,13 +217,6 @@ __ebd_exec_main() {
 	done
 	unset -v x
 
-	# depend's speed up.  turn on qa interceptors by default, instead of flipping them on for each depends;
-	# same for loading depends .lib
-	# important- this needs be loaded after the declare -fr so it doesn't get marked as readonly.
-	# call.
-	export PKGCORE_ENABLE_QA="yes"
-	__qa_interceptors_enable
-
 	source "${PKGCORE_EBD_PATH}"/eapi/depend.lib >&2 || die "failed sourcing eapi/depend.lib"
 	__ebd_main_loop
 	exit 0
@@ -255,7 +248,6 @@ __ebd_process_ebuild_phases() {
 	local is_depends=true
 	if [[ ${phases/depend} == ${phases} ]]; then
 		is_depends=false
-		__qa_interceptors_disable
 	fi
 	local cont=0
 

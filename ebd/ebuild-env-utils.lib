@@ -64,7 +64,6 @@ __environ_dump() {
 	fi
 
 	local func_filters=( "${PKGCORE_BLACKLIST_FUNCS[@]}" ${PKGCORE_EAPI_FUNCS} "${PKGCORE_PRELOADED_ECLASSES[@]}" )
-	${__QA_INTERCEPTORS_ACTIVE:-false} && func_filters+=( "${PKGCORE_QA_INTERCEPTORS[@]}" )
 
 	# Punt any regex chars...
 	__escape_regex_array ___func_filters

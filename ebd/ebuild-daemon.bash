@@ -387,6 +387,10 @@ __ebd_process_metadata() {
 			export PATH=${PKGCORE_METADATA_PATH}
 		fi
 
+		command_not_found_handle() {
+			die "Command not found during metadata regen: ${*}"
+		}
+
 		PKGCORE_SANDBOX_PID=${PPID}
 		__execute_phases "${2:-depend}" && exit 0
 		__ebd_process_sandbox_results

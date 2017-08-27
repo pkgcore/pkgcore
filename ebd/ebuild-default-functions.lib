@@ -241,48 +241,6 @@ EXPORT_FUNCTIONS() {
 	done
 }
 
-PKGCORE_QA_INTERCEPTORS=(
-	javac java-config python python-config perl grep egrep fgrep sed
-	gcc "g++" cc bash awk nawk pkg-config
-)
-__QA_INTERCEPTORS_ACTIVE=false
-
-__qa_interceptors_enable() {
-	# Turn off extended glob matching so that g++ doesn't get incorrectly matched.
-	shopt -u extglob
-
-	${__QA_INTERCEPTORS_ACTIVE} && return
-	# QA INTERCEPTORS
-	local BIN BODY BIN_PATH
-	for BIN in "${PKGCORE_QA_INTERCEPTORS[@]}"; do
-		BIN_PATH=$(type -pf ${BIN})
-		if [[ $? != 0 ]]; then
-			BODY="echo \"*** missing command: ${BIN}\" >&2; return 127"
-		else
-			BODY="${BIN_PATH} \"\$@\"; return \$?"
-		fi
-		eval "${BIN}() {
-			echo -n \"QA Notice: ${BIN} in global scope: \" >&2
-			if [[ \${ECLASS_DEPTH} -gt 0 ]]; then
-				echo \"eclass \${ECLASS}\" >&2
-			else
-				echo \"\${CATEGORY}/\${PF}\" >&2
-			fi
-			${BODY}
-		}" || echo "error creating QA interceptor ${BIN}" >&2
-	done
-	__QA_INTERCEPTORS_ACTIVE=true
-} &> /dev/null
-
-__qa_interceptors_disable() {
-	${__QA_INTERCEPTORS_ACTIVE} || return
-	local x
-	for x in "${PKGCORE_QA_INTERCEPTORS[@]}"; do
-		unset -f ${x}
-	done
-	__QA_INTERCEPTORS_ACTIVE=false
-} &> /dev/null
-
-PKGCORE_BLACKLIST_VARS+=( ECLASS_DEPTH __QA_INTERCEPTORS_ACTIVE )
+PKGCORE_BLACKLIST_VARS+=( ECLASS_DEPTH )
 
 :

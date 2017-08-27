@@ -380,7 +380,7 @@ __ebd_process_metadata() {
 		fi
 
 		command_not_found_handle() {
-			die "Command not found during metadata regen: ${*}"
+			die "External commands disallowed during metadata regen: ${*}"
 		}
 
 		PKGCORE_SANDBOX_PID=${PPID}

@@ -355,12 +355,6 @@ class BundledProfiles(object):
 
     def paths(self, status=None):
         """Yield profile paths optionally matching a given status."""
-        for profile_path, profile_status in chain.from_iterable(self.arch_profiles.itervalues()):
-            if status is None or status == profile_status:
-                yield profile_path
-
-    def paths(self, status=None):
-        """Yield profile paths optionally matching a given status."""
         if status == 'deprecated':
             for root, dirs, files in os.walk(self.profile_base):
                 if os.path.exists(pjoin(root, 'deprecated')):

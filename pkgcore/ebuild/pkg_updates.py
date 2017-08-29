@@ -27,6 +27,7 @@ def _scan_directory(path):
     files.sort(key=itemgetter(0))
     return [x[1] for x in files]
 
+
 def read_updates(path):
     def f():
         d = deque()
@@ -35,7 +36,7 @@ def read_updates(path):
     # via this, pkg moves into a specific pkg can pick up
     # changes past that point, while ignoring changes prior
     # to that point.
-    # Aftwards, we flatten it to get a per cp chain of commands.
+    # Afterwards, we flatten it to get a per cp chain of commands.
     # no need to do lookups basically, although we do need to
     # watch for cycles.
     mods = defaultdict(f)
@@ -43,7 +44,6 @@ def read_updates(path):
 
     for fp in _scan_directory(path):
         fp = pjoin(path, fp)
-
         _process_update(readlines(fp), fp, mods, moved)
 
     # force a walk of the tree, flattening it
@@ -62,14 +62,17 @@ def _process_update(sequence, filename, mods, moved):
                 raise ValueError("move line %r isn't of proper form" % (raw_line,))
             src, trg = atom(line[1]), atom(line[2])
             if src.fullver is not None:
-                raise ValueError("file %r, line %r; atom %s must be versionless"
+                raise ValueError(
+                    "file %r, line %r; atom %s must be versionless"
                     % (filename, raw_line, src))
             elif trg.fullver is not None:
-                raise ValueError("file %r, line %r; atom %s must be versionless"
+                raise ValueError(
+                    "file %r, line %r; atom %s must be versionless"
                     % (filename, raw_line, trg))
 
             if src.key in moved:
-                logger.warning("file %r, line %r: %s was already moved to %s,"
+                logger.warning(
+                    "file %r, line %r: %s was already moved to %s,"
                     " this line is redundant." % (filename, raw_line, src, moved[src.key]))
                 continue
 
@@ -86,11 +89,13 @@ def _process_update(sequence, filename, mods, moved):
             src = atom(line[1])
 
             if src.key in moved:
-                logger.warning("file %r, line %r: %s was already moved to %s,"
+                logger.warning(
+                    "file %r, line %r: %s was already moved to %s,"
                     " this line is redundant.", filename, raw_line, src, moved[src.key])
                 continue
             elif src.slot is not None:
-                logger.warning("file %r, line %r: slotted atom makes no sense for slotmoves, ignoring",
+                logger.warning(
+                    "file %r, line %r: slotted atom makes no sense for slotmoves, ignoring",
                     filename, raw_line)
 
             src_slot = atom("%s:%s" % (src, line[2]))

@@ -30,7 +30,7 @@ demandload(
     'snakeoil.sequences:iter_stable_unique',
     'snakeoil.strings:pluralism',
     'snakeoil.xml:etree',
-    'pkgcore.ebuild:atom,profiles',
+    'pkgcore.ebuild:atom,profiles,pkg_updates',
     'pkgcore.log:logger',
     "pkgcore.restrictions:packages",
 )
@@ -568,8 +568,13 @@ class RepoConfig(syncable.tree):
             return self.config_name
         return self.repo_name
 
-    arch_profiles = klass.alias_attr('profiles.arch_profiles')
+    @klass.jit_attr
+    def updates(self):
+        """Package updates for the repo defined in profiles/updates/*."""
+        return pkg_updates.read_updates(pjoin(self.profiles_base, 'updates'))
 
     @klass.jit_attr
     def profiles(self):
         return BundledProfiles(self.profiles_base)
+
+    arch_profiles = klass.alias_attr('profiles.arch_profiles')

@@ -55,25 +55,31 @@ def read_updates(path):
 
 
 def _process_update(sequence, filename, mods, moved):
-    for raw_line in sequence:
+    for lineno, raw_line in enumerate(sequence):
         line = raw_line.split()
         if line[0] == 'move':
             if len(line) != 3:
-                raise ValueError("move line %r isn't of proper form" % (raw_line,))
+                logger.error(
+                    "file %r: %r on line %s: move isn't of proper form"
+                    % (filename, raw_line, lineno + 1))
+                continue
             src, trg = atom(line[1]), atom(line[2])
             if src.fullver is not None:
-                raise ValueError(
-                    "file %r, line %r; atom %s must be versionless"
-                    % (filename, raw_line, src))
+                logger.error(
+                    "file %r: %r on line %s: atom %s must be versionless"
+                    % (filename, raw_line, lineno + 1, src))
+                continue
             elif trg.fullver is not None:
-                raise ValueError(
-                    "file %r, line %r; atom %s must be versionless"
-                    % (filename, raw_line, trg))
+                logger.error(
+                    "file %r: %r on line %s: atom %s must be versionless"
+                    % (filename, raw_line, lineno + 1, trg))
+                continue
 
             if src.key in moved:
                 logger.warning(
-                    "file %r, line %r: %s was already moved to %s,"
-                    " this line is redundant." % (filename, raw_line, src, moved[src.key]))
+                    "file %r: %r on line %s: %s was already moved to %s,"
+                    " this line is redundant"
+                    % (filename, raw_line, lineno + 1, src, moved[src.key]))
                 continue
 
             d = deque()
@@ -85,18 +91,24 @@ def _process_update(sequence, filename, mods, moved):
 
         elif line[0] == 'slotmove':
             if len(line) != 4:
-                raise ValueError("slotmove line %r isn't of proper form" % (raw_line,))
+                logger.error(
+                    "file %r: %r on line %s: slotmove isn't of proper form"
+                    % (filename, raw_line, lineno + 1))
+                continue
             src = atom(line[1])
 
             if src.key in moved:
                 logger.warning(
-                    "file %r, line %r: %s was already moved to %s,"
-                    " this line is redundant.", filename, raw_line, src, moved[src.key])
+                    "file %r: %r on line %s: %s was already moved to %s,"
+                    " this line is redundant"
+                    % (filename, raw_line, lineno + 1, src, moved[src.key]))
                 continue
             elif src.slot is not None:
-                logger.warning(
-                    "file %r, line %r: slotted atom makes no sense for slotmoves, ignoring",
-                    filename, raw_line)
+                logger.error(
+                    "file %r: %r on line %s: slotted atom makes no sense "
+                    "for slotmoves",
+                    filename, lineno + 1, raw_line)
+                continue
 
             src_slot = atom("%s:%s" % (src, line[2]))
             trg_slot = atom("%s:%s" % (src.key, line[3]))

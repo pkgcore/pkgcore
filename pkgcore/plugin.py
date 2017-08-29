@@ -219,18 +219,7 @@ def initialize_cache(package, force=False):
             cache_stale = True
             entries = []
             qualname = '.'.join((package.__name__, modname))
-            try:
-                module = import_module(qualname)
-            except ImportError:
-                # This is a serious problem, but if we blow up
-                # here we cripple pkgcore entirely which may make
-                # fixing the problem impossible. So be noisy but
-                # try to continue.
-                logger.exception(
-                    'plugin import failed for %s processing %s',
-                    package.__name__, modname)
-                continue
-
+            module = import_module(qualname)
             registry = getattr(module, PLUGIN_ATTR, {})
             vals = set()
             for key, plugs in registry.iteritems():

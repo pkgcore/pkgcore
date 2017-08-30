@@ -571,7 +571,11 @@ class RepoConfig(syncable.tree):
     @klass.jit_attr
     def updates(self):
         """Package updates for the repo defined in profiles/updates/*."""
-        return pkg_updates.read_updates(pjoin(self.profiles_base, 'updates'))
+        d = {}
+        updates_dir = pjoin(self.profiles_base, 'updates')
+        if os.path.exists(updates_dir):
+            d = pkg_updates.read_updates(updates_dir)
+        return mappings.ImmutableDict(d)
 
     @klass.jit_attr
     def profiles(self):

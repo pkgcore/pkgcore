@@ -43,8 +43,7 @@ def read_updates(path):
     moved = {}
 
     for fp in _scan_directory(path):
-        fp = pjoin(path, fp)
-        _process_update(readlines(fp), fp, mods, moved)
+        _process_update(readlines(pjoin(path, fp)), fp, mods, moved)
 
     # force a walk of the tree, flattening it
     commands = {k: list(iflatten_instance(v[0], tuple)) for k,v in mods.iteritems()}

@@ -25,6 +25,7 @@ from pkgcore.util import commandline
 demandload(
     'textwrap',
     'traceback',
+    'snakeoil.errors:dump_error',
 )
 
 
@@ -182,7 +183,7 @@ def uncollapsable_main(options, out, err):
             pass
         except errors.ConfigurationError as e:
             out.autoline = False
-            commandline.dump_error(e, "section %s" % (name,), handle=out)
+            dump_error(e, "section %s" % (name,), handle=out)
             if options.debug:
                 traceback.print_exc()
             out.autoline = True

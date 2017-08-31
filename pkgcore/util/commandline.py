@@ -25,7 +25,7 @@ import sys
 
 from snakeoil import compatibility, modules
 from snakeoil.cli import arghparse
-from snakeoil.cli.tool import dump_error, Tool as BaseTool
+from snakeoil.cli.tool import Tool as BaseTool
 from snakeoil.demandload import demandload
 
 from pkgcore.config import load_config, errors
@@ -34,6 +34,7 @@ demandload(
     'signal',
     'traceback',
     'snakeoil:osutils',
+    'snakeoil.errors:dump_error',
     'snakeoil.sequences:iflatten_instance,unstable_unique',
     'pkgcore:operations',
     'pkgcore.config:basics',

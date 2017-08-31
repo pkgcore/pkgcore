@@ -548,6 +548,7 @@ class Tool(BaseTool):
             super(Tool, self).handle_exec_exception(e)
 
 
+# TODO: deprecated wrapper, remove in 0.10.0
 def main(parser, args=None, outfile=None, errfile=None):
     """Function to use in an "if __name__ == '__main__'" block in a script.
 
@@ -566,5 +567,6 @@ def main(parser, args=None, outfile=None, errfile=None):
     :type errfile: file-like object
     :param errfile: File to use for stderr, defaults to C{sys.stderr}.
     """
-    t = Tool(parser, args=args, outfile=outfile, errfile=errfile)
-    t.main()
+    t = Tool(None, parser=parser)
+    ret = t(args=args, outfile=outfile, errfile=errfile)
+    raise SystemExit(ret)

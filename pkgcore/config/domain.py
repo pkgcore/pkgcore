@@ -7,15 +7,33 @@ base class to derive from for domain objects
 Bit empty at the moment
 """
 
-__all__ = ("domain",)
+__all__ = ("MissingFile", "Failure", "domain")
 
 from snakeoil import klass
 from snakeoil.demandload import demandload
+
+from pkgcore.config.errors import BaseError
 
 demandload(
     'pkgcore.operations:domain@domain_ops',
     'pkgcore.repository.util:RepositoryGroup',
 )
+
+
+class MissingFile(BaseError):
+    """Required file is missing."""
+    def __init__(self, filename, setting):
+        BaseError.__init__(
+            self, "setting %s points at %s, which doesn't exist."
+            % (setting, filename))
+        self.file, self.setting = filename, setting
+
+
+class Failure(BaseError):
+    """Generic domain failure."""
+    def __init__(self, text):
+        BaseError.__init__(self, "domain failure: %s" % (text,))
+        self.text = text
 
 
 # yes this is basically empty. will fill it out as the base is better

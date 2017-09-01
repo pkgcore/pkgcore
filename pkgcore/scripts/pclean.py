@@ -146,7 +146,7 @@ repo_cleaning_opts.add_argument(
 @repo_opts.bind_delayed_default(20, 'repo_opts')
 def _setup_repo_opts(namespace, attr):
     if namespace.installed:
-        namespace.installed = namespace.domain.all_livefs_repos
+        namespace.livefs_repo = namespace.domain.all_livefs_repos
 
 
 @argparser.bind_delayed_default(30, 'restrictions')
@@ -206,7 +206,7 @@ def _dist_validate_args(parser, namespace):
 
     if namespace.restrict:
         for pkg in repo.itermatch(namespace.restrict, sorter=sorted):
-            if ((namespace.installed and pkg.versioned_atom in namespace.installed) or
+            if ((namespace.installed and pkg.versioned_atom in namespace.livefs_repo) or
                     (namespace.fetch_restricted and 'fetch' in pkg.restrict)):
                 continue
             try:
@@ -250,7 +250,7 @@ def _pkg_validate_args(parser, namespace):
 
     pkgs = set(pkg for pkg in repo.itermatch(namespace.restrict))
     if namespace.installed:
-        pkgs = (pkg for pkg in pkgs if pkg.versioned_atom not in namespace.installed)
+        pkgs = (pkg for pkg in pkgs if pkg.versioned_atom not in namespace.livefs_repo)
     if namespace.fetch_restricted:
         pkgs = (pkg for pkg in pkgs if 'fetch' not in pkg.restrict)
     if namespace.source_repo is not None:

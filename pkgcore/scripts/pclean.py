@@ -68,7 +68,8 @@ def _setup_shared_opts(namespace, attr):
 def parse_time(s):
     # simple approximations, could use dateutil for exact deltas
     units = {'s': 60}
-    units['h'] = units['s'] * 60
+    units['min'] = units['s'] * 60
+    units['h'] = units['min'] * 60
     units['d'] = units['h'] * 24
     units['w'] = units['d'] * 7
     units['m'] = units['d'] * 30

@@ -201,8 +201,8 @@ def _dist_validate_args(parser, namespace):
     distdir = namespace.domain.fetcher.distdir
     repo = multiplex.tree(*get_virtual_repos(namespace.domain.repos, False))
 
-    files = set(os.path.basename(f) for f in listdir_files(distdir))
-    pfiles = set()
+    all_dist_files = set(os.path.basename(f) for f in listdir_files(distdir))
+    target_files = set()
 
     if namespace.restrict:
         for pkg in repo.itermatch(namespace.restrict, sorter=sorted):
@@ -210,7 +210,7 @@ def _dist_validate_args(parser, namespace):
                     (namespace.fetch_restricted and 'fetch' in pkg.restrict)):
                 continue
             try:
-                pfiles.update(
+                target_files.update(
                     fetchable.filename for fetchable in
                     iflatten_instance(pkg.fetchables, fetch.fetchable))
             except errors.MetadataException as e:
@@ -223,13 +223,13 @@ def _dist_validate_args(parser, namespace):
                     "got error '%s', parsing package %s in repo '%s'" %
                     (e, pkg.cpvstr, pkg.repo))
     else:
-        pfiles = files
+        target_files = all_dist_files
 
-    distfiles = (pjoin(distdir, f) for f in sorted(files.intersection(pfiles)))
+    targets = (pjoin(distdir, f) for f in sorted(all_dist_files.intersection(target_files)))
     removal_func = partial(os.remove)
     namespace.remove = (
-        (removal_func, distfile) for distfile in
-        ifilter(namespace.filters.run, distfiles))
+        (removal_func, f) for f in
+        ifilter(namespace.filters.run, targets))
 
 
 pkg_opts = commandline.ArgumentParser(suppress=True)

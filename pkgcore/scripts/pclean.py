@@ -225,7 +225,7 @@ def _dist_validate_args(parser, namespace):
     else:
         pfiles = files
 
-    distfiles = (pjoin(distdir, f) for f in files.intersection(pfiles))
+    distfiles = (pjoin(distdir, f) for f in sorted(files.intersection(pfiles)))
     removal_func = partial(os.remove)
     namespace.remove = (
         (removal_func, distfile) for distfile in

@@ -321,7 +321,7 @@ def _remove(options, out, err):
     ret = 0
     # TODO: parallelize this
     for func, target in options.remove:
-        if options.pretend:
+        if options.pretend and not options.quiet:
             out.write('Would remove %s' % target)
         elif options.verbose:
             out.write('Removing %s' % target)

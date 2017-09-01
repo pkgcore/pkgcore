@@ -200,29 +200,30 @@ dist_opts.add_argument(
 def _dist_validate_args(parser, namespace):
     distdir = namespace.domain.fetcher.distdir
     repo = multiplex.tree(*get_virtual_repos(namespace.domain.repos, False))
-    if not namespace.restrict:
-        namespace.restrict = packages.AlwaysTrue
 
     files = set(os.path.basename(f) for f in listdir_files(distdir))
     pfiles = set()
 
-    for pkg in repo.itermatch(namespace.restrict, sorter=sorted):
-        if ((namespace.installed and pkg.versioned_atom in namespace.installed) or
-                (namespace.fetch_restricted and 'fetch' in pkg.restrict)):
-            continue
-        try:
-            pfiles.update(
-                fetchable.filename for fetchable in
-                iflatten_instance(pkg.fetchables, fetch.fetchable))
-        except errors.MetadataException as e:
-            if not namespace.ignore_failures:
+    if namespace.restrict:
+        for pkg in repo.itermatch(namespace.restrict, sorter=sorted):
+            if ((namespace.installed and pkg.versioned_atom in namespace.installed) or
+                    (namespace.fetch_restricted and 'fetch' in pkg.restrict)):
+                continue
+            try:
+                pfiles.update(
+                    fetchable.filename for fetchable in
+                    iflatten_instance(pkg.fetchables, fetch.fetchable))
+            except errors.MetadataException as e:
+                if not namespace.ignore_failures:
+                    dist.error(
+                        "got corruption error '%s', with package %s " %
+                        (e, pkg.cpvstr))
+            except Exception as e:
                 dist.error(
-                    "got corruption error '%s', with package %s " %
-                    (e, pkg.cpvstr))
-        except Exception as e:
-            dist.error(
-                "got error '%s', parsing package %s in repo '%s'" %
-                (e, pkg.cpvstr, pkg.repo))
+                    "got error '%s', parsing package %s in repo '%s'" %
+                    (e, pkg.cpvstr, pkg.repo))
+    else:
+        pfiles = files
 
     distfiles = (pjoin(distdir, f) for f in files.intersection(pfiles))
     removal_func = partial(os.remove)

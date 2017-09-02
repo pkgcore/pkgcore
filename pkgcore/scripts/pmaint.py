@@ -236,6 +236,7 @@ def update_pkg_desc_index(repo, out, err):
     return ret
 
 
+# TODO: limit to ebuild repos only
 regen = subparsers.add_parser(
     "regen", parents=shared_options,
     description="regenerate repository caches")
@@ -444,6 +445,7 @@ digest_opts.add_argument(
         default because manifest generation is often performed when adding new
         ebuilds with distfiles that aren't on Gentoo mirrors yet.
     """)
+# TODO: limit to ebuild repos only
 digest_opts.add_argument(
     "-r", "--repo", help="target repository",
     action=commandline.StoreRepoObject, raw=True,

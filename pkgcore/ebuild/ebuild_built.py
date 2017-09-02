@@ -104,6 +104,8 @@ class package(ebuild_src.base):
 
     _get_attr['fetchables'] = lambda s: conditionals.DepSet.parse(
         '', fetch.fetchable, operators={})
+    _get_attr['distfiles'] = lambda s: tuple(
+        s.data.get("DISTFILES", "").split())
 
     _get_attr["use"] = lambda s: DelayedInstantiation(
         frozenset, lambda: frozenset(s.data["USE"].split()))

@@ -592,6 +592,7 @@ class _ConfiguredTree(configured.tree):
             self._generate_iuse_effective, domain.profile.iuse_effective)
         self.config_wrappables['user_patches'] = partial(
             self._generate_user_patches, domain.config_dir)
+        self.config_wrappables['distfiles'] = partial(self._generate_distfiles)
         configured.tree.__init__(
             self, raw_repo, self.config_wrappables,
             pkg_kls_injections=scope_update)
@@ -605,6 +606,10 @@ class _ConfiguredTree(configured.tree):
     @staticmethod
     def _generate_iuse_effective(profile_iuse_effective, pkg_iuse_stripped, enabled_use, pkg):
         return profile_iuse_effective | pkg_iuse_stripped
+
+    @staticmethod
+    def _generate_distfiles(all_distfiles, enabled_use, pkg):
+        return tuple(f.filename for f in pkg.fetchables.evaluate_depset(enabled_use))
 
     @staticmethod
     def _generate_user_patches(config_dir, _, enabled_use, pkg):

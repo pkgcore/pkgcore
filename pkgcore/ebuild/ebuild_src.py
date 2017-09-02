@@ -27,6 +27,7 @@ from snakeoil.demandload import demandload, demand_compile_regexp
 demandload(
     "snakeoil:chksum",
     "snakeoil:data_source,fileutils",
+    'snakeoil.sequences:iflatten_instance',
     "pkgcore.ebuild.eapi:get_eapi",
     "pkgcore:fetch",
     "pkgcore.log:logger",
@@ -201,6 +202,8 @@ class base(metadata.package):
     _get_attr["slot"] = lambda s: s.fullslot.partition('/')[0]
     _get_attr["subslot"] = get_subslot
     _get_attr["fetchables"] = generate_fetchables
+    _get_attr["distfiles"] = lambda s: tuple(
+        f.filename for f in iflatten_instance(s.fetchables, fetch.fetchable))
     _get_attr["description"] = lambda s: s.data.pop("DESCRIPTION", "").strip()
     _get_attr["keywords"] = lambda s: tuple(
         imap(intern, s.data.pop("KEYWORDS", "").split()))

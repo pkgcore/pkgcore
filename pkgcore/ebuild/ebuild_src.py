@@ -38,20 +38,20 @@ demand_compile_regexp(
 )
 
 
-def generate_depset(c, key, non_package_type, s, **kwds):
+def generate_depset(kls, key, non_package_type, self, **kwds):
     if non_package_type:
         return conditionals.DepSet.parse(
-            s.data.pop(key, ""), c,
+            self.data.pop(key, ""), kls,
             operators={
                 "||": boolean.OrRestriction,
                 "": boolean.AndRestriction},
             **kwds)
-    eapi = s.eapi
+    eapi = self.eapi
     if not eapi.is_supported:
         raise metadata_errors.MetadataException(s, "eapi", "unsupported EAPI: %s" % (eapi,))
     kwds['element_func'] = eapi.atom_kls
     kwds['transitive_use_atoms'] = eapi.options.transitive_use_atoms
-    return conditionals.DepSet.parse(s.data.pop(key, ""), c, **kwds)
+    return conditionals.DepSet.parse(self.data.pop(key, ""), kls, **kwds)
 
 def _mk_required_use_node(data):
     if data[0] == '!':

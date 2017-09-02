@@ -46,7 +46,7 @@ class tree(prototype.tree):
     def _get_pkg_kwds(self, pkg):
         raise NotImplementedError()
 
-    def package_class(self, pkg, *a):
+    def package_class(self, pkg):
         return self._klass(pkg, **self._get_pkg_kwds(pkg))
 
     __getattr__ = GetAttrProxy("raw_repo")

@@ -49,9 +49,10 @@ def make_wrapper(configurable_attribute_name, attributes_to_wrap=(),
     class PackageWrapper(wrapper):
         """Add a new attribute, and evaluate attributes of a wrapped pkg."""
 
-        __slots__ = ("_unchangable", "_configurable",
-            "_reuse_pt", "_cached_wrapped",
-            "_disabled")
+        __slots__ = (
+            "_unchangable", "_configurable", "_reuse_pt",
+            "_cached_wrapped", "_disabled",
+        )
 
         _wrapped_attr = attributes_to_wrap
         _configurable_name = configurable_attribute_name
@@ -60,16 +61,14 @@ def make_wrapper(configurable_attribute_name, attributes_to_wrap=(),
         def operations(self, domain, **kwds):
             return self._operations(domain, self, **kwds)
 
-        locals()[configurable_attribute_name] = \
-            property(attrgetter("_configurable"))
+        locals()[configurable_attribute_name] = property(attrgetter("_configurable"))
 
-        locals().update((x, property(partial(_getattr_wrapped, x)))
+        locals().update(
+            (x, property(partial(_getattr_wrapped, x)))
             for x in attributes_to_wrap)
 
-        def __init__(self, pkg_instance,
-                     initial_settings=None, disabled_settings=None,
-                     unchangable_settings=None):
-
+        def __init__(self, pkg_instance, initial_settings=None,
+                     disabled_settings=None, unchangable_settings=None):
             """
             :type pkg_instance: :obj:`pkgcore.package.metadata.package`
             :param pkg_instance: instance to wrap.
@@ -90,23 +89,23 @@ def make_wrapper(configurable_attribute_name, attributes_to_wrap=(),
 
             sf = object.__setattr__
             sf(self, '_unchangable', unchangable_settings)
-            sf(self, '_configurable',
-                LimitedChangeSet(initial_settings, unchangable_settings))
+            sf(self, '_configurable', LimitedChangeSet(
+                initial_settings, unchangable_settings))
             sf(self, '_disabled', disabled_settings)
             sf(self, '_reuse_pt', 0)
             sf(self, '_cached_wrapped', {})
             wrapper.__init__(self, pkg_instance)
 
         def __copy__(self):
-            return self.__class__(self._raw_pkg, self._configurable_name,
-                                  initial_settings=set(self._configurable),
-                                  disabled_settings=self._disabled,
-                                  unchangable_settings=self._unchangable,
-                                  attributes_to_wrap=self._wrapped_attr)
+            return self.__class__(
+                self._raw_pkg, self._configurable_name,
+                initial_settings=set(self._configurable),
+                disabled_settings=self._disabled,
+                unchangable_settings=self._unchangable,
+                attributes_to_wrap=self._wrapped_attr)
 
         def rollback(self, point=0):
-            """
-            rollback changes to the configurable attribute to an earlier point
+            """rollback changes to the configurable attribute to an earlier point
 
             :param point: must be an int
             """
@@ -116,8 +115,7 @@ def make_wrapper(configurable_attribute_name, attributes_to_wrap=(),
             object.__setattr__(self, '_reuse_pt', self._reuse_pt + 1)
 
         def commit(self):
-            """
-            Commit current changes.
+            """Commit current changes.
 
             This means that those changes can be reverted from this point out.
             """
@@ -125,14 +123,11 @@ def make_wrapper(configurable_attribute_name, attributes_to_wrap=(),
             object.__setattr__(self, '_reuse_pt',  0)
 
         def changes_count(self):
-            """
-            current commit point for the configurable
-            """
+            """current commit point for the configurable"""
             return self._configurable.changes_count()
 
         def request_enable(self, attr, *vals):
-            """
-            internal function
+            """internal function
 
             since configurable somewhat steps outside of normal
             restriction protocols, request_enable requests that this
@@ -149,8 +144,7 @@ def make_wrapper(configurable_attribute_name, attributes_to_wrap=(),
                     entry_point = self.changes_count()
                     try:
                         map(self._configurable.add, vals)
-                        object.__setattr__(self, '_reuse_pt',
-                            self._reuse_pt + 1)
+                        object.__setattr__(self, '_reuse_pt', self._reuse_pt + 1)
                         return True
                     except Unchangable:
                         self.rollback(entry_point)
@@ -179,8 +173,7 @@ def make_wrapper(configurable_attribute_name, attributes_to_wrap=(),
             return True
 
         def request_disable(self, attr, *vals):
-            """
-            internal function
+            """internal function
 
             since configurable somewhat steps outside of normal
             restriction protocols, request_disable requests that this

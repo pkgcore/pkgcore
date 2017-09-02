@@ -603,10 +603,11 @@ class _ConfiguredTree(configured.tree):
             make_kls(InvertedContains), InvertedContains)
 
     @staticmethod
-    def _generate_iuse_effective(profile_iuse_effective, pkg_iuse_stripped, *args):
+    def _generate_iuse_effective(profile_iuse_effective, pkg_iuse_stripped, enabled_use, pkg):
         return profile_iuse_effective | pkg_iuse_stripped
 
-    def _generate_user_patches(self, config_dir, pkg, *args):
+    @staticmethod
+    def _generate_user_patches(config_dir, _, enabled_use, pkg):
         # determine available user patches for >= EAPI 6
         if pkg.eapi.options.user_patches:
             patches = []

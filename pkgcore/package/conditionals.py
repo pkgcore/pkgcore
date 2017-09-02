@@ -25,8 +25,10 @@ demandload(
 def _getattr_wrapped(attr, self):
     o = self._cached_wrapped.get(attr)
     if o is None or o[0] != self._reuse_pt:
-        o = self._wrapped_attr[attr](getattr(self._raw_pkg, attr),
-                                     self._configurable)
+        o = self._wrapped_attr[attr](
+            getattr(self._raw_pkg, attr),
+            self._configurable,
+            pkg=self)
         o = self._cached_wrapped[attr] = (self._reuse_pt, o)
     return o[1]
 

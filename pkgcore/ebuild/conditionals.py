@@ -206,7 +206,7 @@ class DepSet(boolean.AndRestriction):
         ifunc = isinstance
         return any(ifunc(x, kls) for x in iflatten_instance(iterable, atom))
 
-    def evaluate_depset(self, cond_dict, tristate_filter=None):
+    def evaluate_depset(self, cond_dict, tristate_filter=None, pkg=None):
         """
         :param cond_dict: container to be used for conditional collapsing,
             typically is a use list
@@ -216,7 +216,6 @@ class DepSet(boolean.AndRestriction):
             automatically enable the payload
             (regardless of the conditionals negation)
         """
-
         if not self.has_conditionals:
             return self
 

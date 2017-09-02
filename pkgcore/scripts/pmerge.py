@@ -249,7 +249,7 @@ class AmbiguousQuery(parserestrict.ParseError):
         self.keys = keys
 
     def __str__(self):
-        return 'multiple matches for "%s": %s' % (self.token, ', '.join(self.keys))
+        return "multiple matches for '%s': %s" % (self.token, ', '.join(self.keys))
 
 
 class NoMatches(parserestrict.ParseError):

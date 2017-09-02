@@ -605,7 +605,7 @@ class _ConfiguredTree(configured.tree):
 
     @staticmethod
     def _generate_iuse_effective(profile_iuse_effective, pkg_iuse_stripped, enabled_use, pkg):
-        return profile_iuse_effective | pkg_iuse_stripped
+        return frozenset(profile_iuse_effective | pkg_iuse_stripped)
 
     @staticmethod
     def _generate_distfiles(all_distfiles, enabled_use, pkg):

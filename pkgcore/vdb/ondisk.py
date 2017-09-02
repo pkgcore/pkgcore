@@ -196,8 +196,7 @@ class tree(prototype.tree):
                 del oe
 
     def __str__(self):
-        return '%s.%s: location %s' % (
-            self.__class__.__module__, self.__class__.__name__, self.location)
+        return '%s: location %s' % (self.repo_id, self.location)
 
 
 class ConfiguredTree(multiplex.tree):

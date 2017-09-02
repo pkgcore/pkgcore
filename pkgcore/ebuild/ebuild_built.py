@@ -22,6 +22,7 @@ from snakeoil.obj import DelayedInstantiation
 
 demandload(
     're',
+    "pkgcore:fetch",
     'pkgcore.ebuild:triggers',
     'pkgcore.ebuild:ebd',
     'pkgcore.fs.livefs:scan',
@@ -50,9 +51,6 @@ def passthrough_repo(inst):
 
 def wrap_inst(self, wrap, inst):
     return wrap(inst(self), self.use)
-
-
-_empty_fetchable = conditionals.DepSet.parse('', ebuild_src.fetchable, operators={})
 
 
 def generate_eapi(self):
@@ -104,7 +102,8 @@ class package(ebuild_src.base):
     _get_attr['iuse_effective'] = lambda s: tuple(
         s.data.get("IUSE_EFFECTIVE", "").split())
 
-    _get_attr['fetchables'] = lambda self: _empty_fetchable
+    _get_attr['fetchables'] = lambda s: conditionals.DepSet.parse(
+        '', fetch.fetchable, operators={})
 
     _get_attr["use"] = lambda s: DelayedInstantiation(
         frozenset, lambda: frozenset(s.data["USE"].split()))

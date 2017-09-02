@@ -15,8 +15,6 @@ from pkgcore.cache import errors as cache_errors
 from pkgcore.ebuild import conditionals
 from pkgcore.ebuild import processor
 from pkgcore.ebuild.atom import atom
-from pkgcore.fetch import fetchable, mirror, uri_list, default_mirror
-from pkgcore.fetch.errors import UnknownMirror
 from pkgcore.package import errors as metadata_errors
 from pkgcore.package import metadata
 from pkgcore.package.errors import MissingChksum
@@ -30,6 +28,7 @@ demandload(
     "snakeoil:chksum",
     "snakeoil:data_source,fileutils",
     "pkgcore.ebuild.eapi:get_eapi",
+    "pkgcore:fetch",
     "pkgcore.log:logger",
 )
 
@@ -93,7 +92,7 @@ def generate_fetchables(self, allow_missing_checksums=False,
         chksums_can_be_missing, ignore_unknown_mirrors,
         mirrors, default_mirrors, common)
     d = conditionals.DepSet.parse(
-        self.data.pop("SRC_URI", ""), fetchable, operators={},
+        self.data.pop("SRC_URI", ""), fetch.fetchable, operators={},
         element_func=func,
         allow_src_uri_file_renames=self.eapi.options.src_uri_renames)
     for v in common.itervalues():
@@ -111,7 +110,7 @@ def create_fetchable_from_uri(pkg, chksums, ignore_missing_chksums, ignore_unkno
     if preexisting is None:
         if filename not in chksums and not ignore_missing_chksums:
             raise MissingChksum(filename)
-        uris = uri_list(filename)
+        uris = fetch.uri_list(filename)
     else:
         uris = preexisting.uri
 
@@ -128,7 +127,7 @@ def create_fetchable_from_uri(pkg, chksums, ignore_missing_chksums, ignore_unkno
 
             if tier not in mirrors:
                 if not ignore_unknown_mirrors:
-                    raise UnknownMirror(tier, remaining_uri)
+                    raise fetch.errors.UnknownMirror(tier, remaining_uri)
             else:
                 uris.add_mirror(mirrors[tier], remaining_uri)
 
@@ -139,7 +138,7 @@ def create_fetchable_from_uri(pkg, chksums, ignore_missing_chksums, ignore_unkno
                 uris.add_mirror(default_mirrors)
 
     if preexisting is None:
-        common_files[filename] = fetchable(filename, uris, chksums.get(filename))
+        common_files[filename] = fetch.fetchable(filename, uris, chksums.get(filename))
     return common_files[filename]
 
 def get_parsed_eapi(self):
@@ -325,11 +324,11 @@ class package_factory(metadata.factory):
         self._ecache = eclass_cache
 
         if mirrors:
-            mirrors = {k: mirror(v, k) for k, v in mirrors.iteritems()}
+            mirrors = {k: fetch.mirror(v, k) for k, v in mirrors.iteritems()}
 
         self.mirrors = mirrors
         if default_mirrors:
-            self.default_mirrors = default_mirror(default_mirrors, "conf. default mirror")
+            self.default_mirrors = fetch.default_mirror(default_mirrors, "conf. default mirror")
         else:
             self.default_mirrors = None
 

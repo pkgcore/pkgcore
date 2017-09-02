@@ -63,6 +63,8 @@ class install(repo_ops.install):
                 v = getattr(self.new_pkg, k)
                 if k == 'depends' or k == 'rdepends':
                     s = v.slotdep_str(domain)
+                elif k == 'iuse_effective':
+                    s = ' '.join(sorted(v))
                 elif not isinstance(v, basestring):
                     try:
                         s = ' '.join(v)

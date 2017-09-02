@@ -282,7 +282,7 @@ def regen_main(options, out, err):
         if not repo.operations.supports("regen_cache"):
             out.write("repository %s doesn't support cache regeneration" % (repo,))
             continue
-        elif not repo.cache and not options.force:
+        elif not getattr(repo, 'cache', False) and not options.force:
             out.write("skipping repo %s: cache disabled" % (repo,))
             continue
 

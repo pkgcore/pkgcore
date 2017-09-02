@@ -9,6 +9,7 @@ __all__ = ("package", "package_factory")
 
 from functools import partial
 
+from pkgcore import fetch
 from pkgcore.ebuild import ebuild_src, conditionals
 from pkgcore.ebuild.eapi import get_eapi
 from pkgcore.package import metadata
@@ -22,7 +23,6 @@ from snakeoil.obj import DelayedInstantiation
 
 demandload(
     're',
-    "pkgcore:fetch",
     'pkgcore.ebuild:triggers',
     'pkgcore.ebuild:ebd',
     'pkgcore.fs.livefs:scan',
@@ -64,6 +64,15 @@ def generate_eapi(self):
     return eapi
 
 
+def _chost_fallback(initial, self):
+    o = self.data.get(initial)
+    if o is None:
+        o = self.data.get("CHOST")
+        if o is None:
+            return o
+    return o.strip()
+
+
 class package(ebuild_src.base):
 
     """
@@ -85,27 +94,26 @@ class package(ebuild_src.base):
     # hack, not for consumer usage
     _is_from_source = False
 
+    _empty_fetchable = conditionals.DepSet.parse('', fetch.fetchable, operators={})
+
     built = True
 
-    __slots__ = (
-        'cbuild', 'cflags', 'chost', 'contents', 'ctarget', 'cxxflags',
-        'environment', 'ldflags', 'use',
-    )
-
     _get_attr = dict(ebuild_src.package._get_attr)
-
+    _get_attr.update((x, partial(_chost_fallback, x.upper()))
+                     for x in ("cbuild", "chost", "ctarget"))
     _get_attr.update((x, post_curry(passthrough, x))
                      for x in ("contents", "environment", "ebuild"))
-    _get_attr.update((x, lambda s: s.data.get(x.upper(), ""))
+    _get_attr.update((x, lambda s,x=x: s.data.get(x.upper(), ""))
                      for x in ("cflags", "cxxflags", "ldflags"))
-    _get_attr.update((x, lambda s: tuple(s.data.get(x.upper(), "").split()))
-                     for x in ("iuse_effective", "distfiles", "inherited"))
-    _get_attr['source_repository'] = passthrough_repo
-    _get_attr['fetchables'] = lambda s: conditionals.DepSet.parse(
-        '', fetch.fetchable, operators={})
+    _get_attr.update((x, lambda s,x=x: tuple(s.data.get(x.upper(), "").split()))
+                     for x in ("distfiles", "iuse_effective", "inherited"))
+    _get_attr["source_repository"] = passthrough_repo
+    _get_attr["fetchables"] = lambda s: s._empty_fetchable
     _get_attr["use"] = lambda s: DelayedInstantiation(
         frozenset, lambda: frozenset(s.data["USE"].split()))
     _get_attr["eapi"] = generate_eapi
+
+    __slots__ = tuple(set(_get_attr.keys()) - set(ebuild_src.package._get_attr.keys()))
 
     def __init__(self, *args, **kwargs):
         super(package, self).__init__(*args, **kwargs)
@@ -116,18 +124,6 @@ class package(ebuild_src.base):
                 ebuild_src.package._get_attr[k]))
             for k in ebuild_src.package._config_wrappables
             if k in super(package, self).tracked_attributes)
-
-    def _chost_fallback(initial, self):
-        o = self.data.get(initial)
-        if o is None:
-            o = self.data.get("CHOST")
-            if o is None:
-                return o
-        return o.strip()
-
-    _get_attr["cbuild"] = partial(_chost_fallback, 'CBUILD')
-    _get_attr["chost"] = partial(_chost_fallback, 'CHOST')
-    _get_attr["ctarget"] = partial(_chost_fallback, 'CTARGET')
 
     def _update_metadata(self, pkg):
         raise NotImplementedError()

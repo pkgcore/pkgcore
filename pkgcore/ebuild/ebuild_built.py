@@ -98,20 +98,13 @@ class package(ebuild_src.base):
                      for x in ("contents", "environment", "ebuild"))
     _get_attr.update((x, lambda s: s.data.get(x.upper(), ""))
                      for x in ("cflags", "cxxflags", "ldflags"))
+    _get_attr.update((x, lambda s: tuple(s.data.get(x.upper(), "").split()))
+                     for x in ("iuse_effective", "distfiles", "inherited"))
     _get_attr['source_repository'] = passthrough_repo
-    _get_attr['iuse_effective'] = lambda s: tuple(
-        s.data.get("IUSE_EFFECTIVE", "").split())
-
     _get_attr['fetchables'] = lambda s: conditionals.DepSet.parse(
         '', fetch.fetchable, operators={})
-    _get_attr['distfiles'] = lambda s: tuple(
-        s.data.get("DISTFILES", "").split())
-
     _get_attr["use"] = lambda s: DelayedInstantiation(
         frozenset, lambda: frozenset(s.data["USE"].split()))
-
-    _get_attr["inherited"] = lambda s: tuple(sorted(
-        s.data.get("INHERITED", "").split()))
     _get_attr["eapi"] = generate_eapi
 
     def __init__(self, *args, **kwargs):

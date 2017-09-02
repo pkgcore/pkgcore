@@ -547,7 +547,7 @@ class buildable(ebd, setup_mixin, format.build):
             basically initial env
         :param eclass_cache: the :class:`pkgcore.ebuild.eclass_cache`
             we'll be using
-        :param files: mapping of fetchables mapped to their disk location
+        :param verified_files: mapping of fetchables mapped to their disk location
         """
 
         use = kwargs.get("use_override", pkg.use)

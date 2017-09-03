@@ -7,7 +7,7 @@ Ebuild repository, specific to gentoo ebuild trees.
 
 __all__ = ("tree",)
 
-from functools import partial
+from functools import partial, wraps
 from itertools import imap, ifilterfalse
 import os
 import stat
@@ -588,35 +588,48 @@ class _ConfiguredTree(configured.tree):
             for x in ('cflags', 'cxxflags', 'ldflags'))
         scope_update['operations_callback'] = self._generate_pkg_operations
 
-        self.config_wrappables['iuse_effective'] = partial(
-            self._generate_iuse_effective, domain.profile.iuse_effective)
-        self.config_wrappables['user_patches'] = partial(
-            self._generate_user_patches, domain.config_dir)
-        self.config_wrappables['distfiles'] = partial(self._generate_distfiles)
+        # update wrapped attr funcs requiring access to the class instance
+        for k, v in self.config_wrappables.iteritems():
+            if isinstance(v, basestring):
+                self.config_wrappables[k] = getattr(self, v)
+
         configured.tree.__init__(
             self, raw_repo, self.config_wrappables,
             pkg_kls_injections=scope_update)
+
         self._get_pkg_use = domain.get_package_use_unconfigured
         self._get_pkg_use_for_building = domain.get_package_use_buildable
+        self.domain = domain
         self.domain_settings = domain_settings
         self.fetcher_override = fetcher
-        self._delayed_iuse = partial(
-            make_kls(InvertedContains), InvertedContains)
+        self._delayed_iuse = partial(make_kls(InvertedContains), InvertedContains)
 
-    @staticmethod
-    def _generate_iuse_effective(profile_iuse_effective, pkg_iuse_stripped, enabled_use, pkg):
-        return frozenset(profile_iuse_effective | pkg_iuse_stripped)
+    def _wrap_attr(config_wrappables):
+        """Register wrapped attrs that require class instance access."""
+        def _wrap_func(func):
+            @wraps(func)
+            def wrapped(*args, **kwargs):
+                return func(*args, **kwargs)
+            attr = func.__name__.lstrip('_')
+            config_wrappables[attr] = func.__name__
+            return wrapped
+        return _wrap_func
 
-    @staticmethod
-    def _generate_distfiles(all_distfiles, enabled_use, pkg):
+    @_wrap_attr(config_wrappables)
+    def _iuse_effective(self, raw_pkg_iuse_effective, _enabled_use, pkg):
+        profile_iuse_effective = self.domain.profile.iuse_effective
+        return frozenset(profile_iuse_effective.union(raw_pkg_iuse_effective))
+
+    @_wrap_attr(config_wrappables)
+    def _distfiles(self, _raw_pkg_distfiles, enabled_use, pkg):
         return tuple(f.filename for f in pkg.fetchables.evaluate_depset(enabled_use))
 
-    @staticmethod
-    def _generate_user_patches(config_dir, _, enabled_use, pkg):
+    @_wrap_attr(config_wrappables)
+    def _user_patches(self, _raw_pkg_patches, _enabled_use, pkg):
         # determine available user patches for >= EAPI 6
         if pkg.eapi.options.user_patches:
             patches = []
-            patchroot = pjoin(config_dir, 'patches')
+            patchroot = pjoin(self.domain.config_dir, 'patches')
             patch_dirs = [
                 pkg.PF,
                 '%s:%s' % (pkg.PF, pkg.slot),

@@ -601,7 +601,7 @@ class _ConfiguredTree(configured.tree):
         self._get_pkg_use_for_building = domain.get_package_use_buildable
         self.domain = domain
         self.domain_settings = domain_settings
-        self.fetcher_override = fetcher
+        self._fetcher_override = fetcher
         self._delayed_iuse = partial(make_kls(InvertedContains), InvertedContains)
 
     def _wrap_attr(config_wrappables):
@@ -656,7 +656,7 @@ class _ConfiguredTree(configured.tree):
                 self._get_delayed_immutable, pkg, immutable)}
 
     def _generate_pkg_operations(self, domain, pkg, **kwds):
-        fetcher = self.fetcher_override
+        fetcher = self._fetcher_override
         if fetcher is None:
             fetcher = domain.fetcher
         return ebd.src_operations(

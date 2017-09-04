@@ -85,6 +85,7 @@ class TestPortageConfig(TempDirMixin, TestCase):
                 self.make_globals['ACCEPT_LICENSE'], d['ACCEPT_LICENSE'])
             self.assertEqual('foo', d['DISTDIR'])
 
+    # TODO: add some tests for duplicate sections that should output log messages
     def test_load_repos_conf(self):
         self.assertIn('gentoo', self.global_repos_conf)
 

@@ -310,10 +310,14 @@ def load_repos_conf(path):
                 raise_from(errors.PermissionDeniedError(fp, write=False))
             raise_from(errors.ParsingError("parsing %r" % (fp,), exception=e))
 
-        defaults.update(config.defaults())
+        defaults_data = config.defaults()
+        if defaults_data and defaults:
+            logger.warning("repos.conf: overriding DEFAULT section in %r", fp)
+        defaults.update(defaults_data)
+
         for name in config.sections():
-            # note we don't check for duplicate entries so older matching
-            # repos will be overridden
+            if name in repos:
+                logger.warning("repos.conf: overriding %r repo in %r", name, fp)
             repos[name] = dict(config.items(name))
 
             # repo priority defaults to zero if unset

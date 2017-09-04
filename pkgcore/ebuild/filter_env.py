@@ -234,12 +234,9 @@ def walk_statement_dollared_quote_parsing(buff, pos, endchar):
 
 def walk_here_statement(buff, pos):
     pos += 1
-    logger.debug('starting here processing for COMMAND for level 2 at p == %.10s',
-                 pos)
+    logger.debug('starting here processing for COMMAND for level 2 at p == %.10s', pos)
     if buff[pos] == '<':
-        logger.debug(
-            "correction, it's a third level here. Handing back to command "
-            'parsing')
+        logger.debug("correction, it's a third level here. Handing back to command parsing")
         return pos + 1
     isspace = str.isspace
     end = len(buff)

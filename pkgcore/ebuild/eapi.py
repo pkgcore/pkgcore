@@ -175,7 +175,7 @@ class EAPI(object):
         """Check if an EAPI is supported."""
         if EAPI.known_eapis.get(self._magic) is not None:
             if not self.options.is_supported:
-                logger.warning("EAPI %s isn't fully supported" % self)
+                logger.warning("EAPI %s isn't fully supported", self)
             return True
         return False
 

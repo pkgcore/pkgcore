@@ -121,7 +121,7 @@ class base(object):
 
     def __del__(self):
         if getattr(self, 'underway', False):
-            logger.warning("%s merge was underway, but wasn't completed" % (self,))
+            logger.warning("%s merge was underway, but wasn't completed", self)
             self.lock.release_write_lock()
         self.clean_tempdir()
 
@@ -190,7 +190,7 @@ class install(base):
     def finish(self):
         ret = self.format_op.finalize()
         if not ret:
-            logger.warning("ignoring unexpected result from install finalize- %r" % ret)
+            logger.warning("ignoring unexpected result from install finalize- %r", ret)
         return base.finish(self)
 
 
@@ -256,12 +256,12 @@ class uninstall(base):
         ret = self.format_op.finalize()
         self.format_op.cleanup(disable_observer=True)
         if not ret:
-            logger.warning("ignoring unexpected result from uninstall finalize- %r" % ret)
+            logger.warning("ignoring unexpected result from uninstall finalize- %r", ret)
         return base.finish(self)
 
     def __del__(self):
         if getattr(self, 'underway', False):
-            logger.warning("%s unmerge was underway, but wasn't completed" % self.old_pkg)
+            logger.warning("%s unmerge was underway, but wasn't completed", self.old_pkg)
             self.lock.release_write_lock()
 
 
@@ -313,11 +313,11 @@ class replace(install, uninstall):
     def finish(self):
         ret = self.format_op.finalize()
         if not ret:
-            logger.warning("ignoring unexpected result from replace finalize- %r" % ret)
+            logger.warning("ignoring unexpected result from replace finalize- %r", ret)
         return base.finish(self)
 
     def __del__(self):
         if getattr(self, 'underway', False):
             logger.warning("%s -> %s replacement was underway, but "
-                           "wasn't completed" % (self.old_pkg, self.new_pkg))
+                           "wasn't completed", self.old_pkg, self.new_pkg)
             self.lock.release_write_lock()

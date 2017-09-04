@@ -114,8 +114,7 @@ def _read_cache_file(package, cache_path):
     if len(cache_data) >= 1:
         if cache_data[0] != CACHE_HEADER:
             logger.warning(
-                "plugin cache has a wrong header: %r, regenerating",
-                cache_data[0])
+                "plugin cache has a wrong header: %r, regenerating", cache_data[0])
             cache_data = []
         else:
             cache_data = cache_data[1:]
@@ -151,7 +150,7 @@ def _read_cache_file(package, cache_path):
     except compatibility.IGNORED_EXCEPTIONS:
         raise
     except Exception as e:
-        logger.warning("failed reading cache; exception %s.  Regenerating.", e)
+        logger.warning("failed reading cache; exception %s, regenerating.", e)
         stored_cache.clear()
 
     return stored_cache

@@ -566,7 +566,7 @@ class domain(config_domain):
         path = self.settings.get('PORTAGE_TMPDIR', '')
         if not os.path.exists(path):
             path = tempfile.gettempdir()
-            logger.warning('nonexistent PORTAGE_TMPDIR path, defaulting to %s', path)
+            logger.warning('nonexistent PORTAGE_TMPDIR path, defaulting to %r', path)
         return os.path.normpath(path)
 
     @klass.jit_attr

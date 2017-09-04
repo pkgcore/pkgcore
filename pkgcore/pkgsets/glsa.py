@@ -109,8 +109,8 @@ class GlsaDirSet(object):
                         except (TypeError, ValueError) as v:
                             # thrown from cpv.
                             logger.warning(
-                                "invalid glsa- %s, package %s: error %s"
-                                % (fn, pkgname, v))
+                                "invalid glsa- %s, package %s: error %s",
+                                fn, pkgname, v)
                             del v
 
 

@@ -161,7 +161,7 @@ def add_sets(config, root, config_dir):
             # the set not show up in config.
             if setname in ("system", "world"):
                 logger.warning(
-                    "user defined set %s is disallowed; ignoring" %
+                    "user defined set %r is disallowed; ignoring",
                     pjoin(set_fp, setname))
                 continue
             config[setname] = basics.AutoConfigSection({

@@ -46,8 +46,8 @@ class FileList(object):
                             (x, self.path))
                     logger.warning(
                         "set item %r found in pkgset %r: it will be "
-                        "wiped on update since portage/pkgcore store set items"
-                        " in a separate way" % (x[1:], self.path))
+                        "wiped on update since portage/pkgcore store set items "
+                        "in a separate way", x[1:], self.path)
                     continue
                 s.add(atom(x))
         except InvalidDependency as e:

@@ -84,7 +84,7 @@ class PackageRestriction_mixin(restriction.base):
             if not self.ignore_missing:
                 logger.exception(
                     "failed getting attribute %s from %s, "
-                    "exception %s" % ('.'.join(attr_split), str(pkg), str(exc)))
+                    "exception %s", '.'.join(attr_split), str(pkg), str(exc))
 
             eargs = [x for x in exc.args if isinstance(x, basestring)]
             if any(x in attr_split for x in eargs):
@@ -98,7 +98,7 @@ class PackageRestriction_mixin(restriction.base):
                 return False
         logger.exception(
             "caught unexpected exception accessing %s from %s, "
-            "exception %s" % ('.'.join(attr_split), str(pkg), str(exc)))
+            "exception %s", '.'.join(attr_split), str(pkg), str(exc))
         return True
 
     def force_False(self, pkg):

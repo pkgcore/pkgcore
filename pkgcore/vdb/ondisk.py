@@ -114,7 +114,7 @@ class tree(prototype.tree):
                         "that -%s version merged.  "
                         "This is why embrace and extend is bad, mm'kay.  "
                         "Use the offending pkg manager that merged it to "
-                        "unmerge it." % (bad, category, x, bad, bad))
+                        "unmerge it.", bad, category, x, bad, bad)
                     raise InvalidCPV(
                         "%s/%s: -%s version component is "
                         "not standard." % (category, x, bad))

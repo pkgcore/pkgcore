@@ -256,7 +256,7 @@ class ebd(object):
                     "%s doesn't fulfill minimum mode %o and gid %i" % (k, 0770, portage_gid))
             # XXX hack, just 'til pkgcore controls these directories
             if (os.stat(self.env[k]).st_mode & 02000):
-                logger.warning("%s ( %s ) is setgid" % (self.env[k], k))
+                logger.warning("%s ( %s ) is setgid", self.env[k], k)
 
     def _generic_phase(self, phase, userpriv, sandbox, extra_handlers={},
                        failure_allowed=False, suppress_bashrc=False):
@@ -433,7 +433,7 @@ def run_generic_phase(pkg, phase, env, userpriv, sandbox,
             if not failure_allowed:
                 raise format.GenericBuildError(
                     phase + ": Failed building (False/0 return from handler)")
-                logger.warning("executing phase %s: execution failed, ignoring" % (phase,))
+                logger.warning("executing phase %s: execution failed, ignoring", phase)
 
     except Exception as e:
         ebd.shutdown_processor()
@@ -570,7 +570,7 @@ class buildable(ebd, setup_mixin, format.build):
             self.run_test = False
         elif "test" not in use:
             if self.run_test:
-                logger.warning("disabling test for %s due to test use flag being disabled" % pkg)
+                logger.warning("disabling test for %s due to test use flag being disabled", pkg)
             self.run_test = False
 
         # XXX minor hack

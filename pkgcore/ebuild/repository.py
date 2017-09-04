@@ -40,7 +40,6 @@ demandload(
     'pkgcore.ebuild:cpv,digest,ebd,repo_objs,atom,restricts,profiles,processor',
     'pkgcore.ebuild:errors@ebuild_errors',
     'pkgcore.fs.livefs:sorted_scan',
-    'pkgcore.log:logger',
     'pkgcore.package:errors@pkg_errors',
     'pkgcore.restrictions:packages',
     'pkgcore.util.packages:groupby_pkg',

@@ -489,6 +489,7 @@ def config_from_make_conf(location=None, profile_override=None, **kwargs):
 
         if repo_path == default_repo_path:
             repo_conf['default'] = True
+            repo['default'] = True
 
         config['conf:' + repo_name] = basics.AutoConfigSection(repo_conf)
         config[repo_name] = basics.AutoConfigSection(repo)

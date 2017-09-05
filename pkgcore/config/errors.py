@@ -36,7 +36,7 @@ class PermissionError(BaseError):
         self.message = message
 
     def __str__(self):
-        s = "Permission denied to %r" % (self.path,)
+        s = "permission denied to %r" % (self.path,)
         if self.message:
             s += "; %s." % (self.message.rstrip("."),)
         return s
@@ -88,7 +88,7 @@ class ParsingError(ConfigurationError):
         self.exc = exception
 
     def __str__(self):
-        return "Parsing failed: %s\n%s" % (self.message, self.exc)
+        return "parsing failed: %s\n%s" % (self.message, self.exc)
 
     @classmethod
     def wrap_exception(cls, message):
@@ -132,7 +132,7 @@ class ComplexInstantiationError(ConfigurationError):
     :ivar callable: callable object which failed during instantiation.
     :ivar pargs: positional args passed to callable.
     :ivar kwargs: keyword args passed to callable.
-    :ivar exc: Original exception object or None.
+    :ivar exc: original exception object or None.
 
     A well-behaved configurable callable should raise this exception
     if instantiation failed, providing one or both of message and

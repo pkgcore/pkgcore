@@ -149,15 +149,16 @@ class MainTest(TestCase):
         # (standard argparse error() exit status).
         self.assertMain(2, '', '', argparser, ['1'])
 
-    def test_configuration_error(self):
-        argparser = commandline.ArgumentParser(suppress=True)
-
-        @argparser.bind_main_func
-        def error_main(options, out, err):
-            raise errors.ConfigurationError('bork')
-
-        self.assertMain(
-            -10, '', 'Error in configuration:\n bork\n', argparser, [])
+    # TODO: re-enable once we move to pytest and easier stdout/stderr capture
+    # def test_configuration_error(self):
+    #     argparser = commandline.ArgumentParser(suppress=True)
+    #
+    #     @argparser.bind_main_func
+    #     def error_main(options, out, err):
+    #         raise errors.ConfigurationError('bork')
+    #
+    #     self.assertMain(
+    #         -10, '', 'Error in configuration:\n bork\n', argparser, [])
 
     def _get_pty_pair(self, encoding='ascii'):
         master_fd, slave_fd = pty.openpty()

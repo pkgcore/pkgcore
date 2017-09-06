@@ -36,9 +36,9 @@ class PermissionError(BaseError):
         self.message = message
 
     def __str__(self):
-        s = "permission denied to %r" % (self.path,)
+        s = "permission denied to '%s'" % (self.path,)
         if self.message:
-            s += "; %s." % (self.message.rstrip("."),)
+            s += "; %s" % (self.message,)
         return s
 
 

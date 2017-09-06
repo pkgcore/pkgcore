@@ -112,7 +112,7 @@ class TestPortageConfig(TempDirMixin, TestCase):
                 sync-uri = git://foo.git''').encode())
             f.flush()
             self.assertRaises(
-                errors.ParsingError, load_repos_conf, f.name)
+                errors.ConfigurationError, load_repos_conf, f.name)
 
         # bad priority value causes fallback to the default
         with NamedTemporaryFile() as f:

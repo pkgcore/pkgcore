@@ -313,45 +313,47 @@ def load_repos_conf(path):
 
         defaults_data = config.defaults()
         if defaults_data and defaults:
-            logger.warning("repos.conf: overriding DEFAULT section in %r", fp)
+            logger.warning("repos.conf: parsing '%s': overriding DEFAULT section", fp)
         defaults.update(defaults_data)
 
         for name in config.sections():
             if name in repos:
-                logger.warning("repos.conf: overriding %r repo in %r", name, fp)
-            repos[name] = dict(config.items(name))
+                logger.warning("repos.conf: parsing '%s': overriding '%s' repo", fp, name)
+            repo_data = dict(config.items(name))
+
+            # ignore repo if location is unset
+            location = repo_data.get('location', None)
+            if location is None:
+                logger.warning(
+                    "repos.conf: parsing '%s': "
+                    "'%s' repo missing location setting, ignoring repo", fp, name)
+                continue
+            repo_data['location'] = os.path.abspath(location)
 
             # repo priority defaults to zero if unset or invalid
-            priority = repos[name].get('priority', 0)
+            priority = repo_data.get('priority', 0)
             try:
                 priority = int(priority)
             except ValueError:
                 logger.warning(
-                    "parsing repos.conf '%s': '%s' repo has invalid priority "
+                    "repos.conf: parsing '%s': '%s' repo has invalid priority "
                     "setting: '%s' (defaulting to 0)",
                     fp, name, priority)
                 priority = 0
             finally:
-                repos[name]['priority'] = priority
+                repo_data['priority'] = priority
 
-            # only the location setting is strictly required
-            location = repos[name].get('location', None)
-            if location is None:
-                raise errors.ParsingError(
-                    "'%s': '%s' repo missing location setting" %
-                    (fp, name))
-            repos[name]['location'] = os.path.abspath(location)
+            # register repo
+            repos[name] = repo_data
 
     if not repos:
-        raise errors.ConfigurationError(
-            "No repos are defined, please fix your repos.conf settings.")
+        raise errors.ConfigurationError("empty repos.conf, no repos defined")
 
     # the default repo is gentoo if unset and gentoo exists
     default_repo = defaults.get('main-repo', 'gentoo')
     if default_repo not in repos:
         raise errors.ConfigurationError(
-            "The configured default repo '%s' is undefined or invalid, "
-            "please fix your repos.conf settings." % (default_repo,))
+            "default repo '%s' is undefined or invalid" % (default_repo,))
 
     if 'main-repo' not in defaults:
         defaults['main-repo'] = default_repo

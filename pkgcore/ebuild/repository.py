@@ -647,7 +647,7 @@ class _ConfiguredTree(configured.tree):
         return None
 
     def _get_delayed_immutable(self, pkg, immutable):
-        return InvertedContains(pkg.iuse.difference(immutable))
+        return InvertedContains(set(pkg.iuse).difference(immutable))
 
     def _get_pkg_kwds(self, pkg):
         immutable, enabled, disabled = self._get_pkg_use(pkg)

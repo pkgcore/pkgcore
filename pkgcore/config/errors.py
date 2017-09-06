@@ -88,7 +88,10 @@ class ParsingError(ConfigurationError):
         self.exc = exception
 
     def __str__(self):
-        return "parsing failed: %s\n%s" % (self.message, self.exc)
+        msg = 'parsing failed: %s' % (self.message,)
+        if self.exc is not None:
+            msg += '\n%s' % (self.exc,)
+        return msg
 
     @classmethod
     def wrap_exception(cls, message):

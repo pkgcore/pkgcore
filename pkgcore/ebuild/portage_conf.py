@@ -457,7 +457,6 @@ def config_from_make_conf(location=None, profile_override=None, **kwargs):
         'ignore_paludis_versioning': ('ignore-paludis-versioning' in features),
     })
 
-    default_repo_path = repos_conf[repos_conf_defaults['main-repo']]['location']
     repo_map = {}
 
     for repo_name, repo_opts in repos_conf.iteritems():
@@ -487,7 +486,7 @@ def config_from_make_conf(location=None, profile_override=None, **kwargs):
             config[cache_name] = make_cache(repo_config.cache_format, repo_path)
             repo['cache'] = cache_name
 
-        if repo_path == default_repo_path:
+        if repo_name == repos_conf_defaults['main-repo']:
             repo_conf['default'] = True
             repo['default'] = True
 

@@ -12,6 +12,7 @@ __all__ = (
     "load_make_conf", "load_repos_conf", "config_from_make_conf",
 )
 
+import ConfigParser as configparser
 from collections import OrderedDict
 import os
 
@@ -308,8 +309,10 @@ def load_repos_conf(path):
                 config.read_file(f)
         except EnvironmentError as e:
             if e.errno == errno.EACCES:
-                raise_from(errors.PermissionDeniedError(fp, write=False))
-            raise_from(errors.ParsingError("parsing %r" % (fp,), exception=e))
+                raise_from(errors.PermissionDeniedError(fp))
+            raise_from(errors.ParsingError("repos.conf: '%s'" % (fp,), exception=e))
+        except configparser.ParsingError as e:
+            raise_from(errors.ParsingError("repos.conf: '%s'" % (fp,), exception=e))
 
         defaults_data = config.defaults()
         if defaults_data and defaults:

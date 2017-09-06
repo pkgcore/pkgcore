@@ -16,6 +16,7 @@ from collections import OrderedDict
 import os
 
 from snakeoil.bash import read_bash_dict
+from snakeoil.currying import wrap_exception
 from snakeoil.compatibility import raise_from, ConfigParser, IGNORED_EXCEPTIONS
 from snakeoil.demandload import demandload
 from snakeoil.mappings import ImmutableDict
@@ -369,7 +370,7 @@ def load_repos_conf(path):
 
 
 @configurable({'config_dir': 'str'}, typename='configsection')
-@errors.ParsingError.wrap_exception("while loading portage config")
+@wrap_exception(errors.ParsingError, "while loading portage config", pass_error='exception')
 def config_from_make_conf(location=None, profile_override=None, **kwargs):
     """generate a config using portage's config files
 

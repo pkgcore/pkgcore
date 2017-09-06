@@ -92,11 +92,6 @@ class ParsingError(ConfigurationError):
             msg += '\n%s' % (self.exc,)
         return msg
 
-    @classmethod
-    def wrap_exception(cls, message):
-        return currying.wrap_exception(
-            cls, message=message, pass_error='exception')
-
 
 class CollapseInheritOnly(ConfigurationError):
     """Attempt was made to collapse an uncollapsable section.

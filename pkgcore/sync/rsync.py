@@ -12,6 +12,7 @@ demandload(
     'errno',
     'os',
     'socket',
+    'tempfile',
     'time',
     'snakeoil.compatibility:raise_from',
     'snakeoil.osutils:pjoin',
@@ -183,26 +184,25 @@ class rsync_timestamp_syncer(rsync_syncer):
         ret = None
         try:
             if not doit:
-                basedir = self.basedir
-                uri = self.uri
-                new_timestamp = pjoin(
-                    self.basedir, "metadata", ".tmp.timestamp.chk")
-                try:
-                    self.basedir = new_timestamp
-                    self.uri = pjoin(self.uri, "metadata", "timestamp.chk")
-                    ret = rsync_syncer._sync(self, verbosity, output_fd)
-                finally:
-                    self.basedir = basedir
-                    self.uri = uri
-                if not ret:
-                    doit = True
-                else:
-                    delta = self.current_timestamp(new_timestamp) - \
-                        self.last_timestamp
-                    if delta >= 0:
-                        doit = delta > self.forward_sync_delay
+                with tempfile.NamedTemporaryFile() as new_timestamp:
+                    basedir = self.basedir
+                    uri = self.uri
+                    try:
+                        self.basedir = new_timestamp.name
+                        self.uri = pjoin(self.uri, "metadata", "timestamp.chk")
+                        ret = rsync_syncer._sync(self, verbosity, output_fd)
+                    finally:
+                        self.basedir = basedir
+                        self.uri = uri
+                    if not ret:
+                        doit = True
                     else:
-                        doit = delta > self.negative_sync_delay
+                        delta = self.current_timestamp(new_timestamp) - \
+                            self.last_timestamp
+                        if delta >= 0:
+                            doit = delta > self.forward_sync_delay
+                        else:
+                            doit = delta > self.negative_sync_delay
             if not doit:
                 return True
             ret = rsync_syncer._sync(self, verbosity, output_fd)

@@ -533,12 +533,13 @@ class Tool(BaseTool):
                 tb = sys.exc_info()[-1]
                 dump_error(e, 'Error while parsing arguments', tb=tb)
             else:
-                self.parser.error(e)
+                self.parser.error("configuration error: %s" % (e,))
         elif isinstance(e, errors.ConfigurationError):
-            tb = sys.exc_info()[-1]
-            if not self.parser.debug:
-                tb = None
-            dump_error(e, "Error in configuration", handle=self._errfile, tb=tb)
+            if self.parser.debug:
+                tb = sys.exc_info()[-1]
+                dump_error(e, "Error in configuration", handle=self._errfile, tb=tb)
+            else:
+                self.parser.error("configuration error: %s" % (e,))
         elif isinstance(e, operations.OperationError):
             tb = sys.exc_info()[-1]
             if not self.parser.debug:

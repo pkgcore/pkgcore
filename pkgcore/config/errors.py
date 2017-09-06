@@ -56,7 +56,6 @@ class TypeDefinitionError(BaseError):
 
 
 class ConfigurationError(BaseError):
-
     """Fatal error in parsing a config section.
 
     :type stack: sequence of strings.
@@ -129,7 +128,6 @@ class AutoloadInstantiationError(InstantiationError):
 
 
 class ComplexInstantiationError(ConfigurationError):
-
     """Exception occurred during instantiation.
 
     :ivar callable: callable object which failed during instantiation.
@@ -180,7 +178,6 @@ class ComplexInstantiationError(ConfigurationError):
 
 
 class QuoteInterpretationError(ConfigurationError):
-
     """Quoting of a var was screwed up."""
 
     def __init__(self, string):

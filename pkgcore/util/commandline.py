@@ -34,7 +34,7 @@ demandload(
     'signal',
     'traceback',
     'snakeoil:osutils',
-    'snakeoil.errors:dump_error',
+    'snakeoil.errors:dump_error,walk_exception_chain',
     'snakeoil.sequences:iflatten_instance,unstable_unique',
     'pkgcore:operations',
     'pkgcore.config:basics',
@@ -533,13 +533,16 @@ class Tool(BaseTool):
                 tb = sys.exc_info()[-1]
                 dump_error(e, 'Error while parsing arguments', tb=tb)
             else:
-                self.parser.error("configuration error: %s" % (e,))
+                self.parser.error("config error: %s" % (e,))
         elif isinstance(e, errors.ConfigurationError):
             if self.parser.debug:
                 tb = sys.exc_info()[-1]
                 dump_error(e, "Error in configuration", handle=self._errfile, tb=tb)
             else:
-                self.parser.error("configuration error: %s" % (e,))
+                excs = list(walk_exception_chain(e))
+                # skip the original exception if it was re-raised
+                exc = excs[-2] if len(excs) > 1 else excs[-1]
+                self.parser.error("config error: %s" % (exc,))
         elif isinstance(e, operations.OperationError):
             tb = sys.exc_info()[-1]
             if not self.parser.debug:

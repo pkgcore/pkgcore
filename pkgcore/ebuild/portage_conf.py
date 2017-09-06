@@ -320,20 +320,24 @@ def load_repos_conf(path):
                 logger.warning("repos.conf: overriding %r repo in %r", name, fp)
             repos[name] = dict(config.items(name))
 
-            # repo priority defaults to zero if unset
+            # repo priority defaults to zero if unset or invalid
             priority = repos[name].get('priority', 0)
             try:
-                repos[name]['priority'] = int(priority)
+                priority = int(priority)
             except ValueError:
-                raise errors.ParsingError(
-                    "%s: repo '%s' has invalid priority setting: %s" %
-                    (fp, name, priority))
+                logger.warning(
+                    "parsing repos.conf '%s': '%s' repo has invalid priority "
+                    "setting: '%s' (defaulting to 0)",
+                    fp, name, priority)
+                priority = 0
+            finally:
+                repos[name]['priority'] = priority
 
             # only the location setting is strictly required
             location = repos[name].get('location', None)
             if location is None:
                 raise errors.ParsingError(
-                    "%s: repo '%s' missing location setting" %
+                    "'%s': '%s' repo missing location setting" %
                     (fp, name))
             repos[name]['location'] = os.path.abspath(location)
 

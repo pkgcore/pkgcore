@@ -114,15 +114,17 @@ class TestPortageConfig(TempDirMixin, TestCase):
             self.assertRaises(
                 errors.ParsingError, load_repos_conf, f.name)
 
-        # bad priority value
+        # bad priority value causes fallback to the default
         with NamedTemporaryFile() as f:
             f.write(textwrap.dedent('''\
                 [foo]
                 priority = foo
-                location = /var/gentoo/repos/foo''').encode())
+                location = /var/gentoo/repos/foo
+                [gentoo]
+                location = /var/gentoo/repos/gentoo''').encode())
             f.flush()
-            self.assertRaises(
-                errors.ParsingError, load_repos_conf, f.name)
+            defaults, repos = load_repos_conf(f.name)
+            self.assertEqual(0, repos['foo']['priority'])
 
         # undefined main repo with 'gentoo' missing
         with NamedTemporaryFile() as f:

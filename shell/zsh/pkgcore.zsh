@@ -35,8 +35,13 @@ _pkgattr() {
 	exec {fdout}<&- {fderr}<&-
 
 	if [[ ${ret} != 0 ]]; then
-		# show pquery error message
-		echo "${prog}: ${error[-1]#pquery: error: }" >&2
+		# re-prefix the main pquery error message with the shell function name
+		echo "${prog}: ${error[1]#pquery: error: }" >&2
+		# output the remaining portion of the error message
+		local line
+		for line in "${error[@]:1}"; do
+			echo -E "${line}" >&2
+		done
 		return 1
 	fi
 

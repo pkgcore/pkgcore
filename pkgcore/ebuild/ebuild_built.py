@@ -102,7 +102,7 @@ class package(ebuild_src.base):
     _get_attr.update((x, partial(_chost_fallback, x.upper()))
                      for x in ("cbuild", "chost", "ctarget"))
     _get_attr.update((x, post_curry(passthrough, x))
-                     for x in ("contents", "environment", "ebuild"))
+                     for x in ("contents", "environment"))
     _get_attr.update((x, lambda s,x=x: s.data.get(x.upper(), ""))
                      for x in ("cflags", "cxxflags", "ldflags"))
     _get_attr.update((x, lambda s,x=x: tuple(s.data.get(x.upper(), "").split()))

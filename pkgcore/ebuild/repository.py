@@ -197,7 +197,9 @@ def tree(config, repo_config, cache=(), eclass_override=None, default_mirrors=No
     except RuntimeError as e:
         # TODO: migrate to RecursionError when going >=py3.5
         if e.message.startswith('maximum recursion depth exceeded'):
-            raise errors.InitializationError("masters are cyclic for repo: %s" % (repo_config.repo_id,))
+            raise_from(errors.InitializationError(
+                "'%s' repo has cyclic masters: %s" % (
+                    repo_config.repo_id, ', '.join(repo_config.masters))))
         raise
 
     return _UnconfiguredTree(

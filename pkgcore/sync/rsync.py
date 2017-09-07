@@ -147,6 +147,17 @@ class rsync_syncer(base.ExternalSyncer):
         raise base.syncer_exception(ret, "all attempts failed")
 
 
+class rsync_file_syncer(rsync_syncer):
+    """Support syncing a single file over rsync."""
+
+    def __init__(self, path, uri):
+        super(rsync_file_syncer, self).__init__(basedir=path, uri=uri)
+        # override parent classes that always assume directory syncing and
+        # append path separators
+        self.basedir = path
+        self.uri = uri
+
+
 class rsync_timestamp_syncer(rsync_syncer):
 
     forcable = True
@@ -184,20 +195,16 @@ class rsync_timestamp_syncer(rsync_syncer):
         ret = None
         try:
             if not doit:
+                # try to sync the timestamp file to check the delta
                 with tempfile.NamedTemporaryFile() as new_timestamp:
-                    basedir = self.basedir
-                    uri = self.uri
-                    try:
-                        self.basedir = new_timestamp.name
-                        self.uri = pjoin(self.uri, "metadata", "timestamp.chk")
-                        ret = rsync_syncer._sync(self, verbosity, output_fd)
-                    finally:
-                        self.basedir = basedir
-                        self.uri = uri
+                    timestamp_uri = pjoin(self.uri, "metadata", "timestamp.chk")
+                    timestamp_path = new_timestamp.name
+                    timestamp_syncer = rsync_file_syncer(timestamp_path, timestamp_uri)
+                    ret = timestamp_syncer._sync(verbosity, output_fd)
                     if not ret:
                         doit = True
                     else:
-                        delta = self.current_timestamp(new_timestamp.name) - \
+                        delta = self.current_timestamp(timestamp_path) - \
                             self.last_timestamp
                         if delta >= 0:
                             doit = delta > self.forward_sync_delay

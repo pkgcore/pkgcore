@@ -40,15 +40,17 @@ demandload(
 )
 
 
+pkgcore_opts = commandline.ArgumentParser(domain=False, script=(__file__, __name__))
 argparser = arghparse.ArgumentParser(
-    suppress=True, description=__doc__,
-    parents=(commandline.ArgumentParser(domain=False),))
+    suppress=True, description=__doc__, parents=(pkgcore_opts,))
 subparsers = argparser.add_subparsers(description="general system maintenance")
 
 shared_options = (commandline.ArgumentParser(
-    config=False, color=False, debug=False, quiet=False, verbose=False, version=False, domain=False, add_help=False),)
+    config=False, color=False, debug=False, quiet=False, verbose=False,
+    version=False, domain=False, add_help=False),)
 shared_options_domain = (commandline.ArgumentParser(
-    config=False, color=False, debug=False, quiet=False, verbose=False, version=False, domain=True, add_help=False),)
+    config=False, color=False, debug=False, quiet=False, verbose=False,
+    version=False, domain=True, add_help=False),)
 
 sync = subparsers.add_parser(
     "sync", parents=shared_options,

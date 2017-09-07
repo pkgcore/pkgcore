@@ -14,7 +14,7 @@ from snakeoil.cli import arghparse
 
 
 argparser = arghparse.ArgumentParser(
-    verbose=False, color=False, description=__doc__)
+    verbose=False, color=False, description=__doc__, script=(__file__, __name__))
 
 def stdin_default(namespace, attr):
     if sys.stdin.isatty():

@@ -8,7 +8,8 @@ import time
 
 from pkgcore.util import commandline
 
-argparser = commandline.ArgumentParser(domain=False, description=__doc__)
+argparser = commandline.ArgumentParser(
+    domain=False, description=__doc__, script=(__file__, __name__))
 argparser.add_argument(
     "source", config_type='cache', priority=20,
     action=commandline.StoreConfigObject,

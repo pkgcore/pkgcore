@@ -40,9 +40,9 @@ demandload(
     'pkgcore.restrictions:packages',
 )
 
+pkgcore_opts = commandline.ArgumentParser(domain=False, script=(__file__, __name__))
 argparser = arghparse.ArgumentParser(
-    suppress=True, description=__doc__,
-    parents=(commandline.ArgumentParser(domain=False),))
+    suppress=True, description=__doc__, parents=(pkgcore_opts,))
 subparsers = argparser.add_subparsers(description="report applets")
 
 pkgsets = subparsers.add_parser(

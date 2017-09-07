@@ -33,7 +33,8 @@ from pkgcore.util import commandline, parserestrict
 demandload('textwrap:dedent')
 
 
-argparser = commandline.ArgumentParser(domain=True, description=__doc__)
+argparser = commandline.ArgumentParser(
+    domain=True, description=__doc__, script=(__file__, __name__))
 argparser.add_argument(
     nargs='*', dest='targets', metavar='TARGET', action=commandline.StoreTarget,
     help="extended package matching",

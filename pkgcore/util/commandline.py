@@ -459,9 +459,8 @@ def _mk_domain(parser):
 
 class ArgumentParser(arghparse.ArgumentParser):
 
-    def __init__(self, suppress=False, config=True, domain=True,
-                 project=__name__.split('.')[0], **kwds):
-        super(ArgumentParser, self).__init__(suppress=suppress, **kwds)
+    def __init__(self, suppress=False, config=True, domain=True, script=None, **kwds):
+        super(ArgumentParser, self).__init__(suppress=suppress, script=script, **kwds)
 
         if not suppress:
             if config:
@@ -481,12 +480,24 @@ class ArgumentParser(arghparse.ArgumentParser):
                     type=arghparse.existent_path,
                     help='override location of config files')
 
-                # XXX: Figure out a better method for plugin registry/loading.
-                plugins = import_module('.plugins', project)
-                global_config = get_plugins('global_config', plugins)
+                if script is not None:
+                    try:
+                        _, script_module = script
+                    except TypeError:
+                        raise ValueError(
+                            "invalid script parameter, should be (__file__, __name__)")
+                    project = script_module.split('.')[0]
+                else:
+                    project = __name__.split('.')[0]
 
-                self.set_defaults(config=arghparse.DelayedValue(
-                    partial(store_config, global_config=global_config), 0))
+                # TODO: Figure out a better method for plugin registry/loading.
+                try:
+                    plugins = import_module('.plugins', project)
+                    global_config = get_plugins('global_config', plugins)
+                    self.set_defaults(config=arghparse.DelayedValue(
+                        partial(store_config, global_config=global_config), 0))
+                except ImportError:
+                    pass
 
             if domain:
                 _mk_domain(self)

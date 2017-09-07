@@ -13,7 +13,8 @@ from pkgcore.operations import observer, format
 from pkgcore.util import commandline
 
 
-argparser = commandline.ArgumentParser(description=__doc__)
+argparser = commandline.ArgumentParser(
+    description=__doc__, script=(__file__, __name__))
 argparser.add_argument(
     'target', metavar='<atom|ebuild>',
     help="atom or ebuild matching a pkg to execute phases from")

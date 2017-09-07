@@ -12,7 +12,8 @@ from pkgcore import plugin, plugins
 from pkgcore.util import commandline
 
 argparser = commandline.ArgumentParser(
-    config=False, domain=False, color=False, description=__doc__)
+    config=False, domain=False, color=False,
+    description=__doc__, script=(__file__, __name__))
 argparser.add_argument(
     "packages", nargs="*", action='store', default=[plugins],
     type=partial(commandline.python_namespace_type, module=True),

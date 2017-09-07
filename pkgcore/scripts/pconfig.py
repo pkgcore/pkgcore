@@ -107,13 +107,15 @@ def get_classes(configs):
 
 
 shared_options = (commandline.ArgumentParser(
-    config=False, color=False, debug=False, quiet=False, verbose=False, version=False, domain=False, add_help=False),)
+    config=False, color=False, debug=False, quiet=False, verbose=False,
+    version=False, domain=False, add_help=False),)
 shared_options_domain = (commandline.ArgumentParser(
-    config=False, color=False, debug=False, quiet=False, verbose=False, version=False, domain=True, add_help=False),)
+    config=False, color=False, debug=False, quiet=False, verbose=False,
+    version=False, domain=True, add_help=False),)
 
+pkgcore_opts = commandline.ArgumentParser(domain=False, script=(__file__, __name__))
 argparser = arghparse.ArgumentParser(
-        suppress=True, description=__doc__,
-        parents=(commandline.ArgumentParser(domain=False),))
+    suppress=True, description=__doc__, parents=(pkgcore_opts,))
 subparsers = argparser.add_subparsers(description="configuration related subcommands")
 classes = subparsers.add_parser(
     "classes", parents=shared_options,

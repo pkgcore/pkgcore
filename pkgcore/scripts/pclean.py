@@ -31,7 +31,7 @@ demandload(
 )
 
 
-argparser = commandline.ArgumentParser(description=__doc__)
+argparser = commandline.ArgumentParser(description=__doc__, script=(__file__, __name__))
 subparsers = argparser.add_subparsers(description='cleaning applets')
 @argparser.bind_delayed_default(10)
 def _initialize_opts(namespace, attr):

@@ -197,7 +197,7 @@ class rsync_timestamp_syncer(rsync_syncer):
                     if not ret:
                         doit = True
                     else:
-                        delta = self.current_timestamp(new_timestamp) - \
+                        delta = self.current_timestamp(new_timestamp.name) - \
                             self.last_timestamp
                         if delta >= 0:
                             doit = delta > self.forward_sync_delay

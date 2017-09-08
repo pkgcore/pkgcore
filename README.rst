@@ -98,8 +98,8 @@ For bugs and feature requests please create an issue on Github_.
     :target: https://pypi.python.org/pypi/pkgcore
 .. |test| image:: https://travis-ci.org/pkgcore/pkgcore.svg?branch=master
     :target: https://travis-ci.org/pkgcore/pkgcore
-.. |coverage| image:: https://coveralls.io/repos/pkgcore/pkgcore/badge.png?branch=master
-    :target: https://coveralls.io/r/pkgcore/pkgcore?branch=master
+.. |coverage| image:: https://codecov.io/gh/pkgcore/pkgcore/branch/master/graph/badge.svg
+    :target: https://codecov.io/gh/pkgcore/pkgcore
 .. |docs| image:: https://readthedocs.org/projects/pkgcore/badge/?version=latest
     :target: http://pkgcore.readthedocs.org/
     :alt: Documentation Status

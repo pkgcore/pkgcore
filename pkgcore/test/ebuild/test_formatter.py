@@ -544,6 +544,24 @@ class TestPortageFormatter(BaseFormatterTest, TestCase):
             Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6', Reset(),
             ' USE="(', Color('fg', 'yellow'), Bold(), 'static', Reset(), '%*)"')
 
+    def test_forced_use_expand(self):
+        self.formatter = self.newFormatter(use_expand=set(["ABI_X86", "TARGETS"]))
+        self.formatter.pkg_get_use = lambda pkg: (set(['targets_X86']), set(), set())
+
+        # rebuilt pkg: new abi_x86_64 and targets_X86 USE flags,
+        # with abi_x86_64 disabled and targets_X86 forced on
+        self.formatter.format(
+            FakeOp(FakeEbuildSrc(
+                'app-arch/bzip2-1.0.3-r6',
+                iuse=['abi_x86_64', 'targets_X86'],
+                use=['targets_X86']),
+            FakeMutatedPkg('app-arch/bzip2-1.0.3-r6')))
+        self.assertOut('[', Color('fg', 'green'), 'ebuild', Reset(),
+            '   ', Color('fg', 'yellow'), Bold(), 'R', Reset(), '    ] ',
+            Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6', Reset(),
+            ' ABI_X86="', Color('fg', 'yellow'), Bold(), '-64', Reset(), '%"',
+            ' TARGETS="(', Color('fg', 'yellow'), Bold(), 'X86', Reset(), '%*)"')
+
     def test_worldfile_atom(self):
         self.formatter.world_list = [atom('app-arch/bzip2')]
         self.formatter.format(

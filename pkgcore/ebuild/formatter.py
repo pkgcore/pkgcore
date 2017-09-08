@@ -411,7 +411,7 @@ class PortageFormatter(CountingFormatter):
             removed = set(old_pkg_iuse) - set(pkg_iuse)
 
             for flag in sorted(enabled):
-                expanded_flag = '_'.join((attr, flag)).lower() if attr != 'use' else flag
+                expanded_flag = '_'.join((attr.lower(), flag)) if attr != 'use' else flag
                 if flag in old_enabled:
                     # unchanged
                     if self.verbose:
@@ -433,7 +433,7 @@ class PortageFormatter(CountingFormatter):
                         flags.extend((yellow, bold, flag, reset, '%*', ' '))
 
             for flag in sorted(disabled):
-                expanded_flag = '_'.join((attr, flag)).lower() if attr != 'use' else flag
+                expanded_flag = '_'.join((attr.lower(), flag)) if attr != 'use' else flag
                 if flag in old_disabled:
                     # unchanged
                     if self.verbose:
@@ -464,13 +464,13 @@ class PortageFormatter(CountingFormatter):
         # new pkg install
         else:
             for flag in sorted(enabled):
-                expanded_flag = '_'.join((attr, flag)).lower() if attr != 'use' else flag
+                expanded_flag = '_'.join((attr.lower(), flag)) if attr != 'use' else flag
                 if expanded_flag in self.pkg_forced_use:
                     flags.extend(('(', red, bold, flag, reset, ')', ' '))
                 else:
                     flags.extend((red, bold, flag, reset, ' '))
             for flag in sorted(disabled):
-                expanded_flag = '_'.join((attr, flag)).lower() if attr != 'use' else flag
+                expanded_flag = '_'.join((attr.lower(), flag)) if attr != 'use' else flag
                 if expanded_flag in self.pkg_disabled_use:
                     flags.extend(('(', blue, bold, '-', flag, reset, ')', ' '))
                 else:

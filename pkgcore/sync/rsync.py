@@ -37,7 +37,7 @@ class rsync_syncer(base.ExternalSyncer):
         '--stats',
         '--human-readable',
         '--timeout=180',
-        '--whole-file', # this one probably shouldn't be a default.
+        '--whole-file', # this one probably shouldn't be a default
     ]
 
     default_retries = 5
@@ -93,7 +93,7 @@ class rsync_syncer(base.ExternalSyncer):
 
     def _get_ips(self):
         if self.use_proxy:
-            # If we're using a proxy, name resolution is best left to the proxy
+            # If we're using a proxy, name resolution is best left to the proxy.
             yield self.hostname
             return
 
@@ -124,7 +124,7 @@ class rsync_syncer(base.ExternalSyncer):
         elif verbosity > 0:
             opts.extend('-v' for x in xrange(verbosity))
 
-        # zip limits to the shortest iterable.
+        # zip limits to the shortest iterable
         ret = None
         for count, ip in zip(xrange(self.retries), self._get_ips()):
             o = [self.binary_path,
@@ -135,7 +135,7 @@ class rsync_syncer(base.ExternalSyncer):
             if ret == 0:
                 return True
             elif ret == 1:
-                # syntax error.
+                # syntax error
                 raise base.syncer_exception(o, "syntax error")
             elif ret == 11:
                 raise base.syncer_exception(
@@ -147,13 +147,12 @@ class rsync_syncer(base.ExternalSyncer):
         raise base.syncer_exception(ret, "all attempts failed")
 
 
-class rsync_file_syncer(rsync_syncer):
+class _rsync_file_syncer(rsync_syncer):
     """Support syncing a single file over rsync."""
 
     def __init__(self, path, uri):
-        super(rsync_file_syncer, self).__init__(basedir=path, uri=uri)
-        # override parent classes that always assume directory syncing and
-        # append path separators
+        super(_rsync_file_syncer, self).__init__(basedir=path, uri=uri)
+        # override parent classes that always assume directory syncing
         self.basedir = path
         self.uri = uri
 
@@ -179,7 +178,7 @@ class rsync_timestamp_syncer(rsync_syncer):
             with open(path) as f:
                 date, offset = f.read().strip().rsplit('+', 1)
             date = time.mktime(time.strptime(date, "%a, %d %b %Y %H:%M:%S "))
-            # add the hour/minute offset.
+            # add the hour/minute offset
             date += int(offset[:2] * 60) + int(offset[2:])
             return date
         except IOError as oe:
@@ -187,7 +186,7 @@ class rsync_timestamp_syncer(rsync_syncer):
                 raise
             return None
         except ValueError:
-            # malformed timestamp.
+            # malformed timestamp
             return None
 
     def _sync(self, verbosity, output_fd, force=False):
@@ -199,7 +198,7 @@ class rsync_timestamp_syncer(rsync_syncer):
                 with tempfile.NamedTemporaryFile() as new_timestamp:
                     timestamp_uri = pjoin(self.uri, "metadata", "timestamp.chk")
                     timestamp_path = new_timestamp.name
-                    timestamp_syncer = rsync_file_syncer(timestamp_path, timestamp_uri)
+                    timestamp_syncer = _rsync_file_syncer(timestamp_path, timestamp_uri)
                     ret = timestamp_syncer._sync(verbosity, output_fd)
                     if not ret:
                         doit = True
@@ -213,13 +212,12 @@ class rsync_timestamp_syncer(rsync_syncer):
             if not doit:
                 return True
             ret = rsync_syncer._sync(self, verbosity, output_fd)
-            # force a reset of the timestamp.
+            # force a reset of the timestamp
             self.last_timestamp = self.current_timestamp()
         finally:
-            if ret is not None:
-                if ret:
-                    return ret
-            # ensure the timestamp is back to the old.
+            if ret:
+                return ret
+            # ensure the timestamp is back to the old
             try:
                 path = pjoin(self.basedir, "metadata", "timestamp.chk")
                 if self.last_timestamp is None:

@@ -379,6 +379,8 @@ __ebd_process_metadata() {
 			export PATH=${PKGCORE_METADATA_PATH}
 		fi
 
+		# invoked internally by bash on PATH search failure, see the bash man
+		# page section on command execution for details
 		command_not_found_handle() {
 			die "External commands disallowed during metadata regen: ${*}"
 		}

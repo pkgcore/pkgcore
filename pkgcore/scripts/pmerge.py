@@ -285,10 +285,9 @@ def unmerge(out, err, vdb, targets, options, formatter, world_set=None):
                     token, ', '.join(sorted(set(pkg.key for pkg in matches)))))
         all_matches.update(matches)
 
-    matches = sorted(all_matches)
     out.write(out.bold, 'The following packages are to be unmerged:')
     out.prefix = [out.bold, ' * ', out.reset]
-    for match in matches:
+    for match in all_matches:
         out.write(match.cpvstr)
     out.prefix = []
 
@@ -299,7 +298,7 @@ def unmerge(out, err, vdb, targets, options, formatter, world_set=None):
 
     if (options.ask and not formatter.ask("Would you like to unmerge these packages?")):
         return
-    return do_unmerge(options, out, err, vdb, matches, world_set, repo_obs)
+    return do_unmerge(options, out, err, vdb, all_matches, world_set, repo_obs)
 
 
 def do_unmerge(options, out, err, vdb, matches, world_set, repo_obs):

@@ -265,7 +265,8 @@ class Failure(ValueError):
 
 def unmerge(out, err, vdb, targets, options, formatter, world_set=None):
     """Unmerge tokens. hackish, should be rolled back into the resolver"""
-    all_matches = set()
+    matches = set()
+    unknown = set()
     for token, restriction in targets:
         # Catch restrictions matching across more than one category.
         # Multiple matches in the same category are acceptable.
@@ -275,20 +276,27 @@ def unmerge(out, err, vdb, targets, options, formatter, world_set=None):
         # realising there are sporks in more than one category), but
         # matching more than one cat/pkg is impossible without
         # explicit wildcards.
-        matches = vdb.match(restriction)
-        if not matches:
-            raise Failure("nothing matches '%s'" % (token,))
-        categories = set(pkg.category for pkg in matches)
+        installed = vdb.match(restriction)
+        if not installed:
+            unknown.add(token)
+        categories = set(pkg.category for pkg in installed)
         if len(categories) > 1:
             raise parserestrict.ParseError(
                 "'%s' is in multiple categories (%s)" % (
-                    token, ', '.join(sorted(set(pkg.key for pkg in matches)))))
-        all_matches.update(matches)
+                    token, ', '.join(sorted(set(pkg.key for pkg in installed)))))
+        matches.update(installed)
+
+    # fail out if no matches are found, otherwise just output a notification
+    if unknown:
+        if matches:
+            err.write("Skipping unknown matches: %s\n" % ', '.join(map(repr, unknown)))
+        else:
+            raise Failure("no matches found: %s" % ', '.join(map(repr, unknown)))
 
     out.write(out.bold, 'The following packages are to be unmerged:')
     out.prefix = [out.bold, ' * ', out.reset]
-    for match in all_matches:
-        out.write(match.cpvstr)
+    for pkg in matches:
+        out.write(pkg.cpvstr)
     out.prefix = []
 
     repo_obs = observer.repo_observer(observer.formatter_output(out), not options.debug)
@@ -298,7 +306,7 @@ def unmerge(out, err, vdb, targets, options, formatter, world_set=None):
 
     if (options.ask and not formatter.ask("Would you like to unmerge these packages?")):
         return
-    return do_unmerge(options, out, err, vdb, all_matches, world_set, repo_obs)
+    return do_unmerge(options, out, err, vdb, matches, world_set, repo_obs)
 
 
 def do_unmerge(options, out, err, vdb, matches, world_set, repo_obs):

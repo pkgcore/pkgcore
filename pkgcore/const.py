@@ -23,8 +23,6 @@ USER_CONF_FILE     = osp.expanduser('~/.config/pkgcore/pkgcore.conf')
 OLD_SYSTEM_CONF_FILE   = '/etc/pkgcore.conf'
 OLD_USER_CONF_FILE = osp.expanduser('~/.pkgcore.conf')
 
-HOST_NONROOT_PATHS = ("/usr/local/bin", "/usr/bin", "/bin")
-
 
 def _GET_CONST(attr, default_value, allow_environment_override=False):
     consts = mappings.ProxiedAttrs(sys.modules[__name__])

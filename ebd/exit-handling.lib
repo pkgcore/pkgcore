@@ -105,7 +105,7 @@ __dump_trace() {
 	local funcname= sourcefile= lineno=
 	for (( n; n > ${strip}; n-- )); do
 		funcname=${FUNCNAME[${n} - 1]}
-		sourcefile=$(basename ${BASH_SOURCE[${n}]})
+		sourcefile=${BASH_SOURCE[${n}]##*/}
 		lineno=${BASH_LINENO[${n} - 1]}
 		# Display function arguments
 		local args= newargs=

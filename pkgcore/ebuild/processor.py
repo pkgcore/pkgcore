@@ -727,7 +727,9 @@ class EbuildProcessor(object):
 
     def _run_depend_like_phase(self, command, package_inst, eclass_cache,
                                extra_commands={}):
-        self._ensure_metadata_paths(const.HOST_NONROOT_PATHS)
+        # ebuild is not allowed to run any external programs during
+        # depend phases; use /dev/null since "" == "."
+        self._ensure_metadata_paths(("/dev/null",))
 
         env = expected_ebuild_env(package_inst, depends=True)
         data = self._generate_env_str(env)

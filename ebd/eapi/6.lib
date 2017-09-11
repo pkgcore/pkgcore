@@ -93,7 +93,7 @@ eapply() {
 			${PKGCORE_NONFATAL} && return "${ret}"
 			# append error message from patch call if it exists
 			local error_msg=${PKGCORE_STDERR[@]}
-			[[ -n ${error_msg} ]] && error_msg=": ${error_msg}"
+			[[ -n ${error_msg} ]] && error_msg=" with:\n${error_msg}"
 			die "${FUNCNAME}: applying '${f##*/}' failed${error_msg}"
 		fi
 	done

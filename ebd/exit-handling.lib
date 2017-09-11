@@ -36,7 +36,13 @@ die() {
 	local phase_str=
 	[[ -n ${EBUILD_PHASE} ]] && phase_str=" (${EBUILD_PHASE} phase)"
 	eerror "ERROR: ${CATEGORY}/${PF} failed${phase_str}:"
-	eerror "  ${*:-(no error message)}"
+
+	# split error message by newline so every line gets prefixed properly
+	local line
+	echo -e "${@:-(no error message)}" | while IFS= read -r line; do
+		eerror "  ${line}"
+	done
+
 	if [[ -n ${PKGCORE_IS_NOT_HELPER} ]]; then
 		eerror
 		__dump_trace 2 ${filespacing} ${linespacing} >&2

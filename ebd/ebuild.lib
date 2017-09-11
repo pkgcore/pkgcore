@@ -179,8 +179,7 @@ __load_eapi_libs() {
 	# finally, update the filters with functionality loaded from here-
 	# always, always, *always* use our own functionality
 	source "${PKGCORE_EBD_PATH}"/eapi/common.lib || die "failed sourcing eapi/common.lib"
-	source "${PKGCORE_EBD_PATH}/eapi/${EAPI}.lib" || \
-		die "failed loading eapi/${EAPI}.lib"
+	source "${PKGCORE_EBD_PATH}/eapi/${EAPI}.lib" || die "failed loading eapi/${EAPI}.lib"
 
 	# verify active bash version
 	__check_bash_version
@@ -497,7 +496,7 @@ __dump_metadata_keys() {
 	set -f
 	local key
 	for key in EAPI DEPEND RDEPEND SLOT SRC_URI RESTRICT HOMEPAGE LICENSE \
-		DESCRIPTION KEYWORDS INHERITED IUSE PDEPEND PROVIDE PROPERTIES REQUIRED_USE; do
+			DESCRIPTION KEYWORDS INHERITED IUSE PDEPEND PROVIDE PROPERTIES REQUIRED_USE; do
 		# deref the val, if it's not empty/unset, then spit a key command to EBD
 		# after using echo to normalize whitespace (specifically removal of newlines)
 		if [[ ${!key:-unset} != "unset" ]]; then
@@ -514,8 +513,8 @@ __dump_metadata_keys() {
 	# defined phases... fun one.
 	local phases
 	for key in pkg_{pretend,configure,info,{pre,post}{rm,inst},setup} \
-		src_{unpack,prepare,configure,compile,test,install}; do
-			__is_function "${key}" && phases+=${phases:+ }${key}
+			src_{unpack,prepare,configure,compile,test,install}; do
+		__is_function "${key}" && phases+=${phases:+ }${key}
 	done
 	__ebd_write_line "key DEFINED_PHASES=${phases:--}"
 }

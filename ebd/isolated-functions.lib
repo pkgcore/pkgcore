@@ -316,10 +316,19 @@ __env_pop() {
 	done
 }
 
-# Echo a given command to stderr if debugging is enabled and then run it.
+declare -a PKGCORE_STDOUT
+declare -a PKGCORE_STDERR
+
+# Echo a given command to stderr if debugging is enabled then run it while
+# capturing stdout/stderr to PKGCORE_STDOUT/PKGCORE_STDERR arrays.
 __debug_and_run() {
-	[[ ${PKGCORE_DEBUG} -ge 1 ]] && echo $1 1>&2
-	eval $1
+	[[ ${PKGCORE_DEBUG} -ge 1 ]] && echo $1 >&2
+	local ret stdout stderr
+	source <({ stderr=( "$({ mapfile -t stdout< <(eval $1; ret=$?; declare -p ret >&3); } 3>&2 2>&1; declare -p stdout >&2)" ); declare -p stderr; } 2>&1)
+	PKGCORE_STDOUT=( "${stdout[@]}" )
+	PKGCORE_STDERR=( "${stderr[@]}" )
+	[[ ${PKGCORE_DEBUG} -ge 1 ]] && printf '%s\n' "${PKGCORE_STDERR[@]}" >&2
+	return ${ret}
 }
 
 # Echo a given command to stderr and then run it.

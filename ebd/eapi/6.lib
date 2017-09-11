@@ -91,7 +91,10 @@ eapply() {
 		ret=$?
 		if ! eend "${ret}"; then
 			${PKGCORE_NONFATAL} && return "${ret}"
-			die "${FUNCNAME}: applying patch failed: ${f}"
+			# append error message from patch call if it exists
+			local error_msg=${PKGCORE_STDERR[0]##*: }
+			[[ -n ${error_msg} ]] && error_msg=": ${error_msg}"
+			die "${FUNCNAME}: applying patch failed: '${f}'${error_msg}"
 		fi
 	done
 

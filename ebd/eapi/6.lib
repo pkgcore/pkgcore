@@ -87,7 +87,7 @@ eapply() {
 	local ret
 	for f in "${patches[@]}"; do
 		[[ ! ${PKGCORE_DEBUG} -ge 1 ]] && ebegin "${f##*/}"
-		__debug_and_run "patch -p1 -f -s -g0 --no-backup-if-mismatch ${options[@]} -i \"${f}\""
+		__run "patch -p1 -f -s -g0 --no-backup-if-mismatch ${options[@]} -i \"${f}\""
 		ret=$?
 		if ! eend "${ret}"; then
 			${PKGCORE_NONFATAL} && return "${ret}"

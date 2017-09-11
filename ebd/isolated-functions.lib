@@ -321,7 +321,7 @@ declare -a PKGCORE_STDERR
 
 # Echo a given command to stderr if debugging is enabled then run it while
 # capturing stdout/stderr to PKGCORE_STDOUT/PKGCORE_STDERR arrays.
-__debug_and_run() {
+__run() {
 	[[ ${PKGCORE_DEBUG} -ge 1 ]] && echo $1 >&2
 	local ret stdout stderr
 	source <({ stderr=( "$({ mapfile -t stdout< <(eval $1; ret=$?; declare -p ret >&3); } 3>&2 2>&1; declare -p stdout >&2)" ); declare -p stderr; } 2>&1)
@@ -334,7 +334,7 @@ __debug_and_run() {
 # Echo a given command to stderr and then run it.
 __echo_and_run() {
 	[[ ! ${PKGCORE_DEBUG} -ge 1 ]] && local -x PKGCORE_DEBUG=1
-	__debug_and_run "$1"
+	__run "$1"
 }
 
 __qa_invoke() {

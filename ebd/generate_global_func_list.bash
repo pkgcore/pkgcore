@@ -68,9 +68,6 @@ popd >/dev/null
 unset -f __source_was_seen
 unset -f source
 
-# Sorting order; put PMS functionality first, then our internals.
-result=$(compgen -A function | sort)
-result=$(echo "${result}" | grep -v "^__"; echo "${result}" | grep "^__")
-
 ${DEBUG} && echo >&2
-echo "${result}"
+# Sorting order; put PMS functionality first, then our internals.
+printf '%s\n' $(compgen -X '__*' -A function) $(compgen -A function __)

@@ -473,7 +473,7 @@ class ArgumentParser(arghparse.ArgumentParser):
                     metavar=('SECTION', 'KEY', 'VALUE'),
                     help='add a new configuration section')
                 self.add_argument(
-                    '--empty-config', action='store_true', default=False,
+                    '--empty-config', action='store_true',
                     help='do not load user/system configuration')
                 self.add_argument(
                     '--config', metavar='PATH', dest='override_config',

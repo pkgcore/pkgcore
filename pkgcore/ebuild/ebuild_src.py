@@ -211,10 +211,10 @@ class base(metadata.package):
         s.data.pop("RESTRICT", ''), str, operators={},
         element_func=rewrite_restrict)
     _get_attr["eapi"] = get_parsed_eapi
-    _get_attr["iuse"] = lambda s: tuple(
+    _get_attr["iuse"] = lambda s: frozenset(
         imap(intern, s.data.pop("IUSE", "").split()))
     _get_attr["user_patches"] = lambda s: ()
-    _get_attr["iuse_effective"] = lambda s: frozenset(s.iuse_stripped)
+    _get_attr["iuse_effective"] = lambda s: s.iuse_stripped
     _get_attr["properties"] = lambda s: frozenset(
         imap(intern, s.data.pop("PROPERTIES", "").split()))
     _get_attr["defined_phases"] = lambda s: s.eapi.interpret_cache_defined_phases(
@@ -238,8 +238,8 @@ class base(metadata.package):
     @property
     def iuse_stripped(self):
         if self.eapi.options.iuse_defaults:
-            return tuple(x.lstrip('-+') for x in self.iuse)
-        return tuple(self.iuse)
+            return frozenset(x.lstrip('-+') for x in self.iuse)
+        return self.iuse
 
     @property
     def mandatory_phases(self):

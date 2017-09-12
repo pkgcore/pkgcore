@@ -88,9 +88,7 @@ For bugs and feature requests please create an issue on Github_.
 .. _snakeoil: https://github.com/pkgcore/snakeoil
 .. _Github: https://github.com/pkgcore/pkgcore/issues
 .. _#pkgcore: https://webchat.freenode.net?channels=%23pkgcore&uio=d4
-.. _introduction docs: http://pkgcore.readthedocs.org/en/latest/getting-started.html
-.. _development docs: http://pkgcore.readthedocs.org/en/latest/dev-notes/developing.html
-.. _readthedocs: http://pkgcore.readthedocs.org/
+.. _readthedocs: https://pkgcore.readthedocs.io/
 .. _download: https://readthedocs.org/projects/pkgcore/downloads/
 .. _mock: https://pypi.python.org/pypi/mock
 
@@ -101,5 +99,5 @@ For bugs and feature requests please create an issue on Github_.
 .. |coverage| image:: https://codecov.io/gh/pkgcore/pkgcore/branch/master/graph/badge.svg
     :target: https://codecov.io/gh/pkgcore/pkgcore
 .. |docs| image:: https://readthedocs.org/projects/pkgcore/badge/?version=latest
-    :target: http://pkgcore.readthedocs.org/
+    :target: https://pkgcore.readthedocs.io/
     :alt: Documentation Status

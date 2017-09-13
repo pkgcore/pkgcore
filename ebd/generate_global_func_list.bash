@@ -29,24 +29,17 @@ while getopts ":d" opt; do
 	esac
 done
 
-# force some ordering
-__source_was_seen() {
-	local x
-	for x in "${seen[@]}"; do
-		[[ ${x} == $1 ]] && return 0
-	done
-	return 1
-}
-declare -a seen
+# use seen array to only source files once
+declare -A seen
 source() {
 	local fp=$(readlink -f "$1")
-	__source_was_seen "${fp}" && return 0
+	[[ -n ${seen[${fp}]} ]] && return 0
 	# die relies on these vars; we reuse them.
 	local CATEGORY=${PKGCORE_EBD_PATH}
 	local PF=$1
 	${DEBUG} && echo "sourcing ${x}" >&2
 	. "$@" || { echo "!!! failed sourcing ${x}; exit $?" >&2; exit 3; }
-	seen[${#seen[@]}]=${fp}
+	seen[${fp}]=true
 	return 0
 }
 
@@ -77,7 +70,6 @@ for x in "${forced_order_source[@]}" "${PKGCORE_EBD_PATH}"/*.lib; do
 done
 
 # wipe our custom funcs
-unset -f __source_was_seen
 unset -f source
 
 ${DEBUG} && echo >&2

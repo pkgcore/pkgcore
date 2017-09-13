@@ -8,6 +8,7 @@
 
 export PKGCORE_EBD_PATH=${BASH_SOURCE[0]%/*}
 
+# re-exec ourselves inside an empty environment
 if [[ -z ${PKGCORE_CLEAN_ENV} ]]; then
 	exec env -i \
 		PKGCORE_PYTHON_BINARY="${PKGCORE_PYTHON_BINARY}" \
@@ -17,9 +18,8 @@ if [[ -z ${PKGCORE_CLEAN_ENV} ]]; then
 		"$0" "$@"
 fi
 
-export LC_ALL=C # avoid any potential issues of unicode sorting for whacked func names
-# export this so that scripts will behave as libs
-export PKGCORE_SOURCING_FOR_REGEN_FUNCS_LIST=1
+# avoid any potential issues of unicode sorting for whacked func names
+export LC_ALL=C
 DEBUG=false
 
 while getopts ":d" opt; do

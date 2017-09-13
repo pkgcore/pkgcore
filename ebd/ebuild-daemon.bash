@@ -470,6 +470,7 @@ __ebd_main_loop() {
 	done
 }
 
-[[ -z ${PKGCORE_SOURCING_FOR_REGEN_FUNCS_LIST} ]] && __ebd_exec_main
+# start the daemon if requested
+[[ $1 == "daemonize" ]] && __ebd_exec_main
 
 :

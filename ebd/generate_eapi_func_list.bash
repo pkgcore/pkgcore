@@ -8,7 +8,7 @@
 # function lists are generated at install time and used instead.
 
 EAPI=${1:-0}
-export PKGCORE_EBD_PATH=$(dirname "$0")
+export PKGCORE_EBD_PATH=${BASH_SOURCE[0]%/*}
 
 # without this var, parsing certain things can fail; force to true if unset or
 # null so any code that tried accessing it thinks it succeeded

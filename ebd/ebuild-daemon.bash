@@ -1,4 +1,3 @@
-#!/usr/bin/env bash
 # ebuild-daemon.bash; core ebuild processor handling code
 # Copyright 2004-2012 Brian Harring <ferringb@gmail.com>
 # License: BSD/GPL2

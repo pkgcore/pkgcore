@@ -54,15 +54,27 @@ source() {
 # null so any code that tried accessing it thinks it succeeded.
 export PKGCORE_PYTHON_BINARY=${PKGCORE_PYTHON_BINARY:-/bin/true}
 
-forced_order_source="isolated-functions.lib exit-handling.lib eapi/depend.lib eapi/common.lib ebuild-daemon.lib ebuild-daemon.bash"
+# proper sourcing order to satisfy dependencies
+forced_order_source=(
+	isolated-functions.lib
+	exit-handling.lib
+	eapi/depend.lib
+	eapi/common.lib
+	ebuild-daemon.lib
+	ebuild-daemon.bash
+)
 
+# prefix all paths with ebd directory
+forced_order_source=( "${forced_order_source[@]/#/${PKGCORE_EBD_PATH}\/}" )
+
+# Source everything that requires a certain order first, then reload all libs
+# including any ones that were skipped the first time.
+#
 # EAPI specific libs are skipped since those need be sourced on demand
 # depending on an ebuild's EAPI.
-pushd "${PKGCORE_EBD_PATH}" >/dev/null
-for x in ${forced_order_source} *.lib; do
-	source "${PKGCORE_EBD_PATH}/${x}"
+for x in "${forced_order_source[@]}" "${PKGCORE_EBD_PATH}"/*.lib; do
+	source "${x}"
 done
-popd >/dev/null
 
 # wipe our custom funcs
 unset -f __source_was_seen

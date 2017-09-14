@@ -33,7 +33,7 @@ done
 declare -A seen
 source() {
 	local fp=$(readlink -f "$1")
-	[[ -n ${seen[${fp}]} ]] && return 0
+	${seen[${fp}]:-false} && return 0
 	# die relies on these vars; we reuse them.
 	local CATEGORY=${PKGCORE_EBD_PATH}
 	local PF=$1

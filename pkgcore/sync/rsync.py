@@ -203,8 +203,7 @@ class rsync_timestamp_syncer(rsync_syncer):
                     if not ret:
                         doit = True
                     else:
-                        delta = self.current_timestamp(timestamp_path) - \
-                            self.last_timestamp
+                        delta = self.current_timestamp(timestamp_path) - self.last_timestamp
                         if delta >= 0:
                             doit = delta > self.forward_sync_delay
                         else:
@@ -219,11 +218,11 @@ class rsync_timestamp_syncer(rsync_syncer):
                 return ret
             # ensure the timestamp is back to the old
             try:
-                path = pjoin(self.basedir, "metadata", "timestamp.chk")
+                timestamp_path = pjoin(self.basedir, "metadata", "timestamp.chk")
                 if self.last_timestamp is None:
-                    os.remove(path)
+                    os.remove(timestamp_path)
                 else:
-                    with open(pjoin(self.basedir, "metadata", "timestamp.chk"), "w") as f:
+                    with open(timestamp_path, "w") as f:
                         f.write(time.strftime("%a, %d %b %Y %H:%M:%S +0000",
                                 time.gmtime(self.last_timestamp)))
             except EnvironmentError:

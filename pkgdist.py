@@ -50,6 +50,7 @@ def find_project(topdir=TOPDIR):
     """
     topdir_depth = len(topdir.split('/'))
     modules = []
+    project = None
 
     # look for a top-level module
     for root, dirs, files in os.walk(topdir):
@@ -59,12 +60,30 @@ def find_project(topdir=TOPDIR):
         if '__init__.py' in files:
             modules.append(os.path.basename(root))
 
-    if not modules:
-        raise ValueError('No project module found')
+    if len(modules) == 1:
+        project = modules[0]
     elif len(modules) > 1:
-        raise ValueError('Multiple project modules found in %r: %s' % (topdir, ', '.join(modules)))
+        # Multiple modules found in the base directory, searching for one that
+        # defines __title__.
+        projects = []
+        for m in modules:
+            with io.open(os.path.join(topdir, m, '__init__.py'), encoding='utf-8') as f:
+                try:
+                    projects.append(re.search(
+                        r'^__title__\s*=\s*[\'"]([^\'"]*)[\'"]',
+                        f.read(), re.MULTILINE).group(1))
+                except AttributeError:
+                    continue
 
-    return modules[0]
+        if not projects or len(projects) > 1:
+            raise ValueError(
+                'Multiple project modules found in %r: %s' % (topdir, ', '.join(modules)))
+        else:
+            project = projects[0]
+
+    if project is None:
+        raise ValueError('No project module found')
+    return project
 
 
 # determine the project we're being imported into
@@ -900,12 +919,16 @@ class pytest(Command):
         if self.match is not None:
             self.test_args.extend(['-k', self.match])
 
-        if self.coverage:
+        if self.coverage or self.report:
             try:
                 import pytest_cov
                 self.test_args.extend(['--cov', PROJECT])
             except ImportError:
                 raise DistutilsExecError('install pytest-cov for coverage support')
+
+            coveragerc = os.path.join(TOPDIR, '.coveragerc')
+            if os.path.exists(coveragerc):
+                self.test_args.extend(['--cov-config', coveragerc])
 
             if self.report is None:
                 # disable coverage report output
@@ -930,8 +953,7 @@ class pytest(Command):
             raise DistutilsExecError('pytest is not installed')
 
         if self.skip_build:
-            # run tests from the parent directory to the local dir isn't used for module imports
-            builddir = os.path.abspath('..')
+            builddir = TOPDIR
         else:
             # build extensions and byte-compile python
             build_ext = self.reinitialize_command('build_ext')
@@ -940,15 +962,14 @@ class pytest(Command):
             build_py.ensure_finalized()
             self.run_command('build_ext')
             self.run_command('build_py')
-
-            # Change the current working directory to the builddir during testing
-            # so coverage paths are correct.
             builddir = os.path.abspath(build_py.build_lib)
-            if self.coverage and os.path.exists(os.path.join(TOPDIR, '.coveragerc')):
-                shutil.copyfile(os.path.join(TOPDIR, '.coveragerc'),
-                                os.path.join(builddir, '.coveragerc'))
 
-        ret = subprocess.call([sys.executable, '-m', 'pytest'] + self.test_args, cwd=builddir)
+        sys.path.insert(0, builddir)
+        from snakeoil.contexts import chdir
+        # Change the current working directory to the builddir during testing
+        # so coverage paths are correct.
+        with chdir(builddir):
+            ret = pytest.main(self.test_args)
         sys.exit(ret)
 
 

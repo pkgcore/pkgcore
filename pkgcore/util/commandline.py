@@ -583,6 +583,6 @@ def main(parser, args=None, outfile=None, errfile=None):
     :type errfile: file-like object
     :param errfile: File to use for stderr, defaults to C{sys.stderr}.
     """
-    t = Tool(None, parser=parser, outfile=outfile, errfile=errfile)
+    t = Tool(parser=parser, outfile=outfile, errfile=errfile)
     ret = t(args=args)
     raise SystemExit(ret)

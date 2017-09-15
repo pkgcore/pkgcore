@@ -26,7 +26,7 @@ def run(script_name):
         sys.stderr.write('Add --debug to the commandline for a traceback.\n')
         sys.exit(1)
 
-    tool = Tool(script)
+    tool = Tool(script.argparser)
     ret = tool()
     raise SystemExit(ret)
 

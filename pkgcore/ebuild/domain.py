@@ -173,6 +173,7 @@ class domain(config_domain):
 
         self.ebuild_hook_dir = settings.pop("ebuild_hook_dir", None)
 
+        # TODO: split this out into properties similar to what's done for profiles
         for key, val, action in (
             ("package.mask", pkg_masks, parse_match),
             ("package.unmask", pkg_unmasks, parse_match),

@@ -222,11 +222,16 @@ class TestPmsProfileNode(profile_mixin, TestCase):
 
     def test_unmasks(self):
         path = pjoin(self.dir, self.profile)
-        self.assertEqual(self.klass(path).unmasks, ())
+        self.assertEqual(self.klass(path).unmasks, ((), ()))
         self.parsing_checks("package.unmask", "unmasks")
         self.write_file("package.unmask", "dev-util/diffball")
-        self.assertEqual(self.klass(path).unmasks,
-            (atom("dev-util/diffball"),))
+        self.assertEqual(
+            self.klass(path).unmasks,
+            ((), (atom("dev-util/diffball"),)))
+        self.write_file("package.unmask", "-dev-util/diffball")
+        self.assertEqual(
+            self.klass(path).unmasks,
+            ((atom("dev-util/diffball"),), ()))
         self.simple_eapi_awareness_check('package.unmask', 'unmasks')
 
     def _check_package_use_files(self, path, filename, attr):
@@ -790,12 +795,15 @@ class TestOnDiskProfile(profile_mixin, TestCase):
             {},
             {"package.unmask":"dev-util/confcache"}
         )
-        self.assertEqual(sorted(self.get_profile("0").unmasks),
-            sorted([atom("dev-util/foo")]))
-        self.assertEqual(sorted(self.get_profile("1").unmasks),
-            sorted([atom("dev-util/foo")]))
-        self.assertEqual(sorted(self.get_profile("2").unmasks),
-            sorted(atom("dev-util/" + x) for x in ["confcache", "foo"]))
+        self.assertEqual(
+            self.get_profile("0").unmasks,
+            frozenset([atom("dev-util/foo")]))
+        self.assertEqual(
+            self.get_profile("1").unmasks,
+            frozenset([atom("dev-util/foo")]))
+        self.assertEqual(
+            self.get_profile("2").unmasks,
+            frozenset([atom("dev-util/" + x) for x in ("confcache", "foo")]))
 
     def test_bashrc(self):
         self.mk_profiles(

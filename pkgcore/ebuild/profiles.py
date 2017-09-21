@@ -24,7 +24,6 @@ from pkgcore.ebuild import const, ebuild_src
 from pkgcore.ebuild.misc import (
     _build_cp_atom_payload, chunked_data, ChunkedDataDict,
     IncrementalsDict, package_keywords_splitter, render_incrementals)
-from pkgcore.util.parserestrict import parse_match
 
 demandload(
     'collections:defaultdict',
@@ -211,7 +210,7 @@ class ProfileNode(object):
 
     @load_property("package.unmask", allow_recurse=True)
     def unmasks(self, data):
-        return tuple(parse_match(x) for x in data)
+        return split_negations(data, self.eapi_atom)
 
     @load_property("package.keywords", allow_recurse=True)
     def keywords(self, data):
@@ -618,7 +617,7 @@ class ProfileStack(object):
 
     @klass.jit_attr
     def unmasks(self):
-        return frozenset(chain.from_iterable(x.unmasks for x in self.stack))
+        return frozenset(self._collapse_generic('unmasks'))
 
     @klass.jit_attr
     def keywords(self):

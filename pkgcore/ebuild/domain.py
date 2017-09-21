@@ -361,7 +361,11 @@ class domain(config_domain):
                         masks.difference_update(neg)
                         masks.update(pos)
                     masks.update(pkg_masks)
-                    unmasks = set(chain(pkg_unmasks, *profile_unmasks))
+                    unmasks = set()
+                    for neg, pos in profile_unmasks:
+                        unmasks.difference_update(neg)
+                        unmasks.update(pos)
+                    unmasks.update(pkg_unmasks)
                     filtered = generate_filter(masks, unmasks, *vfilters)
                 if filtered:
                     wrapped_repo = visibility.filterTree(wrapped_repo, filtered, True)

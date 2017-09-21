@@ -492,11 +492,11 @@ class ProfileStack(object):
     def pkg_use(self):
         return self._collapse_use_dict("pkg_use")
 
-    def _collapse_generic(self, attr):
+    def _collapse_generic(self, attr, clear=False):
         s = set()
         for node in self.stack:
             val = getattr(node, attr)
-            if len(val) > 2 and val[2]:
+            if clear and len(val) > 2 and val[2]:
                 s.clear()
             s.difference_update(val[0])
             s.update(val[1])
@@ -654,7 +654,7 @@ class ProfileStack(object):
 
     @klass.jit_attr
     def system(self):
-        return frozenset(self._collapse_generic('system'))
+        return frozenset(self._collapse_generic('system', clear=True))
 
 
 class OnDiskProfile(ProfileStack):

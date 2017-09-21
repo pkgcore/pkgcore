@@ -14,6 +14,7 @@ import copy
 import errno
 import io
 import math
+from multiprocessing import cpu_count
 import operator
 import os
 import re
@@ -187,14 +188,40 @@ def pkg_config(*packages, **kw):
     return kw
 
 
-def cython_exts(path=PROJECT):
+def cython_pyx(path=PROJECT):
     """Return all available cython extensions under a given path."""
-    cython_exts = []
     for root, _dirs, files in os.walk(path):
         for f in files:
             if f.endswith('.pyx'):
-                cython_exts.append(os.path.join(root, f))
-    return cython_exts
+                yield os.path.join(root, f)
+
+
+def cython_exts(build_deps=None, build_exts=None, build_opts=None, path=PROJECT):
+    """Prepare all cython extensions under a given path to be built."""
+    build_deps = build_deps if build_deps is not None else []
+    build_exts = build_exts if build_exts is not None else []
+    build_opts = build_opts if build_opts is not None else {}
+
+    exts = []
+    cython_exts = []
+
+    for ext in cython_pyx(path):
+        cythonized = os.path.splitext(ext)[0] + '.c'
+        if os.path.exists(cythonized):
+            exts.append(cythonized)
+        else:
+            cython_exts.append(ext)
+
+    # require cython to build exts as necessary
+    if cython_exts:
+        build_deps.append('cython')
+        exts.extend(cython_exts)
+
+    build_exts.extend(
+        Extension(os.path.splitext(ext)[0].replace(os.path.sep, '.'), [ext], **build_opts)
+        for ext in exts)
+
+    return build_deps, build_exts
 
 
 class OptionalExtension(Extension):
@@ -254,10 +281,10 @@ class sdist(dst_sdist.sdist):
         build_ext.ensure_finalized()
 
         # generate cython extensions if any exist
-        extensions = cython_exts()
+        extensions = list(cython_pyx())
         if extensions:
             from Cython.Build import cythonize
-            cythonize(extensions)
+            cythonize(extensions, nthreads=cpu_count())
 
         dst_sdist.sdist.run(self)
 
@@ -331,8 +358,7 @@ class build_py2to3(build_py):
         from snakeoil.dist import caching_2to3
 
         if proc_count == 0:
-            import multiprocessing
-            proc_count = multiprocessing.cpu_count()
+            proc_count = cpu_count()
 
         assert proc_count >= 1
 
@@ -573,7 +599,7 @@ class build_ext(dst_build_ext.build_ext):
             any(not os.path.exists(x) for ext in self.no_cythonize() for x in ext.sources))
         if use_cython:
             from Cython.Build import cythonize
-            cythonize(self.extensions)
+            cythonize(self.extensions, nthreads=cpu_count())
 
         self.extensions = self.no_cythonize()
         return dst_build_ext.build_ext.run(self)

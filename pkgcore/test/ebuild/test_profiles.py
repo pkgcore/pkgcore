@@ -765,24 +765,35 @@ class TestOnDiskProfile(profile_mixin, TestCase):
             {"packages":"*dev-util/diffball\ndev-util/foo\ndev-util/foo2\n"},
             {"packages":"*dev-util/foo\n-*dev-util/diffball\n-dev-util/foo2\n"},
             {"packages":"*dev-util/foo\n", "parent":"0"},
-            {"packages":"-*\n*dev-util/foo\n", "parent":"0"}
+            {"packages":"-*\n*dev-util/foo\n", "parent":"0"},
+            {"packages":"*dev-util/foo\n-*\n", "parent":"0"},
+            {"packages":"-*\n", "parent":"0"},
         )
         p = self.get_profile("0")
         self.assertEqual(sorted(p.system), sorted([atom("dev-util/diffball")]))
-        self.assertEqual(sorted(p.masks),
+        self.assertEqual(
+            sorted(p.masks),
             sorted(atom("dev-util/foo%s" % x, negate_vers=True) for x in ['', '2']))
 
         p = self.get_profile("1")
         self.assertEqual(sorted(p.system), sorted([atom("dev-util/foo")]))
-        self.assertEqual(sorted(p.masks),
+        self.assertEqual(
+            sorted(p.masks),
             [atom("dev-util/foo", negate_vers=True)])
 
         p = self.get_profile("2")
-        self.assertEqual(sorted(p.system),
+        self.assertEqual(
+            sorted(p.system),
             sorted([atom("dev-util/diffball"), atom("dev-util/foo")]))
 
         p = self.get_profile("3")
         self.assertEqual(sorted(p.system), sorted([atom("dev-util/foo")]))
+
+        p = self.get_profile("4")
+        self.assertEqual(sorted(p.system), sorted([atom("dev-util/foo")]))
+
+        p = self.get_profile("5")
+        self.assertEqual(p.system, frozenset())
 
     def test_masks(self):
         self.mk_profiles(
@@ -791,11 +802,14 @@ class TestOnDiskProfile(profile_mixin, TestCase):
             {"package.mask":"-dev-util/confcache\ndev-util/foo"},
             **{"package.mask":"dev-util/confcache"}
         )
-        self.assertEqual(sorted(self.get_profile("0").masks),
+        self.assertEqual(
+            sorted(self.get_profile("0").masks),
             sorted(atom("dev-util/" + x) for x in ["confcache", "foo"]))
-        self.assertEqual(sorted(self.get_profile("1").masks),
+        self.assertEqual(
+            sorted(self.get_profile("1").masks),
             sorted(atom("dev-util/" + x) for x in ["confcache", "foo"]))
-        self.assertEqual(sorted(self.get_profile("2").masks),
+        self.assertEqual(
+            sorted(self.get_profile("2").masks),
             [atom("dev-util/foo")])
 
     def test_unmasks(self):
@@ -1230,7 +1244,7 @@ class TestOnDiskProfile(profile_mixin, TestCase):
         # value will be cached
         with mock.patch('pkgcore.ebuild.repo_objs.RepoConfig', RepoConfig):
             self.assertEqual(
-                self.get_profile('0', basepath).iuse_effective, frozenset([]))
+                self.get_profile('0', basepath).iuse_effective, frozenset())
             with open(pjoin(basepath, 'arch.list'), 'w') as f:
                 f.write('amd64\narm\n')
             self.assertEqual(

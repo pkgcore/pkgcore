@@ -630,12 +630,12 @@ class ProfileStack(object):
     def _incremental_masks(self, stack_override=None):
         if stack_override is None:
             stack_override = self.stack
-        return [node.masks for node in stack_override if any(node.masks)]
+        return tuple(node.masks for node in stack_override if any(node.masks))
 
     def _incremental_unmasks(self, stack_override=None):
         if stack_override is None:
             stack_override = self.stack
-        return [node.unmasks for node in stack_override if any(node.unmasks)]
+        return tuple(node.unmasks for node in stack_override if any(node.unmasks))
 
     @klass.jit_attr
     def bashrcs(self):

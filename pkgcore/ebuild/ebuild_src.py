@@ -48,7 +48,7 @@ def generate_depset(kls, key, non_package_type, self, **kwds):
             **kwds)
     eapi = self.eapi
     if not eapi.is_supported:
-        raise metadata_errors.MetadataException(s, "eapi", "unsupported EAPI: %s" % (eapi,))
+        raise metadata_errors.MetadataException(self, "eapi", "unsupported EAPI: %s" % (eapi,))
     kwds['element_func'] = eapi.atom_kls
     kwds['transitive_use_atoms'] = eapi.options.transitive_use_atoms
     return conditionals.DepSet.parse(self.data.pop(key, ""), kls, **kwds)

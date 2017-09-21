@@ -646,7 +646,7 @@ class ProfileStack(object):
 
     @klass.jit_attr
     def system(self):
-        return self._collapse_generic('system')
+        return frozenset(self._collapse_generic('system'))
 
 
 class OnDiskProfile(ProfileStack):

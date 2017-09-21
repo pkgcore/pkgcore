@@ -81,7 +81,7 @@ def parse_time(s):
         unit = date.group(2)
     else:
         raise argparse.ArgumentTypeError(
-            "invalid date: '%s' (valid units: %s)" % (s, ', '.join(units.keys())))
+            "invalid date: %r (valid units: %s)" % (s, ', '.join(units.keys())))
     return time.time() - (value * units[unit])
 
 
@@ -99,7 +99,7 @@ def parse_size(s):
         unit = size.group(2)
     else:
         raise argparse.ArgumentTypeError(
-            "invalid size: '%s' (valid units: %s)" % (s, ', '.join(units.keys())))
+            "invalid size: %r (valid units: %s)" % (s, ', '.join(units.keys())))
     return value * units[unit]
 
 
@@ -330,7 +330,7 @@ def _remove(options, out, err):
                 func(target)
         except OSError as e:
             if options.verbose or not options.quiet:
-                err.write("%s: failed to remove '%s': %s" % (options.prog, target, e.strerror))
+                err.write("%s: failed to remove %r: %s" % (options.prog, target, e.strerror))
             ret = 1
             continue
     return ret

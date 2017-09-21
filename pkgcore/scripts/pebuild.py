@@ -12,6 +12,8 @@ from pkgcore.ebuild.errors import MalformedAtom
 from pkgcore.operations import observer, format
 from pkgcore.util import commandline
 
+from snakeoil.strings import pluralism
+
 
 argparser = commandline.ArgumentParser(
     description=__doc__, script=(__file__, __name__))
@@ -33,9 +35,9 @@ def _validate_args(parser, namespace):
 
     if target.endswith('.ebuild'):
         if not os.path.exists(target):
-            parser.error("nonexistent ebuild: '%s'" % target)
+            parser.error("nonexistent ebuild: %r" % target)
         elif not os.path.isfile(target):
-            parser.error("invalid ebuild: '%s'" % target)
+            parser.error("invalid ebuild: %r" % target)
         try:
             restriction = repo.path_restrict(target)
         except ValueError as e:
@@ -45,17 +47,17 @@ def _validate_args(parser, namespace):
             restriction = atom.atom(target)
         except MalformedAtom:
             if os.path.isfile(target):
-                parser.error("file not an ebuild: '%s'" % target)
+                parser.error("file not an ebuild: %r" % target)
             else:
-                parser.error("invalid package atom: '%s'" % target)
+                parser.error("invalid package atom: %r" % target)
 
     pkgs = repo.match(restriction)
     if not pkgs:
-        parser.error("no matches: '%s'" % (target,))
+        parser.error("no matches: %r" % (target,))
 
     pkg = max(pkgs)
     if len(pkgs) > 1:
-        parser.err.write("got multiple matches for '%s':" % (target,))
+        parser.err.write("got multiple matches for %r:" % (target,))
         if len(set((p.slot, p.repo) for p in pkgs)) != 1:
             for p in pkgs:
                 parser.err.write(
@@ -92,17 +94,16 @@ def main(options, out, err):
         build.cleanup(force=True)
     build._reload_state()
 
-    phase_funcs = []
-    for phase in phases:
-        p = getattr(build, phase, None)
-        if p is None:
-            argparser.error("unknown phase: '%s'" % phase)
-        phase_funcs.append(p)
+    phase_funcs = [(p, getattr(build, p, None)) for p in phases]
+    unknown_phases = [p for p, func in phase_funcs if func is None]
+    if unknown_phases:
+        argparser.error("unknown phase%s: %s" % (
+            pluralism(unknown_phases), ', '.join(map(repr, unknown_phases))))
 
     try:
-        for phase, f in izip(phases, phase_funcs):
+        for phase, func in phase_funcs:
             out.write('executing phase %s' % (phase,))
-            f(**kwds)
+            func(**kwds)
     except format.errors as e:
         out.error("caught exception executing phase %s: %s" % (phase, e))
         return 1

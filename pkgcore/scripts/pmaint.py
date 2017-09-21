@@ -306,7 +306,7 @@ def regen_main(options, out, err):
                 with open(timestamp, "w") as f:
                     f.write(time.strftime("%a, %d %b %Y %H:%M:%S +0000", time.gmtime()))
             except IOError as e:
-                err.write("Unable to update timestamp file '%s': %s" % (timestamp, e.strerror))
+                err.write("Unable to update timestamp file %r: %s" % (timestamp, e.strerror))
                 ret.append(os.EX_IOERR)
 
         if options.use_local_desc:
@@ -489,11 +489,11 @@ def _digest_validate(parser, namespace):
             try:
                 restrictions.append(parse_match(target))
             except ValueError:
-                digest.error("invalid atom: '%s'" % (target,))
+                digest.error("invalid atom: %r" % (target,))
 
     restriction = packages.OrRestriction(*restrictions)
     if restriction not in repo:
-        digest.error("no matches for '%s'" % (' '.join(targets),))
+        digest.error("no matches for %s" % (', '.join(map(repr, targets)),))
     namespace.restriction = restriction
     namespace.repo = repo
 

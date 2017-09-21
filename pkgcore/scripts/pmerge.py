@@ -250,7 +250,7 @@ class AmbiguousQuery(parserestrict.ParseError):
         self.keys = keys
 
     def __str__(self):
-        return "multiple matches for '%s': %s" % (self.token, ', '.join(self.keys))
+        return "multiple matches for %r: %s" % (self.token, ', '.join(self.keys))
 
 
 class NoMatches(parserestrict.ParseError):
@@ -282,7 +282,7 @@ def unmerge(out, err, vdb, targets, options, formatter, world_set=None):
         categories = set(pkg.category for pkg in installed)
         if len(categories) > 1:
             raise parserestrict.ParseError(
-                "'%s' is in multiple categories (%s)" % (
+                "%r is in multiple categories (%s)" % (
                     token, ', '.join(sorted(set(pkg.key for pkg in installed)))))
         matches.update(installed)
 
@@ -440,9 +440,9 @@ def _validate(parser, namespace):
     if namespace.sets:
         unknown_sets = set(namespace.sets).difference(namespace.config.pkgset)
         if unknown_sets:
-            parser.error("unknown set%s '%s' (available sets: %s)" % (
+            parser.error("unknown set%s: %s (available sets: %s)" % (
                 pluralism(unknown_sets),
-                ', '.join(sorted(unknown_sets)),
+                ', '.join(sorted(map(repr, unknown_sets))),
                 ', '.join(sorted(namespace.config.pkgset))))
         namespace.sets = [(x, namespace.config.pkgset[x]) for x in namespace.sets]
     if namespace.upgrade:
@@ -592,7 +592,7 @@ def main(options, out, err):
             return 1
         l = list(pkgset)
         if not l:
-            out.write("skipping set '%s': set is empty, nothing to update" % setname)
+            out.write("skipping set %r: set is empty, nothing to update" % setname)
         else:
             atoms.extend(l)
 
@@ -604,9 +604,9 @@ def main(options, out, err):
             argparser.error(str(e))
         if matches is None:
             if not options.ignore_failures:
-                error_msg = ["no matching {}: '{}'".format(pkg_type, token)]
+                error_msg = ["no matching {}: {!r}".format(pkg_type, token)]
                 if token in config.pkgset:
-                    error_msg.append("use '@{0}' instead for the package set".format(token))
+                    error_msg.append("use '@{}' instead for the package set".format(token))
                 elif options.usepkgonly:
                     matches = parse_target(
                         restriction, domain.ebuild_repos.combined, livefs_repos, return_none=True)
@@ -617,7 +617,8 @@ def main(options, out, err):
             atoms.extend(matches)
 
     if not atoms and not options.newuse:
-        argparser.error('no targets specified; nothing to do')
+        err.write("%s: no targets specified; nothing to do" % (options.prog,))
+        return 1
 
     atoms = stable_unique(atoms)
 

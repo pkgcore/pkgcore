@@ -2,7 +2,64 @@
 Release Notes
 =============
 
-See ChangeLog for full commit logs; this is summarized/major changes.
+--------------------------
+pkgcore 0.9.5 (2017-09-22)
+--------------------------
+
+- Fix support for bash-4.4.
+
+- Support -* wildcard for the system packages set in profiles.
+
+- Don't allow external commands to be called during metadata regen.
+
+- pmerge: Don't sort packages in removal mode, just show and unmerge them in
+  the order specified.
+
+- Add a tracked attribute for the distfiles used by a package build. This
+  installs a file named DISTFILES to the vdb which contains all the distfile
+  file names that were needed for the installed package.
+
+- pclean dist: Default to all distfiles if no targets are specified and sort
+  output when in pretend mode.
+
+- pmerge: Add initial -o/--onlydeps support similar to portage.
+
+- pmaint digest: Various fixes and enhancements to better handle fetch
+  failures, globbed digesting, full repo digesting, and more.
+
+- Fix directory permission issues when using ccache.
+
+- pmerge now supports --list-sets to show the sets pkgcore supports.
+
+- pkgcore.spawn moved to snakeoil.process.spawn.
+
+- Add support for the 'profile-set' profile-formats option in
+  metadata/layout.conf.
+
+- Complain if profiles/repo_name is missing for a repository.
+
+- pinspect profile: Add support for specifying a repo with '-r repo' which then
+  allows for specifying relative profile paths without the repo prefix.
+
+- pinspect profile: Default to the configured system profile if none is
+  selected.
+
+- Fix handling ranges in GLSAs for the related security package set.
+
+- Support for python3.3 was dropped and support for python3.6 was added.
+
+- pmerge: Fix checking for installed packages when passed targets of the form
+  'pkg::repo'.
+
+- Support /etc/portage/package.env lines with multiple env file values.
+
+- Support multi-masters instead of singular parents for overlays. This also
+  includes merging licenses and categories from all masters for an overlay.
+
+- Drop fallback to default repo for implicit masters. If no masters are
+  specified for an overlay in metadata/layout.conf anymore it'll have issues
+  depending on packages found in the 'gentoo' repo or whatever master(s) it
+  relies on.
 
 --------------------------
 pkgcore 0.9.4 (2016-05-29)

@@ -1,0 +1,3 @@
+-r release.txt
+
+sphinx

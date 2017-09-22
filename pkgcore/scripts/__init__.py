@@ -34,5 +34,7 @@ def run(script_name):
 if __name__ == '__main__':
     # we're in a git repo or tarball so add the base dir to the system path
     repo_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    if not os.path.exists(os.path.join(repo_dir, 'setup.py')):
+        raise SystemExit('unknown repo hierarchy, %r should be repo root' % repo_dir)
     sys.path.insert(0, repo_dir)
     run(os.path.basename(__file__))

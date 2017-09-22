@@ -199,7 +199,7 @@ cmdclass = {
 command_options = {}
 
 setup(
-    name='pkgcore',
+    name=pkgdist.MODULE,
     version=pkgdist.version(),
     description='package managing framework',
     long_description=pkgdist.readme(),

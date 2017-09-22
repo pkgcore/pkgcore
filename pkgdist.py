@@ -43,63 +43,70 @@ READTHEDOCS = os.environ.get('READTHEDOCS', None) == 'True'
 TOPDIR = os.path.dirname(os.path.abspath(__file__))
 
 
-def find_project(topdir=TOPDIR):
-    """Determine a project's name.
+def find_moduledir(searchdir=TOPDIR):
+    """Determine a module's directory path.
 
     Based on the assumption that the project is only distributing one main
     module.
     """
-    topdir_depth = len(topdir.split('/'))
     modules = []
-    project = None
+    moduledir = None
+    searchdir_depth = len(searchdir.split('/'))
+
+    # allow modules to be found inside a top-level src dir
+    if os.path.exists(os.path.join(TOPDIR, 'src')):
+        searchdir_depth += 1
 
     # look for a top-level module
-    for root, dirs, files in os.walk(topdir):
-        # only descend at most one level
-        if len(root.split('/')) > topdir_depth + 1:
+    for root, dirs, files in os.walk(searchdir):
+        # only descend to a specified level
+        if len(root.split('/')) > searchdir_depth + 1:
             continue
         if '__init__.py' in files:
-            modules.append(os.path.basename(root))
+            modules.append(root)
 
     if len(modules) == 1:
-        project = modules[0]
+        moduledir = modules[0]
     elif len(modules) > 1:
         # Multiple modules found in the base directory, searching for one that
         # defines __title__.
-        projects = []
-        for m in modules:
-            with io.open(os.path.join(topdir, m, '__init__.py'), encoding='utf-8') as f:
+        main_modules = []
+        for path in modules:
+            with io.open(os.path.join(path, '__init__.py'), encoding='utf-8') as f:
                 try:
-                    projects.append(re.search(
+                    main_modules.append(re.search(
                         r'^__title__\s*=\s*[\'"]([^\'"]*)[\'"]',
                         f.read(), re.MULTILINE).group(1))
                 except AttributeError:
                     continue
 
-        if not projects or len(projects) > 1:
+        if not main_modules or len(main_modules) > 1:
             raise ValueError(
-                'Multiple project modules found in %r: %s' % (topdir, ', '.join(modules)))
+                'Multiple main modules found in %r: %s' % (
+                    searchdir, ', '.join(os.path.basename(x) for x in modules)))
         else:
-            project = projects[0]
+            moduledir = modules[0]
 
-    if project is None:
-        raise ValueError('No project module found')
-    return project
+    if moduledir is None:
+        raise ValueError('No main module found')
 
-
-# determine the project we're being imported into
-PROJECT = find_project()
+    return moduledir
 
 
-def version(project=PROJECT):
-    """Determine a project's version.
+# determine the main module we're being used to package
+MODULEDIR = find_moduledir() 
+MODULEDIRNAME = os.path.dirname(MODULEDIR)
+MODULE = os.path.basename(MODULEDIR)
 
-    Based on the assumption that a project defines __version__ in its main
-    module.
+
+def version(moduledir=MODULEDIR):
+    """Determine a module's version.
+
+    Based on the assumption that a module defines __version__.
     """
     version = None
     try:
-        with io.open(os.path.join(TOPDIR, project, '__init__.py'), encoding='utf-8') as f:
+        with io.open(os.path.join(moduledir, '__init__.py'), encoding='utf-8') as f:
             version = re.search(
                 r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]',
                 f.read(), re.MULTILINE).group(1)
@@ -110,22 +117,36 @@ def version(project=PROJECT):
             raise
 
     if version is None:
-        raise RuntimeError('Cannot find version for project: %s' % (project,))
+        raise RuntimeError('Cannot find version for module: %s' % (MODULE,))
 
     return version
 
 
-def readme(project=PROJECT):
+def readme(topdir=TOPDIR):
     """Determine a project's long description."""
     for doc in ('README.rst', 'README'):
         try:
-            with io.open(os.path.join(TOPDIR, doc), encoding='utf-8') as f:
+            with io.open(os.path.join(topdir, doc), encoding='utf-8') as f:
                 return f.read()
         except IOError as e:
             if e.errno == errno.ENOENT:
                 pass
             else:
                 raise
+
+    return None
+
+
+def install_requires(topdir=TOPDIR):
+    """Determine a project's runtime dependencies."""
+    try:
+        with io.open(os.path.join(topdir, 'requirements', 'release.txt')) as f:
+            return f.read().splitlines()
+    except IOError as e:
+        if e.errno == errno.ENOENT:
+            pass
+        else:
+            raise
 
     return None
 
@@ -188,15 +209,15 @@ def pkg_config(*packages, **kw):
     return kw
 
 
-def cython_pyx(path=PROJECT):
+def cython_pyx(path=MODULEDIR):
     """Return all available cython extensions under a given path."""
     for root, _dirs, files in os.walk(path):
         for f in files:
             if f.endswith('.pyx'):
-                yield os.path.join(root, f)
+                yield str(os.path.join(root, f))
 
 
-def cython_exts(build_deps=None, build_exts=None, build_opts=None, path=PROJECT):
+def cython_exts(build_deps=None, build_exts=None, build_opts=None, path=MODULEDIR):
     """Prepare all cython extensions under a given path to be built."""
     build_deps = build_deps if build_deps is not None else []
     build_exts = build_exts if build_exts is not None else []
@@ -238,8 +259,6 @@ class OptionalExtension(Extension):
 class sdist(dst_sdist.sdist):
     """sdist command wrapper to bundle generated files for release."""
 
-    package_namespace = PROJECT
-
     def initialize_options(self):
         dst_sdist.sdist.initialize_options(self)
 
@@ -254,7 +273,7 @@ class sdist(dst_sdist.sdist):
         data = get_git_version(base_dir)
         if not data:
             return
-        path = os.path.join(base_dir, self.package_namespace, '_verinfo.py')
+        path = os.path.join(base_dir, '_verinfo.py')
         with open(path, 'w') as f:
             f.write('version_info=%r' % (data,))
 
@@ -274,7 +293,10 @@ class sdist(dst_sdist.sdist):
                             os.path.join(base_dir, build_man.content_search_path[1]))
 
         dst_sdist.sdist.make_release_tree(self, base_dir, files)
-        self.generate_verinfo(base_dir)
+        build_py = self.reinitialize_command('build_py')
+        build_py.ensure_finalized()
+        self.generate_verinfo(os.path.join(
+            base_dir, build_py.package_dir.get('', ''), MODULE))
 
     def run(self):
         build_ext = self.reinitialize_command('build_ext')
@@ -295,7 +317,6 @@ class build_py(dst_build_py.build_py):
     user_options = dst_build_py.build_py.user_options + \
         [("inplace", "i", "do any source conversions in place")]
 
-    package_namespace = PROJECT
     generate_verinfo = True
 
     def initialize_options(self):
@@ -310,7 +331,7 @@ class build_py(dst_build_py.build_py):
 
     def _run_generate_verinfo(self, rebuilds=None):
         ver_path = self.get_module_outfile(
-            self.build_lib, (self.package_namespace,), '_verinfo')
+            self.build_lib, (MODULE,), '_verinfo')
         # this should check mtime...
         if not os.path.exists(ver_path):
             from snakeoil.version import get_git_version
@@ -338,7 +359,9 @@ class build_py2to3(build_py):
             except EnvironmentError:
                 # ok... wtf distutils?
                 continue
-            trg_path = os.path.join(self.build_lib, path)
+            trg_path = os.path.join(
+                self.build_lib,
+                path.lstrip(self.package_dir.get('', '')).lstrip(os.path.sep))
             if force:
                 yield trg_path, new_mtime
                 continue
@@ -477,7 +500,7 @@ class build_man(Command):
             # generate man page content for scripts we create
             if 'build_scripts' in self.distribution.cmdclass:
                 from snakeoil.dist.generate_docs import generate_man
-                generate_man(PROJECT, TOPDIR)
+                generate_man(MODULE, TOPDIR)
 
             # generate man pages
             build_sphinx = self.reinitialize_command('build_sphinx')
@@ -508,7 +531,7 @@ class build_docs(build_man):
 
             # generate API docs
             from snakeoil.dist.generate_docs import generate_html
-            generate_html(PROJECT, TOPDIR)
+            generate_html(MODULE, TOPDIR)
 
             # generate html docs -- allow build_sphinx cmd to run again
             build_sphinx = self.reinitialize_command('build_sphinx')
@@ -643,7 +666,7 @@ class build_scripts(dst_build_scripts.build_scripts):
                     from os.path import basename
                     from %s import scripts
                     scripts.run(basename(__file__))
-                """ % (sys.executable, PROJECT)))
+                """ % (sys.executable, MODULE)))
         self.copy_scripts()
 
 
@@ -711,7 +734,7 @@ class install_docs(Command):
 
     def calculate_install_path(self):
         return os.path.join(
-            os.path.abspath(self.prefix), 'share', 'doc', PROJECT + '-%s' % version(), 'html')
+            os.path.abspath(self.prefix), 'share', 'doc', MODULE + '-%s' % version(), 'html')
 
     def find_content(self):
         for possible_path in self.content_search_path:
@@ -831,7 +854,7 @@ class test(Command):
         ("include-dirs=", "I", "include dirs for build_ext if needed"),
     ]
 
-    default_test_namespace = '%s.test' % PROJECT
+    default_test_namespace = '%s.test' % MODULE
 
     def initialize_options(self):
         self.inplace = False
@@ -893,7 +916,7 @@ class test(Command):
 
         # remove temporary plugincache so it isn't installed
         plugincache = os.path.join(
-            os.path.abspath(build_py.build_lib), build_py.package_namespace,
+            os.path.abspath(build_py.build_lib), MODULE,
             'plugins/plugincache')
         if os.path.exists(plugincache):
             os.remove(plugincache)
@@ -929,8 +952,8 @@ class pytest(Command):
         if self.test_dir is None:
             for path in (os.path.join(TOPDIR, 'test'),
                          os.path.join(TOPDIR, 'tests'),
-                         os.path.join(TOPDIR, PROJECT, 'test'),
-                         os.path.join(TOPDIR, PROJECT, 'tests')):
+                         os.path.join(MODULEDIR, 'test'),
+                         os.path.join(MODULEDIR, 'tests')):
                 if os.path.exists(path):
                     self.test_dir = path
                     break
@@ -948,7 +971,7 @@ class pytest(Command):
         if self.coverage or self.report:
             try:
                 import pytest_cov
-                self.test_args.extend(['--cov', PROJECT])
+                self.test_args.extend(['--cov', MODULE])
             except ImportError:
                 raise DistutilsExecError('install pytest-cov for coverage support')
 
@@ -979,7 +1002,7 @@ class pytest(Command):
             raise DistutilsExecError('pytest is not installed')
 
         if self.skip_build:
-            builddir = TOPDIR
+            builddir = MODULEDIR
         else:
             # build extensions and byte-compile python
             build_ext = self.reinitialize_command('build_ext')
@@ -1000,7 +1023,7 @@ class pytest(Command):
 
 
 class pylint(Command):
-    """Run pylint on a project."""
+    """Run pylint on a module."""
 
     user_options = [
         ('errors-only', 'E', 'Check only errors with pylint'),
@@ -1015,13 +1038,12 @@ class pylint(Command):
         self.errors_only = bool(self.errors_only)
 
     def run(self):
-        print(self.output_format)
         try:
             from pylint import lint
         except ImportError:
             raise DistutilsExecError('pylint is not installed')
 
-        lint_args = [PROJECT]
+        lint_args = [MODULEDIR]
         rcfile = os.path.join(TOPDIR, '.pylintrc')
         if os.path.exists(rcfile):
             lint_args.extend(['--rcfile', rcfile])

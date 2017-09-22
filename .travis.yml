@@ -10,7 +10,7 @@ env:
     - secure: "j/lUk3RkNuas+wiMdoWsC2j7emirtMRz6G/4OVUf1+X9aFLSLo5jpY8C4yZJPb0FuCdYEjfKsq6aMOADwwMg6aXbXj+u5frqhUYAqBELR85G7gRBoLzcqj9YaRVsiIf9rF14xlueCM2cK08rDlkJwHr4fQZkNBZnbZ5+8MvwsO0="
     - CIBW_PLATFORM=linux
     - CIBW_SKIP="cp26-* cp33-*"
-    - CIBW_BEFORE_BUILD="{pip} install -r requirements.txt"
+    - CIBW_BEFORE_BUILD="{pip} install -r requirements/release.txt"
 sudo: required
 services:
   - docker

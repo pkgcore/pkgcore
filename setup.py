@@ -106,6 +106,11 @@ def write_pkgcore_ebd_funclists(root, target, scripts_dir, python_base='.'):
 def write_pkgcore_lookup_configs(python_base, install_prefix, injected_bin_path=()):
     """Generate file of install path constants."""
     path = os.path.join(python_base, "pkgcore", "_const.py")
+    try:
+        os.makedirs(os.path.dirname(path))
+    except OSError as e:
+        if e.errno != errno.EEXIST:
+            raise
     log.info("writing lookup config to %r" % path)
     with open(path, "w") as f:
         os.chmod(path, 0o644)

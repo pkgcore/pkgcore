@@ -116,7 +116,7 @@ def write_pkgcore_lookup_configs(python_base, install_prefix, injected_bin_path=
 
     with open(path, "w") as f:
         # write more dynamic _const file for wheel installs
-        if install_prefix.startswith("/pkgcore"):
+        if install_prefix != os.path.abspath(sys.prefix):
             import textwrap
             f.write(textwrap.dedent("""\
                 import os.path as osp
@@ -124,20 +124,16 @@ def write_pkgcore_lookup_configs(python_base, install_prefix, injected_bin_path=
 
                 from snakeoil import process
 
-
-                _data_install_offset = 'share/pkgcore'
-                _config_install_offset = osp.join(_data_install_offset, 'config')
-                _libdir_install_offset = 'lib/pkgcore'
-                _ebd_install_offset = osp.join(_libdir_install_offset, 'ebd')
-
                 INSTALL_PREFIX = sys.prefix
-                DATA_PATH=osp.join(INSTALL_PREFIX, _data_install_offset)
-                CONFIG_PATH=osp.join(INSTALL_PREFIX, _config_install_offset)
-                LIBDIR_PATH=osp.join(INSTALL_PREFIX, _libdir_install_offset)
-                EBD_PATH=osp.join(INSTALL_PREFIX, _ebd_install_offset)
-                INJECTED_BIN_PATH=()
-                CP_BINARY=process.find_binary('cp')
-            """))
+                DATA_PATH = osp.join(INSTALL_PREFIX, {!r})
+                CONFIG_PATH = osp.join(INSTALL_PREFIX, {!r})
+                LIBDIR_PATH = osp.join(INSTALL_PREFIX, {!r})
+                EBD_PATH = osp.join(INSTALL_PREFIX, {!r})
+                INJECTED_BIN_PATH = ()
+                CP_BINARY = process.find_binary('cp')
+            """.format(
+                DATA_INSTALL_OFFSET, CONFIG_INSTALL_OFFSET,
+                LIBDIR_INSTALL_OFFSET, EBD_INSTALL_OFFSET)))
         else:
             os.chmod(path, 0o644)
             f.write("INSTALL_PREFIX=%r\n" % install_prefix)

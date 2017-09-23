@@ -169,6 +169,7 @@ def write_pkgcore_lookup_configs(python_base, install_prefix, injected_bin_path=
                     prog_path = ''
                 f.write("%s_BINARY=%r\n" % (prog.upper(), prog_path))
 
+            f.close()
             byte_compile([path], prefix=python_base)
             byte_compile([path], optimize=2, prefix=python_base)
 

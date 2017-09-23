@@ -3,6 +3,18 @@ Release Notes
 =============
 
 --------------------------
+pkgcore 0.9.7 (2017-??-??)
+--------------------------
+
+- Use a more dynamic pkgcore._const for wheel-based installs instead of the
+  static version used when installing directly to a system. Using a static
+  version can't be done because the final paths aren't known until the wheel is
+  installed on the target system.
+
+- Fix merging pkgs with non-ascii filenames with python3. Previously pmerge
+  would crash when writing the contents file to the vdb.
+
+--------------------------
 pkgcore 0.9.6 (2017-09-22)
 --------------------------
 

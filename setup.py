@@ -14,6 +14,7 @@ from distutils.util import byte_compile
 from setuptools import setup, find_packages
 
 import pkgdist
+pkgdist_setup, pkgdist_cmds = pkgdist.setup()
 
 # These offsets control where we install the pkgcore config files and the EBD
 # bits relative to the install-data path given to the install subcmd.
@@ -188,33 +189,22 @@ if not pkgdist.is_py3k:
             'pkgcore.ebuild._misc', ['src/misc.c']),
     ])
 
-cmdclass = {
+cmdclass = pkgdist_cmds
+cmdclass.update({
     'sdist': sdist,
     'build': pkgdist.build,
     'build_py': pkgdist.build_py2to3,
     'build_ext': pkgdist.build_ext,
-    'build_scripts': pkgdist.build_scripts,
-    'build_man': pkgdist.build_man,
-    'build_docs': pkgdist.build_docs,
     'test': test,
     'install': install,
-    'install_man': pkgdist.install_man,
-    'install_docs': pkgdist.install_docs,
-}
-command_options = {}
+})
 
 setup(
-    name=pkgdist.MODULE,
-    version=pkgdist.version(),
     description='package managing framework',
-    long_description=pkgdist.readme(),
     url='https://github.com/pkgcore/pkgcore',
     license='BSD/GPLv2',
     author='Brian Harring, Tim Harder',
     author_email='pkgcore-dev@googlegroups.com',
-    packages=find_packages(),
-    install_requires=pkgdist.install_requires(),
-    scripts=os.listdir('bin'),
     data_files=list(chain(
         pkgdist.data_mapping(EBD_INSTALL_OFFSET, 'ebd'),
         pkgdist.data_mapping(CONFIG_INSTALL_OFFSET, 'config'),
@@ -223,7 +213,8 @@ setup(
             os.path.join(LIBDIR_INSTALL_OFFSET, 'shell'), 'shell',
             skip=glob.glob('shell/*/completion')),
     )),
-    ext_modules=extensions, cmdclass=cmdclass, command_options=command_options,
+    ext_modules=extensions,
+    cmdclass=cmdclass,
     classifiers=[
         'License :: OSI Approved :: BSD License',
         'License :: OSI Approved :: GNU General Public License v2 (GPLv2)',
@@ -232,4 +223,5 @@ setup(
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
     ],
+    **pkgdist_setup
 )

@@ -10,6 +10,7 @@ passing in distutils.
 Specifically, this module is only meant to be imported in setup.py scripts.
 """
 
+from contextlib import contextmanager
 import copy
 import errno
 import io
@@ -27,6 +28,7 @@ import textwrap
 os.environ["SNAKEOIL_DEMANDLOAD_PROTECTION"] = 'n'
 os.environ["SNAKEOIL_DEMANDLOAD_WARN"] = 'n'
 
+from setuptools import find_packages
 from setuptools.command import install as dst_install
 
 from distutils import log
@@ -94,7 +96,7 @@ def find_moduledir(searchdir=TOPDIR):
 
 
 # determine the main module we're being used to package
-MODULEDIR = find_moduledir() 
+MODULEDIR = find_moduledir()
 MODULEDIRNAME = os.path.dirname(MODULEDIR)
 MODULE = os.path.basename(MODULEDIR)
 
@@ -137,18 +139,65 @@ def readme(topdir=TOPDIR):
     return None
 
 
-def install_requires(topdir=TOPDIR):
-    """Determine a project's runtime dependencies."""
+def setup():
+    """Parameters and commands for setuptools."""
+    params = {
+        'name': MODULE,
+        'version': version(),
+        'long_description': readme(),
+        'packages': find_packages(MODULEDIRNAME),
+        'package_dir': {'':os.path.basename(MODULEDIRNAME)},
+        'install_requires': install_requires(),
+    }
+
+    cmds = {
+        'sdist': sdist,
+    }
+
+    # check for scripts
+    if os.path.exists(os.path.join(TOPDIR, 'bin')):
+        params['scripts'] = os.listdir('bin')
+        cmds['build_scripts'] = build_scripts
+
+    # check for docs
+    if os.path.exists(os.path.join(TOPDIR, 'doc')):
+        cmds['build_docs'] = build_docs
+        cmds['install_docs'] = install_docs
+
+    # check for man pages
+    if os.path.exists(os.path.join(TOPDIR, 'doc', 'man')):
+        cmds['build_man'] = build_man
+        cmds['install_man'] = install_man
+
+    return params, cmds
+
+
+def _requires(path):
+    """Determine a project's various dependencies from requirements files."""
     try:
-        with io.open(os.path.join(topdir, 'requirements', 'release.txt')) as f:
+        with io.open(path) as f:
             return f.read().splitlines()
     except IOError as e:
         if e.errno == errno.ENOENT:
             pass
         else:
             raise
-
     return None
+
+
+def build_requires():
+    """Determine a project's build dependencies."""
+    return _requires(os.path.join(TOPDIR, 'requirements', 'build.txt'))
+
+
+def install_requires():
+    """Determine a project's runtime dependencies."""
+    return _requires(os.path.join(TOPDIR, 'requirements', 'install.txt'))
+
+
+def test_requires():
+    """Determine a project's test dependencies."""
+    return _requires(os.path.join(TOPDIR, 'requirements', 'test.txt'))
 
 
 def get_file_paths(path):
@@ -268,7 +317,8 @@ class sdist(dst_sdist.sdist):
         This is used by the --version option in interactive programs among
         other things.
         """
-        from snakeoil.version import get_git_version
+        with syspath(MODULEDIRNAME, MODULE == 'snakeoil'):
+            from snakeoil.version import get_git_version
         log.info('generating _verinfo')
         data = get_git_version(base_dir)
         if not data:
@@ -285,7 +335,9 @@ class sdist(dst_sdist.sdist):
         exist in a working tree.
         """
 
-        if 'build_man' in self.distribution.cmdclass:
+        # don't build man pages when running under tox
+        if ('build_man' in self.distribution.cmdclass and
+                not os.path.basename(os.environ.get('_', '')) == 'tox'):
             build_man = self.reinitialize_command('build_man')
             build_man.ensure_finalized()
             self.run_command('build_man')
@@ -334,7 +386,8 @@ class build_py(dst_build_py.build_py):
             self.build_lib, (MODULE,), '_verinfo')
         # this should check mtime...
         if not os.path.exists(ver_path):
-            from snakeoil.version import get_git_version
+            with syspath(MODULEDIRNAME, MODULE == 'snakeoil'):
+                from snakeoil.version import get_git_version
             log.info('generating _verinfo')
             with open(ver_path, 'w') as f:
                 f.write("version_info=%r" % (get_git_version('.'),))
@@ -378,7 +431,8 @@ class build_py2to3(build_py):
 
     def get_py2to3_converter(self, options=None, proc_count=0):
         from lib2to3 import refactor as ref_mod
-        from snakeoil.dist import caching_2to3
+        with syspath(MODULEDIRNAME, MODULE == 'snakeoil'):
+            from snakeoil.dist import caching_2to3
 
         if proc_count == 0:
             proc_count = cpu_count()
@@ -468,6 +522,7 @@ class build_man(Command):
     2to3 or other conversions instead of straight from the build directory.
     """
 
+    description = "build man pages"
     user_options = [
         ("force", "f", "force build as needed"),
     ]
@@ -494,25 +549,23 @@ class build_man(Command):
             build_py = self.reinitialize_command('build_py')
             build_py.ensure_finalized()
             self.run_command('build_py')
-            syspath = sys.path[:]
-            sys.path.insert(0, os.path.abspath(build_py.build_lib))
+            with syspath(os.path.abspath(build_py.build_lib)):
+                # generate man page content for scripts we create
+                if 'build_scripts' in self.distribution.cmdclass:
+                    from snakeoil.dist.generate_docs import generate_man
+                    generate_man(MODULE, TOPDIR)
 
-            # generate man page content for scripts we create
-            if 'build_scripts' in self.distribution.cmdclass:
-                from snakeoil.dist.generate_docs import generate_man
-                generate_man(MODULE, TOPDIR)
-
-            # generate man pages
-            build_sphinx = self.reinitialize_command('build_sphinx')
-            build_sphinx.builder = 'man'
-            build_sphinx.ensure_finalized()
-            self.run_command('build_sphinx')
-            sys.path = syspath
+                # generate man pages
+                build_sphinx = self.reinitialize_command('build_sphinx')
+                build_sphinx.builder = 'man'
+                build_sphinx.ensure_finalized()
+                self.run_command('build_sphinx')
 
 
 class build_docs(build_man):
     """Build html docs."""
 
+    description = "build HTML documentation"
     user_options = [
         ("force", "f", "force build as needed"),
     ]
@@ -531,7 +584,7 @@ class build_docs(build_man):
 
             # generate API docs
             from snakeoil.dist.generate_docs import generate_html
-            generate_html(MODULE, TOPDIR)
+            generate_html(MODULE, MODULEDIRNAME)
 
             # generate html docs -- allow build_sphinx cmd to run again
             build_sphinx = self.reinitialize_command('build_sphinx')
@@ -706,6 +759,7 @@ class install_docs(Command):
     """Install html documentation."""
 
     content_search_path = build_docs.content_search_path
+    description = "install HTML documentation"
     user_options = [
         ('path=', None, "final path to install to; else it's calculated"),
         ('build-dir=', None, "build directory"),
@@ -788,6 +842,7 @@ class install_docs(Command):
 class install_man(install_docs):
     """Install man pages."""
 
+    description = "install man pages"
     content_search_path = build_man.content_search_path
     build_command = 'build_man'
 
@@ -842,6 +897,7 @@ class test(Command):
 
     blacklist = frozenset()
 
+    description = "run unit tests in a built copy"
     user_options = [
         ("inplace", "i", "do building/testing in place"),
         ("skip-rebuilding", "s", "skip rebuilds. primarily for development"),
@@ -928,6 +984,7 @@ class test(Command):
 class pytest(Command):
     """Run tests using pytest."""
 
+    description = "run unit tests in a built copy using pytest"
     user_options = [
         ('pytest-args=', 'a', 'arguments to pass to py.test'),
         ('coverage', 'c', 'generate coverage info'),
@@ -1013,18 +1070,19 @@ class pytest(Command):
             self.run_command('build_py')
             builddir = os.path.abspath(build_py.build_lib)
 
-        sys.path.insert(0, builddir)
-        from snakeoil.contexts import chdir
-        # Change the current working directory to the builddir during testing
-        # so coverage paths are correct.
-        with chdir(builddir):
-            ret = pytest.main(self.test_args)
+        with syspath(builddir):
+            from snakeoil.contexts import chdir
+            # Change the current working directory to the builddir during testing
+            # so coverage paths are correct.
+            with chdir(builddir):
+                ret = pytest.main(self.test_args)
         sys.exit(ret)
 
 
 class pylint(Command):
     """Run pylint on a module."""
 
+    description = "run pylint on a module"
     user_options = [
         ('errors-only', 'E', 'Check only errors with pylint'),
         ('output-format=', 'f', 'Change the output format'),
@@ -1123,7 +1181,8 @@ class config(dst_config.config):
         return self.try_link("int main(int argc, char *argv[]) { return 0; }")
 
     def run(self):
-        from snakeoil.pickling import dump, load
+        with syspath(MODULEDIRNAME, MODULE == 'snakeoil'):
+            from snakeoil.pickling import dump, load
 
         # try to load the cached results
         try:
@@ -1169,6 +1228,23 @@ class config(dst_config.config):
         return self.try_compile(
             'int main() { %s x; (void) x.%s; return 0; }'
             % (typename, member), headers, include_dirs, lang)
+
+
+@contextmanager
+def syspath(path, condition=True):
+    """Context manager that mangles sys.path and then reverts on exit.
+
+    Args:
+        path: The directory path to add to sys.path.
+        condition: Optional boolean that decides whether sys.path is mangled or not.
+    """
+    syspath = sys.path[:]
+    if condition:
+        sys.path.insert(0, path)
+    try:
+        yield
+    finally:
+        sys.path = syspath
 
 
 # yes these are in snakeoil.compatibility; we can't rely on that module however

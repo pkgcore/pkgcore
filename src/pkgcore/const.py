@@ -43,7 +43,7 @@ def _GET_CONST(attr, default_value, allow_environment_override=False):
     return result
 
 
-_reporoot = osp.dirname(osp.dirname(osp.realpath(__file__)))
+_reporoot = osp.realpath(__file__).rsplit(os.path.sep, 3)[0]
 DATA_PATH = _GET_CONST('DATA_PATH', _reporoot, allow_environment_override=True)
 LIBDIR_PATH = _GET_CONST('LIBDIR_PATH', _reporoot)
 CONFIG_PATH = _GET_CONST('CONFIG_PATH', '%(DATA_PATH)s/config')

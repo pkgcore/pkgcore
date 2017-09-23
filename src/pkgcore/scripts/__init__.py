@@ -21,7 +21,7 @@ def run(script_name):
             'Verify that pkgcore and its deps are properly installed '
             'and/or PYTHONPATH is set correctly for python %s.\n' %
             ('.'.join(map(str, sys.version_info[:3])),))
-        if '--debug' in sys.argv:
+        if '--debug' in sys.argv[1:]:
             raise
         sys.stderr.write('Add --debug to the commandline for a traceback.\n')
         sys.exit(1)
@@ -32,9 +32,8 @@ def run(script_name):
 
 
 if __name__ == '__main__':
-    # we're in a git repo or tarball so add the base dir to the system path
-    repo_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    if not os.path.exists(os.path.join(repo_dir, 'setup.py')):
-        raise SystemExit('unknown repo hierarchy, %r should be repo root' % repo_dir)
-    sys.path.insert(0, repo_dir)
+    # We're in a git repo or tarball so add the src dir to the system path.
+    # Note that this assumes a certain module layout.
+    src_dir = os.path.realpath(__file__).rsplit(os.path.sep, 3)[0]
+    sys.path.insert(0, src_dir)
     run(os.path.basename(__file__))

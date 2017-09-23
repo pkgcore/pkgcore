@@ -113,43 +113,68 @@ def write_pkgcore_lookup_configs(python_base, install_prefix, injected_bin_path=
         if e.errno != errno.EEXIST:
             raise
     log.info("writing lookup config to %r" % path)
+
     with open(path, "w") as f:
-        os.chmod(path, 0o644)
-        f.write("INSTALL_PREFIX=%r\n" % install_prefix)
-        f.write("DATA_PATH=%r\n" %
-                os.path.join(install_prefix, DATA_INSTALL_OFFSET))
-        f.write("CONFIG_PATH=%r\n" %
-                os.path.join(install_prefix, CONFIG_INSTALL_OFFSET))
-        f.write("LIBDIR_PATH=%r\n" %
-                os.path.join(install_prefix, LIBDIR_INSTALL_OFFSET))
-        f.write("EBD_PATH=%r\n" %
-                os.path.join(install_prefix, EBD_INSTALL_OFFSET))
+        # write more dynamic _const file for wheel installs
+        if install_prefix.startswith("/pkgcore"):
+            import textwrap
+            f.write(textwrap.dedent("""\
+                import os.path as osp
+                import sys
 
-        # This is added to suppress the default behaviour of looking
-        # within the repo for a bin subdir.
-        f.write("INJECTED_BIN_PATH=%r\n" % (tuple(injected_bin_path),))
+                from snakeoil import process
 
-        # Static paths for various utilities.
-        from snakeoil import process
-        required_progs = ('bash', 'cp')
-        try:
-            for prog in required_progs:
-                prog_path = process.find_binary(prog)
-                f.write("%s_BINARY=%r\n" % (prog.upper(), prog_path))
-        except process.CommandNotFound:
-            raise DistutilsExecError(
-                "generating lookup config failed: required utility %r missing from PATH" % (prog,))
 
-        extra_progs = ('sandbox',)
-        for prog in extra_progs:
+                _data_install_offset = 'share/pkgcore'
+                _config_install_offset = osp.join(_data_install_offset, 'config')
+                _libdir_install_offset = 'lib/pkgcore'
+                _ebd_install_offset = osp.join(_libdir_install_offset, 'ebd')
+
+                INSTALL_PREFIX = sys.exec_prefix
+                DATA_PATH=osp.join(INSTALL_PREFIX, _data_install_offset)
+                CONFIG_PATH=osp.join(INSTALL_PREFIX, _config_install_offset)
+                LIBDIR_PATH=osp.join(INSTALL_PREFIX, _libdir_install_offset)
+                EBD_PATH=osp.join(INSTALL_PREFIX, _ebd_install_offset)
+                INJECTED_BIN_PATH=()
+                CP_BINARY=process.find_binary('cp')
+            """))
+        else:
+            os.chmod(path, 0o644)
+            f.write("INSTALL_PREFIX=%r\n" % install_prefix)
+            f.write("DATA_PATH=%r\n" %
+                    os.path.join(install_prefix, DATA_INSTALL_OFFSET))
+            f.write("CONFIG_PATH=%r\n" %
+                    os.path.join(install_prefix, CONFIG_INSTALL_OFFSET))
+            f.write("LIBDIR_PATH=%r\n" %
+                    os.path.join(install_prefix, LIBDIR_INSTALL_OFFSET))
+            f.write("EBD_PATH=%r\n" %
+                    os.path.join(install_prefix, EBD_INSTALL_OFFSET))
+
+            # This is added to suppress the default behaviour of looking
+            # within the repo for a bin subdir.
+            f.write("INJECTED_BIN_PATH=%r\n" % (tuple(injected_bin_path),))
+
+            # Static paths for various utilities.
+            from snakeoil import process
+            required_progs = ('bash', 'cp')
             try:
-                prog_path = process.find_binary(prog)
+                for prog in required_progs:
+                    prog_path = process.find_binary(prog)
+                    f.write("%s_BINARY=%r\n" % (prog.upper(), prog_path))
             except process.CommandNotFound:
-                prog_path = ''
-            f.write("%s_BINARY=%r\n" % (prog.upper(), prog_path))
+                raise DistutilsExecError(
+                    "generating lookup config failed: required utility %r missing from PATH" % (prog,))
 
-    byte_compile([path], prefix=python_base)
-    byte_compile([path], optimize=2, prefix=python_base)
+            extra_progs = ('sandbox',)
+            for prog in extra_progs:
+                try:
+                    prog_path = process.find_binary(prog)
+                except process.CommandNotFound:
+                    prog_path = ''
+                f.write("%s_BINARY=%r\n" % (prog.upper(), prog_path))
+
+            byte_compile([path], prefix=python_base)
+            byte_compile([path], optimize=2, prefix=python_base)
 
 
 class test(pkgdist.test):

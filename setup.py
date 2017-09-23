@@ -115,6 +115,7 @@ def write_pkgcore_lookup_configs(python_base, install_prefix, injected_bin_path=
     log.info("writing lookup config to %r" % path)
 
     with open(path, "w") as f:
+        os.chmod(path, 0o644)
         # write more dynamic _const file for wheel installs
         if install_prefix != os.path.abspath(sys.prefix):
             import textwrap
@@ -124,7 +125,7 @@ def write_pkgcore_lookup_configs(python_base, install_prefix, injected_bin_path=
 
                 from snakeoil import process
 
-                INSTALL_PREFIX = sys.prefix
+                INSTALL_PREFIX = osp.abspath(sys.prefix)
                 DATA_PATH = osp.join(INSTALL_PREFIX, {!r})
                 CONFIG_PATH = osp.join(INSTALL_PREFIX, {!r})
                 LIBDIR_PATH = osp.join(INSTALL_PREFIX, {!r})
@@ -135,7 +136,6 @@ def write_pkgcore_lookup_configs(python_base, install_prefix, injected_bin_path=
                 DATA_INSTALL_OFFSET, CONFIG_INSTALL_OFFSET,
                 LIBDIR_INSTALL_OFFSET, EBD_INSTALL_OFFSET)))
         else:
-            os.chmod(path, 0o644)
             f.write("INSTALL_PREFIX=%r\n" % install_prefix)
             f.write("DATA_PATH=%r\n" %
                     os.path.join(install_prefix, DATA_INSTALL_OFFSET))

@@ -1,3 +1,4 @@
--r release.txt
+-r build.txt
+-r install.txt
 
 sphinx

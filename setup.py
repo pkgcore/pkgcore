@@ -130,7 +130,7 @@ def write_pkgcore_lookup_configs(python_base, install_prefix, injected_bin_path=
                 _libdir_install_offset = 'lib/pkgcore'
                 _ebd_install_offset = osp.join(_libdir_install_offset, 'ebd')
 
-                INSTALL_PREFIX = sys.exec_prefix
+                INSTALL_PREFIX = sys.prefix
                 DATA_PATH=osp.join(INSTALL_PREFIX, _data_install_offset)
                 CONFIG_PATH=osp.join(INSTALL_PREFIX, _config_install_offset)
                 LIBDIR_PATH=osp.join(INSTALL_PREFIX, _libdir_install_offset)

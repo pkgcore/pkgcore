@@ -15,7 +15,7 @@ demandload(
     'os',
     'stat',
     'snakeoil.chksum:get_handler',
-    'snakeoil.fileutils:readlines_ascii',
+    'snakeoil.fileutils:readlines_utf8',
     'pkgcore:os_data',
 )
 
@@ -76,9 +76,10 @@ class ContentsFile(contentsSet):
     def _get_fd(self, write=False):
         if isinstance(self._source, basestring):
             if write:
-                return AtomicWriteFile(self._source, uid=os_data.root_uid,
+                return AtomicWriteFile(
+                    self._source, uid=os_data.root_uid,
                     gid=os_data.root_gid, perms=0644)
-            return readlines_ascii(self._source, True)
+            return readlines_utf8(self._source, True)
         fobj = self._source.text_fileobj(writable=write)
         if write:
             fobj.seek(0, 0)

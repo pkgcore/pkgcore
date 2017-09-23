@@ -1,2 +1,0 @@
--r release.txt
--r test.txt

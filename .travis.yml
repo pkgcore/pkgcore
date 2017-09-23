@@ -58,7 +58,7 @@ jobs:
     - stage: deploy
       python: 3.6
       script:
-        - pip install requirements/build.txt
+        - pip install requirements/docs.txt
         - python setup.py sdist
       deploy:
         provider: releases

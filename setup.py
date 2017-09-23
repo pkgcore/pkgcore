@@ -152,7 +152,7 @@ def write_pkgcore_lookup_configs(python_base, install_prefix, injected_bin_path=
 
             # Static paths for various utilities.
             from snakeoil import process
-            required_progs = ('bash', 'cp')
+            required_progs = ('cp',)
             try:
                 for prog in required_progs:
                     prog_path = process.find_binary(prog)
@@ -160,14 +160,6 @@ def write_pkgcore_lookup_configs(python_base, install_prefix, injected_bin_path=
             except process.CommandNotFound:
                 raise DistutilsExecError(
                     "generating lookup config failed: required utility %r missing from PATH" % (prog,))
-
-            extra_progs = ('sandbox',)
-            for prog in extra_progs:
-                try:
-                    prog_path = process.find_binary(prog)
-                except process.CommandNotFound:
-                    prog_path = ''
-                f.write("%s_BINARY=%r\n" % (prog.upper(), prog_path))
 
             f.close()
             byte_compile([path], prefix=python_base)

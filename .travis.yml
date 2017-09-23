@@ -36,20 +36,36 @@ script:
   - cp -R pkgdist/requirements/* requirements/
   - pip install -r requirements/ci.txt
   - tox -e travis
-  - pkgdist/build-dist-files.sh
 after_success:
   # upload coverage data
-  - pushd .tox/travis/lib/python*/site-packages
+  - tox -e coverage-report
   - codecov
-  - popd
 
-# push release tarballs to github
-deploy:
-  provider: releases
-  api_key:
-    secure: M+rX3BOy9kv2hEyeBOdjTf9hXOvrLYE8VsX/DVsPt4ayve9c0xXFjWhXBEd2vKFqqcN7WsPRycwfr8XQtOpmURc14q8SdpTtcmQimm5twtwpiA9rXWO/MG9ELaFvU672Lw9NFvzq/scGnqsNzszVC0prxCXS+fb9g4z4sKA8VLM=
-  file_glob: true
-  file: dist/pkgcore-*.tar.gz
-  skip_cleanup: true
-  on:
-    tags: true
+stages:
+  - test
+  - name: deploy
+    if: branch = master
+    if: type IN (push, api)
+    if: tag IS present
+
+jobs:
+  include:
+    # push tarball and wheels to pypi
+    - stage: deploy
+      python: 3.6
+      script: pkgdist/build-dist-files.sh
+    # push tarball to github
+    - stage: deploy
+      python: 3.6
+      script:
+        - pip install requirements/build.txt
+        - python setup.py sdist
+      deploy:
+        provider: releases
+        api_key:
+          secure: M+rX3BOy9kv2hEyeBOdjTf9hXOvrLYE8VsX/DVsPt4ayve9c0xXFjWhXBEd2vKFqqcN7WsPRycwfr8XQtOpmURc14q8SdpTtcmQimm5twtwpiA9rXWO/MG9ELaFvU672Lw9NFvzq/scGnqsNzszVC0prxCXS+fb9g4z4sKA8VLM=
+        file_glob: true
+        file: dist/pkgcore-*.tar.gz
+        skip_cleanup: true
+        on:
+          tags: true

@@ -11,7 +11,7 @@ import sys
 from distutils import log
 from distutils.errors import DistutilsExecError
 from distutils.util import byte_compile
-from setuptools import setup, find_packages
+from setuptools import setup
 
 import pkgdist
 pkgdist_setup, pkgdist_cmds = pkgdist.setup()

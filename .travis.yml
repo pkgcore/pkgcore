@@ -53,11 +53,16 @@ jobs:
     # push tarball and wheels to pypi
     - stage: deploy
       python: 3.6
-      script: pkgdist/build-dist-files.sh
+      before_script: git clone https://github.com/pkgcore/pkgdist.git
+      script:
+        - cp -R pkgdist/requirements/* requirements/
+        - pkgdist/build-dist-files.sh
     # push tarball to github
     - stage: deploy
       python: 3.6
+      before_script: git clone https://github.com/pkgcore/pkgdist.git
       script:
+        - cp -R pkgdist/requirements/* requirements/
         - pip install requirements/docs.txt
         - python setup.py sdist
       deploy:

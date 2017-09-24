@@ -14,17 +14,17 @@ cache:
 install:
 - pip install -U pip
 before_script:
+# install CI deps
 - git clone https://github.com/pkgcore/pkgdist.git
+- cp -av pkgdist/requirements/* requirements/
+- pip install -r requirements/ci.txt
 # Make sure the actual install-info binary is first in PATH since
 # Debian-based distros use a wrapper script that outputs warnings and
 # breaks the info file merge trigger test.
 - mkdir texinfo
 - ln -s /usr/bin/ginstall-info texinfo/install-info
 - export PATH=$PWD/texinfo:$PATH
-script:
-- cp -R pkgdist/requirements/* requirements/
-- pip install -r requirements/ci.txt
-- tox -e travis
+script: tox -e travis
 after_success:
 # upload coverage data
 - tox -e coverage-report
@@ -43,11 +43,11 @@ jobs:
     # do various lint scans
     - stage: lint
       python: 3.6
-      before_script: git clone https://github.com/pkgcore/pkgdist.git
-      script:
-        - cp -R pkgdist/requirements/* requirements/
+      before_script:
+        - git clone https://github.com/pkgcore/pkgdist.git
+        - cp -av pkgdist/requirements/* requirements/
         - pip install requirements/lint.txt
-        - ./pkgdist/pylint src
+      script: ./pkgdist/pylint src
 
     # push tarball and wheels to pypi
     - stage: deploy
@@ -61,19 +61,19 @@ jobs:
         - CIBW_PLATFORM=linux
         - CIBW_SKIP="cp26-* cp33-*"
         - CIBW_BEFORE_BUILD="{pip} install -r requirements/wheel.txt"
-      before_script: git clone https://github.com/pkgcore/pkgdist.git
-      script:
-        - cp -R pkgdist/requirements/* requirements/
-        - ./pkgdist/build-dist-files.sh
+      before_script:
+        - git clone https://github.com/pkgcore/pkgdist.git
+        - cp -av pkgdist/requirements/* requirements/
+      script: ./pkgdist/build-dist-files.sh
 
     # push tarball to github
     - stage: deploy
       python: 3.6
-      before_script: git clone https://github.com/pkgcore/pkgdist.git
-      script:
-        - cp -R pkgdist/requirements/* requirements/
+      before_script:
+        - git clone https://github.com/pkgcore/pkgdist.git
+        - cp -av pkgdist/requirements/* requirements/
         - pip install requirements/docs.txt
-        - python setup.py sdist
+      script: python setup.py sdist
       deploy:
         provider: releases
         api_key:

@@ -190,12 +190,12 @@ class ProfileNode(object):
                 if separator:
                     if repo_id:
                         try:
-                            repo_config = self._repo_map[repo_id]
+                            location = self._repo_map[repo_id]
                         except KeyError:
                             raise ValueError("unknown repository name: %r" % repo_id)
                         except TypeError:
                             raise ValueError("repo mapping is unset")
-                    l.append(abspath(pjoin(repo_config.location, 'profiles', path)))
+                    l.append(abspath(pjoin(location, 'profiles', path)))
                 else:
                     l.append(abspath(pjoin(self.path, repo_id)))
             return tuple(l)

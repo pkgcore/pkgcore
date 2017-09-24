@@ -474,7 +474,7 @@ def config_from_make_conf(location=None, profile_override=None, **kwargs):
 
         # XXX: Hack for portage-2 profile format support.
         repo_config = RepoConfig(repo_path, repo_name)
-        repo_map[repo_config.repo_id] = repo_config
+        repo_map[repo_config.repo_id] = repo_path
 
         # repo configs
         repo_conf = {

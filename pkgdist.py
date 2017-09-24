@@ -1240,17 +1240,21 @@ class config(dst_config.config):
             % (typename, member), headers, include_dirs, lang)
 
 
+# directly copied from snakeoil.contexts
 @contextmanager
-def syspath(path, condition=True):
+def syspath(path, condition=True, position=0):
     """Context manager that mangles sys.path and then reverts on exit.
 
     Args:
         path: The directory path to add to sys.path.
-        condition: Optional boolean that decides whether sys.path is mangled or not.
+        condition: Optional boolean that decides whether sys.path is mangled or
+            not, defaults to being enabled.
+        position: Optional integer that is the place where the path is inserted
+            in sys.path, defaults to prepending.
     """
     syspath = sys.path[:]
     if condition:
-        sys.path.insert(0, path)
+        sys.path.insert(position, path)
     try:
         yield
     finally:

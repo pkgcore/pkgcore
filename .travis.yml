@@ -5,9 +5,9 @@ python:
 - 3.5
 - 3.6
 addons:
-apt:
-  packages:
-  - install-info
+  apt:
+    packages:
+    - install-info
 cache:
   directories:
   - "$HOME/.cache/pip"
@@ -31,23 +31,29 @@ after_success:
 - codecov
 
 stages:
-  - test
+  - name: test
+    if: NOT branch = lint
   - lint
+    if: branch = lint
   - name: deploy
     if: branch = master
     if: type IN (push, api)
     if: tag IS present
 
 jobs:
+  fast_finish: true
+  allow_failures:
+    - stage: lint
+
   include:
     # do various lint scans
     - stage: lint
-      python: 3.6
+      python: 2.7
       before_script:
         - git clone https://github.com/pkgcore/pkgdist.git
         - cp -av pkgdist/requirements/* requirements/
-        - pip install requirements/lint.txt
-      script: ./pkgdist/pylint src
+        - pip install -r requirements/lint.txt
+      script: ./pkgdist/pylint src/pkgcore
 
     # push tarball and wheels to pypi
     - stage: deploy
@@ -72,7 +78,7 @@ jobs:
       before_script:
         - git clone https://github.com/pkgcore/pkgdist.git
         - cp -av pkgdist/requirements/* requirements/
-        - pip install requirements/docs.txt
+        - pip install -r requirements/docs.txt
       script: python setup.py sdist
       deploy:
         provider: releases

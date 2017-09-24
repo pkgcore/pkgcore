@@ -9,6 +9,8 @@ SPHINXOPTS    =
 SPHINXBUILD   = sphinx-build
 PAPER         =
 BUILDDIR      = $(CURDIR)/_build
+TOPDIR        = ..
+PACKAGEDIR    = ../src
 
 # Internal variables.
 PAPEROPT_a4     = -D latex_paper_size=a4
@@ -45,7 +47,7 @@ clean:
 	-rm -rf $(BUILDDIR) api generated
 
 html:
-	$(PYTHON) -m snakeoil.dist.generate_docs --html ../ pkgcore
+	$(PYTHON) -m snakeoil.dist.generate_docs --html $(TOPDIR) $(PACKAGEDIR) pkgcore
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
@@ -118,7 +120,7 @@ text:
 	@echo "Build finished. The text files are in $(BUILDDIR)/text."
 
 man:
-	$(PYTHON) -m snakeoil.dist.generate_docs --man ../ pkgcore
+	$(PYTHON) -m snakeoil.dist.generate_docs --man $(TOPDIR) $(PACKAGEDIR) pkgcore
 	$(SPHINXBUILD) -b man $(ALLSPHINXOPTS) $(BUILDDIR)/man
 	@for file in man/*; do \
 		[ -L "$${file}" ] && rm -f "$${file}" || continue; \

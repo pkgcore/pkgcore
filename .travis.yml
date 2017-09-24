@@ -1,45 +1,34 @@
 language: python
 python:
-  - 2.7
-  - 3.4
-  - 3.5
-  - 3.6
-env:
-  global:
-    - secure: VbHW1pmzwc3LtJ4JYivarXMdsAE/MfitddnyYSZs+qBLxPevv967WuXZBeJgEak913bLj9Ku9YoxH8OHxu4uACU1rLNo48y0DMm0qtiGHx2sTmevDwIRflLIx/aJiS5OAuJZ4jY79HKPIfgObfZwO5awRzs8Afhlqg5xIFiWhiQ=
-    - secure: j/lUk3RkNuas+wiMdoWsC2j7emirtMRz6G/4OVUf1+X9aFLSLo5jpY8C4yZJPb0FuCdYEjfKsq6aMOADwwMg6aXbXj+u5frqhUYAqBELR85G7gRBoLzcqj9YaRVsiIf9rF14xlueCM2cK08rDlkJwHr4fQZkNBZnbZ5+8MvwsO0=
-    - CIBW_PLATFORM=linux
-    - CIBW_SKIP="cp26-* cp33-*"
-    - CIBW_BEFORE_BUILD="{pip} install -r requirements/wheel.txt"
-sudo: required
-services:
-  - docker
+- 2.7
+- 3.4
+- 3.5
+- 3.6
 addons:
-  apt:
-    packages:
-      - install-info
+apt:
+  packages:
+  - install-info
 cache:
   directories:
-    - "$HOME/.cache/pip"
+  - "$HOME/.cache/pip"
 install:
-  - pip install -U pip
+- pip install -U pip
 before_script:
-  - git clone https://github.com/pkgcore/pkgdist.git
-
-  # Make sure the actual install-info binary is first in PATH since
-  # Debian-based distros use a wrapper script that outputs warnings and
-  # breaks the info file merge trigger test.
-  - mkdir texinfo
-  - ln -s /usr/bin/ginstall-info texinfo/install-info
-  - export PATH=$PWD/texinfo:$PATH
+- git clone https://github.com/pkgcore/pkgdist.git
+# Make sure the actual install-info binary is first in PATH since
+# Debian-based distros use a wrapper script that outputs warnings and
+# breaks the info file merge trigger test.
+- mkdir texinfo
+- ln -s /usr/bin/ginstall-info texinfo/install-info
+- export PATH=$PWD/texinfo:$PATH
 script:
-  - cp -R pkgdist/requirements/* requirements/
-  - pip install -r requirements/ci.txt
-  - tox -e travis
+- cp -R pkgdist/requirements/* requirements/
+- pip install -r requirements/ci.txt
+- tox -e travis
 after_success:
-  # upload coverage data
-  - tox -e coverage-report
-  - codecov
+# upload coverage data
+- tox -e coverage-report
+- codecov
 
 stages:
   - test
@@ -59,13 +48,24 @@ jobs:
         - cp -R pkgdist/requirements/* requirements/
         - pip install requirements/lint.txt
         - ./pkgdist/pylint src
+
     # push tarball and wheels to pypi
     - stage: deploy
       python: 3.6
+      sudo: required
+      services:
+        - docker
+      env:
+        - secure: VbHW1pmzwc3LtJ4JYivarXMdsAE/MfitddnyYSZs+qBLxPevv967WuXZBeJgEak913bLj9Ku9YoxH8OHxu4uACU1rLNo48y0DMm0qtiGHx2sTmevDwIRflLIx/aJiS5OAuJZ4jY79HKPIfgObfZwO5awRzs8Afhlqg5xIFiWhiQ=
+        - secure: j/lUk3RkNuas+wiMdoWsC2j7emirtMRz6G/4OVUf1+X9aFLSLo5jpY8C4yZJPb0FuCdYEjfKsq6aMOADwwMg6aXbXj+u5frqhUYAqBELR85G7gRBoLzcqj9YaRVsiIf9rF14xlueCM2cK08rDlkJwHr4fQZkNBZnbZ5+8MvwsO0=
+        - CIBW_PLATFORM=linux
+        - CIBW_SKIP="cp26-* cp33-*"
+        - CIBW_BEFORE_BUILD="{pip} install -r requirements/wheel.txt"
       before_script: git clone https://github.com/pkgcore/pkgdist.git
       script:
         - cp -R pkgdist/requirements/* requirements/
         - ./pkgdist/build-dist-files.sh
+
     # push tarball to github
     - stage: deploy
       python: 3.6

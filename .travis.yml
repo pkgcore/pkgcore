@@ -43,6 +43,7 @@ after_success:
 
 stages:
   - test
+  - lint
   - name: deploy
     if: branch = master
     if: type IN (push, api)
@@ -50,13 +51,21 @@ stages:
 
 jobs:
   include:
+    # do various lint scans
+    - stage: lint
+      python: 3.6
+      before_script: git clone https://github.com/pkgcore/pkgdist.git
+      script:
+        - cp -R pkgdist/requirements/* requirements/
+        - pip install requirements/lint.txt
+        - ./pkgdist/pylint src
     # push tarball and wheels to pypi
     - stage: deploy
       python: 3.6
       before_script: git clone https://github.com/pkgcore/pkgdist.git
       script:
         - cp -R pkgdist/requirements/* requirements/
-        - pkgdist/build-dist-files.sh
+        - ./pkgdist/build-dist-files.sh
     # push tarball to github
     - stage: deploy
       python: 3.6

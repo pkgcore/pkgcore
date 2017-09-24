@@ -33,7 +33,7 @@ after_success:
 stages:
   - name: test
     if: NOT branch = lint
-  - lint
+  - name: lint
     if: branch = lint
   - name: deploy
     if: branch = master

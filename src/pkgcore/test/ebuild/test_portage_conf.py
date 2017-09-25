@@ -108,7 +108,7 @@ class TestPortageConfig(TempDirMixin, TestCase):
 
         # garbage file
         with NamedTemporaryFile() as f:
-            f.write(str(binascii.b2a_hex(os.urandom(10))))
+            f.write(binascii.b2a_hex(os.urandom(10)))
             f.flush()
             self.assertRaises(
                 errors.ConfigurationError, load_repos_conf, f.name)
@@ -134,8 +134,7 @@ class TestPortageConfig(TempDirMixin, TestCase):
             defaults, repos = load_repos_conf(f.name)
             self.assertEqual(0, repos['foo']['priority'])
 
-        # TODO: check for logger output?
-        # overriding defaults
+        # overriding defaults in the same file throws an exception from configparser
         with NamedTemporaryFile() as f:
             f.write(textwrap.dedent('''\
                 [DEFAULT]
@@ -149,8 +148,8 @@ class TestPortageConfig(TempDirMixin, TestCase):
                 [gentoo]
                 location = /var/gentoo/repos/gentoo''').encode())
             f.flush()
-            defaults, repos = load_repos_conf(f.name)
-            self.assertEqual('foo', defaults['main-repo'])
+            self.assertRaises(
+                errors.ConfigurationError, load_repos_conf, f.name)
 
         # undefined main repo with 'gentoo' missing
         with NamedTemporaryFile() as f:
@@ -174,7 +173,7 @@ class TestPortageConfig(TempDirMixin, TestCase):
             self.assertEqual(['foo', 'gentoo'], repos.keys())
 
         # TODO: check for logger output?
-        # overriding repo fields get merged
+        # overriding defaults in the same file throws an exception from configparser
         with NamedTemporaryFile() as f:
             f.write(textwrap.dedent('''\
                 [DEFAULT]
@@ -185,9 +184,8 @@ class TestPortageConfig(TempDirMixin, TestCase):
                 [foo]
                 location = /var/gentoo/repos/foo''').encode())
             f.flush()
-            defaults, repos = load_repos_conf(f.name)
-            self.assertEqual('/var/gentoo/repos/foo', repos['foo']['location'])
-            self.assertEqual(3, repos['foo']['priority'])
+            self.assertRaises(
+                errors.ConfigurationError, load_repos_conf, f.name)
 
     def test_load_repos_conf_dir(self):
         # repo priority sorting and dir/symlink scanning

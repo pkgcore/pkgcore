@@ -1,6 +1,7 @@
 # Copyright: 2015 Tim Harder
 # License: GPL2/BSD
 
+import binascii
 import os
 import shutil
 import stat
@@ -105,6 +106,13 @@ class TestPortageConfig(TempDirMixin, TestCase):
             self.assertRaises(
                 errors.ConfigurationError, load_repos_conf, f.name)
 
+        # garbage file
+        with NamedTemporaryFile() as f:
+            f.write(str(binascii.b2a_hex(os.urandom(10))))
+            f.flush()
+            self.assertRaises(
+                errors.ConfigurationError, load_repos_conf, f.name)
+
         # missing location parameter
         with NamedTemporaryFile() as f:
             f.write(textwrap.dedent('''\
@@ -126,6 +134,24 @@ class TestPortageConfig(TempDirMixin, TestCase):
             defaults, repos = load_repos_conf(f.name)
             self.assertEqual(0, repos['foo']['priority'])
 
+        # TODO: check for logger output?
+        # overriding defaults
+        with NamedTemporaryFile() as f:
+            f.write(textwrap.dedent('''\
+                [DEFAULT]
+                main-repo = gentoo
+                [DEFAULT]
+                main-repo = foo
+
+                [foo]
+                priority = foo
+                location = /var/gentoo/repos/foo
+                [gentoo]
+                location = /var/gentoo/repos/gentoo''').encode())
+            f.flush()
+            defaults, repos = load_repos_conf(f.name)
+            self.assertEqual('foo', defaults['main-repo'])
+
         # undefined main repo with 'gentoo' missing
         with NamedTemporaryFile() as f:
             f.write(textwrap.dedent('''\
@@ -146,6 +172,22 @@ class TestPortageConfig(TempDirMixin, TestCase):
             defaults, repos = load_repos_conf(f.name)
             self.assertEqual('gentoo', defaults['main-repo'])
             self.assertEqual(['foo', 'gentoo'], repos.keys())
+
+        # TODO: check for logger output?
+        # overriding repo fields get merged
+        with NamedTemporaryFile() as f:
+            f.write(textwrap.dedent('''\
+                [DEFAULT]
+                main-repo = foo
+                [foo]
+                priority = 3
+                location = /var/gentoo/repos/gentoo
+                [foo]
+                location = /var/gentoo/repos/foo''').encode())
+            f.flush()
+            defaults, repos = load_repos_conf(f.name)
+            self.assertEqual('/var/gentoo/repos/foo', repos['foo']['location'])
+            self.assertEqual(3, repos['foo']['priority'])
 
     def test_load_repos_conf_dir(self):
         # repo priority sorting and dir/symlink scanning

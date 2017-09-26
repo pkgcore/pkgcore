@@ -258,6 +258,31 @@ class CountingFormatterTest(BaseFormatterTest):
         self.formatter.end()
         self.assertEnd('\nTotal: 2 packages (2 reinstalls)')
 
+    def test_end_all_ops_order(self):
+        # new
+        self.formatter.format(
+            FakeOp(FakeEbuildSrc('app-arch/pkga-1.0.3-r6')))
+        # new slot
+        self.formatter.format(
+            FakeOp(FakeEbuildSrc('app-arch/pkgb-1.0.3-r6', slot='1')))
+        # downgrade
+        self.formatter.format(
+            FakeOp(FakeEbuildSrc('app-arch/pkgc-1.0.3-r6'),
+            FakeMutatedPkg('app-arch/pkgc-1.0.4')))
+        # upgrade
+        self.formatter.format(
+            FakeOp(FakeEbuildSrc('app-arch/pkgd-1.0.4'),
+            FakeMutatedPkg('app-arch/pkgd-1.0.3-r6')))
+        # reinstall
+        self.formatter.format(
+            FakeOp(FakeEbuildSrc('app-arch/pkge-1.0.4'),
+            FakeMutatedPkg('app-arch/pkge-1.0.4')))
+
+        self.fakeout.resetstream()
+        self.formatter.end()
+        self.assertEnd(
+            '\nTotal: 5 packages (1 new, 1 upgrade, 1 downgrade, 1 in new slot, 1 reinstall)')
+
 
 class TestPaludisFormatter(CountingFormatterTest, TestCase):
     formatterClass = PaludisFormatter

@@ -141,9 +141,19 @@ class TestBasicFormatter(BaseFormatterTest, TestCase):
 
 
 class TestPkgcoreFormatter(BaseFormatterTest, TestCase):
+
     formatterClass = PkgcoreFormatter
-    def test_op(self):
-        # This basically just tests string methods
+
+    def test_install(self):
+        self.formatter.format(FakeOp(FakeEbuildSrc('dev-util/diffball-1.0')))
+        self.assertOut("add     dev-util/diffball-1.0")
+
+    def test_install_repo(self):
+        self.formatter.format(FakeOp(FakeEbuildSrc('dev-util/diffball-1.0',
+            repo=FakeRepo(repo_id='gentoo', location='/var/gentoo/repos/gentoo'))))
+        self.assertOut("add     dev-util/diffball-1.0::gentoo")
+
+    def test_reinstall(self):
         self.formatter.format(
             FakeOp(FakeEbuildSrc('dev-util/diffball-1.2'),
                 FakeMutatedPkg('dev-util/diffball-1.1')))
@@ -151,13 +161,7 @@ class TestPkgcoreFormatter(BaseFormatterTest, TestCase):
             "replace dev-util/diffball-1.1, "
             "dev-util/diffball-1.2")
 
-        self.formatter.format(FakeOp(FakeEbuildSrc('dev-util/diffball-1.0')))
-        self.assertOut("add     dev-util/diffball-1.0")
-
-        self.formatter.format(FakeOp(FakeEbuildSrc('dev-util/diffball-1.0',
-            repo=FakeRepo(repo_id='gentoo', location='/var/gentoo/repos/gentoo'))))
-        self.assertOut("add     dev-util/diffball-1.0::gentoo")
-
+    def test_reinstall_repo(self):
         self.formatter.format(
             FakeOp(FakeEbuildSrc('dev-util/diffball-1.2',
                    repo=FakeRepo(repo_id='gentoo', location='/var/gentoo/repos/gentoo')),

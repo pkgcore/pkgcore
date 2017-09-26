@@ -123,12 +123,22 @@ class BaseFormatterTest(object):
         self.formatter.end()
         self.assertOut(suffix=())
 
+
 class TestBasicFormatter(BaseFormatterTest, TestCase):
+
     formatterClass = BasicFormatter
-    def test_op(self):
+
+    def test_install(self):
         # Make sure we ignore versions...
         self.formatter.format(FakeOp(FakeMutatedPkg('dev-util/diffball-1.1')))
         self.assertOut('dev-util/diffball')
+
+    def test_reinstall(self):
+        self.formatter.format(
+            FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.4'),
+            FakeMutatedPkg('app-arch/bzip2-1.0.4')))
+        self.assertOut('app-arch/bzip2')
+
 
 class TestPkgcoreFormatter(BaseFormatterTest, TestCase):
     formatterClass = PkgcoreFormatter

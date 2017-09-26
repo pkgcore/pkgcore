@@ -303,15 +303,15 @@ def load_repos_conf(path):
     repos = {}
 
     for fp in sorted_scan(os.path.realpath(path), follow_symlinks=True, nonexistent=True):
+        config = ConfigParser()
         try:
             with open(fp) as f:
-                config = ConfigParser()
                 config.read_file(f)
         except EnvironmentError as e:
             if e.errno == errno.EACCES:
                 raise_from(errors.PermissionDeniedError(fp))
             raise_from(errors.ParsingError("repos.conf: '%s'" % (fp,), exception=e))
-        except configparser.ParsingError as e:
+        except ConfigParser.exceptions as e:
             raise_from(errors.ParsingError("repos.conf: '%s'" % (fp,), exception=e))
 
         defaults_data = config.defaults()

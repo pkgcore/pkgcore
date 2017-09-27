@@ -41,10 +41,6 @@ stages:
     if: tag IS present
 
 jobs:
-  fast_finish: true
-  allow_failures:
-    - stage: lint
-
   include:
     # do various lint scans
     - stage: lint
@@ -54,6 +50,7 @@ jobs:
         - cp -av pkgdist/requirements/* requirements/
         - pip install -r requirements/lint.txt
       script: ./pkgdist/pylint src/pkgcore
+      after_success:
 
     # push tarball and wheels to pypi
     - stage: deploy

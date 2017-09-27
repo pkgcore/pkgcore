@@ -3,4 +3,6 @@
 
 source "${PKGCORE_EBD_PATH}"/eapi/6.bash
 
+PKGCORE_BANNED_FUNCS+=( libopts )
+
 :

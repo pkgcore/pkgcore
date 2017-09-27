@@ -362,7 +362,9 @@ class TestPaludisFormatter(CountingFormatterTest, TestCase):
             Color('fg', 'blue'), "{:0} ", Color('fg', 'yellow'), "[R] ",
             Color('fg', 'red'), "-bootstrap ", Color('fg', 'green'), "static")
 
+
 class TestPortageFormatter(BaseFormatterTest, TestCase):
+
     formatterClass = PortageFormatter
 
     def setUp(self):
@@ -494,16 +496,20 @@ class TestPortageFormatter(BaseFormatterTest, TestCase):
             Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6', Reset(),
             ' ', Color('fg', 'blue'), Bold(), '[1.0.1-r1]', Reset())
 
-    def test_fetch_restrict(self):
-        # no fetchables
+    def test_fetch_restrict_no_fetchables(self):
         self.formatter.format(FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6', restrict='fetch')))
         self.assertOut('[', Color('fg', 'green'), 'ebuild', Reset(),
             '  ', Color('fg', 'green'), Bold(), 'N', Reset(),
             ' ', Color('fg', 'green'), Bold(), 'f', Reset(), '   ] ',
             Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6', Reset())
 
-        # TODO: add tests for fetch restricted ebuilds with required fetchables
-        # for both pre-fetched and missing fetchables cases
+    # TODO
+    def test_fetch_restrict_missing_fetchables(self):
+        pass
+
+    # TODO
+    def test_fetch_restrict_prefetched_fetchables(self):
+        pass
 
     def test_changed_use(self):
         self.formatter.format(

@@ -617,8 +617,7 @@ class TestPortageVerboseFormatter(TestPortageFormatter):
         kwargs.setdefault("domain_settings", {"ACCEPT_KEYWORDS": ("amd64",)})
         return TestPortageFormatter.newFormatter(self, **kwargs)
 
-    def test_install_symbols(self):
-        # unkeyworded
+    def test_install_symbol_unkeyworded(self):
         self.formatter.format(
             FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6', repo=self.repo1, keywords=())))
         self.assertOut('[', Color('fg', 'green'), 'ebuild', Reset(),
@@ -626,7 +625,7 @@ class TestPortageVerboseFormatter(TestPortageFormatter):
             Color('fg', 'red'), Bold(), '*', Reset(), '] ',
             Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6%s' % self.repo_id(self.repo1), Reset())
 
-        # unstable arch
+    def test_install_symbol_unstable(self):
         self.formatter.format(
             FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6', repo=self.repo1, keywords=('~amd64',))))
         self.assertOut('[', Color('fg', 'green'), 'ebuild', Reset(),
@@ -634,7 +633,7 @@ class TestPortageVerboseFormatter(TestPortageFormatter):
             Color('fg', 'yellow'), Bold(), '~', Reset(), '] ',
             Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6%s' % self.repo_id(self.repo1), Reset())
 
-        # masked
+    def test_install_symbol_masked(self):
         self.formatter.format(
            FakeOp(FakeEbuildSrc('app-arch/bzip2-2.1', repo=self.repo1)))
         self.assertOut('[', Color('fg', 'green'), 'ebuild', Reset(),

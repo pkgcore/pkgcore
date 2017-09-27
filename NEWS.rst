@@ -3,7 +3,7 @@ Release Notes
 =============
 
 --------------------------
-pkgcore 0.9.7 (2017-??-??)
+pkgcore 0.9.7 (2017-09-27)
 --------------------------
 
 - Use a more dynamic pkgcore._const for wheel-based installs instead of the

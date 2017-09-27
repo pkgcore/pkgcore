@@ -27,8 +27,7 @@ def run(script_name):
         sys.exit(1)
 
     tool = Tool(script.argparser)
-    ret = tool()
-    raise SystemExit(ret)
+    sys.exit(tool())
 
 
 if __name__ == '__main__':

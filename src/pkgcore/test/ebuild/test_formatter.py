@@ -338,7 +338,7 @@ class TestPaludisFormatter(CountingFormatterTest, TestCase):
             Color('fg', 'blue'), "{:0} ", Color('fg', 'yellow'), "[R] ",
             Color('fg', 'red'), "-static")
 
-    def test_iuse_stripped(self):
+    def test_iuse_defaults(self):
         self.formatter.format(
             FakeOp(self.FakeEbuildSrc('app-arch/bzip2-1.0.3-r6', eapi='1', iuse=['+static', '-junk'], use=['static']),
             FakeMutatedPkg('app-arch/bzip2-1.0.3-r6')))
@@ -459,7 +459,7 @@ class TestPortageFormatter(BaseFormatterTest, TestCase):
             Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6', Reset(),
             ' USE="', Color('fg', 'yellow'), Bold(), '-static', Reset(), '%"')
 
-    def test_iuse_stripped(self):
+    def test_iuse_defaults(self):
         self.formatter.format(
             FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6', eapi='1', iuse=['+static', '-junk'], use=['static']),
             FakeMutatedPkg('app-arch/bzip2-1.0.3-r6')))
@@ -469,14 +469,25 @@ class TestPortageFormatter(BaseFormatterTest, TestCase):
             ' USE="', Color('fg', 'yellow'), Bold(), 'static', Reset(), "%* ",
             Color('fg', 'yellow'), Bold(), '-junk', Reset(), '%"')
 
-    def test_use(self):
-        self.formatter.format(
-            FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6', iuse=['static'], use=['static']),
-            FakeMutatedPkg('app-arch/bzip2-1.0.3-r6')))
+    def test_use_enabled(self):
+        self.formatter.format(FakeOp(
+            FakeEbuildSrc('app-arch/bzip2-1.0.3-r6', iuse=['static'], use=['static']),
+            FakeMutatedPkg('app-arch/bzip2-1.0.3-r6', iuse=['static']),
+        ))
         self.assertOut('[', Color('fg', 'green'), 'ebuild', Reset(),
             '   ', Color('fg', 'yellow'), Bold(), 'R', Reset(), '    ] ',
             Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6', Reset(),
-            ' USE="', Color('fg', 'yellow'), Bold(), 'static', Reset(), '%*"')
+            ' USE="', Color('fg', 'green'), Bold(), 'static', Reset(), '*"')
+
+    def test_use_disabled(self):
+        self.formatter.format(FakeOp(
+            FakeEbuildSrc('app-arch/bzip2-1.0.3-r6', iuse=['static']),
+            FakeMutatedPkg('app-arch/bzip2-1.0.3-r6', iuse=['static'], use=['static']),
+        ))
+        self.assertOut('[', Color('fg', 'green'), 'ebuild', Reset(),
+            '   ', Color('fg', 'yellow'), Bold(), 'R', Reset(), '    ] ',
+            Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6', Reset(),
+            ' USE="', Color('fg', 'green'), Bold(), '-static', Reset(), '*"')
 
     def test_multiuse(self):
         self.formatter.format(
@@ -511,28 +522,43 @@ class TestPortageFormatter(BaseFormatterTest, TestCase):
     def test_fetch_restrict_prefetched_fetchables(self):
         pass
 
-    def test_changed_use(self):
-        self.formatter.format(
-            FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6', iuse=['static', 'bootstrap'], use=['static']),
-            FakeMutatedPkg('app-arch/bzip2-1.0.3-r6', iuse=['static'], use=['static'])))
+    def test_added_iuse_disabled(self):
+        self.formatter.format(FakeOp(
+            FakeEbuildSrc('app-arch/bzip2-1.0.3-r6', iuse=['bootstrap']),
+            FakeMutatedPkg('app-arch/bzip2-1.0.3-r6'),
+        ))
         self.assertOut('[', Color('fg', 'green'), 'ebuild', Reset(),
             '   ', Color('fg', 'yellow'), Bold(), 'R', Reset(), '    ] ',
             Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6', Reset(),
             ' USE="', Color('fg', 'yellow'), Bold(), '-bootstrap', Reset(), '%"')
-        self.formatter.format(
-            FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6',
-                iuse=['static', 'bootstrap', 'perl', 'foobar', 'rice'],
-                use=['static', 'rice']),
-            FakeMutatedPkg('app-arch/bzip2-1.0.3-r6',
-                iuse=['bootstrap', 'foobar', 'rice', 'kazaam'],
-                use=['foobar'])))
+
+    def test_added_iuse_enabled(self):
+        self.formatter.format(FakeOp(
+            FakeEbuildSrc('app-arch/bzip2-1.0.3-r6', iuse=['static'], use=['static']),
+            FakeMutatedPkg('app-arch/bzip2-1.0.3-r6'),
+        ))
         self.assertOut('[', Color('fg', 'green'), 'ebuild', Reset(),
             '   ', Color('fg', 'yellow'), Bold(), 'R', Reset(), '    ] ',
-            Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6', Reset(), ' USE="',
-            Color('fg', 'green'), Bold(), 'rice', Reset(), '* ',
-            Color('fg', 'yellow'), Bold(), 'static', Reset(), '%* ',
-            Color('fg', 'green'), Bold(), '-foobar', Reset(), '* ',
-            Color('fg', 'yellow'), Bold(), '-perl', Reset(), '%"')
+            Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6', Reset(),
+            ' USE="', Color('fg', 'yellow'), Bold(), 'static', Reset(), '%*"')
+
+    def test_dropped_iuse_disabled(self):
+        self.formatter.format(FakeOp(
+            FakeEbuildSrc('app-arch/bzip2-1.0.3-r6'),
+            FakeMutatedPkg('app-arch/bzip2-1.0.3-r6', iuse=['bootstrap']),
+        ))
+        self.assertOut('[', Color('fg', 'green'), 'ebuild', Reset(),
+            '   ', Color('fg', 'yellow'), Bold(), 'R', Reset(), '    ] ',
+            Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6', Reset())
+
+    def test_dropped_iuse_enabled(self):
+        self.formatter.format(FakeOp(
+            FakeEbuildSrc('app-arch/bzip2-1.0.3-r6'),
+            FakeMutatedPkg('app-arch/bzip2-1.0.3-r6', iuse=['static'], use=['static']),
+        ))
+        self.assertOut('[', Color('fg', 'green'), 'ebuild', Reset(),
+            '   ', Color('fg', 'yellow'), Bold(), 'R', Reset(), '    ] ',
+            Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6', Reset())
 
     def test_use_expand(self):
         self.formatter = self.newFormatter(use_expand=set(["foo", "bar"]))
@@ -717,15 +743,27 @@ class TestPortageVerboseFormatter(TestPortageFormatter):
             Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6:2/foo', Reset(),
             ' ', Color('fg', 'blue'), Bold(), '[1.0.1-r1:0]', Reset())
 
-    def test_changed_use(self):
-        self.formatter.format(
-            FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6', iuse=['static', 'bootstrap'], use=['static']),
-            FakeMutatedPkg('app-arch/bzip2-1.0.3-r6', iuse=['static'], use=['static'])))
+    def test_dropped_iuse_disabled(self):
+        self.formatter.format(FakeOp(
+            FakeEbuildSrc('app-arch/bzip2-1.0.3-r6'),
+            FakeMutatedPkg('app-arch/bzip2-1.0.3-r6', iuse=['bootstrap']),
+        ))
         self.assertOut('[', Color('fg', 'green'), 'ebuild', Reset(),
             '   ', Color('fg', 'yellow'), Bold(), 'R', Reset(), '    ] ',
             Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6', Reset(),
-            ' USE="', Color('fg', 'red'), Bold(), 'static', Reset(), ' ',
-            Color('fg', 'yellow'), Bold(), '-bootstrap', Reset(), '%"')
+            ' USE="(', Color('fg', 'yellow'), Bold(), '-bootstrap', Reset(), '%)"')
+
+    def test_dropped_iuse_enabled(self):
+        self.formatter.format(FakeOp(
+            FakeEbuildSrc('app-arch/bzip2-1.0.3-r6'),
+            FakeMutatedPkg('app-arch/bzip2-1.0.3-r6', iuse=['static'], use=['static']),
+        ))
+        self.assertOut('[', Color('fg', 'green'), 'ebuild', Reset(),
+            '   ', Color('fg', 'yellow'), Bold(), 'R', Reset(), '    ] ',
+            Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6', Reset(),
+            ' USE="(', Color('fg', 'yellow'), Bold(), '-static', Reset(), '%*)"')
+
+    def test_changed_use(self):
         self.formatter.format(
             FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6',
                 iuse=['static', 'bootstrap', 'perl', 'foobar', 'rice'],

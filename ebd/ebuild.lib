@@ -181,9 +181,6 @@ __load_eapi_libs() {
 	source "${PKGCORE_EBD_PATH}"/eapi/common.lib || die "failed sourcing eapi/common.lib"
 	source "${PKGCORE_EBD_PATH}/eapi/${EAPI}.lib" || die "failed loading eapi/${EAPI}.lib"
 
-	# verify active bash version
-	__check_bash_version
-
 	# override banned functions
 	local func
 	for func in "${PKGCORE_BANNED_FUNCS[@]}"; do
@@ -242,17 +239,6 @@ __generate_initial_ebuild_environ() {
 		echo "source \"${T}\"/.initial_environ"
 	else
 		__timed_call __environ_dump || die "failed dumping env"
-	fi
-}
-
-# Check if the current bash version is compatible with a package's EAPI version.
-__check_bash_version() {
-	[[ -z ${PKGCORE_BASH_COMPAT} ]] && return
-	local maj=${PKGCORE_BASH_COMPAT%.*} min=${PKGCORE_BASH_COMPAT#*.}
-
-	if [[ ${BASH_VERSINFO[0]} -lt ${maj} ]] || \
-			[[ ${BASH_VERSINFO[0]} -eq ${maj} && ${BASH_VERSINFO[1]} -lt ${min} ]]; then
-		die "EAPI ${EAPI} requires >=bash-${maj}.${min}"
 	fi
 }
 

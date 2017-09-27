@@ -8,6 +8,7 @@ from snakeoil.demandload import demandload
 
 demandload(
     "functools:partial",
+    'snakeoil.process.spawn:bash_version',
     "pkgcore.ebuild:atom",
     "pkgcore.log:logger",
 )
@@ -167,6 +168,11 @@ class EAPI(object):
             raise ValueError(
                 "EAPI %s is already known/instantiated- %r" %
                 (eapi._magic, pre_existing))
+        if bash_version() < eapi.options.bash_compat:
+            # hard exit if the system doesn't have an adequate bash installed
+            raise SystemExit(
+                "EAPI %s requires >=bash-%s, system version: %s" % (
+                eapi, eapi.options.bash_compat, bash_version()))
         cls.known_eapis[eapi._magic] = eapi
         return eapi
 

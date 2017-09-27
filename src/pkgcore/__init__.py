@@ -6,4 +6,4 @@ Pkgcore manager base module.
 """
 
 __title__ = 'pkgcore'
-__version__ = '0.9.7'
+__version__ = '0.9.8'

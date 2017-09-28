@@ -24,8 +24,7 @@ import os
 import sys
 
 from snakeoil import compatibility, modules
-from snakeoil.cli import arghparse
-from snakeoil.cli.tool import Tool as BaseTool
+from snakeoil.cli import arghparse, tool
 from snakeoil.demandload import demandload
 
 from pkgcore.config import load_config, errors
@@ -516,7 +515,7 @@ def convert_to_restrict(sequence, default=packages.AlwaysTrue):
     return l or [default]
 
 
-class Tool(BaseTool):
+class Tool(tool.Tool):
     """Pkgcore-specific commandline utility functionality."""
 
     def parse_args(self, *args, **kwargs):

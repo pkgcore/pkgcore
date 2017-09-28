@@ -16,8 +16,8 @@ install:
 before_script:
 # install CI deps
 - git clone https://github.com/pkgcore/pkgdist.git
-- cp -av pkgdist/requirements/* requirements/
-- pip install -r requirements/ci.txt
+- cp -R pkgdist/requirements/* requirements/
+- requirements/pip.sh -rrequirements/ci.txt
 # Make sure the actual install-info binary is first in PATH since
 # Debian-based distros use a wrapper script that outputs warnings and
 # breaks the info file merge trigger test.
@@ -47,9 +47,9 @@ jobs:
       python: 2.7
       before_script:
         - git clone https://github.com/pkgcore/pkgdist.git
-        - cp -av pkgdist/requirements/* requirements/
+        - cp -R pkgdist/requirements/* requirements/
         - pip install -r requirements/lint.txt
-      script: ./pkgdist/pylint src/pkgcore
+      script: pkgdist/pylint src/pkgcore
       after_success:
 
     # push tarball and wheels to pypi
@@ -66,8 +66,8 @@ jobs:
         - CIBW_BEFORE_BUILD="{pip} install -r requirements/wheel.txt"
       before_script:
         - git clone https://github.com/pkgcore/pkgdist.git
-        - cp -av pkgdist/requirements/* requirements/
-      script: ./pkgdist/build-dist-files.sh
+        - cp -R pkgdist/requirements/* requirements/
+      script: pkgdist/build-dist-files.sh
       after_success:
 
     # push tarball to github
@@ -75,8 +75,8 @@ jobs:
       python: 3.6
       before_script:
         - git clone https://github.com/pkgcore/pkgdist.git
-        - cp -av pkgdist/requirements/* requirements/
-        - pip install -r requirements/docs.txt
+        - cp -R pkgdist/requirements/* requirements/
+        - pip install -r requirements/sdist.txt
       script: python setup.py sdist
       after_success:
       deploy:

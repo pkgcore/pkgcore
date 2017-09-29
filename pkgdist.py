@@ -287,9 +287,12 @@ def cython_exts(build_deps=None, build_exts=None, build_opts=None, path=MODULEDI
         build_deps.append('cython')
         exts.extend(cython_exts)
 
-    build_exts.extend(
-        Extension(os.path.splitext(ext)[0].replace(os.path.sep, '.'), [ext], **build_opts)
-        for ext in exts)
+    for ext in exts:
+        # strip package dir
+        module = ext.rpartition(PACKAGEDIR)[-1].lstrip(os.path.sep)
+        # strip file extension and translate to module namespace
+        module = os.path.splitext(module)[0].replace(os.path.sep, '.')
+        build_exts.append(Extension(module, [ext], **build_opts))
 
     return build_deps, build_exts
 

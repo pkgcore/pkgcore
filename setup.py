@@ -31,12 +31,9 @@ class sdist(pkgdist.sdist):
         """Generate bash function lists for releases."""
         import shutil
 
-        # this is icky, but covers up cwd changing issues.
-        cwd = os.getcwd()
-
         # generate function lists so they don't need to be created on install
-        write_pkgcore_ebd_funclists('/', 'ebd', os.path.join(cwd, 'bin'))
-        shutil.copytree(os.path.join(cwd, 'ebd', 'funcnames'),
+        write_pkgcore_ebd_funclists('/', 'ebd', os.path.join(pkgdist.TOPDIR, 'bin'))
+        shutil.copytree(os.path.join(pkgdist.TOPDIR, 'ebd', 'funcnames'),
                         os.path.join(base_dir, 'ebd', 'funcnames'))
 
         pkgdist.sdist.make_release_tree(self, base_dir, files)
@@ -59,7 +56,7 @@ class install(pkgdist.install):
 
             # Generate ebd function lists used for environment filtering if
             # they don't exist (release tarballs contain pre-generated files).
-            if not os.path.exists(os.path.join(os.getcwd(), 'ebd', 'funcnames')):
+            if not os.path.exists(os.path.join(pkgdist.TOPDIR, 'ebd', 'funcnames')):
                 write_pkgcore_ebd_funclists(
                     root, os.path.join(target, EBD_INSTALL_OFFSET),
                     self.install_scripts, self.install_purelib)
@@ -88,17 +85,17 @@ def write_pkgcore_ebd_funclists(root, target, scripts_dir, python_base='.'):
     # generate global function list
     with open(os.path.join(ebd_dir, 'funcnames', 'global'), 'w') as f:
         if subprocess.call(
-                [os.path.join(os.getcwd(), 'ebd', 'generate_global_func_list.bash')],
+                [os.path.join(pkgdist.TOPDIR, 'ebd', 'generate_global_func_list.bash')],
                 cwd=ebd_dir, env=env, stdout=f):
             raise DistutilsExecError("generating global function list failed")
 
     # generate EAPI specific function lists
-    eapis = (x.split('.')[0] for x in os.listdir(os.path.join(os.getcwd(), 'ebd', 'eapi'))
+    eapis = (x.split('.')[0] for x in os.listdir(os.path.join(pkgdist.TOPDIR, 'ebd', 'eapi'))
              if x.split('.')[0].isdigit())
     for eapi in sorted(eapis):
         with open(os.path.join(ebd_dir, 'funcnames', eapi), 'w') as f:
             if subprocess.call(
-                    [os.path.join(os.getcwd(), 'ebd', 'generate_eapi_func_list.bash'), eapi],
+                    [os.path.join(pkgdist.TOPDIR, 'ebd', 'generate_eapi_func_list.bash'), eapi],
                     cwd=ebd_dir, env=env, stdout=f):
                 raise DistutilsExecError(
                     "generating EAPI %s function list failed" % eapi)

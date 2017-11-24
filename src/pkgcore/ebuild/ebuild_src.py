@@ -28,6 +28,7 @@ demandload(
     "snakeoil:chksum",
     "snakeoil:data_source,fileutils",
     'snakeoil.sequences:iflatten_instance',
+    "pkgcore.ebuild:const",
     "pkgcore.ebuild.eapi:get_eapi",
     "pkgcore:fetch",
     "pkgcore.log:logger",
@@ -245,6 +246,10 @@ class base(metadata.package):
     def mandatory_phases(self):
         return frozenset(
             chain(self.defined_phases, self.eapi.default_phases))
+
+    @property
+    def live(self):
+        return bool(const.VCS_ECLASSES.intersection(self.inherited))
 
     @property
     def P(self):

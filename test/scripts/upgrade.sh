@@ -21,7 +21,7 @@ CHROOT=$(mktemp -p /tmp -d chroot-XXXXXX)
 SNAKEOIL_PATH=/home/test/snakeoil
 PKGCORE_PATH=/home/test/pkgcore
 GENTOO=/var/gentoo/repos/gentoo
-STAGE3=$(curl -Ss http://distfiles.gentoo.org/releases/amd64/autobuilds/latest-stage3-amd64-nomultilib.txt | awk '/^[^#]/ {print $1}')
+STAGE3=$(curl -Ss https://distfiles.gentoo.org/releases/amd64/autobuilds/latest-stage3-amd64-nomultilib.txt | awk '/^[^#]/ {print $1}')
 
 # wipe chroot on exit
 cleanup() {
@@ -29,7 +29,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
-curl "http://distfiles.gentoo.org/releases/amd64/autobuilds/${STAGE3}" | tar -jx -C "${CHROOT}" 2>/dev/null
+curl "https://distfiles.gentoo.org/releases/amd64/autobuilds/${STAGE3}" | tar -jx -C "${CHROOT}" 2>/dev/null
 chmod 777 "${CHROOT}"/tmp
 
 # Done after untarring to ignore previous permission errors when unpacking

@@ -539,7 +539,7 @@ class buildable(ebd, setup_mixin, format.build):
     # XXX this is unclean- should be handing in strictly what is build
     # env, rather then dumping domain settings as env.
     def __init__(self, domain, pkg, verified_files, eclass_cache,
-                 observer=None, **kwargs):
+                 observer=None, force_test=False, **kwargs):
         """
         :param pkg: :obj:`pkgcore.ebuild.ebuild_src.package` instance we'll be
             building
@@ -564,11 +564,11 @@ class buildable(ebd, setup_mixin, format.build):
         # this needs to be deprecated and dropped from future EAPIs
         self.env["PORTDIR"] = eclass_cache.location
 
-        self.run_test = self.feat_or_bool("test", domain_settings)
+        self.run_test = force_test or self.feat_or_bool("test", domain_settings)
         self.allow_failed_test = self.feat_or_bool("test-fail-continue", domain_settings)
         if "test" in self.restrict:
             self.run_test = False
-        elif "test" not in use:
+        elif not force_test and "test" not in use:
             if self.run_test:
                 logger.warning("disabling test for %s due to test use flag being disabled", pkg)
             self.run_test = False
@@ -914,11 +914,12 @@ class src_operations(ebuild_mixin, format.build_operations):
         if format_options is None:
             format_options = {}
         allow_fetching = format_options.get("allow_fetching", False)
+        force_test = format_options.get("force_test", False)
         return buildable(
             self.domain, self.pkg, verified_files,
             self._eclass_cache,
             use_override=self._use_override,
-            clean=clean, allow_fetching=allow_fetching)
+            clean=clean, allow_fetching=allow_fetching, force_test=force_test)
 
 
 class misc_operations(ebd):

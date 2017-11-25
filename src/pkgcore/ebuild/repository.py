@@ -111,11 +111,15 @@ class repo_operations(_repo_ops.operations):
                 continue
 
             # calculate checksums for fetched distfiles
-            for fetchable in fetchables.itervalues():
-                d = dict(zip(
-                    required_chksums,
-                    get_chksums(pjoin(distdir, fetchable.filename), *required_chksums)))
-                fetchable.chksums = d
+            try:
+                for fetchable in fetchables.itervalues():
+                    chksums = get_chksums(
+                        pjoin(distdir, fetchable.filename), *required_chksums)
+                    fetchable.chksums = dict(zip(required_chksums, chksums))
+            except KeyError as e:
+                observer.error('failed generating chksum: %s' % e.message)
+                ret.append(key_query)
+                break
 
             fetchables.update(pkgdir_fetchables)
             observer.info("generating manifest: %s::%s", key_query, self.repo.repo_id)

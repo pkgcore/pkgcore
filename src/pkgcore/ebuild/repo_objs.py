@@ -374,6 +374,7 @@ class RepoConfig(syncable.tree):
     layout_offset = "metadata/layout.conf"
 
     default_hashes = ('size', 'blake2b', 'sha512')
+    default_required_hashes = ('size', 'sha512')
     supported_profile_formats = ('pms', 'portage-1', 'portage-2', 'profile-set')
     supported_cache_formats = ('pms', 'md5-dict')
 
@@ -412,6 +413,13 @@ class RepoConfig(syncable.tree):
         else:
             hashes = self.default_hashes
 
+        required_hashes = data.get('manifest-required-hashes', '').lower().split()
+        if required_hashes:
+            required_hashes = ['size'] + required_hashes
+            required_hashes = tuple(iter_stable_unique(required_hashes))
+        else:
+            required_hashes = self.default_required_hashes
+
         manifest_policy = data.get('use-manifests', 'strict').lower()
         d = {
             'disabled': (manifest_policy == 'false'),
@@ -419,6 +427,7 @@ class RepoConfig(syncable.tree):
             'thin': (data.get('thin-manifests', '').lower() == 'true'),
             'signed': (data.get('sign-manifests', 'true').lower() == 'true'),
             'hashes': hashes,
+            'required-hashes': required_hashes,
         }
 
         # complain if profiles/repo_name is missing

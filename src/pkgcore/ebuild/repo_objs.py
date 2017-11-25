@@ -427,7 +427,7 @@ class RepoConfig(syncable.tree):
             'thin': (data.get('thin-manifests', '').lower() == 'true'),
             'signed': (data.get('sign-manifests', 'true').lower() == 'true'),
             'hashes': hashes,
-            'required-hashes': required_hashes,
+            'required_hashes': required_hashes,
         }
 
         # complain if profiles/repo_name is missing

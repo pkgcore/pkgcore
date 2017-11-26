@@ -32,7 +32,7 @@ class sdist(pkgdist.sdist):
         import shutil
 
         # generate function lists so they don't need to be created on install
-        write_pkgcore_ebd_funclists('/', 'ebd', os.path.join(pkgdist.TOPDIR, 'bin'))
+        write_pkgcore_ebd_funclists('/', 'ebd')
         shutil.copytree(os.path.join(pkgdist.TOPDIR, 'ebd', 'funcnames'),
                         os.path.join(base_dir, 'ebd', 'funcnames'))
 
@@ -62,7 +62,7 @@ class install(pkgdist.install):
                     self.install_scripts, self.install_purelib)
 
 
-def write_pkgcore_ebd_funclists(root, target, scripts_dir, python_base='.'):
+def write_pkgcore_ebd_funclists(root, target, python_base='.'):
     "Generate bash function lists from ebd implementation for env filtering."""
     ebd_dir = target
     if root != '/':
@@ -77,7 +77,7 @@ def write_pkgcore_ebd_funclists(root, target, scripts_dir, python_base='.'):
     # Add scripts dir to PATH and set the current python binary for filter-env
     # usage in global scope.
     env = {
-        'PATH': os.pathsep.join([os.path.abspath(scripts_dir), os.environ.get('PATH', '')]),
+        'PATH': os.pathsep.join([pkgdist.SCRIPTS_DIR, os.environ.get('PATH', '')]),
         'PKGCORE_PYTHON_BINARY': sys.executable,
         'PKGCORE_PYTHONPATH': os.path.abspath(python_base),
     }
@@ -200,15 +200,6 @@ if not pkgdist.is_py3k:
             'pkgcore.ebuild._misc', ['src/misc.c']),
     ])
 
-cmdclass = pkgdist_cmds
-cmdclass.update({
-    'sdist': sdist,
-    'build': pkgdist.build,
-    'build_py': pkgdist.build_py2to3,
-    'build_ext': pkgdist.build_ext,
-    'test': test,
-    'install': install,
-})
 
 setup(
     description='package managing framework',
@@ -225,7 +216,14 @@ setup(
             skip=glob.glob('shell/*/completion')),
     )),
     ext_modules=extensions,
-    cmdclass=cmdclass,
+    cmdclass=dict(
+        pkgdist_cmds,
+        sdist=sdist,
+        build_py=pkgdist.build_py2to3,
+        build_ext=pkgdist.build_ext,
+        test=test,
+        install=install,
+    ),
     classifiers=[
         'License :: OSI Approved :: BSD License',
         'License :: OSI Approved :: GNU General Public License v2 (GPLv2)',

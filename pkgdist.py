@@ -43,6 +43,8 @@ READTHEDOCS = os.environ.get('READTHEDOCS', None) == 'True'
 
 # top level repo/tarball directory
 TOPDIR = os.path.dirname(os.path.abspath(__file__))
+# executable scripts directory
+SCRIPTS_DIR = os.path.join(TOPDIR, 'bin')
 
 
 def find_moduledir(searchdir=TOPDIR):
@@ -152,20 +154,23 @@ def setup():
 
     cmds = {
         'sdist': sdist,
+        'build_py': build_py,
     }
 
     # check for scripts
-    if os.path.exists(os.path.join(TOPDIR, 'bin')):
-        params['scripts'] = os.listdir('bin')
+    if os.path.exists(SCRIPTS_DIR):
+        params['scripts'] = os.listdir(SCRIPTS_DIR)
         cmds['build_scripts'] = build_scripts
 
     # check for docs
     if os.path.exists(os.path.join(TOPDIR, 'doc')):
+        cmds['build'] = build
         cmds['build_docs'] = build_docs
         cmds['install_docs'] = install_docs
 
     # check for man pages
     if os.path.exists(os.path.join(TOPDIR, 'doc', 'man')):
+        cmds['build'] = build
         cmds['build_man'] = build_man
         cmds['install_man'] = install_man
 
@@ -322,11 +327,11 @@ class sdist(dst_sdist.sdist):
         """
         with syspath(PACKAGEDIR, MODULE == 'snakeoil'):
             from snakeoil.version import get_git_version
-        log.info('generating _verinfo')
         data = get_git_version(base_dir)
         if not data:
             return
         path = os.path.join(base_dir, '_verinfo.py')
+        log.info('generating version info: %s' % path)
         with open(path, 'w') as f:
             f.write('version_info=%r' % (data,))
 
@@ -391,7 +396,7 @@ class build_py(dst_build_py.build_py):
         if not os.path.exists(ver_path):
             with syspath(PACKAGEDIR, MODULE == 'snakeoil'):
                 from snakeoil.version import get_git_version
-            log.info('generating _verinfo')
+            log.info('generating version info: %s' % ver_path)
             with open(ver_path, 'w') as f:
                 f.write("version_info=%r" % (get_git_version('.'),))
             self.byte_compile([ver_path])
@@ -722,7 +727,7 @@ class build_scripts(dst_build_scripts.build_scripts):
         script_dir = os.path.join(
             os.path.dirname(self.build_dir), '.generated_scripts')
         self.mkpath(script_dir)
-        self.scripts = [os.path.join(script_dir, x) for x in os.listdir('bin')]
+        self.scripts = [os.path.join(script_dir, x) for x in os.listdir(SCRIPTS_DIR)]
 
     def run(self):
         for script in self.scripts:

@@ -36,11 +36,11 @@ after_success:
 
 stages:
   - name: test
-    if: NOT branch = lint
+    if: NOT branch IN (lint, deploy)
   - name: lint
     if: branch = lint
   - name: deploy
-    if: (type IN (api, cron)) OR (branch = travis-ci AND type = push) OR (branch = master AND type IN (push, api) AND tag IS present)
+    if: (type IN (api, cron)) OR (branch IN (travis-ci, deploy)) OR (branch = master AND type IN (push, api) AND tag IS present)
 
 jobs:
   include:

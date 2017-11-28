@@ -201,7 +201,7 @@ if not pkgdist.is_py3k:
     ])
 
 
-setup(
+setup(**dict(pkgdist_setup,
     description='package managing framework',
     url='https://github.com/pkgcore/pkgcore',
     license='BSD/GPLv2',
@@ -213,8 +213,9 @@ setup(
         pkgdist.data_mapping('share/zsh/site-functions', 'shell/zsh/completion'),
         pkgdist.data_mapping(
             os.path.join(LIBDIR_INSTALL_OFFSET, 'shell'), 'shell',
-            skip=glob.glob('shell/*/completion')),
-    )),
+            skip=glob.glob('shell/*/completion'),
+            ),
+        )),
     ext_modules=extensions,
     cmdclass=dict(
         pkgdist_cmds,
@@ -223,7 +224,7 @@ setup(
         build_ext=pkgdist.build_ext,
         test=test,
         install=install,
-    ),
+        ),
     classifiers=[
         'License :: OSI Approved :: BSD License',
         'License :: OSI Approved :: GNU General Public License v2 (GPLv2)',
@@ -231,6 +232,6 @@ setup(
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
-    ],
-    **pkgdist_setup
+        ],
+    )
 )

@@ -4,6 +4,11 @@ python:
 - 3.4
 - 3.5
 - 3.6
+- 3.7-dev
+matrix:
+  fast_finish: true
+  allow_failures:
+  - python: 3.7-dev
 addons:
   apt:
     packages:
@@ -14,7 +19,6 @@ cache:
 install:
 - pip install -U pip
 before_script:
-# install CI deps
 - git clone https://github.com/pkgcore/pkgdist.git
 - cp -R pkgdist/requirements/* requirements/
 - requirements/pip.sh -rrequirements/ci.txt
@@ -36,9 +40,7 @@ stages:
   - name: lint
     if: branch = lint
   - name: deploy
-    if: branch = master
-    if: type IN (push, api)
-    if: tag IS present
+    if: (type IN (api, cron)) OR (branch = travis-ci AND type = push) OR (branch = master AND type IN (push, api) AND tag IS present)
 
 jobs:
   include:
@@ -63,7 +65,8 @@ jobs:
         - secure: j/lUk3RkNuas+wiMdoWsC2j7emirtMRz6G/4OVUf1+X9aFLSLo5jpY8C4yZJPb0FuCdYEjfKsq6aMOADwwMg6aXbXj+u5frqhUYAqBELR85G7gRBoLzcqj9YaRVsiIf9rF14xlueCM2cK08rDlkJwHr4fQZkNBZnbZ5+8MvwsO0=
         - CIBW_PLATFORM=linux
         - CIBW_SKIP="cp26-* cp33-*"
-        - CIBW_BEFORE_BUILD="{pip} install -r requirements/wheel.txt"
+        - CIBW_BEFORE_BUILD="{pip} install -r requirements/wheel.txt -r requirements/test.txt"
+        - CIBW_TEST_COMMAND="py.test --pyargs pkgcore"
       before_script:
         - git clone https://github.com/pkgcore/pkgdist.git
         - cp -R pkgdist/requirements/* requirements/
@@ -78,13 +81,13 @@ jobs:
         - cp -R pkgdist/requirements/* requirements/
         - pip install -r requirements/sdist.txt
       script: python setup.py sdist
-      after_success:
+      after_success: tar -ztf dist/*.tar.gz | sort
       deploy:
         provider: releases
         api_key:
           secure: M+rX3BOy9kv2hEyeBOdjTf9hXOvrLYE8VsX/DVsPt4ayve9c0xXFjWhXBEd2vKFqqcN7WsPRycwfr8XQtOpmURc14q8SdpTtcmQimm5twtwpiA9rXWO/MG9ELaFvU672Lw9NFvzq/scGnqsNzszVC0prxCXS+fb9g4z4sKA8VLM=
         file_glob: true
-        file: dist/pkgcore-*.tar.gz
+        file: dist/*.tar.gz
         skip_cleanup: true
         on:
           tags: true

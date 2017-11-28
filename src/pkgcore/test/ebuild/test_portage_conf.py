@@ -45,11 +45,12 @@ class TestPortageConfig(TempDirMixin, TestCase):
         self.assertEqual({}, d)
 
         # unreadable file
-        d = {}
-        with NamedTemporaryFile() as f:
-            os.chmod(f.name, stat.S_IWUSR)
-            self.assertRaises(
-                errors.PermissionDeniedError, load_make_conf, d, f.name)
+        if os.getuid() != 0:
+            d = {}
+            with NamedTemporaryFile() as f:
+                os.chmod(f.name, stat.S_IWUSR)
+                self.assertRaises(
+                    errors.PermissionDeniedError, load_make_conf, d, f.name)
 
         # overrides and incrementals
         with NamedTemporaryFile() as f:
@@ -96,10 +97,11 @@ class TestPortageConfig(TempDirMixin, TestCase):
             pjoin(self.dir, 'repos.conf'))
 
         # unreadable file
-        with NamedTemporaryFile() as f:
-            os.chmod(f.name, stat.S_IWUSR)
-            self.assertRaises(
-                errors.PermissionDeniedError, load_repos_conf, f.name)
+        if os.getuid() != 0:
+            with NamedTemporaryFile() as f:
+                os.chmod(f.name, stat.S_IWUSR)
+                self.assertRaises(
+                    errors.PermissionDeniedError, load_repos_conf, f.name)
 
         # blank file
         with NamedTemporaryFile() as f:

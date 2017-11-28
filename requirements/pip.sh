@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # `pip install` shim that installs packages passed to it as well as trying to
 # install released build/install deps and then falling back to using git.

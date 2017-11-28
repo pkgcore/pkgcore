@@ -41,11 +41,14 @@ class Test_native_atom(test.TestRestriction):
         self.assertEqual(d.cnf_solutions(True), bd.cnf_solutions())
 
     def test_str_hash(self):
-        for s in ("dev-util/diffball", "=dev-util/diffball-0.7.1",
-            ">foon/bar-1:2[-4,3]", "=foon/bar-2*", "~foon/bar-2.3",
-            "!dev-util/diffball", "!=dev-util/diffball-0.7*",
-            "foon/bar::gentoo", ">=foon/bar-10_alpha1:1::gentoo[-not,use]",
-            "!!dev-util/diffball[use]"):
+        for s in (
+                "dev-util/diffball", "=dev-util/diffball-0.7.1",
+                ">foon/bar-1:2[-4,3]", "=foon/bar-2*", "~foon/bar-2.3",
+                "cat/pkg:0", "cat/pkg:5", "cat/pkg:0/5", "cat/pkg:5/5",
+                "cat/pkg:=", "cat/pkg:0=", "cat/pkg:*",
+                "!dev-util/diffball", "!=dev-util/diffball-0.7*",
+                "foon/bar::gentoo", ">=foon/bar-10_alpha1:1::gentoo[-not,use]",
+                "!!dev-util/diffball[use]"):
             self.assertEqual(str(self.kls(s)), s)
             self.assertEqual(hash(self.kls(s, disable_inst_caching=True)),
                 hash(self.kls(s, disable_inst_caching=True)))

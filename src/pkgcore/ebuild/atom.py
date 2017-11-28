@@ -457,8 +457,12 @@ class atom(boolean.AndRestriction):
                 s = '!' + s
         if self.slot:
             s += ":%s" % self.slot
-            if self.subslot and self.slot_operator == "=":
-                s += "/%s=" % self.subslot
+            if self.subslot:
+                s += "/%s" % self.subslot
+            if self.slot_operator == "=":
+                s += self.slot_operator
+        elif self.slot_operator:
+            s += ":%s" % self.slot_operator
         if self.repo_id:
             s += "::%s" % self.repo_id
         if self.use:

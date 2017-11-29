@@ -1,1 +1,1 @@
-snakeoil>=0.7.5
+snakeoil>=0.7.6

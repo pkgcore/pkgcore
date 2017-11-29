@@ -397,7 +397,7 @@ class setup_mixin(object):
             phase_name, False, True, extra_handlers=additional_commands)
 
 
-def run_generic_phase(pkg, phase, env, userpriv, sandbox,
+def run_generic_phase(pkg, phase, env, userpriv, sandbox, fd_pipes=None,
                       extra_handlers=None, failure_allowed=False, logging=None):
     """
     :param phase: phase to execute
@@ -420,7 +420,7 @@ def run_generic_phase(pkg, phase, env, userpriv, sandbox,
     if env is None:
         env = expected_ebuild_env(pkg)
 
-    ebd = request_ebuild_processor(userpriv=userpriv, sandbox=sandbox)
+    ebd = request_ebuild_processor(userpriv=userpriv, sandbox=sandbox, fd_pipes=fd_pipes)
     # this is a bit of a hack; used until ebd accepts observers that handle
     # the output redirection on its own.  Primary relevance is when
     # stdout/stderr are pointed at a file; we leave buffering on, just

@@ -109,7 +109,7 @@ spawn.atexit_register(shutdown_all_processors)
 
 
 @_single_thread_allowed
-def request_ebuild_processor(userpriv=False, sandbox=None):
+def request_ebuild_processor(userpriv=False, sandbox=None, fd_pipes=None):
     """Request an ebuild_processor instance, creating a new one if needed.
 
     :return: :obj:`EbuildProcessor`
@@ -130,7 +130,7 @@ def request_ebuild_processor(userpriv=False, sandbox=None):
             active_ebp_list.append(x)
             return x
 
-    e = EbuildProcessor(userpriv, sandbox)
+    e = EbuildProcessor(userpriv, sandbox, fd_pipes=fd_pipes)
     active_ebp_list.append(e)
     return e
 
@@ -251,12 +251,12 @@ class EbuildProcessor(object):
 
     __metaclass__ = WeakRefFinalizer
 
-    def __init__(self, userpriv, sandbox):
+    def __init__(self, userpriv, sandbox, fd_pipes=None):
         """
         :param sandbox: enables a sandboxed processor
         :param userpriv: enables a userpriv'd processor
+        :param fd_pipes: mapping from existing fd to fd inside the ebd process
         """
-
         self.lock()
         self.ebd = e_const.EBUILD_DAEMON_PATH
         spawn_opts = {'umask': 0002}
@@ -282,6 +282,9 @@ class EbuildProcessor(object):
         cread, cwrite = os.pipe()
         dread, dwrite = os.pipe()
         self.__sandbox = False
+
+        if fd_pipes is None:
+            fd_pipes = {}
 
         # since it's questionable which spawn method we'll use (if
         # sandbox fex), we ensure the bashrc is invalid.
@@ -315,6 +318,7 @@ class EbuildProcessor(object):
         # force to a neutral dir so that sandbox won't explode if
         # ran from a nonexistent dir
         spawn_opts["cwd"] = e_const.EBD_PATH
+
         # Force the pipes to be high up fd wise so nobody stupidly hits 'em, we
         # start from max-3 to avoid a bug in older bash where it doesn't check
         # if an fd is in use before claiming it.
@@ -322,12 +326,18 @@ class EbuildProcessor(object):
         env.update({
             "PKGCORE_EBD_READ_FD": str(max_fd-4),
             "PKGCORE_EBD_WRITE_FD": str(max_fd-3)})
+
+        # allow any pipe overrides except the ones we use to communicate
+        default_pipes = {0: 0, 1: 1, 2: 2}
+        fd_pipes.update({k: v for k, v in default_pipes.iteritems() if k not in fd_pipes})
+        ebd_pipes = {max_fd-4: cread, max_fd-3: dwrite}
+        fd_pipes.update(ebd_pipes)
+
         # pgid=0: Each ebuild processor is the process group leader for all its
         # spawned children so everything can be terminated easily if necessary.
         self.pid = spawn_func(
             [spawn.BASH_BINARY, self.ebd, "daemonize"],
-            fd_pipes={0: 0, 1: 1, 2: 2, max_fd-4: cread, max_fd-3: dwrite},
-            returnpid=True, env=env, pgid=0, *args, **spawn_opts)[0]
+            fd_pipes=fd_pipes, returnpid=True, env=env, pgid=0, *args, **spawn_opts)[0]
 
         os.close(cread)
         os.close(dwrite)

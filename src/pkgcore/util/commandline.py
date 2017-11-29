@@ -554,10 +554,13 @@ class Tool(tool.Tool):
                 exc = excs[-2] if len(excs) > 1 else excs[-1]
                 self.parser.error("config error: %s" % (exc,))
         elif isinstance(e, operations.OperationError):
-            tb = sys.exc_info()[-1]
-            if not self.parser.debug:
-                tb = None
-            dump_error(e, "Error running an operation", handle=self._errfile, tb=tb)
+            if self.parser.debug:
+                tb = sys.exc_info()[-1]
+                dump_error(e, "Error running an operation", handle=self._errfile, tb=tb)
+            else:
+                excs = list(walk_exception_chain(e))
+                # output the original error message
+                self.parser.error(excs[-1])
         else:
             # exception is unhandled here, fallback to generic handling
             super(Tool, self).handle_exec_exception(e)

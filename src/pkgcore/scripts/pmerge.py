@@ -679,6 +679,7 @@ def main(options, out, err):
     if sys.stdout.isatty():
         out.title('Resolving...')
         out.write(out.bold, ' * ', out.reset, 'Resolving...')
+        out.flush()
     ret = resolver_inst.add_atoms(atoms, skipdeps=skipdeps, finalize=True)
     while ret:
         out.error('resolution failed')

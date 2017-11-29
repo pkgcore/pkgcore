@@ -27,7 +27,9 @@ from snakeoil import compatibility, modules
 from snakeoil.cli import arghparse, tool
 from snakeoil.demandload import demandload
 
-from pkgcore.config import load_config, errors
+from pkgcore import __title__
+from pkgcore.config import load_config
+from pkgcore.config.errors import ParsingError, ConfigurationError
 
 demandload(
     'signal',
@@ -538,13 +540,13 @@ class Tool(tool.Tool):
 
     def handle_exec_exception(self, e):
         """Handle pkgcore-specific runtime exceptions."""
-        if isinstance(e, errors.ParsingError):
+        if isinstance(e, ParsingError):
             if self.parser.debug:
                 tb = sys.exc_info()[-1]
                 dump_error(e, 'Error while parsing arguments', tb=tb)
             else:
                 self.parser.error("config error: %s" % (e,))
-        elif isinstance(e, errors.ConfigurationError):
+        elif isinstance(e, ConfigurationError):
             if self.parser.debug:
                 tb = sys.exc_info()[-1]
                 dump_error(e, "Error in configuration", handle=self._errfile, tb=tb)
@@ -554,13 +556,20 @@ class Tool(tool.Tool):
                 exc = excs[-2] if len(excs) > 1 else excs[-1]
                 self.parser.error("config error: %s" % (exc,))
         elif isinstance(e, operations.OperationError):
-            if self.parser.debug:
-                tb = sys.exc_info()[-1]
-                dump_error(e, "Error running an operation", handle=self._errfile, tb=tb)
-            else:
+            # Output a clean cli error for internal exception types if one
+            # exists otherwise show a debugging traceback.
+            exc = getattr(e, '__cause__', e)
+            cli_error = (
+                getattr(exc, '__module__', None) is not None and
+                exc.__module__.split('.')[0] == __title__ and
+                str(exc) != '')
+            if not self.parser.debug and cli_error:
                 excs = list(walk_exception_chain(e))
                 # output the original error message
                 self.parser.error(excs[-1])
+            else:
+                tb = sys.exc_info()[-1]
+                dump_error(e, "Error running an operation", handle=self._errfile, tb=tb)
         else:
             # exception is unhandled here, fallback to generic handling
             super(Tool, self).handle_exec_exception(e)

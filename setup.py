@@ -32,7 +32,7 @@ class sdist(pkgdist.sdist):
         import shutil
 
         # generate function lists so they don't need to be created on install
-        write_pkgcore_ebd_funclists('/', 'ebd')
+        write_pkgcore_ebd_funclists(root='/', target='ebd')
         shutil.copytree(os.path.join(pkgdist.TOPDIR, 'ebd', 'funcnames'),
                         os.path.join(base_dir, 'ebd', 'funcnames'))
 
@@ -58,12 +58,14 @@ class install(pkgdist.install):
             # they don't exist (release tarballs contain pre-generated files).
             if not os.path.exists(os.path.join(pkgdist.TOPDIR, 'ebd', 'funcnames')):
                 write_pkgcore_ebd_funclists(
-                    root, os.path.join(target, EBD_INSTALL_OFFSET),
-                    self.install_scripts, self.install_purelib)
+                    root=root, target=os.path.join(target, EBD_INSTALL_OFFSET),
+                    scripts_dir=self.install_scripts, python_base=self.install_purelib)
 
 
-def write_pkgcore_ebd_funclists(root, target, python_base='.'):
+def write_pkgcore_ebd_funclists(root, target, scripts_dir=None, python_base='.'): 
     "Generate bash function lists from ebd implementation for env filtering."""
+    if scripts_dir is None:
+        scripts_dir = os.path.join(pkgdist.TOPDIR, 'bin')
     ebd_dir = target
     if root != '/':
         ebd_dir = os.path.join(root, target.lstrip('/'))

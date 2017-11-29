@@ -135,10 +135,10 @@ class fetcher(base.fetcher):
                 except errors.FetchFailed as e:
                     last_exc = sys.exc_info()
                     if not e.resumable:
-                       try:
+                        try:
                             os.unlink(fp)
                             command = self.command
-                       except OSError as oe:
+                        except OSError as oe:
                             raise_from(errors.UnmodifiableFile(fp, oe))
                     else:
                         command = self.resume_command

@@ -99,16 +99,17 @@ class file_handle_output(null_output):
 
 class phase_observer(object):
 
-    def __init__(self, output, semiquiet=True):
+    def __init__(self, output, verbose=None, debug=False):
         self._output = output
-        self._semiquiet = semiquiet
+        self._verbose = verbose
+        self._debug = debug
 
     def phase_start(self, phase):
-        if not self._semiquiet:
+        if self._debug:
             self._output.write("starting %s\n", phase)
 
     def debug(self, msg, *args, **kwds):
-        if not self._semiquiet:
+        if self._debug:
             self._output.debug(msg, *args, **kwds)
 
     info = klass.alias_attr("_output.info")
@@ -117,7 +118,7 @@ class phase_observer(object):
     write = klass.alias_attr("_output.write")
 
     def phase_end(self, phase, status):
-        if not self._semiquiet:
+        if self._debug:
             self._output.write("finished %s: %s\n", phase, status)
 
 # left in place for compatibility sake
@@ -127,11 +128,11 @@ build_observer = phase_observer
 class repo_observer(phase_observer):
 
     def trigger_start(self, hook, trigger):
-        if not self._semiquiet:
+        if self._debug:
             self._output.write("hook %s: trigger: starting %r\n", hook, trigger)
 
     def trigger_end(self, hook, trigger):
-        if not self._semiquiet:
+        if self._debug:
             self._output.write("hook %s: trigger: finished %r\n", hook, trigger)
 
     def installing_fs_obj(self, obj):

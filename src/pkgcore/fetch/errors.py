@@ -6,48 +6,44 @@ errors fetch subsystem may throw
 """
 
 __all__ = (
-    "base", "distdirPerms", "UnmodifiableFile", "UnknownMirror",
+    "distdirPerms", "UnmodifiableFile", "UnknownMirror",
     "RequiredChksumDataMissing"
 )
 
 
-class base(Exception):
-    pass
-
-
-class distdirPerms(base):
+class distdirPerms(Exception):
     def __init__(self, distdir, required):
-        base.__init__(
+        Exception.__init__(
             self, "distdir '%s' required fs attributes weren't enforcable: %s"
             % (distdir, required))
         self.distdir, self.required = distdir, required
 
 
-class UnmodifiableFile(base):
+class UnmodifiableFile(Exception):
     def __init__(self, filename, extra=''):
-        base.__init__(self, "Unable to update file %s, unmodifiable %s"
+        Exception.__init__(self, "Unable to update file %s, unmodifiable %s"
                       % (filename, extra))
         self.filename = filename
 
 
-class UnknownMirror(base):
+class UnknownMirror(Exception):
     def __init__(self, host, uri):
-        base.__init__(self, "uri mirror://%s/%s isn't a known mirror tier"
+        Exception.__init__(self, "uri mirror://%s/%s isn't a known mirror tier"
                       % (host, uri))
         self.host, self.uri = host, uri
 
 
-class RequiredChksumDataMissing(base):
+class RequiredChksumDataMissing(Exception):
     def __init__(self, fetchable, *chksum):
-        base.__init__(self, "chksum(s) %s were configured as required, "
+        Exception.__init__(self, "chksum(s) %s were configured as required, "
                       "but the data is missing from fetchable '%s'"
                       % (', '.join(chksum), fetchable))
         self.fetchable, self.missing_chksum = fetchable, chksum
 
 
-class FetchFailed(base):
+class FetchFailed(Exception):
     def __init__(self, filename, message, resumable=False):
-        base.__init__(self, message)
+        Exception.__init__(self, message)
         self.filename = filename
         self.message = message
         self.resumable = resumable

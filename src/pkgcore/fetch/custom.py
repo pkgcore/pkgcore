@@ -19,10 +19,10 @@ from pkgcore.fetch import errors, base, fetchable
 from pkgcore.config import ConfigHint
 
 
-class MalformedCommand(errors.base):
+class MalformedCommand(Exception):
 
     def __init__(self, command):
-        errors.base.__init__(self, "fetchcommand is malformed: %s" % (command,))
+        Exception.__init__(self, "fetchcommand is malformed: %s" % (command,))
         self.command = command
 
 

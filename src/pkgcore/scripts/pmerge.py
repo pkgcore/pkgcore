@@ -299,7 +299,8 @@ def unmerge(out, err, vdb, targets, options, formatter, world_set=None):
         out.write(pkg.cpvstr)
     out.prefix = []
 
-    repo_obs = observer.repo_observer(observer.formatter_output(out), not options.debug)
+    repo_obs = observer.repo_observer(
+        observer.formatter_output(out), verbose=options.verbose, debug=options.debug)
 
     if options.pretend:
         return
@@ -737,7 +738,8 @@ def main(options, out, err):
             if not formatter.ask("Do you wish to proceed?", default_answer=False):
                 return 1
             out.write()
-        repo_obs = observer.repo_observer(observer.formatter_output(out), not options.debug)
+        repo_obs = observer.repo_observer(
+            observer.formatter_output(out), verbose=options.verbose, debug=options.debug)
         do_unmerge(options, out, err, installed_repos.combined, wipes, world_set, repo_obs)
         return 0
 
@@ -754,8 +756,10 @@ def main(options, out, err):
 
     changes = resolver_inst.state.ops(only_real=True)
 
-    build_obs = observer.build_observer(observer.formatter_output(out), not options.debug)
-    repo_obs = observer.repo_observer(observer.formatter_output(out), not options.debug)
+    build_obs = observer.build_observer(
+        observer.formatter_output(out), verbose=options.verbose, debug=options.debug)
+    repo_obs = observer.repo_observer(
+        observer.formatter_output(out), verbose=options.verbose, debug=options.debug)
 
     # don't run pkg_pretend if only fetching
     if not options.fetchonly:

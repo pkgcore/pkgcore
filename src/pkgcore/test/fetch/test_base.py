@@ -54,17 +54,17 @@ class TestFetcher(TempDirMixin, TestCase):
     def assertFailure(self, functor, path, fetchable, resumable=False,
                       kls=None, **kwds):
         try:
-          self.assertEqual(functor(path, fetchable, **kwds), None)
-          raise AssertionError(
-              "functor %s(%r, %r, **%r) didn't raise an exception"
-              % (functor, path, fetchable, kwds))
+            self.assertEqual(functor(path, fetchable, **kwds), None)
+            raise AssertionError(
+                "functor %s(%r, %r, **%r) didn't raise an exception"
+                % (functor, path, fetchable, kwds))
         except errors.FetchError as e:
-          self.assertEqual(resumable, e.resumable,
-                           msg="Expected resumable=%r, got %r"
-                               % (resumable, e.resumable))
-          self.assertEqual(path, e.filename)
-          if kls is not None:
-            self.assertIsInstance(e, kls)
+            self.assertEqual(
+                resumable, e.resumable,
+                msg="Expected resumable=%r, got %r" % (resumable, e.resumable))
+            self.assertEqual(path, e.filename)
+            if kls is not None:
+                self.assertIsInstance(e, kls)
 
     def test_verify_all_chksums(self):
         self.write_data()

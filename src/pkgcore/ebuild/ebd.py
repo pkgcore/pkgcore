@@ -601,12 +601,13 @@ class buildable(ebd, setup_mixin, format.build):
         self.env["PATH"] = os.pathsep.join(path)
 
         # ordering must match appearance order in SRC_URI per PMS
-        self.env["A"] = ' '.join(iter_stable_unique(x.filename for x in pkg.fetchables))
+        self.env["A"] = ' '.join(iter_stable_unique(pkg.distfiles))
 
         if self.eapi.options.has_AA:
-            pkg = getattr(self.pkg, '_raw_pkg', self.pkg)
-            self.env["AA"] = ' '.join(set(
-                x.filename for x in iflatten_instance(pkg.fetchables, fetch.fetchable)))
+            pkg = self.pkg
+            while hasattr(pkg, '_raw_pkg'):
+                pkg = getattr(pkg, '_raw_pkg')
+            self.env["AA"] = ' '.join(set(iflatten_instance(pkg.distfiles)))
 
         if self.eapi.options.has_KV:
             ret = spawn_get_output(['uname', '-r'])

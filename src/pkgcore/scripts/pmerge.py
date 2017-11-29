@@ -825,7 +825,7 @@ def main(options, out, err):
 
                 pkg_ops = domain.pkg_operations(op.pkg, observer=build_obs)
                 out.write("\n%i file%s required-" % (
-                    len(op.pkg.fetchables), pluralism(op.pkg.fetchables)))
+                    len(op.pkg.distfiles), pluralism(op.pkg.distfiles)))
                 if not pkg_ops.run_if_supported("fetch", or_return=True):
                     out.error("fetching failed for %s" % (op.pkg.cpvstr,))
                     if not options.ignore_failures:

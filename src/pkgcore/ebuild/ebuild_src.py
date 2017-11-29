@@ -94,12 +94,22 @@ def generate_fetchables(self, allow_missing_checksums=False,
         chksums_can_be_missing, ignore_unknown_mirrors,
         mirrors, default_mirrors, common)
     d = conditionals.DepSet.parse(
-        self.data.pop("SRC_URI", ""), fetch.fetchable, operators={},
+        self.data.get("SRC_URI", ""), fetch.fetchable, operators={},
         element_func=func,
         allow_src_uri_file_renames=self.eapi.options.src_uri_renames)
     for v in common.itervalues():
         v.uri.finalize()
     return d
+
+def generate_distfiles(self):
+    def _extract_distfile_from_uri(uri, filename=None):
+        if filename is not None:
+            return filename
+        return os.path.basename(uri)
+    return conditionals.DepSet.parse(
+        self.data.get("SRC_URI", ''), str, operators={},
+        element_func=partial(_extract_distfile_from_uri),
+        allow_src_uri_file_renames=self.eapi.options.src_uri_renames)
 
 # utility func.
 def create_fetchable_from_uri(pkg, chksums, ignore_missing_chksums, ignore_unknown_mirrors,
@@ -203,8 +213,7 @@ class base(metadata.package):
     _get_attr["slot"] = lambda s: s.fullslot.partition('/')[0]
     _get_attr["subslot"] = get_subslot
     _get_attr["fetchables"] = generate_fetchables
-    _get_attr["distfiles"] = lambda s: tuple(
-        f.filename for f in iflatten_instance(s.fetchables, fetch.fetchable))
+    _get_attr["distfiles"] = generate_distfiles
     _get_attr["description"] = lambda s: s.data.pop("DESCRIPTION", "").strip()
     _get_attr["keywords"] = lambda s: tuple(
         imap(intern, s.data.pop("KEYWORDS", "").split()))

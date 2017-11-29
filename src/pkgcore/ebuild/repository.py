@@ -626,8 +626,8 @@ class _ConfiguredTree(configured.tree):
         return frozenset(profile_iuse_effective.union(raw_pkg_iuse_effective))
 
     @_wrap_attr(config_wrappables)
-    def _distfiles(self, _raw_pkg_distfiles, enabled_use, pkg):
-        return tuple(f.filename for f in pkg.fetchables.evaluate_depset(enabled_use))
+    def _distfiles(self, raw_pkg_distfiles, enabled_use, pkg):
+        return tuple(raw_pkg_distfiles.evaluate_depset(enabled_use))
 
     @_wrap_attr(config_wrappables)
     def _user_patches(self, _raw_pkg_patches, _enabled_use, pkg):

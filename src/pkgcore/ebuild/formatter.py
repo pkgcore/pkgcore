@@ -250,8 +250,8 @@ class PortageFormatter(CountingFormatter):
         op_type = op.desc
         op_chars = [[' '] for x in xrange(7)]
         if 'fetch' in op.pkg.restrict:
-            if all(os.path.isfile(pjoin(self.distdir, f.filename))
-                   for f in op.pkg.fetchables):
+            if all(os.path.isfile(pjoin(self.distdir, f))
+                   for f in op.pkg.distfiles):
                 fetched = [out.fg('green'), out.bold, 'f', out.reset]
             else:
                 fetched = [out.fg('red'), out.bold, 'F', out.reset]
@@ -360,8 +360,8 @@ class PortageFormatter(CountingFormatter):
         if self.verbose:
             if not op.pkg.built:
                 downloads = set(
-                    f.filename for f in op.pkg.fetchables
-                    if not os.path.isfile(pjoin(self.distdir, f.filename)))
+                    f for f in op.pkg.distfiles
+                    if not os.path.isfile(pjoin(self.distdir, f)))
                 if downloads.difference(self.downloads):
                     self.downloads.update(downloads)
                     size = sum(

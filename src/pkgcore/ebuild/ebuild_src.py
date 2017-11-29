@@ -121,7 +121,7 @@ def create_fetchable_from_uri(pkg, chksums, ignore_missing_chksums, ignore_unkno
 
     if preexisting is None:
         if filename not in chksums and not ignore_missing_chksums:
-            raise MissingChksum(filename)
+            raise MissingChksum(pkg, filename)
         uris = fetch.uri_list(filename)
     else:
         uris = preexisting.uri

@@ -29,8 +29,10 @@ class ChksumBase(Exception):
 
 class MissingChksum(ChksumBase):
 
-    def __init__(self, filename):
-        ChksumBase.__init__(self, "missing chksum data for %r" % filename)
+    def __init__(self, pkg, filename):
+        ChksumBase.__init__(self, "%s::%s missing chksum data for %r" % (
+            pkg.cpvstr, pkg.repo, filename))
+        self.pkg = pkg
         self.file = filename
 
 class ParseChksumError(ChksumBase):

@@ -103,6 +103,7 @@ class ops_sequence(object):
         return bool(self._ops)
 
     def run_sanity_checks(self, domain, observer=None):
+        # TODO: parallelize running pkg_pretend phases for pkgs
         for plan_op in self:
             if plan_op.desc == 'remove':
                 continue

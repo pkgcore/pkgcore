@@ -58,7 +58,7 @@ class TestFetcher(TempDirMixin, TestCase):
           raise AssertionError(
               "functor %s(%r, %r, **%r) didn't raise an exception"
               % (functor, path, fetchable, kwds))
-        except Exception as e:
+        except errors.FetchError as e:
           self.assertEqual(resumable, e.resumable,
                            msg="Expected resumable=%r, got %r"
                                % (resumable, e.resumable))

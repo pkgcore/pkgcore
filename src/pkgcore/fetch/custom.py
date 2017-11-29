@@ -19,10 +19,10 @@ from pkgcore.fetch import errors, base, fetchable
 from pkgcore.config import ConfigHint
 
 
-class MalformedCommand(Exception):
+class MalformedCommand(errors.FetchError):
 
     def __init__(self, command):
-        Exception.__init__(self, "fetchcommand is malformed: %s" % (command,))
+        errors.FetchError.__init__(self, "fetchcommand is malformed: %s" % (command,))
         self.command = command
 
 
@@ -107,7 +107,7 @@ class fetcher(base.fetcher):
             kw["gid"] = portage_gid
         kw["minimal"] = True
         if not ensure_dirs(self.distdir, **kw):
-            raise errors.distdirPerms(
+            raise errors.DistdirPerms(
                 self.distdir, "if userpriv, uid must be %i, gid must be %i. "
                 "if not readonly, directory must be 0775, else 0555" % (
                     portage_uid, portage_gid))

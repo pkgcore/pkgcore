@@ -166,10 +166,10 @@ class DepSet(boolean.AndRestriction):
                             words.appendleft((k2,))
                         else:
                             k3 = words.next()
-                            # file ename.
+                            # file rename
                             depsets[-1].append(element_func(k, k3))
                 else:
-                    # node/element.
+                    # node/element
                     depsets[-1].append(element_func(k))
 
         except IGNORED_EXCEPTIONS:

@@ -55,3 +55,7 @@ class FetchFailed(Exception):
 class MissingDistfile(FetchFailed):
     def __init__(self, filename):
         FetchFailed.__init__(self, filename, "Doesn't exist.", resumable=True)
+
+
+class MissingChksumHandler(Exception):
+    pass

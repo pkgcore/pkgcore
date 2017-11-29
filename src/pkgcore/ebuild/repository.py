@@ -33,7 +33,7 @@ demandload(
     'locale',
     'operator:attrgetter',
     'random:shuffle',
-    'snakeoil.chksum:get_chksums',
+    'snakeoil:chksum',
     'snakeoil.data_source:local_source',
     'snakeoil.sequences:iflatten_instance',
     'pkgcore:fetch',
@@ -113,11 +113,11 @@ class repo_operations(_repo_ops.operations):
             # calculate checksums for fetched distfiles
             try:
                 for fetchable in fetchables.itervalues():
-                    chksums = get_chksums(
+                    chksums = chksum.get_chksums(
                         pjoin(distdir, fetchable.filename), *required_chksums)
                     fetchable.chksums = dict(zip(required_chksums, chksums))
-            except KeyError as e:
-                observer.error('failed generating chksum: %s' % e.message)
+            except chksum.MissingChksumHandler as e:
+                observer.error('failed generating chksum: %s' % e)
                 ret.append(key_query)
                 break
 

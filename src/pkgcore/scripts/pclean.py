@@ -4,6 +4,7 @@
 """system cleaning utility"""
 
 import argparse
+from collections import defaultdict
 from itertools import chain, ifilter
 import os
 
@@ -55,6 +56,7 @@ cleaning_opts.add_argument(
 @shared_opts.bind_delayed_default(20, 'shared_opts')
 def _setup_shared_opts(namespace, attr):
     # handle command line and file excludes
+    namespace.exclude_restrict = None
     excludes = namespace.excludes if namespace.excludes is not None else []
     if namespace.exclude_file is not None:
         excludes.extend(namespace.exclude_file.read().split('\n'))
@@ -63,6 +65,7 @@ def _setup_shared_opts(namespace, attr):
     if exclude_restrictions != [None]:
         namespace.restrict.append(
             boolean.OrRestriction(negate=True, *exclude_restrictions))
+        namespace.exclude_restrict = boolean.AndRestriction(*exclude_restrictions)
 
 
 def parse_time(s):
@@ -141,6 +144,9 @@ repo_cleaning_opts.add_argument(
     '-I', '--installed', action='store_true',
     help='skip files for packages that are currently installed')
 repo_cleaning_opts.add_argument(
+    '-E', '--exists', action='store_true',
+    help='skip files for packages that relate to ebuilds in the tree')
+repo_cleaning_opts.add_argument(
     '-f', '--fetch-restricted', action='store_true',
     help='skip fetch-restricted files')
 @repo_opts.bind_delayed_default(20, 'repo_opts')
@@ -194,36 +200,90 @@ dist = subparsers.add_parser(
     description='remove distfiles')
 dist_opts = dist.add_argument_group('distfile options')
 dist_opts.add_argument(
-    '-i', '--ignore-failures', action='store_true',
-    help='ignore checksum parsing errors')
+    "-r", "--repo", help="target repository",
+    action=commandline.StoreRepoObject,
+    docs="""
+        Target repository to search for matches. If no repo is specified all
+        repos are used.
+    """)
 @dist.bind_final_check
 def _dist_validate_args(parser, namespace):
     distdir = namespace.domain.fetcher.distdir
-    repo = multiplex.tree(*get_virtual_repos(namespace.domain.repos, False))
+    repo = namespace.repo
+    if repo is None:
+        repo = multiplex.tree(*get_virtual_repos(namespace.domain.repos, False))
 
     all_dist_files = set(os.path.basename(f) for f in listdir_files(distdir))
     target_files = set()
+    installed_dist = set()
+    exists_dist = set()
+    excludes_dist = set()
+    restricted_dist = set()
 
+    # exclude distfiles used by installed packages -- note that this uses the
+    # distfiles attr with USE settings bound to it
+    if namespace.installed:
+        for pkg in namespace.livefs_repo:
+            installed_dist.update(iflatten_instance(pkg.distfiles))
+
+    # exclude distfiles for existing ebuilds or fetch restrictions
+    if namespace.fetch_restricted or (namespace.exists and not namespace.restrict):
+        for pkg in repo:
+            exists_dist.update(iflatten_instance(getattr(pkg, '_raw_pkg', pkg).distfiles))
+            if 'fetch' in pkg.restrict:
+                restricted_dist.update(iflatten_instance(getattr(pkg, '_raw_pkg', pkg).distfiles))
+
+    # exclude distfiles from specified restrictions
+    if namespace.exclude_restrict:
+        for pkg in repo.itermatch(namespace.exclude_restrict, sorter=sorted):
+            excludes_dist.update(iflatten_instance(getattr(pkg, '_raw_pkg', pkg).distfiles))
+
+    # determine dist files for custom restrict targets
     if namespace.restrict:
+        target_dist = defaultdict(lambda: defaultdict(set))
         for pkg in repo.itermatch(namespace.restrict, sorter=sorted):
-            if ((namespace.installed and pkg.versioned_atom in namespace.livefs_repo) or
-                    (namespace.fetch_restricted and 'fetch' in pkg.restrict)):
-                continue
-            try:
-                target_files.update(
-                    fetchable.filename for fetchable in
-                    iflatten_instance(pkg.fetchables, fetch.fetchable))
-            except errors.MetadataException as e:
-                if not namespace.ignore_failures:
-                    dist.error(
-                        "got corruption error '%s', with package %s " %
-                        (e, pkg.cpvstr))
-            except Exception as e:
-                dist.error(
-                    "got error '%s', parsing package %s in repo '%s'" %
-                    (e, pkg.cpvstr, pkg.repo))
+            s = set(iflatten_instance(getattr(pkg, '_raw_pkg', pkg).distfiles))
+            target_dist[pkg.unversioned_atom][pkg].update(s)
+            if namespace.exists:
+                exists_dist.update(s)
+
+        extra_regex_prefixes = defaultdict(set)
+        pkg_regex_prefixes = set()
+        for catpn, pkgs in target_dist.iteritems():
+            pn_regex = '\W'.join(re.split(r'\W', catpn.package))
+            pkg_regex = re.compile(r'%s(\W\w+)*([\W?(0-9)+])*(\W\w+)*(\.\w+)*' % pn_regex,
+                                   re.IGNORECASE)
+            pkg_regex_prefixes.add(pn_regex)
+            for pkg, files in pkgs.iteritems():
+                files = sorted(files)
+                for f in files:
+                    if (pkg_regex.match(f) or (
+                            extra_regex_prefixes and
+                            re.match(r'%s([\W?(0-9)+])+(\W\w+)*(\.\w+)+' % '|'.join(extra_regex_prefixes[catpn]), f))):
+                        continue
+                    else:
+                        pieces = re.split(r'([\W?(0-9)+])+(\W\w+)*(\.\w+)+', f)
+                        if pieces[-1] == '':
+                            pieces.pop()
+                        if len(pieces) > 1:
+                            extra_regex_prefixes[catpn].add(pieces[0])
+
+        # build regexes to match distfiles for older ebuilds no longer in the tree
+        pkg_regex = re.compile(r'%s(\W\w+)*([\W?(0-9)+])*(\W\w+)*(\.\w+)*' % (
+            '|'.join(pkg_regex_prefixes)))
+        extra_regex_prefixes_str = '|'.join(chain.from_iterable(
+            v for k, v in extra_regex_prefixes.iteritems()))
+        extra_regex = re.compile(r'%s([\W?(0-9)+])+(\W\w+)*(\.\w+)+' % extra_regex_prefixes_str)
+
+        for f in all_dist_files:
+            if pkg_regex.match(f) or extra_regex.match(f):
+                target_files.add(f)
     else:
         target_files = all_dist_files
+
+    # exclude files tagged for saving
+    saving_files = installed_dist | exists_dist | excludes_dist | restricted_dist
+    target_files.difference_update(saving_files)
 
     targets = (pjoin(distdir, f) for f in sorted(all_dist_files.intersection(target_files)))
     removal_func = partial(os.remove)

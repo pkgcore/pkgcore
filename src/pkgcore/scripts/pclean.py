@@ -49,13 +49,13 @@ cleaning_opts.add_argument(
     '-p', '--pretend', action='store_true',
     help='dry run without performing any changes')
 cleaning_opts.add_argument(
-    '-x', '--exclude', action='extend_comma', dest='excludes',
+    '-x', '--exclude', action='extend_comma', dest='excludes', metavar='EXCLUDE',
     help='list of packages to exclude from removal')
 cleaning_opts.add_argument(
     '-X', '--exclude-file', type=argparse.FileType('r'),
     help='path to exclusion file')
 cleaning_opts.add_argument(
-    '-S', '--pkgsets', action='extend_comma_toggle',
+    '-S', '--pkgsets', action='extend_comma_toggle', metavar='PKGSET',
     help='list of pkgsets to include or exclude from removal')
 @shared_opts.bind_delayed_default(20, 'shared_opts')
 def _setup_shared_opts(namespace, attr):

@@ -9,6 +9,7 @@ from itertools import chain, ifilter
 import os
 
 from snakeoil.demandload import demandload
+from snakeoil.strings import pluralism
 
 from pkgcore.restrictions import boolean, packages
 from pkgcore.repository import multiplex
@@ -53,19 +54,38 @@ cleaning_opts.add_argument(
 cleaning_opts.add_argument(
     '-X', '--exclude-file', type=argparse.FileType('r'),
     help='path to exclusion file')
+cleaning_opts.add_argument(
+    '-S', '--pkgsets', action='extend_comma_toggle',
+    help='list of pkgsets to include or exclude from removal')
 @shared_opts.bind_delayed_default(20, 'shared_opts')
 def _setup_shared_opts(namespace, attr):
-    # handle command line and file excludes
     namespace.exclude_restrict = None
+    exclude_restrictions = []
+
+    if namespace.pkgsets:
+        disabled, enabled = namespace.pkgsets
+        unknown_sets = set(disabled + enabled).difference(namespace.config.pkgset)
+        if unknown_sets:
+            argparser.error("unknown set%s: %s (available sets: %s)" % (
+                pluralism(unknown_sets),
+                ', '.join(sorted(map(repr, unknown_sets))),
+                ', '.join(sorted(namespace.config.pkgset))))
+        for s in set(disabled):
+            exclude_restrictions.extend(namespace.config.pkgset[s])
+        for s in set(enabled):
+            namespace.restrict.append(boolean.OrRestriction(*namespace.config.pkgset[s]))
+
+    # handle command line and file excludes
     excludes = namespace.excludes if namespace.excludes is not None else []
     if namespace.exclude_file is not None:
         excludes.extend(namespace.exclude_file.read().split('\n'))
-    exclude_restrictions = commandline.convert_to_restrict(excludes, default=None)
+    if excludes:
+        exclude_restrictions.extend(commandline.convert_to_restrict(excludes, default=None))
 
-    if exclude_restrictions != [None]:
+    if exclude_restrictions:
         namespace.restrict.append(
             boolean.OrRestriction(negate=True, *exclude_restrictions))
-        namespace.exclude_restrict = boolean.AndRestriction(*exclude_restrictions)
+        namespace.exclude_restrict = boolean.OrRestriction(*exclude_restrictions)
 
 
 def parse_time(s):

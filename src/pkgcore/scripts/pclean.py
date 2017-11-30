@@ -295,6 +295,13 @@ def _dist_validate_args(parser, namespace):
 pkg_opts = commandline.ArgumentParser(suppress=True)
 pkg_cleaning_opts = pkg_opts.add_argument_group('binpkg cleaning options')
 pkg_cleaning_opts.add_argument(
+    "-r", "--repo", help="target binary repository",
+    action=commandline.StoreRepoObject,
+    docs="""
+        Target binary repository to search for matches. If no repo is specified all
+        binary repos are used.
+    """)
+pkg_cleaning_opts.add_argument(
     '--source-repo', metavar='REPO',
     help='remove binpkgs with matching source repo')
 pkg = subparsers.add_parser(
@@ -302,7 +309,9 @@ pkg = subparsers.add_parser(
     description='remove binpkgs')
 @pkg.bind_final_check
 def _pkg_validate_args(parser, namespace):
-    repo = namespace.domain.all_binary_repos
+    repo = namespace.repo
+    if repo is None:
+        repo = namespace.domain.all_binary_repos
 
     if not namespace.restrict:
         # not in a configured repo dir, remove all binpkgs

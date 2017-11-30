@@ -347,7 +347,7 @@ def print_package(options, out, err, pkg):
             out.write(pkg.cpvstr, autoline=False)
             if options.display_repo:
                 out.write('::', pkg.repo, autoline=False)
-            out.write(':', autoline=False)
+            out.write('|', autoline=False)
         out.write(stringify_attr(options, pkg, options.one_attr))
     else:
         printed_something = False
@@ -435,7 +435,7 @@ def print_packages_noversion(options, out, err, pkgs):
             out.write(pkgs[0].key, autoline=False)
             if options.display_repo:
                 out.write('::', pkgs[0].repo, autoline=False)
-            out.write(':', autoline=False)
+            out.write('|', autoline=False)
         out.write(stringify_attr(options, pkgs[-1], options.one_attr))
     else:
         out.autoline = False

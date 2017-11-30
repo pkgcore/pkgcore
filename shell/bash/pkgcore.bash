@@ -19,9 +19,11 @@ _pkgattr() {
 	mkfifo "${tmpdir}"/{stdout,stderr}
 
 	if [[ -n ${repo} ]]; then
-		pquery -r "${repo}" --raw --unfiltered --cpv --one-attr "${pkg_attr}" -n -- "${pkg_atom}" >"${tmpdir}"/stdout 2>"${tmpdir}"/stderr &
+		pquery -r "${repo}" --raw --unfiltered --cpv -R --one-attr "${pkg_attr}" \
+			-n -- "${pkg_atom}" >"${tmpdir}"/stdout 2>"${tmpdir}"/stderr &
 	else
-		pquery --ebuild-repos --raw --unfiltered --cpv --one-attr "${pkg_attr}" -n -- "${pkg_atom}" >"${tmpdir}"/stdout 2>"${tmpdir}"/stderr &
+		pquery --ebuild-repos --raw --unfiltered --cpv -R --one-attr "${pkg_attr}" \
+			-n -- "${pkg_atom}" >"${tmpdir}"/stdout 2>"${tmpdir}"/stderr &
 	fi
 
 	# capture pquery stdout/stderr into separate vars
@@ -51,12 +53,12 @@ _pkgattr() {
 		return 1
 	elif [[ ${#pkg[@]} > 1 ]]; then
 		echo "${prog}: multiple matches found: ${pkg_atom}" >&2
-		choice=$(_choose "${pkg[@]%%:*}")
+		choice=$(_choose "${pkg[@]%%|*}")
 		[[ $? -ne 0 ]] && return 1
 	else
 		choice=-1
 	fi
-	echo ${pkg[${choice}]#*:}
+	echo ${pkg[${choice}]#*|}
 }
 
 # get the caller of the current function

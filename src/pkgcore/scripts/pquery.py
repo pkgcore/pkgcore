@@ -344,7 +344,10 @@ def print_package(options, out, err, pkg):
         if options.atom:
             out.write('=', autoline=False)
         if options.atom or options.cpv:
-            out.write(pkg.cpvstr, ':', autoline=False)
+            out.write(pkg.cpvstr, autoline=False)
+            if options.display_repo:
+                out.write('::', pkg.repo, autoline=False)
+            out.write(':', autoline=False)
         out.write(stringify_attr(options, pkg, options.one_attr))
     else:
         printed_something = False
@@ -354,6 +357,8 @@ def print_package(options, out, err, pkg):
             if options.atom:
                 out.write('=')
             out.write(pkg.cpvstr)
+            if options.display_repo:
+                out.write('::', pkg.repo)
         for attr in options.attr:
             if printed_something:
                 out.write(' ')
@@ -427,7 +432,10 @@ def print_packages_noversion(options, out, err, pkgs):
         if options.atom:
             out.write('=', autoline=False)
         if options.atom or options.cpv:
-            out.write(pkgs[0].key, ':', autoline=False)
+            out.write(pkgs[0].key, autoline=False)
+            if options.display_repo:
+                out.write('::', pkgs[0].repo, autoline=False)
+            out.write(':', autoline=False)
         out.write(stringify_attr(options, pkgs[-1], options.one_attr))
     else:
         out.autoline = False
@@ -863,6 +871,9 @@ output.add_argument(
         done by default, this option forces the output format if another output
         option (such as --contents) alters it.
     """)
+output.add_argument(
+    '-R', action='store_true', dest='display_repo',
+    help='print the repo of the package')
 
 output_mux = output.add_mutually_exclusive_group()
 output_mux.add_argument(

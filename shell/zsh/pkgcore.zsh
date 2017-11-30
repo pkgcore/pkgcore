@@ -71,6 +71,13 @@ _which() {
 	whence -p "$1" >/dev/null
 }
 
+# cross-shell compatible read num chars
+_read_nchars() {
+	local var
+	read -k $1 var
+	echo ${var}
+}
+
 # cross-shell compatible array index helper
 # zsh arrays start at 1
 _array_index() {

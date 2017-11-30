@@ -77,6 +77,13 @@ _which() {
 	type -P "$1" >/dev/null
 }
 
+# cross-shell compatible read num chars
+_read_nchars() {
+	local var
+	read -n $1 var
+	echo ${var}
+}
+
 # cross-shell compatible array index helper
 # bash arrays start at 0
 _array_index() {

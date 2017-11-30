@@ -169,6 +169,13 @@ repo_cleaning_opts.add_argument(
 repo_cleaning_opts.add_argument(
     '-f', '--fetch-restricted', action='store_true',
     help='skip fetch-restricted files')
+repo_cleaning_opts.add_argument(
+    "-r", "--repo", help="target repository",
+    action=commandline.StoreRepoObject,
+    docs="""
+        Target repository to search for matches. If no repo is specified all
+        relevant repos are used.
+    """)
 @repo_opts.bind_delayed_default(20, 'repo_opts')
 def _setup_repo_opts(namespace, attr):
     if namespace.installed:
@@ -219,13 +226,6 @@ dist = subparsers.add_parser(
     'dist', parents=(shared_opts, file_opts, repo_opts),
     description='remove distfiles')
 dist_opts = dist.add_argument_group('distfile options')
-dist_opts.add_argument(
-    "-r", "--repo", help="target repository",
-    action=commandline.StoreRepoObject,
-    docs="""
-        Target repository to search for matches. If no repo is specified all
-        repos are used.
-    """)
 @dist.bind_final_check
 def _dist_validate_args(parser, namespace):
     distdir = namespace.domain.fetcher.distdir
@@ -314,13 +314,6 @@ def _dist_validate_args(parser, namespace):
 
 pkg_opts = commandline.ArgumentParser(suppress=True)
 pkg_cleaning_opts = pkg_opts.add_argument_group('binpkg cleaning options')
-pkg_cleaning_opts.add_argument(
-    "-r", "--repo", help="target binary repository",
-    action=commandline.StoreRepoObject,
-    docs="""
-        Target binary repository to search for matches. If no repo is specified all
-        binary repos are used.
-    """)
 pkg_cleaning_opts.add_argument(
     '--source-repo', metavar='REPO',
     help='remove binpkgs with matching source repo')

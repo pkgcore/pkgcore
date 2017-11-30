@@ -271,7 +271,7 @@ def _dist_validate_args(parser, namespace):
         pkg_regex_prefixes = set()
         for catpn, pkgs in target_dist.iteritems():
             pn_regex = '\W'.join(re.split(r'\W', catpn.package))
-            pkg_regex = re.compile(r'%s(\W\w+)*([\W?(0-9)+])*(\W\w+)*(\.\w+)*' % pn_regex,
+            pkg_regex = re.compile(r'(%s)(\W\w+)+([\W?(0-9)+])*(\W\w+)*(\.\w+)*' % pn_regex,
                                    re.IGNORECASE)
             pkg_regex_prefixes.add(pn_regex)
             for pkg, files in pkgs.iteritems():
@@ -279,7 +279,7 @@ def _dist_validate_args(parser, namespace):
                 for f in files:
                     if (pkg_regex.match(f) or (
                             extra_regex_prefixes and
-                            re.match(r'%s([\W?(0-9)+])+(\W\w+)*(\.\w+)+' % '|'.join(extra_regex_prefixes[catpn]), f))):
+                            re.match(r'(%s)([\W?(0-9)+])+(\W\w+)*(\.\w+)+' % '|'.join(extra_regex_prefixes[catpn]), f))):
                         continue
                     else:
                         pieces = re.split(r'([\W?(0-9)+])+(\W\w+)*(\.\w+)+', f)
@@ -288,16 +288,23 @@ def _dist_validate_args(parser, namespace):
                         if len(pieces) > 1:
                             extra_regex_prefixes[catpn].add(pieces[0])
 
-        # build regexes to match distfiles for older ebuilds no longer in the tree
-        pkg_regex = re.compile(r'%s(\W\w+)*([\W?(0-9)+])*(\W\w+)*(\.\w+)*' % (
-            '|'.join(pkg_regex_prefixes)))
-        extra_regex_prefixes_str = '|'.join(chain.from_iterable(
-            v for k, v in extra_regex_prefixes.iteritems()))
-        extra_regex = re.compile(r'%s([\W?(0-9)+])+(\W\w+)*(\.\w+)+' % extra_regex_prefixes_str)
+        if target_dist:
+            regexes = []
+            # build regexes to match distfiles for older ebuilds no longer in the tree
+            if pkg_regex_prefixes:
+                pkg_regex_prefixes_str = '|'.join(sorted(pkg_regex_prefixes))
+                regexes.append(re.compile(r'(%s)(\W\w+)+([\W?(0-9)+])*(\W\w+)*(\.\w+)*' % (
+                    pkg_regex_prefixes_str,)))
+            if extra_regex_prefixes:
+                extra_regex_prefixes_str = '|'.join(sorted(chain.from_iterable(
+                    v for k, v in extra_regex_prefixes.iteritems())))
+                regexes.append(re.compile(r'(%s)([\W?(0-9)+])+(\W\w+)*(\.\w+)+' % (
+                    extra_regex_prefixes_str,)))
 
-        for f in all_dist_files:
-            if pkg_regex.match(f) or extra_regex.match(f):
-                target_files.add(f)
+            if regexes:
+                for f in all_dist_files:
+                    if any(r.match(f) for r in regexes):
+                        target_files.add(f)
     else:
         target_files = all_dist_files
 

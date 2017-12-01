@@ -375,7 +375,8 @@ class ConfiguredTree(wrapper.tree):
             __slots__ = ()
 
             def __str__(self):
-                return "ebuild binary pkg: %s: from %r" % (self.cpvstr, self.repo.repo_id)
+                return "ebuild binary pkg: %s::%s, source repo %r" % (
+                    self.cpvstr, self.repo.repo_id, self.source_repository)
 
         wrapper.tree.__init__(self, repo, package_class=package_class)
         self.domain_settings = domain_settings

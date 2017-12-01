@@ -23,7 +23,7 @@ from pkgcore.ebuild.cpv import versioned_CPV
 from pkgcore.ebuild.errors import InvalidCPV
 from pkgcore.merge import triggers
 from pkgcore.plugin import get_plugin
-from pkgcore.repository import prototype, errors
+from pkgcore.repository import prototype, errors, wrapper
 
 demandload(
     "errno",
@@ -37,7 +37,6 @@ demandload(
     "pkgcore.fs.tar:generate_contents",
     "pkgcore.merge:engine",
     "pkgcore.package:base@pkg_base",
-    "pkgcore.repository:wrapper",
     'pkgcore.binpkg:remote',
 )
 

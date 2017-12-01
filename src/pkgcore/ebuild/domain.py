@@ -46,6 +46,7 @@ demandload(
     'tempfile',
     'pkgcore.binpkg:repository@binary_repo',
     'pkgcore.ebuild:repository@ebuild_repo',
+    'pkgcore.ebuild.repo_objs:RepoConfig',
     'pkgcore.ebuild.triggers:generate_triggers@ebuild_generate_triggers',
     'pkgcore.fs.livefs:iter_scan',
     'pkgcore.log:logger',
@@ -524,6 +525,20 @@ class domain(config_domain):
 
     def _mk_nonconfig_triggers(self):
         return ebuild_generate_triggers(self)
+
+    def add_external_repo(self, config, path):
+        """Add unconfigured, external repo to the domain."""
+        path = os.path.abspath(path)
+        if not os.path.isdir(os.path.join(path, 'profiles')):
+            raise TypeError('invalid repo: %r' % path)
+        repo_config = RepoConfig(path)
+        repo_obj = ebuild_repo.tree(config, repo_config)
+        location = repo_obj.location
+        self.repos_raw[location] = repo_obj
+        wrapped_repo = self.configure_repo(repo_obj)
+        self.repos_configured[location] = wrapped_repo
+        self.repos_configured_filtered[location] = self.filter_repo(wrapped_repo)
+        return repo_obj
 
     def configure_repo(self, repo):
         """Configure a raw repo."""

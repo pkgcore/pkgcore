@@ -531,7 +531,7 @@ class domain(config_domain):
         path = os.path.abspath(path)
         if not os.path.isdir(os.path.join(path, 'profiles')):
             raise TypeError('invalid repo: %r' % path)
-        repo_config = RepoConfig(path)
+        repo_config = RepoConfig(path, config_name=path)
         repo_obj = ebuild_repo.tree(config, repo_config)
         location = repo_obj.location
         self.repos_raw[location] = repo_obj

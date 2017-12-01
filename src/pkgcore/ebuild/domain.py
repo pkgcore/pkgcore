@@ -168,15 +168,15 @@ class domain(config_domain):
             vdb.append(profile.provides_repo)
 
         self.profile = profile
-        pkg_masks, pkg_unmasks, pkg_keywords, pkg_licenses = [], [], [], []
+        self.pkg_masks, self.pkg_unmasks, pkg_keywords, pkg_licenses = [], [], [], []
         pkg_use, self.bashrcs = [], []
 
         self.ebuild_hook_dir = settings.pop("ebuild_hook_dir", None)
 
         # TODO: split this out into properties similar to what's done for profiles
         for key, val, action in (
-            ("package.mask", pkg_masks, parse_match),
-            ("package.unmask", pkg_unmasks, parse_match),
+            ("package.mask", self.pkg_masks, parse_match),
+            ("package.unmask", self.pkg_unmasks, parse_match),
             ("package.keywords", pkg_keywords, package_keywords_splitter),
             ("package.accept_keywords", pkg_keywords, package_keywords_splitter),
             ("package.license", pkg_licenses, package_keywords_splitter),
@@ -263,7 +263,7 @@ class domain(config_domain):
         default_keywords = unstable_unique(default_keywords + [self.arch])
 
         accept_keywords = pkg_keywords + list(profile.accept_keywords)
-        vfilters = [self.make_keywords_filter(
+        self.vfilters = [self.make_keywords_filter(
             self.arch, default_keywords, accept_keywords, profile.keywords,
             incremental="package.keywords" in incrementals)]
 
@@ -274,7 +274,7 @@ class domain(config_domain):
         master_license = []
         master_license.extend(settings.get('ACCEPT_LICENSE', ()))
         if master_license or pkg_licenses:
-            vfilters.append(self.make_license_filter(master_license, pkg_licenses))
+            self.vfilters.append(self.make_license_filter(master_license, pkg_licenses))
 
         del master_license
 
@@ -318,58 +318,21 @@ class domain(config_domain):
 
         rev_names = {repo: name for name, repo in self.repos_raw.iteritems()}
 
-        profile_masks = profile._incremental_masks()
-        profile_unmasks = profile._incremental_unmasks()
-        repo_masks = {r.repo_id: r._visibility_limiters() for r in repositories}
+        self.profile_masks = profile._incremental_masks()
+        self.profile_unmasks = profile._incremental_unmasks()
+        self.repo_masks = {r.repo_id: r._visibility_limiters() for r in repositories}
 
         for l, repos, filtered in ((self.repos, repositories, True),
                                    (self.vdb, vdb, False)):
             for repo in repos:
                 if not repo.configured:
-                    pargs = [repo]
-                    try:
-                        for x in repo.configurables:
-                            if x == "domain":
-                                pargs.append(self)
-                            elif x == "settings":
-                                pargs.append(settings)
-                            elif x == "profile":
-                                pargs.append(profile)
-                            else:
-                                pargs.append(getattr(self, x))
-                    except AttributeError as ae:
-                        raise_from(Failure("failed configuring repo '%s': "
-                                           "configurable missing: %s" % (repo, ae)))
-                    wrapped_repo = repo.configure(*pargs)
+                    wrapped_repo = self.configure_repo(repo)
                 else:
                     wrapped_repo = repo
                 key = rev_names.get(repo)
                 self.repos_configured[key] = wrapped_repo
                 if filtered:
-                    config = getattr(repo, 'config', None)
-                    masters = getattr(config, 'masters', ())
-                    if masters is None:
-                        # tough cookies.  If a user has an overlay, no masters
-                        # defined, we're not applying the portdir masks.
-                        # we do this both since that's annoying, and since
-                        # frankly there isn't any good course of action.
-                        masters = ()
-                    global_masks = [repo_masks.get(master, [(), ()]) for master in masters]
-                    global_masks.append(repo_masks[repo.repo_id])
-                    global_masks.extend(profile_masks)
-                    masks = set()
-                    for neg, pos in global_masks:
-                        masks.difference_update(neg)
-                        masks.update(pos)
-                    masks.update(pkg_masks)
-                    unmasks = set()
-                    for neg, pos in profile_unmasks:
-                        unmasks.difference_update(neg)
-                        unmasks.update(pos)
-                    unmasks.update(pkg_unmasks)
-                    filtered = generate_filter(masks, unmasks, *vfilters)
-                if filtered:
-                    wrapped_repo = visibility.filterTree(wrapped_repo, filtered, True)
+                    wrapped_repo = self.filter_repo(wrapped_repo)
                 self.repos_configured_filtered[key] = wrapped_repo
                 l.append(wrapped_repo)
 
@@ -561,6 +524,52 @@ class domain(config_domain):
 
     def _mk_nonconfig_triggers(self):
         return ebuild_generate_triggers(self)
+
+    def configure_repo(self, repo):
+        """Configure a raw repo."""
+        pargs = [repo]
+        try:
+            for x in repo.configurables:
+                if x == "domain":
+                    pargs.append(self)
+                elif x == "settings":
+                    pargs.append(self.settings)
+                elif x == "profile":
+                    pargs.append(self.profile)
+                else:
+                    pargs.append(getattr(self, x))
+        except AttributeError as e:
+            raise_from(Failure("failed configuring repo '%s': "
+                               "configurable missing: %s" % (repo, e)))
+        return repo.configure(*pargs)
+
+    def filter_repo(self, repo):
+        """Filter a configured repo."""
+        config = getattr(repo, 'config', None)
+        masters = getattr(config, 'masters', ())
+        if masters is None:
+            # tough cookies.  If a user has an overlay, no masters
+            # defined, we're not applying the portdir masks.
+            # we do this both since that's annoying, and since
+            # frankly there isn't any good course of action.
+            masters = ()
+        global_masks = [self.repo_masks.get(master, [(), ()]) for master in masters]
+        global_masks.append(self.repo_masks[repo.repo_id])
+        global_masks.extend(self.profile_masks)
+        masks = set()
+        for neg, pos in global_masks:
+            masks.difference_update(neg)
+            masks.update(pos)
+        masks.update(self.pkg_masks)
+        unmasks = set()
+        for neg, pos in self.profile_unmasks:
+            unmasks.difference_update(neg)
+            unmasks.update(pos)
+        unmasks.update(self.pkg_unmasks)
+        filter = generate_filter(masks, unmasks, *self.vfilters)
+        if filter:
+            return visibility.filterTree(repo, filter, True)
+        return repo
 
     @klass.jit_attr
     def tmpdir(self):

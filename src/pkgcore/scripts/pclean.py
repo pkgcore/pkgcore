@@ -7,6 +7,7 @@ import argparse
 from collections import defaultdict
 from itertools import chain, ifilter
 import os
+import sys
 
 from snakeoil.demandload import demandload
 from snakeoil.strings import pluralism
@@ -408,20 +409,23 @@ def _tmp_validate_args(parser, namespace):
 def _remove(options, out, err):
     """Generic removal runner."""
     ret = 0
-    # TODO: parallelize this
-    for func, target in options.remove:
-        if options.pretend and not options.quiet:
-            out.write('Would remove %s' % target)
-        elif options.verbose:
-            out.write('Removing %s' % target)
-        try:
-            if not options.pretend:
-                func(target)
-        except OSError as e:
-            if options.verbose or not options.quiet:
-                err.write("%s: failed to remove %r: %s" % (options.prog, target, e.strerror))
-            ret = 1
-            continue
+    if sys.stdout.isatty():
+        # TODO: parallelize this
+        for func, target in options.remove:
+            if options.pretend and not options.quiet:
+                out.write('Would remove %s' % target)
+            elif options.verbose:
+                out.write('Removing %s' % target)
+            try:
+                if not options.pretend:
+                    func(target)
+            except OSError as e:
+                if options.verbose or not options.quiet:
+                    err.write("%s: failed to remove %r: %s" % (options.prog, target, e.strerror))
+                ret = 1
+                continue
+    else:
+        out.write('\n'.join(target for _, target in options.remove))
     return ret
 
 

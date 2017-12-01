@@ -317,8 +317,6 @@ class domain(config_domain):
         self.repos_configured = {}
         self.repos_configured_filtered = {}
 
-        rev_names = {repo: name for name, repo in self.repos_raw.iteritems()}
-
         self.profile_masks = profile._incremental_masks()
         self.profile_unmasks = profile._incremental_unmasks()
         self.repo_masks = {r.repo_id: r._visibility_limiters() for r in repositories}
@@ -326,15 +324,9 @@ class domain(config_domain):
         for l, repos, filtered in ((self.repos, repositories, True),
                                    (self.vdb, vdb, False)):
             for repo in repos:
-                if not repo.configured:
-                    wrapped_repo = self.configure_repo(repo)
-                else:
-                    wrapped_repo = repo
-                key = rev_names.get(repo)
-                self.repos_configured[key] = wrapped_repo
+                wrapped_repo = self.configure_repo(repo)
                 if filtered:
                     wrapped_repo = self.filter_repo(wrapped_repo)
-                self.repos_configured_filtered[key] = wrapped_repo
                 l.append(wrapped_repo)
 
         self.use_expand_re = re.compile(
@@ -533,30 +525,33 @@ class domain(config_domain):
             raise TypeError('invalid repo: %r' % path)
         repo_config = RepoConfig(path, config_name=path)
         repo_obj = ebuild_repo.tree(config, repo_config)
-        location = repo_obj.location
-        self.repos_raw[location] = repo_obj
+        self.repo_masks[repo_obj.repo_id] = repo_obj._visibility_limiters()
+        self.repos_raw[path] = repo_obj
         wrapped_repo = self.configure_repo(repo_obj)
-        self.repos_configured[location] = wrapped_repo
-        self.repos_configured_filtered[location] = self.filter_repo(wrapped_repo)
+        self.filter_repo(wrapped_repo)
         return repo_obj
 
     def configure_repo(self, repo):
         """Configure a raw repo."""
-        pargs = [repo]
-        try:
-            for x in repo.configurables:
-                if x == "domain":
-                    pargs.append(self)
-                elif x == "settings":
-                    pargs.append(self.settings)
-                elif x == "profile":
-                    pargs.append(self.profile)
-                else:
-                    pargs.append(getattr(self, x))
-        except AttributeError as e:
-            raise_from(Failure("failed configuring repo '%s': "
-                               "configurable missing: %s" % (repo, e)))
-        return repo.configure(*pargs)
+        configured_repo = repo
+        if not repo.configured:
+            pargs = [repo]
+            try:
+                for x in repo.configurables:
+                    if x == "domain":
+                        pargs.append(self)
+                    elif x == "settings":
+                        pargs.append(self.settings)
+                    elif x == "profile":
+                        pargs.append(self.profile)
+                    else:
+                        pargs.append(getattr(self, x))
+            except AttributeError as e:
+                raise_from(Failure("failed configuring repo '%s': "
+                                "configurable missing: %s" % (repo, e)))
+            configured_repo = repo.configure(*pargs)
+        self.repos_configured[repo.repo_id] = configured_repo
+        return configured_repo
 
     def filter_repo(self, repo):
         """Filter a configured repo."""
@@ -582,9 +577,9 @@ class domain(config_domain):
             unmasks.update(pos)
         unmasks.update(self.pkg_unmasks)
         filter = generate_filter(masks, unmasks, *self.vfilters)
-        if filter:
-            return visibility.filterTree(repo, filter, True)
-        return repo
+        filtered_repo = visibility.filterTree(repo, filter, True)
+        self.repos_configured_filtered[repo.repo_id] = filtered_repo
+        return filtered_repo
 
     @klass.jit_attr
     def tmpdir(self):

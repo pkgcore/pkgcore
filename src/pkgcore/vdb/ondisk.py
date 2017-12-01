@@ -18,16 +18,18 @@ from pkgcore.config import ConfigHint
 from pkgcore.ebuild import ebuild_built
 from pkgcore.ebuild.cpv import versioned_CPV
 from pkgcore.ebuild.errors import InvalidCPV
-from pkgcore.repository import errors, multiplex, prototype
+from pkgcore.repository import errors, prototype, wrapper
 
 demandload(
     'pkgcore.log:logger',
+    "pkgcore.package:base@pkg_base",
     'pkgcore.vdb:repo_ops',
     'pkgcore.vdb.contents:ContentsFile',
 )
 
 
 class tree(prototype.tree):
+
     livefs = True
     configured = False
     configurables = ("domain", "settings")
@@ -199,17 +201,31 @@ class tree(prototype.tree):
         return '%s: location %s' % (self.repo_id, self.location)
 
 
-class ConfiguredTree(multiplex.tree):
+class ConfiguredTree(wrapper.tree, tree):
 
-    livefs = True
+    configured = True
     frozen_settable = False
 
-    def __init__(self, raw_vdb, domain, domain_settings):
+    def __init__(self, vdb, domain, domain_settings):
+        class package_class(pkg_base.wrapper):
+
+            _operations = self._generate_operations
+            built = True
+            __slots__ = ()
+
+            def __str__(self):
+                return "installed pkg: %s::%s, source repo %r" % (
+                    self.cpvstr, self.repo.repo_id, self.source_repository)
+
+        wrapper.tree.__init__(self, vdb, package_class=package_class)
         self.domain = domain
         self.domain_settings = domain_settings
-        self.raw_vdb = raw_vdb
-        multiplex.tree.__init__(self, raw_vdb)
 
-    frozen = klass.alias_attr("raw_vdb.frozen")
+    def _generate_operations(self, domain, pkg, **kwargs):
+        pkg = pkg._raw_pkg
+        return ebd.built_operations(
+            domain, pkg, initial_env=self.domain_settings, **kwargs)
+
+
 
 tree.configure = ConfiguredTree

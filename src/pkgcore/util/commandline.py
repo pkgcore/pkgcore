@@ -281,9 +281,9 @@ class StoreRepoObject(StoreConfigObject):
                 yield repo_name
 
     def _load_obj(self, sections, name):
-        repo = None
+        repo = name
         if not self.allow_name_lookup or name in sections:
-            repo = name
+            pass
         else:
             # name wasn't found; search for it.
             for repo_name, repo_obj in sections.iteritems():
@@ -297,8 +297,6 @@ class StoreRepoObject(StoreConfigObject):
                         self.namespace.domain.add_external_repo(self.config, name)
                     except TypeError as e:
                         raise argparse.ArgumentError(self, e)
-                repo = name
-
         return StoreConfigObject._load_obj(self, sections, repo)
 
 

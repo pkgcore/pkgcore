@@ -245,9 +245,13 @@ class StoreRepoObject(StoreConfigObject):
         else:
             kwargs['config_type'] = 'repo'
         self.allow_name_lookup = kwargs.pop("allow_name_lookup", True)
+        self.allow_external_repos = kwargs.pop("allow_external_repos", False)
         StoreConfigObject.__init__(self, *args, **kwargs)
 
     def _get_sections(self, config, namespace):
+        self.config = config
+        self.namespace = namespace
+
         domain = None
         if self.domain:
             domain = getattr(namespace, self.domain, None)
@@ -277,16 +281,25 @@ class StoreRepoObject(StoreConfigObject):
                 yield repo_name
 
     def _load_obj(self, sections, name):
+        repo = None
         if not self.allow_name_lookup or name in sections:
-            return StoreConfigObject._load_obj(self, sections, name)
+            repo = name
+        else:
+            # name wasn't found; search for it.
+            for repo_name, repo_obj in sections.iteritems():
+                if name in repo_obj.aliases:
+                    repo = repo_name
+                    break
+            else:
+                # try to add it as an external repo
+                if self.allow_external_repos and os.path.isdir(name):
+                    try:
+                        self.namespace.domain.add_external_repo(self.config, name)
+                    except TypeError as e:
+                        raise argparse.ArgumentError(self, e)
+                repo = name
 
-        # name wasn't found; search for it.
-        for repo_name, repo in sections.iteritems():
-            if name in repo.aliases:
-                name = repo_name
-                break
-
-        return StoreConfigObject._load_obj(self, sections, name)
+        return StoreConfigObject._load_obj(self, sections, repo)
 
 
 class DomainFromPath(StoreConfigObject):

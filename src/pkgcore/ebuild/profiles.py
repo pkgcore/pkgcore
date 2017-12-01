@@ -609,7 +609,7 @@ class ProfileStack(object):
         intermediate_parent = PkgProvidedParent()
         repo = SimpleTree(
             d, pkg_klass=partial(PkgProvided, intermediate_parent),
-            livefs=True, frozen=True, repo_id='provided')
+            livefs=True, frozen=True, repo_id='package.provided')
         intermediate_parent._parent_repo = repo
 
         if not d:

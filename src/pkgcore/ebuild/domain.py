@@ -598,7 +598,7 @@ class domain(config_domain):
         """Group of all binary repos bound with configuration data."""
         return util.RepositoryGroup(
             x for x in self.repos
-            if isinstance(x.raw_repo, binary_repo.ConfiguredBinpkgTree))
+            if isinstance(x.raw_repo, binary_repo.ConfiguredTree))
 
     @klass.jit_attr
     def binary_repos_raw(self):

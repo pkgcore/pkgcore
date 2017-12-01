@@ -5,7 +5,7 @@
 binpkg ebuild repository
 """
 
-__all__ = ("tree", "ConfiguredBinpkgTree", "force_unpacking")
+__all__ = ("tree", "ConfiguredTree", "force_unpacking")
 
 import os
 
@@ -361,7 +361,7 @@ class tree(prototype.tree):
         return repo_ops
 
 
-class ConfiguredBinpkgTree(wrapper.tree):
+class ConfiguredTree(wrapper.tree):
 
     configured = True
 
@@ -385,4 +385,5 @@ class ConfiguredBinpkgTree(wrapper.tree):
         return ebd.built_operations(
             domain, pkg, initial_env=self.domain_settings, **kwargs)
 
-tree.configure = ConfiguredBinpkgTree
+
+tree.configure = ConfiguredTree

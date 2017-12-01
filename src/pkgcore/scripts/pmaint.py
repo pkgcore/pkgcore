@@ -57,7 +57,7 @@ sync = subparsers.add_parser(
     description="synchronize a local repository with its defined remote")
 sync.add_argument(
     'repos', metavar='repo', nargs='*', help="repo(s) to sync",
-    action=commandline.StoreRepoObject, store_name=True, raw=True)
+    action=commandline.StoreRepoObject, store_name=True, repo_config=True)
 @sync.bind_main_func
 def sync_main(options, out, err):
     """Update local repositories to match their remotes"""
@@ -450,7 +450,7 @@ digest_opts.add_argument(
 # TODO: limit to ebuild repos only
 digest_opts.add_argument(
     "-r", "--repo", help="target repository",
-    action=commandline.StoreRepoObject, raw=True,
+    action=commandline.StoreRepoObject, repo_config=True,
     docs="""
         Target repository to search for matches. If no repo is specified all
         ebuild repos are used.

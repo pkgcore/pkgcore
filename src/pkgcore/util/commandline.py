@@ -237,9 +237,10 @@ class StoreRepoObject(StoreConfigObject):
                 "StoreRepoObject: config_type keyword is redundant: got %s"
                 % (kwargs['config_type'],))
         self.raw = kwargs.pop("raw", False)
+        self.repo_config = kwargs.pop("repo_config", False)
         self.domain_forced = 'domain' in kwargs
         self.domain = kwargs.pop('domain', 'domain')
-        if self.raw:
+        if self.repo_config:
             kwargs['config_type'] = 'repo_config'
         else:
             kwargs['config_type'] = 'repo'
@@ -255,8 +256,11 @@ class StoreRepoObject(StoreConfigObject):
                     self,
                     "No domain found, but one was forced for %s; "
                     "internal bug.  NS=%s" % (self, namespace))
+
         if domain is None:
+            # return repo config objects
             return StoreConfigObject._get_sections(self, config, namespace)
+        # return raw or configured repo objects
         return domain.repos_raw if self.raw else domain.repos_configured_filtered
 
     @staticmethod

@@ -53,17 +53,17 @@ class domain(object):
         l.extend(self._mk_nonconfig_triggers())
         return tuple(l)
 
-    @klass.jit_attr
+    @klass.jit_attr_none
     def source_repos(self):
         """Group of all repos."""
         return RepositoryGroup(self.repos)
 
-    @klass.jit_attr
+    @klass.jit_attr_none
     def source_repos_raw(self):
         """Group of all repos without filtering."""
         return RepositoryGroup(self.repos_raw.itervalues())
 
-    @klass.jit_attr
+    @klass.jit_attr_none
     def installed_repos(self):
         """Group of all installed repos (vdb)."""
         return RepositoryGroup(self.vdb)

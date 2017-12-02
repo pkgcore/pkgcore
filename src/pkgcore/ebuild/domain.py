@@ -548,7 +548,7 @@ class domain(config_domain):
                         pargs.append(getattr(self, x))
             except AttributeError as e:
                 raise_from(Failure("failed configuring repo '%s': "
-                                "configurable missing: %s" % (repo, e)))
+                                   "configurable missing: %s" % (repo, e)))
             configured_repo = repo.configure(*pargs)
         self.repos_configured[repo.repo_id] = configured_repo
         return configured_repo
@@ -598,28 +598,28 @@ class domain(config_domain):
         """Temporary directory for the package manager."""
         return pjoin(self.tmpdir, 'portage')
 
-    @klass.jit_attr
+    @klass.jit_attr_none
     def ebuild_repos(self):
         """Group of all ebuild repos bound with configuration data."""
         return util.RepositoryGroup(
             x for x in self.repos_configured.itervalues()
             if isinstance(x, ebuild_repo._ConfiguredTree))
 
-    @klass.jit_attr
+    @klass.jit_attr_none
     def ebuild_repos_raw(self):
         """Group of all ebuild repos without filtering."""
         return util.RepositoryGroup(
             x for x in self.repos_raw.itervalues()
             if isinstance(x, ebuild_repo._UnconfiguredTree))
 
-    @klass.jit_attr
+    @klass.jit_attr_none
     def binary_repos(self):
         """Group of all binary repos bound with configuration data."""
         return util.RepositoryGroup(
             x for x in self.repos_configured.itervalues()
             if isinstance(x, binary_repo.ConfiguredTree))
 
-    @klass.jit_attr
+    @klass.jit_attr_none
     def binary_repos_raw(self):
         """Group of all binary repos without filtering."""
         return util.RepositoryGroup(

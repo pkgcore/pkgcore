@@ -372,12 +372,12 @@ class TestPortageFormatter(BaseFormatterTest, TestCase):
         masked_atom = atom('>=app-arch/bzip2-2.0')
         self.repo1 = FakeRepo(repo_id='gentoo', location='/var/gentoo/repos/gentoo', masks=(masked_atom,))
         self.repo2 = FakeRepo(repo_id='repo2', location='/var/gentoo/repos/repo2')
-        self.livefs = FakeRepo(repo_id='vdb', pkgs=[pkg])
+        self.vdb = FakeRepo(repo_id='vdb', pkgs=[pkg])
         BaseFormatterTest.setUp(self)
 
     def newFormatter(self, **kwargs):
         kwargs.setdefault('quiet_repo_display', False)
-        kwargs.setdefault('livefs_repos', self.livefs)
+        kwargs.setdefault('installed_repos', self.vdb)
         return BaseFormatterTest.newFormatter(self, **kwargs)
 
     def repo_id(self, repo):

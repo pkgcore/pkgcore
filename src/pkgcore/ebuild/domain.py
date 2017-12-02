@@ -629,6 +629,6 @@ class domain(config_domain):
 
     # multiplexed repos
     all_ebuild_repos = klass.alias_attr("ebuild_repos.combined")
-    all_raw_ebuild_repos = klass.alias_attr("ebuild_repos_raw.combined")
+    all_ebuild_repos_raw = klass.alias_attr("ebuild_repos_raw.combined")
     all_binary_repos = klass.alias_attr("binary_repos.combined")
-    all_raw_binary_repos = klass.alias_attr("binary_repos_raw.combined")
+    all_binary_repos_raw = klass.alias_attr("binary_repos_raw.combined")

@@ -74,9 +74,10 @@ class domain(object):
         return RepositoryGroup(self.vdb)
 
     # multiplexed repos
-    all_repos = klass.alias_attr("source_repos.combined")
-    all_raw_repos = klass.alias_attr("source_repos_raw.combined")
-    all_livefs_repos = klass.alias_attr("installed_repos.combined")
+    all_source_repos = klass.alias_attr("source_repos.combined")
+    all_source_repos_raw = klass.alias_attr("source_repos_raw.combined")
+    all_configured_repos = klass.alias_attr("configured_repos.combined")
+    all_installed_repos = klass.alias_attr("installed_repos.combined")
 
     def pkg_operations(self, pkg, observer=None):
         return pkg.operations(self, observer=observer)
@@ -86,13 +87,13 @@ class domain(object):
             observer=observer, clean=clean, **format_options)
 
     def install_pkg(self, newpkg, observer):
-        return domain_ops.install(self, self.all_livefs_repos, newpkg,
+        return domain_ops.install(self, self.all_installed_repos, newpkg,
             observer, self.triggers, self.root)
 
     def uninstall_pkg(self, pkg, observer):
-        return domain_ops.uninstall(self, self.all_livefs_repos, pkg, observer,
+        return domain_ops.uninstall(self, self.all_installed_repos, pkg, observer,
             self.triggers, self.root)
 
     def replace_pkg(self, oldpkg, newpkg, observer):
-        return domain_ops.replace(self, self.all_livefs_repos, oldpkg, newpkg,
+        return domain_ops.replace(self, self.all_installed_repos, oldpkg, newpkg,
             observer, self.triggers, self.root)

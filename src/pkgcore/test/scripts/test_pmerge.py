@@ -18,15 +18,15 @@ class TargetParsingTest(TestCase):
 
     def test_parse_target(self):
         repo = util.SimpleTree({'spork': {'foon': ('1', '1.0.1', '2')}})
-        livefs_repos = util.SimpleTree({'foo': {'bar': ('1')}})
+        installed_repos = util.SimpleTree({'foo': {'bar': ('1')}})
         for cat in ('', 'spork/'):
-            a = pmerge.parse_target(parse_match('=%sfoon-1' % (cat,)), repo, livefs_repos)
+            a = pmerge.parse_target(parse_match('=%sfoon-1' % (cat,)), repo, installed_repos)
             self.assertEqual(len(a), 1)
             self.assertEqual(a[0].key, 'spork/foon')
             self.assertEqual(
                 [x.fullver for x in repo.itermatch(a[0])],
                 ['1'])
-            a = pmerge.parse_target(parse_match('%sfoon' % (cat,)), repo, livefs_repos)
+            a = pmerge.parse_target(parse_match('%sfoon' % (cat,)), repo, installed_repos)
             self.assertEqual(len(a), 1)
             self.assertEqual(a[0].key, 'spork/foon')
             self.assertEqual(
@@ -38,33 +38,33 @@ class TargetParsingTest(TestCase):
             'spork2': {'foon': ('2',)}})
         self.assertRaises(
             pmerge.NoMatches,
-            pmerge.parse_target, parse_match("foo"), repo, livefs_repos)
+            pmerge.parse_target, parse_match("foo"), repo, installed_repos)
         self.assertRaises(
             pmerge.AmbiguousQuery,
-            pmerge.parse_target, parse_match("foon"), repo, livefs_repos)
+            pmerge.parse_target, parse_match("foon"), repo, installed_repos)
         # test unicode conversion.
-        a = pmerge.parse_target(parse_match(u'=spork/foon-1'), repo, livefs_repos)
+        a = pmerge.parse_target(parse_match(u'=spork/foon-1'), repo, installed_repos)
         self.assertEqual(len(a), 1)
         self.assertEqual(a[0].key, 'spork/foon')
         self.assertTrue(isinstance(a[0].key, str))
         # test globbing
-        a = pmerge.parse_target(parse_match(u'*/foon'), repo, livefs_repos)
+        a = pmerge.parse_target(parse_match(u'*/foon'), repo, installed_repos)
         self.assertEqual(len(a), 2)
 
         # test pkg name collisions between real and virtual pkgs in a repo, but not installed
         # repos, the real pkg will be selected over the virtual
-        livefs_repos = util.SimpleTree({'foo': {'baz': ('1')}})
+        installed_repos = util.SimpleTree({'foo': {'baz': ('1')}})
         repo = util.SimpleTree({'foo': {'bar': ('1',)}, 'virtual': {'bar': ('1',)}})
-        a = pmerge.parse_target(parse_match("bar"), repo, livefs_repos)
+        a = pmerge.parse_target(parse_match("bar"), repo, installed_repos)
         self.assertEqual(len(a), 1)
         self.assertEqual(a[0].key, 'foo/bar')
         self.assertTrue(isinstance(a[0].key, str))
 
         # test pkg name collisions between real and virtual pkgs on livefs
         # repos, the real pkg will be selected over the virtual
-        livefs_repos = util.SimpleTree({'foo': {'bar': ('1')}, 'virtual': {'bar': ('0')}})
+        installed_repos = util.SimpleTree({'foo': {'bar': ('1')}, 'virtual': {'bar': ('0')}})
         repo = util.SimpleTree({'foo': {'bar': ('1',)}, 'virtual': {'bar': ('1',)}})
-        a = pmerge.parse_target(parse_match("bar"), repo, livefs_repos)
+        a = pmerge.parse_target(parse_match("bar"), repo, installed_repos)
         self.assertEqual(len(a), 1)
         self.assertEqual(a[0].key, 'foo/bar')
         self.assertTrue(isinstance(a[0].key, str))

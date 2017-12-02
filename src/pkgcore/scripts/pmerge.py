@@ -464,7 +464,7 @@ def _validate(parser, namespace):
     namespace.sets = f(namespace.sets)
 
 
-def parse_target(restriction, repo, livefs_repos, return_none=False):
+def parse_target(restriction, repo, installed_repos, return_none=False):
     """Use :obj:`parserestrict.parse_match` to produce a list of matches.
 
     This matches the restriction against a repo. If multiple pkgs match and a
@@ -477,7 +477,7 @@ def parse_target(restriction, repo, livefs_repos, return_none=False):
 
     :param restriction: string to convert.
     :param repo: :obj:`pkgcore.repository.prototype.tree` instance to search in.
-    :param livefs_repos: :obj:`pkgcore.config.domain.all_livefs_repos` instance to search in.
+    :param installed_repos: :obj:`pkgcore.config.domain.all_installed_repos` instance to search in.
     :param return_none: indicates if no matches raises or returns C{None}
 
     :return: a list of matches or C{None}.
@@ -494,7 +494,7 @@ def parse_target(restriction, repo, livefs_repos, return_none=False):
                 restriction = restriction.remove_restriction(restriction_types=(restricts.RepositoryDep,))
 
             # find installed package matches
-            matches = {x.key for x in livefs_repos.itermatch(restriction)}
+            matches = {x.key for x in installed_repos.itermatch(restriction)}
 
             # try removing virtuals if there are multiple installed matches or none at all
             if not matches:
@@ -545,7 +545,7 @@ def main(options, out, err):
         resolver.plan.limiters.add(None)
 
     domain = options.domain
-    livefs_repos = domain.all_livefs_repos
+    installed_repos = domain.all_installed_repos
     world_set = world_list = options.world
     if options.oneshot:
         world_set = None
@@ -559,7 +559,7 @@ def main(options, out, err):
         pkg_get_use=domain.get_package_use_unconfigured,
         world_list=world_list,
         verbose=options.verbose,
-        livefs_repos=livefs_repos,
+        installed_repos=installed_repos,
         distdir=domain.fetcher.get_storage_path(),
         quiet_repo_display=options.quiet_repo_display)
 
@@ -569,7 +569,7 @@ def main(options, out, err):
             if world_set is None:
                 argparser.error("disable world updating via --oneshot, or fix your configuration")
         try:
-            unmerge(out, err, livefs_repos, options.targets, options, formatter, world_set)
+            unmerge(out, err, installed_repos, options.targets, options, formatter, world_set)
         except (parserestrict.ParseError, Failure) as e:
             argparser.error(str(e))
         return
@@ -599,7 +599,7 @@ def main(options, out, err):
 
     for token, restriction in options.targets:
         try:
-            matches = parse_target(restriction, source_repos.combined, livefs_repos, return_none=True)
+            matches = parse_target(restriction, source_repos.combined, installed_repos, return_none=True)
         except parserestrict.ParseError as e:
             e.token = token
             argparser.error(str(e))
@@ -610,7 +610,7 @@ def main(options, out, err):
                     error_msg.append("use '@{}' instead for the package set".format(token))
                 elif options.usepkgonly:
                     matches = parse_target(
-                        restriction, domain.ebuild_repos.combined, livefs_repos, return_none=True)
+                        restriction, domain.ebuild_repos.combined, installed_repos, return_none=True)
                     if matches:
                         error_msg.append("try re-running without -K/--usepkgonly enabled to rebuild from source")
                 argparser.error(' -- '.join(error_msg))

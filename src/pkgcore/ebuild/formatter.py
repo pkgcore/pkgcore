@@ -259,7 +259,7 @@ class PortageFormatter(CountingFormatter):
 
         if op.desc == "add":
             op_chars[1] = [out.fg('green'), out.bold, 'N', out.reset]
-            if op.pkg.slot != '0' and self.livefs_repos.match(op.pkg.unversioned_atom):
+            if op.pkg.slot != '0' and self.installed_repos.match(op.pkg.unversioned_atom):
                 op_chars[2] = [out.fg('green'), out.bold, 'S', out.reset]
                 op_type = 'slotted_add'
         elif op.desc == "replace":
@@ -320,11 +320,11 @@ class PortageFormatter(CountingFormatter):
             if self.verbose:
                 pkgs = sorted([
                     '%s:%s' % (x.fullver, x.slot) for x in
-                    self.livefs_repos.match(op.pkg.unversioned_atom)])
+                    self.installed_repos.match(op.pkg.unversioned_atom)])
             else:
                 pkgs = sorted([
                     x.fullver for x in
-                    self.livefs_repos.match(op.pkg.unversioned_atom)])
+                    self.installed_repos.match(op.pkg.unversioned_atom)])
             installed = ', '.join(pkgs)
 
         # output currently installed versions

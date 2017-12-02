@@ -343,7 +343,7 @@ def perl_rebuild_main(options, out, err):
         "/usr/lib(?:64|32)?/perl5/(?:%s|vendor_perl/%s)" %
         (subpattern, subpattern)).match
 
-    for pkg in options.domain.all_livefs_repos:
+    for pkg in options.domain.all_installed_repos:
         contents = getattr(pkg, 'contents', ())
         if not contents:
             continue

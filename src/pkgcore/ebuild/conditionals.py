@@ -335,7 +335,7 @@ def _internal_stringify_boolean(node, domain, func, visit):
     else:
         if (domain is not None and
                 (isinstance(node, atom) and node.slot_operator == '=')):
-            pkg = max(sorted(domain.all_livefs_repos.itermatch(node)))
+            pkg = max(sorted(domain.all_installed_repos.itermatch(node)))
             object.__setattr__(node, "slot", pkg.slot)
             object.__setattr__(node, "subslot", pkg.subslot)
         visit(func(node))

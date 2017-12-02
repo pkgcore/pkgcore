@@ -180,7 +180,7 @@ repo_cleaning_opts.add_argument(
 @repo_opts.bind_delayed_default(20, 'repo_opts')
 def _setup_repo_opts(namespace, attr):
     if namespace.exclude_installed:
-        namespace.livefs_repo = namespace.domain.all_livefs_repos
+        namespace.installed_repo = namespace.domain.all_installed_repos
 
 
 @argparser.bind_delayed_default(30, 'restrictions')
@@ -244,7 +244,7 @@ def _dist_validate_args(parser, namespace):
     # exclude distfiles used by installed packages -- note that this uses the
     # distfiles attr with USE settings bound to it
     if namespace.exclude_installed:
-        for pkg in namespace.livefs_repo:
+        for pkg in namespace.installed_repo:
             installed_dist.update(iflatten_instance(pkg.distfiles))
 
     # exclude distfiles for existing ebuilds or fetch restrictions
@@ -341,7 +341,7 @@ def _pkg_validate_args(parser, namespace):
     pkgs = set(pkg for pkg in repo.itermatch(namespace.restrict))
     pkg_filters = Filters()
     if namespace.exclude_installed:
-        pkg_filters.append(lambda pkg: pkg.versioned_atom not in namespace.livefs_repo)
+        pkg_filters.append(lambda pkg: pkg.versioned_atom not in namespace.installed_repo)
     if namespace.exclude_fetch_restricted:
         pkg_filters.append(lambda pkg: 'fetch' not in pkg.restrict)
     if namespace.source_repo is not None:

@@ -157,14 +157,14 @@ def has_version(options, out, err):
     """
     Return 0 if an atom is merged, 1 if not.
     """
-    if options.atom in options.domain.all_livefs_repos:
+    if options.atom in options.domain.all_installed_repos:
         return 0
     return 1
 
 
 def _best_version(domain, restrict, out):
     try:
-        p = max(domain.all_livefs_repos.itermatch(restrict))
+        p = max(domain.all_installed_repos.itermatch(restrict))
     except ValueError:
         # empty sequence.
         return ''
@@ -192,7 +192,7 @@ def best_version(options, out, err):
 @BaseCommand.make_command("atom", bind=portageq_commands)
 def match(options, out, err):
     """shorthand for `pquery --installed`"""
-    i = options.domain.all_livefs_repos.itermatch(options.atom, sorter=sorted)
+    i = options.domain.all_installed_repos.itermatch(options.atom, sorter=sorted)
     for pkg in i:
         out.write(str_pkg(pkg))
     return 0

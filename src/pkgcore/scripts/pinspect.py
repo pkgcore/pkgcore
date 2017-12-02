@@ -347,7 +347,7 @@ profile = subparsers.add_parser(
 profile_opts = profile.add_argument_group('subcommand options')
 profile_opts.add_argument(
     '-r', '--repo', metavar='REPO', help='target repo',
-    action=commandline.StoreRepoObject, repo_config=True)
+    action=commandline.StoreRepoObject, repo_type='config')
 inspect_profile.bind_parser(profile, 'profile')
 
 digests = subparsers.add_parser(

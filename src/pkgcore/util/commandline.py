@@ -236,11 +236,26 @@ class StoreRepoObject(StoreConfigObject):
             raise ValueError(
                 "StoreRepoObject: config_type keyword is redundant: got %s"
                 % (kwargs['config_type'],))
-        self.raw = kwargs.pop("raw", False)
-        self.repo_config = kwargs.pop("repo_config", False)
+
+        valid_repo_types = {
+            'config': None,
+            'all': 'source_repos',
+            'all_raw': 'source_repos_raw',
+            'installed': 'installed_repos',
+            'ebuild': 'ebuild_repos',
+            'ebuild_raw': 'ebuild_repos_raw',
+            'binary': 'binary_repos',
+            'binary_raw': 'binary_repos_raw',
+        }
+
+        self.repo_type = kwargs.pop('repo_type', 'all')
+        if self.repo_type not in valid_repo_types:
+            raise argparse.ArgumentTypeError('unknown repo type: %r' % self.repo_type)
+        self.repo_key = valid_repo_types[self.repo_type]
+
         self.domain_forced = 'domain' in kwargs
         self.domain = kwargs.pop('domain', 'domain')
-        if self.repo_config:
+        if self.repo_type == 'config':
             kwargs['config_type'] = 'repo_config'
         else:
             kwargs['config_type'] = 'repo'
@@ -261,11 +276,11 @@ class StoreRepoObject(StoreConfigObject):
                     "No domain found, but one was forced for %s; "
                     "internal bug.  NS=%s" % (self, namespace))
 
-        if domain is None:
+        if domain is None or self.repo_type == 'config':
             # return repo config objects
             return StoreConfigObject._get_sections(self, config, namespace)
-        # return raw or configured repo objects
-        return domain.repos_raw if self.raw else domain.repos_configured_filtered
+        # return the type of repos requested
+        return getattr(domain, self.repo_key)
 
     @staticmethod
     def _choices(sections):
@@ -297,6 +312,9 @@ class StoreRepoObject(StoreConfigObject):
                         self.namespace.domain.add_external_repo(self.config, name)
                     except TypeError as e:
                         raise argparse.ArgumentError(self, e)
+                    # force JIT-ed attr refresh to include newly added repo
+                    setattr(self.namespace.domain, '_' + self.repo_key, None)
+                    sections = getattr(self.namespace.domain, self.repo_key)
         return StoreConfigObject._load_obj(self, sections, repo)
 
 

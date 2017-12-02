@@ -6,8 +6,11 @@ __all__ = (
     "repo_containing_path", "get_raw_repos", "get_virtual_repos",
 )
 
+from collections import OrderedDict
+
 from snakeoil import klass
 from snakeoil.demandload import demandload
+from snakeoil.mappings import DictMixin
 
 from pkgcore.ebuild.cpv import versioned_CPV
 from pkgcore.repository.prototype import tree
@@ -66,7 +69,7 @@ class SimpleTree(tree):
         tree.notify_add_package(self, pkg)
 
 
-class RepositoryGroup(object):
+class RepositoryGroup(DictMixin):
     """Group of repositories as a single unit.
 
     Args:
@@ -74,13 +77,16 @@ class RepositoryGroup(object):
         combined: combined repo, if None a multiplex repo is created
     """
 
+    __externally_mutable__ = False
+
     def __init__(self, repos, combined=None):
-        self.repos = tuple(repos)
+        self._repos = OrderedDict((r.repo_id, r) for r in repos)
+
         if combined is None:
-            if len(self.repos) == 1:
-                combined = self.repos[0]
+            if len(self._repos) == 1:
+                combined = next(self._repos.itervalues())
             else:
-                combined = multiplex.tree(*self.repos)
+                combined = multiplex.tree(*list(self._repos.itervalues()))
         self.combined = combined
 
     itermatch = klass.alias_attr("combined.itermatch")
@@ -89,19 +95,38 @@ class RepositoryGroup(object):
     path_restrict = klass.alias_attr("combined.path_restrict")
 
     def __iter__(self):
-        return iter(self.repos)
+        return self._repos.itervalues()
+
+    def __getitem__(self, key):
+        if isinstance(key, basestring):
+            return self._repos[key]
+        else:
+            for x in self._repos.itervalues():
+                if key == x:
+                    return x
+
+    def iterkeys(self):
+        return self._repos.iterkeys()
+
+    def iteritems(self):
+        return self._repos.iteritems()
+
+    def itervalues(self):
+        return self._repos.itervalues()
 
     def __add__(self, other):
         if not isinstance(other, RepositoryGroup):
             raise TypeError("cannot add 'RepositoryGroup' and '%s' objects"
                             % other.__class__.__name__)
-        return RepositoryGroup(self.repos + other.repos)
+        return RepositoryGroup(
+            list(self._repos.itervalues()) + list(other._repos.itervalues()))
 
     def __radd__(self, other):
         if not isinstance(other, RepositoryGroup):
             raise TypeError("cannot add '%s' and 'RepositoryGroup' objects"
                             % other.__class__.__name__)
-        return RepositoryGroup(other.repos + self.repos)
+        return RepositoryGroup(
+            list(other._repos.itervalues()) + list(self._repos.itervalues()))
 
     @classmethod
     def change_repos(cls, repos):

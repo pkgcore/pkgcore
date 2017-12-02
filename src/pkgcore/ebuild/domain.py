@@ -528,7 +528,8 @@ class domain(config_domain):
         self.repo_masks[repo_obj.repo_id] = repo_obj._visibility_limiters()
         self.repos_raw[path] = repo_obj
         wrapped_repo = self.configure_repo(repo_obj)
-        self.filter_repo(wrapped_repo)
+        filtered_repo = self.filter_repo(wrapped_repo)
+        self.repos.append(filtered_repo)
         return repo_obj
 
     def configure_repo(self, repo):

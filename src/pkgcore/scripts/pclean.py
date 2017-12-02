@@ -162,13 +162,13 @@ def _setup_file_opts(namespace, attr):
 repo_opts = commandline.ArgumentParser(suppress=True)
 repo_cleaning_opts = repo_opts.add_argument_group('repo cleaning options')
 repo_cleaning_opts.add_argument(
-    '-I', '--installed', action='store_true',
+    '-I', '--installed', action='store_true', dest='exclude_installed',
     help='skip files for packages that are currently installed')
 repo_cleaning_opts.add_argument(
-    '-E', '--exists', action='store_true',
+    '-E', '--exists', action='store_true', dest='exclude_exists',
     help='skip files for packages that relate to ebuilds in the tree')
 repo_cleaning_opts.add_argument(
-    '-f', '--fetch-restricted', action='store_true',
+    '-f', '--fetch-restricted', action='store_true', dest='exclude_restricted',
     help='skip fetch-restricted files')
 repo_cleaning_opts.add_argument(
     "-r", "--repo", help="target repository",
@@ -179,7 +179,7 @@ repo_cleaning_opts.add_argument(
     """)
 @repo_opts.bind_delayed_default(20, 'repo_opts')
 def _setup_repo_opts(namespace, attr):
-    if namespace.installed:
+    if namespace.exclude_installed:
         namespace.livefs_repo = namespace.domain.all_livefs_repos
 
 
@@ -243,12 +243,12 @@ def _dist_validate_args(parser, namespace):
 
     # exclude distfiles used by installed packages -- note that this uses the
     # distfiles attr with USE settings bound to it
-    if namespace.installed:
+    if namespace.exclude_installed:
         for pkg in namespace.livefs_repo:
             installed_dist.update(iflatten_instance(pkg.distfiles))
 
     # exclude distfiles for existing ebuilds or fetch restrictions
-    if namespace.fetch_restricted or (namespace.exists and not namespace.restrict):
+    if namespace.exclude_restricted or (namespace.exclude_exists and not namespace.restrict):
         for pkg in repo:
             exists_dist.update(iflatten_instance(getattr(pkg, '_raw_pkg', pkg).distfiles))
             if 'fetch' in pkg.restrict:
@@ -265,7 +265,7 @@ def _dist_validate_args(parser, namespace):
         for pkg in repo.itermatch(namespace.restrict, sorter=sorted):
             s = set(iflatten_instance(getattr(pkg, '_raw_pkg', pkg).distfiles))
             target_dist[pkg.unversioned_atom][pkg].update(s)
-            if namespace.exists:
+            if namespace.exclude_exists:
                 exists_dist.update(s)
 
         extra_regex_prefixes = defaultdict(set)
@@ -339,9 +339,9 @@ def _pkg_validate_args(parser, namespace):
         namespace.restrict = packages.AlwaysTrue
 
     pkgs = set(pkg for pkg in repo.itermatch(namespace.restrict))
-    if namespace.installed:
+    if namespace.exclude_installed:
         pkgs = (pkg for pkg in pkgs if pkg.versioned_atom not in namespace.livefs_repo)
-    if namespace.fetch_restricted:
+    if namespace.exclude_restricted:
         pkgs = (pkg for pkg in pkgs if 'fetch' not in pkg.restrict)
     if namespace.source_repo is not None:
         pkgs = (pkg for pkg in pkgs if namespace.source_repo == pkg.source_repository)

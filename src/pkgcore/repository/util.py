@@ -6,11 +6,10 @@ __all__ = (
     "repo_containing_path", "get_raw_repos", "get_virtual_repos",
 )
 
-from collections import OrderedDict
+from itertools import ifilter
 
 from snakeoil import klass
 from snakeoil.demandload import demandload
-from snakeoil.mappings import DictMixin
 
 from pkgcore.ebuild.cpv import versioned_CPV
 from pkgcore.repository.prototype import tree
@@ -69,7 +68,7 @@ class SimpleTree(tree):
         tree.notify_add_package(self, pkg)
 
 
-class RepositoryGroup(DictMixin):
+class RepositoryGroup(object):
     """Group of repositories as a single unit.
 
     Args:
@@ -80,13 +79,13 @@ class RepositoryGroup(DictMixin):
     __externally_mutable__ = False
 
     def __init__(self, repos, combined=None):
-        self._repos = OrderedDict((r.repo_id, r) for r in repos)
+        self.repos = tuple(repos)
 
         if combined is None:
-            if len(self._repos) == 1:
-                combined = next(self._repos.itervalues())
+            if len(self.repos) == 1:
+                combined = self.repos[0]
             else:
-                combined = multiplex.tree(*list(self._repos.itervalues()))
+                combined = multiplex.tree(*self.repos)
         self.combined = combined
 
     itermatch = klass.alias_attr("combined.itermatch")
@@ -95,38 +94,38 @@ class RepositoryGroup(DictMixin):
     path_restrict = klass.alias_attr("combined.path_restrict")
 
     def __iter__(self):
-        return self._repos.itervalues()
+        return iter(self.repos)
 
     def __getitem__(self, key):
         if isinstance(key, basestring):
-            return self._repos[key]
+            func = lambda x: key == x.repo_id
         else:
-            for x in self._repos.itervalues():
-                if key == x:
-                    return x
+            func = lambda x: key == x
+        try:
+            return next(ifilter(func, self.repos))
+        except StopIteration:
+            raise KeyError(key)
 
     def iterkeys(self):
-        return self._repos.iterkeys()
+        return (r.repo_id for r in self.repos)
 
     def iteritems(self):
-        return self._repos.iteritems()
+        return ((r.repo_id, r) for r in self.repos)
 
     def itervalues(self):
-        return self._repos.itervalues()
+        return iter(self.repos)
 
     def __add__(self, other):
         if not isinstance(other, RepositoryGroup):
             raise TypeError("cannot add 'RepositoryGroup' and '%s' objects"
                             % other.__class__.__name__)
-        return RepositoryGroup(
-            list(self._repos.itervalues()) + list(other._repos.itervalues()))
+        return RepositoryGroup(self.repos + other.repos)
 
     def __radd__(self, other):
         if not isinstance(other, RepositoryGroup):
             raise TypeError("cannot add '%s' and 'RepositoryGroup' objects"
                             % other.__class__.__name__)
-        return RepositoryGroup(
-            list(other._repos.itervalues()) + list(self._repos.itervalues()))
+        return RepositoryGroup(other.repos + self.repos)
 
     @classmethod
     def change_repos(cls, repos):

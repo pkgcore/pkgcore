@@ -39,7 +39,7 @@ subparsers = argparser.add_subparsers(description='cleaning applets')
 @argparser.bind_delayed_default(10)
 def _initialize_opts(namespace, attr):
     namespace.restrict = []
-    namespace.filters = Filters()
+    namespace.file_filters = Filters()
 
 shared_opts = commandline.ArgumentParser(suppress=True)
 cleaning_opts = shared_opts.add_argument_group('generic cleaning options')
@@ -154,9 +154,9 @@ file_cleaning_opts.add_argument(
 @file_opts.bind_delayed_default(20, 'file_opts')
 def _setup_file_opts(namespace, attr):
     if namespace.modified is not None:
-        namespace.filters.append(lambda x: os.stat(x).st_mtime < namespace.modified)
+        namespace.file_filters.append(lambda x: os.stat(x).st_mtime < namespace.modified)
     if namespace.size is not None:
-        namespace.filters.append(lambda x: os.stat(x).st_size < namespace.size)
+        namespace.file_filters.append(lambda x: os.stat(x).st_size < namespace.size)
 
 
 repo_opts = commandline.ArgumentParser(suppress=True)
@@ -168,7 +168,7 @@ repo_cleaning_opts.add_argument(
     '-E', '--exists', action='store_true', dest='exclude_exists',
     help='skip files for packages that relate to ebuilds in the tree')
 repo_cleaning_opts.add_argument(
-    '-f', '--fetch-restricted', action='store_true', dest='exclude_restricted',
+    '-f', '--fetch-restricted', action='store_true', dest='exclude_fetch_restricted',
     help='skip fetch-restricted files')
 repo_cleaning_opts.add_argument(
     "-r", "--repo", help="target repository",
@@ -248,7 +248,7 @@ def _dist_validate_args(parser, namespace):
             installed_dist.update(iflatten_instance(pkg.distfiles))
 
     # exclude distfiles for existing ebuilds or fetch restrictions
-    if namespace.exclude_restricted or (namespace.exclude_exists and not namespace.restrict):
+    if namespace.exclude_fetch_restricted or (namespace.exclude_exists and not namespace.restrict):
         for pkg in repo:
             exists_dist.update(iflatten_instance(getattr(pkg, '_raw_pkg', pkg).distfiles))
             if 'fetch' in pkg.restrict:
@@ -317,7 +317,7 @@ def _dist_validate_args(parser, namespace):
     removal_func = partial(os.remove)
     namespace.remove = (
         (removal_func, f) for f in
-        ifilter(namespace.filters.run, targets))
+        ifilter(namespace.file_filters.run, targets))
 
 
 pkg_opts = commandline.ArgumentParser(suppress=True)
@@ -358,7 +358,7 @@ tmp = subparsers.add_parser(
     description='remove tmpdir entries')
 tmp_opts = tmp.add_argument_group('tmpfile options')
 tmp_opts.add_argument(
-    '-a', '--all', dest='wipeall', action='store_true',
+    '-a', '--all', dest='wipe_all', action='store_true',
     help='wipe the entire tmpdir',
     docs="""
         Force the entire tmpdir to be wiped. Note that this overrides any
@@ -370,7 +370,7 @@ def _tmp_validate_args(parser, namespace):
     dirs = ()
     files = ()
 
-    if namespace.restrict and not namespace.wipeall:
+    if namespace.restrict and not namespace.wipe_all:
         # create a fake repo from tmpdir entries and pull matches from it
         pkg_map = {}
         for pkg_build_dir in glob.glob(pjoin(tmpdir, '*', '*')):

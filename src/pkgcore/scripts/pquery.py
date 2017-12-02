@@ -840,7 +840,7 @@ def _add_all_if_needed(namespace, attr):
 def pkg_upgrade(_value, namespace):
     pkgs = []
     for pkg in namespace.domain.all_installed_repos:
-        matches = sorted(namespace.domain.all_repos.match(pkg.slotted_atom))
+        matches = sorted(namespace.domain.all_source_repos.match(pkg.slotted_atom))
         if matches and matches[-1] != pkg:
             pkgs.append(matches[-1].versioned_atom)
     return packages.OrRestriction(*pkgs)

@@ -394,7 +394,7 @@ mirror_opts.add_argument(
 def mirror_main(options, out, err):
     domain = options.domain
     warnings = False
-    for pkg in domain.all_repos.itermatch(options.query):
+    for pkg in domain.all_source_repos.itermatch(options.query):
         pkg_ops = domain.pkg_operations(pkg)
         if not pkg_ops.supports("mirror"):
             warnings = True
@@ -467,7 +467,7 @@ def _digest_validate(parser, namespace):
         # if we're currently in a known ebuild repo use it, otherwise use all ebuild repos
         repo = repo_containing_path(namespace.domain.ebuild_repos_raw, os.getcwd())
         if repo is None:
-            repo = namespace.domain.all_raw_ebuild_repos
+            repo = namespace.domain.all_ebuild_repos_raw
 
         if not targets:
             try:

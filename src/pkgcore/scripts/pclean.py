@@ -185,7 +185,7 @@ def _setup_repo_opts(namespace, attr):
 
 @argparser.bind_delayed_default(30, 'restrictions')
 def _setup_restrictions(namespace, attr):
-    repo = namespace.domain.all_repos
+    repo = namespace.domain.all_source_repos
     target_restrictions = []
 
     # If no targets are passed, create a restriction from the current working

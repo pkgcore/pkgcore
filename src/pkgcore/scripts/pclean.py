@@ -339,12 +339,14 @@ def _pkg_validate_args(parser, namespace):
         namespace.restrict = packages.AlwaysTrue
 
     pkgs = set(pkg for pkg in repo.itermatch(namespace.restrict))
+    pkg_filters = Filters()
     if namespace.exclude_installed:
-        pkgs = (pkg for pkg in pkgs if pkg.versioned_atom not in namespace.livefs_repo)
-    if namespace.exclude_restricted:
-        pkgs = (pkg for pkg in pkgs if 'fetch' not in pkg.restrict)
+        pkg_filters.append(lambda pkg: pkg.versioned_atom not in namespace.livefs_repo)
+    if namespace.exclude_fetch_restricted:
+        pkg_filters.append(lambda pkg: 'fetch' not in pkg.restrict)
     if namespace.source_repo is not None:
-        pkgs = (pkg for pkg in pkgs if namespace.source_repo == pkg.source_repository)
+        pkg_filters.append(lambda pkg: namespace.source_repo == pkg.source_repository)
+    pkgs = ifilter(pkg_filters.run, pkgs)
     removal_func = partial(os.remove)
     namespace.remove = (
         (removal_func, binpkg) for binpkg in

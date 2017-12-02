@@ -324,10 +324,7 @@ class domain(config_domain):
         for l, repos, filtered in ((self.repos, repositories, True),
                                    (self.vdb, vdb, False)):
             for repo in repos:
-                wrapped_repo = self.configure_repo(repo)
-                if filtered:
-                    wrapped_repo = self.filter_repo(wrapped_repo)
-                l.append(wrapped_repo)
+                self.add_repo(repo, filtered=filtered, aggregate=l)
 
         self.use_expand_re = re.compile(
             "^(?:[+-])?(%s)_(.*)$" %
@@ -518,20 +515,29 @@ class domain(config_domain):
     def _mk_nonconfig_triggers(self):
         return ebuild_generate_triggers(self)
 
-    # TODO: add support for configuring/enabling the external repo's cache
-    def add_external_repo(self, config, path):
-        """Add unconfigured, external repo to the domain."""
-        path = os.path.abspath(path)
-        if not os.path.isdir(os.path.join(path, 'profiles')):
-            raise TypeError('invalid repo: %r' % path)
-        repo_config = RepoConfig(path, config_name=path)
-        repo_obj = ebuild_repo.tree(config, repo_config)
-        self.repo_masks[repo_obj.repo_id] = repo_obj._visibility_limiters()
-        self.repos_raw[path] = repo_obj
-        wrapped_repo = self.configure_repo(repo_obj)
-        filtered_repo = self.filter_repo(wrapped_repo)
-        self.repos.append(filtered_repo)
-        return repo_obj
+    def add_repo(self, repo, filtered=True, aggregate=None, config=None):
+        """Add repo to the domain."""
+        if aggregate is None:
+            aggregate = self.repos
+
+        # add unconfigured, external repo to the domain
+        # TODO: add support for configuring/enabling the external repo's cache
+        if isinstance(repo, basestring):
+            if config is None:
+                raise ValueError('missing config')
+            path = os.path.abspath(repo)
+            if not os.path.isdir(os.path.join(path, 'profiles')):
+                raise TypeError('invalid repo: %r' % path)
+            repo_config = RepoConfig(path, config_name=path)
+            repo = ebuild_repo.tree(config, repo_config)
+            self.repo_masks[path] = repo._visibility_limiters()
+            self.repos_raw[path] = repo
+
+        wrapped_repo = self.configure_repo(repo)
+        if filtered:
+            wrapped_repo = self.filter_repo(wrapped_repo)
+        aggregate.append(wrapped_repo)
+        return wrapped_repo
 
     def configure_repo(self, repo):
         """Configure a raw repo."""

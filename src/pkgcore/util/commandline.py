@@ -169,7 +169,7 @@ class StoreConfigObject(argparse._StoreAction):
     def _real_call(self, parser, namespace, values, option_string=None):
         config = getattr(namespace, 'config', None)
         if config is None:
-            raise ValueError("no config found.  Internal bug")
+            raise ValueError("no config found, internal bug")
 
         sections = self._get_sections(config, namespace)
 
@@ -244,6 +244,7 @@ class StoreRepoObject(StoreConfigObject):
             'config': None,
             'all': 'source_repos',
             'all_raw': 'source_repos_raw',
+            'configured': 'configured_repos',
             'installed': 'installed_repos',
             'ebuild': 'ebuild_repos',
             'ebuild_raw': 'ebuild_repos_raw',

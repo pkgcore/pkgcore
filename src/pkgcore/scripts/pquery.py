@@ -501,17 +501,18 @@ class RawAwareStoreRepoObject(commandline.StoreRepoObject):
 
     def _get_sections(self, config, namespace):
         if namespace.raw:
-            return commandline.StoreConfigObject._get_sections(
-                self, config, namespace)
+            self.repo_key = 'source_repos_raw'
         elif namespace.unfiltered:
-            return namespace.domain.repos_configured
-        return commandline.StoreRepoObject._get_sections(
-            self, config, namespace)
+            self.repo_key = 'configured_repos'
+        else:
+            self.repo_key = 'source_repos'
+        return super(RawAwareStoreRepoObject, self)._get_sections(config, namespace)
 
 repo_mux = repo_group.add_mutually_exclusive_group()
 # TODO: update docs when binpkg/vdb repos are configured via repos.conf
 repo_mux.add_argument(
-    '-r', '--repo', action=RawAwareStoreRepoObject, priority=29,
+    '-r', '--repo', action=RawAwareStoreRepoObject,
+    priority=29, allow_external_repos=True,
     help='repo to search (default from domain if omitted)',
     docs="""
         Select the repo to search in for matches. This includes all the

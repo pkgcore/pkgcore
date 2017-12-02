@@ -10,6 +10,7 @@ from itertools import ifilter
 
 from snakeoil import klass
 from snakeoil.demandload import demandload
+from snakeoil.mappings import DictMixin
 
 from pkgcore.ebuild.cpv import versioned_CPV
 from pkgcore.repository.prototype import tree
@@ -68,7 +69,7 @@ class SimpleTree(tree):
         tree.notify_add_package(self, pkg)
 
 
-class RepositoryGroup(object):
+class RepositoryGroup(DictMixin):
     """Group of repositories as a single unit.
 
     Args:

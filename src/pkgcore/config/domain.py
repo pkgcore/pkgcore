@@ -64,6 +64,11 @@ class domain(object):
         return RepositoryGroup(self.repos_raw.itervalues())
 
     @klass.jit_attr_none
+    def configured_repos(self):
+        """Group of all repos bound with configuration data."""
+        return RepositoryGroup(self.repos_configured.itervalues())
+
+    @klass.jit_attr_none
     def installed_repos(self):
         """Group of all installed repos (vdb)."""
         return RepositoryGroup(self.vdb)

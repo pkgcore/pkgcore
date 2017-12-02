@@ -230,6 +230,7 @@ class StoreConfigObject(argparse._StoreAction):
 
 
 class StoreRepoObject(StoreConfigObject):
+    """Load a repo object from the config."""
 
     def __init__(self, *args, **kwargs):
         if 'config_type' in kwargs:
@@ -237,6 +238,8 @@ class StoreRepoObject(StoreConfigObject):
                 "StoreRepoObject: config_type keyword is redundant: got %s"
                 % (kwargs['config_type'],))
 
+        # mapping between supported repo type requests and the related attr on
+        # domain objects to pull the requested repos from
         valid_repo_types = {
             'config': None,
             'all': 'source_repos',
@@ -297,19 +300,19 @@ class StoreRepoObject(StoreConfigObject):
 
     def _load_obj(self, sections, name):
         repo = name
-        if not self.allow_name_lookup or name in sections:
+        if not self.allow_name_lookup or repo in sections:
             pass
         else:
-            # name wasn't found; search for it.
+            # name wasn't found, check repo aliases for it
             for repo_name, repo_obj in sections.iteritems():
-                if name in repo_obj.aliases:
+                if repo in repo_obj.aliases:
                     repo = repo_name
                     break
             else:
                 # try to add it as an external repo
-                if self.allow_external_repos:
+                if self.allow_external_repos and os.path.exists(repo):
                     try:
-                        self.namespace.domain.add_external_repo(self.config, name)
+                        self.namespace.domain.add_external_repo(self.config, repo)
                     except TypeError as e:
                         raise argparse.ArgumentError(self, e)
                     # force JIT-ed attr refresh to include newly added repo

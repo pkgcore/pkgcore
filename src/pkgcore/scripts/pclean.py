@@ -350,8 +350,7 @@ def _pkg_validate_args(parser, namespace):
     removal_func = partial(os.remove)
     namespace.remove = (
         (removal_func, binpkg) for binpkg in
-        ifilter(namespace.filters.run, (pkg.path for pkg in pkgs)))
-
+        sorted(ifilter(namespace.file_filters.run, (pkg.path for pkg in pkgs)))) 
 
 tmp = subparsers.add_parser(
     'tmp', parents=(shared_opts,),

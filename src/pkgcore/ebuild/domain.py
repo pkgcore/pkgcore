@@ -518,6 +518,7 @@ class domain(config_domain):
     def _mk_nonconfig_triggers(self):
         return ebuild_generate_triggers(self)
 
+    # TODO: add support for configuring/enabling the external repo's cache
     def add_external_repo(self, config, path):
         """Add unconfigured, external repo to the domain."""
         path = os.path.abspath(path)

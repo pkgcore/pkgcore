@@ -81,6 +81,17 @@ class FakeRepo(object):
     def match(self, restrict, **kwargs):
         return list(self.itermatch(restrict, **kwargs))
 
+    def __contains__(self, obj):
+        """Determine if a path or a package is in a repo."""
+        if isinstance(obj, str):
+            if self.location and path.startswith(self.location):
+                return True
+            return False
+        else:
+            for pkg in self.itermatch(obj):
+                return True
+            return False
+
 
 class FakeEbuildRepo(FakeRepo):
 

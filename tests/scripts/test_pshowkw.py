@@ -1,0 +1,80 @@
+# Copyright: 2018 Tim Harder <radhermit@gmail.com>
+# License: BSD/GPL2
+
+from pkgcore.config import basics, ConfigHint, configurable
+from pkgcore.ebuild.repo_objs import RepoConfig
+from pkgcore.scripts import pshowkw
+from pkgcore.test.misc import FakePkg, FakeEbuildRepo
+from pkgcore.test.scripts.helpers import ArgParseMixin
+
+from snakeoil.test import TestCase
+
+
+class FakeDomain(object):
+
+    pkgcore_config_type = ConfigHint({'repos': 'refs:repo'}, typename='domain')
+
+    def __init__(self, repos):
+        self.all_ebuild_repos_raw = repos
+        self.root = None
+
+    def add_repo(self, *args, **kwargs):
+        """stubbed"""
+
+
+class FakeRepo(FakeEbuildRepo):
+
+    pkgcore_config_type = ConfigHint({}, typename='repo')
+
+    def __init__(self, repo_id='fake_repo', arches=('amd64', 'x86')):
+        config = RepoConfig('nonexistent')
+        object.__setattr__(config, 'raw_known_arches', frozenset(arches))
+        pkgs = [
+            FakePkg('app-arch/bzip2-1.0.1-r1', slot='0', keywords=('x86',)),
+            FakePkg('app-arch/bzip2-1.0.5-r2', slot='0', keywords=('x86',)),
+            FakePkg('sys-apps/coreutils-8.25', slot='0'),
+            FakePkg('x11-libs/gtk+-2.24', slot='2', keywords=('amd64',)),
+            FakePkg('x11-libs/gtk+-3.22', slot='3', keywords=('amd64', 'x86')),
+        ]
+        super().__init__(repo_id=repo_id, pkgs=pkgs, config=config)
+
+
+domain_config = basics.HardCodedConfigSection({
+    'class': FakeDomain,
+    'repos': [basics.HardCodedConfigSection({'class': FakeRepo})],
+    'default': True,
+})
+
+
+class CommandlineTest(TestCase, ArgParseMixin):
+
+    _argparser = pshowkw.argparser
+
+    def test_missing_target(self):
+        self.assertError(
+            'missing target argument and not in a supported repo',
+            domain=domain_config)
+
+    def test_not_in_specified_repo(self):
+        fake_repo = FakeRepo()
+        ns_kwargs = {'selected_repo': fake_repo}
+        self.assertError(
+            f"not in specified repo: {fake_repo.repo_id!r}",
+            domain=domain_config, ns_kwargs=ns_kwargs)
+
+    def test_no_matches(self):
+        fake_repo = FakeRepo()
+        ns_kwargs = {'selected_repo': fake_repo}
+        self.assertErr(
+            ["pshowkw: no matches for 'foo/bar'"], 'foo/bar',
+            domain=domain_config, ns_kwargs=ns_kwargs)
+
+    def test_collapsed(self):
+        fake_repo = FakeRepo()
+        ns_kwargs = {'selected_repo': fake_repo}
+        self.assertOut(
+            ["x86"], '-c', 'bzip2',
+            domain=domain_config, ns_kwargs=ns_kwargs)
+        self.assertOut(
+            ["amd64 x86"], '-c', 'gtk+',
+            domain=domain_config, ns_kwargs=ns_kwargs)

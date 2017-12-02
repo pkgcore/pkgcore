@@ -307,7 +307,7 @@ class StoreRepoObject(StoreConfigObject):
                     break
             else:
                 # try to add it as an external repo
-                if self.allow_external_repos and os.path.isdir(name):
+                if self.allow_external_repos:
                     try:
                         self.namespace.domain.add_external_repo(self.config, name)
                     except TypeError as e:

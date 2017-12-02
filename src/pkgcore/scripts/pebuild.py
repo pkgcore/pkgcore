@@ -31,7 +31,7 @@ phase_opts.add_argument(
 @argparser.bind_final_check
 def _validate_args(parser, namespace):
     target = namespace.target
-    repo = namespace.domain.ebuild_repos_raw
+    repo = namespace.domain.ebuild_repos
 
     if target.endswith('.ebuild'):
         if not os.path.exists(target):

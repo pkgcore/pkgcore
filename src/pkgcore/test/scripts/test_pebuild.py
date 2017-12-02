@@ -16,7 +16,7 @@ class FakeDomain(object):
 
     def __init__(self, repo):
         object.__init__(self)
-        self.ebuild_repos_raw = repo
+        self.ebuild_repos = repo
 
 
 @configurable(typename='repo')

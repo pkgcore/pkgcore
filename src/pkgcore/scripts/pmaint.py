@@ -129,7 +129,11 @@ def copy_main(options, out, err):
 
     for pkg in src_repo.itermatch(options.query):
         if options.ignore_existing and pkg.versioned_atom in trg_repo:
-            out.write("skipping %s; it exists already." % (pkg,))
+            out.write("skipping existing pkg: %s" % (pkg.cpvstr,))
+            continue
+        # TODO: remove this once we limit src repos to non-virtual (pkg.provided) repos
+        if not pkg.package_is_real:
+            out.write("skipping virtual pkg: %s" % (pkg.cpvstr,))
             continue
 
         out.write("copying %s... " % (pkg,))

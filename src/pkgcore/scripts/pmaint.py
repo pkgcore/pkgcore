@@ -95,12 +95,13 @@ def sync_main(options, out, err):
     return 0
 
 
+# TODO: restrict to required repo types
 copy = subparsers.add_parser(
     "copy", parents=shared_options,
     description="copy binpkgs between repositories; primarily useful for "
     "quickpkging a livefs pkg")
 copy.add_argument(
-    'target_repo', action=commandline.StoreRepoObject, repo_type='binary',
+    'target_repo', action=commandline.StoreRepoObject,
     writable=True, help="repository to add packages to")
 commandline.make_query(
     copy, nargs='+', dest='query',
@@ -109,7 +110,7 @@ commandline.make_query(
 copy_opts = copy.add_argument_group("subcommand options")
 copy_opts.add_argument(
     '-s', '--source-repo', default=None,
-    action=commandline.StoreRepoObject, repo_type='ebuild',
+    action=commandline.StoreRepoObject,
     help="copy strictly from the supplied repository; else it copies from "
     "wherever a match is found")
 copy_opts.add_argument(

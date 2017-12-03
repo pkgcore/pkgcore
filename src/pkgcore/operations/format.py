@@ -131,15 +131,13 @@ class operations(_operations_mod.base):
     @_operations_mod.is_standalone
     def _cmd_api_fetch(self, fetchables=None, observer=None):
         # TODO: add parallel fetch support
-        if fetchables is not None:
+        if fetchables is None:
+            fetcher = self._fetch_op
+        else:
             if not isinstance(fetchables, (tuple, list)):
                 fetchables = [fetchables]
-            ret = []
             fetcher = self._fetch_kls(self.domain, self.pkg, fetchables, self._find_fetcher())
-            for fetchable in fetchables:
-                ret.append(fetcher.fetch_one(fetchable, self._get_observer(observer)))
-            return all(ret)
-        return self._fetch_op.fetch_all(self._get_observer(observer))
+        return fetcher.fetch_all(self._get_observer(observer))
 
     @_operations_mod.is_standalone
     def _cmd_api_mirror(self, observer=None):

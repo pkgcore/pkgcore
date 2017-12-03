@@ -28,8 +28,7 @@ from snakeoil.cli import arghparse, tool
 from snakeoil.demandload import demandload
 
 from pkgcore import __title__
-from pkgcore.config import load_config
-from pkgcore.config.errors import ParsingError, ConfigurationError
+from pkgcore.config import load_config, errors as config_errors
 
 demandload(
     'signal',
@@ -575,20 +574,23 @@ class Tool(tool.Tool):
 
     def handle_exec_exception(self, e):
         """Handle pkgcore-specific runtime exceptions."""
-        if isinstance(e, ParsingError):
+        if isinstance(e, config_errors.ParsingError):
             if self.parser.debug:
                 tb = sys.exc_info()[-1]
                 dump_error(e, 'Error while parsing arguments', tb=tb)
             else:
                 self.parser.error("config error: %s" % (e,))
-        elif isinstance(e, ConfigurationError):
+        elif isinstance(e, config_errors.ConfigurationError):
             if self.parser.debug:
                 tb = sys.exc_info()[-1]
                 dump_error(e, "Error in configuration", handle=self._errfile, tb=tb)
             else:
-                excs = list(walk_exception_chain(e))
-                # skip the original exception if it was re-raised
-                exc = excs[-2] if len(excs) > 1 else excs[-1]
+                # find the first non-config exception in the chain if it exists
+                # for the displayed message
+                for x in walk_exception_chain(e):
+                    exc = x
+                    if not isinstance(exc, config_errors.BaseError):
+                        break
                 self.parser.error("config error: %s" % (exc,))
         elif isinstance(e, operations.OperationError):
             # Output a clean cli error for internal exception types if one

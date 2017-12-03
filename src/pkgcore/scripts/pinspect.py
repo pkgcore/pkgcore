@@ -351,10 +351,10 @@ profile_opts.add_argument(
 inspect_profile.bind_parser(profile, 'profile')
 
 digests = subparsers.add_parser(
-    "digests", description="identify what packages are missing digest info")
+    "digests", domain=True, description="identify what packages are missing digest info")
 digests.add_argument(
     'repos', nargs='*', help="repository to inspect",
-    action=commandline.StoreRepoObject, store_name=True)
+    action=commandline.StoreRepoObject, allow_external_repos=True, store_name=True)
 @digests.bind_main_func
 def digest_manifest(options, out, err):
     for name, repo in options.repos:

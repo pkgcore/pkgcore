@@ -265,12 +265,14 @@ class StoreRepoObject(StoreConfigObject):
         StoreConfigObject.__init__(self, *args, **kwargs)
 
     def _get_sections(self, config, namespace):
-        self.config = config
-        self.domain = config.get_default("domain")
+        domain = getattr(namespace, 'domain', None)
 
         # return repo config objects
-        if self.domain is None or self.repo_type == 'config':
+        if domain is None or self.repo_type == 'config':
             return StoreConfigObject._get_sections(self, config, namespace)
+
+        self.config = config
+        self.domain = config.get_default("domain")
 
         # return the type of repos requested
         return getattr(self.domain, self.repo_key)

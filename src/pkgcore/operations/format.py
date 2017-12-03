@@ -135,8 +135,9 @@ class operations(_operations_mod.base):
             if not isinstance(fetchables, (tuple, list)):
                 fetchables = [fetchables]
             ret = []
+            fetcher = self._fetch_kls(self.domain, self.pkg, fetchables, self._find_fetcher())
             for fetchable in fetchables:
-                ret.append(self._fetch_op.fetch_one(fetchable, self._get_observer(observer)))
+                ret.append(fetcher.fetch_one(fetchable, self._get_observer(observer)))
             return all(ret)
         return self._fetch_op.fetch_all(self._get_observer(observer))
 

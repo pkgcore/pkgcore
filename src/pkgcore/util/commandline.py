@@ -257,8 +257,6 @@ class StoreRepoObject(StoreConfigObject):
             raise argparse.ArgumentTypeError('unknown repo type: %r' % self.repo_type)
         self.repo_key = valid_repo_types[self.repo_type]
 
-        self.domain_forced = 'domain' in kwargs or self.repo_type != 'config'
-        self.domain = kwargs.pop('domain', 'domain')
         if self.repo_type == 'config':
             kwargs['config_type'] = 'repo_config'
         else:
@@ -268,23 +266,15 @@ class StoreRepoObject(StoreConfigObject):
         StoreConfigObject.__init__(self, *args, **kwargs)
 
     def _get_sections(self, config, namespace):
-        domain = None
-        if self.domain:
-            domain = getattr(namespace, self.domain, None)
-            if domain is None and self.domain_forced:
-                raise argparse.ArgumentError(
-                    self,
-                    "No domain found, but one was forced for %s; "
-                    "internal bug.  NS=%s" % (self, namespace))
+        self.config = config
+        self.domain = config.get_default("domain")
 
-        if domain is None or self.repo_type == 'config':
-            # return repo config objects
+        # return repo config objects
+        if self.domain is None or self.repo_type == 'config':
             return StoreConfigObject._get_sections(self, config, namespace)
 
         # return the type of repos requested
-        self.config = config
-        self.domain = domain
-        return getattr(domain, self.repo_key)
+        return getattr(self.domain, self.repo_key)
 
     @staticmethod
     def _choices(sections):

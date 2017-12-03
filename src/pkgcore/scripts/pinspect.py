@@ -41,7 +41,7 @@ demandload(
 )
 
 pkgcore_opts = commandline.ArgumentParser(domain=False, script=(__file__, __name__))
-argparser = arghparse.ArgumentParser(
+argparser = commandline.ArgumentParser(
     suppress=True, description=__doc__, parents=(pkgcore_opts,))
 subparsers = argparser.add_subparsers(description="report applets")
 

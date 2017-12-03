@@ -14,7 +14,6 @@ __all__ = (
 
 from functools import partial
 
-from snakeoil.cli import arghparse
 from snakeoil.demandload import demandload
 
 from pkgcore.config import errors, basics
@@ -114,7 +113,7 @@ shared_options_domain = (commandline.ArgumentParser(
     version=False, domain=True, add_help=False),)
 
 pkgcore_opts = commandline.ArgumentParser(domain=False, script=(__file__, __name__))
-argparser = arghparse.ArgumentParser(
+argparser = commandline.ArgumentParser(
     suppress=True, description=__doc__, parents=(pkgcore_opts,))
 subparsers = argparser.add_subparsers(description="configuration related subcommands")
 classes = subparsers.add_parser(

@@ -97,11 +97,11 @@ def sync_main(options, out, err):
 
 # TODO: restrict to required repo types
 copy = subparsers.add_parser(
-    "copy", parents=shared_options,
+    "copy", parents=shared_options_domain,
     description="copy binpkgs between repositories; primarily useful for "
     "quickpkging a livefs pkg")
 copy.add_argument(
-    'target_repo', action=commandline.StoreRepoObject,
+    'target_repo', action=commandline.StoreRepoObject, repo_type='binary_raw',
     writable=True, help="repository to add packages to")
 commandline.make_query(
     copy, nargs='+', dest='query',
@@ -109,7 +109,7 @@ commandline.make_query(
     "for copying")
 copy_opts = copy.add_argument_group("subcommand options")
 copy_opts.add_argument(
-    '-s', '--source-repo', default=None,
+    '-s', '--source-repo', default=None, repo_type='installed',
     action=commandline.StoreRepoObject,
     help="copy strictly from the supplied repository; else it copies from "
     "wherever a match is found")
@@ -119,20 +119,19 @@ copy_opts.add_argument(
 @copy.bind_main_func
 def copy_main(options, out, err):
     """Copy pkgs between repositories."""
-    src_repo = options.source_repo
-    if src_repo is None:
-        src_repo = multiplex.tree(*options.config.repo.values())
-    trg_repo = options.target_repo
-    src_repo = options.source_repo
+    source_repo = options.source_repo
+    if source_repo is None:
+        source_repo = options.domain.all_source_repos
+    target_repo = options.target_repo
 
     failures = False
 
-    for pkg in src_repo.itermatch(options.query):
-        if options.ignore_existing and pkg.versioned_atom in trg_repo:
+    for pkg in source_repo.itermatch(options.query):
+        if options.ignore_existing and pkg.versioned_atom in target_repo:
             out.write("skipping existing pkg: %s" % (pkg.cpvstr,))
             continue
         # TODO: remove this once we limit src repos to non-virtual (pkg.provided) repos
-        if not pkg.package_is_real:
+        if not getattr(pkg, 'package_is_real', True):
             out.write("skipping virtual pkg: %s" % (pkg.cpvstr,))
             continue
 
@@ -159,12 +158,13 @@ def copy_main(options, out, err):
                 continue
             pkg = mutated.MutatedPkg(pkg, {'contents': new_contents})
 
-        trg_repo.operations.install_or_replace(pkg).finish()
-
+        target_repo.operations.install_or_replace(pkg).finish()
         out.write("completed\n")
+
     if failures:
         return 1
     return 0
+
 
 def _get_default_jobs(namespace, attr):
     # we intentionally overschedule for SMP; the main python thread

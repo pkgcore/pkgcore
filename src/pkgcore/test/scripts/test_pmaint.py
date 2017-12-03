@@ -26,33 +26,75 @@ else:
 Options = AttrAccessible
 
 
+class fake_operations(operations):
+
+    def _cmd_implementation_install(self, pkg, observer):
+        self.repo.installed.append(pkg)
+        return derive_op('add_data', install, self.repo, pkg, observer)
+
+    def _cmd_implementation_uninstall(self, pkg, observer):
+        self.repo.uninstalled.append(pkg)
+        return derive_op('remove_data', uninstall, self.repo, pkg, observer)
+
+    def _cmd_implementation_replace(self, oldpkg, newpkg, observer):
+        self.repo.replaced.append((oldpkg, newpkg))
+        return derive_op(('add_data', 'remove_data'),
+            replace, self.repo, oldpkg, newpkg, observer)
+
+
+class fake_repo(util.SimpleTree):
+
+    operations_kls = fake_operations
+
+    def __init__(self, data, frozen=False, livefs=False, repo_id=None):
+        self.installed = []
+        self.replaced = []
+        self.uninstalled = []
+        util.SimpleTree.__init__(
+            self, data, pkg_klass=partial(fake_pkg, self), repo_id=repo_id)
+        self.livefs = livefs
+        self.frozen = frozen
+
+
+def make_repo_config(repo_data, livefs=False, frozen=False, repo_id=None):
+    def repo():
+        return fake_repo(repo_data, livefs=livefs, frozen=frozen, repo_id=repo_id)
+    repo.pkgcore_config_type = ConfigHint(typename='repo')
+    return basics.HardCodedConfigSection({'class':repo})
+
+
 class FakeDomain(object):
 
     pkgcore_config_type = ConfigHint({'repos': 'refs:repo',
+                                      'binpkg': 'refs:repo',
                                       'vdb': 'refs:repo'},
                                      typename='domain')
 
-    def __init__(self, repos, vdb):
+    def __init__(self, repos, binpkg, vdb):
         object.__init__(self)
         self.repos = repos
         self.source_repos = util.RepositoryGroup(repos)
+        self.installed_repos = util.RepositoryGroup(vdb)
+        self.binary_repos_raw = util.RepositoryGroup(binpkg)
         self.vdb = vdb
 
 
-@configurable(typename='repo')
-def faked_repo():
-    return util.SimpleTree({'spork': {'foon': ('1', '2')}}, repo_id='fake')
+def make_domain(repo=None, binpkg=None, vdb=None):
+    if repo is None:
+        repo = {}
+    if binpkg is None:
+        binpkg = {}
+    if vdb is None:
+        vdb = {}
+    repos_config = make_repo_config(repo, repo_id='fake')
+    binpkg_config = make_repo_config(binpkg, frozen=False, repo_id='fake_binpkg')
+    vdb_config = make_repo_config(vdb, repo_id='fake_vdb')
 
-
-@configurable(typename='repo')
-def faked_vdb():
-    return util.SimpleTree({}, repo_id='fake_vdb')
-
-
-domain_config = basics.HardCodedConfigSection({
+    return basics.HardCodedConfigSection({
         'class': FakeDomain,
-        'repos': [basics.HardCodedConfigSection({'class': faked_repo})],
-        'vdb': [basics.HardCodedConfigSection({'class': faked_vdb})],
+        'repos': [repos_config],
+        'binpkg': [binpkg_config],
+        'vdb': [vdb_config],
         'default': True,
         })
 
@@ -143,43 +185,6 @@ def derive_op(name, op, *a, **kw):
     return new_op(*a, **kw)
 
 
-class fake_operations(operations):
-
-    def _cmd_implementation_install(self, pkg, observer):
-        self.repo.installed.append(pkg)
-        return derive_op('add_data', install, self.repo, pkg, observer)
-
-    def _cmd_implementation_uninstall(self, pkg, observer):
-        self.repo.uninstalled.append(pkg)
-        return derive_op('remove_data', uninstall, self.repo, pkg, observer)
-
-    def _cmd_implementation_replace(self, oldpkg, newpkg, observer):
-        self.repo.replaced.append((oldpkg, newpkg))
-        return derive_op(('add_data', 'remove_data'),
-            replace, self.repo, oldpkg, newpkg, observer)
-
-
-class fake_repo(util.SimpleTree):
-
-    operations_kls = fake_operations
-
-    def __init__(self, data, frozen=False, livefs=False):
-        self.installed = []
-        self.replaced = []
-        self.uninstalled = []
-        util.SimpleTree.__init__(self, data,
-            pkg_klass=partial(fake_pkg, self))
-        self.livefs = livefs
-        self.frozen = frozen
-
-
-def make_repo_config(repo_data, livefs=False, frozen=False):
-    def repo():
-        return fake_repo(repo_data, livefs=livefs, frozen=frozen)
-    repo.pkgcore_config_type = ConfigHint(typename='repo')
-    return basics.HardCodedConfigSection({'class':repo})
-
-
 class TestCopy(TestCase, ArgParseMixin):
 
     _argparser = pmaint.copy
@@ -192,10 +197,9 @@ class TestCopy(TestCase, ArgParseMixin):
 
     def test_normal_function(self):
         ret, config, out = self.execute_main(
-            'trg', '--source-repo', 'src',
+            'fake_binpkg', '--source-repo', 'fake_vdb',
             '*',
-                src=make_repo_config({'sys-apps':{'portage':['2.1', '2.3']}}),
-                trg=make_repo_config({})
+            domain=make_domain(vdb={'sys-apps':{'portage':['2.1', '2.3']}}),
             )
         self.assertEqual(ret, 0, "expected non zero exit code")
         self.assertEqual(map(str, config.target_repo.installed),
@@ -206,10 +210,9 @@ class TestCopy(TestCase, ArgParseMixin):
 
         d = {'sys-apps':{'portage':['2.1', '2.2']}}
         ret, config, out = self.execute_main(
-            'trg', '--source-repo', 'src',
+            'fake_binpkg', '--source-repo', 'fake_vdb',
             '=sys-apps/portage-2.1',
-                src=make_repo_config(d),
-                trg=make_repo_config(d)
+            domain=make_domain(binpkg=d, vdb=d),
             )
         self.assertEqual(ret, 0, "expected non zero exit code")
         self.assertEqual([map(str, x) for x in config.target_repo.replaced],
@@ -220,10 +223,9 @@ class TestCopy(TestCase, ArgParseMixin):
 
     def test_ignore_existing(self):
         ret, config, out = self.execute_main(
-            'trg', '--source-repo', 'src',
+            'fake_binpkg', '--source-repo', 'fake_vdb',
             '*', '--ignore-existing',
-                src=make_repo_config({'sys-apps':{'portage':['2.1', '2.3']}}),
-                trg=make_repo_config({})
+            domain=make_domain(vdb={'sys-apps':{'portage':['2.1', '2.3']}}),
             )
         self.assertEqual(ret, 0, "expected non zero exit code")
         self.assertEqual(map(str, config.target_repo.installed),
@@ -233,10 +235,11 @@ class TestCopy(TestCase, ArgParseMixin):
             msg="uninstalled should be the same as replaced; empty")
 
         ret, config, out = self.execute_main(
-            'trg', '--source-repo', 'src',
+            'fake_binpkg', '--source-repo', 'fake_vdb',
             '*', '--ignore-existing',
-                src=make_repo_config({'sys-apps':{'portage':['2.1', '2.3']}}),
-                trg=make_repo_config({'sys-apps':{'portage':['2.1']}})
+            domain=make_domain(
+                binpkg={'sys-apps':{'portage':['2.1']}},
+                vdb={'sys-apps':{'portage':['2.1', '2.3']}}),
             )
         self.assertEqual(ret, 0, "expected non zero exit code")
         self.assertEqual(map(str, config.target_repo.installed),
@@ -253,7 +256,6 @@ class TestRegen(TestCase, ArgParseMixin):
     def test_parser(self):
 
         options = self.parse(
-            'fake', '--threads', '2', domain=domain_config)
-        self.assertEqual(
-            [options.repos[0].__class__, options.threads],
-            [util.SimpleTree, 2])
+            'fake', '--threads', '2', domain=make_domain())
+        self.assertTrue(isinstance(options.repos[0], util.SimpleTree))
+        self.assertEqual(options.threads, 2)

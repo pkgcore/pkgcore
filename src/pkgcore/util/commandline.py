@@ -257,7 +257,7 @@ class StoreRepoObject(StoreConfigObject):
             raise argparse.ArgumentTypeError('unknown repo type: %r' % self.repo_type)
         self.repo_key = valid_repo_types[self.repo_type]
 
-        self.domain_forced = 'domain' in kwargs
+        self.domain_forced = 'domain' in kwargs or self.repo_type != 'config'
         self.domain = kwargs.pop('domain', 'domain')
         if self.repo_type == 'config':
             kwargs['config_type'] = 'repo_config'
@@ -268,9 +268,6 @@ class StoreRepoObject(StoreConfigObject):
         StoreConfigObject.__init__(self, *args, **kwargs)
 
     def _get_sections(self, config, namespace):
-        self.config = config
-        self.namespace = namespace
-
         domain = None
         if self.domain:
             domain = getattr(namespace, self.domain, None)
@@ -283,7 +280,10 @@ class StoreRepoObject(StoreConfigObject):
         if domain is None or self.repo_type == 'config':
             # return repo config objects
             return StoreConfigObject._get_sections(self, config, namespace)
+
         # return the type of repos requested
+        self.config = config
+        self.domain = domain
         return getattr(domain, self.repo_key)
 
     @staticmethod
@@ -313,12 +313,12 @@ class StoreRepoObject(StoreConfigObject):
                 # try to add it as an external repo
                 if self.allow_external_repos and os.path.exists(repo):
                     try:
-                        self.namespace.domain.add_repo(repo, config=self.config)
+                        self.domain.add_repo(repo, config=self.config)
                     except TypeError as e:
                         raise argparse.ArgumentError(self, e)
                     # force JIT-ed attr refresh to include newly added repo
-                    setattr(self.namespace.domain, '_' + self.repo_key, None)
-                    sections = getattr(self.namespace.domain, self.repo_key)
+                    setattr(self.domain, '_' + self.repo_key, None)
+                    sections = getattr(self.domain, self.repo_key)
         return StoreConfigObject._load_obj(self, sections, repo)
 
 

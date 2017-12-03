@@ -27,20 +27,30 @@ unset PKGSHELL SCRIPTDIR
 # usage: _choose "${array[@]}"
 # returns: index of array choice (assuming array indexing starts at 1)
 _choose() {
-	local choice x i=0 num_opts=$#
+	local choice num_opts=$#
+
+	# show available choices
+	local x i=0
 	for x in $@; do
 		echo "  $(( ++i )): ${x}" >&2
 	done
+
+	# read user choice, checking for invalid values
+	local invalid=0
 	while true; do
 		echo -n "Please select one: " >&2
 		choice=$(_read_nchars ${#num_opts})
 		if [[ ! ${choice} =~ [0-9]+ || ${choice} -lt 1 || ${choice} -gt ${num_opts} ]]; then
+			(( invalid++ ))
 			echo " -- Invalid choice!" >&2
+			# three invalids seen, giving up
+			[[ ${invalid} -gt 2 ]] && break
 			continue
 		fi
 		echo >&2
 		break
 	done
+
 	# default to array indexes starting at 0
 	(( choice-- ))
 	echo $(_array_index ${choice})

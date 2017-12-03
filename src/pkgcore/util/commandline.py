@@ -495,10 +495,18 @@ def _mk_domain(parser):
         help="domain to use for this operation")
 
 
+class _SubParser(arghparse._SubParser):
+
+    def add_parser(self, name, domain=False, **kwds):
+        """Suppress domain option in subparsers by default."""
+        return super(_SubParser, self).add_parser(name, domain=domain, **kwds)
+
+
 class ArgumentParser(arghparse.ArgumentParser):
 
     def __init__(self, suppress=False, config=True, domain=True, script=None, **kwds):
         super(ArgumentParser, self).__init__(suppress=suppress, script=script, **kwds)
+        self.register('action', 'parsers', _SubParser)
 
         if not suppress:
             if config:

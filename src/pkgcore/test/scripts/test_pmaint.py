@@ -26,6 +26,37 @@ else:
 Options = AttrAccessible
 
 
+class FakeDomain(object):
+
+    pkgcore_config_type = ConfigHint({'repos': 'refs:repo',
+                                      'vdb': 'refs:repo'},
+                                     typename='domain')
+
+    def __init__(self, repos, vdb):
+        object.__init__(self)
+        self.repos = repos
+        self.source_repos = util.RepositoryGroup(repos)
+        self.vdb = vdb
+
+
+@configurable(typename='repo')
+def faked_repo():
+    return util.SimpleTree({'spork': {'foon': ('1', '2')}}, repo_id='fake')
+
+
+@configurable(typename='repo')
+def faked_vdb():
+    return util.SimpleTree({}, repo_id='fake_vdb')
+
+
+domain_config = basics.HardCodedConfigSection({
+        'class': FakeDomain,
+        'repos': [basics.HardCodedConfigSection({'class': faked_repo})],
+        'vdb': [basics.HardCodedConfigSection({'class': faked_vdb})],
+        'default': True,
+        })
+
+
 class FakeSyncer(base.syncer):
 
     def __init__(self,  *args, **kwargs):
@@ -221,17 +252,8 @@ class TestRegen(TestCase, ArgParseMixin):
 
     def test_parser(self):
 
-        class TestSimpleTree(util.SimpleTree):
-            pass
-
-        @configurable(typename='repo')
-        def fake_repo():
-            return TestSimpleTree({})
-
-
         options = self.parse(
-            'spork', '--threads', '2', spork=basics.HardCodedConfigSection(
-                {'class': fake_repo}))
+            'fake', '--threads', '2', domain=domain_config)
         self.assertEqual(
             [options.repos[0].__class__, options.threads],
-            [TestSimpleTree, 2])
+            [util.SimpleTree, 2])

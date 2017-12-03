@@ -304,7 +304,8 @@ class StoreRepoObject(StoreConfigObject):
                 # try to add it as an external repo
                 if self.allow_external_repos and os.path.exists(repo):
                     try:
-                        self.domain.add_repo(repo, config=self.config)
+                        repo_obj = self.domain.add_repo(repo, config=self.config)
+                        repo = repo_obj.repo_id
                     except TypeError as e:
                         raise argparse.ArgumentError(self, e)
                     # force JIT-ed attr refresh to include newly added repo

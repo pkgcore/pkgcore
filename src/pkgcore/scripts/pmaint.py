@@ -100,7 +100,7 @@ copy = subparsers.add_parser(
     description="copy binpkgs between repositories; primarily useful for "
     "quickpkging a livefs pkg")
 copy.add_argument(
-    'target_repo', action=commandline.StoreRepoObject,
+    'target_repo', action=commandline.StoreRepoObject, repo_type='binary',
     writable=True, help="repository to add packages to")
 commandline.make_query(
     copy, nargs='+', dest='query',
@@ -109,7 +109,7 @@ commandline.make_query(
 copy_opts = copy.add_argument_group("subcommand options")
 copy_opts.add_argument(
     '-s', '--source-repo', default=None,
-    action=commandline.StoreRepoObject,
+    action=commandline.StoreRepoObject, repo_type='ebuild',
     help="copy strictly from the supplied repository; else it copies from "
     "wherever a match is found")
 copy_opts.add_argument(
@@ -238,12 +238,12 @@ def update_pkg_desc_index(repo, out, err):
     return ret
 
 
-# TODO: limit to ebuild repos only
 regen = subparsers.add_parser(
-    "regen", parents=shared_options,
+    "regen", parents=shared_options_domain,
     description="regenerate repository caches")
 regen.add_argument(
-    'repos', metavar='repo', nargs='*', action=commandline.StoreRepoObject,
+    'repos', metavar='repo', nargs='*',
+    action=commandline.StoreRepoObject, repo_type='all', allow_external_repos=True,
     help="repo(s) to regenerate caches for")
 regen_opts = regen.add_argument_group("subcommand options")
 regen_opts.add_argument(
@@ -447,10 +447,9 @@ digest_opts.add_argument(
         default because manifest generation is often performed when adding new
         ebuilds with distfiles that aren't on Gentoo mirrors yet.
     """)
-# TODO: limit to ebuild repos only
 digest_opts.add_argument(
     "-r", "--repo", help="target repository",
-    action=commandline.StoreRepoObject, repo_type='config',
+    action=commandline.StoreRepoObject, repo_type='ebuild', allow_external_repos=True,
     docs="""
         Target repository to search for matches. If no repo is specified all
         ebuild repos are used.

@@ -101,7 +101,7 @@ copy = subparsers.add_parser(
     description="copy binpkgs between repositories; primarily useful for "
     "quickpkging a livefs pkg")
 copy.add_argument(
-    'target_repo', action=commandline.StoreRepoObject, repo_type='binary_raw',
+    'target_repo', action=commandline.StoreRepoObject, repo_type='binary-raw',
     writable=True, help="repository to add packages to")
 commandline.make_query(
     copy, nargs='+', dest='query',

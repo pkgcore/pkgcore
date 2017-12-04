@@ -243,13 +243,13 @@ class StoreRepoObject(StoreConfigObject):
         self.valid_repo_types = {
             'config': None,
             'all': 'source_repos',
-            'all_raw': 'source_repos_raw',
+            'all-raw': 'source_repos_raw',
             'configured': 'configured_repos',
             'installed': 'installed_repos',
             'ebuild': 'ebuild_repos',
-            'ebuild_raw': 'ebuild_repos_raw',
+            'ebuild-raw': 'ebuild_repos_raw',
             'binary': 'binary_repos',
-            'binary_raw': 'binary_repos_raw',
+            'binary-raw': 'binary_repos_raw',
         }
 
         self.repo_type = kwargs.pop('repo_type', 'all')

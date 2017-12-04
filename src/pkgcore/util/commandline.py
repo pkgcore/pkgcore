@@ -36,6 +36,7 @@ demandload(
     'snakeoil:osutils',
     'snakeoil.errors:dump_error,walk_exception_chain',
     'snakeoil.sequences:iflatten_instance,unstable_unique',
+    'snakeoil.strings:pluralism',
     'pkgcore:operations',
     'pkgcore.config:basics',
     'pkgcore.plugin:get_plugins',
@@ -239,7 +240,7 @@ class StoreRepoObject(StoreConfigObject):
 
         # mapping between supported repo type requests and the related attr on
         # domain objects to pull the requested repos from
-        valid_repo_types = {
+        self.valid_repo_types = {
             'config': None,
             'all': 'source_repos',
             'all_raw': 'source_repos_raw',
@@ -252,9 +253,16 @@ class StoreRepoObject(StoreConfigObject):
         }
 
         self.repo_type = kwargs.pop('repo_type', 'all')
-        if self.repo_type not in valid_repo_types:
+        if self.repo_type not in self.valid_repo_types:
             raise argparse.ArgumentTypeError('unknown repo type: %r' % self.repo_type)
-        self.repo_key = valid_repo_types[self.repo_type]
+        self.repo_key = self.valid_repo_types[self.repo_type]
+
+        self.allow_aliases = set(kwargs.pop("allow_aliases", ()))
+        unknown_aliases = self.allow_aliases.difference(self.valid_repo_types)
+        if unknown_aliases:
+            raise argparse.ArgumentTypeError(
+                'unknown repo alias%s: %s' % (
+                    pluralism(unknown_aliases, plural='es'), ', '.join(unknown_aliases)))
 
         if self.repo_type == 'config':
             kwargs['config_type'] = 'repo_config'
@@ -293,7 +301,11 @@ class StoreRepoObject(StoreConfigObject):
     def _load_obj(self, sections, name):
         repo = name
         if not self.allow_name_lookup or repo in sections:
+            # requested repo exists in the config
             pass
+        elif name in self.allow_aliases and self.valid_repo_types[name]:
+            # pull repos related to given alias
+            return getattr(self.domain, self.valid_repo_types[name])
         else:
             # name wasn't found, check repo aliases for it
             for repo_name, repo_obj in sections.iteritems():

@@ -503,7 +503,7 @@ class RawAwareStoreRepoObject(commandline.StoreRepoObject):
         if namespace.raw:
             self.repo_key = 'source_repos_raw'
         elif namespace.unfiltered:
-            self.repo_key = 'configured_repos'
+            self.repo_key = 'unfiltered_repos'
         else:
             self.repo_key = 'source_repos'
         return super(RawAwareStoreRepoObject, self)._get_sections(config, namespace)

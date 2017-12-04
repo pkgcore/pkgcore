@@ -76,12 +76,12 @@ class domain(object):
 
     @klass.jit_attr_none
     def source_repos_raw(self):
-        """Group of all repos without filtering."""
+        """Group of all repos without any filtering."""
         return RepositoryGroup(self.repos_raw.itervalues())
 
     @klass.jit_attr_none
-    def configured_repos(self):
-        """Group of all repos bound with configuration data."""
+    def unfiltered_repos(self):
+        """Group of all repos without package filtering."""
         return RepositoryGroup(self.repos_configured.itervalues())
 
     @klass.jit_attr_none
@@ -94,7 +94,7 @@ class domain(object):
     all_repos_raw = klass.alias_attr("available_repos_raw.combined")
     all_source_repos = klass.alias_attr("source_repos.combined")
     all_source_repos_raw = klass.alias_attr("source_repos_raw.combined")
-    all_configured_repos = klass.alias_attr("configured_repos.combined")
+    all_unfiltered_repos = klass.alias_attr("unfiltered_repos.combined")
     all_installed_repos = klass.alias_attr("installed_repos.combined")
 
     def pkg_operations(self, pkg, observer=None):

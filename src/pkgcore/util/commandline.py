@@ -240,7 +240,7 @@ class StoreRepoObject(StoreConfigObject):
         'all-raw': 'available_repos_raw',
         'source': 'source_repos',
         'source-raw': 'source_repos_raw',
-        'configured': 'configured_repos',
+        'unfiltered': 'configured_repos',
         'installed': 'installed_repos',
         'ebuild': 'ebuild_repos',
         'ebuild-raw': 'ebuild_repos_raw',

@@ -56,8 +56,18 @@ class domain(object):
     @property
     def repo_configs(self):
         """All defined repo configs."""
-        return tuple(r.config for r in self.repos_raw.itervalues()
+        return tuple(r.config for r in self.available_repos
                      if getattr(r, 'config', False))
+
+    @property
+    def available_repos(self):
+        """Group of all available repos."""
+        return self.source_repos + self.installed_repos
+
+    @property
+    def available_repos_raw(self):
+        """Group of all available repos without filtering."""
+        return self.source_repos_raw + self.installed_repos
 
     @klass.jit_attr_none
     def source_repos(self):
@@ -80,6 +90,8 @@ class domain(object):
         return RepositoryGroup(self.vdb)
 
     # multiplexed repos
+    all_repos = klass.alias_attr("available_repos.combined")
+    all_repos_raw = klass.alias_attr("available_repos_raw.combined")
     all_source_repos = klass.alias_attr("source_repos.combined")
     all_source_repos_raw = klass.alias_attr("source_repos_raw.combined")
     all_configured_repos = klass.alias_attr("configured_repos.combined")

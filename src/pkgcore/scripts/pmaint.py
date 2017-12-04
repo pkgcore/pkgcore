@@ -248,7 +248,7 @@ regen = subparsers.add_parser(
     description="regenerate repository caches")
 regen.add_argument(
     'repos', metavar='repo', nargs='*',
-    action=commandline.StoreRepoObject, repo_type='all', allow_external_repos=True,
+    action=commandline.StoreRepoObject, repo_type='source', allow_external_repos=True,
     help="repo(s) to regenerate caches for")
 regen_opts = regen.add_argument_group("subcommand options")
 regen_opts.add_argument(

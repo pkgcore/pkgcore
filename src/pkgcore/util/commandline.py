@@ -242,8 +242,10 @@ class StoreRepoObject(StoreConfigObject):
         # domain objects to pull the requested repos from
         self.valid_repo_types = {
             'config': 'repo_configs',
-            'all': 'source_repos',
-            'all-raw': 'source_repos_raw',
+            'all': 'available_repos',
+            'all-raw': 'available_repos_raw',
+            'source': 'source_repos',
+            'source-raw': 'source_repos_raw',
             'configured': 'configured_repos',
             'installed': 'installed_repos',
             'ebuild': 'ebuild_repos',

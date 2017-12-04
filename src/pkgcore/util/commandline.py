@@ -232,27 +232,27 @@ class StoreConfigObject(argparse._StoreAction):
 class StoreRepoObject(StoreConfigObject):
     """Load a repo object from the config."""
 
+    # mapping between supported repo type requests and the related attr on
+    # domain objects to pull the requested repos from
+    valid_repo_types = {
+        'config': 'repo_configs',
+        'all': 'available_repos',
+        'all-raw': 'available_repos_raw',
+        'source': 'source_repos',
+        'source-raw': 'source_repos_raw',
+        'configured': 'configured_repos',
+        'installed': 'installed_repos',
+        'ebuild': 'ebuild_repos',
+        'ebuild-raw': 'ebuild_repos_raw',
+        'binary': 'binary_repos',
+        'binary-raw': 'binary_repos_raw',
+    }
+
     def __init__(self, *args, **kwargs):
         if 'config_type' in kwargs:
             raise ValueError(
                 "StoreRepoObject: config_type keyword is redundant: got %s"
                 % (kwargs['config_type'],))
-
-        # mapping between supported repo type requests and the related attr on
-        # domain objects to pull the requested repos from
-        self.valid_repo_types = {
-            'config': 'repo_configs',
-            'all': 'available_repos',
-            'all-raw': 'available_repos_raw',
-            'source': 'source_repos',
-            'source-raw': 'source_repos_raw',
-            'configured': 'configured_repos',
-            'installed': 'installed_repos',
-            'ebuild': 'ebuild_repos',
-            'ebuild-raw': 'ebuild_repos_raw',
-            'binary': 'binary_repos',
-            'binary-raw': 'binary_repos_raw',
-        }
 
         self.repo_type = kwargs.pop('repo_type', 'all')
         if self.repo_type not in self.valid_repo_types:

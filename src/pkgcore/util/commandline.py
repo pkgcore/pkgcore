@@ -241,7 +241,7 @@ class StoreRepoObject(StoreConfigObject):
         # mapping between supported repo type requests and the related attr on
         # domain objects to pull the requested repos from
         self.valid_repo_types = {
-            'config': None,
+            'config': 'repo_configs',
             'all': 'source_repos',
             'all-raw': 'source_repos_raw',
             'configured': 'configured_repos',

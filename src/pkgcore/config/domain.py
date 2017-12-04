@@ -53,6 +53,12 @@ class domain(object):
         l.extend(self._mk_nonconfig_triggers())
         return tuple(l)
 
+    @property
+    def repo_configs(self):
+        """All defined repo configs."""
+        return tuple(r.config for r in self.repos_raw.itervalues()
+                     if getattr(r, 'config', False))
+
     @klass.jit_attr_none
     def source_repos(self):
         """Group of all repos."""

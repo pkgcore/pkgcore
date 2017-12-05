@@ -641,7 +641,7 @@ def generate_triggers(domain):
                                d["COLLISION_IGNORE"])
 
     if "protect-owned" in features and "collision-protect" not in features:
-        yield ProtectOwned(domain.vdb, d["CONFIG_PROTECT"],
+        yield ProtectOwned(domain.installed_repos, d["CONFIG_PROTECT"],
                            d["CONFIG_PROTECT_MASK"], d["COLLISION_IGNORE"])
 
     if "multilib-strict" in features:

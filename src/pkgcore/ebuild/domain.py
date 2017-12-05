@@ -33,6 +33,7 @@ from pkgcore.ebuild.misc import (
     package_keywords_splitter)
 from pkgcore.ebuild.repo_objs import OverlayedLicenses
 from pkgcore.repository import visibility
+from pkgcore.repository.util import RepositoryGroup
 from pkgcore.restrictions import packages, values
 from pkgcore.restrictions.delegated import delegate
 from pkgcore.util.parserestrict import parse_match
@@ -50,7 +51,6 @@ demandload(
     'pkgcore.ebuild.triggers:generate_triggers@ebuild_generate_triggers',
     'pkgcore.fs.livefs:iter_scan',
     'pkgcore.log:logger',
-    "pkgcore.repository:util",
 )
 
 
@@ -148,30 +148,11 @@ class domain(config_domain):
         if 'MAKEOPTS' not in settings:
             settings['MAKEOPTS'] = '-j%i' % cpu_count()
 
-        # map out sectionname -> config manager immediately.
-        repositories_collapsed = [r.collapse() for r in repositories]
-        repositories = [r.instantiate() for r in repositories_collapsed]
-
-        self.fetcher = settings.pop("fetcher")
-
-        self.default_licenses_manager = OverlayedLicenses(*repositories)
-        vdb_collapsed = [r.collapse() for r in vdb]
-        vdb = [r.instantiate() for r in vdb_collapsed]
-        self.repos_raw = {
-            collapsed.name: repo for (collapsed, repo) in izip(
-                repositories_collapsed, repositories)}
-        self.repos_raw.update(
-            (collapsed.name, repo) for (collapsed, repo) in izip(
-                vdb_collapsed, vdb))
-        self.repos_raw.pop(None, None)
-        if profile.provides_repo is not None:
-            self.repos_raw['package.provided'] = profile.provides_repo
-            vdb.append(profile.provides_repo)
-
         self.profile = profile
         self.pkg_masks, self.pkg_unmasks, pkg_keywords, pkg_licenses = [], [], [], []
         pkg_use, self.bashrcs = [], []
 
+        self.fetcher = settings.pop("fetcher")
         self.ebuild_hook_dir = settings.pop("ebuild_hook_dir", None)
 
         # TODO: split this out into properties similar to what's done for profiles
@@ -312,19 +293,27 @@ class domain(config_domain):
             c.merge(getattr(profile, attr + 'masked_use'))
             setattr(self, attr + 'disabled_use', c)
 
-        self.repos = []
-        self.vdb = []
-        self.repos_configured = {}
-        self.repos_configured_filtered = {}
+        self.source_repos_raw = RepositoryGroup(r.instantiate() for r in repositories)
+        self.installed_repos_raw = RepositoryGroup(r.instantiate() for r in vdb)
+        self.default_licenses_manager = OverlayedLicenses(*self.source_repos_raw)
 
-        self.profile_masks = profile._incremental_masks()
-        self.profile_unmasks = profile._incremental_unmasks()
-        self.repo_masks = {r.repo_id: r._visibility_limiters() for r in repositories}
+        self.source_repos = RepositoryGroup()
+        self.installed_repos = RepositoryGroup()
+        self.unfiltered_repos = RepositoryGroup()
 
-        for l, repos, filtered in ((self.repos, repositories, True),
-                                   (self.vdb, vdb, False)):
+        if profile.provides_repo is not None:
+            self.installed_repos_raw.add_repo(profile.provides_repo)
+
+        self._profile_masks = profile._incremental_masks()
+        self._profile_unmasks = profile._incremental_unmasks()
+        self._repo_masks = {r.repo_id: r._visibility_limiters()
+                            for r in self.source_repos_raw}
+
+        for repo_group, repos, filtered in (
+                (self.source_repos, self.source_repos_raw, True),
+                (self.installed_repos, self.installed_repos_raw, False)):
             for repo in repos:
-                self.add_repo(repo, filtered=filtered, aggregate=l)
+                self.add_repo(repo, filtered=filtered, group=repo_group)
 
         self.use_expand_re = re.compile(
             "^(?:[+-])?(%s)_(.*)$" %
@@ -515,10 +504,10 @@ class domain(config_domain):
     def _mk_nonconfig_triggers(self):
         return ebuild_generate_triggers(self)
 
-    def add_repo(self, repo, filtered=True, aggregate=None, config=None):
+    def add_repo(self, repo, filtered=True, group=None, config=None):
         """Add repo to the domain."""
-        if aggregate is None:
-            aggregate = self.repos
+        if group is None:
+            group = self.source_repos
 
         # add unconfigured, external repo to the domain
         # TODO: add support for configuring/enabling the external repo's cache
@@ -530,13 +519,13 @@ class domain(config_domain):
                 raise TypeError('invalid repo: %r' % path)
             repo_config = RepoConfig(path, config_name=path)
             repo = ebuild_repo.tree(config, repo_config)
-            self.repo_masks[path] = repo._visibility_limiters()
-            self.repos_raw[path] = repo
+            self.source_repos_raw.add_repo(repo)
+            self._repo_masks[path] = repo._visibility_limiters()
 
         wrapped_repo = self.configure_repo(repo)
         if filtered:
             wrapped_repo = self.filter_repo(wrapped_repo)
-        aggregate.append(wrapped_repo)
+        group.add_repo(wrapped_repo)
         return wrapped_repo
 
     def configure_repo(self, repo):
@@ -558,7 +547,7 @@ class domain(config_domain):
                 raise_from(Failure("failed configuring repo '%s': "
                                    "configurable missing: %s" % (repo, e)))
             configured_repo = repo.configure(*pargs)
-        self.repos_configured[repo.repo_id] = configured_repo
+        self.unfiltered_repos.add_repo(configured_repo)
         return configured_repo
 
     def filter_repo(self, repo):
@@ -571,22 +560,21 @@ class domain(config_domain):
             # we do this both since that's annoying, and since
             # frankly there isn't any good course of action.
             masters = ()
-        global_masks = [self.repo_masks.get(master, [(), ()]) for master in masters]
-        global_masks.append(self.repo_masks[repo.repo_id])
-        global_masks.extend(self.profile_masks)
+        global_masks = [self._repo_masks.get(master, [(), ()]) for master in masters]
+        global_masks.append(self._repo_masks[repo.repo_id])
+        global_masks.extend(self._profile_masks)
         masks = set()
         for neg, pos in global_masks:
             masks.difference_update(neg)
             masks.update(pos)
         masks.update(self.pkg_masks)
         unmasks = set()
-        for neg, pos in self.profile_unmasks:
+        for neg, pos in self._profile_unmasks:
             unmasks.difference_update(neg)
             unmasks.update(pos)
         unmasks.update(self.pkg_unmasks)
         filter = generate_filter(masks, unmasks, *self.vfilters)
         filtered_repo = visibility.filterTree(repo, filter, True)
-        self.repos_configured_filtered[repo.repo_id] = filtered_repo
         return filtered_repo
 
     @klass.jit_attr
@@ -606,35 +594,59 @@ class domain(config_domain):
         """Temporary directory for the package manager."""
         return pjoin(self.tmpdir, 'portage')
 
+    @property
+    def repo_configs(self):
+        """All defined repo configs."""
+        return tuple(r.config for r in self.repos if hasattr(r, 'config'))
+
+    @klass.jit_attr_none
+    def repos(self):
+        """Group of all repos."""
+        return RepositoryGroup(
+            chain(self.source_repos, self.installed_repos))
+
+    @klass.jit_attr_none
+    def repos_raw(self):
+        """Group of all repos without filtering."""
+        return RepositoryGroup(
+            chain(self.source_repos_raw, self.installed_repos_raw))
+
     @klass.jit_attr_none
     def ebuild_repos(self):
         """Group of all ebuild repos bound with configuration data."""
-        return util.RepositoryGroup(
-            x for x in self.repos_configured.itervalues()
+        return RepositoryGroup(
+            x for x in self.unfiltered_repos
             if isinstance(x, ebuild_repo._ConfiguredTree))
 
     @klass.jit_attr_none
     def ebuild_repos_raw(self):
         """Group of all ebuild repos without filtering."""
-        return util.RepositoryGroup(
-            x for x in self.repos_raw.itervalues()
+        return RepositoryGroup(
+            x for x in self.source_repos_raw
             if isinstance(x, ebuild_repo._UnconfiguredTree))
 
     @klass.jit_attr_none
     def binary_repos(self):
         """Group of all binary repos bound with configuration data."""
-        return util.RepositoryGroup(
-            x for x in self.repos_configured.itervalues()
+        return RepositoryGroup(
+            x for x in self.unfiltered_repos
             if isinstance(x, binary_repo.ConfiguredTree))
 
     @klass.jit_attr_none
     def binary_repos_raw(self):
         """Group of all binary repos without filtering."""
-        return util.RepositoryGroup(
-            x for x in self.repos_raw.itervalues()
+        return RepositoryGroup(
+            x for x in self.source_repos_raw
             if isinstance(x, binary_repo.tree))
 
     # multiplexed repos
+    all_repos = klass.alias_attr("repos.combined")
+    all_repos_raw = klass.alias_attr("repos_raw.combined")
+    all_source_repos = klass.alias_attr("source_repos.combined")
+    all_source_repos_raw = klass.alias_attr("source_repos_raw.combined")
+    all_installed_repos = klass.alias_attr("installed_repos.combined")
+    all_installed_repos_raw = klass.alias_attr("installed_repos_raw.combined")
+    all_unfiltered_repos = klass.alias_attr("unfiltered_repos.combined")
     all_ebuild_repos = klass.alias_attr("ebuild_repos.combined")
     all_ebuild_repos_raw = klass.alias_attr("ebuild_repos_raw.combined")
     all_binary_repos = klass.alias_attr("binary_repos.combined")

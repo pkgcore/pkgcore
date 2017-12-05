@@ -418,8 +418,8 @@ def print_packages_noversion(options, out, err, pkgs):
         # If we are already matching on all repos we do not need to duplicate.
         if not options.all_repos:
             versions = sorted(
-                pkg.fullver for vdb in options.domain.vdb
-                for pkg in vdb.itermatch(pkgs[0].unversioned_atom))
+                pkg.fullver for repo in options.domain.installed_repos
+                for pkg in repo.itermatch(pkgs[0].unversioned_atom))
             if versions:
                 out.write(green, '     installed: ', out.fg(), ' '.join(versions))
         for attr in options.attr:
@@ -501,11 +501,11 @@ class RawAwareStoreRepoObject(commandline.StoreRepoObject):
 
     def _get_sections(self, config, namespace):
         if namespace.raw:
-            self.repo_key = 'source_repos_raw'
+            self.repo_key = 'repos_raw'
         elif namespace.unfiltered:
             self.repo_key = 'unfiltered_repos'
         else:
-            self.repo_key = 'source_repos'
+            self.repo_key = 'repos'
         return super(RawAwareStoreRepoObject, self)._get_sections(config, namespace)
 
 repo_mux = repo_group.add_mutually_exclusive_group()
@@ -550,25 +550,25 @@ def setup_repos(namespace, attr):
         repos = [namespace.repo]
     elif (namespace.contents or namespace.size or namespace._owns or
             namespace._owns_re or namespace.installed):
-        repos = namespace.domain.vdb
+        repos = namespace.domain.installed_repos
     elif namespace.unfiltered:
         if namespace.all_repos:
-            repos = list(namespace.domain.vdb)
-            repos.extend(namespace.domain.repos_configured.itervalues())
+            repos = list(namespace.domain.installed_repos)
+            repos.extend(namespace.domain.unfiltered_repos.repos)
         elif namespace.ebuild_repos:
             repos = namespace.domain.ebuild_repos_raw.repos
         elif namespace.binary_repos:
             repos = namespace.domain.binary_repos_raw.repos
         else:
-            repos = namespace.domain.repos_configured.values()
+            repos = namespace.domain.unfiltered_repos.repos
     elif namespace.all_repos:
-        repos = namespace.domain.repos + namespace.domain.vdb
+        repos = namespace.domain.repos
     elif namespace.ebuild_repos:
         repos = namespace.domain.ebuild_repos.repos
     elif namespace.binary_repos:
         repos = namespace.domain.binary_repos.repos
     else:
-        repos = namespace.domain.repos
+        repos = namespace.domain.source_repos
 
     if namespace.raw or namespace.virtuals:
         repos = get_raw_repos(repos)

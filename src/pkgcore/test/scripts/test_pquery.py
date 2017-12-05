@@ -18,8 +18,8 @@ class FakeDomain(object):
 
     def __init__(self, repos, vdb):
         object.__init__(self)
-        self.repos = repos
-        self.vdb = vdb
+        self.source_repos = repos
+        self.installed_repos = vdb
 
 
 @configurable(typename='repo')

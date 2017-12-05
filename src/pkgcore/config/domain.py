@@ -53,50 +53,6 @@ class domain(object):
         l.extend(self._mk_nonconfig_triggers())
         return tuple(l)
 
-    @property
-    def repo_configs(self):
-        """All defined repo configs."""
-        return tuple(r.config for r in self.available_repos
-                     if getattr(r, 'config', False))
-
-    @property
-    def available_repos(self):
-        """Group of all available repos."""
-        return self.source_repos + self.installed_repos
-
-    @property
-    def available_repos_raw(self):
-        """Group of all available repos without filtering."""
-        return self.source_repos_raw + self.installed_repos
-
-    @klass.jit_attr_none
-    def source_repos(self):
-        """Group of all repos."""
-        return RepositoryGroup(self.repos)
-
-    @klass.jit_attr_none
-    def source_repos_raw(self):
-        """Group of all repos without any filtering."""
-        return RepositoryGroup(self.repos_raw.itervalues())
-
-    @klass.jit_attr_none
-    def unfiltered_repos(self):
-        """Group of all repos without package filtering."""
-        return RepositoryGroup(self.repos_configured.itervalues())
-
-    @klass.jit_attr_none
-    def installed_repos(self):
-        """Group of all installed repos (vdb)."""
-        return RepositoryGroup(self.vdb)
-
-    # multiplexed repos
-    all_repos = klass.alias_attr("available_repos.combined")
-    all_repos_raw = klass.alias_attr("available_repos_raw.combined")
-    all_source_repos = klass.alias_attr("source_repos.combined")
-    all_source_repos_raw = klass.alias_attr("source_repos_raw.combined")
-    all_unfiltered_repos = klass.alias_attr("unfiltered_repos.combined")
-    all_installed_repos = klass.alias_attr("installed_repos.combined")
-
     def pkg_operations(self, pkg, observer=None):
         return pkg.operations(self, observer=observer)
 

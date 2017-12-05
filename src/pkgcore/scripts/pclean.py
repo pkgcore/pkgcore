@@ -232,7 +232,7 @@ def _dist_validate_args(parser, namespace):
     distdir = namespace.domain.fetcher.distdir
     repo = namespace.repo
     if repo is None:
-        repo = multiplex.tree(*get_virtual_repos(namespace.domain.repos, False))
+        repo = multiplex.tree(*get_virtual_repos(namespace.domain.source_repos, False))
 
     all_dist_files = set(os.path.basename(f) for f in listdir_files(distdir))
     target_files = set()

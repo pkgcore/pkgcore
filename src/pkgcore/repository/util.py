@@ -73,26 +73,30 @@ class RepositoryGroup(DictMixin):
     """Group of repositories as a single unit.
 
     Args:
-        repos (list): repo instances
+        repos (iterable): repo instances
         combined: combined repo, if None a multiplex repo is created
     """
 
     __externally_mutable__ = False
 
-    def __init__(self, repos, combined=None):
+    def __init__(self, repos=(), combined=None):
         self.repos = tuple(repos)
-
         if combined is None:
-            if len(self.repos) == 1:
-                combined = self.repos[0]
-            else:
-                combined = multiplex.tree(*self.repos)
+            combined = multiplex.tree(*self.repos)
         self.combined = combined
 
     itermatch = klass.alias_attr("combined.itermatch")
     has_match = klass.alias_attr("combined.has_match")
     match = klass.alias_attr("combined.match")
     path_restrict = klass.alias_attr("combined.path_restrict")
+
+    def add_repo(self, repo):
+        if repo not in self.repos:
+            self.repos += (repo,)
+            self.combined.trees += (repo,)
+
+    def __contains__(self, key):
+        return key in self.repos
 
     def __iter__(self):
         return iter(self.repos)

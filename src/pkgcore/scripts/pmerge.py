@@ -36,7 +36,8 @@ demandload('textwrap:dedent')
 argparser = commandline.ArgumentParser(
     domain=True, description=__doc__, script=(__file__, __name__))
 argparser.add_argument(
-    nargs='*', dest='targets', metavar='TARGET', action=commandline.StoreTarget,
+    nargs='*', dest='targets', metavar='TARGET',
+    action=commandline.StoreTarget, allow_sets=True,
     help="extended package matching",
     docs=commandline.StoreTarget.__doc__.split('\n')[1:])
 

@@ -68,12 +68,12 @@ class StoreTarget(argparse._AppendAction):
     Also, the target '-' allows targets to be read from standard input.
     """
 
-    def __init__(self, sets=True, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
+        self.allow_sets = kwargs.pop('allow_sets', False)
         super(StoreTarget, self).__init__(*args, **kwargs)
-        self.sets = sets
 
     def __call__(self, parser, namespace, values, option_string=None):
-        if self.sets:
+        if self.allow_sets:
             namespace.sets = []
 
         if isinstance(values, basestring):
@@ -87,7 +87,7 @@ class StoreTarget(argparse._AppendAction):
                 raise argparse.ArgumentError(self, "'-' is only valid when piping data in")
 
         for token in values:
-            if self.sets and token.startswith('@'):
+            if self.allow_sets and token.startswith('@'):
                 namespace.sets.append(token[1:])
             else:
                 try:

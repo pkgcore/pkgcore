@@ -244,8 +244,10 @@ class StoreRepoObject(StoreConfigObject):
         'installed-raw': 'installed_repos_raw',
         'unfiltered': 'unfiltered_repos',
         'ebuild': 'ebuild_repos',
+        'ebuild-unfiltered': 'ebuild_repos_unfiltered',
         'ebuild-raw': 'ebuild_repos_raw',
         'binary': 'binary_repos',
+        'binary-unfiltered': 'binary_repos_unfiltered',
         'binary-raw': 'binary_repos_raw',
     }
 

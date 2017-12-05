@@ -599,6 +599,13 @@ class domain(config_domain):
     def ebuild_repos(self):
         """Group of all ebuild repos bound with configuration data."""
         return RepositoryGroup(
+            x for x in self.source_repos
+            if isinstance(x.raw_repo, ebuild_repo._ConfiguredTree))
+
+    @klass.jit_attr_none
+    def ebuild_repos_unfiltered(self):
+        """Group of all ebuild repos without package filtering."""
+        return RepositoryGroup(
             x for x in self.unfiltered_repos
             if isinstance(x, ebuild_repo._ConfiguredTree))
 
@@ -612,6 +619,13 @@ class domain(config_domain):
     @klass.jit_attr_none
     def binary_repos(self):
         """Group of all binary repos bound with configuration data."""
+        return RepositoryGroup(
+            x for x in self.source_repos
+            if isinstance(x.raw_repo, binary_repo.ConfiguredTree))
+
+    @klass.jit_attr_none
+    def binary_repos_unfiltered(self):
+        """Group of all binary repos without package filtering."""
         return RepositoryGroup(
             x for x in self.unfiltered_repos
             if isinstance(x, binary_repo.ConfiguredTree))
@@ -632,6 +646,8 @@ class domain(config_domain):
     all_installed_repos_raw = klass.alias_attr("installed_repos_raw.combined")
     all_unfiltered_repos = klass.alias_attr("unfiltered_repos.combined")
     all_ebuild_repos = klass.alias_attr("ebuild_repos.combined")
+    all_ebuild_repos_unfiltered = klass.alias_attr("ebuild_repos_unfiltered.combined")
     all_ebuild_repos_raw = klass.alias_attr("ebuild_repos_raw.combined")
     all_binary_repos = klass.alias_attr("binary_repos.combined")
+    all_binary_repos_unfiltered = klass.alias_attr("binary_repos_unfiltered.combined")
     all_binary_repos_raw = klass.alias_attr("binary_repos_raw.combined")

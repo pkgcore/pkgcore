@@ -582,6 +582,7 @@ def main(options, out, err):
         source_repos = domain.binary_repos
         pkg_type = 'binpkgs'
     elif options.usepkg:
+        # binary repos are checked for matches first before ebuild repos
         source_repos = domain.binary_repos + domain.ebuild_repos
         pkg_type = 'ebuilds or binpkgs'
     elif options.source_only:

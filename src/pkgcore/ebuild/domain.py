@@ -304,9 +304,6 @@ class domain(config_domain):
         if profile.provides_repo is not None:
             self.installed_repos_raw += profile.provides_repo
 
-        self._profile_masks = profile._incremental_masks()
-        self._profile_unmasks = profile._incremental_unmasks()
-
         for repo_group, repos, filtered in (
                 (self.source_repos, self.source_repos_raw, True),
                 (self.installed_repos, self.installed_repos_raw, False)):
@@ -549,14 +546,14 @@ class domain(config_domain):
 
     def _filter_repo(self, repo):
         """Filter a configured repo."""
-        global_masks = chain(repo._masks, self._profile_masks)
+        global_masks = chain(repo._masks, self.profile._incremental_masks)
         masks = set()
         for neg, pos in global_masks:
             masks.difference_update(neg)
             masks.update(pos)
         masks.update(self.pkg_masks)
         unmasks = set()
-        for neg, pos in self._profile_unmasks:
+        for neg, pos in self.profile._incremental_unmasks:
             unmasks.difference_update(neg)
             unmasks.update(pos)
         unmasks.update(self.pkg_unmasks)

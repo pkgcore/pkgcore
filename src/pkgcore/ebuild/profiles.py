@@ -698,12 +698,14 @@ class OnDiskProfile(ProfileStack):
             l = (EmptyRootNode._autodetect_and_create(self.basepath),) + l
         return l
 
+    @klass.jit_attr
     def _incremental_masks(self):
         stack = self.stack
         if self.load_profile_base:
             stack = stack[1:]
         return ProfileStack._incremental_masks(self, stack_override=stack)
 
+    @klass.jit_attr
     def _incremental_unmasks(self):
         stack = self.stack
         if self.load_profile_base:

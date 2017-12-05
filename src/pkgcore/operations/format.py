@@ -34,9 +34,14 @@ class fetch_base(object):
         self.fetcher = fetcher
 
     def fetch_all(self, observer):
+        # TODO: add parallel fetch support
+        failures = []
         for fetchable in self.fetchables:
             if not self.fetch_one(fetchable, observer):
-                return False
+                failures.append(fetchable)
+        if failures:
+            self._failed_fetch(failures, observer)
+            return False
         return True
 
     def fetch_one(self, fetchable, observer):
@@ -49,13 +54,12 @@ class fetch_base(object):
         except fetch_errors.FetchFailed as e:
             fp = None
         if fp is None:
-            self.failed_fetch(fetchable, observer)
             return False
         self.verified_files[fp] = fetchable
         self._basenames.add(fetchable.filename)
         return True
 
-    def failed_fetch(self, fetchable, observer):
+    def _failed_fetch(self, fetchables, observer):
         # run pkg_nofetch phase for fetch restricted pkgs
         if 'fetch' in self.pkg.restrict:
             # This requires wrapped packages from a configured repo, otherwise
@@ -65,7 +69,7 @@ class fetch_base(object):
             build_ops = self.domain.build_pkg(pkgwrap, observer, failed=True)
             build_ops.nofetch()
             build_ops.cleanup(force=True)
-        observer.error("failed fetching: %r", fetchable.filename)
+        observer.error("failed fetching files: %s::%s", self.pkg.cpvstr, self.pkg.repo_id)
 
 
 class operations(_operations_mod.base):
@@ -130,7 +134,6 @@ class operations(_operations_mod.base):
 
     @_operations_mod.is_standalone
     def _cmd_api_fetch(self, fetchables=None, observer=None):
-        # TODO: add parallel fetch support
         if fetchables is None:
             fetcher = self._fetch_op
         else:

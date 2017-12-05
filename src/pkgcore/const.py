@@ -19,9 +19,6 @@ except ImportError:
 
 SYSTEM_CONF_FILE   = '/etc/pkgcore/pkgcore.conf'
 USER_CONF_FILE     = osp.expanduser('~/.config/pkgcore/pkgcore.conf')
-# TODO: deprecated, drop support in 0.10
-OLD_SYSTEM_CONF_FILE   = '/etc/pkgcore.conf'
-OLD_USER_CONF_FILE = osp.expanduser('~/.pkgcore.conf')
 
 
 def _GET_CONST(attr, default_value, allow_environment_override=False):

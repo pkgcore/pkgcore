@@ -83,16 +83,8 @@ def load_config(user_conf_file=const.USER_CONF_FILE,
     configs = list(prepend_sources)
     if not skip_config_files:
         # load a pkgcore config file if one exists
-        for config in (location,
-                       user_conf_file, const.OLD_USER_CONF_FILE,
-                       system_conf_file, const.OLD_SYSTEM_CONF_FILE):
+        for config in (location, user_conf_file, system_conf_file):
             if config is not None and os.path.isfile(config):
-                # TODO: drop the deprecation notice for 0.10
-                if config in (const.OLD_USER_CONF_FILE, const.OLD_SYSTEM_CONF_FILE):
-                    logger.warning(
-                        'The config file location %s is deprecated, please move '
-                        'the file to %s for user configs or %s for system configs.',
-                        config, const.USER_CONF_FILE, const.SYSTEM_CONF_FILE)
                 with open(config) as f:
                     configs.append(cparser.config_from_file(f))
                 break

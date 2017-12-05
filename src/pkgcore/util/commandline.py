@@ -630,7 +630,7 @@ class Tool(tool.Tool):
             super(Tool, self).handle_exec_exception(e)
 
 
-# TODO: deprecated wrapper, remove in 0.10.0
+# TODO: deprecated wrapper, remove in 0.11.0
 def main(parser, args=None, outfile=None, errfile=None):
     """Function to use in an "if __name__ == '__main__'" block in a script.
 

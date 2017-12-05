@@ -322,8 +322,9 @@ class StoreRepoObject(StoreConfigObject):
                         repo = repo_obj.repo_id
                     except TypeError as e:
                         raise argparse.ArgumentError(self, e)
-                    # force JIT-ed attr refresh to include newly added repo
-                    setattr(self.domain, '_' + self.repo_key, None)
+                    if hasattr(self.domain, '_' + self.repo_key):
+                        # force JIT-ed attr refresh to include newly added repo
+                        setattr(self.domain, '_' + self.repo_key, None)
                     sections = getattr(self.domain, self.repo_key)
         return StoreConfigObject._load_obj(self, sections, repo)
 

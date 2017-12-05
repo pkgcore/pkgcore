@@ -661,7 +661,7 @@ def main(options, out, err):
 #    hp.setrelheap()
 
     resolver_inst = resolver_kls(
-        vdbs=installed_repos.repos, dbs=source_repos.repos,
+        vdbs=installed_repos, dbs=source_repos,
         verify_vdb=options.deep, nodeps=options.nodeps,
         drop_cycles=options.ignore_cycles, force_replace=options.replace,
         process_built_depends=options.with_bdeps, **extra_kwargs)
@@ -706,7 +706,7 @@ def main(options, out, err):
             out.error("failed '%s'" % (restrict,))
             out.write('potentials:')
             match_count = 0
-            for r in get_raw_repos(source_repos.repos):
+            for r in get_raw_repos(source_repos):
                 l = r.match(restrict)
                 if l:
                     out.write(

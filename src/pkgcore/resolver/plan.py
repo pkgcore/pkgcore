@@ -14,7 +14,7 @@ from snakeoil.iterables import caching_iter
 
 # XXX: hack; see insert_blockers
 from pkgcore.ebuild import atom as _atom
-from pkgcore.repository import misc, multiplex, visibility
+from pkgcore.repository import misc, multiplex, visibility, util
 from pkgcore.resolver import state
 from pkgcore.resolver.choice_point import choice_point
 from pkgcore.restrictions import packages, values, restriction
@@ -240,7 +240,7 @@ class merge_plan(object):
 
         self._dprint = partial(dprint, debug_handle)
 
-        if not isinstance(dbs, (list, tuple)):
+        if not isinstance(dbs, (util.RepositoryGroup, list, tuple)):
             dbs = [dbs]
 
         if global_strategy is None:

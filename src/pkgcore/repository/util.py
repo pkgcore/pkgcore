@@ -90,11 +90,6 @@ class RepositoryGroup(DictMixin):
     match = klass.alias_attr("combined.match")
     path_restrict = klass.alias_attr("combined.path_restrict")
 
-    def add_repo(self, repo):
-        if repo not in self.repos:
-            self.repos += (repo,)
-            self.combined.trees += (repo,)
-
     def __contains__(self, key):
         return key in self.repos
 
@@ -121,16 +116,28 @@ class RepositoryGroup(DictMixin):
         return iter(self.repos)
 
     def __add__(self, other):
-        if not isinstance(other, RepositoryGroup):
-            raise TypeError("cannot add 'RepositoryGroup' and '%s' objects"
-                            % other.__class__.__name__)
-        return RepositoryGroup(self.repos + other.repos)
+        if isinstance(other, tree):
+            if other not in self.repos:
+                self.repos += (other,)
+                self.combined += other
+            return self
+        elif isinstance(other, RepositoryGroup):
+            return RepositoryGroup(self.repos + other.repos)
+        raise TypeError(
+            "cannot add '%s' and '%s' objects"
+            % (self.__class__.__name__, other.__class__.__name__))
 
     def __radd__(self, other):
-        if not isinstance(other, RepositoryGroup):
-            raise TypeError("cannot add '%s' and 'RepositoryGroup' objects"
-                            % other.__class__.__name__)
-        return RepositoryGroup(other.repos + self.repos)
+        if isinstance(other, tree):
+            if other not in self.repos:
+                self.repos = (other,) + self.repos
+                self.combined = other + self.combined
+            return self
+        elif isinstance(other, RepositoryGroup):
+            return RepositoryGroup(other.repos + self.repos)
+        raise TypeError(
+            "cannot add '%s' and '%s' objects"
+            % (other.__class__.__name__, self.__class__.__name__))
 
     @classmethod
     def change_repos(cls, repos):

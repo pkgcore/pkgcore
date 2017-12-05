@@ -216,6 +216,28 @@ class tree(prototype.tree):
         # made it here, no match.
         raise KeyError("package %s not found" % key)
 
+    def __add__(self, other):
+        if isinstance(other, prototype.tree):
+            if other not in self.trees:
+                self.trees += (other,)
+            return self
+        elif isinstance(other, tree):
+            return tree(*(self.trees + other.trees))
+        raise TypeError(
+            "cannot add '%s' and '%s' objects"
+            % (self.__class__.__name__, other.__class__.__name__))
+
+    def __radd__(self, other):
+        if isinstance(other, prototype.tree):
+            if other not in self.trees:
+                self.trees = (other,) + self.trees
+            return self
+        elif isinstance(other, tree):
+            return tree(*(other.trees + self.trees))
+        raise TypeError(
+            "cannot add '%s' and '%s' objects"
+            % (other.__class__.__name__, self.__class__.__name__))
+
     def __repr__(self):
         return '<%s.%s trees=%r @%#8x>' % (
             self.__class__.__module__, self.__class__.__name__,

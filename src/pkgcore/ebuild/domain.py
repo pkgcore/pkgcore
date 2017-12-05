@@ -302,7 +302,7 @@ class domain(config_domain):
         self.unfiltered_repos = RepositoryGroup()
 
         if profile.provides_repo is not None:
-            self.installed_repos_raw.add_repo(profile.provides_repo)
+            self.installed_repos_raw += profile.provides_repo
 
         self._profile_masks = profile._incremental_masks()
         self._profile_unmasks = profile._incremental_unmasks()
@@ -519,13 +519,13 @@ class domain(config_domain):
                 raise TypeError('invalid repo: %r' % path)
             repo_config = RepoConfig(path, config_name=path)
             repo = ebuild_repo.tree(config, repo_config)
-            self.source_repos_raw.add_repo(repo)
+            self.source_repos_raw += repo
             self._repo_masks[path] = repo._visibility_limiters()
 
         wrapped_repo = self._configure_repo(repo)
         if filtered:
             wrapped_repo = self._filter_repo(wrapped_repo)
-        group.add_repo(wrapped_repo)
+        group += wrapped_repo
         return wrapped_repo
 
     def _configure_repo(self, repo):
@@ -547,7 +547,7 @@ class domain(config_domain):
                 raise_from(Failure("failed configuring repo '%s': "
                                    "configurable missing: %s" % (repo, e)))
             configured_repo = repo.configure(*pargs)
-        self.unfiltered_repos.add_repo(configured_repo)
+        self.unfiltered_repos += configured_repo
         return configured_repo
 
     def _filter_repo(self, repo):

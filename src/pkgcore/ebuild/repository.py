@@ -503,6 +503,7 @@ class _UnconfiguredTree(prototype.tree):
         return "<ebuild %s location=%r @%#8x>" % (
             self.__class__.__name__, self.base, id(self))
 
+    @klass.jit_attr
     def _visibility_limiters(self):
         path = pjoin(self.base, 'profiles', 'package.mask')
         pos, neg = [], []
@@ -529,7 +530,7 @@ class _UnconfiguredTree(prototype.tree):
             raise_from(profiles.ProfileError(
                 pjoin(self.base, 'profiles'),
                 'package.mask', ma))
-        return [neg, pos]
+        return tuple(neg), tuple(pos)
 
     def _regen_operation_helper(self, **kwds):
         return _RegenOpHelper(
@@ -667,6 +668,10 @@ class _ConfiguredTree(configured.tree):
         return ebd.src_operations(
             domain, pkg, pkg.repo.eclass_cache, fetcher=fetcher,
             use_override=self._get_pkg_use_for_building(pkg), **kwds)
+
+    @klass.jit_attr
+    def _masks(self):
+        return tuple(repo._visibility_limiters for repo in self.trees)
 
 
 _UnconfiguredTree.configure = _ConfiguredTree

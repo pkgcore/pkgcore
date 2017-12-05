@@ -477,10 +477,15 @@ class tree(object):
     @property
     def default_visibility_limiters(self):
         # designed this way to allow for easy override
-        return self._visibility_limiters()[1]
+        return self._visibility_limiters[1]
 
+    @property
     def _visibility_limiters(self):
-        return [(), ()]
+        return (), ()
+
+    @property
+    def _masks(self):
+        return tuple(self._visibility_limiters for _ in xrange(1))
 
     def __str__(self):
         if self.aliases:

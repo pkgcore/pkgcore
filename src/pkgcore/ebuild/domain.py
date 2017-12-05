@@ -306,8 +306,6 @@ class domain(config_domain):
 
         self._profile_masks = profile._incremental_masks()
         self._profile_unmasks = profile._incremental_unmasks()
-        self._repo_masks = {r.repo_id: r._visibility_limiters()
-                            for r in self.source_repos_raw}
 
         for repo_group, repos, filtered in (
                 (self.source_repos, self.source_repos_raw, True),
@@ -520,7 +518,6 @@ class domain(config_domain):
             repo_config = RepoConfig(path, config_name=path)
             repo = ebuild_repo.tree(config, repo_config)
             self.source_repos_raw += repo
-            self._repo_masks[path] = repo._visibility_limiters()
 
         wrapped_repo = self._configure_repo(repo)
         if filtered:
@@ -552,17 +549,7 @@ class domain(config_domain):
 
     def _filter_repo(self, repo):
         """Filter a configured repo."""
-        config = getattr(repo, 'config', None)
-        masters = getattr(config, 'masters', ())
-        if masters is None:
-            # tough cookies.  If a user has an overlay, no masters
-            # defined, we're not applying the portdir masks.
-            # we do this both since that's annoying, and since
-            # frankly there isn't any good course of action.
-            masters = ()
-        global_masks = [self._repo_masks.get(master, [(), ()]) for master in masters]
-        global_masks.append(self._repo_masks[repo.repo_id])
-        global_masks.extend(self._profile_masks)
+        global_masks = chain(repo._masks, self._profile_masks)
         masks = set()
         for neg, pos in global_masks:
             masks.difference_update(neg)

@@ -244,13 +244,14 @@ class tree(prototype.tree):
             getattr(self, 'trees', 'unset'),
             id(self))
 
+    @property
     def _visibility_limiters(self):
         neg, pos = set(), set()
         for tree in self.trees:
-            data = tree._visibility_limiters()
+            data = tree._visibility_limiters
             neg.update(data[0])
             pos.update(data[1])
-        return [list(neg), list(pos)]
+        return tuple(neg), tuple(pos)
 
     @property
     def location(self):

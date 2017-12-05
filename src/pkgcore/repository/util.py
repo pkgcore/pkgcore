@@ -157,7 +157,7 @@ def get_raw_repos(repos):
 
     repos can be either a repo instance, or a list of repos
     """
-    if isinstance(repos, (list, tuple)):
+    if isinstance(repos, (RepositoryGroup, list, tuple)):
         l = []
         map(l.extend, (get_raw_repos(x) for x in repos))
         return l
@@ -175,6 +175,6 @@ def get_virtual_repos(repos, sentinel=True):
     repos can be either a list of repos, or a repo to descend through.
     if sentinel is False, will select all non virtual repos
     """
-    if not isinstance(repos, (tuple, list)):
+    if not isinstance(repos, (RepositoryGroup, list, tuple)):
         repos = get_raw_repos(repos)
     return [x for x in repos if isinstance(x, virtual.tree) == sentinel]

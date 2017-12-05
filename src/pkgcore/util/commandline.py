@@ -571,7 +571,7 @@ def convert_to_restrict(sequence, default=packages.AlwaysTrue):
 
 
 class Tool(tool.Tool):
-    """Pkgcore-specific commandline utility functionality."""
+    """pkgcore-specific commandline utility functionality."""
 
     def parse_args(self, *args, **kwargs):
         """Pass down pkgcore-specific settings to the bash side."""
@@ -600,17 +600,19 @@ class Tool(tool.Tool):
             else:
                 self.parser.error("config error: %s" % (e,))
         elif isinstance(e, config_errors.ConfigurationError):
-            if self.parser.debug:
-                tb = sys.exc_info()[-1]
-                dump_error(e, "Error in configuration", handle=self._errfile, tb=tb)
+            # find the first non-config exception in the chain if it exists
+            # for the displayed message
+            for x in walk_exception_chain(e):
+                exc = x
+                if not isinstance(exc, config_errors.BaseError):
+                    break
             else:
-                # find the first non-config exception in the chain if it exists
-                # for the displayed message
-                for x in walk_exception_chain(e):
-                    exc = x
-                    if not isinstance(exc, config_errors.BaseError):
-                        break
+                # if it's internal, display the error for the commandline
                 self.parser.error("config error: %s" % (exc,))
+            # dump the error if it's external
+            # TODO: extract the traceback object from the exception when py3 only
+            tb = sys.exc_info()[-1]
+            dump_error(exc, "Error in configuration", handle=self._errfile, tb=tb)
         elif isinstance(e, operations.OperationError):
             # Output a clean cli error for internal exception types if one
             # exists otherwise show a debugging traceback.

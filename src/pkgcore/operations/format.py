@@ -62,10 +62,10 @@ class fetch_base(object):
             # buildables aren't available to run the pkg_nofetch phase.
             configured_repo = self.domain.repos_configured[self.pkg.repo_id]
             pkgwrap = configured_repo.package_class(self.pkg)
-            build_ops = self.domain.build_pkg(pkgwrap, observer)
+            build_ops = self.domain.build_pkg(pkgwrap, observer, failed=True)
             build_ops.nofetch()
             build_ops.cleanup(force=True)
-        observer.error("failed fetching %s", fetchable.filename)
+        observer.error("failed fetching: %r", fetchable.filename)
 
 
 class operations(_operations_mod.base):
@@ -154,10 +154,14 @@ class build_operations(operations):
 
     __required__ = frozenset(["build"])
 
-    def _cmd_api_build(self, observer=None, clean=True, **format_options):
+    def _cmd_api_build(self, observer=None, failed=False, clean=True, **format_options):
+        if failed:
+            verified_files = None
+        else:
+            verified_files = self._fetch_op.verified_files
         return self._cmd_implementation_build(
             self._get_observer(observer),
-            self._fetch_op.verified_files,
+            verified_files,
             clean=clean, format_options=format_options)
 
     def _cmd_api_buildable(self, domain):

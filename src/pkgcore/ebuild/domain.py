@@ -245,7 +245,7 @@ class domain(config_domain):
         default_keywords = unstable_unique(default_keywords + [self.arch])
 
         accept_keywords = pkg_keywords + list(profile.accept_keywords)
-        self.vfilters = [self.make_keywords_filter(
+        self.vfilters = [self._make_keywords_filter(
             self.arch, default_keywords, accept_keywords, profile.keywords,
             incremental="package.keywords" in incrementals)]
 
@@ -256,7 +256,7 @@ class domain(config_domain):
         master_license = []
         master_license.extend(settings.get('ACCEPT_LICENSE', ()))
         if master_license or pkg_licenses:
-            self.vfilters.append(self.make_license_filter(master_license, pkg_licenses))
+            self.vfilters.append(self._make_license_filter(master_license, pkg_licenses))
 
         del master_license
 
@@ -327,11 +327,11 @@ class domain(config_domain):
         if "prefix" in features or "force-prefix" in features:
             self.use.append("prefix")
 
-    def make_license_filter(self, master_license, pkg_licenses):
+    def _make_license_filter(self, master_license, pkg_licenses):
         """Generates a restrict that matches iff the licenses are allowed."""
-        return delegate(partial(self.apply_license_filter, master_license, pkg_licenses))
+        return delegate(partial(self._apply_license_filter, master_license, pkg_licenses))
 
-    def apply_license_filter(self, master_licenses, pkg_licenses, pkg, mode):
+    def _apply_license_filter(self, master_licenses, pkg_licenses, pkg, mode):
         """Determine if a package's license is allowed."""
         # note we're not honoring mode; it's always match.
         # reason is that of not turning on use flags to get acceptable license
@@ -354,7 +354,7 @@ class domain(config_domain):
                 return True
         return False
 
-    def make_keywords_filter(self, arch, default_keys, accept_keywords,
+    def _make_keywords_filter(self, arch, default_keys, accept_keywords,
                              profile_keywords, incremental=False):
         """Generates a restrict that matches iff the keywords are allowed."""
         if not accept_keywords and not profile_keywords:
@@ -379,21 +379,21 @@ class domain(config_domain):
             data = f(((packages.AlwaysTrue, default_keys),), accept_keywords)
 
         if incremental:
-            raise NotImplementedError(self.incremental_apply_keywords_filter)
-            #f = self.incremental_apply_keywords_filter
+            raise NotImplementedError(self._incremental_apply_keywords_filter)
+            #f = self._incremental_apply_keywords_filter
         else:
-            f = self.apply_keywords_filter
+            f = self._apply_keywords_filter
         return delegate(partial(f, data, profile_keywords))
 
     @staticmethod
-    def incremental_apply_keywords_filter(data, pkg, mode):
+    def _incremental_apply_keywords_filter(data, pkg, mode):
         # note we ignore mode; keywords aren't influenced by conditionals.
         # note also, we're not using a restriction here.  this is faster.
         allowed = data.pull_data(pkg)
         return any(True for x in pkg.keywords if x in allowed)
 
     @staticmethod
-    def apply_keywords_filter(data, profile_keywords, pkg, mode):
+    def _apply_keywords_filter(data, profile_keywords, pkg, mode):
         # note we ignore mode; keywords aren't influenced by conditionals.
         # note also, we're not using a restriction here.  this is faster.
         pkg_keywords = pkg.keywords
@@ -413,7 +413,7 @@ class domain(config_domain):
                     return True
         return any(True for x in pkg_keywords if x in allowed)
 
-    def split_use_expand_flags(self, use_stream):
+    def _split_use_expand_flags(self, use_stream):
         matcher = self.use_expand_re.match
         stream = ((matcher(x), x) for x in use_stream)
         flags, ue_flags = predicate_split(bool, stream, itemgetter(0))
@@ -441,7 +441,7 @@ class domain(config_domain):
 
         pre_defaults = [x[1:] for x in pkg.iuse if x[0] == '+']
         if pre_defaults:
-            pre_defaults, ue_flags = self.split_use_expand_flags(pre_defaults)
+            pre_defaults, ue_flags = self._split_use_expand_flags(pre_defaults)
             pre_defaults.extend(
                 x[1] for x in ue_flags if x[0][0].upper() not in self.settings)
 
@@ -522,13 +522,13 @@ class domain(config_domain):
             self.source_repos_raw.add_repo(repo)
             self._repo_masks[path] = repo._visibility_limiters()
 
-        wrapped_repo = self.configure_repo(repo)
+        wrapped_repo = self._configure_repo(repo)
         if filtered:
-            wrapped_repo = self.filter_repo(wrapped_repo)
+            wrapped_repo = self._filter_repo(wrapped_repo)
         group.add_repo(wrapped_repo)
         return wrapped_repo
 
-    def configure_repo(self, repo):
+    def _configure_repo(self, repo):
         """Configure a raw repo."""
         configured_repo = repo
         if not repo.configured:
@@ -550,7 +550,7 @@ class domain(config_domain):
         self.unfiltered_repos.add_repo(configured_repo)
         return configured_repo
 
-    def filter_repo(self, repo):
+    def _filter_repo(self, repo):
         """Filter a configured repo."""
         config = getattr(repo, 'config', None)
         masters = getattr(config, 'masters', ())

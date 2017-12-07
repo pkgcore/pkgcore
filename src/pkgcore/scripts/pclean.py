@@ -15,7 +15,7 @@ from snakeoil.strings import pluralism
 from pkgcore.restrictions import boolean, packages
 from pkgcore.repository import multiplex
 from pkgcore.repository.util import get_virtual_repos
-from pkgcore.util import commandline
+from pkgcore.util.commandline import ArgumentParser, StoreRepoObject, convert_to_restrict
 
 demandload(
     'errno',
@@ -34,14 +34,14 @@ demandload(
 )
 
 
-argparser = commandline.ArgumentParser(description=__doc__, script=(__file__, __name__))
+argparser = ArgumentParser(description=__doc__, script=(__file__, __name__))
 subparsers = argparser.add_subparsers(description='cleaning applets')
-@argparser.bind_delayed_default(10)
-def _initialize_opts(namespace, attr):
+@argparser.bind_parse_priority(10)
+def _initialize_opts(namespace):
     namespace.restrict = []
     namespace.file_filters = Filters()
 
-shared_opts = commandline.ArgumentParser(suppress=True)
+shared_opts = ArgumentParser(suppress=True)
 cleaning_opts = shared_opts.add_argument_group('generic cleaning options')
 cleaning_opts.add_argument(
     nargs='*', dest='targets', metavar='TARGET',
@@ -58,8 +58,8 @@ cleaning_opts.add_argument(
 cleaning_opts.add_argument(
     '-S', '--pkgsets', action='extend_comma_toggle', metavar='PKGSET',
     help='list of pkgsets to include or exclude from removal')
-@shared_opts.bind_delayed_default(20, 'shared_opts')
-def _setup_shared_opts(namespace, attr):
+@shared_opts.bind_parse_priority(20)
+def _setup_shared_opts(namespace):
     namespace.exclude_restrict = None
     exclude_restrictions = []
 
@@ -81,7 +81,7 @@ def _setup_shared_opts(namespace, attr):
     if namespace.exclude_file is not None:
         excludes.extend(namespace.exclude_file.read().split('\n'))
     if excludes:
-        exclude_restrictions.extend(commandline.convert_to_restrict(excludes, default=None))
+        exclude_restrictions.extend(convert_to_restrict(excludes, default=None))
 
     if exclude_restrictions:
         namespace.restrict.append(
@@ -127,7 +127,7 @@ def parse_size(s):
     return value * units[unit]
 
 
-file_opts = commandline.ArgumentParser(suppress=True)
+file_opts = ArgumentParser(suppress=True)
 file_cleaning_opts = file_opts.add_argument_group('file cleaning options')
 file_cleaning_opts.add_argument(
     '-m', '--modified', metavar='TIME', type=parse_time,
@@ -151,15 +151,15 @@ file_cleaning_opts.add_argument(
         Supported units are B, K, M, and G representing bytes, kilobytes,
         megabytes, and gigabytes, respectively.
     """)
-@file_opts.bind_delayed_default(20, 'file_opts')
-def _setup_file_opts(namespace, attr):
+@file_opts.bind_parse_priority(20)
+def _setup_file_opts(namespace):
     if namespace.modified is not None:
         namespace.file_filters.append(lambda x: os.stat(x).st_mtime < namespace.modified)
     if namespace.size is not None:
         namespace.file_filters.append(lambda x: os.stat(x).st_size < namespace.size)
 
 
-repo_opts = commandline.ArgumentParser(suppress=True)
+repo_opts = ArgumentParser(suppress=True)
 repo_cleaning_opts = repo_opts.add_argument_group('repo cleaning options')
 repo_cleaning_opts.add_argument(
     '-I', '--installed', action='store_true', dest='exclude_installed',
@@ -172,19 +172,19 @@ repo_cleaning_opts.add_argument(
     help='skip fetch-restricted files')
 repo_cleaning_opts.add_argument(
     "-r", "--repo", help="target repository",
-    action=commandline.StoreRepoObject,
+    action=StoreRepoObject,
     docs="""
         Target repository to search for matches. If no repo is specified all
         relevant repos are used.
     """)
-@repo_opts.bind_delayed_default(20, 'repo_opts')
-def _setup_repo_opts(namespace, attr):
+@repo_opts.bind_parse_priority(20)
+def _setup_repo_opts(namespace):
     if namespace.exclude_installed:
         namespace.installed_repo = namespace.domain.all_installed_repos
 
 
-@argparser.bind_delayed_default(30, 'restrictions')
-def _setup_restrictions(namespace, attr):
+@argparser.bind_parse_priority(30)
+def _setup_restrictions(namespace):
     repo = namespace.domain.all_source_repos
     target_restrictions = []
 
@@ -320,7 +320,7 @@ def _dist_validate_args(parser, namespace):
         ifilter(namespace.file_filters.run, targets))
 
 
-pkg_opts = commandline.ArgumentParser(suppress=True)
+pkg_opts = ArgumentParser(suppress=True)
 pkg_cleaning_opts = pkg_opts.add_argument_group('binpkg cleaning options')
 pkg_cleaning_opts.add_argument(
     '--source-repo', metavar='REPO',

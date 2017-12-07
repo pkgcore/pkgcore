@@ -70,6 +70,7 @@ class StoreTarget(argparse._AppendAction):
 
     def __init__(self, *args, **kwargs):
         self.allow_sets = kwargs.pop('allow_sets', False)
+        self.allow_ebuild_paths = kwargs.pop('allow_ebuild_paths', False)
         super(StoreTarget, self).__init__(*args, **kwargs)
 
     def __call__(self, parser, namespace, values, option_string=None):
@@ -90,12 +91,28 @@ class StoreTarget(argparse._AppendAction):
             if self.allow_sets and token.startswith('@'):
                 namespace.sets.append(token[1:])
             else:
-                try:
-                    argparse._AppendAction.__call__(
-                        self, parser, namespace,
-                        (token, parserestrict.parse_match(token)), option_string=option_string)
-                except parserestrict.ParseError as e:
-                    parser.error(e)
+                if self.allow_ebuild_paths and token.endswith('.ebuild'):
+                    try:
+                        repo = getattr(namespace, 'repo', namespace.domain.ebuild_repos_raw)
+                    except AttributeError:
+                        raise argparse.ArgumentTypeError(
+                            'repo or domain must be defined in the namespace')
+                    if not os.path.exists(token):
+                        raise argparse.ArgumentError(self, "nonexistent ebuild: %r" % token)
+                    elif not os.path.isfile(token):
+                        raise argparse.ArgumentError(self, "invalid ebuild: %r" % token)
+                    try:
+                        restriction = repo.path_restrict(token)
+                    except ValueError as e:
+                        raise argparse.ArgumentError(self, e)
+                else:
+                    try:
+                        restriction = parserestrict.parse_match(token)
+                    except parserestrict.ParseError as e:
+                        parser.error(e)
+                super(StoreTarget, self).__call__(
+                    parser, namespace,
+                    (token, restriction), option_string=option_string)
         if getattr(namespace, self.dest) is None:
             setattr(namespace, self.dest, [])
 
@@ -569,7 +586,7 @@ def convert_to_restrict(sequence, default=packages.AlwaysTrue):
     except parserestrict.ParseError as e:
         compatibility.raise_from(
             argparse.ArgumentError(
-                "arg %r isn't a valid atom: %s" % (x, e)))
+                self, "arg %r isn't a valid atom: %s" % (x, e)))
     return l or [default]
 
 

@@ -546,12 +546,12 @@ class ArgumentParser(arghparse.ArgumentParser):
                 else:
                     project = __name__.split('.')[0]
 
-                # TODO: Figure out a better method for plugin registry/loading.
+                # TODO: figure out a better method for plugin registry/loading
                 try:
                     plugins = import_module('.plugins', project)
                     global_config = get_plugins('global_config', plugins)
                     self.set_defaults(config=arghparse.DelayedValue(
-                        partial(store_config, global_config=global_config), 0))
+                        partial(store_config, global_config=global_config)))
                 except ImportError:
                     pass
 

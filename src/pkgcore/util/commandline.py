@@ -188,7 +188,8 @@ class StoreConfigObject(argparse._StoreAction):
     def store_default(config_type, namespace, attr, option_string=None):
         config = getattr(namespace, 'config', None)
         if config is None:
-            raise argparse.ArgumentError(None, "no config found.  Internal bug, or broken on disk configuration.")
+            raise argparse.ArgumentTypeError(
+                "no config found -- internal bug, or broken on disk configuration")
         obj = config.get_default(config_type)
         if obj is None:
             known_objs = sorted(getattr(config, config_type).keys())
@@ -207,7 +208,7 @@ class StoreConfigObject(argparse._StoreAction):
     def store_all_default(config_type, namespace, attr):
         config = getattr(namespace, 'config', None)
         if config is None:
-            raise ValueError("no config found.  Internal bug")
+            raise ValueError("no config found -- internal bug")
         obj = [(k, v) for k, v in getattr(config, config_type).iteritems()]
         setattr(namespace, attr, obj)
 

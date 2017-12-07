@@ -10,15 +10,14 @@ import os
 from pkgcore.ebuild import atom
 from pkgcore.ebuild.errors import MalformedAtom
 from pkgcore.operations import observer, format
-from pkgcore.util import commandline
+from pkgcore.util.commandline import ArgumentParser, StoreTarget
 
 from snakeoil.strings import pluralism
 
 
-argparser = commandline.ArgumentParser(
-    description=__doc__, script=(__file__, __name__))
+argparser = ArgumentParser(description=__doc__, script=(__file__, __name__))
 argparser.add_argument(
-    'target', metavar='<atom|ebuild>',
+    'target', action=StoreTarget, allow_ebuild_paths=True,
     help="atom or ebuild matching a pkg to execute phases from")
 argparser.add_argument('phase', nargs='+', help="phases to run")
 phase_opts = argparser.add_argument_group("phase options")
@@ -30,34 +29,16 @@ phase_opts.add_argument(
 
 @argparser.bind_final_check
 def _validate_args(parser, namespace):
-    target = namespace.target
-    repo = namespace.domain.ebuild_repos
-
-    if target.endswith('.ebuild'):
-        if not os.path.exists(target):
-            parser.error("nonexistent ebuild: %r" % target)
-        elif not os.path.isfile(target):
-            parser.error("invalid ebuild: %r" % target)
-        try:
-            restriction = repo.path_restrict(target)
-        except ValueError as e:
-            parser.error(e)
-    else:
-        try:
-            restriction = atom.atom(target)
-        except MalformedAtom:
-            if os.path.isfile(target):
-                parser.error("file not an ebuild: %r" % target)
-            else:
-                parser.error("invalid package atom: %r" % target)
+    token, restriction = namespace.target[0]
+    repo = namespace.domain.ebuild_repos_unfiltered
 
     pkgs = repo.match(restriction)
     if not pkgs:
-        parser.error("no matches: %r" % (target,))
+        parser.error("no matches: %r" % (token,))
 
     pkg = max(pkgs)
     if len(pkgs) > 1:
-        parser.err.write("got multiple matches for %r:" % (target,))
+        parser.err.write("got multiple matches for %r:" % (token,))
         if len(set((p.slot, p.repo) for p in pkgs)) != 1:
             for p in pkgs:
                 parser.err.write(

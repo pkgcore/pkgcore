@@ -16,7 +16,7 @@ class FakeDomain(object):
 
     def __init__(self, repo):
         object.__init__(self)
-        self.ebuild_repos = repo
+        self.ebuild_repos_unfiltered = repo
 
 
 @configurable(typename='repo')
@@ -45,7 +45,7 @@ class CommandlineTest(TestCase, ArgParseMixin):
 
     def test_parser(self):
         if compatibility.is_py3k:
-            self.assertError('the following arguments are required: <atom|ebuild>, phase')
+            self.assertError('the following arguments are required: target, phase')
             self.assertError('the following arguments are required: phase', 'dev-util/diffball')
         else:
             self.assertError('too few arguments')

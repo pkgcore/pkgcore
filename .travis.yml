@@ -41,7 +41,7 @@ stages:
   - name: lint
     if: branch = lint
   - name: deploy
-    if: (type IN (api, cron)) OR (branch IN (travis-ci, deploy)) OR (branch = master AND type IN (push, api) AND tag IS present)
+    if: (type = api) OR (branch = deploy) OR (branch = master AND type IN (push, api) AND tag IS present)
 
 jobs:
   include:

@@ -374,7 +374,12 @@ def env_update_main(options, out, err):
         env_update.error("domain specified lacks a root setting; is it a virtual or remote domain?")
 
     out.write("updating env for %r..." % (root,))
-    triggers.perform_env_update(root, skip_ldso_update=options.skip_ldconfig)
+    try:
+        triggers.perform_env_update(root, skip_ldso_update=options.skip_ldconfig)
+    except IOError as e:
+        if e.errno == errno.EACCES:
+            env_update.error("failed updating env, lacking permissions")
+        raise
     if not options.skip_ldconfig:
         out.write("update ldso cache/elf hints for %r..." % (root,))
         merge_triggers.update_elf_hints(root)

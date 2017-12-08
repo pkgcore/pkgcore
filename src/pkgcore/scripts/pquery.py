@@ -554,19 +554,19 @@ def setup_repos(namespace, attr):
     elif namespace.unfiltered:
         if namespace.all_repos:
             repos = list(namespace.domain.installed_repos)
-            repos.extend(namespace.domain.unfiltered_repos.repos)
+            repos.extend(namespace.domain.unfiltered_repos)
         elif namespace.ebuild_repos:
-            repos = namespace.domain.ebuild_repos_raw.repos
+            repos = namespace.domain.ebuild_repos_raw
         elif namespace.binary_repos:
-            repos = namespace.domain.binary_repos_raw.repos
+            repos = namespace.domain.binary_repos_raw
         else:
-            repos = namespace.domain.unfiltered_repos.repos
+            repos = namespace.domain.unfiltered_repos
     elif namespace.all_repos:
         repos = namespace.domain.repos
     elif namespace.ebuild_repos:
-        repos = namespace.domain.ebuild_repos.repos
+        repos = namespace.domain.ebuild_repos
     elif namespace.binary_repos:
-        repos = namespace.domain.binary_repos.repos
+        repos = namespace.domain.binary_repos
     else:
         repos = namespace.domain.source_repos
 

@@ -325,6 +325,9 @@ pkg_cleaning_opts = pkg_opts.add_argument_group('binpkg cleaning options')
 pkg_cleaning_opts.add_argument(
     '--source-repo', metavar='REPO',
     help='remove binpkgs with matching source repo')
+pkg_cleaning_opts.add_argument(
+    '-b', '--bindist', action='store_true',
+    help='only remove binpkgs that restrict distribution')
 pkg = subparsers.add_parser(
     'pkg', parents=(shared_opts, file_opts, repo_opts, pkg_opts),
     description='remove binpkgs')
@@ -338,8 +341,10 @@ def _pkg_validate_args(parser, namespace):
         # not in a configured repo dir, remove all binpkgs
         namespace.restrict = packages.AlwaysTrue
 
-    pkgs = set(pkg for pkg in repo.itermatch(namespace.restrict))
+    pkgs = (pkg for pkg in repo.itermatch(namespace.restrict))
     pkg_filters = Filters()
+    if namespace.bindist:
+        pkg_filters.append(lambda pkg: 'bindist' in pkg.restrict)
     if namespace.exclude_installed:
         pkg_filters.append(lambda pkg: pkg.versioned_atom not in namespace.installed_repo)
     if namespace.exclude_fetch_restricted:

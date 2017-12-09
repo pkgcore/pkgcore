@@ -91,7 +91,7 @@ def _setup_shared_opts(namespace):
 
 def parse_time(s):
     # simple approximations, could use dateutil for exact deltas
-    units = {'s': 60}
+    units = {'s': 1}
     units['min'] = units['s'] * 60
     units['h'] = units['min'] * 60
     units['d'] = units['h'] * 24
@@ -99,7 +99,7 @@ def parse_time(s):
     units['m'] = units['d'] * 30
     units['y'] = units['d'] * 365
 
-    date = re.match(r'^(\d+)([%s])$' % ''.join(units.keys()), s)
+    date = re.match(r'^(\d+)(%s)$' % '|'.join(units.keys()), s)
     if date:
         value = int(date.group(1))
         unit = date.group(2)

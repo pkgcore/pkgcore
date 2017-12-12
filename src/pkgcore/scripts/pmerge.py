@@ -202,7 +202,7 @@ resolution_options.add_argument(
     docs="""
         Comma-separated list of targets to exclude from dependency resolution.
 
-        This supports extended package globbing so targets such as 'dev-python/*' will
+        This supports extended package globbing so targets such as 'dev-python/\*' will
         exclude every package from the dev-python category.
     """)
 resolution_options.add_argument(

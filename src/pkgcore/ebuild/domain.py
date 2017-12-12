@@ -32,7 +32,7 @@ from pkgcore.ebuild.misc import (
     non_incremental_collapsed_restrict_to_data, optimize_incrementals,
     package_keywords_splitter)
 from pkgcore.ebuild.repo_objs import OverlayedLicenses
-from pkgcore.repository import visibility
+from pkgcore.repository import filtered
 from pkgcore.repository.util import RepositoryGroup
 from pkgcore.restrictions import packages, values
 from pkgcore.restrictions.delegated import delegate
@@ -558,7 +558,7 @@ class domain(config_domain):
             unmasks.update(pos)
         unmasks.update(self.pkg_unmasks)
         filter = generate_filter(masks, unmasks, *self.vfilters)
-        filtered_repo = visibility.filterTree(repo, filter, True)
+        filtered_repo = filtered.tree(repo, filter, True)
         return filtered_repo
 
     @klass.jit_attr

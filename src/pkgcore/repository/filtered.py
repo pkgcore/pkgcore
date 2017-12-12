@@ -5,7 +5,7 @@
 filtering repository
 """
 
-__all__ = ("filterTree",)
+__all__ = ("tree",)
 
 from itertools import ifilterfalse as filterfalse, ifilter
 
@@ -21,8 +21,7 @@ if compatibility.is_py3k:
     ifilter = filter
 
 
-class filterTree(prototype.tree):
-
+class tree(prototype.tree):
     """Filter existing repository based upon passed in restrictions."""
 
     operations_kls = operations_proxy

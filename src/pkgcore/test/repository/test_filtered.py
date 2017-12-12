@@ -3,7 +3,7 @@
 
 from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.cpv import versioned_CPV
-from pkgcore.repository.visibility import filterTree
+from pkgcore.repository import filtered
 from pkgcore.restrictions import packages, values
 from pkgcore.test.repository.test_prototype import SimpleTree
 from snakeoil.test import TestCase
@@ -17,7 +17,7 @@ class TestVisibility(TestCase):
             "dev-lib": {"fake": ["1.0", "1.0-r1"]}})
         if restrictions is None:
             restrictions = atom("dev-util/diffball")
-        vrepo = filterTree(repo, restrictions)
+        vrepo = filtered.tree(repo, restrictions)
         return repo, vrepo
 
     def test_filtering(self):
@@ -41,7 +41,7 @@ class TestVisibility(TestCase):
             sorted(repo.itermatch(atom("dev-util/bsdiff"))))
 
         # check sentinel value handling.
-        vrepo = filterTree(repo, a2, sentinel_val=True)
+        vrepo = filtered.tree(repo, a2, sentinel_val=True)
         self.assertEqual(
             sorted(x.cpvstr for x in vrepo),
             sorted(['dev-util/diffball-0.7', 'dev-util/diffball-1.0']))

@@ -196,6 +196,16 @@ resolution_options.add_argument(
         Force all targets and their dependencies to be rebuilt.
     """)
 resolution_options.add_argument(
+    '-x', '--exclude', dest='excludes',
+    action=commandline.StoreTarget, separator=',',
+    help='exclude packages from dep resolution',
+    docs="""
+        Comma-separated list of targets to exclude from dependency resolution.
+
+        This supports extended package globbing so targets such as 'dev-python/*' will
+        exclude every package from the dev-python category.
+    """)
+resolution_options.add_argument(
     '--ignore-failures', action='store_true',
     help='ignore failures while running all types of tasks',
     docs="""
@@ -454,7 +464,7 @@ def _validate(parser, namespace):
     if namespace.newuse:
         namespace.oneshot = True
 
-    # At some point, fix argparse so this isn't necessary...
+    # TODO: At some point, fix argparse so this isn't necessary...
     def f(val):
         if val is None:
             return ()
@@ -463,6 +473,7 @@ def _validate(parser, namespace):
         return val
     namespace.targets = f(namespace.targets)
     namespace.sets = f(namespace.sets)
+    namespace.excludes = f(namespace.excludes)
 
 
 def parse_target(restriction, repo, installed_repos, return_none=False):
@@ -631,6 +642,20 @@ def main(options, out, err):
 
     atoms = stable_unique(atoms)
 
+    # parse dep strings marked for excluding from pkg resolution
+    skipdeps = []
+    for token, restriction in options.excludes:
+        try:
+            matches = parse_target(
+                restriction, source_repos.combined, installed_repos, return_none=True)
+        except parserestrict.ParseError as e:
+            e.token = token
+            argparser.error(e)
+        if matches:
+            skipdeps.extend(matches)
+        elif not options.ignore_failures:
+            argparser.error("no matching {}: '{}'".format(pkg_type, token))
+
     if options.clean and not options.oneshot:
         if world_set is None:
             argparser.error("disable world updating via --oneshot, or fix your configuration")
@@ -662,6 +687,14 @@ def main(options, out, err):
                    inst_iuse.symmetric_difference(src_iuse):
                     atoms.append(src_pkg.unversioned_atom)
 
+    if options.onlydeps:
+        skipdeps.extend(atoms)
+
+    if skipdeps:
+        skipdeps = OrRestriction(*stable_unique(skipdeps))
+    else:
+        skipdeps = None
+
 #    left intentionally in place for ease of debugging.
 #    from guppy import hpy
 #    hp = hpy()
@@ -683,7 +716,6 @@ def main(options, out, err):
 
     failures = []
     resolve_time = time()
-    skipdeps = atoms if options.onlydeps else ()
     if sys.stdout.isatty():
         out.title('Resolving...')
         out.write(out.bold, ' * ', out.reset, 'Resolving...')

@@ -112,11 +112,9 @@ def generate_replace_resolver_kls(resolver_kls):
         overriding_resolver_kls = resolver_kls
         _vdb_restriction = _vdb_restrict
 
-        def add_atoms(self, restricts, skipdeps=(), **kwds):
+        def add_atoms(self, restricts, **kwds):
             restricts = [packages.KeyedAndRestriction(self._vdb_restriction, x, key=x.key)
                          for x in restricts]
-            skipdeps = [packages.KeyedAndRestriction(self._vdb_restriction, x, key=x.key)
-                        for x in skipdeps]
-            return self.overriding_resolver_kls.add_atoms(self, restricts, skipdeps=skipdeps, **kwds)
+            return self.overriding_resolver_kls.add_atoms(self, restricts, **kwds)
 
     return replace_resolver

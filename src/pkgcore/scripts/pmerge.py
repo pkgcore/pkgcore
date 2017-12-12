@@ -196,7 +196,7 @@ resolution_options.add_argument(
         Force all targets and their dependencies to be rebuilt.
     """)
 resolution_options.add_argument(
-    '-x', '--exclude', dest='excludes',
+    '-x', '--exclude', dest='excludes', metavar='TARGET[,TARGET,...]',
     action=commandline.StoreTarget, separator=',',
     help='exclude packages from dep resolution',
     docs="""

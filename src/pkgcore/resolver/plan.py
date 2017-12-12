@@ -684,12 +684,14 @@ class merge_plan(object):
                 state.add_op(c, c.current_pkg, force=True).apply(self.state)
 
     def insert_choice(self, atom, stack, choices):
+        # pretend specified skip deps have already been included in the resolved dep tree
         if self.skipdeps is not None:
-            restrict = atom
-            # strip vdb restriction from specified atoms
-            if not isinstance(restrict, _atom.atom):
-                restrict = _atom.atom(restrict.key)
-            if self.skipdeps.match(restrict):
+            if isinstance(atom, _atom.atom):
+                restrict = atom
+            else:
+                # strip vdb restriction from specified atoms
+                restrict = _atom.atom(atom.key)
+            if self.skipdeps.match(restrict) or self.skipdeps.match(choices.current_pkg):
                 return False
 
         # first, check for conflicts.

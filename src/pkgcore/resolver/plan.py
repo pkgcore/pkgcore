@@ -224,15 +224,11 @@ class resolver_stack(deque):
 
 class merge_plan(object):
 
-    vdb_restrict = packages.PackageRestriction("repo.livefs",
-        values.EqualityMatch(True))
+    vdb_restrict = packages.PackageRestriction("repo.livefs", values.EqualityMatch(True))
 
-    def __init__(self, dbs, per_repo_strategy,
-                 global_strategy=None,
-                 depset_reorder_strategy=None,
-                 process_built_depends=False,
+    def __init__(self, dbs, per_repo_strategy, global_strategy=None,
+                 depset_reorder_strategy=None, process_built_depends=False,
                  drop_cycles=False, debug=False, debug_handle=None):
-
         if debug_handle is None:
             debug_handle = sys.stdout
 

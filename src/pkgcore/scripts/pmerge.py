@@ -196,14 +196,14 @@ resolution_options.add_argument(
         Force all targets and their dependencies to be rebuilt.
     """)
 resolution_options.add_argument(
-    '-x', '--exclude', dest='excludes', metavar='TARGET[,TARGET,...]',
+    '-I', '--installed', dest='injected', metavar='TARGET[,TARGET,...]',
     action=commandline.StoreTarget, separator=',',
-    help='exclude packages from dep resolution',
+    help='inject packages into the installed set',
     docs="""
-        Comma-separated list of targets to exclude from dependency resolution.
+        Comma-separated list of targets to pretend are installed.
 
-        This supports extended package globbing so targets such as 'dev-python/\*' will
-        exclude every package from the dev-python category.
+        This supports extended package globbing, e.g. 'dev-python/\*' equates
+        to faking the entire dev-python category is installed.
     """)
 resolution_options.add_argument(
     '--ignore-failures', action='store_true',
@@ -473,7 +473,7 @@ def _validate(parser, namespace):
         return val
     namespace.targets = f(namespace.targets)
     namespace.sets = f(namespace.sets)
-    namespace.excludes = f(namespace.excludes)
+    namespace.injected = f(namespace.injected)
 
 
 def parse_target(restriction, repo, installed_repos, return_none=False):
@@ -673,12 +673,13 @@ def main(options, out, err):
                    inst_iuse.symmetric_difference(src_iuse):
                     atoms.append(src_pkg.unversioned_atom)
 
-    skipdeps = [restriction for token, restriction in options.excludes]
+    # TODO: rewrite skip impl to use a faked repo added to the installed group
+    injected = [restriction for token, restriction in options.injected]
     if options.onlydeps:
-        skipdeps.extend(atoms)
+        injected.extend(atoms)
 
-    if skipdeps:
-        skipdeps = OrRestriction(*stable_unique(skipdeps))
+    if injected:
+        skipdeps = OrRestriction(*stable_unique(injected))
     else:
         skipdeps = None
 

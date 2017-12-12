@@ -71,9 +71,12 @@ class StoreTarget(argparse._AppendAction):
     def __init__(self, *args, **kwargs):
         self.allow_sets = kwargs.pop('allow_sets', False)
         self.allow_ebuild_paths = kwargs.pop('allow_ebuild_paths', False)
+        self.separator = kwargs.pop('separator', None)
         super(StoreTarget, self).__init__(*args, **kwargs)
 
     def __call__(self, parser, namespace, values, option_string=None):
+        if self.separator is not None:
+            values = values.split(self.separator)
         if self.allow_sets:
             namespace.sets = []
 

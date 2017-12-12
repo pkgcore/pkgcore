@@ -642,20 +642,6 @@ def main(options, out, err):
 
     atoms = stable_unique(atoms)
 
-    # parse dep strings marked for excluding from pkg resolution
-    skipdeps = []
-    for token, restriction in options.excludes:
-        try:
-            matches = parse_target(
-                restriction, source_repos.combined, installed_repos, return_none=True)
-        except parserestrict.ParseError as e:
-            e.token = token
-            argparser.error(e)
-        if matches:
-            skipdeps.extend(matches)
-        elif not options.ignore_failures:
-            argparser.error("no matching {}: '{}'".format(pkg_type, token))
-
     if options.clean and not options.oneshot:
         if world_set is None:
             argparser.error("disable world updating via --oneshot, or fix your configuration")
@@ -687,6 +673,7 @@ def main(options, out, err):
                    inst_iuse.symmetric_difference(src_iuse):
                     atoms.append(src_pkg.unversioned_atom)
 
+    skipdeps = [restriction for token, restriction in options.excludes]
     if options.onlydeps:
         skipdeps.extend(atoms)
 

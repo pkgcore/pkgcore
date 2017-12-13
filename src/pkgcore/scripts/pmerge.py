@@ -274,9 +274,14 @@ class Failure(ValueError):
     """Raised internally to indicate an "expected" failure condition."""
 
 
-def unmerge(out, err, vdb, targets, options, formatter, world_set=None):
+def unmerge(out, err, installed_repos, targets, options, formatter, world_set=None):
     """Unmerge tokens. hackish, should be rolled back into the resolver"""
+    # split real and virtual repos
+    vdb = installed_repos.real.combined
+    fake_vdb = installed_repos.virtual.combined
+
     matches = set()
+    fake = set()
     unknown = set()
     for token, restriction in targets:
         # Catch restrictions matching across more than one category.
@@ -289,7 +294,12 @@ def unmerge(out, err, vdb, targets, options, formatter, world_set=None):
         # explicit wildcards.
         installed = vdb.match(restriction)
         if not installed:
-            unknown.add(token)
+            fake_pkgs = fake_vdb.match(restriction)
+            if fake_pkgs:
+                fake.update(fake_pkgs)
+            else:
+                unknown.add(token)
+            continue
         categories = set(pkg.category for pkg in installed)
         if len(categories) > 1:
             raise parserestrict.ParseError(
@@ -304,21 +314,27 @@ def unmerge(out, err, vdb, targets, options, formatter, world_set=None):
         else:
             raise Failure("no matches found: %s" % ', '.join(map(repr, unknown)))
 
-    out.write(out.bold, 'The following packages are to be unmerged:')
-    out.prefix = [out.bold, ' * ', out.reset]
-    for pkg in matches:
-        out.write(pkg.cpvstr)
-    out.prefix = []
+    if fake:
+        err.write('Skipping virtual pkg%s: %s' % (
+            pluralism(fake_pkgs),
+            ', '.join('%s::%s' % (x.versioned_atom, x.repo_id) for x in fake)))
 
-    repo_obs = observer.repo_observer(
-        observer.formatter_output(out), verbose=options.verbose, debug=options.debug)
+    if matches:
+        out.write(out.bold, 'The following packages are to be unmerged:')
+        out.prefix = [out.bold, ' * ', out.reset]
+        for pkg in matches:
+            out.write(pkg.cpvstr)
+        out.prefix = []
 
-    if options.pretend:
-        return
+        repo_obs = observer.repo_observer(
+            observer.formatter_output(out), verbose=options.verbose, debug=options.debug)
 
-    if (options.ask and not formatter.ask("Would you like to unmerge these packages?")):
-        return
-    return do_unmerge(options, out, err, vdb, matches, world_set, repo_obs)
+        if options.pretend:
+            return
+
+        if (options.ask and not formatter.ask("Would you like to unmerge these packages?")):
+            return
+        return do_unmerge(options, out, err, vdb, matches, world_set, repo_obs)
 
 
 def do_unmerge(options, out, err, vdb, matches, world_set, repo_obs):
@@ -583,7 +599,7 @@ def main(options, out, err):
                 argparser.error("disable world updating via --oneshot, "
                                 "or fix your configuration")
         try:
-            unmerge(out, err, installed_repos, options.targets, options, formatter, world_set)
+            unmerge(out, err, domain.installed_repos, options.targets, options, formatter, world_set)
         except (parserestrict.ParseError, Failure) as e:
             argparser.error(e)
         return

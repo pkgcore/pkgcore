@@ -90,6 +90,8 @@ class InjectedPkg(pkg_base.wrapper):
             other = other._raw_pkg
         elif isinstance(other, pkg_base.base):
             other = other.versioned_atom
+        if self._raw_pkg.intersects(other):
+            return 0
         return cmp(self._raw_pkg, other)
 
     def __eq__(self, other):

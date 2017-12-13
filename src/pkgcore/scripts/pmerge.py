@@ -30,7 +30,10 @@ from pkgcore.restrictions import packages
 from pkgcore.restrictions.boolean import OrRestriction
 from pkgcore.util import commandline, parserestrict
 
-demandload('textwrap:dedent')
+demandload(
+    'textwrap:dedent',
+    'pkgcore.repository.virtual:RestrictionRepo',
+)
 
 
 argparser = commandline.ArgumentParser(
@@ -687,15 +690,15 @@ def main(options, out, err):
                    inst_iuse.symmetric_difference(src_iuse):
                     atoms.append(src_pkg.unversioned_atom)
 
-    # TODO: rewrite skip impl to use a faked repo added to the installed group
     injected = [restriction for token, restriction in options.injected]
     if options.onlydeps:
         injected.extend(atoms)
 
     if injected:
-        skipdeps = OrRestriction(*stable_unique(injected))
-    else:
-        skipdeps = None
+        restriction = OrRestriction(*stable_unique(injected))
+        injected_repo = RestrictionRepo(
+            repo_id='injected', restriction=restriction, frozen=True, livefs=True)
+        installed_repos = injected_repo + installed_repos
 
 #    left intentionally in place for ease of debugging.
 #    from guppy import hpy
@@ -722,7 +725,7 @@ def main(options, out, err):
         out.title('Resolving...')
         out.write(out.bold, ' * ', out.reset, 'Resolving...')
         out.flush()
-    ret = resolver_inst.add_atoms(atoms, skipdeps=skipdeps, finalize=True)
+    ret = resolver_inst.add_atoms(atoms, finalize=True)
     while ret:
         out.error('resolution failed')
         restrict = ret[0][0]

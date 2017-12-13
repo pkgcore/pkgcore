@@ -263,7 +263,6 @@ class merge_plan(object):
         self._ensure_livefs_is_loaded = \
             self._ensure_livefs_is_loaded_nonpreloaded
         self.drop_cycles = drop_cycles
-        self.skipdeps = None
         self.process_built_depends = process_built_depends
         self._debugging = debug
         if debug:
@@ -331,8 +330,7 @@ class merge_plan(object):
         self._ensure_livefs_is_loaded = \
             self._ensure_livefs_is_loaded_preloaded
 
-    def add_atoms(self, restricts, skipdeps=None, finalize=False):
-        self.skipdeps = skipdeps
+    def add_atoms(self, restricts, finalize=False):
         if restricts:
             stack = resolver_stack()
             for restrict in restricts:
@@ -684,16 +682,6 @@ class merge_plan(object):
                 state.add_op(c, c.current_pkg, force=True).apply(self.state)
 
     def insert_choice(self, atom, stack, choices):
-        # pretend specified skip deps have already been included in the resolved dep tree
-        if self.skipdeps is not None:
-            if isinstance(atom, _atom.atom):
-                restrict = atom
-            else:
-                # strip vdb restriction from specified atoms
-                restrict = _atom.atom(atom.key)
-            if self.skipdeps.match(restrict) or self.skipdeps.match(choices.current_pkg):
-                return False
-
         # first, check for conflicts.
         # lil bit fugly, but works for the moment
         if not choices.current_pkg.repo.livefs:

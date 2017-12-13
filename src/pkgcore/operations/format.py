@@ -180,8 +180,8 @@ class build_base(object):
 
     __metaclass__ = ForcedDepends
 
-    def __init__(self, domain, observer):
-        self.domain = domain
+    def __init__(self, domain, observer, pkg=None):
+        self.domain = domain.get_package_domain(pkg)
         self.observer = observer
 
     def start(self):
@@ -205,7 +205,7 @@ class build(build_base):
     }
 
     def __init__(self, domain, pkg, verified_files, observer):
-        build_base.__init__(self, domain, observer)
+        build_base.__init__(self, domain, observer, pkg)
         self.pkg = pkg
         self.verified_files = verified_files
 
@@ -259,7 +259,7 @@ class install(build_base):
     }
 
     def __init__(self, domain, newpkg, observer):
-        build_base.__init__(self, domain, observer)
+        build_base.__init__(self, domain, observer, newpkg)
         self.new_pkg = self.pkg = newpkg
 
     def add_triggers(self, engine):
@@ -287,7 +287,7 @@ class uninstall(build_base):
     }
 
     def __init__(self, domain, oldpkg, observer):
-        build_base.__init__(self, domain, observer)
+        build_base.__init__(self, domain, observer, oldpkg)
         self.old_pkg = self.pkg = oldpkg
 
     def add_triggers(self, engine):
@@ -321,7 +321,7 @@ class replace(install, uninstall):
     }
 
     def __init__(self, domain, old_pkg, new_pkg, observer):
-        build_base.__init__(self, domain, observer)
+        build_base.__init__(self, domain, observer, new_pkg)
         self.new_pkg = new_pkg
         self.old_pkg = old_pkg
 

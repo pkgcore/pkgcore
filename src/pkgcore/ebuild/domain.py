@@ -40,6 +40,7 @@ from pkgcore.util.parserestrict import parse_match
 
 demandload(
     'collections:defaultdict',
+    'copy',
     'errno',
     'multiprocessing:cpu_count',
     'operator:itemgetter',
@@ -47,6 +48,7 @@ demandload(
     'tempfile',
     'pkgcore.binpkg:repository@binary_repo',
     'pkgcore.ebuild:repository@ebuild_repo',
+    'pkgcore.ebuild.portage_conf:load_make_conf',
     'pkgcore.ebuild.repo_objs:RepoConfig',
     'pkgcore.ebuild.triggers:generate_triggers@ebuild_generate_triggers',
     'pkgcore.fs.livefs:iter_scan,sorted_scan',
@@ -59,14 +61,14 @@ def package_env_splitter(basedir, line):
     if len(val) == 1:
         logger.warning('invalid package.env entry: %r' % line)
         return
-    files = []
+    paths = []
     for env_file in val[1:]:
         fp = pjoin(basedir, env_file)
         if os.path.exists(fp):
-            files.append(local_source(fp))
+            paths.append(fp)
         else:
             logger.warning('package.env references nonexistent file: %r' % fp)
-    return parse_match(val[0]), tuple(files)
+    return parse_match(val[0]), tuple(paths)
 
 
 def apply_mask_filter(globs, atoms, pkg, mode):
@@ -503,11 +505,20 @@ class domain(config_domain):
         enabled.update(pkg.use)
         return enabled
 
-    def get_package_settings(self, pkg):
-        for restrict, sources in self.pkg_env:
+    def get_package_domain(self, pkg):
+        """Get domain object with altered settings from matching package.env entries."""
+        files = []
+        for restrict, paths in self.pkg_env:
             if restrict.match(pkg):
-                for source in sources:
-                    yield source
+                files.extend(paths)
+        if files:
+            pkg_settings = dict(self.settings.iteritems())
+            for path in files:
+                load_make_conf(pkg_settings, path, allow_sourcing=True, allow_recurse=False)
+            pkg_domain = copy.copy(self)
+            pkg_domain.settings = pkg_settings
+            return pkg_domain
+        return self
 
     def get_package_bashrcs(self, pkg):
         for source in self.profile.bashrcs:

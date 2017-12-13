@@ -255,7 +255,7 @@ def make_cache(cache_format, repo_path):
 
 
 def load_make_conf(vars_dict, path, allow_sourcing=False, required=True,
-                   incrementals=False):
+                   allow_recurse=True, incrementals=False):
     """parse make.conf files
 
     Args:
@@ -268,7 +268,12 @@ def load_make_conf(vars_dict, path, allow_sourcing=False, required=True,
     if allow_sourcing:
         sourcing_command = 'source'
 
-    for fp in sorted_scan(os.path.realpath(path), follow_symlinks=True, nonexistent=True):
+    if allow_recurse:
+        files = sorted_scan(os.path.realpath(path), follow_symlinks=True, nonexistent=True)
+    else:
+        files = (path,)
+
+    for fp in files:
         try:
             new_vars = read_bash_dict(
                 fp, vars_dict=vars_dict, sourcing_command=sourcing_command)

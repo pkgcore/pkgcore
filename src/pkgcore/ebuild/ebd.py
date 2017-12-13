@@ -61,7 +61,6 @@ class ebd(object):
         :param features: ebuild features, hold over from portage,
             will be broken down at some point
         """
-
         if use_override is not None:
             use = use_override
         else:
@@ -453,7 +452,7 @@ class install_op(ebd, format.install):
     def __init__(self, domain, pkg, observer):
         format.install.__init__(self, domain, pkg, observer)
         ebd.__init__(
-            self, pkg, observer=observer, initial_env=domain.settings,
+            self, pkg, observer=observer, initial_env=self.domain.settings,
             env_data_source=pkg.environment, clean=False)
 
     preinst = pretty_docs(
@@ -475,7 +474,7 @@ class uninstall_op(ebd, format.uninstall):
     def __init__(self, domain, pkg, observer):
         format.uninstall.__init__(self, domain, pkg, observer)
         ebd.__init__(
-            self, pkg, observer=observer, initial_env=domain.settings,
+            self, pkg, observer=observer, initial_env=self.domain.settings,
             env_data_source=pkg.environment, clean=False,
             tmp_offset="unmerge")
 
@@ -543,17 +542,15 @@ class buildable(ebd, setup_mixin, format.build):
         """
         :param pkg: :obj:`pkgcore.ebuild.ebuild_src.package` instance we'll be
             building
-        :param domain_settings: dict bled down from the domain configuration;
-            basically initial env
         :param eclass_cache: the :class:`pkgcore.ebuild.eclass_cache`
             we'll be using
         :param verified_files: mapping of fetchables mapped to their disk location
         """
 
         use = kwargs.get("use_override", pkg.use)
-        domain_settings = domain.settings
 
         format.build.__init__(self, domain, pkg, verified_files, observer)
+        domain_settings = self.domain.settings
         ebd.__init__(self, pkg, initial_env=domain_settings,
                      features=domain_settings["FEATURES"], **kwargs)
 

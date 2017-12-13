@@ -34,6 +34,7 @@ demandload(
     'pkgcore.ebuild.eapi:get_eapi',
     'pkgcore.fs.livefs:sorted_scan',
     'pkgcore.ebuild.repository:ProvidesRepo',
+    'pkgcore.log:logger',
     'pkgcore.restrictions:packages',
 )
 
@@ -208,7 +209,12 @@ class ProfileNode(object):
 
     @load_property("package.provided", allow_recurse=True)
     def pkg_provided(self, data):
-        return split_negations(data, cpv.versioned_CPV)
+        def _parse_cpv(s):
+            try:
+                return cpv.versioned_CPV(s)
+            except cpv.InvalidCPV:
+                logger.warning('invalid package.provided entry: %r' % s)
+        return split_negations(data, _parse_cpv)
 
     @load_property("package.mask", allow_recurse=True)
     def masks(self, data):

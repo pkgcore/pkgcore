@@ -10,7 +10,7 @@ __all__ = ("domain",)
 # XXX doc this up better...
 
 from functools import partial, wraps
-from itertools import chain, izip, ifilter
+from itertools import chain, izip, ifilter, imap
 import os.path
 
 from snakeoil import klass
@@ -306,32 +306,32 @@ class domain(config_domain):
 
     @load_property("package.mask")
     def pkg_masks(self, data):
-        return tuple(map(parse_match, data))
+        return tuple(imap(parse_match, data))
 
     @load_property("package.unmask")
     def pkg_unmasks(self, data):
-        return tuple(map(parse_match, data))
+        return tuple(imap(parse_match, data))
 
     # TODO: deprecated, remove in 0.11
     @load_property("package.keywords")
     def pkg_keywords(self, data):
-        return tuple(map(package_keywords_splitter, data))
+        return tuple(imap(package_keywords_splitter, data))
 
     @load_property("package.accept_keywords")
     def pkg_accept_keywords(self, data):
-        return tuple(map(package_keywords_splitter, data))
+        return tuple(imap(package_keywords_splitter, data))
 
     @load_property("package.license")
     def pkg_licenses(self, data):
-        return tuple(map(package_keywords_splitter, data))
+        return tuple(imap(package_keywords_splitter, data))
 
     @load_property("package.use")
     def pkg_use(self, data):
-        return tuple(map(package_keywords_splitter, data))
+        return tuple(imap(package_keywords_splitter, data))
 
     @load_property("package.env")
     def pkg_env(self, data):
-        pkg_mapping = map(partial(package_env_splitter, self.ebuild_hook_dir), data)
+        pkg_mapping = imap(partial(package_env_splitter, self.ebuild_hook_dir), data)
         return tuple(ifilter(None, pkg_mapping))
 
     @klass.jit_attr

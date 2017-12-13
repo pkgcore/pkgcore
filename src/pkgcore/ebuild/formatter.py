@@ -279,7 +279,7 @@ class PortageFormatter(CountingFormatter):
 
         if self.verbose:
             if (self.unstable_arch in op.pkg.keywords and
-                    self.unstable_arch not in self.domain_settings['ACCEPT_KEYWORDS']):
+                    self.unstable_arch not in op.pkg.repo.domain_settings['ACCEPT_KEYWORDS']):
                 op_chars[6] = [out.fg('yellow'), out.bold, '~', out.reset]
             elif not op.pkg.keywords:
                 op_chars[6] = [out.fg('red'), out.bold, '*', out.reset]

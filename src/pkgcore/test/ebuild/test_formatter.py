@@ -370,8 +370,13 @@ class TestPortageFormatter(BaseFormatterTest, TestCase):
     def setUp(self):
         pkg = FakeMutatedPkg('app-arch/bzip2-1.0.1-r1', slot='0')
         masked_atom = atom('>=app-arch/bzip2-2.0')
-        self.repo1 = FakeRepo(repo_id='gentoo', location='/var/gentoo/repos/gentoo', masks=(masked_atom,))
-        self.repo2 = FakeRepo(repo_id='repo2', location='/var/gentoo/repos/repo2')
+        self.domain_settings = {"ACCEPT_KEYWORDS": ("amd64",)}
+        self.repo1 = FakeRepo(
+            repo_id='gentoo', location='/var/gentoo/repos/gentoo',
+            masks=(masked_atom,), domain_settings=self.domain_settings)
+        self.repo2 = FakeRepo(
+            repo_id='repo2', location='/var/gentoo/repos/repo2',
+            domain_settings=self.domain_settings)
         self.vdb = FakeRepo(repo_id='vdb', pkgs=[pkg])
         BaseFormatterTest.setUp(self)
 
@@ -646,7 +651,6 @@ class TestPortageVerboseFormatter(TestPortageFormatter):
     def newFormatter(self, **kwargs):
         kwargs.setdefault("verbose", True)
         kwargs.setdefault("unstable_arch", "~amd64")
-        kwargs.setdefault("domain_settings", {"ACCEPT_KEYWORDS": ("amd64",)})
         return TestPortageFormatter.newFormatter(self, **kwargs)
 
     def test_install_symbol_unkeyworded(self):
@@ -817,7 +821,8 @@ class TestPortageVerboseRepoIdFormatter(TestPortageVerboseFormatter):
 
     def setUp(self):
         TestPortageVerboseFormatter.setUp(self)
-        self.repo3 = FakeRepo(location='/var/gentoo/repos/repo3')
+        self.repo3 = FakeRepo(
+            location='/var/gentoo/repos/repo3', domain_settings=self.domain_settings)
 
     def newFormatter(self, **kwargs):
         kwargs.setdefault("quiet_repo_display", True)

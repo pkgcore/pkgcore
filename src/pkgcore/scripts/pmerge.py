@@ -567,7 +567,6 @@ def main(options, out, err):
     formatter = options.formatter(
         out=out, err=err,
         unstable_arch=domain.unstable_arch,
-        domain_settings=domain.settings,
         use_expand=domain.profile.use_expand,
         use_expand_hidden=domain.profile.use_expand_hidden,
         pkg_get_use=domain.get_package_use_unconfigured,

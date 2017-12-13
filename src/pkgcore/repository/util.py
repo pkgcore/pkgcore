@@ -192,4 +192,4 @@ def get_virtual_repos(repos, sentinel=True):
     """
     if not isinstance(repos, (RepositoryGroup, list, tuple)):
         repos = get_raw_repos(repos)
-    return [x for x in repos if isinstance(x, virtual.tree) == sentinel]
+    return [x for x in repos if isinstance(x, (virtual.tree, SimpleTree)) == sentinel]

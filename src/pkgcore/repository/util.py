@@ -13,14 +13,14 @@ from snakeoil.demandload import demandload
 from snakeoil.mappings import DictMixin
 
 from pkgcore.ebuild.cpv import versioned_CPV
-from pkgcore.repository.prototype import tree
+from pkgcore.repository import prototype
 
 demandload(
     "pkgcore.repository:multiplex,virtual",
 )
 
 
-class SimpleTree(tree):
+class SimpleTree(prototype.tree):
     """Fake, in-memory repository.
 
     Args:
@@ -39,7 +39,7 @@ class SimpleTree(tree):
         self.livefs = livefs
         self.repo_id = repo_id
         self.package_class = pkg_klass
-        tree.__init__(self, frozen=frozen)
+        super(SimpleTree, self).__init__(frozen=frozen)
 
     def _get_categories(self, *arg):
         if arg:
@@ -61,12 +61,12 @@ class SimpleTree(tree):
             del self.cpv_dict[pkg.category][pkg.package]
             if not self.cpv_dict[pkg.category]:
                 del self.cpv_dict[pkg.category]
-        tree.notify_remove_package(self, pkg)
+        super(SimpleTree, self).notify_remove_package(pkg)
 
     def notify_add_package(self, pkg):
         self.cpv_dict.setdefault(
             pkg.category, {}).setdefault(pkg.package, []).append(pkg.fullver)
-        tree.notify_add_package(self, pkg)
+        super(SimpleTree, self).notify_add_package(pkg)
 
 
 class RepositoryGroup(DictMixin):
@@ -116,7 +116,7 @@ class RepositoryGroup(DictMixin):
         return iter(self.repos)
 
     def __add__(self, other):
-        if isinstance(other, tree):
+        if isinstance(other, prototype.tree):
             if other not in self.repos:
                 self.repos += (other,)
                 self.combined += other
@@ -128,7 +128,7 @@ class RepositoryGroup(DictMixin):
             % (self.__class__.__name__, other.__class__.__name__))
 
     def __radd__(self, other):
-        if isinstance(other, tree):
+        if isinstance(other, prototype.tree):
             if other not in self.repos:
                 self.repos = (other,) + self.repos
                 self.combined = other + self.combined

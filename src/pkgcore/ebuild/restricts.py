@@ -84,6 +84,9 @@ class VersionMatch(restriction.base):
         else:
             r1, r2 = self.rev, pkginst.revision
 
+        if pkginst.version is None:
+            return False
+
         return (cpv.ver_cmp(pkginst.version, r2, self.ver, r1) in self.vals) \
             != self.negate
 

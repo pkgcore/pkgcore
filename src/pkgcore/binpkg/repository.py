@@ -372,6 +372,7 @@ class ConfiguredTree(wrapper.tree):
 
             _operations = self._generate_operations
             built = True
+            repo = self
             __slots__ = ()
 
             def __str__(self):

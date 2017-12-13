@@ -33,7 +33,7 @@ def _getattr_wrapped(attr, self):
     return o[1]
 
 
-def make_wrapper(configurable_attribute_name, attributes_to_wrap=(),
+def make_wrapper(wrapped_repo, configurable_attribute_name, attributes_to_wrap=(),
                  kls_injections={}):
     """
     :param configurable_attribute_name: attribute name to add,
@@ -53,7 +53,7 @@ def make_wrapper(configurable_attribute_name, attributes_to_wrap=(),
 
         __slots__ = (
             "_unchangable", "_configurable", "_reuse_pt",
-            "_cached_wrapped", "_disabled",
+            "_cached_wrapped", "_disabled", "repo",
         )
 
         _wrapped_attr = attributes_to_wrap
@@ -95,6 +95,7 @@ def make_wrapper(configurable_attribute_name, attributes_to_wrap=(),
                 initial_settings, unchangable_settings))
             sf(self, '_disabled', disabled_settings)
             sf(self, '_reuse_pt', 0)
+            sf(self, 'repo', wrapped_repo)
             sf(self, '_cached_wrapped', {})
             wrapper.__init__(self, pkg_instance)
 

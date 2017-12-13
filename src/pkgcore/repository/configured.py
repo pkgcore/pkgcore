@@ -40,7 +40,7 @@ class tree(prototype.tree):
 
     def _mk_kls(self, pkg_kls_injections):
         return make_wrapper(
-            self.configurable, self.wrapped_attrs,
+            self, self.configurable, self.wrapped_attrs,
             kls_injections=pkg_kls_injections)
 
     def _get_pkg_kwds(self, pkg):

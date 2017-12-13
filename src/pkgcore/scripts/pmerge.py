@@ -575,7 +575,6 @@ def main(options, out, err):
         resolver.plan.limiters.add(None)
 
     domain = options.domain
-    installed_repos = domain.all_installed_repos
     world_set = world_list = options.world
     if options.oneshot:
         world_set = None
@@ -588,7 +587,7 @@ def main(options, out, err):
         pkg_get_use=domain.get_package_use_unconfigured,
         world_list=world_list,
         verbose=options.verbose,
-        installed_repos=installed_repos,
+        installed_repos=domain.all_installed_repos,
         distdir=domain.fetcher.get_storage_path(),
         quiet_repo_display=options.quiet_repo_display)
 
@@ -764,7 +763,7 @@ def main(options, out, err):
 
     if options.clean:
         out.write(out.bold, ' * ', out.reset, 'Packages to be removed:')
-        vset = set(installed_repos.combined)
+        vset = set(installed_repos.real.combined)
         len_vset = len(vset)
         vset.difference_update(x.pkg for x in resolver_inst.state.iter_ops(True))
         wipes = sorted(x for x in vset if x.package_is_real)
@@ -784,7 +783,7 @@ def main(options, out, err):
             out.write()
         repo_obs = observer.repo_observer(
             observer.formatter_output(out), verbose=options.verbose, debug=options.debug)
-        do_unmerge(options, out, err, installed_repos.combined, wipes, world_set, repo_obs)
+        do_unmerge(options, out, err, installed_repos.real.combined, wipes, world_set, repo_obs)
         return 0
 
     if options.debug:

@@ -143,6 +143,14 @@ class RepositoryGroup(DictMixin):
     def change_repos(cls, repos):
         return cls(repos)
 
+    @property
+    def real(self):
+        return RepositoryGroup(get_virtual_repos(self, False))
+
+    @property
+    def virtual(self):
+        return RepositoryGroup(get_virtual_repos(self))
+
 
 def repo_containing_path(repos, path):
     """Find the repo containing a path.

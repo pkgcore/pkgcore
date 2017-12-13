@@ -76,7 +76,7 @@ def _load_and_invoke(func, filename, handler, fallback, read_func,
                      allow_recurse, eapi_optional, self):
     profile_path = self.path.rstrip('/')
     if eapi_optional is not None and not getattr(self.eapi.options, eapi_optional, None):
-            return fallback
+        return fallback
     try:
         base = pjoin(profile_path, filename)
         if self.pms_strict or not allow_recurse:

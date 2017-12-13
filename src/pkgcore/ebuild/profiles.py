@@ -3,7 +3,7 @@
 
 __all__ = (
     "ProfileError", "ProfileNode", "EmptyRootNode", "OnDiskProfile",
-    "UserProfile", "PkgProvided",
+    "UserProfile",
 )
 
 import errno
@@ -33,7 +33,7 @@ demandload(
     'pkgcore.ebuild.atom:atom',
     'pkgcore.ebuild.eapi:get_eapi',
     'pkgcore.fs.livefs:sorted_scan',
-    'pkgcore.repository.util:SimpleTree',
+    'pkgcore.ebuild.repository:ProvidesRepo',
     'pkgcore.restrictions:packages',
 )
 
@@ -432,14 +432,6 @@ class EmptyRootNode(ProfileNode):
     pkg_provided = visibility = system = ((), ())
 
 
-def _empty_provides_iterable(*args, **kwds):
-    return iter(())
-
-
-def _empty_provides_has_match(*args, **kwds):
-    return False
-
-
 class ProfileStack(object):
 
     _node_kls = ProfileNode
@@ -602,20 +594,8 @@ class ProfileStack(object):
 
     @klass.jit_attr
     def provides_repo(self):
-        d = {}
-        for pkg in self._collapse_generic("pkg_provided"):
-            d.setdefault(pkg.category, {}).setdefault(pkg.package,
-                         []).append(pkg.fullver)
-        intermediate_parent = PkgProvidedParent()
-        repo = SimpleTree(
-            d, pkg_klass=partial(PkgProvided, intermediate_parent),
-            livefs=True, frozen=True, repo_id='package.provided')
-        intermediate_parent._parent_repo = repo
-
-        if not d:
-            repo.match = repo.itermatch = _empty_provides_iterable
-            repo.has_match = _empty_provides_has_match
-        return repo
+        return ProvidesRepo(pkgs=self._collapse_generic("pkg_provided"),
+                            repo_id='package.provided')
 
     @klass.jit_attr
     def masks(self):
@@ -741,27 +721,3 @@ class UserProfile(OnDiskProfile):
     def __init__(self, user_path, parent_path, parent_profile, load_profile_base=True):
         OnDiskProfile.__init__(self, parent_path, parent_profile, load_profile_base)
         self.node = UserProfileNode(user_path, pjoin(parent_path, parent_profile))
-
-
-class PkgProvidedParent(object):
-
-    def __init__(self, **kwds):
-        self.__dict__.update(kwds)
-
-
-class PkgProvided(ebuild_src.base):
-
-    __slots__ = ('use',)
-
-    package_is_real = False
-    __inst_caching__ = True
-
-    @property
-    def keywords(self):
-        return InvertedContains(())
-
-    def __init__(self, *a, **kwds):
-        ebuild_src.base.__init__(self, *a, **kwds)
-        object.__setattr__(self, "use", [])
-        object.__setattr__(self, "data", {})
-        object.__setattr__(self, "eapi", get_eapi('0'))

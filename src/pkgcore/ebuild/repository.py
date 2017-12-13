@@ -5,7 +5,7 @@
 Ebuild repository, specific to gentoo ebuild trees.
 """
 
-__all__ = ("tree",)
+__all__ = ("tree", "ProvidesRepo",)
 
 from functools import partial, wraps
 from itertools import imap, ifilterfalse
@@ -26,7 +26,7 @@ from pkgcore.config import ConfigHint, configurable
 from pkgcore.ebuild import ebuild_src
 from pkgcore.ebuild import eclass_cache as eclass_cache_module
 from pkgcore.operations import repo as _repo_ops
-from pkgcore.repository import prototype, errors, configured
+from pkgcore.repository import prototype, errors, configured, util
 
 demandload(
     'errno',
@@ -39,6 +39,7 @@ demandload(
     'pkgcore:fetch',
     'pkgcore.ebuild:cpv,digest,ebd,repo_objs,atom,restricts,profiles,processor',
     'pkgcore.ebuild:errors@ebuild_errors',
+    'pkgcore.ebuild.eapi:get_eapi',
     'pkgcore.fs.livefs:sorted_scan',
     'pkgcore.package:errors@pkg_errors',
     'pkgcore.restrictions:packages',
@@ -181,6 +182,54 @@ def _sort_eclasses(config, repo_config, eclasses):
         eclasses = eclass_cache_module.StackedCaches(
             eclasses, location=location, eclassdir=location)
     return eclasses
+
+
+class ProvidesRepo(util.SimpleTree):
+    """Fake, installed repo populated with entries from package.provided."""
+
+    class PkgProvidedParent(object):
+
+        def __init__(self, **kwds):
+            self.__dict__.update(kwds)
+
+    class PkgProvided(ebuild_src.base):
+
+        __slots__ = ('use',)
+
+        package_is_real = False
+        __inst_caching__ = True
+
+        @property
+        def keywords(self):
+            return InvertedContains(())
+
+        def __init__(self, *a, **kwds):
+            ebuild_src.base.__init__(self, *a, **kwds)
+            object.__setattr__(self, "use", [])
+            object.__setattr__(self, "data", {})
+            object.__setattr__(self, "eapi", get_eapi('0'))
+
+    def __init__(self, pkgs, repo_id):
+        d = {}
+        for pkg in pkgs:
+            d.setdefault(pkg.category, {}).setdefault(pkg.package, []).append(pkg.fullver)
+        intermediate_parent = self.PkgProvidedParent()
+        super(ProvidesRepo, self).__init__(
+            d, pkg_klass=partial(self.PkgProvided, intermediate_parent),
+            livefs=True, frozen=True, repo_id=repo_id)
+        intermediate_parent._parent_repo = self
+
+        if not d:
+            self.match = self.itermatch = self._empty_provides_iterable
+            self.has_match = self._empty_provides_has_match
+
+    @staticmethod
+    def _empty_provides_iterable(*args, **kwds):
+        return iter(())
+
+    @staticmethod
+    def _empty_provides_has_match(*args, **kwds):
+        return False
 
 
 @configurable(

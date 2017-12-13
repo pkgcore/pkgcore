@@ -368,7 +368,7 @@ class ConfiguredTree(wrapper.tree):
     def __init__(self, repo, domain_settings):
         # rebind to ourselves basically.
 
-        class package_class(pkg_base.wrapper):
+        class wrapped_binpkg(pkg_base.wrapper):
 
             _operations = self._generate_operations
             built = True
@@ -379,7 +379,7 @@ class ConfiguredTree(wrapper.tree):
                 return "ebuild binary pkg: %s::%s, source repo %r" % (
                     self.cpvstr, self.repo.repo_id, self.source_repository)
 
-        wrapper.tree.__init__(self, repo, package_class=package_class)
+        wrapper.tree.__init__(self, repo, package_class=wrapped_binpkg)
         self.domain_settings = domain_settings
 
     def _generate_operations(self, domain, pkg, **kwargs):

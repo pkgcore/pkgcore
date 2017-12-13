@@ -623,18 +623,6 @@ def config_from_make_conf(location=None, profile_override=None, **kwargs):
         'config_dir': config_dir,
     })
 
-    for f in ("package.mask", "package.unmask", "package.accept_keywords",
-              "package.keywords", "package.license", "package.use",
-              "package.env", "env:ebuild_hook_dir", "bashrc"):
-        fp = pjoin(config_dir, f.split(":")[0])
-        try:
-            os.stat(fp)
-        except OSError as oe:
-            if oe.errno != errno.ENOENT:
-                raise
-        else:
-            make_conf[f.split(":")[-1]] = fp
-
     if triggers:
         make_conf['triggers'] = tuple(triggers)
     config['livefs'] = basics.FakeIncrementalDictConfigSection(

@@ -9,8 +9,8 @@ __all__ = ("domain",)
 
 # XXX doc this up better...
 
-from functools import partial
-from itertools import chain, izip
+from functools import partial, wraps
+from itertools import chain, izip, ifilter
 import os.path
 
 from snakeoil import klass
@@ -49,16 +49,24 @@ demandload(
     'pkgcore.ebuild:repository@ebuild_repo',
     'pkgcore.ebuild.repo_objs:RepoConfig',
     'pkgcore.ebuild.triggers:generate_triggers@ebuild_generate_triggers',
-    'pkgcore.fs.livefs:iter_scan',
+    'pkgcore.fs.livefs:iter_scan,sorted_scan',
     'pkgcore.log:logger',
 )
 
 
-def package_env_splitter(basedir, val):
-    val = val.split()
+def package_env_splitter(basedir, line):
+    val = line.split()
     if len(val) == 1:
-        raise ValueError("package.env files require atoms followed by env file names, got %s" % val)
-    return parse_match(val[0]), tuple(local_source(pjoin(basedir, env_file)) for env_file in val[1:])
+        logger.warning('invalid package.env entry: %r' % line)
+        return
+    files = []
+    for env_file in val[1:]:
+        fp = pjoin(basedir, env_file)
+        if os.path.exists(fp):
+            files.append(local_source(fp))
+        else:
+            logger.warning('package.env references nonexistent file: %r' % fp)
+    return parse_match(val[0]), tuple(files)
 
 
 def apply_mask_filter(globs, atoms, pkg, mode):
@@ -94,6 +102,35 @@ def generate_filter(masks, unmasks, *extra):
     return packages.AndRestriction(disable_inst_caching=True, finalize=True, *(r + extra))
 
 
+def load_property(filename, handler=iter_read_bash, fallback=()):
+    """Decorator simplifying parsing config files to generate a domain property.
+
+    :param filename: The filename to parse within the config directory.
+    :keyword handler: An invokable that is fed the content returned from read_func.
+    :keyword fallback: What to return if the file does not exist -- must be immutable.
+    :return: A :py:`klass.jit.attr_named` property instance.
+    """
+    def f(func):
+        @wraps(func)
+        def _load_and_invoke(func, filename, handler, fallback, self):
+            data = []
+            try:
+                for fs_obj in iter_scan(pjoin(self.config_dir, filename),
+                                        follow_symlinks=True):
+                    if not fs_obj.is_reg or '/.' in fs_obj.location:
+                        continue
+                    data.extend(iter_read_bash(fs_obj.location, allow_line_cont=True))
+            except (EnvironmentError, ValueError) as e:
+                if e.errno == errno.ENOENT:
+                    return func(self, fallback)
+                else:
+                    raise_from(Failure("failed reading %r: %s" % (filename, e)))
+            return func(self, data)
+        f2 = klass.jit_attr_named('_%s' % (func.__name__,))
+        return f2(partial(_load_and_invoke, func, filename, handler, fallback))
+    return f
+
+
 # ow ow ow ow ow ow....
 # this manages a *lot* of crap.  so... this is fun.
 #
@@ -109,12 +146,6 @@ class domain(config_domain):
         'repositories': 'lazy_refs:repo', 'vdb': 'lazy_refs:repo',
         'name': 'str', 'triggers': 'lazy_refs:trigger',
     }
-    for _thing in list(const.incrementals) + ['bashrc']:
-        _types[_thing] = 'list'
-    for _thing in ('package.mask', 'package.keywords', 'package.license',
-                   'package.use', 'package.unmask', 'package.env',
-                   'package.accept_keywords'):
-        _types[_thing] = 'list'
     for _thing in ('root', 'config_dir', 'CHOST', 'CBUILD', 'CTARGET', 'CFLAGS', 'PATH',
                    'PORTAGE_TMPDIR', 'DISTCC_PATH', 'DISTCC_DIR', 'CCACHE_DIR'):
         _types[_thing] = 'str'
@@ -136,6 +167,10 @@ class domain(config_domain):
         # here has already, but still more to add)
         self._triggers = triggers
         self.name = name
+        self.root = settings["ROOT"] = root
+        self.config_dir = config_dir
+        self.prefix = prefix
+        self.ebuild_hook_dir = pjoin(self.config_dir, 'env')
 
         # prevent critical variables from being changed in make.conf
         for k in profile.profile_only_variables.intersection(settings.keys()):
@@ -149,42 +184,8 @@ class domain(config_domain):
             settings['MAKEOPTS'] = '-j%i' % cpu_count()
 
         self.profile = profile
-        self.pkg_masks, self.pkg_unmasks, pkg_keywords, pkg_licenses = [], [], [], []
-        pkg_use, self.bashrcs = [], []
 
         self.fetcher = settings.pop("fetcher")
-        self.ebuild_hook_dir = settings.pop("ebuild_hook_dir", None)
-
-        # TODO: split this out into properties similar to what's done for profiles
-        for key, val, action in (
-            ("package.mask", self.pkg_masks, parse_match),
-            ("package.unmask", self.pkg_unmasks, parse_match),
-            ("package.keywords", pkg_keywords, package_keywords_splitter),
-            ("package.accept_keywords", pkg_keywords, package_keywords_splitter),
-            ("package.license", pkg_licenses, package_keywords_splitter),
-            ("package.use", pkg_use, package_keywords_splitter),
-            ("package.env", self.bashrcs, package_env_splitter),
-            ):
-
-            for fp in settings.pop(key, ()):
-                try:
-                    if key == "package.env":
-                        base = self.ebuild_hook_dir
-                        if base is None:
-                            base = os.path.dirname(fp)
-                        action = partial(action, base)
-                    for fs_obj in iter_scan(fp, follow_symlinks=True):
-                        if not fs_obj.is_reg or '/.' in fs_obj.location:
-                            continue
-                        val.extend(
-                            action(x) for x in
-                            iter_read_bash(fs_obj.location, allow_line_cont=True))
-                except EnvironmentError as e:
-                    if e.errno == errno.ENOENT:
-                        raise MissingFile(fp, key)
-                    raise_from(Failure("failed reading '%s': %s" % (fp, e)))
-                except ValueError as e:
-                    raise_from(Failure("failed reading '%s': %s" % (fp, e)))
 
         for x in incrementals:
             if isinstance(settings.get(x), basestring):
@@ -244,7 +245,7 @@ class domain(config_domain):
                 default_keywords.append(x.lstrip("~"))
         default_keywords = unstable_unique(default_keywords + [self.arch])
 
-        accept_keywords = pkg_keywords + list(profile.accept_keywords)
+        accept_keywords = self.pkg_keywords + self.pkg_accept_keywords + profile.accept_keywords
         self.vfilters = [self._make_keywords_filter(
             self.arch, default_keywords, accept_keywords, profile.keywords,
             incremental="package.keywords" in incrementals)]
@@ -255,33 +256,20 @@ class domain(config_domain):
         # "DISALLOW NON FOSS LICENSES" bug via this >:)
         master_license = []
         master_license.extend(settings.get('ACCEPT_LICENSE', ()))
-        if master_license or pkg_licenses:
-            self.vfilters.append(self._make_license_filter(master_license, pkg_licenses))
+        if master_license or self.pkg_licenses:
+            self.vfilters.append(self._make_license_filter(master_license))
 
         del master_license
 
         # if it's made it this far...
-
-        self.root = settings["ROOT"] = root
-        self.config_dir = config_dir
-        self.prefix = prefix
         self.settings = ProtectedDict(settings)
-
-        for data in self.settings.get('bashrc', ()):
-            source = local_source(data)
-            # this is currently local-only so a path check is ok
-            # TODO make this more general
-            if not os.path.exists(source.path):
-                raise Failure(
-                    'user-specified bashrc %r does not exist' % (data,))
-            self.bashrcs.append((packages.AlwaysTrue, source))
 
         # stack use stuff first, then profile.
         self.enabled_use = ChunkedDataDict()
         self.enabled_use.add_bare_global(*split_negations(self.use))
         self.enabled_use.merge(profile.pkg_use)
         self.enabled_use.update_from_stream(
-            chunked_data(k, *split_negations(v)) for k, v in pkg_use)
+            chunked_data(k, *split_negations(v)) for k, v in self.pkg_use)
 
         for attr in ('', 'stable_'):
             c = ChunkedDataDict()
@@ -314,6 +302,41 @@ class domain(config_domain):
             "^(?:[+-])?(%s)_(.*)$" %
             "|".join(x.lower() for x in sorted(profile.use_expand, reverse=True)))
 
+    @load_property("package.mask")
+    def pkg_masks(self, data):
+        return tuple(map(parse_match, data))
+
+    @load_property("package.unmask")
+    def pkg_unmasks(self, data):
+        return tuple(map(parse_match, data))
+
+    # TODO: deprecated, remove in 0.11
+    @load_property("package.keywords")
+    def pkg_keywords(self, data):
+        return tuple(map(package_keywords_splitter, data))
+
+    @load_property("package.accept_keywords")
+    def pkg_accept_keywords(self, data):
+        return tuple(map(package_keywords_splitter, data))
+
+    @load_property("package.license")
+    def pkg_licenses(self, data):
+        return tuple(map(package_keywords_splitter, data))
+
+    @load_property("package.use")
+    def pkg_use(self, data):
+        return tuple(map(package_keywords_splitter, data))
+
+    @load_property("package.env")
+    def pkg_env(self, data):
+        pkg_mapping = map(partial(package_env_splitter, self.ebuild_hook_dir), data)
+        return tuple(ifilter(None, pkg_mapping))
+
+    @klass.jit_attr
+    def bashrcs(self):
+        files = sorted_scan(pjoin(self.config_dir, 'bashrc'), follow_symlinks=True)
+        return tuple(local_source(x) for x in files)
+
     def _extend_use_for_features(self, features):
         # hackish implementation; if test is on, flip on the flag
         if "test" in features:
@@ -322,18 +345,18 @@ class domain(config_domain):
         if "prefix" in features or "force-prefix" in features:
             self.use.append("prefix")
 
-    def _make_license_filter(self, master_license, pkg_licenses):
+    def _make_license_filter(self, master_license):
         """Generates a restrict that matches iff the licenses are allowed."""
-        return delegate(partial(self._apply_license_filter, master_license, pkg_licenses))
+        return delegate(partial(self._apply_license_filter, master_license))
 
-    def _apply_license_filter(self, master_licenses, pkg_licenses, pkg, mode):
+    def _apply_license_filter(self, master_licenses, pkg, mode):
         """Determine if a package's license is allowed."""
         # note we're not honoring mode; it's always match.
         # reason is that of not turning on use flags to get acceptable license
         # pairs, maybe change this down the line?
 
         matched_pkg_licenses = []
-        for atom, licenses in pkg_licenses:
+        for atom, licenses in self.pkg_licenses:
             if atom.match(pkg):
                 matched_pkg_licenses += licenses
 
@@ -480,15 +503,20 @@ class domain(config_domain):
         enabled.update(pkg.use)
         return enabled
 
+    def get_package_settings(self, pkg):
+        for restrict, sources in self.pkg_env:
+            if restrict.match(pkg):
+                for source in sources:
+                    yield source
+
     def get_package_bashrcs(self, pkg):
         for source in self.profile.bashrcs:
             yield source
-        for restrict, source in self.bashrcs:
-            if restrict.match(pkg):
-                yield source
-        if not self.ebuild_hook_dir:
+        for source in self.bashrcs:
+            yield source
+        if not os.path.exists(self.ebuild_hook_dir):
             return
-        # matching portage behaviour... it's whacked.
+        # matching portage behavior... it's whacked.
         base = pjoin(self.ebuild_hook_dir, pkg.category)
         for fp in (pkg.package, "%s:%s" % (pkg.package, pkg.slot),
                    getattr(pkg, "P", "nonexistent"), getattr(pkg, "PF", "nonexistent")):

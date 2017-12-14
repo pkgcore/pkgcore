@@ -186,7 +186,6 @@ class domain(config_domain):
 
     def __init__(self, profile, repositories, vdb, name=None,
                  root='/', config_dir='/etc/portage', prefix='/',
-                 incrementals=const.incrementals,
                  triggers=(), **settings):
         # voodoo, unfortunately (so it goes)
         # break this up into chunks once it's stabilized (most of code
@@ -197,11 +196,54 @@ class domain(config_domain):
         self.config_dir = config_dir
         self.prefix = prefix
         self.ebuild_hook_dir = pjoin(self.config_dir, 'env')
+        self.profile = profile
 
         # prevent critical variables from being changed in make.conf
-        for k in profile.profile_only_variables.intersection(settings.keys()):
+        for k in self.profile.profile_only_variables.intersection(settings.keys()):
             del settings[k]
 
+        self.fetcher = settings.pop("fetcher")
+        self.settings = self._configure_settings(ProtectedDict(settings))
+
+        # stack use stuff first, then profile.
+        self.enabled_use = ChunkedDataDict()
+        self.enabled_use.add_bare_global(*split_negations(self.use))
+        self.enabled_use.merge(self.profile.pkg_use)
+        self.enabled_use.update_from_stream(
+            chunked_data(k, *split_negations(v)) for k, v in self.pkg_use)
+
+        for attr in ('', 'stable_'):
+            c = ChunkedDataDict()
+            c.merge(getattr(self.profile, attr + 'forced_use'))
+            c.add_bare_global((), (self.arch,))
+            setattr(self, attr + 'forced_use', c)
+
+            c = ChunkedDataDict()
+            c.merge(getattr(self.profile, attr + 'masked_use'))
+            setattr(self, attr + 'disabled_use', c)
+
+        self.source_repos_raw = RepositoryGroup(r.instantiate() for r in repositories)
+        self.installed_repos_raw = RepositoryGroup(r.instantiate() for r in vdb)
+        self.default_licenses_manager = OverlayedLicenses(*self.source_repos_raw)
+
+        self.source_repos = RepositoryGroup()
+        self.installed_repos = RepositoryGroup()
+        self.unfiltered_repos = RepositoryGroup()
+
+        if self.profile.provides_repo is not None:
+            self.installed_repos_raw += self.profile.provides_repo
+
+        for repo_group, repos, filtered in (
+                (self.source_repos, self.source_repos_raw, True),
+                (self.installed_repos, self.installed_repos_raw, False)):
+            for repo in repos:
+                self.add_repo(repo, filtered=filtered, group=repo_group)
+
+        self.use_expand_re = re.compile(
+            "^(?:[+-])?(%s)_(.*)$" %
+            "|".join(x.lower() for x in sorted(self.profile.use_expand, reverse=True)))
+
+    def _configure_settings(self, settings):
         if 'CHOST' in settings and 'CBUILD' not in settings:
             settings['CBUILD'] = settings['CHOST']
 
@@ -209,24 +251,21 @@ class domain(config_domain):
         if 'MAKEOPTS' not in settings:
             settings['MAKEOPTS'] = '-j%i' % cpu_count()
 
-        self.profile = profile
-        self.fetcher = settings.pop("fetcher")
-
-        for x in incrementals:
+        for x in const.incrementals:
             if isinstance(settings.get(x), basestring):
                 settings[x] = tuple(settings[x].split())
 
         # roughly... all incremental stacks should be interpreted left -> right
         # as such we start with the profile settings, and append ours onto it.
-        for k, v in profile.default_env.iteritems():
+        for k, v in self.profile.default_env.iteritems():
             if k not in settings:
                 settings[k] = v
                 continue
-            if k in incrementals:
+            if k in const.incrementals:
                 settings[k] = v + tuple(settings[k])
 
         # next we finalize incrementals.
-        for incremental in incrementals:
+        for incremental in const.incrementals:
             # Skip USE/ACCEPT_LICENSE for the time being; hack; we need the
             # negations currently so that pkg iuse induced enablings can be
             # disabled by negations. For example, think of the profile doing
@@ -241,7 +280,7 @@ class domain(config_domain):
             settings[incremental] = tuple(s)
 
         # append expanded use, FEATURES, and environment defined USE flags
-        self.use = list(settings.get('USE', ())) + list(profile.expand_use(settings))
+        self.use = list(settings.get('USE', ())) + list(self.profile.expand_use(settings))
         self._extend_use_for_features(settings.get("FEATURES", ()))
         self.use = settings['USE'] = set(optimize_incrementals(
             self.use + os.environ.get('USE', '').split()))
@@ -270,10 +309,10 @@ class domain(config_domain):
                 default_keywords.append(x.lstrip("~"))
         default_keywords = unstable_unique(default_keywords + [self.arch])
 
-        accept_keywords = self.pkg_keywords + self.pkg_accept_keywords + profile.accept_keywords
+        accept_keywords = self.pkg_keywords + self.pkg_accept_keywords + self.profile.accept_keywords
         self.vfilters = [self._make_keywords_filter(
-            self.arch, default_keywords, accept_keywords, profile.keywords,
-            incremental="package.keywords" in incrementals)]
+            self.arch, default_keywords, accept_keywords, self.profile.keywords,
+            incremental="package.keywords" in const.incrementals)]
 
         del default_keywords, accept_keywords
 
@@ -286,46 +325,7 @@ class domain(config_domain):
 
         del master_license
 
-        # if it's made it this far...
-        self.settings = ProtectedDict(settings)
-
-        # stack use stuff first, then profile.
-        self.enabled_use = ChunkedDataDict()
-        self.enabled_use.add_bare_global(*split_negations(self.use))
-        self.enabled_use.merge(profile.pkg_use)
-        self.enabled_use.update_from_stream(
-            chunked_data(k, *split_negations(v)) for k, v in self.pkg_use)
-
-        for attr in ('', 'stable_'):
-            c = ChunkedDataDict()
-            c.merge(getattr(profile, attr + 'forced_use'))
-            c.add_bare_global((), (self.arch,))
-            setattr(self, attr + 'forced_use', c)
-
-            c = ChunkedDataDict()
-            c.merge(getattr(profile, attr + 'masked_use'))
-            setattr(self, attr + 'disabled_use', c)
-
-        self.source_repos_raw = RepositoryGroup(r.instantiate() for r in repositories)
-        self.installed_repos_raw = RepositoryGroup(r.instantiate() for r in vdb)
-        self.default_licenses_manager = OverlayedLicenses(*self.source_repos_raw)
-
-        self.source_repos = RepositoryGroup()
-        self.installed_repos = RepositoryGroup()
-        self.unfiltered_repos = RepositoryGroup()
-
-        if profile.provides_repo is not None:
-            self.installed_repos_raw += profile.provides_repo
-
-        for repo_group, repos, filtered in (
-                (self.source_repos, self.source_repos_raw, True),
-                (self.installed_repos, self.installed_repos_raw, False)):
-            for repo in repos:
-                self.add_repo(repo, filtered=filtered, group=repo_group)
-
-        self.use_expand_re = re.compile(
-            "^(?:[+-])?(%s)_(.*)$" %
-            "|".join(x.lower() for x in sorted(profile.use_expand, reverse=True)))
+        return settings
 
     @load_property("package.mask", package_masks)
     def pkg_masks(self, data):
@@ -536,11 +536,12 @@ class domain(config_domain):
             if restrict.match(pkg):
                 files.extend(paths)
         if files:
-            pkg_settings = dict(self.settings.iteritems())
+            pkg_settings = dict(self.settings.orig.iteritems())
             for path in files:
-                load_make_conf(pkg_settings, path, allow_sourcing=True, allow_recurse=False)
+                load_make_conf(pkg_settings, path, allow_sourcing=True,
+                               allow_recurse=False, incrementals=True)
             pkg_domain = copy.copy(self)
-            pkg_domain.settings = pkg_settings
+            pkg_domain.settings = self._configure_settings(pkg_settings)
             return pkg_domain
         return self
 

@@ -831,6 +831,15 @@ def main(options, out, err):
         out.write(out.bold, 'Took %.2f' % (vdb_time,), out.reset,
                   ' seconds to preload vdb state')
     if not changes:
+        # show skipped virtuals
+        virtual_pkgs = set()
+        for x in atoms:
+            virtual_pkgs.update(installed_repos.virtual.match(x))
+        if virtual_pkgs:
+            out.write(
+                "Skipping virtual pkgs:\n%s\n" % '\n'.join(
+                '%s::%s' % (x.versioned_atom, x.repo_id) for x in virtual_pkgs))
+
         out.write("Nothing to merge.")
         return
 

@@ -29,7 +29,7 @@ demandload(
     'collections:defaultdict',
     'snakeoil.data_source:local_source',
     'snakeoil.mappings:ImmutableDict',
-    'pkgcore.ebuild:cpv,repo_objs',
+    'pkgcore.ebuild:cpv,repo_objs,errors@ebuild_errors',
     'pkgcore.ebuild.atom:atom',
     'pkgcore.ebuild.eapi:get_eapi',
     'pkgcore.fs.livefs:sorted_scan',
@@ -259,9 +259,14 @@ class ProfileNode(object):
         # split the data down ordered cat/pkg lines
         for line in data:
             l = line.split()
-            a = self.eapi_atom(l[0])
+            try:
+                a = self.eapi_atom(l[0])
+            except ebuild_errors.MalformedAtom as e:
+                logger.warning(e)
+                continue
             if len(l) == 1:
-                raise Exception("malformed line, missing USE flag(s): %r" % (line,))
+                logger.warning("malformed line, missing USE flag(s): %r" % (line,))
+                continue
             d[a.key].append(chunked_data(a, *split_negations(l[1:])))
 
         return ImmutableDict((k, _build_cp_atom_payload(v, atom(k)))

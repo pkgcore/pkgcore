@@ -199,7 +199,7 @@ resolution_options.add_argument(
         Force all targets and their dependencies to be rebuilt.
     """)
 resolution_options.add_argument(
-    '-I', '--installed', dest='injected', metavar='TARGET[,TARGET,...]',
+    '-x', '--exclude', dest='excludes', metavar='TARGET[,TARGET,...]',
     action=commandline.StoreTarget, separator=',',
     help='inject packages into the installed set',
     docs="""
@@ -492,7 +492,7 @@ def _validate(parser, namespace):
         return val
     namespace.targets = f(namespace.targets)
     namespace.sets = f(namespace.sets)
-    namespace.injected = f(namespace.injected)
+    namespace.excludes = f(namespace.excludes)
 
 
 def parse_target(restriction, repo, installed_repos, return_none=False):
@@ -690,13 +690,13 @@ def main(options, out, err):
                    inst_iuse.symmetric_difference(src_iuse):
                     atoms.append(src_pkg.unversioned_atom)
 
-    injected = [restriction for token, restriction in options.injected]
+    excludes = [restriction for token, restriction in options.excludes]
     if options.onlydeps:
-        injected.extend(atoms)
+        excludes.extend(atoms)
 
-    if injected:
+    if excludes:
         injected_repo = RestrictionRepo(
-            repo_id='injected', restrictions=injected, frozen=True, livefs=True)
+            repo_id='injected', restrictions=excludes, frozen=True, livefs=True)
         installed_repos = injected_repo + installed_repos
 
 #    left intentionally in place for ease of debugging.

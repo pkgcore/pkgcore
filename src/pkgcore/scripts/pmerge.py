@@ -822,7 +822,7 @@ def main(options, out, err):
                 "finished sanity checks in %.2f seconds" % (time() - start_time))
             out.write()
 
-    if options.ask or options.pretend:
+    if (options.ask or options.pretend) and changes:
         for op in changes:
             formatter.format(op)
         formatter.end()

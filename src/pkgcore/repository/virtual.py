@@ -22,12 +22,12 @@ class tree(prototype.tree):
 
     factory_kls = staticmethod(virtual.factory)
 
-    def __init__(self, livefs=False):
+    def __init__(self, livefs=False, frozen=False):
         """
         :param grab_virtuals_func: callable to get a package -> versions mapping
         :param livefs: is this a livefs repository?
         """
-        super(tree, self).__init__()
+        super(tree, self).__init__(frozen)
         self.livefs = livefs
         vf = self.factory_kls(self)
         self.package_class = vf.new_package
@@ -120,16 +120,15 @@ class InjectedPkg(pkg_base.wrapper):
         return hash(self._raw_pkg)
 
 
-class RestrictionRepo(prototype.tree):
+class RestrictionRepo(tree):
     """Fake repo populated by packages matching a given restriction."""
 
     def __init__(self, restrictions, repo_id, frozen=False, livefs=False):
         self.repo_id = repo_id
-        self.livefs = livefs
         self._injected_pkgs = set()
         self.restriction = OrRestriction()
         self.add_restricts(restrictions)
-        super(RestrictionRepo, self).__init__(frozen)
+        super(RestrictionRepo, self).__init__(livefs=livefs, frozen=frozen)
 
     def add_restricts(self, restrictions):
         restricts = list(self.restriction.restrictions)

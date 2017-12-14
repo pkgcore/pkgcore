@@ -8,7 +8,7 @@ __all__ = (
 
 import errno
 from functools import partial
-from itertools import chain
+from itertools import chain, ifilter
 import os
 
 from snakeoil import caching, compatibility, klass, sequences
@@ -17,13 +17,13 @@ from snakeoil.containers import InvertedContains
 from snakeoil.demandload import demandload
 from snakeoil.fileutils import readlines_utf8
 from snakeoil.osutils import abspath, pjoin
-from snakeoil.sequences import split_negations
+from snakeoil.sequences import split_negations, stable_unique
 
 from pkgcore.config import ConfigHint, errors
 from pkgcore.ebuild import const, ebuild_src
 from pkgcore.ebuild.misc import (
     _build_cp_atom_payload, chunked_data, ChunkedDataDict,
-    IncrementalsDict, package_keywords_splitter, render_incrementals)
+    IncrementalsDict, render_incrementals)
 
 demandload(
     'collections:defaultdict',
@@ -37,6 +37,14 @@ demandload(
     'pkgcore.log:logger',
     'pkgcore.restrictions:packages',
 )
+
+
+def package_keywords_splitter(val):
+    v = val.split()
+    try:
+        return atom(v[0]), tuple(stable_unique(v[1:]))
+    except ebuild_errors.MalformedAtom as e:
+        logger.warning('parsing error: %s' % (e,))
 
 
 class ProfileError(errors.ParsingError):
@@ -226,11 +234,11 @@ class ProfileNode(object):
 
     @load_property("package.keywords", allow_recurse=True)
     def keywords(self, data):
-        return tuple(package_keywords_splitter(x) for x in data)
+        return tuple(ifilter(None, (package_keywords_splitter(x) for x in data)))
 
     @load_property("package.accept_keywords", allow_recurse=True)
     def accept_keywords(self, data):
-        return tuple(package_keywords_splitter(x) for x in data)
+        return tuple(ifilter(None, (package_keywords_splitter(x) for x in data)))
 
     @load_property("package.use", allow_recurse=True)
     def pkg_use(self, data):

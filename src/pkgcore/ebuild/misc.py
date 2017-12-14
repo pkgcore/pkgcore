@@ -10,7 +10,6 @@ __all__ = (
     "chunked_data", "collapsed_restrict_to_data", "incremental_chunked",
     "incremental_expansion", "incremental_expansion_license",
     "non_incremental_collapsed_restrict_to_data", "optimize_incrementals",
-    "package_keywords_splitter",
 )
 
 from collections import defaultdict
@@ -19,19 +18,13 @@ from itertools import chain
 
 from snakeoil import compatibility, mappings
 from snakeoil.klass import generic_equality, alias_method
-from snakeoil.sequences import namedtuple, iflatten_instance, stable_unique
+from snakeoil.sequences import namedtuple, iflatten_instance
 
 from pkgcore.ebuild import atom
 from pkgcore.restrictions import packages, restriction, boolean
-from pkgcore.util.parserestrict import parse_match
 
 restrict_payload = namedtuple("restrict_data", ["restrict", "data"])
 chunked_data = namedtuple("chunked_data", ("key", "neg", "pos"))
-
-
-def package_keywords_splitter(val):
-    v = val.split()
-    return parse_match(v[0]), tuple(stable_unique(v[1:]))
 
 
 def optimize_incrementals(sequence):

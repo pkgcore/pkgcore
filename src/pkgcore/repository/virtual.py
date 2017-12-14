@@ -114,7 +114,7 @@ class InjectedPkg(pkg_base.wrapper):
         return "injected restriction pkg: %s" % (self._raw_pkg)
 
     def __repr__(self):
-        return "injected restriction pkg: %s" % (self._raw_pkg)
+        return "<%s cpv=%r @%#8x>" % (self.__class__, self.cpvstr, id(self))
 
     def __hash__(self):
         return hash(self._raw_pkg)

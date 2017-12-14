@@ -695,9 +695,8 @@ def main(options, out, err):
         injected.extend(atoms)
 
     if injected:
-        restriction = OrRestriction(*stable_unique(injected))
         injected_repo = RestrictionRepo(
-            repo_id='injected', restriction=restriction, frozen=True, livefs=True)
+            repo_id='injected', restrictions=injected, frozen=True, livefs=True)
         installed_repos = injected_repo + installed_repos
 
 #    left intentionally in place for ease of debugging.

@@ -8,12 +8,14 @@ virtual repository, pkgs generated via callable
 __all__ = ("tree", "RestrictionRepo")
 
 from snakeoil.compatibility import cmp
+from snakeoil.sequences import stable_unique
 
 from pkgcore.ebuild import atom
 from pkgcore.ebuild.conditionals import DepSet
 from pkgcore.package import virtual
-from pkgcore.repository import prototype
 from pkgcore.package import base as pkg_base
+from pkgcore.repository import prototype
+from pkgcore.restrictions.boolean import OrRestriction
 
 
 class tree(prototype.tree):
@@ -121,12 +123,22 @@ class InjectedPkg(pkg_base.wrapper):
 class RestrictionRepo(prototype.tree):
     """Fake repo populated by packages matching a given restriction."""
 
-    def __init__(self, restriction, repo_id, frozen=False, livefs=False):
-        self.restriction = restriction
-        self._injected_pkgs = set()
+    def __init__(self, restrictions, repo_id, frozen=False, livefs=False):
         self.repo_id = repo_id
         self.frozen = frozen
         self.livefs = livefs
+        self._injected_pkgs = set()
+        self.restriction = OrRestriction()
+        self.add_restricts(restrictions)
+
+    def add_restricts(self, restrictions):
+        restricts = list(self.restriction.restrictions)
+        for r in stable_unique(restrictions):
+            if isinstance(r, atom.atom):
+                self._injected_pkgs.add(InjectedPkg(r, self))
+            else:
+                restricts.append(r)
+        self.restriction = OrRestriction(*restricts)
 
     def itermatch(self, restrict, sorter=iter, pkg_klass_override=InjectedPkg):
         if isinstance(restrict, atom.atom):

@@ -125,11 +125,11 @@ class RestrictionRepo(prototype.tree):
 
     def __init__(self, restrictions, repo_id, frozen=False, livefs=False):
         self.repo_id = repo_id
-        self.frozen = frozen
         self.livefs = livefs
         self._injected_pkgs = set()
         self.restriction = OrRestriction()
         self.add_restricts(restrictions)
+        super(RestrictionRepo, self).__init__(frozen)
 
     def add_restricts(self, restrictions):
         restricts = list(self.restriction.restrictions)
@@ -139,6 +139,18 @@ class RestrictionRepo(prototype.tree):
             else:
                 restricts.append(r)
         self.restriction = OrRestriction(*restricts)
+
+    def _get_categories(self, *args):
+        return tuple(x.category for x in self._injected_pkgs)
+
+    def _get_packages(self, category):
+        return tuple(x.package for x in self._injected_pkgs)
+
+    def _get_versions(self, package):
+        return tuple(x.version for x in self._injected_pkgs)
+
+    def __iter__(self):
+        return iter(self._injected_pkgs)
 
     def itermatch(self, restrict, sorter=iter, pkg_klass_override=InjectedPkg):
         if isinstance(restrict, atom.atom):

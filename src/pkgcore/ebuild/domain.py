@@ -20,7 +20,8 @@ from snakeoil.data_source import local_source
 from snakeoil.demandload import demandload
 from snakeoil.mappings import ProtectedDict
 from snakeoil.osutils import pjoin
-from snakeoil.sequences import split_negations, unstable_unique, predicate_split
+from snakeoil.sequences import (
+    split_negations, stable_unique, unstable_unique, predicate_split)
 
 from pkgcore.config import ConfigHint
 from pkgcore.config.domain import Failure, MissingFile, domain as config_domain
@@ -29,14 +30,13 @@ from pkgcore.ebuild.atom import atom as _atom
 from pkgcore.ebuild.misc import (
     ChunkedDataDict, chunked_data, collapsed_restrict_to_data,
     incremental_expansion, incremental_expansion_license,
-    non_incremental_collapsed_restrict_to_data, optimize_incrementals,
-    package_keywords_splitter)
+    non_incremental_collapsed_restrict_to_data, optimize_incrementals)
 from pkgcore.ebuild.repo_objs import OverlayedLicenses
 from pkgcore.repository import filtered
 from pkgcore.repository.util import RepositoryGroup
 from pkgcore.restrictions import packages, values
 from pkgcore.restrictions.delegated import delegate
-from pkgcore.util.parserestrict import parse_match
+from pkgcore.util.parserestrict import parse_match, ParseError
 
 demandload(
     'collections:defaultdict',
@@ -56,10 +56,25 @@ demandload(
 )
 
 
-def package_env_splitter(basedir, line):
+def package_masks(line, lineno, path):
+    try:
+        return parse_match(line)
+    except ParseError as e:
+        logger.warning('%r, line %s: parsing error: %s' % (path, lineno, e))
+
+
+def package_keywords_splitter(line, lineno, path):
+    v = line.split()
+    try:
+        return parse_match(v[0]), tuple(stable_unique(v[1:]))
+    except ParseError as e:
+        logger.warning('%r, line %s: parsing error: %s' % (path, lineno, e))
+
+
+def package_env_splitter(basedir, line, lineno, path):
     val = line.split()
     if len(val) == 1:
-        logger.warning('invalid package.env entry: %r' % line)
+        logger.warning("%r, line %s: missing file reference: %r" % (path, lineno, line))
         return
     paths = []
     for env_file in val[1:]:
@@ -67,8 +82,11 @@ def package_env_splitter(basedir, line):
         if os.path.exists(fp):
             paths.append(fp)
         else:
-            logger.warning('package.env references nonexistent file: %r' % fp)
-    return parse_match(val[0]), tuple(paths)
+            logger.warning("%r, line %s: nonexistent file: %r" % (path, lineno, fp))
+    try:
+        return parse_match(val[0]), tuple(paths)
+    except ParseError as e:
+        logger.warning('%r, line %s: parsing error: %s' % (path, lineno, e))
 
 
 def apply_mask_filter(globs, atoms, pkg, mode):
@@ -104,10 +122,11 @@ def generate_filter(masks, unmasks, *extra):
     return packages.AndRestriction(disable_inst_caching=True, finalize=True, *(r + extra))
 
 
-def load_property(filename, handler=iter_read_bash, fallback=()):
+def load_property(filename, parsing_func=None, handler=iter_read_bash, fallback=()):
     """Decorator simplifying parsing config files to generate a domain property.
 
     :param filename: The filename to parse within the config directory.
+    :keyword parsing_func: An invokable used to parse the data.
     :keyword handler: An invokable that is fed the content returned from read_func.
     :keyword fallback: What to return if the file does not exist -- must be immutable.
     :return: A :py:`klass.jit.attr_named` property instance.
@@ -115,19 +134,24 @@ def load_property(filename, handler=iter_read_bash, fallback=()):
     def f(func):
         @wraps(func)
         def _load_and_invoke(func, filename, handler, fallback, self):
-            data = []
-            try:
-                for fs_obj in iter_scan(pjoin(self.config_dir, filename),
-                                        follow_symlinks=True):
-                    if not fs_obj.is_reg or '/.' in fs_obj.location:
-                        continue
-                    data.extend(iter_read_bash(fs_obj.location, allow_line_cont=True))
-            except (EnvironmentError, ValueError) as e:
-                if e.errno == errno.ENOENT:
-                    return func(self, fallback)
-                else:
-                    raise_from(Failure("failed reading %r: %s" % (filename, e)))
-            return func(self, data)
+            def _yield_data():
+                try:
+                    for fs_obj in iter_scan(pjoin(self.config_dir, filename),
+                                            follow_symlinks=True):
+                        if not fs_obj.is_reg or '/.' in fs_obj.location:
+                            continue
+                        for lineno, line, in iter_read_bash(
+                                fs_obj.location, allow_line_cont=True, enum_line=True):
+                            if parsing_func is not None:
+                                yield parsing_func(line, lineno, path=fs_obj.location)
+                            else:
+                                yield line, lineno, fs_obj.location
+                except EnvironmentError as e:
+                    if e.errno == errno.ENOENT:
+                        yield fallback
+                    else:
+                        raise_from(Failure("failed reading %r: %s" % (filename, e)))
+            return func(self, ifilter(None, _yield_data()))
         f2 = klass.jit_attr_named('_%s' % (func.__name__,))
         return f2(partial(_load_and_invoke, func, filename, handler, fallback))
     return f
@@ -186,7 +210,6 @@ class domain(config_domain):
             settings['MAKEOPTS'] = '-j%i' % cpu_count()
 
         self.profile = profile
-
         self.fetcher = settings.pop("fetcher")
 
         for x in incrementals:
@@ -304,34 +327,35 @@ class domain(config_domain):
             "^(?:[+-])?(%s)_(.*)$" %
             "|".join(x.lower() for x in sorted(profile.use_expand, reverse=True)))
 
-    @load_property("package.mask")
+    @load_property("package.mask", package_masks)
     def pkg_masks(self, data):
-        return tuple(imap(parse_match, data))
+        return tuple(data)
 
-    @load_property("package.unmask")
+    @load_property("package.unmask", package_masks)
     def pkg_unmasks(self, data):
-        return tuple(imap(parse_match, data))
+        return tuple(data)
 
     # TODO: deprecated, remove in 0.11
-    @load_property("package.keywords")
+    @load_property("package.keywords", package_keywords_splitter)
     def pkg_keywords(self, data):
-        return tuple(imap(package_keywords_splitter, data))
+        return tuple(data)
 
-    @load_property("package.accept_keywords")
+    @load_property("package.accept_keywords", package_keywords_splitter)
     def pkg_accept_keywords(self, data):
-        return tuple(imap(package_keywords_splitter, data))
+        return tuple(data)
 
-    @load_property("package.license")
+    @load_property("package.license", package_keywords_splitter)
     def pkg_licenses(self, data):
-        return tuple(imap(package_keywords_splitter, data))
+        return tuple(data)
 
-    @load_property("package.use")
+    @load_property("package.use", package_keywords_splitter)
     def pkg_use(self, data):
-        return tuple(imap(package_keywords_splitter, data))
+        return tuple(data)
 
-    @load_property("package.env")
+    @load_property("package.env", fallback=None)
     def pkg_env(self, data):
-        pkg_mapping = imap(partial(package_env_splitter, self.ebuild_hook_dir), data)
+        func = partial(package_env_splitter, self.ebuild_hook_dir)
+        pkg_mapping = (func(*x) for x in data)
         return tuple(ifilter(None, pkg_mapping))
 
     @klass.jit_attr

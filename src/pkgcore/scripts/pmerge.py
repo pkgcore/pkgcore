@@ -983,5 +983,4 @@ def main(options, out, err):
     # memory.
     cleanup = []
 
-    out.write("finished")
     return 0

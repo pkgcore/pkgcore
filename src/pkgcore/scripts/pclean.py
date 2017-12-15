@@ -177,10 +177,6 @@ repo_cleaning_opts.add_argument(
         Target repository to search for matches. If no repo is specified all
         relevant repos are used.
     """)
-@repo_opts.bind_parse_priority(20)
-def _setup_repo_opts(namespace):
-    if namespace.exclude_installed:
-        namespace.installed_repo = namespace.domain.all_installed_repos
 
 
 @argparser.bind_parse_priority(30)
@@ -244,7 +240,7 @@ def _dist_validate_args(parser, namespace):
     # exclude distfiles used by installed packages -- note that this uses the
     # distfiles attr with USE settings bound to it
     if namespace.exclude_installed:
-        for pkg in namespace.installed_repo:
+        for pkg in namespace.domain.all_installed_repos:
             installed_dist.update(iflatten_instance(pkg.distfiles))
 
     # exclude distfiles for existing ebuilds or fetch restrictions
@@ -346,7 +342,7 @@ def _pkg_validate_args(parser, namespace):
     if namespace.bindist:
         pkg_filters.append(lambda pkg: 'bindist' in pkg.restrict)
     if namespace.exclude_installed:
-        pkg_filters.append(lambda pkg: pkg.versioned_atom not in namespace.installed_repo)
+        pkg_filters.append(lambda pkg: pkg.versioned_atom not in namespace.all_installed_repos)
     if namespace.exclude_fetch_restricted:
         pkg_filters.append(lambda pkg: 'fetch' not in pkg.restrict)
     if namespace.source_repo is not None:
@@ -355,7 +351,7 @@ def _pkg_validate_args(parser, namespace):
     removal_func = partial(os.remove)
     namespace.remove = (
         (removal_func, binpkg) for binpkg in
-        sorted(ifilter(namespace.file_filters.run, (pkg.path for pkg in pkgs)))) 
+        sorted(ifilter(namespace.file_filters.run, (pkg.path for pkg in pkgs))))
 
 tmp = subparsers.add_parser(
     'tmp', parents=(shared_opts,),

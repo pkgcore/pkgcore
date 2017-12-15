@@ -835,11 +835,13 @@ def main(options, out, err):
         # show skipped virtuals
         virtual_pkgs = set()
         for x in atoms:
-            virtual_pkgs.update(installed_repos.virtual.match(x))
+            matches = installed_repos.virtual.match(x)
+            if matches:
+                virtual_pkgs.add(sorted(matches)[-1])
         if virtual_pkgs:
             out.write(
                 "Skipping virtual pkgs:\n%s\n" % '\n'.join(
-                '%s::%s' % (x.versioned_atom, x.repo_id) for x in virtual_pkgs))
+                    str(x.versioned_repo_atom) for x in virtual_pkgs))
 
         out.write("Nothing to merge.")
         return

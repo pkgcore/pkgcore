@@ -65,8 +65,9 @@ class PigeonHoledSlots(object):
     def remove_slotting(self, obj):
         key = obj.key
         # let the key error be thrown if they screwed up.
-        l = [x for x in self.slot_dict[key] if x is not obj]
-        if len(l) == len(self.slot_dict[key]):
+        slots = self.slot_dict.get(key, ())
+        l = [x for x in slots if x is not obj]
+        if len(l) == len(slots):
             raise KeyError("obj %s isn't slotted" % obj)
         if l:
             self.slot_dict[key] = l

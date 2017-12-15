@@ -428,13 +428,6 @@ def config_from_make_conf(location=None, profile_override=None, **kwargs):
     features = make_conf.get("FEATURES", "").split()
 
     config = {}
-    triggers = []
-
-    def add_trigger(name, kls_path, **extra_args):
-        d = extra_args.copy()
-        d['class'] = kls_path
-        config[name] = basics.ConfigSectionFromStringDict(d)
-        triggers.append(name)
 
     # sets...
     add_sets(config, root, config_dir)
@@ -531,8 +524,9 @@ def config_from_make_conf(location=None, profile_override=None, **kwargs):
         'vuln', SecurityUpgradesViaProfile.pkgcore_config_type.typename)
 
     # binpkg.
-    buildpkg = 'buildpkg' in features or kwargs.pop('buildpkg', False)
-    pkgdir = os.environ.get("PKGDIR", make_conf.pop('PKGDIR', None))
+    forced_buildpkg = kwargs.pop('buildpkg', False)
+    buildpkg = 'buildpkg' in features or forced_buildpkg
+    pkgdir = os.environ.get("PKGDIR", make_conf.get('PKGDIR', None))
     if pkgdir is not None:
         try:
             pkgdir = abspath(pkgdir)
@@ -563,52 +557,12 @@ def config_from_make_conf(location=None, profile_override=None, **kwargs):
                 'ignore_paludis_versioning': str('ignore-paludis-versioning' in features),
             })
             repos.append('binpkg')
-
-        if buildpkg:
-            add_trigger(
-                'buildpkg_trigger', 'pkgcore.merge.triggers.SavePkg',
-                pristine='no', target_repo='binpkg')
-        elif 'pristine-buildpkg' in features:
-            add_trigger(
-                'buildpkg_trigger', 'pkgcore.merge.triggers.SavePkg',
-                pristine='yes', target_repo='binpkg')
-        elif 'buildsyspkg' in features:
-            add_trigger(
-                'buildpkg_system_trigger', 'pkgcore.merge.triggers.SavePkgIfInPkgset',
-                pristine='yes', target_repo='binpkg', pkgset='system')
-        elif 'unmerge-backup' in features:
-            add_trigger(
-                'unmerge_backup_trigger', 'pkgcore.merge.triggers.SavePkgUnmerging',
-                target_repo='binpkg')
-
-    if 'save-deb' in features:
-        path = make_conf.pop("DEB_REPO_ROOT", None)
-        if path is None:
-            logger.warning("disabling save-deb; DEB_REPO_ROOT is unset")
-        else:
-            add_trigger(
-                'save_deb_trigger', 'pkgcore.ospkg.triggers.SaveDeb',
-                basepath=normpath(path), maintainer=make_conf.pop("DEB_MAINAINER", ''),
-                platform=make_conf.pop("DEB_ARCHITECTURE", ""))
-
-    if 'splitdebug' in features:
-        kwds = {}
-
-        if 'compressdebug' in features:
-            kwds['compress'] = 'true'
-
-        add_trigger(
-            'binary_debug_trigger', 'pkgcore.merge.triggers.BinaryDebug',
-            mode='split', **kwds)
-    elif 'strip' in features or 'nostrip' not in features:
-        add_trigger(
-            'binary_debug_trigger', 'pkgcore.merge.triggers.BinaryDebug',
-            mode='strip')
-
-    if '-fixlafiles' not in features:
-        add_trigger(
-            'lafilefixer_trigger',
-            'pkgcore.system.libtool.FixLibtoolArchivesTrigger')
+            # inject feature to enable trigger
+            if forced_buildpkg:
+                make_conf['FEATURES'] += ' buildpkg'
+    elif 'buildpkg' in features:
+        # disable feature due to pkgdir issues so trigger isn't added
+        make_conf['FEATURES'] += ' -buildpkg'
 
     # now add the fetcher- we delay it till here to clean out the environ
     # it passes to the command.
@@ -628,8 +582,6 @@ def config_from_make_conf(location=None, profile_override=None, **kwargs):
         'config_dir': config_dir,
     })
 
-    if triggers:
-        make_conf['triggers'] = tuple(triggers)
     config['livefs'] = basics.FakeIncrementalDictConfigSection(
         my_convert_hybrid, make_conf)
 

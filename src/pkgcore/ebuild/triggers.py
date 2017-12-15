@@ -18,7 +18,7 @@ import os
 from snakeoil.bash import read_bash_dict
 from snakeoil.demandload import demandload
 from snakeoil.fileutils import AtomicWriteFile
-from snakeoil.osutils import listdir_files, normpath, pjoin
+from snakeoil.osutils import listdir_files, abspath, normpath, pjoin
 from snakeoil.sequences import stable_unique, iflatten_instance
 
 from pkgcore.merge import triggers, const, errors
@@ -28,8 +28,11 @@ from pkgcore.restrictions import values
 demandload(
     'fnmatch',
     'snakeoil:compatibility',
-    'pkgcore:os_data',
+    'pkgcore:os_data,ospkg',
+    'pkgcore.system:libtool',
+    'pkgcore.log:logger',
 )
+
 
 colon_parsed = frozenset([
     "ADA_INCLUDE_PATH",  "ADA_OBJECTS_PATH", "INFODIR", "INFOPATH", "LDPATH",
@@ -651,6 +654,36 @@ def generate_triggers(domain):
         yield SFPerms()
 
     yield install_into_symdir_protect(d["CONFIG_PROTECT"], d["CONFIG_PROTECT_MASK"])
+
+    pkgdir = domain_settings.get("PKGDIR", None)
+    target_repo = domain.binary_repos_raw.get(pkgdir, None)
+    if target_repo is not None:
+        if 'buildpkg' in features:
+            yield triggers.SavePkg(pristine='no', target_repo=target_repo)
+        elif 'pristine-buildpkg' in features:
+            yield triggers.SavePkg(pristine='yes', target_repo=target_repo)
+        elif 'buildsyspkg' in features:
+            yield triggers.SavePkgIfInPkgset(
+                pristine='yes', target_repo=target_repo, pkgset='system')
+        elif 'unmerge-backup' in features:
+            yield triggers.SavePkgUnmerging(target_repo=target_repo)
+
+    if 'save-deb' in features:
+        path = domain_settings.get("DEB_REPO_ROOT", None)
+        if path is None:
+            logger.warning("disabling save-deb; DEB_REPO_ROOT is unset")
+        else:
+            yield ospkg.triggers.SaveDeb(
+                basepath=normpath(path), maintainer=domain_settings.get("DEB_MAINAINER", ''),
+                platform=domain_settings.get("DEB_ARCHITECTURE", ""))
+
+    if 'splitdebug' in features:
+        yield triggers.BinaryDebug(mode='split', compress=('compressdebug' in features))
+    elif 'strip' in features or 'nostrip' not in features:
+        yield triggers.BinaryDebug(mode='strip')
+
+    if '-fixlafiles' not in features:
+        yield libtool.FixLibtoolArchivesTrigger()
 
     for x in ("man", "info", "doc"):
         if "no%s" % x in features:

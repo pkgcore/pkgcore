@@ -24,10 +24,11 @@ demandload(
     're',
     'time',
     'shutil',
+    'snakeoil:klass',
     'snakeoil.osutils:listdir_dirs,listdir_files,pjoin',
-    'snakeoil.sequences:iflatten_instance',
+    'snakeoil.sequences:iflatten_instance,split_negations',
     'pkgcore:fetch',
-    'pkgcore.ebuild:atom',
+    'pkgcore.ebuild:atom,domain@domain_mod',
     'pkgcore.package:errors',
     'pkgcore.repository.util:SimpleTree',
     'pkgcore.util:parserestrict',
@@ -210,13 +211,105 @@ def _setup_restrictions(namespace):
         namespace.restrict = boolean.AndRestriction(*namespace.restrict)
 
 
-# TODO: add config support
-#config = subparsers.add_parser(
-#    'config', parents=(shared_opts,),
-#    description='remove config file settings')
-#@config.bind_main_func
-#def config_main(options, out, err):
-#    pass
+class config_domain(object):
+
+    def __init__(self, domain):
+        self._domain = domain
+
+    @domain_mod.load_property("package.mask", domain_mod.package_masks)
+    def pkg_masks(self, data):
+        return tuple(data)
+
+    @domain_mod.load_property("package.unmask", domain_mod.package_masks)
+    def pkg_unmasks(self, data):
+        return tuple(data)
+
+    @domain_mod.load_property("package.keywords", domain_mod.package_keywords_splitter)
+    def pkg_keywords(self, data):
+        return tuple(data)
+
+    @domain_mod.load_property("package.accept_keywords", domain_mod.package_keywords_splitter)
+    def pkg_accept_keywords(self, data):
+        return tuple(data)
+
+    @domain_mod.load_property("package.license", domain_mod.package_keywords_splitter)
+    def pkg_licenses(self, data):
+        return tuple(data)
+
+    @domain_mod.load_property("package.use", domain_mod.package_keywords_splitter)
+    def pkg_use(self, data):
+        return tuple(data)
+
+    @domain_mod.load_property("package.env", fallback=None)
+    def pkg_env(self, data):
+        func = partial(domain_mod.package_env_splitter, self.ebuild_hook_dir)
+        data = ifilter(None, (func(*x) for x in data))
+        return tuple(data)
+
+    __getattr__ = klass.GetAttrProxy("_domain")
+
+
+config = subparsers.add_parser(
+   'config', parents=(shared_opts,),
+   description='remove config file settings')
+@config.bind_main_func
+def config_main(options, out, err):
+    installed_repos = options.domain.all_installed_repos
+    all_repos_raw = options.domain.all_repos_raw
+
+    # wrap actual domain in our verbose domain
+    domain = config_domain(options.domain)
+
+    def iter_restrict(iterable):
+        for x in iterable:
+            restrict = x[0]
+            if (options.exclude_restrict is None or
+                    not options.exclude_restrict.match(restrict)):
+                yield restrict, list(x)
+
+    domain_attrs = (
+        'pkg_masks', 'pkg_unmasks', 'pkg_keywords', 'pkg_accept_keywords',
+        'pkg_licenses', 'pkg_use', 'pkg_env',
+    )
+
+    attrs = {}
+    for name in domain_attrs:
+        # force JIT-ed attr refresh to use custom domain methods
+        setattr(domain, '_' + name, klass._singleton_kls)
+        # filter excluded, matching restricts from the data stream
+        attrs[name] = iter_restrict(getattr(domain, name))
+
+    changes = defaultdict(list)
+    for name, iterable in attrs.iteritems():
+        for restrict, item in iterable:
+            path, lineno, line = item.pop(), item.pop(), item.pop()
+            if not installed_repos.match(restrict):
+                changes['uninstalled'].append((path, line, lineno, str(restrict)))
+            if name == 'pkg_use':
+                atom, use = item
+                disabled, enabled = split_negations(use)
+                pkgs = all_repos_raw.match(atom)
+                available = {u for pkg in pkgs for u in pkg.iuse_stripped}
+                unknown_disabled = set(disabled) - available
+                unknown_enabled = set(enabled) - available
+                if unknown_disabled:
+                    changes['unknown_use'].append((
+                        path, line, lineno, ' '.join('-' + u for u in unknown_disabled)))
+                if unknown_enabled:
+                    changes['unknown_use'].append(
+                        (path, line, lineno, ' '.join(unknown_enabled)))
+
+    type_mapping = {
+        'uninstalled': 'Uninstalled package',
+        'unknown_use': 'Nonexistent use flag(s)',
+    }
+
+    for type, data in changes.iteritems():
+        out.write('%s:' % type_mapping[type])
+        for path, line, lineno, values in data:
+            out.write('%s:' % path)
+            out.write('%s -- line %s: %r' % (values, lineno, line))
+            out.write()
 
 
 dist = subparsers.add_parser(

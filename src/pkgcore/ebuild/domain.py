@@ -58,7 +58,7 @@ demandload(
 
 def package_masks(line, lineno, path):
     try:
-        return parse_match(line)
+        return parse_match(line), line, lineno, path
     except ParseError as e:
         logger.warning('%r, line %s: parsing error: %s' % (path, lineno, e))
 
@@ -66,7 +66,7 @@ def package_masks(line, lineno, path):
 def package_keywords_splitter(line, lineno, path):
     v = line.split()
     try:
-        return parse_match(v[0]), tuple(stable_unique(v[1:]))
+        return parse_match(v[0]), tuple(stable_unique(v[1:])), line, lineno, path
     except ParseError as e:
         logger.warning('%r, line %s: parsing error: %s' % (path, lineno, e))
 
@@ -84,7 +84,7 @@ def package_env_splitter(basedir, line, lineno, path):
         else:
             logger.warning("%r, line %s: nonexistent file: %r" % (path, lineno, fp))
     try:
-        return parse_match(val[0]), tuple(paths)
+        return parse_match(val[0]), tuple(paths), line, lineno, path
     except ParseError as e:
         logger.warning('%r, line %s: parsing error: %s' % (path, lineno, e))
 
@@ -209,8 +209,7 @@ class domain(config_domain):
         self.enabled_use = ChunkedDataDict()
         self.enabled_use.add_bare_global(*split_negations(self.use))
         self.enabled_use.merge(self.profile.pkg_use)
-        self.enabled_use.update_from_stream(
-            chunked_data(k, *split_negations(v)) for k, v in self.pkg_use)
+        self.enabled_use.update_from_stream(chunked_data(k, *v) for k, v in self.pkg_use)
 
         for attr in ('', 'stable_'):
             c = ChunkedDataDict()
@@ -329,34 +328,34 @@ class domain(config_domain):
 
     @load_property("package.mask", package_masks)
     def pkg_masks(self, data):
-        return tuple(data)
+        return tuple(x[0] for x in data)
 
     @load_property("package.unmask", package_masks)
     def pkg_unmasks(self, data):
-        return tuple(data)
+        return tuple(x[0] for x in data)
 
     # TODO: deprecated, remove in 0.11
     @load_property("package.keywords", package_keywords_splitter)
     def pkg_keywords(self, data):
-        return tuple(data)
+        return tuple((x[0], x[1]) for x in data)
 
     @load_property("package.accept_keywords", package_keywords_splitter)
     def pkg_accept_keywords(self, data):
-        return tuple(data)
+        return tuple((x[0], x[1]) for x in data)
 
     @load_property("package.license", package_keywords_splitter)
     def pkg_licenses(self, data):
-        return tuple(data)
+        return tuple((x[0], x[1]) for x in data)
 
     @load_property("package.use", package_keywords_splitter)
     def pkg_use(self, data):
-        return tuple(data)
+        return tuple((x[0], split_negations(x[1])) for x in data)
 
     @load_property("package.env", fallback=None)
     def pkg_env(self, data):
         func = partial(package_env_splitter, self.ebuild_hook_dir)
-        pkg_mapping = (func(*x) for x in data)
-        return tuple(ifilter(None, pkg_mapping))
+        data = ifilter(None, (func(*x) for x in data))
+        return tuple((x[0], x[1]) for x in data)
 
     @klass.jit_attr
     def bashrcs(self):

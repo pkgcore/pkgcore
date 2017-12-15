@@ -47,13 +47,13 @@ class base(object):
 
     stage_hooks = []
 
-    def __init__(self, domain, repo, observer, triggers, offset):
+    def __init__(self, domain, repo, observer, offset):
         self.domain = domain
         self.repo = repo
         self.underway = False
         self.offset = offset
         self.observer = observer
-        self.triggers = triggers
+        self.triggers = self.domain.triggers
         self.create_op()
         self.lock = getattr(repo, "lock")
         self.tempspace = None
@@ -146,9 +146,9 @@ class install(base):
     format_install_op_name = "_repo_install_op"
     engine_kls = staticmethod(MergeEngine.install)
 
-    def __init__(self, domain, repo, pkg, observer, triggers, offset):
+    def __init__(self, domain, repo, pkg, observer, offset):
         self.new_pkg = pkg
-        base.__init__(self, domain, repo, observer, triggers, offset)
+        base.__init__(self, domain, repo, observer, offset)
 
     def create_op(self):
         self.format_op = getattr(
@@ -214,9 +214,9 @@ class uninstall(base):
     format_uninstall_op_name = "_repo_uninstall_op"
     engine_kls = staticmethod(MergeEngine.uninstall)
 
-    def __init__(self, domain, repo, pkg, observer, triggers, offset):
+    def __init__(self, domain, repo, pkg, observer, offset):
         self.old_pkg = pkg
-        base.__init__(self, domain, repo, observer, triggers, offset)
+        base.__init__(self, domain, repo, observer, offset)
 
     def create_op(self):
         self.format_op = getattr(
@@ -291,10 +291,10 @@ class replace(install, uninstall):
     engine_kls = staticmethod(MergeEngine.replace)
     format_replace_op_name = "_repo_replace_op"
 
-    def __init__(self, domain, repo, oldpkg, newpkg, observer, triggers, offset):
+    def __init__(self, domain, repo, oldpkg, newpkg, observer, offset):
         self.old_pkg = oldpkg
         self.new_pkg = newpkg
-        base.__init__(self, domain, repo, observer, triggers, offset)
+        base.__init__(self, domain, repo, observer, offset)
 
     def create_op(self):
         self.format_op = getattr(

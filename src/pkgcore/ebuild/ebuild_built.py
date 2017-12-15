@@ -163,10 +163,10 @@ class package(ebuild_src.base):
     def _mtime_(self):
         raise AttributeError(self, "_mtime_")
 
+
 class fresh_built_package(package):
 
-    __slots__ = ()
-
+    __slots__ = ('_domain',)
     _is_from_source = True
 
 
@@ -242,6 +242,7 @@ class fake_package_factory(package_factory):
             # bypass setattr restrictions.
             object.__setattr__(obj, x, getattr(self.pkg, x))
         object.__setattr__(obj, "use", self.pkg.use)
+        object.__setattr__(obj, "_domain", self.pkg._domain)
         return obj
 
     def get_ebuild_src(self, pkg):

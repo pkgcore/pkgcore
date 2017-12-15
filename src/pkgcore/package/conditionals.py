@@ -53,7 +53,7 @@ def make_wrapper(wrapped_repo, configurable_attribute_name, attributes_to_wrap=(
 
         __slots__ = (
             "_unchangable", "_configurable", "_reuse_pt",
-            "_cached_wrapped", "_disabled", "repo",
+            "_cached_wrapped", "_disabled", "_domain", "repo",
         )
 
         _wrapped_attr = attributes_to_wrap
@@ -97,6 +97,7 @@ def make_wrapper(wrapped_repo, configurable_attribute_name, attributes_to_wrap=(
             sf(self, '_reuse_pt', 0)
             sf(self, 'repo', wrapped_repo)
             sf(self, '_cached_wrapped', {})
+            sf(self, '_domain', None)
             wrapper.__init__(self, pkg_instance)
 
         def __copy__(self):

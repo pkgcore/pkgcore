@@ -18,7 +18,7 @@ from snakeoil.bash import iter_read_bash
 from snakeoil.compatibility import raise_from
 from snakeoil.data_source import local_source
 from snakeoil.demandload import demandload
-from snakeoil.mappings import ProtectedDict
+from snakeoil.mappings import ProtectedDict, ImmutableDict
 from snakeoil.osutils import pjoin
 from snakeoil.sequences import (
     split_negations, stable_unique, unstable_unique, predicate_split)
@@ -531,6 +531,9 @@ class domain(config_domain):
 
     def get_package_domain(self, pkg):
         """Get domain object with altered settings from matching package.env entries."""
+        if getattr(pkg, '_domain', None) is not None:
+            return pkg._domain
+
         files = []
         for restrict, paths in self.pkg_env:
             if restrict.match(pkg):
@@ -541,7 +544,8 @@ class domain(config_domain):
                 load_make_conf(pkg_settings, path, allow_sourcing=True,
                                allow_recurse=False, incrementals=True)
             pkg_domain = copy.copy(self)
-            pkg_domain.settings = self._configure_settings(pkg_settings)
+            pkg_domain.settings = ImmutableDict(self._configure_settings(pkg_settings))
+            object.__setattr__(pkg, "_domain", pkg_domain)
             return pkg_domain
         return self
 

@@ -275,7 +275,7 @@ def config_main(options, out, err):
     attrs = {}
     for name in domain_attrs:
         # force JIT-ed attr refresh to use custom domain methods
-        setattr(domain, '_' + name, klass._singleton_kls)
+        setattr(domain, '_jit_' + name, klass._singleton_kls)
         # filter excluded, matching restricts from the data stream
         attrs[name] = iter_restrict(getattr(domain, name))
 

@@ -122,38 +122,41 @@ def generate_filter(masks, unmasks, *extra):
     return packages.AndRestriction(disable_inst_caching=True, finalize=True, *(r + extra))
 
 
-def load_property(filename, parsing_func=None, handler=iter_read_bash, fallback=()):
+def _read_config_file(path):
+    """Read all the data files under a given path."""
+    try:
+        for fs_obj in iter_scan(path, follow_symlinks=True):
+            if not fs_obj.is_reg or '/.' in fs_obj.location:
+                continue
+            for lineno, line, in iter_read_bash(
+                    fs_obj.location, allow_line_cont=True, enum_line=True):
+                yield line, lineno, fs_obj.location
+    except EnvironmentError as e:
+        if e.errno != errno.ENOENT:
+            raise_from(Failure("failed reading %r: %s" % (filename, e)))
+
+
+def load_property(filename, parsing_func=None, fallback=()):
     """Decorator simplifying parsing config files to generate a domain property.
 
     :param filename: The filename to parse within the config directory.
     :keyword parsing_func: An invokable used to parse the data.
-    :keyword handler: An invokable that is fed the content returned from read_func.
     :keyword fallback: What to return if the file does not exist -- must be immutable.
     :return: A :py:`klass.jit.attr_named` property instance.
     """
+    if parsing_func is None:
+        parsing_func = lambda *args: args
     def f(func):
         @wraps(func)
-        def _load_and_invoke(func, filename, handler, fallback, self):
-            def _yield_data():
-                try:
-                    for fs_obj in iter_scan(pjoin(self.config_dir, filename),
-                                            follow_symlinks=True):
-                        if not fs_obj.is_reg or '/.' in fs_obj.location:
-                            continue
-                        for lineno, line, in iter_read_bash(
-                                fs_obj.location, allow_line_cont=True, enum_line=True):
-                            if parsing_func is not None:
-                                yield parsing_func(line, lineno, path=fs_obj.location)
-                            else:
-                                yield line, lineno, fs_obj.location
-                except EnvironmentError as e:
-                    if e.errno == errno.ENOENT:
-                        yield fallback
-                    else:
-                        raise_from(Failure("failed reading %r: %s" % (filename, e)))
-            return func(self, ifilter(None, _yield_data()))
-        f2 = klass.jit_attr_named('_%s' % (func.__name__,))
-        return f2(partial(_load_and_invoke, func, filename, handler, fallback))
+        def _load_and_invoke(func, fallback, self):
+            data = _read_config_file(pjoin(self.config_dir, filename))
+            if data is None:
+                data = fallback
+            else:
+                data = (parsing_func(*x) for x in data)
+            return func(self, data)
+        f2 = klass.jit_attr_named('_jit_%s' % (func.__name__,))
+        return f2(partial(_load_and_invoke, func, fallback))
     return f
 
 

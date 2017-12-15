@@ -54,20 +54,25 @@ class domain(object):
         return tuple(l)
 
     def pkg_operations(self, pkg, observer=None):
-        return pkg.operations(self, observer=observer)
+        domain = self.get_package_domain(pkg)
+        return pkg.operations(domain, observer=observer)
 
     def build_pkg(self, pkg, observer, failed=False, clean=True, **format_options):
-        return self.pkg_operations(pkg, observer=observer).build(
+        domain = self.get_package_domain(pkg)
+        return domain.pkg_operations(pkg, observer=observer).build(
             observer=observer, failed=failed, clean=clean, **format_options)
 
     def install_pkg(self, newpkg, observer):
-        return domain_ops.install(self, self.all_installed_repos, newpkg,
-            observer, self.triggers, self.root)
+        domain = self.get_package_domain(newpkg)
+        return domain_ops.install(
+            domain, domain.all_installed_repos, newpkg, observer, domain.root)
 
     def uninstall_pkg(self, pkg, observer):
-        return domain_ops.uninstall(self, self.all_installed_repos, pkg, observer,
-            self.triggers, self.root)
+        domain = self.get_package_domain(pkg)
+        return domain_ops.uninstall(
+            domain, domain.all_installed_repos, pkg, observer, domain.root)
 
     def replace_pkg(self, oldpkg, newpkg, observer):
-        return domain_ops.replace(self, self.all_installed_repos, oldpkg, newpkg,
-            observer, self.triggers, self.root)
+        domain = self.get_package_domain(newpkg)
+        return domain_ops.replace(
+            domain, domain.all_installed_repos, oldpkg, newpkg, observer, domain.root)

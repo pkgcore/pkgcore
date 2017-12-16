@@ -16,6 +16,7 @@ def run(script_name):
             [script_name.replace('-', '_')])
         script = import_module(script_module)
     except ImportError as e:
+        # TODO: when py3 only, check __cause__/__context__ and raise if both are None
         sys.stderr.write('Failed importing: %s!\n' % str(e))
         sys.stderr.write(
             'Verify that pkgcore and its deps are properly installed '

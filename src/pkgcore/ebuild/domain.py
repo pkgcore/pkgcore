@@ -190,9 +190,6 @@ class domain(config_domain):
     def __init__(self, profile, repositories, vdb, name=None,
                  root='/', config_dir='/etc/portage', prefix='/',
                  triggers=(), **settings):
-        # voodoo, unfortunately (so it goes)
-        # break this up into chunks once it's stabilized (most of code
-        # here has already, but still more to add)
         self._triggers = triggers
         self.name = name
         self.root = settings["ROOT"] = root
@@ -200,40 +197,27 @@ class domain(config_domain):
         self.prefix = prefix
         self.ebuild_hook_dir = pjoin(self.config_dir, 'env')
         self.profile = profile
+        self.fetcher = settings.pop("fetcher")
 
         # prevent critical variables from being changed in make.conf
         for k in self.profile.profile_only_variables.intersection(settings.keys()):
             del settings[k]
 
-        self.fetcher = settings.pop("fetcher")
-        self.settings = self._configure_settings(ProtectedDict(settings))
+        # Protect original settings from being overridden so matching
+        # package.env settings can be overlaid properly.
+        self._settings = ProtectedDict(settings)
 
-        # stack use stuff first, then profile.
-        self.enabled_use = ChunkedDataDict()
-        self.enabled_use.add_bare_global(*split_negations(self.use))
-        self.enabled_use.merge(self.profile.pkg_use)
-        self.enabled_use.update_from_stream(chunked_data(k, *v) for k, v in self.pkg_use)
-
-        for attr in ('', 'stable_'):
-            c = ChunkedDataDict()
-            c.merge(getattr(self.profile, attr + 'forced_use'))
-            c.add_bare_global((), (self.arch,))
-            setattr(self, attr + 'forced_use', c)
-
-            c = ChunkedDataDict()
-            c.merge(getattr(self.profile, attr + 'masked_use'))
-            setattr(self, attr + 'disabled_use', c)
-
+        # initialize mutable repo groups
         self.source_repos_raw = RepositoryGroup(r.instantiate() for r in repositories)
         self.installed_repos_raw = RepositoryGroup(r.instantiate() for r in vdb)
+        if self.profile.provides_repo is not None:
+            self.installed_repos_raw += self.profile.provides_repo
+
         self.default_licenses_manager = OverlayedLicenses(*self.source_repos_raw)
 
         self.source_repos = RepositoryGroup()
         self.installed_repos = RepositoryGroup()
         self.unfiltered_repos = RepositoryGroup()
-
-        if self.profile.provides_repo is not None:
-            self.installed_repos_raw += self.profile.provides_repo
 
         for repo_group, repos, filtered in (
                 (self.source_repos, self.source_repos_raw, True),
@@ -241,11 +225,9 @@ class domain(config_domain):
             for repo in repos:
                 self.add_repo(repo, filtered=filtered, group=repo_group)
 
-        self.use_expand_re = re.compile(
-            "^(?:[+-])?(%s)_(.*)$" %
-            "|".join(x.lower() for x in sorted(self.profile.use_expand, reverse=True)))
-
-    def _configure_settings(self, settings):
+    @klass.jit_attr_named('_jit_reset_settings', uncached_val=None)
+    def settings(self):
+        settings = self._settings
         if 'CHOST' in settings and 'CBUILD' not in settings:
             settings['CBUILD'] = settings['CHOST']
 
@@ -281,12 +263,6 @@ class domain(config_domain):
                 'while expanding %s' % (incremental,))
             settings[incremental] = tuple(s)
 
-        # append expanded use, FEATURES, and environment defined USE flags
-        self.use = list(settings.get('USE', ())) + list(self.profile.expand_use(settings))
-        self._extend_use_for_features(settings.get("FEATURES", ()))
-        self.use = settings['USE'] = set(optimize_incrementals(
-            self.use + os.environ.get('USE', '').split()))
-
         if 'ACCEPT_KEYWORDS' not in settings:
             raise Failure("No ACCEPT_KEYWORDS setting detected from profile, "
                           "or user config")
@@ -298,36 +274,83 @@ class domain(config_domain):
         default_keywords.extend(s)
         settings['ACCEPT_KEYWORDS'] = set(default_keywords)
 
-        if "ARCH" not in settings:
-            raise Failure(
-                "No ARCH setting detected from profile, or user config")
+        return ImmutableDict(settings)
 
-        self.arch = self.stable_arch = settings["ARCH"]
-        self.unstable_arch = "~%s" % self.arch
-
+    @klass.jit_attr_named('_jit_reset_vfilters', uncached_val=None)
+    def vfilters(self):
         # ~amd64 -> [amd64, ~amd64]
-        for x in default_keywords[:]:
+        default_keywords = set([self.arch])
+        default_keywords.update(self.settings['ACCEPT_KEYWORDS'])
+        for x in self.settings['ACCEPT_KEYWORDS']:
             if x.startswith("~"):
-                default_keywords.append(x.lstrip("~"))
-        default_keywords = unstable_unique(default_keywords + [self.arch])
+                default_keywords.add(x.lstrip("~"))
 
-        accept_keywords = self.pkg_keywords + self.pkg_accept_keywords + self.profile.accept_keywords
-        self.vfilters = [self._make_keywords_filter(
+        # create keyword filters
+        accept_keywords = (
+            self.pkg_keywords + self.pkg_accept_keywords + self.profile.accept_keywords)
+        vfilters = [self._make_keywords_filter(
             self.arch, default_keywords, accept_keywords, self.profile.keywords,
             incremental="package.keywords" in const.incrementals)]
 
-        del default_keywords, accept_keywords
-
-        # we can finally close that fricking
-        # "DISALLOW NON FOSS LICENSES" bug via this >:)
+        # add license filters
         master_license = []
-        master_license.extend(settings.get('ACCEPT_LICENSE', ()))
+        master_license.extend(self.settings.get('ACCEPT_LICENSE', ()))
         if master_license or self.pkg_licenses:
-            self.vfilters.append(self._make_license_filter(master_license))
+            vfilters.append(self._make_license_filter(master_license))
 
-        del master_license
+        return vfilters
 
-        return settings
+    @property
+    def arch(self):
+        if "ARCH" not in self.settings:
+            raise Failure("No ARCH setting detected from profile, or user config")
+        return self.settings['ARCH']
+
+    @property
+    def stable_arch(self):
+        return self.arch
+
+    @property
+    def unstable_arch(self):
+        return "~%s" % self.arch
+
+    @klass.jit_attr_named('_jit_reset_use', uncached_val=None)
+    def use(self):
+        # append expanded use, FEATURES, and environment defined USE flags
+        use = list(self.settings.get('USE', ())) + list(self.profile.expand_use(self.settings))
+
+        # hackish implementation; if test is on, flip on the flag
+        features = self.settings.get("FEATURES", ())
+        if "test" in features:
+            use.append("test")
+        if "prefix" in features or "force-prefix" in features:
+            use.append("prefix")
+
+        use = set(optimize_incrementals(use + os.environ.get('USE', '').split()))
+        return use
+
+    @klass.jit_attr_named('_jit_reset_enabled_use', uncached_val=None)
+    def enabled_use(self):
+        use = ChunkedDataDict()
+        use.add_bare_global(*split_negations(self.use))
+        use.merge(self.profile.pkg_use)
+        use.update_from_stream(chunked_data(k, *v) for k, v in self.pkg_use)
+        use.freeze()
+        return use
+
+    @klass.jit_attr_none
+    def forced_use(self):
+        c = ChunkedDataDict()
+        c.merge(getattr(self.profile, 'forced_use'))
+        c.add_bare_global((), (self.arch,))
+        return c
+
+    @klass.jit_attr_none
+    def stable_forced_use(self):
+        c = ChunkedDataDict()
+        c.merge(getattr(self.profile, 'stable_forced_use'))
+        c.add_bare_global((), (self.arch,))
+        return c
 
     @load_property("package.mask", package_masks)
     def pkg_masks(self, data):
@@ -364,14 +387,6 @@ class domain(config_domain):
     def bashrcs(self):
         files = sorted_scan(pjoin(self.config_dir, 'bashrc'), follow_symlinks=True)
         return tuple(local_source(x) for x in files)
-
-    def _extend_use_for_features(self, features):
-        # hackish implementation; if test is on, flip on the flag
-        if "test" in features:
-            self.use.append("test")
-
-        if "prefix" in features or "force-prefix" in features:
-            self.use.append("prefix")
 
     def _make_license_filter(self, master_license):
         """Generates a restrict that matches iff the licenses are allowed."""
@@ -459,9 +474,14 @@ class domain(config_domain):
                     return True
         return any(True for x in pkg_keywords if x in allowed)
 
+    @property
+    def use_expand_re(self):
+        return re.compile(
+            "^(?:[+-])?(%s)_(.*)$" %
+            "|".join(x.lower() for x in sorted(self.profile.use_expand, reverse=True)))
+
     def _split_use_expand_flags(self, use_stream):
-        matcher = self.use_expand_re.match
-        stream = ((matcher(x), x) for x in use_stream)
+        stream = ((self.use_expand_re.match(x), x) for x in use_stream)
         flags, ue_flags = predicate_split(bool, stream, itemgetter(0))
         return map(itemgetter(1), flags), [(x[0].groups(), x[1]) for x in ue_flags]
 
@@ -493,7 +513,7 @@ class domain(config_domain):
 
         attr = 'stable_' if self.stable_arch in pkg.keywords \
             and self.unstable_arch not in self.settings['ACCEPT_KEYWORDS'] else ''
-        disabled = getattr(self, attr + 'disabled_use').pull_data(pkg)
+        disabled = getattr(self.profile, attr + 'masked_use').pull_data(pkg)
         immutable = getattr(self, attr + 'forced_use').pull_data(pkg)
 
         # lock the configurable use flags to only what's in IUSE, and what's forced
@@ -541,12 +561,16 @@ class domain(config_domain):
             if restrict.match(pkg):
                 files.extend(paths)
         if files:
-            pkg_settings = dict(self.settings.orig.iteritems())
+            pkg_settings = dict(self._settings.orig.iteritems())
             for path in files:
                 load_make_conf(pkg_settings, path, allow_sourcing=True,
                                allow_recurse=False, incrementals=True)
             pkg_domain = copy.copy(self)
-            pkg_domain.settings = ImmutableDict(self._configure_settings(pkg_settings))
+            pkg_domain._settings = ProtectedDict(pkg_settings)
+            # reset JIT-ed attrs that can pull updated settings
+            for attr in (x for x in dir(self) if x.startswith('_jit_reset_')):
+                setattr(pkg_domain, attr, None)
+            # store altered domain on the pkg obj to avoid recreating pkg domain
             object.__setattr__(pkg, "_domain", pkg_domain)
             return pkg_domain
         return self
@@ -631,7 +655,7 @@ class domain(config_domain):
         filtered_repo = filtered.tree(repo, filter, True)
         return filtered_repo
 
-    @klass.jit_attr
+    @klass.jit_attr_named('_jit_reset_tmpdir', uncached_val=None)
     def tmpdir(self):
         """Temporary directory for the system.
 
@@ -646,7 +670,7 @@ class domain(config_domain):
                 logger.warning('nonexistent PORTAGE_TMPDIR path, defaulting to %r', path)
         return os.path.normpath(path)
 
-    @klass.jit_attr
+    @property
     def pm_tmpdir(self):
         """Temporary directory for the package manager."""
         return pjoin(self.tmpdir, 'portage')

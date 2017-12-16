@@ -276,30 +276,6 @@ class domain(config_domain):
 
         return ImmutableDict(settings)
 
-    @klass.jit_attr_named('_jit_reset_vfilters', uncached_val=None)
-    def vfilters(self):
-        # ~amd64 -> [amd64, ~amd64]
-        default_keywords = set([self.arch])
-        default_keywords.update(self.settings['ACCEPT_KEYWORDS'])
-        for x in self.settings['ACCEPT_KEYWORDS']:
-            if x.startswith("~"):
-                default_keywords.add(x.lstrip("~"))
-
-        # create keyword filters
-        accept_keywords = (
-            self.pkg_keywords + self.pkg_accept_keywords + self.profile.accept_keywords)
-        vfilters = [self._make_keywords_filter(
-            self.arch, default_keywords, accept_keywords, self.profile.keywords,
-            incremental="package.keywords" in const.incrementals)]
-
-        # add license filters
-        master_license = []
-        master_license.extend(self.settings.get('ACCEPT_LICENSE', ()))
-        if master_license or self.pkg_licenses:
-            vfilters.append(self._make_license_filter(master_license))
-
-        return vfilters
-
     @property
     def arch(self):
         if "ARCH" not in self.settings:
@@ -388,9 +364,31 @@ class domain(config_domain):
         files = sorted_scan(pjoin(self.config_dir, 'bashrc'), follow_symlinks=True)
         return tuple(local_source(x) for x in files)
 
-    def _make_license_filter(self, master_license):
-        """Generates a restrict that matches iff the licenses are allowed."""
-        return delegate(partial(self._apply_license_filter, master_license))
+    @klass.jit_attr_named('_jit_reset_vfilters', uncached_val=None)
+    def _vfilters(self):
+        # ~amd64 -> [amd64, ~amd64]
+        default_keywords = set([self.arch])
+        default_keywords.update(self.settings['ACCEPT_KEYWORDS'])
+        for x in self.settings['ACCEPT_KEYWORDS']:
+            if x.startswith("~"):
+                default_keywords.add(x.lstrip("~"))
+
+        # create keyword filters
+        accept_keywords = (
+            self.pkg_keywords + self.pkg_accept_keywords + self.profile.accept_keywords)
+        vfilters = [self._make_keywords_filter(
+            default_keywords, accept_keywords,
+            incremental="package.keywords" in const.incrementals)]
+
+        # add license filters
+        master_license = []
+        master_license.extend(self.settings.get('ACCEPT_LICENSE', ()))
+        if master_license or self.pkg_licenses:
+            # restrict that matches iff the licenses are allowed
+            restrict = delegate(partial(self._apply_license_filter, master_license))
+            vfilters.append(restrict)
+
+        return tuple(vfilters)
 
     def _apply_license_filter(self, master_licenses, pkg, mode):
         """Determine if a package's license is allowed."""
@@ -408,26 +406,23 @@ class domain(config_domain):
 
         for and_pair in pkg.license.dnf_solutions():
             accepted = incremental_expansion_license(
-                and_pair, license_manager.groups,
-                raw_accepted_licenses,
+                and_pair, license_manager.groups, raw_accepted_licenses,
                 msg_prefix="while checking ACCEPT_LICENSE for %s" % (pkg,))
             if accepted.issuperset(and_pair):
                 return True
         return False
 
-    def _make_keywords_filter(self, arch, default_keys, accept_keywords,
-                             profile_keywords, incremental=False):
+    def _make_keywords_filter(self, default_keys, accept_keywords, incremental=False):
         """Generates a restrict that matches iff the keywords are allowed."""
-        if not accept_keywords and not profile_keywords:
+        if not accept_keywords and not self.profile.keywords:
             return packages.PackageRestriction(
                 "keywords", values.ContainmentMatch(*default_keys))
 
-        if "~" + arch.lstrip("~") not in default_keys:
+        if self.unstable_arch not in default_keys:
             # stable; thus empty entries == ~arch
-            unstable = "~" + arch
             def f(r, v):
                 if not v:
-                    return r, unstable
+                    return r, self.unstable_arch
                 return r, v
             data = collapsed_restrict_to_data(
                 ((packages.AlwaysTrue, default_keys),),
@@ -444,7 +439,7 @@ class domain(config_domain):
             #f = self._incremental_apply_keywords_filter
         else:
             f = self._apply_keywords_filter
-        return delegate(partial(f, data, profile_keywords))
+        return delegate(partial(f, data))
 
     @staticmethod
     def _incremental_apply_keywords_filter(data, pkg, mode):
@@ -453,12 +448,11 @@ class domain(config_domain):
         allowed = data.pull_data(pkg)
         return any(True for x in pkg.keywords if x in allowed)
 
-    @staticmethod
-    def _apply_keywords_filter(data, profile_keywords, pkg, mode):
+    def _apply_keywords_filter(self, data, pkg, mode):
         # note we ignore mode; keywords aren't influenced by conditionals.
         # note also, we're not using a restriction here.  this is faster.
         pkg_keywords = pkg.keywords
-        for atom, keywords in profile_keywords:
+        for atom, keywords in self.profile.keywords:
             if atom.match(pkg):
                 pkg_keywords += keywords
         allowed = data.pull_data(pkg)
@@ -651,7 +645,7 @@ class domain(config_domain):
             unmasks.difference_update(neg)
             unmasks.update(pos)
         unmasks.update(self.pkg_unmasks)
-        filter = generate_filter(masks, unmasks, *self.vfilters)
+        filter = generate_filter(masks, unmasks, *self._vfilters)
         filtered_repo = filtered.tree(repo, filter, True)
         return filtered_repo
 

@@ -75,7 +75,7 @@ class wrapper(base):
         return not self == other
 
     __getattr__ = klass.GetAttrProxy("_raw_pkg")
-    __dir__ = klass.GetDirProxy("_raw_pkg")
+    __dir__ = klass.DirProxy("_raw_pkg")
 
     built = klass.alias_attr("_raw_pkg.built")
     versioned_atom = klass.alias_attr("_raw_pkg.versioned_atom")

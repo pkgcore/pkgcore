@@ -10,7 +10,7 @@ __all__ = ("tree",)
 from itertools import ifilterfalse as filterfalse, ifilter
 
 from snakeoil import compatibility
-from snakeoil.klass import GetAttrProxy
+from snakeoil.klass import GetAttrProxy, GetDirProxy
 
 from pkgcore.operations.repo import operations_proxy
 from pkgcore.repository import prototype, errors
@@ -61,6 +61,7 @@ class tree(prototype.tree):
         return count
 
     __getattr__ = GetAttrProxy("raw_repo")
+    __dir__ = GetDirProxy("raw_repo")
 
     def __getitem__(self, key):
         v = self.raw_repo[key]

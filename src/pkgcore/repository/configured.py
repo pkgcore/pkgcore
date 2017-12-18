@@ -9,7 +9,7 @@ __all__ = ("tree",)
 
 from functools import partial
 
-from snakeoil.klass import GetAttrProxy
+from snakeoil.klass import GetAttrProxy, GetDirProxy
 
 from pkgcore.operations.repo import operations_proxy
 from pkgcore.package.conditionals import make_wrapper
@@ -50,6 +50,7 @@ class tree(prototype.tree):
         return self._klass(pkg, **self._get_pkg_kwds(pkg))
 
     __getattr__ = GetAttrProxy("raw_repo")
+    __dir__ = GetDirProxy("raw_repo")
 
     def itermatch(self, restrict, **kwds):
         kwds.setdefault("force", True)

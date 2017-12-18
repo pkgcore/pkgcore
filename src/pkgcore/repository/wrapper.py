@@ -12,7 +12,7 @@ __all__ = ("tree",)
 
 from itertools import imap
 
-from snakeoil.klass import GetAttrProxy
+from snakeoil.klass import GetAttrProxy, GetDirProxy
 
 from pkgcore.operations import repo
 from pkgcore.repository import prototype, errors
@@ -41,6 +41,7 @@ class tree(prototype.tree):
         return imap(self.package_class, pkgs)
 
     __getattr__ = GetAttrProxy("raw_repo")
+    __dir__ = GetDirProxy("raw_repo")
 
     def __len__(self):
         return len(self.raw_repo)

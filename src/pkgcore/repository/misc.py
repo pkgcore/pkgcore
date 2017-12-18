@@ -4,7 +4,7 @@
 __all__ = ("nodeps_repo", "caching_repo")
 
 from snakeoil.iterables import caching_iter, iter_sort
-from snakeoil.klass import GetAttrProxy
+from snakeoil.klass import GetAttrProxy, GetDirProxy
 
 from pkgcore.ebuild.conditionals import DepSet
 from pkgcore.operations.repo import operations_proxy
@@ -39,6 +39,7 @@ class nodeps_repo(object):
         return list(self.itermatch(*a, **kwds))
 
     __getattr__ = GetAttrProxy("raw_repo")
+    __dir__ = GetDirProxy("raw_repo")
 
     def __iter__(self):
         return self.itermatch(packages.AlwaysTrue)
@@ -90,6 +91,7 @@ class caching_repo(object):
         return iter(self.match(restrict))
 
     __getattr__ = GetAttrProxy("__db__")
+    __dir__ = GetDirProxy("__db__")
 
     def clear(self):
         self.__cache__.clear()

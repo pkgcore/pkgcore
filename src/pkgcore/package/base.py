@@ -89,6 +89,8 @@ class wrapper(base):
 def dynamic_getattr_dict(self, attr):
     functor = self._get_attr.get(attr)
     if functor is None:
+        if attr == '__dict__':
+            return self._get_attr
         raise AttributeError(self, attr)
     try:
         val = functor(self)

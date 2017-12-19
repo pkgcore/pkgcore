@@ -51,7 +51,7 @@ class base(object):
 
 class wrapper(base):
 
-    __slots__ = ("_raw_pkg",)
+    __slots__ = ("_raw_pkg", "_domain")
 
     klass.inject_richcmp_methods_from_cmp(locals())
 

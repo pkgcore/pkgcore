@@ -22,7 +22,7 @@ def DeriveMetadataKls(original_kls):
     class package(original_kls):
         _derived_metadata_kls = True
         built = False
-        __slots__ = ("_parent", "data")
+        __slots__ = ("_parent", "data", "_domain")
         try:
             __doc__ = "package class with metadata bound to it for attribute " \
                 "generation\n\n" + \

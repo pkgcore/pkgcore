@@ -501,7 +501,7 @@ def _convert_config_mods(iterable):
 
 def store_config(namespace, attr, global_config=()):
     configs = map(
-        _convert_config_mods, [namespace.pop('new_config'), namespace.pop('add_config')])
+        _convert_config_mods, [namespace.pop('new_config', None), namespace.pop('add_config', None)])
     # add necessary inherits for add_config
     for key, vals in configs[1].iteritems():
         vals.setdefault('inherit', key)
@@ -511,10 +511,10 @@ def store_config(namespace, attr, global_config=()):
                for d in configs if d]
 
     config = load_config(
-        skip_config_files=namespace.pop('empty_config'),
+        skip_config_files=namespace.pop('empty_config', False),
         prepend_sources=tuple(global_config),
         append_sources=tuple(configs),
-        location=namespace.pop('override_config'),
+        location=namespace.pop('override_config', None),
         **vars(namespace))
     setattr(namespace, attr, config)
 

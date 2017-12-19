@@ -181,7 +181,7 @@ repo_cleaning_opts.add_argument(
 
 @argparser.bind_parse_priority(30)
 def _setup_restrictions(namespace):
-    repo = namespace.domain.all_source_repos
+    repo = namespace.domain.all_source_repos_raw
     target_restrictions = []
 
     # If no targets are passed, create a restriction from the current working

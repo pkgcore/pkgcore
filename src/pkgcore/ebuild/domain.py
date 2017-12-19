@@ -211,23 +211,14 @@ class domain(config_domain):
         # package.env settings can be overlaid properly.
         self._settings = ProtectedDict(settings)
 
-        # initialize mutable repo groups
+        # initialize base repo groups
         self.source_repos_raw = RepositoryGroup(r.instantiate() for r in repositories)
         self.installed_repos_raw = RepositoryGroup(r.instantiate() for r in vdb)
+        self.unfiltered_repos = RepositoryGroup()
         if self.profile.provides_repo is not None:
             self.installed_repos_raw += self.profile.provides_repo
 
         self.default_licenses_manager = OverlayedLicenses(*self.source_repos_raw)
-
-        self.source_repos = RepositoryGroup()
-        self.installed_repos = RepositoryGroup()
-        self.unfiltered_repos = RepositoryGroup()
-
-        for repo_group, repos, filtered in (
-                (self.source_repos, self.source_repos_raw, True),
-                (self.installed_repos, self.installed_repos_raw, False)):
-            for repo in repos:
-                self.add_repo(repo, filtered=filtered, group=repo_group)
 
     @klass.jit_attr_named('_jit_reset_settings', uncached_val=None)
     def settings(self):
@@ -698,6 +689,22 @@ class domain(config_domain):
     def repo_configs(self):
         """All defined repo configs."""
         return tuple(r.config for r in self.repos if hasattr(r, 'config'))
+
+    @klass.jit_attr_none
+    def source_repos(self):
+        """Group of configured, filtered package repos."""
+        repos = RepositoryGroup()
+        for repo in self.source_repos_raw:
+            self.add_repo(repo, filtered=True, group=repos)
+        return repos
+
+    @klass.jit_attr_none
+    def installed_repos(self):
+        """Group of configured, installed package repos."""
+        repos = RepositoryGroup()
+        for repo in self.installed_repos_raw:
+            self.add_repo(repo, filtered=False, group=repos)
+        return repos
 
     @klass.jit_attr_none
     def repos(self):

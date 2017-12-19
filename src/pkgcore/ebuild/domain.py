@@ -56,37 +56,40 @@ demandload(
 )
 
 
-def package_masks(line, lineno, path):
-    try:
-        return parse_match(line), line, lineno, path
-    except ParseError as e:
-        logger.warning('%r, line %s: parsing error: %s' % (path, lineno, e))
+def package_masks(iterable):
+    for line, lineno, path in iterable:
+        try:
+            yield parse_match(line), line, lineno, path
+        except ParseError as e:
+            logger.warning('%r, line %s: parsing error: %s' % (path, lineno, e))
 
 
-def package_keywords_splitter(line, lineno, path):
-    v = line.split()
-    try:
-        return parse_match(v[0]), tuple(stable_unique(v[1:])), line, lineno, path
-    except ParseError as e:
-        logger.warning('%r, line %s: parsing error: %s' % (path, lineno, e))
+def package_keywords_splitter(iterable):
+    for line, lineno, path in iterable:
+        v = line.split()
+        try:
+            yield parse_match(v[0]), tuple(stable_unique(v[1:])), line, lineno, path
+        except ParseError as e:
+            logger.warning('%r, line %s: parsing error: %s' % (path, lineno, e))
 
 
-def package_env_splitter(basedir, line, lineno, path):
-    val = line.split()
-    if len(val) == 1:
-        logger.warning("%r, line %s: missing file reference: %r" % (path, lineno, line))
-        return
-    paths = []
-    for env_file in val[1:]:
-        fp = pjoin(basedir, env_file)
-        if os.path.exists(fp):
-            paths.append(fp)
-        else:
-            logger.warning("%r, line %s: nonexistent file: %r" % (path, lineno, fp))
-    try:
-        return parse_match(val[0]), tuple(paths), line, lineno, path
-    except ParseError as e:
-        logger.warning('%r, line %s: parsing error: %s' % (path, lineno, e))
+def package_env_splitter(basedir, iterable):
+    for line, lineno, path in iterable:
+        val = line.split()
+        if len(val) == 1:
+            logger.warning("%r, line %s: missing file reference: %r" % (path, lineno, line))
+            continue
+        paths = []
+        for env_file in val[1:]:
+            fp = pjoin(basedir, env_file)
+            if os.path.exists(fp):
+                paths.append(fp)
+            else:
+                logger.warning("%r, line %s: nonexistent file: %r" % (path, lineno, fp))
+        try:
+            yield parse_match(val[0]), tuple(paths), line, lineno, path
+        except ParseError as e:
+            logger.warning('%r, line %s: parsing error: %s' % (path, lineno, e))
 
 
 def apply_mask_filter(globs, atoms, pkg, mode):
@@ -131,7 +134,7 @@ def load_property(filename, parsing_func=None, fallback=()):
     :return: A :py:`klass.jit.attr_named` property instance.
     """
     if parsing_func is None:
-        parsing_func = lambda *args: args
+        parsing_func = lambda x: x
     def f(func):
         @wraps(func)
         def _load_and_invoke(func, fallback, self):
@@ -139,7 +142,7 @@ def load_property(filename, parsing_func=None, fallback=()):
             if data is None:
                 data = fallback
             else:
-                data = (parsing_func(*x) for x in data)
+                data = parsing_func(data)
             return func(self, data)
         f2 = klass.jit_attr_named('_jit_%s' % (func.__name__,))
         return f2(partial(_load_and_invoke, func, fallback))
@@ -377,7 +380,7 @@ class domain(config_domain):
     @load_property("package.env", fallback=None)
     def pkg_env(self, data):
         func = partial(package_env_splitter, self.ebuild_hook_dir)
-        data = ifilter(None, (func(*x) for x in data))
+        data = ifilter(None, func(data))
         if self._debug:
             return tuple(data)
         else:

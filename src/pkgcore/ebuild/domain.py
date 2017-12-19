@@ -136,11 +136,11 @@ def load_property(filename, parsing_func=lambda x: x, fallback=()):
     def f(func):
         @wraps(func)
         def _load_and_invoke(func, fallback, self):
-            data = _read_config_file(pjoin(self.config_dir, filename))
-            if data is None:
-                data = fallback
+            path = pjoin(self.config_dir, filename)
+            if os.path.exists(path):
+                data = parsing_func(_read_config_file(path))
             else:
-                data = parsing_func(data)
+                data = fallback
             return func(self, data)
         f2 = klass.jit_attr_named('_jit_%s' % (func.__name__,))
         return f2(partial(_load_and_invoke, func, fallback))
@@ -375,10 +375,10 @@ class domain(config_domain):
         else:
             return tuple((x[0], split_negations(x[1])) for x in data)
 
-    @load_property("package.env", fallback=None)
+    @load_property("package.env")
     def pkg_env(self, data):
         func = partial(package_env_splitter, self.ebuild_hook_dir)
-        data = ifilter(None, func(data))
+        data = func(data)
         if self._debug:
             return tuple(data)
         else:

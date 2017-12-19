@@ -122,20 +122,6 @@ def generate_filter(masks, unmasks, *extra):
     return packages.AndRestriction(disable_inst_caching=True, finalize=True, *(r + extra))
 
 
-def _read_config_file(path):
-    """Read all the data files under a given path."""
-    try:
-        for fs_obj in iter_scan(path, follow_symlinks=True):
-            if not fs_obj.is_reg or '/.' in fs_obj.location:
-                continue
-            for lineno, line, in iter_read_bash(
-                    fs_obj.location, allow_line_cont=True, enum_line=True):
-                yield line, lineno, fs_obj.location
-    except EnvironmentError as e:
-        if e.errno != errno.ENOENT:
-            raise_from(Failure("failed reading %r: %s" % (filename, e)))
-
-
 def load_property(filename, parsing_func=None, fallback=()):
     """Decorator simplifying parsing config files to generate a domain property.
 
@@ -160,6 +146,20 @@ def load_property(filename, parsing_func=None, fallback=()):
     return f
 
 
+def _read_config_file(path):
+    """Read all the data files under a given path."""
+    try:
+        for fs_obj in iter_scan(path, follow_symlinks=True):
+            if not fs_obj.is_reg or '/.' in fs_obj.location:
+                continue
+            for lineno, line, in iter_read_bash(
+                    fs_obj.location, allow_line_cont=True, enum_line=True):
+                yield line, lineno, fs_obj.location
+    except EnvironmentError as e:
+        if e.errno != errno.ENOENT:
+            raise_from(Failure("failed reading %r: %s" % (filename, e)))
+
+
 # ow ow ow ow ow ow....
 # this manages a *lot* of crap.  so... this is fun.
 #
@@ -178,6 +178,9 @@ class domain(config_domain):
     for _thing in ('root', 'config_dir', 'CHOST', 'CBUILD', 'CTARGET', 'CFLAGS', 'PATH',
                    'PORTAGE_TMPDIR', 'DISTCC_PATH', 'DISTCC_DIR', 'CCACHE_DIR'):
         _types[_thing] = 'str'
+
+    # control adding debug info (line/lineno/path) to config file parsed output
+    _debug = False
 
     # TODO this is missing defaults
     pkgcore_config_type = ConfigHint(
@@ -330,34 +333,55 @@ class domain(config_domain):
 
     @load_property("package.mask", package_masks)
     def pkg_masks(self, data):
-        return tuple(x[0] for x in data)
+        if self._debug:
+            return tuple(data)
+        else:
+            return tuple(x[0] for x in data)
 
     @load_property("package.unmask", package_masks)
     def pkg_unmasks(self, data):
-        return tuple(x[0] for x in data)
+        if self._debug:
+            return tuple(data)
+        else:
+            return tuple(x[0] for x in data)
 
     # TODO: deprecated, remove in 0.11
     @load_property("package.keywords", package_keywords_splitter)
     def pkg_keywords(self, data):
-        return tuple((x[0], x[1]) for x in data)
+        if self._debug:
+            return tuple(data)
+        else:
+            return tuple((x[0], x[1]) for x in data)
 
     @load_property("package.accept_keywords", package_keywords_splitter)
     def pkg_accept_keywords(self, data):
-        return tuple((x[0], x[1]) for x in data)
+        if self._debug:
+            return tuple(data)
+        else:
+            return tuple((x[0], x[1]) for x in data)
 
     @load_property("package.license", package_keywords_splitter)
     def pkg_licenses(self, data):
-        return tuple((x[0], x[1]) for x in data)
+        if self._debug:
+            return tuple(data)
+        else:
+            return tuple((x[0], x[1]) for x in data)
 
     @load_property("package.use", package_keywords_splitter)
     def pkg_use(self, data):
-        return tuple((x[0], split_negations(x[1])) for x in data)
+        if self._debug:
+            return tuple(data)
+        else:
+            return tuple((x[0], split_negations(x[1])) for x in data)
 
     @load_property("package.env", fallback=None)
     def pkg_env(self, data):
         func = partial(package_env_splitter, self.ebuild_hook_dir)
         data = ifilter(None, (func(*x) for x in data))
-        return tuple((x[0], x[1]) for x in data)
+        if self._debug:
+            return tuple(data)
+        else:
+            return tuple((x[0], x[1]) for x in data)
 
     @klass.jit_attr
     def bashrcs(self):

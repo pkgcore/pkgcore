@@ -28,7 +28,6 @@ demandload(
     'snakeoil.osutils:listdir_dirs,listdir_files,pjoin',
     'snakeoil.sequences:iflatten_instance,split_negations',
     'pkgcore:fetch',
-    'pkgcore.ebuild:atom,domain@domain_mod',
     'pkgcore.package:errors',
     'pkgcore.repository.util:SimpleTree',
     'pkgcore.util:parserestrict',
@@ -211,44 +210,6 @@ def _setup_restrictions(namespace):
         namespace.restrict = boolean.AndRestriction(*namespace.restrict)
 
 
-class config_domain(object):
-
-    def __init__(self, domain):
-        self._domain = domain
-
-    @domain_mod.load_property("package.mask", domain_mod.package_masks)
-    def pkg_masks(self, data):
-        return tuple(data)
-
-    @domain_mod.load_property("package.unmask", domain_mod.package_masks)
-    def pkg_unmasks(self, data):
-        return tuple(data)
-
-    @domain_mod.load_property("package.keywords", domain_mod.package_keywords_splitter)
-    def pkg_keywords(self, data):
-        return tuple(data)
-
-    @domain_mod.load_property("package.accept_keywords", domain_mod.package_keywords_splitter)
-    def pkg_accept_keywords(self, data):
-        return tuple(data)
-
-    @domain_mod.load_property("package.license", domain_mod.package_keywords_splitter)
-    def pkg_licenses(self, data):
-        return tuple(data)
-
-    @domain_mod.load_property("package.use", domain_mod.package_keywords_splitter)
-    def pkg_use(self, data):
-        return tuple(data)
-
-    @domain_mod.load_property("package.env", fallback=None)
-    def pkg_env(self, data):
-        func = partial(domain_mod.package_env_splitter, self.ebuild_hook_dir)
-        data = ifilter(None, (func(*x) for x in data))
-        return tuple(data)
-
-    __getattr__ = klass.GetAttrProxy("_domain")
-
-
 config = subparsers.add_parser(
    'config', parents=(shared_opts,),
    description='remove config file settings')
@@ -256,9 +217,7 @@ config = subparsers.add_parser(
 def config_main(options, out, err):
     installed_repos = options.domain.all_installed_repos
     all_repos_raw = options.domain.all_repos_raw
-
-    # wrap actual domain in our verbose domain
-    domain = config_domain(options.domain)
+    domain = options.domain
 
     def iter_restrict(iterable):
         for x in iterable:
@@ -274,7 +233,9 @@ def config_main(options, out, err):
 
     attrs = {}
     for name in domain_attrs:
-        # force JIT-ed attr refresh to use custom domain methods
+        # enable debug output (line/lineno/path data) for config data
+        domain._debug = True
+        # force JIT-ed attr refresh to provide debug data
         setattr(domain, '_jit_' + name, klass._singleton_kls)
         # filter excluded, matching restricts from the data stream
         attrs[name] = iter_restrict(getattr(domain, name))

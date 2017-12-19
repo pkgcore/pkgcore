@@ -10,8 +10,8 @@ __all__ = ("domain",)
 # XXX doc this up better...
 
 from functools import partial, wraps
-from itertools import chain, izip, ifilter, imap
-import os.path
+from itertools import chain
+import os
 
 from snakeoil import klass
 from snakeoil.bash import iter_read_bash

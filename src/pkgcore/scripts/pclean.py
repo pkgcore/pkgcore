@@ -213,6 +213,12 @@ def _setup_restrictions(namespace):
 config = subparsers.add_parser(
    'config', parents=(shared_opts,),
    description='remove config file settings')
+@config.bind_final_check
+def _config_finalize_args(parser, namespace):
+    # enable debug output (line/lineno/path data) for config data
+    namespace.domain._debug = True
+
+
 @config.bind_main_func
 def config_main(options, out, err):
     installed_repos = options.domain.all_installed_repos
@@ -233,8 +239,6 @@ def config_main(options, out, err):
 
     attrs = {}
     for name in domain_attrs:
-        # enable debug output (line/lineno/path data) for config data
-        domain._debug = True
         # force JIT-ed attr refresh to provide debug data
         setattr(domain, '_jit_' + name, klass._singleton_kls)
         # filter excluded, matching restricts from the data stream

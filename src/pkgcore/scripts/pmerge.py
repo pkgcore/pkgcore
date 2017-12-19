@@ -841,7 +841,7 @@ def main(options, out, err):
         if virtual_pkgs:
             out.write(
                 "Skipping virtual pkgs:\n%s\n" % '\n'.join(
-                    str(x.versioned_repo_atom) for x in virtual_pkgs))
+                    str(x.versioned_atom) for x in virtual_pkgs))
 
         out.write("Nothing to merge.")
         return

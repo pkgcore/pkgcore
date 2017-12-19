@@ -528,9 +528,12 @@ def _mk_domain(parser):
 
 class _SubParser(arghparse._SubParser):
 
-    def add_parser(self, name, domain=False, **kwds):
-        """Suppress domain option in subparsers by default."""
-        return super(_SubParser, self).add_parser(name, domain=domain, **kwds)
+    def add_parser(self, name, config=False, domain=False, **kwds):
+        """Suppress config and domain options in subparsers by default.
+
+        They are rarely used so only allow them as options to the base command.
+        """
+        return super(_SubParser, self).add_parser(name, config=config, domain=domain, **kwds)
 
 
 class ArgumentParser(arghparse.ArgumentParser):

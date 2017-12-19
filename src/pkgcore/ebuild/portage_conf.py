@@ -354,21 +354,19 @@ def load_repos_conf(path):
             # register repo
             repos[name] = repo_data
 
-    if not repos:
-        raise errors.ConfigurationError("empty repos.conf, no repos defined")
+    if repos:
+        # the default repo is gentoo if unset and gentoo exists
+        default_repo = defaults.get('main-repo', 'gentoo')
+        if default_repo not in repos:
+            raise errors.ConfigurationError(
+                "default repo '%s' is undefined or invalid" % (default_repo,))
 
-    # the default repo is gentoo if unset and gentoo exists
-    default_repo = defaults.get('main-repo', 'gentoo')
-    if default_repo not in repos:
-        raise errors.ConfigurationError(
-            "default repo '%s' is undefined or invalid" % (default_repo,))
+        if 'main-repo' not in defaults:
+            defaults['main-repo'] = default_repo
 
-    if 'main-repo' not in defaults:
-        defaults['main-repo'] = default_repo
-
-    # the default repo has a low priority if unset or zero
-    if repos[default_repo]['priority'] == 0:
-        repos[default_repo]['priority'] = -1000
+        # the default repo has a low priority if unset or zero
+        if repos[default_repo]['priority'] == 0:
+            repos[default_repo]['priority'] = -1000
 
     # sort repos via priority, in this case high values map to high priorities
     repos = OrderedDict(
@@ -506,22 +504,23 @@ def config_from_make_conf(location=None, profile_override=None, **kwargs):
     profiles.ProfileNode._repo_map = ImmutableDict(repo_map)
 
     repos = [name for name in repos_conf.iterkeys()]
-    if len(repos) > 1:
-        config['repo-stack'] = basics.FakeIncrementalDictConfigSection(
-            my_convert_hybrid, {
-                'class': 'pkgcore.repository.multiplex.config_tree',
-                'repositories': tuple(repos)})
-    else:
-        config['repo-stack'] = basics.section_alias(repos[0], 'repo')
+    if repos:
+        if len(repos) > 1:
+            config['repo-stack'] = basics.FakeIncrementalDictConfigSection(
+                my_convert_hybrid, {
+                    'class': 'pkgcore.repository.multiplex.config_tree',
+                    'repositories': tuple(repos)})
+        else:
+            config['repo-stack'] = basics.section_alias(repos[0], 'repo')
 
-    config['vuln'] = basics.AutoConfigSection({
-        'class': SecurityUpgradesViaProfile,
-        'ebuild_repo': 'repo-stack',
-        'vdb': 'vdb',
-        'profile': 'profile',
-    })
-    config['glsa'] = basics.section_alias(
-        'vuln', SecurityUpgradesViaProfile.pkgcore_config_type.typename)
+        config['vuln'] = basics.AutoConfigSection({
+            'class': SecurityUpgradesViaProfile,
+            'ebuild_repo': 'repo-stack',
+            'vdb': 'vdb',
+            'profile': 'profile',
+        })
+        config['glsa'] = basics.section_alias(
+            'vuln', SecurityUpgradesViaProfile.pkgcore_config_type.typename)
 
     # binpkg.
     forced_buildpkg = kwargs.pop('buildpkg', False)

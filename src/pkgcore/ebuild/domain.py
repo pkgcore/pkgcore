@@ -125,7 +125,7 @@ def generate_filter(masks, unmasks, *extra):
     return packages.AndRestriction(disable_inst_caching=True, finalize=True, *(r + extra))
 
 
-def load_property(filename, parsing_func=None, fallback=()):
+def load_property(filename, parsing_func=lambda x: x, fallback=()):
     """Decorator simplifying parsing config files to generate a domain property.
 
     :param filename: The filename to parse within the config directory.
@@ -133,8 +133,6 @@ def load_property(filename, parsing_func=None, fallback=()):
     :keyword fallback: What to return if the file does not exist -- must be immutable.
     :return: A :py:`klass.jit.attr_named` property instance.
     """
-    if parsing_func is None:
-        parsing_func = lambda x: x
     def f(func):
         @wraps(func)
         def _load_and_invoke(func, fallback, self):

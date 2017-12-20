@@ -706,7 +706,7 @@ class domain(config_domain):
 
     @klass.jit_attr_none
     def unfiltered_repos(self):
-        """Group of unfiltered package repos."""
+        """Group of all configured repos without filtering."""
         repos = chain(self.source_repos, self.installed_repos)
         return RepositoryGroup(
             (r.raw_repo if r.raw_repo is not None else r) for r in repos)

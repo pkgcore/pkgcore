@@ -28,6 +28,7 @@ demandload(
     'snakeoil.osutils:listdir_dirs,listdir_files,pjoin',
     'snakeoil.sequences:iflatten_instance,split_negations',
     'pkgcore:fetch',
+    'pkgcore.ebuild:atom@atom_mod',
     'pkgcore.package:errors',
     'pkgcore.repository.util:SimpleTree',
     'pkgcore.util:parserestrict',
@@ -433,8 +434,8 @@ def _tmp_validate_args(parser, namespace):
         pkg_map = {}
         for pkg_build_dir in glob.glob(pjoin(tmpdir, '*', '*')):
             try:
-                pkg = atom.atom('=' + pkg_build_dir[len(tmpdir):].lstrip(os.path.sep))
-            except atom.MalformedAtom:
+                pkg = atom_mod.atom('=' + pkg_build_dir[len(tmpdir):].lstrip(os.path.sep))
+            except atom_mod.MalformedAtom:
                 continue
             pkg_map.setdefault(pkg.category, {}).setdefault(pkg.package, []).append(pkg.fullver)
         repo = SimpleTree(pkg_map)

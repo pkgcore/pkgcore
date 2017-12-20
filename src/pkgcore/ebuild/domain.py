@@ -214,7 +214,6 @@ class domain(config_domain):
         # initialize base repo groups
         self.source_repos_raw = RepositoryGroup(r.instantiate() for r in repositories)
         self.installed_repos_raw = RepositoryGroup(r.instantiate() for r in vdb)
-        self.unfiltered_repos = RepositoryGroup()
         if self.profile.provides_repo is not None:
             self.installed_repos_raw += self.profile.provides_repo
 
@@ -645,7 +644,6 @@ class domain(config_domain):
                 raise_from(Failure("failed configuring repo '%s': "
                                    "configurable missing: %s" % (repo, e)))
             configured_repo = repo.configure(*pargs)
-        self.unfiltered_repos += configured_repo
         return configured_repo
 
     def _filter_repo(self, repo):
@@ -705,6 +703,13 @@ class domain(config_domain):
         for repo in self.installed_repos_raw:
             self.add_repo(repo, filtered=False, group=repos)
         return repos
+
+    @klass.jit_attr_none
+    def unfiltered_repos(self):
+        """Group of unfiltered package repos."""
+        repos = chain(self.source_repos, self.installed_repos)
+        return RepositoryGroup(
+            (r.raw_repo if r.raw_repo is not None else r) for r in repos)
 
     @klass.jit_attr_none
     def repos(self):

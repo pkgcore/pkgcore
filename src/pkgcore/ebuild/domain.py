@@ -202,6 +202,8 @@ class domain(config_domain):
         self.ebuild_hook_dir = pjoin(self.config_dir, 'env')
         self.profile = profile
         self.fetcher = settings.pop("fetcher")
+        self._repos = repositories
+        self._vdb = vdb
 
         # prevent critical variables from being changed in make.conf
         for k in self.profile.profile_only_variables.intersection(settings.keys()):
@@ -210,14 +212,6 @@ class domain(config_domain):
         # Protect original settings from being overridden so matching
         # package.env settings can be overlaid properly.
         self._settings = ProtectedDict(settings)
-
-        # initialize base repo groups
-        self.source_repos_raw = RepositoryGroup(r.instantiate() for r in repositories)
-        self.installed_repos_raw = RepositoryGroup(r.instantiate() for r in vdb)
-        if self.profile.provides_repo is not None:
-            self.installed_repos_raw += self.profile.provides_repo
-
-        self.default_licenses_manager = OverlayedLicenses(*self.source_repos_raw)
 
     @klass.jit_attr_named('_jit_reset_settings', uncached_val=None)
     def settings(self):
@@ -405,6 +399,10 @@ class domain(config_domain):
 
         return tuple(vfilters)
 
+    @klass.jit_attr_none
+    def _default_licenses_manager(self):
+        return OverlayedLicenses(*self.source_repos_raw)
+
     def _apply_license_filter(self, master_licenses, pkg, mode):
         """Determine if a package's license is allowed."""
         # note we're not honoring mode; it's always match.
@@ -417,7 +415,7 @@ class domain(config_domain):
                 matched_pkg_licenses += licenses
 
         raw_accepted_licenses = master_licenses + matched_pkg_licenses
-        license_manager = getattr(pkg.repo, 'licenses', self.default_licenses_manager)
+        license_manager = getattr(pkg.repo, 'licenses', self._default_licenses_manager)
 
         for and_pair in pkg.license.dnf_solutions():
             accepted = incremental_expansion_license(
@@ -689,6 +687,25 @@ class domain(config_domain):
         return tuple(r.config for r in self.repos if hasattr(r, 'config'))
 
     @klass.jit_attr_none
+    def source_repos_raw(self):
+        """Group of package repos without filtering."""
+        return RepositoryGroup(r.instantiate() for r in self._repos)
+
+    @klass.jit_attr_none
+    def installed_repos_raw(self):
+        """Group of installed repos without filtering."""
+        repos = [r.instantiate() for r in self._vdb]
+        if self.profile.provides_repo is not None:
+            repos.append(self.profile.provides_repo)
+        return RepositoryGroup(repos)
+
+    @klass.jit_attr_none
+    def repos_raw(self):
+        """Group of all repos without filtering."""
+        return RepositoryGroup(
+            chain(self.source_repos_raw, self.installed_repos_raw))
+
+    @klass.jit_attr_none
     def source_repos(self):
         """Group of configured, filtered package repos."""
         repos = RepositoryGroup()
@@ -716,12 +733,6 @@ class domain(config_domain):
         """Group of all repos."""
         return RepositoryGroup(
             chain(self.source_repos, self.installed_repos))
-
-    @klass.jit_attr_none
-    def repos_raw(self):
-        """Group of all repos without filtering."""
-        return RepositoryGroup(
-            chain(self.source_repos_raw, self.installed_repos_raw))
 
     @klass.jit_attr_none
     def ebuild_repos(self):

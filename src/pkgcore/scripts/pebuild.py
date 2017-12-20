@@ -17,7 +17,8 @@ from snakeoil.strings import pluralism
 
 argparser = ArgumentParser(description=__doc__, script=(__file__, __name__))
 argparser.add_argument(
-    'target', action=StoreTarget, allow_ebuild_paths=True,
+    'target', action=StoreTarget,
+    allow_ebuild_paths=True, allow_external_repos=True,
     help="atom or ebuild matching a pkg to execute phases from")
 argparser.add_argument('phase', nargs='+', help="phases to run")
 phase_opts = argparser.add_argument_group("phase options")

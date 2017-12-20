@@ -26,6 +26,7 @@ import sys
 from snakeoil import compatibility, modules
 from snakeoil.cli import arghparse, tool
 from snakeoil.demandload import demandload
+from snakeoil.osutils import pjoin
 
 from pkgcore import __title__
 from pkgcore.config import load_config, errors as config_errors
@@ -71,6 +72,7 @@ class StoreTarget(argparse._AppendAction):
     def __init__(self, *args, **kwargs):
         self.allow_sets = kwargs.pop('allow_sets', False)
         self.allow_ebuild_paths = kwargs.pop('allow_ebuild_paths', False)
+        self.allow_external_repos = kwargs.pop('allow_external_repos', False)
         self.separator = kwargs.pop('separator', None)
         super(StoreTarget, self).__init__(*args, **kwargs)
 
@@ -104,6 +106,15 @@ class StoreTarget(argparse._AppendAction):
                         raise argparse.ArgumentError(self, "nonexistent ebuild: %r" % token)
                     elif not os.path.isfile(token):
                         raise argparse.ArgumentError(self, "invalid ebuild: %r" % token)
+                    if self.allow_external_repos and token not in repo:
+                        repo_root_dir = os.path.abspath(
+                            pjoin(token, os.pardir, os.pardir, os.pardir))
+                        try:
+                            repo = namespace.domain.add_repo(
+                                repo_root_dir, config=namespace.config)
+                        except TypeError as e:
+                            raise argparse.ArgumentError(
+                                self, "ebuild not in valid repo: %r" % token)
                     try:
                         restriction = repo.path_restrict(token)
                     except ValueError as e:

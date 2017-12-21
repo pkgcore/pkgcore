@@ -25,11 +25,11 @@ from pkgcore.repository import syncable
 demandload(
     'errno',
     'os',
+    'lxml:etree',
     'snakeoil.bash:BashParseError,iter_read_bash,read_dict',
     'snakeoil.fileutils:readfile,readlines_ascii',
     'snakeoil.sequences:iter_stable_unique',
     'snakeoil.strings:pluralism',
-    'snakeoil.xml:etree',
     'pkgcore.ebuild:atom,profiles,pkg_updates',
     'pkgcore.log:logger',
     "pkgcore.restrictions:packages",

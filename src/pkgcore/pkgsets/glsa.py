@@ -18,7 +18,7 @@ from pkgcore.config import ConfigHint
 from pkgcore.restrictions import packages, restriction, values
 
 demandload(
-    'snakeoil.xml:etree',
+    'lxml:etree',
     'pkgcore.ebuild:cpv,atom,restricts@atom_restricts',
     'pkgcore.log:logger',
     'pkgcore.package:mutated',

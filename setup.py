@@ -208,7 +208,6 @@ setup(**dict(pkgdist_setup,
     url='https://github.com/pkgcore/pkgcore',
     license='BSD/GPLv2',
     author='Brian Harring, Tim Harder',
-    author_email='pkgcore-dev@googlegroups.com',
     data_files=list(chain(
         pkgdist.data_mapping(EBD_INSTALL_OFFSET, 'ebd'),
         pkgdist.data_mapping(CONFIG_INSTALL_OFFSET, 'config'),

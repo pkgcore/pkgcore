@@ -1,2 +1,3 @@
 cython
 https://github.com/pkgcore/snakeoil/archive/master.tar.gz#egg=snakeoil
+lxml

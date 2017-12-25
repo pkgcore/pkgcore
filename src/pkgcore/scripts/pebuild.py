@@ -70,9 +70,13 @@ def main(options, out, err):
         if "setup" in phases:
             phases.insert(0, "fetch")
 
+    # forcibly run test phase if selected
+    force_test = 'test' in phases
+    if force_test:
+        options.pkg.use.add('test')
+
     # by default turn off startup cleans; we clean by ourselves if
     # told to do so via an arg
-    force_test = 'test' in phases
     build = domain.build_pkg(
         options.pkg, phase_obs, clean=False, allow_fetching=True, force_test=force_test)
     if clean:

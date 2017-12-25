@@ -72,7 +72,7 @@ def main(options, out, err):
 
     # forcibly run test phase if selected
     force_test = 'test' in phases
-    if force_test:
+    if force_test and 'test' in options.pkg.iuse:
         options.pkg.use.add('test')
 
     # by default turn off startup cleans; we clean by ourselves if

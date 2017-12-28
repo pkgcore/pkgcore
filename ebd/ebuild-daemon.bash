@@ -6,6 +6,8 @@
 # switchable.
 PKGCORE_RUNTIME_FUNCS=( '__timed_call' )
 
+PKGCORE_EBD_PATH=${BASH_SOURCE[0]%/*}
+
 __set_perf_debug() {
 	if [[ ${PKGCORE_DEBUG} -ge 4 || -n ${PKGCORE_PERF_DEBUG} ]]; then
 		__timed_call() {
@@ -122,8 +124,6 @@ __ebd_exec_main() {
 		exit 1
 	fi
 	__ebd_write_line "dude!"
-	__ebd_read_line PKGCORE_EBD_PATH
-	[[ -z ${PKGCORE_EBD_PATH} ]] && { __ebd_write_line "empty PKGCORE_EBD_PATH;"; exit 1; }
 
 	# get our die functionality now.
 	if ! source "${PKGCORE_EBD_PATH}"/exit-handling.lib; then

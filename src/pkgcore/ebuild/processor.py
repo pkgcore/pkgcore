@@ -351,7 +351,6 @@ class EbuildProcessor(object):
             raise InitializationError(
                 "expected 'dude!' response from ebd, which wasn't received. "
                 "likely a bug")
-        self.write(e_const.EBD_PATH)
 
         # send PKGCORE_PYTHON_BINARY...
         self.write(spawn.find_invoking_python())

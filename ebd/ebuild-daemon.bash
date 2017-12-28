@@ -32,59 +32,7 @@ die() {
 	exit 1
 }
 
-PKGCORE_EBD_PID=${BASHPID}
-# Use ebd_read/ebd_write for talking to the running pkgcore instance instead of
-# echo'ing to the fd yourself. This allows us to move the open fd's w/out
-# issues down the line.
-__ebd_read_line_nonfatal() {
-	read -u ${PKGCORE_EBD_READ_FD} $1
-}
-
-__ebd_read_line() {
-	__ebd_read_line_nonfatal "$@"
-	local ret=$?
-	[[ ${ret} -ne 0 ]] && \
-		die "coms error in ${PKGCORE_EBD_PID}, read_line $@ failed w/ ${ret}: backing out of daemon."
-}
-
-# are we running a version of bash (4.1 or so) that does -N?
-if echo 'y' | read -N 1 &> /dev/null; then
-	__ebd_read_size()
-	{
-		read -u ${PKGCORE_EBD_READ_FD} -r -N $1 $2
-		local ret=$?
-		[[ ${ret} -ne 0 ]] && \
-			die "coms error in ${PKGCORE_EBD_PID}, read_size $@ failed w/ ${ret}: backing out of daemon."
-	}
-else
-	# fallback to a *icky icky* but working alternative.
-	__ebd_read_size() {
-		eval "${2}=\$(dd bs=1 count=$1 <&${PKGCORE_EBD_READ_FD} 2> /dev/null)"
-		local ret=$?
-		[[ ${ret} -ne 0 ]] && \
-			die "coms error in ${PKGCORE_EBD_PID}, read_size $@ failed w/ ${ret}: backing out of daemon."
-	}
-fi
-
-__ebd_read_cat_size() {
-	dd bs=$1 count=1 <&${PKGCORE_EBD_READ_FD}
-}
-
-__ebd_write_line() {
-	echo "$*" >&${PKGCORE_EBD_WRITE_FD}
-	local ret=$?
-	[[ ${ret} -ne 0 ]] && \
-		die "coms error, write failed w/ ${ret}: backing out of daemon."
-}
-
-__ebd_write_raw() {
-	echo -n "$*" >&${PKGCORE_EBD_WRITE_FD} || die "coms error, __ebd_write_raw failed;  Backing out."
-}
-
-for x in ebd_read_{line,{cat_,}size} __ebd_write_line __set_perf_debug; do
-	declare -rf ${x}
-done
-unset -v x
+declare -rf __set_perf_debug
 declare -r PKGCORE_EBD_WRITE_FD PKGCORE_EBD_READ_FD
 
 __ebd_sigint_handler() {
@@ -115,8 +63,12 @@ __ebd_sigkill_handler() {
 }
 
 __ebd_exec_main() {
-	# ensure the other side is still there.  Well, this moreso is for the python side to ensure
-	# loading up the intermediate funcs succeeded.
+	if ! source "${PKGCORE_EBD_PATH}"/ebuild-daemon.lib >&2; then
+		die "failed sourcing ${PKGCORE_EBD_PATH}/ebuild-daemon.lib"
+	fi
+
+	# Ensure the other side is still there, well, this moreso is for the python
+	# side to ensure loading up the intermediate funcs succeeded.
 	local com
 	__ebd_read_line com
 	if [[ ${com} != "dude?" ]]; then
@@ -187,11 +139,6 @@ __ebd_exec_main() {
 
 	# export env path for helpers
 	declare -x PKGCORE_EBD_ENV
-
-	if ! source "${PKGCORE_EBD_PATH}"/ebuild-daemon.lib >&2; then
-		__ebd_write_line "failed"
-		die "failed sourcing ${PKGCORE_EBD_PATH}/ebuild-daemon.lib"
-	fi
 
 	__colored_output_disable
 	declare -A PKGCORE_PRELOADED_ECLASSES

@@ -301,7 +301,7 @@ common_archive_suffixes = (
 # Boolean variables exported to the bash side, e.g. ebuild_phase_func is
 # exported as PKGCORE_EBUILD_PHASE_FUNC.
 common_env_optionals = mappings.ImmutableDict(dict.fromkeys(
-    ("bash_compat", "dodoc_allow_recursive", "doins_allow_symlinks",
+    ("bash_compat", "doins_allow_symlinks",
      "doman_language_detect", "doman_language_override", "ebuild_phase_func",
      "econf_disable_dependency_tracking", "econf_disable_silent_rules",
      "econf_docdir_and_htmldir", "global_failglob",

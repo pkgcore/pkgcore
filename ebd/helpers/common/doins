@@ -14,8 +14,10 @@ if [[ -n ${INSDESTTREE} && -z ${INSDESTTREE%${ED}*} ]]; then
 	__helper_exit 2 "do not give \${D} nor \${ED} as part of the pathways to doins"
 fi
 
+declare -A FILE_MAPPING
+
 install_paths() {
-	local mydir=$1
+	local mydir=${1:-.}
 	shift
 	check_command invoke_script dodir "${mydir}" || return 1
 
@@ -41,10 +43,15 @@ install_paths() {
 			__shopt_pop
 			continue
 		fi
-		check_command install ${INSOPTIONS} -- "${mysrc}" "${ED}${mydir}"
-		# cleanup the tempspace...
-		[[ ${mysrc} != ${x} ]] && rm -f "${mysrc}"
+		FILE_MAPPING[${mydir}]+=" ${mysrc}"
 	done
 }
 
+# create dirs and determine file mapping
 install_paths "${INSDESTTREE}" "$@"
+
+# install files using xargs to decrease install calls
+for dir in "${!FILE_MAPPING[@]}"; do
+	echo "${FILE_MAPPING[${dir}]}" | ${XARGS} install ${INSOPTIONS} -t "${ED}${dir}" --
+	assert "install failed"
+done

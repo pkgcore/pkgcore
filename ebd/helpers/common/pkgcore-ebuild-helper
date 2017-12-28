@@ -26,6 +26,8 @@ if [[ $# -lt 1 ]]; then
 	die "ebuild-helper invoked without a target helper; no args given."
 fi
 
+source "${PKGCORE_EBD_PATH}"/ebuild-daemon.lib || \
+	die "failed to load ebuild-daemon.lib"
 source "${PKGCORE_EBD_PATH}"/isolated-functions.lib || \
 	die "failed to load isolated-functions.lib"
 source "${PKGCORE_EBD_PATH}"/eapi/depend.lib >&2 || \

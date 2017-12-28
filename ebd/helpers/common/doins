@@ -2,49 +2,15 @@
 # Copyright: 2012 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD 3 clause
 
-recursive=false
-if [[ $1 == "-r" ]]; then
-	recursive=true
-	shift
-fi
+# prepend install options to arguments so both are parsed
+args=( ${INSOPTIONS} "$@" )
 
-check_args 1 -
+# pass args back to python side to handle install
+__ebd_write_line "doins numargs=2"
+__ebd_write_line "dest=${INSDESTTREE}"
+__IFS_push $'\a'
+__ebd_write_line "args=${args[*]}"
+__IFS_pop
+__ebd_read_line result
 
-if [[ -n ${INSDESTTREE} && -z ${INSDESTTREE%${ED}*} ]]; then
-	__helper_exit 2 "do not give \${D} nor \${ED} as part of the pathways to doins"
-fi
-
-install_paths() {
-	local mydir=$1
-	shift
-	check_command invoke_script dodir "${mydir}" || return 1
-
-	__shopt_push -s extglob
-	# strip trailing slashes
-	local paths=( "${@%%+(/)}" )
-	__shopt_pop
-
-	for x in "${paths[@]}"; do
-		mysrc=${x}
-		if [[ -L ${x} ]]; then
-			if ! ${PKGCORE_DOINS_ALLOW_SYMLINKS}; then
-				check_command cp -- "${x}" "${T}" || continue
-				mysrc=${T}/${x##*/}
-			else
-				check_command cp -P -- "${x}" "${ED}${mydir}/${x##*/}"
-				continue
-			fi
-		elif [[ -d ${x} ]]; then
-			${recursive} || continue
-			__shopt_push -s dotglob nullglob
-			install_paths "${mydir}/${x##*/}" "${x}"/*
-			__shopt_pop
-			continue
-		fi
-		check_command install ${INSOPTIONS} -- "${mysrc}" "${ED}${mydir}"
-		# cleanup the tempspace...
-		[[ ${mysrc} != ${x} ]] && rm -f "${mysrc}"
-	done
-}
-
-install_paths "${INSDESTTREE}" "$@"
+__helper_exit "${result}"

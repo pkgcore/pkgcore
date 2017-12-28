@@ -30,6 +30,7 @@ from snakeoil.process.spawn import (
     spawn_bash, spawn, is_sandbox_capable, is_userpriv_capable, spawn_get_output)
 
 from pkgcore.ebuild import ebuild_built, const
+from pkgcore.ebuild.ebd_ipc import Doins
 from pkgcore.ebuild.processor import (
     request_ebuild_processor, release_ebuild_processor,
     expected_ebuild_env, chuck_UnhandledCommand, inherit_handler)
@@ -794,12 +795,16 @@ class buildable(ebd, setup_mixin, format.build):
     @observer.decorate_build_method("install")
     def install(self):
         """run the install phase (maps to src_install)"""
+        # ebuild env commands implemented in python
+        install_cmds = {
+            'doins': Doins(self),
+        }
+
         # TODO: replace print() usage with observer
         print(">>> Install {} into {} category {}".format(
-            self.env['PF'], self.env.get('ED', self.env['D']), self.env['CATEGORY']))
-        ret = self._generic_phase("install", False, True)
-        print(">>> Completed installing {} into {}".format(
-            self.env['PF'], self.env.get('ED', self.env['D'])))
+            self.env['PF'], self.ED, self.env['CATEGORY']))
+        ret = self._generic_phase("install", False, True, extra_handlers=install_cmds)
+        print(">>> Completed installing {} into {}".format(self.env['PF'], self.ED))
         return ret
 
     @observer.decorate_build_method("test")

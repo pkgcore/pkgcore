@@ -272,9 +272,6 @@ into() {
 		export DESTTREE=""
 	else
 		export DESTTREE=$1
-		if [[ ! -d ${ED}${DESTTREE} ]]; then
-			install -d "${ED}${DESTTREE}"
-		fi
 	fi
 }
 
@@ -284,9 +281,6 @@ insinto() {
 		export INSDESTTREE=""
 	else
 		export INSDESTTREE=$1
-		if [[ ! -d ${ED}${INSDESTTREE} ]]; then
-			install -d "${ED}${INSDESTTREE}"
-		fi
 	fi
 }
 
@@ -296,9 +290,6 @@ exeinto() {
 		export PKGCORE_EXEDESTTREE=""
 	else
 		export PKGCORE_EXEDESTTREE=$1
-		if [[ ! -d ${ED}${PKGCORE_EXEDESTTREE} ]]; then
-			install -d "${ED}${PKGCORE_EXEDESTTREE}"
-		fi
 	fi
 }
 
@@ -308,9 +299,6 @@ docinto() {
 		export PKGCORE_DOCDESTTREE=""
 	else
 		export PKGCORE_DOCDESTTREE=$1
-		if [[ ! -d ${ED}usr/share/doc/${PF}/${PKGCORE_DOCDESTTREE} ]]; then
-			install -d "${ED}usr/share/doc/${PF}/${PKGCORE_DOCDESTTREE}"
-		fi
 	fi
 }
 

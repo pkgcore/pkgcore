@@ -8,6 +8,8 @@ Wraps :obj:`pkgcore.ebuild.processor` functionality into a higher level
 api, for example per phase methods.
 """
 
+from __future__ import print_function
+
 __all__ = (
     "ebd", "setup_mixin", "install_op", "uninstall_op", "replace_op",
     "buildable", "binpkg_localize")
@@ -791,7 +793,13 @@ class buildable(ebd, setup_mixin, format.build):
     @observer.decorate_build_method("install")
     def install(self):
         """run the install phase (maps to src_install)"""
-        return self._generic_phase("install", False, True)
+        # TODO: replace print() usage with observer
+        print(">>> Install {} into {} category {}".format(
+            self.env['PF'], self.env.get('ED', self.env['D']), self.env['CATEGORY']))
+        ret = self._generic_phase("install", False, True)
+        print(">>> Completed installing {} into {}".format(
+            self.env['PF'], self.env.get('ED', self.env['D'])))
+        return ret
 
     @observer.decorate_build_method("test")
     def test(self):

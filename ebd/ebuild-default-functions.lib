@@ -20,13 +20,6 @@ addpredict() {
 }
 
 __dyn_src_install() {
-	local f
-	echo
-	if ${PKGCORE_PREFIX_SUPPORT}; then
-		echo ">>> Install ${PF} into ${ED} category ${CATEGORY}"
-	else
-		echo ">>> Install ${PF} into ${D} category ${CATEGORY}"
-	fi
 	if __is_function src_install; then
 		__qa_invoke src_install
 	else
@@ -42,7 +35,7 @@ __dyn_src_install() {
 		# Don't want paths that point to the tree where the package was built
 		# (older, broken libtools would do this).  Also check for null paths
 		# because the loader will search $PWD when it finds null paths.
-		f=$(scanelf -qyRF '%r %p' "${ED}" | grep -E "(${WORKDIR}|${ED}|: |::|^ )")
+		local f=$(scanelf -qyRF '%r %p' "${ED}" | grep -E "(${WORKDIR}|${ED}|: |::|^ )")
 		if [[ -n ${f} ]]; then
 			echo -ne '\a\n'
 			echo "QA Notice: the following files contain insecure RUNPATH's"
@@ -113,7 +106,6 @@ __dyn_src_install() {
 		done }
 	fi
 
-	echo ">>> Completed installing ${PF} into ${ED}"
 	unset -v dir
 }
 

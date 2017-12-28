@@ -2,34 +2,14 @@
 # Copyright: 2012 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD 3 clause
 
-recursive=false
-if ${PKGCORE_DODOC_ALLOW_RECURSIVE} && [[ $1 == "-r" ]]; then
-	recursive=true
-	shift
-fi
+INSDESTTREE=usr/share/doc/${PF}/${PKGCORE_DOCDESTTREE}
 
-check_args 1 -
+# pass args back to python side to handle install
+__ebd_write_line "dodoc numargs=2"
+__ebd_write_line "dest=${INSDESTTREE}"
+__IFS_push $'\a'
+__ebd_write_line "args=$*"
+__IFS_pop
+__ebd_read_line result
 
-install_paths() {
-	local mydir=$1
-	shift
-	check_command install -d -- "${mydir}" || return
-
-	for x in "${@}"; do
-		if [[ ! -e ${x} ]]; then
-			error "nonexistent file: ${x}"
-		elif [[ -d ${x} ]]; then
-			if ! ${recursive}; then
-				error "'${x}' is a directory$(${PKGCORE_DODOC_ALLOW_RECURSIVE} && echo ", perhaps you forgot -r?")"
-				continue
-			fi
-			__directory_is_empty "${x}" && continue
-			install_paths "${mydir}/${x##*/}" "${x}"/*
-		elif [[ -s ${x} ]]; then
-			check_command install -m0644 -- "${x}" "${mydir}" && \
-				check_command "${PORTAGE_COMPRESS}" "${PORTAGE_COMPRESS_FLAGS}" -f "${mydir}/${x##*/}"
-		fi
-	done
-}
-
-install_paths "${ED}usr/share/doc/${PF}/${PKGCORE_DOCDESTTREE}" "$@"
+__helper_exit "${result}"

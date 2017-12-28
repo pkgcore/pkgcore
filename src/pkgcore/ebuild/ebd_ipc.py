@@ -1,4 +1,5 @@
 import argparse
+from copy import copy
 import os
 
 from snakeoil.demandload import demandload
@@ -118,3 +119,20 @@ class Doins(IpcCommand):
         #         os.mkdir(pjoin(self.op.ED, target))
 
         return 0
+
+
+class Dodoc(Doins):
+    """Python wrapper for dodoc."""
+
+    _base_parser = ArgumentParser(add_help=False)
+    _base_parser.add_argument('targets', nargs=argparse.REMAINDER)
+
+    def __init__(self, *args):
+        super(Dodoc, self).__init__(*args)
+        self.parser = copy(self._base_parser)
+        if self.op.pkg.eapi.options.dodoc_allow_recursive:
+            self.parser.add_argument('-r', action='store_true', dest='recursive')
+
+    def parse_args(self, **kwargs):
+        super(Dodoc, self).parse_args(**kwargs)
+        self.opts.mode = 0o644

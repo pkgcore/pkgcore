@@ -199,6 +199,9 @@ class ebd(object):
             self.env["ED"] = normpath(
                 pjoin(self.env["D"], self.prefix.lstrip('/'))) + "/"
 
+        # temporary install dir correct for all EAPIs
+        self.ED = self.env.get('ED', self.env['D'])
+
     def get_env_source(self):
         with open(pjoin(self.env["T"], "environment"), "rb") as f:
             return data_source.bytes_data_source(f.read())

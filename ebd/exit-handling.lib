@@ -77,7 +77,7 @@ die() {
 		# should handle cleanup. This forces die() to work in subshell
 		# environments.
 		__ebd_write_line "term ${scope}"
-		kill -s SIGTERM -${PPID}
+		kill -s SIGTERM -${PPID} 2>/dev/null
 	fi
 
 	exit 1

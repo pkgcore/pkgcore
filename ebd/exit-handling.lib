@@ -134,9 +134,9 @@ __helper_exit() {
 		exit $1
 	fi
 	if [[ -z $2 ]]; then
-		die "returned error $1"
+		die "${HELPER_ERROR_PREFIX}: $1"
 	fi
-	die "exitcode $1: $2"
+	die "${HELPER_ERROR_PREFIX}: exitcode $1: $2"
 }
 
 __helper_failed() {

@@ -7,6 +7,11 @@ nonfatal() {
 	PKGCORE_NONFATAL=true "$@"
 }
 
+docompress() {
+	# for the time being, we're ignoring controllable compression
+	return 0
+}
+
 __phase_src_install() {
 	if [[ -f Makefile || -f GNUmakefile || -f makefile ]]; then
 		emake DESTDIR="${D}" install

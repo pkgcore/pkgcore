@@ -1,7 +1,6 @@
 # Copyright: 2004-2011 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
-
 """
 low level ebuild processor.
 
@@ -863,16 +862,18 @@ class EbuildProcessor(object):
                     raise UnhandledCommand("expects out of alignment")
             while True:
                 line = self.read().strip()
-                # split on first whitespace.
-                s = line.split(None, 1)
-                if not s:
+                # split on first whitespace
+                cmd, _, args_str = line.partition(' ')
+                if not cmd:
                     raise InternalError("Expected command; instead got nothing from %r" % (line,))
-                if s[0] in handlers:
-                    if len(s) == 1:
-                        s.append(None)
-                    handlers[s[0]](self, s[1])
+                if cmd in handlers:
+                    args = []
+                    if args_str:
+                        args.append(args_str)
+                    # TODO: handle exceptions raised from handlers better
+                    handlers[cmd](self, *args)
                 else:
-                    logger.error("unhandled command '%s', line '%s'", s[0], line)
+                    logger.error("unhandled command %r, line %r", cmd, line)
                     raise UnhandledCommand(line)
 
         except FinishedProcessing as fp:

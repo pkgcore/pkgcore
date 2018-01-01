@@ -289,9 +289,7 @@ class ebd(object):
             extra_handlers=extra_handlers, failure_allowed=failure_allowed,
             logging=self.logging)
 
-    def _request_bashrcs(self, ebd, a):
-        if a is not None:
-            chuck_UnhandledCommand(ebd, "bashrc request with arg"+str(a))
+    def _request_bashrcs(self, ebd):
         for source in self.domain.get_package_bashrcs(self.pkg):
             if source.path is not None:
                 ebd.write("path\n%s" % source.path)

@@ -136,3 +136,20 @@ class Dodoc(Doins):
     def parse_args(self, **kwargs):
         super(Dodoc, self).parse_args(**kwargs)
         self.opts.mode = 0o644
+
+
+class Dohtml(Doins):
+    """Python wrapper for dohtml."""
+
+    parser = ArgumentParser(add_help=False)
+    parser.add_argument('-r', action='store_true', dest='recursive')
+    parser.add_argument('-V', action='store_true', dest='verbose')
+    parser.add_argument('-A')
+    parser.add_argument('-a')
+    parser.add_argument('-f')
+    parser.add_argument('-x')
+    parser.add_argument('-p')
+    parser.add_argument('targets', nargs=argparse.REMAINDER)
+
+    def run(self):
+        return 0

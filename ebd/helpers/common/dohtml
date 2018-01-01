@@ -2,6 +2,14 @@
 # Copyright: 2011 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD 3 clause
 
-check_args 1 -
+INSDESTTREE=usr/share/doc/${PF}/${PKGCORE_DOCDESTTREE}
 
-check_command "${PKGCORE_PYTHON_BINARY}" "${PKGCORE_EBD_PATH}/helpers/internals/_raw_dohtml" "$@"
+# pass args back to python side to handle install
+__ebd_write_line "dohtml numargs=2"
+__ebd_write_line "dest=${INSDESTTREE}"
+__IFS_push $'\a'
+__ebd_write_line "args=$*"
+__IFS_pop
+__ebd_read_line result
+
+__helper_exit "${result}"

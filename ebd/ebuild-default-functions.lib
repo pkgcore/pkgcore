@@ -121,7 +121,7 @@ __dyn_pkg_preinst() {
 	# total suid control.
 	if __feature_is_enabled suidctl > /dev/null; then
 		sfconf=/etc/portage/suidctl.conf
-		echo ">>> Preforming suid scan in ${ED}"
+		echo ">>> Performing suid scan in ${ED}"
 		local i
 		for i in $(find "${ED}"/ -type f \( -perm -4000 -o -perm -2000 \) ); do
 			if [[ -s ${sfconf} ]]; then

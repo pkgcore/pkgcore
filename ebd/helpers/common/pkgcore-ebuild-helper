@@ -82,6 +82,13 @@ check_command() {
 	return $(( ret ))
 }
 
+check_pipe() {
+	local pipestatus=${PIPESTATUS[*]}
+	[[ -z ${pipestatus//[ 0]/} ]] && return 0
+	error "command pipeline failed (pipestatus: ${pipestatus})"
+	return 0
+}
+
 check_command_or_stop() {
 	check_command "$@"
 	__helper_check_exit $? "$@ failed, cannot continue"

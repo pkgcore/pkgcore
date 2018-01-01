@@ -153,3 +153,14 @@ class Dohtml(Doins):
 
     def run(self):
         return 0
+
+
+class Compress(IpcCommand):
+    """Compress files tagged on the bash side."""
+
+    def parse_args(self, targets='', skip=''):
+        self.targets = set(x for x in targets.split('\x07') if x)
+        self.skip = set(x for x in skip.split('\x07') if x)
+
+    def run(self):
+        return 0

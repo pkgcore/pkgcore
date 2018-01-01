@@ -5,4 +5,3 @@
 check_args 1 -
 
 check_command install -m0644 -D -t "${ED}usr/share/info" -- "$@"
-check_command "${PORTAGE_COMPRESS}" "${PORTAGE_COMPRESS_FLAGS}" -f "${ED}usr/share/info/${x##*/}"

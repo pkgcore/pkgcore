@@ -386,6 +386,15 @@ __phase_pre_src_install() {
 	__phase_pre_phase
 }
 
+__phase_post_src_install() {
+	# trigger python side to handle file compression
+	__ebd_write_line 'compress numargs=2'
+	__IFS_push $'\a'
+	__ebd_write_line "targets=${PKGCORE_DOCOMPRESS[*]}"
+	__ebd_write_line "skip=${PKGCORE_DOCOMPRESS_SKIP[*]}"
+	__IFS_pop
+}
+
 unpack() {
 	local file file_match filename myfail srcdir taropts tar_subdir
 	taropts='--no-same-owner'

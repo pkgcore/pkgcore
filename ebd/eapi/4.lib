@@ -8,8 +8,12 @@ nonfatal() {
 }
 
 docompress() {
-	# for the time being, we're ignoring controllable compression
-	return 0
+	if [[ $1 == "-x" ]]; then
+		shift
+		PKGCORE_DOCOMPRESS_SKIP+=( "$@" )
+	else
+		PKGCORE_DOCOMPRESS+=( "$@" )
+	fi
 }
 
 __phase_src_install() {

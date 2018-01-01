@@ -4,19 +4,26 @@
 
 check_args 1 -
 
-check_command_or_stop install -d "${ED}${PKGCORE_EXEDESTTREE}"
+# create tempdir for handling symlinks
+TMP=$(mktemp -d "${T}/.${HELPER_NAME}_tmp_XXXXXX")
 
-for x in "$@"; do
-	if [[ -L ${x} ]]; then
-		check_command cp -- "${x}" "${T}" || continue
-		mysrc=${T}/${x##*/}
-	elif [[ -d ${x} ]]; then
-		warn "skipping directory ${x}"
-		continue
-	else
-		mysrc=${x}
-	fi
-	check_command install ${EXEOPTIONS} -- "${mysrc}" "${ED}${PKGCORE_EXEDESTTREE}"
-	# cleanup after ourselves...
-	[[ ${mysrc} != ${x} ]] && rm -f "${mysrc}"
-done
+exes() {
+	for x in "$@"; do
+		if [[ -L ${x} ]]; then
+			check_command cp -- "${x}" "${TMP}" || continue
+			echo "${TMP}/${x##*/}"
+		elif [[ -d ${x} ]]; then
+			warn "skipping directory ${x}"
+			continue
+		else
+			echo "${x}"
+		fi
+	done
+	return 0
+}
+
+exes "$@" | ${XARGS} install ${EXEOPTIONS} -D -t "${ED}${PKGCORE_EXEDESTTREE}" --
+check_pipe
+
+# remove tempdir
+rm -rf "${TMP}"

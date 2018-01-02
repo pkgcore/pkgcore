@@ -4,12 +4,7 @@
 
 check_args 1 -
 
-# chunk off the 'do' prefix to get the subdir to use.
+# Chunk off the 'do' prefix to get the subdir to use.
 target=${HELPER_NAME:2}
 
-# may exist already, but that's fine.
-check_command_or_stop install -d "${ED}${DESTTREE}/${target}"
-
-for x in "$@"; do
-	check_command install -m0755 -- "${x}" "${ED}${DESTTREE}/${target}"
-done
+check_command install -m0755 -D -t "${ED}${DESTTREE}/${target}" -- "$@"

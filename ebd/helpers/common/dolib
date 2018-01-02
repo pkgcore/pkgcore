@@ -4,7 +4,7 @@
 
 check_args 1 -
 
-libdir=${ED}${DESTTREE}/$(__get_libdir lib)
+LIBDIR=${ED}${DESTTREE}/$(__get_libdir lib)
 
 if [[ ${HELPER_NAME} == "dolib.so" ]]; then
 	LIBOPTIONS="-m0755"
@@ -12,14 +12,17 @@ elif [[ ${HELPER_NAME} == "dolib.a" ]]; then
 	LIBOPTIONS="-m0644"
 fi
 
-check_command_or_stop install -d "${libdir}"
+libs() {
+	for x in "$@"; do
+		if [[ -L ${x} ]]; then
+			# yes we want readlink, not readlink -f; we want the symlink content,
+			# not the resolved symlink target.
+			check_command ln -s -- "$(readlink -- "${x}")" "${LIBDIR}/${x##*/}" >/dev/null
+		else
+			echo "${x}"
+		fi
+	done
+}
 
-for x in "$@"; do
-	if [[ -L ${x} ]]; then
-		# yes we want readlink, not readlink -f; we want the symlink content,
-		# not the resolved symlink target.
-		check_command ln -s -- "$(readlink -- "${x}")" "${libdir}/${x##*/}"
-	else
-		check_command install ${LIBOPTIONS} -- "${x}" "${libdir}"
-	fi
-done
+libs "$@" | ${XARGS} install ${LIBOPTIONS} -D -t "${LIBDIR}" --
+check_pipe

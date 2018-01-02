@@ -15,11 +15,18 @@ dodir "$@"
 
 if ${recursive}; then
 	for x in "$@"; do
-		basedir=$(echo "${x}" | cut -d/ -f 2)
-		check_command_or_stop find "${ED}${basedir}" -type d -printf "%p/.keep_${CATEGORY}_${PN}-${SLOT%/*}\0" | ${XARGS} -0 -n100 touch
+		basedir=${x:1}
+		basedir=${basedir%/*}
+		find "${ED}${basedir}" -type d -printf "%p/.keep_${CATEGORY}_${PN}-${SLOT%/*}\0" | ${XARGS} -0 -n100 touch
+		check_pipe
 	done
 else
-	for x in "$@"; do
-		check_command_or_stop touch "${ED}${x}/.keep_${CATEGORY}_${PN}-${SLOT%/*}"
-	done
+	dirs() {
+		for x in "$@"; do
+			echo "${ED}${x}/.keep_${CATEGORY}_${PN}-${SLOT%/*}"
+		done
+	}
+
+	dirs "$@" | ${XARGS} touch
+	check_pipe
 fi

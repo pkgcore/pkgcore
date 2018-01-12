@@ -70,7 +70,7 @@ class SimpleTree(prototype.tree):
 
 
 class RepositoryGroup(DictMixin):
-    """Group of repositories as a single unit.
+    """Group of repos as a single unit.
 
     Args:
         repos (iterable): repo instances

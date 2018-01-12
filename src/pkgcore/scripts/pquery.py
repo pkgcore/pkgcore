@@ -8,12 +8,12 @@ pquery is used to extract various kinds of information about either installed
 or uninstalled packages. From an overall usage standpoint it is similar to
 equery, but it can do things equery cannot do and is a bit more flexible.
 
-What pquery does is select packages from one or more "repositories" that match
+What pquery does is select packages from one or more repos that match
 a boolean combination of restrictions, then print selected information about
 those packages. It is important to understand that the information printing and
-repository selection options are almost completely separate from the
+repo selection options are almost completely separate from the
 restriction options. The only exception to that is that restrictions on
-contents automatically select the vdb (installed packages) repository, since
+contents automatically select the vdb (installed packages) repo, since
 running them on source repos makes no sense.
 """
 
@@ -451,7 +451,7 @@ def print_packages_noversion(options, out, err, pkgs):
 # priority 0 (commandline sets this):
 #  basically, sort the config first (additions/removals/etc),
 # priority 30:
-#   sort the repositories
+#   sort the repos
 # priority 50:
 #  sort the query args individually (potentially accessing the config) along
 #  or lines for each (thus multiple revdep args are or'd together)
@@ -466,7 +466,7 @@ argparser = commandline.ArgumentParser(
 
 repo_group = argparser.add_argument_group(
     'repository matching options',
-    description='options controlling which repositories to inspect')
+    description='options controlling which repos to inspect')
 repo_group.add_argument(
     '--raw', action='store_true', default=False,
     help="disable configuration filtering",

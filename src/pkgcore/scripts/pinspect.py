@@ -3,9 +3,9 @@
 
 """repository inspection interface
 
-pinspect is used to extract various information from repositories. For example,
+pinspect is used to extract various information from repos. For example,
 it can perform aggregated EAPI, license, eclass, and mirror usage queries
-across specified repositories. Any repository type can be queried, e.g. ebuild,
+across specified repos. Any repo type can be queried, e.g. ebuild,
 binary, or vdb.
 
 It also provides an interface to all profile specific metadata, e.g. package
@@ -201,9 +201,9 @@ class histo_data(arghparse.ArgparseCommand):
 
 class eapi_usage_kls(histo_data):
 
-    per_repo_format = ("eapi: %(key)r %(val)s pkgs found, %(percent)s of the repository")
+    per_repo_format = ("eapi: %(key)r %(val)s pkgs found, %(percent)s of the repo")
 
-    summary_format = ("eapi: %(key)r %(val)s pkgs found, %(percent)s of all repositories")
+    summary_format = ("eapi: %(key)r %(val)s pkgs found, %(percent)s of all repos")
 
     def get_data(self, repo, options):
         eapis = {}
@@ -214,15 +214,15 @@ class eapi_usage_kls(histo_data):
         return eapis, pos + 1
 
 eapi_usage = subparsers.add_parser(
-    "eapi_usage", description="report of eapi usage for targeted repositories")
+    "eapi_usage", description="report of eapi usage for targeted repos")
 eapi_usage.bind_class(eapi_usage_kls())
 
 
 class license_usage_kls(histo_data):
 
-    per_repo_format = "license: %(key)r %(val)s pkgs found, %(percent)s of the repository"
+    per_repo_format = "license: %(key)r %(val)s pkgs found, %(percent)s of the repo"
 
-    summary_format = "license: %(key)r %(val)s pkgs found, %(percent)s of all repositories"
+    summary_format = "license: %(key)r %(val)s pkgs found, %(percent)s of all repos"
 
     def get_data(self, repo, options):
         data = {}
@@ -234,15 +234,15 @@ class license_usage_kls(histo_data):
         return data, pos + 1
 
 license_usage = subparsers.add_parser(
-    "license_usage", description="report of license usage for targeted repositories")
+    "license_usage", description="report of license usage for targeted repos")
 license_usage.bind_class(license_usage_kls())
 
 
 class eclass_usage_kls(histo_data):
 
-    per_repo_format = "eclass: %(key)r %(val)s pkgs found, %(percent)s of the repository"
+    per_repo_format = "eclass: %(key)r %(val)s pkgs found, %(percent)s of the repo"
 
-    summary_format = "eclass: %(key)r %(val)s pkgs found, %(percent)s of all repositories"
+    summary_format = "eclass: %(key)r %(val)s pkgs found, %(percent)s of all repos"
 
     def get_data(self, repo, options):
         pos, data = 0, defaultdict(lambda:0)
@@ -252,15 +252,15 @@ class eclass_usage_kls(histo_data):
         return data, pos + 1
 
 eclass_usage = subparsers.add_parser(
-    "eclass_usage", description="report of eclass usage for targeted repositories")
+    "eclass_usage", description="report of eclass usage for targeted repos")
 eclass_usage.bind_class(eclass_usage_kls())
 
 
 class mirror_usage_kls(histo_data):
 
-    per_repo_format = "mirror: %(key)r %(val)s pkgs found, %(percent)s of the repository"
+    per_repo_format = "mirror: %(key)r %(val)s pkgs found, %(percent)s of the repo"
 
-    summary_format = "mirror: %(key)r %(val)s pkgs found, %(percent)s of all repositories"
+    summary_format = "mirror: %(key)r %(val)s pkgs found, %(percent)s of all repos"
 
     def get_data(self, repo, options):
         data = {}
@@ -275,7 +275,7 @@ class mirror_usage_kls(histo_data):
         return data, pos + 1
 
 mirror_usage = subparsers.add_parser(
-    "mirror_usage", description="report of SRC_URI mirror usage for targeted repositories")
+    "mirror_usage", description="report of SRC_URI mirror usage for targeted repos")
 mirror_usage.bind_class(mirror_usage_kls())
 
 
@@ -285,7 +285,7 @@ class distfiles_usage_kls(histo_data):
 
     per_repo_summary = "unique total %(total)i bytes, sharing %(shared)i bytes"
 
-    summary_format = "package: %(key)r %(val)s pkgs found, %(percent)s of all repositories"
+    summary_format = "package: %(key)r %(val)s pkgs found, %(percent)s of all repos"
 
     allow_no_detail = True
 
@@ -329,12 +329,12 @@ class distfiles_usage_kls(histo_data):
 
 distfiles_usage = subparsers.add_parser(
     "distfiles_usage",
-    description="report detailing distfiles space usage for targeted repositories")
+    description="report detailing distfiles space usage for targeted repos")
 distfiles_usage.bind_class(distfiles_usage_kls())
 
 query = subparsers.add_parser(
     "query",
-    description="auxiliary access to ebuild/repository info via portageq akin api")
+    description="auxiliary access to ebuild/repo info via portageq akin api")
 _portageq.bind_parser(query, name='query')
 
 portageq = subparsers.add_parser(
@@ -353,7 +353,7 @@ inspect_profile.bind_parser(profile, 'profile')
 digests = subparsers.add_parser(
     "digests", domain=True, description="identify what packages are missing digest info")
 digests.add_argument(
-    'repos', nargs='*', help="repository to inspect",
+    'repos', nargs='*', help="repo to inspect",
     action=commandline.StoreRepoObject, allow_external_repos=True, store_name=True)
 @digests.bind_main_func
 def digest_manifest(options, out, err):
@@ -381,6 +381,6 @@ def digest_manifest(options, out, err):
             out.write("%i out of %i the tree has broken checksum data "
                       "(%2.2f%%)" % (broken, count, percent))
         else:
-            out.write("repository has no packages")
+            out.write("repo has no packages")
 
         out.write()

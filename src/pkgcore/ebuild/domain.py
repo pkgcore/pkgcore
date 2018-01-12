@@ -173,7 +173,7 @@ class domain(config_domain):
     # XXX ouch, verify this crap and add defaults and stuff
     _types = {
         'profile': 'ref:profile', 'fetcher': 'ref:fetcher',
-        'repositories': 'lazy_refs:repo', 'vdb': 'lazy_refs:repo',
+        'repos': 'lazy_refs:repo', 'vdb': 'lazy_refs:repo',
         'name': 'str', 'triggers': 'lazy_refs:trigger',
     }
     for _thing in ('root', 'config_dir', 'CHOST', 'CBUILD', 'CTARGET', 'CFLAGS', 'PATH',
@@ -186,12 +186,12 @@ class domain(config_domain):
     # TODO this is missing defaults
     pkgcore_config_type = ConfigHint(
         _types, typename='domain',
-        required=['repositories', 'profile', 'vdb', 'fetcher', 'name'],
+        required=['repos', 'profile', 'vdb', 'fetcher', 'name'],
         allow_unknowns=True)
 
     del _types, _thing
 
-    def __init__(self, profile, repositories, vdb, name=None,
+    def __init__(self, profile, repos, vdb, name=None,
                  root='/', config_dir='/etc/portage', prefix='/',
                  triggers=(), **settings):
         self._triggers = triggers
@@ -202,7 +202,7 @@ class domain(config_domain):
         self.ebuild_hook_dir = pjoin(self.config_dir, 'env')
         self.profile = profile
         self.fetcher = settings.pop("fetcher")
-        self._repos = repositories
+        self._repos = repos
         self._vdb = vdb
 
         # prevent critical variables from being changed in make.conf

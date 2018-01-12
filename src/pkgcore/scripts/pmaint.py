@@ -60,7 +60,7 @@ sync.add_argument(
     action=commandline.StoreRepoObject, store_name=True, repo_type='config')
 @sync.bind_main_func
 def sync_main(options, out, err):
-    """Update local repositories to match their remotes"""
+    """Update local repos to match their remotes."""
     verbosity = -1 if options.quiet else options.verbose
     succeeded, failed = [], []
 
@@ -98,7 +98,7 @@ def sync_main(options, out, err):
 # TODO: restrict to required repo types
 copy = subparsers.add_parser(
     "copy", parents=shared_options_domain,
-    description="copy binpkgs between repositories; primarily useful for "
+    description="copy binpkgs between repos; primarily useful for "
     "quickpkging a livefs pkg")
 copy.add_argument(
     'target_repo', action=commandline.StoreRepoObject, repo_type='binary-raw',
@@ -118,7 +118,7 @@ copy_opts.add_argument(
     help="if a matching pkg already exists in the target, don't update it")
 @copy.bind_main_func
 def copy_main(options, out, err):
-    """Copy pkgs between repositories."""
+    """Copy pkgs between repos."""
     source_repo = options.source_repo
     if source_repo is None:
         source_repo = options.domain.all_source_repos

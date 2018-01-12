@@ -129,7 +129,7 @@ class base(object):
 class install(base):
     """base interface for installing a pkg into a livefs repo.
 
-    repositories should override as needed.
+    Repositories should override as needed.
     """
 
     stage_depends = {

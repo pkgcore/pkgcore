@@ -173,7 +173,7 @@ class domain(config_domain):
     # XXX ouch, verify this crap and add defaults and stuff
     _types = {
         'profile': 'ref:profile', 'fetcher': 'ref:fetcher',
-        'repositories': 'lazy_refs:repo', 'vdb': 'lazy_refs:repo',
+        'repos': 'lazy_refs:repo', 'vdb': 'lazy_refs:repo',
         'name': 'str', 'triggers': 'lazy_refs:trigger',
     }
     for _thing in ('root', 'config_dir', 'CHOST', 'CBUILD', 'CTARGET', 'CFLAGS', 'PATH',
@@ -186,12 +186,12 @@ class domain(config_domain):
     # TODO this is missing defaults
     pkgcore_config_type = ConfigHint(
         _types, typename='domain',
-        required=['repositories', 'profile', 'vdb', 'fetcher', 'name'],
+        required=['repos', 'profile', 'vdb', 'fetcher', 'name'],
         allow_unknowns=True)
 
     del _types, _thing
 
-    def __init__(self, profile, repositories, vdb, name=None,
+    def __init__(self, profile, repos, vdb, name=None,
                  root='/', config_dir='/etc/portage', prefix='/',
                  triggers=(), **settings):
         self._triggers = triggers
@@ -202,8 +202,8 @@ class domain(config_domain):
         self.ebuild_hook_dir = pjoin(self.config_dir, 'env')
         self.profile = profile
         self.fetcher = settings.pop("fetcher")
-        self._repositories = repositories
-        self._vdb = vdb
+        self.__repos = repos
+        self.__vdb = vdb
 
         # prevent critical variables from being changed in make.conf
         for k in self.profile.profile_only_variables.intersection(settings.keys()):
@@ -689,12 +689,12 @@ class domain(config_domain):
     @klass.jit_attr_none
     def source_repos_raw(self):
         """Group of package repos without filtering."""
-        return RepositoryGroup(r.instantiate() for r in self._repositories)
+        return RepositoryGroup(r.instantiate() for r in self.__repos)
 
     @klass.jit_attr_none
     def installed_repos_raw(self):
         """Group of installed repos without filtering."""
-        repos = [r.instantiate() for r in self._vdb]
+        repos = [r.instantiate() for r in self.__vdb]
         if self.profile.provides_repo is not None:
             repos.append(self.profile.provides_repo)
         return RepositoryGroup(repos)

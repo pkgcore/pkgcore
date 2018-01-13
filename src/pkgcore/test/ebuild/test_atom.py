@@ -376,6 +376,12 @@ class Test_native_atom(test.TestRestriction):
     def test_eapi4(self):
         self.check_use(4, defaults=True)
 
+    def test_eapi5(self):
+        self.check_use(5, defaults=True)
+
+    def test_eapi6(self):
+        self.check_use(6, defaults=True)
+
     def test_repo_id(self):
         astr = "dev-util/bsdiff"
         c = FakePkg("%s-1" % astr, repo=FakeRepo(repo_id="gentoo-x86A_"), slot="0")

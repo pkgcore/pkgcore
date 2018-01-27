@@ -316,9 +316,8 @@ class AndRestriction(base):
 #                 "AndRestriction isn't implemented yet")
             # hack- this is an experiment
             for r in OrRestriction(
-                node_type=self.type,
-                *[restriction.Negate(x)
-                  for x in self.restrictions]).iter_dnf_solutions():
+                    node_type=self.type, *[restriction.Negate(x)
+                    for x in self.restrictions]).iter_dnf_solutions():
                 yield r
             return
         if not self.restrictions:

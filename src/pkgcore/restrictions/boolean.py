@@ -410,7 +410,7 @@ class OrRestriction(base):
         return self.negate
 
     def cnf_solutions(self, full_solution_expansion=False):
-        """returns alist in CNF (conjunctive normalized form) for of this instance
+        """Returns a list in CNF (conjunctive normalized form) of this instance.
 
         :param full_solution_expansion: controls whether to expand everything
             (break apart atoms for example); this isn't likely what you want
@@ -447,7 +447,7 @@ class OrRestriction(base):
         return dcnf
 
     def iter_dnf_solutions(self, full_solution_expansion=False):
-        """returns a list in DNF (disjunctive normalized form) for of this instance
+        """Returns a list in DNF (disjunctive normalized form) of this instance.
 
         :param full_solution_expansion: controls whether to expand everything
             (break apart atoms for example); this isn't likely what you want

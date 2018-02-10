@@ -64,12 +64,12 @@ class fetch_base(object):
         if 'fetch' in self.pkg.restrict:
             # This requires wrapped packages from a configured repo, otherwise
             # buildables aren't available to run the pkg_nofetch phase.
-            configured_repo = self.domain.unfiltered_repos[self.pkg.repo_id]
+            configured_repo = self.domain.unfiltered_repos[self.pkg.repo.repo_id]
             pkgwrap = configured_repo.package_class(self.pkg)
             build_ops = self.domain.build_pkg(pkgwrap, observer, failed=True)
             build_ops.nofetch()
             build_ops.cleanup(force=True)
-        observer.error("failed fetching files: %s::%s", self.pkg.cpvstr, self.pkg.repo_id)
+        observer.error("failed fetching files: %s::%s", self.pkg.cpvstr, self.pkg.repo.repo_id)
 
 
 class operations(_operations_mod.base):

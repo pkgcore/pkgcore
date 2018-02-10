@@ -39,12 +39,6 @@ class base(object):
         return self._operations(domain, self, **kwds)
 
     @property
-    def repo_id(self):
-        """Initially set to None. will be overridden later
-        when appropriate"""
-        return None
-
-    @property
     def is_supported(self):
         return True
 
@@ -81,7 +75,6 @@ class wrapper(base):
     versioned_atom = klass.alias_attr("_raw_pkg.versioned_atom")
     unversioned_atom = klass.alias_attr("_raw_pkg.unversioned_atom")
     is_supported = klass.alias_attr('_raw_pkg.is_supported')
-    repo_id = klass.alias_attr("_raw_pkg.repo_id")
 
     def __hash__(self):
         return hash(self._raw_pkg)

@@ -687,7 +687,8 @@ class SavePkg(base):
 
     def trigger(self, engine, cset):
         pkg = getattr(engine, self._copy_source)
-        if self.skip_if_source and getattr(pkg, 'repo') == self.target_repo:
+        # don't build binpkgs of target repo binpkgs
+        if self.skip_if_source and getattr(pkg, 'repo_id') == self.target_repo.repo_id:
             return
 
         old_pkg = self.target_repo.match(pkg.versioned_atom)

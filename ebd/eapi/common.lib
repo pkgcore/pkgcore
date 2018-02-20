@@ -533,7 +533,7 @@ libopts() {
 	export LIBOPTIONS=$@
 }
 
-portageq() {
+__portageq() {
 	if [[ ${EBUILD_PHASE} == "depend" ]]; then
 		die "portageq calls in depends phase aren't allowed"
 	fi
@@ -554,11 +554,11 @@ portageq() {
 }
 
 has_version() {
-	PKGCORE_DISABLE_COMPAT=true portageq 'has_version' "$1"
+	PKGCORE_DISABLE_COMPAT=true __portageq 'has_version' "$1"
 }
 
 best_version() {
-	PKGCORE_DISABLE_COMPAT=true portageq 'best_version' "$1"
+	PKGCORE_DISABLE_COMPAT=true __portageq 'best_version' "$1"
 }
 
 :

@@ -308,11 +308,11 @@ class ebd(object):
 
     def set_is_replacing(self, *pkgs):
         if self.eapi.options.exports_replacing:
-            self.env['REPLACING_VERSIONS'] = " ".join(x.cpvstr for x in pkgs)
+            self.env['REPLACING_VERSIONS'] = " ".join(pkg.PVR for pkg in pkgs)
 
     def set_is_being_replaced_by(self, pkg=None):
         if self.eapi.options.exports_replacing and pkg is not None:
-            self.env['REPLACED_BY_VERSION'] = pkg.cpvstr
+            self.env['REPLACED_BY_VERSION'] = pkg.PVR
 
     def cleanup(self, disable_observer=False, force=False):
         if not force:

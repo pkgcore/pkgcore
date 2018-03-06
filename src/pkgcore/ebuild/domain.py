@@ -202,7 +202,7 @@ class domain(config_domain):
         self.ebuild_hook_dir = pjoin(self.config_dir, 'env')
         self.profile = profile
         self.fetcher = settings.pop("fetcher")
-        self._repos = repositories
+        self._repositories = repositories
         self._vdb = vdb
 
         # prevent critical variables from being changed in make.conf
@@ -689,7 +689,7 @@ class domain(config_domain):
     @klass.jit_attr_none
     def source_repos_raw(self):
         """Group of package repos without filtering."""
-        return RepositoryGroup(r.instantiate() for r in self._repos)
+        return RepositoryGroup(r.instantiate() for r in self._repositories)
 
     @klass.jit_attr_none
     def installed_repos_raw(self):

@@ -35,7 +35,7 @@ demandload(
     'random:shuffle',
     'snakeoil:chksum',
     'snakeoil.data_source:local_source',
-    'snakeoil.sequences:iflatten_instance',
+    'snakeoil.sequences:iflatten_instance,stable_unique',
     'pkgcore:fetch',
     'pkgcore.ebuild:cpv,digest,ebd,repo_objs,atom,restricts,profiles,processor',
     'pkgcore.ebuild:errors@ebuild_errors',
@@ -677,7 +677,7 @@ class _ConfiguredTree(configured.tree):
 
     @_wrap_attr(config_wrappables)
     def _distfiles(self, raw_pkg_distfiles, enabled_use, pkg):
-        return tuple(raw_pkg_distfiles.evaluate_depset(enabled_use))
+        return tuple(stable_unique(raw_pkg_distfiles.evaluate_depset(enabled_use)))
 
     @_wrap_attr(config_wrappables)
     def _user_patches(self, _raw_pkg_patches, _enabled_use, pkg):

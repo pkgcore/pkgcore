@@ -345,6 +345,8 @@ def print_package(options, out, err, pkg):
             out.write('=', autoline=False)
         if options.atom or options.cpv:
             out.write(pkg.cpvstr, autoline=False)
+            if options.display_slot:
+                out.write(':', pkg.slot, autoline=False)
             if options.display_repo:
                 out.write('::', pkg.repo.repo_id, autoline=False)
             out.write('|', autoline=False)
@@ -357,6 +359,8 @@ def print_package(options, out, err, pkg):
             if options.atom:
                 out.write('=')
             out.write(pkg.cpvstr)
+            if options.display_slot:
+                out.write(':', pkg.slot)
             if options.display_repo:
                 out.write('::', pkg.repo.repo_id)
         for attr in options.attr:
@@ -433,6 +437,8 @@ def print_packages_noversion(options, out, err, pkgs):
             out.write('=', autoline=False)
         if options.atom or options.cpv:
             out.write(pkgs[0].key, autoline=False)
+            if options.display_slot:
+                out.write(':', pkgs[0].slot, autoline=False)
             if options.display_repo:
                 out.write('::', pkgs[0].repo.repo_id, autoline=False)
             out.write('|', autoline=False)
@@ -440,6 +446,8 @@ def print_packages_noversion(options, out, err, pkgs):
     else:
         out.autoline = False
         out.write(pkgs[0].key)
+        if options.display_slot:
+            out.write(':', pkgs[0].slot, autoline=False)
         if options.display_repo:
             out.write('::', pkgs[0].repo.repo_id, autoline=False)
         for attr in options.attr:
@@ -877,6 +885,9 @@ output.add_argument(
 output.add_argument(
     '-R', action='store_true', dest='display_repo',
     help='print the repo of the package')
+output.add_argument(
+    '--slot', action='store_true', dest='display_slot',
+    help='print the slot of the package')
 
 output_mux = output.add_mutually_exclusive_group()
 output_mux.add_argument(

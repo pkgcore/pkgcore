@@ -440,6 +440,8 @@ def print_packages_noversion(options, out, err, pkgs):
     else:
         out.autoline = False
         out.write(pkgs[0].key)
+        if options.display_repo:
+            out.write('::', pkgs[0].repo, autoline=False)
         for attr in options.attr:
             out.write(' %s="%s"' % (attr, stringify_attr(options, pkgs[-1],
                                                          attr)))

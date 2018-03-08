@@ -346,7 +346,7 @@ def print_package(options, out, err, pkg):
         if options.atom or options.cpv:
             out.write(pkg.cpvstr, autoline=False)
             if options.display_repo:
-                out.write('::', pkg.repo, autoline=False)
+                out.write('::', pkg.repo.repo_id, autoline=False)
             out.write('|', autoline=False)
         out.write(stringify_attr(options, pkg, options.one_attr))
     else:
@@ -358,7 +358,7 @@ def print_package(options, out, err, pkg):
                 out.write('=')
             out.write(pkg.cpvstr)
             if options.display_repo:
-                out.write('::', pkg.repo)
+                out.write('::', pkg.repo.repo_id)
         for attr in options.attr:
             if printed_something:
                 out.write(' ')
@@ -434,14 +434,14 @@ def print_packages_noversion(options, out, err, pkgs):
         if options.atom or options.cpv:
             out.write(pkgs[0].key, autoline=False)
             if options.display_repo:
-                out.write('::', pkgs[0].repo, autoline=False)
+                out.write('::', pkgs[0].repo.repo_id, autoline=False)
             out.write('|', autoline=False)
         out.write(stringify_attr(options, pkgs[-1], options.one_attr))
     else:
         out.autoline = False
         out.write(pkgs[0].key)
         if options.display_repo:
-            out.write('::', pkgs[0].repo, autoline=False)
+            out.write('::', pkgs[0].repo.repo_id, autoline=False)
         for attr in options.attr:
             out.write(' %s="%s"' % (attr, stringify_attr(options, pkgs[-1],
                                                          attr)))

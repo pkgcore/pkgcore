@@ -75,6 +75,7 @@ metadata_attrs += [
     'description',
     'eapi',
     'fetchables',
+    'distfiles',
     'homepage',
     'inherited',
     'iuse',
@@ -142,8 +143,7 @@ def stringify_attr(config, pkg, attr):
     if value is None:
         return 'MISSING'
 
-    if attr in ('iuse', 'properties', 'defined_phases',
-                'inherited'):
+    if attr in ('iuse', 'properties', 'defined_phases', 'inherited'):
         return ' '.join(sorted(unicode(v) for v in value))
     if attr == 'maintainers':
         return ' '.join(unicode(v) for v in value)
@@ -151,6 +151,11 @@ def stringify_attr(config, pkg, attr):
         return unicode(value)
     if attr == 'keywords':
         return ' '.join(sorted(value, key=lambda x: x.lstrip("~")))
+    if attr == 'distfiles':
+        # collapse depsets for raw repo pkgs -- no USE flags are enabled
+        if isinstance(value, conditionals.DepSet):
+            value = value.evaluate_depset([])
+        return ' '.join(value)
     if attr == 'environment':
         return value.text_fileobj().read()
     if attr == 'repo':

@@ -157,19 +157,19 @@ def release_ebuild_processor(ebp):
 
 
 @contextlib.contextmanager
-def reuse_or_request(ebp=None, **request_kwds):
+def reuse_or_request(ebp=None, **kwargs):
     """Do a processor operation, locking as necessary.
 
     If the processor is given, it's assumed to be locked already.
     If no processor is given, one is allocated, then released upon
     finishing."""
-    release_required = ebp is None
-    try:
-        if ebp is None:
-            ebp = request_ebuild_processor(**request_kwds)
+    if ebp is not None:
         yield ebp
-    finally:
-        if release_required and ebp is not None:
+    else:
+        ebp = request_ebuild_processor(**kwargs)
+        try:
+            yield ebp
+        finally:
             release_ebuild_processor(ebp)
 
 

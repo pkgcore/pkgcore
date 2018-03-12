@@ -115,11 +115,10 @@ def request_ebuild_processor(userpriv=False, sandbox=None, fd_pipes=None):
         sandbox = spawn.is_sandbox_capable()
 
     for x in inactive_ebp_list:
-        if x.userprived() == userpriv and (x.sandboxed() or not sandbox):
-            if not x.is_alive:
-                inactive_ebp_list.remove(x)
-                continue
+        if x.userprived() == userpriv and (not sandbox or x.sandboxed()):
             inactive_ebp_list.remove(x)
+            if not x.is_alive:
+                continue
             active_ebp_list.append(x)
             return x
 

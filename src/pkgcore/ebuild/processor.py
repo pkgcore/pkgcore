@@ -594,15 +594,14 @@ class EbuildProcessor(object):
             if self.pid is None:
                 return False
             try:
-                if process.is_running(self.pid):
-                    self.write("alive", disable_runtime_exceptions=True)
-                    if self.expect("yep!", timeout=10):
-                        return True
+                if not process.is_running(self.pid):
+                    return False
             except process.ProcessNotFound:
                 # pid doesn't exist
                 self.pid = None
-            return False
-
+                return False
+            self.write("alive", disable_runtime_exceptions=True)
+            return self.expect("yep!", timeout=10):
         except (AttributeError, KeyboardInterrupt):
             # thrown only if failure occurred instantiation.
             return False

@@ -251,24 +251,23 @@ class EbuildProcessor(object):
         """
         self.lock()
         self.ebd = e_const.EBUILD_DAEMON_PATH
-        spawn_opts = {'umask': 0002}
 
         self._preloaded_eclasses = {}
         self._eclass_caching = False
         self._outstanding_expects = []
         self._metadata_paths = None
 
+        self.__userpriv = userpriv
+        spawn_opts = {'umask': 0002}
         if userpriv:
-            self.__userpriv = True
             spawn_opts.update({
                 "uid": os_data.portage_uid,
                 "gid": os_data.portage_gid,
                 "groups": [os_data.portage_gid]})
-        else:
-            if spawn.is_userpriv_capable():
-                spawn_opts.update({"gid": os_data.portage_gid,
-                                   "groups": [0, os_data.portage_gid]})
-            self.__userpriv = False
+        elif spawn.is_userpriv_capable():
+            spawn_opts.update({
+                "gid": os_data.portage_gid,
+                "groups": [0, os_data.portage_gid]})
 
         # open the pipes to be used for chatting with the new daemon
         cread, cwrite = os.pipe()

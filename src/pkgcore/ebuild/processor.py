@@ -257,30 +257,9 @@ class EbuildProcessor(object):
         self._outstanding_expects = []
         self._metadata_paths = None
 
-        self.__userpriv = userpriv
-        spawn_opts = {'umask': 0002}
-        if userpriv:
-            spawn_opts.update({
-                "uid": os_data.portage_uid,
-                "gid": os_data.portage_gid,
-                "groups": [os_data.portage_gid]})
-        elif spawn.is_userpriv_capable():
-            spawn_opts.update({
-                "gid": os_data.portage_gid,
-                "groups": [0, os_data.portage_gid]})
-
-        # open the pipes to be used for chatting with the new daemon
-        cread, cwrite = os.pipe()
-        dread, dwrite = os.pipe()
-        self.__sandbox = False
-
-        if fd_pipes is None:
-            fd_pipes = {}
-
         # since it's questionable which spawn method we'll use (if
         # sandbox fex), we ensure the bashrc is invalid.
-        env = {x: "/etc/portage/spork/not/valid/ha/ha"
-               for x in ("BASHRC", "BASH_ENV")}
+        env = {x: "/etc/portage/invalid/path/" for x in ("BASHRC", "BASH_ENV")}
 
         if int(os.environ.get('PKGCORE_PERF_DEBUG', 0)):
             env["PKGCORE_PERF_DEBUG"] = os.environ['PKGCORE_PERF_DEBUG']
@@ -296,21 +275,33 @@ class EbuildProcessor(object):
         env["PATH"] = os.pathsep.join(
             list(const.PATH_FORCED_PREPEND) + [os.environ["PATH"]])
 
-        args = []
+        self.__userpriv = userpriv
+        spawn_opts = {'umask': 0002}
+        if userpriv:
+            spawn_opts.update({
+                "uid": os_data.portage_uid,
+                "gid": os_data.portage_gid,
+                "groups": [os_data.portage_gid]})
+        elif spawn.is_userpriv_capable():
+            spawn_opts.update({
+                "gid": os_data.portage_gid,
+                "groups": [0, os_data.portage_gid]})
+
+        self.__sandbox = sandbox
         if sandbox:
             if not spawn.is_sandbox_capable():
                 raise ValueError("spawn lacks sandbox capabilities")
-            self.__sandbox = True
             spawn_func = spawn.spawn_sandbox
 #            env.update({"SANDBOX_DEBUG":"1", "SANDBOX_DEBUG_LOG":"/var/tmp/test"})
         else:
             spawn_func = spawn.spawn
 
+
         # force to a neutral dir so that sandbox won't explode if
         # ran from a nonexistent dir
         spawn_opts["cwd"] = e_const.EBD_PATH
 
-        # Force the pipes to be high up fd wise so nobody stupidly hits 'em, we
+        # force the pipes to be high up fd wise so nobody stupidly hits 'em, we
         # start from max-3 to avoid a bug in older bash where it doesn't check
         # if an fd is in use before claiming it.
         max_fd = min(spawn.max_fd_limit, 1024)
@@ -318,12 +309,22 @@ class EbuildProcessor(object):
             "PKGCORE_EBD_READ_FD": str(max_fd-4),
             "PKGCORE_EBD_WRITE_FD": str(max_fd-3)})
 
-        # allow any pipe overrides except the ones we use to communicate
-        default_pipes = {0: 0, 1: 1, 2: 2}
-        fd_pipes.update({k: v for k, v in default_pipes.iteritems() if k not in fd_pipes})
-        ebd_pipes = {max_fd-4: cread, max_fd-3: dwrite}
-        fd_pipes.update(ebd_pipes)
+        # open the pipes to be used for chatting with the new daemon
+        cread, cwrite = os.pipe()
+        dread, dwrite = os.pipe()
 
+        # set stdin, stdout and stderr
+        # allow any pipe overrides except the ones we use to communicate
+        if fd_pipes is None:
+            fd_pipes = {0: 0, 1: 1, 2: 2}
+        else:
+            fd_pipes.setdefault(0, 0)
+            fd_pipes.setdefault(1, 1)
+            fd_pipes.setdefault(2, 2)
+        fd_pipes[max_fd-4] = cread
+        fd_pipes[max_fd-3] = dwrite
+
+        args = []
         # pgid=0: Each ebuild processor is the process group leader for all its
         # spawned children so everything can be terminated easily if necessary.
         self.pid = spawn_func(

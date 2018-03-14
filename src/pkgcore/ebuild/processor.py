@@ -21,19 +21,6 @@ __all__ = (
     "request_ebuild_processor", "release_ebuild_processor", "EbuildProcessor",
     "UnhandledCommand", "expected_ebuild_env")
 
-try:
-    import threading
-    _global_ebp_lock = threading.Lock()
-    _acquire_global_ebp_lock = _global_ebp_lock.acquire
-    _release_global_ebp_lock = _global_ebp_lock.release
-except ImportError:
-    def _acquire_global_ebp_lock():
-        pass
-
-    def _release_global_ebp_lock():
-        pass
-
-
 inactive_ebp_list = []
 active_ebp_list = []
 
@@ -64,41 +51,20 @@ demandload(
 )
 
 
+try:
+    import threading
+except ImportError:
+    import dummy_threading as threading
+
+_global_ebp_lock = threading.Lock()
+
 def _single_thread_allowed(functor):
-    def _inner(*args, **kwds):
-        _acquire_global_ebp_lock()
-        try:
-            return functor(*args, **kwds)
-        finally:
-            _release_global_ebp_lock()
+    def _inner(*args, **kwargs):
+        with _global_ebp_lock:
+            return functor(*args, **kwargs)
     _inner.func = functor
     pretty_docs(_inner, name=functor.__name__)
     return _inner
-
-
-@_single_thread_allowed
-def shutdown_all_processors():
-    """Kill off all known processors."""
-    try:
-        while active_ebp_list:
-            try:
-                active_ebp_list.pop().shutdown_processor(
-                    ignore_keyboard_interrupt=True)
-            except EnvironmentError:
-                pass
-
-        while inactive_ebp_list:
-            try:
-                inactive_ebp_list.pop().shutdown_processor(
-                    ignore_keyboard_interrupt=True)
-            except EnvironmentError:
-                pass
-    except Exception as e:
-        traceback.print_exc()
-        logger.error(e)
-        raise
-
-spawn.atexit_register(shutdown_all_processors)
 
 
 @_single_thread_allowed
@@ -153,6 +119,27 @@ def release_ebuild_processor(ebp):
     else:
         inactive_ebp_list.append(ebp)
     return True
+
+
+@_single_thread_allowed
+def shutdown_all_processors():
+    """Kill off all known processors."""
+    try:
+        def ebp_shutdown(ebp):
+            try:
+                ebp.shutdown_processor(ignore_keyboard_interrupt=True)
+            except EnvironmentError:
+                pass
+        while active_ebp_list:
+            ebp_shutdown(active_ebp_list.pop())
+        while inactive_ebp_list:
+            ebp_shutdown(inactive_ebp_list.pop())
+    except Exception as e:
+        traceback.print_exc()
+        logger.error(e)
+        raise
+
+spawn.atexit_register(shutdown_all_processors)
 
 
 @contextlib.contextmanager

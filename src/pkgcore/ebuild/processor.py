@@ -301,7 +301,7 @@ class EbuildProcessor(object):
         dread, dwrite = os.pipe()
 
         # set stdin, stdout and stderr
-        # allow any pipe overrides except the ones we use to communicate
+        # allow any pipe overrides except the ones used to communicate
         if fd_pipes is None:
             fd_pipes = {0: 0, 1: 1, 2: 2}
         else:
@@ -322,6 +322,9 @@ class EbuildProcessor(object):
         os.close(dwrite)
         self.ebd_write = os.fdopen(cwrite, "w")
         self.ebd_read = os.fdopen(dread, "r")
+
+        # daemon should be up and running
+        # continue initialization
 
         # basically a quick "yo" to the daemon
         self.write("dude?")
@@ -419,6 +422,7 @@ class EbuildProcessor(object):
     def _timeout_ebp(self, signum, frame):
         raise TimeoutError("ebp for pid '%i' appears dead, timing out" % self.pid)
 
+    # FIXME: timeout > 0 and _outstanding_expects nonempty
     def expect(self, want, async=False, flush=False, timeout=0):
         """Read from the daemon, check if the returned string is expected.
 
@@ -447,6 +451,7 @@ class EbuildProcessor(object):
         self._outstanding_expects.append((flush, want))
         return self._consume_async_expects()
 
+    # FIXME ignore_killed is unused
     def readlines(self, lines, ignore_killed=False):
         mydata = []
         while lines > 0:
@@ -538,6 +543,7 @@ class EbuildProcessor(object):
             return self._consume_async_expects()
         return True
 
+    # TODO? property
     def allow_eclass_caching(self):
         self._eclass_caching = True
 
@@ -563,6 +569,8 @@ class EbuildProcessor(object):
             return True
         return False
 
+    # TODO? property
+    # TODO cleanup: locked, processing_lock, lock(), unlock()
     def lock(self):
         """Lock the processor.
 

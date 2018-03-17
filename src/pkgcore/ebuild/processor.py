@@ -81,7 +81,7 @@ def request_ebuild_processor(userpriv=False, sandbox=None, fd_pipes=None):
         sandbox = spawn.is_sandbox_capable()
 
     for x in inactive_ebp_list:
-        if x.userprived() == userpriv and (not sandbox or x.sandboxed()):
+        if x.userprived == userpriv and (not sandbox or x.sandboxed):
             inactive_ebp_list.remove(x)
             if not x.is_alive:
                 continue
@@ -374,10 +374,12 @@ class EbuildProcessor(object):
         self.write("start_processing")
         return self.generic_handler(additional_commands=additional_commands)
 
+    @property
     def sandboxed(self):
         """is this instance sandboxed?"""
         return self.__sandbox
 
+    @property
     def userprived(self):
         """is this instance userprived?"""
         return self.__userpriv

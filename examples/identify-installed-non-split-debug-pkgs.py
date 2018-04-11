@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 from pkgcore.config import load_config
 from pkgcore.util.file_type import file_identifier

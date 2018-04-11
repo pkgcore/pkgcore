@@ -6,5 +6,6 @@ recursive-include doc *
 recursive-include ebd *
 recursive-include examples *
 recursive-include shell *
+recursive-include tests *
 recursive-include src *.[ch]
 global-exclude *.pyc *.pyo __pycache__

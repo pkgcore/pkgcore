@@ -2,7 +2,7 @@
 source = pkgcore
 branch = True
 omit =
-	src/pkgcore/test/*
+	tests/*
 	*/_const.py
 	*/_verinfo.py
 

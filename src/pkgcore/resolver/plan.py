@@ -128,7 +128,7 @@ class resolver_frame(object):
             cpv = pkg.cpvstr
             pkg = getattr(pkg.repo, 'repo_id', None)
             if pkg is not None:
-                pkg = "%s::%s" % (cpv, pkg)
+                pkg = f"{cpv}::{pkg}"
             else:
                 pkg = str(pkg)
         if self.succeeded is not None:

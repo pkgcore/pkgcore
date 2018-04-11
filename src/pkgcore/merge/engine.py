@@ -118,7 +118,7 @@ class MergeEngine(object):
             if not callable(v):
                 raise TypeError(
                     "cset values must be either the string name of "
-                    "existing methods, or callables (got %s)" % v)
+                    f"existing methods, or callables (got {v})")
 
             if k in preserves:
                 self.add_preserved_cset(k, v)
@@ -258,7 +258,7 @@ class MergeEngine(object):
             # yes this is evil awareness of LazyValDict internals...
             self.preserved_csets._vals[name] = new_cset
         else:
-            raise KeyError("attempted to replace a non preserved cset: %s" % (name,))
+            raise KeyError(f"attempted to replace a non preserved cset: {name}")
 
     def regenerate_csets(self):
         """

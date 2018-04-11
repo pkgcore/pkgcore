@@ -58,15 +58,15 @@ class tree(prototype.tree):
             st = os.stat(self.location)
             if not stat.S_ISDIR(st.st_mode):
                 raise errors.InitializationError(
-                    "base not a dir: %r" % self.location)
+                    f"base not a dir: {self.location!r}")
             elif not st.st_mode & (os.X_OK|os.R_OK):
                 raise errors.InitializationError(
-                    "base lacks read/executable: %r" % self.location)
+                    f"base lacks read/executable: {self.location!r}")
 
         except OSError as e:
             if e.errno != errno.ENOENT:
                 raise errors.InitializationError(
-                    "lstat failed on base %r" % self.location) from e
+                    f"lstat failed on base: {self.location!r}") from e
 
         self.package_class = self.package_factory(self)
 
@@ -79,7 +79,7 @@ class tree(prototype.tree):
                 return tuple(x for x in listdir_dirs(self.location) if not
                              x.startswith('.'))
             except EnvironmentError as e:
-                raise KeyError("failed fetching categories: %s" % str(e)) from e
+                raise KeyError(f"failed fetching categories: {e}") from e
         finally:
             pass
 
@@ -103,9 +103,7 @@ class tree(prototype.tree):
                     elif '-try' in x:
                         bad = 'try'
                     else:
-                        raise InvalidCPV(
-                            "%s/%s: no version component" %
-                            (category, x))
+                        raise InvalidCPV(f"{category}/{x}: no version component")
                     logger.error(
                         "merged -%s pkg detected: %s/%s. "
                         "throwing exception due to -%s not being a valid"
@@ -117,8 +115,7 @@ class tree(prototype.tree):
                         "Use the offending pkg manager that merged it to "
                         "unmerge it.", bad, category, x, bad, bad)
                     raise InvalidCPV(
-                        "%s/%s: -%s version component is "
-                        "not standard." % (category, x, bad))
+                        f"{category}/{x}: -{bad} version component is not standard.")
                 l.add(pkg.package)
                 d.setdefault((category, pkg.package), []).append(pkg.fullver)
         except EnvironmentError as e:
@@ -133,11 +130,11 @@ class tree(prototype.tree):
         return tuple(self._versions_tmp_cache.pop(catpkg))
 
     def _get_ebuild_path(self, pkg):
-        s = "%s-%s" % (pkg.package, pkg.fullver)
+        s = f"{pkg.package}-{pkg.fullver}"
         return pjoin(self.location, pkg.category, s, s + ".ebuild")
 
     def _get_path(self, pkg):
-        s = "%s-%s" % (pkg.package, pkg.fullver)
+        s = f"{pkg.package}-{pkg.fullver}"
         return pjoin(self.location, pkg.category, s)
 
     _metadata_rewrites = {
@@ -150,7 +147,7 @@ class tree(prototype.tree):
         return IndeterminantDict(
             partial(self._internal_load_key, pjoin(
                 self.location, pkg.category,
-                "%s-%s" % (pkg.package, pkg.fullver))))
+                f"{pkg.package}-{pkg.fullver}")))
 
     def _internal_load_key(self, path, key):
         key = self._metadata_rewrites.get(key, key)
@@ -197,7 +194,7 @@ class tree(prototype.tree):
                 del oe
 
     def __str__(self):
-        return '%s: location %s' % (self.repo_id, self.location)
+        return f"{self.repo_id}: location {self.location}"
 
 
 class ConfiguredTree(wrapper.tree, tree):
@@ -213,8 +210,8 @@ class ConfiguredTree(wrapper.tree, tree):
             __slots__ = ()
 
             def __str__(self):
-                return "installed pkg: %s::%s, source repo %r" % (
-                    self.cpvstr, self.repo.repo_id, self.source_repository)
+                return f"installed pkg: {self.cpvstr}::{self.repo.repo_id}, " \
+                       f"source repo {self.source_repository!r}"
 
         wrapper.tree.__init__(self, vdb, package_class=package_class)
         self.domain = domain

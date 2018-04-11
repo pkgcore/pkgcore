@@ -104,9 +104,9 @@ class StoreTarget(argparse._AppendAction):
                         raise argparse.ArgumentTypeError(
                             'repo or domain must be defined in the namespace')
                     if not os.path.exists(token):
-                        raise argparse.ArgumentError(self, "nonexistent ebuild: %r" % token)
+                        raise argparse.ArgumentError(self, f"nonexistent ebuild: {token!r}")
                     elif not os.path.isfile(token):
-                        raise argparse.ArgumentError(self, "invalid ebuild: %r" % token)
+                        raise argparse.ArgumentError(self, f"invalid ebuild: {token!r}")
                     if self.allow_external_repos and token not in repo:
                         repo_root_dir = os.path.abspath(
                             pjoin(token, os.pardir, os.pardir, os.pardir))
@@ -115,7 +115,7 @@ class StoreTarget(argparse._AppendAction):
                                 repo_root_dir, config=namespace.config)
                         except TypeError as e:
                             raise argparse.ArgumentError(
-                                self, "ebuild not in valid repo: %r" % token)
+                                self, f"ebuild not in valid repo: {token!r}")
                     try:
                         restriction = repo.path_restrict(token)
                     except ValueError as e:
@@ -176,15 +176,14 @@ class StoreConfigObject(argparse._StoreAction):
         except KeyError:
             choices = ', '.join(self._choices(sections))
             if choices:
-                choices = ' (available: %s)' % choices
+                choices = f" (available: {choices})"
 
             raise argparse.ArgumentError(
-                self, "couldn't find %s%r%s" %
-                (obj_type, name, choices))
+                self, f"couldn't find {obj_type}{name!r}{choices}")
 
         if self.writable and getattr(val, 'frozen', False):
             raise argparse.ArgumentError(
-                self, "%s%r is readonly" % (obj_type, name))
+                self, f"{obj_type}{name!r} is readonly")
 
         if self.store_name:
             return name, val
@@ -258,7 +257,7 @@ class StoreConfigObject(argparse._StoreAction):
             obj = getattr(namespace.config, config_type)[key]
         except KeyError:
             raise argparse.ArgumentError(
-                None, "couldn't find %s %r" % (config_type, attr))
+                None, f"couldn't find {config_type} {attr!r}")
         setattr(namespace, attr, obj)
 
 
@@ -292,7 +291,7 @@ class StoreRepoObject(StoreConfigObject):
 
         self.repo_type = kwargs.pop('repo_type', 'all')
         if self.repo_type not in self.valid_repo_types:
-            raise argparse.ArgumentTypeError('unknown repo type: %r' % self.repo_type)
+            raise argparse.ArgumentTypeError(f"unknown repo type: {self.repo_type!r}")
         self.repo_key = self.valid_repo_types[self.repo_type]
 
         self.allow_aliases = set(kwargs.pop("allow_aliases", ()))
@@ -332,7 +331,7 @@ class StoreRepoObject(StoreConfigObject):
         for repo_name, repo in sorted(unstable_unique(sections.items())):
             repo_name = getattr(repo, 'repo_id', repo_name)
             if hasattr(repo, 'location'):
-                yield '%s:%s' % (repo_name, repo.location)
+                yield f"{repo_name}:{repo.location}"
             else:
                 yield repo_name
 
@@ -374,7 +373,7 @@ class DomainFromPath(StoreConfigObject):
     def _load_obj(self, sections, requested_path):
         targets = list(find_domains_from_path(sections, requested_path))
         if not targets:
-            raise ValueError("couldn't find domain at path %r" % (requested_path,))
+            raise ValueError(f"couldn't find domain at path {requested_path!r}")
         elif len(targets) != 1:
             raise ValueError(
                 "multiple domains claim root %r: domains %s" %
@@ -405,12 +404,12 @@ class BooleanQuery(arghparse.DelayedValue):
         else:
             raise ValueError(
                 "klass_type either needs to be 'or', 'and', "
-                "or a callable.  Got %r" % (klass_type,))
+                f"or a callable. Got {klass_type!r}")
 
         if converter is not None and not callable(converter):
             raise ValueError(
                 "converter either needs to be None, or a callable;"
-                " got %r" % (converter,))
+                f" got {converter!r}")
 
         self.converter = converter
         self.priority = int(priority)
@@ -451,7 +450,7 @@ def make_query(parser, *args, **kwargs):
     if dest is None:
         raise TypeError("dest must be specified via kwargs")
     attrs = kwargs.pop("attrs", [])
-    subattr = "_%s" % (dest,)
+    subattr = f"_{dest}"
     kwargs["dest"] = subattr
     if kwargs.get('type', False) is None:
         del kwargs['type']
@@ -602,7 +601,7 @@ def convert_to_restrict(sequence, default=packages.AlwaysTrue):
         for x in sequence:
             l.append(parserestrict.parse_match(x))
     except parserestrict.ParseError as e:
-        raise argparse.ArgumentError("arg %r isn't a valid atom: %s" % (x, e)) from e
+        raise argparse.ArgumentError(f"invalid atom: {x!r}: {e}") from e
     return l or [default]
 
 
@@ -634,7 +633,7 @@ class Tool(tool.Tool):
                 tb = sys.exc_info()[-1]
                 dump_error(e, 'Error while parsing arguments', tb=tb)
             else:
-                self.parser.error("config error: %s" % (e,))
+                self.parser.error(f"config error: {e}")
         elif isinstance(e, config_errors.ConfigurationError):
             # find the first non-config exception in the chain if it exists
             # for the displayed message
@@ -644,7 +643,7 @@ class Tool(tool.Tool):
                     break
             else:
                 # if it's internal, display the error for the commandline
-                self.parser.error("config error: %s" % (exc,))
+                self.parser.error(f"config error: {exc}")
             # dump the error if it's external
             # TODO: extract the traceback object from the exception when py3 only
             tb = sys.exc_info()[-1]

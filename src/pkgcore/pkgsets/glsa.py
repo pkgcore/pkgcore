@@ -150,11 +150,11 @@ class GlsaDirSet(object, metaclass=generic_equality):
         glob = base.endswith("*")
         if glob:
             base = base[:-1]
-        base = cpv.versioned_CPV("cat/pkg-%s" % base)
+        base = cpv.versioned_CPV(f"cat/pkg-{base}")
         restrict = self.op_translate[op.lstrip("r")]
         if glob:
             if op != "eq":
-                raise ValueError("glob cannot be used with %s ops" % op)
+                raise ValueError(f"glob cannot be used with {op} ops")
             return packages.PackageRestriction(
                 "fullver", values.StrGlobMatch(base.fullver))
         if op.startswith("r"):

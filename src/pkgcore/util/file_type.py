@@ -46,9 +46,7 @@ class file_identifier(object):
     def _fallback_file(path):
         ret, out = spawn_get_output(["file", path])
         if ret != 0:
-            raise ValueError(
-                "file output was non zero- ret:%r out:%r" %
-                (ret, out))
+            raise ValueError(f"file output was non zero- ret:{ret!r} out:{out!r}")
         out = ''.join(out)
         if out.startswith(path):
             out = out[len(path):]

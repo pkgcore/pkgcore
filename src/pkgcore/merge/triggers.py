@@ -616,7 +616,7 @@ class CommonDirectoryModes(base):
     directories = [pjoin('/usr', x) for x in ('.', 'lib', 'lib64', 'lib32',
         'bin', 'sbin', 'local')]
     directories.extend(pjoin('/usr/share', x) for x in ('.', 'man', 'info'))
-    directories.extend('/usr/share/man/man%i' % x for x in range(1, 10))
+    directories.extend(f'/usr/share/man/man{x}' for x in range(1, 10))
     directories.extend(['/lib', '/lib32', '/lib64', '/etc', '/bin', '/sbin', '/var'])
     directories = frozenset(map(normpath, directories))
 
@@ -765,9 +765,9 @@ class BinaryDebug(ThreadedTrigger):
         self.mode = mode = mode.lower()
         if mode not in ('split', 'strip'):
             raise TypeError("mode %r is unknown; must be either split or strip")
-        self.thread_trigger = getattr(self, '_%s' % mode)
-        self.threading_setup = getattr(self, '_%s_setup' % mode)
-        self.threading_finish = getattr(self, '_%s_finish' % mode)
+        self.thread_trigger = getattr(self, f'_{mode}')
+        self.threading_setup = getattr(self, f'_{mode}_setup')
+        self.threading_finish = getattr(self, f'_{mode}_finish')
 
         self._strip_binary = strip_binary
         self._objcopy_binary = objcopy_binary
@@ -778,13 +778,13 @@ class BinaryDebug(ThreadedTrigger):
 
     def _initialize_paths(self, pkg, progs):
         for x in progs:
-            obj = getattr(self, "_%s_binary" % x)
+            obj = getattr(self, f"_{x}_binary")
             if obj is None:
                 try:
-                    obj = process.find_binary("%s-%s" % (pkg.chost, x))
+                    obj = process.find_binary(f"{pkg.chost}-{x}")
                 except process.CommandNotFound:
                     obj = process.find_binary(x)
-            setattr(self, '%s_binary' % x, obj)
+            setattr(self, f'{x}_binary', obj)
 
     def _strip_fsobj(self, fs_obj, ftype, reporter, quiet=False):
         args = self._strip_flags

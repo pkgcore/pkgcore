@@ -47,8 +47,9 @@ def convert_glob(token):
     elif not valid_globbing(token):
         raise ParseError(
             "globs must be composed of [\w-.+], with optional "
-            "'*'- '%s' is disallowed however" % token)
-    pattern = "^%s$" % (re.escape(token).replace("\*", ".*"),)
+            f"'*'- {token!r} is disallowed however")
+    pattern = re.escape(token).replace('\*', '.*')
+    pattern = f"^{pattern}$"
     return values.StrRegex(pattern, match=True)
 
 
@@ -91,8 +92,7 @@ def parse_match(text):
     orig_text = text = text.strip()
     if "!" in text:
         raise ParseError(
-            "'!' or any form of blockers make no sense in this usage: '%s'" % (
-                text,))
+            f"'!' or any form of blockers make no sense in this usage: {text!r}")
 
     restrictions = []
     if '::' in text:
@@ -121,12 +121,11 @@ def parse_match(text):
                 return packages.AndRestriction(*restrictions)
         elif text.startswith("*"):
             raise ParseError(
-                "cannot do prefix glob matches with version ops: %s" % (
-                    orig_text,))
+                f"cannot do prefix glob matches with version ops: {orig_text}")
         # ok... fake category.  whee.
         try:
             r = list(collect_package_restrictions(
-                     atom.atom("%scategory/%s" % (ops, text)).restrictions,
+                     atom.atom(f"{ops}category/{text}").restrictions,
                      attrs=("category",), invert=True))
         except errors.MalformedAtom as e:
             e.atom = orig_text
@@ -166,16 +165,15 @@ def parse_pv(repo, text):
     try:
         return cpv.CPV.versioned(text)
     except errors.InvalidCPV:
-        restrict = parse_match('=%s' % (text,))
+        restrict = parse_match(f"={text}")
         result = None
         for match in repo.itermatch(restrict):
             if result is not None:
                 raise ParseError(
-                    'multiple matches for %s (%s, %s)' %
-                    (text, result.cpvstr, match.cpvstr))
+                    f"multiple matches for {text} ({result.cpvstr}, {match.cpvstr})")
             result = match
         if result is None:
-            raise ParseError('no matches for %s' % (text,))
+            raise ParseError(f"no matches for {text}")
         return cpv.CPV(result.category, result.package, result.version)
 
 

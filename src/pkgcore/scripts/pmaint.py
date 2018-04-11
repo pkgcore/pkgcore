@@ -71,18 +71,18 @@ def sync_main(options, out, err):
 
         if not repo.operations.supports("sync"):
             continue
-        out.write("*** syncing %s" % repo_name)
+        out.write(f"*** syncing {repo_name}")
         ret = False
         try:
             ret = repo.operations.sync(verbosity=verbosity)
         except OperationError:
             pass
         if not ret:
-            out.write("*** failed syncing %s" % repo_name)
+            out.write(f"*** failed syncing {repo_name}")
             failed.append(repo_name)
         else:
             succeeded.append(repo_name)
-            out.write("*** synced %s" % repo_name)
+            out.write(f"*** synced {repo_name}")
 
     total = len(succeeded) + len(failed)
     if total > 1:
@@ -128,14 +128,14 @@ def copy_main(options, out, err):
 
     for pkg in source_repo.itermatch(options.query):
         if options.ignore_existing and pkg.versioned_atom in target_repo:
-            out.write("skipping existing pkg: %s" % (pkg.cpvstr,))
+            out.write(f"skipping existing pkg: {pkg.cpvstr}")
             continue
         # TODO: remove this once we limit src repos to non-virtual (pkg.provided) repos
         if not getattr(pkg, 'package_is_real', True):
-            out.write("skipping virtual pkg: %s" % (pkg.cpvstr,))
+            out.write(f"skipping virtual pkg: {pkg.cpvstr}")
             continue
 
-        out.write("copying %s... " % (pkg,))
+        out.write(f"copying {pkg}... ")
         if getattr(getattr(pkg, 'repo', None), 'livefs', False):
             out.write("forcing regen of contents due to src being livefs..")
             new_contents = contents.contentsSet(mutable=True)
@@ -152,8 +152,7 @@ def copy_main(options, out, err):
                         new_contents = None
                         break
                     err.write(
-                        "warning: dropping fs obj %r since it "
-                        "doesn't exist" % fsobj)
+                        f"warning: dropping fs obj {fsobj!r} since it doesn't exist")
             if new_contents is None:
                 continue
             pkg = mutated.MutatedPkg(pkg, {'contents': new_contents})
@@ -196,13 +195,13 @@ def update_use_local_desc(repo, out, err):
                     return
                 raise
             except Exception as e:
-                err.write("caught exception '%s' while processing '%s'" % (e, p))
+                err.write(f"caught exception '{e}' while processing '{p}'")
                 ret = os.EX_DATAERR
         for k, v in sorted(res.items()):
             f.write(('%s - %s\n' % (':'.join(k), v)).encode('utf8'))
         f.close()
     except IOError as e:
-        err.write("Unable to update use.local.desc file '%s': %s" % (use_local_desc, e.strerror))
+        err.write(f"Unable to update use.local.desc file {use_local_desc!r}: {e.strerror}")
         ret = os.EX_IOERR
     finally:
         if f is not None:
@@ -234,7 +233,7 @@ def update_pkg_desc_index(repo, out, err):
             f.write('%s %s: %s\n' % (key, ' '.join(p.fullver for p in pkgs), pkgs[-1].description))
         f.close()
     except IOError as e:
-        err.write("Unable to update pkg_desc_index file '%s': %s" % (pkg_desc_index, e.strerror))
+        err.write(f"Unable to update pkg_desc_index file {pkg_desc_index!r}: {e.strerror}")
         ret = os.EX_IOERR
     finally:
         if f is not None:
@@ -287,10 +286,10 @@ def regen_main(options, out, err):
 
     for repo in iter_stable_unique(options.repos):
         if not repo.operations.supports("regen_cache"):
-            out.write("repository %s doesn't support cache regeneration" % (repo,))
+            out.write(f"repo {repo} doesn't support cache regeneration")
             continue
         elif not getattr(repo, 'cache', False) and not options.force:
-            out.write("skipping repo %s: cache disabled" % (repo,))
+            out.write(f"skipping repo {repo}: cache disabled")
             continue
 
         start_time = time.time()
@@ -311,7 +310,7 @@ def regen_main(options, out, err):
                 with open(timestamp, "w") as f:
                     f.write(time.strftime("%a, %d %b %Y %H:%M:%S +0000", time.gmtime()))
             except IOError as e:
-                err.write("Unable to update timestamp file %r: %s" % (timestamp, e.strerror))
+                err.write(f"Unable to update timestamp file {timestamp!r}: {e.strerror}")
                 ret.append(os.EX_IOERR)
 
         if options.use_local_desc:
@@ -355,7 +354,7 @@ def perl_rebuild_main(options, out, err):
         # scan just directories...
         for fsobj in contents.iterdirs():
             if matcher(fsobj.location):
-                out.write("%s" % (pkg.unversioned_atom,))
+                out.write(str(pkg.unversioned_atom))
                 break
     return 0
 
@@ -373,7 +372,7 @@ def env_update_main(options, out, err):
     if root is None:
         env_update.error("domain specified lacks a root setting; is it a virtual or remote domain?")
 
-    out.write("updating env for %r..." % (root,))
+    out.write(f"updating env for {root!r}...")
     try:
         triggers.perform_env_update(root, skip_ldso_update=options.skip_ldconfig)
     except IOError as e:
@@ -381,7 +380,7 @@ def env_update_main(options, out, err):
             env_update.error("failed updating env, lacking permissions")
         raise
     if not options.skip_ldconfig:
-        out.write("update ldso cache/elf hints for %r..." % (root,))
+        out.write(f"update ldso cache/elf hints for {root!r}...")
         merge_triggers.update_elf_hints(root)
     return 0
 
@@ -408,11 +407,11 @@ def mirror_main(options, out, err):
         pkg_ops = domain.pkg_operations(pkg)
         if not pkg_ops.supports("mirror"):
             warnings = True
-            out.write("pkg %s doesn't support mirroring\n" % (pkg,))
+            out.write(f"pkg {pkg} doesn't support mirroring\n")
             continue
-        out.write("mirroring %s" % (pkg,))
+        out.write(f"mirroring {pkg}")
         if not pkg_ops.mirror():
-            out.error("pkg %s failed to mirror" % (pkg,))
+            out.error(f"pkg {pkg} failed to mirror")
             if not options.ignore_failures:
                 return 2
             out.info("ignoring..\n")
@@ -498,7 +497,7 @@ def _digest_validate(parser, namespace):
             try:
                 restrictions.append(parse_match(target))
             except ValueError:
-                digest.error("invalid atom: %r" % (target,))
+                digest.error(f"invalid atom: {target!r}")
 
     restriction = packages.OrRestriction(*restrictions)
     if restriction not in repo:

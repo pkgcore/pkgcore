@@ -2,6 +2,6 @@
 # License: BSD/GPL2
 
 pkgcore_plugins = {
-    'syncer': ['pkgcore.sync.%s.%s_syncer' % (x, x) for x in
+    'syncer': [f'pkgcore.sync.{x}.{x}_syncer' for x in
                ('bzr', 'cvs', 'darcs', 'git', 'git_svn', 'hg', 'svn')],
 }

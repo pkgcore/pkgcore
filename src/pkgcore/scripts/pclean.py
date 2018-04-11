@@ -271,10 +271,10 @@ def config_main(options, out, err):
     }
 
     for type, data in changes.items():
-        out.write('%s:' % type_mapping[type])
+        out.write(f"{type_mapping[type]}:")
         for path, line, lineno, values in data:
-            out.write('%s:' % path)
-            out.write('%s -- line %s: %r' % (values, lineno, line))
+            out.write(f"{path}:")
+            out.write(f"{values} -- line {lineno}: {line!r}")
             out.write()
 
 
@@ -474,15 +474,15 @@ def _remove(options, out, err):
         # TODO: parallelize this
         for func, target in options.remove:
             if options.pretend and not options.quiet:
-                out.write('Would remove %s' % target)
+                out.write(f"Would remove {target}")
             elif options.verbose:
-                out.write('Removing %s' % target)
+                out.write(f"Removing {target}")
             try:
                 if not options.pretend:
                     func(target)
             except OSError as e:
                 if options.verbose or not options.quiet:
-                    err.write("%s: failed to remove %r: %s" % (options.prog, target, e.strerror))
+                    err.write(f"{options.prog}: failed to remove {target!r}: {e.strerror}")
                 ret = 1
                 continue
     else:

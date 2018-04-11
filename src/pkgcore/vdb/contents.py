@@ -118,8 +118,7 @@ class ContentsFile(contentsSet):
                     # XXX throw a corruption error
                     raise
             else:
-                raise Exception(
-                    "unknown entry type %r" % (line,))
+                raise Exception(f"unknown entry type {line!r}")
 
             yield obj
 
@@ -150,8 +149,7 @@ class ContentsFile(contentsSet):
                     s = "fif " + obj.location
 
                 else:
-                    raise Exception(
-                        "unknown type %s: %s" % (type(obj), obj))
+                    raise Exception(f"unknown type {type(obj)}: {obj}")
                 outfile.write(s + "\n")
             outfile.close()
 

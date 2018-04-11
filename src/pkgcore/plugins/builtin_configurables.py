@@ -20,7 +20,7 @@ for module in walker().walk_namespace('pkgcore'):
     for name in dir(module):
         obj = getattr(module, name)
         if getattr(obj, 'pkgcore_config_type', None) is not None:
-            targets.append('%s.%s' % (module.__name__, name))
+            targets.append(f'{module.__name__}.{name}')
 
 pkgcore_plugins = {
     'configurable': targets

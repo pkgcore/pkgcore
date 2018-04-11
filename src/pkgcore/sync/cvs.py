@@ -45,12 +45,12 @@ class cvs_syncer(base.dvcs_syncer):
         proto, uri = self.parse_uri(raw_uri)
         self.rsh = proto
         if self.rsh is None:
-            uri = ":anoncvs:%s" % uri
+            uri = f":anoncvs:{uri}"
         elif self.rsh == "pserver":
-            uri = ":pserver:%s" % uri
+            uri = f":pserver:{uri}"
             self.rsh = None
         else:
-            uri = ":ext:%s" % uri
+            uri = f":ext:{uri}"
         host, self.module = uri.rsplit(":", 1)
         base.dvcs_syncer.__init__(self, basedir, host, **kwargs)
 

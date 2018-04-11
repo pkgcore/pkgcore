@@ -31,7 +31,7 @@ class bzr_syncer(base.dvcs_syncer):
             if len(line) != 2:
                 continue
             if line[0] == 'parent branch':
-                uri = "bzr+%s" % (line[1].strip(),)
+                uri = f"bzr+{line[1].strip()}"
                 return (cls._rewrite_uri_from_stat(bzr_path, uri),)
         return None
 

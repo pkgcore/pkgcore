@@ -61,13 +61,13 @@ class Maintainer(object):
     def __str__(self):
         if self.name is not None:
             if self.email is not None:
-                res = '%s <%s>' % (self.name, self.email)
+                res = f'{self.name} <{self.email}>'
             else:
                 res = self.name
         else:
             res = self.email
         if self.description is not None:
-            return '%s (%s)' % (res, self.description)
+            return '{res} ({self.description})'
         return res
 
 
@@ -432,7 +432,7 @@ class RepoConfig(syncable.tree, metaclass=WeakInstMeta):
         if repo_name is None:
             if not self.is_empty:
                 logger.warning("repo lacks a defined name: %r", self.location)
-            repo_name = '<unlabeled repo %s>' % self.location
+            repo_name = f'<unlabeled repo {self.location}>'
         # repo-name setting from metadata/layout.conf overrides profiles/repo_name if it exists
         sf(self, 'repo_name', data.get('repo-name', repo_name.strip()))
 
@@ -524,7 +524,7 @@ class RepoConfig(syncable.tree, metaclass=WeakInstMeta):
                 def converter(key):
                     return (packages.AlwaysTrue, group + key)
 
-                for x in self._split_use_desc_file('desc/%s' % use_group, converter):
+                for x in self._split_use_desc_file(f'desc/{use_group}', converter):
                     yield x
 
         return tuple(f())

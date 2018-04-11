@@ -45,7 +45,7 @@ def package_keywords_splitter(val):
     try:
         return atom(v[0]), tuple(stable_unique(v[1:]))
     except ebuild_errors.MalformedAtom as e:
-        logger.warning('parsing error: %s' % (e,))
+        logger.warning('parsing error: %s', e)
 
 
 class ProfileError(errors.ParsingError):
@@ -54,8 +54,7 @@ class ProfileError(errors.ParsingError):
         self.path, self.filename, self.error = path, filename, error
 
     def __str__(self):
-        return "failed parsing %r in %r: %s" % (
-            self.filename, self.path, self.error)
+        return f"failed parsing {self.filename!r} in {self.path!r}: {self.error}"
 
 
 def load_property(filename, handler=iter_read_bash, fallback=(),
@@ -76,7 +75,7 @@ def load_property(filename, handler=iter_read_bash, fallback=(),
     :return: A :py:`klass.jit.attr_named` property instance.
     """
     def f(func):
-        f2 = klass.jit_attr_named('_%s' % (func.__name__,))
+        f2 = klass.jit_attr_named(f'_{func.__name__}')
         return f2(partial(
             _load_and_invoke, func, filename, handler, fallback,
             read_func, allow_recurse, eapi_optional))
@@ -147,7 +146,7 @@ class ProfileNode(object, metaclass=caching.WeakInstMeta):
         self.pms_strict = pms_strict
 
     def __str__(self):
-        return "Profile at %r" % self.path
+        return "Profile at {self.path!r}"
 
     def __repr__(self):
         return '<%s path=%r, @%#8x>' % (self.__class__.__name__, self.path, id(self))
@@ -199,7 +198,7 @@ class ProfileNode(object, metaclass=caching.WeakInstMeta):
                         try:
                             location = self._repo_map[repo_id]
                         except KeyError:
-                            raise ValueError("unknown repository name: %r" % repo_id)
+                            raise ValueError(f"unknown repository name: {repo_id!r}")
                         except TypeError:
                             raise ValueError("repo mapping is unset")
                     l.append(abspath(pjoin(location, 'profiles', path)))
@@ -219,7 +218,7 @@ class ProfileNode(object, metaclass=caching.WeakInstMeta):
             try:
                 return cpv.versioned_CPV(s)
             except cpv.InvalidCPV:
-                logger.warning('invalid package.provided entry: %r' % s)
+                logger.warning(f'invalid package.provided entry: {s!r}')
         return split_negations(data, _parse_cpv)
 
     @load_property("package.mask", allow_recurse=True)
@@ -271,7 +270,7 @@ class ProfileNode(object, metaclass=caching.WeakInstMeta):
                 logger.warning(e)
                 continue
             if len(l) == 1:
-                logger.warning("malformed line, missing USE flag(s): %r" % (line,))
+                logger.warning(f"malformed line, missing USE flag(s): {line!r}")
                 continue
             d[a.key].append(chunked_data(a, *split_negations(l[1:])))
 
@@ -396,7 +395,7 @@ class ProfileNode(object, metaclass=caching.WeakInstMeta):
             raise ProfileError(self.path, 'eapi', "multiple lines detected")
         eapi = get_eapi(data[0])
         if not eapi.is_supported:
-            raise ProfileError(self.path, 'eapi', 'unsupported eapi: %s' % data[0])
+            raise ProfileError(self.path, 'eapi', f'unsupported eapi: {data[0]}')
         return eapi
 
     eapi_atom = klass.alias_attr("eapi.atom_kls")
@@ -522,8 +521,7 @@ class ProfileStack(object):
                 else:
                     v = render_incrementals(
                         v,
-                        msg_prefix="While expanding %s, value %r: " %
-                        (incremental, v))
+                        msg_prefix=f"While expanding {incremental}, value {v!r}: ")
                     if v:
                         d[incremental] = tuple(v)
         return ImmutableDict(d.items())

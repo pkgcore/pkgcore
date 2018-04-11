@@ -78,7 +78,7 @@ def native_init(self, atom, negate_vers=False, eapi=-1):
                         x = x[1:]
                     if x[0] == '-':
                         raise errors.MalformedAtom(
-                            orig_atom, "malformed use flag: %s" % x)
+                            orig_atom, f"malformed use flag: {x}")
                 elif x[0] == '-':
                     x = x[1:]
 
@@ -93,10 +93,10 @@ def native_init(self, atom, negate_vers=False, eapi=-1):
                 elif x[0] not in alphanum:
                     raise errors.MalformedAtom(
                         orig_atom,
-                        "invalid first char spotted in use dep '%s' (must be alphanumeric)" % x)
+                        f"invalid first char spotted in use dep '{x}' (must be alphanumeric)")
                 if not valid_use_chars.issuperset(x):
                     raise errors.MalformedAtom(
-                        orig_atom, "invalid char spotted in use dep '%s'" % x)
+                        orig_atom, f"invalid char spotted in use dep '{x}'")
             except IndexError:
                 raise errors.MalformedAtom(
                     orig_atom, 'empty use dep detected')
@@ -115,11 +115,11 @@ def native_init(self, atom, negate_vers=False, eapi=-1):
             elif repo_id[0] in '-':
                 raise errors.MalformedAtom(
                     orig_atom,
-                    "invalid first char of repo_id '%s' (must not begin with a hyphen)" % repo_id)
+                    f"invalid first char of repo_id '{repo_id}' (must not begin with a hyphen)")
             elif not valid_repo_chars.issuperset(repo_id):
                 raise errors.MalformedAtom(
                     orig_atom,
-                    "repo_id may contain only [a-Z0-9_-/], found %r" % (repo_id,))
+                    f"repo_id may contain only [a-Z0-9_-/], found {repo_id!r}")
             atom = atom[:i2]
             sf(self, "repo_id", repo_id)
         else:
@@ -162,12 +162,12 @@ def native_init(self, atom, negate_vers=False, eapi=-1):
                 if chunk[0] in '-.':
                     raise errors.MalformedAtom(
                         orig_atom,
-                        "Slot targets must not start with a hypen or dot: %r" % chunk)
+                        "Slot targets must not start with a hypen or dot: {chunk!r}")
                 elif not valid_slot_chars.issuperset(chunk):
+                    invalid_chars = ', '.join(map(repr, sorted(set(chunk).difference(valid_slot_chars))))
                     raise errors.MalformedAtom(
                         orig_atom,
-                        "Invalid character(s) in slot target: %s" %
-                        ', '.join(map(repr, sorted(set(chunk).difference(valid_slot_chars)))))
+                        f"Invalid character(s) in slot target: {invalid_chars}")
 
             if len(slots) == 2:
                 slot, subslot = slots
@@ -221,7 +221,7 @@ def native_init(self, atom, negate_vers=False, eapi=-1):
             if getattr(self, x) is not None:
                 raise errors.MalformedAtom(
                     orig_atom,
-                    "%s atoms aren't supported for EAPI 0" % x)
+                    f"{x} atoms aren't supported for EAPI 0")
     elif eapi == 1:
         if self.use is not None:
             raise errors.MalformedAtom(
@@ -231,7 +231,7 @@ def native_init(self, atom, negate_vers=False, eapi=-1):
         if self.repo_id is not None:
             raise errors.MalformedAtom(
                 orig_atom,
-                "repo_id atoms aren't supported for EAPI %i" % eapi)
+                f"repo_id atoms aren't supported for EAPI {eapi}")
     if use_start != -1 and slot_start != -1 and use_start < slot_start:
         raise errors.MalformedAtom(
             orig_atom,
@@ -397,7 +397,7 @@ class atom(boolean.AndRestriction, metaclass=generic_equality):
 
     def __repr__(self):
         if self.op == '=*':
-            atom = "=%s*" % self.cpvstr
+            atom = f"={self.cpvstr}*"
         else:
             atom = self.op + self.cpvstr
         if self.blocks:
@@ -409,13 +409,13 @@ class atom(boolean.AndRestriction, metaclass=generic_equality):
                 atom = '!' + atom
         attrs = [atom]
         if self.use:
-            attrs.append('use=%r' % (self.use,))
+            attrs.append(f'use={self.use!r}')
         if self.slot is not None:
-            attrs.append('slot=%r' % (self.slot,))
+            attrs.append(f'slot={self.slot!r}')
         if self.subslot is not None:
-            attrs.append('subslot=%r' % (self.subslot,))
+            attrs.append(f'subslot={self.subslot!r}')
         if self.repo_id is not None:
-            attrs.append('repo_id=%r' % (self.repo_id,))
+            attrs.append(f'repo_id={self.repo_id!r}')
         return '<%s %s @#%x>' % (
             self.__class__.__name__, ' '.join(attrs), id(self))
 
@@ -443,7 +443,7 @@ class atom(boolean.AndRestriction, metaclass=generic_equality):
 
     def __str__(self):
         if self.op == '=*':
-            s = "=%s*" % self.cpvstr
+            s = f"={self.cpvstr}*"
         else:
             s = self.op + self.cpvstr
         if self.blocks:
@@ -452,17 +452,17 @@ class atom(boolean.AndRestriction, metaclass=generic_equality):
             else:
                 s = '!' + s
         if self.slot:
-            s += ":%s" % self.slot
+            s += f":{self.slot}"
             if self.subslot:
-                s += "/%s" % self.subslot
+                s += f"/{self.subslot}"
             if self.slot_operator == "=":
                 s += self.slot_operator
         elif self.slot_operator:
-            s += ":%s" % self.slot_operator
+            s += f":{self.slot_operator}"
         if self.repo_id:
-            s += "::%s" % self.repo_id
+            s += f"::{self.repo_id}"
         if self.use:
-            s += "[%s]" % ",".join(self.use)
+            s += f"[{','.join(self.use)}]"
         return s
 
     __hash__ = reflective_hash('_hash')
@@ -714,7 +714,7 @@ class transitive_use_atom(atom):
         if not varied:
             s = ','.join(forced_use)
             if s:
-                s = '[%s]' % s
+                s = f'[{s}]'
             return (self._nontransitive_use_atom(atom_str + s), )
 
         flag = varied[0]

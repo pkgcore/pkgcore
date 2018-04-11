@@ -261,17 +261,17 @@ class base(metadata.package):
 
     @property
     def P(self):
-        return "%s-%s" % (self.package, self.version)
+        return f"{self.package}-{self.version}"
 
     @property
     def PF(self):
-        return "%s-%s" % (self.package, self.fullver)
+        return f"{self.package}-{self.fullver}"
 
     @property
     def PR(self):
-        r = self.revision
-        if r is not None:
-            return 'r%s' % r
+        rev = self.revision
+        if rev is not None:
+            return f'r{rev}'
         return 'r0'
 
     @property
@@ -286,7 +286,7 @@ class base(metadata.package):
         return self._parent._get_metadata(self, ebp=ebp, force_regen=force_regen)
 
     def __str__(self):
-        return "ebuild src: %s" % self.cpvstr
+        return f"ebuild src: {self.cpvstr}"
 
     def __repr__(self):
         return "<%s cpv=%r @%#8x>" % (self.__class__, self.cpvstr, id(self))

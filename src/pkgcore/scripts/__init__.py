@@ -17,12 +17,13 @@ def run(script_name):
         script = import_module(script_module)
     except ImportError as e:
         # TODO: when py3 only, check __cause__/__context__ and raise if both are None
-        sys.stderr.write('Failed importing: %s!\n' % str(e))
+        sys.stderr.write(f'Failed importing: {e}!\n')
+        py_version = '.'.join(map(str, sys.version_info[:3]))
         sys.stderr.write(
             'Verify that pkgcore and its deps are properly installed '
-            'and/or PYTHONPATH is set correctly for python %s.\n' %
-            ('.'.join(map(str, sys.version_info[:3])),))
+            f'and/or PYTHONPATH is set correctly for python {py_version}.\n')
         if '--debug' in sys.argv[1:]:
+            sys.stderr.write('\n')
             raise
         sys.stderr.write('Add --debug to the commandline for a traceback.\n')
         sys.exit(1)

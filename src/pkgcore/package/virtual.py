@@ -36,7 +36,7 @@ class package(metadata.package):
         elif key in ("depends", "post_rdepends", "provides"):
             val = OrRestriction()
         elif key == "slot":
-            val = "%s-%s" % (self.provider.category, self.version)
+            val = f"{self.provider.category}-{self.version}"
         else:
             return super(package, self).__getattr__(key)
         self.__dict__[key] = val

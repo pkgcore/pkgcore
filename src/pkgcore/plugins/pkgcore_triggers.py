@@ -2,7 +2,7 @@
 # License: GPL2/BSD
 
 pkgcore_plugins = {
-    'triggers': ['pkgcore.merge.triggers.%s' % x for x in [
+    'triggers': [f'pkgcore.merge.triggers.{x}' for x in [
         'ldconfig',
         'merge',
         'unmerge',

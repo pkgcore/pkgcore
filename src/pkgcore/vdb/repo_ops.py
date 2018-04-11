@@ -36,9 +36,9 @@ class install(repo_ops.install):
 
     def __init__(self, repo, newpkg, observer):
         base = pjoin(repo.location, newpkg.category)
-        dirname = "%s-%s" % (newpkg.package, newpkg.fullver)
+        dirname = f"{newpkg.package}-{newpkg.fullver}"
         self.install_path = pjoin(base, dirname)
-        self.tmp_write_path = pjoin(base, '.tmp.%s' % (dirname,))
+        self.tmp_write_path = pjoin(base, f".tmp.{dirname}")
         repo_ops.install.__init__(self, repo, newpkg, observer)
 
     def add_data(self, domain):
@@ -111,7 +111,7 @@ class install(repo_ops.install):
 
         #finally, we mark who made this.
         with open(pjoin(dirpath, "PKGMANAGER"), "w") as f:
-            f.write("pkgcore-%s\n" % __version__)
+            f.write(f"pkgcore-{__version__}\n")
         return True
 
     def finalize_data(self):

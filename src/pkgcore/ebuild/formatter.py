@@ -124,11 +124,11 @@ class PkgcoreFormatter(Formatter):
         if not repo:
             p = str(op.pkg.cpvstr)
         else:
-            p = "%s::%s" % (op.pkg.cpvstr, repo)
+            p = f"{op.pkg.cpvstr}::{repo}"
         if op.desc == "replace":
-            self.out.write("replace %s, %s" % (op.old_pkg.cpvstr, p))
+            self.out.write(f"replace {op.old_pkg.cpvstr}, {p}")
         else:
-            self.out.write("%s %s" % (op.desc.ljust(7), p))
+            self.out.write(f"{op.desc.ljust(7)} {p}")
 
 
 class CountingFormatter(Formatter):
@@ -152,8 +152,7 @@ class CountingFormatter(Formatter):
         if self.verbose:
             total = sum(self.package_data.values())
             self.out.write(
-                'Total: %d package%s' % (total, pluralism(total)),
-                autoline=False)
+                f"Total: {total} package{pluralism(total)}", autoline=False)
 
             d = dict(self.package_data.items())
             op_types = (
@@ -168,15 +167,16 @@ class CountingFormatter(Formatter):
                 num_ops = d.pop(op_type, 0)
                 if num_ops:
                     if op_str == 'new':
-                        op_list.append('%i %s' % (num_ops, op_str))
+                        op_list.append(f"{num_ops} {op_str}")
                     else:
-                        op_list.append('%i %s%s' % (num_ops, op_str, pluralism(num_ops)))
+                        op_list.append(f"{num_ops} {op_str}{pluralism(num_ops)}")
             if d:
-                op_list.append('%i other op%s' % (len(d), pluralism(d)))
+                op_list.append(f"{len(d)} other op{pluralism(d)}")
             if op_list:
-                self.out.write(' (' + ', '.join(op_list) + ')', autoline=False)
+                self.out.write(f" ({', '.join(op_list)})", autoline=False)
             if self.download_size:
-                self.out.write(', Size of downloads: ', sizeof_fmt(self.download_size), autoline=False)
+                self.out.write(
+                    ', Size of downloads: ', sizeof_fmt(self.download_size), autoline=False)
             self.out.write()
 
 
@@ -297,11 +297,11 @@ class PortageFormatter(CountingFormatter):
         pkg = [op.pkg.cpvstr]
         if self.verbose:
             if op.pkg.subslot != op.pkg.slot:
-                pkg.append(':%s/%s' % (op.pkg.slot, op.pkg.subslot))
+                pkg.append(f":{op.pkg.slot}/{op.pkg.subslot}")
             elif op.pkg.slot != '0':
-                pkg.append(':%s' % op.pkg.slot)
+                pkg.append(f":{op.pkg.slot}")
             if not self.quiet_repo_display and op.pkg.source_repository:
-                pkg.append("::%s" % op.pkg.source_repository)
+                pkg.append(f"::{op.pkg.source_repository}")
         out.write(*(pkg_coloring + pkg + [out.reset]))
 
         installed = []
@@ -309,27 +309,27 @@ class PortageFormatter(CountingFormatter):
             old_pkg = [op.old_pkg.fullver]
             if self.verbose:
                 if op.old_pkg.subslot != op.old_pkg.slot:
-                    old_pkg.append(':%s/%s' % (op.old_pkg.slot, op.old_pkg.subslot))
+                    old_pkg.append(f":{op.old_pkg.slot}/{op.old_pkg.subslot}")
                 elif op.old_pkg.slot != '0':
-                    old_pkg.append(':%s' % op.old_pkg.slot)
+                    old_pkg.append(f":{op.old_pkg.slot}")
                 if not self.quiet_repo_display and op.old_pkg.source_repository:
-                    old_pkg.append("::%s" % op.old_pkg.source_repository)
+                    old_pkg.append(f"::{op.old_pkg.source_repository}")
             if op_type != 'replace' or op.pkg.source_repository != op.old_pkg.source_repository:
                 installed = ''.join(old_pkg)
         elif op_type == 'slotted_add':
             if self.verbose:
-                pkgs = sorted([
-                    '%s:%s' % (x.fullver, x.slot) for x in
-                    self.installed_repos.match(op.pkg.unversioned_atom)])
+                pkgs = sorted(
+                    f"{x.fullver}:{x.slot}" for x in
+                    self.installed_repos.match(op.pkg.unversioned_atom))
             else:
-                pkgs = sorted([
+                pkgs = sorted(
                     x.fullver for x in
-                    self.installed_repos.match(op.pkg.unversioned_atom)])
+                    self.installed_repos.match(op.pkg.unversioned_atom))
             installed = ', '.join(pkgs)
 
         # output currently installed versions
         if installed:
-            out.write(' ', out.fg('blue'), out.bold, '[%s]' % installed, out.reset)
+            out.write(' ', out.fg('blue'), out.bold, f'[{installed}]', out.reset)
 
         # Build a list of (useflags, use_expand_dicts) tuples.
         # HACK: if we are in "replace" mode we build a list of length
@@ -372,7 +372,7 @@ class PortageFormatter(CountingFormatter):
                         out.write(' ', sizeof_fmt(size))
 
             if self.quiet_repo_display:
-                out.write(out.fg('cyan'), " [%d]" % (self.repos[op.pkg.repo]))
+                out.write(out.fg('cyan'), f" [{self.repos[op.pkg.repo]}]")
 
         out.write('\n')
         out.autoline = origautoline
@@ -497,12 +497,12 @@ class PortageFormatter(CountingFormatter):
                     location = getattr(k, 'location', 'unspecified location')
                     if reponame != location:
                         self.out.write(
-                            ' ', self.out.fg('cyan'), "[%d]" % v,
-                            self.out.reset, " %s (%s)" % (reponame, location))
+                            ' ', self.out.fg('cyan'), f"[{v}]",
+                            self.out.reset, f" {reponame} ({location})")
                     else:
                         self.out.write(
-                            ' ', self.out.fg('cyan'), "[%d]" % v,
-                            self.out.reset, " %s" % location)
+                            ' ', self.out.fg('cyan'), f"[{v}]",
+                            self.out.reset, f" {location}")
 
 
 class PaludisFormatter(CountingFormatter):
@@ -523,16 +523,16 @@ class PaludisFormatter(CountingFormatter):
 
         out.write('* ')
         out.write(out.fg('blue'), op.pkg.key)
-        out.write("-%s" % op.pkg.fullver)
-        out.write("::%s " % op.pkg.repo.repo_id)
-        out.write(out.fg('blue'), "{:%s} " % op.pkg.slot)
+        out.write(f"-{op.pkg.fullver}")
+        out.write(f"::{op.pkg.repo.repo_id} ")
+        out.write(out.fg('blue'), f"{{:{op.pkg.slot}}} ")
         op_type = op.desc
         if op.desc == 'add':
             suffix = 'N'
             if op.pkg.slot != '0':
                 op_type = 'slotted_add'
                 suffix = 'S'
-            out.write(out.fg('yellow'), "[%s]" % suffix)
+            out.write(out.fg('yellow'), f"[{suffix}]")
         elif op.desc == 'replace':
             if op.pkg != op.old_pkg:
                 if op.pkg > op.old_pkg:
@@ -540,8 +540,8 @@ class PaludisFormatter(CountingFormatter):
                 else:
                     op_type = 'downgrade'
                 out.write(
-                    out.fg('yellow'), "[%s %s]" %
-                    (op_type[0].upper(), op.old_pkg.fullver))
+                    out.fg('yellow'),
+                    f"[{op_type[0].upper()} {op.old_pkg.fullver}]")
             else:
                 out.write(out.fg('yellow'), "[R]")
         else:

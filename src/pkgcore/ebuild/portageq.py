@@ -30,7 +30,7 @@ def str_pkg(pkg):
 def get_atom_kls(value):
     eapi = get_eapi(value)
     if eapi is None:
-        raise ValueError("EAPI %s isn't known/supported" % (value,))
+        raise ValueError(f"EAPI {value} isn't known/supported")
     return eapi.atom_kls
 
 def default_portageq_args(parser):
@@ -91,7 +91,7 @@ class BaseCommand(arghparse.ArgparseCommand):
                 parser.add_argument('atom', help="atom to inspect",
                     type=make_atom, **kwds)
             else:
-                parser.add_argument(token, help="%s to inspect" % (token,),
+                parser.add_argument(token, help=f"{token} to inspect",
                     **kwds)
 
     @classmethod
@@ -260,7 +260,7 @@ def portageq_get_repo_news_path(options, out, err):
     return get_repo_news_path.function(options, out, err)
 
 def bind_parser(parser, compat=False, name='portageq'):
-    subparsers = parser.add_subparsers(description="%s commands" % (name,))
+    subparsers = parser.add_subparsers(description=f"{name} commands")
     l = common_commands[:]
     if compat:
         l += portageq_commands

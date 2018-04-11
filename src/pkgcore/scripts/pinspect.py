@@ -359,7 +359,7 @@ digests.add_argument(
 def digest_manifest(options, out, err):
     for name, repo in options.repos:
         broken = count = 0
-        out.write("inspecting %r:" % (name,))
+        out.write(f"inspecting {name!r}:")
         out.first_prefix.append("  ")
         out.later_prefix.append("  ")
         for pkg in repo:
@@ -367,7 +367,7 @@ def digest_manifest(options, out, err):
             try:
                 pkg.fetchables
             except errors.MetadataException:
-                out.write("%s is broken" % (pkg,))
+                out.write(f"{pkg} is broken")
                 broken += 1
                 continue
 

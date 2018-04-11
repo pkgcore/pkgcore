@@ -47,8 +47,7 @@ class DataSourceRestriction(values.base):
         self.restriction = childrestriction
 
     def __str__(self):
-        return 'DataSourceRestriction: %s negate=%s' % (
-            self.restriction, self.negate)
+        return f'DataSourceRestriction: {self.restriction} negate={self.negate}'
 
     def __repr__(self):
         if self.negate:
@@ -65,7 +64,7 @@ class DataSourceRestriction(values.base):
 
 dep_attrs = ['depends', 'rdepends', 'post_rdepends']
 metadata_attrs = dep_attrs
-dep_attrs += list('raw_%s' % x for x in dep_attrs)
+dep_attrs += list(f'raw_{x}' for x in dep_attrs)
 dep_formatted_attrs = dep_attrs + ['restrict']
 dep_formatted_attrs = frozenset(dep_attrs + ['restrict'])
 dep_attrs = tuple(sorted(dep_attrs))
@@ -403,7 +402,7 @@ def print_package(options, out, err, pkg):
             if options.color:
                 out.write(*(color.get(obj.__class__, []) + [obj] + [out.reset]))
             else:
-                out.write('%r' % (obj,))
+                out.write(f'{obj!r}')
 
     if options.size:
         size = 0
@@ -411,8 +410,8 @@ def print_package(options, out, err, pkg):
         for location in (obj.location for obj in get_pkg_attr(pkg, 'contents', ())):
             files += 1
             size += os.lstat(location).st_size
-        out.write('Total files: %d' % (files,))
-        out.write('Total size: %s' % (sizeof_fmt(size),))
+        out.write(f'Total files: {files}')
+        out.write(f'Total size: {sizeof_fmt(size)}')
 
 
 def print_packages_noversion(options, out, err, pkgs):
@@ -609,7 +608,7 @@ def add_query(*args, **kwds):
         # auto-determine destination name from long option(s)
         dest = [x for x in args if x.startswith(argparser.prefix_chars * 2) and len(x) > 2]
         if not dest:
-            raise ValueError('no valid options for query dest names: %s' % ', '.join(args))
+            raise ValueError(f"no valid options for query dest names: {', '.join(args)}")
         dest = dest[0].lstrip(argparser.prefix_chars)
         kwds['dest'] = dest.replace('-', '_')
     _query_items.append(kwds['dest'])
@@ -843,7 +842,7 @@ _query_items.append('_fallback_all')
 def _add_all_if_needed(namespace, attr):
     val = [packages.AlwaysTrue]
     for query_attr in _query_items:
-        if getattr(namespace, '_%s' % (query_attr,), None):
+        if getattr(namespace, f'_{query_attr}', None):
             val = None
             break
     setattr(namespace, attr, val)
@@ -1003,8 +1002,8 @@ def main(options, out, err):
     """Run a query."""
     if options.debug:
         for repo in options.repos:
-            out.write('repo: %r' % (repo,))
-        out.write('restrict: %r' % (options.query,))
+            out.write(f'repo: {repo!r}')
+        out.write(f'restrict: {options.query!r}')
         out.write()
 
     if options.query is None:
@@ -1035,6 +1034,6 @@ def main(options, out, err):
                 # swallow it; receiving end shutdown early.
                 return
             err.write('caught an exception!')
-            err.write('repo: %r' % (repo,))
-            err.write('restrict: %r' % (options.query,))
+            err.write(f'repo: {repo!r}')
+            err.write(f'restrict: {options.query!r}')
             raise

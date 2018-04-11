@@ -68,7 +68,7 @@ class PigeonHoledSlots(object):
         slots = self.slot_dict.get(key, ())
         l = [x for x in slots if x is not obj]
         if len(l) == len(slots):
-            raise KeyError("obj %s isn't slotted" % obj)
+            raise KeyError(f"obj {obj} isn't slotted")
         if l:
             self.slot_dict[key] = l
         else:
@@ -79,7 +79,7 @@ class PigeonHoledSlots(object):
             key = atom.key
         l = [x for x in self.limiters[key] if x is not atom]
         if len(l) == len(self.limiters[key]):
-            raise KeyError("obj %s isn't slotted" % atom)
+            raise KeyError(f"obj {atom} isn't slotted")
         if not l:
             del self.limiters[key]
         else:

@@ -54,7 +54,7 @@ class rsync_syncer(base.ExternalSyncer):
         proto = raw_uri.split(":", 1)
         proto[0] = proto[0].split("+", 1)[1]
         cls.require_binary(proto[0])
-        return proto[0], "rsync:%s" % proto[1]
+        return proto[0], f"rsync:{proto[1]}"
 
     pkgcore_config_type = ConfigHint({
         'basedir': 'str', 'uri': 'str', 'conn_timeout': 'str',
@@ -103,7 +103,7 @@ class rsync_syncer(base.ExternalSyncer):
             for ipaddr in socket.getaddrinfo(
                     self.hostname, None, af_fam, socket.SOCK_STREAM):
                 if ipaddr[0] == socket.AF_INET6:
-                    yield "[%s]" % ipaddr[4][0]
+                    yield f"[{ipaddr[4][0]}]"
                 else:
                     yield ipaddr[4][0]
 
@@ -116,8 +116,8 @@ class rsync_syncer(base.ExternalSyncer):
         if self.rsh:
             opts.append("-e")
             opts.append(self.rsh)
-        opts.extend("--exclude=%s" % x for x in self.excludes)
-        opts.extend("--include=%s" % x for x in self.includes)
+        opts.extend(f"--exclude={x}" for x in self.excludes)
+        opts.extend(f"--include={x}" for x in self.includes)
         if verbosity < 0:
             opts.append("--quiet")
         elif verbosity > 0:

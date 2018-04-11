@@ -84,7 +84,7 @@ class syncer(object):
                 proto = uri[0].split("/", 1)
                 proto[1] = proto[1].lstrip("/")
                 uri[0] = proto[1]
-                uri[1] = "%s//%s" % (proto[0], uri[1])
+                uri[1] = f"{proto[0]}//{uri[1]}"
 
             return pwd.getpwnam(uri[0]).pw_uid, uri[1]
         except KeyError as e:
@@ -105,8 +105,7 @@ class syncer(object):
         raise NotImplementedError(self, "_sync")
 
     def __str__(self):
-        return "%s syncer: %s, %s" % (
-            self.__class__, self.basedir, self.uri)
+        return f"{self.__class__} syncer: {self.basedir}, {self.uri}"
 
     @classmethod
     def supports_uri(cls, uri):
@@ -218,7 +217,7 @@ def GenericSyncer(basedir, uri, **kwargs):
         for plug in plugin.get_plugins('syncer'))
     plugins.sort(key=lambda x: x[0])
     if not plugins or plugins[-1][0] <= 0:
-        raise uri_exception('no known syncer supports %r' % (uri,))
+        raise uri_exception(f"no known syncer supports {uri!r}")
     # XXX this is random if there is a tie. Should we raise an exception?
     return plugins[-1][1](basedir, uri, **kwargs)
 

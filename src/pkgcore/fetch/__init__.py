@@ -33,8 +33,7 @@ class fetchable(object, metaclass=generic_equality):
         self.filename = filename
 
     def __str__(self):
-        return "('%s', '%s', (%s))" % (
-            self.filename, self.uri, ', '.join(self.chksums))
+        return f"({self.filename!r}, {self.uri!r}, {', '.join(self.chksums)}"
 
     def __repr__(self):
         return "<%s filename=%r uri=%r chksums=%r @%#8x>" % (
@@ -71,7 +70,7 @@ class mirror(object, metaclass=generic_equality):
         return iter(self.mirrors)
 
     def __str__(self):
-        return "mirror://%s" % self.mirror_name
+        return f"mirror://{self.mirror_name}"
 
     def __len__(self):
         return len(self.mirrors)
@@ -83,7 +82,7 @@ class mirror(object, metaclass=generic_equality):
         return self.mirrors[idx]
 
     def __repr__(self):
-        return "<%s mirror tier=%r>" % (self.__class__, self.mirror_name)
+        return f"<{self.__class__} mirror tier={self.mirror_name!r}>"
 
 
 class default_mirror(mirror):
@@ -121,14 +120,14 @@ class uri_list(object):
             elif isinstance(entry, tuple):
                 # mirror with suburi
                 for base_uri in entry[0]:
-                    yield '%s/%s' % (base_uri.rstrip('/'), entry[1])
+                    yield f"{base_uri.rstrip('/')}/{entry[1]}"
             else:
                 for base_uri in entry:
-                    yield "%s/%s" % (base_uri.rstrip('/'), fname)
+                    yield f"{base_uri.rstrip('/')}/{fname}"
 
     def __str__(self):
-        return "file: %s, uri: %s" % (
-            self.filename, ', '.join(str(x) for x in self._uri_source))
+        uris = ', '.join(str(x) for x in self._uri_source)
+        return f"file: {self.filename}, uri: {uris}"
 
     def __bool__(self):
         # implemented this way on the off chance an empty sublist is handed in

@@ -64,7 +64,7 @@ class VersionMatch(restriction.base, metaclass=generic_equality):
         sf(self, "rev", rev)
         if operator != "~" and operator not in self._convert_str2op:
             raise errors.InvalidVersion(
-                self.ver, self.rev, "invalid operator, '%s'" % operator)
+                self.ver, self.rev, f"invalid operator, '{operator}'")
 
         sf(self, "negate", negate)
         if operator == "~":
@@ -98,14 +98,14 @@ class VersionMatch(restriction.base, metaclass=generic_equality):
             n = ''
 
         if self.droprev or self.rev is None:
-            return "ver %s%s %s" % (n, s, self.ver)
-        return "ver-rev %s%s %s-r%s" % (n, s, self.ver, self.rev)
+            return f"ver {n}{s} {self.ver}"
+        return f"ver-rev {n}{s} {self.ver}-r{self.rev}"
 
     def __repr__(self):
         s = self._convert_op2str[self.vals]
         s += self.ver
         if self.rev:
-            s += "-r%s" % (self.rev,)
+            s += f"-r{self.rev}"
         return "<%s %s negate=%s droprrev=%s @#x>" % (
             self.__class__.__name__, s, self.negate, self.droprev)
 

@@ -33,7 +33,7 @@ class svn_syncer(base.ExternalSyncer):
             if len(line) != 2:
                 continue
             if line[0] == 'URL':
-                uri = "svn+%s" % (line[1].strip(),)
+                uri = f"svn+{line[1].strip()}"
                 return (cls._rewrite_uri_from_stat(svn_path, uri),)
         return None
 

@@ -22,8 +22,8 @@ from snakeoil.osutils import normpath, pjoin
 
 __all__ = [
     "fsFile", "fsDir", "fsSymlink", "fsDev", "fsFifo"]
-__all__.extend("is%s" % x for x in ("dir", "reg", "sym", "fifo", "dev",
-    "fs_obj"))
+__all__.extend(
+    f"is{x}" for x in ("dir", "reg", "sym", "fifo", "dev", "fs_obj"))
 
 # following are used to generate appropriate __init__, wiped from the
 # namespace at the end of the module
@@ -177,7 +177,7 @@ class fsFile(fsBase):
     gen_doc_additions(__init__, __slots__)
 
     def __repr__(self):
-        return "file:%s" % self.location
+        return f"file:{self.location}"
 
     data_source = klass.alias_attr("data")
 
@@ -211,7 +211,7 @@ class fsDir(fsBase):
     is_dir = True
 
     def __repr__(self):
-        return "dir:%s" % self.location
+        return f"dir:{self.location}"
 
 
 class fsLink(fsBase):
@@ -257,10 +257,10 @@ class fsLink(fsBase):
         return 0
 
     def __str__(self):
-        return '%s -> %s' % (self.location, self.target)
+        return f'{self.location} -> {self.target}'
 
     def __repr__(self):
-        return "symlink:%s->%s" % (self.location, self.target)
+        return f"symlink:{self.location}->{self.target}"
 
 
 fsSymlink = fsLink
@@ -304,7 +304,7 @@ class fsDev(fsBase):
         fsBase.__init__(self, path, **kwds)
 
     def __repr__(self):
-        return "device:%s" % self.location
+        return f"device:{self.location}"
 
 
 def get_major_minor(stat_inst):
@@ -322,7 +322,7 @@ class fsFifo(fsBase):
     is_fifo = True
 
     def __repr__(self):
-        return "fifo:%s" % self.location
+        return f"fifo:{self.location}"
 
 def mk_check(name):
     return pretty_docs(post_curry(getattr, 'is_' + name, False),

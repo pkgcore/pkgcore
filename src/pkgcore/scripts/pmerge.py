@@ -351,17 +351,17 @@ def do_unmerge(options, out, err, vdb, matches, world_set, repo_obs):
             raise Failure('vdb is frozen')
 
     for idx, match in enumerate(matches):
-        out.write("removing %i of %i: %s" % (idx + 1, len(matches), match))
-        out.title("%i/%i: %s" % (idx + 1, len(matches), match))
+        out.write(f"removing {idx + 1} of {len(matches)}: {match}")
+        out.title(f"{idx + 1}/{len(matches)}: {match}")
         op = options.domain.uninstall_pkg(match, observer=repo_obs)
         ret = op.finish()
         if not ret:
             if not options.ignore_failures:
-                raise Failure('failed unmerging %s' % (match,))
+                raise Failure(f'failed unmerging {match}')
             out.write(out.fg('red'), 'failed unmerging ', match)
         pkg = slotatom_if_slotted(vdb, match.versioned_atom)
         update_worldset(world_set, pkg, remove=True)
-    out.write("finished; removed %i packages" % len(matches))
+    out.write(f"finished; removed {len(matches)} packages")
 
 
 def display_failures(out, sequence, first_level=True, debug=False):
@@ -373,9 +373,9 @@ def display_failures(out, sequence, first_level=True, debug=False):
         # pops below need to exactly match.
         out.first_prefix.extend((out.fg("red"), "!!!", out.reset))
     out.first_prefix.append(" ")
-    out.write("request %s, mode %s" % (frame.atom, frame.mode))
+    out.write(f"request {frame.atom}, mode {frame.mode}")
     for pkg, steps in sequence:
-        out.write("trying %s" % str(pkg.cpvstr))
+        out.write(f"trying {pkg.cpvstr}")
         out.first_prefix.append(" ")
         for step in steps:
             if isinstance(step, list):
@@ -626,7 +626,7 @@ def main(options, out, err):
             return 1
         l = list(pkgset)
         if not l:
-            out.write("skipping set %r: set is empty, nothing to update" % setname)
+            out.write(f"skipping set {setname!r}: set is empty, nothing to update")
         else:
             atoms.extend(l)
 
@@ -639,9 +639,9 @@ def main(options, out, err):
             argparser.error(e)
         if matches is None:
             if not options.ignore_failures:
-                error_msg = ["no matching {}: {!r}".format(pkg_type, token)]
+                error_msg = [f"no matching {pkg_type}: {token!r}"]
                 if token in config.pkgset:
-                    error_msg.append("use '@{}' instead for the package set".format(token))
+                    error_msg.append(f"use '@{token}' instead for the package set")
                 elif options.usepkgonly:
                     matches = parse_target(
                         restriction, domain.ebuild_repos.combined,
@@ -654,7 +654,7 @@ def main(options, out, err):
             atoms.extend(matches)
 
     if not atoms and not options.newuse:
-        err.write("%s: no targets specified; nothing to do" % (options.prog,))
+        err.write(f"{options.prog}: no targets specified; nothing to do")
         return 1
 
     atoms = stable_unique(atoms)
@@ -770,7 +770,7 @@ def main(options, out, err):
         vset.difference_update(x.pkg for x in resolver_inst.state.iter_ops(True))
         wipes = sorted(x for x in vset if x.package_is_real)
         for x in wipes:
-            out.write("Remove %s" % x)
+            out.write(f"Remove {x}")
         out.write()
         if wipes:
             out.write("removing %i packages of %i installed, %0.2f%%." %
@@ -857,8 +857,7 @@ def main(options, out, err):
     action = 'merge'
     if options.fetchonly:
         action = 'fetch'
-    if (options.ask and not formatter.ask(
-            "Would you like to {} these packages?".format(action))):
+    if (options.ask and not formatter.ask(f"Would you like to {action} these packages?")):
         return
 
     change_count = len(changes)
@@ -872,9 +871,9 @@ def main(options, out, err):
 
             cleanup = []
 
-            out.write("\nProcessing %i of %i: %s::%s" % (
-                count + 1, change_count, op.pkg.cpvstr, op.pkg.repo))
-            out.title("%i/%i: %s" % (count + 1, change_count, op.pkg.cpvstr))
+            out.write(f"\nProcessing {count + 1} of {change_count}: "
+                      f"{op.pkg.cpvstr}::{op.pkg.repo}")
+            out.title(f"{count + 1}/{change_count}: {op.pkg.cpvstr}")
             if op.desc != "remove":
                 cleanup = [op.pkg.release_cached_data]
 
@@ -882,10 +881,9 @@ def main(options, out, err):
                     out.write("Forcing a clean of workdir")
 
                 pkg_ops = domain.pkg_operations(op.pkg, observer=build_obs)
-                out.write("\n%i file%s required-" % (
-                    len(op.pkg.distfiles), pluralism(op.pkg.distfiles)))
+                out.write(f"\n{len(op.pkg.distfiles)} file{pluralism(op.pkg.distfiles)} required-")
                 if not pkg_ops.run_if_supported("fetch", or_return=True):
-                    out.error("fetching failed for %s" % (op.pkg.cpvstr,))
+                    out.error(f"fetching failed for {op.pkg.cpvstr}")
                     if not options.ignore_failures:
                         return 1
                     continue
@@ -895,15 +893,15 @@ def main(options, out, err):
                 buildop = pkg_ops.run_if_supported("build", or_return=None)
                 pkg = op.pkg
                 if buildop is not None:
-                    out.write("building %s" % (op.pkg.cpvstr,))
+                    out.write(f"building {op.pkg.cpvstr}")
                     result = False
                     try:
                         result = buildop.finalize()
                     except format.errors as e:
-                        out.error("caught exception building %s: %s" % (op.pkg.cpvstr, e))
+                        out.error(f"caught exception building {op.pkg.cpvstr}: {e}")
                     else:
                         if result is False:
-                            out.error("failed building %s" % (op.pkg.cpvstr,))
+                            out.error(f"failed building {op.pkg.cpvstr}")
                     if result is False:
                         if not options.ignore_failures:
                             return 1
@@ -923,25 +921,24 @@ def main(options, out, err):
                 out.write()
                 if op.desc == "replace":
                     if op.old_pkg == pkg:
-                        out.write(">>> Reinstalling %s" % (pkg.cpvstr))
+                        out.write(f">>> Reinstalling {pkg.cpvstr}")
                     else:
-                        out.write(">>> Replacing %s with %s" % (
-                            op.old_pkg.cpvstr, pkg.cpvstr))
+                        out.write(f">>> Replacing {op.old_pkg.cpvstr} with {pkg.cpvstr}")
                     i = domain.replace_pkg(op.old_pkg, pkg, repo_obs)
                     cleanup.append(op.old_pkg.release_cached_data)
                 else:
-                    out.write(">>> Installing %s" % (pkg.cpvstr,))
+                    out.write(f">>> Installing {pkg.cpvstr}")
                     i = domain.install_pkg(pkg, repo_obs)
 
                 # force this explicitly- can hold onto a helluva lot more
                 # then we would like.
             else:
-                out.write(">>> Removing %s" % op.pkg.cpvstr)
+                out.write(f">>> Removing {op.pkg.cpvstr}")
                 i = domain.uninstall_pkg(op.pkg, repo_obs)
             try:
                 ret = i.finish()
             except merge_errors.BlockModification as e:
-                out.error("Failed to merge %s: %s" % (op.pkg, e))
+                out.error(f"Failed to merge {op.pkg}: {e}")
                 if not options.ignore_failures:
                     return 1
                 continue
@@ -954,13 +951,13 @@ def main(options, out, err):
 
             if world_set is not None:
                 if op.desc == "remove":
-                    out.write('>>> Removing %s from world file' % op.pkg.cpvstr)
+                    out.write(f'>>> Removing {op.pkg.cpvstr} from world file')
                     removal_pkg = slotatom_if_slotted(
                         source_repos.combined, op.pkg.versioned_atom)
                     update_worldset(world_set, removal_pkg, remove=True)
                 elif not options.oneshot and any(x.match(op.pkg) for x in atoms):
                     if not options.upgrade:
-                        out.write('>>> Adding %s to world file' % op.pkg.cpvstr)
+                        out.write(f'>>> Adding {op.pkg.cpvstr} to world file')
                         add_pkg = slotatom_if_slotted(
                             source_repos.combined, op.pkg.versioned_atom)
                         update_worldset(world_set, add_pkg)

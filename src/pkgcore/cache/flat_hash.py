@@ -125,7 +125,7 @@ class database(fs_template.FsBased):
                 subdirs = os.listdir(d)
             except EnvironmentError as e:
                 if e.errno != errno.ENOENT:
-                    raise KeyError(cpv, "failed accessing due to %s".format(e))
+                    raise KeyError(cpv, f"access failure: {e}")
                 continue
             for l in os.listdir(d):
                 if l.endswith(".cpickle"):
@@ -135,7 +135,7 @@ class database(fs_template.FsBased):
                     st = os.lstat(p)
                 except EnvironmentError as e:
                     if e.errno != errno.ENOENT:
-                        raise KeyError(cpv, "Unhandled IO error: %s".format(e))
+                        raise KeyError(cpv, f"Unhandled IO error: {e}")
                     continue
                 if stat.S_ISDIR(st.st_mode):
                     dirs.append(p)

@@ -53,7 +53,7 @@ class FetchFailed(FetchError):
         self.resumable = resumable
 
     def __str__(self):
-        return "File %s: %s" % (self.filename, self.message)
+        return f"File {self.filename}: {self.message}"
 
 
 class MissingDistfile(FetchFailed):

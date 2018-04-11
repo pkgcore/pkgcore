@@ -78,7 +78,7 @@ class repo_operations(_repo_ops.operations):
                             fetch.fetchable)
                         })
             except pkg_errors.MetadataException as e:
-                observer.error("failed sourcing %s", pkg.cpvstr)
+                observer.error(f"failed sourcing {pkg.cpvstr}")
                 ret.append(key_query)
                 continue
 
@@ -95,14 +95,13 @@ class repo_operations(_repo_ops.operations):
                         os.remove(manifest.path)
                     except:
                         observer.error(
-                            "failed removing old manifest: %s::%s",
-                            key_query, self.repo.repo_id)
+                            f"failed removing old manifest: {key_query}::{self.repo.repo_id}")
                         ret.append(key_query)
                 continue
 
             pkg_ops = domain.pkg_operations(pkgs[0], observer=observer)
             if not pkg_ops.supports("fetch"):
-                observer.error("pkg %s doesn't support fetching, can't generate manifest", pkg)
+                observer.error(f"pkg {pkg} doesn't support fetching, can't generate manifest")
                 ret.append(key_query)
                 continue
 
@@ -118,12 +117,12 @@ class repo_operations(_repo_ops.operations):
                         pjoin(distdir, fetchable.filename), *required_chksums)
                     fetchable.chksums = dict(zip(required_chksums, chksums))
             except chksum.MissingChksumHandler as e:
-                observer.error('failed generating chksum: %s' % e)
+                observer.error(f'failed generating chksum: {e}')
                 ret.append(key_query)
                 break
 
             fetchables.update(pkgdir_fetchables)
-            observer.info("generating manifest: %s::%s", key_query, self.repo.repo_id)
+            observer.info(f"generating manifest: {key_query}::{self.repo.repo_id}")
             manifest.update(sorted(fetchables.values()), chfs=required_chksums)
 
         return ret
@@ -148,9 +147,9 @@ def _sort_eclasses(config, repo_config, eclasses):
             # empty tuple means it's a standalone repository
             if default is None:
                 raise Exception(
-                    "repository %r named %r wants the default repository "
-                    "(gentoo for example), but no repository is marked as the default. "
-                    "Fix your configuration." % (repo_path, repo_config.repo_id))
+                    f"repo {repo_config.repo_id!r} at {repo_path!r} wants the "
+                    "default repository (gentoo for example), but no repository "
+                    "is marked as the default. Fix your configuration.")
             eclasses = [location]
     else:
         repo_map = {r.repo_id: r.location for r in
@@ -316,10 +315,9 @@ class _UnconfiguredTree(prototype.tree):
         self.base = self.location = location
         try:
             if not stat.S_ISDIR(os.stat(self.base).st_mode):
-                raise errors.InitializationError(
-                    "base not a dir: %s" % self.base)
+                raise errors.InitializationError(f"base not a dir: {self.base}")
         except OSError as e:
-            raise errors.InitializationError("lstat failed on base %s" % (self.base,)) from e
+            raise errors.InitializationError(f"lstat failed: {self.base}") from e
         if repo_config is None:
             repo_config = repo_objs.RepoConfig(location)
         self.config = repo_config
@@ -379,7 +377,7 @@ class _UnconfiguredTree(prototype.tree):
         realpath = os.path.realpath(path)
 
         if realpath not in self:
-            raise ValueError("'%s' repo doesn't contain: '%s'" % (self.repo_id, path))
+            raise ValueError(f"{self.repo_id!r} repo doesn't contain: {path!r}")
 
         relpath = realpath[len(os.path.realpath(self.location)):].strip('/')
         repo_path = relpath.split(os.path.sep) if relpath else []
@@ -387,10 +385,11 @@ class _UnconfiguredTree(prototype.tree):
 
         if os.path.isfile(realpath):
             if not path.endswith('.ebuild'):
-                raise ValueError("file is not an ebuild: '%s'" % (path,))
+                raise ValueError(f"file is not an ebuild: {path!r}")
             elif len(repo_path) != 3:
                 # ebuild isn't in a category/PN directory
-                raise ValueError("ebuild not in the correct directory layout: '%s'" % (path,))
+                raise ValueError(
+                    f"ebuild not in the correct directory layout: {path!r}")
 
         # add restrictions until path components run out
         try:
@@ -398,7 +397,7 @@ class _UnconfiguredTree(prototype.tree):
             if repo_path[0] in self.categories:
                 restrictions.append(restricts.CategoryDep(repo_path[0]))
                 restrictions.append(restricts.PackageDep(repo_path[1]))
-                base = cpv.versioned_CPV("%s/%s" % (repo_path[0], os.path.splitext(repo_path[2])[0]))
+                base = cpv.versioned_CPV(f"{repo_path[0]}/{os.path.splitext(repo_path[2])[0]}")
                 restrictions.append(restricts.VersionMatch('=', base.version, rev=base.revision))
         except IndexError:
             pass
@@ -408,7 +407,7 @@ class _UnconfiguredTree(prototype.tree):
         cpv_inst = self.package_class(*cpv)
         if cpv_inst.fullver not in self.versions[(cpv_inst.category, cpv_inst.package)]:
             if cpv_inst.revision is None:
-                if '%s-r0' % cpv_inst.fullver in \
+                if f'{cpv_inst.fullver}-r0' in \
                         self.versions[(cpv_inst.category, cpv_inst.package)]:
                     # ebuild on disk has an explicit -r0 in its name
                     return cpv_inst
@@ -453,7 +452,7 @@ class _UnconfiguredTree(prototype.tree):
                 self.false_categories.__contains__,
                 (x for x in listdir_dirs(self.base) if x[0:1] != "."))))
         except EnvironmentError as e:
-            raise KeyError("failed fetching categories: %s" % str(e)) from e
+            raise KeyError(f"failed fetching categories: {e}") from e
 
     def _get_packages(self, category):
         cpath = pjoin(self.base, category.lstrip(os.path.sep))
@@ -504,10 +503,10 @@ class _UnconfiguredTree(prototype.tree):
                 # daft explicit -r0 on disk.
                 return pjoin(
                     self.base, pkg.category, pkg.package,
-                    "%s-%s-r0%s" % (pkg.package, pkg.fullver, self.extension))
+                    f"{pkg.package}-{pkg.fullver}-r0{self.extension}")
         return pjoin(
             self.base, pkg.category, pkg.package,
-            "%s-%s%s" % (pkg.package, pkg.fullver, self.extension))
+            f"{pkg.package}-{pkg.fullver}{self.extension}")
 
     def _get_ebuild_src(self, pkg):
         return local_source(self._get_ebuild_path(pkg), encoding='utf8')
@@ -682,11 +681,11 @@ class _ConfiguredTree(configured.tree):
             patchroot = pjoin(self.domain.config_dir, 'patches')
             patch_dirs = [
                 pkg.PF,
-                '%s:%s' % (pkg.PF, pkg.slot),
+                f'{pkg.PF}:{pkg.slot}',
                 pkg.P,
-                '%s:%s' % (pkg.P, pkg.slot),
+                f'{pkg.P}:{pkg.slot}',
                 pkg.PN,
-                '%s:%s' % (pkg.PN, pkg.slot),
+                f'{pkg.PN}:{pkg.slot}',
             ]
             for d in patch_dirs:
                 for root, _dirs, files in os.walk(pjoin(patchroot, pkg.category, d)):

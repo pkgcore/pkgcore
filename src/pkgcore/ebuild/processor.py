@@ -186,7 +186,7 @@ class FinishedProcessing(ProcessingInterruption):
 
     def __init__(self, val, msg=None):
         ProcessingInterruption.__init__(
-            self, "Finished processing with val, %s" % (val,))
+            self, f"Finished processing with val, {val}")
         self.val, self.msg = val, msg
 
 
@@ -194,7 +194,7 @@ class UnhandledCommand(ProcessingInterruption):
 
     def __init__(self, line=None):
         ProcessingInterruption.__init__(
-            self, "unhandled command, %s" % (line,))
+            self, f"unhandled command, {line}")
         self.line = line
         self.args = (line,)
 
@@ -381,10 +381,10 @@ class EbuildProcessor(object):
         :return: True for success, False for everything else
         """
 
-        self.write("process_ebuild %s" % phase)
+        self.write(f"process_ebuild {phase}")
         if not self.send_env(env, tmpdir=tmpdir):
             return False
-        self.write("set_sandbox_state %i" % sandbox)
+        self.write(f"set_sandbox_state {int(sandbox)}")
         if logging:
             if not self.set_logfile(logging):
                 return False
@@ -573,7 +573,7 @@ class EbuildProcessor(object):
         if not os.path.exists(ec_file):
             logger.error("failed: %s", ec_file)
             return False
-        self.write("preload_eclass %s" % ec_file)
+        self.write(f"preload_eclass {ec_file}")
         if self.expect("preload_eclass succeeded", async=async, flush=True):
             return True
         return False
@@ -668,15 +668,15 @@ class EbuildProcessor(object):
                     data.append("%s=(%s)" % (key, ' '.join(
                         '[%s]="%s"' % (i, value) for i, value in enumerate(val))))
                 elif val.isalnum():
-                    data.append("%s=%s" % (key, val))
+                    data.append(f"{key}={val}")
                 elif "'" not in val:
-                    data.append("%s='%s'" % (key, val))
+                    data.append(f"{key}='{val}'")
                 else:
                     data.append("%s=$'%s'" % (key, val.replace("'", "\\'")))
 
         env_str = [' '.join(internal_data)]
         if exported_data:
-            env_str.append('export %s' % (' '.join(exported_data),))
+            env_str.append(f"export {' '.join(exported_data)}")
         return '\n'.join(env_str)
 
     def send_env(self, env_dict, async=False, tmpdir=None):
@@ -690,11 +690,9 @@ class EbuildProcessor(object):
         if tmpdir:
             path = pjoin(tmpdir, 'ebd-env-transfer')
             fileutils.write_file(path, 'wb', data.encode())
-            self.write("start_receiving_env file %s\n" %
-                       (path,), append_newline=False)
+            self.write(f"start_receiving_env file {path}")
         else:
-            self.write("start_receiving_env bytes %i\n%s" %
-                       (len(data), data), append_newline=False)
+            self.write(f"start_receiving_env bytes {len(data)}\n{data}")
         os.umask(old_umask)
         return self.expect("env_received", async=async, flush=True)
 
@@ -706,7 +704,7 @@ class EbuildProcessor(object):
 
         :param logfile: filepath to log to
         """
-        self.write("logging %s" % logfile)
+        self.write(f"logging {logfile}")
         return self.expect("logging_ack")
 
     def __del__(self):

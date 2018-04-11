@@ -21,7 +21,7 @@ from pkgcore.config import ConfigHint
 class MalformedCommand(errors.FetchError):
 
     def __init__(self, command):
-        errors.FetchError.__init__(self, "fetchcommand is malformed: %s" % (command,))
+        errors.FetchError.__init__(self, f"fetchcommand is malformed: {command}")
         self.command = command
 
 
@@ -72,7 +72,7 @@ class fetcher(base.fetcher):
             try:
                 new_command % {"URI": "blah", "FILE": "blah"}
             except KeyError as k:
-                raise MalformedCommand("%s: unexpected key %s" % (command, k.args[0]))
+                raise MalformedCommand(f"{command}: unexpected key {k.args[0]}")
             return new_command
 
         self.command = rewrite_command(command)
@@ -97,7 +97,7 @@ class fetcher(base.fetcher):
 
         if not isinstance(target, fetchable):
             raise TypeError(
-                "target must be fetchable instance/derivative: %s" % target)
+                f"target must be fetchable instance/derivative: {target}")
 
         kw = {"mode": 0o775}
         if self.readonly:

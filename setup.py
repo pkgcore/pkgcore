@@ -165,7 +165,7 @@ def write_pkgcore_lookup_configs(python_base, install_prefix, injected_bin_path=
             byte_compile([path], optimize=2, prefix=python_base)
 
 
-class test(pkgdist.test):
+class test(pkgdist.pytest):
     """test wrapper to enforce testing against built version."""
 
     def run(self):
@@ -176,7 +176,7 @@ class test(pkgdist.test):
         original = os.environ.get(key)
         try:
             os.environ[key] = os.path.dirname(os.path.realpath(__file__))
-            return pkgdist.test.run(self)
+            super().run()
         finally:
             if original is not None:
                 os.environ[key] = original

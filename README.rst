@@ -34,7 +34,7 @@ Tools
 Requirements
 ============
 
-At least python version 2.7, and snakeoil_ — a utility library with misc
+At least python version 3.6, and snakeoil_ — a utility library with misc
 optimizations split out of pkgcore for others to use.
 
 Installing
@@ -73,9 +73,7 @@ environments just execute **tox** in the root directory of a repo or unpacked
 tarball. Otherwise, for a specific python version execute something similar to
 the following::
 
-    tox -e py27
-
-Note that mock_ is required for tests when using python-2.7.
+    tox -e py36
 
 Contact
 =======

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import errno
 import glob
@@ -221,7 +221,6 @@ setup(**dict(pkgdist_setup,
     cmdclass=dict(
         pkgdist_cmds,
         sdist=sdist,
-        build_py=pkgdist.build_py2to3,
         build_ext=pkgdist.build_ext,
         test=test,
         install=install,
@@ -229,9 +228,6 @@ setup(**dict(pkgdist_setup,
     classifiers=[
         'License :: OSI Approved :: BSD License',
         'License :: OSI Approved :: GNU General Public License v2 (GPLv2)',
-        'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3.4',
-        'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         ],
     )

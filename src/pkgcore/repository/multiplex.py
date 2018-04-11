@@ -106,7 +106,7 @@ class tree(prototype.tree):
         else:
             for x in self.trees:
                 try:
-                    map(d.add, x.categories)
+                    list(map(d.add, x.categories))
                 except (errors.TreeCorruption, KeyError):
                     failures += 1
         if failures == len(self.trees):
@@ -189,7 +189,7 @@ class tree(prototype.tree):
         return sum(len(repo) for repo in self.trees)
 
     def __contains__(self, obj):
-        if isinstance(obj, basestring):
+        if isinstance(obj, str):
             path = os.path.realpath(obj)
             if not os.path.exists(path):
                 return False

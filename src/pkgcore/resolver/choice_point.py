@@ -68,7 +68,7 @@ class choice_point(object):
         """
         if self.matches is None:
             raise IndexError("no solutions remain")
-        if hasattr(atom, "__contains__") and not isinstance(atom, basestring):
+        if hasattr(atom, "__contains__") and not isinstance(atom, str):
             self.solution_filters.update(atom)
         else:
             self.solution_filters.add(atom)
@@ -153,7 +153,7 @@ class choice_point(object):
             raise IndexError("no more solutions remain")
         return self._prdeps
 
-    def __nonzero__(self):
+    def __bool__(self):
         if self.matches_cur is None:
             if self.matches is None:
                 return False

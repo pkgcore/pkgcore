@@ -14,6 +14,7 @@ __all__ = ("alias_cset", "map_new_cset_livefs", "MergeEngine")
 # ordering?
 
 from functools import partial
+from itertools import chain
 import operator
 
 from pkgcore.fs import contents, livefs
@@ -60,7 +61,7 @@ class MergeEngine(object):
     uninstall_hooks = {x: [] for x in
         ("sanity_check", "pre_unmerge", "unmerge", "post_unmerge", "final")}
     replace_hooks = {x: [] for x in
-        set(install_hooks.keys() + uninstall_hooks.keys())}
+        set(chain(install_hooks.keys(), uninstall_hooks.keys()))}
 
     install_csets = {
         "install_existing": "get_install_livefs_intersect",
@@ -111,8 +112,8 @@ class MergeEngine(object):
         # instantiate these separately so their values are preserved
         self.preserved_csets = LazyValDict(
             self.preserve_csets, self._get_cset_source)
-        for k, v in csets.iteritems():
-            if isinstance(v, basestring):
+        for k, v in csets.items():
+            if isinstance(v, str):
                 v = getattr(self, v, v)
             if not callable(v):
                 raise TypeError(
@@ -135,7 +136,7 @@ class MergeEngine(object):
                 t.register(self)
 
         # merge in overrides
-        for hook, triggers in hooks.iteritems():
+        for hook, triggers in hooks.items():
             for trigger in triggers:
                 self.add_trigger(hook, trigger)
 
@@ -159,8 +160,7 @@ class MergeEngine(object):
 
         """
 
-        hooks = {k: [y() for y in v]
-                 for (k, v) in cls.install_hooks.iteritems()}
+        hooks = {k: [y() for y in v] for (k, v) in cls.install_hooks.items()}
 
         csets = cls.install_csets.copy()
         if "raw_new_cset" not in csets:
@@ -192,8 +192,7 @@ class MergeEngine(object):
         :return: :obj:`MergeEngine`
         """
 
-        hooks = {k: [y() for y in v]
-                 for (k, v) in cls.uninstall_hooks.iteritems()}
+        hooks = {k: [y() for y in v] for (k, v) in cls.uninstall_hooks.items()}
         csets = cls.uninstall_csets.copy()
 
         if "raw_old_cset" not in csets:
@@ -227,8 +226,7 @@ class MergeEngine(object):
 
         """
 
-        hooks = {k: [y() for y in v]
-                 for (k, v) in cls.replace_hooks.iteritems()}
+        hooks = {k: [y() for y in v] for (k, v) in cls.replace_hooks.items()}
 
         csets = cls.replace_csets.copy()
 
@@ -297,7 +295,7 @@ class MergeEngine(object):
         """
         if not callable(func):
             raise TypeError("func must be a callable")
-        if not isinstance(cset_name, basestring):
+        if not isinstance(cset_name, str):
             raise TypeError("cset_name must be a string")
         self.cset_sources[cset_name] = func
 
@@ -315,7 +313,7 @@ class MergeEngine(object):
         if required_csets is not None:
             for rcs in required_csets:
                 if rcs not in self.cset_sources:
-                    if isinstance(rcs, basestring):
+                    if isinstance(rcs, str):
                         raise errors.TriggerUnknownCset(trigger, rcs)
 
         self.hooks[hook_name].append(trigger)

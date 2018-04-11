@@ -32,8 +32,6 @@ type_names = ("list", "str", "bool", "int")
 # Also documented in http://docs.python.org/ref/types.html.
 CO_VARARGS, CO_VARKEYWORDS = 4, 8
 
-_code_attrname = '__code__'
-
 
 class ConfigType(object):
     """A configurable type.
@@ -66,7 +64,7 @@ class ConfigType(object):
         self.name = func_obj.__name__
         self.callable = func_obj
         self.doc = getattr(func_obj, '__doc__', None)
-        if not hasattr(func_obj, _code_attrname):
+        if not hasattr(func_obj, '__code__'):
             # No function or method, should be a class so grab __init__.
             func_obj = func_obj.__init__
         # We do not use the inspect module because that is a heavy
@@ -82,13 +80,13 @@ class ConfigType(object):
         # against the case where there is no Hint
         if not getattr(hint_overrides, 'authorative', None):
             try:
-                code = getattr(func_obj, _code_attrname)
+                code = getattr(func_obj, '__code__')
             except AttributeError:
                 if func_obj != object.__init__:
                     raise TypeError(
                         "func %s has no %r attribute; likely a "
                         "builtin object which can't be introspected without hints"
-                        % (original_func_obj, _code_attrname))
+                        % (original_func_obj, '__code__'))
             else:
                 if code.co_argcount and code.co_varnames[0] == 'self':
                     args = code.co_varnames[1:code.co_argcount]
@@ -96,7 +94,7 @@ class ConfigType(object):
                     args = code.co_varnames[:code.co_argcount]
                 varargs = bool(code.co_flags & CO_VARARGS)
                 varkw = bool(code.co_flags & CO_VARKEYWORDS)
-                defaults = func_obj.func_defaults
+                defaults = func_obj.__defaults__
                 if defaults is None:
                     defaults = ()
                 # iterate through defaults backwards, so they match up to argnames
@@ -106,7 +104,7 @@ class ConfigType(object):
                             (bool, 'bool'),
                             (tuple, 'list'),
                             (str, 'str'),
-                            ((int, long), 'int')]:
+                            (int, 'int')]:
                         if isinstance(default, typeobj):
                             self.types[argname] = typename
                             break
@@ -239,7 +237,7 @@ class DictConfigSection(ConfigSection):
         return name in self.dict
 
     def keys(self):
-        return self.dict.keys()
+        return list(self.dict.keys())
 
     def render_value(self, central, name, arg_type):
         try:
@@ -411,7 +409,7 @@ def str_to_list(string):
     e = len(string)
     # check for stringness because we return something interesting if
     # feeded a sequence of strings
-    if not isinstance(string, basestring):
+    if not isinstance(string, str):
         raise TypeError('expected a string, got %r' % (string,))
     while i < e:
         if not string[i].isspace():
@@ -478,9 +476,9 @@ _str_converters = {
 
 def convert_string(central, value, arg_type):
     """Conversion func for a string-based DictConfigSection."""
-    if not isinstance(value, basestring):
+    if not isinstance(value, str):
         raise ValueError(
-            'convert_string invoked with non basestring instance:'
+            'convert_string invoked with non str instance:'
             ' val(%r), arg_type(%r)' % (value, arg_type))
     if arg_type == 'callable':
         try:
@@ -548,13 +546,13 @@ def convert_asis(central, value, arg_type):
 def convert_hybrid(central, value, arg_type):
     """Automagically switch between :obj:`convert_string` and :obj:`convert_asis`.
 
-    :obj:`convert_asis` is used for arg_type str and if value is not a basestring.
+    :obj:`convert_asis` is used for arg_type str and if value is not a string.
     :obj:`convert_string` is used for the rest.
 
     Be careful about handing in escaped strings: they are not
     unescaped (for arg_type str).
     """
-    if arg_type != 'str' and isinstance(value, basestring):
+    if arg_type != 'str' and isinstance(value, str):
         return convert_string(central, value, arg_type)
     return convert_asis(central, value, arg_type)
 

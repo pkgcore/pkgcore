@@ -35,10 +35,10 @@ filtering.add_argument(
     help="Invert the filtering- instead of removing a function if it matches "
     "remove all functions that do not match")
 filtering.add_argument(
-    '-f', '--funcs', action='extend_comma',
+    '-f', '--funcs', action='csv',
     help="comma separated list of regexes to match function names against for filtering")
 filtering.add_argument(
-    '-v', '--vars', action='extend_comma',
+    '-v', '--vars', action='csv',
     help="comma separated list of regexes to match variable names against for filtering")
 filtering.add_argument(
     '--print-vars', action='store_true', default=False,

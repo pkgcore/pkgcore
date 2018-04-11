@@ -9,7 +9,6 @@ __all__ = ("Failure", "base", "install", "uninstall", "replace")
 
 from snakeoil.demandload import demandload
 from snakeoil.dependant_methods import ForcedDepends
-from snakeoil.weakrefs import WeakRefFinalizer
 
 demandload(
     'errno',
@@ -31,17 +30,11 @@ class fake_lock(object):
     release_read_lock = release_write_lock = __init__
 
 
-class finalizer_base(WeakRefFinalizer, ForcedDepends):
-    pass
-
-
 class Failure(Exception):
     pass
 
 
-class base(object):
-
-    __metaclass__ = finalizer_base
+class base(object, metaclass=ForcedDepends):
 
     stage_depends = {}
 

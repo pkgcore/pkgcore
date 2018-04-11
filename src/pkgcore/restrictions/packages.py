@@ -17,11 +17,10 @@ demandload("pkgcore.log:logger")
 package_type = restriction.package_type
 
 
-class native_PackageRestriction(object):
+class native_PackageRestriction(object, metaclass=generic_equality):
 
     __slots__ = ('_pull_attr_func', '_attr_split', 'restriction', 'ignore_missing', 'negate')
     __attr_comparison__ = ("__class__", "negate", "_attr_split", "restriction")
-    __metaclass__ = generic_equality
 
     def __init__(self, attr, childrestriction, negate=False, ignore_missing=True):
         """
@@ -86,7 +85,7 @@ class PackageRestriction_mixin(restriction.base):
                     "failed getting attribute %s from %s, "
                     "exception %s", '.'.join(attr_split), str(pkg), str(exc))
 
-            eargs = [x for x in exc.args if isinstance(x, basestring)]
+            eargs = [x for x in exc.args if isinstance(x, str)]
             if any(x in attr_split for x in eargs):
                 return False
             elif any("'%s'" % x in y for x in attr_split for y in eargs):
@@ -226,7 +225,7 @@ class PackageRestrictionMulti(PackageRestrictionMulti_base, PackageRestrictionMu
     __eq__ = PackageRestriction_base.__eq__
 
 
-class Conditional(PackageRestriction):
+class Conditional(PackageRestriction, metaclass=generic_equality):
     """Base object representing a conditional package restriction.
 
     Used to control whether a payload of restrictions are accessible or not.
@@ -235,7 +234,6 @@ class Conditional(PackageRestriction):
     __slots__ = ('payload',)
 
     __attr_comparison__ = ("__class__", "negate", "attr", "restriction", "payload")
-    __metaclass__ = generic_equality
     conditional = True
 
     # note that instance caching is turned off.

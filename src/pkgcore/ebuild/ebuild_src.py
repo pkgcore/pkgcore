@@ -8,7 +8,7 @@ package class for buildable ebuilds
 __all__ = ("base", "package", "package_factory")
 
 from functools import partial
-from itertools import imap, chain
+from itertools import chain
 import os
 from sys import intern
 
@@ -97,7 +97,7 @@ def generate_fetchables(self, allow_missing_checksums=False,
         self.data.get("SRC_URI", ""), fetch.fetchable, operators={},
         element_func=func,
         allow_src_uri_file_renames=self.eapi.options.src_uri_renames)
-    for v in common.itervalues():
+    for v in common.values():
         v.uri.finalize()
     return d
 
@@ -216,26 +216,26 @@ class base(metadata.package):
     _get_attr["distfiles"] = generate_distfiles
     _get_attr["description"] = lambda s: s.data.pop("DESCRIPTION", "").strip()
     _get_attr["keywords"] = lambda s: tuple(
-        imap(intern, s.data.pop("KEYWORDS", "").split()))
+        map(intern, s.data.pop("KEYWORDS", "").split()))
     _get_attr["restrict"] = lambda s: conditionals.DepSet.parse(
         s.data.pop("RESTRICT", ''), str, operators={},
         element_func=rewrite_restrict)
     _get_attr["eapi"] = get_parsed_eapi
     _get_attr["iuse"] = lambda s: frozenset(
-        imap(intern, s.data.pop("IUSE", "").split()))
+        map(intern, s.data.pop("IUSE", "").split()))
     _get_attr["user_patches"] = lambda s: ()
     _get_attr["iuse_effective"] = lambda s: s.iuse_stripped
     _get_attr["properties"] = lambda s: frozenset(
-        imap(intern, s.data.pop("PROPERTIES", "").split()))
+        map(intern, s.data.pop("PROPERTIES", "").split()))
     _get_attr["defined_phases"] = lambda s: s.eapi.interpret_cache_defined_phases(
-        imap(intern, s.data.pop("DEFINED_PHASES", "").split()))
+        map(intern, s.data.pop("DEFINED_PHASES", "").split()))
     _get_attr["homepage"] = lambda s: s.data.pop("HOMEPAGE", "").strip()
     _get_attr["inherited"] = lambda s: tuple(sorted(s.data.get('_eclasses_', {})))
 
     _get_attr["required_use"] = generate_required_use
     _get_attr["source_repository"] = lambda s: s.repo.repo_id
 
-    __slots__ = tuple(_get_attr.keys() + ["_pkg_metadata_shared"])
+    __slots__ = tuple(list(_get_attr.keys()) + ["_pkg_metadata_shared"])
 
     PN = klass.alias_attr("package")
     PV = klass.alias_attr("version")
@@ -334,7 +334,7 @@ class package_factory(metadata.factory):
         self._ecache = eclass_cache
 
         if mirrors:
-            mirrors = {k: fetch.mirror(v, k) for k, v in mirrors.iteritems()}
+            mirrors = {k: fetch.mirror(v, k) for k, v in mirrors.items()}
 
         self.mirrors = mirrors
         if default_mirrors:

@@ -51,7 +51,6 @@ from snakeoil import klass
 from snakeoil.currying import pretty_docs
 from snakeoil.demandload import demandload
 from snakeoil.osutils import abspath, normpath, pjoin
-from snakeoil.weakrefs import WeakRefFinalizer
 
 demandload(
     'logging',
@@ -248,8 +247,6 @@ class EbuildProcessor(object):
     Contains the env, functions, etc that ebuilds expect.
     """
 
-    __metaclass__ = WeakRefFinalizer
-
     def __init__(self, userpriv, sandbox, fd_pipes=None):
         """
         :param sandbox: enables a sandboxed processor
@@ -258,7 +255,7 @@ class EbuildProcessor(object):
         """
         self.lock()
         self.ebd = e_const.EBUILD_DAEMON_PATH
-        spawn_opts = {'umask': 0002}
+        spawn_opts = {'umask': 0o002}
 
         self._preloaded_eclasses = {}
         self._eclass_caching = False
@@ -328,7 +325,7 @@ class EbuildProcessor(object):
 
         # allow any pipe overrides except the ones we use to communicate
         default_pipes = {0: 0, 1: 1, 2: 2}
-        fd_pipes.update({k: v for k, v in default_pipes.iteritems() if k not in fd_pipes})
+        fd_pipes.update({k: v for k, v in default_pipes.items() if k not in fd_pipes})
         ebd_pipes = {max_fd-4: cread, max_fd-3: dwrite}
         fd_pipes.update(ebd_pipes)
 
@@ -547,7 +544,7 @@ class EbuildProcessor(object):
         if limited_to:
             i = ((eclass, ec[eclass]) for eclass in limited_to)
         else:
-            i = cache.eclasses.iteritems()
+            i = cache.eclasses.items()
         for eclass, data in i:
             if data.path != self._preloaded_eclasses.get(eclass):
                 if self._preload_eclass(data.path, async=True):
@@ -658,12 +655,12 @@ class EbuildProcessor(object):
 
         for d, data in ((internal_env, internal_data),
                         (exported_env, exported_data)):
-            for key, val in d.iteritems():
+            for key, val in d.items():
                 if key in self.dont_export_vars:
                     continue
                 if not key[0].isalpha():
                     raise KeyError("%s: bash doesn't allow digits as the first char" % (key,))
-                if not isinstance(val, (basestring, list, tuple)):
+                if not isinstance(val, (str, list, tuple)):
                     raise ValueError("_generate_env_str was fed a bad value; key=%s, val=%s"
                                      % (key, val))
 
@@ -689,7 +686,7 @@ class EbuildProcessor(object):
         :param env_dict: the bash env.
         """
         data = self._generate_env_str(env_dict)
-        old_umask = os.umask(0002)
+        old_umask = os.umask(0o002)
         if tmpdir:
             path = pjoin(tmpdir, 'ebd-env-transfer')
             fileutils.write_file(path, 'wb', data.encode())

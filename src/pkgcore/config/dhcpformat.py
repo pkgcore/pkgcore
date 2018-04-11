@@ -80,7 +80,7 @@ class ConfigSection(basics.ConfigSection):
         return name in self.section
 
     def keys(self):
-        return self.section.keys()
+        return list(self.section.keys())
 
     def render_value(self, central, name, arg_type):
         value = self.section[name]
@@ -88,7 +88,7 @@ class ConfigSection(basics.ConfigSection):
             if len(value) != 1:
                 raise errors.ConfigurationError('only one argument required')
             value = value[0]
-            if not isinstance(value, basestring):
+            if not isinstance(value, str):
                 raise errors.ConfigurationError(
                     'need a callable, not a section')
             try:
@@ -102,7 +102,7 @@ class ConfigSection(basics.ConfigSection):
             if len(value) != 1:
                 raise errors.ConfigurationError('only one argument required')
             value = value[0]
-            if isinstance(value, basestring):
+            if isinstance(value, str):
                 # it's a section ref
                 return basics.LazyNamedSectionRef(central, arg_type, value)
             else:
@@ -112,7 +112,7 @@ class ConfigSection(basics.ConfigSection):
         elif arg_type.startswith('refs:'):
             result = []
             for ref in value:
-                if isinstance(ref, basestring):
+                if isinstance(ref, str):
                     # it's a section ref
                     result.append(basics.LazyNamedSectionRef(
                             central, arg_type, ref))
@@ -122,28 +122,28 @@ class ConfigSection(basics.ConfigSection):
                             central, arg_type, ConfigSection(ref)))
             return None, result, None
         elif arg_type == 'list':
-            if not isinstance(value, basestring):
+            if not isinstance(value, str):
                 # sequence
                 value = ' '.join(value)
             return None, basics.str_to_list(value), None
         elif arg_type == 'repr':
             if len(value) == 1:
                 value = value[0]
-                if isinstance(value, basestring):
+                if isinstance(value, str):
                     return 'str', value
                 return 'ref', ConfigSection(value)
-            if all(isinstance(v, basestring) for v in value):
+            if all(isinstance(v, str) for v in value):
                 return 'list', list(value)
             result = []
             for v in value:
-                if not isinstance(v, basestring):
+                if not isinstance(v, str):
                     v = ConfigSection(v)
                 result.append(v)
             return 'refs', result
         else:
             if len(value) != 1:
                 raise errors.ConfigurationError('only one argument required')
-            if not isinstance(value[0], basestring):
+            if not isinstance(value[0], str):
                 raise errors.ConfigurationError(
                     '%r should be a string' % value)
             if arg_type == 'str':

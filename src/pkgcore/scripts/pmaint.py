@@ -189,7 +189,7 @@ def update_use_local_desc(repo, out, err):
         res = {}
         for p in repo:
             try:
-                for flag, desc in p.local_use.iteritems():
+                for flag, desc in p.local_use.items():
                     res[(p.key, flag)] = desc
             except IGNORED_EXCEPTIONS as e:
                 if isinstance(e, KeyboardInterrupt):

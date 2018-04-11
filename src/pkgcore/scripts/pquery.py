@@ -144,11 +144,11 @@ def stringify_attr(config, pkg, attr):
         return 'MISSING'
 
     if attr in ('iuse', 'properties', 'defined_phases', 'inherited'):
-        return ' '.join(sorted(unicode(v) for v in value))
+        return ' '.join(sorted(str(v) for v in value))
     if attr == 'maintainers':
-        return ' '.join(unicode(v) for v in value)
+        return ' '.join(str(v) for v in value)
     if attr == 'longdescription':
-        return unicode(value)
+        return str(value)
     if attr == 'keywords':
         return ' '.join(sorted(value, key=lambda x: x.lstrip("~")))
     if attr == 'distfiles':
@@ -326,7 +326,7 @@ def print_package(options, out, err, pkg):
                             out.write(
                                 str(revdep), ' through dep ', out.bold,
                                 str(key))
-                for key, restricts in depset.node_conds.iteritems():
+                for key, restricts in depset.node_conds.items():
                     if key.intersects(revdep):
                         out.write(
                             green, '     revdep: ', out.fg(), name, ' on ',
@@ -384,7 +384,7 @@ def print_package(options, out, err, pkg):
                 for key, restricts in depset.find_cond_nodes(depset.restrictions, True):
                     if not restricts and key.intersects(revdep):
                         out.write(' %s on %s through %s' % (name, revdep, key))
-                for key, restricts in depset.node_conds.iteritems():
+                for key, restricts in depset.node_conds.items():
                     if key.intersects(revdep):
                         out.write(' %s on %s through %s if USE %s,' %
                                   (name, revdep, key, ' or '.join(

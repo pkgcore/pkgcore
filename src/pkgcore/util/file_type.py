@@ -16,7 +16,7 @@ class file_identifier(object):
             self.func = self._fallback_file
 
     def __call__(self, obj):
-        if not isinstance(obj, basestring):
+        if not isinstance(obj, str):
             obj = obj.path
         return self.func(obj)
 

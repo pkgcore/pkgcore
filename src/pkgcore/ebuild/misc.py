@@ -148,15 +148,14 @@ class IncrementalsDict(mappings.DictMixin):
     for x in "getitem delitem len iter".split():
         x = '__%s__' % x
         locals()[x] = alias_method("_dict.%s" % x)
-    s = "pop clear keys items values iterkeys iteritems itervalues"
+    s = "pop clear keys items values"
     for x in s.split():
         locals()[x] = alias_method("_dict.%s" % x)
     del x, s
 
 
-class collapsed_restrict_to_data(object):
+class collapsed_restrict_to_data(object, metaclass=generic_equality):
 
-    __metaclass__ = generic_equality
     __attr_comparison__ = ('defaults', 'freeform', 'atoms', '__class__')
     incremental = True
 
@@ -188,7 +187,7 @@ class collapsed_restrict_to_data(object):
                     # note also, we're dropping AlwaysFalse; it'll never match.
                     if a.negate:
                         always.extend(data)
-                        for atomlist in atom_d.itervalues():
+                        for atomlist in atom_d.values():
                             atomlist.append((a, set([flag for flag in data if flag.startswith("-")])))
                 elif isinstance(a, atom.atom):
                     atom_d.setdefault(a.key, []).append((a, data))
@@ -340,8 +339,8 @@ def _build_cp_atom_payload(sequence, restrict, payload_form=False):
 
     new_l = [f(
         restrict,
-        tuple(k for k, v in locked.iteritems() if not v),  # neg
-        tuple(k for k, v in locked.iteritems() if v)  # pos
+        tuple(k for k, v in locked.items() if not v),  # neg
+        tuple(k for k, v in locked.items() if v)  # pos
     )]
     # we exploit a few things this time around in reusing the algo from above
     # we know there is only going to be one global (which we just added),
@@ -359,9 +358,8 @@ def _build_cp_atom_payload(sequence, restrict, payload_form=False):
     return tuple(new_l)
 
 
-class ChunkedDataDict(object):
+class ChunkedDataDict(object, metaclass=generic_equality):
 
-    __metaclass__ = generic_equality
     __attr_comparison__ = ('_global_settings', '_dict')
 
     def __init__(self):
@@ -379,7 +377,7 @@ class ChunkedDataDict(object):
             obj._global_settings = self._global_settings
             return obj
         obj._dict = defaultdict(partial(list, self._global_settings))
-        for key, values in self._dict.iteritems():
+        for key, values in self._dict.items():
             obj._dict[key].extend(values)
         obj._global_settings = list(self._global_settings)
         return obj
@@ -402,7 +400,7 @@ class ChunkedDataDict(object):
         if restrict is None:
             restrict = packages.AlwaysTrue
         payload = self.mk_item(restrict, tuple(disabled), tuple(enabled))
-        for vals in self._dict.itervalues():
+        for vals in self._dict.values():
             vals.append(payload)
 
         self._expand_globals([payload])
@@ -418,7 +416,7 @@ class ChunkedDataDict(object):
                 "got type %s, %r" % (type(cdict), cdict,))
         # straight extensions for this, rather than update_from_stream.
         d = self._dict
-        for key, values in cdict._dict.iteritems():
+        for key, values in cdict._dict.items():
             d[key].extend(values)
 
         # note the cdict we're merging has the globals layer through it already, ours
@@ -462,21 +460,21 @@ class ChunkedDataDict(object):
         if not isinstance(self._dict, mappings.ImmutableDict):
             self._dict = mappings.ImmutableDict(
                 (k, tuple(v))
-                for k, v in self._dict.iteritems())
+                for k, v in self._dict.items())
             self._global_settings = tuple(self._global_settings)
 
     def optimize(self, cache=None):
         if cache is None:
             d_stream = (
                 (k, _build_cp_atom_payload(v, atom.atom(k), False))
-                for k, v in self._dict.iteritems())
+                for k, v in self._dict.items())
             g_stream = (_build_cp_atom_payload(
                 self._global_settings,
                 packages.AlwaysTrue, payload_form=isinstance(self, PayloadDict)))
         else:
             d_stream = ((k, _cached_build_cp_atom_payload(
                 cache, v, atom.atom(k), False))
-                for k, v in self._dict.iteritems())
+                for k, v in self._dict.items())
             g_stream = (_cached_build_cp_atom_payload(
                 cache, self._global_settings,
                 packages.AlwaysTrue, payload_form=isinstance(self, PayloadDict)))
@@ -497,7 +495,7 @@ class ChunkedDataDict(object):
     def render_to_payload(self):
         d = PayloadDict()
         d = {atom.atom(k): _build_cp_atom_payload(v, atom.atom(k), True)
-             for k, v in self._dict.iteritems()}
+             for k, v in self._dict.items()}
         if self._global_settings:
             data = _build_cp_atom_payload(
                 self._global_settings,
@@ -505,7 +503,7 @@ class ChunkedDataDict(object):
             d[packages.AlwaysTrue] = tuple(data)
         return d
 
-    def __nonzero__(self):
+    def __bool__(self):
         return bool(self._global_settings) or bool(self._dict)
 
     def __str__(self):

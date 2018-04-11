@@ -12,14 +12,12 @@ from snakeoil import caching, klass
 from snakeoil.currying import pretty_docs
 
 
-class base(object):
+class base(object, metaclass=caching.WeakInstMeta):
     """base restriction matching object.
 
     all derivatives *should* be __slot__ based (lot of instances may
     wind up in memory).
     """
-
-    __metaclass__ = caching.WeakInstMeta
     __inst_caching__ = True
 
     # __weakref__ here's is implicit via the metaclass

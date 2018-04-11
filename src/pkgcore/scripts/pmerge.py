@@ -368,7 +368,7 @@ def display_failures(out, sequence, first_level=True, debug=False):
     """when resolution fails, display a nicely formatted message"""
 
     sequence = iter(sequence)
-    frame = sequence.next()
+    frame = next(sequence)
     if first_level:
         # pops below need to exactly match.
         out.first_prefix.extend((out.fg("red"), "!!!", out.reset))
@@ -401,7 +401,7 @@ def display_failures(out, sequence, first_level=True, debug=False):
         out.first_prefix.pop()
     out.first_prefix.pop()
     if first_level:
-        for x in xrange(3):
+        for x in range(3):
             out.first_prefix.pop()
 
 
@@ -555,7 +555,7 @@ def load_world(namespace, attr):
 
 
 def display_pkgsets(out, options):
-    for name, kls in sorted(options.config.pkgset.iteritems()):
+    for name, kls in sorted(options.config.pkgset.items()):
         if options.verbose:
             out.write(name)
             out.write('\n'.join('  ' + dedent(x) for x in kls.__doc__.split('\n')))

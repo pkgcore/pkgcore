@@ -35,16 +35,16 @@ def main(options, out, err):
     valid = set()
     start = time.time()
     if options.verbose:
-        for k, v in source.iteritems():
+        for k, v in source.items():
             out.write("updating %s" % (k,))
             target[k] = v
             valid.add(k)
     else:
-        for k, v in source.iteritems():
+        for k, v in source.items():
             target[k] = v
             valid.add(k)
 
-    for x in target.iterkeys():
+    for x in target.keys():
         if x not in valid:
             if options.verbose:
                 out.write("deleting %s" % (x,))

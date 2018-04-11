@@ -150,12 +150,12 @@ class CountingFormatter(Formatter):
         """Output total package, operation, and download size counts."""
         self.out.write()
         if self.verbose:
-            total = sum(self.package_data.itervalues())
+            total = sum(self.package_data.values())
             self.out.write(
                 'Total: %d package%s' % (total, pluralism(total)),
                 autoline=False)
 
-            d = dict(self.package_data.iteritems())
+            d = dict(self.package_data.items())
             op_types = (
                 ('add', 'new'),
                 ('upgrade', 'upgrade'),
@@ -248,7 +248,7 @@ class PortageFormatter(CountingFormatter):
 
         # Order is important here - look at the above diagram
         op_type = op.desc
-        op_chars = [[' '] for x in xrange(7)]
+        op_chars = [[' '] for x in range(7)]
         if 'fetch' in op.pkg.restrict:
             if all(os.path.isfile(pjoin(self.distdir, f))
                    for f in op.pkg.distfiles):
@@ -342,11 +342,11 @@ class PortageFormatter(CountingFormatter):
                 op.old_pkg.iuse_stripped, op.old_pkg.use)
         elif op.desc == 'add':
             uses = (op.pkg.iuse_stripped, op.pkg.use)
-        stuff = map(self.use_splitter, uses)
+        stuff = list(map(self.use_splitter, uses))
 
         # Convert the list of tuples to a list of lists and a list of
         # dicts (both length 2 or 4).
-        uselists, usedicts = zip(*stuff)
+        uselists, usedicts = list(zip(*stuff))
 
         # output USE flags
         self.format_use('use', *uselists)
@@ -366,7 +366,7 @@ class PortageFormatter(CountingFormatter):
                     self.downloads.update(downloads)
                     size = sum(
                         v.size for dist, v in
-                        op.pkg.manifest.distfiles.iteritems() if dist in downloads)
+                        op.pkg.manifest.distfiles.items() if dist in downloads)
                     if size:
                         self.download_size += size
                         out.write(' ', sizeof_fmt(size))
@@ -490,7 +490,7 @@ class PortageFormatter(CountingFormatter):
             super(PortageFormatter, self).end()
             out.write()
             if self.quiet_repo_display:
-                repos = self.repos.items()
+                repos = list(self.repos.items())
                 repos.sort(key=operator.itemgetter(1))
                 for k, v in repos:
                     reponame = getattr(k, 'repo_id', 'unknown repo id')

@@ -8,7 +8,7 @@ __all__ = (
 
 import errno
 from functools import partial
-from itertools import chain, ifilter
+from itertools import chain
 import os
 
 from snakeoil import caching, klass, sequences
@@ -135,9 +135,8 @@ def _open_utf8(path, *args):
         return None
 
 
-class ProfileNode(object):
+class ProfileNode(object, metaclass=caching.WeakInstMeta):
 
-    __metaclass__ = caching.WeakInstMeta
     __inst_caching__ = True
     _repo_map = None
 
@@ -233,17 +232,17 @@ class ProfileNode(object):
 
     @load_property("package.keywords", allow_recurse=True)
     def keywords(self, data):
-        return tuple(ifilter(None, (package_keywords_splitter(x) for x in data)))
+        return tuple(filter(None, (package_keywords_splitter(x) for x in data)))
 
     @load_property("package.accept_keywords", allow_recurse=True)
     def accept_keywords(self, data):
-        return tuple(ifilter(None, (package_keywords_splitter(x) for x in data)))
+        return tuple(filter(None, (package_keywords_splitter(x) for x in data)))
 
     @load_property("package.use", allow_recurse=True)
     def pkg_use(self, data):
         c = ChunkedDataDict()
         c.update_from_stream(
-            chain.from_iterable(self._parse_package_use(data).itervalues()))
+            chain.from_iterable(self._parse_package_use(data).values()))
         c.freeze()
         return c
 
@@ -277,7 +276,7 @@ class ProfileNode(object):
             d[a.key].append(chunked_data(a, *split_negations(l[1:])))
 
         return ImmutableDict((k, _build_cp_atom_payload(v, atom(k)))
-                             for k, v in d.iteritems())
+                             for k, v in d.items())
 
     def _parse_use(self, data):
         c = ChunkedDataDict()
@@ -329,7 +328,7 @@ class ProfileNode(object):
         if self.pkg_use_mask:
             c = c.clone(unfreeze=True)
             c.update_from_stream(
-                chain.from_iterable(self.pkg_use_mask.itervalues()))
+                chain.from_iterable(self.pkg_use_mask.values()))
             c.freeze()
         return c
 
@@ -340,10 +339,10 @@ class ProfileNode(object):
             c.merge(self.use_stable_mask)
         if self.pkg_use_mask:
             c.update_from_stream(
-                chain.from_iterable(self.pkg_use_mask.itervalues()))
+                chain.from_iterable(self.pkg_use_mask.values()))
         if self.pkg_use_stable_mask:
             c.update_from_stream(
-                chain.from_iterable(self.pkg_use_stable_mask.itervalues()))
+                chain.from_iterable(self.pkg_use_stable_mask.values()))
         c.freeze()
         return c
 
@@ -353,7 +352,7 @@ class ProfileNode(object):
         if self.pkg_use_force:
             c = c.clone(unfreeze=True)
             c.update_from_stream(
-                chain.from_iterable(self.pkg_use_force.itervalues()))
+                chain.from_iterable(self.pkg_use_force.values()))
             c.freeze()
         return c
 
@@ -364,10 +363,10 @@ class ProfileNode(object):
             c.merge(self.use_stable_force)
         if self.pkg_use_force:
             c.update_from_stream(
-                chain.from_iterable(self.pkg_use_force.itervalues()))
+                chain.from_iterable(self.pkg_use_force.values()))
         if self.pkg_use_stable_force:
             c.update_from_stream(
-                chain.from_iterable(self.pkg_use_stable_force.itervalues()))
+                chain.from_iterable(self.pkg_use_stable_force.values()))
         c.freeze()
         return c
 
@@ -375,11 +374,11 @@ class ProfileNode(object):
     def default_env(self, data):
         rendered = _make_incrementals_dict()
         for parent in self.parents:
-            rendered.update(parent.default_env.iteritems())
+            rendered.update(parent.default_env.items())
 
         if data is not None:
             data = read_bash_dict(data, vars_dict=rendered)
-            rendered.update(data.iteritems())
+            rendered.update(data.items())
         return ImmutableDict(rendered)
 
     @klass.jit_attr
@@ -391,8 +390,8 @@ class ProfileNode(object):
 
     @load_property('eapi', fallback=('0',))
     def eapi(self, data):
-        data = [x.strip() for x in data]
-        data = filter(None, data)
+        data = (x.strip() for x in data)
+        data = [x for x in data if x]
         if len(data) != 1:
             raise ProfileError(self.path, 'eapi', "multiple lines detected")
         eapi = get_eapi(data[0])
@@ -514,7 +513,7 @@ class ProfileStack(object):
 
     @klass.jit_attr
     def default_env(self):
-        d = dict(self.node.default_env.iteritems())
+        d = dict(self.node.default_env.items())
         for incremental in const.incrementals:
             v = d.pop(incremental, '').split()
             if v:
@@ -527,7 +526,7 @@ class ProfileStack(object):
                         (incremental, v))
                     if v:
                         d[incremental] = tuple(v)
-        return ImmutableDict(d.iteritems())
+        return ImmutableDict(d.items())
 
     @property
     def profile_only_variables(self):
@@ -673,7 +672,7 @@ class OnDiskProfile(ProfileStack):
         path = abspath(path)
         # filter's heavy, but it handles '/' while also
         # suppressing the leading '/'
-        chunks = filter(None, path.split("/"))
+        chunks = [x for x in path.split("/") if x]
         try:
             # poor mans rindex.
             pbase = max(x for x in enumerate(chunks) if x[1] == 'profiles')[0]

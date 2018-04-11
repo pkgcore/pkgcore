@@ -88,11 +88,10 @@ class VersionRestriction(base):
     __slots__ = ()
 
 
-class StrRegex(base):
+class StrRegex(base, metaclass=hashed_base):
     """regex based matching"""
 
     __slots__ = ('_hash', 'flags', 'regex', '_matchfunc', 'ismatch', 'negate')
-    __metaclass__ = hashed_base
     __inst_caching__ = True
 
     def __init__(self, regex, case_sensitive=True, match=False, negate=False):
@@ -122,7 +121,7 @@ class StrRegex(base):
         sf(self, "_hash", hash((self.regex, self.negate, self.flags, self.ismatch)))
 
     def match(self, value):
-        if not isinstance(value, basestring):
+        if not isinstance(value, str):
             # Be too clever for our own good --marienz
             if value is None:
                 value = ''
@@ -152,11 +151,10 @@ class StrRegex(base):
         return result
 
 
-class native_StrExactMatch(object):
+class native_StrExactMatch(object, metaclass=generic_equality):
     """exact string comparison match"""
 
     __slots__ = __attr_comparison__ = ('_hash', 'exact', 'case_sensitive', 'negate')
-    __metaclass__ = generic_equality
 
     def __init__(self, exact, case_sensitive=True, negate=False):
         """
@@ -229,11 +227,10 @@ class StrExactMatch(base_StrExactMatch, base):
     __str__ = _StrExact__str__
 
 
-class StrGlobMatch(base):
+class StrGlobMatch(base, metaclass=hashed_base):
     """globbing matches; essentially startswith and endswith matches"""
 
     __slots__ = ('_hash', 'glob', 'prefix', 'negate', 'flags')
-    __metaclass__ = hashed_base
     __inst_caching__ = True
 
     def __init__(self, glob, case_sensitive=True, prefix=True, negate=False):
@@ -289,10 +286,9 @@ class StrGlobMatch(base):
         return "%s*%s" % (s, self.glob)
 
 
-class EqualityMatch(base):
+class EqualityMatch(base, metaclass=generic_equality):
 
     __slots__ = ('negate', 'data')
-    __metaclass__ = generic_equality
     __attr_comparison__ = __slots__
 
     def __init__(self, data, negate=False):
@@ -321,7 +317,7 @@ class EqualityMatch(base):
         return "EqualityMatch: =%s" % (self.data,)
 
 
-class ContainmentMatch2(base):
+class ContainmentMatch2(base, metaclass=hashed_base):
     """Used for an 'in' style operation.
 
     For example, 'x86' in ['x86', '~x86']. Note that negation of this *does*
@@ -332,7 +328,6 @@ class ContainmentMatch2(base):
     """
 
     __slots__ = ('_hash', 'vals', 'all', 'negate')
-    __metaclass__ = hashed_base
     __inst_caching__ = True
 
     def __init__(self, vals, match_all=False, negate=False):
@@ -354,7 +349,7 @@ class ContainmentMatch2(base):
         if _values_override is None:
             vals = self.vals
 
-        if isinstance(val, basestring):
+        if isinstance(val, str):
             for fval in vals:
                 if fval in val:
                     return not self.negate
@@ -391,7 +386,7 @@ class ContainmentMatch2(base):
             vals = self.vals
 
         # XXX pretty much positive this isn't working.
-        if isinstance(val, basestring) or not getattr(pkg, 'configurable', False):
+        if isinstance(val, str) or not getattr(pkg, 'configurable', False):
             # unchangable
             return not self.match(val)
 
@@ -438,7 +433,7 @@ class ContainmentMatch2(base):
         if _values_override is None:
             vals = self.vals
 
-        if isinstance(val, basestring) or not getattr(pkg, 'configurable', False):
+        if isinstance(val, str) or not getattr(pkg, 'configurable', False):
             # unchangable
             return self.match(val)
 
@@ -514,12 +509,11 @@ class ContainmentMatch(ContainmentMatch2):
         ContainmentMatch2.__init__(self, vals, match_all=match_all, **kwargs)
 
 
-class FlatteningRestriction(base):
+class FlatteningRestriction(base, metaclass=generic_equality):
     """Flatten the values passed in and apply the nested restriction."""
 
     __slots__ = __attr_comparison__ = ('dont_iter', 'restriction', 'negate')
     __hash__ = object.__hash__
-    __metaclass__ = generic_equality
 
     def __init__(self, dont_iter, childrestriction, negate=False):
         """
@@ -548,12 +542,11 @@ class FlatteningRestriction(base):
             id(self))
 
 
-class FunctionRestriction(base):
+class FunctionRestriction(base, metaclass=generic_equality):
     """Convenience class for creating special restrictions."""
 
     __attr_comparison__ = __slots__ = ('func', 'negate')
     __hash__ = object.__hash__
-    __metaclass__ = generic_equality
 
     def __init__(self, func, negate=False):
         """
@@ -575,12 +568,11 @@ class FunctionRestriction(base):
             self.__class__.__name__, self.func, self.negate, id(self))
 
 
-class StrConversion(base):
+class StrConversion(base, metaclass=generic_equality):
     """convert passed in data to a str object"""
 
     __hash__ = object.__hash__
     __attr_comparison__ = __slots__ = ('restrict',)
-    __metaclass__ = generic_equality
 
     def __init__(self, restrict):
         object.__setattr__(self, "restrict", restrict)
@@ -595,7 +587,7 @@ class UnicodeConversion(StrConversion):
     __slots__ = ()
 
     def match(self, val):
-        return self.restrict.match(unicode(val))
+        return self.restrict.match(str(val))
 
 
 class AnyMatch(restriction.AnyMatch):

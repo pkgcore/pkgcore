@@ -26,7 +26,7 @@ class FileList(object):
     pkgcore_config_type = ConfigHint({'location': 'str'}, typename='pkgset')
     error_on_subsets = True
 
-    def __init__(self, location, gid=os_data.portage_gid, mode=0644):
+    def __init__(self, location, gid=os_data.portage_gid, mode=0o644):
         self.path = location
         self.gid = gid
         self.mode = mode
@@ -88,7 +88,7 @@ class WorldFile(FileList):
     error_on_subsets = False
 
     def __init__(self, location=const.WORLD_FILE,
-                 gid=os_data.portage_gid, mode=0644):
+                 gid=os_data.portage_gid, mode=0o644):
         FileList.__init__(self, location, gid=gid, mode=mode)
 
     def add(self, atom_inst):

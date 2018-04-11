@@ -84,9 +84,9 @@ def print_simple_histogram(data, out, format, total, sort_by_key=False,
     total = float(total) / 100
 
     if sort_by_key:
-        data = sorted(data.iteritems(), key=itemgetter(0))
+        data = sorted(data.items(), key=itemgetter(0))
     else:
-        data = sorted(data.iteritems(), key=itemgetter(1), reverse=True)
+        data = sorted(data.items(), key=itemgetter(1), reverse=True)
 
     if first:
         data = islice(data, 0, first)
@@ -176,7 +176,7 @@ class histo_data(arghparse.ArgparseCommand):
                         repo_total, sort_by_key=opts.sort_by_name,
                         first=opts.first, last=opts.last)
                 out.first_prefix.pop()
-            for key, val in detail_data.iteritems():
+            for key, val in detail_data.items():
                 global_stats.setdefault(key, 0)
                 global_stats[key] += val
             total_pkgs += repo_total
@@ -313,11 +313,11 @@ class distfiles_usage_kls(histo_data):
                     items[fetchable.filename] = fetchable.chksums.get("size", 0)
 
         data = defaultdict(lambda: 0)
-        for filename, keys in owners.iteritems():
+        for filename, keys in owners.items():
             for key in keys:
                 data[key] += items[filename]
-        unique = sum(items.itervalues())
-        shared = sum(items[k] for (k, v) in owners.iteritems() if len(v) > 1)
+        unique = sum(items.values())
+        shared = sum(items[k] for (k, v) in owners.items() if len(v) > 1)
         return (data, {"total": unique, "shared": shared}), unique
 
     def transform_data_to_detail(self, data):

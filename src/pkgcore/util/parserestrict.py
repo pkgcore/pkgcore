@@ -141,7 +141,7 @@ def parse_match(text):
         except errors.MalformedAtom as e:
             raise ParseError(str(e)) from e
 
-    r = map(convert_glob, tsplit)
+    r = list(map(convert_glob, tsplit))
     if not r[0] and not r[1]:
         restrictions.append(packages.AlwaysTrue)
     elif not r[0]:

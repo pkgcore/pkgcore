@@ -58,7 +58,7 @@ def main(target_repo, seen, moves):
 
 def apply_updates(moves, atom_set):
     d = {}
-    for src, trg in moves.iteritems():
+    for src, trg in moves.items():
         if src in atom_set:
             d[src] = trg
             atom_set.remove(src)
@@ -96,7 +96,7 @@ if __name__ == '__main__':
         repo = conf.repo[args[0]]
     except KeyError:
         sys.stderr.write("repository %r wasn't found- known repos\n%r\n" %
-            (args[0], conf.repo.keys()))
+            (args[0], list(conf.repo.keys())))
         sys.exit(-2)
 
     if not os.path.exists(args[1]):

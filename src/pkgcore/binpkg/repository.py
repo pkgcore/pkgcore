@@ -185,7 +185,7 @@ class StackedXpakDict(DictMixin):
             self.xpak[key] = val
         return val
 
-    def iterkeys(self):
+    def keys(self):
         for k in self.xpak:
             yield k
         for k in ("environment", "contents"):
@@ -253,7 +253,7 @@ class tree(prototype.tree):
             raise errors.InitializationError(
                 "base directory %r with mode 0%03o isn't readable/executable"
                 " by this user" %
-                (self.base, os.stat(self.base).st_mode & 04777))
+                (self.base, os.stat(self.base).st_mode & 0o4777))
 
         self.cache = remote.get_cache_kls(cache_version)(pjoin(self.base, self.cache_name))
         self.package_class = wrap_factory(self.package_factory, self)

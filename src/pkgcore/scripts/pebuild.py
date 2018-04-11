@@ -4,7 +4,6 @@
 
 """low-level ebuild utility"""
 
-from itertools import izip
 import os
 
 from pkgcore.ebuild import atom

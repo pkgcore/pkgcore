@@ -99,9 +99,9 @@ class fetcher(base.fetcher):
             raise TypeError(
                 "target must be fetchable instance/derivative: %s" % target)
 
-        kw = {"mode": 0775}
+        kw = {"mode": 0o775}
         if self.readonly:
-            kw["mode"] = 0555
+            kw["mode"] = 0o555
         if self.userpriv:
             kw["gid"] = portage_gid
         kw["minimal"] = True
@@ -119,7 +119,7 @@ class fetcher(base.fetcher):
             extra = {"uid": portage_uid, "gid": portage_gid}
         else:
             extra = {}
-        extra["umask"] = 0002
+        extra["umask"] = 0o002
         extra["env"] = self.extra_env
         attempts = self.attempts
         last_exc = None
@@ -137,14 +137,14 @@ class fetcher(base.fetcher):
                         try:
                             os.unlink(fp)
                             command = self.command
-                       except OSError as e:
+                        except OSError as e:
                             raise errors.UnmodifiableFile(fp, oe) from e
                     else:
                         command = self.resume_command
 
                 # yeah, it's funky, but it works.
                 if attempts > 0:
-                    u = uri.next()
+                    u = next(uri)
                     # note we're not even checking the results. the
                     # verify portion of the loop handles this. iow,
                     # don't trust their exit code. trust our chksums
@@ -152,7 +152,7 @@ class fetcher(base.fetcher):
                     spawn_bash(command % {"URI": u, "FILE": filename}, **extra)
                 attempts -= 1
             assert last_exc is not None
-            raise last_exc[0], last_exc[1], last_exc[2]
+            raise last_exc[0](last_exc[1]).with_traceback(last_exc[2])
 
         except StopIteration:
             # ran out of uris

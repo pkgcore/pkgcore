@@ -131,7 +131,7 @@ def env_var(options, out, err):
     envvar_getter = {"DISTDIR":distdir_get}
     for x in options.variable:
         val = envvar_getter.get(x, default_get)(options.domain, x)
-        if not isinstance(val, basestring):
+        if not isinstance(val, str):
             val = ' '.join(val)
         out.write(str(val))
     return 0
@@ -213,7 +213,7 @@ def find_profile_paths_by_repo_id(config, repo_id, fullpath=False):
     repo = config.repo.get(repo_id, None)
     if repo is not None and getattr(repo, 'location', None) is not None:
         profiles = repo.config.profiles.arch_profiles
-        for arch in profiles.iterkeys():
+        for arch in profiles.keys():
             for path, stability in profiles[arch]:
                 if fullpath:
                     path = os.path.join(repo.location, 'profiles', path)

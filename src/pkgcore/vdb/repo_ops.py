@@ -44,7 +44,7 @@ class install(repo_ops.install):
     def add_data(self, domain):
         # error checking?
         dirpath = self.tmp_write_path
-        ensure_dirs(dirpath, mode=0755, minimal=True)
+        ensure_dirs(dirpath, mode=0o755, minimal=True)
         update_mtime(self.repo.location)
         rewrite = self.repo._metadata_rewrites
         for k in self.new_pkg.tracked_attributes:
@@ -63,7 +63,7 @@ class install(repo_ops.install):
                 v = getattr(self.new_pkg, k)
                 if k == 'depends' or k == 'rdepends':
                     s = v.slotdep_str(domain)
-                elif not isinstance(v, basestring):
+                elif not isinstance(v, str):
                     try:
                         s = ' '.join(v)
                     except TypeError:

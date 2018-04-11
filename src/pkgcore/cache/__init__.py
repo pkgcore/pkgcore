@@ -7,15 +7,13 @@ cache subsystem, typically used for storing package metadata
 
 __all__ = ("base", "bulk")
 
-import itertools
 import math
 import os
 import operator
 
 from snakeoil import klass
 from snakeoil.chksum import get_handler
-from snakeoil.mappings import (
-    ProtectedDict, autoconvert_py3k_methods_metaclass, make_SlottedDict_kls)
+from snakeoil.mappings import ProtectedDict, make_SlottedDict_kls
 
 from pkgcore.cache import errors
 from pkgcore.ebuild.const import metadata_keys
@@ -43,8 +41,6 @@ class base(object):
     default_keys = metadata_keys
 
     frozen = klass.alias_attr('readonly')
-
-    __metaclass__ = autoconvert_py3k_methods_metaclass
 
     def __init__(self, auxdbkeys=None, readonly=False):
         """
@@ -81,8 +77,8 @@ class base(object):
         if chf == 'eclassdir':
             return str
         elif chf == 'mtime':
-            return lambda val:long(math.floor(float(val)))
-        return lambda val:long(val, 16)
+            return lambda val: int(math.floor(float(val)))
+        return lambda val: int(val, 16)
 
     @klass.jit_attr
     def eclass_chf_serializers(self):
@@ -135,7 +131,7 @@ class base(object):
             raise errors.ReadOnly()
         d = ProtectedDict(values)
         if self.cleanse_keys:
-            for k in d.iterkeys():
+            for k in d.keys():
                 if not d[k]:
                     del d[k]
             if "_eclasses_" in values:
@@ -180,20 +176,14 @@ class base(object):
         return cpv in self
 
     def keys(self):
-        return list(self.iterkeys())
-
-    def iterkeys(self):
         raise NotImplementedError
 
     def __iter__(self):
-        return self.iterkeys()
-
-    def iteritems(self):
-        for x in self.iterkeys():
-            yield (x, self[x])
+        return self.keys()
 
     def items(self):
-        return list(self.iteritems())
+        for x in self.keys():
+            yield (x, self[x])
 
     def clear(self):
         for key in list(self):
@@ -212,19 +202,19 @@ class base(object):
         """takes a dict, returns a string representing said dict"""
         l = []
         converters = self.eclass_chf_serializers
-        for eclass, data in sorted(eclass_dict.iteritems()):
+        for eclass, data in sorted(eclass_dict.items()):
             l.append(eclass)
             l.extend(f(data) for f in converters)
         return self.eclass_splitter.join(l)
 
     def _deserialize_eclass_chfs(self, data):
-        data = itertools.izip(self.eclass_chf_deserializers, data)
+        data = zip(self.eclass_chf_deserializers, data)
         for (chf, convert), item in data:
             yield chf, convert(item)
 
     def reconstruct_eclasses(self, cpv, eclass_string):
         """Turn a string from :obj:`serialize_eclasses` into a dict."""
-        if not isinstance(eclass_string, basestring):
+        if not isinstance(eclass_string, str):
             raise TypeError("eclass_string must be basestring, got %r" %
                 eclass_string)
         eclass_data = eclass_string.strip().split(self.eclass_splitter)
@@ -294,15 +284,9 @@ class bulk(base):
     def _getitem(self, key):
         return self.data[key]
 
-    def iterkeys(self):
-        return self.data.iterkeys()
-
-    def iteritems(self):
-        return self.data.iteritems()
-
     def _setitem(self, key, val):
         known = self._known_keys
-        val = self._cdict_kls((k, v) for k,v in val.iteritems() if k in known)
+        val = self._cdict_kls((k, v) for k,v in val.items() if k in known)
         self._pending_updates.append((key, val))
         self.data[key] = val
 

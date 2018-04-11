@@ -87,7 +87,7 @@ def default_mkdir(d):
     :raise EnvironmentError: if can't complete
     """
     if not d.mode:
-        mode = 0777
+        mode = 0o777
     else:
         mode = d.mode
     os.mkdir(d.location, mode)
@@ -142,7 +142,7 @@ def default_copyfile(obj, mkdirs=False):
         basefp = os.path.dirname(obj.location)
         if basefp.strip(os.path.sep) and not os.path.exists(basefp):
             if mkdirs:
-                if not ensure_dirs(basefp, mode=0750, minimal=True):
+                if not ensure_dirs(basefp, mode=0o750, minimal=True):
                     raise FailedCopy(obj, str(oe))
             else:
                 raise

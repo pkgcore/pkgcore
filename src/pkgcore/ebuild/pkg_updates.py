@@ -46,9 +46,9 @@ def read_updates(path):
         _process_update(readlines(pjoin(path, fp)), fp, mods, moved)
 
     # force a walk of the tree, flattening it
-    commands = {k: list(iflatten_instance(v[0], tuple)) for k,v in mods.iteritems()}
+    commands = {k: list(iflatten_instance(v[0], tuple)) for k,v in mods.items()}
     # filter out empty nodes.
-    commands = {k: v for k,v in commands.iteritems() if v}
+    commands = {k: v for k,v in commands.items() if v}
 
     return commands
 

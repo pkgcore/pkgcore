@@ -3,8 +3,6 @@
 
 # misc things useful for tests.
 
-from itertools import ifilter, imap
-
 from snakeoil.mappings import AttrAccessible
 
 from pkgcore import plugin
@@ -46,8 +44,8 @@ class FakeProfile(object):
     def __init__(self, masked_use={}, forced_use={},
                  provides={}, masks=[], virtuals={}, arch='x86', name='none'):
         self.provides_repo = SimpleTree(provides)
-        self.masked_use = {atom(k): v for k, v in masked_use.iteritems()}
-        self.forced_use = {atom(k): v for k, v in forced_use.iteritems()}
+        self.masked_use = {atom(k): v for k, v in masked_use.items()}
+        self.forced_use = {atom(k): v for k, v in forced_use.items()}
         self.masks = tuple(map(atom, masks))
         self.virtuals = SimpleTree(virtuals)
         self.arch = arch
@@ -55,11 +53,11 @@ class FakeProfile(object):
 
         self.forced_data = collapsed_restrict_to_data(
             [(AlwaysTrue, (self.arch,))],
-            self.forced_use.iteritems())
+            self.forced_use.items())
 
         self.masked_data = collapsed_restrict_to_data(
             [(AlwaysTrue, default_arches)],
-            self.masked_use.iteritems())
+            self.masked_use.items())
 
     def make_virtuals_repo(self, repo):
         return self.virtuals
@@ -73,11 +71,11 @@ class FakeRepo(object):
         self.location = location
         self.default_visibility_limiters = masks
 
-        for k, v in kwds.iteritems():
+        for k, v in kwds.items():
             setattr(self, k, v)
 
     def itermatch(self, restrict, sorter=iter, pkg_klass_override=lambda x: x):
-        return ifilter(restrict.match, imap(pkg_klass_override, sorter(self.pkgs)))
+        return filter(restrict.match, list(map(pkg_klass_override, sorter(self.pkgs))))
 
     def match(self, restrict, **kwargs):
         return list(self.itermatch(restrict, **kwargs))

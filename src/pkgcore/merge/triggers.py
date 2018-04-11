@@ -216,7 +216,7 @@ class mtime_watcher(object):
         self.saved_mtimes = None
         self.locations = None
 
-    def __nonzero__(self):
+    def __bool__(self):
         return bool(self.saved_mtimes)
 
     @staticmethod
@@ -324,7 +324,7 @@ class ldconfig(base):
         return [pjoin(offset, x) for x in l]
 
     def _mk_ld_so_conf(self, fp):
-        if not ensure_dirs(os.path.dirname(fp), mode=0755, minimal=True):
+        if not ensure_dirs(os.path.dirname(fp), mode=0o755, minimal=True):
             raise errors.BlockModification(self,
                 "failed creating/setting %s to 0755, root/root for uid/gid" %
                     os.path.basename(fp))
@@ -541,11 +541,11 @@ class fix_set_bits(base):
         reporter = engine.observer
         # if s(uid|gid) *and* world writable...
         l = [x for x in cset.iterlinks(True) if
-             (x.mode & 06000) and (x.mode & 0002)]
+             (x.mode & 0o6000) and (x.mode & 0o002)]
 
         if reporter is not None:
             for x in l:
-                if x.mode & 04000:
+                if x.mode & 0o4000:
                     reporter.warn(
                         "correcting unsafe world writable SetGID: %s",
                             x.location)
@@ -556,7 +556,7 @@ class fix_set_bits(base):
 
         if l:
             # wipe setgid/setuid
-            cset.update(x.change_attributes(mode=x.mode & ~06002) for x in l)
+            cset.update(x.change_attributes(mode=x.mode & ~0o6002) for x in l)
 
 
 class detect_world_writable(base):
@@ -575,12 +575,12 @@ class detect_world_writable(base):
 
         reporter = engine.observer
 
-        l = [x for x in cset.iterlinks(True) if x.mode & 0002]
+        l = [x for x in cset.iterlinks(True) if x.mode & 0o002]
         if reporter is not None:
             for x in l:
                 reporter.warn("world writable file: %s", x.location)
         if self.fix_perms:
-            cset.update(x.change_attributes(mode=x.mode & ~0002) for x in l)
+            cset.update(x.change_attributes(mode=x.mode & ~0o002) for x in l)
 
 
 class PruneFiles(base):
@@ -600,7 +600,7 @@ class PruneFiles(base):
         self.sentinel = sentinel_func
 
     def trigger(self, engine, cset):
-        removal = filter(self.sentinel, cset)
+        removal = list(filter(self.sentinel, cset))
         if engine.observer:
             for x in removal:
                 engine.observer.info("pruning: %s", x.location)
@@ -616,7 +616,7 @@ class CommonDirectoryModes(base):
     directories = [pjoin('/usr', x) for x in ('.', 'lib', 'lib64', 'lib32',
         'bin', 'sbin', 'local')]
     directories.extend(pjoin('/usr/share', x) for x in ('.', 'man', 'info'))
-    directories.extend('/usr/share/man/man%i' % x for x in xrange(1, 10))
+    directories.extend('/usr/share/man/man%i' % x for x in range(1, 10))
     directories.extend(['/lib', '/lib32', '/lib64', '/etc', '/bin', '/sbin', '/var'])
     directories = frozenset(map(normpath, directories))
 
@@ -627,7 +627,7 @@ class CommonDirectoryModes(base):
         for x in cset.iterdirs():
             if x.location not in self.directories:
                 continue
-            if x.mode != 0755:
+            if x.mode != 0o755:
                 r.warn('%s path has mode %s, should be 0755',
                        x.location, oct(x.mode))
 
@@ -804,7 +804,7 @@ class BinaryDebug(ThreadedTrigger):
         file_typer = file_type.file_identifier()
         regex_f = re.compile(self.elf_regex).match
         engine.observer.debug("starting binarydebug filetype scan")
-        for fs_objs in cset.inode_map().itervalues():
+        for fs_objs in cset.inode_map().values():
             fs_obj = fs_objs[0]
             ftype = file_typer(fs_obj.data)
             if regex_f(ftype):
@@ -912,7 +912,7 @@ class BinaryDebug(ThreadedTrigger):
     def _split_finish(self, engine, cset):
         if not hasattr(self, '_modified'):
             return
-        self._modified.add_missing_directories(mode=0775)
+        self._modified.add_missing_directories(mode=0o775)
         # add the non directories first.
         cset.update(self._modified.iterdirs(invert=True))
         # punt any intersections, leaving just the new directories.

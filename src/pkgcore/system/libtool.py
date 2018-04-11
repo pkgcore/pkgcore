@@ -109,7 +109,7 @@ def rewrite_lafile(handle, filename):
     if inherited_flags:
         # must be prefixed with a space
         data["inherited_flags"] = ' ' + (' '.join(inherited_flags))
-    content = "\n".join("%s='%s'" % (k, v) for k,v in sorted(data.iteritems()))
+    content = "\n".join("%s='%s'" % (k, v) for k,v in sorted(data.items()))
     return True, template % {"content":content, "file":filename}
 
 def fix_fsobject(location):

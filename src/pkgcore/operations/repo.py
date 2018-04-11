@@ -16,7 +16,6 @@ from snakeoil import klass
 from snakeoil.currying import post_curry
 from snakeoil.demandload import demandload
 from snakeoil.dependant_methods import ForcedDepends
-from snakeoil.weakrefs import WeakRefFinalizer
 
 from pkgcore import operations as _operations_mod
 
@@ -36,17 +35,11 @@ class fake_lock(object):
     release_read_lock = release_write_lock = __init__
 
 
-class finalizer_base(WeakRefFinalizer, ForcedDepends):
-    pass
-
-
 class Failure(Exception):
     pass
 
 
-class base(object):
-
-    __metaclass__ = ForcedDepends
+class base(object, metaclass=ForcedDepends):
 
     stage_depends = {}
 

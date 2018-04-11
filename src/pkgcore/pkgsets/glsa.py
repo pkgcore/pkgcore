@@ -26,7 +26,7 @@ demandload(
 )
 
 
-class GlsaDirSet(object):
+class GlsaDirSet(object, metaclass=generic_equality):
     """generate a pkgset based on GLSA's distributed via a directory.
 
     (rsync tree is the usual source.)
@@ -34,8 +34,6 @@ class GlsaDirSet(object):
 
     pkgcore_config_type = ConfigHint({'src': 'ref:repo'}, typename='pkgset')
     op_translate = {"ge": ">=", "gt": ">", "lt": "<", "le": "<=", "eq": "="}
-
-    __metaclass__ = generic_equality
     __attr_comparison__ = ('paths',)
 
     def __init__(self, src):
@@ -45,7 +43,7 @@ class GlsaDirSet(object):
             to pull it from
         """
 
-        if not isinstance(src, basestring):
+        if not isinstance(src, str):
             src = tuple(sorted(
                 filter(os.path.isdir, (pjoin(
                     repo.base, 'metadata', 'glsa') for repo in
@@ -196,7 +194,7 @@ def find_vulnerable_repo_pkgs(glsa_src, repo, grouped=False, arch=None):
     if arch is None:
         wrapper = lambda p: p
     else:
-        if isinstance(arch, basestring):
+        if isinstance(arch, str):
             arch = (arch,)
         else:
             arch = tuple(arch)
@@ -209,14 +207,12 @@ def find_vulnerable_repo_pkgs(glsa_src, repo, grouped=False, arch=None):
             yield restrict, matches
 
 
-class SecurityUpgrades(object):
+class SecurityUpgrades(object, metaclass=generic_equality):
     """Set of packages for available security upgrades."""
 
     pkgcore_config_type = ConfigHint({'ebuild_repo': 'ref:repo',
                                       'vdb': 'ref:vdb'},
                                      typename='pkgset')
-
-    __metaclass__ = generic_equality
     __attr_comparison__ = ('arch', 'glsa_src', 'vdb')
 
     def __init__(self, ebuild_repo, vdb, arch):

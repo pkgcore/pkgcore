@@ -52,7 +52,7 @@ class CategoryIterValLazyDict(IterValLazyDict):
 
     def __contains__(self, key):
         if self._keys_func is not None:
-            return key in self.keys()
+            return key in list(self.keys())
         return key in self._keys
 
 
@@ -72,8 +72,8 @@ class PackageMapping(DictMixin):
         self._cache[key] = vals = self._pull_vals(key)
         return vals
 
-    def iterkeys(self):
-        return self._parent.iterkeys()
+    def keys(self):
+        return self._parent.keys()
 
     def __contains__(self, key):
         return key in self._cache or key in self._parent
@@ -102,8 +102,8 @@ class VersionMapping(DictMixin):
         self._cache[key] = val
         return val
 
-    def iterkeys(self):
-        for cat, pkgs in self._parent.iteritems():
+    def keys(self):
+        for cat, pkgs in self._parent.items():
             for pkg in pkgs:
                 yield (cat, pkg)
 
@@ -185,11 +185,11 @@ class tree(object):
         return self.itermatch(packages.AlwaysTrue)
 
     def __len__(self):
-        return sum(len(v) for v in self.versions.itervalues())
+        return sum(len(v) for v in self.versions.values())
 
     def __contains__(self, obj):
         """Determine if a path or a package is in a repo."""
-        if isinstance(obj, basestring):
+        if isinstance(obj, str):
             path = os.path.realpath(obj)
             if not os.path.exists(path):
                 return False
@@ -363,7 +363,7 @@ class tree(object):
         if cat_exact:
             if not cat_restrict and len(cat_exact) == 1:
                 # Cannot use pop here, cat_exact is reused below.
-                c = iter(cat_exact).next()
+                c = next(iter(cat_exact))
                 if not pkg_restrict and len(pkg_exact) == 1:
                     cp = (c, pkg_exact.pop())
                     if cp in self.versions:
@@ -462,9 +462,9 @@ class tree(object):
     def get_operations(self, observer=None):
         return self.operations_kls(self)
 
-    def __nonzero__(self):
+    def __bool__(self):
         try:
-            iter(self.versions).next()
+            next(iter(self.versions))
             return True
         except StopIteration:
             return False
@@ -480,7 +480,7 @@ class tree(object):
 
     @property
     def _masks(self):
-        return tuple(self._visibility_limiters for _ in xrange(1))
+        return tuple(self._visibility_limiters for _ in range(1))
 
     def __str__(self):
         if self.aliases:

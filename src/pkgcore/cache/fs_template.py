@@ -30,7 +30,7 @@ class FsBased(base):
             gid to force all entries to
         :keyword perms: defaults to 0665, mode to force all entries to"""
 
-        for x, y in (("gid", portage_gid), ("perms", 0664)):
+        for x, y in (("gid", portage_gid), ("perms", 0o664)):
             if x in config:
                 setattr(self, "_"+x, config[x])
                 del config[x]
@@ -61,7 +61,7 @@ class FsBased(base):
             os.chown(path, -1, self._gid)
             os.chmod(path, self._perms)
             if mtime is not None:
-                mtime = long(mtime)
+                mtime = int(mtime)
                 os.utime(path, (mtime, mtime))
         except EnvironmentError:
             return False
@@ -73,4 +73,4 @@ class FsBased(base):
             path = pjoin(self.location, os.path.dirname(path))
         else:
             path = self.location
-        return ensure_dirs(path, mode=0775, minimal=False)
+        return ensure_dirs(path, mode=0o775, minimal=False)

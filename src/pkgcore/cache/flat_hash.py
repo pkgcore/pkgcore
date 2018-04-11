@@ -55,7 +55,7 @@ class database(fs_template.FsBased):
             if self.mtime_in_entry:
                 d[self._chf_key] = self._chf_deserializer(d[self._chf_key])
             else:
-                d[self._chf_key] = long(mtime)
+                d[self._chf_key] = int(mtime)
         else:
             d[self._chf_key] = self._chf_deserializer(d[self._chf_key])
         return d
@@ -84,7 +84,7 @@ class database(fs_template.FsBased):
         if self._mtime_used:
             if not self.mtime_in_entry:
                 mtime = values['_mtime_']
-        for k, v in sorted(values.iteritems()):
+        for k, v in sorted(values.items()):
             myf.writelines("%s=%s\n" % (k, v))
 
         myf.close()
@@ -113,7 +113,7 @@ class database(fs_template.FsBased):
     def __contains__(self, cpv):
         return os.path.exists(pjoin(self.location, cpv))
 
-    def iterkeys(self):
+    def keys(self):
         """generator for walking the dir struct"""
         dirs = [self.location]
         len_base = len(self.location)

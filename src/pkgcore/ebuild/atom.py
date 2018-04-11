@@ -354,7 +354,7 @@ except ImportError:
     atom_overrides = native_atom_overrides
 
 
-class atom(boolean.AndRestriction):
+class atom(boolean.AndRestriction, metaclass=generic_equality):
 
     """Currently implements gentoo ebuild atom parsing.
 
@@ -382,10 +382,9 @@ class atom(boolean.AndRestriction):
     # hack; combine these 2 metaclasses at some point...
     locals().pop("__eq__", None)
     locals().pop("__ne__", None)
-    __metaclass__ = generic_equality
     __inst_caching__ = True
 
-    locals().update(atom_overrides.iteritems())
+    locals().update(atom_overrides.items())
 
     # overrided in child class if it's supported
     evaluate_depset = None

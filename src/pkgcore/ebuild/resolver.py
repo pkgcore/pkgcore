@@ -36,10 +36,10 @@ def upgrade_resolver(vdbs, dbs, verify_vdb=True, nodeps=False,
     f = plan.merge_plan.prefer_highest_version_strategy
     # hack.
     if nodeps:
-        vdbs = map(misc.nodeps_repo, vdbs)
-        dbs = map(misc.nodeps_repo, dbs)
+        vdbs = list(map(misc.nodeps_repo, vdbs))
+        dbs = list(map(misc.nodeps_repo, dbs))
     elif not verify_vdb:
-        vdbs = map(misc.nodeps_repo, vdbs)
+        vdbs = list(map(misc.nodeps_repo, vdbs))
         dbs = list(dbs)
 
     if force_replace:
@@ -67,10 +67,10 @@ def min_install_resolver(vdbs, dbs, verify_vdb=True, nodeps=False,
     """
 
     if nodeps:
-        vdbs = map(misc.nodeps_repo, vdbs)
-        dbs = map(misc.nodeps_repo, dbs)
+        vdbs = list(map(misc.nodeps_repo, vdbs))
+        dbs = list(map(misc.nodeps_repo, dbs))
     elif not verify_vdb:
-        vdbs = map(misc.nodeps_repo, vdbs)
+        vdbs = list(map(misc.nodeps_repo, vdbs))
         dbs = list(dbs)
 
     if force_replace:

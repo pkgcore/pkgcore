@@ -16,13 +16,11 @@ from pkgcore.operations import format
 from pkgcore.package.errors import MetadataException
 
 
-class base(object):
+class base(object, metaclass=klass.immutable_instance):
 
     built = False
     configurable = False
     _operations = format.operations
-
-    __metaclass__ = klass.immutable_instance
 
     __slots__ = ("__weakref__",)
     _get_attr = {}

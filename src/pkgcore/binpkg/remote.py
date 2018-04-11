@@ -10,12 +10,10 @@ local binpkg repositories
 
 __all__ = ("PackagesCacheV0", "PackagesCacheV1")
 
-from itertools import izip
 import os
 
 from snakeoil.demandload import demandload
 from snakeoil.mappings import ImmutableDict, StackedDict
-from snakeoil.weakrefs import WeakRefFinalizer
 
 from pkgcore import cache
 
@@ -55,14 +53,8 @@ class CacheEntry(StackedDict):
 def find_best_savings(stream, line_prefix):
     rcs = RefCountingSet(stream)
     line_overhead = len(line_prefix)
-    stream = ((k, v) for k, v in rcs.iteritems() if v != 1)
-    return max(stream, key=lambda (k, v): (len(k) + line_overhead) * v)[0]
-
-
-cache_meta = WeakRefFinalizer
-if type != cache.bulk.__metaclass__:
-    class cache_meta(WeakRefFinalizer, cache.bulk.__metaclass__):
-        pass
+    stream = ((k, v) for k, v in rcs.items() if v != 1)
+    return max(stream, key=lambda x: (len(x[0]) + line_overhead) * x[1])[0]
 
 
 class PackagesCacheV0(cache.bulk):
@@ -71,8 +63,6 @@ class PackagesCacheV0(cache.bulk):
     Note this follows version 0 semantics- not the most efficient, and
     doesn't bundle certain useful keys like RESTRICT
     """
-
-    __metaclass__ = cache_meta
 
     _header_mangling_map = ImmutableDict({
         'FEATURES': 'UPSTREAM_FEATURES',
@@ -131,8 +121,8 @@ class PackagesCacheV0(cache.bulk):
             raise
         self.preamble = self.read_preamble(handle)
 
-        defaults = dict(self._deserialized_defaults.iteritems())
-        defaults.update((k, v) for k, v in self.preamble.iteritems()
+        defaults = dict(self._deserialized_defaults.items())
+        defaults.update((k, v) for k, v in self.preamble.items()
                         if k in self.deserialized_inheritable)
         defaults = ImmutableDict(defaults)
 
@@ -142,7 +132,7 @@ class PackagesCacheV0(cache.bulk):
         while True:
             raw_d = dict(_iter_till_empty_newline(handle))
 
-            d = {k: v for k, v in raw_d.iteritems() if k in vkeys}
+            d = {k: v for k, v in raw_d.items() if k in vkeys}
             if not d:
                 break
             count += 1
@@ -152,7 +142,7 @@ class PackagesCacheV0(cache.bulk):
 
             if 'USE' in d:
                 d.setdefault('IUSE', d.get('USE', ''))
-            for src, dst in self._deserialize_map.iteritems():
+            for src, dst in self._deserialize_map.items():
                 if src in d:
                     d.setdefault(dst, d.pop(src))
 
@@ -189,7 +179,7 @@ class PackagesCacheV0(cache.bulk):
             key = key.upper()
             d[cls._serialize_map.get(key, key)] = value
 
-        for key, value in izip(cls._stored_chfs,
+        for key, value in zip(cls._stored_chfs,
                                get_chksums(pkg.path, *cls._stored_chfs)):
             if key != 'size':
                 value = "%x" % (value,)
@@ -202,7 +192,7 @@ class PackagesCacheV0(cache.bulk):
         try:
             try:
                 handler = AtomicWriteFile(self._location)
-                self._serialize_to_handle(self.data.items(), handler)
+                self._serialize_to_handle(list(self.data.items()), handler)
                 handler.close()
             except EnvironmentError as e:
                 if e.errno != errno.EACCES:
@@ -231,7 +221,7 @@ class PackagesCacheV0(cache.bulk):
         for cpv, pkg_data in sorted(data, key=itemgetter(0)):
             handler.write("CPV:%s%s\n" % (spacer, cpv))
             data = [(convert_key(key, key), value)
-                    for key, value in pkg_data.iteritems()]
+                    for key, value in pkg_data.items()]
             for write_key, value in sorted(data):
                 if write_key not in vkeys:
                     continue
@@ -247,12 +237,12 @@ class PackagesCacheV0(cache.bulk):
             handler.write('\n')
 
     def update_from_xpak(self, pkg, xpak):
-        # invert the lookups here; if you do .iteritems() on an xpak,
+        # invert the lookups here; if you do .items() on an xpak,
         # it'll load up the contents in full.
         new_dict = {k: xpak[k] for k in self._known_keys if k in xpak}
         new_dict['_chf_'] = xpak._chf_
         chfs = [x for x in self._stored_chfs if x != 'mtime']
-        for key, value in izip(chfs, get_chksums(pkg.path, *chfs)):
+        for key, value in zip(chfs, get_chksums(pkg.path, *chfs)):
             if key != 'size':
                 value = "%x" % (value,)
             new_dict[key.upper()] = value
@@ -283,7 +273,7 @@ class PackagesCacheV1(PackagesCacheV0):
         ('SLOT', 'EAPI', 'LICENSE', 'KEYWORDS', 'USE', 'RESTRICT'))
 
     _deserialized_defaults = ImmutableDict(
-        PackagesCacheV0._deserialized_defaults.items() + [('RESTRICT', '')])
+        list(PackagesCacheV0._deserialized_defaults.items()) + [('RESTRICT', '')])
 
     @classmethod
     def _assemble_pkg_dict(cls, pkg):

@@ -6,7 +6,7 @@ __all__ = ("resolver_frame", "resolver_stack", "merge_plan")
 from collections import deque
 from functools import partial
 import operator
-from itertools import chain, islice, ifilterfalse as filterfalse
+from itertools import chain, islice, filterfalse
 import sys
 
 from snakeoil.compatibility import cmp, sort_cmp

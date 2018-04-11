@@ -12,7 +12,7 @@ __all__ = (
     "load_make_conf", "load_repos_conf", "config_from_make_conf",
 )
 
-import configParser
+import configparser
 from collections import OrderedDict
 import os
 
@@ -106,7 +106,7 @@ def make_repo_syncers(config, repos_conf, make_conf, allow_timestamps=True):
     """generate syncing configs for known repos"""
     rsync_opts = None
 
-    for repo_name, repo_opts in repos_conf.iteritems():
+    for repo_name, repo_opts in repos_conf.items():
         d = {'basedir': repo_opts['location']}
 
         sync_type = repo_opts.get('sync-type', None)
@@ -316,7 +316,7 @@ def load_repos_conf(path):
             if e.errno == errno.EACCES:
                 raise errors.PermissionDeniedError(fp, write=False) from e
             raise errors.ParsingError("parsing %r" % (fp,), exception=e) from e
-        except configParser.Error as e:
+        except configparser.Error as e:
             raise errors.ParsingError("repos.conf: '%s'" % (fp,), exception=e) from e
 
         defaults_data = config.defaults()
@@ -371,7 +371,7 @@ def load_repos_conf(path):
     # sort repos via priority, in this case high values map to high priorities
     repos = OrderedDict(
         (k, v) for k, v in
-        sorted(repos.iteritems(), key=lambda d: d[1]['priority'], reverse=True))
+        sorted(repos.items(), key=lambda d: d[1]['priority'], reverse=True))
 
     del config
     return defaults, repos
@@ -464,7 +464,7 @@ def config_from_make_conf(location=None, profile_override=None, **kwargs):
 
     repo_map = {}
 
-    for repo_name, repo_opts in repos_conf.iteritems():
+    for repo_name, repo_opts in repos_conf.items():
         repo_path = repo_opts['location']
 
         # XXX: Hack for portage-2 profile format support.
@@ -502,7 +502,7 @@ def config_from_make_conf(location=None, profile_override=None, **kwargs):
     # to dynamically create this from the config at runtime on attr access.
     profiles.ProfileNode._repo_map = ImmutableDict(repo_map)
 
-    repos = [name for name in repos_conf.iterkeys()]
+    repos = [name for name in repos_conf.keys()]
     if repos:
         if len(repos) > 1:
             config['repo-stack'] = basics.FakeIncrementalDictConfigSection(
@@ -536,7 +536,7 @@ def config_from_make_conf(location=None, profile_override=None, **kwargs):
                 logger.warning("disabling buildpkg related features since PKGDIR doesn't exist")
             pkgdir = None
         else:
-            if not ensure_dirs(pkgdir, mode=0755, minimal=True):
+            if not ensure_dirs(pkgdir, mode=0o755, minimal=True):
                 logger.warning("disabling buildpkg related features since PKGDIR either doesn't "
                                "exist, or lacks 0755 minimal permissions")
                 pkgdir = None

@@ -18,7 +18,7 @@ from pkgcore.restrictions import packages, restriction, values
 
 # TODO: change values.EqualityMatch so it supports le, lt, gt, ge, eq,
 # ne ops, and convert this to it.
-class VersionMatch(restriction.base):
+class VersionMatch(restriction.base, metaclass=generic_equality):
 
     """
     package restriction implementing gentoo ebuild version comparison rules
@@ -30,7 +30,6 @@ class VersionMatch(restriction.base):
     __slots__ = ("ver", "rev", "vals", "droprev", "negate")
 
     __inst_caching__ = True
-    __metaclass__ = generic_equality
     __attr_comparison__ = ('negate', 'rev', 'droprev', 'vals')
 
     type = packages.package_type
@@ -44,7 +43,7 @@ class VersionMatch(restriction.base):
         (1,): ">",
     }
 
-    _convert_str2op = {v: k for k, v in _convert_op2str.iteritems()}
+    _convert_str2op = {v: k for k, v in _convert_op2str.items()}
 
     def __init__(self, operator, ver, rev=None, negate=False, **kwd):
         """

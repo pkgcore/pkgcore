@@ -126,11 +126,10 @@ class _optionals_cls(mappings.ImmutableDict):
     mappings.inject_getitem_as_getattr(locals())
 
 
-class EAPI(object):
+class EAPI(object, metaclass=klass.immutable_instance):
 
     known_eapis = weakrefs.WeakValCache()
     unknown_eapis = weakrefs.WeakValCache()
-    __metaclass__ = klass.immutable_instance
 
     def __init__(self, magic, parent, phases, default_phases, metadata_keys, mandatory_keys,
                  tracked_attributes, archive_suffixes, optionals, ebd_env_options=None):
@@ -141,7 +140,7 @@ class EAPI(object):
 
         sf(self, "phases", mappings.ImmutableDict(phases))
         sf(self, "phases_rev", mappings.ImmutableDict((v, k) for k, v in
-           self.phases.iteritems()))
+           self.phases.items()))
 
         # We track the phases that have a default implementation- this is
         # primarily due to DEFINED_PHASES cache values not including it.
@@ -218,7 +217,7 @@ class EAPI(object):
     def get_ebd_env(self):
         """Return EAPI options passed to the ebd environment."""
         d = {}
-        for k, converter in self.ebd_env_options.iteritems():
+        for k, converter in self.ebd_env_options.items():
             d["PKGCORE_%s" % (k.upper(),)] = converter(getattr(self.options, k))
         d["EAPI"] = self._magic
         return d
@@ -349,7 +348,7 @@ eapi2 = EAPI.register(
     phases=_combine_dicts(
         eapi1.phases, _mk_phase_func_map("src_prepare", "src_configure")),
     default_phases=eapi1.default_phases.union(
-        map(_shorten_phase_name, ["src_prepare", "src_configure"])),
+        list(map(_shorten_phase_name, ["src_prepare", "src_configure"]))),
     metadata_keys=eapi1.metadata_keys,
     mandatory_keys=eapi1.mandatory_keys,
     tracked_attributes=eapi1.tracked_attributes,

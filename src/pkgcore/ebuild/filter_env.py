@@ -15,7 +15,7 @@ demandload(
     'pkgcore.log:logger'
 )
 
-COMMAND_PARSING, SPACE_PARSING = range(2)
+COMMAND_PARSING, SPACE_PARSING = list(range(2))
 
 
 def native_run(out, file_buff, var_match, func_match,
@@ -43,7 +43,7 @@ except ImportError:
 
 
 def build_regex_string(tokens, invert=False):
-    tokens = filter(None, tokens)
+    tokens = [_f for _f in tokens if _f]
     if not tokens:
         return None
     if len(tokens) == 1:
@@ -415,7 +415,7 @@ def main_run(out_handle, data, vars_to_filter=(), funcs_to_filter=(), vars_is_wh
         vars = build_regex_string(vars_to_filter, invert=vars_is_whitelist).match
 
     if funcs_to_filter:
-        if isinstance(funcs_to_filter, basestring):
+        if isinstance(funcs_to_filter, str):
             raise ValueError("funcs_str should not be a string; should be a sequence.")
         funcs = build_regex_string(funcs_to_filter, invert=funcs_is_whitelist).match
 

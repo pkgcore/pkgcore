@@ -94,7 +94,7 @@ def write(tempspace, finalpath, pkg, cset=None, platform='', maintainer='', comp
         control.update(parsedeps(pkgdeps))
 
     control_ds = text_data_source("".join("%s: %s\n" % (k, v)
-        for (k, v) in control.iteritems()))
+        for (k, v) in control.items()))
 
     control_path = pjoin(tempspace, 'control.tar.gz')
     tar.write_set(
@@ -102,7 +102,7 @@ def write(tempspace, finalpath, pkg, cset=None, platform='', maintainer='', comp
             fs.fsFile('control',
                 {'size':len(control_ds.text_fileobj().getvalue())},
                 data=control_ds,
-                uid=0, gid=0, mode=0644, mtime=time.time())
+                uid=0, gid=0, mode=0o644, mtime=time.time())
             ]),
         control_path, compressor='gz')
     dbinary_path = pjoin(tempspace, 'debian-binary')

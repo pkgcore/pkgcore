@@ -2,7 +2,7 @@
 # License: GPL2/BSD 3 clause
 
 import threading
-import Queue
+import queue
 
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.demandload import demandload
@@ -38,7 +38,7 @@ def map_async(iterable, functor, *args, **kwds):
     # note we allow an infinite queue since .put below is blocking, and won't
     # return till it succeeds (regardless of signal) as such, we do it this way
     # to ensure the put succeeds, then the keyboardinterrupt can be seen.
-    q = Queue.Queue()
+    q = queue.Queue()
     kill = threading.Event()
     kill.clear()
 
@@ -52,7 +52,7 @@ def map_async(iterable, functor, *args, **kwds):
     empty_signal = object()
 
     threads = []
-    for x in xrange(parallelism):
+    for x in range(parallelism):
         tkwds = kwds.copy()
         tkwds.update(per_thread_kwds())
         targs = (iter_queue(kill, q, empty_signal),) + args + per_thread_args()
@@ -69,7 +69,7 @@ def map_async(iterable, functor, *args, **kwds):
             kill.set()
             raise
     finally:
-        for x in xrange(parallelism):
+        for x in range(parallelism):
             q.put(empty_signal)
 
         reclaim_threads(threads)

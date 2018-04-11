@@ -68,7 +68,7 @@ def _process_plugins(package, sequence, filter_disabled=False):
 
 
 def _process_plugin(package, plug, filter_disabled=False):
-    if isinstance(plug.target, basestring):
+    if isinstance(plug.target, str):
         try:
             plug = modules.load_any(plug.target)
         except modules.FailedImport as e:
@@ -161,9 +161,9 @@ def _write_cache_file(path, data):
     cachefile = None
     try:
         try:
-            cachefile = fileutils.AtomicWriteFile(path, binary=False, perms=0664)
+            cachefile = fileutils.AtomicWriteFile(path, binary=False, perms=0o664)
             cachefile.write(CACHE_HEADER + "\n")
-            for (module, mtime), plugs in sorted(data.iteritems(), key=operator.itemgetter(0)):
+            for (module, mtime), plugs in sorted(data.items(), key=operator.itemgetter(0)):
                 plugs = sort_plugs(plugs)
                 plugs = ':'.join('%s,%s,%s' % (plug.key, plug.priority, plug.target) for plug in plugs)
                 cachefile.write("%s:%s:%s\n" % (module, mtime, plugs))
@@ -222,9 +222,9 @@ def initialize_cache(package, force=False):
             module = import_module(qualname)
             registry = getattr(module, PLUGIN_ATTR, {})
             vals = set()
-            for key, plugs in registry.iteritems():
+            for key, plugs in registry.items():
                 for idx, plug_name in enumerate(plugs):
-                    if isinstance(plug_name, basestring):
+                    if isinstance(plug_name, str):
                         plug = _process_plugin(package, _plugin_data(key, 0, qualname, plug_name))
                     else:
                         plug = plug_name
@@ -250,7 +250,7 @@ def initialize_cache(package, force=False):
         logger.debug('updating cache %r for new plugins', stored_cache_name)
         _write_cache_file(stored_cache_name, actual_cache)
 
-    return mappings.ImmutableDict((k, sort_plugs(v)) for k, v in package_cache.iteritems())
+    return mappings.ImmutableDict((k, sort_plugs(v)) for k, v in package_cache.items())
 
 
 def get_plugins(key, package=None):
@@ -302,7 +302,7 @@ def extend_path(path, name):
     pname = os.path.join(*name.split('.'))
 
     for entry in sys.path:
-        if not isinstance(entry, basestring) or not os.path.isdir(entry):
+        if not isinstance(entry, str) or not os.path.isdir(entry):
             continue
         subdir = os.path.join(entry, pname)
         # XXX This may still add duplicate entries to path on

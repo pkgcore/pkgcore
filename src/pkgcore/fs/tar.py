@@ -6,7 +6,7 @@ binpkg tar utilities
 """
 
 from functools import partial
-import itertools
+from itertools import count
 import os
 import stat
 
@@ -18,7 +18,7 @@ from snakeoil.tar import tarfile
 from pkgcore.fs import contents
 from pkgcore.fs.fs import fsFile, fsDir, fsSymlink, fsFifo, fsDev
 
-_unique_inode = itertools.count(2**32).next
+_unique_inode = count(2**32).__next__
 
 known_compressors = {
     "bz2": tarfile.TarFile.bz2open,
@@ -61,7 +61,7 @@ def add_contents_to_tarfile(contents_set, tar_fd, absolute_paths=False):
                 if x._can_be_hardlinked(existing):
                     t.type = tarfile.LNKTYPE
                     t.linkname = './%s' % existing.location.lstrip('/')
-                    t.size = 0L
+                    t.size = 0
             else:
                 inodes[key] = x
                 data = x.data.bytes_fileobj()
@@ -116,8 +116,8 @@ def archive_to_fsobj(src_tar):
         elif member.isfifo():
             yield fsFifo(location, **d)
         elif member.isdev():
-            d["major"] = long(member.major)
-            d["minor"] = long(member.minor)
+            d["major"] = int(member.major)
+            d["minor"] = int(member.minor)
             yield fsDev(location, **d)
         else:
             raise AssertionError(

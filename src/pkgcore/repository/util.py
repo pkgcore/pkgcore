@@ -6,8 +6,6 @@ __all__ = (
     "repo_containing_path", "get_raw_repos", "get_virtual_repos",
 )
 
-from itertools import ifilter
-
 from snakeoil import klass
 from snakeoil.demandload import demandload
 from snakeoil.mappings import DictMixin
@@ -44,10 +42,10 @@ class SimpleTree(prototype.tree):
     def _get_categories(self, *arg):
         if arg:
             return ()
-        return tuple(self.cpv_dict.iterkeys())
+        return tuple(self.cpv_dict.keys())
 
     def _get_packages(self, category):
-        return tuple(self.cpv_dict[category].iterkeys())
+        return tuple(self.cpv_dict[category].keys())
 
     def _get_versions(self, cp_key):
         return tuple(self.cpv_dict[cp_key[0]][cp_key[1]])
@@ -97,22 +95,22 @@ class RepositoryGroup(DictMixin):
         return iter(self.repos)
 
     def __getitem__(self, key):
-        if isinstance(key, basestring):
+        if isinstance(key, str):
             func = lambda x: key in x.aliases
         else:
             func = lambda x: key == x
         try:
-            return next(ifilter(func, self.repos))
+            return next(filter(func, self.repos))
         except StopIteration:
             raise KeyError(key)
 
-    def iterkeys(self):
+    def keys(self):
         return (r.repo_id for r in self.repos)
 
-    def iteritems(self):
+    def items(self):
         return ((r.repo_id, r) for r in self.repos)
 
-    def itervalues(self):
+    def values(self):
         return iter(self.repos)
 
     def __add__(self, other):
@@ -174,13 +172,15 @@ def get_raw_repos(repos):
     """
     if isinstance(repos, (RepositoryGroup, list, tuple)):
         l = []
-        map(l.extend, (get_raw_repos(x) for x in repos))
+        for x in repos:
+            l.extend(get_raw_repos(x))
         return l
     while getattr(repos, "raw_repo", None) is not None:
         repos = repos.raw_repo
     if isinstance(repos, multiplex.tree):
         l = []
-        map(l.extend, (get_raw_repos(x) for x in repos.trees))
+        for x in repos.trees:
+            l.extend(get_raw_repos(x))
         return l
     return [repos]
 

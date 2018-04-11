@@ -8,7 +8,6 @@ cache backend designed for rsynced tree's pregenerated metadata.
 
 __all__ = ("database", "paludis_flat_list", "protective_database")
 
-from itertools import izip
 import errno
 import os
 
@@ -79,7 +78,7 @@ class database(flat_hash.database):
 
     def _parse_data(self, data, mtime):
         i = iter(self.hardcoded_auxdbkeys_processing)
-        d = self._cdict_kls([(key, val) for (key, val) in izip(i, data) if key])
+        d = self._cdict_kls([(key, val) for (key, val) in zip(i, data) if key])
         # sadly, this is faster then doing a .next() and snagging the
         # exception
         for x in i:
@@ -89,7 +88,7 @@ class database(flat_hash.database):
                 (self.magic_line_count,))
 
         if self._mtime_used:  # and not self.mtime_in_entry:
-            d["_mtime_"] = long(mtime)
+            d["_mtime_"] = int(mtime)
         return d
 
     def _setitem(self, cpv, values):
@@ -163,7 +162,7 @@ class paludis_flat_list(database):
         if eclasses:
             self._ensure_access(
                 fp,
-                mtime=max(max(mtime for path, mtime in eclasses.itervalues()),
+                mtime=max(max(mtime for path, mtime in eclasses.values()),
                           mtime))
         else:
             self._ensure_access(fp, mtime)

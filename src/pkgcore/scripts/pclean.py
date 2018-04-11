@@ -5,7 +5,7 @@
 
 import argparse
 from collections import defaultdict
-from itertools import chain, ifilter
+from itertools import chain
 import os
 import sys
 
@@ -51,13 +51,13 @@ cleaning_opts.add_argument(
     '-p', '--pretend', action='store_true',
     help='dry run without performing any changes')
 cleaning_opts.add_argument(
-    '-x', '--exclude', action='extend_comma', dest='excludes', metavar='EXCLUDE',
+    '-x', '--exclude', action='csv', dest='excludes', metavar='EXCLUDE',
     help='list of packages to exclude from removal')
 cleaning_opts.add_argument(
     '-X', '--exclude-file', type=argparse.FileType('r'),
     help='path to exclusion file')
 cleaning_opts.add_argument(
-    '-S', '--pkgsets', action='extend_comma_toggle', metavar='PKGSET',
+    '-S', '--pkgsets', action='csv_negations', metavar='PKGSET',
     help='list of pkgsets to include or exclude from removal')
 @shared_opts.bind_parse_priority(20)
 def _setup_shared_opts(namespace):
@@ -246,7 +246,7 @@ def config_main(options, out, err):
         attrs[name] = iter_restrict(getattr(domain, name))
 
     changes = defaultdict(list)
-    for name, iterable in attrs.iteritems():
+    for name, iterable in attrs.items():
         for restrict, item in iterable:
             path, lineno, line = item.pop(), item.pop(), item.pop()
             if not installed_repos.match(restrict):
@@ -270,7 +270,7 @@ def config_main(options, out, err):
         'unknown_use': 'Nonexistent use flag(s)',
     }
 
-    for type, data in changes.iteritems():
+    for type, data in changes.items():
         out.write('%s:' % type_mapping[type])
         for path, line, lineno, values in data:
             out.write('%s:' % path)
@@ -325,12 +325,12 @@ def _dist_validate_args(parser, namespace):
 
         extra_regex_prefixes = defaultdict(set)
         pkg_regex_prefixes = set()
-        for catpn, pkgs in target_dist.iteritems():
+        for catpn, pkgs in target_dist.items():
             pn_regex = '\W'.join(re.split(r'\W', catpn.package))
             pkg_regex = re.compile(r'(%s)(\W\w+)+([\W?(0-9)+])*(\W\w+)*(\.\w+)*' % pn_regex,
                                    re.IGNORECASE)
             pkg_regex_prefixes.add(pn_regex)
-            for pkg, files in pkgs.iteritems():
+            for pkg, files in pkgs.items():
                 files = sorted(files)
                 for f in files:
                     if (pkg_regex.match(f) or (
@@ -353,7 +353,7 @@ def _dist_validate_args(parser, namespace):
                     pkg_regex_prefixes_str,)))
             if extra_regex_prefixes:
                 extra_regex_prefixes_str = '|'.join(sorted(chain.from_iterable(
-                    v for k, v in extra_regex_prefixes.iteritems())))
+                    v for k, v in extra_regex_prefixes.items())))
                 regexes.append(re.compile(r'(%s)([\W?(0-9)+])+(\W\w+)*(\.\w+)+' % (
                     extra_regex_prefixes_str,)))
 
@@ -372,7 +372,7 @@ def _dist_validate_args(parser, namespace):
     removal_func = partial(os.remove)
     namespace.remove = (
         (removal_func, f) for f in
-        ifilter(namespace.file_filters.run, targets))
+        filter(namespace.file_filters.run, targets))
 
 
 pkg_opts = ArgumentParser(suppress=True)
@@ -406,11 +406,11 @@ def _pkg_validate_args(parser, namespace):
         pkg_filters.append(lambda pkg: 'fetch' not in pkg.restrict)
     if namespace.source_repo is not None:
         pkg_filters.append(lambda pkg: namespace.source_repo == pkg.source_repository)
-    pkgs = ifilter(pkg_filters.run, pkgs)
+    pkgs = list(filter(pkg_filters.run, pkgs))
     removal_func = partial(os.remove)
     namespace.remove = (
         (removal_func, binpkg) for binpkg in
-        sorted(ifilter(namespace.file_filters.run, (pkg.path for pkg in pkgs))))
+        sorted(filter(namespace.file_filters.run, (pkg.path for pkg in pkgs))))
 
 tmp = subparsers.add_parser(
     'tmp', parents=(shared_opts,),

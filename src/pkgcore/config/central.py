@@ -44,7 +44,7 @@ class _ConfigMapping(mappings.DictMixin):
             raise KeyError(key)
         return conf.instantiate()
 
-    def iterkeys(self):
+    def keys(self):
         for name in self.manager.sections():
             try:
                 collapsed = self.manager.collapse_named_section(name)
@@ -161,7 +161,7 @@ class CollapsedConfig(object):
         # Careful: not everything we have for needs to be in the conf dict
         # (because of default values) and not everything in the conf dict
         # needs to have a type (because of allow_unknowns).
-        for name, val in config.iteritems():
+        for name, val in config.items():
             typename = self.type.types.get(name)
             if typename is None:
                 continue
@@ -361,7 +361,7 @@ class ConfigManager(object):
 
     def sections(self):
         """Return an iterator of all section names."""
-        return self.sections_lookup.iterkeys()
+        return iter(self.sections_lookup.keys())
 
     def collapse_named_section(self, name, raise_on_missing=True):
         """Collapse a config by name, possibly returning a cached instance.
@@ -474,13 +474,14 @@ class ConfigManager(object):
     @klass.jit_attr
     def types(self):
         type_map = collections.defaultdict(dict)
-        for name, sections in self.sections_lookup.iteritems():
+        for name, sections in self.sections_lookup.items():
             if self._section_is_inherit_only(sections[0]):
                 continue
             obj = self.collapse_named_section(name)
             type_map[obj.type.name][name] = obj
-        return mappings.ImmutableDict((k, mappings.ImmutableDict(v))
-            for k,v in type_map.iteritems())
+        return mappings.ImmutableDict(
+            (k, mappings.ImmutableDict(v))
+            for k,v in type_map.items())
 
     def _render_config_stack(self, type_obj, config_stack):
         conf = {}
@@ -539,7 +540,7 @@ class ConfigManager(object):
         Returns C{None} if no defaults.
         """
         try:
-            defaults = self.types.get(type_name, {}).iteritems()
+            defaults = self.types.get(type_name, {}).items()
         except IGNORED_EXCEPTIONS:
             raise
         except Exception as e:

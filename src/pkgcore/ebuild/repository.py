@@ -8,7 +8,7 @@ Ebuild repository, specific to gentoo ebuild trees.
 __all__ = ("tree", "ProvidesRepo",)
 
 from functools import partial, wraps
-from itertools import imap, ifilterfalse
+from itertools import filterfalse
 import os
 import stat
 from sys import intern
@@ -83,11 +83,11 @@ class repo_operations(_repo_ops.operations):
                 continue
 
             # fetchables targeted for manifest generation
-            fetchables = {filename: fetchable for filename, fetchable in pkgdir_fetchables.iteritems()
+            fetchables = {filename: fetchable for filename, fetchable in pkgdir_fetchables.items()
                           if force or filename not in manifest.distfiles}
 
             # Manifest file is current and not forcing a refresh
-            manifest_current = set(manifest.distfiles.iterkeys()) == set(pkgdir_fetchables.iterkeys())
+            manifest_current = set(manifest.distfiles.keys()) == set(pkgdir_fetchables.keys())
             if manifest_config.thin and not fetchables and manifest_current:
                 # Manifest files aren't necessary with thin manifests and no distfiles
                 if os.path.exists(manifest.path) and not pkgdir_fetchables:
@@ -107,13 +107,13 @@ class repo_operations(_repo_ops.operations):
                 continue
 
             # fetch distfiles
-            if not pkg_ops.fetch(list(fetchables.itervalues()), observer):
+            if not pkg_ops.fetch(list(fetchables.values()), observer):
                 ret.append(key_query)
                 continue
 
             # calculate checksums for fetched distfiles
             try:
-                for fetchable in fetchables.itervalues():
+                for fetchable in fetchables.values():
                     chksums = chksum.get_chksums(
                         pjoin(distdir, fetchable.filename), *required_chksums)
                     fetchable.chksums = dict(zip(required_chksums, chksums))
@@ -124,7 +124,7 @@ class repo_operations(_repo_ops.operations):
 
             fetchables.update(pkgdir_fetchables)
             observer.info("generating manifest: %s::%s", key_query, self.repo.repo_id)
-            manifest.update(sorted(fetchables.itervalues()), chfs=required_chksums)
+            manifest.update(sorted(fetchables.values()), chfs=required_chksums)
 
         return ret
 
@@ -154,7 +154,7 @@ def _sort_eclasses(config, repo_config, eclasses):
             eclasses = [location]
     else:
         repo_map = {r.repo_id: r.location for r in
-                    config.objects['repo_config'].itervalues()}
+                    config.objects['repo_config'].values()}
 
         missing = set(repo_config.masters).difference(repo_map)
         if missing:
@@ -339,7 +339,7 @@ class _UnconfiguredTree(prototype.tree):
         mirrors = {}
         fp = pjoin(self.location, metadata_offset, "thirdpartymirrors")
         try:
-            for k, v in read_dict(fp, splitter=None).iteritems():
+            for k, v in read_dict(fp, splitter=None).items():
                 v = v.split()
                 shuffle(v)
                 mirrors[k] = v
@@ -349,7 +349,7 @@ class _UnconfiguredTree(prototype.tree):
 
         # use mirrors from masters if not defined in the repo
         for master in masters:
-            for k, v in master.mirrors.iteritems():
+            for k, v in master.mirrors.items():
                 if k not in mirrors:
                     mirrors[k] = v
 
@@ -436,7 +436,7 @@ class _UnconfiguredTree(prototype.tree):
             pjoin(self.base, 'profiles', 'categories'),
             True, True, True)
         if categories is not None:
-            categories = tuple(imap(intern, categories))
+            categories = tuple(map(intern, categories))
         return categories
 
     def _get_categories(self, *optional_category):
@@ -452,7 +452,7 @@ class _UnconfiguredTree(prototype.tree):
         if categories:
             return tuple(categories)
         try:
-            return tuple(imap(intern, ifilterfalse(
+            return tuple(map(intern, filterfalse(
                 self.false_categories.__contains__,
                 (x for x in listdir_dirs(self.base) if x[0:1] != "."))))
         except EnvironmentError as e:
@@ -461,7 +461,7 @@ class _UnconfiguredTree(prototype.tree):
     def _get_packages(self, category):
         cpath = pjoin(self.base, category.lstrip(os.path.sep))
         try:
-            return tuple(ifilterfalse(
+            return tuple(filterfalse(
                 self.false_packages.__contains__, listdir_dirs(cpath)))
         except EnvironmentError as e:
             if e.errno == errno.ENOENT:
@@ -642,8 +642,8 @@ class _ConfiguredTree(configured.tree):
         scope_update['operations_callback'] = self._generate_pkg_operations
 
         # update wrapped attr funcs requiring access to the class instance
-        for k, v in self.config_wrappables.iteritems():
-            if isinstance(v, basestring):
+        for k, v in self.config_wrappables.items():
+            if isinstance(v, str):
                 self.config_wrappables[k] = getattr(self, v)
 
         configured.tree.__init__(

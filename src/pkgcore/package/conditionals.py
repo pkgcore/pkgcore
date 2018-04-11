@@ -147,7 +147,7 @@ def make_wrapper(wrapped_repo, configurable_attribute_name, attributes_to_wrap=(
                 if attr == self._configurable_name:
                     entry_point = self.changes_count()
                     try:
-                        map(self._configurable.add, vals)
+                        list(map(self._configurable.add, vals))
                         object.__setattr__(self, '_reuse_pt', self._reuse_pt + 1)
                         return True
                     except Unchangable:
@@ -193,7 +193,7 @@ def make_wrapper(wrapped_repo, configurable_attribute_name, attributes_to_wrap=(
                 if attr == self._configurable_name:
                     entry_point = self.changes_count()
                     try:
-                        map(self._configurable.remove, vals)
+                        list(map(self._configurable.remove, vals))
                         return True
                     except Unchangable:
                         self.rollback(entry_point)

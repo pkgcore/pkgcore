@@ -8,8 +8,6 @@ Wraps :obj:`pkgcore.ebuild.processor` functionality into a higher level
 api, for example per phase methods.
 """
 
-from __future__ import print_function
-
 __all__ = (
     "ebd", "setup_mixin", "install_op", "uninstall_op", "replace_op",
     "buildable", "binpkg_localize")
@@ -159,8 +157,8 @@ class ebd(object):
 
         self.pkg = pkg
         self.eapi = pkg.eapi
-        wipes = [k for k, v in self.env.iteritems()
-                 if not isinstance(v, basestring)]
+        wipes = [k for k, v in self.env.items()
+                 if not isinstance(v, str)]
         for k in wipes:
             del self.env[k]
 
@@ -207,11 +205,11 @@ class ebd(object):
             return data_source.bytes_data_source(f.read())
 
     def setup_env_data_source(self):
-        if not ensure_dirs(self.env["T"], mode=0770, gid=portage_gid, minimal=True):
+        if not ensure_dirs(self.env["T"], mode=0o770, gid=portage_gid, minimal=True):
             raise format.FailedDirectory(
                 self.env['T'],
                 "%s doesn't fulfill minimum mode %o and gid %i" % (
-                    self.env['T'], 0770, portage_gid))
+                    self.env['T'], 0o770, portage_gid))
 
         if self.env_data_source is not None:
             fp = pjoin(self.env["T"], "environment")
@@ -246,7 +244,7 @@ class ebd(object):
 
     def setup_logging(self):
         if self.logging and not ensure_dirs(os.path.dirname(self.logging),
-                                            mode=02770, gid=portage_gid):
+                                            mode=0o2770, gid=portage_gid):
             raise format.FailedDirectory(
                 os.path.dirname(self.logging),
                 "PORT_LOGDIR, desired mode 02770 and gid %i" % portage_gid)
@@ -254,12 +252,12 @@ class ebd(object):
     def setup_workdir(self):
         # ensure dirs.
         for k in ("HOME", "T", "WORKDIR", "D"):
-            if not ensure_dirs(self.env[k], mode=04770, gid=portage_gid, minimal=True):
+            if not ensure_dirs(self.env[k], mode=0o4770, gid=portage_gid, minimal=True):
                 raise format.FailedDirectory(
                     self.env[k],
-                    "%s doesn't fulfill minimum mode %o and gid %i" % (k, 0770, portage_gid))
+                    "%s doesn't fulfill minimum mode %o and gid %i" % (k, 0o770, portage_gid))
             # XXX hack, just 'til pkgcore controls these directories
-            if (os.stat(self.env[k]).st_mode & 02000):
+            if (os.stat(self.env[k]).st_mode & 0o2000):
                 logger.warning("%s ( %s ) is setgid", self.env[k], k)
 
     def _generic_phase(self, phase, userpriv, sandbox, extra_handlers={},
@@ -658,7 +656,7 @@ class buildable(ebd, setup_mixin, format.build):
                     self.env["DISTDIR"],
                     "failed removing existing file/dir/link at: exception %s" % e) from e
 
-            if not ensure_dirs(self.env["DISTDIR"], mode=0770, gid=portage_gid):
+            if not ensure_dirs(self.env["DISTDIR"], mode=0o770, gid=portage_gid):
                 raise format.FailedDirectory(
                     self.env["DISTDIR"],
                     "failed creating distdir symlink directory")
@@ -666,7 +664,7 @@ class buildable(ebd, setup_mixin, format.build):
             try:
                 for src, dest in [
                         (k, pjoin(self.env["DISTDIR"], v.filename))
-                        for (k, v) in self.verified_files.iteritems()]:
+                        for (k, v) in self.verified_files.items()]:
                     os.symlink(src, dest)
 
             except EnvironmentError as e:
@@ -685,7 +683,7 @@ class buildable(ebd, setup_mixin, format.build):
         if self.distcc:
             for p in ("", "/lock", "/state"):
                 if not ensure_dirs(pjoin(self.env["DISTCC_DIR"], p),
-                                   mode=02775, gid=portage_gid):
+                                   mode=0o2775, gid=portage_gid):
                     raise format.FailedDirectory(
                         pjoin(self.env["DISTCC_DIR"], p),
                         "failed creating needed distcc directory")
@@ -696,7 +694,7 @@ class buildable(ebd, setup_mixin, format.build):
                 st = os.stat(self.env["CCACHE_DIR"])
             except OSError as e:
                 st = None
-                if not ensure_dirs(self.env["CCACHE_DIR"], mode=02775,
+                if not ensure_dirs(self.env["CCACHE_DIR"], mode=0o2775,
                                    gid=portage_gid):
                     raise format.FailedDirectory(
                         self.env["CCACHE_DIR"],
@@ -705,14 +703,14 @@ class buildable(ebd, setup_mixin, format.build):
                 # XXX this is more then mildly stupid.
                 st = os.stat(self.env["CCACHE_DIR"])
             try:
-                if st.st_gid != portage_gid or (st.st_mode & 02775) != 02775:
+                if st.st_gid != portage_gid or (st.st_mode & 0o2775) != 0o2775:
                     try:
                         cwd = os.getcwd()
                     except OSError:
                         cwd = "/"
                     try:
                         # crap.
-                        os.chmod(self.env["CCACHE_DIR"], 02775)
+                        os.chmod(self.env["CCACHE_DIR"], 0o2775)
                         os.chown(self.env["CCACHE_DIR"], -1, portage_gid)
                         os.chdir(cwd)
                         if 0 != spawn(
@@ -769,7 +767,7 @@ class buildable(ebd, setup_mixin, format.build):
 
         We need the same prerequisites as setup, so reuse that.
         """
-        ensure_dirs(self.env["T"], mode=0770, gid=portage_gid, minimal=True)
+        ensure_dirs(self.env["T"], mode=0o770, gid=portage_gid, minimal=True)
         return setup_mixin.setup(self, "nofetch")
 
     def unpack(self):
@@ -782,7 +780,7 @@ class buildable(ebd, setup_mixin, format.build):
             except OSError as e:
                 raise format.GenericBuildError(
                     "failed forcing %i uid for WORKDIR: %s" %
-                    (portage_uid, e)) as e
+                    (portage_uid, e)) from e
         return self._generic_phase("unpack", True, True)
 
     compile = pretty_docs(
@@ -876,7 +874,7 @@ class ebuild_mixin(object):
         env = expected_ebuild_env(pkg)
         builddir = pjoin(domain.pm_tmpdir, env["CATEGORY"], env["PF"])
         pkg_tmpdir = normpath(pjoin(builddir, "temp"))
-        ensure_dirs(pkg_tmpdir, mode=0770, gid=portage_gid, minimal=True)
+        ensure_dirs(pkg_tmpdir, mode=0o770, gid=portage_gid, minimal=True)
         env["ROOT"] = domain.root
         env["T"] = pkg_tmpdir
 

@@ -174,11 +174,9 @@ class build_operations(operations):
         return True
 
 
-class build_base(object):
+class build_base(object, metaclass=ForcedDepends):
 
     stage_depends = {'finish': 'start'}
-
-    __metaclass__ = ForcedDepends
 
     def __init__(self, domain, observer):
         self.domain = domain

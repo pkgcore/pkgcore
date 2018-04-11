@@ -10,8 +10,6 @@ __all__ = ("tree",)
 # icky.
 # ~harring
 
-from itertools import imap
-
 from snakeoil.klass import GetAttrProxy, DirProxy
 
 from pkgcore.operations import repo
@@ -38,7 +36,7 @@ class tree(prototype.tree):
 
     def itermatch(self, *args, **kwargs):
         pkgs = (x for x in self.raw_repo.itermatch(*args, **kwargs) if x.is_supported)
-        return imap(self.package_class, pkgs)
+        return map(self.package_class, pkgs)
 
     __getattr__ = GetAttrProxy("raw_repo")
     __dir__ = DirProxy("raw_repo")

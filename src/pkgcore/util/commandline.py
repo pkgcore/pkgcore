@@ -83,7 +83,7 @@ class StoreTarget(argparse._AppendAction):
         if self.allow_sets:
             namespace.sets = []
 
-        if isinstance(values, basestring):
+        if isinstance(values, str):
             values = [values]
         elif values is not None and len(values) == 1 and values[0] == '-':
             if not sys.stdin.isatty():
@@ -164,7 +164,7 @@ class StoreConfigObject(argparse._StoreAction):
     @staticmethod
     def _choices(sections):
         """Yield available values for a given option."""
-        for k, v in sections.iteritems():
+        for k, v in sections.items():
             yield k
 
     def _load_obj(self, sections, name):
@@ -206,11 +206,11 @@ class StoreConfigObject(argparse._StoreAction):
         sections = self._get_sections(config, namespace)
 
         if self.nargs == argparse.ZERO_OR_MORE and values == []:
-            values = sections.keys()
+            values = list(sections.keys())
 
         if values is CONFIG_ALL_DEFAULT:
             value = [self._load_obj(sections, x) for x in sections]
-        elif isinstance(values, basestring):
+        elif isinstance(values, str):
             value = self._load_obj(sections, values)
         else:
             value = [self._load_obj(sections, x) for x in values]
@@ -241,7 +241,7 @@ class StoreConfigObject(argparse._StoreAction):
         config = getattr(namespace, 'config', None)
         if config is None:
             raise ValueError("no config found -- internal bug")
-        obj = [(k, v) for k, v in getattr(config, config_type).iteritems()]
+        obj = [(k, v) for k, v in getattr(config, config_type).items()]
         setattr(namespace, attr, obj)
 
     @classmethod
@@ -329,7 +329,7 @@ class StoreRepoObject(StoreConfigObject):
 
         If a repo doesn't have a proper location just the name is returned.
         """
-        for repo_name, repo in sorted(unstable_unique(sections.iteritems())):
+        for repo_name, repo in sorted(unstable_unique(sections.items())):
             repo_name = getattr(repo, 'repo_id', repo_name)
             if hasattr(repo, 'location'):
                 yield '%s:%s' % (repo_name, repo.location)
@@ -346,7 +346,7 @@ class StoreRepoObject(StoreConfigObject):
             return getattr(self.domain, self.valid_repo_types[name])
         else:
             # name wasn't found, check repo aliases for it
-            for repo_name, repo_obj in sections.iteritems():
+            for repo_name, repo_obj in sections.items():
                 if repo in repo_obj.aliases:
                     repo = repo_name
                     break
@@ -384,7 +384,7 @@ class DomainFromPath(StoreConfigObject):
 
 def find_domains_from_path(sections, path):
     path = osutils.normpath(osutils.abspath(path))
-    for name, domain in sections.iteritems():
+    for name, domain in sections.items():
         root = getattr(domain, 'root', None)
         if root is None:
             continue
@@ -512,14 +512,14 @@ def _convert_config_mods(iterable):
 
 
 def store_config(namespace, attr, global_config=()):
-    configs = map(
-        _convert_config_mods, [namespace.pop('new_config', None), namespace.pop('add_config', None)])
+    configs = list(map(
+        _convert_config_mods, [namespace.pop('new_config', None), namespace.pop('add_config', None)]))
     # add necessary inherits for add_config
-    for key, vals in configs[1].iteritems():
+    for key, vals in configs[1].items():
         vals.setdefault('inherit', key)
 
     configs = [{section: basics.ConfigSectionFromStringDict(vals)
-                for section, vals in d.iteritems()}
+                for section, vals in d.items()}
                for d in configs if d]
 
     config = load_config(

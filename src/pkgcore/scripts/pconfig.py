@@ -35,7 +35,7 @@ def dump_section(config, out):
                                 config.type.callable.__name__))
     if config.default:
         out.write('default true;')
-    for key, val in sorted(config.config.iteritems()):
+    for key, val in sorted(config.config.items()):
         typename = config.type.types.get(key)
         if typename is None:
             if config.type.allow_unknowns:
@@ -90,7 +90,7 @@ def get_classes(configs):
     for config in configs:
         classes.add('%s.%s' % (config.type.callable.__module__,
                                config.type.callable.__name__))
-        for key, val in config.config.iteritems():
+        for key, val in config.config.items():
             typename = config.type.types.get(key)
             if typename is None:
                 continue
@@ -160,7 +160,7 @@ def write_type(out, type_obj):
     if type_obj.allow_unknowns:
         out.write('values not listed are handled as strings')
     out.write()
-    for name, typename in sorted(type_obj.types.iteritems()):
+    for name, typename in sorted(type_obj.types.items()):
         if typename.startswith("lazy_ref:"):
             typename = typename[len("lazy_ref:"):]
         elif typename.startswith("lazy_refs:"):
@@ -211,7 +211,7 @@ def dump_main(options, out, err):
     if options.typename is None:
         names = config.sections()
     else:
-        names = getattr(config, options.typename).iterkeys()
+        names = iter(getattr(config, options.typename).keys())
     for i, name in enumerate(sorted(names)):
         if i > 0:
             out.write()
@@ -255,7 +255,7 @@ def configurables_main(options, out, err):
 
 def _dump_uncollapsed_section(config, out, err, section):
     """Write a single section."""
-    if isinstance(section, basestring):
+    if isinstance(section, str):
         out.write('named section %r' % (section,))
         return
     for key in sorted(section.keys()):
@@ -331,7 +331,7 @@ def dump_uncollapsed_main(options, out, err):
         out.write(out.bold, s)
         out.write(out.bold, '*' * len(s))
         out.write()
-        for name, section in sorted(source.iteritems()):
+        for name, section in sorted(source.items()):
             out.write('%s' % (name,))
             out.write('=' * len(name))
             _dump_uncollapsed_section(options.config, out, err, section)

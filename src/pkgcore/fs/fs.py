@@ -76,7 +76,7 @@ class fsBase(object):
             for k in self.__attrs__:
                 s(self, k, d[k])
         else:
-            for k, v in d.iteritems():
+            for k, v in d.items():
                 s(self, k, v)
     gen_doc_additions(__init__, __attrs__)
 
@@ -151,7 +151,7 @@ class fsFile(fsBase):
 
     __slots__ = ("chksums", "data", "dev", "inode")
     __attrs__ = fsBase.__attrs__ + __slots__
-    __default_attrs__ = {"mtime":0l, 'dev':None, 'inode':None}
+    __default_attrs__ = {"mtime":0, 'dev':None, 'inode':None}
 
     is_reg = True
 
@@ -182,7 +182,7 @@ class fsFile(fsBase):
     data_source = klass.alias_attr("data")
 
     def _chksum_callback(self, chfs):
-        return zip(chfs, get_chksums(self.data, *chfs))
+        return list(zip(chfs, get_chksums(self.data, *chfs)))
 
     def change_attributes(self, **kwds):
         if 'data' in kwds and ('chksums' not in kwds and

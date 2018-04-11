@@ -223,12 +223,12 @@ class domain(config_domain):
             settings['MAKEOPTS'] = '-j%i' % cpu_count()
 
         for x in const.incrementals:
-            if isinstance(settings.get(x), basestring):
+            if isinstance(settings.get(x), str):
                 settings[x] = tuple(settings[x].split())
 
         # roughly... all incremental stacks should be interpreted left -> right
         # as such we start with the profile settings, and append ours onto it.
-        for k, v in self.profile.default_env.iteritems():
+        for k, v in self.profile.default_env.items():
             if k not in settings:
                 settings[k] = v
                 continue
@@ -489,7 +489,7 @@ class domain(config_domain):
     def _split_use_expand_flags(self, use_stream):
         stream = ((self.use_expand_re.match(x), x) for x in use_stream)
         flags, ue_flags = predicate_split(bool, stream, itemgetter(0))
-        return map(itemgetter(1), flags), [(x[0].groups(), x[1]) for x in ue_flags]
+        return list(map(itemgetter(1), flags)), [(x[0].groups(), x[1]) for x in ue_flags]
 
     def get_package_use_unconfigured(self, pkg, for_metadata=True):
         """Determine use flags for a given package.
@@ -567,7 +567,7 @@ class domain(config_domain):
             if restrict.match(pkg):
                 files.extend(paths)
         if files:
-            pkg_settings = dict(self._settings.orig.iteritems())
+            pkg_settings = dict(self._settings.orig.items())
             for path in files:
                 load_make_conf(pkg_settings, path, allow_sourcing=True,
                                allow_recurse=False, incrementals=True)
@@ -606,7 +606,7 @@ class domain(config_domain):
 
         # add unconfigured, external repo to the domain
         # TODO: add support for configuring/enabling the external repo's cache
-        if isinstance(repo, basestring):
+        if isinstance(repo, str):
             if config is None:
                 raise ValueError('missing config')
             path = os.path.abspath(repo)

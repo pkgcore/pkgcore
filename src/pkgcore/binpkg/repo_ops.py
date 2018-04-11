@@ -55,7 +55,7 @@ def generate_attr_dict(pkg, portage_compatible=True):
             d['environment.bz2'] = compress_data(
                 'bzip2', v.bytes_fileobj().read())
             continue
-        elif not isinstance(v, basestring):
+        elif not isinstance(v, str):
             try:
                 s = ' '.join(v)
             except TypeError:
@@ -92,7 +92,7 @@ class install(repo_interfaces.install):
 
         self.tmp_path, self.final_path = tmp_path, final_path
 
-        if not ensure_dirs(os.path.dirname(tmp_path), mode=0755):
+        if not ensure_dirs(os.path.dirname(tmp_path), mode=0o755):
             raise repo_interfaces.Failure(
                 "failed creating directory %r" %
                 os.path.dirname(tmp_path))
@@ -107,7 +107,7 @@ class install(repo_interfaces.install):
             xpak.Xpak.write_xpak(tmp_path, generate_attr_dict(pkg))
             end("wrote Xpak", True)
             # ok... we tagged the xpak on.
-            os.chmod(tmp_path, 0644)
+            os.chmod(tmp_path, 0o644)
         except Exception as e:
             try:
                 unlink_if_exists(tmp_path)

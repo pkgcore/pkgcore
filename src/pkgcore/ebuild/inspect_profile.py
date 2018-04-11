@@ -64,13 +64,11 @@ class _base(arghparse.ArgparseCommand):
 _register_command = commandline.register_command(commands)
 
 
-class parent(_base):
+class parent(_base, metaclass=_register_command):
     """output the linearized tree of inherited parents
 
     later lines override earlier lines
     """
-
-    __metaclass__ = _register_command
 
     def __call__(self, namespace, out, err):
         if namespace.repo is None:
@@ -81,26 +79,22 @@ class parent(_base):
                 out.write(x.path[len(repo_dir):].lstrip('/'))
 
 
-class eapi(_base):
+class eapi(_base, metaclass=_register_command):
     """output EAPI support required for reading this profile"""
-
-    __metaclass__ = _register_command
 
     def __call__(self, namespace, out, err):
         eapis = set(str(x.eapi) for x in namespace.profile.stack)
         out.write("\n".join(sorted(eapis)))
 
 
-class status(_base):
+class status(_base, metaclass=_register_command):
     """output profile status"""
-
-    __metaclass__ = _register_command
 
     def __call__(self, namespace, out, err):
         profiles_dir = pjoin(namespace.profile.node.repoconfig.location, 'profiles')
         profile_rel_path = namespace.profile.path[len(profiles_dir):].lstrip('/')
         arch_profiles = namespace.profile.node.repoconfig.arch_profiles
-        statuses = [(path, status) for path, status in chain.from_iterable(arch_profiles.itervalues())
+        statuses = [(path, status) for path, status in chain.from_iterable(arch_profiles.values())
                     if path.startswith(profile_rel_path)]
         if len(statuses) > 1:
             for path, status in sorted(statuses):
@@ -109,10 +103,8 @@ class status(_base):
             out.write(statuses[0][1])
 
 
-class deprecated(_base):
+class deprecated(_base, metaclass=_register_command):
     """dump deprecation notices, if any"""
-
-    __metaclass__ = _register_command
 
     def __call__(self, namespace, out, err):
         for idx, profile in enumerate(x for x in namespace.profile.stack if x.deprecated):
@@ -128,45 +120,39 @@ class deprecated(_base):
                     out.write(line, prefix='  ')
 
 
-class provided(_base):
+class provided(_base, metaclass=_register_command):
     """list all package.provided packages
 
     Note that these are exact versions- if a dep requires a higher version,
     it's not considered satisfied.
     """
 
-    __metaclass__ = _register_command
-
     def __call__(self, namespace, out, err):
         targets = defaultdict(list)
         for pkg in namespace.profile.provides_repo:
             targets[pkg.key].append(pkg)
 
-        for pkg_name, pkgs in sorted(targets.iteritems(), key=operator.itemgetter(0)):
+        for pkg_name, pkgs in sorted(targets.items(), key=operator.itemgetter(0)):
             out.write(
                 out.fg("cyan"), pkg_name, out.reset, ": ",
                 ", ".join(x.fullver for x in sorted(pkgs)))
 
 
-class system(_base):
+class system(_base, metaclass=_register_command):
     """output the system package set"""
-
-    __metaclass__ = _register_command
 
     def __call__(self, namespace, out, err):
         for pkg in sorted(namespace.profile.system):
             out.write(str(pkg))
 
 
-class use_expand(_base):
+class use_expand(_base, metaclass=_register_command):
     """output the USE_EXPAND configuration for this profile
 
     Outputs two fields of interest; USE_EXPAND (pseudo use groups), and
     USE_EXPAND_HIDDEN which is immutable by user configuration and use deps
     (primarily used for things like setting the kernel or OS type).
     """
-
-    __metaclass__ = _register_command
 
     def __call__(self, namespace, out, err):
         out.write(
@@ -177,60 +163,48 @@ class use_expand(_base):
             ', '.join(sorted(namespace.profile.use_expand_hidden)))
 
 
-class iuse_effective(_base):
+class iuse_effective(_base, metaclass=_register_command):
     """output the IUSE_EFFECTIVE value for this profile"""
-
-    __metaclass__ = _register_command
 
     def __call__(self, namespace, out, err):
         if namespace.profile.iuse_effective:
             out.write(' '.join(sorted(namespace.profile.iuse_effective)))
 
 
-class masks(_base):
+class masks(_base, metaclass=_register_command):
     """inspect package masks"""
-
-    __metaclass__ = _register_command
 
     def __call__(self, namespace, out, err):
         for mask in sorted(namespace.profile.masks):
             out.write(str(mask))
 
 
-class unmasks(_base):
+class unmasks(_base, metaclass=_register_command):
     """inspect package unmasks"""
-
-    __metaclass__ = _register_command
 
     def __call__(self, namespace, out, err):
         for unmask in sorted(namespace.profile.unmasks):
             out.write(str(unmask))
 
 
-class bashrcs(_base):
+class bashrcs(_base, metaclass=_register_command):
     """inspect bashrcs"""
-
-    __metaclass__ = _register_command
 
     def __call__(self, namespace, out, err):
         for bashrc in namespace.profile.bashrcs:
             out.write(bashrc.path)
 
 
-class keywords(_base):
+class keywords(_base, metaclass=_register_command):
     """inspect package.keywords"""
-
-    __metaclass__ = _register_command
 
     def __call__(self, namespace, out, err):
         for pkg, keywords in namespace.profile.keywords:
             out.write('%s: %s' % (pkg, ' '.join(keywords)))
 
 
-class accept_keywords(_base):
+class accept_keywords(_base, metaclass=_register_command):
     """inspect package.accept_keywords"""
-
-    __metaclass__ = _register_command
 
     def __call__(self, namespace, out, err):
         for pkg, keywords in namespace.profile.accept_keywords:
@@ -247,8 +221,8 @@ class _use(_base):
         global_use = []
         pkg_use = []
 
-        for k, v in namespace.use.render_to_dict().iteritems():
-            if isinstance(k, basestring):
+        for k, v in namespace.use.render_to_dict().items():
+            if isinstance(k, str):
                 pkg, neg, pos = v[-1]
                 if not isinstance(pkg, atom.atom):
                     continue
@@ -266,13 +240,11 @@ class _use(_base):
                 out.write('%s: %s' % (pkg, use))
 
 
-class use(_use):
+class use(_use, metaclass=_register_command):
     """inspect enabled USE flags
 
     Including USE, USE_EXPAND, and package.use settings.
     """
-
-    __metaclass__ = _register_command
 
     def __call__(self, namespace, out, err):
         u = ChunkedDataDict()
@@ -282,54 +254,44 @@ class use(_use):
         super(use, self).__call__(namespace, out, err)
 
 
-class masked_use(_use):
+class masked_use(_use, metaclass=_register_command):
     """inspect masked use flags"""
-
-    __metaclass__ = _register_command
 
     def __call__(self, namespace, out, err):
         namespace.use = namespace.profile.masked_use
         super(masked_use, self).__call__(namespace, out, err)
 
 
-class stable_masked_use(_use):
+class stable_masked_use(_use, metaclass=_register_command):
     """inspect stable masked use flags"""
-
-    __metaclass__ = _register_command
 
     def __call__(self, namespace, out, err):
         namespace.use = namespace.profile.stable_masked_use
         super(stable_masked_use, self).__call__(namespace, out, err)
 
 
-class forced_use(_use):
+class forced_use(_use, metaclass=_register_command):
     """inspect forced use flags"""
-
-    __metaclass__ = _register_command
 
     def __call__(self, namespace, out, err):
         namespace.use = namespace.profile.forced_use
         super(forced_use, self).__call__(namespace, out, err)
 
 
-class stable_forced_use(_use):
+class stable_forced_use(_use, metaclass=_register_command):
     """inspect stable forced use flags"""
-
-    __metaclass__ = _register_command
 
     def __call__(self, namespace, out, err):
         namespace.use = namespace.profile.stable_forced_use
         super(stable_forced_use, self).__call__(namespace, out, err)
 
 
-class defaults(_base):
+class defaults(_base, metaclass=_register_command):
     """inspect defined configuration for this profile
 
     This is data parsed from make.defaults, containing things like
     ACCEPT_KEYWORDS.
     """
-
-    __metaclass__ = _register_command
 
     def _subclass_bind(self, parser):
         parser.add_argument(
@@ -356,10 +318,8 @@ class defaults(_base):
             out.write('%s="%s"' % (key, val))
 
 
-class arch(_base):
+class arch(_base, metaclass=_register_command):
     """output the arch defined for this profile"""
-
-    __metaclass__ = _register_command
 
     def __call__(self, namespace, out, err):
         if namespace.profile.arch is not None:

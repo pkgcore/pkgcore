@@ -7,7 +7,7 @@ filtering repository
 
 __all__ = ("tree",)
 
-from itertools import ifilterfalse as filterfalse
+from itertools import filterfalse
 
 from snakeoil.klass import GetAttrProxy, DirProxy
 

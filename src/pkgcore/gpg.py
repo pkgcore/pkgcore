@@ -24,18 +24,18 @@ def skip_signatures(iterable):
     for line in i:
         # so... prune msg first, then
         if line.endswith(msg_header):
-            line = i.next()
+            line = next(i)
             while line[msg_hash_len:] == msg_hash:
-                line = i.next()
+                line = next(i)
             # skip blank line after msg.
-            i.next()
+            next(i)
             continue
         while line.endswith(sig_header):
-            line = i.next()
+            line = next(i)
             # swallow the footer.
             while not line.endswith(sig_footer):
-                line = i.next()
+                line = next(i)
             # leave the next line on the stack
-            line = i.next()
+            line = next(i)
 
         yield line

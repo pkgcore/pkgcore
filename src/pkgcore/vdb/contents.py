@@ -48,7 +48,7 @@ class ContentsFile(contentsSet):
 
     def __init__(self, source, mutable=False, create=False):
 
-        if not isinstance(source, (data_source.base, basestring)):
+        if not isinstance(source, (data_source.base, str)):
             raise TypeError("source must be either data_source, or a filepath")
         contentsSet.__init__(self, mutable=True)
         self._source = source
@@ -74,11 +74,11 @@ class ContentsFile(contentsSet):
         contentsSet.add(self, obj)
 
     def _get_fd(self, write=False):
-        if isinstance(self._source, basestring):
+        if isinstance(self._source, str):
             if write:
                 return AtomicWriteFile(
                     self._source, uid=os_data.root_uid,
-                    gid=os_data.root_gid, perms=0644)
+                    gid=os_data.root_gid, perms=0o644)
             return readlines_utf8(self._source, True)
         fobj = self._source.text_fileobj(writable=write)
         if write:
@@ -106,13 +106,13 @@ class ContentsFile(contentsSet):
             elif s[0] == "obj":
                 path = ' '.join(s[1:-2])
                 obj = fs.fsFile(
-                    path, chksums={"md5":long(s[-2], 16)},
-                        mtime=long(s[-1]), strict=False)
+                    path, chksums={"md5":int(s[-2], 16)},
+                        mtime=int(s[-1]), strict=False)
             elif s[0] == "sym":
                 try:
                     p = s.index("->")
                     obj = fs.fsLink(' '.join(s[1:p]), ' '.join(s[p+1:-1]),
-                        mtime=long(s[-1]), strict=False)
+                        mtime=int(s[-1]), strict=False)
 
                 except ValueError:
                     # XXX throw a corruption error
@@ -134,11 +134,11 @@ class ContentsFile(contentsSet):
                 if obj.is_reg:
                     s = " ".join(("obj", obj.location,
                         md5_handler.long2str(obj.chksums["md5"]),
-                        str(long(obj.mtime))))
+                        str(int(obj.mtime))))
 
                 elif obj.is_sym:
                     s = " ".join(("sym", obj.location, "->",
-                                   obj.target, str(long(obj.mtime))))
+                                   obj.target, str(int(obj.mtime))))
 
                 elif obj.is_dir:
                     s = "dir " + obj.location

@@ -17,10 +17,8 @@ from snakeoil.klass import generic_equality, cached_hash
 from pkgcore.restrictions import restriction
 
 
-class base(restriction.base):
+class base(restriction.base, metaclass=generic_equality):
     """base template for boolean restrictions"""
-
-    __metaclass__ = generic_equality
     __attr_comparison__ = ('negate', 'type', 'restrictions')
     __slots__ = ('restrictions', 'type', 'negate', '_hash')
 

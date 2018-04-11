@@ -121,11 +121,11 @@ class rsync_syncer(base.ExternalSyncer):
         if verbosity < 0:
             opts.append("--quiet")
         elif verbosity > 0:
-            opts.extend('-v' for x in xrange(verbosity))
+            opts.extend('-v' for x in range(verbosity))
 
         # zip limits to the shortest iterable
         ret = None
-        for count, ip in zip(xrange(self.retries), self._get_ips()):
+        for count, ip in zip(range(self.retries), self._get_ips()):
             o = [self.binary_path,
                  self.uri.replace(self.hostname, ip, 1),
                  self.basedir] + opts

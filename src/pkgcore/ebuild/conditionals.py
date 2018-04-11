@@ -144,7 +144,7 @@ class DepSet(boolean.AndRestriction):
                 elif k[-1] == '?' or k in operators:
                     # use conditional or custom op.
                     # no tokens left == bad dep_str.
-                    k2 = words.next()
+                    k2 = next(words)
 
                     if k2 != "(":
                         raise ParseError(dep_str, k2)
@@ -157,7 +157,7 @@ class DepSet(boolean.AndRestriction):
                     raise ParseError(dep_str, k)
                 elif allow_src_uri_file_renames:
                     try:
-                        k2 = words.next()
+                        k2 = next(words)
                     except StopIteration:
                         depsets[-1].append(element_func(k))
                     else:
@@ -165,7 +165,7 @@ class DepSet(boolean.AndRestriction):
                             depsets[-1].append(element_func(k))
                             words.appendleft((k2,))
                         else:
-                            k3 = words.next()
+                            k3 = next(words)
                             # file rename
                             depsets[-1].append(element_func(k, k3))
                 else:

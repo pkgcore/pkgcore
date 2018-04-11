@@ -7,7 +7,6 @@ ebuild tree manifest/digest support
 
 __all__ = ("parse_manifest", "Manifest")
 
-from itertools import izip
 import operator
 from os.path import basename, dirname
 
@@ -42,7 +41,7 @@ def convert_chksums(iterable):
             # explicit size entries are stupid, format has implicit size
             continue
         else:
-            yield chf, long(sum, 16)
+            yield chf, int(sum, 16)
 
 
 def parse_manifest(source, ignore_gpg=True):
@@ -57,7 +56,7 @@ def parse_manifest(source, ignore_gpg=True):
     chf_types = set(["size"])
     f = None
     try:
-        if isinstance(source, basestring):
+        if isinstance(source, str):
             i = f = open(source, "r", 32768)
         else:
             i = f = source.text_fileobj()
@@ -81,15 +80,15 @@ def parse_manifest(source, ignore_gpg=True):
             # this is a trick to do pairwise collapsing;
             # [size, 1] becomes [(size, 1)]
             i = iter(line[3:])
-            d[line[1]] = [("size", long(line[2]))] + list(convert_chksums(izip(i, i)))
+            d[line[1]] = [("size", int(line[2]))] + list(convert_chksums(zip(i, i)))
     finally:
         if f is not None and f.close:
             f.close()
 
     # finally convert it to slotted dict for memory savings.
     slotted_kls = make_SlottedDict_kls(x.lower() for x in chf_types)
-    for t, d in types.iteritems():
-        types[t] = mappings.ImmutableDict((k, slotted_kls(v)) for k, v in d.iteritems())
+    for t, d in types.items():
+        types[t] = mappings.ImmutableDict((k, slotted_kls(v)) for k, v in d.items())
     # ordering annoyingly matters. bad api.
     return [types[x] for x in ("DIST", "AUX", "EBUILD", "MISC")]
 
@@ -154,7 +153,7 @@ class Manifest(object):
         handle = open(self.path, 'w')
 
         # write it in alphabetical order; aux gets flushed now.
-        for path, chksums in sorted(aux.iteritems(), key=_key_sort):
+        for path, chksums in sorted(aux.items(), key=_key_sort):
             _write_manifest(handle, 'AUX', path, chksums)
 
         # next dist...
@@ -163,7 +162,7 @@ class Manifest(object):
 
         # then ebuild and misc
         for mtype, inst in (("EBUILD", ebuild), ("MISC", misc)):
-            for path, chksum in sorted(inst.iteritems(), key=_key_sort):
+            for path, chksum in sorted(inst.items(), key=_key_sort):
                 _write_manifest(handle, mtype, path, chksum)
 
     @property

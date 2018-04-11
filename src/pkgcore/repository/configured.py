@@ -33,7 +33,7 @@ class tree(prototype.tree):
         # not perfect I know.
         self.raw_repo = raw_repo
         self.wrapped_attrs = wrapped_attrs
-        self.attr_filters = frozenset(wrapped_attrs.keys() +
+        self.attr_filters = frozenset(list(wrapped_attrs.keys()) +
                                       [self.configurable])
 
         self._klass = self._mk_kls(pkg_kls_injections)
@@ -75,5 +75,5 @@ class tree(prototype.tree):
         return '<%s.%s raw_repo=%r wrapped=%r @%#8x>' % (
             self.__class__.__module__, self.__class__.__name__,
             getattr(self, 'raw_repo', 'unset'),
-            getattr(self, 'wrapped_attrs', {}).keys(),
+            list(getattr(self, 'wrapped_attrs', {}).keys()),
             id(self))

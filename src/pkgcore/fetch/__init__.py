@@ -10,13 +10,12 @@ __all__ = ("fetchable", "mirror", "default_mirror", "uri_list")
 from snakeoil.klass import generic_equality
 
 
-class fetchable(object):
+class fetchable(object, metaclass=generic_equality):
 
     """class representing uri sources for a file and chksum information."""
 
     __slots__ = ("filename", "uri", "chksums")
     __attr_comparison__ = __slots__
-    __metaclass__ = generic_equality
 
     def __init__(self, filename, uri=(), chksums=None):
         """
@@ -49,11 +48,10 @@ class fetchable(object):
         return hash((self.filename, self.uri))
 
 
-class mirror(object):
+class mirror(object, metaclass=generic_equality):
     """
     uri source representing a mirror tier
     """
-    __metaclass__ = generic_equality
     __attr_comparison__ = ('mirror_name', 'mirrors')
 
     __slots__ = ("mirrors", "mirror_name")
@@ -78,7 +76,7 @@ class mirror(object):
     def __len__(self):
         return len(self.mirrors)
 
-    def __nonzero__(self):
+    def __bool__(self):
         return bool(self.mirrors)
 
     def __getitem__(self, idx):
@@ -118,7 +116,7 @@ class uri_list(object):
     def __iter__(self):
         fname = self.filename
         for entry in self._uri_source:
-            if isinstance(entry, basestring):
+            if isinstance(entry, str):
                 yield entry
             elif isinstance(entry, tuple):
                 # mirror with suburi
@@ -132,7 +130,7 @@ class uri_list(object):
         return "file: %s, uri: %s" % (
             self.filename, ', '.join(str(x) for x in self._uri_source))
 
-    def __nonzero__(self):
+    def __bool__(self):
         # implemented this way on the off chance an empty sublist is handed in
         for entry in self:
             return True

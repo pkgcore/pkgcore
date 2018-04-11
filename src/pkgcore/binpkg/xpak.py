@@ -12,7 +12,6 @@ from collections import OrderedDict
 from snakeoil import klass
 from snakeoil import struct_compat as struct
 from snakeoil.demandload import demandload
-from snakeoil.mappings import autoconvert_py3k_methods_metaclass
 
 demandload(
     "errno",
@@ -43,8 +42,6 @@ class MalformedXpak(Exception):
 class Xpak(object):
     __slots__ = ("_source", "_source_is_path", "xpak_start", "_keys_dict")
 
-    __metaclass__ = autoconvert_py3k_methods_metaclass
-
     _reading_key_rewrites = {'repo': 'REPO'}
 
     trailer_pre_magic = "XPAKSTOP"
@@ -60,7 +57,7 @@ class Xpak(object):
     header_pre_magic = header_pre_magic.encode("ascii")
 
     def __init__(self, source):
-        self._source_is_path = isinstance(source, basestring)
+        self._source_is_path = isinstance(source, str)
         self._source = source
         self.xpak_start = None
         # keys_dict becomes an ordereddict after _load_offsets; reason for
@@ -87,11 +84,11 @@ class Xpak(object):
         try:
             old_xpak = cls(target_source)
             # force access
-            old_xpak.keys()
+            list(old_xpak.keys())
             start = old_xpak.xpak_start
             source_is_path = old_xpak._source_is_path
         except (MalformedXpak, IOError):
-            source_is_path = isinstance(target_source, basestring)
+            source_is_path = isinstance(target_source, str)
             if source_is_path:
                 try:
                     start = os.lstat(target_source).st_size
@@ -106,10 +103,10 @@ class Xpak(object):
         new_index = []
         new_data = []
         cur_pos = 0
-        for key, val in data.iteritems():
-            if isinstance(val, unicode):
+        for key, val in data.items():
+            if isinstance(val, str):
                 val = val.encode('utf8')
-            if isinstance(key, unicode):
+            if isinstance(key, str):
                 key = key.encode()
             new_index.append(struct.pack(
                 ">L%isLL" % len(key),
@@ -201,13 +198,18 @@ class Xpak(object):
         return self.xpak_start + self.header.size, index_len, data_len
 
     def keys(self):
-        return list(self.iterkeys())
+        return self.keys_dict.keys()
 
     def values(self):
-        return list(self.itervalues())
+        fd = self._fd
+        return (self._get_data(fd, *v) for v in self.keys_dict.values())
 
     def items(self):
-        return list(self.iteritems())
+        # note that it's an OrderedDict, so this works.
+        fd = self._fd
+        return (
+            (k, self._get_data(fd, *v))
+            for k, v in self.keys_dict.items())
 
     def __len__(self):
         return len(self.keys_dict)
@@ -215,25 +217,11 @@ class Xpak(object):
     def __contains__(self, key):
         return key in self.keys_dict
 
-    def __nonzero__(self):
+    def __bool__(self):
         return bool(self.keys_dict)
 
     def __iter__(self):
         return iter(self.keys_dict)
-
-    def iterkeys(self):
-        return self.keys_dict.iterkeys()
-
-    def itervalues(self):
-        fd = self._fd
-        return (self._get_data(fd, *v) for v in self.keys_dict.itervalues())
-
-    def iteritems(self):
-        # note that it's an OrderedDict, so this works.
-        fd = self._fd
-        return (
-            (k, self._get_data(fd, *v))
-            for k, v in self.keys_dict.iteritems())
 
     def __getitem__(self, key):
         return self._get_data(self._fd, *self.keys_dict[key])

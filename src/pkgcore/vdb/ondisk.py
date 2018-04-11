@@ -79,7 +79,7 @@ class tree(prototype.tree):
                 return tuple(x for x in listdir_dirs(self.location) if not
                              x.startswith('.'))
             except EnvironmentError as e:
-                raise KeyError("failed fetching categories: %s" % str(e))) from e
+                raise KeyError("failed fetching categories: %s" % str(e)) from e
         finally:
             pass
 

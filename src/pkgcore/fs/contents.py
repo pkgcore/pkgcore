@@ -6,7 +6,6 @@ contents set- container of fs objects
 """
 
 from functools import partial
-from itertools import ifilter
 from operator import attrgetter
 
 from snakeoil.demandload import demandload
@@ -42,10 +41,8 @@ def check_instance(obj):
     return obj.location, obj
 
 
-class contentsSet(object):
+class contentsSet(object, metaclass=generic_equality):
     """set of :class:`pkgcore.fs.fs.fsBase` objects"""
-
-    __metaclass__ = generic_equality
     __attr_comparison__ = ('_dict',)
     __dict_kls__ = dict
 
@@ -203,7 +200,7 @@ class contentsSet(object):
         return c
 
     def __iter__(self):
-        return self._dict.itervalues()
+        return iter(self._dict.values())
 
     def __len__(self):
         return len(self._dict)
@@ -247,7 +244,7 @@ class contentsSet(object):
 
         if invert:
             return (x for x in self if not x.is_reg)
-        return ifilter(attrgetter('is_reg'), self)
+        return filter(attrgetter('is_reg'), self)
 
     def files(self, invert=False):
         """Returns a list of just :obj:`pkgcore.fs.fs.fsFile` instances.
@@ -260,7 +257,7 @@ class contentsSet(object):
     def iterdirs(self, invert=False):
         if invert:
             return (x for x in self if not x.is_dir)
-        return ifilter(attrgetter('is_dir'), self)
+        return filter(attrgetter('is_dir'), self)
 
     def dirs(self, invert=False):
         return list(self.iterdirs(invert=invert))
@@ -268,7 +265,7 @@ class contentsSet(object):
     def itersymlinks(self, invert=False):
         if invert:
             return (x for x in self if not x.is_sym)
-        return ifilter(attrgetter('is_sym'), self)
+        return filter(attrgetter('is_sym'), self)
 
     def symlinks(self, invert=False):
         return list(self.iterlinks(invert=invert))
@@ -279,7 +276,7 @@ class contentsSet(object):
     def iterdevs(self, invert=False):
         if invert:
             return (x for x in self if not x.is_dev)
-        return ifilter(attrgetter('is_dev'), self)
+        return filter(attrgetter('is_dev'), self)
 
     def devs(self, invert=False):
         return list(self.iterdevs(invert=invert))
@@ -287,7 +284,7 @@ class contentsSet(object):
     def iterfifos(self, invert=False):
         if invert:
             return (x for x in self if not x.is_fifo)
-        return ifilter(attrgetter('is_fifo'), self)
+        return filter(attrgetter('is_fifo'), self)
 
     def fifos(self, invert=False):
         return list(self.iterfifos(invert=invert))
@@ -311,7 +308,7 @@ class contentsSet(object):
     def clone(self, empty=False):
         if empty:
             return self.__class__([], mutable=True)
-        return self.__class__(self._dict.itervalues(), mutable=True)
+        return self.__class__(iter(self._dict.values()), mutable=True)
 
     def insert_offset(self, offset):
         cset = self.clone(empty=True)
@@ -376,7 +373,7 @@ class contentsSet(object):
             conflicts = sorted(contentsSet(obj.iterdirs()).intersection(conflicts_d))
         return obj
 
-    def add_missing_directories(self, mode=0775, uid=0, gid=0, mtime=None):
+    def add_missing_directories(self, mode=0o775, uid=0, gid=0, mtime=None):
         """Ensure that a directory node exists for each path; add if missing."""
         missing = (x.dirname for x in self)
         missing = set(x for x in missing if x not in self)

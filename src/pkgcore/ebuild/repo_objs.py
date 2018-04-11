@@ -166,9 +166,8 @@ class SharedPkgData(object):
         self.manifest = manifest
 
 
-class Licenses(object):
+class Licenses(object, metaclass=WeakInstMeta):
 
-    __metaclass__ = WeakInstMeta
     __inst_caching__ = True
 
     __slots__ = ('_base', '_licenses', '_groups', 'license_groups_path', 'licenses_dir')
@@ -199,15 +198,15 @@ class Licenses(object):
             logger.error("failed parsing license_groups: %s", pe)
             return mappings.ImmutableDict()
         self._expand_groups(d)
-        return mappings.ImmutableDict((k, tuple(v)) for (k, v) in d.iteritems())
+        return mappings.ImmutableDict((k, tuple(v)) for (k, v) in d.items())
 
     def _expand_groups(self, groups):
         keep_going = True
-        for k, v in groups.iteritems():
+        for k, v in groups.items():
             groups[k] = v.split()
         while keep_going:
             keep_going = False
-            for k, v in groups.iteritems():
+            for k, v in groups.items():
                 if not any(x[0] == '@' for x in v):
                     continue
                 keep_going = True
@@ -265,7 +264,7 @@ class OverlayedLicenses(Licenses):
     def groups(self):
         d = {}
         for li in self._license_instances:
-            for k, v in li.groups.iteritems():
+            for k, v in li.groups.items():
                 if k in d:
                     d[k] += v
                 else:
@@ -274,7 +273,7 @@ class OverlayedLicenses(Licenses):
 
     @klass.jit_attr_none
     def licenses(self):
-        return frozenset(chain(*map(iter, self._license_instances)))
+        return frozenset(chain.from_iterable(self._license_instances))
 
     def __getitem__(self, license):
         for li in self._license_instances:
@@ -342,12 +341,12 @@ class BundledProfiles(object):
                 raise
             logger.debug("No profile descriptions found at %r", fp)
         return mappings.ImmutableDict(
-            (k, tuple(sorted(v))) for k, v in d.iteritems())
+            (k, tuple(sorted(v))) for k, v in d.items())
 
     def arches(self, status=None):
         """All arches with profiles defined in the repo."""
         arches = []
-        for arch, profiles in self.arch_profiles.iteritems():
+        for arch, profiles in self.arch_profiles.items():
             for _profile_path, profile_status in profiles:
                 if status is None or profile_status == status:
                     arches.append(arch)
@@ -360,7 +359,7 @@ class BundledProfiles(object):
                 if os.path.exists(pjoin(root, 'deprecated')):
                     yield root[len(self.profile_base) + 1:]
         else:
-            for profile_path, profile_status in chain.from_iterable(self.arch_profiles.itervalues()):
+            for profile_path, profile_status in chain.from_iterable(self.arch_profiles.values()):
                 if status is None or status == profile_status:
                     yield profile_path
 
@@ -369,7 +368,7 @@ class BundledProfiles(object):
         return profiles.OnDiskProfile(self.profile_base, node)
 
 
-class RepoConfig(syncable.tree):
+class RepoConfig(syncable.tree, metaclass=WeakInstMeta):
 
     layout_offset = "metadata/layout.conf"
 
@@ -379,8 +378,6 @@ class RepoConfig(syncable.tree):
     supported_cache_formats = ('pms', 'md5-dict')
 
     klass.inject_immutable_instance(locals())
-
-    __metaclass__ = WeakInstMeta
     __inst_caching__ = True
 
     pkgcore_config_type = ConfigHint(

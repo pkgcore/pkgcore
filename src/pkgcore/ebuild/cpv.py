@@ -7,8 +7,6 @@
 
 __all__ = ("CPV", "versioned_CPV", "unversioned_CPV")
 
-from itertools import izip
-
 from snakeoil.compatibility import cmp
 from snakeoil.demandload import demandload, demand_compile_regexp
 from snakeoil.klass import inject_richcmp_methods_from_cmp
@@ -97,14 +95,14 @@ class _native_CPV(object):
                     % (cpvstr,))
         elif l == 3:
             for x in a:
-                if not isinstance(x, basestring):
+                if not isinstance(x, str):
                     raise TypeError("all args must be strings, got %r" % (a,))
             cpvstr = "%s/%s-%s" % a
             versioned = True
         else:
             raise TypeError("CPV takes 1 arg (cpvstr), or 3 (cat, pkg, ver):"
                 " got %r" % (a,))
-        if not isinstance(cpvstr, basestring):
+        if not isinstance(cpvstr, str):
             raise TypeError(self.cpvstr)
 
         try:
@@ -222,7 +220,7 @@ def native_ver_cmp(ver1, rev1, ver2, rev2):
         ver_parts2_len = len(ver_parts2)
 
         # Iterate through the components
-        for v1, v2 in izip(ver_parts1, ver_parts2):
+        for v1, v2 in zip(ver_parts1, ver_parts2):
 
             # If the string components are equal, the numerical
             # components will be equal too.
@@ -264,7 +262,7 @@ def native_ver_cmp(ver1, rev1, ver2, rev2):
     parts2_len = len(parts2)
 
     # Iterate through the suffixes
-    for x in xrange(max(parts1_len, parts2_len)):
+    for x in range(max(parts1_len, parts2_len)):
 
         # If we're at the end of one of our lists, we need to use
         # the next suffix from the other list to decide who wins.

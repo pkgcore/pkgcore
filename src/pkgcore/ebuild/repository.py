@@ -247,13 +247,10 @@ def tree(config, repo_config, cache=(), eclass_override=None, default_mirrors=No
 
     try:
         masters = tuple(config.objects['repo'][r] for r in repo_config.masters)
-    except RuntimeError as e:
-        # TODO: migrate to RecursionError when going >=py3.5
-        if e.message.startswith('maximum recursion depth exceeded'):
-            raise errors.InitializationError(
-                "'%s' repo has cyclic masters: %s" % (
-                    repo_config.repo_id, ', '.join(repo_config.masters))) from e
-        raise
+    except RecursionError:
+        raise errors.InitializationError(
+            "'%s' repo has cyclic masters: %s" % (
+                repo_config.repo_id, ', '.join(repo_config.masters)))
 
     return _UnconfiguredTree(
         repo_config.location, eclass_override, masters=masters, cache=cache,

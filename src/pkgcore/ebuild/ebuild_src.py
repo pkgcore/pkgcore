@@ -186,6 +186,13 @@ def rewrite_restrict(restrict):
         return restrict[2:]
     return restrict
 
+def get_cbuild_depends(self):
+    if "BDEPEND" in self.eapi.metadata_keys:
+        k = "BDEPEND"
+    else:
+        k = "DEPEND"
+    return generate_depset(atom, k, False, self)
+
 
 class base(metadata.package):
 
@@ -199,10 +206,12 @@ class base(metadata.package):
     _config_wrappables = {
         x: klass.alias_method("evaluate_depset")
         for x in ("depends", "rdepends", "post_rdepends", "fetchables",
-                  "license", "src_uri", "restrict", "required_use")
+                  "license", "src_uri", "restrict", "required_use",
+                  "cbuild_depends")
     }
 
     _get_attr = dict(metadata.package._get_attr)
+    _get_attr["cbuild_depends"] = get_cbuild_depends
     _get_attr["depends"] = partial(generate_depset, atom, "DEPEND", False)
     _get_attr["rdepends"] = partial(generate_depset, atom, "RDEPEND", False)
     _get_attr["post_rdepends"] = partial(generate_depset, atom, "PDEPEND", False)

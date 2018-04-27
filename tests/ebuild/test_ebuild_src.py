@@ -183,17 +183,17 @@ class test_base(TestCase):
             ('~amd64', '~x86', '~amd64-fbsd'))
 
     def generic_check_depends(self, depset, attr, expected=None,
-                              data_name=None):
+                              data_name=None, eapi='0'):
         if expected is None:
             expected = depset
         if data_name is None:
             data_name = attr.rstrip('s').upper()
-        o = self.get_pkg({data_name:depset})
+        o = self.get_pkg({data_name:depset, 'EAPI':eapi})
         assert str(getattr(o, attr)) == expected
-        o = self.get_pkg({data_name:''})
+        o = self.get_pkg({data_name:'', 'EAPI':eapi})
         assert str(getattr(o, attr)) == ''
         self.assertRaises(errors.MetadataException, getattr,
-            self.get_pkg({data_name:'|| ( '}), attr)
+            self.get_pkg({data_name:'|| ( ', 'EAPI':eapi}), attr)
 
     for x in ('depends', 'rdepends'):
         locals()['test_%s' % x] = post_curry(generic_check_depends,
@@ -203,6 +203,13 @@ class test_base(TestCase):
     test_post_rdepends = post_curry(generic_check_depends,
         'dev-util/diffball x86? ( virtual/boo )',
         'post_rdepends', data_name='PDEPEND')
+    # BDEPEND in EAPI 7, fallback to DEPEND in EAPI 0
+    test_cbuild_depends = post_curry(generic_check_depends,
+        'dev-util/diffball x86? ( virtual/boo )',
+        'cbuild_depends', data_name='BDEPEND', eapi='7')
+    test_cbuild_depends = post_curry(generic_check_depends,
+        'dev-util/diffball x86? ( virtual/boo )',
+        'cbuild_depends', data_name='DEPEND', eapi='0')
 
     def test_fetchables(self):
         l = []

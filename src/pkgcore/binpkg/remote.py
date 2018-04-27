@@ -75,6 +75,7 @@ class PackagesCacheV0(cache.bulk):
         'repo': 'REPO'}
     # this maps from .attr to data items.
     _serialize_map = {
+        "CBUILD_DEPENDS": "BDEPEND",
         "DEPENDS": "DEPEND",
         "RDEPENDS": "RDEPEND",
         "POST_RDEPENDS": "POST_RDEPEND",
@@ -87,7 +88,7 @@ class PackagesCacheV0(cache.bulk):
         'BUILD_TIME', 'DEPEND', 'IUSE', 'KEYWORDS',
         'LICENSE', 'PATH', 'PDEPEND', 'PROPERTIES', 'RDEPEND',
         'USE', 'DEFINED_PHASES', 'CHOST', 'CBUILD', 'DESC', 'REPO',
-        'DESCRIPTION'),
+        'DESCRIPTION', 'BDEPEND'),
         '')
     _deserialized_defaults.update({'EAPI': '0', 'SLOT': '0'})
     _deserialized_defaults = ImmutableDict(_deserialized_defaults)

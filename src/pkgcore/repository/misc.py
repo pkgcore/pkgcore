@@ -16,10 +16,11 @@ class nodeps_repo(object):
 
     """
     repository wrapper that returns wrapped pkgs via
-    :obj:`MutatedPkg` that have their depends/rdepends/post_rdepends wiped
+    :obj:`MutatedPkg` that have their cbuild_depends/depends/rdepends/
+    post_rdepends wiped
     """
 
-    default_depends = default_rdepends = default_post_rdepends = DepSet()
+    default_cbuild_depends = default_depends = default_rdepends = default_post_rdepends = DepSet()
 
     def __init__(self, repo):
         """
@@ -29,7 +30,8 @@ class nodeps_repo(object):
 
     def itermatch(self, *a, **kwds):
         return (MutatedPkg(
-            x, overrides={"depends": self.default_depends,
+            x, overrides={"cbuild_depends": self.default_cbuild_depends,
+                          "depends": self.default_depends,
                           "rdepends": self.default_rdepends,
                           "post_rdepends": self.default_post_rdepends}
             )

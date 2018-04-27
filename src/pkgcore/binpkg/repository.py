@@ -111,6 +111,7 @@ class StackedXpakDict(DictMixin):
     __slots__ = ("_xpak", "_parent", "_pkg", "contents", "_wipes", "_chf_obj")
 
     _metadata_rewrites = {
+        "cbuild_depends": "BDEPEND",
         "depends": "DEPEND",
         "rdepends": "RDEPEND",
         "post_rdepends": "PDEPEND",

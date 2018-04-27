@@ -46,7 +46,7 @@ class database(flat_hash.database):
         'DEPEND', 'RDEPEND', 'SLOT', 'SRC_URI',
         'RESTRICT', 'HOMEPAGE',  'LICENSE', 'DESCRIPTION',
         'KEYWORDS', '_eclasses_', 'IUSE', 'REQUIRED_USE',
-        'PDEPEND', 'EAPI', 'PROPERTIES',
+        'PDEPEND', 'BDEPEND', 'EAPI', 'PROPERTIES',
         'DEFINED_PHASES',
     )
 

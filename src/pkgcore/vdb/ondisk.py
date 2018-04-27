@@ -144,7 +144,8 @@ class tree(prototype.tree):
     _metadata_rewrites = {
         "depends": "DEPEND", "rdepends": "RDEPEND", "post_rdepends": "PDEPEND",
         "use": "USE", "eapi": "EAPI", "CONTENTS": "contents",
-        "source_repository": "repository", "fullslot": "SLOT"
+        "source_repository": "repository", "fullslot": "SLOT",
+        "cbuild_depends": "BDEPEND",
     }
 
     def _get_metadata(self, pkg):

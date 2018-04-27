@@ -280,7 +280,7 @@ common_tracked_attributes = (
     "cflags", "cbuild", "chost", "ctarget", "cxxflags", "defined_phases",
     "depends", "description", "eapi", "distfiles", "fullslot", "homepage", "inherited",
     "iuse", "keywords", "ldflags", "license", "post_rdepends", "properties",
-    "rdepends", "restrict", "source_repository",
+    "rdepends", "restrict", "source_repository", "cbuild_depends",
 )
 
 common_archive_suffixes = (
@@ -448,7 +448,7 @@ eapi7 = EAPI.register(
     parent=eapi6,
     phases=eapi6.phases,
     default_phases=eapi6.default_phases,
-    metadata_keys=eapi6.metadata_keys,
+    metadata_keys=eapi6.metadata_keys | frozenset(["BDEPEND"]),
     mandatory_keys=eapi6.mandatory_keys,
     tracked_attributes=eapi6.tracked_attributes,
     archive_suffixes=eapi6.archive_suffixes,

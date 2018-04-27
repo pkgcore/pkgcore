@@ -11,7 +11,7 @@ class choice_point(object):
 
     __slots__ = (
         "__weakref__", "atom", "matches", "matches_cur", "solution_filters",
-        "_prdeps", "_rdeps", "_deps")
+        "_prdeps", "_rdeps", "_deps", "_bdeps")
 
     def __init__(self, a, matches):
         self.atom = a
@@ -19,6 +19,7 @@ class choice_point(object):
         self.matches_cur = None
         self.solution_filters = set()
         # match solutions, remaining
+        self._bdeps = None
         self._deps = None
         self._rdeps = None
         self._prdeps = None
@@ -29,12 +30,14 @@ class choice_point(object):
 
         :return: A tuple consisting of the number of possible choices,
             current matches' repo, current package match, all possible
-            matches, build deps, runtime deps, and post merge deps.
+            matches, cbuild build deps, chost build deps, runtime deps,
+            and post merge deps.
         """
         m = self.matches_cur
         return (len(self.solution_filters),
             m.repo, m,
             self.matches,
+            self._bdeps,
             self._deps,
             self._rdeps,
             self._prdeps)
@@ -85,7 +88,7 @@ class choice_point(object):
                 if not self._internal_force_next():
                     return True
 
-            for depset_name in ("_deps", "_rdeps", "_prdeps"):
+            for depset_name in ("_bdeps", "_deps", "_rdeps", "_prdeps"):
                 depset = getattr(self, depset_name)
                 reqs = list(self._filter_choices(depset, filterset))
                 if len(reqs) != len(depset):
@@ -96,10 +99,11 @@ class choice_point(object):
 
     def _reset_iters(self):
         """
-        Reset depends, rdepends, and post_rdepends properties
+        Reset cbuild_depends, depends, rdepends, and post_rdepends properties
         to current matches' related attributes.
         """
         cur = self.matches_cur
+        self._bdeps = cur.depends.cnf_solutions()
         self._deps = cur.depends.cnf_solutions()
         self._rdeps = cur.rdepends.cnf_solutions()
         self._prdeps = cur.post_rdepends.cnf_solutions()
@@ -133,8 +137,15 @@ class choice_point(object):
         return self.reduce_atoms([])
 
     @property
+    def cbuild_depends(self):
+        """Build time dependencies for CBUILD."""
+        if not self:
+            raise IndexError("no more solutions remain")
+        return self._bdeps
+
+    @property
     def depends(self):
-        """Build time dependencies."""
+        """Build time dependencies for CHOST."""
         if not self:
             raise IndexError("no more solutions remain")
         return self._deps

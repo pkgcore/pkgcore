@@ -36,6 +36,7 @@ def discern_loc(base, pkg, extension='.tbz2'):
 
 
 _metadata_rewrites = {
+    "cbuild_depends": "BDEPEND",
     "depends": "DEPEND",
     "rdepends": "RDEPEND",
     "post_rdepends": "PDEPEND",

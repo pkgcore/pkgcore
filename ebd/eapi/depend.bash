@@ -89,7 +89,7 @@ elog() {
 	__elog_base LOG "$*"
 	local line
 	echo -e "$@" | while IFS= read -r line; do
-		echo " ${PKGCORE_RC_GOOD}*${PKGCORE_RC_NORMAL} ${line}"
+		echo " ${PKGCORE_RC_GOOD}*${PKGCORE_RC_NORMAL} ${line}" >&2
 	done
 	PKGCORE_RC_LAST_CMD="elog"
 	return 0
@@ -98,7 +98,7 @@ elog() {
 einfo() {
 	local line
 	echo -e "$@" | while IFS= read -r line; do
-		echo " ${PKGCORE_RC_GOOD}*${PKGCORE_RC_NORMAL} ${line}"
+		echo " ${PKGCORE_RC_GOOD}*${PKGCORE_RC_NORMAL} ${line}" >&2
 	done
 	PKGCORE_RC_LAST_CMD="einfo"
 	return 0
@@ -106,7 +106,7 @@ einfo() {
 
 einfon() {
 	__elog_base INFO "$*"
-	echo -ne " ${PKGCORE_RC_GOOD}*${PKGCORE_RC_NORMAL} $*"
+	echo -ne " ${PKGCORE_RC_GOOD}*${PKGCORE_RC_NORMAL} $*" >&2
 	PKGCORE_RC_LAST_CMD="einfon"
 	return 0
 }
@@ -154,7 +154,7 @@ eend() {
 		msg="${PKGCORE_RC_BRACKET}[ ${PKGCORE_RC_BAD}!!${PKGCORE_RC_BRACKET} ]${PKGCORE_RC_NORMAL}"
 	fi
 
-	echo -e "${PKGCORE_RC_ENDCOL} ${msg}"
+	echo -e "${PKGCORE_RC_ENDCOL} ${msg}" >&2
 
 	return ${retval}
 }

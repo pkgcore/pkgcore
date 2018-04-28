@@ -2,5 +2,6 @@
 # license GPL2/BSD 3
 
 source "${PKGCORE_EBD_PATH}"/eapi/6.lib
+source "${PKGCORE_EBD_PATH}"/eapi/7-ver-funcs.lib
 
 :

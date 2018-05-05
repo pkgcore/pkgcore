@@ -498,7 +498,7 @@ __dump_metadata_keys() {
 
 	# defined phases... fun one.
 	local phases
-	for key in pkg_{pretend,configure,info,{pre,post}{rm,inst},setup} \
+	for key in pkg_{pretend,config,info,nofetch,{pre,post}{rm,inst},setup} \
 			src_{unpack,prepare,configure,compile,test,install}; do
 		__is_function "${key}" && phases+=${phases:+ }${key}
 	done

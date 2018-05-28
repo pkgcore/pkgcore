@@ -50,6 +50,10 @@ eapi_optionals = mappings.ImmutableDict({
     # Controls whether MERGE vars are exported to ebuilds; see PMS.
     "has_merge_type": False,
 
+    # Controls whether package.mask and other files in profiles can
+    # be directories; see PMS.
+    "has_profile_data_directories": False,
+
     # Controls whether REQUIRED_USE is supported, enforcing constraints on
     # allowed use configuration states.
     "has_required_use": False,
@@ -452,6 +456,7 @@ eapi7 = EAPI.register(
     tracked_attributes=eapi6.tracked_attributes,
     archive_suffixes=eapi6.archive_suffixes,
     optionals=_combine_dicts(eapi6.options, dict(
+        has_profile_data_directories=True,
         is_supported=False,
     )),
     ebd_env_options=eapi6.ebd_env_options,

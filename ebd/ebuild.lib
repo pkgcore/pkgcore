@@ -273,8 +273,8 @@ __load_ebuild() {
 	SANDBOX_ON=1
 	export S=${WORKDIR}/${P}
 
-	unset -v IUSE   REQUIRED_USE   DEPEND   RDEPEND   PDEPEND
-	local  E_IUSE E_REQUIRED_USE E_DEPEND E_RDEPEND E_PDEPEND
+	unset -v IUSE   REQUIRED_USE   DEPEND   RDEPEND   PDEPEND   BDEPEND
+	local  E_IUSE E_REQUIRED_USE E_DEPEND E_RDEPEND E_PDEPEND E_BDEPEND
 
 	if [[ ! -f ${EBUILD} ]]; then
 		echo "bailing, ebuild not found at '${EBUILD}'"
@@ -310,6 +310,7 @@ __load_ebuild() {
 	DEPEND+=${DEPEND:+ }${E_DEPEND}
 	RDEPEND+=${RDEPEND:+ }${E_RDEPEND}
 	PDEPEND+=${PDEPEND:+ }${E_PDEPEND}
+	BDEPEND+=${BDEPEND:+ }${E_BDEPEND}
 }
 
 # short version. think these should be sourced via at the daemon's choice, rather then defacto.
@@ -481,7 +482,7 @@ __dump_metadata_keys() {
 	# and directly screw w/ it for speed reasons- about 5% speedup in metadata regen.
 	set -f
 	local key
-	for key in EAPI DEPEND RDEPEND SLOT SRC_URI RESTRICT HOMEPAGE LICENSE \
+	for key in EAPI BDEPEND DEPEND RDEPEND SLOT SRC_URI RESTRICT HOMEPAGE LICENSE \
 			DESCRIPTION KEYWORDS INHERITED IUSE PDEPEND PROVIDE PROPERTIES REQUIRED_USE; do
 		# deref the val, if it's not empty/unset, then spit a key command to EBD
 		# after using echo to normalize whitespace (specifically removal of newlines)

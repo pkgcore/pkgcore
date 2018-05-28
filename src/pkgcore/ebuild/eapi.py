@@ -50,6 +50,10 @@ eapi_optionals = mappings.ImmutableDict({
     # Controls whether MERGE vars are exported to ebuilds; see PMS.
     "has_merge_type": False,
 
+    # Controls whether package.mask and other files in profiles can
+    # be directories; see PMS.
+    "has_profile_data_directories": False,
+
     # Controls whether REQUIRED_USE is supported, enforcing constraints on
     # allowed use configuration states.
     "has_required_use": False,
@@ -280,7 +284,7 @@ common_tracked_attributes = (
     "cflags", "cbuild", "chost", "ctarget", "cxxflags", "defined_phases",
     "depends", "description", "eapi", "distfiles", "fullslot", "homepage", "inherited",
     "iuse", "keywords", "ldflags", "license", "post_rdepends", "properties",
-    "rdepends", "restrict", "source_repository",
+    "rdepends", "restrict", "source_repository", "cbuild_depends",
 )
 
 common_archive_suffixes = (
@@ -441,4 +445,20 @@ eapi6 = EAPI.register(
         bash_compat='4.2',
     )),
     ebd_env_options=eapi5.ebd_env_options,
+)
+
+eapi7 = EAPI.register(
+    magic="7",
+    parent=eapi6,
+    phases=eapi6.phases,
+    default_phases=eapi6.default_phases,
+    metadata_keys=eapi6.metadata_keys | frozenset(["BDEPEND"]),
+    mandatory_keys=eapi6.mandatory_keys,
+    tracked_attributes=eapi6.tracked_attributes,
+    archive_suffixes=eapi6.archive_suffixes,
+    optionals=_combine_dicts(eapi6.options, dict(
+        has_profile_data_directories=True,
+        is_supported=False,
+    )),
+    ebd_env_options=eapi6.ebd_env_options,
 )

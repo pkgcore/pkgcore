@@ -164,6 +164,7 @@ __ebd_exec_main() {
 	unset -v x
 
 	source "${PKGCORE_EBD_PATH}"/eapi/depend.lib >&2 || die "failed sourcing eapi/depend.lib"
+	source "${PKGCORE_EBD_PATH}"/eapi/7-ver-funcs.lib >&2 || die "failed sourcing eapi/7-ver-funcs.lib"
 	__ebd_main_loop
 	exit 0
 }

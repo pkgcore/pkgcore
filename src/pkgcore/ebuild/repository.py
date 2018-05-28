@@ -557,7 +557,8 @@ class _UnconfiguredTree(prototype.tree):
         path = pjoin(self.base, 'profiles', 'package.mask')
         pos, neg = [], []
         try:
-            if self.config.profile_formats.intersection(['portage-1', 'portage-2']):
+            if (self.config.eapi.options['has_profile_data_directories'] or
+                    self.config.profile_formats.intersection(['portage-1', 'portage-2'])):
                 paths = sorted_scan(path)
             else:
                 paths = [path]
@@ -613,7 +614,8 @@ class _ConfiguredTree(configured.tree):
     config_wrappables = {
         x: klass.alias_method("evaluate_depset")
         for x in ("depends", "rdepends", "post_rdepends", "fetchables",
-                  "license", "src_uri", "restrict", "required_use")}
+                  "license", "src_uri", "restrict", "required_use",
+                  "cbuild_depends")}
 
     def __init__(self, raw_repo, domain, domain_settings, fetcher=None):
         """

@@ -428,10 +428,11 @@ class merge_plan(object):
                 if last_state == new_state:
                     raise AssertionError("no state change detected, "
                         "old %r != new %r\nchoices(%r)\ncurrent(%r)\ndepends(%r)\n"
-                        "rdepends(%r)\npost_rdepends(%r)" %
+                        "rdepends(%r)\npost_rdepends(%r)\ncbuild_depends(%r)" %
                         (last_state, new_state, tuple(choices.matches),
                             choices.current_pkg, choices.depends,
-                            choices.rdepends, choices.post_rdepends))
+                            choices.rdepends, choices.post_rdepends,
+                            choices.cbuild_depends))
                 last_state = new_state
             additions = []
 
@@ -440,6 +441,12 @@ class merge_plan(object):
             if not choices.current_pkg.built or self.process_built_depends:
                 new_additions, failures = self.process_dependencies_and_blocks(
                     stack, choices, 'depends', atom, depth)
+                if failures:
+                    continue
+                additions += new_additions
+
+                new_additions, failures = self.process_dependencies_and_blocks(
+                    stack, choices, 'cbuild_depends', atom, depth)
                 if failures:
                     continue
                 additions += new_additions
@@ -565,7 +572,7 @@ class merge_plan(object):
             if not any(f.mode == 'post_rdepends' for f in
                 islice(stack, stack.index(frame), stack.index(cur_frame))):
                 # exact same pkg.
-                if frame.mode == 'depends':
+                if frame.mode in ('cbuild_depends', 'depends'):
                     # ok, we *must* go vdb if not already.
                     if frame.current_pkg.repo.livefs:
                         if cur_frame.current_pkg.repo.livefs:

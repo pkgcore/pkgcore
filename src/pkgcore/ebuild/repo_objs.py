@@ -31,6 +31,7 @@ demandload(
     'snakeoil.sequences:iter_stable_unique',
     'snakeoil.strings:pluralism',
     'pkgcore.ebuild:atom,profiles,pkg_updates',
+    'pkgcore.ebuild.eapi:get_eapi',
     'pkgcore.log:logger',
     "pkgcore.restrictions:packages",
 )
@@ -590,3 +591,20 @@ class RepoConfig(syncable.tree, metaclass=WeakInstMeta):
         return BundledProfiles(self.profiles_base)
 
     arch_profiles = klass.alias_attr('profiles.arch_profiles')
+
+    @klass.jit_attr
+    def eapi(self):
+        try:
+            path = pjoin(self.profiles_base, 'eapi')
+            data = [x.strip() for x in iter_read_bash(path)]
+            data = filter(None, data)
+            if len(data) != 1:
+                raise ValueError("%s: multiple lines detected" % path)
+            eapi = get_eapi(data[0])
+            if not eapi.is_supported:
+                raise ValueError("%s: unsupported eapi: %s" % (path, data[0]))
+            return eapi
+        except EnvironmentError as e:
+            if e.errno != errno.ENOENT:
+                raise
+            return get_eapi('0')

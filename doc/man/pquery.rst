@@ -2,9 +2,10 @@
 pquery
 ======
 
-.. include:: pquery/main_synopsis.rst
-.. include:: pquery/main_description.rst
-.. include:: pquery/main_options.rst
+.. include:: pquery/_synopsis.rst
+.. include:: pquery/_description.rst
+.. include:: pquery/_options.rst
+.. include:: pquery/_subcommands.rst
 
 Usage
 =====

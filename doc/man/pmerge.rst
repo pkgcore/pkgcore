@@ -2,8 +2,8 @@
 pmerge
 ======
 
-.. include:: pmerge/main_synopsis.rst
-.. include:: pmerge/main_description.rst
+.. include:: pmerge/_synopsis.rst
+.. include:: pmerge/_description.rst
 
 Portage Compatibility
 =====================
@@ -24,7 +24,8 @@ options that portage provides so many of the more obscure ones are missing. In
 addition, pmerge defaults to a portage compatible output format that closely
 matches the default colors and output structure that portage uses.
 
-.. include:: pmerge/main_options.rst
+.. include:: pmerge/_options.rst
+.. include:: pmerge/_subcommands.rst
 
 Example Usage
 =============

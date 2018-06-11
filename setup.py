@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 
 import errno
+from distutils import log
+from distutils.errors import DistutilsExecError
+from distutils.util import byte_compile
 import glob
 import io
 from itertools import chain
@@ -8,12 +11,9 @@ import os
 import subprocess
 import sys
 
-from distutils import log
-from distutils.errors import DistutilsExecError
-from distutils.util import byte_compile
 from setuptools import setup
 
-import pkgdist
+from snakeoil.dist import distutils_extensions as pkgdist
 pkgdist_setup, pkgdist_cmds = pkgdist.setup()
 
 # These offsets control where we install the pkgcore config files and the EBD
@@ -33,7 +33,7 @@ class sdist(pkgdist.sdist):
 
         # generate function lists so they don't need to be created on install
         write_pkgcore_ebd_funclists(root='/', target='ebd')
-        shutil.copytree(os.path.join(pkgdist.TOPDIR, 'ebd', 'funcnames'),
+        shutil.copytree(os.path.join(pkgdist.REPODIR, 'ebd', 'funcnames'),
                         os.path.join(base_dir, 'ebd', 'funcnames'))
 
         pkgdist.sdist.make_release_tree(self, base_dir, files)
@@ -56,7 +56,7 @@ class install(pkgdist.install):
 
             # Generate ebd function lists used for environment filtering if
             # they don't exist (release tarballs contain pre-generated files).
-            if not os.path.exists(os.path.join(pkgdist.TOPDIR, 'ebd', 'funcnames')):
+            if not os.path.exists(os.path.join(pkgdist.REPODIR, 'ebd', 'funcnames')):
                 write_pkgcore_ebd_funclists(
                     root=root, target=os.path.join(target, EBD_INSTALL_OFFSET),
                     scripts_dir=self.install_scripts, python_base=self.install_purelib)
@@ -65,7 +65,7 @@ class install(pkgdist.install):
 def write_pkgcore_ebd_funclists(root, target, scripts_dir=None, python_base='.'): 
     "Generate bash function lists from ebd implementation for env filtering."""
     if scripts_dir is None:
-        scripts_dir = os.path.join(pkgdist.TOPDIR, 'bin')
+        scripts_dir = os.path.join(pkgdist.REPODIR, 'bin')
     ebd_dir = target
     if root != '/':
         ebd_dir = os.path.join(root, target.lstrip('/'))
@@ -87,17 +87,17 @@ def write_pkgcore_ebd_funclists(root, target, scripts_dir=None, python_base='.')
     # generate global function list
     with open(os.path.join(ebd_dir, 'funcnames', 'global'), 'w') as f:
         if subprocess.call(
-                [os.path.join(pkgdist.TOPDIR, 'ebd', 'generate_global_func_list.bash')],
+                [os.path.join(pkgdist.REPODIR, 'ebd', 'generate_global_func_list.bash')],
                 cwd=ebd_dir, env=env, stdout=f):
             raise DistutilsExecError("generating global function list failed")
 
     # generate EAPI specific function lists
-    eapis = (x.split('.')[0] for x in os.listdir(os.path.join(pkgdist.TOPDIR, 'ebd', 'eapi'))
+    eapis = (x.split('.')[0] for x in os.listdir(os.path.join(pkgdist.REPODIR, 'ebd', 'eapi'))
              if x.split('.')[0].isdigit())
     for eapi in sorted(eapis):
         with open(os.path.join(ebd_dir, 'funcnames', eapi), 'w') as f:
             if subprocess.call(
-                    [os.path.join(pkgdist.TOPDIR, 'ebd', 'generate_eapi_func_list.bash'), eapi],
+                    [os.path.join(pkgdist.REPODIR, 'ebd', 'generate_eapi_func_list.bash'), eapi],
                     cwd=ebd_dir, env=env, stdout=f):
                 raise DistutilsExecError(
                     "generating EAPI %s function list failed" % eapi)

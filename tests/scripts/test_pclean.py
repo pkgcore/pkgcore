@@ -2,7 +2,7 @@
 # License: BSD/GPL2
 
 from pkgcore.scripts import pclean
-from pkgcore.test.scripts.helpers import ArgParseMixin
+from tests.scripts.helpers import ArgParseMixin
 from snakeoil.test import TestCase
 
 

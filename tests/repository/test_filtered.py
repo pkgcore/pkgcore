@@ -5,7 +5,7 @@ from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.cpv import versioned_CPV
 from pkgcore.repository import filtered
 from pkgcore.restrictions import packages, values
-from pkgcore.test.repository.test_prototype import SimpleTree
+from pkgcore.repository.util import SimpleTree
 from snakeoil.test import TestCase
 
 

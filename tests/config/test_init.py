@@ -22,7 +22,7 @@ class ConfigLoadingTest(TestCase):
         self.user_config = mk_named_tempfile()
         self.user_config.write(
             '[foo]\n'
-            'class = pkgcore.test.config.test_init.passthrough\n'
+            'class = tests.config.test_init.passthrough\n'
             )
         self.user_config.flush()
         self.system_config = mk_named_tempfile()

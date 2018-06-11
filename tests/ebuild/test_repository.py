@@ -64,11 +64,11 @@ class UnconfiguredTreeTest(TempDirMixin):
             sorted(mirrors['spork']))
         with open(pjoin(self.pdir, 'thirdpartymirrors'), 'w') as f:
             f.write("foon  dar\n")
-        self.assertEqual(self.mk_tree(self.dir).mirrors.keys(), ['foon'])
+        self.assertEqual(list(self.mk_tree(self.dir).mirrors.keys()), ['foon'])
 
     def test_repo_id(self):
         dir1 = pjoin(self.dir, '1')
-        os.mkdir(dir1, 0755)
+        os.mkdir(dir1, 0o755)
         repo = self.mk_tree(dir1)
         self.assertEqual(repo.repo_id, '<unlabeled repo %s>' % (dir1,))
         dir2 = pjoin(self.dir, '2')
@@ -259,9 +259,9 @@ class SlavedTreeTest(UnconfiguredTreeTest):
         with open(pjoin(self.slave_pdir, 'categories'), 'w') as f:
             f.write('\n'.join(slave))
         for cat in master:
-            os.mkdir(pjoin(self.dir_master, cat), 0755)
+            os.mkdir(pjoin(self.dir_master, cat), 0o755)
         for cat in slave:
-            os.mkdir(pjoin(self.dir_slave, cat), 0755)
+            os.mkdir(pjoin(self.dir_slave, cat), 0o755)
         return self.mk_tree(self.dir)
 
     def test_categories(self):

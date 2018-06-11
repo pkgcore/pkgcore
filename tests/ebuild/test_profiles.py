@@ -45,7 +45,7 @@ class profile_mixin(TempDirMixin):
             path = pjoin(self.dir, name)
             ensure_dirs(path)
             parent = vals.pop("parent", None)
-            for fname, data in vals.iteritems():
+            for fname, data in vals.items():
                 with open(pjoin(path, fname), "w") as f:
                     f.write(data)
 
@@ -56,7 +56,7 @@ class profile_mixin(TempDirMixin):
                 with open(pjoin(path, "parent"), "w") as f:
                     f.write("../%s" % (parent,))
         if kwds:
-            for key, val in kwds.iteritems():
+            for key, val in kwds.items():
                 with open(pjoin(self.dir, key), "w") as f:
                     f.write(val)
 
@@ -79,7 +79,7 @@ class profile_mixin(TempDirMixin):
         self.assertEqual(keys1, keys2, msg="keys differ: wanted %r got %r\nfrom %r" %
             (keys2, keys1, given_mapping))
 
-        for key, desired in desired_mapping.iteritems():
+        for key, desired in desired_mapping.items():
             got = given_mapping[key]
             # sanity check the desired data, occasionally screw this up
             self.assertNotInstance(desired, bare_kls, msg="key %r, bad test invocation; "
@@ -90,7 +90,7 @@ class profile_mixin(TempDirMixin):
                 "rather than tuple: %r" % (key, bare_kls.__name__, got))
             if not all(isinstance(x, bare_kls) for x in got):
                 self.fail("non %s instance: key %r, val %r; types %r" % (bare_kls.__name__,
-                    key, got, map(type, got)))
+                    key, got, list(map(type, got))))
             got2, desired2 = tuple(map(reformat_f, got)), tuple(map(reformat_f, desired))
             self.assertEqual(got2, desired2, msg="key %r isn't equal; wanted %r, got %r" % (key, desired2, got2))
 

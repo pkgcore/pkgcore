@@ -19,10 +19,10 @@ handlers = get_handlers()
 from snakeoil.mappings import LazyValDict
 def _callback(chf):
     return handlers[chf](data_source.data_source(data))
-chksums = LazyValDict(frozenset(handlers.iterkeys()), _callback)
+chksums = LazyValDict(frozenset(handlers.keys()), _callback)
 
 # get a non size based chksum
-known_chksum = [x for x in handlers.iterkeys() if x != "size"][0]
+known_chksum = [x for x in handlers.keys() if x != "size"][0]
 
 class TestFetcher(TempDirMixin, TestCase):
 
@@ -68,7 +68,7 @@ class TestFetcher(TempDirMixin, TestCase):
 
     def test_verify_all_chksums(self):
         self.write_data()
-        subhandlers = dict([handlers.items()[0]])
+        subhandlers = dict([list(handlers.items())[0]])
         self.assertRaises(errors.RequiredChksumDataMissing,
             self.fetcher._verify, self.fp, self.obj, handlers=subhandlers)
         self.fetcher._verify(self.fp, self.obj)
@@ -77,7 +77,7 @@ class TestFetcher(TempDirMixin, TestCase):
 
     def test_size_verification_first(self):
         self.write_data()
-        chksum_data = dict(chksums.iteritems())
+        chksum_data = dict(chksums.items())
         l = []
         def f(chf, fp):
             l.append(chf)

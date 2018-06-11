@@ -7,7 +7,7 @@ from snakeoil.test import TestCase
 
 from pkgcore.config import configurable, basics, errors
 from pkgcore.scripts import pconfig
-from pkgcore.test.scripts.helpers import ArgParseMixin
+from tests.scripts.helpers import ArgParseMixin
 
 
 @configurable({'reff': 'ref:spork'})
@@ -67,19 +67,19 @@ class DescribeClassTest(TestCase, ArgParseMixin):
              'Test thing.',
              '',
              'reff: ref:spork (required)'],
-            'pkgcore.test.scripts.test_pconfig.spork')
+            'tests.scripts.test_pconfig.spork')
         self.assertOut(
             ['typename is increment',
              'Noop.',
              'values not listed are handled as strings',
              '',
              'inc: list'],
-            'pkgcore.test.scripts.test_pconfig.increment')
+            'tests.scripts.test_pconfig.increment')
 
     def test_broken_type(self):
         self.assertErr(
             ['Not a valid type!'],
-            'pkgcore.test.scripts.test_pconfig.broken_type')
+            'tests.scripts.test_pconfig.broken_type')
 
 
 class ClassesTest(TestCase, ArgParseMixin):
@@ -88,25 +88,25 @@ class ClassesTest(TestCase, ArgParseMixin):
 
     def test_classes(self):
         sections = []
-        for i in xrange(10):
+        for i in range(10):
             @configurable(typename='spork')
             def noop():
                 """noop"""
             noop.__name__ = str(i)
             sections.append(basics.HardCodedConfigSection({'class': noop}))
         self.assertOut(
-            ['pkgcore.test.scripts.test_pconfig.foon'],
+            ['tests.scripts.test_pconfig.foon'],
             spork=basics.HardCodedConfigSection({'class': foon}))
         self.assertOut([
-                'pkgcore.test.scripts.test_pconfig.0',
-                'pkgcore.test.scripts.test_pconfig.1',
-                'pkgcore.test.scripts.test_pconfig.2',
-                'pkgcore.test.scripts.test_pconfig.3',
-                'pkgcore.test.scripts.test_pconfig.4',
-                'pkgcore.test.scripts.test_pconfig.5',
-                'pkgcore.test.scripts.test_pconfig.multi',
-                'pkgcore.test.scripts.test_pconfig.pseudospork',
-                'pkgcore.test.scripts.test_pconfig.spork',
+                'tests.scripts.test_pconfig.0',
+                'tests.scripts.test_pconfig.1',
+                'tests.scripts.test_pconfig.2',
+                'tests.scripts.test_pconfig.3',
+                'tests.scripts.test_pconfig.4',
+                'tests.scripts.test_pconfig.5',
+                'tests.scripts.test_pconfig.multi',
+                'tests.scripts.test_pconfig.pseudospork',
+                'tests.scripts.test_pconfig.spork',
                 ],
             bork=basics.HardCodedConfigSection({
                     'class': pseudospork, 'bork': True, 'inherit-only': True}),
@@ -132,7 +132,7 @@ class DumpTest(TestCase, ArgParseMixin):
         self.assertOut(
             ["'spork' {",
              '    # typename of this section: foon',
-             '    class pkgcore.test.scripts.test_pconfig.foon;',
+             '    class tests.scripts.test_pconfig.foon;',
              '}',
              ''],
             spork=basics.HardCodedConfigSection({'class': foon}))
@@ -141,7 +141,7 @@ class DumpTest(TestCase, ArgParseMixin):
         self.assertOut(
             ["'spork' {",
              '    # typename of this section: foon',
-             '    class pkgcore.test.scripts.test_pconfig.foon;',
+             '    class tests.scripts.test_pconfig.foon;',
              '    default true;',
              '}',
              ''],
@@ -159,38 +159,38 @@ class DumpTest(TestCase, ArgParseMixin):
         self.assertOut(
             ["'spork' {",
              '    # typename of this section: multi',
-             '    class pkgcore.test.scripts.test_pconfig.multi;',
+             '    class tests.scripts.test_pconfig.multi;',
              '    # type: bool',
              '    boolean True;',
              '    # type: callable',
-             '    callable pkgcore.test.scripts.test_pconfig.multi;',
+             '    callable tests.scripts.test_pconfig.multi;',
              '    # type: lazy_ref:spork',
              '    lazy_ref {',
              '        # typename of this section: spork',
-             '        class pkgcore.test.scripts.test_pconfig.pseudospork;',
+             '        class tests.scripts.test_pconfig.pseudospork;',
              '    };',
              '    # type: lazy_refs:spork',
              '    lazy_refs {',
              '        # typename of this section: spork',
-             '        class pkgcore.test.scripts.test_pconfig.pseudospork;',
+             '        class tests.scripts.test_pconfig.pseudospork;',
              '    } {',
              '        # typename of this section: spork',
-             '        class pkgcore.test.scripts.test_pconfig.pseudospork;',
+             '        class tests.scripts.test_pconfig.pseudospork;',
              '    };',
              '    # type: list',
              "    list 'a' 'b\\' \"c';",
              '    # type: ref:spork',
              '    ref {',
              '        # typename of this section: spork',
-             '        class pkgcore.test.scripts.test_pconfig.pseudospork;',
+             '        class tests.scripts.test_pconfig.pseudospork;',
              '    };',
              '    # type: refs:spork',
              '    refs {',
              '        # typename of this section: spork',
-             '        class pkgcore.test.scripts.test_pconfig.pseudospork;',
+             '        class tests.scripts.test_pconfig.pseudospork;',
              '    } {',
              '        # typename of this section: spork',
-             '        class pkgcore.test.scripts.test_pconfig.pseudospork;',
+             '        class tests.scripts.test_pconfig.pseudospork;',
              '    };',
              '    # type: str',
              '    string \'it is a "stringy" \\\'string\\\'\';',
@@ -215,7 +215,7 @@ class DumpTest(TestCase, ArgParseMixin):
         self.assertOut(
             ["'spork' {",
              '    # typename of this section: spork',
-             '    class pkgcore.test.scripts.test_pconfig.pseudospork;',
+             '    class tests.scripts.test_pconfig.pseudospork;',
              '}',
              '',
              ],
@@ -238,7 +238,7 @@ class UncollapsableTest(TestCase, ArgParseMixin):
             "",
             "section spork:",
             " Collapsing section named 'spork'",
-            " type pkgcore.test.scripts.test_pconfig.spork needs settings for 'reff'"
+            " type tests.scripts.test_pconfig.spork needs settings for 'reff'"
             "",
             "",
             ],
@@ -297,7 +297,7 @@ class DumpUncollapsedTest(TestCase, ArgParseMixin):
              'foon',
              '====',
              '# type: callable',
-             "'class' = pkgcore.test.scripts.test_pconfigspork",
+             "'class' = tests.scripts.test_pconfigspork",
              '# type: bool',
              "'inherit-only' = True",
              '# type: refs',
@@ -329,7 +329,7 @@ class DumpUncollapsedTest(TestCase, ArgParseMixin):
              'spork',
              '=====',
              '# type: callable',
-             "'class' = pkgcore.test.scripts.test_pconfigspork",
+             "'class' = tests.scripts.test_pconfigspork",
              '',
              ],
             spork=basics.HardCodedConfigSection({'class': spork}),

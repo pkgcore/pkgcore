@@ -41,7 +41,7 @@ class TestBase(TestCase):
         assertRebuildResults(False, 'eclass1', 200)
 
     def test_get_eclass_data(self):
-        keys = self.ec.eclasses.keys()
+        keys = list(self.ec.eclasses.keys())
         data = self.ec.get_eclass_data([])
         self.assertIdentical(data, self.ec.get_eclass_data([]))
         data = self.ec.get_eclass_data(keys)

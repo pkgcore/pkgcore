@@ -14,7 +14,7 @@ from pkgcore.ebuild import ebuild_src, digest, repo_objs
 from pkgcore.ebuild.eapi import get_eapi
 from pkgcore.package import errors
 from pkgcore.test import malleable_obj
-from pkgcore.test.ebuild.test_eclass_cache import FakeEclassCache
+from tests.ebuild.test_eclass_cache import FakeEclassCache
 
 
 class test_base(TestCase):
@@ -138,7 +138,7 @@ class test_base(TestCase):
 
     def test_restrict(self):
         o = self.get_pkg({'RESTRICT': 'strip fetch strip'})
-        self.assertEqual(*map(sorted, (o.restrict, ['strip', 'fetch', 'strip'])))
+        self.assertEqual(*list(map(sorted, (o.restrict, ['strip', 'fetch', 'strip']))))
         # regression test to ensure it onnly grabs 'no' prefix, instead of lstriping it
         self.assertEqual(list(self.get_pkg({'RESTRICT': 'onoasdf'}).restrict),
             ['onoasdf'])
@@ -212,7 +212,7 @@ class test_base(TestCase):
         self.assertEqual(l, [o])
 
         # basic tests;
-        for x in xrange(0,3):
+        for x in range(0, 3):
             f = self.get_pkg({'SRC_URI':'http://foo.com/monkey.tgz',
                 'EAPI':str(x)},
                  repo=parent).fetchables
@@ -321,11 +321,11 @@ class test_package(test_base):
         l = []
         def f(self, cpv):
             l.append(cpv)
-            return 100l
+            return 100
 
         parent = self.make_parent(_get_ebuild_mtime=f)
         o = self.get_pkg(repo=parent)
-        self.assertEqual(o._mtime_, 100l)
+        self.assertEqual(o._mtime_, 100)
         self.assertEqual(l, [o])
 
     def make_shared_pkg_data(self, manifest=None, metadata_xml=None):
@@ -356,13 +356,13 @@ class test_package_factory(TestCase):
     def mkinst(self, repo=None, cache=(), eclasses=None, mirrors={},
                default_mirrors={}, **overrides):
         o = self.kls(repo, cache, eclasses, mirrors, default_mirrors)
-        for k, v in overrides.iteritems():
+        for k, v in overrides.items():
             object.__setattr__(o, k, v)
         return o
 
     def test_mirrors(self):
         mirrors_d = {'gentoo':['http://bar/', 'http://far/']}
-        mirrors = {k: fetch.mirror(v, k) for k, v in mirrors_d.iteritems()}
+        mirrors = {k: fetch.mirror(v, k) for k, v in mirrors_d.items()}
         pf = self.mkinst(mirrors=mirrors_d)
         self.assertLen(pf._cache, 0)
         self.assertEqual(sorted(pf.mirrors), sorted(mirrors))
@@ -422,7 +422,7 @@ class test_package_factory(TestCase):
             {'marker':1, '_mtime_':100},
             reflective=False)
 
-        self.assertEqual(cache1.keys(), [pkg.cpvstr])
+        self.assertEqual(list(cache1.keys()), [pkg.cpvstr])
         self.assertFalse(cache2)
 
         # mtime was wiped, thus no longer is usable.
@@ -439,7 +439,7 @@ class test_package_factory(TestCase):
         })
         cache2.readonly = True
         self.assertRaises(explode_kls, pf._get_metadata, pkg)
-        self.assertEqual(cache2.keys(), [pkg.cpvstr])
+        self.assertEqual(list(cache2.keys()), [pkg.cpvstr])
         # keep in mind the backend assumes it gets its own copy of the data.
         # thus, modifying (popping _mtime_) _is_ valid
         self.assertEqual(cache2[pkg.cpvstr],

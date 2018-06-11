@@ -15,7 +15,7 @@ from pkgcore.operations.repo import install, uninstall, replace, operations
 from pkgcore.repository import util, syncable
 from pkgcore.scripts import pmaint
 from pkgcore.sync import base
-from pkgcore.test.scripts.helpers import ArgParseMixin
+from tests.scripts.helpers import ArgParseMixin
 
 
 
@@ -168,7 +168,7 @@ class fake_pkg(CPV):
         object.__setattr__(self, 'repo', repo)
 
 def derive_op(name, op, *a, **kw):
-    if isinstance(name, basestring):
+    if isinstance(name, str):
         name = [name]
     name = ['finalize_data'] + list(name)
     class new_op(op):
@@ -198,7 +198,7 @@ class TestCopy(TestCase, ArgParseMixin):
             domain=make_domain(vdb={'sys-apps':{'portage':['2.1', '2.3']}}),
             )
         self.assertEqual(ret, 0, "expected non zero exit code")
-        self.assertEqual(map(str, config.target_repo.installed),
+        self.assertEqual(list(map(str, config.target_repo.installed)),
             ['sys-apps/portage-2.1', 'sys-apps/portage-2.3'])
         self.assertEqual(config.target_repo.uninstalled,
             config.target_repo.replaced,
@@ -211,7 +211,7 @@ class TestCopy(TestCase, ArgParseMixin):
             domain=make_domain(binpkg=d, vdb=d),
             )
         self.assertEqual(ret, 0, "expected non zero exit code")
-        self.assertEqual([map(str, x) for x in config.target_repo.replaced],
+        self.assertEqual([list(map(str, x)) for x in config.target_repo.replaced],
             [['sys-apps/portage-2.1', 'sys-apps/portage-2.1']])
         self.assertEqual(config.target_repo.uninstalled,
             config.target_repo.installed,
@@ -224,7 +224,7 @@ class TestCopy(TestCase, ArgParseMixin):
             domain=make_domain(vdb={'sys-apps':{'portage':['2.1', '2.3']}}),
             )
         self.assertEqual(ret, 0, "expected non zero exit code")
-        self.assertEqual(map(str, config.target_repo.installed),
+        self.assertEqual(list(map(str, config.target_repo.installed)),
             ['sys-apps/portage-2.1', 'sys-apps/portage-2.3'])
         self.assertEqual(config.target_repo.uninstalled,
             config.target_repo.replaced,
@@ -238,7 +238,7 @@ class TestCopy(TestCase, ArgParseMixin):
                 vdb={'sys-apps':{'portage':['2.1', '2.3']}}),
             )
         self.assertEqual(ret, 0, "expected non zero exit code")
-        self.assertEqual(map(str, config.target_repo.installed),
+        self.assertEqual(list(map(str, config.target_repo.installed)),
             ['sys-apps/portage-2.3'])
         self.assertEqual(config.target_repo.uninstalled,
             config.target_repo.replaced,

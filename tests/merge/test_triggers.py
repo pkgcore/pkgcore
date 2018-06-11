@@ -2,7 +2,7 @@
 # License: GPL2/BSD
 
 from functools import partial
-from itertools import izip
+
 from math import floor, ceil
 import os
 import shutil
@@ -17,7 +17,7 @@ from pkgcore.fs import fs
 from pkgcore.merge import triggers, const
 from pkgcore.fs.contents import contentsSet
 from pkgcore.fs.livefs import gen_obj, scan
-from pkgcore.test.merge.util import fake_trigger, fake_engine, fake_reporter
+from tests.merge.util import fake_trigger, fake_engine, fake_reporter
 
 
 def _render_msg(func, msg, *args, **kwargs):
@@ -25,7 +25,7 @@ def _render_msg(func, msg, *args, **kwargs):
 
 def make_fake_reporter(**kwargs):
     kwargs = dict((key, partial(_render_msg, val))
-                  for key, val in kwargs.iteritems())
+                  for key, val in kwargs.items())
     return fake_reporter(**kwargs)
 
 class TestBase(TestCase):
@@ -207,7 +207,7 @@ class Test_mtime_watcher(mixins.TempDirMixin, TestCase):
         # and just severely crappy chance.
         # faster the io actions, easier it is to trigger.
         t = self.kls()
-        for x in xrange(100):
+        for x in range(100):
             now = ceil(time.time()) + 1
             os.utime(self.dir, (now + 100, now + 100))
             t.set_state([self.dir])
@@ -265,7 +265,7 @@ class Test_ldconfig(trigger_mixin, TestCase):
         self.assertPaths(self.trigger.read_ld_so_conf(self.dir),
             [pjoin(self.dir, x) for x in self.trigger.default_ld_path])
         o = gen_obj(pjoin(self.dir, 'etc'))
-        self.assertEqual(o.mode, 0755)
+        self.assertEqual(o.mode, 0o755)
         self.assertTrue(fs.isdir(o))
         self.assertTrue(os.path.exists(pjoin(self.dir, 'etc/ld.so.conf')))
 
@@ -395,8 +395,8 @@ END-INFO-DIR-ENTRY
         self.trigger._passed_in_args = []
         self.engine.phase = phase
         self.trigger(self.engine, {})
-        self.assertEqual(map(normpath, (x[1] for x in self.trigger._passed_in_args)),
-            map(normpath, expected_regen))
+        self.assertEqual(list(map(normpath, (x[1] for x in self.trigger._passed_in_args))),
+            list(map(normpath, expected_regen)))
         return l
 
     def test_trigger(self):
@@ -490,7 +490,7 @@ class single_attr_change_base(object):
             {'new_cset':new})
         new = sorted(new)
         self.assertEqual(len(orig), len(new))
-        for x, y in izip(orig, new):
+        for x, y in zip(orig, new):
             self.assertEqual(orig.__class__, new.__class__)
             for attr in x.__attrs__:
                 if self.attr == attr:
@@ -506,21 +506,21 @@ class single_attr_change_base(object):
 
     def test_trigger(self):
         self.assertContents()
-        self.assertContents([fs.fsFile("/foon", mode=0644, uid=2, gid=1,
+        self.assertContents([fs.fsFile("/foon", mode=0o644, uid=2, gid=1,
             strict=False)])
-        self.assertContents([fs.fsFile("/foon", mode=0646, uid=1, gid=1,
+        self.assertContents([fs.fsFile("/foon", mode=0o646, uid=1, gid=1,
             strict=False)])
-        self.assertContents([fs.fsFile("/foon", mode=04766, uid=1, gid=2,
+        self.assertContents([fs.fsFile("/foon", mode=0o4766, uid=1, gid=2,
             strict=False)])
-        self.assertContents([fs.fsFile("/blarn", mode=02700, uid=2, gid=2,
+        self.assertContents([fs.fsFile("/blarn", mode=0o2700, uid=2, gid=2,
             strict=False),
-            fs.fsDir("/dir", mode=0500, uid=2, gid=2, strict=False)])
-        self.assertContents([fs.fsFile("/blarn", mode=02776, uid=2, gid=2,
+            fs.fsDir("/dir", mode=0o500, uid=2, gid=2, strict=False)])
+        self.assertContents([fs.fsFile("/blarn", mode=0o2776, uid=2, gid=2,
             strict=False),
-            fs.fsDir("/dir", mode=02777, uid=1, gid=2, strict=False)])
-        self.assertContents([fs.fsFile("/blarn", mode=06772, uid=2, gid=2,
+            fs.fsDir("/dir", mode=0o2777, uid=1, gid=2, strict=False)])
+        self.assertContents([fs.fsFile("/blarn", mode=0o6772, uid=2, gid=2,
             strict=False),
-            fs.fsDir("/dir", mode=04774, uid=1, gid=1, strict=False)])
+            fs.fsDir("/dir", mode=0o4774, uid=1, gid=1, strict=False)])
 
 
 class Test_fix_uid_perms(single_attr_change_base, TestCase):
@@ -543,8 +543,8 @@ class Test_fix_set_bits(single_attr_change_base, TestCase):
 
     @staticmethod
     def good_val(val):
-        if val & 06000 and val & 0002:
-            return val & ~06002
+        if val & 0o6000 and val & 0o002:
+            return val & ~0o6002
         return val
 
 
@@ -565,7 +565,7 @@ class Test_detect_world_writable(single_attr_change_base, TestCase):
         self.assertEqual(self._trigger_override, None,
             msg="bug in test code; good_val should not be invoked when a "
                 "trigger override is in place.")
-        return val & ~0002
+        return val & ~0o002
 
     def test_lazyness(self):
         # ensure it doesn't even look if it won't make noise, and no reporter
@@ -588,17 +588,17 @@ class Test_detect_world_writable(single_attr_change_base, TestCase):
             self.kls(fix_perms=fix_perms).trigger(engine,
                 contentsSet(fs_objs))
 
-        run([fs.fsFile('/foon', mode=0770, strict=False)])
+        run([fs.fsFile('/foon', mode=0o770, strict=False)])
         self.assertFalse(warnings)
-        run([fs.fsFile('/foon', mode=0772, strict=False)])
+        run([fs.fsFile('/foon', mode=0o772, strict=False)])
         self.assertEqual(len(warnings), 1)
         self.assertIn('/foon', warnings[0])
 
         warnings[:] = []
 
-        run([fs.fsFile('/dar', mode=0776, strict=False),
-            fs.fsFile('/bar', mode=0776, strict=False),
-            fs.fsFile('/far', mode=0770, strict=False)])
+        run([fs.fsFile('/dar', mode=0o776, strict=False),
+            fs.fsFile('/bar', mode=0o776, strict=False),
+            fs.fsFile('/far', mode=0o770, strict=False)])
 
         self.assertEqual(len(warnings), 2)
         self.assertIn('/dar', ' '.join(warnings))

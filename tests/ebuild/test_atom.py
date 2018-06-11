@@ -2,9 +2,9 @@
 # License: GPL2/BSD
 
 from functools import partial
+from pickle import dumps, loads
 
 from snakeoil.compatibility import cmp
-from snakeoil.pickling import dumps, loads
 from snakeoil.test import mk_cpy_loadable_testcase
 
 from pkgcore import test
@@ -17,7 +17,7 @@ from pkgcore.test.misc import FakePkg, FakeRepo
 class Test_native_atom(test.TestRestriction):
 
     class kls(atom.atom):
-        locals().update(atom.native_atom_overrides.iteritems())
+        locals().update(atom.native_atom_overrides.items())
         __inst_caching__ = True
         __slots__ = ()
 
@@ -60,7 +60,7 @@ class Test_native_atom(test.TestRestriction):
             "!!dev-util/diffball", eapi=1)
         self.assertRaises(errors.MalformedAtom, self.kls,
             "!!!dev-util/diffball", eapi=2)
-        for x in xrange(0,2):
+        for x in range(0, 2):
             obj = self.kls("!dev-util/diffball", eapi=x)
             self.assertTrue(obj.blocks)
             self.assertTrue(obj.blocks_temp_ignorable)
@@ -393,7 +393,7 @@ class Test_native_atom(test.TestRestriction):
         self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/foon::")
         self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/foon::-gentoo-x86")
         self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/foon:::")
-        for x in xrange(0, 3):
+        for x in range(0, 3):
             self.assertRaises(errors.MalformedAtom, self.kls,
                 "dev-util/foon::gentoo-x86", eapi=x)
 

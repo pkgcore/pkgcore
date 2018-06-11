@@ -43,12 +43,12 @@ class TargetParsingTest(TestCase):
             pmerge.AmbiguousQuery,
             pmerge.parse_target, parse_match("foon"), repo, installed_repos)
         # test unicode conversion.
-        a = pmerge.parse_target(parse_match(u'=spork/foon-1'), repo, installed_repos)
+        a = pmerge.parse_target(parse_match('=spork/foon-1'), repo, installed_repos)
         self.assertEqual(len(a), 1)
         self.assertEqual(a[0].key, 'spork/foon')
         self.assertTrue(isinstance(a[0].key, str))
         # test globbing
-        a = pmerge.parse_target(parse_match(u'*/foon'), repo, installed_repos)
+        a = pmerge.parse_target(parse_match('*/foon'), repo, installed_repos)
         self.assertEqual(len(a), 2)
 
         # test pkg name collisions between real and virtual pkgs in a repo, but not installed

@@ -42,10 +42,10 @@ class base(object):
         mkobj = self.make_obj
         o = mkobj("/tmp/foo")
         self.assertEqual(o.location, "/tmp/foo")
-        self.assertEqual(mkobj(mtime=100l).mtime, 100l)
-        self.assertEqual(mkobj(mode=0660).mode, 0660)
+        self.assertEqual(mkobj(mtime=100).mtime, 100)
+        self.assertEqual(mkobj(mode=0o660).mode, 0o660)
         # ensure the highband stays in..
-        self.assertEqual(mkobj(mode=042660).mode, 042660)
+        self.assertEqual(mkobj(mode=0o42660).mode, 0o42660)
         self.assertEqual(mkobj(uid=0).uid, 0)
         self.assertEqual(mkobj(gid=0).gid, 0)
 
@@ -115,13 +115,13 @@ class Test_fsFile(TestCase, base):
         o = mkobj("/bin/this-file-should-not-exist-nor-be-read",
             data=data_source(raw_data))
         self.assertEqual(o.data.text_fileobj().read(), raw_data)
-        keys = o.chksums.keys()
+        keys = list(o.chksums.keys())
         self.assertEqual([o.chksums[x] for x in keys],
             list(get_chksums(data_source(raw_data), *keys)))
 
-        chksums = dict(o.chksums.iteritems())
-        self.assertEqual(sorted(mkobj(chksums=chksums).chksums.iteritems()),
-            sorted(chksums.iteritems()))
+        chksums = dict(iter(o.chksums.items()))
+        self.assertEqual(sorted(mkobj(chksums=chksums).chksums.items()),
+            sorted(chksums.items()))
 
     def test_chksum_regen(self):
         data_source = object()

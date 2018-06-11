@@ -34,10 +34,10 @@ class TestMultiplex(TestCase):
             self.d2.setdefault(cat, {}).setdefault(pkg, []).extend(ver)
 
         self.d1 = OrderedDict(
-            (k, OrderedDict(self.d1[k].iteritems()))
+            (k, OrderedDict(self.d1[k].items()))
             for k in sorted(self.d1, reverse=True))
         self.d2 = OrderedDict(
-            (k, OrderedDict(self.d2[k].iteritems()))
+            (k, OrderedDict(self.d2[k].items()))
             for k in sorted(self.d2, reverse=True))
         self.tree1 = SimpleTree(self.d1)
         self.tree2 = SimpleTree(self.d2)

@@ -49,12 +49,12 @@ class TestBasePkg(mixin, TestCase):
         class Class(base.base):
             __slotting_intentionally_disabled__ = True
             _get_attr = {str(x): partial((lambda a, s: a), x)
-                         for x in xrange(10)}
+                         for x in range(10)}
             _get_attr["a"] = lambda s:"foo"
             __getattr__ = base.dynamic_getattr_dict
 
         o = Class()
-        for x in xrange(10):
+        for x in range(10):
             self.assertEqual(getattr(o, str(x)), x)
         self.assertEqual(o.a, "foo")
         self.assertEqual(self.mk_inst().built, False)

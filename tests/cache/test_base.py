@@ -33,7 +33,7 @@ class DictCache(base):
         # Protected dict's come back by default, but are a minor
         # pita to deal with for this code- thus we convert back.
         # Additionally, we drop any chksum info in the process.
-        d = dict(base.__getitem__(self, cpv).iteritems())
+        d = dict(base.__getitem__(self, cpv).items())
         d.pop('_%s_' % self.chf_type, None)
         return d
 
@@ -50,8 +50,8 @@ class DictCache(base):
     def __contains__(self, cpv):
         return cpv in self._data
 
-    def iterkeys(self):
-        return self._data.iterkeys()
+    def keys(self):
+        return iter(self._data.keys())
 
 
 class DictCacheBulk(bulk):
@@ -80,6 +80,9 @@ class DictCacheBulk(bulk):
         data['_chf_'] = _chf_obj
         return bulk.__setitem__(self, cpv, data)
 
+    def keys(self):
+        return iter(self._data.keys())
+
 
 class BaseTest(TestCase):
 
@@ -106,8 +109,8 @@ class BaseTest(TestCase):
         del self.cache['foon']
         self.assertRaises(KeyError, operator.getitem, self.cache, 'foon')
 
-        self.assertTrue(self.cache.has_key('spork'))
-        self.assertFalse(self.cache.has_key('foon'))
+        self.assertTrue('spork' in self.cache)
+        self.assertFalse('foon' in self.cache)
 
         self.cache['empty'] = {'foo': ''}
         self.assertEqual({}, self.cache['empty'])
@@ -126,7 +129,7 @@ class BaseTest(TestCase):
                 'spork\t1\tfoon\t2',
                 'foon\t2\tspork\t1'])
         self.assertEqual(
-            sorted([('foon', (('mtime', 2L),)), ('spork', (('mtime', 1L),))]),
+            sorted([('foon', (('mtime', 2),)), ('spork', (('mtime', 1),))]),
             sorted(self.cache['spork']['_eclasses_']))
 
     def test_readonly(self):
@@ -192,4 +195,4 @@ class TestBulk(BaseTest):
         db = self.get_db()
         # write a key outside of known keys
         db["dar"] = {"foo2":"dar"}
-        self.assertEqual(db["dar"].items(), [])
+        self.assertEqual(list(db["dar"].items()), [])

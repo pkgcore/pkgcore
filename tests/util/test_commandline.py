@@ -11,7 +11,7 @@ import sys
 import unittest
 
 from pkgcore.config import central, errors
-from pkgcore.test.scripts.helpers import ArgParseMixin
+from tests.scripts.helpers import ArgParseMixin
 from pkgcore.util import commandline
 from snakeoil.test import TestCase
 
@@ -62,15 +62,15 @@ class ModifyConfigTest(TestCase, ArgParseMixin):
     def test_modify_config(self):
         namespace = self.parse(
             '--empty-config', '--new-config',
-            'foo', 'class', 'pkgcore.test.util.test_commandline.sect',
+            'foo', 'class', 'tests.util.test_commandline.sect',
             '--trigger')
         self.assertTrue(namespace.config.collapse_named_section('foo'))
 
         namespace = self.parse(
             '--empty-config', '--new-config',
-            'foo', 'class', 'pkgcore.test.util.test_commandline.missing',
+            'foo', 'class', 'tests.util.test_commandline.missing',
             '--add-config', 'foo', 'class',
-            'pkgcore.test.util.test_commandline.sect',
+            'tests.util.test_commandline.sect',
             '--trigger')
         self.assertTrue(namespace.config.collapse_named_section('foo'))
 

@@ -110,7 +110,7 @@ class native_DepSetParsingTest(base):
             s, v = s
             v2 = []
             for x in v:
-                if isinstance(x, basestring):
+                if isinstance(x, str):
                     v2.append(x)
                 else:
                     v2.append(x[-1] + '?')
@@ -235,10 +235,10 @@ class native_DepSetConditionalsInspectionTest(base):
 
     def check_conds(self, s, r, msg=None, element_kls=str, **kwds):
         nc = {k: self.flatten_cond(v) for k, v in
-              self.gen_depset(s, element_kls=element_kls, **kwds).node_conds.iteritems()}
-        d = {element_kls(k): v for k, v in r.iteritems()}
-        for k, v in d.iteritems():
-            if isinstance(v, basestring):
+              self.gen_depset(s, element_kls=element_kls, **kwds).node_conds.items()}
+        d = {element_kls(k): v for k, v in r.items()}
+        for k, v in d.items():
+            if isinstance(v, str):
                 d[k] = set([frozenset(v.split())])
             elif isinstance(v, (tuple, list)):
                 d[k] = set(map(frozenset, v))
@@ -279,7 +279,7 @@ class cpy_DepSetConditionalsInspectionTest(
 class native_DepSetEvaluateTest(base):
 
     def test_evaluation(self):
-        flag_set = list(sorted("x%i" % (x,) for x in xrange(2000)))
+        flag_set = list(sorted("x%i" % (x,) for x in range(2000)))
         for vals in (
             ("y", "x? ( y ) !x? ( z )", "x"),
             ("z", "x? ( y ) !x? ( z )"),

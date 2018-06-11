@@ -164,7 +164,7 @@ class cpy_TestStrExactMatch(native_TestStrExactMatch):
 
     def test_eq_isinstance_checks(self):
         # this seems insane, but it's the right alloc to trigger it
-        self.kls("", case_sensitive=False).__ne__(u"\uEFA3\uC2EF\uBE5B\u9D98\uFE2F\uB781\u27C7\u8592")
+        self.kls("", case_sensitive=False).__ne__("\uEFA3\uC2EF\uBE5B\u9D98\uFE2F\uB781\u27C7\u8592")
 
 
 class TestStrGlobMatch(TestRestriction):
@@ -241,7 +241,7 @@ class TestEqualityMatch(TestRestriction):
         for x, y, ret in (("asdf", "asdf", True), ("asdf", "fdsa", False),
             (1, 1, True), (1,2, False),
             (list(range(2)), list(range(2)), True),
-            (range(2), reversed(range(2)), False),
+            (list(range(2)), reversed(list(range(2))), False),
             (True, True, True),
             (True, False, False),
             (False, True, False)):
@@ -278,10 +278,10 @@ class TestContainmentMatch(TestRestriction):
 
     def test_match(self):
         for x, y, ret in (
-            (range(10), range(10), True),
-            (range(10), [], False),
-            (range(10), set(xrange(10)), True),
-            (set(xrange(10)), range(10), True)):
+            (list(range(10)), list(range(10)), True),
+            (list(range(10)), [], False),
+            (list(range(10)), set(range(10)), True),
+            (set(range(10)), list(range(10)), True)):
 
             for negated in (False, True):
                 self.assertMatches(self.kls(negate=negated,
@@ -292,10 +292,9 @@ class TestContainmentMatch(TestRestriction):
             # intentionally differing for the force_* args; slips in
             # an extra data set for testing.
             self.assertMatches(self.kls(all=True, negate=negated, *range(10)),
-                range(20), [range(10)]*3, negated=negated)
-            self.assertNotMatches(self.kls(all=True, negate=negated,
-                *range(10)),
-                range(5), [range(5)]*3, negated=negated)
+                list(range(20)), [list(range(10))]*3, negated=negated)
+            self.assertNotMatches(self.kls(all=True, negate=negated, *range(10)),
+                list(range(5)), [list(range(5))]*3, negated=negated)
 
         self.assertNotMatches(self.kls("asdf"), "fdsa", ["fdas"]*3)
         self.assertMatches(self.kls("asdf"), "asdf", ["asdf"]*3)
@@ -361,5 +360,5 @@ class AnyMatchTest(TestCase):
 
     def test_force(self):
         restrict = values.AnyMatch(values.AlwaysTrue)
-        self.assertTrue(restrict.force_True(None, None, range(2)))
-        self.assertFalse(restrict.force_False(None, None, range(2)))
+        self.assertTrue(restrict.force_True(None, None, list(range(2))))
+        self.assertFalse(restrict.force_False(None, None, list(range(2))))

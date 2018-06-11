@@ -1,7 +1,7 @@
 # Copyright: 2005 Marien Zwart <marienz@gentoo.org>
 # License: BSD/GPL2
 
-from StringIO import StringIO
+from io import StringIO
 import sys
 
 from pkgcore.config import cparser, central, errors
@@ -40,7 +40,7 @@ list.append = post bits
 true = yes
 false = no
 '''))
-        self.assertEqual(config.keys(), ['test'])
+        self.assertEqual(list(config.keys()), ['test'])
         section = config['test']
         for key, arg_type, value in [
             ('string', 'str', [None, 'hi I am a string', None]),

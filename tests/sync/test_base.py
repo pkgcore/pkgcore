@@ -5,7 +5,7 @@ import os
 import pwd
 
 from pkgcore.sync import base, svn
-from pkgcore.test.sync import make_bogus_syncer, make_valid_syncer
+from tests.sync.syncer import make_bogus_syncer, make_valid_syncer
 from snakeoil.test import TestCase, SkipTest
 
 valid = make_valid_syncer(base.ExternalSyncer)

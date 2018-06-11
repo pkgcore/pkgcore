@@ -54,8 +54,8 @@ glsa_template = \
 """
 
 ops = {'>':'gt', '<':'lt'}
-ops.update((k+'=', v[0] + 'e') for k, v in ops.items())
-ops.update(('~' + k, 'r' + v) for k, v in ops.items())
+ops.update((k+'=', v[0] + 'e') for k, v in list(ops.items()))
+ops.update(('~' + k, 'r' + v) for k, v in list(ops.items()))
 ops['='] = 'eq'
 def convert_range(text, tag):
     i = 0

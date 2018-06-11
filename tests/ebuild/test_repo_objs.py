@@ -24,7 +24,7 @@ class TestMetadataXml(TestCase):
                 "</maintainer><maintainer>".join(ms)
         if local_use:
             us = ['<use>']
-            for flag, desc in local_use.iteritems():
+            for flag, desc in local_use.items():
                 us.append('<flag name="%s">%s</flag>' % (flag, desc))
             us.append('</use>')
             us = '\n'.join(us)
@@ -49,11 +49,11 @@ class TestMetadataXml(TestCase):
         # test email/name integration.
         mx = self.get_metadata_xml(
             maintainers=(("funkymonkey@gmail.com",
-                          u"funky monkey \N{SNOWMAN}"),))
-        self.assertEqual((u"funky monkey \N{SNOWMAN} <funkymonkey@gmail.com>",),
-                         tuple(unicode(m) for m in mx.maintainers))
+                          "funky monkey \N{SNOWMAN}"),))
+        self.assertEqual(("funky monkey \N{SNOWMAN} <funkymonkey@gmail.com>",),
+                         tuple(str(m) for m in mx.maintainers))
         self.assertEqual("funkymonkey@gmail.com", mx.maintainers[0].email)
-        self.assertEqual(u"funky monkey \N{SNOWMAN}", mx.maintainers[0].name)
+        self.assertEqual("funky monkey \N{SNOWMAN}", mx.maintainers[0].name)
 
     def test_local_use(self):
         # empty...
@@ -67,7 +67,7 @@ class TestMetadataXml(TestCase):
         pkg_tag_re = re.compile(r'</?pkg>')
         local_use = dict(
                 (k, pkg_tag_re.sub('', v))
-                for k, v in local_use.iteritems())
+                for k, v in local_use.items())
         self.assertEqual(local_use, metadata_xml.local_use)
 
     def test_longdesc(self):

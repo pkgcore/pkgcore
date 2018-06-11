@@ -29,17 +29,17 @@ class TestContentsSet(TestCase):
 
     def __init__(self, *a, **kw):
         TestCase.__init__(self, *a, **kw)
-        self.files = map(self.mk_file, ["/etc/blah", "/etc/foo", "/etc/dar",
+        self.files = list(map(self.mk_file, ["/etc/blah", "/etc/foo", "/etc/dar",
              "/tmp/dar",
-             "/tmp/blah/foo/long/ass/file/name/but/not/that/bad/really"])
-        self.dirs = map(self.mk_dir, ["/tmp", "/blah", "/tmp/dar",
-            "/usr/", "/usr/bin"])
+             "/tmp/blah/foo/long/ass/file/name/but/not/that/bad/really"]))
+        self.dirs = list(map(self.mk_dir, ["/tmp", "/blah", "/tmp/dar",
+            "/usr/", "/usr/bin"]))
         self.links = [fs.fsLink(x, os.path.dirname(x), strict=False) for x in
             ["/tmp/foo", "/usr/X11R6/lib", "/nagga/noo"]]
-        self.devs = map(self.mk_dev,
-            [pjoin("dev", x) for x in ["sda1", "hda", "hda2", "disks/ide1"]])
-        self.fifos = map(self.mk_fifo,
-            [pjoin("tmp", y) for y in ("dar", "boo", "bah")])
+        self.devs = list(map(self.mk_dev,
+            [pjoin("dev", x) for x in ["sda1", "hda", "hda2", "disks/ide1"]]))
+        self.fifos = list(map(self.mk_fifo,
+            [pjoin("tmp", y) for y in ("dar", "boo", "bah")]))
         self.all = self.dirs + self.links + self.devs + self.fifos
 
     def test_init(self):
@@ -53,8 +53,8 @@ class TestContentsSet(TestCase):
 
     def test_add(self):
         cs = contents.contentsSet(self.files + self.dirs, mutable=True)
-        map(cs.add, self.links)
         for x in self.links:
+            cs.add(x)
             self.assertIn(x, cs)
         self.assertEqual(
             len(cs),
@@ -70,9 +70,11 @@ class TestContentsSet(TestCase):
         self.assertRaises(AttributeError,
             contents.contentsSet(mutable=False).remove, 1)
         cs = contents.contentsSet(self.all, mutable=True)
-        map(cs.remove, self.all)
+        for x in self.all:
+            cs.remove(x)
         cs = contents.contentsSet(self.all, mutable=True)
-        map(cs.remove, (x.location for x in self.all))
+        for location in (x.location for x in self.all):
+            cs.remove(location)
         self.assertEqual(len(cs), 0)
         self.assertRaises(KeyError, cs.remove, self.all[0])
 
@@ -104,7 +106,8 @@ class TestContentsSet(TestCase):
 
         s2 = set(getattr(cs, forced_name)())
         if obj_class is not None:
-            map(post_curry(self.assertTrue, obj_class), s2)
+            for x in s2:
+                post_curry(self.assertTrue, obj_class)(x)
         self.assertEqual(s, s2)
 
         if forced_name == "__iter__":
@@ -113,7 +116,8 @@ class TestContentsSet(TestCase):
         # inversion tests now.
         s3 = set(getattr(cs, forced_name)(invert=True))
         if obj_class is not None:
-            map(post_curry(self.assertFalse, obj_class), s3)
+            for x in s3:
+                post_curry(self.assertFalse, obj_class)(x)
 
         self.assertEqual(s.symmetric_difference(s2), s3)
 
@@ -190,7 +194,7 @@ class TestContentsSet(TestCase):
         check_set_op, "symmetric_difference_update", [])
 
     fstrings = ("/a", "/b", "/c", "/d")
-    f = map(mk_file, fstrings)
+    f = list(map(mk_file, fstrings))
 
     test_union1 = post_curry(check_set_op, "union", ["/tmp"])
     test_union2 = post_curry(check_set_op, "union", fstrings, [f[:2], f[2:]])
@@ -282,13 +286,13 @@ class TestContentsSet(TestCase):
             ['/dir1', '/dir1/a', '/dir1/dir4', '/dir2', '/dir2/dir3',
                 '/dir2/dir3/b'])
         obj = cs['/dir1']
-        self.assertEqual(obj.mode, 0775)
+        self.assertEqual(obj.mode, 0o775)
 
     def test_inode_map(self):
 
         def check_it(target):
-            d = {k: sorted(v) for k, v in cs.inode_map().iteritems()}
-            target = {k: sorted(v) for k, v in target.iteritems()}
+            d = {k: sorted(v) for k, v in cs.inode_map().items()}
+            target = {k: sorted(v) for k, v in target.items()}
             self.assertEqual(d, target)
 
         cs = contents.contentsSet()
@@ -315,8 +319,8 @@ class Test_offset_rewriting(TestCase):
     offset_insert = staticmethod(contents.offset_rewriter)
 
     def test_offset_rewriter(self):
-        f = ["/foon/%i" % x for x in xrange(10)]
-        f.extend("/foon/%i/blah" % x for x in xrange(5))
+        f = ["/foon/%i" % x for x in range(10)]
+        f.extend("/foon/%i/blah" % x for x in range(5))
         f = [fs.fsFile(x, strict=False) for x in f]
         self.assertEqual(sorted(x.location for x in f),
             sorted(x.location for x in self.offset_insert('/', f)))
@@ -325,8 +329,8 @@ class Test_offset_rewriting(TestCase):
             sorted(x.location for x in self.offset_insert('/usr', f)))
 
     def test_it(self):
-        f = ["/foon/%i" % x for x in xrange(10)]
-        f.extend("/foon/%i/blah" % x for x in xrange(5))
+        f = ["/foon/%i" % x for x in range(10)]
+        f.extend("/foon/%i/blah" % x for x in range(5))
         f = [fs.fsFile(x, strict=False) for x in f]
         self.assertEqual(sorted(x.location for x in f),
             sorted(y.location for y in self.change_offset('/usr', '/',

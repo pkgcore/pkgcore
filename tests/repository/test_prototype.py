@@ -30,7 +30,7 @@ class TestPrototype(TestCase):
     def test_concurrent_access(self):
         iall = iter(self.repo)
         self.repo.match(atom("dev-lib/fake"))
-        pkg = iall.next()
+        pkg = next(iall)
         if pkg.category == 'dev-util':
             self.repo.match(atom("dev-lib/fake"))
         else:
@@ -48,7 +48,7 @@ class TestPrototype(TestCase):
         self.assertEqual(
             sorted(
                 "%s/%s-%s" % (cp[0], cp[1], v)
-                for cp, t in self.repo.versions.iteritems() for v in t),
+                for cp, t in self.repo.versions.items() for v in t),
             sorted([
                 "dev-util/diffball-1.0", "dev-util/diffball-0.7",
                 "dev-util/bsdiff-0.4.1", "dev-util/bsdiff-0.4.2",

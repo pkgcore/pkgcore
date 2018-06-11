@@ -4,7 +4,6 @@
 from snakeoil.chksum import LazilyHashedPath
 
 from pkgcore.cache import errors
-from snakeoil.test import TestCase
 
 generic_data = \
     ("sys-libs/libtrash-2.4",
@@ -22,17 +21,17 @@ generic_data = \
         ('SRC_URI', 'http://pages.stern.nyu.edu/~marriaga/software/blah.tgz'),
         ('_eclasses_',
             {
-                'toolchain-funcs': LazilyHashedPath('/var/gentoo/repos/gentoo/eclass', mtime=1155996352L),
-                'multilib': LazilyHashedPath('/var/gentoo/repos/gentoo/eclass', mtime=1156014349L),
-                'eutils': LazilyHashedPath('/var/gentoo/repos/gentoo/eclass', mtime=1155996352L),
-                'portability': LazilyHashedPath('/var/gentoo/repos/gentoo/eclass', mtime=1141850196L)
+                'toolchain-funcs': LazilyHashedPath('/var/gentoo/repos/gentoo/eclass', mtime=1155996352),
+                'multilib': LazilyHashedPath('/var/gentoo/repos/gentoo/eclass', mtime=1156014349),
+                'eutils': LazilyHashedPath('/var/gentoo/repos/gentoo/eclass', mtime=1155996352),
+                'portability': LazilyHashedPath('/var/gentoo/repos/gentoo/eclass', mtime=1141850196)
             }
         ),
         ('_mtime_', 1000),
     ),
 )
 
-class GenericCacheMixin(TestCase):
+class GenericCacheMixin(object):
 
     cache_keys = ("DEPENDS", "RDEPEND", "EAPI", "HOMEPAGE", "KEYWORDS",
         "LICENSE", "PDEPEND", "RESTRICT", "SLOT", "SRC_URI",
@@ -62,4 +61,3 @@ class GenericCacheMixin(TestCase):
         for key, raw_data in self.test_data:
             d = dict(raw_data)
             db[key] = d
-

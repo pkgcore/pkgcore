@@ -114,9 +114,9 @@ class AndRestrictionTest(base, TestCase):
                 self.kls(true, true), true).dnf_solutions(),
             [[true, true, true]])
         self.assertEqual(
-            map(set, self.kls(
+            list(map(set, self.kls(
                     true, true,
-                    boolean.OrRestriction(false, true)).dnf_solutions()),
+                    boolean.OrRestriction(false, true)).dnf_solutions())),
             [set([true, true, false]), set([true, true, true])])
         self.assertEqual(self.kls().dnf_solutions(), [[]])
 
@@ -164,10 +164,10 @@ class OrRestrictionTest(base, TestCase):
             self.kls(true, true).dnf_solutions(),
             [[true], [true]])
         self.assertEqual(
-            map(set, self.kls(
+            list(map(set, self.kls(
                     true, true,
-                    boolean.AndRestriction(false, true)).dnf_solutions()),
-            map(set, [[true], [true], [false, true]]))
+                    boolean.AndRestriction(false, true)).dnf_solutions())),
+            list(map(set, [[true], [true], [false, true]])))
         self.assertEqual(
             self.kls(
                 self.kls(true, false), true).dnf_solutions(),

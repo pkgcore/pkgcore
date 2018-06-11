@@ -19,7 +19,7 @@ class base(TestCase):
             reflective=False)
         atoms_dict = {a[0].key: (a, a[1]) for a in atoms}
         self.assertEqual(sorted(obj.atoms), sorted(atoms_dict))
-        for k, v in obj.atoms.iteritems():
+        for k, v in obj.atoms.items():
             l1 = sorted((x[0], list(x[1])) for x in v)
             l2 = sorted((x[0], list(x[1])) for x, y in
                 atoms_dict[k])
@@ -32,7 +32,7 @@ class test_collapsed_restrict_to_data(base):
     kls = misc.collapsed_restrict_to_data
 
     def test_defaults(self):
-        srange = map(str, xrange(100))
+        srange = list(map(str, range(100)))
         self.assertState(self.kls([(AlwaysTrue, srange)]),
             defaults=srange)
         # ensure AlwaysFalse is ignored.
@@ -85,7 +85,7 @@ class TestIncrementalsDict(TestCase):
     kls = misc.IncrementalsDict
 
     def assertContents(self, mapping1, mapping2):
-        self.assertEqual(sorted(mapping1.iteritems()), sorted(mapping2.iteritems()))
+        self.assertEqual(sorted(mapping1.items()), sorted(mapping2.items()))
 
     def test_behaviour(self):
         d = self.kls(frozenset("i1 i2".split()), a1="1", i1="1")

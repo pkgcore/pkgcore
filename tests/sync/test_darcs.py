@@ -2,7 +2,7 @@
 # License: GPL2/BSD
 
 from pkgcore.sync import base, darcs
-from pkgcore.test.sync import make_bogus_syncer, make_valid_syncer
+from tests.sync.syncer import make_bogus_syncer, make_valid_syncer
 from snakeoil.test import TestCase
 
 bogus = make_bogus_syncer(darcs.darcs_syncer)

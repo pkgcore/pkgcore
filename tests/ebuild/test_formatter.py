@@ -95,7 +95,7 @@ class BaseFormatterTest(object):
             args.append(suffix)
 
         for arg in args:
-            if isinstance(arg, unicode):
+            if isinstance(arg, str):
                 stringlist.append(arg.encode('ascii'))
             elif isinstance(arg, bytes):
                 stringlist.append(arg)

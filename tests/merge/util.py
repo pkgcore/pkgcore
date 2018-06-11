@@ -10,9 +10,9 @@ class fake_trigger(triggers.base):
 
     def __init__(self, **kwargs):
         self._called = []
-        if isinstance(kwargs.get('_hooks', False), basestring):
+        if isinstance(kwargs.get('_hooks', False), str):
             kwargs['_hooks'] = (kwargs['_hooks'],)
-        for k, v in kwargs.iteritems():
+        for k, v in kwargs.items():
             if callable(v):
                 v = partial(v, self)
             setattr(self, k, v)
@@ -26,7 +26,7 @@ class fake_engine(object):
     def __init__(self, **kwargs):
         kwargs.setdefault('observer', None)
         self._triggers = []
-        for k, v in kwargs.iteritems():
+        for k, v in kwargs.items():
             if callable(v):
                 v = partial(v, self)
             setattr(self, k, v)
@@ -39,5 +39,5 @@ class fake_engine(object):
 
 class fake_reporter(object):
     def __init__(self, **kwargs):
-        for k, v in kwargs.iteritems():
+        for k, v in kwargs.items():
             setattr(self, k, v)

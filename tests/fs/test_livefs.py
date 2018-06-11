@@ -21,7 +21,7 @@ class FsObjsTest(TempDirMixin, TestCase):
         if offset is not None:
             self.assertTrue(path.startswith("/"),
                 msg="path must be absolute, got %r" % path)
-        self.assertEqual(obj.mode & 07777, st.st_mode & 07777)
+        self.assertEqual(obj.mode & 0o7777, st.st_mode & 0o7777)
         self.assertEqual(obj.uid, st.st_uid)
         self.assertEqual(obj.gid, st.st_gid)
         if fs.isreg(obj):
@@ -77,10 +77,12 @@ class FsObjsTest(TempDirMixin, TestCase):
         files = [os.path.normpath(os.path.join(path, x)) for x in [
                 "tmp", "blah", "dar"]]
         # cheap version of a touch.
-        map(lambda x:open(x, "w").close(), files)
+        for x in files:
+            open(x, "w").close()
         dirs = [os.path.normpath(os.path.join(path, x)) for x in [
                 "a", "b", "c"]]
-        map(os.mkdir, dirs)
+        for x in dirs:
+            os.mkdir(x)
         dirs.append(path)
         for obj in livefs.iter_scan(path):
             self.assertInstance(obj, fs.fsBase)
@@ -109,15 +111,17 @@ class FsObjsTest(TempDirMixin, TestCase):
         files = [os.path.normpath(os.path.join(path, x)) for x in
                  ["tmp", "blah", "dar", ".foo", ".bar"]]
         # cheap version of a touch.
-        map(lambda x: open(x, "w").close(), files)
+        for x in files:
+            open(x, "w").close()
         dirs = [os.path.normpath(os.path.join(path, x)) for x in [
                 "a", "b", "c"]]
-        map(os.mkdir, dirs)
+        for x in dirs:
+            os.mkdir(x)
 
         # regular directory scanning
         sorted_files = livefs.sorted_scan(path)
         self.assertEqual(
-            list(map(lambda x: pjoin(path, x), ['blah', 'dar', 'tmp'])),
+            list([pjoin(path, x) for x in ['blah', 'dar', 'tmp']]),
             sorted_files)
 
         # nonexistent paths

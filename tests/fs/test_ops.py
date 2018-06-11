@@ -22,19 +22,19 @@ class VerifyMixin(object):
                 self.assertEqual(getattr(stat, attr), kwds[keyword],
                                  "testing %s" % (keyword,))
         if "mode" in kwds:
-            self.assertEqual((stat.st_mode & 04777), kwds["mode"])
+            self.assertEqual((stat.st_mode & 0o4777), kwds["mode"])
 
 
 class TestDefaultEnsurePerms(VerifyMixin, TempDirMixin, TestCase):
 
     def common_bits(self, creator_func, kls):
-        kwds = {"mtime":01234, "uid":os.getuid(), "gid":os.getgid(),
-                "mode":0775, "dev":None, "inode":None}
+        kwds = {"mtime":0o1234, "uid":os.getuid(), "gid":os.getgid(),
+                "mode":0o775, "dev":None, "inode":None}
         o = kls(pjoin(self.dir, "blah"), **kwds)
         creator_func(o.location)
         self.assertTrue(ops.default_ensure_perms(o))
         self.verify(o, kwds, os.stat(o.location))
-        kwds["mode"] = 0770
+        kwds["mode"] = 0o770
         o2 = kls(pjoin(self.dir, "blah"), **kwds)
         self.assertTrue(ops.default_ensure_perms(o2))
         self.verify(o2, kwds, os.stat(o.location))
@@ -56,13 +56,13 @@ class TestDefaultMkdir(TempDirMixin, TestCase):
         self.assertTrue(ops.default_mkdir(o))
         old_umask = os.umask(0)
         try:
-            self.assertEqual((os.stat(o.location).st_mode & 04777), 0777 & ~old_umask)
+            self.assertEqual((os.stat(o.location).st_mode & 0o4777), 0o777 & ~old_umask)
         finally:
             os.umask(old_umask)
         os.rmdir(o.location)
-        o = fs.fsDir(pjoin(self.dir, "mkdir_test2"), strict=False, mode=0750)
+        o = fs.fsDir(pjoin(self.dir, "mkdir_test2"), strict=False, mode=0o750)
         self.assertTrue(ops.default_mkdir(o))
-        self.assertEqual(os.stat(o.location).st_mode & 04777, 0750)
+        self.assertEqual(os.stat(o.location).st_mode & 0o4777, 0o750)
 
 
 class TestCopyFile(VerifyMixin, TempDirMixin, TestCase):
@@ -71,9 +71,9 @@ class TestCopyFile(VerifyMixin, TempDirMixin, TestCase):
         src = pjoin(self.dir, "copy_test_src")
         dest = pjoin(self.dir, "copy_test_dest")
         with open(src, "w") as f:
-            f.writelines("asdf\n" for i in xrange(10))
+            f.writelines("asdf\n" for i in range(10))
         kwds = {"mtime":10321, "uid":os.getuid(), "gid":os.getgid(),
-                "mode":0664, "data":local_source(src), "dev":None,
+                "mode":0o664, "data":local_source(src), "dev":None,
                 "inode":None}
         o = fs.fsFile(dest, **kwds)
         self.assertTrue(ops.default_copyfile(o))
@@ -90,7 +90,7 @@ class TestCopyFile(VerifyMixin, TempDirMixin, TestCase):
         group = group[0]
         fp = pjoin(self.dir, "sym")
         o = fs.fsSymlink(fp, mtime=10321, uid=os.getuid(), gid=group,
-            mode=0664, target='target')
+            mode=0o664, target='target')
         self.assertTrue(ops.default_copyfile(o))
         self.assertEqual(os.lstat(fp).st_gid, group)
         self.assertEqual(os.lstat(fp).st_uid, os.getuid())
@@ -108,7 +108,7 @@ class TestCopyFile(VerifyMixin, TempDirMixin, TestCase):
             livefs.gen_obj(fp).change_attributes(location=path))
 
         # test sym over a directory.
-        f = fs.fsSymlink(path, fp, mode=0644, mtime=0, uid=os.getuid(),
+        f = fs.fsSymlink(path, fp, mode=0o644, mtime=0, uid=os.getuid(),
             gid=os.getgid())
         self.assertRaises(TypeError, ops.default_copyfile, f)
         os.unlink(fp)
@@ -205,7 +205,7 @@ class Test_merge_contents(ContentsMixin):
         fp = pjoin(self.dir, "trg")
         os.mkdir(path)
         # test sym over a directory.
-        f = fs.fsSymlink(path, fp, mode=0644, mtime=0, uid=os.getuid(),
+        f = fs.fsSymlink(path, fp, mode=0o644, mtime=0, uid=os.getuid(),
             gid=os.getgid())
         cset = contents.contentsSet([f])
         self.assertRaises(ops.FailedCopy, ops.merge_contents, cset)
@@ -218,7 +218,7 @@ class Test_merge_contents(ContentsMixin):
         # aren't dirs or symlinks to dirs
         path = pjoin(self.dir, "file2dir")
         open(path, 'w').close()
-        d = fs.fsDir(path, mode=0755, mtime=0, uid=os.getuid(), gid=os.getgid())
+        d = fs.fsDir(path, mode=0o755, mtime=0, uid=os.getuid(), gid=os.getgid())
         cset = contents.contentsSet([d])
         self.assertRaises(ops.CannotOverwrite, ops.merge_contents, cset)
 
@@ -255,7 +255,7 @@ class Test_unmerge_contents(ContentsMixin):
 
     def test_lingering_file(self):
         img, cset = self.generic_unmerge_bits(self.entries_norm1)
-        dirs = [k for k, v in self.entries_norm1.iteritems() if v[0] == "dir"]
+        dirs = [k for k, v in self.entries_norm1.items() if v[0] == "dir"]
         fp = os.path.join(img, dirs[0], "linger")
         open(fp, "w").close()
         self.assertTrue(ops.unmerge_contents(cset, offset=img))

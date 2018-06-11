@@ -3,7 +3,7 @@
 
 from pkgcore.config import basics, ConfigHint
 from pkgcore.scripts import pclonecache
-from pkgcore.test.scripts.helpers import ArgParseMixin
+from tests.scripts.helpers import ArgParseMixin
 from snakeoil.test import TestCase
 
 

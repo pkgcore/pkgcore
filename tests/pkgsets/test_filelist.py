@@ -58,7 +58,7 @@ class TestFileList(TestCase):
         s.add(atom("=dev-util/lib-1"))
         s.flush()
         with open(self.fn) as f:
-            self.assertEqual(map(atom, (x.strip() for x in f)),
+            self.assertEqual(list(map(atom, (x.strip() for x in f))),
                 sorted(map(atom, ("dev-util/diffball", "=dev-util/bsdiff-0.4",
                 "dev-util/foon", "=dev-util/lib-1"))))
 

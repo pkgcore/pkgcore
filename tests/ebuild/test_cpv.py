@@ -11,7 +11,7 @@ from pkgcore.ebuild import cpv
 
 def generate_misc_sufs():
     simple_good_sufs = ["_alpha", "_beta", "_pre", "_p"]
-    suf_nums = list(xrange(100))
+    suf_nums = list(range(100))
     shuffle(suf_nums)
 
     good_sufs = (simple_good_sufs +["%s%i" % (x, suf_nums.pop())
@@ -19,7 +19,7 @@ def generate_misc_sufs():
 
     l = len(good_sufs)
     good_sufs = good_sufs + [
-        good_sufs[x] + good_sufs[l - x - 1] for x in xrange(l)]
+        good_sufs[x] + good_sufs[l - x - 1] for x in range(l)]
 
     bad_sufs  = ["_a", "_9", "_"] + [x+" " for x in simple_good_sufs]
     return good_sufs, bad_sufs
@@ -79,7 +79,7 @@ class native_CpvTest(TestCase):
                 key = src[0]
             else:
                 key = src[1]
-            if isinstance(src[0], basestring):
+            if isinstance(src[0], str):
                 cat, pkgver = src[0].rsplit("/", 1)
                 vals = pkgver.rsplit("-", 1)
                 if len(vals) == 1:
@@ -124,8 +124,8 @@ class native_CpvTest(TestCase):
         for x in (10, 18, 19, 36, 100):
             self.assertEqual(self.kls("da", "ba", "1-r0%s" % ("0" * x)).revision,
                 None)
-            self.assertEqual(long(self.kls("da", "ba", "1-r1%s1" % ("0" * x)).revision),
-                long("1%s1" % ("0" * x)))
+            self.assertEqual(int(self.kls("da", "ba", "1-r1%s1" % ("0" * x)).revision),
+                int("1%s1" % ("0" * x)))
 
 
     def process_pkg(self, ret, cat, pkg):

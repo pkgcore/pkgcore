@@ -43,7 +43,7 @@ def nonopt(one, two):
 
 
 def alltypes(alist=(), astr='astr', abool=True, aref=object(), anint=3,
-    along=long(3)):
+    along=int(3)):
     """Function taking lots of kinds of args."""
 
 
@@ -241,7 +241,7 @@ class DictConfigSectionTest(TestCase):
         section = basics.DictConfigSection(convert, {'list': [1, 2]})
         self.assertFalse('foo' in section)
         self.assertTrue('list' in section)
-        self.assertEqual(['list'], section.keys())
+        self.assertEqual(['list'], list(section.keys()))
         self.assertEqual(
             (None, [1, 2], 'spoon'), section.render_value(None, 'list', 'spoon'))
 
@@ -269,7 +269,7 @@ class FakeIncrementalDictConfigSectionTest(TestCase):
             self._convert, {'list': [1, 2]})
         self.assertFalse('foo' in section)
         self.assertTrue('list' in section)
-        self.assertEqual(['list'], section.keys())
+        self.assertEqual(['list'], list(section.keys()))
         self.assertRaises(
             errors.ConfigurationError,
             basics.FakeIncrementalDictConfigSection(
@@ -329,7 +329,7 @@ class FakeIncrementalDictConfigSectionTest(TestCase):
         self.assertEqual(
             ('list', [
                     ['whatever'],
-                    ['pkgcore.test.config.test_basics.asis'],
+                    ['tests.config.test_basics.asis'],
                     None]),
             section.render_value(manager, 'strlist', 'repr'))
         self.assertRaises(
@@ -341,26 +341,26 @@ class ConvertStringTest(TestCase):
 
     def test_render_value(self):
         source = {
-            'str': 'pkgcore.test',
+            'str': 'tests',
             'bool': 'yes',
             'list': '0 1 2',
-            'callable': 'pkgcore.test.config.test_basics.passthrough',
+            'callable': 'tests.config.test_basics.passthrough',
             }
         destination = {
-            'str': 'pkgcore.test',
+            'str': 'tests',
             'bool': True,
             'list': ['0', '1', '2'],
             'callable': passthrough,
             }
 
         # valid gets
-        for typename, value in destination.iteritems():
+        for typename, value in destination.items():
             self.assertEqual(
                 value,
                 basics.convert_string(None, source[typename], typename))
 
         # reprs
-        for typename, value in source.iteritems():
+        for typename, value in source.items():
             self.assertEqual(
                 ('str', value),
                 basics.convert_string(None, source[typename], 'repr'))
@@ -423,7 +423,7 @@ class ConvertStringTest(TestCase):
 class ConvertAsIsTest(TestCase):
 
     source = {
-        'str': 'pkgcore.test',
+        'str': 'tests',
         'bool': True,
         'list': ['0', '1', '2'],
         'callable': passthrough,
@@ -431,7 +431,7 @@ class ConvertAsIsTest(TestCase):
 
     def test_render_value(self):
         # try all combinations
-        for arg, value in self.source.iteritems():
+        for arg, value in self.source.items():
             for typename in self.source:
                 if arg == typename:
                     self.assertEqual(
@@ -442,7 +442,7 @@ class ConvertAsIsTest(TestCase):
                         basics.convert_asis, None, value, typename)
 
     def test_repr(self):
-        for typename, value in self.source.iteritems():
+        for typename, value in self.source.items():
             self.assertEqual(
                 (typename, value),
                 basics.convert_asis(None, value, 'repr'))

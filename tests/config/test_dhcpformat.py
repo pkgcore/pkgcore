@@ -1,7 +1,7 @@
 # Copyright: 2005 Marien Zwart <marienz@gentoo.org>
 # License: BSD/GPL2
 
-from StringIO import StringIO
+from io import StringIO
 
 try:
     import pyparsing
@@ -43,10 +43,10 @@ test {
 '''),
             ]:
             config = parser(StringIO(text))
-            self.assertEqual(config.keys(), ['test'])
+            self.assertEqual(list(config.keys()), ['test'])
             section = config['test']
             self.assertTrue('hi' in section)
-            self.assertEqual(section.keys(), ['hi'])
+            self.assertEqual(list(section.keys()), ['hi'])
             self.assertEqual(section.render_value(None, 'hi', 'str'),
                              [None, 'there', None])
 
@@ -57,7 +57,7 @@ test {
     list one two three;
     string hi;
     bool yes;
-    callable pkgcore.test.config.test_dhcpformat.passthrough;
+    callable tests.config.test_dhcpformat.passthrough;
 }
 '''),
             (mke2fsformat.config_from_file, '''
@@ -65,7 +65,7 @@ test {
     list = one two three
     string = hi
     bool = yes
-    callable = pkgcore.test.config.test_dhcpformat.passthrough
+    callable = tests.config.test_dhcpformat.passthrough
 '''),
             ]:
             config = parser(StringIO(text))
@@ -83,7 +83,7 @@ test {
                 ('string', 'str', 'hi'),
                 ('bool', 'str', 'yes'),
                 ('callable', 'str',
-                 'pkgcore.test.config.test_dhcpformat.passthrough'),
+                 'tests.config.test_dhcpformat.passthrough'),
                 ):
                 self.assertEqual(
                     (typename, value), section.render_value(None, name, 'repr'))
@@ -92,27 +92,27 @@ test {
         for parser, text in [
             (dhcpformat.config_from_file, '''
 target {
-    class pkgcore.test.config.test_dhcpformat.testtype;
+    class tests.config.test_dhcpformat.testtype;
     hi there;
 }
 
 test {
     ref target;
     inline {
-        class pkgcore.test.config.test_dhcpformat.testtype;
+        class tests.config.test_dhcpformat.testtype;
         hi here;
     };
 }
 '''),
             (mke2fsformat.config_from_file, '''
 [target]
-    class = pkgcore.test.config.test_dhcpformat.testtype
+    class = tests.config.test_dhcpformat.testtype
     hi = there
 
 [test]
     ref = target
     inline = {
-        class = pkgcore.test.config.test_dhcpformat.testtype
+        class = tests.config.test_dhcpformat.testtype
         hi = here
     }
 '''),
@@ -136,41 +136,41 @@ test {
         for parser, text in [
             (dhcpformat.config_from_file, '''
 target {
-    class pkgcore.test.config.test_dhcpformat.testtype;
+    class tests.config.test_dhcpformat.testtype;
     hi there;
 }
 
 test {
     ref target target;
     inline {
-        class pkgcore.test.config.test_dhcpformat.testtype;
+        class tests.config.test_dhcpformat.testtype;
         hi here;
     } {
-        class pkgcore.test.config.test_dhcpformat.testtype;
+        class tests.config.test_dhcpformat.testtype;
         hi here;
     };
     mix target {
-        class pkgcore.test.config.test_dhcpformat.testtype;
+        class tests.config.test_dhcpformat.testtype;
         hi here;
     };
 }
 '''),
             (mke2fsformat.config_from_file, '''
 [target]
-    class = pkgcore.test.config.test_dhcpformat.testtype
+    class = tests.config.test_dhcpformat.testtype
     hi = there
 
 [test]
     ref = target target
     inline = {
-        class = pkgcore.test.config.test_dhcpformat.testtype
+        class = tests.config.test_dhcpformat.testtype
         hi = here
     } {
-        class = pkgcore.test.config.test_dhcpformat.testtype
+        class = tests.config.test_dhcpformat.testtype
         hi = here
     }
     mix = target {
-        class = pkgcore.test.config.test_dhcpformat.testtype
+        class = tests.config.test_dhcpformat.testtype
         hi = here
     }
 '''),
@@ -196,25 +196,25 @@ test {
         for parser, text in [
             (dhcpformat.config_from_file, '''
 target {
-    class pkgcore.test.config.test_dhcpformat.testtype;
+    class tests.config.test_dhcpformat.testtype;
     hi there;
 }
 
 test {
     refs target {
-        class pkgcore.test.config.test_dhcpformat.testtype;
+        class tests.config.test_dhcpformat.testtype;
         hi here;
     };
 }
 '''),
             (mke2fsformat.config_from_file, '''
 [target]
-    class = pkgcore.test.config.test_dhcpformat.testtype
+    class = tests.config.test_dhcpformat.testtype
     hi = there
 
 [test]
     refs = target {
-        class = pkgcore.test.config.test_dhcpformat.testtype
+        class = tests.config.test_dhcpformat.testtype
         hi = here
     }
 '''),
@@ -230,13 +230,13 @@ test {
         for parser, text in [
             (dhcpformat.config_from_file, '''
 target {
-    class pkgcore.test.config.test_dhcpformat.testtype;
+    class tests.config.test_dhcpformat.testtype;
     hi there;
 }
 
 test {
     inline {
-        class pkgcore.test.config.test_dhcpformat.testtype;
+        class tests.config.test_dhcpformat.testtype;
         hi here;
     };
     ref target;
@@ -244,12 +244,12 @@ test {
 '''),
             (mke2fsformat.config_from_file, '''
 [target]
-    class = pkgcore.test.config.test_dhcpformat.testtype
+    class = tests.config.test_dhcpformat.testtype
     hi = there
 
 [test]
     inline = {
-        class = pkgcore.test.config.test_dhcpformat.testtype
+        class = tests.config.test_dhcpformat.testtype
         hi = here
     }
     ref = target

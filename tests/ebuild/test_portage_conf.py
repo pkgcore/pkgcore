@@ -172,7 +172,7 @@ class TestPortageConfig(TempDirMixin, TestCase):
             f.flush()
             defaults, repos = load_repos_conf(f.name)
             self.assertEqual('gentoo', defaults['main-repo'])
-            self.assertEqual(['foo', 'gentoo'], repos.keys())
+            self.assertEqual(['foo', 'gentoo'], list(repos.keys()))
 
         # TODO: check for logger output?
         # overriding defaults in the same file throws an exception from configparser
@@ -218,4 +218,4 @@ class TestPortageConfig(TempDirMixin, TestCase):
         self.assertEqual(defaults, sym_defaults)
         self.assertEqual(repos, sym_repos)
         self.assertEqual('gentoo', defaults['main-repo'])
-        self.assertEqual(['foo', 'bar', 'gentoo'], repos.keys())
+        self.assertEqual(['foo', 'bar', 'gentoo'], list(repos.keys()))

@@ -22,13 +22,13 @@ class Test_collect_package_restrictions(TestCase):
 
         r = packages.AndRestriction(
             packages.OrRestriction(*prs.values()), packages.AlwaysTrue)
-        for k, v in prs.iteritems():
+        for k, v in prs.items():
             self.assertEqual(
                 list(util.collect_package_restrictions(r, attrs=[k])),
                 [v])
         r = packages.AndRestriction(packages.OrRestriction(
                 *prs.values()), *prs.values())
-        for k, v in prs.iteritems():
+        for k, v in prs.items():
             self.assertEqual(
                 list(util.collect_package_restrictions(r, attrs=[k])),
                 [v] * 2)

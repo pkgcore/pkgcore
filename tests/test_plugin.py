@@ -54,7 +54,7 @@ pkgcore_plugins = {
     'plugtest': [
         DisabledPlug,
         high_plug,
-        'pkgcore.test.test_plugin.LowPlug',
+        'tests.test_plugin.LowPlug',
     ]
 }
 ''')
@@ -133,7 +133,7 @@ pkgcore_plugins = {'plugtest': [HiddenPlug]}
         self.assertEqual('plug2:%s:\n' % (mtime,), lines[0])
         mtime = int(os.path.getmtime(pjoin(self.packdir, 'plug.py')))
         self.assertEqual(
-            'plug:%s:plugtest,7,1:plugtest,1,pkgcore.test.test_plugin.LowPlug:'
+            'plug:%s:plugtest,7,1:plugtest,1,tests.test_plugin.LowPlug:'
             'plugtest,0,0\n' % (mtime,),
             lines[1])
 

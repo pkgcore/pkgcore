@@ -21,10 +21,10 @@ MD5 2fa54dd51b6a8f1c46e5baf741e90f7e python-2.4-patches-1.tar.bz2 7820
 RMD160 313c0f4f4dea59290c42a9b2c8de1db159f1ca1b python-2.4-patches-1.tar.bz2 7820
 SHA256 e22abe4394f1f0919aac429f155c00ec1b3fe94cdc302119059994d817cd30b5 python-2.4-patches-1.tar.bz2 7820"""
 digest_chksum = (
-    ("size", long(7853169)),
-    ("md5", long("98db1465629693fc434d4dc52db93838", 16)),
-    ("rmd160", long("c511d2b76b5394742d285e71570a2bcd3c1fa871", 16)),
-    ("sha256", long("e163b95ee56819c0f3c58ef9278c30b9e49302c2f1a1917680ca894d33929f7e", 16))
+    ("size", int(7853169)),
+    ("md5", int("98db1465629693fc434d4dc52db93838", 16)),
+    ("rmd160", int("c511d2b76b5394742d285e71570a2bcd3c1fa871", 16)),
+    ("sha256", int("e163b95ee56819c0f3c58ef9278c30b9e49302c2f1a1917680ca894d33929f7e", 16))
 )
 
 # ripped straight from the glep
@@ -46,8 +46,8 @@ for x in pure_manifest2.split("\n"):
     if not l:
         continue
     i = iter(l[3:])
-    chksum = [("size", long(l[2]))]
-    chksum += [(k.lower(), long(v, 16)) for k, v in zip(i, i)]
+    chksum = [("size", int(l[2]))]
+    chksum += [(k.lower(), int(v, 16)) for k, v in zip(i, i)]
     chksum = tuple(chksum)
     pure_manifest2_chksums.setdefault(l[0], {})[l[1]] = chksum
     del chksum, l, i
@@ -83,9 +83,9 @@ class TestManifest(TestCase):
             ("EBUILD", ebuild), ("MISC", misc)):
             req_d = pure_manifest2_chksums[dtype]
             self.assertEqual(sorted(req_d), sorted(d))
-            for k, v in req_d.iteritems():
+            for k, v in req_d.items():
                 i1 = sorted(v)
-                i2 = sorted(d[k].iteritems())
+                i2 = sorted(d[k].items())
                 self.assertEqual(i1, i2, msg="%r != %r\nfor %s %s" %
                     (i1, i2, dtype, k))
 

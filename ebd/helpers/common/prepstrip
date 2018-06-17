@@ -67,7 +67,8 @@ for x in $(scanelf -yqRBF '#k%F' -k '.symtab' "$@"); do
 	# actually causes problems.  install sources for all
 	# elf types though cause that stuff is good.
 
-	if [[ ${f} == *"SB executable"* || ${f} == *"SB shared object"* ]]; then
+	if [[ ${f} == *"SB executable"* || ${f} == *"SB pie executable"* ||
+			${f} == *"SB shared object"* ]]; then
 		save_elf_sources "${x}"
 	elif [[ ${f} == *"SB relocatable"* ]]; then
 		save_elf_sources "${x}"

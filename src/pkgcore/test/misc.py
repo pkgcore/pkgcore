@@ -122,3 +122,80 @@ class DisablePlugins(object):
     def tearDown(self):
         plugin._cache = self._plugin_orig_cache
         plugin.initialize_cache = self._plugin_orig_initialize
+
+
+# misc setup code for generating glsas for testing
+
+glsa_template = \
+"""<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE glsa SYSTEM "http://www.gentoo.org/dtd/glsa.dtd">
+<?xml-stylesheet href="/xsl/glsa.xsl" type="text/xsl"?>
+<?xml-stylesheet href="/xsl/guide.xsl" type="text/xsl"?>
+
+<glsa id="%s">
+  <title>generated glsa for %s</title>
+  <synopsis>
+    foon
+  </synopsis>
+  <product type="ebuild">foon</product>
+  <announced>2003-11-23</announced>
+  <revised>2003-11-23: 01</revised>
+  <bug>33989</bug>
+  <access>remote</access>
+  <affected>%s</affected>
+  <background>
+    <p>FreeRADIUS is a popular open source RADIUS server.</p>
+  </background>
+  <description>
+    <p>foon</p>
+  </description>
+  <impact type="normal">
+    <p>
+    impact-rific
+    </p>
+  </impact>
+  <workaround>
+    <p>redundant if no workaround</p>
+  </workaround>
+  <resolution>
+    <p>blarh</p>
+  </resolution>
+  <references>
+    <uri link="http://www.securitytracker.com/alerts/2003/Nov/1008263.html">SecurityTracker.com Security Alert</uri>
+  </references>
+</glsa>
+"""
+
+ops = {'>': 'gt', '<': 'lt'}
+ops.update((k + '=', v[0] + 'e') for k, v in list(ops.items()))
+ops.update(('~' + k, 'r' + v) for k, v in list(ops.items()))
+ops['='] = 'eq'
+
+
+def convert_range(text, tag):
+    i = 0
+    while text[i] in "><=~":
+        i += 1
+    op = text[:i]
+    text = text[i:]
+    range = ops[op]
+    return '<%s range="%s">%s</%s>' % (tag, range, text, tag)
+
+
+def mk_glsa(*pkgs, **kwds):
+    id = kwds.pop("id", None)
+    if kwds:
+        raise TypeError("id is the only allowed kwds; got %r" % kwds)
+    id = str(id)
+    horked = ''
+    for data in pkgs:
+        if len(data) == 3:
+            pkg, ranges, arch = data
+        else:
+            pkg, ranges = data
+            arch = '*'
+        horked += '<package name="%s" auto="yes" arch="%s">%s%s\n</package>' \
+            % (pkg, arch,
+                '\n'.join(convert_range(x, 'unaffected') for x in ranges[0]),
+                '\n'.join(convert_range(x, 'vulnerable') for x in ranges[1]))
+    return glsa_template % (id, id, horked)

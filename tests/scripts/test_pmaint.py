@@ -15,7 +15,7 @@ from pkgcore.operations.repo import install, uninstall, replace, operations
 from pkgcore.repository import util, syncable
 from pkgcore.scripts import pmaint
 from pkgcore.sync import base
-from tests.scripts.helpers import ArgParseMixin
+from pkgcore.test.scripts.helpers import ArgParseMixin
 
 
 

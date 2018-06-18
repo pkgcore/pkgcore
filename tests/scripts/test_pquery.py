@@ -6,7 +6,7 @@ from pkgcore.config import basics, ConfigHint, configurable
 from pkgcore.ebuild import atom
 from pkgcore.repository import util
 from pkgcore.scripts import pquery
-from tests.scripts.helpers import ArgParseMixin
+from pkgcore.test.scripts.helpers import ArgParseMixin
 from snakeoil.test import TestCase
 
 

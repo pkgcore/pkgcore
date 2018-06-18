@@ -3,7 +3,7 @@
 
 from pkgcore import plugins
 from pkgcore.scripts import pplugincache
-from tests.scripts.helpers import ArgParseMixin
+from pkgcore.test.scripts.helpers import ArgParseMixin
 from snakeoil.test import TestCase
 
 

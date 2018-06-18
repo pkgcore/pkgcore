@@ -4,7 +4,7 @@
 from pkgcore.config import basics, ConfigHint, configurable
 from pkgcore.scripts import pebuild
 from pkgcore.test.misc import FakePkg, FakeRepo
-from tests.scripts.helpers import ArgParseMixin
+from pkgcore.test.scripts.helpers import ArgParseMixin
 
 from snakeoil.test import TestCase
 

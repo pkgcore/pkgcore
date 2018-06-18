@@ -11,7 +11,7 @@ import sys
 import unittest
 
 from pkgcore.config import central, errors
-from tests.scripts.helpers import ArgParseMixin
+from pkgcore.test.scripts.helpers import ArgParseMixin
 from pkgcore.util import commandline
 from snakeoil.test import TestCase
 

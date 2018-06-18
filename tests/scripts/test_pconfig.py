@@ -7,7 +7,7 @@ from snakeoil.test import TestCase
 
 from pkgcore.config import configurable, basics, errors
 from pkgcore.scripts import pconfig
-from tests.scripts.helpers import ArgParseMixin
+from pkgcore.test.scripts.helpers import ArgParseMixin
 
 
 @configurable({'reff': 'ref:spork'})

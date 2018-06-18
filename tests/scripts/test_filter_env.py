@@ -3,7 +3,7 @@
 # License: BSD/GPL2
 
 from pkgcore.scripts import filter_env
-from tests.scripts.helpers import ArgParseMixin
+from pkgcore.test.scripts.helpers import ArgParseMixin
 from snakeoil.test import TestCase
 
 

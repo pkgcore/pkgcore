@@ -22,7 +22,12 @@ if [[ ! -f ${INSTALLED} ]]; then
 
 	if [[ ${ret} -ne 0 ]]; then
 		while read -r dep; do
-			pip install -I --no-deps ${dep}
+			# skip installing deps when installing directly from git repos
+			if [[ ${dep} =~ ^https?://.* ]]; then
+				pip install -I --no-deps ${dep}
+			else
+				pip install -I ${dep}
+			fi
 		done < "${DIR}"/dev.txt
 		ret=$?
 	fi

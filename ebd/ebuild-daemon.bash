@@ -1,4 +1,4 @@
-# ebuild-daemon.bash; core ebuild processor handling code
+# core ebuild processor handling code
 # Copyright 2004-2012 Brian Harring <ferringb@gmail.com>
 # License: BSD/GPL2
 
@@ -63,8 +63,8 @@ __ebd_sigkill_handler() {
 }
 
 __ebd_exec_main() {
-	if ! source "${PKGCORE_EBD_PATH}"/ebuild-daemon.lib >&2; then
-		die "failed sourcing ${PKGCORE_EBD_PATH}/ebuild-daemon.lib"
+	if ! source "${PKGCORE_EBD_PATH}"/ebuild-daemon-lib.bash >&2; then
+		die "failed sourcing ${PKGCORE_EBD_PATH}/ebuild-daemon-lib.bash"
 	fi
 
 	# Ensure the other side is still there, well, this moreso is for the python
@@ -78,13 +78,13 @@ __ebd_exec_main() {
 	__ebd_write_line "dude!"
 
 	# get our die functionality now.
-	if ! source "${PKGCORE_EBD_PATH}"/exit-handling.lib; then
+	if ! source "${PKGCORE_EBD_PATH}"/exit-handling.bash; then
 		__ebd_write_line "failed sourcing exit handling functionality"
 		exit 2
 	fi
 
-	if ! source "${PKGCORE_EBD_PATH}"/isolated-functions.lib; then
-		__ebd_write_line "failed sourcing isolated-functions.lib"
+	if ! source "${PKGCORE_EBD_PATH}"/isolated-functions.bash; then
+		__ebd_write_line "failed sourcing isolated-functions.bash"
 		exit 2
 	fi
 
@@ -93,9 +93,9 @@ __ebd_exec_main() {
 	__ebd_read_line PKGCORE_PYTHONPATH
 	[[ -z ${PKGCORE_PYTHONPATH} ]] && die "empty PKGCORE_PYTHONPATH, bailing"
 
-	if ! source "${PKGCORE_EBD_PATH}"/ebuild.lib >&2; then
+	if ! source "${PKGCORE_EBD_PATH}"/ebuild.bash >&2; then
 		__ebd_write_line "failed"
-		die "failed sourcing ${PKGCORE_EBD_PATH}/ebuild.lib"
+		die "failed sourcing ${PKGCORE_EBD_PATH}/ebuild.bash"
 	fi
 
 	__ebd_read_line com
@@ -151,7 +151,7 @@ __ebd_exec_main() {
 	if [[ -e ${PKGCORE_EBD_PATH}/funcnames/global ]]; then
 		PKGCORE_BLACKLIST_FUNCS+=( $(<"${PKGCORE_EBD_PATH}"/funcnames/global) )
 	else
-		PKGCORE_BLACKLIST_FUNCS+=( $("${PKGCORE_EBD_PATH}"/generate_global_func_list.bash 2> /dev/null) )
+		PKGCORE_BLACKLIST_FUNCS+=( $("${PKGCORE_EBD_PATH}"/generate_global_func_list 2> /dev/null) )
 	fi
 	[[ $? -eq 0 ]] || die "failed reading the global function skip list"
 
@@ -163,7 +163,7 @@ __ebd_exec_main() {
 	done
 	unset -v x
 
-	source "${PKGCORE_EBD_PATH}"/eapi/depend.lib >&2 || die "failed sourcing eapi/depend.lib"
+	source "${PKGCORE_EBD_PATH}"/eapi/depend.bash >&2 || die "failed sourcing eapi/depend.bash"
 	__ebd_main_loop
 	exit 0
 }

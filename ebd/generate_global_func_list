@@ -49,11 +49,11 @@ export PKGCORE_PYTHON_BINARY=${PKGCORE_PYTHON_BINARY:-/bin/true}
 
 # proper sourcing order to satisfy dependencies
 forced_order_source=(
-	isolated-functions.lib
-	exit-handling.lib
-	eapi/depend.lib
-	eapi/common.lib
-	ebuild-daemon.lib
+	isolated-functions.bash
+	exit-handling.bash
+	eapi/depend.bash
+	eapi/common.bash
+	ebuild-daemon-lib.bash
 	ebuild-daemon.bash
 )
 
@@ -65,7 +65,7 @@ forced_order_source=( "${forced_order_source[@]/#/${PKGCORE_EBD_PATH}\/}" )
 #
 # EAPI specific libs are skipped since those need be sourced on demand
 # depending on an ebuild's EAPI.
-for x in "${forced_order_source[@]}" "${PKGCORE_EBD_PATH}"/*.lib; do
+for x in "${forced_order_source[@]}" "${PKGCORE_EBD_PATH}"/*.bash; do
 	source "${x}"
 done
 

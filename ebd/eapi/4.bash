@@ -1,7 +1,7 @@
 # Copyright: 2011-2012 Brian Harring <ferringb@gmail.com>
 # license GPL2/BSD 3
 
-source "${PKGCORE_EBD_PATH}"/eapi/3.lib
+source "${PKGCORE_EBD_PATH}"/eapi/3.bash
 
 nonfatal() {
 	PKGCORE_NONFATAL=true "$@"

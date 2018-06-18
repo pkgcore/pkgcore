@@ -3,7 +3,7 @@
 # Copyright: 1999-2005 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
 
-source "${PKGCORE_EBD_PATH}"/exit-handling.lib || { echo "failed loading libs"; exit -127; }
+source "${PKGCORE_EBD_PATH}"/exit-handling.bash || { echo "failed loading libs"; exit -127; }
 
 "${PKGCORE_EBD_PATH}"/helpers/internals/prepallman
 prepinfo

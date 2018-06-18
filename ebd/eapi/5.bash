@@ -1,7 +1,7 @@
 # Copyright: 2012 Brian Harring <ferringb@gmail.com>
 # license GPL2/BSD 3
 
-source "${PKGCORE_EBD_PATH}"/eapi/4.lib
+source "${PKGCORE_EBD_PATH}"/eapi/4.bash
 
 has_version() {
 	local r=${ROOT:-/}

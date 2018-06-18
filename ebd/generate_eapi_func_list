@@ -14,8 +14,8 @@ export PKGCORE_EBD_PATH=${BASH_SOURCE[0]%/*}
 # null so any code that tried accessing it thinks it succeeded
 export PKGCORE_PYTHON_BINARY=${PKGCORE_PYTHON_BINARY:-/bin/true}
 
-source "${PKGCORE_EBD_PATH}/eapi/${EAPI}.lib" \
-	|| { echo "failed loading eapi/${EAPI}.lib" >&2; exit 1; }
+source "${PKGCORE_EBD_PATH}/eapi/${EAPI}.bash" \
+	|| { echo "failed loading eapi/${EAPI}.bash" >&2; exit 1; }
 
 # Sorting order; put PMS functionality first, then our internals.
 printf '%s\n' $(compgen -X '__*' -A function) $(compgen -A function __)

@@ -4,10 +4,10 @@
 # Distributed under the terms of the GNU General Public License v2
 
 shopt -s extdebug
-source "${PKGCORE_EBD_PATH}"/exit-handling.lib || { echo "failed loading libs"; exit -127; }
+source "${PKGCORE_EBD_PATH}"/exit-handling.bash || { echo "failed loading libs"; exit -127; }
 
-source "${PKGCORE_EBD_PATH}"/isolated-functions.lib || {
-	echo "failed sourcing isolated-functions.lib"
+source "${PKGCORE_EBD_PATH}"/isolated-functions.bash || {
+	echo "failed sourcing isolated-functions.bash"
 	exit -1
 }
 

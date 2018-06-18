@@ -17,7 +17,7 @@ source "${PKGCORE_EBD_ENV}" || {
 	exit -127
 }
 
-source "${PKGCORE_EBD_PATH}"/exit-handling.lib || {
+source "${PKGCORE_EBD_PATH}"/exit-handling.bash || {
 	echo "failed to load exit-handling library: PKGCORE_EBD_PATH=${PKGCORE_EBD_PATH}" >&2
 	exit -127
 }
@@ -26,12 +26,12 @@ if [[ $# -lt 1 ]]; then
 	die "ebuild-helper invoked without a target helper; no args given."
 fi
 
-source "${PKGCORE_EBD_PATH}"/isolated-functions.lib || \
-	die "failed to load isolated-functions.lib"
-source "${PKGCORE_EBD_PATH}"/eapi/depend.lib >&2 || \
-	die "failed sourcing eapi/depend.lib"
-source "${PKGCORE_EBD_PATH}"/eapi/common.lib >&2 || \
-	die "failed sourcing eapi/common.lib"
+source "${PKGCORE_EBD_PATH}"/isolated-functions.bash || \
+	die "failed to load isolated-functions.bash"
+source "${PKGCORE_EBD_PATH}"/eapi/depend.bash >&2 || \
+	die "failed sourcing eapi/depend.bash"
+source "${PKGCORE_EBD_PATH}"/eapi/common.bash >&2 || \
+	die "failed sourcing eapi/common.bash"
 
 failed=false
 _helper_issues=()

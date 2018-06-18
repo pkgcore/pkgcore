@@ -1,4 +1,4 @@
-# ebuild.lib; ebuild phase processing, env handling
+# ebuild phase processing, env handling
 # Copyright 2005-2012 Brian Harring <ferringb@gmail.com>: BSD/GPL2
 
 # general phase execution path- __execute_phases is called, which sets EBUILD_PHASE, and then
@@ -178,8 +178,8 @@ __load_eapi_libs() {
 	# rely on this setting the env up as necessary
 	# finally, update the filters with functionality loaded from here-
 	# always, always, *always* use our own functionality
-	source "${PKGCORE_EBD_PATH}"/eapi/common.lib || die "failed sourcing eapi/common.lib"
-	source "${PKGCORE_EBD_PATH}/eapi/${EAPI}.lib" || die "failed loading eapi/${EAPI}.lib"
+	source "${PKGCORE_EBD_PATH}"/eapi/common.bash || die "failed sourcing eapi/common.bash"
+	source "${PKGCORE_EBD_PATH}/eapi/${EAPI}.bash" || die "failed loading eapi/${EAPI}.bash"
 
 	# override banned functions
 	local func
@@ -314,9 +314,9 @@ __load_ebuild() {
 
 # short version. think these should be sourced via at the daemon's choice, rather then defacto.
 # note that exit-handling loads the die functions, thus the custom failure there.
-source "${PKGCORE_EBD_PATH}"/exit-handling.lib >&2 || { echo "ERROR: failed sourcing exit-handling.lib"; exit -1; }
-source "${PKGCORE_EBD_PATH}"/ebuild-default-functions.lib >&2 || die "failed sourcing ebuild-default-functions.lib"
-source "${PKGCORE_EBD_PATH}"/ebuild-env-utils.lib >&2 || die "failed sourcing ebuild-env-utils.lib"
+source "${PKGCORE_EBD_PATH}"/exit-handling.bash >&2 || { echo "ERROR: failed sourcing exit-handling.bash"; exit -1; }
+source "${PKGCORE_EBD_PATH}"/ebuild-default-functions.bash >&2 || die "failed sourcing ebuild-default-functions.bash"
+source "${PKGCORE_EBD_PATH}"/ebuild-env-utils.bash >&2 || die "failed sourcing ebuild-env-utils.bash"
 
 __run_ebuild_phase() {
 	[[ ${PKGCORE_DEBUG} -ge 2 ]] && set -x

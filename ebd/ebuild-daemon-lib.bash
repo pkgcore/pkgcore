@@ -1,4 +1,4 @@
-# ebuild-daemon.lib; daemon lib code.
+# ebuild daemon lib code
 # Copyright 2005-2012 Brian Harring <ferringb@gmail.com>
 # License BSD/GPL2
 

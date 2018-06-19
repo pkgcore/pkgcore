@@ -324,16 +324,15 @@ class EbuildProcessor(object):
             "PKGCORE_EBD_WRITE_FD": str(max_fd-3)})
 
         # allow any pipe overrides except the ones we use to communicate
-        default_pipes = {0: 0, 1: 1, 2: 2}
-        fd_pipes.update({k: v for k, v in default_pipes.items() if k not in fd_pipes})
-        ebd_pipes = {max_fd-4: cread, max_fd-3: dwrite}
-        fd_pipes.update(ebd_pipes)
+        ebd_pipes = {0: 0, 1: 1, 2: 2}
+        ebd_pipes.update(self._fd_pipes)
+        ebd_pipes.update({max_fd-4: cread, max_fd-3: dwrite})
 
         # pgid=0: Each ebuild processor is the process group leader for all its
         # spawned children so everything can be terminated easily if necessary.
         self.pid = spawn_func(
             [spawn.BASH_BINARY, self.ebd, "daemonize"],
-            fd_pipes=fd_pipes, returnpid=True, env=env, pgid=0, *args, **spawn_opts)[0]
+            fd_pipes=ebd_pipes, returnpid=True, env=env, pgid=0, *args, **spawn_opts)[0]
 
         os.close(cread)
         os.close(dwrite)

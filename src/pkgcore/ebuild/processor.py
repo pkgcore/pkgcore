@@ -119,18 +119,19 @@ def request_ebuild_processor(userpriv=False, sandbox=None, fd_pipes=None):
     if sandbox is None:
         sandbox = spawn.is_sandbox_capable()
 
-    for x in inactive_ebp_list:
-        if x.userprived() == userpriv and (x.sandboxed() or not sandbox):
-            if not x.is_alive:
-                inactive_ebp_list.remove(x)
+    for ebp in inactive_ebp_list:
+        if ebp.userprived() == userpriv and (ebp.sandboxed() or not sandbox):
+            if not ebp.is_alive:
+                inactive_ebp_list.remove(ebp)
                 continue
-            inactive_ebp_list.remove(x)
-            active_ebp_list.append(x)
-            return x
+            inactive_ebp_list.remove(ebp)
+            active_ebp_list.append(ebp)
+            break
+    else:
+        ebp = EbuildProcessor(userpriv, sandbox, fd_pipes=fd_pipes)
+        active_ebp_list.append(ebp)
 
-    e = EbuildProcessor(userpriv, sandbox, fd_pipes=fd_pipes)
-    active_ebp_list.append(e)
-    return e
+    return ebp
 
 
 @_single_thread_allowed

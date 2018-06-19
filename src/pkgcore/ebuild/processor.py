@@ -153,8 +153,9 @@ def release_ebuild_processor(ebp):
         return False
 
     assert ebp not in inactive_ebp_list
-    if ebp.locked:
-        # ok, so the thing is not reusable either way.
+    # We can't reuse processors that use custom fd mappings or are locked on
+    # release for one reason or another.
+    if ebp.locked or ebp._fd_pipes:
         ebp.shutdown_processor()
     else:
         inactive_ebp_list.append(ebp)
@@ -279,8 +280,7 @@ class EbuildProcessor(object):
         dread, dwrite = os.pipe()
         self.__sandbox = False
 
-        if fd_pipes is None:
-            fd_pipes = {}
+        self._fd_pipes = fd_pipes if fd_pipes is not None else {}
 
         # since it's questionable which spawn method we'll use (if
         # sandbox fex), we ensure the bashrc is invalid.

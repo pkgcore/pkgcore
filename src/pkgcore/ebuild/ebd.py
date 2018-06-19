@@ -890,7 +890,8 @@ class ebuild_mixin(object):
                 if not observer._verbose:
                     fd_pipes = {1: f.fileno(), 2: f.fileno()}
                 ret = run_generic_phase(
-                    pkg, "pretend", env, fd_pipes=fd_pipes, userpriv=True, sandbox=True, extra_handlers=commands)
+                    pkg, "pretend", env, fd_pipes=fd_pipes, userpriv=True,
+                    sandbox=True, extra_handlers=commands)
             logger.debug(
                 "pkg_pretend sanity check for %s took %2.2f seconds",
                 pkg.cpvstr, time.time() - start)

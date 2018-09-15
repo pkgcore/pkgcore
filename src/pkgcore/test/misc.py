@@ -179,7 +179,7 @@ def convert_range(text, tag, slot):
     op = text[:i]
     text = text[i:]
     range = ops[op]
-    slot = f' slot="{slot}"'
+    slot = f' slot="{slot}"' if slot else ''
     return f'<{tag} range="{range}"{slot}>{text}</{tag}>'
 
 

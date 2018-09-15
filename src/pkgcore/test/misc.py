@@ -172,14 +172,15 @@ ops.update(('~' + k, 'r' + v) for k, v in list(ops.items()))
 ops['='] = 'eq'
 
 
-def convert_range(text, tag):
+def convert_range(text, tag, slot):
     i = 0
     while text[i] in "><=~":
         i += 1
     op = text[:i]
     text = text[i:]
     range = ops[op]
-    return '<%s range="%s">%s</%s>' % (tag, range, text, tag)
+    slot = f' slot="{slot}"'
+    return f'<{tag} range="{range}"{slot}>{text}</{tag}>'
 
 
 def mk_glsa(*pkgs, **kwds):
@@ -189,13 +190,17 @@ def mk_glsa(*pkgs, **kwds):
     id = str(id)
     horked = ''
     for data in pkgs:
-        if len(data) == 3:
+        if len(data) == 4:
+            pkg, slot, ranges, arch = data
+        elif len(data) == 3:
             pkg, ranges, arch = data
+            slot = ''
         else:
             pkg, ranges = data
+            slot = ''
             arch = '*'
         horked += '<package name="%s" auto="yes" arch="%s">%s%s\n</package>' \
             % (pkg, arch,
-                '\n'.join(convert_range(x, 'unaffected') for x in ranges[0]),
-                '\n'.join(convert_range(x, 'vulnerable') for x in ranges[1]))
+                '\n'.join(convert_range(x, 'unaffected', slot) for x in ranges[0]),
+                '\n'.join(convert_range(x, 'vulnerable', slot) for x in ranges[1]))
     return glsa_template % (id, id, horked)

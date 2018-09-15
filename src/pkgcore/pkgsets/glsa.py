@@ -146,6 +146,7 @@ class GlsaDirSet(object, metaclass=generic_equality):
 
     def generate_restrict_from_range(self, node, negate=False):
         op = str(node.get("range").strip())
+        slot = str(node.get("slot", "").strip())
         base = str(node.text.strip())
         glob = base.endswith("*")
         if glob:
@@ -157,6 +158,7 @@ class GlsaDirSet(object, metaclass=generic_equality):
                 raise ValueError(f"glob cannot be used with {op} ops")
             return packages.PackageRestriction(
                 "fullver", values.StrGlobMatch(base.fullver))
+        restrictions = []
         if op.startswith("r"):
             if not base.revision:
                 if op == "rlt": # rlt -r0 can never match
@@ -168,13 +170,14 @@ class GlsaDirSet(object, metaclass=generic_equality):
                     return atom_restricts.VersionMatch("=", base.version, negate=negate)
                 elif op == "rge": # rge -r0 -> ~
                     return atom_restricts.VersionMatch("~", base.version, negate=negate)
-                # rgt -r0 passes through to regular ~ + >
-            return packages.AndRestriction(
-                atom_restricts.VersionMatch("~", base.version),
-                atom_restricts.VersionMatch(restrict, base.version, rev=base.revision),
-                negate=negate)
-        return atom_restricts.VersionMatch(
-            restrict, base.version, rev=base.revision, negate=negate)
+            # rgt -r0 passes through to regular ~ + >
+            restrictions.append(atom_restricts.VersionMatch("~", base.version))
+        restrictions.append(
+            atom_restricts.VersionMatch(restrict, base.version, rev=base.revision),
+        )
+        if slot:
+            restrictions.append(atom_restricts.SlotDep(slot))
+        return packages.AndRestriction(*restrictions, negate=negate)
 
 
 def find_vulnerable_repo_pkgs(glsa_src, repo, grouped=False, arch=None):

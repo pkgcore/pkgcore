@@ -6,17 +6,16 @@ from snakeoil.osutils import pjoin
 from snakeoil.test import TestCase
 from snakeoil.test.mixins import TempDirMixin
 
-from pkgcore.ebuild import cpv
+from pkgcore.ebuild import atom, cpv
 from pkgcore.pkgsets import glsa
 from pkgcore.restrictions.packages import OrRestriction
 from pkgcore.restrictions.restriction import AlwaysBool
 from pkgcore.test.misc import mk_glsa
 
 pkgs_set = (
-    (("dev-util/diffball", ([], ["~>=0.7-r1"]))
-    ),
-    (("dev-util/bsdiff", ([">=2"], [">1"]))
-    ))
+    ("dev-util/diffball", ([], ["~>=0.7-r1"])),
+    ("dev-util/bsdiff", ([">=2"], [">1"])),
+)
 
 
 class TestGlsaDirSet(TempDirMixin, TestCase):
@@ -93,3 +92,20 @@ class TestGlsaDirSet(TempDirMixin, TestCase):
             ("0", "1", "1.1", "2", "2-r1")]
         self.assertEqual([x.fullver for x in pkgs if r.match(x)],
             ["1.1", "2-r1"])
+
+    def test_slots(self):
+        slotted_pkgs_set = pkgs_set + (
+            ("dev-util/pkgcheck", '1', ([">=2"], [">1"]), '*'),
+        )
+        self.mk_glsa(slotted_pkgs_set)
+        g = glsa.GlsaDirSet(self.dir)
+        l = list(g)
+        self.assertEqual(set(x.key for x in l),
+            set(['dev-util/diffball', 'dev-util/bsdiff', 'dev-util/pkgcheck']))
+        restrict = OrRestriction(*tuple(glsa.GlsaDirSet(self.dir)))
+        self.assertTrue(restrict.match(atom.atom('=dev-util/pkgcheck-1-r1:1')))
+        self.assertFalse(restrict.match(atom.atom('=dev-util/pkgcheck-1:1')))
+        self.assertFalse(restrict.match(atom.atom('=dev-util/pkgcheck-2:1')))
+        self.assertFalse(restrict.match(atom.atom('=dev-util/pkgcheck-1:0')))
+        self.assertFalse(restrict.match(atom.atom('dev-util/pkgcheck:0')))
+        self.assertFalse(restrict.match(atom.atom('dev-util/pkgcheck')))

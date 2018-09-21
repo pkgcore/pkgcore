@@ -95,25 +95,24 @@ class BaseTest(TestCase):
     def test_basics(self):
         self.cache = self.get_db()
         self.cache['spork'] = {'foo':'bar'}
-        self.assertEqual({'foo': 'bar'}, self.cache['spork'])
+        assert {'foo': 'bar'} == self.cache['spork']
         self.assertRaises(KeyError, operator.getitem, self.cache, 'notaspork')
 
         self.cache['spork'] = {'foo': 42}
         self.cache['foon'] = {'foo': 42}
-        self.assertEqual({'foo': 42}, self.cache['spork'])
-        self.assertEqual({'foo': 42}, self.cache['foon'])
+        assert {'foo': 42} == self.cache['spork']
+        assert {'foo': 42} == self.cache['foon']
 
-        self.assertEqual(['foon', 'spork'], sorted(self.cache.keys()))
-        self.assertEqual([('foon', {'foo': 42}), ('spork', {'foo': 42})],
-                          sorted(self.cache.items()))
+        assert ['foon', 'spork'] == sorted(self.cache.keys())
+        assert [('foon', {'foo': 42}), ('spork', {'foo': 42})] == sorted(self.cache.items())
         del self.cache['foon']
         self.assertRaises(KeyError, operator.getitem, self.cache, 'foon')
 
-        self.assertTrue('spork' in self.cache)
-        self.assertFalse('foon' in self.cache)
+        assert 'spork' in self.cache
+        assert 'foon' not in self.cache
 
         self.cache['empty'] = {'foo': ''}
-        self.assertEqual({}, self.cache['empty'])
+        assert {} == self.cache['empty']
 
     def test_eclasses(self):
         self.cache = self.get_db()
@@ -125,11 +124,9 @@ class BaseTest(TestCase):
 
         self.cache['spork'] = {'_eclasses_': {'spork': _mk_chf_obj(mtime=1),
                                               'foon': _mk_chf_obj(mtime=2)}}
-        self.assertIn(self.cache._data['spork']['_eclasses_'], [
-                'spork\t1\tfoon\t2',
-                'foon\t2\tspork\t1'])
-        self.assertEqual(
-            sorted([('foon', (('mtime', 2),)), ('spork', (('mtime', 1),))]),
+        assert self.cache._data['spork']['_eclasses_'] in ['spork\t1\tfoon\t2', 'foon\t2\tspork\t1']
+        assert (
+            sorted([('foon', (('mtime', 2),)), ('spork', (('mtime', 1),))]) ==
             sorted(self.cache['spork']['_eclasses_']))
 
     def test_readonly(self):
@@ -141,18 +138,18 @@ class BaseTest(TestCase):
                           operator.delitem, cache, 'spork')
         self.assertRaises(errors.ReadOnly,
                           operator.setitem, cache, 'spork', {'foo': 42})
-        self.assertEqual({'foo': 'bar'}, cache['spork'])
+        assert {'foo': 'bar'} == cache['spork']
 
     def test_clear(self):
         cache = self.get_db()
         cache['spork'] = {'foo':'bar'}
-        self.assertEqual({'foo':'bar'}, cache['spork'])
-        self.assertEqual(list(cache), ['spork'])
+        assert {'foo':'bar'} == cache['spork']
+        assert list(cache) == ['spork']
         cache['dork'] = {'foo':'bar2'}
         cache['dork2'] = {'foo':'bar2'}
-        self.assertEqual(list(sorted(cache)), sorted(['dork', 'dork2', 'spork']))
+        assert list(sorted(cache)) == sorted(['dork', 'dork2', 'spork'])
         cache.clear()
-        self.assertEqual(list(cache), [])
+        assert list(cache) == []
 
     def test_sync_rate(self):
         db = self.get_db()
@@ -168,21 +165,21 @@ class BaseTest(TestCase):
 
         db.set_sync_rate(2)
         db["dar"] = {"foo":"blah"}
-        self.assertFalse(tracker)
+        assert not tracker
         db["dar2"] = {"foo":"blah"}
-        self.assertLen(tracker, 1)
-        self.assertEqual(sorted(db), ["dar", "dar2"])
+        assert len(tracker) == 1
+        assert sorted(db) == ["dar", "dar2"]
         db["dar3"] = {"foo":"blah"}
-        self.assertLen(tracker, 1)
+        assert len(tracker) == 1
 
         # finally ensure sync_rate(1) behaves
         db.set_sync_rate(1)
         # ensure it doesn't flush just for fiddling w/ sync rate
-        self.assertLen(tracker, 1)
+        assert len(tracker) == 1
         db["dar4"] = {"foo":"blah"}
-        self.assertLen(tracker, 2)
+        assert len(tracker) == 2
         db["dar5"] = {"foo":"blah"}
-        self.assertLen(tracker, 3)
+        assert len(tracker) == 3
 
 
 class TestBulk(BaseTest):
@@ -195,4 +192,4 @@ class TestBulk(BaseTest):
         db = self.get_db()
         # write a key outside of known keys
         db["dar"] = {"foo2":"dar"}
-        self.assertEqual(list(db["dar"].items()), [])
+        assert list(db["dar"].items()) == []

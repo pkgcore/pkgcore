@@ -78,14 +78,10 @@ class StrRegexTest(TestRestriction):
         self.assertMatches(self.kls('foo', False), 'FoO', ['fOo']*3)
 
     def test_str(self):
-        self.assertEqual('search spork', str(self.kls('spork')))
-        self.assertEqual('not search spork',
-                          str(self.kls('spork', negate=True)))
-        self.assertEqual('match spork',
-                          str(self.kls('spork', match=True)))
-        self.assertEqual('not match spork',
-                          str(self.kls('spork',
-                                              match=True, negate=True)))
+        assert 'search spork' == str(self.kls('spork'))
+        assert 'not search spork' == str(self.kls('spork', negate=True))
+        assert 'match spork' == str(self.kls('spork', match=True))
+        assert 'not match spork' == str(self.kls('spork', match=True, negate=True))
 
     def test_repr(self):
         for restr, string in [
@@ -142,18 +138,12 @@ class native_TestStrExactMatch(TestRestriction):
 
     def test__eq__(self):
         for negate in (True, False):
-            self.assertEqual(
-                self.kls("rsync", negate=negate),
-                self.kls("rsync", negate=negate))
+            assert self.kls("rsync", negate=negate) == self.kls("rsync", negate=negate)
             for x in "Ca":
-                self.assertNotEqual(
-                    self.kls("rsync", negate=negate),
-                    self.kls("rsyn"+x, negate=negate))
-            self.assertEqual(
-                self.kls(
-                    "Rsync", case_sensitive=False, negate=negate),
-                self.kls(
-                    "rsync", case_sensitive=False, negate=negate))
+                assert self.kls("rsync", negate=negate) != self.kls("rsyn"+x, negate=negate)
+            assert (
+                self.kls("Rsync", case_sensitive=False, negate=negate) ==
+                self.kls("rsync", case_sensitive=False, negate=negate))
 
 
 class cpy_TestStrExactMatch(native_TestStrExactMatch):
@@ -212,9 +202,7 @@ class TestStrGlobMatch(TestRestriction):
             self.kls("rsync", prefix=False) ==
             self.kls("rsync", prefix=True))
         for negate in (True, False):
-            self.assertEqual(
-                self.kls("rsync", negate=negate),
-                self.kls("rsync", negate=negate))
+            assert self.kls("rsync", negate=negate) == self.kls("rsync", negate=negate)
             for x in "Ca":
                 self.assertNotEqual(
                     self.kls("rsync", negate=negate),
@@ -251,9 +239,7 @@ class TestEqualityMatch(TestRestriction):
 
     def test__eq__(self):
         for negate in (True, False):
-            self.assertEqual(
-                self.kls("asdf", negate=negate),
-                self.kls("asdf", negate=negate))
+            assert self.kls("asdf", negate=negate) == self.kls("asdf", negate=negate)
             self.assertNotEqual(
                 self.kls(1, negate=negate),
                 self.kls(2, negate=negate))
@@ -264,12 +250,12 @@ class TestEqualityMatch(TestRestriction):
     def test__hash__(self):
         def f(*args, **kwds):
             return hash(self.kls(*args, **kwds))
-        self.assertEqual(f("dar"), f("dar"))
-        self.assertEqual(f("dar"), f("dar", negate=False))
-        self.assertNotEqual(f("dar", negate=True), f("dar", negate=False))
-        self.assertEqual(f("dar", negate=True), f("dar", negate=True))
-        self.assertNotEqual(f("dar"), f("dar2"))
-        self.assertNotEqual(f("dar", negate=True), f("dar2"))
+        assert f("dar") == f("dar")
+        assert f("dar") == f("dar", negate=False)
+        assert f("dar", negate=True) != f("dar", negate=False)
+        assert f("dar", negate=True) == f("dar", negate=True)
+        assert f("dar") != f("dar2")
+        assert f("dar", negate=True) != f("dar2")
 
 
 class TestContainmentMatch(TestRestriction):
@@ -303,20 +289,19 @@ class TestContainmentMatch(TestRestriction):
 
     def test__eq__(self):
         for negate in (True, False):
-            self.assertEqual(
+            assert (
+                self.kls(negate=negate, *range(100)) ==
                 self.kls(negate=negate, *range(100)),
-                self.kls(negate=negate, *range(100)),
-                msg="range(100), negate=%s" % negate)
-            self.assertNotEqual(self.kls(1, negate=not negate),
-                self.kls(1, negate=negate))
-            self.assertEqual(
-                self.kls(1, 2, 3, all=True, negate=negate),
+                f"range(100), negate={negate}")
+            assert self.kls(1, negate=not negate) != self.kls(1, negate=negate)
+            assert (
+                self.kls(1, 2, 3, all=True, negate=negate) ==
                 self.kls(1, 2, 3, all=True, negate=negate))
-            self.assertNotEqual(
-                self.kls(1, 2, all=True, negate=negate),
+            assert (
+                self.kls(1, 2, all=True, negate=negate) !=
                 self.kls(1, 2, 3, all=True, negate=negate))
-            self.assertNotEqual(
-                self.kls(1, 2, 3, all=False, negate=negate),
+            assert (
+                self.kls(1, 2, 3, all=False, negate=negate) !=
                 self.kls(1, 2, 3, all=True, negate=negate))
 
 
@@ -327,8 +312,8 @@ class FlatteningRestrictionTest(TestCase):
             inst = values.FlatteningRestriction(
                 tuple, values.AnyMatch(values.EqualityMatch(None)),
                 negate=negate)
-            self.assertEqual(not negate, inst.match([7, 8, [9, None]]))
-            self.assertEqual(negate, inst.match([7, 8, (9, None)]))
+            assert not negate == inst.match([7, 8, [9, None]])
+            assert negate == inst.match([7, 8, (9, None)])
             # Just check this does not raise
             self.assertTrue(str(inst))
             self.assertTrue(repr(inst))
@@ -346,12 +331,12 @@ class FunctionRestrictionTest(TestCase):
         for negate in (False, True):
             yes_restrict = values.FunctionRestriction(yes, negate=negate)
             no_restrict = values.FunctionRestriction(no, negate=negate)
-            self.assertEqual(not negate, yes_restrict.match(7))
-            self.assertEqual(negate, no_restrict.match(7))
+            assert not negate == yes_restrict.match(7)
+            assert negate == no_restrict.match(7)
             for restrict in yes_restrict, no_restrict:
                 # Just check this does not raise
-                self.assertTrue(str(restrict))
-                self.assertTrue(repr(restrict))
+                assert str(restrict)
+                assert repr(restrict)
 
 
 class AnyMatchTest(TestCase):
@@ -360,5 +345,5 @@ class AnyMatchTest(TestCase):
 
     def test_force(self):
         restrict = values.AnyMatch(values.AlwaysTrue)
-        self.assertTrue(restrict.force_True(None, None, list(range(2))))
-        self.assertFalse(restrict.force_False(None, None, list(range(2))))
+        assert restrict.force_True(None, None, list(range(2)))
+        assert not restrict.force_False(None, None, list(range(2)))

@@ -46,12 +46,9 @@ class base(object):
 
     def test_change_restrictions(self):
         base = self.kls(true, false)
-        self.assertEqual(self.kls(false, true),
-            base.change_restrictions(false, true))
-        self.assertNotEqual(self.kls(false, true),
-            base.change_restrictions(false, true, negate=True))
-        self.assertEqual(self.kls(false, true, negate=True),
-            base.change_restrictions(false, true, negate=True))
+        assert self.kls(false, true) == base.change_restrictions(false, true)
+        assert self.kls(false, true) != base.change_restrictions(false, true, negate=True)
+        assert self.kls(false, true, negate=True) == base.change_restrictions(false, true, negate=True)
 
     def test_add_restriction(self):
         self.assertRaises(TypeError,
@@ -60,7 +57,7 @@ class base(object):
             self.kls(node_type='foon').add_restriction, false)
         k = self.kls(finalize=False)
         k.add_restriction(false)
-        self.assertEqual(k.restrictions, [false])
+        assert k.restrictions == [false]
 
     # TODO total_len? what does it do?
 
@@ -70,8 +67,8 @@ class BaseTest(base, TestCase):
 
     def test_base(self):
         base = self.kls(true, false, node_type='foo')
-        self.assertEqual(len(base), 2)
-        self.assertEqual(list(base), [true, false])
+        assert len(base) == 2
+        assert list(base) == [true, false]
         self.assertRaises(NotImplementedError, base.match, false)
         # TODO is the signature for these correct?
         self.assertRaises(NotImplementedError, base.force_False, false)
@@ -85,55 +82,33 @@ class AndRestrictionTest(base, TestCase):
     kls = boolean.AndRestriction
 
     def test_match(self):
-        self.assertTrue(self.kls(
-                true, true, node_type='foo').match(None))
-        self.assertFalse(self.kls(
-                false, true, true, node_type='foo').match(None))
-        self.assertFalse(self.kls(
-                true, false, true, node_type='foo').match(None))
+        assert self.kls(true, true, node_type='foo').match(None)
+        assert not self.kls(false, true, true, node_type='foo').match(None)
+        assert not self.kls(true, false, true, node_type='foo').match(None)
 
     def test_negate_match(self):
-        self.assertTrue(
-            self.kls(false, true,
-                node_type='foo', negate=True).match(None))
-        self.assertTrue(
-            self.kls(true, false,
-                node_type='foo', negate=True).match(None))
-        self.assertTrue(
-            self.kls(false, false,
-                node_type='foo', negate=True).match(None))
-        self.assertFalse(
-            self.kls(true, true,
-                node_type='foo', negate=True).match(None))
+        assert self.kls(false, true, node_type='foo', negate=True).match(None)
+        assert self.kls(true, false, node_type='foo', negate=True).match(None)
+        assert self.kls(false, false, node_type='foo', negate=True).match(None)
+        assert not self.kls(true, true, node_type='foo', negate=True).match(None)
 
     def test_dnf_solutions(self):
-        self.assertEqual(
-            self.kls(true, true).dnf_solutions(), [[true, true]])
-        self.assertEqual(
-            self.kls(
-                self.kls(true, true), true).dnf_solutions(),
-            [[true, true, true]])
-        self.assertEqual(
-            list(map(set, self.kls(
+        assert self.kls(true, true).dnf_solutions() == [[true, true]]
+        assert self.kls(self.kls(true, true), true).dnf_solutions() == [[true, true, true]]
+        assert (list(map(set, self.kls(
                     true, true,
-                    boolean.OrRestriction(false, true)).dnf_solutions())),
+                    boolean.OrRestriction(false, true)).dnf_solutions())) ==
             [set([true, true, false]), set([true, true, true])])
-        self.assertEqual(self.kls().dnf_solutions(), [[]])
+        assert self.kls().dnf_solutions() == [[]]
 
     def test_cnf_solutions(self):
-        self.assertEqual(
-            self.kls(true, true).cnf_solutions(),
-            [[true], [true]])
-        self.assertEqual(
-            self.kls(
-                self.kls(true, true), true).cnf_solutions(),
-            [[true], [true], [true]])
-        self.assertEqual(
-            list(self.kls(
+        assert self.kls(true, true).cnf_solutions() == [[true], [true]]
+        assert self.kls(self.kls(true, true), true).cnf_solutions() == [[true], [true], [true]]
+        assert (list(self.kls(
                     true, true,
-                    boolean.OrRestriction(false, true)).cnf_solutions()),
+                    boolean.OrRestriction(false, true)).cnf_solutions()) ==
             list([[true], [true], [false, true]]))
-        self.assertEqual(self.kls().cnf_solutions(), [])
+        assert self.kls().cnf_solutions() == []
 
 
 class OrRestrictionTest(base, TestCase):
@@ -141,60 +116,44 @@ class OrRestrictionTest(base, TestCase):
     kls = boolean.OrRestriction
 
     def test_match(self):
-        self.assertTrue(self.kls(
-                true, true, node_type='foo').match(None))
-        self.assertTrue(self.kls(
-                false, true, false, node_type='foo').match(None))
-        self.assertTrue(self.kls(
-                true, false, false, node_type='foo').match(None))
-        self.assertTrue(self.kls(
-                false, false, true, node_type='foo').match(None))
-        self.assertFalse(self.kls(
-                false, false, node_type='foo').match(None))
+        assert self.kls(true, true, node_type='foo').match(None)
+        assert self.kls(false, true, false, node_type='foo').match(None)
+        assert self.kls(true, false, false, node_type='foo').match(None)
+        assert self.kls(false, false, true, node_type='foo').match(None)
+        assert not self.kls(false, false, node_type='foo').match(None)
 
     def test_negate_match(self):
         for x in ((true, false), (false, true), (true, true)):
-            self.assertFalse(self.kls(
-                    node_type='foo', negate=True, *x).match(None))
-        self.assertTrue(self.kls(
-                false, false, node_type='foo', negate=True).match(None))
+            assert not self.kls(node_type='foo', negate=True, *x).match(None)
+        assert self.kls(false, false, node_type='foo', negate=True).match(None)
 
     def test_dnf_solutions(self):
-        self.assertEqual(
-            self.kls(true, true).dnf_solutions(),
-            [[true], [true]])
-        self.assertEqual(
-            list(map(set, self.kls(
+        assert self.kls(true, true).dnf_solutions() == [[true], [true]]
+        assert (list(map(set, self.kls(
                     true, true,
-                    boolean.AndRestriction(false, true)).dnf_solutions())),
+                    boolean.AndRestriction(false, true)).dnf_solutions())) ==
             list(map(set, [[true], [true], [false, true]])))
-        self.assertEqual(
-            self.kls(
-                self.kls(true, false), true).dnf_solutions(),
-            [[true], [false], [true]])
-        self.assertEqual(self.kls().dnf_solutions(), [[]])
+        assert self.kls(self.kls(true, false), true).dnf_solutions() == [[true], [false], [true]]
+        assert self.kls().dnf_solutions() == [[]]
 
     def test_cnf_solutions(self):
-        self.assertEqual(
-            self.kls(true, true).cnf_solutions(), [[true, true]])
-        self.assertEqual(
-            [set(x) for x in self.kls(
+        assert self.kls(true, true).cnf_solutions() == [[true, true]]
+        assert ([set(x) for x in self.kls(
                     true, true,
-                    boolean.AndRestriction(false, true)).cnf_solutions()],
+                    boolean.AndRestriction(false, true)).cnf_solutions()] ==
             [set(x) for x in [[true, false], [true, true]]])
 
-        self.assertEqual(
-            [set(x) for x in self.kls(self.kls(
+        assert ([set(x) for x in self.kls(self.kls(
                         true, true,
-                        boolean.AndRestriction(false, true))).cnf_solutions()],
+                        boolean.AndRestriction(false, true))).cnf_solutions()] ==
             [set(x) for x in [[true, false], [true, true]]])
 
-        self.assertEqual(
-            set(self.kls(
+        assert (set(self.kls(
                     self.kls(true, false),
-                    true).cnf_solutions()[0]),
+                    true).cnf_solutions()[0]) ==
             set([true, false, true]))
-        self.assertEqual(self.kls().cnf_solutions(), [])
+
+        assert self.kls().cnf_solutions() == []
 
 
 class JustOneRestrictionTest(base, TestCase):
@@ -202,13 +161,8 @@ class JustOneRestrictionTest(base, TestCase):
     kls = boolean.JustOneRestriction
 
     def test_match(self):
-        self.assertTrue(self.kls(
-                true, false, node_type='foo').match(None))
-        self.assertTrue(self.kls(
-                false, true, false, node_type='foo').match(None))
-        self.assertFalse(self.kls(
-                false, false,  node_type='foo').match(None))
-        self.assertFalse(self.kls(
-                true, false, true, node_type='foo').match(None))
-        self.assertFalse(self.kls(
-                true, true, true, node_type='foo').match(None))
+        assert self.kls(true, false, node_type='foo').match(None)
+        assert self.kls(false, true, false, node_type='foo').match(None)
+        assert not self.kls(false, false,  node_type='foo').match(None)
+        assert not self.kls(true, false, true, node_type='foo').match(None)
+        assert not self.kls(true, true, true, node_type='foo').match(None)

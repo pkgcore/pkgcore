@@ -18,12 +18,12 @@ class MatchTest(TestCase):
         parser = parserestrict.comma_separated_containment('utensil')
         restrict = parser('spork,foon')
         # Icky, should really try to match a fake package.
-        self.assertInstance(restrict, packages.PackageRestriction)
-        self.assertEqual('utensil', restrict.attr)
+        assert isinstance(restrict, packages.PackageRestriction)
+        assert 'utensil' == restrict.attr
         valrestrict = restrict.restriction
-        self.assertTrue(valrestrict.match(('foon',)))
-        self.assertFalse(valrestrict.match(('spork,foon',)))
-        self.assertFalse(valrestrict.match(('foo',)))
+        assert valrestrict.match(('foon',))
+        assert not valrestrict.match(('spork,foon',))
+        assert not valrestrict.match(('foo',))
 
 
 class TestExtendedRestrictionGeneration(TestCase):
@@ -34,11 +34,11 @@ class TestExtendedRestrictionGeneration(TestCase):
             msg="got %r, expected %r for %r" % (restrict, kls, token))
 
     def verify_text_glob(self, restrict, token):
-        self.assertInstance(restrict, values.StrRegex, token)
+        assert isinstance(restrict, values.StrRegex), token
 
     def verify_text(self, restrict, token):
-        self.assertInstance(restrict, values.StrExactMatch, token)
-        self.assertEqual(restrict.exact, token)
+        assert isinstance(restrict, values.StrExactMatch), token
+        assert restrict.exact == token
 
     def test_convert_glob(self):
         self.verify_text(parserestrict.convert_glob("diffball"), "diffball")
@@ -47,20 +47,16 @@ class TestExtendedRestrictionGeneration(TestCase):
 
         for token in ("*", ""):
             i = parserestrict.convert_glob(token)
-            self.assertEqual(
-                i, None,
-                msg="verifying None is returned on pointless restrictions,"
-                    " failed token: %r" % (token,))
+            assert i == None, (
+                f"verifying None is returned on pointless restrictions, failed token: {token}")
 
         self.assertRaises(
             parserestrict.ParseError, parserestrict.convert_glob, '**')
 
     def verify_restrict(self, restrict, attr, token):
-        self.assertInstance(restrict, packages.PackageRestriction, token)
-        self.assertEqual(
-            restrict.attr, attr,
-            msg="verifying package attr %r; required(%s), token %s" % (
-                restrict.attr, attr, token))
+        assert isinstance(restrict, packages.PackageRestriction), token
+        assert restrict.attr == attr, (
+            f"verifying package attr {restrict.attr}; required({attr}), token {token}")
 
         if "*" in token:
             self.verify_text_glob(restrict.restriction, token)
@@ -85,34 +81,32 @@ class TestExtendedRestrictionGeneration(TestCase):
     test_package = post_curry(generic_single_restrict_check, False)
 
     def test_combined(self):
-        self.assertInstance(
-            parserestrict.parse_match("dev-util/diffball"),
-            atom, "dev-util/diffball")
+        assert isinstance(parserestrict.parse_match("dev-util/diffball"), atom), "dev-util/diffball"
         for token in ("dev-*/util", "dev-*/util*", "dev-a/util*"):
             i = parserestrict.parse_match(token)
-            self.assertInstance(i, boolean.AndRestriction, token)
-            self.assertEqual(len(i), 2)
+            assert isinstance(i, boolean.AndRestriction), token
+            assert len(i) == 2
             self.verify_restrict(i[0], "category", token.split("/")[0])
             self.verify_restrict(i[1], "package", token.split("/")[1])
 
     def test_globs(self):
         for token in ("*", "*/*"):
             i = parserestrict.parse_match(token)
-            self.assertInstance(i, restriction.AlwaysBool, token)
-            self.assertEqual(len(i), 1)
+            assert isinstance(i, restriction.AlwaysBool), token
+            assert len(i) == 1
 
         for token in ("*::gentoo", "*/*::gentoo"):
             i = parserestrict.parse_match(token)
-            self.assertInstance(i, boolean.AndRestriction, token)
-            self.assertEqual(len(i), 2)
-            self.assertInstance(i[0], restricts.RepositoryDep, token.split("::")[1])
-            self.assertInstance(i[1], restriction.AlwaysBool, token.split("::")[0])
+            assert isinstance(i, boolean.AndRestriction), token
+            assert len(i) == 2
+            assert isinstance(i[0], restricts.RepositoryDep), token.split("::")[1]
+            assert isinstance(i[1], restriction.AlwaysBool), token.split("::")[0]
 
         for token in ("foo*::gentoo", "*foo::gentoo"):
             i = parserestrict.parse_match(token)
-            self.assertInstance(i, boolean.AndRestriction, token)
-            self.assertEqual(len(i), 2)
-            self.assertInstance(i[0], restricts.RepositoryDep, token.split("::")[1])
+            assert isinstance(i, boolean.AndRestriction), token
+            assert len(i) == 2
+            assert isinstance(i[0], restricts.RepositoryDep), token.split("::")[1]
             self.verify_restrict(i[1], "package", token.split("::")[0])
 
         for token, attr, n in (
@@ -120,9 +114,9 @@ class TestExtendedRestrictionGeneration(TestCase):
                 ('*/foo:5', 'package', 1),
                 ):
             i = parserestrict.parse_match(token)
-            self.assertInstance(i, boolean.AndRestriction, token)
-            self.assertEqual(len(i), 2)
-            self.assertInstance(i[0], restricts.SlotDep, token.split(":")[1])
+            assert isinstance(i, boolean.AndRestriction), token
+            assert len(i) == 2
+            assert isinstance(i[0], restricts.SlotDep), token.split(":")[1]
             self.verify_restrict(i[1], attr, token.split(":")[0].split("/")[n])
 
         for token, attr, n in (
@@ -130,11 +124,11 @@ class TestExtendedRestrictionGeneration(TestCase):
                 ('*/foo:5/5', 'package', 1),
                 ):
             i = parserestrict.parse_match(token)
-            self.assertInstance(i, boolean.AndRestriction, token)
-            self.assertEqual(len(i), 3)
+            assert isinstance(i, boolean.AndRestriction), token
+            assert len(i) == 3
             slot, _sep, subslot = token.split(":")[1].partition('/')
-            self.assertInstance(i[0], restricts.SlotDep, slot)
-            self.assertInstance(i[1], restricts.SubSlotDep, subslot)
+            assert isinstance(i[0], restricts.SlotDep), slot
+            assert isinstance(i[1], restricts.SubSlotDep), subslot
             self.verify_restrict(i[2], attr, token.split(":")[0].split("/")[n])
 
         for token, attr, n in (
@@ -142,9 +136,9 @@ class TestExtendedRestrictionGeneration(TestCase):
                 ("*/foo::gentoo", "package", 1),
                 ):
             i = parserestrict.parse_match(token)
-            self.assertInstance(i, boolean.AndRestriction, token)
-            self.assertEqual(len(i), 2)
-            self.assertInstance(i[0], restricts.RepositoryDep, token.split("::")[1])
+            assert isinstance(i, boolean.AndRestriction), token
+            assert len(i) == 2
+            assert isinstance(i[0], restricts.RepositoryDep), token.split("::")[1]
             self.verify_restrict(i[1], attr, token.split("::")[0].split("/")[n])
 
         for token, attr, n in (
@@ -152,44 +146,42 @@ class TestExtendedRestrictionGeneration(TestCase):
                 ('*/foo:5/5::gentoo', 'package', 1),
                 ):
             i = parserestrict.parse_match(token)
-            self.assertInstance(i, boolean.AndRestriction, token)
-            self.assertEqual(len(i), 4)
+            assert isinstance(i, boolean.AndRestriction), token
+            assert len(i) == 4
             token, repo_id = token.rsplit('::', 1)
-            self.assertInstance(i[0], restricts.RepositoryDep, repo_id)
+            assert isinstance(i[0], restricts.RepositoryDep), repo_id
             slot, _sep, subslot = token.split(":")[1].partition('/')
-            self.assertInstance(i[1], restricts.SlotDep, slot)
-            self.assertInstance(i[2], restricts.SubSlotDep, subslot)
+            assert isinstance(i[1], restricts.SlotDep), slot
+            assert isinstance(i[2], restricts.SubSlotDep), subslot
             self.verify_restrict(i[3], attr, token.split(":")[0].split("/")[n])
 
     def test_atom_globbed(self):
-        self.assertInstance(
-            parserestrict.parse_match("=sys-devel/gcc-4*"),
-            atom, "=sys-devel/gcc-4*")
+        assert isinstance(parserestrict.parse_match("=sys-devel/gcc-4*"), atom), "=sys-devel/gcc-4*"
 
     def test_use_atom(self):
         o = parserestrict.parse_match("net-misc/openssh[-X]")
-        self.assertInstance(o, atom, "net-misc/openssh[-X]")
-        self.assertTrue(o.use)
+        assert isinstance(o, atom), "net-misc/openssh[-X]"
+        assert o.use
 
     def test_slot_atom(self):
         o = parserestrict.parse_match("sys-devel/automake:1.6")
-        self.assertInstance(o, atom, "sys-devel/automake:1.6")
-        self.assertTrue(o.slot)
+        assert isinstance(o, atom), "sys-devel/automake:1.6"
+        assert o.slot
 
     def test_subslot_atom(self):
         o = parserestrict.parse_match("dev-libs/boost:0/1.54")
-        self.assertInstance(o, atom, "dev-libs/boost:0/1.54")
-        self.assertTrue(o.slot)
-        self.assertTrue(o.subslot)
+        assert isinstance(o, atom), "dev-libs/boost:0/1.54"
+        assert o.slot
+        assert o.subslot
 
     def test_subslot_package(self):
         token = 'boost:0/1.54'
         o = parserestrict.parse_match(token)
-        self.assertInstance(o, boolean.AndRestriction, token)
-        self.assertEqual(len(o), 3)
+        assert isinstance(o, boolean.AndRestriction), token
+        assert len(o) == 3
         slot, _sep, subslot = token.split(":")[1].partition('/')
-        self.assertInstance(o[0], restricts.SlotDep, slot)
-        self.assertInstance(o[1], restricts.SubSlotDep, subslot)
+        assert isinstance(o[0], restricts.SlotDep), slot
+        assert isinstance(o[1], restricts.SubSlotDep), subslot
         self.verify_restrict(o[2], "package", token.split(":")[0])
 
     def test_exceptions(self):
@@ -223,9 +215,7 @@ class ParsePVTest(TestCase):
                 ('spork-1', 'spork/spork-1'),
                 ('foon-3', 'foon/foon-3'),
                 ):
-            self.assertEqual(
-                output,
-                parserestrict.parse_pv(self.repo, input).cpvstr)
+            assert output == parserestrict.parse_pv(self.repo, input).cpvstr
         for bogus in (
                 'spork',
                 'foon-2',

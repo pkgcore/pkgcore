@@ -434,7 +434,7 @@ class EbuildProcessor(object):
     def _timeout_ebp(self, signum, frame):
         raise TimeoutError("ebp for pid '%i' appears dead, timing out" % self.pid)
 
-    def expect(self, want, async=False, flush=False, timeout=0):
+    def expect(self, want, async_req=False, flush=False, timeout=0):
         """Read from the daemon, check if the returned string is expected.
 
         :param want: string we're expecting
@@ -444,7 +444,7 @@ class EbuildProcessor(object):
             signal.signal(signal.SIGALRM, self._timeout_ebp)
             signal.setitimer(signal.ITIMER_REAL, timeout)
 
-        if async:
+        if async_req:
             self._outstanding_expects.append((flush, want))
             return True
         if flush:
@@ -530,7 +530,7 @@ class EbuildProcessor(object):
         self._preloaded_eclasses.clear()
         return True
 
-    def preload_eclasses(self, cache, async=False, limited_to=None):
+    def preload_eclasses(self, cache, async_req=False, limited_to=None):
         """Preload an eclass stack's eclasses into bash functions.
 
         Avoids the cost of going to disk on inherit. Preloading eutils
@@ -547,9 +547,9 @@ class EbuildProcessor(object):
             i = cache.eclasses.items()
         for eclass, data in i:
             if data.path != self._preloaded_eclasses.get(eclass):
-                if self._preload_eclass(data.path, async=True):
+                if self._preload_eclass(data.path, async_req=True):
                     self._preloaded_eclasses[eclass] = data.path
-        if not async:
+        if not async_req:
             return self._consume_async_expects()
         return True
 
@@ -560,7 +560,7 @@ class EbuildProcessor(object):
         self.clear_preloaded_eclasses()
         self._eclass_caching = False
 
-    def _preload_eclass(self, ec_file, async=False):
+    def _preload_eclass(self, ec_file, async_req=False):
         """Preload an eclass into a bash function.
 
         Avoids the cost of going to disk on inherit. Preloading eutils
@@ -574,7 +574,7 @@ class EbuildProcessor(object):
             logger.error("failed: %s", ec_file)
             return False
         self.write(f"preload_eclass {ec_file}")
-        if self.expect("preload_eclass succeeded", async=async, flush=True):
+        if self.expect("preload_eclass succeeded", async_req=async_req, flush=True):
             return True
         return False
 
@@ -679,7 +679,7 @@ class EbuildProcessor(object):
             env_str.append(f"export {' '.join(exported_data)}")
         return '\n'.join(env_str)
 
-    def send_env(self, env_dict, async=False, tmpdir=None):
+    def send_env(self, env_dict, async_req=False, tmpdir=None):
         """Transfer the ebuild's desired env (env_dict) to the running daemon.
 
         :type env_dict: mapping with string keys and values.
@@ -694,7 +694,7 @@ class EbuildProcessor(object):
         else:
             self.write(f"start_receiving_env bytes {len(data)}\n{data}")
         os.umask(old_umask)
-        return self.expect("env_received", async=async, flush=True)
+        return self.expect("env_received", async_req=async_req, flush=True)
 
     def set_logfile(self, logfile=''):
         """
@@ -750,7 +750,7 @@ class EbuildProcessor(object):
             raise Exception(val)
 
         if updates:
-            self.preload_eclasses(eclass_cache, limited_to=updates, async=True)
+            self.preload_eclasses(eclass_cache, limited_to=updates, async_req=True)
 
     def get_ebuild_environment(self, package_inst, eclass_cache):
         """Request a dump of the ebuild environ for a package.

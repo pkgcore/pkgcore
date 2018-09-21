@@ -13,9 +13,9 @@ import os
 from sys import intern
 
 from pkgcore.cache import errors as cache_errors
-from pkgcore.ebuild import conditionals
-from pkgcore.ebuild import processor
+from pkgcore.ebuild import conditionals, processor
 from pkgcore.ebuild.atom import atom
+from pkgcore.ebuild.misc import sort_keywords
 from pkgcore.package import errors as metadata_errors
 from pkgcore.package import metadata
 from pkgcore.package.errors import MissingChksum
@@ -247,10 +247,7 @@ class base(metadata.package):
     @property
     def sorted_keywords(self):
         """Sort keywords with prefix keywords after regular arches."""
-        def _sort_keywords(kw):
-            parts = tuple(reversed(kw.lstrip('~-').partition('-')))
-            return parts[0], parts[2]
-        return tuple(sorted(self.keywords, key=_sort_keywords))
+        return tuple(sort_keywords(self.keywords))
 
     @property
     def iuse_stripped(self):

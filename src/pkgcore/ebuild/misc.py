@@ -10,6 +10,7 @@ __all__ = (
     "chunked_data", "collapsed_restrict_to_data", "incremental_chunked",
     "incremental_expansion", "incremental_expansion_license",
     "non_incremental_collapsed_restrict_to_data", "optimize_incrementals",
+    "sort_keywords",
 )
 
 from collections import defaultdict
@@ -26,6 +27,13 @@ from pkgcore.restrictions import packages, restriction, boolean
 restrict_payload = namedtuple("restrict_data", ["restrict", "data"])
 chunked_data = namedtuple("chunked_data", ("key", "neg", "pos"))
 
+
+def sort_keywords(keywords):
+    """Sort keywords in the proper order: i.e. glob-arches, arch, prefix-arches."""
+    def _sort_kwds(kw):
+        parts = tuple(reversed(kw.lstrip('~-').partition('-')))
+        return parts[0], parts[2]
+    return sorted(keywords, key=_sort_kwds)
 
 def optimize_incrementals(sequence):
     # roughly the algorithm walks sequences right->left,

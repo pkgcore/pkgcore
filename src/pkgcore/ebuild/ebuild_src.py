@@ -245,6 +245,14 @@ class base(metadata.package):
     tracked_attributes = klass.alias_attr('eapi.tracked_attributes')
 
     @property
+    def sorted_keywords(self):
+        """Sort keywords with prefix keywords after regular arches."""
+        def _sort_keywords(kw):
+            parts = tuple(reversed(kw.lstrip('~-').partition('-')))
+            return parts[0], parts[2]
+        return tuple(sorted(self.keywords, key=_sort_keywords))
+
+    @property
     def iuse_stripped(self):
         if self.eapi.options.iuse_defaults:
             return frozenset(x.lstrip('-+') for x in self.iuse)

@@ -177,6 +177,21 @@ class test_base(TestCase):
             {'KEYWORDS':'x86 amd64'}).keywords),
             sorted(['x86', 'amd64']))
 
+    def test_sorted_keywords(self):
+        self.assertEqual(self.get_pkg({'KEYWORDS':''}).sorted_keywords, ())
+        self.assertEqual(
+            self.get_pkg({'KEYWORDS':'amd64 x86'}).sorted_keywords,
+            ('amd64', 'x86'))
+        self.assertEqual(
+            self.get_pkg({'KEYWORDS':'x86 amd64'}).sorted_keywords,
+            ('amd64', 'x86'))
+        self.assertEqual(
+            self.get_pkg({'KEYWORDS':'~amd64 ~amd64-fbsd ~x86'}).sorted_keywords,
+            ('~amd64', '~x86', '~amd64-fbsd'))
+        self.assertEqual(
+            self.get_pkg({'KEYWORDS':'~amd64 ~x86 ~amd64-fbsd'}).sorted_keywords,
+            ('~amd64', '~x86', '~amd64-fbsd'))
+
     def generic_check_depends(self, depset, attr, expected=None,
                               data_name=None):
         if expected is None:

@@ -373,7 +373,7 @@ class RepoConfig(syncable.tree, metaclass=WeakInstMeta):
     layout_offset = "metadata/layout.conf"
 
     default_hashes = ('size', 'blake2b', 'sha512')
-    default_required_hashes = ('size', 'sha512')
+    default_required_hashes = ('size', 'blake2b')
     supported_profile_formats = ('pms', 'portage-1', 'portage-2', 'profile-set')
     supported_cache_formats = ('pms', 'md5-dict')
 

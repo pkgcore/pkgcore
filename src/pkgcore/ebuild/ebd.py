@@ -557,10 +557,6 @@ class buildable(ebd, setup_mixin, format.build):
 
         self.env["FILESDIR"] = pjoin(os.path.dirname(pkg.ebuild.path), "files")
         self.eclass_cache = eclass_cache
-        self.env["ECLASSDIR"] = eclass_cache.eclassdir
-
-        # this needs to be deprecated and dropped from future EAPIs
-        self.env["PORTDIR"] = eclass_cache.location
 
         self.run_test = force_test or self.feat_or_bool("test", domain_settings)
         self.allow_failed_test = self.feat_or_bool("test-fail-continue", domain_settings)
@@ -618,6 +614,10 @@ class buildable(ebd, setup_mixin, format.build):
         # available user patches for >= EAPI 6
         if self.eapi.options.user_patches:
             self.env["PKGCORE_USER_PATCHES"] = pkg.user_patches
+
+        if self.eapi.options.has_portdir:
+            self.env["PORTDIR"] = eclass_cache.location
+            self.env["ECLASSDIR"] = eclass_cache.eclassdir
 
         if self.setup_is_for_src:
             self.init_distfiles_env()

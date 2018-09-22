@@ -597,7 +597,7 @@ class RepoConfig(syncable.tree, metaclass=WeakInstMeta):
         try:
             path = pjoin(self.profiles_base, 'eapi')
             data = [x.strip() for x in iter_read_bash(path)]
-            data = filter(None, data)
+            data = [_f for _f in data if _f]
             if len(data) != 1:
                 raise ValueError("%s: multiple lines detected" % path)
             eapi = get_eapi(data[0])

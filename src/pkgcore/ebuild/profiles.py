@@ -101,7 +101,9 @@ def _load_and_invoke(func, filename, handler, fallback, read_func,
         else:
             data = []
             profile_len = len(profile_path) + 1
-            files = sorted_scan(base)
+            # Skip hidden files and backup files, those beginning with '.' or
+            # ending with '~', respectively.
+            files = sorted_scan(base, hidden=False, backup=False)
             if not files:
                 data = None
             else:

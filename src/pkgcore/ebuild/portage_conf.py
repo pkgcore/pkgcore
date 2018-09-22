@@ -269,7 +269,9 @@ def load_make_conf(vars_dict, path, allow_sourcing=False, required=True,
         sourcing_command = 'source'
 
     if allow_recurse:
-        files = sorted_scan(os.path.realpath(path), follow_symlinks=True, nonexistent=True)
+        files = sorted_scan(
+            os.path.realpath(path), follow_symlinks=True, nonexistent=True,
+            hidden=False, backup=False)
     else:
         files = (path,)
 
@@ -307,7 +309,9 @@ def load_repos_conf(path):
     defaults = {}
     repos = {}
 
-    for fp in sorted_scan(os.path.realpath(path), follow_symlinks=True, nonexistent=True):
+    for fp in sorted_scan(
+            os.path.realpath(path), follow_symlinks=True, nonexistent=True,
+            hidden=False, backup=False):
         config = configparser.ConfigParser()
         try:
             with open(fp) as f:

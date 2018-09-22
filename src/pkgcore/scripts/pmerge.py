@@ -205,7 +205,7 @@ resolution_options.add_argument(
     docs="""
         Comma-separated list of targets to pretend are installed.
 
-        This supports extended package globbing, e.g. 'dev-python/\*' equates
+        This supports extended package globbing, e.g. 'dev-python/*' equates
         to faking the entire dev-python category is installed.
     """)
 resolution_options.add_argument(

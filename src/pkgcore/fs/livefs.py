@@ -195,7 +195,7 @@ def sorted_scan(path, nonexistent=False, *args, **kwargs):
 
 
 def scan(*a, **kw):
-    """Alias for list(iter_scan(\*a, \*\*kw))
+    """Alias for list(iter_scan(*a, **kw))
 
     Look at :py:func:`iter_scan` for valid args.
     """

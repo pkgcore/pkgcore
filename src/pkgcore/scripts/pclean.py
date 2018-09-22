@@ -326,7 +326,7 @@ def _dist_validate_args(parser, namespace):
         extra_regex_prefixes = defaultdict(set)
         pkg_regex_prefixes = set()
         for catpn, pkgs in target_dist.items():
-            pn_regex = '\W'.join(re.split(r'\W', catpn.package))
+            pn_regex = r'\W'.join(re.split(r'\W', catpn.package))
             pkg_regex = re.compile(r'(%s)(\W\w+)+([\W?(0-9)+])*(\W\w+)*(\.\w+)*' % pn_regex,
                                    re.IGNORECASE)
             pkg_regex_prefixes.add(pn_regex)

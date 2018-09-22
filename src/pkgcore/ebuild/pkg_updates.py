@@ -13,9 +13,7 @@ from pkgcore.ebuild.atom import atom
 
 demandload('pkgcore.log:logger')
 
-demand_compile_regexp(
-    "valid_updates_re", "^(\d)Q-(\d{4})$"
-)
+demand_compile_regexp("valid_updates_re", r"^(\d)Q-(\d{4})$")
 
 
 def _scan_directory(path):

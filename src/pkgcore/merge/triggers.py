@@ -755,7 +755,7 @@ class BinaryDebug(ThreadedTrigger):
     _hooks = ('pre_merge',)
 
     default_strip_flags = ('--strip-unneeded', '-R', '.comment')
-    elf_regex = '(^| )ELF +(\d+-bit )'
+    elf_regex = r'(^| )ELF +(\d+-bit )'
 
     pkgcore_config_type = base.pkgcore_config_type.clone(
         types={"strip_binary":"str", "objcopy_binary":"str"})

@@ -336,7 +336,7 @@ def perl_rebuild_main(options, out, err):
 
     base = pjoin(options.domain.root, "/usr/lib/perl5")
     potential_perl_versions = [
-        x.replace(".", "\.") for x in listdir_dirs(base)
+        x.replace(".", "\\.") for x in listdir_dirs(base)
         if x.startswith("5.") and x != options.new_version]
 
     if len(potential_perl_versions) == 1:

@@ -653,7 +653,7 @@ add_query(
     const=packages.AlwaysTrue, type=None,
     help='match all packages',
     docs="""
-        Match all packages which is equivalent to "pquery \*". Note that if no
+        Match all packages which is equivalent to "pquery *". Note that if no
         query options are specified, this option is enabled.
     """)
 add_query(

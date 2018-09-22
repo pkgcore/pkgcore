@@ -386,15 +386,9 @@ class test_package_factory(TestCase):
     def test_get_ebuild_mtime(self):
         f = pjoin(self.dir, "temp-0.ebuild")
         open(f, 'w').close()
-        cur = os.stat_float_times()
-        try:
-            for x in (False, True):
-                os.stat_float_times(x)
-                self.assertEqual(self.mkinst(repo=malleable_obj(
-                    _get_ebuild_path=lambda s:f))._get_ebuild_mtime(None),
-                    os.stat(f).st_mtime)
-        finally:
-            os.stat_float_times(cur)
+        self.assertEqual(self.mkinst(repo=malleable_obj(
+            _get_ebuild_path=lambda s:f))._get_ebuild_mtime(None),
+            os.stat(f).st_mtime)
 
     def test_get_metadata(self):
         ec = FakeEclassCache('/nonexistent/path')

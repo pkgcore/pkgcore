@@ -289,10 +289,8 @@ class TestContainmentMatch(TestRestriction):
 
     def test__eq__(self):
         for negate in (True, False):
-            assert (
-                self.kls(negate=negate, *range(100)) ==
-                self.kls(negate=negate, *range(100)),
-                f"range(100), negate={negate}")
+            assert self.kls(negate=negate, *range(100)) == self.kls(negate=negate, *range(100)), \
+                f"range(100), negate={negate}"
             assert self.kls(1, negate=not negate) != self.kls(1, negate=negate)
             assert (
                 self.kls(1, 2, 3, all=True, negate=negate) ==

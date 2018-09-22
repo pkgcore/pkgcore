@@ -89,7 +89,8 @@ def gen_obj(path, stat=None, chksum_handlers=None, real_location=None,
 # fine doing it this way (specially since we're relying on
 # os.path.sep, not '/' :P)
 
-def _internal_iter_scan(path, chksum_handlers, stat_func=os.lstat):
+def _internal_iter_scan(path, chksum_handlers, stat_func=os.lstat,
+                        hidden=True, backup=True):
     dirs = collections.deque([normpath(path)])
     obj = gen_obj(dirs[0], chksum_handlers=chksum_handlers,
         stat_func=stat_func)
@@ -99,6 +100,10 @@ def _internal_iter_scan(path, chksum_handlers, stat_func=os.lstat):
     while dirs:
         base = dirs.popleft()
         for x in listdir(base):
+            if not hidden and x.startswith('.'):
+                continue
+            if not backup and x.endswith('~'):
+                continue
             path = pjoin(base, x)
             obj = gen_obj(path, chksum_handlers=chksum_handlers,
                         real_location=path, stat_func=stat_func)
@@ -107,8 +112,8 @@ def _internal_iter_scan(path, chksum_handlers, stat_func=os.lstat):
                 dirs.append(path)
 
 
-def _internal_offset_iter_scan(path, chksum_handlers, offset,
-                               stat_func=os.lstat):
+def _internal_offset_iter_scan(path, chksum_handlers, offset, stat_func=os.lstat,
+                               hidden=True, backup=True):
     offset = normpath(offset)
     path = normpath(path)
     dirs = collections.deque([path[len(offset):]])
@@ -122,6 +127,10 @@ def _internal_offset_iter_scan(path, chksum_handlers, offset,
         real_base = pjoin(offset, base.lstrip(sep))
         base = base.rstrip(sep) + sep
         for x in listdir(real_base):
+            if not hidden and x.startswith('.'):
+                continue
+            if not backup and x.endswith('~'):
+                continue
             path = pjoin(base, x)
             obj = gen_obj(path, chksum_handlers=chksum_handlers,
                         real_location=pjoin(real_base, x),
@@ -131,7 +140,8 @@ def _internal_offset_iter_scan(path, chksum_handlers, offset,
                 dirs.append(path)
 
 
-def iter_scan(path, offset=None, follow_symlinks=False, chksum_types=None):
+def iter_scan(path, offset=None, follow_symlinks=False, chksum_types=None,
+              hidden=True, backup=True):
     """
     Recursively scan a path.
 
@@ -150,8 +160,10 @@ def iter_scan(path, offset=None, follow_symlinks=False, chksum_types=None):
 
     stat_func = follow_symlinks and os.stat or os.lstat
     if offset is None:
-        return _internal_iter_scan(path, chksum_handlers, stat_func)
-    return _internal_offset_iter_scan(path, chksum_handlers, offset, stat_func)
+        return _internal_iter_scan(
+            path, chksum_handlers, stat_func, hidden=hidden, backup=backup)
+    return _internal_offset_iter_scan(
+        path, chksum_handlers, offset, stat_func, hidden=hidden, backup=backup)
 
 
 def sorted_scan(path, nonexistent=False, *args, **kwargs):
@@ -174,8 +186,7 @@ def sorted_scan(path, nonexistent=False, *args, **kwargs):
     files = [path] if nonexistent else []
 
     try:
-        files = sorted(x.location for x in iter_scan(path, *args, **kwargs)
-                       if x.is_reg and not x.basename.startswith('.'))
+        files = sorted(x.location for x in iter_scan(path, *args, **kwargs) if x.is_reg)
     except EnvironmentError as e:
         if e.errno != errno.ENOENT:
             raise

@@ -109,7 +109,7 @@ class FsObjsTest(TempDirMixin, TestCase):
         path = os.path.join(self.dir, "sorted_scan")
         os.mkdir(path)
         files = [os.path.normpath(os.path.join(path, x)) for x in
-                 ["tmp", "blah", "dar", ".foo", ".bar"]]
+                 ["tmp", "blah", "dar"]]
         # cheap version of a touch.
         for x in files:
             open(x, "w").close()
@@ -131,6 +131,30 @@ class FsObjsTest(TempDirMixin, TestCase):
         sorted_files = livefs.sorted_scan(nonexistent_path, nonexistent=True)
         self.assertEqual(sorted_files, [nonexistent_path])
 
+    def test_sorted_scan_hidden(self):
+        path = os.path.join(self.dir, "sorted_scan")
+        os.mkdir(path)
+        files = [os.path.normpath(os.path.join(path, x)) for x in
+                 [".tmp", "blah",]]
+        # cheap version of a touch.
+        for x in files:
+            open(x, "w").close()
+        sorted_files = livefs.sorted_scan(path)
+        assert list([pjoin(path, x) for x in ['.tmp', 'blah']]) == sorted_files
+        sorted_files = livefs.sorted_scan(path, hidden=False)
+        assert list([pjoin(path, x) for x in ['blah']]) == sorted_files
+
+    def test_sorted_scan_backup(self):
+        path = os.path.join(self.dir, "sorted_scan")
+        os.mkdir(path)
+        files = [os.path.normpath(os.path.join(path, x)) for x in ["blah", "blah~"]]
+        # cheap version of a touch.
+        for x in files:
+            open(x, "w").close()
+        sorted_files = livefs.sorted_scan(path)
+        assert list([pjoin(path, x) for x in ['blah', 'blah~']]) == sorted_files
+        sorted_files = livefs.sorted_scan(path, backup=False)
+        assert list([pjoin(path, x) for x in ['blah']]) == sorted_files
 
     def test_relative_sym(self):
         f = os.path.join(self.dir, "relative-symlink-test")

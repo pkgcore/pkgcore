@@ -123,10 +123,8 @@ class ebd(object):
 
         self.env["FEATURES"] = ' '.join(sorted(self.features))
 
-        iuse_effective_regex = (re.escape(x) for x in pkg.iuse_effective)
-        iuse_effective_regex = f"^({'|'.join(iuse_effective_regex)}$"
-        iuse_effective_regex = iuse_effective_regex.replace("\\.\\*", ".*")
-        self.env["PKGCORE_IUSE_EFFECTIVE"] = iuse_effective_regex
+        iuse_effective_regex = f"^({'|'.join(re.escape(x) for x in pkg.iuse_effective)})$"
+        self.env["PKGCORE_IUSE_EFFECTIVE"] = iuse_effective_regex.replace("\\.\\*", ".*")
 
         expected_ebuild_env(pkg, self.env, env_source_override=self.env_data_source)
 

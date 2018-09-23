@@ -71,8 +71,7 @@ class ebd(object):
         if not hasattr(self, "observer"):
             self.observer = observer
         if not pkg.eapi.is_supported:
-            raise TypeError(
-                "package %s uses an unsupported eapi: %s" % (pkg, pkg.eapi))
+            raise TypeError(f"package {pkg} uses an unsupported eapi: {pkg.eapi}")
 
         if initial_env is not None:
             # copy.
@@ -110,7 +109,7 @@ class ebd(object):
             ret, eapi_funcs = spawn_get_output(
                 [pjoin(const.EBD_PATH, 'generate_eapi_func_list'), str(pkg.eapi)])
             if ret != 0:
-                raise Exception("failed to generate list of EAPI %s specific functions" % str(pkg.eapi))
+                raise Exception(f"failed to generate list of EAPI {pkg.eapi} specific functions")
         self.env["PKGCORE_EAPI_FUNCS"] = ' '.join(x.strip() for x in eapi_funcs)
 
         self.env_data_source = env_data_source
@@ -118,15 +117,14 @@ class ebd(object):
                 not isinstance(env_data_source, data_source.base)):
             raise TypeError(
                 "env_data_source must be None, or a pkgcore.data_source.base "
-                "derivative: %s: %s" % (
-                    env_data_source.__class__, env_data_source))
+                f"derivative: {env_data_source.__class__}: {env_data_source}")
 
         self.features = set(x.lower() for x in features)
 
         self.env["FEATURES"] = ' '.join(sorted(self.features))
 
         iuse_effective_regex = (re.escape(x) for x in pkg.iuse_effective)
-        iuse_effective_regex = "^(%s)$" % "|".join(iuse_effective_regex)
+        iuse_effective_regex = f"^({'|'.join(iuse_effective_regex)}$"
         iuse_effective_regex = iuse_effective_regex.replace("\\.\\*", ".*")
         self.env["PKGCORE_IUSE_EFFECTIVE"] = iuse_effective_regex
 
@@ -258,7 +256,7 @@ class ebd(object):
                     "%s doesn't fulfill minimum mode %o and gid %i" % (k, 0o770, portage_gid))
             # XXX hack, just 'til pkgcore controls these directories
             if (os.stat(self.env[k]).st_mode & 0o2000):
-                logger.warning("%s ( %s ) is setgid", self.env[k], k)
+                logger.warning(f"{self.env[k]} ( {k} ) is setgid")
 
     def _generic_phase(self, phase, userpriv, sandbox, extra_handlers={},
                        failure_allowed=False, suppress_bashrc=False):
@@ -290,14 +288,13 @@ class ebd(object):
     def _request_bashrcs(self, ebd):
         for source in self.domain.get_package_bashrcs(self.pkg):
             if source.path is not None:
-                ebd.write("path\n%s" % source.path)
+                ebd.write(f"path\n{source.path}")
             elif source.get_data is not None:
                 raise NotImplementedError
             else:
                 chuck_UnhandledCommand(
                     ebd, "bashrc request: unable to process bashrc "
-                    "due to source '%s' due to lacking usable get_*" % (
-                        source,))
+                    f"due to source '{source}' due to lacking usable get_*")
             if not ebd.expect("next"):
                 chuck_UnhandledCommand(
                     ebd, "bashrc transfer, didn't receive 'next' response.  "
@@ -337,7 +334,7 @@ class ebd(object):
                     raise
         except EnvironmentError as e:
             raise format.GenericBuildError(
-                "clean: Caught exception while cleansing: %s" % (e,)) from e
+                f"clean: Caught exception while cleansing: {e}") from e
         return True
 
     def feat_or_bool(self, name, extra_env=None):
@@ -362,7 +359,7 @@ class ebd(object):
 
     def __stage_step_callback__(self, stage):
         try:
-            open(pjoin(self.builddir, '.%s' % (stage,)), 'w').close()
+            open(pjoin(self.builddir, f'.{stage}'), 'w').close()
         except EnvironmentError:
             # we really don't care...
             pass
@@ -433,7 +430,7 @@ def run_generic_phase(pkg, phase, env, userpriv, sandbox, fd_pipes=None,
             if not failure_allowed:
                 raise format.GenericBuildError(
                     phase + ": Failed building (False/0 return from handler)")
-                logger.warning("executing phase %s: execution failed, ignoring", phase)
+                logger.warning(f"executing phase {phase}: execution failed, ignoring")
 
     except Exception as e:
         ebd.shutdown_processor()
@@ -441,7 +438,7 @@ def run_generic_phase(pkg, phase, env, userpriv, sandbox, fd_pipes=None,
         if isinstance(e, IGNORED_EXCEPTIONS + (format.GenericBuildError,)):
             raise
         raise format.GenericBuildError(
-            "Executing phase %s: Caught exception: %s" % (phase, e)) from e
+            f"Executing phase {phase}: Caught exception: {e}") from e
 
     release_ebuild_processor(ebd)
     return True
@@ -564,7 +561,7 @@ class buildable(ebd, setup_mixin, format.build):
             self.run_test = False
         elif not force_test and "test" not in use:
             if self.run_test:
-                logger.warning("disabling test for %s due to test use flag being disabled", pkg)
+                logger.warning(f"disabling test for {pkg} due to test use flag being disabled")
             self.run_test = False
 
         # XXX minor hack
@@ -582,12 +579,12 @@ class buildable(ebd, setup_mixin, format.build):
                 # gentoo bug 355283
                 libdir = self.env.get("ABI")
                 if libdir is not None:
-                    libdir = self.env.get("LIBDIR_%s" % (libdir,))
+                    libdir = self.env.get(f"LIBDIR_{libdir}")
                     if libdir is not None:
                         libdir = self.env.get(libdir)
                 if libdir is None:
                     libdir = "lib"
-                path.insert(0, "/usr/%s/%s/bin" % (libdir, s.lower()))
+                path.insert(0, f"/usr/{libdir}/{s.lower()}/bin")
             else:
                 for y in ("_PATH", "_DIR"):
                     if s + y in self.env:
@@ -628,7 +625,7 @@ class buildable(ebd, setup_mixin, format.build):
         if distdir_write is None:
             raise format.GenericBuildError(
                 "no usable distdir was found "
-                "for PORTAGE_ACTUAL_DISTDIR from fetcher %s" % self.domain.fetcher)
+                f"for PORTAGE_ACTUAL_DISTDIR from fetcher {self.domain.fetcher}")
         self.env["PORTAGE_ACTUAL_DISTDIR"] = distdir_write
         self.env["DISTDIR"] = normpath(
             pjoin(self.builddir, "distdir"))
@@ -654,7 +651,7 @@ class buildable(ebd, setup_mixin, format.build):
             except EnvironmentError as e:
                 raise format.FailedDirectory(
                     self.env["DISTDIR"],
-                    "failed removing existing file/dir/link at: exception %s" % e) from e
+                    f"failed removing existing file/dir/link: {e}") from e
 
             if not ensure_dirs(self.env["DISTDIR"], mode=0o770, gid=portage_gid):
                 raise format.FailedDirectory(
@@ -669,8 +666,7 @@ class buildable(ebd, setup_mixin, format.build):
 
             except EnvironmentError as e:
                 raise format.GenericBuildError(
-                    "Failed symlinking in distfiles for src %s -> %s: %s" % (
-                        src, dest, e)) from e
+                    f"Failed symlinking in distfiles for src {src} -> {dest}: {e}") from e
 
     @observer.decorate_build_method("setup")
     def setup(self):

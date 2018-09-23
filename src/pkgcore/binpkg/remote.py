@@ -139,7 +139,7 @@ class PackagesCacheV0(cache.bulk):
             count += 1
             cpv = d.pop("CPV", None)
             if cpv is None:
-                cpv = "%s/%s" % (d.pop("CATEGORY"), d.pop("PF"))
+                cpv = f"{d.pop('CATEGORY')}/{d.pop('PF')}"
 
             if 'USE' in d:
                 d.setdefault('IUSE', d.get('USE', ''))
@@ -199,8 +199,7 @@ class PackagesCacheV0(cache.bulk):
                 if e.errno != errno.EACCES:
                     raise
                 logger.error(
-                    "failed writing binpkg Packages cache to %r; permissions issue %s",
-                    self._location, e)
+                    f"failed writing binpkg Packages cache to {self._location!r}; permissions issue {e}")
         finally:
             if handler is not None:
                 handler.discard()
@@ -211,7 +210,7 @@ class PackagesCacheV0(cache.bulk):
         convert_key = self._serialize_map.get
 
         for key in sorted(preamble):
-            handler.write("%s: %s\n" % (convert_key(key, key), preamble[key]))
+            handler.write(f"{convert_key(key, key)}: {preamble[key]}\n")
         handler.write('\n')
 
         spacer = ' '
@@ -220,7 +219,7 @@ class PackagesCacheV0(cache.bulk):
 
         vkeys = self._known_keys
         for cpv, pkg_data in sorted(data, key=itemgetter(0)):
-            handler.write("CPV:%s%s\n" % (spacer, cpv))
+            handler.write(f"CPV:{spacer}{cpv}\n")
             data = [(convert_key(key, key), value)
                     for key, value in pkg_data.items()]
             for write_key, value in sorted(data):
@@ -230,11 +229,11 @@ class PackagesCacheV0(cache.bulk):
                 if write_key in preamble:
                     if value != preamble[write_key]:
                         if value:
-                            handler.write("%s:%s%s\n" % (write_key, spacer, value))
+                            handler.write(f"{write_key}:{spacer}{value}\n")
                         else:
-                            handler.write("%s:\n" % (write_key,))
+                            handler.write(f"{write_key}:\n")
                 elif value:
-                    handler.write("%s:%s%s\n" % (write_key, spacer, value))
+                    handler.write(f"{write_key}:{spacer}{value}\n")
             handler.write('\n')
 
     def update_from_xpak(self, pkg, xpak):
@@ -282,7 +281,7 @@ class PackagesCacheV1(PackagesCacheV0):
         d = PackagesCacheV0._assemble_pkg_dict(pkg)
         use = set(pkg.use).intersection(pkg.iuse_stripped)
         d.pop("IUSE", None)
-        iuse_bits = ['-%s' % (x,) for x in pkg.iuse_stripped if x not in use]
+        iuse_bits = [f'-{x}' for x in pkg.iuse_stripped if x not in use]
         use.update(iuse_bits)
         d["USE"] = ' '.join(sorted(use))
         return d
@@ -296,4 +295,4 @@ def get_cache_kls(version):
         return PackagesCacheV0
     elif version in ('1', '-1'):
         return PackagesCacheV1
-    raise KeyError("cache version %s unsupported" % (version,))
+    raise KeyError(f"cache version {version} unsupported")

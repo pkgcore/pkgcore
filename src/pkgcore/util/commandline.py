@@ -231,7 +231,7 @@ class StoreConfigObject(argparse._StoreAction):
                 msg += "Please either fix your configuration, or set the %s " \
                     "via the %s option." % (config_type, option_string)
             if known_objs:
-                msg += "Known %ss: %s" % (config_type, ', '.join(map(repr, known_objs)))
+                msg += f"Known {config_type}s: {', '.join(map(repr, known_objs))}"
             raise NoDefaultConfigError(None, msg)
         setattr(namespace, attr, obj)
 

@@ -155,9 +155,7 @@ class StackedXpakDict(DictMixin):
                 data = data_source(
                     compression.decompress_data('bzip2', data), mutable=True)
         elif key == "ebuild":
-            data = self.xpak.get(
-                "%s-%s.ebuild" %
-                (self._pkg.package, self._pkg.fullver), "")
+            data = self.xpak.get(f"{self._pkg.package}-{self._pkg.fullver}.ebuild", "")
             data = data_source(data)
         else:
             try:
@@ -249,8 +247,7 @@ class tree(prototype.tree):
         if not access(self.base, os.X_OK | os.R_OK):
             # either it doesn't exist, or we don't have perms.
             if not os.path.exists(self.base):
-                raise errors.InitializationError(
-                    "base %r doesn't exist: %s" % self.base)
+                raise errors.InitializationError(f"base {self.base!r} doesn't exist")
             raise errors.InitializationError(
                 "base directory %r with mode 0%03o isn't readable/executable"
                 " by this user" %
@@ -271,7 +268,7 @@ class tree(prototype.tree):
                 x for x in listdir_dirs(self.base)
                 if x.lower() != "all")
         except EnvironmentError as e:
-            raise KeyError("failed fetching categories: %s" % str(e)) from e
+            raise KeyError(f"failed fetching categories: {e}") from e
 
     def _get_packages(self, category):
         cpath = pjoin(self.base, category.lstrip(os.path.sep))
@@ -297,15 +294,12 @@ class tree(prototype.tree):
                     elif '-try' in pv:
                         bad = 'try'
                     else:
-                        raise InvalidCPV(
-                            "%s/%s: no version component" %
-                            (category, pv))
+                        raise InvalidCPV(f"{category}/{pv}: no version component")
                     if self.ignore_paludis_versioning:
                         bad = False
                         continue
                     raise InvalidCPV(
-                        "%s/%s: -%s version component is "
-                        "not standard." % (category, pv, bad))
+                        f"{category}/{pv}: -{bad} version component is not standard.")
                 l.add(pkg.package)
                 d.setdefault((category, pkg.package), []).append(pkg.fullver)
         except EnvironmentError as e:
@@ -320,8 +314,7 @@ class tree(prototype.tree):
         return tuple(self._versions_tmp_cache.pop(catpkg))
 
     def _get_path(self, pkg):
-        s = "%s-%s" % (pkg.package, pkg.fullver)
-        return pjoin(self.base, pkg.category, s+".tbz2")
+        return pjoin(self.base, pkg.category, f"{pkg.package}-{pkg.fullver}.tbz2")
 
     _get_ebuild_path = _get_path
 

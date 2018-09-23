@@ -205,8 +205,7 @@ class InternalError(ProcessingInterruption):
 
     def __init__(self, line=None, msg=None):
         ProcessingInterruption.__init__(
-            self, "Internal error occurred: line=%r, msg=%r"
-            % (line, msg))
+            self, f"Internal error occurred: line={line!r}, msg={msg!r}")
         self.line, self.msg = line, msg
         self.args = (line, msg)
 
@@ -571,7 +570,7 @@ class EbuildProcessor(object):
         :return: boolean, True for success
         """
         if not os.path.exists(ec_file):
-            logger.error("failed: %s", ec_file)
+            logger.error(f"failed: {ec_file}")
             return False
         self.write(f"preload_eclass {ec_file}")
         if self.expect("preload_eclass succeeded", async_req=async_req, flush=True):
@@ -891,7 +890,7 @@ def inherit_handler(ecache, ebp, line, updates=None):
     if eclass is None:
         ebp.write("failed")
         raise UnhandledCommand(
-            "inherit requires an unknown eclass, %s cannot be found" % line)
+            f"inherit requires an unknown eclass, {line} cannot be found")
 
     if eclass.path is not None:
         ebp.write("path")

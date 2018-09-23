@@ -599,10 +599,10 @@ class RepoConfig(syncable.tree, metaclass=WeakInstMeta):
             data = [x.strip() for x in iter_read_bash(path)]
             data = [_f for _f in data if _f]
             if len(data) != 1:
-                raise ValueError("%s: multiple lines detected" % path)
+                raise ValueError(f"multiple lines detected: {path!r}")
             eapi = get_eapi(data[0])
             if not eapi.is_supported:
-                raise ValueError("%s: unsupported eapi: %s" % (path, data[0]))
+                raise ValueError(f"unsupported eapi {data[0]!r}: {path!r}")
             return eapi
         except EnvironmentError as e:
             if e.errno != errno.ENOENT:

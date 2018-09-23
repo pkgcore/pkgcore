@@ -30,9 +30,7 @@ demandload("pkgcore.log:logger")
 
 
 def discern_loc(base, pkg, extension='.tbz2'):
-    return pjoin(
-        base, pkg.category,
-        "%s-%s%s" % (pkg.package, pkg.fullver, extension))
+    return pjoin(base, pkg.category, f"{pkg.package}-{pkg.fullver}{extension}")
 
 
 _metadata_rewrites = {
@@ -64,8 +62,7 @@ def generate_attr_dict(pkg, portage_compatible=True):
         else:
             s = v
         d[_metadata_rewrites.get(k, k.upper())] = s
-    d["%s-%s.ebuild" % (pkg.package, pkg.fullver)] = \
-        pkg.ebuild.text_fileobj().read()
+    d[f"{pkg.package}-{pkg.fullver}.ebuild"] = pkg.ebuild.text_fileobj().read()
 
     # this shouldn't be necessary post portage 2.2.
     # till then, their code requires redundant data,
@@ -95,10 +92,9 @@ class install(repo_interfaces.install):
 
         if not ensure_dirs(os.path.dirname(tmp_path), mode=0o755):
             raise repo_interfaces.Failure(
-                "failed creating directory %r" %
-                os.path.dirname(tmp_path))
+                f"failed creating directory: {os.path.dirname(tmp_path)!r}")
         try:
-            start("generating tarball: %s" % tmp_path)
+            start(f"generating tarball: {tmp_path}")
             tar.write_set(
                 pkg.contents, tmp_path, compressor='bzip2',
                 parallelize=True)
@@ -113,7 +109,7 @@ class install(repo_interfaces.install):
             try:
                 unlink_if_exists(tmp_path)
             except EnvironmentError as e:
-                logger.warning("failed removing %r: %r", tmp_path, e)
+                logger.warning(f"failed removing {tmp_path!r}: {e}")
             raise
         return True
 

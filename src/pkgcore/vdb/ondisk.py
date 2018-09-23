@@ -105,15 +105,15 @@ class tree(prototype.tree):
                     else:
                         raise InvalidCPV(f"{category}/{x}: no version component")
                     logger.error(
-                        "merged -%s pkg detected: %s/%s. "
-                        "throwing exception due to -%s not being a valid"
+                        f"merged -{bad} pkg detected: {category}/{x}. "
+                        f"throwing exception due to -{bad} not being a valid"
                         " version component.  Silently ignoring that "
                         "specific version is not viable either since it "
                         "would result in pkgcore stomping whatever it was "
-                        "that -%s version merged.  "
+                        f"that -{bad} version merged.  "
                         "This is why embrace and extend is bad, mm'kay.  "
                         "Use the offending pkg manager that merged it to "
-                        "unmerge it.", bad, category, x, bad, bad)
+                        "unmerge it.")
                     raise InvalidCPV(
                         f"{category}/{x}: -{bad} version component is not standard.")
                 l.add(pkg.package)

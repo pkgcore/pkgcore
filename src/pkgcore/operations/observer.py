@@ -27,14 +27,12 @@ def _convert(msg, args=(), kwds={}):
             return msg % args
         except (ValueError, TypeError) as e:
             raise TypeError(
-                "observer interpolation error: %s, msg=%r, args=%r"
-                % (e, msg, args))
+                f"observer interpolation error: {e}, msg={msg!r}, args={args!r}")
     try:
         return msg % kwds
     except (KeyError, TypeError, ValueError) as e:
         raise TypeError(
-            "observer interpolation error: %s, msg=%r, kwds=%r"
-            % (e, msg, kwds))
+            f"observer interpolation error: {e}, msg={msg!r}, kwds={kwds!r}")
 
 
 class null_output(object):
@@ -82,16 +80,16 @@ class file_handle_output(null_output):
         self.out = out
 
     def info(self, msg, *args, **kwds):
-        self._out.write("info: %s\n" % _convert(msg, args, kwds))
+        self._out.write(f"info: {_convert(msg, args, kwds)}\n")
 
     def debug(self, msg, *args, **kwds):
-        self._out.write("debug: %s\n" % _convert(msg, args, kwds))
+        self._out.write(f"debug: {_convert(msg, args, kwds)}\n")
 
     def warn(self, msg, *args, **kwds):
-        self._out.write("warning: %s\n" % _convert(msg, args, kwds))
+        self._out.write(f"warning: {_convert(msg, args, kwds)}\n")
 
     def error(self, msg, *args, **kwds):
-        self._out.write("error: %s\n" % _convert(msg, args, kwds))
+        self._out.write(f"error: {_convert(msg, args, kwds)}\n")
 
     def write(self, msg, *args, **kwds):
         self._out.write(_convert(msg, args, kwds))
@@ -106,7 +104,7 @@ class phase_observer(object):
 
     def phase_start(self, phase):
         if self._debug:
-            self._output.write("starting %s\n", phase)
+            self._output.write(f"starting {phase}\n")
 
     def debug(self, msg, *args, **kwds):
         if self._debug:
@@ -119,7 +117,7 @@ class phase_observer(object):
 
     def phase_end(self, phase, status):
         if self._debug:
-            self._output.write("finished %s: %s\n", phase, status)
+            self._output.write(f"finished {phase}: {status}\n")
 
 # left in place for compatibility sake
 build_observer = phase_observer
@@ -129,17 +127,17 @@ class repo_observer(phase_observer):
 
     def trigger_start(self, hook, trigger):
         if self._debug:
-            self._output.write("hook %s: trigger: starting %r\n", hook, trigger)
+            self._output.write(f"hook {hook}: trigger: starting {trigger!r}\n", hook)
 
     def trigger_end(self, hook, trigger):
         if self._debug:
-            self._output.write("hook %s: trigger: finished %r\n", hook, trigger)
+            self._output.write(f"hook {hook}: trigger: finished {trigger!r}\n", hook)
 
     def installing_fs_obj(self, obj):
-        self._output.write(">>> %s\n", obj)
+        self._output.write(f">>> {obj}\n")
 
     def removing_fs_obj(self, obj):
-        self._output.write("<<< %s\n", obj)
+        self._output.write(f"<<< {obj}\n")
 
 
 def _reflection_func(attr, self, *args, **kwds):

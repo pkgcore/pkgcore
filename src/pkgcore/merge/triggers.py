@@ -162,7 +162,7 @@ class ThreadedTrigger(base):
                 return
             raise
         except Exception as e:
-            observer.error("exception occurred in thread: %s", e)
+            observer.error(f"exception occurred in thread: {e}")
 
     def threading_get_args(self, engine, *csets):
         return ()
@@ -325,9 +325,9 @@ class ldconfig(base):
 
     def _mk_ld_so_conf(self, fp):
         if not ensure_dirs(os.path.dirname(fp), mode=0o755, minimal=True):
-            raise errors.BlockModification(self,
-                "failed creating/setting %s to 0755, root/root for uid/gid" %
-                    os.path.basename(fp))
+            raise errors.BlockModification(
+                self,
+                f"failed creating/setting {fp} to 0755, root/root for uid/gid")
             # touch the file.
         try:
             open(fp, 'w').close()

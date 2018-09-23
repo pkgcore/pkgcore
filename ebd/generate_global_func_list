@@ -53,7 +53,6 @@ forced_order_source=(
 	exit-handling.bash
 	eapi/depend.bash
 	eapi/common.bash
-	eapi/7-ver-funcs.bash
 	ebuild-daemon-lib.bash
 	ebuild-daemon.bash
 )

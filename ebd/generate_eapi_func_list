@@ -7,6 +7,18 @@
 # different lists of functions to be skipped. For installed versions, static
 # function lists are generated at install time and used instead.
 
+ONLY=false
+VISIBLE=false
+
+while getopts "ov" opt; do
+	case ${opt} in
+		o) ONLY=true ;;
+		v) VISIBLE=true ;;
+		*) ;;
+	esac
+done
+
+shift $((OPTIND-1))
 EAPI=${1:-0}
 export PKGCORE_EBD_PATH=${BASH_SOURCE[0]%/*}
 
@@ -14,8 +26,24 @@ export PKGCORE_EBD_PATH=${BASH_SOURCE[0]%/*}
 # null so any code that tried accessing it thinks it succeeded
 export PKGCORE_PYTHON_BINARY=${PKGCORE_PYTHON_BINARY:-/bin/true}
 
+if ${ONLY}; then
+	PREV_EAPI=$((EAPI-1))
+	if [[ -f "${PKGCORE_EBD_PATH}/eapi/${PREV_EAPI}.bash" ]]; then
+		source "${PKGCORE_EBD_PATH}/eapi/${PREV_EAPI}.bash" \
+			|| { echo "failed loading eapi/${PREV_EAPI}.bash" >&2; exit 1; }
+		PREV_EAPI_FUNCS=( $(compgen -A function) )
+	fi
+fi
+
 source "${PKGCORE_EBD_PATH}/eapi/${EAPI}.bash" \
 	|| { echo "failed loading eapi/${EAPI}.bash" >&2; exit 1; }
 
+if ${ONLY}; then
+	for func in "${PREV_EAPI_FUNCS[@]}"; do
+		unset -f ${func}
+	done
+fi
+
 # Sorting order; put PMS functionality first, then our internals.
-printf '%s\n' $(compgen -X '__*' -A function) $(compgen -A function __)
+printf '%s\n' $(compgen -X '__*' -A function)
+${VISIBLE} || printf '%s\n' $(compgen -A function __)

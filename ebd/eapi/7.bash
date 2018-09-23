@@ -44,8 +44,6 @@ __eapi7_ver_split() {
 }
 
 ver_cut() {
-	[[ ${EAPI} != [0123456] ]] || die "${FUNCNAME} not supported in EAPI ${EAPI}"
-
 	local range=${1}
 	local v=${2:-${PV}}
 	local start end
@@ -63,8 +61,6 @@ ver_cut() {
 }
 
 ver_rs() {
-	[[ ${EAPI} != [0123456] ]] || die "${FUNCNAME} not supported in EAPI ${EAPI}"
-
 	local v
 	(( ${#} & 1 )) && v=${@: -1} || v=${PV}
 	local start end i
@@ -176,8 +172,6 @@ __eapi7_ver_compare() {
 }
 
 ver_test() {
-	[[ ${EAPI} != [0123456] ]] || die "${FUNCNAME} not supported in EAPI ${EAPI}"
-
 	local va op vb
 
 	if [[ $# -eq 3 ]]; then

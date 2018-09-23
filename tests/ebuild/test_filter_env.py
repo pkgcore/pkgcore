@@ -234,7 +234,7 @@ src_install() {
             funcs='src_unpack')))
 
     def test_arg_awareness(self):
-        data = "f() {\n x \{}\n}\n"
+        data = "f() {\n x \\{}\n}\n"
         self.assertNotIn('}', ''.join(self.get_output(data, 'f')))
 
     def test_print_vars(self):

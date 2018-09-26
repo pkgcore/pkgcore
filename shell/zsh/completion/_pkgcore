@@ -681,7 +681,7 @@ _pquery() {
   )
 
   output=(
-    '--early-out[stop when first match is found]'
+    {'(--first)-1','(-1)--first'}'[stop when first match is found]'
     {'(--no-version)-n','(-n)--no-version'}'[collapse multiple matching versions together]'
     '--min[show only the lowest version for each package]'
     '--max[show only the highest version for each package]'

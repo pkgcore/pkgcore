@@ -866,7 +866,7 @@ argparser.set_defaults(
 
 output = argparser.add_argument_group('output formatting')
 output.add_argument(
-    '--early-out', action='store_true', dest='earlyout',
+    '-1', '--first', action='store_true',
     help='stop when first match is found')
 output.add_argument(
     '-a', '--atom', action=arghparse.Expansion,
@@ -1022,9 +1022,9 @@ def main(options, out, err):
                 else:
                     for pkg in pkgs:
                         print_package(options, out, err, pkg)
-                        if options.earlyout:
+                        if options.first:
                             break
-                if options.earlyout:
+                if options.first:
                     break
 
         except KeyboardInterrupt:

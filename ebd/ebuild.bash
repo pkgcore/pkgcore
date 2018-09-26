@@ -121,6 +121,7 @@ alias __load_safe_environ='{
 
 alias __init_environ='{
 	PKGCORE_EXISTING_PATH=${PATH};
+	__timed_call __load_eapi_libs
 	if [[ -n ${PKGCORE_PERF_DEBUG} ]]; then
 		echo "timing eval \$(__generate_initial_ebuild_environ)" >&2
 		time eval "$(__timed_call __generate_initial_ebuild_environ)" >&2
@@ -279,8 +280,6 @@ __load_ebuild() {
 		echo "bailing, ebuild not found at '${EBUILD}'"
 		die "EBUILD=${EBUILD}; problem is, it doesn't exist.  bye." >&2
 	fi
-
-	__timed_call __load_eapi_libs
 
 	__env_push
 	__export_bash_compat
@@ -443,6 +442,7 @@ __execute_phases() {
 				PKGCORE_DIE_OUTPUT_DETAILS=false
 
 				EBUILD_PHASE="depend"
+				__timed_call __load_eapi_libs
 				__load_ebuild "${EBUILD}"
 
 				if [[ ${EBUILD_PHASE} == depend ]]; then

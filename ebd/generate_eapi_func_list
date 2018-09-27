@@ -44,6 +44,9 @@ if ${ONLY}; then
 	done
 fi
 
+if ! ${VISIBLE}; then
+	INTERNAL_FUNCS=( $(compgen -A function __) )
+fi
+
 # Sorting order; put PMS functionality first, then our internals.
-printf '%s\n' $(compgen -X '__*' -A function)
-${VISIBLE} || printf '%s\n' $(compgen -A function __)
+printf '%s\n' $(compgen -X '__*' -A function) ${INTERNAL_FUNCS[@]}

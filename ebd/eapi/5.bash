@@ -3,23 +3,26 @@
 
 source "${PKGCORE_EBD_PATH}"/eapi/4.bash
 
-has_version() {
-	local r=${ROOT:-/}
+__query_version_funcs() {
+	local atom root=${ROOT:-/}
 	if [[ $1 == "--host-root" ]]; then
-		r=/
+		root=/
 		shift
 	fi
-	PKGCORE_DISABLE_COMPAT=true __portageq 'has_version' "$1" --domain-at-root "${r}"
+
+	atom=$1
+	shift
+	[[ $# -gt 0 ]] && die "${FUNCNAME[1]}: unknown argument(s): $*"
+
+	PKGCORE_DISABLE_COMPAT=true __portageq "${FUNCNAME[1]}" "${atom}" --domain-at-root "${root}"
+}
+
+has_version() {
+	__query_version_funcs "$@"
 }
 
 best_version() {
-	local r=${ROOT:-/}
-	if [[ $1 == "--host-root" ]]; then
-		r=/
-		shift
-	fi
-	PKGCORE_DISABLE_COMPAT=true __portageq 'best_version' "$1" --domain-at-root "${r}"
-
+	__query_version_funcs "$@"
 }
 
 usex() {

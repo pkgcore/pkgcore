@@ -552,7 +552,7 @@ class _UnconfiguredTree(prototype.tree):
         path = pjoin(self.base, 'profiles', 'package.mask')
         pos, neg = [], []
         try:
-            if (self.config.eapi.options['has_profile_data_directories'] or
+            if (self.config.eapi.options['has_profile_data_dirs'] or
                     self.config.profile_formats.intersection(['portage-1', 'portage-2'])):
                 paths = sorted_scan(path)
             else:

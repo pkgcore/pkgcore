@@ -55,7 +55,7 @@ eapi_optionals = mappings.ImmutableDict({
 
     # Controls whether package.mask and other files in profiles can
     # be directories; see PMS.
-    "has_profile_data_directories": False,
+    "has_profile_data_dirs": False,
 
     # Controls whether REQUIRED_USE is supported, enforcing constraints on
     # allowed use configuration states.
@@ -452,7 +452,7 @@ eapi7 = EAPI.register(
     tracked_attributes=eapi6.tracked_attributes,
     archive_suffixes=eapi6.archive_suffixes,
     optionals=_combine_dicts(eapi6.options, dict(
-        has_profile_data_directories=True,
+        has_profile_data_dirs=True,
         has_portdir=False,
         is_supported=False,
     )),

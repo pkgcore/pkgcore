@@ -67,11 +67,13 @@ class ebd(object):
             use = pkg.use
 
         self.allow_fetching = allow_fetching
+        self.pkg = pkg
+        self.eapi = pkg.eapi
 
         if not hasattr(self, "observer"):
             self.observer = observer
-        if not pkg.eapi.is_supported:
-            raise TypeError(f"package {pkg} uses an unsupported eapi: {pkg.eapi}")
+        if not self.eapi.is_supported:
+            raise TypeError(f"package {pkg} uses an unsupported eapi: {self.eapi}")
 
         if initial_env is not None:
             # copy.
@@ -82,6 +84,8 @@ class ebd(object):
         else:
             self.env = {}
 
+        self.bashrc = self.env.pop("bashrc", ())
+
         if "PYTHONPATH" in os.environ:
             self.env["PYTHONPATH"] = os.environ["PYTHONPATH"]
 
@@ -90,7 +94,7 @@ class ebd(object):
 
         # XXX: note this is just EAPI 3 compatibility; not full prefix, soon..
         self.env["ROOT"] = self.domain.root.rstrip(os.sep) + self.eapi.options.trailing_slash
-        self.prefix_mode = pkg.eapi.options.prefix_capable or 'force-prefix' in features
+        self.prefix_mode = self.eapi.options.prefix_capable or 'force-prefix' in features
         self.env["PKGCORE_PREFIX_SUPPORT"] = 'false'
         self.prefix = '/'
         if self.prefix_mode:
@@ -103,14 +107,14 @@ class ebd(object):
 
         # set the list of internally implemented EAPI specific functions that
         # shouldn't be exported
-        if os.path.exists(pjoin(const.EBD_PATH, 'funcnames', str(pkg.eapi))):
-            with open(pjoin(const.EBD_PATH, 'funcnames', str(pkg.eapi)), 'r') as f:
+        if os.path.exists(pjoin(const.EBD_PATH, 'funcnames', str(self.eapi))):
+            with open(pjoin(const.EBD_PATH, 'funcnames', str(self.eapi)), 'r') as f:
                 eapi_funcs = f.readlines()
         else:
             ret, eapi_funcs = spawn_get_output(
-                [pjoin(const.EBD_PATH, 'generate_eapi_func_list'), str(pkg.eapi)])
+                [pjoin(const.EBD_PATH, 'generate_eapi_func_list'), str(self.eapi)])
             if ret != 0:
-                raise Exception(f"failed to generate list of EAPI {pkg.eapi} specific functions")
+                raise Exception(f"failed to generate list of EAPI {self.eapi} specific functions")
         self.env["PKGCORE_EAPI_FUNCS"] = ' '.join(x.strip() for x in eapi_funcs)
 
         self.env_data_source = env_data_source
@@ -150,10 +154,6 @@ class ebd(object):
 
         self.env["XARGS"] = xargs
 
-        self.bashrc = self.env.pop("bashrc", ())
-
-        self.pkg = pkg
-        self.eapi = pkg.eapi
         wipes = [k for k, v in self.env.items()
                  if not isinstance(v, str)]
         for k in wipes:

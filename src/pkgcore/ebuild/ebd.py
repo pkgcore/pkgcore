@@ -92,7 +92,7 @@ class ebd(object):
         if features is None:
             features = self.env.get("FEATURES", ())
 
-        # XXX: note this is just EAPI 3 compatibility; not full prefix, soon..
+        # XXX: note this is just EAPI 3 and EAPI 7 compatibility; not full prefix, soon..
         self.env["ROOT"] = self.domain.root.rstrip(os.sep) + self.eapi.options.trailing_slash
         self.prefix_mode = self.eapi.options.prefix_capable or 'force-prefix' in features
         self.env["PKGCORE_PREFIX_SUPPORT"] = 'false'
@@ -104,6 +104,12 @@ class ebd(object):
                 pjoin(self.domain.root, self.prefix.lstrip(os.sep))).rstrip(os.sep) + \
                     self.eapi.options.trailing_slash
             self.env["PKGCORE_PREFIX_SUPPORT"] = 'true'
+
+        if self.eapi.options.has_sysroot:
+            self.env['SYSROOT'] = self.env["ROOT"]
+            self.env['ESYSROOT'] = abspath(
+                pjoin(self.domain.root, self.prefix.lstrip(os.sep))).rstrip(os.sep)
+            self.env['BROOT'] = self.env['EPREFIX']
 
         # set the list of internally implemented EAPI specific functions that
         # shouldn't be exported

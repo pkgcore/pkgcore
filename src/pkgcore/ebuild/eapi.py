@@ -57,6 +57,9 @@ eapi_optionals = mappings.ImmutableDict({
     # Controls whether ROOT, EROOT, D, and ED end with a trailing slash; see PMS.
     "trailing_slash": os.sep,
 
+    # Controls whether SYSROOT, ESYSROOT, and BROOT are defined; see PMS.
+    "has_sysroot": False,
+
     # Controls whether package.mask and other files in profiles can
     # be directories; see PMS.
     "has_profile_data_dirs": False,
@@ -458,6 +461,7 @@ eapi7 = EAPI.register(
     optionals=_combine_dicts(eapi6.options, dict(
         has_profile_data_dirs=True,
         has_portdir=False,
+        has_sysroot=True,
         trailing_slash='',
         is_supported=False,
     )),

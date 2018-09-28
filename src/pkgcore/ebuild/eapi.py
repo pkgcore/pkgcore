@@ -51,7 +51,7 @@ eapi_optionals = mappings.ImmutableDict({
     "has_merge_type": False,
 
     # Controls whether PORTDIR and ECLASSDIR are exported to ebuilds; see PMS.
-    "has_portdir": False,
+    "has_portdir": True,
 
     # Controls whether package.mask and other files in profiles can
     # be directories; see PMS.
@@ -63,10 +63,10 @@ eapi_optionals = mappings.ImmutableDict({
 
     # Controls whether AA env var is exported to ebuilds; this is a flattened
     # listing of each filename in SRC_URI.
-    "has_AA": False,
+    "has_AA": True,
 
     # Controls whether KV (kernel version; see PMS for details) is exported.
-    "has_KV": False,
+    "has_KV": True,
 
     # Controls whether or not pkgcore, or extensions loaded, actually fully
     # support this EAPI.
@@ -87,7 +87,7 @@ eapi_optionals = mappings.ImmutableDict({
 
     # Controls whether this EAPI supports prefix related variables/settings;
     # prefix awareness basically. See PMS for full details.
-    "prefix_capable": True,
+    "prefix_capable": False,
 
     # Controls whether profile-defined IUSE injection is supported.
     "profile_iuse_injection": False,
@@ -115,7 +115,7 @@ eapi_optionals = mappings.ImmutableDict({
     # trust the cache definition and skip invoking those phases if they're not defined.
     # If the EAPI didn't mandate this var, then we can do our inference, but generally will
     # invoke the phase in the absense of that metadata var since we have no other choice.
-    "trust_defined_phases_cache": True,
+    "trust_defined_phases_cache": False,
 
     # Controls whether unpack supports absolute paths; see PMS.
     "unpack_absolute_paths": False,
@@ -159,9 +159,7 @@ class EAPI(object, metaclass=klass.immutable_instance):
         sf(self, "archive_suffixes", frozenset(archive_suffixes))
         sf(self, "archive_suffixes_re", '(?:%s)' % '|'.join(map(re.escape, archive_suffixes)))
 
-        d = dict(eapi_optionals)
-        d.update(optionals)
-        sf(self, 'options', _optionals_cls(d))
+        sf(self, 'options', _optionals_cls(optionals))
         if ebd_env_options is None:
             ebd_env_options = {}
         sf(self, "ebd_env_options", mappings.ImmutableDict(ebd_env_options))
@@ -325,13 +323,7 @@ eapi0 = EAPI.register(
     mandatory_keys=common_mandatory_metadata_keys,
     tracked_attributes=common_tracked_attributes,
     archive_suffixes=common_archive_suffixes,
-    optionals=dict(
-        trust_defined_phases_cache=False,
-        prefix_capable=False,
-        has_AA=True,
-        has_KV=True,
-        has_portdir=True,
-    ),
+    optionals=eapi_optionals,
     ebd_env_options=common_env_optionals,
 )
 

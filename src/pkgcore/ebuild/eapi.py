@@ -39,6 +39,9 @@ eapi_optionals = mappings.ImmutableDict({
     # Controls --docdir and --htmldir passing for econf; see PMS.
     'econf_docdir_and_htmldir': False,
 
+    # Controls --sysroot passing for econf; see PMS.
+    'econf_sysroot': False,
+
     # Controls whether an ebuild_phase function exists for ebuild consumption.
     'ebuild_phase_func': False,
 
@@ -315,7 +318,7 @@ common_env_optionals = mappings.ImmutableDict(dict.fromkeys(
     ("bash_compat", "dodoc_allow_recursive", "doins_allow_symlinks",
      "doman_language_detect", "doman_language_override", "ebuild_phase_func",
      "econf_disable_dependency_tracking", "econf_disable_silent_rules",
-     "econf_docdir_and_htmldir", "global_failglob",
+     "econf_docdir_and_htmldir", "econf_sysroot", "global_failglob",
      "new_reads_stdin", "nonfatal", "nonfatal_die", "profile_iuse_injection",
      "unpack_absolute_paths", "unpack_case_insensitive",),
     lambda s: str(s).lower()))
@@ -462,6 +465,7 @@ eapi7 = EAPI.register(
         has_profile_data_dirs=True,
         has_portdir=False,
         has_sysroot=True,
+        econf_sysroot=True,
         trailing_slash='',
         is_supported=False,
     )),

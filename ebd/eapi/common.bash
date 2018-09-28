@@ -125,7 +125,8 @@ econf() {
 
 	if ${PKGCORE_ECONF_DISABLE_DEPENDENCY_TRACKING} || \
 			${PKGCORE_ECONF_DISABLE_SILENT_RULES} || \
-			${PKGCORE_ECONF_DOCDIR_AND_HTMLDIR}; then
+			${PKGCORE_ECONF_DOCDIR_AND_HTMLDIR} || \
+			${PKGCORE_ECONF_SYSROOT}; then
 		local help_text=$("${ECONF_SOURCE}/configure" --help 2> /dev/null)
 		local extra_args=()
 
@@ -148,6 +149,13 @@ econf() {
 			fi
 			if [[ ${help_text} == *"--htmldir"* ]]; then
 				extra_args+=( --htmldir="${EPREFIX}"/usr/share/doc/${PF}/html )
+			fi
+		fi
+
+		# EAPI 7 and up.
+		if ${PKGCORE_ECONF_SYSROOT}; then
+			if [[ ${help_text} == *"--with-sysroot"* ]]; then
+				extra_args+=( --with-sysroot="${ESYSROOT:-/}" )
 			fi
 		fi
 

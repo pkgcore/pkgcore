@@ -11,13 +11,11 @@ __ver_parse_range() {
 	local range=${1}
 	local max=${2}
 
-	[[ ${range} == [0-9]* ]] \
-		|| die "${FUNCNAME}: range must start with a number"
+	[[ ${range} == [0-9]* ]] || die "${FUNCNAME}: range must start with a number"
 	start=${range%-*}
 	[[ ${range} == *-* ]] && end=${range#*-} || end=${start}
 	if [[ ${end} ]]; then
-		[[ ${start} -le ${end} ]] \
-			|| die "${FUNCNAME}: end of range must be >= start"
+		[[ ${start} -le ${end} ]] || die "${FUNCNAME}: end of range must be >= start"
 		[[ ${end} -le ${max} ]] || end=${max}
 	else
 		end=${max}

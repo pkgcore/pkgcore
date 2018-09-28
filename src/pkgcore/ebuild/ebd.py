@@ -89,15 +89,16 @@ class ebd(object):
             features = self.env.get("FEATURES", ())
 
         # XXX: note this is just EAPI 3 compatibility; not full prefix, soon..
-        self.env["ROOT"] = self.domain.root
+        self.env["ROOT"] = self.domain.root.rstrip(os.sep) + self.eapi.options.trailing_slash
         self.prefix_mode = pkg.eapi.options.prefix_capable or 'force-prefix' in features
         self.env["PKGCORE_PREFIX_SUPPORT"] = 'false'
         self.prefix = '/'
         if self.prefix_mode:
             self.prefix = self.domain.prefix
-            self.env['EPREFIX'] = self.prefix.rstrip('/')
+            self.env['EPREFIX'] = self.prefix.rstrip(os.sep)
             self.env['EROOT'] = abspath(
-                pjoin(self.domain.root, self.prefix.lstrip('/'))).rstrip('/') + '/'
+                pjoin(self.domain.root, self.prefix.lstrip(os.sep))).rstrip(os.sep) + \
+                    self.eapi.options.trailing_slash
             self.env["PKGCORE_PREFIX_SUPPORT"] = 'true'
 
         # set the list of internally implemented EAPI specific functions that
@@ -176,7 +177,7 @@ class ebd(object):
         # don't fool with this, without fooling with setup.
         self.tmpdir = self.domain.pm_tmpdir
         if tmp_offset:
-            self.tmpdir = pjoin(self.tmpdir, tmp_offset.strip(os.path.sep))
+            self.tmpdir = pjoin(self.tmpdir, tmp_offset.strip(os.sep))
 
         self.builddir = pjoin(self.tmpdir, self.env["CATEGORY"], self.env["PF"])
         for x, y in (("T", "temp"),
@@ -184,14 +185,15 @@ class ebd(object):
                      ("D", "image"),
                      ("HOME", "homedir")):
             self.env[x] = normpath(pjoin(self.builddir, y))
-        self.env["D"] += "/"
+        self.env["D"] += self.eapi.options.trailing_slash
         self.env["PORTAGE_LOGFILE"] = normpath(pjoin(self.env["T"], "build.log"))
 
         # XXX: Note that this is just EAPI 3 support, not yet prefix
         # full awareness.
         if self.prefix_mode:
             self.env["ED"] = normpath(
-                pjoin(self.env["D"], self.prefix.lstrip('/'))) + "/"
+                pjoin(self.env["D"].rstrip(os.sep), self.prefix.rstrip(os.sep))) \
+                    + self.eapi.options.trailing_slash
 
         # temporary install dir correct for all EAPIs
         self.ED = self.env.get('ED', self.env['D'])
@@ -628,7 +630,7 @@ class buildable(ebd, setup_mixin, format.build):
         self.env["DISTDIR"] = normpath(
             pjoin(self.builddir, "distdir"))
         for x in ("PORTAGE_ACTUAL_DISTDIR", "DISTDIR"):
-            self.env[x] = os.path.realpath(self.env[x]).rstrip("/") + "/"
+            self.env[x] = os.path.realpath(self.env[x]).rstrip(os.sep) + os.sep
 
     def setup_distfiles(self):
         if not self.verified_files and self.allow_fetching:

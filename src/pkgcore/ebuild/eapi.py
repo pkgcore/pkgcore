@@ -1,6 +1,7 @@
 # Copyright: 2011 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD 3 clause
 
+import os
 import re
 
 from snakeoil import mappings, weakrefs, klass
@@ -52,6 +53,9 @@ eapi_optionals = mappings.ImmutableDict({
 
     # Controls whether PORTDIR and ECLASSDIR are exported to ebuilds; see PMS.
     "has_portdir": True,
+
+    # Controls whether ROOT, EROOT, D, and ED end with a trailing slash; see PMS.
+    "trailing_slash": os.sep,
 
     # Controls whether package.mask and other files in profiles can
     # be directories; see PMS.
@@ -454,6 +458,7 @@ eapi7 = EAPI.register(
     optionals=_combine_dicts(eapi6.options, dict(
         has_profile_data_dirs=True,
         has_portdir=False,
+        trailing_slash='',
         is_supported=False,
     )),
     ebd_env_options=eapi6.ebd_env_options,

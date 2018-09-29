@@ -172,7 +172,7 @@ class EAPI(object, metaclass=klass.immutable_instance):
         sf(self, "archive_suffixes_re", '(?:%s)' % '|'.join(map(re.escape, archive_suffixes)))
 
         if optionals is None:
-            optionals = eapi_optionals
+            optionals = {}
         sf(self, 'options', _optionals_cls(optionals))
         if ebd_env_options is None:
             ebd_env_options = {}

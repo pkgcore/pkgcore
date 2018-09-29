@@ -13,8 +13,13 @@ import pytest
 
 
 def test_get_eapi():
+    # unknown EAPI
     unknown_eapi = get_eapi("unknown")
     assert unknown_eapi in EAPI.unknown_eapis.values()
+    # check that unknown EAPI is now registered as an unknown
+    assert unknown_eapi == get_eapi("unknown")
+
+    # known EAPI
     eapi = get_eapi("6")
     assert eapi6 == eapi
 
@@ -47,6 +52,10 @@ class TestEAPI(object):
 
     def test_is_supported(self):
         assert eapi6.is_supported
+
+        # partially supported EAPI is flagged as such
+        test_eapi = EAPI.register("test", optionals={'is_supported': False})
+        assert not test_eapi.is_supported
 
         # unsupported/unknown EAPI is flagged as such
         unknown_eapi = get_eapi("blah")

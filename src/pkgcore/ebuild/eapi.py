@@ -148,8 +148,10 @@ class EAPI(object, metaclass=klass.immutable_instance):
     known_eapis = weakrefs.WeakValCache()
     unknown_eapis = weakrefs.WeakValCache()
 
-    def __init__(self, magic, parent, phases, default_phases, metadata_keys, mandatory_keys,
-                 tracked_attributes, archive_suffixes, optionals, ebd_env_options=None):
+    def __init__(self, magic, parent=None, phases=(), default_phases=(),
+                 metadata_keys=(), mandatory_keys=(),
+                 tracked_attributes=(), archive_suffixes=(),
+                 optionals=None, ebd_env_options=None):
         sf = object.__setattr__
 
         sf(self, "_magic", str(magic))
@@ -169,6 +171,8 @@ class EAPI(object, metaclass=klass.immutable_instance):
         sf(self, "archive_suffixes", frozenset(archive_suffixes))
         sf(self, "archive_suffixes_re", '(?:%s)' % '|'.join(map(re.escape, archive_suffixes)))
 
+        if optionals is None:
+            optionals = eapi_optionals
         sf(self, 'options', _optionals_cls(optionals))
         if ebd_env_options is None:
             ebd_env_options = {}
@@ -244,10 +248,7 @@ def get_eapi(magic, suppress_unsupported=True):
     if eapi is None and suppress_unsupported:
         eapi = EAPI.unknown_eapis.get(magic)
         if eapi is None:
-            eapi = EAPI(
-                magic=magic, parent=None, phases=(), default_phases=(),
-                metadata_keys=(), mandatory_keys=(), tracked_attributes=(),
-                archive_suffixes=(), optionals={'is_supported': False})
+            eapi = EAPI(magic=magic, optionals={'is_supported': False})
             EAPI.unknown_eapis[eapi._magic] = eapi
     return eapi
 

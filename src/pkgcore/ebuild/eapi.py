@@ -265,11 +265,8 @@ def _mk_phase_func_map(*sequence):
     return d
 
 
-def _combine_dicts(*sequence_of_mappings):
-    d = {}
-    for mapping in sequence_of_mappings:
-        d.update(mapping)
-    return d
+def _combine_dicts(*mappings):
+    return {k: v for d in mappings for k, v in d.items()}
 
 
 # Note that pkg_setup is forced by default since this is how our env setup occurs.

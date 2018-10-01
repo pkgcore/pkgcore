@@ -425,12 +425,13 @@ class TestBase(object):
                         getattr(pkg, 'required_use')
                     assert f"EAPI {eapi_str} doesn't support '??' operator" in cm.value.error
 
-                for required_use, use, set_use, satisfied in required_use_data:
+                for required_use, iuse, use, satisfied in required_use_data:
                     pkg = self.get_pkg({'EAPI': eapi_str, 'REQUIRED_USE': required_use})
-                    required_use_deps = pkg.required_use.evaluate_depset(use.split())
+                    required_use_deps = pkg.required_use.evaluate_depset(iuse.split())
                     for node in required_use_deps:
-                        assert node.match(set_use.split()) is satisfied, \
-                            f'REQUIRED_USE="{required_use}", USE="{use}", set USE="{set_use}", satisfied="{satisfied}"'
+                        assert node.match(use.split()) is satisfied, \
+                            f'REQUIRED_USE="{required_use}", IUSE="{iuse}", ' \
+                            f'USE="{use}", satisfied="{satisfied}"'
 
 
 class TestPackage(TestBase):

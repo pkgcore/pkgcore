@@ -7,11 +7,7 @@ from functools import partial
 import os
 import shutil
 import tempfile
-
-try:
-    from unittest import mock
-except ImportError:
-    import mock
+from unittest import mock
 
 from snakeoil.osutils import pjoin, ensure_dirs, normpath
 from snakeoil.test import TestCase

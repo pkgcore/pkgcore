@@ -4,11 +4,7 @@
 
 import os
 import textwrap
-
-try:
-    from unittest import mock
-except ImportError:
-    import mock
+from unittest import mock
 
 from snakeoil.fileutils import touch
 from snakeoil.osutils import ensure_dirs, pjoin

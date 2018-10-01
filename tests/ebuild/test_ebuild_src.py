@@ -10,7 +10,7 @@ import pytest
 
 from pkgcore import fetch
 from pkgcore.ebuild import ebuild_src, digest, repo_objs
-from pkgcore.ebuild.eapi import get_eapi
+from pkgcore.ebuild.eapi import get_eapi, EAPI
 from pkgcore.package import errors
 from pkgcore.test import malleable_obj
 from tests.ebuild.test_eclass_cache import FakeEclassCache
@@ -338,15 +338,12 @@ class TestBase(object):
 
     # TODO: add more REQUIRED_USE tests
     def test_required_use(self):
-        # EAPIs not supporting REQUIRED_USE
-        for eapi in (0, 1, 2, 3):
+        for eapi in EAPI.known_eapis.values():
+            # Check all EAPIs for REQUIRED_USE parsing, EAPIs that don't support it
+            # should return depsets that evaluate to False.
             pkg = self.get_pkg({'EAPI': eapi, 'REQUIRED_USE': 'test? ( foo )'})
-            assert not pkg.required_use
-
-        # EAPIs supporting REQUIRED_USE
-        for eapi in (4, 5, 6, 7):
-            pkg = self.get_pkg({'EAPI': eapi, 'REQUIRED_USE': 'test? ( foo )'})
-            assert pkg.required_use
+            assert bool(pkg.required_use) == eapi.options.has_required_use, \
+                f"failure parsing REQUIRED_USE for EAPI {eapi}"
 
 
 class TestPackage(TestBase):

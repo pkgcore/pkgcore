@@ -4,8 +4,9 @@
 
 from random import shuffle
 
+import pytest
 from snakeoil.compatibility import cmp
-from snakeoil.test import TestCase, mk_cpy_loadable_testcase
+from snakeoil.test import mk_cpy_loadable_testcase
 
 from pkgcore.ebuild import cpv
 
@@ -14,8 +15,7 @@ def generate_misc_sufs():
     suf_nums = list(range(100))
     shuffle(suf_nums)
 
-    good_sufs = (simple_good_sufs +["%s%i" % (x, suf_nums.pop())
-        for x in simple_good_sufs])
+    good_sufs = (simple_good_sufs + [f"{x}{suf_nums.pop()}" for x in simple_good_sufs])
 
     l = len(good_sufs)
     good_sufs = good_sufs + [
@@ -25,7 +25,7 @@ def generate_misc_sufs():
     return good_sufs, bad_sufs
 
 
-class native_CpvTest(TestCase):
+class Test_native_Cpv(object):
 
     kls = staticmethod(cpv.native_CPV)
 
@@ -64,11 +64,12 @@ class native_CpvTest(TestCase):
         if self.testing_secondary_args:
             return self.kls(cat, pkg, fullver, versioned=bool(fullver))
         if fullver:
-            return self.vkls("%s/%s-%s" % (cat, pkg, fullver))
-        return self.ukls("%s/%s" % (cat, pkg))
+            return self.vkls(f"{cat}/{pkg}-{fullver}")
+        return self.ukls(f"{cat}/{pkg}")
 
     def test_simple_key(self):
-        self.assertRaises(cpv.InvalidCPV, self.make_inst, "da", "ba-3", "3.3")
+        with pytest.raises(cpv.InvalidCPV):
+            self.make_inst("da", "ba-3", "3.3")
         for src in [[("dev-util", "diffball", "0.7.1"), "dev-util/diffball"],
             ["dev-util/diffball"],
             ["dev-perl/mod_perl"],
@@ -90,19 +91,22 @@ class native_CpvTest(TestCase):
             else:
                 cat, pkg, ver = src[0]
 
-            self.assertEqual(self.make_inst(cat, pkg, ver).key, key)
+            assert self.make_inst(cat, pkg, ver).key == key
 
     def test_init(self):
         self.kls("dev-util", "diffball", "0.7.1")
         self.kls("dev-util/diffball-0.7.1", versioned=True)
-        self.assertRaises(TypeError, self.kls, "dev-util", "diffball")
-        self.assertRaises(TypeError, self.vkls, "dev-util", "diffball", None)
+        with pytest.raises(TypeError):
+            self.kls("dev-util", "diffball")
+        with pytest.raises(TypeError):
+            self.vkls("dev-util", "diffball", None)
 
     def test_parsing(self):
         # check for gentoo bug 263787
         self.process_pkg(False, 'app-text', 'foo-123-bar')
         self.process_ver(False, 'app-text', 'foo-123-bar', '2.0017a_p', '-r5')
-        self.assertRaises(cpv.InvalidCPV, self.ukls, 'app-text/foo-123')
+        with pytest.raises(cpv.InvalidCPV):
+            self.ukls('app-text/foo-123')
         for cat_ret, cats in [[False, self.good_cats], [True, self.bad_cats]]:
             for cat in cats:
                 for pkg_ret, pkgs in [[False, self.good_pkgs],
@@ -122,45 +126,42 @@ class native_CpvTest(TestCase):
                                              ver, rev)
 
         for x in (10, 18, 19, 36, 100):
-            self.assertEqual(self.kls("da", "ba", "1-r0%s" % ("0" * x)).revision,
-                None)
-            self.assertEqual(int(self.kls("da", "ba", "1-r1%s1" % ("0" * x)).revision),
-                int("1%s1" % ("0" * x)))
-
+            assert self.kls("da", "ba", f"1-r0{'0' * x}").revision is None
+            assert \
+                int(self.kls("da", "ba", f"1-r1{'0' * x}1").revision) == int(f"1{'0' * x}1")
 
     def process_pkg(self, ret, cat, pkg):
         if ret:
-            self.assertRaisesMsg("%s/%s" % (cat,pkg), cpv.InvalidCPV,
-                self.make_inst, cat, pkg)
+            with pytest.raises(cpv.InvalidCPV):
+                self.make_inst(cat, pkg)
         else:
             c = self.make_inst(cat, pkg)
-            self.assertEqual(c.cpvstr, "%s/%s" % (cat, pkg))
-            self.assertEqual(c.category, cat)
-            self.assertEqual(c.package, pkg)
-            self.assertEqual(c.key, "%s/%s" % (cat, pkg))
-            self.assertEqual(c.revision, None)
-            self.assertEqual(c.version, None)
-            self.assertEqual(c.fullver, None)
+            assert c.cpvstr == f"{cat}/{pkg}"
+            assert c.category == cat
+            assert c.package == pkg
+            assert c.key == f"{cat}/{pkg}"
+            assert c.revision is None
+            assert c.version is None
+            assert c.fullver is None
 
     def process_ver(self, ret, cat, pkg, ver, rev):
         if ret:
-            self.assertRaisesMsg("%s/%s-%s%s" % (cat, pkg, ver, rev),
-                cpv.InvalidCPV, self.make_inst,
-                cat, pkg,  "%s%s" % (ver, rev))
+            with pytest.raises(cpv.InvalidCPV):
+                self.make_inst(cat, pkg, f"{ver}{rev}")
         else:
             c = self.make_inst(cat, pkg, ver + rev)
             if rev == "" or rev == "-r0":
-                self.assertEqual(c.cpvstr, "%s/%s-%s" % (cat, pkg, ver))
-                self.assertEqual(c.revision, None)
-                self.assertEqual(c.fullver, ver)
+                assert c.cpvstr == f"{cat}/{pkg}-{ver}"
+                assert c.revision is None
+                assert c.fullver == ver
             else:
-                self.assertEqual(c.revision, int(rev.lstrip("-r")))
-                self.assertEqual(c.cpvstr, "%s/%s-%s%s" % (cat, pkg, ver, rev))
-                self.assertEqual(c.fullver, ver+rev)
-            self.assertEqual(c.category, cat)
-            self.assertEqual(c.package, pkg)
-            self.assertEqual(c.key, "%s/%s" % (cat, pkg))
-            self.assertEqual(c.version, ver)
+                assert c.revision == int(rev.lstrip("-r"))
+                assert c.cpvstr == f"{cat}/{pkg}-{ver}{rev}"
+                assert c.fullver == ver+rev
+            assert c.category == cat
+            assert c.package == pkg
+            assert c.key == f"{cat}/{pkg}"
+            assert c.version == ver
 
         for suf in self.good_sufs:
             self.process_suf(ret, cat, pkg, ver + suf, rev)
@@ -175,45 +176,42 @@ class native_CpvTest(TestCase):
 
     def process_suf(self, ret, cat, pkg, ver, rev):
         if ret:
-            self.assertRaisesMsg("%s/%s-%s%s" % (cat, pkg, ver, rev),
-                cpv.InvalidCPV, self.make_inst,
-                cat, pkg, ver+rev)
+            with pytest.raises(cpv.InvalidCPV):
+                self.make_inst(cat, pkg, ver+rev)
         else:
             # redundant in light of process_ver... combine these somehow.
             c = self.make_inst(cat, pkg, ver + rev)
             if rev == '' or rev == '-r0':
-                self.assertEqual(c.cpvstr, "%s/%s-%s" % (cat, pkg, ver))
-                self.assertEqual(c.revision, None)
-                self.assertEqual(c.fullver, ver)
+                assert c.cpvstr == f"{cat}/{pkg}-{ver}"
+                assert c.revision is None
+                assert c.fullver == ver
             else:
-                self.assertEqual(c.cpvstr, "%s/%s-%s%s" % (cat, pkg, ver, rev))
-                self.assertEqual(c.revision, int(rev.lstrip("-r")))
-                self.assertEqual(c.fullver, ver + rev)
-            self.assertEqual(c.category, cat)
-            self.assertEqual(c.package, pkg)
-            self.assertEqual(c.key, "%s/%s" % (cat, pkg))
-            self.assertEqual(c.version, ver)
+                assert c.cpvstr == f"{cat}/{pkg}-{ver}{rev}"
+                assert c.revision == int(rev.lstrip("-r"))
+                assert c.fullver == ver + rev
+            assert c.category == cat
+            assert c.package == pkg
+            assert c.key == f"{cat}/{pkg}"
+            assert c.version == ver
 
     def assertGT(self, obj1, obj2):
-        self.assertTrue(obj1 > obj2, '%r must be > %r' % (obj1, obj2))
+        assert obj1 > obj2, f'{obj1!r} must be > {obj2!r}'
         # swap the ordering, so that it's no longer obj1.__cmp__, but obj2s
-        self.assertTrue(obj2 < obj1, '%r must be < %r' % (obj2, obj1))
+        assert obj2 < obj1, f'{obj2!r} must be < {obj1!r}'
 
         if self.run_cpy_ver_cmp and obj1.fullver and obj2.fullver:
-            self.assertTrue(cpv.cpy_ver_cmp(obj1.version, obj1.revision,
-                obj2.version, obj2.revision) > 0,
-                    'cpy_ver_cmp, %r > %r' % (obj1, obj2))
-            self.assertTrue(cpv.cpy_ver_cmp(obj2.version, obj2.revision,
-                obj1.version, obj1.revision) < 0,
-                    'cpy_ver_cmp, %r < %r' % (obj2, obj1))
+            assert cpv.cpy_ver_cmp(
+                obj1.version, obj1.revision, obj2.version, obj2.revision) > 0, \
+                    f'cpy_ver_cmp, {obj1!r} > {obj2!r}'
+            assert cpv.cpy_ver_cmp(
+                obj2.version, obj2.revision, obj1.version, obj1.revision) < 0, \
+                    f'cpy_ver_cmp, {obj2!r} < {obj1!r}'
 
     def test_cmp(self):
         ukls, vkls = self.ukls, self.vkls
-        self.assertTrue(
-            cmp(vkls("dev-util/diffball-0.1"),
-                vkls("dev-util/diffball-0.2")) < 0)
+        assert cmp(vkls("dev-util/diffball-0.1"), vkls("dev-util/diffball-0.2")) < 0
         base = "dev-util/diffball-0.7.1"
-        self.assertFalse(cmp(vkls(base), vkls(base)))
+        assert not cmp(vkls(base), vkls(base))
         for rev in ("", "-r1"):
             last = None
             for suf in ["_alpha", "_beta", "_pre", "", "_p"]:
@@ -223,73 +221,66 @@ class native_CpvTest(TestCase):
                     sufs = [suf, suf+"4"]
                 for x in sufs:
                     cur = vkls(base+x+rev)
-                    self.assertEqual(cur, vkls(base+x+rev))
+                    assert cur == vkls(base+x+rev)
                     if last is not None:
-                        self.assertGT(cur, last)
+                        assert cur > last
 
-        self.assertGT(vkls("da/ba-6a"), vkls("da/ba-6"))
-        self.assertGT(vkls("da/ba-6a-r1"), vkls("da/ba-6a"))
-        self.assertGT(vkls("da/ba-6.0"), vkls("da/ba-6"))
-        self.assertGT(vkls("da/ba-6.0.0"), vkls("da/ba-6.0b"))
-        self.assertGT(vkls("da/ba-6.02"), vkls("da/ba-6.0.0"))
+        assert vkls("da/ba-6a") > vkls("da/ba-6")
+        assert vkls("da/ba-6a-r1") > vkls("da/ba-6a")
+        assert vkls("da/ba-6.0") > vkls("da/ba-6")
+        assert vkls("da/ba-6.0.0") > vkls("da/ba-6.0b")
+        assert vkls("da/ba-6.02") > vkls("da/ba-6.0.0")
         # float comparison rules.
-        self.assertGT(vkls("da/ba-6.2"), vkls("da/ba-6.054"))
-        self.assertEqual(vkls("da/ba-6"), vkls("da/ba-6"))
-        self.assertGT(ukls("db/ba"), ukls("da/ba"))
-        self.assertGT(ukls("da/bb"), ukls("da/ba"))
-        self.assertGT(vkls("da/ba-6.0_alpha0_p1"), vkls("da/ba-6.0_alpha"))
-        self.assertEqual(vkls("da/ba-6.0_alpha"), vkls("da/ba-6.0_alpha0"))
-        self.assertGT(vkls("da/ba-6.1"), vkls("da/ba-6.09"))
-        self.assertGT(vkls("da/ba-6.0.1"), vkls("da/ba-6.0"))
-        self.assertGT(vkls("da/ba-12.2.5"), vkls("da/ba-12.2b"))
+        assert vkls("da/ba-6.2") > vkls("da/ba-6.054")
+        assert vkls("da/ba-6") == vkls("da/ba-6")
+        assert ukls("db/ba") > ukls("da/ba")
+        assert ukls("da/bb") > ukls("da/ba")
+        assert vkls("da/ba-6.0_alpha0_p1") > vkls("da/ba-6.0_alpha")
+        assert vkls("da/ba-6.0_alpha") == vkls("da/ba-6.0_alpha0")
+        assert vkls("da/ba-6.1") > vkls("da/ba-6.09")
+        assert vkls("da/ba-6.0.1") > vkls("da/ba-6.0")
+        assert vkls("da/ba-12.2.5") > vkls("da/ba-12.2b")
 
         # test for gentoo bug 287848
-        self.assertGT(vkls("dev-lang/erlang-12.2.5"),
-            vkls("dev-lang/erlang-12.2b"))
-        self.assertGT(vkls("dev-lang/erlang-12.2.5-r1"),
-            vkls("dev-lang/erlang-12.2b"))
+        assert vkls("dev-lang/erlang-12.2.5") > vkls("dev-lang/erlang-12.2b")
+        assert vkls("dev-lang/erlang-12.2.5-r1") > vkls("dev-lang/erlang-12.2b")
 
-        self.assertEqual(vkls("da/ba-6.01.0"), vkls("da/ba-6.010.0"))
+        assert vkls("da/ba-6.01.0") == vkls("da/ba-6.010.0")
 
         for v1, v2 in (("1.001000000000000000001", "1.001000000000000000002"),
             ("1.00100000000", "1.0010000000000000001"),
             ("1.01", "1.1")):
-            self.assertGT(vkls("da/ba-%s" % v2), vkls("da/ba-%s" % v1))
+            assert vkls(f"da/ba-{v2}") > vkls(f"da/ba-{v1}")
 
         for x in (18, 36, 100):
             s = "0" * x
-            self.assertGT(vkls("da/ba-10%s1" % s), vkls("da/ba-1%s1" % s))
+            assert vkls(f"da/ba-10{s}1") > vkls(f"da/ba-1{s}1")
 
         for x in (18, 36, 100):
             s = "0" * x
-            self.assertGT(vkls("da/ba-1-r10%s1" % s),
-                vkls("da/ba-1-r1%s1" % s))
+            assert vkls(f"da/ba-1-r10{s}1") > vkls(f"da/ba-1-r1{s}1")
 
-        self.assertGT(vkls('sys-apps/net-tools-1.60_p2010081516093'),
-            vkls('sys-apps/net-tools-1.60_p2009072801401'))
+        assert vkls('sys-apps/net-tools-1.60_p2010081516093') > \
+            vkls('sys-apps/net-tools-1.60_p2009072801401')
 
-        self.assertGT(vkls('sys-apps/net-tools-1.60_p20100815160931'),
-            vkls('sys-apps/net-tools-1.60_p20090728014017'))
+        assert vkls('sys-apps/net-tools-1.60_p20100815160931') > \
+            vkls('sys-apps/net-tools-1.60_p20090728014017')
 
-        self.assertGT(vkls('sys-apps/net-tools-1.60_p20100815160931'),
-            vkls('sys-apps/net-tools-1.60_p20090728014017-r1'))
+        assert vkls('sys-apps/net-tools-1.60_p20100815160931') > \
+            vkls('sys-apps/net-tools-1.60_p20090728014017-r1')
 
         # Regression test: python does comparison slightly differently
         # if the classes do not match exactly (it prefers rich
         # comparison over __cmp__).
         class DummySubclass(self.kls):
             pass
-        self.assertNotEqual(
-            DummySubclass("da/ba-6.0_alpha0_p1", versioned=True),
-                vkls("da/ba-6.0_alpha"))
-        self.assertEqual(
-            DummySubclass("da/ba-6.0_alpha0", versioned=True),
-                vkls("da/ba-6.0_alpha"))
 
-        self.assertNotEqual(DummySubclass("da/ba-6.0", versioned=True),
-            "foon")
-        self.assertEqual(DummySubclass("da/ba-6.0", versioned=True),
-            DummySubclass("da/ba-6.0-r0", versioned=True))
+        assert DummySubclass("da/ba-6.0_alpha0_p1", versioned=True) != vkls("da/ba-6.0_alpha")
+        assert DummySubclass("da/ba-6.0_alpha0", versioned=True) == vkls("da/ba-6.0_alpha")
+
+        assert DummySubclass("da/ba-6.0", versioned=True) != "foon"
+        assert DummySubclass("da/ba-6.0", versioned=True) == \
+            DummySubclass("da/ba-6.0-r0", versioned=True)
 
     def test_no_init(self):
         """Test if the cpv is in a somewhat sane state if __init__ fails.
@@ -300,7 +291,8 @@ class native_CpvTest(TestCase):
         """
         uninited = self.kls.__new__(self.kls)
         broken = self.kls.__new__(self.kls)
-        self.assertRaises(cpv.InvalidCPV, broken.__init__, 'broken', versioned=True)
+        with pytest.raises(cpv.InvalidCPV):
+            broken.__init__('broken', versioned=True)
         for thing in (uninited, broken):
             # the c version returns None, the py version does not have the attr
             getattr(thing, 'cpvstr', None)
@@ -314,24 +306,23 @@ class native_CpvTest(TestCase):
 
     def test_r0_removal(self):
         obj = self.kls("dev-util/diffball-1.0-r0", versioned=True)
-        self.assertEqual(obj.fullver, "1.0")
-        self.assertEqual(obj.revision, None)
-        self.assertEqual(str(obj), "dev-util/diffball-1.0")
+        assert obj.fullver == "1.0"
+        assert obj.revision is None
+        assert str(obj) == "dev-util/diffball-1.0"
 
 
-class CPY_CpvTest(native_CpvTest):
+@pytest.mark.skipif(not cpv.cpy_builtin, reason="cpython cpv extension not available")
+class Test_CPY_Cpv(Test_native_Cpv):
     if cpv.cpy_builtin:
         kls = staticmethod(cpv.cpy_CPV)
-    else:
-        skip = "cpython cpv extension not available"
-
-    run_cpy_ver_cmp = True
+        run_cpy_ver_cmp = True
 
 
-class CPY_Cpv_OptionalArgsTest(CPY_CpvTest):
+class Test_CPY_Cpv_OptionalArgs(Test_CPY_Cpv):
 
     testing_secondary_args = True
 
-test_cpy_used = mk_cpy_loadable_testcase('pkgcore.ebuild._cpv',
-    "pkgcore.ebuild.cpv", "CPV_base", "CPV")
+
+test_cpy_used = mk_cpy_loadable_testcase(
+    "pkgcore.ebuild._cpv", "pkgcore.ebuild.cpv", "CPV_base", "CPV")
 

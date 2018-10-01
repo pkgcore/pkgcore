@@ -6,8 +6,8 @@ import os
 
 from snakeoil.currying import post_curry
 from snakeoil.osutils import pjoin
-from snakeoil.test import TestCase
 from snakeoil.test.mixins import tempdir_decorator
+import pytest
 
 from pkgcore import fetch
 from pkgcore.ebuild import ebuild_src, digest, repo_objs
@@ -17,7 +17,7 @@ from pkgcore.test import malleable_obj
 from tests.ebuild.test_eclass_cache import FakeEclassCache
 
 
-class test_base(TestCase):
+class TestBase(object):
 
     kls = ebuild_src.base
 
@@ -59,16 +59,16 @@ class test_base(TestCase):
 
     def test_fetch_metadata(self):
         def f(self, cpv, **options):
-            return {'1':'2'}
+            return {'1': '2'}
         o = self.get_pkg(repo=self.make_parent(_get_metadata=f))
         assert o.data == {'1': '2'}
 
     def test_license(self):
-        o = self.get_pkg({'LICENSE':'GPL2 FOON'})
+        o = self.get_pkg({'LICENSE': 'GPL2 FOON'})
         assert list(o.license) == ['GPL2', 'FOON']
 
     def test_description(self):
-        o = self.get_pkg({'DESCRIPTION':' foon\n asdf '})
+        o = self.get_pkg({'DESCRIPTION': ' foon\n asdf '})
         assert o.description == 'foon\n asdf'
 
     def test_iuse(self):
@@ -114,7 +114,12 @@ class test_base(TestCase):
         assert o.fullslot == '1/2'
         o = self.get_pkg({'SLOT': '1/foo-1'})
         assert o.fullslot == '1/foo-1'
-        self.assertRaises(ValueError, getattr, self.get_pkg({'SLOT':''}), 'fullslot')
+        # unset SLOT variable
+        with pytest.raises(ValueError):
+            self.get_pkg().fullslot
+        # empty SLOT variable
+        with pytest.raises(ValueError):
+            self.get_pkg({'SLOT': ''}).fullslot
 
     def test_slot(self):
         o = self.get_pkg({'SLOT': '0'})
@@ -123,7 +128,12 @@ class test_base(TestCase):
         assert o.slot == '1'
         o = self.get_pkg({'SLOT': '1/foo-1'})
         assert o.slot == '1'
-        self.assertRaises(ValueError, getattr, self.get_pkg({'SLOT':''}), 'slot')
+        # unset SLOT variable
+        with pytest.raises(ValueError):
+            self.get_pkg().slot
+        # empty SLOT variable
+        with pytest.raises(ValueError):
+            self.get_pkg({'SLOT': ''}).slot
 
     def test_subslot(self):
         o = self.get_pkg({'SLOT': '0'})
@@ -134,52 +144,56 @@ class test_base(TestCase):
         assert o.subslot == '2'
         o = self.get_pkg({'SLOT': '1/foo-1'})
         assert o.subslot == 'foo-1'
-        self.assertRaises(ValueError, getattr, self.get_pkg({'SLOT':''}), 'subslot')
+        # unset SLOT variable
+        with pytest.raises(ValueError):
+            self.get_pkg().subslot
+        # empty SLOT variable
+        with pytest.raises(ValueError):
+            self.get_pkg({'SLOT': ''}).subslot
 
     def test_restrict(self):
         o = self.get_pkg({'RESTRICT': 'strip fetch strip'})
-        self.assertEqual(*list(map(sorted, (o.restrict, ['strip', 'fetch', 'strip']))))
+        assert sorted(o.restrict) == ['fetch', 'strip', 'strip']
         # regression test to ensure it onnly grabs 'no' prefix, instead of lstriping it
         assert list(self.get_pkg({'RESTRICT': 'onoasdf'}).restrict) == ['onoasdf']
-        assert sorted(self.get_pkg({'RESTRICT':'nofetch'}).restrict) == ['fetch']
+        assert sorted(self.get_pkg({'RESTRICT': 'nofetch'}).restrict) == ['fetch']
         o = self.get_pkg({'RESTRICT': 'x? ( foo ) !x? ( dar )'})
         assert sorted(o.restrict.evaluate_depset([])) == ['dar']
         # ensure restrict doesn't have || () in it
-        self.assertRaises(errors.MetadataException, getattr,
-            self.get_pkg({'RESTRICT':'|| ( foon dar )'}), 'restrict')
+        with pytest.raises(errors.MetadataException):
+            getattr(self.get_pkg({'RESTRICT': '|| ( foon dar )'}), 'restrict')
 
     def test_eapi(self):
         assert str(self.get_pkg({'EAPI': '0'}).eapi) == '0'
         assert self.get_pkg({'EAPI': '0'}).eapi.is_supported
         assert not self.get_pkg({'EAPI': '-1'}).eapi.is_supported
         assert self.get_pkg({'EAPI': 'foon'}, suppress_unsupported=False).eapi is None
-        self.assertRaises(errors.MetadataException, getattr,
-            self.get_pkg({'EAPI':0, 'DEPEND':"d/b:0"}), 'depends')
-        self.assertRaises(errors.MetadataException, getattr,
-            self.get_pkg({'EAPI':0, 'RDEPEND':"d/b:0"}), 'rdepends')
-        self.assertRaises(errors.MetadataException, getattr,
-            self.get_pkg({'EAPI':1, 'DEPEND':"d/b[x,y]"}), 'depends')
-        self.assertRaises(errors.MetadataException, getattr,
-            self.get_pkg({'EAPI':1, 'DEPEND':"d/b::foon"}), 'depends')
-        self.get_pkg({'EAPI':1, 'DEPEND':'d/b:foon'}).slot
-        assert self.get_pkg({'EAPI':2, 'DEPEND':'a/b[x=]'}).depends.node_conds
-        pkg = self.get_pkg({'EAPI':1, 'DEPEND':'a/b[x=]'})
-        self.assertRaises(errors.MetadataException, getattr,
-            pkg, 'depends')
+        with pytest.raises(errors.MetadataException):
+            getattr(self.get_pkg({'EAPI': 0, 'DEPEND': "d/b:0"}), 'depends')
+        with pytest.raises(errors.MetadataException):
+            getattr(self.get_pkg({'EAPI': 0, 'RDEPEND': "d/b:0"}), 'rdepends')
+        with pytest.raises(errors.MetadataException):
+            getattr(self.get_pkg({'EAPI': 1, 'DEPEND': "d/b[x,y]"}), 'depends')
+        with pytest.raises(errors.MetadataException):
+            getattr(self.get_pkg({'EAPI': 1, 'DEPEND': "d/b::foon"}), 'depends')
+        assert self.get_pkg({'EAPI': 2, 'DEPEND': 'a/b[x=]'}).depends.node_conds
+        pkg = self.get_pkg({'EAPI': 1, 'DEPEND': 'a/b[x=]'})
+        with pytest.raises(errors.MetadataException):
+            getattr(pkg, 'depends')
 
     def test_keywords(self):
-        assert list(self.get_pkg({'KEYWORDS':''}).keywords) == []
-        assert sorted(self.get_pkg({'KEYWORDS':'x86 amd64'}).keywords) == sorted(['x86', 'amd64'])
+        assert list(self.get_pkg({'KEYWORDS': ''}).keywords) == []
+        assert sorted(self.get_pkg({'KEYWORDS': 'x86 amd64'}).keywords) == sorted(['x86', 'amd64'])
 
     def test_sorted_keywords(self):
-        assert self.get_pkg({'KEYWORDS':''}).sorted_keywords == ()
-        assert self.get_pkg({'KEYWORDS':'amd64 x86'}).sorted_keywords == ('amd64', 'x86')
-        assert self.get_pkg({'KEYWORDS':'x86 amd64'}).sorted_keywords == ('amd64', 'x86')
+        assert self.get_pkg({'KEYWORDS': ''}).sorted_keywords == ()
+        assert self.get_pkg({'KEYWORDS': 'amd64 x86'}).sorted_keywords == ('amd64', 'x86')
+        assert self.get_pkg({'KEYWORDS': 'x86 amd64'}).sorted_keywords == ('amd64', 'x86')
         assert (
-            self.get_pkg({'KEYWORDS':'~amd64 ~amd64-fbsd ~x86'}).sorted_keywords ==
+            self.get_pkg({'KEYWORDS': '~amd64 ~amd64-fbsd ~x86'}).sorted_keywords ==
             ('~amd64', '~x86', '~amd64-fbsd'))
         assert (
-            self.get_pkg({'KEYWORDS':'~amd64 ~x86 ~amd64-fbsd'}).sorted_keywords ==
+            self.get_pkg({'KEYWORDS': '~amd64 ~x86 ~amd64-fbsd'}).sorted_keywords ==
             ('~amd64', '~x86', '~amd64-fbsd'))
 
     def generic_check_depends(self, depset, attr, expected=None,
@@ -188,12 +202,12 @@ class test_base(TestCase):
             expected = depset
         if data_name is None:
             data_name = attr.rstrip('s').upper()
-        o = self.get_pkg({data_name:depset, 'EAPI':eapi})
+        o = self.get_pkg({data_name: depset, 'EAPI': eapi})
         assert str(getattr(o, attr)) == expected
-        o = self.get_pkg({data_name:'', 'EAPI':eapi})
+        o = self.get_pkg({data_name: '', 'EAPI': eapi})
         assert str(getattr(o, attr)) == ''
-        self.assertRaises(errors.MetadataException, getattr,
-            self.get_pkg({data_name:'|| ( ', 'EAPI':eapi}), attr)
+        with pytest.raises(errors.MetadataException):
+            getattr(self.get_pkg({data_name: '|| ( ', 'EAPI': eapi}), attr)
 
     for x in ('depends', 'rdepends'):
         locals()['test_%s' % x] = post_curry(generic_check_depends,
@@ -219,36 +233,38 @@ class test_base(TestCase):
         repo = self.make_parent(_get_digests=f)
         parent = self.make_parent(_parent_repo=repo)
         # verify it does digest lookups...
-        o = self.get_pkg({'SRC_URI':'http://foo.com/bar.tgz'}, repo=parent)
-        self.assertRaises(errors.MetadataException, getattr, o, 'fetchables')
+        o = self.get_pkg({'SRC_URI': 'http://foo.com/bar.tgz'}, repo=parent)
+        with pytest.raises(errors.MetadataException):
+            getattr(o, 'fetchables')
         assert l == [o]
 
         # basic tests;
         for x in range(0, 3):
-            f = self.get_pkg({'SRC_URI':'http://foo.com/monkey.tgz',
-                'EAPI':str(x)},
+            f = self.get_pkg({'SRC_URI': 'http://foo.com/monkey.tgz',
+                'EAPI': str(x)},
                  repo=parent).fetchables
             assert list(f[0].uri) == ['http://foo.com/monkey.tgz']
             assert f[0].filename == 'monkey.tgz'
 
-        f = self.get_pkg({'SRC_URI':'http://foo.com/monkey.tgz '
-            'http://dar/boon.tgz', 'EAPI':'2'},
+        f = self.get_pkg({'SRC_URI': 'http://foo.com/monkey.tgz '
+            'http://dar/boon.tgz', 'EAPI': '2'},
              repo=parent).fetchables
         assert [list(x.uri) for x in f] == [['http://foo.com/monkey.tgz'], ['http://dar/boon.tgz']]
         assert [x.filename for x in f] == ['monkey.tgz', 'boon.tgz']
 
-        f = self.get_pkg({'SRC_URI':'http://foo.com/monkey.tgz -> foon.tar.gz',
-            'EAPI':'2'},
+        f = self.get_pkg({'SRC_URI': 'http://foo.com/monkey.tgz -> foon.tar.gz',
+            'EAPI': '2'},
              repo=parent).fetchables
         assert list(f[0].uri) == ['http://foo.com/monkey.tgz']
         assert f[0].filename == 'foon.tar.gz'
 
-        o = self.get_pkg({'SRC_URI':'http://foo.com/monkey.tgz -> ',
-            'EAPI':'2'}, repo=parent)
-        self.assertRaises(errors.MetadataException, getattr, o, 'fetchables')
+        o = self.get_pkg({'SRC_URI': 'http://foo.com/monkey.tgz -> ',
+            'EAPI': '2'}, repo=parent)
+        with pytest.raises(errors.MetadataException):
+            getattr(o, 'fetchables')
 
         # verify it collapses multiple basenames down to the same.
-        f = self.get_pkg({'SRC_URI':'http://foo.com/monkey.tgz '
+        f = self.get_pkg({'SRC_URI': 'http://foo.com/monkey.tgz '
             'http://foo.com2/monkey.tgz'}, repo=parent).fetchables
         assert list(f[0].uri) == ['http://foo.com/monkey.tgz', 'http://foo.com2/monkey.tgz']
 
@@ -261,24 +277,24 @@ class test_base(TestCase):
         assert list(f[0].uri) == ['http://boon.com/foon/monkey.tgz']
 
         # assert it bails if mirror doesn't exist.
-        self.assertRaises(errors.MetadataException, getattr, self.get_pkg(
-                {'SRC_URI':'mirror://mirror2/foon/monkey.tgz'},
-                repo=parent), 'fetchables')
+        with pytest.raises(errors.MetadataException):
+            pkg = self.get_pkg({'SRC_URI': 'mirror://mirror2/foon/monkey.tgz'}, repo=parent)
+            getattr(pkg, 'fetchables')
 
         assert (
             [list(x.uri) for x in self.get_pkg(
-                {'EAPI':'2', 'SRC_URI': 'mirror://mirror1/monkey.tgz -> foon.tar.gz'},
+                {'EAPI': '2', 'SRC_URI': 'mirror://mirror1/monkey.tgz -> foon.tar.gz'},
                 repo=parent).fetchables] ==
             [['http://boon.com/monkey.tgz']])
 
         parent = self.make_parent(_parent_repo=repo,
-            mirrors={'mirror1':mirror}, default_mirrors=fetch.default_mirror(
+            mirrors={'mirror1': mirror}, default_mirrors=fetch.default_mirror(
                 ['http://default.com/dist/', 'http://default2.com/'],
                 'default'))
 
         assert (
             [list(x.uri) for x in self.get_pkg(
-                {'EAPI':'2', 'SRC_URI': 'mirror://mirror1/monkey.tgz -> foon.tar.gz'},
+                {'EAPI': '2', 'SRC_URI': 'mirror://mirror1/monkey.tgz -> foon.tar.gz'},
                 repo=parent).fetchables] ==
             [[
                 'http://default.com/dist/foon.tar.gz',
@@ -293,9 +309,9 @@ class test_base(TestCase):
         # test primaryuri...
         mirror2 = fetch.mirror(['http://boon2.com/'], 'default')
         parent = self.make_parent(_parent_repo=repo, default_mirrors=mirror,
-            mirrors={'mirror1':mirror2})
+            mirrors={'mirror1': mirror2})
         f = self.get_pkg({'SRC_URI': 'http://foo.com/monkey.tgz '
-            'mirror://mirror1/boon.tgz', 'RESTRICT':'primaryuri'},
+            'mirror://mirror1/boon.tgz', 'RESTRICT': 'primaryuri'},
             repo=parent).fetchables
         assert list(f[0].uri) == ['http://foo.com/monkey.tgz', 'http://boon.com/monkey.tgz']
         assert list(f[1].uri) == ['http://boon2.com/boon.tgz', 'http://boon.com/boon.tgz']
@@ -312,16 +328,16 @@ class test_base(TestCase):
         assert list(f[0].uri) == []
 
 
-class test_package(test_base):
+class TestPackage(TestBase):
 
     kls = ebuild_src.package
 
     def get_pkg(self, *args, **kwds):
         kwds.setdefault("pre_args", (None,))
-        return test_base.get_pkg(self, *args, **kwds)
+        return super().get_pkg(*args, **kwds)
 
     def test_init(self):
-        test_base.test_init(self)
+        super().test_init()
         o = self.get_pkg(pre_args=(1,))
         assert o._shared_pkg_data == 1
 
@@ -354,10 +370,10 @@ class test_package(test_base):
     def test_manifest(self):
         m = digest.Manifest(None)
         o = self.make_shared_pkg_data(manifest=m)
-        self.assertIdentical(o.manifest, m)
+        assert o.manifest is m
 
 
-class test_package_factory(TestCase):
+class TestPackageFactory(object):
 
     kls = ebuild_src.package_factory
 
@@ -385,7 +401,7 @@ class test_package_factory(TestCase):
     def test_get_ebuild_src(self):
         assert (
             self.mkinst(
-                repo=malleable_obj(_get_ebuild_src=lambda s:f"lincoln haunts me: {s}")
+                repo=malleable_obj(_get_ebuild_src=lambda s: f"lincoln haunts me: {s}")
                 ).get_ebuild_src("1") ==
             "lincoln haunts me: 1")
 
@@ -393,9 +409,9 @@ class test_package_factory(TestCase):
     def test_get_ebuild_mtime(self):
         f = pjoin(self.dir, "temp-0.ebuild")
         open(f, 'w').close()
-        self.assertEqual(self.mkinst(repo=malleable_obj(
-            _get_ebuild_path=lambda s:f))._get_ebuild_mtime(None),
-            os.stat(f).st_mtime)
+        mtime = self.mkinst(
+            repo=malleable_obj(_get_ebuild_path=lambda s: f))._get_ebuild_mtime(None)
+        assert mtime == os.stat(f).st_mtime
 
     def test_get_metadata(self):
         ec = FakeEclassCache('/nonexistent/path')
@@ -408,7 +424,7 @@ class test_package_factory(TestCase):
                 return self.validate_result
 
         cache1 = fake_cache({pkg.cpvstr:
-            {'_mtime_':100, 'marker':1}
+            {'_mtime_': 100, 'marker': 1}
         })
         cache2 = fake_cache({})
 
@@ -418,13 +434,12 @@ class test_package_factory(TestCase):
             raise explode_kls("%s was called with %r and %r, "
                 "shouldn't be invoked." % (name, args, kwargs))
 
-        pf = self.mkinst(cache=(cache2, cache1), eclasses=ec,
+        pf = self.mkinst(
+            cache=(cache2, cache1), eclasses=ec,
             _update_metadata=partial(explode, '_update_metadata'))
 
         cache1.validate_result = True
-        self.assertEqual(pf._get_metadata(pkg),
-            {'marker':1, '_mtime_':100},
-            reflective=False)
+        assert pf._get_metadata(pkg) == {'marker': 1, '_mtime_': 100}
 
         assert list(cache1.keys()) == [pkg.cpvstr]
         assert not cache2
@@ -432,22 +447,24 @@ class test_package_factory(TestCase):
         # mtime was wiped, thus no longer is usable.
         # note also, that the caches are writable.
         cache1.validate_result = False
-        self.assertRaises(explode_kls, pf._get_metadata, pkg)
+        with pytest.raises(explode_kls):
+            pf._get_metadata(pkg)
         assert not cache2
         assert not cache1
 
         # Note that this is known crap eclass data; partially lazyness, partially
         # to validate the eclass validation is left to ec cache only.
         cache2.update({pkg.cpvstr:
-            {'_mtime_':200, '_eclasses_':{'eclass1':(None, 100)}, 'marker':2}
+            {'_mtime_': 200, '_eclasses_': {'eclass1': (None, 100)}, 'marker': 2}
         })
         cache2.readonly = True
-        self.assertRaises(explode_kls, pf._get_metadata, pkg)
+        with pytest.raises(explode_kls):
+            pf._get_metadata(pkg)
         assert list(cache2.keys()) == [pkg.cpvstr]
         # keep in mind the backend assumes it gets its own copy of the data.
         # thus, modifying (popping _mtime_) _is_ valid
-        self.assertEqual(cache2[pkg.cpvstr],
-            {'_eclasses_':{'eclass1':(None, 100)}, 'marker':2, '_mtime_':200})
+        assert cache2[pkg.cpvstr] == \
+            {'_eclasses_': {'eclass1': (None, 100)}, 'marker': 2, '_mtime_': 200}
 
     def test_required_use(self):
         pass

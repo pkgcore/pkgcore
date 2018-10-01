@@ -12,6 +12,7 @@ from pkgcore import fetch
 from pkgcore.ebuild import ebuild_src, digest, repo_objs
 from pkgcore.ebuild.eapi import get_eapi, EAPI
 from pkgcore.package import errors
+from pkgcore.restrictions.values import ContainmentMatch
 from pkgcore.test import malleable_obj
 from tests.ebuild.test_eclass_cache import FakeEclassCache
 
@@ -344,6 +345,11 @@ class TestBase(object):
             pkg = self.get_pkg({'EAPI': eapi, 'REQUIRED_USE': 'test? ( foo )'})
             assert bool(pkg.required_use) == eapi.options.has_required_use, \
                 f"failure parsing REQUIRED_USE for EAPI {eapi}"
+
+            # render/verify REQUIRED_USE deps as if the 'test' USE flag is enabled
+            if eapi.options.has_required_use:
+                use_deps = pkg.required_use.evaluate_depset(['test'])
+                assert use_deps.restrictions == (ContainmentMatch('foo'),)
 
 
 class TestPackage(TestBase):

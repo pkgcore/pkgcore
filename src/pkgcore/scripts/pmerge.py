@@ -264,13 +264,13 @@ class AmbiguousQuery(parserestrict.ParseError):
         self.keys = keys
 
     def __str__(self):
-        return "multiple matches for %r: %s" % (self.token, ', '.join(self.keys))
+        return f"multiple matches for {self.token!r}: {', '.join(self.keys)}"
 
 
 class NoMatches(parserestrict.ParseError):
     """Exception for no matches where at least one match is required."""
     def __init__(self, token):
-        parserestrict.ParseError.__init__(self, '%s: no matches' % (token,))
+        parserestrict.ParseError.__init__(self, f'{token!r}: no matches')
 
 
 class Failure(ValueError):
@@ -312,15 +312,16 @@ def unmerge(out, err, installed_repos, targets, options, formatter, world_set=No
 
     # fail out if no matches are found, otherwise just output a notification
     if unknown:
+        unknowns = ', '.join(map(repr, unknown))
         if matches:
-            err.write("Skipping unknown matches: %s\n" % ', '.join(map(repr, unknown)))
+            err.write(f"Skipping unknown matches: {unknowns}\n")
         else:
-            raise Failure("no matches found: %s" % ', '.join(map(repr, unknown)))
+            raise Failure(f"no matches found: {unknowns}")
 
     if fake:
         err.write('Skipping virtual pkg%s: %s' % (
             pluralism(fake_pkgs),
-            ', '.join('%s::%s' % (x.versioned_atom, x.repo_id) for x in fake)))
+            ', '.join(f'{x.versioned_atom}::{x.repo_id}' for x in fake)))
 
     if matches:
         out.write(out.bold, 'The following packages are to be unmerged:')
@@ -746,14 +747,13 @@ def main(options, out, err):
         out.write()
         out.write('Failures encountered:')
         for restrict in failures:
-            out.error("failed '%s'" % (restrict,))
+            out.error(f"failed '{restrict}'")
             out.write('potentials:')
             match_count = 0
             for r in get_raw_repos(source_repos):
                 l = r.match(restrict)
                 if l:
-                    out.write(
-                        "repo %s: [ %s ]" % (r, ", ".join(str(x) for x in l)))
+                    out.write(f"repo {r}: [ {', '.join(map(str, l))} ]")
                     match_count += len(l)
             if not match_count:
                 out.write("No matches found")

@@ -106,7 +106,7 @@ def parse_time(s):
         unit = date.group(2)
     else:
         raise argparse.ArgumentTypeError(
-            "invalid date: %r (valid units: %s)" % (s, ', '.join(units.keys())))
+            f"invalid date: {s!r} (valid units: {' ,'.join(units.keys())})")
     return time.time() - (value * units[unit])
 
 
@@ -124,7 +124,7 @@ def parse_size(s):
         unit = size.group(2)
     else:
         raise argparse.ArgumentTypeError(
-            "invalid size: %r (valid units: %s)" % (s, ', '.join(units.keys())))
+            f"invalid size: {s!r} (valid units: {' ,'.join(units.keys())})")
     return value * units[unit]
 
 

@@ -30,9 +30,8 @@ demandload(
 
 def dump_section(config, out):
     out.first_prefix.append('    ')
-    out.write('# typename of this section: %s' % (config.type.name,))
-    out.write('class %s.%s;' % (config.type.callable.__module__,
-                                config.type.callable.__name__))
+    out.write(f'# typename of this section: {config.type.name}')
+    out.write(f'class {config.type.callable.__module__}.{config.type.callable.__name__};')
     if config.default:
         out.write('default true;')
     for key, val in sorted(config.config.items()):
@@ -41,8 +40,8 @@ def dump_section(config, out):
             if config.type.allow_unknowns:
                 typename = 'str'
             else:
-                raise ValueError('no type set for %s (%r)' % (key, val))
-        out.write('# type: %s' % (typename,))
+                raise ValueError(f'no type set for {key} ({val!r})')
+        out.write(f'# type: {typename}')
         if typename.startswith('lazy_refs'):
             typename = typename[5:]
             val = list(ref.collapse() for ref in val)
@@ -50,24 +49,23 @@ def dump_section(config, out):
             typename = typename[5:]
             val = val.collapse()
         if typename == 'str':
-            out.write('%s %r;' % (key, val))
+            out.write(f'{key} {val!r};')
         elif typename == 'bool':
-            out.write('%s %s;' % (key, bool(val)))
+            out.write(f'{key} {bool(val)};')
         elif typename == 'list':
-            out.write('%s %s;' %
-                      (key, ' '.join(repr(string) for string in val)))
+            out.write(f"{key} {' '.join(map(repr, val))};")
         elif typename == 'callable':
-            out.write('%s %s.%s;' % (key, val.__module__, val.__name__))
+            out.write(f'{key} {val.__module__}.{val.__name__};')
         elif typename.startswith('ref:'):
             if val.name is None:
-                out.write('%s {' % (key,))
+                out.write(f'{key} {{')
                 dump_section(val, out)
                 out.write('};')
             else:
-                out.write('%s %r;' % (key, val.name))
+                out.write(f'{key} {val.name!r};')
         elif typename.startswith('refs:'):
             out.autoline = False
-            out.write('%s' % (key,))
+            out.write(f'{key}')
             for i, subconf in enumerate(val):
                 if subconf.name is None:
                     out.autoline = True
@@ -76,11 +74,11 @@ def dump_section(config, out):
                     out.autoline = False
                     out.write('}')
                 else:
-                    out.write(' %r' % (subconf.name,))
+                    out.write(f' {subconf.name!r}')
             out.autoline = True
             out.write(';')
         else:
-            out.write('# %s = %r of unknown type %s' % (key, val, typename))
+            out.write(f'# {key} = {val!r} of unknown type {typename}')
     out.first_prefix.pop()
 
 
@@ -88,8 +86,7 @@ def get_classes(configs):
     # Not particularly efficient (doesn't memoize already visited configs)
     classes = set()
     for config in configs:
-        classes.add('%s.%s' % (config.type.callable.__module__,
-                               config.type.callable.__name__))
+        classes.add(f'{config.type.callable.__module__}.{config.type.callable.__name__}')
         for key, val in config.config.items():
             typename = config.type.types.get(key)
             if typename is None:
@@ -153,7 +150,7 @@ def describe_class_main(options, out, err):
     write_type(out, type_obj)
 
 def write_type(out, type_obj):
-    out.write('typename is %s' % (type_obj.name,))
+    out.write(f'typename is {type_obj.name}')
     if type_obj.doc:
         for line in type_obj.doc.split('\n'):
             out.write(line.strip(), wrap=True)
@@ -165,7 +162,7 @@ def write_type(out, type_obj):
             typename = typename[len("lazy_ref:"):]
         elif typename.startswith("lazy_refs:"):
             typename = typename[len("lazy_refs:"):]
-        out.write('%s: %s' % (name, typename), autoline=False)
+        out.write(f'{name}: {typename}', autoline=False)
         if name in type_obj.required:
             out.write(' (required)', autoline=False)
         out.write()
@@ -184,7 +181,7 @@ def uncollapsable_main(options, out, err):
             pass
         except errors.ConfigurationError as e:
             out.autoline = False
-            dump_error(e, "section %s" % (name,), handle=out)
+            dump_error(e, f"section {name}", handle=out)
             if options.debug:
                 traceback.print_exc()
             out.autoline = True
@@ -221,7 +218,7 @@ def dump_main(options, out, err):
             continue
         except errors.ConfigurationError:
             continue
-        out.write('%r {' % (name,))
+        out.write(f'{name!r} {{')
         dump_section(section, out)
         out.write('}')
 
@@ -246,8 +243,7 @@ def configurables_main(options, out, err):
         type_obj = basics.ConfigType(configurable)
         if options.typename is not None and type_obj.name != options.typename:
             continue
-        out.write(out.bold, '%s.%s' %
-                  (configurable.__module__, configurable.__name__))
+        out.write(out.bold, f'{configurable.__module__}.{configurable.__name__}')
         write_type(out, type_obj)
         out.write()
         out.write()
@@ -256,11 +252,11 @@ def configurables_main(options, out, err):
 def _dump_uncollapsed_section(config, out, err, section):
     """Write a single section."""
     if isinstance(section, str):
-        out.write('named section %r' % (section,))
+        out.write(f'named section {section!r}')
         return
     for key in sorted(section.keys()):
         kind, value = section.render_value(config, key, 'repr')
-        out.write('# type: %s' % (kind,))
+        out.write(f'# type: {kind}')
         if kind == 'list':
             for name, val in zip((
                     key + '.prepend', key, key + '.append'), value):
@@ -281,7 +277,7 @@ def _dump_uncollapsed_section(config, out, err, section):
                     out.first_prefix.append('    ')
                     try:
                         for subnr, subsection in enumerate(val):
-                            subname = 'nested section %s' % (subnr + 1,)
+                            subname = f'nested section {subnr + 1}'
                             out.write(subname)
                             out.write('=' * len(subname))
                             _dump_uncollapsed_section(config, out, err, subsection)
@@ -289,7 +285,7 @@ def _dump_uncollapsed_section(config, out, err, section):
                     finally:
                         out.first_prefix.pop()
             continue
-        out.write('%r = ' % (key,), autoline=False)
+        out.write(f'{key!r} = ', autoline=False)
         if kind == 'callable':
             out.write(value.__module__, value.__name__)
         elif kind == 'bool':
@@ -302,7 +298,7 @@ def _dump_uncollapsed_section(config, out, err, section):
             finally:
                 out.first_prefix.pop()
         else:
-            err.error('unsupported type %r' % (kind,))
+            err.error(f'unsupported type {kind!r}')
 
 dump_uncollapsed = subparsers.add_parser(
     "dump-uncollapsed", parents=shared_options,
@@ -326,13 +322,13 @@ def dump_uncollapsed_main(options, out, err):
         # to work in a config file with a different format.
         '''))
     for i, source in enumerate(options.config.configs):
-        s = 'Source %s' % (i + 1,)
+        s = f'Source {i + 1}'
         out.write(out.bold, '*' * len(s))
         out.write(out.bold, s)
         out.write(out.bold, '*' * len(s))
         out.write()
         for name, section in sorted(source.items()):
-            out.write('%s' % (name,))
+            out.write(f'{name}')
             out.write('=' * len(name))
             _dump_uncollapsed_section(options.config, out, err, section)
             out.write()
@@ -351,9 +347,9 @@ def package_func(options, out, err):
         matched = True
         ops = domain.pkg_operations(pkg)
         if not ops.supports("configure"):
-            out.write("package %s: nothing to configure, ignoring" % (pkg,))
+            out.write(f"package {pkg}: nothing to configure, ignoring")
             continue
-        out.write("package %s: configuring..." % (pkg,))
+        out.write(f"package {pkg}: configuring...")
         ops.configure()
     if not matched:
         out.write("no packages matched")

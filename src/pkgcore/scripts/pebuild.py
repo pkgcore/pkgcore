@@ -34,21 +34,19 @@ def _validate_args(parser, namespace):
 
     pkgs = repo.match(restriction)
     if not pkgs:
-        parser.error("no matches: %r" % (token,))
+        parser.error(f"no matches: {token!r}")
 
     pkg = max(pkgs)
     if len(pkgs) > 1:
-        parser.err.write("got multiple matches for %r:" % (token,))
+        parser.err.write(f"got multiple matches for {token!r}:")
         if len(set((p.slot, p.repo) for p in pkgs)) != 1:
             for p in pkgs:
-                parser.err.write(
-                    "%s:%s::%s" % (p.cpvstr, p.slot,
-                                   getattr(p.repo, 'repo_id', 'unknown')), prefix='  ')
+                repo_id = getattr(p.repo, 'repo_id', 'unknown')
+                parser.err.write(f"{p.cpvstr}:{p.slot}::{repo_id}", prefix='  ')
             parser.err.write()
             parser.error("please refine your restriction to one match")
-        parser.err.write(
-            "choosing %s:%s::%s" %
-            (pkg.cpvstr, pkg.slot, getattr(pkg.repo, 'repo_id', 'unknown')), prefix='  ')
+        repo_id = getattr(pkg.repo, 'repo_id', 'unknown')
+        parser.err.write("choosing {pkg.cpvstr}:{pkg.slot}::{repo_id}", prefix='  ')
 
     namespace.pkg = pkg
 
@@ -90,8 +88,8 @@ def main(options, out, err):
 
     try:
         for phase, func in phase_funcs:
-            out.write('executing phase %s' % (phase,))
+            out.write(f'executing phase {phase}')
             func(**kwds)
     except format.errors as e:
-        out.error("caught exception executing phase %s: %s" % (phase, e))
+        out.error(f"caught exception executing phase {phase}: {e}")
         return 1

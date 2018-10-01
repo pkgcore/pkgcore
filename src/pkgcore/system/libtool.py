@@ -38,9 +38,9 @@ class UnknownData(Exception):
         self.token, self.line = token, line
 
     def __str__(self):
-        s = "we don't know how to parse line %r" % (self.line,)
+        s = f"we don't know how to parse line {self.line!r}"
         if self.token:
-            s += "specifically token %r" % (self.token,)
+            s += f"specifically token {self.token!r}"
         return s
 
 # libtiff.la - a libtool library file
@@ -141,7 +141,7 @@ class FixLibtoolArchivesTrigger(triggers.base):
             if not updated:
                 continue
 
-            engine.observer.info("rewriting libtool archive %s" % (obj.location,))
+            engine.observer.info(f"rewriting libtool archive {obj.location}")
             source = engine.get_writable_fsobj(obj, empty=True)
             source.text_fileobj(True).write(content)
             # force chksums to be regenerated

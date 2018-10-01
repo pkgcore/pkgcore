@@ -68,13 +68,15 @@ def generate_required_use(self):
         "": boolean.AndRestriction,
         "^^": boolean.JustOneRestriction
     }
+
+    def _invalid_op(msg, *args):
+        raise metadata_errors.MetadataException(self, 'eapi', f'REQUIRED_USE: {msg}')
+
     if self.eapi.options.required_use_one_of:
         operators['??'] = boolean.AtMostOneOfRestriction
     else:
-        def _invalid_op(*args):
-            raise metadata_errors.MetadataException(
-                self, "eapi", f"REQUIRED_USE: EAPI {self.eapi} doesn't support '??' operator")
-        operators['??'] = _invalid_op
+        operators['??'] = partial(
+            _invalid_op, f"EAPI {self.eapi} doesn't support '??' operator")
 
     return conditionals.DepSet.parse(
         data,

@@ -377,8 +377,9 @@ class TestBase(object):
                 else:
                     # EAPIs that don't support the ?? operator raise metadata exceptions if used.
                     pkg = self.get_pkg({'EAPI': eapi_str, 'REQUIRED_USE': '?? ( bar foo )'})
-                    with pytest.raises(errors.MetadataException):
+                    with pytest.raises(errors.MetadataException) as cm:
                         getattr(pkg, 'required_use')
+                    assert f"EAPI {eapi_str} doesn't support '??' operator" in cm.value.error
 
                 for required_use, use, set_use, satisfied in required_use_data:
                     pkg = self.get_pkg({'EAPI': eapi_str, 'REQUIRED_USE': required_use})

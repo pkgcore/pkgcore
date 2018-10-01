@@ -12,7 +12,6 @@ from pkgcore import fetch
 from pkgcore.ebuild import ebuild_src, digest, repo_objs
 from pkgcore.ebuild.eapi import get_eapi, EAPI
 from pkgcore.package import errors
-from pkgcore.restrictions.values import ContainmentMatch
 from pkgcore.test import malleable_obj
 from tests.ebuild.test_eclass_cache import FakeEclassCache
 
@@ -346,10 +345,37 @@ class TestBase(object):
             assert bool(pkg.required_use) == eapi.options.has_required_use, \
                 f"failure parsing REQUIRED_USE for EAPI {eapi}"
 
-            # render/verify REQUIRED_USE deps as if the 'test' USE flag is enabled
+            # Render various REQUIRED_USE deps with set USE flag states and
+            # check for satisfiability.
             if eapi.options.has_required_use:
-                use_deps = pkg.required_use.evaluate_depset(['test'])
-                assert use_deps.restrictions == (ContainmentMatch('foo'),)
+                for required_use, use, set_use, satisfied in (
+                        ('foo', '', 'foo', True),
+                        ('foo', '', '', False),
+                        ('foo bar', '', 'foo bar', True),
+                        ('foo bar', '', 'bar foo', True),
+                        ('( foo bar )', '', 'foo', False),
+                        ('( foo bar )', '', 'foo bar', True),
+                        ('test? ( foo )', 'test', 'foo', True),
+                        ('test? ( foo )', 'test', '', False),
+                        ('test? ( foo bar )', 'test', 'foo bar', True),
+                        ('!test? ( foo )', 'test', '', True),
+                        ('!test? ( foo )', '', 'foo', True),
+                        ('|| ( test foo )', 'test', 'test', True),
+                        ('|| ( test foo )', 'test', 'test foo', True),
+                        ('|| ( test foo ) bar? ( foo )', 'test', 'test', True),
+                        ('|| ( test foo ) bar? ( foo )', 'bar', 'foo', True),
+                        ('^^ ( bar foo )', '', 'bar', True),
+                        ('^^ ( bar foo )', '', 'foo', True),
+                        ('^^ ( bar foo )', '', '', False),
+                        ('?? ( bar foo )', '', 'bar', True),
+                        ('?? ( bar foo )', '', 'foo', True),
+                        ('?? ( bar foo )', '', '', True),
+                        ):
+                    pkg = self.get_pkg({'EAPI': eapi, 'REQUIRED_USE': required_use})
+                    required_use_deps = pkg.required_use.evaluate_depset(use.split())
+                    for node in required_use_deps:
+                        assert node.match(set_use.split()) is satisfied, \
+                            f'REQUIRED_USE="{required_use}", USE="{use}", set USE="{set_use}", satisfied="{satisfied}"'
 
 
 class TestPackage(TestBase):

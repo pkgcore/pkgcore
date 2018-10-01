@@ -336,42 +336,52 @@ class TestBase(object):
         f = self.get_pkg({'SRC_URI': 'monkey.tgz'}, repo=parent).fetchables
         assert list(f[0].uri) == []
 
-    # TODO: add more REQUIRED_USE tests
     def test_required_use(self):
-        for eapi in EAPI.known_eapis.values():
+        for eapi_str, eapi in EAPI.known_eapis.items():
             # Check all EAPIs for REQUIRED_USE parsing, EAPIs that don't support it
             # should return depsets that evaluate to False.
-            pkg = self.get_pkg({'EAPI': eapi, 'REQUIRED_USE': 'test? ( foo )'})
+            pkg = self.get_pkg({'EAPI': eapi_str, 'REQUIRED_USE': 'test? ( foo )'})
             assert bool(pkg.required_use) == eapi.options.has_required_use, \
                 f"failure parsing REQUIRED_USE for EAPI {eapi}"
 
             # Render various REQUIRED_USE deps with set USE flag states and
             # check for satisfiability.
             if eapi.options.has_required_use:
-                for required_use, use, set_use, satisfied in (
-                        ('foo', '', 'foo', True),
-                        ('foo', '', '', False),
-                        ('foo bar', '', 'foo bar', True),
-                        ('foo bar', '', 'bar foo', True),
-                        ('( foo bar )', '', 'foo', False),
-                        ('( foo bar )', '', 'foo bar', True),
-                        ('test? ( foo )', 'test', 'foo', True),
-                        ('test? ( foo )', 'test', '', False),
-                        ('test? ( foo bar )', 'test', 'foo bar', True),
-                        ('!test? ( foo )', 'test', '', True),
-                        ('!test? ( foo )', '', 'foo', True),
-                        ('|| ( test foo )', 'test', 'test', True),
-                        ('|| ( test foo )', 'test', 'test foo', True),
-                        ('|| ( test foo ) bar? ( foo )', 'test', 'test', True),
-                        ('|| ( test foo ) bar? ( foo )', 'bar', 'foo', True),
-                        ('^^ ( bar foo )', '', 'bar', True),
-                        ('^^ ( bar foo )', '', 'foo', True),
-                        ('^^ ( bar foo )', '', '', False),
+                required_use_data = (
+                    ('foo', '', 'foo', True),
+                    ('foo', '', '', False),
+                    ('foo bar', '', 'foo bar', True),
+                    ('foo bar', '', 'bar foo', True),
+                    ('( foo bar )', '', 'foo', False),
+                    ('( foo bar )', '', 'foo bar', True),
+                    ('test? ( foo )', 'test', 'foo', True),
+                    ('test? ( foo )', 'test', '', False),
+                    ('test? ( foo bar )', 'test', 'foo bar', True),
+                    ('!test? ( foo )', 'test', '', True),
+                    ('!test? ( foo )', '', 'foo', True),
+                    ('|| ( test foo )', 'test', 'test', True),
+                    ('|| ( test foo )', 'test', 'test foo', True),
+                    ('|| ( test foo ) bar? ( foo )', 'test', 'test', True),
+                    ('|| ( test foo ) bar? ( foo )', 'bar', 'foo', True),
+                    ('^^ ( bar foo )', '', 'bar', True),
+                    ('^^ ( bar foo )', '', 'foo', True),
+                    ('^^ ( bar foo )', '', '', False),
+                )
+
+                if eapi.options.required_use_one_of:
+                    required_use_data += (
                         ('?? ( bar foo )', '', 'bar', True),
                         ('?? ( bar foo )', '', 'foo', True),
                         ('?? ( bar foo )', '', '', True),
-                        ):
-                    pkg = self.get_pkg({'EAPI': eapi, 'REQUIRED_USE': required_use})
+                    )
+                else:
+                    # EAPIs that don't support the ?? operator raise metadata exceptions if used.
+                    pkg = self.get_pkg({'EAPI': eapi_str, 'REQUIRED_USE': '?? ( bar foo )'})
+                    with pytest.raises(errors.MetadataException):
+                        getattr(pkg, 'required_use')
+
+                for required_use, use, set_use, satisfied in required_use_data:
+                    pkg = self.get_pkg({'EAPI': eapi_str, 'REQUIRED_USE': required_use})
                     required_use_deps = pkg.required_use.evaluate_depset(use.split())
                     for node in required_use_deps:
                         assert node.match(set_use.split()) is satisfied, \

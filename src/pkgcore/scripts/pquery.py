@@ -520,7 +520,7 @@ class RawAwareStoreRepoObject(commandline.StoreRepoObject):
             self.repo_key = 'unfiltered_repos'
         else:
             self.repo_key = 'repos'
-        return super(RawAwareStoreRepoObject, self)._get_sections(config, namespace)
+        return super()._get_sections(config, namespace)
 
 repo_mux = repo_group.add_mutually_exclusive_group()
 # TODO: update docs when binpkg/vdb repos are configured via repos.conf

@@ -213,7 +213,7 @@ class ProvidesRepo(util.SimpleTree):
         for pkg in pkgs:
             d.setdefault(pkg.category, {}).setdefault(pkg.package, []).append(pkg.fullver)
         intermediate_parent = self.PkgProvidedParent()
-        super(ProvidesRepo, self).__init__(
+        super().__init__(
             d, pkg_klass=partial(self.PkgProvided, intermediate_parent),
             livefs=True, frozen=True, repo_id=repo_id)
         intermediate_parent._parent_repo = self

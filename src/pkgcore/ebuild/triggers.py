@@ -453,7 +453,7 @@ class CollisionProtect(FileCollision):
 class ProtectOwned(FileCollision):
 
     def __init__(self, vdb, *args):
-        super(ProtectOwned, self).__init__(*args)
+        super().__init__(*args)
         self.vdb = vdb
 
     def collision(self, colliding):

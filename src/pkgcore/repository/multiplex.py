@@ -86,7 +86,7 @@ class tree(prototype.tree):
     operations_kls = operations
 
     def __init__(self, *trees):
-        super(tree, self).__init__()
+        super().__init__()
         for x in trees:
             if not hasattr(x, 'itermatch'):
                 raise errors.InitializationError(

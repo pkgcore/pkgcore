@@ -36,7 +36,7 @@ class FsBased(base):
                 del config[x]
             else:
                 setattr(self, "_"+x, y)
-        super(FsBased, self).__init__(**config)
+        super().__init__(**config)
 
         if label is not None:
             location = pjoin(location, label.lstrip(os.path.sep))

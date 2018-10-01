@@ -37,7 +37,7 @@ class SimpleTree(prototype.tree):
         self.livefs = livefs
         self.repo_id = repo_id
         self.package_class = pkg_klass
-        super(SimpleTree, self).__init__(frozen=frozen)
+        super().__init__(frozen=frozen)
 
     def _get_categories(self, *arg):
         if arg:
@@ -59,12 +59,12 @@ class SimpleTree(prototype.tree):
             del self.cpv_dict[pkg.category][pkg.package]
             if not self.cpv_dict[pkg.category]:
                 del self.cpv_dict[pkg.category]
-        super(SimpleTree, self).notify_remove_package(pkg)
+        super().notify_remove_package(pkg)
 
     def notify_add_package(self, pkg):
         self.cpv_dict.setdefault(
             pkg.category, {}).setdefault(pkg.package, []).append(pkg.fullver)
-        super(SimpleTree, self).notify_add_package(pkg)
+        super().notify_add_package(pkg)
 
 
 class RepositoryGroup(DictMixin):

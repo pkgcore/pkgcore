@@ -251,7 +251,7 @@ class use(_use, metaclass=_register_command):
         u.add_bare_global(*split_negations(namespace.profile.use))
         u.merge(namespace.profile.pkg_use)
         namespace.use = u
-        super(use, self).__call__(namespace, out, err)
+        super().__call__(namespace, out, err)
 
 
 class masked_use(_use, metaclass=_register_command):
@@ -259,7 +259,7 @@ class masked_use(_use, metaclass=_register_command):
 
     def __call__(self, namespace, out, err):
         namespace.use = namespace.profile.masked_use
-        super(masked_use, self).__call__(namespace, out, err)
+        super().__call__(namespace, out, err)
 
 
 class stable_masked_use(_use, metaclass=_register_command):
@@ -267,7 +267,7 @@ class stable_masked_use(_use, metaclass=_register_command):
 
     def __call__(self, namespace, out, err):
         namespace.use = namespace.profile.stable_masked_use
-        super(stable_masked_use, self).__call__(namespace, out, err)
+        super().__call__(namespace, out, err)
 
 
 class forced_use(_use, metaclass=_register_command):
@@ -275,7 +275,7 @@ class forced_use(_use, metaclass=_register_command):
 
     def __call__(self, namespace, out, err):
         namespace.use = namespace.profile.forced_use
-        super(forced_use, self).__call__(namespace, out, err)
+        super().__call__(namespace, out, err)
 
 
 class stable_forced_use(_use, metaclass=_register_command):
@@ -283,7 +283,7 @@ class stable_forced_use(_use, metaclass=_register_command):
 
     def __call__(self, namespace, out, err):
         namespace.use = namespace.profile.stable_forced_use
-        super(stable_forced_use, self).__call__(namespace, out, err)
+        super().__call__(namespace, out, err)
 
 
 class defaults(_base, metaclass=_register_command):

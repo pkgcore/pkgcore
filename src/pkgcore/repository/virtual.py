@@ -27,7 +27,7 @@ class tree(prototype.tree):
         :param grab_virtuals_func: callable to get a package -> versions mapping
         :param livefs: is this a livefs repository?
         """
-        super(tree, self).__init__(frozen)
+        super().__init__(frozen)
         self.livefs = livefs
         vf = self.factory_kls(self)
         self.package_class = vf.new_package
@@ -127,7 +127,7 @@ class RestrictionRepo(tree):
         self._injected_pkgs = set()
         self.restriction = OrRestriction()
         self.add_restricts(restrictions)
-        super(RestrictionRepo, self).__init__(livefs=livefs, frozen=frozen)
+        super().__init__(livefs=livefs, frozen=frozen)
 
     def add_restricts(self, restrictions):
         restricts = list(self.restriction.restrictions)

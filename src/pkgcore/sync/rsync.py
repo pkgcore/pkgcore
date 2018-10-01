@@ -150,7 +150,7 @@ class _rsync_file_syncer(rsync_syncer):
     """Support syncing a single file over rsync."""
 
     def __init__(self, path, uri):
-        super(_rsync_file_syncer, self).__init__(basedir=path, uri=uri)
+        super().__init__(basedir=path, uri=uri)
         # override parent classes that always assume directory syncing
         self.basedir = path
         self.uri = uri

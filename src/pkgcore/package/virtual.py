@@ -38,7 +38,7 @@ class package(metadata.package):
         elif key == "slot":
             val = f"{self.provider.category}-{self.version}"
         else:
-            return super(package, self).__getattr__(key)
+            return super().__getattr__(key)
         self.__dict__[key] = val
         return val
 

@@ -64,7 +64,7 @@ class database(flat_hash.database):
         config.pop('label', None)
         self.mtime_in_entry = config.pop('mtime_in_entry', True)
         location = pjoin(location, 'metadata', 'cache')
-        super(database, self).__init__(location, *args, **config)
+        super().__init__(location, *args, **config)
         self.hardcoded_auxdbkeys_order = tuple(
             (idx, key)
             for idx, key in enumerate(self.auxdbkeys_order)

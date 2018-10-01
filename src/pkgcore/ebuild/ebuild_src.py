@@ -343,7 +343,7 @@ class package_factory(metadata.factory):
 
     def __init__(self, parent, cachedb, eclass_cache, mirrors, default_mirrors,
                  *args, **kwargs):
-        super(package_factory, self).__init__(parent, *args, **kwargs)
+        super().__init__(parent, *args, **kwargs)
         self._cache = cachedb
         self._ecache = eclass_cache
 

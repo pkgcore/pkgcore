@@ -83,8 +83,7 @@ class package(ebuild_src.base):
 
     @property
     def tracked_attributes(self):
-        return tuple(super(package, self).tracked_attributes) + \
-            ("contents", "use", "environment")
+        return tuple(super().tracked_attributes) + ("contents", "use", "environment")
 
     @property
     def _operations(self):
@@ -115,14 +114,14 @@ class package(ebuild_src.base):
     __slots__ = tuple(set(_get_attr.keys()) - set(ebuild_src.package._get_attr.keys()))
 
     def __init__(self, *args, **kwargs):
-        super(package, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self._get_attr.update(
             (k, post_curry(
                 wrap_inst,
                 ebuild_src.package._config_wrappables[k],
                 ebuild_src.package._get_attr[k]))
             for k in ebuild_src.package._config_wrappables
-            if k in super(package, self).tracked_attributes)
+            if k in super().tracked_attributes)
 
     def _update_metadata(self, pkg):
         raise NotImplementedError()

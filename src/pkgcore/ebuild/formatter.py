@@ -487,7 +487,7 @@ class PortageFormatter(CountingFormatter):
         """Output package repository list."""
         out = self.out
         if self.verbose:
-            super(PortageFormatter, self).end()
+            super().end()
             out.write()
             if self.quiet_repo_display:
                 repos = list(self.repos.items())

@@ -235,7 +235,7 @@ class tree(prototype.tree):
         :keyword ignore_paludis_versioning: if False, error when -scm is seen.
             If True, silently ignore -scm ebuilds.
         """
-        super(tree, self).__init__()
+        super().__init__()
         self.base = self.location = location
         if repo_id is None:
             repo_id = location

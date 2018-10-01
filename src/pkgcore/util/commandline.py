@@ -75,7 +75,7 @@ class StoreTarget(argparse._AppendAction):
         self.allow_ebuild_paths = kwargs.pop('allow_ebuild_paths', False)
         self.allow_external_repos = kwargs.pop('allow_external_repos', False)
         self.separator = kwargs.pop('separator', None)
-        super(StoreTarget, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def __call__(self, parser, namespace, values, option_string=None):
         if self.separator is not None:
@@ -125,7 +125,7 @@ class StoreTarget(argparse._AppendAction):
                         restriction = parserestrict.parse_match(token)
                     except parserestrict.ParseError as e:
                         parser.error(e)
-                super(StoreTarget, self).__call__(
+                super().__call__(
                     parser, namespace,
                     (token, restriction), option_string=option_string)
         if getattr(namespace, self.dest) is None:
@@ -159,7 +159,7 @@ class StoreConfigObject(argparse._StoreAction):
         self.writable = kwargs.pop("writable", None)
         self.target = argparse._StoreAction(*args, **kwargs)
 
-        super(StoreConfigObject, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     @staticmethod
     def _choices(sections):
@@ -544,13 +544,13 @@ class _SubParser(arghparse._SubParser):
 
         They are rarely used so only allow them as options to the base command.
         """
-        return super(_SubParser, self).add_parser(name, config=config, domain=domain, **kwds)
+        return super().add_parser(name, config=config, domain=domain, **kwds)
 
 
 class ArgumentParser(arghparse.ArgumentParser):
 
     def __init__(self, suppress=False, config=True, domain=True, script=None, **kwds):
-        super(ArgumentParser, self).__init__(suppress=suppress, script=script, **kwds)
+        super().__init__(suppress=suppress, script=script, **kwds)
         self.register('action', 'parsers', _SubParser)
 
         if not suppress:
@@ -610,7 +610,7 @@ class Tool(tool.Tool):
 
     def parse_args(self, *args, **kwargs):
         """Pass down pkgcore-specific settings to the bash side."""
-        options = super(Tool, self).parse_args(*args, **kwargs)
+        options = super().parse_args(*args, **kwargs)
 
         if self.parser.debug:
             # verbosity level affects debug output
@@ -665,7 +665,7 @@ class Tool(tool.Tool):
                 dump_error(e, "Error running an operation", handle=self._errfile, tb=tb)
         else:
             # exception is unhandled here, fallback to generic handling
-            super(Tool, self).handle_exec_exception(e)
+            super().handle_exec_exception(e)
 
 
 # TODO: deprecated wrapper, remove in 0.11.0

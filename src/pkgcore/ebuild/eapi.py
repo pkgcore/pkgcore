@@ -262,10 +262,7 @@ def _shorten_phase_name(func_name):
 
 
 def _mk_phase_func_map(*sequence):
-    d = {}
-    for x in sequence:
-        d[_shorten_phase_name(x)] = x
-    return d
+    return {_shorten_phase_name(x): x for x in sequence}
 
 
 def _combine_dicts(*mappings):

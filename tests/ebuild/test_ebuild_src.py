@@ -180,6 +180,12 @@ class TestBase(object):
         with pytest.raises(errors.MetadataException):
             getattr(pkg, 'depends')
 
+        # unsupported EAPI
+        pkg = self.get_pkg({'EAPI': '-1', 'DEPEND': 'a/b[x=]'})
+        with pytest.raises(errors.MetadataException) as cm:
+            getattr(pkg, 'depends')
+        assert 'unsupported EAPI: -1' in cm.value.error
+
     def test_keywords(self):
         assert list(self.get_pkg({'KEYWORDS': ''}).keywords) == []
         assert sorted(self.get_pkg({'KEYWORDS': 'x86 amd64'}).keywords) == sorted(['x86', 'amd64'])

@@ -301,21 +301,6 @@ def native_ver_cmp(ver1, rev1, ver2, rev2):
     # The revision holds the final difference.
     return cmp(rev1, rev2)
 
-fake_cat = "fake"
-fake_pkg = "pkg"
-def cpy_ver_cmp(ver1, rev1, ver2, rev2):
-    if ver1 == ver2:
-        return cmp(rev1, rev2)
-    if ver1 is None:
-        ver1 = ''
-    if ver2 is None:
-        ver2 = ''
-    c = cmp(cpy_CPV(fake_cat, fake_pkg, ver1, versioned=bool(ver1)),
-            cpy_CPV(fake_cat, fake_pkg, ver2, versioned=bool(ver2)))
-    if c != 0:
-        return c
-    return cmp(rev1, rev2)
-
 
 def mk_cpv_cls(base_cls):
     class CPV(base.base, base_cls):
@@ -376,8 +361,21 @@ try:
     # No name in module
     # pylint: disable-msg=E0611
     from pkgcore.ebuild._cpv import CPV as cpy_CPV
+
+    def ver_cmp(ver1, rev1, ver2, rev2):
+        if ver1 == ver2:
+            return cmp(rev1, rev2)
+        if ver1 is None:
+            ver1 = ''
+        if ver2 is None:
+            ver2 = ''
+        c = cmp(cpy_CPV("fake", "pkg", ver1, versioned=bool(ver1)),
+                cpy_CPV("fake", "pkg", ver2, versioned=bool(ver2)))
+        if c != 0:
+            return c
+        return cmp(rev1, rev2)
+
     CPV_base = cpy_CPV
-    ver_cmp = cpy_ver_cmp
     cpy_builtin = True
     cpy_CPV = CPV = mk_cpv_cls(cpy_CPV)
 except ImportError:

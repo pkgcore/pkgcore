@@ -170,9 +170,9 @@ def get_parsed_eapi(self):
     return get_eapi(eapi.group(2) if eapi is not None else '0', True)
 
 def get_slot(self):
-    o = self.data.pop("SLOT", "0")
-    if o is None:
-        raise ValueError(self, "SLOT cannot be unset")
+    o = self.data.pop("SLOT", None)
+    if not o:
+        raise ValueError(self, "SLOT cannot be unset or empty")
     return o.strip()
 
 def get_subslot(self):

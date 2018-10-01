@@ -1,10 +1,10 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
-from pkgcore import test, gpg
+from pkgcore import gpg
 
 
-class TestSkipSignatures(test.TestCase):
+class TestSkipSignatures(object):
 
     def test_simple_skipping(self):
         for header in (
@@ -20,9 +20,7 @@ class TestSkipSignatures(test.TestCase):
             d2 = header + d
             parsed = list(gpg.skip_signatures(d2))
             required = [d[0], d[1], d[-1]]
-            self.assertEqual(
-                parsed, required, msg="%r != %r for header %r" %
-                (parsed, required, header))
+            assert parsed == required, f"{parsed!r} != {required!r} for header {header!r}"
 
     def test_signed_signed(self):
         d = [
@@ -45,6 +43,4 @@ class TestSkipSignatures(test.TestCase):
             " not valid...\n",
             "-----END PGP SIGNATURE-----\n",
             "asdf\n"]
-        self.assertEqual(
-            list(gpg.skip_signatures(d)),
-            ["blah\n", "foon\n", "asdf\n"])
+        assert list(gpg.skip_signatures(d)) == ["blah\n", "foon\n", "asdf\n"]

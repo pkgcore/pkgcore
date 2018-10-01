@@ -5,6 +5,7 @@ from functools import partial
 import os
 
 from snakeoil.currying import post_curry
+from snakeoil.data_source import data_source
 from snakeoil.osutils import pjoin
 import pytest
 
@@ -24,9 +25,10 @@ class TestBase(object):
                 pre_args=(), suppress_unsupported=True):
         o = self.kls(*(list(pre_args) + [repo, cpv]))
         if data is not None:
-            eapi_data = str(data.pop('EAPI', 0))
-            object.__setattr__(o, 'eapi', get_eapi(
-                eapi_data, suppress_unsupported=suppress_unsupported))
+            eapi_data = data.pop('EAPI', 0)
+            if eapi_data is not None:
+                object.__setattr__(o, 'eapi', get_eapi(
+                    str(eapi_data), suppress_unsupported=suppress_unsupported))
             object.__setattr__(o, 'data', data)
         return o
 
@@ -196,6 +198,15 @@ class TestBase(object):
         with pytest.raises(errors.MetadataException) as cm:
             getattr(pkg, 'depends')
         assert 'unsupported EAPI: -1' in cm.value.error
+
+    def test_get_parsed_eapi(self):
+        def _src(self, cpv, eapi_str):
+            return data_source(f'EAPI={eapi_str}')
+
+        for eapi_str, eapi in EAPI.known_eapis.items():
+            c = self.make_parent(get_ebuild_src=post_curry(_src, eapi_str))
+            o = self.get_pkg({'EAPI': None}, repo=c)
+            assert str(o.eapi) == eapi_str
 
     def test_keywords(self):
         assert list(self.get_pkg({'KEYWORDS': ''}).keywords) == []

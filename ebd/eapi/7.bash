@@ -7,6 +7,15 @@ source "${PKGCORE_EBD_PATH}"/eapi/6.bash
 
 PKGCORE_BANNED_FUNCS+=( libopts )
 
+dostrip() {
+	if [[ $1 == "-x" ]]; then
+		shift
+		PKGCORE_DOSTRIP_SKIP+=( "$@" )
+	else
+		PKGCORE_DOSTRIP+=( "$@" )
+	fi
+}
+
 __query_version_funcs() {
 	local atom root
 

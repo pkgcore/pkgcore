@@ -381,6 +381,8 @@ __phase_pre_src_install() {
 	export PORTAGE_COMPRESS_FLAGS=${PORTAGE_COMPRESS_FLAGS:--9}
 	export PKGCORE_DOCOMPRESS=( /usr/share/{doc,info,man} )
 	export PKGCORE_DOCOMPRESS_SKIP=( /usr/share/doc/${PF}/html )
+	export PKGCORE_DOSTRIP=()
+	export PKGCORE_DOSTRIP_SKIP=()
 	export MOPREFIX=${PN}
 	export D
 	rm -rf "${D}"

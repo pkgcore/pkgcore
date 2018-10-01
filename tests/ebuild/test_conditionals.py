@@ -102,8 +102,7 @@ class native_DepSetParsingTest(base):
             v = s.split()
         got = list(self.flatten_restricts(func(self, s)))
         wanted = list(v)
-        self.assertEqual(got, v, msg="given %r\nexpected %r but got %r" %
-            (s, wanted, got))
+        self.assertEqual(got, v, msg="given {s!r}\nexpected {wanted!r} but got {got!r}")
 
     def check_str(self, s, func=base.gen_depset):
         if isinstance(s, (list, tuple)):
@@ -229,7 +228,7 @@ class native_DepSetConditionalsInspectionTest(base):
                 s = ""
                 if a.negate:
                     s = "!"
-                t.update(["%s%s" % (s, y) for y in a.vals])
+                t.update([f"{s}{y}" for y in a.vals])
             l.add(frozenset(t))
         return l
 

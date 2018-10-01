@@ -17,24 +17,23 @@ class TestMetadataXml(TestCase):
         if maintainers:
             ms = []
             for x in maintainers:
-                ms.append("<email>%s</email>" % x[0])
+                ms.append(f"<email>{x[0]}</email>")
                 if len(x) > 1:
-                    ms[-1] = "%s\n<name>%s</name>" % (ms[-1], x[1])
-            ms = "<maintainer>%s</maintainer>\n" % \
-                "</maintainer><maintainer>".join(ms)
+                    ms[-1] = f"{ms[-1]}\n<name>{x[1]}</name>"
+            ms = "<maintainer>%s</maintainer>\n" % "</maintainer><maintainer>".join(ms)
         if local_use:
             us = ['<use>']
             for flag, desc in local_use.items():
-                us.append('<flag name="%s">%s</flag>' % (flag, desc))
+                us.append(f'<flag name="{flag}">{desc}</flag>')
             us.append('</use>')
             us = '\n'.join(us)
         if longdescription:
-            ls = "<longdescription>%s</longdescription>\n" % longdescription
+            ls = f"<longdescription>{longdescription}</longdescription>\n"
         s = \
-"""<?xml version="1.0" encoding="UTF-8"?>
+f"""<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
 <pkgmetadata>
-%s%s%s%s</pkgmetadata>""" % (hs, ms, us, ls)
+{hs}{ms}{us}{ls}</pkgmetadata>"""
         return repo_objs.MetadataXml(data_source(s.encode('utf-8')))
 
     def test_maintainers(self):

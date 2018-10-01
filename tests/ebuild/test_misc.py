@@ -23,8 +23,7 @@ class base(TestCase):
             l1 = sorted((x[0], list(x[1])) for x in v)
             l2 = sorted((x[0], list(x[1])) for x, y in
                 atoms_dict[k])
-            self.assertEqual(l1, l2, msg="for %r atom, got %r, expected %r"
-                % (k, l1, l2))
+            self.assertEqual(l1, l2, msg=f"for {k!r} atom, got {l1!r}, expected {l2!r}")
 
 
 class test_collapsed_restrict_to_data(base):

@@ -66,7 +66,7 @@ class UnconfiguredTreeTest(TempDirMixin):
         dir1 = pjoin(self.dir, '1')
         os.mkdir(dir1, 0o755)
         repo = self.mk_tree(dir1)
-        self.assertEqual(repo.repo_id, '<unlabeled repo %s>' % (dir1,))
+        self.assertEqual(repo.repo_id, f'<unlabeled repo {dir1}>')
         dir2 = pjoin(self.dir, '2')
         ensure_dirs(pjoin(dir2, 'profiles'))
         with open(pjoin(dir2, 'profiles', 'repo_name'), 'w') as f:
@@ -174,8 +174,7 @@ class UnconfiguredTreeTest(TempDirMixin):
 
         for x in ("1-scm", "scm", "1-try", "1_beta-scm", "1_beta-try"):
             for rev in ("", "-r1"):
-                fp = pjoin(self.dir, 'cat', 'pkg', 'pkg-%s%s.ebuild' %
-                    (x, rev))
+                fp = pjoin(self.dir, 'cat', 'pkg', f'pkg-{x}{rev}.ebuild')
                 open(fp, 'w').close()
                 repo = self.mk_tree(self.dir)
                 self.assertRaises(ebuild_errors.InvalidCPV,

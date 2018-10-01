@@ -34,7 +34,7 @@ class TestBase(TestCase):
             data = [(ec, [('mtime', mtime)]) for ec, mtime in zip(i, i)]
             got = self.ec.rebuild_cache_entry(data)
             self.assertTrue(bool(got) == bool(result),
-                msg="Expected %r from %r, got %r" % (result, raw_data, got))
+                msg=f"Expected {result!r} from {raw_data!r}, got {got!r}")
 
         assertRebuildResults(False, 'eclass3', 100)
         assertRebuildResults(True, 'eclass1', 100)
@@ -56,8 +56,8 @@ class TestEclassCache(TempDirMixin, TestBase):
     def setUp(self):
         TempDirMixin.setUp(self)
         for x, mtime in (("eclass1", 100), ("eclass2", 200)):
-            open(pjoin(self.dir, "%s.eclass" % x), "w").close()
-            os.utime(pjoin(self.dir, "%s.eclass" % x), (mtime, mtime))
+            open(pjoin(self.dir, f"{x}.eclass"), "w").close()
+            os.utime(pjoin(self.dir, f"{x}.eclass"), (mtime, mtime))
         # insert a crap file to ensure it doesn't grab it.
         open(pjoin(self.dir, 'foon-eclass'), 'w').close()
         self.ec = eclass_cache.cache(self.dir)
@@ -67,7 +67,7 @@ class TestEclassCache(TempDirMixin, TestBase):
         for x in ("eclass1", "eclass2"):
             handle = self.ec.get_eclass(x)
             self.assertInstance(handle, data_source.local_source)
-            self.assertEqual(pjoin(self.ec_locs[x], "%s.eclass" % x),
+            self.assertEqual(pjoin(self.ec_locs[x], f"{x}.eclass"),
                 handle.path)
 
         # note an eclass, thus shouldn't grab it.

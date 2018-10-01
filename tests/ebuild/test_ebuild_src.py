@@ -210,7 +210,7 @@ class TestBase(object):
             getattr(self.get_pkg({data_name: '|| ( ', 'EAPI': eapi}), attr)
 
     for x in ('depends', 'rdepends'):
-        locals()['test_%s' % x] = post_curry(generic_check_depends,
+        locals()[f'test_{x}'] = post_curry(generic_check_depends,
             'dev-util/diffball || ( dev-util/foo x86? ( dev-util/bsdiff ) )',
              x)
     del x
@@ -364,7 +364,7 @@ class TestPackage(TestBase):
         assert getattr(o, attr) == "foon"
 
     for x in ("longdescription", "maintainers"):
-        locals()["test_%s" % x] = post_curry(generic_metadata_xml, x)
+        locals()[f"test_{x}"] = post_curry(generic_metadata_xml, x)
     del x
 
     def test_manifest(self):
@@ -431,8 +431,8 @@ class TestPackageFactory(object):
         class explode_kls(AssertionError): pass
 
         def explode(name, *args, **kwargs):
-            raise explode_kls("%s was called with %r and %r, "
-                "shouldn't be invoked." % (name, args, kwargs))
+            raise explode_kls(
+                f"{name} was called with {args!r} and {kwargs!r}, shouldn't be invoked.")
 
         pf = self.mkinst(
             cache=(cache2, cache1), eclasses=ec,

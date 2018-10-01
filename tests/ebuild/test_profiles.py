@@ -50,7 +50,7 @@ class profile_mixin(TempDirMixin):
 
             if parent is not None:
                 with open(pjoin(path, "parent"), "w") as f:
-                    f.write("../%s" % (parent,))
+                    f.write(f"../{parent}")
         if kwds:
             for key, val in kwds.items():
                 with open(pjoin(self.dir, key), "w") as f:
@@ -72,8 +72,9 @@ class profile_mixin(TempDirMixin):
 
     def _assertEqualPayload(self, given_mapping, desired_mapping, reformat_f, bare_kls):
         keys1, keys2 = set(given_mapping), set(desired_mapping)
-        self.assertEqual(keys1, keys2, msg="keys differ: wanted %r got %r\nfrom %r" %
-            (keys2, keys1, given_mapping))
+        self.assertEqual(
+            keys1, keys2,
+            msg=f"keys differ: wanted {keys2!r} got {keys1!r}\nfrom {given_mapping!r}")
 
         for key, desired in desired_mapping.items():
             got = given_mapping[key]
@@ -594,7 +595,7 @@ class TestPmsProfileNode(profile_mixin, TestCase):
     def test_parents(self):
         path = pjoin(self.dir, self.profile)
         os.mkdir(pjoin(path, 'child'))
-        self.write_file("parent", "..", profile="%s/child" % self.profile)
+        self.write_file("parent", "..", profile=f"{self.profile}/child")
         p = self.klass(pjoin(path, "child"))
         self.assertEqual(1, len(p.parents))
         self.assertEqual(p.parents[0].path, path)
@@ -769,7 +770,7 @@ class TestOnDiskProfile(profile_mixin, TestCase):
         self.assertEqual(sorted(p.system), sorted([atom("dev-util/diffball")]))
         self.assertEqual(
             sorted(p.masks),
-            sorted(atom("dev-util/foo%s" % x, negate_vers=True) for x in ['', '2']))
+            sorted(atom(f"dev-util/foo{x}", negate_vers=True) for x in ['', '2']))
 
         p = self.get_profile("1")
         self.assertEqual(sorted(p.system), sorted([atom("dev-util/foo")]))

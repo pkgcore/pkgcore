@@ -108,13 +108,13 @@ class Test_native_atom(test.TestRestriction):
             l.append("=")
         if 1 in ops:
             l.append("<")
-        return self.kls("%s%s-%s" % (''.join(l), s, ver))
+        return self.kls(f"{''.join(l)}{s}-{ver}")
 
     def test_versioned(self):
         astr = "app-arch/tarsync"
-        le_cpv = CPV.versioned("%s-0" % astr)
-        eq_cpv = CPV.versioned("%s-1.1-r2" % astr)
-        ge_cpv = CPV.versioned("%s-2" % astr)
+        le_cpv = CPV.versioned(f"{astr}-0")
+        eq_cpv = CPV.versioned(f"{astr}-1.1-r2")
+        ge_cpv = CPV.versioned(f"{astr}-2")
         # <, =, >
         ops = (-1, 0, 1)
 
@@ -139,74 +139,74 @@ class Test_native_atom(test.TestRestriction):
 
     def test_norev(self):
         astr = "app-arch/tarsync"
-        a = self.kls("~%s-1" % astr)
-        self.assertMatch(a, CPV.versioned("%s-1" % astr))
-        self.assertMatch(a, CPV.versioned("%s-1-r1" % astr))
-        self.assertMatch(a, CPV.versioned("%s-1-r0" % astr))
-        self.assertNotMatch(a, CPV.versioned("%s-2" % astr))
-        self.assertRaises(errors.MalformedAtom, self.kls, "~%s-r1" % astr)
-        self.assertRaises(errors.MalformedAtom, self.kls, "~%s-r2" % astr)
+        a = self.kls(f"~{astr}-1")
+        self.assertMatch(a, CPV.versioned(f"{astr}-1"))
+        self.assertMatch(a, CPV.versioned(f"{astr}-1-r1"))
+        self.assertMatch(a, CPV.versioned(f"{astr}-1-r0"))
+        self.assertNotMatch(a, CPV.versioned(f"{astr}-2"))
+        self.assertRaises(errors.MalformedAtom, self.kls, "~{astr}-r1")
+        self.assertRaises(errors.MalformedAtom, self.kls, "~{astr}-r2")
         # special case- yes -r0 effectively is None, but -r shouldn't be used
         # with ~
-        self.assertRaises(errors.MalformedAtom, self.kls, "~%s-r0" % astr)
+        self.assertRaises(errors.MalformedAtom, self.kls, "~{astr}-r0")
 
     def check_use(self, eapi, defaults=False):
         astr = "dev-util/bsdiff"
-        c = FakePkg("%s-1" % astr, use=("debug",), iuse=("debug", "foon"), slot=1)
+        c = FakePkg(f"{astr}-1", use=("debug",), iuse=("debug", "foon"), slot=1)
 
         kls = partial(self.kls, eapi=eapi)
 
         # Valid chars: [a-zA-Z0-9_@+-]
-        kls('%s[zZaA09]' % astr)
-        kls('%s[x@y]' % astr)
-        kls('%s[x+y]' % astr)
-        kls('%s[x-y]' % astr)
-        kls('%s[x_y]' % astr)
-        kls('%s[-x_y]' % astr)
-        kls('%s[x?]' % astr)
-        kls('%s[!x?]' % astr)
-        kls('%s[x=]' % astr)
-        kls('%s[!x=]' % astr)
+        kls(f'{astr}[zZaA09]')
+        kls(f'{astr}[x@y]')
+        kls(f'{astr}[x+y]')
+        kls(f'{astr}[x-y]')
+        kls(f'{astr}[x_y]')
+        kls(f'{astr}[-x_y]')
+        kls(f'{astr}[x?]')
+        kls(f'{astr}[!x?]')
+        kls(f'{astr}[x=]')
+        kls(f'{astr}[!x=]')
 
         if defaults:
-            kls('%s[x(+)]' % astr)
-            kls('%s[x(-)]' % astr)
-            self.assertRaises(errors.MalformedAtom, kls, '%s[x(+-)]' % astr)
-            self.assertRaises(errors.MalformedAtom, kls, '%s[x(@)]' % astr)
-            self.assertMatch(kls("%s[debug(+)]" % astr), c)
-            self.assertMatch(kls("%s[debug(-)]" % astr), c)
-            self.assertMatch(kls("%s[missing(+)]" % astr), c)
-            self.assertNotMatch(kls("%s[missing(-)]" % astr), c)
-            self.assertMatch(kls("%s[missing(+)]" % astr), c)
-            self.assertMatch(kls("%s[-missing(-)]" % astr), c)
-            self.assertNotMatch(kls("%s[-missing(+)]" % astr), c)
+            kls(f'{astr}[x(+)]')
+            kls(f'{astr}[x(-)]')
+            self.assertRaises(errors.MalformedAtom, kls, f'{astr}[x(+-)]')
+            self.assertRaises(errors.MalformedAtom, kls, f'{astr}[x(@)]')
+            self.assertMatch(kls(f"{astr}[debug(+)]"), c)
+            self.assertMatch(kls(f"{astr}[debug(-)]"), c)
+            self.assertMatch(kls(f"{astr}[missing(+)]"), c)
+            self.assertNotMatch(kls(f"{astr}[missing(-)]"), c)
+            self.assertMatch(kls(f"{astr}[missing(+)]"), c)
+            self.assertMatch(kls(f"{astr}[-missing(-)]"), c)
+            self.assertNotMatch(kls(f"{astr}[-missing(+)]"), c)
 
-            self.assertMatch(kls("%s[-missing(-),debug]" % astr), c)
-            self.assertNotMatch(kls("%s[-missing(+),debug(+)]" % astr), c)
-            self.assertMatch(kls("%s[missing(+),debug(+)]" % astr), c)
+            self.assertMatch(kls(f"{astr}[-missing(-),debug]"), c)
+            self.assertNotMatch(kls(f"{astr}[-missing(+),debug(+)]"), c)
+            self.assertMatch(kls(f"{astr}[missing(+),debug(+)]"), c)
         else:
-            self.assertRaises(errors.MalformedAtom, kls, '%s[x(+)]' % astr)
-            self.assertRaises(errors.MalformedAtom, kls, '%s[x(-)]' % astr)
+            self.assertRaises(errors.MalformedAtom, kls, f'{astr}[x(+)]')
+            self.assertRaises(errors.MalformedAtom, kls, f'{astr}[x(-)]')
 
         # '.' not a valid char in use deps
-        self.assertRaises(errors.MalformedAtom, kls, "%s[x.y]" % astr)
+        self.assertRaises(errors.MalformedAtom, kls, f"{astr}[x.y]")
 
         # Use deps start with an alphanumeric char (non-transitive)
-        self.assertRaises(errors.MalformedAtom, kls, "%s[@x]" % astr)
-        self.assertRaises(errors.MalformedAtom, kls, "%s[_x]" % astr)
-        self.assertRaises(errors.MalformedAtom, kls, "%s[+x]" % astr)
-        self.assertRaises(errors.MalformedAtom, kls, "%s[-@x]" % astr)
-        self.assertRaises(errors.MalformedAtom, kls, "%s[-_x]" % astr)
-        self.assertRaises(errors.MalformedAtom, kls, "%s[-+x]" % astr)
-        self.assertRaises(errors.MalformedAtom, kls, "%s[--x]" % astr)
+        self.assertRaises(errors.MalformedAtom, kls, f"{astr}[@x]")
+        self.assertRaises(errors.MalformedAtom, kls, f"{astr}[_x]")
+        self.assertRaises(errors.MalformedAtom, kls, f"{astr}[+x]")
+        self.assertRaises(errors.MalformedAtom, kls, f"{astr}[-@x]")
+        self.assertRaises(errors.MalformedAtom, kls, f"{astr}[-_x]")
+        self.assertRaises(errors.MalformedAtom, kls, f"{astr}[-+x]")
+        self.assertRaises(errors.MalformedAtom, kls, f"{astr}[--x]")
 
-        self.assertMatch(kls("%s[debug]" % astr), c)
-        self.assertNotMatch(kls("%s[-debug]" % astr), c)
-        self.assertMatch(kls("%s[debug,-not]" % astr), c)
-        self.assertMatch(kls("%s:1[debug,-not]" % astr), c)
+        self.assertMatch(kls(f"{astr}[debug]"), c)
+        self.assertNotMatch(kls(f"{astr}[-debug]"), c)
+        self.assertMatch(kls(f"{astr}[debug,-not]"), c)
+        self.assertMatch(kls(f"{astr}:1[debug,-not]"), c)
 
-        self.assertRaises(errors.MalformedAtom, kls, "%s[]" % astr)
-        self.assertRaises(errors.MalformedAtom, kls, "%s[-]" % astr)
+        self.assertRaises(errors.MalformedAtom, kls, f"{astr}[]")
+        self.assertRaises(errors.MalformedAtom, kls, f"{astr}[-]")
         self.assertRaises(errors.MalformedAtom, kls, "dev-util/diffball[foon")
         self.assertRaises(errors.MalformedAtom, kls, "dev-util/diffball[[fo]")
         self.assertRaises(errors.MalformedAtom, kls, "dev-util/diffball[x][y]")
@@ -225,18 +225,18 @@ class Test_native_atom(test.TestRestriction):
 
     def test_slot(self):
         astr = "dev-util/confcache"
-        c = FakePkg("%s-1" % astr, slot=1)
-        self.assertNotMatch(self.kls("%s:0" % astr), c)
-        self.assertMatch(self.kls("%s:1" % astr), c)
-        self.assertNotMatch(self.kls("%s:2" % astr), c)
+        c = FakePkg(f"{astr}-1", slot=1)
+        self.assertNotMatch(self.kls(f"{astr}:0"), c)
+        self.assertMatch(self.kls(f"{astr}:1"), c)
+        self.assertNotMatch(self.kls(f"{astr}:2"), c)
         # note the above isn't compliant with eapi2/3; thus this test
         self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/foo:0", eapi=0)
 
         # shouldn't puke, but has, thus checking"
         self.kls("sys-libs/db:4.4")
-        self.kls("%s:azAZ.-+_09" % astr)
-        self.kls("%s:_bar" % astr) # According to PMS, underscore and plus-sign are
-        self.kls("%s:+bar" % astr) # not invalid first chars in a slot dep
+        self.kls(f"{astr}:azAZ.-+_09")
+        self.kls(f"{astr}:_bar") # According to PMS, underscore and plus-sign are
+        self.kls(f"{astr}:+bar") # not invalid first chars in a slot dep
         self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/foo:")
         self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/foo:1,,0")
         self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/foo:1:")
@@ -259,15 +259,15 @@ class Test_native_atom(test.TestRestriction):
         self.assertRaises(errors.MalformedAtom, self.kls, "sys-libs/db:*1/=", eapi=5)
 
         for subslot in ("/1.0", ""):
-            self.assertRaises(errors.MalformedAtom, self.kls, "sys-libs/db:*4%s" % subslot, eapi=5)
-            self.assertRaises(errors.MalformedAtom, self.kls, "sys-libs/db:4%s*" % subslot, eapi=5)
-            self.assertRaises(errors.MalformedAtom, self.kls, "sys-libs/db:=4%s" % subslot, eapi=5)
-            self.kls("sys-libs/db:4%s=" % subslot, eapi=5)
-            self.kls("sys-libs/db:3.2%s=" % subslot, eapi=5)
-            self.assertRaises(errors.MalformedAtom, self.kls, "sys-libs/db:4%s==" % subslot, eapi=5)
+            self.assertRaises(errors.MalformedAtom, self.kls, f"sys-libs/db:*4{subslot}", eapi=5)
+            self.assertRaises(errors.MalformedAtom, self.kls, f"sys-libs/db:4{subslot}*", eapi=5)
+            self.assertRaises(errors.MalformedAtom, self.kls, f"sys-libs/db:=4{subslot}", eapi=5)
+            self.kls(f"sys-libs/db:4{subslot}=", eapi=5)
+            self.kls(f"sys-libs/db:3.2{subslot}=", eapi=5)
+            self.assertRaises(errors.MalformedAtom, self.kls, f"sys-libs/db:4{subslot}==", eapi=5)
 
         def check_it(text, slot, subslot, operator):
-            obj = self.kls("sys-libs/db%s" % text)
+            obj = self.kls(f"sys-libs/db{text}")
             self.assertEqual(obj.slot, slot)
             self.assertEqual(obj.subslot, subslot)
             self.assertEqual(obj.slot_operator, operator)
@@ -313,8 +313,7 @@ class Test_native_atom(test.TestRestriction):
 
         for pref, ver, repo, slot, use in f():
             pos = 0
-            o = self.kls("%sdev-util/diffball%s%s%s%s" %
-                (pref, ver, slot, repo, use))
+            o = self.kls(f"{pref}dev-util/diffball{ver}{slot}{repo}{use}")
             count = 2
             for x in ("use", "repo", "pref", "slot"):
                 if locals()[x]:
@@ -345,16 +344,15 @@ class Test_native_atom(test.TestRestriction):
     def test_eapi0(self):
         for postfix in (':1', ':1,2', ':asdf', '::asdf', '::asdf-x86', '[x]',
                         '[x,y]', ':1[x,y]', '[x,y]:1', ':1::repo'):
-            self.assertRaisesMsg("dev-util/foon%s must be invalid in EAPI 0"
-                % postfix, errors.MalformedAtom, self.kls,
-                "dev-util/foon%s" % postfix, eapi=0)
+            self.assertRaisesMsg(f"dev-util/foon{postfix} must be invalid in EAPI 0",
+                errors.MalformedAtom, self.kls, f"dev-util/foon{postfix}", eapi=0)
 
     def test_eapi1(self):
         for postfix in (':1,2', '::asdf', '::asdf-x86', '[x]',
                         '[x,y]', ':1[x,y]', '[x,y]:1', ':1:repo'):
-            self.assertRaisesMsg("dev-util/foon%s must be invalid in EAPI 1"
-                % postfix, errors.MalformedAtom, self.kls,
-                "dev-util/foon%s" % postfix, eapi=1)
+            self.assertRaisesMsg(f"dev-util/foon{postfix} must be invalid in EAPI 1",
+                errors.MalformedAtom, self.kls,
+                f"dev-util/foon{postfix}", eapi=1)
         self.kls("dev-util/foon:1", eapi=1)
         self.kls("dev-util/foon:12", eapi=1)
         self.assertRaisesMsg("dev-util/foon[dar] must be invalid in EAPI 1",
@@ -387,11 +385,11 @@ class Test_native_atom(test.TestRestriction):
 
     def test_repo_id(self):
         astr = "dev-util/bsdiff"
-        c = FakePkg("%s-1" % astr, repo=FakeRepo(repo_id="gentoo-x86A_"), slot="0")
-        self.assertMatch(self.kls("%s" % astr), c)
-        self.assertMatch(self.kls("%s::gentoo-x86A_" % astr), c)
-        self.assertMatch(self.kls("%s:0::gentoo-x86A_" % astr), c)
-        self.assertNotMatch(self.kls("%s::gentoo2" % astr), c)
+        c = FakePkg(f"{astr}-1", repo=FakeRepo(repo_id="gentoo-x86A_"), slot="0")
+        self.assertMatch(self.kls(f"{astr}"), c)
+        self.assertMatch(self.kls(f"{astr}::gentoo-x86A_"), c)
+        self.assertMatch(self.kls(f"{astr}:0::gentoo-x86A_"), c)
+        self.assertNotMatch(self.kls(f"{astr}::gentoo2"), c)
         self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/foon:1:")
         self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/foon::")
         self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/foon::-gentoo-x86")
@@ -454,10 +452,10 @@ class Test_native_atom(test.TestRestriction):
             that_atom = self.kls(that)
             self.assertEqual(
                 result, this_atom.intersects(that_atom),
-                '%s intersecting %s should be %s' % (this, that, result))
+                f'{this} intersecting {that} should be {result}')
             self.assertEqual(
                 result, that_atom.intersects(this_atom),
-                '%s intersecting %s should be %s' % (that, this, result))
+                f'{that} intersecting {this} should be {result}')
 
     def assertEqual2(self, o1, o2):
         # logic bugs hidden behind short circuiting comparisons for metadata
@@ -515,18 +513,18 @@ class Test_native_atom(test.TestRestriction):
         self.assertNotEqual2(self.kls('cat/pkg:1'), self.kls('cat/pkg'))
         self.assertEqual2(self.kls('cat/pkg:2'), self.kls('cat/pkg:2'))
         for lesser, greater in (('0.1', '1'), ('1', '1-r1'), ('1.1', '1.2')):
-            self.assertTrue(self.kls('=d/b-%s' % lesser) <
-                self.kls('=d/b-%s' % greater),
-                msg="d/b-%s < d/b-%s" % (lesser, greater))
-            self.assertFalse(self.kls('=d/b-%s' % lesser) >
-                self.kls('=d/b-%s' % greater),
-                msg="!: d/b-%s < d/b-%s" % (lesser, greater))
-            self.assertTrue(self.kls('=d/b-%s' % greater) >
-                self.kls('=d/b-%s' % lesser),
-                msg="d/b-%s > d/b-%s" % (greater, lesser))
-            self.assertFalse(self.kls('=d/b-%s' % greater) <
-                self.kls('=d/b-%s' % lesser),
-                msg="!: d/b-%s > d/b-%s" % (greater, lesser))
+            self.assertTrue(self.kls(f'=d/b-{lesser}') <
+                self.kls(f'=d/b-{greater}'),
+                msg=f"d/b-{lesser} < d/b-{greater}")
+            self.assertFalse(self.kls(f'=d/b-{lesser}') >
+                self.kls(f'=d/b-{greater}'),
+                msg=f"!: d/b-{lesser} < d/b-{greater}")
+            self.assertTrue(self.kls(f'=d/b-{greater}') >
+                self.kls(f'=d/b-{lesser}'),
+                msg=f"d/b-{greater} > d/b-{lesser}")
+            self.assertFalse(self.kls(f'=d/b-{greater}') <
+                self.kls(f'=d/b-{lesser}'),
+                msg=f"!: d/b-{greater} > d/b-{lesser}")
 
         self.assertTrue(self.kls("!!=d/b-1", eapi=2) > self.kls("!=d/b-1"))
         self.assertTrue(self.kls("!=d/b-1") < self.kls("!!=d/b-1"))

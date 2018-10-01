@@ -70,7 +70,7 @@ class TestManifest(TestCase):
         # intentionally stick gpg signing midway through
         data = pure_manifest2.split("\n")
         s = "\n".join(data[0:2])
-        s += "\n%s\nasdf\n%s\n" % (gpg.sig_header, gpg.sig_footer)
+        s += f"\n{gpg.sig_header}\nasdf\n{gpg.sig_footer}\n"
         s += "\n".join(data[2:])
         # ensure it can parse it
         (dist, aux, ebuild, misc) = self.get_manifest(s)
@@ -86,8 +86,7 @@ class TestManifest(TestCase):
             for k, v in req_d.items():
                 i1 = sorted(v)
                 i2 = sorted(d[k].items())
-                self.assertEqual(i1, i2, msg="%r != %r\nfor %s %s" %
-                    (i1, i2, dtype, k))
+                self.assertEqual(i1, i2, msg="{i1!r} != {i2!r}\nfor {dtype} {k}")
 
 
 class TestManifestDataSource(TestManifest):

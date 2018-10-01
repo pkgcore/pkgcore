@@ -46,6 +46,17 @@ class TestBase(object):
         assert o.PR == 'r1'
         assert self.get_pkg({}, 'dev-util/diffball-0.1').PR == 'r0'
 
+    def test_path(self):
+        l = []
+        path = '/random/path/to/foo-0.ebuild'
+        def f(self, cpv):
+            l.append(cpv)
+            return path
+        c = self.make_parent(_get_ebuild_path=f)
+        o = self.get_pkg({}, repo=c)
+        assert o.path == path
+        assert l == [o]
+
     def test_ebuild(self):
         l = []
         def f(self, cpv):

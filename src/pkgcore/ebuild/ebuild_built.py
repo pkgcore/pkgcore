@@ -121,7 +121,7 @@ class package(ebuild_src.base):
                 ebuild_src.package._config_wrappables[k],
                 ebuild_src.package._get_attr[k]))
             for k in ebuild_src.package._config_wrappables
-            if k in super().tracked_attributes)
+            if k in super(package, self).tracked_attributes)
 
     def _update_metadata(self, pkg):
         raise NotImplementedError()

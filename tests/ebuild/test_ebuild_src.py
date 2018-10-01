@@ -6,7 +6,6 @@ import os
 
 from snakeoil.currying import post_curry
 from snakeoil.osutils import pjoin
-from snakeoil.test.mixins import tempdir_decorator
 import pytest
 
 from pkgcore import fetch
@@ -269,11 +268,10 @@ class TestBase(object):
         assert list(f[0].uri) == ['http://foo.com/monkey.tgz', 'http://foo.com2/monkey.tgz']
 
         mirror = fetch.mirror(['http://boon.com/'], 'mirror1')
-        parent = self.make_parent(_parent_repo=repo, mirrors={
-            'mirror1': mirror})
+        parent = self.make_parent(_parent_repo=repo, mirrors={'mirror1': mirror})
 
-        f = self.get_pkg({'SRC_URI': 'mirror://mirror1/foon/monkey.tgz'},
-            repo=parent).fetchables
+        f = self.get_pkg(
+            {'SRC_URI': 'mirror://mirror1/foon/monkey.tgz'}, repo=parent).fetchables
         assert list(f[0].uri) == ['http://boon.com/foon/monkey.tgz']
 
         # assert it bails if mirror doesn't exist.
@@ -390,7 +388,7 @@ class TestPackageFactory(object):
         return o
 
     def test_mirrors(self):
-        mirrors_d = {'gentoo':['http://bar/', 'http://far/']}
+        mirrors_d = {'gentoo': ['http://bar/', 'http://far/']}
         mirrors = {k: fetch.mirror(v, k) for k, v in mirrors_d.items()}
         pf = self.mkinst(mirrors=mirrors_d)
         assert len(pf._cache) == 0
@@ -410,9 +408,8 @@ class TestPackageFactory(object):
                 ).get_ebuild_src("1") ==
             "lincoln haunts me: 1")
 
-    @tempdir_decorator
-    def test_get_ebuild_mtime(self):
-        f = pjoin(self.dir, "temp-0.ebuild")
+    def test_get_ebuild_mtime(self, tmpdir):
+        f = pjoin(str(tmpdir), "temp-0.ebuild")
         open(f, 'w').close()
         mtime = self.mkinst(
             repo=malleable_obj(_get_ebuild_path=lambda s: f))._get_ebuild_mtime(None)
@@ -428,9 +425,7 @@ class TestPackageFactory(object):
             def validate_entry(self, *args):
                 return self.validate_result
 
-        cache1 = fake_cache({pkg.cpvstr:
-            {'_mtime_': 100, 'marker': 1}
-        })
+        cache1 = fake_cache({pkg.cpvstr: {'_mtime_': 100, 'marker': 1}})
         cache2 = fake_cache({})
 
         class explode_kls(AssertionError): pass

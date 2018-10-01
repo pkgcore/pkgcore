@@ -3,9 +3,10 @@
 
 from functools import partial
 import os
+import textwrap
 
 from snakeoil.currying import post_curry
-from snakeoil.data_source import data_source
+from snakeoil.data_source import data_source, local_source
 from snakeoil.osutils import pjoin
 import pytest
 
@@ -199,10 +200,27 @@ class TestBase(object):
             getattr(pkg, 'depends')
         assert 'unsupported EAPI: -1' in cm.value.error
 
-    def test_get_parsed_eapi(self):
+    def test_get_parsed_eapi(self, tmpdir):
+        def _path(self, cpv, eapi_str):
+            ebuild = pjoin(str(tmpdir), "temp-0.ebuild")
+            with open(ebuild, 'w') as f:
+                f.write(textwrap.dedent(f'''\
+                    # Copyright
+                    # License
+
+                    EAPI={eapi_str}'''))
+            return local_source(str(ebuild))
+
+        # ebuild has a real path on the fs
+        for eapi_str, eapi in EAPI.known_eapis.items():
+            c = self.make_parent(get_ebuild_src=post_curry(_path, eapi_str))
+            o = self.get_pkg({'EAPI': None}, repo=c)
+            assert str(o.eapi) == eapi_str
+
         def _src(self, cpv, eapi_str):
             return data_source(f'EAPI={eapi_str}')
 
+        # ebuild is a faked obj
         for eapi_str, eapi in EAPI.known_eapis.items():
             c = self.make_parent(get_ebuild_src=post_curry(_src, eapi_str))
             o = self.get_pkg({'EAPI': None}, repo=c)

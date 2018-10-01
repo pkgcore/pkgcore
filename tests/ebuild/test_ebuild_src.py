@@ -336,6 +336,18 @@ class TestBase(object):
         f = self.get_pkg({'SRC_URI': 'monkey.tgz'}, repo=parent).fetchables
         assert list(f[0].uri) == []
 
+    # TODO: add more REQUIRED_USE tests
+    def test_required_use(self):
+        # EAPIs not supporting REQUIRED_USE
+        for eapi in (0, 1, 2, 3):
+            pkg = self.get_pkg({'EAPI': eapi, 'REQUIRED_USE': 'test? ( foo )'})
+            assert not pkg.required_use
+
+        # EAPIs supporting REQUIRED_USE
+        for eapi in (4, 5, 6, 7):
+            pkg = self.get_pkg({'EAPI': eapi, 'REQUIRED_USE': 'test? ( foo )'})
+            assert pkg.required_use
+
 
 class TestPackage(TestBase):
 
@@ -471,8 +483,3 @@ class TestPackageFactory(object):
         # thus, modifying (popping _mtime_) _is_ valid
         assert cache2[pkg.cpvstr] == \
             {'_eclasses_': {'eclass1': (None, 100)}, 'marker': 2, '_mtime_': 200}
-
-    def test_required_use(self):
-        pass
-
-    test_required_use.skip = "TODO"

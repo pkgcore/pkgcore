@@ -390,9 +390,9 @@ class AndRestriction(base):
         return andreqs
 
     def __str__(self):
-        if self.negate:
-            return "not ( %s )" % " && ".join(str(x) for x in self.restrictions)
-        return "( %s )" % " && ".join(str(x) for x in self.restrictions)
+        restricts_str = " && ".join(map(str, self.restrictions))
+        negate = 'not ' if self.negate else ''
+        return f'{negate}( {restricts_str} )'
 
 
 class OrRestriction(base):
@@ -527,9 +527,9 @@ class OrRestriction(base):
             yield True
 
     def __str__(self):
-        if self.negate:
-            return "not ( %s )" % " || ".join(str(x) for x in self.restrictions)
-        return "( %s )" % " || ".join(str(x) for x in self.restrictions)
+        restricts_str = " || ".join(map(str, self.restrictions))
+        negate = 'not ' if self.negate else ''
+        return f'{negate}( {restricts_str} )'
 
 
 class JustOneRestriction(base):
@@ -556,9 +556,9 @@ class JustOneRestriction(base):
         return self.negate
 
     def __str__(self):
-        if self.negate:
-            return "not ^^ ( %s )" % " ".join(str(x) for x in self.restrictions)
-        return "^^ ( %s )" % " ".join(str(x) for x in self.restrictions)
+        restricts_str = " ".join(map(str, self.restrictions))
+        negate = 'not ' if self.negate else ''
+        return f'{negate}exactly-one-of ( {restricts_str} )'
 
 
 class AtMostOneOfRestriction(base):
@@ -580,6 +580,6 @@ class AtMostOneOfRestriction(base):
         return not self.negate
 
     def __str__(self):
-        if self.negate:
-            return "not ?? ( %s )" % " ".join(str(x) for x in self.restrictions)
-        return "?? ( %s )" % " ".join(str(x) for x in self.restrictions)
+        restricts_str = " ".join(map(str, self.restrictions))
+        negate = 'not ' if self.negate else ''
+        return f'{negate}at-most-one-of ( {restricts_str} )'

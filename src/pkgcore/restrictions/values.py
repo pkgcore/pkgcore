@@ -481,11 +481,9 @@ class ContainmentMatch2(base, metaclass=hashed_base):
             self.__class__.__name__, tuple(self.vals), self.all, id(self))
 
     def __str__(self):
-        if self.negate:
-            s = "not contains [%s]"
-        else:
-            s = "contains [%s]"
-        return s % ', '.join(str(x) for x in self.vals)
+        restricts_str = ', '.join(map(str, self.vals))
+        negate = '!' if self.negate else ''
+        return f'{negate}{restricts_str}'
 
 
 class ContainmentMatch(ContainmentMatch2):

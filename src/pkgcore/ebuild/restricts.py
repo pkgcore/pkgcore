@@ -195,9 +195,9 @@ class StaticUseDep(packages.PackageRestriction):
     def __init__(self, false_use, true_use):
         v = []
         if false_use:
-            v.append(values.ContainmentMatch(negate=True, all=True, *false_use))
+            v.append(values.ContainmentMatch2(false_use, negate=True, match_all=True))
         if true_use:
-            v.append(values.ContainmentMatch(all=True, *true_use))
+            v.append(values.ContainmentMatch2(true_use, match_all=True))
 
         l = len(v)
         if l == 2:
@@ -210,20 +210,20 @@ class StaticUseDep(packages.PackageRestriction):
         packages.PackageRestriction.__init__(self, 'use', v)
 
 
-class _UseDepDefaultContainment(values.ContainmentMatch):
+class _UseDepDefaultContainment(values.ContainmentMatch2):
 
     __slots__ = ('if_missing',)
 
     def __init__(self, if_missing, vals, negate=False):
         object.__setattr__(self, 'if_missing', bool(if_missing))
-        values.ContainmentMatch.__init__(self, negate=negate, all=True, *vals)
+        values.ContainmentMatch2.__init__(self, vals, negate=negate, match_all=True)
 
     def match(self, val):
         reduced_vals = self.vals
         iuse, use = val
         if reduced_vals.issubset(iuse):
             # use normal pathways.
-            return values.ContainmentMatch.match(self, use)
+            return values.ContainmentMatch2.match(self, use)
         if self.if_missing == self.negate:
             # ex: if is_missing = False, missing flags are assumed falsed.
             # if negate is False, then we're not trying to disable the flags, trying to enable.
@@ -234,7 +234,7 @@ class _UseDepDefaultContainment(values.ContainmentMatch):
         # recall that negate is unfortunately a double negative in labeling...
         reduced_vals = reduced_vals.intersection(iuse)
         if reduced_vals:
-            return values.ContainmentMatch.match(self, use, _values_override=reduced_vals)
+            return values.ContainmentMatch2.match(self, use, _values_override=reduced_vals)
         # nothing to match means all are missing, but the default makes them considered a match.
         return True
 
@@ -243,12 +243,12 @@ class _UseDepDefaultContainment(values.ContainmentMatch):
         # see comments in .match for clarification of logic.
         iuse, use = val
         if reduced_vals.issubset(iuse):
-            return values.ContainmentMatch.force_False(self, pkg, 'use', use)
+            return values.ContainmentMatch2.force_False(self, pkg, 'use', use)
         if self.if_missing == self.negate:
             return False
         reduced_vals = reduced_vals.intersection(iuse)
         if reduced_vals:
-            return values.ContainmentMatch.force_False(self, pkg, 'use', use, reduced_vals)
+            return values.ContainmentMatch2.force_False(self, pkg, 'use', use, reduced_vals)
         return True
 
     def force_True(self, pkg, attr, val):
@@ -256,12 +256,12 @@ class _UseDepDefaultContainment(values.ContainmentMatch):
         # see comments in .match for clarification of logic.
         iuse, use = val
         if reduced_vals.issubset(iuse):
-            return values.ContainmentMatch.force_True(self, pkg, 'use', use)
+            return values.ContainmentMatch2.force_True(self, pkg, 'use', use)
         if self.if_missing == self.negate:
             return False
         reduced_vals = reduced_vals.intersection(iuse)
         if reduced_vals:
-            return values.ContainmentMatch.force_True(self, pkg, 'use', use, reduced_vals)
+            return values.ContainmentMatch2.force_True(self, pkg, 'use', use, reduced_vals)
         return True
 
 

@@ -56,8 +56,8 @@ def generate_depset(kls, key, non_package_type, self, **kwds):
 
 def _mk_required_use_node(data):
     if data[0] == '!':
-        return values.ContainmentMatch(data[1:], negate=True)
-    return values.ContainmentMatch(data,)
+        return values.ContainmentMatch2(data[1:], negate=True)
+    return values.ContainmentMatch2(data)
 
 def generate_required_use(self):
     data = self.data.pop("REQUIRED_USE", "")
@@ -80,7 +80,7 @@ def generate_required_use(self):
 
     return conditionals.DepSet.parse(
         data,
-        values.ContainmentMatch, operators=operators,
+        values.ContainmentMatch2, operators=operators,
         element_func=_mk_required_use_node)
 
 def generate_fetchables(self, allow_missing_checksums=False,

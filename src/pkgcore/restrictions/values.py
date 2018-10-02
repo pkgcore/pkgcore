@@ -340,7 +340,7 @@ class ContainmentMatch2(base, metaclass=hashed_base):
 
         sf = object.__setattr__
         sf(self, "all", bool(match_all))
-        sf(self, "vals", vals)
+        sf(self, "vals", frozenset((vals,) if isinstance(vals, str) else vals))
         sf(self, "negate", bool(negate))
         sf(self, "_hash", hash((self.all, self.negate, self.vals)))
 

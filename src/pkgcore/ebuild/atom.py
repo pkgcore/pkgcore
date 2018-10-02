@@ -23,7 +23,7 @@ from pkgcore.restrictions import values, packages, boolean
 
 demandload(
     'pkgcore.restrictions.packages:Conditional,AndRestriction@PkgAndRestriction',
-    'pkgcore.restrictions.values:ContainmentMatch',
+    'pkgcore.restrictions.values:ContainmentMatch2',
 )
 
 # namespace compatibility...
@@ -708,7 +708,7 @@ class transitive_use_atom(atom):
 
     @staticmethod
     def _mk_conditional(flag, payload, negate=False):
-        return Conditional('use', ContainmentMatch(flag, negate=negate), payload)
+        return Conditional('use', ContainmentMatch2(flag, negate=negate), payload)
 
     def _recurse_transitive_use_conds(self, atom_str, forced_use, varied):
         if not varied:

@@ -23,7 +23,7 @@ class ParseError(ValueError):
 
 
 def comma_separated_containment(attr, values_kls=frozenset, token_kls=str):
-    """Helper for parsing comma-separated strings to a ContainmentMatch.
+    """Helper for parsing comma-separated strings to a ContainmentMatch2.
 
     :param attr: name of the attribute.
     :return: a parse function: takes a string of comma-separated values,

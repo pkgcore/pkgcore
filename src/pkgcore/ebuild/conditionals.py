@@ -125,9 +125,9 @@ class DepSet(boolean.AndRestriction):
                         node_conds = True
                         c = raw_conditionals[-1]
                         if c[0] == "!":
-                            c = values.ContainmentMatch(c[1:-1], negate=True)
+                            c = values.ContainmentMatch2(c[1:-1], negate=True)
                         else:
-                            c = values.ContainmentMatch(c[:-1])
+                            c = values.ContainmentMatch2(c[:-1])
 
                         depsets[-2].append(
                             packages.Conditional("use", c, tuple(depsets[-1])))

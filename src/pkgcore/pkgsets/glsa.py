@@ -130,7 +130,7 @@ class GlsaDirSet(object, metaclass=generic_equality):
             vuln = vuln_list[0]
         if arch is not None:
             vuln = packages.AndRestriction(vuln, packages.PackageRestriction(
-                "keywords", values.ContainmentMatch(all=False, *arch)))
+                "keywords", values.ContainmentMatch2(arch, match_all=False)))
         invuln = (pkg_node.findall("unaffected"))
         if not invuln:
             # wrap it.

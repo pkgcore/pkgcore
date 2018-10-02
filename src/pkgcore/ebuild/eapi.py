@@ -3,6 +3,7 @@
 
 import os
 import re
+import sys
 
 from snakeoil import mappings, weakrefs, klass
 from snakeoil.demandload import demandload
@@ -202,6 +203,7 @@ class EAPI(object, metaclass=klass.immutable_instance):
         if EAPI.known_eapis.get(self._magic) is not None:
             if not self.options.is_supported:
                 logger.warning("EAPI %s isn't fully supported", self)
+                sys.stderr.flush()
             return True
         return False
 

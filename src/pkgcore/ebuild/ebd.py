@@ -847,6 +847,7 @@ class ebuild_mixin(object):
         """Various ebuild sanity checks (REQUIRED_USE, pkg_pretend)."""
         pkg = self.pkg
         eapi = pkg.eapi
+        out = observer._output._out
 
         # perform REQUIRED_USE checks
         if eapi.options.has_required_use:
@@ -880,9 +881,8 @@ class ebuild_mixin(object):
         env["T"] = pkg_tmpdir
 
         # TODO: make colored output easier to achieve from observers
-        msg = ['>>> Running pkg_pretend for ', observer._output._out.fg('green'),
-               pkg.cpvstr, observer._output._out.reset]
-        observer._output._out.write(*msg)
+        msg = ['>>> Running pkg_pretend for ', out.fg('green'), pkg.cpvstr, out.reset]
+        out.write(*msg)
 
         try:
             start = time.time()

@@ -20,7 +20,7 @@ class base(object, metaclass=caching.WeakInstMeta):
     """
     __inst_caching__ = True
 
-    # __weakref__ here's is implicit via the metaclass
+    # __weakref__ here is implicit via the metaclass
     __slots__ = ()
     package_matching = False
 

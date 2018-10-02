@@ -321,9 +321,6 @@ def mk_cpv_cls(base_cls):
         __slots__ = ()
 
         inject_richcmp_methods_from_cmp(locals())
-#       __metaclass__ = WeakInstMeta
-
-#       __inst_caching__ = True
 
         def __repr__(self):
             return '<%s cpvstr=%s @%#8x>' % (

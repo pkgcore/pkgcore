@@ -19,8 +19,9 @@ class FsObjsTest(TempDirMixin, TestCase):
         else:
             st = os.lstat(offset + '/' + path)
         if offset is not None:
-            self.assertTrue(path.startswith("/"),
-                msg="path must be absolute, got %r" % path)
+            self.assertTrue(
+                path.startswith("/"),
+                msg=f"path must be absolute, got {path!r}")
         self.assertEqual(obj.mode & 0o7777, st.st_mode & 0o7777)
         self.assertEqual(obj.uid, st.st_uid)
         self.assertEqual(obj.gid, st.st_gid)
@@ -91,8 +92,7 @@ class FsObjsTest(TempDirMixin, TestCase):
             elif fs.isdir(obj):
                 self.assertTrue(obj.location in dirs)
             else:
-                raise Exception(
-                    "unknown object popped up in testing dir, '%s'" % obj)
+                raise Exception(f"unknown object popped up in testing dir, {obj!r}")
             self.check_attrs(obj, obj.location)
         # do offset verification now.
         offset = os.path.join(self.dir, "iscan")

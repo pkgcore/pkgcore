@@ -39,8 +39,9 @@ class TestBase(TestCase):
 
     def test_default_attrs(self):
         for x in ("required_csets", "_label", "_hooks", "_engine_types"):
-            self.assertEqual(None, getattr(self.kls, x),
-                msg="%s must exist and be None" % x)
+            self.assertEqual(
+                None, getattr(self.kls, x),
+                msg=f"{x} must exist and be None")
         self.assertEqual(50, self.kls.priority)
 
     def test_label(self):
@@ -213,8 +214,9 @@ class Test_mtime_watcher(mixins.TempDirMixin, TestCase):
             t.set_state([self.dir])
             now, st_mtime = time.time(), os.stat(self.dir).st_mtime
             now, st_mtime = ceil(now), floor(st_mtime)
-            self.assertTrue(now > st_mtime,
-                msg="%r must be > %r" % (now, st_mtime))
+            self.assertTrue(
+                now > st_mtime,
+                msg=f"{now!r} must be > {st_mtime!r}")
 
 
 def castrate_trigger(base_kls, **kwargs):
@@ -249,8 +251,9 @@ class trigger_mixin(mixins.TempDirMixin):
     def assertPaths(self, expected, tested):
         expected = sorted(expected)
         tested = sorted(tested)
-        self.assertEqual(expected, tested,
-            msg="expected %r, got %r" % (expected, tested))
+        self.assertEqual(
+            expected, tested,
+            msg="expected {expected!}, got {tested!r}")
 
 
 class Test_ldconfig(trigger_mixin, TestCase):
@@ -297,7 +300,7 @@ class Test_ldconfig(trigger_mixin, TestCase):
                 os.utime(pjoin(self.dir, x), (past, past))
 
         self.reset_objects()
-        self.engine.phase = 'pre_%s' % hook
+        self.engine.phase = f'pre_{hook}'
         self.engine.mode = mode
         self.trigger(self.engine, {})
         self.assertFalse(self.trigger._passed_in_args)
@@ -312,7 +315,7 @@ class Test_ldconfig(trigger_mixin, TestCase):
         for x in resets:
             os.utime(x, (past, past))
 
-        self.engine.phase = 'post_%s' % hook
+        self.engine.phase = f'post_{hook}'
         self.trigger(self.engine, {})
 
         self.assertEqual([[getattr(x, 'offset', None) for x in y]

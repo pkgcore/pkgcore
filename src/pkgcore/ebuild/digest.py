@@ -69,7 +69,7 @@ def parse_manifest(source, ignore_gpg=True):
             d = types.get(line[0])
             if d is None:
                 raise errors.ParseChksumError(
-                    source, "unknown manifest type: %s: %r" % (line[0], line))
+                    source, f"unknown manifest type: {line[0]}: {line!r}")
             if len(line) % 2 != 1:
                 raise errors.ParseChksumError(
                     source,

@@ -18,7 +18,7 @@ mk_fifo = partial(fs.fsFifo, strict=False)
 
 for x in ("File", "Dir", "Link", "Dev", "Fifo"):
     globals()["mk_" + x.lower()] = partial(
-        getattr(fs, "fs%s" % x), strict=False)
+        getattr(fs, f"fs{x}"), strict=False)
 del x
 
 
@@ -212,9 +212,9 @@ class TestContentsSet(TestCase):
             cset2 = contents.contentsSet(data2)
             f = getattr(cset1, name)
             got = f(cset2)
-            self.assertEqual(got, required,
-                msg="%s: expected %s, got %s\ncset1=%r\ncset2=%r" %
-                (name, required, got, cset1, cset2))
+            self.assertEqual(
+                got, required,
+                msg=f"{name}: expected {required}, got {got}\ncset1={cset1!r}\ncset2={cset2!r}")
 
     test_issubset = post_curry(
         check_complex_set_op, "issubset",
@@ -325,7 +325,7 @@ class Test_offset_rewriting(TestCase):
         self.assertEqual(sorted(x.location for x in f),
             sorted(x.location for x in self.offset_insert('/', f)))
         self.assertEqual(
-            sorted('/usr%s' % x.location for x in f),
+            sorted(f'/usr{x.location}' for x in f),
             sorted(x.location for x in self.offset_insert('/usr', f)))
 
     def test_it(self):
@@ -334,17 +334,17 @@ class Test_offset_rewriting(TestCase):
         f = [fs.fsFile(x, strict=False) for x in f]
         self.assertEqual(sorted(x.location for x in f),
             sorted(y.location for y in self.change_offset('/usr', '/',
-                (x.change_attributes(location='/usr%s' % x.location)
+                (x.change_attributes(location=f'/usr{x.location}')
                     for x in f)
             )))
         self.assertEqual(sorted(x.location for x in f),
             sorted(y.location for y in self.change_offset('/usr', '/',
-                (x.change_attributes(location='/usr/%s' % x.location)
+                (x.change_attributes(location=f'/usr/{x.location}')
                     for x in f)
             )))
         self.assertEqual(sorted("/usr" + x.location for x in f),
             sorted(y.location for y in self.change_offset('/', '/usr',
-                (x.change_attributes(location='/%s' % x.location)
+                (x.change_attributes(location=f'/{x.location}')
                     for x in f)
             )))
 

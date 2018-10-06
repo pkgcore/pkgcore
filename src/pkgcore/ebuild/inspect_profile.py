@@ -45,14 +45,14 @@ class _base(arghparse.ArgparseCommand):
         except argparse.ArgumentTypeError as e:
             parser.error(e)
         if stack.node.repoconfig is None:
-            parser.error("invalid profile path: '%s'" % path)
+            parser.error(f"invalid profile path: {path!r}")
         namespace.profile = stack
 
     def bind_to_parser(self, parser):
         arghparse.ArgparseCommand.bind_to_parser(self, parser)
         parser.add_argument('profile', nargs='?', help='path to the profile to inspect')
         name = self.__class__.__name__
-        kwds = {('_%s_suppress' % name): arghparse.DelayedDefault.wipe(('domain'), 50)}
+        kwds = {(f'_{name}_suppress'): arghparse.DelayedDefault.wipe(('domain'), 50)}
         parser.set_defaults(**kwds)
         parser.bind_final_check(self._validate_args)
         self._subclass_bind(parser)
@@ -98,7 +98,7 @@ class status(_base, metaclass=_register_command):
                     if path.startswith(profile_rel_path)]
         if len(statuses) > 1:
             for path, status in sorted(statuses):
-                out.write('%s: %s' % (path, status))
+                out.write(f'{path}: {status}')
         elif statuses:
             out.write(statuses[0][1])
 
@@ -113,7 +113,7 @@ class deprecated(_base, metaclass=_register_command):
             out.write(out.bold, out.fg("cyan"), profile.path, out.reset, ":")
             data = profile.deprecated
             if data[0]:
-                out.write(" ", out.fg("yellow"), "replacement profile", out.reset, ": %s" % (data[0],))
+                out.write(" ", out.fg("yellow"), "replacement profile", out.reset, f": {data[0]}")
             if data[1]:
                 out.write(" ", out.fg("yellow"), "deprecation message", out.reset, ":")
                 for line in data[1].split("\n"):
@@ -200,7 +200,7 @@ class keywords(_base, metaclass=_register_command):
 
     def __call__(self, namespace, out, err):
         for pkg, keywords in namespace.profile.keywords:
-            out.write('%s: %s' % (pkg, ' '.join(keywords)))
+            out.write(f"{pkg}: {' '.join(keywords)}")
 
 
 class accept_keywords(_base, metaclass=_register_command):
@@ -210,7 +210,7 @@ class accept_keywords(_base, metaclass=_register_command):
         for pkg, keywords in namespace.profile.accept_keywords:
             out.write(pkg, autoline=False)
             if keywords:
-                out.write(': %s' % (' '.join(keywords)))
+                out.write(f": {' '.join(keywords)}")
             else:
                 out.write()
 
@@ -234,10 +234,10 @@ class _use(_base):
                 global_use = ' '.join(sorted(chain(neg, pos)))
 
         if global_use:
-            out.write('*/*: %s' % (global_use,))
+            out.write(f'*/*: {global_use}')
         if pkg_use:
             for pkg, use in sorted(pkg_use):
-                out.write('%s: %s' % (pkg, use))
+                out.write(f'{pkg}: {use}')
 
 
 class use(_use, metaclass=_register_command):
@@ -315,7 +315,7 @@ class defaults(_base, metaclass=_register_command):
                 continue
             if isinstance(val, tuple):
                 val = ' '.join(val)
-            out.write('%s="%s"' % (key, val))
+            out.write(f'{key}="{val}"')
 
 
 class arch(_base, metaclass=_register_command):
@@ -327,7 +327,7 @@ class arch(_base, metaclass=_register_command):
 
 
 def bind_parser(parser, name):
-    subparsers = parser.add_subparsers(description="%s commands" % (name,))
+    subparsers = parser.add_subparsers(description=f"{name} commands")
     for command in commands:
         # Split docstrings into summaries and extended docs.
         help, _, docs = command.__doc__.partition('\n')

@@ -21,8 +21,8 @@ class TestMultiplex(TestCase):
     tree2_pkgs = (
         ("dev-util/diffball", ["1.0", "1.1"]),
         ("dev-lib/bsdiff", ["1.0", "2.0"]))
-    tree1_list = ["%s-%s" % (k, ver) for k, v in tree1_pkgs for ver in v]
-    tree2_list = ["%s-%s" % (k, ver) for k, v in tree2_pkgs for ver in v]
+    tree1_list = [f"{k}-{ver}" for k, v in tree1_pkgs for ver in v]
+    tree2_list = [f"{k}-{ver}" for k, v in tree2_pkgs for ver in v]
 
     def setUp(self):
         self.d1, self.d2 = {}, {}

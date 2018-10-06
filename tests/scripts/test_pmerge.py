@@ -20,13 +20,13 @@ class TargetParsingTest(TestCase):
         repo = util.SimpleTree({'spork': {'foon': ('1', '1.0.1', '2')}})
         installed_repos = util.SimpleTree({'foo': {'bar': ('1')}})
         for cat in ('', 'spork/'):
-            a = pmerge.parse_target(parse_match('=%sfoon-1' % (cat,)), repo, installed_repos)
+            a = pmerge.parse_target(parse_match(f'={cat}foon-1'), repo, installed_repos)
             self.assertEqual(len(a), 1)
             self.assertEqual(a[0].key, 'spork/foon')
             self.assertEqual(
                 [x.fullver for x in repo.itermatch(a[0])],
                 ['1'])
-            a = pmerge.parse_target(parse_match('%sfoon' % (cat,)), repo, installed_repos)
+            a = pmerge.parse_target(parse_match(f'{cat}foon'), repo, installed_repos)
             self.assertEqual(len(a), 1)
             self.assertEqual(a[0].key, 'spork/foon')
             self.assertEqual(

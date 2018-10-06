@@ -54,10 +54,10 @@ class DescribeClassTest(TestCase, ArgParseMixin):
             module = "'module' object"
 
         self.assertError(
-            "argument target_class: Failed importing target 'pkgcore.spork': '%s has no attribute 'spork''" % module,
+            f"argument target_class: Failed importing target 'pkgcore.spork': '{module} has no attribute 'spork''",
             'pkgcore.spork')
         self.assertError(
-            "argument target_class: Failed importing target 'pkgcore.a': '%s has no attribute 'a''" % module,
+            f"argument target_class: Failed importing target 'pkgcore.a': '{module} has no attribute 'a''",
             'pkgcore.a', 'pkgcore.b')
         self.parse('pkgcore.scripts')
 
@@ -270,7 +270,7 @@ class WeirdSection(basics.ConfigSection):
         if name != 'sects':
             raise KeyError(name)
         if arg_type != 'repr':
-            raise errors.ConfigurationError('%r unsupported' % (arg_type,))
+            raise errors.ConfigurationError(f'{arg_type!r} unsupported')
         return 'refs', [
             ['spork', basics.HardCodedConfigSection({'foo': 'bar'})],
             None, None]

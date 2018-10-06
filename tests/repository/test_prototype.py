@@ -47,7 +47,7 @@ class TestPrototype(TestCase):
             sorted([x for x in ["dev-util/diffball", "dev-util/bsdiff", "dev-lib/fake"]]))
         self.assertEqual(
             sorted(
-                "%s/%s-%s" % (cp[0], cp[1], v)
+                f"{cp[0]}/{cp[1]}-{v}"
                 for cp, t in self.repo.versions.items() for v in t),
             sorted([
                 "dev-util/diffball-1.0", "dev-util/diffball-0.7",
@@ -220,7 +220,7 @@ class TestPrototype(TestCase):
         # if replace, override _replace since replace reflects to it
 
         class my_ops(operations):
-            locals()['_cmd_implementation_%s' % attr] = f
+            locals()[f'_cmd_implementation_{attr}'] = f
         self.repo.operations_kls = my_ops
         args = [self.repo.match(atom(arg1))]
         if arg2:

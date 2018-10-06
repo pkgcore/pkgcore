@@ -21,7 +21,7 @@ class MalformedAtom(errors.InvalidDependency):
         errors.InvalidDependency.__init__(self, str(self))
 
     def __str__(self):
-        return "invalid package atom: '%s'%s" % (self.atom, self.err)
+        return f"invalid package atom: '{self.atom}'{self.err}"
 
 
 class InvalidVersion(errors.InvalidDependency):
@@ -29,8 +29,7 @@ class InvalidVersion(errors.InvalidDependency):
     def __init__(self, ver, rev, err=''):
         errors.InvalidDependency.__init__(
             self,
-            "Version restriction ver='%s', rev='%s', is malformed: error %s" %
-            (ver, rev, err))
+            f"Version restriction ver='{ver}', rev='{rev}', is malformed: error {err}")
         self.ver, self.rev, self.err = ver, rev, err
 
 
@@ -51,10 +50,9 @@ class ParseError(errors.InvalidDependency):
         if self.msg is None:
             str_msg = ''
         else:
-            str_msg = ': %s' % self.msg
+            str_msg = f': {self.msg}'
 
         if self.token is not None:
-            return "%s is unparseable%s\nflagged token- %s" % \
-                (self.dep_str, str_msg, self.token)
+            return f"{self.dep_str} is unparseable{str_msg}\nflagged token- {self.token}"
         else:
-            return "%s is unparseable%s" % (self.dep_str, str_msg)
+            return f"{self.dep_str} is unparseable{str_msg}"

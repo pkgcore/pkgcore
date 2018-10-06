@@ -13,8 +13,8 @@ def fake_pkg(cat='dev-util', pkg='bsdiff', ver='1.0', **attrs):
     d['category'] = cat
     d['pkg'] = pkg
     d['ver'] = ver
-    d['key'] = "%s/%s" % (cat, pkg)
-    d["cpvstr"] = "%s/%s-%s" % (cat, pkg, ver)
+    d['key'] = f"{cat}/{pkg}"
+    d["cpvstr"] = f"{cat}/{pkg}-{ver}"
     d['built'] = False
     d.update(attrs)
     return malleable_obj(**d)

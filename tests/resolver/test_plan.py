@@ -11,7 +11,7 @@ from pkgcore.test.misc import FakePkg
 class TestPkgSorting(TestCase):
 
     def check_it(self, sorter, vers, expected, iter_sort_target=False):
-        pkgs = [FakePkg("d-b/a-%s" % x) for x in vers]
+        pkgs = [FakePkg(f"d-b/a-{x}") for x in vers]
         if iter_sort_target:
             pkgs = [[x, []] for x in pkgs]
         pkgs = list(sorter(pkgs))

@@ -31,7 +31,7 @@ class TestExtendedRestrictionGeneration(TestCase):
     def assertInstance(self, restrict, kls, token):
         TestCase.assertInstance(
             self, restrict, kls,
-            msg="got %r, expected %r for %r" % (restrict, kls, token))
+            msg=f"got {restrict!r}, expected {kls!r} for {token!r}")
 
     def verify_text_glob(self, restrict, token):
         assert isinstance(restrict, values.StrRegex), token

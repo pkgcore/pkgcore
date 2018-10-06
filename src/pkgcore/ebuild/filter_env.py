@@ -49,14 +49,14 @@ def build_regex_string(tokens, invert=False):
     if len(tokens) == 1:
         s = tokens[0]
     else:
-        s = '(?:%s)' % ('|'.join(tokens),)
-    s = '^%s$' % (s,)
+        s = f"(?:{'|'.join(tokens)})"
+    s = f'^{s}$'
     if invert:
-        s = "(?!%s)" % (s,)
+        s = f"(?!{s})"
     try:
         return re.compile(s)
     except re.error as e:
-        raise Exception("failed compiling %r:\n\nerror: %s" % (s, e))
+        raise Exception(f"failed compiling {s!r}:\n\nerror: {e}")
 
 
 FUNC_LEN = len('function')
@@ -148,15 +148,15 @@ def process_scope(out, buff, pos, var_match, func_match, endchar,
         new_start, new_end, new_p = is_function(buff, pos)
         if new_p is not None:
             func_name = buff[new_start:new_end]
-            logger.debug('matched func name %r', func_name)
+            logger.debug(f'matched func name {func_name!r}')
             new_p = process_scope(None, buff, new_p, None, None, '}',
                                   func_callback=func_callback,
                                   func_level=func_level+1)
-            logger.debug('ended processing %r', func_name)
+            logger.debug(f'ended processing {func_name!r}')
             if func_callback is not None:
                 func_callback(func_level, func_name, buff[new_start:new_p])
             if func_match is not None and func_match(func_name):
-                logger.debug('filtering func %r', func_name)
+                logger.debug(f'filtering func {func_name!r}')
                 window_end = com_start
             pos = new_p
             pos += 1
@@ -175,11 +175,11 @@ def process_scope(out, buff, pos, var_match, func_match, endchar,
             pos = new_p
             if envvar_callback:
                 envvar_callback(var_name)
-            logger.debug('matched env assign %r', var_name)
+            logger.debug(f'matched env assign {var_name!r}')
 
             if var_match is not None and var_match(var_name):
                 # This would be filtered.
-                logger.info("filtering var '%s'", var_name)
+                logger.info(f"filtering var {var_name!r}")
                 window_end = com_start
 
             if pos >= end:
@@ -248,8 +248,7 @@ def walk_here_statement(buff, pos):
     else:
         end_here = walk_command_complex(buff, pos, ' ', SPACE_PARSING)
     here_word = buff[pos:end_here]
-    logger.debug('matched len(%s)/%r for a here word',
-                 len(here_word), here_word)
+    logger.debug(f'matched len({len(here_word)})/{here_word!r} for a here word')
     # XXX watch this. Potential for horkage. Need to do the quote
     # removal thing. This sucks.
     end_here += 1
@@ -321,7 +320,7 @@ def walk_command_complex(buff, pos, endchar, interpret_level):
                 # since it may be an endchar
                 continue
             else:
-                logger.debug('noticed <, interpret_level=%s', interpret_level)
+                logger.debug(f'noticed <, interpret_level={interpret_level}')
         elif ch == '#':
             if start == pos or isspace(buff[pos - 1]) or buff[pos - 1] == ';':
                 pos = walk_statement_pound(buff, pos)

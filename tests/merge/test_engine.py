@@ -21,7 +21,7 @@ class fake_pkg(object):
         self.contents = contents
 
     def __str__(self):
-        return "fake_pkg: %s" % self.label
+        return f"fake_pkg: {self.label}"
 
 
 class Test_MergeEngineCsets(TestCase):

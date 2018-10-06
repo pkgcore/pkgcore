@@ -196,7 +196,7 @@ class Licenses(object, metaclass=WeakInstMeta):
         except EnvironmentError:
             return mappings.ImmutableDict()
         except BashParseError as pe:
-            logger.error("failed parsing license_groups: %s", pe)
+            logger.error(f"failed parsing license_groups: {pe}")
             return mappings.ImmutableDict()
         self._expand_groups(d)
         return mappings.ImmutableDict((k, tuple(v)) for (k, v) in d.items())
@@ -217,11 +217,11 @@ class Licenses(object, metaclass=WeakInstMeta):
                         v2 = v2[1:]
                         if not v2 or v2 not in groups:
                             logger.error(
-                                "invalid license group reference: %r in %s", v2, self)
+                                f"invalid license group reference: {v2!r} in {self}")
                             continue
                         elif v2 == k:
                             logger.error(
-                                "cyclic license group references for %r in %s", v2, self)
+                                f"cyclic license group references for {v2!r} in {self}")
                             continue
                         l.extend(groups[v2])
                     else:
@@ -330,8 +330,7 @@ class BundledProfiles(object):
                     key, profile, status = l
                 except ValueError:
                     logger.error(
-                        "%s: line doesn't follow 'key profile status' form: %s",
-                        fp, line)
+                        f"{fp}: line doesn't follow 'key profile status' form: {line}")
                     continue
                 # Normalize the profile name on the offchance someone slipped an extra /
                 # into it.
@@ -340,7 +339,7 @@ class BundledProfiles(object):
         except EnvironmentError as e:
             if e.errno != errno.ENOENT:
                 raise
-            logger.debug("No profile descriptions found at %r", fp)
+            logger.debug(f"No profile descriptions found at {fp!r}")
         return mappings.ImmutableDict(
             (k, tuple(sorted(v))) for k, v in d.items())
 
@@ -432,7 +431,7 @@ class RepoConfig(syncable.tree, metaclass=WeakInstMeta):
         repo_name = readfile(pjoin(self.profiles_base, 'repo_name'), True)
         if repo_name is None:
             if not self.is_empty:
-                logger.warning("repo lacks a defined name: %r", self.location)
+                logger.warning(f"repo lacks a defined name: {self.location!r}")
             repo_name = f'<unlabeled repo {self.location}>'
         # repo-name setting from metadata/layout.conf overrides profiles/repo_name if it exists
         sf(self, 'repo_name', data.get('repo-name', repo_name.strip()))
@@ -442,9 +441,9 @@ class RepoConfig(syncable.tree, metaclass=WeakInstMeta):
         if masters is None:
             if not self.is_empty:
                 logger.warning(
-                    "repo at %r, named %r, doesn't specify masters in metadata/layout.conf. "
-                    "Please explicitly set masters (use \"masters =\" if the repo "
-                    "is standalone).", self.location, self.repo_id)
+                    f"repo at {self.location!r}, named {self.repo_id!r}, doesn't "
+                    "specify masters in metadata/layout.conf. Please explicitly "
+                    "set masters (use \"masters =\" if the repo is standalone).")
             masters = ()
         else:
             masters = tuple(iter_stable_unique(masters.split()))
@@ -463,8 +462,8 @@ class RepoConfig(syncable.tree, metaclass=WeakInstMeta):
         profile_formats = set(data.get('profile-formats', 'pms').lower().split())
         if not profile_formats:
             logger.warning(
-                "%r repo at %r has explicitly unset profile-formats, "
-                "defaulting to pms", self.repo_id, self.location)
+                f"{self.repo_id!r} repo at {self.location!r} has explicitly "
+                "unset profile-formats, defaulting to pms")
             profile_formats = set(['pms'])
         unknown = profile_formats.difference(self.supported_profile_formats)
         if unknown:
@@ -544,7 +543,7 @@ class RepoConfig(syncable.tree, metaclass=WeakInstMeta):
         except ValueError as e:
             if line is None:
                 raise
-            raise ValueError("Failed parsing %r: line was %r" % (fp, line)) from e
+            raise ValueError(f"Failed parsing {fp!r}: line was {line!r}") from e
 
     known_arches = klass.alias_attr('raw_known_arches')
     use_desc = klass.alias_attr('raw_use_desc')
@@ -563,7 +562,7 @@ class RepoConfig(syncable.tree, metaclass=WeakInstMeta):
                 raise
 
         if result:
-            logger.debug("repo is empty: %r", self.location)
+            logger.debug(f"repo is empty: {self.location!r}")
         return result
 
     @klass.jit_attr

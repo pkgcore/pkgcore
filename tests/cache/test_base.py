@@ -34,7 +34,7 @@ class DictCache(base):
         # pita to deal with for this code- thus we convert back.
         # Additionally, we drop any chksum info in the process.
         d = dict(base.__getitem__(self, cpv).items())
-        d.pop('_%s_' % self.chf_type, None)
+        d.pop(f'_{self.chf_type}_', None)
         return d
 
     def __setitem__(self, cpv, data):
@@ -73,7 +73,7 @@ class DictCacheBulk(bulk):
 
     def __getitem__(self, cpv):
         d = bulk.__getitem__(self, cpv)
-        d.pop('_%s_' % self.chf_type, None)
+        d.pop(f'_{self.chf_type}_', None)
         return d
 
     def __setitem__(self, cpv, data):

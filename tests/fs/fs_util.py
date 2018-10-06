@@ -22,9 +22,9 @@ for key in dir(fs):
     # downside, this works on new style only
     if isinstance(val, type) and issubclass(val, fs.fsBase) and \
             val is not fs.fsBase:
-        locals()["_original_%s" % key] = val
+        locals()[f"_original_{key}"] = val
         val = pre_curry(val, strict=False)
-        val.__doc__ = locals()["_original_%s" % key].__doc__
+        val.__doc__ = locals()[f"_original_{key}"].__doc__
     locals()[key] = val
     del val
 

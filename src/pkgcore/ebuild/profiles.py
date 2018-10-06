@@ -45,7 +45,7 @@ def package_keywords_splitter(val):
     try:
         return atom(v[0]), tuple(stable_unique(v[1:]))
     except ebuild_errors.MalformedAtom as e:
-        logger.warning('parsing error: %s', e)
+        logger.warning(f'parsing error: {e}')
 
 
 class ProfileError(errors.ParsingError):

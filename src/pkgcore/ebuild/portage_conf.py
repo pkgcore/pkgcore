@@ -115,7 +115,7 @@ def make_repo_syncers(config, repos_conf, make_conf, allow_timestamps=True):
         if sync_uri:
             # prefix non-native protocols
             if (sync_type is not None and not sync_uri.startswith(sync_type)):
-                sync_uri = '%s+%s' % (sync_type, sync_uri)
+                sync_uri = f'{sync_type}+{sync_uri}'
 
             d['uri'] = sync_uri
             d['opts'] = repo_opts.get('sync-opts', '')
@@ -181,10 +181,9 @@ def _find_profile_link(config_dir):
     except EnvironmentError as e:
         if oe.errno in (errno.ENOENT, errno.EINVAL):
             raise errors.ComplexInstantiationError(
-                "%s must be a symlink pointing to a real target" % (
-                    make_profile,)) from e
+                f"{make_profile} must be a symlink pointing to a real target") from e
         raise errors.ComplexInstantiationError(
-            "%s: unexpected error- %s" % (make_profile, e.strerror)) from e
+            f"{make_profile}: unexpected error- {e.strerror}") from e
 
 def add_profile(config, config_dir, profile_override=None):
     if profile_override is None:
@@ -192,8 +191,7 @@ def add_profile(config, config_dir, profile_override=None):
     else:
         profile = normpath(abspath(profile_override))
         if not os.path.exists(profile):
-            raise errors.ComplexInstantiationError(
-                "%s doesn't exist" % (profile,))
+            raise errors.ComplexInstantiationError(f"{profile} doesn't exist")
 
     paths = profiles.OnDiskProfile.split_abspath(profile)
     if paths is None:
@@ -289,7 +287,7 @@ def load_make_conf(vars_dict, path, allow_sourcing=False, required=True,
         if incrementals:
             for key in econst.incrementals:
                 if key in vars_dict and key in new_vars:
-                    new_vars[key] = "%s %s" % (vars_dict[key], new_vars[key])
+                    new_vars[key] = f"{vars_dict[key]} {new_vars[key]}"
         # quirk of read_bash_dict; it returns only what was mutated.
         vars_dict.update(new_vars)
 
@@ -319,26 +317,26 @@ def load_repos_conf(path):
         except EnvironmentError as e:
             if e.errno == errno.EACCES:
                 raise errors.PermissionDeniedError(fp, write=False) from e
-            raise errors.ParsingError("parsing %r" % (fp,), exception=e) from e
+            raise errors.ParsingError(f"parsing {fp!r}", exception=e) from e
         except configparser.Error as e:
-            raise errors.ParsingError("repos.conf: '%s'" % (fp,), exception=e) from e
+            raise errors.ParsingError(f"repos.conf: {fp!r}", exception=e) from e
 
         defaults_data = config.defaults()
         if defaults_data and defaults:
-            logger.warning("repos.conf: parsing '%s': overriding DEFAULT section", fp)
+            logger.warning(f"repos.conf: parsing {fp!r}: overriding DEFAULT section")
         defaults.update(defaults_data)
 
         for name in config.sections():
             if name in repos:
-                logger.warning("repos.conf: parsing '%s': overriding '%s' repo", fp, name)
+                logger.warning(f"repos.conf: parsing {fp!r}: overriding {name!r} repo")
             repo_data = dict(config.items(name))
 
             # ignore repo if location is unset
             location = repo_data.get('location', None)
             if location is None:
                 logger.warning(
-                    "repos.conf: parsing '%s': "
-                    "'%s' repo missing location setting, ignoring repo", fp, name)
+                    f"repos.conf: parsing {fp!r}: "
+                    f"{name!r} repo missing location setting, ignoring repo")
                 continue
             repo_data['location'] = os.path.abspath(location)
 
@@ -348,9 +346,8 @@ def load_repos_conf(path):
                 priority = int(priority)
             except ValueError:
                 logger.warning(
-                    "repos.conf: parsing '%s': '%s' repo has invalid priority "
-                    "setting: '%s' (defaulting to 0)",
-                    fp, name, priority)
+                    f"repos.conf: parsing {fp!r}: {name!r} repo has invalid priority "
+                    f"setting: {priority!r} (defaulting to 0)")
                 priority = 0
             finally:
                 repo_data['priority'] = priority
@@ -363,7 +360,7 @@ def load_repos_conf(path):
         default_repo = defaults.get('main-repo', 'gentoo')
         if default_repo not in repos:
             raise errors.ConfigurationError(
-                "default repo '%s' is undefined or invalid" % (default_repo,))
+                f"default repo {default_repo!r} is undefined or invalid")
 
         if 'main-repo' not in defaults:
             defaults['main-repo'] = default_repo

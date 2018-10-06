@@ -49,7 +49,7 @@ class ConfigManagerTest(TestCase):
         except klass as e:
             self.assertEqual(
                 message, _str_exc(e),
-                '\nGot:\n%r\nExpected:\n%r\n' % (_str_exc(e), message))
+                f'\nGot:\n{_str_exc(e)!r}\nExpected:\n{message!r}\n')
         else:
             self.fail('no exception raised')
 

@@ -19,7 +19,7 @@ class fake_blocker(restriction.base):
         object.__setattr__(self, "blocks", blocks)
 
     def __str__(self):
-        return "fake_atom(%s, %s)" % (self.key, self.blocks)
+        return f"fake_atom({self.key}, {self.blocks})"
 
     def match(self, obj):
         for x in self.blocks:

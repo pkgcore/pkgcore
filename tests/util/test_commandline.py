@@ -109,7 +109,7 @@ class MainTest(TestCase):
             self.assertEqual(outtext, out_getvalue())
             self.assertEqual(
                 status, e.args[0],
-                msg="expected status %r, got %r" % (status, e.args[0]))
+                msg=f"expected status {status!r}, got {e.args[0]!r}")
         else:
             self.fail('no exception raised')
 
@@ -119,7 +119,7 @@ class MainTest(TestCase):
 
         @argparser.bind_main_func
         def run(options, out, err):
-            out.write("args: %s" % (options.foon,))
+            out.write(f"args: {options.foon}")
             return 0
 
         self.assertMain(
@@ -202,7 +202,7 @@ class MainTest(TestCase):
                 master.close()
                 self.assertTrue(
                     out_name.startswith(out_kind) or out_name == 'PlainTextFormatter',
-                    'expected %r, got %r' % (out_kind, out_name))
+                    f'expected {out_kind!r}, got {out_name!r}')
                 self.assertEqual(err_kind, err_getvalue())
             else:
                 self.fail('no exception raised')

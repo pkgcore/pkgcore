@@ -21,9 +21,9 @@ class Test_delegate(TestRestriction):
 
         for negated in (False, True):
             def assertIt(got, expected):
-                self.assertEqual(got, expected,
-                    msg="got=%r, expected=%r, negate=%r" %
-                        (got, expected, negated))
+                self.assertEqual(
+                    got, expected,
+                    msg=f"got={got!r}, expected={expected!r}, negate={negated!r}")
             y = True
             l[:] = []
             o = self.kls(f, negate=negated)

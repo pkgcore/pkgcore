@@ -20,7 +20,7 @@ class VerifyMixin(object):
                               ("st_uid", "uid")):
             if keyword in kwds:
                 self.assertEqual(getattr(stat, attr), kwds[keyword],
-                                 "testing %s" % (keyword,))
+                                 f"testing {keyword}")
         if "mode" in kwds:
             self.assertEqual((stat.st_mode & 0o4777), kwds["mode"])
 
@@ -146,7 +146,7 @@ class ContentsMixin(VerifyMixin, TempDirMixin, TestCase):
                 os.symlink(v[1], k)
             else:
                 raise Exception(
-                    "generate_tree doesnt' support type %r yet: k %r" % (v, k))
+                    f"generate_tree doesn't support type {v!r} yet: k {k!r}")
 
     def gen_dir(self, name):
         d = os.path.join(self.dir, name)

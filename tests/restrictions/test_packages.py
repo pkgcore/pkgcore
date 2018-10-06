@@ -68,14 +68,15 @@ class native_PackageRestrictionTest(TestRestriction):
             self.assertRaises(AttributeError,
                 getattr(self.kls("foon", AlwaysSelfIntersect), mode),
                 foo())
-            self.assertEqual(len(excepts), 1,
-                msg="expected one exception, got %r" % excepts)
+            self.assertEqual(
+                len(excepts), 1,
+                msg=f"expected one exception, got {excepts!r}")
 
             # ensure various exceptions are passed through
             for k in (KeyboardInterrupt, RuntimeError, SystemExit):
-                self.assertRaises(k,
-                    getattr(self.kls("exc_%s" % k.__name__,
-                        AlwaysSelfIntersect), mode),
+                self.assertRaises(
+                    k,
+                    getattr(self.kls(f"exc_{k.__name__}", AlwaysSelfIntersect), mode),
                     foo())
 
         # check that it only does string comparison in exception catching.

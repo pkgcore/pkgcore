@@ -60,7 +60,7 @@ def package_masks(iterable):
         try:
             yield parse_match(line), line, lineno, path
         except ParseError as e:
-            logger.warning('%r, line %s: parsing error: %s' % (path, lineno, e))
+            logger.warning(f'{path!r}, line {lineno}: parsing error: {e}')
 
 
 def package_keywords_splitter(iterable):
@@ -69,14 +69,14 @@ def package_keywords_splitter(iterable):
         try:
             yield parse_match(v[0]), tuple(stable_unique(v[1:])), line, lineno, path
         except ParseError as e:
-            logger.warning('%r, line %s: parsing error: %s' % (path, lineno, e))
+            logger.warning(f'{path!r}, line {lineno}: parsing error: {e}')
 
 
 def package_env_splitter(basedir, iterable):
     for line, lineno, path in iterable:
         val = line.split()
         if len(val) == 1:
-            logger.warning("%r, line %s: missing file reference: %r" % (path, lineno, line))
+            logger.warning(f"{path!r}, line {lineno}: missing file reference: {line!r}")
             continue
         paths = []
         for env_file in val[1:]:
@@ -84,11 +84,11 @@ def package_env_splitter(basedir, iterable):
             if os.path.exists(fp):
                 paths.append(fp)
             else:
-                logger.warning("%r, line %s: nonexistent file: %r" % (path, lineno, fp))
+                logger.warning(f"{path!r}, line {lineno}: nonexistent file: {fp!r}")
         try:
             yield parse_match(val[0]), tuple(paths), line, lineno, path
         except ParseError as e:
-            logger.warning('%r, line %s: parsing error: %s' % (path, lineno, e))
+            logger.warning(f'{path!r}, line {lineno}: parsing error: {e}')
 
 
 def apply_mask_filter(globs, atoms, pkg, mode):
@@ -141,7 +141,7 @@ def load_property(filename, parsing_func=lambda x: x, fallback=()):
             else:
                 data = fallback
             return func(self, data)
-        f2 = klass.jit_attr_named('_jit_%s' % (func.__name__,))
+        f2 = klass.jit_attr_named(f'_jit_{func.__name__}')
         return f2(partial(_load_and_invoke, func, fallback))
     return f
 
@@ -157,7 +157,7 @@ def _read_config_file(path):
                 yield line, lineno, fs_obj.location
     except EnvironmentError as e:
         if e.errno != errno.ENOENT:
-            raise Failure("failed reading %r: %s" % (filename, e)) from e
+            raise Failure(f"failed reading {filename!r}: {e}") from e
 
 
 # ow ow ow ow ow ow....
@@ -247,7 +247,7 @@ class domain(config_domain):
             s = set()
             incremental_expansion(
                 s, settings[incremental],
-                'while expanding %s' % (incremental,))
+                f'while expanding {incremental}')
             settings[incremental] = tuple(s)
 
         if 'ACCEPT_KEYWORDS' not in settings:
@@ -275,7 +275,7 @@ class domain(config_domain):
 
     @property
     def unstable_arch(self):
-        return "~%s" % self.arch
+        return f"~{self.arch}"
 
     @klass.jit_attr_named('_jit_reset_use', uncached_val=None)
     def use(self):
@@ -419,7 +419,7 @@ class domain(config_domain):
         for and_pair in pkg.license.dnf_solutions():
             accepted = incremental_expansion_license(
                 and_pair, license_manager.groups, raw_accepted_licenses,
-                msg_prefix="while checking ACCEPT_LICENSE for %s" % (pkg,))
+                msg_prefix=f"while checking ACCEPT_LICENSE for {pkg}")
             if accepted.issuperset(and_pair):
                 return True
         return False
@@ -590,7 +590,7 @@ class domain(config_domain):
             return
         # matching portage behavior... it's whacked.
         base = pjoin(self.ebuild_hook_dir, pkg.category)
-        for fp in (pkg.package, "%s:%s" % (pkg.package, pkg.slot),
+        for fp in (pkg.package, f"{pkg.package}:{pkg.slot}",
                    getattr(pkg, "P", "nonexistent"), getattr(pkg, "PF", "nonexistent")):
             fp = pjoin(base, fp)
             if os.path.exists(fp):
@@ -611,7 +611,7 @@ class domain(config_domain):
                 raise ValueError('missing config')
             path = os.path.abspath(repo)
             if not os.path.isdir(os.path.join(path, 'profiles')):
-                raise TypeError('invalid repo: %r' % path)
+                raise TypeError(f'invalid repo: {path!r}')
             repo_config = RepoConfig(path, config_name=path)
             repo = ebuild_repo.tree(config, repo_config)
             self.source_repos_raw += repo
@@ -638,8 +638,9 @@ class domain(config_domain):
                     else:
                         pargs.append(getattr(self, x))
             except AttributeError as e:
-                raise Failure("failed configuring repo '%s': "
-                              "configurable missing: %s" % (repo, e)) from e
+                raise Failure(
+                    f"failed configuring repo {repo!r}: "
+                    f"configurable missing: {e}") from e
             configured_repo = repo.configure(*pargs)
         return configured_repo
 
@@ -672,7 +673,7 @@ class domain(config_domain):
                 os.mkdir(path)
             except EnvironmentError:
                 path = tempfile.gettempdir()
-                logger.warning('nonexistent PORTAGE_TMPDIR path, defaulting to %r', path)
+                logger.warning(f'nonexistent PORTAGE_TMPDIR path, defaulting to {path!r}')
         return os.path.normpath(path)
 
     @property

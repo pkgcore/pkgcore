@@ -53,7 +53,7 @@ class repo_operations(_repo_ops.operations):
                                     mirrors=False, force=False):
         manifest_config = self.repo.config.manifests
         if manifest_config.disabled:
-            observer.info("repo %s has manifests disabled", self.repo.repo_id)
+            observer.info(f"repo {self.repo.repo_id} has manifests disabled")
             return
         required_chksums = manifest_config.hashes
         distdir = domain.fetcher.distdir

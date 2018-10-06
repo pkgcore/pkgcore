@@ -16,7 +16,7 @@ class db(flat_hash.database):
 
     def __getitem__(self, cpv):
         d = dict(flat_hash.database.__getitem__(self, cpv).items())
-        d.pop('_%s_' % self.chf_type, None)
+        d.pop(f'_{self.chf_type}_', None)
         return d
 
 

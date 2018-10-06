@@ -25,15 +25,15 @@ class TestBase(TestCase):
         self.assertEqual(o.local_user, os.getuid())
         self.assertEqual(o.uri, "http://dar")
 
-        o = valid("/tmp/foon", "http://%s::@site" % existing_user)
+        o = valid("/tmp/foon", f"http://{existing_user}::@site")
         self.assertEqual(o.local_user, existing_uid)
         self.assertEqual(o.uri, "http://site")
 
-        o = valid("/tmp/foon", "http://%s::foon@site" % existing_user)
+        o = valid("/tmp/foon", f"http://{existing_user}::foon@site")
         self.assertEqual(o.local_user, existing_uid)
         self.assertEqual(o.uri, "http://foon@site")
 
-        o = valid("/tmp/foon", "%s::foon@site" % existing_user)
+        o = valid("/tmp/foon", f"{existing_user}::foon@site")
         self.assertEqual(o.local_user, existing_uid)
         self.assertEqual(o.uri, "foon@site")
 

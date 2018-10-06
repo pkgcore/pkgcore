@@ -82,8 +82,7 @@ def native_incremental_expansion(orig, iterable, msg_prefix='', finalize=True):
             i = token[1:]
             if not i:
                 raise ValueError(
-                    "%s encountered an incomplete negation, '-'"
-                    % (msg_prefix,))
+                    f"{msg_prefix} encountered an incomplete negation, '-'")
             if i == '*':
                 orig.clear()
             else:
@@ -107,8 +106,7 @@ def incremental_expansion_license(licenses, license_groups, iterable, msg_prefix
             i = token[1:]
             if not i:
                 raise ValueError(
-                    "%sencountered an incomplete negation, '-'"
-                    % (msg_prefix,))
+                    f"{msg_prefix}encountered an incomplete negation, '-'")
             if i == '*':
                 seen.clear()
             else:
@@ -116,8 +114,8 @@ def incremental_expansion_license(licenses, license_groups, iterable, msg_prefix
                     i = i[1:]
                     if not i:
                         raise ValueError(
-                            "%sencountered an incomplete negation"
-                            " of a license group, '-@'" % (msg_prefix,))
+                            f"{msg_prefix}encountered an incomplete negation"
+                            " of a license group, '-@'")
                     seen.difference_update(license_groups.get(i, ()))
                 else:
                     seen.discard(i)
@@ -125,8 +123,7 @@ def incremental_expansion_license(licenses, license_groups, iterable, msg_prefix
             i = token[1:]
             if not i:
                 raise ValueError(
-                    "%sencountered an incomplete license group"
-                    ", '@'" % (msg_prefix,))
+                    f"{msg_prefix}encountered an incomplete license group, '@'")
             seen.update(license_groups.get(i, ()))
         elif token == '*':
             seen.update(licenses)
@@ -147,18 +144,18 @@ class IncrementalsDict(mappings.DictMixin):
     def __setitem__(self, key, value):
         if key in self._incrementals:
             if key in self._dict:
-                self._dict[key] += ' %s' % (value,)
+                self._dict[key] += f' {value}'
             else:
                 self._dict[key] = value
         else:
             self._dict[key] = value
 
     for x in "getitem delitem len iter".split():
-        x = '__%s__' % x
-        locals()[x] = alias_method("_dict.%s" % x)
+        x = f'__{x}__'
+        locals()[x] = alias_method(f"_dict.{x}")
     s = "pop clear keys items values"
     for x in s.split():
-        locals()[x] = alias_method("_dict.%s" % x)
+        locals()[x] = alias_method(f"_dict.{x}")
     del x, s
 
 
@@ -196,7 +193,8 @@ class collapsed_restrict_to_data(object, metaclass=generic_equality):
                     if a.negate:
                         always.extend(data)
                         for atomlist in atom_d.values():
-                            atomlist.append((a, set([flag for flag in data if flag.startswith("-")])))
+                            atomlist.append(
+                                (a, set([flag for flag in data if flag.startswith("-")])))
                 elif isinstance(a, atom.atom):
                     atom_d.setdefault(a.key, []).append((a, data))
                 elif isinstance(a, boolean.AndRestriction):
@@ -210,12 +208,12 @@ class collapsed_restrict_to_data(object, metaclass=generic_equality):
                         repo.append((a, data))
                     else:
                         raise ValueError(
-                            "%r doesn't operate on package/category/repo: "
-                            "data %r" % (a, data))
+                            f"{a!r} doesn't operate on "
+                            f"package/category/repo: data {data!r}")
                 else:
                     raise ValueError(
-                        "%r is not an AlwaysBool, PackageRestriction, "
-                        "or atom: data %r" % (a, data))
+                        f"{a!r} is not an AlwaysBool, PackageRestriction, "
+                        f"or atom: data {data!r}")
 
         if always:
             s = set()
@@ -417,11 +415,11 @@ class ChunkedDataDict(object, metaclass=generic_equality):
         if not isinstance(cdict, ChunkedDataDict):
             raise TypeError(
                 "merge expects a ChunkedDataDict instance; "
-                "got type %s, %r" % (type(cdict), cdict,))
+                f"got type {type(cdict)}, {cdict!r}")
         if isinstance(cdict, PayloadDict) and not isinstance(self, PayloadDict):
             raise TypeError(
                 "merge expects a PayloadDataDict instance; "
-                "got type %s, %r" % (type(cdict), cdict,))
+                f"got type {type(cdict)}, {cdict!r}")
         # straight extensions for this, rather than update_from_stream.
         d = self._dict
         for key, values in cdict._dict.items():

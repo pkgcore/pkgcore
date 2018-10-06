@@ -507,7 +507,7 @@ class EbuildProcessor(object):
         self.write(red(
             "--------------------------- ACCESS VIOLATION SUMMARY "
             "---------------------------")+"\n")
-        self.write(red("LOG FILE = \"%s\"" % move_log)+"\n\n")
+        self.write(red(f"LOG FILE = \"{move_log}\"")+"\n\n")
         for x in violations:
             self.write(x+"\n")
         self.write(red(
@@ -517,7 +517,7 @@ class EbuildProcessor(object):
         try:
             os.remove(self.__sandbox_log)
         except (IOError, OSError) as e:
-            logger.error("exception caught when cleansing sandbox_log=%s", str(e))
+            logger.error(f"exception caught when cleansing sandbox_log={e}")
         return 1
 
     def clear_preloaded_eclasses(self):
@@ -658,14 +658,14 @@ class EbuildProcessor(object):
                 if key in self.dont_export_vars:
                     continue
                 if not key[0].isalpha():
-                    raise KeyError("%s: bash doesn't allow digits as the first char" % (key,))
+                    raise KeyError(f"{key}: bash doesn't allow digits as the first char")
                 if not isinstance(val, (str, list, tuple)):
-                    raise ValueError("_generate_env_str was fed a bad value; key=%s, val=%s"
-                                     % (key, val))
+                    raise ValueError(
+                        f"_generate_env_str was fed a bad value; key={key}, val={val}")
 
                 if isinstance(val, (list, tuple)):
                     data.append("%s=(%s)" % (key, ' '.join(
-                        '[%s]="%s"' % (i, value) for i, value in enumerate(val))))
+                        f'[{i}]="{value}"' for i, value in enumerate(val))))
                 elif val.isalnum():
                     data.append(f"{key}={val}")
                 elif "'" not in val:
@@ -723,7 +723,7 @@ class EbuildProcessor(object):
         # filter here, so that a screwy default doesn't result in resetting it
         # every time.
         data = ':'.join(filter(None, paths))
-        self.write("set_metadata_path %i\n%s" % (len(data), data), append_newline=False)
+        self.write(f"set_metadata_path {len(data)}\n{data}", append_newline=False)
         if self.expect("metadata_path_received", flush=True):
             self._metadata_paths = paths
 
@@ -735,7 +735,7 @@ class EbuildProcessor(object):
 
         env = expected_ebuild_env(package_inst, depends=True)
         data = self._generate_env_str(env)
-        self.write("%s %i\n%s" % (command, len(data), data), append_newline=False)
+        self.write(f"{command} {len(data)}\n{data}", append_newline=False)
 
         updates = None
         if self._eclass_caching:
@@ -745,7 +745,7 @@ class EbuildProcessor(object):
         val = self.generic_handler(additional_commands=commands)
 
         if not val:
-            logger.debug("returned val from %s was '%s'", command, str(val))
+            logger.debug(f"returned val from {command} was '{val}'")
             raise Exception(val)
 
         if updates:
@@ -859,7 +859,8 @@ class EbuildProcessor(object):
                 # split on first whitespace
                 cmd, _, args_str = line.partition(' ')
                 if not cmd:
-                    raise InternalError("Expected command; instead got nothing from %r" % (line,))
+                    raise InternalError(
+                        f"Expected command; instead got nothing from {line!r}")
                 if cmd in handlers:
                     args = []
                     if args_str:
@@ -867,7 +868,7 @@ class EbuildProcessor(object):
                     # TODO: handle exceptions raised from handlers better
                     handlers[cmd](self, *args)
                 else:
-                    logger.error("unhandled command %r, line %r", cmd, line)
+                    logger.error(f"unhandled command {cmd!r}, line {line!r}")
                     raise UnhandledCommand(line)
 
         except FinishedProcessing as fp:

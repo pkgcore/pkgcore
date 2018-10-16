@@ -72,6 +72,9 @@ eapi_optionals = mappings.ImmutableDict({
     # allowed use configuration states.
     "has_required_use": False,
 
+    # Controls whether USE dependency defaults are supported, see PMS.
+    "has_use_dep_defaults": False,
+
     # Controls whether AA env var is exported to ebuilds; this is a flattened
     # listing of each filename in SRC_URI.
     "has_AA": True,
@@ -403,6 +406,7 @@ eapi4 = EAPI.register(
         has_AA=False, has_KV=False,
         has_merge_type=True,
         has_required_use=True,
+        has_use_dep_defaults=True,
         trust_defined_phases_cache=True,
     )),
     ebd_env_options=eapi3.ebd_env_options,

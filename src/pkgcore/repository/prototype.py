@@ -243,7 +243,8 @@ class tree(object):
 
         if not isinstance(restrict, restriction.base):
             raise TypeError(
-                f"restrict must be a pkgcore.restriction.restrictions.base instance: got {restrict!r}")
+                f"restrict must be a pkgcore.restriction.restrictions.base instance: "
+                f"got {restrict!r}")
 
         if sorter is None:
             sorter = iter

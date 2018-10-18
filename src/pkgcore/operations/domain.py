@@ -23,6 +23,7 @@ demandload(
 
 
 class fake_lock(object):
+
     def __init__(self):
         pass
 
@@ -65,8 +66,7 @@ class base(object, metaclass=ForcedDepends):
     def _create_tempspace(self):
         location = self.domain.pm_tmpdir
         osutils.ensure_dirs(location)
-        self.tempspace = tempfile.mkdtemp(
-            dir=location, prefix="merge-engine-tmp")
+        self.tempspace = tempfile.mkdtemp(dir=location, prefix="merge-engine-tmp")
 
     def _add_triggers(self, engine):
         for trigger in self.triggers:
@@ -114,7 +114,7 @@ class base(object, metaclass=ForcedDepends):
 
     def __del__(self):
         if getattr(self, 'underway', False):
-            logger.warning("%s merge was underway, but wasn't completed", self)
+            logger.warning(f"{self} merge was underway, but wasn't completed")
             self.lock.release_write_lock()
         self.clean_tempdir()
 
@@ -132,7 +132,7 @@ class install(base):
         "repo_add": "create_repo_op",
         "create_repo_op": "transfer",
         "transfer": "preinst",
-        "preinst": "start"
+        "preinst": "start",
     }
 
     stage_hooks = ["merge_metadata", "postinst", "preinst", "transfer"]
@@ -145,12 +145,10 @@ class install(base):
 
     def create_op(self):
         self.format_op = getattr(
-            self.new_pkg, self.format_install_op_name)(
-                self.domain, self.observer)
+            self.new_pkg, self.format_install_op_name)(self.domain, self.observer)
 
     def create_repo_op(self):
-        self.repo_op = self.repo.operations.install(
-            self.new_pkg, self.observer)
+        self.repo_op = self.repo.operations.install(self.new_pkg, self.observer)
         return True
 
     def create_engine(self):
@@ -167,8 +165,7 @@ class install(base):
 
     def transfer(self):
         """execute the actual transfer"""
-        for merge_phase in (self.me.pre_merge, self.me.merge,
-                            self.me.post_merge):
+        for merge_phase in (self.me.pre_merge, self.me.merge, self.me.post_merge):
             merge_phase()
         self._update_new_pkg(self.me.get_merged_cset())
         return True
@@ -183,7 +180,7 @@ class install(base):
     def finish(self):
         ret = self.format_op.finalize()
         if not ret:
-            logger.warning("ignoring unexpected result from install finalize- %r", ret)
+            logger.warning(f"ignoring unexpected result from install finalize- {ret!r}")
         return base.finish(self)
 
 
@@ -200,7 +197,7 @@ class uninstall(base):
         "repo_remove": "remove",
         "remove": "prerm",
         "prerm": "create_repo_op",
-        "create_repo_op": "start"
+        "create_repo_op": "start",
     }
 
     stage_hooks = ["merge_metadata", "postrm", "prerm", "remove"]
@@ -217,9 +214,7 @@ class uninstall(base):
             self.format_uninstall_op_name)(self.domain, self.observer)
 
     def create_repo_op(self):
-        self.repo_op = self.repo.operations.uninstall(
-            self.old_pkg,
-            self.observer)
+        self.repo_op = self.repo.operations.uninstall(self.old_pkg, self.observer)
         return True
 
     def create_engine(self):
@@ -233,8 +228,7 @@ class uninstall(base):
 
     def remove(self):
         """execute any removal steps required"""
-        for unmerge_phase in (self.me.pre_unmerge, self.me.unmerge,
-                              self.me.post_unmerge):
+        for unmerge_phase in (self.me.pre_unmerge, self.me.unmerge, self.me.post_unmerge):
             unmerge_phase()
         return True
 
@@ -249,12 +243,12 @@ class uninstall(base):
         ret = self.format_op.finalize()
         self.format_op.cleanup(disable_observer=True)
         if not ret:
-            logger.warning("ignoring unexpected result from uninstall finalize- %r", ret)
+            logger.warning(f"ignoring unexpected result from uninstall finalize- {ret!r}")
         return base.finish(self)
 
     def __del__(self):
         if getattr(self, 'underway', False):
-            logger.warning("%s unmerge was underway, but wasn't completed", self.old_pkg)
+            logger.warning(f"{self.old_pkg} unmerge was underway, but wasn't completed")
             self.lock.release_write_lock()
 
 
@@ -275,12 +269,13 @@ class replace(install, uninstall):
         "repo_add": "create_repo_op",
         "create_repo_op": "transfer",
         "transfer": "preinst",
-        "preinst": "start"
+        "preinst": "start",
     }
 
     stage_hooks = [
         "merge_metadata", "unmerge_metadata", "postrm", "prerm", "postinst",
-        "preinst", "unmerge_metadata", "merge_metadata"]
+        "preinst", "unmerge_metadata", "merge_metadata",
+    ]
     engine_kls = staticmethod(MergeEngine.replace)
     format_replace_op_name = "_repo_replace_op"
 
@@ -290,12 +285,13 @@ class replace(install, uninstall):
         base.__init__(self, domain, repo, observer, offset)
 
     def create_op(self):
-        self.format_op = getattr(
-            self.new_pkg, self.format_replace_op_name)(self.domain, self.old_pkg, self.observer)
+        self.format_op = getattr(self.new_pkg, self.format_replace_op_name)(
+            self.domain, self.old_pkg, self.observer)
         return True
 
     def create_repo_op(self):
-        self.repo_op = self.repo.operations.replace(self.old_pkg, self.new_pkg, self.observer)
+        self.repo_op = self.repo.operations.replace(
+            self.old_pkg, self.new_pkg, self.observer)
         return True
 
     def create_engine(self):
@@ -306,11 +302,12 @@ class replace(install, uninstall):
     def finish(self):
         ret = self.format_op.finalize()
         if not ret:
-            logger.warning("ignoring unexpected result from replace finalize- %r", ret)
+            logger.warning(f"ignoring unexpected result from replace finalize- {ret!r}")
         return base.finish(self)
 
     def __del__(self):
         if getattr(self, 'underway', False):
-            logger.warning("%s -> %s replacement was underway, but "
-                           "wasn't completed", self.old_pkg, self.new_pkg)
+            logger.warning(
+                f"{self.old_pkg} -> {self.new_pkg} replacement was underway, but "
+                "wasn't completed")
             self.lock.release_write_lock()

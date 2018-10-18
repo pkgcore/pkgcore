@@ -53,6 +53,6 @@ class ParseError(errors.InvalidDependency):
             str_msg = f': {self.msg}'
 
         if self.token is not None:
-            return f"{self.dep_str} is unparseable{str_msg}\nflagged token- {self.token}"
+            return f"{self.dep_str!r} is unparseable{str_msg}\nflagged token- {self.token}"
         else:
-            return f"{self.dep_str} is unparseable{str_msg}"
+            return f"{self.dep_str!r} is unparseable{str_msg}"

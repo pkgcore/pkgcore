@@ -73,7 +73,7 @@ class ebd(object):
         if not hasattr(self, "observer"):
             self.observer = observer
         if not self.eapi.is_supported:
-            raise TypeError(f"package {pkg} uses an unsupported eapi: {self.eapi}")
+            raise TypeError(f"package {pkg} uses unsupported EAPI: {str(self.eapi)!r}")
 
         if initial_env is not None:
             # copy.

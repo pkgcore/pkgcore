@@ -49,15 +49,18 @@ def generate_depset(kls, key, non_package_type, self, **kwds):
             **kwds)
     eapi = self.eapi
     if not eapi.is_supported:
-        raise metadata_errors.MetadataException(self, "eapi", "unsupported EAPI: %s" % (eapi,))
+        raise metadata_errors.MetadataException(
+            self, "eapi", f"unsupported EAPI: {str(eapi)!r}")
     kwds['element_func'] = eapi.atom_kls
     kwds['transitive_use_atoms'] = eapi.options.transitive_use_atoms
     return conditionals.DepSet.parse(self.data.pop(key, ""), kls, **kwds)
+
 
 def _mk_required_use_node(data):
     if data[0] == '!':
         return values.ContainmentMatch2(data[1:], negate=True)
     return values.ContainmentMatch2(data)
+
 
 def generate_required_use(self):
     data = self.data.pop("REQUIRED_USE", "")
@@ -82,6 +85,7 @@ def generate_required_use(self):
         data,
         values.ContainmentMatch2, operators=operators,
         element_func=_mk_required_use_node)
+
 
 def generate_fetchables(self, allow_missing_checksums=False,
                         ignore_unknown_mirrors=False, skip_default_mirrors=False):
@@ -108,6 +112,7 @@ def generate_fetchables(self, allow_missing_checksums=False,
         v.uri.finalize()
     return d
 
+
 def generate_distfiles(self):
     def _extract_distfile_from_uri(uri, filename=None):
         if filename is not None:
@@ -117,6 +122,7 @@ def generate_distfiles(self):
         self.data.get("SRC_URI", ''), str, operators={},
         element_func=partial(_extract_distfile_from_uri),
         allow_src_uri_file_renames=self.eapi.options.src_uri_renames)
+
 
 # utility func.
 def create_fetchable_from_uri(pkg, chksums, ignore_missing_chksums, ignore_unknown_mirrors,
@@ -160,6 +166,7 @@ def create_fetchable_from_uri(pkg, chksums, ignore_missing_chksums, ignore_unkno
         common_files[filename] = fetch.fetchable(filename, uris, chksums.get(filename))
     return common_files[filename]
 
+
 def get_parsed_eapi(self):
     ebuild = self.ebuild
     eapi = None
@@ -176,11 +183,13 @@ def get_parsed_eapi(self):
         break
     return get_eapi(eapi.group(2) if eapi is not None else '0', True)
 
+
 def get_slot(self):
     o = self.data.pop("SLOT", None)
     if not o:
         raise ValueError(self, "SLOT cannot be unset or empty")
     return o.strip()
+
 
 def get_subslot(self):
     slot, _sep, subslot = self.fullslot.partition('/')
@@ -188,10 +197,12 @@ def get_subslot(self):
         return slot
     return subslot
 
+
 def rewrite_restrict(restrict):
     if restrict[0:2] == 'no':
         return restrict[2:]
     return restrict
+
 
 def get_cbuild_depends(self):
     if "BDEPEND" in self.eapi.metadata_keys:
@@ -320,7 +331,7 @@ class package(base):
     _get_attr = dict(base._get_attr)
 
     def __init__(self, shared_pkg_data, *args, **kwargs):
-        base.__init__(self, *args, **kwargs)
+        super().__init__(*args, **kwargs)
         object.__setattr__(self, "_shared_pkg_data", shared_pkg_data)
 
     maintainers = klass.alias_attr("_shared_pkg_data.metadata_xml.maintainers")
@@ -343,6 +354,7 @@ class package(base):
 
 
 class package_factory(metadata.factory):
+
     child_class = package
 
     # For the plugin system.
@@ -408,8 +420,8 @@ class package_factory(metadata.factory):
         eapi = get_eapi(mydata["EAPI"])
         if parsed_eapi != eapi:
             raise metadata_errors.MetadataException(
-                pkg, 'eapi', "parsed EAPI '%s' doesn't match sourced EAPI '%s'"
-                % (parsed_eapi, eapi))
+                pkg, 'eapi',
+                f"parsed EAPI {parsed_eapi!r} doesn't match sourced EAPI {eapi!r}")
         wipes = set(mydata)
 
         wipes.difference_update(eapi.metadata_keys)

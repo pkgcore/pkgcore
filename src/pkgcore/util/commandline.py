@@ -224,12 +224,13 @@ class StoreConfigObject(argparse._StoreAction):
         obj = config.get_default(config_type)
         if obj is None:
             known_objs = sorted(getattr(config, config_type).keys())
-            msg = "config error: no default object of type %r found.  " % (config_type,)
+            msg = f"config error: no default object of type {config_type!r} found.  "
             if not option_string:
                 msg += "Please fix your configuration."
             else:
-                msg += "Please either fix your configuration, or set the %s " \
-                    "via the %s option." % (config_type, option_string)
+                msg += (
+                    "Please either fix your configuration, or set the "
+                    f"{config_type} via the {option_string} option.")
             if known_objs:
                 msg += f"Known {config_type}s: {', '.join(map(repr, known_objs))}"
             raise NoDefaultConfigError(None, msg)

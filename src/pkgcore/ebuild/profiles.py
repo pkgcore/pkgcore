@@ -397,7 +397,7 @@ class ProfileNode(object, metaclass=caching.WeakInstMeta):
             raise ProfileError(self.path, 'eapi', "multiple lines detected")
         eapi = get_eapi(data[0])
         if not eapi.is_supported:
-            raise ProfileError(self.path, 'eapi', f'unsupported eapi: {data[0]}')
+            raise ProfileError(self.path, 'eapi', f'unsupported EAPI: {str(eapi)!r}')
         return eapi
 
     eapi_atom = klass.alias_attr("eapi.atom_kls")

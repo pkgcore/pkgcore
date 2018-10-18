@@ -25,11 +25,11 @@ demandload(
 def update_mtime(path, timestamp=None):
     if timestamp is None:
         timestamp = time.time()
-    logger.debug("updating vdb timestamp for %r", path)
+    logger.debug(f"updating vdb timestamp for {path!r}")
     try:
         os.utime(path, (timestamp, timestamp))
     except EnvironmentError as e:
-        logger.error("failed updated vdb timestamp for %r: %s", path, e)
+        logger.error(f"failed updated vdb timestamp for {path!r}: {e}")
 
 
 class install(repo_ops.install):

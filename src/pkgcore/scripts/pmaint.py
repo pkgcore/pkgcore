@@ -145,9 +145,8 @@ def copy_main(options, out, err):
                 except OSError as oe:
                     if oe.errno != errno.ENOENT:
                         err.write(
-                            "failed accessing fs obj %r; %r\n"
-                            "aborting this copy" %
-                            (fsobj, oe))
+                            f"failed accessing fs obj {fsobj!r}; {oe}\n"
+                            "aborting this copy")
                         failures = True
                         new_contents = None
                         break
@@ -186,19 +185,19 @@ def update_use_local_desc(repo, out, err):
             # Please add your descriptions to your package's metadata.xml ONLY.
             # * generated automatically using pmaint *\n\n''').encode('utf8'))
         res = {}
-        for p in repo:
+        for pkg in repo:
             try:
-                for flag, desc in p.local_use.items():
-                    res[(p.key, flag)] = desc
+                for flag, desc in pkg.local_use.items():
+                    res[(pkg.key, flag)] = desc
             except IGNORED_EXCEPTIONS as e:
                 if isinstance(e, KeyboardInterrupt):
                     return
                 raise
             except Exception as e:
-                err.write(f"caught exception '{e}' while processing '{p}'")
+                err.write(f"caught exception {e!r} while processing {pkg}")
                 ret = os.EX_DATAERR
         for k, v in sorted(res.items()):
-            f.write(('%s - %s\n' % (':'.join(k), v)).encode('utf8'))
+            f.write(f"':'.join(k) - {v}\n".encode('utf8'))
         f.close()
     except IOError as e:
         err.write(f"Unable to update use.local.desc file {use_local_desc!r}: {e.strerror}")
@@ -218,19 +217,20 @@ def update_pkg_desc_index(repo, out, err):
     try:
         f = AtomicWriteFile(pkg_desc_index)
         res = defaultdict(dict)
-        for p in repo:
+        for pkg in repo:
             try:
-                res[p.key][p] = p.description
+                res[pkg.key][pkg] = pkg.description
             except IGNORED_EXCEPTIONS as e:
                 if isinstance(e, KeyboardInterrupt):
                     return
                 raise
             except Exception as e:
-                err.write("caught exception '%s' while processing '%s'", (e, p))
+                err.write(f"caught exception {e!r} while processing {pkg}")
                 ret = os.EX_DATAERR
         for key in sorted(res):
             pkgs = sorted(res[key])
-            f.write('%s %s: %s\n' % (key, ' '.join(p.fullver for p in pkgs), pkgs[-1].description))
+            versions = ' '.join(p.fullver for p in pkgs)
+            f.write(f"{key} {versions}: {pkgs[-1].description}\n")
         f.close()
     except IOError as e:
         err.write(f"Unable to update pkg_desc_index file {pkg_desc_index!r}: {e.strerror}")
@@ -331,8 +331,8 @@ def perl_rebuild_main(options, out, err):
     path = pjoin(options.domain.root, "usr/lib/perl5", options.new_version)
     if not os.path.exists(path):
         perl_rebuild.error(
-            "version %s doesn't seem to be installed; can't find it at %r" %
-            (options.new_version, path))
+            f"version {options.new_version} doesn't seem to be installed; "
+            f"can't find it at {path!r}")
 
     base = pjoin(options.domain.root, "/usr/lib/perl5")
     potential_perl_versions = [

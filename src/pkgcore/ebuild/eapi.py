@@ -6,7 +6,7 @@ import re
 import sys
 
 from snakeoil import mappings, weakrefs, klass
-from snakeoil.demandload import demandload
+from snakeoil.demandload import demandload, demand_compile_regexp
 
 demandload(
     "functools:partial",
@@ -14,6 +14,11 @@ demandload(
     "pkgcore.ebuild:atom",
     "pkgcore.log:logger",
 )
+
+demand_compile_regexp(
+    '_valid_EAPI_regex', r"^[A-Za-z0-9_][A-Za-z0-9+_.-]*$"
+)
+
 
 eapi_optionals = mappings.ImmutableDict({
     # Controls what version of bash compatibility to force; see PMS.
@@ -250,6 +255,9 @@ class EAPI(object, metaclass=klass.immutable_instance):
 
 def get_eapi(magic, suppress_unsupported=True):
     """Return EAPI object for a given identifier."""
+    if _valid_EAPI_regex.match(magic) is None:
+        eapi_str = f" {magic!r}" if magic else ''
+        raise ValueError(f'invalid EAPI{eapi_str}')
     eapi = EAPI.known_eapis.get(magic)
     if eapi is None and suppress_unsupported:
         eapi = EAPI.unknown_eapis.get(magic)

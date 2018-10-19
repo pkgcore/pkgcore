@@ -179,7 +179,7 @@ class TestBase(object):
     def test_eapi(self):
         assert str(self.get_pkg({'EAPI': '0'}).eapi) == '0'
         assert self.get_pkg({'EAPI': '0'}).eapi.is_supported
-        assert not self.get_pkg({'EAPI': '-1'}).eapi.is_supported
+        assert not self.get_pkg({'EAPI': '0.1'}).eapi.is_supported
         assert self.get_pkg({'EAPI': 'foon'}, suppress_unsupported=False).eapi is None
         with pytest.raises(errors.MetadataException):
             getattr(self.get_pkg({'EAPI': 0, 'DEPEND': "d/b:0"}), 'depends')
@@ -195,10 +195,10 @@ class TestBase(object):
             getattr(pkg, 'depends')
 
         # unsupported EAPI
-        pkg = self.get_pkg({'EAPI': '-1', 'DEPEND': 'a/b[x=]'})
+        pkg = self.get_pkg({'EAPI': '0.1', 'DEPEND': 'a/b[x=]'})
         with pytest.raises(errors.MetadataException) as cm:
             getattr(pkg, 'depends')
-        assert 'unsupported EAPI: -1' in cm.value.error
+        assert "unsupported EAPI: '0.1'" == cm.value.error
 
     def test_get_parsed_eapi(self, tmpdir):
         def _path(self, cpv, eapi_str):

@@ -35,7 +35,7 @@ demandload(
 )
 
 demand_compile_regexp(
-    '_parse_EAPI_RE', r"^EAPI=(['\"]?)([A-Za-z0-9+_.-]*)\1[\t ]*(?:#.*)?"
+    '_parse_EAPI_regex', r"^EAPI=(['\"]?)([A-Za-z0-9+_.-]*)\1[\t ]*(?:#.*)?"
 )
 
 
@@ -179,9 +179,9 @@ def get_parsed_eapi(self):
     for line in i:
         if line[0:1] in ('', '#'):
             continue
-        eapi = _parse_EAPI_RE.match(line)
+        eapi = _parse_EAPI_regex.match(line)
         break
-    return get_eapi(eapi.group(2) if eapi is not None else '0', True)
+    return get_eapi(eapi.group(2) if eapi is not None else '0')
 
 
 def get_slot(self):

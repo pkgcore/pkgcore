@@ -16,6 +16,7 @@ from snakeoil.sequences import iflatten_instance
 
 from pkgcore.ebuild.atom import atom
 from pkgcore.operations import repo
+from pkgcore.package.errors import MetadataException
 from pkgcore.restrictions import values, boolean, restriction, packages
 from pkgcore.restrictions.util import collect_package_restrictions
 
@@ -152,6 +153,7 @@ class tree(object):
             self._get_categories, self._get_categories)
         self.packages = PackageMapping(self.categories, self._get_packages)
         self.versions = VersionMapping(self.packages, self._get_versions)
+        self._masked = {}
 
         if self.frozen_settable:
             self.frozen = frozen
@@ -269,6 +271,16 @@ class tree(object):
         for cp in sorter(candidates):
             for pkg in sorter(pkls(cp[0], cp[1], ver)
                               for ver in self.versions.get(cp, ())):
+                # check pkgs for unsupported/invalid EAPIs
+                try:
+                    if not pkg.is_supported:
+                        self._masked[pkg.versioned_atom] = (
+                            'eapi', f"EAPI {str(pkg.eapi)!r} is not supported")
+                        continue
+                except MetadataException as e:
+                    self._masked[e.pkg.versioned_atom] = (e.attr, e.error)
+                    continue
+
                 yield pkg
 
     def _internal_match(self, candidates, match_func, sorter,

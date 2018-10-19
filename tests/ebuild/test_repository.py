@@ -16,7 +16,7 @@ from pkgcore.ebuild.atom import atom
 from pkgcore.repository import errors
 
 
-class UnconfiguredTreeTest(TempDirMixin):
+class TestUnconfiguredTree(TempDirMixin):
 
     def mk_tree(self, path, *args, **kwds):
         eclasses = kwds.pop('eclass_cache', None)
@@ -30,6 +30,11 @@ class UnconfiguredTreeTest(TempDirMixin):
         TempDirMixin.setUp(self)
         self.pdir = pjoin(self.dir, 'profiles')
         ensure_dirs(self.pdir)
+
+        # silence missing masters warnings
+        ensure_dirs(pjoin(self.dir, 'metadata'))
+        with open(pjoin(self.dir, 'metadata', 'layout.conf'), 'w') as f:
+            f.write('masters =\n')
 
     def test_basics(self):
         repo = self.mk_tree(self.dir)
@@ -111,13 +116,15 @@ class UnconfiguredTreeTest(TempDirMixin):
 
         for d in (repo_dir, sym_repo_dir):
             repo = self.mk_tree(d)
-            for path in (self.dir,  # path not in repo
-                        pjoin(repo.location, 'a'),  # nonexistent category dir
-                        pjoin(repo.location, 'profiles'),  # non-category dir
-                        pjoin(repo.location, 'skel.ebuild'),  # not in the correct cat/PN dir layout
-                        pjoin(repo.location, 'cat', 'a'),  # nonexistent package dir
-                        pjoin(repo.location, 'cat', 'foo', 'foo-0.ebuild'),  # nonexistent ebuild file
-                        pjoin(repo.location, 'cat', 'foo', 'Manifest')):  # non-ebuild file
+            for path in (
+                    self.dir,  # path not in repo
+                    pjoin(repo.location, 'a'),  # nonexistent category dir
+                    pjoin(repo.location, 'profiles'),  # non-category dir
+                    pjoin(repo.location, 'skel.ebuild'),  # not in the correct cat/PN dir layout
+                    pjoin(repo.location, 'cat', 'a'),  # nonexistent package dir
+                    pjoin(repo.location, 'cat', 'foo', 'foo-0.ebuild'),  # nonexistent ebuild file
+                    pjoin(repo.location, 'cat', 'foo', 'Manifest'),  # non-ebuild file
+                    ):
                 self.assertRaises(ValueError, repo.path_restrict, path)
 
             # repo dir
@@ -197,7 +204,7 @@ class UnconfiguredTreeTest(TempDirMixin):
             sorted(repo.default_visibility_limiters))
 
 
-class SlavedTreeTest(UnconfiguredTreeTest):
+class TestSlavedTree(TestUnconfiguredTree):
 
     def mk_tree(self, path, *args, **kwds):
         if path != self.dir:
@@ -225,24 +232,25 @@ class SlavedTreeTest(UnconfiguredTreeTest):
         ensure_dirs(self.dir_master)
         ensure_dirs(self.dir_slave)
 
-        self.dir = self.dir_slave
+        ensure_dirs(pjoin(self.dir_master, 'metadata'))
+        ensure_dirs(pjoin(self.dir_slave, 'metadata'))
+        # silence missing masters warnings
+        with open(pjoin(self.dir_master, 'metadata', 'layout.conf'), 'w') as f:
+            f.write('masters =\n')
+        with open(pjoin(self.dir_slave, 'metadata', 'layout.conf'), 'w') as f:
+            f.write('masters = master\n')
 
         self.master_pdir = pjoin(self.dir_master, 'profiles')
         self.pdir = self.slave_pdir = pjoin(self.dir_slave, 'profiles')
         ensure_dirs(self.master_pdir)
         ensure_dirs(self.slave_pdir)
-
+        # silence missing repo name warnings
         with open(pjoin(self.master_pdir, 'repo_name'), 'w') as f:
             f.write('master\n')
         with open(pjoin(self.slave_pdir, 'repo_name'), 'w') as f:
             f.write('slave\n')
 
-        ensure_dirs(pjoin(self.dir_master, 'metadata'))
-        ensure_dirs(pjoin(self.dir_slave, 'metadata'))
-        with open(pjoin(self.dir_master, 'metadata', 'layout.conf'), 'w') as f:
-            f.write('masters =\n')
-        with open(pjoin(self.dir_slave, 'metadata', 'layout.conf'), 'w') as f:
-            f.write('masters = master\n')
+        self.dir = self.dir_slave
 
     def tearDown(self):
         self.dir = self.dir_orig

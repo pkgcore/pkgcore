@@ -3,35 +3,41 @@
 
 from pkgcore.pkgsets import installed
 from pkgcore.repository.util import SimpleTree
-from snakeoil.test import TestCase
 
 
 class FakePkg(object):
 
     package_is_real = True
+    is_supported = True
 
-    def __init__(self, *key):
-        self.key = key
+    def __init__(self, cat, pn, ver):
+        self.cat = cat
+        self.pn = pn
+        self.ver = ver
 
     @property
     def slotted_atom(self):
-        return "%s/%s" % self.key[:2]
+        return f"{self.cat}/{self.pn}"
 
     @property
     def versioned_atom(self):
-        return '%s/%s-%s' % self.key
+        return f"{self.cat}/{self.pn}-{self.ver}"
 
 
-class TestInstalled(TestCase):
+class TestInstalled(object):
 
     def test_iter(self):
-        fake_vdb = SimpleTree({"dev-util": {"diffball":["1.0"],
-            "bsdiff":["1.2", "1.3"]}}, pkg_klass=FakePkg)
+        fake_vdb = SimpleTree(
+            {"dev-util": {
+                "diffball": ["1.0"],
+                "bsdiff": ["1.2", "1.3"],
+                }
+            }, pkg_klass=FakePkg)
+
         ipkgset = installed.Installed([fake_vdb])
-        self.assertEqual(sorted(["dev-util/diffball",
-            "dev-util/bsdiff", "dev-util/bsdiff"]),
-            sorted(ipkgset))
+        pkgs = sorted(["dev-util/diffball", "dev-util/bsdiff", "dev-util/bsdiff"])
+        assert pkgs == sorted(ipkgset)
+
         vpkgset = installed.VersionedInstalled([fake_vdb])
-        self.assertEqual(sorted(["dev-util/diffball-1.0",
-            "dev-util/bsdiff-1.2", "dev-util/bsdiff-1.3"]),
-            sorted(vpkgset))
+        cpvs = sorted(["dev-util/diffball-1.0", "dev-util/bsdiff-1.2", "dev-util/bsdiff-1.3"])
+        assert cpvs == sorted(vpkgset)

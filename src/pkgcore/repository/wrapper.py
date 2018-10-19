@@ -35,8 +35,7 @@ class tree(prototype.tree):
         self.raw_repo = repo
 
     def itermatch(self, *args, **kwargs):
-        pkgs = (x for x in self.raw_repo.itermatch(*args, **kwargs) if x.is_supported)
-        return map(self.package_class, pkgs)
+        return map(self.package_class, self.raw_repo.itermatch(*args, **kwargs))
 
     __getattr__ = GetAttrProxy("raw_repo")
     __dir__ = DirProxy("raw_repo")

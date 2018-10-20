@@ -194,12 +194,6 @@ class TestBase(object):
         with pytest.raises(errors.MetadataException):
             getattr(pkg, 'depends')
 
-        # unsupported EAPI
-        pkg = self.get_pkg({'EAPI': '0.1', 'DEPEND': 'a/b[x=]'})
-        with pytest.raises(errors.MetadataException) as cm:
-            getattr(pkg, 'depends')
-        assert "unsupported EAPI: '0.1'" == cm.value.error
-
     def test_get_parsed_eapi(self, tmpdir):
         def _path(self, cpv, eapi_str):
             ebuild = pjoin(str(tmpdir), "temp-0.ebuild")

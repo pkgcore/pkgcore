@@ -55,17 +55,17 @@ class Test_native_atom(test.TestRestriction):
 
     def test_blockers(self):
         self.assertRaises(errors.MalformedAtom, self.kls,
-            "!!dev-util/diffball", eapi=0)
+            "!!dev-util/diffball", eapi='0')
         self.assertRaises(errors.MalformedAtom, self.kls,
-            "!!dev-util/diffball", eapi=1)
+            "!!dev-util/diffball", eapi='1')
         self.assertRaises(errors.MalformedAtom, self.kls,
-            "!!!dev-util/diffball", eapi=2)
+            "!!!dev-util/diffball", eapi='2')
         for x in range(0, 2):
-            obj = self.kls("!dev-util/diffball", eapi=x)
+            obj = self.kls("!dev-util/diffball", eapi=str(x))
             self.assertTrue(obj.blocks)
             self.assertTrue(obj.blocks_temp_ignorable)
             self.assertFalse(obj.blocks_strongly)
-        obj = self.kls("!!dev-util/diffball", eapi=2)
+        obj = self.kls("!!dev-util/diffball", eapi='2')
         self.assertTrue(obj.blocks)
         self.assertFalse(obj.blocks_temp_ignorable)
         self.assertTrue(obj.blocks_strongly)
@@ -230,7 +230,7 @@ class Test_native_atom(test.TestRestriction):
         self.assertMatch(self.kls(f"{astr}:1"), c)
         self.assertNotMatch(self.kls(f"{astr}:2"), c)
         # note the above isn't compliant with eapi2/3; thus this test
-        self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/foo:0", eapi=0)
+        self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/foo:0", eapi='0')
 
         # shouldn't puke, but has, thus checking"
         self.kls("sys-libs/db:4.4")
@@ -245,26 +245,26 @@ class Test_native_atom(test.TestRestriction):
         self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/foo:1@2")
 
     def test_slot_operators_and_subslots(self):
-        self.assertRaises(errors.MalformedAtom, self.kls, "sys-libs/db:*", eapi=4)
-        self.kls("sys-libs/db:*", eapi=5)
-        self.assertRaises(errors.MalformedAtom, self.kls, "sys-libs/db:=", eapi=4)
-        self.kls("sys-libs/db:=", eapi=5)
-        self.assertRaises(errors.MalformedAtom, self.kls, "sys-libs/db:==", eapi=5)
-        self.assertRaises(errors.MalformedAtom, self.kls, "sys-libs/db:1=", eapi=4)
-        self.assertRaises(errors.MalformedAtom, self.kls, "sys-libs/db:2/3.0=", eapi=4)
-        self.assertRaises(errors.MalformedAtom, self.kls, "sys-libs/db:2/3.0", eapi=1)
-        self.assertRaises(errors.MalformedAtom, self.kls, "sys-libs/db:/=", eapi=5)
-        self.assertRaises(errors.MalformedAtom, self.kls, "sys-libs/db:/1=", eapi=5)
-        self.assertRaises(errors.MalformedAtom, self.kls, "sys-libs/db:1/=", eapi=5)
-        self.assertRaises(errors.MalformedAtom, self.kls, "sys-libs/db:*1/=", eapi=5)
+        self.assertRaises(errors.MalformedAtom, self.kls, "sys-libs/db:*", eapi='4')
+        self.kls("sys-libs/db:*", eapi='5')
+        self.assertRaises(errors.MalformedAtom, self.kls, "sys-libs/db:=", eapi='4')
+        self.kls("sys-libs/db:=", eapi='5')
+        self.assertRaises(errors.MalformedAtom, self.kls, "sys-libs/db:==", eapi='5')
+        self.assertRaises(errors.MalformedAtom, self.kls, "sys-libs/db:1=", eapi='4')
+        self.assertRaises(errors.MalformedAtom, self.kls, "sys-libs/db:2/3.0=", eapi='4')
+        self.assertRaises(errors.MalformedAtom, self.kls, "sys-libs/db:2/3.0", eapi='1')
+        self.assertRaises(errors.MalformedAtom, self.kls, "sys-libs/db:/=", eapi='5')
+        self.assertRaises(errors.MalformedAtom, self.kls, "sys-libs/db:/1=", eapi='5')
+        self.assertRaises(errors.MalformedAtom, self.kls, "sys-libs/db:1/=", eapi='5')
+        self.assertRaises(errors.MalformedAtom, self.kls, "sys-libs/db:*1/=", eapi='5')
 
         for subslot in ("/1.0", ""):
-            self.assertRaises(errors.MalformedAtom, self.kls, f"sys-libs/db:*4{subslot}", eapi=5)
-            self.assertRaises(errors.MalformedAtom, self.kls, f"sys-libs/db:4{subslot}*", eapi=5)
-            self.assertRaises(errors.MalformedAtom, self.kls, f"sys-libs/db:=4{subslot}", eapi=5)
-            self.kls(f"sys-libs/db:4{subslot}=", eapi=5)
-            self.kls(f"sys-libs/db:3.2{subslot}=", eapi=5)
-            self.assertRaises(errors.MalformedAtom, self.kls, f"sys-libs/db:4{subslot}==", eapi=5)
+            self.assertRaises(errors.MalformedAtom, self.kls, f"sys-libs/db:*4{subslot}", eapi='5')
+            self.assertRaises(errors.MalformedAtom, self.kls, f"sys-libs/db:4{subslot}*", eapi='5')
+            self.assertRaises(errors.MalformedAtom, self.kls, f"sys-libs/db:=4{subslot}", eapi='5')
+            self.kls(f"sys-libs/db:4{subslot}=", eapi='5')
+            self.kls(f"sys-libs/db:3.2{subslot}=", eapi='5')
+            self.assertRaises(errors.MalformedAtom, self.kls, f"sys-libs/db:4{subslot}==", eapi='5')
 
         def check_it(text, slot, subslot, operator):
             obj = self.kls(f"sys-libs/db{text}")
@@ -345,43 +345,43 @@ class Test_native_atom(test.TestRestriction):
         for postfix in (':1', ':1,2', ':asdf', '::asdf', '::asdf-x86', '[x]',
                         '[x,y]', ':1[x,y]', '[x,y]:1', ':1::repo'):
             self.assertRaisesMsg(f"dev-util/foon{postfix} must be invalid in EAPI 0",
-                errors.MalformedAtom, self.kls, f"dev-util/foon{postfix}", eapi=0)
+                errors.MalformedAtom, self.kls, f"dev-util/foon{postfix}", eapi='0')
 
     def test_eapi1(self):
         for postfix in (':1,2', '::asdf', '::asdf-x86', '[x]',
                         '[x,y]', ':1[x,y]', '[x,y]:1', ':1:repo'):
             self.assertRaisesMsg(f"dev-util/foon{postfix} must be invalid in EAPI 1",
                 errors.MalformedAtom, self.kls,
-                f"dev-util/foon{postfix}", eapi=1)
-        self.kls("dev-util/foon:1", eapi=1)
-        self.kls("dev-util/foon:12", eapi=1)
+                f"dev-util/foon{postfix}", eapi='1')
+        self.kls("dev-util/foon:1", eapi='1')
+        self.kls("dev-util/foon:12", eapi='1')
         self.assertRaisesMsg("dev-util/foon[dar] must be invalid in EAPI 1",
             errors.MalformedAtom,
-            self.kls, "dev-util/foon[dar]", eapi=1)
+            self.kls, "dev-util/foon[dar]", eapi='1')
 
     def test_eapi2(self):
-        self.check_use(2)
+        self.check_use('2')
 
     def test_eapi3(self):
-        self.check_use(3)
-        self.kls("dev-util/foon:1", eapi=3)
-        self.kls("dev-util/foon:2", eapi=3)
-        self.kls("!dev-util/foon:1", eapi=3)
-        self.kls("dev-util/foon:1[x]", eapi=3)
-        self.kls("dev-util/foon:1[x?]", eapi=3)
-        self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/foon:1::dar", eapi=3)
+        self.check_use('3')
+        self.kls("dev-util/foon:1", eapi='3')
+        self.kls("dev-util/foon:2", eapi='3')
+        self.kls("!dev-util/foon:1", eapi='3')
+        self.kls("dev-util/foon:1[x]", eapi='3')
+        self.kls("dev-util/foon:1[x?]", eapi='3')
+        self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/foon:1::dar", eapi='3')
 
     def test_eapi4(self):
-        self.check_use(4, defaults=True)
+        self.check_use('4', defaults=True)
 
     def test_eapi5(self):
-        self.check_use(5, defaults=True)
+        self.check_use('5', defaults=True)
 
     def test_eapi6(self):
-        self.check_use(6, defaults=True)
+        self.check_use('6', defaults=True)
 
     def test_eapi7(self):
-        self.check_use(7, defaults=True)
+        self.check_use('7', defaults=True)
 
     def test_repo_id(self):
         astr = "dev-util/bsdiff"
@@ -396,7 +396,7 @@ class Test_native_atom(test.TestRestriction):
         self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/foon:::")
         for x in range(0, 3):
             self.assertRaises(errors.MalformedAtom, self.kls,
-                "dev-util/foon::gentoo-x86", eapi=x)
+                "dev-util/foon::gentoo-x86", eapi=str(x))
 
     def test_invalid_atom(self):
         self.assertRaises(errors.MalformedAtom, self.kls, '~dev-util/spork')
@@ -526,7 +526,7 @@ class Test_native_atom(test.TestRestriction):
                 self.kls(f'=d/b-{lesser}'),
                 msg=f"!: d/b-{greater} > d/b-{lesser}")
 
-        self.assertTrue(self.kls("!!=d/b-1", eapi=2) > self.kls("!=d/b-1"))
+        self.assertTrue(self.kls("!!=d/b-1", eapi='2') > self.kls("!=d/b-1"))
         self.assertTrue(self.kls("!=d/b-1") < self.kls("!!=d/b-1"))
         self.assertEqual(self.kls("!=d/b-1"), self.kls("!=d/b-1"))
 

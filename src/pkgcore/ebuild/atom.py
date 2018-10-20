@@ -44,7 +44,7 @@ valid_repo_chars = frozenset(valid_repo_chars)
 valid_slot_chars = frozenset(valid_slot_chars)
 
 
-def native_init(self, atom, negate_vers=False, eapi=-1):
+def native_init(self, atom, negate_vers=False, eapi='-1'):
     """
     :param atom: string, see gentoo ebuild atom syntax
     :keyword negate_vers: boolean controlling whether the version should be
@@ -82,7 +82,7 @@ def native_init(self, atom, negate_vers=False, eapi=-1):
                 elif x[0] == '-':
                     x = x[1:]
 
-                if x[-1] == ')' and eapi not in (0, 1, 2, 3):
+                if x[-1] == ')' and eapi not in ('0', '1', '2', '3'):
                     # use defaults.
                     if x[-3:] in ("(+)", "(-)"):
                         x = x[:-3]
@@ -135,7 +135,7 @@ def native_init(self, atom, negate_vers=False, eapi=-1):
             slot = None
         else:
             slots = (slot,)
-            if eapi not in (0, 1, 2, 3, 4):
+            if eapi not in ('0', '1', '2', '3', '4'):
                 if slot[0:1] in ("*", "="):
                     if len(slot) > 1:
                         raise errors.MalformedAtom(
@@ -148,7 +148,7 @@ def native_init(self, atom, negate_vers=False, eapi=-1):
                         slot_operator = '='
                         slot = slot[:-1]
                     slots = slot.split('/', 1)
-            elif eapi == 0:
+            elif eapi == '0':
                 raise errors.MalformedAtom(
                     orig_atom,
                     "slot dependencies aren't allowed in EAPI 0")
@@ -187,7 +187,7 @@ def native_init(self, atom, negate_vers=False, eapi=-1):
         atom = atom[1:]
         # hackish/slow, but lstrip doesn't take a 'prune this many' arg
         # open to alternatives
-        if eapi not in (0, 1) and atom.startswith("!"):
+        if eapi not in ('0', '1') and atom.startswith("!"):
             atom = atom[1:]
             sf(self, "blocks_strongly", True)
         else:
@@ -216,18 +216,18 @@ def native_init(self, atom, negate_vers=False, eapi=-1):
         sf(self, 'op', '')
     sf(self, 'cpvstr', atom)
 
-    if eapi == 0:
+    if eapi == '0':
         for x in ('use', 'slot'):
             if getattr(self, x) is not None:
                 raise errors.MalformedAtom(
                     orig_atom,
                     f"{x} atoms aren't supported for EAPI 0")
-    elif eapi == 1:
+    elif eapi == '1':
         if self.use is not None:
             raise errors.MalformedAtom(
                 orig_atom,
                 "use atoms aren't supported for EAPI < 2")
-    if eapi != -1:
+    if eapi != '-1':
         if self.repo_id is not None:
             raise errors.MalformedAtom(
                 orig_atom,

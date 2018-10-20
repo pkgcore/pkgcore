@@ -216,7 +216,7 @@ class EAPI(object, metaclass=klass.immutable_instance):
 
     @klass.jit_attr
     def atom_kls(self):
-        return partial(atom.atom, eapi=int(self._magic))
+        return partial(atom.atom, eapi=self._magic)
 
     def interpret_cache_defined_phases(self, sequence):
         phases = set(sequence)

@@ -14,6 +14,7 @@ from sys import intern
 
 from pkgcore.cache import errors as cache_errors
 from pkgcore.ebuild import conditionals, processor
+from pkgcore.ebuild import errors as ebuild_errors
 from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.misc import sort_keywords
 from pkgcore.package import errors as metadata_errors
@@ -104,10 +105,20 @@ def generate_fetchables(self, allow_missing_checksums=False,
         create_fetchable_from_uri, self, chksums,
         chksums_can_be_missing, ignore_unknown_mirrors,
         mirrors, default_mirrors, common)
-    d = conditionals.DepSet.parse(
-        self.data.get("SRC_URI", ""), fetch.fetchable, operators={},
-        element_func=func,
-        allow_src_uri_file_renames=self.eapi.options.src_uri_renames)
+
+    # TODO: try/except block can be dropped when pkg._get_attr['fetchables']
+    # filtering hacks to pass custom args are fixed/removed.
+    #
+    # Usually dynamic_getattr_dict() catches/rethrows all exceptions as
+    # MetadataExceptions when attrs are accessed properly (e.g. pkg.fetchables).
+    try:
+        d = conditionals.DepSet.parse(
+            self.data.get("SRC_URI", ""), fetch.fetchable, operators={},
+            element_func=func,
+            allow_src_uri_file_renames=self.eapi.options.src_uri_renames)
+    except ebuild_errors.ParseError as e: 
+        raise metadata_errors.MetadataException(self, 'fetchables', str(e))
+
     for v in common.values():
         v.uri.finalize()
     return d

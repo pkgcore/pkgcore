@@ -197,7 +197,7 @@ def update_use_local_desc(repo, out, err):
                 err.write(f"caught exception {e!r} while processing {pkg}")
                 ret = os.EX_DATAERR
         for k, v in sorted(res.items()):
-            f.write(f"':'.join(k) - {v}\n".encode('utf8'))
+            f.write(f"{':'.join(k)} - {v}\n".encode('utf8'))
         f.close()
     except IOError as e:
         err.write(f"Unable to update use.local.desc file {use_local_desc!r}: {e.strerror}")

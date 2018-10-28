@@ -383,7 +383,7 @@ class tree(object):
                     return []
                 cats_iter = [c]
             else:
-                cat_restrict.add(values.ContainmentMatch2(cat_exact))
+                cat_restrict.add(values.ContainmentMatch2(frozenset(cat_exact)))
                 cats_iter = sorter(self._cat_filter(cat_restrict))
         elif cat_restrict:
             cats_iter = self._cat_filter(
@@ -401,7 +401,7 @@ class tree(object):
                     (c, p)
                     for c in cats_iter for p in pkg_exact)
             else:
-                pkg_restrict.add(values.ContainmentMatch2(pkg_exact))
+                pkg_restrict.add(values.ContainmentMatch2(frozenset(pkg_exact)))
 
         if pkg_restrict:
             return self._package_filter(

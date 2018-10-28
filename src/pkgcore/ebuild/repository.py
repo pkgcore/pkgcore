@@ -205,7 +205,7 @@ class ProvidesRepo(util.SimpleTree):
         def __init__(self, *a, **kwds):
             ebuild_src.base.__init__(self, *a, **kwds)
             object.__setattr__(self, "use", [])
-            object.__setattr__(self, "data", {})
+            object.__setattr__(self, "data", {"SLOT": "0"})
             object.__setattr__(self, "eapi", get_eapi('0'))
 
     def __init__(self, pkgs, repo_id):

@@ -266,8 +266,7 @@ class mirror_usage_kls(histo_data):
         data = {}
         for pos, pkg in enumerate(repo):
             for fetchable in iflatten_instance(pkg.fetchables, fetch.fetchable):
-                for mirror in fetchable.uri.visit_mirrors(
-                    treat_default_as_mirror=False):
+                for mirror in fetchable.uri.visit_mirrors(treat_default_as_mirror=False):
                     if isinstance(mirror, tuple):
                         mirror = mirror[0]
                     data.setdefault(mirror.mirror_name, 0)

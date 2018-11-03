@@ -17,7 +17,7 @@ class fetchable(object, metaclass=generic_equality):
     __slots__ = ("filename", "uri", "chksums")
     __attr_comparison__ = __slots__
 
-    def __init__(self, filename, uri=(), chksums=None):
+    def __init__(self, filename, uri=None, chksums=None):
         """
         :param filename: filename...
         :param uri: either None (no uri),
@@ -25,15 +25,12 @@ class fetchable(object, metaclass=generic_equality):
         :param chksums: either None (no chksum data),
             or a dict of chksum_type -> value for this file
         """
-        self.uri = uri
-        if chksums is None:
-            self.chksums = {}
-        else:
-            self.chksums = chksums
+        self.uri = uri if uri is not None else ()
+        self.chksums = chksums if chksums is not None else {}
         self.filename = filename
 
     def __str__(self):
-        return f"({self.filename!r}, {self.uri!r}, {', '.join(self.chksums)}"
+        return f"({self.filename!r}, {self.uri!r}, {', '.join(self.chksums)})"
 
     def __repr__(self):
         return "<%s filename=%r uri=%r chksums=%r @%#8x>" % (

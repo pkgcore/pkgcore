@@ -127,7 +127,7 @@ def stringify_attr(config, pkg, attr):
                 return node.filename
         else:
             def _format(node):
-                return ' '.join(node.uri or ())
+                return ' '.join(node.uri)
         return conditionals.stringify_boolean(data, _format)
 
     if attr == 'use':
@@ -273,15 +273,14 @@ def format_attr(config, out, pkg, attr):
                 out.write(node.filename, autoline=False)
         else:
             def _format(out, node):
-                uris = list(node.uri)
-                if not uris:
+                if not node.uri:
                     return False
-                if len(uris) == 1:
-                    out.write(uris[0], autoline=False)
+                if len(node.uri) == 1:
+                    out.write(node.uri[0], autoline=False)
                     return False
                 out.write('|| (')
                 out.first_prefix.append('    ')
-                for uri in uris:
+                for uri in node.uri:
                     out.write(uri)
                 out.first_prefix.pop()
                 out.write(')', autoline=False)

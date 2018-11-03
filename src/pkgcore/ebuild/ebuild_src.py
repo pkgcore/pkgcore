@@ -137,6 +137,9 @@ def create_fetchable_from_uri(pkg, chksums, ignore_missing_chksums, ignore_unkno
     if filename is None:
         filename = os.path.basename(uri)
 
+    if not filename:
+        raise ValueError(f'missing filename: {uri!r}')
+
     preexisting = common_files.get(filename)
 
     if preexisting is None:

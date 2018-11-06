@@ -2,10 +2,13 @@
 # License: BSD/GPL2
 
 import pytest
+from snakeoil.sequences import iflatten_instance
 
+from pkgcore.ebuild.restricts import SlotDep
 from pkgcore.repository.util import SimpleTree
 from pkgcore.scripts import pmerge
 from pkgcore.util.parserestrict import parse_match
+from pkgcore.test.misc import FakePkg, FakeRepo
 
 
 # TODO: make repo objs into configurable fixtures
@@ -13,7 +16,7 @@ class TestTargetParsing(object):
 
     def test_base_targets(self):
         repo = SimpleTree({'spork': {'foon': ('1', '1.0.1', '2')}})
-        installed_repos = SimpleTree({'foo': {'bar': ('1')}})
+        installed_repos = SimpleTree({'foo': {'bar': ('1',)}})
         for cat in ('', 'spork/'):
             a = pmerge.parse_target(parse_match(f'={cat}foon-1'), repo, installed_repos)
             assert len(a) == 1
@@ -31,7 +34,7 @@ class TestTargetParsing(object):
         repo = SimpleTree({
             'spork': {'foon': ('1',)},
             'spork2': {'foon': ('2',)}})
-        installed_repos = SimpleTree({'foo': {'bar': ('1')}})
+        installed_repos = SimpleTree({'foo': {'bar': ('1',)}})
         with pytest.raises(pmerge.NoMatches):
             pmerge.parse_target(parse_match("foo"), repo, installed_repos)
 
@@ -39,7 +42,7 @@ class TestTargetParsing(object):
         repo = SimpleTree({
             'spork': {'foon': ('1',)},
             'spork2': {'foon': ('2',)}})
-        installed_repos = SimpleTree({'foo': {'bar': ('1')}})
+        installed_repos = SimpleTree({'foo': {'bar': ('1',)}})
         with pytest.raises(pmerge.AmbiguousQuery):
             pmerge.parse_target(parse_match("foon"), repo, installed_repos)
 
@@ -47,28 +50,41 @@ class TestTargetParsing(object):
         repo = SimpleTree({
             'spork': {'foon': ('1',)},
             'spork2': {'foon': ('2',)}})
-        installed_repos = SimpleTree({'foo': {'bar': ('1')}})
+        installed_repos = SimpleTree({'foo': {'bar': ('1',)}})
         a = pmerge.parse_target(parse_match('*/foon'), repo, installed_repos)
         assert len(a) == 2
 
-    def test_collisions_repo(self):
-        # test pkg name collisions between real and virtual pkgs in a repo, but not installed
+    def test_collision_repo(self):
+        # test pkg name collision between real and virtual pkgs in a repo, but not installed
         # repos, the real pkg will be selected over the virtual
-        installed_repos = SimpleTree({'foo': {'baz': ('1')}})
+        installed_repos = SimpleTree({'foo': {'baz': ('1',)}})
         repo = SimpleTree({'foo': {'bar': ('1',)}, 'virtual': {'bar': ('1',)}})
         a = pmerge.parse_target(parse_match("bar"), repo, installed_repos)
         assert len(a) == 1
         assert a[0].key == 'foo/bar'
-        assert isinstance(a[0].key, str)
 
-    def test_collisions_livefs(self):
-        # test pkg name collisions between real and virtual pkgs on livefs
+    def test_collision_livefs(self):
+        # test pkg name collision between real and virtual pkgs on livefs
         # repos, the real pkg will be selected over the virtual
-        installed_repos = SimpleTree({'foo': {'bar': ('1')}, 'virtual': {'bar': ('0')}})
+        installed_repos = SimpleTree({'foo': {'bar': ('1',)}, 'virtual': {'bar': ('0',)}})
         repo = SimpleTree({'foo': {'bar': ('1',)}, 'virtual': {'bar': ('1',)}})
         a = pmerge.parse_target(parse_match("bar"), repo, installed_repos)
         assert len(a) == 1
         assert a[0].key == 'foo/bar'
-        assert isinstance(a[0].key, str)
 
-    # TODO: add slotted (extra restrictions) collision test
+    def test_collision_slotted(self):
+        pkgs = [
+            FakePkg('foo/bar-1.0.1', slot='0'),
+            FakePkg('foo/bar-2.0.2', slot='2'),
+            FakePkg('foon/bar-3.4.5', slot='0'),
+        ]
+        installed_pkgs = [
+            FakePkg('foo/bar-1.0.0', slot='0'),
+            FakePkg('foo/bar-2.0.1', slot='2'),
+        ]
+        installed_repos = FakeRepo(pkgs=installed_pkgs)
+        repo = FakeRepo(pkgs=pkgs)
+        a = pmerge.parse_target(parse_match("bar:0"), repo, installed_repos)
+        assert len(a) == 1
+        assert a[0].key == 'foo/bar'
+        assert list(iflatten_instance(a))[0] == SlotDep('0')

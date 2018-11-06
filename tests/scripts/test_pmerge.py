@@ -2,9 +2,8 @@
 # License: BSD/GPL2
 
 import pytest
-from snakeoil.sequences import iflatten_instance
 
-from pkgcore.ebuild.restricts import SlotDep
+from pkgcore.ebuild.atom import atom
 from pkgcore.repository.util import SimpleTree
 from pkgcore.scripts import pmerge
 from pkgcore.util.parserestrict import parse_match
@@ -87,4 +86,5 @@ class TestTargetParsing(object):
         a = pmerge.parse_target(parse_match("bar:0"), repo, installed_repos)
         assert len(a) == 1
         assert a[0].key == 'foo/bar'
-        assert list(iflatten_instance(a))[0] == SlotDep('0')
+        assert a[0].match(atom('foo/bar:0'))
+        assert not a[0].match(atom('foo/bar:2'))

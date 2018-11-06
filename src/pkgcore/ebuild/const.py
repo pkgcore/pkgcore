@@ -14,6 +14,7 @@ incrementals = (
     "CONFIG_PROTECT_MASK", "FEATURES", "IUSE_IMPLICIT",
     "PROFILE_ONLY_VARIABLES", "USE", "USE_EXPAND",
     "USE_EXPAND_HIDDEN", "USE_EXPAND_IMPLICIT", "USE_EXPAND_UNPREFIXED",
+    "ENV_UNSET",
 )
 
 incrementals_unfinalized = ("USE",)

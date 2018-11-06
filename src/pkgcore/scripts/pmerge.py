@@ -537,7 +537,7 @@ def parse_target(restriction, repo, installed_repos, return_none=False):
                 matches = {x for x in matches if not x.startswith('virtual/')}
 
             if len(matches) == 1:
-                return [atom(matches.pop())]
+                return [packages.KeyedAndRestriction(restriction, key=matches.pop())]
 
             raise AmbiguousQuery(restriction, sorted(key_matches))
         else:

@@ -56,6 +56,13 @@ operation_options.add_argument(
         configurations.
     """)
 operation_options.add_argument(
+    '-d', '--downgrade', action='store_true',
+    help='try to downgrade installed pkgs/deps',
+    docs="""
+        Try to downgrade specified targets to the previous visible version
+        compared to whats currently installed.
+    """)
+operation_options.add_argument(
     '-C', '--unmerge', action='store_true',
     help='unmerge packages',
     docs="""
@@ -477,7 +484,7 @@ def _validate(parser, namespace):
                 ', '.join(sorted(map(repr, unknown_sets))),
                 ', '.join(sorted(namespace.config.pkgset))))
         namespace.sets = [(x, namespace.config.pkgset[x]) for x in namespace.sets]
-    if namespace.upgrade:
+    if namespace.upgrade or namespace.downgrade:
         namespace.replace = False
     if not namespace.targets and not namespace.sets:
         parser.error('please specify at least one atom or nonempty set')
@@ -666,6 +673,8 @@ def main(options, out, err):
 
     if options.upgrade:
         resolver_kls = resolver.upgrade_resolver
+    elif options.downgrade:
+        resolver_kls = resolver.downgrade_resolver
     else:
         resolver_kls = resolver.min_install_resolver
 

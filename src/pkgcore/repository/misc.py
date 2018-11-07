@@ -13,7 +13,6 @@ from pkgcore.restrictions import packages
 
 
 class nodeps_repo(object):
-
     """
     repository wrapper that returns wrapped pkgs via
     :obj:`MutatedPkg` that have their cbuild_depends/depends/rdepends/
@@ -36,6 +35,32 @@ class nodeps_repo(object):
                           "post_rdepends": self.default_post_rdepends}
             )
             for x in self.raw_repo.itermatch(*a, **kwds))
+
+    def match(self, *a, **kwds):
+        return list(self.itermatch(*a, **kwds))
+
+    __getattr__ = GetAttrProxy("raw_repo")
+    __dir__ = DirProxy("raw_repo")
+
+    def __iter__(self):
+        return self.itermatch(packages.AlwaysTrue)
+
+
+class restrict_repo(object):
+    """Repository wrapper that skips packages matching a given restriction."""
+
+    def __init__(self, restrict, repo):
+        """
+        :param restrict: package matching restriction
+        :param repo: repository to wrap
+        """
+        self.raw_repo = repo
+        self.restrict = restrict
+
+    def itermatch(self, *a, **kwds):
+        return (
+            x for x in self.raw_repo.itermatch(*a, **kwds)
+            if not self.restrict.match(x))
 
     def match(self, *a, **kwds):
         return list(self.itermatch(*a, **kwds))
@@ -101,14 +126,13 @@ class caching_repo(object):
 
 class multiplex_sorting_repo(object):
 
-    def __init__(self, sorter, *repos):
-        self.__repos__ = repos
+    def __init__(self, sorter, repos):
+        self.__repos__ = tuple(repos)
         self.__sorter__ = sorter
 
     def itermatch(self, restrict):
-        return iter_sort(
-            self.__sorter__, *[repo.itermatch(restrict)
-                               for repo in self.__repos__])
+        repo_iters = [repo.itermatch(restrict) for repo in self.__repos__]
+        return iter_sort(self.__sorter__, *repo_iters)
 
     def match(self, restrict):
         return list(self.itermatch(restrict))

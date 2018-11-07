@@ -7,14 +7,13 @@ resolver configuration to match portage behaviour (misbehaviour in a few spots)
 
 __all__ = ["upgrade_resolver", "min_install_resolver"]
 
-from snakeoil.demandload import demandload
+from functools import partial
+from itertools import chain
 
+from pkgcore.ebuild.atom import atom
 from pkgcore.repository import misc, multiplex
 from pkgcore.resolver import plan
-
-demandload(
-    'pkgcore.restrictions:packages,values',
-)
+from pkgcore.restrictions import packages, values
 
 
 def upgrade_resolver(vdbs, dbs, verify_vdb=True, nodeps=False,
@@ -34,6 +33,37 @@ def upgrade_resolver(vdbs, dbs, verify_vdb=True, nodeps=False,
     """
 
     f = plan.merge_plan.prefer_highest_version_strategy
+    # hack.
+    if nodeps:
+        vdbs = list(map(misc.nodeps_repo, vdbs))
+        dbs = list(map(misc.nodeps_repo, dbs))
+    elif not verify_vdb:
+        vdbs = list(map(misc.nodeps_repo, vdbs))
+        dbs = list(dbs)
+
+    if force_replace:
+        resolver_cls = generate_replace_resolver_kls(resolver_cls)
+    return resolver_cls(dbs + vdbs, plan.pkg_sort_highest, f, **kwds)
+
+
+def downgrade_resolver(
+        vdbs, dbs, verify_vdb=True, nodeps=False, force_replace=False,
+        resolver_cls=plan.merge_plan, **kwds):
+    """
+    generate and configure a resolver for downgrading all processed nodes.
+
+    :param vdbs: list of :obj:`pkgcore.repository.prototype.tree` instances
+        that represents the livefs
+    :param dbs: list of :obj:`pkgcore.repository.prototype.tree` instances
+        representing sources of pkgs
+    :param verify_vdb: should we stop resolving once we hit the vdb,
+        or do full resolution?
+    :return: :obj:`pkgcore.resolver.plan.merge_plan` instance
+    """
+    restrict = packages.OrRestriction(
+        *list(atom(f'>={x.cpvstr}') for x in chain.from_iterable(vdbs)))
+    f = partial(plan.merge_plan.prefer_downgrade_version_strategy, restrict)
+    dbs = list(map(partial(misc.restrict_repo, restrict), dbs))
     # hack.
     if nodeps:
         vdbs = list(map(misc.nodeps_repo, vdbs))

@@ -59,6 +59,32 @@ def highest_iter_sort(l, pkg_grabber=pkg_grabber):
     return l
 
 
+def downgrade_iter_sort(restrict, l, pkg_grabber=pkg_grabber):
+    """Sort a list of packages from highest to lowest and prefer nonlivefs.
+
+    :param l: list of packages
+    :param pkg_grabber: function to use as an attrgetter
+    :return: sorted list of packages
+    """
+    def f(x, y):
+        c = cmp(x, y)
+        if x.repo.livefs:
+            if y.repo.livefs:
+                return c
+            return -1
+        elif y.repo.livefs:
+            return 1
+        elif restrict.match(x):
+            if restrict.match(y):
+                return 1
+            return -1
+        elif restrict.match(y):
+            return 1
+        return c
+    sort_cmp(l, f, key=pkg_grabber, reverse=True)
+    return l
+
+
 def lowest_iter_sort(l, pkg_grabber=pkg_grabber):
     """Sort a list of packages from lowest to highest.
 
@@ -246,9 +272,7 @@ class merge_plan(object):
             depset_reorder_strategy = self.default_depset_reorder_strategy
 
         self.depset_reorder = depset_reorder_strategy
-        self.per_repo_strategy = per_repo_strategy
-        self.total_ordering_strategy = global_strategy
-        self.all_raw_dbs = [misc.caching_repo(x, self.per_repo_strategy) for x in dbs]
+        self.all_raw_dbs = [misc.caching_repo(x, per_repo_strategy) for x in dbs]
         self.all_dbs = global_strategy(self.all_raw_dbs)
         self.default_dbs = self.all_dbs
 
@@ -843,19 +867,35 @@ class merge_plan(object):
         return chain(cls.just_livefs_dbs(dbs), cls.just_nonlivefs_dbs(dbs))
 
     @classmethod
+    def prefer_nonlivefs_dbs(cls, dbs, just_vdb=None):
+        """
+        :param dbs: db list to walk
+        :param just_vdb: if None, no filtering; if True, just vdb, if False,
+          non-vdb only
+        :return: yields repos in requested ordering
+        """
+        return chain(cls.just_nonlivefs_dbs(dbs), cls.just_livefs_dbs(dbs))
+
+    @classmethod
     def prefer_highest_version_strategy(cls, dbs):
-        return misc.multiplex_sorting_repo(highest_iter_sort,
-            *list(cls.prefer_livefs_dbs(dbs)))
+        return misc.multiplex_sorting_repo(
+            highest_iter_sort, cls.prefer_livefs_dbs(dbs))
 
     @staticmethod
     def prefer_lowest_version_strategy(dbs):
-        return misc.multiplex_sorting_repo(lowest_iter_sort, *list(dbs))
+        return misc.multiplex_sorting_repo(lowest_iter_sort, dbs)
+
+    @classmethod
+    def prefer_downgrade_version_strategy(cls, restrict, dbs):
+        return misc.multiplex_sorting_repo(
+            partial(downgrade_iter_sort, restrict),
+            cls.prefer_nonlivefs_dbs(dbs))
 
     @classmethod
     def prefer_reuse_strategy(cls, dbs):
         return multiplex.tree(
-            misc.multiplex_sorting_repo(highest_iter_sort,
-                *list(cls.just_livefs_dbs(dbs))),
-            misc.multiplex_sorting_repo(highest_iter_sort,
-                *list(cls.just_nonlivefs_dbs(dbs)))
+            misc.multiplex_sorting_repo(
+                highest_iter_sort, cls.just_livefs_dbs(dbs)),
+            misc.multiplex_sorting_repo(
+                highest_iter_sort, cls.just_nonlivefs_dbs(dbs)),
         )

@@ -705,8 +705,8 @@ class merge_plan(object):
 
             # Note that virtual pkg conflicts are skipped since it's assumed
             # they are injected.
-            virtual = (any(not x.package_is_real for x in conflicts) or not
-                       choices.current_pkg.package_is_real)
+            virtual = (any(not getattr(x, 'package_is_real', True) for x in conflicts)
+                       or not choices.current_pkg.package_is_real)
             if (virtual or (len(conflicts) == 1 and conflicts[0] == choices.current_pkg and
                     (conflicts[0].repo.livefs == choices.current_pkg.repo.livefs and
                     atom.match(conflicts[0])))):

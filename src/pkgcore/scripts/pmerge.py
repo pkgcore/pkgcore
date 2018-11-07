@@ -522,7 +522,7 @@ def parse_target(restriction, repo, installed_repos, return_none=False):
 
     :return: a list of matches or C{None}.
     """
-    key_matches = {x.key for x in repo.itermatch(restriction)}
+    key_matches = {x.unversioned_atom for x in repo.itermatch(restriction)}
     if not key_matches:
         if return_none:
             return None
@@ -535,25 +535,27 @@ def parse_target(restriction, repo, installed_repos, return_none=False):
                     restriction_types=(restricts.RepositoryDep,))
 
             # find installed package matches
-            matches = {x.key for x in installed_repos.itermatch(restriction)}
+            matches = {x.unversioned_atom for x in installed_repos.itermatch(restriction)}
 
             # try removing virtuals if there are multiple installed matches or none at all
             if not matches:
-                matches = {x for x in key_matches if not x.startswith('virtual/')}
+                matches = {x for x in key_matches if x.category != 'virtual'}
             elif len(matches) > 1:
-                matches = {x for x in matches if not x.startswith('virtual/')}
+                matches = {x for x in matches if x.category != 'virtual'}
 
             if len(matches) == 1:
-                return [packages.KeyedAndRestriction(restriction, key=matches.pop())]
+                p = matches.pop()
+                # TODO: collapse redundant restrictions?
+                return [packages.KeyedAndRestriction(restriction, p, key=p.key)]
 
             raise AmbiguousQuery(restriction, sorted(key_matches))
         else:
             # if a glob was specified then just return every match
-            return [atom(x) for x in key_matches]
+            return key_matches
     if isinstance(restriction, atom):
         # atom is guaranteed to be fine, since it's cat/pkg
         return [restriction]
-    return [packages.KeyedAndRestriction(restriction, key=key_matches.pop())]
+    return [packages.KeyedAndRestriction(restriction, key=key_matches.pop().key)]
 
 
 @argparser.bind_delayed_default(50, name='world')

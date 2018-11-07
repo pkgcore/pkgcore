@@ -61,6 +61,7 @@ class TestTargetParsing(object):
         a = pmerge.parse_target(parse_match("bar"), repo, installed_repos)
         assert len(a) == 1
         assert a[0].key == 'foo/bar'
+        assert [x.key for x in repo.match(a[0])] == ['foo/bar']
 
     def test_collision_livefs(self):
         # test pkg name collision between real and virtual pkgs on livefs
@@ -70,6 +71,7 @@ class TestTargetParsing(object):
         a = pmerge.parse_target(parse_match("bar"), repo, installed_repos)
         assert len(a) == 1
         assert a[0].key == 'foo/bar'
+        assert [x.key for x in repo.match(a[0])] == ['foo/bar']
 
     def test_collision_slotted(self):
         pkgs = [

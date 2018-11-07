@@ -121,6 +121,8 @@ class RepositoryGroup(DictMixin):
             return self
         elif isinstance(other, RepositoryGroup):
             return RepositoryGroup(self.repos + other.repos)
+        elif isinstance(other, (list, tuple)):
+            return RepositoryGroup(self.repos + tuple(other))
         raise TypeError(
             "cannot add '%s' and '%s' objects"
             % (self.__class__.__name__, other.__class__.__name__))
@@ -133,6 +135,8 @@ class RepositoryGroup(DictMixin):
             return self
         elif isinstance(other, RepositoryGroup):
             return RepositoryGroup(other.repos + self.repos)
+        elif isinstance(other, (list, tuple)):
+            return RepositoryGroup(tuple(other) + self.repos)
         raise TypeError(
             "cannot add '%s' and '%s' objects"
             % (other.__class__.__name__, self.__class__.__name__))

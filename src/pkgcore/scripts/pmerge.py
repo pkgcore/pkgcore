@@ -59,8 +59,12 @@ operation_options.add_argument(
     '-d', '--downgrade', action='store_true',
     help='try to downgrade installed pkgs/deps',
     docs="""
-        Try to downgrade specified targets to the previous visible version
-        compared to whats currently installed.
+        Try to downgrade specified targets to a lower visible version
+        compared to what's currently installed.
+
+        Useful for reverting to the previously installed package version;
+        however, note that the -O/--nodeps option is generally used with this
+        otherwise lots of downgrades will be pulled into the resolved deptree.
     """)
 operation_options.add_argument(
     '-C', '--unmerge', action='store_true',

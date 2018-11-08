@@ -613,6 +613,7 @@ _pmerge() {
 
   resolver=(
     {'(--upgrade)-u','(-u)--upgrade'}'[try to upgrade already installed packages/dependencies]'
+    {'(--downgrade)-d','(-d)--downgrade'}'[try to downgrade already installed packages/dependencies]'
     {'(--deep)-D','(-D)--deep'}'[force the resolver to verify already installed dependencies]'
     '--preload-vdb-state[enable preloading of the installed packages database]'
     {'(--ignore-cycles)-i','(-i)--ignore-cycles'}"[ignore cycles if they're found to be unbreakable]"

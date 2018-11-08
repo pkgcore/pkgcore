@@ -376,7 +376,7 @@ class TestBase(object):
             # should return depsets that evaluate to False.
             pkg = self.get_pkg({'EAPI': eapi_str, 'REQUIRED_USE': 'test? ( foo )'})
             assert bool(pkg.required_use) == eapi.options.has_required_use, \
-                f"failure parsing REQUIRED_USE for EAPI {eapi}"
+                f"failure parsing REQUIRED_USE for EAPI '{eapi}'"
 
             # Render various REQUIRED_USE deps with set USE flag states and
             # check for satisfiability.
@@ -417,7 +417,7 @@ class TestBase(object):
                     pkg = self.get_pkg({'EAPI': eapi_str, 'REQUIRED_USE': '?? ( bar foo )'})
                     with pytest.raises(errors.MetadataException) as cm:
                         getattr(pkg, 'required_use')
-                    assert f"EAPI {eapi_str} doesn't support '??' operator" in cm.value.error
+                    assert f"EAPI '{eapi_str}' doesn't support '??' operator" in cm.value.error
 
                 for required_use, iuse, use, satisfied in required_use_data:
                     pkg = self.get_pkg({'EAPI': eapi_str, 'REQUIRED_USE': required_use})

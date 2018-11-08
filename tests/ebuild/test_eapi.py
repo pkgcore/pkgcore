@@ -40,7 +40,7 @@ class TestEAPI(object):
             bash_version.return_value = '3.1'
             with pytest.raises(SystemExit) as excinfo:
                 new_eapi = EAPI.register(magic='new', optionals={'bash_compat': '3.2'})
-            assert 'EAPI new requires >=bash-3.2, system version: 3.1' == excinfo.value.args[0]
+            assert "EAPI 'new' requires >=bash-3.2, system version: 3.1" == excinfo.value.args[0]
 
             # adequate system bash versions
             bash_version.return_value = '3.2'

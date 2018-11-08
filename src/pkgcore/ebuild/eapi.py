@@ -193,13 +193,13 @@ class EAPI(object, metaclass=klass.immutable_instance):
         pre_existing = cls.known_eapis.get(eapi._magic)
         if pre_existing is not None:
             raise ValueError(
-                f"EAPI {eapi} is already known/instantiated- {pre_existing!r}")
+                f"EAPI '{eapi}' is already known/instantiated- {pre_existing!r}")
 
         if (getattr(eapi.options, 'bash_compat', False) and
                 bash_version() < eapi.options.bash_compat):
             # hard exit if the system doesn't have an adequate bash installed
             raise SystemExit(
-                f"EAPI {eapi} requires >=bash-{eapi.options.bash_compat}, "
+                f"EAPI '{eapi}' requires >=bash-{eapi.options.bash_compat}, "
                 f"system version: {bash_version()}")
         cls.known_eapis[eapi._magic] = eapi
         return eapi
@@ -209,7 +209,7 @@ class EAPI(object, metaclass=klass.immutable_instance):
         """Check if an EAPI is supported."""
         if EAPI.known_eapis.get(self._magic) is not None:
             if not self.options.is_supported:
-                logger.warning(f"EAPI {self} isn't fully supported")
+                logger.warning(f"EAPI '{self}' isn't fully supported")
                 sys.stderr.flush()
             return True
         return False

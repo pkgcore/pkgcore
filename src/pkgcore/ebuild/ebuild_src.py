@@ -76,7 +76,7 @@ def generate_required_use(self):
         operators['??'] = boolean.AtMostOneOfRestriction
     else:
         operators['??'] = partial(
-            _invalid_op, f"EAPI {self.eapi} doesn't support '??' operator")
+            _invalid_op, f"EAPI '{self.eapi}' doesn't support '??' operator")
 
     return conditionals.DepSet.parse(
         data,
@@ -431,7 +431,7 @@ class package_factory(metadata.factory):
         if parsed_eapi != eapi:
             raise metadata_errors.MetadataException(
                 pkg, 'eapi',
-                f"parsed EAPI {parsed_eapi!r} doesn't match sourced EAPI {eapi!r}")
+                f"parsed EAPI '{parsed_eapi}' doesn't match sourced EAPI '{eapi}'")
         wipes = set(mydata)
 
         wipes.difference_update(eapi.metadata_keys)

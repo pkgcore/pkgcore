@@ -275,7 +275,7 @@ class tree(object):
                 try:
                     if not pkg.is_supported:
                         self._masked[pkg.versioned_atom] = (
-                            'eapi', f"EAPI {str(pkg.eapi)!r} is not supported")
+                            'eapi', f"EAPI '{pkg.eapi}' is not supported")
                         continue
                 except MetadataException as e:
                     self._masked[e.pkg.versioned_atom] = (e.attr, e.error)

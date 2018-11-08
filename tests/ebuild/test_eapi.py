@@ -26,16 +26,13 @@ def test_get_eapi():
 
 class TestEAPI(object):
 
-    def setup_method(self, method):
-        # keep registered EAPIs consistent between methods
-        reload(eapi)
-
     def test_register(self):
         # re-register known EAPI
         with pytest.raises(ValueError):
             EAPI.register(magic="0")
 
-        with mock.patch('pkgcore.ebuild.eapi.bash_version') as bash_version:
+        with mock.patch('pkgcore.ebuild.eapi.bash_version') as bash_version, \
+                mock.patch.dict(eapi.EAPI.known_eapis):
             # inadequate bash version
             bash_version.return_value = '3.1'
             with pytest.raises(SystemExit) as excinfo:
@@ -50,16 +47,18 @@ class TestEAPI(object):
             test_eapi = EAPI.register(magic='test1', optionals={'bash_compat': '4.1'})
             assert test_eapi._magic == 'test1'
 
-    def test_is_supported(self):
+    def test_is_supported(self, caplog):
         assert eapi6.is_supported
 
-        # partially supported EAPI is flagged as such
-        test_eapi = EAPI.register("test", optionals={'is_supported': False})
-        assert not test_eapi.is_supported
+        with mock.patch.dict(eapi.EAPI.known_eapis):
+            # partially supported EAPI is flagged as such
+            test_eapi = EAPI.register("test", optionals={'is_supported': False})
+            assert test_eapi.is_supported
+            assert caplog.text.endswith("EAPI 'test' isn't fully supported\n")
 
-        # unsupported/unknown EAPI is flagged as such
-        unknown_eapi = get_eapi("blah")
-        assert not unknown_eapi.is_supported
+            # unsupported/unknown EAPI is flagged as such
+            unknown_eapi = get_eapi("blah")
+            assert not unknown_eapi.is_supported
 
     def test_inherits(self):
         assert list(eapi0.inherits) == [eapi0]

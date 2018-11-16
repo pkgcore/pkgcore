@@ -16,4 +16,4 @@ else
 fi
 
 check_command_or_stop dodir "${2%/*}"
-check_command ln -${ln_option}f "${src_prefix}$1" "${ED}$2"
+check_command ln -${ln_option}f "${src_prefix}$1" "${ED}/$2"

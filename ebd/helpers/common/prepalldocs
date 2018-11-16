@@ -12,7 +12,7 @@ elif [[ ${ED:-unset} == "unset" ]]; then
 	exit -1
 fi
 
-dir=${ED}usr/share/doc
+dir=${ED}/usr/share/doc
 
 [[ ! -d ${dir} ]] && exit 0
 

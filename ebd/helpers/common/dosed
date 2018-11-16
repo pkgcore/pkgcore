@@ -7,7 +7,7 @@ check_args 1 -
 pattern="s:${ED}::g"
 
 for x in "$@"; do
-	trg=${ED}${x}
+	trg=${ED}/${x}
 	if [[ ! -e ${trg} ]]; then
 		pattern=${x}
 		continue

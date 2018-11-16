@@ -31,7 +31,7 @@ install_paths() {
 				check_command cp -- "${x}" "${T}" || continue
 				mysrc=${T}/${x##*/}
 			else
-				check_command cp -P -- "${x}" "${ED}${mydir}/${x##*/}"
+				check_command cp -P -- "${x}" "${ED}/${mydir}/${x##*/}"
 				continue
 			fi
 		elif [[ -d ${x} ]]; then
@@ -41,7 +41,7 @@ install_paths() {
 			__shopt_pop
 			continue
 		fi
-		check_command install ${INSOPTIONS} -- "${mysrc}" "${ED}${mydir}"
+		check_command install ${INSOPTIONS} -- "${mysrc}" "${ED}/${mydir}"
 		# cleanup the tempspace...
 		[[ ${mysrc} != ${x} ]] && rm -f "${mysrc}"
 	done

@@ -14,12 +14,12 @@ elif [[ ${ED:-unset} == "unset" ]]; then
 fi
 
 if [[ -z $1 ]]; then
-	z=${ED}usr/share/info
+	z=${ED}/usr/share/info
 else
-	if [[ -d ${ED}$1/share/info ]]; then
-		z=${ED}$1/share/info
+	if [[ -d ${ED}/$1/share/info ]]; then
+		z=${ED}/$1/share/info
 	else
-		z=${ED}$1/info
+		z=${ED}/$1/info
 	fi
 fi
 

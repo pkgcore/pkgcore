@@ -123,7 +123,7 @@ __dyn_pkg_preinst() {
 		sfconf=/etc/portage/suidctl.conf
 		echo ">>> Performing suid scan in ${ED}"
 		local i
-		for i in $(find "${ED}"/ -type f \( -perm -4000 -o -perm -2000 \) ); do
+		for i in $(find "${ED}" -type f \( -perm -4000 -o -perm -2000 \) ); do
 			if [[ -s ${sfconf} ]]; then
 				suid=$(grep ^${i/${ED}/}$ "${sfconf}")
 				if [[ ${suid} == ${i/${ED}/} ]]; then

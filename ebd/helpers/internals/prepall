@@ -18,10 +18,10 @@ fi
 
 # this should help to ensure that all (most?) shared libraries are executable
 # and that all libtool scripts / static libraries are not executable
-for i in "${ED}"opt/*/lib{,32,64} \
-		 "${ED}"lib{,32,64}       \
-		 "${ED}"usr/lib{,32,64}   \
-		 "${ED}"usr/X11R6/lib{,32,64}; do
+for i in "${ED}"/opt/*/lib{,32,64} \
+		 "${ED}"/lib{,32,64}       \
+		 "${ED}"/usr/lib{,32,64}   \
+		 "${ED}"/usr/X11R6/lib{,32,64}; do
 	[[ ! -d ${i} ]] && continue
 
 	for j in "${i}"/*.so.* "${i}"/*.so; do
@@ -45,7 +45,7 @@ done
 # /lib, we have to make sure we have a linker script in /usr/lib along side
 # the static library, or gcc will utilize the static lib when linking :(.
 # http://bugs.gentoo.org/4411
-for a in "${ED}"usr/lib*/*.a; do
+for a in "${ED}"/usr/lib*/*.a; do
 	s=${a%.a}.so
 	if [[ ! -e ${s} ]]; then
 		s=${s%usr/*}${s##*/usr/}
@@ -57,7 +57,7 @@ for a in "${ED}"usr/lib*/*.a; do
 done
 
 # Make sure people don't store libtool files or static libs in /lib
-f=$(ls "${ED}"lib*/*.{a,la} 2>/dev/null)
+f=$(ls "${ED}"/lib*/*.{a,la} 2>/dev/null)
 if [[ -n ${f} ]]; then
 	echo -e "\n\aQA Notice: excessive files found in the / partition\a"
 	echo "${f}"
@@ -65,7 +65,7 @@ if [[ -n ${f} ]]; then
 fi
 
 # Verify that the libtool files don't contain bogus $ED entries.
-for a in "${ED}"usr/lib*/*.la; do
+for a in "${ED}"/usr/lib*/*.la; do
 	s=${a##*/}
 	if grep -qs "${ED}" "${a}"; then
 		echo -e "\n\aQA Notice: ${s} appears to contain PORTAGE_TMPDIR paths\a"
@@ -75,7 +75,7 @@ done
 
 if type -p scanelf > /dev/null; then
 	# Run some sanity checks on shared libraries
-	for d in "${ED}"lib* "${ED}"usr/lib*; do
+	for d in "${ED}"/lib* "${ED}"/usr/lib*; do
 		f=$(scanelf -ByF '%S %p' "${d}"/lib*.so* | gawk '$2 == "" { print }')
 		if [[ -n ${f} ]]; then
 			echo -e "\n\aQA Notice: the following shared libraries lack a SONAME\a"

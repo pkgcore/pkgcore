@@ -101,7 +101,7 @@ class ebd(object):
             self.prefix = self.domain.prefix
             self.env['EPREFIX'] = self.prefix.rstrip(os.sep)
             self.env['EROOT'] = abspath(
-                pjoin(self.domain.root, self.prefix.lstrip(os.sep))).rstrip(os.sep) + \
+                pjoin(self.domain.root, self.prefix.lstrip(os.sep).rstrip(os.sep))) + \
                     self.eapi.options.trailing_slash
             self.env["PKGCORE_PREFIX_SUPPORT"] = 'true'
 

@@ -547,7 +547,7 @@ __portageq() {
 	${PKGCORE_DISABLE_COMPAT-false} && portageq_str="query"
 	SANDBOX_ON=0 PYTHONPATH="${PKGCORE_PYTHONPATH}" "${PKGCORE_PYTHON_BINARY}" \
 		$(__which pinspect) ${opts} ${portageq_str} "${command}" \
-		--eapi "${EAPI:--1}" --use "${USE}" "$@"
+		--eapi "${EAPI:--1}" --use "${USE}" "$@" 2> /dev/null
 	local ret=$?
 	[[ ${ret} == 127 ]] && die "pinspect couldn't be found; broken pkgcore installation?"
 	return $(( ret ))

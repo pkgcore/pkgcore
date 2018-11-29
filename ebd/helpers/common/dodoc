@@ -24,7 +24,9 @@ install_paths() {
 				continue
 			fi
 			__directory_is_empty "${x}" && continue
+			__shopt_push -s dotglob nullglob
 			install_paths "${mydir}/${x##*/}" "${x}"/*
+			__shopt_pop
 		elif [[ -s ${x} ]]; then
 			check_command install -m0644 -- "${x}" "${mydir}" && \
 				check_command "${PORTAGE_COMPRESS}" "${PORTAGE_COMPRESS_FLAGS}" -f "${mydir}/${x##*/}"

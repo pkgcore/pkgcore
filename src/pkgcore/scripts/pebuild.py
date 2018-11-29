@@ -5,6 +5,7 @@
 """low-level ebuild utility"""
 
 import os
+import sys
 
 from pkgcore.ebuild import atom
 from pkgcore.ebuild.errors import MalformedAtom
@@ -46,7 +47,8 @@ def _validate_args(parser, namespace):
             parser.err.write()
             parser.error("please refine your restriction to one match")
         repo_id = getattr(pkg.repo, 'repo_id', 'unknown')
-        parser.err.write("choosing {pkg.cpvstr}:{pkg.slot}::{repo_id}", prefix='  ')
+        parser.err.write(f"choosing {pkg.cpvstr}:{pkg.slot}::{repo_id}", prefix='  ')
+        sys.stderr.flush()
 
     namespace.pkg = pkg
 

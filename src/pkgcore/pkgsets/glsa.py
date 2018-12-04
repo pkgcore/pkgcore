@@ -115,7 +115,7 @@ class GlsaDirSet(object, metaclass=generic_equality):
     def generate_intersects_from_pkg_node(self, pkg_node, tag=None):
         arch = pkg_node.get("arch")
         if arch is not None:
-            arch = str(arch.strip()).split()
+            arch = tuple(str(arch.strip()).split())
             if not arch or "*" in arch:
                 arch = None
 

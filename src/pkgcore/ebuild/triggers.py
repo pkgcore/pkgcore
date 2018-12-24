@@ -662,7 +662,7 @@ def generate_triggers(domain):
             yield triggers.SavePkg(pristine='yes', target_repo=target_repo)
         elif 'buildsyspkg' in features:
             yield triggers.SavePkgIfInPkgset(
-                pristine='yes', target_repo=target_repo, pkgset='system')
+                pristine='yes', target_repo=target_repo, pkgset=domain.profile.system)
         elif 'unmerge-backup' in features:
             yield triggers.SavePkgUnmerging(target_repo=target_repo)
 

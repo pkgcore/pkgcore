@@ -55,7 +55,8 @@ class repo_operations(_repo_ops.operations):
         if manifest_config.disabled:
             observer.info(f"repo {self.repo.repo_id} has manifests disabled")
             return
-        required_chksums = manifest_config.hashes
+        required_chksums = set(manifest_config.required_hashes)
+        write_chksums = manifest_config.hashes
         distdir = domain.fetcher.distdir
         ret = []
 
@@ -82,9 +83,14 @@ class repo_operations(_repo_ops.operations):
                 ret.append(key_query)
                 continue
 
-            # fetchables targeted for manifest generation
-            fetchables = {filename: fetchable for filename, fetchable in pkgdir_fetchables.items()
-                          if force or filename not in manifest.distfiles}
+            # fetchables targeted for (re-)manifest generation
+            fetchables = {}
+            chksum_set = set(write_chksums)
+            for filename, fetchable in pkgdir_fetchables.items():
+                if force or not required_chksums.issubset(fetchable.chksums):
+                    fetchable.chksums = {
+                        k: v for k, v in fetchable.chksums.items() if k in chksum_set}
+                    fetchables[filename] = fetchable
 
             # Manifest file is current and not forcing a refresh
             manifest_current = set(manifest.distfiles.keys()) == set(pkgdir_fetchables.keys())
@@ -114,8 +120,8 @@ class repo_operations(_repo_ops.operations):
             try:
                 for fetchable in fetchables.values():
                     chksums = chksum.get_chksums(
-                        pjoin(distdir, fetchable.filename), *required_chksums)
-                    fetchable.chksums = dict(zip(required_chksums, chksums))
+                        pjoin(distdir, fetchable.filename), *write_chksums)
+                    fetchable.chksums = dict(zip(write_chksums, chksums))
             except chksum.MissingChksumHandler as e:
                 observer.error(f'failed generating chksum: {e}')
                 ret.append(key_query)
@@ -123,7 +129,7 @@ class repo_operations(_repo_ops.operations):
 
             fetchables.update(pkgdir_fetchables)
             observer.info(f"generating manifest: {key_query}::{self.repo.repo_id}")
-            manifest.update(sorted(fetchables.values()), chfs=required_chksums)
+            manifest.update(sorted(fetchables.values()), chfs=write_chksums)
 
         return ret
 

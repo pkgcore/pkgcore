@@ -66,30 +66,32 @@ class PackagesCacheV0(cache.bulk):
 
     _header_mangling_map = ImmutableDict({
         'FEATURES': 'UPSTREAM_FEATURES',
-        'ACCEPT_KEYWORDS': 'KEYWORDS'})
+        'ACCEPT_KEYWORDS': 'KEYWORDS',
+    })
 
     # this maps from literal keys in the cache to .data[key] expected forms
     _deserialize_map = {
         'DESC': 'DESCRIPTION',
         'MTIME': 'mtime',
-        'repo': 'REPO'}
+        'repo': 'REPO',
+    }
     # this maps from .attr to data items.
     _serialize_map = {
-        "CBUILD_DEPENDS": "BDEPEND",
-        "DEPENDS": "DEPEND",
-        "RDEPENDS": "RDEPEND",
-        "POST_RDEPENDS": "POST_RDEPEND",
-        "DESCRIPTION": "DESC",
+        'DESCRIPTION': 'DESC',
         'mtime': 'MTIME',
-        "source_repository": "REPO"}
+        'source_repository': 'REPO',
+    }
     deserialized_inheritable = frozenset(('CBUILD', 'CHOST', 'source_repository'))
     _pkg_attr_sequences = ('use', 'keywords', 'iuse')
-    _deserialized_defaults = dict.fromkeys((
-        'BUILD_TIME', 'DEPEND', 'IUSE', 'KEYWORDS',
-        'LICENSE', 'PATH', 'PDEPEND', 'PROPERTIES', 'RDEPEND',
-        'USE', 'DEFINED_PHASES', 'CHOST', 'CBUILD', 'DESC', 'REPO',
-        'DESCRIPTION', 'BDEPEND'),
-        '')
+    _deserialized_defaults = dict.fromkeys(
+        (
+            'BDEPEND', 'DEPEND', 'RDEPEND', 'PDEPEND',
+            'BUILD_TIME', 'IUSE', 'KEYWORDS', 'LICENSE', 'PATH', 'PROPERTIES',
+            'USE', 'DEFINED_PHASES', 'CHOST', 'CBUILD', 'DESC', 'REPO',
+            'DESCRIPTION',
+        ),
+        ''
+    )
     _deserialized_defaults.update({'EAPI': '0', 'SLOT': '0'})
     _deserialized_defaults = ImmutableDict(_deserialized_defaults)
 
@@ -156,7 +158,8 @@ class PackagesCacheV0(cache.bulk):
         preamble = {
             'VERSION': cls.version,
             'PACKAGES': len(target_dicts),
-            'TIMESTAMP': str(int(time()))}
+            'TIMESTAMP': str(int(time())),
+        }
         for key in cls.deserialized_inheritable:
             try:
                 preamble[key] = find_best_savings(

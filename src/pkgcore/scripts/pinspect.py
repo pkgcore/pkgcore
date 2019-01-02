@@ -23,6 +23,8 @@ __all__ = (
     "portageq", "query",
 )
 
+from concurrent.futures import ThreadPoolExecutor
+
 from snakeoil.cli import arghparse
 from snakeoil.demandload import demandload
 
@@ -349,6 +351,16 @@ profile_opts.add_argument(
     action=commandline.StoreRepoObject, repo_type='config')
 inspect_profile.bind_parser(profile, 'profile')
 
+
+def _bad_digest(pkg):
+    """Check if a given package has a broken or missing digest."""
+    try:
+        pkg.fetchables
+    except errors.MetadataException:
+        return pkg, True
+    return pkg, False
+
+
 digests = subparsers.add_parser(
     "digests", domain=True, description="identify what packages are missing digest info")
 digests.add_argument(
@@ -357,28 +369,34 @@ digests.add_argument(
 @digests.bind_main_func
 def digest_manifest(options, out, err):
     for name, repo in options.repos:
-        broken = count = 0
-        out.write(f"inspecting {name!r}:")
-        out.first_prefix.append("  ")
-        out.later_prefix.append("  ")
-        for pkg in repo:
-            count += 1
-            try:
-                pkg.fetchables
-            except errors.MetadataException:
-                out.write(f"{pkg} is broken")
-                broken += 1
-                continue
+        count = 0
+        broken = []
+        out.write(f"inspecting {name!r} repo:")
+        out.flush()
 
-        out.first_prefix.pop()
-        out.later_prefix.pop()
-        count = len(repo)
+        # TODO: move to ProcessPoolExecutor once underlying pkg wrapper classes can be pickled
+        with ThreadPoolExecutor() as executor:
+            for pkg, bad in executor.map(_bad_digest, iter(repo)):
+                count += 1
+                if bad:
+                    broken.append(pkg)
+
         if count:
-            broken = float(broken)
-            percent = (broken/count)
-            percent *= 100
-            out.write("%i out of %i the tree has broken checksum data "
-                      "(%2.2f%%)" % (broken, count, percent))
+            if broken:
+                out.write('Packages with broken digests:')
+                out.first_prefix.append("  ")
+                out.later_prefix.append("  ")
+                for pkg in sorted(broken):
+                    out.write(pkg.cpvstr)
+                out.first_prefix.pop()
+                out.later_prefix.pop()
+                percent = len(broken) / count * 100
+                out.write(
+                    f"{len(broken)} out of {count} ({round(percent, 2)}%) packages "
+                    "in the repo have bad checksum data"
+                )
+            else:
+                out.write('repo has no broken digests')
         else:
             out.write("repo has no packages")
 

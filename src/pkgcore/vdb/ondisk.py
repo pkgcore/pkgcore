@@ -138,10 +138,9 @@ class tree(prototype.tree):
         return pjoin(self.location, pkg.category, s)
 
     _metadata_rewrites = {
-        "depends": "DEPEND", "rdepends": "RDEPEND", "post_rdepends": "PDEPEND",
+        "bdepend": "BDEPEND", "depend": "DEPEND", "rdepend": "RDEPEND", "pdepend": "PDEPEND",
         "use": "USE", "eapi": "EAPI", "CONTENTS": "contents",
         "source_repository": "repository", "fullslot": "SLOT",
-        "cbuild_depends": "BDEPEND",
     }
 
     def _get_metadata(self, pkg):

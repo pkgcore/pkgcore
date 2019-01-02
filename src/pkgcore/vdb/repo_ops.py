@@ -61,7 +61,7 @@ class install(repo_ops.install):
                 del data
             else:
                 v = getattr(self.new_pkg, k)
-                if k in ('cbuild_depends', 'depends', 'rdepends'):
+                if k in ('bdepend', 'depend', 'rdepend'):
                     s = v.slotdep_str(domain)
                 elif not isinstance(v, str):
                     try:

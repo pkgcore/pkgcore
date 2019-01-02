@@ -24,7 +24,7 @@ def str_pkg(pkg):
     if hasattr(pkg, "actual_pkg"):
         return pkg.actual_pkg.cpvstr
     # icky, but works.
-    return str(pkg.rdepends).lstrip("=")
+    return str(pkg.rdepend).lstrip("=")
 
 
 def get_atom_kls(value):

@@ -112,7 +112,7 @@ def generate_fetchables(self, allow_missing_checksums=False,
             self.data.get("SRC_URI", ""), fetch.fetchable, operators={},
             element_func=func,
             allow_src_uri_file_renames=self.eapi.options.src_uri_renames)
-    except ebuild_errors.ParseError as e: 
+    except ebuild_errors.ParseError as e:
         raise metadata_errors.MetadataException(self, 'fetchables', str(e))
 
     for v in common.values():
@@ -208,18 +208,16 @@ def get_subslot(self):
     return subslot
 
 
+def get_bdepend(self):
+    if "BDEPEND" in self.eapi.metadata_keys:
+        return generate_depset(atom, "BDEPEND", False, self)
+    return generate_depset(atom, None, False, self)
+
+
 def rewrite_restrict(restrict):
     if restrict[0:2] == 'no':
         return restrict[2:]
     return restrict
-
-
-def get_cbuild_depends(self):
-    if "BDEPEND" in self.eapi.metadata_keys:
-        k = "BDEPEND"
-    else:
-        k = "DEPEND"
-    return generate_depset(atom, k, False, self)
 
 
 class base(metadata.package):
@@ -233,19 +231,19 @@ class base(metadata.package):
 
     _config_wrappables = {
         x: klass.alias_method("evaluate_depset")
-        for x in ("depends", "rdepends", "post_rdepends", "fetchables",
-                  "license", "src_uri", "restrict", "required_use",
-                  "cbuild_depends")
+        for x in (
+            "bdepend", "depend", "rdepend", "pdepend",
+            "fetchables", "license", "src_uri", "restrict", "required_use",
+        )
     }
 
     _get_attr = dict(metadata.package._get_attr)
-    _get_attr["cbuild_depends"] = get_cbuild_depends
-    _get_attr["depends"] = partial(generate_depset, atom, "DEPEND", False)
-    _get_attr["rdepends"] = partial(generate_depset, atom, "RDEPEND", False)
-    _get_attr["post_rdepends"] = partial(generate_depset, atom, "PDEPEND", False)
+    _get_attr["bdepend"] = get_bdepend
+    _get_attr["depend"] = partial(generate_depset, atom, "DEPEND", False)
+    _get_attr["rdepend"] = partial(generate_depset, atom, "RDEPEND", False)
+    _get_attr["pdepend"] = partial(generate_depset, atom, "PDEPEND", False)
     _get_attr["license"] = partial(
-        generate_depset, str,
-        "LICENSE", True, element_func=intern)
+        generate_depset, str, "LICENSE", True, element_func=intern)
     _get_attr["fullslot"] = get_slot
     _get_attr["slot"] = lambda s: s.fullslot.partition('/')[0]
     _get_attr["subslot"] = get_subslot

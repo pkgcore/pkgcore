@@ -89,7 +89,7 @@ def write(tempspace, finalpath, pkg, cset=None, platform='', maintainer='', comp
     if maintainer:
         control['Maintainer'] = maintainer
     control['Description'] = pkg.description
-    pkgdeps = "%s" % (pkg.rdepends,)
+    pkgdeps = "%s" % (pkg.rdepend,)
     if (pkgdeps is not None and pkgdeps != ""):
         control.update(parsedeps(pkgdeps))
 

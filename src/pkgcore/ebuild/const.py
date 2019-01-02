@@ -20,9 +20,10 @@ incrementals = (
 incrementals_unfinalized = ("USE",)
 
 metadata_keys = (
-    "BDEPEND", "DEFINED_PHASES", "DEPEND", "DESCRIPTION", "EAPI", "HOMEPAGE",
-    "INHERITED", "IUSE", "KEYWORDS", "LICENSE", "PDEPEND", "PROPERTIES",
-    "RDEPEND", "REQUIRED_USE", "RESTRICT", "SLOT", "SRC_URI", "_eclasses_",
+    "BDEPEND", "DEPEND", "RDEPEND", "PDEPEND",
+    "DEFINED_PHASES", "DESCRIPTION", "EAPI", "HOMEPAGE",
+    "INHERITED", "IUSE", "KEYWORDS", "LICENSE", "PROPERTIES",
+    "REQUIRED_USE", "RESTRICT", "SLOT", "SRC_URI", "_eclasses_",
 )
 
 VCS_ECLASSES = frozenset([

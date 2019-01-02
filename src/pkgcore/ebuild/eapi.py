@@ -301,9 +301,10 @@ common_metadata_keys = common_mandatory_metadata_keys + (
 
 common_tracked_attributes = (
     "cflags", "cbuild", "chost", "ctarget", "cxxflags", "defined_phases",
-    "depends", "description", "eapi", "distfiles", "fullslot", "homepage", "inherited",
-    "iuse", "keywords", "ldflags", "license", "post_rdepends", "properties",
-    "rdepends", "restrict", "source_repository", "cbuild_depends",
+    "bdepend", "depend", "rdepend", "pdepend",
+    "description", "eapi", "distfiles", "fullslot", "homepage", "inherited",
+    "iuse", "keywords", "ldflags", "license", "properties",
+    "restrict", "source_repository",
 )
 
 common_archive_suffixes = (

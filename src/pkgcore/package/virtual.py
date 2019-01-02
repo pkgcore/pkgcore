@@ -31,9 +31,9 @@ class package(metadata.package):
 
     def __getattr__ (self, key):
         val = None
-        if key == "rdepends":
+        if key == "rdepend":
             val = self.provider
-        elif key in ("cbuild_depends", "depends", "post_rdepends", "provides"):
+        elif key in ("bdepend", "depends", "pdepend"):
             val = OrRestriction()
         elif key == "slot":
             val = f"{self.provider.category}-{self.version}"

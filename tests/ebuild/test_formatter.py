@@ -19,7 +19,7 @@ class FakeMutatedPkg(FakePkg):
     def __str__(self):
         # Yes this should be less hackish (and hardcoded values suck),
         # but we can't really subclass MutatedPkg so this will have to do
-        return f"MutatedPkg(built ebuild: {self.cpvstr}, overrides=('depends', 'rdepends'))"
+        return f"MutatedPkg(built ebuild: {self.cpvstr}, overrides=('depend', 'rdepend'))"
 
 class FakeEbuildSrc(FakePkg):
     def __str__(self):

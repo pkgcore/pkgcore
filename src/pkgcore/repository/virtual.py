@@ -62,9 +62,11 @@ class tree(prototype.tree):
 
 class InjectedPkg(pkg_base.wrapper):
 
-    __slots__ = ("repo", "repo_id", "built", "depends", "rdepends", "post_rdepends",
-                 "versioned_atom", "unversioned_atom", "cbuild_depends")
-    default_cbuild_depends = default_depends = default_rdepends = default_post_rdepends = DepSet()
+    __slots__ = (
+        "bdepend", "depend", "rdepend", "pdepend",
+        "repo", "repo_id", "built", "versioned_atom", "unversioned_atom",
+    )
+    default_bdepend = default_depend = default_rdepend = default_pdepend = DepSet()
     package_is_real = False
     is_supported = True
 
@@ -75,10 +77,10 @@ class InjectedPkg(pkg_base.wrapper):
         object.__setattr__(self, "built", repo.livefs)
         object.__setattr__(self, "versioned_atom", str(self._raw_pkg))
         object.__setattr__(self, "unversioned_atom", self._raw_pkg.key)
-        object.__setattr__(self, "cbuild_depends", self.default_cbuild_depends)
-        object.__setattr__(self, "depends", self.default_depends)
-        object.__setattr__(self, "rdepends", self.default_rdepends)
-        object.__setattr__(self, "post_rdepends", self.default_post_rdepends)
+        object.__setattr__(self, "bdepend", self.default_bdepend)
+        object.__setattr__(self, "depend", self.default_depend)
+        object.__setattr__(self, "rdepend", self.default_rdepend)
+        object.__setattr__(self, "pdepend", self.default_pdepend)
 
     @property
     def use(self):

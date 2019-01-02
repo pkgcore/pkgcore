@@ -15,11 +15,10 @@ from pkgcore.restrictions import packages
 class nodeps_repo(object):
     """
     repository wrapper that returns wrapped pkgs via
-    :obj:`MutatedPkg` that have their cbuild_depends/depends/rdepends/
-    post_rdepends wiped
+    :obj:`MutatedPkg` that have their bdepend/depend/rdepend/pdepend wiped
     """
 
-    default_cbuild_depends = default_depends = default_rdepends = default_post_rdepends = DepSet()
+    default_bdepend = default_depend = default_rdepend = default_pdepend = DepSet()
 
     def __init__(self, repo):
         """
@@ -29,10 +28,10 @@ class nodeps_repo(object):
 
     def itermatch(self, *a, **kwds):
         return (MutatedPkg(
-            x, overrides={"cbuild_depends": self.default_cbuild_depends,
-                          "depends": self.default_depends,
-                          "rdepends": self.default_rdepends,
-                          "post_rdepends": self.default_post_rdepends}
+            x, overrides={"bdepend": self.default_bdepend,
+                          "depend": self.default_depend,
+                          "rdepend": self.default_rdepend,
+                          "pdepend": self.default_pdepend}
             )
             for x in self.raw_repo.itermatch(*a, **kwds))
 

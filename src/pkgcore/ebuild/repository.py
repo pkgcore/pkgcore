@@ -613,9 +613,11 @@ class _ConfiguredTree(configured.tree):
     configurable = "use"
     config_wrappables = {
         x: klass.alias_method("evaluate_depset")
-        for x in ("depends", "rdepends", "post_rdepends", "fetchables",
-                  "license", "src_uri", "restrict", "required_use",
-                  "cbuild_depends")}
+        for x in (
+            "bdepend", "depend", "rdepend", "pdepend",
+            "fetchables", "license", "src_uri", "restrict", "required_use",
+        )
+    }
 
     def __init__(self, raw_repo, domain, domain_settings, fetcher=None):
         """

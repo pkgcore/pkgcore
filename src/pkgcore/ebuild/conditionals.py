@@ -3,7 +3,7 @@
 
 """DepSet parsing.
 
-Turns a DepSet (depends, rdepends, SRC_URI, license, etc) into
+Turns a DepSet (depend, rdepend, SRC_URI, license, etc) into
 appropriate conditionals.
 """
 

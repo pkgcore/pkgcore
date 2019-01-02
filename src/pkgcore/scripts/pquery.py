@@ -62,7 +62,7 @@ class DataSourceRestriction(values.base):
     __hash__ = object.__hash__
 
 
-dep_attrs = ['cbuild_depends', 'depends', 'rdepends', 'post_rdepends']
+dep_attrs = ['bdepend', 'depend', 'rdepend', 'pdepend']
 metadata_attrs = dep_attrs
 dep_attrs += list(f'raw_{x}' for x in dep_attrs)
 dep_formatted_attrs = dep_attrs + ['restrict']
@@ -700,7 +700,7 @@ def parse_revdep(value):
         values.AnyMatch(values.FunctionRestriction(targetatom.intersects)))
     return packages.OrRestriction(*list(
         packages.PackageRestriction(dep, val_restrict)
-        for dep in ('cbuild_depends', 'depends', 'rdepends', 'post_rdepends')))
+        for dep in ('bdepend', 'depend', 'rdepend', 'pdepend')))
 
 def _revdep_pkgs_match(pkgs, value):
     return any(value.match(pkg) for pkg in pkgs)
@@ -721,7 +721,7 @@ def revdep_pkgs_finalize(sequence, namespace):
         values.FunctionRestriction(partial(_revdep_pkgs_match, tuple(l))))
     r = values.FlatteningRestriction(atom.atom, any_restrict)
     return list(packages.PackageRestriction(dep, r)
-                for dep in ('cbuild_depends', 'depends', 'rdepends', 'post_rdepends'))
+                for dep in ('bdepend', 'depend', 'rdepend', 'pdepend'))
 
 @bind_add_query(
     '-S', '--description', action='append',
@@ -981,9 +981,9 @@ def _validate_args(parser, namespace):
             elif attr == 'allmetadata':
                 i = process_attrs(metadata_attrs)
             elif attr == 'alldepends':
-                i = ['cbuild_depends', 'depends', 'rdepends', 'post_rdepends']
+                i = ['bdepend', 'depend', 'rdepend', 'pdepend']
             elif attr == 'raw_alldepends':
-                i = ['raw_cbuild_depends', 'raw_depends', 'raw_rdepends', 'raw_post_rdepends']
+                i = ['raw_bdepend', 'raw_depend', 'raw_rdepend', 'raw_pdepend']
             else:
                 i = [attr]
             for attr in i:

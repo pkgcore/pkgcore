@@ -182,17 +182,17 @@ class TestBase(object):
         assert not self.get_pkg({'EAPI': '0.1'}).eapi.is_supported
         assert self.get_pkg({'EAPI': 'foon'}, suppress_unsupported=False).eapi is None
         with pytest.raises(errors.MetadataException):
-            getattr(self.get_pkg({'EAPI': 0, 'DEPEND': "d/b:0"}), 'depends')
+            getattr(self.get_pkg({'EAPI': 0, 'DEPEND': "d/b:0"}), 'depend')
         with pytest.raises(errors.MetadataException):
-            getattr(self.get_pkg({'EAPI': 0, 'RDEPEND': "d/b:0"}), 'rdepends')
+            getattr(self.get_pkg({'EAPI': 0, 'RDEPEND': "d/b:0"}), 'rdepend')
         with pytest.raises(errors.MetadataException):
-            getattr(self.get_pkg({'EAPI': 1, 'DEPEND': "d/b[x,y]"}), 'depends')
+            getattr(self.get_pkg({'EAPI': 1, 'DEPEND': "d/b[x,y]"}), 'depend')
         with pytest.raises(errors.MetadataException):
-            getattr(self.get_pkg({'EAPI': 1, 'DEPEND': "d/b::foon"}), 'depends')
-        assert self.get_pkg({'EAPI': 2, 'DEPEND': 'a/b[x=]'}).depends.node_conds
+            getattr(self.get_pkg({'EAPI': 1, 'DEPEND': "d/b::foon"}), 'depend')
+        assert self.get_pkg({'EAPI': 2, 'DEPEND': 'a/b[x=]'}).depend.node_conds
         pkg = self.get_pkg({'EAPI': 1, 'DEPEND': 'a/b[x=]'})
         with pytest.raises(errors.MetadataException):
-            getattr(pkg, 'depends')
+            getattr(pkg, 'depend')
 
     def test_get_parsed_eapi(self, tmpdir):
         def _path(self, cpv, eapi_str):
@@ -240,29 +240,28 @@ class TestBase(object):
         if expected is None:
             expected = depset
         if data_name is None:
-            data_name = attr.rstrip('s').upper()
+            data_name = attr.upper()
         o = self.get_pkg({data_name: depset, 'EAPI': eapi})
         assert str(getattr(o, attr)) == expected
         o = self.get_pkg({data_name: '', 'EAPI': eapi})
         assert str(getattr(o, attr)) == ''
-        with pytest.raises(errors.MetadataException):
-            getattr(self.get_pkg({data_name: '|| ( ', 'EAPI': eapi}), attr)
+        if expected:
+            with pytest.raises(errors.MetadataException):
+                getattr(self.get_pkg({data_name: '|| ( ', 'EAPI': eapi}), attr)
 
-    for x in ('depends', 'rdepends'):
+    for x in ('depend', 'rdepend'):
         locals()[f'test_{x}'] = post_curry(generic_check_depends,
             'dev-util/diffball || ( dev-util/foo x86? ( dev-util/bsdiff ) )',
              x)
     del x
-    test_post_rdepends = post_curry(generic_check_depends,
-        'dev-util/diffball x86? ( virtual/boo )',
-        'post_rdepends', data_name='PDEPEND')
-    # BDEPEND in EAPI 7, fallback to DEPEND in EAPI 0
-    test_cbuild_depends = post_curry(generic_check_depends,
-        'dev-util/diffball x86? ( virtual/boo )',
-        'cbuild_depends', data_name='BDEPEND', eapi='7')
-    test_cbuild_depends = post_curry(generic_check_depends,
-        'dev-util/diffball x86? ( virtual/boo )',
-        'cbuild_depends', data_name='DEPEND', eapi='0')
+    test_pdepend = post_curry(generic_check_depends,
+        'dev-util/diffball x86? ( virtual/boo )', 'pdepend')
+    # BDEPEND in EAPI 7
+    test_bdepend = post_curry(generic_check_depends,
+        'dev-util/diffball x86? ( virtual/boo )', 'bdepend', eapi='7')
+    # BDEPEND is ignored in EAPIs <= 6
+    test_bdepend = post_curry(generic_check_depends,
+        'dev-util/diffball x86? ( virtual/boo )', 'bdepend', expected='', eapi='0')
 
     def test_fetchables(self):
         l = []

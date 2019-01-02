@@ -99,14 +99,14 @@ class choice_point(object):
 
     def _reset_iters(self):
         """
-        Reset cbuild_depends, depends, rdepends, and post_rdepends properties
+        Reset bdepend, depend, rdepend, and pdepend properties
         to current matches' related attributes.
         """
         cur = self.matches_cur
-        self._bdeps = cur.depends.cnf_solutions()
-        self._deps = cur.depends.cnf_solutions()
-        self._rdeps = cur.rdepends.cnf_solutions()
-        self._prdeps = cur.post_rdepends.cnf_solutions()
+        self._bdeps = cur.bdepend.cnf_solutions()
+        self._deps = cur.depend.cnf_solutions()
+        self._rdeps = cur.rdepend.cnf_solutions()
+        self._prdeps = cur.pdepend.cnf_solutions()
 
     slot = klass.alias_attr("current_pkg.slot")
     key = klass.alias_attr("current_pkg.key")
@@ -137,28 +137,28 @@ class choice_point(object):
         return self.reduce_atoms([])
 
     @property
-    def cbuild_depends(self):
+    def bdepend(self):
         """Build time dependencies for CBUILD."""
         if not self:
             raise IndexError("no more solutions remain")
         return self._bdeps
 
     @property
-    def depends(self):
+    def depend(self):
         """Build time dependencies for CHOST."""
         if not self:
             raise IndexError("no more solutions remain")
         return self._deps
 
     @property
-    def rdepends(self):
+    def rdepend(self):
         """Runtime dependencies."""
         if not self:
             raise IndexError("no more solutions remain")
         return self._rdeps
 
     @property
-    def post_rdepends(self):
+    def pdepend(self):
         """Post merge dependencies."""
         if not self:
             raise IndexError("no more solutions remain")

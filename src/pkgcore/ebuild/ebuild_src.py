@@ -211,7 +211,7 @@ def get_subslot(self):
 def get_bdepend(self):
     if "BDEPEND" in self.eapi.metadata_keys:
         return generate_depset(atom, "BDEPEND", False, self)
-    return generate_depset(atom, None, False, self)
+    return conditionals.DepSet()
 
 
 def rewrite_restrict(restrict):

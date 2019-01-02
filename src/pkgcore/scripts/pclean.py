@@ -473,7 +473,7 @@ def _remove(options, out, err):
     if sys.stdout.isatty():
         # TODO: parallelize this
         for func, target in options.remove:
-            if options.pretend and not options.quiet:
+            if options.pretend and options.verbosity >= 0:
                 out.write(f"Would remove {target}")
             elif options.verbosity > 0:
                 out.write(f"Removing {target}")

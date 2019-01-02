@@ -475,13 +475,13 @@ def _remove(options, out, err):
         for func, target in options.remove:
             if options.pretend and not options.quiet:
                 out.write(f"Would remove {target}")
-            elif options.verbose:
+            elif options.verbosity > 0:
                 out.write(f"Removing {target}")
             try:
                 if not options.pretend:
                     func(target)
             except OSError as e:
-                if options.verbose or not options.quiet:
+                if options.verbosity >= 0:
                     err.write(f"{options.prog}: failed to remove {target!r}: {e.strerror}")
                 ret = 1
                 continue

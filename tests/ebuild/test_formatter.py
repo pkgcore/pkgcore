@@ -179,7 +179,7 @@ class CountingFormatterTest(BaseFormatterTest):
     endsuffix = "\n"
 
     def newFormatter(self, **kwargs):
-        kwargs.setdefault('verbose', True)
+        kwargs.setdefault('verbosity', 1)
         return BaseFormatterTest.newFormatter(self, **kwargs)
 
     def assertEnd(self, *args, **kwargs):
@@ -388,7 +388,7 @@ class TestPortageFormatter(BaseFormatterTest, TestCase):
         return BaseFormatterTest.newFormatter(self, **kwargs)
 
     def repo_id(self, repo):
-        if getattr(self.formatter, 'verbose', False):
+        if getattr(self.formatter, 'verbosity', 0):
             return '::' + repo.repo_id
         return ''
 
@@ -651,7 +651,7 @@ class TestPortageFormatter(BaseFormatterTest, TestCase):
 class TestPortageVerboseFormatter(TestPortageFormatter):
 
     def newFormatter(self, **kwargs):
-        kwargs.setdefault("verbose", True)
+        kwargs.setdefault("verbosity", 1)
         kwargs.setdefault("unstable_arch", "~amd64")
         return TestPortageFormatter.newFormatter(self, **kwargs)
 

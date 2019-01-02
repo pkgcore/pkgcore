@@ -30,11 +30,11 @@ def main(options, out, err):
     source, target = options.source, options.target
     if not target.autocommits:
         target.sync_rate = 1000
-    if options.verbose:
+    if options.verbosity > 0:
         out.write("grabbing target's existing keys")
     valid = set()
     start = time.time()
-    if options.verbose:
+    if options.verbosity > 0:
         for k, v in source.items():
             out.write(f"updating {k}")
             target[k] = v
@@ -46,9 +46,9 @@ def main(options, out, err):
 
     for x in target.keys():
         if x not in valid:
-            if options.verbose:
+            if options.verbosity > 0:
                 out.write(f"deleting {x}")
             del target[x]
 
-    if options.verbose:
+    if options.verbosity > 0:
         out.write("took %i seconds" % int(time.time() - start))

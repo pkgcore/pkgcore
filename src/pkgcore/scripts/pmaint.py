@@ -61,7 +61,6 @@ sync.add_argument(
 @sync.bind_main_func
 def sync_main(options, out, err):
     """Update local repos to match their remotes."""
-    verbosity = -1 if options.quiet else options.verbose
     succeeded, failed = [], []
 
     for repo_name, repo in iter_stable_unique(options.repos):
@@ -74,7 +73,7 @@ def sync_main(options, out, err):
         out.write(f"*** syncing {repo_name}")
         ret = False
         try:
-            ret = repo.operations.sync(verbosity=verbosity)
+            ret = repo.operations.sync(verbosity=options.verbosity)
         except OperationError:
             pass
         if not ret:
@@ -299,7 +298,7 @@ def regen_main(options, out, err):
             eclass_caching=(not options.disable_eclass_caching))
         end_time = time.time()
 
-        if options.verbose:
+        if options.verbosity > 0:
             out.write(
                 "finished %d nodes in %.2f seconds" %
                 (len(repo), end_time - start_time))

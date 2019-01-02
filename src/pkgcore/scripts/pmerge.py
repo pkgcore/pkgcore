@@ -342,7 +342,7 @@ def unmerge(out, err, installed_repos, targets, options, formatter, world_set=No
         out.prefix = []
 
         repo_obs = observer.repo_observer(
-            observer.formatter_output(out), verbose=options.verbose, debug=options.debug)
+            observer.formatter_output(out), verbosity=options.verbosity, debug=options.debug)
 
         if options.pretend:
             return
@@ -570,11 +570,11 @@ def load_world(namespace, attr):
 
 def display_pkgsets(out, options):
     for name, kls in sorted(options.config.pkgset.items()):
-        if options.verbose:
+        if options.verbosity > 0:
             out.write(name)
             out.write('\n'.join('  ' + dedent(x) for x in kls.__doc__.split('\n')))
             out.write()
-            if options.verbose > 1:
+            if options.verbosity > 1:
                 out.write('\n'.join('  ' + str(pkg) for pkg in sorted(kls)))
                 out.write()
         else:
@@ -603,7 +603,7 @@ def main(options, out, err):
         use_expand_hidden=domain.profile.use_expand_hidden,
         pkg_get_use=domain.get_package_use_unconfigured,
         world_list=world_list,
-        verbose=options.verbose,
+        verbosity=options.verbosity,
         installed_repos=domain.all_installed_repos,
         distdir=domain.fetcher.get_storage_path(),
         quiet_repo_display=options.quiet_repo_display)
@@ -799,7 +799,7 @@ def main(options, out, err):
                 return 1
             out.write()
         repo_obs = observer.repo_observer(
-            observer.formatter_output(out), verbose=options.verbose, debug=options.debug)
+            observer.formatter_output(out), verbosity=options.verbosity, debug=options.debug)
         do_unmerge(options, out, err, installed_repos.real.combined, wipes, world_set, repo_obs)
         return 0
 
@@ -817,9 +817,9 @@ def main(options, out, err):
     changes = resolver_inst.state.ops(only_real=True)
 
     build_obs = observer.build_observer(
-        observer.formatter_output(out), verbose=options.verbose, debug=options.debug)
+        observer.formatter_output(out), verbosity=options.verbosity, debug=options.debug)
     repo_obs = observer.repo_observer(
-        observer.formatter_output(out), verbose=options.verbose, debug=options.debug)
+        observer.formatter_output(out), verbosity=options.verbosity, debug=options.debug)
 
     # don't run pkg_pretend if only fetching
     if not options.fetchonly:
@@ -846,7 +846,7 @@ def main(options, out, err):
         out.write(out.bold, 'Took %.2f' % (vdb_time,), out.reset,
                   ' seconds to preload vdb state')
 
-    if not changes and options.verbose:
+    if not changes and options.verbosity > 0:
         # show skipped virtuals
         virtual_pkgs = set()
         for x in atoms:
@@ -862,7 +862,7 @@ def main(options, out, err):
         return
 
     if options.pretend:
-        if options.verbose:
+        if options.verbosity > 0:
             out.write(
                 out.bold, ' * ', out.reset,
                 "resolver plan required %i ops (%.2f seconds)" %

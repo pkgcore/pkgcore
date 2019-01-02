@@ -60,7 +60,7 @@ class syncer(object):
         return None
 
     def __init__(self, path, uri, default_verbosity=0, opts=''):
-        self.verbose = default_verbosity
+        self.verbosity = default_verbosity
         self.basedir = path.rstrip(os.path.sep) + os.path.sep
         self.local_user, self.uri = self.split_users(uri)
         self.opts = opts.split()
@@ -97,7 +97,7 @@ class syncer(object):
         if self.forcable and force:
             kwds["force"] = True
         if verbosity is None:
-            verbosity = self.verbose
+            verbosity = self.verbosity
         # output_fd is harded coded as stdout atm.
         return self._sync(verbosity, 1, **kwds)
 

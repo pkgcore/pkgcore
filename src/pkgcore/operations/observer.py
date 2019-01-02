@@ -97,9 +97,9 @@ class file_handle_output(null_output):
 
 class phase_observer(object):
 
-    def __init__(self, output, verbose=None, debug=False):
+    def __init__(self, output, verbosity=None, debug=False):
         self._output = output
-        self._verbose = verbose
+        self._verbosity = verbosity if verbosity is not None else 0
         self._debug = debug
 
     def phase_start(self, phase):

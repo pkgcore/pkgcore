@@ -135,8 +135,8 @@ class CountingFormatter(Formatter):
     """Subclass for formatters that count packages"""
 
     def __init__(self, **kwargs):
-        kwargs.setdefault("verbose", False)
-        Formatter.__init__(self, **kwargs)
+        kwargs.setdefault("verbosity", 0)
+        super().__init__(**kwargs)
         self.package_data = defaultdictkey(lambda x: 0)
 
         # total download size for all pkgs to be merged
@@ -149,7 +149,7 @@ class CountingFormatter(Formatter):
     def end(self):
         """Output total package, operation, and download size counts."""
         self.out.write()
-        if self.verbose:
+        if self.verbosity > 0:
             total = sum(self.package_data.values())
             self.out.write(
                 f"Total: {total} package{pluralism(total)}", autoline=False)
@@ -190,7 +190,7 @@ class PortageFormatter(CountingFormatter):
     def __init__(self, **kwargs):
         kwargs.setdefault("use_expand", set())
         kwargs.setdefault("use_expand_hidden", set())
-        CountingFormatter.__init__(self, **kwargs)
+        super().__init__(**kwargs)
         self.use_splitter = use_expand_filter(
             self.use_expand, self.use_expand_hidden)
         # Map repo location to an index.
@@ -277,7 +277,7 @@ class PortageFormatter(CountingFormatter):
         else:
             logger.warning("unformattable op type: desc(%r), %r", op.desc, op)
 
-        if self.verbose:
+        if self.verbosity > 0:
             if (self.unstable_arch in op.pkg.keywords and
                     self.unstable_arch not in op.pkg.repo.domain_settings['ACCEPT_KEYWORDS']):
                 op_chars[6] = [out.fg('yellow'), out.bold, '~', out.reset]
@@ -295,7 +295,7 @@ class PortageFormatter(CountingFormatter):
         self.visit_op(op_type)
 
         pkg = [op.pkg.cpvstr]
-        if self.verbose:
+        if self.verbosity > 0:
             if op.pkg.subslot != op.pkg.slot:
                 pkg.append(f":{op.pkg.slot}/{op.pkg.subslot}")
             elif op.pkg.slot != '0':
@@ -307,7 +307,7 @@ class PortageFormatter(CountingFormatter):
         installed = []
         if op.desc == 'replace':
             old_pkg = [op.old_pkg.fullver]
-            if self.verbose:
+            if self.verbosity > 0:
                 if op.old_pkg.subslot != op.old_pkg.slot:
                     old_pkg.append(f":{op.old_pkg.slot}/{op.old_pkg.subslot}")
                 elif op.old_pkg.slot != '0':
@@ -317,7 +317,7 @@ class PortageFormatter(CountingFormatter):
             if op_type != 'replace' or op.pkg.source_repository != op.old_pkg.source_repository:
                 installed = ''.join(old_pkg)
         elif op_type == 'slotted_add':
-            if self.verbose:
+            if self.verbosity > 0:
                 pkgs = sorted(
                     f"{x.fullver}:{x.slot}" for x in
                     self.installed_repos.match(op.pkg.unversioned_atom))
@@ -357,7 +357,7 @@ class PortageFormatter(CountingFormatter):
             self.format_use(expand, *flaglists)
 
         # output download size
-        if self.verbose:
+        if self.verbosity > 0:
             if not op.pkg.built:
                 downloads = set(
                     f for f in op.pkg.distfiles
@@ -414,7 +414,7 @@ class PortageFormatter(CountingFormatter):
                 expanded_flag = '_'.join((attr.lower(), flag)) if attr != 'use' else flag
                 if flag in old_enabled:
                     # unchanged
-                    if self.verbose:
+                    if self.verbosity > 0:
                         if expanded_flag in self.pkg_forced_use:
                             flags.extend(('(', red, bold, flag, reset, ')', ' '))
                         else:
@@ -436,7 +436,7 @@ class PortageFormatter(CountingFormatter):
                 expanded_flag = '_'.join((attr.lower(), flag)) if attr != 'use' else flag
                 if flag in old_disabled:
                     # unchanged
-                    if self.verbose:
+                    if self.verbosity > 0:
                         if expanded_flag in self.pkg_disabled_use:
                             flags.extend(('(', blue, bold, '-', flag, reset, ')', ' '))
                         else:
@@ -454,7 +454,7 @@ class PortageFormatter(CountingFormatter):
                     else:
                         flags.extend((yellow, bold, '-', flag, reset, '%', ' '))
 
-            if self.verbose:
+            if self.verbosity > 0:
                 for flag in sorted(removed):
                     if flag in old_enabled:
                         flags.extend(('(', yellow, bold, '-', flag, reset, '%*)', ' '))
@@ -486,7 +486,7 @@ class PortageFormatter(CountingFormatter):
     def end(self):
         """Output package repository list."""
         out = self.out
-        if self.verbose:
+        if self.verbosity > 0:
             super().end()
             out.write()
             if self.quiet_repo_display:
@@ -513,8 +513,8 @@ class PaludisFormatter(CountingFormatter):
     """
 
     def __init__(self, **kwargs):
-        kwargs.setdefault("verbose", True)
-        CountingFormatter.__init__(self, **kwargs)
+        kwargs.setdefault("verbosity", 1)
+        super().__init__(**kwargs)
 
     def format(self, op):
         out = self.out
@@ -591,6 +591,6 @@ paludis_factory = formatter_factory_generator(PaludisFormatter)
 def portage_verbose_factory():
     """Version of portage formatter that is always in verbose mode."""
     def factory(**kwargs):
-        kwargs['verbose'] = True
+        kwargs['verbosity'] = 1
         return PortageFormatter(**kwargs)
     return factory

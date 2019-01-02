@@ -614,11 +614,8 @@ class Tool(tool.Tool):
         options = super().parse_args(*args, **kwargs)
 
         if self.parser.debug:
-            # verbosity level affects debug output
-            verbose = getattr(options, 'verbose', None)
-            debug_verbosity = verbose if verbose is not None else 1
-            # pass down debug setting
-            os.environ['PKGCORE_DEBUG'] = str(debug_verbosity)
+            # pass down verbosity level to affect debug output
+            os.environ['PKGCORE_DEBUG'] = str(options.verbosity)
 
         if not getattr(options, 'color', True):
             # pass down color setting

@@ -295,7 +295,7 @@ def format_attr(config, out, pkg, attr):
 
 def print_package(options, out, err, pkg):
     """Print a package."""
-    if options.verbose:
+    if options.verbosity > 0:
         green = out.fg('green')
         out.write(out.bold, green, ' * ', out.fg(), pkg.cpvstr)
         out.wrap = True
@@ -415,7 +415,7 @@ def print_package(options, out, err, pkg):
 
 def print_packages_noversion(options, out, err, pkgs):
     """Print a summary of all versions for a single package."""
-    if options.verbose:
+    if options.verbosity > 0:
         green = out.fg('green')
         out.write(out.bold, green, ' * ', out.fg(), pkgs[0].key)
         out.wrap = True
@@ -989,7 +989,7 @@ def _validate_args(parser, namespace):
             for attr in i:
                 yield attr
 
-    attrs = ['repo', 'description', 'homepage', 'license'] if namespace.verbose else []
+    attrs = ['repo', 'description', 'homepage', 'license'] if namespace.verbosity > 0 else []
     attrs.extend(process_attrs(namespace.attr))
 
     # finally, uniquify the attrs.

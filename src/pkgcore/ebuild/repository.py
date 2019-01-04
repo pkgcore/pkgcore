@@ -8,7 +8,7 @@ Ebuild repository, specific to gentoo ebuild trees.
 __all__ = ("tree", "ProvidesRepo",)
 
 from functools import partial, wraps
-from itertools import filterfalse
+from itertools import chain, filterfalse
 import os
 import stat
 from sys import intern
@@ -368,6 +368,12 @@ class _UnconfiguredTree(prototype.tree):
 
     repo_id = klass.alias_attr("config.repo_id")
     repo_name = klass.alias_attr("config.repo_name")
+
+    @klass.jit_attr
+    def known_arches(self):
+        """Return all known arches for a repo (including masters)."""
+        return frozenset(chain.from_iterable(
+            r.config.known_arches for r in self.trees))
 
     def path_restrict(self, path):
         """Return a restriction from a given path in a repo.

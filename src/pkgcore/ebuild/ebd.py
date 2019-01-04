@@ -571,7 +571,7 @@ class buildable(ebd, setup_mixin, format.build):
             self.run_test = False
 
         # XXX minor hack
-        path = self.env["PATH"].split(":")
+        path = self.env["PATH"].split(os.pathsep)
 
         for s, default in (("DISTCC", ".distcc"), ("CCACHE", "ccache")):
             b = (self.feat_or_bool(s, domain_settings) and

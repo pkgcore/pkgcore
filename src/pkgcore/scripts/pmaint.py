@@ -17,7 +17,6 @@ from pkgcore.operations import OperationError
 
 demandload(
     'collections:defaultdict',
-    'errno',
     'multiprocessing:cpu_count',
     'os',
     're',
@@ -141,16 +140,16 @@ def copy_main(options, out, err):
             for fsobj in pkg.contents:
                 try:
                     new_contents.add(livefs.gen_obj(fsobj.location))
-                except OSError as oe:
-                    if oe.errno != errno.ENOENT:
-                        err.write(
-                            f"failed accessing fs obj {fsobj!r}; {oe}\n"
-                            "aborting this copy")
-                        failures = True
-                        new_contents = None
-                        break
+                except FileNotFoundError:
                     err.write(
                         f"warning: dropping fs obj {fsobj!r} since it doesn't exist")
+                except OSError as oe:
+                    err.write(
+                        f"failed accessing fs obj {fsobj!r}; {oe}\n"
+                        "aborting this copy")
+                    failures = True
+                    new_contents = None
+                    break
             if new_contents is None:
                 continue
             pkg = mutated.MutatedPkg(pkg, {'contents': new_contents})
@@ -374,10 +373,8 @@ def env_update_main(options, out, err):
     out.write(f"updating env for {root!r}...")
     try:
         triggers.perform_env_update(root, skip_ldso_update=options.skip_ldconfig)
-    except IOError as e:
-        if e.errno == errno.EACCES:
-            env_update.error("failed updating env, lacking permissions")
-        raise
+    except PermissionError:
+        env_update.error("failed updating env, lacking permissions")
     if not options.skip_ldconfig:
         out.write(f"update ldso cache/elf hints for {root!r}...")
         merge_triggers.update_elf_hints(root)

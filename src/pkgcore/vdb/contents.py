@@ -11,7 +11,6 @@ from pkgcore.fs import fs
 from pkgcore.fs.contents import contentsSet
 
 demandload(
-    'errno',
     'os',
     'stat',
     'snakeoil.chksum:get_handler',
@@ -28,9 +27,7 @@ class LookupFsDev(fs.fsDev):
         if any(x not in kwds for x in ("major", "minor", "mode")):
             try:
                 st = os.lstat(path)
-            except OSError as oe:
-                if oe.errno != errno.ENOENT:
-                    raise
+            except FileNotFoundError:
                 st = None
             if st is None or any(f(st.st_mode) for f in
                 (stat.S_ISREG, stat.S_ISDIR, stat.S_ISFIFO)):

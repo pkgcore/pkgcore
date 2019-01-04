@@ -33,7 +33,6 @@ from pkgcore.config import ConfigHint
 from pkgcore.merge import errors, const
 
 demandload(
-    'errno',
     'math:floor',
     'os',
     "platform",
@@ -222,9 +221,7 @@ class mtime_watcher(object):
         for x in locations:
             try:
                 st = stat_func(x)
-            except OSError as oe:
-                if not oe.errno == errno.ENOENT:
-                    raise
+            except FileNotFoundError:
                 continue
             obj = gen_obj(x, stat=st)
             if fs.isdir(obj):
@@ -313,9 +310,7 @@ class ldconfig(base):
 
         try:
             l = [x.lstrip(os.path.sep) for x in iter_read_bash(fp)]
-        except IOError as oe:
-            if oe.errno != errno.ENOENT:
-                raise
+        except FileNotFoundError:
             self._mk_ld_so_conf(fp)
             # fall back to an educated guess.
             l = self.default_ld_path
@@ -410,10 +405,8 @@ class InfoRegen(base):
         ignores = ("dir", "dir.old")
         try:
             files = listdir_files(basepath)
-        except OSError as oe:
-            if oe.errno == errno.ENOENT:
-                return
-            raise
+        except FileNotFoundError:
+            return
 
         if self.should_skip_directory(basepath, files):
             return

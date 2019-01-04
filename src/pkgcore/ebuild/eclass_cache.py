@@ -20,7 +20,6 @@ from snakeoil.weakrefs import WeakValCache
 from pkgcore.config import ConfigHint
 
 demandload(
-    "errno",
     "os",
     "snakeoil.mappings:StackedDict",
     "snakeoil.osutils:normpath",
@@ -101,9 +100,7 @@ class cache(base):
         eclass_len = len(".eclass")
         try:
             files = listdir_files(self.eclassdir)
-        except EnvironmentError as e:
-            if e.errno not in (errno.ENOENT, errno.ENOTDIR):
-                raise
+        except (FileNotFoundError, NotADirectoryError):
             return ImmutableDict()
         for y in files:
             if not y.endswith(".eclass"):

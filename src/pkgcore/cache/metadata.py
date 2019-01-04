@@ -8,7 +8,6 @@ cache backend designed for rsynced tree's pregenerated metadata.
 
 __all__ = ("database", "paludis_flat_list", "protective_database")
 
-import errno
 import os
 
 from snakeoil.osutils import pjoin
@@ -106,14 +105,14 @@ class database(flat_hash.database):
             self.location, cpv[:s], ".update.%i.%s" % (os.getpid(), cpv[s+1:]))
         try:
             myf = open(fp, "w")
-        except EnvironmentError as e:
-            if e.errno != errno.ENOENT:
-                raise errors.CacheCorruption(cpv, e) from e
+        except FileNotFoundError:
             try:
                 self._ensure_dirs(cpv)
                 myf = open(fp, "w")
             except EnvironmentError as e:
                 raise errors.CacheCorruption(cpv, e) from e
+        except EnvironmentError as e:
+            raise errors.CacheCorruption(cpv, e) from e
 
         count = 0
         for idx, key in self.hardcoded_auxdbkeys_order:

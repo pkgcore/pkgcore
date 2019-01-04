@@ -20,7 +20,6 @@ from snakeoil.sequences import iflatten_instance
 from pkgcore.config import configurable
 
 demandload(
-    'errno',
     'os',
     'snakeoil.mappings:defaultdictkey',
     'snakeoil.osutils:pjoin,sizeof_fmt',

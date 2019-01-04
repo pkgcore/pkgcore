@@ -177,12 +177,13 @@ def do_link(src, trg):
     try:
         os.link(src.location, trg.location)
         return True
+    except FileExistsError:
+        pass
     except EnvironmentError as e:
         if e.errno == errno.EXDEV:
             # hardlink is impossible, force copyfile
             return False
-        elif e.errno != errno.EEXIST:
-            raise
+        raise
 
     path = trg.location + '#new'
     unlink_if_exists(path)
@@ -255,15 +256,11 @@ def merge_contents(cset, offset=None, callback=None):
                 # that aren't dirs or symlinks to dirs
                 raise CannotOverwrite(x.location, obj)
             ensure_perms(x, obj)
-        except OSError as oe:
-            if oe.errno != errno.ENOENT:
-                raise
+        except FileNotFoundError:
             try:
                 # we do this form to catch dangling symlinks
                 mkdir(x)
-            except OSError as oe:
-                if oe.errno != errno.EEXIST:
-                    raise
+            except FileExistsError:
                 os.unlink(x.location)
                 mkdir(x)
             ensure_perms(x)

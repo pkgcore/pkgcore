@@ -6,7 +6,6 @@ __all__ = (
     "UserProfile",
 )
 
-import errno
 from functools import partial
 from itertools import chain
 import os
@@ -91,13 +90,11 @@ def _load_and_invoke(func, filename, handler, fallback, read_func,
         if self.pms_strict or not allow_recurse:
             try:
                 data = read_func(base, True, True, True)
-            except EnvironmentError as e:
-                if errno.EISDIR == e.errno:
-                    raise ProfileError(self.path, filename,
-                        "path is a directory, but this profile is PMS format- "
-                        "directories aren't allowed.  See layout.conf profile-formats "
-                        "to enable directory support") from e
-                raise
+            except IsADirectoryError as e:
+                raise ProfileError(self.path, filename,
+                    "path is a directory, but this profile is PMS format- "
+                    "directories aren't allowed.  See layout.conf profile-formats "
+                    "to enable directory support") from e
         else:
             data = []
             profile_len = len(profile_path) + 1
@@ -130,9 +127,7 @@ _make_incrementals_dict = partial(IncrementalsDict, const.incrementals)
 def _open_utf8(path, *args):
     try:
         return open(path, 'r', encoding='utf8')
-    except EnvironmentError as e:
-        if e.errno != errno.ENOENT:
-            raise
+    except FileNotFoundError:
         return None
 
 

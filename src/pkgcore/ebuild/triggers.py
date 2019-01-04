@@ -12,7 +12,6 @@ __all__ = (
     "InfoRegen", "SFPerms", "FixImageSymlinks", "generate_triggers",
 )
 
-import errno
 import os
 
 from snakeoil.bash import read_bash_dict
@@ -50,9 +49,8 @@ def collapse_envd(base):
     collapsed_d = {}
     try:
         env_d_files = sorted(listdir_files(base))
-    except OSError as oe:
-        if oe.errno != errno.ENOENT:
-            raise
+    except FileNotFoundError:
+        pass
     else:
         for x in env_d_files:
             if x.endswith(".bak") or x.endswith("~") or x.startswith("._cfg") \
@@ -250,9 +248,7 @@ class ConfigProtectInstall(triggers.base):
             try:
                 existing = sorted(x for x in listdir_files(dir_loc)
                                   if x.startswith("._cfg"))
-            except OSError as oe:
-                if oe.errno != errno.ENOENT:
-                    raise
+            except FileNotFoundError:
                 # this shouldn't occur.
                 continue
 
@@ -332,9 +328,8 @@ class ConfigProtectUninstall(triggers.base):
                         # chksum differs.  file stays.
                         remove.append(recorded_ent)
                 # If a file doesn't exist we don't need to remove it
-                except IOError as e:
-                    if e.errno not in (errno.ENOENT, errno.ENOTDIR):
-                        raise
+                except (FileNotFoundError, NotADirectoryError):
+                    pass
 
         for x in remove:
             del uninstall_cset[x]

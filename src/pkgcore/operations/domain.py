@@ -11,7 +11,6 @@ from snakeoil.demandload import demandload
 from snakeoil.dependant_methods import ForcedDepends
 
 demandload(
-    'errno',
     "shutil",
     "tempfile",
     'snakeoil:osutils',
@@ -103,9 +102,8 @@ class base(object, metaclass=ForcedDepends):
         if self.tempspace:
             try:
                 shutil.rmtree(self.tempspace)
-            except EnvironmentError as e:
-                if e.errno != errno.ENOENT:
-                    raise
+            except FileNotFoundError:
+                pass
         self.tempspace = None
         return True
 

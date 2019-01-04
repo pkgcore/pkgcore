@@ -23,7 +23,6 @@ from pkgcore.config import ConfigHint
 from pkgcore.repository import syncable
 
 demandload(
-    'errno',
     'os',
     'lxml:etree',
     'snakeoil.bash:BashParseError,iter_read_bash,read_dict',
@@ -149,9 +148,7 @@ class LocalMetadataXml(MetadataXml):
     def _parse_xml(self):
         try:
             MetadataXml._parse_xml(self, open(self._source, "rb", 32768))
-        except EnvironmentError as oe:
-            if oe.errno != errno.ENOENT:
-                raise
+        except FileNotFoundError:
             self._maintainers = ()
             self._local_use = mappings.ImmutableDict()
             self._longdescription = None
@@ -237,10 +234,8 @@ class Licenses(object, metaclass=WeakInstMeta):
             raise KeyError(license)
         try:
             return open(pjoin(self.licenses_dir, license)).read()
-        except EnvironmentError as e:
-            if e.errno == errno.ENOENT:
-                raise KeyError(license)
-            raise
+        except FileNotFoundError:
+            raise KeyError(license)
 
     def __len__(self):
         return len(self.licenses)
@@ -336,9 +331,7 @@ class BundledProfiles(object):
                 # into it.
                 d[key].append(_KnownProfile(
                     '/'.join(filter(None, profile.split('/'))), status))
-        except EnvironmentError as e:
-            if e.errno != errno.ENOENT:
-                raise
+        except FileNotFoundError:
             logger.debug(f"No profile descriptions found at {fp!r}")
         return mappings.ImmutableDict(
             (k, tuple(sorted(v))) for k, v in d.items())
@@ -482,9 +475,7 @@ class RepoConfig(syncable.tree, metaclass=WeakInstMeta):
         try:
             return frozenset(iter_read_bash(
                 pjoin(self.profiles_base, 'arch.list')))
-        except EnvironmentError as e:
-            if e.errno != errno.ENOENT:
-                raise
+        except FileNotFoundError:
             return frozenset()
 
     @klass.jit_attr
@@ -513,9 +504,7 @@ class RepoConfig(syncable.tree, metaclass=WeakInstMeta):
         base = pjoin(self.profiles_base, 'desc')
         try:
             targets = sorted(listdir_files(base))
-        except EnvironmentError as e:
-            if e.errno != errno.ENOENT:
-                raise
+        except FileNotFoundError:
             return ()
 
         def f():
@@ -538,9 +527,8 @@ class RepoConfig(syncable.tree, metaclass=WeakInstMeta):
                 key, val = line.split(None, 1)
                 key = converter(key)
                 yield key[0], (key[1], val.split('-', 1)[1].strip())
-        except EnvironmentError as e:
-            if e.errno != errno.ENOENT:
-                raise
+        except FileNotFoundError:
+            pass
         except ValueError as e:
             if line is None:
                 raise
@@ -558,9 +546,8 @@ class RepoConfig(syncable.tree, metaclass=WeakInstMeta):
         try:
             # any files existing means it's not empty
             result = not listdir(self.location)
-        except EnvironmentError as e:
-            if e.errno != errno.ENOENT:
-                raise
+        except FileNotFoundError:
+            pass
 
         if result:
             logger.debug(f"repo is empty: {self.location!r}")
@@ -604,7 +591,5 @@ class RepoConfig(syncable.tree, metaclass=WeakInstMeta):
             if not eapi.is_supported:
                 raise ValueError(f"unsupported eapi {data[0]!r}: {path!r}")
             return eapi
-        except EnvironmentError as e:
-            if e.errno != errno.ENOENT:
-                raise
+        except FileNotFoundError:
             return get_eapi('0')

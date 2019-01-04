@@ -18,7 +18,6 @@ from snakeoil.mappings import ImmutableDict, StackedDict
 from pkgcore import cache
 
 demandload(
-    'errno',
     'operator:itemgetter',
     'time:time',
     'snakeoil.chksum:get_chksums',
@@ -118,10 +117,8 @@ class PackagesCacheV0(cache.bulk):
     def _read_data(self):
         try:
             handle = self._handle()
-        except EnvironmentError as e:
-            if e.errno == errno.ENOENT:
-                return {}
-            raise
+        except FileNotFoundError:
+            return {}
         self.preamble = self.read_preamble(handle)
 
         defaults = dict(self._deserialized_defaults.items())
@@ -198,9 +195,7 @@ class PackagesCacheV0(cache.bulk):
                 handler = AtomicWriteFile(self._location)
                 self._serialize_to_handle(list(self.data.items()), handler)
                 handler.close()
-            except EnvironmentError as e:
-                if e.errno != errno.EACCES:
-                    raise
+            except PermissionError:
                 logger.error(
                     f"failed writing binpkg Packages cache to {self._location!r}; permissions issue {e}")
         finally:

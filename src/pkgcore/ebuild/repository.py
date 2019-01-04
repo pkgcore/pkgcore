@@ -29,7 +29,6 @@ from pkgcore.operations import repo as _repo_ops
 from pkgcore.repository import prototype, errors, configured, util
 
 demandload(
-    'errno',
     'locale',
     'operator:attrgetter',
     'random:shuffle',
@@ -344,9 +343,8 @@ class _UnconfiguredTree(prototype.tree):
                 v = v.split()
                 shuffle(v)
                 mirrors[k] = v
-        except EnvironmentError as ee:
-            if ee.errno != errno.ENOENT:
-                raise
+        except FileNotFoundError:
+            pass
 
         # use mirrors from masters if not defined in the repo
         for master in masters:
@@ -465,11 +463,11 @@ class _UnconfiguredTree(prototype.tree):
         try:
             return tuple(filterfalse(
                 self.false_packages.__contains__, listdir_dirs(cpath)))
+        except FileNotFoundError:
+            if category in self.categories:
+                # ignore it, since it's PMS mandated that it be allowed.
+                return ()
         except EnvironmentError as e:
-            if e.errno == errno.ENOENT:
-                if category in self.categories:
-                    # ignore it, since it's PMS mandated that it be allowed.
-                    return ()
             raise KeyError(
                 "failed fetching packages for category %s: %s" %
                 (pjoin(self.base, category.lstrip(os.path.sep)), str(e))) from e
@@ -574,9 +572,8 @@ class _UnconfiguredTree(prototype.tree):
                         neg.append(atom.atom(line[1:]))
                     else:
                         pos.append(atom.atom(line))
-        except IOError as i:
-            if i.errno != errno.ENOENT:
-                raise
+        except FileNotFoundError:
+            pass
         except ebuild_errors.MalformedAtom as e:
             raise profiles.ProfileError(
                 pjoin(self.base, 'profiles'), 'package.mask', e) from e

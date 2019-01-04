@@ -7,7 +7,6 @@ per key file based backend
 
 __all__ = ("database",)
 
-import errno
 import os
 import stat
 
@@ -67,17 +66,14 @@ class database(fs_template.FsBased):
         fp = pjoin(self.location, cpv[:s], ".update.%i.%s" % (os.getpid(), cpv[s:]))
         try:
             myf = open(fp, "w", 32768)
-        except IOError as ie:
-            if ie.errno == errno.ENOENT:
-                if not self._ensure_dirs(cpv):
-                    raise errors.CacheCorruption(
-                        cpv, 'error creating directory for %r' % (fp,))
-                try:
-                    myf = open(fp, "w", 32768)
-                except EnvironmentError as e:
-                    raise errors.CacheCorruption(cpv, e) from e
-            else:
-                raise errors.CacheCorruption(cpv, ie) from ie
+        except FileNotFoundError:
+            if not self._ensure_dirs(cpv):
+                raise errors.CacheCorruption(
+                    cpv, 'error creating directory for %r' % (fp,))
+            try:
+                myf = open(fp, "w", 32768)
+            except EnvironmentError as e:
+                raise errors.CacheCorruption(cpv, e) from e
         except OSError as e:
             raise errors.CacheCorruption(cpv, e) from e
 
@@ -104,11 +100,10 @@ class database(fs_template.FsBased):
     def _delitem(self, cpv):
         try:
             os.remove(pjoin(self.location, cpv))
+        except FileNotFoundError:
+            raise KeyError(cpv)
         except OSError as e:
-            if e.errno == errno.ENOENT:
-                raise KeyError(cpv)
-            else:
-                raise errors.CacheCorruption(cpv, e) from e
+            raise errors.CacheCorruption(cpv, e) from e
 
     def __contains__(self, cpv):
         return os.path.exists(pjoin(self.location, cpv))
@@ -123,20 +118,20 @@ class database(fs_template.FsBased):
             d = dirs.pop(0)
             try:
                 subdirs = os.listdir(d)
-            except EnvironmentError as e:
-                if e.errno != errno.ENOENT:
-                    raise KeyError(cpv, f"access failure: {e}")
+            except FileNotFoundError:
                 continue
+            except EnvironmentError as e:
+                raise KeyError(cpv, f"access failure: {e}")
             for l in os.listdir(d):
                 if l.endswith(".cpickle"):
                     continue
                 p = pjoin(d, l)
                 try:
                     st = os.lstat(p)
-                except EnvironmentError as e:
-                    if e.errno != errno.ENOENT:
-                        raise KeyError(cpv, f"Unhandled IO error: {e}")
+                except FileNotFoundError:
                     continue
+                except EnvironmentError as e:
+                    raise KeyError(cpv, f"Unhandled IO error: {e}")
                 if stat.S_ISDIR(st.st_mode):
                     dirs.append(p)
                     continue

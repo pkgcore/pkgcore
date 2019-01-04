@@ -30,7 +30,6 @@ from snakeoil.demandload import demandload
 from snakeoil.osutils import pjoin, listdir_files
 
 demandload(
-    'errno',
     'tempfile',
     'snakeoil:fileutils,osutils',
     'pkgcore.log:logger',

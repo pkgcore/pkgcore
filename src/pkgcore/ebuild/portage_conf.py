@@ -169,9 +169,9 @@ def add_sets(config, root, config_dir):
             config[setname] = basics.AutoConfigSection({
                 "class": "pkgcore.pkgsets.filelist.FileList",
                 "location": pjoin(set_fp, setname)})
-    except OSError as e:
-        if e.errno != errno.ENOENT:
-            raise
+    except FileNotFoundError:
+        pass
+
 
 def _find_profile_link(config_dir):
     make_profile = pjoin(config_dir, 'make.profile')
@@ -277,9 +277,9 @@ def load_make_conf(vars_dict, path, allow_sourcing=False, required=True,
         try:
             new_vars = read_bash_dict(
                 fp, vars_dict=vars_dict, sourcing_command=sourcing_command)
+        except PermissionError as e:
+            raise errors.PermissionDeniedError(fp, write=False) from e
         except EnvironmentError as e:
-            if e.errno == errno.EACCES:
-                raise errors.PermissionDeniedError(fp, write=False) from e
             if e.errno != errno.ENOENT or required:
                 raise errors.ParsingError("parsing %r" % (fp,), exception=e) from e
             return
@@ -314,9 +314,9 @@ def load_repos_conf(path):
         try:
             with open(fp) as f:
                 config.read_file(f)
+        except PermissionError as e:
+            raise errors.PermissionDeniedError(fp, write=False) from e
         except EnvironmentError as e:
-            if e.errno == errno.EACCES:
-                raise errors.PermissionDeniedError(fp, write=False) from e
             raise errors.ParsingError(f"parsing {fp!r}", exception=e) from e
         except configparser.Error as e:
             raise errors.ParsingError(f"repos.conf: {fp!r}", exception=e) from e
@@ -529,9 +529,7 @@ def config_from_make_conf(location=None, profile_override=None, **kwargs):
     if pkgdir is not None:
         try:
             pkgdir = abspath(pkgdir)
-        except OSError as oe:
-            if oe.errno != errno.ENOENT:
-                raise
+        except FileNotFoundError:
             if buildpkg or set(features).intersection(
                     ('pristine-buildpkg', 'buildsyspkg', 'unmerge-backup')):
                 logger.warning("disabling buildpkg related features since PKGDIR doesn't exist")

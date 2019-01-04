@@ -17,7 +17,6 @@ demandload(
     'os',
     'pwd',
     'stat',
-    'errno',
     'snakeoil:process',
     'pkgcore:os_data,plugin',
 )
@@ -182,11 +181,11 @@ class dvcs_syncer(ExternalSyncer):
     def _sync(self, verbosity, output_fd):
         try:
             st = os.stat(self.basedir)
-        except EnvironmentError as e:
-            if e.errno != errno.ENOENT:
-                raise generic_exception(self, self.basedir, e) from e
+        except FileNotFoundError:
             command = self._initial_pull() + self.opts
             chdir = None
+        except EnvironmentError as e:
+            raise generic_exception(self, self.basedir, e) from e
         else:
             if not stat.S_ISDIR(st.st_mode):
                 raise generic_exception(self, self.basedir, "isn't a directory")

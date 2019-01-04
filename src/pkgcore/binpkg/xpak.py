@@ -14,7 +14,6 @@ from snakeoil import struct_compat as struct
 from snakeoil.demandload import demandload
 
 demandload(
-    "errno",
     "os",
 )
 
@@ -92,9 +91,7 @@ class Xpak(object):
             if source_is_path:
                 try:
                     start = os.lstat(target_source).st_size
-                except OSError as e:
-                    if e.errno != errno.ENOENT:
-                        raise
+                except FileNotFoundError:
                     start = 0
             else:
                 f = target_source.bytes_fileobj(writable=True)

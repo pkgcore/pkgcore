@@ -9,7 +9,6 @@ from pkgcore.config import ConfigHint
 from pkgcore.sync import base
 
 demandload(
-    'errno',
     'os',
     'socket',
     'tempfile',
@@ -180,9 +179,7 @@ class rsync_timestamp_syncer(rsync_syncer):
             # add the hour/minute offset
             date += int(offset[:2] * 60) + int(offset[2:])
             return date
-        except IOError as oe:
-            if oe.errno not in (errno.ENOENT, errno.ENOTDIR):
-                raise
+        except (FileNotFoundError, NotADirectoryError):
             return None
         except ValueError:
             # malformed timestamp

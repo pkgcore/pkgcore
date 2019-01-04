@@ -62,11 +62,11 @@ class tree(prototype.tree):
             elif not st.st_mode & (os.X_OK|os.R_OK):
                 raise errors.InitializationError(
                     f"base lacks read/executable: {self.location!r}")
-
+        except FileNotFoundError:
+            pass
         except OSError as e:
-            if e.errno != errno.ENOENT:
-                raise errors.InitializationError(
-                    f"lstat failed on base: {self.location!r}") from e
+            raise errors.InitializationError(
+                f"lstat failed on base: {self.location!r}") from e
 
         self.package_class = self.package_factory(self)
 

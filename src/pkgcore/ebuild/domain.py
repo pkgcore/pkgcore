@@ -40,7 +40,6 @@ from pkgcore.util.parserestrict import parse_match, ParseError
 demandload(
     'collections:defaultdict',
     'copy',
-    'errno',
     'multiprocessing:cpu_count',
     'operator:itemgetter',
     're',
@@ -155,9 +154,10 @@ def _read_config_file(path):
             for lineno, line, in iter_read_bash(
                     fs_obj.location, allow_line_cont=True, enum_line=True):
                 yield line, lineno, fs_obj.location
+    except FileNotFoundError:
+        pass
     except EnvironmentError as e:
-        if e.errno != errno.ENOENT:
-            raise Failure(f"failed reading {filename!r}: {e}") from e
+        raise Failure(f"failed reading {filename!r}: {e}") from e
 
 
 # ow ow ow ow ow ow....

@@ -342,7 +342,7 @@ def unmerge(out, err, installed_repos, targets, options, formatter, world_set=No
         out.prefix = []
 
         repo_obs = observer.repo_observer(
-            observer.formatter_output(out), verbosity=options.verbosity, debug=options.debug)
+            observer.formatter_output(out), debug=options.debug)
 
         if options.pretend:
             return
@@ -799,7 +799,7 @@ def main(options, out, err):
                 return 1
             out.write()
         repo_obs = observer.repo_observer(
-            observer.formatter_output(out), verbosity=options.verbosity, debug=options.debug)
+            observer.formatter_output(out), debug=options.debug)
         do_unmerge(options, out, err, installed_repos.real.combined, wipes, world_set, repo_obs)
         return 0
 
@@ -817,9 +817,9 @@ def main(options, out, err):
     changes = resolver_inst.state.ops(only_real=True)
 
     build_obs = observer.phase_observer(
-        observer.formatter_output(out), verbosity=options.verbosity, debug=options.debug)
+        observer.formatter_output(out), debug=options.debug)
     repo_obs = observer.repo_observer(
-        observer.formatter_output(out), verbosity=options.verbosity, debug=options.debug)
+        observer.formatter_output(out), debug=options.debug)
 
     # don't run pkg_pretend if only fetching
     if not options.fetchonly:

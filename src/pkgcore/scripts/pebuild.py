@@ -58,8 +58,8 @@ def main(options, out, err):
     domain = options.domain
 
     kwds = {}
-    phase_obs = observer.phase_observer(observer.formatter_output(out),
-                                        not options.debug)
+    phase_obs = observer.phase_observer(
+        observer.formatter_output(out), not options.debug)
 
     phases = [x for x in options.phase if x != 'clean']
     clean = (len(phases) != len(options.phase))

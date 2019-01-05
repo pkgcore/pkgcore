@@ -328,7 +328,7 @@ __ebd_process_metadata() {
 		# invoked internally by bash on PATH search failure, see the bash man
 		# page section on command execution for details
 		command_not_found_handle() {
-			die "External commands disallowed during metadata regen: ${*}"
+			die "external commands disallowed during metadata regen: '${*}'"
 		}
 
 		__execute_phases "${2:-depend}" && exit 0

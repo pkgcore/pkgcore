@@ -71,7 +71,7 @@ class StoreTarget(argparse._AppendAction):
     """
 
     def __init__(self, *args, **kwargs):
-        self.allow_sets = kwargs.pop('allow_sets', False)
+        self.use_sets = kwargs.pop('use_sets', False)
         self.allow_ebuild_paths = kwargs.pop('allow_ebuild_paths', False)
         self.allow_external_repos = kwargs.pop('allow_external_repos', False)
         self.separator = kwargs.pop('separator', None)
@@ -80,8 +80,8 @@ class StoreTarget(argparse._AppendAction):
     def __call__(self, parser, namespace, values, option_string=None):
         if self.separator is not None:
             values = values.split(self.separator)
-        if self.allow_sets:
-            namespace.sets = []
+        if self.use_sets:
+            setattr(namespace, self.use_sets, [])
 
         if isinstance(values, str):
             values = [values]
@@ -94,7 +94,7 @@ class StoreTarget(argparse._AppendAction):
                 raise argparse.ArgumentError(self, "'-' is only valid when piping data in")
 
         for token in values:
-            if self.allow_sets and token.startswith('@'):
+            if self.use_sets and token.startswith('@'):
                 namespace.sets.append(token[1:])
             else:
                 if self.allow_ebuild_paths and token.endswith('.ebuild'):

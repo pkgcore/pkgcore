@@ -59,7 +59,7 @@ class repo_operations(_repo_ops.operations):
         required_chksums = set(manifest_config.required_hashes)
         write_chksums = manifest_config.hashes
         distdir = domain.fetcher.distdir
-        ret = []
+        ret = set()
 
         for key_query in sorted(set(match.unversioned_atom for match in matches)):
             pkgs = self.repo.match(key_query)
@@ -70,18 +70,20 @@ class repo_operations(_repo_ops.operations):
 
             # all pkgdir fetchables
             pkgdir_fetchables = {}
-            try:
-                for pkg in pkgs:
-                    pkgdir_fetchables.update({
-                        fetchable.filename: fetchable for fetchable in
-                        iflatten_instance(pkg._get_attr['fetchables'](
-                            pkg, allow_missing_checksums=True,
-                            skip_default_mirrors=(not mirrors)),
-                            fetch.fetchable)
-                        })
-            except pkg_errors.MetadataException as e:
-                observer.error(f"failed sourcing {pkg.cpvstr}")
-                ret.append(key_query)
+            for pkg in pkgs:
+                pkgdir_fetchables.update({
+                    fetchable.filename: fetchable for fetchable in
+                    iflatten_instance(pkg._get_attr['fetchables'](
+                        pkg, allow_missing_checksums=True,
+                        skip_default_mirrors=(not mirrors)),
+                        fetch.fetchable)
+                    })
+
+            for pkg in self.repo._masked.itermatch(key_query):
+                e = pkg.data
+                error_str = f"{pkg.cpvstr}: {e.msg(verbosity=observer.verbosity)}"
+                observer.error(error_str)
+                ret.add(key_query)
                 continue
 
             # fetchables targeted for (re-)manifest generation
@@ -103,18 +105,18 @@ class repo_operations(_repo_ops.operations):
                     except:
                         observer.error(
                             f"failed removing old manifest: {key_query}::{self.repo.repo_id}")
-                        ret.append(key_query)
+                        ret.add(key_query)
                 continue
 
             pkg_ops = domain.pkg_operations(pkgs[0], observer=observer)
             if not pkg_ops.supports("fetch"):
                 observer.error(f"pkg {pkg} doesn't support fetching, can't generate manifest")
-                ret.append(key_query)
+                ret.add(key_query)
                 continue
 
             # fetch distfiles
             if not pkg_ops.fetch(list(fetchables.values()), observer):
-                ret.append(key_query)
+                ret.add(key_query)
                 continue
 
             # calculate checksums for fetched distfiles
@@ -125,12 +127,13 @@ class repo_operations(_repo_ops.operations):
                     fetchable.chksums = dict(zip(write_chksums, chksums))
             except chksum.MissingChksumHandler as e:
                 observer.error(f'failed generating chksum: {e}')
-                ret.append(key_query)
+                ret.add(key_query)
                 break
 
-            fetchables.update(pkgdir_fetchables)
-            observer.info(f"generating manifest: {key_query}::{self.repo.repo_id}")
-            manifest.update(sorted(fetchables.values()), chfs=write_chksums)
+            if key_query not in ret:
+                fetchables.update(pkgdir_fetchables)
+                observer.info(f"generating manifest: {key_query}::{self.repo.repo_id}")
+                manifest.update(sorted(fetchables.values()), chfs=write_chksums)
 
         return ret
 

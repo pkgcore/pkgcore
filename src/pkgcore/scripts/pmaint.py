@@ -504,14 +504,11 @@ def _digest_validate(parser, namespace):
 def digest_main(options, out, err):
     repo = options.repo
 
-    failures = repo.operations.digests(
+    failed = repo.operations.digests(
         domain=options.domain,
         restriction=options.restriction,
         observer=observer.formatter_output(out),
         mirrors=options.mirrors,
         force=options.force)
-    if failures:
-        digest.error('failed generating manifest%s: %s' % (
-            pluralism(failures), ', '.join(str(x) for x in failures)))
 
-    return 0
+    return int(any(failed))

@@ -263,7 +263,7 @@ class operations(sync_operations):
         observer = self._get_observer(observer)
         matches = self.repo.match(restriction)
         if not matches:
-            return True
+            return matches
         return self._cmd_implementation_digests(
             domain, matches, observer, mirrors, force)
 

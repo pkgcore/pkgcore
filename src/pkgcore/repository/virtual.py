@@ -125,21 +125,29 @@ class InjectedPkg(pkg_base.wrapper):
 class RestrictionRepo(tree):
     """Fake repo populated by packages matching a given restriction."""
 
-    def __init__(self, restrictions, repo_id, frozen=False, livefs=False):
+    def __init__(self, repo_id, restrictions=(), frozen=False, livefs=False):
         self.repo_id = repo_id
-        self._injected_pkgs = set()
-        self.restriction = OrRestriction()
-        self.add_restricts(restrictions)
+        self._injected_pkgs = {}
+        self._restrictions = {}
+        for r in restrictions:
+            self[r] = None
         super().__init__(livefs=livefs, frozen=frozen)
 
-    def add_restricts(self, restrictions):
-        restricts = list(self.restriction.restrictions)
-        for r in stable_unique(restrictions):
-            if isinstance(r, atom.atom):
-                self._injected_pkgs.add(InjectedPkg(r, self))
-            else:
-                restricts.append(r)
-        self.restriction = OrRestriction(*restricts)
+    def __setitem__(self, key, val):
+        if isinstance(key, atom.atom):
+            self._injected_pkgs[InjectedPkg(key, self, data=val)] = val
+        else:
+            self._restrictions[key] = val
+
+    def __getitem__(self, key):
+        val = self._injected_pkgs.__getitem__(key)
+        if val is not None:
+            return val
+        return self._restrictions.__getitem__(key)
+
+    @property
+    def restriction(self):
+        return OrRestriction(*self._restrictions.keys())
 
     def _get_categories(self, *args):
         return tuple(x.category for x in self._injected_pkgs)
@@ -165,10 +173,10 @@ class RestrictionRepo(tree):
                 yield pkg
 
         # inject/yield any matching atoms into the repo that aren't blockers
-        if isinstance(restrict, atom.atom):
+        if self._restrictions and isinstance(restrict, atom.atom):
             if self.restriction.match(restrict) and not restrict.blocks:
                 p = pkg_klass_override(restrict, self)
-                self._injected_pkgs.add(p)
+                self._injected_pkgs[p] = None
                 yield p
 
     def match(self, restrict, **kwargs):

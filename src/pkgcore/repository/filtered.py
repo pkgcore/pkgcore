@@ -13,7 +13,7 @@ from snakeoil.klass import GetAttrProxy, DirProxy
 
 from pkgcore.operations.repo import operations_proxy
 from pkgcore.repository import prototype, errors
-from pkgcore.restrictions.restriction import base
+from pkgcore.restrictions import restriction
 
 
 class tree(prototype.tree):
@@ -21,16 +21,15 @@ class tree(prototype.tree):
 
     operations_kls = operations_proxy
 
-    def __init__(self, repo, restriction, sentinel_val=False):
+    def __init__(self, repo, restrict, sentinel_val=False):
         self.raw_repo = repo
         self.sentinel_val = sentinel_val
         if not hasattr(self.raw_repo, 'itermatch'):
             raise errors.InitializationError(
-                "%s is not a repository tree derivative" % (self.raw_repo,))
-        if not isinstance(restriction, base):
-            raise errors.InitializationError(
-                "%s is not a restriction" % (restriction,))
-        self.restriction = restriction
+                f"{self.raw_repo} is not a repository tree derivative")
+        if not isinstance(restrict, restriction.base):
+            raise errors.InitializationError(f"{restrict} is not a restriction")
+        self.restrict = restrict
         self.raw_repo = repo
         if sentinel_val:
             self._filterfunc = filter
@@ -44,7 +43,7 @@ class tree(prototype.tree):
         # (determined by repo's attributes) versus what does cost
         # (metadata pull for example).
         return self._filterfunc(
-            self.restriction.match, self.raw_repo.itermatch(restrict, **kwds))
+            self.restrict.match, self.raw_repo.itermatch(restrict, **kwds))
 
     itermatch.__doc__ = prototype.tree.itermatch.__doc__.replace(
         "@param", "@keyword").replace(":keyword restrict:", ":param restrict:")
@@ -60,14 +59,14 @@ class tree(prototype.tree):
 
     def __getitem__(self, key):
         v = self.raw_repo[key]
-        if self.restriction.match(v) != self.sentinel_val:
+        if self.restrict.match(v) != self.sentinel_val:
             raise KeyError(key)
         return v
 
     def __repr__(self):
-        return '<%s raw_repo=%r restriction=%r sentinel=%r @%#8x>' % (
+        return '<%s raw_repo=%r restrict=%r sentinel=%r @%#8x>' % (
             self.__class__.__name__,
             getattr(self, 'raw_repo', 'unset'),
-            getattr(self, 'restriction', 'unset'),
+            getattr(self, 'restrict', 'unset'),
             getattr(self, 'sentinel_val', 'unset'),
             id(self))

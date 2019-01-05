@@ -4,6 +4,8 @@
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.demandload import demandload
 
+from pkgcore.restrictions import packages
+
 demandload(
     'pkgcore.util.thread_pool:map_async',
 )
@@ -32,12 +34,13 @@ def regen_repository(repo, observer, threads=1, pkg_attr='keywords', **options):
         helpers.append(helper)
         return helper
 
+    pkgs = repo.itermatch(packages.AlwaysTrue, pkg_filter=None)
     if threads == 1:
-        regen_iter(iter(repo), _get_repo_helper(), observer)
+        regen_iter(pkgs, _get_repo_helper(), observer)
     else:
         def get_args():
             return (_get_repo_helper(), observer, True)
-        map_async(repo, regen_iter, per_thread_args=get_args)
+        map_async(pkgs, regen_iter, per_thread_args=get_args)
 
     for helper in helpers:
         f = getattr(helper, 'finish', None)

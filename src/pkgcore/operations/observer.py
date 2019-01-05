@@ -56,6 +56,7 @@ class formatter_output(null_output):
 
     def __init__(self, out):
         self._out = out
+        self.verbosity = getattr(out, 'verbosity', 0)
 
     def debug(self, msg, *args, **kwds):
         self._out.write(_convert("debug: " + msg, args, kwds))
@@ -93,9 +94,9 @@ class file_handle_output(formatter_output):
 
 class phase_observer(object):
 
-    def __init__(self, output, verbosity=None, debug=False):
+    def __init__(self, output, debug=False):
         self._output = output
-        self._verbosity = verbosity if verbosity is not None else 0
+        self.verbosity = getattr(output, 'verbosity', 0)
         self._debug = debug
 
     def phase_start(self, phase):

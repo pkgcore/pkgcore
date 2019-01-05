@@ -889,7 +889,7 @@ class ebuild_mixin(object):
             fd_pipes = None
             with open(os.devnull, 'w') as f:
                 # suppress bash output when not running in verbose mode
-                if observer._verbosity <= 0:
+                if observer.verbosity <= 0:
                     fd_pipes = {1: f.fileno(), 2: f.fileno()}
                 ret = run_generic_phase(
                     pkg, "pretend", env, fd_pipes=fd_pipes, userpriv=True,

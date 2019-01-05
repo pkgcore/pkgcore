@@ -273,11 +273,10 @@ class tree(object):
             yield_none=yield_none, sorter=sorter, pkg_filter=pkg_filter)
 
     def _internal_gen_candidates(self, candidates, sorter, pkg_filter):
-        pkls = self.package_class
         for cp in sorter(candidates):
-            for pkg in sorter(pkg_filter((pkls(cp[0], cp[1], ver)
-                              for ver in self.versions.get(cp, ())))):
-                yield pkg
+            pkgs = (self.package_class(cp[0], cp[1], ver)
+                    for ver in self.versions.get(cp, ()))
+            yield from sorter(pkg_filter(pkgs))
 
     def _internal_match(self, candidates, match_func, pkg_klass_override,
                         yield_none=False, **kwargs):

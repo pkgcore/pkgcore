@@ -16,7 +16,6 @@ from snakeoil.sequences import iflatten_instance
 
 from pkgcore.ebuild.atom import atom
 from pkgcore.operations import repo
-from pkgcore.package.errors import MetadataException
 from pkgcore.restrictions import values, boolean, restriction, packages
 from pkgcore.restrictions.util import collect_package_restrictions
 
@@ -153,7 +152,6 @@ class tree(object):
             self._get_categories, self._get_categories)
         self.packages = PackageMapping(self.categories, self._get_packages)
         self.versions = VersionMapping(self.packages, self._get_versions)
-        self._masked = {}
 
         if self.frozen_settable:
             self.frozen = frozen
@@ -184,6 +182,10 @@ class tree(object):
         raise AttributeError
 
     def __iter__(self):
+        """Filtered iterator over all the repo's packages.
+
+        All packages with metadata issues are skipped.""
+        """
         return self.itermatch(packages.AlwaysTrue)
 
     def __len__(self):
@@ -222,7 +224,8 @@ class tree(object):
         return list(self.itermatch(atom, **kwds))
 
     def itermatch(self, restrict, restrict_solutions=None, sorter=None,
-                  pkg_klass_override=None, force=None, yield_none=False):
+                  pkg_filter=None, pkg_klass_override=None, force=None,
+                  yield_none=False):
 
         """
         generator that yields packages match a restriction.
@@ -234,6 +237,7 @@ class tree(object):
             Don't play with it unless you know what you're doing
         :param sorter: callable to do sorting during searching-
             if sorting the results, use this instead of sorting externally.
+        :param pkg_filter: callable to do package filtering
         :param yield_none: if True then itermatch will yield None for every
             non-matching package. This is meant for use in combination with
             C{twisted.task.cooperate} or other async uses where itermatch
@@ -250,6 +254,8 @@ class tree(object):
 
         if sorter is None:
             sorter = iter
+        if pkg_filter is None:
+            pkg_filter = iter
 
         if isinstance(restrict, atom):
             candidates = [(restrict.category, restrict.package)]
@@ -263,29 +269,19 @@ class tree(object):
         else:
             match = restrict.force_False
         return self._internal_match(
-            candidates, match, sorter, pkg_klass_override,
-            yield_none=yield_none)
+            candidates, match, pkg_klass_override,
+            yield_none=yield_none, sorter=sorter, pkg_filter=pkg_filter)
 
-    def _internal_gen_candidates(self, candidates, sorter):
+    def _internal_gen_candidates(self, candidates, sorter, pkg_filter):
         pkls = self.package_class
         for cp in sorter(candidates):
-            for pkg in sorter(pkls(cp[0], cp[1], ver)
-                              for ver in self.versions.get(cp, ())):
-                # check pkgs for unsupported/invalid EAPIs
-                try:
-                    if not pkg.is_supported:
-                        self._masked[pkg.versioned_atom] = (
-                            'eapi', f"EAPI '{pkg.eapi}' is not supported")
-                        continue
-                except MetadataException as e:
-                    self._masked[e.pkg.versioned_atom] = (e.attr, e.error)
-                    continue
-
+            for pkg in sorter(pkg_filter((pkls(cp[0], cp[1], ver)
+                              for ver in self.versions.get(cp, ())))):
                 yield pkg
 
-    def _internal_match(self, candidates, match_func, sorter,
-                        pkg_klass_override, yield_none=False):
-        for pkg in self._internal_gen_candidates(candidates, sorter):
+    def _internal_match(self, candidates, match_func, pkg_klass_override,
+                        yield_none=False, **kwargs):
+        for pkg in self._internal_gen_candidates(candidates, **kwargs):
             if pkg_klass_override is not None:
                 pkg = pkg_klass_override(pkg)
 

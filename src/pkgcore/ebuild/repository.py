@@ -26,7 +26,9 @@ from pkgcore.config import ConfigHint, configurable
 from pkgcore.ebuild import ebuild_src
 from pkgcore.ebuild import eclass_cache as eclass_cache_module
 from pkgcore.operations import repo as _repo_ops
+from pkgcore.package.errors import MetadataException
 from pkgcore.repository import prototype, errors, configured, util
+from pkgcore.repository.virtual import RestrictionRepo
 
 demandload(
     'locale',
@@ -365,6 +367,7 @@ class _UnconfiguredTree(prototype.tree):
         self.package_class = self.package_factory(
             self, cache, self.eclass_cache, self.mirrors, self.default_mirrors)
         self._shared_pkg_cache = WeakValCache()
+        self._masked = RestrictionRepo(repo_id='masked')
 
     repo_id = klass.alias_attr("config.repo_id")
     repo_name = klass.alias_attr("config.repo_name")
@@ -506,6 +509,27 @@ class _UnconfiguredTree(prototype.tree):
             raise KeyError(
                 "failed fetching versions for package %s: %s" %
                 (pjoin(self.base, '/'.join(catpkg)), str(e))) from e
+
+    def _pkg_filter(self, pkgs):
+        """Filter packages with bad metadata."""
+        for pkg in pkgs:
+            if pkg not in self._masked.itermatch(pkg.versioned_atom):
+                # check pkgs for unsupported/invalid EAPIs and bad metadata
+                try:
+                    if not pkg.is_supported:
+                        self._masked[pkg.versioned_atom] = MetadataException(
+                            pkg, 'eapi', f"EAPI '{pkg.eapi}' is not supported")
+                        continue
+                    # TODO: add a generic metadata validation method to avoid slow metadata checks?
+                    pkg.data
+                except MetadataException as e:
+                    self._masked[e.pkg.versioned_atom] = e
+                    continue
+                yield pkg
+
+    def itermatch(self, *args, **kwargs):
+        kwargs.setdefault('pkg_filter', self._pkg_filter)
+        return super().itermatch(*args, **kwargs)
 
     def _get_ebuild_path(self, pkg):
         if pkg.revision is None:

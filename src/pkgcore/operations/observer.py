@@ -3,8 +3,7 @@
 
 __all__ = (
     "null_output", "formatter_output", "file_handle_output",
-    "phase_observer", "build_observer", "repo_observer",
-    "decorate_build_method",
+    "phase_observer", "repo_observer", "decorate_build_method",
 )
 
 from snakeoil import klass
@@ -118,9 +117,6 @@ class phase_observer(object):
     def phase_end(self, phase, status):
         if self._debug:
             self._output.write(f"finished {phase}: {status}\n")
-
-# left in place for compatibility sake
-build_observer = phase_observer
 
 
 class repo_observer(phase_observer):

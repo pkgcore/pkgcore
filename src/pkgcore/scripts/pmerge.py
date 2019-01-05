@@ -816,7 +816,7 @@ def main(options, out, err):
 
     changes = resolver_inst.state.ops(only_real=True)
 
-    build_obs = observer.build_observer(
+    build_obs = observer.phase_observer(
         observer.formatter_output(out), verbosity=options.verbosity, debug=options.debug)
     repo_obs = observer.repo_observer(
         observer.formatter_output(out), verbosity=options.verbosity, debug=options.debug)

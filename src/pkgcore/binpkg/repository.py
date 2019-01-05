@@ -92,9 +92,8 @@ def wrap_factory(klass, *args, **kwds):
 
         def _add_format_triggers(self, pkg, op_inst, format_op_inst,
                                  engine_inst):
-            if engine.UNINSTALL_MODE != engine_inst.mode and \
-                pkg == engine_inst.new and \
-                pkg.repo is engine_inst.new.repo:
+            if (engine.UNINSTALL_MODE != engine_inst.mode and
+                    pkg == engine_inst.new and pkg.repo is engine_inst.new.repo):
                 t = force_unpacking(op_inst.format_op)
                 t.register(engine_inst)
 

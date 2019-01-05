@@ -64,23 +64,24 @@ class InjectedPkg(pkg_base.wrapper):
 
     __slots__ = (
         "bdepend", "depend", "rdepend", "pdepend",
-        "repo", "repo_id", "built", "versioned_atom", "unversioned_atom",
+        "repo", "repo_id", "built", "versioned_atom", "unversioned_atom", "data",
     )
     default_bdepend = default_depend = default_rdepend = default_pdepend = DepSet()
     package_is_real = False
     is_supported = True
 
-    def __init__(self, raw_pkg, repo):
+    def __init__(self, raw_pkg, repo, data=None):
         pkg_base.wrapper.__init__(self, raw_pkg)
         object.__setattr__(self, "repo", repo)
         object.__setattr__(self, "repo_id", repo.repo_id)
         object.__setattr__(self, "built", repo.livefs)
-        object.__setattr__(self, "versioned_atom", str(self._raw_pkg))
+        object.__setattr__(self, "versioned_atom", self._raw_pkg)
         object.__setattr__(self, "unversioned_atom", self._raw_pkg.key)
         object.__setattr__(self, "bdepend", self.default_bdepend)
         object.__setattr__(self, "depend", self.default_depend)
         object.__setattr__(self, "rdepend", self.default_rdepend)
         object.__setattr__(self, "pdepend", self.default_pdepend)
+        object.__setattr__(self, "data", data)
 
     @property
     def use(self):

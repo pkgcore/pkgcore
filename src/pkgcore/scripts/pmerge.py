@@ -495,17 +495,6 @@ def _validate(parser, namespace):
     if namespace.newuse:
         namespace.oneshot = True
 
-    # TODO: At some point, fix argparse so this isn't necessary...
-    def f(val):
-        if val is None:
-            return ()
-        elif isinstance(val, tuple):
-            return [val]
-        return val
-    namespace.targets = f(namespace.targets)
-    namespace.sets = f(namespace.sets)
-    namespace.excludes = f(namespace.excludes)
-
 
 def parse_target(restriction, repo, installed_repos, return_none=False):
     """Use :obj:`parserestrict.parse_match` to produce a list of matches.

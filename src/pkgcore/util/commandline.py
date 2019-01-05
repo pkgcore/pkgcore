@@ -75,6 +75,7 @@ class StoreTarget(argparse._AppendAction):
         self.allow_ebuild_paths = kwargs.pop('allow_ebuild_paths', False)
         self.allow_external_repos = kwargs.pop('allow_external_repos', False)
         self.separator = kwargs.pop('separator', None)
+        kwargs.setdefault('default', ())
         super().__init__(*args, **kwargs)
 
     def __call__(self, parser, namespace, values, option_string=None):
@@ -92,6 +93,10 @@ class StoreTarget(argparse._AppendAction):
                 sys.stdin = open('/dev/tty')
             else:
                 raise argparse.ArgumentError(self, "'-' is only valid when piping data in")
+
+        # override default empty tuple value to appendable list
+        if values:
+            setattr(namespace, self.dest, [])
 
         for token in values:
             if self.use_sets and token.startswith('@'):
@@ -128,8 +133,6 @@ class StoreTarget(argparse._AppendAction):
                 super().__call__(
                     parser, namespace,
                     (token, restriction), option_string=option_string)
-        if getattr(namespace, self.dest) is None:
-            setattr(namespace, self.dest, [])
 
 
 CONFIG_ALL_DEFAULT = object()

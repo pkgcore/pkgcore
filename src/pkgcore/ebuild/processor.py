@@ -242,6 +242,10 @@ class InitializationError(Exception):
     pass
 
 
+class ProcessorError(Exception):
+    pass
+
+
 class EbuildProcessor(object):
     """Abstraction of a running ebd instance.
 
@@ -746,7 +750,7 @@ class EbuildProcessor(object):
 
         if not val:
             logger.debug(f"returned val from {command} was '{val}'")
-            raise Exception(val)
+            raise ProcessorError(val)
 
         if updates:
             self.preload_eclasses(eclass_cache, limited_to=updates, async_req=True)

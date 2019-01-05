@@ -165,7 +165,7 @@ class ebd(object):
         for k in wipes:
             del self.env[k]
 
-        self.set_op_vars(tmp_offset)
+        self._set_op_vars(tmp_offset)
         self.clean_at_start = clean
         self.clean_needed = False
 
@@ -175,11 +175,11 @@ class ebd(object):
             if not self.cleanup():
                 return False
         self.setup_workdir()
-        self.setup_env_data_source()
+        self._setup_env_data_source()
         self.clean_needed = True
         return True
 
-    def set_op_vars(self, tmp_offset):
+    def _set_op_vars(self, tmp_offset):
         # don't fool with this, without fooling with setup.
         self.tmpdir = self.domain.pm_tmpdir
         if tmp_offset:
@@ -208,7 +208,7 @@ class ebd(object):
         with open(pjoin(self.env["T"], "environment"), "rb") as f:
             return data_source.bytes_data_source(f.read())
 
-    def setup_env_data_source(self):
+    def _setup_env_data_source(self):
         if not ensure_dirs(self.env["T"], mode=0o770, gid=portage_gid, minimal=True):
             raise format.FailedDirectory(
                 self.env['T'],
@@ -623,9 +623,9 @@ class buildable(ebd, setup_mixin, format.build):
             self.env["ECLASSDIR"] = eclass_cache.eclassdir
 
         if self.setup_is_for_src:
-            self.init_distfiles_env()
+            self._init_distfiles_env()
 
-    def init_distfiles_env(self):
+    def _init_distfiles_env(self):
         # cvs/svn ebuilds need to die.
         distdir_write = self.domain.fetcher.get_storage_path()
         if distdir_write is None:
@@ -638,7 +638,7 @@ class buildable(ebd, setup_mixin, format.build):
         for x in ("PORTAGE_ACTUAL_DISTDIR", "DISTDIR"):
             self.env[x] = os.path.realpath(self.env[x]).rstrip(os.sep) + os.sep
 
-    def setup_distfiles(self):
+    def _setup_distfiles(self):
         if not self.verified_files and self.allow_fetching:
             ops = self.domain.pkg_operations(self.pkg, observer=self.observer)
             if not ops.fetch():
@@ -775,7 +775,7 @@ class buildable(ebd, setup_mixin, format.build):
     def unpack(self):
         """execute the unpack phase"""
         if self.setup_is_for_src:
-            self.setup_distfiles()
+            self._setup_distfiles()
         if self.userpriv:
             try:
                 os.chown(self.env["WORKDIR"], portage_uid, -1)

@@ -57,6 +57,9 @@ class formatter_output(null_output):
     def __init__(self, out):
         self._out = out
 
+    def debug(self, msg, *args, **kwds):
+        self._out.write(_convert("debug: " + msg, args, kwds))
+
     def error(self, msg, *args, **kwds):
         self._out.error(_convert(msg, args, kwds))
 
@@ -69,26 +72,20 @@ class formatter_output(null_output):
     def write(self, msg, *args, **kwds):
         self._out.write(_convert(msg, args, kwds), autoline=False)
 
-    def debug(self, msg, *args, **kwds):
-        self._out.write(_convert("debug: " + msg, args, kwds))
 
-
-class file_handle_output(null_output):
-
-    def __init__(self, out):
-        self.out = out
-
-    def info(self, msg, *args, **kwds):
-        self._out.write(f"info: {_convert(msg, args, kwds)}\n")
+class file_handle_output(formatter_output):
 
     def debug(self, msg, *args, **kwds):
         self._out.write(f"debug: {_convert(msg, args, kwds)}\n")
 
-    def warn(self, msg, *args, **kwds):
-        self._out.write(f"warning: {_convert(msg, args, kwds)}\n")
-
     def error(self, msg, *args, **kwds):
         self._out.write(f"error: {_convert(msg, args, kwds)}\n")
+
+    def info(self, msg, *args, **kwds):
+        self._out.write(f"info: {_convert(msg, args, kwds)}\n")
+
+    def warn(self, msg, *args, **kwds):
+        self._out.write(f"warning: {_convert(msg, args, kwds)}\n")
 
     def write(self, msg, *args, **kwds):
         self._out.write(_convert(msg, args, kwds))

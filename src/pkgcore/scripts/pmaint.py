@@ -496,8 +496,6 @@ def _digest_validate(parser, namespace):
                 digest.error(f"invalid atom: {target!r}")
 
     restriction = packages.OrRestriction(*restrictions)
-    if restriction not in repo:
-        digest.error("no matches for %s" % (', '.join(map(repr, targets)),))
     namespace.restriction = restriction
     namespace.repo = repo
 

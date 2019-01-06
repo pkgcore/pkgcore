@@ -39,7 +39,7 @@ class git_svn_syncer(base.dvcs_syncer):
 
     def __init__(self, basedir, uri, **kwargs):
         uri = self.parse_uri(uri)
-        base.dvcs_syncer.__init__(self, basedir, uri, **kwargs)
+        super().__init__(basedir, uri, **kwargs)
 
     def _initial_pull(self):
         return [self.binary_path, "svn", "clone", self.uri, self.basedir]

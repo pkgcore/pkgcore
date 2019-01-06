@@ -52,7 +52,7 @@ class cvs_syncer(base.dvcs_syncer):
         else:
             uri = f":ext:{uri}"
         host, self.module = uri.rsplit(":", 1)
-        base.dvcs_syncer.__init__(self, basedir, host, **kwargs)
+        super().__init__(basedir, host, **kwargs)
 
         self.env['CVSROOT'] = self.uri
         if self.rsh is not None:

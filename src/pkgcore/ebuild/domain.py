@@ -22,7 +22,7 @@ from snakeoil.osutils import pjoin
 from snakeoil.sequences import (
     split_negations, stable_unique, unstable_unique, predicate_split)
 
-from pkgcore.config import ConfigHint
+from pkgcore.config import ConfigHint, errors
 from pkgcore.config.domain import Failure, MissingFile, domain as config_domain
 from pkgcore.ebuild import const
 from pkgcore.ebuild.atom import atom as _atom
@@ -689,7 +689,20 @@ class domain(config_domain):
     @klass.jit_attr_none
     def source_repos_raw(self):
         """Group of package repos without filtering."""
-        return RepositoryGroup(r.instantiate() for r in self.__repos)
+        repos = []
+        for r in self.__repos:
+            try:
+                repos.append(r.instantiate())
+            except errors.InstantiationError as e:
+                # roll back the exception chain to a meaningful error message
+                while True:
+                    context = getattr(e, '__context__', None)
+                    if context is None:
+                        break
+                    e = context
+                logger.warning(f'skipping {r.name!r} repo: {e}')
+                continue
+        return RepositoryGroup(repos)
 
     @klass.jit_attr_none
     def installed_repos_raw(self):

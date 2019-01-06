@@ -1001,8 +1001,8 @@ def main(options, out, err):
     """Run a query."""
     if options.debug:
         for repo in options.repos:
-            out.write(f'repo: {repo!r}')
-        out.write(f'restrict: {options.query!r}')
+            out.write(f'repo: {repo.repo_id}')
+        out.write(f'restrict: {options.query}')
         out.write()
 
     if options.query is None:

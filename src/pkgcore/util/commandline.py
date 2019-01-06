@@ -612,10 +612,8 @@ def convert_to_restrict(sequence, default=packages.AlwaysTrue):
 class Tool(tool.Tool):
     """pkgcore-specific commandline utility functionality."""
 
-    def parse_args(self, *args, **kwargs):
+    def set_options(self, options):
         """Pass down pkgcore-specific settings to the bash side."""
-        options = super().parse_args(*args, **kwargs)
-
         if self.parser.debug:
             # pass down verbosity level to affect debug output
             os.environ['PKGCORE_DEBUG'] = str(options.verbosity)

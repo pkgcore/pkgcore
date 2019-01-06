@@ -19,7 +19,8 @@ class MetadataException(PackageError):
 
     def __init__(self, pkg, attr, error, verbose=None):
         super().__init__(f"metadata exception: pkg {pkg}, attr {attr}\nerror: {error}")
-        self.pkg, self.attr, self.error, self._verbose = pkg, attr, error, verbose
+        self.pkg, self.attr, self.error = pkg, attr, error
+        self._verbose = verbose.strip()
 
     def msg(self, verbosity=0):
         """Extract error message from verbose output depending on verbosity level."""
@@ -29,8 +30,10 @@ class MetadataException(PackageError):
                 # add full bash output in verbose mode
                 s += ":\n" + self._verbose.strip('\n')
             else:
-                # extract die message from bash output
-                s += ": " + self._verbose.split('\n')[1].lstrip('* ')
+                # extract context and die message from bash output
+                bash_error = [x.lstrip('* ') for x in self._verbose.split('\n')]
+                s += f": {bash_error[-1]} \"{bash_error[1]}\""
+
         return s
 
 

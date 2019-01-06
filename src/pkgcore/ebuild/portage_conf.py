@@ -229,6 +229,52 @@ def add_fetcher(config, make_conf):
     config["fetcher"] = basics.AutoConfigSection(fetcher_dict)
 
 
+def _config_repo_ebuild_v1(config, repo_name, repo_opts, repo_map, defaults):
+    """Create ebuild repo v1 configuration."""
+    repo_path = repo_opts['location']
+
+    # XXX: Hack for portage-2 profile format support.
+    repo_config = RepoConfig(repo_path, repo_name)
+    repo_map[repo_config.repo_id] = repo_path
+
+    # repo configs
+    repo_conf = {
+        'class': 'pkgcore.ebuild.repo_objs.RepoConfig',
+        'config_name': repo_name,
+        'location': repo_path,
+        'syncer': 'sync:' + repo_name,
+    }
+
+    # repo trees
+    repo = {
+        'inherit': ('ebuild-repo-common',),
+        'repo_config': 'conf:' + repo_name,
+    }
+
+    # metadata cache
+    if repo_config.cache_format is not None:
+        cache_name = 'cache:' + repo_name
+        config[cache_name] = make_cache(repo_config.cache_format, repo_path)
+        repo['cache'] = cache_name
+
+    if repo_name == defaults['main-repo']:
+        repo_conf['default'] = True
+        repo['default'] = True
+
+    config['conf:' + repo_name] = basics.AutoConfigSection(repo_conf)
+    return repo
+
+
+def _config_repo_binpkg_v1(config, repo_name, repo_opts, **kwargs):
+    """Create binpkg repo v1 configuration."""
+    repo = {
+        'class': 'pkgcore.binpkg.repository.tree',
+        'repo_id': repo_name,
+        'location': repo_opts['location'],
+    }
+    return repo
+
+
 def make_cache(cache_format, repo_path):
     # Use md5 cache if it exists or the option is selected, otherwise default
     # to the old flat hash format in /var/cache/edb/dep/*.
@@ -340,8 +386,18 @@ def load_repos_conf(path):
                 continue
             repo_data['location'] = os.path.abspath(location)
 
-            # repo priority defaults to zero if unset or invalid
-            priority = repo_data.get('priority', 0)
+            repo_type = repo_data.get('repo-type', 'ebuild_v1').replace('-', '_')
+            repo_data['repo_type'] = repo_type
+
+            # Priority defaults to zero if unset or invalid for ebuild repos
+            # while binpkg repos have the lowest priority by default.
+            priority = repo_data.get('priority', None)
+            if priority is None:
+                if repo_type.startswith('binpkg'):
+                    priority = -10000
+                else:
+                    priority = 0
+
             try:
                 priority = int(priority)
             except ValueError:
@@ -460,44 +516,19 @@ def config_from_make_conf(location=None, profile_override=None, **kwargs):
         'class': 'pkgcore.ebuild.repository.tree',
         'default_mirrors': gentoo_mirrors,
         'inherit-only': True,
-        'ignore_paludis_versioning': ('ignore-paludis-versioning' in features),
     })
 
     repo_map = {}
 
     for repo_name, repo_opts in repos_conf.items():
-        repo_path = repo_opts['location']
-
-        # XXX: Hack for portage-2 profile format support.
-        repo_config = RepoConfig(repo_path, repo_name)
-        repo_map[repo_config.repo_id] = repo_path
-
-        # repo configs
-        repo_conf = {
-            'class': 'pkgcore.ebuild.repo_objs.RepoConfig',
-            'config_name': repo_name,
-            'location': repo_path,
-            'syncer': 'sync:' + repo_name,
-        }
-
-        # repo trees
-        repo = {
-            'inherit': ('ebuild-repo-common',),
-            'repo_config': 'conf:' + repo_name,
-        }
-
-        # metadata cache
-        if repo_config.cache_format is not None:
-            cache_name = 'cache:' + repo_name
-            config[cache_name] = make_cache(repo_config.cache_format, repo_path)
-            repo['cache'] = cache_name
-
-        if repo_name == repos_conf_defaults['main-repo']:
-            repo_conf['default'] = True
-            repo['default'] = True
-
-        config['conf:' + repo_name] = basics.AutoConfigSection(repo_conf)
-        config[repo_name] = basics.AutoConfigSection(repo)
+        repo_type = repo_opts.pop('repo-type', 'ebuild_v1').replace('-', '_')
+        try:
+            repo = globals()[f"_config_repo_{repo_type}"](
+                config, repo_name, repo_opts,
+                repo_map=repo_map, defaults=repos_conf_defaults)
+            config[repo_name] = basics.AutoConfigSection(repo)
+        except (KeyError, TypeError):
+            raise errors.ConfigurationError(f"unsupported repo type: {repo_type!r}")
 
     # XXX: Hack for portage-2 profile format support. We need to figure out how
     # to dynamically create this from the config at runtime on attr access.
@@ -522,44 +553,9 @@ def config_from_make_conf(location=None, profile_override=None, **kwargs):
         config['glsa'] = basics.section_alias(
             'vuln', SecurityUpgradesViaProfile.pkgcore_config_type.typename)
 
-    # binpkg.
     forced_buildpkg = kwargs.pop('buildpkg', False)
-    buildpkg = 'buildpkg' in features or forced_buildpkg
-    pkgdir = os.environ.get("PKGDIR", make_conf.get('PKGDIR', None))
-    if pkgdir is not None:
-        try:
-            pkgdir = abspath(pkgdir)
-        except FileNotFoundError:
-            if buildpkg or set(features).intersection(
-                    ('pristine-buildpkg', 'buildsyspkg', 'unmerge-backup')):
-                logger.warning("disabling buildpkg related features since PKGDIR doesn't exist")
-            pkgdir = None
-        else:
-            if not ensure_dirs(pkgdir, mode=0o755, minimal=True):
-                logger.warning("disabling buildpkg related features since PKGDIR either doesn't "
-                               "exist, or lacks 0755 minimal permissions")
-                pkgdir = None
-    else:
-        if buildpkg or set(features).intersection(
-                ('pristine-buildpkg', 'buildsyspkg', 'unmerge-backup')):
-            logger.warning("disabling buildpkg related features since PKGDIR is unset")
-
-    # yes, round two; may be disabled from above and massive else block sucks
-    if pkgdir is not None:
-        if pkgdir and os.path.isdir(pkgdir):
-            config['binpkg'] = basics.ConfigSectionFromStringDict({
-                'class': 'pkgcore.binpkg.repository.tree',
-                'repo_id': 'binpkg',
-                'location': pkgdir,
-                'ignore_paludis_versioning': str('ignore-paludis-versioning' in features),
-            })
-            repos.append('binpkg')
-            # inject feature to enable trigger
-            if forced_buildpkg:
-                make_conf['FEATURES'] += ' buildpkg'
-    elif 'buildpkg' in features:
-        # disable feature due to pkgdir issues so trigger isn't added
-        make_conf['FEATURES'] += ' -buildpkg'
+    if forced_buildpkg:
+        make_conf['FEATURES'] += ' buildpkg'
 
     # now add the fetcher- we delay it till here to clean out the environ
     # it passes to the command.

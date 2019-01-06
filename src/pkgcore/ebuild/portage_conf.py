@@ -386,8 +386,9 @@ def load_repos_conf(path):
                 continue
             repo_data['location'] = os.path.abspath(location)
 
+            # repo type defaults to ebuild for compat with portage
             repo_type = repo_data.get('repo-type', 'ebuild_v1').replace('-', '_')
-            repo_data['repo_type'] = repo_type
+            repo_data['repo-type'] = repo_type
 
             # Priority defaults to zero if unset or invalid for ebuild repos
             # while binpkg repos have the lowest priority by default.
@@ -521,7 +522,7 @@ def config_from_make_conf(location=None, profile_override=None, **kwargs):
     repo_map = {}
 
     for repo_name, repo_opts in repos_conf.items():
-        repo_type = repo_opts.pop('repo-type', 'ebuild_v1').replace('-', '_')
+        repo_type = repo_opts.pop('repo-type')
         try:
             repo = globals()[f"_config_repo_{repo_type}"](
                 config, repo_name, repo_opts,

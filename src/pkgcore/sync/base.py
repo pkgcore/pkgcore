@@ -27,7 +27,9 @@ class syncer_exception(Exception):
 
 
 class uri_exception(syncer_exception):
-    pass
+
+    def __init__(self, uri, msg):
+        super().__init__(f"{uri!r} {msg}")
 
 
 class generic_exception(syncer_exception):

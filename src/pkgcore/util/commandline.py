@@ -633,35 +633,28 @@ class Tool(tool.Tool):
                 dump_error(e, 'Error while parsing arguments', tb=tb)
             else:
                 self.parser.error(f"config error: {e}")
-        elif isinstance(e, config_errors.ConfigurationError):
-            # find the first non-config exception in the chain if it exists
-            # for the displayed message
-            for x in walk_exception_chain(e):
-                exc = x
-                if not isinstance(exc, config_errors.BaseError):
-                    break
+        elif isinstance(e, (config_errors.ConfigurationError, operations.OperationError)):
+            if isinstance(e, config_errors.ConfigurationError):
+                msg = 'Error in configuration'
             else:
-                # if it's internal, display the error for the commandline
-                self.parser.error(f"config error: {exc}")
-            # dump the error if it's external
-            # TODO: extract the traceback object from the exception when py3 only
-            tb = sys.exc_info()[-1]
-            dump_error(exc, "Error in configuration", handle=self._errfile, tb=tb)
-        elif isinstance(e, operations.OperationError):
-            # Output a clean cli error for internal exception types if one
-            # exists otherwise show a debugging traceback.
+                msg = 'Error running an operation'
+
+            # determine if clean CLI error exists
             exc = getattr(e, '__cause__', e)
             cli_error = (
                 getattr(exc, '__module__', None) is not None and
                 exc.__module__.split('.')[0] == __title__ and
                 str(exc) != '')
+
+            # Output a clean cli error for internal exception types if one
+            # exists otherwise show a debugging traceback.
             if not self.parser.debug and cli_error:
                 excs = list(walk_exception_chain(e))
                 # output the original error message
                 self.parser.error(excs[-1])
             else:
                 tb = sys.exc_info()[-1]
-                dump_error(e, "Error running an operation", handle=self._errfile, tb=tb)
+                dump_error(e, msg, handle=self._errfile, tb=tb)
         else:
             # exception is unhandled here, fallback to generic handling
             super().handle_exec_exception(e)

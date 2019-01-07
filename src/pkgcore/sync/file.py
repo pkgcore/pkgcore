@@ -3,9 +3,9 @@ __all__ = ("file_syncer",)
 import errno
 import os
 import sys
-import tempfile
 import urllib.request
 
+from snakeoil.fileutils import AtomicWriteFile
 from snakeoil.osutils import pjoin
 
 from pkgcore.sync import base
@@ -51,27 +51,30 @@ class file_syncer(base.Syncer):
             blocksize = 1000000
 
         try:
-            tmpfile = tempfile.NamedTemporaryFile(
-                prefix=f'.{self.basename}-', dir=self.basedir, delete=False)
-
-            size = 0
-            while True:
-                buf = resp.read(blocksize)
-                if not buf:
-                    sys.stdout.write('\n')
-                    break
-                tmpfile.write(buf)
-                size += len(buf)
-                if length:
-                    sys.stdout.write('\r')
-                    progress = '=' * int(size / length * 50)
-                    percent = int(size / length * 100)
-                    sys.stdout.write("[%-50s] %d%%" % (progress, percent))
-
-            os.rename(tmpfile.name, self.dest)
-            with open(timestamp, 'w') as f:
-                f.write(last_modified)
+            f = AtomicWriteFile(self.dest, binary=True, perms=0o644)
         except OSError as e:
             raise base.PathError(self.basedir, e.strerror) from e
+
+        # retrieve the file while providing simple progress output
+        size = 0
+        while True:
+            buf = resp.read(blocksize)
+            if not buf:
+                sys.stdout.write('\n')
+                break
+            f.write(buf)
+            size += len(buf)
+            if length:
+                sys.stdout.write('\r')
+                progress = '=' * int(size / length * 50)
+                percent = int(size / length * 100)
+                sys.stdout.write("[%-50s] %d%%" % (progress, percent))
+
+        # atomically create file
+        f.close()
+
+        # update timestamp
+        with open(timestamp, 'w') as f:
+            f.write(last_modified)
 
         return True

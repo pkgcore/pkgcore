@@ -247,11 +247,10 @@ class ProvidesRepo(util.SimpleTree):
         'repo_config': 'ref:repo_config', 'cache': 'refs:cache',
         'eclass_override': 'ref:eclass_cache',
         'default_mirrors': 'list',
-        'ignore_paludis_versioning': 'bool',
         'allow_missing_manifests': 'bool'},
     requires_config='config')
-def tree(config, repo_config, cache=(), eclass_override=None, default_mirrors=None,
-         ignore_paludis_versioning=False, allow_missing_manifests=False):
+def tree(config, repo_config, cache=(), eclass_override=None,
+         default_mirrors=None, allow_missing_manifests=False):
     eclass_cache = _sort_eclasses(config, repo_config, eclass_override)
 
     try:
@@ -264,7 +263,6 @@ def tree(config, repo_config, cache=(), eclass_override=None, default_mirrors=No
     return UnconfiguredTree(
         repo_config.location, eclass_cache=eclass_cache, masters=masters, cache=cache,
         default_mirrors=default_mirrors,
-        ignore_paludis_versioning=ignore_paludis_versioning,
         allow_missing_manifests=allow_missing_manifests,
         repo_config=repo_config)
 
@@ -294,7 +292,6 @@ class UnconfiguredTree(prototype.tree):
         'masters': 'refs:repo',
         'cache': 'refs:cache',
         'default_mirrors': 'list',
-        'ignore_paludis_versioning': 'bool',
         'allow_missing_manifests': 'bool',
         'repo_config': 'ref:repo_config',
         },
@@ -360,7 +357,6 @@ class UnconfiguredTree(prototype.tree):
         self.mirrors = mirrors
         self.default_mirrors = default_mirrors
         self.cache = cache
-        self.ignore_paludis_versioning = ignore_paludis_versioning
         self._allow_missing_chksums = allow_missing_manifests
         self.package_class = self.package_factory(
             self, cache, self.eclass_cache, self.mirrors, self.default_mirrors)
@@ -486,23 +482,9 @@ class UnconfiguredTree(prototype.tree):
         extension = self.extension
         ext_len = -len(extension)
         try:
-            ret = tuple(x[lp:ext_len] for x in listdir_files(cppath)
-                        if x[ext_len:] == extension and x[:lp] == pkg)
-            if any(('scm' in x or '-try' in x) for x in ret):
-                if not self.ignore_paludis_versioning:
-                    for x in ret:
-                        if 'scm' in x:
-                            raise ebuild_errors.InvalidCPV(
-                                "%s/%s-%s has nonstandard -scm "
-                                "version component" % (catpkg + (x,)))
-                        elif 'try' in x:
-                            raise ebuild_errors.InvalidCPV(
-                                "%s/%s-%s has nonstandard -try "
-                                "version component" % (catpkg + (x,)))
-                    raise AssertionError('unreachable codepoint was reached')
-                return tuple(x for x in ret
-                             if ('scm' not in x and 'try' not in x))
-            return ret
+            return tuple(
+                x[lp:ext_len] for x in listdir_files(cppath)
+                if x[ext_len:] == extension and x[:lp] == pkg)
         except EnvironmentError as e:
             raise KeyError(
                 "failed fetching versions for package %s: %s" %

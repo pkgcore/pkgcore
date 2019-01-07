@@ -179,18 +179,6 @@ class TestUnconfiguredTree(TempDirMixin):
             {('cat', 'pkg'): ('3',), ('empty', 'empty'): ()},
             dict(repo.versions))
 
-        for x in ("1-scm", "scm", "1-try", "1_beta-scm", "1_beta-try"):
-            for rev in ("", "-r1"):
-                fp = pjoin(self.dir, 'cat', 'pkg', f'pkg-{x}{rev}.ebuild')
-                open(fp, 'w').close()
-                repo = self.mk_tree(self.dir)
-                self.assertRaises(ebuild_errors.InvalidCPV,
-                    repo.match, atom('cat/pkg'))
-                repo = self.mk_tree(self.dir, ignore_paludis_versioning=True)
-                self.assertEqual(sorted(x.cpvstr for x in
-                    repo.itermatch(atom('cat/pkg'))), ['cat/pkg-3'])
-                os.unlink(fp)
-
     def test_package_mask(self):
         with open(pjoin(self.pdir, 'package.mask'), 'w') as f:
             f.write(textwrap.dedent('''\

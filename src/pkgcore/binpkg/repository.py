@@ -222,17 +222,14 @@ class tree(prototype.tree):
 
     pkgcore_config_type = ConfigHint({
         'location': 'str',
-        'repo_id': 'str', 'ignore_paludis_versioning': 'bool'},
+        'repo_id': 'str'},
         typename='repo')
 
-    def __init__(self, location, repo_id=None, ignore_paludis_versioning=False,
-                 cache_version='0'):
+    def __init__(self, location, repo_id=None, cache_version='0'):
         """
         :param location: root of the tbz2 repository
         :keyword repo_id: unique repository id to use; else defaults to
             the location
-        :keyword ignore_paludis_versioning: if False, error when -scm is seen.
-            If True, silently ignore -scm ebuilds.
         """
         super().__init__()
         self.base = self.location = location
@@ -240,7 +237,6 @@ class tree(prototype.tree):
             repo_id = location
         self.repo_id = repo_id
         self._versions_tmp_cache = {}
-        self.ignore_paludis_versioning = ignore_paludis_versioning
 
         # XXX rewrite this when snakeoil.osutils grows an access equivalent.
         if not access(self.base, os.X_OK | os.R_OK):
@@ -283,22 +279,7 @@ class tree(prototype.tree):
                         x.startswith(".tmp.")):
                     continue
                 pv = x[:-lext]
-                try:
-                    pkg = versioned_CPV(category+"/"+pv)
-                except InvalidCPV:
-                    bad = True
-                if bad or not pkg.fullver:
-                    if '-scm' in pv:
-                        bad = 'scm'
-                    elif '-try' in pv:
-                        bad = 'try'
-                    else:
-                        raise InvalidCPV(f"{category}/{pv}: no version component")
-                    if self.ignore_paludis_versioning:
-                        bad = False
-                        continue
-                    raise InvalidCPV(
-                        f"{category}/{pv}: -{bad} version component is not standard.")
+                pkg = versioned_CPV(f'{category}/{pv}')
                 l.add(pkg.package)
                 d.setdefault((category, pkg.package), []).append(pkg.fullver)
         except EnvironmentError as e:

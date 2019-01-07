@@ -71,12 +71,15 @@ def sync_main(options, out, err):
             continue
         out.write(f"*** syncing {repo_name}")
         ret = False
+        err_msg = ''
         try:
             ret = repo.operations.sync(verbosity=options.verbosity)
-        except OperationError:
-            pass
+        except OperationError as e:
+            err = str(getattr(e, '__cause__', ''))
+            if err:
+                err_msg = f': {err}'
         if not ret:
-            out.write(f"*** failed syncing {repo_name}")
+            out.write(f"*** failed syncing {repo_name}{err_msg}")
             failed.append(repo_name)
         else:
             succeeded.append(repo_name)

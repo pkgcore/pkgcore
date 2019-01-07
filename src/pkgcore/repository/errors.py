@@ -20,4 +20,4 @@ class TreeCorruption(Exception):
 class InitializationError(TreeCorruption):
 
     def __str__(self):
-        return f"initialization failed: {self.err}"
+        return f"repo init failed: {self.err}"

@@ -21,6 +21,7 @@ from snakeoil.sequences import namedtuple
 
 from pkgcore.config import ConfigHint
 from pkgcore.repository import syncable
+from pkgcore.repository.errors import InitializationError
 
 demandload(
     'lxml:etree',
@@ -617,7 +618,7 @@ class SquashfsRepoConfig(RepoConfig):
     def _pre_sync(self):
         try:
             self._umount_archive()
-        except IOError as e:
+        except InitializationError:
             # already unmounted
             pass
 
@@ -643,11 +644,12 @@ class SquashfsRepoConfig(RepoConfig):
             ret = subprocess.run(
                 cmd + [self._sqfs, location], stderr=subprocess.PIPE, stdout=subprocess.PIPE)
         except FileNotFoundError as e:
-            raise IOError(f'failed mounting squashfs archive: {e.filename} required')
+            raise InitializationError(
+                f'failed mounting squashfs archive: {e.filename} required')
 
         if ret.returncode:
             stderr = ret.stderr.decode().strip().lower()
-            raise IOError(f'failed mounting squashfs archive: {stderr}')
+            raise InitializationError(f'failed mounting squashfs archive: {stderr}')
 
     def _umount_archive(self):
         """Unmount the squashfs archive."""
@@ -662,8 +664,9 @@ class SquashfsRepoConfig(RepoConfig):
             ret = subprocess.run(
                 cmd + [self.location], stderr=subprocess.PIPE, stdout=subprocess.PIPE)
         except FileNotFoundError as e:
-            raise IOError(f'failed unmounting squashfs archive: {e.filename} required')
+            raise InitializationError(
+                f'failed unmounting squashfs archive: {e.filename} required')
 
         if ret.returncode:
             stderr = ret.stderr.decode().strip().lower()
-            raise IOError(f'failed unmounting squashfs archive: {stderr}')
+            raise InitializationError(f'failed unmounting squashfs archive: {stderr}')

@@ -95,11 +95,11 @@ def make_domain(repo=None, binpkg=None, vdb=None):
         })
 
 
-class FakeSyncer(base.syncer):
+class FakeSyncer(base.Syncer):
 
     def __init__(self,  *args, **kwargs):
         self.succeed = kwargs.pop('succeed', True)
-        base.syncer.__init__(self, *args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.synced = False
 
     def _sync(self, verbosity, output_fd, **kwds):

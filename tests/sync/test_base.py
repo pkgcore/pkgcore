@@ -19,7 +19,7 @@ class TestBase(TestCase):
 
     def test_init(self):
         self.assertRaises(
-            base.syncer_exception, bogus,
+            base.SyncError, bogus,
             "/tmp/foon", "http://dar")
         o = valid("/tmp/foon", "http://dar")
         self.assertEqual(o.local_user, os.getuid())
@@ -42,12 +42,12 @@ class GenericSyncerTest(TestCase):
 
     def test_init(self):
         self.assertRaises(
-            base.uri_exception,
+            base.UriError,
             base.GenericSyncer, '/', 'seriouslynotaprotocol://blah/')
         # TODO this should be using a syncer we know is always available.
         try:
             syncer = base.GenericSyncer('/', 'svn://blah/')
-        except base.uri_exception as e:
+        except base.UriError as e:
             if str(e) == "no known syncer supports 'svn://blah/'":
                 raise SkipTest('svn syncer unavailable')
             raise

@@ -16,9 +16,9 @@ class TestHgSyncer(TestCase):
             "http://dar")
         self.assertEqual(hg.hg_syncer.parse_uri("mercurial+http://dar"),
             "http://dar")
-        self.assertRaises(base.uri_exception, hg.hg_syncer.parse_uri,
+        self.assertRaises(base.UriError, hg.hg_syncer.parse_uri,
             "hg://dar")
-        self.assertRaises(base.syncer_exception, bogus,
+        self.assertRaises(base.SyncError, bogus,
             "/tmp/foon", "hg+http://foon.com/dar")
         o = valid("/tmp/foon", "hg+http://dar")
         self.assertEqual(o.uri, "http://dar")

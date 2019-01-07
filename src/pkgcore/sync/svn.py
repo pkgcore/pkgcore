@@ -47,9 +47,9 @@ class svn_syncer(base.ExternalSyncer):
             return True
         elif raw_uri.startswith("svn+"):
             if raw_uri.startswith("svn+:"):
-                raise base.uri_exception(raw_uri, "svn+:// isn't valid")
+                raise base.UriError(raw_uri, "svn+:// isn't valid")
         else:
-            raise base.uri_exception(raw_uri, "protocol unknown")
+            raise base.UriError(raw_uri, "protocol unknown")
         return True
 
     def _sync(self, verbosity, output_fd):

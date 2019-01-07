@@ -160,7 +160,7 @@ class sync_operations(_operations_mod.base):
             syncer = getattr(self.repo, 'config', None)
             syncer = getattr(syncer, '_syncer', None)
 
-        if not lazy and not isinstance(syncer, _sync_base.syncer):
+        if not lazy and not isinstance(syncer, _sync_base.Syncer):
             syncer = syncer.instantiate()
         return syncer
 

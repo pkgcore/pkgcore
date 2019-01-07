@@ -8,7 +8,7 @@ import os
 from pkgcore.sync import base
 
 
-class git_syncer(base.dvcs_syncer):
+class git_syncer(base.VcsSyncer):
 
     binary = "git"
 
@@ -30,11 +30,11 @@ class git_syncer(base.dvcs_syncer):
     @staticmethod
     def parse_uri(raw_uri):
         if not raw_uri.startswith("git+") and not raw_uri.startswith("git://"):
-            raise base.uri_exception(
+            raise base.UriError(
                 raw_uri, "doesn't start with git+ nor git://")
         if raw_uri.startswith("git+"):
             if raw_uri.startswith("git+:"):
-                raise base.uri_exception(
+                raise base.UriError(
                     raw_uri, "need to specify the sub protocol if using git+")
             return raw_uri[4:]
         return raw_uri

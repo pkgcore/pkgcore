@@ -6,7 +6,7 @@ __all__ = ("darcs_syncer",)
 from pkgcore.sync import base
 
 
-class darcs_syncer(base.dvcs_syncer):
+class darcs_syncer(base.VcsSyncer):
 
     binary = "darcs"
 
@@ -17,7 +17,7 @@ class darcs_syncer(base.dvcs_syncer):
     @staticmethod
     def parse_uri(raw_uri):
         if not raw_uri.startswith("darcs+"):
-            raise base.uri_exception(raw_uri, "doesn't start with darcs+")
+            raise base.UriError(raw_uri, "doesn't start with darcs+")
         return raw_uri[6:]
 
     def __init__(self, basedir, uri, **kwargs):

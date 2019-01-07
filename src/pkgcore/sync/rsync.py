@@ -45,7 +45,7 @@ class rsync_syncer(base.ExternalSyncer):
     def parse_uri(cls, raw_uri):
         if not raw_uri.startswith("rsync://") and \
                 not raw_uri.startswith("rsync+"):
-            raise base.uri_exception(raw_uri, "doesn't start with rsync:// nor rsync+")
+            raise base.UriError(raw_uri, "doesn't start with rsync:// nor rsync+")
 
         if raw_uri.startswith("rsync://"):
             return None, raw_uri
@@ -107,7 +107,7 @@ class rsync_syncer(base.ExternalSyncer):
                     yield ipaddr[4][0]
 
         except socket.error as e:
-            raise base.syncer_exception(self.hostname, af_fam, str(e)) from e
+            raise base.SyncError(self.hostname, af_fam, str(e)) from e
 
     def _sync(self, verbosity, output_fd):
         fd_pipes = {1: output_fd, 2: output_fd}
@@ -134,18 +134,18 @@ class rsync_syncer(base.ExternalSyncer):
                 return True
             elif ret == 1:
                 # syntax error
-                raise base.syncer_exception(o, "syntax error")
+                raise base.SyncError(o, "syntax error")
             elif ret == 11:
-                raise base.syncer_exception(
+                raise base.SyncError(
                     "rsync returned error code of "
                     "11; this is an out of space exit code")
            # need to do something here instead of just restarting...
            # else:
            #     print(ret)
-        raise base.syncer_exception(ret, "all attempts failed")
+        raise base.SyncError(ret, "all attempts failed")
 
 
-class _rsync_file_syncer(rsync_syncer):
+class _RsyncFileSyncer(rsync_syncer):
     """Support syncing a single file over rsync."""
 
     def __init__(self, path, uri):
@@ -162,7 +162,7 @@ class rsync_timestamp_syncer(rsync_syncer):
     negative_sync_delay = 60 * 60 # 60 minutes
 
     def __init__(self, *args, **kwargs):
-        rsync_syncer.__init__(self, *args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.last_timestamp = self.current_timestamp()
 
     def current_timestamp(self, path=None):
@@ -194,7 +194,7 @@ class rsync_timestamp_syncer(rsync_syncer):
                 with tempfile.NamedTemporaryFile() as new_timestamp:
                     timestamp_uri = pjoin(self.uri, "metadata", "timestamp.chk")
                     timestamp_path = new_timestamp.name
-                    timestamp_syncer = _rsync_file_syncer(timestamp_path, timestamp_uri)
+                    timestamp_syncer = _RsyncFileSyncer(timestamp_path, timestamp_uri)
                     ret = timestamp_syncer._sync(verbosity, output_fd)
                     if not ret:
                         doit = True
@@ -206,7 +206,7 @@ class rsync_timestamp_syncer(rsync_syncer):
                             doit = delta > self.negative_sync_delay
             if not doit:
                 return True
-            ret = rsync_syncer._sync(self, verbosity, output_fd)
+            ret = super()._sync(verbosity, output_fd)
             # force a reset of the timestamp
             self.last_timestamp = self.current_timestamp()
         finally:

@@ -8,7 +8,7 @@ import os
 from pkgcore.sync import base
 
 
-class hg_syncer(base.dvcs_syncer):
+class hg_syncer(base.VcsSyncer):
 
     binary = "hg"
 
@@ -30,7 +30,7 @@ class hg_syncer(base.dvcs_syncer):
             return raw_uri[3:]
         elif raw_uri.startswith("mercurial+"):
             return raw_uri[len("mercurial+"):]
-        raise base.uri_exception(
+        raise base.UriError(
             raw_uri, "doesn't start with hg+ nor mercurial+")
 
     def __init__(self, basedir, uri, **kwargs):

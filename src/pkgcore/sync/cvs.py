@@ -8,7 +8,7 @@ import os
 from pkgcore.sync import base
 
 
-class cvs_syncer(base.dvcs_syncer):
+class cvs_syncer(base.VcsSyncer):
 
     binary = "cvs"
 
@@ -28,12 +28,12 @@ class cvs_syncer(base.dvcs_syncer):
     def parse_uri(cls, raw_uri):
         if not raw_uri.startswith("cvs") and \
                 not raw_uri.startswith("cvs+"):
-            raise base.uri_exception(raw_uri, "must be cvs:// or cvs+${RSH}")
+            raise base.UriError(raw_uri, "must be cvs:// or cvs+${RSH}")
         if raw_uri.startswith("cvs://"):
             return None, raw_uri[len("cvs://"):]
         proto = raw_uri[len("cvs+"):].split(":", 1)
         if not proto[0]:
-            raise base.uri_exception(
+            raise base.UriError(
                 raw_uri, "cvs+ requires the rsh alternative to be specified")
         if proto[0] == "anon":
             proto[0] = None

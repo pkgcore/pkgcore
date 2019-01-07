@@ -12,9 +12,9 @@ valid = make_valid_syncer(svn.svn_syncer)
 class TestSVNSyncer(TestCase):
 
     def test_uri_parse(self):
-        self.assertRaises(base.uri_exception, svn.svn_syncer.parse_uri,
+        self.assertRaises(base.UriError, svn.svn_syncer.parse_uri,
             "svn+://dar")
-        self.assertRaises(base.syncer_exception, bogus,
+        self.assertRaises(base.SyncError, bogus,
             "/tmp/foon", "svn+http://foon.com/dar")
         o = valid("/tmp/foon", "svn+http://dar")
         self.assertEqual(o.uri, "svn+http://dar")

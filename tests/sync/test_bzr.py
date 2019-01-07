@@ -14,9 +14,9 @@ class TestBzrSyncer(TestCase):
     def test_uri_parse(self):
         self.assertEqual(bzr.bzr_syncer.parse_uri("bzr+http://dar"),
             "http://dar")
-        self.assertRaises(base.uri_exception, bzr.bzr_syncer.parse_uri,
+        self.assertRaises(base.UriError, bzr.bzr_syncer.parse_uri,
             "bzr://dar")
-        self.assertRaises(base.syncer_exception, bogus,
+        self.assertRaises(base.SyncError, bogus,
             "/tmp/foon", "bzr+http://foon.com/dar")
         o = valid("/tmp/foon", "bzr+http://dar")
         self.assertEqual(o.uri, "http://dar")

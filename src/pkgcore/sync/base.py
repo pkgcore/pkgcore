@@ -3,10 +3,9 @@
 
 
 __all__ = (
-    "syncer_exception", "uri_exception", "generic_exception",
-    "missing_local_user", "missing_binary", "syncer", "ExternalSyncer",
-    "dvcs_syncer", "GenericSyncer", "DisabledSyncer",
-    "AutodetectSyncer",
+    "SyncError", "UriError", "MissingLocalUser", "MissingBinary",
+    "Syncer", "ExternalSyncer", "VcsSyncer",
+    "GenericSyncer", "DisabledSyncer", "AutodetectSyncer",
 )
 
 from snakeoil.demandload import demandload
@@ -22,29 +21,43 @@ demandload(
 )
 
 
-class syncer_exception(Exception):
+class SyncError(Exception):
     pass
 
 
-class uri_exception(syncer_exception):
+class UriError(SyncError):
 
     def __init__(self, uri, msg):
-        super().__init__(f"{uri!r} {msg}")
+        self.uri = uri
+        self.msg = msg
+        super().__init__(f"{uri!r}: {msg}")
 
 
-class generic_exception(syncer_exception):
-    pass
+class PathError(SyncError):
+
+    def __init__(self, path, msg):
+        self.path = path.rstrip(os.path.sep)
+        self.msg = msg
+        super().__init__(f"{self.path!r}: {msg}")
 
 
-class missing_local_user(syncer_exception):
-    pass
+class MissingLocalUser(SyncError):
+
+    def __init__(self, uri, msg):
+        self.uri = uri
+        self.msg = msg
+        super().__init__(f"{uri!r}: {msg}")
 
 
-class missing_binary(syncer_exception):
-    pass
+class MissingBinary(SyncError):
+
+    def __init__(self, binary, msg):
+        self.binary = binary
+        self.msg = msg
+        super().__init__(f"{binary!r}: {msg}")
 
 
-class syncer(object):
+class Syncer(object):
 
     forcable = False
 
@@ -89,7 +102,7 @@ class syncer(object):
 
             return pwd.getpwnam(uri[0]).pw_uid, uri[1]
         except KeyError as e:
-            raise missing_local_user(raw_uri, uri[0], e)
+            raise MissingLocalUser(raw_uri, str(e))
 
     def sync(self, verbosity=None, force=False):
         if self.disabled:
@@ -116,7 +129,7 @@ class syncer(object):
         return 0
 
 
-class ExternalSyncer(syncer):
+class ExternalSyncer(Syncer):
 
     """Base class for syncers that spawn a binary to do the the actual work."""
 
@@ -128,7 +141,7 @@ class ExternalSyncer(syncer):
     )
 
     def __init__(self, *args, **kwargs):
-        syncer.__init__(self, *args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.env = {v: os.environ[v] for v in self.env_whitelist if v in os.environ}
 
         if not hasattr(self, 'binary_path'):
@@ -140,7 +153,7 @@ class ExternalSyncer(syncer):
             return process.find_binary(bin_name)
         except process.CommandNotFound as e:
             if fatal:
-                raise missing_binary(bin_name, e)
+                raise MissingBinary(bin_name, str(e))
             return None
 
     @classmethod
@@ -178,7 +191,7 @@ class ExternalSyncer(syncer):
             return uri
 
 
-class dvcs_syncer(ExternalSyncer):
+class VcsSyncer(ExternalSyncer):
 
     def _sync(self, verbosity, output_fd):
         try:
@@ -187,10 +200,10 @@ class dvcs_syncer(ExternalSyncer):
             command = self._initial_pull() + self.opts
             chdir = None
         except EnvironmentError as e:
-            raise generic_exception(self, self.basedir, e) from e
+            raise PathError(self.basedir, e.strerror) from e
         else:
             if not stat.S_ISDIR(st.st_mode):
-                raise generic_exception(self, self.basedir, "isn't a directory")
+                raise PathError(self.basedir, "isn't a directory")
             command = self._update_existing() + self.opts
             chdir = self.basedir
 
@@ -218,15 +231,15 @@ def GenericSyncer(basedir, uri, **kwargs):
         for plug in plugin.get_plugins('syncer'))
     plugins.sort(key=lambda x: x[0])
     if not plugins or plugins[-1][0] <= 0:
-        raise uri_exception(f"no known syncer supports {uri!r}")
+        raise UriError(uri, "no known syncer support")
     # XXX this is random if there is a tie. Should we raise an exception?
     return plugins[-1][1](basedir, uri, **kwargs)
 
 
-class DisabledSyncer(syncer):
+class DisabledSyncer(Syncer):
 
     def __init__(self, basedir, **kwargs):
-        syncer.__init__(self, basedir, uri='', **kwargs)
+        super().__init__(basedir, uri='', **kwargs)
 
     @staticmethod
     def disabled():

@@ -17,10 +17,10 @@ class TestGitSVNSyncer(TestCase):
             git_svn.git_svn_syncer.parse_uri("git+svn+http://dar"),
             "http://dar")
         self.assertRaises(
-            base.uri_exception, git_svn.git_svn_syncer.parse_uri,
+            base.UriError, git_svn.git_svn_syncer.parse_uri,
             "git+svn+://dar")
         self.assertRaises(
-            base.syncer_exception, bogus,
+            base.SyncError, bogus,
             "/tmp/foon", "git+svn+http://foon.com/dar")
         o = valid("/tmp/foon", "git+svn+http://dar")
         self.assertEqual(o.uri, "http://dar")

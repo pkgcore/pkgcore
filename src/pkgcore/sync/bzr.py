@@ -9,7 +9,7 @@ from snakeoil.process.spawn import spawn_get_output
 from pkgcore.sync import base
 
 
-class bzr_syncer(base.dvcs_syncer):
+class bzr_syncer(base.VcsSyncer):
 
     binary = "bzr"
 
@@ -38,7 +38,7 @@ class bzr_syncer(base.dvcs_syncer):
     @staticmethod
     def parse_uri(raw_uri):
         if not raw_uri.startswith("bzr+"):
-            raise base.uri_exception(raw_uri, "doesn't start with bzr+")
+            raise base.UriError(raw_uri, "doesn't start with bzr+")
         return raw_uri[4:]
 
     def __init__(self, basedir, uri, **kwargs):

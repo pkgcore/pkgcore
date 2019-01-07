@@ -13,7 +13,7 @@ class TestCVSSyncer(TestCase):
 
     def test_uri_parse(self):
         self.assertRaises(
-            base.syncer_exception, bogus,
+            base.SyncError, bogus,
             "/tmp/foon", "cvs+hopefully_nonexistent_binary://foon.com/dar")
         o = valid("/tmp/foon", "cvs://dar:module")
         self.assertEqual(o.uri, ":anoncvs:dar")

@@ -647,7 +647,7 @@ class Tool(tool.Tool):
             if self.parser.debug or not cli_error:
                 tb = sys.exc_info()[-1]
                 msg = exc_types[e.__class__]
-                dump_error(e, msg, handle=self._errfile, tb=tb)
+                dump_error(exc, msg, handle=self._errfile, tb=exc.__traceback__)
             else:
                 excs = list(walk_exception_chain(e))
                 # output the original error message

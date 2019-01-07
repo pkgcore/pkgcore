@@ -619,7 +619,7 @@ class buildable(ebd, setup_mixin, format.build):
             self.env["PKGCORE_USER_PATCHES"] = pkg.user_patches
 
         if self.eapi.options.has_portdir:
-            self.env["PORTDIR"] = eclass_cache.location
+            self.env["PORTDIR"] = pkg.repo.location
             self.env["ECLASSDIR"] = eclass_cache.eclassdir
 
         if self.setup_is_for_src:

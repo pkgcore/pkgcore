@@ -146,7 +146,10 @@ class sync_operations(_operations_mod.base):
     def _cmd_api_sync(self, observer=None, **kwargs):
         # often enough, the syncer is a lazy_ref
         syncer = self._get_syncer()
-        return syncer.sync(**kwargs)
+        self.repo._pre_sync()
+        ret = syncer.sync(**kwargs)
+        self.repo._post_sync()
+        return ret
 
     def _get_syncer(self, lazy=False):
         singleton = object()

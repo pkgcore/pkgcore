@@ -19,3 +19,9 @@ class tree(object):
 
     def get_operations(self, observer=None):
         return self.operations_kls(self)
+
+    def _pre_sync(self):
+        """Run any required pre-sync repo operations."""
+
+    def _post_sync(self):
+        """Run any required post-sync repo operations."""

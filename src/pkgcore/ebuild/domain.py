@@ -752,21 +752,21 @@ class domain(config_domain):
         """Group of all ebuild repos bound with configuration data."""
         return RepositoryGroup(
             x for x in self.source_repos
-            if isinstance(x.raw_repo, ebuild_repo._ConfiguredTree))
+            if isinstance(x.raw_repo, ebuild_repo.ConfiguredTree))
 
     @klass.jit_attr_none
     def ebuild_repos_unfiltered(self):
         """Group of all ebuild repos without package filtering."""
         return RepositoryGroup(
             x for x in self.unfiltered_repos
-            if isinstance(x, ebuild_repo._ConfiguredTree))
+            if isinstance(x, ebuild_repo.ConfiguredTree))
 
     @klass.jit_attr_none
     def ebuild_repos_raw(self):
         """Group of all ebuild repos without filtering."""
         return RepositoryGroup(
             x for x in self.source_repos_raw
-            if isinstance(x, ebuild_repo._UnconfiguredTree))
+            if isinstance(x, ebuild_repo.UnconfiguredTree))
 
     @klass.jit_attr_none
     def binary_repos(self):

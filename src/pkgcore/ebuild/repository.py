@@ -5,7 +5,7 @@
 Ebuild repository, specific to gentoo ebuild trees.
 """
 
-__all__ = ("tree", "ProvidesRepo",)
+__all__ = ("UnconfiguredTree", "ConfiguredTree", "ProvidesRepo", "tree")
 
 from functools import partial, wraps
 from itertools import chain, filterfalse
@@ -213,7 +213,7 @@ class ProvidesRepo(util.SimpleTree):
             return InvertedContains(())
 
         def __init__(self, *a, **kwds):
-            ebuild_src.base.__init__(self, *a, **kwds)
+            super().__init__(*a, **kwds)
             object.__setattr__(self, "use", [])
             object.__setattr__(self, "data", {"SLOT": "0"})
             object.__setattr__(self, "eapi", get_eapi('0'))
@@ -252,7 +252,7 @@ class ProvidesRepo(util.SimpleTree):
     requires_config='config')
 def tree(config, repo_config, cache=(), eclass_override=None, default_mirrors=None,
          ignore_paludis_versioning=False, allow_missing_manifests=False):
-    eclass_override = _sort_eclasses(config, repo_config, eclass_override)
+    eclass_cache = _sort_eclasses(config, repo_config, eclass_override)
 
     try:
         masters = tuple(config.objects['repo'][r] for r in repo_config.masters)
@@ -261,18 +261,15 @@ def tree(config, repo_config, cache=(), eclass_override=None, default_mirrors=No
             "'%s' repo has cyclic masters: %s" % (
                 repo_config.repo_id, ', '.join(repo_config.masters)))
 
-    return _UnconfiguredTree(
-        repo_config.location, eclass_override, masters=masters, cache=cache,
+    return UnconfiguredTree(
+        repo_config.location, eclass_cache=eclass_cache, masters=masters, cache=cache,
         default_mirrors=default_mirrors,
         ignore_paludis_versioning=ignore_paludis_versioning,
         allow_missing_manifests=allow_missing_manifests,
         repo_config=repo_config)
 
 
-metadata_offset = "profiles"
-
-
-class _UnconfiguredTree(prototype.tree):
+class UnconfiguredTree(prototype.tree):
     """Raw implementation supporting standard ebuild tree.
 
     Return packages don't have USE configuration bound to them.
@@ -304,9 +301,7 @@ class _UnconfiguredTree(prototype.tree):
         typename='repo')
 
     def __init__(self, location, eclass_cache=None, masters=(), cache=(),
-                 default_mirrors=None, ignore_paludis_versioning=False,
-                 allow_missing_manifests=False, repo_config=None):
-
+                 default_mirrors=None, allow_missing_manifests=False, repo_config=None):
         """
         :param location: on disk location of the tree
         :param cache: sequence of :obj:`pkgcore.cache.template.database` instances
@@ -317,22 +312,22 @@ class _UnconfiguredTree(prototype.tree):
             if None, generates the eclass_cache itself
         :param default_mirrors: Either None, or sequence of mirrors to try
             fetching from first, then falling back to other uri
-        :param ignore_paludis_versioning: If False, fail when -scm is encountered.  if True,
-            silently ignore -scm ebuilds.
         """
-
-        prototype.tree.__init__(self)
+        super().__init__()
         self.base = self.location = location
         try:
             if not stat.S_ISDIR(os.stat(self.base).st_mode):
                 raise errors.InitializationError(f"base not a dir: {self.base}")
         except OSError as e:
             raise errors.InitializationError(f"lstat failed: {self.base}") from e
+
         if repo_config is None:
             repo_config = repo_objs.RepoConfig(location)
         self.config = repo_config
+
         if eclass_cache is None:
-            eclass_cache = eclass_cache_module.cache(pjoin(self.location, 'eclass'))
+            eclass_cache = eclass_cache_module.cache(
+                pjoin(self.location, 'eclass'), location=self.location)
         self.eclass_cache = eclass_cache
 
         self.masters = masters
@@ -342,7 +337,7 @@ class _UnconfiguredTree(prototype.tree):
             self.licenses = repo_objs.OverlayedLicenses(*self.trees)
 
         mirrors = {}
-        fp = pjoin(self.location, metadata_offset, "thirdpartymirrors")
+        fp = pjoin(self.location, 'profiles', "thirdpartymirrors")
         try:
             for k, v in read_dict(fp, splitter=None).items():
                 v = v.split()
@@ -637,8 +632,8 @@ class _RegenOpHelper(object):
         self.ebp = None
 
 
-class _ConfiguredTree(configured.tree):
-    """Wrapper around a :obj:`_UnconfiguredTree` binding build/configuration data (USE)."""
+class ConfiguredTree(configured.tree):
+    """Wrapper around a :obj:`UnconfiguredTree` binding build/configuration data (USE)."""
 
     configurable = "use"
     config_wrappables = {
@@ -651,7 +646,7 @@ class _ConfiguredTree(configured.tree):
 
     def __init__(self, raw_repo, domain, domain_settings, fetcher=None):
         """
-        :param raw_repo: :obj:`_UnconfiguredTree` instance
+        :param raw_repo: :obj:`UnconfiguredTree` instance
         :param domain_settings: environment settings to bind
         :param fetcher: :obj:`pkgcore.fetch.base.fetcher` instance to use
             for getting access to fetchable files
@@ -682,9 +677,8 @@ class _ConfiguredTree(configured.tree):
             if isinstance(v, str):
                 self.config_wrappables[k] = getattr(self, v)
 
-        configured.tree.__init__(
-            self, raw_repo, self.config_wrappables,
-            pkg_kls_injections=scope_update)
+        super().__init__(
+            raw_repo, self.config_wrappables, pkg_kls_injections=scope_update)
 
         self._get_pkg_use = domain.get_package_use_unconfigured
         self._get_pkg_use_for_building = domain.get_package_use_buildable
@@ -757,4 +751,4 @@ class _ConfiguredTree(configured.tree):
         return tuple(repo._visibility_limiters for repo in self.trees)
 
 
-_UnconfiguredTree.configure = _ConfiguredTree
+UnconfiguredTree.configure = ConfiguredTree

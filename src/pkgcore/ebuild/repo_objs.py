@@ -23,10 +23,12 @@ from pkgcore.config import ConfigHint
 from pkgcore.repository import syncable
 
 demandload(
-    'os',
     'lxml:etree',
+    'os',
+    'subprocess',
     'snakeoil.bash:BashParseError,iter_read_bash,read_dict',
     'snakeoil.fileutils:readfile,readlines_ascii',
+    'snakeoil.process.namespaces:simple_unshare',
     'snakeoil.sequences:iter_stable_unique',
     'snakeoil.strings:pluralism',
     'pkgcore.ebuild:atom,profiles,pkg_updates',
@@ -362,6 +364,7 @@ class BundledProfiles(object):
 
 
 class RepoConfig(syncable.tree, metaclass=WeakInstMeta):
+    """Configuration data for an ebuild repository."""
 
     layout_offset = "metadata/layout.conf"
 
@@ -384,7 +387,7 @@ class RepoConfig(syncable.tree, metaclass=WeakInstMeta):
         object.__setattr__(self, 'config_name', config_name)
         object.__setattr__(self, 'location', location)
         object.__setattr__(self, 'profiles_base', pjoin(self.location, profiles_base))
-        syncable.tree.__init__(self, syncer)
+        super().__init__(syncer)
         self._parse_config()
 
     def _parse_config(self):
@@ -593,3 +596,74 @@ class RepoConfig(syncable.tree, metaclass=WeakInstMeta):
             return eapi
         except FileNotFoundError:
             return get_eapi('0')
+
+
+class SquashfsRepoConfig(RepoConfig):
+    """Configuration data for an ebuild repository in a squashfs archive.
+
+    Linux only support for transparently supporting ebuild repos compressed
+    into squashfs archives.
+    """
+
+    def __init__(self, sqfs_file, location, *args, **kwargs):
+        sqfs_path = pjoin(location, sqfs_file)
+        object.__setattr__(self, '_sqfs', sqfs_path)
+        object.__setattr__(self, '_root', os.getuid() == 0)
+        # if squashfs archive exists in the repo, try to mount it over itself
+        if os.path.exists(self._sqfs):
+            self._mount_archive(location)
+        super().__init__(location, *args, **kwargs)
+
+    def _pre_sync(self):
+        try:
+            self._umount_archive()
+        except IOError as e:
+            # already unmounted
+            pass
+
+    def _post_sync(self):
+        if os.path.exists(self._sqfs):
+            self._mount_archive(self.location)
+
+    def _mount_archive(self, location):
+        """Mount the squashfs archive onto the repo in a mount namespace."""
+        # enable a user namespace if not running as root
+        unshare_kwds = {'mount': True, 'user': not self._root}
+        simple_unshare(**unshare_kwds)
+
+        if self._root:
+            # using mount binary to automatically handle setting up loop device
+            cmd = ['mount']
+        else:
+            # loopback device mounting (losetup) doesn't work in user namespaces
+            cmd = ['squashfuse', '-o', 'nonempty']
+
+        # TODO: switch to capture_output=True when >= py3.7
+        try:
+            ret = subprocess.run(
+                cmd + [self._sqfs, location], stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+        except FileNotFoundError as e:
+            raise IOError(f'failed mounting squashfs archive: {e.filename} required')
+
+        if ret.returncode:
+            stderr = ret.stderr.decode().strip().lower()
+            raise IOError(f'failed mounting squashfs archive: {stderr}')
+
+    def _umount_archive(self):
+        """Unmount the squashfs archive."""
+        if self._root:
+            cmd = ['umount']
+        else:
+            # loopback device mounting (losetup) doesn't work in user namespaces
+            cmd = ['fusermount', '-u']
+
+        # TODO: switch to capture_output=True when >= py3.7
+        try:
+            ret = subprocess.run(
+                cmd + [self.location], stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+        except FileNotFoundError as e:
+            raise IOError(f'failed unmounting squashfs archive: {e.filename} required')
+
+        if ret.returncode:
+            stderr = ret.stderr.decode().strip().lower()
+            raise IOError(f'failed unmounting squashfs archive: {stderr}')

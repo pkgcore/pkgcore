@@ -26,7 +26,7 @@ from snakeoil.osutils import access, normpath, abspath, listdir_files, pjoin, en
 from pkgcore import const
 from pkgcore.config import basics, configurable
 from pkgcore.ebuild import const as econst, profiles
-from pkgcore.ebuild.repo_objs import RepoConfig
+from pkgcore.ebuild import repo_objs
 from pkgcore.fs.livefs import sorted_scan
 from pkgcore.pkgsets.glsa import SecurityUpgrades
 
@@ -229,13 +229,15 @@ def add_fetcher(config, make_conf):
     config["fetcher"] = basics.AutoConfigSection(fetcher_dict)
 
 
-def _config_repo_ebuild_v1(config, repo_name, repo_opts, repo_map, defaults):
+def _config_repo_ebuild_v1(config, repo_name, repo_opts, repo_map,
+                           defaults, repo_obj=None, repo_dict=None):
     """Create ebuild repo v1 configuration."""
     repo_path = repo_opts['location']
 
     # XXX: Hack for portage-2 profile format support.
-    repo_config = RepoConfig(repo_path, repo_name)
-    repo_map[repo_config.repo_id] = repo_path
+    if repo_obj is None:
+        repo_obj = repo_objs.RepoConfig(repo_path, repo_name)
+    repo_map[repo_obj.repo_id] = repo_path
 
     # repo configs
     repo_conf = {
@@ -244,6 +246,8 @@ def _config_repo_ebuild_v1(config, repo_name, repo_opts, repo_map, defaults):
         'location': repo_path,
         'syncer': 'sync:' + repo_name,
     }
+    if repo_dict is not None:
+        repo_conf.update(repo_dict)
 
     # repo trees
     repo = {
@@ -252,9 +256,9 @@ def _config_repo_ebuild_v1(config, repo_name, repo_opts, repo_map, defaults):
     }
 
     # metadata cache
-    if repo_config.cache_format is not None:
+    if repo_obj.cache_format is not None:
         cache_name = 'cache:' + repo_name
-        config[cache_name] = make_cache(repo_config.cache_format, repo_path)
+        config[cache_name] = make_cache(repo_obj.cache_format, repo_path)
         repo['cache'] = cache_name
 
     if repo_name == defaults['main-repo']:
@@ -263,6 +267,24 @@ def _config_repo_ebuild_v1(config, repo_name, repo_opts, repo_map, defaults):
 
     config['conf:' + repo_name] = basics.AutoConfigSection(repo_conf)
     return repo
+
+
+def _config_repo_sqfs_v1(*args, **kwargs):
+    """Create ebuild squashfs repo v1 configuration."""
+    repo_name = kwargs['repo_name']
+    repo_opts = kwargs['repo_opts']
+
+    repo_path = repo_opts['location']
+    sqfs_file = os.path.basename(repo_opts['sync-uri'])
+    # XXX: Hack for portage-2 profile format support.
+    kwargs['repo_obj'] = repo_objs.SquashfsRepoConfig(sqfs_file, repo_path, repo_name)
+
+    repo_dict = {
+        'class': 'pkgcore.ebuild.repo_objs.SquashfsRepoConfig',
+        'sqfs_file': sqfs_file,
+    }
+    kwargs['repo_dict'] = repo_dict
+    return _config_repo_ebuild_v1(*args, **kwargs)
 
 
 def _config_repo_binpkg_v1(config, repo_name, repo_opts, **kwargs):
@@ -525,7 +547,7 @@ def config_from_make_conf(location=None, profile_override=None, **kwargs):
         repo_type = repo_opts.pop('repo-type')
         try:
             repo = globals()[f"_config_repo_{repo_type}"](
-                config, repo_name, repo_opts,
+                config=config, repo_name=repo_name, repo_opts=repo_opts,
                 repo_map=repo_map, defaults=repos_conf_defaults)
             config[repo_name] = basics.AutoConfigSection(repo)
         except (KeyError, TypeError):

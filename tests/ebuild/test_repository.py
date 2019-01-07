@@ -24,7 +24,7 @@ class TestUnconfiguredTree(TempDirMixin):
             epath = pjoin(path, 'eclass')
             ensure_dirs(epath)
             eclasses = eclass_cache.cache(epath)
-        return repository._UnconfiguredTree(path, eclass_cache=eclasses, *args, **kwds)
+        return repository.UnconfiguredTree(path, eclass_cache=eclasses, *args, **kwds)
 
     def setUp(self):
         TempDirMixin.setUp(self)
@@ -219,9 +219,9 @@ class TestSlavedTree(TestUnconfiguredTree):
             ensure_dirs(epath)
             eclasses = eclass_cache.cache(epath)
 
-        self.master_repo = repository._UnconfiguredTree(self.dir_master, eclass_cache=eclasses, *args, **kwds)
+        self.master_repo = repository.UnconfiguredTree(self.dir_master, eclass_cache=eclasses, *args, **kwds)
         masters = (self.master_repo,)
-        return repository._UnconfiguredTree(self.dir_slave, eclass_cache=eclasses, masters=masters, *args, **kwds)
+        return repository.UnconfiguredTree(self.dir_slave, eclass_cache=eclasses, masters=masters, *args, **kwds)
 
     def setUp(self):
         TempDirMixin.setUp(self)

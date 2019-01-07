@@ -3,5 +3,5 @@
 
 pkgcore_plugins = {
     'syncer': [f'pkgcore.sync.{x}.{x}_syncer' for x in
-               ('bzr', 'cvs', 'darcs', 'git', 'git_svn', 'hg', 'svn')],
+               ('bzr', 'cvs', 'darcs', 'file', 'git', 'git_svn', 'hg', 'svn')],
 }

@@ -68,7 +68,6 @@ class file_syncer(base.Syncer):
                     percent = int(size / length * 100)
                     sys.stdout.write("[%-50s] %d%%" % (progress, percent))
 
-            # TODO: verify image checksum and gpg signature
             os.rename(tmpfile.name, self.dest)
             with open(timestamp, 'w') as f:
                 f.write(last_modified)

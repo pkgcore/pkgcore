@@ -179,7 +179,7 @@ def _find_profile_link(config_dir):
         return normpath(abspath(
             pjoin(config_dir, os.readlink(make_profile))))
     except EnvironmentError as e:
-        if oe.errno in (errno.ENOENT, errno.EINVAL):
+        if e.errno in (errno.ENOENT, errno.EINVAL):
             raise errors.ComplexInstantiationError(
                 f"{make_profile} must be a symlink pointing to a real target") from e
         raise errors.ComplexInstantiationError(

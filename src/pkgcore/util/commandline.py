@@ -627,34 +627,31 @@ class Tool(tool.Tool):
 
     def handle_exec_exception(self, e):
         """Handle pkgcore-specific runtime exceptions."""
-        if isinstance(e, config_errors.ParsingError):
-            if self.parser.debug:
-                tb = sys.exc_info()[-1]
-                dump_error(e, 'Error while parsing arguments', tb=tb)
-            else:
-                self.parser.error(f"config error: {e}")
-        elif isinstance(e, (config_errors.ConfigurationError, operations.OperationError)):
-            if isinstance(e, config_errors.ConfigurationError):
-                msg = 'Error in configuration'
-            else:
-                msg = 'Error running an operation'
+        # determine if clean CLI error exists
+        exc = getattr(e, '__cause__', e)
+        cli_error = (
+            getattr(exc, '__module__', None) is not None and
+            exc.__module__.split('.')[0] == __title__ and
+            str(exc) != '')
 
-            # determine if clean CLI error exists
-            exc = getattr(e, '__cause__', e)
-            cli_error = (
-                getattr(exc, '__module__', None) is not None and
-                exc.__module__.split('.')[0] == __title__ and
-                str(exc) != '')
+        # exception types handled internally
+        exc_types = {
+            config_errors.ConfigurationError: 'Error in configuration',
+            operations.OperationError: 'Error running an operation',
+            config_errors.ParsingError: 'Error while parsing arguments',
+        }
 
+        if isinstance(e, tuple(exc_types.keys())):
             # Output a clean cli error for internal exception types if one
             # exists otherwise show a debugging traceback.
-            if not self.parser.debug and cli_error:
+            if self.parser.debug or not cli_error:
+                tb = sys.exc_info()[-1]
+                msg = exc_types[e.__class__]
+                dump_error(e, msg, handle=self._errfile, tb=tb)
+            else:
                 excs = list(walk_exception_chain(e))
                 # output the original error message
                 self.parser.error(excs[-1])
-            else:
-                tb = sys.exc_info()[-1]
-                dump_error(e, msg, handle=self._errfile, tb=tb)
         else:
             # exception is unhandled here, fallback to generic handling
             super().handle_exec_exception(e)

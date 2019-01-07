@@ -4,7 +4,7 @@
 import os
 import pwd
 
-from pkgcore.sync import base, svn
+from pkgcore.sync import base, file
 from tests.sync.syncer import make_bogus_syncer, make_valid_syncer
 from snakeoil.test import TestCase, SkipTest
 
@@ -44,11 +44,10 @@ class GenericSyncerTest(TestCase):
         self.assertRaises(
             base.UriError,
             base.GenericSyncer, '/', 'seriouslynotaprotocol://blah/')
-        # TODO this should be using a syncer we know is always available.
         try:
-            syncer = base.GenericSyncer('/', 'svn://blah/')
+            syncer = base.GenericSyncer('/', 'file+https://blah/')
         except base.UriError as e:
-            if str(e) == "no known syncer supports 'svn://blah/'":
-                raise SkipTest('svn syncer unavailable')
+            if str(e) == "no known syncer supports 'file+https://blah/'":
+                raise SkipTest('file syncer unavailable')
             raise
-        self.assertIdentical(svn.svn_syncer, syncer.__class__)
+        self.assertIdentical(file.file_syncer, syncer.__class__)

@@ -25,14 +25,21 @@ class MetadataException(PackageError):
     def msg(self, verbosity=0):
         """Extract error message from verbose output depending on verbosity level."""
         s = self.error
+
         if self._verbose:
             if verbosity > 0:
                 # add full bash output in verbose mode
                 s += f":\n{self._verbose}"
             else:
-                # extract context and die message from bash output
-                bash_error = [x.lstrip('* ') for x in self._verbose.split('\n')]
-                s += f": {bash_error[-1]} \"{bash_error[1]}\""
+                # extract context and die message from bash eerror output
+                bash_error = [
+                    x.lstrip(' *') for x in self._verbose.split('\n')
+                    if x.startswith(' *')
+                ]
+
+                context = bash_error[-1]
+                err_msg = bash_error[1]
+                s += f": {context} \"{err_msg}\""
 
         return s
 

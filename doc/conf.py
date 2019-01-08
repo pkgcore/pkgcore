@@ -64,7 +64,7 @@ copyright = '2006-2017, pkgcore contributors'
 # built documents.
 #
 # The short X.Y version.
-version = pkgdist.version()
+version = pkgdist.module_version()
 # The full version, including alpha/beta/rc tags.
 release = 'trunk'
 

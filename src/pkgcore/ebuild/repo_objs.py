@@ -26,6 +26,7 @@ from pkgcore.repository.errors import InitializationError
 demandload(
     'lxml:etree',
     'os',
+    'platform',
     'subprocess',
     'snakeoil.bash:BashParseError,iter_read_bash,read_dict',
     'snakeoil.fileutils:readfile,readlines_ascii',
@@ -612,7 +613,13 @@ class SquashfsRepoConfig(RepoConfig):
         object.__setattr__(self, '_root', os.getuid() == 0)
         # if squashfs archive exists in the repo, try to mount it over itself
         if os.path.exists(self._sqfs):
-            self._mount_archive(location)
+            try:
+                self._mount_archive(location)
+            except PermissionError as e:
+                if not self._root and platform.uname().release < '4.18':
+                    raise InitializationError(
+                        'fuse mounts in user namespaces require linux >= 4.18')
+                raise
         super().__init__(location, *args, **kwargs)
 
     def _pre_sync(self):

@@ -649,7 +649,11 @@ class SquashfsRepoConfig(RepoConfig):
 
         if ret.returncode:
             stderr = ret.stderr.decode().strip().lower()
-            raise InitializationError(f'failed mounting squashfs archive: {stderr}')
+            msg = f'failed mounting squashfs archive: {stderr}'
+            if ret.returncode == 1:
+                raise PermissionError(msg)
+            else:
+                raise InitializationError(msg)
 
     def _umount_archive(self):
         """Unmount the squashfs archive."""
@@ -669,4 +673,8 @@ class SquashfsRepoConfig(RepoConfig):
 
         if ret.returncode:
             stderr = ret.stderr.decode().strip().lower()
-            raise InitializationError(f'failed unmounting squashfs archive: {stderr}')
+            msg = f'failed unmounting squashfs archive: {stderr}'
+            if ret.returncode == 1:
+                raise PermissionError(msg)
+            else:
+                raise InitializationError(msg)

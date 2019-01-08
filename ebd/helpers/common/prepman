@@ -31,9 +31,7 @@ if [[ -z ${PORTAGE_COMPRESS_SUFFIX} ]]; then
 	esac
 fi
 
-if [[ -z ${prepallman_banner} ]]; then
-	echo "man: ${PORTAGE_COMPRESS} ${PORTAGE_COMPRESS_FLAGS}"
-fi
+echo "man: ${PORTAGE_COMPRESS} ${PORTAGE_COMPRESS_FLAGS}"
 
 for x in $(find "${z}"/ -type d 2>/dev/null); do
 	for y in $(find "${x}"/ \( -type f -or -type l \) ! -name '.keep*' -maxdepth 1 -mindepth 1 2>/dev/null); do

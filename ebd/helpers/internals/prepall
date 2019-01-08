@@ -5,7 +5,7 @@
 
 source "${PKGCORE_EBD_PATH}"/exit-handling.bash || { echo "failed loading libs"; exit -127; }
 
-"${PKGCORE_EBD_PATH}"/helpers/internals/prepallman
+prepman
 prepinfo
 prepallstrip
 

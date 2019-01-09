@@ -62,6 +62,34 @@ def SecurityUpgradesViaProfile(ebuild_repo, vdb, profile):
     return SecurityUpgrades(ebuild_repo, vdb, arch)
 
 
+class ParseConfig(configparser.ConfigParser):
+    """Custom ConfigParser class to support returning dict objects."""
+
+    def parse_file(self, f, reset=True):
+        """Parse config data from a given file handle.
+
+        By default the underlying config data is reset on each call if it
+        exists. This allows multiple files to be easily parsed by a single instance
+        without combining all the data in one instance.
+
+        Args:
+            f: iterable yielding unicode strings (opened file handle)
+            reset (boolean): reset config data if it exists before parsing
+
+        Returns:
+            dict: default settings
+            dict: regular section settings
+        """
+        if self._defaults and reset:
+            self._defaults = self._dict()
+        if self._sections and reset:
+            self._sections = self._dict()
+        # currently we don't reset section proxies as they should affect
+        # this direct data dumping
+        self.read_file(f)
+        return self._defaults, self._sections
+
+
 class PortageConfig(DictMixin):
     """Support for portage's config file layout."""
 
@@ -265,16 +293,17 @@ class PortageConfig(DictMixin):
             dict: global repo settings
             dict: repo settings
         """
-        defaults = {}
+        main_defaults = {}
         repos = {}
+
+        parser = ParseConfig()
 
         for fp in sorted_scan(
                 os.path.realpath(path), follow_symlinks=True, nonexistent=True,
                 hidden=False, backup=False):
-            config = configparser.ConfigParser()
             try:
                 with open(fp) as f:
-                    config.read_file(f)
+                    defaults, repo_confs = parser.parse_file(f)
             except PermissionError as e:
                 raise errors.PermissionDeniedError(fp, write=False) from e
             except EnvironmentError as e:
@@ -282,32 +311,30 @@ class PortageConfig(DictMixin):
             except configparser.Error as e:
                 raise errors.ParsingError(f"repos.conf: {fp!r}", exception=e) from e
 
-            defaults_data = config.defaults()
-            if defaults_data and defaults:
+            if defaults and main_defaults:
                 logger.warning(f"repos.conf: parsing {fp!r}: overriding DEFAULT section")
-            defaults.update(defaults_data)
+            main_defaults.update(defaults)
 
-            for name in config.sections():
+            for name, repo_conf in repo_confs.items():
                 if name in repos:
                     logger.warning(f"repos.conf: parsing {fp!r}: overriding {name!r} repo")
-                repo_data = dict(config.items(name))
 
                 # ignore repo if location is unset
-                location = repo_data.get('location', None)
+                location = repo_conf.get('location', None)
                 if location is None:
                     logger.warning(
                         f"repos.conf: parsing {fp!r}: "
                         f"{name!r} repo missing location setting, ignoring repo")
                     continue
-                repo_data['location'] = os.path.abspath(location)
+                repo_conf['location'] = os.path.abspath(location)
 
                 # repo type defaults to ebuild for compat with portage
-                repo_type = repo_data.get('repo-type', 'ebuild_v1').replace('-', '_')
-                repo_data['repo-type'] = repo_type
+                repo_type = repo_conf.get('repo-type', 'ebuild_v1').replace('-', '_')
+                repo_conf['repo-type'] = repo_type
 
                 # Priority defaults to zero if unset or invalid for ebuild repos
                 # while binpkg repos have the lowest priority by default.
-                priority = repo_data.get('priority', None)
+                priority = repo_conf.get('priority', None)
                 if priority is None:
                     if repo_type.startswith('binpkg'):
                         priority = -10000
@@ -322,20 +349,20 @@ class PortageConfig(DictMixin):
                         f"setting: {priority!r} (defaulting to 0)")
                     priority = 0
                 finally:
-                    repo_data['priority'] = priority
+                    repo_conf['priority'] = priority
 
                 # register repo
-                repos[name] = repo_data
+                repos[name] = repo_conf
 
         if repos:
             # the default repo is gentoo if unset and gentoo exists
-            default_repo = defaults.get('main-repo', 'gentoo')
+            default_repo = main_defaults.get('main-repo', 'gentoo')
             if default_repo not in repos:
                 raise errors.ConfigurationError(
                     f"default repo {default_repo!r} is undefined or invalid")
 
-            if 'main-repo' not in defaults:
-                defaults['main-repo'] = default_repo
+            if 'main-repo' not in main_defaults:
+                main_defaults['main-repo'] = default_repo
 
             # the default repo has a low priority if unset or zero
             if repos[default_repo]['priority'] == 0:
@@ -346,7 +373,7 @@ class PortageConfig(DictMixin):
             (k, v) for k, v in
             sorted(repos.items(), key=lambda d: d[1]['priority'], reverse=True))
 
-        return defaults, repos
+        return main_defaults, repos
 
     def _make_repo_syncers(self, repos_conf, make_conf, allow_timestamps=True):
         """generate syncing configs for known repos"""

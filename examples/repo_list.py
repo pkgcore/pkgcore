@@ -1,13 +1,11 @@
 #!/usr/bin/env python3
 # Copyright 2007 Charlie Shepherd
 
-from __future__ import print_function
-
 import sys
 
 try:
     from pkgcore.util import commandline
-    from pkgcore.util.repo_utils import get_raw_repos, get_virtual_repos
+    from pkgcore.repository.util import get_raw_repos, get_virtual_repos
 except ImportError:
     print('Cannot import pkgcore!', file=sys.stderr)
     print('Verify it is properly installed and/or PYTHONPATH is set correctly.', file=sys.stderr)

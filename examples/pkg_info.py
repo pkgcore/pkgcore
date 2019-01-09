@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 
-from __future__ import print_function
-
 import itertools
 import sys
 
@@ -43,14 +41,12 @@ def main(options, out, err):
         for pkg in pkgs:
             out.write('%s::%s' % (pkg.cpvstr, pkg.repo.repo_id))
         out.first_prefix = ""
-        out.write()
         item = 'maintainer'
         values = t[1]
         if values:
             out.write(
                 "%s%s: %s" %
-                (item.title(), 's'[len(values) == 1:], ', '.join((unicode(x) for x in values))))
-        out.write()
+                (item.title(), 's'[len(values) == 1:], ', '.join(str(x) for x in values)))
         out.write()
 
 if __name__ == '__main__':

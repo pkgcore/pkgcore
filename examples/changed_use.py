@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 # Copyright 2007 Charlie Shepherd
 
-from __future__ import print_function
-
 from operator import attrgetter
 import os
 import sys
@@ -37,9 +35,10 @@ argparser.add_argument(
 @argparser.bind_final_check
 def check_args(parser, namespace):
     domain = namespace.domain
-    namespace.vdb = domain.vdb[0]
+    namespace.vdb = domain.all_installed_repos
     if not namespace.repo:
-        namespace.repo = domain.repos[1]
+        # fallback to default repo
+        namespace.repo = namespace.config.get_default('repo')
 
     namespace.restrict = OrRestriction(
         *commandline.convert_to_restrict(namespace.target))
@@ -50,21 +49,21 @@ def check_args(parser, namespace):
 def main(options, out, err):
     repo = options.repo
     for built in options.vdb.itermatch(options.restrict):
-        current = repo.match(built.versioned_atom)
+        current = repo.match(built.unversioned_atom)
         if current:
             current = current[0]
             oldflags = built.iuse & built.use
             newflags = current.iuse & built.use
             if (newflags != oldflags) or (current.iuse ^ built.iuse):
                 changed_flags = (oldflags ^ newflags) | (current.iuse ^ built.iuse)
-                if options.quiet:
-                    out.write(options.outputter(current))
-                else:
+                if options.verbosity > 0:
                     out.write(
-                        "for package %s, %d flags have changed:\n\t%s" %
-                        (current.cpvstr, len(changed_flags), ' '.join(changed_flags)))
+                        "package %s, %d flags have changed:\n\t%s" %
+                        (current.unversioned_atom, len(changed_flags), ' '.join(changed_flags)))
+                else:
+                    out.write(options.outputter(current))
             else:
-                if options.verbose:
+                if options.verbosity > 0:
                     out.write("%s is the same as it was before" % current.cpvstr)
 
 if __name__ == '__main__':

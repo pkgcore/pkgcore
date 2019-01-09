@@ -626,7 +626,7 @@ class buildable(ebd, setup_mixin, format.build):
             self._init_distfiles_env()
 
     def _init_distfiles_env(self):
-        # cvs/svn ebuilds need to die.
+        # TODO: PORTAGE_ACTUAL_DISTDIR usage by vcs eclasses needs to be killed off
         distdir_write = self.domain.fetcher.get_storage_path()
         if distdir_write is None:
             raise format.GenericBuildError(

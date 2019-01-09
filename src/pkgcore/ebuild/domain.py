@@ -46,7 +46,7 @@ demandload(
     'tempfile',
     'pkgcore.binpkg:repository@binary_repo',
     'pkgcore.ebuild:repository@ebuild_repo',
-    'pkgcore.ebuild.portage_conf:load_make_conf',
+    'pkgcore.ebuild.portage_conf:PortageConfig',
     'pkgcore.ebuild.repo_objs:RepoConfig',
     'pkgcore.ebuild.triggers:generate_triggers@ebuild_generate_triggers',
     'pkgcore.fs.livefs:iter_scan,sorted_scan',
@@ -569,8 +569,9 @@ class domain(config_domain):
         if files:
             pkg_settings = dict(self._settings.orig.items())
             for path in files:
-                load_make_conf(pkg_settings, path, allow_sourcing=True,
-                               allow_recurse=False, incrementals=True)
+                PortageConfig.load_make_conf(
+                    pkg_settings, path, allow_sourcing=True,
+                    allow_recurse=False, incrementals=True)
             pkg_domain = copy.copy(self)
             pkg_domain._settings = ProtectedDict(pkg_settings)
             # reset JIT-ed attrs that can pull updated settings

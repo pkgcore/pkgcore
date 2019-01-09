@@ -14,7 +14,10 @@ from snakeoil.test.mixins import TempDirMixin
 
 from pkgcore import const
 from pkgcore.config import errors
-from pkgcore.ebuild.portage_conf import load_make_conf, load_repos_conf
+from pkgcore.ebuild.portage_conf import PortageConfig
+
+load_make_conf = PortageConfig.load_make_conf
+load_repos_conf = PortageConfig.load_repos_conf
 
 
 class TestPortageConfig(TempDirMixin, TestCase):

@@ -19,7 +19,7 @@ from pkgcore import const
 demandload(
     'os',
     'pkgcore.config:central,cparser',
-    'pkgcore.ebuild.portage_conf:config_from_make_conf',
+    'pkgcore.ebuild.portage_conf:PortageConfig',
     'pkgcore.log:logger',
 )
 
@@ -90,7 +90,7 @@ def load_config(user_conf_file=const.USER_CONF_FILE,
                 break
         # otherwise load the portage config
         else:
-            configs.append(config_from_make_conf(
+            configs.append(PortageConfig(
                 location=location, profile_override=profile_override, **kwargs))
     configs.extend(append_sources)
     return central.CompatConfigManager(central.ConfigManager(configs, debug=debug))

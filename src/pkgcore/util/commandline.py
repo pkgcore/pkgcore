@@ -31,12 +31,13 @@ from snakeoil.osutils import pjoin
 
 from pkgcore import __title__
 from pkgcore.config import load_config, errors as config_errors
+from pkgcore.exceptions import PkgcoreCliException
 
 demandload(
     'signal',
     'traceback',
     'snakeoil:osutils',
-    'snakeoil.errors:dump_error,walk_exception_chain',
+    'snakeoil.errors:walk_exception_chain',
     'snakeoil.sequences:iflatten_instance,unstable_unique',
     'snakeoil.strings:pluralism',
     'pkgcore:operations',
@@ -627,13 +628,6 @@ class Tool(tool.Tool):
 
     def handle_exec_exception(self, e):
         """Handle pkgcore-specific runtime exceptions."""
-        # determine if clean CLI error exists
-        exc = getattr(e, '__cause__', e)
-        cli_error = (
-            getattr(exc, '__module__', None) is not None and
-            exc.__module__.split('.')[0] == __title__ and
-            str(exc) != '')
-
         # exception types handled internally
         exc_types = {
             config_errors.ConfigurationError: 'Error in configuration',
@@ -642,16 +636,17 @@ class Tool(tool.Tool):
         }
 
         if isinstance(e, tuple(exc_types.keys())):
-            # Output a clean cli error for internal exception types if one
-            # exists otherwise show a debugging traceback.
+            # determine if original exception has clean CLI error
+            excs = list(walk_exception_chain(e))
+            orig_exc = excs[-1]
+            cli_error = isinstance(orig_exc, PkgcoreCliException)
+
+            # output CLI error if one exists otherwise show debugging traceback
             if self.parser.debug or not cli_error:
-                tb = sys.exc_info()[-1]
-                msg = exc_types[e.__class__]
-                dump_error(exc, msg, handle=self._errfile, tb=exc.__traceback__)
+                raise
             else:
-                excs = list(walk_exception_chain(e))
                 # output the original error message
-                self.parser.error(excs[-1])
+                self.parser.error(orig_exc)
         else:
             # exception is unhandled here, fallback to generic handling
             super().handle_exec_exception(e)

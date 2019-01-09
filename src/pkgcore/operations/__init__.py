@@ -19,10 +19,11 @@ from snakeoil import klass
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.currying import pretty_docs
 
+from pkgcore.exceptions import PkgcoreException
 from pkgcore.operations import observer as _observer
 
 
-class OperationError(Exception):
+class OperationError(PkgcoreException):
 
     def __init__(self, api):
         self._api = api

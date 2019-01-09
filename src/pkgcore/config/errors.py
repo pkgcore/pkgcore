@@ -15,6 +15,8 @@ __all__ = (
 
 from snakeoil.demandload import demandload
 
+from pkgcore.exceptions import PkgcoreException
+
 demandload('snakeoil:currying')
 
 
@@ -25,7 +27,7 @@ def _identify_functor_source(functor):
     return '%s.%s' % (module, functor.__name__)
 
 
-class BaseError(Exception):
+class BaseError(PkgcoreException):
     pass
 
 

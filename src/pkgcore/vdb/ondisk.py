@@ -197,23 +197,29 @@ class tree(prototype.tree):
         return f"{self.repo_id}: location {self.location}"
 
 
+class WrappedInstalledPkg(pkg_base.wrapper):
+    """Installed package with configuration data bound to it."""
+
+    built = True
+    __slots__ = ()
+
+    def __str__(self):
+        return (
+            f'installed pkg: {self.cpvstr}::{self.repo.repo_id}, '
+            f'source repo {self.source_repository!r}'
+        )
+
+
 class ConfiguredTree(wrapper.tree, tree):
+    """Configured repository for packages installed on the filesystem."""
 
     configured = True
     frozen_settable = False
 
     def __init__(self, vdb, domain, domain_settings):
-        class package_class(pkg_base.wrapper):
-
-            _operations = self._generate_operations
-            built = True
-            __slots__ = ()
-
-            def __str__(self):
-                return f"installed pkg: {self.cpvstr}::{self.repo.repo_id}, " \
-                       f"source repo {self.source_repository!r}"
-
-        wrapper.tree.__init__(self, vdb, package_class=package_class)
+        WrappedInstalledPkg._operations = self._generate_operations
+        WrappedInstalledPkg.repo = self
+        wrapper.tree.__init__(self, vdb, package_class=WrappedInstalledPkg)
         self.domain = domain
         self.domain_settings = domain_settings
 
@@ -221,7 +227,6 @@ class ConfiguredTree(wrapper.tree, tree):
         pkg = pkg._raw_pkg
         return ebd.built_operations(
             domain, pkg, initial_env=self.domain_settings, **kwargs)
-
 
 
 tree.configure = ConfiguredTree

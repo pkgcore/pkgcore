@@ -334,25 +334,28 @@ class tree(prototype.tree):
         return repo_ops
 
 
+class WrappedBinpkg(pkg_base.wrapper):
+    """Binary package with configuration data bound to it."""
+
+    built = True
+    __slots__ = ()
+
+    def __str__(self):
+        return (
+            f'ebuild binary pkg: {self.cpvstr}::{self.repo.repo_id}, '
+            f'source repo {self.source_repository!r}'
+        )
+
+
 class ConfiguredTree(wrapper.tree):
+    """Configured repository for portage-compatible binary packages."""
 
     configured = True
 
     def __init__(self, repo, domain_settings):
-        # rebind to ourselves basically.
-
-        class wrapped_binpkg(pkg_base.wrapper):
-
-            _operations = self._generate_operations
-            built = True
-            repo = self
-            __slots__ = ()
-
-            def __str__(self):
-                return "ebuild binary pkg: %s::%s, source repo %r" % (
-                    self.cpvstr, self.repo.repo_id, self.source_repository)
-
-        wrapper.tree.__init__(self, repo, package_class=wrapped_binpkg)
+        WrappedBinpkg._operations = self._generate_operations
+        WrappedBinpkg.repo = self
+        wrapper.tree.__init__(self, repo, package_class=WrappedBinpkg)
         self.domain_settings = domain_settings
 
     def _generate_operations(self, domain, pkg, **kwargs):

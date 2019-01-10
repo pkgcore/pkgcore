@@ -23,6 +23,7 @@ from snakeoil import data_source, klass
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.currying import post_curry, pretty_docs
 from snakeoil.demandload import demandload
+from snakeoil.fileutils import touch
 from snakeoil.osutils import ensure_dirs, abspath, normpath, pjoin, listdir_files
 from snakeoil.process.spawn import (
     spawn_bash, spawn, is_sandbox_capable, is_userpriv_capable, spawn_get_output)
@@ -365,7 +366,7 @@ class ebd(object):
 
     def __stage_step_callback__(self, stage):
         try:
-            open(pjoin(self.builddir, f'.{stage}'), 'w').close()
+            touch(pjoin(self.builddir, f'.{stage}'))
         except EnvironmentError:
             # we really don't care...
             pass

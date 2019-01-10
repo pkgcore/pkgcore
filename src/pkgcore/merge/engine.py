@@ -27,6 +27,7 @@ from snakeoil import data_source
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.currying import post_curry
 from snakeoil.demandload import demandload
+from snakeoil.fileutils import touch
 from snakeoil.mappings import LazyValDict, ImmutableDict, StackedDict
 from snakeoil.osutils import normpath
 
@@ -409,7 +410,7 @@ class MergeEngine(object):
         # this however doesn't allow us to state "create if missing"
         # so we create it ourselves. Annoying, but so it goes.
         # just touch the filepath.
-        open(path, 'w').close()
+        touch(path)
         new_source = data_source.local_source(
             path, True, encoding=getattr(fsobj, 'encoding', None))
 

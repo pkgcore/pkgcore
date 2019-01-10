@@ -27,6 +27,7 @@ __all__ = (
 
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.demandload import demandload
+from snakeoil.fileutils import touch
 from snakeoil.osutils import listdir_files, pjoin, ensure_dirs, normpath
 
 from pkgcore.config import ConfigHint
@@ -321,9 +322,8 @@ class ldconfig(base):
             raise errors.BlockModification(
                 self,
                 f"failed creating/setting {fp} to 0755, root/root for uid/gid")
-            # touch the file.
         try:
-            open(fp, 'w').close()
+            touch(fp)
         except EnvironmentError as e:
             raise errors.BlockModification(self, e) from e
 

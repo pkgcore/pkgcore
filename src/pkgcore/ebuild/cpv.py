@@ -102,14 +102,14 @@ class _native_CPV(object):
             raise TypeError(self.cpvstr)
 
         try:
-            categories, pkgver = cpvstr.rsplit("/", 1)
+            category, pkgver = cpvstr.rsplit("/", 1)
         except ValueError:
             # occurs if the rsplit yields only one item
             raise InvalidCPV(f'{cpvstr}: no package or version components')
-        if not isvalid_cat_re.match(categories):
+        if not isvalid_cat_re.match(category):
             raise InvalidCPV(f'{cpvstr}: invalid category name')
         sf = object.__setattr__
-        sf(self, 'category', categories)
+        sf(self, 'category', category)
         sf(self, 'cpvstr', cpvstr)
         pkg_chunks = pkgver.split("-")
         lpkg_chunks = len(pkg_chunks)
@@ -125,7 +125,7 @@ class _native_CPV(object):
                 if not rev:
                     rev = None
                     # reset the stored cpvstr to drop -r0+
-                    sf(self, 'cpvstr', f"{categories}/{'-'.join(pkg_chunks)}")
+                    sf(self, 'cpvstr', f"{category}/{'-'.join(pkg_chunks)}")
                 sf(self, 'revision', rev)
             else:
                 sf(self, 'revision', None)
@@ -141,7 +141,7 @@ class _native_CPV(object):
             if not isvalid_pkg_name(pkg_chunks):
                 raise InvalidCPV(f'{cpvstr}: invalid package name')
             sf(self, 'package', '-'.join(pkg_chunks))
-            sf(self, 'key', f"{categories}/{self.package}")
+            sf(self, 'key', f"{category}/{self.package}")
         else:
             if not isvalid_pkg_name(pkg_chunks):
                 raise InvalidCPV(f'{cpvstr}: invalid package name')

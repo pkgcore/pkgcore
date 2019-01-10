@@ -418,8 +418,8 @@ class domain(config_domain):
 
         for and_pair in pkg.license.dnf_solutions():
             accepted = incremental_expansion_license(
-                and_pair, license_manager.groups, raw_accepted_licenses,
-                msg_prefix=f"while checking ACCEPT_LICENSE for {pkg}")
+                pkg, and_pair, license_manager.groups, raw_accepted_licenses,
+                msg_prefix=f"while checking ACCEPT_LICENSE ")
             if accepted.issuperset(and_pair):
                 return True
         return False

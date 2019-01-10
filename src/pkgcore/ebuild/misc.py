@@ -99,14 +99,14 @@ except ImportError:
     incremental_expansion = native_incremental_expansion
 
 
-def incremental_expansion_license(licenses, license_groups, iterable, msg_prefix=''):
+def incremental_expansion_license(pkg, licenses, license_groups, iterable, msg_prefix=''):
     seen = set()
     for token in iterable:
         if token[0] == '-':
             i = token[1:]
             if not i:
                 raise ValueError(
-                    f"{msg_prefix}encountered an incomplete negation, '-'")
+                    f"{pkg}: {msg_prefix}encountered an incomplete negation, '-'")
             if i == '*':
                 seen.clear()
             else:
@@ -114,7 +114,7 @@ def incremental_expansion_license(licenses, license_groups, iterable, msg_prefix
                     i = i[1:]
                     if not i:
                         raise ValueError(
-                            f"{msg_prefix}encountered an incomplete negation"
+                            f"{pkg}: {msg_prefix}encountered an incomplete negation"
                             " of a license group, '-@'")
                     seen.difference_update(license_groups.get(i, ()))
                 else:
@@ -123,7 +123,7 @@ def incremental_expansion_license(licenses, license_groups, iterable, msg_prefix
             i = token[1:]
             if not i:
                 raise ValueError(
-                    f"{msg_prefix}encountered an incomplete license group, '@'")
+                    f"{pkg}: {msg_prefix}encountered an incomplete license group, '@'")
             seen.update(license_groups.get(i, ()))
         elif token == '*':
             seen.update(licenses)

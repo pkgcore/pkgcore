@@ -102,20 +102,6 @@ class ops_sequence(object):
     def __bool__(self):
         return bool(self._ops)
 
-    def run_sanity_checks(self, domain, observer=None):
-        # TODO: parallelize running pkg_pretend phases for pkgs
-        for plan_op in self:
-            if plan_op.desc == 'remove':
-                continue
-
-            pkg_ops = domain.pkg_operations(plan_op.pkg, observer=observer)
-            if pkg_ops.supports("sanity_check"):
-                if observer is not None:
-                    observer.debug("running sanity_check for %s", plan_op.pkg)
-                if not pkg_ops.sanity_check():
-                    return False
-        return True
-
 
 class base_op_state(object):
 

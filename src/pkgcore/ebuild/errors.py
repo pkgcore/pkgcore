@@ -10,6 +10,9 @@ atom exceptions
 
 __all__ = ("MalformedAtom", "InvalidVersion", "InvalidCPV", "ParseError")
 
+import textwrap
+
+from pkgcore.exceptions import PkgcoreException
 from pkgcore.package import errors
 
 
@@ -56,3 +59,56 @@ class ParseError(errors.InvalidDependency):
             return f"{self.dep_str!r} is unparseable{str_msg}\nflagged token- {self.token}"
         else:
             return f"{self.dep_str!r} is unparseable{str_msg}"
+
+
+class SanityCheckError(PkgcoreException):
+    """Generic error for sanity check failures."""
+
+    @property
+    def verbose_msg(self):
+        return str(self)
+
+    def msg(self, verbosity):
+        if verbosity > 0:
+            return self.verbose_msg
+        else:
+            return str(self)
+
+
+class PkgPretendError(SanityCheckError):
+    """The pkg_pretend phase check failed for a package."""
+
+    def __init__(self, pkg, output):
+        self.pkg = pkg
+        self.output = output
+
+    def __str__(self):
+        return f'>>> Failed pkg_pretend: {self.pkg.cpvstr}'
+
+    @property
+    def verbose_msg(self):
+        return f'{self}\n{self.output}'
+
+
+class RequiredUseError(SanityCheckError):
+    """REQUIRED_USE check for a package failed."""
+
+    def __init__(self, pkg, unmatched, required_use):
+        self.unmatched = unmatched
+        self.required_use = required_use
+        self.pkg = pkg
+
+    def __str__(self):
+        return f'>>> Failed REQUIRED_USE check: {self.pkg.cpvstr}'
+
+    @property
+    def verbose_msg(self):
+        verbose = textwrap.dedent(f"""
+            REQUIRED_USE requirement wasn't met
+            Failed to match: {self.unmatched}
+            from: {self.required_use}
+            for USE: {' '.join(self.pkg.use)}
+            pkg: {self.pkg.cpvstr}
+            """
+        )
+        return f'{self}\n{verbose.strip()}'

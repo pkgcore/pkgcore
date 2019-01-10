@@ -22,6 +22,7 @@ from snakeoil.strings import pluralism
 
 from pkgcore.ebuild import resolver, restricts
 from pkgcore.ebuild.atom import atom
+from pkgcore.ebuild.misc import run_sanity_checks
 from pkgcore.merge import errors as merge_errors
 from pkgcore.operations import observer, format
 from pkgcore.repository.util import get_raw_repos
@@ -810,26 +811,36 @@ def main(options, out, err):
     repo_obs = observer.repo_observer(
         observer.formatter_output(out), debug=options.debug)
 
+    if (options.ask or options.pretend) and changes:
+        for op in changes:
+            formatter.format(op)
+        formatter.end()
+
     # don't run pkg_pretend if only fetching
     if not options.fetchonly:
+        out.write()
+        out.write(out.bold, " * ", out.reset, "Running sanity checks...")
         if options.debug:
-            out.write(out.bold, " * ", out.reset, "running sanity checks")
             start_time = time()
-        if not changes.run_sanity_checks(domain, build_obs):
-            if not options.ignore_failures:
-                return 1
-            else:
+        sanity_failures = run_sanity_checks((x.pkg for x in changes), domain)
+        if sanity_failures:
+            if options.ignore_failures:
+                out.write(
+                    out.fg('red'), out.bold, "!!! ",
+                    out.reset, "Skipping failed sanity checks:")
+                out.write('\n'.join(map(str, sanity_failures)))
                 out.write()
+            else:
+                errors = (x.msg(verbosity=options.verbosity) for x in sanity_failures)
+                out.write('\n\n'.join(errors))
+                return 1
+        else:
+            out.write()
         if options.debug:
             out.write(
                 out.bold, " * ", out.reset,
                 "finished sanity checks in %.2f seconds" % (time() - start_time))
             out.write()
-
-    if (options.ask or options.pretend) and changes:
-        for op in changes:
-            formatter.format(op)
-        formatter.end()
 
     if vdb_time:
         out.write(out.bold, 'Took %.2f' % (vdb_time,), out.reset,

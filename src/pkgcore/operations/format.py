@@ -91,7 +91,7 @@ class operations(_operations_mod.base):
         return getattr(self.pkg, 'built', False)
 
     def _cmd_api_sanity_check(self):
-        return self._cmd_implementation_sanity_check(self.domain, self.observer)
+        return self._cmd_implementation_sanity_check(self.domain)
 
     def _cmd_implementation_sanity_check(self, domain):
         return True

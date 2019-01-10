@@ -18,6 +18,7 @@ import os
 import re
 import shutil
 import sys
+from tempfile import TemporaryFile
 
 from snakeoil import data_source, klass
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
@@ -28,7 +29,7 @@ from snakeoil.osutils import ensure_dirs, abspath, normpath, pjoin, listdir_file
 from snakeoil.process.spawn import (
     spawn_bash, spawn, is_sandbox_capable, is_userpriv_capable, spawn_get_output)
 
-from pkgcore.ebuild import ebuild_built, const
+from pkgcore.ebuild import ebuild_built, const, errors
 from pkgcore.ebuild.processor import (
     request_ebuild_processor, release_ebuild_processor,
     expected_ebuild_env, chuck_UnhandledCommand, inherit_handler)
@@ -36,7 +37,6 @@ from pkgcore.operations import observer, format
 from pkgcore.os_data import portage_gid, portage_uid, xargs
 
 demandload(
-    'textwrap',
     "time",
     'snakeoil.sequences:iflatten_instance,iter_stable_unique',
     'pkgcore:fetch',
@@ -410,6 +410,8 @@ def run_generic_phase(pkg, phase, env, userpriv, sandbox, fd_pipes=None,
         :obj:`pkgcore.os_data.portage_uid` and
         :obj:`pkgcore.os_data.portage_gid` access for this phase?
     :param sandbox: should this phase be sandboxed?
+    :param fd_pipes: use custom file descriptors for ebd instance
+    :type fd_pipes: mapping between file descriptors
     :param extra_handlers: extra command handlers
     :type extra_handlers: mapping from string to callable
     :param failure_allowed: allow failure without raising error
@@ -438,7 +440,6 @@ def run_generic_phase(pkg, phase, env, userpriv, sandbox, fd_pipes=None,
                 raise format.GenericBuildError(
                     phase + ": Failed building (False/0 return from handler)")
                 logger.warning(f"executing phase {phase}: execution failed, ignoring")
-
     except Exception as e:
         ebd.shutdown_processor()
         release_ebuild_processor(ebd)
@@ -844,27 +845,15 @@ class binpkg_localize(ebd, setup_mixin, format.build):
 
 class ebuild_mixin(object):
 
-    def _cmd_implementation_sanity_check(self, domain, observer):
+    def _cmd_implementation_sanity_check(self, domain):
         """Various ebuild sanity checks (REQUIRED_USE, pkg_pretend)."""
         pkg = self.pkg
-        eapi = pkg.eapi
-        out = observer._output._out
 
         # perform REQUIRED_USE checks
-        if eapi.options.has_required_use:
-            use = pkg.use
+        if pkg.eapi.options.has_required_use:
             for node in pkg.required_use:
-                if not node.match(use):
-                    observer.info(textwrap.dedent(
-                        """
-                        REQUIRED_USE requirement wasn't met
-                        Failed to match: {}
-                        from: {}
-                        for USE: {}
-                        pkg: {}
-                        """.format(node, pkg.required_use, " ".join(use), pkg.cpvstr)
-                    ))
-                    return False
+                if not node.match(pkg.use):
+                    raise errors.RequiredUseError(pkg, node, pkg.required_use)
 
         # return if running pkg_pretend is not required
         if 'pretend' not in pkg.mandatory_phases:
@@ -881,26 +870,23 @@ class ebuild_mixin(object):
         env["ROOT"] = domain.root
         env["T"] = pkg_tmpdir
 
-        # TODO: make colored output easier to achieve from observers
-        msg = ['>>> Running pkg_pretend for ', out.fg('green'), pkg.cpvstr, out.reset]
-        out.write(*msg)
-
         try:
             start = time.time()
-            fd_pipes = None
-            with open(os.devnull, 'w') as f:
-                # suppress bash output when not running in verbose mode
-                if observer.verbosity <= 0:
+            with TemporaryFile() as f:
+                try:
+                    # suppress bash output by default
                     fd_pipes = {1: f.fileno(), 2: f.fileno()}
-                ret = run_generic_phase(
-                    pkg, "pretend", env, fd_pipes=fd_pipes, userpriv=True,
-                    sandbox=True, extra_handlers=commands)
-            logger.debug(
-                "pkg_pretend sanity check for %s took %2.2f seconds",
-                pkg.cpvstr, time.time() - start)
-            return ret
-        except format.GenericBuildError as e:
-            return False
+                    ret = run_generic_phase(
+                        pkg, "pretend", env, fd_pipes=fd_pipes, userpriv=True,
+                        sandbox=True, extra_handlers=commands)
+                    logger.debug(
+                        "pkg_pretend sanity check for %s took %2.2f seconds",
+                        pkg.cpvstr, time.time() - start)
+                    return ret
+                except format.GenericBuildError as e:
+                    f.seek(0)
+                    msg = f.read().decode().strip('\n')
+                    raise errors.PkgPretendError(pkg, msg)
         finally:
             shutil.rmtree(builddir)
             # try to wipe the cat dir; if not empty, ignore it

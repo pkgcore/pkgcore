@@ -11,7 +11,6 @@ from snakeoil.klass import generic_equality
 
 
 class fetchable(object, metaclass=generic_equality):
-
     """class representing uri sources for a file and chksum information."""
 
     __slots__ = ("filename", "uri", "chksums")
@@ -30,7 +29,8 @@ class fetchable(object, metaclass=generic_equality):
         self.filename = filename
 
     def __str__(self):
-        return f"({self.filename!r}, {self.uri!r}, {', '.join(self.chksums)})"
+        chksums = ', '.join(self.chksums)
+        return f'({self.filename!r}, {self.uri!r}, {chksums})'
 
     def __repr__(self):
         return "<%s filename=%r uri=%r chksums=%r @%#8x>" % (
@@ -45,9 +45,8 @@ class fetchable(object, metaclass=generic_equality):
 
 
 class mirror(object, metaclass=generic_equality):
-    """
-    uri source representing a mirror tier
-    """
+    """uri source representing a mirror tier"""
+
     __attr_comparison__ = ('mirror_name', 'mirrors')
 
     __slots__ = ("mirrors", "mirror_name")

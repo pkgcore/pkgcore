@@ -28,7 +28,7 @@ class base(restriction.base, metaclass=generic_equality):
     @cached_hash
     def __hash__(self):
         if not isinstance(self.restrictions, tuple):
-            raise TypeError("%r isn't finalized" % self)
+            raise TypeError(f"{self!r} isn't finalized")
         return hash(tuple(getattr(self, x) for x in self.__attr_comparison__))
 
     def __init__(self, *restrictions, **kwds):

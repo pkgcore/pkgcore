@@ -168,10 +168,12 @@ def _sort_eclasses(config, repo_config, eclasses):
         missing = set(repo_config.masters).difference(repo_map)
         if missing:
             missing = ', '.join(sorted(missing))
+            repo_id = repo_config.repo_id
+            masters = ', '.join(map(repr, masters))
             raise Exception(
-                "repo %r at path %r has masters %s; we cannot find "
-                "the following repos: %s"
-                % (repo_config.repo_id, repo_path, ', '.join(map(repr, masters)), missing))
+                f'repo {repo_id!r} at path {repo_path!r} has masters {masters}; '
+                f'we cannot find the following repos: {missing}'
+            )
         eclasses = [repo_map[x] for x in masters]
 
     # add the repo's eclass directories if it's not specified.
@@ -256,9 +258,10 @@ def tree(config, repo_config, cache=(), eclass_override=None,
     try:
         masters = tuple(config.objects['repo'][r] for r in repo_config.masters)
     except RecursionError:
+        repo_id = repo_config.repo_id
+        masters = ', '.join(repo_config.masters)
         raise errors.InitializationError(
-            "'%s' repo has cyclic masters: %s" % (
-                repo_config.repo_id, ', '.join(repo_config.masters)))
+            f'{repo_id!r} repo has cyclic masters: {masters}')
 
     return UnconfiguredTree(
         repo_config.location, eclass_cache=eclass_cache, masters=masters, cache=cache,
@@ -471,13 +474,13 @@ class UnconfiguredTree(prototype.tree):
                 # ignore it, since it's PMS mandated that it be allowed.
                 return ()
         except EnvironmentError as e:
+            category = pjoin(self.base, category.lstrip(os.path.sep))
             raise KeyError(
-                "failed fetching packages for category %s: %s" %
-                (pjoin(self.base, category.lstrip(os.path.sep)), str(e))) from e
+                f'failed fetching packages for category {category}: {e}') from e
 
     def _get_versions(self, catpkg):
         cppath = pjoin(self.base, catpkg[0], catpkg[1])
-        pkg = catpkg[-1] + "-"
+        pkg = f'{catpkg[-1]}-'
         lp = len(pkg)
         extension = self.extension
         ext_len = -len(extension)
@@ -636,13 +639,11 @@ class ConfiguredTree(configured.tree):
 
         if "USE" not in domain_settings:
             raise errors.InitializationError(
-                "%s requires the following settings: 'USE', not supplied" % (
-                    self.__class__,))
+                f"{self.__class__} requires the following settings: 'USE', not supplied")
 
         elif 'CHOST' not in domain_settings:
             raise errors.InitializationError(
-                "%s requires the following settings: 'CHOST', not supplied" % (
-                    self.__class__,))
+                f"{self.__class__} requires the following settings: 'CHOST', not supplied")
 
         chost = domain_settings['CHOST']
         scope_update = {'chost': chost}

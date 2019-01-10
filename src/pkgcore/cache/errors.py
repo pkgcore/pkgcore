@@ -17,24 +17,24 @@ class CacheError(Exception):
 
 class InitializationError(CacheError):
     def __init__(self, class_name, error):
-        CacheError.__init__(self, "Creation of instance %s failed due to %s" %
-                            (class_name, error))
+        super().__init__(
+            f'creation of instance {class_name} failed due to {error}')
         self.error, self.class_name = error, class_name
 
 
 class CacheCorruption(CacheError):
     def __init__(self, key, ex):
-        CacheError.__init__(self, "%s is corrupt: %s" % (key, ex))
+        super().__init__(f'{key} is corrupt: {ex}')
         self.key, self.ex = key, ex
 
 
 class GeneralCacheCorruption(CacheError):
     def __init__(self, ex):
-        CacheError.__init__(self, "corruption detected: %s" % (ex,))
+        super().__init__(f'corruption detected: {ex}')
         self.ex = ex
 
 
 class ReadOnly(CacheError):
     def __init__(self, info=''):
-        CacheError.__init__(self, "cache is non-modifiable %s" % (info,))
+        super().__init__(f'cache is non-modifiable {info}')
         self.info = info

@@ -37,7 +37,7 @@ offset_rewriter = partial(change_offset_rewriter, '/')
 
 def check_instance(obj):
     if not isinstance(obj, fs.fsBase):
-        raise TypeError("'%s' is not a fs.fsBase deriviative" % obj)
+        raise TypeError(f"'{obj}' is not a fs.fsBase deriviative")
     return obj.location, obj
 
 
@@ -60,13 +60,15 @@ class contentsSet(object, metaclass=generic_equality):
         self.mutable = mutable
 
     def __str__(self):
-        return "%s([%s])" % (self.__class__.__name__,
-            ', '.join(str(x) for x in self))
+        name = self.__class__.__name__
+        contents = ', '.join(map(str, self))
+        return f'{name}([{contents}])'
 
     def __repr__(self):
+        name = self.__class__.__name__
+        contents = ', '.join(map(repr, self))
         # this should include the id among other things
-        return "%s([%s])" % (self.__class__.__name__,
-            ', '.join(repr(x) for x in self))
+        return f'{name}([{contents}])'
 
     def add(self, obj):
 
@@ -79,9 +81,9 @@ class contentsSet(object, metaclass=generic_equality):
         if not self.mutable:
             # weird, but keeping with set.
             raise AttributeError(
-                "%s is frozen; no add functionality" % self.__class__)
+                f'{self.__class__} is frozen; no add functionality')
         if not fs.isfs_obj(obj):
-            raise TypeError("'%s' is not a fs.fsBase class" % str(obj))
+            raise TypeError(f"'{obj}' is not a fs.fsBase class")
         self._dict[obj.location] = obj
 
     def __delitem__(self, obj):
@@ -97,7 +99,7 @@ class contentsSet(object, metaclass=generic_equality):
         if not self.mutable:
             # weird, but keeping with set.
             raise AttributeError(
-                "%s is frozen; no remove functionality" % self.__class__)
+                f'{self.__class__} is frozen; no remove functionality')
         if fs.isfs_obj(obj):
             del self._dict[obj.location]
         else:
@@ -130,7 +132,7 @@ class contentsSet(object, metaclass=generic_equality):
         if not self.mutable:
             # weird, but keeping with set.
             raise AttributeError(
-                "%s is frozen; no clear functionality" % self.__class__)
+                f'{self.__class__} is frozen; no clear functionality')
         self._dict.clear()
 
     @staticmethod
@@ -147,7 +149,7 @@ class contentsSet(object, metaclass=generic_equality):
         f = fs.isfs_obj
         for x in iterable:
             if not f(x):
-                raise ValueError("must be an fsBase derivative: got %r" % x)
+                raise ValueError(f'must be an fsBase derivative: got {x!r}')
             yield x
 
     def difference(self, other):
@@ -158,7 +160,7 @@ class contentsSet(object, metaclass=generic_equality):
 
     def difference_update(self, other):
         if not self.mutable:
-            raise TypeError("%r isn't mutable" % self)
+            raise TypeError(f'immutable type {self!r}')
 
         rem = self.remove
         for x in other:
@@ -171,7 +173,7 @@ class contentsSet(object, metaclass=generic_equality):
 
     def intersection_update(self, other):
         if not self.mutable:
-            raise TypeError("%r isn't mutable" % self)
+            raise TypeError(f'immutable type {self!r}')
         if not hasattr(other, '__contains__'):
             other = set(self._convert_loc(other))
 
@@ -214,7 +216,7 @@ class contentsSet(object, metaclass=generic_equality):
 
     def symmetric_difference_update(self, other):
         if not self.mutable:
-            raise TypeError("%r isn't mutable" % self)
+            raise TypeError(f'immutable type {self!r}')
         if not hasattr(other, '__contains__'):
             other = contentsSet(self._ensure_fsbase(other))
         l = []
@@ -289,11 +291,11 @@ class contentsSet(object, metaclass=generic_equality):
     def fifos(self, invert=False):
         return list(self.iterfifos(invert=invert))
 
-    for k in ("file", "dir", "symlink", "dev", "fifo"):
-        locals()['iter%ss' % k].__doc__ = \
-            iterfiles.__doc__.replace('fsFile', 'fs%s' % k.capitalize())
-        locals()['%ss' % k].__doc__ = \
-            files.__doc__.replace('fsFile', 'fs%s' % k.capitalize())
+    for k in ('file', 'dir', 'symlink', 'dev', 'fifo'):
+        locals()[f'iter{k}s'].__doc__ = \
+            iterfiles.__doc__.replace('fsFile', f'fs{k.capitalize()}')
+        locals()[f'{k}s'].__doc__ = \
+            files.__doc__.replace('fsFile', f'fs{k.capitalize()}')
     del k
 
     def inode_map(self):

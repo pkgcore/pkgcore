@@ -226,9 +226,10 @@ class base(object):
         chf_funcs = self.eclass_chf_deserializers
         tuple_len = len(chf_funcs) + 1
         if len(eclass_data) % tuple_len:
-             raise errors.CacheCorruption(
-                 cpv, "_eclasses_ was of invalid len %i"
-                 "(must be mod %i)" % (len(eclass_data), tuple_len))
+            raise errors.CacheCorruption(
+                cpv, f'_eclasses_ was of invalid len {len(eclass_data)}'
+                f'(must be mod {tuple_len})'
+            )
 
         i = iter(eclass_data)
         # roughly; deserializer grabs the values it needs, resulting
@@ -243,7 +244,7 @@ class base(object):
                 for eclass in i]
         except ValueError as e:
             raise errors.CacheCorruption(
-                cpv, 'ValueError reading %r' % (eclass_string,)) from e
+                cpv, f'ValueError reading {eclass_string!r}') from e
 
     def validate_entry(self, cache_item, ebuild_hash_item, eclass_db):
         chf_hash = cache_item.get(self._chf_key)

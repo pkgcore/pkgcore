@@ -34,7 +34,7 @@ class _ConfigMapping(mappings.DictMixin):
     """
 
     def __init__(self, manager, typename):
-        mappings.DictMixin.__init__(self)
+        super().__init__()
         self.manager = manager
         self.typename = typename
 
@@ -65,7 +65,7 @@ class _ConfigMapping(mappings.DictMixin):
 class _ConfigStack(collections.defaultdict):
 
     def __init__(self):
-        collections.defaultdict.__init__(self, list)
+        super().__init__(list)
 
     def render_vals(self, manager, key, type_name):
         for data in self.get(key, ()):
@@ -120,11 +120,11 @@ class CollapsedConfig(object):
         # Check if we got all values required to instantiate.
         missing = set(type_obj.required) - set(config)
         if missing:
+            module = type_obj.callable.__module__
+            name = type_obj.callable.__name__
+            missing_vars = ', '.join(map(repr, missing))
             raise errors.ConfigurationError(
-                'type %s.%s needs settings for %s' % (
-                    type_obj.callable.__module__,
-                    type_obj.callable.__name__,
-                    ', '.join(repr(var) for var in missing)))
+                f'type {module}.{name} needs settings for {missing_vars}')
 
         self.name = None
         self.default = default
@@ -179,7 +179,7 @@ class CollapsedConfig(object):
                     raise
                 except Exception as e:
                     raise errors.ConfigurationError(
-                        "Instantiating reference %r pointing at %r" % (name, ref.name)) from e
+                        f'Instantiating reference {name!r} pointing at {ref.name!r}') from e
                 if unlist_it:
                     final_val = final_val[0]
                 config[name] = final_val
@@ -187,14 +187,18 @@ class CollapsedConfig(object):
 
         if self.type.requires_config:
             if self.manager is None:
-                raise Exception("configuration internal error; "
-                    "requires_config is enabled "
-                    "but we have no config manager to return ")
+                raise Exception(
+                    'configuration internal error; '
+                    'requires_config is enabled '
+                    'but we have no config manager to return '
+                )
             manager = self.manager()
             if manager is None:
-                raise Exception("Configuration internal error, potentially "
-                    "client code error; manager requested, but the config "
-                    "manager is no longer in memory")
+                raise Exception(
+                    'Configuration internal error, potentially '
+                    'client code error; manager requested, but the config '
+                    'manager is no longer in memory'
+                )
 
             config[self.type.requires_config] = manager
 
@@ -211,8 +215,9 @@ class CollapsedConfig(object):
         except IGNORED_EXCEPTIONS:
             raise
         except Exception as e:
-            raise errors.InstantiationError(self.name,
-                "exception caught from %r" % (errors._identify_functor_source(self.type.callable),)) from e
+            source = errors._identify_functor_source(self.type.callable)
+            raise errors.InstantiationError(
+                self.name, f'exception caught from {source!r}') from e
         if self._instance is None:
             raise errors.ComplexInstantiationError(
                 'No object returned', callable_obj=callable_obj, pargs=pargs,
@@ -324,10 +329,11 @@ class ConfigManager(object):
             # If this matches something we previously instantiated
             # we should probably blow up to prevent massive
             # amounts of confusion (and recursive autoloads)
-            raise errors.ConfigurationError("New config is trying to "
-                "modify existing section(s) %s that was already instantiated."
-                % (', '.join(repr(x) for x in sorted(collision)),))
-
+            sections = ', '.join(repr(x) for x in sorted(collision))
+            raise errors.ConfigurationError(
+                'New config is trying to modify existing section(s) '
+                f'{sections} that was already instantiated.'
+            )
 
         self.configs.append(config_data)
         self.config_sources.append(config)
@@ -344,12 +350,13 @@ class ConfigManager(object):
                 raise
             except Exception as e:
                 raise errors.ConfigurationError(
-                    "Failed collapsing autoload section %r" % (name,)) from e
+                    f'Failed collapsing autoload section {name!r}') from e
 
             if collapsed.type.name != 'configsection':
                 raise errors.ConfigurationError(
-                   'Section %r is marked as autoload but type is %s, not '
-                   'configsection' % (name, collapsed.type.name))
+                   f'Section {name!r} is marked as autoload but '
+                   f'type is {collapsed.type.name}, not configsection'
+                )
             try:
                 instance = collapsed.instantiate()
             except IGNORED_EXCEPTIONS:
@@ -372,8 +379,7 @@ class ConfigManager(object):
         unless raise_on_missing is False in which case None is returned.
         """
         if name in self._refs:
-            raise errors.ConfigurationError(
-                'Reference to %r is recursive' % (name,))
+            raise errors.ConfigurationError(f'Reference to {name!r} is recursive')
         self._refs.add(name)
         try:
             result = self.rendered_sections.get(name)
@@ -383,8 +389,7 @@ class ConfigManager(object):
             if section_stack is None:
                 if not raise_on_missing:
                     return None
-                raise errors.ConfigurationError(
-                   'no section called %r' % (name,))
+                raise errors.ConfigurationError(f'no section called {name!r}')
             try:
                 result = self.collapse_section(section_stack, name)
                 result.name = name
@@ -392,7 +397,7 @@ class ConfigManager(object):
                 raise
             except Exception as e:
                 raise errors.ConfigurationError(
-                    "Collapsing section named %r" % (name,)) from e
+                    f'Collapsing section named {name!r}') from e
             self.rendered_sections[name] = result
             return result
         finally:
@@ -412,15 +417,14 @@ class ConfigManager(object):
                 self, 'inherit', 'list')
             if prepend is not None or append is not None:
                 raise errors.ConfigurationError(
-                    'Prepending or appending to the inherit list makes no '
-                    'sense')
+                    'Prepending or appending to the inherit list makes no sense')
             for inherit in inherits:
                 if inherit == current_section:
                     # self-inherit.  Mkae use of section_stack to handle this.
                     if len(section_stack) == 1:
                         # nothing else to self inherit.
                         raise errors.ConfigurationError(
-                            'Self-inherit %r cannot be found' % (inherit,))
+                            f'Self-inherit {inherit!r} cannot be found')
                     if isinstance(section_stack, collections.deque):
                         slist.append((inherit, list(section_stack)[1:]))
                     else:
@@ -428,12 +432,12 @@ class ConfigManager(object):
                 else:
                     if inherit in inherit_names:
                         raise errors.ConfigurationError(
-                            'Inherit %r is recursive' % (inherit,))
+                            f'Inherit {inherit!r} is recursive')
                     inherit_names.add(inherit)
                     target = self.sections_lookup.get(inherit)
                     if target is None:
                         raise errors.ConfigurationError(
-                            'inherit target %r cannot be found' % (inherit,))
+                            f'Inherit target {inherit!r} cannot be found')
                     slist.append((inherit, target))
         return [_section_data(name, stack[0]) for (name, stack) in slist]
 
@@ -489,8 +493,7 @@ class ConfigManager(object):
             typename = type_obj.types.get(key)
             if typename is None:
                 if not type_obj.allow_unknowns:
-                    raise errors.ConfigurationError(
-                        'Type of %r unknown' % (key,))
+                    raise errors.ConfigurationError(f'Type of {key!r} unknown')
                 typename = 'str'
 
             is_ref = typename.startswith('ref:')
@@ -517,7 +520,7 @@ class ConfigManager(object):
                     raise
                 except Exception as e:
                     raise errors.ConfigurationError(
-                        "Failed collapsing section key %r" % (key,)) from e
+                        f'Failed collapsing section key {key!r}') from e
             if is_ref:
                 result = result[0]
 
@@ -526,11 +529,11 @@ class ConfigManager(object):
         # Check if we got all values required to instantiate.
         missing = set(type_obj.required) - set(conf)
         if missing:
+            module = type_obj.callable.__module__
+            name = type_obj.callable.__name__
+            missing_vars = ', '.join(map(repr, missing))
             raise errors.ConfigurationError(
-                'type %s.%s needs settings for %s' % (
-                    type_obj.callable.__module__,
-                    type_obj.callable.__name__,
-                    ', '.join(repr(var) for var in missing)))
+                f'type {module}.{name} needs settings for {missing_vars}')
 
         return mappings.ImmutableDict(conf)
 
@@ -545,17 +548,16 @@ class ConfigManager(object):
             raise
         except Exception as e:
             raise errors.ConfigurationError(
-                "Collapsing defaults for %r" % (type_name,)) from e
+                f'Collapsing defaults for {type_name!r}') from e
         defaults = [(name, section) for name, section in defaults if section.default]
 
         if not defaults:
             return None
 
         if len(defaults) > 1:
-            defaults = sorted([x[0] for x in defaults])
+            defaults = ', '.join(map(repr, sorted(x[0] for x in defaults)))
             raise errors.ConfigurationError(
-                'type %s incorrectly has multiple default sections: %s'
-                    % (type_name, ', '.join(map(repr, defaults))))
+                f'type {type_name} incorrectly has multiple default sections: {defaults}')
 
         try:
             return defaults[0][1].instantiate()
@@ -563,5 +565,5 @@ class ConfigManager(object):
             raise
         except Exception as e:
             raise errors.ConfigurationError(
-                "Failed instantiating default %s %r" % (type_name, defaults[0][0])) from e
+                f'failed instantiating default {type_name} {defaults[0][0]!r}') from e
         return None

@@ -139,8 +139,7 @@ class SlotDep(packages.PackageRestriction):
 
     def __init__(self, slot, **kwds):
         v = values.StrExactMatch(slot)
-        return packages.PackageRestriction.__init__(
-            self, "slot", v, negate=kwds.get("negate", False))
+        super().__init__('slot', v, negate=kwds.get('negate', False))
 
 
 class SubSlotDep(packages.PackageRestriction):
@@ -150,8 +149,7 @@ class SubSlotDep(packages.PackageRestriction):
 
     def __init__(self, slot, **kwds):
         v = values.StrExactMatch(slot)
-        return packages.PackageRestriction.__init__(
-            self, "subslot", v, negate=kwds.get("negate", False))
+        super().__init__('subslot', v, negate=kwds.get('negate', False))
 
 
 class CategoryDep(packages.PackageRestriction):
@@ -160,9 +158,7 @@ class CategoryDep(packages.PackageRestriction):
     __inst_caching__ = True
 
     def __init__(self, category, negate=False):
-        packages.PackageRestriction.__init__(
-            self, "category",
-            values.StrExactMatch(category, negate=negate))
+        super().__init__('category', values.StrExactMatch(category, negate=negate))
 
 
 class PackageDep(packages.PackageRestriction):
@@ -171,9 +167,7 @@ class PackageDep(packages.PackageRestriction):
     __inst_caching__ = True
 
     def __init__(self, package, negate=False):
-        packages.PackageRestriction.__init__(
-            self, "package",
-            values.StrExactMatch(package, negate=negate))
+        super().__init__('package', values.StrExactMatch(package, negate=negate))
 
 
 class RepositoryDep(packages.PackageRestriction):
@@ -182,9 +176,7 @@ class RepositoryDep(packages.PackageRestriction):
     __inst_caching__ = True
 
     def __init__(self, repo_id, negate=False):
-        packages.PackageRestriction.__init__(
-            self, "repo.repo_id",
-            values.StrExactMatch(repo_id), negate=negate)
+        super().__init__('repo.repo_id', values.StrExactMatch(repo_id), negate=negate)
 
 
 class StaticUseDep(packages.PackageRestriction):
@@ -207,7 +199,7 @@ class StaticUseDep(packages.PackageRestriction):
         else:
             v = values.AlwaysTrue
 
-        packages.PackageRestriction.__init__(self, 'use', v)
+        super().__init__('use', v)
 
 
 class _UseDepDefaultContainment(values.ContainmentMatch2):
@@ -216,7 +208,7 @@ class _UseDepDefaultContainment(values.ContainmentMatch2):
 
     def __init__(self, if_missing, vals, negate=False):
         object.__setattr__(self, 'if_missing', bool(if_missing))
-        values.ContainmentMatch2.__init__(self, vals, negate=negate, match_all=True)
+        super().__init__(vals, negate=negate, match_all=True)
 
     def match(self, val):
         reduced_vals = self.vals
@@ -285,7 +277,7 @@ class UseDepDefault(packages.PackageRestrictionMulti):
         else:
             v = values.AlwaysTrue
 
-        packages.PackageRestrictionMulti.__init__(self, ('iuse', 'use'), v)
+        super().__init__(('iuse', 'use'), v)
 
 
 def _parse_nontransitive_use(sequence):

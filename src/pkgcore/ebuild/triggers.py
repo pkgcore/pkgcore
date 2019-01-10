@@ -216,13 +216,13 @@ class ConfigProtectInstall(triggers.base):
     _hooks = ('pre_merge',)
 
     def __init__(self, extra_protects=(), extra_disables=()):
-        triggers.base.__init__(self)
+        super().__init__()
         self.renames = {}
         self.extra_protects = extra_protects
         self.extra_disables = extra_disables
 
     def register(self, engine):
-        triggers.base.register(self, engine)
+        super().register(engine)
         t2 = ConfigProtectInstall_restore(self.renames)
         t2.register(engine)
 
@@ -295,7 +295,7 @@ class ConfigProtectInstall_restore(triggers.base):
     pkgcore_config_type = None
 
     def __init__(self, renames_dict):
-        triggers.base.__init__(self)
+        super().__init__()
         self.renames = renames_dict
 
     def trigger(self, engine, install_cset):
@@ -343,7 +343,7 @@ class UninstallIgnore(triggers.base):
     pkgcore_config_type = None
 
     def __init__(self, uninstall_ignore=()):
-        triggers.base.__init__(self)
+        super().__init__()
         self.uninstall_ignore = uninstall_ignore
 
     def trigger(self, engine, existing_cset, uninstall_cset):
@@ -366,7 +366,7 @@ class preinst_contents_reset(triggers.base):
     pkgcore_config_type = None
 
     def __init__(self, format_op):
-        triggers.base.__init__(self)
+        super().__init__()
         self.format_op = format_op
 
     def trigger(self, engine, cset):
@@ -393,7 +393,7 @@ class FileCollision(triggers.base):
     suppress_exceptions = False
 
     def __init__(self, extra_protects=(), extra_disables=(), extra_ignores=()):
-        triggers.base.__init__(self)
+        super().__init__()
         self.extra_protects = extra_protects
         self.extra_disables = extra_disables
         self.extra_ignores = extra_ignores
@@ -483,7 +483,7 @@ class install_into_symdir_protect(triggers.base):
     _engine_types = triggers.INSTALLING_MODES
 
     def __init__(self, extra_protects=(), extra_disables=()):
-        triggers.base.__init__(self)
+        super().__init__()
         self.extra_protects = extra_protects
         self.extra_disables = extra_disables
 
@@ -592,13 +592,14 @@ def register_multilib_strict_trigger(domain_settings):
 
 
 class FixImageSymlinks(triggers.base):
+
     required_csets = ('new_cset',)
     _hooks = ('pre_merge',)
 
     pkgcore_config_type = None
 
     def __init__(self, format_op):
-        triggers.base.__init__(self)
+        super().__init__()
         self.format_op = format_op
 
     def trigger(self, engine, cset):

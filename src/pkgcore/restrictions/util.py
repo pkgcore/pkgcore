@@ -27,8 +27,9 @@ def collect_package_restrictions(restrict, attrs=None, invert=False):
     for r in restrict:
         if not isinstance(r, restriction.base):
             raise TypeError(
-                "restrict must be of a restriction.base, not %s: %r" % (
-                    r.__class__.__name__, r))
+                'restrict must be of a restriction.base, '
+                f'not {r.__class__.__class__}: {r!r}'
+            )
     if attrs is None:
         for r in iflatten_func(restrict, _is_package_instance):
             yield r

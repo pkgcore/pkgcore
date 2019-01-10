@@ -462,7 +462,8 @@ class atom(boolean.AndRestriction, metaclass=generic_equality):
         if self.repo_id:
             s += f"::{self.repo_id}"
         if self.use:
-            s += f"[{','.join(self.use)}]"
+            use = ','.join(self.use)
+            s += f"[{use}]"
         return s
 
     __hash__ = reflective_hash('_hash')

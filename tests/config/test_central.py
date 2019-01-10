@@ -109,7 +109,7 @@ class ConfigManagerTest(TestCase):
               }], [RemoteSource()])
         self.check_error(
             "Collapsing section named 'myrepo':\n"
-            "inherit target 'baserepo' cannot be found",
+            "Inherit target 'baserepo' cannot be found",
             self.get_config_obj, manager, 'repo', 'myrepo')
 
     def test_inherit_unknown_type(self):

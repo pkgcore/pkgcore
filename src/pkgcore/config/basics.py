@@ -2,7 +2,6 @@
 # Copyright: 2005 Marien Zwart <marienz@gentoo.org>
 # License: BSD/GPL2
 
-
 """
 configuration subsystem primitives
 
@@ -135,20 +134,19 @@ class ConfigType(object):
                     self.required = tuple(x for x in self.required if x != self.requires_config)
         elif varargs or varkw:
             raise TypeError(
-                'func %s accepts *args or **kwargs, and no ConfigHint is '
-                'provided' % (self.callable,))
+                f'func {self.callable} accepts *args or **kwargs, '
+                'and no ConfigHint is provided'
+            )
 
         for var in ('class', 'inherit', 'default'):
             if var in self.types:
                 raise errors.TypeDefinitionError(
-                    '%s: you cannot change the type of %r' % (
-                        self.callable, var))
+                    f'{self.callable}: you cannot change the type of {var!r}')
 
         for var in self.positional:
             if var not in self.required and var != self.requires_config:
                 raise errors.TypeDefinitionError(
-                    '%s: %r is in positionals but not in required' %
-                    (self.callable, var))
+                    f'{self.callable}: {var!r} is in positionals but not in required')
 
 
 class LazySectionRef(object):
@@ -169,8 +167,9 @@ class LazySectionRef(object):
             config = self.cached_config = self._collapse()
             if self.typename is not None and config.type.name != self.typename:
                 raise errors.ConfigurationError(
-                    'reference %r should be of type %r, got %r' % (
-                        self.name, self.typename, config.type.name))
+                    f'reference {self.name!r} should be of type '
+                    f'{self.typename!r}, got {config.type.name!r}'
+                )
         return self.cached_config
 
     def instantiate(self):
@@ -181,7 +180,7 @@ class LazySectionRef(object):
 class LazyNamedSectionRef(LazySectionRef):
 
     def __init__(self, central, typename, name):
-        LazySectionRef.__init__(self, central, typename)
+        super().__init__(central, typename)
         self.name = name
 
     def _collapse(self):
@@ -191,7 +190,7 @@ class LazyNamedSectionRef(LazySectionRef):
 class LazyUnnamedSectionRef(LazySectionRef):
 
     def __init__(self, central, typename, section):
-        LazySectionRef.__init__(self, central, typename)
+        super().__init__(central, typename)
         self.section = section
 
     def _collapse(self):
@@ -229,7 +228,7 @@ class DictConfigSection(ConfigSection):
             the dict and a type name.
         :type source_dict: dict with string keys and arbitrary values.
         """
-        ConfigSection.__init__(self)
+        super().__init__()
         self.func = conversion_func
         self.dict = source_dict
 
@@ -246,8 +245,7 @@ class DictConfigSection(ConfigSection):
             raise
         except Exception as e:
             raise errors.ConfigurationError(
-                "Failed converting argument %r to %s"
-                % (name, arg_type)) from e
+                f'Failed converting argument {name!r} to {arg_type}') from e
 
 
 class FakeIncrementalDictConfigSection(ConfigSection):
@@ -267,7 +265,7 @@ class FakeIncrementalDictConfigSection(ConfigSection):
             the dict and a type name.
         :type source_dict: dict with string keys and arbitrary values.
         """
-        ConfigSection.__init__(self)
+        super().__init__()
         self.func = conversion_func
         self.dict = source_dict
 
@@ -302,8 +300,7 @@ class FakeIncrementalDictConfigSection(ConfigSection):
                         raise
                     except Exception as e:
                         raise errors.ConfigurationError(
-                            "Failed converting argument %r to %s"
-                            % (subname, arg_type)) from e
+                            f'Failed converting argument {subname!r} to {arg_type}') from e
                 result.append(val)
             if result[0] is result[1] is result[2] is None:
                 raise KeyError(name)
@@ -359,23 +356,26 @@ class FakeIncrementalDictConfigSection(ConfigSection):
                 if kind == 'ref':
                     if target_kind != 'refs':
                         raise ValueError(
-                            "Internal issue detected: kind(ref), "
-                            "target_kind(%r), name(%r), val(%r), arg_type(%r)"
-                            % (target_kind, name, val, arg_type))
+                            'Internal issue detected: kind(ref), '
+                            f'target_kind({target_kind!r}), name({name!r}), '
+                            f'val({val!r}), arg_type({arg_type!r})'
+                        )
                     converted.append([val])
                 elif kind == 'refs':
                     if target_kind != 'refs':
                         raise ValueError(
-                            "Internal issue detected: kind(refs), "
-                            "target_kind(%r), name(%r), val(%r), arg_type(%r)"
-                            % (target_kind, name, val, arg_type))
+                            'Internal issue detected: kind(refs), '
+                            f'target_kind({target_kind!r}), name({name!r}), '
+                            f'val({val!r}), arg_type({arg_type!r})'
+                        )
                     converted.append(val)
                 elif kind == 'list':
                     if target_kind == 'str':
                         raise ValueError(
-                            "Internal issue detected: kind(str), "
-                            "target_kind(%r), name(%r), val(%r), arg_type(%r)"
-                            % (target_kind, name, val, arg_type))
+                            'Internal issue detected: kind(str), '
+                            f'target_kind({target_kind!r}), name({name!r}), '
+                            f'val({val!r}), arg_type({arg_type!r})'
+                        )
                     converted.append(val)
                 else:
                     # Everything else gets converted to a string first.
@@ -384,8 +384,7 @@ class FakeIncrementalDictConfigSection(ConfigSection):
                     elif kind in ('bool', 'int', 'str'):
                         val = str(val)
                     else:
-                        raise errors.ConfigurationError(
-                            'unsupported type %r' % (kind,))
+                        raise errors.ConfigurationError(f'unsupported type {kind!r}')
                     # Then convert the str to list if needed.
                     if target_kind == 'str':
                         converted.append(val)
@@ -399,7 +398,7 @@ class FakeIncrementalDictConfigSection(ConfigSection):
             raise
         except Exception as e:
             raise errors.ConfigurationError(
-                "Failed converting argument %r to %s" % (name, arg_type)) from e
+                f'Failed converting argument {name!r} to {arg_type}') from e
 
 
 def str_to_list(string):
@@ -410,7 +409,7 @@ def str_to_list(string):
     # check for stringness because we return something interesting if
     # feeded a sequence of strings
     if not isinstance(string, str):
-        raise TypeError('expected a string, got %r' % (string,))
+        raise TypeError(f'expected a string, got {string!r}')
     while i < e:
         if not string[i].isspace():
             if string[i] in ("'", '"'):
@@ -455,7 +454,7 @@ def str_to_bool(string):
         return False
     if s in ("yes", "true", "1"):
         return True
-    raise errors.ConfigurationError('%r is not a boolean' % s)
+    raise errors.ConfigurationError(f'{s!r} is not a boolean')
 
 
 def str_to_int(string):
@@ -464,7 +463,7 @@ def str_to_int(string):
     try:
         return int(string)
     except ValueError:
-        raise errors.ConfigurationError('%r is not an integer' % string)
+        raise errors.ConfigurationError(f'{string!r} is not an integer')
 
 _str_converters = {
     'list': str_to_list,
@@ -478,15 +477,16 @@ def convert_string(central, value, arg_type):
     """Conversion func for a string-based DictConfigSection."""
     if not isinstance(value, str):
         raise ValueError(
-            'convert_string invoked with non str instance:'
-            ' val(%r), arg_type(%r)' % (value, arg_type))
+            'convert_string invoked with non str instance: '
+            f'val({value!r}), arg_type({arg_type!r})'
+        )
     if arg_type == 'callable':
         try:
             func = modules.load_attribute(value)
         except modules.FailedImport as e:
-            raise errors.ConfigurationError('Cannot import %r' % (value,)) from e
+            raise errors.ConfigurationError(f'cannot import {value!r}') from e
         if not callable(func):
-            raise errors.ConfigurationError('%r is not callable' % (value,))
+            raise errors.ConfigurationError(f'{value!r} is not callable')
         return func
     elif arg_type.startswith('refs:'):
         return list(LazyNamedSectionRef(central, arg_type, ref)
@@ -497,7 +497,7 @@ def convert_string(central, value, arg_type):
         return 'str', value
     func = _str_converters.get(arg_type)
     if func is None:
-        raise errors.ConfigurationError('Unknown type %r' % (arg_type,))
+        raise errors.ConfigurationError(f'unknown type {arg_type!r}')
     return func(value)
 
 
@@ -505,19 +505,17 @@ def convert_asis(central, value, arg_type):
     """"Conversion" func assuming the types are already correct."""
     if arg_type == 'callable':
         if not callable(value):
-            raise errors.ConfigurationError('%r is not callable' % (value,))
+            raise errors.ConfigurationError(f'{value!r} is not callable')
         return value
     elif arg_type.startswith('ref:'):
         if not isinstance(value, ConfigSection):
-            raise errors.ConfigurationError('%r is not a config section' %
-                                            (value,))
+            raise errors.ConfigurationError(f'{value!r} is not a config section')
         return LazyUnnamedSectionRef(central, arg_type, value)
     elif arg_type.startswith('refs:'):
         l = []
         for section in value:
             if not isinstance(section, ConfigSection):
-                raise errors.ConfigurationError('%r is not a config section' %
-                                                (value,))
+                raise errors.ConfigurationError(f'{value!r} is not a config section')
             l.append(LazyUnnamedSectionRef(central, arg_type, section))
         return l
     elif arg_type == 'repr':
@@ -534,12 +532,12 @@ def convert_asis(central, value, arg_type):
                 return 'list', value
             if isinstance(value[0], ConfigSection):
                 return 'refs', value
-        raise errors.ConfigurationError('unsupported type for %r' % (value,))
+        raise errors.ConfigurationError(f'unsupported type for {value!r}')
     elif not isinstance(value, {'list': (list, tuple),
                                 'str': str,
                                 'bool': bool}[arg_type]):
         raise errors.ConfigurationError(
-            '%r does not have type %r' % (value, arg_type))
+            f'{value!r} does not have type {arg_type!r}')
     return value
 
 
@@ -583,7 +581,7 @@ def parse_config_file(path, parser):
     try:
         f = open(path, 'r')
     except (IOError, OSError):
-        raise errors.InstantiationError("Failed opening %r" % (path,))
+        raise errors.InstantiationError(f'failed opening {path!r}')
     try:
         return parser(f)
     finally:

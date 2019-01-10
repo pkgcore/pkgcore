@@ -13,7 +13,7 @@ __all__ = ("TreeCorruption", "InitializationError")
 class TreeCorruption(Exception):
 
     def __init__(self, err):
-        Exception.__init__(self, f"unexpected tree corruption: {err}")
+        super().__init__(f'unexpected tree corruption: {err}')
         self.err = err
 
 

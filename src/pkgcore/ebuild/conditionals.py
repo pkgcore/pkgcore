@@ -24,12 +24,9 @@ except ImportError:
 
 
 class DepSet(boolean.AndRestriction):
+    """Gentoo DepSet syntax parser"""
 
-    """
-    gentoo DepSet syntax parser
-    """
-
-    __slots__ = ("element_class", "_node_conds", "_known_conditionals")
+    __slots__ = ('element_class', '_node_conds', '_known_conditionals')
     type = packages.package_type
     negate = False
 

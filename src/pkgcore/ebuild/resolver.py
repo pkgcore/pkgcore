@@ -130,7 +130,7 @@ class empty_tree_merge_plan(plan.merge_plan):
         :param kwds: see :obj:`pkgcore.resolver.plan.merge_plan.__init__`
             for valid args
         """
-        plan.merge_plan.__init__(self, dbs, *args, **kwds)
+        super().__init__(dbs, *args, **kwds)
         # XXX *cough*, hack.
         self.default_dbs = multiplex.tree(
             *[x for x in self.all_raw_dbs if not x.livefs])

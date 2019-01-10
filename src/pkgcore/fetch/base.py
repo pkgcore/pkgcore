@@ -17,8 +17,7 @@ from pkgcore.fetch import errors
 class fetcher(object):
 
     def _verify(self, file_location, target, all_chksums=True, handlers=None):
-        """
-        Internal function for derivatives.
+        """Internal function for derivatives.
 
         Digs through chksums, and either returns None, or throws an
         errors.FetchFailed exception.
@@ -39,7 +38,7 @@ class fetcher(object):
                 handlers = get_handlers(target.chksums)
             except MissingChksumHandler as e:
                 raise errors.MissingChksumHandler(
-                    "couldn't find a required checksum handler: %s" % e)
+                    f'missing required checksum handler: {e}')
         if all_chksums:
             missing = set(target.chksums).difference(handlers)
             if missing:

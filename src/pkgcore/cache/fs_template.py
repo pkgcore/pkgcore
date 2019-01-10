@@ -32,10 +32,10 @@ class FsBased(base):
 
         for x, y in (("gid", portage_gid), ("perms", 0o664)):
             if x in config:
-                setattr(self, "_"+x, config[x])
+                setattr(self, f'_{x}', config[x])
                 del config[x]
             else:
-                setattr(self, "_"+x, y)
+                setattr(self, f'_{x}', y)
         super().__init__(**config)
 
         if label is not None:

@@ -1,7 +1,8 @@
 # Copyright: 2005 Marien Zwart <marienz@gentoo.org>
 # License: BSD/GPL2
 
-"""Parse a dhcpd.conf(5) style configuration file.
+"""
+Parse a dhcpd.conf(5) style configuration file.
 
 Example of the supported format (not a complete config)::
 
@@ -73,7 +74,7 @@ class ConfigSection(basics.ConfigSection):
     """
 
     def __init__(self, section):
-        basics.ConfigSection.__init__(self)
+        super().__init__()
         self.section = section
 
     def __contains__(self, name):
@@ -89,14 +90,13 @@ class ConfigSection(basics.ConfigSection):
                 raise errors.ConfigurationError('only one argument required')
             value = value[0]
             if not isinstance(value, str):
-                raise errors.ConfigurationError(
-                    'need a callable, not a section')
+                raise errors.ConfigurationError('need a callable, not a section')
             try:
                 value = modules.load_attribute(value)
             except modules.FailedImport:
-                raise errors.ConfigurationError('cannot import %r' % (value,))
+                raise errors.ConfigurationError(f'cannot import {value!r}')
             if not callable(value):
-                raise errors.ConfigurationError('%r is not callable' % value)
+                raise errors.ConfigurationError(f'{value!r} is not callable')
             return value
         elif arg_type.startswith('ref:'):
             if len(value) != 1:
@@ -144,15 +144,13 @@ class ConfigSection(basics.ConfigSection):
             if len(value) != 1:
                 raise errors.ConfigurationError('only one argument required')
             if not isinstance(value[0], str):
-                raise errors.ConfigurationError(
-                    '%r should be a string' % value)
+                raise errors.ConfigurationError(f'{value!r} should be a string')
             if arg_type == 'str':
                 return [None, basics.str_to_str(value[0]), None]
             elif arg_type == 'bool':
                 return basics.str_to_bool(value[0])
             else:
-                raise errors.ConfigurationError(
-                    'unsupported type %r' % (arg_type,))
+                raise errors.ConfigurationError(f'unsupported type {arg_type!r}')
 
 
 def config_from_file(file_obj):
@@ -160,7 +158,7 @@ def config_from_file(file_obj):
         config = parser.parseFile(file_obj)
     except pyp.ParseException as e:
         name = getattr(file_obj, 'name', file_obj)
-        raise errors.ConfigurationError('%s: %s' % (name, e))
+        raise errors.ConfigurationError(f'{name}: {e}') from e
     def build_section(name):
         return ConfigSection(config[name])
     return mappings.LazyValDict(config.keys, build_section)

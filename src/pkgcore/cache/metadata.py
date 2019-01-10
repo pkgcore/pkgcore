@@ -100,9 +100,8 @@ class database(flat_hash.database):
             eclasses = self.reconstruct_eclasses(cpv, eclasses)
             values["INHERITED"] = ' '.join(eclasses)
 
-        s = cpv.rfind("/")
-        fp = pjoin(
-            self.location, cpv[:s], ".update.%i.%s" % (os.getpid(), cpv[s+1:]))
+        s = cpv.rfind('/')
+        fp = pjoin(self.location, cpv[:s], f'.update.{os.getpid()}.{cpv[s+1:]}')
         try:
             myf = open(fp, "w")
         except FileNotFoundError:

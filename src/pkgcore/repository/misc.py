@@ -13,10 +13,7 @@ from pkgcore.restrictions import packages
 
 
 class nodeps_repo(object):
-    """
-    repository wrapper that returns wrapped pkgs via
-    :obj:`MutatedPkg` that have their bdepend/depend/rdepend/pdepend wiped
-    """
+    """Repository wrapper that returns wrapped pkgs with deps wiped."""
 
     default_bdepend = default_depend = default_rdepend = default_pdepend = DepSet()
 
@@ -72,11 +69,10 @@ class restrict_repo(object):
 
 
 class caching_repo(object):
+    """Repository wrapper that overrides match, returning :obj:`caching_iter` instances.
 
-    """
-    repository wrapper that overrides match, returning
-    :obj:`caching_iter` instances; itermatch is slaved to match,
-    in other words iterating over the caching_iter.
+    Itermatch is slaved to match, in other words iterating over the
+    caching_iter.
 
     Main use for this is to cache results from query lookups;
     if matches restrict arg is in the cache, the caller gets a shared

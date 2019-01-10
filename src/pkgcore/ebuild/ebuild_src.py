@@ -222,9 +222,7 @@ def rewrite_restrict(restrict):
 
 
 class base(metadata.package):
-
-    """
-    ebuild package
+    """ebuild package
 
     :cvar _config_wrappables: mapping of attribute to callable for
         re-evaluating attributes dependent on configuration

@@ -24,17 +24,18 @@ demandload(
 
 class MissingFile(BaseError):
     """Required file is missing."""
+
     def __init__(self, filename, setting):
-        BaseError.__init__(
-            self, "setting %s points at %s, which doesn't exist."
-            % (setting, filename))
+        super().__init__(
+            f"setting {settings} points at {filename!r}, which doesn't exist.")
         self.file, self.setting = filename, setting
 
 
 class Failure(BaseError):
     """Generic domain failure."""
+
     def __init__(self, text):
-        BaseError.__init__(self, "domain failure: %s" % (text,))
+        super().__init__(f'domain failure: {text}')
         self.text = text
 
 

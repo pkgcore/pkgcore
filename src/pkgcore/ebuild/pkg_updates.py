@@ -57,7 +57,7 @@ def _process_update(sequence, filename, mods, moved):
         if line[0] == 'move':
             if len(line) != 3:
                 logger.error(
-                    "file %r: %r on line %s: move isn't of proper form",
+                    'file %r: %r on line %s: bad move form',
                     filename, raw_line, lineno + 1)
                 continue
             src, trg = atom(line[1]), atom(line[2])
@@ -89,7 +89,7 @@ def _process_update(sequence, filename, mods, moved):
         elif line[0] == 'slotmove':
             if len(line) != 4:
                 logger.error(
-                    "file %r: %r on line %s: slotmove isn't of proper form",
+                    'file %r: %r on line %s: bad slotmove form',
                     filename, raw_line, lineno + 1)
                 continue
             src = atom(line[1])
@@ -107,7 +107,7 @@ def _process_update(sequence, filename, mods, moved):
                     filename, lineno + 1, raw_line)
                 continue
 
-            src_slot = atom("%s:%s" % (src, line[2]))
-            trg_slot = atom("%s:%s" % (src.key, line[3]))
+            src_slot = atom(f'{src}:{line[2]}')
+            trg_slot = atom(f'{src.key}:{line[3]}')
 
             mods[src.key][1].append(('slotmove', src_slot, line[3]))

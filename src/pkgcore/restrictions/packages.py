@@ -125,7 +125,7 @@ class PackageRestriction_mixin(restriction.base):
         return hash((self.negate, self.attrs, self.restriction))
 
     def __str__(self):
-        s = "%s " % (self.attrs, )
+        s = f'{self.attrs} '
         if self.negate:
             s += "not "
         return s + str(self.restriction)
@@ -251,9 +251,9 @@ class Conditional(PackageRestriction, metaclass=generic_equality):
         object.__setattr__(self, "payload", tuple(payload))
 
     def __str__(self):
-        return "( Conditional: %s payload: [ %s ] )" % (
-            PackageRestriction.__str__(self),
-            ", ".join(str(x) for x in self.payload))
+        s = PackageRestriction.__str__(self)
+        payload = ', '.join(str(x) for x in self.payload)
+        return f'( Conditional: {s} payload: [ {payload} ] )'
 
     def __repr__(self):
         if self.negate:
@@ -314,9 +314,10 @@ class KeyedAndRestriction(boolean.AndRestriction):
         object.__setattr__(self, "tag", tag)
 
     def __str__(self):
+        boolean_str = boolean.AndRestriction.__str__(self)
         if self.tag is None:
-            return boolean.AndRestriction.__str__(self)
-        return "%s %s" % (self.tag, boolean.AndRestriction.__str__(self))
+            return boolean_str
+        return f'{self.tag} {boolean_str}'
 
 AlwaysTrue = AlwaysBool(negate=True)
 AlwaysFalse = AlwaysBool(negate=False)

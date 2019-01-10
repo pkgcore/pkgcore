@@ -54,8 +54,8 @@ class tree(prototype.tree):
         raise NotImplementedError(self, "_load_data")
 
     def _get_packages(self, category):
-        if category != "virtual":
-            raise KeyError("no %s category for this repository" % category)
+        if category != 'virtual':
+            raise KeyError(f'no {category} category for this repository')
         self._load_data()
         return self.packages[category]
 
@@ -113,7 +113,7 @@ class InjectedPkg(pkg_base.wrapper):
         return not self._raw_pkg.intersects(other)
 
     def __str__(self):
-        return "injected restriction pkg: %s" % (self._raw_pkg)
+        return f'injected restriction pkg: {self._raw_pkg}'
 
     def __repr__(self):
         return "<%s cpv=%r @%#8x>" % (self.__class__, self.cpvstr, id(self))

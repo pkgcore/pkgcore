@@ -226,9 +226,7 @@ class tree(object):
     def itermatch(self, restrict, restrict_solutions=None, sorter=None,
                   pkg_filter=None, pkg_klass_override=None, force=None,
                   yield_none=False):
-
-        """
-        generator that yields packages match a restriction.
+        """Generator that yields packages match a restriction.
 
         :type restrict: :obj:`pkgcore.restrictions.packages.PackageRestriction`
             instance.
@@ -433,8 +431,7 @@ class tree(object):
                         break
 
     def notify_remove_package(self, pkg):
-        """
-        internal function,
+        """internal function
 
         notify the repository that a pkg it provides is being removed
         """
@@ -449,8 +446,7 @@ class tree(object):
         self.versions.force_regen(ver_key, tuple(l))
 
     def notify_add_package(self, pkg):
-        """
-        internal function,
+        """internal function
 
         notify the repository that a pkg is being added to it
         """

@@ -90,7 +90,7 @@ class tree(prototype.tree):
         for x in trees:
             if not hasattr(x, 'itermatch'):
                 raise errors.InitializationError(
-                    "%s is not a repository tree derivative" % (x,))
+                    f'{x} is not a repository tree derivative')
         self.trees = trees
 
     def _get_categories(self, *optional_category):
@@ -125,7 +125,7 @@ class tree(prototype.tree):
             except (errors.TreeCorruption, KeyError):
                 failures += 1
         if failures == len(self.trees):
-            raise KeyError("category '%s' not found" % category)
+            raise KeyError(f'category {category!r} not found')
         return tuple(d)
 
     def _get_versions(self, package):
@@ -138,7 +138,7 @@ class tree(prototype.tree):
                 failures += 1
 
         if failures == len(self.trees):
-            raise KeyError("category '%s' not found" % package)
+            raise KeyError(f'category {package!r} not found')
         return tuple(d)
 
     def path_restrict(self, path):
@@ -161,7 +161,7 @@ class tree(prototype.tree):
                 return repo.path_restrict(path)
             except ValueError:
                 raise
-        raise ValueError("no repo contains: '%s'" % path)
+        raise ValueError(f'no repo contains: {path!r}')
 
     def itermatch(self, restrict, **kwds):
         sorter = kwds.get("sorter", iter)
@@ -214,7 +214,7 @@ class tree(prototype.tree):
             except KeyError:
                 pass
         # made it here, no match.
-        raise KeyError("package %s not found" % key)
+        raise KeyError(f'package {key} not found')
 
     def __add__(self, other):
         if isinstance(other, prototype.tree):

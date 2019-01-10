@@ -29,6 +29,7 @@ demandload(
 
 
 class tree(prototype.tree):
+    """Repository for packages installed on the filesystem."""
 
     livefs = True
     configured = False
@@ -45,7 +46,7 @@ class tree(prototype.tree):
 
     def __init__(self, location, cache_location=None, repo_id='vdb',
                  disable_cache=False):
-        prototype.tree.__init__(self, frozen=False)
+        super().__init__(frozen=False)
         self.repo_id = repo_id
         self.location = location
         if disable_cache:
@@ -65,8 +66,7 @@ class tree(prototype.tree):
         except FileNotFoundError:
             pass
         except OSError as e:
-            raise errors.InitializationError(
-                f"lstat failed on base: {self.location!r}") from e
+            raise errors.InitializationError(f'lstat failed on base: {self.location!r}') from e
 
         self.package_class = self.package_factory(self)
 
@@ -94,7 +94,7 @@ class tree(prototype.tree):
                         or x.startswith("-MERGING-"):
                     continue
                 try:
-                    pkg = versioned_CPV(category + "/" + x)
+                    pkg = versioned_CPV(f'{category}/{x}')
                 except InvalidCPV:
                     bad = True
                 if bad or not pkg.fullver:
@@ -105,23 +105,21 @@ class tree(prototype.tree):
                     else:
                         raise InvalidCPV(f"{category}/{x}: no version component")
                     logger.error(
-                        f"merged -{bad} pkg detected: {category}/{x}. "
-                        f"throwing exception due to -{bad} not being a valid"
-                        " version component.  Silently ignoring that "
-                        "specific version is not viable either since it "
-                        "would result in pkgcore stomping whatever it was "
-                        f"that -{bad} version merged.  "
-                        "This is why embrace and extend is bad, mm'kay.  "
-                        "Use the offending pkg manager that merged it to "
-                        "unmerge it.")
+                        f'merged -{bad} pkg detected: {category}/{x}. '
+                        f'throwing exception due to -{bad} not being a valid'
+                        ' version component.  Silently ignoring that '
+                        'specific version is not viable either since it '
+                        'would result in pkgcore stomping whatever it was '
+                        f'that -{bad} version merged.  '
+                        'Use the offending pkg manager that merged it to '
+                        'unmerge it.')
                     raise InvalidCPV(
                         f"{category}/{x}: -{bad} version component is not standard.")
                 l.add(pkg.package)
                 d.setdefault((category, pkg.package), []).append(pkg.fullver)
         except EnvironmentError as e:
-            raise KeyError(
-                "failed fetching packages for category %s: %s" %
-                (pjoin(self.location, category.lstrip(os.path.sep)), str(e))) from e
+            category = pjoin(self.location, category.lstrip(os.path.sep))
+            raise KeyError(f'failed fetching packages for category {category}: {e}') from e
 
         self._versions_tmp_cache.update(d)
         return tuple(l)
@@ -155,15 +153,15 @@ class tree(prototype.tree):
             data = ContentsFile(pjoin(path, "CONTENTS"), mutable=True)
         elif key == "environment":
             fp = pjoin(path, key)
-            if not os.path.exists(fp + ".bz2"):
+            if not os.path.exists(f'{fp}.bz2'):
                 if not os.path.exists(fp):
                     # icky.
                     raise KeyError("environment: no environment file found")
                 data = data_source.local_source(fp)
             else:
-                data = data_source.bz2_source(fp + ".bz2")
-        elif key == "ebuild":
-            fp = pjoin(path, os.path.basename(path.rstrip(os.path.sep)) + ".ebuild")
+                data = data_source.bz2_source(f'{fp}.bz2')
+        elif key == 'ebuild':
+            fp = pjoin(path, os.path.basename(path.rstrip(os.path.sep)) + '.ebuild')
             data = data_source.local_source(fp)
         elif key == 'repo':
             # try both, for portage/paludis compatibility.

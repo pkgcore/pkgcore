@@ -62,14 +62,14 @@ class database(fs_template.FsBased):
     def _setitem(self, cpv, values):
         # might seem weird, but we rely on the trailing +1; this
         # makes it behave properly for any cache depth (including no depth)
-        s = cpv.rfind("/") + 1
-        fp = pjoin(self.location, cpv[:s], ".update.%i.%s" % (os.getpid(), cpv[s:]))
+        s = cpv.rfind('/') + 1
+        fp = pjoin(self.location, cpv[:s], f'.update.{os.getpid()}.{cpv[s:]}')
         try:
             myf = open(fp, "w", 32768)
         except FileNotFoundError:
             if not self._ensure_dirs(cpv):
                 raise errors.CacheCorruption(
-                    cpv, 'error creating directory for %r' % (fp,))
+                    cpv, f'error creating directory for {fp!r}')
             try:
                 myf = open(fp, "w", 32768)
             except EnvironmentError as e:
@@ -81,7 +81,7 @@ class database(fs_template.FsBased):
             if not self.mtime_in_entry:
                 mtime = values['_mtime_']
         for k, v in sorted(values.items()):
-            myf.writelines("%s=%s\n" % (k, v))
+            myf.writelines(f'{k}={v}\n')
 
         myf.close()
         if self._mtime_used and not self.mtime_in_entry:

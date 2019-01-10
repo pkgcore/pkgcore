@@ -17,8 +17,7 @@ from pkgcore.repository import prototype, errors
 
 
 class tree(prototype.tree):
-
-    """wrap an existing repository yielding wrapped packages."""
+    """Repository wrapper binding configuration data to contained packages."""
 
     operation_kls = repo.operations_proxy
 
@@ -30,7 +29,7 @@ class tree(prototype.tree):
         self.raw_repo = repo
         if not isinstance(self.raw_repo, prototype.tree):
             raise errors.InitializationError(
-                "%s is not a repository tree derivative" % (self.raw_repo,))
+                f'{self.raw_repo!r} is not a repository tree derivative')
         self.package_class = package_class
         self.raw_repo = repo
 

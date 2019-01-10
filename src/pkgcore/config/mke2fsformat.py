@@ -74,7 +74,7 @@ def config_from_file(file_obj):
         config = parser.parseFile(file_obj)
     except pyp.ParseException as e:
         name = getattr(file_obj, 'name', file_obj)
-        raise errors.ConfigurationError('%s: %s' % (name, e))
+        raise errors.ConfigurationError(f'{name}: {e}') from e
     def build_section(name):
         return dhcpformat.ConfigSection(config[name])
     return mappings.LazyValDict(config.keys, build_section)

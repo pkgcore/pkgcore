@@ -39,22 +39,23 @@ def DeriveMetadataKls(original_kls):
 
         _get_attr = dict(original_kls._get_attr)
 
-        def __init__(self, parent_repository, *a, **kwds):
-            """
-            wrapper for %s.__init__; see %s.__init__ for allowed args/kwds,
-            they're passed directly to it
+        def __init__(self, parent_repository, *args, **kwds):
+            f"""wrapper for {original_kls}.__init__
+            
+            See {original_kls}.__init__ for allowed args/kwds, they're passed
+            directly to it.
 
             :param parent_repository: parent repository this package belongs to
             :type parent_repository: :obj:`pkgcore.repository.prototype.tree`
                 instance
-            """ % (original_kls, original_kls)
-            original_kls.__init__(self, *a, **kwds)
-            object.__setattr__(self, "_parent",  parent_repository)
+            """
+            super().__init__(*args, **kwds)
+            object.__setattr__(self, '_parent',  parent_repository)
 
         def _get_data(self):
-            """
-            internal hook func to get the packages metadata, consumer
-            of :obj:`_get_attr`
+            """internal hook func to get the packages metadata
+
+            consumer of :obj:`_get_attr`
             """
             return self._fetch_metadata()
         _get_attr["data"] = _get_data
@@ -78,12 +79,12 @@ def DeriveMetadataKls(original_kls):
 
         @property
         def slotted_atom(self):
-            return atom("%s:%s" % (self.key, self.slot))
+            return atom(f'{self.key}:{self.slot}')
 
         def _fetch_metadata(self):
-            """
-            pull the metadata for this package.
-            must be overridden in derivative
+            """Pull the metadata for this package.
+
+            Must be overridden in derivatives.
             """
             raise NotImplementedError
 
@@ -95,9 +96,7 @@ def DeriveMetadataKls(original_kls):
 package = DeriveMetadataKls(cpv.versioned_CPV_cls)
 
 class factory(object):
-
-    """
-    package generator
+    """package generator
 
     does weakref caching per repository
 
@@ -111,10 +110,7 @@ class factory(object):
         self._cached_instances = weakrefs.WeakValCache()
 
     def new_package(self, *args):
-        """
-        generate a new package instance
-
-        """
+        """generate a new package instance"""
         inst = self._cached_instances.get(args)
         if inst is None:
             inst = self._cached_instances[args] = self.child_class(self, *args)
@@ -124,9 +120,7 @@ class factory(object):
         return self.new_package(*args, **kwds)
 
     def clear(self):
-        """
-        wipe the weakref cache of packages instances
-        """
+        """wipe the weakref cache of packages instances"""
         self._cached_instances.clear()
 
     def _get_metadata(self, *args):
@@ -139,5 +133,6 @@ class factory(object):
     def _update_metadata(self, *args):
         """Updates metadata in the repo/cache/wherever.
 
-        Must be overridden in derivatives."""
+        Must be overridden in derivatives.
+        """
         raise NotImplementedError

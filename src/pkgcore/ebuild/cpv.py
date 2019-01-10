@@ -53,9 +53,7 @@ def isvalid_rev(s):
 
 
 class _native_CPV(object):
-
-    """
-    base ebuild package class
+    """base ebuild package class
 
     :ivar category: str category
     :ivar package: str package
@@ -121,7 +119,8 @@ class _native_CPV(object):
             if isvalid_rev(pkg_chunks[-1]):
                 if lpkg_chunks < 3:
                     # needs at least ('pkg', 'ver', 'rev')
-                    raise InvalidCPV(f'{cpvstr}: missing package name, version, and/or revision')
+                    raise InvalidCPV(
+                        f'{cpvstr}: missing package name, version, and/or revision')
                 rev = int(pkg_chunks.pop(-1)[1:])
                 if not rev:
                     rev = None
@@ -303,10 +302,9 @@ def native_ver_cmp(ver1, rev1, ver2, rev2):
 
 
 def mk_cpv_cls(base_cls):
-    class CPV(base.base, base_cls):
 
-        """
-        base ebuild package class
+    class CPV(base.base, base_cls):
+        """base ebuild package class
 
         :ivar category: str category
         :ivar package: str package
@@ -388,4 +386,4 @@ class versioned_CPV_cls(CPV):
     __slots__ = ()
 
     def __init__(self, *args):
-        CPV.__init__(self, versioned=True, *args)
+        super().__init__(versioned=True, *args)

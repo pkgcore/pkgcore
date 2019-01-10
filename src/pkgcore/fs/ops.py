@@ -103,7 +103,7 @@ class FailedCopy(TypeError):
         self.msg = msg
 
     def __str__(self):
-        return "failed copying %s:" % (self.obj, self.msg)
+        return f'failed copying {self.obj}: {self.msg}'
 
 
 class CannotOverwrite(FailedCopy):
@@ -111,8 +111,7 @@ class CannotOverwrite(FailedCopy):
         self.obj, self.existing = obj, existing
 
     def __str__(self):
-        return "cannot write %s due to %s existing" % (
-            self.obj, self.existing)
+        return f'cannot write {self.obj} due to {self.existing} existing'
 
 
 def default_copyfile(obj, mkdirs=False):
@@ -128,9 +127,9 @@ def default_copyfile(obj, mkdirs=False):
     existent = False
     ensure_perms = get_plugin("fs_ops.ensure_perms")
     if not fs.isfs_obj(obj):
-        raise TypeError("obj must be fsBase derivative: %r" % obj)
+        raise TypeError(f'obj must be fsBase derivative: {obj!r}')
     elif fs.isdir(obj):
-        raise TypeError("obj must not be a fsDir instance: %r" % obj)
+        raise TypeError(f'obj must not be a fsDir instance: {obj!r}')
 
     try:
         existing = gen_obj(obj.location)
@@ -165,7 +164,7 @@ def default_copyfile(obj, mkdirs=False):
     else:
         ret = spawn([CP_BINARY, "-Rp", obj.location, fp])
         if ret != 0:
-            raise FailedCopy(obj, "got %i from %s -Rp" % ret)
+            raise FailedCopy(obj, f'got {ret} from {CP_BINARY} -Rp')
 
     ensure_perms(obj.change_attributes(location=fp))
 
@@ -229,12 +228,12 @@ def merge_contents(cset, offset=None, callback=None):
     mkdir = get_plugin("fs_ops.mkdir")
 
     if not isinstance(cset, contents.contentsSet):
-        raise TypeError("cset must be a contentsSet, got %r" % (cset,))
+        raise TypeError(f'cset must be a contentsSet, got {cset!r}')
 
     if offset is not None:
         if os.path.exists(offset):
             if not os.path.isdir(offset):
-                raise TypeError("offset must be a dir, or not exist: %s" % offset)
+                raise TypeError(f'offset must be a dir, or not exist: {offset}')
         else:
             mkdir(fs.fsDir(offset, strict=False))
         iterate = partial(contents.offset_rewriter, offset.rstrip(os.path.sep))

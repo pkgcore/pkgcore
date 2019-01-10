@@ -138,7 +138,8 @@ class StrRegex(base, metaclass=hashed_base):
         else:
             result.append('search')
         result.append('@%#8x' % (id(self),))
-        return '<%s>' % (' '.join(result),)
+        result = ' '.join(result)
+        return f'<{result}>'
 
     def __str__(self):
         if self.ismatch:
@@ -147,7 +148,7 @@ class StrRegex(base, metaclass=hashed_base):
             result = 'search '
         result += self.regex
         if self.negate:
-            return 'not ' + result
+            return f'not {result}'
         return result
 
 
@@ -213,8 +214,8 @@ def _StrExact__repr__(self):
 
 def _StrExact__str__(self):
     if self.negate:
-        return "!= "+self.exact
-    return "== "+self.exact
+        return f'!= {self.exact}'
+    return f'== {self.exact}'
 
 
 class StrExactMatch(base_StrExactMatch, base):
@@ -269,9 +270,9 @@ class StrGlobMatch(base, metaclass=hashed_base):
         else:
             string = '<%s %r case_sensitive=%r @%#8x>'
         if self.prefix:
-            g = self.glob + ".*"
+            g = f'{self.glob}.*'
         else:
-            g = ".*" + self.glob
+            g = f'.*{self.glob}'
         return string % (
             self.__class__.__name__, g,
             self.flags == re.I and True or False,
@@ -282,8 +283,8 @@ class StrGlobMatch(base, metaclass=hashed_base):
         if self.negate:
             s = 'not '
         if self.prefix:
-            return "%s%s*" % (s, self.glob)
-        return "%s*%s" % (s, self.glob)
+            return f'{s}{self.glob}*'
+        return '{s}*{self.glob}'
 
 
 class EqualityMatch(base, metaclass=generic_equality):
@@ -313,8 +314,8 @@ class EqualityMatch(base, metaclass=generic_equality):
 
     def __str__(self):
         if self.negate:
-            return "EqualityMatch: !=%s" % (self.data,)
-        return "EqualityMatch: =%s" % (self.data,)
+            return f'EqualityMatch: !={self.data}'
+        return f'EqualityMatch: ={self.data}'
 
 
 class ContainmentMatch2(base, metaclass=hashed_base):
@@ -530,8 +531,10 @@ class FlatteningRestriction(base, metaclass=generic_equality):
             iflatten_instance(val, self.dont_iter)) != self.negate
 
     def __str__(self):
-        return 'flattening_restriction: dont_iter = %s, restriction = %s' % (
-            self.dont_iter, self.restriction)
+        return (
+            'flattening_restriction: '
+            f'dont_iter = {self.dont_iter}, restriction = {self.restriction}'
+        )
 
     def __repr__(self):
         return '<%s restriction=%r dont_iter=%r negate=%r @%#8x>' % (

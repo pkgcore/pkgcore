@@ -44,11 +44,9 @@ def alias_cset(alias, engine, csets):
 
 
 def map_new_cset_livefs(engine, csets, cset_name='new_cset'):
-    """find the syms on disk that redirect new_cset, and return a cset
-    localized to the livefs"""
+    """Find symlinks on disk that redirect new_cset, and return a livefs localized cset."""
     initial = csets[cset_name]
-    ondisk = contents.contentsSet(livefs.intersect(initial.iterdirs(),
-        realpath=False))
+    ondisk = contents.contentsSet(livefs.intersect(initial.iterdirs(), realpath=False))
     livefs.recursively_fill_syms(ondisk)
     ret = initial.map_directory_structure(ondisk, add_conflicting_sym=True)
     return ret
@@ -89,7 +87,6 @@ class MergeEngine(object):
 
     allow_reuse = True
 
-
     def __init__(self, mode, tempdir, hooks, csets, preserves, observer,
                  offset=None, disable_plugins=False, parallelism=None):
         if observer is None:
@@ -100,11 +97,7 @@ class MergeEngine(object):
             tempdir = normpath(tempdir) + '/'
         self.tempdir = tempdir
 
-        if parallelism is None:
-            parallelism = cpu_count()
-
-        self.parallelism = parallelism
-
+        self.parallelism = parallelism if parallelism is not None else cpu_count()
         self.hooks = ImmutableDict((x, []) for x in hooks)
 
         self.preserve_csets = []
@@ -147,9 +140,7 @@ class MergeEngine(object):
     @classmethod
     def install(cls, tempdir, pkg, offset=None, observer=None,
                 disable_plugins=False):
-
-        """
-        generate a MergeEngine instance configured for installing a pkg
+        """Generate a MergeEngine instance configured for installing a pkg.
 
         :param tempdir: tempspace for the merger to use; this space it must
             control alone, no sharing.
@@ -157,9 +148,7 @@ class MergeEngine(object):
         :param offset: any livefs offset to force for modifications
         :param disable_plugins: if enabled, run just the triggers passed in
         :return: :obj:`MergeEngine`
-
         """
-
         hooks = {k: [y() for y in v] for (k, v) in cls.install_hooks.items()}
 
         csets = cls.install_csets.copy()
@@ -179,9 +168,7 @@ class MergeEngine(object):
     @classmethod
     def uninstall(cls, tempdir, pkg, offset=None, observer=None,
                   disable_plugins=False):
-
-        """
-        generate a MergeEngine instance configured for uninstalling a pkg
+        """Generate a MergeEngine instance configured for uninstalling a pkg.
 
         :param tempdir: tempspace for the merger to use; this space it must
             control alone, no sharing.
@@ -191,7 +178,6 @@ class MergeEngine(object):
         :param disable_plugins: if enabled, run just the triggers passed in
         :return: :obj:`MergeEngine`
         """
-
         hooks = {k: [y() for y in v] for (k, v) in cls.uninstall_hooks.items()}
         csets = cls.uninstall_csets.copy()
 
@@ -211,9 +197,7 @@ class MergeEngine(object):
     @classmethod
     def replace(cls, tempdir, old, new, offset=None, observer=None,
                 disable_plugins=False):
-
-        """
-        generate a MergeEngine instance configured for replacing a pkg.
+        """Generate a MergeEngine instance configured for replacing a pkg.
 
         :param tempdir: tempspace for the merger to use; this space it must
             control alone, no sharing.
@@ -223,9 +207,7 @@ class MergeEngine(object):
         :param offset: any livefs offset to force for modifications
         :param disable_plugins: if enabled, run just the triggers passed in
         :return: :obj:`MergeEngine`
-
         """
-
         hooks = {k: [y() for y in v] for (k, v) in cls.replace_hooks.items()}
 
         csets = cls.replace_csets.copy()
@@ -248,8 +230,9 @@ class MergeEngine(object):
         return o
 
     def replace_cset(self, name, new_cset):
-        """
-        replace the cset referenced by this engine; use only if you know what you're doing
+        """Replace the cset referenced by this engine.
+
+        Use only if you know what you're doing.
 
         :param name: name of the cset
         :new_cset: a contentsSet instance to use
@@ -261,8 +244,7 @@ class MergeEngine(object):
             raise KeyError(f"attempted to replace a non preserved cset: {name}")
 
     def regenerate_csets(self):
-        """
-        internal function, reset non preserverd csets.
+        """Internal function, reset non preserverd csets.
 
         Used in transitioning between hook points
         """
@@ -273,8 +255,7 @@ class MergeEngine(object):
         return self.cset_sources[key](self, self.csets)
 
     def add_preserved_cset(self, cset_name, func):
-        """
-        register a cset generator for use.
+        """Register a cset generator for use.
 
         The cset will stay in memory until the engine finishes all steps.
 
@@ -285,8 +266,7 @@ class MergeEngine(object):
         self.preserve_csets.append(cset_name)
 
     def add_cset(self, cset_name, func):
-        """
-        regiser a cset generator for use.
+        """Regiser a cset generator for use.
 
         The cset will be released from memory when it's no longer used.
 
@@ -300,15 +280,14 @@ class MergeEngine(object):
         self.cset_sources[cset_name] = func
 
     def add_trigger(self, hook_name, trigger, required_csets):
-        """
-        register a :obj:`pkgcore.merge.triggers.base` instance to be executed
+        """Register a :obj:`pkgcore.merge.triggers.base` instance to be executed.
 
         :param hook_name: engine step to hook the trigger into
         :param trigger: :class:`pkgcore.merge.triggers.base` to add
         """
         if hook_name not in self.hooks:
-            raise KeyError("trigger %r's hook %s isn't a known hook" %
-                (trigger, hook_name))
+            raise KeyError(
+                f"trigger {trigger!r}'s hook {hook_name} isn't a known hook")
 
         if required_csets is not None:
             for rcs in required_csets:
@@ -319,9 +298,7 @@ class MergeEngine(object):
         self.hooks[hook_name].append(trigger)
 
     def execute_hook(self, hook):
-        """
-        execute any triggers bound to a hook point
-        """
+        """Execute any triggers bound to a hook point."""
         try:
             self.phase = hook
             self.regenerate_csets()
@@ -335,11 +312,11 @@ class MergeEngine(object):
                         raise
                     except errors.BlockModification as e:
                         self.observer.error(
-                            "modification was blocked by trigger %r: %s", trigger, e)
+                            f"modification was blocked by trigger {trigger!r}: {e}")
                         raise
                     except errors.ModificationError as e:
                         self.observer.error(
-                            "modification error occurred during trigger %r: %s", trigger, e)
+                            f"modification error occurred during trigger {trigger!r}: {e}")
                         raise
                     except Exception as e:
                         if not trigger.suppress_exceptions:
@@ -349,7 +326,9 @@ class MergeEngine(object):
                         traceback.print_exc(file=handle)
 
                         self.observer.warn(
-                            "unhandled exception caught and suppressed:\n%s", handle.getvalue())
+                            "unhandled exception caught and "
+                            f"suppressed:\n{handle.getvalue()}"
+                        )
                 finally:
                     self.observer.trigger_end(hook, trigger)
         finally:
@@ -357,17 +336,17 @@ class MergeEngine(object):
 
     @staticmethod
     def generate_offset_cset(engine, csets, cset_generator):
-        """generate a cset with offset applied"""
+        """Generate a cset with offset applied."""
         return cset_generator(engine, csets).insert_offset(engine.offset)
 
     @staticmethod
     def get_pkg_contents(engine, csets, pkg):
-        """generate the cset of what files shall be merged to the livefs"""
+        """Generate the cset of what files shall be merged to the livefs."""
         return pkg.contents.clone()
 
     @staticmethod
     def get_remove_cset(engine, csets):
-        """generate the cset of what files shall be removed from the livefs"""
+        """Generate the cset of what files shall be removed from the livefs."""
         return csets["old_cset"].difference(csets["install"])
 
     @staticmethod
@@ -377,7 +356,7 @@ class MergeEngine(object):
 
     @staticmethod
     def _get_livefs_intersect_cset(engine, csets, cset_name, realpath=False):
-        """generates the livefs intersection against a cset"""
+        """Generate the livefs intersection against a cset."""
         return contents.contentsSet(livefs.intersect(csets[cset_name], realpath=realpath))
 
     @staticmethod
@@ -398,7 +377,6 @@ class MergeEngine(object):
         return cset
 
     def get_writable_fsobj(self, fsobj, prefer_reuse=True, empty=False):
-
         path = source = None
         if fsobj:
             source = fsobj.data
@@ -429,7 +407,7 @@ class MergeEngine(object):
         # XXX: annoying quirk of python, we don't want append mode, so 'a+'
         # isn't viable; wr will truncate the file, so data_source uses r+.
         # this however doesn't allow us to state "create if missing"
-        # so we create it ourselves.  Annoying, but so it goes.
+        # so we create it ourselves. Annoying, but so it goes.
         # just touch the filepath.
         open(path, 'w').close()
         new_source = data_source.local_source(

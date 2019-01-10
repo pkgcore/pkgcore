@@ -2,7 +2,6 @@
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
 # License: BSD/GPL2
 
-
 """Plugin system, heavily inspired by twisted's plugin system."""
 
 __all__ = ("initialize_cache", "get_plugins", "get_plugin")
@@ -141,9 +140,9 @@ def _read_cache_file(package, cache_path):
                         val = int(val)
                     return val
                 entries = set(
-                    _plugin_data(key, int(priority),
-                                 '%s.%s' % (package.__name__, module),
-                                 f(target))
+                    _plugin_data(
+                        key, int(priority),
+                        f'{package.__name__}.{module}', f(target))
                     for (key, priority, target) in zip(entries, entries, entries))
             stored_cache[(module, mtime)] = entries
 
@@ -164,8 +163,8 @@ def _write_cache_file(path, data):
             cachefile.write(CACHE_HEADER + "\n")
             for (module, mtime), plugs in sorted(data.items(), key=operator.itemgetter(0)):
                 plugs = sort_plugs(plugs)
-                plugs = ':'.join('%s,%s,%s' % (plug.key, plug.priority, plug.target) for plug in plugs)
-                cachefile.write("%s:%s:%s\n" % (module, mtime, plugs))
+                plugs = ':'.join(f'{plug.key},{plug.priority},{plug.target}' for plug in plugs)
+                cachefile.write(f'{module}:{mtime}:{plugs}\n')
             cachefile.close()
         except EnvironmentError as e:
             # We cannot write a new cache. We should log this

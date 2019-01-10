@@ -24,7 +24,7 @@ def _identify_functor_source(functor):
     module = getattr(functor, '__module__', None)
     if module is None:
         return functor.__name__
-    return '%s.%s' % (module, functor.__name__)
+    return f'{module}.{functor.__name__}'
 
 
 class BaseError(PkgcoreException):
@@ -38,9 +38,9 @@ class PermissionError(BaseError):
         self.message = message
 
     def __str__(self):
-        s = "permission denied to '%s'" % (self.path,)
+        s = f'permission denied to {self.path!r}'
         if self.message:
-            s += "; %s" % (self.message,)
+            s += f'; {self.message}'
         return s
 
 
@@ -48,9 +48,10 @@ class PermissionDeniedError(PermissionError):
 
     def __init__(self, path, write=False):
         if write:
-            PermissionError.__init__(self, path, message="write access required")
+            message = 'write access required'
         else:
-            PermissionError.__init__(self, path, message="read access required")
+            message = 'read access required'
+        super().__init__(path, message=message)
 
 
 class TypeDefinitionError(BaseError):
@@ -69,7 +70,7 @@ class ConfigurationError(BaseError):
     """
 
     def __init__(self, message):
-        BaseError.__init__(self, message)
+        super().__init__(message)
         self.stack = [message]
 
     def __str__(self):
@@ -80,18 +81,18 @@ class ParsingError(ConfigurationError):
 
     def __init__(self, message=None, exception=None):
         if message is not None:
-            ConfigurationError.__init__(self, message)
+            super().__init__(message)
         elif exception is not None:
-            ConfigurationError.__init__(self, str(exception))
+            super().__init__(str(exception))
         else:
             raise ValueError('specify at least one of message and exception')
         self.message = message
         self.exc = exception
 
     def __str__(self):
-        msg = 'parsing failed: %s' % (self.message,)
+        msg = f'parsing failed: {self.message}'
         if self.exc is not None:
-            msg += '\n%s' % (self.exc,)
+            msg += f'\n{self.exc}'
         return msg
 
 
@@ -143,9 +144,9 @@ class ComplexInstantiationError(ConfigurationError):
     def __init__(self, message=None, exception=None, callable_obj=None,
                  pargs=None, kwargs=None):
         if message is not None:
-            ConfigurationError.__init__(self, message)
+            super().__init__(message)
         elif exception is not None:
-            ConfigurationError.__init__(self, str(exception))
+            super().__init__(str(exception))
         else:
             raise ValueError('specify at least one of message and exception')
         self.message = message
@@ -159,18 +160,20 @@ class ComplexInstantiationError(ConfigurationError):
         # and str() this before central had a chance to fill it in)
         if self.message is not None:
             if self.callable is None:
-                message = '%r, callable unset!' % (self.message,)
+                message = f'{self.message!r}, callable unset!'
             else:
-                message = '%r instantiating %s.%s' % (
-                    self.message, self.callable.__module__,
-                    self.callable.__name__)
+                message = (
+                    f'{self.message!r} instantiating '
+                    f'{self.callable.__module__}.{self.callable.__name__}'
+                )
         # The weird repr(str(exc)) used here quotes the message nicely.
         elif self.callable is not None:
-            message = "Caught exception %r instantiating %s.%s" % (
-                str(self.exc), self.callable.__module__,
-                self.callable.__name__)
+            message = (
+                f'Caught exception {str(self.exc)!r} '
+                f'instantiating {self.callable.__module__}.{self.callable.__name__}'
+            )
         else:
-            message = "Caught exception %r, callable unset!" % (str(self.exc),)
+            message = f'Caught exception {str(self.exc)!r}, callable unset!'
         return ':\n'.join(reversed([message] + self.stack[1:]))
 
 
@@ -178,5 +181,5 @@ class QuoteInterpretationError(ConfigurationError):
     """Quoting of a var was screwed up."""
 
     def __init__(self, string):
-        ConfigurationError.__init__(self, "Parsing of %r failed" % (string,))
+        super().__init__(f'parsing of {string!r} failed')
         self.str = string

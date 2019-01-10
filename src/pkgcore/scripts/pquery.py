@@ -301,7 +301,7 @@ def print_package(options, out, err, pkg):
         out.wrap = True
         out.later_prefix = ['                  ']
         for attr in options.attr:
-            out.write(green, '     %s: ' % (attr,), out.fg(), autoline=False)
+            out.write(green, f'     {attr}: ', out.fg(), autoline=False)
             format_attr(options, out, pkg, attr)
         for revdep in options.print_revdep:
             for name in dep_attrs:
@@ -370,23 +370,23 @@ def print_package(options, out, err, pkg):
             if printed_something:
                 out.write(' ')
             printed_something = True
-            out.write('%s="%s"' % (attr, stringify_attr(options, pkg, attr)))
+            attr_str = stringify_attr(options, pkg, attr)
+            out.write(f'{attr}="{attr_str}"')
         for revdep in options.print_revdep:
             for name in dep_attrs:
                 depset = get_pkg_attr(pkg, name)
                 if getattr(depset, 'find_cond_nodes', None) is None:
                     # TODO maybe be smarter here? (this code is
                     # triggered by virtuals currently).
-                    out.write(' %s on %s' % (name, revdep))
+                    out.write(f' {name} on {revdep}')
                     continue
                 for key, restricts in depset.find_cond_nodes(depset.restrictions, True):
                     if not restricts and key.intersects(revdep):
-                        out.write(' %s on %s through %s' % (name, revdep, key))
+                        out.write(f' {name} on {revdep} through {key}')
                 for key, restricts in depset.node_conds.items():
                     if key.intersects(revdep):
-                        out.write(' %s on %s through %s if USE %s,' %
-                                  (name, revdep, key, ' or '.join(
-                                      str(r) for r in restricts)))
+                        restricts = ' or '.join(map(str, restricts))
+                        out.write(f' {name} on {revdep} through {key} if USE {restricts},')
         # If we printed anything at all print the newline now
         out.autoline = True
         if printed_something:
@@ -430,7 +430,7 @@ def print_packages_noversion(options, out, err, pkgs):
             if versions:
                 out.write(green, '     installed: ', out.fg(), ' '.join(versions))
         for attr in options.attr:
-            out.write(green, '     %s: ' % (attr,), out.fg(),
+            out.write(green, f'     {attr}: ', out.fg(),
                       stringify_attr(options, pkgs[-1], attr))
         out.write()
         out.wrap = False
@@ -454,8 +454,8 @@ def print_packages_noversion(options, out, err, pkgs):
         if options.display_repo:
             out.write('::', pkgs[0].repo.repo_id, autoline=False)
         for attr in options.attr:
-            out.write(' %s="%s"' % (attr, stringify_attr(options, pkgs[-1],
-                                                         attr)))
+            attr_str = stringify_attr(options, pkgs[-1], attr)
+            out.write(f' {attr}="{attr_str}"')
         out.autoline = True
         out.write()
 
@@ -928,12 +928,12 @@ output.add_argument(
     '--attr', action='append', choices=printable_attrs,
     metavar='attribute', default=[],
     help="print this attribute's value (can be specified more than once)",
-    docs="""
+    docs=f"""
         Print the given attribute's value. This option can be specified
         multiple times.
 
-        Valid attributes: {}
-    """.format(', '.join(printable_attrs)))
+        Valid attributes: {', '.join(printable_attrs)}
+    """)
 output.add_argument(
     '--force-attr', action='append', dest='attr',
     metavar='attribute', default=[],

@@ -21,7 +21,7 @@ from pkgcore.config import ConfigHint
 class MalformedCommand(errors.FetchError):
 
     def __init__(self, command):
-        errors.FetchError.__init__(self, f"fetchcommand is malformed: {command}")
+        super().__init__(f'fetchcommand is malformed: {command}')
         self.command = command
 
 
@@ -49,7 +49,7 @@ class fetcher(base.fetcher):
         :param attempts: max number of attempts before failing the fetch
         :param readonly: controls whether fetching is allowed
         """
-        base.fetcher.__init__(self)
+        super().__init__()
         self.distdir = distdir
         if required_chksums is not None:
             required_chksums = [x.lower() for x in required_chksums]

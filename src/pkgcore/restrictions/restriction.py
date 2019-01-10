@@ -69,7 +69,7 @@ class AlwaysBool(base):
         return iter(())
 
     def __str__(self):
-        return "always '%s'" % self.negate
+        return f"always '{self.negate}'"
 
     def __repr__(self):
         return '<%s always %r @%#8x>' % (

@@ -592,10 +592,7 @@ class RepoConfig(syncable.tree, metaclass=WeakInstMeta):
             data = [_f for _f in data if _f]
             if len(data) != 1:
                 raise ValueError(f"multiple lines detected: {path!r}")
-            eapi = get_eapi(data[0])
-            if not eapi.is_supported:
-                raise ValueError(f"unsupported eapi {data[0]!r}: {path!r}")
-            return eapi
+            return get_eapi(data[0])
         except FileNotFoundError:
             return get_eapi('0')
 

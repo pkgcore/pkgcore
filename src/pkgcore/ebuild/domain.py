@@ -693,7 +693,7 @@ class domain(config_domain):
         repos = []
         for r in self.__repos:
             try:
-                repos.append(r.instantiate())
+                repo = r.instantiate()
             except errors.InstantiationError as e:
                 # roll back the exception chain to a meaningful error message
                 while True:
@@ -703,6 +703,11 @@ class domain(config_domain):
                     e = context
                 logger.warning(f'skipping {r.name!r} repo: {e}')
                 continue
+            if not repo.is_supported:
+                logger.warning(
+                    f'skipping {r.name!r} repo: unsupported EAPI {str(repo.eapi)!r}')
+                continue
+            repos.append(repo)
         return RepositoryGroup(repos)
 
     @klass.jit_attr_none

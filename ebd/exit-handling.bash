@@ -66,18 +66,13 @@ die() {
 	fi
 
 	if [[ ${BASHPID} != ${PKGCORE_EBUILD_PROCESS_PID} ]]; then
-		local scope
-		if [[ -z ${PKGCORE_EBUILD_PROCESS_PID} ]]; then
-			scope="ebd"
-		else
-			scope="ebuild"
+		if [[ -n ${PKGCORE_EBUILD_PROCESS_PID} ]]; then
+			# Tell the python side we're terminating the ebd process group so it
+			# should handle cleanup. This forces die() to work in subshell
+			# environments.
+			__ebd_write_line "term"
+			kill -s SIGTERM -${PPID} 2>/dev/null
 		fi
-
-		# Tell the python side we're terminating the ebd process group so it
-		# should handle cleanup. This forces die() to work in subshell
-		# environments.
-		__ebd_write_line "term ${scope}"
-		kill -s SIGTERM -${PPID} 2>/dev/null
 	fi
 
 	exit 1

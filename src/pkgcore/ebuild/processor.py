@@ -210,9 +210,7 @@ class InternalError(ProcessingInterruption):
         self.args = (line, msg)
 
 
-def chuck_TermInterrupt(scope=None, *arg):
-    if scope == 'ebd':
-        raise SystemExit(1)
+def chuck_TermInterrupt(*arg):
     raise FinishedProcessing(False)
 
 

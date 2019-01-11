@@ -402,7 +402,7 @@ class setup_mixin(object):
 
 
 def run_generic_phase(pkg, phase, env, userpriv, sandbox, fd_pipes=None,
-                      extra_handlers=None, failure_allowed=False, logging=None):
+                      extra_handlers=None, failure_allowed=False, logging=None, **kwargs):
     """
     :param phase: phase to execute
     :param env: environment mapping for the phase
@@ -422,6 +422,7 @@ def run_generic_phase(pkg, phase, env, userpriv, sandbox, fd_pipes=None,
 
     userpriv = userpriv and is_userpriv_capable()
     sandbox = sandbox and is_sandbox_capable()
+    tmpdir = kwargs.get('tmpdir', env.get('T', None))
 
     if env is None:
         env = expected_ebuild_env(pkg)
@@ -434,7 +435,7 @@ def run_generic_phase(pkg, phase, env, userpriv, sandbox, fd_pipes=None,
     sys.stdout.flush()
     sys.stderr.flush()
     try:
-        if not ebd.run_phase(phase, env, env.get('T'), sandbox=sandbox,
+        if not ebd.run_phase(phase, env, tmpdir=tmpdir, sandbox=sandbox,
                              logging=logging, additional_commands=extra_handlers):
             if not failure_allowed:
                 raise format.GenericBuildError(

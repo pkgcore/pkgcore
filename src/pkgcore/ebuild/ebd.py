@@ -896,6 +896,8 @@ class ebuild_operations(object):
         env = expected_ebuild_env(pkg)
         env["T"] = domain.pm_tmpdir
         env["ROOT"] = domain.root
+        # avoid clipping eend() messages
+        env["PKGCORE_RC_PREFIX"] = '2'
 
         start = time.time()
         with TemporaryFile() as f:

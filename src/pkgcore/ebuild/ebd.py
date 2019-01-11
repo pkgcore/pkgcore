@@ -864,7 +864,7 @@ class ebuild_operations(object):
                 check(self, self.pkg, domain=domain)
             except errors.SanityCheckError as e:
                 failures.append(e)
-        return failures
+        return self.pkg, failures
 
     @_register_check(_checks)
     def _check_required_use(self, pkg, **kwargs):

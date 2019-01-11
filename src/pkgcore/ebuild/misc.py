@@ -14,6 +14,7 @@ __all__ = (
 )
 
 from collections import defaultdict
+from concurrent.futures import ThreadPoolExecutor
 from functools import partial
 from itertools import chain
 
@@ -568,11 +569,17 @@ class PayloadDict(ChunkedDataDict):
 def run_sanity_checks(pkgs, domain):
     """Run all sanity checks for a sequence of packages."""
     failures = defaultdict(list)
-    # TODO: parallelize running pkg_pretend phases for pkgs
-    for pkg in pkgs:
-        pkg_ops = domain.pkg_operations(pkg)
-        if pkg_ops.supports("sanity_check"):
-            failed = pkg_ops.sanity_check()
+    sanity_check = lambda pkg_ops: pkg_ops.sanity_check()
+
+    # generator of pkgs supporting sanity checks
+    def _filter_pkgs(pkgs):
+        for pkg in pkgs:
+            pkg_ops = domain.pkg_operations(pkg)
+            if pkg_ops.supports("sanity_check"):
+                yield pkg_ops
+
+    with ThreadPoolExecutor() as executor:
+        for pkg, failed in executor.map(sanity_check, _filter_pkgs(pkgs)):
             if failed:
                 failures[pkg].extend(failed)
     return failures

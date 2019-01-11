@@ -263,7 +263,7 @@ __ebd_process_ebuild_phases() {
 				__ebd_write_line "yep!"
 				;;
 			*)
-				echo "received unknown com during phase processing: ${line}" >&2
+				echo "received unknown com during phase processing: \"${line}\"" >&2
 				exit 1
 				;;
 		esac
@@ -407,7 +407,7 @@ __ebd_main_loop() {
 				__ebd_write_line "yep!"
 				;;
 			*)
-				echo "received unknown com: ${com}" >&2
+				echo "received unknown com: \"${com}\"" >&2
 				exit 1
 				;;
 		esac

@@ -41,11 +41,14 @@ __colored_output_enable() {
 		fi
 	fi
 	export COLUMNS=${PKGCORE_RC_COLS}
-	PKGCORE_RC_COLS=$(( PKGCORE_RC_COLS - 8 )) # width of [ ok ] == 7
 
+	# Use PKGCORE_RC_PREFIX in build env to avoid clipping when capturing the
+	# output and displaying with a custom prefix.
+	PKGCORE_RC_COLS=$(( PKGCORE_RC_COLS - 8 - PKGCORE_RC_PREFIX )) # width of [ ok ] == 7
+
+	# Now, ${PKGCORE_RC_ENDCOL} will move us to the end of the column;
+	# irregardless of character width.
 	export PKGCORE_RC_ENDCOL=$'\e[A\e['${PKGCORE_RC_COLS}'C'
-	# Now, ${PKGCORE_RC_ENDCOL} will move us to the end of the
-	# column;  irregardless of character width
 
 	export PKGCORE_RC_GOOD=$'\e[32;01m'
 	export PKGCORE_RC_WARN=$'\e[33;01m'

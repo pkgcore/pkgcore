@@ -811,12 +811,13 @@ def main(options, out, err):
     repo_obs = observer.repo_observer(
         observer.formatter_output(out), debug=options.debug)
 
+    # show pkgs to merge in selected format
     if (options.ask or options.pretend) and changes:
         for op in changes:
             formatter.format(op)
         formatter.end()
 
-    # don't run pkg_pretend if only fetching
+    # run sanity checks for pkgs -- pkg_pretend, REQUIRED_USE, etc
     if not options.fetchonly:
         out.write()
         out.write(out.bold, " * ", out.reset, "Running sanity checks...")
@@ -974,7 +975,7 @@ def main(options, out, err):
                         source_repos.combined, op.pkg.versioned_atom)
                     update_worldset(world_set, removal_pkg, remove=True)
                 elif not options.oneshot and any(x.match(op.pkg) for x in atoms):
-                    if not options.upgrade:
+                    if not (options.upgrade or options.downgrade):
                         out.write(f'>>> Adding {op.pkg.cpvstr} to world file')
                         add_pkg = slotatom_if_slotted(
                             source_repos.combined, op.pkg.versioned_atom)

@@ -202,7 +202,7 @@ econf() {
 
 # in the future might use e* from /etc/init.d/functions.sh if i feel like it
 debug-print() {
-	if __safe_has ${EBUILD_PHASE} depend nofetch config info postinst; then
+	if __safe_has ${EBUILD_PHASE} depend nofetch pretend config info postinst; then
 		return
 	fi
 	# if ${T} isn't defined, we're in dep calculation mode and

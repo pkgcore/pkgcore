@@ -695,7 +695,9 @@ class EbuildProcessor(object):
             fileutils.write_file(path, 'wb', data.encode())
             self.write(f"start_receiving_env file {path}")
         else:
-            self.write(f"start_receiving_env bytes {len(data)}\n{data}")
+            self.write(
+                f"start_receiving_env bytes {len(data)}\n{data}",
+                append_newline=False)
         os.umask(old_umask)
         return self.expect("env_received", async_req=async_req, flush=True)
 

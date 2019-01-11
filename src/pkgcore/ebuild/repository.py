@@ -368,6 +368,8 @@ class UnconfiguredTree(prototype.tree):
 
     repo_id = klass.alias_attr("config.repo_id")
     repo_name = klass.alias_attr("config.repo_name")
+    eapi = klass.alias_attr('config.eapi')
+    is_supported = klass.alias_attr('config.eapi.is_supported')
 
     @klass.jit_attr
     def known_arches(self):

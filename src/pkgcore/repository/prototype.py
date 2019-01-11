@@ -140,6 +140,7 @@ class tree(object):
     """
 
     raw_repo = None
+    is_supported = True
     livefs = False
     package_class = None
     configured = True

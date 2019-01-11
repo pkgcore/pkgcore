@@ -231,7 +231,7 @@ __generate_initial_ebuild_environ() {
 	fi
 
 	__ensure_PATH "${PKGCORE_EXISTING_PATH}"
-	if [[ -n ${T} ]]; then
+	if [[ -n ${T} && ${EBUILD_PHASE} != "pretend" ]]; then
 		# Use a file if possible; faster since bash does this lovely byte by
 		# byte reading if it's a pipe. Having the file around is useful for
 		# debugging also.

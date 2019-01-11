@@ -724,6 +724,10 @@ def main(options, out, err):
     else:
         vdb_time = 0.0
 
+    # flush warning messages before dep resolution begins
+    out.flush()
+    err.flush()
+
     failures = []
     resolve_time = time()
     if sys.stdout.isatty():

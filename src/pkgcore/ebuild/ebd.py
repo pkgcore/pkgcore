@@ -889,41 +889,30 @@ class ebuild_operations(object):
         commands = None
         if not pkg.built:
             commands = {"request_inherit": partial(inherit_handler, self._eclass_cache)}
-        env = expected_ebuild_env(pkg)
-        builddir = pjoin(domain.pm_tmpdir, env["CATEGORY"], env["PF"])
-        pkg_tmpdir = normpath(pjoin(builddir, "temp"))
-        ensure_dirs(pkg_tmpdir, mode=0o770, gid=portage_gid, minimal=True)
-        env["ROOT"] = domain.root
-        env["T"] = pkg_tmpdir
 
-        try:
-            start = time.time()
-            with TemporaryFile() as f:
-                try:
-                    # suppress bash output by default
-                    fd_pipes = {1: f.fileno(), 2: f.fileno()}
-                    ret = run_generic_phase(
-                        pkg, "pretend", env, fd_pipes=fd_pipes, userpriv=True,
-                        sandbox=True, extra_handlers=commands)
-                    logger.debug(
-                        "pkg_pretend sanity check for %s took %2.2f seconds",
-                        pkg.cpvstr, time.time() - start)
-                    return ret
-                except format.GenericBuildError as e:
-                    f.seek(0)
-                    msg = f.read().decode().strip('\n')
-                    raise errors.PkgPretendError(pkg, msg)
-        finally:
-            shutil.rmtree(builddir)
-            # try to wipe the cat dir; if not empty, ignore it
+        # Use base build tempdir for $T instead of full pkg specific path to
+        # avoid having to create/remove directories -- pkg_pretend isn't
+        # allowed to write to the filesystem anyway. 
+        env = expected_ebuild_env(pkg)
+        env["T"] = domain.pm_tmpdir
+        env["ROOT"] = domain.root
+
+        start = time.time()
+        with TemporaryFile() as f:
             try:
-                os.rmdir(os.path.dirname(builddir))
-            except EnvironmentError as e:
-                # POSIX specifies either ENOTEMPTY or EEXIST for non-empty dir
-                # in particular, Solaris uses EEXIST in that case.
-                # https://github.com/pkgcore/pkgcore/pull/181
-                if e.errno not in (errno.ENOTEMPTY, errno.EEXIST):
-                    raise
+                # suppress bash output by default
+                fd_pipes = {1: f.fileno(), 2: f.fileno()}
+                ret = run_generic_phase(
+                    pkg, "pretend", env, tmpdir=None, fd_pipes=fd_pipes,
+                    userpriv=True, sandbox=True, extra_handlers=commands)
+                logger.debug(
+                    "pkg_pretend sanity check for %s took %2.2f seconds",
+                    pkg.cpvstr, time.time() - start)
+                return ret
+            except format.GenericBuildError as e:
+                f.seek(0)
+                msg = f.read().decode().strip('\n')
+                raise errors.PkgPretendError(pkg, msg)
 
 
 class src_operations(ebuild_operations, format.build_operations):

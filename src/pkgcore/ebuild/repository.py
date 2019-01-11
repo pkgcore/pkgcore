@@ -683,15 +683,18 @@ class ConfiguredTree(configured.tree):
 
     @_wrap_attr(config_wrappables)
     def _iuse_effective(self, raw_pkg_iuse_effective, _enabled_use, pkg):
+        """IUSE_EFFECTIVE for a package."""
         profile_iuse_effective = self.domain.profile.iuse_effective
         return frozenset(profile_iuse_effective.union(raw_pkg_iuse_effective))
 
     @_wrap_attr(config_wrappables)
     def _distfiles(self, raw_pkg_distfiles, enabled_use, pkg):
+        """Distfiles used by a package."""
         return tuple(stable_unique(raw_pkg_distfiles.evaluate_depset(enabled_use)))
 
     @_wrap_attr(config_wrappables)
     def _user_patches(self, _raw_pkg_patches, _enabled_use, pkg):
+        """User patches that will be applied when building a package."""
         # determine available user patches for >= EAPI 6
         if pkg.eapi.options.user_patches:
             patches = []

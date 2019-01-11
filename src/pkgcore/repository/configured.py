@@ -17,26 +17,21 @@ from pkgcore.repository import prototype
 
 
 class tree(prototype.tree):
-    configured = True
 
+    configured = True
     operations_kls = operations_proxy
 
     def __init__(self, raw_repo, wrapped_attrs, pkg_kls_injections=()):
-
         """
         :param raw_repo: repo to wrap
         :type raw_repo: :obj:`pkgcore.repository.prototype.tree`
         :param wrapped_attrs: sequence of attrs to wrap for each pkg
         """
-
         # yes, we're intentionally not using tree's init.
         # not perfect I know.
         self.raw_repo = raw_repo
         self.wrapped_attrs = wrapped_attrs
-        self.attr_filters = frozenset(list(wrapped_attrs.keys()) +
-                                      [self.configurable])
-
-        self._klass = self._mk_kls(pkg_kls_injections)
+        self._pkg_klass = self._mk_kls(pkg_kls_injections)
 
     def _mk_kls(self, pkg_kls_injections):
         return make_wrapper(
@@ -44,10 +39,10 @@ class tree(prototype.tree):
             kls_injections=pkg_kls_injections)
 
     def _get_pkg_kwds(self, pkg):
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def package_class(self, pkg):
-        return self._klass(pkg, **self._get_pkg_kwds(pkg))
+        return self._pkg_klass(pkg, **self._get_pkg_kwds(pkg))
 
     __getattr__ = GetAttrProxy("raw_repo")
     __dir__ = DirProxy("raw_repo")

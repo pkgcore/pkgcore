@@ -367,7 +367,7 @@ class EbuildProcessor(object):
         # locking isn't used much, but w/ threading this will matter
         self.unlock()
 
-    def run_phase(self, phase, env, tmpdir, logging=None,
+    def run_phase(self, phase, env, tmpdir=None, logging=None,
                   additional_commands=None, sandbox=True):
         """Utility function, to initialize the processor for a phase.
 

@@ -823,6 +823,8 @@ def main(options, out, err):
         out.write(out.bold, " * ", out.reset, "Running sanity checks...")
         if options.debug:
             start_time = time()
+        # flush output so bash spawned errors are shown in the correct order of events
+        out.flush()
         sanity_failures = run_sanity_checks((x.pkg for x in changes), domain)
         if sanity_failures:
             for pkg, errors in sanity_failures.items():

@@ -21,8 +21,7 @@ from snakeoil import mappings
 from snakeoil.klass import generic_equality, alias_method
 from snakeoil.sequences import namedtuple, iflatten_instance
 
-from pkgcore.ebuild import atom, errors
-from pkgcore.operations import OperationError
+from pkgcore.ebuild import atom
 from pkgcore.restrictions import packages, restriction, boolean
 
 restrict_payload = namedtuple("restrict_data", ["restrict", "data"])
@@ -568,17 +567,12 @@ class PayloadDict(ChunkedDataDict):
 
 def run_sanity_checks(pkgs, domain):
     """Run all sanity checks for a sequence of packages."""
-    failures = []
+    failures = defaultdict(list)
     # TODO: parallelize running pkg_pretend phases for pkgs
     for pkg in pkgs:
         pkg_ops = domain.pkg_operations(pkg)
         if pkg_ops.supports("sanity_check"):
-            try:
-                pkg_ops.sanity_check()
-            except OperationError as e:
-                cause = getattr(e, '__cause__', e)
-                if isinstance(cause, errors.SanityCheckError):
-                    failures.append(cause)
-                else:
-                    raise
+            failed = pkg_ops.sanity_check()
+            if failed:
+                failures[pkg].extend(failed)
     return failures

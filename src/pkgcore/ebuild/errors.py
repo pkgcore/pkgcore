@@ -64,15 +64,14 @@ class ParseError(errors.InvalidDependency):
 class SanityCheckError(PkgcoreException):
     """Generic error for sanity check failures."""
 
-    @property
     def verbose_msg(self):
         return str(self)
 
-    def msg(self, verbosity):
+    def msg(self, verbosity, prefix='  '):
         if verbosity > 0:
-            return self.verbose_msg
+            return self.verbose_msg(prefix)
         else:
-            return str(self)
+            return f'{prefix}{self}'
 
 
 class PkgPretendError(SanityCheckError):
@@ -85,30 +84,31 @@ class PkgPretendError(SanityCheckError):
     def __str__(self):
         return f'>>> Failed pkg_pretend: {self.pkg.cpvstr}'
 
-    @property
-    def verbose_msg(self):
-        return f'{self}\n{self.output}'
+    def verbose_msg(self, prefix):
+        error_str = '\n'.join(f'{prefix}{line}' for line in self.output.splitlines())
+        return f'{self}\n{error_str}'
 
 
 class RequiredUseError(SanityCheckError):
-    """REQUIRED_USE check for a package failed."""
+    """REQUIRED_USE check(s) for a package failed."""
 
-    def __init__(self, pkg, unmatched, required_use):
+    def __init__(self, pkg, unmatched):
         self.unmatched = unmatched
-        self.required_use = required_use
         self.pkg = pkg
 
     def __str__(self):
         return f'>>> Failed REQUIRED_USE check: {self.pkg.cpvstr}'
 
-    @property
-    def verbose_msg(self):
-        verbose = textwrap.dedent(f"""
-            REQUIRED_USE requirement wasn't met
-            Failed to match: {self.unmatched}
-            from: {self.required_use}
-            for USE: {' '.join(self.pkg.use)}
-            pkg: {self.pkg.cpvstr}
-            """
-        )
-        return f'{self}\n{verbose.strip()}'
+    def verbose_msg(self, prefix):
+        errors = []
+        for node in self.unmatched:
+            errors.append(textwrap.dedent(
+                f"""
+                Failed to match: {node}
+                from: {self.pkg.required_use}
+                for USE: {' '.join(self.pkg.use)}
+                """
+            ))
+        error_str = '\n'.join(
+            f'{prefix}{line}' for e in errors for line in e.strip().splitlines())
+        return f'{self}\n{error_str}'

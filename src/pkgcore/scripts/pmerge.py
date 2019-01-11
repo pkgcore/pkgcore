@@ -824,15 +824,18 @@ def main(options, out, err):
             start_time = time()
         sanity_failures = run_sanity_checks((x.pkg for x in changes), domain)
         if sanity_failures:
+            for pkg, errors in sanity_failures.items():
+                out.write(pkg.cpvstr)
+                out.write('\n'.join(e.msg(verbosity=options.verbosity) for e in errors))
+                out.write()
             if options.ignore_failures:
                 out.write(
                     out.fg('red'), out.bold, "!!! ",
-                    out.reset, "Skipping failed sanity checks:")
-                out.write('\n'.join(map(str, sanity_failures)))
-                out.write()
+                    out.reset, "Skipping failed sanity checks...")
             else:
-                errors = (x.msg(verbosity=options.verbosity) for x in sanity_failures)
-                out.write('\n\n'.join(errors))
+                out.write(
+                    out.fg('red'), out.bold, "!!! ",
+                    out.reset, "Sanity checks failed, exiting...")
                 return 1
         else:
             out.write()

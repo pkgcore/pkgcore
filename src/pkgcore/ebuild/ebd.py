@@ -33,7 +33,7 @@ from pkgcore.ebuild import ebuild_built, const, errors
 from pkgcore.ebuild.processor import (
     request_ebuild_processor, release_ebuild_processor,
     expected_ebuild_env, chuck_UnhandledCommand, inherit_handler)
-from pkgcore.operations import observer, format
+from pkgcore.operations import observer, format, OperationError
 from pkgcore.os_data import portage_gid, portage_uid, xargs
 
 demandload(
@@ -843,23 +843,48 @@ class binpkg_localize(ebd, setup_mixin, format.build):
         return MutatedPkg(self.pkg, {"environment": self.get_env_source()})
 
 
-class ebuild_mixin(object):
+class ebuild_operations(object):
+
+    _checks = []
+
+    def _register_check(checks):
+        """Decorator to register sanity checks that will be run."""
+        def _wrap_func(func):
+            def wrapped(*args, **kwargs):
+                return func(*args, **kwargs)
+            checks.append(func)
+            return wrapped
+        return _wrap_func
 
     def _cmd_implementation_sanity_check(self, domain):
-        """Various ebuild sanity checks (REQUIRED_USE, pkg_pretend)."""
-        pkg = self.pkg
+        """Run all defined sanity checks."""
+        failures = []
+        for check in self._checks:
+            try:
+                check(self, self.pkg, domain=domain)
+            except errors.SanityCheckError as e:
+                failures.append(e)
+        return failures
 
-        # perform REQUIRED_USE checks
+    @_register_check(_checks)
+    def _check_required_use(self, pkg, **kwargs):
+        """Perform REQUIRED_USE verification against a set of USE flags.
+
+        Note that this assumes the REQUIRED_USE depset has been evaluated
+        against a known set of enabled USE flags and is in collapsed form.
+        """
         if pkg.eapi.options.has_required_use:
-            for node in pkg.required_use:
-                if not node.match(pkg.use):
-                    raise errors.RequiredUseError(pkg, node, pkg.required_use)
+            failures = tuple(node for node in pkg.required_use if not node.match(pkg.use))
+            if failures:
+                raise errors.RequiredUseError(pkg, failures)
 
-        # return if running pkg_pretend is not required
+    @_register_check(_checks)
+    def _check_pkg_pretend(self, pkg, *, domain, **kwargs):
+        """Run pkg_pretend phase."""
+        # pkg_pretend is not defined or required
         if 'pretend' not in pkg.mandatory_phases:
             return True
 
-        # run pkg_pretend phase
         commands = None
         if not pkg.built:
             commands = {"request_inherit": partial(inherit_handler, self._eclass_cache)}
@@ -900,7 +925,7 @@ class ebuild_mixin(object):
                     raise
 
 
-class src_operations(ebuild_mixin, format.build_operations):
+class src_operations(ebuild_operations, format.build_operations):
 
     def __init__(self, domain, pkg, eclass_cache, fetcher=None, observer=None, use_override=None):
         format.build_operations.__init__(self, domain, pkg, observer=observer)
@@ -933,7 +958,7 @@ class misc_operations(ebd):
         return self._generic_phase('info', True, True)
 
 
-class built_operations(ebuild_mixin, format.operations):
+class built_operations(ebuild_operations, format.operations):
 
     def __init__(self, domain, pkg, fetcher=None, observer=None, initial_env=None):
         format.operations.__init__(self, domain, pkg, observer=observer)

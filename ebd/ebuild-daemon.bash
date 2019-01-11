@@ -26,8 +26,8 @@ __set_perf_debug() {
 
 __set_perf_debug
 
+# Temporary function used by the daemon, till proper die implementation is loaded.
 die() {
-	# Temporary function used by the daemon, till proper die implementation is loaded.
 	echo "$@" >&2
 	exit 1
 }
@@ -72,8 +72,7 @@ __ebd_exec_main() {
 	local com
 	__ebd_read_line com
 	if [[ ${com} != "dude?" ]]; then
-		echo "serv init coms failed, received ${com} when expecting 'dude?'" >&2
-		exit 1
+		die "serv init coms failed, received '${com}' when expecting 'dude?'"
 	fi
 	__ebd_write_line "dude!"
 
@@ -102,8 +101,7 @@ __ebd_exec_main() {
 	case ${com} in
 		"sandbox_log?")
 			if [[ ! ${SANDBOX_LOG} ]]; then
-				echo "sandbox enabled but no SANDBOX_LOG?!"
-				exit 1
+				die "sandbox enabled but no SANDBOX_LOG?!"
 			fi
 			__ebd_write_line "${SANDBOX_LOG}"
 			declare -rx SANDBOX_LOG=${SANDBOX_LOG}
@@ -112,8 +110,7 @@ __ebd_exec_main() {
 		no_sandbox)
 			;;
 		*)
-			echo "unknown com '${com}'" >&2
-			exit 1
+			die "unknown sandbox com: '${com}'"
 			;;
 	esac
 
@@ -263,8 +260,7 @@ __ebd_process_ebuild_phases() {
 				__ebd_write_line "yep!"
 				;;
 			*)
-				echo "received unknown com during phase processing: '${line}'" >&2
-				exit 1
+				die "unknown phase processing com: '${line}'"
 				;;
 		esac
 	done
@@ -407,8 +403,7 @@ __ebd_main_loop() {
 				__ebd_write_line "yep!"
 				;;
 			*)
-				echo "received unknown com: '${com}'" >&2
-				exit 1
+				die "unknown ebd com: '${com}'"
 				;;
 		esac
 	done

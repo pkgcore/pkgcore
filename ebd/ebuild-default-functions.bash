@@ -224,8 +224,7 @@ inherit() {
 # src_unpack() { base_src_unpack; }
 EXPORT_FUNCTIONS() {
 	if [[ -z ${ECLASS} ]]; then
-		echo "EXPORT_FUNCTIONS without a defined ECLASS" >&2
-		exit 1
+		die "EXPORT_FUNCTIONS without a defined ECLASS"
 	fi
 	local phase_func
 	for phase_func in $*; do

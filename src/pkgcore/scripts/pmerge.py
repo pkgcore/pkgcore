@@ -745,9 +745,6 @@ def main(options, out, err):
         ret = resolver_inst.add_atoms(atoms, finalize=True)
     resolve_time = time() - resolve_time
 
-    if options.debug:
-        out.write(out.bold, " * ", out.reset, "resolution took %.2f seconds" % resolve_time)
-
     if failures:
         out.write()
         out.write('Failures encountered:')

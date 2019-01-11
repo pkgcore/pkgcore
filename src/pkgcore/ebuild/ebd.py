@@ -33,7 +33,7 @@ from pkgcore.ebuild import ebuild_built, const, errors
 from pkgcore.ebuild.processor import (
     request_ebuild_processor, release_ebuild_processor,
     expected_ebuild_env, chuck_UnhandledCommand, inherit_handler)
-from pkgcore.operations import observer, format, OperationError
+from pkgcore.operations import observer, format
 from pkgcore.os_data import portage_gid, portage_uid, xargs
 
 demandload(

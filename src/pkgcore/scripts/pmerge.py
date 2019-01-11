@@ -496,6 +496,13 @@ def _validate(parser, namespace):
     if namespace.newuse:
         namespace.oneshot = True
 
+    if namespace.upgrade:
+        namespace.resolver_kls = resolver.upgrade_resolver
+    elif namespace.downgrade:
+        namespace.resolver_kls = resolver.downgrade_resolver
+    else:
+        namespace.resolver_kls = resolver.min_install_resolver
+
 
 def parse_target(restriction, repo, installed_repos, return_none=False):
     """Use :obj:`parserestrict.parse_match` to produce a list of matches.
@@ -667,13 +674,6 @@ def main(options, out, err):
         if world_set is None:
             argparser.error("disable world updating via --oneshot, or fix your configuration")
 
-    if options.upgrade:
-        resolver_kls = resolver.upgrade_resolver
-    elif options.downgrade:
-        resolver_kls = resolver.downgrade_resolver
-    else:
-        resolver_kls = resolver.min_install_resolver
-
     extra_kwargs = {}
     if options.empty:
         extra_kwargs['resolver_cls'] = resolver.empty_tree_merge_plan
@@ -710,7 +710,7 @@ def main(options, out, err):
 #    hp = hpy()
 #    hp.setrelheap()
 
-    resolver_inst = resolver_kls(
+    resolver_inst = options.resolver_kls(
         vdbs=installed_repos, dbs=source_repos,
         verify_vdb=options.deep, nodeps=options.nodeps,
         drop_cycles=options.ignore_cycles, force_replace=options.replace,

@@ -463,7 +463,7 @@ __execute_phases() {
 				fi
 				;;
 			*)
-				die "Please specify a valid command: ${EBUILD_PHASE} isn't valid."
+				die "invalid command: ${EBUILD_PHASE}"
 				;;
 		esac
 

@@ -604,7 +604,7 @@ class PortageConfig(DictMixin):
         self['conf:' + repo_name] = basics.AutoConfigSection(repo_conf)
         return repo
 
-    def _repo_sqfs_v1(*args, **kwargs):
+    def _repo_sqfs_v1(self, *args, **kwargs):
         """Create ebuild squashfs repo v1 configuration."""
         repo_name = kwargs['repo_name']
         repo_opts = kwargs['repo_opts']
@@ -619,7 +619,7 @@ class PortageConfig(DictMixin):
             'sqfs_file': sqfs_file,
         }
         kwargs['repo_dict'] = repo_dict
-        return _config_repo_ebuild_v1(*args, **kwargs)
+        return self._repo_ebuild_v1(*args, **kwargs)
 
     def _repo_binpkg_v1(self, repo_name, repo_opts, **kwargs):
         """Create binpkg repo v1 configuration."""

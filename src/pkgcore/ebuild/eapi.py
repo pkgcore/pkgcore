@@ -184,8 +184,8 @@ class EAPI(object, metaclass=klass.immutable_instance):
             optionals = {}
         sf(self, 'options', _optionals_cls(optionals))
         if ebd_env_options is None:
-            ebd_env_options = {}
-        sf(self, "ebd_env_options", mappings.ImmutableDict(ebd_env_options))
+            ebd_env_options = ()
+        sf(self, "ebd_env_options", ebd_env_options)
 
     @classmethod
     def register(cls, *args, **kwds):
@@ -247,8 +247,8 @@ class EAPI(object, metaclass=klass.immutable_instance):
     def get_ebd_env(self):
         """Return EAPI options passed to the ebd environment."""
         d = {}
-        for k, converter in self.ebd_env_options.items():
-            d[f"PKGCORE_{k.upper()}"] = converter(getattr(self.options, k))
+        for k in self.ebd_env_options:
+            d[f"PKGCORE_{k.upper()}"] = str(getattr(self.options, k)).lower()
         d["EAPI"] = self._magic
         return d
 
@@ -324,15 +324,14 @@ common_archive_suffixes = (
 
 # Boolean variables exported to the bash side, e.g. ebuild_phase_func is
 # exported as PKGCORE_EBUILD_PHASE_FUNC.
-common_env_optionals = mappings.ImmutableDict(dict.fromkeys(
-    ("bash_compat", "dodoc_allow_recursive", "doins_allow_symlinks",
-     "doman_language_detect", "doman_language_override", "ebuild_phase_func",
-     "econf_disable_dependency_tracking", "econf_disable_silent_rules",
-     "econf_docdir_and_htmldir", "econf_sysroot", "global_failglob",
-     "new_reads_stdin", "nonfatal", "nonfatal_die", "profile_iuse_injection",
-     "unpack_absolute_paths", "unpack_case_insensitive",),
-    lambda s: str(s).lower()))
-
+common_env_optionals = (
+    "bash_compat", "dodoc_allow_recursive", "doins_allow_symlinks",
+    "doman_language_detect", "doman_language_override", "ebuild_phase_func",
+    "econf_disable_dependency_tracking", "econf_disable_silent_rules",
+    "econf_docdir_and_htmldir", "econf_sysroot", "global_failglob",
+    "new_reads_stdin", "nonfatal", "nonfatal_die", "profile_iuse_injection",
+    "unpack_absolute_paths", "unpack_case_insensitive",
+)
 
 eapi0 = EAPI.register(
     magic="0",

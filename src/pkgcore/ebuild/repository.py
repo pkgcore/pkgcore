@@ -325,6 +325,9 @@ class UnconfiguredTree(prototype.tree):
             repo_config = repo_objs.RepoConfig(location)
         self.config = repo_config
 
+        if not self.is_supported:
+            raise errors.UnsupportedRepo(self)
+
         if eclass_cache is None:
             eclass_cache = eclass_cache_module.cache(
                 pjoin(self.location, 'eclass'), location=self.location)

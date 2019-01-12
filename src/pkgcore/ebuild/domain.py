@@ -22,7 +22,7 @@ from snakeoil.osutils import pjoin
 from snakeoil.sequences import (
     split_negations, stable_unique, unstable_unique, predicate_split)
 
-from pkgcore.config import ConfigHint, errors
+from pkgcore.config import ConfigHint, errors as config_errors
 from pkgcore.config.domain import Failure, MissingFile, domain as config_domain
 from pkgcore.ebuild import const
 from pkgcore.ebuild.atom import atom as _atom
@@ -694,7 +694,7 @@ class domain(config_domain):
         for r in self.__repos:
             try:
                 repo = r.instantiate()
-            except errors.InstantiationError as e:
+            except config_errors.InstantiationError as e:
                 # roll back the exception chain to a meaningful error message
                 while True:
                     context = getattr(e, '__context__', None)

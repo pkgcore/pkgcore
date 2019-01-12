@@ -25,6 +25,7 @@ from pkgcore import const
 from pkgcore.config import basics, configurable
 from pkgcore.ebuild import const as econst, profiles
 from pkgcore.ebuild import repo_objs
+from pkgcore.ebuild.repository import errors as repo_errors
 from pkgcore.fs.livefs import sorted_scan
 from pkgcore.pkgsets.glsa import SecurityUpgrades
 
@@ -159,8 +160,6 @@ class PortageConfig(DictMixin):
             except Exception as e:
                 raise errors.ParsingError('failed to find a usable repos.conf') from e
 
-        self._make_repo_syncers(repos_conf, make_conf)
-
         self['ebuild-repo-common'] = basics.AutoConfigSection({
             'class': 'pkgcore.ebuild.repository.tree',
             'default_mirrors': gentoo_mirrors,
@@ -169,22 +168,30 @@ class PortageConfig(DictMixin):
 
         repo_map = {}
 
-        for repo_name, repo_opts in repos_conf.items():
+        for repo_name, repo_opts in list(repos_conf.items()):
             repo_type = repo_opts.pop('repo-type')
             try:
                 repo_creator = getattr(self, f"_repo_{repo_type}")
             except AttributeError:
                 raise errors.ConfigurationError(f"unsupported repo type: {repo_type!r}")
 
-            repo = repo_creator(
-                repo_name=repo_name, repo_opts=repo_opts,
-                repo_map=repo_map, defaults=repos_conf_defaults)
+            try:
+                repo = repo_creator(
+                    repo_name=repo_name, repo_opts=repo_opts,
+                    repo_map=repo_map, defaults=repos_conf_defaults)
+            except repo_errors.UnsupportedRepo as e:
+                logger.warning(
+                    f'skipping {repo_name!r} repo: unsupported EAPI {str(e.repo.eapi)!r}')
+                del repos_conf[repo_name]
+                continue
+
             self[repo_name] = basics.AutoConfigSection(repo)
 
         # XXX: Hack for portage-2 profile format support. We need to figure out how
         # to dynamically create this from the config at runtime on attr access.
         profiles.ProfileNode._repo_map = ImmutableDict(repo_map)
 
+        self._make_repo_syncers(repos_conf, make_conf)
         repos = [name for name in repos_conf.keys()]
         if repos:
             if len(repos) > 1:

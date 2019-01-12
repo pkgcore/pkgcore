@@ -20,8 +20,7 @@ from snakeoil.osutils import pjoin, listdir_files, listdir
 from snakeoil.sequences import namedtuple
 
 from pkgcore.config import ConfigHint
-from pkgcore.repository import syncable
-from pkgcore.repository.errors import InitializationError
+from pkgcore.repository import syncable, errors as repo_errors
 
 demandload(
     'lxml:etree',
@@ -389,6 +388,10 @@ class RepoConfig(syncable.tree, metaclass=WeakInstMeta):
         object.__setattr__(self, 'config_name', config_name)
         object.__setattr__(self, 'location', location)
         object.__setattr__(self, 'profiles_base', pjoin(self.location, profiles_base))
+
+        if not self.eapi.is_supported:
+            raise repo_errors.UnsupportedRepo(self)
+
         super().__init__(syncer)
         self._parse_config()
 
@@ -614,7 +617,7 @@ class SquashfsRepoConfig(RepoConfig):
                 self._mount_archive(location)
             except PermissionError as e:
                 if not self._root and platform.uname().release < '4.18':
-                    raise InitializationError(
+                    raise repo_errors.InitializationError(
                         'fuse mounts in user namespaces require linux >= 4.18')
                 raise
         super().__init__(location, *args, **kwargs)
@@ -622,7 +625,7 @@ class SquashfsRepoConfig(RepoConfig):
     def _pre_sync(self):
         try:
             self._umount_archive()
-        except InitializationError:
+        except repo_errors.InitializationError:
             # already unmounted
             pass
 
@@ -648,7 +651,7 @@ class SquashfsRepoConfig(RepoConfig):
             ret = subprocess.run(
                 cmd + [self._sqfs, location], stderr=subprocess.PIPE, stdout=subprocess.PIPE)
         except FileNotFoundError as e:
-            raise InitializationError(
+            raise repo_errors.InitializationError(
                 f'failed mounting squashfs archive: {e.filename} required')
 
         if ret.returncode:
@@ -657,7 +660,7 @@ class SquashfsRepoConfig(RepoConfig):
             if ret.returncode == 1:
                 raise PermissionError(msg)
             else:
-                raise InitializationError(msg)
+                raise repo_errors.InitializationError(msg)
 
     def _umount_archive(self):
         """Unmount the squashfs archive."""
@@ -672,7 +675,7 @@ class SquashfsRepoConfig(RepoConfig):
             ret = subprocess.run(
                 cmd + [self.location], stderr=subprocess.PIPE, stdout=subprocess.PIPE)
         except FileNotFoundError as e:
-            raise InitializationError(
+            raise repo_errors.InitializationError(
                 f'failed unmounting squashfs archive: {e.filename} required')
 
         if ret.returncode:
@@ -681,4 +684,4 @@ class SquashfsRepoConfig(RepoConfig):
             if ret.returncode == 1:
                 raise PermissionError(msg)
             else:
-                raise InitializationError(msg)
+                raise repo_errors.InitializationError(msg)

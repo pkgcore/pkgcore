@@ -42,6 +42,7 @@ alphanum = frozenset(alphanum)
 valid_use_chars = frozenset(valid_use_chars)
 valid_repo_chars = frozenset(valid_repo_chars)
 valid_slot_chars = frozenset(valid_slot_chars)
+valid_ops = frozenset(['<', '<=', '=', '~', '>=', '>'])
 
 
 def native_init(self, atom, negate_vers=False, eapi='-1'):

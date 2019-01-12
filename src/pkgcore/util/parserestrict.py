@@ -134,11 +134,15 @@ def parse_match(text):
             return r[0]
         restrictions.extend(r)
         return packages.AndRestriction(*restrictions)
-    elif text[0] in "=<>~" or "*" not in text:
+    elif text[0] in atom.valid_ops or '*' not in text:
+        # possibly a valid atom object
         try:
             return atom.atom(orig_text)
         except errors.MalformedAtom as e:
-            raise ParseError(str(e)) from e
+            if '*' not in text:
+                raise ParseError(str(e)) from e
+            # support globbed targets with version restrictions
+            return packages.AndRestriction(*parse_globbed_version(text, orig_text))
 
     r = list(map(convert_glob, tsplit))
     if not r[0] and not r[1]:
@@ -155,6 +159,33 @@ def parse_match(text):
     if len(restrictions) == 1:
         return restrictions[0]
     return packages.AndRestriction(*restrictions)
+
+
+def parse_globbed_version(text, orig_text):
+    """Support parsing globbed targets with limited version restrictions.
+
+    For example, '>=*/alsa-*-1.1.7' would match all packages named 'alsa-*'
+    that are version 1.1.7 or greater.
+    """
+    restrictions = []
+    # find longest matching op
+    op = max(x for x in atom.valid_ops if text.startswith(x))
+    text = text[len(op):]
+    # determine pkg version
+    chunks = text.rsplit('-', 1)
+    if len(chunks) == 1:
+        raise ParseError(f'missing valid package version: {orig_text!r}')
+    version_txt = chunks[-1]
+    version = cpv.isvalid_version_re.match(version_txt)
+    if not version:
+        if '*' in version_txt:
+            raise ParseError(
+                f'operator {op!r} invalid with globbed version: {version_txt!r}')
+        raise ParseError(f'missing valid package version: {orig_text!r}')
+    restrictions.append(restricts.VersionMatch(op, version.group(0)))
+    # parse the remaining chunk
+    restrictions.append(parse_match(chunks[0]))
+    return restrictions
 
 
 def parse_pv(repo, text):

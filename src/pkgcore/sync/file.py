@@ -2,6 +2,7 @@ __all__ = ("file_syncer",)
 
 import errno
 import os
+import ssl
 import sys
 import urllib.request
 
@@ -31,7 +32,12 @@ class file_syncer(base.Syncer):
         super().__init__(basedir, uri, **kwargs)
 
     def _sync(self, verbosity, output_fd, **kwds):
-        resp = urllib.request.urlopen(self.uri)
+        # default to using system ssl certs
+        context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+        try:
+            resp = urllib.request.urlopen(self.uri, context=context)
+        except urllib.error.URLError as e:
+            raise base.ConnectionError(str(e.reason)) from e
 
         # TODO: cache/use ETag from header if it exists and fallback to last-modified
         # to check if updates exist

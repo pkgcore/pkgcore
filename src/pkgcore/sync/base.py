@@ -25,6 +25,10 @@ class SyncError(Exception):
     pass
 
 
+class ConnectionError(SyncError):
+    pass
+
+
 class UriError(SyncError):
 
     def __init__(self, uri, msg):
@@ -222,6 +226,7 @@ class VcsSyncer(ExternalSyncer):
 
     def _update_existing(self):
         raise NotImplementedError(self, "_update_existing")
+
 
 @configurable({'basedir': 'str', 'uri': 'str', 'opts': 'str'}, typename='syncer')
 def GenericSyncer(basedir, uri, **kwargs):

@@ -75,41 +75,41 @@ debug-print-section() {
 
 eqawarn() {
 	__elog_base QA "$*"
-	printf " ${PKGCORE_RC_WARN}*${PKGCORE_RC_NORMAL} %s\n" "${@}" >&2
+	printf " ${PKGCORE_RC_WARN}*${PKGCORE_RC_NORMAL} %b\n" "${@}" >&2
 	PKGCORE_RC_LAST_CMD="eqawarn"
 	return 0
 }
 
 elog() {
 	__elog_base LOG "$*"
-	printf " ${PKGCORE_RC_GOOD}*${PKGCORE_RC_NORMAL} %s\n" "${@}" >&2
+	printf " ${PKGCORE_RC_GOOD}*${PKGCORE_RC_NORMAL} %b\n" "${@}" >&2
 	PKGCORE_RC_LAST_CMD="elog"
 	return 0
 }
 
 einfo() {
-	printf " ${PKGCORE_RC_GOOD}*${PKGCORE_RC_NORMAL} %s\n" "${@}" >&2
+	printf " ${PKGCORE_RC_GOOD}*${PKGCORE_RC_NORMAL} %b\n" "${@}" >&2
 	PKGCORE_RC_LAST_CMD="einfo"
 	return 0
 }
 
 einfon() {
 	__elog_base INFO "$*"
-	printf " ${PKGCORE_RC_GOOD}*${PKGCORE_RC_NORMAL} %s" "${@}" >&2
+	printf " ${PKGCORE_RC_GOOD}*${PKGCORE_RC_NORMAL} %b" "${@}" >&2
 	PKGCORE_RC_LAST_CMD="einfon"
 	return 0
 }
 
 ewarn() {
 	__elog_base WARN "$*"
-	printf " ${PKGCORE_RC_WARN}*${PKGCORE_RC_NORMAL} %s\n" "${@}" >&2
+	printf " ${PKGCORE_RC_WARN}*${PKGCORE_RC_NORMAL} %b\n" "${@}" >&2
 	PKGCORE_RC_LAST_CMD="ewarn"
 	return 0
 }
 
 eerror() {
 	__elog_base ERROR "$*"
-	printf " ${PKGCORE_RC_BAD}*${PKGCORE_RC_NORMAL} %s\n" "${@}" >&2
+	printf " ${PKGCORE_RC_BAD}*${PKGCORE_RC_NORMAL} %b\n" "${@}" >&2
 	PKGCORE_RC_LAST_CMD="eerror"
 	return 0
 }

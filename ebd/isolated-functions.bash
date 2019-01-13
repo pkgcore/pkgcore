@@ -330,7 +330,7 @@ __run() {
 	source <({ stderr=( "$({ mapfile -t stdout< <(eval $1; ret=$?; declare -p ret >&3); } 3>&2 2>&1; declare -p stdout >&2)" ); declare -p stderr; } 2>&1)
 	PKGCORE_STDOUT=( "${stdout[@]}" )
 	PKGCORE_STDERR=( "${stderr[@]}" )
-	[[ ${PKGCORE_DEBUG} -ge 1 ]] && printf '%s\n' "${PKGCORE_STDERR[@]}" >&2
+	[[ ${PKGCORE_DEBUG} -ge 1 ]] && printf '%b\n' "${PKGCORE_STDERR[@]}" >&2
 	return ${ret}
 }
 

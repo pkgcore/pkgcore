@@ -10,6 +10,7 @@ import sys
 from pkgcore.ebuild import atom
 from pkgcore.ebuild.errors import MalformedAtom
 from pkgcore.operations import observer, format
+from pkgcore.package.errors import MetadataException
 from pkgcore.util.commandline import ArgumentParser, StoreTarget
 
 from snakeoil.strings import pluralism
@@ -33,7 +34,12 @@ def _validate_args(parser, namespace):
     token, restriction = namespace.target[0]
     repo = namespace.domain.ebuild_repos_unfiltered
 
-    pkgs = repo.match(restriction)
+    try:
+        pkgs = repo.match(restriction, pkg_filter=None)
+    except MetadataException as e:
+        error = e.msg(verbosity=namespace.verbosity)
+        parser.error(f'{e.pkg.cpvstr}::{e.pkg.repo.repo_id}: {error}')
+
     if not pkgs:
         parser.error(f"no matches: {token!r}")
 

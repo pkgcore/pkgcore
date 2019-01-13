@@ -617,17 +617,18 @@ def convert_to_restrict(sequence, default=packages.AlwaysTrue):
 class Tool(tool.Tool):
     """pkgcore-specific commandline utility functionality."""
 
-    def set_options(self, options):
+    def pre_parse(self, *args, **kwargs):
         """Pass down pkgcore-specific settings to the bash side."""
+        # pass down verbosity level to affect debug output
         if self.parser.debug:
-            # pass down verbosity level to affect debug output
             os.environ['PKGCORE_DEBUG'] = str(options.verbosity)
 
+    def post_parse(self, options):
+        """Pass down pkgcore-specific settings to the bash side."""
         if not getattr(options, 'color', True):
             # pass down color setting
             if 'PKGCORE_NOCOLOR' not in os.environ:
                 os.environ['PKGCORE_NOCOLOR'] = '1'
-
         return options
 
     def handle_exec_exception(self, e):

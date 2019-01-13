@@ -58,9 +58,7 @@ hasq() {
 }
 
 hasv() {
-	if has "$@"; then
-		echo "$1"
-	fi
+	has "$@" && echo "$1"
 }
 
 debug-print() {

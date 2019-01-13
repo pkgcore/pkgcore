@@ -897,7 +897,7 @@ def main(options, out, err):
                       f"{op.pkg.cpvstr}::{op.pkg.repo}")
             out.title(f"{count + 1}/{change_count}: {op.pkg.cpvstr}")
             if op.desc != "remove":
-                cleanup = [op.pkg.release_cached_data]
+                cleanup.append(op.pkg.release_cached_data)
 
                 if not options.fetchonly and options.debug:
                     out.write("Forcing a clean of workdir")

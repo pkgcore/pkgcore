@@ -75,56 +75,41 @@ debug-print-section() {
 
 eqawarn() {
 	__elog_base QA "$*"
-	local line
-	echo -e "$@" | while IFS= read -r line; do
-		echo " ${PKGCORE_RC_WARN}*${PKGCORE_RC_NORMAL} ${line}" >&2
-	done
+	printf " ${PKGCORE_RC_WARN}*${PKGCORE_RC_NORMAL} %s\n" "${@}" >&2
 	PKGCORE_RC_LAST_CMD="eqawarn"
 	return 0
 }
 
 elog() {
 	__elog_base LOG "$*"
-	local line
-	echo -e "$@" | while IFS= read -r line; do
-		echo " ${PKGCORE_RC_GOOD}*${PKGCORE_RC_NORMAL} ${line}" >&2
-	done
+	printf " ${PKGCORE_RC_GOOD}*${PKGCORE_RC_NORMAL} %s\n" "${@}" >&2
 	PKGCORE_RC_LAST_CMD="elog"
 	return 0
 }
 
 einfo() {
-	local line
-	echo -e "$@" | while IFS= read -r line; do
-		echo " ${PKGCORE_RC_GOOD}*${PKGCORE_RC_NORMAL} ${line}" >&2
-	done
+	printf " ${PKGCORE_RC_GOOD}*${PKGCORE_RC_NORMAL} %s\n" "${@}" >&2
 	PKGCORE_RC_LAST_CMD="einfo"
 	return 0
 }
 
 einfon() {
 	__elog_base INFO "$*"
-	echo -ne " ${PKGCORE_RC_GOOD}*${PKGCORE_RC_NORMAL} $*" >&2
+	printf " ${PKGCORE_RC_GOOD}*${PKGCORE_RC_NORMAL} %s" "${@}" >&2
 	PKGCORE_RC_LAST_CMD="einfon"
 	return 0
 }
 
 ewarn() {
 	__elog_base WARN "$*"
-	local line
-	echo -e "$@" | while IFS= read -r line; do
-		echo " ${PKGCORE_RC_WARN}*${PKGCORE_RC_NORMAL} ${line}" >&2
-	done
+	printf " ${PKGCORE_RC_WARN}*${PKGCORE_RC_NORMAL} %s\n" "${@}" >&2
 	PKGCORE_RC_LAST_CMD="ewarn"
 	return 0
 }
 
 eerror() {
 	__elog_base ERROR "$*"
-	local line
-	echo -e "$@" | while IFS= read -r line; do
-		echo " ${PKGCORE_RC_BAD}*${PKGCORE_RC_NORMAL} ${line}" >&2
-	done
+	printf " ${PKGCORE_RC_BAD}*${PKGCORE_RC_NORMAL} %s\n" "${@}" >&2
 	PKGCORE_RC_LAST_CMD="eerror"
 	return 0
 }

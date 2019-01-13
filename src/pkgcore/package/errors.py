@@ -6,6 +6,8 @@ __all__ = (
     "ChksumBase", "MissingChksum", "ParseChksumError",
 )
 
+from snakeoil import bash
+
 
 class PackageError(ValueError):
     pass
@@ -31,15 +33,16 @@ class MetadataException(PackageError):
                 # add full bash output in verbose mode
                 s += f":\n{self.verbose}"
             else:
-                # extract context and die message from bash eerror output
-                bash_error = [
-                    x.lstrip(' *') for x in self.verbose.split('\n')
-                    if x.startswith(' *')
-                ]
+                # strip ANSI escapes from output
+                lines = (bash.ansi_escape_re.sub('', x) for x in self.verbose.split('\n'))
+                # extract context and die message from bash error output
+                bash_error = [x.lstrip(' *') for x in lines if x.startswith(' *')]
 
-                context = bash_error[-1]
-                err_msg = bash_error[1]
-                s += f": {context} \"{err_msg}\""
+                # append bash specific error message if it exists in the expected format
+                if bash_error:
+                    context = bash_error[-1]
+                    err_msg = bash_error[1]
+                    s += f": {context} \"{err_msg}\""
 
         return s
 

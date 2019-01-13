@@ -93,6 +93,6 @@ def dynamic_getattr_dict(self, attr):
     except MetadataException as e:
         if e.attr == attr:
             raise
-        raise MetadataException(self, attr, e.error) from e
+        raise MetadataException(self, attr, e.error, e.verbose) from e
     except Exception as e:
         raise MetadataException(self, attr, str(e)) from e

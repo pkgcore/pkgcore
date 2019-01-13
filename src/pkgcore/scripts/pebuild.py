@@ -75,13 +75,13 @@ def main(options, out, err):
 
     # forcibly run test phase if selected
     force_test = 'test' in phases
-    if force_test and 'test' in options.pkg.iuse:
-        options.pkg.use.add('test')
+    if force_test and 'test' in pkg.iuse:
+        pkg.use.add('test')
 
     # by default turn off startup cleans; we clean by ourselves if
     # told to do so via an arg
     build = domain.build_pkg(
-        options.pkg, phase_obs, clean=False, allow_fetching=True, force_test=force_test)
+        pkg, phase_obs, clean=False, allow_fetching=True, force_test=force_test)
     if clean:
         build.cleanup(force=True)
     build._reload_state()

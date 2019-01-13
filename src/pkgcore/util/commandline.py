@@ -621,7 +621,7 @@ class Tool(tool.Tool):
         """Pass down pkgcore-specific settings to the bash side."""
         # pass down verbosity level to affect debug output
         if self.parser.debug:
-            os.environ['PKGCORE_DEBUG'] = str(options.verbosity)
+            os.environ['PKGCORE_DEBUG'] = str(self.parser.verbosity)
 
     def post_parse(self, options):
         """Pass down pkgcore-specific settings to the bash side."""

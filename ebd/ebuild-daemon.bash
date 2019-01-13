@@ -87,6 +87,9 @@ __ebd_exec_main() {
 		exit 2
 	fi
 
+	# enable colored support as early as possible for early die() usage
+	[[ -z ${PKGCORE_NOCOLOR} ]] && __colored_output_enable
+
 	__ebd_read_line PKGCORE_PYTHON_BINARY
 	[[ -z ${PKGCORE_PYTHON_BINARY} ]] && die "empty PKGCORE_PYTHON_BINARY, bailing"
 	__ebd_read_line PKGCORE_PYTHONPATH
@@ -137,7 +140,6 @@ __ebd_exec_main() {
 	# export env path for helpers
 	declare -x PKGCORE_EBD_ENV
 
-	__colored_output_disable
 	declare -A PKGCORE_PRELOADED_ECLASSES
 
 	trap __ebd_sigint_handler SIGINT
@@ -269,8 +271,6 @@ __ebd_process_ebuild_phases() {
 	fi
 
 	[[ -n ${PORTAGE_LOGFILE} ]] && addwrite "$(readlink -f "${PORTAGE_LOGFILE}")"
-
-	[[ -z ${PKGCORE_NOCOLOR} ]] && __colored_output_enable
 
 	[[ -n ${PORTAGE_TMPDIR} ]] && {
 		addpredict "${PORTAGE_TMPDIR}"

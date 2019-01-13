@@ -210,14 +210,14 @@ class InternalError(ProcessingInterruption):
         self.args = (line, msg)
 
 
-def chuck_TermInterrupt(ebd, *args):
-    ebd.shutdown_processor(force=True)
+def chuck_TermInterrupt(ebp, *args):
+    ebp.shutdown_processor(force=True)
     raise FinishedProcessing(False)
 
 
 def chuck_KeyboardInterrupt(*args):
     for ebp in chain(active_ebp_list, inactive_ebp_list):
-        ebd.shutdown_processor(force=True)
+        ebp.shutdown_processor(force=True)
     raise KeyboardInterrupt("ctrl+c encountered")
 
 signal.signal(signal.SIGINT, chuck_KeyboardInterrupt)
@@ -630,6 +630,7 @@ class EbuildProcessor(object):
             except (EnvironmentError, ValueError):
                 kill = True
 
+        # TODO: add fallback to SIGKILL on failure
         if kill:
             os.killpg(self.pid, signal.SIGTERM)
 

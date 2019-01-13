@@ -45,14 +45,6 @@ class CommandlineTest(TestCase, ArgParseMixin):
     def test_parser(self):
         self.assertError('the following arguments are required: target, phase')
         self.assertError('the following arguments are required: phase', 'dev-util/diffball')
-        self.assertError("no matches: 'foo/bar'", 'foo/bar', 'baz', 'spork', domain=domain_config)
-
-        # select highest version of a package with multiple versions
-        config = self.parse('app-arch/bzip2', 'baz', 'spork', domain=domain_config)
-        self.assertEqual(config.pkg, FakePkg('app-arch/bzip2-1.0.5-r2'))
-
-        # packages with multiple slots require a specific slot selection
-        self.assertError("please refine your restriction to one match", 'x11-libs/gtk+', 'baz', 'spork', domain=domain_config)
 
         # working initialization
         config = self.parse('sys-apps/coreutils', 'bar', 'baz', domain=domain_config)

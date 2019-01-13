@@ -31,37 +31,35 @@ phase_opts.add_argument(
 
 @argparser.bind_final_check
 def _validate_args(parser, namespace):
-    token, restriction = namespace.target[0]
-    repo = namespace.domain.ebuild_repos_unfiltered
-
-    try:
-        pkgs = repo.match(restriction, pkg_filter=None)
-    except MetadataException as e:
-        error = e.msg(verbosity=namespace.verbosity)
-        parser.error(f'{e.pkg.cpvstr}::{e.pkg.repo.repo_id}: {error}')
-
-    if not pkgs:
-        parser.error(f"no matches: {token!r}")
-
-    pkg = max(pkgs)
-    if len(pkgs) > 1:
-        parser.err.write(f"got multiple matches for {token!r}:")
-        if len(set((p.slot, p.repo) for p in pkgs)) != 1:
-            for p in pkgs:
-                repo_id = getattr(p.repo, 'repo_id', 'unknown')
-                parser.err.write(f"{p.cpvstr}:{p.slot}::{repo_id}", prefix='  ')
-            parser.err.write()
-            parser.error("please refine your restriction to one match")
-        repo_id = getattr(pkg.repo, 'repo_id', 'unknown')
-        parser.err.write(f"choosing {pkg.cpvstr}:{pkg.slot}::{repo_id}", prefix='  ')
-        sys.stderr.flush()
-
-    namespace.pkg = pkg
+    namespace.repo = namespace.domain.ebuild_repos_unfiltered
 
 
 @argparser.bind_main_func
 def main(options, out, err):
+    token, restriction = options.target[0]
     domain = options.domain
+
+    try:
+        pkgs = options.repo.match(restriction, pkg_filter=None)
+    except MetadataException as e:
+        error = e.msg(verbosity=options.verbosity)
+        argparser.error(f'{e.pkg.cpvstr}::{e.pkg.repo.repo_id}: {error}')
+
+    if not pkgs:
+        argparser.error(f"no matches: {token!r}")
+
+    pkg = max(pkgs)
+    if len(pkgs) > 1:
+        argparser.err.write(f"got multiple matches for {token!r}:")
+        if len(set((p.slot, p.repo) for p in pkgs)) != 1:
+            for p in pkgs:
+                repo_id = getattr(p.repo, 'repo_id', 'unknown')
+                argparser.err.write(f"{p.cpvstr}:{p.slot}::{repo_id}", prefix='  ')
+            argparser.err.write()
+            argparser.error("please refine your restriction to one match")
+        repo_id = getattr(pkg.repo, 'repo_id', 'unknown')
+        argparser.err.write(f"choosing {pkg.cpvstr}:{pkg.slot}::{repo_id}", prefix='  ')
+        sys.stderr.flush()
 
     kwds = {}
     phase_obs = observer.phase_observer(

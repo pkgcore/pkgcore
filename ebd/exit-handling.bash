@@ -67,11 +67,9 @@ die() {
 
 	if [[ ${BASHPID} != ${PKGCORE_EBUILD_PROCESS_PID} ]]; then
 		if [[ -n ${PKGCORE_EBUILD_PROCESS_PID} ]]; then
-			# Tell the python side we're terminating the ebd process group so it
-			# should handle cleanup. This forces die() to work in subshell
-			# environments.
+			# Tell the python side we're dying so it should handle cleanup.
+			# This forces die() to work in subshell environments.
 			__ebd_write_line "term"
-			kill -s SIGTERM -${PPID} 2>/dev/null
 		fi
 	fi
 

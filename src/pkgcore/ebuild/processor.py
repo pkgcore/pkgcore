@@ -210,13 +210,14 @@ class InternalError(ProcessingInterruption):
         self.args = (line, msg)
 
 
-def chuck_TermInterrupt(*arg):
+def chuck_TermInterrupt(ebd, *args):
+    ebd.shutdown_processor(force=True)
     raise FinishedProcessing(False)
 
 
-def chuck_KeyboardInterrupt(*arg):
+def chuck_KeyboardInterrupt(*args):
     for ebp in chain(active_ebp_list, inactive_ebp_list):
-        os.killpg(ebp.pid, signal.SIGKILL)
+        ebd.shutdown_processor(force=True)
     raise KeyboardInterrupt("ctrl+c encountered")
 
 signal.signal(signal.SIGINT, chuck_KeyboardInterrupt)
@@ -467,10 +468,11 @@ class EbuildProcessor(object):
         mydata = []
         while lines > 0:
             mydata.append(self.ebd_read.readline())
-            if mydata[-1].startswith("killed"):
-                chuck_KeyboardInterrupt()
-            elif mydata[-1].startswith('term'):
-                chuck_TermInterrupt(mydata[-1].strip().split()[-1])
+            cmd = mydata[-1]
+            if cmd.startswith("killed"):
+                chuck_KeyboardInterrupt(self)
+            elif cmd.startswith('term'):
+                chuck_TermInterrupt(self)
             lines -= 1
         return mydata
 

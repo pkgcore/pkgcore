@@ -163,6 +163,22 @@ def release_ebuild_processor(ebp):
     return True
 
 
+@_single_thread_allowed
+def drop_ebuild_processor(ebp):
+    """Force an ebuild processor to be dropped from active/inactive lists.
+
+    :param ebp: :obj:`EbuildProcessor` instance
+    """
+    try:
+        active_ebp_list.remove(ebp)
+    except ValueError:
+        pass
+
+    try:
+        inactive_ebp_list.remove(ebp)
+    except ValueError:
+        pass
+
 @contextlib.contextmanager
 def reuse_or_request(ebp=None, **request_kwds):
     """Do a processor operation, locking as necessary.
@@ -211,12 +227,14 @@ class InternalError(ProcessingInterruption):
 
 
 def chuck_TermInterrupt(ebp, *args):
+    drop_ebuild_processor(ebp)
     ebp.shutdown_processor(force=True)
     raise FinishedProcessing(False)
 
 
 def chuck_KeyboardInterrupt(*args):
     for ebp in chain(active_ebp_list, inactive_ebp_list):
+        drop_ebuild_processor(ebp)
         ebp.shutdown_processor(force=True)
     raise KeyboardInterrupt("ctrl+c encountered")
 

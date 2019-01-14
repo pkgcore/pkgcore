@@ -13,7 +13,7 @@ from snakeoil import klass
 from snakeoil.compatibility import cmp, IGNORED_EXCEPTIONS
 
 from pkgcore.operations import format
-from pkgcore.package.errors import MetadataException
+from pkgcore.package import errors
 
 
 class base(object, metaclass=klass.immutable_instance):
@@ -90,7 +90,9 @@ def dynamic_getattr_dict(self, attr):
         return val
     except IGNORED_EXCEPTIONS:
         raise
-    except MetadataException as e:
+    except errors.MetadataException as e:
         if e.attr == attr:
             raise
-        raise MetadataException(self, attr, e.error, e.verbose) from e
+        raise errors.MetadataException(self, attr, e.error, e.verbose) from e
+    except errors.PackageError as e:
+        raise errors.MetadataException(self, attr, str(e)) from e

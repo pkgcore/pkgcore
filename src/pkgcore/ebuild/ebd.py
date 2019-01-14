@@ -27,7 +27,7 @@ from snakeoil.demandload import demandload
 from snakeoil.fileutils import touch
 from snakeoil.osutils import ensure_dirs, abspath, normpath, pjoin, listdir_files
 from snakeoil.process.spawn import (
-    spawn_bash, spawn, is_sandbox_capable, is_userpriv_capable, spawn_get_output)
+    spawn_bash, spawn, is_sandbox_capable, is_userpriv_capable)
 
 from pkgcore.ebuild import ebuild_built, const, errors
 from pkgcore.ebuild.processor import (
@@ -601,9 +601,7 @@ class buildable(ebd, setup_mixin, format.build):
             self.env["AA"] = ' '.join(set(iflatten_instance(pkg.distfiles)))
 
         if self.eapi.options.has_KV:
-            ret = spawn_get_output(['uname', '-r'])
-            if ret[0] == 0:
-                self.env["KV"] = ret[1][0].strip()
+            self.env["KV"] = domain.KV
 
         if self.eapi.options.has_merge_type:
             self.env["MERGE_TYPE"] = "source"

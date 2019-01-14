@@ -44,6 +44,7 @@ demandload(
     'operator:itemgetter',
     're',
     'tempfile',
+    'snakeoil.process.spawn:spawn_get_output',
     'pkgcore.binpkg:repository@binary_repo',
     'pkgcore.ebuild:repository@ebuild_repo',
     'pkgcore.ebuild.portage_conf:PortageConfig',
@@ -572,6 +573,13 @@ class domain(config_domain):
                 PortageConfig.load_make_conf(
                     pkg_settings, path, allow_sourcing=True,
                     allow_recurse=False, incrementals=True)
+
+            # TODO: Improve pkg domain vs main domain proxying, e.g. static
+            # jit-ed attrs should always be generated and pulled from the main
+            # domain obj; however, currently each pkg domain instance gets its
+            # own copy so values collapsed on the pkg domain instance aren't
+            # propagated back to the main domain leading to regen per pkg if
+            # requested.
             pkg_domain = copy.copy(self)
             pkg_domain._settings = ProtectedDict(pkg_settings)
             # reset JIT-ed attrs that can pull updated settings
@@ -686,6 +694,15 @@ class domain(config_domain):
     def repo_configs(self):
         """All defined repo configs."""
         return tuple(r.config for r in self.repos if hasattr(r, 'config'))
+
+    @klass.jit_attr
+    def KV(self):
+        """The version of the running kernel."""
+        print('retrieving KV')
+        ret, version = spawn_get_output(['uname', '-r'])
+        if ret == 0:
+            return version[0].strip()
+        raise ValueError('unknown kernel version')
 
     @klass.jit_attr_none
     def source_repos_raw(self):

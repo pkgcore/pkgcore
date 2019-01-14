@@ -304,7 +304,6 @@ class EbuildProcessor(object):
         env["PATH"] = os.pathsep.join(
             list(const.PATH_FORCED_PREPEND) + [os.environ["PATH"]])
 
-        args = []
         if sandbox:
             if not spawn.is_sandbox_capable():
                 raise ValueError("spawn lacks sandbox capabilities")
@@ -335,7 +334,7 @@ class EbuildProcessor(object):
         # spawned children so everything can be terminated easily if necessary.
         self.pid = spawn_func(
             [spawn.BASH_BINARY, self.ebd, "daemonize"],
-            fd_pipes=ebd_pipes, returnpid=True, env=env, pgid=0, *args, **spawn_opts)[0]
+            fd_pipes=ebd_pipes, returnpid=True, env=env, pgid=0, **spawn_opts)[0]
 
         os.close(cread)
         os.close(dwrite)

@@ -510,6 +510,7 @@ class UnconfiguredTree(prototype.tree):
                         continue
                     # TODO: add a generic metadata validation method to avoid slow metadata checks?
                     pkg.data
+                    pkg.required_use
                 except MetadataException as e:
                     self._masked[e.pkg.versioned_atom] = e
                     continue

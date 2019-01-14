@@ -61,28 +61,29 @@ def _mk_required_use_node(data):
 
 
 def generate_required_use(self):
-    data = self.data.pop("REQUIRED_USE", "")
-    if not self.eapi.options.has_required_use:
-        data = ''
-    operators = {
-        "||": boolean.OrRestriction,
-        "": boolean.AndRestriction,
-        "^^": boolean.JustOneRestriction
-    }
+    if self.eapi.options.has_required_use:
+        data = self.data.pop("REQUIRED_USE", "")
+        if data:
+            operators = {
+                "||": boolean.OrRestriction,
+                "": boolean.AndRestriction,
+                "^^": boolean.JustOneRestriction
+            }
 
-    def _invalid_op(msg, *args):
-        raise metadata_errors.MetadataException(self, 'eapi', f'REQUIRED_USE: {msg}')
+            def _invalid_op(msg, *args):
+                raise metadata_errors.MetadataException(self, 'eapi', f'REQUIRED_USE: {msg}')
 
-    if self.eapi.options.required_use_one_of:
-        operators['??'] = boolean.AtMostOneOfRestriction
-    else:
-        operators['??'] = partial(
-            _invalid_op, f"EAPI '{self.eapi}' doesn't support '??' operator")
+            if self.eapi.options.required_use_one_of:
+                operators['??'] = boolean.AtMostOneOfRestriction
+            else:
+                operators['??'] = partial(
+                    _invalid_op, f"EAPI '{self.eapi}' doesn't support '??' operator")
 
-    return conditionals.DepSet.parse(
-        data,
-        values.ContainmentMatch2, operators=operators,
-        element_func=_mk_required_use_node)
+            return conditionals.DepSet.parse(
+                data,
+                values.ContainmentMatch2, operators=operators,
+                element_func=_mk_required_use_node)
+    return conditionals.DepSet()
 
 
 def generate_fetchables(self, allow_missing_checksums=False,

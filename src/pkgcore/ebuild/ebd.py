@@ -112,17 +112,8 @@ class ebd(object):
                 pjoin(self.domain.root, self.prefix.lstrip(os.sep))).rstrip(os.sep)
             self.env['BROOT'] = self.env['EPREFIX']
 
-        # set the list of internally implemented EAPI specific functions that
-        # shouldn't be exported
-        if os.path.exists(pjoin(const.EBD_PATH, 'funcnames', str(self.eapi))):
-            with open(pjoin(const.EBD_PATH, 'funcnames', str(self.eapi)), 'r') as f:
-                eapi_funcs = f.readlines()
-        else:
-            ret, eapi_funcs = spawn_get_output(
-                [pjoin(const.EBD_PATH, 'generate_eapi_func_list'), str(self.eapi)])
-            if ret != 0:
-                raise Exception(f"failed to generate list of EAPI {self.eapi} specific functions")
-        self.env["PKGCORE_EAPI_FUNCS"] = ' '.join(x.strip() for x in eapi_funcs)
+        # internally implemented EAPI specific functions to skip when exporting env
+        self.env["PKGCORE_EAPI_FUNCS"] = ' '.join(self.eapi.bash_funcs)
 
         self.env_data_source = env_data_source
         if (env_data_source is not None and

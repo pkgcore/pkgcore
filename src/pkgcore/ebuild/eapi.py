@@ -7,11 +7,12 @@ import sys
 
 from snakeoil import mappings, weakrefs, klass
 from snakeoil.demandload import demandload, demand_compile_regexp
+from snakeoil.osutils import pjoin
 
 demandload(
     "functools:partial",
-    'snakeoil.process.spawn:bash_version',
-    "pkgcore.ebuild:atom",
+    'snakeoil.process.spawn:bash_version,spawn_get_output',
+    "pkgcore.ebuild:atom,const",
     "pkgcore.log:logger",
 )
 
@@ -213,6 +214,21 @@ class EAPI(object, metaclass=klass.immutable_instance):
                 sys.stderr.flush()
             return True
         return False
+
+    @klass.jit_attr
+    def bash_funcs(self):
+        """List of internally implemented EAPI specific functions to skip when exporting."""
+        try:
+            with open(pjoin(const.EBD_PATH, 'funcnames', self._magic), 'r') as f:
+                funcs = f.readlines()
+        except FileNotFoundError:
+            # we're running in the git repo and need to generate the list on the fly
+            ret, funcs = spawn_get_output(
+                [pjoin(const.EBD_PATH, 'generate_eapi_func_list'), self._magic])
+            if ret != 0:
+                raise Exception(
+                    f"failed to generate list of EAPI '{self}' specific functions")
+        return tuple(x.strip() for x in funcs)
 
     @klass.jit_attr
     def atom_kls(self):

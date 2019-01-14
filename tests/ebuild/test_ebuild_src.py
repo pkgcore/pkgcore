@@ -129,7 +129,7 @@ class TestBase(object):
         assert o.fullslot == '1/foo-1'
         # unset SLOT variable
         with pytest.raises(ValueError):
-            self.get_pkg().fullslot
+            self.get_pkg({}).fullslot
         # empty SLOT variable
         with pytest.raises(ValueError):
             self.get_pkg({'SLOT': ''}).fullslot
@@ -143,7 +143,7 @@ class TestBase(object):
         assert o.slot == '1'
         # unset SLOT variable
         with pytest.raises(ValueError):
-            self.get_pkg().slot
+            self.get_pkg({}).slot
         # empty SLOT variable
         with pytest.raises(ValueError):
             self.get_pkg({'SLOT': ''}).slot
@@ -159,7 +159,7 @@ class TestBase(object):
         assert o.subslot == 'foo-1'
         # unset SLOT variable
         with pytest.raises(ValueError):
-            self.get_pkg().subslot
+            self.get_pkg({}).subslot
         # empty SLOT variable
         with pytest.raises(ValueError):
             self.get_pkg({'SLOT': ''}).subslot

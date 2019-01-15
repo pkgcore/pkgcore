@@ -256,9 +256,6 @@ class PackagesCacheV0(cache.bulk):
             open(self._location, 'wb').close()
             return
 
-    def __del__(self):
-        self.commit()
-
 
 class PackagesCacheV1(PackagesCacheV0):
     """Cache backend for writing binpkg Packages caches in format version 1.

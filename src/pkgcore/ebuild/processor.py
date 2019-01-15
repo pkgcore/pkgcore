@@ -747,7 +747,7 @@ class EbuildProcessor(object):
             return
         # filter here, so that a screwy default doesn't result in resetting it
         # every time.
-        data = ':'.join(filter(None, paths))
+        data = os.pathsep.join(filter(None, paths))
         self.write(f"set_metadata_path {len(data)}\n{data}", append_newline=False)
         if self.expect("metadata_path_received", flush=True):
             self._metadata_paths = paths

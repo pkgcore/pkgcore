@@ -107,7 +107,7 @@ class tree(prototype.tree):
             for x in self.trees:
                 try:
                     list(map(d.add, x.categories))
-                except (errors.TreeCorruption, KeyError):
+                except (errors.RepoError, KeyError):
                     failures += 1
         if failures == len(self.trees):
             if optional_category:
@@ -122,7 +122,7 @@ class tree(prototype.tree):
         for x in self.trees:
             try:
                 d.update(x.packages[category])
-            except (errors.TreeCorruption, KeyError):
+            except (errors.RepoError, KeyError):
                 failures += 1
         if failures == len(self.trees):
             raise KeyError(f'category {category!r} not found')
@@ -134,7 +134,7 @@ class tree(prototype.tree):
         for x in self.trees:
             try:
                 d.update(x.versions[package])
-            except (errors.TreeCorruption, KeyError):
+            except (errors.RepoError, KeyError):
                 failures += 1
 
         if failures == len(self.trees):

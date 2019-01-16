@@ -123,9 +123,9 @@ class StoreTarget(argparse._AppendAction):
                         except TypeError as e:
                             raise argparse.ArgumentError(
                                 self, f"ebuild not in valid repo: {token!r}")
-                        except repo_errors.UnsupportedRepo as e:
+                        except repo_errors.RepoError as e:
                             raise argparse.ArgumentError(
-                                self, f"{token!r} in unsupported repo -- {e}")
+                                self, f"{token!r} in bad repo -- {e}")
                     try:
                         restriction = repo.path_restrict(token)
                     except ValueError as e:
@@ -364,7 +364,7 @@ class StoreRepoObject(StoreConfigObject):
                     try:
                         repo_obj = self.domain.add_repo(repo, config=self.config)
                         repo = repo_obj.repo_id
-                    except (TypeError, repo_errors.UnsupportedRepo) as e:
+                    except (TypeError, repo_errors.RepoError) as e:
                         raise argparse.ArgumentError(self, e)
                     if hasattr(self.domain, '_' + self.repo_key):
                         # force JIT-ed attr refresh to include newly added repo

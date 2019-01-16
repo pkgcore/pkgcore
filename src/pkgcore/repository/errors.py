@@ -7,27 +7,25 @@ exceptions thrown by repository classes.
 Need to extend the usage a bit further still.
 """
 
-__all__ = ("TreeCorruption", "InitializationError")
-
 from pkgcore.exceptions import PkgcoreException
 
 
-class TreeCorruption(Exception):
-    """General repository corruption error."""
+class RepoError(PkgcoreException):
+    """General repository error."""
 
     def __init__(self, err):
-        super().__init__(f'unexpected tree corruption: {err}')
+        super().__init__(err)
         self.err = err
 
 
-class InitializationError(TreeCorruption):
+class InitializationError(RepoError):
     """General repository initialization failure."""
 
     def __str__(self):
         return f"repo init failed: {self.err}"
 
 
-class UnsupportedRepo(PkgcoreException):
+class UnsupportedRepo(RepoError):
     """Repository uses an unknown EAPI or is otherwise not supported."""
 
     def __init__(self, repo):

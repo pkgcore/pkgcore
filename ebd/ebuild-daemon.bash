@@ -63,7 +63,7 @@ __ebd_sigkill_handler() {
 }
 
 __ebd_exec_main() {
-	if ! source "${PKGCORE_EBD_PATH}"/ebuild-daemon-lib.bash >&2; then
+	if ! source "${PKGCORE_EBD_PATH}"/ebuild-daemon-lib.bash; then
 		die "failed sourcing ${PKGCORE_EBD_PATH}/ebuild-daemon-lib.bash"
 	fi
 
@@ -95,7 +95,7 @@ __ebd_exec_main() {
 	__ebd_read_line PKGCORE_PYTHONPATH
 	[[ -z ${PKGCORE_PYTHONPATH} ]] && die "empty PKGCORE_PYTHONPATH, bailing"
 
-	if ! source "${PKGCORE_EBD_PATH}"/ebuild.bash >&2; then
+	if ! source "${PKGCORE_EBD_PATH}"/ebuild.bash; then
 		__ebd_write_line "failed"
 		die "failed sourcing ${PKGCORE_EBD_PATH}/ebuild.bash"
 	fi
@@ -162,7 +162,7 @@ __ebd_exec_main() {
 	done
 	unset -v x
 
-	source "${PKGCORE_EBD_PATH}"/eapi/depend.bash >&2 || die "failed sourcing eapi/depend.bash"
+	source "${PKGCORE_EBD_PATH}"/eapi/depend.bash || die "failed sourcing eapi/depend.bash"
 	__ebd_main_loop
 	exit 0
 }

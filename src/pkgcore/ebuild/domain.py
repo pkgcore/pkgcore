@@ -31,7 +31,7 @@ from pkgcore.ebuild.misc import (
     incremental_expansion, incremental_expansion_license,
     non_incremental_collapsed_restrict_to_data, optimize_incrementals)
 from pkgcore.ebuild.repo_objs import OverlayedLicenses
-from pkgcore.repository import filtered
+from pkgcore.repository import filtered, errors as repo_errors
 from pkgcore.repository.util import RepositoryGroup
 from pkgcore.restrictions import packages, values
 from pkgcore.restrictions.delegated import delegate
@@ -620,7 +620,7 @@ class domain(config_domain):
                 raise ValueError('missing config')
             path = os.path.abspath(repo)
             if not os.path.isdir(os.path.join(path, 'profiles')):
-                raise TypeError(f'invalid repo: {path!r}')
+                raise repo_errors.InvalidRepo(repr(path))
             repo_config = RepoConfig(path, config_name=path)
             repo = ebuild_repo.tree(config, repo_config)
             self.source_repos_raw += repo

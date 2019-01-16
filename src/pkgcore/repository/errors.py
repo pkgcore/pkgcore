@@ -25,6 +25,13 @@ class InitializationError(RepoError):
         return f"repo init failed: {self.err}"
 
 
+class InvalidRepo(RepoError):
+    """Repository is not a repo or is otherwise invalid."""
+
+    def __str__(self):
+        return f"invalid repo: {self.err}"
+
+
 class UnsupportedRepo(RepoError):
     """Repository uses an unknown EAPI or is otherwise not supported."""
 

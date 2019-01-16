@@ -17,24 +17,13 @@ __ebd_read_line() {
 		die "coms error in ${PKGCORE_EBD_PID}, read_line $@ failed w/ ${ret}: backing out of daemon."
 }
 
-# are we running a version of bash (4.1 or so) that does -N?
-if echo 'y' | read -N 1 &> /dev/null; then
-	__ebd_read_size()
-	{
-		read -u ${PKGCORE_EBD_READ_FD} -r -N $1 $2
-		local ret=$?
-		[[ ${ret} -ne 0 ]] && \
-			die "coms error in ${PKGCORE_EBD_PID}, read_size $@ failed w/ ${ret}: backing out of daemon."
-	}
-else
-	# fallback to a *icky icky* but working alternative.
-	__ebd_read_size() {
-		eval "${2}=\$(dd bs=1 count=$1 <&${PKGCORE_EBD_READ_FD} 2> /dev/null)"
-		local ret=$?
-		[[ ${ret} -ne 0 ]] && \
-			die "coms error in ${PKGCORE_EBD_PID}, read_size $@ failed w/ ${ret}: backing out of daemon."
-	}
-fi
+# read -N usage requires bash-4.1 or so (EAPI 6 requires >= 4.2)
+__ebd_read_size() {
+	read -u ${PKGCORE_EBD_READ_FD} -r -N $1 $2
+	local ret=$?
+	[[ ${ret} -ne 0 ]] && \
+		die "coms error in ${PKGCORE_EBD_PID}, read_size $@ failed w/ ${ret}: backing out of daemon."
+}
 
 __ebd_read_cat_size() {
 	dd bs=$1 count=1 <&${PKGCORE_EBD_READ_FD}

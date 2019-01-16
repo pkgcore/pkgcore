@@ -12,6 +12,7 @@ from pkgcore.ebuild.cpv import CPV
 from pkgcore.ebuild.eapi import get_eapi
 from pkgcore.ebuild.ebuild_src import package
 from pkgcore.ebuild.misc import collapsed_restrict_to_data
+from pkgcore.ebuild.repo_objs import RepoConfig
 from pkgcore.package.metadata import factory
 from pkgcore.repository.util import SimpleTree
 from pkgcore.restrictions.packages import AlwaysTrue
@@ -79,6 +80,14 @@ class FakeRepo(object):
 
     def match(self, restrict, **kwargs):
         return list(self.itermatch(restrict, **kwargs))
+
+
+class FakeEbuildRepo(FakeRepo):
+
+    def __init__(self, *args, **kwds):
+        self.config = kwds.pop('config', RepoConfig('nonexistent'))
+        self.trees = (self,)
+        super().__init__(*args, **kwds)
 
 
 class FakePkg(FakePkgBase):

@@ -599,8 +599,11 @@ class domain(config_domain):
             return
         # matching portage behavior... it's whacked.
         base = pjoin(self.ebuild_hook_dir, pkg.category)
-        for fp in (pkg.package, f"{pkg.package}:{pkg.slot}",
-                   getattr(pkg, "P", "nonexistent"), getattr(pkg, "PF", "nonexistent")):
+        dirs = (
+            pkg.package, f"{pkg.package}:{pkg.slot}",
+            getattr(pkg, "P", None), getattr(pkg, "PF", None),
+        )
+        for fp in filter(None, dirs):
             fp = pjoin(base, fp)
             if os.path.exists(fp):
                 yield local_source(fp)

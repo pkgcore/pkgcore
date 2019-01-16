@@ -144,6 +144,7 @@ def _sort_eclasses(config, repo_config, eclasses):
         return eclasses
 
     repo_path = repo_config.location
+    repo_id = repo_config.repo_id
     masters = repo_config.masters
     eclasses = []
     default = config.get_default('repo_config')
@@ -157,24 +158,19 @@ def _sort_eclasses(config, repo_config, eclasses):
             # if it's None, that means it's not a standalone, and is PMS, or misconfigured.
             # empty tuple means it's a standalone repository
             if default is None:
-                raise Exception(
-                    f"repo {repo_config.repo_id!r} at {repo_path!r} wants the "
-                    "default repository (gentoo for example), but no repository "
-                    "is marked as the default. Fix your configuration.")
+                raise errors.InitializationError(
+                    f"repo {repo_id!r} at {repo_path!r} requires missing default repo")
             eclasses = [location]
     else:
-        repo_map = {r.repo_id: r.location for r in
-                    config.objects['repo_config'].values()}
+        repo_map = {
+            r.repo_id: r.location for r in
+            config.objects['repo_config'].values()}
 
         missing = set(repo_config.masters).difference(repo_map)
         if missing:
-            missing = ', '.join(sorted(missing))
-            repo_id = repo_config.repo_id
-            masters = ', '.join(map(repr, masters))
-            raise Exception(
-                f'repo {repo_id!r} at path {repo_path!r} has masters {masters}; '
-                f'we cannot find the following repos: {missing}'
-            )
+            missing = ', '.join(map(repr, sorted(missing)))
+            raise errors.InitializationError(
+                f'repo {repo_id!r} at path {repo_path!r} has missing masters: {missing}')
         eclasses = [repo_map[x] for x in masters]
 
     # add the repo's eclass directories if it's not specified.

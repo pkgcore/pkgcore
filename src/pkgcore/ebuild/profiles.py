@@ -658,7 +658,7 @@ class OnDiskProfile(ProfileStack):
     )
 
     def __init__(self, basepath, profile, load_profile_base=True):
-        ProfileStack.__init__(self, pjoin(basepath, profile))
+        super().__init__(pjoin(basepath, profile))
         self.basepath = basepath
         self.load_profile_base = load_profile_base
 
@@ -711,7 +711,7 @@ class UserProfileNode(ProfileNode):
 
     def __init__(self, path, parent_path):
         self.override_path = pjoin(path, parent_path)
-        ProfileNode.__init__(self, path, pms_strict=False)
+        super().__init__(path, pms_strict=False)
 
     @klass.jit_attr
     def parents(self):
@@ -731,5 +731,5 @@ class UserProfile(OnDiskProfile):
     )
 
     def __init__(self, user_path, parent_path, parent_profile, load_profile_base=True):
-        OnDiskProfile.__init__(self, parent_path, parent_profile, load_profile_base)
+        super().__init__(parent_path, parent_profile, load_profile_base)
         self.node = UserProfileNode(user_path, pjoin(parent_path, parent_profile))

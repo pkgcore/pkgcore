@@ -19,7 +19,7 @@ class MutatedPkg(wrapper):
         :param overrides: is an attr -> instance mapping to substitute when
             the attr is requested
         """
-        wrapper.__init__(self, pkg)
+        super().__init__(pkg)
         object.__setattr__(self, "_overrides", overrides)
 
     def __getattr__(self, attr):

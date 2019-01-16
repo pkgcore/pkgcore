@@ -139,7 +139,7 @@ class install(base):
 
     def __init__(self, domain, repo, pkg, observer, offset):
         self.new_pkg = pkg
-        base.__init__(self, domain, repo, observer, offset)
+        super().__init__(domain, repo, observer, offset)
 
     def create_op(self):
         self.format_op = getattr(
@@ -204,7 +204,7 @@ class uninstall(base):
 
     def __init__(self, domain, repo, pkg, observer, offset):
         self.old_pkg = pkg
-        base.__init__(self, domain, repo, observer, offset)
+        super().__init__(domain, repo, observer, offset)
 
     def create_op(self):
         self.format_op = getattr(

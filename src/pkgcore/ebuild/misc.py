@@ -140,7 +140,7 @@ class IncrementalsDict(mappings.DictMixin):
     def __init__(self, incrementals, **kwds):
         self._incrementals = incrementals
         self._dict = {}
-        mappings.DictMixin.__init__(self, **kwds)
+        super().__init__(**kwds)
 
     def __setitem__(self, key, value):
         if key in self._incrementals:

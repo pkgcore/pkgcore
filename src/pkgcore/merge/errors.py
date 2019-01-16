@@ -5,9 +5,8 @@
 exceptions thrown by the MergeEngine
 """
 
-__all__ = ("ModificationError", "BlockModification",
-    "TriggerUnknownCset",
-)
+__all__ = ("ModificationError", "BlockModification", "TriggerUnknownCset")
+
 
 class ModificationError(Exception):
 
@@ -16,8 +15,7 @@ class ModificationError(Exception):
     def __init__(self, trigger, msg):
         self.trigger = trigger
         self.msg = msg
-        Exception.__init__(self, "%s: modification error: %s" %
-            (self.trigger, self.msg))
+        super().__init__(f"{self.trigger}: modification error: {self.msg}")
 
 
 class BlockModification(ModificationError):
@@ -33,6 +31,6 @@ class TriggerUnknownCset(ModificationError):
     def __init__(self, trigger, csets):
         if not isinstance(csets, (tuple, list)):
             csets = (csets,)
-        ModificationError.__init__(self, "%s: trigger %r unknown cset: %r" %
-                                   (self.__class__, trigger, csets))
+        super().__init__(
+            f"{self.__class__}: trigger {trigger!r} unknown cset: {csets!r}")
         self.trigger, self.csets = trigger, csets

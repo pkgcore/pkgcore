@@ -58,8 +58,8 @@ class ChksumBase(Exception):
 class MissingChksum(ChksumBase):
 
     def __init__(self, pkg, filename):
-        ChksumBase.__init__(
-            self, f"{pkg.cpvstr}::{pkg.repo} missing chksum data for {filename!r}")
+        super().__init__(
+            f"{pkg.cpvstr}::{pkg.repo} missing chksum data for {filename!r}")
         self.pkg = pkg
         self.file = filename
 
@@ -68,11 +68,11 @@ class ParseChksumError(ChksumBase):
 
     def __init__(self, filename, error, missing=False):
         if missing:
-            ChksumBase.__init__(
-                self, f"failed parsing {filename!r} chksum; data isn't available: {error}")
+            super().__init__(
+                f"failed parsing {filename!r} chksum; data isn't available: {error}")
         else:
-            ChksumBase.__init__(
-                self, "failed parsing {filename!r} chksum due to {error}")
+            super().__init__(
+                f"failed parsing {filename!r} chksum due to {error}")
         self.file = filename
         self.error = error
         self.missing = missing

@@ -39,7 +39,7 @@ class install(repo_ops.install):
         dirname = f"{newpkg.package}-{newpkg.fullver}"
         self.install_path = pjoin(base, dirname)
         self.tmp_write_path = pjoin(base, f".tmp.{dirname}")
-        repo_ops.install.__init__(self, repo, newpkg, observer)
+        super().__init__(repo, newpkg, observer)
 
     def add_data(self, domain):
         # error checking?
@@ -125,7 +125,7 @@ class uninstall(repo_ops.uninstall):
     def __init__(self, repo, pkg, observer):
         self.remove_path = pjoin(
             repo.location, pkg.category, pkg.package+"-"+pkg.fullver)
-        repo_ops.uninstall.__init__(self, repo, pkg, observer)
+        super().__init__(repo, pkg, observer)
 
     def remove_data(self):
         return True

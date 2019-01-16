@@ -18,7 +18,7 @@ quiet_logger = QuietLogger()
 
 class callback_logger(log.logging.Handler):
     def __init__(self, callback):
-        log.logging.Handler.__init__(self)
+        super().__init__()
         self.callback = callback
 
     def emit(self, record):

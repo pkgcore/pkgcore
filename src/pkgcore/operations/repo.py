@@ -140,7 +140,7 @@ class sync_operations(_operations_mod.base):
 
     def __init__(self, repository, disable_overrides=(), enable_overrides=()):
         self.repo = repository
-        _operations_mod.base.__init__(self, disable_overrides, enable_overrides)
+        super().__init__(disable_overrides, enable_overrides)
 
     @_operations_mod.is_standalone
     def _cmd_api_sync(self, observer=None, **kwargs):

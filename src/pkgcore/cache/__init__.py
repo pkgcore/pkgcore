@@ -266,7 +266,7 @@ class bulk(base):
     default_sync_rate = 100
 
     def __init__(self, *args, **kwds):
-        base.__init__(self, *args, **kwds)
+        super().__init__(*args, **kwds)
         self._pending_updates = []
 
     @klass.jit_attr

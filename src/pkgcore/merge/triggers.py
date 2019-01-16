@@ -492,7 +492,7 @@ class fix_uid_perms(base):
 
     def __init__(self, uid=os_data.portage_uid,
                  replacement=os_data.root_uid):
-        base.__init__(self)
+        super().__init__()
         self.bad_uid = uid
         self.good_uid = replacement
 
@@ -511,7 +511,7 @@ class fix_gid_perms(base):
 
     def __init__(self, gid=os_data.portage_gid,
                  replacement=os_data.root_gid):
-        base.__init__(self)
+        super().__init__()
         self.bad_gid = gid
         self.good_gid = replacement
 
@@ -553,7 +553,7 @@ class detect_world_writable(base):
     _engine_types = INSTALLING_MODES
 
     def __init__(self, fix_perms=False):
-        base.__init__(self)
+        super().__init__()
         self.fix_perms = fix_perms
 
     def trigger(self, engine, cset):
@@ -583,7 +583,7 @@ class PruneFiles(base):
         :param sentinel_func: callable accepting a fsBase entry, returns
         True if the entry should be removed, False otherwise
         """
-        base.__init__(self)
+        super().__init__()
         self.sentinel = sentinel_func
 
     def trigger(self, engine, cset):
@@ -697,7 +697,7 @@ class SavePkgIfInPkgset(SavePkg):
     del d
 
     def __init__(self, target_repo, pkgset, pristine=True, skip_if_source=True):
-        SavePkg.__init__(self, target_repo, pristine=pristine, skip_if_source=skip_if_source)
+        super().__init__(target_repo, pristine=pristine, skip_if_source=skip_if_source)
         self.pkgset = pkgset
 
     def trigger(self, engine, cset):
@@ -725,7 +725,7 @@ class SavePkgUnmergingIfInPkgset(SavePkgUnmerging):
         required=['target_repo', 'pkgset'])
 
     def __init__(self, target_repo, pkgset, pristine=True):
-        SavePkgUnmerging.__init__(self, target_repo, pristine=pristine)
+        super().__init__(target_repo, pristine=pristine)
         self.pkgset = pkgset
 
     def trigger(self, engine, cset):

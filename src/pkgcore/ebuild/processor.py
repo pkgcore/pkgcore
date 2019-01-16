@@ -203,16 +203,14 @@ class ProcessingInterruption(Exception):
 class FinishedProcessing(ProcessingInterruption):
 
     def __init__(self, val, msg=None):
-        ProcessingInterruption.__init__(
-            self, f"Finished processing with val, {val}")
+        super().__init__(f"Finished processing with val, {val}")
         self.val, self.msg = val, msg
 
 
 class UnhandledCommand(ProcessingInterruption):
 
     def __init__(self, line=None):
-        ProcessingInterruption.__init__(
-            self, f"unhandled command, {line}")
+        super().__init__(f"unhandled command, {line}")
         self.line = line
         self.args = (line,)
 
@@ -220,8 +218,7 @@ class UnhandledCommand(ProcessingInterruption):
 class InternalError(ProcessingInterruption):
 
     def __init__(self, line=None, msg=None):
-        ProcessingInterruption.__init__(
-            self, f"Internal error occurred: line={line!r}, msg={msg!r}")
+        super().__init__(f"Internal error occurred: line={line!r}, msg={msg!r}")
         self.line, self.msg = line, msg
         self.args = (line, msg)
 

@@ -282,7 +282,7 @@ class AmbiguousQuery(parserestrict.ParseError):
 class NoMatches(parserestrict.ParseError):
     """Exception for no matches where at least one match is required."""
     def __init__(self, token):
-        parserestrict.ParseError.__init__(self, f'{token!r}: no matches')
+        super().__init__(f'{token!r}: no matches')
 
 
 class Failure(ValueError):

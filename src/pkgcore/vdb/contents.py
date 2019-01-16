@@ -37,7 +37,7 @@ class LookupFsDev(fs.fsDev):
                 kwds["major"] = major
                 kwds["minor"] = minor
                 kwds["mode"] = st.st_mode
-        fs.fsDev.__init__(self, path, **kwds)
+        super().__init__(path, **kwds)
 
 
 class ContentsFile(contentsSet):
@@ -47,7 +47,7 @@ class ContentsFile(contentsSet):
 
         if not isinstance(source, (data_source.base, str)):
             raise TypeError("source must be either data_source, or a filepath")
-        contentsSet.__init__(self, mutable=True)
+        super().__init__(mutable=True)
         self._source = source
 
         if not create:

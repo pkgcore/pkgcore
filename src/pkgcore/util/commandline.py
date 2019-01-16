@@ -313,7 +313,7 @@ class StoreRepoObject(StoreConfigObject):
             kwargs['config_type'] = 'repo'
         self.allow_name_lookup = kwargs.pop("allow_name_lookup", True)
         self.allow_external_repos = kwargs.pop("allow_external_repos", False)
-        StoreConfigObject.__init__(self, *args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def _get_sections(self, config, namespace):
         domain = getattr(namespace, 'domain', None)
@@ -374,7 +374,7 @@ class DomainFromPath(StoreConfigObject):
 
     def __init__(self, *args, **kwargs):
         kwargs['config_type'] = 'domain'
-        StoreConfigObject.__init__(self, *args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def _load_obj(self, sections, requested_path):
         targets = list(find_domains_from_path(sections, requested_path))

@@ -98,7 +98,7 @@ def make_wrapper(wrapped_repo, configurable_attribute_name, attributes_to_wrap=(
             sf(self, 'repo', wrapped_repo)
             sf(self, '_cached_wrapped', {})
             sf(self, '_domain', None)
-            wrapper.__init__(self, pkg_instance)
+            super().__init__(pkg_instance)
 
         def __copy__(self):
             return self.__class__(

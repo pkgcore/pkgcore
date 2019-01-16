@@ -35,7 +35,7 @@ class FakePkgBase(package):
         data.setdefault("KEYWORDS", ' '.join(default_arches))
 
         cpv = CPV(cpvstr, versioned=True)
-        package.__init__(self, shared, repo, cpv.category, cpv.package, cpv.fullver)
+        super().__init__(shared, repo, cpv.category, cpv.package, cpv.fullver)
         object.__setattr__(self, "data", data)
 
 
@@ -88,7 +88,7 @@ class FakePkg(FakePkgBase):
             repo = FakeRepo(repo)
         elif isinstance(repo, (tuple, list)) and len(repo) < 3:
             repo = FakeRepo(*repo)
-        FakePkgBase.__init__(self, cpv, repo=factory(repo), **kwargs)
+        super().__init__(cpv, repo=factory(repo), **kwargs)
         if keywords is not None:
             object.__setattr__(self, "keywords", set(keywords))
         object.__setattr__(self, "slot", str(slot))

@@ -152,7 +152,7 @@ class paludis_flat_list(database):
 
     def __init__(self, *args, **config):
         config['auxdbkeys'] = self.auxdbkeys_order
-        database.__init__(self, *args, **config)
+        super().__init__(*args, **config)
 
     def _set_mtime(self, fp, values, eclasses):
         mtime = values.get("_mtime_", 0)

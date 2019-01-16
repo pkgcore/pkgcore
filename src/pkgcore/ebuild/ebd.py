@@ -502,7 +502,7 @@ class replace_op(format.replace):
     uninstall_kls = staticmethod(uninstall_op)
 
     def __init__(self, domain, old_pkg, new_pkg, observer):
-        format.replace.__init__(self, domain, old_pkg, new_pkg, observer)
+        super().__init__(domain, old_pkg, new_pkg, observer)
         self.install_op = install_op(domain, new_pkg, observer)
         self.install_op.set_is_replacing(old_pkg)
         self.uninstall_op = uninstall_op(domain, old_pkg, observer)
@@ -930,7 +930,7 @@ class misc_operations(ebd):
 
     def __init__(self, domain, *args, **kwds):
         self.domain = domain
-        ebd.__init__(self, *args, **kwds)
+        super().__init__(*args, **kwds)
 
     def configure(self, observer=None):
         return self._generic_phase('config', False, True)

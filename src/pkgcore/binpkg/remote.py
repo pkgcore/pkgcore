@@ -104,7 +104,7 @@ class PackagesCacheV0(cache.bulk):
         vkeys.update(self._deserialized_defaults)
         vkeys.update(x.upper() for x in self._stored_chfs)
         kwds["auxdbkeys"] = vkeys
-        cache.bulk.__init__(self, *args, **kwds)
+        super().__init__(*args, **kwds)
 
     def _handle(self):
         return readlines(self._location, True, False, False)

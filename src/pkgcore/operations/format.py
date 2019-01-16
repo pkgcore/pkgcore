@@ -81,7 +81,7 @@ class operations(_operations_mod.base):
         self.observer = observer
         self.pkg = pkg
         self.domain = domain
-        _operations_mod.base.__init__(self, disable_overrides, enable_overrides)
+        super().__init__(disable_overrides, enable_overrides)
 
     def _cmd_api_info(self):
         return self._cmd_implementation_info()
@@ -203,7 +203,7 @@ class build(build_base):
     }
 
     def __init__(self, domain, pkg, verified_files, observer):
-        build_base.__init__(self, domain, observer)
+        super().__init__(domain, observer)
         self.pkg = pkg
         self.verified_files = verified_files
 
@@ -257,7 +257,7 @@ class install(build_base):
     }
 
     def __init__(self, domain, newpkg, observer):
-        build_base.__init__(self, domain, observer)
+        super().__init__(domain, observer)
         self.new_pkg = self.pkg = newpkg
 
     def add_triggers(self, engine):
@@ -285,7 +285,7 @@ class uninstall(build_base):
     }
 
     def __init__(self, domain, oldpkg, observer):
-        build_base.__init__(self, domain, observer)
+        super().__init__(domain, observer)
         self.old_pkg = self.pkg = oldpkg
 
     def add_triggers(self, engine):
@@ -329,7 +329,7 @@ class empty_build_op(build_base):
     stage_depends = {}
 
     def __init__(self, pkg, observer=None, clean=False):
-        build_base.__init__(self, observer)
+        super().__init__(observer)
         self.pkg = pkg
 
     def cleanup(self):
@@ -345,13 +345,12 @@ class BuildError(Exception):
 
 class FailedDirectory(BuildError):
     def __init__(self, path, text):
-        BuildError.__init__(
-            self, "failed creating/ensuring dir %s: %s" % (path, text))
+        super().__init__(f"failed creating/ensuring dir {path}: {text}")
 
 
 class GenericBuildError(BuildError):
     def __init__(self, err):
-        BuildError.__init__(self, "failed build operation: %s" % (err,))
+        super().__init__(f"failed build operation: {err}")
         self.err = str(err)
 
 

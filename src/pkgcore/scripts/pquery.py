@@ -43,7 +43,7 @@ class DataSourceRestriction(values.base):
     """Turn a data_source into a line iterator and apply a restriction."""
 
     def __init__(self, childrestriction, **kwargs):
-        values.base.__init__(self, **kwargs)
+        super().__init__(**kwargs)
         self.restriction = childrestriction
 
     def __str__(self):

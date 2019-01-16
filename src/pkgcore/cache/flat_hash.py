@@ -146,4 +146,4 @@ class md5_cache(database):
 
     def __init__(self, location, **config):
         location = pjoin(location, 'metadata', 'md5-cache')
-        database.__init__(self, location, **config)
+        super().__init__(location, **config)

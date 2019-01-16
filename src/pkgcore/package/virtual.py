@@ -25,7 +25,7 @@ class package(metadata.package):
     __slots__ = ("__dict__",)
 
     def __init__(self, repo, provider, *a, **kwds):
-        metadata.package.__init__(self, repo, *a, **kwds)
+        super().__init__(repo, *a, **kwds)
         object.__setattr__(self, 'provider', provider)
         object.__setattr__(self, 'data', {})
 

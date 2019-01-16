@@ -21,7 +21,7 @@ class MalformedAtom(errors.InvalidDependency):
     def __init__(self, atom, err=''):
         err = ': ' + err if err else ''
         self.atom, self.err = atom, err
-        errors.InvalidDependency.__init__(self, str(self))
+        super().__init__(str(self))
 
     def __str__(self):
         return f"invalid package atom: '{self.atom}'{self.err}"
@@ -30,8 +30,7 @@ class MalformedAtom(errors.InvalidDependency):
 class InvalidVersion(errors.InvalidDependency):
 
     def __init__(self, ver, rev, err=''):
-        errors.InvalidDependency.__init__(
-            self,
+        super().__init__(
             f"Version restriction ver='{ver}', rev='{rev}', is malformed: error {err}")
         self.ver, self.rev, self.err = ver, rev, err
 

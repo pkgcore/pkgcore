@@ -698,7 +698,6 @@ class domain(config_domain):
     @klass.jit_attr
     def KV(self):
         """The version of the running kernel."""
-        print('retrieving KV')
         ret, version = spawn_get_output(['uname', '-r'])
         if ret == 0:
             return version[0].strip()
@@ -746,7 +745,10 @@ class domain(config_domain):
         """Group of configured, filtered package repos."""
         repos = RepositoryGroup()
         for repo in self.source_repos_raw:
-            self.add_repo(repo, filtered=True, group=repos)
+            try:
+                self.add_repo(repo, filtered=True, group=repos)
+            except repo_errors.RepoError as e:
+                logger.warning(f'skipping {repo.repo_id!r} repo: {e}')
         return repos
 
     @klass.jit_attr_none
@@ -754,7 +756,10 @@ class domain(config_domain):
         """Group of configured, installed package repos."""
         repos = RepositoryGroup()
         for repo in self.installed_repos_raw:
-            self.add_repo(repo, filtered=False, group=repos)
+            try:
+                self.add_repo(repo, filtered=False, group=repos)
+            except repo_errors.RepoError as e:
+                logger.warning(f'skipping {repo.repo_id!r} repo: {e}')
         return repos
 
     @klass.jit_attr_none

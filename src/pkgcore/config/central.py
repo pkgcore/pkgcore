@@ -254,6 +254,7 @@ class CompatConfigManager(object):
             obj = getattr(self._manager.objects, attr)
         return obj
 
+    __dir__ = klass.DirProxy("_manager")
 
 class ConfigManager(object):
 

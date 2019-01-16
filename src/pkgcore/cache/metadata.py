@@ -6,7 +6,7 @@
 cache backend designed for rsynced tree's pregenerated metadata.
 """
 
-__all__ = ("database", "paludis_flat_list", "protective_database")
+__all__ = ("database", "protective_database")
 
 import os
 
@@ -133,37 +133,6 @@ class database(flat_hash.database):
     def _set_mtime(self, fp, values, eclasses):
         if self._mtime_used:
             self._ensure_access(fp, mtime=values["_mtime_"])
-
-
-class paludis_flat_list(database):
-    """(Hopefully) write a paludis specific form of flat_list format cache.
-
-    Not very well tested.
-
-    Difference from a normal flat_list cache is that mtime is set to ebuild
-    for normal, for paludis it's max mtime of eclasses/ebuild involved.
-    """
-
-    pkgcore_config_type = ConfigHint(
-        {'readonly': 'bool', 'location': 'str', 'label': 'str'},
-        required=['location'],
-        positional=['location'],
-        typename='cache')
-
-    def __init__(self, *args, **config):
-        config['auxdbkeys'] = self.auxdbkeys_order
-        super().__init__(*args, **config)
-
-    def _set_mtime(self, fp, values, eclasses):
-        mtime = values.get("_mtime_", 0)
-
-        if eclasses:
-            self._ensure_access(
-                fp,
-                mtime=max(max(mtime for path, mtime in eclasses.values()),
-                          mtime))
-        else:
-            self._ensure_access(fp, mtime)
 
 
 class protective_database(database):

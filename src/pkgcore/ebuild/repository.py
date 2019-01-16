@@ -20,6 +20,7 @@ from snakeoil.demandload import demandload
 from snakeoil.fileutils import readlines
 from snakeoil.obj import make_kls
 from snakeoil.osutils import listdir_files, listdir_dirs, pjoin
+from snakeoil.strings import pluralism as _pl
 from snakeoil.weakrefs import WeakValCache
 
 from pkgcore.config import ConfigHint, configurable
@@ -642,14 +643,12 @@ class ConfiguredTree(configured.tree):
         :param fetcher: :obj:`pkgcore.fetch.base.fetcher` instance to use
             for getting access to fetchable files
         """
-
-        if "USE" not in domain_settings:
+        required_settings = {'USE', 'CHOST'}
+        missing_settings = required_settings.difference(domain_settings)
+        if missing_settings:
             raise errors.InitializationError(
-                f"{self.__class__} requires the following settings: 'USE', not supplied")
-
-        elif 'CHOST' not in domain_settings:
-            raise errors.InitializationError(
-                f"{self.__class__} requires the following settings: 'CHOST', not supplied")
+                f"{self.__class__} missing required setting{_pl(missing_settings)}: "
+                f"{', '.join(map(repr, missing_settings))}")
 
         chost = domain_settings['CHOST']
         scope_update = {'chost': chost}

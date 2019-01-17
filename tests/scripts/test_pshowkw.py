@@ -1,13 +1,13 @@
 # Copyright: 2018 Tim Harder <radhermit@gmail.com>
 # License: BSD/GPL2
 
+import pytest
+
 from pkgcore.config import basics, ConfigHint, configurable
 from pkgcore.ebuild.repo_objs import RepoConfig
 from pkgcore.scripts import pshowkw
 from pkgcore.test.misc import FakePkg, FakeEbuildRepo
 from pkgcore.test.scripts.helpers import ArgParseMixin
-
-from snakeoil.test import TestCase
 
 
 class FakeDomain(object):
@@ -26,7 +26,7 @@ class FakeRepo(FakeEbuildRepo):
 
     pkgcore_config_type = ConfigHint({}, typename='repo')
 
-    def __init__(self, repo_id='faker', arches=('amd64', 'x86')):
+    def __init__(self, repo_id='faker', arches=('amd64', 'x86', 'arm', 'arm64')):
         config = RepoConfig('nonexistent')
         object.__setattr__(config, 'raw_known_arches', frozenset(arches))
         pkgs = [
@@ -46,9 +46,18 @@ domain_config = basics.HardCodedConfigSection({
 })
 
 
-class CommandlineTest(TestCase, ArgParseMixin):
+class TestCommandline(ArgParseMixin):
 
     _argparser = pshowkw.argparser
+
+    def test_unknown_arches(self, capsys):
+        fake_repo = FakeRepo()
+        ns_kwargs = {'selected_repo': fake_repo}
+        with pytest.raises(SystemExit):
+            self.parse('-a', 'unknown', domain=domain_config, ns_kwargs=ns_kwargs)
+        captured = capsys.readouterr()
+        assert captured.err.strip() == (
+            "pshowkw: error: unknown arch: 'unknown' (choices: amd64, arm, arm64, x86)")
 
     def test_missing_target(self):
         self.assertError(
@@ -79,18 +88,34 @@ class CommandlineTest(TestCase, ArgParseMixin):
             ["amd64 x86"], '-c', 'gtk+',
             domain=domain_config, ns_kwargs=ns_kwargs)
 
+    def test_specified_arches(self):
+        fake_repo = FakeRepo()
+        ns_kwargs = {'selected_repo': fake_repo}
+        # specifying arch to be shown
+        self.assertOut(
+            ["amd64"], '-c', 'gtk+', '-a', 'amd64',
+            domain=domain_config, ns_kwargs=ns_kwargs)
+        # disabling arch from being shown
+        self.assertOut(
+            ["amd64"], '-c', 'gtk+', '-a=-x86',
+            domain=domain_config, ns_kwargs=ns_kwargs)
+        # no keywords matching specified arches
+        self.assertOut(
+            [''], '-c', 'gtk+', '-a' 'arm',
+            domain=domain_config, ns_kwargs=ns_kwargs)
+
     def test_tabular_output(self):
         fake_repo = FakeRepo()
         ns_kwargs = {'selected_repo': fake_repo}
         self.assertOut("""\
-      a
-      m   e s r
-      d x a l e
-      6 8 p o p
-      4 6 i t o
--------------------
- 2.24 + o 0 2 faker
- 3.22 + + 0 3 faker
+      a   a
+      m   r   e s r
+      d a m x a l e
+      6 r 6 8 p o p
+      4 m 4 6 i t o
+-----------------------
+ 2.24 + o o o 0 2 faker
+ 3.22 + o o + 0 3 faker
 """.splitlines(),
             'gtk+',
             domain=domain_config, ns_kwargs=ns_kwargs)

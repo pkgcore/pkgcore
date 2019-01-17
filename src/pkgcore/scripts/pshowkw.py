@@ -5,6 +5,8 @@
 
 import os
 
+from snakeoil.strings import pluralism as _pl
+
 from pkgcore.util import commandline, packages as pkgutils
 from pkgcore.util.tabulate import tabulate, tabulate_formats
 from pkgcore.repository import errors as repo_errors
@@ -85,13 +87,20 @@ def setup_arches(namespace, attr):
 
     arches = known_arches
     if namespace.arch is not None:
-        selected_arches = set(namespace.arch)
-        unknown_arches = selected_arches.difference(known_arches)
+        disabled_arches, enabled_arches = namespace.arch
+        disabled_arches = set(disabled_arches)
+        enabled_arches = set(enabled_arches)
+        unknown_arches = disabled_arches.difference(known_arches) | enabled_arches.difference(known_arches)
         if unknown_arches:
-            argparser.error(
-                'unknown arch(es): %s (choices: %s)' % (
-                    ', '.join(sorted(unknown_arches)), ', '.join(sorted(known_arches))))
-        arches = arches.intersection(selected_arches)
+            unknown = ', '.join(map(repr, sorted(unknown_arches)))
+            known = ', '.join(sorted(known_arches))
+            plural = _pl(unknown_arches, plural='es')
+            argparser.error(f'unknown arch{plural}: {unknown} (choices: {known})')
+        if enabled_arches:
+            arches = arches.intersection(enabled_arches)
+        if disabled_arches:
+            arches = arches - disabled_arches
+
     prefix_arches = set(x for x in arches if '-' in x)
     native_arches = arches.difference(prefix_arches)
     arches = native_arches
@@ -157,7 +166,6 @@ def main(options, out, err):
                 if options.prefix:
                     arches += sorted(options.arches.intersection(options.prefix_arches))
                 headers = [''] + arches + ['eapi', 'slot', 'repo']
-                dividers = (1, len(arches) + 1, len(arches) + 3)
                 data = render_rows(out, pkgs, arches)
                 table = tabulate(data, headers=headers, tablefmt=options.format)
                 if continued:
@@ -185,7 +193,5 @@ def render_rows(out, pkgs, arches):
                 row.append('*')
             else:
                 row.append('o')
-        row.append(str(pkg.eapi))
-        row.append(pkg.fullslot)
-        row.append(str(pkg.repo.repo_id))
+        row.extend([pkg.eapi, pkg.fullslot, pkg.repo.repo_id])
         yield row

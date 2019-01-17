@@ -5,7 +5,7 @@
 
 import os
 
-from pkgcore.util import commandline
+from pkgcore.util import commandline, packages as pkgutils
 from pkgcore.util.tabulate import tabulate, tabulate_formats
 from pkgcore.repository import errors as repo_errors
 
@@ -129,42 +129,45 @@ def _validate_args(parser, namespace):
 
 @argparser.bind_main_func
 def main(options, out, err):
+    continued = False
     for token, restriction in options.targets:
-        pkgs = options.repo.match(restriction)
+        for pkgs in pkgutils.groupby_pkg(options.repo.itermatch(restriction)):
+            if options.collapse:
+                keywords = set()
+                stable_keywords = set()
+                unstable_keywords = set()
+                for pkg in pkgs:
+                    for x in pkg.keywords:
+                        if x[0] == '~':
+                            unstable_keywords.add(x[1:])
+                        else:
+                            stable_keywords.add(x)
+                if options.unstable:
+                    keywords.update(unstable_keywords)
+                if options.only_unstable:
+                    keywords.update(unstable_keywords.difference(stable_keywords))
+                if not keywords or options.stable:
+                    keywords.update(stable_keywords)
+                arches = options.arches.intersection(keywords)
+                out.write(' '.join(
+                    sorted(arches.intersection(options.native_arches)) +
+                    sorted(arches.intersection(options.prefix_arches))))
+            else:
+                arches = sorted(options.arches.intersection(options.native_arches))
+                if options.prefix:
+                    arches += sorted(options.arches.intersection(options.prefix_arches))
+                headers = [''] + arches + ['eapi', 'slot', 'repo']
+                dividers = (1, len(arches) + 1, len(arches) + 3)
+                data = render_rows(out, pkgs, arches)
+                table = tabulate(data, headers=headers, tablefmt=options.format)
+                if continued:
+                    out.write()
+                out.write(table)
+            continued = True
 
-        if not pkgs:
-            err.write(f"{options.prog}: no matches for {token!r}")
-            return 1
-
-        if options.collapse:
-            keywords = set()
-            stable_keywords = set()
-            unstable_keywords = set()
-            for pkg in pkgs:
-                for x in pkg.keywords:
-                    if x[0] == '~':
-                        unstable_keywords.add(x[1:])
-                    else:
-                        stable_keywords.add(x)
-            if options.unstable:
-                keywords.update(unstable_keywords)
-            if options.only_unstable:
-                keywords.update(unstable_keywords.difference(stable_keywords))
-            if not keywords or options.stable:
-                keywords.update(stable_keywords)
-            arches = options.arches.intersection(keywords)
-            out.write(' '.join(
-                sorted(arches.intersection(options.native_arches)) +
-                sorted(arches.intersection(options.prefix_arches))))
-        else:
-            arches = sorted(options.arches.intersection(options.native_arches))
-            if options.prefix:
-                arches += sorted(options.arches.intersection(options.prefix_arches))
-            headers = [''] + arches + ['eapi', 'slot', 'repo']
-            dividers = (1, len(arches) + 1, len(arches) + 3)
-            data = render_rows(out, pkgs, arches)
-            table = tabulate(data, headers=headers, tablefmt=options.format)
-            out.write(table)
+    if not continued:
+        err.write(f"{options.prog}: no matches for {token!r}")
+        return 1
 
 
 def render_rows(out, pkgs, arches):

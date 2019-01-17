@@ -149,31 +149,35 @@ def _validate_args(parser, namespace):
         namespace.targets = [(token, restriction)]
 
 
+def collapsed_arches(options, pkgs):
+    """Collapse arches into a single set."""
+    keywords = set()
+    stable_keywords = set()
+    unstable_keywords = set()
+    for pkg in pkgs:
+        for x in pkg.keywords:
+            if x[0] == '~':
+                unstable_keywords.add(x[1:])
+            elif x in options.arches:
+                stable_keywords.add(x)
+    if options.unstable:
+        keywords.update(unstable_keywords)
+    if options.only_unstable:
+        keywords.update(unstable_keywords.difference(stable_keywords))
+    if not keywords or options.stable:
+        keywords.update(stable_keywords)
+    return (
+        sorted(keywords.intersection(options.native_arches)) +
+        sorted(keywords.intersection(options.prefix_arches)))
+
+
 @argparser.bind_main_func
 def main(options, out, err):
     continued = False
     for token, restriction in options.targets:
         for pkgs in pkgutils.groupby_pkg(options.repo.itermatch(restriction, sorter=sorted)):
             if options.collapse:
-                keywords = set()
-                stable_keywords = set()
-                unstable_keywords = set()
-                for pkg in pkgs:
-                    for x in pkg.keywords:
-                        if x[0] == '~':
-                            unstable_keywords.add(x[1:])
-                        else:
-                            stable_keywords.add(x)
-                if options.unstable:
-                    keywords.update(unstable_keywords)
-                if options.only_unstable:
-                    keywords.update(unstable_keywords.difference(stable_keywords))
-                if not keywords or options.stable:
-                    keywords.update(stable_keywords)
-                arches = options.arches.intersection(keywords)
-                out.write(' '.join(
-                    sorted(arches.intersection(options.native_arches)) +
-                    sorted(arches.intersection(options.prefix_arches))))
+                out.write(' '.join(collapsed_arches(options, pkgs)))
             else:
                 arches = sorted(options.arches.intersection(options.native_arches))
                 if options.prefix:

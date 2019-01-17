@@ -97,7 +97,7 @@ class TestCommandline(ArgParseMixin):
             [''], '-c', 'gtk+', '-a' 'arm',
             domain=domain_config, ns_kwargs=ns_kwargs)
 
-    def test_tabular_output(self):
+    def test_tabular_default_output(self):
         fake_repo = FakeRepo()
         ns_kwargs = {'selected_repo': fake_repo}
         self.assertOut("""\
@@ -112,4 +112,17 @@ keywords for x11-libs/gtk+:
  3.22 + o o + 0 3 faker
 """.splitlines(),
             'gtk+',
+            domain=domain_config, ns_kwargs=ns_kwargs)
+
+    def test_tabular_default_output(self):
+        fake_repo = FakeRepo()
+        ns_kwargs = {'selected_repo': fake_repo}
+        self.assertOut("""\
+keywords for x11-libs/gtk+:
+      | amd64   | arm   | arm64   | x86   | eapi   |   slot | repo
+------+---------+-------+---------+-------+--------+--------+--------
+ 2.24 | +       | o     | o       | o     | 0      |      2 | faker
+ 3.22 | +       | o     | o       | +     | 0      |      3 | faker
+""".splitlines(),
+            '-f', 'presto', 'gtk+',
             domain=domain_config, ns_kwargs=ns_kwargs)

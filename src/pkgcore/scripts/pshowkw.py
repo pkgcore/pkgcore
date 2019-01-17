@@ -1,7 +1,7 @@
 # Copyright: 2019 Tim Harder <radhermit@gmail.com>
 # License: BSD/GPL2
 
-"""display ebuild keywords"""
+"""display package keywords"""
 
 import os
 
@@ -71,7 +71,7 @@ def _setup_repos(namespace, attr):
 
 
 @argparser.bind_delayed_default(40, 'arches')
-def setup_arches(namespace, attr):
+def _setup_arches(namespace, attr):
     default_repo = namespace.config.get_default('repo')
 
     try:
@@ -149,7 +149,7 @@ def _validate_args(parser, namespace):
         namespace.targets = [(token, restriction)]
 
 
-def collapsed_arches(options, pkgs):
+def _collapse_arches(options, pkgs):
     """Collapse arches into a single set."""
     keywords = set()
     stable_keywords = set()
@@ -171,34 +171,8 @@ def collapsed_arches(options, pkgs):
         sorted(keywords.intersection(options.prefix_arches)))
 
 
-@argparser.bind_main_func
-def main(options, out, err):
-    continued = False
-    for token, restriction in options.targets:
-        for pkgs in pkgutils.groupby_pkg(options.repo.itermatch(restriction, sorter=sorted)):
-            if options.collapse:
-                out.write(' '.join(collapsed_arches(options, pkgs)))
-            else:
-                arches = sorted(options.arches.intersection(options.native_arches))
-                if options.prefix:
-                    arches += sorted(options.arches.intersection(options.prefix_arches))
-                headers = [''] + arches + ['eapi', 'slot', 'repo']
-                if continued:
-                    out.write()
-                if not options.pkg_dir:
-                    pkgs = list(pkgs)
-                    out.write(f'keywords for {pkgs[0].unversioned_atom}:')
-                data = render_rows(options, pkgs, arches)
-                table = tabulate(data, headers=headers, tablefmt=options.format)
-                out.write(table)
-            continued = True
-
-    if not continued:
-        err.write(f"{options.prog}: no matches for {token!r}")
-        return 1
-
-
-def render_rows(options, pkgs, arches):
+def _render_rows(options, pkgs, arches):
+    """Build rows for tabular data output."""
     for pkg in sorted(pkgs):
         keywords = set(pkg.keywords)
         row = [pkg.fullver]
@@ -215,3 +189,30 @@ def render_rows(options, pkgs, arches):
                 row.append('o')
         row.extend([pkg.eapi, pkg.fullslot, pkg.repo.repo_id])
         yield row
+
+
+@argparser.bind_main_func
+def main(options, out, err):
+    continued = False
+    for token, restriction in options.targets:
+        for pkgs in pkgutils.groupby_pkg(options.repo.itermatch(restriction, sorter=sorted)):
+            if options.collapse:
+                out.write(' '.join(_collapse_arches(options, pkgs)))
+            else:
+                arches = sorted(options.arches.intersection(options.native_arches))
+                if options.prefix:
+                    arches += sorted(options.arches.intersection(options.prefix_arches))
+                headers = [''] + arches + ['eapi', 'slot', 'repo']
+                if continued:
+                    out.write()
+                if not options.pkg_dir:
+                    pkgs = list(pkgs)
+                    out.write(f'keywords for {pkgs[0].unversioned_atom}:')
+                data = _render_rows(options, pkgs, arches)
+                table = tabulate(data, headers=headers, tablefmt=options.format)
+                out.write(table)
+            continued = True
+
+    if not continued:
+        err.write(f"{options.prog}: no matches for {token!r}")
+        return 1

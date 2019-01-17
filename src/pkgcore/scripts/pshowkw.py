@@ -153,7 +153,7 @@ def _validate_args(parser, namespace):
 def main(options, out, err):
     continued = False
     for token, restriction in options.targets:
-        for pkgs in pkgutils.groupby_pkg(options.repo.itermatch(restriction)):
+        for pkgs in pkgutils.groupby_pkg(options.repo.itermatch(restriction, sorter=sorted)):
             if options.collapse:
                 keywords = set()
                 stable_keywords = set()

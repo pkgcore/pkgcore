@@ -88,11 +88,15 @@ DataRow = namedtuple("DataRow", ["begin", "sep", "end"])
 #
 #   - either None, to display all table elements unconditionally,
 #   - or a list of elements not to be displayed if the table has column headers.
+
 TableFormat = namedtuple("TableFormat", [
     "lineabove", "linebelowheader", "linebetweenrows", "linebelow",
     "headerrow", "datarow", "padding", "with_header_hide",
     "vertical_headers",
 ])
+# TODO: use defaults param when >= python3.7 only
+# set default for vertical_headers params
+TableFormat.__new__.__defaults__ = (False,)
 
 
 def _pipe_segment_with_colons(align, colwidth):
@@ -214,7 +218,6 @@ _table_formats = {
                     datarow=DataRow("", "  ", ""),
                     padding=0,
                     with_header_hide=["lineabove", "linebelow"],
-                    vertical_headers=False,
         ),
     "plain":
         TableFormat(lineabove=None, linebelowheader=None,
@@ -222,7 +225,6 @@ _table_formats = {
                     headerrow=DataRow("", "  ", ""),
                     datarow=DataRow("", "  ", ""),
                     padding=0, with_header_hide=None,
-                    vertical_headers=False,
         ),
     "grid":
         TableFormat(lineabove=Line("+", "-", "+", "+"),
@@ -232,7 +234,6 @@ _table_formats = {
                     headerrow=DataRow("|", "|", "|"),
                     datarow=DataRow("|", "|", "|"),
                     padding=1, with_header_hide=None,
-                    vertical_headers=False,
         ),
     "fancy_grid":
         TableFormat(lineabove=Line("╒", "═", "╤", "╕"),
@@ -242,7 +243,6 @@ _table_formats = {
                     headerrow=DataRow("│", "│", "│"),
                     datarow=DataRow("│", "│", "│"),
                     padding=1, with_header_hide=None,
-                    vertical_headers=False,
         ),
     "github":
         TableFormat(lineabove=Line("|", "-", "|", "|"),
@@ -253,7 +253,6 @@ _table_formats = {
                     datarow=DataRow("|", "|", "|"),
                     padding=1,
                     with_header_hide=["lineabove"],
-                    vertical_headers=False,
         ),
     "pipe":
         TableFormat(lineabove=_pipe_line_with_colons,
@@ -264,7 +263,6 @@ _table_formats = {
                     datarow=DataRow("|", "|", "|"),
                     padding=1,
                     with_header_hide=["lineabove"],
-                    vertical_headers=False,
         ),
     "orgtbl":
         TableFormat(lineabove=None,
@@ -274,7 +272,6 @@ _table_formats = {
                     headerrow=DataRow("|", "|", "|"),
                     datarow=DataRow("|", "|", "|"),
                     padding=1, with_header_hide=None,
-                    vertical_headers=False,
         ),
     "jira":
         TableFormat(lineabove=None,
@@ -284,7 +281,6 @@ _table_formats = {
                     headerrow=DataRow("||", "||", "||"),
                     datarow=DataRow("|", "|", "|"),
                     padding=1, with_header_hide=None,
-                    vertical_headers=False,
         ),
     "presto":
         TableFormat(lineabove=None,
@@ -294,7 +290,6 @@ _table_formats = {
                     headerrow=DataRow("", "|", ""),
                     datarow=DataRow("", "|", ""),
                     padding=1, with_header_hide=None,
-                    vertical_headers=False,
         ),
     "pshowkw":
         TableFormat(lineabove=None,
@@ -314,7 +309,6 @@ _table_formats = {
                     headerrow=DataRow("|", "|", "|"),
                     datarow=DataRow("|", "|", "|"),
                     padding=1, with_header_hide=None,
-                    vertical_headers=False,
         ),
     "rst":
         TableFormat(lineabove=Line("", "=", "  ", ""),
@@ -324,7 +318,6 @@ _table_formats = {
                     headerrow=DataRow("", "  ", ""),
                     datarow=DataRow("", "  ", ""),
                     padding=0, with_header_hide=None,
-                    vertical_headers=False,
         ),
     "mediawiki":
         TableFormat(lineabove=Line("{| class=\"wikitable\" style=\"text-align: left;\"",
@@ -335,7 +328,6 @@ _table_formats = {
                     headerrow=partial(_mediawiki_row_with_attrs, "!"),
                     datarow=partial(_mediawiki_row_with_attrs, "|"),
                     padding=0, with_header_hide=None,
-                    vertical_headers=False,
         ),
     "moinmoin":
         TableFormat(lineabove=None,
@@ -345,7 +337,6 @@ _table_formats = {
                     headerrow=partial(_moin_row_with_attrs,"||",header="'''"),
                     datarow=partial(_moin_row_with_attrs,"||"),
                     padding=1, with_header_hide=None,
-                    vertical_headers=False,
         ),
     "youtrack":
         TableFormat(lineabove=None,
@@ -355,7 +346,6 @@ _table_formats = {
                     headerrow=DataRow("|| ", " || ", " || "),
                     datarow=DataRow("| ", " | ", " |"),
                     padding=1, with_header_hide=None,
-                    vertical_headers=False,
         ),
     "html":
         TableFormat(lineabove=_html_begin_table_without_header,
@@ -365,7 +355,6 @@ _table_formats = {
                     headerrow=partial(_html_row_with_attrs, "th"),
                     datarow=partial(_html_row_with_attrs, "td"),
                     padding=0, with_header_hide=["lineabove"],
-                    vertical_headers=False,
         ),
     "latex":
         TableFormat(lineabove=_latex_line_begin_tabular,
@@ -375,7 +364,6 @@ _table_formats = {
                     headerrow=_latex_row,
                     datarow=_latex_row,
                     padding=1, with_header_hide=None,
-                    vertical_headers=False,
         ),
     "latex_raw":
         TableFormat(lineabove=_latex_line_begin_tabular,
@@ -385,7 +373,6 @@ _table_formats = {
                     headerrow=partial(_latex_row, escrules={}),
                     datarow=partial(_latex_row, escrules={}),
                     padding=1, with_header_hide=None,
-                    vertical_headers=False,
         ),
     "latex_booktabs":
         TableFormat(lineabove=partial(_latex_line_begin_tabular, booktabs=True),
@@ -395,7 +382,6 @@ _table_formats = {
                     headerrow=_latex_row,
                     datarow=_latex_row,
                     padding=1, with_header_hide=None,
-                    vertical_headers=False,
         ),
     "tsv":
         TableFormat(lineabove=None, linebelowheader=None,
@@ -403,7 +389,6 @@ _table_formats = {
                     headerrow=DataRow("", "\t", ""),
                     datarow=DataRow("", "\t", ""),
                     padding=0, with_header_hide=None,
-                    vertical_headers=False,
         ),
     "textile":
         TableFormat(lineabove=None, linebelowheader=None,
@@ -411,7 +396,6 @@ _table_formats = {
                     headerrow=DataRow("|_. ", "|_.", "|"),
                     datarow=_textile_row_with_attrs,
                     padding=1, with_header_hide=None,
-                    vertical_headers=False,
         ),
 }
 

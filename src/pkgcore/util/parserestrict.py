@@ -102,9 +102,18 @@ def parse_match(text):
         text, slot = text.rsplit(':', 1)
         slot, _sep, subslot = slot.partition('/')
         if slot:
-            restrictions.append(restricts.SlotDep(slot))
+            if '*' in slot:
+                r = convert_glob(slot)
+                if r is not None:
+                    restrictions.append(packages.PackageRestriction("slot", r))
+            else:
+                restrictions.append(restricts.SlotDep(slot))
         if subslot:
-            restrictions.append(restricts.SubSlotDep(subslot))
+            if '*' in subslot:
+                if r is not None:
+                    restrictions.append(packages.PackageRestriction("subslot", r))
+            else:
+                restrictions.append(restricts.SubSlotDep(subslot))
 
     tsplit = text.rsplit("/", 1)
     if len(tsplit) == 1:

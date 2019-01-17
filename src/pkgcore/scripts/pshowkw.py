@@ -7,6 +7,7 @@ import os
 
 from snakeoil.strings import pluralism as _pl
 
+from pkgcore.ebuild import restricts
 from pkgcore.util import commandline, packages as pkgutils
 from pkgcore.util.tabulate import tabulate, tabulate_formats
 from pkgcore.repository import errors as repo_errors
@@ -123,17 +124,22 @@ def setup_arches(namespace, attr):
 
 @argparser.bind_final_check
 def _validate_args(parser, namespace):
-    # Use a path restriction if we're in a repo, obviously it'll work faster if
-    # we're in an invididual ebuild dir but we're not that restrictive.
     if not namespace.targets:
-        try:
-            restriction = namespace.repo.path_restrict(namespace.cwd)
-        except (AttributeError, ValueError):
-            if namespace.selected_repo:
-                parser.error(f'not in specified repo: {namespace.selected_repo.repo_id!r}')
-            parser.error('missing target argument and not in a supported repo')
+        if namespace.selected_repo:
+            # use repo restriction since no targets specified
+            restriction = restricts.RepositoryDep(namespace.selected_repo.repo_id)
+            token = namespace.selected_repo.repo_id
+        else:
+            # Use a path restriction if we're in a repo, obviously it'll work
+            # faster if we're in an invididual ebuild dir but we're not that
+            # restrictive.
+            try:
+                restriction = namespace.repo.path_restrict(namespace.cwd)
+                token = namespace.cwd
+            except (AttributeError, ValueError):
+                parser.error('missing target argument and not in a supported repo')
 
-        namespace.targets = [(namespace.cwd, restriction)]
+        namespace.targets = [(token, restriction)]
 
 
 @argparser.bind_main_func
@@ -166,7 +172,7 @@ def main(options, out, err):
                 if options.prefix:
                     arches += sorted(options.arches.intersection(options.prefix_arches))
                 headers = [''] + arches + ['eapi', 'slot', 'repo']
-                data = render_rows(out, pkgs, arches)
+                data = render_rows(options, pkgs, arches)
                 table = tabulate(data, headers=headers, tablefmt=options.format)
                 if continued:
                     out.write()
@@ -178,7 +184,7 @@ def main(options, out, err):
         return 1
 
 
-def render_rows(out, pkgs, arches):
+def render_rows(options, pkgs, arches):
     for pkg in sorted(pkgs):
         keywords = set(pkg.keywords)
         row = [pkg.fullver]

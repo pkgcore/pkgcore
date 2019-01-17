@@ -64,13 +64,6 @@ class TestCommandline(ArgParseMixin):
             'missing target argument and not in a supported repo',
             domain=domain_config)
 
-    def test_not_in_specified_repo(self):
-        fake_repo = FakeRepo()
-        ns_kwargs = {'selected_repo': fake_repo}
-        self.assertError(
-            f"not in specified repo: {fake_repo.repo_id!r}",
-            domain=domain_config, ns_kwargs=ns_kwargs)
-
     def test_no_matches(self):
         fake_repo = FakeRepo()
         ns_kwargs = {'selected_repo': fake_repo}

@@ -1345,10 +1345,12 @@ def tabulate(tabular_data, headers=(), tablefmt="simple",
         assert isinstance(colalign, Iterable)
         for idx, align in enumerate(colalign):
             aligns[idx] = align
-    if fmt.vertical_headers:
-        minwidths = [1] * len(headers)
+    if not headers:
+        minwidths = [0] * len(cols)
+    elif fmt.vertical_headers:
+        minwidths = [1] * len(cols)
     else:
-        minwidths = [width_fn(h) + MIN_PADDING for h in headers] if headers else [0]*len(cols)
+        minwidths = [width_fn(h) + MIN_PADDING for h in headers]
     cols = [_align_column(c, a, minw, has_invisible, enable_widechars, is_multiline)
             for c, a, minw in zip(cols, aligns, minwidths)]
 
@@ -1396,10 +1398,13 @@ def _expand_numparse(disable_numparse, column_count):
         return [not disable_numparse] * column_count
 
 
-def _pad_row(cells, padding):
+def _pad_row(cells, padding, squash=False):
     if cells:
         pad = " " * padding
-        padded_cells = [pad + cell for cell in cells]
+        if squash:
+            padded_cells = [pad + cell for cell in cells]
+        else:
+            padded_cells = [pad + cell + pad for cell in cells]
         return padded_cells
     else:
         return cells
@@ -1477,10 +1482,10 @@ def _format_table(fmt, headers, rows, colwidths, colaligns, is_multiline):
         append_row = _append_basic_row
 
     if fmt.vertical_headers:
-        padded_headers = [pad_row(line, pad) for line in headers]
+        padded_headers = [pad_row(line, pad, squash=True) for line in headers]
     else:
         padded_headers = pad_row(headers, pad)
-    padded_rows = [pad_row(row, pad) for row in rows]
+    padded_rows = [pad_row(row, pad, squash=fmt.vertical_headers) for row in rows]
 
     if fmt.lineabove and "lineabove" not in hidden:
         _append_line(lines, padded_widths, colaligns, fmt.lineabove)

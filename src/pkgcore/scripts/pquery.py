@@ -628,9 +628,17 @@ def bind_add_query(*args, **kwds):
     bind='final_converter', type=None,
     help="extended atom matching of pkgs")
 def matches_finalize(targets, namespace):
-    if not targets:
-        return []
     repos = multiplex.tree(*namespace.repos)
+
+    # If current working dir is in a repo, build a path restriction; otherwise
+    # match everything.
+    if not targets:
+        cwd = os.getcwd()
+        if cwd in repos:
+            targets = [cwd]
+        else:
+            return []
+
     restrictions = []
     for target in targets:
         try:

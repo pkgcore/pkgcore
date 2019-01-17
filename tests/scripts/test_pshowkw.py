@@ -101,6 +101,7 @@ class TestCommandline(ArgParseMixin):
         fake_repo = FakeRepo()
         ns_kwargs = {'selected_repo': fake_repo}
         self.assertOut("""\
+keywords for x11-libs/gtk+:
       a   a
       m   r   e s r
       d a m x a l e

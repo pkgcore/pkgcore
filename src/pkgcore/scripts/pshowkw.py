@@ -124,6 +124,8 @@ def setup_arches(namespace, attr):
 
 @argparser.bind_final_check
 def _validate_args(parser, namespace):
+    namespace.pkg_dir = False
+
     if not namespace.targets:
         if namespace.selected_repo:
             # use repo restriction since no targets specified
@@ -138,6 +140,11 @@ def _validate_args(parser, namespace):
                 token = namespace.cwd
             except (AttributeError, ValueError):
                 parser.error('missing target argument and not in a supported repo')
+
+            # determine if we're grabbing the keywords for a single pkg in cwd
+            namespace.pkg_dir = any(
+                isinstance(x, restricts.PackageDep)
+                for x in reversed(restriction.restrictions))
 
         namespace.targets = [(token, restriction)]
 
@@ -172,10 +179,13 @@ def main(options, out, err):
                 if options.prefix:
                     arches += sorted(options.arches.intersection(options.prefix_arches))
                 headers = [''] + arches + ['eapi', 'slot', 'repo']
-                data = render_rows(options, pkgs, arches)
-                table = tabulate(data, headers=headers, tablefmt=options.format)
                 if continued:
                     out.write()
+                if not options.pkg_dir:
+                    pkgs = list(pkgs)
+                    out.write(f'keywords for {pkgs[0].unversioned_atom}:')
+                data = render_rows(options, pkgs, arches)
+                table = tabulate(data, headers=headers, tablefmt=options.format)
                 out.write(table)
             continued = True
 

@@ -6,10 +6,15 @@
 import os
 
 from pkgcore.util import commandline
+from pkgcore.util.tabulate import tabulate, tabulate_formats
 from pkgcore.repository import errors as repo_errors
 
 
 argparser = commandline.ArgumentParser(description=__doc__, script=(__file__, __name__))
+argparser.add_argument(
+    '-f', '--format', default='pshowkw', choices=tabulate_formats,
+    help='format to display keywords table')
+
 arch_options = argparser.add_argument_group('arch options')
 arch_options.add_argument(
     '-s', '--stable', action='store_true',
@@ -152,18 +157,32 @@ def main(options, out, err):
                 sorted(arches.intersection(options.native_arches)) +
                 sorted(arches.intersection(options.prefix_arches))))
         else:
-            out.write(PkgTable(pkgs, options.arches))
+            headers = ['']
+            arches = sorted(options.arches.intersection(options.native_arches))
+            if options.prefix:
+                arches += sorted(options.arches.intersection(options.prefix_arches))
+            headers = [''] + arches + ['eapi', 'slot', 'subslot', 'repo']
+            dividers = (1, len(arches) + 1, len(arches) + 3)
+            data = render_rows(out, pkgs, arches)
+            table = tabulate(data, headers=headers, tablefmt=options.format)
+            out.write(table)
 
 
-# TODO: convert to use generic tabular output mechanism
-class PkgTable(object):
-
-    def __init__(self, pkgs, arches):
-        self.pkgs = pkgs
-        self.arches = arches
-
-    def __str__(self):
-        s = []
-        for pkg in sorted(self.pkgs):
-            s.append('{}: {}'.format(pkg.fullver, ' '.join(pkg.keywords)))
-        return '\n'.join(s)
+def render_rows(out, pkgs, arches):
+    for pkg in pkgs:
+        keywords = set(pkg.keywords)
+        row = [pkg.fullver]
+        for arch in arches:
+            if arch in keywords:
+                row.append('+')
+            elif f'~{arch}' in keywords:
+                row.append('~')
+            elif '-*' in keywords or f'-{arch}' in keywords:
+                row.append('-')
+            else:
+                row.append('o')
+        row.append(str(pkg.eapi))
+        row.append(pkg.slot)
+        row.append(pkg.subslot)
+        row.append(str(pkg.repo.repo_id))
+        yield row

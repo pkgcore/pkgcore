@@ -157,11 +157,10 @@ def main(options, out, err):
                 sorted(arches.intersection(options.native_arches)) +
                 sorted(arches.intersection(options.prefix_arches))))
         else:
-            headers = ['']
             arches = sorted(options.arches.intersection(options.native_arches))
             if options.prefix:
                 arches += sorted(options.arches.intersection(options.prefix_arches))
-            headers = [''] + arches + ['eapi', 'slot', 'subslot', 'repo']
+            headers = [''] + arches + ['eapi', 'slot', 'repo']
             dividers = (1, len(arches) + 1, len(arches) + 3)
             data = render_rows(out, pkgs, arches)
             table = tabulate(data, headers=headers, tablefmt=options.format)
@@ -169,7 +168,7 @@ def main(options, out, err):
 
 
 def render_rows(out, pkgs, arches):
-    for pkg in pkgs:
+    for pkg in sorted(pkgs):
         keywords = set(pkg.keywords)
         row = [pkg.fullver]
         for arch in arches:
@@ -177,12 +176,13 @@ def render_rows(out, pkgs, arches):
                 row.append('+')
             elif f'~{arch}' in keywords:
                 row.append('~')
-            elif '-*' in keywords or f'-{arch}' in keywords:
+            elif f'-{arch}' in keywords:
                 row.append('-')
+            elif '-*' in keywords:
+                row.append('*')
             else:
                 row.append('o')
         row.append(str(pkg.eapi))
-        row.append(pkg.slot)
-        row.append(pkg.subslot)
+        row.append(pkg.fullslot)
         row.append(str(pkg.repo.repo_id))
         yield row

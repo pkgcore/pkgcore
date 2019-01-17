@@ -30,11 +30,11 @@ class FakeRepo(FakeEbuildRepo):
         config = RepoConfig('nonexistent')
         object.__setattr__(config, 'raw_known_arches', frozenset(arches))
         pkgs = [
-            FakePkg('app-arch/bzip2-1.0.1-r1', repo=self, slot='0', keywords=('x86',)),
-            FakePkg('app-arch/bzip2-1.0.5-r2', repo=self, slot='0', keywords=('x86',)),
-            FakePkg('sys-apps/coreutils-8.25', repo=self, slot='0'),
-            FakePkg('x11-libs/gtk+-2.24', repo=self, slot='2', keywords=('amd64',)),
-            FakePkg('x11-libs/gtk+-3.22', repo=self, slot='3', keywords=('amd64', 'x86')),
+            FakePkg('app-arch/bzip2-1.0.1-r1', repo=self, data={'SLOT': '0'}, keywords=('x86',)),
+            FakePkg('app-arch/bzip2-1.0.5-r2', repo=self, data={'SLOT': '0'}, keywords=('x86',)),
+            FakePkg('sys-apps/coreutils-8.25', repo=self, data={'SLOT': '0'}),
+            FakePkg('x11-libs/gtk+-2.24', repo=self, data={'SLOT': '2'}, keywords=('amd64',)),
+            FakePkg('x11-libs/gtk+-3.22', repo=self, data={'SLOT': '3'}, keywords=('amd64', 'x86')),
         ]
         super().__init__(repo_id=repo_id, pkgs=pkgs, config=config)
 
@@ -83,16 +83,14 @@ class CommandlineTest(TestCase, ArgParseMixin):
         fake_repo = FakeRepo()
         ns_kwargs = {'selected_repo': fake_repo}
         self.assertOut("""\
-              s
-              u
-      a       b
-      m   e s s r
-      d x a l l e
-      6 8 p o o p
-      4 6 i t t o
----------------------
- 2.24 + o 0 2 2 faker
- 3.22 + + 0 3 3 faker
+      a
+      m   e s r
+      d x a l e
+      6 8 p o p
+      4 6 i t o
+-------------------
+ 2.24 + o 0 2 faker
+ 3.22 + + 0 3 faker
 """.splitlines(),
             'gtk+',
             domain=domain_config, ns_kwargs=ns_kwargs)

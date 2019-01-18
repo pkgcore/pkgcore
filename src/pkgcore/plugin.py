@@ -67,21 +67,9 @@ def _process_plugins(package, sequence, filter_disabled=False):
 
 def _process_plugin(package, plug, filter_disabled=False):
     if isinstance(plug.target, str):
-        try:
-            plug = modules.load_any(plug.target)
-        except modules.FailedImport as e:
-            logger.exception(
-                "plugin import for %s failed processing file %s, entry %s: %s",
-                package.__name__, plug.source, plug.target, e)
-            return None
+        plug = modules.load_any(plug.target)
     elif isinstance(plug.target, int):
-        try:
-            module = modules.load_any(plug.source)
-        except modules.FailedImport as e:
-            logger.exception(
-                "plugin import for %s failed processing file %s: %s",
-                package.__name__, plug.source, e)
-            return None
+        module = modules.load_any(plug.source)
         plugs = getattr(module, PLUGIN_ATTR, {})
         plugs = plugs.get(plug.key, [])
         if len(plugs) <= plug.target:

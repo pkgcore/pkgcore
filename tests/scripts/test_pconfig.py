@@ -4,6 +4,7 @@
 import sys
 
 from snakeoil.test import TestCase
+import pytest
 
 from pkgcore.config import configurable, basics, errors
 from pkgcore.scripts import pconfig
@@ -40,25 +41,28 @@ def increment(inc=()):
     """Noop."""
 
 
-class DescribeClassTest(TestCase, ArgParseMixin):
+class DescribeClassTest(ArgParseMixin):
 
     _argparser = pconfig.describe_class
 
-    def test_parser(self):
+    def test_parser(self, capsys):
         self.assertError(
             'the following arguments are required: target_class')
 
-        if sys.hexversion >= 0x03050000:
-            module = "module 'pkgcore'"
-        else:
-            module = "'module' object"
+        module = "module 'pkgcore'"
 
-        self.assertError(
-            f"argument target_class: Failed importing target 'pkgcore.spork': '{module} has no attribute 'spork''",
-            'pkgcore.spork')
-        self.assertError(
-            f"argument target_class: Failed importing target 'pkgcore.a': '{module} has no attribute 'a''",
-            'pkgcore.a', 'pkgcore.b')
+        with pytest.raises(SystemExit):
+            self.parse('pkgcore.spork')
+        captured = capsys.readouterr()
+        assert captured.err.strip() == (
+            f"argument target_class: Failed importing target 'pkgcore.spork': '{module} has no attribute 'spork''")
+
+        with pytest.raises(SystemExit):
+            self.parse('pkgcore.a', 'pkgcore.b')
+        captured = capsys.readouterr()
+        assert captured.err.strip() == (
+            f"argument target_class: Failed importing target 'pkgcore.a': '{module} has no attribute 'a''")
+
         self.parse('pkgcore.scripts')
 
     def test_describe_class(self):

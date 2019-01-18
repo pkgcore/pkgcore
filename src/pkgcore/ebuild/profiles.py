@@ -6,11 +6,12 @@ __all__ = (
     "UserProfile",
 )
 
+from collections import namedtuple
 from functools import partial
 from itertools import chain
 import os
 
-from snakeoil import caching, klass, sequences
+from snakeoil import caching, klass
 from snakeoil.bash import iter_read_bash, read_bash_dict
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.containers import InvertedContains
@@ -151,7 +152,7 @@ class ProfileNode(object, metaclass=caching.WeakInstMeta):
     system = klass.alias_attr("packages.system")
     visibility = klass.alias_attr("packages.visibility")
 
-    _packages_kls = sequences.namedtuple("packages", ("system", "visibility"))
+    _packages_kls = namedtuple("packages", ("system", "visibility"))
 
     @load_property("packages")
     def packages(self, data):

@@ -17,13 +17,13 @@ __all__ = ("initialize_cache", "get_plugins", "get_plugin")
 # latter an installed plugin issue. May have to change this if it
 # causes problems.
 
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 from importlib import import_module
 import operator
 import os.path
 import sys
 
-from snakeoil import mappings, modules, sequences
+from snakeoil import mappings, modules
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.demandload import demandload
 from snakeoil.osutils import pjoin, listdir_files
@@ -35,7 +35,7 @@ demandload(
 )
 
 
-_plugin_data = sequences.namedtuple(
+_plugin_data = namedtuple(
     "_plugin_data", ["key", "priority", "source", "target"])
 
 PLUGIN_ATTR = 'pkgcore_plugins'

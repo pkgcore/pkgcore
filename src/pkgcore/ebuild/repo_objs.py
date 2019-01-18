@@ -10,6 +10,7 @@ __all__ = (
     "SharedPkgData", "Licenses", "OverlayedLicenses"
 )
 
+from collections import namedtuple
 from itertools import chain
 
 from snakeoil import klass, mappings
@@ -17,7 +18,6 @@ from snakeoil.caching import WeakInstMeta
 from snakeoil.currying import post_curry
 from snakeoil.demandload import demandload
 from snakeoil.osutils import pjoin, listdir_files, listdir
-from snakeoil.sequences import namedtuple
 
 from pkgcore.config import ConfigHint
 from pkgcore.repository import syncable, errors as repo_errors

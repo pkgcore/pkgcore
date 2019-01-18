@@ -9,16 +9,16 @@ A lot of extra documentation on this is in dev-notes/config.rst.
 
 __all__ = ("CollapsedConfig", "ConfigManager",)
 
-import collections
+from collections import defaultdict, deque, namedtuple
 from itertools import chain
 import weakref
 
-from snakeoil import mappings, sequences, klass
+from snakeoil import mappings, klass
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
 
 from pkgcore.config import errors, basics
 
-_section_data = sequences.namedtuple('_section_data', ['name', 'section'])
+_section_data = namedtuple('_section_data', ['name', 'section'])
 
 
 class _ConfigMapping(mappings.DictMixin):
@@ -62,7 +62,7 @@ class _ConfigMapping(mappings.DictMixin):
         return conf is not None and conf.type.name == self.typename
 
 
-class _ConfigStack(collections.defaultdict):
+class _ConfigStack(defaultdict):
 
     def __init__(self):
         super().__init__(list)
@@ -305,7 +305,7 @@ class ConfigManager(object):
         self.config_sources = []
         # Cache mapping confname to CollapsedConfig.
         self.rendered_sections = {}
-        self.sections_lookup = collections.defaultdict(collections.deque)
+        self.sections_lookup = defaultdict(deque)
         # force regeneration.
         self._types = klass._uncached_singleton
         for config in self.original_config_sources:
@@ -426,7 +426,7 @@ class ConfigManager(object):
                         # nothing else to self inherit.
                         raise errors.ConfigurationError(
                             f'Self-inherit {inherit!r} cannot be found')
-                    if isinstance(section_stack, collections.deque):
+                    if isinstance(section_stack, deque):
                         slist.append((inherit, list(section_stack)[1:]))
                     else:
                         slist.append((inherit, section_stack[1:]))
@@ -478,7 +478,7 @@ class ConfigManager(object):
 
     @klass.jit_attr
     def types(self):
-        type_map = collections.defaultdict(dict)
+        type_map = defaultdict(dict)
         for name, sections in self.sections_lookup.items():
             if self._section_is_inherit_only(sections[0]):
                 continue

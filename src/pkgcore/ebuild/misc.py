@@ -13,14 +13,14 @@ __all__ = (
     "sort_keywords",
 )
 
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
 from itertools import chain
 
 from snakeoil import mappings
 from snakeoil.klass import generic_equality, alias_method
-from snakeoil.sequences import namedtuple, iflatten_instance
+from snakeoil.sequences import iflatten_instance
 
 from pkgcore.ebuild import atom
 from pkgcore.restrictions import packages, restriction, boolean

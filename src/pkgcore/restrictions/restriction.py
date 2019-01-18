@@ -75,6 +75,14 @@ class AlwaysBool(base):
         return '<%s always %r @%#8x>' % (
             self.__class__.__name__, self.negate, id(self))
 
+    def __getstate__(self):
+        return self.negate, self.type
+
+    def __setstate__(self, state):
+        negate, node_type = state
+        object.__setattr__(self, "negate", negate)
+        object.__setattr__(self, "type", node_type)
+
 
 class Negate(base):
     """wrap and negate a restriction instance"""

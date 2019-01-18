@@ -15,8 +15,15 @@ from pkgcore.repository import errors as repo_errors
 
 argparser = commandline.ArgumentParser(description=__doc__, script=(__file__, __name__))
 argparser.add_argument(
-    '-f', '--format', default='pshowkw', choices=tabulate_formats,
-    help='format to display keywords table')
+    '-f', '--format', default='pshowkw', metavar='FORMAT',
+    choices=tabulate_formats,
+    help='keywords table format',
+    docs=f"""
+        Output table using specified tabular format (defaults to compressed,
+        custom pshowkw format).
+
+        Available formats: {', '.join(tabulate_formats)}
+    """)
 
 arch_options = argparser.add_argument_group('arch options')
 arch_options.add_argument(

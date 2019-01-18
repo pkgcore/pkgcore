@@ -8,7 +8,15 @@ Internal constants.
 import os
 osp = os.path
 import sys
+
 from snakeoil import mappings
+
+from . import __title__
+
+
+_reporoot = osp.realpath(__file__).rsplit(os.path.sep, 3)[0]
+_module = sys.modules[__name__]
+
 try:
     # This is a file written during pkgcore installation;
     # if it exists, we defer to it.  If it doesn't, then we're
@@ -17,12 +25,9 @@ try:
 except ImportError:
     _defaults = object()
 
-SYSTEM_CONF_FILE   = '/etc/pkgcore/pkgcore.conf'
-USER_CONF_FILE     = osp.expanduser('~/.config/pkgcore/pkgcore.conf')
-
 
 def _GET_CONST(attr, default_value, allow_environment_override=False):
-    consts = mappings.ProxiedAttrs(sys.modules[__name__])
+    consts = mappings.ProxiedAttrs(_module)
     is_tuple = not isinstance(default_value, str)
     if is_tuple:
         default_value = tuple(x % consts for x in default_value)
@@ -37,7 +42,17 @@ def _GET_CONST(attr, default_value, allow_environment_override=False):
     return result
 
 
-_reporoot = osp.realpath(__file__).rsplit(os.path.sep, 3)[0]
+# determine XDG compatible paths
+for xdg_var, var_name, fallback_dir in (
+        ('XDG_CONFIG_HOME', 'USER_CONFIG_PATH', '~/.config'),
+        ('XDG_CACHE_HOME', 'USER_CACHE_PATH', '~/.cache'),
+        ('XDG_DATA_HOME', 'USER_DATA_PATH', '~/.local/share')):
+    setattr(_module, var_name,
+            os.environ.get(xdg_var, osp.join(osp.expanduser(fallback_dir), __title__)))
+
+SYSTEM_CONF_FILE = '/etc/pkgcore/pkgcore.conf'
+USER_CONF_FILE = osp.join(getattr(_module, 'USER_CONFIG_PATH'), 'pkgcore.conf')
+
 DATA_PATH = _GET_CONST('DATA_PATH', _reporoot, allow_environment_override=True)
 LIBDIR_PATH = _GET_CONST('LIBDIR_PATH', _reporoot)
 CONFIG_PATH = _GET_CONST('CONFIG_PATH', '%(DATA_PATH)s/config')

@@ -643,7 +643,11 @@ class SquashfsRepoConfig(RepoConfig):
         """Mount the squashfs archive onto the repo in a mount namespace."""
         # enable a user namespace if not running as root
         unshare_kwds = {'mount': True, 'user': not os.getuid() == 0}
-        simple_unshare(**unshare_kwds)
+        try:
+            simple_unshare(**unshare_kwds)
+        except OSError as e:
+            raise repo_errors.InitializationError(
+                f'namespace support unavailable: {e.strerror}')
 
         # First try using mount binary to automatically handle setting up loop
         # device -- this only works with real root perms since loopback device
@@ -651,7 +655,9 @@ class SquashfsRepoConfig(RepoConfig):
         #
         # TODO: switch to capture_output=True when >= py3.7
         ret = subprocess.run(
-            ['mount', self._sqfs, self.location], stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+            ['mount', self._sqfs, self.location],
+            stderr=subprocess.PIPE, stdout=subprocess.PIPE,
+        )
 
         if ret.returncode == 0:
             return

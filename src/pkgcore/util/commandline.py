@@ -628,19 +628,6 @@ class Tool(tool.Tool):
                 os.environ['PKGCORE_NOCOLOR'] = '1'
         return options
 
-    def handle_exec_exception(self, e):
-        """Handle pkgcore-specific runtime exceptions."""
-        # output CLI error if one exists otherwise show debugging traceback
-        for exc in walk_exception_chain(e):
-            if isinstance(exc, PkgcoreCliException):
-                if self.parser.debug:
-                    raise
-                self.parser.error(exc)
-                break
-        else:
-            # exception is unhandled here, fallback to generic handling
-            super().handle_exec_exception(e)
-
 
 # TODO: deprecated wrapper, remove in 0.11.0
 def main(parser, args=None, outfile=None, errfile=None):

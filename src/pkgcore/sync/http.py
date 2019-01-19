@@ -25,8 +25,12 @@ class http_syncer(base.Syncer):
         super().__init__(basedir, uri, **kwargs)
 
     def _sync(self, verbosity, output_fd, **kwds):
-        # default to using system ssl certs
-        context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+        if self.uri.startswith('https://'):
+            # default to using system ssl certs
+            context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+        else:
+            context = None
+
         try:
             resp = urllib.request.urlopen(self.uri, context=context)
         except urllib.error.URLError as e:

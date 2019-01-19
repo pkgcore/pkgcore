@@ -12,6 +12,7 @@ __all__ = ("base", "wrapper", "dynamic_getattr_dict")
 from snakeoil import klass
 from snakeoil.compatibility import cmp, IGNORED_EXCEPTIONS
 
+from pkgcore import exceptions as base_errors
 from pkgcore.operations import format
 from pkgcore.package import errors
 
@@ -96,3 +97,5 @@ def dynamic_getattr_dict(self, attr):
         raise errors.MetadataException(self, attr, e.error, e.verbose) from e
     except errors.PackageError as e:
         raise errors.MetadataException(self, attr, str(e)) from e
+    except PermissionError as e:
+        raise base_errors.PermissionDenied(self.path, write=False) from e

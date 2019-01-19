@@ -21,10 +21,7 @@ from snakeoil.osutils import abspath, pjoin
 from snakeoil.sequences import split_negations, stable_unique
 
 from pkgcore.config import ConfigHint, errors
-from pkgcore.ebuild import const, ebuild_src
-from pkgcore.ebuild.misc import (
-    _build_cp_atom_payload, chunked_data, ChunkedDataDict,
-    IncrementalsDict, render_incrementals)
+from pkgcore.ebuild import const, ebuild_src, misc
 
 demandload(
     'collections:defaultdict',
@@ -125,7 +122,7 @@ def _load_and_invoke(func, filename, handler, fallback, read_func,
         raise ProfileError(profile_path, filename, e) from e
 
 
-_make_incrementals_dict = partial(IncrementalsDict, const.incrementals)
+_make_incrementals_dict = partial(misc.IncrementalsDict, const.incrementals)
 
 def _open_utf8(path, *args):
     try:
@@ -239,7 +236,7 @@ class ProfileNode(object, metaclass=caching.WeakInstMeta):
 
     @load_property("package.use", allow_recurse=True)
     def pkg_use(self, data):
-        c = ChunkedDataDict()
+        c = misc.ChunkedDataDict()
         c.update_from_stream(
             chain.from_iterable(self._parse_package_use(data).values()))
         c.freeze()
@@ -272,13 +269,13 @@ class ProfileNode(object, metaclass=caching.WeakInstMeta):
             if len(l) == 1:
                 logger.warning(f"malformed line, missing USE flag(s): {line!r}")
                 continue
-            d[a.key].append(chunked_data(a, *split_negations(l[1:])))
+            d[a.key].append(misc.chunked_data(a, *split_negations(l[1:])))
 
-        return ImmutableDict((k, _build_cp_atom_payload(v, atom(k)))
+        return ImmutableDict((k, misc._build_cp_atom_payload(v, atom(k)))
                              for k, v in d.items())
 
     def _parse_use(self, data):
-        c = ChunkedDataDict()
+        c = misc.ChunkedDataDict()
         neg, pos = split_negations(data)
         if neg or pos:
             c.add_bare_global(neg, pos)
@@ -442,7 +439,7 @@ class EmptyRootNode(ProfileNode):
 
     parents = ()
     deprecated = None
-    pkg_use = masked_use = stable_masked_use = forced_use = stable_forced_use = ChunkedDataDict()
+    pkg_use = masked_use = stable_masked_use = forced_use = stable_forced_use = misc.ChunkedDataDict()
     forced_use.freeze()
     pkg_use_force = pkg_use_mask = ImmutableDict()
     pkg_provided = visibility = system = ((), ())
@@ -474,7 +471,7 @@ class ProfileStack(object):
 
     def _collapse_use_dict(self, attr):
         stack = (getattr(x, attr) for x in self.stack)
-        d = ChunkedDataDict()
+        d = misc.ChunkedDataDict()
         for mapping in stack:
             d.merge(mapping)
         d.freeze()
@@ -519,7 +516,7 @@ class ProfileStack(object):
                 if incremental in const.incrementals_unfinalized:
                     d[incremental] = tuple(v)
                 else:
-                    v = render_incrementals(
+                    v = misc.render_incrementals(
                         v,
                         msg_prefix=f"While expanding {incremental}, value {v!r}: ")
                     if v:

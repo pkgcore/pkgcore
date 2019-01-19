@@ -126,7 +126,7 @@ class Test_native_Cpv(object):
                                              ver, rev)
 
         for x in (10, 18, 19, 36, 100):
-            assert self.kls("da", "ba", f"1-r0{'0' * x}").revision is None
+            assert self.kls("da", "ba", f"1-r0{'0' * x}").revision == 0
             assert \
                 int(self.kls("da", "ba", f"1-r1{'0' * x}1").revision) == int(f"1{'0' * x}1")
 
@@ -152,7 +152,7 @@ class Test_native_Cpv(object):
             c = self.make_inst(cat, pkg, ver + rev)
             if rev == "" or rev == "-r0":
                 assert c.cpvstr == f"{cat}/{pkg}-{ver}"
-                assert c.revision is None
+                assert c.revision == 0
                 assert c.fullver == ver
             else:
                 assert c.revision == int(rev.lstrip("-r"))
@@ -183,7 +183,7 @@ class Test_native_Cpv(object):
             c = self.make_inst(cat, pkg, ver + rev)
             if rev == '' or rev == '-r0':
                 assert c.cpvstr == f"{cat}/{pkg}-{ver}"
-                assert c.revision is None
+                assert c.revision == 0
                 assert c.fullver == ver
             else:
                 assert c.cpvstr == f"{cat}/{pkg}-{ver}{rev}"
@@ -307,7 +307,7 @@ class Test_native_Cpv(object):
     def test_r0_removal(self):
         obj = self.kls("dev-util/diffball-1.0-r0", versioned=True)
         assert obj.fullver == "1.0"
-        assert obj.revision is None
+        assert obj.revision == 0
         assert str(obj) == "dev-util/diffball-1.0"
 
 

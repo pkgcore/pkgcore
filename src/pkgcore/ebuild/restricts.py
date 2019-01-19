@@ -97,7 +97,7 @@ class VersionMatch(restriction.base, metaclass=generic_equality):
         else:
             n = ''
 
-        if self.droprev or self.rev is None:
+        if self.droprev or not self.rev:
             return f"ver {n}{s} {self.ver}"
         return f"ver-rev {n}{s} {self.ver}-r{self.rev}"
 

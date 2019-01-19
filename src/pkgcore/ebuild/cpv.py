@@ -64,8 +64,10 @@ class _native_CPV(object):
     :cvar _get_attr: mapping of attr:callable to generate attributes on the fly
     """
 
-    __slots__ = ("__weakref__", "cpvstr", "key", "category", "package",
-        "version", "revision", "fullver")
+    __slots__ = (
+        "__weakref__", "cpvstr", "key", "category", "package",
+        "version", "revision", "fullver",
+    )
 
     # if native is being used, forget trying to reuse strings.
     def __init__(self, *a, **kwds):
@@ -122,12 +124,12 @@ class _native_CPV(object):
                         f'{cpvstr}: missing package name, version, and/or revision')
                 rev = int(pkg_chunks.pop(-1)[1:])
                 if not rev:
-                    rev = None
+                    rev = 0
                     # reset the stored cpvstr to drop -r0+
                     sf(self, 'cpvstr', f"{category}/{'-'.join(pkg_chunks)}")
                 sf(self, 'revision', rev)
             else:
-                sf(self, 'revision', None)
+                sf(self, 'revision', 0)
 
             if not isvalid_version_re.match(pkg_chunks[-1]):
                 raise InvalidCPV(f"{cpvstr}: invalid version '{pkg_chunks[-1]}'")
@@ -176,8 +178,8 @@ class _native_CPV(object):
             # ~harring
             # fails in doing comparison of unversioned atoms against
             # versioned atoms
-            return native_ver_cmp(self.version, self.revision, other.version,
-                              other.revision)
+            return native_ver_cmp(
+                self.version, self.revision, other.version, other.revision)
         except AttributeError:
             return 1
 
@@ -186,6 +188,9 @@ def native_ver_cmp(ver1, rev1, ver2, rev2):
 
     # If the versions are the same, comparing revisions will suffice.
     if ver1 == ver2:
+        # revisions are equal if 0 or None (versionless cpv)
+        if not rev1 and not rev2:
+            return 0
         return cmp(rev1, rev2)
 
     # Split up the versions into dotted strings and lists of suffixes.

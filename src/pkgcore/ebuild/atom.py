@@ -663,12 +663,12 @@ class atom(boolean.AndRestriction, metaclass=generic_equality):
                 # package smaller than ranged.fullver and
                 # other.fullver that they both match.
 
-                # If other.revision is not None then other does not
-                # match anything smaller than its own fullver:
-                if other.revision is not None:
+                # If other.revision is not None or 0 then other does not match
+                # anything smaller than its own fullver:
+                if other.revision:
                     return False
 
-                # If other.revision is None then we can always
+                # If other.revision is None or 0 then we can always
                 # construct a package smaller than other.fullver by
                 # tagging e.g. an _alpha1 on, since
                 # cat/pkg_beta2_alpha1_alpha1 is a valid version.

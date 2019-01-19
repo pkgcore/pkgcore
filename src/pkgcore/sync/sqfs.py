@@ -17,6 +17,10 @@ class sqfs_syncer(http_syncer):
             return raw_uri[5:]
         raise base.UriError(raw_uri, "unsupported URI")
 
+    def __init__(self, basedir, uri, **kwargs):
+        uri = self.parse_uri(uri)
+        super().__init__(basedir, uri, **kwargs)
+
     def _sync(self, *args, **kwargs):
         ret = super()._sync(*args, **kwargs)
         # TODO: verify image checksum and gpg signature

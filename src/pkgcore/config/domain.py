@@ -14,7 +14,7 @@ from itertools import chain
 from snakeoil import klass
 from snakeoil.demandload import demandload
 
-from pkgcore.config.errors import BaseError
+from pkgcore.exceptions import PkgcoreException
 
 demandload(
     'pkgcore.operations:domain@domain_ops',
@@ -22,7 +22,7 @@ demandload(
 )
 
 
-class MissingFile(BaseError):
+class MissingFile(PkgcoreException):
     """Required file is missing."""
 
     def __init__(self, filename, setting):
@@ -31,7 +31,7 @@ class MissingFile(BaseError):
         self.file, self.setting = filename, setting
 
 
-class Failure(BaseError):
+class Failure(PkgcoreException):
     """Generic domain failure."""
 
     def __init__(self, text):

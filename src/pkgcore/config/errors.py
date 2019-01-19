@@ -8,9 +8,9 @@
 """Exceptions raised by the config code."""
 
 __all__ = (
-    "BaseError", "TypeDefinitionError", "ConfigurationError", "ParsingError",
+    "TypeDefinitionError", "ConfigurationError", "ParsingError",
     "CollapseInheritOnly", "ComplexInstantiationError",
-    "QuoteInterpretationError", "PermissionError", "PermissionDeniedError",
+    "QuoteInterpretationError",
 )
 
 from snakeoil.demandload import demandload
@@ -27,38 +27,15 @@ def _identify_functor_source(functor):
     return f'{module}.{functor.__name__}'
 
 
-class BaseError(PkgcoreException):
-    pass
+class ConfigError(PkgcoreException):
+	"""Generic config exception."""
 
 
-class PermissionError(BaseError, PkgcoreCliException):
-
-    def __init__(self, path, message=None):
-        self.path = path
-        self.message = message
-
-    def __str__(self):
-        s = f'permission denied to {self.path!r}'
-        if self.message:
-            s += f'; {self.message}'
-        return s
-
-
-class PermissionDeniedError(PermissionError):
-
-    def __init__(self, path, write=False):
-        if write:
-            message = 'write access required'
-        else:
-            message = 'read access required'
-        super().__init__(path, message=message)
-
-
-class TypeDefinitionError(BaseError):
+class TypeDefinitionError(ConfigError):
     """Fatal error in type construction."""
 
 
-class ConfigurationError(BaseError):
+class ConfigurationError(ConfigError):
     """Fatal error in parsing a config section.
 
     :type stack: sequence of strings.

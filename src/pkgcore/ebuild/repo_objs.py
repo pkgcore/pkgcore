@@ -20,6 +20,7 @@ from snakeoil.demandload import demandload
 from snakeoil.osutils import pjoin, listdir_files, listdir
 
 from pkgcore.config import ConfigHint
+from pkgcore.exceptions import PermissionDenied
 from pkgcore.repository import syncable, errors as repo_errors
 
 demandload(
@@ -635,7 +636,7 @@ class SquashfsRepoConfig(RepoConfig):
             stderr = ret.stderr.decode().strip().lower()
             msg = f'failed {action} squashfs archive: {stderr}'
             if ret.returncode == 1:
-                raise PermissionError(msg)
+                raise PermissionDenied(self._sqfs, msg)
             else:
                 raise repo_errors.InitializationError(msg)
 

@@ -48,7 +48,7 @@ class _ConfigMapping(mappings.DictMixin):
         for name in self.manager.sections():
             try:
                 collapsed = self.manager.collapse_named_section(name)
-            except errors.BaseError:
+            except errors.ConfigError:
                 # Cannot be collapsed, ignore it (this is not
                 # an error, it can be used as base for
                 # something that can be collapsed)

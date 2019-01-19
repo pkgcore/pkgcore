@@ -12,8 +12,8 @@ from snakeoil.osutils import pjoin
 from snakeoil.test import TestCase
 from snakeoil.test.mixins import TempDirMixin
 
-from pkgcore import const
-from pkgcore.config import errors
+from pkgcore import const, exceptions as base_errors
+from pkgcore.config import errors as config_errors
 from pkgcore.ebuild.portage_conf import PortageConfig
 
 load_make_conf = PortageConfig.load_make_conf
@@ -41,7 +41,7 @@ class TestPortageConfig(TempDirMixin, TestCase):
         d = {}
         # by default files are required
         self.assertRaises(
-            errors.ParsingError, load_make_conf,
+            config_errors.ParsingError, load_make_conf,
             d, pjoin(self.dir, 'make.globals'))
         # should return empty dict when not required
         load_make_conf(d, pjoin(self.dir, 'make.conf'), required=False)
@@ -53,7 +53,7 @@ class TestPortageConfig(TempDirMixin, TestCase):
             with NamedTemporaryFile() as f:
                 os.chmod(f.name, stat.S_IWUSR)
                 self.assertRaises(
-                    errors.PermissionDeniedError, load_make_conf, d, f.name)
+                    base_errors.PermissionDenied, load_make_conf, d, f.name)
 
         # overrides and incrementals
         with NamedTemporaryFile() as f:
@@ -96,7 +96,7 @@ class TestPortageConfig(TempDirMixin, TestCase):
 
         # nonexistent file
         self.assertRaises(
-            errors.ParsingError, load_repos_conf,
+            config_errors.ParsingError, load_repos_conf,
             pjoin(self.dir, 'repos.conf'))
 
         # unreadable file
@@ -104,19 +104,19 @@ class TestPortageConfig(TempDirMixin, TestCase):
             with NamedTemporaryFile() as f:
                 os.chmod(f.name, stat.S_IWUSR)
                 self.assertRaises(
-                    errors.PermissionDeniedError, load_repos_conf, f.name)
+                    base_errors.PermissionDenied, load_repos_conf, f.name)
 
         # blank file
         with NamedTemporaryFile() as f:
             self.assertRaises(
-                errors.ConfigurationError, load_repos_conf, f.name)
+                config_errors.ConfigurationError, load_repos_conf, f.name)
 
         # garbage file
         with NamedTemporaryFile() as f:
             f.write(binascii.b2a_hex(os.urandom(10)))
             f.flush()
             self.assertRaises(
-                errors.ConfigurationError, load_repos_conf, f.name)
+                config_errors.ConfigurationError, load_repos_conf, f.name)
 
         # missing location parameter
         with NamedTemporaryFile() as f:
@@ -125,7 +125,7 @@ class TestPortageConfig(TempDirMixin, TestCase):
                 sync-uri = git://foo.git''').encode())
             f.flush()
             self.assertRaises(
-                errors.ConfigurationError, load_repos_conf, f.name)
+                config_errors.ConfigurationError, load_repos_conf, f.name)
 
         # bad priority value causes fallback to the default
         with NamedTemporaryFile() as f:
@@ -154,7 +154,7 @@ class TestPortageConfig(TempDirMixin, TestCase):
                 location = /var/gentoo/repos/gentoo''').encode())
             f.flush()
             self.assertRaises(
-                errors.ConfigurationError, load_repos_conf, f.name)
+                config_errors.ConfigurationError, load_repos_conf, f.name)
 
         # undefined main repo with 'gentoo' missing
         with NamedTemporaryFile() as f:
@@ -163,7 +163,7 @@ class TestPortageConfig(TempDirMixin, TestCase):
                 location = /var/gentoo/repos/foo''').encode())
             f.flush()
             self.assertRaises(
-                errors.ConfigurationError, load_repos_conf, f.name)
+                config_errors.ConfigurationError, load_repos_conf, f.name)
 
         # default section isn't required as long as gentoo repo exists
         with NamedTemporaryFile() as f:
@@ -190,7 +190,7 @@ class TestPortageConfig(TempDirMixin, TestCase):
                 location = /var/gentoo/repos/foo''').encode())
             f.flush()
             self.assertRaises(
-                errors.ConfigurationError, load_repos_conf, f.name)
+                config_errors.ConfigurationError, load_repos_conf, f.name)
 
     def test_load_repos_conf_dir(self):
         # repo priority sorting and dir/symlink scanning

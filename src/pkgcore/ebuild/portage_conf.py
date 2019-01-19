@@ -21,10 +21,9 @@ from snakeoil.demandload import demandload
 from snakeoil.mappings import ImmutableDict, DictMixin
 from snakeoil.osutils import access, normpath, abspath, listdir_files, pjoin, ensure_dirs
 
-from pkgcore import const
+from pkgcore import const, exceptions as base_errors
 from pkgcore.config import basics, configurable
-from pkgcore.ebuild import const as econst, profiles
-from pkgcore.ebuild import repo_objs
+from pkgcore.ebuild import const as econst, profiles, repo_objs
 from pkgcore.ebuild.repository import errors as repo_errors
 from pkgcore.fs.livefs import sorted_scan
 from pkgcore.pkgsets.glsa import SecurityUpgrades
@@ -274,7 +273,7 @@ class PortageConfig(DictMixin):
                 new_vars = read_bash_dict(
                     fp, vars_dict=vars_dict, sourcing_command=sourcing_command)
             except PermissionError as e:
-                raise errors.PermissionDeniedError(fp, write=False) from e
+                raise base_errors.PermissionDenied(fp, write=False) from e
             except EnvironmentError as e:
                 if e.errno != errno.ENOENT or required:
                     raise errors.ParsingError(f"parsing {fp!r}", exception=e) from e
@@ -312,7 +311,7 @@ class PortageConfig(DictMixin):
                 with open(fp) as f:
                     defaults, repo_confs = parser.parse_file(f)
             except PermissionError as e:
-                raise errors.PermissionDeniedError(fp, write=False) from e
+                raise base_errors.PermissionDenied(fp, write=False) from e
             except EnvironmentError as e:
                 raise errors.ParsingError(f"parsing {fp!r}", exception=e) from e
             except configparser.Error as e:

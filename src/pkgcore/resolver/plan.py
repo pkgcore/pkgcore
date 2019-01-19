@@ -255,12 +255,13 @@ class merge_plan(object):
     def __init__(self, dbs, per_repo_strategy, global_strategy=None,
                  depset_reorder_strategy=None, process_built_depends=False,
                  drop_cycles=False, debug=False, debug_handle=None):
-        if debug_handle is None:
-            debug_handle = sys.stdout
-
-        self.debug_handler = debug_handle
-
-        self._dprint = partial(dprint, debug_handle)
+        if debug:
+            if debug_handle is None:
+                debug_handle = sys.stdout
+            self._dprint = partial(dprint, debug_handle)
+        else:
+            # don't run debug func when debugging is disabled
+            self._dprint = lambda *args, **kwargs: None
 
         if not isinstance(dbs, (util.RepositoryGroup, list, tuple)):
             dbs = [dbs]

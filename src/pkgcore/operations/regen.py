@@ -23,14 +23,14 @@ def regen_iter(iterable, regen_func, observer, is_thread=False):
             observer.error("caught exception %s while processing %s", e, x)
 
 
-def regen_repository(repo, observer, threads=1, pkg_attr='keywords', **options):
+def regen_repository(repo, observer, threads=1, pkg_attr='keywords', **kwargs):
     helpers = []
 
     def _get_repo_helper():
         if not hasattr(repo, '_regen_operation_helper'):
             return lambda pkg: getattr(pkg, 'keywords')
         # for an actual helper, track it and invoke .finish if it exists.
-        helper = repo._regen_operation_helper(**options)
+        helper = repo._regen_operation_helper(**kwargs)
         helpers.append(helper)
         return helper
 

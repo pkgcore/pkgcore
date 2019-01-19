@@ -231,11 +231,9 @@ class operations(sync_operations):
                 del cache[p]
 
     @_operations_mod.is_standalone
-    def _cmd_api_regen_cache(self, observer=None, threads=1, **options):
-        if getattr(self, '_regen_disable_threads', False):
-            threads = 1
+    def _cmd_api_regen_cache(self, observer=None, threads=1, **kwargs):
         cache = getattr(self.repo, 'cache', None)
-        if not cache and not options.get('force', False):
+        if not cache and not kwargs.get('force', False):
             return
         sync_rate = getattr(cache, 'sync_rate', None)
         try:
@@ -243,7 +241,7 @@ class operations(sync_operations):
                 cache.set_sync_rate(1000000)
             ret = regen.regen_repository(
                 self.repo,
-                self._get_observer(observer), threads=threads, **options)
+                self._get_observer(observer), threads=threads, **kwargs)
             self._cmd_implementation_clean_cache()
             return ret
         finally:
@@ -289,5 +287,5 @@ class operations_proxy(operations):
         for op in self.raw_operations.enabled_operations:
             setattr(self, op, partial(self._proxy_op, op))
 
-    def _proxy_op(self, op_name, *args, **kwds):
-        return getattr(self.raw_operations, op_name)(*args, **kwds)
+    def _proxy_op(self, op_name, *args, **kwargs):
+        return getattr(self.raw_operations, op_name)(*args, **kwargs)

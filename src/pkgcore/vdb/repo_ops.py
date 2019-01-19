@@ -162,8 +162,6 @@ class replace(repo_ops.replace, install, uninstall):
 
 class operations(repo_ops.operations):
 
-    _regen_disable_threads = True
-
     def _cmd_implementation_install(self, pkg, observer):
         return install(self.repo, pkg, observer)
 
@@ -172,3 +170,7 @@ class operations(repo_ops.operations):
 
     def _cmd_implementation_replace(self, oldpkg, newpkg, observer):
         return replace(self.repo, oldpkg, newpkg, observer)
+
+    def _cmd_api_regen_cache(self, *args, **kwargs):
+        # disable threaded cache updates
+        super()._cmd_api_regen_cache(*args, threads=1, **kwargs)

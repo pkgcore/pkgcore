@@ -64,6 +64,25 @@ class repo_operations(_repo_ops.operations):
 
         for key_query in sorted(set(match.unversioned_atom for match in matches)):
             pkgs = self.repo.match(key_query)
+
+            # Check for bad ebuilds -- mismatched or invalid PNs won't be
+            # matched by regular restrictions so they will otherwise be
+            # ignored.
+            ebuilds = {
+                x for x in listdir_files(pjoin(self.repo.location, str(key_query)))
+                if x.endswith('.ebuild')
+            }
+            unknown_ebuilds = ebuilds.difference(os.path.basename(x.path) for x in pkgs)
+            if unknown_ebuilds:
+                error_str = (
+                    f"{key_query}: invalid ebuild{_pl(unknown_ebuilds)}: "
+                    f"{', '.join(unknown_ebuilds)}"
+                )
+                observer.error(error_str)
+                ret.add(key_query)
+                continue
+
+            # empty package dir
             if not pkgs:
                 continue
 

@@ -1040,7 +1040,6 @@ def main(options, out, err):
             if isinstance(e, IOError) and e.errno == errno.EPIPE:
                 # swallow it; receiving end shutdown early.
                 return
-            err.write('caught an exception!')
-            err.write(f'repo: {repo!r}')
-            err.write(f'restrict: {options.query!r}')
+            # force a newline for error msg or traceback output
+            err.write()
             raise

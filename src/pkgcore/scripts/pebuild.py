@@ -7,13 +7,14 @@
 import os
 import sys
 
+from snakeoil.cli.exceptions import ExitException
+from snakeoil.strings import pluralism
+
 from pkgcore.ebuild import atom
 from pkgcore.ebuild.errors import MalformedAtom
 from pkgcore.operations import observer, format
 from pkgcore.package.errors import MetadataException
 from pkgcore.util.commandline import ArgumentParser, StoreTarget
-
-from snakeoil.strings import pluralism
 
 
 argparser = ArgumentParser(description=__doc__, script=(__file__, __name__))
@@ -97,5 +98,4 @@ def main(options, out, err):
             out.write(f'executing phase {phase}')
             func(**kwds)
     except format.errors as e:
-        out.error(f"caught exception executing phase {phase}: {e}")
-        return 1
+        raise ExitException(1) from e

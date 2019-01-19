@@ -98,4 +98,4 @@ def main(options, out, err):
             out.write(f'executing phase {phase}')
             func(**kwds)
     except format.errors as e:
-        raise ExitException(1) from e
+        raise ExitException(f"caught exception executing phase {phase}: {e}") from e

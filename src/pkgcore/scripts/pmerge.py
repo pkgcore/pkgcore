@@ -919,19 +919,17 @@ def main(options, out, err):
                     out.write(f"building {op.pkg.cpvstr}")
                     result = False
                     exc = None
-                    error_msg = None
                     try:
                         result = buildop.finalize()
                     except format.errors as e:
-                        error_msg = f"caught exception building {op.pkg.cpvstr}: {e}"
+                        out.error(f"caught exception building {op.pkg.cpvstr}: {e}")
                         exc = e
                     else:
                         if result is False:
-                            error_msg = f"failed building {op.pkg.cpvstr}"
+                            out.error(f"failed building {op.pkg.cpvstr}")
                     if result is False:
                         if not options.ignore_failures:
                             raise ExitException(1) from exc
-                        out.error(error_msg)
                         continue
                     pkg = result
                     cleanup.append(pkg.release_cached_data)

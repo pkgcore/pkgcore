@@ -306,29 +306,33 @@ class merge_plan(object):
     def notify_starting_mode(self, mode, stack):
         if mode == "pdepend":
             mode = 'prdepends'
-        self._dprint("%s:%s%s: started: %s" %
+        self._dprint(
+            "%s:%s%s: started: %s",
             (mode, ' ' * ((stack.current_frame.depth * 2) + 12 - len(mode)),
                 stack.current_frame.atom,
                 stack.current_frame.choices.current_pkg)
             )
 
     def notify_trying_choice(self, stack, atom, choices):
-        self._dprint("choose for %s%s, %s",
-               (stack.depth *2*" ", atom, choices.current_pkg))
+        self._dprint(
+            "choose for %s%s, %s",
+            (stack.depth *2*" ", atom, choices.current_pkg))
         stack.add_event(('inspecting', choices.current_pkg))
 
     def notify_choice_failed(self, stack, atom, choices, msg, msg_args=()):
         stack[-1].events.append(("choice", str(choices.current_pkg), False, msg % msg_args))
         if msg:
             msg = ': %s' % (msg % msg_args)
-        self._dprint("choice for %s%s, %s failed%s",
+        self._dprint(
+            "choice for %s%s, %s failed%s",
             (stack.depth * 2 * ' ', atom, choices.current_pkg, msg))
 
     def notify_choice_succeeded(self, stack, atom, choices, msg='', msg_args=()):
         stack[-1].events.append(("choice", str(choices.current_pkg), True, msg))
         if msg:
             msg = ': %s' % (msg % msg_args)
-        self._dprint("choice for %s%s, %s succeeded%s",
+        self._dprint(
+            "choice for %s%s, %s succeeded%s",
             (stack.depth * 2 * ' ', atom, choices.current_pkg, msg))
 
     def notify_viable(self, stack, atom, viable, msg='', pre_solved=False):
@@ -339,7 +343,9 @@ class merge_plan(object):
         s=''
         if stack:
             s = " for %s " % (stack[-1].atom)
-        self._dprint("%s%s%s%s%s", (t_viable.ljust(13), "  "*stack.depth, atom, s, t_msg))
+        self._dprint(
+            "%s%s%s%s%s",
+            (t_viable.ljust(13), "  "*stack.depth, atom, s, t_msg))
         stack.add_event(("viable", viable, pre_solved, atom, msg))
 
     def load_vdb_state(self):
@@ -430,11 +436,13 @@ class merge_plan(object):
 
         if stack:
             if limit_to_vdb:
-                self._dprint("processing   %s%s  [%s]; mode %s vdb bound",
-                       (depth*2*" ", atom, stack[-1].atom, mode))
+                self._dprint(
+                    "processing   %s%s  [%s]; mode %s vdb bound",
+                    (depth*2*" ", atom, stack[-1].atom, mode))
             else:
-                self._dprint("processing   %s%s  [%s]; mode %s",
-                       (depth*2*" ", atom, stack[-1].atom, mode))
+                self._dprint(
+                    "processing   %s%s  [%s]; mode %s",
+                    (depth*2*" ", atom, stack[-1].atom, mode))
         else:
             self._dprint("processing   %s%s", (depth*2*" ", atom))
 
@@ -487,13 +495,15 @@ class merge_plan(object):
             if l is False:
                 # this means somehow the node already slipped in.
                 # so we exit now, we are satisfied
-                self.notify_choice_succeeded(stack, atom, choices,
+                self.notify_choice_succeeded(
+                    stack, atom, choices,
                     "already exists in the state plan")
                 stack.pop_frame(True)
                 return None
             elif l is not None:
                 # failure.
-                self.notify_choice_failed(stack, atom, choices,
+                self.notify_choice_failed(
+                    stack, atom, choices,
                     "failed inserting: %s", l)
                 self.state.backtrack(stack.current_frame.start_point)
                 choices.force_next_pkg()
@@ -517,8 +527,9 @@ class merge_plan(object):
         # regardless of if it's a cycle issue
         if not drop_cycles and self.drop_cycles:
             stack.add_event(("cycle", stack.current_frame, "trying to drop any cycles"),)
-            self._dprint("trying saving throw for %s ignoring cycles",
-                   atom, "cycle")
+            self._dprint(
+                "trying saving throw for %s ignoring cycles",
+                atom, "cycle")
             # note everything is retored to a pristine state prior also.
             stack[-1].ignored = True
             l = self._rec_add_atom(atom, stack, dbs,
@@ -642,8 +653,9 @@ class merge_plan(object):
         depset = self.depset_reorder(getattr(choices, attr), attr)
         l = self.process_dependencies(stack, choices, attr, depset, atom)
         if len(l) == 1:
-            self._dprint("resetting for %s%s because of %s: %s",
-                   (depth*2*" ", atom, attr, l[0]))
+            self._dprint(
+                "resetting for %s%s because of %s: %s",
+                (depth*2*" ", atom, attr, l[0]))
             self.state.backtrack(stack.current_frame.start_point)
             return [], l[0]
 
@@ -673,11 +685,11 @@ class merge_plan(object):
                     # XXX this is whacky tacky fantastically crappy
                     # XXX kill it; purpose seems... questionable.
                     if cur_frame.drop_cycles:
-                        self._dprint("%s level cycle: %s: "
-                               "dropping cycle for %s from %s",
-                                (mode, cur_frame.atom, or_node,
-                                cur_frame.current_pkg),
-                                "cycle")
+                        self._dprint(
+                            "%s level cycle: %s: "
+                            "dropping cycle for %s from %s",
+                            (mode, cur_frame.atom, or_node, cur_frame.current_pkg),
+                            "cycle")
                         failure = None
                         break
 
@@ -695,7 +707,8 @@ class merge_plan(object):
         ret = self.insert_blockers(stack, choices, [blocker])
         if ret is None:
             return []
-        self.notify_choice_failed(stack, atom, choices,
+        self.notify_choice_failed(
+            stack, atom, choices,
             "%s blocker: %s conflicts w/ %s", (mode, ret[0], ret[1]))
         return [ret[0]]
 
@@ -740,10 +753,9 @@ class merge_plan(object):
                 # same result slipped through.
                 return False
 
-            self._dprint("was trying to insert atom '%s' pkg '%s',\n"
-                   "but '[%s]' exists already",
-                   (atom, choices.current_pkg,
-                   ", ".join(map(str, conflicts))))
+            self._dprint(
+                "was trying to insert atom '%s' pkg '%s',\nbut '[%s]' exists already",
+                (atom, choices.current_pkg, ", ".join(map(str, conflicts))))
 
             try_rematch = False
             if any(True for x in conflicts if isinstance(x, restriction.base)):
@@ -759,7 +771,8 @@ class merge_plan(object):
                                     "but current doesn't. bailing- run w/ --debug")
                 conflicts = state.replace_op(choices, choices.current_pkg).apply(self.state)
                 if not conflicts:
-                    self._dprint("replacing vdb entry for '%s' with pkg '%s'",
+                    self._dprint(
+                        "replacing vdb entry for '%s' with pkg '%s'",
                         (atom, choices.current_pkg))
 
             else:
@@ -800,7 +813,8 @@ class merge_plan(object):
             l = self.state.add_blocker(choices, rewrote_blocker, key=x.key)
             if l:
                 # blocker caught something. yay.
-                self._dprint("%s blocker %s hit %s for atom %s pkg %s",
+                self._dprint(
+                    "%s blocker %s hit %s for atom %s pkg %s",
                     (stack[-1].mode, x, l, stack[-1].atom, choices.current_pkg))
                 if x.weak_blocker:
                     # note that we use the top frame of the stacks' dbs; this

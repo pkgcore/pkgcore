@@ -246,7 +246,7 @@ resolution_options.add_argument(
         the graph of the requested operation.
     """)
 
-output_options = argparser.add_argument_group("output related options")
+output_options = argparser.add_argument_group("output options")
 output_options.add_argument(
     '--quiet-repo-display', action='store_true',
     help="use indexes instead of ::repo suffixes in dep resolution output",

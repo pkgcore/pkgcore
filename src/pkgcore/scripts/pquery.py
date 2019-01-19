@@ -871,7 +871,7 @@ argparser.set_defaults(
 argparser.set_defaults(
     query=commandline.BooleanQuery(_query_items, klass_type='and', priority=90))
 
-output = argparser.add_argument_group('output formatting')
+output = argparser.add_argument_group('output options')
 output.add_argument(
     '-1', '--first', action='store_true',
     help='stop when first match is found')

@@ -15,6 +15,12 @@ from pkgcore.repository import errors as repo_errors
 
 argparser = commandline.ArgumentParser(description=__doc__, script=(__file__, __name__))
 argparser.add_argument(
+    'targets', metavar='target', nargs='*',
+    action=commandline.StoreTarget,
+    help='extended atom matching of packages')
+
+output_opts = argparser.add_argument_group('output options')
+output_opts.add_argument(
     '-f', '--format', default='pshowkw', metavar='FORMAT',
     choices=tabulate_formats,
     help='keywords table format',
@@ -24,6 +30,9 @@ argparser.add_argument(
 
         Available formats: {', '.join(tabulate_formats)}
     """)
+output_opts.add_argument(
+    '-c', '--collapse', action='store_true',
+    help='show collapsed list of arches')
 
 arch_options = argparser.add_argument_group('arch options')
 arch_options.add_argument(
@@ -39,19 +48,12 @@ arch_options.add_argument(
     '-p', '--prefix', action='store_true',
     help='show prefix and non-native arches')
 arch_options.add_argument(
-    '-c', '--collapse', action='store_true',
-    help='show collapsed list of arches')
-arch_options.add_argument(
     '-a', '--arch', action='csv_negations',
     help='select arches to display')
 
-argparser.add_argument(
-    'targets', metavar='target', nargs='*',
-    action=commandline.StoreTarget,
-    help='extended atom matching of packages')
-
 # TODO: allow multi-repo comma-separated input
-argparser.add_argument(
+target_opts = argparser.add_argument_group('target options')
+target_opts.add_argument(
     '-r', '--repo', dest='selected_repo', metavar='REPO', priority=29,
     action=commandline.StoreRepoObject,
     repo_type='all-raw', allow_external_repos=True,

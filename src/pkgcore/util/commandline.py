@@ -554,19 +554,20 @@ class ArgumentParser(arghparse.ArgumentParser):
         self.register('action', 'parsers', _SubParser)
 
         if not suppress:
+            config_opts = self.add_argument_group("config options")
             if config:
-                self.add_argument(
+                config_opts.add_argument(
                     '--add-config', nargs=3, action='append',
                     metavar=('SECTION', 'KEY', 'VALUE'),
                     help='modify an existing configuration section')
-                self.add_argument(
+                config_opts.add_argument(
                     '--new-config', nargs=3, action='append',
                     metavar=('SECTION', 'KEY', 'VALUE'),
                     help='add a new configuration section')
-                self.add_argument(
+                config_opts.add_argument(
                     '--empty-config', action='store_true',
                     help='do not load user/system configuration')
-                self.add_argument(
+                config_opts.add_argument(
                     '--config', metavar='PATH', dest='override_config',
                     type=arghparse.existent_path,
                     help='override location of config files')
@@ -591,7 +592,7 @@ class ArgumentParser(arghparse.ArgumentParser):
                     pass
 
             if domain:
-                _mk_domain(self)
+                _mk_domain(config_opts)
 
 
 def convert_to_restrict(sequence, default=packages.AlwaysTrue):

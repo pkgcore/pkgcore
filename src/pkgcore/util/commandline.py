@@ -630,25 +630,13 @@ class Tool(tool.Tool):
 
     def handle_exec_exception(self, e):
         """Handle pkgcore-specific runtime exceptions."""
-        # exception types handled internally
-        exc_types = {
-            config_errors.ConfigurationError: 'Error in configuration',
-            operations.OperationError: 'Error running an operation',
-            config_errors.ParsingError: 'Error while parsing arguments',
-        }
-
-        if isinstance(e, tuple(exc_types.keys())):
-            # determine if original exception has clean CLI error
-            excs = list(walk_exception_chain(e))
-            orig_exc = excs[-1]
-            cli_error = isinstance(orig_exc, PkgcoreCliException)
-
-            # output CLI error if one exists otherwise show debugging traceback
-            if self.parser.debug or not cli_error:
-                raise
-            else:
-                # output the original error message
-                self.parser.error(orig_exc)
+        # output CLI error if one exists otherwise show debugging traceback
+        for exc in walk_exception_chain(e):
+            if isinstance(exc, PkgcoreCliException):
+                if self.parser.debug:
+                    raise
+                self.parser.error(exc)
+                break
         else:
             # exception is unhandled here, fallback to generic handling
             super().handle_exec_exception(e)

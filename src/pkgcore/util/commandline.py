@@ -29,19 +29,13 @@ from snakeoil.cli import arghparse, tool
 from snakeoil.demandload import demandload
 from snakeoil.osutils import pjoin
 
-from pkgcore import __title__
-from pkgcore.config import load_config, errors as config_errors
-from pkgcore.exceptions import PkgcoreCliException
+from pkgcore.config import load_config
 from pkgcore.repository import errors as repo_errors
 
 demandload(
-    'signal',
-    'traceback',
     'snakeoil:osutils',
-    'snakeoil.errors:walk_exception_chain',
     'snakeoil.sequences:iflatten_instance,unstable_unique',
     'snakeoil.strings:pluralism',
-    'pkgcore:operations',
     'pkgcore.config:basics',
     'pkgcore.plugin:get_plugins',
     'pkgcore.restrictions:packages,restriction',

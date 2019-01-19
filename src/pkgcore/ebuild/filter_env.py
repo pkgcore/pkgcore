@@ -10,8 +10,8 @@ __all__ = ("run",)
 from snakeoil.demandload import demandload
 
 demandload(
+    'io',
     're',
-    'snakeoil:stringio',
     'pkgcore.log:logger'
 )
 
@@ -433,6 +433,6 @@ def main_run(out_handle, data, vars_to_filter=(), funcs_to_filter=(), vars_is_wh
         _parser = run
 
     if out_handle is None:
-        out_handle = stringio.bytes_writable()
+        out_handle = io.BytesIO()
 
     _parser(out_handle, data, vars, funcs, **kwds)

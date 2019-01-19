@@ -32,10 +32,10 @@ from snakeoil.mappings import LazyValDict, ImmutableDict, StackedDict
 from snakeoil.osutils import normpath
 
 demandload(
+    "io",
     "multiprocessing:cpu_count",
     "tempfile",
     "traceback",
-    "snakeoil:stringio",
 )
 
 
@@ -323,7 +323,7 @@ class MergeEngine(object):
                         if not trigger.suppress_exceptions:
                             raise
 
-                        handle = stringio.text_writable()
+                        handle = io.StringIO()
                         traceback.print_exc(file=handle)
 
                         self.observer.warn(

@@ -3,8 +3,8 @@
 # License: BSD/GPL2
 
 from functools import partial
+import io
 
-from snakeoil import stringio
 from snakeoil.test import TestCase, mk_cpy_loadable_testcase
 
 from pkgcore.ebuild import filter_env
@@ -16,7 +16,7 @@ class NativeFilterEnvTest(TestCase):
 
     def get_output(self, raw_data, funcs=None, vars=None, preserve_funcs=False,
                    preserve_vars=False, debug=False, global_envvar_callback=None):
-        out = stringio.bytes_writable()
+        out = io.BytesIO()
         if funcs:
             funcs = funcs.split(',')
         if vars:

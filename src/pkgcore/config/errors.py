@@ -15,7 +15,7 @@ __all__ = (
 
 from snakeoil.demandload import demandload
 
-from pkgcore.exceptions import PkgcoreException
+from pkgcore.exceptions import PkgcoreException, PkgcoreCliException
 
 demandload('snakeoil:currying')
 
@@ -77,7 +77,7 @@ class ConfigurationError(BaseError):
         return ':\n'.join(reversed(self.stack))
 
 
-class ParsingError(ConfigurationError):
+class ParsingError(ConfigurationError, PkgcoreCliException):
 
     def __init__(self, message=None, exception=None):
         if message is not None:

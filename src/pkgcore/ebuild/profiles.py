@@ -54,7 +54,9 @@ class ProfileError(errors.ParsingError):
         self.path, self.filename, self.error = path, filename, error
 
     def __str__(self):
-        return f"failed parsing {self.filename!r} in {self.path!r}: {self.error}"
+        if self.filename:
+            return f"failed parsing {self.filename!r} in {self.path!r}: {self.error}"
+        return f"failed parsing {self.path!r}: {self.error}"
 
 
 def load_property(filename, handler=iter_read_bash, fallback=(),

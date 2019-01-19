@@ -8,8 +8,10 @@ __all__ = (
 
 from snakeoil import bash
 
+from pkgcore.exceptions import PkgcoreException
 
-class PackageError(ValueError):
+
+class PackageError(ValueError, PkgcoreException):
     pass
 
 
@@ -51,7 +53,7 @@ class InvalidDependency(PackageError):
     pass
 
 
-class ChksumBase(Exception):
+class ChksumBase(PkgcoreException):
     pass
 
 

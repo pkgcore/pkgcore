@@ -18,6 +18,7 @@ from snakeoil.demandload import demandload
 from snakeoil.dependant_methods import ForcedDepends
 
 from pkgcore import operations as _operations_mod
+from pkgcore.exceptions import PkgcoreException
 
 demandload(
     "pkgcore.log:logger",
@@ -35,7 +36,7 @@ class fake_lock(object):
     release_read_lock = release_write_lock = __init__
 
 
-class Failure(Exception):
+class Failure(PkgcoreException):
     pass
 
 

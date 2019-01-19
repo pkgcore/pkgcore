@@ -31,7 +31,7 @@ class BaseError(PkgcoreException):
     pass
 
 
-class PermissionError(BaseError):
+class PermissionError(BaseError, PkgcoreCliException):
 
     def __init__(self, path, message=None):
         self.path = path

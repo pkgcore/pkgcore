@@ -10,8 +10,10 @@ __all__ = (
     "RequiredChksumDataMissing"
 )
 
+from pkgcore.exceptions import PkgcoreCliException
 
-class FetchError(Exception):
+
+class FetchError(PkgcoreCliException):
     """Generic fetch exception."""
 
 

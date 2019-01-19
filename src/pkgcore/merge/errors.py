@@ -8,8 +8,10 @@ exceptions thrown by the MergeEngine
 __all__ = ("ModificationError", "BlockModification", "TriggerUnknownCset")
 
 
-class ModificationError(Exception):
+from pkgcore.exceptions import PkgcoreException
 
+
+class ModificationError(PkgcoreException):
     """Base Exception class for modification errors"""
 
     def __init__(self, trigger, msg):

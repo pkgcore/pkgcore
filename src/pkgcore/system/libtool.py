@@ -11,6 +11,7 @@ from snakeoil.currying import post_curry
 from snakeoil.sequences import stable_unique
 
 from pkgcore.merge import triggers
+from pkgcore.exceptions import PkgcoreException
 
 x11_sub = post_curry(partial(
     re.compile(r"X11R6/+lib").sub, "lib"), 1)
@@ -32,7 +33,7 @@ template = """# %(file)s - a libtool library file
 """
 
 
-class UnknownData(Exception):
+class UnknownData(PkgcoreException):
 
     def __init__(self, line, token=None):
         self.token, self.line = token, line

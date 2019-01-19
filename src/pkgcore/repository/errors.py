@@ -7,7 +7,7 @@ exceptions thrown by repository classes.
 Need to extend the usage a bit further still.
 """
 
-from pkgcore.exceptions import PkgcoreException
+from pkgcore.exceptions import PkgcoreException, PkgcoreCliException
 
 
 class RepoError(PkgcoreException):
@@ -18,21 +18,21 @@ class RepoError(PkgcoreException):
         self.err = err
 
 
-class InitializationError(RepoError):
+class InitializationError(RepoError, PkgcoreCliException):
     """General repository initialization failure."""
 
     def __str__(self):
         return f"repo init failed: {self.err}"
 
 
-class InvalidRepo(RepoError):
+class InvalidRepo(RepoError, PkgcoreCliException):
     """Repository is not a repo or is otherwise invalid."""
 
     def __str__(self):
         return f"invalid repo: {self.err}"
 
 
-class UnsupportedRepo(RepoError):
+class UnsupportedRepo(RepoError, PkgcoreCliException):
     """Repository uses an unknown EAPI or is otherwise not supported."""
 
     def __init__(self, repo):

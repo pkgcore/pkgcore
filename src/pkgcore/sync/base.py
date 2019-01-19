@@ -11,6 +11,7 @@ __all__ = (
 from snakeoil.demandload import demandload
 
 from pkgcore.config import ConfigHint, configurable
+from pkgcore.exceptions import PkgcoreCliException
 
 demandload(
     'os',
@@ -21,7 +22,7 @@ demandload(
 )
 
 
-class SyncError(Exception):
+class SyncError(PkgcoreCliException):
     pass
 
 

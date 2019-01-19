@@ -10,6 +10,8 @@ __all__ = ("Failure", "base", "install", "uninstall", "replace")
 from snakeoil.demandload import demandload
 from snakeoil.dependant_methods import ForcedDepends
 
+from pkgcore.exceptions import PkgcoreException
+
 demandload(
     "shutil",
     "tempfile",
@@ -30,7 +32,7 @@ class fake_lock(object):
     release_read_lock = release_write_lock = __init__
 
 
-class Failure(Exception):
+class Failure(PkgcoreException):
     pass
 
 

@@ -8,14 +8,13 @@ XPAK container support
 __all__ = ("MalformedXpak", "Xpak")
 
 from collections import OrderedDict
+import os
 
 from snakeoil import klass
 from snakeoil import struct_compat as struct
-from snakeoil.demandload import demandload
 
-demandload(
-    "os",
-)
+from pkgcore.exceptions import PkgcoreException
+
 
 # format is:
 # XPAKPACKIIIIDDDD[index][data]XPAKSTOPOOOOSTOP
@@ -32,9 +31,10 @@ demandload(
 #   reach the end of the magic, and 'STOP'.  offset is relative to EOS for Xpak
 
 
-class MalformedXpak(Exception):
+class MalformedXpak(PkgcoreException):
+
     def __init__(self, msg):
-        Exception.__init__(self, "xpak as malformed: %s" % (msg,))
+        super().__init__(f"xpak as malformed: {msg}")
         self.msg = msg
 
 

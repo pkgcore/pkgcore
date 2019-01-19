@@ -43,14 +43,14 @@ from functools import partial
 import os
 import signal
 
-import pkgcore
-from pkgcore import const, os_data
-from pkgcore.ebuild import const as e_const
-
 from snakeoil import klass
 from snakeoil.currying import pretty_docs
 from snakeoil.demandload import demandload
 from snakeoil.osutils import abspath, normpath, pjoin
+
+from pkgcore import __file__, const, os_data
+from pkgcore.ebuild import const as e_const
+from pkgcore.exceptions import PkgcoreException
 
 demandload(
     'logging',
@@ -196,7 +196,7 @@ def reuse_or_request(ebp=None, **request_kwds):
             release_ebuild_processor(ebp)
 
 
-class ProcessingInterruption(Exception):
+class ProcessingInterruption(PkgcoreException):
     pass
 
 
@@ -248,15 +248,15 @@ def chuck_StoppingCommand(val, processor, *args):
     raise FinishedProcessing(val)
 
 
-class TimeoutError(Exception):
+class TimeoutError(PkgcoreException):
     pass
 
 
-class InitializationError(Exception):
+class InitializationError(PkgcoreException):
     pass
 
 
-class ProcessorError(Exception):
+class ProcessorError(PkgcoreException):
     pass
 
 
@@ -368,7 +368,7 @@ class EbuildProcessor(object):
         self.write(spawn.find_invoking_python())
         self.write(
             os.pathsep.join([
-                normpath(abspath(pjoin(pkgcore.__file__, os.pardir, os.pardir))),
+                normpath(abspath(pjoin(__file__, os.pardir, os.pardir))),
                 os.environ.get('PYTHONPATH', '')])
             )
         if self.__sandbox:

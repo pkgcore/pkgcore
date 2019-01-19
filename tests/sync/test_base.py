@@ -4,7 +4,7 @@
 import os
 import pwd
 
-from pkgcore.sync import base, file
+from pkgcore.sync import base, http
 from tests.sync.syncer import make_bogus_syncer, make_valid_syncer
 from snakeoil.test import TestCase, SkipTest
 
@@ -44,10 +44,7 @@ class GenericSyncerTest(TestCase):
         self.assertRaises(
             base.UriError,
             base.GenericSyncer, '/', 'seriouslynotaprotocol://blah/')
-        try:
-            syncer = base.GenericSyncer('/', 'file+https://blah/')
-        except base.UriError as e:
-            if str(e) == "no known syncer supports 'file+https://blah/'":
-                raise SkipTest('file syncer unavailable')
-            raise
-        self.assertIdentical(file.file_syncer, syncer.__class__)
+
+        for proto in ('http', 'https'):
+            syncer = base.GenericSyncer('/', f'{proto}://blah/')
+            self.assertIdentical(http.http_syncer, syncer.__class__)

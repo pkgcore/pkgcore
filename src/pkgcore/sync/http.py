@@ -1,4 +1,4 @@
-__all__ = ("file_syncer",)
+__all__ = ("http_syncer",)
 
 import errno
 import os
@@ -12,21 +12,14 @@ from snakeoil.osutils import pjoin
 from pkgcore.sync import base
 
 
-class file_syncer(base.Syncer):
+class http_syncer(base.Syncer):
 
     supported_uris = (
-        ('file+http://', 5),
-        ('file+https://', 5),
+        ('http://', 5),
+        ('https://', 5),
     )
 
-    @staticmethod
-    def parse_uri(raw_uri):
-        if raw_uri.startswith(("file+http://", "file+https://")):
-            return raw_uri[5:]
-        raise base.UriError(raw_uri, "unsupported URI")
-
     def __init__(self, basedir, uri, **kwargs):
-        uri = self.parse_uri(uri)
         self.basename = os.path.basename(uri)
         self.dest = pjoin(basedir, self.basename)
         super().__init__(basedir, uri, **kwargs)

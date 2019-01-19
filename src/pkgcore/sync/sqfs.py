@@ -1,10 +1,10 @@
 __all__ = ("sqfs_syncer",)
 
 from pkgcore.sync import base
-from pkgcore.sync.file import file_syncer
+from pkgcore.sync.http import http_syncer
 
 
-class sqfs_syncer(file_syncer):
+class sqfs_syncer(http_syncer):
 
     supported_uris = (
         ('sqfs+http://', 5),

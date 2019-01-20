@@ -7,26 +7,35 @@ import os
 import shutil
 import sys
 import tempfile
+from unittest import mock
 
 from pkgcore import plugin
 from pkgcore.test import silence_logging
 from snakeoil.osutils import pjoin
 from snakeoil.sequences import stable_unique
-from snakeoil.test import TestCase
 
 
 class LowPlug(object):
     priority = 1
 
 
-class ModulesTest(TestCase):
+class TestModules(object):
 
-    def setUp(self):
+    def setup_method(self, method):
+        # patch out actual cache dir settings with temp dirs
+        self.patcher = mock.patch('pkgcore.plugin.const')
+        const = self.patcher.start()
+        self.dir = tempfile.mkdtemp(prefix='cache-')
+        self.cache_dir = pjoin(self.dir, 'mod_testplug')
+        os.mkdir(self.cache_dir)
+        const.SYSTEM_CACHE_PATH = self.cache_dir
+        const.USER_CACHE_PATH = self.cache_dir
+
         # Set up some test modules for our use.
-        self.dir = tempfile.mkdtemp()
         self.dir2 = tempfile.mkdtemp()
-        self.packdir = pjoin(self.dir, 'mod_testplug')
-        self.packdir2 = pjoin(self.dir2, 'mod_testplug')
+        self.dir3 = tempfile.mkdtemp()
+        self.packdir = pjoin(self.dir2, 'mod_testplug')
+        self.packdir2 = pjoin(self.dir3, 'mod_testplug')
         os.mkdir(self.packdir)
         os.mkdir(self.packdir2)
         with open(pjoin(self.packdir, '__init__.py'), 'w') as init:
@@ -75,16 +84,19 @@ class HiddenPlug(object):
 pkgcore_plugins = {'plugtest': [HiddenPlug]}
 ''')
         # Append it to the path
+        sys.path.insert(0, self.dir3)
         sys.path.insert(0, self.dir2)
-        sys.path.insert(0, self.dir)
 
-    def tearDown(self):
+    def teardown_method(self):
+        # stop mocked patcher
+        self.patcher.stop()
         # pop the test module dir from path
         sys.path.pop(0)
         sys.path.pop(0)
         # and kill it
         shutil.rmtree(self.dir)
         shutil.rmtree(self.dir2)
+        shutil.rmtree(self.dir3)
         # make sure we don't keep the sys.modules entries around
         sys.modules.pop('mod_testplug', None)
         sys.modules.pop('mod_testplug.plug', None)
@@ -95,47 +107,42 @@ pkgcore_plugins = {'plugtest': [HiddenPlug]}
         expected = stable_unique(
             pjoin(p, 'mod_testplug')
             for p in sys.path if os.path.isdir(p))
-        self.assertEqual(
-            expected, mod_testplug.__path__,
-            set(expected) ^ set(mod_testplug.__path__))
+        assert expected == mod_testplug.__path__, \
+            set(expected) ^ set(mod_testplug.__path__)
 
     def _runit(self, method):
         plugin._global_cache.clear()
         method()
-        mtime = os.path.getmtime(pjoin(self.packdir, plugin.CACHE_FILENAME))
+        mtime = os.path.getmtime(pjoin(self.cache_dir, plugin.CACHE_FILENAME))
         method()
         plugin._global_cache.clear()
         method()
         method()
-        self.assertEqual(
-            mtime,
-            os.path.getmtime(pjoin(self.packdir, plugin.CACHE_FILENAME)))
+        assert mtime == \
+            os.path.getmtime(pjoin(self.cache_dir, plugin.CACHE_FILENAME))
         # We cannot write this since it contains an unimportable plugin.
-        self.assertFalse(
-            os.path.exists(pjoin(self.packdir2, plugin.CACHE_FILENAME)))
+        assert not os.path.exists(pjoin(self.packdir2, plugin.CACHE_FILENAME))
 
     def _test_plug(self):
         import mod_testplug
-        self.assertIdentical(None, plugin.get_plugin('spork', mod_testplug))
+        assert plugin.get_plugin('spork', mod_testplug) is None
         plugins = list(plugin.get_plugins('plugtest', mod_testplug))
-        self.assertEqual(2, len(plugins), plugins)
+        assert len(plugins) == 2, plugins
         plugin.get_plugin('plugtest', mod_testplug)
-        self.assertEqual(
-            'HighPlug',
-            plugin.get_plugin('plugtest', mod_testplug).__class__.__name__)
-        with open(pjoin(self.packdir, plugin.CACHE_FILENAME)) as f:
+        assert 'HighPlug' == \
+            plugin.get_plugin('plugtest', mod_testplug).__class__.__name__
+        with open(pjoin(self.cache_dir, plugin.CACHE_FILENAME)) as f:
             lines = f.readlines()
-        self.assertEqual(3, len(lines))
-        self.assertEqual(plugin.CACHE_HEADER + "\n", lines[0])
+        assert len(lines) == 3
+        assert plugin.CACHE_HEADER + "\n" == lines[0]
         lines.pop(0)
         lines.sort()
         mtime = int(os.path.getmtime(pjoin(self.packdir, 'plug2.py')))
-        self.assertEqual('plug2:%s:\n' % (mtime,), lines[0])
+        assert f'plug2:{mtime}:\n' == lines[0]
         mtime = int(os.path.getmtime(pjoin(self.packdir, 'plug.py')))
-        self.assertEqual(
-            'plug:%s:plugtest,7,1:plugtest,1,tests.test_plugin.LowPlug:'
-            'plugtest,0,0\n' % (mtime,),
-            lines[1])
+        assert (
+            f'plug:{mtime}:plugtest,7,1:plugtest,1,tests.test_plugin.LowPlug:plugtest,0,0\n'
+            == lines[1])
 
     def test_plug(self):
         self._runit(self._test_plug)
@@ -148,17 +155,19 @@ pkgcore_plugins = {'plugtest': [HiddenPlug]}
         sys.modules.pop('mod_testplug.plug2', None)
         list(plugin.get_plugins('plugtest', mod_testplug))
         # Extra messages since getting all of sys.modules printed is annoying.
-        self.assertIn('mod_testplug.plug', sys.modules, 'plug not loaded')
-        self.assertNotIn('mod_testplug.plug2', sys.modules, 'plug2 loaded')
+        assert 'mod_testplug.plug' in sys.modules, 'plug not loaded'
+        assert 'mod_testplug.plug2' not in sys.modules, 'plug2 loaded'
 
     def test_no_unneeded_import(self):
         self._runit(self._test_no_unneeded_import)
 
     @silence_logging(logging.root)
     def test_cache_corruption(self):
+        print(plugin.const)
+        print('wheeeeee')
         import mod_testplug
         list(plugin.get_plugins('spork', mod_testplug))
-        filename = pjoin(self.packdir, plugin.CACHE_FILENAME)
+        filename = pjoin(self.cache_dir, plugin.CACHE_FILENAME)
         cachefile = open(filename, 'a')
         try:
             cachefile.write('corruption\n')
@@ -172,12 +181,11 @@ pkgcore_plugins = {'plugtest': [HiddenPlug]}
         plugin._global_cache.clear()
         self._test_plug()
         good_mtime = os.path.getmtime(
-            pjoin(self.packdir, plugin.CACHE_FILENAME))
+            pjoin(self.cache_dir, plugin.CACHE_FILENAME))
         plugin._global_cache.clear()
         self._test_plug()
-        self.assertEqual(good_mtime, os.path.getmtime(
-            pjoin(self.packdir, plugin.CACHE_FILENAME)))
-        self.assertNotEqual(good_mtime, corrupt_mtime)
+        assert good_mtime == os.path.getmtime(pjoin(self.cache_dir, plugin.CACHE_FILENAME))
+        assert good_mtime != corrupt_mtime
 
     def test_rewrite_on_remove(self):
         filename = pjoin(self.packdir, 'extra.py')
@@ -189,8 +197,7 @@ pkgcore_plugins = {'plugtest': [HiddenPlug]}
 
         plugin._global_cache.clear()
         import mod_testplug
-        self.assertEqual(
-            3, len(list(plugin.get_plugins('plugtest', mod_testplug))))
+        assert len(list(plugin.get_plugins('plugtest', mod_testplug))) == 3
 
         os.unlink(filename)
 
@@ -268,14 +275,14 @@ pkgcore_plugins = {
         sys.modules.pop('mod_testplug.plug6', None)
         best_plug = plugin.get_plugin('plugtest', mod_testplug)
         from mod_testplug import plug
-        self.assertEqual(plug.high_plug, best_plug)
+        assert plug.high_plug == best_plug
         # Extra messages since getting all of sys.modules printed is annoying.
-        self.assertIn('mod_testplug.plug', sys.modules, 'plug not loaded')
-        self.assertNotIn('mod_testplug.plug2', sys.modules, 'plug2 loaded')
-        self.assertNotIn('mod_testplug.plug3', sys.modules, 'plug3 loaded')
-        self.assertIn('mod_testplug.plug4', sys.modules, 'plug4 not loaded')
-        self.assertIn('mod_testplug.plug5', sys.modules, 'plug4 not loaded')
-        self.assertNotIn('mod_testplug.plug6', sys.modules, 'plug6 loaded')
+        assert 'mod_testplug.plug' in sys.modules, 'plug not loaded'
+        assert 'mod_testplug.plug2' not in sys.modules, 'plug2 loaded'
+        assert 'mod_testplug.plug3' not in sys.modules, 'plug3 loaded'
+        assert 'mod_testplug.plug4' in sys.modules, 'plug4 not loaded'
+        assert 'mod_testplug.plug5' in sys.modules, 'plug4 not loaded'
+        assert 'mod_testplug.plug6' not in sys.modules, 'plug6 loaded'
 
     @silence_logging(logging.root)
     def test_header_change_invalidates_cache(self):
@@ -285,7 +292,7 @@ pkgcore_plugins = {
         list(plugin.get_plugins('testplug', mod_testplug))
 
         # Modify the cache.
-        filename = pjoin(self.packdir, plugin.CACHE_FILENAME)
+        filename = pjoin(self.cache_dir, plugin.CACHE_FILENAME)
         with open(filename) as f:
             cache = f.readlines()
         cache[0] = 'not really a pkgcore plugin cache\n'

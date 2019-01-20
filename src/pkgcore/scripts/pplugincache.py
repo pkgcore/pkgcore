@@ -26,5 +26,5 @@ def main(options, out, err):
     """Update caches."""
     for package in stable_unique(options.packages):
         if options.verbosity >= 0:
-            out.write('Updating cache for %s...' % (package.__name__,))
+            out.write(f'updating cache: {package.__name__}')
         plugin.initialize_cache(package, force=True)

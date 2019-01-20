@@ -24,13 +24,15 @@ import os.path
 import sys
 
 from snakeoil import mappings, modules
+from snakeoil.cli.exceptions import CliException
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.demandload import demandload
-from snakeoil.osutils import pjoin, listdir_files
+from snakeoil.osutils import pjoin, listdir_files, ensure_dirs, unlink_if_exists
+
+from pkgcore import const, os_data
 
 demandload(
-    'tempfile',
-    'snakeoil:fileutils,osutils',
+    'snakeoil.fileutils:AtomicWriteFile,readlines_ascii',
     'pkgcore.log:logger',
 )
 
@@ -47,7 +49,7 @@ CACHE_FILENAME = 'plugincache'
 def _clean_old_caches(path):
     for name in ('plugincache2',):
         try:
-            osutils.unlink_if_exists(pjoin(path, name))
+            unlink_if_exists(pjoin(path, name))
         except EnvironmentError as e:
             logger.error(
                 "attempting to clean old plugin cache %r failed with %s",
@@ -96,8 +98,9 @@ def _process_plugin(package, plug, filter_disabled=False):
     return plug
 
 def _read_cache_file(package, cache_path):
+    """Read an existing cache file."""
     stored_cache = {}
-    cache_data = list(fileutils.readlines_ascii(cache_path, True, True, False))
+    cache_data = list(readlines_ascii(cache_path, True, True, False))
     if len(cache_data) >= 1:
         if cache_data[0] != CACHE_HEADER:
             logger.warning(
@@ -142,12 +145,13 @@ def _read_cache_file(package, cache_path):
 
     return stored_cache
 
-def _write_cache_file(path, data):
-    # Write a new cache.
+def _write_cache_file(path, data, uid=-1, gid=-1):
+    """Write a new cache file."""
     cachefile = None
     try:
         try:
-            cachefile = fileutils.AtomicWriteFile(path, binary=False, perms=0o664)
+            cachefile = AtomicWriteFile(
+                path, binary=False, perms=0o664, uid=uid, gid=gid)
             cachefile.write(CACHE_HEADER + "\n")
             for (module, mtime), plugs in sorted(data.items(), key=operator.itemgetter(0)):
                 plugs = sort_plugs(plugs)
@@ -173,18 +177,37 @@ def initialize_cache(package, force=False):
 
     Writes cache files if they are stale and writing is possible.
     """
+    if os_data.uid in (os_data.root_uid, os_data.portage_uid):
+        cache_dir = const.SYSTEM_CACHE_PATH
+        uid = os_data.portage_uid
+        gid = os_data.portage_gid
+        mode = 0o775
+    else:
+        cache_dir = const.USER_CACHE_PATH
+        uid = gid = -1
+        mode = 0o755
+
+    # put pkgcore consumer plugins (e.g. pkgcheck) inside pkgcore cache dir
+    chunks = package.__name__.split('.', 1)
+    if chunks[0] != os.path.basename(cache_dir):
+        cache_dir = os.path.join(cache_dir, chunks[0])
+
+    if not ensure_dirs(cache_dir, uid=uid, gid=gid, mode=mode):
+        raise CliException(
+            f'failed creating plugins cache dir: {cache_dir!r}: {e.strerror}')
+
     # package plugin cache, see above.
     package_cache = defaultdict(set)
-    modpath = os.path.dirname(package.__file__)
-    modlist = listdir_files(modpath)
-    stored_cache_name = pjoin(modpath, CACHE_FILENAME)
+    stored_cache_name = pjoin(cache_dir, CACHE_FILENAME)
     stored_cache = _read_cache_file(package, stored_cache_name)
 
     if force:
-        _clean_old_caches(modpath)
+        _clean_old_caches(cache_dir)
 
     # Directory cache, mapping modulename to
     # (mtime, set([keys]))
+    modpath = os.path.dirname(package.__file__)
+    modlist = listdir_files(modpath)
     modlist = set(x for x in modlist if os.path.splitext(x)[1] == '.py'
                   and x != '__init__.py')
 
@@ -234,7 +257,7 @@ def initialize_cache(package, force=False):
             package_cache[data.key].add(data)
     if force or set(stored_cache) != set(actual_cache):
         logger.debug('updating cache %r for new plugins', stored_cache_name)
-        _write_cache_file(stored_cache_name, actual_cache)
+        _write_cache_file(stored_cache_name, actual_cache, uid=uid, gid=gid)
 
     return mappings.ImmutableDict((k, sort_plugs(v)) for k, v in package_cache.items())
 

@@ -50,8 +50,9 @@ for xdg_var, var_name, fallback_dir in (
     setattr(_module, var_name,
             os.environ.get(xdg_var, osp.join(osp.expanduser(fallback_dir), __title__)))
 
-SYSTEM_CONF_FILE = '/etc/pkgcore/pkgcore.conf'
 USER_CONF_FILE = osp.join(getattr(_module, 'USER_CONFIG_PATH'), 'pkgcore.conf')
+SYSTEM_CONF_FILE = '/etc/pkgcore/pkgcore.conf'
+SYSTEM_CACHE_PATH = '/var/cache/pkgcore'
 
 DATA_PATH = _GET_CONST('DATA_PATH', _reporoot, allow_environment_override=True)
 LIBDIR_PATH = _GET_CONST('LIBDIR_PATH', _reporoot)

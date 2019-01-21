@@ -13,11 +13,7 @@ from pkgcore.sync import base
 
 
 class http_syncer(base.Syncer):
-
-    supported_uris = (
-        ('http://', 5),
-        ('https://', 5),
-    )
+    """Syncer that fetches files over HTTP(S)."""
 
     def __init__(self, basedir, uri, **kwargs):
         self.basename = os.path.basename(uri)

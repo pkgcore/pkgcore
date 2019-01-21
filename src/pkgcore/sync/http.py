@@ -42,9 +42,8 @@ class http_syncer(base.Syncer):
 
         # check if updates exist
         modified = pjoin(self.basedir, '.modified')
-        etag = resp.getheader('ETag')
+        etag = resp.getheader('ETag', '').strip('\'"')
         if etag and os.path.exists(modified):
-            etag = etag.strip('\'"')
             with open(modified, 'r') as f:
                 previous = f.read()
                 if etag == previous:

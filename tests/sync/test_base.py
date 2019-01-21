@@ -23,19 +23,19 @@ class TestExternalSyncer(object):
             bogus("/tmp/foon", "http://dar")
 
         o = valid("/tmp/foon", "http://dar")
-        assert o.local_user == os.getuid()
+        assert o.uid == os.getuid()
         assert o.uri == "http://dar"
 
         o = valid("/tmp/foon", f"http://{existing_user}::@site")
-        assert o.local_user == existing_uid
+        assert o.uid == existing_uid
         assert o.uri == "http://site"
 
         o = valid("/tmp/foon", f"http://{existing_user}::foon@site")
-        assert o.local_user == existing_uid
+        assert o.uid == existing_uid
         assert o.uri == "http://foon@site"
 
         o = valid("/tmp/foon", f"{existing_user}::foon@site")
-        assert o.local_user == existing_uid
+        assert o.uid == existing_uid
         assert o.uri == "foon@site"
 
 

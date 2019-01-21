@@ -38,6 +38,7 @@ else:
     raise Exception("Operating system unsupported, '%s'" % ostype)
 
 uid = os.getuid()
+gid = os.getgid()
 # hard coding sucks.
 root_uid = 0
 root_gid = wheelgid = 0

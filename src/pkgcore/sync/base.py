@@ -79,7 +79,7 @@ class Syncer(object):
         self.usersync = usersync
         self.basedir = path.rstrip(os.path.sep) + os.path.sep
         uri = self.parse_uri(uri)
-        self.local_user, self.uri = self.split_users(uri)
+        self.uid, self.gid, self.uri = self.split_users(uri)
         self.opts = opts.split()
 
     @staticmethod
@@ -103,12 +103,17 @@ class Syncer(object):
         if len(uri) == 1:
             if self.usersync:
                 if os.path.exists(self.basedir):
-                    uid = os.stat(self.basedir).st_uid
-                else: 
+                    stat = os.stat(self.basedir)
+                    uid = stat.st_uid
+                    gid = stat.st_gid
+                else:
                     uid = os_data.portage_uid
+                    gid = os_data.portage_gid
             else:
                 uid = os_data.uid
-            return uid, raw_uri
+                gid = os_data.gid
+
+            return uid, gid, raw_uri
         try:
             if uri[1].startswith("@"):
                 uri[1] = uri[1][1:]
@@ -118,7 +123,7 @@ class Syncer(object):
                 uri[0] = proto[1]
                 uri[1] = f"{proto[0]}//{uri[1]}"
 
-            return pwd.getpwnam(uri[0]).pw_uid, uri[1]
+            return pwd.getpwnam(uri[0]).pw_uid, os_data.gid, uri[1]
         except KeyError as e:
             raise MissingLocalUser(raw_uri, str(e))
 
@@ -193,7 +198,7 @@ class ExternalSyncer(Syncer):
 
     def _spawn(self, command, pipes, **kwargs):
         return process.spawn.spawn(
-            command, fd_pipes=pipes, uid=self.local_user, env=self.env, **kwargs)
+            command, fd_pipes=pipes, uid=self.uid, gid=self.gid, env=self.env, **kwargs)
 
     @staticmethod
     def _rewrite_uri_from_stat(path, uri):
@@ -230,7 +235,7 @@ class VcsSyncer(ExternalSyncer):
         elif verbosity > 0:
             command.append('-' + 'v' * verbosity)
 
-        ret = self._spawn(command, {1: output_fd, 2: output_fd, 0: 0},
+        ret = self._spawn(command, pipes={1: output_fd, 2: output_fd, 0: 0},
                           cwd=chdir)
         return ret == 0
 

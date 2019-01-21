@@ -62,7 +62,7 @@ class tar_syncer(http_syncer, base.ExternalSyncer):
 
     def _post_download(self, path):
         # create tempdir for staging decompression
-        if not ensure_dirs(self.tempdir, mode=0o755, uid=self.local_user):
+        if not ensure_dirs(self.tempdir, mode=0o755, uid=self.uid, gid=self.gid):
             raise base.SyncError(
                 f'failed creating repo update dir: {self.tempdir!r}')
 

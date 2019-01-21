@@ -19,15 +19,23 @@ class tar_syncer(http_syncer):
         ('tar+https://', 5),
     )
 
-    @staticmethod
-    def parse_uri(raw_uri):
-        # TODO: support more of the less used file extensions
-        if not raw_uri.endswith(('.tar.gz', '.tar.bz2', '.tar.xz')):
+    # TODO: support more of the less used file extensions
+    supported_exts = ('.tar.gz', '.tar.bz2', '.tar.xz')
+
+    @classmethod
+    def parse_uri(cls, raw_uri):
+        if raw_uri.startswith(("tar+http://", "tar+https://")):
+            raw_uri = raw_uri[4:]
+        if raw_uri.startswith(('http://', 'https://')) and raw_uri.endswith(cls.supported_exts):
+            return raw_uri
+        else:
             raise base.UriError(
                 raw_uri, "unsupported compression format for tarball archive")
-        if raw_uri.startswith(("tar+http://", "tar+https://")):
-            return raw_uri[4:]
         raise base.UriError(raw_uri, "unsupported URI")
+
+    @classmethod
+    def works_with_uri(cls, uri):
+        return uri.endswith(cls.supported_exts)
 
     def _sync(self, *args, **kwargs):
         # create temp file for downloading

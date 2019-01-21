@@ -1,24 +1,27 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
+import pytest
+
 from pkgcore.sync import base, git
 from tests.sync.syncer import make_bogus_syncer, make_valid_syncer
-from snakeoil.test import TestCase
 
 bogus = make_bogus_syncer(git.git_syncer)
 valid = make_valid_syncer(git.git_syncer)
 
 
-class TestGitSyncer(TestCase):
+class TestGitSyncer(object):
 
     def test_uri_parse(self):
-        self.assertEqual(git.git_syncer.parse_uri("git+http://dar"),
-            "http://dar")
-        self.assertRaises(base.UriError, git.git_syncer.parse_uri,
-            "git+://dar")
-        self.assertRaises(base.UriError, git.git_syncer.parse_uri,
-            "https://foo.com/repo.git")
-        self.assertRaises(base.SyncError, bogus,
-            "/tmp/foon", "git+http://foon.com/dar")
-        o = valid("/tmp/foon", "git+http://dar")
-        self.assertEqual(o.uri, "http://dar")
+        assert git.git_syncer.parse_uri("git+http://dar") == "http://dar"
+
+        with pytest.raises(base.UriError):
+            git.git_syncer.parse_uri("git+://dar")
+
+        with pytest.raises(base.SyncError):
+            bogus("/tmp/foon", "git+http://foon.com/dar")
+
+        for proto in ('http', 'https'):
+            for uri in (f"git+{proto}://repo.git", f"{proto}://repo.git"):
+                o = valid("/tmp/foon", uri)
+                assert o.uri == f"{proto}://repo.git"

@@ -4,7 +4,7 @@ from pkgcore.sync import base
 from pkgcore.sync.sqfs import sqfs_syncer
 
 
-class TestGitSyncer(object):
+class TestSqfsSyncer(object):
 
     def test_uri_parse(self):
         assert sqfs_syncer.parse_uri("sqfs+http://repo.lzo.sqfs") == "http://repo.lzo.sqfs"

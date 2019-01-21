@@ -87,6 +87,11 @@ class Syncer(object):
         return None
 
     @staticmethod
+    def works_with_uri(uri):
+        """Return True if a syncer works for a given URI, otherwise return False."""
+        return False
+
+    @staticmethod
     def split_users(raw_uri):
         """
         :param raw_uri: string uri to split users from; harring::ferringb:pass
@@ -236,6 +241,9 @@ def GenericSyncer(basedir, uri, **kwargs):
         for plug in plugin.get_plugins('syncer'))
     plugins.sort(key=lambda x: x[0])
     if not plugins or plugins[-1][0] <= 0:
+        for plug in plugin.get_plugins('syncer'):
+            if plug.works_with_uri(uri):
+                return plug(basedir, uri, **kwargs)
         raise UriError(uri, "no known syncer support")
     # XXX this is random if there is a tie. Should we raise an exception?
     return plugins[-1][1](basedir, uri, **kwargs)

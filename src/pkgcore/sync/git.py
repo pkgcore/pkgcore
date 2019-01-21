@@ -28,10 +28,16 @@ class git_syncer(base.VcsSyncer):
         return (cls._rewrite_uri_from_stat(git_path, "git://"),)
 
     @staticmethod
+    def works_with_uri(uri):
+        return uri.endswith('.git')
+
+    @staticmethod
     def parse_uri(raw_uri):
         if not raw_uri.startswith("git+") and not raw_uri.startswith("git://"):
+            if raw_uri.startswith(("http://", "https://")) and raw_uri.endswith(".git"):
+                return raw_uri
             raise base.UriError(
-                raw_uri, "doesn't start with git+ nor git://")
+                raw_uri, "doesn't start with git+ or git://")
         if raw_uri.startswith("git+"):
             if raw_uri.startswith("git+:"):
                 raise base.UriError(

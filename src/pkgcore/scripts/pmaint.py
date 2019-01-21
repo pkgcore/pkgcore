@@ -12,6 +12,7 @@ __all__ = (
 from snakeoil.cli import arghparse
 from snakeoil.demandload import demandload
 
+from pkgcore.exceptions import PkgcoreCliException
 from pkgcore.util import commandline
 from pkgcore.operations import OperationError
 
@@ -75,9 +76,10 @@ def sync_main(options, out, err):
         try:
             ret = repo.operations.sync(verbosity=options.verbosity)
         except OperationError as e:
-            err = str(getattr(e, '__cause__', ''))
-            if err:
-                err_msg = f': {err}'
+            exc = getattr(e, '__cause__', e)
+            if not isinstance(exc, PkgcoreCliException):
+                raise
+            err_msg = f': {exc}'
         if not ret:
             out.write(f"*** failed syncing {repo_name}{err_msg}")
             failed.append(repo_name)

@@ -6,7 +6,7 @@ import pwd
 
 import pytest
 
-from pkgcore.sync import base, git
+from pkgcore.sync import base, tar
 from tests.sync.syncer import make_bogus_syncer, make_valid_syncer
 
 valid = make_valid_syncer(base.ExternalSyncer)
@@ -45,6 +45,5 @@ class TestGenericSyncer(object):
         with pytest.raises(base.UriError):
             base.GenericSyncer('/', 'seriouslynotaprotocol://blah/')
 
-        # TODO: switch to tarball syncer once support is implemented
-        syncer = base.GenericSyncer('/', f'git://blah/')
-        assert git.git_syncer is syncer.__class__
+        syncer = base.GenericSyncer('/', f'tar+https://blah.tar.gz')
+        assert tar.tar_syncer is syncer.__class__

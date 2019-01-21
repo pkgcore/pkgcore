@@ -15,28 +15,36 @@ from pkgcore.sync import base
 class http_syncer(base.Syncer):
     """Syncer that fetches files over HTTP(S)."""
 
-    def __init__(self, basedir, uri, **kwargs):
+    def __init__(self, basedir, uri, dest=None, **kwargs):
         self.basename = os.path.basename(uri)
         self.dest = pjoin(basedir, self.basename)
         super().__init__(basedir, uri, **kwargs)
 
     def _sync(self, verbosity, output_fd, **kwds):
+        dest = kwds.get('dest', self.dest)
         if self.uri.startswith('https://'):
             # default to using system ssl certs
             context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
         else:
             context = None
 
+        # TODO: add customizable timeout
         try:
             resp = urllib.request.urlopen(self.uri, context=context)
         except urllib.error.URLError as e:
             raise base.SyncError(str(e.reason)) from e
 
+        try:
+            os.makedirs(self.basedir, exist_ok=True)
+        except OSError as e:
+            raise base.SyncError(
+                f'failed creating repo dir {self.basedir!r}: {e.strerror}') from e
+
         # TODO: cache/use ETag from header if it exists and fallback to last-modified
         # to check if updates exist
         timestamp = pjoin(self.basedir, '.timestamp')
         last_modified = resp.getheader('last-modified')
-        if os.path.exists(self.dest) and os.path.exists(timestamp):
+        if last_modified and os.path.exists(timestamp):
             with open(timestamp, 'r') as f:
                 previous = f.read()
                 if last_modified == previous:
@@ -50,7 +58,7 @@ class http_syncer(base.Syncer):
             blocksize = 1000000
 
         try:
-            f = AtomicWriteFile(self.dest, binary=True, perms=0o644)
+            f = AtomicWriteFile(dest, binary=True, perms=0o644)
         except OSError as e:
             raise base.PathError(self.basedir, e.strerror) from e
 
@@ -59,7 +67,8 @@ class http_syncer(base.Syncer):
         while True:
             buf = resp.read(blocksize)
             if not buf:
-                sys.stdout.write('\n')
+                if length:
+                    sys.stdout.write('\n')
                 break
             f.write(buf)
             size += len(buf)
@@ -73,7 +82,8 @@ class http_syncer(base.Syncer):
         f.close()
 
         # update timestamp
-        with open(timestamp, 'w') as f:
-            f.write(last_modified)
+        if last_modified:
+            with open(timestamp, 'w') as f:
+                f.write(last_modified)
 
         return True

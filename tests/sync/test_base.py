@@ -4,9 +4,10 @@
 import os
 import pwd
 
-from pkgcore.sync import base, http
+import pytest
+
+from pkgcore.sync import base, git
 from tests.sync.syncer import make_bogus_syncer, make_valid_syncer
-from snakeoil.test import TestCase, SkipTest
 
 valid = make_valid_syncer(base.ExternalSyncer)
 bogus = make_bogus_syncer(base.ExternalSyncer)
@@ -15,36 +16,35 @@ existing_user = pwd.getpwall()[0].pw_name
 existing_uid = pwd.getpwnam(existing_user).pw_uid
 
 
-class TestBase(TestCase):
+class TestExternalSyncer(object):
 
     def test_init(self):
-        self.assertRaises(
-            base.SyncError, bogus,
-            "/tmp/foon", "http://dar")
+        with pytest.raises(base.SyncError):
+            bogus("/tmp/foon", "http://dar")
+
         o = valid("/tmp/foon", "http://dar")
-        self.assertEqual(o.local_user, os.getuid())
-        self.assertEqual(o.uri, "http://dar")
+        assert o.local_user == os.getuid()
+        assert o.uri == "http://dar"
 
         o = valid("/tmp/foon", f"http://{existing_user}::@site")
-        self.assertEqual(o.local_user, existing_uid)
-        self.assertEqual(o.uri, "http://site")
+        assert o.local_user == existing_uid
+        assert o.uri == "http://site"
 
         o = valid("/tmp/foon", f"http://{existing_user}::foon@site")
-        self.assertEqual(o.local_user, existing_uid)
-        self.assertEqual(o.uri, "http://foon@site")
+        assert o.local_user == existing_uid
+        assert o.uri == "http://foon@site"
 
         o = valid("/tmp/foon", f"{existing_user}::foon@site")
-        self.assertEqual(o.local_user, existing_uid)
-        self.assertEqual(o.uri, "foon@site")
+        assert o.local_user == existing_uid
+        assert o.uri == "foon@site"
 
 
-class GenericSyncerTest(TestCase):
+class TestGenericSyncer(object):
 
     def test_init(self):
-        self.assertRaises(
-            base.UriError,
-            base.GenericSyncer, '/', 'seriouslynotaprotocol://blah/')
+        with pytest.raises(base.UriError):
+            base.GenericSyncer('/', 'seriouslynotaprotocol://blah/')
 
-        for proto in ('http', 'https'):
-            syncer = base.GenericSyncer('/', f'{proto}://blah/')
-            self.assertIdentical(http.http_syncer, syncer.__class__)
+        # TODO: switch to tarball syncer once support is implemented
+        syncer = base.GenericSyncer('/', f'git://blah/')
+        assert git.git_syncer is syncer.__class__

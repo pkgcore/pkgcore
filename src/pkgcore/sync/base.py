@@ -155,7 +155,7 @@ class ExternalSyncer(Syncer):
             self.binary_path = self.require_binary(self.binary)
 
     @staticmethod
-    def require_binary(bin_name, fatal=False):
+    def require_binary(bin_name, fatal=True):
         try:
             return process.find_binary(bin_name)
         except process.CommandNotFound as e:
@@ -177,9 +177,6 @@ class ExternalSyncer(Syncer):
             else:
                 disabled = cls._disabled = os.path.exists(path)
         return disabled
-
-    def set_binary_path(self):
-        self.binary_path = self.require_binary(self.binary)
 
     def _spawn(self, command, pipes, **kwargs):
         return process.spawn.spawn(

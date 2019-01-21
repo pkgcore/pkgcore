@@ -39,10 +39,6 @@ class git_syncer(base.VcsSyncer):
             return raw_uri[4:]
         return raw_uri
 
-    def __init__(self, basedir, uri, **kwargs):
-        uri = self.parse_uri(uri)
-        super().__init__(basedir, uri, **kwargs)
-
     def _initial_pull(self):
         return [self.binary_path, "clone", self.uri, self.basedir]
 

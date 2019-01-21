@@ -25,7 +25,7 @@ class cvs_syncer(base.VcsSyncer):
         return (cls._rewrite_uri_from_stat(cvs_path, 'cvs://'),)
 
     @classmethod
-    def parse_uri(cls, raw_uri):
+    def _parse_uri(cls, raw_uri):
         if not raw_uri.startswith("cvs") and \
                 not raw_uri.startswith("cvs+"):
             raise base.UriError(raw_uri, "must be cvs:// or cvs+${RSH}")
@@ -42,7 +42,7 @@ class cvs_syncer(base.VcsSyncer):
         return proto[0], proto[1].lstrip("/")
 
     def __init__(self, basedir, raw_uri, **kwargs):
-        proto, uri = self.parse_uri(raw_uri)
+        proto, uri = self._parse_uri(raw_uri)
         self.rsh = proto
         if self.rsh is None:
             uri = f":anoncvs:{uri}"

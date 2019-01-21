@@ -17,4 +17,4 @@ class TestSVNSyncer(TestCase):
         self.assertRaises(base.SyncError, bogus,
             "/tmp/foon", "svn+http://foon.com/dar")
         o = valid("/tmp/foon", "svn+http://dar")
-        self.assertEqual(o.uri, "svn+http://dar")
+        self.assertEqual(o.uri, "http://dar")

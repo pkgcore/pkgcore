@@ -23,11 +23,7 @@ demandload(
 
 
 class SyncError(PkgcoreCliException):
-    pass
-
-
-class ConnectionError(SyncError):
-    pass
+    """Generic syncing error."""
 
 
 class UriError(SyncError):
@@ -35,7 +31,7 @@ class UriError(SyncError):
     def __init__(self, uri, msg):
         self.uri = uri
         self.msg = msg
-        super().__init__(f"{uri!r}: {msg}")
+        super().__init__(f"{msg}: {uri!r}")
 
 
 class PathError(SyncError):
@@ -43,7 +39,7 @@ class PathError(SyncError):
     def __init__(self, path, msg):
         self.path = path.rstrip(os.path.sep)
         self.msg = msg
-        super().__init__(f"{self.path!r}: {msg}")
+        super().__init__(f"{msg}: {self.path!r}")
 
 
 class MissingLocalUser(SyncError):
@@ -51,7 +47,7 @@ class MissingLocalUser(SyncError):
     def __init__(self, uri, msg):
         self.uri = uri
         self.msg = msg
-        super().__init__(f"{uri!r}: {msg}")
+        super().__init__(f"{msg}: {uri!r}")
 
 
 class MissingBinary(SyncError):
@@ -59,7 +55,7 @@ class MissingBinary(SyncError):
     def __init__(self, binary, msg):
         self.binary = binary
         self.msg = msg
-        super().__init__(f"{binary!r}: {msg}")
+        super().__init__(f"{msg}: {binary!r}")
 
 
 class Syncer(object):
@@ -74,15 +70,21 @@ class Syncer(object):
     pkgcore_config_type = ConfigHint(
         {'path': 'str', 'uri': 'str', 'opts': 'str'}, typename='syncer')
 
-    @classmethod
-    def is_usable_on_filepath(cls, path):
-        return None
-
     def __init__(self, path, uri, default_verbosity=0, opts=''):
         self.verbosity = default_verbosity
         self.basedir = path.rstrip(os.path.sep) + os.path.sep
+        uri = self.parse_uri(uri)
         self.local_user, self.uri = self.split_users(uri)
         self.opts = opts.split()
+
+    @staticmethod
+    def parse_uri(uri):
+        """Return the real URI with any protocol prefix stripped."""
+        return uri
+
+    @classmethod
+    def is_usable_on_filepath(cls, path):
+        return None
 
     @staticmethod
     def split_users(raw_uri):
@@ -244,8 +246,8 @@ def GenericSyncer(basedir, uri, **kwargs):
 
 class DisabledSyncer(Syncer):
 
-    def __init__(self, basedir, **kwargs):
-        super().__init__(basedir, uri='', **kwargs)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, uri='', **kwargs)
 
     @staticmethod
     def disabled():

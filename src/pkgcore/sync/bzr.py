@@ -41,10 +41,6 @@ class bzr_syncer(base.VcsSyncer):
             raise base.UriError(raw_uri, "doesn't start with bzr+")
         return raw_uri[4:]
 
-    def __init__(self, basedir, uri, **kwargs):
-        uri = self.parse_uri(uri)
-        super().__init__(basedir, uri, **kwargs)
-
     def _initial_pull(self):
         return [self.binary_path, "branch", self.uri, self.basedir]
 

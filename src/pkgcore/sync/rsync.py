@@ -42,7 +42,7 @@ class rsync_syncer(base.ExternalSyncer):
     binary = "rsync"
 
     @classmethod
-    def parse_uri(cls, raw_uri):
+    def _parse_uri(cls, raw_uri):
         if not raw_uri.startswith("rsync://") and \
                 not raw_uri.startswith("rsync+"):
             raise base.UriError(raw_uri, "doesn't start with rsync:// nor rsync+")
@@ -66,7 +66,7 @@ class rsync_syncer(base.ExternalSyncer):
                  retries=default_retries, proxy=None,
                  opts=(), extra_opts=()):
         uri = uri.rstrip(os.path.sep) + os.path.sep
-        self.rsh, uri = self.parse_uri(uri)
+        self.rsh, uri = self._parse_uri(uri)
         super().__init__(basedir, uri, default_verbosity=1)
         self.hostname = self.parse_hostname(self.uri)
         if self.rsh:

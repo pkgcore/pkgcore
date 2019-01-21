@@ -30,7 +30,7 @@ class http_syncer(base.Syncer):
         try:
             resp = urllib.request.urlopen(self.uri, context=context)
         except urllib.error.URLError as e:
-            raise base.ConnectionError(str(e.reason)) from e
+            raise base.SyncError(str(e.reason)) from e
 
         # TODO: cache/use ETag from header if it exists and fallback to last-modified
         # to check if updates exist

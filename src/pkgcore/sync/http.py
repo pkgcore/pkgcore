@@ -32,7 +32,7 @@ class http_syncer(base.Syncer):
         try:
             resp = urllib.request.urlopen(self.uri, context=context)
         except urllib.error.URLError as e:
-            raise base.SyncError(str(e.reason)) from e
+            raise base.SyncError(f'failed fetching {self.uri!r}: {e.reason}') from e
 
         try:
             os.makedirs(self.basedir, exist_ok=True)

@@ -17,6 +17,9 @@ class git_syncer(base.VcsSyncer):
         ('git+', 5),
     )
 
+    supported_protocols = ('http://', 'https://', 'git://')
+    supported_exts = ('.git',)
+
     @classmethod
     def is_usable_on_filepath(cls, path):
         git_path = os.path.join(path, '.git')
@@ -27,14 +30,10 @@ class git_syncer(base.VcsSyncer):
             return None
         return (cls._rewrite_uri_from_stat(git_path, "git://"),)
 
-    @staticmethod
-    def works_with_uri(uri):
-        return uri.endswith('.git')
-
-    @staticmethod
-    def parse_uri(raw_uri):
+    @classmethod
+    def parse_uri(cls, raw_uri):
         if not raw_uri.startswith("git+") and not raw_uri.startswith("git://"):
-            if raw_uri.startswith(("http://", "https://")) and raw_uri.endswith(".git"):
+            if raw_uri.startswith(cls.supported_protocols) and raw_uri.endswith(cls.supported_exts):
                 return raw_uri
             raise base.UriError(
                 raw_uri, "doesn't start with git+ or git://")

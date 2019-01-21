@@ -63,6 +63,8 @@ class Syncer(object):
     forcable = False
 
     supported_uris = ()
+    supported_protocols = ()
+    supported_exts = ()
 
     # plugin system uses this.
     disabled = False
@@ -85,11 +87,6 @@ class Syncer(object):
     @classmethod
     def is_usable_on_filepath(cls, path):
         return None
-
-    @staticmethod
-    def works_with_uri(uri):
-        """Return True if a syncer works for a given URI, otherwise return False."""
-        return False
 
     @staticmethod
     def split_users(raw_uri):
@@ -138,6 +135,8 @@ class Syncer(object):
         for prefix, level in cls.supported_uris:
             if uri.startswith(prefix):
                 return level
+        if uri.startswith(cls.supported_protocols) and uri.endswith(cls.supported_exts):
+            return 1
         return 0
 
 
@@ -241,9 +240,6 @@ def GenericSyncer(basedir, uri, **kwargs):
         for plug in plugin.get_plugins('syncer'))
     plugins.sort(key=lambda x: x[0])
     if not plugins or plugins[-1][0] <= 0:
-        for plug in plugin.get_plugins('syncer'):
-            if plug.works_with_uri(uri):
-                return plug(basedir, uri, **kwargs)
         raise UriError(uri, "no known syncer support")
     # XXX this is random if there is a tie. Should we raise an exception?
     return plugins[-1][1](basedir, uri, **kwargs)

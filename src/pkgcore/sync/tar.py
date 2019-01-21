@@ -35,6 +35,11 @@ class tar_syncer(http_syncer):
         raise base.UriError(raw_uri, "unsupported URI")
 
     def _sync(self, *args, **kwargs):
+        ret = super()._sync(*args, **kwargs)
+        # TODO: verify image checksum and gpg signature
+        return ret
+
+    def _pre_download(self):
         # create temp file for downloading
         temp = tempfile.NamedTemporaryFile()
         tarball = temp.name
@@ -45,27 +50,27 @@ class tar_syncer(http_syncer):
         basedir = self.basedir.rstrip(os.path.sep)
         repos_dir = os.path.dirname(basedir)
         repo_name = os.path.basename(basedir)
-        tempdir = os.path.join(repos_dir, f'.{repo_name}.update.{uuid.uuid4().hex}')
-        tempdir_old = os.path.join(repos_dir, f'.{repo_name}.old.{uuid.uuid4().hex}')
-        # register new temp repo dir for removal on exiting due to syncing failure
-        atexit.register(partial(shutil.rmtree, tempdir, ignore_errors=True))
+        self.tempdir = os.path.join(repos_dir, f'.{repo_name}.update.{uuid.uuid4().hex}')
+        self.tempdir_old = os.path.join(repos_dir, f'.{repo_name}.old.{uuid.uuid4().hex}')
+        # remove temp repo dir on exit
+        atexit.register(partial(shutil.rmtree, self.tempdir, ignore_errors=True))
+        return tarball
 
+    def _post_download(self, path):
+        # create tempdir for staging decompression
         try:
-            os.makedirs(tempdir)
+            os.makedirs(self.tempdir)
         except OSError as e:
             raise base.SyncError(
-                f'failed creating repo update dir: {tempdir!r}: {e.strerror}') from e
-
-        # download file
-        super()._sync(*args, dest=tarball, **kwargs)
+                f'failed creating repo update dir: {self.tempdir!r}: {e.strerror}') from e
 
         exts = {'gz': 'gzip', 'bz2': 'bzip2', 'xz': 'xz'}
         compression = exts[self.uri.rsplit('.', 1)[1]]
         # use tar instead of tarfile so we can easily strip leading path components
         # TODO: programmatically determine how man components to strip?
         cmd = [
-            'tar', '--extract', f'--{compression}', '-f', tarball,
-            '--strip-components=1', '-C', tempdir
+            'tar', '--extract', f'--{compression}', '-f', path,
+            '--strip-components=1', '-C', self.tempdir
         ]
         try:
             subprocess.check_call(cmd)
@@ -74,13 +79,10 @@ class tar_syncer(http_syncer):
 
         # move old repo out of the way and then move new, unpacked repo into place
         try:
-            os.rename(self.basedir, tempdir_old)
-            os.rename(tempdir, self.basedir)
+            os.rename(self.basedir, self.tempdir_old)
+            os.rename(self.tempdir, self.basedir)
         except OSError as e:
             raise base.SyncError(f'failed to update repo: {e.strerror}') from e
 
-        # register old repo for removal after it has been successfully replaced
-        atexit.register(partial(shutil.rmtree, tempdir_old, ignore_errors=True))
-
-        # TODO: verify image checksum and gpg signature if it exists
-        return True
+        # register old repo removal after it has been successfully replaced
+        atexit.register(partial(shutil.rmtree, self.tempdir_old, ignore_errors=True))

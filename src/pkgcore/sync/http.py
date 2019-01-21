@@ -17,11 +17,11 @@ class http_syncer(base.Syncer):
 
     def __init__(self, basedir, uri, dest=None, **kwargs):
         self.basename = os.path.basename(uri)
-        self.dest = pjoin(basedir, self.basename)
         super().__init__(basedir, uri, **kwargs)
 
     def _sync(self, verbosity, output_fd, **kwds):
-        dest = kwds.get('dest', self.dest)
+        dest = self._pre_download()
+
         if self.uri.startswith('https://'):
             # default to using system ssl certs
             context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
@@ -40,14 +40,14 @@ class http_syncer(base.Syncer):
             raise base.SyncError(
                 f'failed creating repo dir {self.basedir!r}: {e.strerror}') from e
 
-        # TODO: cache/use ETag from header if it exists and fallback to last-modified
-        # to check if updates exist
-        timestamp = pjoin(self.basedir, '.timestamp')
-        last_modified = resp.getheader('last-modified')
-        if last_modified and os.path.exists(timestamp):
-            with open(timestamp, 'r') as f:
+        # check if updates exist
+        modified = pjoin(self.basedir, '.modified')
+        etag = resp.getheader('ETag')
+        if etag and os.path.exists(modified):
+            etag = etag.strip('\'"')
+            with open(modified, 'r') as f:
                 previous = f.read()
-                if last_modified == previous:
+                if etag == previous:
                     return True
 
         length = resp.getheader('content-length')
@@ -81,9 +81,26 @@ class http_syncer(base.Syncer):
         # atomically create file
         f.close()
 
+        self._post_download(dest)
+
+        # TODO: store this in pkgcore cache dir instead?
         # update timestamp
-        if last_modified:
-            with open(timestamp, 'w') as f:
-                f.write(last_modified)
+        if etag:
+            with open(modified, 'w') as f:
+                f.write(etag)
 
         return True
+
+    def _pre_download(self):
+        """Pre-download initialization.
+
+        Returns file path to download file to.
+        """
+        return pjoin(self.basedir, self.basename)
+
+    def _post_download(self, path):
+        """Post-download file processing.
+
+        Args:
+            path (str): path to downloaded file
+        """

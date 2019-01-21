@@ -8,13 +8,14 @@ __all__ = (
     "GenericSyncer", "DisabledSyncer", "AutodetectSyncer",
 )
 
+import os
+
 from snakeoil.demandload import demandload
 
 from pkgcore.config import ConfigHint, configurable
 from pkgcore.exceptions import PkgcoreCliException
 
 demandload(
-    'os',
     'pwd',
     'stat',
     'snakeoil:process',
@@ -70,10 +71,12 @@ class Syncer(object):
     disabled = False
 
     pkgcore_config_type = ConfigHint(
-        {'path': 'str', 'uri': 'str', 'opts': 'str'}, typename='syncer')
+        {'path': 'str', 'uri': 'str', 'opts': 'str', 'usersync': 'bool'},
+        typename='syncer')
 
-    def __init__(self, path, uri, default_verbosity=0, opts=''):
+    def __init__(self, path, uri, default_verbosity=0, usersync=False, opts=''):
         self.verbosity = default_verbosity
+        self.usersync = usersync
         self.basedir = path.rstrip(os.path.sep) + os.path.sep
         uri = self.parse_uri(uri)
         self.local_user, self.uri = self.split_users(uri)
@@ -88,8 +91,7 @@ class Syncer(object):
     def is_usable_on_filepath(cls, path):
         return None
 
-    @staticmethod
-    def split_users(raw_uri):
+    def split_users(self, raw_uri):
         """
         :param raw_uri: string uri to split users from; harring::ferringb:pass
           for example is local user 'harring', remote 'ferringb',
@@ -99,7 +101,14 @@ class Syncer(object):
         """
         uri = raw_uri.split("::", 1)
         if len(uri) == 1:
-            return os.getuid(), raw_uri
+            if self.usersync:
+                if os.path.exists(self.basedir):
+                    uid = os.stat(self.basedir).st_uid
+                else: 
+                    uid = os_data.portage_uid
+            else:
+                uid = os_data.uid
+            return uid, raw_uri
         try:
             if uri[1].startswith("@"):
                 uri[1] = uri[1][1:]
@@ -232,7 +241,9 @@ class VcsSyncer(ExternalSyncer):
         raise NotImplementedError(self, "_update_existing")
 
 
-@configurable({'basedir': 'str', 'uri': 'str', 'opts': 'str'}, typename='syncer')
+@configurable(
+    {'basedir': 'str', 'uri': 'str', 'usersync': 'bool', 'opts': 'str'},
+    typename='syncer')
 def GenericSyncer(basedir, uri, **kwargs):
     """Syncer using the plugin system to find a syncer based on uri."""
     plugins = list(
@@ -255,7 +266,7 @@ class DisabledSyncer(Syncer):
         return True
 
 
-@configurable({'basedir': 'str'}, typename='syncer')
+@configurable({'basedir': 'str', 'usersync': 'bool'}, typename='syncer')
 def AutodetectSyncer(basedir, **kwargs):
     for plug in plugin.get_plugins('syncer'):
         ret = plug.is_usable_on_filepath(basedir)

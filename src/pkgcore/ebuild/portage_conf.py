@@ -24,6 +24,7 @@ from snakeoil.osutils import access, normpath, abspath, listdir_files, pjoin, en
 from pkgcore import const, exceptions as base_errors
 from pkgcore.config import basics, configurable
 from pkgcore.ebuild import const as econst, profiles, repo_objs
+from pkgcore.ebuild.misc import optimize_incrementals
 from pkgcore.ebuild.repository import errors as repo_errors
 from pkgcore.fs.livefs import sorted_scan
 from pkgcore.pkgsets.glsa import SecurityUpgrades
@@ -134,6 +135,9 @@ class PortageConfig(DictMixin):
         self.root = os.environ.get("ROOT", kwargs.pop('root', make_conf.get("ROOT", "/")))
         gentoo_mirrors = [
             x.rstrip("/") + "/distfiles" for x in make_conf.pop("GENTOO_MIRRORS", "").split()]
+
+        self.features = frozenset(
+            optimize_incrementals(make_conf.get('FEATURES', '').split()))
 
         self._add_sets()
         self._add_profile(profile_override)
@@ -384,9 +388,10 @@ class PortageConfig(DictMixin):
     def _make_repo_syncers(self, repos_conf, make_conf, allow_timestamps=True):
         """generate syncing configs for known repos"""
         rsync_opts = None
+        usersync = 'usersync' in self.features
 
         for repo_name, repo_opts in repos_conf.items():
-            d = {'basedir': repo_opts['location']}
+            d = {'basedir': repo_opts['location'], 'usersync': usersync}
 
             sync_type = repo_opts.get('sync-type', None)
             sync_uri = repo_opts.get('sync-uri', None)

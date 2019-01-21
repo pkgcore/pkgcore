@@ -8,11 +8,15 @@ import shutil
 import tempfile
 import uuid
 
+from snakeoil.osutils import ensure_dirs
+
 from pkgcore.sync import base
 from pkgcore.sync.http import http_syncer
 
 
-class tar_syncer(http_syncer):
+class tar_syncer(http_syncer, base.ExternalSyncer):
+
+    binary = 'tar'
 
     supported_uris = (
         ('tar+http://', 5),
@@ -58,11 +62,9 @@ class tar_syncer(http_syncer):
 
     def _post_download(self, path):
         # create tempdir for staging decompression
-        try:
-            os.makedirs(self.tempdir)
-        except OSError as e:
+        if not ensure_dirs(self.tempdir, mode=0o755, uid=self.local_user):
             raise base.SyncError(
-                f'failed creating repo update dir: {self.tempdir!r}: {e.strerror}') from e
+                f'failed creating repo update dir: {self.tempdir!r}')
 
         exts = {'gz': 'gzip', 'bz2': 'bzip2', 'xz': 'xz'}
         compression = exts[self.uri.rsplit('.', 1)[1]]
@@ -70,12 +72,12 @@ class tar_syncer(http_syncer):
         # TODO: programmatically determine how man components to strip?
         cmd = [
             'tar', '--extract', f'--{compression}', '-f', path,
-            '--strip-components=1', '-C', self.tempdir
+            '--strip-components=1', '--no-same-owner', '-C', self.tempdir
         ]
-        try:
-            subprocess.check_call(cmd)
-        except subprocess.CalledProcessError as e:
-            raise base.SyncError('failed to unpack tarball') from e
+        with open(os.devnull) as f:
+            ret = self._spawn(cmd, pipes={1: f.fileno(), 2: f.fileno()})
+        if ret:
+            raise base.SyncError('failed to unpack tarball')
 
         # move old repo out of the way and then move new, unpacked repo into place
         try:

@@ -47,7 +47,7 @@ class TestGitSyncer(object):
             assert spawn.call_args[1]['cwd'] == syncer.basedir
 
 
-@pytest.mark.network
+@pytest.mark_network
 class TestGitSyncerReal(object):
 
     def test_sync(self, tmp_path):

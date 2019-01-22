@@ -89,8 +89,16 @@ class TestVcsSyncer(object):
         repo = tmp_path / "repo"
         repo.touch()
         syncer = git.git_syncer(str(repo), 'git://blah.git')
-        with pytest.raises(base.PathError):
+
+        # basedir gets '/' appended by default and stat errors out
+        with pytest.raises(base.PathError) as excinfo:
             syncer.sync()
+
+        # remove trailing slash from basedir and file check catches it instead
+        syncer.basedir = str(repo)
+        with pytest.raises(base.PathError) as excinfo:
+            syncer.sync()
+        assert "isn't a directory" in str(excinfo.value)
 
     def test_verbose_sync(self, spawn, find_binary, tmp_path):
         find_binary.return_value = 'git'

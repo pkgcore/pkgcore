@@ -19,7 +19,7 @@ from snakeoil.caching import WeakInstMeta
 from snakeoil.currying import post_curry
 from snakeoil.demandload import demandload
 from snakeoil.osutils import pjoin, listdir_files, listdir
-from snakeoil.osutils import umount
+from snakeoil.osutils.mount import umount
 
 from pkgcore.config import ConfigHint
 from pkgcore.exceptions import PermissionDenied

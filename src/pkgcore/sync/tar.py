@@ -38,11 +38,6 @@ class tar_syncer(http_syncer, base.ExternalSyncer):
                 raw_uri, "unsupported compression format for tarball archive")
         raise base.UriError(raw_uri, "unsupported URI")
 
-    def _sync(self, *args, **kwargs):
-        ret = super()._sync(*args, **kwargs)
-        # TODO: verify image checksum and gpg signature
-        return ret
-
     def _pre_download(self):
         # create temp file for downloading
         temp = tempfile.NamedTemporaryFile()
@@ -61,6 +56,8 @@ class tar_syncer(http_syncer, base.ExternalSyncer):
         return tarball
 
     def _post_download(self, path):
+        super()._post_download(path)
+
         # create tempdir for staging decompression
         if not ensure_dirs(self.tempdir, mode=0o755, uid=self.uid, gid=self.gid):
             raise base.SyncError(
@@ -78,6 +75,8 @@ class tar_syncer(http_syncer, base.ExternalSyncer):
             ret = self._spawn(cmd, pipes={1: f.fileno(), 2: f.fileno()})
         if ret:
             raise base.SyncError('failed to unpack tarball')
+
+        # TODO: verify gpg data if it exists
 
         # move old repo out of the way and then move new, unpacked repo into place
         try:

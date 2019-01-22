@@ -86,7 +86,7 @@ class http_syncer(base.Syncer):
             blocksize = 1000000
 
         try:
-            f = AtomicWriteFile(dest, binary=True, perms=0o644)
+            self._download = AtomicWriteFile(dest, binary=True, perms=0o644)
         except OSError as e:
             raise base.PathError(self.basedir, e.strerror) from e
 
@@ -98,16 +98,13 @@ class http_syncer(base.Syncer):
                 if length:
                     sys.stdout.write('\n')
                 break
-            f.write(buf)
+            self._download.write(buf)
             size += len(buf)
             if length:
                 sys.stdout.write('\r')
                 progress = '=' * int(size / length * 50)
                 percent = int(size / length * 100)
                 sys.stdout.write("[%-50s] %d%%" % (progress, percent))
-
-        # atomically create file
-        f.close()
 
         self._post_download(dest)
 
@@ -135,3 +132,5 @@ class http_syncer(base.Syncer):
         Args:
             path (str): path to downloaded file
         """
+        # atomically create file
+        self._download.close()

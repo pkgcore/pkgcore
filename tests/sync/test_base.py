@@ -3,9 +3,11 @@
 
 import os
 import pwd
+from unittest import mock
 
 import pytest
 
+from pkgcore import os_data
 from pkgcore.sync import base, git, tar
 from tests.sync.syncer import make_bogus_syncer, make_valid_syncer
 
@@ -34,6 +36,25 @@ class TestSyncer(object):
         o = base.Syncer("/tmp/foon", f"{existing_user}::foon@site")
         assert o.uid == existing_uid
         assert o.uri == "foon@site"
+
+    def test_usersync_disabled(self):
+        o = base.Syncer("/tmp/foon", f"http://foo/bar.git", usersync=False)
+        o.uid == os_data.uid
+        o.gid == os_data.gid
+
+    def test_usersync_enabled(self, tmp_path):
+        # sync uses portage perms if repo dir doesn't exist
+        o = base.Syncer("/tmp/foo/nonexistent/path", f"http://foo/bar.git", usersync=True)
+        o.uid == os_data.portage_uid
+        o.gid == os_data.portage_gid
+
+        # and repo dir perms if it does exist
+        with mock.patch('os.stat') as stat:
+            stat.return_value = mock.Mock(st_uid=1234, st_gid=5678)
+            o = base.Syncer(str(tmp_path), f"http://foo/bar.git", usersync=True)
+            stat.assert_called()
+            assert o.uid == 1234
+            assert o.gid == 5678
 
 
 class TestExternalSyncer(object):

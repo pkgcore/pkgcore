@@ -19,7 +19,7 @@ from snakeoil.caching import WeakInstMeta
 from snakeoil.currying import post_curry
 from snakeoil.demandload import demandload
 from snakeoil.osutils import pjoin, listdir_files, listdir
-from snakeoil.osutils.mount import mount, umount
+from snakeoil.osutils import umount
 
 from pkgcore.config import ConfigHint
 from pkgcore.exceptions import PermissionDenied
@@ -654,24 +654,24 @@ class SquashfsRepoConfig(RepoConfig):
             raise repo_errors.InitializationError(
                 f'namespace support unavailable: {e.strerror}')
 
-        # First try using mount to automatically handle setting up loop device
-        # -- this only works with real root perms since loopback device
+        # First try using mount binary to automatically handle setting up loop
+        # device -- this only works with real root perms since loopback device
         # mounting (losetup) doesn't work in user namespaces.
-        try:
-            mount(self._sqfs, self.location, 'squashfs', 0)
+        #
+        # TODO: switch to capture_output=True when >= py3.7
+        ret = subprocess.run(
+            ['mount', self._sqfs, self.location],
+            stderr=subprocess.PIPE, stdout=subprocess.PIPE,
+        )
+
+        if ret.returncode == 0:
             return
-        except FileNotFoundError as e:
-            raise repo_errors.InitializationError(
-                f'failed mounting squashfs archive: {e.filename} required')
-        except OSError as e:
+        elif ret.returncode not in (1, 32):
             # fail out if not a permissions issue (regular or loopback failure inside userns)
-            if e.errno not in (errno.EPERM, errno.EPIPE):
-                raise repo_errors.InitializationError(
-                    f'failed mounting squashfs archive: {e.strerror}')
+            self._failed_cmd(ret, 'mounting')
 
         # fallback to using squashfuse
         try:
-            # TODO: switch to capture_output=True when >= py3.7
             ret = subprocess.run(
                 ['squashfuse', '-o', 'nonempty', self._sqfs, self.location],
                 stderr=subprocess.PIPE, stdout=subprocess.PIPE)

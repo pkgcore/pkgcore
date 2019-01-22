@@ -11,6 +11,7 @@ __all__ = (
 )
 
 from collections import namedtuple
+import errno
 from itertools import chain
 
 from snakeoil import klass, mappings
@@ -18,6 +19,7 @@ from snakeoil.caching import WeakInstMeta
 from snakeoil.currying import post_curry
 from snakeoil.demandload import demandload
 from snakeoil.osutils import pjoin, listdir_files, listdir
+from snakeoil.osutils.mount import mount, umount
 
 from pkgcore.config import ConfigHint
 from pkgcore.exceptions import PermissionDenied
@@ -650,24 +652,24 @@ class SquashfsRepoConfig(RepoConfig):
             raise repo_errors.InitializationError(
                 f'namespace support unavailable: {e.strerror}')
 
-        # First try using mount binary to automatically handle setting up loop
-        # device -- this only works with real root perms since loopback device
+        # First try using mount to automatically handle setting up loop device
+        # -- this only works with real root perms since loopback device
         # mounting (losetup) doesn't work in user namespaces.
-        #
-        # TODO: switch to capture_output=True when >= py3.7
-        ret = subprocess.run(
-            ['mount', self._sqfs, self.location],
-            stderr=subprocess.PIPE, stdout=subprocess.PIPE,
-        )
-
-        if ret.returncode == 0:
+        try:
+            mount(self._sqfs, self.location, 'squashfs', 0)
             return
-        elif ret.returncode not in (1, 32):
+        except FileNotFoundError as e:
+            raise repo_errors.InitializationError(
+                f'failed mounting squashfs archive: {e.filename} required')
+        except OSError as e:
             # fail out if not a permissions issue (regular or loopback failure inside userns)
-            self._failed_cmd(ret, 'mounting')
+            if e.errno not in (errno.EPERM, errno.EPIPE):
+                raise repo_errors.InitializationError(
+                    f'failed mounting squashfs archive: {e.strerror}')
 
         # fallback to using squashfuse
         try:
+            # TODO: switch to capture_output=True when >= py3.7
             ret = subprocess.run(
                 ['squashfuse', '-o', 'nonempty', self._sqfs, self.location],
                 stderr=subprocess.PIPE, stdout=subprocess.PIPE)
@@ -680,17 +682,21 @@ class SquashfsRepoConfig(RepoConfig):
 
     def _umount_archive(self):
         """Unmount the squashfs archive."""
-        # TODO: switch to capture_output=True when >= py3.7
-        ret = subprocess.run(
-            ['umount', self.location], stderr=subprocess.PIPE, stdout=subprocess.PIPE)
-
-        if ret.returncode == 0:
+        try:
+            umount(self.location)
             return
-        elif ret.returncode not in (1, 32):
-            self._failed_cmd(ret, 'unmounting')
+        except FileNotFoundError as e:
+            raise repo_errors.InitializationError(
+                f'failed unmounting squashfs archive: {e.filename} required')
+        except OSError as e:
+            # fail out if not a permissions issue (regular or loopback failure inside userns)
+            if e.errno not in (errno.EPERM, errno.EPIPE):
+                raise repo_errors.InitializationError(
+                    f'failed unmounting squashfs archive: {e.strerror}')
 
         # fallback to using fusermount
         try:
+            # TODO: switch to capture_output=True when >= py3.7
             ret = subprocess.run(
                 ['fusermount', '-u', self.location],
                 stderr=subprocess.PIPE, stdout=subprocess.PIPE)

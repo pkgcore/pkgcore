@@ -1,24 +1,26 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
+import pytest
+
 from pkgcore.sync import base, hg
 from tests.sync.syncer import make_bogus_syncer, make_valid_syncer
-from snakeoil.test import TestCase
 
 bogus = make_bogus_syncer(hg.hg_syncer)
 valid = make_valid_syncer(hg.hg_syncer)
 
 
-class TestHgSyncer(TestCase):
+class TestHgSyncer(object):
 
     def test_uri_parse(self):
-        self.assertEqual(hg.hg_syncer.parse_uri("hg+http://dar"),
-            "http://dar")
-        self.assertEqual(hg.hg_syncer.parse_uri("mercurial+http://dar"),
-            "http://dar")
-        self.assertRaises(base.UriError, hg.hg_syncer.parse_uri,
-            "hg://dar")
-        self.assertRaises(base.SyncError, bogus,
-            "/tmp/foon", "hg+http://foon.com/dar")
+        assert hg.hg_syncer.parse_uri("hg+http://dar") == "http://dar"
+        assert hg.hg_syncer.parse_uri("mercurial+http://dar") == "http://dar"
+
+        with pytest.raises(base.UriError):
+            hg.hg_syncer.parse_uri("hg://dar")
+
+        with pytest.raises(base.SyncError):
+            bogus("/tmp/foon", "hg+http://foon.com/dar")
+
         o = valid("/tmp/foon", "hg+http://dar")
-        self.assertEqual(o.uri, "http://dar")
+        assert o.uri == "http://dar"

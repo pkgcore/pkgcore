@@ -114,7 +114,41 @@ keywords for x11-libs/gtk+:
             'gtk+',
             domain=domain_config, ns_kwargs=ns_kwargs)
 
-    def test_tabular_default_output(self):
+    def test_tabular_specified_arch(self):
+        fake_repo = FakeRepo()
+        ns_kwargs = {'selected_repo': fake_repo}
+        self.assertOut("""\
+keywords for x11-libs/gtk+:
+      a
+      m e s r
+      d a l e
+      6 p o p
+      4 i t o
+-----------------
+ 2.24 + 0 2 faker
+ 3.22 + 0 3 faker
+""".splitlines(),
+            '-a', 'amd64', 'gtk+',
+            domain=domain_config, ns_kwargs=ns_kwargs)
+
+    def test_tabular_disabled_arch(self):
+        fake_repo = FakeRepo()
+        ns_kwargs = {'selected_repo': fake_repo}
+        self.assertOut("""\
+keywords for x11-libs/gtk+:
+      a
+      m     e s r
+      d a x a l e
+      6 r 8 p o p
+      4 m 6 i t o
+---------------------
+ 2.24 + o o 0 2 faker
+ 3.22 + o + 0 3 faker
+""".splitlines(),
+            '-a=-arm64', 'gtk+',
+            domain=domain_config, ns_kwargs=ns_kwargs)
+
+    def test_tabular_custom_output_format(self):
         fake_repo = FakeRepo()
         ns_kwargs = {'selected_repo': fake_repo}
         self.assertOut("""\

@@ -1,3 +1,5 @@
+import os
+
 import pytest
 
 from pkgcore.sync import base
@@ -22,3 +24,19 @@ class TestTarSyncer(object):
                 for uri in (f"tar+{proto}://repo{ext}", f"{proto}://repo{ext}"):
                     o = tar_syncer("/tmp/foon", uri)
                     assert o.uri == f"{proto}://repo{ext}"
+
+
+@pytest.mark_network
+class TestTarSyncerReal(object):
+
+    def test_sync(self, tmp_path):
+        path = tmp_path / 'repo'
+        syncer = tar_syncer(
+            str(path), "https://github.com/pkgcore/pkgrepo/archive/master.tar.gz")
+        assert syncer.sync()
+        layout_conf = os.path.join(path, 'metadata', 'layout.conf')
+        assert os.path.exists(layout_conf)
+        stat = os.stat(layout_conf)
+        # re-sync and verify that the repo didn't get replaced
+        assert syncer.sync()
+        assert stat == os.stat(layout_conf)

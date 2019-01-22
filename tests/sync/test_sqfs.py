@@ -1,3 +1,5 @@
+import os
+
 import pytest
 
 from pkgcore.sync import base
@@ -19,3 +21,20 @@ class TestSqfsSyncer(object):
 
         o = sqfs_syncer("/tmp/foon", "sqfs+https://repo.lzo.sqfs")
         assert o.uri == "https://repo.lzo.sqfs"
+
+
+@pytest.mark_network
+class TestSqfsSyncerReal(object):
+
+    def test_sync(self, tmp_path):
+        path = tmp_path / 'repo'
+        syncer = sqfs_syncer(
+                str(path),
+                "sqfs+http://distfiles.gentoo.org/snapshots/squashfs/gentoo-current.lzo.sqfs")
+        assert syncer.sync()
+        sqfs = os.path.join(syncer.basedir, syncer.basename)
+        assert os.path.exists(sqfs)
+        stat = os.stat(sqfs)
+        # re-sync and verify that the repo didn't get replaced
+        assert syncer.sync()
+        assert stat == os.stat(sqfs)

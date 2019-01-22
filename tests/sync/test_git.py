@@ -45,3 +45,14 @@ class TestGitSyncer(object):
             syncer.sync()
             assert spawn.call_args[0] == (['git', 'pull'],)
             assert spawn.call_args[1]['cwd'] == syncer.basedir
+
+
+@pytest.mark.network
+class TestGitSyncerReal(object):
+
+    def test_sync(self, tmp_path):
+        path = tmp_path / 'repo'
+        syncer = git.git_syncer(str(path), "https://github.com/pkgcore/pkgrepo.git")
+        assert syncer.sync()
+        assert os.path.exists(os.path.join(path, 'metadata', 'layout.conf'))
+        assert syncer.sync()

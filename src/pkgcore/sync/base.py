@@ -263,12 +263,10 @@ def GenericSyncer(basedir, uri, **kwargs):
 
 class DisabledSyncer(Syncer):
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, uri='', **kwargs)
+    disabled = True
 
-    @staticmethod
-    def disabled():
-        return True
+    def __init__(self, path, uri=None, **kwargs):
+        super().__init__(path, uri='', **kwargs)
 
 
 @configurable({'basedir': 'str', 'usersync': 'bool'}, typename='syncer')

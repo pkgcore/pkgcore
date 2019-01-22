@@ -58,6 +58,9 @@ sync = subparsers.add_parser(
 sync.add_argument(
     'repos', metavar='repo', nargs='*', help="repo(s) to sync",
     action=commandline.StoreRepoObject, store_name=True, repo_type='config')
+sync.add_argument(
+    '-f', '--force', action='store_true', default=False,
+    help="force syncing to occur regardless of staleness checks")
 @sync.bind_main_func
 def sync_main(options, out, err):
     """Update local repos to match their remotes."""
@@ -74,7 +77,8 @@ def sync_main(options, out, err):
         ret = False
         err_msg = ''
         try:
-            ret = repo.operations.sync(verbosity=options.verbosity)
+            ret = repo.operations.sync(
+                force=options.force, verbosity=options.verbosity)
         except OperationError as e:
             exc = getattr(e, '__cause__', e)
             if not isinstance(exc, PkgcoreCliException):

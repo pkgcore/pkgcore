@@ -38,3 +38,6 @@ class TestSqfsSyncerReal(object):
         # re-sync and verify that the repo didn't get replaced
         assert syncer.sync()
         assert stat == os.stat(sqfs)
+        # forcibly re-sync and verify that the repo gets replaced
+        assert syncer.sync(force=True)
+        assert stat != os.stat(sqfs)

@@ -15,11 +15,13 @@ from pkgcore.sync import base
 class http_syncer(base.Syncer):
     """Syncer that fetches files over HTTP(S)."""
 
+    forcable = True
+
     def __init__(self, basedir, uri, dest=None, **kwargs):
         self.basename = os.path.basename(uri)
         super().__init__(basedir, uri, **kwargs)
 
-    def _sync(self, verbosity, output_fd, **kwds):
+    def _sync(self, verbosity, output_fd, force=False, **kwargs):
         dest = self._pre_download()
 
         if self.uri.startswith('https://'):
@@ -29,28 +31,29 @@ class http_syncer(base.Syncer):
             context = None
 
         headers = {}
-
-        # use cached ETag to check if updates exist
         etag_path = pjoin(self.basedir, '.etag')
-        previous_etag = None
-        try:
-            with open(etag_path, 'r') as f:
-                previous_etag = f.read()
-        except FileNotFoundError:
-            pass
-        if previous_etag:
-            headers['If-None-Match'] = previous_etag
-
-        # use cached modification timestamp to check if updates exist
         modified_path = pjoin(self.basedir, '.modified')
-        previous_modified = None
-        try:
-            with open(modified_path, 'r') as f:
-                previous_modified = f.read()
-        except FileNotFoundError:
-            pass
-        if previous_modified:
-            headers['If-Modified-Since'] = previous_modified
+
+        if not force:
+            # use cached ETag to check if updates exist
+            previous_etag = None
+            try:
+                with open(etag_path, 'r') as f:
+                    previous_etag = f.read()
+            except FileNotFoundError:
+                pass
+            if previous_etag:
+                headers['If-None-Match'] = previous_etag
+
+            # use cached modification timestamp to check if updates exist
+            previous_modified = None
+            try:
+                with open(modified_path, 'r') as f:
+                    previous_modified = f.read()
+            except FileNotFoundError:
+                pass
+            if previous_modified:
+                headers['If-Modified-Since'] = previous_modified
 
         req = urllib.request.Request(self.uri, headers=headers, method='GET')
 
@@ -66,11 +69,12 @@ class http_syncer(base.Syncer):
         # Manually check cached values ourselves since some servers appear to
         # ignore If-None-Match or If-Modified-Since headers.
         etag = resp.getheader('ETag', '')
-        if etag == previous_etag:
-            return True
         modified = resp.getheader('Last-Modified', '')
-        if modified == previous_modified:
-            return True
+        if not force:
+            if etag == previous_etag:
+                return True
+            if modified == previous_modified:
+                return True
 
         try:
             os.makedirs(self.basedir, exist_ok=True)

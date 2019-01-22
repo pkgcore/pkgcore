@@ -624,7 +624,7 @@ class SquashfsRepoConfig(RepoConfig):
         super().__init__(location, *args, **kwargs)
 
     def _pre_sync(self):
-        if not os.path.exists(self._sqfs):
+        if os.path.exists(self.location) and not os.path.exists(self._sqfs):
             self._umount_archive()
 
     def _post_sync(self):

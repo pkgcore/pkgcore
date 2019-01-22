@@ -37,6 +37,9 @@ class TestSyncer(object):
         assert o.uid == existing_uid
         assert o.uri == "foon@site"
 
+        with pytest.raises(base.MissingLocalUser):
+            base.Syncer("/tmp/foon", f"foo_nonexistent_user::foon@site")
+
     def test_usersync_disabled(self):
         o = base.Syncer("/tmp/foon", f"http://foo/bar.git", usersync=False)
         o.uid == os_data.uid

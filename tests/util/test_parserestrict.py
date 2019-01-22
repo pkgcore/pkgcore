@@ -3,16 +3,16 @@
 # License: BSD/GPL2
 
 from snakeoil.currying import post_curry
+import pytest
 
 from pkgcore.ebuild import restricts
 from pkgcore.ebuild.atom import atom
 from pkgcore.repository import util
 from pkgcore.restrictions import packages, values, boolean, restriction
 from pkgcore.util import parserestrict
-from snakeoil.test import TestCase
 
 
-class MatchTest(TestCase):
+class TestMatch(object):
 
     def test_comma_separated_containment(self):
         parser = parserestrict.comma_separated_containment('utensil')
@@ -26,12 +26,7 @@ class MatchTest(TestCase):
         assert not valrestrict.match(('foo',))
 
 
-class TestExtendedRestrictionGeneration(TestCase):
-
-    def assertInstance(self, restrict, kls, token):
-        TestCase.assertInstance(
-            self, restrict, kls,
-            msg=f"got {restrict!r}, expected {kls!r} for {token!r}")
+class TestExtendedRestrictionGeneration(object):
 
     def verify_text_glob(self, restrict, token):
         assert isinstance(restrict, values.StrRegex), token
@@ -50,8 +45,8 @@ class TestExtendedRestrictionGeneration(TestCase):
             assert i == None, (
                 f"verifying None is returned on pointless restrictions, failed token: {token}")
 
-        self.assertRaises(
-            parserestrict.ParseError, parserestrict.convert_glob, '**')
+        with pytest.raises(parserestrict.ParseError):
+            parserestrict.convert_glob('**')
 
     def verify_restrict(self, restrict, attr, token):
         assert isinstance(restrict, packages.PackageRestriction), token
@@ -156,7 +151,8 @@ class TestExtendedRestrictionGeneration(TestCase):
             self.verify_restrict(i[3], attr, token.split(":")[0].split("/")[n])
 
     def test_atom_globbed(self):
-        assert isinstance(parserestrict.parse_match("=sys-devel/gcc-4*"), atom), "=sys-devel/gcc-4*"
+        assert isinstance(
+            parserestrict.parse_match("=sys-devel/gcc-4*"), atom), "=sys-devel/gcc-4*"
 
     def test_use_atom(self):
         o = parserestrict.parse_match("net-misc/openssh[-X]")
@@ -185,21 +181,19 @@ class TestExtendedRestrictionGeneration(TestCase):
         self.verify_restrict(o[2], "package", token.split(":")[0])
 
     def test_exceptions(self):
-        pm = parserestrict.parse_match
-        pe = parserestrict.ParseError
         for token in (
                 "!dev-util/diffball",
                 "dev-util/diffball-0.4",
-                "=dev-util/*diffball-0.4",
-                "=*/diffball-0.4",
+                "=dev-util/*diffball-0.4*",
                 "::gentoo",
                 ):
-            self.assertRaises(pe, pm, token)
+            with pytest.raises(parserestrict.ParseError):
+                parserestrict.parse_match(token)
 
 
-class ParsePVTest(TestCase):
+class TestParsePV(object):
 
-    def setUp(self):
+    def setup_method(self, method):
         self.repo = util.SimpleTree({
             'spork': {
                 'foon': ('1', '2'),
@@ -220,6 +214,5 @@ class ParsePVTest(TestCase):
                 'spork',
                 'foon-2',
                 ):
-            self.assertRaises(
-                parserestrict.ParseError,
-                parserestrict.parse_pv, self.repo, bogus)
+            with pytest.raises(parserestrict.ParseError):
+                parserestrict.parse_pv(self.repo, bogus)

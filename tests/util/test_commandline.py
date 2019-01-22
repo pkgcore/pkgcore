@@ -10,10 +10,11 @@ import pty
 import sys
 import unittest
 
+import pytest
+
 from pkgcore.config import central, errors
 from pkgcore.test.scripts.helpers import ArgParseMixin
 from pkgcore.util import commandline
-from snakeoil.test import TestCase
 
 # Careful: the tests should not hit a load_config() call!
 
@@ -38,7 +39,7 @@ class _Trigger(argparse.Action):
         namespace.empty_config = True
 
 
-class ModifyConfigTest(TestCase, ArgParseMixin):
+class TestModifyConfig(ArgParseMixin):
 
     parser = commandline.ArgumentParser(domain=False, version=False)
     parser.add_argument('--trigger', nargs=0, action=_Trigger)
@@ -57,14 +58,14 @@ class ModifyConfigTest(TestCase, ArgParseMixin):
         return namespace
 
     def test_empty_config(self):
-        self.assertTrue(self.parse('--empty-config', '--trigger'))
+        assert self.parse('--empty-config', '--trigger')
 
     def test_modify_config(self):
         namespace = self.parse(
             '--empty-config', '--new-config',
             'foo', 'class', 'tests.util.test_commandline.sect',
             '--trigger')
-        self.assertTrue(namespace.config.collapse_named_section('foo'))
+        assert namespace.config.collapse_named_section('foo')
 
         namespace = self.parse(
             '--empty-config', '--new-config',
@@ -72,15 +73,14 @@ class ModifyConfigTest(TestCase, ArgParseMixin):
             '--add-config', 'foo', 'class',
             'tests.util.test_commandline.sect',
             '--trigger')
-        self.assertTrue(namespace.config.collapse_named_section('foo'))
+        assert namespace.config.collapse_named_section('foo')
 
         namespace = self.parse(
             '--empty-config',
             '--add-config', 'foo', 'inherit', 'missing',
             '--trigger')
-        self.assertRaises(
-            errors.ConfigurationError,
-            namespace.config.collapse_named_section, 'foo')
+        with pytest.raises(errors.ConfigurationError):
+            namespace.config.collapse_named_section('foo')
 
 
 # This dance is currently necessary because commandline.main wants
@@ -97,7 +97,7 @@ def _stream_and_getvalue():
     return f, getvalue
 
 
-class MainTest(TestCase):
+class TestMain(object):
 
     def assertMain(self, status, outtext, errtext, subcmds, *args, **kwargs):
         out, out_getvalue = _stream_and_getvalue()
@@ -105,11 +105,9 @@ class MainTest(TestCase):
         try:
             commandline.main(subcmds, outfile=out, errfile=err, *args, **kwargs)
         except SystemExit as e:
-            self.assertEqual(errtext, err_getvalue())
-            self.assertEqual(outtext, out_getvalue())
-            self.assertEqual(
-                status, e.args[0],
-                msg=f"expected status {status!r}, got {e.args[0]!r}")
+            assert errtext == err_getvalue()
+            assert outtext == out_getvalue()
+            assert status == e.args[0], f"expected status {status!r}, got {e.args[0]!r}"
         else:
             self.fail('no exception raised')
 
@@ -183,7 +181,7 @@ class MainTest(TestCase):
             except SystemExit as e:
                 # Important, without this reading the master fd blocks.
                 out.close()
-                self.assertEqual(None, e.args[0])
+                assert None == e.args[0]
 
                 # There can be an xterm title update after this.
                 #
@@ -200,9 +198,8 @@ class MainTest(TestCase):
                         raise
 
                 master.close()
-                self.assertTrue(
-                    out_name.startswith(out_kind) or out_name == 'PlainTextFormatter',
-                    f'expected {out_kind!r}, got {out_name!r}')
-                self.assertEqual(err_kind, err_getvalue())
+                assert out_name.startswith(out_kind) or out_name == 'PlainTextFormatter', \
+                    f'expected {out_kind!r}, got {out_name!r}'
+                assert err_kind == err_getvalue()
             else:
                 self.fail('no exception raised')

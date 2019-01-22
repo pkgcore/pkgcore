@@ -1,6 +1,9 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
+import os
+from unittest import mock
+
 import pytest
 
 from pkgcore.sync import base, git
@@ -25,3 +28,20 @@ class TestGitSyncer(object):
             for uri in (f"git+{proto}://repo.git", f"{proto}://repo.git"):
                 o = valid("/tmp/foon", uri)
                 assert o.uri == f"{proto}://repo.git"
+
+    def test_sync(self, tmp_path):
+        path = tmp_path / 'repo'
+        uri = 'git://foo.git'
+        with mock.patch('snakeoil.process.spawn.spawn') as spawn, \
+                mock.patch('snakeoil.process.find_binary') as find_binary:
+            find_binary.return_value = 'git'
+            syncer = git.git_syncer(str(path), uri)
+            # initial sync
+            syncer.sync()
+            assert spawn.call_args[0] == (['git', 'clone', uri, str(path) + os.path.sep],)
+            assert spawn.call_args[1]['cwd'] is None
+            # repo update
+            path.mkdir()
+            syncer.sync()
+            assert spawn.call_args[0] == (['git', 'pull'],)
+            assert spawn.call_args[1]['cwd'] == syncer.basedir

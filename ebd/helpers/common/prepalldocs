@@ -1,20 +1,18 @@
-#!/usr/bin/env bash
+#!/usr/bin/env pkgcore-ebuild-helper
 # Copyright 1999-2005 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
 
 shopt -s extdebug
-source "${PKGCORE_EBD_PATH}"/exit-handling.bash || { echo "failed loading libs"; exit -127; }
 
 if ! ${PKGCORE_PREFIX_SUPPORT:=false}; then
 	ED=${D}
 elif [[ ${ED:-unset} == "unset" ]]; then
-	echo "The variable ED is missing from the environment, but is required for prefix mode; failing."
-	exit -1
+	__helper_exit -1 "The variable ED is missing from the environment, but is required for prefix mode; failing."
 fi
 
 dir=${ED}/usr/share/doc
 
-[[ ! -d ${dir} ]] && exit 0
+[[ ! -d ${dir} ]] && return
 
 z=$(find "${dir}" -print \
 	'(' -type f -or -type l ')' \
@@ -25,15 +23,14 @@ z=$(find "${dir}" -print \
 	-not -name '*.js' \
 	2>/dev/null)
 
-[[ -z ${z} ]] && exit 0
+[[ -z ${z} ]] && return
 
 if [[ -z ${PORTAGE_COMPRESS_SUFFIX} ]]; then
 	case ${PORTAGE_COMPRESS} in
 		gzip)  suffix="gz";;
 		bzip2) suffix="bz2";;
 		xz)    suffix="xz";;
-		*)     echo "prepalldocs error: please set PORTAGE_COMPRESS_SUFFIX in make.conf" >&2
-		       exit 1;;
+		*)     die "prepalldocs error: please set PORTAGE_COMPRESS_SUFFIX in make.conf";;
 	esac
 fi
 

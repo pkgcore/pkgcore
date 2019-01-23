@@ -1,16 +1,14 @@
-#!/usr/bin/env bash
+#!/usr/bin/env pkgcore-ebuild-helper
 # Copyright: 2011 Brian Harring <ferringb@gmail.com>
 # Copyright: 1999-2005 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
 
 shopt -s extdebug
-source "${PKGCORE_EBD_PATH}"/exit-handling.bash || { echo "failed loading libs"; exit -127; }
 
 if ! ${PKGCORE_PREFIX_SUPPORT:=false}; then
 	ED=${D}
 elif [[ ${ED:-unset} == "unset" ]]; then
-	echo "The variable ED is missing from the environment, but is required for prefix mode; failing."
-	exit -1
+	__helper_exit -1 "The variable ED is missing from the environment, but is required for prefix mode; failing."
 fi
 
 if [[ -z $1 ]]; then
@@ -23,7 +21,7 @@ else
 	fi
 fi
 
-[[ ! -d ${z} ]] && exit 0
+[[ ! -d ${z} ]] && return
 
 rm -f "${z}"/dir{,.old}{,.info{,.gz,.bz2,.xz,.Z}}
 
@@ -32,8 +30,7 @@ if [[ -z ${PORTAGE_COMPRESS_SUFFIX} ]]; then
 		gzip)  suffix="gz";;
 		bzip2) suffix="bz2";;
 		xz)    suffix="xz";;
-		*)     echo "prepinfo: error fixing links: please set PORTAGE_COMPRESS_SUFFIX in make.conf" >&2
-		       exit 1;;
+		*)     die "prepinfo: error fixing links: please set PORTAGE_COMPRESS_SUFFIX in make.conf";;
 	esac
 fi
 

@@ -1,32 +1,25 @@
-#!/usr/bin/env bash
+#!/usr/bin/env pkgcore-ebuild-helper
 # Copyright 2008-2011 Brian Harring <ferringb@gmail.com>: BSD/GPL2
 # Copyright 1999-2007 Gentoo Foundation: GPL2
 # Distributed under the terms of the GNU General Public License v2
 
 shopt -s extdebug
-source "${PKGCORE_EBD_PATH}"/exit-handling.bash || { echo "failed loading libs"; exit -127; }
-
-source "${PKGCORE_EBD_PATH}"/isolated-functions.bash || {
-	echo "failed sourcing isolated-functions.bash"
-	exit -1
-}
 
 # exit if the feature isn't requested, or the restrict isn't there.
-__feature_is_enabled installsources || exit 0
-__safe_has installsources ${RESTRICT} && exit 0
+__feature_is_enabled installsources || return
+__safe_has installsources ${RESTRICT} && return
 
 if ! ${PKGCORE_PREFIX_SUPPORT:=false}; then
 	ED=${D}
 elif [[ ${ED:-unset} == "unset" ]]; then
-	echo "The variable ED is missing from the environment, but is required for prefix mode; failing."
-	exit -1
+	__helper_exit -1 "The variable ED is missing from the environment, but is required for prefix mode; failing."
 fi
 
 for x in debugedit scanelf rsync; do
 	if ! type -P ${x} >/dev/null; then
 		ewarn "FEATURES=installsources is enabled but the ${x} binary could not"
 		ewarn "be found. This feature will not work unless ${x} is installed!"
-		exit 0
+		return
 	fi
 done
 

@@ -674,7 +674,7 @@ class EbuildProcessor(object):
 
         for d, data in ((internal_env, internal_data),
                         (exported_env, exported_data)):
-            for key, val in d.items():
+            for key, val in sorted(d.items()):
                 if key in self._readonly_vars:
                     continue
                 if not key[0].isalpha():
@@ -693,10 +693,12 @@ class EbuildProcessor(object):
                 else:
                     data.append("%s=$'%s'" % (key, val.replace("'", "\\'")))
 
-        env_str = [' '.join(internal_data)]
+        env = []
         if exported_data:
-            env_str.append(f"export {' '.join(exported_data)}")
-        return '\n'.join(env_str)
+            env.extend(f"export {x}" for x in exported_data)
+            env.append('')
+        env.extend(internal_data)
+        return '\n'.join(env)
 
     def send_env(self, env_dict, async_req=False, tmpdir=None):
         """Transfer the ebuild's desired env (env_dict) to the running daemon.

@@ -39,6 +39,7 @@ demandload(
 demand_compile_regexp(
     '_parse_EAPI_regex', r"^EAPI=(['\"]?)([A-Za-z0-9+_.-]*)\1[\t ]*(?:#.*)?"
 )
+demand_compile_regexp('_parse_inherit_regex', r'^\s*inherit\s(.*)$')
 
 
 def generate_depset(kls, key, non_package_type, self, **kwds):
@@ -196,6 +197,22 @@ def get_parsed_eapi(self):
     return get_eapi(eapi.group(2) if eapi is not None else '0')
 
 
+def get_parsed_inherits(self):
+    """Search for directly inherited eclasses in an ebuild file."""
+    if self.ebuild.path:
+        # Use readlines directly since it does whitespace stripping
+        # for us, far faster than native python can.
+        i = fileutils.readlines_utf8(self.ebuild.path)
+    else:
+        i = (x.strip() for x in self.ebuild.text_fileobj())
+
+    inherits = []
+    for match in filter(None, map(_parse_inherit_regex.match, i)):
+        inherits.extend(match.group(1).split())
+
+    return tuple(inherits)
+
+
 def get_slot(self):
     o = self.data.pop("SLOT", None)
     if not o:
@@ -266,6 +283,7 @@ class base(metadata.package):
         map(intern, s.data.pop("DEFINED_PHASES", "").split()))
     _get_attr["homepage"] = lambda s: s.data.pop("HOMEPAGE", "").strip()
     _get_attr["inherited"] = lambda s: tuple(sorted(s.data.get('_eclasses_', {})))
+    _get_attr["inherit"] = get_parsed_inherits
 
     _get_attr["required_use"] = generate_required_use
     _get_attr["source_repository"] = lambda s: s.repo.repo_id

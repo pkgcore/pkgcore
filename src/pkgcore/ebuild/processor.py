@@ -376,7 +376,7 @@ class EbuildProcessor(object):
             self.__sandbox_log = self.read().split()[0]
         else:
             self.write("no_sandbox")
-        self.dont_export_vars = self.read().split()
+        self._readonly_vars = frozenset(self.read().split())
         # locking isn't used much, but w/ threading this will matter
         self.unlock()
 
@@ -675,7 +675,7 @@ class EbuildProcessor(object):
         for d, data in ((internal_env, internal_data),
                         (exported_env, exported_data)):
             for key, val in d.items():
-                if key in self.dont_export_vars:
+                if key in self._readonly_vars:
                     continue
                 if not key[0].isalpha():
                     raise KeyError(f"{key}: bash doesn't allow digits as the first char")

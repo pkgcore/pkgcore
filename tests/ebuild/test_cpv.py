@@ -152,7 +152,10 @@ class Test_native_Cpv(object):
             c = self.make_inst(cat, pkg, ver + rev)
             if rev == "" or rev == "-r0":
                 assert c.cpvstr == f"{cat}/{pkg}-{ver}"
-                assert c.revision == 0
+                if rev:
+                    assert c.revision == 0
+                else:
+                    assert c.revision is None
                 assert c.fullver == ver
             else:
                 assert c.revision == int(rev.lstrip("-r"))
@@ -183,7 +186,10 @@ class Test_native_Cpv(object):
             c = self.make_inst(cat, pkg, ver + rev)
             if rev == '' or rev == '-r0':
                 assert c.cpvstr == f"{cat}/{pkg}-{ver}"
-                assert c.revision == 0
+                if rev:
+                    assert c.revision == 0
+                else:
+                    assert c.revision is None
                 assert c.fullver == ver
             else:
                 assert c.cpvstr == f"{cat}/{pkg}-{ver}{rev}"

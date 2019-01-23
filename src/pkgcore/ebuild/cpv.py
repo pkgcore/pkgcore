@@ -123,13 +123,12 @@ class _native_CPV(object):
                     raise InvalidCPV(
                         f'{cpvstr}: missing package name, version, and/or revision')
                 rev = int(pkg_chunks.pop(-1)[1:])
-                if not rev:
-                    rev = 0
+                if rev == 0:
                     # reset the stored cpvstr to drop -r0+
                     sf(self, 'cpvstr', f"{category}/{'-'.join(pkg_chunks)}")
                 sf(self, 'revision', rev)
             else:
-                sf(self, 'revision', 0)
+                sf(self, 'revision', None)
 
             if not isvalid_version_re.match(pkg_chunks[-1]):
                 raise InvalidCPV(f"{cpvstr}: invalid version '{pkg_chunks[-1]}'")

@@ -140,6 +140,9 @@ def stringify_attr(config, pkg, attr):
 
     value = get_pkg_attr(pkg, attr)
     if value is None:
+        # missing revision is assumed to be -r0
+        if attr == 'revision':
+            return '0'
         return 'MISSING'
 
     if attr in ('iuse', 'properties', 'defined_phases', 'inherited'):

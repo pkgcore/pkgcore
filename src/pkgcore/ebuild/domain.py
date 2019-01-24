@@ -303,17 +303,19 @@ class domain(config_domain):
 
     @klass.jit_attr_none
     def forced_use(self):
-        c = ChunkedDataDict()
-        c.merge(getattr(self.profile, 'forced_use'))
-        c.add_bare_global((), (self.arch,))
-        return c
+        use = ChunkedDataDict()
+        use.merge(getattr(self.profile, 'forced_use'))
+        use.add_bare_global((), (self.arch,))
+        use.freeze()
+        return use
 
     @klass.jit_attr_none
     def stable_forced_use(self):
-        c = ChunkedDataDict()
-        c.merge(getattr(self.profile, 'stable_forced_use'))
-        c.add_bare_global((), (self.arch,))
-        return c
+        use = ChunkedDataDict()
+        use.merge(getattr(self.profile, 'stable_forced_use'))
+        use.add_bare_global((), (self.arch,))
+        use.freeze()
+        return use
 
     @load_property("package.mask", package_masks)
     def pkg_masks(self, data):

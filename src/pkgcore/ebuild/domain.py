@@ -290,8 +290,7 @@ class domain(config_domain):
         if "prefix" in features or "force-prefix" in features:
             use.append("prefix")
 
-        use = set(optimize_incrementals(use + os.environ.get('USE', '').split()))
-        return use
+        return frozenset(optimize_incrementals(use + os.environ.get('USE', '').split()))
 
     @klass.jit_attr_named('_jit_reset_enabled_use', uncached_val=None)
     def enabled_use(self):

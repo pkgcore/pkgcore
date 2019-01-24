@@ -683,8 +683,6 @@ class ConfiguredTree(configured.tree):
         super().__init__(
             raw_repo, self.config_wrappables, pkg_kls_injections=scope_update)
 
-        self._get_pkg_use = domain.get_package_use_unconfigured
-        self._get_pkg_use_for_building = domain.get_package_use_buildable
         self.domain = domain
         self.domain_settings = domain_settings
         self._fetcher_override = fetcher
@@ -738,7 +736,7 @@ class ConfiguredTree(configured.tree):
         return InvertedContains(set(pkg.iuse).difference(immutable))
 
     def _get_pkg_kwds(self, pkg):
-        immutable, enabled, disabled = self._get_pkg_use(pkg)
+        immutable, enabled, disabled = self.domain.get_package_use_unconfigured(pkg)
         return {
             "initial_settings": enabled,
             "unchangable_settings": self._delayed_iuse(
@@ -750,7 +748,7 @@ class ConfiguredTree(configured.tree):
             fetcher = domain.fetcher
         return ebd.src_operations(
             domain, pkg, pkg.repo.eclass_cache, fetcher=fetcher,
-            use_override=self._get_pkg_use_for_building(pkg), **kwds)
+            use_override=self.domain.get_package_use_buildable(pkg), **kwds)
 
     @klass.jit_attr
     def _masks(self):

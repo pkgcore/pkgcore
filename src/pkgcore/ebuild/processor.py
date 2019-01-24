@@ -64,6 +64,7 @@ demandload(
 
 
 def _single_thread_allowed(functor):
+    """Decorator that forces method to run under single thread."""
     def _inner(*args, **kwargs):
         _acquire_global_ebp_lock()
         try:
@@ -197,10 +198,11 @@ def reuse_or_request(ebp=None, **kwargs):
 
 
 class ProcessingInterruption(PkgcoreException):
-    pass
+    """Generic ebuild processor exception."""
 
 
 class FinishedProcessing(ProcessingInterruption):
+    """Signal ebuild processor that current command has finished running."""
 
     def __init__(self, val, msg=None):
         super().__init__(f"Finished processing with val, {val}")
@@ -208,6 +210,7 @@ class FinishedProcessing(ProcessingInterruption):
 
 
 class UnhandledCommand(ProcessingInterruption):
+    """Bash processor sent an unknown command."""
 
     def __init__(self, line=None):
         super().__init__(f"unhandled command, {line}")
@@ -216,6 +219,7 @@ class UnhandledCommand(ProcessingInterruption):
 
 
 class InternalError(ProcessingInterruption):
+    """Ebuild processor encountered an internal error or invalid command."""
 
     def __init__(self, line=None, msg=None):
         super().__init__(f"Internal error occurred: line={line!r}, msg={msg!r}")
@@ -223,13 +227,23 @@ class InternalError(ProcessingInterruption):
         self.args = (line, msg)
 
 
+class TimeoutError(PkgcoreException):
+    """Bash processor timed out."""
+
+
+class ProcessorError(PkgcoreException):
+    """Bash processor returned a failure."""
+
+
 def chuck_TermInterrupt(ebp, *args):
+    """Event handler for bash side 'term' command."""
     drop_ebuild_processor(ebp)
     ebp.shutdown_processor(force=True)
     raise FinishedProcessing(False)
 
 
 def chuck_KeyboardInterrupt(*args):
+    """Event handler for SIGINT."""
     for ebp in chain(active_ebp_list, inactive_ebp_list):
         drop_ebuild_processor(ebp)
         ebp.shutdown_processor(force=True)
@@ -239,25 +253,15 @@ signal.signal(signal.SIGINT, chuck_KeyboardInterrupt)
 
 
 def chuck_UnhandledCommand(processor, line):
+    """Event handler for unhandled commands."""
     raise UnhandledCommand(line)
 
 
 def chuck_StoppingCommand(val, processor, *args):
+    """Event handler for successful phase/command completion."""
     if callable(val):
         raise FinishedProcessing(val(args[0]))
     raise FinishedProcessing(val)
-
-
-class TimeoutError(PkgcoreException):
-    pass
-
-
-class InitializationError(PkgcoreException):
-    pass
-
-
-class ProcessorError(PkgcoreException):
-    pass
 
 
 class EbuildProcessor(object):
@@ -364,7 +368,7 @@ class EbuildProcessor(object):
         self.write("dude?")
         if not self.expect("dude!"):
             logger.error("error in server coms, bailing.")
-            raise InitializationError(
+            raise InternalError(
                 "expected 'dude!' response from ebd, which wasn't received. "
                 "likely a bug")
 
@@ -412,11 +416,11 @@ class EbuildProcessor(object):
         return self.generic_handler(additional_commands=additional_commands)
 
     def sandboxed(self):
-        """is this instance sandboxed?"""
+        """Is this instance sandboxed?"""
         return self.__sandbox
 
     def userprived(self):
-        """is this instance userprived?"""
+        """Is this instance userprived?"""
         return self.__userpriv
 
     def write(self, string, flush=True, disable_runtime_exceptions=False,
@@ -687,7 +691,7 @@ class EbuildProcessor(object):
         # TODO: Move to using unprefixed lines to avoid leaking internal
         # variables to spawned commands once we use builtins for all commands
         # currently using pkgcore-ebuild-helper.
-        return '\n'.join(f"export {x}"  for x in data)
+        return '\n'.join(f"export {x}" for x in data)
 
     def send_env(self, env_dict, async_req=False, tmpdir=None):
         """Transfer the ebuild's desired env (env_dict) to the running daemon.
@@ -919,6 +923,7 @@ def inherit_handler(ecache, ebp, line, updates=None):
         updates.add(line)
 
 
+# TODO: move to base wrapped pkg class once they're reworked
 def expected_ebuild_env(pkg, d=None, env_source_override=None, depends=False):
     """Setup expected ebuild vars.
 

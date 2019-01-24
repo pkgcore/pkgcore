@@ -64,10 +64,10 @@ demandload(
 
 
 def _single_thread_allowed(functor):
-    def _inner(*args, **kwds):
+    def _inner(*args, **kwargs):
         _acquire_global_ebp_lock()
         try:
-            return functor(*args, **kwds)
+            return functor(*args, **kwargs)
         finally:
             _release_global_ebp_lock()
     _inner.func = functor
@@ -180,7 +180,7 @@ def drop_ebuild_processor(ebp):
         pass
 
 @contextlib.contextmanager
-def reuse_or_request(ebp=None, **request_kwds):
+def reuse_or_request(ebp=None, **kwargs):
     """Do a processor operation, locking as necessary.
 
     If the processor is given, it's assumed to be locked already.
@@ -189,7 +189,7 @@ def reuse_or_request(ebp=None, **request_kwds):
     release_required = ebp is None
     try:
         if ebp is None:
-            ebp = request_ebuild_processor(**request_kwds)
+            ebp = request_ebuild_processor(**kwargs)
         yield ebp
     finally:
         if release_required and ebp is not None:
@@ -286,11 +286,14 @@ class EbuildProcessor(object):
             spawn_opts.update({
                 "uid": os_data.portage_uid,
                 "gid": os_data.portage_gid,
-                "groups": [os_data.portage_gid]})
+                "groups": [os_data.portage_gid],
+            })
         else:
             if spawn.is_userpriv_capable():
-                spawn_opts.update({"gid": os_data.portage_gid,
-                                   "groups": [0, os_data.portage_gid]})
+                spawn_opts.update({
+                    "gid": os_data.portage_gid,
+                    "groups": [0, os_data.portage_gid],
+                })
             self.__userpriv = False
 
         # open the pipes to be used for chatting with the new daemon
@@ -338,7 +341,8 @@ class EbuildProcessor(object):
         max_fd = min(spawn.max_fd_limit, 1024)
         env.update({
             "PKGCORE_EBD_READ_FD": str(max_fd-4),
-            "PKGCORE_EBD_WRITE_FD": str(max_fd-3)})
+            "PKGCORE_EBD_WRITE_FD": str(max_fd-3),
+        })
 
         # allow any pipe overrides except the ones we use to communicate
         ebd_pipes = {0: 0, 1: 1, 2: 2}

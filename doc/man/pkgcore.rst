@@ -66,6 +66,7 @@ Supported:
 * noinfo
 * noman
 * userfetch (forced on)
+* usersync
 * collision-protect
 * metadata-transfer (does not do the actual transfer however)
 * nostrip

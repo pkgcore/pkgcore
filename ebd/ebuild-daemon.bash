@@ -137,9 +137,6 @@ __ebd_exec_main() {
 	declare -rx PKGCORE_PYTHON_BINARY=${PKGCORE_PYTHON_BINARY}
 	declare -rx PKGCORE_PYTHONPATH=${PKGCORE_PYTHONPATH}
 
-	# export env path for helpers
-	declare -x PKGCORE_EBD_ENV
-
 	declare -A PKGCORE_PRELOADED_ECLASSES
 
 	trap __ebd_sigint_handler SIGINT
@@ -205,8 +202,7 @@ __ebd_process_ebuild_phases() {
 				case ${line} in
 					file*)
 						line=${line#file }
-						PKGCORE_EBD_ENV=${line}
-						source "${PKGCORE_EBD_ENV}"
+						source "${line}"
 						cont=$?
 						;;
 					bytes*)

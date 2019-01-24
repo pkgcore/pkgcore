@@ -664,45 +664,30 @@ class EbuildProcessor(object):
         self.pid = None
 
     def _generate_env_str(self, env_dict):
-        internal_data = []
-        exported_data = []
-        # variables exported to external programs
-        exported_vars = ('HOME',)
+        data = []
+        for key, val in sorted(env_dict.items()):
+            if key in self._readonly_vars:
+                continue
+            if not key[0].isalpha():
+                raise KeyError(f"{key}: bash doesn't allow digits as the first char")
+            if not isinstance(val, (str, list, tuple)):
+                raise ValueError(
+                    f"_generate_env_str was fed a bad value; key={key}, val={val}")
 
-        internal_env = env_dict.copy()
-        exported_env = {}
-        for k in exported_vars:
-            if k in env_dict:
-                exported_env[k] = env_dict[k]
-                del internal_env[k]
+            if isinstance(val, (list, tuple)):
+                data.append("%s=(%s)" % (key, ' '.join(
+                    f'[{i}]="{value}"' for i, value in enumerate(val))))
+            elif val.isalnum():
+                data.append(f"{key}={val}")
+            elif "'" not in val:
+                data.append(f"{key}='{val}'")
+            else:
+                data.append("%s=$'%s'" % (key, val.replace("'", "\\'")))
 
-        for d, data in ((internal_env, internal_data),
-                        (exported_env, exported_data)):
-            for key, val in sorted(d.items()):
-                if key in self._readonly_vars:
-                    continue
-                if not key[0].isalpha():
-                    raise KeyError(f"{key}: bash doesn't allow digits as the first char")
-                if not isinstance(val, (str, list, tuple)):
-                    raise ValueError(
-                        f"_generate_env_str was fed a bad value; key={key}, val={val}")
-
-                if isinstance(val, (list, tuple)):
-                    data.append("%s=(%s)" % (key, ' '.join(
-                        f'[{i}]="{value}"' for i, value in enumerate(val))))
-                elif val.isalnum():
-                    data.append(f"{key}={val}")
-                elif "'" not in val:
-                    data.append(f"{key}='{val}'")
-                else:
-                    data.append("%s=$'%s'" % (key, val.replace("'", "\\'")))
-
-        env = []
-        if exported_data:
-            env.extend(f"export {x}" for x in exported_data)
-            env.append('')
-        env.extend(internal_data)
-        return '\n'.join(env)
+        # TODO: Move to using unprefixed lines to avoid leaking internal
+        # variables to spawned commands once we use builtins for all commands
+        # currently using pkgcore-ebuild-helper.
+        return '\n'.join(f"export {x}"  for x in data)
 
     def send_env(self, env_dict, async_req=False, tmpdir=None):
         """Transfer the ebuild's desired env (env_dict) to the running daemon.

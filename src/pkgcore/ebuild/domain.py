@@ -486,7 +486,7 @@ class domain(config_domain):
     def use_expand_re(self):
         return re.compile(
             "^(?:[+-])?(%s)_(.*)$" %
-            "|".join(x.lower() for x in sorted(self.profile.use_expand, reverse=True)))
+            "|".join(x.lower() for x in self.profile.use_expand))
 
     def _split_use_expand_flags(self, use_stream):
         stream = ((self.use_expand_re.match(x), x) for x in use_stream)

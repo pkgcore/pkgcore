@@ -529,7 +529,7 @@ class ProfileStack(object):
             return frozenset(self.default_env.get("PROFILE_ONLY_VARIABLES", ()))
         return frozenset(self.default_env.get("PROFILE_ONLY_VARIABLES", "").split())
 
-    @property
+    @klass.jit_attr
     def use_expand(self):
         """USE_EXPAND variables defined by the profile."""
         if "USE_EXPAND" in const.incrementals:

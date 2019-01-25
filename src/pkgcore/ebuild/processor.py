@@ -954,12 +954,7 @@ def expected_ebuild_env(pkg, d=None, env_source_override=None, depends=False):
     d.update(pkg.eapi.get_ebd_env())
 
     if not depends:
-        path = list(const.PATH_FORCED_PREPEND)
-        for eapi in pkg.eapi.inherits:
-            eapi_helper_dir = pjoin(e_const.EBUILD_HELPERS_PATH, str(eapi))
-            if os.path.exists(eapi_helper_dir):
-                path.append(eapi_helper_dir)
-        path.append(pjoin(e_const.EBUILD_HELPERS_PATH, "common"))
+        path = list(const.PATH_FORCED_PREPEND + pkg.eapi.helpers)
         path.extend(d.get("PATH", "").split(os.pathsep))
         path.extend(os.environ.get("PATH", "").split(os.pathsep))
         d["PATH"] = os.pathsep.join(filter(None, path))

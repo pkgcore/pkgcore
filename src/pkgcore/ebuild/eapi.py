@@ -217,7 +217,7 @@ class EAPI(object, metaclass=klass.immutable_instance):
 
     @klass.jit_attr
     def bash_funcs(self):
-        """List of internally implemented EAPI specific functions to skip when exporting."""
+        """Internally implemented EAPI specific functions to skip when exporting."""
         try:
             with open(pjoin(const.EBD_PATH, 'funcnames', self._magic), 'r') as f:
                 funcs = f.readlines()
@@ -259,6 +259,17 @@ class EAPI(object, metaclass=klass.immutable_instance):
         while parent is not None:
             yield parent
             parent = parent._parent
+
+    @klass.jit_attr
+    def helpers(self):
+        """Directories for EAPI specific helpers to add to $PATH."""
+        dirs = []
+        for eapi in self.inherits:
+            helper_dir = pjoin(const.EBUILD_HELPERS_PATH, eapi._magic)
+            if os.path.exists(helper_dir):
+                dirs.append(helper_dir)
+        dirs.append(pjoin(const.EBUILD_HELPERS_PATH, 'common'))
+        return tuple(dirs)
 
     def get_ebd_env(self):
         """Return EAPI options passed to the ebd environment."""

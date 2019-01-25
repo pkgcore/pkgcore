@@ -105,8 +105,6 @@ __dyn_src_install() {
 			echo "${arch:3};${obj};${soname};${rpath};${needed}" >> "${T}"/NEEDED.ELF.2
 		done }
 	fi
-
-	unset -v dir
 }
 
 __dyn_pkg_preinst() {

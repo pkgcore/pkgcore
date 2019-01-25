@@ -736,7 +736,7 @@ class ConfiguredTree(configured.tree):
         return InvertedContains(set(pkg.iuse).difference(immutable))
 
     def _get_pkg_kwds(self, pkg):
-        immutable, enabled, disabled = self.domain.get_package_use_unconfigured(pkg)
+        immutable, enabled, _disabled = self.domain.get_package_use_unconfigured(pkg)
         return {
             "initial_settings": enabled,
             "unchangable_settings": self._delayed_iuse(
@@ -747,8 +747,7 @@ class ConfiguredTree(configured.tree):
         if fetcher is None:
             fetcher = domain.fetcher
         return ebd.src_operations(
-            domain, pkg, pkg.repo.eclass_cache, fetcher=fetcher,
-            use_override=self.domain.get_package_use_buildable(pkg), **kwds)
+            domain, pkg, pkg.repo.eclass_cache, fetcher=fetcher, **kwds)
 
     @klass.jit_attr
     def _masks(self):

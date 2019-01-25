@@ -49,7 +49,7 @@ class ebd(object):
 
     def __init__(self, pkg, initial_env=None, env_data_source=None,
                  features=None, observer=None, clean=True, tmp_offset=None,
-                 use_override=None, allow_fetching=False):
+                 allow_fetching=False):
         """
         :param pkg:
             :class:`pkgcore.ebuild.ebuild_src.package`
@@ -62,11 +62,6 @@ class ebd(object):
         :param features: ebuild features, hold over from portage,
             will be broken down at some point
         """
-        if use_override is not None:
-            use = use_override
-        else:
-            use = pkg.use
-
         self.allow_fetching = allow_fetching
         self.pkg = pkg
         self.eapi = pkg.eapi
@@ -544,9 +539,6 @@ class buildable(ebd, setup_mixin, format.build):
             we'll be using
         :param verified_files: mapping of fetchables mapped to their disk location
         """
-
-        use = kwargs.get("use_override", pkg.use)
-
         format.build.__init__(self, domain, pkg, verified_files, observer)
         domain_settings = self.domain.settings
         ebd.__init__(self, pkg, initial_env=domain_settings,
@@ -559,7 +551,7 @@ class buildable(ebd, setup_mixin, format.build):
         self.allow_failed_test = self.feat_or_bool("test-fail-continue", domain_settings)
         if "test" in self.restrict:
             self.run_test = False
-        elif not force_test and "test" not in use:
+        elif not force_test and "test" not in pkg.use:
             if self.run_test:
                 logger.warning(f"disabling test for {pkg} due to test use flag being disabled")
             self.run_test = False
@@ -908,10 +900,9 @@ class ebuild_operations(object):
 
 class src_operations(ebuild_operations, format.build_operations):
 
-    def __init__(self, domain, pkg, eclass_cache, fetcher=None, observer=None, use_override=None):
+    def __init__(self, domain, pkg, eclass_cache, fetcher=None, observer=None):
         format.build_operations.__init__(self, domain, pkg, observer=observer)
         self._fetcher = fetcher
-        self._use_override = use_override
         self._eclass_cache = eclass_cache
 
     def _cmd_implementation_build(self, observer, verified_files, clean=False, format_options=None):
@@ -922,7 +913,6 @@ class src_operations(ebuild_operations, format.build_operations):
         return buildable(
             self.domain, self.pkg, verified_files,
             self._eclass_cache,
-            use_override=self._use_override,
             clean=clean, allow_fetching=allow_fetching, force_test=force_test)
 
 

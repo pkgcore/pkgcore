@@ -546,19 +546,6 @@ class domain(config_domain):
 
         return immutable, enabled, disabled
 
-    def get_package_use_buildable(self, pkg):
-        # isolate just what isn't exposed for metadata- anything non-IUSE
-        # this brings in actual use flags the ebuild shouldn't see, but that's
-        # a future enhancement to be done when USE_EXPAND is kept separate from
-        # mainline USE in this code.
-
-        metadata_use = self.get_package_use_unconfigured(pkg, for_metadata=True)[1]
-        raw_use = self.get_package_use_unconfigured(pkg, for_metadata=False)[1]
-        enabled = raw_use.difference(metadata_use)
-
-        enabled.update(pkg.use)
-        return enabled
-
     def get_package_domain(self, pkg):
         """Get domain object with altered settings from matching package.env entries."""
         if getattr(pkg, '_domain', None) is not None:

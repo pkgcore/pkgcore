@@ -538,11 +538,14 @@ class UnconfiguredTree(prototype.tree):
 
     def _get_ebuild_path(self, pkg):
         if pkg.revision is None:
-            if pkg.fullver not in self.versions[(pkg.category, pkg.package)]:
-                # daft explicit -r0 on disk.
-                return pjoin(
-                    self.base, pkg.category, pkg.package,
-                    f"{pkg.package}-{pkg.fullver}-r0{self.extension}")
+            try:
+                if pkg.fullver not in self.versions[(pkg.category, pkg.package)]:
+                    # daft explicit -r0 on disk.
+                    return pjoin(
+                        self.base, pkg.category, pkg.package,
+                        f"{pkg.package}-{pkg.fullver}-r0{self.extension}")
+            except KeyError as e:
+                raise MetadataException(pkg, 'package', 'mismatched ebuild name') from e
         return pjoin(
             self.base, pkg.category, pkg.package,
             f"{pkg.package}-{pkg.fullver}{self.extension}")

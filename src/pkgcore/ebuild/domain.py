@@ -482,7 +482,7 @@ class domain(config_domain):
                     return True
         return any(True for x in pkg_keywords if x in allowed)
 
-    @property
+    @klass.jit_attr_none
     def use_expand_re(self):
         return re.compile(
             "^(?:[+-])?(%s)_(.*)$" %

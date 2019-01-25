@@ -9,8 +9,9 @@ import shutil
 from snakeoil import compression
 from snakeoil.demandload import demandload
 from snakeoil.osutils import ensure_dirs, pjoin, normpath
+from snakeoil.version import get_version
 
-from pkgcore import __version__
+from pkgcore import __title__
 from pkgcore.operations import repo as repo_ops
 
 demandload(
@@ -109,9 +110,9 @@ class install(repo_ops.install):
         with open(pjoin(dirpath, "COUNTER"), "w") as f:
             f.write(str(int(time.time())))
 
-        #finally, we mark who made this.
+        # finally, we mark who made this.
         with open(pjoin(dirpath, "PKGMANAGER"), "w") as f:
-            f.write(f"pkgcore-{__version__}\n")
+            f.write(get_version(__title__, __file__))
         return True
 
     def finalize_data(self):

@@ -292,8 +292,6 @@ class ConfigProtectInstall_restore(triggers.base):
     priority = 10
     _hooks = ('post_merge',)
 
-    pkgcore_config_type = None
-
     def __init__(self, renames_dict):
         super().__init__()
         self.renames = renames_dict
@@ -312,8 +310,6 @@ class ConfigProtectUninstall(triggers.base):
 
     required_csets = ('uninstall_existing', 'uninstall')
     _hooks = ('pre_unmerge',)
-
-    pkgcore_config_type = None
 
     def trigger(self, engine, existing_cset, uninstall_cset):
         protected_filter = gen_config_protect_filter(engine.offset).match
@@ -340,8 +336,6 @@ class UninstallIgnore(triggers.base):
     required_csets = ('uninstall_existing', 'uninstall')
     _hooks = ('pre_unmerge',)
 
-    pkgcore_config_type = None
-
     def __init__(self, uninstall_ignore=()):
         super().__init__()
         self.uninstall_ignore = uninstall_ignore
@@ -362,8 +356,6 @@ class preinst_contents_reset(triggers.base):
     required_csets = ('new_cset',)
     priority = 1
     _hooks = ('pre_merge',)
-
-    pkgcore_config_type = None
 
     def __init__(self, format_op):
         super().__init__()
@@ -595,8 +587,6 @@ class FixImageSymlinks(triggers.base):
 
     required_csets = ('new_cset',)
     _hooks = ('pre_merge',)
-
-    pkgcore_config_type = None
 
     def __init__(self, format_op):
         super().__init__()

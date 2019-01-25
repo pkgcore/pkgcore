@@ -30,7 +30,6 @@ from snakeoil.demandload import demandload
 from snakeoil.fileutils import touch
 from snakeoil.osutils import listdir_files, pjoin, ensure_dirs, normpath
 
-from pkgcore.config import ConfigHint
 from pkgcore.merge import errors, const
 
 demandload(
@@ -75,8 +74,6 @@ class base(object):
     priority = 50
 
     suppress_exceptions = True
-
-    pkgcore_config_type = ConfigHint(typename='trigger')
 
     @property
     def label(self):
@@ -296,9 +293,6 @@ class ldconfig(base):
 
     default_ld_path = ['usr/lib', 'usr/lib64', 'usr/lib32', 'lib', 'lib64', 'lib32']
 
-    pkgcore_config_type = base.pkgcore_config_type.clone(
-        types={'ld_so_conf_path':'str'})
-
     def __init__(self, ld_so_conf_path="etc/ld.so.conf"):
         self.ld_so_conf_path = ld_so_conf_path.lstrip(os.path.sep)
         self.saved_mtimes = mtime_watcher()
@@ -471,9 +465,6 @@ class BaseSystemUnmergeProtection(base):
         '/etc', '/var', '/home', '/root',
     )
 
-    pkgcore_config_type = base.pkgcore_config_type.clone(
-        types={"preserve_sequence":"list"})
-
     def __init__(self, preserve_sequence=None):
         if preserve_sequence is None:
             preserve_sequence = self._preserve_sequence
@@ -576,8 +567,6 @@ class PruneFiles(base):
     _hooks = ('pre_merge',)
     _engine_types = INSTALLING_MODES
 
-    pkgcore_config_type = None
-
     def __init__(self, sentinel_func):
         """
         :param sentinel_func: callable accepting a fsBase entry, returns
@@ -659,10 +648,6 @@ class SavePkg(base):
 
     _copy_source = 'new'
 
-    pkgcore_config_type = base.pkgcore_config_type.clone(
-        types={'target_repo':'ref:repo','pristine':'bool', 'skip_if_source':'bool'},
-        required=['target_repo'])
-
     def __init__(self, target_repo, pristine=True, skip_if_source=True):
         if not pristine:
             self._hooks = ('pre_merge',)
@@ -690,12 +675,6 @@ class SavePkg(base):
 
 class SavePkgIfInPkgset(SavePkg):
 
-    d = SavePkg.pkgcore_config_type.types.copy()
-    d['pkgset'] = 'ref:pkgset'
-    pkgcore_config_type = SavePkg.pkgcore_config_type.clone(
-        types=d, required=['target_repo', 'pkgset'])
-    del d
-
     def __init__(self, target_repo, pkgset, pristine=True, skip_if_source=True):
         super().__init__(target_repo, pristine=pristine, skip_if_source=skip_if_source)
         self.pkgset = pkgset
@@ -711,18 +690,11 @@ class SavePkgUnmerging(SavePkg):
     _engine_types = UNINSTALLING_MODES
     _copy_source = 'old'
 
-    pkgcore_config_type = base.pkgcore_config_type.clone(
-        types={'target_repo':'ref:repo'})
-
     def __init__(self, target_repo):
         self.target_repo = target_repo
 
 
 class SavePkgUnmergingIfInPkgset(SavePkgUnmerging):
-
-    pkgcore_config_type = base.pkgcore_config_type.clone(
-        types={'target_repo':'ref:repo', 'pkgset':'ref:pkgset'},
-        required=['target_repo', 'pkgset'])
 
     def __init__(self, target_repo, pkgset, pristine=True):
         super().__init__(target_repo, pristine=pristine)
@@ -743,9 +715,6 @@ class BinaryDebug(ThreadedTrigger):
 
     default_strip_flags = ('--strip-unneeded', '-R', '.comment')
     elf_regex = r'(^| )ELF +(\d+-bit )'
-
-    pkgcore_config_type = base.pkgcore_config_type.clone(
-        types={"strip_binary":"str", "objcopy_binary":"str"})
 
     def __init__(self, mode='split', strip_binary=None, objcopy_binary=None,
                  extra_strip_flags=(), debug_storage='/usr/lib/debug/', compress=False):

@@ -173,8 +173,7 @@ class domain(config_domain):
     # XXX ouch, verify this crap and add defaults and stuff
     _types = {
         'profile': 'ref:profile', 'fetcher': 'ref:fetcher',
-        'repos': 'lazy_refs:repo', 'vdb': 'lazy_refs:repo',
-        'name': 'str', 'triggers': 'lazy_refs:trigger',
+        'repos': 'lazy_refs:repo', 'vdb': 'lazy_refs:repo', 'name': 'str',
     }
     for _thing in ('root', 'config_dir', 'CHOST', 'CBUILD', 'CTARGET', 'CFLAGS', 'PATH',
                    'PORTAGE_TMPDIR', 'DISTCC_PATH', 'DISTCC_DIR', 'CCACHE_DIR'):
@@ -192,9 +191,7 @@ class domain(config_domain):
     del _types, _thing
 
     def __init__(self, profile, repos, vdb, name=None,
-                 root='/', config_dir='/etc/portage', prefix='/',
-                 triggers=(), **settings):
-        self._triggers = triggers
+                 root='/', config_dir='/etc/portage', prefix='/', **settings):
         self.name = name
         self.root = settings["ROOT"] = root
         self.config_dir = config_dir

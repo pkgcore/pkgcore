@@ -9,8 +9,6 @@ Bit empty at the moment
 
 __all__ = ("MissingFile", "Failure", "domain")
 
-from itertools import chain
-
 from snakeoil import klass
 from snakeoil.demandload import demandload
 
@@ -45,15 +43,13 @@ class domain(object):
 
     fetcher = None
     tmpdir = None
-    _triggers = ()
 
     def _mk_nonconfig_triggers(self):
         return ()
 
     @property
     def triggers(self):
-        config_triggers = (x.instantiate() for x in self._triggers)
-        return tuple(chain(config_triggers, self._mk_nonconfig_triggers()))
+        return tuple(self._mk_nonconfig_triggers())
 
     def pkg_operations(self, pkg, observer=None):
         domain = self.get_package_domain(pkg)

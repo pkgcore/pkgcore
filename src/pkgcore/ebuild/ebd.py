@@ -75,8 +75,7 @@ class ebd(object):
             # copy.
             self.env = dict(initial_env)
             for x in ("USE", "ACCEPT_LICENSE"):
-                if x in self.env:
-                    del self.env[x]
+                self.env.pop(x, None)
         else:
             self.env = {}
 
@@ -147,6 +146,7 @@ class ebd(object):
 
         self.env["XARGS"] = xargs
 
+        # wipe internal settings from the exported env
         wipes = [k for k, v in self.env.items()
                  if not isinstance(v, str)]
         for k in wipes:
@@ -440,7 +440,7 @@ def run_generic_phase(pkg, phase, env, userpriv, sandbox, fd_pipes=None,
 
 
 class install_op(ebd, format.install):
-    """phase operations and steps for install execution"""
+    """Phase operations and steps for install execution."""
 
     def __init__(self, domain, pkg, observer):
         format.install.__init__(self, domain, pkg, observer)
@@ -462,7 +462,7 @@ class install_op(ebd, format.install):
 
 
 class uninstall_op(ebd, format.uninstall):
-    """phase operations and steps for uninstall execution"""
+    """Phase operations and steps for uninstall execution."""
 
     def __init__(self, domain, pkg, observer):
         format.uninstall.__init__(self, domain, pkg, observer)
@@ -491,7 +491,7 @@ class uninstall_op(ebd, format.uninstall):
 
 
 class replace_op(format.replace):
-    """phase operations and steps for replace execution"""
+    """Phase operations and steps for replace execution."""
 
     install_kls = staticmethod(install_op)
     uninstall_kls = staticmethod(uninstall_op)
@@ -524,7 +524,7 @@ class replace_op(format.replace):
 
 
 class buildable(ebd, setup_mixin, format.build):
-    """build operation"""
+    """Generic build operation."""
 
     _built_class = ebuild_built.fresh_built_package
 
@@ -660,11 +660,10 @@ class buildable(ebd, setup_mixin, format.build):
 
     @observer.decorate_build_method("setup")
     def setup(self):
-        """
-        execute the setup phase, mapping out to pkg_setup in the ebuild
+        """Execute the setup phase, mapping out to pkg_setup in the ebuild.
 
-        necessarily dirs are created as required, and build env is
-        initialized at this point
+        Necessarily dirs are created as required, and build env is
+        initialized at this point.
         """
         if self.distcc:
             for p in ("", "/lock", "/state"):
@@ -727,10 +726,9 @@ class buildable(ebd, setup_mixin, format.build):
         return setup_mixin.setup(self)
 
     def configure(self):
-        """
-        execute the configure phase
+        """Execute the configure phase.
 
-        does nothing if the pkg's EAPI is less than 2 (that spec lacks a
+        Does nothing if the pkg's EAPI is less than 2 (that spec lacks a
         separated configure phase).
         """
         if "configure" in self.eapi.phases:
@@ -738,8 +736,7 @@ class buildable(ebd, setup_mixin, format.build):
         return True
 
     def prepare(self):
-        """
-        execute a source preparation phase
+        """Execute a source preparation phase.
 
         does nothing if the pkg's EAPI is less than 2
         """
@@ -748,8 +745,7 @@ class buildable(ebd, setup_mixin, format.build):
         return True
 
     def nofetch(self):
-        """
-        execute the nofetch phase
+        """Execute the nofetch phase.
 
         We need the same prerequisites as setup, so reuse that.
         """
@@ -757,7 +753,7 @@ class buildable(ebd, setup_mixin, format.build):
         return setup_mixin.setup(self, "nofetch")
 
     def unpack(self):
-        """execute the unpack phase"""
+        """Execute the unpack phase."""
         if self.setup_is_for_src:
             self._setup_distfiles()
         if self.userpriv:
@@ -772,11 +768,11 @@ class buildable(ebd, setup_mixin, format.build):
     compile = pretty_docs(
         observer.decorate_build_method("compile")(
             post_curry(ebd._generic_phase, "compile", True, True)),
-        "run the compile phase (maps to src_compile)")
+        "Run the compile phase (maps to src_compile).")
 
     @observer.decorate_build_method("install")
     def install(self):
-        """run the install phase (maps to src_install)"""
+        """Run the install phase (maps to src_install)."""
         # TODO: replace print() usage with observer
         ED = self.env.get('ED', self.env['D'])
         print(f">>> Install {self.env['PF']} into {ED} category {self.env['CATEGORY']}")
@@ -786,20 +782,18 @@ class buildable(ebd, setup_mixin, format.build):
 
     @observer.decorate_build_method("test")
     def test(self):
-        """run the test phase (if enabled), maps to src_test"""
+        """Run the test phase (if enabled), maps to src_test."""
         if not self.run_test:
             return True
         return self._generic_phase(
             "test", True, True, failure_allowed=self.allow_failed_test)
 
     def finalize(self):
-        """
-        finalize the operation.
+        """Finalize the operation.
 
-        this yields a built package, but the packages
-        metadata/contents are bound to the workdir. In other words,
-        install the package somewhere prior to executing clean if you
-        intend on installing it.
+        This yields a built package, but the packages metadata/contents are
+        bound to the workdir. In other words, install the package somewhere
+        prior to executing clean if you intend on installing it.
 
         :return: :obj:`pkgcore.ebuild.ebuild_built.package` instance
         """
@@ -873,7 +867,7 @@ class ebuild_operations(object):
 
         # Use base build tempdir for $T instead of full pkg specific path to
         # avoid having to create/remove directories -- pkg_pretend isn't
-        # allowed to write to the filesystem anyway. 
+        # allowed to write to the filesystem anyway.
         env = expected_ebuild_env(pkg)
         env["T"] = domain.pm_tmpdir
         env["ROOT"] = domain.root

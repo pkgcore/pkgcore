@@ -512,7 +512,6 @@ class domain(config_domain):
             Three groups of use flags for the package in the following order:
             immutable flags, enabled flags, and disabled flags.
         """
-
         pre_defaults = [x[1:] for x in pkg.iuse if x[0] == '+']
         if pre_defaults:
             pre_defaults, ue_flags = self._split_use_expand_flags(pre_defaults)

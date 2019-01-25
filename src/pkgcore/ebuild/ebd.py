@@ -12,6 +12,7 @@ __all__ = (
     "ebd", "setup_mixin", "install_op", "uninstall_op", "replace_op",
     "buildable", "binpkg_localize")
 
+from collections import defaultdict
 import errno
 from functools import partial
 import os
@@ -78,6 +79,18 @@ class ebd(object):
                 self.env.pop(x, None)
         else:
             self.env = {}
+
+        # Override exported USE_EXPAND defaults with enabled USE flags. This
+        # allows profile enabled/disabled use flags in package.use* to override
+        # settings in make.defaults.
+        d = defaultdict(list)
+        for u in pkg.use:
+            m = self.domain.use_expand_re.match(u)
+            if m:
+                use_expand, value = m.groups()
+                d[use_expand.upper()].append(value)
+        for k, v in d.items():
+            self.env[k] = ' '.join(sorted(v))
 
         self.bashrc = self.env.pop("bashrc", ())
 

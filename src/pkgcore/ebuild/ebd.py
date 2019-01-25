@@ -80,9 +80,11 @@ class ebd(object):
         else:
             self.env = {}
 
-        # Override exported USE_EXPAND defaults with enabled USE flags. This
-        # allows profile enabled/disabled use flags in package.use* to override
-        # settings in make.defaults.
+        # Drop all USE_EXPAND variables from the exported environment.
+        for u in self.domain.profile.use_expand:
+            self.env.pop(u, None)
+
+        # Only export USE_EXPAND variables for the package's enabled USE flags.
         d = defaultdict(list)
         for u in pkg.use:
             m = self.domain.use_expand_re.match(u)

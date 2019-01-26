@@ -9,7 +9,7 @@ __all__ = ("domain",)
 
 # XXX doc this up better...
 
-from functools import partial, wraps
+from functools import partial
 from itertools import chain
 import os
 
@@ -141,27 +141,30 @@ def _read_config_file(path):
 
 def load_property(filename, *, read_func=_read_config_file,
                   parse_func=lambda x: x, fallback=()):
-    """Decorator simplifying parsing config files to generate a domain property.
+    """Decorator for parsing files using specified read/parse methods.
 
     :param filename: The filename to parse within the config directory.
+    :keyword read_func: An invokable used to read the specified file.
     :keyword parse_func: An invokable used to parse the data.
-    :keyword fallback: What to return if the file does not exist -- must be immutable.
+    :keyword fallback: What to return if the file does not exist.
     :return: A :py:`klass.jit.attr_named` property instance.
     """
     def f(func):
-        @wraps(func)
         def _load_and_invoke(func, fallback, self):
             if filename.startswith(os.path.sep):
+                # translate root fs calls to prefixed root fs
                 path = pjoin(self.root, filename.lstrip(os.path.sep))
             else:
+                # assume relative files are inside the config dir
                 path = pjoin(self.config_dir, filename)
             if os.path.exists(path):
                 data = parse_func(read_func(path))
             else:
                 data = fallback
             return func(self, data)
-        f2 = klass.jit_attr_named(f'_jit_{func.__name__}')
-        return f2(partial(_load_and_invoke, func, fallback))
+        doc = getattr(func, '__doc__', None)
+        jit_attr_named = klass.jit_attr_named(f'_jit_{func.__name__}', doc=doc)
+        return jit_attr_named(partial(_load_and_invoke, func, fallback))
     return f
 
 

@@ -97,6 +97,8 @@ class RepositoryGroup(DictMixin):
     def __getitem__(self, key):
         if isinstance(key, str):
             func = lambda x: key in x.aliases
+        elif isinstance(key, int):
+            return self.repos[key]
         else:
             func = lambda x: key == x
         try:

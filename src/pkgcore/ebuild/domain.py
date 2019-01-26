@@ -191,14 +191,15 @@ class domain(config_domain):
     del _types, _thing
 
     def __init__(self, profile, repos, vdb, name=None,
-                 root='/', config_dir='/etc/portage', prefix='/', **settings):
+                 root='/', config_dir='/etc/portage', prefix='/', *,
+                 fetcher, **settings):
         self.name = name
         self.root = settings["ROOT"] = root
         self.config_dir = config_dir
         self.prefix = prefix
         self.ebuild_hook_dir = pjoin(self.config_dir, 'env')
         self.profile = profile
-        self.fetcher = settings.pop("fetcher")
+        self.fetcher = fetcher
         self.__repos = repos
         self.__vdb = vdb
 

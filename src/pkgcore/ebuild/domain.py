@@ -14,7 +14,7 @@ from itertools import chain
 import os
 
 from snakeoil import klass
-from snakeoil.bash import iter_read_bash
+from snakeoil.bash import iter_read_bash, read_bash_dict
 from snakeoil.data_source import local_source
 from snakeoil.demandload import demandload
 from snakeoil.mappings import ProtectedDict, ImmutableDict
@@ -124,28 +124,6 @@ def generate_filter(masks, unmasks, *extra):
     return packages.AndRestriction(disable_inst_caching=True, finalize=True, *(r + extra))
 
 
-def load_property(filename, parsing_func=lambda x: x, fallback=()):
-    """Decorator simplifying parsing config files to generate a domain property.
-
-    :param filename: The filename to parse within the config directory.
-    :keyword parsing_func: An invokable used to parse the data.
-    :keyword fallback: What to return if the file does not exist -- must be immutable.
-    :return: A :py:`klass.jit.attr_named` property instance.
-    """
-    def f(func):
-        @wraps(func)
-        def _load_and_invoke(func, fallback, self):
-            path = pjoin(self.config_dir, filename)
-            if os.path.exists(path):
-                data = parsing_func(_read_config_file(path))
-            else:
-                data = fallback
-            return func(self, data)
-        f2 = klass.jit_attr_named(f'_jit_{func.__name__}')
-        return f2(partial(_load_and_invoke, func, fallback))
-    return f
-
-
 def _read_config_file(path):
     """Read all the data files under a given path."""
     try:
@@ -159,6 +137,32 @@ def _read_config_file(path):
         pass
     except EnvironmentError as e:
         raise Failure(f"failed reading {filename!r}: {e}") from e
+
+
+def load_property(filename, *, read_func=_read_config_file,
+                  parse_func=lambda x: x, fallback=()):
+    """Decorator simplifying parsing config files to generate a domain property.
+
+    :param filename: The filename to parse within the config directory.
+    :keyword parse_func: An invokable used to parse the data.
+    :keyword fallback: What to return if the file does not exist -- must be immutable.
+    :return: A :py:`klass.jit.attr_named` property instance.
+    """
+    def f(func):
+        @wraps(func)
+        def _load_and_invoke(func, fallback, self):
+            if filename.startswith(os.path.sep):
+                path = pjoin(self.root, filename.lstrip(os.path.sep))
+            else:
+                path = pjoin(self.config_dir, filename)
+            if os.path.exists(path):
+                data = parse_func(read_func(path))
+            else:
+                data = fallback
+            return func(self, data)
+        f2 = klass.jit_attr_named(f'_jit_{func.__name__}')
+        return f2(partial(_load_and_invoke, func, fallback))
+    return f
 
 
 # ow ow ow ow ow ow....
@@ -211,6 +215,10 @@ class domain(config_domain):
         # package.env settings can be overlaid properly.
         self._settings = ProtectedDict(settings)
 
+    @load_property("/etc/profile.env", read_func=read_bash_dict)
+    def system_profile(self, data):
+        return ImmutableDict(data)
+
     @klass.jit_attr_named('_jit_reset_settings', uncached_val=None)
     def settings(self):
         settings = self._settings
@@ -221,18 +229,27 @@ class domain(config_domain):
         if 'MAKEOPTS' not in settings:
             settings['MAKEOPTS'] = '-j%i' % cpu_count()
 
+        # reformat env.d and make.conf incrementals
+        system_profile_settings = {}
         for x in const.incrementals:
-            if isinstance(settings.get(x), str):
-                settings[x] = tuple(settings[x].split())
+            system_profile_val = self.system_profile.get(x, ())
+            make_conf_val = settings.get(x, ())
+            if isinstance(system_profile_val, str):
+                system_profile_val = tuple(system_profile_val.split())
+            if isinstance(make_conf_val, str):
+                make_conf_val = tuple(make_conf_val.split())
+            system_profile_settings[x] = system_profile_val
+            settings[x] = make_conf_val
 
         # roughly... all incremental stacks should be interpreted left -> right
-        # as such we start with the profile settings, and append ours onto it.
+        # as such we start with the env.d settings, append profile settings,
+        # and finally append make.conf settings onto that.
         for k, v in self.profile.default_env.items():
             if k not in settings:
                 settings[k] = v
                 continue
             if k in const.incrementals:
-                settings[k] = v + tuple(settings[k])
+                settings[k] = system_profile_settings[k] + v + settings[k]
 
         # next we finalize incrementals.
         for incremental in const.incrementals:
@@ -323,14 +340,14 @@ class domain(config_domain):
         use.freeze()
         return use
 
-    @load_property("package.mask", package_masks)
+    @load_property("package.mask", parse_func=package_masks)
     def pkg_masks(self, data):
         if self._debug:
             return tuple(data)
         else:
             return tuple(x[0] for x in data)
 
-    @load_property("package.unmask", package_masks)
+    @load_property("package.unmask", parse_func=package_masks)
     def pkg_unmasks(self, data):
         if self._debug:
             return tuple(data)
@@ -338,28 +355,28 @@ class domain(config_domain):
             return tuple(x[0] for x in data)
 
     # TODO: deprecated, remove in 0.11
-    @load_property("package.keywords", package_keywords_splitter)
+    @load_property("package.keywords", parse_func=package_keywords_splitter)
     def pkg_keywords(self, data):
         if self._debug:
             return tuple(data)
         else:
             return tuple((x[0], x[1]) for x in data)
 
-    @load_property("package.accept_keywords", package_keywords_splitter)
+    @load_property("package.accept_keywords", parse_func=package_keywords_splitter)
     def pkg_accept_keywords(self, data):
         if self._debug:
             return tuple(data)
         else:
             return tuple((x[0], x[1]) for x in data)
 
-    @load_property("package.license", package_keywords_splitter)
+    @load_property("package.license", parse_func=package_keywords_splitter)
     def pkg_licenses(self, data):
         if self._debug:
             return tuple(data)
         else:
             return tuple((x[0], x[1]) for x in data)
 
-    @load_property("package.use", package_keywords_splitter)
+    @load_property("package.use", parse_func=package_keywords_splitter)
     def pkg_use(self, data):
         if self._debug:
             return tuple(data)

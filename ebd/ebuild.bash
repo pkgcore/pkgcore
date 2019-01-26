@@ -202,12 +202,6 @@ __generate_initial_ebuild_environ() {
 		# bug 51552
 		__timed_call __environ_save_to_file "${T}"/.temp_env
 
-		if [[ ${USERLAND} == "GNU" ]]; then
-			local PORTAGE_SHIFTED_PATH=${PATH}
-			__timed_call __qa_invoke source /etc/profile.env
-			__ensure_PATH "${PKGCORE_EXISTING_PATH}"
-		fi
-
 		# restore the saved env vars.
 		PKGCORE_SUPPRESS_BASHRCS=true
 		PKGCORE_TARGET_ENV=${T}/.temp_env

@@ -275,16 +275,21 @@ class domain(config_domain):
     def unstable_arch(self):
         return f"~{self.arch}"
 
+    @klass.jit_attr_named('_jit_reset_features', uncached_val=None)
+    def features(self):
+        conf_features = list(self.settings.get('FEATURES', ()))
+        env_features = os.environ.get('FEATURES', '').split()
+        return frozenset(optimize_incrementals(conf_features + env_features))
+
     @klass.jit_attr_named('_jit_reset_use', uncached_val=None)
     def use(self):
         # append expanded use, FEATURES, and environment defined USE flags
         use = list(self.settings.get('USE', ())) + list(self.profile.expand_use(self.settings))
 
         # hackish implementation; if test is on, flip on the flag
-        features = self.settings.get("FEATURES", ())
-        if "test" in features:
+        if "test" in self.features:
             use.append("test")
-        if "prefix" in features or "force-prefix" in features:
+        if "prefix" in self.features or "force-prefix" in self.features:
             use.append("prefix")
 
         return frozenset(optimize_incrementals(use + os.environ.get('USE', '').split()))

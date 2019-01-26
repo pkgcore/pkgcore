@@ -49,7 +49,7 @@ demandload(
 class ebd(object):
 
     def __init__(self, pkg, initial_env=None, env_data_source=None,
-                 features=None, observer=None, clean=True, tmp_offset=None,
+                 observer=None, clean=True, tmp_offset=None,
                  allow_fetching=False):
         """
         :param pkg:
@@ -60,8 +60,6 @@ class ebd(object):
             to restore the environment from- used for restoring the
             state of an ebuild processing, whether for unmerging, or
             walking phases during building
-        :param features: ebuild features, hold over from portage,
-            will be broken down at some point
         """
         self.allow_fetching = allow_fetching
         self.pkg = pkg
@@ -99,12 +97,12 @@ class ebd(object):
         if "PYTHONPATH" in os.environ:
             self.env["PYTHONPATH"] = os.environ["PYTHONPATH"]
 
-        if features is None:
-            features = self.env.get("FEATURES", ())
+        self.features = set(x.lower() for x in self.domain.features)
+        self.env["FEATURES"] = ' '.join(sorted(self.features))
 
         # XXX: note this is just EAPI 3 and EAPI 7 compatibility; not full prefix, soon..
         self.env["ROOT"] = self.domain.root.rstrip(os.sep) + self.eapi.options.trailing_slash
-        self.prefix_mode = self.eapi.options.prefix_capable or 'force-prefix' in features
+        self.prefix_mode = self.eapi.options.prefix_capable or 'force-prefix' in self.features
         self.env["PKGCORE_PREFIX_SUPPORT"] = 'false'
         self.prefix = '/'
         if self.prefix_mode:
@@ -130,10 +128,6 @@ class ebd(object):
             raise TypeError(
                 "env_data_source must be None, or a pkgcore.data_source.base "
                 f"derivative: {env_data_source.__class__}: {env_data_source}")
-
-        self.features = set(x.lower() for x in features)
-
-        self.env["FEATURES"] = ' '.join(sorted(self.features))
 
         iuse_effective_regex = f"^({'|'.join(re.escape(x) for x in pkg.iuse_effective)})$"
         self.env["PKGCORE_IUSE_EFFECTIVE"] = iuse_effective_regex.replace("\\.\\*", ".*")
@@ -556,8 +550,7 @@ class buildable(ebd, setup_mixin, format.build):
         """
         format.build.__init__(self, domain, pkg, verified_files, observer)
         domain_settings = self.domain.settings
-        ebd.__init__(self, pkg, initial_env=domain_settings,
-                     features=domain_settings["FEATURES"], **kwargs)
+        ebd.__init__(self, pkg, initial_env=domain_settings, **kwargs)
 
         self.env["FILESDIR"] = pjoin(os.path.dirname(pkg.ebuild.path), "files")
         self.eclass_cache = eclass_cache

@@ -87,7 +87,7 @@ __ver_split() {
 
 ver_cut() {
 	local range=${1}
-	local v=${2:-${PV}}
+	local v=${2:-${PVR}}
 	local start end
 	local -a comp
 
@@ -104,7 +104,7 @@ ver_cut() {
 
 ver_rs() {
 	local v
-	(( ${#} & 1 )) && v=${@: -1} || v=${PV}
+	(( ${#} & 1 )) && v=${@: -1} || v=${PVR}
 	local start end i
 	local -a comp
 

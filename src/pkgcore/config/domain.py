@@ -43,13 +43,11 @@ class domain(object):
 
     fetcher = None
     tmpdir = None
-
-    def _mk_nonconfig_triggers(self):
-        return ()
+    _triggers = ()
 
     @property
     def triggers(self):
-        return tuple(self._mk_nonconfig_triggers())
+        return tuple(self._triggers)
 
     def pkg_operations(self, pkg, observer=None):
         domain = self.get_package_domain(pkg)

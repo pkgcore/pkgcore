@@ -49,7 +49,7 @@ demandload(
     'pkgcore.ebuild:repository@ebuild_repo',
     'pkgcore.ebuild.portage_conf:PortageConfig',
     'pkgcore.ebuild.repo_objs:RepoConfig',
-    'pkgcore.ebuild.triggers:generate_triggers@ebuild_generate_triggers',
+    'pkgcore.ebuild.triggers:GenerateTriggers',
     'pkgcore.fs.livefs:iter_scan,sorted_scan',
     'pkgcore.log:logger',
 )
@@ -259,6 +259,9 @@ class domain(config_domain):
             'while expanding ACCEPT_KEYWORDS')
         default_keywords.extend(s)
         settings['ACCEPT_KEYWORDS'] = set(default_keywords)
+
+        # pull trigger options from the env
+        self._triggers = GenerateTriggers(self, settings)
 
         return ImmutableDict(settings)
 
@@ -565,14 +568,14 @@ class domain(config_domain):
                     allow_recurse=False, incrementals=True)
 
             # TODO: Improve pkg domain vs main domain proxying, e.g. static
-            # jit-ed attrs should always be generated and pulled from the main
+            # jitted attrs should always be generated and pulled from the main
             # domain obj; however, currently each pkg domain instance gets its
             # own copy so values collapsed on the pkg domain instance aren't
             # propagated back to the main domain leading to regen per pkg if
             # requested.
             pkg_domain = copy.copy(self)
             pkg_domain._settings = ProtectedDict(pkg_settings)
-            # reset JIT-ed attrs that can pull updated settings
+            # reset jitted attrs that can pull updated settings
             for attr in (x for x in dir(self) if x.startswith('_jit_reset_')):
                 setattr(pkg_domain, attr, None)
             # store altered domain on the pkg obj to avoid recreating pkg domain
@@ -597,9 +600,6 @@ class domain(config_domain):
             fp = pjoin(base, fp)
             if os.path.exists(fp):
                 yield local_source(fp)
-
-    def _mk_nonconfig_triggers(self):
-        return ebuild_generate_triggers(self)
 
     def add_repo(self, repo, filtered=True, group=None, config=None):
         """Add repo to the domain."""

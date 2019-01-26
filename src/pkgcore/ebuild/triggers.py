@@ -9,7 +9,7 @@ __all__ = (
     "collapse_envd", "string_collapse_envd", "env_update",
     "ConfigProtectInstall", "ConfigProtectUninstall", "preinst_contents_reset",
     "CollisionProtect", "ProtectOwned", "install_into_symdir_protect",
-    "InfoRegen", "SFPerms", "FixImageSymlinks", "generate_triggers",
+    "InfoRegen", "SFPerms", "FixImageSymlinks", "GenerateTriggers",
 )
 
 import os
@@ -607,86 +607,102 @@ class FixImageSymlinks(triggers.base):
             for x in l)
 
 
-def generate_triggers(domain):
-    domain_settings = domain.settings
-    yield env_update()
+class GenerateTriggers(object):
 
-    d = {}
-    for x in ("CONFIG_PROTECT", "CONFIG_PROTECT_MASK", "COLLISION_IGNORE",
-              "INSTALL_MASK", "UNINSTALL_IGNORE"):
-        d[x] = domain_settings.get(x, [])
-        if isinstance(d[x], str):
-            d[x] = d[x].split()
+    def __init__(self, domain, settings):
+        self.domain = domain
+        self.settings = settings
 
-    yield ConfigProtectInstall(d["CONFIG_PROTECT"], d["CONFIG_PROTECT_MASK"])
-    yield ConfigProtectUninstall()
+        config_opts = (
+            "CONFIG_PROTECT", "CONFIG_PROTECT_MASK", "COLLISION_IGNORE",
+            "INSTALL_MASK", "UNINSTALL_IGNORE",
+        )
 
-    features = domain_settings.get("FEATURES", ())
+        # Pop trigger-related options from the system config, they shouldn't be
+        # needed anywhere else and doing so prevents them from leaking into the
+        # ebuild env.
+        self.opts = {}
+        for x in config_opts:
+            self.opts[x] = self.settings.pop(x, [])
+            if isinstance(self.opts[x], str):
+                self.opts[x] = self.opts[x].split()
 
-    if "collision-protect" in features:
-        yield CollisionProtect(d["CONFIG_PROTECT"], d["CONFIG_PROTECT_MASK"],
-                               d["COLLISION_IGNORE"])
+    def __iter__(self):
+        yield env_update()
 
-    if "protect-owned" in features and "collision-protect" not in features:
-        yield ProtectOwned(domain.installed_repos, d["CONFIG_PROTECT"],
-                           d["CONFIG_PROTECT_MASK"], d["COLLISION_IGNORE"])
+        yield ConfigProtectInstall(
+            self.opts["CONFIG_PROTECT"], self.opts["CONFIG_PROTECT_MASK"])
+        yield ConfigProtectUninstall()
 
-    if "multilib-strict" in features:
-        yield register_multilib_strict_trigger(domain_settings)
+        features = self.settings.get("FEATURES", ())
 
-    if "sfperms" in features:
-        yield SFPerms()
+        if "collision-protect" in features:
+            yield CollisionProtect(
+                self.opts["CONFIG_PROTECT"], self.opts["CONFIG_PROTECT_MASK"],
+                self.opts["COLLISION_IGNORE"])
 
-    yield install_into_symdir_protect(d["CONFIG_PROTECT"], d["CONFIG_PROTECT_MASK"])
+        if "protect-owned" in features and "collision-protect" not in features:
+            yield ProtectOwned(
+                self.domain.installed_repos, self.opts["CONFIG_PROTECT"],
+                self.opts["CONFIG_PROTECT_MASK"], self.opts["COLLISION_IGNORE"])
 
-    pkgdir = domain_settings.get("PKGDIR", None)
-    target_repo = domain.binary_repos_raw.get(pkgdir, None)
-    if target_repo is not None:
-        if 'buildpkg' in features:
-            yield triggers.SavePkg(pristine='no', target_repo=target_repo)
-        elif 'pristine-buildpkg' in features:
-            yield triggers.SavePkg(pristine='yes', target_repo=target_repo)
-        elif 'buildsyspkg' in features:
-            yield triggers.SavePkgIfInPkgset(
-                pristine='yes', target_repo=target_repo, pkgset=domain.profile.system)
-        elif 'unmerge-backup' in features:
-            yield triggers.SavePkgUnmerging(target_repo=target_repo)
+        if "multilib-strict" in features:
+            yield register_multilib_strict_trigger(self.settings)
 
-    if 'save-deb' in features:
-        path = domain_settings.get("DEB_REPO_ROOT", None)
-        if path is None:
-            logger.warning("disabling save-deb; DEB_REPO_ROOT is unset")
-        else:
-            yield ospkg.triggers.SaveDeb(
-                basepath=normpath(path), maintainer=domain_settings.get("DEB_MAINAINER", ''),
-                platform=domain_settings.get("DEB_ARCHITECTURE", ""))
+        if "sfperms" in features:
+            yield SFPerms()
 
-    if 'splitdebug' in features:
-        yield triggers.BinaryDebug(mode='split', compress=('compressdebug' in features))
-    elif 'strip' in features or 'nostrip' not in features:
-        yield triggers.BinaryDebug(mode='strip')
+        yield install_into_symdir_protect(
+            self.opts["CONFIG_PROTECT"], self.opts["CONFIG_PROTECT_MASK"])
 
-    if '-fixlafiles' not in features:
-        yield libtool.FixLibtoolArchivesTrigger()
+        pkgdir = self.settings.get("PKGDIR", None)
+        target_repo = self.domain.binary_repos_raw.get(pkgdir, None)
+        if target_repo is not None:
+            if 'buildpkg' in features:
+                yield triggers.SavePkg(pristine='no', target_repo=target_repo)
+            elif 'pristine-buildpkg' in features:
+                yield triggers.SavePkg(pristine='yes', target_repo=target_repo)
+            elif 'buildsyspkg' in features:
+                yield triggers.SavePkgIfInPkgset(
+                    pristine='yes', target_repo=target_repo, pkgset=self.domain.profile.system)
+            elif 'unmerge-backup' in features:
+                yield triggers.SavePkgUnmerging(target_repo=target_repo)
 
-    for x in ("man", "info", "doc"):
-        if f"no{x}" in features:
-            d["INSTALL_MASK"].append(f"/usr/share/{x}")
-    l = []
-    for x in d["INSTALL_MASK"]:
-        x = x.rstrip("/")
-        l.append(values.StrRegex(fnmatch.translate(x)))
-        l.append(values.StrRegex(fnmatch.translate(f"{x}/*")))
-    install_mask = l
+        if 'save-deb' in features:
+            path = self.settings.get("DEB_REPO_ROOT", None)
+            if path is None:
+                logger.warning("disabling save-deb; DEB_REPO_ROOT is unset")
+            else:
+                yield ospkg.triggers.SaveDeb(
+                    basepath=normpath(path), maintainer=self.settings.get("DEB_MAINAINER", ''),
+                    platform=self.settings.get("DEB_ARCHITECTURE", ""))
 
-    if install_mask:
-        if len(install_mask) == 1:
-            install_mask = install_mask[0]
-        else:
-            install_mask = values.OrRestriction(*install_mask)
-        yield triggers.PruneFiles(install_mask.match)
-        # note that if this wipes all /usr/share/ entries, should
-        # wipe the empty dir.
+        if 'splitdebug' in features:
+            yield triggers.BinaryDebug(mode='split', compress=('compressdebug' in features))
+        elif 'strip' in features or 'nostrip' not in features:
+            yield triggers.BinaryDebug(mode='strip')
 
-    yield UninstallIgnore(d["UNINSTALL_IGNORE"])
-    yield InfoRegen()
+        if '-fixlafiles' not in features:
+            yield libtool.FixLibtoolArchivesTrigger()
+
+        for x in ("man", "info", "doc"):
+            if f"no{x}" in features:
+                self.opts["INSTALL_MASK"].append(f"/usr/share/{x}")
+        l = []
+        for x in self.opts["INSTALL_MASK"]:
+            x = x.rstrip("/")
+            l.append(values.StrRegex(fnmatch.translate(x)))
+            l.append(values.StrRegex(fnmatch.translate(f"{x}/*")))
+        install_mask = l
+
+        if install_mask:
+            if len(install_mask) == 1:
+                install_mask = install_mask[0]
+            else:
+                install_mask = values.OrRestriction(*install_mask)
+            yield triggers.PruneFiles(install_mask.match)
+            # note that if this wipes all /usr/share/ entries, should
+            # wipe the empty dir.
+
+        yield UninstallIgnore(self.opts["UNINSTALL_IGNORE"])
+        yield InfoRegen()

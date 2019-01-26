@@ -660,8 +660,16 @@ class GenerateTriggers(object):
         yield install_into_symdir_protect(
             self.opts["CONFIG_PROTECT"], self.opts["CONFIG_PROTECT_MASK"])
 
+        # TODO: support multiple binpkg repo targets?
         pkgdir = self.opts.get("PKGDIR", None)
-        target_repo = self.domain.binary_repos_raw.get(pkgdir, None)
+        if pkgdir:
+            target_repo = self.domain.binary_repos_raw.get(pkgdir, None)
+        else:
+            # get the highest priority binpkg repo
+            try:
+                target_repo = self.domain.binary_repos_raw[0]
+            except IndexError:
+                target_repo = None
         if target_repo is not None:
             if 'buildpkg' in self.domain.features:
                 yield triggers.SavePkg(pristine='no', target_repo=target_repo)

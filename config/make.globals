@@ -9,7 +9,6 @@ ACCEPT_PROPERTIES="*"
 ACCEPT_RESTRICT="*"
 
 DISTDIR="/var/gentoo/dist"
-PKGDIR="/var/gentoo/pkgs"
 
 PORTAGE_TMPDIR="/var/tmp"
 

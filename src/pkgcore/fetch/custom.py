@@ -120,42 +120,37 @@ class fetcher(base.fetcher):
             extra = {}
         extra["umask"] = 0o002
         extra["env"] = self.extra_env
-        attempts = self.attempts
-        last_exc = None
-        try:
-            while attempts >= 0:
-                try:
-                    c = self._verify(fp, target)
-                    return fp
-                except errors.MissingDistfile as e:
-                    command = self.command
-                    last_exc = e
-                except errors.FetchFailed as e:
-                    last_exc = e
-                    if not e.resumable:
-                        try:
-                            os.unlink(fp)
-                            command = self.command
-                        except OSError as e:
-                            raise errors.UnmodifiableFile(fp, oe) from e
-                    else:
-                        command = self.resume_command
+        last_exc = RuntimeError("fetching failed for an unknown reason")
+        for _attempt in range(self.attempts):
+            try:
+                c = self._verify(fp, target)
+                return fp
+            except errors.MissingDistfile as e:
+                command = self.command
+                last_exc = e
+            except errors.FetchFailed as e:
+                last_exc = e
+                if not e.resumable:
+                    try:
+                        os.unlink(fp)
+                        command = self.command
+                    except OSError as e:
+                        raise errors.UnmodifiableFile(fp, oe) from e
+                else:
+                    command = self.resume_command
 
-                # yeah, it's funky, but it works.
-                if attempts > 0:
-                    u = next(uri)
-                    # note we're not even checking the results. the
-                    # verify portion of the loop handles this. iow,
-                    # don't trust their exit code. trust our chksums
-                    # instead.
-                    spawn_bash(command % {"URI": u, "FILE": filename}, **extra)
-                attempts -= 1
-            assert last_exc is not None
+            try:
+                u = next(uri)
+            except StopIteration:
+                raise errors.FetchFailed(fp, "ran out of urls to fetch from")
+
+            # note we're not even checking the results. the
+            # verify portion of the loop handles this. iow,
+            # don't trust their exit code. trust our chksums
+            # instead.
+            spawn_bash(command % {"URI": u, "FILE": filename}, **extra)
+        else:
             raise last_exc
-
-        except StopIteration:
-            # ran out of uris
-            raise errors.FetchFailed(fp, "Ran out of urls to fetch from")
 
     def get_path(self, fetchable):
         fp = pjoin(self.distdir, fetchable.filename)

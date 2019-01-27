@@ -8,7 +8,6 @@ fetcher class that pulls files via executing another program to do the fetching
 __all__ = ("MalformedCommand", "fetcher",)
 
 import os
-import sys
 
 from snakeoil.osutils import ensure_dirs, pjoin
 from snakeoil.process.spawn import spawn_bash, is_userpriv_capable
@@ -128,11 +127,11 @@ class fetcher(base.fetcher):
                 try:
                     c = self._verify(fp, target)
                     return fp
-                except errors.MissingDistfile:
+                except errors.MissingDistfile as e:
                     command = self.command
-                    last_exc = sys.exc_info()
+                    last_exc = e
                 except errors.FetchFailed as e:
-                    last_exc = sys.exc_info()
+                    last_exc = e
                     if not e.resumable:
                         try:
                             os.unlink(fp)
@@ -152,7 +151,7 @@ class fetcher(base.fetcher):
                     spawn_bash(command % {"URI": u, "FILE": filename}, **extra)
                 attempts -= 1
             assert last_exc is not None
-            raise last_exc[0](last_exc[1]).with_traceback(last_exc[2])
+            raise last_exc
 
         except StopIteration:
             # ran out of uris

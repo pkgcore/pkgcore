@@ -5,9 +5,7 @@ from importlib import reload
 from unittest import mock
 
 from pkgcore.ebuild import eapi
-from pkgcore.ebuild.eapi import (
-    EAPI, get_eapi,
-    eapi0, eapi1, eapi2, eapi3, eapi4, eapi5, eapi6, eapi7)
+from pkgcore.ebuild.eapi import EAPI, get_eapi, eapi6
 
 import pytest
 
@@ -61,8 +59,9 @@ class TestEAPI(object):
             assert not unknown_eapi.is_supported
 
     def test_inherits(self):
-        assert list(eapi0.inherits) == [eapi0]
-        assert list(eapi7.inherits) == [eapi7, eapi6, eapi5, eapi4, eapi3, eapi2, eapi1, eapi0]
+        for eapi_str, eapi_obj in EAPI.known_eapis.items():
+            objs = (get_eapi(str(x)) for x in range(int(eapi_str), -1, -1))
+            assert list(map(str, eapi_obj.inherits)) == list(map(str, objs))
 
     def test_ebd_env(self):
         for eapi_str, eapi_obj in EAPI.known_eapis.items():

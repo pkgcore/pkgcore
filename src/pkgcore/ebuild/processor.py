@@ -951,7 +951,7 @@ def expected_ebuild_env(pkg, d=None, env_source_override=None, depends=False):
             d["EBUILD"] = ""
 
     # add EAPI specific settings
-    d.update(pkg.eapi.get_ebd_env())
+    d.update(pkg.eapi.ebd_env)
 
     if not depends:
         path = list(const.PATH_FORCED_PREPEND + pkg.eapi.helpers)

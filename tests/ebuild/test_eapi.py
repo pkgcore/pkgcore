@@ -64,5 +64,6 @@ class TestEAPI(object):
         assert list(eapi0.inherits) == [eapi0]
         assert list(eapi7.inherits) == [eapi7, eapi6, eapi5, eapi4, eapi3, eapi2, eapi1, eapi0]
 
-    def test_get_ebd_env(self):
-        assert eapi0.get_ebd_env()['EAPI'] == '0'
+    def test_ebd_env(self):
+        for eapi_str, eapi_obj in EAPI.known_eapis.items():
+            assert eapi_obj.ebd_env['EAPI'] == eapi_str

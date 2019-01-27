@@ -186,7 +186,7 @@ class EAPI(object, metaclass=klass.immutable_instance):
         sf(self, 'options', _optionals_cls(optionals))
         if ebd_env_options is None:
             ebd_env_options = ()
-        sf(self, "ebd_env_options", ebd_env_options)
+        sf(self, "_ebd_env_options", ebd_env_options)
 
     @classmethod
     def register(cls, *args, **kwds):
@@ -271,13 +271,14 @@ class EAPI(object, metaclass=klass.immutable_instance):
         dirs.append(pjoin(const.EBUILD_HELPERS_PATH, 'common'))
         return tuple(dirs)
 
-    def get_ebd_env(self):
-        """Return EAPI options passed to the ebd environment."""
+    @klass.jit_attr
+    def ebd_env(self):
+        """Dictionary of EAPI options passed to the ebd environment."""
         d = {}
-        for k in self.ebd_env_options:
+        for k in self._ebd_env_options:
             d[f"PKGCORE_{k.upper()}"] = str(getattr(self.options, k)).lower()
         d["EAPI"] = self._magic
-        return d
+        return mappings.ImmutableDict(d)
 
 
 def get_eapi(magic, suppress_unsupported=True):
@@ -385,7 +386,7 @@ eapi1 = EAPI.register(
     optionals=_combine_dicts(eapi0.options, dict(
         iuse_defaults=True,
     )),
-    ebd_env_options=eapi0.ebd_env_options,
+    ebd_env_options=eapi0._ebd_env_options,
 )
 
 eapi2 = EAPI.register(
@@ -404,7 +405,7 @@ eapi2 = EAPI.register(
         transitive_use_atoms=True,
         src_uri_renames=True,
     )),
-    ebd_env_options=eapi1.ebd_env_options,
+    ebd_env_options=eapi1._ebd_env_options,
 )
 
 eapi3 = EAPI.register(
@@ -419,7 +420,7 @@ eapi3 = EAPI.register(
     optionals=_combine_dicts(eapi2.options, dict(
         prefix_capable=True,
     )),
-    ebd_env_options=eapi2.ebd_env_options,
+    ebd_env_options=eapi2._ebd_env_options,
 )
 
 eapi4 = EAPI.register(
@@ -444,7 +445,7 @@ eapi4 = EAPI.register(
         has_use_dep_defaults=True,
         trust_defined_phases_cache=True,
     )),
-    ebd_env_options=eapi3.ebd_env_options,
+    ebd_env_options=eapi3._ebd_env_options,
 )
 
 eapi5 = EAPI.register(
@@ -465,7 +466,7 @@ eapi5 = EAPI.register(
         required_use_one_of=True,
         sub_slotting=True,
     )),
-    ebd_env_options=eapi4.ebd_env_options,
+    ebd_env_options=eapi4._ebd_env_options,
 )
 
 eapi6 = EAPI.register(
@@ -486,7 +487,7 @@ eapi6 = EAPI.register(
         user_patches=True,
         bash_compat='4.2',
     )),
-    ebd_env_options=eapi5.ebd_env_options,
+    ebd_env_options=eapi5._ebd_env_options,
 )
 
 eapi7 = EAPI.register(
@@ -506,5 +507,5 @@ eapi7 = EAPI.register(
         trailing_slash='',
         is_supported=False,
     )),
-    ebd_env_options=eapi6.ebd_env_options,
+    ebd_env_options=eapi6._ebd_env_options,
 )

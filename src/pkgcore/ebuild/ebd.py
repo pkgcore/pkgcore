@@ -94,6 +94,8 @@ class ebd(object):
 
         self.bashrc = self.env.pop("bashrc", ())
 
+        # TODO: drop this once we rewrite/remove calling python-based scripts
+        # from the bash side
         if "PYTHONPATH" in os.environ:
             self.env["PYTHONPATH"] = os.environ["PYTHONPATH"]
 
@@ -155,7 +157,12 @@ class ebd(object):
 
         self.env["XARGS"] = xargs
 
-        # wipe internal settings from the exported env
+        # wipe variables listed in ENV_UNSET for supporting EAPIs
+        if self.eapi.options.has_env_unset:
+            for x in self.env.pop('ENV_UNSET', ()):
+                self.env.pop(x, None)
+
+        # wipe any remaining internal settings from the exported env
         wipes = [k for k, v in self.env.items()
                  if not isinstance(v, str)]
         for k in wipes:

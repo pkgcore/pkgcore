@@ -81,6 +81,9 @@ eapi_optionals = mappings.ImmutableDict({
     # Controls whether USE dependency defaults are supported, see PMS.
     "has_use_dep_defaults": False,
 
+    # Controls whether ENV_UNSET is supported, see PMS.
+    "has_env_unset": False,
+
     # Controls whether AA env var is exported to ebuilds; this is a flattened
     # listing of each filename in SRC_URI.
     "has_AA": True,
@@ -503,6 +506,7 @@ eapi7 = EAPI.register(
         has_profile_data_dirs=True,
         has_portdir=False,
         has_sysroot=True,
+        has_env_unset=True,
         econf_sysroot=True,
         trailing_slash='',
         is_supported=False,

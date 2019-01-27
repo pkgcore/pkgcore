@@ -3,7 +3,7 @@
 
 __all__ = (
     "SimpleTree", "RepositoryGroup",
-    "repo_containing_path", "get_raw_repos", "get_virtual_repos",
+    "get_raw_repos", "get_virtual_repos",
 )
 
 from snakeoil import klass
@@ -155,21 +155,20 @@ class RepositoryGroup(DictMixin):
     def virtual(self):
         return RepositoryGroup(get_virtual_repos(self))
 
+    def repo_match(self, path):
+        """Find the repo containing a path.
 
-def repo_containing_path(repos, path):
-    """Find the repo containing a path.
+        Args:
+            path (str): path in the filesystem
 
-    Args:
-        repos (iterable): iterable of repo objects
-        path (str): path in the filesystem
+        Returns:
+            repo object if a matching repo is found, otherwise None.
+        """
+        for repo in self.repos:
+            if path in repo:
+                return repo
+        return None
 
-    Returns:
-        repo object if a matching repo is found, otherwise None.
-    """
-    for repo in repos:
-        if path in repo:
-            return repo
-    return None
 
 def get_raw_repos(repos):
     """Returns a list of raw repos found.
@@ -189,6 +188,7 @@ def get_raw_repos(repos):
             l.extend(get_raw_repos(x))
         return l
     return [repos]
+
 
 def get_virtual_repos(repos, sentinel=True):
     """Select only virtual repos.

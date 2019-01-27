@@ -7,9 +7,9 @@ import os
 
 from snakeoil.strings import pluralism as _pl
 
+from pkgcore._vendor.tabulate import tabulate, tabulate_formats
 from pkgcore.ebuild import restricts
 from pkgcore.util import commandline, packages as pkgutils
-from pkgcore.util.tabulate import tabulate, tabulate_formats
 from pkgcore.repository import errors as repo_errors
 
 

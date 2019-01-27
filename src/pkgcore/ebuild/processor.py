@@ -691,7 +691,7 @@ class EbuildProcessor(object):
         # TODO: Move to using unprefixed lines to avoid leaking internal
         # variables to spawned commands once we use builtins for all commands
         # currently using pkgcore-ebuild-helper.
-        return '\n'.join(f"export {x}" for x in data)
+        return f"export {' '.join(data)}"
 
     def send_env(self, env_dict, async_req=False, tmpdir=None):
         """Transfer the ebuild's desired env (env_dict) to the running daemon.

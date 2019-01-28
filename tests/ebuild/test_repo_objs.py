@@ -114,6 +114,20 @@ class TestRepoConfig(object):
         assert repo_config.pms_repo_name == ''
         del repo_config
 
+        # whitespace
+        with open(os.path.join(profiles_base, 'repo_name'), 'w') as f:
+            f.write(' \n')
+        repo_config = repo_objs.RepoConfig(repo)
+        assert repo_config.pms_repo_name == ''
+        del repo_config
+
+        # whitespace + name
+        with open(os.path.join(profiles_base, 'repo_name'), 'w') as f:
+            f.write(' repo \n')
+        repo_config = repo_objs.RepoConfig(repo)
+        assert repo_config.pms_repo_name == 'repo'
+        del repo_config
+
         # regular name
         with open(os.path.join(profiles_base, 'repo_name'), 'w') as f:
             f.write('newrepo')

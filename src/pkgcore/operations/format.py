@@ -7,7 +7,7 @@ build operation
 
 __all__ = (
     'build_base', 'install', 'uninstall', 'replace', 'fetch_base',
-    'empty_build_op', 'FailedDirectory', 'GenericBuildError', 'errors',
+    'empty_build_op', 'FailedDirectory', 'GenericBuildError',
 )
 
 import os
@@ -369,6 +369,3 @@ class GenericBuildError(BuildError):
     def __init__(self, err):
         super().__init__(f"failed build operation: {err}")
         self.err = str(err)
-
-
-errors = (FailedDirectory, GenericBuildError)

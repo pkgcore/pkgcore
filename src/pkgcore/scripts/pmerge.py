@@ -921,7 +921,7 @@ def main(options, out, err):
                     exc = None
                     try:
                         result = buildop.finalize()
-                    except format.errors as e:
+                    except format.BuildError as e:
                         out.error(f"caught exception building {op.pkg.cpvstr}: {e}")
                         exc = e
                     else:

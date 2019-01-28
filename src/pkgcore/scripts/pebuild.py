@@ -12,7 +12,7 @@ from snakeoil.strings import pluralism
 
 from pkgcore.ebuild import atom
 from pkgcore.ebuild.errors import MalformedAtom
-from pkgcore.operations import observer, format
+from pkgcore.operations import observer, format, OperationError
 from pkgcore.package.errors import MetadataException
 from pkgcore.util.commandline import ArgumentParser, StoreTarget
 
@@ -97,5 +97,5 @@ def main(options, out, err):
         for phase, func in phase_funcs:
             out.write(f'executing phase {phase}')
             func(**kwds)
-    except format.errors as e:
+    except OperationError as e:
         raise ExitException(f"caught exception executing phase {phase}: {e}") from e

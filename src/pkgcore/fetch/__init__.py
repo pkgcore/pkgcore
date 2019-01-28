@@ -7,6 +7,8 @@ functionality related to downloading files
 
 __all__ = ("fetchable", "mirror", "default_mirror", "uri_list")
 
+from itertools import zip_longest
+
 from snakeoil.klass import generic_equality
 
 
@@ -120,16 +122,34 @@ class uri_list(object):
 
     def __iter__(self):
         fname = self.filename
-        for entry in self._uri_source:
+        i = 0
+        while i < len(self._uri_source):
+            entry = self._uri_source[i]
             if isinstance(entry, str):
                 yield entry
             elif isinstance(entry, tuple):
-                # mirror with suburi
-                for base_uri in entry[0]:
-                    yield f"{base_uri.rstrip('/')}/{entry[1]}"
+                # TODO: rewrite mirror handling to do this more transparently
+                # collect all mirrors at the same priority
+                mirrored = []
+                while True:
+                    m, sub_uri = entry
+                    uris = (f"{base_uri.rstrip('/')}/{sub_uri}" for base_uri in m)
+                    mirrored.append(uris)
+                    try:
+                        entry = self._uri_source[i + 1]
+                    except IndexError:
+                        break
+                    if not isinstance(entry, tuple):
+                        break
+                    i += 1
+
+                # iterate between different mirror groups
+                for mirrored_uris in zip_longest(*mirrored):
+                    yield from filter(None, mirrored_uris)
             else:
                 for base_uri in entry:
                     yield f"{base_uri.rstrip('/')}/{fname}"
+            i += 1
 
     def __str__(self):
         uris = ', '.join(str(x) for x in self._uri_source)

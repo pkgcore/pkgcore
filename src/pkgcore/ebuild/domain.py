@@ -634,6 +634,9 @@ class domain(config_domain):
             path = os.path.abspath(repo)
             if not os.path.isdir(os.path.join(path, 'profiles')):
                 raise repo_errors.InvalidRepo(repr(path))
+            if path in group:
+                raise ValueError(f'repo at {path!r} already configured')
+            # use path for repo id to avoid collisions
             repo_config = RepoConfig(path, config_name=path)
             repo = ebuild_repo.tree(config, repo_config)
             self.source_repos_raw += repo

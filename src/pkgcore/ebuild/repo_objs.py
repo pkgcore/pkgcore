@@ -402,10 +402,12 @@ class RepoConfig(syncable.tree, metaclass=WeakInstMeta):
         """Load data from the repo's metadata/layout.conf file."""
         path = pjoin(self.location, self.layout_offset)
         data = read_dict(
-            iter_read_bash(readlines_ascii(path, True, True)),
+            iter_read_bash(
+                readlines_ascii(path, strip_whitespace=True, swallow_missing=True)),
             source_isiter=True, strip=True, filename=path)
 
         sf = object.__setattr__
+        sf(self, 'repo_name', data.get('repo-name', None))
 
         hashes = data.get('manifest-hashes', '').lower().split()
         if hashes:
@@ -430,15 +432,6 @@ class RepoConfig(syncable.tree, metaclass=WeakInstMeta):
             'hashes': hashes,
             'required_hashes': required_hashes,
         }
-
-        # complain if profiles/repo_name is missing
-        repo_name = readfile(pjoin(self.profiles_base, 'repo_name'), True)
-        if repo_name is None:
-            if not self.is_empty:
-                logger.warning(f"repo lacks a defined name: {self.location!r}")
-            repo_name = f'<unlabeled repo {self.location}>'
-        # repo-name setting from metadata/layout.conf overrides profiles/repo_name if it exists
-        sf(self, 'repo_name', data.get('repo-name', repo_name.strip()))
 
         sf(self, 'manifests', _immutable_attr_dict(d))
         masters = data.get('masters')
@@ -565,15 +558,34 @@ class RepoConfig(syncable.tree, metaclass=WeakInstMeta):
         return result
 
     @klass.jit_attr
+    def pms_repo_name(self):
+        """Repository name from profiles/repo_name (as defined by PMS).
+
+        We're more lenient than the spec and don't verify it conforms to the
+        specified format.
+        """
+        name = readfile(pjoin(self.profiles_base, 'repo_name'), none_on_missing=True)
+        if name is not None:
+            name = name.split('\n', 1)[0].strip()
+        return name
+
+    @klass.jit_attr
     def repo_id(self):
         """Main identifier for the repo.
 
-        The name set in repos.conf for a repo overrides any repo-name settings
-        in the repo.
+        The precedence order is as follows: repos.conf name, repo-name from
+        metadata/layout.conf, profiles/repo_name, and finally a fallback to the
+        repo's location for unlabeled repos.
         """
-        if self.config_name is not None:
+        if self.config_name:
             return self.config_name
-        return self.repo_name
+        if self.repo_name:
+            return self.repo_name
+        if self.pms_repo_name:
+            return self.pms_repo_name
+        if not self.is_empty:
+            logger.warning(f"repo lacks a defined name: {self.location!r}")
+        return self.location
 
     @klass.jit_attr
     def updates(self):

@@ -1,15 +1,16 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
+import os
 import re
 
 from snakeoil.data_source import data_source
-from snakeoil.test import TestCase
+from snakeoil.fileutils import touch
 
 from pkgcore.ebuild import repo_objs
 
 
-class TestMetadataXml(TestCase):
+class TestMetadataXml(object):
 
     @staticmethod
     def get_metadata_xml(maintainers=(), local_use={}, longdescription=None):
@@ -38,25 +39,25 @@ f"""<?xml version="1.0" encoding="UTF-8"?>
 
     def test_maintainers(self):
         # test empty.
-        self.assertEqual((), self.get_metadata_xml().maintainers)
+        assert () == self.get_metadata_xml().maintainers
 
         # test non empty, multiple
         names = ("foo@gmail.com", "monkeybone@gmail.com")
         mx = self.get_metadata_xml(maintainers=tuple(
             (x,) for x in names))
-        self.assertEqual(sorted(names), sorted(str(m) for m in mx.maintainers))
+        assert sorted(names) == sorted(str(m) for m in mx.maintainers)
         # test email/name integration.
         mx = self.get_metadata_xml(
             maintainers=(("funkymonkey@gmail.com",
                           "funky monkey \N{SNOWMAN}"),))
-        self.assertEqual(("funky monkey \N{SNOWMAN} <funkymonkey@gmail.com>",),
-                         tuple(str(m) for m in mx.maintainers))
-        self.assertEqual("funkymonkey@gmail.com", mx.maintainers[0].email)
-        self.assertEqual("funky monkey \N{SNOWMAN}", mx.maintainers[0].name)
+        assert ("funky monkey \N{SNOWMAN} <funkymonkey@gmail.com>",) == \
+            tuple(str(m) for m in mx.maintainers)
+        assert "funkymonkey@gmail.com" == mx.maintainers[0].email
+        assert "funky monkey \N{SNOWMAN}" == mx.maintainers[0].name
 
     def test_local_use(self):
         # empty...
-        self.assertEqual(dict(), self.get_metadata_xml().local_use)
+        assert dict() == self.get_metadata_xml().local_use
 
         local_use = {
             "foo": "description for foo",
@@ -67,11 +68,11 @@ f"""<?xml version="1.0" encoding="UTF-8"?>
         local_use = dict(
                 (k, pkg_tag_re.sub('', v))
                 for k, v in local_use.items())
-        self.assertEqual(local_use, metadata_xml.local_use)
+        assert local_use == metadata_xml.local_use
 
     def test_longdesc(self):
         # empty...
-        self.assertEqual(None, self.get_metadata_xml().longdescription)
+        assert None == self.get_metadata_xml().longdescription
         s = \
 """
 I saw the best minds of my generation destroyed by madness, starving
@@ -86,13 +87,57 @@ through universities with radiant cool eyes hallucinating Arkansas and
 Blake-light tragedy among the scholars of war.
 """
 
-        self.assertEqual(" ".join(s.split()),
-            self.get_metadata_xml(longdescription=s).longdescription)
+        assert " ".join(s.split()) == self.get_metadata_xml(longdescription=s).longdescription
 
 
-class TestRepoConfig(TestCase):
+class TestRepoConfig(object):
 
     def test_nonexistent_repo(self):
         # Newly configured, nonexistent repos shouldn't cause issues.
         repo_config = repo_objs.RepoConfig('nonexistent')
-        self.assertEqual(repo_config.location, 'nonexistent')
+        assert repo_config.location == 'nonexistent'
+        assert repo_config.repo_id == 'nonexistent'
+
+    def test_pms_repo_name(self, tmpdir):
+        repo = str(tmpdir)
+        profiles_base = os.path.join(repo, 'profiles')
+        os.mkdir(profiles_base)
+
+        # nonexistent file
+        repo_config = repo_objs.RepoConfig(repo)
+        assert repo_config.pms_repo_name is None
+        del repo_config
+
+        # empty file
+        touch(os.path.join(profiles_base, 'repo_name'))
+        repo_config = repo_objs.RepoConfig(repo)
+        assert repo_config.pms_repo_name == ''
+        del repo_config
+
+        # regular name
+        with open(os.path.join(profiles_base, 'repo_name'), 'w') as f:
+            f.write('newrepo')
+        repo_config = repo_objs.RepoConfig(repo)
+        assert repo_config.pms_repo_name == 'newrepo'
+        del repo_config
+
+        # regular name EOLed
+        with open(os.path.join(profiles_base, 'repo_name'), 'w') as f:
+            f.write('newrepo2\n')
+        repo_config = repo_objs.RepoConfig(repo)
+        assert repo_config.pms_repo_name == 'newrepo2'
+        del repo_config
+
+        # multi-line
+        with open(os.path.join(profiles_base, 'repo_name'), 'w') as f:
+            f.write('newrepo3\nfoobar')
+        repo_config = repo_objs.RepoConfig(repo)
+        assert repo_config.pms_repo_name == 'newrepo3'
+        del repo_config
+
+        # binary data
+        with open(os.path.join(profiles_base, 'repo_name'), 'wb') as f:
+            f.write(b'\x6e\x65\x77\x72\x65\x70\x6f\x34')
+        repo_config = repo_objs.RepoConfig(repo)
+        assert repo_config.pms_repo_name == 'newrepo4'
+        del repo_config

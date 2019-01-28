@@ -73,7 +73,7 @@ class base(object):
             return functor(*args, **kwds)
         except IGNORED_EXCEPTIONS:
             raise
-        except Exception as e:
+        except PkgcoreException as e:
             if isinstance(e, exc_class):
                 raise
             raise exc_class(name, e) from e

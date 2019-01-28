@@ -6,8 +6,7 @@ import os
 
 from snakeoil import data_source
 from snakeoil.chksum import get_handlers
-from snakeoil.test import TestCase
-from snakeoil.test.mixins import TempDirMixin
+import pytest
 
 from pkgcore.fetch import base, fetchable, errors
 
@@ -24,11 +23,11 @@ chksums = LazyValDict(frozenset(handlers.keys()), _callback)
 # get a non size based chksum
 known_chksum = [x for x in handlers.keys() if x != "size"][0]
 
-class TestFetcher(TempDirMixin, TestCase):
+class TestFetcher(object):
 
-    def setUp(self):
-        TempDirMixin.setUp(self)
-        self.fp = os.path.join(self.dir, "test")
+    @pytest.fixture(autouse=True)
+    def _setup(self, tmpdir):
+        self.fp = os.path.join(str(tmpdir), "test")
         self.obj = fetchable(self.fp, chksums=chksums)
         self.fetcher = base.fetcher()
 
@@ -44,36 +43,22 @@ class TestFetcher(TempDirMixin, TestCase):
 
         o = c()
         o.fetch(1, foon=True)
-        self.assertEqual([(1,), {"foon":True}], l)
+        assert [(1,), {"foon": True}] == l
         self.write_data()
-        self.assertEqual(self.fetcher._verify(self.fp, self.obj), None)
+        assert self.fetcher._verify(self.fp, self.obj) == None
         self.write_data("asdf")
-        self.assertFailure(self.fetcher._verify, self.fp, self.obj,
-                           resumable=True)
-
-    def assertFailure(self, functor, path, fetchable, resumable=False,
-                      kls=None, **kwds):
-        try:
-            self.assertEqual(functor(path, fetchable, **kwds), None)
-            raise AssertionError(
-                "functor %s(%r, %r, **%r) didn't raise an exception"
-                % (functor, path, fetchable, kwds))
-        except errors.FetchError as e:
-            self.assertEqual(
-                resumable, e.resumable,
-                msg="Expected resumable=%r, got %r" % (resumable, e.resumable))
-            self.assertEqual(path, e.filename)
-            if kls is not None:
-                self.assertIsInstance(e, kls)
+        with pytest.raises(errors.FetchError) as excinfo:
+            self.fetcher._verify(self.fp, self.obj)
+        assert excinfo.value.resumable
 
     def test_verify_all_chksums(self):
         self.write_data()
         subhandlers = dict([list(handlers.items())[0]])
-        self.assertRaises(errors.RequiredChksumDataMissing,
-            self.fetcher._verify, self.fp, self.obj, handlers=subhandlers)
+        with pytest.raises(errors.RequiredChksumDataMissing):
+            self.fetcher._verify(self.fp, self.obj, handlers=subhandlers)
         self.fetcher._verify(self.fp, self.obj)
-        self.assertEqual(None, self.fetcher._verify(self.fp, self.obj,
-            handlers=subhandlers, all_chksums=False))
+        assert None == self.fetcher._verify(
+            self.fp, self.obj, handlers=subhandlers, all_chksums=False)
 
     def test_size_verification_first(self):
         self.write_data()
@@ -82,35 +67,43 @@ class TestFetcher(TempDirMixin, TestCase):
         def f(chf, fp):
             l.append(chf)
             return chksum_data[chf]
-        subhandlers = {"size":partial(f, 'size'),
-            known_chksum:partial(f, known_chksum)}
+        subhandlers = {"size": partial(f, 'size'), known_chksum:partial(f, known_chksum)}
 
         # exact size verification
-        self.fetcher._verify(self.fp, self.obj, handlers=subhandlers,
-            all_chksums=False)
-        self.assertEqual(['size', known_chksum], l)
+        self.fetcher._verify(self.fp, self.obj, handlers=subhandlers, all_chksums=False)
+        assert ['size', known_chksum] == l
         for x in (-100, 100):
             while l:
                 l.pop(-1)
             chksum_data["size"] = chksums["size"] + x
-            self.assertFailure(self.fetcher._verify, self.fp, self.obj,
-                               handlers=subhandlers, all_chksums=False,
-                               resumable=x < 0)
-            self.assertEqual(['size'], l)
+            if x > 0:
+                with pytest.raises(errors.ChksumFailure) as excinfo:
+                    self.fetcher._verify(
+                        self.fp, self.obj, handlers=subhandlers, all_chksums=False)
+                assert excinfo.value.chksum == 'size'
+            else:
+                with pytest.raises(errors.FetchError) as excinfo:
+                    self.fetcher._verify(
+                        self.fp, self.obj, handlers=subhandlers, all_chksums=False)
+                assert excinfo.value.resumable
+            assert ['size'] == l
 
     def test_normal(self):
         self.write_data()
-        self.assertEqual(self.fetcher._verify(self.fp, self.obj), None)
+        assert self.fetcher._verify(self.fp, self.obj) == None
         self.write_data(data[:-1])
-        self.assertFailure(self.fetcher._verify, self.fp, self.obj,
-                           resumable=True)
+        with pytest.raises(errors.FetchError) as excinfo:
+            self.fetcher._verify(self.fp, self.obj)
+        assert excinfo.value.resumable
         # verify it returns -2 for missing file paths.
         os.unlink(self.fp)
-        self.assertFailure(self.fetcher._verify, self.fp, self.obj,
-                           kls=errors.MissingDistfile, resumable=True)
+        with pytest.raises(errors.MissingDistfile) as excinfo:
+            self.fetcher._verify(self.fp, self.obj)
+        assert excinfo.value.resumable
         self.write_data(data + "foon")
-        self.assertFailure(self.fetcher._verify, self.fp, self.obj,
-                           resumable=False)
+        with pytest.raises(errors.ChksumFailure) as excinfo:
+            self.fetcher._verify(self.fp, self.obj)
+        assert excinfo.value.chksum == 'size'
 
         # verify they're ran one, and only once
         l = []
@@ -119,6 +112,5 @@ class TestFetcher(TempDirMixin, TestCase):
             return chksums[chf]
 
         alt_handlers = {chf: partial(f, chf) for chf in chksums}
-        self.assertEqual(self.fetcher._verify(self.fp, self.obj,
-            handlers=alt_handlers), None)
-        self.assertEqual(sorted(l), sorted(alt_handlers))
+        assert None == self.fetcher._verify(self.fp, self.obj, handlers=alt_handlers)
+        assert sorted(l) == sorted(alt_handlers)

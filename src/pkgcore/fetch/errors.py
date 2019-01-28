@@ -16,6 +16,9 @@ from pkgcore.exceptions import PkgcoreCliException
 class FetchError(PkgcoreCliException):
     """Generic fetch exception."""
 
+    def __init__(self, msg):
+        super().__init__(f'fetching failed: {msg}')
+
 
 class DistdirPerms(FetchError):
 
@@ -42,16 +45,6 @@ class UnknownMirror(FetchError):
         self.host, self.uri = host, uri
 
 
-class RequiredChksumDataMissing(FetchError):
-
-    def __init__(self, fetchable, *chksum):
-        super().__init__(
-            f"chksum(s) {', '.join(chksum)} were configured as required, "
-            f"but the data is missing from fetchable '{fetchable}'"
-        )
-        self.fetchable, self.missing_chksum = fetchable, chksum
-
-
 class FetchFailed(FetchError):
 
     def __init__(self, filename, message, resumable=False):
@@ -68,6 +61,28 @@ class MissingDistfile(FetchFailed):
 
     def __init__(self, filename):
         super().__init__(filename, "doesn't exist", resumable=True)
+
+
+class ChksumError(FetchError):
+    """Generic checksum failure."""
+
+    def __init__(self, filename, *, chksum, expected, value):
+        self.filename = filename
+        self.chksum = chksum
+        self.expected = expected
+        self.value = value
+        super().__init__(f"{chksum} checksum verification failed: {filename!r}")
+
+
+class RequiredChksumDataMissing(ChksumError):
+    """A required checksum for the target is missing."""
+
+    def __init__(self, fetchable, *chksum):
+        super().__init__(
+            f"chksum(s) {', '.join(chksum)} were configured as required, "
+            f"but the data is missing from fetchable '{fetchable}'"
+        )
+        self.fetchable, self.missing_chksum = fetchable, chksum
 
 
 class MissingChksumHandler(FetchError):

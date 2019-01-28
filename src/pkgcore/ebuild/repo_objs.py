@@ -550,11 +550,11 @@ class RepoConfig(syncable.tree, metaclass=WeakInstMeta):
         try:
             # any files existing means it's not empty
             result = not listdir(self.location)
+            if result:
+                logger.debug(f"repo is empty: {self.location!r}")
         except FileNotFoundError:
             pass
 
-        if result:
-            logger.debug(f"repo is empty: {self.location!r}")
         return result
 
     @klass.jit_attr

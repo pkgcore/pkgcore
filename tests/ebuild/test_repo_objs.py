@@ -1,6 +1,7 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
+import logging
 import os
 import re
 
@@ -97,13 +98,13 @@ class TestRepoConfig(object):
     @pytest.fixture(autouse=True)
     def _setup(self, tmpdir):
         self.repo_path = str(tmpdir)
-        self.profiles_base = os.path.join(self.repo_path, "profiles")
+        self.profiles_base = os.path.join(self.repo_path, 'profiles')
+        self.metadata_path = os.path.join(self.repo_path, 'metadata')
 
     def test_nonexistent_repo(self):
         # Newly configured, nonexistent repos shouldn't cause issues.
         repo_config = repo_objs.RepoConfig('nonexistent')
         assert repo_config.location == 'nonexistent'
-        assert repo_config.repo_id == "<unlabeled repo: 'nonexistent'>"
 
     def test_supported(self, tmpdir):
         os.mkdir(self.profiles_base)
@@ -112,6 +113,29 @@ class TestRepoConfig(object):
         with pytest.raises(repo_errors.UnsupportedRepo) as excinfo:
             repo_objs.RepoConfig(self.repo_path)
         assert isinstance(excinfo.value.repo, repo_objs.RepoConfig)
+
+    def test_is_empty(self, caplog):
+        caplog.set_level(logging.DEBUG)
+
+        # nonexistent repo
+        repo_config = repo_objs.RepoConfig('nonexistent')
+        assert repo_config.is_empty
+        assert caplog.text == ''
+        caplog.clear()
+        del repo_config
+
+        # empty repo
+        repo_config = repo_objs.RepoConfig(self.repo_path)
+        assert repo_config.is_empty
+        assert 'repo is empty:' in caplog.text
+        caplog.clear()
+        del repo_config
+
+        # profiles dir exists
+        os.mkdir(self.profiles_base)
+        repo_config = repo_objs.RepoConfig(self.repo_path)
+        assert not repo_config.is_empty
+        del repo_config
 
     def test_pms_repo_name(self):
         os.mkdir(self.profiles_base)
@@ -168,4 +192,45 @@ class TestRepoConfig(object):
             f.write(b'\x6e\x65\x77\x72\x65\x70\x6f\x34')
         repo_config = repo_objs.RepoConfig(self.repo_path)
         assert repo_config.pms_repo_name == 'newrepo4'
+        del repo_config
+
+    def test_repo_id(self, caplog):
+        # nonexistent repo
+        repo_config = repo_objs.RepoConfig('nonexistent')
+        assert repo_config.repo_id == "<unlabeled repo: 'nonexistent'>"
+        del repo_config
+
+        # empty repo
+        repo_config = repo_objs.RepoConfig(self.repo_path)
+        assert repo_config.repo_id == f"<unlabeled repo: {self.repo_path!r}>"
+        assert caplog.text == ''
+        caplog.clear()
+        del repo_config
+
+        # nonempty repo
+        os.mkdir(self.profiles_base)
+        repo_config = repo_objs.RepoConfig(self.repo_path)
+        assert repo_config.repo_id == f"<unlabeled repo: {self.repo_path!r}>"
+        assert 'repo lacks a defined name:' in caplog.text
+        caplog.clear()
+        del repo_config
+
+        # pms repo name exists
+        with open(os.path.join(self.profiles_base, 'repo_name'), 'w') as f:
+            f.write('pms_name')
+        repo_config = repo_objs.RepoConfig(self.repo_path)
+        assert repo_config.repo_id == 'pms_name'
+        del repo_config
+
+        # layout.conf repo name exists
+        os.mkdir(self.metadata_path)
+        with open(os.path.join(self.metadata_path, 'layout.conf'), 'w') as f:
+            f.write('repo-name = metadata_name')
+        repo_config = repo_objs.RepoConfig(self.repo_path)
+        assert repo_config.repo_id == 'metadata_name'
+        del repo_config
+
+        # config name exists
+        repo_config = repo_objs.RepoConfig(self.repo_path, config_name='config_name')
+        assert repo_config.repo_id == 'config_name'
         del repo_config

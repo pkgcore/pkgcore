@@ -18,7 +18,7 @@ from snakeoil.dependant_methods import ForcedDepends
 from snakeoil.osutils import pjoin
 
 from pkgcore import operations as _operations_mod
-from pkgcore.exceptions import PkgcoreException
+from pkgcore.exceptions import PkgcoreCliException
 
 demandload(
     'snakeoil.sequences:iflatten_instance',
@@ -361,7 +361,7 @@ class empty_build_op(build_base):
         return self.pkg
 
 
-class BuildError(PkgcoreException):
+class BuildError(PkgcoreCliException):
     pass
 
 

@@ -96,7 +96,7 @@ class TestRepoConfig(object):
         # Newly configured, nonexistent repos shouldn't cause issues.
         repo_config = repo_objs.RepoConfig('nonexistent')
         assert repo_config.location == 'nonexistent'
-        assert repo_config.repo_id == 'nonexistent'
+        assert repo_config.repo_id == "<unlabeled repo: 'nonexistent'>"
 
     def test_pms_repo_name(self, tmpdir):
         repo = str(tmpdir)

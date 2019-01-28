@@ -86,14 +86,12 @@ class fetcher(base.fetcher):
         self.extra_env = extra_env
 
     def fetch(self, target):
-        """
-        fetch a file
+        """Fetch a file.
 
         :type target: :obj:`pkgcore.fetch.fetchable` instance
         :return: None if fetching failed,
             else on disk location of the copied file
         """
-
         if not isinstance(target, fetchable):
             raise TypeError(
                 f"target must be fetchable instance/derivative: {target}")
@@ -119,7 +117,7 @@ class fetcher(base.fetcher):
 
         for _attempt in range(self.attempts):
             try:
-                c = self._verify(path, target)
+                self._verify(path, target)
                 return path
             except errors.MissingDistfile as e:
                 command = self.command
@@ -131,7 +129,7 @@ class fetcher(base.fetcher):
                         os.unlink(path)
                         command = self.command
                     except OSError as e:
-                        raise errors.UnmodifiableFile(path, oe) from e
+                        raise errors.UnmodifiableFile(path, e) from e
                 else:
                     command = self.resume_command
             # Note we're not even checking the results, the verify portion of
@@ -142,7 +140,8 @@ class fetcher(base.fetcher):
                     command % {"URI": next(uris), "FILE": target.filename},
                     **spawn_opts)
             except StopIteration:
-                raise errors.FetchFailed(path, "ran out of urls to fetch from")
+                raise errors.FetchFailed(
+                    target.filename, "ran out of urls to fetch from")
         else:
             raise last_exc
 

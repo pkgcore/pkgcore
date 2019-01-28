@@ -53,7 +53,7 @@ class domain(object):
         domain = self.get_package_domain(pkg)
         return pkg.operations(domain, observer=observer)
 
-    def build_pkg(self, pkg, observer, failed=False, clean=True, **format_options):
+    def build_pkg(self, pkg, observer=None, failed=False, clean=True, **format_options):
         domain = self.get_package_domain(pkg)
         return domain.pkg_operations(pkg, observer=observer).build(
             observer=observer, failed=failed, clean=clean, **format_options)

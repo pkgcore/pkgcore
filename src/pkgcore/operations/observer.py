@@ -51,6 +51,9 @@ class null_output(object):
     def write(self, msg, *args, **kwds):
         pass
 
+    def flush(self):
+        pass
+
 
 class formatter_output(null_output):
 
@@ -72,6 +75,9 @@ class formatter_output(null_output):
 
     def write(self, msg, *args, **kwds):
         self._out.write(_convert(msg, args, kwds), autoline=False)
+
+    def flush(self):
+        self._out.flush()
 
 
 class file_handle_output(formatter_output):
@@ -111,6 +117,7 @@ class phase_observer(object):
     warn = klass.alias_attr("_output.warn")
     error = klass.alias_attr("_output.error")
     write = klass.alias_attr("_output.write")
+    flush = klass.alias_attr("_output.flush")
 
     def phase_end(self, phase, status):
         if self._debug:

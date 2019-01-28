@@ -89,7 +89,7 @@ class RepositoryGroup(DictMixin):
     path_restrict = klass.alias_attr("combined.path_restrict")
 
     def __contains__(self, key):
-        return key in self.repos
+        return key in self.combined
 
     def __iter__(self):
         return iter(self.repos)

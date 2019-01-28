@@ -5,11 +5,6 @@
 errors fetch subsystem may throw
 """
 
-__all__ = (
-    "FetchError", "DistdirPerms", "UnmodifiableFile", "UnknownMirror",
-    "RequiredChksumDataMissing"
-)
-
 from pkgcore.exceptions import PkgcoreCliException
 
 
@@ -66,6 +61,10 @@ class MissingDistfile(FetchFailed):
 class ChksumError(FetchError):
     """Generic checksum failure."""
 
+
+class ChksumFailure(ChksumError):
+    """Checksum verification failed."""
+
     def __init__(self, filename, *, chksum, expected, value):
         self.filename = filename
         self.chksum = chksum
@@ -80,7 +79,7 @@ class RequiredChksumDataMissing(ChksumError):
     def __init__(self, fetchable, *chksum):
         super().__init__(
             f"chksum(s) {', '.join(chksum)} were configured as required, "
-            f"but the data is missing from fetchable '{fetchable}'"
+            f"but the data is missing: {fetchable.filename!r}"
         )
         self.fetchable, self.missing_chksum = fetchable, chksum
 

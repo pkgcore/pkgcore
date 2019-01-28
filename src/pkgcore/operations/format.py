@@ -55,7 +55,7 @@ class fetch_base(object):
         # XXX hack atm, could use better logic but works for now
         try:
             fp = self.fetcher(fetchable)
-        except fetch_errors.ChksumError as e:
+        except fetch_errors.ChksumFailure as e:
             # checksum failed, rename file and try refetching
             path = pjoin(self.fetcher.distdir, fetchable.filename)
             failed_filename = f'{fetchable.filename}._failed_chksum_'

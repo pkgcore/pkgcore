@@ -52,7 +52,7 @@ class fetcher(object):
                 if val < target.chksums["size"]:
                     raise errors.FetchFailed(
                         file_location, 'file is too small', resumable=True)
-                raise errors.ChksumError(
+                raise errors.ChksumFailure(
                     file_location, chksum='size', expected=target.chksums["size"], value=val)
         elif not os.path.exists(file_location):
             raise errors.MissingDistfile(file_location)
@@ -67,14 +67,14 @@ class fetcher(object):
             for x in chfs:
                 val = handlers[x](file_location)
                 if val != target.chksums[x]:
-                    raise errors.ChksumError(
+                    raise errors.ChksumFailure(
                         file_location, chksum=x, expected=target.chksums[x], value=val)
         else:
             desired_vals = [target.chksums[x] for x in chfs]
             calced = get_chksums(file_location, *chfs)
             for desired, got, chf in zip(desired_vals, calced, chfs):
                 if desired != got:
-                    raise errors.ChksumError(
+                    raise errors.ChksumFailure(
                         file_location, chksum=chf, expected=desired, value=got)
 
     def __call__(self, fetchable):

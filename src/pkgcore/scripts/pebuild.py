@@ -82,7 +82,8 @@ def main(options, out, err):
     # by default turn off startup cleans; we clean by ourselves if
     # told to do so via an arg
     build = domain.build_pkg(
-        pkg, phase_obs, clean=False, allow_fetching=True, force_test=force_test)
+        pkg, failed=True, clean=False, allow_fetching=True,
+        observer=phase_obs, force_test=force_test)
     if clean:
         build.cleanup(force=True)
     build._reload_state()

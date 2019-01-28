@@ -404,7 +404,7 @@ class RepoConfig(syncable.tree, metaclass=WeakInstMeta):
         data = read_dict(
             iter_read_bash(
                 readlines_ascii(path, strip_whitespace=True, swallow_missing=True)),
-            source_isiter=True, strip=True, filename=path)
+            source_isiter=True, strip=True, filename=path, ignore_errors=True)
 
         sf = object.__setattr__
         sf(self, 'repo_name', data.get('repo-name', None))

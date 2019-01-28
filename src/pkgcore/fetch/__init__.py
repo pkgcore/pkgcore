@@ -43,6 +43,12 @@ class fetchable(object, metaclass=generic_equality):
     def __hash__(self):
         return hash((self.filename, self.uri))
 
+    @property
+    def upstream(self):
+        """Return a new fetchable with all mirror URIs removed."""
+        uri = self.uri.remove_mirrors()
+        return self.__class__(self.filename, uri=uri, chksums=self.chksums)
+
 
 class mirror(object, metaclass=generic_equality):
     """uri source representing a mirror tier"""
@@ -101,6 +107,10 @@ class uri_list(object):
             self._uri_source.append((mirror_inst, suburi.lstrip('/')))
         else:
             self._uri_source.append(mirror_inst)
+
+    def remove_mirrors(self):
+        """Return the URI source list after dropping all mirror-based URIs."""
+        return tuple(x for x in self._uri_source if not isinstance(x, mirror))
 
     def add_uri(self, uri):
         self._uri_source.append(uri)

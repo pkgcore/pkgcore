@@ -192,15 +192,18 @@ class tree(prototype.tree):
         if isinstance(obj, str):
             path = os.path.realpath(obj)
             if not os.path.exists(path):
-                return False
+                # check by repo id
+                return obj in map(str, self.trees)
             for repo in self.trees:
                 try:
-                    repo_path = os.path.realpath(getattr(repo, 'location'))
+                    repo_path = os.path.realpath(repo.location)
                 except AttributeError:
                     continue
                 if path.startswith(repo_path):
                     return True
             return False
+        elif isinstance(obj, prototype.tree):
+            return obj in self.trees
         else:
             for pkg in self.itermatch(obj):
                 return True

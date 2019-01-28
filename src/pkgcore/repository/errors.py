@@ -13,10 +13,6 @@ from pkgcore.exceptions import PkgcoreException, PkgcoreCliException
 class RepoError(PkgcoreException):
     """General repository error."""
 
-    def __init__(self, err):
-        super().__init__(err)
-        self.err = err
-
 
 class InitializationError(RepoError, PkgcoreCliException):
     """General repository initialization failure."""
@@ -36,7 +32,6 @@ class UnsupportedRepo(RepoError, PkgcoreCliException):
     """Repository uses an unknown EAPI or is otherwise not supported."""
 
     def __init__(self, repo):
-        super().__init__()
         self.repo = repo
 
     def __str__(self):

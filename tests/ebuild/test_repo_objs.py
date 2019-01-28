@@ -4,10 +4,12 @@
 import os
 import re
 
+import pytest
 from snakeoil.data_source import data_source
 from snakeoil.fileutils import touch
 
 from pkgcore.ebuild import repo_objs
+from pkgcore.repository import errors as repo_errors
 
 
 class TestMetadataXml(object):
@@ -92,67 +94,78 @@ Blake-light tragedy among the scholars of war.
 
 class TestRepoConfig(object):
 
+    @pytest.fixture(autouse=True)
+    def _setup(self, tmpdir):
+        self.repo_path = str(tmpdir)
+        self.profiles_base = os.path.join(self.repo_path, "profiles")
+
     def test_nonexistent_repo(self):
         # Newly configured, nonexistent repos shouldn't cause issues.
         repo_config = repo_objs.RepoConfig('nonexistent')
         assert repo_config.location == 'nonexistent'
         assert repo_config.repo_id == "<unlabeled repo: 'nonexistent'>"
 
-    def test_pms_repo_name(self, tmpdir):
-        repo = str(tmpdir)
-        profiles_base = os.path.join(repo, 'profiles')
-        os.mkdir(profiles_base)
-        repo_name_path = os.path.join(profiles_base, 'repo_name')
+    def test_supported(self, tmpdir):
+        os.mkdir(self.profiles_base)
+        with open(os.path.join(self.profiles_base, 'eapi'), 'w') as f:
+            f.write('unknown_eapi')
+        with pytest.raises(repo_errors.UnsupportedRepo) as excinfo:
+            repo_objs.RepoConfig(self.repo_path)
+        assert isinstance(excinfo.value.repo, repo_objs.RepoConfig)
+
+    def test_pms_repo_name(self):
+        os.mkdir(self.profiles_base)
+        repo_name_path = os.path.join(self.profiles_base, 'repo_name')
 
         # nonexistent file
-        repo_config = repo_objs.RepoConfig(repo)
+        repo_config = repo_objs.RepoConfig(self.repo_path)
         assert repo_config.pms_repo_name is None
         del repo_config
 
         # empty file
         touch(repo_name_path)
-        repo_config = repo_objs.RepoConfig(repo)
+        repo_config = repo_objs.RepoConfig(self.repo_path)
         assert repo_config.pms_repo_name == ''
         del repo_config
 
         # whitespace
         with open(repo_name_path, 'w') as f:
             f.write(' \n')
-        repo_config = repo_objs.RepoConfig(repo)
+        repo_config = repo_objs.RepoConfig(self.repo_path)
         assert repo_config.pms_repo_name == ''
         del repo_config
 
         # whitespace + name
         with open(repo_name_path, 'w') as f:
             f.write(' repo \n')
-        repo_config = repo_objs.RepoConfig(repo)
+        repo_config = repo_objs.RepoConfig(self.repo_path)
         assert repo_config.pms_repo_name == 'repo'
         del repo_config
 
         # regular name
         with open(repo_name_path, 'w') as f:
             f.write('newrepo')
-        repo_config = repo_objs.RepoConfig(repo)
+        repo_config = repo_objs.RepoConfig(self.repo_path)
         assert repo_config.pms_repo_name == 'newrepo'
         del repo_config
 
         # regular name EOLed
         with open(repo_name_path, 'w') as f:
             f.write('newrepo2\n')
-        repo_config = repo_objs.RepoConfig(repo)
+        repo_config = repo_objs.RepoConfig(self.repo_path)
         assert repo_config.pms_repo_name == 'newrepo2'
         del repo_config
 
         # multi-line
         with open(repo_name_path, 'w') as f:
             f.write('newrepo3\nfoobar')
-        repo_config = repo_objs.RepoConfig(repo)
+        repo_config = repo_objs.RepoConfig(self.repo_path)
         assert repo_config.pms_repo_name == 'newrepo3'
         del repo_config
 
         # binary data
         with open(repo_name_path, 'wb') as f:
             f.write(b'\x6e\x65\x77\x72\x65\x70\x6f\x34')
-        repo_config = repo_objs.RepoConfig(repo)
+        repo_config = repo_objs.RepoConfig(self.repo_path)
         assert repo_config.pms_repo_name == 'newrepo4'
         del repo_config

@@ -606,12 +606,12 @@ class RepoConfig(syncable.tree, metaclass=WeakInstMeta):
     def eapi(self):
         try:
             path = pjoin(self.profiles_base, 'eapi')
-            data = [x.strip() for x in iter_read_bash(path)]
+            data = (x.strip() for x in iter_read_bash(path))
             data = [_f for _f in data if _f]
             if len(data) != 1:
                 logger.warning(f"multiple EAPI lines detected: {path!r}")
             return get_eapi(data[0])
-        except FileNotFoundError:
+        except (FileNotFoundError, IndexError):
             return get_eapi('0')
 
 

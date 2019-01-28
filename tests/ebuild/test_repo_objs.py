@@ -99,7 +99,8 @@ class TestRepoConfig(object):
     def _setup(self, tmpdir):
         self.repo_path = str(tmpdir)
         self.profiles_base = os.path.join(self.repo_path, 'profiles')
-        self.metadata_path = os.path.join(self.repo_path, 'metadata')
+        self.metadata_path = os.path.join(
+            self.repo_path, repo_objs.RepoConfig.layout_offset)
 
     def test_nonexistent_repo(self):
         # Newly configured, nonexistent repos shouldn't cause issues.
@@ -181,6 +182,65 @@ class TestRepoConfig(object):
         os.mkdir(self.profiles_base)
         repo_config = repo_objs.RepoConfig(self.repo_path)
         assert not repo_config.is_empty
+        del repo_config
+
+    def test_repo_name(self, caplog):
+        # nonexistent file
+        repo_config = repo_objs.RepoConfig(self.repo_path)
+        assert repo_config.repo_name is None
+        del repo_config
+
+        # empty file
+        os.mkdir(os.path.dirname(self.metadata_path))
+        touch(self.metadata_path)
+        repo_config = repo_objs.RepoConfig(self.repo_path)
+        assert repo_config.repo_name is None
+        del repo_config
+
+        # bad data formatting
+        with open(self.metadata_path, 'w') as f:
+            f.write('repo-name repo')
+        repo_config = repo_objs.RepoConfig(self.repo_path)
+        assert repo_config.repo_name is None
+        assert 'bash parse error' in caplog.text
+        caplog.clear()
+        del repo_config
+
+        # bad data formatting + name
+        with open(self.metadata_path, 'w') as f:
+            f.write('foo bar\nrepo-name = repo0')
+        repo_config = repo_objs.RepoConfig(self.repo_path)
+        assert repo_config.repo_name == 'repo0'
+        assert 'bash parse error' in caplog.text
+        caplog.clear()
+        del repo_config
+
+        # unset
+        with open(self.metadata_path, 'w') as f:
+            f.write('repo-name =')
+        repo_config = repo_objs.RepoConfig(self.repo_path)
+        assert repo_config.repo_name == ''
+        del repo_config
+
+        # whitespace
+        with open(self.metadata_path, 'w') as f:
+            f.write('repo-name =  \n')
+        repo_config = repo_objs.RepoConfig(self.repo_path)
+        assert repo_config.repo_name == ''
+        del repo_config
+
+        # whitespace + name
+        with open(self.metadata_path, 'w') as f:
+            f.write('repo-name = repo \n')
+        repo_config = repo_objs.RepoConfig(self.repo_path)
+        assert repo_config.repo_name == 'repo'
+        del repo_config
+
+        # regular name
+        with open(self.metadata_path, 'w') as f:
+            f.write('repo-name = repo1')
+        repo_config = repo_objs.RepoConfig(self.repo_path)
+        assert repo_config.repo_name == 'repo1'
         del repo_config
 
     def test_pms_repo_name(self):
@@ -269,8 +329,8 @@ class TestRepoConfig(object):
         del repo_config
 
         # layout.conf repo name exists
-        os.mkdir(self.metadata_path)
-        with open(os.path.join(self.metadata_path, 'layout.conf'), 'w') as f:
+        os.mkdir(os.path.dirname(self.metadata_path))
+        with open(os.path.join(self.metadata_path), 'w') as f:
             f.write('repo-name = metadata_name')
         repo_config = repo_objs.RepoConfig(self.repo_path)
         assert repo_config.repo_id == 'metadata_name'

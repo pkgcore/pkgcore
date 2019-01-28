@@ -915,11 +915,7 @@ class src_operations(ebuild_operations, format.build_operations):
         self._eclass_cache = eclass_cache
 
     def _cmd_implementation_build(self, observer, verified_files,
-                                  clean=False, format_options=None):
-        if format_options is None:
-            format_options = {}
-        allow_fetching = format_options.get("allow_fetching", False)
-        force_test = format_options.get("force_test", False)
+                                  clean=False, allow_fetching=False, force_test=False):
         return buildable(
             self.domain, self.pkg, verified_files,
             self._eclass_cache, observer=observer,

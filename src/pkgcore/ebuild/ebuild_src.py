@@ -167,7 +167,7 @@ def create_fetchable_from_uri(pkg, chksums, ignore_missing_chksums, ignore_unkno
                 if not ignore_unknown_mirrors:
                     raise fetch.errors.UnknownMirror(tier, remaining_uri)
             else:
-                uris.add_mirror(mirrors[tier], remaining_uri)
+                uris.add_mirror(mirrors[tier], sub_uri=remaining_uri)
 
         else:
             uris.add_uri(uri)

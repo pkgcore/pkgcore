@@ -160,14 +160,9 @@ def create_fetchable_from_uri(pkg, chksums, ignore_missing_chksums, ignore_unkno
 
         if uri.startswith("mirror://"):
             # mirror:// is 9 chars.
-
             tier, remaining_uri = uri[9:].split("/", 1)
-
-            if tier not in mirrors:
-                if not ignore_unknown_mirrors:
-                    raise fetch.errors.UnknownMirror(tier, remaining_uri)
-            else:
-                uris.add_mirror(mirrors[tier], sub_uri=remaining_uri)
+            mirror = mirrors.get(tier, fetch.unknown_mirror(tier))
+            uris.add_mirror(mirror, sub_uri=remaining_uri)
 
         else:
             uris.add_uri(uri)

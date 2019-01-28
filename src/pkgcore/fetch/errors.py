@@ -30,13 +30,6 @@ class UnmodifiableFile(FetchError):
         self.filename = filename
 
 
-class UnknownMirror(FetchError):
-
-    def __init__(self, host, uri):
-        super().__init__(f'unknown mirror tier: uri mirror://{host}/{uri}')
-        self.host, self.uri = host, uri
-
-
 class FetchFailed(FetchError):
 
     def __init__(self, filename, message, resumable=False):

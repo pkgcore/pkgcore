@@ -313,10 +313,9 @@ class TestBase(object):
             {'SRC_URI': 'mirror://mirror1/foon/monkey.tgz'}, repo=parent).fetchables
         assert list(f[0].uri) == ['http://boon.com/foon/monkey.tgz']
 
-        # assert it bails if mirror doesn't exist.
-        with pytest.raises(errors.MetadataException):
-            pkg = self.get_pkg({'SRC_URI': 'mirror://mirror2/foon/monkey.tgz'}, repo=parent)
-            getattr(pkg, 'fetchables')
+        # unknown mirrors get ignored (and flagged by pkgcheck)
+        pkg = self.get_pkg({'SRC_URI': 'mirror://mirror2/foon/monkey.tgz'}, repo=parent)
+        assert pkg.fetchables
 
         assert (
             [list(x.uri) for x in self.get_pkg(

@@ -89,6 +89,15 @@ class mirror(object, metaclass=generic_equality):
         return f"<{self.__class__} mirror tier={self.mirror_name!r}>"
 
 
+class unknown_mirror(mirror):
+    """Unknown mirror tier."""
+
+    __slots__ = ()
+
+    def __init__(self, mirror_name):
+        super().__init__(mirrors=(), mirror_name=mirror_name)
+
+
 class default_mirror(mirror):
 
     __slots__ = ()

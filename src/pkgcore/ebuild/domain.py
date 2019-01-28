@@ -621,7 +621,7 @@ class domain(config_domain):
             if os.path.exists(fp):
                 yield local_source(fp)
 
-    def add_repo(self, repo, filtered=True, group=None, config=None):
+    def add_repo(self, repo, filtered=True, group=None, config=None, name=None):
         """Add repo to the domain."""
         if group is None:
             group = self.source_repos
@@ -634,10 +634,11 @@ class domain(config_domain):
             path = os.path.abspath(repo)
             if not os.path.isdir(os.path.join(path, 'profiles')):
                 raise repo_errors.InvalidRepo(repr(path))
-            if path in group:
-                raise ValueError(f'repo at {path!r} already configured')
-            # use path for repo id to avoid collisions
-            repo_config = RepoConfig(path, config_name=path)
+            # use path for repo id by default to avoid collisions
+            config_name = name if name is not None else path
+            if config_name in group:
+                raise ValueError(f'{config_name!r} repo already configured')
+            repo_config = RepoConfig(path, config_name=config_name)
             repo = ebuild_repo.tree(config, repo_config)
             self.source_repos_raw += repo
 

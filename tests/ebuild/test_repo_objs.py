@@ -102,6 +102,7 @@ class TestRepoConfig(object):
         repo = str(tmpdir)
         profiles_base = os.path.join(repo, 'profiles')
         os.mkdir(profiles_base)
+        repo_name_path = os.path.join(profiles_base, 'repo_name')
 
         # nonexistent file
         repo_config = repo_objs.RepoConfig(repo)
@@ -109,48 +110,48 @@ class TestRepoConfig(object):
         del repo_config
 
         # empty file
-        touch(os.path.join(profiles_base, 'repo_name'))
+        touch(repo_name_path)
         repo_config = repo_objs.RepoConfig(repo)
         assert repo_config.pms_repo_name == ''
         del repo_config
 
         # whitespace
-        with open(os.path.join(profiles_base, 'repo_name'), 'w') as f:
+        with open(repo_name_path, 'w') as f:
             f.write(' \n')
         repo_config = repo_objs.RepoConfig(repo)
         assert repo_config.pms_repo_name == ''
         del repo_config
 
         # whitespace + name
-        with open(os.path.join(profiles_base, 'repo_name'), 'w') as f:
+        with open(repo_name_path, 'w') as f:
             f.write(' repo \n')
         repo_config = repo_objs.RepoConfig(repo)
         assert repo_config.pms_repo_name == 'repo'
         del repo_config
 
         # regular name
-        with open(os.path.join(profiles_base, 'repo_name'), 'w') as f:
+        with open(repo_name_path, 'w') as f:
             f.write('newrepo')
         repo_config = repo_objs.RepoConfig(repo)
         assert repo_config.pms_repo_name == 'newrepo'
         del repo_config
 
         # regular name EOLed
-        with open(os.path.join(profiles_base, 'repo_name'), 'w') as f:
+        with open(repo_name_path, 'w') as f:
             f.write('newrepo2\n')
         repo_config = repo_objs.RepoConfig(repo)
         assert repo_config.pms_repo_name == 'newrepo2'
         del repo_config
 
         # multi-line
-        with open(os.path.join(profiles_base, 'repo_name'), 'w') as f:
+        with open(repo_name_path, 'w') as f:
             f.write('newrepo3\nfoobar')
         repo_config = repo_objs.RepoConfig(repo)
         assert repo_config.pms_repo_name == 'newrepo3'
         del repo_config
 
         # binary data
-        with open(os.path.join(profiles_base, 'repo_name'), 'wb') as f:
+        with open(repo_name_path, 'wb') as f:
             f.write(b'\x6e\x65\x77\x72\x65\x70\x6f\x34')
         repo_config = repo_objs.RepoConfig(repo)
         assert repo_config.pms_repo_name == 'newrepo4'

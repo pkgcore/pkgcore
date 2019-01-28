@@ -609,7 +609,7 @@ class RepoConfig(syncable.tree, metaclass=WeakInstMeta):
             data = [x.strip() for x in iter_read_bash(path)]
             data = [_f for _f in data if _f]
             if len(data) != 1:
-                raise ValueError(f"multiple lines detected: {path!r}")
+                logger.warning(f"multiple EAPI lines detected: {path!r}")
             return get_eapi(data[0])
         except FileNotFoundError:
             return get_eapi('0')

@@ -10,9 +10,12 @@ __all__ = (
     'empty_build_op', 'FailedDirectory', 'GenericBuildError', 'errors',
 )
 
+import os
+
 from snakeoil import klass
 from snakeoil.demandload import demandload
 from snakeoil.dependant_methods import ForcedDepends
+from snakeoil.osutils import pjoin
 
 from pkgcore import operations as _operations_mod
 from pkgcore.exceptions import PkgcoreException
@@ -45,13 +48,26 @@ class fetch_base(object):
             return False
         return True
 
-    def fetch_one(self, fetchable, observer):
+    def fetch_one(self, fetchable, observer, retry=False):
         if fetchable.filename in self._basenames:
             return True
         # fetching files without uri won't fly
         # XXX hack atm, could use better logic but works for now
         try:
             fp = self.fetcher(fetchable)
+        except fetch_errors.ChksumError as e:
+            # checksum failed, rename file and try refetching
+            path = pjoin(self.fetcher.distdir, fetchable.filename)
+            failed_filename = f'{fetchable.filename}._failed_chksum_'
+            failed_path = pjoin(self.fetcher.distdir, failed_filename)
+            os.rename(path, failed_path)
+            if retry:
+                raise
+            observer.error(str(e))
+            observer.error(f'renaming to {failed_filename!r} and refetching from upstream')
+            observer.flush()
+            # refetch directly from upstream
+            return self.fetch_one(fetchable.upstream, observer, retry=True)
         except fetch_errors.FetchFailed as e:
             fp = None
         if fp is None:

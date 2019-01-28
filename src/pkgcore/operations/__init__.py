@@ -25,11 +25,14 @@ from pkgcore.operations import observer as _observer
 
 class OperationError(PkgcoreException):
 
-    def __init__(self, api):
+    def __init__(self, api, exc=None):
         self._api = api
+        self._exc = exc
 
     def __str__(self):
-        return "Unhandled exception in %s" % (self._api,)
+        if self._exc is not None:
+            return str(self._exc)
+        return f"unhandled exception in {self._api}"
 
 
 class base(object):
@@ -73,7 +76,7 @@ class base(object):
         except Exception as e:
             if isinstance(e, exc_class):
                 raise
-            raise exc_class(name) from e
+            raise exc_class(name, e) from e
 
     def _wrap_exception(self, functor, name):
         f = partial(

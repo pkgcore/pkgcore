@@ -122,6 +122,8 @@ class fetcher(base.fetcher):
             except errors.MissingDistfile as e:
                 command = self.command
                 last_exc = e
+            except errors.ChksumFailure:
+                raise
             except errors.FetchFailed as e:
                 last_exc = e
                 if not e.resumable:

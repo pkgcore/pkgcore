@@ -11,9 +11,6 @@ from pkgcore.exceptions import PkgcoreCliException
 class FetchError(PkgcoreCliException):
     """Generic fetch exception."""
 
-    def __init__(self, msg):
-        super().__init__(f'fetching failed: {msg}')
-
 
 class DistdirPerms(FetchError):
 
@@ -49,7 +46,7 @@ class FetchFailed(FetchError):
         self.resumable = resumable
 
     def __str__(self):
-        return f"file {self.filename}: {self.message}"
+        return f"failed fetching: {self.filename!r}: {self.message}"
 
 
 class MissingDistfile(FetchFailed):
@@ -62,7 +59,7 @@ class ChksumError(FetchError):
     """Generic checksum failure."""
 
 
-class ChksumFailure(ChksumError):
+class ChksumFailure(FetchFailed, ChksumError):
     """Checksum verification failed."""
 
     def __init__(self, filename, *, chksum, expected, value):
@@ -70,7 +67,7 @@ class ChksumFailure(ChksumError):
         self.chksum = chksum
         self.expected = expected
         self.value = value
-        super().__init__(f"{chksum} checksum verification failed: {filename!r}")
+        super().__init__(filename, "checksum verification failed")
 
 
 class RequiredChksumDataMissing(ChksumError):
@@ -84,5 +81,5 @@ class RequiredChksumDataMissing(ChksumError):
         self.fetchable, self.missing_chksum = fetchable, chksum
 
 
-class MissingChksumHandler(FetchError):
+class MissingChksumHandler(ChksumError):
     """An unknown checksum type tried to be hashed."""

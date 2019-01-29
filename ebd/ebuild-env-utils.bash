@@ -66,7 +66,7 @@ __environ_dump() {
 	local func_filters=( "${PKGCORE_BLACKLIST_FUNCS[@]}" ${PKGCORE_EAPI_FUNCS} "${PKGCORE_PRELOADED_ECLASSES[@]}" )
 
 	# Punt any regex chars...
-	__escape_regex_array ___func_filters
+	__escape_regex_array func_filters
 	local exported_funcs=( $(compgen -A function | __regex_filter_input "${func_filters[@]}" ) )
 	if [[ ${#exported_funcs[@]} -ne 0 ]]; then
 		declare -f "${exported_funcs[@]}" || die "failed outputting funcs ${exported_funcs[@]}" >&2

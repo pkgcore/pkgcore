@@ -478,7 +478,7 @@ class TestRepoConfig(object):
 
         # layout.conf repo name exists
         os.mkdir(os.path.dirname(self.metadata_path))
-        with open(os.path.join(self.metadata_path), 'w') as f:
+        with open(self.metadata_path, 'w') as f:
             f.write('repo-name = metadata_name')
         repo_config = repo_objs.RepoConfig(self.repo_path)
         assert repo_config.repo_id == 'metadata_name'
@@ -487,6 +487,129 @@ class TestRepoConfig(object):
         # config name exists
         repo_config = repo_objs.RepoConfig(self.repo_path, config_name='config_name')
         assert repo_config.repo_id == 'config_name'
+        del repo_config
+
+    def test_raw_known_arches(self):
+        # nonexistent repo
+        repo_config = repo_objs.RepoConfig('nonexistent')
+        assert repo_config.raw_known_arches == frozenset()
+        del repo_config
+
+        # empty file
+        os.mkdir(self.profiles_base)
+        arches_path = os.path.join(self.profiles_base, 'arch.list')
+        touch(arches_path)
+        repo_config = repo_objs.RepoConfig(self.repo_path)
+        assert repo_config.raw_known_arches == frozenset()
+        del repo_config
+
+        # single entry
+        with open(arches_path, 'w') as f:
+            f.write('foo')
+        repo_config = repo_objs.RepoConfig(self.repo_path)
+        assert repo_config.raw_known_arches == frozenset(['foo'])
+        del repo_config
+
+        # multiple entries with whitespaces and comments
+        with open(arches_path, 'w') as f:
+            f.write(
+                """
+                amd64
+                x86
+
+                # prefix
+                foo-bar
+                """)
+        repo_config = repo_objs.RepoConfig(self.repo_path)
+        assert repo_config.raw_known_arches == frozenset(['amd64', 'x86', 'foo-bar'])
+        del repo_config
+
+    def test_raw_use_desc(self):
+        # nonexistent repo
+        repo_config = repo_objs.RepoConfig('nonexistent')
+        assert repo_config.raw_use_desc == ()
+        del repo_config
+
+        # empty file
+        os.mkdir(self.profiles_base)
+        use_desc_path = os.path.join(self.profiles_base, 'use.desc')
+        touch(use_desc_path)
+        repo_config = repo_objs.RepoConfig(self.repo_path)
+        assert repo_config.raw_use_desc == ()
+        del repo_config
+
+        # regular entries
+        with open(use_desc_path, 'w') as f:
+            f.write(
+                """
+                # copy
+                # license
+
+                foo1 - enable foo1
+                foo2 - enable foo2
+                bar3 - add bar3 support
+                """)
+        repo_config = repo_objs.RepoConfig(self.repo_path)
+        assert 3 == len(repo_config.raw_use_desc)
+        del repo_config
+
+    def test_raw_use_expand_desc(self):
+        # nonexistent repo
+        repo_config = repo_objs.RepoConfig('nonexistent')
+        assert repo_config.raw_use_expand_desc == ()
+        del repo_config
+
+        # empty file
+        use_expand_desc_path = os.path.join(self.profiles_base, 'desc')
+        os.makedirs(use_expand_desc_path)
+        use_expand_desc_file = os.path.join(use_expand_desc_path, 'foo.desc')
+        touch(use_expand_desc_file)
+        repo_config = repo_objs.RepoConfig(self.repo_path)
+        assert repo_config.raw_use_expand_desc == ()
+        del repo_config
+
+        # regular entries
+        with open(use_expand_desc_file, 'w') as f:
+            f.write(
+                """
+                # copy
+                # license
+
+                foo - enable foo
+                bar - add bar support
+                baz - build using baz
+                """)
+        repo_config = repo_objs.RepoConfig(self.repo_path)
+        assert 3 == len(repo_config.raw_use_expand_desc)
+        del repo_config
+
+    def test_raw_use_local_desc(self):
+        # nonexistent repo
+        repo_config = repo_objs.RepoConfig('nonexistent')
+        assert repo_config.raw_use_local_desc == ()
+        del repo_config
+
+        # empty file
+        os.mkdir(self.profiles_base)
+        use_local_desc_path = os.path.join(self.profiles_base, 'use.local.desc')
+        touch(use_local_desc_path)
+        repo_config = repo_objs.RepoConfig(self.repo_path)
+        assert repo_config.raw_use_local_desc == ()
+        del repo_config
+
+        # regular entries
+        with open(use_local_desc_path, 'w') as f:
+            f.write(
+                """
+                # copy
+                # license
+
+                cat/pkg1:foo1 - enable foo1
+                cat1/pkg2:foo2 - enable foo2
+                cat2/pkg3:bar3 - add bar3 support
+                """)
+        repo_config = repo_objs.RepoConfig(self.repo_path)
+        assert 3 == len(repo_config.raw_use_local_desc)
         del repo_config
 
     def test_updates(self):

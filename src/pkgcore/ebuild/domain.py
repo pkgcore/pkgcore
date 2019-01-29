@@ -150,7 +150,7 @@ def load_property(filename, *, read_func=_read_config_file,
     :return: A :py:`klass.jit.attr_named` property instance.
     """
     def f(func):
-        def _load_and_invoke(func, fallback, self):
+        def _load_and_invoke(func, fallback, self, *args, **kwargs):
             if filename.startswith(os.path.sep):
                 # translate root fs calls to prefixed root fs
                 path = pjoin(self.root, filename.lstrip(os.path.sep))
@@ -161,7 +161,7 @@ def load_property(filename, *, read_func=_read_config_file,
                 data = parse_func(read_func(path))
             else:
                 data = fallback
-            return func(self, data)
+            return func(self, data, *args, **kwargs)
         doc = getattr(func, '__doc__', None)
         jit_attr_named = klass.jit_attr_named(f'_jit_{func.__name__}', doc=doc)
         return jit_attr_named(partial(_load_and_invoke, func, fallback))
@@ -185,9 +185,6 @@ class domain(config_domain):
     for _thing in ('root', 'config_dir', 'CHOST', 'CBUILD', 'CTARGET', 'CFLAGS', 'PATH',
                    'PORTAGE_TMPDIR', 'DISTCC_PATH', 'DISTCC_DIR', 'CCACHE_DIR'):
         _types[_thing] = 'str'
-
-    # control adding debug info (line/lineno/path) to config file parsed output
-    _debug = False
 
     # TODO this is missing defaults
     pkgcore_config_type = ConfigHint(
@@ -344,56 +341,49 @@ class domain(config_domain):
         return use
 
     @load_property("package.mask", parse_func=package_masks)
-    def pkg_masks(self, data):
-        if self._debug:
+    def pkg_masks(self, data, debug=False):
+        if debug:
             return tuple(data)
-        else:
-            return tuple(x[0] for x in data)
+        return tuple(x[0] for x in data)
 
     @load_property("package.unmask", parse_func=package_masks)
-    def pkg_unmasks(self, data):
-        if self._debug:
+    def pkg_unmasks(self, data, debug=False):
+        if debug:
             return tuple(data)
-        else:
-            return tuple(x[0] for x in data)
+        return tuple(x[0] for x in data)
 
     # TODO: deprecated, remove in 0.11
     @load_property("package.keywords", parse_func=package_keywords_splitter)
-    def pkg_keywords(self, data):
-        if self._debug:
+    def pkg_keywords(self, data, debug=False):
+        if debug:
             return tuple(data)
-        else:
-            return tuple((x[0], x[1]) for x in data)
+        return tuple((x[0], x[1]) for x in data)
 
     @load_property("package.accept_keywords", parse_func=package_keywords_splitter)
-    def pkg_accept_keywords(self, data):
-        if self._debug:
+    def pkg_accept_keywords(self, data, debug=False):
+        if debug:
             return tuple(data)
-        else:
-            return tuple((x[0], x[1]) for x in data)
+        return tuple((x[0], x[1]) for x in data)
 
     @load_property("package.license", parse_func=package_keywords_splitter)
-    def pkg_licenses(self, data):
-        if self._debug:
+    def pkg_licenses(self, data, debug=False):
+        if debug:
             return tuple(data)
-        else:
-            return tuple((x[0], x[1]) for x in data)
+        return tuple((x[0], x[1]) for x in data)
 
     @load_property("package.use", parse_func=package_keywords_splitter)
-    def pkg_use(self, data):
-        if self._debug:
+    def pkg_use(self, data, debug=False):
+        if debug:
             return tuple(data)
-        else:
-            return tuple((x[0], split_negations(x[1])) for x in data)
+        return tuple((x[0], split_negations(x[1])) for x in data)
 
     @load_property("package.env")
-    def pkg_env(self, data):
+    def pkg_env(self, data, debug=False):
         func = partial(package_env_splitter, self.ebuild_hook_dir)
         data = func(data)
-        if self._debug:
+        if debug:
             return tuple(data)
-        else:
-            return tuple((x[0], x[1]) for x in data)
+        return tuple((x[0], x[1]) for x in data)
 
     @klass.jit_attr
     def bashrcs(self):
@@ -613,8 +603,10 @@ class domain(config_domain):
         # matching portage behavior... it's whacked.
         base = pjoin(self.ebuild_hook_dir, pkg.category)
         dirs = (
-            pkg.package, f"{pkg.package}:{pkg.slot}",
-            getattr(pkg, "P", None), getattr(pkg, "PF", None),
+            pkg.package,
+            f"{pkg.package}:{pkg.slot}",
+            getattr(pkg, "P", None),
+            getattr(pkg, "PF", None),
         )
         for fp in filter(None, dirs):
             fp = pjoin(base, fp)

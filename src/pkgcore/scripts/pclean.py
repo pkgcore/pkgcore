@@ -12,6 +12,7 @@ import sys
 from snakeoil.demandload import demandload
 from snakeoil.strings import pluralism
 
+from pkgcore.ebuild.domain import domain as domain_cls
 from pkgcore.restrictions import boolean, packages
 from pkgcore.repository import multiplex
 from pkgcore.repository.util import get_virtual_repos
@@ -214,12 +215,6 @@ def _setup_restrictions(namespace):
 config = subparsers.add_parser(
    'config', parents=(shared_opts,),
    description='remove config file settings')
-@config.bind_final_check
-def _config_finalize_args(parser, namespace):
-    # enable debug output (line/lineno/path data) for config data
-    namespace.domain._debug = True
-
-
 @config.bind_main_func
 def config_main(options, out, err):
     installed_repos = options.domain.all_installed_repos
@@ -240,10 +235,10 @@ def config_main(options, out, err):
 
     attrs = {}
     for name in domain_attrs:
-        # force JIT-ed attr refresh to provide debug data
-        setattr(domain, '_jit_' + name, klass._singleton_kls)
+        # call jitted attr funcs directly to provide debug data
+        func = getattr(domain_cls, name).function
         # filter excluded, matching restricts from the data stream
-        attrs[name] = iter_restrict(getattr(domain, name))
+        attrs[name] = iter_restrict(func(domain, debug=True))
 
     changes = defaultdict(list)
     for name, iterable in attrs.items():
@@ -270,8 +265,8 @@ def config_main(options, out, err):
         'unknown_use': 'Nonexistent use flag(s)',
     }
 
-    for type, data in changes.items():
-        out.write(f"{type_mapping[type]}:")
+    for t, data in changes.items():
+        out.write(f"{type_mapping[t]}:")
         for path, line, lineno, values in data:
             out.write(f"{path}:")
             out.write(f"{values} -- line {lineno}: {line!r}")

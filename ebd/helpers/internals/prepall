@@ -5,6 +5,7 @@
 
 prepman
 prepinfo
+prepalldocs
 prepallstrip
 
 if ! ${PKGCORE_PREFIX_SUPPORT:=false}; then

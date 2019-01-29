@@ -9,7 +9,7 @@ import pytest
 from snakeoil.data_source import data_source
 from snakeoil.fileutils import touch
 
-from pkgcore.ebuild import repo_objs
+from pkgcore.ebuild import repo_objs, atom
 from pkgcore.repository import errors as repo_errors
 
 
@@ -487,4 +487,29 @@ class TestRepoConfig(object):
         # config name exists
         repo_config = repo_objs.RepoConfig(self.repo_path, config_name='config_name')
         assert repo_config.repo_id == 'config_name'
+        del repo_config
+
+    def test_updates(self):
+        # nonexistent repo
+        repo_config = repo_objs.RepoConfig('nonexistent')
+        assert repo_config.updates == {}
+        del repo_config
+
+        # empty file
+        updates_path = os.path.join(self.profiles_base, 'updates')
+        updates_file_path = os.path.join(updates_path, '1Q-2019')
+        os.makedirs(updates_path)
+        touch(updates_file_path)
+        repo_config = repo_objs.RepoConfig(self.repo_path)
+        assert repo_config.updates == {}
+        del repo_config
+
+        # simple pkg move
+        # TODO: move pkg_updates content tests to its own module
+        with open(updates_file_path, 'w') as f:
+            f.write('move cat1/pkg1 cat2/pkg1\n')
+        repo_config = repo_objs.RepoConfig(self.repo_path)
+        assert repo_config.updates == {
+            'cat1/pkg1':  [('move', atom.atom('cat1/pkg1'), atom.atom('cat2/pkg1'))],
+        }
         del repo_config

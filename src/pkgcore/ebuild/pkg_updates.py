@@ -40,8 +40,11 @@ def read_updates(path):
     mods = defaultdict(f)
     moved = {}
 
-    for fp in _scan_directory(path):
-        _process_update(readlines(pjoin(path, fp)), fp, mods, moved)
+    try:
+        for fp in _scan_directory(path):
+            _process_update(readlines(pjoin(path, fp)), fp, mods, moved)
+    except FileNotFoundError:
+        pass
 
     # force a walk of the tree, flattening it
     commands = {k: list(iflatten_instance(v[0], tuple)) for k,v in mods.items()}

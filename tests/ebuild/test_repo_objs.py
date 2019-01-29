@@ -243,6 +243,154 @@ class TestRepoConfig(object):
         assert repo_config.repo_name == 'repo1'
         del repo_config
 
+    def test_manifests(self):
+        # nonexistent file
+        repo_config = repo_objs.RepoConfig(self.repo_path)
+        assert repo_config.manifests == {
+            'disabled': False,
+            'strict': True,
+            'thin': False,
+            'signed': True,
+            'hashes': repo_objs.RepoConfig.default_hashes,
+            'required_hashes': repo_objs.RepoConfig.default_required_hashes,
+        }
+        del repo_config
+
+        # regular data
+        os.mkdir(os.path.dirname(self.metadata_path))
+        with open(self.metadata_path, 'w') as f:
+            f.write('manifest-hashes = foo\n')
+            f.write('manifest-required-hashes = bar\n')
+        repo_config = repo_objs.RepoConfig(self.repo_path)
+        assert repo_config.manifests.hashes == ('size', 'foo')
+        assert repo_config.manifests.required_hashes == ('size', 'bar')
+        del repo_config
+
+    def test_masters(self, caplog):
+        # empty repo
+        repo_config = repo_objs.RepoConfig(self.repo_path)
+        assert repo_config.masters == ()
+        assert caplog.text == ''
+        caplog.clear()
+        del repo_config
+
+        # nonempty repo
+        os.mkdir(self.profiles_base)
+        repo_config = repo_objs.RepoConfig(self.repo_path)
+        assert repo_config.masters == ()
+        assert "doesn't specify masters in metadata" in caplog.text
+        caplog.clear()
+        del repo_config
+
+        # explicit empty masters for standalone repo
+        os.mkdir(os.path.dirname(self.metadata_path))
+        with open(self.metadata_path, 'w') as f:
+            f.write('masters =\n')
+        repo_config = repo_objs.RepoConfig(self.repo_path, config_name='foo')
+        assert repo_config.masters == ()
+        assert caplog.text == ''
+        caplog.clear()
+        del repo_config
+
+        # overlay repo with masters
+        with open(self.metadata_path, 'w') as f:
+            f.write('masters = foo bar\n')
+        repo_config = repo_objs.RepoConfig(self.repo_path, config_name='a')
+        assert repo_config.masters == ('foo', 'bar')
+        del repo_config
+
+        # overlay repo with duplicate masters
+        with open(self.metadata_path, 'w') as f:
+            f.write('masters = foo bar foo baz\n')
+        repo_config = repo_objs.RepoConfig(self.repo_path, config_name='b')
+        assert repo_config.masters == ('foo', 'bar', 'baz')
+        del repo_config
+
+    def test_cache_format(self, caplog):
+        # empty repo
+        repo_config = repo_objs.RepoConfig(self.repo_path)
+        assert repo_config.cache_format == 'pms'
+        del repo_config
+
+        # explicit empty setting
+        os.mkdir(os.path.dirname(self.metadata_path))
+        with open(self.metadata_path, 'w') as f:
+            f.write('cache-formats =\n')
+        repo_config = repo_objs.RepoConfig(self.repo_path)
+        assert repo_config.cache_format is None
+        del repo_config
+
+        # unknown formats
+        with open(self.metadata_path, 'w') as f:
+            f.write('cache-formats = foo bar\n')
+        repo_config = repo_objs.RepoConfig(self.repo_path)
+        assert repo_config.cache_format == 'pms'
+        assert 'unknown cache format:' in caplog.text
+        caplog.clear()
+        del repo_config
+
+        # known format
+        with open(self.metadata_path, 'w') as f:
+            f.write('cache-formats = md5-dict\n')
+        repo_config = repo_objs.RepoConfig(self.repo_path)
+        assert repo_config.cache_format == 'md5-dict'
+        del repo_config
+
+        # multiple formats -- favored format is selected
+        with open(self.metadata_path, 'w') as f:
+            f.write('cache-formats = pms md5-dict\n')
+        repo_config = repo_objs.RepoConfig(self.repo_path)
+        assert repo_config.cache_format == 'md5-dict'
+        del repo_config
+
+        # unknown + known
+        with open(self.metadata_path, 'w') as f:
+            f.write('cache-formats = foo md5-dict\n')
+        repo_config = repo_objs.RepoConfig(self.repo_path)
+        assert repo_config.cache_format == 'md5-dict'
+        del repo_config
+
+    def test_profile_formats(self, caplog):
+        # empty repo
+        repo_config = repo_objs.RepoConfig(self.repo_path)
+        assert repo_config.profile_formats == {'pms'}
+        del repo_config
+
+        # explicit empty setting
+        os.mkdir(os.path.dirname(self.metadata_path))
+        with open(self.metadata_path, 'w') as f:
+            f.write('profile-formats =\n')
+        repo_config = repo_objs.RepoConfig(self.repo_path)
+        assert repo_config.profile_formats == {'pms'}
+        assert 'has explicitly unset profile-formats' in caplog.text
+        caplog.clear()
+        del repo_config
+
+        # unknown formats
+        with open(self.metadata_path, 'w') as f:
+            f.write('profile-formats = foo bar\n')
+        repo_config = repo_objs.RepoConfig(self.repo_path)
+        assert repo_config.profile_formats == {'pms'}
+        assert 'has unsupported profile format' in caplog.text
+        caplog.clear()
+        del repo_config
+
+        # unknown + known
+        with open(self.metadata_path, 'w') as f:
+            f.write('profile-formats = foo portage-2\n')
+        repo_config = repo_objs.RepoConfig(self.repo_path)
+        assert repo_config.profile_formats == {'pms', 'portage-2'}
+        assert 'has unsupported profile format' in caplog.text
+        caplog.clear()
+        del repo_config
+
+        # known formats
+        with open(self.metadata_path, 'w') as f:
+            f.write('profile-formats = portage-1 portage-2\n')
+        repo_config = repo_objs.RepoConfig(self.repo_path)
+        assert repo_config.profile_formats == {'portage-1', 'portage-2'}
+        del repo_config
+
     def test_pms_repo_name(self):
         os.mkdir(self.profiles_base)
         repo_name_path = os.path.join(self.profiles_base, 'repo_name')

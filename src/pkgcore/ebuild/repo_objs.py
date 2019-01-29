@@ -375,7 +375,7 @@ class RepoConfig(syncable.tree, metaclass=WeakInstMeta):
     default_hashes = ('size', 'blake2b', 'sha512')
     default_required_hashes = ('size', 'blake2b')
     supported_profile_formats = ('pms', 'portage-1', 'portage-2', 'profile-set')
-    supported_cache_formats = ('pms', 'md5-dict')
+    supported_cache_formats = ('md5-dict', 'pms')
 
     klass.inject_immutable_instance(locals())
     __inst_caching__ = True
@@ -453,8 +453,12 @@ class RepoConfig(syncable.tree, metaclass=WeakInstMeta):
         v = set(data.get('cache-formats', 'pms').lower().split())
         if not v:
             v = [None]
-        elif not v.intersection(self.supported_cache_formats):
-            v = ['pms']
+        else:
+            # sort into favored order
+            v = [f for f in self.supported_cache_formats if f in v]
+            if not v:
+                logger.warning(f'unknown cache format: falling back to pms format')
+                v = ['pms']
         sf(self, 'cache_format', list(v)[0])
 
         profile_formats = set(data.get('profile-formats', 'pms').lower().split())
@@ -462,7 +466,7 @@ class RepoConfig(syncable.tree, metaclass=WeakInstMeta):
             logger.warning(
                 f"{self.repo_id!r} repo at {self.location!r} has explicitly "
                 "unset profile-formats, defaulting to pms")
-            profile_formats = set(['pms'])
+            profile_formats = {'pms'}
         unknown = profile_formats.difference(self.supported_profile_formats)
         if unknown:
             logger.warning(

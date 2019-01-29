@@ -10,17 +10,19 @@ elif [[ ${ED:-unset} == "unset" ]]; then
 	__helper_exit -1 "The variable ED is missing from the environment, but is required for prefix mode; failing."
 fi
 
-dir=${ED}/usr/share/doc
+dir=${ED}/usr/share/doc/${PF}
 
 [[ ! -d ${dir} ]] && return
 
-z=$(find "${dir}" -print \
+z=$(find "${dir}" \
 	'(' -type f -or -type l ')' \
 	-not -name '*.gz' \
 	-not -name '*.bz2' \
 	-not -name '*.xz' \
 	-not -name '*.Z' \
 	-not -name '*.js' \
+	-not -path "${ED}/usr/share/doc/${PF}/html/*" \
+	-print \
 	2>/dev/null)
 
 [[ -z ${z} ]] && return

@@ -566,7 +566,7 @@ class PayloadDict(ChunkedDataDict):
     pull_data = render_pkg
 
 
-def run_sanity_checks(pkgs, domain):
+def run_sanity_checks(pkgs, domain, threads=None):
     """Run all sanity checks for a sequence of packages."""
     failures = defaultdict(list)
     sanity_check = lambda pkg_ops: pkg_ops.sanity_check()
@@ -578,7 +578,7 @@ def run_sanity_checks(pkgs, domain):
             if pkg_ops.supports("sanity_check"):
                 yield pkg_ops
 
-    with ThreadPoolExecutor() as executor:
+    with ThreadPoolExecutor(max_workers=threads) as executor:
         for pkg, failed in executor.map(sanity_check, _filter_pkgs(pkgs)):
             if failed:
                 failures[pkg].extend(failed)

@@ -827,7 +827,7 @@ def main(options, out, err):
             start_time = time()
         # flush output so bash spawned errors are shown in the correct order of events
         out.flush()
-        sanity_failures = run_sanity_checks((x.pkg for x in changes), domain)
+        sanity_failures = run_sanity_checks((x.pkg for x in changes), domain, threads=1)
         if sanity_failures:
             for pkg, errors in sanity_failures.items():
                 out.write(pkg.cpvstr)

@@ -240,12 +240,12 @@ def config_main(options, out, err):
         # filter excluded, matching restricts from the data stream
         attrs[name] = iter_restrict(func(domain, debug=True))
 
-    changes = defaultdict(list)
+    changes = defaultdict(lambda: defaultdict(list))
     for name, iterable in attrs.items():
         for restrict, item in iterable:
             path, lineno, line = item.pop(), item.pop(), item.pop()
             if not installed_repos.match(restrict):
-                changes['uninstalled'].append((path, line, lineno, str(restrict)))
+                changes['uninstalled'][path].append((line, lineno, str(restrict)))
             if name == 'pkg_use':
                 atom, use = item
                 disabled, enabled = split_negations(use)
@@ -254,22 +254,23 @@ def config_main(options, out, err):
                 unknown_disabled = set(disabled) - available
                 unknown_enabled = set(enabled) - available
                 if unknown_disabled:
-                    changes['unknown_use'].append((
-                        path, line, lineno, ' '.join('-' + u for u in unknown_disabled)))
+                    changes['unknown_use'][path].append((
+                        line, lineno, ' '.join('-' + u for u in unknown_disabled)))
                 if unknown_enabled:
-                    changes['unknown_use'].append(
-                        (path, line, lineno, ' '.join(unknown_enabled)))
+                    changes['unknown_use'][path].append(
+                        (line, lineno, ' '.join(unknown_enabled)))
 
     type_mapping = {
         'uninstalled': 'Uninstalled package',
         'unknown_use': 'Nonexistent use flag(s)',
     }
 
-    for t, data in changes.items():
+    for t, paths in changes.items():
         out.write(f"{type_mapping[t]}:")
-        for path, line, lineno, values in data:
+        for path, data in paths.items():
             out.write(f"{path}:")
-            out.write(f"{values} -- line {lineno}: {line!r}")
+            for line, lineno, values in data:
+                out.write(f"{values} -- line {lineno}: {line!r}")
             out.write()
 
 

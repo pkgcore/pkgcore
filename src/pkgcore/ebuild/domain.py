@@ -67,7 +67,7 @@ def package_keywords_splitter(iterable):
     for line, lineno, path in iterable:
         v = line.split()
         try:
-            yield parse_match(v[0]), tuple(stable_unique(v[1:])), line, lineno, path
+            yield parse_match(v[0]), tuple(v[1:]), line, lineno, path
         except ParseError as e:
             logger.warning(f'{path!r}, line {lineno}: parsing error: {e}')
 
@@ -357,25 +357,25 @@ class domain(config_domain):
     def pkg_keywords(self, data, debug=False):
         if debug:
             return tuple(data)
-        return tuple((x[0], x[1]) for x in data)
+        return tuple((x[0], stable_unique(x[1])) for x in data)
 
     @load_property("package.accept_keywords", parse_func=package_keywords_splitter)
     def pkg_accept_keywords(self, data, debug=False):
         if debug:
             return tuple(data)
-        return tuple((x[0], x[1]) for x in data)
+        return tuple((x[0], stable_unique(x[1])) for x in data)
 
     @load_property("package.license", parse_func=package_keywords_splitter)
     def pkg_licenses(self, data, debug=False):
         if debug:
             return tuple(data)
-        return tuple((x[0], x[1]) for x in data)
+        return tuple((x[0], stable_unique(x[1])) for x in data)
 
     @load_property("package.use", parse_func=package_keywords_splitter)
     def pkg_use(self, data, debug=False):
         if debug:
             return tuple(data)
-        return tuple((x[0], split_negations(x[1])) for x in data)
+        return tuple((x[0], split_negations(stable_unique(x[1]))) for x in data)
 
     @load_property("package.env")
     def pkg_env(self, data, debug=False):

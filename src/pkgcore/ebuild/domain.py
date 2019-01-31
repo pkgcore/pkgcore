@@ -636,7 +636,7 @@ class domain(config_domain):
 
         wrapped_repo = self._configure_repo(repo)
         if filtered:
-            wrapped_repo = self._filter_repo(wrapped_repo)
+            wrapped_repo = self.filter_repo(wrapped_repo)
         group += wrapped_repo
         return wrapped_repo
 
@@ -662,19 +662,21 @@ class domain(config_domain):
             configured_repo = repo.configure(*pargs)
         return configured_repo
 
-    def _filter_repo(self, repo):
+    def filter_repo(self, repo, pkg_masks=None, pkg_unmasks=None):
         """Filter a configured repo."""
+        pkg_masks = pkg_masks if pkg_masks is not None else self.pkg_masks
+        pkg_unmasks = pkg_unmasks if pkg_unmasks is not None else self.pkg_unmasks
         global_masks = chain(repo._masks, self.profile._incremental_masks)
         masks = set()
         for neg, pos in global_masks:
             masks.difference_update(neg)
             masks.update(pos)
-        masks.update(self.pkg_masks)
+        masks.update(pkg_masks)
         unmasks = set()
         for neg, pos in self.profile._incremental_unmasks:
             unmasks.difference_update(neg)
             unmasks.update(pos)
-        unmasks.update(self.pkg_unmasks)
+        unmasks.update(pkg_unmasks)
         filter = generate_filter(masks, unmasks, *self._vfilters)
         filtered_repo = filtered.tree(repo, filter, True)
         return filtered_repo

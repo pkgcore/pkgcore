@@ -10,6 +10,7 @@ import os
 import sys
 
 from snakeoil.demandload import demandload
+from snakeoil.mappings import DictMixin
 from snakeoil.strings import pluralism
 
 from pkgcore.ebuild.domain import domain as domain_cls
@@ -212,6 +213,42 @@ def _setup_restrictions(namespace):
         namespace.restrict = boolean.AndRestriction(*namespace.restrict)
 
 
+class _UnfilteredRepos(DictMixin):
+    """Generate custom, unfiltered repos on demand."""
+
+    _supported_attrs = {
+        'pkg_masks', 'pkg_unmasks', 'pkg_accept_keywords', 'pkg_keywords',
+    }
+
+    def __init__(self, domain):
+        self.domain = domain
+        self.unfiltered_repos = {}
+
+    def __getitem__(self, key):
+        if key not in self._supported_attrs:
+            raise KeyError
+
+        try:
+            return self.unfiltered_repos[key]
+        except KeyError:
+            repos = []
+            kwargs = {key: ()}
+            for repo in self.domain.ebuild_repos_unfiltered:
+                repos.append(self.domain.filter_repo(repo, **kwargs))
+            unfiltered_repo = multiplex.tree(*repos)
+            self.unfiltered_repos[key] = unfiltered_repo
+            return unfiltered_repo
+
+    def keys(self):
+        return self.unfiltered_repo.keys()
+
+    def values(self):
+        return self.unfiltered_repo.values()
+
+    def items(self):
+        return self.unfiltered_repo.items()
+
+
 config = subparsers.add_parser(
    'config', parents=(shared_opts,),
    description='remove config file settings')
@@ -222,22 +259,8 @@ def config_main(options, out, err):
     all_repos_raw = domain.all_repos_raw
     all_ebuild_repos = domain.all_ebuild_repos
 
-    # create custom, unfiltered multiplexed repos to test mask usage
-    repos_no_unmasks = []
-    repos_no_masks = []
-    repos_no_accept_keywords = []
-    repos_no_keywords = []
-    for repo in domain.ebuild_repos_unfiltered:
-        repos_no_unmasks.append(domain.filter_repo(repo, pkg_unmasks=()))
-        repos_no_masks.append(domain.filter_repo(repo, pkg_masks=()))
-        repos_no_accept_keywords.append(domain.filter_repo(repo, pkg_accept_keywords=()))
-        repos_no_keywords.append(domain.filter_repo(repo, pkg_keywords=()))
-    unfiltered_repos = {
-        'pkg_masks': multiplex.tree(*repos_no_masks),
-        'pkg_unmasks': multiplex.tree(*repos_no_unmasks),
-        'pkg_accept_keywords': multiplex.tree(*repos_no_accept_keywords),
-        'pkg_keywords': multiplex.tree(*repos_no_keywords),
-    }
+    # proxy to create custom, unfiltered repos
+    unfiltered_repos = _UnfilteredRepos(domain)
 
     def iter_restrict(iterable):
         for x in iterable:

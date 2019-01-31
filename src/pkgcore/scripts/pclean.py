@@ -322,8 +322,7 @@ def config_main(options, out, err):
                 # find unknowns
                 pkgs = all_repos_raw.match(atom)
                 available = {u for pkg in pkgs for u in pkg.iuse_stripped}
-                unknown = [f'-{u}' for u in disabled - available]
-                unknown.extend(enabled - available)
+                unknown = (disabled - available) | (enabled - available)
                 if unknown:
                     changes['unknown_use'][path].append(
                         (line, lineno, ', '.join(unknown)))

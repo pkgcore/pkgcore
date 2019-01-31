@@ -299,17 +299,34 @@ def config_main(options, out, err):
                     changes[f'unnecessary_{name}'][path].append((line, lineno, str(restrict)))
             elif name == 'pkg_use':
                 atom, use = item
-                disabled, enabled = split_negations(use)
+
+                # find duplicates
+                use_sets = [set(), set()]
+                disabled, enabled = use_sets
+                duplicates = set()
+                for i, data in enumerate(split_negations(use)):
+                    for u in data:
+                        if u in use_sets[i]:
+                            duplicates.add(u)
+                        use_sets[i].add(u)
+                if duplicates:
+                    changes['duplicate_use'][path].append(
+                        (line, lineno, ', '.join(duplicates)))
+
+                # find conflicts
+                conflicting = enabled & disabled
+                if conflicting:
+                    changes['conflicting_use'][path].append(
+                        (line, lineno, ', '.join(conflicting)))
+
+                # find unknowns
                 pkgs = all_repos_raw.match(atom)
                 available = {u for pkg in pkgs for u in pkg.iuse_stripped}
-                unknown_disabled = set(disabled) - available
-                unknown_enabled = set(enabled) - available
-                if unknown_disabled:
-                    changes['unknown_use'][path].append((
-                        line, lineno, ' '.join('-' + u for u in unknown_disabled)))
-                if unknown_enabled:
+                unknown = [f'-{u}' for u in disabled - available]
+                unknown.extend(enabled - available)
+                if unknown:
                     changes['unknown_use'][path].append(
-                        (line, lineno, ' '.join(unknown_enabled)))
+                        (line, lineno, ', '.join(unknown)))
 
     type_mapping = {
         'unavailable': 'Unavailable package(s)',
@@ -318,6 +335,8 @@ def config_main(options, out, err):
         'unnecessary_pkg_unmasks': 'Unnecessary unmask(s)',
         'unnecessary_pkg_accept_keywords': 'Unnecessary accept keywords(s)',
         'unnecessary_pkg_keywords': 'Unnecessary keywords(s)',
+        'duplicate_use': 'Duplicate use flag(s)',
+        'conflicting_use': 'Conflicting use flag(s)',
         'unknown_use': 'Nonexistent use flag(s)',
     }
 

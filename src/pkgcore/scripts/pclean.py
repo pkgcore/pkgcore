@@ -268,9 +268,9 @@ def config_main(options, out, err):
     for t, paths in changes.items():
         out.write(f"{type_mapping[t]}:")
         for path, data in paths.items():
-            out.write(f"{path}:")
+            out.write(f"{path}:", prefix="  ")
             for line, lineno, values in data:
-                out.write(f"{values} -- line {lineno}: {line!r}")
+                out.write(f"{values} -- line {lineno}: {line!r}", prefix="    ")
             out.write()
 
 

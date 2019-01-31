@@ -225,11 +225,19 @@ def config_main(options, out, err):
     # create custom, unfiltered multiplexed repos to test mask usage
     repos_no_unmasks = []
     repos_no_masks = []
+    repos_no_accept_keywords = []
+    repos_no_keywords = []
     for repo in domain.ebuild_repos_unfiltered:
         repos_no_unmasks.append(domain.filter_repo(repo, pkg_unmasks=()))
         repos_no_masks.append(domain.filter_repo(repo, pkg_masks=()))
-    repos_no_unmasks = multiplex.tree(*repos_no_unmasks)
-    repos_no_masks = multiplex.tree(*repos_no_masks)
+        repos_no_accept_keywords.append(domain.filter_repo(repo, pkg_accept_keywords=()))
+        repos_no_keywords.append(domain.filter_repo(repo, pkg_keywords=()))
+    unfiltered_repos = {
+        'pkg_masks': multiplex.tree(*repos_no_masks),
+        'pkg_unmasks': multiplex.tree(*repos_no_unmasks),
+        'pkg_accept_keywords': multiplex.tree(*repos_no_accept_keywords),
+        'pkg_keywords': multiplex.tree(*repos_no_keywords),
+    }
 
     def iter_restrict(iterable):
         for x in iterable:
@@ -261,16 +269,11 @@ def config_main(options, out, err):
             if not installed_repos.match(restrict):
                 changes['uninstalled'][path].append((line, lineno, str(restrict)))
 
-            if name == 'pkg_unmasks':
+            if name in unfiltered_repos:
                 filtered_pkgs = all_ebuild_repos.match(restrict)
-                no_unmasks_pkgs = repos_no_unmasks.match(restrict)
-                if filtered_pkgs == no_unmasks_pkgs:
-                    changes['unnecessary_unmask'][path].append((line, lineno, str(restrict)))
-            elif name == 'pkg_masks':
-                filtered_pkgs = all_ebuild_repos.match(restrict)
-                no_masks_pkgs = repos_no_masks.match(restrict)
-                if filtered_pkgs == no_masks_pkgs:
-                    changes['unnecessary_mask'][path].append((line, lineno, str(restrict)))
+                unfiltered_pkgs = unfiltered_repos[name].match(restrict)
+                if filtered_pkgs == unfiltered_pkgs:
+                    changes[f'unnecessary_{name}'][path].append((line, lineno, str(restrict)))
             elif name == 'pkg_use':
                 atom, use = item
                 disabled, enabled = split_negations(use)
@@ -288,8 +291,10 @@ def config_main(options, out, err):
     type_mapping = {
         'unavailable': 'Unavailable package(s)',
         'uninstalled': 'Uninstalled package(s)',
-        'unnecessary_mask': 'Unnecessary mask(s)',
-        'unnecessary_unmask': 'Unnecessary unmask(s)',
+        'unnecessary_pkg_masks': 'Unnecessary mask(s)',
+        'unnecessary_pkg_unmasks': 'Unnecessary unmask(s)',
+        'unnecessary_pkg_accept_keywords': 'Unnecessary accept keywords(s)',
+        'unnecessary_pkg_keywords': 'Unnecessary keywords(s)',
         'unknown_use': 'Nonexistent use flag(s)',
     }
 

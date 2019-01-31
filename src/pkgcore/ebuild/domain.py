@@ -391,7 +391,12 @@ class domain(config_domain):
         return tuple(local_source(x) for x in files)
 
     @klass.jit_attr_named('_jit_reset_vfilters', uncached_val=None)
-    def _vfilters(self):
+    def _vfilters(self, pkg_accept_keywords=None, pkg_keywords=None):
+        if pkg_accept_keywords is None:
+            pkg_accept_keywords = self.pkg_accept_keywords
+        if pkg_keywords is None:
+            pkg_keywords = self.pkg_keywords
+
         # ~amd64 -> [amd64, ~amd64]
         default_keywords = set([self.arch])
         default_keywords.update(self.settings['ACCEPT_KEYWORDS'])
@@ -401,7 +406,7 @@ class domain(config_domain):
 
         # create keyword filters
         accept_keywords = (
-            self.pkg_keywords + self.pkg_accept_keywords + self.profile.accept_keywords)
+            pkg_keywords + pkg_accept_keywords + self.profile.accept_keywords)
         vfilters = [self._make_keywords_filter(
             default_keywords, accept_keywords,
             incremental="package.keywords" in const.incrementals)]
@@ -662,10 +667,14 @@ class domain(config_domain):
             configured_repo = repo.configure(*pargs)
         return configured_repo
 
-    def filter_repo(self, repo, pkg_masks=None, pkg_unmasks=None):
+    def filter_repo(self, repo, pkg_masks=None, pkg_unmasks=None,
+                    pkg_accept_keywords=None, pkg_keywords=None):
         """Filter a configured repo."""
-        pkg_masks = pkg_masks if pkg_masks is not None else self.pkg_masks
-        pkg_unmasks = pkg_unmasks if pkg_unmasks is not None else self.pkg_unmasks
+        if pkg_masks is None:
+            pkg_masks = self.pkg_masks
+        if pkg_unmasks is None:
+            pkg_unmasks = self.pkg_unmasks
+
         global_masks = chain(repo._masks, self.profile._incremental_masks)
         masks = set()
         for neg, pos in global_masks:
@@ -677,7 +686,18 @@ class domain(config_domain):
             unmasks.difference_update(neg)
             unmasks.update(pos)
         unmasks.update(pkg_unmasks)
-        filter = generate_filter(masks, unmasks, *self._vfilters)
+        if pkg_accept_keywords is not None or pkg_keywords is not None:
+            # TODO: rework jitted attr access to provide underlying method
+            # access when requested via some suffixed attr name
+            #
+            # avoid jitted attr and call class method directly
+            func = getattr(self.__class__, '_vfilters').function
+            vfilters = func(
+                self,
+                pkg_accept_keywords=pkg_accept_keywords, pkg_keywords=pkg_keywords)
+        else:
+            vfilters = self._vfilters
+        filter = generate_filter(masks, unmasks, *vfilters)
         filtered_repo = filtered.tree(repo, filter, True)
         return filtered_repo
 

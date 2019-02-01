@@ -25,7 +25,7 @@ from snakeoil.weakrefs import WeakValCache
 
 from pkgcore.config import ConfigHint, configurable
 from pkgcore.ebuild import ebuild_src
-from pkgcore.ebuild import eclass_cache as eclass_cache_module
+from pkgcore.ebuild import eclass_cache as eclass_cache_mod
 from pkgcore.operations import repo as _repo_ops
 from pkgcore.package.errors import MetadataException
 from pkgcore.repository import prototype, errors, configured, util
@@ -158,10 +158,7 @@ class repo_operations(_repo_ops.operations):
         return ret
 
 
-def _sort_eclasses(config, repo_config, eclasses):
-    if eclasses:
-        return eclasses
-
+def _sort_eclasses(config, repo_config):
     repo_path = repo_config.location
     repo_id = repo_config.repo_id
     masters = repo_config.masters
@@ -173,23 +170,11 @@ def _sort_eclasses(config, repo_config, eclasses):
         location = default.location
 
     if not masters:
-        if masters is None:
-            # if it's None, that means it's not a standalone, and is PMS, or misconfigured.
-            # empty tuple means it's a standalone repository
-            if default is None:
-                raise errors.InitializationError(
-                    f"repo {repo_id!r} at {repo_path!r} requires missing default repo")
-            eclasses = [location]
+        eclasses = [location]
     else:
         repo_map = {
             r.repo_id: r.location for r in
             config.objects['repo_config'].values()}
-
-        missing = set(repo_config.masters).difference(repo_map)
-        if missing:
-            missing = ', '.join(map(repr, sorted(missing)))
-            raise errors.InitializationError(
-                f'repo {repo_id!r} at path {repo_path!r} has missing masters: {missing}')
         eclasses = [repo_map[x] for x in masters]
 
     # add the repo's eclass directories if it's not specified.
@@ -199,14 +184,14 @@ def _sort_eclasses(config, repo_config, eclasses):
     if repo_path not in eclasses:
         eclasses.append(repo_path)
 
-    eclasses = [eclass_cache_module.cache(pjoin(x, 'eclass'), location=location)
+    eclasses = [eclass_cache_mod.cache(pjoin(x, 'eclass'), location=location)
                 for x in eclasses]
 
     if len(eclasses) == 1:
         eclasses = eclasses[0]
     else:
         eclasses = list(reversed(eclasses))
-        eclasses = eclass_cache_module.StackedCaches(
+        eclasses = eclass_cache_mod.StackedCaches(
             eclasses, location=location, eclassdir=location)
     return eclasses
 
@@ -263,13 +248,30 @@ class ProvidesRepo(util.SimpleTree):
     typename='repo',
     types={
         'repo_config': 'ref:repo_config', 'cache': 'refs:cache',
-        'eclass_override': 'ref:eclass_cache',
+        'eclass_cache': 'ref:eclass_cache',
         'default_mirrors': 'list',
         'allow_missing_manifests': 'bool'},
     requires_config='config')
-def tree(config, repo_config, cache=(), eclass_override=None,
+def tree(config, repo_config, cache=(), eclass_cache=None,
          default_mirrors=None, allow_missing_manifests=False):
-    eclass_cache = _sort_eclasses(config, repo_config, eclass_override)
+    """Initialize an unconfigured ebuild repository."""
+    repo_id = repo_config.repo_id
+    repo_path = repo_config.location
+
+    if repo_config.masters is None:
+        # if it's None, that means it's not a standalone, and is PMS, or misconfigured.
+        # empty tuple means it's a standalone repository
+        default = config.get_default('repo_config')
+        if default is None:
+            raise errors.InitializationError(
+                f"repo {repo_id!r} at {repo_path!r} requires missing default repo")
+
+    configured_repos = tuple(r.repo_id for r in config.objects['repo_config'].values())
+    missing = set(repo_config.masters).difference(configured_repos)
+    if missing:
+        missing = ', '.join(map(repr, sorted(missing)))
+        raise errors.InitializationError(
+            f'repo {repo_id!r} at path {repo_path!r} has missing masters: {missing}')
 
     try:
         masters = tuple(config.objects['repo'][r] for r in repo_config.masters)
@@ -278,6 +280,9 @@ def tree(config, repo_config, cache=(), eclass_override=None,
         masters = ', '.join(repo_config.masters)
         raise errors.InitializationError(
             f'{repo_id!r} repo has cyclic masters: {masters}')
+
+    if eclass_cache is None:
+        eclass_cache = _sort_eclasses(config, repo_config)
 
     return UnconfiguredTree(
         repo_config.location, eclass_cache=eclass_cache, masters=masters, cache=cache,
@@ -350,7 +355,7 @@ class UnconfiguredTree(prototype.tree):
             raise errors.UnsupportedRepo(self)
 
         if eclass_cache is None:
-            eclass_cache = eclass_cache_module.cache(
+            eclass_cache = eclass_cache_mod.cache(
                 pjoin(self.location, 'eclass'), location=self.location)
         self.eclass_cache = eclass_cache
 

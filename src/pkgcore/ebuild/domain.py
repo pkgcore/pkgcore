@@ -31,6 +31,7 @@ from pkgcore.ebuild.misc import (
     incremental_expansion, incremental_expansion_license,
     non_incremental_collapsed_restrict_to_data, optimize_incrementals)
 from pkgcore.ebuild.repo_objs import OverlayedLicenses
+from pkgcore.exceptions import PkgcoreCliException
 from pkgcore.repository import filtered, errors as repo_errors
 from pkgcore.repository.util import RepositoryGroup
 from pkgcore.restrictions import packages, values
@@ -44,6 +45,7 @@ demandload(
     'operator:itemgetter',
     're',
     'tempfile',
+    'snakeoil.cli.exceptions:find_cli_exception',
     'snakeoil.process.spawn:spawn_get_output',
     'pkgcore.binpkg:repository@binary_repo',
     'pkgcore.ebuild:repository@ebuild_repo',
@@ -629,8 +631,6 @@ class domain(config_domain):
             if config is None:
                 raise ValueError('missing config')
             path = os.path.abspath(repo)
-            if not os.path.isdir(os.path.join(path, 'profiles')):
-                raise repo_errors.InvalidRepo(repr(path))
             # use path for repo id by default to avoid collisions
             config_name = name if name is not None else path
             if config_name in group:
@@ -743,12 +743,10 @@ class domain(config_domain):
                 repo = r.instantiate()
             except config_errors.InstantiationError as e:
                 # roll back the exception chain to a meaningful error message
-                while True:
-                    context = getattr(e, '__context__', None)
-                    if context is None:
-                        break
-                    e = context
-                logger.warning(f'skipping {r.name!r} repo: {e}')
+                exc = find_cli_exception(e)
+                if exc is None:
+                    exc = e
+                logger.warning(f'skipping {r.name!r} repo: {exc}')
                 continue
             if not repo.is_supported:
                 logger.warning(

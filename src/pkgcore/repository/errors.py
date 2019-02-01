@@ -24,7 +24,7 @@ class InitializationError(RepoError, PkgcoreCliException):
         return f"repo init failed: {self.msg}"
 
 
-class InvalidRepo(RepoError, PkgcoreCliException):
+class InvalidRepo(InitializationError, PkgcoreCliException):
     """Repository is not a repo or is otherwise invalid."""
 
     def __str__(self):

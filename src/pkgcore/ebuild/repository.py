@@ -341,6 +341,11 @@ class UnconfiguredTree(prototype.tree):
             repo_config = repo_objs.RepoConfig(location)
         self.config = repo_config
 
+        # profiles dir is required by PMS
+        if not os.path.isdir(self.config.profiles_base):
+            raise errors.InvalidRepo(f'missing required profiles dir: {self.location!r}')
+
+        # verify we support the repo's EAPI
         if not self.is_supported:
             raise errors.UnsupportedRepo(self)
 

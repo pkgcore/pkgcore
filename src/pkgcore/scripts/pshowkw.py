@@ -73,7 +73,7 @@ def _setup_repos(namespace, attr):
                 try:
                     repo = namespace.domain.add_repo(path, config=namespace.config)
                     break
-                except repo_errors.InvalidRepo:
+                except repo_errors.InitializationError:
                     path = os.path.dirname(path)
 
     namespace.repo = repo

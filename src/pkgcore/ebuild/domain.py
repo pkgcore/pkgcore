@@ -451,7 +451,7 @@ class domain(config_domain):
         """Generates a restrict that matches iff the keywords are allowed."""
         if not accept_keywords and not self.profile.keywords:
             return packages.PackageRestriction(
-                "keywords", values.ContainmentMatch2(default_keys))
+                "keywords", values.ContainmentMatch2(frozenset(default_keys)))
 
         if self.unstable_arch not in default_keys:
             # stable; thus empty entries == ~arch

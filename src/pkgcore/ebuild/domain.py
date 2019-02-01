@@ -31,7 +31,6 @@ from pkgcore.ebuild.misc import (
     incremental_expansion, incremental_expansion_license,
     non_incremental_collapsed_restrict_to_data, optimize_incrementals)
 from pkgcore.ebuild.repo_objs import OverlayedLicenses
-from pkgcore.exceptions import PkgcoreCliException
 from pkgcore.repository import filtered, errors as repo_errors
 from pkgcore.repository.util import RepositoryGroup
 from pkgcore.restrictions import packages, values
@@ -620,30 +619,27 @@ class domain(config_domain):
             if os.path.exists(fp):
                 yield local_source(fp)
 
-    def add_repo(self, repo, filtered=True, group=None, config=None, name=None):
-        """Add repo to the domain."""
-        if group is None:
-            group = self.source_repos
-
-        # add unconfigured, external repo to the domain
-        # TODO: add support for configuring/enabling the external repo's cache
-        if isinstance(repo, str):
-            if config is None:
-                raise ValueError('missing config')
-            path = os.path.abspath(repo)
-            # use path for repo id by default to avoid collisions
-            config_name = name if name is not None else path
-            if config_name in group:
-                raise ValueError(f'{config_name!r} repo already configured')
-            repo_config = RepoConfig(path, config_name=config_name)
-            repo = ebuild_repo.tree(config, repo_config)
-            self.source_repos_raw += repo
-
+    def _wrap_repo(self, repo, filtered=True):
+        """Create a filtered, wrapped repo object for the domain."""
         wrapped_repo = self._configure_repo(repo)
         if filtered:
             wrapped_repo = self.filter_repo(wrapped_repo)
-        group += wrapped_repo
         return wrapped_repo
+
+    def add_repo(self, path, config, name=None):
+        """Add an external, unconfigured repo to the domain."""
+        # TODO: add support for configuring/enabling the external repo's cache
+        path = os.path.abspath(path)
+        # use path for repo id by default to avoid collisions
+        config_name = name if name is not None else path
+        if config_name in self.source_repos_raw:
+            raise ValueError(f'{config_name!r} repo already configured')
+        repo_config = RepoConfig(path, config_name=config_name)
+        repo_obj = ebuild_repo.tree(config, repo_config)
+
+        # TODO: reset related jit attrs
+        self.source_repos_raw += repo_obj
+        return self._wrap_repo(repo_obj)
 
     def _configure_repo(self, repo):
         """Configure a raw repo."""
@@ -772,24 +768,24 @@ class domain(config_domain):
     @klass.jit_attr_none
     def source_repos(self):
         """Group of configured, filtered package repos."""
-        repos = RepositoryGroup()
+        repos = []
         for repo in self.source_repos_raw:
             try:
-                self.add_repo(repo, filtered=True, group=repos)
+                repos.append(self._wrap_repo(repo, filtered=True))
             except repo_errors.RepoError as e:
                 logger.warning(f'skipping {repo.repo_id!r} repo: {e}')
-        return repos
+        return RepositoryGroup(repos)
 
     @klass.jit_attr_none
     def installed_repos(self):
         """Group of configured, installed package repos."""
-        repos = RepositoryGroup()
+        repos = []
         for repo in self.installed_repos_raw:
             try:
-                self.add_repo(repo, filtered=False, group=repos)
+                repos.append(self._wrap_repo(repo, filtered=False))
             except repo_errors.RepoError as e:
                 logger.warning(f'skipping {repo.repo_id!r} repo: {e}')
-        return repos
+        return RepositoryGroup(repos)
 
     @klass.jit_attr_none
     def unfiltered_repos(self):

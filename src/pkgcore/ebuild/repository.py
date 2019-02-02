@@ -221,7 +221,7 @@ class ProvidesRepo(util.SimpleTree):
             object.__setattr__(self, "data", {"SLOT": "0"})
             object.__setattr__(self, "eapi", get_eapi('0'))
 
-    def __init__(self, pkgs, repo_id):
+    def __init__(self, pkgs, repo_id='package.provided'):
         d = {}
         for pkg in pkgs:
             d.setdefault(pkg.category, {}).setdefault(pkg.package, []).append(pkg.fullver)

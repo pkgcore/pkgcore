@@ -70,6 +70,9 @@ eapi_optionals = mappings.ImmutableDict({
     # Controls whether SYSROOT, ESYSROOT, and BROOT are defined; see PMS.
     "has_sysroot": False,
 
+    # Controls whether package.provided files in profiles are supported; see PMS.
+    "profile_pkg_provided": True,
+
     # Controls whether package.mask and other files in profiles can
     # be directories; see PMS.
     "has_profile_data_dirs": False,
@@ -505,6 +508,7 @@ eapi7 = EAPI.register(
     optionals=_combine_dicts(eapi6.options, dict(
         has_profile_data_dirs=True,
         has_portdir=False,
+        profile_pkg_provided=False,
         has_sysroot=True,
         has_env_unset=True,
         econf_sysroot=True,

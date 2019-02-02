@@ -209,7 +209,8 @@ class ProfileNode(object, metaclass=caching.WeakInstMeta):
         kls = getattr(self, 'parent_node_kls', self.__class__)
         return tuple(kls(x) for x in self.parent_paths)
 
-    @load_property("package.provided", allow_recurse=True)
+    @load_property("package.provided", allow_recurse=True,
+                   eapi_optional='profile_pkg_provided')
     def pkg_provided(self, data):
         def _parse_cpv(s):
             try:
@@ -613,8 +614,7 @@ class ProfileStack(object):
 
     @klass.jit_attr
     def provides_repo(self):
-        return ProvidesRepo(pkgs=self._collapse_generic("pkg_provided"),
-                            repo_id='package.provided')
+        return ProvidesRepo(pkgs=self._collapse_generic("pkg_provided"))
 
     @klass.jit_attr
     def masks(self):

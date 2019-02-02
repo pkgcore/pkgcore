@@ -143,7 +143,7 @@ class ProfileNode(object, metaclass=caching.WeakInstMeta):
         self.pms_strict = pms_strict
 
     def __str__(self):
-        return "Profile at {self.path!r}"
+        return f"profile at {self.path!r}"
 
     def __repr__(self):
         return '<%s path=%r, @%#8x>' % (self.__class__.__name__, self.path, id(self))
@@ -469,6 +469,18 @@ class ProfileStack(object):
             yield node
         return tuple(f(self.node))
 
+    @klass.jit_attr
+    def _system_profile(self):
+        """User-selected system profile.
+
+        This should map directly to the profile linked to /etc/portage/make.profile.
+        """
+        # prefer main system profile; otherwise, fallback to custom user profile
+        for profile in reversed(self.stack):
+            if not isinstance(profile, UserProfileNode):
+                break
+        return profile
+
     def _collapse_use_dict(self, attr):
         stack = (getattr(x, attr) for x in self.stack)
         d = misc.ChunkedDataDict()
@@ -581,15 +593,10 @@ class ProfileStack(object):
 
     @klass.jit_attr
     def iuse_effective(self):
-        # prefer main system profile; otherwise, fallback to custom user profile
-        for profile in reversed(self.stack):
-            if not isinstance(profile, UserProfileNode):
-                break
-
         iuse_effective = []
 
         # EAPI 5 and above allow profile defined IUSE injection (see PMS)
-        if profile.eapi.options.profile_iuse_injection:
+        if self._system_profile.eapi.options.profile_iuse_injection:
             iuse_effective.extend(self.iuse_implicit)
             for v in self.use_expand_implicit.intersection(self.use_expand_unprefixed):
                 iuse_effective.extend(self.default_env.get("USE_EXPAND_VALUES_" + v, "").split())
@@ -597,7 +604,7 @@ class ProfileStack(object):
                 for x in self.default_env.get("USE_EXPAND_VALUES_" + v, "").split():
                     iuse_effective.append(v.lower() + "_" + x)
         else:
-            iuse_effective.extend(profile.repoconfig.known_arches)
+            iuse_effective.extend(self._system_profile.repoconfig.known_arches)
             for v in self.use_expand:
                 for x in self.default_env.get("USE_EXPAND_VALUES_" + v, "").split():
                     iuse_effective.append(v.lower() + "_" + x)

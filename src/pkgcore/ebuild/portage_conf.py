@@ -94,6 +94,8 @@ class ParseConfig(configparser.ConfigParser):
 class PortageConfig(DictMixin):
     """Support for portage's config file layout."""
 
+    _supported_repo_types = {}
+
     def __init__(self, location=None, profile_override=None, **kwargs):
         """
         Args:
@@ -172,15 +174,10 @@ class PortageConfig(DictMixin):
         repo_map = {}
 
         for repo_name, repo_opts in list(repos_conf.items()):
-            repo_type = repo_opts.pop('repo-type')
+            repo_cls = repo_opts.pop('repo-type')
             try:
-                repo_creator = getattr(self, f"_repo_{repo_type}")
-            except AttributeError:
-                raise errors.ConfigurationError(f"unsupported repo type: {repo_type!r}")
-
-            try:
-                repo = repo_creator(
-                    repo_name=repo_name, repo_opts=repo_opts,
+                repo = repo_cls(
+                    self, repo_name=repo_name, repo_opts=repo_opts,
                     repo_map=repo_map, defaults=repos_conf_defaults)
             except repo_errors.UnsupportedRepo as e:
                 logger.warning(
@@ -290,8 +287,8 @@ class PortageConfig(DictMixin):
             # quirk of read_bash_dict; it returns only what was mutated.
             vars_dict.update(new_vars)
 
-    @staticmethod
-    def load_repos_conf(path):
+    @classmethod
+    def load_repos_conf(cls, path):
         """parse repos.conf files
 
         Args:
@@ -339,8 +336,15 @@ class PortageConfig(DictMixin):
                 repo_conf['location'] = os.path.abspath(location)
 
                 # repo type defaults to ebuild for compat with portage
-                repo_type = repo_conf.get('repo-type', 'ebuild_v1').replace('-', '_')
-                repo_conf['repo-type'] = repo_type
+                repo_type = repo_conf.get('repo-type', 'ebuild-v1')
+                try:
+                    repo_conf['repo-type'] = cls._supported_repo_types[repo_type]
+                except KeyError:
+                    logger.warning(
+                        f"repos.conf: parsing {fp!r}: "
+                        f"{name!r} repo has unsupported repo-type {repo_type!r}, "
+                        "ignoring repo")
+                    continue
 
                 # Priority defaults to zero if unset or invalid for ebuild repos
                 # while binpkg repos have the lowest priority by default.
@@ -569,6 +573,17 @@ class PortageConfig(DictMixin):
             'readonly': readonly
         })
 
+    def _register_repo_type(supported_repo_types):
+        """Decorator to register supported repo types."""
+        def _wrap_func(func):
+            def wrapped(*args, **kwargs):
+                return func(*args, **kwargs)
+            name = func.__name__[6:].replace('_', '-')
+            supported_repo_types[name] = func
+            return wrapped
+        return _wrap_func
+
+    @_register_repo_type(_supported_repo_types)
     def _repo_ebuild_v1(self, repo_name, repo_opts, repo_map,
                         defaults, repo_obj=None, repo_dict=None):
         """Create ebuild repo v1 configuration."""
@@ -608,6 +623,7 @@ class PortageConfig(DictMixin):
         self['conf:' + repo_name] = basics.AutoConfigSection(repo_conf)
         return repo
 
+    @_register_repo_type(_supported_repo_types)
     def _repo_sqfs_v1(self, *args, **kwargs):
         """Create ebuild squashfs repo v1 configuration."""
         repo_name = kwargs['repo_name']
@@ -625,6 +641,7 @@ class PortageConfig(DictMixin):
         kwargs['repo_dict'] = repo_dict
         return self._repo_ebuild_v1(*args, **kwargs)
 
+    @_register_repo_type(_supported_repo_types)
     def _repo_binpkg_v1(self, repo_name, repo_opts, **kwargs):
         """Create binpkg repo v1 configuration."""
         repo = {

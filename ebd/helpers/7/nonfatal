@@ -1,0 +1,5 @@
+#!/usr/bin/env pkgcore-ebuild-helper
+
+check_args 1 -
+
+PKGCORE_NONFATAL=true "$@"

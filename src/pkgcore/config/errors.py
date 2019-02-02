@@ -28,7 +28,11 @@ def _identify_functor_source(functor):
 
 
 class ConfigError(PkgcoreException):
-	"""Generic config exception."""
+    """Generic config exception."""
+
+
+class UserConfigError(ConfigError, PkgcoreCliException):
+    """Generic config exception with user relevant error."""
 
 
 class TypeDefinitionError(ConfigError):
@@ -55,6 +59,7 @@ class ConfigurationError(ConfigError):
 
 
 class ParsingError(ConfigurationError, PkgcoreCliException):
+    """Generic file parsing exception."""
 
     def __init__(self, message=None, exception=None):
         if message is not None:

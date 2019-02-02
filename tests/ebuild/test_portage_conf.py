@@ -163,7 +163,7 @@ class TestPortageConfig(TempDirMixin, TestCase):
                 location = /var/gentoo/repos/foo''').encode())
             f.flush()
             self.assertRaises(
-                config_errors.ConfigurationError, load_repos_conf, f.name)
+                config_errors.UserConfigError, load_repos_conf, f.name)
 
         # default section isn't required as long as gentoo repo exists
         with NamedTemporaryFile() as f:

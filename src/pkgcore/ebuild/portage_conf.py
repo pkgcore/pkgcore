@@ -372,8 +372,8 @@ class PortageConfig(DictMixin):
             # the default repo is gentoo if unset and gentoo exists
             default_repo = main_defaults.get('main-repo', 'gentoo')
             if default_repo not in repos:
-                raise errors.ConfigurationError(
-                    f"default repo {default_repo!r} is undefined or invalid")
+                raise errors.UserConfigError(
+                    f"repos.conf: default repo {default_repo!r} is undefined or invalid")
 
             if 'main-repo' not in main_defaults:
                 main_defaults['main-repo'] = default_repo

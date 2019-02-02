@@ -117,8 +117,7 @@ class StoreTarget(argparse._AppendAction):
                                 repo = namespace.domain.add_repo(
                                     repo_root_dir, config=namespace.config)
                         except repo_errors.RepoError as e:
-                            raise argparse.ArgumentError(
-                                self, f"{token!r} in bad repo -- {e}")
+                            raise argparse.ArgumentError(self, f"{token!r} -- {e}")
                     try:
                         restriction = repo.path_restrict(token)
                     except ValueError as e:

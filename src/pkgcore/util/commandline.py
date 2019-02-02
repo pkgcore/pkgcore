@@ -27,6 +27,7 @@ from snakeoil import formatters, modules
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.cli import arghparse, tool
 from snakeoil.demandload import demandload
+from snakeoil.log import suppress_logging
 from snakeoil.osutils import pjoin
 
 from pkgcore.config import load_config
@@ -112,8 +113,9 @@ class StoreTarget(argparse._AppendAction):
                         repo_root_dir = os.path.abspath(
                             pjoin(token, os.pardir, os.pardir, os.pardir))
                         try:
-                            repo = namespace.domain.add_repo(
-                                repo_root_dir, config=namespace.config)
+                            with suppress_logging():
+                                repo = namespace.domain.add_repo(
+                                    repo_root_dir, config=namespace.config)
                         except repo_errors.RepoError as e:
                             raise argparse.ArgumentError(
                                 self, f"{token!r} in bad repo -- {e}")
@@ -353,7 +355,8 @@ class StoreRepoObject(StoreConfigObject):
                 # try to add it as an external repo
                 if self.allow_external_repos and os.path.exists(repo):
                     try:
-                        repo_obj = self.domain.add_repo(repo, config=self.config)
+                        with suppress_logging():
+                            repo_obj = self.domain.add_repo(repo, config=self.config)
                         repo = repo_obj.repo_id
                     except repo_errors.RepoError as e:
                         raise argparse.ArgumentError(self, e)

@@ -12,7 +12,7 @@ __all__ = (
 from snakeoil.cli import arghparse
 from snakeoil.demandload import demandload
 
-from pkgcore.exceptions import PkgcoreCliException
+from pkgcore.exceptions import PkgcoreUserException
 from pkgcore.util import commandline
 from pkgcore.operations import OperationError
 
@@ -80,7 +80,7 @@ def sync_main(options, out, err):
                 force=options.force, verbosity=options.verbosity)
         except OperationError as e:
             exc = getattr(e, '__cause__', e)
-            if not isinstance(exc, PkgcoreCliException):
+            if not isinstance(exc, PkgcoreUserException):
                 raise
             err_msg = f': {exc}'
         if not ret:

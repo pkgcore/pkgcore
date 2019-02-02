@@ -5,10 +5,10 @@
 errors fetch subsystem may throw
 """
 
-from pkgcore.exceptions import PkgcoreCliException
+from pkgcore.exceptions import PkgcoreUserException
 
 
-class FetchError(PkgcoreCliException):
+class FetchError(PkgcoreUserException):
     """Generic fetch exception."""
 
 

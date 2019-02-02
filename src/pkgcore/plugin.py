@@ -24,7 +24,7 @@ import os.path
 import sys
 
 from snakeoil import mappings, modules
-from snakeoil.cli.exceptions import CliException
+from snakeoil.cli.exceptions import UserException
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.demandload import demandload
 from snakeoil.osutils import pjoin, listdir_files, ensure_dirs, unlink_if_exists
@@ -193,7 +193,7 @@ def initialize_cache(package, force=False):
         cache_dir = os.path.join(cache_dir, chunks[0])
 
     if not ensure_dirs(cache_dir, uid=uid, gid=gid, mode=mode):
-        raise CliException(
+        raise UserException(
             f'failed creating plugins cache dir: {cache_dir!r}: {e.strerror}')
 
     # package plugin cache, see above.

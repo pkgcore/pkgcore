@@ -15,7 +15,7 @@ __all__ = (
 
 from snakeoil.demandload import demandload
 
-from pkgcore.exceptions import PkgcoreException, PkgcoreCliException
+from pkgcore.exceptions import PkgcoreException, PkgcoreUserException
 
 demandload('snakeoil:currying')
 
@@ -31,7 +31,7 @@ class ConfigError(PkgcoreException):
     """Generic config exception."""
 
 
-class UserConfigError(ConfigError, PkgcoreCliException):
+class UserConfigError(ConfigError, PkgcoreUserException):
     """Generic config exception with user relevant error."""
 
 
@@ -58,7 +58,7 @@ class ConfigurationError(ConfigError):
         return ':\n'.join(reversed(self.stack))
 
 
-class ParsingError(ConfigurationError, PkgcoreCliException):
+class ParsingError(ConfigurationError, PkgcoreUserException):
     """Generic file parsing exception."""
 
     def __init__(self, message=None, exception=None):

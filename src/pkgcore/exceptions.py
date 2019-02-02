@@ -1,17 +1,17 @@
 """Base pkgcore exceptions."""
 
-from snakeoil.cli.exceptions import CliException
+from snakeoil.cli.exceptions import UserException
 
 
 class PkgcoreException(Exception):
     """Generic pkgcore exception."""
 
 
-class PkgcoreCliException(PkgcoreException, CliException):
-    """Generic pkgcore exception with a sane string for non-debug cli output."""
+class PkgcoreUserException(PkgcoreException, UserException):
+    """Generic pkgcore exception with a sane string for non-debug, user-facing output."""
 
 
-class PermissionDenied(PermissionError, PkgcoreCliException):
+class PermissionDenied(PermissionError, PkgcoreUserException):
 
     def __init__(self, path, message=None, write=False):
         if message is None:

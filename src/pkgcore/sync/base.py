@@ -13,7 +13,7 @@ import os
 from snakeoil.demandload import demandload
 
 from pkgcore.config import ConfigHint, configurable
-from pkgcore.exceptions import PkgcoreCliException
+from pkgcore.exceptions import PkgcoreUserException
 
 demandload(
     'pwd',
@@ -23,7 +23,7 @@ demandload(
 )
 
 
-class SyncError(PkgcoreCliException):
+class SyncError(PkgcoreUserException):
     """Generic syncing error."""
 
 

@@ -44,7 +44,7 @@ demandload(
     'operator:itemgetter',
     're',
     'tempfile',
-    'snakeoil.cli.exceptions:find_cli_exception',
+    'snakeoil.cli.exceptions:find_user_exception',
     'snakeoil.process.spawn:spawn_get_output',
     'pkgcore.binpkg:repository@binary_repo',
     'pkgcore.ebuild:repository@ebuild_repo',
@@ -739,7 +739,7 @@ class domain(config_domain):
                 repo = r.instantiate()
             except config_errors.InstantiationError as e:
                 # roll back the exception chain to a meaningful error message
-                exc = find_cli_exception(e)
+                exc = find_user_exception(e)
                 if exc is None:
                     exc = e
                 logger.warning(f'skipping {r.name!r} repo: {exc}')

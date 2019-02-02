@@ -2,9 +2,7 @@
 # license GPL2/BSD 3
 
 use() {
-	# EAPI 5 and up
-	if ${PKGCORE_PROFILE_IUSE_INJECTION} && \
-			[[ ! ${1#!} =~ ${PKGCORE_IUSE_EFFECTIVE} ]]; then
+	if [[ ! ${1#!} =~ ${PKGCORE_IUSE_EFFECTIVE} ]]; then
 		die "USE flag '${1#!}' not in IUSE for ${CATEGORY}/${PF}"
 	fi
 
@@ -49,7 +47,7 @@ use_with() {
 		uword=$1
 	fi
 
-	if use $1; then
+	if use "$1"; then
 		echo "--with-${uword}${uw_suffix}"
 		return 0
 	fi

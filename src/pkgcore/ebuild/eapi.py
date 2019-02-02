@@ -351,7 +351,7 @@ common_env_optionals = (
     "bash_compat", "dodoc_allow_recursive", "doins_allow_symlinks",
     "doman_language_detect", "doman_language_override", "ebuild_phase_func",
     "global_failglob", "new_reads_stdin", "nonfatal", "nonfatal_die",
-    "profile_iuse_injection", "unpack_absolute_paths", "unpack_case_insensitive",
+    "unpack_absolute_paths", "unpack_case_insensitive",
 )
 
 eapi0 = EAPI.register(

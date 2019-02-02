@@ -6,6 +6,15 @@ source "${PKGCORE_EBD_PATH}"/eapi/5.bash
 PKGCORE_BANNED_FUNCS+=( einstall )
 PKGCORE_EAPPLY_USER=false
 
+__econf_options_eapi6() {
+	if [[ $1 == *"--docdir"* ]]; then
+		echo --docdir="${EPREFIX}"/usr/share/doc/${PF}
+	fi
+	if [[ $1 == *"--htmldir"* ]]; then
+		echo --htmldir="${EPREFIX}"/usr/share/doc/${PF}/html
+	fi
+}
+
 get_libdir() { __get_libdir lib; }
 
 in_iuse() {

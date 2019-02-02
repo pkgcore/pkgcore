@@ -7,6 +7,12 @@ source "${PKGCORE_EBD_PATH}"/eapi/6.bash
 
 PKGCORE_BANNED_FUNCS+=( libopts )
 
+__econf_options_eapi7() {
+	if [[ $1 == *"--with-sysroot"* ]]; then
+		echo --with-sysroot="${ESYSROOT:-/}"
+	fi
+}
+
 dostrip() {
 	if [[ $1 == "-x" ]]; then
 		shift

@@ -37,18 +37,6 @@ eapi_optionals = mappings.ImmutableDict({
     # Controls whether -i18n option is allowed.
     "doman_language_override": False,
 
-    # Controls --disable-silent-rules passing for econf.
-    'econf_disable_silent_rules': False,
-
-    # Controls --disable-dependency-tracking passing for econf.
-    'econf_disable_dependency_tracking': False,
-
-    # Controls --docdir and --htmldir passing for econf; see PMS.
-    'econf_docdir_and_htmldir': False,
-
-    # Controls --sysroot passing for econf; see PMS.
-    'econf_sysroot': False,
-
     # Controls whether an ebuild_phase function exists for ebuild consumption.
     'ebuild_phase_func': False,
 
@@ -283,6 +271,7 @@ class EAPI(object, metaclass=klass.immutable_instance):
         d = {}
         for k in self._ebd_env_options:
             d[f"PKGCORE_{k.upper()}"] = str(getattr(self.options, k)).lower()
+        d["PKGCORE_EAPI_INHERITS"] = ' '.join(x._magic for x in self.inherits)
         d["EAPI"] = self._magic
         return mappings.ImmutableDict(d)
 
@@ -361,10 +350,8 @@ common_archive_suffixes = (
 common_env_optionals = (
     "bash_compat", "dodoc_allow_recursive", "doins_allow_symlinks",
     "doman_language_detect", "doman_language_override", "ebuild_phase_func",
-    "econf_disable_dependency_tracking", "econf_disable_silent_rules",
-    "econf_docdir_and_htmldir", "econf_sysroot", "global_failglob",
-    "new_reads_stdin", "nonfatal", "nonfatal_die", "profile_iuse_injection",
-    "unpack_absolute_paths", "unpack_case_insensitive",
+    "global_failglob", "new_reads_stdin", "nonfatal", "nonfatal_die",
+    "profile_iuse_injection", "unpack_absolute_paths", "unpack_case_insensitive",
 )
 
 eapi0 = EAPI.register(
@@ -443,7 +430,6 @@ eapi4 = EAPI.register(
         doins_allow_symlinks=True,
         doman_language_override=True,
         nonfatal=False,
-        econf_disable_dependency_tracking=True,
         exports_replacing=True,
         has_AA=False, has_KV=False,
         has_merge_type=True,
@@ -465,7 +451,6 @@ eapi5 = EAPI.register(
     archive_suffixes=eapi4.archive_suffixes,
     optionals=_combine_dicts(eapi4.options, dict(
         ebuild_phase_func=True,
-        econf_disable_silent_rules=True,
         profile_iuse_injection=True,
         profile_stable_use=True,
         new_reads_stdin=True,
@@ -485,7 +470,6 @@ eapi6 = EAPI.register(
     tracked_attributes=eapi5.tracked_attributes | frozenset(["user_patches"]),
     archive_suffixes=eapi5.archive_suffixes | frozenset(["txz"]),
     optionals=_combine_dicts(eapi5.options, dict(
-        econf_docdir_and_htmldir=True,
         global_failglob=True,
         nonfatal_die=True,
         unpack_absolute_paths=True,
@@ -511,7 +495,6 @@ eapi7 = EAPI.register(
         profile_pkg_provided=False,
         has_sysroot=True,
         has_env_unset=True,
-        econf_sysroot=True,
         trailing_slash='',
         is_supported=False,
     )),

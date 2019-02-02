@@ -3,6 +3,12 @@
 
 source "${PKGCORE_EBD_PATH}"/eapi/3.bash
 
+__econf_options_eapi4() {
+	if [[ $1 == *"--disable-dependency-tracking"* ]]; then
+		echo --disable-dependency-tracking
+	fi
+}
+
 nonfatal() {
 	PKGCORE_NONFATAL=true "$@"
 }

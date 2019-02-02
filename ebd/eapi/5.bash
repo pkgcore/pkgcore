@@ -3,6 +3,12 @@
 
 source "${PKGCORE_EBD_PATH}"/eapi/4.bash
 
+__econf_options_eapi5() {
+	if [[ $1 == *"--disable-silent-rules"* ]]; then
+		echo --disable-silent-rules
+	fi
+}
+
 __query_version_funcs() {
 	local atom root=${ROOT:-/}
 	if [[ $1 == "--host-root" ]]; then

@@ -123,46 +123,9 @@ econf() {
 		set -- --libdir="$(__strip_duplicate_slashes "${CONF_PREFIX}${CONF_LIBDIR}")" "$@"
 	fi
 
-	if ${PKGCORE_ECONF_DISABLE_DEPENDENCY_TRACKING} || \
-			${PKGCORE_ECONF_DISABLE_SILENT_RULES} || \
-			${PKGCORE_ECONF_DOCDIR_AND_HTMLDIR} || \
-			${PKGCORE_ECONF_SYSROOT}; then
-		local help_text=$("${ECONF_SOURCE}/configure" --help 2> /dev/null)
-		local extra_args=()
-
-		# EAPI 4 and up.
-		if ${PKGCORE_ECONF_DISABLE_DEPENDENCY_TRACKING} && \
-				[[ ${help_text} == *"--disable-dependency-tracking"* ]]; then
-			extra_args+=( --disable-dependency-tracking )
-		fi
-
-		# EAPI 5 and up.
-		if ${PKGCORE_ECONF_DISABLE_SILENT_RULES} && \
-				[[ ${help_text} == *"--disable-silent-rules"* ]]; then
-			extra_args+=( --disable-silent-rules )
-		fi
-
-		# EAPI 6 and up.
-		if ${PKGCORE_ECONF_DOCDIR_AND_HTMLDIR}; then
-			if [[ ${help_text} == *"--docdir"* ]]; then
-				extra_args+=( --docdir="${EPREFIX}"/usr/share/doc/${PF} )
-			fi
-			if [[ ${help_text} == *"--htmldir"* ]]; then
-				extra_args+=( --htmldir="${EPREFIX}"/usr/share/doc/${PF}/html )
-			fi
-		fi
-
-		# EAPI 7 and up.
-		if ${PKGCORE_ECONF_SYSROOT}; then
-			if [[ ${help_text} == *"--with-sysroot"* ]]; then
-				extra_args+=( --with-sysroot="${ESYSROOT:-/}" )
-			fi
-		fi
-
-		set -- "${extra_args[@]}" "$@"
-		unset -v extra_args
-		unset -v help_text
-	fi
+	# get EAPI specific arguments
+	local help_text=$("${ECONF_SOURCE}/configure" --help 2> /dev/null)
+	set -- $(__run_eapi_funcs __econf_options "${help_text}") "$@"
 
 	# Reset IFS since we're interpreting user supplied EXTRA_ECONF.
 	local IFS=$' \t\n'
@@ -395,6 +358,18 @@ __phase_pre_src_install() {
 		mkdir "${D}"
 	fi
 	__phase_pre_phase
+}
+
+# Iterate over the inherited EAPI stack running all EAPI specific
+# functions starting with a defined prefix.
+__run_eapi_funcs() {
+	local func_prefix=$1
+	shift
+
+	local eapi
+	for eapi in ${PKGCORE_EAPI_INHERITS}; do
+		__qa_run_function_if_exists ${func_prefix}_eapi${eapi} "$@"
+	done
 }
 
 unpack() {

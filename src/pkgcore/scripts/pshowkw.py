@@ -5,6 +5,7 @@
 
 import os
 
+from snakeoil.log import suppress_logging
 from snakeoil.strings import pluralism as _pl
 
 from pkgcore._vendor.tabulate import tabulate, tabulate_formats
@@ -69,12 +70,13 @@ def _setup_repos(namespace, attr):
         # try to add the current working directory as an external repo
         if namespace.cwd not in repo and not namespace.targets:
             path = namespace.cwd
-            while path != namespace.domain.root:
-                try:
-                    repo = namespace.domain.add_repo(path, config=namespace.config)
-                    break
-                except repo_errors.InitializationError:
-                    path = os.path.dirname(path)
+            with suppress_logging():
+                while path != namespace.domain.root:
+                    try:
+                        repo = namespace.domain.add_repo(path, config=namespace.config)
+                        break
+                    except repo_errors.InitializationError:
+                        path = os.path.dirname(path)
 
     namespace.repo = repo
 

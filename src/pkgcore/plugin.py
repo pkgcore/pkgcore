@@ -194,7 +194,7 @@ def initialize_cache(package, force=False):
 
     if not ensure_dirs(cache_dir, uid=uid, gid=gid, mode=mode):
         raise UserException(
-            f'failed creating plugins cache dir: {cache_dir!r}: {e.strerror}')
+            f'failed creating plugins cache dir: {cache_dir!r}')
 
     # package plugin cache, see above.
     package_cache = defaultdict(set)

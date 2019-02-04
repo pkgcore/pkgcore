@@ -40,7 +40,7 @@ class sdist(pkgdist.sdist):
 
 
 class install(pkgdist.install):
-    """install wrapper to generate and install pkgcore-related files."""
+    """Install wrapper to generate and install pkgcore-related files."""
 
     def run(self):
         pkgdist.install.run(self)
@@ -50,6 +50,14 @@ class install(pkgdist.install):
             target = os.path.join('/', os.path.relpath(target, root))
         target = os.path.abspath(target)
         if not self.dry_run:
+            # Install module plugincache
+            # TODO: move this to pkgdist once plugin support is moved to snakeoil
+            with pkgdist.syspath(pkgdist.PACKAGEDIR):
+                from pkgcore import plugin, plugins
+                log.info('Generating plugin cache')
+                path = os.path.join(self.install_purelib, 'pkgcore', 'plugins')
+                plugin.initialize_cache(plugins, force=True, cache_dir=path)
+
             # Install configuration data so pkgcore knows where to find its content,
             # rather than assuming it is running from a tarball/git repo.
             write_pkgcore_lookup_configs(self.install_purelib, target)

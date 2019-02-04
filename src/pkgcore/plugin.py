@@ -177,20 +177,38 @@ def initialize_cache(package, force=False):
 
     Writes cache files if they are stale and writing is possible.
     """
-    if os_data.uid in (os_data.root_uid, os_data.portage_uid):
-        cache_dir = const.SYSTEM_CACHE_PATH
-        uid = os_data.portage_uid
-        gid = os_data.portage_gid
-        mode = 0o775
+    modpath = os.path.dirname(package.__file__)
+    pkgpath = os.path.dirname(os.path.dirname(modpath))
+    uid = gid = -1
+    mode = 0o755
+
+    if not force:
+        # use user-generated caches if they exist, fallback to module cache
+        if os.path.exists(pjoin(const.USER_CACHE_PATH, CACHE_FILENAME)):
+            cache_dir = const.USER_CACHE_PATH
+        elif os.path.exists(pjoin(const.SYSTEM_CACHE_PATH, CACHE_FILENAME)):
+            cache_dir = const.SYSTEM_CACHE_PATH
+            uid = os_data.portage_uid
+            gid = os_data.portage_gid
+            mode = 0o775
+        else:
+            cache_dir = modpath
     else:
-        cache_dir = const.USER_CACHE_PATH
-        uid = gid = -1
-        mode = 0o755
+        # generate module cache when running from git repo, otherwise create system/user cache
+        if pkgpath == sys.path[0]:
+            cache_dir = modpath
+        elif os_data.uid in (os_data.root_uid, os_data.portage_uid):
+            cache_dir = const.SYSTEM_CACHE_PATH
+            uid = os_data.portage_uid
+            gid = os_data.portage_gid
+            mode = 0o775
+        else:
+            cache_dir = const.USER_CACHE_PATH
 
     # put pkgcore consumer plugins (e.g. pkgcheck) inside pkgcore cache dir
     chunks = package.__name__.split('.', 1)
     if chunks[0] != os.path.basename(cache_dir):
-        cache_dir = os.path.join(cache_dir, chunks[0])
+        cache_dir = pjoin(cache_dir, chunks[0])
 
     if not ensure_dirs(cache_dir, uid=uid, gid=gid, mode=mode):
         raise UserException(
@@ -206,7 +224,6 @@ def initialize_cache(package, force=False):
 
     # Directory cache, mapping modulename to
     # (mtime, set([keys]))
-    modpath = os.path.dirname(package.__file__)
     modlist = listdir_files(modpath)
     modlist = set(x for x in modlist if os.path.splitext(x)[1] == '.py'
                   and x != '__init__.py')
@@ -308,12 +325,12 @@ def extend_path(path, name):
         # frozen package.  Return the path unchanged in that case.
         return
     # Reconstitute as relative path.
-    pname = os.path.join(*name.split('.'))
+    pname = pjoin(*name.split('.'))
 
     for entry in sys.path:
         if not isinstance(entry, str) or not os.path.isdir(entry):
             continue
-        subdir = os.path.join(entry, pname)
+        subdir = pjoin(entry, pname)
         # XXX This may still add duplicate entries to path on
         # case-insensitive filesystems
         if subdir not in path:

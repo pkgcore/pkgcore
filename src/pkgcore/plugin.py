@@ -172,7 +172,7 @@ def _write_cache_file(path, data, uid=-1, gid=-1):
             cachefile.discard()
 
 
-def initialize_cache(package, force=False):
+def initialize_cache(package, force=False, cache_dir=None):
     """Determine available plugins in a package.
 
     Writes cache files if they are stale and writing is possible.
@@ -182,33 +182,35 @@ def initialize_cache(package, force=False):
     uid = gid = -1
     mode = 0o755
 
-    if not force:
-        # use user-generated caches if they exist, fallback to module cache
-        if os.path.exists(pjoin(const.USER_CACHE_PATH, CACHE_FILENAME)):
-            cache_dir = const.USER_CACHE_PATH
-        elif os.path.exists(pjoin(const.SYSTEM_CACHE_PATH, CACHE_FILENAME)):
-            cache_dir = const.SYSTEM_CACHE_PATH
-            uid = os_data.portage_uid
-            gid = os_data.portage_gid
-            mode = 0o775
+    if cache_dir is None:
+        if not force:
+            # use user-generated caches if they exist, fallback to module cache
+            if os.path.exists(pjoin(const.USER_CACHE_PATH, CACHE_FILENAME)):
+                cache_dir = const.USER_CACHE_PATH
+            elif os.path.exists(pjoin(const.SYSTEM_CACHE_PATH, CACHE_FILENAME)):
+                cache_dir = const.SYSTEM_CACHE_PATH
+                uid = os_data.portage_uid
+                gid = os_data.portage_gid
+                mode = 0o775
+            else:
+                cache_dir = modpath
         else:
-            cache_dir = modpath
-    else:
-        # generate module cache when running from git repo, otherwise create system/user cache
-        if pkgpath == sys.path[0]:
-            cache_dir = modpath
-        elif os_data.uid in (os_data.root_uid, os_data.portage_uid):
-            cache_dir = const.SYSTEM_CACHE_PATH
-            uid = os_data.portage_uid
-            gid = os_data.portage_gid
-            mode = 0o775
-        else:
-            cache_dir = const.USER_CACHE_PATH
+            # generate module cache when running from git repo, otherwise create system/user cache
+            if pkgpath == sys.path[0]:
+                cache_dir = modpath
+            elif os_data.uid in (os_data.root_uid, os_data.portage_uid):
+                cache_dir = const.SYSTEM_CACHE_PATH
+                uid = os_data.portage_uid
+                gid = os_data.portage_gid
+                mode = 0o775
+            else:
+                cache_dir = const.USER_CACHE_PATH
 
     # put pkgcore consumer plugins (e.g. pkgcheck) inside pkgcore cache dir
-    chunks = package.__name__.split('.', 1)
-    if chunks[0] != os.path.basename(cache_dir):
-        cache_dir = pjoin(cache_dir, chunks[0])
+    if cache_dir in (const.SYSTEM_CACHE_PATH, const.USER_CACHE_PATH):
+        chunks = package.__name__.split('.', 1)
+        if chunks[0] != os.path.basename(cache_dir):
+            cache_dir = pjoin(cache_dir, chunks[0])
 
     if not ensure_dirs(cache_dir, uid=uid, gid=gid, mode=mode):
         raise UserException(

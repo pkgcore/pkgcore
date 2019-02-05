@@ -24,7 +24,6 @@ import os.path
 import sys
 
 from snakeoil import mappings, modules
-from snakeoil.cli.exceptions import UserException
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.demandload import demandload
 from snakeoil.osutils import pjoin, listdir_files, ensure_dirs, unlink_if_exists
@@ -212,10 +211,6 @@ def initialize_cache(package, force=False, cache_dir=None):
         if chunks[0] != os.path.basename(cache_dir):
             cache_dir = pjoin(cache_dir, chunks[0])
 
-    if not ensure_dirs(cache_dir, uid=uid, gid=gid, mode=mode):
-        raise UserException(
-            f'failed creating plugins cache dir: {cache_dir!r}')
-
     # package plugin cache, see above.
     package_cache = defaultdict(set)
     stored_cache_name = pjoin(cache_dir, CACHE_FILENAME)
@@ -276,6 +271,7 @@ def initialize_cache(package, force=False, cache_dir=None):
             package_cache[data.key].add(data)
     if force or set(stored_cache) != set(actual_cache):
         logger.debug('updating cache %r for new plugins', stored_cache_name)
+        ensure_dirs(cache_dir, uid=uid, gid=gid, mode=mode)
         _write_cache_file(stored_cache_name, actual_cache, uid=uid, gid=gid)
 
     return mappings.ImmutableDict((k, sort_plugs(v)) for k, v in package_cache.items())

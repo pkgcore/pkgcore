@@ -22,20 +22,19 @@ class LowPlug(object):
 class TestModules(object):
 
     def setup_method(self, method):
-        # patch out actual cache dir settings with temp dirs
+        self.dir = tempfile.mkdtemp()
+        self.dir2 = tempfile.mkdtemp()
+
+        # force plugin module to use package dir for cache dir by setting
+        # system/user cache dirs to nonexistent paths
         self.patcher = mock.patch('pkgcore.plugin.const')
         const = self.patcher.start()
-        self.dir = tempfile.mkdtemp(prefix='cache-')
-        self.cache_dir = pjoin(self.dir, 'mod_testplug')
-        os.mkdir(self.cache_dir)
-        const.SYSTEM_CACHE_PATH = self.cache_dir
-        const.USER_CACHE_PATH = self.cache_dir
+        const.SYSTEM_CACHE_PATH = pjoin(self.dir, 'nonexistent')
+        const.USER_CACHE_PATH = pjoin(self.dir, 'nonexistent')
 
         # Set up some test modules for our use.
-        self.dir2 = tempfile.mkdtemp()
-        self.dir3 = tempfile.mkdtemp()
-        self.packdir = pjoin(self.dir2, 'mod_testplug')
-        self.packdir2 = pjoin(self.dir3, 'mod_testplug')
+        self.packdir = pjoin(self.dir, 'mod_testplug')
+        self.packdir2 = pjoin(self.dir2, 'mod_testplug')
         os.mkdir(self.packdir)
         os.mkdir(self.packdir2)
         with open(pjoin(self.packdir, '__init__.py'), 'w') as init:
@@ -84,8 +83,8 @@ class HiddenPlug(object):
 pkgcore_plugins = {'plugtest': [HiddenPlug]}
 ''')
         # Append it to the path
-        sys.path.insert(0, self.dir3)
         sys.path.insert(0, self.dir2)
+        sys.path.insert(0, self.dir)
 
     def teardown_method(self):
         # stop mocked patcher
@@ -96,7 +95,6 @@ pkgcore_plugins = {'plugtest': [HiddenPlug]}
         # and kill it
         shutil.rmtree(self.dir)
         shutil.rmtree(self.dir2)
-        shutil.rmtree(self.dir3)
         # make sure we don't keep the sys.modules entries around
         sys.modules.pop('mod_testplug', None)
         sys.modules.pop('mod_testplug.plug', None)
@@ -113,13 +111,13 @@ pkgcore_plugins = {'plugtest': [HiddenPlug]}
     def _runit(self, method):
         plugin._global_cache.clear()
         method()
-        mtime = os.path.getmtime(pjoin(self.cache_dir, plugin.CACHE_FILENAME))
+        mtime = os.path.getmtime(pjoin(self.packdir, plugin.CACHE_FILENAME))
         method()
         plugin._global_cache.clear()
         method()
         method()
         assert mtime == \
-            os.path.getmtime(pjoin(self.cache_dir, plugin.CACHE_FILENAME))
+            os.path.getmtime(pjoin(self.packdir, plugin.CACHE_FILENAME))
         # We cannot write this since it contains an unimportable plugin.
         assert not os.path.exists(pjoin(self.packdir2, plugin.CACHE_FILENAME))
 
@@ -131,7 +129,7 @@ pkgcore_plugins = {'plugtest': [HiddenPlug]}
         plugin.get_plugin('plugtest', mod_testplug)
         assert 'HighPlug' == \
             plugin.get_plugin('plugtest', mod_testplug).__class__.__name__
-        with open(pjoin(self.cache_dir, plugin.CACHE_FILENAME)) as f:
+        with open(pjoin(self.packdir, plugin.CACHE_FILENAME)) as f:
             lines = f.readlines()
         assert len(lines) == 3
         assert plugin.CACHE_HEADER + "\n" == lines[0]
@@ -167,7 +165,7 @@ pkgcore_plugins = {'plugtest': [HiddenPlug]}
         print('wheeeeee')
         import mod_testplug
         list(plugin.get_plugins('spork', mod_testplug))
-        filename = pjoin(self.cache_dir, plugin.CACHE_FILENAME)
+        filename = pjoin(self.packdir, plugin.CACHE_FILENAME)
         cachefile = open(filename, 'a')
         try:
             cachefile.write('corruption\n')
@@ -181,10 +179,10 @@ pkgcore_plugins = {'plugtest': [HiddenPlug]}
         plugin._global_cache.clear()
         self._test_plug()
         good_mtime = os.path.getmtime(
-            pjoin(self.cache_dir, plugin.CACHE_FILENAME))
+            pjoin(self.packdir, plugin.CACHE_FILENAME))
         plugin._global_cache.clear()
         self._test_plug()
-        assert good_mtime == os.path.getmtime(pjoin(self.cache_dir, plugin.CACHE_FILENAME))
+        assert good_mtime == os.path.getmtime(pjoin(self.packdir, plugin.CACHE_FILENAME))
         assert good_mtime != corrupt_mtime
 
     def test_rewrite_on_remove(self):
@@ -292,7 +290,7 @@ pkgcore_plugins = {
         list(plugin.get_plugins('testplug', mod_testplug))
 
         # Modify the cache.
-        filename = pjoin(self.cache_dir, plugin.CACHE_FILENAME)
+        filename = pjoin(self.packdir, plugin.CACHE_FILENAME)
         with open(filename) as f:
             cache = f.readlines()
         cache[0] = 'not really a pkgcore plugin cache\n'

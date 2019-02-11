@@ -105,9 +105,9 @@ class rsync_syncer(base.ExternalSyncer):
                     yield f"[{ipaddr[4][0]}]"
                 else:
                     yield ipaddr[4][0]
-
-        except socket.error as e:
-            raise base.SyncError(self.hostname, af_fam, str(e)) from e
+        except OSError as e:
+            raise base.SyncError(
+                f"DNS resolution failed for {self.hostname!r}: {e.strerror}")
 
     def _sync(self, verbosity, output_fd):
         fd_pipes = {1: output_fd, 2: output_fd}

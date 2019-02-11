@@ -56,18 +56,18 @@ class rsync_syncer(base.ExternalSyncer):
         return proto[0], f"rsync:{proto[1]}"
 
     pkgcore_config_type = ConfigHint({
-        'basedir': 'str', 'uri': 'str', 'conn_timeout': 'str',
+        'basedir': 'str', 'uri': 'str', 'conn_timeout': 'str', 'usersync': 'bool',
         'compress': 'bool', 'excludes': 'list', 'includes': 'list',
         'retries': 'str', 'opts': 'list', 'extra_opts': 'list', 'proxy': 'str'},
         typename='syncer')
 
     def __init__(self, basedir, uri, conn_timeout=default_conn_timeout,
-                 compress=False, excludes=(), includes=(),
+                 usersync=False, compress=False, excludes=(), includes=(),
                  retries=default_retries, proxy=None,
                  opts=(), extra_opts=()):
         uri = uri.rstrip(os.path.sep) + os.path.sep
         self.rsh, uri = self._parse_uri(uri)
-        super().__init__(basedir, uri, default_verbosity=1)
+        super().__init__(basedir, uri, default_verbosity=1, usersync=usersync)
         self.hostname = self.parse_hostname(self.uri)
         if self.rsh:
             self.rsh = self.require_binary(self.rsh)

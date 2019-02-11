@@ -46,7 +46,7 @@ class TestRsyncSyncerReal(object):
         stat = os.stat(timestamp)
 
         # run rsync over the unpacked repo tarball to update to the latest tree
-        syncer = rsync.rsync_syncer(
+        syncer = rsync.rsync_timestamp_syncer(
             str(path), "rsync://rsync.gentoo.org/gentoo-portage")
         assert syncer.sync()
         assert stat != os.stat(timestamp)

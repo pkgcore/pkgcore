@@ -30,11 +30,16 @@ class TestRsyncSyncer(object):
         assert o.rsh == "/bin/sh"
 
     @mock.patch('snakeoil.process.find_binary', return_value='rsync')
+    @mock.patch('socket.getaddrinfo')
     @mock.patch('snakeoil.process.spawn.spawn')
-    def test_sync(self, spawn, find_binary, tmp_path):
+    def test_sync(self, spawn, getaddrinfo, find_binary, tmp_path):
         path = tmp_path / 'repo'
         syncer = rsync.rsync_syncer(
             str(path), "rsync://rsync.gentoo.org/gentoo-portage")
+
+        # faked IPv4 addresses for rsync.gentoo.org
+        fake_ips = ['.'.join(str(x) * 4) for x in range(3)]
+        getaddrinfo.return_value = fake_ips
 
         # successful sync
         spawn.return_value = 0
@@ -42,19 +47,49 @@ class TestRsyncSyncer(object):
         spawn.assert_called_once()
         spawn.reset_mock()
 
-        # failed sync
+        # failed command sync
         spawn.return_value = 1
-        with pytest.raises(base.SyncError):
+        with pytest.raises(base.SyncError) as excinfo:
             assert syncer.sync()
+        assert str(excinfo.value).startswith('rsync command syntax error:')
+        spawn.assert_called_once()
+        spawn.reset_mock()
+
+        # failed disk space sync
+        spawn.return_value = 11
+        with pytest.raises(base.SyncError) as excinfo:
+            assert syncer.sync()
+        assert str(excinfo.value) == 'rsync ran out of disk space'
         spawn.assert_called_once()
         spawn.reset_mock()
 
         # retried sync
         spawn.return_value = 99
-        with pytest.raises(base.SyncError):
+        with pytest.raises(base.SyncError) as excinfo:
             assert syncer.sync()
+        assert str(excinfo.value) == 'all attempts failed'
         # rsync should retry every resolved IP related to the sync URI
-        assert len(spawn.mock_calls) > 1
+        assert len(spawn.mock_calls) == len(fake_ips)
+        spawn.reset_mock()
+
+        # retried sync, more IPs than retries
+        fake_ips = ['.'.join(str(x) * 4) for x in range(10)]
+        getaddrinfo.return_value = fake_ips
+        with pytest.raises(base.SyncError) as excinfo:
+            assert syncer.sync()
+        assert str(excinfo.value) == 'all attempts failed'
+        assert len(fake_ips) > syncer.retries
+        assert len(spawn.mock_calls) == syncer.retries
+        spawn.reset_mock()
+
+        # failed DNS resolution
+        getaddrinfo.side_effect = OSError()
+        with pytest.raises(base.SyncError) as excinfo:
+            assert syncer.sync()
+        assert str(excinfo.value).startswith('DNS resolution failed')
+        spawn.assert_not_called()
+        getaddrinfo.reset_mock()
+        spawn.reset_mock()
 
 
 @pytest.mark_network

@@ -3,6 +3,7 @@
 
 import datetime
 import os
+from unittest import mock
 
 import pytest
 
@@ -28,6 +29,32 @@ class TestRsyncSyncer(object):
         assert o.uri == "rsync://dar/module/"
         assert o.rsh == "/bin/sh"
 
+    @mock.patch('snakeoil.process.spawn.spawn')
+    def test_sync(self, spawn, tmp_path):
+        path = tmp_path / 'repo'
+        syncer = rsync.rsync_timestamp_syncer(
+            str(path), "rsync://rsync.gentoo.org/gentoo-portage")
+
+        # successful sync
+        spawn.return_value = 0
+        assert syncer.sync()
+        spawn.assert_called_once()
+        spawn.reset_mock()
+
+        # failed sync
+        spawn.return_value = 1
+        with pytest.raises(base.SyncError):
+            assert syncer.sync()
+        spawn.assert_called_once()
+        spawn.reset_mock()
+
+        # retried sync
+        spawn.return_value = 99
+        with pytest.raises(base.SyncError):
+            assert syncer.sync()
+        # rsync should retry every resolved IP related to the sync URI
+        assert len(spawn.mock_calls) > 1
+
 
 @pytest.mark_network
 class TestRsyncSyncerReal(object):
@@ -35,8 +62,7 @@ class TestRsyncSyncerReal(object):
     def test_sync(self, tmp_path):
         # perform a tarball sync for initial week-old base
         path = tmp_path / 'repo'
-        now = datetime.datetime.now()
-        week_old = now - datetime.timedelta(days=7)
+        week_old = datetime.datetime.now() - datetime.timedelta(days=7)
         date_str = week_old.strftime("%Y%m%d")
         syncer = tar_syncer(
             str(path), f"http://distfiles.gentoo.org/snapshots/portage-{date_str}.tar.xz")

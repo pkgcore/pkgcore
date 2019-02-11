@@ -41,10 +41,12 @@ def fake_ips(num):
 @mock.patch('snakeoil.process.spawn.spawn')
 class TestRsyncSyncer(object):
 
+    _syncer_class = rsync.rsync_syncer
+
     @pytest.fixture(autouse=True)
     def _setup(self, tmp_path):
         path = tmp_path / 'repo'
-        self.syncer = rsync.rsync_syncer(
+        self.syncer = self._syncer_class(
             str(path), "rsync://rsync.gentoo.org/gentoo-portage")
 
     def test_successful_sync(self, spawn, getaddrinfo, find_binary):
@@ -89,6 +91,11 @@ class TestRsyncSyncer(object):
             assert self.syncer.sync()
         assert str(excinfo.value).startswith('DNS resolution failed')
         spawn.assert_not_called()
+
+
+class TestRsyncTimestampSyncer(TestRsyncSyncer):
+
+    _syncer_class = rsync.rsync_timestamp_syncer
 
 
 @pytest.mark_network

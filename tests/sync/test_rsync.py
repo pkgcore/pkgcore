@@ -29,10 +29,11 @@ class TestRsyncSyncer(object):
         assert o.uri == "rsync://dar/module/"
         assert o.rsh == "/bin/sh"
 
+    @mock.patch('snakeoil.process.find_binary', return_value='rsync')
     @mock.patch('snakeoil.process.spawn.spawn')
-    def test_sync(self, spawn, tmp_path):
+    def test_sync(self, spawn, find_binary, tmp_path):
         path = tmp_path / 'repo'
-        syncer = rsync.rsync_timestamp_syncer(
+        syncer = rsync.rsync_syncer(
             str(path), "rsync://rsync.gentoo.org/gentoo-portage")
 
         # successful sync

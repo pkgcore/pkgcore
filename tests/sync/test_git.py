@@ -29,22 +29,22 @@ class TestGitSyncer(object):
                 o = valid("/tmp/foon", uri)
                 assert o.uri == f"{proto}://repo.git"
 
-    def test_sync(self, tmp_path):
+    @mock.patch('snakeoil.process.find_binary', return_value='git')
+    @mock.patch('snakeoil.process.spawn.spawn')
+    def test_sync(self, spawn, find_binary, tmp_path):
         path = tmp_path / 'repo'
         uri = 'git://foo.git'
-        with mock.patch('snakeoil.process.spawn.spawn') as spawn, \
-                mock.patch('snakeoil.process.find_binary') as find_binary:
-            find_binary.return_value = 'git'
-            syncer = git.git_syncer(str(path), uri)
-            # initial sync
-            syncer.sync()
-            assert spawn.call_args[0] == (['git', 'clone', uri, str(path) + os.path.sep],)
-            assert spawn.call_args[1]['cwd'] is None
-            # repo update
-            path.mkdir()
-            syncer.sync()
-            assert spawn.call_args[0] == (['git', 'pull'],)
-            assert spawn.call_args[1]['cwd'] == syncer.basedir
+
+        syncer = git.git_syncer(str(path), uri)
+        # initial sync
+        syncer.sync()
+        assert spawn.call_args[0] == (['git', 'clone', uri, str(path) + os.path.sep],)
+        assert spawn.call_args[1]['cwd'] is None
+        # repo update
+        path.mkdir()
+        syncer.sync()
+        assert spawn.call_args[0] == (['git', 'pull'],)
+        assert spawn.call_args[1]['cwd'] == syncer.basedir
 
 
 @pytest.mark_network

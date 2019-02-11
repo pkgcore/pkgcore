@@ -72,12 +72,11 @@ class TestExternalSyncer(object):
         assert o.binary == "/bin/sh"
 
 
-@mock.patch('snakeoil.process.find_binary')
+@mock.patch('snakeoil.process.find_binary', return_value='git')
 @mock.patch('snakeoil.process.spawn.spawn')
 class TestVcsSyncer(object):
 
     def test_basedir_perms_error(self, spawn, find_binary, tmp_path):
-        find_binary.return_value = 'git'
         syncer = git.git_syncer(str(tmp_path), 'git://blah.git')
         with pytest.raises(base.PathError):
             with mock.patch('os.stat') as stat:
@@ -85,7 +84,6 @@ class TestVcsSyncer(object):
                 syncer.sync()
 
     def test_basedir_is_file_error(self, spawn, find_binary, tmp_path):
-        find_binary.return_value = 'git'
         repo = tmp_path / "repo"
         repo.touch()
         syncer = git.git_syncer(str(repo), 'git://blah.git')
@@ -101,7 +99,6 @@ class TestVcsSyncer(object):
         assert "isn't a directory" in str(excinfo.value)
 
     def test_verbose_sync(self, spawn, find_binary, tmp_path):
-        find_binary.return_value = 'git'
         syncer = git.git_syncer(str(tmp_path), 'git://blah.git')
         syncer.sync(verbosity=1)
         assert '-v' == spawn.call_args[0][0][-1]
@@ -109,7 +106,6 @@ class TestVcsSyncer(object):
         assert '-vv' == spawn.call_args[0][0][-1]
 
     def test_quiet_sync(self, spawn, find_binary, tmp_path):
-        find_binary.return_value = 'git'
         syncer = git.git_syncer(str(tmp_path), 'git://blah.git')
         syncer.sync(verbosity=-1)
         assert '-q' == spawn.call_args[0][0][-1]

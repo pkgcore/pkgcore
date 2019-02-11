@@ -125,24 +125,21 @@ class rsync_syncer(base.ExternalSyncer):
         # zip limits to the shortest iterable
         ret = None
         for count, ip in zip(range(self.retries), self._get_ips()):
-            o = [self.binary_path,
+            cmd = [self.binary_path,
                  self.uri.replace(self.hostname, ip, 1),
                  self.basedir] + opts
 
-            ret = self._spawn(o, fd_pipes)
+            ret = self._spawn(cmd, fd_pipes)
             if ret == 0:
                 return True
             elif ret == 1:
-                # syntax error
-                raise base.SyncError(o, "syntax error")
+                raise base.SyncError("rsync command syntax error: {' '.join(cmd)}")
             elif ret == 11:
-                raise base.SyncError(
-                    "rsync returned error code of "
-                    "11; this is an out of space exit code")
+                raise base.SyncError("rsync ran out of disk space")
            # need to do something here instead of just restarting...
            # else:
            #     print(ret)
-        raise base.SyncError(ret, "all attempts failed")
+        raise base.SyncError("all attempts failed")
 
 
 class _RsyncFileSyncer(rsync_syncer):

@@ -89,6 +89,22 @@ class TestExternalSyncer(object):
         assert o.uri == 'http://dar'
         assert o.binary == 'foo'
 
+    @mock.patch('snakeoil.process.spawn.spawn')
+    def test_usersync(self, spawn, find_binary):
+        # fake external syncer
+        class FooSyncer(base.ExternalSyncer):
+            binary = 'foo'
+
+        # fake that the external binary exists
+        find_binary.side_effect = lambda x: x
+
+        o = FooSyncer(self.repo_path, 'http://dar')
+        o.uid = 1234
+        o.gid = 2345
+        o._spawn('cmd', pipes={})
+        assert spawn.call_args[1]['uid'] == o.uid
+        assert spawn.call_args[1]['gid'] == o.gid
+
 
 @mock.patch('snakeoil.process.find_binary', return_value='git')
 @mock.patch('snakeoil.process.spawn.spawn')

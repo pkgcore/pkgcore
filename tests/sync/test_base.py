@@ -6,13 +6,10 @@ import pwd
 from unittest import mock
 
 import pytest
+from snakeoil.process import CommandNotFound
 
 from pkgcore import os_data
 from pkgcore.sync import base, git, tar
-from tests.sync.syncer import make_bogus_syncer, make_valid_syncer
-
-valid = make_valid_syncer(base.ExternalSyncer)
-bogus = make_bogus_syncer(base.ExternalSyncer)
 
 existing_user = pwd.getpwall()[0].pw_name
 existing_uid = pwd.getpwnam(existing_user).pw_uid
@@ -20,56 +17,77 @@ existing_uid = pwd.getpwnam(existing_user).pw_uid
 
 class TestSyncer(object):
 
+    @pytest.fixture(autouse=True)
+    def _setup(self, tmp_path):
+        self.repo_path = str(tmp_path / 'repo')
+
     def test_split_users(self):
-        o = base.Syncer("/tmp/foon", "http://dar")
+        o = base.Syncer(self.repo_path, "http://dar")
         assert o.uid == os.getuid()
         assert o.uri == "http://dar"
 
-        o = base.Syncer("/tmp/foon", f"http://{existing_user}::@site")
+        o = base.Syncer(self.repo_path, f"http://{existing_user}::@site")
         assert o.uid == existing_uid
         assert o.uri == "http://site"
 
-        o = base.Syncer("/tmp/foon", f"http://{existing_user}::foon@site")
+        o = base.Syncer(self.repo_path, f"http://{existing_user}::foon@site")
         assert o.uid == existing_uid
         assert o.uri == "http://foon@site"
 
-        o = base.Syncer("/tmp/foon", f"{existing_user}::foon@site")
+        o = base.Syncer(self.repo_path, f"{existing_user}::foon@site")
         assert o.uid == existing_uid
         assert o.uri == "foon@site"
 
         with pytest.raises(base.MissingLocalUser):
-            base.Syncer("/tmp/foon", f"foo_nonexistent_user::foon@site")
+            base.Syncer(self.repo_path, f"foo_nonexistent_user::foon@site")
 
-    def test_usersync_disabled(self):
-        o = base.Syncer("/tmp/foon", f"http://foo/bar.git", usersync=False)
+    @mock.patch('snakeoil.process.spawn.spawn')
+    def test_usersync_disabled(self, spawn):
+        o = base.Syncer(self.repo_path, f"http://foo/bar.git", usersync=False)
         o.uid == os_data.uid
         o.gid == os_data.gid
 
-    def test_usersync_enabled(self, tmp_path):
+    @mock.patch('snakeoil.process.spawn.spawn')
+    def test_usersync_portage_perms(self, spawn):
         # sync uses portage perms if repo dir doesn't exist
-        o = base.Syncer("/tmp/foo/nonexistent/path", f"http://foo/bar.git", usersync=True)
+        o = base.Syncer(self.repo_path, f"http://foo/bar.git", usersync=True)
         o.uid == os_data.portage_uid
         o.gid == os_data.portage_gid
 
+    @mock.patch('snakeoil.process.spawn.spawn')
+    def test_usersync_repo_dir_perms(self, spawn):
         # and repo dir perms if it does exist
         with mock.patch('os.stat') as stat:
             stat.return_value = mock.Mock(st_uid=1234, st_gid=5678)
-            o = base.Syncer(str(tmp_path), f"http://foo/bar.git", usersync=True)
+            o = base.Syncer(self.repo_path, f"http://foo/bar.git", usersync=True)
             stat.assert_called()
             assert o.uid == 1234
             assert o.gid == 5678
 
 
+@mock.patch('snakeoil.process.find_binary')
 class TestExternalSyncer(object):
 
-    def test_missing_binary(self):
-        with pytest.raises(base.MissingBinary):
-            bogus("/tmp/foon", "http://dar")
+    @pytest.fixture(autouse=True)
+    def _setup(self, tmp_path):
+        self.repo_path = str(tmp_path / 'repo')
 
-    def test_existing_binary(self):
-        o = valid("/tmp/foon", "http://dar")
-        assert o.uri == "http://dar"
-        assert o.binary == "/bin/sh"
+    def test_missing_binary(self, find_binary):
+        find_binary.side_effect = CommandNotFound('foo')
+        with pytest.raises(base.MissingBinary):
+            base.ExternalSyncer(self.repo_path, 'http://dar')
+
+    def test_existing_binary(self, find_binary):
+        # fake external syncer
+        class FooSyncer(base.ExternalSyncer):
+            binary = 'foo'
+
+        # fake that the external binary exists
+        find_binary.side_effect = lambda x: x
+
+        o = FooSyncer(self.repo_path, 'http://dar')
+        assert o.uri == 'http://dar'
+        assert o.binary == 'foo'
 
 
 @mock.patch('snakeoil.process.find_binary', return_value='git')

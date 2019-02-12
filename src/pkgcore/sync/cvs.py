@@ -38,7 +38,11 @@ class cvs_syncer(base.VcsSyncer):
         if proto[0] == "anon":
             proto[0] = None
         elif proto[0] != "pserver":
-            proto[0] = cls.require_binary(proto[0])
+            try:
+                proto[0] = cls.require_binary(proto[0])
+            except base.MissingBinary:
+                raise base.UriError(
+                    raw_uri, f"missing rsh binary: {proto[0]!r}")
         return proto[0], proto[1].lstrip("/")
 
     def __init__(self, basedir, raw_uri, **kwargs):

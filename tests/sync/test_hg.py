@@ -5,15 +5,16 @@ import os
 from unittest import mock
 
 import pytest
+from snakeoil.process import CommandNotFound
 
 from pkgcore.sync import base, hg
-from tests.sync.syncer import make_bogus_syncer, make_valid_syncer
-
-bogus = make_bogus_syncer(hg.hg_syncer)
-valid = make_valid_syncer(hg.hg_syncer)
 
 
 class TestHgSyncer(object):
+
+    @pytest.fixture(autouse=True)
+    def _setup(self, tmp_path):
+        self.repo_path = tmp_path / 'repo'
 
     def test_uri_parse(self):
         assert hg.hg_syncer.parse_uri("hg+http://dar") == "http://dar"
@@ -22,25 +23,31 @@ class TestHgSyncer(object):
         with pytest.raises(base.UriError):
             hg.hg_syncer.parse_uri("hg://dar")
 
-        with pytest.raises(base.SyncError):
-            bogus("/tmp/foon", "hg+http://foon.com/dar")
+        # external binary doesn't exist
+        with mock.patch('snakeoil.process.find_binary') as find_binary:
+            find_binary.side_effect = CommandNotFound('svn')
+            with pytest.raises(base.SyncError):
+                hg.hg_syncer(str(self.repo_path), "hg+http://foon.com/dar")
 
-        o = valid("/tmp/foon", "hg+http://dar")
-        assert o.uri == "http://dar"
+        # fake that the external binary exists
+        with mock.patch('snakeoil.process.find_binary') as find_binary:
+            find_binary.return_value = 'hg'
+            o = hg.hg_syncer(str(self.repo_path), "hg+http://dar")
+            assert o.uri == "http://dar"
 
-    @mock.patch('snakeoil.process.find_binary', return_value='hg')
     @mock.patch('snakeoil.process.spawn.spawn')
-    def test_sync(self, spawn, find_binary, tmp_path):
-        path = tmp_path / 'repo'
+    def test_sync(self, spawn):
         uri = 'https://foo/bar'
+        with mock.patch('snakeoil.process.find_binary', return_value='hg'):
+            syncer = hg.hg_syncer(str(self.repo_path), f'hg+{uri}')
 
-        syncer = hg.hg_syncer(str(path), f'hg+{uri}')
         # initial sync
         syncer.sync()
-        assert spawn.call_args[0] == (['hg', 'clone', uri, str(path) + os.path.sep],)
+        assert spawn.call_args[0] == (
+            ['hg', 'clone', uri, str(self.repo_path) + os.path.sep],)
         assert spawn.call_args[1]['cwd'] is None
         # repo update
-        path.mkdir()
+        self.repo_path.mkdir()
         syncer.sync()
         assert spawn.call_args[0] == (['hg', 'pull', '-u', uri],)
         assert spawn.call_args[1]['cwd'] == syncer.basedir

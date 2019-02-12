@@ -2,16 +2,19 @@
 # Copyright: 2015 Michał Górny <mgorny@gentoo.org>
 # License: GPL2/BSD
 
+from unittest import mock
+
 import pytest
+from snakeoil.process import CommandNotFound
 
 from pkgcore.sync import base, git_svn
-from tests.sync.syncer import make_bogus_syncer, make_valid_syncer
-
-bogus = make_bogus_syncer(git_svn.git_svn_syncer)
-valid = make_valid_syncer(git_svn.git_svn_syncer)
 
 
 class TestGitSVNSyncer(object):
+
+    @pytest.fixture(autouse=True)
+    def _setup(self, tmp_path):
+        self.repo_path = tmp_path / 'repo'
 
     def test_uri_parse(self):
         assert git_svn.git_svn_syncer.parse_uri("git+svn+http://dar") == "http://dar"
@@ -19,8 +22,14 @@ class TestGitSVNSyncer(object):
         with pytest.raises(base.UriError):
             git_svn.git_svn_syncer.parse_uri("git+svn+://dar")
 
-        with pytest.raises(base.SyncError):
-            bogus("/tmp/foon", "git+svn+http://foon.com/dar")
+        # external binary doesn't exist
+        with mock.patch('snakeoil.process.find_binary') as find_binary:
+            find_binary.side_effect = CommandNotFound('git')
+            with pytest.raises(base.SyncError):
+                git_svn.git_svn_syncer(str(self.repo_path), "git+svn+http://foon.com/dar")
 
-        o = valid("/tmp/foon", "git+svn+http://dar")
-        assert o.uri == "http://dar"
+        # fake that the external binary exists
+        with mock.patch('snakeoil.process.find_binary') as find_binary:
+            find_binary.return_value = 'git'
+            o = git_svn.git_svn_syncer(str(self.repo_path), "git+svn+http://dar")
+            assert o.uri == "http://dar"

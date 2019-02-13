@@ -649,6 +649,11 @@ class EbuildProcessor(object):
                     self.ebd_read.close()
                 else:
                     kill = True
+            except FinishedProcessing:
+                # TODO: remove this hack once bash side tracking is reworked
+                # Handle case where we received a term interrupt while exiting,
+                # e.g. IPC command dying.
+                return
             except (EnvironmentError, ValueError):
                 kill = True
 

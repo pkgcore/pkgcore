@@ -31,6 +31,7 @@ from snakeoil.process.spawn import (
     spawn_bash, spawn, is_sandbox_capable, is_userpriv_capable)
 
 from pkgcore.ebuild import ebuild_built, const, errors
+from pkgcore.ebuild.ebd_ipc import IpcCommandError, Doins
 from pkgcore.ebuild.processor import (
     request_ebuild_processor, release_ebuild_processor,
     expected_ebuild_env, chuck_UnhandledCommand, inherit_handler)
@@ -444,6 +445,9 @@ def run_generic_phase(pkg, phase, env, userpriv, sandbox, fd_pipes=None,
                     phase + ": Failed building (False/0 return from handler)")
                 logger.warning(f"executing phase {phase}: execution failed, ignoring")
     except Exception as e:
+        if isinstance(e, IpcCommandError):
+            # notify bash side of IPC error
+            ebd.write(e.ret)
         ebd.shutdown_processor()
         release_ebuild_processor(ebd)
         if isinstance(e, IGNORED_EXCEPTIONS + (format.GenericBuildError,)):
@@ -788,10 +792,15 @@ class buildable(ebd, setup_mixin, format.build):
     @observer.decorate_build_method("install")
     def install(self):
         """Run the install phase (maps to src_install)."""
+        # bash helpers implemented in python
+        ipc_helpers = {
+            'doins': Doins(self),
+        }
+
         # TODO: replace print() usage with observer
         ED = self.env.get('ED', self.env['D'])
         print(f">>> Install {self.env['PF']} into {ED} category {self.env['CATEGORY']}")
-        ret = self._generic_phase("install", False, True)
+        ret = self._generic_phase("install", False, True, extra_handlers=ipc_helpers)
         print(f">>> Completed installing {self.env['PF']} into {ED}")
         return ret
 

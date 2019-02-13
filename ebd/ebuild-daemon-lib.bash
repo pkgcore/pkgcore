@@ -40,7 +40,27 @@ __ebd_write_raw() {
 	echo -n "$*" >&${PKGCORE_EBD_WRITE_FD} || die "coms error, __ebd_write_raw failed;  Backing out."
 }
 
-# ask the python side to display sandbox complaints.
+# run an ebuild command on the python side and return its status
+__ebd_ipc_cmd() {
+	local cmd=$1 opts=$2 ret_str
+	local -a ret
+	shift 2
+
+	__ebd_write_line ${cmd}
+	__ebd_write_line ${opts}
+	# Send arg list as a single string using a null char delimiter terminated by a newline.
+	# Note that this requires printf as echo doesn't appear to respect IFS=$'\0'.
+	printf "%s\0" "$@" >&${PKGCORE_EBD_WRITE_FD}
+	__ebd_write_line
+
+	# split return status into array of return code and optional error message
+	# using bell char as a delimiter since the null char can't be assigned to variables
+	__ebd_read_line ret_str
+	IFS=$'\x07' read -ra ret <<< "${ret_str}"
+	__helper_exit "${ret[@]}"
+}
+
+# ask the python side to display sandbox complaints
 __request_sandbox_summary() {
 	local line
 	__ebd_write_line "__request_sandbox_summary ${SANDBOX_LOG}"

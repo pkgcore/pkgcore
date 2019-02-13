@@ -122,14 +122,18 @@ __dump_trace() {
 
 __helper_exit() {
 	[[ $1 == 0 ]] && exit 0
+
+	local ret=$1
+	local error_msg="${HELPER_ERROR_PREFIX}: exitcode ${ret}"
+	shift
+	[[ -n $@ ]] && error_msg+=": $@"
+
 	if ${PKGCORE_NONFATAL}; then
-		echo "WARNING: exitcode $1 from ${HELPER_ERROR_PREFIX}" >&2
-		exit $1
+		eerror "${error_msg}"
+		exit ${ret}
 	fi
-	if [[ -z $2 ]]; then
-		die "${HELPER_ERROR_PREFIX}: $1"
-	fi
-	die "${HELPER_ERROR_PREFIX}: exitcode $1: $2"
+
+	die "${error_msg}"
 }
 
 __helper_failed() {

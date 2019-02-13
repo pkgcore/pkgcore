@@ -2,7 +2,7 @@
 # Copyright 2004-2005 Gentoo Foundation: GPL2
 
 # Check whether any command in the most recently executed foreground pipe
-# returned non-zero and if so calls die passing along any given parameters. 
+# returned non-zero and if so calls die passing along any given parameters.
 assert() {
 	local pipestatus=${PIPESTATUS[*]}
 	[[ -z ${pipestatus//[ 0]/} ]] || die "$@ (pipestatus: ${pipestatus})"
@@ -118,33 +118,6 @@ __dump_trace() {
 		fi
 		eerror "   $(printf "%${filespacing}s" "${sourcefile}"), line $(printf "%${linespacing}s" "${lineno}"):  called ${funcname}${args:+ ${args}}"
 	done
-}
-
-__helper_exit() {
-	[[ $1 == 0 ]] && exit 0
-
-	local ret=$1
-	local error_msg="${HELPER_ERROR_PREFIX}: exitcode ${ret}"
-	shift
-	[[ -n $@ ]] && error_msg+=": $@"
-
-	if ${PKGCORE_NONFATAL}; then
-		eerror "${error_msg}"
-		exit ${ret}
-	fi
-
-	die "${error_msg}"
-}
-
-__helper_failed() {
-	PKGCORE_IS_NOT_HELPER=
-	die "helper failed: ${BASH_COMMAND}"
-}
-
-__helper_check_exit() {
-	[[ $1 == 0 ]] && return
-	shift
-	__helper_exit "$@"
 }
 
 :

@@ -83,6 +83,33 @@ check_command_or_stop() {
 	return 0
 }
 
+__helper_exit() {
+	[[ $1 == 0 ]] && exit 0
+
+	local ret=$1
+	local error_msg="${HELPER_ERROR_PREFIX}: exitcode ${ret}"
+	shift
+	[[ -n $@ ]] && error_msg+=": $@"
+
+	if ${PKGCORE_NONFATAL}; then
+		eerror "${error_msg}"
+		exit ${ret}
+	fi
+
+	die "${error_msg}"
+}
+
+__helper_failed() {
+	PKGCORE_IS_NOT_HELPER=
+	die "helper failed: ${BASH_COMMAND}"
+}
+
+__helper_check_exit() {
+	[[ $1 == 0 ]] && return
+	shift
+	__helper_exit "$@"
+}
+
 MASTER_HELPER_NAME=${1##*/}
 HELPER_ERROR_PREFIX=
 

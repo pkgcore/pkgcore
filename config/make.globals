@@ -4,7 +4,6 @@
 # Default distfiles mirrors. This rotation has multiple hosts and is reliable.
 GENTOO_MIRRORS="http://distfiles.gentoo.org"
 
-ACCEPT_LICENSE="* -@EULA"
 ACCEPT_PROPERTIES="*"
 ACCEPT_RESTRICT="*"
 

@@ -24,7 +24,6 @@ import os
 import sys
 
 from snakeoil import formatters, modules
-from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.cli import arghparse, tool
 from snakeoil.demandload import demandload
 from snakeoil.log import suppress_logging

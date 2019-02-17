@@ -31,7 +31,7 @@ from snakeoil.process.spawn import (
     spawn_bash, spawn, is_sandbox_capable, is_userpriv_capable)
 
 from pkgcore.ebuild import ebuild_built, const, errors
-from pkgcore.ebuild.ebd_ipc import IpcCommandError, Doins, Dodoc
+from pkgcore.ebuild.ebd_ipc import IpcError, IpcInternalError, Doins, Dodoc
 from pkgcore.ebuild.processor import (
     request_ebuild_processor, release_ebuild_processor,
     expected_ebuild_env, chuck_UnhandledCommand, inherit_handler)
@@ -445,12 +445,15 @@ def run_generic_phase(pkg, phase, env, userpriv, sandbox, fd_pipes=None,
                     phase + ": Failed building (False/0 return from handler)")
                 logger.warning(f"executing phase {phase}: execution failed, ignoring")
     except Exception as e:
-        if isinstance(e, IpcCommandError):
+        if isinstance(e, IpcError):
             # notify bash side of IPC error
             ebd.write(e.ret)
         ebd.shutdown_processor()
         release_ebuild_processor(ebd)
-        if isinstance(e, IGNORED_EXCEPTIONS + (format.GenericBuildError,)):
+        if isinstance(e, IpcInternalError):
+            # show main exception cause for internal IPC errors
+            raise e.__cause__
+        elif isinstance(e, IGNORED_EXCEPTIONS + (format.GenericBuildError,)):
             raise
         raise format.GenericBuildError(
             f"Executing phase {phase}: Caught exception: {e}") from e

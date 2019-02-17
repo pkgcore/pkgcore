@@ -12,6 +12,8 @@ from snakeoil.demandload import demandload
 from snakeoil.iterables import partition
 from snakeoil.osutils import pjoin
 
+from pkgcore.exceptions import PkgcoreException, PkgcoreUserException
+
 demandload(
     'grp',
     'operator:itemgetter',
@@ -19,13 +21,21 @@ demandload(
 )
 
 
-class IpcCommandError(Exception):
-    """IPC errors related to parsing arguments or running the command."""
+class IpcError(PkgcoreException):
+    """Generic IPC errors."""
 
     def __init__(self, msg='', code=1):
         self.msg = msg
         self.code = code
         self.ret = f'{code}\x07{msg}'
+
+
+class IpcInternalError(IpcError):
+    """IPC errors related to internal bugs."""
+
+
+class IpcCommandError(IpcError, PkgcoreUserException):
+    """IPC errors related to parsing arguments or running the command."""
 
 
 class UnknownOptions(IpcCommandError):
@@ -70,8 +80,7 @@ class IpcCommand(object):
         except IpcCommandError:
             raise
         except Exception as e:
-            raise IpcCommandError(
-                f'internal python failure (use --debug to see traceback)')
+            raise IpcInternalError(f'internal python failure') from e
 
         # return completion status to the bash side
         self.write(ret)

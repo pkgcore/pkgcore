@@ -136,8 +136,8 @@ def command_options(s):
     return shlex.split(s)
 
 
-class Doins(IpcCommand):
-    """Python wrapper for doins."""
+class _InstallWrapper(IpcCommand):
+    """Python wrapper for commands using `install`."""
 
     parser = ArgumentParser(add_help=False)
     parser.add_argument('--cwd', required=True)
@@ -192,7 +192,6 @@ class Doins(IpcCommand):
             raise IpcCommandError('missing targets')
         self.targets = args
         self.target_dir = pjoin(self.op.ED, self.opts.dest.lstrip(os.path.sep))
-        self.allow_symlinks = self.op.pkg.eapi.options.doins_allow_symlinks
 
     def run(self):
         os.chdir(self.opts.cwd)
@@ -200,6 +199,11 @@ class Doins(IpcCommand):
         self._install_targets(x.rstrip(os.path.sep) for x in self.targets)
 
     def _install_targets(self, targets):
+        """Install targets.
+
+        Args:
+            targets: files/symlinks/dirs/etc to install
+        """
         for x in targets:
             if os.path.isdir(x):
                 if self.opts.recursive:
@@ -215,10 +219,6 @@ class Doins(IpcCommand):
             dest_dir: target directory to install files to
         """
         for path in files:
-            if os.path.islink(path):
-                if self.allow_symlinks:
-                    self.install_link(path, pjoin(dest_dir, os.path.basename(path)))
-                    continue
             self.install(path, dest_dir)
 
     def _install_from_dir(self, source):
@@ -409,3 +409,38 @@ class Doins(IpcCommand):
             os.symlink(os.readlink(source), dest)
         except OSError as e:
             raise IpcCommandError(f'failed creating symlink: {source!r} -> {dest!r}: {e.strerror}')
+
+
+class Doins(_InstallWrapper):
+    """Python wrapper for doins."""
+
+    def finalize_args(self, args):
+        super().finalize_args(args)
+        self.allow_symlinks = self.op.pkg.eapi.options.doins_allow_symlinks
+
+    def _install_files(self, files, dest_dir):
+        for path in files:
+            if os.path.islink(path):
+                if self.allow_symlinks:
+                    self.install_link(path, pjoin(dest_dir, os.path.basename(path)))
+                    continue
+            self.install(path, dest_dir)
+
+
+class Dodoc(_InstallWrapper):
+    """Python wrapper for dodoc."""
+
+    def finalize_args(self, args):
+        super().finalize_args(args)
+        self.allow_recursive = self.op.pkg.eapi.options.dodoc_allow_recursive
+
+    def _install_targets(self, targets):
+        for x in targets:
+            if os.path.isdir(x):
+                if self.opts.recursive and self.allow_recursive:
+                    self._install_from_dir(x)
+                else:
+                    missing_option = ', missing -r option?' if self.allow_recursive else ''
+                    raise IpcCommandError(f'{x} is a directory{missing_option}')
+            else:
+                self._install_files([x], self.target_dir)

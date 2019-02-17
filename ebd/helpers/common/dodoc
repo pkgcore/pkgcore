@@ -1,36 +1,17 @@
 #!/usr/bin/env pkgcore-ebuild-helper
-# Copyright: 2012 Brian Harring <ferringb@gmail.com>
-# License: GPL2/BSD 3 clause
 
-recursive=false
-if ${PKGCORE_DODOC_ALLOW_RECURSIVE} && [[ $1 == "-r" ]]; then
-	recursive=true
+OPTIONS=(
+	"--cwd=\"${PWD}\""
+	"--dest=\"/usr/share/doc/${PF}/${PKGCORE_DOCDESTTREE}\""
+	"--insoptions=-m0644"
+)
+
+if [[ $1 == "-r" ]]; then
+	OPTIONS+=( "--recursive" )
 	shift
 fi
 
 check_args 1 -
 
-install_paths() {
-	local mydir=$1
-	shift
-	check_command install -d -- "${mydir}" || return
-
-	for x in "${@}"; do
-		if [[ ! -e ${x} ]]; then
-			error "nonexistent file: ${x}"
-		elif [[ -d ${x} ]]; then
-			if ! ${recursive}; then
-				error "'${x}' is a directory$(${PKGCORE_DODOC_ALLOW_RECURSIVE} && echo ", perhaps you forgot -r?")"
-				continue
-			fi
-			__directory_is_empty "${x}" && continue
-			__shopt_push -s dotglob nullglob
-			install_paths "${mydir}/${x##*/}" "${x}"/*
-			__shopt_pop
-		elif [[ -s ${x} ]]; then
-			check_command install -m0644 -- "${x}" "${mydir}"
-		fi
-	done
-}
-
-install_paths "${ED}/usr/share/doc/${PF}/${PKGCORE_DOCDESTTREE}" "$@"
+# python side handles install
+__ebd_ipc_cmd ${HELPER_NAME} "${OPTIONS[*]}" "$@"

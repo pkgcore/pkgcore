@@ -31,7 +31,7 @@ from snakeoil.process.spawn import (
     spawn_bash, spawn, is_sandbox_capable, is_userpriv_capable)
 
 from pkgcore.ebuild import ebuild_built, const, errors
-from pkgcore.ebuild.ebd_ipc import IpcCommandError, Doins
+from pkgcore.ebuild.ebd_ipc import IpcCommandError, Doins, Dodoc
 from pkgcore.ebuild.processor import (
     request_ebuild_processor, release_ebuild_processor,
     expected_ebuild_env, chuck_UnhandledCommand, inherit_handler)
@@ -795,6 +795,7 @@ class buildable(ebd, setup_mixin, format.build):
         # bash helpers implemented in python
         ipc_helpers = {
             'doins': Doins(self),
+            'dodoc': Dodoc(self),
         }
 
         # TODO: replace print() usage with observer

@@ -45,7 +45,7 @@ class UnknownOptions(IpcCommandError):
         super().__init__(f"unknown options: {', '.join(map(repr, options))}")
 
 
-class IpcArgumentParser(arghparse.OptionalsArgumentParser):
+class IpcArgumentParser(arghparse.OptionalsParser, arghparse.CustomActionsParser):
     """Raise IPC exception for argparse errors.
 
     Otherwise standard argparse prints the parser usage then outputs the error
@@ -472,3 +472,69 @@ class Dodoc(_InstallWrapper):
                 missing_option = ', missing -r option?' if self.allow_recursive else ''
                 raise IpcCommandError(f'{dirs[0]} is a directory{missing_option}')
         self._install_files((f, self.target_dir) for f in files)
+
+
+class Dohtml(_InstallWrapper):
+    """Python wrapper for dohtml."""
+
+    opts_parser = IpcArgumentParser(add_help=False)
+    opts_parser.add_argument('-r', dest='recursive', action='store_true')
+    opts_parser.add_argument('-V', dest='verbose', action='store_true')
+    opts_parser.add_argument('-A', dest='extra_allowed_file_exts', action='csv', default=[])
+    opts_parser.add_argument('-a', dest='allowed_file_exts', action='csv', default=[])
+    opts_parser.add_argument('-f', dest='allowed_files', action='csv', default=[])
+    opts_parser.add_argument('-x', dest='excluded_dirs', action='csv', default=[])
+    opts_parser.add_argument('-p', dest='doc_prefix', default='')
+
+    # default allowed file extensions
+    default_allowed_file_exts = ('css', 'gif', 'htm', 'html', 'jpeg', 'jpg', 'js', 'png')
+
+    def finalize(self, *args, **kwargs):
+        args = super().finalize(*args, **kwargs)
+
+        if not self.opts.allowed_file_exts:
+            self.opts.allowed_file_exts = list(self.default_allowed_file_exts)
+        self.opts.allowed_file_exts.extend(self.opts.extra_allowed_file_exts)
+        self.opts.allowed_file_exts = set(self.opts.allowed_file_exts)
+
+        self.target_dir = pjoin(self.target_dir, self.opts.doc_prefix.lstrip(os.path.sep))
+        self.opts.excluded_dirs = set(self.opts.excluded_dirs)
+        self.opts.allowed_files = set(self.opts.allowed_files)
+
+        if self.opts.verbose:
+            msg = []
+            if self.opts.allowed_file_exts:
+                msg.append(
+                    f"  Allowed extensions: {', '.join(sorted(self.opts.allowed_file_exts))}")
+            if self.opts.excluded_dirs:
+                msg.append(
+                    f"  Allowed extensions: {', '.join(sorted(self.opts.allowed_file_exts))}")
+            if self.opts.allowed_files:
+                msg.append(
+                    f"  Allowed files: {', '.join(sorted(self.opts.allowed_files))}")
+            if self.opts.doc_prefix:
+                msg.append(f"  Document prefix: {self.opts.doc_prefix!r}")
+            if msg:
+                msg = ['dohtml:'] + msg
+                self.observer.write('\n'.join(msg) + '\n')
+                self.observer.flush()
+
+        return args
+
+    def _install_targets(self, targets):
+        files, dirs = partition(targets, predicate=os.path.isdir)
+        if self.opts.recursive:
+            dirs = (d for d in dirs if d not in self.opts.excluded_dirs)
+            self._install_from_dirs(dirs)
+        self._install_files((f, self.target_dir) for f in files)
+
+    def _allowed_file(self, item):
+        """Determine if a file is allowed to be installed."""
+        path, dest_dir = item
+        basename = os.path.basename(path)
+        ext = os.path.splitext(basename)[1][1:]
+        return (ext in self.opts.allowed_file_exts or basename in self.opts.allowed_files)
+
+    def _install_files(self, files):
+        skipped, files = partition(files, predicate=self._allowed_file)
+        self.install(files)

@@ -1,7 +1,10 @@
 #!/usr/bin/env pkgcore-ebuild-helper
-# Copyright: 2011 Brian Harring <ferringb@gmail.com>
-# License: GPL2/BSD 3 clause
 
-check_args 1 -
+OPTIONS=(
+	"--cwd=\"${PWD}\""
+	"--dest=\"/usr/share/doc/${PF}/${PKGCORE_DOCDESTTREE:-html}\""
+	"--insoptions=-m0644"
+)
 
-check_command "${PKGCORE_PYTHON_BINARY}" "${PKGCORE_EBD_PATH}/helpers/internals/_raw_dohtml" "$@"
+# python side handles install
+__ebd_ipc_cmd ${HELPER_NAME} "${OPTIONS[*]}" "$@"

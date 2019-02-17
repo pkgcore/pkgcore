@@ -6,12 +6,5 @@ OPTIONS=(
 	"--insoptions=-m0644"
 )
 
-if [[ $1 == "-r" ]]; then
-	OPTIONS+=( "--recursive" )
-	shift
-fi
-
-check_args 1 -
-
 # python side handles install
 __ebd_ipc_cmd ${HELPER_NAME} "${OPTIONS[*]}" "$@"

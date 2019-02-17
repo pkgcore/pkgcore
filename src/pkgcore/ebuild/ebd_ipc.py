@@ -1,4 +1,3 @@
-import argparse
 import itertools
 import os
 import shlex
@@ -7,6 +6,7 @@ import stat
 import subprocess
 import sys
 
+from snakeoil.cli import arghparse
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.demandload import demandload
 from snakeoil.iterables import partition
@@ -45,7 +45,7 @@ class UnknownOptions(IpcCommandError):
         super().__init__(f"unknown options: {', '.join(map(repr, options))}")
 
 
-class ArgumentParser(argparse.ArgumentParser):
+class IpcArgumentParser(arghparse.OptionalsArgumentParser):
     """Raise IPC exception for argparse errors.
 
     Otherwise standard argparse prints the parser usage then outputs the error
@@ -59,22 +59,31 @@ class ArgumentParser(argparse.ArgumentParser):
 class IpcCommand(object):
     """Commands sent from the bash side of the ebuild daemon to run."""
 
+    # argument parser for internal options
+    parser = IpcArgumentParser(add_help=False)
+    parser.add_argument('--cwd', required=True)
+    parser.add_argument('--dest', required=True)
+
+    # argument parser for user options
+    opts_parser = None
+
     def __init__(self, op):
         self.op = op
         self.observer = self.op.observer
         self._helper = self.__class__.__name__.lower()
-        self.opts = argparse.Namespace()
+        self.opts = arghparse.Namespace()
 
     def __call__(self, ebd):
         self.ebd = ebd
         options = shlex.split(self.read())
-        args = self.read().strip('\0').split('\0')
+        args = self.read().strip('\0')
+        args = args.split('\0') if args else None
         ret = 0
 
         try:
-            self.parse_options(options)
-            self.finalize_args(args)
-            self.run()
+            args = self.parse_options(options, args)
+            args = self.finalize(args)
+            self.run(args)
         except IGNORED_EXCEPTIONS:
             raise
         except IpcCommandError:
@@ -85,16 +94,22 @@ class IpcCommand(object):
         # return completion status to the bash side
         self.write(ret)
 
-    def parse_options(self, opts):
-        """Parse the args passed from the bash side."""
+    def parse_options(self, opts, args):
+        """Parse internal args passed from the bash side."""
         opts, unknown = self.parser.parse_known_args(opts, namespace=self.opts)
         if unknown:
             raise UnknownOptions(unknown)
 
-    def finalize_args(self, args):
-        """Finalize the options and arguments for the IPC command."""
+        # pull user options off the start of the argument list
+        if args and self.opts_parser is not None:
+            opts, args = self.opts_parser.parse_optionals(args, namespace=self.opts)
+        return args
 
-    def run(self):
+    def finalize(self, args):
+        """Finalize the options and arguments for the IPC command."""
+        return args
+
+    def run(self, args):
         """Run the requested IPC command."""
         raise NotImplementedError
 
@@ -151,15 +166,12 @@ def command_options(s):
 class _InstallWrapper(IpcCommand):
     """Python wrapper for commands using `install`."""
 
-    parser = ArgumentParser(add_help=False)
-    parser.add_argument('--cwd', required=True)
-    parser.add_argument('--dest', required=True)
+    parser = IpcArgumentParser(add_help=False, parents=(IpcCommand.parser,))
     parser.add_argument('--insoptions', default='', type=command_options)
     parser.add_argument('--diroptions', default='', type=command_options)
-    parser.add_argument('--recursive', action='store_true')
 
     # supported install options
-    install_parser = ArgumentParser(add_help=False)
+    install_parser = IpcArgumentParser(add_help=False)
     install_parser.add_argument('-g', '--group', default=-1, type=_parse_group)
     install_parser.add_argument('-o', '--owner', default=-1, type=_parse_user)
     install_parser.add_argument('-m', '--mode', default=0o755, type=_parse_mode)
@@ -167,18 +179,19 @@ class _InstallWrapper(IpcCommand):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.insoptions = argparse.Namespace()
-        self.diroptions = argparse.Namespace()
+        self.insoptions = arghparse.Namespace()
+        self.diroptions = arghparse.Namespace()
         # default to python-based install cmds
         self.install = self._install
         self.install_dirs = self._install_dirs
 
-    def parse_options(self, opts):
-        super().parse_options(opts)
+    def parse_options(self, *args, **kwargs):
+        args = super().parse_options(*args, **kwargs)
         if not self._parse_install_options(self.opts.insoptions, self.insoptions):
             self.install = self._install_cmd
         if not self._parse_install_options(self.opts.diroptions, self.diroptions):
             self.install_dirs = self._install_dirs_cmd
+        return args
 
     def _parse_install_options(self, options, namespace):
         """Parse install command options.
@@ -199,16 +212,18 @@ class _InstallWrapper(IpcCommand):
             return False
         return True
 
-    def finalize_args(self, args):
-        if not args:
-            raise IpcCommandError('missing targets')
-        self.targets = args
+    def finalize(self, args):
         self.target_dir = pjoin(self.op.ED, self.opts.dest.lstrip(os.path.sep))
 
-    def run(self):
+        if args is None:
+            raise IpcCommandError('missing targets to install')
+        args = (x.rstrip(os.path.sep) for x in args)
+        return args
+
+    def run(self, args):
         os.chdir(self.opts.cwd)
         self.install_dirs([self.target_dir])
-        self._install_targets(x.rstrip(os.path.sep) for x in self.targets)
+        self._install_targets(args)
 
     def _install_targets(self, targets):
         """Install targets.
@@ -423,9 +438,12 @@ class _InstallWrapper(IpcCommand):
 class Doins(_InstallWrapper):
     """Python wrapper for doins."""
 
-    def finalize_args(self, args):
-        super().finalize_args(args)
+    opts_parser = IpcArgumentParser(add_help=False)
+    opts_parser.add_argument('-r', dest='recursive', action='store_true')
+
+    def finalize(self, *args, **kwargs):
         self.allow_symlinks = self.op.pkg.eapi.options.doins_allow_symlinks
+        return super().finalize(*args, **kwargs)
 
     def _install_files(self, files):
         if self.allow_symlinks:
@@ -437,9 +455,12 @@ class Doins(_InstallWrapper):
 class Dodoc(_InstallWrapper):
     """Python wrapper for dodoc."""
 
-    def finalize_args(self, args):
-        super().finalize_args(args)
+    opts_parser = IpcArgumentParser(add_help=False)
+    opts_parser.add_argument('-r', dest='recursive', action='store_true')
+
+    def finalize(self, *args, **kwargs):
         self.allow_recursive = self.op.pkg.eapi.options.dodoc_allow_recursive
+        return super().finalize(*args, **kwargs)
 
     def _install_targets(self, targets):
         files, dirs = partition(targets, predicate=os.path.isdir)

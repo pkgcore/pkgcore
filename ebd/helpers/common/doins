@@ -7,13 +7,6 @@ OPTIONS=(
 	"--diroptions=\"${DIROPTIONS}\""
 )
 
-if [[ $1 == "-r" ]]; then
-	OPTIONS+=( "--recursive" )
-	shift
-fi
-
-check_args 1 -
-
 if [[ -n ${INSDESTTREE} && -z ${INSDESTTREE%${ED}*} ]]; then
 	__helper_exit 2 "do not give \${D} or \${ED} as part of the path arguments to doins"
 fi

@@ -47,6 +47,7 @@ __ebd_ipc_cmd() {
 	shift 2
 
 	__ebd_write_line ${cmd}
+	__ebd_write_line ${PKGCORE_NONFATAL:-false}
 	__ebd_write_line ${opts}
 	# Send arg list as a single string using a null char delimiter terminated by a newline.
 	# Note that this requires printf as echo doesn't appear to respect IFS=$'\0'.

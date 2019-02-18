@@ -76,6 +76,7 @@ class IpcCommand(object):
 
     def __call__(self, ebd):
         self.ebd = ebd
+        nonfatal = self.read() == 'true'
         options = shlex.split(self.read())
         args = self.read().strip('\0')
         args = args.split('\0') if args else None
@@ -87,8 +88,11 @@ class IpcCommand(object):
             self.run(args)
         except IGNORED_EXCEPTIONS:
             raise
-        except IpcCommandError:
-            raise
+        except IpcCommandError as e:
+            if nonfatal:
+                self.warn(str(e))
+            else:
+                raise
         except Exception as e:
             raise IpcInternalError(f'internal python failure') from e
 

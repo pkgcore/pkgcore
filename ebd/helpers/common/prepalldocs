@@ -51,15 +51,15 @@ for y in ${z}; do
 			mylink=${mylink}.${suffix}
 		fi
 
-		echo "   link fixed ${mylink##*/}"
+		echo "  link fixed ${mylink##*/}"
 		ln -snf "${linkto}" "${mylink}"
 		if [[ ${y} != ${mylink} ]]; then
-			echo "   link removed ${y##*/}"
+			echo "  link removed ${y##*/}"
 			rm -f "${y}"
 		fi
 	else
 		if [[ ${y##*.} != ${suffix} ]]; then
-			echo "   compressing ${y##*/}" >&2
+			echo "  compressing ${y##*/}" >&2
 			"${PORTAGE_COMPRESS}" ${PORTAGE_COMPRESS_FLAGS} -f "${y}"
 		fi
 	fi

@@ -69,6 +69,7 @@ class IpcCommand(object):
 
     def __init__(self, op):
         self.op = op
+        self.ED = op.ED
         self.observer = self.op.observer
         self._helper = self.__class__.__name__.lower()
         self.opts = arghparse.Namespace()
@@ -213,7 +214,7 @@ class _InstallWrapper(IpcCommand):
         return True
 
     def finalize(self, args):
-        self.target_dir = pjoin(self.op.ED, self.opts.dest.lstrip(os.path.sep))
+        self.target_dir = pjoin(self.ED, self.opts.dest.lstrip(os.path.sep))
 
         if args is None:
             raise IpcCommandError('missing targets to install')
@@ -503,24 +504,25 @@ class Dohtml(_InstallWrapper):
         self.opts.allowed_files = set(self.opts.allowed_files)
 
         if self.opts.verbose:
-            msg = []
-            if self.opts.allowed_file_exts:
-                msg.append(
-                    f"  Allowed extensions: {', '.join(sorted(self.opts.allowed_file_exts))}")
-            if self.opts.excluded_dirs:
-                msg.append(
-                    f"  Allowed extensions: {', '.join(sorted(self.opts.allowed_file_exts))}")
-            if self.opts.allowed_files:
-                msg.append(
-                    f"  Allowed files: {', '.join(sorted(self.opts.allowed_files))}")
-            if self.opts.doc_prefix:
-                msg.append(f"  Document prefix: {self.opts.doc_prefix!r}")
-            if msg:
-                msg = ['dohtml:'] + msg
-                self.observer.write('\n'.join(msg) + '\n')
-                self.observer.flush()
+            self.observer.write(str(self) + '\n')
+            self.observer.flush()
 
         return args
+
+    def __str__(self):
+        msg = ['dohtml:', f'  Installing to: /{self.target_dir[len(self.ED):]}']
+        if self.opts.allowed_file_exts:
+            msg.append(
+                f"  Allowed extensions: {', '.join(sorted(self.opts.allowed_file_exts))}")
+        if self.opts.excluded_dirs:
+            msg.append(
+                f"  Allowed extensions: {', '.join(sorted(self.opts.allowed_file_exts))}")
+        if self.opts.allowed_files:
+            msg.append(
+                f"  Allowed files: {', '.join(sorted(self.opts.allowed_files))}")
+        if self.opts.doc_prefix:
+            msg.append(f"  Document prefix: {self.opts.doc_prefix!r}")
+        return '\n'.join(msg)
 
     def _install_targets(self, targets):
         files, dirs = partition(targets, predicate=os.path.isdir)

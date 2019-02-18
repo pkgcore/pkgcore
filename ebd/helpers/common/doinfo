@@ -3,7 +3,6 @@
 OPTIONS=(
 	"--cwd=\"${PWD}\""
 	"--dest=/usr/share/info"
-	"--insoptions=-m0644"
 )
 
 # python side handles install

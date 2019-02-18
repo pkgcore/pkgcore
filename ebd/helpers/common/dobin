@@ -3,7 +3,6 @@
 OPTIONS=(
 	"--cwd=\"${PWD}\""
 	"--dest=\"${DESTTREE}\""
-	"--insoptions=-m0755"
 )
 
 # python side handles install

@@ -479,6 +479,10 @@ class Dodoc(_InstallWrapper):
     opts_parser = IpcArgumentParser(add_help=False)
     opts_parser.add_argument('-r', dest='recursive', action='store_true')
 
+    def parse_install_options(self, *args, **kwargs):
+        self.opts.insoptions = ['-m0644']
+        return super().parse_install_options(*args, **kwargs)
+
     def finalize(self, *args, **kwargs):
         self.allow_recursive = self.op.pkg.eapi.options.dodoc_allow_recursive
         return super().finalize(*args, **kwargs)
@@ -499,6 +503,10 @@ class Dodoc(_InstallWrapper):
 class Doinfo(_InstallWrapper):
     """Python wrapper for doinfo."""
 
+    def parse_install_options(self, *args, **kwargs):
+        self.opts.insoptions = ['-m0644']
+        return super().parse_install_options(*args, **kwargs)
+
 
 class Doexe(_InstallWrapper):
     """Python wrapper for doexe."""
@@ -507,15 +515,17 @@ class Doexe(_InstallWrapper):
 class Dobin(_InstallWrapper):
     """Python wrapper for dobin."""
 
-    def parse_install_options(self, opts, args):
+    def parse_install_options(self, *args, **kwargs):
+        # TODO: fix this to be prefix aware at some point
+        self.opts.insoptions = [
+            '-m0755', f'-g{os_data.root_gid}', f'-o{os_data.root_uid}']
+        return super().parse_install_options(*args, **kwargs)
+
+    def finalize(self, *args, **kwargs):
         # get bin/sbin subdir to install into
         subdir = self._helper[2:]
         self.opts.dest = pjoin(self.opts.dest, subdir)
-
-        # TODO: fix this to be prefix aware at some point
-        self.opts.insoptions.extend([f'-g{os_data.root_gid}', f'-o{os_data.root_uid}'])
-
-        return super().parse_install_options(opts, args)
+        return super().finalize(*args, **kwargs)
 
 
 class Dosbin(Dobin):
@@ -536,6 +546,10 @@ class Dohtml(_InstallWrapper):
 
     # default allowed file extensions
     default_allowed_file_exts = ('css', 'gif', 'htm', 'html', 'jpeg', 'jpg', 'js', 'png')
+
+    def parse_install_options(self, *args, **kwargs):
+        self.opts.insoptions = ['-m0644']
+        return super().parse_install_options(*args, **kwargs)
 
     def finalize(self, *args, **kwargs):
         args = super().finalize(*args, **kwargs)

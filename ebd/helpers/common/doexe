@@ -1,10 +1,7 @@
-#!/usr/bin/env pkgcore-ebuild-helper
+#!/usr/bin/env pkgcore-ipc-helper
 
 OPTIONS=(
 	"--cwd=\"${PWD}\""
 	"--dest=\"${PKGCORE_EXEDESTTREE}\""
 	"--insoptions=\"${EXEOPTIONS}\""
 )
-
-# python side handles install
-__ebd_ipc_cmd ${HELPER_NAME} "${OPTIONS[*]}" "$@"

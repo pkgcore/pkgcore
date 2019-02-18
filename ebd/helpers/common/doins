@@ -1,4 +1,4 @@
-#!/usr/bin/env pkgcore-ebuild-helper
+#!/usr/bin/env pkgcore-ipc-helper
 
 OPTIONS=(
 	"--cwd=\"${PWD}\""
@@ -10,6 +10,3 @@ OPTIONS=(
 if [[ -n ${INSDESTTREE} && -z ${INSDESTTREE%${ED}*} ]]; then
 	__helper_exit 2 "do not give \${D} or \${ED} as part of the path arguments to doins"
 fi
-
-# python side handles install
-__ebd_ipc_cmd ${HELPER_NAME} "${OPTIONS[*]}" "$@"

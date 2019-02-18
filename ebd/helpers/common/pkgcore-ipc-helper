@@ -1,0 +1,99 @@
+#!/usr/bin/env bash
+
+# protect against env screwups.
+if [[ -z ${PKGCORE_EBD_PATH} ]]; then
+	PKGCORE_EBD_PATH=$(readlink -f "${0}")
+	# and go up 3, out of helpers.
+	PKGCORE_EBD_PATH=${PKGCORE_EBD_PATH%/*}
+	PKGCORE_EBD_PATH=${PKGCORE_EBD_PATH%/*}
+	PKGCORE_EBD_PATH=${PKGCORE_EBD_PATH%/*}
+fi
+export PKGCORE_EBD_PATH
+
+source "${PKGCORE_EBD_PATH}"/exit-handling.bash || {
+	echo "failed to load exit-handling library: PKGCORE_EBD_PATH=${PKGCORE_EBD_PATH}" >&2
+	exit -127
+}
+
+if [[ $# -lt 1 ]]; then
+	die "ipc-helper invoked without a target helper; no args given."
+fi
+
+source "${PKGCORE_EBD_PATH}"/ebuild-daemon-lib.bash || \
+	die "failed to load ebuild-daemon-lib.bash"
+source "${PKGCORE_EBD_PATH}"/isolated-functions.bash || \
+	die "failed to load isolated-functions.bash"
+source "${PKGCORE_EBD_PATH}"/eapi/depend.bash >&2 || \
+	die "failed sourcing eapi/depend.bash"
+source "${PKGCORE_EBD_PATH}"/eapi/common.bash >&2 || \
+	die "failed sourcing eapi/common.bash"
+
+HELPER_ERROR_PREFIX=
+
+if ! ${PKGCORE_PREFIX_SUPPORT:=false}; then
+	export ED=${D}
+elif [[ ${ED:-unset} == "unset" ]]; then
+	error "The variable ED is missing from the environment, but is required for prefix mode; failing."
+	exit -1
+fi
+
+# run an ebuild command on the python side and return its status
+__ebd_ipc_cmd() {
+	local cmd=$1 opts=$2 ret_str
+	shift 2
+
+	__ebd_write_line ${cmd}
+	__ebd_write_line ${PKGCORE_NONFATAL:-false}
+	__ebd_write_line ${opts}
+	# Send arg list as a single string using a null char delimiter terminated by a newline.
+	# Note that this requires printf as echo doesn't appear to respect IFS=$'\0'.
+	printf "%s\0" "$@" >&${PKGCORE_EBD_WRITE_FD}
+	__ebd_write_line
+
+	__ebd_read_line ret_str
+	__ipc_exit "${ret_str}"
+}
+
+__ipc_exit() {
+	[[ $1 == 0 ]] && exit 0
+
+	local ret_str=$1 ret msg
+	local -a ret_array
+
+	# Split return status into array of return code and optional error message.
+	# This uses a bell char as a delimiter since the null char can't be
+	# assigned to variables.
+	IFS=$'\x07' read -ra ret_array <<< "${ret_str}"
+	ret=${ret_array[0]}
+	msg=${ret_array[1]}
+
+	local error_msg="${HELPER_ERROR_PREFIX}: exitcode ${ret}"
+	[[ -n ${msg} ]] && error_msg+=": ${msg}"
+
+	if ${PKGCORE_NONFATAL}; then
+		eerror "${error_msg}"
+		exit ${ret}
+	fi
+
+	die "${error_msg}"
+}
+
+run_ipc_cmd() {
+	[[ $# -eq 0 ]] && die "${FUNCNAME}: missing required arguments"
+	local HELPER_PATH=$1
+	local HELPER_NAME=${1##*/}
+	shift
+	if [[ ! -e ${HELPER_PATH} ]]; then
+		# note this can daftly go find a binary...
+		HELPER_PATH=$(type -p "${HELPER_NAME}")
+		[[ -z ${HELPER_PATH} ]] && die "couldn't find implementation of ${HELPER_NAME}!?"
+	fi
+
+	local OLD_ERROR_PREFIX=${HELPER_ERROR_PREFIX}
+	local HELPER_ERROR_PREFIX=${OLD_ERROR_PREFIX:+${OLD_ERROR_PREFIX}: }${HELPER_NAME}
+
+	source "${HELPER_PATH}"
+	__ebd_ipc_cmd ${HELPER_NAME} "${OPTIONS[*]}" "$@"
+}
+run_ipc_cmd "$@"
+exit $(( $? ))

@@ -1,5 +1,6 @@
 import itertools
 import os
+import re
 import shlex
 import shutil
 import stat
@@ -553,6 +554,65 @@ class Dolib_so(Dolib):
 
 class Dolib_a(Dolib):
     """Python wrapper for dolib.a."""
+
+
+class Doman(_InstallWrapper):
+    """Python wrapper for doman."""
+
+    opts_parser = IpcArgumentParser(add_help=False)
+    opts_parser.add_argument('-i18n', action='store_true', default='')
+
+    detect_lang_re = re.compile(r'^(\w+)\.([a-z]{2}([A-Z]{2})?)\.(\w+)$')
+    valid_mandir_re = re.compile(r'man[0-9n](f|p|pm)?$')
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.allow_symlinks = True
+
+    def parse_install_options(self, *args, **kwargs):
+        self.opts.insoptions = ['-m0644']
+        return super().parse_install_options(*args, **kwargs)
+
+    def finalize(self, *args, **kwargs):
+        self.language_detect = self.eapi.options.doman_language_detect
+        self.language_override = self.eapi.options.doman_language_override
+        return super().finalize(*args, **kwargs)
+
+    def _filter_targets(self, files):
+        dirs = set()
+        for f in files:
+            basename = os.path.basename(f)
+            suffix = os.path.splitext(basename)[1][1:]
+
+            if self.eapi.archive_suffixes_re.match(suffix):
+                # TODO: uncompress/warn?
+                suffix = os.path.splitext(basename.rsplit('.', 1)[0])[1][1:]
+
+            name = basename
+            mandir = f'man{suffix}'
+
+            if self.language_override and self.opts.i18n:
+                mandir = pjoin(self.opts.i18n, mandir)
+            elif self.language_detect:
+                match = self.detect_lang_re.match(basename)
+                if match:
+                    name = f'{match.group(0)}.{match.group(3)}'
+                    mandir = pjoin(match.group(1), mandir)
+
+            if self.valid_mandir_re.match(mandir):
+                if mandir not in dirs:
+                    yield True, mandir
+                    dirs.add(mandir)
+                yield False, (f, pjoin(mandir, name))
+            else:
+                raise IpcCommandError(f'invalid man page: {f}')
+
+    def _install_targets(self, targets):
+        # TODO: skip/warn installing empty files
+        targets = self._filter_targets(targets)
+        files, dirs = partition(targets, predicate=itemgetter(0))
+        self.install_dirs(x for _, x in dirs)
+        self._install_files(x for _, x in files)
 
 
 class Dohtml(_InstallWrapper):

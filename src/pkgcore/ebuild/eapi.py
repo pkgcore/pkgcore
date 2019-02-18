@@ -351,8 +351,8 @@ common_archive_suffixes = (
 # Boolean variables exported to the bash side, e.g. ebuild_phase_func is
 # exported as PKGCORE_EBUILD_PHASE_FUNC.
 common_env_optionals = (
-    "bash_compat", "doman_language_detect", "doman_language_override", "ebuild_phase_func",
-    "global_failglob", "new_reads_stdin", "nonfatal", "nonfatal_die",
+    "bash_compat", "ebuild_phase_func", "global_failglob",
+    "new_reads_stdin", "nonfatal", "nonfatal_die",
     "unpack_absolute_paths", "unpack_case_insensitive",
 )
 

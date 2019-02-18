@@ -1,47 +1,6 @@
-#!/usr/bin/env pkgcore-ebuild-helper
-# Copyright: 2011 Brian Harring <ferringb@gmail.com>
-# License: GPL2/BSD 3 clause
+#!/usr/bin/env pkgcore-ipc-helper
 
-check_args 1 -
-
-i18n=""
-
-for x in "$@"; do
-	if [[ ${x} == "-i18n="* ]]; then
-		i18n=${x:6}/
-		continue
-	fi
-	if [[ ${x} == ".keep_"* || ${x} == ".keep" ]]; then
-		continue
-	fi
-
-	# rewrite this suffix bits into regex.
-	suffix=${x##*.}
-	if __safe_has "${suffix}" Z gz bz2; then
-		uncompressed_name=${x%.*}
-		suffix=${uncompressed_name##*.}
-	fi
-
-	if ${PKGCORE_DOMAN_LANGUAGE_OVERRIDE} && [[ -n ${i18n} ]]; then
-		name=${x##*/}
-		mandir=${i18n}man${suffix:0:1}
-	elif ${PKGCORE_DOMAN_LANGUAGE_DETECT} &&
-		[[ ${x} =~ (.*)\.([a-z][a-z](_[A-Z][A-Z])?)\.(.*) ]]; then
-		name=${BASH_REMATCH[1]##*/}.${BASH_REMATCH[4]}
-		mandir=${BASH_REMATCH[2]}/man${suffix:0:1}
-	else
-		name=${x##*/}
-		mandir=${i18n}man${suffix:0:1}
-	fi
-
-	if [[ ${mandir} =~ man[0-9n](f|p|pm)?$ ]]; then
-		if [[ -s ${x} ]]; then
-			check_command install -d "${ED}/usr/share/man/${mandir}" || continue
-			check_command install -m0644 -- "${x}" "${ED}/usr/share/man/${mandir}/${name}"
-		elif [[ ! -e ${x} ]]; then
-			error "'${x}' does not exist"
-		fi
-	else
-		error "'${x}' doesn't have a filename pattern that looks like a man page, not installing"
-	fi
-done
+OPTIONS=(
+	"--cwd=\"${PWD}\""
+	"--dest=/usr/share/man"
+)

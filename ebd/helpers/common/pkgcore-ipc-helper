@@ -27,6 +27,8 @@ source "${PKGCORE_EBD_PATH}"/eapi/depend.bash >&2 || \
 	die "failed sourcing eapi/depend.bash"
 source "${PKGCORE_EBD_PATH}"/eapi/common.bash >&2 || \
 	die "failed sourcing eapi/common.bash"
+source "${PKGCORE_EBD_PATH}"/helpers/internals/helper-lib.bash >&2 || \
+	die "failed sourcing helpers/internals/helper-lib.bash"
 
 HELPER_ERROR_PREFIX=
 
@@ -40,6 +42,7 @@ fi
 # run an ebuild command on the python side and return its status
 __ebd_ipc_cmd() {
 	local cmd=$1 opts=$2 ret_str
+	local -a ret
 	shift 2
 
 	__ebd_write_line ${cmd}
@@ -50,44 +53,22 @@ __ebd_ipc_cmd() {
 	printf "%s\0" "$@" >&${PKGCORE_EBD_WRITE_FD}
 	__ebd_write_line
 
-	__ebd_read_line ret_str
-	__ipc_exit "${ret_str}"
-}
-
-__ipc_exit() {
-	[[ $1 == 0 ]] && exit 0
-
-	local ret_str=$1 ret msg
-	local -a ret_array
-
 	# Split return status into array of return code and optional error message.
 	# This uses a bell char as a delimiter since the null char can't be
 	# assigned to variables.
-	IFS=$'\x07' read -ra ret_array <<< "${ret_str}"
-	ret=${ret_array[0]}
-	msg=${ret_array[1]}
-
-	local error_msg="${HELPER_ERROR_PREFIX}: exitcode ${ret}"
-	[[ -n ${msg} ]] && error_msg+=": ${msg}"
-
-	if ${PKGCORE_NONFATAL}; then
-		eerror "${error_msg}"
-		exit ${ret}
-	fi
-
-	die "${error_msg}"
+	__ebd_read_line ret_str
+	IFS=$'\x07' read -ra ret <<< "${ret_str}"
+	__helper_exit "${ret[@]}"
 }
 
 run_ipc_cmd() {
 	[[ $# -eq 0 ]] && die "${FUNCNAME}: missing required arguments"
-
 	local HELPER_PATH=$1
 	local HELPER_NAME=${1##*/}
 	local HELPER_EAPI=${1%/*}
 	HELPER_EAPI=${HELPER_EAPI##*/}
-	local IPC_CMD=${HELPER_NAME}
 	shift
-
+	local HELPER_ARG_COUNT=$#
 	if [[ ! -e ${HELPER_PATH} ]]; then
 		# note this can daftly go find a binary...
 		HELPER_PATH=$(type -p "${HELPER_NAME}")
@@ -97,7 +78,9 @@ run_ipc_cmd() {
 	local OLD_ERROR_PREFIX=${HELPER_ERROR_PREFIX}
 	local HELPER_ERROR_PREFIX=${OLD_ERROR_PREFIX:+${OLD_ERROR_PREFIX}: }${HELPER_NAME}
 
+	local IPC_CMD=${HELPER_NAME}
 	source "${HELPER_PATH}"
+
 	# load main command opts when running a subcommand
 	if [[ ${HELPER_NAME} != ${IPC_CMD} ]]; then
 		source "$(type -p ${IPC_CMD})" >&2 || die "failed sourcing ${IPC_CMD}"

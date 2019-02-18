@@ -639,6 +639,9 @@ class buildable(ebd, setup_mixin, format.build):
             'doexe': ebd_ipc.Doexe(self),
             'dobin': ebd_ipc.Dobin(self),
             'dosbin': ebd_ipc.Dosbin(self),
+            'dolib': ebd_ipc.Dolib(self),
+            'dolib.so': ebd_ipc.Dolib_so(self),
+            'dolib.a': ebd_ipc.Dolib_a(self),
         }
 
     def _generic_phase(self, *args, extra_handlers={}, **kwargs):

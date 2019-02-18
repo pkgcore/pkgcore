@@ -72,7 +72,7 @@ class IpcCommand(object):
         self.op = op
         self.ED = op.ED
         self.observer = self.op.observer
-        self._helper = self.__class__.__name__.lower()
+        self._helper = self.__class__.__name__.lower().replace('_', '.')
         self.opts = arghparse.Namespace()
 
     def __call__(self, ebd):
@@ -187,6 +187,7 @@ class _InstallWrapper(IpcCommand):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.allow_symlinks = False
         self.insoptions = arghparse.Namespace()
         self.diroptions = arghparse.Namespace()
         # default to python-based install cmds
@@ -253,7 +254,11 @@ class _InstallWrapper(IpcCommand):
         Args:
             files: iterable of (path, target dir) tuples of files to install
         """
+        files, symlinks = partition(files, predicate=lambda x: os.path.islink(x[0]))
         self.install(files)
+        # TODO: warn on symlinks when not supported?
+        if self.allow_symlinks:
+            self.install_symlinks(symlinks)
 
     def _install_from_dirs(self, dirs):
         """Install all targets under given directories.
@@ -440,10 +445,6 @@ class _InstallWrapper(IpcCommand):
         try:
             for symlink, dest_dir in symlinks:
                 dest = pjoin(dest_dir, os.path.basename(symlink))
-                try:
-                    os.unlink(dest)
-                except IsADirectoryError:
-                    shutil.rmtree(dest, ignore_errors=True)
                 os.symlink(os.readlink(symlink), dest)
         except OSError as e:
             raise IpcCommandError(
@@ -465,12 +466,6 @@ class Doins(_InstallWrapper):
         if self.opts.recursive:
             self._install_from_dirs(dirs)
         self._install_files((f, self.target_dir) for f in files)
-
-    def _install_files(self, files):
-        if self.allow_symlinks:
-            files, symlinks = partition(files, predicate=lambda x: os.path.islink(x[0]))
-            self.install_symlinks(symlinks)
-        self.install(files)
 
 
 class Dodoc(_InstallWrapper):
@@ -530,6 +525,22 @@ class Dobin(_InstallWrapper):
 
 class Dosbin(Dobin):
     """Python wrapper for dosbin."""
+
+
+class Dolib(_InstallWrapper):
+    """Python wrapper for dolib."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.allow_symlinks = True
+
+
+class Dolib_so(Dolib):
+    """Python wrapper for dolib.so."""
+
+
+class Dolib_a(Dolib):
+    """Python wrapper for dolib.a."""
 
 
 class Dohtml(_InstallWrapper):

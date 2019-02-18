@@ -289,10 +289,14 @@ class _InstallWrapper(IpcCommand):
         Args:
             path: file/directory path
         """
-        if opts.owner != -1 or opts.group != -1:
-            os.lchown(path, opts.owner, opts.group)
-        if opts.mode is not None:
-            os.chmod(path, opts.mode)
+        try:
+            if opts.owner != -1 or opts.group != -1:
+                os.lchown(path, opts.owner, opts.group)
+            if opts.mode is not None:
+                os.chmod(path, opts.mode)
+        except OSError as e:
+            raise IpcCommandError(
+                f'failed setting file attributes: {path!r}: {e.strerror}')
 
     @staticmethod
     def _set_timestamps(source_stat, dest):

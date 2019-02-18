@@ -71,6 +71,7 @@ class IpcCommand(object):
     def __init__(self, op):
         self.op = op
         self.ED = op.ED
+        self.eapi = op.pkg.eapi
         self.observer = self.op.observer
         self._helper = self.__class__.__name__.lower().replace('_', '.')
         self.opts = arghparse.Namespace()
@@ -237,7 +238,11 @@ class _InstallWrapper(IpcCommand):
 
     def run(self, args):
         os.chdir(self.opts.cwd)
-        self.install_dirs([self.target_dir])
+        try:
+            os.makedirs(self.target_dir, exist_ok=True)
+        except OSError as e:
+            raise IpcCommandError(
+                f'failed creating dir: {self.target_dir!r}: {e.strerror}')
         self._install_targets(args)
 
     def _install_targets(self, targets):
@@ -246,7 +251,8 @@ class _InstallWrapper(IpcCommand):
         Args:
             targets: files/symlinks/dirs/etc to install
         """
-        self._install_files((f, self.target_dir) for f in targets)
+        files = ((f, os.path.basename(f)) for f in targets)
+        self._install_files(files)
 
     def _install_files(self, files):
         """Install files into a given directory.
@@ -268,24 +274,26 @@ class _InstallWrapper(IpcCommand):
         """
         def scan_dirs(paths):
             for d in paths:
-                dest_dir = pjoin(self.target_dir, os.path.basename(d))
+                dest_dir = os.path.basename(d)
                 yield True, dest_dir
                 for dirpath, dirnames, filenames in os.walk(d):
                     for dirname in dirnames:
                         source_dir = pjoin(dirpath, dirname)
                         relpath = os.path.relpath(source_dir, self.opts.cwd)
                         if os.path.islink(source_dir):
-                            yield False, (relpath, dest_dir)
+                            dest = pjoin(dest_dir, os.path.basename(relpath))
+                            yield False, (relpath, dest)
                         else:
-                            yield True, pjoin(self.target_dir, relpath)
-                    yield from (
-                        (False, (os.path.relpath(pjoin(dirpath, f), self.opts.cwd), dest_dir))
-                        for f in filenames)
+                            yield True, relpath
+                    for f in filenames:
+                        source = os.path.relpath(pjoin(dirpath, f), self.opts.cwd)
+                        dest = pjoin(dest_dir, os.path.basename(f))
+                        yield False, (source, dest)
 
         # determine all files and dirs under target directories and install them
         files, dirs = partition(scan_dirs(dirs), predicate=itemgetter(0))
-        self.install_dirs(path for _, path in dirs)
-        self._install_files(path for _, path in files)
+        self.install_dirs(x for _, x in dirs)
+        self._install_files(x for _, x in files)
 
     @staticmethod
     def _set_attributes(opts, path):
@@ -360,8 +368,8 @@ class _InstallWrapper(IpcCommand):
         Raises:
             IpcCommandError on failure
         """
-        for f, dest_dir in files:
-            dest = pjoin(dest_dir, os.path.basename(f))
+        for f, dest in files:
+            dest = pjoin(self.target_dir, dest)
             try:
                 sstat = os.stat(f)
             except OSError as e:
@@ -383,7 +391,7 @@ class _InstallWrapper(IpcCommand):
                     if self.insoptions.preserve_timestamps:
                         self._set_timestamps(sstat, dest)
             except OSError as e:
-                raise IpcCommandError(f'failed copying file: {f!r} to {dest_dir!r}: {e.strerror}')
+                raise IpcCommandError(f'failed copying file: {f!r} to {dest!r}: {e.strerror}')
 
     def _install_cmd(self, files):
         """Install files using `install` command.
@@ -394,9 +402,10 @@ class _InstallWrapper(IpcCommand):
             IpcCommandError on failure
         """
         files = sorted(files, key=itemgetter(1))
-        for dest_dir, files_group in itertools.groupby(files, itemgetter(1)):
+        for dest, files_group in itertools.groupby(files, itemgetter(1)):
+            dest = pjoin(self.target_dir, dest)
             paths = list(path for path, _ in files_group)
-            command = ['install'] + self.opts.insoptions + paths + [dest_dir]
+            command = ['install'] + self.opts.insoptions + paths + [dest]
             try:
                 subprocess.run(command, check=True, stderr=subprocess.PIPE)
             except subprocess.CalledProcessError as e:
@@ -412,6 +421,7 @@ class _InstallWrapper(IpcCommand):
         """
         try:
             for d in dirs:
+                d = pjoin(self.target_dir, d)
                 os.makedirs(d, exist_ok=True)
                 if self.diroptions:
                     self._set_attributes(self.diroptions, d)
@@ -426,8 +436,7 @@ class _InstallWrapper(IpcCommand):
         Raises:
             IpcCommandError on failure
         """
-        if not isinstance(dirs, list):
-            dirs = list(dirs)
+        dirs = [pjoin(self.target_dir, d) for d in dirs]
         command = ['install', '-d'] + self.opts.diroptions + dirs
         try:
             subprocess.run(command, check=True, stderr=subprocess.PIPE)
@@ -443,8 +452,8 @@ class _InstallWrapper(IpcCommand):
             IpcCommandError on failure
         """
         try:
-            for symlink, dest_dir in symlinks:
-                dest = pjoin(dest_dir, os.path.basename(symlink))
+            for symlink, dest in symlinks:
+                dest = pjoin(self.target_dir, dest)
                 os.symlink(os.readlink(symlink), dest)
         except OSError as e:
             raise IpcCommandError(
@@ -458,14 +467,15 @@ class Doins(_InstallWrapper):
     opts_parser.add_argument('-r', dest='recursive', action='store_true')
 
     def finalize(self, *args, **kwargs):
-        self.allow_symlinks = self.op.pkg.eapi.options.doins_allow_symlinks
+        self.allow_symlinks = self.eapi.options.doins_allow_symlinks
         return super().finalize(*args, **kwargs)
 
     def _install_targets(self, targets):
         files, dirs = partition(targets, predicate=os.path.isdir)
         if self.opts.recursive:
             self._install_from_dirs(dirs)
-        self._install_files((f, self.target_dir) for f in files)
+        files = ((f, os.path.basename(f)) for f in files)
+        self._install_files(files)
 
 
 class Dodoc(_InstallWrapper):
@@ -479,7 +489,7 @@ class Dodoc(_InstallWrapper):
         return super().parse_install_options(*args, **kwargs)
 
     def finalize(self, *args, **kwargs):
-        self.allow_recursive = self.op.pkg.eapi.options.dodoc_allow_recursive
+        self.allow_recursive = self.eapi.options.dodoc_allow_recursive
         return super().finalize(*args, **kwargs)
 
     def _install_targets(self, targets):
@@ -492,7 +502,9 @@ class Dodoc(_InstallWrapper):
             else:
                 missing_option = ', missing -r option?' if self.allow_recursive else ''
                 raise IpcCommandError(f'{dirs[0]!r} is a directory{missing_option}')
-        self._install_files((f, self.target_dir) for f in files)
+        # TODO: skip/warn installing empty files
+        files = ((f, os.path.basename(f)) for f in files)
+        self._install_files(files)
 
 
 class Doinfo(_InstallWrapper):
@@ -605,11 +617,12 @@ class Dohtml(_InstallWrapper):
                 self._install_from_dirs(dirs)
             else:
                 raise IpcCommandError(f'{dirs[0]!r} is a directory, missing -r option?')
-        self._install_files((f, self.target_dir) for f in files)
+        files = ((f, os.path.basename(f)) for f in files)
+        self._install_files(files)
 
     def _allowed_file(self, item):
         """Determine if a file is allowed to be installed."""
-        path, dest_dir = item
+        path, dest = item
         basename = os.path.basename(path)
         ext = os.path.splitext(basename)[1][1:]
         return (ext in self.opts.allowed_file_exts or basename in self.opts.allowed_files)

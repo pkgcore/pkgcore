@@ -57,15 +57,12 @@ class TestPortageConfig(TempDirMixin, TestCase):
 
         # overrides and incrementals
         with NamedTemporaryFile() as f:
-            f.write(b'DISTDIR=foo\nACCEPT_LICENSE=foo\n')
+            f.write(b'DISTDIR=foo\n')
             f.flush()
             d = {}
             load_make_conf(d, pjoin(const.CONFIG_PATH, 'make.globals'))
             load_make_conf(d, f.name, allow_sourcing=True, incrementals=True)
             self.assertEqual('foo', d['DISTDIR'])
-            self.assertEqual(
-                ' '.join([self.make_globals['ACCEPT_LICENSE'], 'foo']),
-                d['ACCEPT_LICENSE'])
 
     def test_load_make_conf_dir(self):
         # load files from dir and symlinked dir
@@ -86,8 +83,6 @@ class TestPortageConfig(TempDirMixin, TestCase):
             load_make_conf(sym_d, make_conf_sym)
 
             self.assertEqual(d, sym_d)
-            self.assertEqual(
-                self.make_globals['ACCEPT_LICENSE'], d['ACCEPT_LICENSE'])
             self.assertEqual('foo', d['DISTDIR'])
 
     # TODO: add some tests for duplicate sections that should output log messages

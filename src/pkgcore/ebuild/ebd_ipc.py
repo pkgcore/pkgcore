@@ -63,7 +63,6 @@ class IpcCommand(object):
 
     # argument parser for internal options
     parser = IpcArgumentParser(add_help=False)
-    parser.add_argument('--cwd', required=True)
     parser.add_argument('--dest', required=True)
 
     # argument parser for user options
@@ -84,6 +83,7 @@ class IpcCommand(object):
         try:
             # read info from bash side
             nonfatal = self.read() == 'true'
+            self.cwd = self.read()
             options = shlex.split(self.read())
             args = self.read().strip('\0')
             args = args.split('\0') if args else None
@@ -238,7 +238,7 @@ class _InstallWrapper(IpcCommand):
         return args
 
     def run(self, args):
-        os.chdir(self.opts.cwd)
+        os.chdir(self.cwd)
         try:
             os.makedirs(self.target_dir, exist_ok=True)
         except OSError as e:
@@ -280,14 +280,14 @@ class _InstallWrapper(IpcCommand):
                 for dirpath, dirnames, filenames in os.walk(d):
                     for dirname in dirnames:
                         source_dir = pjoin(dirpath, dirname)
-                        relpath = os.path.relpath(source_dir, self.opts.cwd)
+                        relpath = os.path.relpath(source_dir, self.cwd)
                         if os.path.islink(source_dir):
                             dest = pjoin(dest_dir, os.path.basename(relpath))
                             yield False, (relpath, dest)
                         else:
                             yield True, relpath
                     for f in filenames:
-                        source = os.path.relpath(pjoin(dirpath, f), self.opts.cwd)
+                        source = os.path.relpath(pjoin(dirpath, f), self.cwd)
                         dest = pjoin(dest_dir, os.path.basename(f))
                         yield False, (source, dest)
 

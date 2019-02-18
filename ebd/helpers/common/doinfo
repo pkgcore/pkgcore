@@ -1,6 +1,3 @@
 #!/usr/bin/env pkgcore-ipc-helper
 
-OPTIONS=(
-	"--cwd=\"${PWD}\""
-	"--dest=/usr/share/info"
-)
+OPTIONS=( "--dest=/usr/share/info" )

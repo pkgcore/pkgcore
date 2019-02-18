@@ -7,7 +7,6 @@ elif [[ ${HELPER_NAME} == "dolib.a" ]]; then
 fi
 
 OPTIONS=(
-	"--cwd=\"${PWD}\""
 	"--dest=\"${DESTTREE}/$(__get_libdir lib)\""
 	"--insoptions=\"${LIBOPTIONS}\""
 )

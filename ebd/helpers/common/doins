@@ -1,7 +1,6 @@
 #!/usr/bin/env pkgcore-ipc-helper
 
 OPTIONS=(
-	"--cwd=\"${PWD}\""
 	"--dest=\"${INSDESTTREE}\""
 	"--insoptions=\"${INSOPTIONS}\""
 	"--diroptions=\"${DIROPTIONS}\""

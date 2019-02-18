@@ -631,6 +631,18 @@ class buildable(ebd, setup_mixin, format.build):
         if self.setup_is_for_src:
             self._init_distfiles_env()
 
+        # bash helpers implemented in python
+        self._ipc_helpers = {
+            'doins': Doins(self),
+            'dodoc': Dodoc(self),
+            'dohtml': Dohtml(self),
+        }
+
+    def _generic_phase(self, *args, extra_handlers={}, **kwargs):
+        # add IPC helpers to the available ebd command handlers
+        extra_handlers.update(self._ipc_helpers)
+        return super()._generic_phase(*args, extra_handlers=extra_handlers, **kwargs)
+
     def _init_distfiles_env(self):
         # TODO: PORTAGE_ACTUAL_DISTDIR usage by vcs eclasses needs to be killed off
         distdir_write = self.domain.fetcher.get_storage_path()
@@ -795,17 +807,10 @@ class buildable(ebd, setup_mixin, format.build):
     @observer.decorate_build_method("install")
     def install(self):
         """Run the install phase (maps to src_install)."""
-        # bash helpers implemented in python
-        ipc_helpers = {
-            'doins': Doins(self),
-            'dodoc': Dodoc(self),
-            'dohtml': Dohtml(self),
-        }
-
         # TODO: replace print() usage with observer
         ED = self.env.get('ED', self.env['D'])
         print(f">>> Install {self.env['PF']} into {ED} category {self.env['CATEGORY']}")
-        ret = self._generic_phase("install", False, True, extra_handlers=ipc_helpers)
+        ret = self._generic_phase("install", False, True)
         print(f">>> Completed installing {self.env['PF']} into {ED}")
         return ret
 

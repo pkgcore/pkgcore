@@ -76,13 +76,15 @@ class IpcCommand(object):
 
     def __call__(self, ebd):
         self.ebd = ebd
-        nonfatal = self.read() == 'true'
-        options = shlex.split(self.read())
-        args = self.read().strip('\0')
-        args = args.split('\0') if args else None
         ret = 0
 
         try:
+            # read info from bash side
+            nonfatal = self.read() == 'true'
+            options = shlex.split(self.read())
+            args = self.read().strip('\0')
+            args = args.split('\0') if args else None
+            # parse args and run command
             args = self.parse_options(options, args)
             args = self.finalize(args)
             self.run(args)
@@ -94,7 +96,7 @@ class IpcCommand(object):
             else:
                 raise
         except Exception as e:
-            raise IpcInternalError(f'internal python failure') from e
+            raise IpcInternalError(f'internal failure') from e
 
         # return completion status to the bash side
         self.write(ret)

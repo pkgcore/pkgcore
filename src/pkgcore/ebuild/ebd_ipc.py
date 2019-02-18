@@ -464,13 +464,14 @@ class Dodoc(_InstallWrapper):
 
     def _install_targets(self, targets):
         files, dirs = partition(targets, predicate=os.path.isdir)
+        # TODO: add peekable class for iterables to avoid list conversion
         dirs = list(dirs)
         if dirs:
             if self.opts.recursive and self.allow_recursive:
                 self._install_from_dirs(dirs)
             else:
                 missing_option = ', missing -r option?' if self.allow_recursive else ''
-                raise IpcCommandError(f'{dirs[0]} is a directory{missing_option}')
+                raise IpcCommandError(f'{dirs[0]!r} is a directory{missing_option}')
         self._install_files((f, self.target_dir) for f in files)
 
 
@@ -523,9 +524,14 @@ class Dohtml(_InstallWrapper):
 
     def _install_targets(self, targets):
         files, dirs = partition(targets, predicate=os.path.isdir)
-        if self.opts.recursive:
-            dirs = (d for d in dirs if d not in self.opts.excluded_dirs)
-            self._install_from_dirs(dirs)
+        # TODO: add peekable class for iterables to avoid list conversion
+        dirs = list(dirs)
+        if dirs:
+            if self.opts.recursive:
+                dirs = (d for d in dirs if d not in self.opts.excluded_dirs)
+                self._install_from_dirs(dirs)
+            else:
+                raise IpcCommandError(f'{dirs[0]!r} is a directory, missing -r option?')
         self._install_files((f, self.target_dir) for f in files)
 
     def _allowed_file(self, item):

@@ -636,6 +636,7 @@ class buildable(ebd, setup_mixin, format.build):
             'dodoc': ebd_ipc.Dodoc(self),
             'dohtml': ebd_ipc.Dohtml(self),
             'doinfo': ebd_ipc.Doinfo(self),
+            'doexe': ebd_ipc.Doexe(self),
         }
 
     def _generic_phase(self, *args, extra_handlers={}, **kwargs):

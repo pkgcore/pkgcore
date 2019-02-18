@@ -483,6 +483,10 @@ class Doinfo(_InstallWrapper):
     """Python wrapper for doinfo."""
 
 
+class Doexe(_InstallWrapper):
+    """Python wrapper for doexe."""
+
+
 class Dohtml(_InstallWrapper):
     """Python wrapper for dohtml."""
 

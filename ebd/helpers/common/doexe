@@ -1,22 +1,10 @@
 #!/usr/bin/env pkgcore-ebuild-helper
-# Copyright: 2011 Brian Harring <ferringb@gmail.com>
-# License: GPL2/BSD 3 clause
 
-check_args 1 -
+OPTIONS=(
+	"--cwd=\"${PWD}\""
+	"--dest=\"${PKGCORE_EXEDESTTREE}\""
+	"--insoptions=\"${EXEOPTIONS}\""
+)
 
-check_command_or_stop install -d "${ED}/${PKGCORE_EXEDESTTREE}"
-
-for x in "$@"; do
-	if [[ -L ${x} ]]; then
-		check_command cp -- "${x}" "${T}" || continue
-		mysrc=${T}/${x##*/}
-	elif [[ -d ${x} ]]; then
-		warn "skipping directory ${x}"
-		continue
-	else
-		mysrc=${x}
-	fi
-	check_command install ${EXEOPTIONS} -- "${mysrc}" "${ED}/${PKGCORE_EXEDESTTREE}"
-	# cleanup after ourselves...
-	[[ ${mysrc} != ${x} ]] && rm -f "${mysrc}"
-done
+# python side handles install
+__ebd_ipc_cmd ${HELPER_NAME} "${OPTIONS[*]}" "$@"

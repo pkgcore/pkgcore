@@ -173,7 +173,6 @@ class EAPI(object, metaclass=klass.immutable_instance):
         sf(self, "metadata_keys", frozenset(metadata_keys))
         sf(self, "tracked_attributes", frozenset(tracked_attributes))
         sf(self, "archive_suffixes", frozenset(archive_suffixes))
-        sf(self, "archive_suffixes_re", '(?:%s)' % '|'.join(map(re.escape, archive_suffixes)))
 
         if optionals is None:
             optionals = {}
@@ -223,6 +222,10 @@ class EAPI(object, metaclass=klass.immutable_instance):
                 raise Exception(
                     f"failed to generate list of EAPI '{self}' specific functions")
         return tuple(x.strip() for x in funcs)
+
+    @klass.jit_attr
+    def archive_suffixes_re(self):
+        return re.compile('(?:%s)' % '|'.join(map(re.escape, self.archive_suffixes)))
 
     @klass.jit_attr
     def atom_kls(self):

@@ -1,3 +1,4 @@
-#!/usr/bin/env pkgcore-ebuild-helper
+#!/usr/bin/env pkgcore-ipc-helper
 
-INSDESTTREE=/etc/env.d invoke_script doins "$@"
+INSDESTTREE=/etc/env.d
+IPC_CMD=doins

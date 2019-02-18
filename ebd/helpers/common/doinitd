@@ -1,7 +1,4 @@
-#!/usr/bin/env pkgcore-ebuild-helper
-# Copyright: 2011 Brian Harring <ferringb@gmail.com>
-# License: GPL2/BSD 3 clause
+#!/usr/bin/env pkgcore-ipc-helper
 
-check_args 1 -
-
-PKGCORE_EXEDESTTREE=/etc/init.d invoke_script doexe "$@"
+PKGCORE_EXEDESTTREE=/etc/init.d
+IPC_CMD=doexe

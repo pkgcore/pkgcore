@@ -80,9 +80,14 @@ __ipc_exit() {
 
 run_ipc_cmd() {
 	[[ $# -eq 0 ]] && die "${FUNCNAME}: missing required arguments"
+
 	local HELPER_PATH=$1
 	local HELPER_NAME=${1##*/}
+	local HELPER_EAPI=${1%/*}
+	HELPER_EAPI=${HELPER_EAPI##*/}
+	local IPC_CMD=${HELPER_NAME}
 	shift
+
 	if [[ ! -e ${HELPER_PATH} ]]; then
 		# note this can daftly go find a binary...
 		HELPER_PATH=$(type -p "${HELPER_NAME}")
@@ -93,7 +98,12 @@ run_ipc_cmd() {
 	local HELPER_ERROR_PREFIX=${OLD_ERROR_PREFIX:+${OLD_ERROR_PREFIX}: }${HELPER_NAME}
 
 	source "${HELPER_PATH}"
-	__ebd_ipc_cmd ${HELPER_NAME} "${OPTIONS[*]}" "$@"
+	# load main command opts when running a subcommand
+	if [[ ${HELPER_NAME} != ${IPC_CMD} ]]; then
+		source "$(type -p ${IPC_CMD})" >&2 || die "failed sourcing ${IPC_CMD}"
+	fi
+
+	__ebd_ipc_cmd ${IPC_CMD} "${OPTIONS[*]}" "$@"
 }
 run_ipc_cmd "$@"
 exit $(( $? ))

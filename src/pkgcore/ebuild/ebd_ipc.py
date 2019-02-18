@@ -18,6 +18,7 @@ demandload(
     'grp',
     'operator:itemgetter',
     'pwd',
+    'pkgcore:os_data',
 )
 
 
@@ -192,8 +193,12 @@ class _InstallWrapper(IpcCommand):
         self.install = self._install
         self.install_dirs = self._install_dirs
 
-    def parse_options(self, *args, **kwargs):
-        args = super().parse_options(*args, **kwargs)
+    def parse_options(self, opts, args):
+        args = super().parse_options(opts, args)
+        return self.parse_install_options(opts, args)
+
+    def parse_install_options(self, opts, args):
+        """Parse install command options."""
         if self.opts.insoptions:
             if not self._parse_install_options(self.opts.insoptions, self.insoptions):
                 self.install = self._install_cmd
@@ -203,7 +208,7 @@ class _InstallWrapper(IpcCommand):
         return args
 
     def _parse_install_options(self, options, namespace):
-        """Parse install command options.
+        """Internal install command option parser.
 
         Args:
             options: list of options to parse
@@ -493,6 +498,24 @@ class Doinfo(_InstallWrapper):
 
 class Doexe(_InstallWrapper):
     """Python wrapper for doexe."""
+
+
+class Dobin(_InstallWrapper):
+    """Python wrapper for dobin."""
+
+    def parse_install_options(self, opts, args):
+        # get bin/sbin subdir to install into
+        subdir = self._helper[2:]
+        self.opts.dest = pjoin(self.opts.dest, subdir)
+
+        # TODO: fix this to be prefix aware at some point
+        self.opts.insoptions.extend([f'-g{os_data.root_gid}', f'-o{os_data.root_uid}'])
+
+        return super().parse_install_options(opts, args)
+
+
+class Dosbin(Dobin):
+    """Python wrapper for dosbin."""
 
 
 class Dohtml(_InstallWrapper):

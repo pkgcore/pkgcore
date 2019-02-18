@@ -369,7 +369,7 @@ class _InstallWrapper(IpcCommand):
 
             try:
                 shutil.copyfile(f, dest)
-                if self.opts.insoptions:
+                if self.insoptions:
                     self._set_attributes(self.insoptions, dest)
                     if self.insoptions.preserve_timestamps:
                         self._set_timestamps(sstat, dest)
@@ -404,7 +404,7 @@ class _InstallWrapper(IpcCommand):
         try:
             for d in dirs:
                 os.makedirs(d, exist_ok=True)
-                if self.opts.diroptions:
+                if self.diroptions:
                     self._set_attributes(self.diroptions, d)
         except OSError as e:
             raise IpcCommandError(f'failed creating dir: {dest!r}: {e.strerror}')

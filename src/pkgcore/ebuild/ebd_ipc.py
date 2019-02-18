@@ -194,10 +194,12 @@ class _InstallWrapper(IpcCommand):
 
     def parse_options(self, *args, **kwargs):
         args = super().parse_options(*args, **kwargs)
-        if not self._parse_install_options(self.opts.insoptions, self.insoptions):
-            self.install = self._install_cmd
-        if not self._parse_install_options(self.opts.diroptions, self.diroptions):
-            self.install_dirs = self._install_dirs_cmd
+        if self.opts.insoptions:
+            if not self._parse_install_options(self.opts.insoptions, self.insoptions):
+                self.install = self._install_cmd
+        if self.opts.diroptions:
+            if not self._parse_install_options(self.opts.diroptions, self.diroptions):
+                self.install_dirs = self._install_dirs_cmd
         return args
 
     def _parse_install_options(self, options, namespace):
@@ -364,8 +366,8 @@ class _InstallWrapper(IpcCommand):
                 shutil.copyfile(f, dest)
                 if self.opts.insoptions:
                     self._set_attributes(self.insoptions, dest)
-                if self.insoptions.preserve_timestamps:
-                    self._set_timestamps(sstat, dest)
+                    if self.insoptions.preserve_timestamps:
+                        self._set_timestamps(sstat, dest)
             except OSError as e:
                 raise IpcCommandError(f'failed copying file: {f!r} to {dest_dir!r}: {e.strerror}')
 

@@ -81,10 +81,12 @@ run_ipc_cmd() {
 	local IPC_CMD=${HELPER_NAME}
 	source "${HELPER_PATH}"
 
-	# load main command opts when running a subcommand
-	if [[ ${HELPER_NAME} != ${IPC_CMD} ]]; then
+	# load all parent command opts when running a subcommand that is possibly nested
+	local orig_cmd=${HELPER_NAME}
+	while [[ ${orig_cmd} != ${IPC_CMD} ]]; do
+		orig_cmd=${IPC_CMD}
 		source "$(type -p ${IPC_CMD})" >&2 || die "failed sourcing ${IPC_CMD}"
-	fi
+	done
 
 	__ebd_ipc_cmd ${IPC_CMD} "${OPTIONS[*]}" "$@"
 }

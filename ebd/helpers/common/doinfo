@@ -1,11 +1,10 @@
 #!/usr/bin/env pkgcore-ebuild-helper
-# Copyright: 2011 Brian Harring <ferringb@gmail.com>
-# License: GPL2/BSD 3 clause
 
-check_args 1 -
+OPTIONS=(
+	"--cwd=\"${PWD}\""
+	"--dest=/usr/share/info"
+	"--insoptions=-m0644"
+)
 
-check_command_or_stop install -d "${ED}/usr/share/info"
-
-for x in "$@"; do
-	check_command install -m0644 -- "${x}" "${ED}/usr/share/info"
-done
+# python side handles install
+__ebd_ipc_cmd ${HELPER_NAME} "${OPTIONS[*]}" "$@"

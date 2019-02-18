@@ -232,10 +232,7 @@ class _InstallWrapper(IpcCommand):
         Args:
             targets: files/symlinks/dirs/etc to install
         """
-        files, dirs = partition(targets, predicate=os.path.isdir)
-        if self.opts.recursive:
-            self._install_from_dirs(dirs)
-        self._install_files((f, self.target_dir) for f in files)
+        self._install_files((f, self.target_dir) for f in targets)
 
     def _install_files(self, files):
         """Install files into a given directory.
@@ -446,6 +443,12 @@ class Doins(_InstallWrapper):
         self.allow_symlinks = self.op.pkg.eapi.options.doins_allow_symlinks
         return super().finalize(*args, **kwargs)
 
+    def _install_targets(self, targets):
+        files, dirs = partition(targets, predicate=os.path.isdir)
+        if self.opts.recursive:
+            self._install_from_dirs(dirs)
+        self._install_files((f, self.target_dir) for f in files)
+
     def _install_files(self, files):
         if self.allow_symlinks:
             files, symlinks = partition(files, predicate=lambda x: os.path.islink(x[0]))
@@ -474,6 +477,10 @@ class Dodoc(_InstallWrapper):
                 missing_option = ', missing -r option?' if self.allow_recursive else ''
                 raise IpcCommandError(f'{dirs[0]!r} is a directory{missing_option}')
         self._install_files((f, self.target_dir) for f in files)
+
+
+class Doinfo(_InstallWrapper):
+    """Python wrapper for doinfo."""
 
 
 class Dohtml(_InstallWrapper):

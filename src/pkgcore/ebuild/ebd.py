@@ -30,8 +30,7 @@ from snakeoil.osutils import ensure_dirs, abspath, normpath, pjoin, listdir_file
 from snakeoil.process.spawn import (
     spawn_bash, spawn, is_sandbox_capable, is_userpriv_capable)
 
-from pkgcore.ebuild import ebuild_built, const, errors
-from pkgcore.ebuild.ebd_ipc import IpcError, IpcInternalError, Doins, Dodoc, Dohtml
+from pkgcore.ebuild import ebd_ipc, ebuild_built, const, errors
 from pkgcore.ebuild.processor import (
     request_ebuild_processor, release_ebuild_processor,
     expected_ebuild_env, chuck_UnhandledCommand, inherit_handler)
@@ -445,12 +444,12 @@ def run_generic_phase(pkg, phase, env, userpriv, sandbox, fd_pipes=None,
                     phase + ": Failed building (False/0 return from handler)")
                 logger.warning(f"executing phase {phase}: execution failed, ignoring")
     except Exception as e:
-        if isinstance(e, IpcError):
+        if isinstance(e, ebd_ipc.IpcError):
             # notify bash side of IPC error
             ebd.write(e.ret)
         ebd.shutdown_processor()
         release_ebuild_processor(ebd)
-        if isinstance(e, IpcInternalError):
+        if isinstance(e, ebd_ipc.IpcInternalError):
             # show main exception cause for internal IPC errors
             raise e.__cause__
         elif isinstance(e, IGNORED_EXCEPTIONS + (format.GenericBuildError,)):
@@ -633,9 +632,10 @@ class buildable(ebd, setup_mixin, format.build):
 
         # bash helpers implemented in python
         self._ipc_helpers = {
-            'doins': Doins(self),
-            'dodoc': Dodoc(self),
-            'dohtml': Dohtml(self),
+            'doins': ebd_ipc.Doins(self),
+            'dodoc': ebd_ipc.Dodoc(self),
+            'dohtml': ebd_ipc.Dohtml(self),
+            'doinfo': ebd_ipc.Doinfo(self),
         }
 
     def _generic_phase(self, *args, extra_handlers={}, **kwargs):

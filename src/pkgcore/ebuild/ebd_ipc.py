@@ -62,9 +62,7 @@ class IpcCommand(object):
     """Commands sent from the bash side of the ebuild daemon to run."""
 
     # argument parser for internal options
-    parser = IpcArgumentParser(add_help=False)
-    parser.add_argument('--dest', required=True)
-
+    parser = None
     # argument parser for user options
     opts_parser = None
 
@@ -106,9 +104,10 @@ class IpcCommand(object):
 
     def parse_options(self, opts, args):
         """Parse internal args passed from the bash side."""
-        opts, unknown = self.parser.parse_known_args(opts, namespace=self.opts)
-        if unknown:
-            raise UnknownOptions(unknown)
+        if opts and self.parser is not None:
+            opts, unknown = self.parser.parse_known_args(opts, namespace=self.opts)
+            if unknown:
+                raise UnknownOptions(unknown)
 
         # pull user options off the start of the argument list
         if args and self.opts_parser is not None:
@@ -176,7 +175,8 @@ def command_options(s):
 class _InstallWrapper(IpcCommand):
     """Python wrapper for commands using `install`."""
 
-    parser = IpcArgumentParser(add_help=False, parents=(IpcCommand.parser,))
+    parser = IpcArgumentParser(add_help=False)
+    parser.add_argument('--dest', required=True)
     parser.add_argument('--insoptions', default='', type=command_options)
     parser.add_argument('--diroptions', default='', type=command_options)
 

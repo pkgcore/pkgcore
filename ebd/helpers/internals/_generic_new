@@ -11,7 +11,7 @@ trap 'rm -rf "${TMP}"' EXIT
 
 if ${PKGCORE_NEW_READS_STDIN} && [[ $1 == "-" ]]; then
 	if [[ -t 0 ]]; then
-		die "${HELPER_NAME#new} - $2 cannot be invoked with stdin as a tty"
+		__helper_exit 1 "no input data available, stdin is a tty"
 	fi
 	check_command_or_stop cat > "${TMP}/$2"
 else

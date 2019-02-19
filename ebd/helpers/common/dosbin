@@ -1,1 +1,3 @@
-dobin
+#!/usr/bin/env pkgcore-ipc-helper
+
+OPTIONS=( "--dest=\"${DESTTREE}/sbin\"" )

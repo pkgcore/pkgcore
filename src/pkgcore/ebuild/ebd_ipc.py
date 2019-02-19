@@ -546,12 +546,6 @@ class Dobin(_InstallWrapper):
             '-m0755', f'-g{os_data.root_gid}', f'-o{os_data.root_uid}']
         return super().parse_install_options(*args, **kwargs)
 
-    def finalize(self, *args, **kwargs):
-        # get bin/sbin subdir to install into
-        subdir = self._helper[2:]
-        self.opts.dest = pjoin(self.opts.dest, subdir)
-        return super().finalize(*args, **kwargs)
-
 
 class Dosbin(Dobin):
     """Python wrapper for dosbin."""

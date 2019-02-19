@@ -112,15 +112,15 @@ __strip_duplicate_slashes() {
 }
 
 __get_func_code() {
-	__IFS_push $'\n'
-	local code=( $(declare -f "$1") )
-	__IFS_pop
-
+	local -a code
+	mapfile code <<<$(declare -f "$1")
 	[[ -z ${code[@]} ]] && return
 
 	# drop function name and surrounding brackets
+	__IFS_push $'\n'
 	code=( ${code[@]:2:${#code[@]}-3} )
-	echo "${code[@]}"
+	__IFS_pop
+	printf "%s\n" "${code[@]}"
 }
 
 __inject_func_code() {

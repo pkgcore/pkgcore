@@ -373,11 +373,11 @@ unpack() {
 	local file file_match filename myfail srcdir taropts tar_subdir
 	taropts='--no-same-owner'
 
-	[[ $# -eq 0 ]] && die "Nothing passed to the 'unpack' command"
+	[[ $# -eq 0 ]] && die "${FUNCNAME}: missing archive arguments to extract"
 
 	for file in "$@"; do
 		echo ">>> Unpacking ${file} to ${PWD}"
-		myfail="failure unpacking ${file}"
+		myfail="${FUNCNAME}: failure unpacking ${file}"
 
 		if [[ ${file} != */* ]]; then
 			# regular filename get prefixed with ${DISTDIR}/
@@ -394,11 +394,11 @@ unpack() {
 				[[ ${file} == ${DISTDIR%%/}/* ]] && \
 					eqawarn "QA Notice: unpack() argument contains redundant \${DISTDIR}: ${file}"
 			elif [[ ${file} == ${DISTDIR%%/}/* ]]; then
-				die "Arguments to unpack() must not begin with \${DISTDIR}."
+				die "${FUNCNAME}: arguments must not begin with \${DISTDIR}"
 			elif [[ ${file} == /* ]]; then
-				die "Arguments to unpack() must not be absolute paths."
+				die "${FUNCNAME}: arguments must not be absolute paths"
 			else
-				die "Relative paths to unpack() must be prefixed with './' in EAPI ${EAPI}"
+				die "${FUNCNAME}: relative paths must be prefixed with './' in EAPI ${EAPI}"
 			fi
 		fi
 
@@ -425,14 +425,14 @@ unpack() {
 				;;
 			*.tar.xz)
 				if __safe_has "${EAPI}" 0 1 2; then
-					echo "xz is a supported extension in EAPI 3 and above only" >&2
+					echo "${FUNCNAME}: *.tar.xz archives are unsupported in EAPI ${EAPI}" >&2
 					continue;
 				fi
 				tar xf "${srcdir}${file}" -I"${PORTAGE_XZ_COMMAND}" ${taropts} || die "${myfail}"
 				;;
 			*.txz)
 				if __safe_has "${EAPI}" 0 1 2 3 4 5; then
-					echo "unpacking *.txz archives is unsupported in EAPI ${EAPI}" >&2
+					echo "${FUNCNAME}: *.txz archives are unsupported in EAPI ${EAPI}" >&2
 					continue;
 				fi
 				tar xf "${srcdir}${file}" -I"${PORTAGE_XZ_COMMAND}" ${taropts} || die "${myfail}"
@@ -449,7 +449,7 @@ unpack() {
 				;;
 			*.xz)
 				if __safe_has "${EAPI}" 0 1 2; then
-					echo "xz is a supported extension in EAPI 3 and above only" >&2
+					echo "${FUNCNAME}: *.xz archives are unsupported in EAPI ${EAPI}" >&2
 					continue;
 				fi
 				${PORTAGE_UNXZ_COMMAND:-${PORTAGE_XZ_COMMAND} -d} < "${srcdir}${file}" > ${filename%.*} || die "${myfail}"
@@ -475,7 +475,7 @@ unpack() {
 				lzma -dc "${srcdir}${file}" > ${filename%.*} || die "${myfail}"
 				;;
 			*)
-				echo "unpack ${file}: file format not recognized. Ignoring."
+				echo "${FUNCNAME}: skipping unrecognized file format: ${file}"
 				;;
 		esac
 	done

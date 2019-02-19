@@ -35,7 +35,7 @@ die() {
 
 	local phase_str=
 	[[ -n ${EBUILD_PHASE} ]] && phase_str=" (${EBUILD_PHASE} phase)"
-	eerror "ERROR: ${CATEGORY}/${PF} failed${phase_str}:"
+	eerror "ERROR: ${CATEGORY}/${PF}::${PKGCORE_PKG_REPO} failed${phase_str}:"
 
 	# split error message by newline so every line gets prefixed properly
 	local line

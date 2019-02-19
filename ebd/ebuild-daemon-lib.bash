@@ -40,6 +40,46 @@ __ebd_write_raw() {
 	echo -n "$*" >&${PKGCORE_EBD_WRITE_FD} || die "coms error, __ebd_write_raw failed;  Backing out."
 }
 
+__ipc_exit() {
+	[[ $1 == 0 ]] && exit 0
+	# exit in a helper compatible way when running IPC command from a helper
+	[[ -n ${HELPER_ERROR_PREFIX} ]] && __helper_exit "$@"
+
+	local ret=$1 msg=$2
+	local error_msg="${IPC_CMD}: exitcode ${ret}"
+	[[ -n ${msg} ]] && error_msg+=": ${msg}"
+
+	if ${PKGCORE_NONFATAL}; then
+		eerror "${error_msg}"
+		exit ${ret}
+	fi
+
+	die "${error_msg}"
+}
+
+# run an ebuild command on the python side and return its status
+__ebd_ipc_cmd() {
+	local IPC_CMD=$1 opts=$2 ret_str
+	local -a ret
+	shift 2
+
+	__ebd_write_line ${IPC_CMD}
+	__ebd_write_line ${PKGCORE_NONFATAL:-false}
+	__ebd_write_line ${PWD}
+	__ebd_write_line ${opts}
+	# Send arg list as a single string using a null char delimiter terminated by a newline.
+	# Note that this requires printf as echo doesn't appear to respect IFS=$'\0'.
+	printf "%s\0" "$@" >&${PKGCORE_EBD_WRITE_FD}
+	__ebd_write_line
+
+	# Split return status into array of return code and optional error message.
+	# This uses a bell char as a delimiter since the null char can't be
+	# assigned to variables.
+	__ebd_read_line ret_str
+	IFS=$'\x07' read -ra ret <<< "${ret_str}"
+	__ipc_exit "${ret[@]}"
+}
+
 # ask the python side to display sandbox complaints
 __request_sandbox_summary() {
 	local line

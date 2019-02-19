@@ -327,6 +327,17 @@ __run_ebuild_phase() {
 	__export_bash_compat
 	${PKGCORE_EBUILD_PHASE_FUNC} && __var_push -n EBUILD_PHASE_FUNC=$1
 
+	# die when encountering unknown commands
+	command_not_found_handle() {
+		local msg="${EBUILD_PHASE_FUNC}(): unknown command '$1'"
+		[[ $# -gt 1 ]] && msg+=" when executing: '$*'"
+		if ${PKGCORE_NONFATAL}; then
+			eerror "${msg}"
+			return 1
+		fi
+		die "${msg}"
+	}
+
 	__qa_run_function_if_exists __phase_pre_$1
 	__qa_run_function_if_exists pre_$1
 
@@ -342,6 +353,9 @@ __run_ebuild_phase() {
 	__qa_run_function_if_exists __phase_post_$1
 
 	__env_pop
+
+	# don't leak func to exported env
+	unset -f command_not_found_handle
 
 	[[ ${PKGCORE_DEBUG} -lt 4 ]] && set +x
 }

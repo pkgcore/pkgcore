@@ -155,7 +155,7 @@ class ebd(object):
         else:
             self.logging = False
 
-        self.env["PKGCORE_PKG_REPO"] = pkg.repo.repo_id
+        self.env["PKGCORE_PKG_REPO"] = pkg.source_repository
         self.env["XARGS"] = xargs
 
         # wipe variables listed in ENV_UNSET for supporting EAPIs

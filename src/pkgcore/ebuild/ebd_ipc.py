@@ -1,3 +1,4 @@
+from functools import wraps
 import itertools
 import os
 import re
@@ -230,7 +231,7 @@ class _InstallWrapper(IpcCommand):
         return True
 
     def finalize(self, args):
-        self.target_dir = pjoin(self.ED, self.opts.dest.lstrip(os.path.sep))
+        self.dest_dir = self.opts.dest.lstrip(os.path.sep)
 
         if args is None:
             raise IpcCommandError('missing targets to install')
@@ -240,11 +241,25 @@ class _InstallWrapper(IpcCommand):
     def run(self, args):
         os.chdir(self.cwd)
         try:
-            os.makedirs(self.target_dir, exist_ok=True)
+            dest_dir = pjoin(self.ED, self.dest_dir)
+            os.makedirs(dest_dir, exist_ok=True)
         except OSError as e:
             raise IpcCommandError(
-                f'failed creating dir: {self.target_dir!r}: {e.strerror}')
+                f'failed creating dir: {dest_dir!r}: {e.strerror}')
         self._install_targets(args)
+
+    def _prefix_targets(files):
+        """Decorator to prepend targets being installed with the destination path."""
+        def wrapper(func):
+            @wraps(func)
+            def wrapped(self, targets):
+                if files:
+                    targets = ((s, pjoin(self.ED, self.dest_dir, d)) for s, d in targets)
+                else:
+                    targets = (pjoin(self.ED, self.dest_dir, d) for d in targets)
+                return func(self, targets)
+            return wrapped
+        return wrapper
 
     def _install_targets(self, targets):
         """Install targets.
@@ -361,21 +376,22 @@ class _InstallWrapper(IpcCommand):
 
         raise IpcCommandError(f'{source!r} and {dest!r} are identical')
 
+    @_prefix_targets(files=True)
     def _install(self, files):
         """Install files.
 
         Args:
-            files: iterable of (path, target dir) tuples of files to install
+            files: iterable of (source, dest) tuples of files to install
         Raises:
             IpcCommandError on failure
         """
-        for f, dest in files:
-            dest = pjoin(self.target_dir, dest)
+        for source, dest in files:
             try:
-                sstat = os.stat(f)
+                sstat = os.stat(source)
             except OSError as e:
-                raise IpcCommandError(f'cannot stat {f!r}: {e.strerror}')
-            self._is_install_allowed(f, sstat, dest)
+                raise IpcCommandError(f'cannot stat {source!r}: {e.strerror}')
+
+            self._is_install_allowed(source, sstat, dest)
 
             # matching `install` command, remove dest before file install
             try:
@@ -386,32 +402,34 @@ class _InstallWrapper(IpcCommand):
                 raise IpcCommandError(f'failed removing file: {dest!r}: {e.strerror}')
 
             try:
-                shutil.copyfile(f, dest)
+                shutil.copyfile(source, dest)
                 if self.insoptions:
                     self._set_attributes(self.insoptions, dest)
                     if self.insoptions.preserve_timestamps:
                         self._set_timestamps(sstat, dest)
             except OSError as e:
-                raise IpcCommandError(f'failed copying file: {f!r} to {dest!r}: {e.strerror}')
+                raise IpcCommandError(
+                    f'failed copying file: {source!r} to {dest!r}: {e.strerror}')
 
+    @_prefix_targets(files=True)
     def _install_cmd(self, files):
         """Install files using `install` command.
 
         Args:
-            files: iterable of (path, target dir) tuples of files to install
+            files: iterable of (source, dest) tuples of files to install
         Raises:
             IpcCommandError on failure
         """
         files = sorted(files, key=itemgetter(1))
         for dest, files_group in itertools.groupby(files, itemgetter(1)):
-            dest = pjoin(self.target_dir, dest)
-            paths = list(path for path, _ in files_group)
-            command = ['install'] + self.opts.insoptions + paths + [dest]
+            sources = list(path for path, _ in files_group)
+            command = ['install'] + self.opts.insoptions + sources + [dest]
             try:
                 subprocess.run(command, check=True, stderr=subprocess.PIPE)
             except subprocess.CalledProcessError as e:
                 raise IpcCommandError(e.stderr.decode())
 
+    @_prefix_targets(files=False)
     def _install_dirs(self, dirs):
         """Create directories.
 
@@ -422,13 +440,13 @@ class _InstallWrapper(IpcCommand):
         """
         try:
             for d in dirs:
-                d = pjoin(self.target_dir, d)
                 os.makedirs(d, exist_ok=True)
                 if self.diroptions:
                     self._set_attributes(self.diroptions, d)
         except OSError as e:
-            raise IpcCommandError(f'failed creating dir: {dest!r}: {e.strerror}')
+            raise IpcCommandError(f'failed creating dir: {d!r}: {e.strerror}')
 
+    @_prefix_targets(files=False)
     def _install_dirs_cmd(self, dirs):
         """Create directories using `install` command.
 
@@ -437,13 +455,13 @@ class _InstallWrapper(IpcCommand):
         Raises:
             IpcCommandError on failure
         """
-        dirs = [pjoin(self.target_dir, d) for d in dirs]
-        command = ['install', '-d'] + self.opts.diroptions + dirs
+        command = ['install', '-d'] + self.opts.diroptions + list(dirs)
         try:
             subprocess.run(command, check=True, stderr=subprocess.PIPE)
         except subprocess.CalledProcessError as e:
             raise IpcCommandError(e.stderr.decode())
 
+    @_prefix_targets(files=True)
     def install_symlinks(self, symlinks):
         """Install iterable of symlinks.
 
@@ -454,7 +472,6 @@ class _InstallWrapper(IpcCommand):
         """
         try:
             for symlink, dest in symlinks:
-                dest = pjoin(self.target_dir, dest)
                 os.symlink(os.readlink(symlink), dest)
         except OSError as e:
             raise IpcCommandError(
@@ -660,13 +677,13 @@ class Dohtml(_InstallWrapper):
 
     def finalize(self, *args, **kwargs):
         args = super().finalize(*args, **kwargs)
+        self.dest_dir = pjoin(self.dest_dir, self.opts.doc_prefix.lstrip(os.path.sep))
 
         if not self.opts.allowed_file_exts:
             self.opts.allowed_file_exts = list(self.default_allowed_file_exts)
         self.opts.allowed_file_exts.extend(self.opts.extra_allowed_file_exts)
-        self.opts.allowed_file_exts = set(self.opts.allowed_file_exts)
 
-        self.target_dir = pjoin(self.target_dir, self.opts.doc_prefix.lstrip(os.path.sep))
+        self.opts.allowed_file_exts = set(self.opts.allowed_file_exts)
         self.opts.excluded_dirs = set(self.opts.excluded_dirs)
         self.opts.allowed_files = set(self.opts.allowed_files)
 
@@ -677,7 +694,7 @@ class Dohtml(_InstallWrapper):
         return args
 
     def __str__(self):
-        msg = ['dohtml:', f'  Installing to: /{self.target_dir[len(self.ED):]}']
+        msg = ['dohtml:', f'  Installing to: /{self.dest_dir}']
         if self.opts.allowed_file_exts:
             msg.append(
                 f"  Allowed extensions: {', '.join(sorted(self.opts.allowed_file_exts))}")
@@ -712,5 +729,4 @@ class Dohtml(_InstallWrapper):
         return (ext in self.opts.allowed_file_exts or basename in self.opts.allowed_files)
 
     def _install_files(self, files):
-        skipped, files = partition(files, predicate=self._allowed_file)
-        self.install(files)
+        self.install(f for f in files if self._allowed_file(f))

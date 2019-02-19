@@ -13,13 +13,15 @@ nonfatal() {
 	PKGCORE_NONFATAL=true "$@"
 }
 
-docompress() {
-	if [[ $1 == "-x" ]]; then
-		shift
-		PKGCORE_DOCOMPRESS_SKIP+=( "$@" )
-	else
-		PKGCORE_DOCOMPRESS+=( "$@" )
-	fi
+__phase_funcs_src_install_eapi4() {
+	docompress() {
+		if [[ $1 == "-x" ]]; then
+			shift
+			PKGCORE_DOCOMPRESS_SKIP+=( "$@" )
+		else
+			PKGCORE_DOCOMPRESS+=( "$@" )
+		fi
+	}
 }
 
 __phase_src_install() {

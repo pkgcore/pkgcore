@@ -13,13 +13,15 @@ __econf_options_eapi7() {
 	fi
 }
 
-dostrip() {
-	if [[ $1 == "-x" ]]; then
-		shift
-		PKGCORE_DOSTRIP_SKIP+=( "$@" )
-	else
-		PKGCORE_DOSTRIP+=( "$@" )
-	fi
+__phase_funcs_src_install_eapi7() {
+	dostrip() {
+		if [[ $1 == "-x" ]]; then
+			shift
+			PKGCORE_DOSTRIP_SKIP+=( "$@" )
+		else
+			PKGCORE_DOSTRIP+=( "$@" )
+		fi
+	}
 }
 
 __query_version_funcs() {

@@ -338,6 +338,9 @@ __run_ebuild_phase() {
 		die "${msg}"
 	}
 
+	# load phase specific functions if any exist
+	__run_eapi_funcs --override __phase_funcs_$1
+
 	__qa_run_function_if_exists __phase_pre_$1
 	__qa_run_function_if_exists pre_$1
 

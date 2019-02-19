@@ -630,11 +630,15 @@ class domain(config_domain):
         """Add an external, unconfigured repo to the domain."""
         # TODO: add support for configuring/enabling the external repo's cache
         path = os.path.abspath(path)
-        # use path for repo id by default to avoid collisions
-        config_name = name if name is not None else path
-        if config_name in self.source_repos_raw:
-            raise ValueError(f'{config_name!r} repo already configured')
-        repo_config = RepoConfig(path, config_name=config_name)
+        if name is None:
+            # parse repo id from the given path
+            name = RepoConfig(path).repo_id
+            if name in self.source_repos_raw:
+                # fallback to using path for repo id in case of duplicate repos
+                name = path
+        if name in self.source_repos_raw:
+            raise ValueError(f'{name!r} repo already configured')
+        repo_config = RepoConfig(path, config_name=name)
         repo_obj = ebuild_repo.tree(config, repo_config)
 
         # TODO: reset related jit attrs

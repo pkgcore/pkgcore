@@ -1,28 +1,6 @@
 # Copyright: 2011-2012 Brian Harring <ferringb@gmail.com>
 # license GPL2/BSD 3
 
-# while these echo statements are ugly, written this way to ensure bash does it as a single write-
-# aka, keep it within the size of atomic writes for pipes.  Relevant for threaded output straight to term
-use() {
-	echo "WARNING: 'use' function invoked by ${CATEGORY}/${PF} during metadata regeneration."$'\nWARNING: Please ensure upstream is aware of it and working to remove it.\n' >&2
-	return 1
-}
-
-usev() {
-	echo "WARNING: 'usev' function invoked by ${CATEGORY}/${PF} during metadata regeneration."$'\nWARNING: Please ensure upstream is aware of it and working to remove it.\n' >&2
-	return 1
-}
-
-use_with() {
-	echo "WARNING: 'use_with' function invoked by ${CATEGORY}/${PF} during metadata regeneration."$'\nWARNING: Please ensure upstream is aware of it and working to remove it.\n' >&2
-	return 1
-}
-
-use_enable() {
-	echo "WARNING: 'use_enable' function invoked by ${CATEGORY}/${PF} during metadata regeneration."$'\nWARNING: Please ensure upstream is aware of it and working to remove it.\n' >&2
-	return 1
-}
-
 has() {
 	local needle=$1
 	shift

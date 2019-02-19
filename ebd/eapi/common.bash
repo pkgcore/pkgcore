@@ -357,14 +357,21 @@ __phase_pre_src_install() {
 	__phase_pre_phase
 }
 
-# Iterate over the inherited EAPI stack running all EAPI specific
-# functions starting with a defined prefix.
+# Iterate over the inherited EAPI stack running all EAPI specific functions
+# starting with a defined prefix. Defaults to running in inherited order from
+# the current package's EAPI to the oldest inherited EAPI. To run in overriding
+# order (the reverse direction), pass '--override' as the first argument.
 __run_eapi_funcs() {
+	local eapis=( ${PKGCORE_EAPI_INHERITS} )
+	if [[ $1 == --override ]]; then
+		eapis=( $(__reverse_array eapis) )
+		shift
+	fi
 	local func_prefix=$1
 	shift
 
 	local eapi
-	for eapi in ${PKGCORE_EAPI_INHERITS}; do
+	for eapi in "${eapis[@]}"; do
 		__qa_run_function_if_exists ${func_prefix}_eapi${eapi} "$@"
 	done
 }

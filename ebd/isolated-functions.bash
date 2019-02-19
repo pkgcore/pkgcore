@@ -101,6 +101,21 @@ __directory_is_empty() {
 	return 0
 }
 
+# Reverse a given array.
+# Example:
+#	$ a=(1 2 3 4 5)
+#	$ a=( $(__reverse_array a) )
+#	$ echo ${a[@]}
+#	5 4 3 2 1
+__reverse_array() {
+	local _array_ref="$1"[@]
+	local -a array=( "${!_array_ref}" )
+	local i
+	for (( i=${#array[@]}-1 ; i>=0 ; i-- )) ; do
+		echo "${array[i]}"
+	done
+}
+
 __strip_duplicate_slashes() {
 	if [[ -n $1 ]]; then
 		local removed=$1

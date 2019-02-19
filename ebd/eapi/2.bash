@@ -17,21 +17,4 @@ __phase_src_compile() {
 	fi
 }
 
-default_pkg_nofetch() { __phase_pkg_nofetch; }
-default_src_unpack() { __phase_src_unpack; }
-default_src_prepare() { __phase_src_prepare; }
-default_src_configure() { __phase_src_configure; }
-default_src_compile() { __phase_src_compile; }
-default_src_test() { __phase_src_test; }
-
-default() {
-	if __is_function default_pkg_${EBUILD_PHASE}; then
-		default_pkg_${EBUILD_PHASE}
-	elif __is_function default_src_${EBUILD_PHASE}; then
-		default_src_${EBUILD_PHASE}
-	else
-		die "default is not available in ebuild phase '${EBUILD_PHASE}'"
-	fi
-}
-
 :

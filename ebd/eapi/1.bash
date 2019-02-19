@@ -11,3 +11,5 @@ __phase_src_compile() {
 		emake || die "emake failed"
 	fi
 }
+
+:

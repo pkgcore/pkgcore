@@ -3,27 +3,6 @@
 
 source "${PKGCORE_EBD_PATH}"/eapi/3.bash
 
-__econf_options_eapi4() {
-	if [[ $1 == *"--disable-dependency-tracking"* ]]; then
-		echo --disable-dependency-tracking
-	fi
-}
-
-nonfatal() {
-	PKGCORE_NONFATAL=true "$@"
-}
-
-__phase_funcs_src_install_eapi4() {
-	docompress() {
-		if [[ $1 == "-x" ]]; then
-			shift
-			PKGCORE_DOCOMPRESS_SKIP+=( "$@" )
-		else
-			PKGCORE_DOCOMPRESS+=( "$@" )
-		fi
-	}
-}
-
 __phase_src_install() {
 	if [[ -f Makefile || -f GNUmakefile || -f makefile ]]; then
 		emake DESTDIR="${D}" install
@@ -41,7 +20,5 @@ __phase_src_install() {
 		dodoc ${DOCS}
 	fi
 }
-
-default_src_install() { __phase_src_install; }
 
 :

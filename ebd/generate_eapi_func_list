@@ -31,12 +31,16 @@ if ${ONLY}; then
 	if [[ -f "${PKGCORE_EBD_PATH}/eapi/${PREV_EAPI}.bash" ]]; then
 		source "${PKGCORE_EBD_PATH}/eapi/${PREV_EAPI}.bash" \
 			|| { echo "failed loading eapi/${PREV_EAPI}.bash" >&2; exit 1; }
+		source "${PKGCORE_EBD_PATH}/eapi/${PREV_EAPI}-phase.bash" \
+			|| { echo "failed loading eapi/${PREV_EAPI}-phase.bash" >&2; exit 1; }
 		PREV_EAPI_FUNCS=( $(compgen -A function) )
 	fi
 fi
 
 source "${PKGCORE_EBD_PATH}/eapi/${EAPI}.bash" \
 	|| { echo "failed loading eapi/${EAPI}.bash" >&2; exit 1; }
+source "${PKGCORE_EBD_PATH}/eapi/${EAPI}-phase.bash" \
+	|| { echo "failed loading eapi/${EAPI}-phase.bash" >&2; exit 1; }
 
 if ${ONLY}; then
 	for func in "${PREV_EAPI_FUNCS[@]}"; do

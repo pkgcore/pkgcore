@@ -61,6 +61,8 @@ hasv() {
 	has "$@" && echo "$1"
 }
 
+## Stubbed debug commands to avoid debug output during metadata generation
+
 debug-print() {
 	:
 }
@@ -72,6 +74,8 @@ debug-print-function() {
 debug-print-section() {
 	:
 }
+
+## Output commands
 
 eqawarn() {
 	__elog_base QA "$*"

@@ -182,7 +182,12 @@ __load_eapi_libs() {
 	source "${PKGCORE_EBD_PATH}"/eapi/common.bash || die "failed sourcing eapi/common.bash"
 	source "${PKGCORE_EBD_PATH}/eapi/${EAPI}.bash" || die "failed loading eapi/${EAPI}.bash"
 
-	# override banned functions
+	# override banned global functions
+	__ban_eapi_funcs
+}
+
+# Replace EAPI banned functions.
+__ban_eapi_funcs() {
 	local func
 	for func in "${PKGCORE_BANNED_FUNCS[@]}"; do
 		eval "${func}() { die \"'${func}' is banned in EAPI ${EAPI}\"; }"
@@ -338,8 +343,17 @@ __run_ebuild_phase() {
 		die "${msg}"
 	}
 
-	# load phase specific functions if any exist
+	# EAPI libs append function names to this array to ban usage
+	local -a PKGCORE_BANNED_FUNCS
+
+	# load phase specific functions
+	source "${PKGCORE_EBD_PATH}/eapi/${EAPI}-phase.bash" || \
+		die "failed loading eapi/${EAPI}-phase.bash"
+	# load phase specific EAPI functions if any exist
 	__run_eapi_funcs --override __phase_funcs_$1
+
+	# override banned phase functions
+	__ban_eapi_funcs
 
 	__qa_run_function_if_exists __phase_pre_$1
 	__qa_run_function_if_exists pre_$1

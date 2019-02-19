@@ -1,18 +1,3 @@
-#!/usr/bin/env pkgcore-ebuild-helper
-# Copyright: 2011 Brian Harring <ferringb@gmail.com>
-# License: GPL2/BSD 3 clause
+#!/usr/bin/env pkgcore-ipc-helper
 
-check_args 1 -
-
-check_command_or_stop install -d "${ED}/${DESTTREE}/share/locale/"
-
-for x in "$@"; do
-	if [[ -e ${x} ]]; then
-		my_basename=${x##*/}
-		mydir="${ED}/${DESTTREE}/share/locale/${my_basename%.*}/LC_MESSAGES"
-		check_command install -d "${mydir}" && \
-			check_command install -m0644 -- "${x}" "${mydir}/${MOPREFIX}.mo"
-	else
-		error "'${x}' does not exist"
-	fi
-done
+OPTIONS=( "--dest=\"${DESTTREE}/share/locale\"" )

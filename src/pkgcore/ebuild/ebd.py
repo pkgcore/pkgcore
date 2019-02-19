@@ -643,6 +643,7 @@ class buildable(ebd, setup_mixin, format.build):
             'dolib.so': ebd_ipc.Dolib_so(self),
             'dolib.a': ebd_ipc.Dolib_a(self),
             'doman': ebd_ipc.Doman(self),
+            'domo': ebd_ipc.Domo(self),
         }
 
     def _generic_phase(self, *args, extra_handlers={}, **kwargs):

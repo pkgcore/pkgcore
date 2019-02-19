@@ -67,10 +67,10 @@ class IpcCommand(object):
     opts_parser = None
 
     def __init__(self, op):
-        self.op = op
         self.ED = op.ED
+        self.pkg = op.pkg
         self.eapi = op.pkg.eapi
-        self.observer = self.op.observer
+        self.observer = op.observer
         self._helper = self.__class__.__name__.lower().replace('_', '.')
         self.opts = arghparse.Namespace()
 
@@ -606,6 +606,30 @@ class Doman(_InstallWrapper):
                 yield False, (f, pjoin(mandir, name))
             else:
                 raise IpcCommandError(f'invalid man page: {f}')
+
+    def _install_targets(self, targets):
+        # TODO: skip/warn installing empty files
+        targets = self._filter_targets(targets)
+        files, dirs = partition(targets, predicate=itemgetter(0))
+        self.install_dirs(x for _, x in dirs)
+        self._install_files(x for _, x in files)
+
+
+class Domo(_InstallWrapper):
+    """Python wrapper for domo."""
+
+    def parse_install_options(self, *args, **kwargs):
+        self.opts.insoptions = ['-m0644']
+        return super().parse_install_options(*args, **kwargs)
+
+    def _filter_targets(self, files):
+        dirs = set()
+        for f in files:
+            d = pjoin(os.path.splitext(os.path.basename(f))[0], 'LC_MESSAGES')
+            if d not in dirs:
+                yield True, d
+                dirs.add(d)
+            yield False, (f, pjoin(d, f'{self.pkg.PN}.mo'))
 
     def _install_targets(self, targets):
         # TODO: skip/warn installing empty files

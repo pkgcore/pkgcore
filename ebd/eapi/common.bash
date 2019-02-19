@@ -344,7 +344,6 @@ __phase_pre_src_install() {
 	export PKGCORE_DOCOMPRESS_SKIP=( /usr/share/doc/${PF}/html )
 	export PKGCORE_DOSTRIP=()
 	export PKGCORE_DOSTRIP_SKIP=()
-	export MOPREFIX=${PN}
 	export D
 	rm -rf "${D}"
 	if ${PKGCORE_PREFIX_SUPPORT}; then

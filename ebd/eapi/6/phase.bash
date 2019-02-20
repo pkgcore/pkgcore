@@ -104,9 +104,11 @@ eapply() {
 
 eapply_user() {
 	[[ ${EBUILD_PHASE} == "prepare" ]] || die "${FUNCNAME}: called during invalid phase: ${EBUILD_PHASE}"
+
 	# return if eapply_user has already been called
-	${PKGCORE_EAPPLY_USER} && return
-	PKGCORE_EAPPLY_USER=true
+	local user_patches_applied=${T}/.user_patches_applied
+	[[ -f ${user_patches_applied} ]] && return
+	echo "${PKGCORE_USER_PATCHES[@]}" > "${user_patches_applied}"
 
 	if [[ ${#PKGCORE_USER_PATCHES[@]} -gt 0 ]]; then
 		echo

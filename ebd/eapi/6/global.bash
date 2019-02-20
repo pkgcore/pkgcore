@@ -1,10 +1,10 @@
 # Copyright: 2014-2016 Tim Harder <radhermit@gmail.com>
 # license GPL2/BSD 3
 
-PKGCORE_EAPPLY_USER=false
-
 __phase_post_src_prepare() {
-	${PKGCORE_EAPPLY_USER} || die "eapply_user (or default) must be called in src_prepare()"
+	if [[ ! -f ${T}/.user_patches_applied ]]; then
+		die "eapply_user (or default) must be called in src_prepare()"
+	fi
 }
 
 __phase_src_prepare() {

@@ -85,7 +85,7 @@ class IpcCommand(object):
             self.cwd = self.read()
             options = shlex.split(self.read())
             args = self.read().strip('\0')
-            args = args.split('\0') if args else None
+            args = args.split('\0') if args else []
             # parse args and run command
             args = self.parse_options(options, args)
             args = self.finalize(args)
@@ -105,13 +105,13 @@ class IpcCommand(object):
 
     def parse_options(self, opts, args):
         """Parse internal args passed from the bash side."""
-        if opts and self.parser is not None:
+        if self.parser is not None:
             opts, unknown = self.parser.parse_known_args(opts, namespace=self.opts)
             if unknown:
                 raise UnknownOptions(unknown)
 
         # pull user options off the start of the argument list
-        if args and self.opts_parser is not None:
+        if self.opts_parser is not None:
             opts, args = self.opts_parser.parse_optionals(args, namespace=self.opts)
         return args
 
@@ -233,7 +233,7 @@ class _InstallWrapper(IpcCommand):
     def finalize(self, args):
         self.dest_dir = self.opts.dest.lstrip(os.path.sep)
 
-        if args is None:
+        if not args:
             raise IpcCommandError('missing targets to install')
         args = (x.rstrip(os.path.sep) for x in args)
         return args

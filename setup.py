@@ -153,15 +153,12 @@ def write_pkgcore_ebd_eapi_libs(root, target, scripts_dir=None, python_base='.')
 
             for phase in eapi_obj.phases.values():
                 # generate specific phase scope lib
-                proc = subprocess.run(
-                    [script, '-s', phase, eapi],
-                    cwd=ebd_dir, env=env, stdout=subprocess.PIPE)
-                if proc.returncode:
-                    raise DistutilsExecError(
-                        f"generating {phase} phase scope EAPI {eapi} lib failed")
-                if proc.stdout:
-                    with open(os.path.join(ebd_dir, 'libs', eapi, phase), 'wb') as f:
-                        f.write(proc.stdout)
+                with open(os.path.join(ebd_dir, 'libs', eapi, phase), 'w') as f:
+                    if subprocess.call(
+                            [script, '-s', phase, eapi],
+                            cwd=ebd_dir, env=env, stdout=f):
+                        raise DistutilsExecError(
+                            f"generating {phase} phase scope EAPI {eapi} lib failed")
 
 
 def write_pkgcore_lookup_configs(python_base, install_prefix, injected_bin_path=()):

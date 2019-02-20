@@ -1,6 +1,6 @@
 #!/usr/bin/env pkgcore-ebuild-helper
 
-eqawarn "QA Notice: '${HELPER_NAME}' is deprecated in EAPI ${HELPER_EAPI}"
+eqawarn "QA Notice: ${HELPER_NAME}: deprecated in EAPI ${HELPER_EAPI}"
 
 # find original, nondeprecated helper and execute it by removing the EAPI where
 # it's deprecated from PATH and searching for the old implementation

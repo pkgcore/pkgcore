@@ -32,15 +32,17 @@ for (( eapi=0 ; eapi<=${EAPI} ; eapi++ )) ; do
 			source "${file}" || { echo "failed loading ${file}" >&2; exit 1; }
 		fi
 	fi
+
 	file=${PKGCORE_EBD_PATH}/eapi/${eapi}/${SCOPE}.bash
 	if  [[ -f ${file} ]]; then
 		source "${file}" || { echo "failed loading ${file}" >&2; exit 1; }
 	fi
-done
 
-# replace EAPI banned functions
-for func in "${PKGCORE_BANNED_FUNCS[@]}"; do
-	eval "${func}() { die \"'${func}' is banned in EAPI \${EAPI}\"; }"
+	# replace EAPI banned functions if any exist
+	for func in "${PKGCORE_BANNED_FUNCS[@]}"; do
+		eval "${func}() { die \"\${FUNCNAME}: banned in EAPI ${eapi}\"; }"
+	done
+	unset PKGCORE_BANNED_FUNCS
 done
 
 declare -f ${FUNC}

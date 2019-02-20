@@ -2,7 +2,7 @@
 .*.sw[po]
 
 # C extensions
-*.so
+src/**/*.so
 
 # generated function lists
 bash/funcnames

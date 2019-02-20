@@ -43,7 +43,7 @@ econf() {
 
 	# get EAPI specific arguments
 	local help_text=$("${ECONF_SOURCE}/configure" --help 2> /dev/null)
-	set -- $(__run_eapi_funcs __econf_options "${help_text}") "$@"
+	set -- $(__run_eapi_funcs --override __econf_options "${help_text}") "$@"
 
 	# Reset IFS since we're interpreting user supplied EXTRA_ECONF.
 	local IFS=$' \t\n'

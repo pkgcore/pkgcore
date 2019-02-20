@@ -40,7 +40,7 @@ done
 
 # replace EAPI banned functions
 for func in "${PKGCORE_BANNED_FUNCS[@]}"; do
-	eval "${func}() { die \"'${func}' is banned in EAPI ${EAPI}\"; }"
+	eval "${func}() { die \"'${func}' is banned in EAPI \${EAPI}\"; }"
 done
 
 declare -f ${FUNC}

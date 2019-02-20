@@ -1,8 +1,6 @@
 # Copyright: 2014-2016 Tim Harder <radhermit@gmail.com>
 # license GPL2/BSD 3
 
-source "${PKGCORE_EBD_PATH}"/eapi/5.bash
-
 PKGCORE_EAPPLY_USER=false
 
 __phase_post_src_prepare() {

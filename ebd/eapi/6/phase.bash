@@ -1,5 +1,3 @@
-source "${PKGCORE_EBD_PATH}"/eapi/5-phase.bash
-
 PKGCORE_BANNED_FUNCS+=( einstall )
 
 __econf_options_eapi6() {

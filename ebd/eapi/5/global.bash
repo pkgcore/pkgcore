@@ -1,8 +1,6 @@
 # Copyright: 2012 Brian Harring <ferringb@gmail.com>
 # license GPL2/BSD 3
 
-source "${PKGCORE_EBD_PATH}"/eapi/4.bash
-
 # parallel tests are allowed (no forced -j1)
 __phase_src_test() {
 	addpredict /

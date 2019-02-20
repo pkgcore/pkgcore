@@ -26,31 +26,20 @@ export PKGCORE_EBD_PATH=${BASH_SOURCE[0]%/*}
 # null so any code that tried accessing it thinks it succeeded
 export PKGCORE_PYTHON_BINARY=${PKGCORE_PYTHON_BINARY:-/bin/true}
 
+shopt -s nullglob
 if ${ONLY}; then
-	PREV_EAPI=$((EAPI-1))
-	if [[ -f "${PKGCORE_EBD_PATH}/eapi/${PREV_EAPI}.bash" ]]; then
-		source "${PKGCORE_EBD_PATH}/eapi/${PREV_EAPI}.bash" \
-			|| { echo "failed loading eapi/${PREV_EAPI}.bash" >&2; exit 1; }
-		source "${PKGCORE_EBD_PATH}/eapi/${PREV_EAPI}-phase.bash" \
-			|| { echo "failed loading eapi/${PREV_EAPI}-phase.bash" >&2; exit 1; }
-		PREV_EAPI_FUNCS=( $(compgen -A function) )
-	fi
-fi
-
-source "${PKGCORE_EBD_PATH}/eapi/${EAPI}.bash" \
-	|| { echo "failed loading eapi/${EAPI}.bash" >&2; exit 1; }
-source "${PKGCORE_EBD_PATH}/eapi/${EAPI}-phase.bash" \
-	|| { echo "failed loading eapi/${EAPI}-phase.bash" >&2; exit 1; }
-
-if ${ONLY}; then
-	for func in "${PREV_EAPI_FUNCS[@]}"; do
-		unset -f ${func}
+	for file in "${PKGCORE_EBD_PATH}/eapi/${EAPI}"/*.bash; do
+		source "${file}" || { echo "failed loading ${file}" >&2; exit 1; }
+	done
+else
+	for (( eapi=0 ; eapi<=${EAPI} ; eapi++ )) ; do
+		for file in "${PKGCORE_EBD_PATH}/eapi/${eapi}"/*.bash; do
+			source "${file}" || { echo "failed loading ${file}" >&2; exit 1; }
+		done
 	done
 fi
 
-if ! ${VISIBLE}; then
-	INTERNAL_FUNCS=( $(compgen -A function __) )
-fi
+${VISIBLE} || INTERNAL_FUNCS=( $(compgen -A function __) )
 
 # Sorting order; put PMS functionality first, then our internals.
 printf '%s\n' $(compgen -X '__*' -A function) ${INTERNAL_FUNCS[@]}

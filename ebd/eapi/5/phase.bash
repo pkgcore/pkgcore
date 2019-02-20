@@ -1,5 +1,3 @@
-source "${PKGCORE_EBD_PATH}"/eapi/4-phase.bash
-
 __econf_options_eapi5() {
 	if [[ $1 == *"--disable-silent-rules"* ]]; then
 		echo --disable-silent-rules

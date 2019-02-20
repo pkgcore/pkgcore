@@ -39,22 +39,12 @@ hasv() {
 	has "$@" && echo "$1"
 }
 
-## Stubbed debug commands to avoid debug output during metadata generation
+# stubbed debug commands to avoid debug output during metadata generation
+debug-print() { :; }
+debug-print-function() { :; }
+debug-print-section() { :; }
 
-debug-print() {
-	:
-}
-
-debug-print-function() {
-	:
-}
-
-debug-print-section() {
-	:
-}
-
-## Output commands
-
+# output commands
 eqawarn() {
 	__elog_base QA "$*"
 	printf " ${PKGCORE_RC_WARN}*${PKGCORE_RC_NORMAL} %b\n" "${*}" >&2

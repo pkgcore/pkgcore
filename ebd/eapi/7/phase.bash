@@ -1,15 +1,9 @@
-source "${PKGCORE_EBD_PATH}"/eapi/6-phase.bash
-
 PKGCORE_BANNED_FUNCS+=( libopts )
 
 __econf_options_eapi7() {
 	if [[ $1 == *"--with-sysroot"* ]]; then
 		echo --with-sysroot="${ESYSROOT:-/}"
 	fi
-}
-
-__phase_funcs_src_install_eapi7() {
-	dostrip() { __ebd_ipc_cmd ${FUNCNAME} "" "$@"; }
 }
 
 __query_version_funcs() {

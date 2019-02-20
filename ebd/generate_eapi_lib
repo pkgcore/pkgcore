@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+#
+# Generate EAPI specific bash libraries for various scopes.
+#
+# This script is run dynamically in a repo or tarball layout on initialization
+# of the build environment for each ebuild since different EAPIs require
+# different support to be enabled or overridden. For installed versions, static
+# function lists are generated at install time and used instead.
+
+SCOPE=global
+while getopts "s:" opt; do
+	case ${opt} in
+		s) SCOPE=${OPTARG} ;;
+		*) exit 1 ;;
+	esac
+done
+
+shift $((OPTIND-1))
+EAPI=${1:-0}
+FUNC=$2
+export PKGCORE_EBD_PATH=${BASH_SOURCE[0]%/*}
+
+# without this var, parsing certain things can fail; force to true if unset or
+# null so any code that tried accessing it thinks it succeeded
+export PKGCORE_PYTHON_BINARY=${PKGCORE_PYTHON_BINARY:-/bin/true}
+
+for (( eapi=0 ; eapi<=${EAPI} ; eapi++ )) ; do
+	file="${PKGCORE_EBD_PATH}/eapi/${eapi}"/${SCOPE}.bash
+	if  [[ -f ${file} ]]; then
+		source "${file}" || { echo "failed loading ${file}" >&2; exit 1; }
+	fi
+done
+
+# replace EAPI banned functions
+for func in "${PKGCORE_BANNED_FUNCS[@]}"; do
+	eval "${func}() { die \"'${func}' is banned in EAPI ${EAPI}\"; }"
+done
+
+declare -f ${FUNC}

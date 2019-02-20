@@ -3,8 +3,6 @@
 # Copyright: 2017-2018 Ulrich Müller <ulm@gentoo.org>
 # license GPL2/BSD 3
 
-source "${PKGCORE_EBD_PATH}"/eapi/6.bash
-
 __ver_parse_range() {
 	local range=${1}
 	local max=${2}

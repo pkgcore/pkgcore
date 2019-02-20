@@ -1,8 +1,6 @@
 # Copyright: 2011-2012 Brian Harring <ferringb@gmail.com>
 # license GPL2/BSD 3
 
-## Debug commands
-
 # debug-print() gets called from many places with verbose status information useful
 # for tracking down problems. The output is in ${T}/eclass-debug.log.
 # You can set ECLASS_DEBUG_OUTPUT to redirect the output somewhere else as well.

@@ -172,26 +172,15 @@ __ensure_PATH() {
 }
 
 __load_eapi_libs() {
-	# EAPI libs append function names to this array to ban usage
-	local -a PKGCORE_BANNED_FUNCS
-
 	# reload depend; while it may've been loaded already, reload it so that callers can
 	# rely on this setting the env up as necessary
 	# finally, update the filters with functionality loaded from here-
 	# always, always, *always* use our own functionality
-	source "${PKGCORE_EBD_PATH}"/eapi/common.bash || die "failed sourcing eapi/common.bash"
-	source "${PKGCORE_EBD_PATH}/eapi/${EAPI}.bash" || die "failed loading eapi/${EAPI}.bash"
-
-	# override banned global functions
-	__ban_eapi_funcs
-}
-
-# Replace EAPI banned functions.
-__ban_eapi_funcs() {
-	local func
-	for func in "${PKGCORE_BANNED_FUNCS[@]}"; do
-		eval "${func}() { die \"'${func}' is banned in EAPI ${EAPI}\"; }"
-	done
+	source "${PKGCORE_EBD_PATH}/eapi/common.bash" \
+		|| die "failed sourcing eapi/common.bash"
+	# load global scope EAPI functions
+	source <("${PKGCORE_EBD_PATH}"/generate_eapi_lib -s global ${EAPI}) \
+		|| die "failed sourcing EAPI ${EAPI} global scope lib"
 }
 
 # do all profile, bashrc's, and ebuild sourcing. Should only be called in setup phase, unless the
@@ -343,17 +332,12 @@ __run_ebuild_phase() {
 		die "${msg}"
 	}
 
-	# EAPI libs append function names to this array to ban usage
-	local -a PKGCORE_BANNED_FUNCS
-
-	# load phase specific functions
-	source "${PKGCORE_EBD_PATH}/eapi/${EAPI}-phase.bash" || \
-		die "failed loading eapi/${EAPI}-phase.bash"
-	# load phase specific EAPI functions if any exist
-	__run_eapi_funcs --override __phase_funcs_$1
-
-	# override banned phase functions
-	__ban_eapi_funcs
+	# load generic phase scope EAPI functions
+	source <("${PKGCORE_EBD_PATH}"/generate_eapi_lib -s phase ${EAPI}) \
+		|| die "failed sourcing EAPI ${EAPI} generic phase scope lib"
+	# load specific phase scope EAPI functions
+	source <("${PKGCORE_EBD_PATH}"/generate_eapi_lib -s $1 ${EAPI}) \
+		|| die "failed sourcing EAPI ${EAPI} $1 phase scope lib"
 
 	__qa_run_function_if_exists __phase_pre_$1
 	__qa_run_function_if_exists pre_$1

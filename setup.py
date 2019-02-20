@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import errno
 from distutils import log
 from distutils.errors import DistutilsExecError
 from distutils.util import byte_compile
@@ -79,11 +78,7 @@ def write_pkgcore_ebd_funclists(root, target, scripts_dir=None, python_base='.')
     if root != '/':
         ebd_dir = os.path.join(root, target.lstrip('/'))
     log.info("Writing ebd function lists to %s" % os.path.join(ebd_dir, 'funcnames'))
-    try:
-        os.makedirs(os.path.join(ebd_dir, 'funcnames'))
-    except OSError as e:
-        if e.errno != errno.EEXIST:
-            raise
+    os.makedirs(os.path.join(ebd_dir, 'funcnames'), exist_ok=True)
 
     # Add scripts dir to PATH and set the current python binary for filter-env
     # usage in global scope.
@@ -115,11 +110,7 @@ def write_pkgcore_ebd_funclists(root, target, scripts_dir=None, python_base='.')
 def write_pkgcore_lookup_configs(python_base, install_prefix, injected_bin_path=()):
     """Generate file of install path constants."""
     path = os.path.join(python_base, "pkgcore", "_const.py")
-    try:
-        os.makedirs(os.path.dirname(path))
-    except OSError as e:
-        if e.errno != errno.EEXIST:
-            raise
+    os.makedirs(os.path.dirname(path), exist_ok=True)
     log.info("writing lookup config to %r" % path)
 
     with open(path, "w") as f:

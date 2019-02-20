@@ -32,6 +32,7 @@ class sdist(pkgdist.sdist):
 
         # generate function lists so they don't need to be created on install
         write_pkgcore_ebd_funclists(root='/', target='ebd/generated')
+        write_pkgcore_ebd_eapi_libs(root='/', target='ebd/generated')
         shutil.copytree(
             os.path.join(pkgdist.REPODIR, 'ebd', 'generated'),
             os.path.join(base_dir, 'ebd', 'generated'))
@@ -68,9 +69,12 @@ class install(pkgdist.install):
                 write_pkgcore_ebd_funclists(
                     root=root, target=os.path.join(target, EBD_INSTALL_OFFSET, 'generated'),
                     scripts_dir=self.install_scripts, python_base=self.install_purelib)
+                write_pkgcore_ebd_eapi_libs(
+                    root=root, target=os.path.join(target, EBD_INSTALL_OFFSET, 'generated'),
+                    scripts_dir=self.install_scripts, python_base=self.install_purelib)
 
 
-def write_pkgcore_ebd_funclists(root, target, scripts_dir=None, python_base='.'): 
+def write_pkgcore_ebd_funclists(root, target, scripts_dir=None, python_base='.'):
     "Generate bash function lists from ebd implementation for env filtering."""
     if scripts_dir is None:
         scripts_dir = os.path.join(pkgdist.REPODIR, 'bin')
@@ -105,6 +109,59 @@ def write_pkgcore_ebd_funclists(root, target, scripts_dir=None, python_base='.')
                     cwd=ebd_dir, env=env, stdout=f):
                 raise DistutilsExecError(
                     "generating EAPI %s function list failed" % eapi)
+
+
+def write_pkgcore_ebd_eapi_libs(root, target, scripts_dir=None, python_base='.'):
+    "Generate bash EAPI scope libs for sourcing."""
+    if scripts_dir is None:
+        scripts_dir = os.path.join(pkgdist.REPODIR, 'bin')
+    ebd_dir = target
+    if root != '/':
+        ebd_dir = os.path.join(root, target.lstrip('/'))
+    log.info("Writing ebd libs %s" % os.path.join(ebd_dir, 'libs'))
+
+    # Add scripts dir to PATH and set the current python binary for filter-env
+    # usage in global scope.
+    env = {
+        'PATH': os.pathsep.join([pkgdist.SCRIPTS_DIR, os.environ.get('PATH', '')]),
+        'PKGCORE_PYTHON_BINARY': sys.executable,
+        'PKGCORE_PYTHONPATH': os.path.abspath(python_base),
+    }
+
+    script = os.path.join(pkgdist.REPODIR, 'ebd', 'generate_eapi_lib')
+    with pkgdist.syspath(pkgdist.PACKAGEDIR):
+        from pkgcore.ebuild.eapi import EAPI
+        for eapi_obj in EAPI.known_eapis.values():
+            eapi = str(eapi_obj)
+            os.makedirs(os.path.join(ebd_dir, 'libs', eapi), exist_ok=True)
+
+            # generate global scope lib
+            with open(os.path.join(ebd_dir, 'libs', eapi, 'global'), 'w') as f:
+                if subprocess.call(
+                        [script, eapi],
+                        cwd=ebd_dir, env=env, stdout=f):
+                    raise DistutilsExecError(
+                        f"generating global scope EAPI {eapi} lib failed")
+
+            # generate generic phase scope lib
+            with open(os.path.join(ebd_dir, 'libs', eapi, 'phase'), 'w') as f:
+                if subprocess.call(
+                        [script, '-s', 'phase', eapi],
+                        cwd=ebd_dir, env=env, stdout=f):
+                    raise DistutilsExecError(
+                        f"generating phase scope EAPI {eapi} lib failed")
+
+            for phase in eapi_obj.phases.values():
+                # generate specific phase scope lib
+                proc = subprocess.run(
+                    [script, '-s', phase, eapi],
+                    cwd=ebd_dir, env=env, stdout=subprocess.PIPE)
+                if proc.returncode:
+                    raise DistutilsExecError(
+                        f"generating {phase} phase scope EAPI {eapi} lib failed")
+                if proc.stdout:
+                    with open(os.path.join(ebd_dir, 'libs', eapi, phase), 'wb') as f:
+                        f.write(proc.stdout)
 
 
 def write_pkgcore_lookup_configs(python_base, install_prefix, injected_bin_path=()):

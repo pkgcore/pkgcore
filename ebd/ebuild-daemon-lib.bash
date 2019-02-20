@@ -41,7 +41,7 @@ __ebd_write_raw() {
 }
 
 __ipc_exit() {
-	[[ $1 == 0 ]] && exit 0
+	[[ $1 == 0 ]] && return 0
 	# exit in a helper compatible way when running IPC command from a helper
 	[[ -n ${HELPER_ERROR_PREFIX} ]] && __helper_exit "$@"
 
@@ -51,7 +51,7 @@ __ipc_exit() {
 
 	if ${PKGCORE_NONFATAL}; then
 		eerror "${error_msg}"
-		exit ${ret}
+		return ${ret}
 	fi
 
 	die "${error_msg}"

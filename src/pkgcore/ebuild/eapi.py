@@ -212,7 +212,8 @@ class EAPI(object, metaclass=klass.immutable_instance):
     def bash_funcs(self):
         """Internally implemented EAPI specific functions to skip when exporting."""
         try:
-            with open(pjoin(const.EBD_PATH, 'funcnames', self._magic), 'r') as f:
+            eapi_funcs = pjoin(const.EBD_PATH, 'generated', 'funcnames', self._magic)
+            with open(eapi_funcs, 'r') as f:
                 funcs = f.readlines()
         except FileNotFoundError:
             # we're running in the git repo and need to generate the list on the fly

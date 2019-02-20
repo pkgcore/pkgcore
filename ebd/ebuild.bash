@@ -176,12 +176,12 @@ __load_eapi_libs() {
 	# rely on this setting the env up as necessary
 	# finally, update the filters with functionality loaded from here-
 	# always, always, *always* use our own functionality
-	source "${PKGCORE_EBD_PATH}/eapi/common.bash" \
+	source "${PKGCORE_EBD_PATH}"/eapi/common.bash \
 		|| die "failed sourcing eapi/common.bash"
 
 	# load global scope EAPI functions
 	if [[ -f ${PKGCORE_EBD_PATH}/generated/libs/${EAPI}/global ]]; then
-		source ${PKGCORE_EBD_PATH}/generated/libs/${EAPI}/global \
+		source "${PKGCORE_EBD_PATH}"/generated/libs/${EAPI}/global \
 			|| die "failed sourcing EAPI ${EAPI} global scope lib"
 	else
 		source <("${PKGCORE_EBD_PATH}"/generate_eapi_lib -s global ${EAPI}) \
@@ -338,18 +338,9 @@ __run_ebuild_phase() {
 		die "${msg}"
 	}
 
-	# load generic phase scope EAPI functions
-	if [[ -f ${PKGCORE_EBD_PATH}/generated/libs/${EAPI}/phase ]]; then
-		source ${PKGCORE_EBD_PATH}/generated/libs/${EAPI}/phase \
-			|| die "failed sourcing EAPI ${EAPI} generic phase scope lib"
-	else
-		source <("${PKGCORE_EBD_PATH}"/generate_eapi_lib -s phase ${EAPI}) \
-			|| die "failed sourcing EAPI ${EAPI} generic phase scope lib"
-	fi
-
-	# load specific phase scope EAPI functions
+	# load phase scope EAPI functions
 	if [[ -f ${PKGCORE_EBD_PATH}/generated/libs/${EAPI}/$1 ]]; then
-		source ${PKGCORE_EBD_PATH}/generated/libs/${EAPI}/$1 \
+		source "${PKGCORE_EBD_PATH}"/generated/libs/${EAPI}/$1 \
 			|| die "failed sourcing EAPI ${EAPI} $1 phase scope lib"
 	else
 		source <("${PKGCORE_EBD_PATH}"/generate_eapi_lib -s $1 ${EAPI}) \

@@ -143,16 +143,8 @@ def write_pkgcore_ebd_eapi_libs(root, target, scripts_dir=None, python_base='.')
                     raise DistutilsExecError(
                         f"generating global scope EAPI {eapi} lib failed")
 
-            # generate generic phase scope lib
-            with open(os.path.join(ebd_dir, 'libs', eapi, 'phase'), 'w') as f:
-                if subprocess.call(
-                        [script, '-s', 'phase', eapi],
-                        cwd=ebd_dir, env=env, stdout=f):
-                    raise DistutilsExecError(
-                        f"generating phase scope EAPI {eapi} lib failed")
-
             for phase in eapi_obj.phases.values():
-                # generate specific phase scope lib
+                # generate phase scope lib
                 with open(os.path.join(ebd_dir, 'libs', eapi, phase), 'w') as f:
                     if subprocess.call(
                             [script, '-s', phase, eapi],

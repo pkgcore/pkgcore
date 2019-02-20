@@ -631,8 +631,8 @@ class buildable(ebd, setup_mixin, format.build):
         if self.setup_is_for_src:
             self._init_distfiles_env()
 
-        # bash helpers implemented in python
         self._ipc_helpers = {
+            # bash helpers implemented in python
             'doins': ebd_ipc.Doins(self),
             'dodoc': ebd_ipc.Dodoc(self),
             'dohtml': ebd_ipc.Dohtml(self),
@@ -645,6 +645,10 @@ class buildable(ebd, setup_mixin, format.build):
             'dolib.a': ebd_ipc.Dolib_a(self),
             'doman': ebd_ipc.Doman(self),
             'domo': ebd_ipc.Domo(self),
+
+            # bash functions
+            'docompress': ebd_ipc.Docompress(self),
+            'dostrip': ebd_ipc.Dostrip(self),
         }
 
     def _generic_phase(self, *args, extra_handlers={}, **kwargs):

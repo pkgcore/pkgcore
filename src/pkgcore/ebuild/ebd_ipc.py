@@ -724,3 +724,42 @@ class Dohtml(_InstallWrapper):
 
     def _install_files(self, files):
         self.install(f for f in files if self._allowed_file(f))
+
+
+class _AlterFiles(IpcCommand):
+
+    opts_parser = IpcArgumentParser(add_help=False)
+    opts_parser.add_argument('-x', dest='excludes', action='store_true')
+
+    default_includes = ()
+    default_excludes = ()
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.includes = set(self.default_includes)
+        self.excludes = set(self.default_excludes)
+
+    def run(self, args):
+        if not args:
+            raise IpcCommandError('missing targets')
+        if self.opts.excludes:
+            self.excludes.update(args)
+        else:
+            self.includes.update(args)
+
+
+class Docompress(_AlterFiles):
+
+    default_includes = ('/usr/share/doc', '/usr/share/info', '/usr/share/man')
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.excludes = {f'/usr/share/doc/{self.pkg.PF}/html'}
+
+
+class Dostrip(_AlterFiles):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if 'strip' not in self.pkg.restrict:
+            self.includes = {'/'}

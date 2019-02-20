@@ -9,14 +9,7 @@ __econf_options_eapi7() {
 }
 
 __phase_funcs_src_install_eapi7() {
-	dostrip() {
-		if [[ $1 == "-x" ]]; then
-			shift
-			PKGCORE_DOSTRIP_SKIP+=( "$@" )
-		else
-			PKGCORE_DOSTRIP+=( "$@" )
-		fi
-	}
+	dostrip() { __ebd_ipc_cmd ${FUNCNAME} "" "$@"; }
 }
 
 __query_version_funcs() {

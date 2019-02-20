@@ -123,10 +123,6 @@ __phase_pre_src_install() {
 	export LIBOPTIONS="-m0644" DIROPTIONS="-m0755"
 	export PORTAGE_COMPRESS=${PORTAGE_COMPRESS:-bzip2}
 	export PORTAGE_COMPRESS_FLAGS=${PORTAGE_COMPRESS_FLAGS:--9}
-	export PKGCORE_DOCOMPRESS=( /usr/share/{doc,info,man} )
-	export PKGCORE_DOCOMPRESS_SKIP=( /usr/share/doc/${PF}/html )
-	export PKGCORE_DOSTRIP=()
-	export PKGCORE_DOSTRIP_SKIP=()
 	export D
 	rm -rf "${D}"
 	if ${PKGCORE_PREFIX_SUPPORT}; then

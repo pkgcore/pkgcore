@@ -92,7 +92,7 @@ class IpcCommand(object):
             # parse args and run command
             args = self.parse_options(options, args)
             args = self.finalize(args)
-            self.run(args)
+            ret = self.run(args)
         except IGNORED_EXCEPTIONS:
             raise
         except IpcCommandError as e:
@@ -124,7 +124,7 @@ class IpcCommand(object):
 
     def run(self, args):
         """Run the requested IPC command."""
-        raise NotImplementedError
+        return 0
 
     def read(self):
         """Read a line from the ebuild daemon."""
@@ -259,6 +259,7 @@ class _InstallWrapper(IpcCommand):
             raise IpcCommandError(
                 f'failed creating dir: {dest_dir!r}: {e.strerror}')
         self._install_targets(args)
+        return 0
 
     def _prefix_targets(files):
         """Decorator to prepend targets being installed with the destination path."""
@@ -751,6 +752,7 @@ class _AlterFiles(IpcCommand):
             self.excludes.update(args)
         else:
             self.includes.update(args)
+        return 0
 
 
 class Docompress(_AlterFiles):

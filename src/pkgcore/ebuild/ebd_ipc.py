@@ -66,13 +66,16 @@ class IpcCommand(object):
     parser = None
     # argument parser for user options
     opts_parser = None
+    # override IPC name for error messages
+    name = None
 
     def __init__(self, op):
         self.ED = op.ED
         self.pkg = op.pkg
         self.eapi = op.pkg.eapi
         self.observer = op.observer
-        self._helper = self.__class__.__name__.lower().replace('_', '.')
+        if self.name is None:
+            self.name = self.__class__.__name__.lower()
         self.opts = arghparse.Namespace()
 
     def __call__(self, ebd):
@@ -141,7 +144,7 @@ class IpcCommand(object):
         Args:
             msg: message to be output
         """
-        self.observer.warn(f'{self._helper}: {msg}')
+        self.observer.warn(f'{self.name}: {msg}')
         self.observer.flush()
 
 
@@ -562,9 +565,13 @@ class Dolib(_InstallWrapper):
 class Dolib_so(Dolib):
     """Python wrapper for dolib.so."""
 
+    name = 'dolib.so'
+
 
 class Dolib_a(Dolib):
     """Python wrapper for dolib.a."""
+
+    name = 'dolib.a'
 
 
 class Doman(_InstallWrapper):

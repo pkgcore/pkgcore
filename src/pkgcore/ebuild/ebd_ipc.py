@@ -195,6 +195,9 @@ class _InstallWrapper(IpcCommand):
     install_parser.add_argument('-m', '--mode', default=0o755, type=_parse_mode)
     install_parser.add_argument('-p', '--preserve-timestamps', action='store_true')
 
+    # boolean for whether symlinks are allowed to be installed
+    allow_symlinks = False
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.parser.set_defaults(
@@ -559,9 +562,7 @@ class Dosbin(Dobin):
 class Dolib(_InstallWrapper):
     """Python wrapper for dolib."""
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.allow_symlinks = True
+    allow_symlinks = True
 
 
 class Dolib_so(Dolib):
@@ -587,9 +588,10 @@ class Doman(_InstallWrapper):
     detect_lang_re = re.compile(r'^(\w+)\.([a-z]{2}([A-Z]{2})?)\.(\w+)$')
     valid_mandir_re = re.compile(r'man[0-9n](f|p|pm)?$')
 
+    allow_symlinks = True
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.allow_symlinks = True
 
     def finalize(self, *args, **kwargs):
         self.language_detect = self.eapi.options.doman_language_detect

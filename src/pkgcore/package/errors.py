@@ -8,10 +8,10 @@ __all__ = (
 
 from snakeoil import bash
 
-from pkgcore.exceptions import PkgcoreException
+from pkgcore.exceptions import PkgcoreUserException
 
 
-class PackageError(ValueError, PkgcoreException):
+class PackageError(ValueError, PkgcoreUserException):
     pass
 
 
@@ -50,11 +50,11 @@ class MetadataException(PackageError):
 
 
 class InvalidDependency(PackageError):
-    pass
+    """Generic bad package dependency."""
 
 
-class ChksumBase(PkgcoreException):
-    pass
+class ChksumBase(PkgcoreUserException):
+    """Generic checksum failure."""
 
 
 class MissingChksum(ChksumBase):

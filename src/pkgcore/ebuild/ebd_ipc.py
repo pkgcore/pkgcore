@@ -181,10 +181,14 @@ class _InstallWrapper(IpcCommand):
 
     parser = IpcArgumentParser(add_help=False)
     parser.add_argument('--dest', required=True)
-    parser.add_argument('--insoptions', default='', type=command_options)
-    parser.add_argument('--diroptions', default='', type=command_options)
+    parser.add_argument('--insoptions', type=command_options)
+    parser.add_argument('--diroptions', type=command_options)
 
-    # supported install options
+    # defaults options for file and dir install actions
+    insoptions_default = ''
+    diroptions_default = ''
+
+    # supported install command options
     install_parser = IpcArgumentParser(add_help=False)
     install_parser.add_argument('-g', '--group', default=-1, type=_parse_group)
     install_parser.add_argument('-o', '--owner', default=-1, type=_parse_user)
@@ -193,7 +197,9 @@ class _InstallWrapper(IpcCommand):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.allow_symlinks = False
+        self.parser.set_defaults(
+            insoptions=self.insoptions_default,
+            diroptions=self.diroptions_default)
         self.insoptions = arghparse.Namespace()
         self.diroptions = arghparse.Namespace()
         # default to python-based install cmds
@@ -502,12 +508,10 @@ class Doins(_InstallWrapper):
 class Dodoc(_InstallWrapper):
     """Python wrapper for dodoc."""
 
+    insoptions_default = '-m0644'
+
     opts_parser = IpcArgumentParser(add_help=False)
     opts_parser.add_argument('-r', dest='recursive', action='store_true')
-
-    def parse_install_options(self, *args, **kwargs):
-        self.opts.insoptions = ['-m0644']
-        return super().parse_install_options(*args, **kwargs)
 
     def finalize(self, *args, **kwargs):
         self.allow_recursive = self.eapi.options.dodoc_allow_recursive
@@ -531,9 +535,7 @@ class Dodoc(_InstallWrapper):
 class Doinfo(_InstallWrapper):
     """Python wrapper for doinfo."""
 
-    def parse_install_options(self, *args, **kwargs):
-        self.opts.insoptions = ['-m0644']
-        return super().parse_install_options(*args, **kwargs)
+    insoptions_default = '-m0644'
 
 
 class Doexe(_InstallWrapper):
@@ -577,6 +579,8 @@ class Dolib_a(Dolib):
 class Doman(_InstallWrapper):
     """Python wrapper for doman."""
 
+    insoptions_default = '-m0644'
+
     opts_parser = IpcArgumentParser(add_help=False)
     opts_parser.add_argument('-i18n', action='store_true', default='')
 
@@ -586,10 +590,6 @@ class Doman(_InstallWrapper):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.allow_symlinks = True
-
-    def parse_install_options(self, *args, **kwargs):
-        self.opts.insoptions = ['-m0644']
-        return super().parse_install_options(*args, **kwargs)
 
     def finalize(self, *args, **kwargs):
         self.language_detect = self.eapi.options.doman_language_detect
@@ -636,9 +636,7 @@ class Doman(_InstallWrapper):
 class Domo(_InstallWrapper):
     """Python wrapper for domo."""
 
-    def parse_install_options(self, *args, **kwargs):
-        self.opts.insoptions = ['-m0644']
-        return super().parse_install_options(*args, **kwargs)
+    insoptions_default = '-m0644'
 
     def _filter_targets(self, files):
         dirs = set()
@@ -660,6 +658,8 @@ class Domo(_InstallWrapper):
 class Dohtml(_InstallWrapper):
     """Python wrapper for dohtml."""
 
+    insoptions_default = '-m0644'
+
     opts_parser = IpcArgumentParser(add_help=False)
     opts_parser.add_argument('-r', dest='recursive', action='store_true')
     opts_parser.add_argument('-V', dest='verbose', action='store_true')
@@ -671,10 +671,6 @@ class Dohtml(_InstallWrapper):
 
     # default allowed file extensions
     default_allowed_file_exts = ('css', 'gif', 'htm', 'html', 'jpeg', 'jpg', 'js', 'png')
-
-    def parse_install_options(self, *args, **kwargs):
-        self.opts.insoptions = ['-m0644']
-        return super().parse_install_options(*args, **kwargs)
 
     def finalize(self, *args, **kwargs):
         args = super().finalize(*args, **kwargs)

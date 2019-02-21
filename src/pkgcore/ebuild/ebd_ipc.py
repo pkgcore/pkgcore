@@ -48,6 +48,13 @@ class UnknownOptions(IpcCommandError):
         super().__init__(f"unknown options: {', '.join(map(repr, options))}")
 
 
+class UnknownArguments(IpcCommandError):
+    """Unknown arguments passed to IPC command."""
+
+    def __init__(self, args):
+        super().__init__(f"unknown arguments: {', '.join(map(repr, args))}")
+
+
 class IpcArgumentParser(arghparse.OptionalsParser, arghparse.CustomActionsParser):
     """Raise IPC exception for argparse errors.
 
@@ -66,6 +73,8 @@ class IpcCommand(object):
     parser = None
     # argument parser for user options
     opts_parser = None
+    # argument parser for command arguments
+    args_parser = None
     # override IPC name for error messages
     name = None
 
@@ -91,7 +100,7 @@ class IpcCommand(object):
             args = args.split('\0') if args else []
             # parse args and run command
             args = self.parse_options(options, args)
-            args = self.finalize(args)
+            args = self.parse_args(args)
             ret = self.run(args)
         except IGNORED_EXCEPTIONS:
             raise
@@ -118,8 +127,12 @@ class IpcCommand(object):
             opts, args = self.opts_parser.parse_optionals(args, namespace=self.opts)
         return args
 
-    def finalize(self, args):
-        """Finalize the options and arguments for the IPC command."""
+    def parse_args(self, args):
+        """Parse remaining args for the IPC command."""
+        if self.args_parser is not None:
+            args, unknown = self.args_parser.parse_known_args(args)
+            if unknown:
+                raise UnknownArguments(unknown)
         return args
 
     def run(self, args):
@@ -195,6 +208,9 @@ class _InstallWrapper(IpcCommand):
     install_parser.add_argument('-m', '--mode', default=0o755, type=_parse_mode)
     install_parser.add_argument('-p', '--preserve-timestamps', action='store_true')
 
+    args_parser = IpcArgumentParser(add_help=False)
+    args_parser.add_argument('targets', nargs='+')
+
     # boolean for whether symlinks are allowed to be installed
     allow_symlinks = False
 
@@ -242,23 +258,15 @@ class _InstallWrapper(IpcCommand):
             return False
         return True
 
-    def finalize(self, args):
-        self.dest_dir = self.opts.dest.lstrip(os.path.sep)
-
-        if not args:
-            raise IpcCommandError('missing targets to install')
-        args = (x.rstrip(os.path.sep) for x in args)
-        return args
-
     def run(self, args):
         os.chdir(self.cwd)
         try:
-            dest_dir = pjoin(self.ED, self.dest_dir)
+            dest_dir = pjoin(self.ED, self.opts.dest.lstrip(os.path.sep))
             os.makedirs(dest_dir, exist_ok=True)
         except OSError as e:
             raise IpcCommandError(
                 f'failed creating dir: {dest_dir!r}: {e.strerror}')
-        self._install_targets(args)
+        self._install_targets(args.targets)
         return 0
 
     def _prefix_targets(files):
@@ -266,10 +274,11 @@ class _InstallWrapper(IpcCommand):
         def wrapper(func):
             @wraps(func)
             def wrapped(self, targets):
+                dest_dir = self.opts.dest.lstrip(os.path.sep)
                 if files:
-                    targets = ((s, pjoin(self.ED, self.dest_dir, d)) for s, d in targets)
+                    targets = ((s, pjoin(self.ED, dest_dir, d)) for s, d in targets)
                 else:
-                    targets = (pjoin(self.ED, self.dest_dir, d) for d in targets)
+                    targets = (pjoin(self.ED, dest_dir, d) for d in targets)
                 return func(self, targets)
             return wrapped
         return wrapper
@@ -497,9 +506,9 @@ class Doins(_InstallWrapper):
     opts_parser = IpcArgumentParser(add_help=False)
     opts_parser.add_argument('-r', dest='recursive', action='store_true')
 
-    def finalize(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.allow_symlinks = self.eapi.options.doins_allow_symlinks
-        return super().finalize(*args, **kwargs)
 
     def _install_targets(self, targets):
         files, dirs = partition(targets, predicate=os.path.isdir)
@@ -517,9 +526,9 @@ class Dodoc(_InstallWrapper):
     opts_parser = IpcArgumentParser(add_help=False)
     opts_parser.add_argument('-r', dest='recursive', action='store_true')
 
-    def finalize(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.allow_recursive = self.eapi.options.dodoc_allow_recursive
-        return super().finalize(*args, **kwargs)
 
     def _install_targets(self, targets):
         files, dirs = partition(targets, predicate=os.path.isdir)
@@ -593,11 +602,8 @@ class Doman(_InstallWrapper):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-    def finalize(self, *args, **kwargs):
         self.language_detect = self.eapi.options.doman_language_detect
         self.language_override = self.eapi.options.doman_language_override
-        return super().finalize(*args, **kwargs)
 
     def _filter_targets(self, files):
         dirs = set()
@@ -675,9 +681,9 @@ class Dohtml(_InstallWrapper):
     # default allowed file extensions
     default_allowed_file_exts = ('css', 'gif', 'htm', 'html', 'jpeg', 'jpg', 'js', 'png')
 
-    def finalize(self, *args, **kwargs):
-        args = super().finalize(*args, **kwargs)
-        self.dest_dir = pjoin(self.dest_dir, self.opts.doc_prefix.lstrip(os.path.sep))
+    def parse_options(self, *args, **kwargs):
+        args = super().parse_options(*args, **kwargs)
+        self.opts.dest = pjoin(self.opts.dest, self.opts.doc_prefix.lstrip(os.path.sep))
 
         if not self.opts.allowed_file_exts:
             self.opts.allowed_file_exts = list(self.default_allowed_file_exts)
@@ -694,7 +700,7 @@ class Dohtml(_InstallWrapper):
         return args
 
     def __str__(self):
-        msg = ['dohtml:', f'  Installing to: /{self.dest_dir}']
+        msg = ['dohtml:', f'  Installing to: {self.opts.dest}']
         if self.opts.allowed_file_exts:
             msg.append(
                 f"  Allowed extensions: {', '.join(sorted(self.opts.allowed_file_exts))}")
@@ -737,6 +743,9 @@ class _AlterFiles(IpcCommand):
     opts_parser = IpcArgumentParser(add_help=False)
     opts_parser.add_argument('-x', dest='excludes', action='store_true')
 
+    args_parser = IpcArgumentParser(add_help=False)
+    args_parser.add_argument('targets', nargs='+')
+
     default_includes = ()
     default_excludes = ()
 
@@ -746,12 +755,10 @@ class _AlterFiles(IpcCommand):
         self.excludes = set(self.default_excludes)
 
     def run(self, args):
-        if not args:
-            raise IpcCommandError('missing targets')
         if self.opts.excludes:
-            self.excludes.update(args)
+            self.excludes.update(args.targets)
         else:
-            self.includes.update(args)
+            self.includes.update(args.targets)
         return 0
 
 

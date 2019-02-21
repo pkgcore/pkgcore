@@ -1,3 +1,4 @@
+import argparse
 from functools import wraps
 import itertools
 import os
@@ -95,6 +96,7 @@ class IpcCommand(object):
             # read info from bash side
             nonfatal = self.read() == 'true'
             self.cwd = self.read()
+            os.chdir(self.cwd)
             options = shlex.split(self.read())
             args = self.read().strip('\0')
             args = args.split('\0') if args else []
@@ -189,6 +191,13 @@ def command_options(s):
     return shlex.split(s)
 
 
+def existing_path(path):
+    """Split string of command line options into list."""
+    if not os.path.exists(path):
+        raise argparse.ArgumentTypeError(f'nonexistent path: {path!r}')
+    return path
+
+
 class _InstallWrapper(IpcCommand):
     """Python wrapper for commands using `install`."""
 
@@ -209,7 +218,7 @@ class _InstallWrapper(IpcCommand):
     install_parser.add_argument('-p', '--preserve-timestamps', action='store_true')
 
     args_parser = IpcArgumentParser(add_help=False)
-    args_parser.add_argument('targets', nargs='+')
+    args_parser.add_argument('targets', nargs='+', type=existing_path)
 
     # boolean for whether symlinks are allowed to be installed
     allow_symlinks = False
@@ -259,7 +268,6 @@ class _InstallWrapper(IpcCommand):
         return True
 
     def run(self, args):
-        os.chdir(self.cwd)
         try:
             dest_dir = pjoin(self.ED, self.opts.dest.lstrip(os.path.sep))
             os.makedirs(dest_dir, exist_ok=True)

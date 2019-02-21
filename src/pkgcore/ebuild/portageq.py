@@ -72,14 +72,15 @@ class BaseCommand(arghparse.ArgparseCommand):
                 if self._compat_root_default:
                     kwds["nargs"] = "?"
                     kwds["default"] = self._compat_root_default
-                parser.add_argument(dest="domain", metavar="root",
+                parser.add_argument(
+                    dest="domain", metavar="root",
                     action=commandline.DomainFromPath,
                     help="the domain that lives at root will be used", **kwds)
             else:
                 mux = parser.add_mutually_exclusive_group()
                 commandline._mk_domain(mux)
-                mux.add_argument('--domain-at-root',
-                    action=commandline.DomainFromPath,
+                mux.add_argument(
+                    '--domain-at-root', action=commandline.DomainFromPath,
                     dest="domain", help="specify the domain to use via its root path")
 
         for token in self.arg_spec:
@@ -88,16 +89,18 @@ class BaseCommand(arghparse.ArgparseCommand):
                 kwds["nargs"] = token[-1]
                 token = token[:-1]
             if token == 'atom':
-                parser.add_argument('atom', help="atom to inspect",
+                parser.add_argument(
+                    'atom', help="atom to inspect",
                     type=make_atom, **kwds)
             else:
-                parser.add_argument(token, help=f"{token} to inspect",
-                    **kwds)
+                parser.add_argument(
+                    token, help=f"{token} to inspect", **kwds)
 
     @classmethod
     def make_command(cls, arg_spec='', requires_root=True, bind=None,
                      root_default=None, name=None, **kwds):
-        kwds = dict(arg_spec=tuple(arg_spec.split()), requires_root=requires_root,
+        kwds = dict(
+            arg_spec=tuple(arg_spec.split()), requires_root=requires_root,
             _compat_root_default=root_default, **kwds)
 
         def internal_function(functor, name=name):
@@ -225,7 +228,8 @@ def get_profiles(options, out, err):
     if options.repo_id == 'all':
         profiles = (
             profile for repo in options.domain.ebuild_repos_raw
-            for profile in find_profile_paths_by_repo_id(options.config, repo.repo_id, fullpath=True))
+            for profile in find_profile_paths_by_repo_id(
+                options.config, repo.repo_id, fullpath=True))
     else:
         profiles = find_profile_paths_by_repo_id(options.config, options.repo_id)
     for x in sorted(set(profiles)):
@@ -268,6 +272,6 @@ def bind_parser(parser, compat=False, name='portageq'):
         l += query_commands
 
     for command in sorted(l, key=lambda x:x.__name__):
-        subparser = subparsers.add_parser(command.__name__,
-            help=command.__doc__, description=command.__doc__)
+        subparser = subparsers.add_parser(
+            command.__name__, help=command.__doc__, description=command.__doc__)
         command().bind_to_parser(subparser, compat=compat)

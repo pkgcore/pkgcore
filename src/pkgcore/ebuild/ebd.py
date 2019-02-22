@@ -103,22 +103,20 @@ class ebd(object):
         self.env["FEATURES"] = ' '.join(sorted(self.features))
 
         # XXX: note this is just EAPI 3 and EAPI 7 compatibility; not full prefix, soon..
-        self.env["ROOT"] = self.domain.root.rstrip(os.sep) + self.eapi.options.trailing_slash
+        trailing_slash = self.eapi.options.trailing_slash
+        self.env['ROOT'] = self.domain.root.rstrip(trailing_slash) + trailing_slash
         self.prefix_mode = self.eapi.options.prefix_capable or 'force-prefix' in self.features
-        self.env["PKGCORE_PREFIX_SUPPORT"] = 'false'
+        self.env['PKGCORE_PREFIX_SUPPORT'] = 'false'
         self.prefix = '/'
         if self.prefix_mode:
             self.prefix = self.domain.prefix
             self.env['EPREFIX'] = self.prefix.rstrip(os.sep)
-            self.env['EROOT'] = abspath(
-                pjoin(self.domain.root, self.prefix.lstrip(os.sep).rstrip(os.sep))) + \
-                    self.eapi.options.trailing_slash
-            self.env["PKGCORE_PREFIX_SUPPORT"] = 'true'
+            self.env['EROOT'] = pjoin(self.env['ROOT'], self.env['EPREFIX']) + trailing_slash
+            self.env['PKGCORE_PREFIX_SUPPORT'] = 'true'
 
         if self.eapi.options.has_sysroot:
-            self.env['SYSROOT'] = self.env["ROOT"]
-            self.env['ESYSROOT'] = abspath(
-                pjoin(self.domain.root, self.prefix.lstrip(os.sep))).rstrip(os.sep)
+            self.env['SYSROOT'] = self.env['ROOT']
+            self.env['ESYSROOT'] = pjoin(self.env['SYSROOT'], self.env['EPREFIX'])
             self.env['BROOT'] = self.env['EPREFIX']
 
         # internally implemented EAPI specific functions to skip when exporting env

@@ -23,6 +23,7 @@ from tempfile import TemporaryFile
 
 from snakeoil import data_source, klass
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
+from snakeoil.contexts import chdir
 from snakeoil.currying import post_curry, pretty_docs
 from snakeoil.demandload import demandload
 from snakeoil.fileutils import touch
@@ -737,11 +738,10 @@ class buildable(ebd, setup_mixin, format.build):
                         cwd = os.getcwd()
                     except OSError:
                         cwd = "/"
-                    try:
+                    with chdir(cwd):
                         # crap.
                         os.chmod(self.env["CCACHE_DIR"], 0o2775)
                         os.chown(self.env["CCACHE_DIR"], -1, portage_gid)
-                        os.chdir(cwd)
                         if 0 != spawn(
                                 ["chgrp", "-R", str(portage_gid), self.env["CCACHE_DIR"]]):
                             raise format.FailedDirectory(
@@ -760,8 +760,6 @@ class buildable(ebd, setup_mixin, format.build):
                             raise format.FailedDirectory(
                                 self.env["CCACHE_DIR"],
                                 "failed correcting perms for CCACHE_DIR")
-                    finally:
-                        os.chdir(cwd)
             except OSError as e:
                 raise format.FailedDirectory(
                     self.env["CCACHE_DIR"],

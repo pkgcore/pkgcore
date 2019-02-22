@@ -30,8 +30,7 @@ die() {
 	if [[ ! -t 2 ]]; then
 		if [[ -n ${T} ]]; then
 			stderr=$(mktemp -p "${T}" ".die_XXXXXX")
-			exec 3<> "${stderr}"
-			exec 2>&3
+			exec 2>"${stderr}"
 		else
 			stderr="$@"
 		fi

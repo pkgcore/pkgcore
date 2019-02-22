@@ -31,7 +31,7 @@ class IpcError(PkgcoreException):
     def __init__(self, msg='', code=1):
         self.msg = msg
         self.code = code
-        self.ret = f'{code}\x07{msg}'
+        self.ret = IpcCommand._encode_ret((code, msg))
 
 
 class IpcInternalError(IpcError):
@@ -90,7 +90,6 @@ class IpcCommand(object):
 
     def __call__(self, ebd):
         self.ebd = ebd
-        ret = 0
 
         try:
             # read info from bash side
@@ -104,6 +103,8 @@ class IpcCommand(object):
             args = self.parse_options(options, args)
             args = self.parse_args(args)
             ret = self.run(args)
+            # return completion status to the bash side
+            self.write(self._encode_ret(ret))
         except IGNORED_EXCEPTIONS:
             raise
         except IpcCommandError as e:
@@ -112,10 +113,21 @@ class IpcCommand(object):
             else:
                 raise
         except Exception as e:
-            raise IpcInternalError(f'internal failure') from e
+            raise IpcInternalError('internal failure') from e
 
-        # return completion status to the bash side
-        self.write(ret)
+    @staticmethod
+    def _encode_ret(ret):
+        """Encode exit status and any returned value to be sent back to the bash side."""
+        if ret is None:
+            return 0
+        elif isinstance(ret, tuple):
+            code, response = ret
+            return f'{code}\x07{response}'
+        elif isinstance(ret, str):
+            return f'0\x07{ret}'
+        elif isinstance(ret, int):
+            return ret
+        raise TypeError(f'unsupported return status type: {type(ret)}')
 
     def parse_options(self, opts, args):
         """Parse internal args passed from the bash side."""
@@ -139,7 +151,7 @@ class IpcCommand(object):
 
     def run(self, args):
         """Run the requested IPC command."""
-        return 0
+        raise NotImplementedError
 
     def read(self):
         """Read a line from the ebuild daemon."""
@@ -275,7 +287,6 @@ class _InstallWrapper(IpcCommand):
             raise IpcCommandError(
                 f'failed creating dir: {dest_dir!r}: {e.strerror}')
         self._install_targets(args.targets)
-        return 0
 
     def _prefix_targets(files):
         """Decorator to prepend targets being installed with the destination path."""
@@ -767,10 +778,10 @@ class _AlterFiles(IpcCommand):
             self.excludes.update(args.targets)
         else:
             self.includes.update(args.targets)
-        return 0
 
 
 class Docompress(_AlterFiles):
+    """Python wrapper for docompress."""
 
     default_includes = ('/usr/share/doc', '/usr/share/info', '/usr/share/man')
 
@@ -780,6 +791,7 @@ class Docompress(_AlterFiles):
 
 
 class Dostrip(_AlterFiles):
+    """Python wrapper for dostrip."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

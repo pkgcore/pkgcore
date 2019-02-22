@@ -128,10 +128,8 @@ class IpcCommand(object):
         elif isinstance(ret, tuple):
             code, response = ret
             return f'{code}\x07{response}'
-        elif isinstance(ret, str):
+        elif isinstance(ret, (int, str)):
             return f'0\x07{ret}'
-        elif isinstance(ret, int):
-            return ret
         raise TypeError(f'unsupported return status type: {type(ret)}')
 
     def parse_args(self, opts, args):

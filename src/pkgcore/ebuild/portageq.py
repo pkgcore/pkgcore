@@ -165,7 +165,7 @@ def has_version(options, out, err):
     return 1
 
 
-def _best_version(domain, restrict, out):
+def _best_version(domain, restrict):
     try:
         p = max(domain.all_installed_repos.itermatch(restrict))
     except ValueError:
@@ -180,7 +180,7 @@ def mass_best_version(options, out, err):
     """
     for x in options.atom:
         out.write("%s:%s" %
-            (x, _best_version(options.domain, x, out).rstrip()))
+            (x, _best_version(options.domain, x).rstrip()))
     return 0
 
 @BaseCommand.make_command("atom", bind=common_commands)
@@ -188,7 +188,7 @@ def best_version(options, out, err):
     """
     Return the maximum visible version for a given atom.
     """
-    out.write(_best_version(options.domain, options.atom, out))
+    out.write(_best_version(options.domain, options.atom))
     return 0
 
 

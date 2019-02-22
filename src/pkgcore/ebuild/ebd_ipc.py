@@ -109,7 +109,7 @@ class IpcCommand(object):
                 ret = self.run(args)
             except IpcCommandError as e:
                 if nonfatal:
-                    self.warn(str(e))
+                    ret = (e.code, e.msg)
                 else:
                     raise
             except IGNORED_EXCEPTIONS:

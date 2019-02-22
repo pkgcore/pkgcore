@@ -11,6 +11,7 @@ import sys
 
 from snakeoil.cli import arghparse
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
+from snakeoil.contexts import chdir
 from snakeoil.demandload import demandload
 from snakeoil.iterables import partition
 from snakeoil.osutils import pjoin
@@ -92,29 +93,32 @@ class IpcCommand(object):
 
     def __call__(self, ebd):
         self.ebd = ebd
+        ret = 0
 
-        try:
-            # read info from bash side
-            nonfatal = self.read() == 'true'
-            self.cwd = self.read()
-            os.chdir(self.cwd)
-            options = shlex.split(self.read())
-            args = self.read().strip('\0')
-            args = args.split('\0') if args else []
-            # parse args and run command
-            args = self.parse_args(options, args)
-            ret = self.run(args)
-            # return completion status to the bash side
-            self.write(self._encode_ret(ret))
-        except IGNORED_EXCEPTIONS:
-            raise
-        except IpcCommandError as e:
-            if nonfatal:
-                self.warn(str(e))
-            else:
+        # read info from bash side
+        nonfatal = self.read() == 'true'
+        self.cwd = self.read()
+        options = shlex.split(self.read())
+        args = self.read().strip('\0')
+        args = args.split('\0') if args else []
+
+        # parse args and run command
+        with chdir(self.cwd):
+            try:
+                args = self.parse_args(options, args)
+                ret = self.run(args)
+            except IpcCommandError as e:
+                if nonfatal:
+                    self.warn(str(e))
+                else:
+                    raise
+            except IGNORED_EXCEPTIONS:
                 raise
-        except Exception as e:
-            raise IpcInternalError('internal failure') from e
+            except Exception as e:
+                raise IpcInternalError('internal failure') from e
+
+        # return completion status to the bash side
+        self.write(self._encode_ret(ret))
 
     @staticmethod
     def _encode_ret(ret):

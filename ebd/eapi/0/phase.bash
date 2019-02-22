@@ -106,8 +106,8 @@ einstall() {
 
 ## Package manager query commands
 
-has_version() { PKGCORE_DISABLE_COMPAT=true __portageq 'has_version' "$1"; }
-best_version() { PKGCORE_DISABLE_COMPAT=true __portageq 'best_version' "$1"; }
+has_version() { return $(__ebd_ipc_cmd ${FUNCNAME} "" "$@"); }
+best_version() { __ebd_ipc_cmd ${FUNCNAME} "" "$@"; }
 
 ## Install destination commands
 

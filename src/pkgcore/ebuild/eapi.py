@@ -109,6 +109,12 @@ eapi_optionals = mappings.ImmutableDict({
     # Controls whether profiles support package.use.stable.* and use.stable.* files.
     "profile_stable_use": False,
 
+    # Controls whether has_version/best_version supports --host-root option; see PMS.
+    'query_host_root': False,
+
+    # Controls whether has_version/best_version supports -b/-d/-r options; see PMS.
+    'query_deps': False,
+
     # Controls whether SLOT values can actually be multi-part; see PMS EAPI 5.
     # This is related to ABI breakage detection.
     'sub_slotting': False,
@@ -456,6 +462,7 @@ eapi5 = EAPI.register(
         ebuild_phase_func=True,
         profile_iuse_injection=True,
         profile_stable_use=True,
+        query_host_root=True,
         new_reads_stdin=True,
         required_use_one_of=True,
         sub_slotting=True,
@@ -496,6 +503,8 @@ eapi7 = EAPI.register(
         has_profile_data_dirs=True,
         has_portdir=False,
         profile_pkg_provided=False,
+        query_host_root=False,
+        query_deps=True,
         has_sysroot=True,
         has_env_unset=True,
         trailing_slash='',

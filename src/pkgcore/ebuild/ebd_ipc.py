@@ -22,6 +22,8 @@ demandload(
     'operator:itemgetter',
     'pwd',
     'pkgcore:os_data',
+    'pkgcore.ebuild:portageq',
+    'pkgcore.ebuild:atom@atom_mod',
 )
 
 
@@ -78,6 +80,7 @@ class IpcCommand(object):
     name = None
 
     def __init__(self, op):
+        self.op = op
         self.ED = op.ED
         self.pkg = op.pkg
         self.eapi = op.pkg.eapi
@@ -792,3 +795,74 @@ class Dostrip(_AlterFiles):
         super().__init__(*args, **kwargs)
         if 'strip' not in self.pkg.restrict:
             self.includes = {'/'}
+
+
+class _QueryCmd(IpcCommand):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if not getattr(self.arg_parser, '_args_added', False):
+            if self.eapi.options.query_host_root:
+                # >= EAPI 5
+                self.arg_parser.add_argument('--host-root', action='store_true')
+            elif self.eapi.options.query_deps:
+                # >= EAPI 7
+                dep_opts = self.arg_parser.add_mutually_exclusive_group()
+                dep_opts.add_argument('-b', dest='bdepend', action='store_true')
+                dep_opts.add_argument('-d', dest='depend', action='store_true')
+                dep_opts.add_argument('-r', dest='rdepend', action='store_true')
+        # flag to skip re-adding options across multiple phases
+        self.arg_parser._args_added = True
+
+    def parse_args(self, opts, args):
+        args = super().parse_args(opts, args)
+        root = None
+        self.opts.domain = self.op.domain
+
+        if self.eapi.options.query_host_root and self.opts.host_root:
+            root = '/'
+        elif self.eapi.options.query_deps:
+            if self.opts.bdepend:
+                if self.op.prefix_mode:
+                    # not using BROOT as that's only defined in src_* phases
+                    root = pjoin('/', self.op.env['EPREFIX'])
+                else:
+                    root = '/'
+            elif self.opts.depend:
+                if self.op.prefix_mode:
+                    root = self.op.env['ESYSROOT']
+                else:
+                    root = self.op.env['SYSROOT']
+            else:
+                if self.op.prefix_mode:
+                    root = self.op.env['EROOT']
+                else:
+                    root = self.op.env['ROOT']
+
+        # TODO: find domain from given path, pointless until full prefix support works
+        if root is not None and root != self.opts.domain.root:
+            raise IpcCommandError('prefix support not implemented yet')
+
+        return args
+
+
+class Has_Version(_QueryCmd):
+    """Python wrapper for has_version."""
+
+    arg_parser = IpcArgumentParser(add_help=False)
+    arg_parser.add_argument('atom', type=atom_mod.atom)
+
+    def run(self, args):
+        if args.atom in self.opts.domain.all_installed_repos:
+            return 0
+        return 1
+
+
+class Best_Version(_QueryCmd):
+    """Python wrapper for best_version."""
+
+    arg_parser = IpcArgumentParser(add_help=False)
+    arg_parser.add_argument('atom', type=atom_mod.atom)
+
+    def run(self, args):
+        return portageq._best_version(self.opts.domain, args.atom)

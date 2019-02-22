@@ -153,24 +153,4 @@ __run_eapi_funcs() {
 	done
 }
 
-__portageq() {
-	if [[ ${EBUILD_PHASE} == "depend" ]]; then
-		die "portageq calls in depends phase aren't allowed"
-	fi
-	local command=$1
-	shift
-	# suppress sandbox for the invocation; do this to avoid things like .pyc generation
-	# being snagged by the sandbox
-	local opts
-	[[ ${PKGCORE_DEBUG} -ge 1 ]] && opts="--debug"
-	local portageq_str="portageq"
-	${PKGCORE_DISABLE_COMPAT-false} && portageq_str="query"
-	SANDBOX_ON=0 PYTHONPATH="${PKGCORE_PYTHONPATH}" "${PKGCORE_PYTHON_BINARY}" \
-		$(__which pinspect) ${opts} ${portageq_str} "${command}" \
-		--eapi "${EAPI:--1}" --use "${USE}" "$@" 2> /dev/null
-	local ret=$?
-	[[ ${ret} == 127 ]] && die "pinspect couldn't be found; broken pkgcore installation?"
-	return $(( ret ))
-}
-
 :

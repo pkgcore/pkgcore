@@ -171,6 +171,29 @@ class ebd(object):
         self.clean_at_start = clean
         self.clean_needed = False
 
+        # various IPC command support
+        self._ipc_helpers = {
+            # bash helpers
+            'doins': ebd_ipc.Doins(self),
+            'dodoc': ebd_ipc.Dodoc(self),
+            'dohtml': ebd_ipc.Dohtml(self),
+            'doinfo': ebd_ipc.Doinfo(self),
+            'doexe': ebd_ipc.Doexe(self),
+            'dobin': ebd_ipc.Dobin(self),
+            'dosbin': ebd_ipc.Dosbin(self),
+            'dolib': ebd_ipc.Dolib(self),
+            'dolib.so': ebd_ipc.Dolib_so(self),
+            'dolib.a': ebd_ipc.Dolib_a(self),
+            'doman': ebd_ipc.Doman(self),
+            'domo': ebd_ipc.Domo(self),
+
+            # bash functions
+            'has_version': ebd_ipc.Has_Version(self),
+            'best_version': ebd_ipc.Best_Version(self),
+            'docompress': ebd_ipc.Docompress(self),
+            'dostrip': ebd_ipc.Dostrip(self),
+        }
+
     def start(self):
         if self.clean_at_start:
             self.clean_needed = True
@@ -286,6 +309,7 @@ class ebd(object):
         sandbox = self.sandbox and sandbox
         self._set_per_phase_env(phase, self.env)
         extra_handlers = extra_handlers.copy()
+        extra_handlers.update(self._ipc_helpers)
         if not suppress_bashrc:
             extra_handlers.setdefault("request_bashrcs", self._request_bashrcs)
         return run_generic_phase(
@@ -628,31 +652,6 @@ class buildable(ebd, setup_mixin, format.build):
 
         if self.setup_is_for_src:
             self._init_distfiles_env()
-
-        self._ipc_helpers = {
-            # bash helpers implemented in python
-            'doins': ebd_ipc.Doins(self),
-            'dodoc': ebd_ipc.Dodoc(self),
-            'dohtml': ebd_ipc.Dohtml(self),
-            'doinfo': ebd_ipc.Doinfo(self),
-            'doexe': ebd_ipc.Doexe(self),
-            'dobin': ebd_ipc.Dobin(self),
-            'dosbin': ebd_ipc.Dosbin(self),
-            'dolib': ebd_ipc.Dolib(self),
-            'dolib.so': ebd_ipc.Dolib_so(self),
-            'dolib.a': ebd_ipc.Dolib_a(self),
-            'doman': ebd_ipc.Doman(self),
-            'domo': ebd_ipc.Domo(self),
-
-            # bash functions
-            'docompress': ebd_ipc.Docompress(self),
-            'dostrip': ebd_ipc.Dostrip(self),
-        }
-
-    def _generic_phase(self, *args, extra_handlers={}, **kwargs):
-        # add IPC helpers to the available ebd command handlers
-        extra_handlers.update(self._ipc_helpers)
-        return super()._generic_phase(*args, extra_handlers=extra_handlers, **kwargs)
 
     def _init_distfiles_env(self):
         # TODO: PORTAGE_ACTUAL_DISTDIR usage by vcs eclasses needs to be killed off

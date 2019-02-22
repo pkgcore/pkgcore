@@ -58,7 +58,8 @@ class UnknownArguments(IpcCommandError):
         super().__init__(f"unknown arguments: {', '.join(map(repr, args))}")
 
 
-class IpcArgumentParser(arghparse.OptionalsParser, arghparse.CustomActionsParser):
+class IpcArgumentParser(arghparse.OptionalsParser, arghparse.CustomActionsParser,
+                        arghparse.CopyableParser):
     """Raise IPC exception for argparse errors.
 
     Otherwise standard argparse prints the parser usage then outputs the error
@@ -518,9 +519,8 @@ class _InstallWrapper(IpcCommand):
 class Doins(_InstallWrapper):
     """Python wrapper for doins."""
 
-    arg_parser = IpcArgumentParser(add_help=False)
+    arg_parser = _InstallWrapper.arg_parser.copy()
     arg_parser.add_argument('-r', dest='recursive', action='store_true')
-    arg_parser.add_argument('targets', nargs='+', type=existing_path)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -539,9 +539,8 @@ class Dodoc(_InstallWrapper):
 
     insoptions_default = '-m0644'
 
-    arg_parser = IpcArgumentParser(add_help=False)
+    arg_parser = _InstallWrapper.arg_parser.copy()
     arg_parser.add_argument('-r', dest='recursive', action='store_true')
-    arg_parser.add_argument('targets', nargs='+', type=existing_path)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -609,9 +608,8 @@ class Doman(_InstallWrapper):
 
     insoptions_default = '-m0644'
 
-    arg_parser = IpcArgumentParser(add_help=False)
+    arg_parser = _InstallWrapper.arg_parser.copy()
     arg_parser.add_argument('-i18n', action='store_true', default='')
-    arg_parser.add_argument('targets', nargs='+', type=existing_path)
 
     detect_lang_re = re.compile(r'^(\w+)\.([a-z]{2}([A-Z]{2})?)\.(\w+)$')
     valid_mandir_re = re.compile(r'man[0-9n](f|p|pm)?$')
@@ -687,7 +685,7 @@ class Dohtml(_InstallWrapper):
 
     insoptions_default = '-m0644'
 
-    arg_parser = IpcArgumentParser(add_help=False)
+    arg_parser = _InstallWrapper.arg_parser.copy()
     arg_parser.add_argument('-r', dest='recursive', action='store_true')
     arg_parser.add_argument('-V', dest='verbose', action='store_true')
     arg_parser.add_argument('-A', dest='extra_allowed_file_exts', action='csv', default=[])
@@ -695,7 +693,6 @@ class Dohtml(_InstallWrapper):
     arg_parser.add_argument('-f', dest='allowed_files', action='csv', default=[])
     arg_parser.add_argument('-x', dest='excluded_dirs', action='csv', default=[])
     arg_parser.add_argument('-p', dest='doc_prefix', default='')
-    arg_parser.add_argument('targets', nargs='+', type=existing_path)
 
     # default allowed file extensions
     default_allowed_file_exts = ('css', 'gif', 'htm', 'html', 'jpeg', 'jpg', 'js', 'png')
@@ -799,6 +796,9 @@ class Dostrip(_AlterFiles):
 
 class _QueryCmd(IpcCommand):
 
+    arg_parser = IpcArgumentParser(add_help=False)
+    arg_parser.add_argument('atom', type=atom_mod.atom)
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if not getattr(self.arg_parser, '_args_added', False):
@@ -849,9 +849,6 @@ class _QueryCmd(IpcCommand):
 class Has_Version(_QueryCmd):
     """Python wrapper for has_version."""
 
-    arg_parser = IpcArgumentParser(add_help=False)
-    arg_parser.add_argument('atom', type=atom_mod.atom)
-
     def run(self, args):
         if args.atom in self.opts.domain.all_installed_repos:
             return 0
@@ -860,9 +857,6 @@ class Has_Version(_QueryCmd):
 
 class Best_Version(_QueryCmd):
     """Python wrapper for best_version."""
-
-    arg_parser = IpcArgumentParser(add_help=False)
-    arg_parser.add_argument('atom', type=atom_mod.atom)
 
     def run(self, args):
         return portageq._best_version(self.opts.domain, args.atom)

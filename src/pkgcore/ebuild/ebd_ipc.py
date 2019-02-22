@@ -72,10 +72,8 @@ class IpcCommand(object):
 
     # argument parser for internal options
     parser = None
-    # argument parser for user options
-    opts_parser = None
-    # argument parser for command arguments
-    args_parser = None
+    # argument parser for command options/arguments
+    arg_parser = None
     # override IPC name for error messages
     name = None
 
@@ -100,8 +98,7 @@ class IpcCommand(object):
             args = self.read().strip('\0')
             args = args.split('\0') if args else []
             # parse args and run command
-            args = self.parse_options(options, args)
-            args = self.parse_args(args)
+            args = self.parse_args(options, args)
             ret = self.run(args)
             # return completion status to the bash side
             self.write(self._encode_ret(ret))
@@ -129,22 +126,18 @@ class IpcCommand(object):
             return ret
         raise TypeError(f'unsupported return status type: {type(ret)}')
 
-    def parse_options(self, opts, args):
+    def parse_args(self, opts, args):
         """Parse internal args passed from the bash side."""
         if self.parser is not None:
             opts, unknown = self.parser.parse_known_args(opts, namespace=self.opts)
             if unknown:
                 raise UnknownOptions(unknown)
 
-        # pull user options off the start of the argument list
-        if self.opts_parser is not None:
-            opts, args = self.opts_parser.parse_optionals(args, namespace=self.opts)
-        return args
-
-    def parse_args(self, args):
-        """Parse remaining args for the IPC command."""
-        if self.args_parser is not None:
-            args, unknown = self.args_parser.parse_known_args(args)
+        if self.arg_parser is not None:
+            # pull user options off the start of the argument list
+            opts, args = self.arg_parser.parse_known_optionals(args, namespace=self.opts)
+            # parse remaining command arguments
+            args, unknown = self.arg_parser.parse_known_args(args, namespace=self.opts)
             if unknown:
                 raise UnknownArguments(unknown)
         return args
@@ -229,8 +222,8 @@ class _InstallWrapper(IpcCommand):
     install_parser.add_argument('-m', '--mode', default=0o755, type=_parse_mode)
     install_parser.add_argument('-p', '--preserve-timestamps', action='store_true')
 
-    args_parser = IpcArgumentParser(add_help=False)
-    args_parser.add_argument('targets', nargs='+', type=existing_path)
+    arg_parser = IpcArgumentParser(add_help=False)
+    arg_parser.add_argument('targets', nargs='+', type=existing_path)
 
     # boolean for whether symlinks are allowed to be installed
     allow_symlinks = False
@@ -246,8 +239,8 @@ class _InstallWrapper(IpcCommand):
         self.install = self._install
         self.install_dirs = self._install_dirs
 
-    def parse_options(self, opts, args):
-        args = super().parse_options(opts, args)
+    def parse_args(self, opts, args):
+        args = super().parse_args(opts, args)
         return self.parse_install_options(opts, args)
 
     def parse_install_options(self, opts, args):
@@ -522,8 +515,9 @@ class _InstallWrapper(IpcCommand):
 class Doins(_InstallWrapper):
     """Python wrapper for doins."""
 
-    opts_parser = IpcArgumentParser(add_help=False)
-    opts_parser.add_argument('-r', dest='recursive', action='store_true')
+    arg_parser = IpcArgumentParser(add_help=False)
+    arg_parser.add_argument('-r', dest='recursive', action='store_true')
+    arg_parser.add_argument('targets', nargs='+', type=existing_path)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -542,8 +536,9 @@ class Dodoc(_InstallWrapper):
 
     insoptions_default = '-m0644'
 
-    opts_parser = IpcArgumentParser(add_help=False)
-    opts_parser.add_argument('-r', dest='recursive', action='store_true')
+    arg_parser = IpcArgumentParser(add_help=False)
+    arg_parser.add_argument('-r', dest='recursive', action='store_true')
+    arg_parser.add_argument('targets', nargs='+', type=existing_path)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -611,8 +606,9 @@ class Doman(_InstallWrapper):
 
     insoptions_default = '-m0644'
 
-    opts_parser = IpcArgumentParser(add_help=False)
-    opts_parser.add_argument('-i18n', action='store_true', default='')
+    arg_parser = IpcArgumentParser(add_help=False)
+    arg_parser.add_argument('-i18n', action='store_true', default='')
+    arg_parser.add_argument('targets', nargs='+', type=existing_path)
 
     detect_lang_re = re.compile(r'^(\w+)\.([a-z]{2}([A-Z]{2})?)\.(\w+)$')
     valid_mandir_re = re.compile(r'man[0-9n](f|p|pm)?$')
@@ -688,20 +684,21 @@ class Dohtml(_InstallWrapper):
 
     insoptions_default = '-m0644'
 
-    opts_parser = IpcArgumentParser(add_help=False)
-    opts_parser.add_argument('-r', dest='recursive', action='store_true')
-    opts_parser.add_argument('-V', dest='verbose', action='store_true')
-    opts_parser.add_argument('-A', dest='extra_allowed_file_exts', action='csv', default=[])
-    opts_parser.add_argument('-a', dest='allowed_file_exts', action='csv', default=[])
-    opts_parser.add_argument('-f', dest='allowed_files', action='csv', default=[])
-    opts_parser.add_argument('-x', dest='excluded_dirs', action='csv', default=[])
-    opts_parser.add_argument('-p', dest='doc_prefix', default='')
+    arg_parser = IpcArgumentParser(add_help=False)
+    arg_parser.add_argument('-r', dest='recursive', action='store_true')
+    arg_parser.add_argument('-V', dest='verbose', action='store_true')
+    arg_parser.add_argument('-A', dest='extra_allowed_file_exts', action='csv', default=[])
+    arg_parser.add_argument('-a', dest='allowed_file_exts', action='csv', default=[])
+    arg_parser.add_argument('-f', dest='allowed_files', action='csv', default=[])
+    arg_parser.add_argument('-x', dest='excluded_dirs', action='csv', default=[])
+    arg_parser.add_argument('-p', dest='doc_prefix', default='')
+    arg_parser.add_argument('targets', nargs='+', type=existing_path)
 
     # default allowed file extensions
     default_allowed_file_exts = ('css', 'gif', 'htm', 'html', 'jpeg', 'jpg', 'js', 'png')
 
-    def parse_options(self, *args, **kwargs):
-        args = super().parse_options(*args, **kwargs)
+    def parse_args(self, *args, **kwargs):
+        args = super().parse_args(*args, **kwargs)
         self.opts.dest = pjoin(self.opts.dest, self.opts.doc_prefix.lstrip(os.path.sep))
 
         if not self.opts.allowed_file_exts:
@@ -759,11 +756,9 @@ class Dohtml(_InstallWrapper):
 
 class _AlterFiles(IpcCommand):
 
-    opts_parser = IpcArgumentParser(add_help=False)
-    opts_parser.add_argument('-x', dest='excludes', action='store_true')
-
-    args_parser = IpcArgumentParser(add_help=False)
-    args_parser.add_argument('targets', nargs='+')
+    arg_parser = IpcArgumentParser(add_help=False)
+    arg_parser.add_argument('-x', dest='excludes', action='store_true')
+    arg_parser.add_argument('targets', nargs='+')
 
     default_includes = ()
     default_excludes = ()

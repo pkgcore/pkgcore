@@ -41,13 +41,18 @@ __ebd_write_raw() {
 }
 
 __ipc_exit() {
-	[[ $1 == 0 ]] && return 0
 	# exit in a helper compatible way when running IPC command from a helper
 	[[ -n ${HELPER_ERROR_PREFIX} ]] && __helper_exit "$@"
 
-	local ret=$1 msg=$2
+	local ret=$1
+	shift
+	if [[ ${ret} == 0 ]]; then
+		[[ -n $@ ]] && echo "$@"
+		return 0
+	fi
+
 	local error_msg="${IPC_CMD}: exitcode ${ret}"
-	[[ -n ${msg} ]] && error_msg+=": ${msg}"
+	[[ -n $@ ]] && error_msg+=": $@"
 
 	if ${PKGCORE_NONFATAL}; then
 		eerror "${error_msg}"

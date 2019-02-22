@@ -54,11 +54,11 @@ check_command_or_stop() {
 }
 
 __helper_exit() {
-	[[ $1 == 0 ]] && exit 0
-
 	local ret=$1
-	local error_msg="${HELPER_ERROR_PREFIX}: exitcode ${ret}"
 	shift
+	[[ ${ret} == 0 ]] && exit 0
+
+	local error_msg="${HELPER_ERROR_PREFIX}: exitcode ${ret}"
 	[[ -n $@ ]] && error_msg+=": $@"
 
 	if ${PKGCORE_NONFATAL}; then

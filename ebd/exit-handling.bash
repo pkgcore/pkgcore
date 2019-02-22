@@ -24,6 +24,19 @@ die() {
 		fi
 	fi
 
+	# If stderr is redirected, store the error message in a temp file to be
+	# sent back to python for output.
+	local stderr
+	if [[ ! -t 2 ]]; then
+		if [[ -n ${T} ]]; then
+			stderr=$(mktemp -p "${T}" ".die_XXXXXX")
+			exec 3<> "${stderr}"
+			exec 2>&3
+		else
+			stderr="$@"
+		fi
+	fi
+
 	local n filespacing=0 linespacing=0 sourcefile lineno
 	# setup spacing to make output easier to read
 	for (( n = ${#FUNCNAME[@]} - 1 ; n >= 0 ; --n )); do
@@ -67,9 +80,24 @@ die() {
 
 	if [[ ${BASHPID} != ${PKGCORE_EBUILD_PROCESS_PID} ]]; then
 		if [[ -n ${PKGCORE_EBUILD_PROCESS_PID} ]]; then
-			# Tell the python side we're dying so it should handle cleanup.
-			# This forces die() to work in subshell environments.
+			local -a error_msg
+			# format error message for transmission
+			if [[ -n ${stderr} ]]; then
+				if [[ -f ${stderr} ]]; then
+					mapfile -t error_msg <${stderr}
+					rm -f "${stderr}"
+				else
+					error_msg+=( ${stderr} )
+				fi
+			fi
+
+			# Tell the python side we're dying so it should handle cleanup,
+			# this forces die() to work in subshell environments.
 			__ebd_write_line "term"
+			# Send any error message back to python if unable to output it here
+			# due to redirection.
+			printf "%s\0" "${error_msg[@]}" >&${PKGCORE_EBD_WRITE_FD}
+			__ebd_write_line
 		fi
 	fi
 

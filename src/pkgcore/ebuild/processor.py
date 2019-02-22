@@ -42,6 +42,7 @@ import errno
 from functools import partial
 import os
 import signal
+import sys
 
 from snakeoil import klass
 from snakeoil.currying import pretty_docs
@@ -237,6 +238,12 @@ class ProcessorError(PkgcoreException):
 
 def chuck_TermInterrupt(ebp, *args):
     """Event handler for bash side 'term' command."""
+    # Retrieve any message that the bash side was not able to output due to
+    # redirection, e.g. running a command while redirecting stderr to /dev/null.
+    msg = ebp.read().strip('\0').strip('\n')
+    if msg:
+        msg = '\n'.join(msg.split('\0'))
+        print(msg, file=sys.stderr)
     drop_ebuild_processor(ebp)
     ebp.shutdown_processor(force=True)
     raise FinishedProcessing(False)

@@ -346,18 +346,18 @@ common_tracked_attributes = (
 )
 
 common_archive_suffixes = (
-    "tar",
-    "tar.gz", "tgz", "tar.Z", "tar.z",
-    "tar.bz2", "tbz2", "tbz",
-    "zip", "ZIP", "jar",
-    "gz", "Z", "z",
-    "bz2",
-    "rar", "RAR",
-    "lha", "LHa", "LHA", "lzh",
-    "a", "deb",
-    "tar.lzma",
-    "lzma",
-    "7z", "7Z",
+    ".tar",
+    ".tar.gz", ".tgz", ".tar.Z", ".tar.z",
+    ".tar.bz2", ".tbz2", ".tbz",
+    ".zip", ".ZIP", ".jar",
+    ".gz", ".Z", ".z",
+    ".bz2",
+    ".rar", ".RAR",
+    ".lha", ".LHa", ".LHA", ".lzh",
+    ".a", ".deb",
+    ".tar.lzma",
+    ".lzma",
+    ".7z", ".7Z",
 )
 
 # Boolean variables exported to the bash side, e.g. ebuild_phase_func is
@@ -423,7 +423,7 @@ eapi3 = EAPI.register(
     metadata_keys=eapi2.metadata_keys,
     mandatory_keys=eapi2.mandatory_keys,
     tracked_attributes=eapi2.tracked_attributes,
-    archive_suffixes=eapi2.archive_suffixes | frozenset(["tar.xz", "xz"]),
+    archive_suffixes=eapi2.archive_suffixes | frozenset([".tar.xz", ".xz"]),
     optionals=_combine_dicts(eapi2.options, dict(
         prefix_capable=True,
     )),
@@ -483,7 +483,7 @@ eapi6 = EAPI.register(
     metadata_keys=eapi5.metadata_keys,
     mandatory_keys=eapi5.mandatory_keys,
     tracked_attributes=eapi5.tracked_attributes | frozenset(["user_patches"]),
-    archive_suffixes=eapi5.archive_suffixes | frozenset(["txz"]),
+    archive_suffixes=eapi5.archive_suffixes | frozenset([".txz"]),
     optionals=_combine_dicts(eapi5.options, dict(
         global_failglob=True,
         nonfatal_die=True,

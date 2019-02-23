@@ -627,14 +627,14 @@ class Doman(_InstallWrapper):
         dirs = set()
         for f in files:
             basename = os.path.basename(f)
-            suffix = os.path.splitext(basename)[1][1:]
+            suffix = os.path.splitext(basename)[1]
 
             if self.eapi.archive_suffixes_re.match(suffix):
                 # TODO: uncompress/warn?
-                suffix = os.path.splitext(basename.rsplit('.', 1)[0])[1][1:]
+                suffix = os.path.splitext(basename.rsplit('.', 1)[0])[1]
 
             name = basename
-            mandir = f'man{suffix}'
+            mandir = f'man{suffix[1:]}'
 
             if self.language_override and self.opts.i18n:
                 mandir = pjoin(self.opts.i18n, mandir)

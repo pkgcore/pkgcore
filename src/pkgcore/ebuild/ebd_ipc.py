@@ -203,8 +203,8 @@ def command_options(s):
 
 
 def existing_path(path):
-    """Split string of command line options into list."""
-    if not os.path.exists(path):
+    """Check if a given path exists (allows broken symlinks)."""
+    if not os.path.lexists(path):
         raise argparse.ArgumentTypeError(f'nonexistent path: {path!r}')
     return path
 

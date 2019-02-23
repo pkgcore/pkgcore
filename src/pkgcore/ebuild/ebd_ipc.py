@@ -801,22 +801,24 @@ class _QueryCmd(IpcCommand):
     arg_parser = IpcArgumentParser(add_help=False)
     arg_parser.add_argument('atom', type=atom_mod.atom)
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if not getattr(self.arg_parser, '_args_added', False):
-            if self.eapi.options.query_host_root:
-                # >= EAPI 5
-                self.arg_parser.add_argument('--host-root', action='store_true')
-            elif self.eapi.options.query_deps:
-                # >= EAPI 7
-                dep_opts = self.arg_parser.add_mutually_exclusive_group()
-                dep_opts.add_argument('-b', dest='bdepend', action='store_true')
-                dep_opts.add_argument('-d', dest='depend', action='store_true')
-                dep_opts.add_argument('-r', dest='rdepend', action='store_true')
-        # flag to skip re-adding options across multiple phases
-        self.arg_parser._args_added = True
+    # >= EAPI 5
+    host_root_parser = IpcArgumentParser(add_help=False)
+    host_root_parser.add_argument('--host-root', action='store_true')
+
+    # >= EAPI 7
+    query_deps_parser = IpcArgumentParser(add_help=False)
+    dep_opts = query_deps_parser.add_mutually_exclusive_group()
+    dep_opts.add_argument('-b', dest='bdepend', action='store_true')
+    dep_opts.add_argument('-d', dest='depend', action='store_true')
+    dep_opts.add_argument('-r', dest='rdepend', action='store_true')
 
     def parse_args(self, opts, args):
+        # parse EAPI specific arguments
+        if self.eapi.options.query_host_root:
+            _, args = self.host_root_parser.parse_known_optionals(args, namespace=self.opts)
+        elif self.eapi.options.query_deps:
+            _, args = self.query_deps_parser.parse_known_optionals(args, namespace=self.opts)
+
         args = super().parse_args(opts, args)
         root = None
         self.opts.domain = self.op.domain

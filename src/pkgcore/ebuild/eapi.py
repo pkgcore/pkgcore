@@ -232,7 +232,12 @@ class EAPI(object, metaclass=klass.immutable_instance):
 
     @klass.jit_attr
     def archive_suffixes_re(self):
-        return re.compile('(?:%s)' % '|'.join(map(re.escape, self.archive_suffixes)))
+        if self.options.unpack_case_insensitive:
+            flags = re.IGNORECASE
+        else:
+            flags = 0
+        archive_suffixes = '|'.join(map(re.escape, self.archive_suffixes))
+        return re.compile(rf'({archive_suffixes})$', flags=flags)
 
     @klass.jit_attr
     def atom_kls(self):

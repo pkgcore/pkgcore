@@ -67,6 +67,10 @@ class IpcArgumentParser(arghparse.OptionalsParser, arghparse.CustomActionsParser
     message to stderr.
     """
 
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault('add_help', False)
+        super().__init__(*args, **kwargs)
+
     def error(self, msg):
         raise IpcCommandError(msg)
 
@@ -212,7 +216,7 @@ def existing_path(path):
 class _InstallWrapper(IpcCommand):
     """Python wrapper for commands using `install`."""
 
-    parser = IpcArgumentParser(add_help=False)
+    parser = IpcArgumentParser()
     parser.add_argument('--dest', required=True)
     parser.add_argument('--insoptions', type=command_options)
     parser.add_argument('--diroptions', type=command_options)
@@ -222,13 +226,13 @@ class _InstallWrapper(IpcCommand):
     diroptions_default = ''
 
     # supported install command options
-    install_parser = IpcArgumentParser(add_help=False)
+    install_parser = IpcArgumentParser()
     install_parser.add_argument('-g', '--group', default=-1, type=_parse_group)
     install_parser.add_argument('-o', '--owner', default=-1, type=_parse_user)
     install_parser.add_argument('-m', '--mode', default=0o755, type=_parse_mode)
     install_parser.add_argument('-p', '--preserve-timestamps', action='store_true')
 
-    arg_parser = IpcArgumentParser(add_help=False)
+    arg_parser = IpcArgumentParser()
     arg_parser.add_argument('targets', nargs='+', type=existing_path)
 
     # boolean for whether symlinks are allowed to be installed
@@ -758,7 +762,7 @@ class Dohtml(_InstallWrapper):
 
 class _AlterFiles(IpcCommand):
 
-    arg_parser = IpcArgumentParser(add_help=False)
+    arg_parser = IpcArgumentParser()
     arg_parser.add_argument('-x', dest='excludes', action='store_true')
     arg_parser.add_argument('targets', nargs='+')
 
@@ -798,15 +802,15 @@ class Dostrip(_AlterFiles):
 
 class _QueryCmd(IpcCommand):
 
-    arg_parser = IpcArgumentParser(add_help=False)
+    arg_parser = IpcArgumentParser()
     arg_parser.add_argument('atom', type=atom_mod.atom)
 
     # >= EAPI 5
-    host_root_parser = IpcArgumentParser(add_help=False)
+    host_root_parser = IpcArgumentParser()
     host_root_parser.add_argument('--host-root', action='store_true')
 
     # >= EAPI 7
-    query_deps_parser = IpcArgumentParser(add_help=False)
+    query_deps_parser = IpcArgumentParser()
     dep_opts = query_deps_parser.add_mutually_exclusive_group()
     dep_opts.add_argument('-b', dest='bdepend', action='store_true')
     dep_opts.add_argument('-d', dest='depend', action='store_true')

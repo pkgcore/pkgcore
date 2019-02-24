@@ -682,9 +682,8 @@ class EbuildProcessor(object):
             except (EnvironmentError, ValueError):
                 kill = True
 
-        # TODO: add fallback to SIGKILL on failure
         if kill:
-            os.killpg(self.pid, signal.SIGTERM)
+            os.killpg(self.pid, signal.SIGKILL)
 
         # now we wait for the process group
         try:

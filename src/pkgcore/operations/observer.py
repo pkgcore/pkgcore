@@ -65,13 +65,19 @@ class formatter_output(null_output):
         self._out.write(_convert("debug: " + msg, args, kwds))
 
     def error(self, msg, *args, **kwds):
-        self._out.error(_convert(msg, args, kwds))
+        prefixes = kwds.pop(
+            'prefixes', (self._out.fg('red'), self._out.bold, ' * ', self._out.reset))
+        self._out.write(_convert(msg, args, kwds), prefixes=prefixes)
 
     def info(self, msg, *args, **kwds):
-        self._out.write(_convert(msg, args, kwds))
+        prefixes = kwds.pop(
+            'prefixes', (self._out.fg('green'), self._out.bold, ' * ', self._out.reset))
+        self._out.write(_convert(msg, args, kwds), prefixes=prefixes)
 
     def warn(self, msg, *args, **kwds):
-        self._out.warn(_convert(msg, args, kwds))
+        prefixes = kwds.pop(
+            'prefixes', (self._out.fg('yellow'), self._out.bold, ' * ', self._out.reset))
+        self._out.write(_convert(msg, args, kwds), prefixes=prefixes)
 
     def write(self, msg, *args, **kwds):
         self._out.write(_convert(msg, args, kwds), autoline=False)

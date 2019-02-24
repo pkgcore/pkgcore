@@ -590,9 +590,7 @@ class Dodir(_InstallWrapper):
     arg_parser.add_argument('targets', nargs='+')
 
     def run(self, args):
-        # support an iterable of targets in addition to a regular argparse namespace
-        dirs = getattr(args, 'targets', args)
-        self.install_dirs(dirs)
+        self.install_dirs(args.targets)
 
 
 class Doexe(_InstallWrapper):
@@ -631,7 +629,7 @@ class Dolib_a(Dolib):
     name = 'dolib.a'
 
 
-class _Symlink(IpcCommand):
+class _Symlink(_InstallWrapper):
 
     arg_parser = IpcArgumentParser()
     arg_parser.add_argument('source')
@@ -642,7 +640,7 @@ class _Symlink(IpcCommand):
         dest = pjoin(self.ED, args.dest.lstrip(os.path.sep))
 
         dest_dir = dest.rsplit(os.path.sep, 1)[0]
-        self.op._ipc_helpers['dodir'].run([dest_dir])
+        self.install_dirs([dest_dir])
 
         # remove existing destination files
         try:

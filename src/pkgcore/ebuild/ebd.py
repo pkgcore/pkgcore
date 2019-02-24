@@ -188,6 +188,8 @@ class ebd(object):
             'dolib.a': ebd_ipc.Dolib_a(self),
             'doman': ebd_ipc.Doman(self),
             'domo': ebd_ipc.Domo(self),
+            'dosym': ebd_ipc.Dosym(self),
+            'dohard': ebd_ipc.Dohard(self),
 
             # bash functions
             'has_version': ebd_ipc.Has_Version(self),

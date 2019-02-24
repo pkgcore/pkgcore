@@ -590,7 +590,9 @@ class Dodir(_InstallWrapper):
     arg_parser.add_argument('targets', nargs='+')
 
     def run(self, args):
-        self.install_dirs(args.targets)
+        # support an iterable of targets in addition to a regular argparse namespace
+        dirs = getattr(args, 'targets', args)
+        self.install_dirs(dirs)
 
 
 class Doexe(_InstallWrapper):
@@ -627,6 +629,53 @@ class Dolib_a(Dolib):
     """Python wrapper for dolib.a."""
 
     name = 'dolib.a'
+
+
+class _Symlink(IpcCommand):
+
+    arg_parser = IpcArgumentParser()
+    arg_parser.add_argument('source')
+    arg_parser.add_argument('dest')
+
+    def run(self, args):
+        source = pjoin(self.ED, args.source.lstrip(os.path.sep))
+        dest = pjoin(self.ED, args.dest.lstrip(os.path.sep))
+
+        dest_dir = dest.rsplit(os.path.sep, 1)[0]
+        self.op._ipc_helpers['dodir'].run([dest_dir])
+
+        # remove existing destination files
+        try:
+            os.unlink(dest)
+        except FileNotFoundError:
+            pass
+        except OSError as e:
+            raise IpcCommandError(f'failed removing file: {dest!r}: {e.strerror}')
+
+        try:
+            self._link(source, dest)
+        except OSError as e:
+            raise IpcCommandError(f'failed creating link: {dest!r}: {e.strerror}')
+
+
+class Dosym(_Symlink):
+    """Python wrapper for dosym."""
+
+    _link = os.symlink
+
+    def run(self, args):
+        dest = args.dest
+        if (dest.endswith(os.path.sep) or
+            (os.path.isdir(dest) and not os.path.islink(dest))): 
+            # bug 379899
+            raise IpcCommandError(f'missing filename target: {dest!r}')
+        super().run(args)
+
+
+class Dohard(_Symlink):
+    """Python wrapper for dosym."""
+
+    _link = os.link
 
 
 class Doman(_InstallWrapper):

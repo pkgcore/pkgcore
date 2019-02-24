@@ -65,6 +65,16 @@ class repo_operations(_repo_ops.operations):
         for key_query in sorted(set(match.unversioned_atom for match in matches)):
             pkgs = self.repo.match(key_query)
 
+            # check for pkgs masked by bad metadata
+            bad_metadata = self.repo._masked.match(key_query)
+            if bad_metadata:
+                for pkg in bad_metadata:
+                    e = pkg.data
+                    error_str = f"{pkg.cpvstr}: {e.msg(verbosity=observer.verbosity)}"
+                    observer.error(error_str)
+                    ret.add(key_query)
+                continue
+
             # Check for bad ebuilds -- mismatched or invalid PNs won't be
             # matched by regular restrictions so they will otherwise be
             # ignored.
@@ -98,13 +108,6 @@ class repo_operations(_repo_ops.operations):
                         skip_default_mirrors=(not mirrors)),
                         fetch.fetchable)
                     })
-
-            for pkg in self.repo._masked.itermatch(key_query):
-                e = pkg.data
-                error_str = f"{pkg.cpvstr}: {e.msg(verbosity=observer.verbosity)}"
-                observer.error(error_str)
-                ret.add(key_query)
-                continue
 
             # fetchables targeted for (re-)manifest generation
             fetchables = {}

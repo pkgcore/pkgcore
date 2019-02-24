@@ -99,9 +99,9 @@ class IpcCommand(object):
         self.observer = op.observer
         if self.name is None:
             self.name = self.__class__.__name__.lower()
-        self.opts = arghparse.Namespace()
 
     def __call__(self, ebd):
+        self.opts = arghparse.Namespace()
         self.ebd = ebd
         ret = 0
 
@@ -142,16 +142,16 @@ class IpcCommand(object):
             return f'0\x07{ret}'
         raise TypeError(f'unsupported return status type: {type(ret)}')
 
-    def parse_args(self, opts, args):
+    def parse_args(self, options, args):
         """Parse internal args passed from the bash side."""
         if self.parser is not None:
-            opts, unknown = self.parser.parse_known_args(opts, namespace=self.opts)
+            _, unknown = self.parser.parse_known_args(options, namespace=self.opts)
             if unknown:
                 raise UnknownOptions(unknown)
 
         if self.arg_parser is not None:
             # pull user options off the start of the argument list
-            opts, args = self.arg_parser.parse_known_optionals(args, namespace=self.opts)
+            _, args = self.arg_parser.parse_known_optionals(args, namespace=self.opts)
             # parse remaining command arguments
             args, unknown = self.arg_parser.parse_known_args(args, namespace=self.opts)
             if unknown:
@@ -249,25 +249,25 @@ class _InstallWrapper(IpcCommand):
         self.parser.set_defaults(
             insoptions=self.insoptions_default,
             diroptions=self.diroptions_default)
-        self.insoptions = arghparse.Namespace()
-        self.diroptions = arghparse.Namespace()
         # default to python-based install cmds
         self.install = self._install
         self.install_dirs = self._install_dirs
 
-    def parse_args(self, opts, args):
-        args = super().parse_args(opts, args)
-        return self.parse_install_options(opts, args)
+    def parse_args(self, *args, **kwargs):
+        args = super().parse_args(*args, **kwargs)
+        self.parse_install_options()
+        return args
 
-    def parse_install_options(self, opts, args):
+    def parse_install_options(self):
         """Parse install command options."""
+        self.insoptions = arghparse.Namespace()
+        self.diroptions = arghparse.Namespace()
         if self.opts.insoptions:
             if not self._parse_install_options(self.opts.insoptions, self.insoptions):
                 self.install = self._install_cmd
         if self.opts.diroptions:
             if not self._parse_install_options(self.opts.diroptions, self.diroptions):
                 self.install_dirs = self._install_dirs_cmd
-        return args
 
     def _parse_install_options(self, options, namespace):
         """Internal install command option parser.
@@ -822,14 +822,14 @@ class _QueryCmd(IpcCommand):
     dep_opts.add_argument('-d', dest='depend', action='store_true')
     dep_opts.add_argument('-r', dest='rdepend', action='store_true')
 
-    def parse_args(self, opts, args):
-        # parse EAPI specific arguments
+    def parse_args(self, options, args):
+        # parse EAPI specific optionals then remaining args
         if self.eapi.options.query_host_root:
             _, args = self.host_root_parser.parse_known_optionals(args, namespace=self.opts)
         elif self.eapi.options.query_deps:
             _, args = self.query_deps_parser.parse_known_optionals(args, namespace=self.opts)
+        args = super().parse_args(options, args)
 
-        args = super().parse_args(opts, args)
         root = None
         self.opts.domain = self.op.domain
 

@@ -581,6 +581,18 @@ class Doinfo(_InstallWrapper):
     insoptions_default = '-m0644'
 
 
+class Dodir(_InstallWrapper):
+    """Python wrapper for dodir."""
+
+    diroptions_default = '-m0755'
+
+    arg_parser = IpcArgumentParser()
+    arg_parser.add_argument('targets', nargs='+')
+
+    def run(self, args):
+        self.install_dirs(args.targets)
+
+
 class Doexe(_InstallWrapper):
     """Python wrapper for doexe."""
 

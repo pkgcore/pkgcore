@@ -179,6 +179,7 @@ class ebd(object):
             'dodoc': ebd_ipc.Dodoc(self),
             'dohtml': ebd_ipc.Dohtml(self),
             'doinfo': ebd_ipc.Doinfo(self),
+            'dodir': ebd_ipc.Dodir(self),
             'doexe': ebd_ipc.Doexe(self),
             'dobin': ebd_ipc.Dobin(self),
             'dosbin': ebd_ipc.Dosbin(self),

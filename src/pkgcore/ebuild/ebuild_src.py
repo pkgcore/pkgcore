@@ -11,7 +11,6 @@ from functools import partial
 from itertools import chain
 import os
 from sys import intern
-from tempfile import TemporaryFile
 
 from pkgcore.cache import errors as cache_errors
 from pkgcore.ebuild import conditionals, processor
@@ -436,16 +435,12 @@ class package_factory(metadata.factory):
         if not parsed_eapi.is_supported:
             return {'EAPI': str(parsed_eapi)}
 
-        # TODO: figure out how to reuse ebd processors when using custom fd pipes
-        # suppress sandbox error output on termination
-        with open(os.devnull, 'w') as f:
-            fd_pipes = {1: f.fileno(), 2: f.fileno()}
-            with processor.reuse_or_request(ebp, fd_pipes=fd_pipes) as my_proc:
-                try:
-                    mydata = my_proc.get_keys(pkg, self._ecache)
-                except processor.ProcessorError as e:
-                    raise metadata_errors.MetadataException(
-                        pkg, 'data', 'failed sourcing ebuild', e)
+        with processor.reuse_or_request(ebp) as my_proc:
+            try:
+                mydata = my_proc.get_keys(pkg, self._ecache)
+            except processor.ProcessorError as e:
+                raise metadata_errors.MetadataException(
+                    pkg, 'data', 'failed sourcing ebuild', e)
 
         inherited = mydata.pop("INHERITED", None)
         # Rewrite defined_phases as needed, since we now know the EAPI.

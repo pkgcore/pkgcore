@@ -473,12 +473,21 @@ def run_generic_phase(pkg, phase, env, userpriv, sandbox, fd_pipes=None,
         if isinstance(e, ebd_ipc.IpcError):
             # notify bash side of IPC error
             ebd.write(e.ret)
-        ebd.shutdown_processor()
+            if isinstance(e, ebd_ipc.IpcInternalError):
+                # show main exception cause for internal IPC errors
+                ebd.shutdown_processor(force=True)
+                raise e.__cause__
+        try:
+            ebd.shutdown_processor()
+        except ProcessorError as pe:
+            # catch die errors during shutdown
+            e = pe
         release_ebuild_processor(ebd)
-        if isinstance(e, ebd_ipc.IpcInternalError):
-            # show main exception cause for internal IPC errors
-            raise e.__cause__
-        elif isinstance(e, IGNORED_EXCEPTIONS + (ProcessorError, format.GenericBuildError,)):
+        if isinstance(e, ProcessorError):
+            # force verbose die output
+            e._verbosity = 1
+            raise e
+        elif isinstance(e, IGNORED_EXCEPTIONS + (format.GenericBuildError,)):
             raise
         raise format.GenericBuildError(
             f"Executing phase {phase}: Caught exception: {e}") from e

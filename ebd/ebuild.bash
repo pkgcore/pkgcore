@@ -184,7 +184,12 @@ __load_eapi_libs() {
 		source "${PKGCORE_EBD_PATH}"/generated/libs/${EAPI}/global \
 			|| die "failed sourcing EAPI ${EAPI} global scope lib"
 	else
-		source <("${PKGCORE_EBD_PATH}"/generate_eapi_lib -s global ${EAPI}) \
+		# can't run as a script since external commands are disabled in global scope
+		source "${PKGCORE_EBD_PATH}"/generate_eapi_lib \
+			|| die "failed sourcing generate_eapi_lib"
+		# stderr wiped since bash appears to overly complain about inherited
+		# readonly functions during sourcing
+		source <(load_eapi_libs -s global ${EAPI}) 2>/dev/null \
 			|| die "failed sourcing EAPI ${EAPI} global scope lib"
 	fi
 }

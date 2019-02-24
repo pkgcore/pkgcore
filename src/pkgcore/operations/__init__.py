@@ -123,6 +123,7 @@ class base(object):
         :return: Either the value of or_return, or if the operation is
             supported, the return value from that operation
         """
+        kwds.setdefault('observer', self.observer)
         ret = kwds.pop("or_return", self.UNSUPPORTED)
         if self.supports(operation_name):
             ret = getattr(self, operation_name)(*args, **kwds)

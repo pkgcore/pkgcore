@@ -31,10 +31,16 @@ demandload(
 class IpcError(PkgcoreException):
     """Generic IPC errors."""
 
-    def __init__(self, msg='', code=1):
+    def __init__(self, msg='', code=1, name=None):
         self.msg = msg
         self.code = code
+        self.name = name
         self.ret = IpcCommand._encode_ret((code, msg))
+
+    def __str__(self):
+        if self.name:
+            return f'{self.name}: {self.msg}'
+        return self.msg
 
 
 class IpcInternalError(IpcError):
@@ -115,7 +121,7 @@ class IpcCommand(object):
                 if nonfatal:
                     ret = (e.code, e.msg)
                 else:
-                    raise
+                    raise IpcCommandError(msg=e.msg, code=e.code, name=self.name)
             except IGNORED_EXCEPTIONS:
                 raise
             except Exception as e:

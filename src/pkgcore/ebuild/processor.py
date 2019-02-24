@@ -290,7 +290,7 @@ def chuck_UnhandledCommand(processor, line):
 def chuck_StoppingCommand(val, processor, *args):
     """Event handler for successful phase/command completion."""
     if callable(val):
-        raise FinishedProcessing(val(args[0]))
+        val = val(args[0])
     raise FinishedProcessing(val)
 
 
@@ -679,11 +679,6 @@ class EbuildProcessor(object):
                     self.ebd_read.close()
                 else:
                     kill = True
-            except FinishedProcessing:
-                # TODO: remove this hack once bash side tracking is reworked
-                # Handle case where we received a term interrupt while exiting,
-                # e.g. IPC command dying.
-                return
             except (EnvironmentError, ValueError):
                 kill = True
 
@@ -921,11 +916,11 @@ class EbuildProcessor(object):
                 else:
                     logger.error(f"unhandled command {cmd!r}, line {line!r}")
                     raise UnhandledCommand(line)
-
         except FinishedProcessing as fp:
             v = fp.val
-            self.unlock()
             return v
+        finally:
+            self.unlock()
 
 def inherit_handler(ecache, ebp, line, updates=None):
     """Callback for implementing inherit digging into eclass_cache.

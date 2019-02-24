@@ -32,7 +32,8 @@ demandload(
 class IpcError(PkgcoreException):
     """Generic IPC errors."""
 
-    def __init__(self, msg='', code=1, name=None):
+    def __init__(self, msg='', code=1, name=None, **kwargs):
+        super().__init__(msg, **kwargs)
         self.msg = msg
         self.code = code
         self.name = name

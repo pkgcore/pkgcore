@@ -247,13 +247,9 @@ class ProcessorError(PkgcoreUserException):
             lines = (bash.ansi_escape_re.sub('', x) for x in self.error.split('\n'))
             # extract context and die message from bash error output
             bash_error = [x.lstrip(' *') for x in lines if x.startswith(' *')]
-
-            # append bash specific error message if it exists in the expected format
+            # output specific error message if it exists in the expected format
             if bash_error:
-                context = bash_error[-1]
-                err_msg = bash_error[1]
-                return f": {context} \"{err_msg}\""
-
+                return bash_error[1]
         # show full bash output in verbose mode
         return self.error.strip('\n')
 

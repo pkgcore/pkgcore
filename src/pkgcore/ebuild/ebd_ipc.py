@@ -477,7 +477,7 @@ class _InstallWrapper(IpcCommand):
             try:
                 subprocess.run(command, check=True, stderr=subprocess.PIPE)
             except subprocess.CalledProcessError as e:
-                raise IpcCommandError(e.stderr.decode())
+                raise IpcCommandError(e.stderr.decode(), code=e.returncode)
 
     @_prefix_targets(files=False)
     def _install_dirs(self, dirs):
@@ -509,7 +509,7 @@ class _InstallWrapper(IpcCommand):
         try:
             subprocess.run(command, check=True, stderr=subprocess.PIPE)
         except subprocess.CalledProcessError as e:
-            raise IpcCommandError(e.stderr.decode())
+            raise IpcCommandError(e.stderr.decode(), code=e.returncode)
 
     @_prefix_targets(files=True)
     def install_symlinks(self, symlinks):

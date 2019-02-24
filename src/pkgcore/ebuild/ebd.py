@@ -33,7 +33,7 @@ from snakeoil.process.spawn import (
 
 from pkgcore.ebuild import ebd_ipc, ebuild_built, const, errors
 from pkgcore.ebuild.processor import (
-    request_ebuild_processor, release_ebuild_processor,
+    request_ebuild_processor, release_ebuild_processor, ProcessorError,
     expected_ebuild_env, chuck_UnhandledCommand, inherit_handler)
 from pkgcore.operations import observer, format
 from pkgcore.os_data import portage_gid, portage_uid, xargs
@@ -478,7 +478,7 @@ def run_generic_phase(pkg, phase, env, userpriv, sandbox, fd_pipes=None,
         if isinstance(e, ebd_ipc.IpcInternalError):
             # show main exception cause for internal IPC errors
             raise e.__cause__
-        elif isinstance(e, IGNORED_EXCEPTIONS + (format.GenericBuildError,)):
+        elif isinstance(e, IGNORED_EXCEPTIONS + (ProcessorError, format.GenericBuildError,)):
             raise
         raise format.GenericBuildError(
             f"Executing phase {phase}: Caught exception: {e}") from e

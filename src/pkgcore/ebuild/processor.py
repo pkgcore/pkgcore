@@ -51,7 +51,7 @@ from snakeoil.osutils import abspath, normpath, pjoin
 
 from pkgcore import __file__, const, os_data
 from pkgcore.ebuild import const as e_const
-from pkgcore.exceptions import PkgcoreException
+from pkgcore.exceptions import PkgcoreException, PkgcoreUserException
 
 demandload(
     'logging',
@@ -233,7 +233,7 @@ class TimeoutError(PkgcoreException):
     """Bash processor timed out."""
 
 
-class ProcessorError(PkgcoreException):
+class ProcessorError(PkgcoreUserException):
     """Bash processor returned a failure."""
 
     def __init__(self, error):

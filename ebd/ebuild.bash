@@ -283,6 +283,7 @@ __load_ebuild() {
 	${PKGCORE_GLOBAL_FAILGLOB} && __shopt_push -s failglob
 
 	__qa_invoke source "${EBUILD}" >&2
+	[[ $? == 0 ]] || die "error sourcing ebuild"
 
 	__env_pop
 

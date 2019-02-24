@@ -437,17 +437,15 @@ class package_factory(metadata.factory):
             return {'EAPI': str(parsed_eapi)}
 
         # TODO: figure out how to reuse ebd processors when using custom fd pipes
-        with TemporaryFile() as f:
+        # suppress sandbox error output on termination
+        with open(os.devnull, 'w') as f:
             fd_pipes = {1: f.fileno(), 2: f.fileno()}
             with processor.reuse_or_request(ebp, fd_pipes=fd_pipes) as my_proc:
                 try:
                     mydata = my_proc.get_keys(pkg, self._ecache)
                 except processor.ProcessorError as e:
-                    error = "failed sourcing ebuild"
-                    f.seek(0)
-                    verbose = f.read().decode()
                     raise metadata_errors.MetadataException(
-                        pkg, 'data', error, verbose)
+                        pkg, 'data', 'failed sourcing ebuild', e)
 
         inherited = mydata.pop("INHERITED", None)
         # Rewrite defined_phases as needed, since we now know the EAPI.

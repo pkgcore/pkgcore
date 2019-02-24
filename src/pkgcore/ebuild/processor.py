@@ -57,6 +57,7 @@ demandload(
     'logging',
     'itertools:chain',
     'traceback',
+    'snakeoil:bash',
     'snakeoil:fileutils',
     'snakeoil:process',
     'snakeoil.process:spawn',
@@ -235,18 +236,40 @@ class TimeoutError(PkgcoreException):
 class ProcessorError(PkgcoreException):
     """Bash processor returned a failure."""
 
+    def __init__(self, error):
+        self.error = error
+        super().__init__(self.msg())
+
+    def msg(self, verbosity=0):
+        """Extract error message from verbose output depending on verbosity level."""
+        if verbosity <= 0:
+            # strip ANSI escapes from output
+            lines = (bash.ansi_escape_re.sub('', x) for x in self.error.split('\n'))
+            # extract context and die message from bash error output
+            bash_error = [x.lstrip(' *') for x in lines if x.startswith(' *')]
+
+            # append bash specific error message if it exists in the expected format
+            if bash_error:
+                context = bash_error[-1]
+                err_msg = bash_error[1]
+                return f": {context} \"{err_msg}\""
+
+        # show full bash output in verbose mode
+        return self.error.strip('\n')
+
 
 def chuck_DyingInterrupt(ebp, *args):
     """Event handler for bash side 'die' command."""
-    # output die() error message
+    # read die() error message from bash side
+    error = []
     while True:
         line = ebp.read()
         if line.strip() == 'dead':
             break
-        sys.stderr.write(line)
+        error.append(line)
     drop_ebuild_processor(ebp)
     ebp.shutdown_processor(force=True)
-    raise FinishedProcessing(False)
+    raise ProcessorError(''.join(error))
 
 
 def chuck_KeyboardInterrupt(*args):
@@ -774,8 +797,7 @@ class EbuildProcessor(object):
         val = self.generic_handler(additional_commands=commands)
 
         if not val:
-            logger.debug(f"returned val from {command} was '{val}'")
-            raise ProcessorError(val)
+            raise ProcessorError(f"returned val from {command} was '{val}'")
 
         if updates:
             self.preload_eclasses(eclass_cache, limited_to=updates, async_req=True)

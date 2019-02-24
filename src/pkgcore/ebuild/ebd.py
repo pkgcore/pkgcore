@@ -191,6 +191,8 @@ class ebd(object):
             # bash functions
             'has_version': ebd_ipc.Has_Version(self),
             'best_version': ebd_ipc.Best_Version(self),
+            'eapply': ebd_ipc.Eapply(self),
+            'eapply_user': ebd_ipc.Eapply_User(self),
             'docompress': ebd_ipc.Docompress(self),
             'dostrip': ebd_ipc.Dostrip(self),
         }
@@ -643,10 +645,6 @@ class buildable(ebd, setup_mixin, format.build):
         if self.eapi.options.has_merge_type:
             self.env["MERGE_TYPE"] = "source"
 
-        # available user patches for >= EAPI 6
-        if self.eapi.options.user_patches:
-            self.env["PKGCORE_USER_PATCHES"] = pkg.user_patches
-
         if self.eapi.options.has_portdir:
             self.env["PORTDIR"] = pkg.repo.location
             self.env["ECLASSDIR"] = eclass_cache.eclassdir
@@ -782,9 +780,15 @@ class buildable(ebd, setup_mixin, format.build):
 
         does nothing if the pkg's EAPI is less than 2
         """
+        ret = True
         if "prepare" in self.eapi.phases:
-            return self._generic_phase("prepare", True, True)
-        return True
+            ret = self._generic_phase("prepare", True, True)
+            if (self.eapi.options.user_patches and
+                    not os.path.exists(pjoin(self.env['T'], '.user_patches_applied'))):
+                self.observer.error(
+                    'eapply_user (or default) must be called in src_prepare()')
+                raise format.GenericBuildError('missing eapply_user call')
+        return ret
 
     def nofetch(self):
         """Execute the nofetch phase.

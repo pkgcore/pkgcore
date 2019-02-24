@@ -3,6 +3,7 @@
 
 __all__ = ("install", "uninstall", "replace", "operations")
 
+from itertools import chain
 import os
 import shutil
 
@@ -64,6 +65,8 @@ class install(repo_ops.install):
                 v = getattr(self.new_pkg, k)
                 if k in ('bdepend', 'depend', 'rdepend'):
                     s = v.slotdep_str(domain)
+                elif k == 'user_patches':
+                    s = '\n'.join(chain.from_iterable(files for _, files in v))
                 elif not isinstance(v, str):
                     try:
                         s = ' '.join(v)

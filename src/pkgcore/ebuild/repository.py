@@ -740,8 +740,10 @@ class ConfiguredTree(configured.tree):
             ]
             for d in patch_dirs:
                 for root, _dirs, files in os.walk(pjoin(patchroot, pkg.category, d)):
-                    patches.extend([pjoin(root, f) for f in sorted(files, key=locale.strxfrm)
-                                    if f.endswith(('.diff', '.patch'))])
+                    files = (
+                        pjoin(root, f) for f in sorted(files, key=locale.strxfrm)
+                        if f.endswith(('.diff', '.patch')))
+                    patches.append((root, tuple(files)))
             return tuple(patches)
         return None
 

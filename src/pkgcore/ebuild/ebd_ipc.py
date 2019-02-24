@@ -20,6 +20,7 @@ from pkgcore.exceptions import PkgcoreException, PkgcoreUserException
 
 demandload(
     'grp',
+    'locale',
     'operator:itemgetter',
     'pwd',
     'pkgcore:os_data',
@@ -874,3 +875,94 @@ class Best_Version(_QueryCmd):
 
     def run(self, args):
         return portageq._best_version(self.opts.domain, args.atom)
+
+
+class Eapply(IpcCommand):
+
+    arg_parser = IpcArgumentParser()
+    arg_parser.add_argument('targets', nargs='+', type=existing_path)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.patch_cmd = ['patch', '-p1', '-f', '-s', '-g0', '--no-backup-if-mismatch']
+
+    def _parse_patch_opts(self, args):
+        patch_opts = []
+        files = []
+        for i, arg in enumerate(args):
+            if arg == '--':
+                if files:
+                    raise IpcCommandError('options must be specified before file arguments')
+                files = args[i + l:]
+                break
+            elif arg.startswith('-'):
+                if files:
+                    raise IpcCommandError('options must be specified before file arguments')
+                patch_opts.append(arg)
+            else:
+                files.append(arg)
+        return files, patch_opts
+
+    def _find_patches(self, args):
+        for path in args:
+            if os.path.isdir(path):
+                for root, _dirs, files in os.walk(path):
+                    patches = [
+                        pjoin(root, f) for f in sorted(files, key=locale.strxfrm)
+                        if f.endswith(('.diff', '.patch'))]
+                    if not patches:
+                        raise IpcCommandError(f'no patches in directory: {path!r}')
+                    yield path, patches
+            else:
+                yield None, [path]
+
+    def parse_args(self, options, args):
+        args, patch_opts = self._parse_patch_opts(args)
+        self.opts.patch_opts = patch_opts
+        args = super().parse_args(options, args)
+        return self._find_patches(args.targets)
+
+    def run(self, args, user=False):
+        if user:
+            patch_type = 'user patches'
+            output = self.observer.warn
+        else:
+            patch_type = 'patches'
+            output = self.observer.info
+
+        try:
+            for path, patches in args:
+                prefix = ''
+                if path is not None:
+                    output(f'Applying {patch_type} from {path!r}:')
+                    prefix = '  '
+                for patch in patches:
+                    output(f'{prefix}{os.path.basename(patch)}')
+                    self.observer.flush()
+                    with open(patch) as f:
+                        subprocess.run(
+                            self.patch_cmd + self.opts.patch_opts,
+                            check=True, stdin=f, stderr=subprocess.PIPE)
+        except subprocess.CalledProcessError as e:
+            filename = os.path.basename(patch)
+            msg = f'applying {filename!r} failed: {e.stderr.decode()}'
+            raise IpcCommandError(msg, code=e.returncode)
+        except OSError as e:
+            raise IpcCommandError(
+                f'failed reading patch file: {patch!r}: {e.strerror}')
+
+
+class Eapply_User(IpcCommand):
+
+    # stub parser so any arguments are flagged as errors
+    arg_parser = IpcArgumentParser()
+
+    def run(self, args):
+        if self.pkg.user_patches:
+            self.op._ipc_helpers['eapply'].run(self.pkg.user_patches, user=True)
+
+        # create marker to skip additionals calls
+        patches = itertools.chain.from_iterable(
+            files for _, files in self.pkg.user_patches)
+        with open(pjoin(self.op.env['T'], '.user_patches_applied'), 'w') as f:
+            f.write('\n'.join(patches))

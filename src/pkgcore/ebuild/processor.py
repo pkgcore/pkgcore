@@ -236,14 +236,14 @@ class ProcessorError(PkgcoreException):
     """Bash processor returned a failure."""
 
 
-def chuck_TermInterrupt(ebp, *args):
-    """Event handler for bash side 'term' command."""
-    # Retrieve any message that the bash side was not able to output due to
-    # redirection, e.g. running a command while redirecting stderr to /dev/null.
-    msg = ebp.read().strip('\0').strip('\n')
-    if msg:
-        msg = '\n'.join(msg.split('\0'))
-        print(msg, file=sys.stderr)
+def chuck_DyingInterrupt(ebp, *args):
+    """Event handler for bash side 'die' command."""
+    # output die() error message
+    while True:
+        line = ebp.read()
+        if line.strip() == 'dead':
+            break
+        sys.stderr.write(line)
     drop_ebuild_processor(ebp)
     ebp.shutdown_processor(force=True)
     raise FinishedProcessing(False)
@@ -497,11 +497,11 @@ class EbuildProcessor(object):
         mydata = []
         while lines > 0:
             mydata.append(self.ebd_read.readline())
-            cmd = mydata[-1]
-            if cmd.startswith("killed"):
-                chuck_KeyboardInterrupt(self)
-            elif cmd.startswith('term'):
-                chuck_TermInterrupt(self)
+            cmd, _, args_str = mydata[-1].strip().partition(' ')
+            if cmd == 'killed':
+                chuck_KeyboardInterrupt(self, args_str)
+            elif cmd == 'dying':
+                chuck_DyingInterrupt(self, args_str)
             lines -= 1
         return mydata
 
@@ -867,7 +867,7 @@ class EbuildProcessor(object):
             chuck_StoppingCommand, lambda f: f.lower().strip() == "succeeded")
 
         handlers["killed"] = chuck_KeyboardInterrupt
-        handlers["term"] = chuck_TermInterrupt
+        handlers["dying"] = chuck_DyingInterrupt
 
         if additional_commands is not None:
             for x in additional_commands:

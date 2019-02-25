@@ -15,6 +15,7 @@ from snakeoil.contexts import chdir
 from snakeoil.demandload import demandload
 from snakeoil.iterables import partition
 from snakeoil.osutils import pjoin
+from snakeoil.process import spawn
 
 from pkgcore.exceptions import PkgcoreException, PkgcoreUserException
 
@@ -986,34 +987,39 @@ class Eapply(IpcCommand):
     def run(self, args, user=False):
         if user:
             patch_type = 'user patches'
-            output = self.observer.warn
+            output_func = self.observer.warn
         else:
             patch_type = 'patches'
-            output = self.observer.info
+            output_func = self.observer.info
 
-        try:
-            for path, patches in args:
-                prefix = ''
-                if path is not None:
-                    output(f'Applying {patch_type} from {path!r}:')
-                    prefix = '  '
-                for patch in patches:
-                    if path is None:
-                        output(f'{prefix}Applying {os.path.basename(patch)}...')
-                    else:
-                        output(f'{prefix}{os.path.basename(patch)}...')
-                    self.observer.flush()
+        spawn_kwargs = {'collect_fds': (1, 2)}
+        if self.op.userpriv:
+            spawn_kwargs['uid'] = os_data.portage_uid
+            spawn_kwargs['gid'] = os_data.portage_gid
+
+        for path, patches in args:
+            prefix = ''
+            if path is not None:
+                output_func(f'Applying {patch_type} from {path!r}:')
+                prefix = '  '
+            for patch in patches:
+                if path is None:
+                    output_func(f'{prefix}Applying {os.path.basename(patch)}...')
+                else:
+                    output_func(f'{prefix}{os.path.basename(patch)}...')
+                self.observer.flush()
+                try:
                     with open(patch) as f:
-                        subprocess.run(
+                        ret, output = spawn.spawn_get_output(
                             self.patch_cmd + self.opts.patch_opts,
-                            check=True, stdin=f, stderr=subprocess.PIPE)
-        except subprocess.CalledProcessError as e:
-            filename = os.path.basename(patch)
-            msg = f'applying {filename!r} failed: {e.stderr.decode()}'
-            raise IpcCommandError(msg, code=e.returncode)
-        except OSError as e:
-            raise IpcCommandError(
-                f'failed reading patch file: {patch!r}: {e.strerror}')
+                            fd_pipes={0: f.fileno()}, **spawn_kwargs)
+                    if ret:
+                        filename = os.path.basename(patch)
+                        msg = f'applying {filename!r} failed: {output[0]}'
+                        raise IpcCommandError(msg, code=ret)
+                except OSError as e:
+                    raise IpcCommandError(
+                    f'failed reading patch file: {patch!r}: {e.strerror}')
 
 
 class Eapply_User(IpcCommand):

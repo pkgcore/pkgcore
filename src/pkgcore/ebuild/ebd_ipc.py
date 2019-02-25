@@ -637,27 +637,27 @@ class _Symlink(_InstallWrapper):
 
     arg_parser = IpcArgumentParser()
     arg_parser.add_argument('source')
-    arg_parser.add_argument('dest')
+    arg_parser.add_argument('target')
 
     def run(self, args):
         source = pjoin(self.ED, args.source.lstrip(os.path.sep))
-        dest = pjoin(self.ED, args.dest.lstrip(os.path.sep))
+        target = pjoin(self.ED, args.target.lstrip(os.path.sep))
 
-        dest_dir = dest.rsplit(os.path.sep, 1)[0]
+        dest_dir = args.target.rsplit(os.path.sep, 1)[0]
         self.install_dirs([dest_dir])
 
         # remove existing destination files
         try:
-            os.unlink(dest)
+            os.unlink(target)
         except FileNotFoundError:
             pass
         except OSError as e:
-            raise IpcCommandError(f'failed removing file: {dest!r}: {e.strerror}')
+            raise IpcCommandError(f'failed removing file: {target!r}: {e.strerror}')
 
         try:
-            self._link(source, dest)
+            self._link(source, target)
         except OSError as e:
-            raise IpcCommandError(f'failed creating link: {dest!r}: {e.strerror}')
+            raise IpcCommandError(f'failed creating link: {target!r}: {e.strerror}')
 
 
 class Dosym(_Symlink):
@@ -666,11 +666,11 @@ class Dosym(_Symlink):
     _link = os.symlink
 
     def run(self, args):
-        dest = args.dest
-        if (dest.endswith(os.path.sep) or
-            (os.path.isdir(dest) and not os.path.islink(dest))): 
+        target = args.target
+        if (target.endswith(os.path.sep) or
+            (os.path.isdir(target) and not os.path.islink(target))):
             # bug 379899
-            raise IpcCommandError(f'missing filename target: {dest!r}')
+            raise IpcCommandError(f'missing filename target: {target!r}')
         super().run(args)
 
 

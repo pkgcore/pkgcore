@@ -345,14 +345,13 @@ class _InstallWrapper(IpcCommand):
         """
         def scan_dirs(paths):
             for d in paths:
-                dest_dir = os.path.basename(d)
-                yield True, dest_dir
+                yield True, d
                 for dirpath, dirnames, filenames in os.walk(d):
                     for dirname in dirnames:
                         source_dir = pjoin(dirpath, dirname)
                         relpath = os.path.relpath(source_dir, self.cwd)
                         if os.path.islink(source_dir):
-                            dest = pjoin(dest_dir, os.path.basename(relpath))
+                            dest = pjoin(os.path.basename(d), os.path.basename(relpath))
                             yield False, (relpath, dest)
                         else:
                             yield True, relpath

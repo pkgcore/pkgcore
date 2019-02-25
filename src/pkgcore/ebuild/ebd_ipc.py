@@ -1001,7 +1001,10 @@ class Eapply(IpcCommand):
                     output(f'Applying {patch_type} from {path!r}:')
                     prefix = '  '
                 for patch in patches:
-                    output(f'{prefix}{os.path.basename(patch)}')
+                    if path is None:
+                        output(f'{prefix}Applying {os.path.basename(patch)}...')
+                    else:
+                        output(f'{prefix}{os.path.basename(patch)}...')
                     self.observer.flush()
                     with open(patch) as f:
                         subprocess.run(

@@ -358,8 +358,8 @@ class _InstallWrapper(IpcCommand):
                         else:
                             yield True, relpath
                     for f in filenames:
-                        source = os.path.relpath(pjoin(dirpath, f), self.cwd)
-                        dest = pjoin(dest_dir, os.path.basename(f))
+                        dest = pjoin(dirpath, f)
+                        source = os.path.relpath(dest, self.cwd)
                         yield False, (source, dest)
 
         # determine all files and dirs under target directories and install them

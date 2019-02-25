@@ -639,20 +639,22 @@ class _Symlink(_InstallWrapper):
     arg_parser.add_argument('target')
 
     def run(self, args):
-        source = pjoin(self.op.ED, args.source.lstrip(os.path.sep))
-        target = pjoin(self.op.ED, args.target.lstrip(os.path.sep))
-
         dest_dir = args.target.rsplit(os.path.sep, 1)[0]
-        self.install_dirs([dest_dir])
+        if dest_dir != args.target:
+            self.install_dirs([dest_dir])
 
-        try:
+        target = pjoin(self.op.ED, args.target.lstrip(os.path.sep))
+        with chdir(self.op.ED):
             try:
-                self._link(source, target)
-            except FileExistsError:
-                os.unlink(target)
-                self._link(source, target)
-        except OSError as e:
-            raise IpcCommandError(f'failed creating link: {target!r}: {e.strerror}')
+                try:
+                    self._link(args.source, target)
+                except FileExistsError:
+                    # overwrite target if it exists
+                    os.unlink(target)
+                    self._link(args.source, target)
+            except OSError as e:
+                raise IpcCommandError(
+                    f'failed creating link: {args.source!r} -> {args.target!r}: {e.strerror}')
 
 
 class Dosym(_Symlink):

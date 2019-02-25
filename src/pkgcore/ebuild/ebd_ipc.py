@@ -225,7 +225,7 @@ class _InstallWrapper(IpcCommand):
     """Python wrapper for commands using `install`."""
 
     parser = IpcArgumentParser()
-    parser.add_argument('--dest', required=True)
+    parser.add_argument('--dest', default='/')
     parser.add_argument('--insoptions', type=command_options)
     parser.add_argument('--diroptions', type=command_options)
 

@@ -1,6 +1,3 @@
 #!/usr/bin/env pkgcore-ipc-helper
 
-OPTIONS=(
-	"--dest=\"\""
-	"--diroptions=\"${DIROPTIONS}\""
-)
+OPTIONS=( "--diroptions=\"${DIROPTIONS}\"" )

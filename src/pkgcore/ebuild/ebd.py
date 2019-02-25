@@ -921,7 +921,11 @@ class ebuild_operations(object):
 
         commands = None
         if not pkg.built:
-            commands = {"request_inherit": partial(inherit_handler, self._eclass_cache)}
+            commands = {
+                'request_inherit': partial(inherit_handler, self._eclass_cache),
+                'has_version': ebd_ipc.Has_Version(self),
+                'best_version': ebd_ipc.Best_Version(self),
+            }
 
         # Use base build tempdir for $T instead of full pkg specific path to
         # avoid having to create/remove directories -- pkg_pretend isn't

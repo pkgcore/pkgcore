@@ -95,7 +95,6 @@ class IpcCommand(object):
 
     def __init__(self, op):
         self.op = op
-        self.ED = op.ED
         self.pkg = op.pkg
         self.eapi = op.pkg.eapi
         self.observer = op.observer
@@ -292,7 +291,7 @@ class _InstallWrapper(IpcCommand):
 
     def run(self, args):
         try:
-            dest_dir = pjoin(self.ED, self.opts.dest.lstrip(os.path.sep))
+            dest_dir = pjoin(self.op.ED, self.opts.dest.lstrip(os.path.sep))
             os.makedirs(dest_dir, exist_ok=True)
         except OSError as e:
             raise IpcCommandError(
@@ -307,11 +306,11 @@ class _InstallWrapper(IpcCommand):
                 dest_dir = self.opts.dest.lstrip(os.path.sep)
                 if files:
                     targets = (
-                        (s, pjoin(self.ED, dest_dir, d.lstrip(os.path.sep)))
+                        (s, pjoin(self.op.ED, dest_dir, d.lstrip(os.path.sep)))
                         for s, d in targets)
                 else:
                     targets = (
-                        pjoin(self.ED, dest_dir, d.lstrip(os.path.sep))
+                        pjoin(self.op.ED, dest_dir, d.lstrip(os.path.sep))
                         for d in targets)
                 return func(self, targets)
             return wrapped
@@ -640,8 +639,8 @@ class _Symlink(_InstallWrapper):
     arg_parser.add_argument('target')
 
     def run(self, args):
-        source = pjoin(self.ED, args.source.lstrip(os.path.sep))
-        target = pjoin(self.ED, args.target.lstrip(os.path.sep))
+        source = pjoin(self.op.ED, args.source.lstrip(os.path.sep))
+        target = pjoin(self.op.ED, args.target.lstrip(os.path.sep))
 
         dest_dir = args.target.rsplit(os.path.sep, 1)[0]
         self.install_dirs([dest_dir])

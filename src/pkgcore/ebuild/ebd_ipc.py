@@ -6,7 +6,6 @@ import re
 import shlex
 import shutil
 import stat
-import subprocess
 import sys
 
 from snakeoil.cli import arghparse
@@ -480,10 +479,9 @@ class _InstallWrapper(IpcCommand):
         for dest, files_group in itertools.groupby(files, itemgetter(1)):
             sources = list(path for path, _ in files_group)
             command = ['install'] + self.opts.insoptions + sources + [dest]
-            try:
-                subprocess.run(command, check=True, stderr=subprocess.PIPE)
-            except subprocess.CalledProcessError as e:
-                raise IpcCommandError(e.stderr.decode(), code=e.returncode)
+            ret, output = spawn.spawn_get_output(command, collect_fds=(2,))
+            if not ret:
+                raise IpcCommandError('\n'.join(output), code=ret)
 
     @_prefix_targets(files=False)
     def _install_dirs(self, dirs):
@@ -512,10 +510,9 @@ class _InstallWrapper(IpcCommand):
             IpcCommandError on failure
         """
         command = ['install', '-d'] + self.opts.diroptions + list(dirs)
-        try:
-            subprocess.run(command, check=True, stderr=subprocess.PIPE)
-        except subprocess.CalledProcessError as e:
-            raise IpcCommandError(e.stderr.decode(), code=e.returncode)
+        ret, output = spawn.spawn_get_output(command, collect_fds=(2,))
+        if not ret:
+            raise IpcCommandError('\n'.join(output), code=ret)
 
     @_prefix_targets(files=True)
     def install_symlinks(self, symlinks):

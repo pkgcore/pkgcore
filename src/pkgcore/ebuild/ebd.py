@@ -15,6 +15,7 @@ __all__ = (
 from collections import defaultdict
 import errno
 from functools import partial
+from itertools import chain
 import os
 import re
 import shutil
@@ -31,7 +32,8 @@ from snakeoil.osutils import ensure_dirs, abspath, normpath, pjoin, listdir_file
 from snakeoil.process.spawn import (
     spawn_bash, spawn, is_sandbox_capable, is_userpriv_capable)
 
-from pkgcore.ebuild import ebd_ipc, ebuild_built, const, errors
+from pkgcore import const
+from pkgcore.ebuild import ebd_ipc, ebuild_built, errors
 from pkgcore.ebuild.processor import (
     request_ebuild_processor, release_ebuild_processor, ProcessorError,
     expected_ebuild_env, chuck_UnhandledCommand, inherit_handler)
@@ -258,6 +260,17 @@ class ebd(object):
 
     def _set_per_phase_env(self, phase, env):
         self._setup_merge_type(phase, env)
+
+        # add phase specific helper paths to PATH if they exist
+        ebuild_phase = self.eapi.phases.get(phase, '')
+        if ebuild_phase in self.eapi.helpers:
+            path = chain.from_iterable((
+                const.PATH_FORCED_PREPEND,
+                self.pkg.eapi.helpers.get('global', ()),
+                self.eapi.helpers[ebuild_phase],
+                os.environ.get('PATH', '').split(os.pathsep),
+            ))
+            env['PATH'] = os.pathsep.join(path)
 
     def _setup_merge_type(self, phase, env):
         # only allowed in pkg_ phases.

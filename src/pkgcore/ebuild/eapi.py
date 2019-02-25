@@ -1,6 +1,7 @@
 # Copyright: 2011 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD 3 clause
 
+from collections import defaultdict
 import os
 import re
 import sys
@@ -271,14 +272,23 @@ class EAPI(object, metaclass=klass.immutable_instance):
 
     @klass.jit_attr
     def helpers(self):
-        """Directories for EAPI specific helpers to add to $PATH."""
-        dirs = []
+        """Phase to directory mapping for EAPI specific helpers to add to $PATH."""
+        paths = defaultdict(list)
         for eapi in self.inherits:
+            paths['global'].append(pjoin(const.EBUILD_HELPERS_PATH, 'common'))
             helper_dir = pjoin(const.EBUILD_HELPERS_PATH, eapi._magic)
-            if os.path.exists(helper_dir):
-                dirs.append(helper_dir)
-        dirs.append(pjoin(const.EBUILD_HELPERS_PATH, 'common'))
-        return tuple(dirs)
+            for dirpath, dirnames, filenames in os.walk(helper_dir):
+                if not filenames:
+                    continue
+                if dirpath == helper_dir:
+                    paths['global'].append(dirpath)
+                else:
+                    phase = os.path.basename(dirpath)
+                    if phase in self.phases_rev:
+                        paths[phase].append(dirpath)
+                    else:
+                        raise ValueError(f'unknown phase: {phase!r}')
+        return mappings.ImmutableDict((k, tuple(v)) for k, v in paths.items())
 
     @klass.jit_attr
     def ebd_env(self):

@@ -978,9 +978,12 @@ def expected_ebuild_env(pkg, d=None, env_source_override=None, depends=False):
     d.update(pkg.eapi.ebd_env)
 
     if not depends:
-        path = list(const.PATH_FORCED_PREPEND + pkg.eapi.helpers)
-        path.extend(d.get("PATH", "").split(os.pathsep))
-        path.extend(os.environ.get("PATH", "").split(os.pathsep))
+        path = chain.from_iterable((
+            const.PATH_FORCED_PREPEND,
+            pkg.eapi.helpers.get('global', ()),
+            d.get("PATH", "").split(os.pathsep),
+            os.environ.get("PATH", "").split(os.pathsep),
+        ))
         d["PATH"] = os.pathsep.join(filter(None, path))
         d["INHERITED"] = ' '.join(pkg.data.get("_eclasses_", ()))
         d["USE"] = ' '.join(sorted(str(x) for x in pkg.use))

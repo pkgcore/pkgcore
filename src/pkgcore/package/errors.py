@@ -29,6 +29,8 @@ class MetadataException(PackageError):
         if self.verbose:
             if verbosity > 0:
                 s += ':\n'
+            else:
+                s += ': '
             s += self.verbose.msg(verbosity)
         return s
 

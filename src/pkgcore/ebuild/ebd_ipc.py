@@ -645,16 +645,12 @@ class _Symlink(_InstallWrapper):
         dest_dir = args.target.rsplit(os.path.sep, 1)[0]
         self.install_dirs([dest_dir])
 
-        # remove existing destination files
         try:
-            os.unlink(target)
-        except FileNotFoundError:
-            pass
-        except OSError as e:
-            raise IpcCommandError(f'failed removing file: {target!r}: {e.strerror}')
-
-        try:
-            self._link(source, target)
+            try:
+                self._link(source, target)
+            except FileExistsError:
+                os.unlink(target)
+                self._link(source, target)
         except OSError as e:
             raise IpcCommandError(f'failed creating link: {target!r}: {e.strerror}')
 

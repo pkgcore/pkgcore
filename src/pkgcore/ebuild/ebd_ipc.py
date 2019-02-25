@@ -306,9 +306,13 @@ class _InstallWrapper(IpcCommand):
             def wrapped(self, targets):
                 dest_dir = self.opts.dest.lstrip(os.path.sep)
                 if files:
-                    targets = ((s, pjoin(self.ED, dest_dir, d)) for s, d in targets)
+                    targets = (
+                        (s, pjoin(self.ED, dest_dir, d.lstrip(os.path.sep)))
+                        for s, d in targets)
                 else:
-                    targets = (pjoin(self.ED, dest_dir, d) for d in targets)
+                    targets = (
+                        pjoin(self.ED, dest_dir, d.lstrip(os.path.sep))
+                        for d in targets)
                 return func(self, targets)
             return wrapped
         return wrapper

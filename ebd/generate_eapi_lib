@@ -39,7 +39,12 @@ load_eapi_libs() {
 
 		# replace EAPI banned functions if any exist
 		for func in "${PKGCORE_BANNED_FUNCS[@]}"; do
-			eval "${func}() { die \"\${FUNCNAME}: banned in EAPI ${eapi}\"; }"
+			if declare -F ${func} &>/dev/null; then
+				eval "${func}() { die \"\${FUNCNAME}: banned in EAPI ${eapi}\"; }"
+			else
+				echo "EAPI ${eapi}: undefined banned func: '${func}'" >&2
+				exit 1
+			fi
 		done
 		unset PKGCORE_BANNED_FUNCS
 	done

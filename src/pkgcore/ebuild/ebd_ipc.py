@@ -67,7 +67,7 @@ class UnknownArguments(IpcCommandError):
         super().__init__(f"unknown arguments: {', '.join(map(repr, args))}")
 
 
-class IpcArgumentParser(arghparse.OptionalsParser, arghparse.CustomActionsParser,
+class IpcArgumentParser(arghparse.OptionalsParser, arghparse.CsvActionsParser,
                         arghparse.CopyableParser):
     """Raise IPC exception for argparse errors.
 

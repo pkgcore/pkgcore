@@ -770,12 +770,12 @@ class EbuildProcessor(object):
             self._metadata_paths = paths
 
     def _run_depend_like_phase(self, command, package_inst, eclass_cache,
-                               extra_commands={}):
+                               env=None, extra_commands={}):
         # ebuild is not allowed to run any external programs during
         # depend phases; use /dev/null since "" == "."
         self._ensure_metadata_paths(("/dev/null",))
 
-        env = expected_ebuild_env(package_inst, depends=True)
+        env = expected_ebuild_env(package_inst, env, depends=True)
         data = self._generate_env_str(env)
         self.write(f"{command} {len(data)}\n{data}", append_newline=False)
 
@@ -817,8 +817,9 @@ class EbuildProcessor(object):
             # This is a raw transfer, for obvious reasons.
             environ.append(self.ebd_read.read(int(line)))
 
-        self._run_depend_like_phase('gen_ebuild_env', package_inst, eclass_cache,
-                                    {'receive_env': receive_env})
+        self._run_depend_like_phase(
+            'gen_ebuild_env', package_inst, eclass_cache,
+            extra_commands={'receive_env': receive_env})
         if not environ:
             raise InternalError(None, "receive_env was never invoked.")
         # Dump any leading/trailing spaces.

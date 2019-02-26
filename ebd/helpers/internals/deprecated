@@ -2,9 +2,9 @@
 
 eqawarn "QA Notice: ${HELPER_NAME}: deprecated in EAPI ${HELPER_EAPI}"
 
-# find original, nondeprecated helper and execute it by removing the EAPI where
-# it's deprecated from PATH and searching for the old implementation
-__var_push PATH=${PATH/${PKGCORE_EBD_PATH}\/helpers\/${HELPER_EAPI}:/}
+# remove deprecated location from PATH and run original helper
+deprecated_path=$(__which ${HELPER_NAME})
+__var_push PATH=${PATH/${deprecated_path%/*}:/}
 ORIG_HELPER=$(__which ${HELPER_NAME})
 __var_pop
 

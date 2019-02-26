@@ -819,42 +819,42 @@ def main(options, out, err):
             formatter.format(op)
         formatter.end()
 
-    # run sanity checks for pkgs -- pkg_pretend, REQUIRED_USE, etc
-    if not options.fetchonly:
-        out.write()
-        out.write(out.bold, " * ", out.reset, "Running sanity checks...")
-        if options.debug:
-            start_time = time()
-        # flush output so bash spawned errors are shown in the correct order of events
-        out.flush()
-        sanity_failures = run_sanity_checks((x.pkg for x in changes), domain, threads=1)
-        if sanity_failures:
-            for pkg, errors in sanity_failures.items():
-                out.write(pkg.cpvstr)
-                out.write('\n'.join(e.msg(verbosity=options.verbosity) for e in errors))
-                out.write()
-            if options.ignore_failures:
-                out.write(
-                    out.fg('red'), out.bold, "!!! ",
-                    out.reset, "Skipping failed sanity checks...")
-            else:
-                out.write(
-                    out.fg('red'), out.bold, "!!! ",
-                    out.reset, "Sanity checks failed, exiting...")
-                return 1
-        else:
-            out.write()
-        if options.debug:
-            out.write(
-                out.bold, " * ", out.reset,
-                "finished sanity checks in %.2f seconds" % (time() - start_time))
-            out.write()
-
     if vdb_time:
         out.write(out.bold, 'Took %.2f' % (vdb_time,), out.reset,
                   ' seconds to preload vdb state')
 
-    if not changes and options.verbosity > 0:
+    if changes:
+        if not options.fetchonly:
+            # run sanity checks for pkgs -- pkg_pretend, REQUIRED_USE, etc
+            out.write()
+            out.write(out.bold, " * ", out.reset, "Running sanity checks...")
+            if options.debug:
+                start_time = time()
+            # flush output so bash spawned errors are shown in the correct order of events
+            out.flush()
+            sanity_failures = run_sanity_checks((x.pkg for x in changes), domain, threads=1)
+            if sanity_failures:
+                for pkg, errors in sanity_failures.items():
+                    out.write(pkg.cpvstr)
+                    out.write('\n'.join(e.msg(verbosity=options.verbosity) for e in errors))
+                    out.write()
+                if options.ignore_failures:
+                    out.write(
+                        out.fg('red'), out.bold, "!!! ",
+                        out.reset, "Skipping failed sanity checks...")
+                else:
+                    out.write(
+                        out.fg('red'), out.bold, "!!! ",
+                        out.reset, "Sanity checks failed, exiting...")
+                    return 1
+            else:
+                out.write()
+            if options.debug:
+                out.write(
+                    out.bold, " * ", out.reset,
+                    "finished sanity checks in %.2f seconds" % (time() - start_time))
+                out.write()
+    elif options.verbosity > 0:
         # show skipped virtuals
         virtual_pkgs = set()
         for x in atoms:

@@ -843,8 +843,15 @@ class EbuildProcessor(object):
                 raise FinishedProcessing(True)
             metadata_keys[line[0]] = line[1]
 
-        self._run_depend_like_phase('gen_metadata', package_inst, eclass_cache,
-                                    {"key": receive_key})
+        # pass down phase and metadata key lists to avoid hardcoding them on the bash side
+        env = {
+            'PKGCORE_EBUILD_PHASES': tuple(package_inst.eapi.phases.values()),
+            'PKGCORE_METADATA_KEYS': tuple(package_inst.eapi.metadata_keys),
+        }
+
+        self._run_depend_like_phase(
+            'gen_metadata', package_inst, eclass_cache, env=env,
+            extra_commands={'key': receive_key})
 
         return metadata_keys
 

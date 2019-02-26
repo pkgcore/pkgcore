@@ -345,7 +345,7 @@ common_mandatory_metadata_keys = (
 
 common_metadata_keys = common_mandatory_metadata_keys + (
     "DEPEND", "RDEPEND", "PDEPEND", "RESTRICT",
-    "DEFINED_PHASES", "PROPERTIES", "EAPI")
+    "DEFINED_PHASES", "INHERITED", "PROPERTIES", "EAPI")
 
 common_tracked_attributes = (
     "cflags", "cbuild", "chost", "ctarget", "cxxflags", "defined_phases",

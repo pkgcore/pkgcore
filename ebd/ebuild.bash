@@ -512,29 +512,27 @@ __dump_metadata_keys() {
 	# be invoked after ebuild code has done it's thing, as such we no longer care,
 	# and directly screw w/ it for speed reasons- about 5% speedup in metadata regen.
 	set -f
-	local key
-	for key in EAPI BDEPEND DEPEND RDEPEND SLOT SRC_URI RESTRICT HOMEPAGE LICENSE \
-			DESCRIPTION KEYWORDS INHERITED IUSE PDEPEND PROVIDE PROPERTIES REQUIRED_USE; do
-		# deref the val, if it's not empty/unset, then spit a key command to EBD
-		# after using echo to normalize whitespace (specifically removal of newlines)
-		if [[ ${!key:-unset} != "unset" ]]; then
-			# note that we explicitly bypass the normal functions, and directly
-			# write to the FD. This is done since it's about 25% faster for our usage;
-			# if we used the functions, we'd have to subshell the 'echo ${!key}', which
-			# because of bash behaviour, means the content would be read byte by byte.
-			echo -n "key ${key}=" >&${PKGCORE_EBD_WRITE_FD}
-			echo ${!key} >&${PKGCORE_EBD_WRITE_FD}
+	local key phases phase
+	for key in "${PKGCORE_METADATA_KEYS[@]}"; do
+		if [[ ${key} == DEFINED_PHASES ]]; then
+			for phase in "${PKGCORE_EBUILD_PHASES[@]}"; do
+				__is_function "${phase}" && phases+=( ${phase} )
+			done
+			__ebd_write_line "key DEFINED_PHASES=${phases[@]:--}"
+		else
+			# deref the val, if it's not empty/unset, then spit a key command to EBD
+			# after using echo to normalize whitespace (specifically removal of newlines)
+			if [[ ${!key:-unset} != "unset" ]]; then
+				# note that we explicitly bypass the normal functions, and directly
+				# write to the FD. This is done since it's about 25% faster for our usage;
+				# if we used the functions, we'd have to subshell the 'echo ${!key}', which
+				# because of bash behaviour, means the content would be read byte by byte.
+				echo -n "key ${key}=" >&${PKGCORE_EBD_WRITE_FD}
+				echo ${!key} >&${PKGCORE_EBD_WRITE_FD}
+			fi
 		fi
 	done
 	set +f
-
-	# defined phases... fun one.
-	local phases
-	for key in pkg_{pretend,config,info,nofetch,{pre,post}{rm,inst},setup} \
-			src_{unpack,prepare,configure,compile,test,install}; do
-		__is_function "${key}" && phases+=${phases:+ }${key}
-	done
-	__ebd_write_line "key DEFINED_PHASES=${phases:--}"
 }
 
 set +f

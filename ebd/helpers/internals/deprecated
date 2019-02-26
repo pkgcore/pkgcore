@@ -8,4 +8,8 @@ __var_push PATH=${PATH/${deprecated_path%/*}:/}
 ORIG_HELPER=$(__which ${HELPER_NAME})
 __var_pop
 
+if [[ ${deprecated_path} == ${ORIG_HELPER} ]]; then
+	die "couldn't find original '${HELPER_NAME}' helper, internal error"
+fi
+
 "${ORIG_HELPER}" "$@"

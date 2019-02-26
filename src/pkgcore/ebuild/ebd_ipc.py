@@ -936,6 +936,7 @@ class Best_Version(_QueryCmd):
 
 
 class Eapply(IpcCommand):
+    """Python wrapper for eapply."""
 
     arg_parser = IpcArgumentParser()
     arg_parser.add_argument('targets', nargs='+', type=existing_path)
@@ -1019,6 +1020,7 @@ class Eapply(IpcCommand):
 
 
 class Eapply_User(IpcCommand):
+    """Python wrapper for eapply_user."""
 
     # stub parser so any arguments are flagged as errors
     arg_parser = IpcArgumentParser()

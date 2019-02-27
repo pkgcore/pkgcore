@@ -9,7 +9,6 @@ import stat
 import sys
 
 from snakeoil.cli import arghparse
-from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.contexts import chdir
 from snakeoil.demandload import demandload
 from snakeoil.iterables import partition
@@ -123,7 +122,7 @@ class IpcCommand(object):
                     ret = (e.code, e.msg)
                 else:
                     raise IpcCommandError(msg=e.msg, code=e.code, name=self.name)
-            except IGNORED_EXCEPTIONS:
+            except KeyboardInterrupt:
                 raise
             except Exception as e:
                 raise IpcInternalError('internal failure') from e

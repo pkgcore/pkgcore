@@ -11,7 +11,7 @@ if [[ $1 == "-r" ]]; then
 fi
 
 check_args 1 -
-dodir "$@"
+check_command install -d ${DIROPTIONS} "${@/#/${ED}/}"
 
 if ${recursive}; then
 	for x in "$@"; do

@@ -592,6 +592,20 @@ class Dodir(_InstallWrapper):
         self.install_dirs(args.targets)
 
 
+class Keepdir(Dodir):
+    """Python wrapper for keepdir."""
+
+    def run(self, args):
+        # create dirs
+        super().run(args)
+
+        # create stub files
+        filename = f'.keep_{self.pkg.category}_{self.pkg.PN}-{self.pkg.slot}'
+        for x in args.targets:
+            path = pjoin(self.op.ED, x.lstrip(os.path.sep), filename)
+            open(path, 'w').close()
+
+
 class Doexe(_InstallWrapper):
     """Python wrapper for doexe."""
 

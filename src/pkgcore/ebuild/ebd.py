@@ -192,6 +192,7 @@ class ebd(object):
             'domo': ebd_ipc.Domo(self),
             'dosym': ebd_ipc.Dosym(self),
             'dohard': ebd_ipc.Dohard(self),
+            'keepdir': ebd_ipc.Keepdir(self),
 
             # bash functions
             'has_version': ebd_ipc.Has_Version(self),

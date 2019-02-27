@@ -1,25 +1,3 @@
-#!/usr/bin/env pkgcore-ebuild-helper
-# Copyright: 2011 Brian Harring <ferringb@gmail.com>
-# License: GPL2/BSD 3 clause
-#
-# adds ".keep" files so that dirs aren't auto-cleaned
+#!/usr/bin/env pkgcore-ipc-helper
 
-recursive=false
-if [[ $1 == "-r" ]]; then
-	recursive=true
-	shift
-fi
-
-check_args 1 -
-check_command install -d ${DIROPTIONS} "${@/#/${ED}/}"
-
-if ${recursive}; then
-	for x in "$@"; do
-		basedir=$(echo "${x}" | cut -d/ -f 2)
-		check_command_or_stop find "${ED}/${basedir}" -type d -printf "%p/.keep_${CATEGORY}_${PN}-${SLOT%/*}\0" | ${XARGS} -0 -n100 touch
-	done
-else
-	for x in "$@"; do
-		check_command_or_stop touch "${ED}/${x}/.keep_${CATEGORY}_${PN}-${SLOT%/*}"
-	done
-fi
+OPTIONS=( "--diroptions=\"${DIROPTIONS}\"" )

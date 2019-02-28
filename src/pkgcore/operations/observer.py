@@ -79,8 +79,8 @@ class formatter_output(null_output):
             'prefixes', (self._out.fg('yellow'), self._out.bold, ' * ', self._out.reset))
         self._out.write(_convert(msg, args, kwds), prefixes=prefixes)
 
-    def write(self, msg, *args, **kwds):
-        self._out.write(_convert(msg, args, kwds), autoline=False)
+    def write(self, msg, *args, autoline=False, **kwds):
+        self._out.write(_convert(msg, args, kwds), autoline=autoline)
 
     def flush(self):
         self._out.flush()

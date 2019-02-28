@@ -9,6 +9,7 @@ import sys
 
 from snakeoil.cli import arghparse
 from snakeoil.contexts import chdir
+from snakeoil.compression import ArComp, ArCompError
 from snakeoil.decorators import coroutine
 from snakeoil.demandload import demandload
 from snakeoil.iterables import partition
@@ -764,7 +765,7 @@ class Dohtml(_InstallWrapper):
         self.opts.allowed_files = set(self.opts.allowed_files)
 
         if self.opts.verbose:
-            self.observer.write(str(self) + '\n')
+            self.observer.write(str(self), autoline=True)
             self.observer.flush()
 
         return args
@@ -1012,3 +1013,89 @@ class Eapply_User(IpcCommand):
             files for _, files in self.pkg.user_patches)
         with open(pjoin(self.op.env['T'], '.user_patches_applied'), 'w') as f:
             f.write('\n'.join(patches))
+
+
+class Unpack(IpcCommand):
+
+    arg_parser = IpcArgumentParser(add_help=False)
+    arg_parser.add_argument('targets', nargs='+')
+
+    _file_mode = (
+        stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH \
+        | stat.S_IWUSR \
+        & ~stat.S_IWGRP & ~stat.S_IWOTH
+    )
+    _dir_mode = _file_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
+
+    def parse_args(self, *args, **kwargs):
+        args = super().parse_args(*args, **kwargs)
+        self.opts.distdir = self.op.env['DISTDIR']
+        args.targets = self._filter_targets(args.targets)
+        return args
+
+    def _filter_targets(self, targets):
+        for archive in targets:
+            if os.path.sep not in archive:
+                # regular filename get prefixed with ${DISTDIR}
+                srcdir = self.opts.distdir
+            elif archive.startswith('./'):
+                # relative paths get passed through
+                srcdir = ''
+            else:
+                srcdir = self.opts.distdir
+
+                # >= EAPI 6 allows absolute paths
+                if self.eapi.options.unpack_absolute_paths:
+                    srcdir = ''
+                    if archive.startswith(self.opts.distdir):
+                        self.warn(
+                            f'argument contains redundant ${{DISTDIR}}: {archive!r}')
+                elif archive.startswith(self.opts.distdir):
+                    raise IpcCommandError(
+                        f'arguments must not begin with ${{DISTDIR}}: {archive!r}')
+                elif archive.startswith(os.path.sep):
+                    raise IpcCommandError(
+                        f'arguments must not be absolute paths: {archive!r}')
+                else:
+                    raise IpcCommandError(
+                        'relative paths must be prefixed with '
+                        f"'./' in EAPI {self.eapi}")
+
+            path = pjoin(srcdir, archive)
+            if not os.path.exists:
+                raise IpcCommandError(f'nonexistent file: {archive!r}')
+            elif os.stat(path).st_size == 0:
+                raise IpcCommandError(f'empty file: {archive!r}')
+
+            match = self.eapi.archive_suffixes_re.search(archive)
+            if not match:
+                self.warn(f'skipping unrecognized file format: {archive!r}')
+                continue
+            ext = match.group(1)
+
+            yield archive, ext, path
+
+    def run(self, args):
+        spawn_kwargs = {}
+        if self.op.userpriv:
+            spawn_kwargs['uid'] = os_data.portage_uid
+            spawn_kwargs['gid'] = os_data.portage_gid
+
+        for filename, ext, source in args.targets:
+            self.observer.write(f'>>> Unpacking {filename} to {self.cwd}', autoline=True)
+            self.observer.flush()
+            dest = pjoin(self.cwd, filename[:-len(ext)])
+            try:
+                target = ArComp(source, type=ext)
+                target.unpack(dest=dest, **spawn_kwargs)
+            except ArCompError as e:
+                raise IpcCommandError(str(e), code=e.code)
+
+        for dirpath, dirnames, filenames in os.walk(self.cwd):
+            dirs = ((self._dir_mode, x) for x in dirnames)
+            files = ((self._file_mode, x) for x in filenames)
+            for mode, f in itertools.chain.from_iterable((dirs, files)):
+                path = pjoin(dirpath, f)
+                current_mode = os.lstat(path).st_mode
+                if not stat.S_ISLNK(current_mode):
+                    os.chmod(path, current_mode | mode)

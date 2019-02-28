@@ -375,7 +375,6 @@ common_archive_suffixes = (
 common_env_optionals = (
     "bash_compat", "ebuild_phase_func", "global_failglob",
     "new_reads_stdin", "nonfatal", "nonfatal_die",
-    "unpack_absolute_paths", "unpack_case_insensitive",
     "has_desttree",
 )
 

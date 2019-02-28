@@ -197,6 +197,7 @@ class ebd(object):
             # bash functions
             'has_version': ebd_ipc.Has_Version(self),
             'best_version': ebd_ipc.Best_Version(self),
+            'unpack': ebd_ipc.Unpack(self),
             'eapply': ebd_ipc.Eapply(self),
             'eapply_user': ebd_ipc.Eapply_User(self),
             'docompress': ebd_ipc.Docompress(self),

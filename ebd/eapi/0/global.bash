@@ -13,11 +13,7 @@ __phase_pkg_nofetch() {
 	__shopt_pop
 }
 
-__phase_src_unpack() {
-	if [[ -n ${A} ]]; then
-		unpack ${A}
-	fi
-}
+__phase_src_unpack() { [[ -n ${A} ]] && unpack ${A}; }
 
 __phase_src_compile() {
 	if [[ -x ./configure ]]; then

@@ -75,14 +75,7 @@ __phase_pre_phase() {
 	fi
 }
 
-__phase_pre_src_unpack() {
-	export PORTAGE_GZIP_COMMAND=${PORTAGE_GZIP_COMMAND:-gzip}
-	export PORTAGE_BZIP2_COMMAND=${PORTAGE_BZIP2_COMMAND:-bzip2}
-	export PORTAGE_XZ_COMMAND=${PORTAGE_XZ_COMMAND:-xz}
-	export S
-	cd "${WORKDIR}"
-}
-
+__phase_pre_src_unpack()  { cd "${WORKDIR}"; }
 __phase_pre_src_prepare() { __phase_pre_phase; }
 __phase_pre_src_test()    { __phase_pre_phase; }
 

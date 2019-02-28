@@ -139,7 +139,7 @@ __phase_pre_src_install() {
 # the current package's EAPI to the oldest inherited EAPI. To run in overriding
 # order (the reverse direction), pass '--override' as the first argument.
 __run_eapi_funcs() {
-	local eapis=( ${PKGCORE_EAPI_INHERITS} )
+	local -a eapis=( "${PKGCORE_EAPI_INHERITS[@]}" )
 	if [[ $1 == --override ]]; then
 		eapis=( $(__reverse_array eapis) )
 		shift

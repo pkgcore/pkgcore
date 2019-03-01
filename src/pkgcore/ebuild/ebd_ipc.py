@@ -414,6 +414,7 @@ class _InstallWrapper(IpcCommand):
         """
         while True:
             files = yield
+            # TODO: skip/warn installing empty files
             for source, dest in self._prefix_targets(files):
                 try:
                     sstat = os.stat(source)
@@ -547,7 +548,6 @@ class Dodoc(_InstallWrapper):
             else:
                 missing_option = ', missing -r option?' if self.allow_recursive else ''
                 raise IpcCommandError(f'{dirs[0]!r} is a directory{missing_option}')
-        # TODO: skip/warn installing empty files
         self.install.send((f, os.path.basename(f)) for f in files)
 
 
@@ -678,10 +678,10 @@ class Doman(_InstallWrapper):
         self.language_detect = self.eapi.options.doman_language_detect
         self.language_override = self.eapi.options.doman_language_override
 
-    def _filter_targets(self, files):
+    def _install_targets(self, targets):
         dirs = set()
-        for f in files:
-            basename = os.path.basename(f)
+        for x in targets:
+            basename = os.path.basename(x)
             suffix = os.path.splitext(basename)[1]
 
             if self.eapi.archive_suffixes_re.match(suffix):
@@ -701,18 +701,11 @@ class Doman(_InstallWrapper):
 
             if self.valid_mandir_re.match(mandir):
                 if mandir not in dirs:
-                    yield True, mandir
+                    self.install_dirs.send([mandir])
                     dirs.add(mandir)
-                yield False, (f, pjoin(mandir, name))
+                self.install.send([(x, pjoin(mandir, name))])
             else:
-                raise IpcCommandError(f'invalid man page: {f}')
-
-    def _install_targets(self, targets):
-        # TODO: skip/warn installing empty files
-        targets = self._filter_targets(targets)
-        files, dirs = partition(targets, predicate=itemgetter(0))
-        self.install_dirs.send(x for _, x in dirs)
-        self.install.send(x for _, x in files)
+                raise IpcCommandError(f'invalid man page: {x}')
 
 
 class Domo(_InstallWrapper):
@@ -720,21 +713,14 @@ class Domo(_InstallWrapper):
 
     insoptions_default = '-m0644'
 
-    def _filter_targets(self, files):
-        dirs = set()
-        for f in files:
-            d = pjoin(os.path.splitext(os.path.basename(f))[0], 'LC_MESSAGES')
-            if d not in dirs:
-                yield True, d
-                dirs.add(d)
-            yield False, (f, pjoin(d, f'{self.pkg.PN}.mo'))
-
     def _install_targets(self, targets):
-        # TODO: skip/warn installing empty files
-        targets = self._filter_targets(targets)
-        files, dirs = partition(targets, predicate=itemgetter(0))
-        self.install_dirs.send(x for _, x in dirs)
-        self.install.send(x for _, x in files)
+        dirs = set()
+        for x in targets:
+            d = pjoin(os.path.splitext(os.path.basename(x))[0], 'LC_MESSAGES')
+            if d not in dirs:
+                self.install_dirs.send([d])
+                dirs.add(d)
+            self.install.send([(x, pjoin(d, f'{self.pkg.PN}.mo'))])
 
 
 class Dohtml(_InstallWrapper):

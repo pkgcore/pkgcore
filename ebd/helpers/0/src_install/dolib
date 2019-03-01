@@ -7,6 +7,6 @@ elif [[ ${HELPER_NAME} == "dolib.a" ]]; then
 fi
 
 OPTIONS=(
-	"--dest=\"${DESTTREE}/$(__get_libdir lib)\""
+	"--dest=\"${PKGCORE_DESTTREE}/$(__get_libdir lib)\""
 	"--insoptions=\"${LIBOPTIONS}\""
 )

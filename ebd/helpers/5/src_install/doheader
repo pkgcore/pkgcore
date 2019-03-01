@@ -1,4 +1,4 @@
 #!/usr/bin/env pkgcore-ipc-helper
 
-INSDESTTREE=/usr/include
+PKGCORE_INSDESTTREE=/usr/include
 IPC_CMD=doins

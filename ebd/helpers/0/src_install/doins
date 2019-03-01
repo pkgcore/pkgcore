@@ -1,11 +1,11 @@
 #!/usr/bin/env pkgcore-ipc-helper
 
 OPTIONS=(
-	"--dest=\"${INSDESTTREE}\""
+	"--dest=\"${PKGCORE_INSDESTTREE}\""
 	"--insoptions=\"${INSOPTIONS}\""
 	"--diroptions=\"${DIROPTIONS}\""
 )
 
-if [[ -n ${INSDESTTREE} && -z ${INSDESTTREE%${ED}*} ]]; then
+if [[ -n ${PKGCORE_INSDESTTREE} && -z ${PKGCORE_INSDESTTREE%${ED}*} ]]; then
 	__helper_exit 2 "do not give \${D} or \${ED} as part of the path arguments to doins"
 fi

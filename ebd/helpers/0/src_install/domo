@@ -1,3 +1,7 @@
 #!/usr/bin/env pkgcore-ipc-helper
 
-OPTIONS=( "--dest=\"${DESTTREE}/share/locale\"" )
+if ${PKGCORE_HAS_DESTREE}; then
+	OPTIONS=( "--dest=\"${PKGCORE_DESTTREE}/share/locale\"" )
+else
+	OPTIONS=( "--dest=/usr/share/locale" )
+fi

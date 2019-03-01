@@ -53,6 +53,9 @@ eapi_optionals = mappings.ImmutableDict({
     # Controls whether PORTDIR and ECLASSDIR are exported to ebuilds; see PMS.
     "has_portdir": True,
 
+    # Controls whether DESTTREE and INSDESTTREE are exported during src_install; see PMS.
+    "has_desttree": True,
+
     # Controls whether ROOT, EROOT, D, and ED end with a trailing slash; see PMS.
     "trailing_slash": os.sep,
 
@@ -376,6 +379,7 @@ common_env_optionals = (
     "bash_compat", "ebuild_phase_func", "global_failglob",
     "new_reads_stdin", "nonfatal", "nonfatal_die",
     "unpack_absolute_paths", "unpack_case_insensitive",
+    "has_desttree",
 )
 
 eapi0 = EAPI.register(
@@ -517,6 +521,7 @@ eapi7 = EAPI.register(
     optionals=_combine_dicts(eapi6.options, dict(
         has_profile_data_dirs=True,
         has_portdir=False,
+        has_desttree=False,
         profile_pkg_provided=False,
         query_host_root=False,
         query_deps=True,

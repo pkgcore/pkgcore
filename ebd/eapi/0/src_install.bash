@@ -3,19 +3,25 @@
 into() {
 	${PKGCORE_PREFIX_SUPPORT} || local ED=${D}
 	if [[ $1 == "/" ]]; then
-		export DESTTREE=""
+		export PKGCORE_DESTTREE=""
 	else
-		export DESTTREE=$1
+		export PKGCORE_DESTTREE=$1
 	fi
+
+	# only EAPI <= 6 supports DESTTREE
+	${PKGCORE_HAS_DESTTREE} && export DESTTREE=${PKGCORE_DESTTREE}
 }
 
 insinto() {
 	${PKGCORE_PREFIX_SUPPORT} || local ED=${D}
 	if [[ $1 == "/" ]]; then
-		export INSDESTTREE=""
+		export PKGCORE_INSDESTTREE=""
 	else
-		export INSDESTTREE=$1
+		export PKGCORE_INSDESTTREE=$1
 	fi
+
+	# only EAPI <= 6 supports DESTTREE
+	${PKGCORE_HAS_DESTTREE} && export INSDESTTREE=${PKGCORE_INSDESTTREE}
 }
 
 exeinto() {

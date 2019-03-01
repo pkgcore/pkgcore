@@ -1,4 +1,4 @@
 #!/usr/bin/env pkgcore-ipc-helper
 
-INSDESTTREE=/etc/conf.d
+PKGCORE_INSDESTTREE=/etc/conf.d
 IPC_CMD=doins

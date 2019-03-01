@@ -318,22 +318,7 @@ class _InstallWrapper(IpcCommand):
         Args:
             targets: files/symlinks/dirs/etc to install
         """
-        files = ((f, os.path.basename(f)) for f in targets)
-        self._install_files(files)
-
-    def _install_files(self, files):
-        """Install files into a given directory.
-
-        Args:
-            files: iterable of (path, target dir) tuples of files to install
-        """
-        if self.install == self._install:
-            self.install.send(files)
-        else:
-            # `install` forcibly resolves symlinks so split them out when using it
-            files, symlinks = partition(files, predicate=lambda x: os.path.islink(x[0]))
-            self.install.send(files)
-            self.install_symlinks.send(symlinks)
+        self.install.send((f, os.path.basename(f)) for f in targets)
 
     def _install_from_dirs(self, dirs):
         """Install all targets under given directories.
@@ -465,6 +450,12 @@ class _InstallWrapper(IpcCommand):
         """
         while True:
             files = yield
+
+            # `install` forcibly resolves symlinks so split them out
+            files, symlinks = partition(files, predicate=lambda x: os.path.islink(x[0]))
+            self.install_symlinks.send(symlinks)
+
+            # group and install sets of files by destination to decrease `install` calls
             files = sorted(self._prefix_targets(files), key=itemgetter(1))
             for dest, files_group in itertools.groupby(files, itemgetter(1)):
                 sources = list(path for path, _ in files_group)
@@ -531,8 +522,7 @@ class Doins(_InstallWrapper):
         files, dirs = partition(targets, predicate=os.path.isdir)
         if self.opts.recursive:
             self._install_from_dirs(dirs)
-        files = ((f, os.path.basename(f)) for f in files)
-        self._install_files(files)
+        self.install.send((f, os.path.basename(f)) for f in files)
 
 
 class Dodoc(_InstallWrapper):
@@ -558,8 +548,7 @@ class Dodoc(_InstallWrapper):
                 missing_option = ', missing -r option?' if self.allow_recursive else ''
                 raise IpcCommandError(f'{dirs[0]!r} is a directory{missing_option}')
         # TODO: skip/warn installing empty files
-        files = ((f, os.path.basename(f)) for f in files)
-        self._install_files(files)
+        self.install.send((f, os.path.basename(f)) for f in files)
 
 
 class Doinfo(_InstallWrapper):
@@ -723,7 +712,7 @@ class Doman(_InstallWrapper):
         targets = self._filter_targets(targets)
         files, dirs = partition(targets, predicate=itemgetter(0))
         self.install_dirs.send(x for _, x in dirs)
-        self._install_files(x for _, x in files)
+        self.install.send(x for _, x in files)
 
 
 class Domo(_InstallWrapper):
@@ -745,7 +734,7 @@ class Domo(_InstallWrapper):
         targets = self._filter_targets(targets)
         files, dirs = partition(targets, predicate=itemgetter(0))
         self.install_dirs.send(x for _, x in dirs)
-        self._install_files(x for _, x in files)
+        self.install.send(x for _, x in files)
 
 
 class Dohtml(_InstallWrapper):
@@ -798,6 +787,13 @@ class Dohtml(_InstallWrapper):
             msg.append(f"  Document prefix: {self.opts.doc_prefix!r}")
         return '\n'.join(msg)
 
+    def _allowed_file(self, item):
+        """Determine if a file is allowed to be installed."""
+        path, dest = item
+        basename = os.path.basename(path)
+        ext = os.path.splitext(basename)[1][1:]
+        return (ext in self.opts.allowed_file_exts or basename in self.opts.allowed_files)
+
     def _install_targets(self, targets):
         files, dirs = partition(targets, predicate=os.path.isdir)
         # TODO: add peekable class for iterables to avoid list conversion
@@ -808,18 +804,7 @@ class Dohtml(_InstallWrapper):
                 self._install_from_dirs(dirs)
             else:
                 raise IpcCommandError(f'{dirs[0]!r} is a directory, missing -r option?')
-        files = ((f, os.path.basename(f)) for f in files)
-        self._install_files(files)
-
-    def _allowed_file(self, item):
-        """Determine if a file is allowed to be installed."""
-        path, dest = item
-        basename = os.path.basename(path)
-        ext = os.path.splitext(basename)[1][1:]
-        return (ext in self.opts.allowed_file_exts or basename in self.opts.allowed_files)
-
-    def _install_files(self, files):
-        self.install.send(f for f in files if self._allowed_file(f))
+        self.install.send((f, os.path.basename(f)) for f in files if self._allowed_file(f))
 
 
 class _AlterFiles(IpcCommand):

@@ -241,9 +241,6 @@ class _InstallWrapper(IpcCommand):
     arg_parser = IpcArgumentParser()
     arg_parser.add_argument('targets', nargs='+', type=existing_path)
 
-    # boolean for whether symlinks are allowed to be installed
-    allow_symlinks = False
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.parser.set_defaults(
@@ -332,9 +329,7 @@ class _InstallWrapper(IpcCommand):
         """
         files, symlinks = partition(files, predicate=lambda x: os.path.islink(x[0]))
         self.install(files)
-        # TODO: warn on symlinks when not supported?
-        if self.allow_symlinks:
-            self.install_symlinks(symlinks)
+        self.install_symlinks(symlinks)
 
     def _install_from_dirs(self, dirs):
         """Install all targets under given directories.
@@ -534,10 +529,6 @@ class Doins(_InstallWrapper):
     arg_parser = _InstallWrapper.arg_parser.copy()
     arg_parser.add_argument('-r', dest='recursive', action='store_true')
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.allow_symlinks = self.eapi.options.doins_allow_symlinks
-
     def _install_targets(self, targets):
         files, dirs = partition(targets, predicate=os.path.isdir)
         if self.opts.recursive:
@@ -626,8 +617,6 @@ class Dosbin(Dobin):
 class Dolib(_InstallWrapper):
     """Python wrapper for dolib."""
 
-    allow_symlinks = True
-
 
 class Dolib_so(Dolib):
     """Python wrapper for dolib.so."""
@@ -696,8 +685,6 @@ class Doman(_InstallWrapper):
 
     detect_lang_re = re.compile(r'^(\w+)\.([a-z]{2}([A-Z]{2})?)\.(\w+)$')
     valid_mandir_re = re.compile(r'man[0-9n](f|p|pm)?$')
-
-    allow_symlinks = True
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

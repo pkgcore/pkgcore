@@ -29,9 +29,6 @@ eapi_optionals = mappings.ImmutableDict({
     # Controls whether -r is allowed for dodoc.
     "dodoc_allow_recursive": False,
 
-    # Controls whether doins recurses symlinks.
-    "doins_allow_symlinks": False,
-
     # Controls the language awareness of doman; see PMS.
     "doman_language_detect": False,
 
@@ -455,7 +452,6 @@ eapi4 = EAPI.register(
     archive_suffixes=eapi3.archive_suffixes,
     optionals=_combine_dicts(eapi3.options, dict(
         dodoc_allow_recursive=True,
-        doins_allow_symlinks=True,
         doman_language_override=True,
         nonfatal=False,
         exports_replacing=True,

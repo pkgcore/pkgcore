@@ -248,12 +248,12 @@ class _InstallWrapper(IpcCommand):
             diroptions=self.diroptions_default)
 
         # initialize file/dir creation generators
-        self.install = self._install()
-        self.install.send(None)
-        self.install_dirs = self._install_dirs()
-        self.install_dirs.send(None)
-        self.install_symlinks = self._install_symlinks()
-        self.install_symlinks.send(None)
+        self.install = self._install().send
+        self.install(None)
+        self.install_dirs = self._install_dirs().send
+        self.install_dirs(None)
+        self.install_symlinks = self._install_symlinks().send
+        self.install_symlinks(None)
 
     def parse_args(self, *args, **kwargs):
         args = super().parse_args(*args, **kwargs)
@@ -266,12 +266,12 @@ class _InstallWrapper(IpcCommand):
         self.diroptions = arghparse.Namespace()
         if self.opts.insoptions:
             if not self._parse_install_options(self.opts.insoptions, self.insoptions):
-                self.install = self._install_cmd()
-                self.install.send(None)
+                self.install = self._install_cmd().send
+                self.install(None)
         if self.opts.diroptions:
             if not self._parse_install_options(self.opts.diroptions, self.diroptions):
-                self.install_dirs = self._install_dirs_cmd()
-                self.install_dirs.send(None)
+                self.install_dirs = self._install_dirs_cmd().send
+                self.install_dirs(None)
 
     def _parse_install_options(self, options, namespace):
         """Internal install command option parser.
@@ -318,7 +318,7 @@ class _InstallWrapper(IpcCommand):
         Args:
             targets: files/symlinks/dirs/etc to install
         """
-        self.install.send((f, os.path.basename(f)) for f in targets)
+        self.install((f, os.path.basename(f)) for f in targets)
 
     def _install_from_dirs(self, dirs):
         """Install all targets under given directories.
@@ -330,16 +330,16 @@ class _InstallWrapper(IpcCommand):
             base_dir = os.path.basename(d)
             for dirpath, dirnames, filenames in os.walk(d):
                 dest_dir = os.path.normpath(pjoin(base_dir, os.path.relpath(dirpath, d)))
-                self.install_dirs.send([dest_dir])
+                self.install_dirs([dest_dir])
                 for dirname in dirnames:
                     source = pjoin(dirpath, dirname)
                     if os.path.islink(source):
                         dest = pjoin(dest_dir, dirname)
-                        self.install_symlinks.send([(source, dest)])
+                        self.install_symlinks([(source, dest)])
                 for f in filenames:
                     source = pjoin(dirpath, f)
                     dest = pjoin(dest_dir, f)
-                    self.install.send([(source, dest)])
+                    self.install([(source, dest)])
 
     @staticmethod
     def _set_attributes(opts, path):
@@ -407,8 +407,10 @@ class _InstallWrapper(IpcCommand):
         raise IpcCommandError(f'{source!r} and {dest!r} are identical')
 
     def _install(self):
-        """Generator accepting iterable of (source, dest) tuples of file targets to install.
+        """Install files.
 
+        Args:
+            files: iterable of (source, dest) tuples of files to install
         Raises:
             IpcCommandError on failure
         """
@@ -442,10 +444,10 @@ class _InstallWrapper(IpcCommand):
                         f'failed copying file: {source!r} to {dest!r}: {e.strerror}')
 
     def _install_cmd(self):
-        """Generator accepting iterable of (source, dest) tuples of file targets to install.
+        """Install files using `install` command.
 
-        Via the `install` command.
-
+        Args:
+            files: iterable of (source, dest) tuples of files to install
         Raises:
             IpcCommandError on failure
         """
@@ -454,7 +456,7 @@ class _InstallWrapper(IpcCommand):
 
             # `install` forcibly resolves symlinks so split them out
             files, symlinks = partition(files, predicate=lambda x: os.path.islink(x[0]))
-            self.install_symlinks.send(symlinks)
+            self.install_symlinks(symlinks)
 
             # group and install sets of files by destination to decrease `install` calls
             files = sorted(self._prefix_targets(files), key=itemgetter(1))
@@ -466,8 +468,10 @@ class _InstallWrapper(IpcCommand):
                     raise IpcCommandError('\n'.join(output), code=ret)
 
     def _install_dirs(self):
-        """Generator accepting iterable of directory paths to create.
+        """Create directories.
 
+        Args:
+            dirs: iterable of paths where directories should be created
         Raises:
             IpcCommandError on failure
         """
@@ -482,10 +486,10 @@ class _InstallWrapper(IpcCommand):
                 raise IpcCommandError(f'failed creating dir: {d!r}: {e.strerror}')
 
     def _install_dirs_cmd(self):
-        """Generator accepting iterable of directory paths to create.
+        """Create directories using `install` command.
 
-        Via the `install -d` command.
-
+        Args:
+            dirs: iterable of paths where directories should be created
         Raises:
             IpcCommandError on failure
         """
@@ -498,8 +502,10 @@ class _InstallWrapper(IpcCommand):
                 raise IpcCommandError('\n'.join(output), code=ret)
 
     def _install_symlinks(self):
-        """Generator accepting iterable of (source, dest) tuples of symlinks to install.
+        """Install iterable of symlinks.
 
+        Args:
+            symlinks: iterable of (path, target dir) tuples of symlinks to install
         Raises:
             IpcCommandError on failure
         """
@@ -523,7 +529,7 @@ class Doins(_InstallWrapper):
         files, dirs = partition(targets, predicate=os.path.isdir)
         if self.opts.recursive:
             self._install_from_dirs(dirs)
-        self.install.send((f, os.path.basename(f)) for f in files)
+        self.install((f, os.path.basename(f)) for f in files)
 
 
 class Dodoc(_InstallWrapper):
@@ -548,7 +554,7 @@ class Dodoc(_InstallWrapper):
             else:
                 missing_option = ', missing -r option?' if self.allow_recursive else ''
                 raise IpcCommandError(f'{dirs[0]!r} is a directory{missing_option}')
-        self.install.send((f, os.path.basename(f)) for f in files)
+        self.install((f, os.path.basename(f)) for f in files)
 
 
 class Doinfo(_InstallWrapper):
@@ -566,7 +572,7 @@ class Dodir(_InstallWrapper):
     arg_parser.add_argument('targets', nargs='+')
 
     def run(self, args):
-        self.install_dirs.send(args.targets)
+        self.install_dirs(args.targets)
 
 
 class Keepdir(Dodir):
@@ -626,7 +632,7 @@ class _Symlink(_InstallWrapper):
     def run(self, args):
         dest_dir = args.target.rsplit(os.path.sep, 1)[0]
         if dest_dir != args.target:
-            self.install_dirs.send([dest_dir])
+            self.install_dirs([dest_dir])
 
         target = pjoin(self.op.ED, args.target.lstrip(os.path.sep))
         with chdir(self.op.ED):
@@ -701,9 +707,9 @@ class Doman(_InstallWrapper):
 
             if self.valid_mandir_re.match(mandir):
                 if mandir not in dirs:
-                    self.install_dirs.send([mandir])
+                    self.install_dirs([mandir])
                     dirs.add(mandir)
-                self.install.send([(x, pjoin(mandir, name))])
+                self.install([(x, pjoin(mandir, name))])
             else:
                 raise IpcCommandError(f'invalid man page: {x}')
 
@@ -718,9 +724,9 @@ class Domo(_InstallWrapper):
         for x in targets:
             d = pjoin(os.path.splitext(os.path.basename(x))[0], 'LC_MESSAGES')
             if d not in dirs:
-                self.install_dirs.send([d])
+                self.install_dirs([d])
                 dirs.add(d)
-            self.install.send([(x, pjoin(d, f'{self.pkg.PN}.mo'))])
+            self.install([(x, pjoin(d, f'{self.pkg.PN}.mo'))])
 
 
 class Dohtml(_InstallWrapper):
@@ -790,7 +796,7 @@ class Dohtml(_InstallWrapper):
                 self._install_from_dirs(dirs)
             else:
                 raise IpcCommandError(f'{dirs[0]!r} is a directory, missing -r option?')
-        self.install.send((f, os.path.basename(f)) for f in files if self._allowed_file(f))
+        self.install((f, os.path.basename(f)) for f in files if self._allowed_file(f))
 
 
 class _AlterFiles(IpcCommand):

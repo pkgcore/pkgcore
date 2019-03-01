@@ -344,19 +344,18 @@ class _InstallWrapper(IpcCommand):
         """
         def scan_dirs(paths):
             for d in paths:
-                yield True, d
+                base_dir = os.path.basename(d)
                 for dirpath, dirnames, filenames in os.walk(d):
+                    dest_dir = os.path.normpath(pjoin(base_dir, os.path.relpath(dirpath, d)))
+                    yield True, dest_dir
                     for dirname in dirnames:
-                        source_dir = pjoin(dirpath, dirname)
-                        relpath = os.path.relpath(source_dir, self.cwd)
-                        if os.path.islink(source_dir):
-                            dest = pjoin(os.path.basename(d), os.path.basename(relpath))
-                            yield False, (relpath, dest)
-                        else:
-                            yield True, relpath
+                        source = pjoin(dirpath, dirname)
+                        if os.path.islink(source):
+                            dest = pjoin(dest_dir, dirname)
+                            yield False, (source, dest)
                     for f in filenames:
-                        dest = pjoin(dirpath, f)
-                        source = os.path.relpath(dest, self.cwd)
+                        source = pjoin(dirpath, f)
+                        dest = pjoin(dest_dir, f)
                         yield False, (source, dest)
 
         # determine all files and dirs under target directories and install them

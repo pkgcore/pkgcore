@@ -327,9 +327,13 @@ class _InstallWrapper(IpcCommand):
         Args:
             files: iterable of (path, target dir) tuples of files to install
         """
-        files, symlinks = partition(files, predicate=lambda x: os.path.islink(x[0]))
-        self.install(files)
-        self.install_symlinks(symlinks)
+        if self.install == self._install:
+            self.install(files)
+        else:
+            # `install` forcibly resolves symlinks so split them out when using it
+            files, symlinks = partition(files, predicate=lambda x: os.path.islink(x[0]))
+            self.install(files)
+            self.install_symlinks(symlinks)
 
     def _install_from_dirs(self, dirs):
         """Install all targets under given directories.
@@ -449,7 +453,7 @@ class _InstallWrapper(IpcCommand):
                 raise IpcCommandError(f'failed removing file: {dest!r}: {e.strerror}')
 
             try:
-                shutil.copyfile(source, dest)
+                shutil.copyfile(source, dest, follow_symlinks=False)
                 if self.insoptions:
                     self._set_attributes(self.insoptions, dest)
                     if self.insoptions.preserve_timestamps:

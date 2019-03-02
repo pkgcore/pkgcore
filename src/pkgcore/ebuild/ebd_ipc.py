@@ -335,10 +335,11 @@ class _InstallWrapper(IpcCommand):
                         if os.path.islink(source):
                             dest = pjoin(dest_dir, dirname)
                             self.install_symlinks([(source, dest)])
-                    for f in filenames:
-                        source = pjoin(dirpath, f)
-                        dest = pjoin(dest_dir, f)
-                        self.install([(source, dest)])
+                    if filenames:
+                        self.install(
+                            (pjoin(dirpath, f), pjoin(dest_dir, f))
+                            for f in filenames
+                        )
 
     @staticmethod
     def _set_attributes(opts, path):

@@ -2,7 +2,7 @@
 
 ## Build commands
 
-econf() {
+__econf() {
 	local ret
 	ECONF_SOURCE=${ECONF_SOURCE:-.}
 	if [[ ! -x ${ECONF_SOURCE}/configure ]]; then

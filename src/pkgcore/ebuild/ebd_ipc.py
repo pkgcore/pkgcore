@@ -9,6 +9,7 @@ import sys
 
 from snakeoil.cli import arghparse
 from snakeoil.contexts import chdir
+from snakeoil.decorators import coroutine
 from snakeoil.demandload import demandload
 from snakeoil.iterables import partition
 from snakeoil.osutils import pjoin
@@ -248,11 +249,8 @@ class _InstallWrapper(IpcCommand):
 
         # initialize file/dir creation coroutines
         self.install = self._install().send
-        self.install(None)
         self.install_dirs = self._install_dirs().send
-        self.install_dirs(None)
         self.install_symlinks = self._install_symlinks().send
-        self.install_symlinks(None)
 
     def parse_args(self, *args, **kwargs):
         args = super().parse_args(*args, **kwargs)
@@ -266,11 +264,9 @@ class _InstallWrapper(IpcCommand):
         if self.opts.insoptions:
             if not self._parse_install_options(self.opts.insoptions, self.insoptions):
                 self.install = self._install_cmd().send
-                self.install(None)
         if self.opts.diroptions:
             if not self._parse_install_options(self.opts.diroptions, self.diroptions):
                 self.install_dirs = self._install_dirs_cmd().send
-                self.install_dirs(None)
 
     def _parse_install_options(self, options, namespace):
         """Internal install command option parser.
@@ -405,6 +401,7 @@ class _InstallWrapper(IpcCommand):
 
         raise IpcCommandError(f'{source!r} and {dest!r} are identical')
 
+    @coroutine
     def _install(self):
         """Install files.
 
@@ -414,7 +411,7 @@ class _InstallWrapper(IpcCommand):
             IpcCommandError on failure
         """
         while True:
-            files = yield
+            files = (yield)
             # TODO: skip/warn installing empty files
             for source, dest in self._prefix_targets(files):
                 try:
@@ -442,6 +439,7 @@ class _InstallWrapper(IpcCommand):
                     raise IpcCommandError(
                         f'failed copying file: {source!r} to {dest!r}: {e.strerror}')
 
+    @coroutine
     def _install_cmd(self):
         """Install files using `install` command.
 
@@ -451,7 +449,7 @@ class _InstallWrapper(IpcCommand):
             IpcCommandError on failure
         """
         while True:
-            files = yield
+            files = (yield)
 
             # `install` forcibly resolves symlinks so split them out
             files, symlinks = partition(files, predicate=lambda x: os.path.islink(x[0]))
@@ -466,6 +464,7 @@ class _InstallWrapper(IpcCommand):
                 if not ret:
                     raise IpcCommandError('\n'.join(output), code=ret)
 
+    @coroutine
     def _install_dirs(self):
         """Create directories.
 
@@ -475,7 +474,7 @@ class _InstallWrapper(IpcCommand):
             IpcCommandError on failure
         """
         while True:
-            dirs = yield
+            dirs = (yield)
             try:
                 for d in self._prefix_targets(dirs, files=False):
                     os.makedirs(d, exist_ok=True)
@@ -484,6 +483,7 @@ class _InstallWrapper(IpcCommand):
             except OSError as e:
                 raise IpcCommandError(f'failed creating dir: {d!r}: {e.strerror}')
 
+    @coroutine
     def _install_dirs_cmd(self):
         """Create directories using `install` command.
 
@@ -493,13 +493,14 @@ class _InstallWrapper(IpcCommand):
             IpcCommandError on failure
         """
         while True:
-            dirs = yield
+            dirs = (yield)
             dirs = self._prefix_targets(dirs, files=False)
             command = ['install', '-d'] + self.opts.diroptions + list(dirs)
             ret, output = spawn.spawn_get_output(command, collect_fds=(2,))
             if not ret:
                 raise IpcCommandError('\n'.join(output), code=ret)
 
+    @coroutine
     def _install_symlinks(self):
         """Install iterable of symlinks.
 
@@ -509,7 +510,7 @@ class _InstallWrapper(IpcCommand):
             IpcCommandError on failure
         """
         while True:
-            symlinks = yield
+            symlinks = (yield)
             try:
                 for symlink, dest in self._prefix_targets(symlinks):
                     os.symlink(os.readlink(symlink), dest)

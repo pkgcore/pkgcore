@@ -251,6 +251,7 @@ class _InstallWrapper(IpcCommand):
         self.install = self._install().send
         self.install_dirs = self._install_dirs().send
         self.install_symlinks = self._install_symlinks().send
+        self.install_from_dirs = self._install_from_dirs().send
 
     def parse_args(self, *args, **kwargs):
         args = super().parse_args(*args, **kwargs)
@@ -315,26 +316,29 @@ class _InstallWrapper(IpcCommand):
         """
         self.install((f, os.path.basename(f)) for f in targets)
 
-    def _install_from_dirs(self, dirs):
+    @coroutine
+    def _install_from_dirs(self):
         """Install all targets under given directories.
 
         Args:
-            dirs: iterable of directories to install from
+            iterable of directories to install from
         """
-        for d in dirs:
-            base_dir = os.path.basename(d)
-            for dirpath, dirnames, filenames in os.walk(d):
-                dest_dir = os.path.normpath(pjoin(base_dir, os.path.relpath(dirpath, d)))
-                self.install_dirs([dest_dir])
-                for dirname in dirnames:
-                    source = pjoin(dirpath, dirname)
-                    if os.path.islink(source):
-                        dest = pjoin(dest_dir, dirname)
-                        self.install_symlinks([(source, dest)])
-                for f in filenames:
-                    source = pjoin(dirpath, f)
-                    dest = pjoin(dest_dir, f)
-                    self.install([(source, dest)])
+        while True:
+            dirs = (yield)
+            for d in dirs:
+                base_dir = os.path.basename(d)
+                for dirpath, dirnames, filenames in os.walk(d):
+                    dest_dir = os.path.normpath(pjoin(base_dir, os.path.relpath(dirpath, d)))
+                    self.install_dirs([dest_dir])
+                    for dirname in dirnames:
+                        source = pjoin(dirpath, dirname)
+                        if os.path.islink(source):
+                            dest = pjoin(dest_dir, dirname)
+                            self.install_symlinks([(source, dest)])
+                    for f in filenames:
+                        source = pjoin(dirpath, f)
+                        dest = pjoin(dest_dir, f)
+                        self.install([(source, dest)])
 
     @staticmethod
     def _set_attributes(opts, path):
@@ -528,7 +532,7 @@ class Doins(_InstallWrapper):
     def _install_targets(self, targets):
         files, dirs = partition(targets, predicate=os.path.isdir)
         if self.opts.recursive:
-            self._install_from_dirs(dirs)
+            self.install_from_dirs(dirs)
         self.install((f, os.path.basename(f)) for f in files)
 
 
@@ -550,7 +554,7 @@ class Dodoc(_InstallWrapper):
         dirs = list(dirs)
         if dirs:
             if self.opts.recursive and self.allow_recursive:
-                self._install_from_dirs(dirs)
+                self.install_from_dirs(dirs)
             else:
                 missing_option = ', missing -r option?' if self.allow_recursive else ''
                 raise IpcCommandError(f'{dirs[0]!r} is a directory{missing_option}')
@@ -793,7 +797,7 @@ class Dohtml(_InstallWrapper):
         if dirs:
             if self.opts.recursive:
                 dirs = (d for d in dirs if d not in self.opts.excluded_dirs)
-                self._install_from_dirs(dirs)
+                self.install_from_dirs(dirs)
             else:
                 raise IpcCommandError(f'{dirs[0]!r} is a directory, missing -r option?')
         self.install((f, os.path.basename(f)) for f in files if self._allowed_file(f))

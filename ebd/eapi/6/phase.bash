@@ -1,5 +1,3 @@
-PKGCORE_BANNED_FUNCS=( einstall )
-
 __econf_options_eapi6() {
 	if [[ $1 == *"--docdir"* ]]; then
 		echo --docdir="${EPREFIX}"/usr/share/doc/${PF}

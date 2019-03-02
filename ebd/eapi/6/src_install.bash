@@ -1,3 +1,5 @@
+PKGCORE_BANNED_FUNCS=( einstall )
+
 einstalldocs() {
 	local docs PKGCORE_DOCDESTTREE=
 	if ! docs=$(declare -p DOCS 2> /dev/null); then

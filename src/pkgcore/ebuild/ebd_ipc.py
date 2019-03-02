@@ -1,5 +1,4 @@
 import argparse
-from functools import wraps
 import itertools
 import os
 import re
@@ -247,7 +246,7 @@ class _InstallWrapper(IpcCommand):
             insoptions=self.insoptions_default,
             diroptions=self.diroptions_default)
 
-        # initialize file/dir creation generators
+        # initialize file/dir creation coroutines
         self.install = self._install().send
         self.install(None)
         self.install_dirs = self._install_dirs().send
@@ -410,7 +409,7 @@ class _InstallWrapper(IpcCommand):
         """Install files.
 
         Args:
-            files: iterable of (source, dest) tuples of files to install
+            iterable of (source, dest) tuples of files to install
         Raises:
             IpcCommandError on failure
         """
@@ -447,7 +446,7 @@ class _InstallWrapper(IpcCommand):
         """Install files using `install` command.
 
         Args:
-            files: iterable of (source, dest) tuples of files to install
+            iterable of (source, dest) tuples of files to install
         Raises:
             IpcCommandError on failure
         """
@@ -471,7 +470,7 @@ class _InstallWrapper(IpcCommand):
         """Create directories.
 
         Args:
-            dirs: iterable of paths where directories should be created
+            iterable of paths where directories should be created
         Raises:
             IpcCommandError on failure
         """
@@ -489,7 +488,7 @@ class _InstallWrapper(IpcCommand):
         """Create directories using `install` command.
 
         Args:
-            dirs: iterable of paths where directories should be created
+            iterable of paths where directories should be created
         Raises:
             IpcCommandError on failure
         """
@@ -505,7 +504,7 @@ class _InstallWrapper(IpcCommand):
         """Install iterable of symlinks.
 
         Args:
-            symlinks: iterable of (path, target dir) tuples of symlinks to install
+            iterable of (path, target dir) tuples of symlinks to install
         Raises:
             IpcCommandError on failure
         """
@@ -950,8 +949,7 @@ class Eapply(IpcCommand):
                 yield None, [path]
 
     def parse_args(self, options, args):
-        args, patch_opts = self._parse_patch_opts(args)
-        self.opts.patch_opts = patch_opts
+        args, self.opts.patch_opts = self._parse_patch_opts(args)
         args = super().parse_args(options, args)
         return self._find_patches(args.targets)
 

@@ -28,8 +28,13 @@ die() {
 	# this forces die() to work in subshell environments.
 	__ebd_write_line "dying"
 
-	# Send any error messages back to python for output.
-	exec 2>&${PKGCORE_EBD_WRITE_FD}
+	# Send any error messages back to python for output and append them to the
+	# build log if it exists.
+	if [[ -n ${PORTAGE_LOGFILE} ]]; then
+		exec 2> >(tee -a "${PORTAGE_LOGFILE}" >&${PKGCORE_EBD_WRITE_FD})
+	else
+		exec 2>&${PKGCORE_EBD_WRITE_FD}
+	fi
 
 	local n filespacing=0 linespacing=0 sourcefile lineno
 	# setup spacing to make output easier to read

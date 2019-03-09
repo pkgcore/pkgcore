@@ -62,7 +62,7 @@ __phase_pre_phase() {
 	else
 		local phase
 		# eapi4 blatant idiocy...
-		for phase in unpack prepare configure compile install; do
+		for phase in unpack prepare configure compile test install; do
 			[[ ${phase} == ${EBUILD_PHASE} ]] && break
 			__is_function src_${phase} || continue
 			# to reach here means that (for example), we're doing src_install, and src_compile was defined

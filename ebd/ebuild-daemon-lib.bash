@@ -17,6 +17,14 @@ __ebd_read_line() {
 		die "coms error in ${PKGCORE_EBD_PID}, read_line $@ failed w/ ${ret}: backing out of daemon."
 }
 
+# Read a line into an array using a bell char as a delimiter since the null char
+# can't be assigned to variables.
+__ebd_read_array() {
+	IFS=$'\07' read -u ${PKGCORE_EBD_READ_FD} -a $1
+	[[ $? -ne 0 ]] && \
+		die "coms error in ${PKGCORE_EBD_PID}, read_array $@ failed: backing out of daemon."
+}
+
 # read -N usage requires bash-4.1 or so (EAPI 6 requires >= 4.2)
 __ebd_read_size() {
 	read -u ${PKGCORE_EBD_READ_FD} -r -N $1 $2
@@ -27,6 +35,13 @@ __ebd_read_size() {
 
 __ebd_read_cat_size() {
 	dd bs=$1 count=1 <&${PKGCORE_EBD_READ_FD}
+}
+
+# Write arg list as a single string using a null char delimiter terminated by a newline.
+# Note that this requires printf as echo doesn't appear to respect IFS=$'\0'.
+__ebd_write_array() {
+	printf "%s\0" "$@" >&${PKGCORE_EBD_WRITE_FD}
+	__ebd_write_line
 }
 
 __ebd_write_line() {
@@ -72,16 +87,8 @@ __ebd_ipc_cmd() {
 	__ebd_write_line ${PKGCORE_NONFATAL:-false}
 	__ebd_write_line ${PWD}
 	__ebd_write_line ${opts}
-	# Send arg list as a single string using a null char delimiter terminated by a newline.
-	# Note that this requires printf as echo doesn't appear to respect IFS=$'\0'.
-	printf "%s\0" "$@" >&${PKGCORE_EBD_WRITE_FD}
-	__ebd_write_line
-
-	# Split return status into array of return code and optional error message.
-	# This uses a bell char as a delimiter since the null char can't be
-	# assigned to variables.
-	__ebd_read_line ret_str
-	IFS=$'\x07' read -ra ret <<< "${ret_str}"
+	__ebd_write_array "$@"
+	__ebd_read_array ret
 	__ipc_exit "${ret[@]}"
 }
 

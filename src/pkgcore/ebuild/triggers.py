@@ -333,14 +333,19 @@ class ConfigProtectUninstall(triggers.base):
 
 class UninstallIgnore(triggers.base):
 
-    required_csets = ('uninstall_existing', 'uninstall')
+    required_csets = {
+        const.REPLACE_MODE: ('uninstall_existing', 'uninstall', 'old_cset'),
+        const.UNINSTALL_MODE: ('uninstall_existing', 'uninstall'),
+    }
+
     _hooks = ('pre_unmerge',)
+    _engine_types = triggers.UNINSTALLING_MODES
 
     def __init__(self, uninstall_ignore=()):
         super().__init__()
         self.uninstall_ignore = uninstall_ignore
 
-    def trigger(self, engine, existing_cset, uninstall_cset):
+    def trigger(self, engine, existing_cset, uninstall_cset, old_cset={}):
         ignore = [values.StrRegex(fnmatch.translate(x), match=True)
                   for x in self.uninstall_ignore]
         ignore_filter = values.OrRestriction(*ignore).match
@@ -348,7 +353,10 @@ class UninstallIgnore(triggers.base):
         remove = [x for x in existing_cset.iterfiles()
                   if ignore_filter(x.location)]
         for x in remove:
+            # don't remove matching files being uninstalled
             del uninstall_cset[x]
+            # don't remove matching files being replaced
+            old_cset.pop(x, None)
 
 
 class preinst_contents_reset(triggers.base):

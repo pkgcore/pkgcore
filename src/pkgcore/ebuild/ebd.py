@@ -114,7 +114,7 @@ class ebd(object):
         if self.prefix_mode:
             self.prefix = self.domain.prefix
             self.env['EPREFIX'] = self.prefix.rstrip(os.sep)
-            self.env['EROOT'] = pjoin(self.env['ROOT'], self.env['EPREFIX']) + trailing_slash
+            self.env['EROOT'] = pjoin(self.env['ROOT'].rstrip(os.sep), self.env['EPREFIX']) + trailing_slash
             self.env['PKGCORE_PREFIX_SUPPORT'] = 'true'
 
         if self.eapi.options.has_sysroot:

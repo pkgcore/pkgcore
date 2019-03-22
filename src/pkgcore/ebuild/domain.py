@@ -218,6 +218,11 @@ class domain(config_domain):
 
     @load_property("/etc/profile.env", read_func=read_bash_dict)
     def system_profile(self, data):
+        # prepend system profile $PATH if it exists
+        if 'PATH' in data:
+            path = stable_unique(
+                data['PATH'].split(os.pathsep) + os.environ['PATH'].split(os.pathsep))
+            os.environ['PATH'] = os.pathsep.join(path)
         return ImmutableDict(data)
 
     @klass.jit_attr_named('_jit_reset_settings', uncached_val=None)

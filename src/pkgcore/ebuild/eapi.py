@@ -296,7 +296,7 @@ class EAPI(object, metaclass=klass.immutable_instance):
         d = {}
         for k in self._ebd_env_options:
             d[f"PKGCORE_{k.upper()}"] = str(getattr(self.options, k)).lower()
-        d["PKGCORE_EAPI_INHERITS"] = tuple(x._magic for x in self.inherits)
+        d["PKGCORE_EAPI_INHERITS"] = ' '.join(x._magic for x in self.inherits)
         d["EAPI"] = self._magic
         return mappings.ImmutableDict(d)
 

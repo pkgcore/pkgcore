@@ -847,10 +847,9 @@ class buildable(ebd, setup_mixin, format.build):
     def install(self):
         """Run the install phase (maps to src_install)."""
         # TODO: replace print() usage with observer
-        ED = self.env.get('ED', self.env['D'])
-        print(f">>> Install {self.env['PF']} into {ED} category {self.env['CATEGORY']}")
+        print(f">>> Install {self.env['PF']} into {self.ED!r} category {self.env['CATEGORY']}")
         ret = self._generic_phase("install", False, True)
-        print(f">>> Completed installing {self.env['PF']} into {ED}")
+        print(f">>> Completed installing {self.env['PF']} into {self.ED!r}")
         return ret
 
     @observer.decorate_build_method("test")

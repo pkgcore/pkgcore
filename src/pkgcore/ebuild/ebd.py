@@ -120,7 +120,7 @@ class ebd(object):
             self.env['PKGCORE_PREFIX_SUPPORT'] = 'true'
 
         if self.eapi.options.has_sysroot:
-            self.env['SYSROOT'] = self.env['ROOT']
+            self.env['SYSROOT'] = self.env['ROOT'].rstrip(os.sep)
             self.env['ESYSROOT'] = pjoin(self.env['SYSROOT'], self.env['EPREFIX'])
             self.env['BROOT'] = self.env['EPREFIX']
 

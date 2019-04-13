@@ -1086,7 +1086,7 @@ class Unpack(IpcCommand):
             self.observer.flush()
             dest = pjoin(self.cwd, filename[:-len(ext)])
             try:
-                target = ArComp(source, type=ext)
+                target = ArComp(source, ext=ext)
                 target.unpack(dest=dest, **spawn_kwargs)
             except ArCompError as e:
                 raise IpcCommandError(str(e), code=e.code)

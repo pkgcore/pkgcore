@@ -309,7 +309,7 @@ class TestRepoConfig(object):
     def test_cache_format(self, caplog):
         # empty repo
         repo_config = repo_objs.RepoConfig(self.repo_path)
-        assert repo_config.cache_format == 'pms'
+        assert repo_config.cache_format == 'md5-dict'
         del repo_config
 
         # explicit empty setting
@@ -324,16 +324,16 @@ class TestRepoConfig(object):
         with open(self.metadata_path, 'w') as f:
             f.write('cache-formats = foo bar\n')
         repo_config = repo_objs.RepoConfig(self.repo_path)
-        assert repo_config.cache_format == 'pms'
+        assert repo_config.cache_format == 'md5-dict'
         assert 'unknown cache format:' in caplog.text
         caplog.clear()
         del repo_config
 
         # known format
         with open(self.metadata_path, 'w') as f:
-            f.write('cache-formats = md5-dict\n')
+            f.write('cache-formats = pms\n')
         repo_config = repo_objs.RepoConfig(self.repo_path)
-        assert repo_config.cache_format == 'md5-dict'
+        assert repo_config.cache_format == 'pms'
         del repo_config
 
         # multiple formats -- favored format is selected

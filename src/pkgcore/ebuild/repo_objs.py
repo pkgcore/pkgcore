@@ -450,15 +450,15 @@ class RepoConfig(syncable.tree, metaclass=WeakInstMeta):
         sf(self, 'eapis_deprecated', tuple(iter_stable_unique(data.get('eapis-deprecated', '').split())))
         sf(self, 'eapis_banned', tuple(iter_stable_unique(data.get('eapis-banned', '').split())))
 
-        v = set(data.get('cache-formats', 'pms').lower().split())
+        v = set(data.get('cache-formats', 'md5-dict').lower().split())
         if not v:
             v = [None]
         else:
             # sort into favored order
             v = [f for f in self.supported_cache_formats if f in v]
             if not v:
-                logger.warning(f'unknown cache format: falling back to pms format')
-                v = ['pms']
+                logger.warning(f'unknown cache format: falling back to md5-dict format')
+                v = ['md5-dict']
         sf(self, 'cache_format', list(v)[0])
 
         profile_formats = set(data.get('profile-formats', 'pms').lower().split())

@@ -352,7 +352,7 @@ class _InstallWrapper(IpcCommand):
         try:
             if opts.owner != -1 or opts.group != -1:
                 os.lchown(path, opts.owner, opts.group)
-            if opts.mode is not None:
+            if opts.mode is not None and not os.path.islink(path):
                 os.chmod(path, opts.mode)
         except OSError as e:
             raise IpcCommandError(

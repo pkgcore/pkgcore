@@ -254,7 +254,7 @@ class ProcessorError(PkgcoreUserException):
         return self.error.strip('\n')
 
 
-def chuck_DyingInterrupt(ebp, *args):
+def chuck_DyingInterrupt(ebp, logfile=None, *args):
     """Event handler for bash side 'die' command."""
     # read die() error message from bash side
     error = []
@@ -265,6 +265,9 @@ def chuck_DyingInterrupt(ebp, *args):
         error.append(line)
     drop_ebuild_processor(ebp)
     ebp.shutdown_processor(force=True)
+    if logfile:
+        with open(logfile, 'at') as f:
+            f.write(''.join(error))
     raise ProcessorError(''.join(error))
 
 

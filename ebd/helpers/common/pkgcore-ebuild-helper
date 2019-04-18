@@ -69,7 +69,7 @@ invoke_script() {
 			# need to track the exit code here...
 			return 1
 		fi
-		kill -s SIGUSR1 ${PKGCORE_EBUILD_PROCESS_PID}
+		die "helper failed: ${HELPER_NAME} $@"
 		exit 1
 	fi
 	return 0

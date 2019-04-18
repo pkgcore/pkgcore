@@ -393,7 +393,6 @@ __execute_phases() {
 	trap "exit 2" SIGINT
 	trap "exit 9" SIGQUIT
 	trap "exit 1" SIGTERM
-	trap __helper_failed SIGUSR1
 	declare -rx PKGCORE_EBUILD_PROCESS_PID=${BASHPID}
 
 	local ret

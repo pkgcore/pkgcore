@@ -2,7 +2,6 @@
 
 error() {
 	echo "${HELPER_ERROR_PREFIX}: ${@-no message given}" >&2
-	_helper[${#_helper[@]}]=${*-no message given}
 	failed=true
 }
 

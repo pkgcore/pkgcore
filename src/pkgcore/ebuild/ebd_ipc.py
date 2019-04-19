@@ -785,9 +785,8 @@ class Dohtml(_InstallWrapper):
             msg.append(f"  Document prefix: {self.opts.doc_prefix!r}")
         return '\n'.join(msg)
 
-    def _allowed_file(self, item):
+    def _allowed_file(self, path):
         """Determine if a file is allowed to be installed."""
-        path, dest = item
         basename = os.path.basename(path)
         ext = os.path.splitext(basename)[1][1:]
         return (ext in self.opts.allowed_file_exts or basename in self.opts.allowed_files)

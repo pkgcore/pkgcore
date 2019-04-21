@@ -327,7 +327,7 @@ class _InstallWrapper(IpcCommand):
         while True:
             dirs = (yield)
             for d in dirs:
-                base_dir = os.path.basename(d)
+                base_dir = os.path.basename(d.rstrip(os.path.sep))
                 for dirpath, dirnames, filenames in os.walk(d):
                     dest_dir = os.path.normpath(pjoin(base_dir, os.path.relpath(dirpath, d)))
                     self.install_dirs([dest_dir])

@@ -7,7 +7,7 @@ GENTOO_MIRRORS="http://distfiles.gentoo.org"
 ACCEPT_PROPERTIES="*"
 ACCEPT_RESTRICT="*"
 
-DISTDIR="/var/gentoo/dist"
+DISTDIR="/var/cache/distfiles"
 
 PORTAGE_TMPDIR="/var/tmp"
 

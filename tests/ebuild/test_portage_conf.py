@@ -216,4 +216,4 @@ class TestPortageConfig(TempDirMixin, TestCase):
         self.assertEqual(defaults, sym_defaults)
         self.assertEqual(repos, sym_repos)
         self.assertEqual('gentoo', defaults['main-repo'])
-        self.assertEqual(['foo', 'bar', 'gentoo', 'pkgs'], list(repos.keys()))
+        self.assertEqual(['foo', 'bar', 'gentoo', 'binpkgs'], list(repos.keys()))

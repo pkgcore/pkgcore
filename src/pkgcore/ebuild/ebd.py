@@ -104,25 +104,7 @@ class ebd(object):
 
         self.features = set(x.lower() for x in self.domain.features)
         self.env["FEATURES"] = ' '.join(sorted(self.features))
-
-        # XXX: note this is just EAPI 3 and EAPI 7 compatibility; not full prefix, soon..
-        trailing_slash = self.eapi.options.trailing_slash
-        self.env['ROOT'] = self.domain.root.rstrip(trailing_slash) + trailing_slash
-        self.prefix_mode = self.eapi.options.prefix_capable or 'force-prefix' in self.features
-        self.env['PKGCORE_PREFIX_SUPPORT'] = 'false'
-        self.prefix = '/'
-        if self.prefix_mode:
-            self.prefix = self.domain.prefix
-            self.env['EPREFIX'] = self.prefix.rstrip(os.sep)
-            self.env['EROOT'] = (
-                pjoin(self.env['ROOT'].rstrip(trailing_slash), self.env['EPREFIX']) +
-                trailing_slash)
-            self.env['PKGCORE_PREFIX_SUPPORT'] = 'true'
-
-        if self.eapi.options.has_sysroot:
-            self.env['SYSROOT'] = self.env['ROOT'].rstrip(os.sep)
-            self.env['ESYSROOT'] = pjoin(self.env['SYSROOT'], self.env['EPREFIX'])
-            self.env['BROOT'] = self.env['EPREFIX']
+        self.set_path_vars(self.env, self.pkg, self.domain)
 
         # internally implemented EAPI specific functions to skip when exporting env
         self.env["PKGCORE_EAPI_FUNCS"] = ' '.join(self.eapi.bash_funcs)
@@ -216,6 +198,24 @@ class ebd(object):
         self.clean_needed = True
         return True
 
+    @staticmethod
+    def set_path_vars(env, pkg, domain):
+        # XXX: note this is just EAPI 3 and EAPI 7 compatibility; not full prefix, soon..
+        trailing_slash = pkg.eapi.options.trailing_slash
+        env['ROOT'] = domain.root.rstrip(trailing_slash) + trailing_slash
+        env['PKGCORE_PREFIX_SUPPORT'] = 'false'
+        if pkg.eapi.options.prefix_capable:
+            env['EPREFIX'] = domain.prefix.rstrip(os.sep)
+            env['EROOT'] = (
+                pjoin(env['ROOT'].rstrip(trailing_slash), env['EPREFIX']) +
+                trailing_slash)
+            env['PKGCORE_PREFIX_SUPPORT'] = 'true'
+
+        if pkg.eapi.options.has_sysroot:
+            env['SYSROOT'] = env['ROOT'].rstrip(os.sep)
+            env['ESYSROOT'] = pjoin(env['SYSROOT'], env['EPREFIX'])
+            env['BROOT'] = env['EPREFIX']
+
     def _set_op_vars(self, tmp_offset):
         # don't fool with this, without fooling with setup.
         self.tmpdir = self.domain.pm_tmpdir
@@ -233,9 +233,9 @@ class ebd(object):
 
         # XXX: Note that this is just EAPI 3 support, not yet prefix
         # full awareness.
-        if self.prefix_mode:
+        if self.pkg.eapi.options.prefix_capable:
             self.env["ED"] = normpath(
-                pjoin(self.env["D"].rstrip(os.sep), self.prefix.rstrip(os.sep))) \
+                pjoin(self.env["D"].rstrip(os.sep), self.env["EPREFIX"])) \
                     + self.eapi.options.trailing_slash
 
         # temporary install dir correct for all EAPIs
@@ -946,11 +946,11 @@ class ebuild_operations(object):
         # Use base build tempdir for $T instead of full pkg specific path to
         # avoid having to create/remove directories -- pkg_pretend isn't
         # allowed to write to the filesystem anyway.
-        env = expected_ebuild_env(pkg)
-        env["T"] = domain.pm_tmpdir
-        env["ROOT"] = domain.root
+        self.env = expected_ebuild_env(pkg)
+        self.env["T"] = domain.pm_tmpdir
+        ebd.set_path_vars(self.env, pkg, domain)
         # avoid clipping eend() messages
-        env["PKGCORE_RC_PREFIX"] = '2'
+        self.env["PKGCORE_RC_PREFIX"] = '2'
 
         start = time.time()
         with TemporaryFile() as f:
@@ -958,7 +958,7 @@ class ebuild_operations(object):
                 # suppress bash output by default
                 fd_pipes = {1: f.fileno(), 2: f.fileno()}
                 ret = run_generic_phase(
-                    pkg, "pretend", env, tmpdir=None, fd_pipes=fd_pipes,
+                    pkg, "pretend", self.env, tmpdir=None, fd_pipes=fd_pipes,
                     userpriv=True, sandbox=True, extra_handlers=commands)
                 logger.debug(
                     "pkg_pretend sanity check for %s took %2.2f seconds",

@@ -316,7 +316,7 @@ class domain(config_domain):
         # hackish implementation; if test is on, flip on the flag
         if "test" in self.features:
             use.append("test")
-        if "prefix" in self.features or "force-prefix" in self.features:
+        if "prefix" in self.features:
             use.append("prefix")
 
         return frozenset(optimize_incrementals(use + os.environ.get('USE', '').split()))

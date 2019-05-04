@@ -875,18 +875,18 @@ class _QueryCmd(IpcCommand):
             root = '/'
         elif self.eapi.options.query_deps:
             if self.opts.bdepend:
-                if self.op.prefix_mode:
+                if self.pkg.eapi.options.prefix_capable:
                     # not using BROOT as that's only defined in src_* phases
                     root = pjoin('/', self.op.env['EPREFIX'])
                 else:
                     root = '/'
             elif self.opts.depend:
-                if self.op.prefix_mode:
+                if self.pkg.eapi.options.prefix_capable:
                     root = self.op.env['ESYSROOT']
                 else:
                     root = self.op.env['SYSROOT']
             else:
-                if self.op.prefix_mode:
+                if self.pkg.eapi.options.prefix_capable:
                     root = self.op.env['EROOT']
                 else:
                     root = self.op.env['ROOT']

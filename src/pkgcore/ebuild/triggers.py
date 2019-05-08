@@ -356,7 +356,7 @@ class UninstallIgnore(triggers.base):
             # don't remove matching files being uninstalled
             del uninstall_cset[x]
             # don't remove matching files being replaced
-            old_cset.pop(x, None)
+            old_cset.discard(x)
 
 
 class preinst_contents_reset(triggers.base):

@@ -217,27 +217,34 @@ class accept_keywords(_base, metaclass=_register_command):
 
 class _use(_base):
 
+    def _output_use(self, neg, pos):
+        neg = ('-' + x for x in neg)
+        return ' '.join(sorted(chain(neg, pos)))
+
     def __call__(self, namespace, out, err):
         global_use = []
-        pkg_use = []
+        pkg_use = {}
 
         for k, v in namespace.use.render_to_dict().items():
             if isinstance(k, str):
-                pkg, neg, pos = v[-1]
-                if not isinstance(pkg, atom.atom):
-                    continue
-                neg = ('-' + x for x in neg)
-                pkg_use.append((pkg, ' '.join(sorted(chain(neg, pos)))))
+                for pkg, neg, pos in v:
+                    if isinstance(pkg, atom.atom):
+                        pkg_neg, pkg_pos = pkg_use.setdefault(pkg, (set(), set()))
+                        pkg_neg.update(neg)
+                        pkg_pos.update(pos)
+                        matched = pkg_neg.intersection(pkg_pos)
+                        pkg_pos.difference_update(matched)
+                        pkg_neg.difference_update(matched)
             else:
                 _, neg, pos = v[0]
-                neg = ('-' + x for x in neg)
-                global_use = ' '.join(sorted(chain(neg, pos)))
+                global_use = (neg, pos)
 
         if global_use:
-            out.write(f'*/*: {global_use}')
+            out.write(f'*/*: {self._output_use(*global_use)}')
         if pkg_use:
-            for pkg, use in sorted(pkg_use):
-                out.write(f'{pkg}: {use}')
+            for pkg, (neg, pos) in sorted(pkg_use.items()):
+                if neg or pos:
+                    out.write(f'{pkg}: {self._output_use(neg, pos)}')
 
 
 class use(_use, metaclass=_register_command):

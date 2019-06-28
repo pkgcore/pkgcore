@@ -708,10 +708,10 @@ class Doman(_InstallWrapper):
             elif self.language_detect:
                 match = self.detect_lang_re.match(basename)
                 if match:
-                    name = f'{match.group(0)}.{match.group(3)}'
-                    mandir = pjoin(match.group(1), mandir)
+                    name = f'{match.group(1)}.{match.group(4)}'
+                    mandir = pjoin(match.group(2), mandir)
 
-            if self.valid_mandir_re.match(mandir):
+            if self.valid_mandir_re.match(os.path.basename(mandir)):
                 if mandir not in dirs:
                     self.install_dirs([mandir])
                     dirs.add(mandir)

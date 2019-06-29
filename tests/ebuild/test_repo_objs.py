@@ -556,7 +556,7 @@ class TestRepoConfig(object):
     def test_raw_use_expand_desc(self):
         # nonexistent repo
         repo_config = repo_objs.RepoConfig('nonexistent')
-        assert repo_config.raw_use_expand_desc == ()
+        assert repo_config.raw_use_expand_desc == {}
         del repo_config
 
         # empty file
@@ -565,7 +565,7 @@ class TestRepoConfig(object):
         use_expand_desc_file = os.path.join(use_expand_desc_path, 'foo.desc')
         touch(use_expand_desc_file)
         repo_config = repo_objs.RepoConfig(self.repo_path)
-        assert repo_config.raw_use_expand_desc == ()
+        assert repo_config.raw_use_expand_desc == {'foo': ()}
         del repo_config
 
         # regular entries
@@ -575,12 +575,15 @@ class TestRepoConfig(object):
                 # copy
                 # license
 
-                foo - enable foo
                 bar - add bar support
                 baz - build using baz
                 """)
         repo_config = repo_objs.RepoConfig(self.repo_path)
-        assert 3 == len(repo_config.raw_use_expand_desc)
+        assert repo_config.raw_use_expand_desc == {
+            'foo': (
+                ('foo_bar', 'add bar support'),
+                ('foo_baz', 'build using baz')
+            )}
         del repo_config
 
     def test_raw_use_local_desc(self):

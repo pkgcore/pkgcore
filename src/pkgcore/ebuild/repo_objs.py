@@ -510,31 +510,31 @@ class RepoConfig(syncable.tree, metaclass=WeakInstMeta):
     def raw_use_expand_desc(self):
         """USE_EXPAND settings for the repo."""
         base = pjoin(self.profiles_base, 'desc')
+        d = dict()
         try:
-            targets = sorted(listdir_files(base))
+            targets = listdir_files(base)
         except FileNotFoundError:
-            return ()
+            targets = []
 
-        def f():
-            for use_group in targets:
-                group = use_group.split('.', 1)[0] + "_"
+        for use_group in targets:
+            group = use_group.split('.', 1)[0]
+            d[group] = tuple(
+                self._split_use_desc_file(
+                    f'desc/{use_group}', lambda k: f'{group}_{k}', matcher=False))
 
-                def converter(key):
-                    return (packages.AlwaysTrue, group + key)
+        return mappings.ImmutableDict(d)
 
-                for x in self._split_use_desc_file(f'desc/{use_group}', converter):
-                    yield x
-
-        return tuple(f())
-
-    def _split_use_desc_file(self, name, converter):
+    def _split_use_desc_file(self, name, converter, matcher=True):
         line = None
         fp = pjoin(self.profiles_base, name)
         try:
             for line in iter_read_bash(fp):
                 key, val = line.split(None, 1)
                 key = converter(key)
-                yield key[0], (key[1], val.split('-', 1)[1].strip())
+                if matcher:
+                    yield key[0], (key[1], val.split('-', 1)[1].strip())
+                else:
+                    yield key, val.split('-', 1)[1].strip()
         except FileNotFoundError:
             pass
         except ValueError as e:

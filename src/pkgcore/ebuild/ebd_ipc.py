@@ -892,7 +892,7 @@ class _QueryCmd(IpcCommand):
                     root = self.op.env['ROOT']
 
         # TODO: find domain from given path, pointless until full prefix support works
-        if root is not None and root != self.opts.domain.root:
+        if root and root != self.opts.domain.root:
             raise IpcCommandError('prefix support not implemented yet')
 
         return args

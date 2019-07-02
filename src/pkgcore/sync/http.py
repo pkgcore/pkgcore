@@ -61,9 +61,6 @@ class http_syncer(base.Syncer):
         try:
             resp = urllib.request.urlopen(req, context=context)
         except urllib.error.URLError as e:
-            if e.code == 304:
-                # TODO: raise exception to notify user the repo is up to date?
-                return True
             raise base.SyncError(f'failed fetching {self.uri!r}: {e.reason}') from e
 
         # Manually check cached values ourselves since some servers appear to

@@ -673,25 +673,28 @@ class domain(config_domain):
         return configured_repo
 
     def filter_repo(self, repo, pkg_masks=None, pkg_unmasks=None,
-                    pkg_accept_keywords=None, pkg_keywords=None):
+                    pkg_accept_keywords=None, pkg_keywords=None, profile=True):
         """Filter a configured repo."""
         if pkg_masks is None:
             pkg_masks = self.pkg_masks
         if pkg_unmasks is None:
             pkg_unmasks = self.pkg_unmasks
 
-        global_masks = chain(repo._masks, self.profile._incremental_masks)
+        global_masks = [repo._masks]
+        if profile:
+            global_masks.append(self.profile._incremental_masks)
         masks = set()
-        for neg, pos in global_masks:
+        for neg, pos in chain(*global_masks):
             masks.difference_update(neg)
             masks.update(pos)
         masks.update(pkg_masks)
         unmasks = set()
-        for neg, pos in self.profile._incremental_unmasks:
-            unmasks.difference_update(neg)
-            unmasks.update(pos)
+        if profile:
+            for neg, pos in self.profile._incremental_unmasks:
+                unmasks.difference_update(neg)
+                unmasks.update(pos)
         unmasks.update(pkg_unmasks)
-        if pkg_accept_keywords is not None or pkg_keywords is not None:
+        if pkg_accept_keywords or pkg_keywords:
             # TODO: rework jitted attr access to provide underlying method
             # access when requested via some suffixed attr name
             #

@@ -128,10 +128,10 @@ class TestBase(object):
         o = self.get_pkg({'SLOT': '1/foo-1'})
         assert o.fullslot == '1/foo-1'
         # unset SLOT variable
-        with pytest.raises(ValueError):
+        with pytest.raises(errors.MetadataException):
             self.get_pkg({}).fullslot
         # empty SLOT variable
-        with pytest.raises(ValueError):
+        with pytest.raises(errors.MetadataException):
             self.get_pkg({'SLOT': ''}).fullslot
 
     def test_slot(self):
@@ -142,10 +142,10 @@ class TestBase(object):
         o = self.get_pkg({'SLOT': '1/foo-1'})
         assert o.slot == '1'
         # unset SLOT variable
-        with pytest.raises(ValueError):
+        with pytest.raises(errors.MetadataException):
             self.get_pkg({}).slot
         # empty SLOT variable
-        with pytest.raises(ValueError):
+        with pytest.raises(errors.MetadataException):
             self.get_pkg({'SLOT': ''}).slot
 
     def test_subslot(self):
@@ -158,10 +158,10 @@ class TestBase(object):
         o = self.get_pkg({'SLOT': '1/foo-1'})
         assert o.subslot == 'foo-1'
         # unset SLOT variable
-        with pytest.raises(ValueError):
+        with pytest.raises(errors.MetadataException):
             self.get_pkg({}).subslot
         # empty SLOT variable
-        with pytest.raises(ValueError):
+        with pytest.raises(errors.MetadataException):
             self.get_pkg({'SLOT': ''}).subslot
 
     def test_restrict(self):

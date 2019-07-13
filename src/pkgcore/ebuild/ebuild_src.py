@@ -213,7 +213,8 @@ def get_parsed_inherits(self):
 def get_slot(self):
     o = self.data.pop("SLOT", None)
     if not o:
-        raise ValueError("SLOT cannot be unset or empty")
+        raise metadata_errors.MetadataException(
+            self, 'slot', 'SLOT cannot be unset or empty')
     return o.strip()
 
 

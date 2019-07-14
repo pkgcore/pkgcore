@@ -154,13 +154,14 @@ class Test_native_Cpv(object):
                 assert c.cpvstr == f"{cat}/{pkg}-{ver}"
                 if rev:
                     assert c.revision == 0
+                    assert c.fullver == ver + rev
                 else:
                     assert c.revision is None
-                assert c.fullver == ver
+                    assert c.fullver == ver
             else:
                 assert c.revision == int(rev.lstrip("-r"))
                 assert c.cpvstr == f"{cat}/{pkg}-{ver}{rev}"
-                assert c.fullver == ver+rev
+                assert c.fullver == ver + rev
             assert c.category == cat
             assert c.package == pkg
             assert c.key == f"{cat}/{pkg}"
@@ -188,9 +189,10 @@ class Test_native_Cpv(object):
                 assert c.cpvstr == f"{cat}/{pkg}-{ver}"
                 if rev:
                     assert c.revision == 0
+                    assert c.fullver == ver + rev
                 else:
                     assert c.revision is None
-                assert c.fullver == ver
+                    assert c.fullver == ver
             else:
                 assert c.cpvstr == f"{cat}/{pkg}-{ver}{rev}"
                 assert c.revision == int(rev.lstrip("-r"))
@@ -310,11 +312,34 @@ class Test_native_Cpv(object):
             except AttributeError:
                 pass
 
-    def test_r0_removal(self):
+    def test_r0_revisions(self):
+        # single '0'
         obj = self.kls("dev-util/diffball-1.0-r0", versioned=True)
-        assert obj.fullver == "1.0"
-        assert obj.revision == 0
+        assert obj.cpvstr == "dev-util/diffball-1.0"
         assert str(obj) == "dev-util/diffball-1.0"
+        assert obj.fullver == "1.0-r0"
+        assert obj.revision == 0
+
+        # multiple '0'
+        obj = self.kls("dev-util/diffball-1.0-r000", versioned=True)
+        assert obj.cpvstr == "dev-util/diffball-1.0"
+        assert str(obj) == "dev-util/diffball-1.0"
+        assert obj.fullver == "1.0-r000"
+        assert obj.revision == 0
+
+        # single '0' prefix
+        obj = self.kls("dev-util/diffball-1.0-r01", versioned=True)
+        assert obj.cpvstr == "dev-util/diffball-1.0-r1"
+        assert str(obj) == "dev-util/diffball-1.0-r1"
+        assert obj.fullver == "1.0-r01"
+        assert obj.revision == 1
+
+        # multiple '0' prefixes
+        obj = self.kls("dev-util/diffball-1.0-r0001", versioned=True)
+        assert obj.cpvstr == "dev-util/diffball-1.0-r1"
+        assert str(obj) == "dev-util/diffball-1.0-r1"
+        assert obj.fullver == "1.0-r0001"
+        assert obj.revision == 1
 
 
 @pytest.mark.skipif(not cpv.cpy_builtin, reason="cpython cpv extension not available")

@@ -6,6 +6,8 @@
 
 __all__ = ("CPV", "versioned_CPV", "unversioned_CPV")
 
+from collections import UserString
+
 from snakeoil.compatibility import cmp
 from snakeoil.demandload import demandload, demand_compile_regexp
 from snakeoil.klass import inject_richcmp_methods_from_cmp
@@ -51,6 +53,49 @@ def isvalid_rev(s):
     return s and s[0] == 'r' and s[1:].isdigit()
 
 
+class _Revision(UserString):
+    """Internal revision class storing revisions as strings and comparing as integers."""
+
+    # parent __hash__() isn't inherited when __eq__() is defined in the child class
+    # https://docs.python.org/3/reference/datamodel.html#object.__hash__
+    __hash__ = UserString.__hash__
+
+    def __eq__(self, other):
+        if isinstance(other, _Revision):
+            return int(self.data) == int(other.data)
+        elif isinstance(other, int):
+            return int(self.data) == other
+        return self.data == other
+
+    def __lt__(self, other):
+        if isinstance(other, _Revision):
+            return int(self.data) < int(other.data)
+        elif isinstance(other, int):
+            return int(self.data) < other
+        return self.data < other
+
+    def __le__(self, other):
+        if isinstance(other, _Revision):
+            return int(self.data) <= int(other.data)
+        elif isinstance(other, int):
+            return int(self.data) <= other
+        return self.data <= other
+
+    def __gt__(self, other):
+        if isinstance(other, _Revision):
+            return int(self.data) > int(other.data)
+        elif isinstance(other, int):
+            return int(self.data) > other
+        return self.data > other
+
+    def __ge__(self, other):
+        if isinstance(other, _Revision):
+            return int(self.data) >= int(other.data)
+        elif isinstance(other, int):
+            return int(self.data) >= other
+        return self.data >= other
+
+
 class _native_CPV(object):
     """base ebuild package class
 
@@ -58,7 +103,7 @@ class _native_CPV(object):
     :ivar package: str package
     :ivar key: strkey (cat/pkg)
     :ivar version: str version
-    :ivar revision: int revision
+    :ivar revision: str revision
     :ivar versioned_atom: atom matching this exact version
     :ivar unversioned_atom: atom matching all versions of this package
     :cvar _get_attr: mapping of attr:callable to generate attributes on the fly
@@ -122,10 +167,13 @@ class _native_CPV(object):
                     # needs at least ('pkg', 'ver', 'rev')
                     raise InvalidCPV(
                         f'{cpvstr}: missing package name, version, and/or revision')
-                rev = int(pkg_chunks.pop(-1)[1:])
+                rev = _Revision(pkg_chunks.pop(-1)[1:])
                 if rev == 0:
-                    # reset the stored cpvstr to drop -r0+
+                    # reset stored cpvstr to drop -r0+
                     sf(self, 'cpvstr', f"{category}/{'-'.join(pkg_chunks)}")
+                elif rev[0] == '0':
+                    # reset stored cpvstr to drop leading zeroes from revision
+                    sf(self, 'cpvstr', f"{category}/{'-'.join(pkg_chunks)}-r{int(rev)}")
                 sf(self, 'revision', rev)
             else:
                 sf(self, 'revision', None)
@@ -184,7 +232,6 @@ class _native_CPV(object):
 
 
 def native_ver_cmp(ver1, rev1, ver2, rev2):
-
     # If the versions are the same, comparing revisions will suffice.
     if ver1 == ver2:
         # revisions are equal if 0 or None (versionless cpv)
@@ -313,7 +360,7 @@ def mk_cpv_cls(base_cls):
         :ivar package: str package
         :ivar key: strkey (cat/pkg)
         :ivar version: str version
-        :ivar revision: int revision
+        :ivar revision: str revision
         :ivar versioned_atom: atom matching this exact version
         :ivar unversioned_atom: atom matching all versions of this package
         :cvar _get_attr: mapping of attr:callable to generate attributes on the fly

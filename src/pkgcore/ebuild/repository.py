@@ -450,11 +450,6 @@ class UnconfiguredTree(prototype.tree):
     def __getitem__(self, cpv):
         cpv_inst = self.package_class(*cpv)
         if cpv_inst.fullver not in self.versions[(cpv_inst.category, cpv_inst.package)]:
-            if cpv_inst.revision is None:
-                if f'{cpv_inst.fullver}-r0' in \
-                        self.versions[(cpv_inst.category, cpv_inst.package)]:
-                    # ebuild on disk has an explicit -r0 in its name
-                    return cpv_inst
             raise KeyError(cpv)
         return cpv_inst
 
@@ -550,15 +545,6 @@ class UnconfiguredTree(prototype.tree):
         return super().itermatch(*args, **kwargs)
 
     def _get_ebuild_path(self, pkg):
-        if pkg.revision is None:
-            try:
-                if pkg.fullver not in self.versions[(pkg.category, pkg.package)]:
-                    # daft explicit -r0 on disk.
-                    return pjoin(
-                        self.base, pkg.category, pkg.package,
-                        f"{pkg.package}-{pkg.fullver}-r0{self.extension}")
-            except KeyError as e:
-                raise MetadataException(pkg, 'package', 'mismatched ebuild name') from e
         return pjoin(
             self.base, pkg.category, pkg.package,
             f"{pkg.package}-{pkg.fullver}{self.extension}")

@@ -820,15 +820,6 @@ def parse_maintainer_email(value):
             'email', values.StrRegex(value.lower(), case_sensitive=False))))
 
 @bind_add_query(
-    '--maintainer-needed', action='store_true',
-    metavar=None, type=None, bind='final_converter',
-    help='match packages without a maintainer')
-def maintainer_needed(_value, _namespace):
-    return packages.PackageRestriction(
-        'maintainers',
-        values.EqualityMatch(()))
-
-@bind_add_query(
     '--environment', action='append',
     help='regexp search in environment.bz2')
 def parse_envmatch(value):

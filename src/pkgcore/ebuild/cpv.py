@@ -67,6 +67,12 @@ class _Revision(UserString):
         else:
             self._revint = 0
 
+    def __str__(self):
+        if not self.data:
+            return '0'
+        else:
+            return self.data
+
     def __eq__(self, other):
         if isinstance(other, _Revision):
             return self._revint == other._revint

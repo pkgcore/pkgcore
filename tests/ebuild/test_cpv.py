@@ -156,6 +156,7 @@ class Test_native_Cpv(object):
                 if rev:
                     assert c.fullver == ver + rev
                 else:
+                    assert c.revision == ""
                     assert c.fullver == ver
             else:
                 assert c.revision == int(rev.lstrip("-r"))
@@ -190,6 +191,7 @@ class Test_native_Cpv(object):
                 if rev:
                     assert c.fullver == ver + rev
                 else:
+                    assert c.revision == ""
                     assert c.fullver == ver
             else:
                 assert c.cpvstr == f"{cat}/{pkg}-{ver}{rev}"

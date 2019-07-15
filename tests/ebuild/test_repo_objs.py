@@ -58,6 +58,16 @@ f"""<?xml version="1.0" encoding="UTF-8"?>
         assert "funkymonkey@gmail.com" == mx.maintainers[0].email
         assert "funky monkey \N{SNOWMAN}" == mx.maintainers[0].name
 
+        # test maintainer-needed
+        s = \
+f"""<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+<!-- maintainer-needed -->
+</pkgmetadata>"""
+        mx = repo_objs.MetadataXml(data_source(s.encode('utf-8')))
+        assert "maintainer-needed" == mx.maintainers[0].name
+
     def test_local_use(self):
         # empty...
         assert dict() == self.get_metadata_xml().local_use

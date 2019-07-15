@@ -120,6 +120,13 @@ class MetadataXml(object):
             maintainers.append(Maintainer(
                 name=name, email=email, description=description))
 
+        # pull maintainer-needed status from comments
+        if not maintainers:
+            for comment in tree.xpath('//comment()'):
+                if comment.text.strip() == 'maintainer-needed':
+                    maintainers.append(Maintainer(name='maintainer-needed'))
+                    break
+
         self._maintainers = tuple(maintainers)
 
         # Could be unicode!

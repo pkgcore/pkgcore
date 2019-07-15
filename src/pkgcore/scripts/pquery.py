@@ -139,10 +139,10 @@ def stringify_attr(config, pkg, attr):
         return ' '.join(result)
 
     value = get_pkg_attr(pkg, attr)
-    if value is None:
-        # missing revision is assumed to be -r0
-        if attr == 'revision':
-            return '0'
+    if attr == 'revision' and not value:
+        # missing/empty revision is assumed to be -r0
+        return '0'
+    elif value is None:
         return 'MISSING'
 
     if attr in ('iuse', 'properties', 'defined_phases', 'inherited'):

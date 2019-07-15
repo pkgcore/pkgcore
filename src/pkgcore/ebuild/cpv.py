@@ -60,39 +60,56 @@ class _Revision(UserString):
     # https://docs.python.org/3/reference/datamodel.html#object.__hash__
     __hash__ = UserString.__hash__
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.data:
+            self._revint = int(self.data)
+        else:
+            self._revint = 0
+
     def __eq__(self, other):
         if isinstance(other, _Revision):
-            return int(self.data) == int(other.data)
+            return self._revint == other._revint
         elif isinstance(other, int):
-            return int(self.data) == other
+            return self._revint == other
+        elif other is None:
+            return self._revint == 0
         return self.data == other
 
     def __lt__(self, other):
         if isinstance(other, _Revision):
-            return int(self.data) < int(other.data)
+            return self._revint < other._revint
         elif isinstance(other, int):
-            return int(self.data) < other
+            return self._revint < other
+        elif other is None:
+            return self._revint < 0
         return self.data < other
 
     def __le__(self, other):
         if isinstance(other, _Revision):
-            return int(self.data) <= int(other.data)
+            return self._revint <= other._revint
         elif isinstance(other, int):
-            return int(self.data) <= other
+            return self._revint <= other
+        elif other is None:
+            return self._revint <= 0
         return self.data <= other
 
     def __gt__(self, other):
         if isinstance(other, _Revision):
-            return int(self.data) > int(other.data)
+            return self._revint > other._revint
         elif isinstance(other, int):
-            return int(self.data) > other
+            return self._revint > other
+        elif other is None:
+            return self._revint > 0
         return self.data > other
 
     def __ge__(self, other):
         if isinstance(other, _Revision):
-            return int(self.data) >= int(other.data)
+            return self._revint >= other._revint
         elif isinstance(other, int):
-            return int(self.data) >= other
+            return self._revint >= other
+        elif other is None:
+            return self._revint >= 0
         return self.data >= other
 
 
@@ -176,7 +193,7 @@ class _native_CPV(object):
                     sf(self, 'cpvstr', f"{category}/{'-'.join(pkg_chunks)}-r{int(rev)}")
                 sf(self, 'revision', rev)
             else:
-                sf(self, 'revision', None)
+                sf(self, 'revision', _Revision(''))
 
             if not isvalid_version_re.match(pkg_chunks[-1]):
                 raise InvalidCPV(f"{cpvstr}: invalid version '{pkg_chunks[-1]}'")

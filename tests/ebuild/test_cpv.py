@@ -152,11 +152,10 @@ class Test_native_Cpv(object):
             c = self.make_inst(cat, pkg, ver + rev)
             if rev == "" or rev == "-r0":
                 assert c.cpvstr == f"{cat}/{pkg}-{ver}"
+                assert c.revision == 0
                 if rev:
-                    assert c.revision == 0
                     assert c.fullver == ver + rev
                 else:
-                    assert c.revision is None
                     assert c.fullver == ver
             else:
                 assert c.revision == int(rev.lstrip("-r"))
@@ -187,11 +186,10 @@ class Test_native_Cpv(object):
             c = self.make_inst(cat, pkg, ver + rev)
             if rev == '' or rev == '-r0':
                 assert c.cpvstr == f"{cat}/{pkg}-{ver}"
+                assert c.revision == 0
                 if rev:
-                    assert c.revision == 0
                     assert c.fullver == ver + rev
                 else:
-                    assert c.revision is None
                     assert c.fullver == ver
             else:
                 assert c.cpvstr == f"{cat}/{pkg}-{ver}{rev}"
@@ -253,7 +251,14 @@ class Test_native_Cpv(object):
         assert vkls("dev-lang/erlang-12.2.5") > vkls("dev-lang/erlang-12.2b")
         assert vkls("dev-lang/erlang-12.2.5-r1") > vkls("dev-lang/erlang-12.2b")
 
+        # equivalent versions
         assert vkls("da/ba-6.01.0") == vkls("da/ba-6.010.0")
+        assert vkls("da/ba-6.0.1") == vkls("da/ba-6.000.1")
+
+        # equivalent revisions
+        assert vkls("da/ba-6.01.0") == vkls("da/ba-6.01.0-r0")
+        assert vkls("da/ba-6.01.0-r0") == vkls("da/ba-6.01.0-r00")
+        assert vkls("da/ba-6.01.0-r1") == vkls("da/ba-6.01.0-r001")
 
         for v1, v2 in (("1.001000000000000000001", "1.001000000000000000002"),
             ("1.00100000000", "1.0010000000000000001"),

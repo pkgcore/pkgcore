@@ -16,8 +16,9 @@ from pkgcore.repository import errors as repo_errors
 class TestMetadataXml(object):
 
     @staticmethod
-    def get_metadata_xml(maintainers=(), local_use={}, longdescription=None):
-        hs = ms = us = ls = ""
+    def get_metadata_xml(maintainers=(), comments=(), local_use={}, longdescription=None):
+        cs = '\n'.join(comments)
+        ms = us = ls = ""
         if maintainers:
             ms = []
             for x in maintainers:
@@ -37,10 +38,17 @@ class TestMetadataXml(object):
 f"""<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
 <pkgmetadata>
-{hs}{ms}{us}{ls}</pkgmetadata>"""
+{cs}{ms}{us}{ls}</pkgmetadata>"""
         return repo_objs.MetadataXml(data_source(s.encode('utf-8')))
 
     def test_maintainers(self):
+        # test empty
+        assert () == self.get_metadata_xml().maintainers
+
+        # test maintainer-needed comment
+        mx = self.get_metadata_xml(comments=('<!-- maintainer-needed -->',))
+        assert mx.maintainers == ()
+
         # test non empty, multiple
         names = ("foo@gmail.com", "monkeybone@gmail.com")
         mx = self.get_metadata_xml(maintainers=tuple(
@@ -54,25 +62,6 @@ f"""<?xml version="1.0" encoding="UTF-8"?>
             tuple(str(m) for m in mx.maintainers)
         assert "funkymonkey@gmail.com" == mx.maintainers[0].email
         assert "funky monkey \N{SNOWMAN}" == mx.maintainers[0].name
-
-        # test maintainer-needed
-        s = \
-f"""<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
-<pkgmetadata>
-<!-- maintainer-needed -->
-</pkgmetadata>"""
-        mx = repo_objs.MetadataXml(data_source(s.encode('utf-8')))
-        assert "maintainer-needed" == mx.maintainers[0].name
-
-        # test empty -> maintainer-needed
-        s = \
-f"""<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
-<pkgmetadata>
-</pkgmetadata>"""
-        mx = repo_objs.MetadataXml(data_source(s.encode('utf-8')))
-        assert "maintainer-needed" == mx.maintainers[0].name
 
     def test_local_use(self):
         # empty...

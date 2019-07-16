@@ -120,10 +120,6 @@ class MetadataXml(object):
             maintainers.append(Maintainer(
                 name=name, email=email, description=description))
 
-        # pull maintainer-needed status from comments
-        if not maintainers:
-            maintainers.append(Maintainer(name='maintainer-needed'))
-
         self._maintainers = tuple(maintainers)
 
         # Could be unicode!

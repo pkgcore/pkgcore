@@ -788,10 +788,16 @@ def parse_maintainer(value):
     Case insensitive Regex match on the combined 'name <email>' bit of
     metadata.xml's maintainer data.
     """
-    return packages.PackageRestriction(
-        'maintainers',
-        values.AnyMatch(values.UnicodeConversion(
+    if value:
+        return packages.PackageRestriction(
+            'maintainers',
+            values.AnyMatch(values.UnicodeConversion(
             values.StrRegex(value.lower(), case_sensitive=False))))
+    else:
+        # empty string matches packages without a maintainer
+        return packages.PackageRestriction(
+            'maintainers',
+            values.EqualityMatch(()))
 
 @bind_add_query(
     '--maintainer-name', action='append',

@@ -21,6 +21,9 @@ class FakeDomain(object):
     def add_repo(self, *args, **kwargs):
         """stubbed"""
 
+    def find_repo(self, *args, **kwargs):
+        """stubbed"""
+
 
 class FakeRepo(FakeEbuildRepo):
 

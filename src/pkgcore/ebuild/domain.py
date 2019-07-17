@@ -45,6 +45,7 @@ demandload(
     're',
     'tempfile',
     'snakeoil.cli.exceptions:find_user_exception',
+    'snakeoil.log:suppress_logging',
     'snakeoil.process.spawn:spawn_get_output',
     'pkgcore.binpkg:repository@binary_repo',
     'pkgcore.ebuild:repository@ebuild_repo',
@@ -651,6 +652,18 @@ class domain(config_domain):
         if configure:
             return self._wrap_repo(repo_obj)
         return repo_obj
+
+    def find_repo(self, path, config, configure=True):
+        """Find and add an external repo to the domain given a path."""
+        repo = None
+        with suppress_logging():
+            while path != self.root:
+                try:
+                    repo = self.add_repo(path, config=config, configure=configure)
+                    break
+                except repo_errors.InitializationError:
+                    path = os.path.dirname(path)
+        return repo
 
     def _configure_repo(self, repo):
         """Configure a raw repo."""

@@ -353,8 +353,10 @@ class StoreRepoObject(StoreConfigObject):
                 # try to add it as an external repo
                 if self.allow_external_repos and os.path.exists(repo):
                     try:
+                        configure = not self.repo_type.endswith('-raw')
                         with suppress_logging():
-                            repo_obj = self.domain.add_repo(repo, config=self.config)
+                            repo_obj = self.domain.add_repo(
+                                repo, config=self.config, configure=configure)
                         repo = repo_obj.repo_id
                     except repo_errors.RepoError as e:
                         raise argparse.ArgumentError(self, e)

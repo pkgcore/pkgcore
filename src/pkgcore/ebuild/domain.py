@@ -631,8 +631,8 @@ class domain(config_domain):
             wrapped_repo = self.filter_repo(wrapped_repo)
         return wrapped_repo
 
-    def add_repo(self, path, config, name=None):
-        """Add an external, unconfigured repo to the domain."""
+    def add_repo(self, path, config, name=None, configure=True):
+        """Add an external repo to the domain."""
         # TODO: add support for configuring/enabling the external repo's cache
         path = os.path.abspath(path)
         if name is None:
@@ -648,7 +648,9 @@ class domain(config_domain):
 
         # TODO: reset related jit attrs
         self.source_repos_raw += repo_obj
-        return self._wrap_repo(repo_obj)
+        if configure:
+            return self._wrap_repo(repo_obj)
+        return repo_obj
 
     def _configure_repo(self, repo):
         """Configure a raw repo."""

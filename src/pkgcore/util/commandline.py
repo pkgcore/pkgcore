@@ -525,16 +525,12 @@ def store_config(namespace, attr, global_config=()):
                 for section, vals in d.items()}
                for d in configs if d]
 
-    profile_override = namespace.pop('profile_override', None)
-    if profile_override == 'fake':
-        profile_override = pjoin(const.DATA_PATH, 'fakerepo/profiles/default')
-
     config = load_config(
         skip_config_files=namespace.pop('empty_config', False),
         prepend_sources=tuple(global_config),
         append_sources=tuple(configs),
         location=namespace.pop('override_config', None),
-        profile_override=profile_override,
+        profile_override=namespace.pop('profile_override', None),
         **vars(namespace))
     setattr(namespace, attr, config)
 

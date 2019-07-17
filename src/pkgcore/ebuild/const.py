@@ -32,7 +32,7 @@ VCS_ECLASSES = frozenset([
 
 WORLD_FILE = '/var/lib/portage/world'
 
-EBD_PATH = const._GET_CONST('EBD_PATH', '%(DATA_PATH)s/ebd')
+EBD_PATH = const._GET_CONST('EBD_PATH', '%(REPO_PATH)s/ebd')
 EBUILD_DAEMON_PATH = pjoin(EBD_PATH, "ebuild-daemon.bash")
 EBUILD_HELPERS_PATH = pjoin(EBD_PATH, "helpers")
 

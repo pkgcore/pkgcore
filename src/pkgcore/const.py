@@ -54,8 +54,9 @@ USER_CONF_FILE = osp.join(getattr(_module, 'USER_CONFIG_PATH'), 'pkgcore.conf')
 SYSTEM_CONF_FILE = '/etc/pkgcore/pkgcore.conf'
 SYSTEM_CACHE_PATH = '/var/cache/pkgcore'
 
-DATA_PATH = _GET_CONST('DATA_PATH', _reporoot, allow_environment_override=True)
-LIBDIR_PATH = _GET_CONST('LIBDIR_PATH', _reporoot)
-CONFIG_PATH = _GET_CONST('CONFIG_PATH', '%(DATA_PATH)s/config')
-PATH_FORCED_PREPEND = _GET_CONST('INJECTED_BIN_PATH', ('%(DATA_PATH)s/bin',))
+REPO_PATH = _GET_CONST('REPO_PATH', _reporoot, allow_environment_override=True)
+DATA_PATH = _GET_CONST('DATA_PATH', '%(REPO_PATH)s/data')
+LIBDIR_PATH = _GET_CONST('LIBDIR_PATH', '%(REPO_PATH)s')
+CONFIG_PATH = _GET_CONST('CONFIG_PATH', '%(REPO_PATH)s/data/config')
+PATH_FORCED_PREPEND = _GET_CONST('INJECTED_BIN_PATH', ('%(REPO_PATH)s/bin',))
 CP_BINARY = _GET_CONST('CP_BINARY', '/bin/cp')

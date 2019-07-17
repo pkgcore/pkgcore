@@ -218,7 +218,7 @@ class test(pkgdist.pytest):
         # This is fairly hacky, but is done to ensure that the tests
         # are ran purely from what's in build, reflecting back to the source
         # only for misc bash scripts or config data.
-        key = 'PKGCORE_OVERRIDE_DATA_PATH'
+        key = 'PKGCORE_OVERRIDE_REPO_PATH'
         original = os.environ.get(key)
         try:
             os.environ[key] = os.path.dirname(os.path.realpath(__file__))
@@ -256,7 +256,7 @@ setup(**dict(pkgdist_setup,
     author='Brian Harring, Tim Harder',
     data_files=list(chain(
         pkgdist.data_mapping(EBD_INSTALL_OFFSET, 'ebd'),
-        pkgdist.data_mapping(CONFIG_INSTALL_OFFSET, 'config'),
+        pkgdist.data_mapping(DATA_INSTALL_OFFSET, 'data'),
         pkgdist.data_mapping('share/zsh/site-functions', 'shell/zsh/completion'),
         pkgdist.data_mapping(
             os.path.join(LIBDIR_INSTALL_OFFSET, 'shell'), 'shell',

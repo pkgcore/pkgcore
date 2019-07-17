@@ -466,10 +466,10 @@ class PortageConfig(DictMixin):
                 pjoin(self.dir, os.readlink(make_profile))))
         except EnvironmentError as e:
             if e.errno in (errno.ENOENT, errno.EINVAL):
-                raise errors.ComplexInstantiationError(
-                    f"{make_profile} must be a symlink pointing to a real target") from e
+                raise errors.UserConfigError(
+                    f"{make_profile!r} must be a symlink pointing to a real target") from e
             raise errors.ComplexInstantiationError(
-                f"{make_profile}: unexpected error- {e.strerror}") from e
+                f"{make_profile!r}: unexpected error- {e.strerror}") from e
 
     def _add_profile(self, profile_override=None):
         if profile_override is None:
@@ -477,12 +477,12 @@ class PortageConfig(DictMixin):
         else:
             profile = normpath(abspath(profile_override))
             if not os.path.exists(profile):
-                raise errors.ComplexInstantiationError(f"{profile} doesn't exist")
+                raise errors.UserConfigError(f"{profile!r} doesn't exist")
 
         paths = profiles.OnDiskProfile.split_abspath(profile)
         if paths is None:
-            raise errors.ComplexInstantiationError(
-                '%s expands to %s, but no profile detected' %
+            raise errors.UserConfigError(
+                '%r expands to %r, but no profile detected' %
                 (pjoin(self.dir, 'make.profile'), profile))
 
         user_profile_path = pjoin(self.dir, 'profile')

@@ -181,15 +181,24 @@ def _render_rows(options, pkgs, arches):
         row = [pkg.fullver]
         for arch in arches:
             if arch in keywords:
-                row.append('+')
+                line = '+'
+                color = '\u001b[32m'
             elif f'~{arch}' in keywords:
-                row.append('~')
+                line = '~'
+                color = '\u001b[33m'
             elif f'-{arch}' in keywords:
-                row.append('-')
+                line = '-'
+                color = '\u001b[31m'
             elif '-*' in keywords:
-                row.append('*')
+                line = '*'
+                color = '\u001b[31m'
             else:
-                row.append('o')
+                line = 'o'
+                color = '\u001b[30;1m'
+            if options.color:
+                row.append(color + line + '\u001b[0m')
+            else:
+                row.append(line)
         row.extend([pkg.eapi, pkg.fullslot, pkg.repo.repo_id])
         yield row
 

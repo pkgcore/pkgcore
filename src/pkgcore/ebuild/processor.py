@@ -234,11 +234,18 @@ class TimeoutError(PkgcoreException):
 
 
 class ProcessorError(PkgcoreUserException):
-    """Bash processor returned a failure."""
+    """Generic ebuild processor error."""
 
     def __init__(self, error):
         self.error = error
         super().__init__(self.msg())
+
+    def msg(self, verbosity=0):
+        return self.error
+
+
+class EbdError(ProcessorError):
+    """Ebuild daemon received a die() call on the bash side."""
 
     def msg(self, verbosity=0):
         """Extract error message from verbose output depending on verbosity level."""
@@ -268,7 +275,7 @@ def chuck_DyingInterrupt(ebp, logfile=None, *args):
     if logfile:
         with open(logfile, 'at') as f:
             f.write(''.join(error))
-    raise ProcessorError(''.join(error))
+    raise EbdError(''.join(error))
 
 
 def chuck_KeyboardInterrupt(*args):
@@ -935,15 +942,13 @@ def inherit_handler(ecache, ebp, line, updates=None):
     """
     if line is None:
         ebp.write("failed")
-        raise UnhandledCommand(
-            "inherit requires an eclass specified, none specified")
+        raise UnhandledCommand("inherit requires eclass specified, got none")
 
     line = line.strip()
     eclass = ecache.get_eclass(line)
     if eclass is None:
         ebp.write("failed")
-        raise UnhandledCommand(
-            f"inherit requires an unknown eclass, {line} cannot be found")
+        raise ProcessorError(f"inherit requires unknown eclass: {line}.eclass")
 
     if eclass.path is not None:
         ebp.write("path")

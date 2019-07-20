@@ -935,7 +935,7 @@ class EbuildProcessor(object):
         finally:
             self.unlock()
 
-def inherit_handler(ecache, ebp, line, updates=None):
+def inherit_handler(ecache, ebp, line=None, updates=None):
     """Callback for implementing inherit digging into eclass_cache.
 
     Not for normal consumption.

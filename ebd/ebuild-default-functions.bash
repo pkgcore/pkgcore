@@ -172,6 +172,7 @@ __dyn_pkg_preinst() {
 }
 
 inherit() {
+	[[ -z $@ ]] && die "${FUNCNAME}: missing eclass argument"
 	local ECLASS_DEPTH=$(( ${ECLASS_DEPTH-0} + 1 ))
 
 	if [[ ${ECLASS_DEPTH} -gt 1 ]]; then

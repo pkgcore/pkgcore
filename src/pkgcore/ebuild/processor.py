@@ -941,13 +941,15 @@ def inherit_handler(ecache, ebp, line=None, updates=None):
     Not for normal consumption.
     """
     if line is None:
-        ebp.write("failed")
-        raise UnhandledCommand("inherit requires eclass specified, got none")
+        drop_ebuild_processor(ebp)
+        ebp.shutdown_processor(force=True)
+        raise ProcessorError("inherit requires eclass specified, got none")
 
     line = line.strip()
     eclass = ecache.get_eclass(line)
     if eclass is None:
-        ebp.write("failed")
+        drop_ebuild_processor(ebp)
+        ebp.shutdown_processor(force=True)
         raise ProcessorError(f"inherit requires unknown eclass: {line}.eclass")
 
     if eclass.path is not None:

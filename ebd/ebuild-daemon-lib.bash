@@ -120,8 +120,6 @@ __internal_inherit() {
 	elif [[ ${line} == "transfer" ]]; then
 		__ebd_read_line line
 		__qa_invoke eval "${line}" || die "failed evaluating eclass $1 on an inherit transfer"
-	elif [[ ${line} == "failed" ]]; then
-		die "inherit for $1 failed"
 	else
 		die "unknown inherit command from pythonic side, '${line}' for eclass $1"
 	fi

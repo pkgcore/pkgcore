@@ -435,15 +435,18 @@ class RepoConfig(syncable.tree, metaclass=WeakInstMeta):
 
         sf(self, 'manifests', _immutable_attr_dict(d))
         masters = data.get('masters')
+        _missing_masters = False
         if masters is None:
             if not self.is_empty:
                 logger.warning(
                     f"repo at {self.location!r}, named {self.repo_id!r}, doesn't "
                     "specify masters in metadata/layout.conf. Please explicitly "
                     "set masters (use \"masters =\" if the repo is standalone).")
+            _missing_masters = True
             masters = ()
         else:
             masters = tuple(iter_stable_unique(masters.split()))
+        sf(self, '_missing_masters', _missing_masters)
         sf(self, 'masters', masters)
         aliases = data.get('aliases', '').split() + [self.repo_id, self.location]
         sf(self, 'aliases', tuple(iter_stable_unique(aliases)))

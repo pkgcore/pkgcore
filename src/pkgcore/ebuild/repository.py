@@ -166,11 +166,13 @@ def _sort_eclasses(config, repo_config):
     repo_id = repo_config.repo_id
     masters = repo_config.masters
     eclasses = []
+
     default = config.get_default('repo_config')
-    if default is None:
-        location = repo_path
-    else:
+    if repo_config._missing_masters and default is not None:
+        # use default repo's eclasses for overlays with missing masters
         location = default.location
+    else:
+        location = repo_path
 
     if not masters:
         eclasses = [location]

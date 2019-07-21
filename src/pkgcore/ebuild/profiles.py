@@ -153,6 +153,10 @@ class ProfileNode(object, metaclass=caching.WeakInstMeta):
 
     _packages_kls = namedtuple("packages", ("system", "visibility"))
 
+    @klass.jit_attr
+    def name(self):
+        return self.path.split('/profiles/')[-1]
+
     @load_property("packages")
     def packages(self, data):
         repo_config = self.repoconfig
@@ -460,6 +464,7 @@ class ProfileStack(object):
 
     deprecated = klass.alias_attr("node.deprecated")
     eapi = klass.alias_attr("node.eapi")
+    name = klass.alias_attr("node.name")
 
     @klass.jit_attr
     def stack(self):

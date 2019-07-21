@@ -459,6 +459,7 @@ class ProfileStack(object):
         return self.default_env.get("ARCH")
 
     deprecated = klass.alias_attr("node.deprecated")
+    eapi = klass.alias_attr("node.eapi")
 
     @klass.jit_attr
     def stack(self):

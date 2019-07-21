@@ -1289,6 +1289,12 @@ class TestOnDiskProfile(profile_mixin, TestCase):
             )
         self.assertTrue(self.get_profile("1").deprecated)
 
+    def test_eapi(self):
+        self.mk_profiles({})
+        assert str(self.get_profile("0").eapi) == '0'
+        self.mk_profiles({"eapi": "5\n"})
+        assert str(self.get_profile("0").eapi) == '5'
+
     @silence_logging
     def test_from_abspath(self):
         self.mk_profiles({'name':'profiles'}, {'name':'profiles/1'})

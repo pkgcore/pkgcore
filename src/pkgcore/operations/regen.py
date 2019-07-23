@@ -2,25 +2,24 @@
 # License: GPL2/BSD 3 clause
 
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
-from snakeoil.demandload import demandload
 
+from pkgcore.package.errors import MetadataException
 from pkgcore.restrictions import packages
-
-demandload(
-    'pkgcore.util.thread_pool:map_async',
-)
+from pkgcore.util.thread_pool import map_async
 
 
 def regen_iter(iterable, regen_func, observer, is_thread=False):
-    for x in iterable:
+    for pkg in iterable:
         try:
-            regen_func(x)
+            regen_func(pkg)
         except IGNORED_EXCEPTIONS as e:
             if isinstance(e, KeyboardInterrupt):
                 return
             raise
+        except MetadataException as e:
+            observer.error(f'{pkg.cpvstr}: {e.msg(verbosity=observer.verbosity)}')
         except Exception as e:
-            observer.error("caught exception %s while processing %s", e, x)
+            observer.error(f'caught exception {e} while processing {pkg.cpvstr}')
 
 
 def regen_repository(repo, observer, threads=1, pkg_attr='keywords', **kwargs):

@@ -649,7 +649,6 @@ class _RegenOpHelper(object):
         if self.eclass_caching:
             self.ebp.disable_eclass_caching()
         processor.release_ebuild_processor(self.ebp)
-        self.ebp = None
 
 
 class ConfiguredTree(configured.tree):

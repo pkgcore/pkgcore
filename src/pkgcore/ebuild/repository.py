@@ -540,6 +540,10 @@ class UnconfiguredTree(prototype.tree):
                 except MetadataException as e:
                     self._masked[e.pkg.versioned_atom] = e
                     continue
+                except FileNotFoundError as e:
+                    self._masked[pkg.versioned_atom] = MetadataException(
+                        pkg, 'data', 'mismatched package name')
+                    continue
                 yield pkg
 
     def itermatch(self, *args, **kwargs):

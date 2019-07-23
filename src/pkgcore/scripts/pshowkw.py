@@ -147,7 +147,7 @@ def _validate_args(parser, namespace):
             # faster if we're in an invididual ebuild dir but we're not that
             # restrictive.
             try:
-                restriction = namespace.target_repo.path_restrict(namespace.cwd)
+                restriction = namespace.repo.path_restrict(namespace.cwd)
                 token = namespace.cwd
             except (AttributeError, ValueError):
                 parser.error('missing target argument and not in a supported repo')

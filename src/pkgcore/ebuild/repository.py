@@ -629,12 +629,21 @@ class _RegenOpHelper(object):
     def __init__(self, repo, force=False, eclass_caching=True):
         self.force = force
         self.eclass_caching = eclass_caching
-        self.ebp = processor.request_ebuild_processor()
-        if eclass_caching:
-            self.ebp.allow_eclass_caching()
+
+    @klass.jit_attr_none
+    def ebp(self):
+        ebp = processor.request_ebuild_processor()
+        if self.eclass_caching:
+            ebp.allow_eclass_caching()
+        return ebp
 
     def __call__(self, pkg):
-        return pkg._fetch_metadata(ebp=self.ebp, force_regen=self.force)
+        try:
+            return pkg._fetch_metadata(ebp=self.ebp, force_regen=self.force)
+        except MetadataException as e:
+            # ebuild processor is dead, so force a replacement request
+            self._ebp = None
+            raise
 
     def finish(self):
         if self.eclass_caching:

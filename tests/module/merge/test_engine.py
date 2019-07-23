@@ -10,8 +10,9 @@ from snakeoil.test.mixins import tempdir_decorator
 from pkgcore.fs import livefs
 from pkgcore.fs.contents import contentsSet
 from pkgcore.merge import engine
-from tests.fs.fs_util import fsFile, fsDir, fsSymlink
-from tests.merge.util import fake_engine
+
+from .util import fake_engine
+from ..fs.fs_util import fsFile, fsDir, fsSymlink
 
 
 class fake_pkg(object):

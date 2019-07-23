@@ -329,7 +329,7 @@ class FakeIncrementalDictConfigSectionTest(TestCase):
         self.assertEqual(
             ('list', [
                     ['whatever'],
-                    ['tests.config.test_basics.asis'],
+                    ['module.config.test_basics.asis'],
                     None]),
             section.render_value(manager, 'strlist', 'repr'))
         self.assertRaises(
@@ -344,7 +344,7 @@ class ConvertStringTest(TestCase):
             'str': 'tests',
             'bool': 'yes',
             'list': '0 1 2',
-            'callable': 'tests.config.test_basics.passthrough',
+            'callable': 'module.config.test_basics.passthrough',
             }
         destination = {
             'str': 'tests',

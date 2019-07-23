@@ -4,8 +4,9 @@
 from snakeoil.test.mixins import TempDirMixin
 
 from pkgcore.cache import flat_hash
-from tests.cache import test_base
-from tests.cache.test_util import GenericCacheMixin
+
+from . import test_base
+from .test_util import GenericCacheMixin
 
 
 class db(flat_hash.database):

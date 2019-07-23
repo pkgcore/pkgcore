@@ -63,15 +63,15 @@ class TestModifyConfig(ArgParseMixin):
     def test_modify_config(self):
         namespace = self.parse(
             '--empty-config', '--new-config',
-            'foo', 'class', 'tests.util.test_commandline.sect',
+            'foo', 'class', 'module.util.test_commandline.sect',
             '--trigger')
         assert namespace.config.collapse_named_section('foo')
 
         namespace = self.parse(
             '--empty-config', '--new-config',
-            'foo', 'class', 'tests.util.test_commandline.missing',
+            'foo', 'class', 'module.util.test_commandline.missing',
             '--add-config', 'foo', 'class',
-            'tests.util.test_commandline.sect',
+            'module.util.test_commandline.sect',
             '--trigger')
         assert namespace.config.collapse_named_section('foo')
 

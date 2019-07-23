@@ -17,7 +17,8 @@ from pkgcore.fs import fs
 from pkgcore.merge import triggers, const
 from pkgcore.fs.contents import contentsSet
 from pkgcore.fs.livefs import gen_obj, scan
-from tests.merge.util import fake_trigger, fake_engine, fake_reporter
+
+from .util import fake_trigger, fake_engine, fake_reporter
 
 
 def _render_msg(func, msg, *args, **kwargs):

@@ -57,7 +57,7 @@ test {
     list one two three;
     string hi;
     bool yes;
-    callable tests.config.test_dhcpformat.passthrough;
+    callable module.config.test_dhcpformat.passthrough;
 }
 '''),
             (mke2fsformat.config_from_file, '''
@@ -65,7 +65,7 @@ test {
     list = one two three
     string = hi
     bool = yes
-    callable = tests.config.test_dhcpformat.passthrough
+    callable = module.config.test_dhcpformat.passthrough
 '''),
             ]:
             config = parser(StringIO(text))
@@ -83,7 +83,7 @@ test {
                 ('string', 'str', 'hi'),
                 ('bool', 'str', 'yes'),
                 ('callable', 'str',
-                 'tests.config.test_dhcpformat.passthrough'),
+                 'module.config.test_dhcpformat.passthrough'),
                 ):
                 self.assertEqual(
                     (typename, value), section.render_value(None, name, 'repr'))
@@ -92,27 +92,27 @@ test {
         for parser, text in [
             (dhcpformat.config_from_file, '''
 target {
-    class tests.config.test_dhcpformat.testtype;
+    class module.config.test_dhcpformat.testtype;
     hi there;
 }
 
 test {
     ref target;
     inline {
-        class tests.config.test_dhcpformat.testtype;
+        class module.config.test_dhcpformat.testtype;
         hi here;
     };
 }
 '''),
             (mke2fsformat.config_from_file, '''
 [target]
-    class = tests.config.test_dhcpformat.testtype
+    class = module.config.test_dhcpformat.testtype
     hi = there
 
 [test]
     ref = target
     inline = {
-        class = tests.config.test_dhcpformat.testtype
+        class = module.config.test_dhcpformat.testtype
         hi = here
     }
 '''),
@@ -136,41 +136,41 @@ test {
         for parser, text in [
             (dhcpformat.config_from_file, '''
 target {
-    class tests.config.test_dhcpformat.testtype;
+    class module.config.test_dhcpformat.testtype;
     hi there;
 }
 
 test {
     ref target target;
     inline {
-        class tests.config.test_dhcpformat.testtype;
+        class module.config.test_dhcpformat.testtype;
         hi here;
     } {
-        class tests.config.test_dhcpformat.testtype;
+        class module.config.test_dhcpformat.testtype;
         hi here;
     };
     mix target {
-        class tests.config.test_dhcpformat.testtype;
+        class module.config.test_dhcpformat.testtype;
         hi here;
     };
 }
 '''),
             (mke2fsformat.config_from_file, '''
 [target]
-    class = tests.config.test_dhcpformat.testtype
+    class = module.config.test_dhcpformat.testtype
     hi = there
 
 [test]
     ref = target target
     inline = {
-        class = tests.config.test_dhcpformat.testtype
+        class = module.config.test_dhcpformat.testtype
         hi = here
     } {
-        class = tests.config.test_dhcpformat.testtype
+        class = module.config.test_dhcpformat.testtype
         hi = here
     }
     mix = target {
-        class = tests.config.test_dhcpformat.testtype
+        class = module.config.test_dhcpformat.testtype
         hi = here
     }
 '''),
@@ -196,25 +196,25 @@ test {
         for parser, text in [
             (dhcpformat.config_from_file, '''
 target {
-    class tests.config.test_dhcpformat.testtype;
+    class module.config.test_dhcpformat.testtype;
     hi there;
 }
 
 test {
     refs target {
-        class tests.config.test_dhcpformat.testtype;
+        class module.config.test_dhcpformat.testtype;
         hi here;
     };
 }
 '''),
             (mke2fsformat.config_from_file, '''
 [target]
-    class = tests.config.test_dhcpformat.testtype
+    class = module.config.test_dhcpformat.testtype
     hi = there
 
 [test]
     refs = target {
-        class = tests.config.test_dhcpformat.testtype
+        class = module.config.test_dhcpformat.testtype
         hi = here
     }
 '''),
@@ -230,13 +230,13 @@ test {
         for parser, text in [
             (dhcpformat.config_from_file, '''
 target {
-    class tests.config.test_dhcpformat.testtype;
+    class module.config.test_dhcpformat.testtype;
     hi there;
 }
 
 test {
     inline {
-        class tests.config.test_dhcpformat.testtype;
+        class module.config.test_dhcpformat.testtype;
         hi here;
     };
     ref target;
@@ -244,12 +244,12 @@ test {
 '''),
             (mke2fsformat.config_from_file, '''
 [target]
-    class = tests.config.test_dhcpformat.testtype
+    class = module.config.test_dhcpformat.testtype
     hi = there
 
 [test]
     inline = {
-        class = tests.config.test_dhcpformat.testtype
+        class = module.config.test_dhcpformat.testtype
         hi = here
     }
     ref = target

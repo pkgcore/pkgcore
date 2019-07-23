@@ -15,7 +15,8 @@ from pkgcore.ebuild import ebuild_src, digest, repo_objs
 from pkgcore.ebuild.eapi import get_eapi, EAPI
 from pkgcore.package import errors
 from pkgcore.test import malleable_obj
-from tests.ebuild.test_eclass_cache import FakeEclassCache
+
+from .test_eclass_cache import FakeEclassCache
 
 
 class TestBase(object):

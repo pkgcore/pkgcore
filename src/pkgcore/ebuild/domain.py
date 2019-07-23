@@ -48,6 +48,7 @@ demandload(
     'snakeoil.log:suppress_logging',
     'snakeoil.process.spawn:spawn_get_output',
     'pkgcore.binpkg:repository@binary_repo',
+    'pkgcore.cache.flat_hash:md5_cache',
     'pkgcore.ebuild:repository@ebuild_repo',
     'pkgcore.ebuild.portage_conf:PortageConfig',
     'pkgcore.ebuild.repo_objs:RepoConfig',
@@ -634,7 +635,6 @@ class domain(config_domain):
 
     def add_repo(self, path, config, name=None, configure=True):
         """Add an external repo to the domain."""
-        # TODO: add support for configuring/enabling the external repo's cache
         path = os.path.abspath(path)
         if name is None:
             # parse repo id from the given path
@@ -645,7 +645,9 @@ class domain(config_domain):
         if name in self.source_repos_raw:
             raise ValueError(f'{name!r} repo already configured')
         repo_config = RepoConfig(path, config_name=name)
-        repo_obj = ebuild_repo.tree(config, repo_config)
+        # default to using md5 cache
+        cache = md5_cache(path)
+        repo_obj = ebuild_repo.tree(config, repo_config, cache=(cache,))
 
         # TODO: reset related jit attrs
         self.source_repos_raw += repo_obj

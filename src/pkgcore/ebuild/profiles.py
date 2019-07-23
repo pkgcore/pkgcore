@@ -137,9 +137,9 @@ class ProfileNode(object, metaclass=caching.WeakInstMeta):
     _repo_map = None
 
     def __init__(self, path, pms_strict=True):
-        if not os.path.isdir(path):
-            raise ProfileError(path, "", "profile doesn't exist")
         self.path = path
+        if not os.path.isdir(self.path):
+            raise ProfileError(self.path, "", "nonexistent profile")
         self.pms_strict = pms_strict
 
     def __str__(self):
@@ -193,7 +193,8 @@ class ProfileNode(object, metaclass=caching.WeakInstMeta):
         repo_config = self.repoconfig
         if repo_config is not None and 'portage-2' in repo_config.profile_formats:
             l = []
-            for repo_id, separator, path in (x.partition(':') for x in data):
+            for line in data:
+                repo_id, separator, path = line.partition(':')
                 if separator:
                     if repo_id:
                         try:
@@ -211,7 +212,15 @@ class ProfileNode(object, metaclass=caching.WeakInstMeta):
     @klass.jit_attr
     def parents(self):
         kls = getattr(self, 'parent_node_kls', self.__class__)
-        return tuple(kls(x) for x in self.parent_paths)
+        parents = []
+        for path in self.parent_paths:
+            try:
+                parents.append(kls(path))
+            except ProfileError as e:
+                repo_id = self.repoconfig.repo_id
+                logger.warning(f'bad profile: {repo_id}:{self.name}: {str(e)}')
+                continue
+        return tuple(parents)
 
     @load_property("package.provided", allow_recurse=True,
                    eapi_optional='profile_pkg_provided')

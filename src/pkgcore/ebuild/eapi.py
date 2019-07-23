@@ -12,6 +12,7 @@ from snakeoil.osutils import pjoin
 
 demandload(
     "functools:partial",
+    'subprocess',
     'snakeoil.process.spawn:bash_version,spawn_get_output',
     "pkgcore.ebuild:atom,const",
     "pkgcore.log:logger",
@@ -202,7 +203,10 @@ class EAPI(object, metaclass=klass.immutable_instance):
             raise SystemExit(
                 f"EAPI '{eapi}' requires >=bash-{eapi.options.bash_compat}, "
                 f"system version: {bash_version()}")
+
         cls.known_eapis[eapi._magic] = eapi
+        # generate EAPI bash libs when running from git repo
+        eapi.bash_libs()
         return eapi
 
     @klass.jit_attr
@@ -218,18 +222,52 @@ class EAPI(object, metaclass=klass.immutable_instance):
     @klass.jit_attr
     def bash_funcs(self):
         """Internally implemented EAPI specific functions to skip when exporting."""
-        try:
-            eapi_funcs = pjoin(const.EBD_PATH, 'generated', 'funcnames', self._magic)
-            with open(eapi_funcs, 'r') as f:
-                funcs = f.readlines()
-        except FileNotFoundError:
-            # we're running in the git repo and need to generate the list on the fly
-            ret, funcs = spawn_get_output(
-                [pjoin(const.EBD_PATH, 'generate_eapi_func_list'), self._magic])
-            if ret != 0:
+        eapi_funcs = pjoin(const.EBD_PATH, '.generated', 'funcnames', self._magic)
+        if not os.path.exists(eapi_funcs):
+            # we're probably running in a cacheless git repo, so generate a cached version
+            try:
+                os.makedirs(os.path.dirname(eapi_funcs), exist_ok=True)
+                with open(eapi_funcs, 'w') as f:
+                    subprocess.run(
+                        [pjoin(const.EBD_PATH, 'generate_eapi_func_list'), self._magic],
+                        cwd=const.EBD_PATH, stdout=f)
+            except (IOError, subprocess.CalledProcessError) as e:
                 raise Exception(
-                    f"failed to generate list of EAPI '{self}' specific functions")
-        return tuple(x.strip() for x in funcs)
+                    f"failed to generate list of EAPI '{self}' specific functions: {str(e)}")
+
+        with open(eapi_funcs, 'r') as f:
+            return tuple(line.strip() for line in f)
+
+    def bash_libs(self):
+        """Generate internally implemented EAPI specific bash libs required by the ebd."""
+        eapi_global_lib = pjoin(const.EBD_PATH, '.generated', 'libs', self._magic, 'global')
+        script = pjoin(const.EBD_PATH, 'generate_eapi_lib')
+        # skip generation when installing as the install process takes care of it
+        if not os.path.exists(script):
+            return
+
+        if not os.path.exists(eapi_global_lib):
+            try:
+                os.makedirs(os.path.dirname(eapi_global_lib), exist_ok=True)
+                with open(eapi_global_lib, 'w') as f:
+                    subprocess.run(
+                        [script, '-s', 'global', self._magic],
+                        cwd=const.EBD_PATH, stdout=f)
+            except (IOError, subprocess.CalledProcessError) as e:
+                raise Exception(
+                    f"failed to generate EAPI '{self}' global lib: {str(e)}")
+
+        for phase in self.phases.values():
+            eapi_lib = pjoin(const.EBD_PATH, '.generated', 'libs', self._magic, phase)
+            if not os.path.exists(eapi_lib):
+                try:
+                    os.makedirs(os.path.dirname(eapi_lib), exist_ok=True)
+                    with open(eapi_lib, 'w') as f:
+                        subprocess.run(
+                            [script, '-s', phase, self._magic],
+                            cwd=const.EBD_PATH, stdout=f)
+                except (IOError, subprocess.CalledProcessError) as e:
+                    raise Exception(f"failed to generate EAPI '{self}' phase {phase} lib: {str(e)}")
 
     @klass.jit_attr
     def archive_suffixes_re(self):

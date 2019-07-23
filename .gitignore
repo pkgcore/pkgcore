@@ -5,9 +5,9 @@
 src/**/*.so
 
 # generated function lists
-bash/funcnames
+ebd/.generated
 
-pkgcore/plugins/plugincache
+src/pkgcore/plugins/plugincache
 /build
 /cache
 /dist

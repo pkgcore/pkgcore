@@ -180,18 +180,8 @@ __load_eapi_libs() {
 		|| die "failed sourcing eapi/common.bash"
 
 	# load global scope EAPI functions
-	if [[ -f ${PKGCORE_EBD_PATH}/generated/libs/${EAPI}/global ]]; then
-		source "${PKGCORE_EBD_PATH}"/generated/libs/${EAPI}/global \
-			|| die "failed sourcing EAPI ${EAPI} global scope lib"
-	else
-		# can't run as a script since external commands are disabled in global scope
-		source "${PKGCORE_EBD_PATH}"/generate_eapi_lib \
-			|| die "failed sourcing generate_eapi_lib"
-		# stderr wiped since bash appears to overly complain about inherited
-		# readonly functions during sourcing
-		source <(load_eapi_libs -s global ${EAPI}) 2>/dev/null \
-			|| die "failed sourcing EAPI ${EAPI} global scope lib"
-	fi
+	source "${PKGCORE_EBD_PATH}"/.generated/libs/${EAPI}/global \
+		|| die "failed sourcing EAPI ${EAPI} global scope lib"
 }
 
 # do all profile, bashrc's, and ebuild sourcing. Should only be called in setup phase, unless the
@@ -351,13 +341,8 @@ __run_ebuild_phase() {
 	}
 
 	# load phase scope EAPI functions
-	if [[ -f ${PKGCORE_EBD_PATH}/generated/libs/${EAPI}/$1 ]]; then
-		source "${PKGCORE_EBD_PATH}"/generated/libs/${EAPI}/$1 \
-			|| die "failed sourcing EAPI ${EAPI} $1 phase scope lib"
-	else
-		source <("${PKGCORE_EBD_PATH}"/generate_eapi_lib -s $1 ${EAPI}) \
-			|| die "failed sourcing EAPI ${EAPI} $1 phase scope lib"
-	fi
+	source "${PKGCORE_EBD_PATH}"/.generated/libs/${EAPI}/$1 \
+		|| die "failed sourcing EAPI ${EAPI} $1 phase scope lib"
 
 	__qa_run_function_if_exists __phase_pre_$1
 	__qa_run_function_if_exists pre_$1

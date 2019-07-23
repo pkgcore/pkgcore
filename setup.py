@@ -31,11 +31,11 @@ class sdist(pkgdist.sdist):
         import shutil
 
         # generate function lists so they don't need to be created on install
-        write_pkgcore_ebd_funclists(root='/', target='ebd/generated')
-        write_pkgcore_ebd_eapi_libs(root='/', target='ebd/generated')
+        write_pkgcore_ebd_funclists(root='/', target='ebd/.generated')
+        write_pkgcore_ebd_eapi_libs(root='/', target='ebd/.generated')
         shutil.copytree(
-            os.path.join(pkgdist.REPODIR, 'ebd', 'generated'),
-            os.path.join(base_dir, 'ebd', 'generated'))
+            os.path.join(pkgdist.REPODIR, 'ebd', '.generated'),
+            os.path.join(base_dir, 'ebd', '.generated'))
 
         pkgdist.sdist.make_release_tree(self, base_dir, files)
 
@@ -63,14 +63,14 @@ class install(pkgdist.install):
             # rather than assuming it is running from a tarball/git repo.
             write_pkgcore_lookup_configs(self.install_purelib, target)
 
-            # Generate ebd function lists used for environment filtering if
-            # they don't exist (release tarballs contain pre-generated files).
-            if not os.path.exists(os.path.join(pkgdist.REPODIR, 'ebd', 'generated')):
+            # Generate ebd libs when not running from release tarballs that
+            # contain pre-generated files.
+            if not os.path.exists(os.path.join(pkgdist.REPODIR, 'man')):
                 write_pkgcore_ebd_funclists(
-                    root=root, target=os.path.join(target, EBD_INSTALL_OFFSET, 'generated'),
+                    root=root, target=os.path.join(target, EBD_INSTALL_OFFSET, '.generated'),
                     scripts_dir=self.install_scripts, python_base=self.install_purelib)
                 write_pkgcore_ebd_eapi_libs(
-                    root=root, target=os.path.join(target, EBD_INSTALL_OFFSET, 'generated'),
+                        root=root, target=os.path.join(target, EBD_INSTALL_OFFSET, '.generated'),
                     scripts_dir=self.install_scripts, python_base=self.install_purelib)
 
 

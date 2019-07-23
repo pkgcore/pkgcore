@@ -16,6 +16,7 @@ class FakeDomain(object):
 
     def __init__(self, repos):
         self.all_ebuild_repos_raw = repos
+        self.ebuild_repos_raw = repos
         self.root = None
 
     def add_repo(self, *args, **kwargs):
@@ -55,7 +56,7 @@ class TestCommandline(ArgParseMixin):
 
     def test_unknown_arches(self, capsys):
         fake_repo = FakeRepo()
-        ns_kwargs = {'selected_repo': fake_repo}
+        ns_kwargs = {'color': False, 'selected_repo': fake_repo}
         with pytest.raises(SystemExit):
             self.parse('-a', 'unknown', domain=domain_config, ns_kwargs=ns_kwargs)
         captured = capsys.readouterr()
@@ -69,14 +70,14 @@ class TestCommandline(ArgParseMixin):
 
     def test_no_matches(self):
         fake_repo = FakeRepo()
-        ns_kwargs = {'selected_repo': fake_repo}
+        ns_kwargs = {'color': False, 'selected_repo': fake_repo}
         self.assertErr(
             ["pshowkw: no matches for 'foo/bar'"], 'foo/bar',
             domain=domain_config, ns_kwargs=ns_kwargs)
 
     def test_collapsed(self):
         fake_repo = FakeRepo()
-        ns_kwargs = {'selected_repo': fake_repo}
+        ns_kwargs = {'color': False, 'selected_repo': fake_repo}
         self.assertOut(
             ["x86"], '-c', 'bzip2',
             domain=domain_config, ns_kwargs=ns_kwargs)
@@ -86,7 +87,7 @@ class TestCommandline(ArgParseMixin):
 
     def test_specified_arches(self):
         fake_repo = FakeRepo()
-        ns_kwargs = {'selected_repo': fake_repo}
+        ns_kwargs = {'color': False, 'selected_repo': fake_repo}
         # specifying arch to be shown
         self.assertOut(
             ["amd64"], '-c', 'gtk+', '-a', 'amd64',
@@ -102,7 +103,7 @@ class TestCommandline(ArgParseMixin):
 
     def test_tabular_default_output(self):
         fake_repo = FakeRepo()
-        ns_kwargs = {'selected_repo': fake_repo}
+        ns_kwargs = {'color': False, 'selected_repo': fake_repo}
         self.assertOut("""\
 keywords for x11-libs/gtk+:
       a   a
@@ -119,7 +120,7 @@ keywords for x11-libs/gtk+:
 
     def test_tabular_specified_arch(self):
         fake_repo = FakeRepo()
-        ns_kwargs = {'selected_repo': fake_repo}
+        ns_kwargs = {'color': False, 'selected_repo': fake_repo}
         self.assertOut("""\
 keywords for x11-libs/gtk+:
       a
@@ -136,7 +137,7 @@ keywords for x11-libs/gtk+:
 
     def test_tabular_disabled_arch(self):
         fake_repo = FakeRepo()
-        ns_kwargs = {'selected_repo': fake_repo}
+        ns_kwargs = {'color': False, 'selected_repo': fake_repo}
         self.assertOut("""\
 keywords for x11-libs/gtk+:
       a
@@ -153,7 +154,7 @@ keywords for x11-libs/gtk+:
 
     def test_tabular_custom_output_format(self):
         fake_repo = FakeRepo()
-        ns_kwargs = {'selected_repo': fake_repo}
+        ns_kwargs = {'color': False, 'selected_repo': fake_repo}
         self.assertOut("""\
 keywords for x11-libs/gtk+:
       | amd64   | arm   | arm64   | x86   | eapi   |   slot | repo

@@ -55,13 +55,13 @@ arch_options.add_argument(
 # TODO: allow multi-repo comma-separated input
 target_opts = argparser.add_argument_group('target options')
 target_opts.add_argument(
-    '-r', '--repo', dest='target_repo', metavar='REPO', priority=29,
+    '-r', '--repo', dest='selected_repo', metavar='REPO', priority=29,
     action=commandline.StoreRepoObject,
     repo_type='all-raw', allow_external_repos=True,
     help='repo to query (defaults to all ebuild repos)')
 @argparser.bind_delayed_default(30, 'repos')
 def _setup_repos(namespace, attr):
-    target_repo = namespace.target_repo
+    target_repo = namespace.selected_repo
     namespace.cwd = os.getcwd()
 
     # TODO: move this to StoreRepoObject
@@ -78,7 +78,7 @@ def _setup_repos(namespace, attr):
                 target_repo = namespace.domain.find_repo(
                     namespace.cwd, config=namespace.config)
 
-    namespace.target_repo = target_repo
+    namespace.repo = target_repo
 
 
 @argparser.bind_delayed_default(40, 'arches')
@@ -138,16 +138,16 @@ def _validate_args(parser, namespace):
     namespace.pkg_dir = False
 
     if not namespace.targets:
-        if namespace.target_repo:
+        if namespace.selected_repo:
             # use repo restriction since no targets specified
-            restriction = restricts.RepositoryDep(namespace.target_repo.repo_id)
-            token = namespace.target_repo.repo_id
+            restriction = restricts.RepositoryDep(namespace.selected_repo.repo_id)
+            token = namespace.selected_repo.repo_id
         else:
             # Use a path restriction if we're in a repo, obviously it'll work
             # faster if we're in an invididual ebuild dir but we're not that
             # restrictive.
             try:
-                restriction = namespace.repo.path_restrict(namespace.cwd)
+                restriction = namespace.target_repo.path_restrict(namespace.cwd)
                 token = namespace.cwd
             except (AttributeError, ValueError):
                 parser.error('missing target argument and not in a supported repo')
@@ -215,7 +215,7 @@ def _render_rows(options, pkgs, arches):
 def main(options, out, err):
     continued = False
     for token, restriction in options.targets:
-        for pkgs in pkgutils.groupby_pkg(options.target_repo.itermatch(restriction, sorter=sorted)):
+        for pkgs in pkgutils.groupby_pkg(options.repo.itermatch(restriction, sorter=sorted)):
             if options.collapse:
                 out.write(' '.join(_collapse_arches(options, pkgs)))
             else:

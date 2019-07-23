@@ -23,7 +23,7 @@ def reclaim_threads(threads):
             pass
 
 
-def map_async(iterable, functor, *args, **kwds):
+def map_async(iterable, results, functor, *args, **kwds):
     per_thread_args = kwds.pop("per_thread_args", lambda: ())
     per_thread_kwds = kwds.pop("per_thread_kwds", lambda: {})
     parallelism = kwds.pop("threads", None)
@@ -49,17 +49,20 @@ def map_async(iterable, functor, *args, **kwds):
                 return
             yield item
 
-    empty_signal = object()
+    def worker(*args):
+        for result in functor(*args):
+            if result is not None:
+                results.put(result)
 
+    empty_signal = object()
     threads = []
     for x in range(parallelism):
         tkwds = kwds.copy()
         tkwds.update(per_thread_kwds())
         targs = (iter_queue(kill, q, empty_signal),) + args + per_thread_args()
-        threads.append(threading.Thread(target=functor, args=targs, kwargs=tkwds))
+        threads.append(threading.Thread(target=worker, args=targs, kwargs=tkwds))
     try:
         try:
-            failed = True
             for x in threads:
                 x.start()
             # now we feed the queue.

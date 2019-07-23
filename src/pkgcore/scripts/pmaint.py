@@ -299,10 +299,10 @@ def regen_main(options, out, err):
             continue
 
         start_time = time.time()
-        repo.operations.regen_cache(
+        ret.append(repo.operations.regen_cache(
             threads=options.threads,
             observer=observer.formatter_output(out), force=options.force,
-            eclass_caching=(not options.disable_eclass_caching))
+            eclass_caching=(not options.disable_eclass_caching)))
         end_time = time.time()
 
         if options.verbosity > 0:

@@ -19,6 +19,7 @@ from snakeoil.dependant_methods import ForcedDepends
 
 from pkgcore import operations as _operations_mod
 from pkgcore.exceptions import PkgcoreException
+from pkgcore.package.errors import MetadataException
 from pkgcore.restrictions import packages
 
 demandload(
@@ -245,9 +246,15 @@ class operations(sync_operations):
         try:
             if sync_rate is not None:
                 cache.set_sync_rate(1000000)
-            ret = regen.regen_repository(
-                self.repo,
-                self._get_observer(observer), threads=threads, **kwargs)
+            ret = 0
+            for pkg, e in regen.regen_repository(
+                    self.repo,
+                    self._get_observer(observer), threads=threads, **kwargs):
+                ret = 1
+                if isinstance(e, MetadataException):
+                    observer.error(f'{pkg.cpvstr}: {e.msg(verbosity=observer.verbosity)}')
+                else:
+                    observer.error(f'caught exception {e} while processing {pkg.cpvstr}')
             self._cmd_implementation_clean_cache()
             return ret
         finally:

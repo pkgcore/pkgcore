@@ -8,7 +8,7 @@ from pkgcore.restrictions import packages
 from pkgcore.util.thread_pool import map_async
 
 
-def regen_iter(iterable, regen_func, observer, is_thread=False):
+def regen_iter(iterable, regen_func, observer):
     for pkg in iterable:
         try:
             regen_func(pkg)
@@ -35,12 +35,9 @@ def regen_repository(repo, observer, threads=1, pkg_attr='keywords', **kwargs):
 
     # force usage of unfiltered repo to include pkgs with metadata issues
     pkgs = repo.itermatch(packages.AlwaysTrue, pkg_filter=None)
-    if threads == 1:
-        regen_iter(pkgs, _get_repo_helper(), observer)
-    else:
-        def get_args():
-            return (_get_repo_helper(), observer, True)
-        map_async(pkgs, regen_iter, per_thread_args=get_args)
+    def get_args():
+        return (_get_repo_helper(), observer)
+    map_async(pkgs, regen_iter, threads=threads, per_thread_args=get_args)
 
     for helper in helpers:
         f = getattr(helper, 'finish', None)

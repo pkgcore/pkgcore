@@ -33,6 +33,7 @@ def regen_repository(repo, observer, threads=1, pkg_attr='keywords', **kwargs):
         helpers.append(helper)
         return helper
 
+    # force usage of unfiltered repo to include pkgs with metadata issues
     pkgs = repo.itermatch(packages.AlwaysTrue, pkg_filter=None)
     if threads == 1:
         regen_iter(pkgs, _get_repo_helper(), observer)

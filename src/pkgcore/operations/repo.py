@@ -19,6 +19,7 @@ from snakeoil.dependant_methods import ForcedDepends
 
 from pkgcore import operations as _operations_mod
 from pkgcore.exceptions import PkgcoreException
+from pkgcore.restrictions import packages
 
 demandload(
     "pkgcore.log:logger",
@@ -217,14 +218,19 @@ class operations(sync_operations):
 
     def _cmd_api_configure(self, pkg, observer=None):
         return self._cmd_implementation_configure(
-            self.repository, pkg, self._get_observer(observer))
+            self.repo, pkg, self._get_observer(observer))
 
     def _cmd_implementation_clean_cache(self):
-        """ Clean stale cache entries up """
+        """Clean stale cache entries up."""
         caches = [x for x in self._get_caches() if not x.readonly]
         if not caches:
             return
-        pkgs = frozenset(x.cpvstr for x in self.repo)
+        # Force usage of unfiltered repo to include pkgs with metadata issues,
+        # otherwise their cache files would get removed -- this matches current
+        # portage behavior.
+        pkgs = frozenset(
+            pkg.cpvstr for pkg in
+            self.repo.itermatch(packages.AlwaysTrue, pkg_filter=None))
         for cache in caches:
             cache_pkgs = frozenset(cache)
             for p in cache_pkgs - pkgs:

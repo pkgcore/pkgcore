@@ -20,7 +20,7 @@ insinto() {
 		export PKGCORE_INSDESTTREE=$1
 	fi
 
-	# only EAPI <= 6 supports DESTTREE
+	# only EAPI <= 6 supports INSDESTTREE
 	${PKGCORE_HAS_DESTTREE} && export INSDESTTREE=${PKGCORE_INSDESTTREE}
 }
 

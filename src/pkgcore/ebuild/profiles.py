@@ -276,7 +276,9 @@ class ProfileNode(object, metaclass=caching.WeakInstMeta):
             except StopIteration:
                 # only an empty replacement could trigger this; thus
                 # formatted badly.
-                raise ValueError("didn't specify a replacement profile")
+                logger.error(
+                    f"deprecated profile missing replacement: '{self.name}/deprecated'")
+                data = None
         return data
 
     def _parse_package_use(self, data):

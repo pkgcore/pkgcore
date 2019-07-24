@@ -133,7 +133,7 @@ def _read_config_file(path):
         for fs_obj in iter_scan(path, follow_symlinks=True):
             if not fs_obj.is_reg or '/.' in fs_obj.location:
                 continue
-            for lineno, line, in iter_read_bash(
+            for lineno, line in iter_read_bash(
                     fs_obj.location, allow_line_cont=True, enum_line=True):
                 yield line, lineno, fs_obj.location
     except FileNotFoundError:

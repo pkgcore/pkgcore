@@ -42,7 +42,7 @@ def package_keywords_splitter(val):
     try:
         return atom(v[0]), tuple(stable_unique(v[1:]))
     except ebuild_errors.MalformedAtom as e:
-        logger.warning(f'parsing error: {e}')
+        logger.error(f'parsing error: {e}')
 
 
 class ProfileError(errors.ParsingError):
@@ -202,7 +202,7 @@ class ProfileNode(object, metaclass=caching.WeakInstMeta):
                             if repo_id == repo_config.repo_id:
                                 location = repo_config.location
                             else:
-                                logger.warning(
+                                logger.error(
                                     f'repo {repo_config.repo_id!r}: '
                                     f"'{self.name}/parent' (line {lineno}), "
                                     f'bad profile parent {line!r}: '
@@ -224,7 +224,7 @@ class ProfileNode(object, metaclass=caching.WeakInstMeta):
                 parents.append(kls(path))
             except ProfileError as e:
                 repo_id = self.repoconfig.repo_id
-                logger.warning(
+                logger.error(
                     f"repo {repo_id!r}: '{self.name}/parent' (line {lineno}), "
                     f'bad profile parent {line!r}: {e.error}'
                 )
@@ -238,7 +238,7 @@ class ProfileNode(object, metaclass=caching.WeakInstMeta):
             try:
                 return cpv.versioned_CPV(s)
             except cpv.InvalidCPV:
-                logger.warning(f'invalid package.provided entry: {s!r}')
+                logger.error(f'invalid package.provided entry: {s!r}')
         return split_negations(data, _parse_cpv)
 
     @load_property("package.mask", allow_recurse=True)
@@ -287,10 +287,10 @@ class ProfileNode(object, metaclass=caching.WeakInstMeta):
             try:
                 a = self.eapi_atom(l[0])
             except ebuild_errors.MalformedAtom as e:
-                logger.warning(e)
+                logger.error(e)
                 continue
             if len(l) == 1:
-                logger.warning(f"malformed line, missing USE flag(s): {line!r}")
+                logger.error(f"malformed line, missing USE flag(s): {line!r}")
                 continue
             d[a.key].append(misc.chunked_data(a, *split_negations(l[1:])))
 
@@ -488,7 +488,15 @@ class ProfileStack(object):
     def stack(self):
         def f(node):
             for path, line, lineno in node.parent_paths:
-                x = self._node_kls._autodetect_and_create(path)
+                try:
+                    x = self._node_kls._autodetect_and_create(path)
+                except ProfileError as e:
+                    repo_id = node.repoconfig.repo_id
+                    logger.error(
+                        f"repo {repo_id!r}: '{self.name}/parent' (line {lineno}), "
+                        f'bad profile parent {line!r}: {e.error}'
+                    )
+                    continue
                 for y in f(x):
                     yield y
             yield node

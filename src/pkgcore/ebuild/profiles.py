@@ -113,12 +113,7 @@ def _load_and_invoke(func, filename, handler, fallback, read_func,
         if handler:
             data = handler(data)
         return func(self, data)
-    except IGNORED_EXCEPTIONS:
-        raise
-    except ProfileError:
-        # no point in wrapping/throwing..
-        raise
-    except Exception as e:
+    except (ValueError, IndexError) as e:
         raise ProfileError(profile_path, filename, e) from e
 
 

@@ -32,8 +32,11 @@ def regen_repository(repo, observer, threads=1, pkg_attr='keywords', **kwargs):
         helpers.append(helper)
         return helper
 
-    # force usage of unfiltered repo to include pkgs with metadata issues
-    pkgs = repo.itermatch(packages.AlwaysTrue, pkg_filter=None)
+    # Force usage of unfiltered repo to include pkgs with metadata issues.
+    # Matches are collapsed directly to a list to avoid threading issues such
+    # as EBADF since the repo iterator isn't thread-safe.
+    pkgs = list(repo.itermatch(packages.AlwaysTrue, pkg_filter=None))
+
     def get_args():
         return (_get_repo_helper(), observer)
 

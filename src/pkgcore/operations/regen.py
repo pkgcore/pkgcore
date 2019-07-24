@@ -5,7 +5,6 @@ import queue
 
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
 
-from pkgcore.restrictions import packages
 from pkgcore.util.thread_pool import map_async
 
 
@@ -21,7 +20,7 @@ def regen_iter(iterable, regen_func, observer):
             yield pkg, e
 
 
-def regen_repository(repo, observer, threads=1, pkg_attr='keywords', **kwargs):
+def regen_repository(repo, pkgs, observer, threads=1, pkg_attr='keywords', **kwargs):
     helpers = []
 
     def _get_repo_helper():
@@ -31,11 +30,6 @@ def regen_repository(repo, observer, threads=1, pkg_attr='keywords', **kwargs):
         helper = repo._regen_operation_helper(**kwargs)
         helpers.append(helper)
         return helper
-
-    # Force usage of unfiltered repo to include pkgs with metadata issues.
-    # Matches are collapsed directly to a list to avoid threading issues such
-    # as EBADF since the repo iterator isn't thread-safe.
-    pkgs = list(repo.itermatch(packages.AlwaysTrue, pkg_filter=None))
 
     def get_args():
         return (_get_repo_helper(), observer)

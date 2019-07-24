@@ -221,7 +221,7 @@ class operations(sync_operations):
         return self._cmd_implementation_configure(
             self.repo, pkg, self._get_observer(observer))
 
-    def _cmd_implementation_clean_cache(self):
+    def _cmd_implementation_clean_cache(self, pkgs):
         """Clean stale cache entries up."""
         caches = [x for x in self._get_caches() if not x.readonly]
         if not caches:
@@ -229,9 +229,7 @@ class operations(sync_operations):
         # Force usage of unfiltered repo to include pkgs with metadata issues,
         # otherwise their cache files would get removed -- this matches current
         # portage behavior.
-        pkgs = frozenset(
-            pkg.cpvstr for pkg in
-            self.repo.itermatch(packages.AlwaysTrue, pkg_filter=None))
+        pkgs = frozenset(pkg.cpvstr for pkg in pkgs)
         for cache in caches:
             cache_pkgs = frozenset(cache)
             for p in cache_pkgs - pkgs:
@@ -247,15 +245,21 @@ class operations(sync_operations):
             if sync_rate is not None:
                 cache.set_sync_rate(1000000)
             ret = 0
+
+            # Force usage of unfiltered repo to include pkgs with metadata issues.
+            # Matches are collapsed directly to a list to avoid threading issues such
+            # as EBADF since the repo iterator isn't thread-safe.
+            pkgs = list(self.repo.itermatch(packages.AlwaysTrue, pkg_filter=None))
+
             for pkg, e in regen.regen_repository(
-                    self.repo,
+                    self.repo, pkgs,
                     self._get_observer(observer), threads=threads, **kwargs):
                 ret = 1
                 if isinstance(e, MetadataException):
                     observer.error(f'{pkg.cpvstr}: {e.msg(verbosity=observer.verbosity)}')
                 else:
                     observer.error(f'caught exception {e} while processing {pkg.cpvstr}')
-            self._cmd_implementation_clean_cache()
+            self._cmd_implementation_clean_cache(pkgs)
             return ret
         finally:
             if sync_rate is not None:

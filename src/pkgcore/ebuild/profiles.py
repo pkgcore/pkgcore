@@ -193,7 +193,7 @@ class ProfileNode(object, metaclass=caching.WeakInstMeta):
         repo_config = self.repoconfig
         if repo_config is not None and 'portage-2' in repo_config.profile_formats:
             l = []
-            for line in data:
+            for lineno, line in enumerate(data, 1):
                 repo_id, separator, path = line.partition(':')
                 if separator:
                     if repo_id:
@@ -206,9 +206,15 @@ class ProfileNode(object, metaclass=caching.WeakInstMeta):
                             if repo_id == repo_config.repo_id:
                                 location = repo_config.location
                             else:
-                                raise ValueError(f"unknown repository name: {repo_id!r}")
-                        except TypeError:
-                            raise ValueError("repo mapping is unset")
+                                logger.warning(
+                                    f'repo {repo_config.repo_id!r}: '
+                                    f'bad profile parent while parsing {line!r} from '
+                                    f"'{self.name}/parent' (line {lineno}): "
+                                    f'unknown repo {repo_id!r}'
+                                )
+                                continue
+                        except (TypeError, AttributeError):
+                            raise RuntimeError("repo mapping is unset")
                     l.append(abspath(pjoin(location, 'profiles', path)))
                 else:
                     l.append(abspath(pjoin(self.path, repo_id)))

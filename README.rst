@@ -31,6 +31,8 @@ Tools
 
 **pquery**: query repository info, revdeps, pkg search, vdb search, etc.
 
+**pshowkw**: display package keywords
+
 Requirements
 ============
 

@@ -200,7 +200,13 @@ class ProfileNode(object, metaclass=caching.WeakInstMeta):
                         try:
                             location = self._repo_map[repo_id]
                         except KeyError:
-                            raise ValueError(f"unknown repository name: {repo_id!r}")
+                            # check if requested repo ID matches the current
+                            # repo which could be the case when running against
+                            # unconfigured, external repos.
+                            if repo_id == repo_config.repo_id:
+                                location = repo_config.location
+                            else:
+                                raise ValueError(f"unknown repository name: {repo_id!r}")
                         except TypeError:
                             raise ValueError("repo mapping is unset")
                     l.append(abspath(pjoin(location, 'profiles', path)))

@@ -43,6 +43,7 @@ demandload(
     'pkgcore.ebuild:errors@ebuild_errors',
     'pkgcore.ebuild.eapi:get_eapi',
     'pkgcore.fs.livefs:sorted_scan',
+    'pkgcore.log:logger',
     'pkgcore.package:errors@pkg_errors',
     'pkgcore.restrictions:packages',
     'pkgcore.util.packages:groupby_pkg',
@@ -597,29 +598,28 @@ class UnconfiguredTree(prototype.tree):
     @klass.jit_attr
     def _visibility_limiters(self):
         path = pjoin(self.base, 'profiles', 'package.mask')
-        pos, neg = [], []
+        neg, pos = [], []
         try:
-            if (self.config.eapi.options['has_profile_data_dirs'] or
+            if (self.config.eapi.options.has_profile_data_dirs or
                     self.config.profile_formats.intersection(['portage-1', 'portage-2'])):
                 paths = sorted_scan(path)
             else:
                 paths = [path]
             for path in paths:
-                for line in iter_read_bash(path):
+                for lineno, line in iter_read_bash(path, enum_line=True):
                     line = line.strip()
-                    if line in ('-', ''):
-                        raise profiles.ProfileError(
-                            pjoin(self.base, 'profiles'),
-                            'package.mask', "encountered empty negation: -")
-                    if line.startswith('-'):
-                        neg.append(atom.atom(line[1:]))
-                    else:
-                        pos.append(atom.atom(line))
+                    if line == '-':
+                        logger.warning(f"{path!r}, line {lineno}: empty negation '-'")
+                        continue
+                    try:
+                        if line.startswith('-'):
+                            neg.append(atom.atom(line[1:]))
+                        else:
+                            pos.append(atom.atom(line))
+                    except ebuild_errors.MalformedAtom as e:
+                        logger.warning(f'{path!r}, line {lineno}: {e}')
         except FileNotFoundError:
             pass
-        except ebuild_errors.MalformedAtom as e:
-            raise profiles.ProfileError(
-                pjoin(self.base, 'profiles'), 'package.mask', e) from e
         return tuple(neg), tuple(pos)
 
     def _regen_operation_helper(self, **kwds):

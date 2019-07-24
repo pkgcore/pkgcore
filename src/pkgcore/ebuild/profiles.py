@@ -37,12 +37,13 @@ demandload(
 )
 
 
-def package_keywords_splitter(val):
-    v = val.split()
-    try:
-        return atom(v[0]), tuple(stable_unique(v[1:]))
-    except ebuild_errors.MalformedAtom as e:
-        logger.error(f'parsing error: {e}')
+def package_keywords_splitter(iterable):
+    for line, lineno, path in iterable:
+        v = line.split()
+        try:
+            yield atom(v[0]), tuple(v[1:]), line, lineno, path
+        except ebuild_errors.MalformedAtom as e:
+            logger.error(f'{path!r}, line {lineno}: parsing error: {e}')
 
 
 class ProfileError(errors.ParsingError):
@@ -56,15 +57,24 @@ class ProfileError(errors.ParsingError):
         return f"failed parsing {self.path!r}: {self.error}"
 
 
-def load_property(filename, handler=iter_read_bash, fallback=(),
-                  read_func=readlines_utf8, allow_recurse=False, eapi_optional=None):
+def _read_profile_files(files, allow_line_cont=False):
+    """Read all the given data files."""
+    for path in files:
+        for lineno, line in iter_read_bash(
+                path, allow_line_cont=allow_line_cont, enum_line=True):
+            yield line, lineno, path
+
+
+def load_property(filename, *, read_func=_read_profile_files, fallback=(),
+                  parse_func=lambda x: x, allow_line_cont=False, allow_recurse=False,
+                  eapi_optional=None):
     """Decorator simplifying parsing profile files to generate a profile property.
 
     :param filename: The filename to parse within that profile directory.
-    :keyword handler: An invokable that is fed the content returned from read_func.
-    :keyword fallback: What to return if the file does not exist for this profile.  Must
-        be immutable.
-    :keyword read_func: An invokable in the form of :py:`readlines_utf8`.
+    :keyword read_func: An invokable used to read the specified file.
+    :keyword fallback: What to return if the file does not exist for this profile. Must be immutable.
+    :keyword parse_func: An invokable used to parse the data.
+    :keyword allow_line_cont: Controls whether line continuations are respected.
     :keyword allow_recurse: Controls whether or not this specific content can be a directory
         of files, rather than just a file.  Only is consulted if we're parsing the profile
         in non pms strict mode.
@@ -76,54 +86,48 @@ def load_property(filename, handler=iter_read_bash, fallback=(),
     def f(func):
         f2 = klass.jit_attr_named(f'_{func.__name__}')
         return f2(partial(
-            _load_and_invoke, func, filename, handler, fallback,
-            read_func, allow_recurse, eapi_optional))
+            _load_and_invoke, func, filename, read_func, fallback,
+            allow_recurse, allow_line_cont, parse_func, eapi_optional))
     return f
 
-def _load_and_invoke(func, filename, handler, fallback, read_func,
-                     allow_recurse, eapi_optional, self):
-    profile_path = self.path.rstrip('/')
+def _load_and_invoke(func, filename, read_func, fallback, allow_recurse,
+                     allow_line_cont, parse_func, eapi_optional, self):
     if eapi_optional is not None and not getattr(self.eapi.options, eapi_optional, None):
         return fallback
-    try:
-        base = pjoin(profile_path, filename)
-        if self.pms_strict or not allow_recurse:
-            try:
-                data = read_func(base, True, True, True)
-            except IsADirectoryError as e:
-                raise ProfileError(self.path, filename,
-                    "path is a directory, but this profile is PMS format- "
-                    "directories aren't allowed.  See layout.conf profile-formats "
-                    "to enable directory support") from e
-        else:
-            data = []
-            profile_len = len(profile_path) + 1
-            # Skip hidden files and backup files, those beginning with '.' or
-            # ending with '~', respectively.
-            files = sorted_scan(base, hidden=False, backup=False)
-            if not files:
-                data = None
-            else:
-                for location in sorted(files):
-                    filename = location[profile_len:]
-                    data.extend(read_func(location, True, True, True))
 
-        if data is None:
-            return func(self, fallback)
-        if handler:
-            data = handler(data)
+    profile_path = self.path.rstrip('/')
+    base = pjoin(profile_path, filename)
+
+    files = []
+    if self.pms_strict or not allow_recurse:
+        if os.path.exists(base):
+            files.append(base)
+    else:
+        # Skip hidden files and backup files, those beginning with '.' or
+        # ending with '~', respectively.
+        files.extend(sorted_scan(base, hidden=False, backup=False))
+
+    try:
+        if files:
+            if read_func is None:
+                data = parse_func(files)
+            else:
+                data = parse_func(read_func(
+                    files, allow_line_cont=allow_line_cont))
+        else:
+            data = fallback
         return func(self, data)
-    except (ValueError, IndexError) as e:
+    except (ValueError, IndexError, EnvironmentError) as e:
         raise ProfileError(profile_path, filename, e) from e
+    except IsADirectoryError as e:
+        raise ProfileError(
+            self.path, filename,
+            "path is a directory, but this profile is PMS format- "
+            "directories aren't allowed. See layout.conf profile-formats "
+            "to enable directory support") from e
 
 
 _make_incrementals_dict = partial(misc.IncrementalsDict, const.incrementals)
-
-def _open_utf8(path, *args):
-    try:
-        return open(path, 'r', encoding='utf8')
-    except FileNotFoundError:
-        return None
 
 
 class ProfileNode(object, metaclass=caching.WeakInstMeta):
@@ -159,7 +163,7 @@ class ProfileNode(object, metaclass=caching.WeakInstMeta):
         # sys packages and visibility
         sys, neg_sys, vis, neg_vis = [], [], [], []
         neg_sys_wildcard = False
-        for line in data:
+        for line, lineno, path in data:
             if line[0] == '-':
                 if line == '-*':
                     neg_sys_wildcard = True
@@ -185,12 +189,11 @@ class ProfileNode(object, metaclass=caching.WeakInstMeta):
 
     @load_property("parent")
     def parent_paths(self, data):
-        data = ((lineno, line) for lineno, line in enumerate(data, 1))
         repo_config = self.repoconfig
         if repo_config is not None and 'portage-2' in repo_config.profile_formats:
             l = []
-            for lineno, line in data:
-                repo_id, separator, path = line.partition(':')
+            for line, lineno, path in data:
+                repo_id, separator, profile_path = line.partition(':')
                 if separator:
                     if repo_id:
                         try:
@@ -209,11 +212,12 @@ class ProfileNode(object, metaclass=caching.WeakInstMeta):
                                     f'unknown repo {repo_id!r}'
                                 )
                                 continue
-                    l.append((abspath(pjoin(location, 'profiles', path)), line, lineno))
+                    l.append((abspath(pjoin(location, 'profiles', profile_path)), line, lineno))
                 else:
                     l.append((abspath(pjoin(self.path, repo_id)), line, lineno))
             return tuple(l)
-        return tuple((abspath(pjoin(self.path, line)), line, lineno) for lineno, line in data)
+        return tuple((abspath(pjoin(self.path, line)), line, lineno)
+                     for line, lineno, path in data)
 
     @klass.jit_attr
     def parents(self):
@@ -239,23 +243,28 @@ class ProfileNode(object, metaclass=caching.WeakInstMeta):
                 return cpv.versioned_CPV(s)
             except cpv.InvalidCPV:
                 logger.error(f'invalid package.provided entry: {s!r}')
+        data = (x[0] for x in data)
         return split_negations(data, _parse_cpv)
 
     @load_property("package.mask", allow_recurse=True)
     def masks(self, data):
+        data = (x[0] for x in data)
         return split_negations(data, self.eapi_atom)
 
     @load_property("package.unmask", allow_recurse=True)
     def unmasks(self, data):
+        data = (x[0] for x in data)
         return split_negations(data, self.eapi_atom)
 
-    @load_property("package.keywords", allow_recurse=True)
+    @load_property("package.keywords", allow_recurse=True,
+                   parse_func=package_keywords_splitter)
     def keywords(self, data):
-        return tuple(filter(None, (package_keywords_splitter(x) for x in data)))
+        return tuple((x[0], tuple(stable_unique(x[1]))) for x in data)
 
-    @load_property("package.accept_keywords", allow_recurse=True)
+    @load_property("package.accept_keywords", allow_recurse=True,
+                   parse_func=package_keywords_splitter)
     def accept_keywords(self, data):
-        return tuple(filter(None, (package_keywords_splitter(x) for x in data)))
+        return tuple((x[0], tuple(stable_unique(x[1]))) for x in data)
 
     @load_property("package.use", allow_recurse=True)
     def pkg_use(self, data):
@@ -265,10 +274,10 @@ class ProfileNode(object, metaclass=caching.WeakInstMeta):
         c.freeze()
         return c
 
-    @load_property("deprecated", handler=None, fallback=None)
+    @load_property("deprecated", read_func=None, fallback=None)
     def deprecated(self, data):
         if data is not None:
-            data = iter(data)
+            data = iter(readlines_utf8(data[0]))
             try:
                 replacement = next(data).strip()
                 msg = "\n".join(x.lstrip("#").strip() for x in data)
@@ -284,7 +293,7 @@ class ProfileNode(object, metaclass=caching.WeakInstMeta):
     def _parse_package_use(self, data):
         d = defaultdict(list)
         # split the data down ordered cat/pkg lines
-        for line in data:
+        for line, lineno, path in data:
             l = line.split()
             try:
                 a = self.eapi_atom(l[0])
@@ -301,6 +310,7 @@ class ProfileNode(object, metaclass=caching.WeakInstMeta):
 
     def _parse_use(self, data):
         c = misc.ChunkedDataDict()
+        data = (x[0] for x in data)
         neg, pos = split_negations(data)
         if neg or pos:
             c.add_bare_global(neg, pos)
@@ -391,14 +401,14 @@ class ProfileNode(object, metaclass=caching.WeakInstMeta):
         c.freeze()
         return c
 
-    @load_property('make.defaults', fallback=None, read_func=_open_utf8, handler=None)
+    @load_property('make.defaults', read_func=None, fallback=None)
     def default_env(self, data):
         rendered = _make_incrementals_dict()
         for parent in self.parents:
             rendered.update(parent.default_env.items())
 
         if data is not None:
-            data = read_bash_dict(data, vars_dict=rendered)
+            data = read_bash_dict(data[0], vars_dict=rendered)
             rendered.update(data.items())
         return ImmutableDict(rendered)
 
@@ -411,6 +421,7 @@ class ProfileNode(object, metaclass=caching.WeakInstMeta):
 
     @load_property('eapi', fallback=('0',))
     def eapi(self, data):
+        data = (x[0] for x in data)
         data = (x.strip() for x in data)
         data = [x for x in data if x]
         if len(data) != 1:

@@ -209,8 +209,6 @@ class ProfileNode(object, metaclass=caching.WeakInstMeta):
                                     f'unknown repo {repo_id!r}'
                                 )
                                 continue
-                        except (TypeError, AttributeError):
-                            raise RuntimeError("repo mapping is unset")
                     l.append((abspath(pjoin(location, 'profiles', path)), line, lineno))
                 else:
                     l.append((abspath(pjoin(self.path, repo_id)), line, lineno))

@@ -190,10 +190,11 @@ class ProfileNode(object, metaclass=caching.WeakInstMeta):
 
     @load_property("parent")
     def parent_paths(self, data):
+        data = ((lineno, line) for lineno, line in enumerate(data, 1))
         repo_config = self.repoconfig
         if repo_config is not None and 'portage-2' in repo_config.profile_formats:
             l = []
-            for lineno, line in enumerate(data, 1):
+            for lineno, line in data:
                 repo_id, separator, path = line.partition(':')
                 if separator:
                     if repo_id:
@@ -208,29 +209,32 @@ class ProfileNode(object, metaclass=caching.WeakInstMeta):
                             else:
                                 logger.warning(
                                     f'repo {repo_config.repo_id!r}: '
-                                    f'bad profile parent while parsing {line!r} from '
-                                    f"'{self.name}/parent' (line {lineno}): "
+                                    f"'{self.name}/parent' (line {lineno}), "
+                                    f'bad profile parent {line!r}: '
                                     f'unknown repo {repo_id!r}'
                                 )
                                 continue
                         except (TypeError, AttributeError):
                             raise RuntimeError("repo mapping is unset")
-                    l.append(abspath(pjoin(location, 'profiles', path)))
+                    l.append((abspath(pjoin(location, 'profiles', path)), line, lineno))
                 else:
-                    l.append(abspath(pjoin(self.path, repo_id)))
+                    l.append((abspath(pjoin(self.path, repo_id)), line, lineno))
             return tuple(l)
-        return tuple(abspath(pjoin(self.path, x)) for x in data)
+        return tuple((abspath(pjoin(self.path, line)), line, lineno) for lineno, line in data)
 
     @klass.jit_attr
     def parents(self):
         kls = getattr(self, 'parent_node_kls', self.__class__)
         parents = []
-        for path in self.parent_paths:
+        for path, line, lineno in self.parent_paths:
             try:
                 parents.append(kls(path))
             except ProfileError as e:
                 repo_id = self.repoconfig.repo_id
-                logger.warning(f'bad profile: {repo_id}:{self.name}: {str(e)}')
+                logger.warning(
+                    f"repo {repo_id!r}: '{self.name}/parent' (line {lineno}), "
+                    f'bad profile parent {line!r}: {e.error}'
+                )
                 continue
         return tuple(parents)
 
@@ -490,8 +494,8 @@ class ProfileStack(object):
     @klass.jit_attr
     def stack(self):
         def f(node):
-            for x in node.parent_paths:
-                x = self._node_kls._autodetect_and_create(x)
+            for path, line, lineno in node.parent_paths:
+                x = self._node_kls._autodetect_and_create(path)
                 for y in f(x):
                     yield y
             yield node
@@ -753,7 +757,7 @@ class UserProfileNode(ProfileNode):
 
     @klass.jit_attr
     def parent_paths(self):
-        return (self.override_path,)
+        return ((self.override_path, None, None),)
 
 
 class UserProfile(OnDiskProfile):

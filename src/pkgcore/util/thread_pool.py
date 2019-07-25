@@ -1,7 +1,9 @@
 # Copyright: 2011 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD 3 clause
 
+from collections import deque
 import threading
+from types import GeneratorType
 import queue
 
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
@@ -23,7 +25,7 @@ def reclaim_threads(threads):
             pass
 
 
-def map_async(iterable, results, functor, *args, **kwds):
+def map_async(iterable, functor, *args, **kwds):
     per_thread_args = kwds.pop("per_thread_args", lambda: ())
     per_thread_kwds = kwds.pop("per_thread_kwds", lambda: {})
     parallelism = kwds.pop("threads", None)
@@ -39,6 +41,7 @@ def map_async(iterable, results, functor, *args, **kwds):
     # return till it succeeds (regardless of signal) as such, we do it this way
     # to ensure the put succeeds, then the keyboardinterrupt can be seen.
     q = queue.Queue()
+    results = deque()
     kill = threading.Event()
     kill.clear()
 
@@ -50,9 +53,13 @@ def map_async(iterable, results, functor, *args, **kwds):
             yield item
 
     def worker(*args):
-        for result in functor(*args):
-            if result is not None:
-                results.put(result)
+        result = functor(*args)
+        if result is not None:
+            # avoid appending chars from a string into results
+            if isinstance(result, GeneratorType):
+                results.extend(result)
+            else:
+                results.append(result)
 
     empty_signal = object()
     threads = []
@@ -77,4 +84,4 @@ def map_async(iterable, results, functor, *args, **kwds):
 
         reclaim_threads(threads)
 
-    assert q.empty()
+    return results

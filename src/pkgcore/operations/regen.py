@@ -1,8 +1,6 @@
 # Copyright: 2011 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD 3 clause
 
-import queue
-
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
 
 from pkgcore.package.errors import MetadataException
@@ -39,8 +37,7 @@ def regen_repository(repo, pkgs, observer, threads=1, pkg_attr='keywords', **kwa
     def get_args():
         return (_get_repo_helper(), observer)
 
-    errors = queue.Queue()
-    map_async(pkgs, errors, regen_iter, threads=threads, per_thread_args=get_args)
+    errors = map_async(pkgs, regen_iter, threads=threads, per_thread_args=get_args)
 
     # release ebuild processors
     for helper in helpers:
@@ -49,5 +46,4 @@ def regen_repository(repo, pkgs, observer, threads=1, pkg_attr='keywords', **kwa
             f()
 
     # yield any errors that occurred during metadata generation
-    while not errors.empty():
-        yield errors.get()
+    yield from errors

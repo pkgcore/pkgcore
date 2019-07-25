@@ -221,15 +221,13 @@ class operations(sync_operations):
         return self._cmd_implementation_configure(
             self.repo, pkg, self._get_observer(observer))
 
-    def _cmd_implementation_clean_cache(self, pkgs):
-        """Clean stale cache entries up."""
+    def _cmd_implementation_clean_cache(self, pkgs=None):
+        """Clean stale and invalid cache entries up."""
         caches = [x for x in self._get_caches() if not x.readonly]
         if not caches:
             return
-        # Force usage of unfiltered repo to include pkgs with metadata issues,
-        # otherwise their cache files would get removed -- this matches current
-        # portage behavior.
-        pkgs = frozenset(pkg.cpvstr for pkg in pkgs)
+        if pkgs is None:
+            pkgs = frozenset(pkg.cpvstr for pkg in self.repo)
         for cache in caches:
             cache_pkgs = frozenset(cache)
             for p in cache_pkgs - pkgs:
@@ -251,15 +249,22 @@ class operations(sync_operations):
             # as EBADF since the repo iterator isn't thread-safe.
             pkgs = list(self.repo.itermatch(packages.AlwaysTrue, pkg_filter=None))
 
+            observer = self._get_observer(observer)
             for pkg, e in regen.regen_repository(
-                    self.repo, pkgs,
-                    self._get_observer(observer), threads=threads, **kwargs):
+                    self.repo, pkgs, observer=observer, threads=threads, **kwargs):
+                observer.error(f'caught exception {e} while processing {pkg.cpvstr}')
                 ret = 1
-                if isinstance(e, MetadataException):
-                    observer.error(f'{pkg.cpvstr}: {e.msg(verbosity=observer.verbosity)}')
-                else:
-                    observer.error(f'caught exception {e} while processing {pkg.cpvstr}')
+
+            # report pkgs with bad metadata -- relies on iterating over the
+            # unfiltered repo to populate the masked repo
+            pkgs = frozenset(pkg.cpvstr for pkg in self.repo)
+            for pkg in sorted(self.repo._masked):
+                observer.error(f'{pkg.cpvstr}: {pkg.data.msg(verbosity=observer.verbosity)}')
+                ret = 1
+
+            # remove old/invalid cache entries
             self._cmd_implementation_clean_cache(pkgs)
+
             return ret
         finally:
             if sync_rate is not None:

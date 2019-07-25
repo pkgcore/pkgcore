@@ -5,6 +5,7 @@ import queue
 
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
 
+from pkgcore.package.errors import MetadataException
 from pkgcore.util.thread_pool import map_async
 
 
@@ -16,6 +17,10 @@ def regen_iter(iterable, regen_func, observer):
             if isinstance(e, KeyboardInterrupt):
                 return
             raise
+        except MetadataException:
+            # handled at a higher level by scanning for metadata masked pkgs
+            # after regen has completed
+            pass
         except Exception as e:
             yield pkg, e
 

@@ -8,7 +8,7 @@ from snakeoil.test import TestCase, mk_cpy_loadable_testcase
 
 from pkgcore.ebuild import conditionals
 from pkgcore.ebuild.atom import atom
-from pkgcore.ebuild.errors import ParseError
+from pkgcore.ebuild.errors import DepsetParseError
 from pkgcore.restrictions import boolean, packages
 
 
@@ -30,7 +30,7 @@ class base(TestCase):
 class native_DepSetParsingTest(base):
 
     def f(self, x):
-        self.assertRaises(ParseError, self.gen_depset, x)
+        self.assertRaises(DepsetParseError, self.gen_depset, x)
 
     # generate a lot of parse error assertions.
     for idx, x in enumerate(("( )", "( a b c", "(a b c )",
@@ -42,7 +42,7 @@ class native_DepSetParsingTest(base):
         "|| ( x?() )", "|| (x )", "|| ( x)",
         "a|", "a?", "a(b", "a)", "a||b",
         "a(", "a)b", "x? y", "( x )?", "||?")):
-        locals()["test_ParseError_case%i" % (idx + 1)] = post_curry(f, x)
+        locals()["test_DepsetParseError_case%i" % (idx + 1)] = post_curry(f, x)
     del x
 
     @staticmethod
@@ -190,7 +190,7 @@ class native_DepSetParsingTest(base):
 
     def test_disabling_or(self):
         self.assertRaises(
-            ParseError, self.gen_depset, "|| ( a b )",
+            DepsetParseError, self.gen_depset, "|| ( a b )",
             {"operators":{"":boolean.AndRestriction}})
 
     def test_atom_interaction(self):

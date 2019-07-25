@@ -8,7 +8,7 @@
 atom exceptions
 """
 
-__all__ = ("MalformedAtom", "InvalidVersion", "InvalidCPV", "ParseError")
+__all__ = ("MalformedAtom", "InvalidVersion", "InvalidCPV", "DepsetParseError")
 
 import textwrap
 
@@ -43,21 +43,24 @@ class InvalidCPV(errors.InvalidPackageName):
     """
 
 
-class ParseError(errors.InvalidDependency):
+class DepsetParseError(errors.InvalidDependency):
 
-    def __init__(self, s, token=None, msg=None):
-        self.dep_str, self.token, self.msg = s, token, msg
+    def __init__(self, s, token=None, msg=None, attr=None):
+        self.dep_str = s
+        self.token = token
+        self.msg = msg
+        self.attr = attr
 
     def __str__(self):
-        if self.msg is None:
-            str_msg = ''
-        else:
-            str_msg = f': {self.msg}'
-
+        msg = []
+        if self.attr is not None:
+            msg.append(f'failed parsing {self.attr}')
+        msg.append(f'{self.dep_str!r} is unparseable')
         if self.token is not None:
-            return f"{self.dep_str!r} is unparseable{str_msg}\nflagged token- {self.token}"
-        else:
-            return f"{self.dep_str!r} is unparseable{str_msg}"
+            msg.append(f'flagged token- {self.token}')
+        if self.msg is not None:
+            msg.append(f'{self.msg}')
+        return ': '.join(msg)
 
 
 class SanityCheckError(PkgcoreException):

@@ -14,7 +14,7 @@ from snakeoil.iterables import expandable_chain
 from snakeoil.sequences import iflatten_instance
 
 from pkgcore.ebuild.atom import atom, transitive_use_atom
-from pkgcore.ebuild.errors import ParseError
+from pkgcore.ebuild.errors import DepsetParseError
 from pkgcore.restrictions import packages, values, boolean
 
 try:
@@ -49,7 +49,7 @@ class DepSet(boolean.AndRestriction):
 
     @classmethod
     def parse(cls, dep_str, element_class,
-              operators=None,
+              operators=None, attr=None,
               element_func=None, transitive_use_atoms=False,
               allow_src_uri_file_renames=False):
         """
@@ -61,6 +61,7 @@ class DepSet(boolean.AndRestriction):
             Mainly useful for when you need to curry a few args for instance
             generation, since element_class _must_ be a class
         :param element_class: class of generated elements
+        :param attr: name of the DepSet attribute being parsed
         """
         if element_func is None:
             element_func = element_class
@@ -106,7 +107,7 @@ class DepSet(boolean.AndRestriction):
                     # indexerror would be chucked from trying to pop
                     # the frame so that is addressed.
                     if not depsets[-1] or not raw_conditionals:
-                        raise ParseError(dep_str)
+                        raise DepsetParseError(dep_str, attr=attr)
                     elif raw_conditionals[-1] in operators:
                         if len(depsets[-1]) == 1:
                             depsets[-2].append(depsets[-1][0])
@@ -139,14 +140,14 @@ class DepSet(boolean.AndRestriction):
                     k2 = next(words)
 
                     if k2 != "(":
-                        raise ParseError(dep_str, k2)
+                        raise DepsetParseError(dep_str, k2, attr=attr)
 
                     # push another frame on
                     depsets.append([])
                     raw_conditionals.append(k)
 
                 elif "|" in k:
-                    raise ParseError(dep_str, k)
+                    raise DepsetParseError(dep_str, k, attr=attr)
                 elif allow_src_uri_file_renames:
                     try:
                         k2 = next(words)
@@ -172,13 +173,13 @@ class DepSet(boolean.AndRestriction):
         except StopIteration:
             if k is None:
                 raise
-            raise ParseError(dep_str, k)
+            raise DepsetParseError(dep_str, k, attr=attr)
         except Exception as e:
-            raise ParseError(dep_str, e) from e
+            raise DepsetParseError(dep_str, e, attr=attr) from e
 
         # check if any closures required
         if len(depsets) != 1:
-            raise ParseError(dep_str)
+            raise DepsetParseError(dep_str, attr=attr)
 
         if transitive_use_atoms and not node_conds:
             # localize to this scope for speed.

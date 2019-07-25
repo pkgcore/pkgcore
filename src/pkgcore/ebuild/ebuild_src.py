@@ -42,6 +42,7 @@ demand_compile_regexp('_parse_inherit_regex', r'^\s*inherit\s(.*)$')
 
 
 def generate_depset(kls, key, non_package_type, self, **kwds):
+    kwds.setdefault('attr', key)
     if non_package_type:
         return conditionals.DepSet.parse(
             self.data.pop(key, ""), kls,
@@ -82,7 +83,7 @@ def generate_required_use(self):
             return conditionals.DepSet.parse(
                 data,
                 values.ContainmentMatch2, operators=operators,
-                element_func=_mk_required_use_node)
+                element_func=_mk_required_use_node, attr='REQUIRED_USE')
     return conditionals.DepSet()
 
 
@@ -112,9 +113,9 @@ def generate_fetchables(self, allow_missing_checksums=False,
     try:
         d = conditionals.DepSet.parse(
             self.data.get("SRC_URI", ""), fetch.fetchable, operators={},
-            element_func=func,
+            element_func=func, attr='SRC_URI',
             allow_src_uri_file_renames=self.eapi.options.src_uri_renames)
-    except ebuild_errors.ParseError as e:
+    except ebuild_errors.DepsetParseError as e:
         raise metadata_errors.MetadataException(self, 'fetchables', str(e))
 
     for v in common.values():
@@ -128,7 +129,7 @@ def generate_distfiles(self):
             return filename
         return os.path.basename(uri)
     return conditionals.DepSet.parse(
-        self.data.get("SRC_URI", ''), str, operators={},
+        self.data.get("SRC_URI", ''), str, operators={}, attr='SRC_URI',
         element_func=partial(_extract_distfile_from_uri),
         allow_src_uri_file_renames=self.eapi.options.src_uri_renames)
 
@@ -268,7 +269,7 @@ class base(metadata.package):
     _get_attr["keywords"] = lambda s: tuple(
         map(intern, s.data.pop("KEYWORDS", "").split()))
     _get_attr["restrict"] = lambda s: conditionals.DepSet.parse(
-        s.data.pop("RESTRICT", ''), str, operators={},
+        s.data.pop("RESTRICT", ''), str, operators={}, attr='RESTRICT',
         element_func=rewrite_restrict)
     _get_attr["eapi"] = get_parsed_eapi
     _get_attr["iuse"] = lambda s: frozenset(

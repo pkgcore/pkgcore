@@ -10,7 +10,7 @@ __all__ = ("database",)
 import os
 import stat
 
-from snakeoil.fileutils import readlines_ascii
+from snakeoil.fileutils import readlines_utf8
 from snakeoil.osutils import pjoin
 
 from pkgcore.cache import fs_template, errors
@@ -35,7 +35,7 @@ class database(fs_template.FsBased):
     def _getitem(self, cpv):
         path = pjoin(self.location, cpv)
         try:
-            data = readlines_ascii(path, True, True, True)
+            data = readlines_utf8(path, True, True, True)
             if data is None:
                 raise KeyError(cpv)
             return self._parse_data(data, data.mtime)

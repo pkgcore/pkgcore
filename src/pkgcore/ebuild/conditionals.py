@@ -167,7 +167,7 @@ class DepSet(boolean.AndRestriction):
 
         except IGNORED_EXCEPTIONS:
             raise
-        except IndexError:
+        except (IndexError, DepsetParseError):
             # [][-1] for a frame access, which means it was a parse error.
             raise
         except StopIteration:

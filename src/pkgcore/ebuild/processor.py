@@ -21,31 +21,15 @@ __all__ = (
     "request_ebuild_processor", "release_ebuild_processor", "EbuildProcessor",
     "UnhandledCommand", "expected_ebuild_env")
 
-try:
-    import threading
-    _global_ebp_lock = threading.Lock()
-    _acquire_global_ebp_lock = _global_ebp_lock.acquire
-    _release_global_ebp_lock = _global_ebp_lock.release
-except ImportError:
-    def _acquire_global_ebp_lock():
-        pass
-
-    def _release_global_ebp_lock():
-        pass
-
-
-inactive_ebp_list = []
-active_ebp_list = []
-
 import contextlib
 import errno
-from functools import partial
+from functools import partial, wraps
 import os
 import signal
 import sys
+import threading
 
 from snakeoil import klass
-from snakeoil.currying import pretty_docs
 from snakeoil.demandload import demandload
 from snakeoil.osutils import abspath, normpath, pjoin
 
@@ -64,17 +48,17 @@ demandload(
     'pkgcore.log:logger',
 )
 
+_global_ebp_lock = threading.Lock()
+inactive_ebp_list = []
+active_ebp_list = []
+
 
 def _single_thread_allowed(functor):
     """Decorator that forces method to run under single thread."""
+    @wraps(functor)
     def _inner(*args, **kwargs):
-        _acquire_global_ebp_lock()
-        try:
+        with _global_ebp_lock:
             return functor(*args, **kwargs)
-        finally:
-            _release_global_ebp_lock()
-    _inner.func = functor
-    pretty_docs(_inner, name=functor.__name__)
     return _inner
 
 

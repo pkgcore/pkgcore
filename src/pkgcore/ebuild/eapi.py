@@ -561,7 +561,6 @@ eapi7 = EAPI.register(
         has_sysroot=True,
         has_env_unset=True,
         trailing_slash='',
-        is_supported=False,
     )),
     ebd_env_options=eapi6._ebd_env_options,
 )

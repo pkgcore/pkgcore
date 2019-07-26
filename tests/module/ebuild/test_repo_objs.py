@@ -356,40 +356,66 @@ class TestRepoConfig(object):
         del repo_config
 
     def test_profile_formats(self, caplog):
+        os.mkdir(self.profiles_base)
+        with open(os.path.join(self.profiles_base, 'repo_name'), 'w') as f:
+            f.write('pms_name')
+
         # empty repo
         repo_config = repo_objs.RepoConfig(self.repo_path)
         assert repo_config.profile_formats == {'pms'}
         del repo_config
+        caplog.clear()
 
         # explicit empty setting
         os.mkdir(os.path.dirname(self.metadata_path))
         with open(self.metadata_path, 'w') as f:
-            f.write('profile-formats =\n')
+            f.write('masters =\nprofile-formats =\n')
         repo_config = repo_objs.RepoConfig(self.repo_path)
         assert repo_config.profile_formats == {'pms'}
+        assert not caplog.text
+        caplog.clear()
+        del repo_config
+        # message shown at info log level
+        caplog.set_level(logging.INFO)
+        repo_config = repo_objs.RepoConfig(self.repo_path)
         assert 'has explicitly unset profile-formats' in caplog.text
         caplog.clear()
         del repo_config
 
         # unknown formats
+        caplog.set_level(logging.WARNING)
         with open(self.metadata_path, 'w') as f:
-            f.write('profile-formats = foo bar\n')
+            f.write('masters =\nprofile-formats = foo bar\n')
         repo_config = repo_objs.RepoConfig(self.repo_path)
         assert repo_config.profile_formats == {'pms'}
+        assert not caplog.text
+        caplog.clear()
+        del repo_config
+        # message shown at info log level
+        caplog.set_level(logging.INFO)
+        repo_config = repo_objs.RepoConfig(self.repo_path)
         assert 'has unsupported profile format' in caplog.text
         caplog.clear()
         del repo_config
 
         # unknown + known
+        caplog.set_level(logging.WARNING)
         with open(self.metadata_path, 'w') as f:
-            f.write('profile-formats = foo portage-2\n')
+            f.write('masters =\nprofile-formats = foo portage-2\n')
         repo_config = repo_objs.RepoConfig(self.repo_path)
         assert repo_config.profile_formats == {'pms', 'portage-2'}
+        assert not caplog.text
+        caplog.clear()
+        del repo_config
+        # message shown at info log level
+        caplog.set_level(logging.INFO)
+        repo_config = repo_objs.RepoConfig(self.repo_path)
         assert 'has unsupported profile format' in caplog.text
         caplog.clear()
         del repo_config
 
         # known formats
+        caplog.set_level(logging.WARNING)
         with open(self.metadata_path, 'w') as f:
             f.write('profile-formats = portage-1 portage-2\n')
         repo_config = repo_objs.RepoConfig(self.repo_path)

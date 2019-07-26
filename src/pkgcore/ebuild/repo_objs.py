@@ -466,13 +466,13 @@ class RepoConfig(syncable.tree, metaclass=WeakInstMeta):
 
         profile_formats = set(data.get('profile-formats', 'pms').lower().split())
         if not profile_formats:
-            logger.warning(
+            logger.info(
                 f"{self.repo_id!r} repo at {self.location!r} has explicitly "
                 "unset profile-formats, defaulting to pms")
             profile_formats = {'pms'}
         unknown = profile_formats.difference(self.supported_profile_formats)
         if unknown:
-            logger.warning(
+            logger.info(
                 "%r repo at %r has unsupported profile format%s: %s",
                 self.repo_id, self.location, pluralism(unknown),
                 ', '.join(sorted(unknown)))

@@ -86,7 +86,7 @@ def forget_all_processors():
 
 @_single_thread_allowed
 def shutdown_all_processors():
-    """Kill off all known processors."""
+    """Kill all known processors."""
     try:
         while active_ebp_list:
             try:
@@ -111,7 +111,7 @@ spawn.atexit_register(shutdown_all_processors)
 
 @_single_thread_allowed
 def request_ebuild_processor(userpriv=False, sandbox=None, fd_pipes=None):
-    """Request an ebuild_processor instance, creating a new one if needed.
+    """Request a processor instance, creating a new one if needed.
 
     :return: :obj:`EbuildProcessor`
     :param userpriv: should the processor be deprived to
@@ -139,9 +139,9 @@ def request_ebuild_processor(userpriv=False, sandbox=None, fd_pipes=None):
 
 @_single_thread_allowed
 def release_ebuild_processor(ebp):
-    """The inverse of request_ebuild_processor.
+    """Release a given processor instance and shut it down if necessary.
 
-    Any processor requested via request_ebuild_processor B{must} be released
+    Any processor requested via request_ebuild_processor() B{must} be released
     via this function once it's no longer in use.
 
     :param ebp: :obj:`EbuildProcessor` instance
@@ -168,7 +168,7 @@ def release_ebuild_processor(ebp):
 
 @_single_thread_allowed
 def drop_ebuild_processor(ebp):
-    """Force an ebuild processor to be dropped from active/inactive lists.
+    """Force a given processor to be dropped from active/inactive lists.
 
     :param ebp: :obj:`EbuildProcessor` instance
     """
@@ -200,11 +200,11 @@ def reuse_or_request(ebp=None, **kwargs):
 
 
 class ProcessingInterruption(PkgcoreException):
-    """Generic ebuild processor exception."""
+    """Generic processor exception."""
 
 
 class FinishedProcessing(ProcessingInterruption):
-    """Signal ebuild processor that current command has finished running."""
+    """Signal processor that current command has finished running."""
 
     def __init__(self, val, msg=None):
         super().__init__(f"Finished processing with val, {val}")
@@ -221,7 +221,7 @@ class UnhandledCommand(ProcessingInterruption):
 
 
 class InternalError(ProcessingInterruption):
-    """Ebuild processor encountered an internal error or invalid command."""
+    """Processor encountered an internal error or invalid command."""
 
     def __init__(self, line=None, msg=None):
         super().__init__(f"Internal error occurred: line={line!r}, msg={msg!r}")
@@ -234,7 +234,7 @@ class TimeoutError(PkgcoreException):
 
 
 class ProcessorError(PkgcoreUserException):
-    """Generic ebuild processor error."""
+    """Generic processor error."""
 
     def __init__(self, error):
         self.error = error
@@ -389,7 +389,7 @@ class EbuildProcessor(object):
         ebd_pipes.update(self._fd_pipes)
         ebd_pipes.update({max_fd-4: cread, max_fd-3: dwrite})
 
-        # pgid=0: Each ebuild processor is the process group leader for all its
+        # pgid=0: Each processor is the process group leader for all its
         # spawned children so everything can be terminated easily if necessary.
         self.pid = spawn_func(
             [spawn.BASH_BINARY, self.ebd, "daemonize"],
@@ -654,7 +654,7 @@ class EbuildProcessor(object):
 
     @property
     def is_alive(self):
-        """Returns if it's known if the processor has been shutdown."""
+        """Return whether the processor is alive."""
         try:
             if self.pid is None:
                 return False
@@ -748,10 +748,9 @@ class EbuildProcessor(object):
         return self.expect("env_received", async_req=async_req, flush=True)
 
     def set_logfile(self, logfile=''):
-        """
-        Set the logfile (location to log to).
+        """Set the logfile (location to log to).
 
-        Relevant only when the daemon is sandbox'd,
+        Relevant only when the daemon is sandboxed.
 
         :param logfile: filepath to log to
         """
@@ -759,8 +758,9 @@ class EbuildProcessor(object):
         return self.expect("logging_ack")
 
     def __del__(self):
-        """simply attempts to notify the daemon to die"""
-        # for this to be reached means we ain't in a list no more.
+        # Simply attempts to notify the daemon to die. If a processor reaches
+        # this state it shouldn't be in the active or inactive lists anymore so
+        # no need to try to remove itself from them.
         if self.is_alive:
             # I'd love to know why the exception wrapping is required...
             try:
@@ -836,8 +836,7 @@ class EbuildProcessor(object):
         return environ[0].strip()
 
     def get_keys(self, package_inst, eclass_cache):
-        """
-        request the metadata be regenerated from an ebuild
+        """Request the metadata be regenerated from an ebuild.
 
         :param package_inst: :obj:`pkgcore.ebuild.ebuild_src.package` instance
             to regenerate

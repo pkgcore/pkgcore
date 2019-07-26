@@ -314,7 +314,8 @@ class base(metadata.package):
 
     @property
     def live(self):
-        return bool(const.VCS_ECLASSES.intersection(self.inherited))
+        return ('live' in self.properties or
+                bool(const.VCS_ECLASSES.intersection(self.inherited)))
 
     @property
     def P(self):

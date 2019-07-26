@@ -426,6 +426,14 @@ class TestBase(object):
                             f'REQUIRED_USE="{required_use}", IUSE="{iuse}", ' \
                             f'USE="{use}", satisfied="{satisfied}"'
 
+    def test_live(self):
+        o = self.get_pkg({})
+        assert not o.live
+        o = self.get_pkg({'PROPERTIES': 'live'})
+        assert o.live
+        o = self.get_pkg({'_eclasses_': ('git-r3',)})
+        assert o.live
+
 
 class TestPackage(TestBase):
 

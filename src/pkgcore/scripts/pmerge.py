@@ -835,9 +835,9 @@ def main(options, out, err):
             sanity_failures = run_sanity_checks((x.pkg for x in changes), domain, threads=1)
             if sanity_failures:
                 for pkg, errors in sanity_failures.items():
-                    out.write(pkg.cpvstr)
                     out.write('\n'.join(e.msg(verbosity=options.verbosity) for e in errors))
-                    out.write()
+                    if options.verbosity > 0:
+                        out.write()
                 if options.ignore_failures:
                     out.write(
                         out.fg('red'), out.bold, "!!! ",

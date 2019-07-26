@@ -910,10 +910,9 @@ class ebuild_operations(object):
         """Run all defined sanity checks."""
         failures = []
         for check in self._checks:
-            try:
-                check(self, self.pkg, domain=domain)
-            except errors.SanityCheckError as e:
-                failures.append(e)
+            result = check(self, self.pkg, domain=domain)
+            if result is not None:
+                failures.append(result)
         return self.pkg, failures
 
     @_register_check(_checks)
@@ -926,14 +925,14 @@ class ebuild_operations(object):
         if pkg.eapi.options.has_required_use:
             failures = tuple(node for node in pkg.required_use if not node.match(pkg.use))
             if failures:
-                raise errors.RequiredUseError(pkg, failures)
+                return errors.RequiredUseError(pkg, failures)
 
     @_register_check(_checks)
     def _check_pkg_pretend(self, pkg, *, domain, **kwargs):
         """Run pkg_pretend phase."""
         # pkg_pretend is not defined or required
         if 'pretend' not in pkg.mandatory_phases:
-            return True
+            return
 
         commands = None
         if not pkg.built:
@@ -952,22 +951,17 @@ class ebuild_operations(object):
         # avoid clipping eend() messages
         self.env["PKGCORE_RC_PREFIX"] = '2'
 
-        start = time.time()
         with TemporaryFile() as f:
+            # suppress bash output by default
+            fd_pipes = {1: f.fileno(), 2: f.fileno()}
             try:
-                # suppress bash output by default
-                fd_pipes = {1: f.fileno(), 2: f.fileno()}
-                ret = run_generic_phase(
+                run_generic_phase(
                     pkg, "pretend", self.env, tmpdir=None, fd_pipes=fd_pipes,
                     userpriv=True, sandbox=True, extra_handlers=commands)
-                logger.debug(
-                    "pkg_pretend sanity check for %s took %2.2f seconds",
-                    pkg.cpvstr, time.time() - start)
-                return ret
-            except format.GenericBuildError as e:
+            except ProcessorError as e:
                 f.seek(0)
-                msg = f.read().decode().strip('\n')
-                raise errors.PkgPretendError(pkg, msg)
+                output = f.read().decode().strip('\n')
+                return errors.PkgPretendError(pkg, output, e)
 
 
 class src_operations(ebuild_operations, format.build_operations):

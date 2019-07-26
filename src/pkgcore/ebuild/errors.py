@@ -66,9 +66,6 @@ class DepsetParseError(errors.InvalidDependency):
 class SanityCheckError(PkgcoreException):
     """Generic error for sanity check failures."""
 
-    def verbose_msg(self):
-        return str(self)
-
     def msg(self, verbosity, prefix='  '):
         if verbosity > 0:
             return self.verbose_msg(prefix)
@@ -79,38 +76,41 @@ class SanityCheckError(PkgcoreException):
 class PkgPretendError(SanityCheckError):
     """The pkg_pretend phase check failed for a package."""
 
-    def __init__(self, pkg, output):
+    def __init__(self, pkg, output, error):
         self.pkg = pkg
         self.output = output
+        self.error = error
 
-    def __str__(self):
-        return f'>>> Failed pkg_pretend: {self.pkg.cpvstr}'
-
-    def verbose_msg(self, prefix):
-        error_str = '\n'.join(f'{prefix}{line}' for line in self.output.splitlines())
-        return f'{self}\n{error_str}'
+    def msg(self, verbosity=0, prefix=' '):
+        header = f'>>> {self.pkg.cpvstr}: failed pkg_pretend'
+        msg = []
+        error_msg = self.error.msg(verbosity=verbosity)
+        if verbosity > 0:
+            msg.extend(self.output.splitlines())
+            msg.extend(error_msg.splitlines())
+            msg = [f'{prefix}{l}' for l in msg]
+        elif error_msg:
+            header += f': {error_msg}'
+        return '\n'.join([header] + msg)
 
 
 class RequiredUseError(SanityCheckError):
     """REQUIRED_USE check(s) for a package failed."""
 
     def __init__(self, pkg, unmatched):
-        self.unmatched = unmatched
         self.pkg = pkg
+        self.unmatched = unmatched
 
-    def __str__(self):
-        return f'>>> Failed REQUIRED_USE check: {self.pkg.cpvstr}'
-
-    def verbose_msg(self, prefix):
+    def msg(self, verbosity=0, prefix='  '):
+        header = f'>>> {self.pkg.cpvstr}: failed REQUIRED_USE'
         errors = []
         for node in self.unmatched:
             errors.append(textwrap.dedent(
                 f"""
                 Failed to match: {node}
                 from: {self.pkg.required_use}
-                for USE: {' '.join(self.pkg.use)}
+                for USE: {' '.join(sorted(self.pkg.use))}
                 """
             ))
-        error_str = '\n'.join(
-            f'{prefix}{line}' for e in errors for line in e.strip().splitlines())
-        return f'{self}\n{error_str}'
+        msg = [f'{prefix}{line}' for e in errors for line in e.strip().splitlines()]
+        return '\n'.join([header] + msg)

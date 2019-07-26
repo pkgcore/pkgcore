@@ -26,10 +26,6 @@ metadata_keys = (
     "REQUIRED_USE", "RESTRICT", "SLOT", "SRC_URI", "_eclasses_",
 )
 
-VCS_ECLASSES = frozenset([
-    "bzr", "cvs", "darcs", "git-2", "git-r3", "golang-vcs", "mercurial", "subversion",
-])
-
 WORLD_FILE = '/var/lib/portage/world'
 
 EBD_PATH = const._GET_CONST('EBD_PATH', '%(REPO_PATH)s/ebd')

@@ -315,24 +315,30 @@ class BundledProfiles(object):
 
     klass.inject_immutable_instance(locals())
 
-    def __init__(self, profile_base, format='pms'):
+    def __init__(self, profile_base, profile_format='pms'):
         object.__setattr__(self, 'profile_base', profile_base)
-        object.__setattr__(self, 'format', format)
+        object.__setattr__(self, 'format', profile_format)
 
     @klass.jit_attr
-    def arch_profiles(self):
+    def arch_profiles(self, known_status=None, known_arch=None):
         """Return the mapping of arches to profiles for a repo."""
         d = mappings.defaultdict(list)
         fp = pjoin(self.profile_base, 'profiles.desc')
         try:
-            for line in iter_read_bash(fp):
-                l = line.split()
+            for lineno, line in iter_read_bash(fp, enum_line=True):
                 try:
-                    key, profile, status = l
+                    key, profile, status = line.split()
                 except ValueError:
                     logger.error(
-                        f"{fp}: line doesn't follow 'key profile status' form: {line}")
+                        f"{fp}, line {lineno}: invalid profile line format: "
+                        "should be 'key profile status'")
                     continue
+                if known_status is not None and status not in known_status:
+                    logger.warning(
+                        f"{fp}, line {lineno}: unknown profile status: {status!r}")
+                if known_arch is not None and key not in known_arch:
+                    logger.warning(
+                        f"{fp}, line {lineno}: unknown arch: {key!r}")
                 # Normalize the profile name on the offchance someone slipped an extra /
                 # into it.
                 d[key].append(_KnownProfile(
@@ -439,7 +445,7 @@ class RepoConfig(syncable.tree, metaclass=WeakInstMeta):
         if masters is None:
             if not self.is_empty:
                 logger.warning(
-                    f"repo at {self.location!r}, named {self.repo_id!r}, doesn't "
+                    f"{self.repo_id} repo at {self.location!r}, doesn't "
                     "specify masters in metadata/layout.conf. Please explicitly "
                     "set masters (use \"masters =\" if the repo is standalone).")
             _missing_masters = True

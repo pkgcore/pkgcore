@@ -43,7 +43,7 @@ __ebd_sigint_handler() {
 	# suppress sigpipe; if we can't tell the parent to die,
 	# it's already shutting us down.
 	trap "exit 2" SIGPIPE
-	__ebd_write_line "killed"
+	__ebd_write_line "SIGINT"
 	trap - SIGINT
 	# this relies on the python side to *not* discard the killed
 	exit 2

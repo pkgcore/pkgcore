@@ -511,7 +511,7 @@ class EbuildProcessor(object):
         while lines > 0:
             mydata.append(self.ebd_read.readline())
             cmd, _, args_str = mydata[-1].strip().partition(' ')
-            if cmd == 'killed':
+            if cmd == 'SIGINT':
                 chuck_KeyboardInterrupt(self, args_str)
             elif cmd == 'dying':
                 chuck_DyingInterrupt(self, args_str)
@@ -879,7 +879,7 @@ class EbuildProcessor(object):
         handlers["phases"] = partial(
             chuck_StoppingCommand, lambda f: f.lower().strip() == "succeeded")
 
-        handlers["killed"] = chuck_KeyboardInterrupt
+        handlers["SIGINT"] = chuck_KeyboardInterrupt
         handlers["dying"] = chuck_DyingInterrupt
 
         if additional_commands is not None:

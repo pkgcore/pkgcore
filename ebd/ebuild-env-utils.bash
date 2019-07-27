@@ -83,15 +83,11 @@ __environ_save_to_file() {
 
 # reload a saved env, applying usual filters to the env prior to eval'ing it.
 __environ_sanitize_saved_env() {
-	local src
-
 	if [[ $# -ne 1 ]]; then
 		die "scrub_environ called with wrong args, only one can be given: $@"
 	fi
 
 	[[ ! -f $1 ]] && die "${FUNCNAME}: called with a nonexist env: $1"
-
-	src=$1
 
 	# here's how this goes; we do an eval'd loadup of the target env w/in a subshell..
 	# declares and such will slide past filter-env (so it goes).  we then use our own
@@ -107,7 +103,7 @@ __environ_sanitize_saved_env() {
 		__shopt_push -f
 		IFS=$' \t\n'
 		declare -a PKGCORE_FUNC_ARRAY=( "${PKGCORE_BLACKLIST_FUNCS[@]}" )
-		declare -a PKGCORE_VAR_ARRAY=( "${PKGCORE_BLACKLIST_VARS[@]}" src )
+		declare -a PKGCORE_VAR_ARRAY=( "${PKGCORE_BLACKLIST_VARS[@]}" )
 		IFS=,
 		PKGCORE_FUNC_ARRAY=${PKGCORE_FUNC_ARRAY[*]}
 		PKGCORE_VAR_ARRAY=${PKGCORE_VAR_ARRAY[*]}
@@ -119,7 +115,7 @@ __environ_sanitize_saved_env() {
 		__filter_env \
 			--funcs "${PKGCORE_FUNC_ARRAY}" \
 			--vars "${PKGCORE_VAR_ARRAY}" \
-			"${src}" "${T}"/.pre-scrubbed-env \
+			"$1" "${T}"/.pre-scrubbed-env \
 			|| die "failed first step of scrubbing the env to load"
 
 		[[ -s ${T}/.pre-scrubbed-env ]] || die "empty pre-scrubbed-env file.  pkgcore bug?"

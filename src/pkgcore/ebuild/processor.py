@@ -272,6 +272,22 @@ def chuck_KeyboardInterrupt(*args):
 signal.signal(signal.SIGINT, chuck_KeyboardInterrupt)
 
 
+def chuck_TermInterrupt(ebp, *args):
+    """Event handler for SIGTERM."""
+    if ebp is None:
+        # main python process got SIGTERM-ed, shutdown everything
+        for ebp in chain(active_ebp_list, inactive_ebp_list):
+            drop_ebuild_processor(ebp)
+            ebp.shutdown_processor()
+        raise SystemExit(128 + signal.SIGTERM)
+    else:
+        # individual ebd got SIGTERM-ed, shutdown corresponding processor
+        drop_ebuild_processor(ebp)
+        ebp.shutdown_processor()
+
+signal.signal(signal.SIGTERM, partial(chuck_TermInterrupt, None))
+
+
 def chuck_UnhandledCommand(processor, line):
     """Event handler for unhandled commands."""
     raise UnhandledCommand(line)
@@ -513,6 +529,8 @@ class EbuildProcessor(object):
             cmd, _, args_str = mydata[-1].strip().partition(' ')
             if cmd == 'SIGINT':
                 chuck_KeyboardInterrupt(self, args_str)
+            elif cmd == 'SIGTERM':
+                chuck_TermInterrupt(self, args_str)
             elif cmd == 'dying':
                 chuck_DyingInterrupt(self, args_str)
             lines -= 1
@@ -880,6 +898,7 @@ class EbuildProcessor(object):
             chuck_StoppingCommand, lambda f: f.lower().strip() == "succeeded")
 
         handlers["SIGINT"] = chuck_KeyboardInterrupt
+        handlers["SIGTERM"] = chuck_TermInterrupt
         handlers["dying"] = chuck_DyingInterrupt
 
         if additional_commands is not None:

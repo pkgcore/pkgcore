@@ -49,17 +49,17 @@ __ebd_sigint_handler() {
 	exit 2
 }
 
-__ebd_sigkill_handler() {
+__ebd_sigterm_handler() {
 	EBD_DISABLE_DIEFUNC="yes"
 	# silence ourselves as everything shuts down.
 	exec 2>/dev/null
 	exec 1>/dev/null
 	# suppress sigpipe; if we can't tell the parent to die,
 	# it's already shutting us down.
-	trap "exit 9" SIGPIPE
-	__ebd_write_line "killed"
-	trap - SIGKILL
-	exit 9
+	trap "exit 15" SIGPIPE
+	__ebd_write_line "SIGTERM"
+	trap - SIGTERM
+	exit 15
 }
 
 __ebd_exec_main() {
@@ -140,7 +140,7 @@ __ebd_exec_main() {
 	declare -A PKGCORE_PRELOADED_ECLASSES
 
 	trap __ebd_sigint_handler SIGINT
-	trap __ebd_sigkill_handler SIGKILL
+	trap __ebd_sigterm_handler SIGTERM
 
 	# finally, load the master list of pkgcore funcs. fallback to
 	# regenerating it if needed.

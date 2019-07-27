@@ -408,13 +408,6 @@ class EbuildProcessor(object):
                 "expected 'dude!' response from ebd, which wasn't received. "
                 "likely a bug")
 
-        # send PKGCORE_PYTHON_BINARY...
-        self.write(spawn.find_invoking_python())
-        self.write(
-            os.pathsep.join([
-                normpath(abspath(pjoin(__file__, os.pardir, os.pardir))),
-                os.environ.get('PYTHONPATH', '')])
-            )
         if self.__sandbox:
             self.write("sandbox_log?")
             self.__sandbox_log = self.read().split()[0]

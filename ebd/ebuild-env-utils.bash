@@ -18,14 +18,6 @@ __regex_filter_input() {
 		# return status is 1 for no matches and 2 for errors
 		[[ ${ret} -gt 1 ]] && die "got failing return code (${ret}) ${l} -v '${regex}'"
 		ret=0 # reset the return status if there are no matches, it isn't an error
-	elif [[ -x ${PKGCORE_PYTHON_BINARY} ]]; then
-		# We check for the binary on the off chance an ebuild operation
-		# just removed it under our feet.
-		"${PKGCORE_PYTHON_BINARY}" -c \
-			'import sys;import re;r=re.compile(sys.argv[1]).match;sys.stdout.write("\n".join(x for x in sys.stdin.read().splitlines() if r(x) is None))' \
-			"${regex}"
-		local ret=$?
-		[[ ${ret} != 0 ]] && die "got failing return code (${ret}) invoking ${PKGCORE_PYTHON_BINARY} for regex_filter"
 	else
 		while read l; do
 			[[ ${l} =~ ${regex} ]] || echo "${l}"
@@ -108,7 +100,7 @@ __environ_sanitize_saved_env() {
 	(
 		# protect the core vars and functions needed to do a __environ_dump
 		# some of these are already readonly- we still are forcing it to be safe.
-		readonly PKGCORE_PYTHONPATH PKGCORE_PYTHON_BINARY PKGCORE_EXISTING_PATH SANDBOX_ON T
+		readonly PKGCORE_EXISTING_PATH SANDBOX_ON T
 		readonly -a PKGCORE_BLACKLIST_VARS PKGCORE_BLACKLIST_FUNCS
 		readonly -f __filter_env __environ_dump __regex_filter_input
 

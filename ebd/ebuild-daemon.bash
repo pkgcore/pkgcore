@@ -90,11 +90,6 @@ __ebd_exec_main() {
 	# enable colored support as early as possible for early die() usage
 	[[ -z ${PKGCORE_NOCOLOR} ]] && __colored_output_enable
 
-	__ebd_read_line PKGCORE_PYTHON_BINARY
-	[[ -z ${PKGCORE_PYTHON_BINARY} ]] && die "empty PKGCORE_PYTHON_BINARY, bailing"
-	__ebd_read_line PKGCORE_PYTHONPATH
-	[[ -z ${PKGCORE_PYTHONPATH} ]] && die "empty PKGCORE_PYTHONPATH, bailing"
-
 	if ! source "${PKGCORE_EBD_PATH}"/ebuild.bash; then
 		__ebd_write_line "failed"
 		die "failed sourcing ${PKGCORE_EBD_PATH}/ebuild.bash"
@@ -134,8 +129,6 @@ __ebd_exec_main() {
 
 	# protect ourselves
 	declare -rx PKGCORE_EBD_PATH=${PKGCORE_EBD_PATH}
-	declare -rx PKGCORE_PYTHON_BINARY=${PKGCORE_PYTHON_BINARY}
-	declare -rx PKGCORE_PYTHONPATH=${PKGCORE_PYTHONPATH}
 
 	declare -A PKGCORE_PRELOADED_ECLASSES
 

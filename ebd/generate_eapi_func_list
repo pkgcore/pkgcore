@@ -23,10 +23,6 @@ EAPI=${1:-0}
 ${ONLY} && INITIAL_EAPI=${EAPI} || INITIAL_EAPI=0
 export PKGCORE_EBD_PATH=${BASH_SOURCE[0]%/*}
 
-# without this var, parsing certain things can fail; force to true if unset or
-# null so any code that tried accessing it thinks it succeeded
-export PKGCORE_PYTHON_BINARY=${PKGCORE_PYTHON_BINARY:-/bin/true}
-
 shopt -s nullglob
 for (( eapi=${INITIAL_EAPI} ; eapi<=${EAPI} ; eapi++ )) ; do
 	for file in "${PKGCORE_EBD_PATH}/eapi/${eapi}"/*.bash; do

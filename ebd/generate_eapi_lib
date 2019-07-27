@@ -64,8 +64,5 @@ load_eapi_libs() {
 # output values if being run as a script
 if [[ ${BASH_SOURCE[0]} == $0 ]]; then
 	export PKGCORE_EBD_PATH=${BASH_SOURCE[0]%/*}
-	# without this var, parsing certain things can fail; force to true if unset or
-	# null so any code that tried accessing it thinks it succeeded
-	export PKGCORE_PYTHON_BINARY=${PKGCORE_PYTHON_BINARY:-/bin/true}
 	load_eapi_libs "$@"
 fi

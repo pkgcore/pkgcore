@@ -11,8 +11,6 @@ export PKGCORE_EBD_PATH=${BASH_SOURCE[0]%/*}
 # re-exec ourselves inside an empty environment
 if [[ -z ${PKGCORE_CLEAN_ENV} ]]; then
 	exec env -i \
-		PKGCORE_PYTHON_BINARY="${PKGCORE_PYTHON_BINARY}" \
-		PKGCORE_PYTHONPATH="${PKGCORE_PYTHONPATH}" \
 		PATH="${PATH}" \
 		PKGCORE_CLEAN_ENV=1 \
 		"$0" "$@"
@@ -42,10 +40,6 @@ source() {
 	seen[${fp}]=true
 	return 0
 }
-
-# Without this var, parsing certain things can fail; force to true if unset or
-# null so any code that tried accessing it thinks it succeeded.
-export PKGCORE_PYTHON_BINARY=${PKGCORE_PYTHON_BINARY:-/bin/true}
 
 # proper sourcing order to satisfy dependencies
 forced_order_source=(

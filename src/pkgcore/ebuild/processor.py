@@ -288,12 +288,12 @@ def chuck_TermInterrupt(ebp, *args):
 signal.signal(signal.SIGTERM, partial(chuck_TermInterrupt, None))
 
 
-def chuck_UnhandledCommand(processor, line):
+def chuck_UnhandledCommand(ebp, line):
     """Event handler for unhandled commands."""
     raise UnhandledCommand(line)
 
 
-def chuck_StoppingCommand(val, processor, *args):
+def chuck_StoppingCommand(val, ebp, *args):
     """Event handler for successful phase/command completion."""
     if callable(val):
         val = val(args[0])

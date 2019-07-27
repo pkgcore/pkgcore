@@ -186,6 +186,9 @@ class ebd(object):
             'eapply_user': ebd_ipc.Eapply_User(self),
             'docompress': ebd_ipc.Docompress(self),
             'dostrip': ebd_ipc.Dostrip(self),
+
+            # internals
+            'filter_env': ebd_ipc.FilterEnv(self),
         }
 
     def start(self):

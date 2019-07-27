@@ -48,8 +48,7 @@ __escape_regex_array() {
 __filter_env() {
 	local opts
 	[[ ${PKGCORE_DEBUG} -ge 1 ]] && opts="--debug"
-	PYTHONPATH="${PKGCORE_PYTHONPATH}" "${PKGCORE_PYTHON_BINARY}" \
-		$(__which filter-env) ${opts} "$@" || die "filter-env invocation failed"
+	__ebd_ipc_cmd "filter_env" "${opts}" "$@"
 }
 
 # selectively saves the environ- specifically removes things that have been marked to not be exported.
@@ -128,8 +127,8 @@ __environ_sanitize_saved_env() {
 		__filter_env \
 			--funcs "${PKGCORE_FUNC_ARRAY}" \
 			--vars "${PKGCORE_VAR_ARRAY}" \
-			-i "${src}" \
-			> "${T}"/.pre-scrubbed-env || die "failed first step of scrubbing the env to load"
+			"${src}" "${T}"/.pre-scrubbed-env \
+			|| die "failed first step of scrubbing the env to load"
 
 		[[ -s ${T}/.pre-scrubbed-env ]] || die "empty pre-scrubbed-env file.  pkgcore bug?"
 		source "${T}"/.pre-scrubbed-env >&2 || die "failed sourcing scrubbed env"

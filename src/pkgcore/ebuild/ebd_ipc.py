@@ -24,7 +24,7 @@ demandload(
     'operator:itemgetter',
     'pwd',
     'pkgcore:os_data',
-    'pkgcore.ebuild:portageq',
+    'pkgcore.ebuild:filter_env,portageq',
     'pkgcore.ebuild:atom@atom_mod',
 )
 
@@ -1098,3 +1098,31 @@ class Unpack(IpcCommand):
                 current_mode = os.lstat(path).st_mode
                 if not stat.S_ISLNK(current_mode):
                     os.chmod(path, current_mode | mode)
+
+
+class FilterEnv(IpcCommand):
+
+    arg_parser = IpcArgumentParser()
+    filtering = arg_parser.add_argument_group("Environment filtering options")
+    filtering.add_argument(
+        '-V', '--var-match', action='store_true', default=False,
+        help="invert the filtering- instead of removing a var if it matches "
+        "remove all vars that do not match")
+    filtering.add_argument(
+        '-F', '--func-match', action='store_true', default=False,
+        help="invert the filtering- instead of removing a function if it matches "
+        "remove all functions that do not match")
+    filtering.add_argument(
+        '-f', '--funcs', action='csv',
+        help="comma separated list of regexes to match function names against for filtering")
+    filtering.add_argument(
+        '-v', '--vars', action='csv',
+        help="comma separated list of regexes to match variable names against for filtering")
+    arg_parser.add_argument('files', nargs=2)
+
+    def run(self, args):
+        src_path, dest_path = args.files
+        with open(src_path) as src, open(dest_path, 'wb') as dest:
+            filter_env.main_run(
+                dest, src.read(), args.vars, args.funcs,
+                args.var_match, args.func_match)

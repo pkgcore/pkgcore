@@ -41,18 +41,20 @@ demand_compile_regexp(
 demand_compile_regexp('_parse_inherit_regex', r'^\s*inherit\s(.*)$')
 
 
-def generate_depset(kls, key, non_package_type, self, **kwds):
-    kwds.setdefault('attr', key)
-    if non_package_type:
-        return conditionals.DepSet.parse(
-            self.data.pop(key, ""), kls,
-            operators={
-                "||": boolean.OrRestriction,
-                "": boolean.AndRestriction},
-            **kwds)
-    kwds['element_func'] = self.eapi.atom_kls
-    kwds['transitive_use_atoms'] = self.eapi.options.transitive_use_atoms
-    return conditionals.DepSet.parse(self.data.pop(key, ""), kls, **kwds)
+def generate_depset(kls, key, self):
+    return conditionals.DepSet.parse(
+        self.data.pop(key, ""), kls,
+        attr=key, element_func=self.eapi.atom_kls,
+        transitive_use_atoms=self.eapi.options.transitive_use_atoms)
+
+
+def generate_licenses(self):
+    return conditionals.DepSet.parse(
+        self.data.pop('LICENSE', ''), str,
+        operators={
+            '||': boolean.OrRestriction,
+            '': boolean.AndRestriction},
+        attr='LICENSE', element_func=intern)
 
 
 def _mk_required_use_node(data):
@@ -228,7 +230,7 @@ def get_subslot(self):
 
 def get_bdepend(self):
     if "BDEPEND" in self.eapi.metadata_keys:
-        return generate_depset(atom, "BDEPEND", False, self)
+        return generate_depset(atom, "BDEPEND", self)
     return conditionals.DepSet()
 
 
@@ -255,11 +257,10 @@ class base(metadata.package):
 
     _get_attr = dict(metadata.package._get_attr)
     _get_attr["bdepend"] = get_bdepend
-    _get_attr["depend"] = partial(generate_depset, atom, "DEPEND", False)
-    _get_attr["rdepend"] = partial(generate_depset, atom, "RDEPEND", False)
-    _get_attr["pdepend"] = partial(generate_depset, atom, "PDEPEND", False)
-    _get_attr["license"] = partial(
-        generate_depset, str, "LICENSE", True, element_func=intern)
+    _get_attr["depend"] = partial(generate_depset, atom, "DEPEND")
+    _get_attr["rdepend"] = partial(generate_depset, atom, "RDEPEND")
+    _get_attr["pdepend"] = partial(generate_depset, atom, "PDEPEND")
+    _get_attr["license"] = generate_licenses
     _get_attr["fullslot"] = get_slot
     _get_attr["slot"] = lambda s: s.fullslot.partition('/')[0]
     _get_attr["subslot"] = get_subslot

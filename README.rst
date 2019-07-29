@@ -54,7 +54,6 @@ Installing from git in a virtualenv::
 Installing from a tarball or git repo::
 
     python setup.py install
-    pplugincache
 
 Documentation
 =============

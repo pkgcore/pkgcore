@@ -520,10 +520,10 @@ class TestRepoConfig(object):
         assert repo_config.repo_id == 'config_name'
         del repo_config
 
-    def test_raw_known_arches(self):
+    def test_known_arches(self):
         # nonexistent repo
         repo_config = repo_objs.RepoConfig('nonexistent')
-        assert repo_config.raw_known_arches == frozenset()
+        assert repo_config.known_arches == frozenset()
         del repo_config
 
         # empty file
@@ -531,14 +531,14 @@ class TestRepoConfig(object):
         arches_path = os.path.join(self.profiles_base, 'arch.list')
         touch(arches_path)
         repo_config = repo_objs.RepoConfig(self.repo_path)
-        assert repo_config.raw_known_arches == frozenset()
+        assert repo_config.known_arches == frozenset()
         del repo_config
 
         # single entry
         with open(arches_path, 'w') as f:
             f.write('foo')
         repo_config = repo_objs.RepoConfig(self.repo_path)
-        assert repo_config.raw_known_arches == frozenset(['foo'])
+        assert repo_config.known_arches == frozenset(['foo'])
         del repo_config
 
         # multiple entries with whitespaces and comments
@@ -552,13 +552,13 @@ class TestRepoConfig(object):
                 foo-bar
                 """)
         repo_config = repo_objs.RepoConfig(self.repo_path)
-        assert repo_config.raw_known_arches == frozenset(['amd64', 'x86', 'foo-bar'])
+        assert repo_config.known_arches == frozenset(['amd64', 'x86', 'foo-bar'])
         del repo_config
 
-    def test_raw_use_desc(self):
+    def test_use_desc(self):
         # nonexistent repo
         repo_config = repo_objs.RepoConfig('nonexistent')
-        assert repo_config.raw_use_desc == ()
+        assert repo_config.use_desc == ()
         del repo_config
 
         # empty file
@@ -566,7 +566,7 @@ class TestRepoConfig(object):
         use_desc_path = os.path.join(self.profiles_base, 'use.desc')
         touch(use_desc_path)
         repo_config = repo_objs.RepoConfig(self.repo_path)
-        assert repo_config.raw_use_desc == ()
+        assert repo_config.use_desc == ()
         del repo_config
 
         # regular entries
@@ -581,13 +581,13 @@ class TestRepoConfig(object):
                 bar3 - add bar3 support
                 """)
         repo_config = repo_objs.RepoConfig(self.repo_path)
-        assert 3 == len(repo_config.raw_use_desc)
+        assert 3 == len(repo_config.use_desc)
         del repo_config
 
-    def test_raw_use_expand_desc(self):
+    def test_use_expand_desc(self):
         # nonexistent repo
         repo_config = repo_objs.RepoConfig('nonexistent')
-        assert repo_config.raw_use_expand_desc == {}
+        assert repo_config.use_expand_desc == {}
         del repo_config
 
         # empty file
@@ -596,7 +596,7 @@ class TestRepoConfig(object):
         use_expand_desc_file = os.path.join(use_expand_desc_path, 'foo.desc')
         touch(use_expand_desc_file)
         repo_config = repo_objs.RepoConfig(self.repo_path)
-        assert repo_config.raw_use_expand_desc == {'foo': ()}
+        assert repo_config.use_expand_desc == {'foo': ()}
         del repo_config
 
         # regular entries
@@ -610,17 +610,17 @@ class TestRepoConfig(object):
                 baz - build using baz
                 """)
         repo_config = repo_objs.RepoConfig(self.repo_path)
-        assert repo_config.raw_use_expand_desc == {
+        assert repo_config.use_expand_desc == {
             'foo': (
                 ('foo_bar', 'add bar support'),
                 ('foo_baz', 'build using baz')
             )}
         del repo_config
 
-    def test_raw_use_local_desc(self):
+    def test_use_local_desc(self):
         # nonexistent repo
         repo_config = repo_objs.RepoConfig('nonexistent')
-        assert repo_config.raw_use_local_desc == ()
+        assert repo_config.use_local_desc == ()
         del repo_config
 
         # empty file
@@ -628,7 +628,7 @@ class TestRepoConfig(object):
         use_local_desc_path = os.path.join(self.profiles_base, 'use.local.desc')
         touch(use_local_desc_path)
         repo_config = repo_objs.RepoConfig(self.repo_path)
-        assert repo_config.raw_use_local_desc == ()
+        assert repo_config.use_local_desc == ()
         del repo_config
 
         # regular entries
@@ -643,7 +643,7 @@ class TestRepoConfig(object):
                 cat2/pkg3:bar3 - add bar3 support
                 """)
         repo_config = repo_objs.RepoConfig(self.repo_path)
-        assert 3 == len(repo_config.raw_use_local_desc)
+        assert 3 == len(repo_config.use_local_desc)
         del repo_config
 
     def test_updates(self):

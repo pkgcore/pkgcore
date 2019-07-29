@@ -32,7 +32,7 @@ class FakeRepo(FakeEbuildRepo):
 
     def __init__(self, repo_id='faker', arches=('amd64', 'x86', 'arm', 'arm64')):
         config = RepoConfig('nonexistent')
-        object.__setattr__(config, 'raw_known_arches', frozenset(arches))
+        object.__setattr__(config, 'known_arches', frozenset(arches))
         pkgs = [
             FakePkg('app-arch/bzip2-1.0.1-r1', repo=self, data={'SLOT': '0'}, keywords=('x86',)),
             FakePkg('app-arch/bzip2-1.0.5-r2', repo=self, data={'SLOT': '0'}, keywords=('x86',)),

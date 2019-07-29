@@ -487,7 +487,7 @@ class RepoConfig(syncable.tree, metaclass=WeakInstMeta):
         sf(self, 'profile_formats', profile_formats)
 
     @klass.jit_attr
-    def raw_known_arches(self):
+    def known_arches(self):
         """All valid KEYWORDS for the repo."""
         try:
             return frozenset(iter_read_bash(
@@ -496,7 +496,7 @@ class RepoConfig(syncable.tree, metaclass=WeakInstMeta):
             return frozenset()
 
     @klass.jit_attr
-    def raw_use_desc(self):
+    def use_desc(self):
         """Global USE flags for the repo."""
         # todo: convert this to using a common exception base, with
         # conversion of ValueErrors...
@@ -505,7 +505,7 @@ class RepoConfig(syncable.tree, metaclass=WeakInstMeta):
         return tuple(self._split_use_desc_file('use.desc', converter))
 
     @klass.jit_attr
-    def raw_use_local_desc(self):
+    def use_local_desc(self):
         """Local USE flags for the repo."""
         def converter(key):
             # todo: convert this to using a common exception base, with
@@ -516,7 +516,7 @@ class RepoConfig(syncable.tree, metaclass=WeakInstMeta):
         return tuple(self._split_use_desc_file('use.local.desc', converter))
 
     @klass.jit_attr
-    def raw_use_expand_desc(self):
+    def use_expand_desc(self):
         """USE_EXPAND settings for the repo."""
         base = pjoin(self.profiles_base, 'desc')
         d = dict()
@@ -550,11 +550,6 @@ class RepoConfig(syncable.tree, metaclass=WeakInstMeta):
             if line is None:
                 raise
             raise ValueError(f"Failed parsing {fp!r}: line was {line!r}") from e
-
-    known_arches = klass.alias_attr('raw_known_arches')
-    use_desc = klass.alias_attr('raw_use_desc')
-    use_local_desc = klass.alias_attr('raw_use_local_desc')
-    use_expand_desc = klass.alias_attr('raw_use_expand_desc')
 
     @klass.jit_attr
     def is_empty(self):

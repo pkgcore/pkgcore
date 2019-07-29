@@ -5,7 +5,6 @@
 
 import os
 
-from snakeoil.log import suppress_logging
 from snakeoil.strings import pluralism as _pl
 
 from pkgcore._vendor.tabulate import tabulate, tabulate_formats
@@ -62,26 +61,23 @@ target_opts.add_argument(
 @argparser.bind_delayed_default(30, 'repos')
 def _setup_repos(namespace, attr):
     target_repo = namespace.selected_repo
+    all_ebuild_repos = namespace.domain.all_ebuild_repos_raw
     namespace.cwd = os.getcwd()
 
     # TODO: move this to StoreRepoObject
     if target_repo is None:
-        with suppress_logging():
-            # determine target repo from the target directory
-            for repo in namespace.domain.ebuild_repos_raw:
-                if namespace.cwd in repo:
-                    target_repo = repo
-                    break
-            else:
-                # determine if CWD is inside an unconfigured repo
-                target_repo = namespace.domain.find_repo(
-                    namespace.cwd, config=namespace.config)
+        # determine target repo from the target directory
+        for repo in all_ebuild_repos.trees:
+            if namespace.cwd in repo:
+                target_repo = repo
+                break
+        else:
+            # determine if CWD is inside an unconfigured repo
+            target_repo = namespace.domain.find_repo(
+                namespace.cwd, config=namespace.config)
 
-    # fallback to using all ebuild repos
-    if target_repo is None:
-        target_repo = namespace.domain.all_ebuild_repos_raw
-
-    namespace.repo = target_repo
+    # fallback to using all, unfiltered ebuild repos if no target repo can be found
+    namespace.repo = target_repo if target_repo is not None else all_ebuild_repos
 
 
 @argparser.bind_delayed_default(40, 'arches')

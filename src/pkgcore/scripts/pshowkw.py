@@ -66,7 +66,6 @@ def _setup_repos(namespace, attr):
 
     # TODO: move this to StoreRepoObject
     if target_repo is None:
-        target_repo = namespace.domain.all_ebuild_repos_raw
         with suppress_logging():
             # determine target repo from the target directory
             for repo in namespace.domain.ebuild_repos_raw:
@@ -77,6 +76,10 @@ def _setup_repos(namespace, attr):
                 # determine if CWD is inside an unconfigured repo
                 target_repo = namespace.domain.find_repo(
                     namespace.cwd, config=namespace.config)
+
+    # fallback to using all ebuild repos
+    if target_repo is None:
+        target_repo = namespace.domain.all_ebuild_repos_raw
 
     namespace.repo = target_repo
 

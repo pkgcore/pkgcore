@@ -5,6 +5,7 @@ import pytest
 
 from pkgcore.config import basics, ConfigHint, configurable
 from pkgcore.ebuild.repo_objs import RepoConfig
+from pkgcore.repository import multiplex
 from pkgcore.scripts import pshowkw
 from pkgcore.test.misc import FakePkg, FakeEbuildRepo
 from pkgcore.test.scripts.helpers import ArgParseMixin
@@ -15,8 +16,7 @@ class FakeDomain(object):
     pkgcore_config_type = ConfigHint({'repos': 'refs:repo'}, typename='domain')
 
     def __init__(self, repos):
-        self.all_ebuild_repos_raw = repos
-        self.ebuild_repos_raw = repos
+        self.all_ebuild_repos_raw = multiplex.tree(*repos)
         self.root = None
 
     def add_repo(self, *args, **kwargs):

@@ -95,7 +95,7 @@ def dynamic_getattr_dict(self, attr):
         if e.attr == attr:
             raise
         raise errors.MetadataException(self, attr, e.error, e.verbose) from e
-    except errors.PackageError as e:
+    except (errors.PackageError, UnicodeDecodeError) as e:
         raise errors.MetadataException(self, attr, str(e)) from e
     except PermissionError as e:
         raise base_errors.PermissionDenied(self.path, write=False) from e

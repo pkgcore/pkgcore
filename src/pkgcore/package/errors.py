@@ -20,7 +20,7 @@ class InvalidPackageName(PackageError):
 class MetadataException(PackageError):
 
     def __init__(self, pkg, attr, error, verbose=None):
-        super().__init__(f"metadata exception: pkg {pkg}, attr {attr}\nerror: {error}")
+        super().__init__(f"metadata exception: pkg {pkg}, attr {attr}: {error}")
         self.pkg, self.attr, self.error, self.verbose = pkg, attr, error, verbose
 
     def msg(self, verbosity=0):

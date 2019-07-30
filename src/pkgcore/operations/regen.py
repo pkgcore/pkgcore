@@ -39,11 +39,5 @@ def regen_repository(repo, pkgs, observer, threads=1, pkg_attr='keywords', **kwa
 
     errors = map_async(pkgs, regen_iter, threads=threads, per_thread_args=get_args)
 
-    # release ebuild processors
-    for helper in helpers:
-        f = getattr(helper, 'finish', None)
-        if f is not None:
-            f()
-
     # yield any errors that occurred during metadata generation
     yield from errors

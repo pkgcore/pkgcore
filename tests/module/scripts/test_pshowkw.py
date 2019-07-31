@@ -38,7 +38,7 @@ class FakeRepo(FakeEbuildRepo):
             FakePkg('app-arch/bzip2-1.0.5-r2', repo=self, data={'SLOT': '0'}, keywords=('x86',)),
             FakePkg('sys-apps/coreutils-8.25', repo=self, data={'SLOT': '0'}),
             FakePkg('x11-libs/gtk+-2.24', repo=self, data={'SLOT': '2'}, keywords=('amd64',)),
-            FakePkg('x11-libs/gtk+-3.22', repo=self, data={'SLOT': '3'}, keywords=('amd64', 'x86')),
+            FakePkg('x11-libs/gtk+-3.20', repo=self, data={'SLOT': '3'}, keywords=('amd64', 'x86')),
         ]
         super().__init__(repo_id=repo_id, pkgs=pkgs, config=config)
 
@@ -113,7 +113,7 @@ keywords for x11-libs/gtk+:
       4 m 4 6 i t o
 -----------------------
  2.24 + o o o 0 2 faker
- 3.22 + o o + 0 3 faker
+ 3.20 + o o + 0 3 faker
 """.splitlines(),
             'gtk+',
             domain=domain_config, ns_kwargs=ns_kwargs)
@@ -130,7 +130,7 @@ keywords for x11-libs/gtk+:
       4 i t o
 -----------------
  2.24 + 0 2 faker
- 3.22 + 0 3 faker
+ 3.20 + 0 3 faker
 """.splitlines(),
             '-a', 'amd64', 'gtk+',
             domain=domain_config, ns_kwargs=ns_kwargs)
@@ -147,7 +147,7 @@ keywords for x11-libs/gtk+:
       4 m 6 i t o
 ---------------------
  2.24 + o o 0 2 faker
- 3.22 + o + 0 3 faker
+ 3.20 + o + 0 3 faker
 """.splitlines(),
             '-a=-arm64', 'gtk+',
             domain=domain_config, ns_kwargs=ns_kwargs)
@@ -157,10 +157,10 @@ keywords for x11-libs/gtk+:
         ns_kwargs = {'color': False, 'selected_repo': fake_repo}
         self.assertOut("""\
 keywords for x11-libs/gtk+:
-      | amd64   | arm   | arm64   | x86   | eapi   |   slot | repo
+      | amd64   | arm   | arm64   | x86   | eapi   | slot   | repo
 ------+---------+-------+---------+-------+--------+--------+--------
- 2.24 | +       | o     | o       | o     | 0      |      2 | faker
- 3.22 | +       | o     | o       | +     | 0      |      3 | faker
+ 2.24 | +       | o     | o       | o     | 0      | 2      | faker
+ 3.20 | +       | o     | o       | +     | 0      | 3      | faker
 """.splitlines(),
             '-f', 'presto', 'gtk+',
             domain=domain_config, ns_kwargs=ns_kwargs)

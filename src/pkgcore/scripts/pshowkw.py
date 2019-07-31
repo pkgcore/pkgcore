@@ -228,7 +228,9 @@ def main(options, out, err):
                     pkgs = list(pkgs)
                     out.write(f'keywords for {pkgs[0].unversioned_atom}:')
                 data = _render_rows(options, pkgs, arches)
-                table = tabulate(data, headers=headers, tablefmt=options.format)
+                table = tabulate(
+                    data, headers=headers, tablefmt=options.format,
+                    disable_numparse=True)
                 out.write(table)
             continued = True
 

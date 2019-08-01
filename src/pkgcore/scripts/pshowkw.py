@@ -3,6 +3,7 @@
 
 """display package keywords"""
 
+from functools import partial
 import os
 
 from snakeoil.strings import pluralism as _pl
@@ -132,9 +133,33 @@ def _setup_arches(namespace, attr):
     namespace.arches = arches
 
 
+def _colormap(colors, line):
+    if colors is None:
+        return line
+    return colors[line] + line + colors['reset']
+
+
 @argparser.bind_final_check
 def _validate_args(parser, namespace):
     namespace.pkg_dir = False
+
+    # disable colors when not using the native pshowkw output format
+    if namespace.format != 'pshowkw':
+        namespace.color = False
+
+    if namespace.color:
+        # default colors to use for keyword types
+        _COLORS = {
+            '+': '\u001b[32m',
+            '~': '\u001b[33m',
+            '-': '\u001b[31m',
+            '*': '\u001b[31m',
+            'o': '\u001b[30;1m',
+            'reset': '\u001b[0m',
+        }
+    else:
+        _COLORS = None
+    namespace.colormap = partial(_colormap, _COLORS)
 
     if not namespace.targets:
         if namespace.selected_repo:
@@ -189,23 +214,15 @@ def _render_rows(options, pkgs, arches):
         for arch in arches:
             if arch in keywords:
                 line = '+'
-                color = '\u001b[32m'
             elif f'~{arch}' in keywords:
                 line = '~'
-                color = '\u001b[33m'
             elif f'-{arch}' in keywords:
                 line = '-'
-                color = '\u001b[31m'
             elif '-*' in keywords:
                 line = '*'
-                color = '\u001b[31m'
             else:
                 line = 'o'
-                color = '\u001b[30;1m'
-            if options.color:
-                row.append(color + line + '\u001b[0m')
-            else:
-                row.append(line)
+            row.append(options.colormap(line))
         row.extend([pkg.eapi, pkg.fullslot, pkg.repo.repo_id])
         yield row
 

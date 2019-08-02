@@ -73,7 +73,7 @@ class Maintainer(object):
         else:
             res = self.email
         if self.description is not None:
-            return '{res} ({self.description})'
+            return f'{res} ({self.description})'
         return res
 
 

@@ -123,6 +123,291 @@ Blake-light tragedy among the scholars of war.
         assert " ".join(s.split()) == self.get_metadata_xml(longdescription=s).longdescription
 
 
+class TestProjectsXml(object):
+
+    @staticmethod
+    def get_projects_xml(s=None):
+        default_s = """<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE projects SYSTEM "http://www.gentoo.org/dtd/projects.dtd">
+<projects>
+  <project>
+    <email>nomembers@example.com</email>
+    <name>Project with no members</name>
+    <url>https://projects.example.com/nomembers</url>
+    <description>Here is the description</description>
+  </project>
+  <project>
+    <email>nolead@example.com</email>
+    <name>Project with no lead</name>
+    <url>https://projects.example.com/nolead</url>
+    <description>Here is the description</description>
+    <member>
+      <email>fulldev1@example.com</email>
+      <name>Full Dev</name>
+      <role>Somebody</role>
+    </member>
+    <member>
+      <email>dev1@example.com</email>
+    </member>
+  </project>
+  <project>
+    <email>lead@example.com</email>
+    <name>Project with a lead</name>
+    <url>https://projects.example.com/lead</url>
+    <description>Here is the description</description>
+    <member>
+      <email>fulldev2@example.com</email>
+      <name>Full Dev</name>
+      <role>Somebody</role>
+    </member>
+    <member is-lead="1">
+      <email>dev2@example.com</email>
+    </member>
+  </project>
+  <project>
+    <email>subprojects@example.com</email>
+    <name>Project with non-recursive subprojects</name>
+    <url>https://projects.example.com/subprojects</url>
+    <description>Here is the description</description>
+    <member>
+      <email>fulldev3@example.com</email>
+      <name>Full Dev</name>
+      <role>Somebody</role>
+    </member>
+    <member is-lead="1">
+      <email>dev3@example.com</email>
+    </member>
+    <subproject ref="nolead@example.com"/>
+    <subproject ref="lead@example.com"/>
+  </project>
+  <project>
+    <email>recursive-subprojects@example.com</email>
+    <name>Project with recursive subprojects</name>
+    <url>https://projects.example.com/recursive-subprojects</url>
+    <description>Here is the description</description>
+    <member>
+      <email>fulldev4@example.com</email>
+      <name>Full Dev</name>
+      <role>Somebody</role>
+    </member>
+    <member>
+      <!-- this one is common -->
+      <email>dev1@example.com</email>
+    </member>
+    <member is-lead="1">
+      <email>dev4@example.com</email>
+    </member>
+    <subproject ref="nolead@example.com" inherit-members="1"/>
+    <subproject ref="lead@example.com"/>
+  </project>
+  <project>
+    <email>super-recursive-subprojects@example.com</email>
+    <name>Project with double recursion</name>
+    <url>https://projects.example.com/super-recursive-subprojects</url>
+    <description>Here is the description</description>
+    <member>
+      <email>fulldev5@example.com</email>
+      <name>Full Dev</name>
+      <role>Somebody</role>
+    </member>
+    <member is-lead="1">
+      <!-- this one is common -->
+      <email>dev2@example.com</email>
+    </member>
+    <member>
+      <email>dev5@example.com</email>
+    </member>
+    <subproject ref="recursive-subprojects@example.com" inherit-members="1"/>
+  </project>
+</projects>"""
+        if s is None:
+            s = default_s
+        return repo_objs.ProjectsXml(data_source(s.encode('utf-8')))
+
+    def test_empty(self):
+        assert self.get_projects_xml('').projects == {}
+
+    def test_invalid_xml(self):
+        assert self.get_projects_xml('<foo><bar></foo>').projects == {}
+
+    def test_project_member_without_email(self):
+        p = self.get_projects_xml("""<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE projects SYSTEM "http://www.gentoo.org/dtd/projects.dtd">
+<projects>
+  <project>
+    <email>nolead@example.com</email>
+    <name>Project with no lead</name>
+    <url>https://projects.example.com/nolead</url>
+    <description>Here is the description</description>
+    <member>
+      <name>Full Dev</name>
+      <role>Somebody</role>
+    </member>
+  </project>
+</projects>
+""").projects['nolead@example.com']
+        assert p.members == ()
+
+    def test_subproject_without_ref(self):
+        p = self.get_projects_xml("""<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE projects SYSTEM "http://www.gentoo.org/dtd/projects.dtd">
+<projects>
+  <project>
+    <email>nolead@example.com</email>
+    <name>Project with no lead</name>
+    <url>https://projects.example.com/nolead</url>
+    <description>Here is the description</description>
+    <member>
+      <email>fulldev1@example.com</email>
+      <name>Full Dev</name>
+      <role>Somebody</role>
+    </member>
+    <subproject inherit-members="1"/>
+  </project>
+</projects>
+""").projects['nolead@example.com']
+        assert p.subprojects == ()
+
+    def test_subproject_with_invalid_ref(self):
+        p = self.get_projects_xml("""<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE projects SYSTEM "http://www.gentoo.org/dtd/projects.dtd">
+<projects>
+  <project>
+    <email>nolead@example.com</email>
+    <name>Project with no lead</name>
+    <url>https://projects.example.com/nolead</url>
+    <description>Here is the description</description>
+    <member>
+      <email>fulldev1@example.com</email>
+      <name>Full Dev</name>
+      <role>Somebody</role>
+    </member>
+    <subproject ref="nonexist@example.com" inherit-members="1"/>
+  </project>
+</projects>
+""").projects['nolead@example.com']
+        assert p.subprojects[0].project is None
+        assert p.recursive_members == p.members
+
+    def test_deep_subproject_with_invalid_ref(self):
+        p = self.get_projects_xml("""<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE projects SYSTEM "http://www.gentoo.org/dtd/projects.dtd">
+<projects>
+  <project>
+    <email>nolead@example.com</email>
+    <name>Project with no lead</name>
+    <url>https://projects.example.com/nolead</url>
+    <description>Here is the description</description>
+    <member>
+      <email>fulldev1@example.com</email>
+      <name>Full Dev</name>
+      <role>Somebody</role>
+    </member>
+    <subproject ref="nonexist@example.com" inherit-members="1"/>
+  </project>
+  <project>
+    <email>subprojects@example.com</email>
+    <name>Project with real subprojects</name>
+    <url>https://projects.example.com/subprojects</url>
+    <description>Here is the description</description>
+    <subproject ref="nolead@example.com" inherit-members="1"/>
+  </project>
+</projects>
+""").projects
+        assert (p['subprojects@example.com'].recursive_members ==
+                p['nolead@example.com'].members)
+
+    def test_basic_metadata(self):
+        projects = self.get_projects_xml().projects
+        for email, project in projects.items():
+            assert project.email == email
+            assert project.name.startswith('Project with')
+            assert project.url == (
+                'https://projects.example.com/' + email.split('@')[0])
+            assert project.description == 'Here is the description'
+
+    def test_no_members(self):
+        p = self.get_projects_xml().projects['nomembers@example.com']
+        assert p.members == ()
+        assert p.leads == ()
+        assert p.subprojects == ()
+        assert p.recursive_members == ()
+
+    def test_no_lead(self):
+        p = self.get_projects_xml().projects['nolead@example.com']
+        assert p.members[0].email == 'fulldev1@example.com'
+        assert p.members[0].name == 'Full Dev'
+        assert p.members[0].role == 'Somebody'
+        assert not p.members[0].is_lead
+        assert p.members[1].email == 'dev1@example.com'
+        assert p.members[1].name is None
+        assert p.members[1].role is None
+        assert not p.members[1].is_lead
+        assert p.leads == ()
+        assert p.subprojects == ()
+        assert p.recursive_members == p.members
+
+    def test_have_lead(self):
+        p = self.get_projects_xml().projects['lead@example.com']
+        assert p.members[0].email == 'fulldev2@example.com'
+        assert p.members[0].name == 'Full Dev'
+        assert p.members[0].role == 'Somebody'
+        assert not p.members[0].is_lead
+        assert p.members[1].email == 'dev2@example.com'
+        assert p.members[1].name is None
+        assert p.members[1].role is None
+        assert p.members[1].is_lead
+        assert p.leads == (p.members[1],)
+        assert p.subprojects == ()
+        assert p.recursive_members == p.members
+
+    def test_subprojects(self):
+        p = self.get_projects_xml().projects['subprojects@example.com']
+        assert p.subprojects[0].email == 'nolead@example.com'
+        assert p.subprojects[0].name == 'Project with no lead'
+        assert not p.subprojects[0].inherit_members
+        assert p.subprojects[1].email == 'lead@example.com'
+        assert p.subprojects[1].name == 'Project with a lead'
+        assert not p.subprojects[1].inherit_members
+        assert p.recursive_members == p.members
+
+    @staticmethod
+    def unlead(members):
+        for m in members:
+            yield repo_objs.ProjectMember(
+                email=m.email, name=m.name, role=m.role, is_lead=False)
+
+    def test_recursive_subprojects(self):
+        projects = self.get_projects_xml().projects
+        p = projects['recursive-subprojects@example.com']
+        sp = projects['nolead@example.com']
+        assert p.subprojects[0].email == 'nolead@example.com'
+        assert p.subprojects[0].name == 'Project with no lead'
+        assert p.subprojects[0].inherit_members
+        assert p.subprojects[1].email == 'lead@example.com'
+        assert p.subprojects[1].name == 'Project with a lead'
+        assert not p.subprojects[1].inherit_members
+        # one extra member should be inherited from sp
+        assert p.recursive_members == (
+            p.members + tuple(self.unlead(sp.members[:1])))
+        # lead of sp should not be considered lead of p
+        assert not p.recursive_members[3].is_lead
+
+    def test_super_recursive_subprojects(self):
+        projects = self.get_projects_xml().projects
+        p = projects['super-recursive-subprojects@example.com']
+        sp = projects['recursive-subprojects@example.com']
+        ssp = projects['nolead@example.com']
+        assert p.subprojects[0].email == 'recursive-subprojects@example.com'
+        assert p.subprojects[0].name == 'Project with recursive subprojects'
+        assert p.subprojects[0].inherit_members
+        # one extra member should be inherited from ssp
+        assert p.recursive_members == (
+            p.members + tuple(self.unlead(sp.members + ssp.members[:1])))
+        # lead of sp should not be considered lead of p
+        assert not p.recursive_members[5].is_lead
+
+
 class TestRepoConfig(object):
 
     @pytest.fixture(autouse=True)

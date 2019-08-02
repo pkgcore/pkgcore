@@ -7,7 +7,8 @@ package class for buildable ebuilds
 
 __all__ = (
     "Maintainer", "MetadataXml", "LocalMetadataXml",
-    "SharedPkgData", "Licenses", "OverlayedLicenses"
+    "SharedPkgData", "Licenses", "OverlayedLicenses",
+    "Project", "ProjectMember", "Subproject", "ProjectsXml", "LocalProjectsXml"
 )
 
 from collections import namedtuple
@@ -180,6 +181,227 @@ class SharedPkgData(object):
     def __init__(self, metadata_xml, manifest):
         self.metadata_xml = metadata_xml
         self.manifest = manifest
+
+
+class ProjectMember(object, metaclass=klass.generic_equality):
+    """Data on a single project member.
+
+    :type email: C{unicode} object
+    :ivar email: email address.
+    :type name: C{unicode} object or C{None}
+    :ivar name: full name
+    :type role: C{unicode} object or C{None}
+    :ivar role: role within the project.
+    :type is_lead: C{bool}
+    :ivar is_lead: whether the member is a project lead.
+    """
+
+    __slots__ = ('email', 'name', 'role', 'is_lead')
+    __attr_comparison__ = ('email', 'name', 'role', 'is_lead')
+
+    def __init__(self, email, name=None, role=None, is_lead=None):
+        if email is None:
+            raise ValueError('email for project member must not be null')
+        self.email = email
+        self.name = name
+        self.role = role
+        self.is_lead = is_lead
+
+    def __str__(self):
+        if self.name is not None:
+            res = f'{self.name} <{self.email}>'
+        else:
+            res = self.email
+        if self.role is not None:
+            return f'{res} ({self.role})'
+        return res
+
+
+class Subproject(object):
+    """Data on a subproject.
+
+    :type inherit_members: C{bool}
+    :ivar inherit_members: whether the parent project inherits members
+                           from this subproject.
+    """
+
+    __slots__ = ('_ref', 'inherit_members', '_projects_xml', '_project')
+
+    def __init__(self, ref, projects_xml, inherit_members=None):
+        if ref is None:
+            raise ValueError('ref for subproject must not be null')
+        self._ref = ref
+        self.inherit_members = inherit_members
+        self._projects_xml = projects_xml
+        self._project = None
+
+    @klass.jit_attr_none
+    def project(self):
+        try:
+            return self._projects_xml.projects[self._ref]
+        except KeyError:
+            logger.error(f"projects.xml: subproject {self._ref} does not exist!")
+            return None
+
+    __getattr__ = klass.GetAttrProxy("project")
+    # TODO: radhermit, why doesn't this work? because of __slots__?
+    __dir__ = klass.DirProxy("project")
+
+
+class Project(object):
+    """Data on a single project.
+
+    :type email: C{unicode} object
+    :ivar email: email address.
+    :type name: C{unicode} object or C{None}
+    :ivar name: full name
+    :type url: C{unicode} object or C{None}
+    :ivar url: project website URI
+    :type description: C{unicode} object or C{None}
+    :ivar description: full project description.
+    :type members: C{tuple} of C{ProjectMember}
+    :ivar members: project members
+    :type subprojects: C{tuple} of C{Subprojects}
+    :ivar subprojects: subprojects
+    """
+
+    __slots__ = ('email', 'name', 'url', 'description', 'members',
+                 'subprojects')
+
+    def __init__(self, email, name=None, url=None, description=None,
+                 members=(), subprojects=()):
+        if email is None:
+            raise ValueError('email for project must not be null')
+        self.email = email
+        self.name = name
+        self.url = url
+        self.description = description
+        self.members = tuple(members)
+        self.subprojects = tuple(subprojects)
+
+    def __str__(self):
+        if self.name is not None:
+            res = f'{self.name} <{self.email}>'
+        else:
+            res = self.email
+        if self.url is not None:
+            return f'{res} ({self.url})'
+        return res
+
+    @property
+    def leads(self):
+        """Project lead(s), if any."""
+        return tuple(m for m in self.members if m.is_lead)
+
+    @property
+    def recursive_members(self):
+        """All project members, including members inherited from subprojects."""
+        # collect all subprojects from which to inherit, recursively
+        subprojects = list(sp for sp in self.subprojects
+                              if sp.inherit_members and sp.project is not None)
+        subproject_emails = set(sp.email for sp in subprojects)
+        i = 0
+        while i < len(subprojects):
+            for sp in subprojects[i].subprojects:
+                if sp.project is None:
+                    continue
+                if sp.inherit_members and sp.email not in subproject_emails:
+                    subprojects.append(sp)
+                    subproject_emails.add(sp.email)
+            i += 1
+
+        members = list(self.members)
+        emails = set(m.email for m in self.members)
+        for sp in subprojects:
+            if sp.inherit_members:
+                for m in sp.members:
+                    # avoid duplicating people
+                    if m.email not in emails:
+                        # drop lead bit
+                        m = ProjectMember(email=m.email,
+                                          name=m.name,
+                                          role=m.role,
+                                          is_lead=False)
+                        members.append(m)
+                        emails.add(m.email)
+        return tuple(members)
+
+
+class ProjectsXml(object):
+    """projects.xml parsed results
+
+    Attributes are set to -1 if unloaded, None if no entry, or the value
+    if loaded.
+    """
+
+    __slots__ = (
+        "__weakref__", "_projects", "_source"
+    )
+
+    def __init__(self, source):
+        self._source = source
+
+    @klass.jit_attr
+    def projects(self):
+        if self._source is not None:
+            return self._parse_xml()
+        return {}
+
+    def _parse_xml(self, source=None):
+        if source is None:
+            source = self._source.bytes_fileobj()
+        try:
+            tree = etree.parse(source)
+        except etree.XMLSyntaxError as pe:
+            self._projects = mappings.ImmutableDict()
+            self._source = None
+            logger.error(f"failed parsing projects.xml: {pe}")
+            return {}
+
+        projects = {}
+        for p in tree.findall("project"):
+            kwargs = {}
+            for k in ('email', 'name', 'url', 'description'):
+                kwargs[k] = p.findtext(k)
+
+            members = []
+            for m in p.findall('member'):
+                m_kwargs = {}
+                for k in ('email', 'name', 'role'):
+                    m_kwargs[k] = m.findtext(k)
+                m_kwargs['is_lead'] = m.get('is-lead', '') == '1'
+                try:
+                    members.append(ProjectMember(**m_kwargs))
+                except ValueError:
+                    logger.error(f"project {kwargs['email']} has <member/> with no email!")
+            kwargs['members'] = members
+
+            subprojects = []
+            for sp in p.findall('subproject'):
+                try:
+                    subprojects.append(Subproject(
+                        ref=sp.get('ref'),
+                        inherit_members=sp.get('inherit-members', '') == '1',
+                        projects_xml=self))
+                except ValueError:
+                    logger.error(f"project {kwargs['email']} has <subproject/> with no ref!")
+            kwargs['subprojects'] = subprojects
+
+            projects[kwargs['email']] = Project(**kwargs)
+
+        return projects
+
+
+class LocalProjectsXml(ProjectsXml):
+
+    __slots__ = ()
+
+    def _parse_xml(self):
+        try:
+            with open(self._source, "rb", 32768) as f:
+                return super()._parse_xml(f)
+        except FileNotFoundError:
+            return {}
 
 
 class Licenses(object, metaclass=WeakInstMeta):

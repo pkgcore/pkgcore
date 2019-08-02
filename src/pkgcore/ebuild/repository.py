@@ -400,6 +400,8 @@ class UnconfiguredTree(prototype.tree):
             self, cache, self.eclass_cache, self.mirrors, self.default_mirrors)
         self._shared_pkg_cache = WeakValCache()
         self._masked = RestrictionRepo(repo_id='masked')
+        self.projects_xml = repo_objs.LocalProjectsXml(
+            pjoin(self.location, 'metadata', "projects.xml"))
 
     repo_id = klass.alias_attr("config.repo_id")
     repo_name = klass.alias_attr("config.repo_name")

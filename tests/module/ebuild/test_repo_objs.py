@@ -54,18 +54,17 @@ f"""<?xml version="1.0" encoding="UTF-8"?>
 
     def test_multiple_maintainers(self):
         names = ("foo@gmail.com", "monkeybone@gmail.com")
-        mx = self.get_metadata_xml(maintainers=tuple(
-            (x,) for x in names))
-        assert sorted(names) == sorted(str(m) for m in mx.maintainers)
+        mx = self.get_metadata_xml(maintainers=tuple((x,) for x in names))
+        assert sorted(names) == sorted(map(str, mx.maintainers))
 
     def test_maintainer_name_with_email(self):
         mx = self.get_metadata_xml(
-            maintainers=(("funkymonkey@gmail.com",
-                          "funky monkey \N{SNOWMAN}"),))
+            maintainers=(("funkymonkey@gmail.com", "funky monkey \N{SNOWMAN}"),))
         assert ("funky monkey \N{SNOWMAN} <funkymonkey@gmail.com>",) == \
-            tuple(str(m) for m in mx.maintainers)
+            tuple(map(str, mx.maintainers))
         assert "funkymonkey@gmail.com" == mx.maintainers[0].email
         assert "funky monkey \N{SNOWMAN}" == mx.maintainers[0].name
+        assert None == mx.maintainers[0].description
 
     def test_maintainer_with_desc(self):
         mx = self.get_metadata_xml(
@@ -86,8 +85,8 @@ f"""<?xml version="1.0" encoding="UTF-8"?>
         metadata_xml = self.get_metadata_xml(local_use=local_use)
         pkg_tag_re = re.compile(r'</?pkg>')
         local_use = dict(
-                (k, pkg_tag_re.sub('', v))
-                for k, v in local_use.items())
+            (k, pkg_tag_re.sub('', v))
+            for k, v in local_use.items())
         assert local_use == metadata_xml.local_use
 
     def test_longdesc(self):

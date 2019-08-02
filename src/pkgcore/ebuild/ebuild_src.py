@@ -281,7 +281,7 @@ class base(metadata.package):
         map(intern, s.data.pop("PROPERTIES", "").split()))
     _get_attr["defined_phases"] = lambda s: s.eapi.interpret_cache_defined_phases(
         map(intern, s.data.pop("DEFINED_PHASES", "").split()))
-    _get_attr["homepage"] = lambda s: s.data.pop("HOMEPAGE", "").strip()
+    _get_attr["homepage"] = lambda s: tuple(s.data.pop("HOMEPAGE", "").split())
     _get_attr["inherited"] = lambda s: tuple(sorted(s.data.get('_eclasses_', {})))
     _get_attr["inherit"] = get_parsed_inherits
 

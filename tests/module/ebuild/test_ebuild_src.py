@@ -117,7 +117,9 @@ class TestBase(object):
 
     def test_homepage(self):
         o = self.get_pkg({'HOMEPAGE': ' http://slashdot/ '})
-        assert o.homepage == 'http://slashdot/'
+        assert o.homepage == ('http://slashdot/',)
+        o = self.get_pkg({'HOMEPAGE': 'http://foozball.org https://foobar.com'})
+        assert o.homepage == ('http://foozball.org', 'https://foobar.com')
 
     def test_fullslot(self):
         o = self.get_pkg({'SLOT': '0'})

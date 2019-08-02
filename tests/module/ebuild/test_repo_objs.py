@@ -24,8 +24,12 @@ class TestMetadataXml(object):
             for x in maintainers:
                 ms.append(f"<email>{x[0]}</email>")
                 if len(x) > 1:
-                    ms[-1] = f"{ms[-1]}\n<name>{x[1]}</name>"
-            ms = "<maintainer>%s</maintainer>\n" % "</maintainer><maintainer>".join(ms)
+                    ms[-1] += f"\n<name>{x[1]}</name>"
+                if len(x) > 2:
+                    ms[-1] += f"\n<description>{x[2]}</description>"
+                if len(x) > 3:
+                    raise ValueError('maintainer data has too many fields')
+            ms = '\n'.join(f'<maintainer>{x}</maintainer>' for x in ms)
         if local_use:
             us = ['<use>']
             for flag, desc in local_use.items():
@@ -41,20 +45,20 @@ f"""<?xml version="1.0" encoding="UTF-8"?>
 {cs}{ms}{us}{ls}</pkgmetadata>"""
         return repo_objs.MetadataXml(data_source(s.encode('utf-8')))
 
-    def test_maintainers(self):
-        # test empty
+    def test_empty_maintainers(self):
         assert () == self.get_metadata_xml().maintainers
 
-        # test maintainer-needed comment
+    def test_maintainer_needed(self):
         mx = self.get_metadata_xml(comments=('<!-- maintainer-needed -->',))
         assert mx.maintainers == ()
 
-        # test non empty, multiple
+    def test_multiple_maintainers(self):
         names = ("foo@gmail.com", "monkeybone@gmail.com")
         mx = self.get_metadata_xml(maintainers=tuple(
             (x,) for x in names))
         assert sorted(names) == sorted(str(m) for m in mx.maintainers)
-        # test email/name integration.
+
+    def test_maintainer_name_with_email(self):
         mx = self.get_metadata_xml(
             maintainers=(("funkymonkey@gmail.com",
                           "funky monkey \N{SNOWMAN}"),))
@@ -62,6 +66,14 @@ f"""<?xml version="1.0" encoding="UTF-8"?>
             tuple(str(m) for m in mx.maintainers)
         assert "funkymonkey@gmail.com" == mx.maintainers[0].email
         assert "funky monkey \N{SNOWMAN}" == mx.maintainers[0].name
+
+    def test_maintainer_with_desc(self):
+        mx = self.get_metadata_xml(
+            maintainers=(("foo@bar.com", "foobar", "Foobar"),))
+        assert ("foobar <foo@bar.com> (Foobar)",) == tuple(map(str, mx.maintainers))
+        assert "foo@bar.com" == mx.maintainers[0].email
+        assert "foobar" == mx.maintainers[0].name
+        assert "Foobar" == mx.maintainers[0].description
 
     def test_local_use(self):
         # empty...

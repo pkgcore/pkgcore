@@ -455,11 +455,12 @@ __execute_phases() {
 
 				PKGCORE_DIE_OUTPUT_DETAILS=false
 
+				PKGCORE_ORIG_PHASE=${EBUILD_PHASE}
 				EBUILD_PHASE="depend"
 				__timed_call __load_eapi_libs
 				__load_ebuild "${EBUILD}"
 
-				if [[ ${EBUILD_PHASE} == depend ]]; then
+				if [[ ${PKGCORE_ORIG_PHASE} == depend ]]; then
 					__dump_metadata_keys
 				else
 					# Use gawk if at possible; it's a fair bit faster since

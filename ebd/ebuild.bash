@@ -466,7 +466,7 @@ __execute_phases() {
 					# Use gawk if at possible; it's a fair bit faster since
 					# bash likes to do byte by byte reading.
 					local __path
-					__path=$(type -P gawk)
+					__path=$(PATH=/usr/bin:/bin type -P gawk)
 					if [[ $? == 0 ]]; then
 						{ unset -v __path; __environ_dump; } | \
 							LC_ALL=C "${__path}" -F $'\0' 'BEGIN { content="";chars=0;RS="\0";ORS=""} {chars += length($0);content = content $0} END {printf("receive_env %i\n%s",chars, content)}' >&${PKGCORE_EBD_WRITE_FD}

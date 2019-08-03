@@ -455,7 +455,6 @@ __execute_phases() {
 
 				PKGCORE_DIE_OUTPUT_DETAILS=false
 
-				EBUILD_PHASE="depend"
 				__timed_call __load_eapi_libs
 				__load_ebuild "${EBUILD}"
 

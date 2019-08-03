@@ -53,16 +53,20 @@ class Maintainer(object):
     :ivar name: full name
     :type description: C{unicode} object or C{None}
     :ivar description: description of maintainership.
+    :type maint_type: C{unicode} object or C{None}
+    :ivar maint_type: maintainer type (person or project).
     """
 
-    __slots__ = ('email', 'description', 'name')
+    __slots__ = ('email', 'description', 'name', 'maint_type')
 
-    def __init__(self, email=None, name=None, description=None):
+    def __init__(self, email=None, name=None, description=None,
+                 maint_type=None):
         if email is None and name is None:
             raise ValueError('need at least one of name and email')
         self.email = email
         self.name = name
         self.description = description
+        self.maint_type = maint_type
 
     def __str__(self):
         if self.name is not None:
@@ -118,7 +122,8 @@ class MetadataXml(object):
                 elif e.tag == 'description' and e.get('lang', 'en') == 'en':
                     description = e.text
             maintainers.append(Maintainer(
-                name=name, email=email, description=description))
+                name=name, email=email, description=description,
+                maint_type=x.get('type')))
 
         self._maintainers = tuple(maintainers)
 

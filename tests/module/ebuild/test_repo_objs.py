@@ -16,7 +16,8 @@ from pkgcore.repository import errors as repo_errors
 class TestMetadataXml(object):
 
     @staticmethod
-    def get_metadata_xml(maintainers=(), comments=(), local_use={}, longdescription=None):
+    def get_metadata_xml(maintainers=(), comments=(), local_use={},
+                         longdescription=None, maint_type=None):
         cs = '\n'.join(comments)
         ms = us = ls = ""
         if maintainers:
@@ -29,7 +30,8 @@ class TestMetadataXml(object):
                     ms[-1] += f"\n<description>{x[2]}</description>"
                 if len(x) > 3:
                     raise ValueError('maintainer data has too many fields')
-            ms = '\n'.join(f'<maintainer>{x}</maintainer>' for x in ms)
+            maint_type = (f'type="{maint_type}"' if maint_type is not None else '')
+            ms = '\n'.join(f'<maintainer {maint_type}>{x}</maintainer>' for x in ms)
         if local_use:
             us = ['<use>']
             for flag, desc in local_use.items():
@@ -64,7 +66,8 @@ f"""<?xml version="1.0" encoding="UTF-8"?>
             tuple(map(str, mx.maintainers))
         assert "funkymonkey@gmail.com" == mx.maintainers[0].email
         assert "funky monkey \N{SNOWMAN}" == mx.maintainers[0].name
-        assert None == mx.maintainers[0].description
+        assert mx.maintainers[0].description is None
+        assert mx.maintainers[0].maint_type is None
 
     def test_maintainer_with_desc(self):
         mx = self.get_metadata_xml(
@@ -73,6 +76,17 @@ f"""<?xml version="1.0" encoding="UTF-8"?>
         assert "foo@bar.com" == mx.maintainers[0].email
         assert "foobar" == mx.maintainers[0].name
         assert "Foobar" == mx.maintainers[0].description
+        assert mx.maintainers[0].maint_type is None
+
+    def test_maintainer_with_type(self):
+        mx = self.get_metadata_xml(
+            maintainers=(("foo@bar.com", "foobar"),),
+            maint_type='person')
+        assert ("foobar <foo@bar.com>",) == tuple(map(str, mx.maintainers))
+        assert "foo@bar.com" == mx.maintainers[0].email
+        assert "foobar" == mx.maintainers[0].name
+        assert mx.maintainers[0].description is None
+        assert "person" == mx.maintainers[0].maint_type
 
     def test_local_use(self):
         # empty...

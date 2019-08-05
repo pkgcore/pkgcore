@@ -462,6 +462,8 @@ class RepoConfig(syncable.tree, metaclass=WeakInstMeta):
         sf(self, 'aliases', tuple(iter_stable_unique(aliases)))
         sf(self, 'eapis_deprecated', tuple(iter_stable_unique(data.get('eapis-deprecated', '').split())))
         sf(self, 'eapis_banned', tuple(iter_stable_unique(data.get('eapis-banned', '').split())))
+        sf(self, 'properties_allowed', tuple(iter_stable_unique(data.get('properties-allowed', '').split())))
+        sf(self, 'restrict_allowed', tuple(iter_stable_unique(data.get('restrict-allowed', '').split())))
 
         v = set(data.get('cache-formats', 'md5-dict').lower().split())
         if not v:

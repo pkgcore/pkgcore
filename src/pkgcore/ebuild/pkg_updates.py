@@ -87,7 +87,7 @@ def _process_updates(sequence, filename, mods, moved):
                 logger.warning(
                     f"file {filename!r}: {raw_line!r} on line {lineno}: "
                     f"{src} was already moved to {moved[src.key]}, "
-                    " this line is redundant")
+                    "this line is redundant")
                 continue
 
             d = deque()

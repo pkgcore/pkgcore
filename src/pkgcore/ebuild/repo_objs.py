@@ -114,7 +114,7 @@ class MetadataXml(object):
             self._local_use = mappings.ImmutableDict()
             self._longdescription = None
             self._source = None
-            # TODO: raise MetadataExeception instead?
+            logger.error(e)
             return
 
         # TODO: handle i18n properly

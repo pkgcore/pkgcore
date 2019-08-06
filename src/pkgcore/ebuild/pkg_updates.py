@@ -5,7 +5,6 @@ from collections import deque, defaultdict
 from operator import itemgetter
 
 from snakeoil.demandload import demandload, demand_compile_regexp
-from snakeoil.fileutils import readlines
 from snakeoil.osutils import listdir_files, pjoin
 from snakeoil.sequences import iflatten_instance
 
@@ -42,7 +41,9 @@ def read_updates(path):
 
     try:
         for fp in _scan_directory(path):
-            _process_update(readlines(pjoin(path, fp)), fp, mods, moved)
+            with open(pjoin(path, fp)) as f:
+                data = (line.rstrip('\n') for line in f)
+                _process_updates(data, fp, mods, moved)
     except FileNotFoundError:
         pass
 
@@ -54,32 +55,39 @@ def read_updates(path):
     return commands
 
 
-def _process_update(sequence, filename, mods, moved):
+def _process_updates(sequence, filename, mods, moved):
     for lineno, raw_line in enumerate(sequence, 1):
-        line = raw_line.split()
+        line = raw_line.strip()
+        if not line:
+            logger.error(f'file {filename!r}: empty line {lineno}')
+            continue
+        elif line != raw_line:
+            logger.error(
+                f'file {filename!r}: extra whitespace in {raw_line!r} on line {lineno}')
+
+        line = line.split()
         if line[0] == 'move':
             if len(line) != 3:
                 logger.error(
-                    'file %r: %r on line %s: bad move form',
-                    filename, raw_line, lineno)
+                    f'file {filename!r}: {raw_line!r} on line {lineno}: bad move form')
                 continue
             src, trg = atom(line[1]), atom(line[2])
             if src.fullver is not None:
                 logger.error(
-                    "file %r: %r on line %s: atom %s must be versionless",
-                    filename, raw_line, lineno, src)
+                    f"file {filename!r}: {raw_line!r} on line {lineno}: "
+                    f"atom {src} must be versionless")
                 continue
             elif trg.fullver is not None:
                 logger.error(
-                    "file %r: %r on line %s: atom %s must be versionless",
-                    filename, raw_line, lineno, trg)
+                    f"file {filename!r}: {raw_line!r} on line {lineno}: "
+                    f"atom {trg} must be versionless")
                 continue
 
             if src.key in moved:
                 logger.warning(
-                    "file %r: %r on line %s: %s was already moved to %s,"
-                    " this line is redundant",
-                    filename, raw_line, lineno, src, moved[src.key])
+                    f"file {filename!r}: {raw_line!r} on line {lineno}: "
+                    f"{src} was already moved to {moved[src.key]}, "
+                    " this line is redundant")
                 continue
 
             d = deque()
@@ -92,25 +100,27 @@ def _process_update(sequence, filename, mods, moved):
         elif line[0] == 'slotmove':
             if len(line) != 4:
                 logger.error(
-                    'file %r: %r on line %s: bad slotmove form',
-                    filename, raw_line, lineno)
+                    f"file {filename!r}: {raw_line!r} on line {lineno}: "
+                    "bad slotmove form")
                 continue
             src = atom(line[1])
 
             if src.key in moved:
                 logger.warning(
-                    "file %r: %r on line %s: %s was already moved to %s, "
-                    "this line is redundant",
-                    filename, raw_line, lineno, src, moved[src.key])
+                    f"file {filename!r}: {raw_line!r} on line {lineno}: "
+                    f"{src} was already moved to {moved[src.key]}, "
+                    "this line is redundant")
                 continue
             elif src.slot is not None:
                 logger.error(
-                    "file %r: %r on line %s: slotted atom makes no sense "
-                    "for slotmoves",
-                    filename, lineno, raw_line)
+                    f"file {filename!r}: {raw_line!r} on line {lineno}: "
+                    "slotted atom makes no sense for slotmoves")
                 continue
 
             src_slot = atom(f'{src}:{line[2]}')
             trg_slot = atom(f'{src.key}:{line[3]}')
 
             mods[src.key][1].append(('slotmove', src_slot, line[3]))
+        else:
+            logger.error(
+                f'file {filename!r}: {raw_line!r} on line {lineno}: unknown command')

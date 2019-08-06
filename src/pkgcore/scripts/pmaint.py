@@ -31,7 +31,7 @@ demandload(
     'pkgcore.ebuild:processor,triggers',
     'pkgcore.fs:contents,livefs',
     'pkgcore.merge:triggers@merge_triggers',
-    'pkgcore.operations:observer',
+    'pkgcore.operations:observer@observer_mod',
     'pkgcore.package:mutated',
     'pkgcore.repository:multiplex',
     'pkgcore.restrictions:packages',
@@ -179,7 +179,7 @@ def _get_default_jobs(namespace, attr):
     setattr(namespace, attr, val)
 
 
-def update_use_local_desc(repo, out, err):
+def update_use_local_desc(repo, observer):
     """Update a repo's local USE flag description cache (profiles/use.local.desc)"""
     ret = 0
     use_local_desc = pjoin(repo.location, "profiles", "use.local.desc")
@@ -200,13 +200,14 @@ def update_use_local_desc(repo, out, err):
                     return
                 raise
             except Exception as e:
-                err.write(f"caught exception {e!r} while processing {pkg}")
+                observer.error(f'{pkg.key}: {e}')
                 ret = os.EX_DATAERR
         for k, v in sorted(res.items()):
             f.write(f"{':'.join(k)} - {v}\n".encode('utf8'))
         f.close()
     except IOError as e:
-        err.write(f"Unable to update use.local.desc file {use_local_desc!r}: {e.strerror}")
+        observer.error(
+            f"Unable to update use.local.desc file {use_local_desc!r}: {e.strerror}")
         ret = os.EX_IOERR
     finally:
         if f is not None:
@@ -215,7 +216,7 @@ def update_use_local_desc(repo, out, err):
     return ret
 
 
-def update_pkg_desc_index(repo, out, err):
+def update_pkg_desc_index(repo, observer):
     """Update a repo's package description cache (metadata/pkg_desc_index)"""
     ret = 0
     pkg_desc_index = pjoin(repo.location, "metadata", "pkg_desc_index")
@@ -231,7 +232,7 @@ def update_pkg_desc_index(repo, out, err):
                     return
                 raise
             except Exception as e:
-                err.write(f"caught exception {e!r} while processing {pkg}")
+                observer.error(f'{pkg}: {e}')
                 ret = os.EX_DATAERR
         for key in sorted(res):
             pkgs = sorted(res[key])
@@ -239,7 +240,8 @@ def update_pkg_desc_index(repo, out, err):
             f.write(f"{key} {versions}: {pkgs[-1].description}\n")
         f.close()
     except IOError as e:
-        err.write(f"Unable to update pkg_desc_index file {pkg_desc_index!r}: {e.strerror}")
+        observer.error(
+            f"Unable to update pkg_desc_index file {pkg_desc_index!r}: {e.strerror}")
         ret = os.EX_IOERR
     finally:
         if f is not None:
@@ -290,6 +292,7 @@ def regen_main(options, out, err):
     """Regenerate a repository cache."""
     ret = []
 
+    observer = observer_mod.formatter_output(out)
     for repo in iter_stable_unique(options.repos):
         if not repo.operations.supports("regen_cache"):
             out.write(f"repo {repo} doesn't support cache regeneration")
@@ -300,8 +303,7 @@ def regen_main(options, out, err):
 
         start_time = time.time()
         ret.append(repo.operations.regen_cache(
-            threads=options.threads,
-            observer=observer.formatter_output(out), force=options.force,
+            threads=options.threads, observer=observer, force=options.force,
             eclass_caching=(not options.disable_eclass_caching)))
         end_time = time.time()
 
@@ -320,9 +322,9 @@ def regen_main(options, out, err):
                 ret.append(os.EX_IOERR)
 
         if options.use_local_desc:
-            ret.append(update_use_local_desc(repo, out, err))
+            ret.append(update_use_local_desc(repo, observer))
         if options.pkg_desc_index:
-            ret.append(update_pkg_desc_index(repo, out, err))
+            ret.append(update_pkg_desc_index(repo, observer))
 
     return int(any(ret))
 
@@ -516,7 +518,7 @@ def digest_main(options, out, err):
     failed = repo.operations.digests(
         domain=options.domain,
         restriction=options.restriction,
-        observer=observer.formatter_output(out),
+        observer=observer_mod.formatter_output(out),
         mirrors=options.mirrors,
         force=options.force)
 

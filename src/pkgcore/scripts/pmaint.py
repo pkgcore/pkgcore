@@ -24,6 +24,7 @@ demandload(
     're',
     'textwrap',
     'time',
+    'snakeoil.contexts:patch',
     'snakeoil.fileutils:AtomicWriteFile',
     'snakeoil.osutils:pjoin,listdir_dirs',
     'snakeoil.sequences:iter_stable_unique',
@@ -184,6 +185,7 @@ def update_use_local_desc(repo, observer):
     ret = 0
     use_local_desc = pjoin(repo.location, "profiles", "use.local.desc")
     f = None
+    def _raise_xml_error(exc): raise exc
     try:
         f = AtomicWriteFile(use_local_desc, binary=True)
         f.write(textwrap.dedent('''\
@@ -193,8 +195,9 @@ def update_use_local_desc(repo, observer):
         res = {}
         for pkg in repo:
             try:
-                for flag, desc in pkg.local_use.items():
-                    res[(pkg.key, flag)] = desc
+                with patch('pkgcore.log.logger.error', _raise_xml_error):
+                    for flag, desc in pkg.local_use.items():
+                        res[(pkg.key, flag)] = desc
             except IGNORED_EXCEPTIONS as e:
                 if isinstance(e, KeyboardInterrupt):
                     return

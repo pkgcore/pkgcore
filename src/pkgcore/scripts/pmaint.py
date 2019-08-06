@@ -10,6 +10,7 @@ __all__ = (
 )
 
 from snakeoil.cli import arghparse
+from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.demandload import demandload
 
 from pkgcore.exceptions import PkgcoreUserException
@@ -23,7 +24,6 @@ demandload(
     're',
     'textwrap',
     'time',
-    'snakeoil.compatibility:IGNORED_EXCEPTIONS',
     'snakeoil.fileutils:AtomicWriteFile',
     'snakeoil.osutils:pjoin,listdir_dirs',
     'snakeoil.sequences:iter_stable_unique',

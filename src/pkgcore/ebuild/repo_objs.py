@@ -107,7 +107,15 @@ class MetadataXml(object):
     def _parse_xml(self, source=None):
         if source is None:
             source = self._source.bytes_fileobj()
-        tree = etree.parse(source)
+        try:
+            tree = etree.parse(source)
+        except etree.XMLSyntaxError as e:
+            self._maintainers = ()
+            self._local_use = mappings.ImmutableDict()
+            self._longdescription = None
+            self._source = None
+            # TODO: raise MetadataExeception instead?
+            return
 
         # TODO: handle i18n properly
         maintainers = []

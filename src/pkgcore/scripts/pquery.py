@@ -144,7 +144,7 @@ def stringify_attr(config, pkg, attr):
 
     if attr in ('iuse', 'properties', 'defined_phases', 'inherited'):
         return ' '.join(sorted(str(v) for v in value))
-    if attr == 'maintainers':
+    if attr in ('maintainers', 'homepage'):
         return ' '.join(str(v) for v in value)
     if attr == 'longdescription':
         return str(value)

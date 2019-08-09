@@ -104,12 +104,10 @@ class GlsaDirSet(object, metaclass=generic_equality):
                                 continue
                             pkgatom = atom.atom(pkgname)
                             yield fn[5:-4], pkgname, pkgatom, pkg_vuln_restrict
-                        except (TypeError, ValueError) as v:
+                        except (TypeError, ValueError) as e:
                             # thrown from cpv.
-                            logger.warning(
-                                "invalid glsa- %s, package %s: error %s",
-                                fn, pkgname, v)
-                            del v
+                            logger.warning(f"invalid glsa- {fn}, package {pkgname}: {e}")
+                            del e
 
 
     def generate_intersects_from_pkg_node(self, pkg_node, tag=None):
@@ -147,12 +145,20 @@ class GlsaDirSet(object, metaclass=generic_equality):
     def generate_restrict_from_range(self, node, negate=False):
         op = str(node.get("range").strip())
         slot = str(node.get("slot", "").strip())
+
+        try:
+            restrict = self.op_translate[op.lstrip("r")]
+        except KeyError:
+            raise ValueError(f'unknown operator: {op!r}')
+        if node.text is None:
+            raise ValueError(f"{op!r} node missing version")
+
         base = str(node.text.strip())
         glob = base.endswith("*")
         if glob:
             base = base[:-1]
         base = cpv.versioned_CPV(f"cat/pkg-{base}")
-        restrict = self.op_translate[op.lstrip("r")]
+
         if glob:
             if op != "eq":
                 raise ValueError(f"glob cannot be used with {op} ops")

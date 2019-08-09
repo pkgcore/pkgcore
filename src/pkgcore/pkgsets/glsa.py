@@ -9,6 +9,7 @@ __all__ = ("GlsaDirSet", "SecurityUpgrades")
 
 import os
 
+from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.demandload import demandload
 from snakeoil.iterables import caching_iter
 from snakeoil.klass import generic_equality
@@ -107,7 +108,10 @@ class GlsaDirSet(object, metaclass=generic_equality):
                         except (TypeError, ValueError) as e:
                             # thrown from cpv.
                             logger.warning(f"invalid glsa- {fn}, package {pkgname}: {e}")
-                            del e
+                        except IGNORED_EXCEPTIONS:
+                            raise
+                        except Exception as e:
+                            logger.warning(f"invalid glsa- {fn}: error: {e}")
 
 
     def generate_intersects_from_pkg_node(self, pkg_node, tag=None):

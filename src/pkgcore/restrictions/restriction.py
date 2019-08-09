@@ -12,7 +12,7 @@ from snakeoil import caching, klass
 from snakeoil.currying import pretty_docs
 
 
-class base(object, metaclass=caching.WeakInstMeta):
+class base(klass.SlotsPicklingMixin, metaclass=caching.WeakInstMeta):
     """base restriction matching object.
 
     all derivatives *should* be __slot__ based (lot of instances may

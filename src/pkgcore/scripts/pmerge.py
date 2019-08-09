@@ -539,11 +539,12 @@ def parse_target(restriction, repo, installed_repos, return_none=False):
             # find installed package matches
             matches = {x.unversioned_atom for x in installed_repos.itermatch(restriction)}
 
-            # try removing virtuals if there are multiple installed matches or none at all
+            # try removing stub pkgs if there are multiple installed matches or none at all
+            skip_categories = {'acct-group', 'acct-user', 'virtual'}
             if not matches:
-                matches = {x for x in key_matches if x.category != 'virtual'}
+                matches = {x for x in key_matches if x.category not in skip_categories}
             elif len(matches) > 1:
-                matches = {x for x in matches if x.category != 'virtual'}
+                matches = {x for x in matches if x.category not in skip_categories}
 
             if len(matches) == 1:
                 p = matches.pop()

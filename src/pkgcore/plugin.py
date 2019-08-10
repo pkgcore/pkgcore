@@ -135,7 +135,6 @@ def _read_cache_file(package, cache_path):
                         f'{package.__name__}.{module}', f(target))
                     for (key, priority, target) in zip(entries, entries, entries))
             stored_cache[(module, mtime)] = entries
-
     except IGNORED_EXCEPTIONS:
         raise
     except Exception as e:

@@ -13,7 +13,6 @@ import os
 
 from snakeoil import caching, klass
 from snakeoil.bash import iter_read_bash, read_bash_dict
-from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.containers import InvertedContains
 from snakeoil.demandload import demandload
 from snakeoil.fileutils import readlines_utf8

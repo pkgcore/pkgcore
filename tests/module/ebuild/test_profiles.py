@@ -157,27 +157,18 @@ class TestPmsProfileNode(profile_mixin, TestCase):
     def test_packages(self):
         p = self.klass(pjoin(self.dir, self.profile))
         self.assertEqual(p.system, empty)
-        self.assertEqual(p.visibility, empty)
         self.parsing_checks("packages", "system")
         self.write_file("packages", "#foo\n")
         p = self.klass(pjoin(self.dir, self.profile))
-        self.assertEqual(p.visibility, empty)
         self.assertEqual(p.system, empty)
         self.write_file("packages", "#foo\ndev-util/diffball\n")
         p = self.klass(pjoin(self.dir, self.profile))
         self.assertEqual(p.system, empty)
-        self.assertEqual(list(p.visibility), [(), (atom("dev-util/diffball",
-            negate_vers=True),)])
 
         self.write_file("packages", "-dev-util/diffball\ndev-foo/bar\n*dev-sys/atom\n"
             "-*dev-sys/atom2\nlock-foo/dar")
         p = self.klass(pjoin(self.dir, self.profile))
         self.assertEqual(p.system, ((atom("dev-sys/atom2"),), (atom("dev-sys/atom"),)))
-        self.assertEqual([set(x) for x in p.visibility],
-            [set([atom("dev-util/diffball", negate_vers=True)]),
-            set([atom("dev-foo/bar", negate_vers=True),
-                atom("lock-foo/dar", negate_vers=True)])
-            ])
         self.simple_eapi_awareness_check('packages', 'system')
 
     def test_deprecated(self):
@@ -726,7 +717,7 @@ class TestProfileSetProfileNode(TestPmsProfileNode):
     def test_packages(self):
         self.write_file("packages", "dev-sys/atom\n-dev-sys/atom2\n")
         p = self.klass(pjoin(self.dir, self.profile))
-        self.assertEqual(p.system, ((atom("dev-sys/atom2"),), (atom("dev-sys/atom"),)))
+        self.assertEqual(p.profile_set, ((atom("dev-sys/atom2"),), (atom("dev-sys/atom"),)))
 
 
 class TestOnDiskProfile(profile_mixin, TestCase):
@@ -768,15 +759,11 @@ class TestOnDiskProfile(profile_mixin, TestCase):
         )
         p = self.get_profile("0")
         self.assertEqual(sorted(p.system), sorted([atom("dev-util/diffball")]))
-        self.assertEqual(
-            sorted(p.masks),
-            sorted(atom(f"dev-util/foo{x}", negate_vers=True) for x in ['', '2']))
+        self.assertEqual(sorted(p.masks), [])
 
         p = self.get_profile("1")
         self.assertEqual(sorted(p.system), sorted([atom("dev-util/foo")]))
-        self.assertEqual(
-            sorted(p.masks),
-            [atom("dev-util/foo", negate_vers=True)])
+        self.assertEqual(sorted(p.masks), [])
 
         p = self.get_profile("2")
         self.assertEqual(

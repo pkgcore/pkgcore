@@ -6,6 +6,7 @@ __all__ = (
     "UserProfile",
 )
 
+from collections import namedtuple
 from functools import partial
 from itertools import chain
 import os
@@ -32,7 +33,6 @@ demandload(
     'pkgcore.fs.livefs:sorted_scan',
     'pkgcore.ebuild.repository:ProvidesRepo',
     'pkgcore.log:logger',
-    'pkgcore.restrictions:packages',
 )
 
 
@@ -127,6 +127,7 @@ def _load_and_invoke(func, filename, read_func, fallback, allow_recurse,
 
 
 _make_incrementals_dict = partial(misc.IncrementalsDict, const.incrementals)
+_Packages = namedtuple("_Packages", ("system", "profile"))
 
 
 class ProfileNode(object, metaclass=caching.WeakInstMeta):
@@ -147,6 +148,7 @@ class ProfileNode(object, metaclass=caching.WeakInstMeta):
         return '<%s path=%r, @%#8x>' % (self.__class__.__name__, self.path, id(self))
 
     system = klass.alias_attr("packages.system")
+    profile_set = klass.alias_attr("packages.profile")
 
     @klass.jit_attr
     def name(self):
@@ -155,27 +157,29 @@ class ProfileNode(object, metaclass=caching.WeakInstMeta):
     @load_property("packages")
     def packages(self, data):
         repo_config = self.repoconfig
-        # TODO: provide separate access to @profile package set?
+        # TODO: get profile-set support into PMS
         profile_set = repo_config is not None and 'profile-set' in repo_config.profile_formats
-        sys, neg_sys = [], []
-        neg_sys_wildcard = False
+        sys, neg_sys, pro, neg_pro = [], [], [], []
+        neg_wildcard = False
         for line, lineno, path in data:
             if line[0] == '-':
                 if line == '-*':
-                    neg_sys_wildcard = True
+                    neg_wildcard = True
                 elif line[1] == '*':
                     neg_sys.append(self.eapi_atom(line[2:]))
                 elif profile_set:
-                    neg_sys.append(self.eapi_atom(line[1:]))
+                    neg_pro.append(self.eapi_atom(line[1:]))
             else:
                 if line[0] == '*':
                     sys.append(self.eapi_atom(line[1:]))
                 elif profile_set:
-                    sys.append(self.eapi_atom(line))
+                    pro.append(self.eapi_atom(line))
         system = [tuple(neg_sys), tuple(sys)]
-        if neg_sys_wildcard:
-            system.append(neg_sys_wildcard)
-        return tuple(system)
+        profile = [tuple(neg_pro), tuple(pro)]
+        if neg_wildcard:
+            system.append(neg_wildcard)
+            profile.append(neg_wildcard)
+        return _Packages(tuple(system), tuple(profile))
 
     @load_property("parent")
     def parent_paths(self, data):
@@ -468,7 +472,7 @@ class EmptyRootNode(ProfileNode):
     pkg_use = masked_use = stable_masked_use = forced_use = stable_forced_use = misc.ChunkedDataDict()
     forced_use.freeze()
     pkg_use_force = pkg_use_mask = ImmutableDict()
-    pkg_provided = system = ((), ())
+    pkg_provided = system = profile_set = ((), ())
 
 
 class ProfileStack(object):
@@ -687,6 +691,10 @@ class ProfileStack(object):
     @klass.jit_attr
     def system(self):
         return frozenset(self._collapse_generic('system', clear=True))
+
+    @klass.jit_attr
+    def profile_set(self):
+        return frozenset(self._collapse_generic('profile_set', clear=True))
 
 
 class OnDiskProfile(ProfileStack):

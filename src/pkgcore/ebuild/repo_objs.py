@@ -335,7 +335,7 @@ class ProjectsXml(object):
     def projects(self):
         if self._source is not None:
             return self._parse_xml()
-        return {}
+        return mappings.ImmutableDict()
 
     def _parse_xml(self, source=None):
         if source is None:
@@ -343,10 +343,8 @@ class ProjectsXml(object):
         try:
             tree = etree.parse(source)
         except etree.XMLSyntaxError as e:
-            self._projects = mappings.ImmutableDict()
-            self._source = None
             logger.error(f'failed parsing projects.xml: {e}')
-            return {}
+            return mappings.ImmutableDict()
 
         projects = {}
         for p in tree.findall('project'):
@@ -379,7 +377,7 @@ class ProjectsXml(object):
 
             projects[kwargs['email']] = Project(**kwargs)
 
-        return projects
+        return mappings.ImmutableDict(projects)
 
 
 class LocalProjectsXml(ProjectsXml):
@@ -391,7 +389,7 @@ class LocalProjectsXml(ProjectsXml):
             with open(self._source, "rb", 32768) as f:
                 return super()._parse_xml(f)
         except FileNotFoundError:
-            return {}
+            return mappings.ImmutableDict()
 
 
 class Licenses(object, metaclass=WeakInstMeta):
@@ -495,7 +493,7 @@ class OverlayedLicenses(Licenses):
                     d[k] += v
                 else:
                     d[k] = v
-        return d
+        return ImmutableDict(d)
 
     @klass.jit_attr_none
     def licenses(self):

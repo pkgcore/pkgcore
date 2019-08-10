@@ -6,7 +6,6 @@ __all__ = (
     "UserProfile",
 )
 
-from collections import namedtuple
 from functools import partial
 from itertools import chain
 import os
@@ -148,9 +147,6 @@ class ProfileNode(object, metaclass=caching.WeakInstMeta):
         return '<%s path=%r, @%#8x>' % (self.__class__.__name__, self.path, id(self))
 
     system = klass.alias_attr("packages.system")
-    visibility = klass.alias_attr("packages.visibility")
-
-    _packages_kls = namedtuple("packages", ("system", "visibility"))
 
     @klass.jit_attr
     def name(self):
@@ -159,9 +155,9 @@ class ProfileNode(object, metaclass=caching.WeakInstMeta):
     @load_property("packages")
     def packages(self, data):
         repo_config = self.repoconfig
+        # TODO: provide separate access to @profile package set?
         profile_set = repo_config is not None and 'profile-set' in repo_config.profile_formats
-        # sys packages and visibility
-        sys, neg_sys, vis, neg_vis = [], [], [], []
+        sys, neg_sys = [], []
         neg_sys_wildcard = False
         for line, lineno, path in data:
             if line[0] == '-':
@@ -171,21 +167,15 @@ class ProfileNode(object, metaclass=caching.WeakInstMeta):
                     neg_sys.append(self.eapi_atom(line[2:]))
                 elif profile_set:
                     neg_sys.append(self.eapi_atom(line[1:]))
-                else:
-                    neg_vis.append(self.eapi_atom(line[1:], negate_vers=True))
             else:
                 if line[0] == '*':
                     sys.append(self.eapi_atom(line[1:]))
                 elif profile_set:
                     sys.append(self.eapi_atom(line))
-                else:
-                    vis.append(self.eapi_atom(line, negate_vers=True))
         system = [tuple(neg_sys), tuple(sys)]
         if neg_sys_wildcard:
             system.append(neg_sys_wildcard)
-        return self._packages_kls(
-            tuple(system),
-            (tuple(neg_vis), tuple(vis)))
+        return tuple(system)
 
     @load_property("parent")
     def parent_paths(self, data):
@@ -478,7 +468,7 @@ class EmptyRootNode(ProfileNode):
     pkg_use = masked_use = stable_masked_use = forced_use = stable_forced_use = misc.ChunkedDataDict()
     forced_use.freeze()
     pkg_use_force = pkg_use_mask = ImmutableDict()
-    pkg_provided = visibility = system = ((), ())
+    pkg_provided = system = ((), ())
 
 
 class ProfileStack(object):
@@ -663,9 +653,7 @@ class ProfileStack(object):
 
     @klass.jit_attr
     def masks(self):
-        return frozenset(chain(
-            self._collapse_generic("masks"),
-            self._collapse_generic("visibility")))
+        return frozenset(chain(self._collapse_generic("masks")))
 
     @klass.jit_attr
     def unmasks(self):

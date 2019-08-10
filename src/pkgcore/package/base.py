@@ -10,7 +10,7 @@ Right now, doesn't provide much, need to change that down the line
 __all__ = ("base", "wrapper", "dynamic_getattr_dict")
 
 from snakeoil import klass
-from snakeoil.compatibility import cmp, IGNORED_EXCEPTIONS
+from snakeoil.compatibility import cmp
 
 from pkgcore import exceptions as base_errors
 from pkgcore.operations import format
@@ -89,8 +89,6 @@ def dynamic_getattr_dict(self, attr):
         val = functor(self)
         object.__setattr__(self, attr, val)
         return val
-    except IGNORED_EXCEPTIONS:
-        raise
     except errors.MetadataException as e:
         if e.attr == attr:
             raise

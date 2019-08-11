@@ -29,7 +29,7 @@ demandload(
     'snakeoil.osutils:pjoin,listdir_dirs',
     'snakeoil.sequences:iter_stable_unique',
     'snakeoil.strings:pluralism',
-    'pkgcore.ebuild:processor,triggers',
+    'pkgcore.ebuild:cpv,processor,triggers',
     'pkgcore.fs:contents,livefs',
     'pkgcore.merge:triggers@merge_triggers',
     'pkgcore.operations:observer@observer_mod',
@@ -222,21 +222,12 @@ def update_pkg_desc_index(repo, observer):
     f = None
     try:
         f = AtomicWriteFile(pkg_desc_index)
-        res = defaultdict(dict)
-        for pkg in repo:
-            try:
-                res[pkg.key][pkg] = pkg.description
-            except IGNORED_EXCEPTIONS as e:
-                if isinstance(e, KeyboardInterrupt):
-                    return
-                raise
-            except Exception as e:
-                observer.error(f'{pkg}: {e}')
-                ret = os.EX_DATAERR
-        for key in sorted(res):
-            pkgs = sorted(res[key])
-            versions = ' '.join(p.fullver for p in pkgs)
-            f.write(f"{key} {versions}: {pkgs[-1].description}\n")
+        for cat, pkgs in sorted(repo.packages.items()):
+            for pkg in sorted(pkgs):
+                cpvs = sorted(cpv.CPV(cat, pkg, v) for v in repo.versions[(cat, pkg)])
+                versions = ' '.join(x.fullver for x in cpvs)
+                desc = repo[(cat, pkg, cpvs[-1].fullver)].description
+                f.write(f"{cat}/{pkg} {versions}: {desc}\n")
         f.close()
     except IOError as e:
         observer.error(

@@ -69,7 +69,7 @@ class FakeDomain(object):
     def __init__(self, repos, binpkg, vdb):
         object.__init__(self)
         self.repos = repos
-        self.source_repos = util.RepositoryGroup(repos)
+        self.source_repos_raw = util.RepositoryGroup(repos)
         self.installed_repos = util.RepositoryGroup(vdb)
         self.binary_repos_raw = util.RepositoryGroup(binpkg)
         self.vdb = vdb

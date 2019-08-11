@@ -185,28 +185,24 @@ def update_use_local_desc(repo, observer):
     ret = 0
     use_local_desc = pjoin(repo.location, "profiles", "use.local.desc")
     f = None
-    def _raise_xml_error(exc): raise exc
+
+    def _raise_xml_error(exc):
+        observer.error(f'{cat}/{pkg}: failed parsing metadata.xml: {str(exc)}')
+        nonlocal ret
+        ret = 1
+
     try:
-        f = AtomicWriteFile(use_local_desc, binary=True)
+        f = AtomicWriteFile(use_local_desc)
         f.write(textwrap.dedent('''\
             # This file is deprecated as per GLEP 56 in favor of metadata.xml.
             # Please add your descriptions to your package's metadata.xml ONLY.
-            # * generated automatically using pmaint *\n\n''').encode('utf8'))
-        res = {}
-        for pkg in repo:
-            try:
-                with patch('pkgcore.log.logger.error', _raise_xml_error):
-                    for flag, desc in pkg.local_use.items():
-                        res[(pkg.key, flag)] = desc
-            except IGNORED_EXCEPTIONS as e:
-                if isinstance(e, KeyboardInterrupt):
-                    return
-                raise
-            except Exception as e:
-                observer.error(f'{pkg.key}: {e}')
-                ret = os.EX_DATAERR
-        for k, v in sorted(res.items()):
-            f.write(f"{':'.join(k)} - {v}\n".encode('utf8'))
+            # * generated automatically using pmaint *\n\n'''))
+        with patch('pkgcore.log.logger.error', _raise_xml_error):
+            for cat, pkgs in sorted(repo.packages.items()):
+                for pkg in sorted(pkgs):
+                    metadata = repo._get_metadata_xml(cat, pkg)
+                    for flag, desc in sorted(metadata.local_use.items()):
+                        f.write(f'{cat}/{pkg}:{flag} - {desc}\n')
         f.close()
     except IOError as e:
         observer.error(

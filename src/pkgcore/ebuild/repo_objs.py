@@ -493,7 +493,7 @@ class OverlayedLicenses(Licenses):
                     d[k] += v
                 else:
                     d[k] = v
-        return ImmutableDict(d)
+        return mappings.ImmutableDict(d)
 
     @klass.jit_attr_none
     def licenses(self):

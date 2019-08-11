@@ -205,17 +205,17 @@ class ebd(object):
     def set_path_vars(env, pkg, domain):
         # XXX: note this is just EAPI 3 and EAPI 7 compatibility; not full prefix, soon..
         trailing_slash = pkg.eapi.options.trailing_slash
-        env['ROOT'] = domain.root.rstrip(trailing_slash) + trailing_slash
+        env['ROOT'] = domain.root.rstrip(os.sep) + trailing_slash
         env['PKGCORE_PREFIX_SUPPORT'] = 'false'
         if pkg.eapi.options.prefix_capable:
             env['EPREFIX'] = domain.prefix.rstrip(os.sep)
             env['EROOT'] = (
-                pjoin(env['ROOT'].rstrip(trailing_slash), env['EPREFIX']) +
-                trailing_slash)
+                pjoin(env['ROOT'].rstrip(trailing_slash), env['EPREFIX'])
+                + trailing_slash)
             env['PKGCORE_PREFIX_SUPPORT'] = 'true'
 
         if pkg.eapi.options.has_sysroot:
-            env['SYSROOT'] = env['ROOT'].rstrip(os.sep)
+            env['SYSROOT'] = env['ROOT']
             env['ESYSROOT'] = pjoin(env['SYSROOT'], env['EPREFIX'])
             env['BROOT'] = env['EPREFIX']
 

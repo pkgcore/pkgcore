@@ -224,16 +224,13 @@ class tree(object):
     def match(self, atom, **kwds):
         return list(self.itermatch(atom, **kwds))
 
-    def itermatch(self, restrict, restrict_solutions=None, sorter=None,
-                  pkg_filter=None, pkg_klass_override=None, force=None,
-                  yield_none=False):
+    def itermatch(self, restrict, sorter=None, pkg_filter=None,
+                  pkg_klass_override=None, force=None, yield_none=False):
         """Generator that yields packages match a restriction.
 
         :type restrict: :obj:`pkgcore.restrictions.packages.PackageRestriction`
             instance.
         :param restrict: restriction to search via
-        :param restrict_solutions: cnf collapsed list of the restrict.
-            Don't play with it unless you know what you're doing
         :param sorter: callable to do sorting during searching-
             if sorting the results, use this instead of sorting externally.
         :param pkg_filter: callable to do package filtering

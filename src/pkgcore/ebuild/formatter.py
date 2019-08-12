@@ -7,8 +7,7 @@
 __all__ = (
     "Formatter", "use_expand_filter",
     "BasicFormatter", "PkgcoreFormatter", "CountingFormatter",
-    "PortageFormatter", "PaludisFormatter", "basic_factory", "pkgcore_factory",
-    "portage_factory", "paludis_factory", "portage_verbose_factory",
+    "PortageFormatter", "PortageVerboseFormatter", "PaludisFormatter",
 )
 
 import operator
@@ -17,7 +16,7 @@ from snakeoil.cli.input import userquery
 from snakeoil.demandload import demandload
 from snakeoil.sequences import iflatten_instance
 
-from pkgcore.config import configurable
+from pkgcore.config import ConfigHint
 
 demandload(
     'os',
@@ -93,6 +92,8 @@ class use_expand_filter(object):
 class Formatter(object):
     """Base Formatter class: All formatters should be subclasses of this."""
 
+    pkgcore_config_type = ConfigHint(typename='pmerge_formatter', raw_class=True)
+
     def __init__(self, **kwargs):
         self.__dict__.update(kwargs)
 
@@ -113,6 +114,14 @@ class BasicFormatter(Formatter):
 
     def format(self, op):
         self.out.write(op.pkg.key)
+
+
+class VerboseFormatter(Formatter):
+    """Formatter with output forced into verbose mode."""
+
+    def __init__(self, **kwargs):
+        kwargs['verbosity'] = 1
+        super().__init__(**kwargs)
 
 
 class PkgcoreFormatter(Formatter):
@@ -180,11 +189,7 @@ class CountingFormatter(Formatter):
 
 
 class PortageFormatter(CountingFormatter):
-    """Portage formatter
-
-    A Formatter designed to resemble Portage's output
-    as much as much as possible.
-    """
+    """Formatter designed to resemble portage output."""
 
     def __init__(self, **kwargs):
         kwargs.setdefault("use_expand", set())
@@ -194,7 +199,6 @@ class PortageFormatter(CountingFormatter):
             self.use_expand, self.use_expand_hidden)
         # Map repo location to an index.
         self.repos = {}
-
         # set of files to be downloaded
         self.downloads = set()
 
@@ -504,16 +508,12 @@ class PortageFormatter(CountingFormatter):
                             self.out.reset, f" {location}")
 
 
+class PortageVerboseFormatter(VerboseFormatter, PortageFormatter):
+    """Formatter designed to resemble portage output in verbose mode."""
+
+
 class PaludisFormatter(CountingFormatter):
-    """Paludis formatter
-
-    A Formatter designed to resemble Paludis' output
-    as much as much as possible.
-    """
-
-    def __init__(self, **kwargs):
-        kwargs.setdefault("verbosity", 1)
-        super().__init__(**kwargs)
+    """Formatter designed to resemble paludis output."""
 
     def format(self, op):
         out = self.out
@@ -563,33 +563,3 @@ class PaludisFormatter(CountingFormatter):
             out.write(*flags[:-1])
         out.write('\n')
         out.autoline = origautoline
-
-
-def formatter_factory_generator(cls):
-    """Factory for formatter factories that take no further arguments.
-
-    A formatter factory is a subclass of Formatter or a callable
-    taking the same keyword arguments.
-
-    This helper wraps such a subclass in an extra no-argument callable
-    that is usable by the configuration system.
-    """
-    @configurable(typename='pmerge_formatter')
-    def factory():
-        return cls
-    return factory
-
-
-basic_factory = formatter_factory_generator(BasicFormatter)
-pkgcore_factory = formatter_factory_generator(PkgcoreFormatter)
-portage_factory = formatter_factory_generator(PortageFormatter)
-paludis_factory = formatter_factory_generator(PaludisFormatter)
-
-
-@configurable(typename='pmerge_formatter')
-def portage_verbose_factory():
-    """Version of portage formatter that is always in verbose mode."""
-    def factory(**kwargs):
-        kwargs['verbosity'] = 1
-        return PortageFormatter(**kwargs)
-    return factory

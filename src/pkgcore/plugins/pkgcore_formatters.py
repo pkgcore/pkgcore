@@ -6,20 +6,20 @@ from pkgcore.config import basics
 pkgcore_plugins = {
     'global_config': [{
         'basic': basics.ConfigSectionFromStringDict({
-            'class': 'pkgcore.ebuild.formatter.basic_factory',
+            'class': 'pkgcore.ebuild.formatter.BasicFormatter',
             }),
         'pkgcore': basics.ConfigSectionFromStringDict({
-            'class': 'pkgcore.ebuild.formatter.pkgcore_factory',
+            'class': 'pkgcore.ebuild.formatter.PkgcoreFormatter',
             }),
         'portage': basics.ConfigSectionFromStringDict({
-            'class': 'pkgcore.ebuild.formatter.portage_factory',
+            'class': 'pkgcore.ebuild.formatter.PortageFormatter',
             'default': 'True',
             }),
         'portage-verbose': basics.ConfigSectionFromStringDict({
-            'class': 'pkgcore.ebuild.formatter.portage_verbose_factory',
+            'class': 'pkgcore.ebuild.formatter.PortageVerboseFormatter',
             }),
         'paludis': basics.ConfigSectionFromStringDict({
-            'class': 'pkgcore.ebuild.formatter.paludis_factory',
+            'class': 'pkgcore.ebuild.formatter.PaludisFormatter',
             }),
     }],
 }

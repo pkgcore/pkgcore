@@ -115,6 +115,7 @@ class ConfigType(object):
         self.required = tuple(self.positional)
         self.allow_unknowns = False
         self.requires_config = False
+        self.raw_class = False
 
         # Process ConfigHint (if any)
         if hint_overrides is not None:
@@ -129,6 +130,7 @@ class ConfigType(object):
                 self.doc = hint_overrides.doc
             self.allow_unknowns = hint_overrides.allow_unknowns
             self.requires_config = hint_overrides.requires_config
+            self.raw_class = hint_overrides.raw_class
             if self.requires_config:
                 if self.requires_config in self.required:
                     self.required = tuple(x for x in self.required if x != self.requires_config)

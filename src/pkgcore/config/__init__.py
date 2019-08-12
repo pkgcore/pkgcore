@@ -31,11 +31,11 @@ class ConfigHint(object):
     # be aware this is used in clone
     __slots__ = (
         "types", "positional", "required", "typename", "allow_unknowns",
-        "doc", "authorative", 'requires_config')
+        "doc", "authorative", "requires_config", "raw_class")
 
     def __init__(self, types=None, positional=None, required=None, doc=None,
                  typename=None, allow_unknowns=False, authorative=False,
-                 requires_config=False):
+                 requires_config=False, raw_class=False):
         self.types = types or {}
         self.positional = positional or []
         self.required = required or []
@@ -44,6 +44,7 @@ class ConfigHint(object):
         self.doc = doc
         self.authorative = authorative
         self.requires_config = requires_config
+        self.raw_class = raw_class
 
     def clone(self, **kwds):
         new_kwds = {}

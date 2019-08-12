@@ -203,6 +203,9 @@ class CollapsedConfig(object):
             config[self.type.requires_config] = manager
 
         callable_obj = self.type.callable
+        # return that raw, uninstantiated class object if requested
+        if self.type.raw_class:
+            return callable_obj
 
         pargs = []
         for var in self.type.positional:

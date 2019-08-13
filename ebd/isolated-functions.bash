@@ -126,44 +126,6 @@ __strip_duplicate_slashes() {
 	fi
 }
 
-__get_func_code() {
-	local -a code
-	mapfile code <<<$(declare -f "$1")
-	[[ -z ${code[@]} ]] && return
-
-	# drop function name and surrounding brackets
-	__IFS_push $'\n'
-	code=( ${code[@]:2:${#code[@]}-3} )
-	__IFS_pop
-	printf "%s\n" "${code[@]}"
-}
-
-__inject_func_code() {
-	local funcname=$1 code=$2 line=${3:-0}
-	local func_src=() index
-
-	if [[ ${line} -gt 0 ]]; then
-		func_src=( $(__get_func_code ${funcname}) )
-		if [[ ${line} -gt ${#func_src[@]} ]]; then
-			# code injected to line numbers bigger than the what the target function
-			# has appends code to the function
-			index=${#func_src[@]}
-		else
-			index=$(( line - 1 ))
-		fi
-	else
-		# code injected to line numbers <= 0 replaces the function code entirely
-		# (replacement occurs by default if the line number argument is empty or unset)
-		index=0
-	fi
-
-	eval "${funcname}() {
-		${func_src[@]:0:${index}}
-		${code}
-		${func_src[@]:${index}:${#func_src[@]}-${index}}
-	}" || die "failed evaluating function '${funcname}'"
-}
-
 declare -a PKGCORE_SHOPT_STACK
 
 # Save the current shell option state and set a shell option.

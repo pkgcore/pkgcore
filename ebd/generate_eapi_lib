@@ -47,6 +47,22 @@ load_eapi_libs() {
 			fi
 		done
 		unset PKGCORE_BANNED_FUNCS
+
+		# replace EAPI deprecated functions if any exist
+		for func in "${PKGCORE_DEPRECATED_FUNCS[@]}"; do
+			if declare -F ${func} &>/dev/null; then
+				local func_src=$(declare -f ${func})
+				local warning="QA Notice: ${func}: deprecated in EAPI ${eapi}"
+				# rename deprecated function
+				eval "${func_src/#${func}/__deprecated_${func}}"
+				# replace deprecated function with QA warning + renamed function
+				eval "${func}() { eqawarn \"${warning}\"; __deprecated_${func}; }"
+			else
+				echo "EAPI ${eapi}: undefined deprecated func: '${func}'" >&2
+				exit 1
+			fi
+		done
+		unset PKGCORE_DEPRECATED_FUNCS
 	done
 
 	local -a eapi_funcs

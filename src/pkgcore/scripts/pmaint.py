@@ -225,9 +225,10 @@ def update_pkg_desc_index(repo, observer):
         for cat, pkgs in sorted(repo.packages.items()):
             for pkg in sorted(pkgs):
                 cpvs = sorted(cpv.CPV(cat, pkg, v) for v in repo.versions[(cat, pkg)])
-                versions = ' '.join(x.fullver for x in cpvs)
-                desc = repo[(cat, pkg, cpvs[-1].fullver)].description
-                f.write(f"{cat}/{pkg} {versions}: {desc}\n")
+                if cpvs:
+                    versions = ' '.join(x.fullver for x in cpvs)
+                    desc = repo[(cat, pkg, cpvs[-1].fullver)].description
+                    f.write(f"{cat}/{pkg} {versions}: {desc}\n")
         f.close()
     except IOError as e:
         observer.error(

@@ -120,15 +120,15 @@ class repo_operations(_repo_ops.operations):
                     fetchables[filename] = fetchable
 
             # Manifest file is current and not forcing a refresh
-            manifest_current = set(manifest.distfiles.keys()) == set(pkgdir_fetchables.keys())
-            if manifest_config.thin and not fetchables and manifest_current:
+            if manifest_config.thin and not pkgdir_fetchables:
                 # Manifest files aren't necessary with thin manifests and no distfiles
-                if os.path.exists(manifest.path) and not pkgdir_fetchables:
+                if os.path.exists(manifest.path):
                     try:
                         os.remove(manifest.path)
-                    except:
+                    except EnvironmentError as e:
                         observer.error(
-                            f"failed removing old manifest: {key_query}::{self.repo.repo_id}")
+                            'failed removing old manifest: '
+                            f'{key_query}::{self.repo.repo_id}: {e}')
                         ret.add(key_query)
                 continue
 

@@ -17,10 +17,12 @@ demand_compile_regexp("valid_updates_re", r"^(\d)Q-(\d{4})$")
 
 def _scan_directory(path):
     files = []
-    for x in listdir_files(path):
-        match = valid_updates_re.match(x)
+    for filename in listdir_files(path):
+        match = valid_updates_re.match(filename)
         if match is not None:
-            files.append(((match.group(2), match.group(1)), x))
+            files.append(((match.group(2), match.group(1)), filename))
+        else:
+            logger.error(f'incorrectly named update file: {filename!r}')
     files.sort(key=itemgetter(0))
     return [x[1] for x in files]
 

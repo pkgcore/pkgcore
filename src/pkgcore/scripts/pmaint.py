@@ -463,7 +463,7 @@ digest_opts.add_argument(
     """)
 digest_opts.add_argument(
     "-r", "--repo", help="target repository",
-    action=commandline.StoreRepoObject, repo_type='ebuild', allow_external_repos=True,
+    action=commandline.StoreRepoObject, repo_type='ebuild-raw', allow_external_repos=True,
     docs="""
         Target repository to search for matches. If no repo is specified all
         ebuild repos are used.

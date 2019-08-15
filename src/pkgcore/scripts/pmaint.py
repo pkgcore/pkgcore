@@ -16,6 +16,7 @@ from snakeoil.demandload import demandload
 from pkgcore.exceptions import PkgcoreUserException
 from pkgcore.util import commandline
 from pkgcore.operations import OperationError
+from pkgcore.package.errors import MetadataException
 
 demandload(
     'collections:defaultdict',
@@ -29,7 +30,8 @@ demandload(
     'snakeoil.osutils:pjoin,listdir_dirs',
     'snakeoil.sequences:iter_stable_unique',
     'snakeoil.strings:pluralism',
-    'pkgcore.ebuild:cpv,processor,triggers',
+    'pkgcore.ebuild:processor,triggers',
+    'pkgcore.ebuild.cpv:CPV',
     'pkgcore.fs:contents,livefs',
     'pkgcore.merge:triggers@merge_triggers',
     'pkgcore.operations:observer@observer_mod',
@@ -224,11 +226,17 @@ def update_pkg_desc_index(repo, observer):
         f = AtomicWriteFile(pkg_desc_index)
         for cat, pkgs in sorted(repo.packages.items()):
             for pkg in sorted(pkgs):
-                cpvs = sorted(cpv.CPV(cat, pkg, v) for v in repo.versions[(cat, pkg)])
-                if cpvs:
-                    versions = ' '.join(x.fullver for x in cpvs)
-                    desc = repo[(cat, pkg, cpvs[-1].fullver)].description
-                    f.write(f"{cat}/{pkg} {versions}: {desc}\n")
+                cpvs = sorted(CPV(cat, pkg, v) for v in repo.versions[(cat, pkg)])
+                # get the most recent pkg description, skipping bad pkgs
+                for cpv in reversed(cpvs):
+                    try:
+                        desc = repo[(cat, pkg, cpv.fullver)].description
+                        versions = ' '.join(x.fullver for x in cpvs)
+                        f.write(f"{cat}/{pkg} {versions}: {desc}\n")
+                        break
+                    except MetadataException as e:
+                        # should be caught and outputted already by cache regen
+                        ret = 1
         f.close()
     except IOError as e:
         observer.error(

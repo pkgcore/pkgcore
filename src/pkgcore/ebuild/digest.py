@@ -8,7 +8,7 @@ ebuild tree manifest/digest support
 __all__ = ("parse_manifest", "Manifest")
 
 import operator
-from os.path import basename, dirname
+import os
 
 from snakeoil.chksum import get_handler
 from snakeoil.demandload import demandload
@@ -121,8 +121,7 @@ class Manifest(object):
         """
 
         if self.thin and not fetchables:
-            # thin doesn't require a manifest to be written
-            # if there is no fetchables.
+            # Manifest files aren't necessary with thin manifests and no distfiles
             return
 
         _key_sort = operator.itemgetter(0)
@@ -131,7 +130,7 @@ class Manifest(object):
         aux, ebuild, misc = {}, {}, {}
         if not self.thin:
             filesdir = '/files/'
-            for obj in iter_scan('/', offset=dirname(self.path), chksum_types=chfs):
+            for obj in iter_scan('/', offset=os.path.dirname(self.path), chksum_types=chfs):
                 if not obj.is_reg:
                     continue
                 pathname = obj.location
@@ -158,7 +157,9 @@ class Manifest(object):
 
         # next dist...
         for fetchable in sorted(fetchables, key=operator.attrgetter('filename')):
-            _write_manifest(handle, 'DIST', basename(fetchable.filename), dict(fetchable.chksums))
+            _write_manifest(
+                handle, 'DIST', os.path.basename(fetchable.filename),
+                dict(fetchable.chksums))
 
         # then ebuild and misc
         for mtype, inst in (("EBUILD", ebuild), ("MISC", misc)):

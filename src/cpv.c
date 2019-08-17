@@ -1,7 +1,4 @@
 /*
- * Copyright: 2006-2011 Brian Harring <ferringb@gmail.com>
- * License: GPL2/BSD
- *
  * C version of cpv class for speed.
  */
 

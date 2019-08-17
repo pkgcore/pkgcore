@@ -1,6 +1,3 @@
-# Copyright: 2007 Brian Harring <ferringb@gmail.com>
-# License: GPL2/BSD
-
 """
 WARNING: this module is for testing usage only; it disables
 the default strictness tests that fsBase.* derivatives have to ease

@@ -1,5 +1,4 @@
 # ebuild phase processing, env handling
-# Copyright 2005-2012 Brian Harring <ferringb@gmail.com>: BSD/GPL2
 
 # general phase execution path- __execute_phases is called, which sets EBUILD_PHASE, and then
 # depending on the phase, loads or initializes. Env is init'd for non src based stages if the env

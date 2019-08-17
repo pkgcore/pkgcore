@@ -1,10 +1,3 @@
-/*
- * Copyright: 2004-2011 Brian Harring
- * Copyright: 2005 Mike Frysinger
- * Copyright: 2006 Marien Zwart
- * License: BSD 3 clause
- */
-
 #define PY_SSIZE_T_CLEAN
 
 #include <Python.h>

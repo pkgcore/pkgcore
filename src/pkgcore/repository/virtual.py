@@ -1,6 +1,3 @@
-# Copyright: 2005-2008 Brian harring <ferringb@gmail.com>
-# License: GPL2/BSD
-
 """
 virtual repository, pkgs generated via callable
 """

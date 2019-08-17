@@ -1,6 +1,3 @@
-# Copyright: 2012 Brian Harring <ferringb@gmail.com>
-# license GPL2/BSD 3
-
 __phase_pkg_nofetch() {
 	[[ -z ${SRC_URI} ]] && return
 

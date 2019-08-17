@@ -1,6 +1,3 @@
-# Copyright 2007 Charlie Shepherd <masterdriverz@gmail.com>
-# License: GPL2
-
 import difflib
 
 from snakeoil.test import TestCase

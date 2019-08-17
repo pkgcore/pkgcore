@@ -1,7 +1,3 @@
-# Copyright: 2007-2012 Brian Harring <ferringb@gmail.com
-# Copyright: 2005 Marien Zwart <marienz@gentoo.org>
-# License: BSD/GPL2
-
 from functools import partial
 
 from pkgcore.restrictions import restriction

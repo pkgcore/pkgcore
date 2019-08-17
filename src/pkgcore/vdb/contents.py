@@ -1,6 +1,3 @@
-# Copyright: 2005-2010 Brian Harring <ferringb@gmail.com>
-# License: GPL2/BSD
-
 __all__ = ("LookupFsDev", "ContentsFile")
 
 from snakeoil import data_source

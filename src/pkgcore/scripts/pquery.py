@@ -1,7 +1,3 @@
-# Copyright: 2006-2011 Brian Harring <ferringb@gmail.com
-# Copyright: 2006-2007 Marien Zwart <marienz@gentoo.org>
-# License: BSD/GPL2
-
 """package querying interface
 
 pquery is used to extract various kinds of information about either installed

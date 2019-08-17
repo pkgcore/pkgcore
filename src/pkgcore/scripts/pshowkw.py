@@ -1,6 +1,3 @@
-# Copyright: 2019 Tim Harder <radhermit@gmail.com>
-# License: BSD/GPL2
-
 """display package keywords"""
 
 from functools import partial

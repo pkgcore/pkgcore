@@ -1,6 +1,3 @@
-# Copyright: 2006-2008 Brian Harring <ferringb@gmail.com>
-# License: GPL2/BSD
-
 """
 simple repository wrapping to override the package instances returned
 """

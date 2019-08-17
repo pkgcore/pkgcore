@@ -1,6 +1,3 @@
-# Copyright: 2005 Marien Zwart <marienz@gentoo.org>
-# License: BSD/GPL2
-
 from io import StringIO
 
 try:

@@ -1,6 +1,3 @@
-# Copyright: 2011 Brian Harring <ferringb@gmail.com>
-# License: BSD/GPL2
-
 from pkgcore.ebuild import ebuild_src
 
 pkgcore_plugins = {

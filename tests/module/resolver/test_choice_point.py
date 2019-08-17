@@ -1,6 +1,3 @@
-# Copyright: 2006 Brian Harring <ferringb@gmail.com>
-# License: GPL2/BSD
-
 from pkgcore.resolver.choice_point import choice_point
 from pkgcore.restrictions.boolean import AndRestriction, OrRestriction
 from snakeoil.test import TestCase

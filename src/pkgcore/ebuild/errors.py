@@ -1,6 +1,3 @@
-# Copyright: 2005 Brian Harring <ferringb@gmail.com>
-# License: GPL2/BSD
-
 # "More than one statement on a single line"
 # pylint: disable-msg=C0321
 

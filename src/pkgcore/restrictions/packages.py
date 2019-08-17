@@ -1,6 +1,3 @@
-# Copyright: 2005-2012 Brian Harring <ferringb@gmail.com>
-# License: GPL2/BSD
-
 """
 restriction classes designed for package level matching
 """

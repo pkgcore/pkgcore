@@ -1,7 +1,3 @@
-# Copyright: 2005-2011 Brian Harring <ferringb@gmail.com>
-# Copyright: 2005 Marien Zwart <marienz@gentoo.org>
-# License: BSD/GPL2
-
 # potentially use an intermediate base for user config errors,
 # separate base for instantiation?
 

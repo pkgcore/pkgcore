@@ -1,6 +1,4 @@
 #!/usr/bin/env pkgcore-ebuild-helper
-# Copyright 2012 Brian Harring <ferringb@gmail.com>
-# Distributed under the terms of the GNU General Public License v2
 
 check_args 0 0
 

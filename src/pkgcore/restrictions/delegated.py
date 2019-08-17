@@ -1,6 +1,3 @@
-# Copyright: 2005-2008 Brian Harring <ferringb@gmail.com>
-# License: GPL2/BSD
-
 """
 functionality to hand off to a callable, enabling collapsing
 long chains of restrictions into Nlog N, or generating

@@ -1,6 +1,3 @@
-# Copyright: 2006-2011 Brian Harring <ferringb@gmail.com>
-# License: GPL2/BSD
-
 pkgcore_plugins = {
     'triggers': [f'pkgcore.merge.triggers.{x}' for x in [
         'ldconfig',

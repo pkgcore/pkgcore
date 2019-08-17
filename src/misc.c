@@ -1,8 +1,4 @@
 /*
- * Copyright: 2010-2011 Brian Harring <ferringb@gmail.com>
- * Copyright: 2008 Charlie Shepherd <masterdriverz@gmail.com>
- * License: BSD 3 clause
- *
  * primarily a cpy version of incremental_expansion for speed.
  */
 

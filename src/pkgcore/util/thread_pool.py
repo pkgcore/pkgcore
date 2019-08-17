@@ -1,6 +1,3 @@
-# Copyright: 2011 Brian Harring <ferringb@gmail.com>
-# License: GPL2/BSD 3 clause
-
 from collections import deque
 import threading
 from types import GeneratorType

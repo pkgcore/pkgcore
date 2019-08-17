@@ -1,6 +1,3 @@
-# Copyright: 2006-2011 Brian Harring <ferringb@gmail.com>
-# License: GPL2/BSD
-
 __all__ = ("rsync_syncer", "rsync_timestamp_syncer",)
 
 from snakeoil.demandload import demandload

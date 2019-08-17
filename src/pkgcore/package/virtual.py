@@ -1,6 +1,3 @@
-# Copyright: 2005 Jason Stubbs <jstubbs@gentoo.org>
-# License: GPL2/BSD
-
 """
 virtual package
 """

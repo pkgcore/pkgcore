@@ -1,6 +1,3 @@
-# Copyright: 2007-2008 Brian Harring <ferringb@gmail.com>
-# License: GPL2/BSD
-
 __all__ = ("group_attempts", "fails_filter", "reduce_to_failures",)
 
 

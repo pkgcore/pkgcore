@@ -1,6 +1,3 @@
-# Copyright: 2006 Brian Harring <ferringb@gmail.com>
-# License: GPL2/BSD
-
 from pkgcore.package import metadata, base
 from snakeoil.test import TestCase
 

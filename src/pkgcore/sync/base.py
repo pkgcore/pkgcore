@@ -1,7 +1,3 @@
-# Copyright: 2006-2011 Brian Harring <ferringb@gmail.com>
-# License: GPL2/BSD
-
-
 __all__ = (
     "SyncError", "UriError", "MissingLocalUser", "MissingBinary",
     "Syncer", "ExternalSyncer", "VcsSyncer",

@@ -1,6 +1,3 @@
-# Copyright: 2018 Tim Harder <radhermit@gmail.com>
-# License: BSD/GPL2
-
 import pytest
 
 from pkgcore.config import basics, ConfigHint, configurable

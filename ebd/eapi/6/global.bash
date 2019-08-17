@@ -1,6 +1,3 @@
-# Copyright: 2014-2016 Tim Harder <radhermit@gmail.com>
-# license GPL2/BSD 3
-
 __phase_src_prepare() {
 	local patches
 	if patches=$(declare -p PATCHES 2> /dev/null); then

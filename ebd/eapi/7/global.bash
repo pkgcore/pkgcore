@@ -1,8 +1,3 @@
-# Copyright: 2016-2018 Tim Harder <radhermit@gmail.com>
-# Copyright: 2017-2018 Michał Górny <mgorny@gentoo.org>
-# Copyright: 2017-2018 Ulrich Müller <ulm@gentoo.org>
-# license GPL2/BSD 3
-
 __ver_parse_range() {
 	local range=${1}
 	local max=${2}

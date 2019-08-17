@@ -1,6 +1,3 @@
-# Copyright: 2015 Tim Harder
-# License: GPL2/BSD
-
 import binascii
 import os
 import shutil

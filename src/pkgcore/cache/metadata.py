@@ -1,7 +1,3 @@
-# Copyright: 2005-2011 Brian Harring <ferringb@gmail.com>
-# Copyright: 2006 Marien Zwart <marienz@gentoo.org>
-# License: BSD/GPL2
-
 """
 cache backend designed for rsynced tree's pregenerated metadata.
 """

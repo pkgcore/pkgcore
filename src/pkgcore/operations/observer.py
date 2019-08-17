@@ -1,6 +1,3 @@
-# Copyright: 2006-2011 Brian Harring <ferringb@gmail.com>
-# License: GPL2/BSD
-
 __all__ = (
     "null_output", "formatter_output", "file_handle_output",
     "phase_observer", "repo_observer", "decorate_build_method",

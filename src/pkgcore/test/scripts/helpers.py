@@ -1,7 +1,3 @@
-# Copyright: 2016 Tim Harder <radhermit@gmail.com>
-# Copyright: 2006 Marien Zwart <marienz@gentoo.org>
-# License: BSD/GPL2
-
 """Helpers for testing scripts."""
 
 import argparse

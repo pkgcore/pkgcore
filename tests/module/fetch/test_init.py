@@ -1,6 +1,3 @@
-# Copyright: 2006 Brian Harring <ferringb@gmail.com>
-# License: GPL2/BSD
-
 from snakeoil.sequences import iflatten_instance
 from snakeoil.test import TestCase
 

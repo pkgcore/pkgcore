@@ -1,6 +1,3 @@
-# Copyright: 2006 Marien Zwart <marienz@gentoo.org>
-# License: BSD/GPL2
-
 from pkgcore.config import basics
 
 pkgcore_plugins = {

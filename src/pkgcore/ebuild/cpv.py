@@ -1,7 +1,3 @@
-# Copyright: 2005-2011 Brian Harring <ferringb@gmail.com>
-# Copyright: 2005 Jason Stubbs <jstubbs@gentoo.org>
-# License: GPL2/BSD
-
 """gentoo ebuild specific base package class"""
 
 __all__ = ("CPV", "versioned_CPV", "unversioned_CPV")

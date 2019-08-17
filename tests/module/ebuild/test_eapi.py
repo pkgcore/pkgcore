@@ -1,6 +1,3 @@
-# Copyright: 2018 Tim Harder <radhermit@gmail.com>
-# License: GPL2/BSD
-
 from importlib import reload
 from unittest import mock
 

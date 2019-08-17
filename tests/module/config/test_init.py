@@ -1,6 +1,3 @@
-# Copyright: 2005 Marien Zwart <marienz@gentoo.org>
-# License: BSD/GPL2
-
 """tests for pkgcore.config's package __init__.py"""
 
 import operator

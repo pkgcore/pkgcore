@@ -1,6 +1,3 @@
-# Copyright: 2006-2011 Brian Harring <ferringb@gmail.com>
-# License: GPL2/BSD
-
 __all__ = (
     "SimpleTree", "RepositoryGroup",
     "get_raw_repos", "get_virtual_repos",

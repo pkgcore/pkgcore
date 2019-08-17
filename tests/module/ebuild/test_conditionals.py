@@ -1,6 +1,3 @@
-# Copyright: 2005-2011 Brian Harring <ferringb@gentoo.org>
-# License: GPL2/BSD
-
 from snakeoil.currying import post_curry
 from snakeoil.iterables import expandable_chain
 from snakeoil.sequences import iflatten_instance

@@ -1,6 +1,4 @@
 # default functions for ebuild env that aren't saved- specific to the portage instance.
-# Copyright 2005-2012 Brian Harring <ferringb@gmail.com>: BSD/GPL2
-# Copyright 2004-2006 Gentoo Foundation: GPL2
 
 # sandbox support functions
 addread() {

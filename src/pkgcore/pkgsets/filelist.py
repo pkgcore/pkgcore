@@ -1,6 +1,3 @@
-# Copyright: 2006-2011 Brian Harring <ferringb@gmail.com>
-# License: GPL2/BSD
-
 """
 pkgset based around loading a list of atoms from a world file
 """

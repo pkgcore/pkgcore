@@ -1,7 +1,3 @@
-# Copyright: 2005-2012 Brian Harring <ferringb@gmail.com
-# Copyright: 2006 Marien Zwart <marienz@gentoo.org>
-# License: BSD/GPL2
-
 """value restrictions
 
 Works hand in hand with :obj:`pkgcore.restrictions.packages`, these

@@ -1,5 +1,4 @@
-# Copyright 2005-2012 Brian Harring <ferringb@gmail.com>: BSD/GPL2
-# Copyright 2004-2005 Gentoo Foundation: GPL2
+# Exit handling functions for the ebuild environment
 
 # Check whether any command in the most recently executed foreground pipe
 # returned non-zero and if so calls die passing along any given parameters.

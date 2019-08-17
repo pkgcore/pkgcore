@@ -1,11 +1,8 @@
-# Copyright: 2006 Marien Zwart <marienz@gentoo.org>
-# License: BSD/GPL2
-
-
 """Logging utilities.
 
 Currently just contains pkgcore's root logger.
 """
+
 __all__ = ("logger",)
 
 import logging

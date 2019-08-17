@@ -1,5 +1,4 @@
-# Copyright: 2011-2012 Brian Harring <ferringb@gmail.com>
-# license GPL2/BSD 3
+# Common EAPI functionality (mainly phase related)
 
 # debug-print() gets called from many places with verbose status information useful
 # for tracking down problems. The output is in ${T}/eclass-debug.log.

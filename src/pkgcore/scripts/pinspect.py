@@ -1,6 +1,3 @@
-# Copyright: 2009-2011 Brian Harring <ferringb@gmail.com>
-# License: GPL2/BSD
-
 """repository inspection interface
 
 pinspect is used to extract various information from repos. For example,

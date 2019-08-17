@@ -1,6 +1,3 @@
-# Copyright: 2008-2011 Brian Harring <ferringb@gmail.com>
-# License: BSD/GPL2
-
 __all__ = ("file_identifier",)
 
 from snakeoil.compatibility import IGNORED_EXCEPTIONS

@@ -1,7 +1,3 @@
-# Copyright: 2011 Brian Harring <ferringb@gmail.com>
-# Copyright: 2007 Marien Zwart <marienz@gentoo.org>
-# License: BSD/GPL2
-
 import os
 import textwrap
 from unittest import mock

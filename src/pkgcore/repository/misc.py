@@ -1,6 +1,3 @@
-# Copyright: 2006-2008 Brian Harring <ferringb@gmail.com>
-# License: GPL2/BSD
-
 __all__ = ("nodeps_repo", "caching_repo")
 
 from snakeoil.iterables import caching_iter, iter_sort

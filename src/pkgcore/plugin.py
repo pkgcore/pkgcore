@@ -1,7 +1,3 @@
-# Copyright: 2009-2011 Brian Harring <ferringb@gmail.com>
-# Copyright: 2006 Marien Zwart <marienz@gentoo.org>
-# License: BSD/GPL2
-
 """Plugin system, heavily inspired by twisted's plugin system."""
 
 __all__ = ("initialize_cache", "get_plugins", "get_plugin")

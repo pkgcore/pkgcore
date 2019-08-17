@@ -1,7 +1,3 @@
-# Copyright: 2009-2011 Brian Harring <ferringb@gmail.com>
-# Copyright: 2006 Marien Zwart <marienz@gentoo.org>
-# License: BSD/GPL2
-
 """Utilities for writing commandline utilities.
 
 pkgcore scripts should use the :obj:`ArgumentParser` subclass here for a

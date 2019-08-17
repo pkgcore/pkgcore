@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-# Copyright: 2015 Michał Górny <mgorny@gentoo.org>
-# License: GPL2/BSD
 
 from unittest import mock
 

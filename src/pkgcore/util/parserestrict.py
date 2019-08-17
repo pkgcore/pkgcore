@@ -1,7 +1,3 @@
-# Copyright: 2005-2011 Brian Harring <ferringb@gmail.com
-# Copyright: 2006 Marien Zwart <marienz@gentoo.org>
-# License: BSD/GPL2
-
 """Functions that turn a string into a restriction or raise ParseError.
 
 __all__ = ("parse_match", "ParseError",)

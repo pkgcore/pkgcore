@@ -1,10 +1,4 @@
-# Copyright: 2005-2007 Brian Harring <ferringb@gmail.com>
-# License: GPL2/BSD
-
-
-"""
-package with its metadata accessible (think 'no longer abstract')
-"""
+"""package with its metadata accessible (think 'no longer abstract')"""
 
 __all__ = ("DeriveMetadataKls", "factory", "package")
 

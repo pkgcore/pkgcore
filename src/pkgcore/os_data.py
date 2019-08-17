@@ -1,7 +1,3 @@
-# Copyright: 2005-2011 Brian Harring <ferringb@gmail.com>
-# Copyright: 2005 Gentoo Foundation
-# License: GPL2
-
 """
 Avoid using- os data- root uid/gid, pkgcore uid/gid, etc.
 

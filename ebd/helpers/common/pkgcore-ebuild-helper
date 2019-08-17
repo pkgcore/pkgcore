@@ -1,6 +1,4 @@
 #!/usr/bin/env bash
-# Copyright: 2012 Brian Harring <ferringb@gmail.com>
-# License: GPL2/BSD 3 clause
 
 # protect against env screwups.
 if [[ -z ${PKGCORE_EBD_PATH} ]]; then

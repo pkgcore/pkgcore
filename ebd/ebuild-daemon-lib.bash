@@ -1,6 +1,4 @@
 # ebuild daemon lib code
-# Copyright 2005-2012 Brian Harring <ferringb@gmail.com>
-# License BSD/GPL2
 
 PKGCORE_EBD_PID=${BASHPID}
 # Use ebd_read/ebd_write for talking to the running pkgcore instance instead of

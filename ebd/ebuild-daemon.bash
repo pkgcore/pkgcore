@@ -1,6 +1,4 @@
 # core ebuild processor handling code
-# Copyright 2004-2012 Brian Harring <ferringb@gmail.com>
-# License: BSD/GPL2
 
 # These are functions that shouldn't be marked readonly, since they're runtime
 # switchable.

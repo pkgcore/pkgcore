@@ -1,7 +1,3 @@
-# Copyright: 2009-2010 Brian Harring <ferringb@gmail.com>
-# Copyright: 2005 Marien Zwart <marienz@gentoo.org>
-# License: BSD/GPL2
-
 """
 configuration subsystem primitives
 

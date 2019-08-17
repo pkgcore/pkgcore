@@ -1,6 +1,3 @@
-# Copyright: 2005 Marien Zwart <marienz@gentoo.org>
-# License: BSD/GPL2
-
 """
 Parse a dhcpd.conf(5) style configuration file.
 

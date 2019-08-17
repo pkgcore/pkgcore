@@ -1,6 +1,3 @@
-# Copyright: 2005-2009 Brian Harring <ferringb@gmail.com>
-# License: GPL2/BSD
-
 import os
 
 from snakeoil.osutils import pjoin

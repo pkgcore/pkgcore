@@ -1,6 +1,3 @@
-# Copyright: 2006-2007 Brian Harring <ferringb@gmail.com>
-# License: GPL2/BSD
-
 import os
 
 from snakeoil import data_source

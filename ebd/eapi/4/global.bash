@@ -1,6 +1,3 @@
-# Copyright: 2011-2012 Brian Harring <ferringb@gmail.com>
-# license GPL2/BSD 3
-
 __phase_src_install() {
 	if [[ -f Makefile || -f GNUmakefile || -f makefile ]]; then
 		emake DESTDIR="${D}" install

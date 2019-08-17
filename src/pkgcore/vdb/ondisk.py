@@ -1,6 +1,3 @@
-# Copyright: 2005-2011 Brian Harring <ferringb@gmail.com>
-# License: GPL2/BSD
-
 __all__ = ("tree", "ConfiguredTree")
 
 import errno

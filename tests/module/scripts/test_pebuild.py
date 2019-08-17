@@ -1,6 +1,3 @@
-# Copyright: 2006 Marien Zwart <marienz@gentoo.org>
-# License: BSD/GPL2
-
 from pkgcore.config import basics, ConfigHint, configurable
 from pkgcore.scripts import pebuild
 from pkgcore.test.misc import FakePkg, FakeRepo

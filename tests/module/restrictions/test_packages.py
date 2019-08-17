@@ -1,7 +1,3 @@
-# Copyright: 2006-2012 Brian Harring <ferringb@gmail.com
-# Copyright: 2006 Marien Zwart <marienz@gentoo.org>
-# License: BSD/GPL2
-
 from snakeoil.mappings import AttrAccessible
 from snakeoil.test import mk_cpy_loadable_testcase
 

@@ -1,6 +1,3 @@
-# Copyright: 2006-2010 Brian Harring <ferringb@gmail.com>
-# License: GPL2/BSD
-
 __all__ = ("choice_point",)
 
 from snakeoil import klass

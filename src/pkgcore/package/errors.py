@@ -1,6 +1,3 @@
-# Copyright: 2006 Marien Zwart <marienz@gentoo.org>
-# License: BSD/GPL2
-
 __all__ = (
     "PackageError", "InvalidPackageName", "MetadataException", "InvalidDependency",
     "ChksumBase", "MissingChksum", "ParseChksumError",

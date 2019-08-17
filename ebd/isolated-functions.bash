@@ -1,5 +1,4 @@
-# Copyright 2006-2012 Brian Harring <ferringb@gmail.com>
-# License GPL2/BSD3
+# Various internal functions
 
 # Internal logging function, don't use this in ebuilds.
 __elog_base() {

@@ -1,6 +1,3 @@
-# Copyright: 2012 Brian Harring <ferringb@gmail.com>
-# license GPL2/BSD 3
-
 # parallel tests are allowed (no forced -j1)
 __phase_src_test() {
 	addpredict /

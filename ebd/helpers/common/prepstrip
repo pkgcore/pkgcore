@@ -1,7 +1,4 @@
 #!/usr/bin/env pkgcore-ebuild-helper
-# Copyright 2008-2011 Brian Harring <ferringb@gmail.com>: BSD/GPL2
-# Copyright 1999-2007 Gentoo Foundation: GPL2
-# Distributed under the terms of the GNU General Public License v2
 
 shopt -s extdebug
 

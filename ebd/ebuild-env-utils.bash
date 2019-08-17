@@ -1,4 +1,3 @@
-# Copyright 2005-2012 Brian Harring <ferringb@gmail.com>: BSD/GPL2
 # this functionality is all related to saving/loading environmental dumps for ebuilds
 
 __regex_filter_input() {

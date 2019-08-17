@@ -1,7 +1,3 @@
-# Copyright: 2007-2011 Brian Harring <ferringb@gmail.com>
-# Copyright: 2007 Charlie Shepherd <masterdriverz@gmail.com>
-# License: GPL2/BSD2
-
 """pmerge formatting module"""
 
 __all__ = (

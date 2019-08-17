@@ -1,6 +1,3 @@
-# Copyright: 2007-2011 Brian Harring <ferringb@gmail.com>
-# License: GPL2/BSD
-
 from snakeoil.test import TestCase, mk_cpy_loadable_testcase
 
 from pkgcore.ebuild import misc

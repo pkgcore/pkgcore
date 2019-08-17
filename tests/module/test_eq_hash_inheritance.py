@@ -1,6 +1,3 @@
-# Copyright: 2010 Brian Harring <ferringb@gmail.com>
-# License: GPL2/BSD
-
 from snakeoil.test.eq_hash_inheritance import Test
 
 

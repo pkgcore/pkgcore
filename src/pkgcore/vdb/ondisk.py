@@ -103,7 +103,7 @@ class tree(prototype.tree):
                     elif '-try' in x:
                         bad = 'try'
                     else:
-                        raise InvalidCPV(f"{category}/{x}: no version component")
+                        raise InvalidCPV(f'{category}/{x}', 'no version component')
                     logger.error(
                         f'merged -{bad} pkg detected: {category}/{x}. '
                         f'throwing exception due to -{bad} not being a valid'
@@ -114,7 +114,7 @@ class tree(prototype.tree):
                         'Use the offending pkg manager that merged it to '
                         'unmerge it.')
                     raise InvalidCPV(
-                        f"{category}/{x}: -{bad} version component is not standard.")
+                        f'{category}/{x}', f'{bad} version component is not standard.')
                 l.add(pkg.package)
                 d.setdefault((category, pkg.package), []).append(pkg.fullver)
         except EnvironmentError as e:

@@ -10,14 +10,25 @@ from pkgcore.exceptions import PkgcoreUserException
 
 
 class PackageError(ValueError, PkgcoreUserException):
-    pass
+    """Generic package exception."""
 
 
 class InvalidPackageName(PackageError):
-    pass
+    """Package name using unsupported characters or format."""
+
+    def __init__(self, name, msg=None):
+        self.name = name
+        self.msg = msg
+
+    def __str__(self):
+        msg = self.name
+        if self.msg is not None:
+            msg += f': {self.msg}'
+        return msg
 
 
 class MetadataException(PackageError):
+    """Generic package metadata exception."""
 
     def __init__(self, pkg, attr, error, verbose=None):
         super().__init__(f"metadata exception: pkg {pkg}, attr {attr}: {error}")

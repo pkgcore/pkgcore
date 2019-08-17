@@ -232,7 +232,7 @@ if not pkgdist.is_py3k:
 setup(**dict(pkgdist_setup,
     description='package managing framework',
     url='https://github.com/pkgcore/pkgcore',
-    license='BSD/GPLv2',
+    license='BSD',
     author='Tim Harder',
     author_email='radhermit@gmail.com',
     data_files=list(chain(
@@ -254,7 +254,6 @@ setup(**dict(pkgdist_setup,
         ),
     classifiers=[
         'License :: OSI Approved :: BSD License',
-        'License :: OSI Approved :: GNU General Public License v2 (GPLv2)',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         ],

@@ -1,4 +1,4 @@
-include AUTHORS BSD GPL2 LICENSE *.py *.rst
+include AUTHORS LICENSE *.py *.rst
 include requirements.txt tox.ini .coveragerc
 recursive-include bin *
 recursive-include config *

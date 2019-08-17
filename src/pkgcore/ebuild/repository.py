@@ -27,7 +27,7 @@ from pkgcore.config import ConfigHint, configurable
 from pkgcore.ebuild import ebuild_src
 from pkgcore.ebuild import eclass_cache as eclass_cache_mod
 from pkgcore.operations import repo as _repo_ops
-from pkgcore.package.errors import MetadataException
+from pkgcore.package import errors as pkg_errors
 from pkgcore.repository import prototype, errors, configured, util
 from pkgcore.repository.virtual import RestrictionRepo
 
@@ -44,7 +44,6 @@ demandload(
     'pkgcore.ebuild.eapi:get_eapi',
     'pkgcore.fs.livefs:sorted_scan',
     'pkgcore.log:logger',
-    'pkgcore.package:errors@pkg_errors',
     'pkgcore.restrictions:packages',
     'pkgcore.util.packages:groupby_pkg',
 )
@@ -529,22 +528,30 @@ class UnconfiguredTree(prototype.tree):
 
     def _pkg_filter(self, pkgs):
         """Filter packages with bad metadata."""
-        for pkg in pkgs:
+        while True:
+            try:
+                pkg = next(pkgs)
+            except pkg_errors.PackageError as e:
+                # ignore pkgs with invalid CPVs
+                continue
+            except StopIteration:
+                return
+
             if pkg not in self._masked.itermatch(pkg.versioned_atom):
                 # check pkgs for unsupported/invalid EAPIs and bad metadata
                 try:
                     if not pkg.is_supported:
-                        self._masked[pkg.versioned_atom] = MetadataException(
+                        self._masked[pkg.versioned_atom] = pkg_errors.MetadataException(
                             pkg, 'eapi', f"EAPI '{pkg.eapi}' is not supported")
                         continue
                     # TODO: add a generic metadata validation method to avoid slow metadata checks?
                     pkg.data
                     pkg.required_use
-                except MetadataException as e:
+                except pkg_errors.MetadataException as e:
                     self._masked[e.pkg.versioned_atom] = e
                     continue
                 except FileNotFoundError as e:
-                    self._masked[pkg.versioned_atom] = MetadataException(
+                    self._masked[pkg.versioned_atom] = pkg_errors.MetadataException(
                         pkg, 'data', 'mismatched package name')
                     continue
                 yield pkg
@@ -646,7 +653,7 @@ class _RegenOpHelper(object):
     def __call__(self, pkg):
         try:
             return pkg._fetch_metadata(ebp=self.ebp, force_regen=self.force)
-        except MetadataException as e:
+        except pkg_errors.MetadataException as e:
             # ebuild processor is dead, so force a replacement request
             self.ebp = self.request_ebp()
             raise

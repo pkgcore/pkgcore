@@ -17,17 +17,22 @@ from pkgcore.package import errors
 
 
 class MalformedAtom(errors.InvalidDependency):
+    """Package atom doesn't follow required specifications."""
 
-    def __init__(self, atom, err=''):
-        err = ': ' + err if err else ''
-        self.atom, self.err = atom, err
+    def __init__(self, atom, err=None):
+        self.atom = atom
+        self.err = err
         super().__init__(str(self))
 
     def __str__(self):
-        return f"invalid package atom: '{self.atom}'{self.err}"
+        msg = f'invalid package atom: {self.atom!r}'
+        if self.err:
+            msg += f': {self.err}'
+        return msg
 
 
 class InvalidVersion(errors.InvalidDependency):
+    """Package version doesn't follow required specifications."""
 
     def __init__(self, ver, rev, err=''):
         super().__init__(
@@ -36,11 +41,7 @@ class InvalidVersion(errors.InvalidDependency):
 
 
 class InvalidCPV(errors.InvalidPackageName):
-    """Raised if an invalid cpv was passed in.
-
-    :ivar args: single-element tuple containing the invalid string.
-    :type args: C{tuple}
-    """
+    """CPV with unsupported characters or format."""
 
 
 class DepsetParseError(errors.InvalidDependency):

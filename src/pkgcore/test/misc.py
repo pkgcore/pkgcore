@@ -99,7 +99,7 @@ class FakeEbuildRepo(FakeRepo):
 
 
 class FakePkg(FakePkgBase):
-    def __init__(self, cpv, eapi="0", slot="0", subslot=None, iuse=(), use=(),
+    def __init__(self, cpv, eapi="0", slot="0", subslot=None, iuse=None, use=(),
                  repo=FakeRepo(), restrict='', keywords=None, **kwargs):
         if isinstance(repo, str):
             repo = FakeRepo(repo)
@@ -115,8 +115,9 @@ class FakePkg(FakePkgBase):
         object.__setattr__(self, "restrict", DepSet.parse(restrict, str))
         object.__setattr__(self, "fetchables", [])
         object.__setattr__(self, "use", set(use))
-        object.__setattr__(self, "iuse", set(iuse))
         object.__setattr__(self, 'eapi', get_eapi(eapi, False))
+        if iuse is not None:
+            object.__setattr__(self, "iuse", set(iuse))
 
 
 class DisablePlugins(object):

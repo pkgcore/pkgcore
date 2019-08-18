@@ -267,8 +267,8 @@ class base(metadata.package):
         map(intern, s.data.pop("IUSE", "").split()))
     _get_attr["user_patches"] = lambda s: ()
     _get_attr["iuse_effective"] = lambda s: s.iuse_stripped
-    _get_attr["properties"] = lambda s: frozenset(
-        map(intern, s.data.pop("PROPERTIES", "").split()))
+    _get_attr["properties"] = lambda s: conditionals.DepSet.parse(
+        s.data.pop("PROPERTIES", ''), str, operators={}, attr='PROPERTIES')
     _get_attr["defined_phases"] = lambda s: s.eapi.interpret_cache_defined_phases(
         map(intern, s.data.pop("DEFINED_PHASES", "").split()))
     _get_attr["homepage"] = lambda s: tuple(s.data.pop("HOMEPAGE", "").split())

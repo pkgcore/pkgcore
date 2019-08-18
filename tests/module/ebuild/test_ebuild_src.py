@@ -106,11 +106,11 @@ class TestBase(object):
 
     def test_properties(self):
         o = self.get_pkg({})
-        assert o.properties == frozenset()
+        assert sorted(o.properties.evaluate_depset([])) == []
         o = self.get_pkg({'PROPERTIES': ''})
-        assert o.properties == frozenset()
+        assert sorted(o.properties.evaluate_depset([])) == []
         o = self.get_pkg({'PROPERTIES': 'interactive'})
-        assert o.properties == frozenset(['interactive'])
+        assert sorted(o.properties.evaluate_depset([])) == ['interactive']
 
     def test_homepage(self):
         o = self.get_pkg({'HOMEPAGE': ' http://slashdot/ '})

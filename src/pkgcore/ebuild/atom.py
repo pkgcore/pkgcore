@@ -473,9 +473,9 @@ class atom(boolean.AndRestriction, metaclass=generic_equality):
         return self.restrictions[index]
 
     def __cmp__(self, other):
-        if not isinstance(other, self.__class__):
-            raise TypeError("other isn't of %s type, is %s" %
-                            (self.__class__, other.__class__))
+        if not isinstance(other, atom):
+            raise TypeError(
+                f"other isn't of {atom!r} type, is {other.__class__}")
 
         c = cmp(self.category, other.category)
         if c:

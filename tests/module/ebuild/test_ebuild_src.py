@@ -167,9 +167,6 @@ class TestBase(object):
     def test_restrict(self):
         o = self.get_pkg({'RESTRICT': 'strip fetch strip'})
         assert sorted(o.restrict) == ['fetch', 'strip', 'strip']
-        # regression test to ensure it onnly grabs 'no' prefix, instead of lstriping it
-        assert list(self.get_pkg({'RESTRICT': 'onoasdf'}).restrict) == ['onoasdf']
-        assert sorted(self.get_pkg({'RESTRICT': 'nofetch'}).restrict) == ['fetch']
         o = self.get_pkg({'RESTRICT': 'x? ( foo ) !x? ( dar )'})
         assert sorted(o.restrict.evaluate_depset([])) == ['dar']
         # ensure restrict doesn't have || () in it

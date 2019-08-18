@@ -231,12 +231,6 @@ def get_bdepend(self):
     return conditionals.DepSet()
 
 
-def rewrite_restrict(restrict):
-    if restrict[0:2] == 'no':
-        return restrict[2:]
-    return restrict
-
-
 class base(metadata.package):
     """ebuild package
 
@@ -267,8 +261,7 @@ class base(metadata.package):
     _get_attr["keywords"] = lambda s: tuple(
         map(intern, s.data.pop("KEYWORDS", "").split()))
     _get_attr["restrict"] = lambda s: conditionals.DepSet.parse(
-        s.data.pop("RESTRICT", ''), str, operators={}, attr='RESTRICT',
-        element_func=rewrite_restrict)
+        s.data.pop("RESTRICT", ''), str, operators={}, attr='RESTRICT')
     _get_attr["eapi"] = get_parsed_eapi
     _get_attr["iuse"] = lambda s: frozenset(
         map(intern, s.data.pop("IUSE", "").split()))

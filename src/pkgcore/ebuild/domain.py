@@ -642,9 +642,11 @@ class domain(config_domain):
         if name in self.source_repos_raw:
             raise ValueError(f'{name!r} repo already configured')
         repo_config = RepoConfig(path, config_name=name)
-        # default to using md5 cache
-        cache = md5_cache(path)
-        repo_obj = ebuild_repo.tree(config, repo_config, cache=(cache,))
+        kwargs = {}
+        if repo_config.cache_format is not None:
+            # default to using md5 cache
+            kwargs['cache'] = (md5_cache(path),)
+        repo_obj = ebuild_repo.tree(config, repo_config, **kwargs)
 
         # TODO: reset related jit attrs
         self.source_repos_raw += repo_obj

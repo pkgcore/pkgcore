@@ -657,6 +657,7 @@ class domain(config_domain):
     def find_repo(self, path, config, configure=True):
         """Find and add an external repo to the domain given a path."""
         repo = None
+        path = os.path.abspath(path)
         with suppress_logging():
             while path != self.root:
                 try:

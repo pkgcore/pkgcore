@@ -100,11 +100,16 @@ class TestUnconfiguredTree(TempDirMixin):
         ensure_dirs(pjoin(repo_dir, 'cat', 'bar'))
         ensure_dirs(pjoin(repo_dir, 'tac', 'oof'))
         touch(pjoin(repo_dir, 'skel.ebuild'))
-        touch(pjoin(repo_dir, 'cat', 'foo', 'foo-1.ebuild'))
-        touch(pjoin(repo_dir, 'cat', 'foo', 'foo-2.ebuild'))
         touch(pjoin(repo_dir, 'cat', 'foo', 'Manifest'))
-        touch(pjoin(repo_dir, 'cat', 'bar', 'bar-1.ebuild'))
-        touch(pjoin(repo_dir, 'tac', 'oof', 'oof-1.ebuild'))
+        ebuilds = (
+            pjoin(repo_dir, 'cat', 'foo', 'foo-1.ebuild'),
+            pjoin(repo_dir, 'cat', 'foo', 'foo-2.ebuild'),
+            pjoin(repo_dir, 'cat', 'bar', 'bar-1.ebuild'),
+            pjoin(repo_dir, 'tac', 'oof', 'oof-1.ebuild'),
+        )
+        for ebuild in ebuilds:
+            with open(ebuild, 'w') as f:
+                f.write('SLOT=0\n')
 
         # specify repo category dirs
         with open(pjoin(repo_dir, 'profiles', 'categories'), 'w') as f:

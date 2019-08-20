@@ -555,7 +555,9 @@ class UnconfiguredTree(prototype.tree):
                 yield pkg
 
     def itermatch(self, *args, **kwargs):
-        kwargs.setdefault('pkg_filter', self._pkg_filter)
+        # filter pkg objs with bad metadata when custom raw pkgs aren't requested
+        if 'raw_pkg_cls' not in kwargs:
+            kwargs.setdefault('pkg_filter', self._pkg_filter)
         return super().itermatch(*args, **kwargs)
 
     def _get_ebuild_path(self, pkg):

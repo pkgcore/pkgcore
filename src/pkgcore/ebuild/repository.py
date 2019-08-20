@@ -551,8 +551,11 @@ class UnconfiguredTree(prototype.tree):
                     self._masked[e.pkg.versioned_atom] = e
                     continue
                 except FileNotFoundError as e:
-                    self._masked[pkg.versioned_atom] = pkg_errors.MetadataException(
-                        pkg, 'data', 'mismatched package name')
+                    # TODO: catch this in _get_versions() instead so we have
+                    # more info, this will need to be coordinated with pkgcheck
+                    # InvalidPN/MismatchPN changes.
+                    self._masked[pkg.versioned_atom] = pkg_errors.InvalidPackageName(
+                        pkg.PN, 'mismatched package name')
                     continue
                 yield pkg
 

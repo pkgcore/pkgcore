@@ -523,7 +523,7 @@ class UnconfiguredTree(prototype.tree):
                 "failed fetching versions for package %s: %s" %
                 (pjoin(self.base, '/'.join(catpkg)), str(e))) from e
 
-    def _pkg_filter(self, pkgs):
+    def _pkg_filter(self, raw, pkgs):
         """Filter packages with bad metadata."""
         while True:
             try:
@@ -534,7 +534,9 @@ class UnconfiguredTree(prototype.tree):
             except StopIteration:
                 return
 
-            if pkg not in self._masked.itermatch(pkg.versioned_atom):
+            if raw:
+                yield pkg
+            elif pkg not in self._masked.itermatch(pkg.versioned_atom):
                 # check pkgs for unsupported/invalid EAPIs and bad metadata
                 try:
                     if not pkg.is_supported:
@@ -555,9 +557,7 @@ class UnconfiguredTree(prototype.tree):
                 yield pkg
 
     def itermatch(self, *args, **kwargs):
-        # filter pkg objs with bad metadata when custom raw pkgs aren't requested
-        if 'raw_pkg_cls' not in kwargs:
-            kwargs.setdefault('pkg_filter', self._pkg_filter)
+        kwargs.setdefault('pkg_filter', partial(self._pkg_filter, 'raw_pkg_cls' in kwargs))
         return super().itermatch(*args, **kwargs)
 
     def _get_ebuild_path(self, pkg):

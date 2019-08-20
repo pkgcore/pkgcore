@@ -2,13 +2,11 @@
 
 __all__ = ("run",)
 
-from snakeoil.demandload import demandload
+import io
+import re
 
-demandload(
-    'io',
-    're',
-    'pkgcore.log:logger'
-)
+from pkgcore.log import logger
+
 
 COMMAND_PARSING, SPACE_PARSING = list(range(2))
 

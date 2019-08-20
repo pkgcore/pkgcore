@@ -20,24 +20,21 @@ __all__ = (
     "portageq", "query",
 )
 
+from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
+from itertools import groupby, islice
+from operator import attrgetter, itemgetter
 
 from snakeoil.cli import arghparse
-from snakeoil.demandload import demandload
+from snakeoil.sequences import iflatten_instance, unstable_unique
 
+from pkgcore import fetch
 from pkgcore.ebuild import inspect_profile
 from pkgcore.ebuild import portageq as _portageq
+from pkgcore.package import errors
+from pkgcore.restrictions import packages
 from pkgcore.util import commandline
 
-demandload(
-    'collections:defaultdict',
-    'itertools:groupby,islice',
-    'operator:attrgetter,itemgetter',
-    'snakeoil.sequences:iflatten_instance,unstable_unique',
-    'pkgcore:fetch',
-    'pkgcore.package:errors',
-    'pkgcore.restrictions:packages',
-)
 
 pkgcore_opts = commandline.ArgumentParser(domain=False, script=(__file__, __name__))
 argparser = commandline.ArgumentParser(

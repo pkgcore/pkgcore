@@ -3,11 +3,10 @@ __all__ = (
     "phase_observer", "repo_observer", "decorate_build_method",
 )
 
+import threading
+
 from snakeoil import klass
 from snakeoil.currying import pre_curry
-from snakeoil.demandload import demandload
-
-demandload('threading')
 
 
 def _convert(msg, args=(), kwds={}):

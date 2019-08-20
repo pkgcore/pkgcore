@@ -11,33 +11,29 @@ __all__ = (
 from collections import namedtuple
 import errno
 from itertools import chain
+from lxml import etree
+import os
+import platform
+import subprocess
 
 from snakeoil import klass, mappings
+from snakeoil.bash import BashParseError, iter_read_bash, read_dict
 from snakeoil.caching import WeakInstMeta
 from snakeoil.currying import post_curry
-from snakeoil.demandload import demandload
+from snakeoil.fileutils import readfile, readlines_ascii
 from snakeoil.osutils import pjoin, listdir_files, listdir
 from snakeoil.osutils.mount import umount
+from snakeoil.process.namespaces import simple_unshare
+from snakeoil.sequences import iter_stable_unique
+from snakeoil.strings import pluralism
 
 from pkgcore.config import ConfigHint
+from pkgcore.ebuild import atom, profiles, pkg_updates
+from pkgcore.ebuild.eapi import get_eapi
 from pkgcore.exceptions import PermissionDenied
+from pkgcore.log import logger
 from pkgcore.repository import syncable, errors as repo_errors
-
-demandload(
-    'lxml:etree',
-    'os',
-    'platform',
-    'subprocess',
-    'snakeoil.bash:BashParseError,iter_read_bash,read_dict',
-    'snakeoil.fileutils:readfile,readlines_ascii',
-    'snakeoil.process.namespaces:simple_unshare',
-    'snakeoil.sequences:iter_stable_unique',
-    'snakeoil.strings:pluralism',
-    'pkgcore.ebuild:atom,profiles,pkg_updates',
-    'pkgcore.ebuild.eapi:get_eapi',
-    'pkgcore.log:logger',
-    "pkgcore.restrictions:packages",
-)
+from pkgcore.restrictions import packages
 
 
 class Maintainer(object):

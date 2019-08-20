@@ -3,7 +3,7 @@ __all__ = (
     "UserProfile",
 )
 
-from collections import namedtuple
+from collections import defaultdict, namedtuple
 from functools import partial
 from itertools import chain
 import os
@@ -11,25 +11,21 @@ import os
 from snakeoil import caching, klass
 from snakeoil.bash import iter_read_bash, read_bash_dict
 from snakeoil.containers import InvertedContains
+from snakeoil.data_source import local_source
 from snakeoil.demandload import demandload
 from snakeoil.fileutils import readlines_utf8
+from snakeoil.mappings import ImmutableDict
 from snakeoil.osutils import abspath, pjoin
 from snakeoil.sequences import split_negations, stable_unique
 
 from pkgcore.config import ConfigHint, errors
-from pkgcore.ebuild import const, ebuild_src, misc
+from pkgcore.ebuild import const, ebuild_src, misc, cpv, repo_objs, errors as ebuild_errors
+from pkgcore.ebuild.atom import atom
+from pkgcore.ebuild.eapi import get_eapi
+from pkgcore.fs.livefs import sorted_scan
+from pkgcore.log import logger
 
-demandload(
-    'collections:defaultdict',
-    'snakeoil.data_source:local_source',
-    'snakeoil.mappings:ImmutableDict',
-    'pkgcore.ebuild:cpv,repo_objs,errors@ebuild_errors',
-    'pkgcore.ebuild.atom:atom',
-    'pkgcore.ebuild.eapi:get_eapi',
-    'pkgcore.fs.livefs:sorted_scan',
-    'pkgcore.ebuild.repository:ProvidesRepo',
-    'pkgcore.log:logger',
-)
+demandload('pkgcore.ebuild.repository:ProvidesRepo')
 
 
 def package_keywords_splitter(iterable):

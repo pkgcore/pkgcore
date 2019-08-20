@@ -4,15 +4,10 @@ __all__ = (
 )
 
 from snakeoil import klass
-from snakeoil.demandload import demandload
 from snakeoil.mappings import DictMixin
 
 from pkgcore.ebuild.cpv import versioned_CPV
-from pkgcore.repository import prototype
-
-demandload(
-    "pkgcore.repository:multiplex,virtual",
-)
+from pkgcore.repository import multiplex, prototype, virtual
 
 
 class SimpleTree(prototype.tree):

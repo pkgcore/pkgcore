@@ -7,20 +7,16 @@ __all__ = (
 )
 
 import operator
+import os
 
 from snakeoil.cli.input import userquery
-from snakeoil.demandload import demandload
+from snakeoil.mappings import defaultdictkey
+from snakeoil.osutils import pjoin, sizeof_fmt
 from snakeoil.sequences import iflatten_instance
+from snakeoil.strings import pluralism
 
 from pkgcore.config import ConfigHint
-
-demandload(
-    'os',
-    'snakeoil.mappings:defaultdictkey',
-    'snakeoil.osutils:pjoin,sizeof_fmt',
-    'snakeoil.strings:pluralism',
-    'pkgcore.log:logger',
-)
+from pkgcore.log import logger
 
 
 class use_expand_filter(object):

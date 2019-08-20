@@ -11,9 +11,9 @@ __all__ = ("AmbiguousQuery", "NoMatches")
 from functools import partial
 import sys
 from time import time
+from textwrap import dedent
 
 from snakeoil.cli.exceptions import ExitException
-from snakeoil.demandload import demandload
 from snakeoil.sequences import iflatten_instance, stable_unique
 from snakeoil.strings import pluralism
 
@@ -23,15 +23,11 @@ from pkgcore.ebuild.misc import run_sanity_checks
 from pkgcore.merge import errors as merge_errors
 from pkgcore.operations import observer, format
 from pkgcore.repository.util import get_raw_repos
+from pkgcore.repository.virtual import RestrictionRepo
 from pkgcore.resolver.util import reduce_to_failures
 from pkgcore.restrictions import packages
 from pkgcore.restrictions.boolean import OrRestriction
 from pkgcore.util import commandline, parserestrict
-
-demandload(
-    'textwrap:dedent',
-    'pkgcore.repository.virtual:RestrictionRepo',
-)
 
 
 argparser = commandline.ArgumentParser(

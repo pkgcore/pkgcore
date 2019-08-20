@@ -1,19 +1,15 @@
 __all__ = ("LookupFsDev", "ContentsFile")
 
-from snakeoil import data_source
-from snakeoil.demandload import demandload
-from snakeoil.fileutils import AtomicWriteFile
+import os
+import stat
 
+from snakeoil import data_source
+from snakeoil.chksum import get_handler
+from snakeoil.fileutils import AtomicWriteFile, readlines_utf8
+
+from pkgcore import os_data
 from pkgcore.fs import fs
 from pkgcore.fs.contents import contentsSet
-
-demandload(
-    'os',
-    'stat',
-    'snakeoil.chksum:get_handler',
-    'snakeoil.fileutils:readlines_utf8',
-    'pkgcore:os_data',
-)
 
 
 class LookupFsDev(fs.fsDev):

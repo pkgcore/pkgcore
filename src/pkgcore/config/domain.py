@@ -7,14 +7,10 @@ Bit empty at the moment
 __all__ = ("MissingFile", "Failure", "domain")
 
 from snakeoil import klass
-from snakeoil.demandload import demandload
 
 from pkgcore.exceptions import PkgcoreException
-
-demandload(
-    'pkgcore.operations:domain@domain_ops',
-    'pkgcore.repository.util:RepositoryGroup',
-)
+from pkgcore.operations import domain as domain_ops
+from pkgcore.repository.util import RepositoryGroup
 
 
 class MissingFile(PkgcoreException):

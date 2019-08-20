@@ -12,7 +12,11 @@ __all__ = ("alias_cset", "map_new_cset_livefs", "MergeEngine")
 
 from functools import partial
 from itertools import chain
+import io
+from multiprocessing import cpu_count
 import operator
+import tempfile
+import traceback
 
 from pkgcore.fs import contents, livefs
 from pkgcore.merge import errors
@@ -23,17 +27,9 @@ from pkgcore.plugin import get_plugins
 from snakeoil import data_source
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.currying import post_curry
-from snakeoil.demandload import demandload
 from snakeoil.fileutils import touch
 from snakeoil.mappings import LazyValDict, ImmutableDict, StackedDict
 from snakeoil.osutils import normpath
-
-demandload(
-    "io",
-    "multiprocessing:cpu_count",
-    "tempfile",
-    "traceback",
-)
 
 
 def alias_cset(alias, engine, csets):

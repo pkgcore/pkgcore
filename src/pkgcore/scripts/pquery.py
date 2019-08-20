@@ -13,26 +13,21 @@ contents automatically select the vdb (installed packages) repo, since
 running them on source repos makes no sense.
 """
 
+import errno
 from functools import partial
+import os
 
 from snakeoil.cli import arghparse
-from snakeoil.demandload import demandload
 from snakeoil.formatters import decorate_forced_wrapping
+from snakeoil.osutils import sizeof_fmt
+from snakeoil.sequences import iter_stable_unique
 
 from pkgcore.ebuild import conditionals, atom
+from pkgcore.fs import fs as fs_module, contents as contents_module
+from pkgcore.repository import multiplex
 from pkgcore.repository.util import get_raw_repos, get_virtual_repos
 from pkgcore.restrictions import packages, values, boolean
 from pkgcore.util import commandline, parserestrict, packages as pkgutils
-
-demandload(
-    'errno',
-    'os',
-    're',
-    'snakeoil.osutils:sizeof_fmt',
-    'snakeoil.sequences:iter_stable_unique',
-    'pkgcore.fs:fs@fs_module,contents@contents_module',
-    'pkgcore.repository:multiplex',
-)
 
 
 class DataSourceRestriction(values.base):

@@ -4,20 +4,17 @@ repository modifications (installing, removing, replacing)
 
 __all__ = ("Failure", "base", "install", "uninstall", "replace")
 
-from snakeoil.demandload import demandload
+import shutil
+import tempfile
+
+from snakeoil import osutils
 from snakeoil.dependant_methods import ForcedDepends
 
 from pkgcore.exceptions import PkgcoreException
-
-demandload(
-    "shutil",
-    "tempfile",
-    'snakeoil:osutils',
-    "pkgcore.log:logger",
-    "pkgcore.merge:errors@merge_errors",
-    "pkgcore.merge.engine:MergeEngine",
-    "pkgcore.package.mutated:MutatedPkg",
-)
+from pkgcore.log import logger
+from pkgcore.merge import errors as merge_errors
+from pkgcore.merge.engine import MergeEngine
+from pkgcore.package.mutated import MutatedPkg
 
 
 class fake_lock(object):

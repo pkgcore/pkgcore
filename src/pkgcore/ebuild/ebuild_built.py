@@ -5,11 +5,7 @@ built ebuild packages (vdb packages and binpkgs are derivatives of this)
 __all__ = ("package", "package_factory")
 
 from functools import partial
-
-from pkgcore import fetch
-from pkgcore.ebuild import ebuild_src, conditionals
-from pkgcore.ebuild.eapi import get_eapi
-from pkgcore.package import metadata
+import re
 
 from snakeoil.currying import post_curry
 from snakeoil.data_source import local_source
@@ -17,13 +13,14 @@ from snakeoil.demandload import demandload
 from snakeoil.mappings import IndeterminantDict
 from snakeoil.obj import DelayedInstantiation
 
-demandload(
-    're',
-    'pkgcore.ebuild:triggers',
-    'pkgcore.ebuild:ebd',
-    'pkgcore.fs.livefs:scan',
-    'pkgcore.merge:engine',
-)
+from pkgcore import fetch
+from pkgcore.ebuild import ebuild_src, conditionals, triggers
+from pkgcore.ebuild.eapi import get_eapi
+from pkgcore.fs.livefs import scan
+from pkgcore.merge import engine
+from pkgcore.package import metadata
+
+demandload('pkgcore.ebuild:ebd')
 
 
 def passthrough(inst, attr):

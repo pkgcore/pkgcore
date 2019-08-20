@@ -1,20 +1,16 @@
 import argparse
+from collections import defaultdict
+from itertools import chain
+import operator
 
 from snakeoil.cli import arghparse
-from snakeoil.demandload import demandload
+from snakeoil.osutils import pjoin
+from snakeoil.sequences import split_negations
 
-from pkgcore.ebuild import profiles
+from pkgcore.ebuild import atom, profiles
+from pkgcore.ebuild.misc import ChunkedDataDict
 from pkgcore.util import commandline
 
-demandload(
-    'collections:defaultdict',
-    'itertools:chain',
-    'operator',
-    'snakeoil.osutils:pjoin',
-    'snakeoil.sequences:split_negations',
-    'pkgcore.ebuild:atom',
-    'pkgcore.ebuild.misc:ChunkedDataDict',
-)
 
 commands = []
 # info: keywords known

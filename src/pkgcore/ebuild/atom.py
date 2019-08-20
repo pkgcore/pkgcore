@@ -10,18 +10,15 @@ __all__ = ("atom", "transitive_use_atom")
 import string
 
 from snakeoil.compatibility import cmp
-from snakeoil.demandload import demandload
 from snakeoil.klass import (
     generic_equality, inject_richcmp_methods_from_cmp,
     reflective_hash, alias_attr)
 
 from pkgcore.ebuild import cpv, errors, restricts
 from pkgcore.restrictions import values, packages, boolean
+from pkgcore.restrictions.packages import Conditional, AndRestriction as PkgAndRestriction
+from pkgcore.restrictions.values import ContainmentMatch2
 
-demandload(
-    'pkgcore.restrictions.packages:Conditional,AndRestriction@PkgAndRestriction',
-    'pkgcore.restrictions.values:ContainmentMatch2',
-)
 
 # namespace compatibility...
 MalformedAtom = errors.MalformedAtom

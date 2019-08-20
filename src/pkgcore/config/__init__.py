@@ -8,15 +8,15 @@ __all__ = ("ConfigHint", "configurable", "load_config")
 # pkgcore.config isn't uncommon, thus don't trigger till
 # actually needed
 
+import os
+
 from snakeoil.demandload import demandload
 
 from pkgcore import const
 
 demandload(
-    'os',
     'pkgcore.config:central,cparser',
     'pkgcore.ebuild.portage_conf:PortageConfig',
-    'pkgcore.log:logger',
 )
 
 

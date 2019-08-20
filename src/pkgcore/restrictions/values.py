@@ -6,15 +6,13 @@ attr from a package instance and hand it to their wrapped restriction
 (which is a value restriction).
 """
 
+import re
+
 from snakeoil.klass import generic_equality, reflective_hash
-from snakeoil.demandload import demandload
+from snakeoil.sequences import iflatten_instance
 
 from pkgcore.restrictions import restriction, boolean, packages
 
-demandload(
-    're',
-    'snakeoil.sequences:iflatten_instance',
-)
 
 # Backwards compatibility.
 value_type = restriction.value_type

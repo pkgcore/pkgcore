@@ -18,32 +18,27 @@ import re
 import shutil
 import sys
 from tempfile import TemporaryFile
+import time
 
 from snakeoil import data_source, klass
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.contexts import chdir
 from snakeoil.currying import post_curry, pretty_docs
-from snakeoil.demandload import demandload
 from snakeoil.fileutils import touch
 from snakeoil.osutils import ensure_dirs, abspath, normpath, pjoin, listdir_files
 from snakeoil.process.spawn import (
     spawn_bash, spawn, is_sandbox_capable, is_userpriv_capable)
+from snakeoil.sequences import iflatten_instance, iter_stable_unique
 
-from pkgcore import const
+from pkgcore import const, fetch
 from pkgcore.ebuild import ebd_ipc, ebuild_built, errors
 from pkgcore.ebuild.processor import (
     request_ebuild_processor, release_ebuild_processor, ProcessorError,
     expected_ebuild_env, chuck_UnhandledCommand, inherit_handler)
+from pkgcore.log import logger
 from pkgcore.operations import observer, format
 from pkgcore.os_data import portage_gid, portage_uid, xargs
-
-demandload(
-    "time",
-    'snakeoil.sequences:iflatten_instance,iter_stable_unique',
-    'pkgcore:fetch',
-    "pkgcore.log:logger",
-    "pkgcore.package.mutated:MutatedPkg",
-)
+from pkgcore.package.mutated import MutatedPkg
 
 
 class ebd(object):

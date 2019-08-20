@@ -4,22 +4,17 @@ ebuild tree manifest/digest support
 
 __all__ = ("parse_manifest", "Manifest")
 
+import errno
 import operator
 import os
 
 from snakeoil.chksum import get_handler
-from snakeoil.demandload import demandload
-from snakeoil.mappings import make_SlottedDict_kls
+from snakeoil.mappings import ImmutableDict, make_SlottedDict_kls
+from snakeoil.sequences import iflatten_instance
 
 from pkgcore import gpg
 from pkgcore.package import errors
 from pkgcore.fs.livefs import iter_scan
-
-demandload(
-    "errno",
-    'snakeoil:mappings',
-    "snakeoil.sequences:iflatten_instance",
-)
 
 
 def _write_manifest(handle, chf, filename, chksums):
@@ -85,7 +80,7 @@ def parse_manifest(source, ignore_gpg=True):
     # finally convert it to slotted dict for memory savings.
     slotted_kls = make_SlottedDict_kls(x.lower() for x in chf_types)
     for t, d in types.items():
-        types[t] = mappings.ImmutableDict((k, slotted_kls(v)) for k, v in d.items())
+        types[t] = ImmutableDict((k, slotted_kls(v)) for k, v in d.items())
     # ordering annoyingly matters. bad api.
     return [types[x] for x in ("DIST", "AUX", "EBUILD", "MISC")]
 

@@ -10,18 +10,13 @@ __all__ = (
 import os
 
 from snakeoil import klass
-from snakeoil.demandload import demandload
 from snakeoil.dependant_methods import ForcedDepends
 from snakeoil.osutils import pjoin
+from snakeoil.sequences import iflatten_instance
 
-from pkgcore import operations as _operations_mod
+from pkgcore import fetch as _fetch_module, operations as _operations_mod 
 from pkgcore.exceptions import PkgcoreUserException
-
-demandload(
-    'snakeoil.sequences:iflatten_instance',
-    'pkgcore:fetch@_fetch_module',
-    'pkgcore.fetch:errors@fetch_errors',
-)
+from pkgcore.fetch import errors as fetch_errors
 
 
 class fetch_base(object):

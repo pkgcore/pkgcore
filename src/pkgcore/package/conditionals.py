@@ -6,17 +6,13 @@ Changing them triggering regen of other attributes on the package instance.
 
 __all__ = ("make_wrapper",)
 
+from copy import copy
 from functools import partial
 from operator import attrgetter
 
 from snakeoil.containers import LimitedChangeSet, Unchangable
-from snakeoil.demandload import demandload
 
 from pkgcore.package.base import wrapper
-
-demandload(
-    "copy:copy",
-)
 
 
 def _getattr_wrapped(attr, self):

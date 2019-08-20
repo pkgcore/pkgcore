@@ -9,11 +9,9 @@ __all__ = (
     "QuoteInterpretationError",
 )
 
-from snakeoil.demandload import demandload
+from snakeoil import currying
 
 from pkgcore.exceptions import PkgcoreException, PkgcoreUserException
-
-demandload('snakeoil:currying')
 
 
 def _identify_functor_source(functor):

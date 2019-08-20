@@ -17,9 +17,7 @@ PAPEROPT_a4     = -D latex_paper_size=a4
 PAPEROPT_letter = -D latex_paper_size=letter
 MAINSPHINXOPTS   = $(PAPEROPT_$(PAPER)) $(SPHINXOPTS)
 ALLSPHINXOPTS   = -d $(BUILDDIR)/doctrees $(MAINSPHINXOPTS) .
-# note this should probably just check for sphinx.domains in sys.modules w/in the demandload instead..
-export SNAKEOIL_DEMANDLOAD_WARN = no
-export SNAKEOIL_DEMANDLOAD_PROTECTION = no
+export SNAKEOIL_DEMANDIMPORT = false
 export PYTHONPATH
 
 .PHONY: help clean html dirhtml singlehtml pickle json htmlhelp qthelp devhelp epub latex latexpdf text man changes linkcheck doctest man

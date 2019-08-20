@@ -11,20 +11,16 @@ from functools import partial
 
 from snakeoil import klass
 from snakeoil.currying import post_curry
-from snakeoil.demandload import demandload
 from snakeoil.dependant_methods import ForcedDepends
 
 from pkgcore import operations as _operations_mod
 from pkgcore.exceptions import PkgcoreException
+from pkgcore.log import logger
+from pkgcore.operations import observer as observer_mod,regen
 from pkgcore.package.errors import MetadataException
+from pkgcore.package.mutated import MutatedPkg
 from pkgcore.restrictions import packages
-
-demandload(
-    "pkgcore.log:logger",
-    "pkgcore.operations:observer@observer_mod,regen",
-    "pkgcore.package.mutated:MutatedPkg",
-    "pkgcore.sync:base@_sync_base",
-)
+from pkgcore.sync import base as _sync_base
 
 
 class fake_lock(object):

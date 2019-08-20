@@ -6,53 +6,47 @@ __all__ = ("domain",)
 
 # XXX doc this up better...
 
+from collections import defaultdict
+import copy
 from functools import partial
 from itertools import chain
+from multiprocessing import cpu_count
+from operator import itemgetter
 import os
+import re
+import tempfile
 
 from snakeoil import klass
 from snakeoil.bash import iter_read_bash, read_bash_dict
+from snakeoil.cli.exceptions import find_user_exception
 from snakeoil.data_source import local_source
-from snakeoil.demandload import demandload
 from snakeoil.mappings import ProtectedDict, ImmutableDict
+from snakeoil.log import suppress_logging
 from snakeoil.osutils import pjoin
+from snakeoil.process.spawn import spawn_get_output
 from snakeoil.sequences import (
     split_negations, stable_unique, unstable_unique, predicate_split)
 
+from pkgcore.binpkg import repository as binary_repo
+from pkgcore.cache.flat_hash import md5_cache
 from pkgcore.config import ConfigHint, errors as config_errors
 from pkgcore.config.domain import Failure, MissingFile, domain as config_domain
-from pkgcore.ebuild import const
+from pkgcore.ebuild import const, repository as ebuild_repo
 from pkgcore.ebuild.atom import atom as _atom
 from pkgcore.ebuild.misc import (
     ChunkedDataDict, chunked_data, collapsed_restrict_to_data,
     incremental_expansion, incremental_expansion_license,
     non_incremental_collapsed_restrict_to_data, optimize_incrementals)
-from pkgcore.ebuild.repo_objs import OverlayedLicenses
+from pkgcore.ebuild.portage_conf import PortageConfig
+from pkgcore.ebuild.repo_objs import RepoConfig, OverlayedLicenses
+from pkgcore.ebuild.triggers import GenerateTriggers
+from pkgcore.fs.livefs import iter_scan, sorted_scan
+from pkgcore.log import logger
 from pkgcore.repository import filtered, errors as repo_errors
 from pkgcore.repository.util import RepositoryGroup
 from pkgcore.restrictions import packages, values
 from pkgcore.restrictions.delegated import delegate
 from pkgcore.util.parserestrict import parse_match, ParseError
-
-demandload(
-    'collections:defaultdict',
-    'copy',
-    'multiprocessing:cpu_count',
-    'operator:itemgetter',
-    're',
-    'tempfile',
-    'snakeoil.cli.exceptions:find_user_exception',
-    'snakeoil.log:suppress_logging',
-    'snakeoil.process.spawn:spawn_get_output',
-    'pkgcore.binpkg:repository@binary_repo',
-    'pkgcore.cache.flat_hash:md5_cache',
-    'pkgcore.ebuild:repository@ebuild_repo',
-    'pkgcore.ebuild.portage_conf:PortageConfig',
-    'pkgcore.ebuild.repo_objs:RepoConfig',
-    'pkgcore.ebuild.triggers:GenerateTriggers',
-    'pkgcore.fs.livefs:iter_scan,sorted_scan',
-    'pkgcore.log:logger',
-)
 
 
 def package_masks(iterable):

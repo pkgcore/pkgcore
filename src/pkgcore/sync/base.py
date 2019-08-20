@@ -5,18 +5,14 @@ __all__ = (
 )
 
 import os
+import pwd
+import stat
 
-from snakeoil.demandload import demandload
+from snakeoil import process
 
+from pkgcore import os_data, plugin
 from pkgcore.config import ConfigHint, configurable
 from pkgcore.exceptions import PkgcoreUserException
-
-demandload(
-    'pwd',
-    'stat',
-    'snakeoil:process',
-    'pkgcore:os_data,plugin',
-)
 
 
 class SyncError(PkgcoreUserException):

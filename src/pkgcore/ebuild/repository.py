@@ -6,44 +6,39 @@ __all__ = ("UnconfiguredTree", "ConfiguredTree", "ProvidesRepo", "tree")
 
 from functools import partial, wraps
 from itertools import chain, filterfalse
+import locale
+from operator import attrgetter
 import os
 import stat
+from random import shuffle
 from sys import intern
 
-from snakeoil import klass
+from snakeoil import chksum, klass
 from snakeoil.bash import iter_read_bash, read_dict
 from snakeoil.containers import InvertedContains
-from snakeoil.demandload import demandload
+from snakeoil.data_source import local_source
 from snakeoil.fileutils import readlines
 from snakeoil.obj import make_kls
 from snakeoil.osutils import listdir_files, listdir_dirs, pjoin
+from snakeoil.sequences import iflatten_instance, stable_unique
 from snakeoil.strings import pluralism as _pl
 from snakeoil.weakrefs import WeakValCache
 
+from pkgcore import fetch
 from pkgcore.config import ConfigHint, configurable
-from pkgcore.ebuild import ebuild_src
-from pkgcore.ebuild import eclass_cache as eclass_cache_mod
+from pkgcore.ebuild import (
+    cpv, digest, ebd, repo_objs, atom, restricts, processor,
+    ebuild_src, eclass_cache as eclass_cache_mod, errors as ebuild_errors,
+)
+from pkgcore.ebuild.eapi import get_eapi
+from pkgcore.fs.livefs import sorted_scan
+from pkgcore.log import logger
 from pkgcore.operations import repo as _repo_ops
 from pkgcore.package import errors as pkg_errors
 from pkgcore.repository import prototype, errors, configured, util
 from pkgcore.repository.virtual import RestrictionRepo
-
-demandload(
-    'locale',
-    'operator:attrgetter',
-    'random:shuffle',
-    'snakeoil:chksum',
-    'snakeoil.data_source:local_source',
-    'snakeoil.sequences:iflatten_instance,stable_unique',
-    'pkgcore:fetch',
-    'pkgcore.ebuild:cpv,digest,ebd,repo_objs,atom,restricts,profiles,processor',
-    'pkgcore.ebuild:errors@ebuild_errors',
-    'pkgcore.ebuild.eapi:get_eapi',
-    'pkgcore.fs.livefs:sorted_scan',
-    'pkgcore.log:logger',
-    'pkgcore.restrictions:packages',
-    'pkgcore.util.packages:groupby_pkg',
-)
+from pkgcore.restrictions import packages
+from pkgcore.util.packages import groupby_pkg
 
 
 class repo_operations(_repo_ops.operations):

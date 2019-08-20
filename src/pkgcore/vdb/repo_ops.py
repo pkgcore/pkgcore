@@ -3,22 +3,18 @@ __all__ = ("install", "uninstall", "replace", "operations")
 from itertools import chain
 import os
 import shutil
+import time
 
 from snakeoil import compression
-from snakeoil.demandload import demandload
+from snakeoil.data_source import local_source
 from snakeoil.osutils import ensure_dirs, pjoin, normpath
 from snakeoil.version import get_version
 
 from pkgcore import __title__
+from pkgcore.ebuild import conditionals
+from pkgcore.log import logger
 from pkgcore.operations import repo as repo_ops
-
-demandload(
-    'time',
-    'snakeoil.data_source:local_source',
-    'pkgcore.ebuild:conditionals',
-    'pkgcore.log:logger',
-    'pkgcore.vdb.contents:ContentsFile',
-)
+from pkgcore.vdb.contents import ContentsFile
 
 
 def update_mtime(path, timestamp=None):

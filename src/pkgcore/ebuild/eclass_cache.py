@@ -4,23 +4,17 @@ in memory representation of on disk eclass stacking order
 
 __all__ = ("base", "cache", "StackedCaches")
 
+import os
 from sys import intern
 
 from snakeoil.chksum import LazilyHashedPath
 from snakeoil.data_source import local_source
-from snakeoil.demandload import demandload
 from snakeoil.klass import jit_attr_ext_method
-from snakeoil.mappings import ImmutableDict
-from snakeoil.osutils import pjoin, listdir_files
+from snakeoil.mappings import ImmutableDict, StackedDict
+from snakeoil.osutils import normpath, pjoin, listdir_files
 from snakeoil.weakrefs import WeakValCache
 
 from pkgcore.config import ConfigHint
-
-demandload(
-    "os",
-    "snakeoil.mappings:StackedDict",
-    "snakeoil.osutils:normpath",
-)
 
 
 class base(object):

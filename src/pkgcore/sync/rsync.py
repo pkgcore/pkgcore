@@ -1,17 +1,14 @@
 __all__ = ("rsync_syncer", "rsync_timestamp_syncer",)
 
-from snakeoil.demandload import demandload
+import os
+import socket
+import tempfile
+import time
+
+from snakeoil.osutils import pjoin
 
 from pkgcore.config import ConfigHint
 from pkgcore.sync import base
-
-demandload(
-    'os',
-    'socket',
-    'tempfile',
-    'time',
-    'snakeoil.osutils:pjoin',
-)
 
 
 class rsync_syncer(base.ExternalSyncer):

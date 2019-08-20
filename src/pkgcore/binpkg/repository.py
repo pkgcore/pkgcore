@@ -4,37 +4,28 @@ binpkg ebuild repository
 
 __all__ = ("tree", "ConfiguredTree", "force_unpacking")
 
+import errno
 import os
 
-from snakeoil.demandload import demandload
+from snakeoil import chksum, compression
+from snakeoil.data_source import local_source, data_source
 from snakeoil.klass import jit_attr, jit_attr_named, alias_attr
 from snakeoil.mappings import DictMixin, StackedDict
-from snakeoil.osutils import listdir_dirs, listdir_files, access
-from snakeoil.osutils import pjoin
+from snakeoil.osutils import listdir_dirs, listdir_files, access, pjoin
 
-from pkgcore.binpkg import repo_ops
+from pkgcore.binpkg import remote, repo_ops
+from pkgcore.binpkg.xpak import Xpak
 from pkgcore.config import ConfigHint
-from pkgcore.ebuild import ebuild_built
+from pkgcore.ebuild import ebd, ebuild_built
 from pkgcore.ebuild.cpv import versioned_CPV
 from pkgcore.ebuild.errors import InvalidCPV
-from pkgcore.merge import triggers
+from pkgcore.fs.contents import offset_rewriter, contentsSet
+from pkgcore.fs.livefs import scan
+from pkgcore.fs.tar import generate_contents
+from pkgcore.merge import engine, triggers
+from pkgcore.package import base as pkg_base
 from pkgcore.plugin import get_plugin
 from pkgcore.repository import prototype, errors, wrapper
-
-demandload(
-    "errno",
-    "snakeoil:chksum",
-    "snakeoil:compression",
-    "snakeoil.data_source:local_source,data_source",
-    "pkgcore.binpkg.xpak:Xpak",
-    "pkgcore.ebuild:ebd",
-    "pkgcore.fs.contents:offset_rewriter,contentsSet",
-    "pkgcore.fs.livefs:scan",
-    "pkgcore.fs.tar:generate_contents",
-    "pkgcore.merge:engine",
-    "pkgcore.package:base@pkg_base",
-    'pkgcore.binpkg:remote',
-)
 
 
 class force_unpacking(triggers.base):

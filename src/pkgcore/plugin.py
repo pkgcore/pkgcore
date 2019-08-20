@@ -21,15 +21,11 @@ import sys
 
 from snakeoil import mappings, modules
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
-from snakeoil.demandload import demandload
+from snakeoil.fileutils import AtomicWriteFile, readlines_ascii
 from snakeoil.osutils import pjoin, listdir_files, ensure_dirs, unlink_if_exists
 
 from pkgcore import const, os_data
-
-demandload(
-    'snakeoil.fileutils:AtomicWriteFile,readlines_ascii',
-    'pkgcore.log:logger',
-)
+from pkgcore.log import logger
 
 
 _plugin_data = namedtuple(

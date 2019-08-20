@@ -13,12 +13,11 @@ __all__ = (
 
 from functools import partial
 
+from snakeoil import modules
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
-from snakeoil.demandload import demandload
 
 from pkgcore.config import errors, configurable
 
-demandload("snakeoil:modules")
 
 type_names = ("list", "str", "bool", "int")
 

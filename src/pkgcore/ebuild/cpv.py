@@ -5,14 +5,13 @@ __all__ = ("CPV", "versioned_CPV", "unversioned_CPV")
 from collections import UserString
 
 from snakeoil.compatibility import cmp
-from snakeoil.demandload import demandload, demand_compile_regexp
+from snakeoil.demandload import demand_compile_regexp
 from snakeoil.klass import inject_richcmp_methods_from_cmp
 
+from pkgcore.ebuild import atom
 from pkgcore.ebuild.errors import InvalidCPV
 from pkgcore.package import base
 
-# do this to break the cycle.
-demandload("pkgcore.ebuild:atom")
 
 demand_compile_regexp(
     'suffix_regexp', '^(alpha|beta|rc|pre|p)(\\d*)$')

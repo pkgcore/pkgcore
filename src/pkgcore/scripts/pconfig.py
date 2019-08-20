@@ -9,19 +9,15 @@ __all__ = (
 )
 
 from functools import partial
+import textwrap
+import traceback
 
-from snakeoil.demandload import demandload
+from snakeoil.errors import dump_error
 
 from pkgcore.config import errors, basics
 from pkgcore.ebuild import atom
 from pkgcore.plugin import get_plugins
 from pkgcore.util import commandline
-
-demandload(
-    'textwrap',
-    'traceback',
-    'snakeoil.errors:dump_error',
-)
 
 
 def dump_section(config, out):

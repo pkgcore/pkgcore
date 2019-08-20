@@ -7,22 +7,18 @@ local binpkg repositories
 
 __all__ = ("PackagesCacheV0", "PackagesCacheV1")
 
+from operator import itemgetter
 import os
+from time import time
 
-from snakeoil.demandload import demandload
+from snakeoil.chksum import get_chksums
+from snakeoil.containers import RefCountingSet
+from snakeoil.fileutils import AtomicWriteFile, readlines
 from snakeoil.mappings import ImmutableDict, StackedDict
 
 from pkgcore import cache
-
-demandload(
-    'operator:itemgetter',
-    'time:time',
-    'snakeoil.chksum:get_chksums',
-    'snakeoil.containers:RefCountingSet',
-    'snakeoil.fileutils:AtomicWriteFile,readlines',
-    'pkgcore.log:logger',
-    'pkgcore.restrictions.packages:AlwaysTrue',
-)
+from pkgcore.log import logger
+from pkgcore.restrictions import packages
 
 
 def _iter_till_empty_newline(data):
@@ -246,7 +242,7 @@ class PackagesCacheV0(cache.bulk):
 
     def update_from_repo(self, repo):
         # try to collapse certain keys down to the profile preamble
-        targets = repo.match(AlwaysTrue, sorter=sorted)
+        targets = repo.match(packages.AlwaysTrue, sorter=sorted)
 
         if not targets:
             # just open/trunc the target instead, and bail

@@ -5,18 +5,14 @@ pkgset based around loading a list of atoms from a world file
 __all__ = ("FileList", "WorldFile")
 
 from snakeoil import klass
-from snakeoil.demandload import demandload
+from snakeoil.fileutils import AtomicWriteFile, readlines_ascii
 
+from pkgcore import os_data
 from pkgcore.config import ConfigHint, errors
 from pkgcore.ebuild import const
 from pkgcore.ebuild.atom import atom
+from pkgcore.log import logger
 from pkgcore.package.errors import InvalidDependency
-
-demandload(
-    'snakeoil.fileutils:AtomicWriteFile,readlines_ascii',
-    'pkgcore:os_data',
-    'pkgcore.log:logger',
-)
 
 
 class FileList(object):

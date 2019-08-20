@@ -1,17 +1,14 @@
+from functools import partial
+import os
+
+from snakeoil import osutils
 from snakeoil.cli import arghparse
-from snakeoil.demandload import demandload
 
-from pkgcore.util import commandline
+from pkgcore.ebuild import atom, conditionals
+from pkgcore.ebuild.eapi import get_eapi
+from pkgcore.restrictions.boolean import AndRestriction
+from pkgcore.util import commandline, packages
 
-demandload(
-    'os',
-    'functools:partial',
-    'snakeoil:osutils',
-    'pkgcore.ebuild:atom,conditionals',
-    'pkgcore.ebuild.eapi:get_eapi',
-    'pkgcore.restrictions.boolean:AndRestriction',
-    'pkgcore.util:packages',
-)
 
 def str_pkg(pkg):
     pkg = packages.get_raw_pkg(pkg)

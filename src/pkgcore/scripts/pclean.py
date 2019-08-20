@@ -2,36 +2,31 @@
 
 import argparse
 from collections import defaultdict
+import errno
+from functools import partial
+import glob
 from itertools import chain
 import os
+import re
+import shutil
 import sys
+import time
 
-from snakeoil.demandload import demandload
+from snakeoil import klass
 from snakeoil.mappings import DictMixin
+from snakeoil.osutils import listdir_dirs, listdir_files, pjoin
+from snakeoil.sequences import iflatten_instance, split_negations
 from snakeoil.strings import pluralism
 
+from pkgcore import fetch
+from pkgcore.ebuild import atom as atom_mod
 from pkgcore.ebuild.domain import domain as domain_cls
-from pkgcore.restrictions import boolean, packages
+from pkgcore.package import errors
 from pkgcore.repository import multiplex
-from pkgcore.repository.util import get_virtual_repos
+from pkgcore.repository.util import SimpleTree, get_virtual_repos
+from pkgcore.restrictions import boolean, packages
+from pkgcore.util import parserestrict
 from pkgcore.util.commandline import ArgumentParser, StoreRepoObject, convert_to_restrict
-
-demandload(
-    'errno',
-    'functools:partial',
-    'glob',
-    're',
-    'time',
-    'shutil',
-    'snakeoil:klass',
-    'snakeoil.osutils:listdir_dirs,listdir_files,pjoin',
-    'snakeoil.sequences:iflatten_instance,split_negations',
-    'pkgcore:fetch',
-    'pkgcore.ebuild:atom@atom_mod',
-    'pkgcore.package:errors',
-    'pkgcore.repository.util:SimpleTree',
-    'pkgcore.util:parserestrict',
-)
 
 
 argparser = ArgumentParser(description=__doc__, script=(__file__, __name__))

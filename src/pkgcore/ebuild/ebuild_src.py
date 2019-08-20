@@ -9,28 +9,20 @@ from itertools import chain
 import os
 from sys import intern
 
+from snakeoil import chksum, data_source, fileutils, klass
+from snakeoil.demandload import demand_compile_regexp
+from snakeoil.sequences import iflatten_instance
+
+from pkgcore import fetch
 from pkgcore.cache import errors as cache_errors
-from pkgcore.ebuild import conditionals, processor
-from pkgcore.ebuild import errors as ebuild_errors
+from pkgcore.ebuild import conditionals, const, processor, errors as ebuild_errors
 from pkgcore.ebuild.atom import atom
+from pkgcore.ebuild.eapi import get_eapi
 from pkgcore.ebuild.misc import sort_keywords
-from pkgcore.package import errors as metadata_errors
-from pkgcore.package import metadata
-from pkgcore.package.errors import MissingChksum
+from pkgcore.log import logger
+from pkgcore.package import errors as metadata_errors, metadata
 from pkgcore.restrictions import boolean, values
 
-from snakeoil import klass
-from snakeoil.demandload import demandload, demand_compile_regexp
-
-demandload(
-    "snakeoil:chksum",
-    "snakeoil:data_source,fileutils",
-    'snakeoil.sequences:iflatten_instance',
-    "pkgcore.ebuild:const",
-    "pkgcore.ebuild.eapi:get_eapi",
-    "pkgcore:fetch",
-    "pkgcore.log:logger",
-)
 
 demand_compile_regexp(
     '_parse_EAPI_regex', r"^EAPI=(['\"]?)([A-Za-z0-9+_.-]*)\1[\t ]*(?:#.*)?"
@@ -146,7 +138,7 @@ def create_fetchable_from_uri(pkg, chksums, ignore_missing_chksums, ignore_unkno
 
     if preexisting is None:
         if filename not in chksums and not ignore_missing_chksums:
-            raise MissingChksum(pkg, filename)
+            raise metadata_errors.MissingChksum(pkg, filename)
         uris = fetch.uri_list(filename)
     else:
         uris = preexisting.uri

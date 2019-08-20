@@ -7,18 +7,16 @@ __all__ = ("tree", "operations")
 from functools import partial
 from itertools import chain
 from operator import itemgetter
+import os
 
 from snakeoil import klass
 from snakeoil.compatibility import sorted_cmp
 from snakeoil.currying import post_curry
-from snakeoil.demandload import demandload
 from snakeoil.iterables import iter_sort
 
 from pkgcore.config import configurable
 from pkgcore.operations import repo as repo_interface
 from pkgcore.repository import prototype, errors
-
-demandload('os')
 
 
 class operations(repo_interface.operations_proxy):

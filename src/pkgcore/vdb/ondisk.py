@@ -6,7 +6,6 @@ import os
 import stat
 
 from snakeoil import data_source, klass
-from snakeoil.demandload import demandload
 from snakeoil.fileutils import readfile
 from snakeoil.mappings import IndeterminantDict
 from snakeoil.osutils import listdir_dirs, pjoin
@@ -15,14 +14,11 @@ from pkgcore.config import ConfigHint
 from pkgcore.ebuild import ebuild_built
 from pkgcore.ebuild.cpv import versioned_CPV
 from pkgcore.ebuild.errors import InvalidCPV
+from pkgcore.log import logger
+from pkgcore.package import base as pkg_base
 from pkgcore.repository import errors, prototype, wrapper
-
-demandload(
-    'pkgcore.log:logger',
-    "pkgcore.package:base@pkg_base",
-    'pkgcore.vdb:repo_ops',
-    'pkgcore.vdb.contents:ContentsFile',
-)
+from pkgcore.vdb import repo_ops
+from pkgcore.vdb.contents import ContentsFile
 
 
 class tree(prototype.tree):

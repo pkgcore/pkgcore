@@ -9,28 +9,23 @@ __all__ = (
 
 import configparser
 from collections import OrderedDict
+import errno
 import os
 
 from snakeoil.bash import read_bash_dict
 from snakeoil.currying import wrap_exception
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
-from snakeoil.demandload import demandload
 from snakeoil.mappings import ImmutableDict, DictMixin
 from snakeoil.osutils import access, normpath, abspath, listdir_files, pjoin, ensure_dirs
 
 from pkgcore import const, exceptions as base_errors
-from pkgcore.config import basics, configurable
+from pkgcore.config import basics, configurable, errors as config_errors
 from pkgcore.ebuild import const as econst, profiles, repo_objs
 from pkgcore.ebuild.misc import optimize_incrementals
 from pkgcore.ebuild.repository import errors as repo_errors
 from pkgcore.fs.livefs import sorted_scan
+from pkgcore.log import logger
 from pkgcore.pkgsets.glsa import SecurityUpgrades
-
-demandload(
-    'errno',
-    'pkgcore.config:errors',
-    'pkgcore.log:logger',
-)
 
 
 def my_convert_hybrid(manager, val, arg_type):
@@ -56,7 +51,7 @@ def SecurityUpgradesViaProfile(ebuild_repo, vdb, profile):
     """
     arch = profile.arch
     if arch is None:
-        raise errors.ComplexInstantiationError("arch wasn't set in profiles")
+        raise config_errors.ComplexInstantiationError("arch wasn't set in profiles")
     return SecurityUpgrades(ebuild_repo, vdb, arch)
 
 
@@ -126,7 +121,7 @@ class PortageConfig(DictMixin):
         except IGNORED_EXCEPTIONS:
             raise
         except Exception as e:
-            raise errors.ParsingError("failed to load make.globals") from e
+            raise config_errors.ParsingError("failed to load make.globals") from e
         self.load_make_conf(
             make_conf, pjoin(self.dir, 'make.conf'), required=False,
             allow_sourcing=True, incrementals=True)
@@ -150,7 +145,7 @@ class PortageConfig(DictMixin):
         try:
             repos_conf_defaults, repos_conf = self.load_repos_conf(
                 pjoin(self.dir, 'repos.conf'))
-        except errors.ParsingError as e:
+        except config_errors.ParsingError as e:
             if not getattr(getattr(e, 'exc', None), 'errno', None) == errno.ENOENT:
                 raise
             try:
@@ -160,7 +155,7 @@ class PortageConfig(DictMixin):
             except IGNORED_EXCEPTIONS:
                 raise
             except Exception as e:
-                raise errors.ParsingError('failed to find a usable repos.conf') from e
+                raise config_errors.ParsingError('failed to find a usable repos.conf') from e
 
         self['ebuild-repo-common'] = basics.AutoConfigSection({
             'class': 'pkgcore.ebuild.repository.tree',
@@ -274,7 +269,7 @@ class PortageConfig(DictMixin):
                 raise base_errors.PermissionDenied(fp, write=False) from e
             except EnvironmentError as e:
                 if e.errno != errno.ENOENT or required:
-                    raise errors.ParsingError(f"parsing {fp!r}", exception=e) from e
+                    raise config_errors.ParsingError(f"parsing {fp!r}", exception=e) from e
                 return
 
             if incrementals:
@@ -311,9 +306,9 @@ class PortageConfig(DictMixin):
             except PermissionError as e:
                 raise base_errors.PermissionDenied(fp, write=False) from e
             except EnvironmentError as e:
-                raise errors.ParsingError(f"parsing {fp!r}", exception=e) from e
+                raise config_errors.ParsingError(f"parsing {fp!r}", exception=e) from e
             except configparser.Error as e:
-                raise errors.ParsingError(f"repos.conf: {fp!r}", exception=e) from e
+                raise config_errors.ParsingError(f"repos.conf: {fp!r}", exception=e) from e
 
             if defaults and main_defaults:
                 logger.warning(f"repos.conf: parsing {fp!r}: overriding DEFAULT section")
@@ -369,7 +364,7 @@ class PortageConfig(DictMixin):
             # the default repo is gentoo if unset and gentoo exists
             default_repo = main_defaults.get('main-repo', 'gentoo')
             if default_repo not in repos:
-                raise errors.UserConfigError(
+                raise config_errors.UserConfigError(
                     f"repos.conf: default repo {default_repo!r} is undefined or invalid")
 
             if 'main-repo' not in main_defaults:
@@ -463,9 +458,9 @@ class PortageConfig(DictMixin):
                 pjoin(self.dir, os.readlink(make_profile))))
         except EnvironmentError as e:
             if e.errno in (errno.ENOENT, errno.EINVAL):
-                raise errors.UserConfigError(
+                raise config_errors.UserConfigError(
                     f"{make_profile!r} must be a symlink pointing to a real target") from e
-            raise errors.ComplexInstantiationError(
+            raise config_errors.ComplexInstantiationError(
                 f"{make_profile!r}: unexpected error- {e.strerror}") from e
 
     def _add_profile(self, profile_override=None):
@@ -474,11 +469,11 @@ class PortageConfig(DictMixin):
         else:
             profile = normpath(abspath(profile_override))
             if not os.path.exists(profile):
-                raise errors.UserConfigError(f"{profile!r} doesn't exist")
+                raise config_errors.UserConfigError(f"{profile!r} doesn't exist")
 
         paths = profiles.OnDiskProfile.split_abspath(profile)
         if paths is None:
-            raise errors.UserConfigError(
+            raise config_errors.UserConfigError(
                 '%r expands to %r, but no profile detected' %
                 (pjoin(self.dir, 'make.profile'), profile))
 

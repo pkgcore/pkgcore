@@ -5,37 +5,33 @@ __all__ = (
     "perl_rebuild", "perl_rebuild_main", "env_update", "env_update_main",
 )
 
+from collections import defaultdict
+from multiprocessing import cpu_count
+import os
+import re
+import textwrap
+import time
+
 from snakeoil.cli import arghparse
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
-from snakeoil.demandload import demandload
+from snakeoil.contexts import patch
+from snakeoil.fileutils import AtomicWriteFile
+from snakeoil.osutils import pjoin, listdir_dirs
+from snakeoil.sequences import iter_stable_unique
+from snakeoil.strings import pluralism
 
+from pkgcore.ebuild import processor, triggers
+from pkgcore.ebuild.cpv import CPV
 from pkgcore.exceptions import PkgcoreUserException
-from pkgcore.util import commandline
-from pkgcore.operations import OperationError
+from pkgcore.fs import contents, livefs
+from pkgcore.merge import triggers as merge_triggers
+from pkgcore.operations import observer as observer_mod, OperationError
+from pkgcore.package import mutated
 from pkgcore.package.errors import MetadataException
-
-demandload(
-    'collections:defaultdict',
-    'multiprocessing:cpu_count',
-    'os',
-    're',
-    'textwrap',
-    'time',
-    'snakeoil.contexts:patch',
-    'snakeoil.fileutils:AtomicWriteFile',
-    'snakeoil.osutils:pjoin,listdir_dirs',
-    'snakeoil.sequences:iter_stable_unique',
-    'snakeoil.strings:pluralism',
-    'pkgcore.ebuild:processor,triggers',
-    'pkgcore.ebuild.cpv:CPV',
-    'pkgcore.fs:contents,livefs',
-    'pkgcore.merge:triggers@merge_triggers',
-    'pkgcore.operations:observer@observer_mod',
-    'pkgcore.package:mutated',
-    'pkgcore.repository:multiplex',
-    'pkgcore.restrictions:packages',
-    'pkgcore.util.parserestrict:parse_match',
-)
+from pkgcore.repository import multiplex
+from pkgcore.restrictions import packages
+from pkgcore.util import commandline
+from pkgcore.util.parserestrict import parse_match
 
 
 pkgcore_opts = commandline.ArgumentParser(domain=False, script=(__file__, __name__))

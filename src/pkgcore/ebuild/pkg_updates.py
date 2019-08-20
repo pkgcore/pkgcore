@@ -1,15 +1,14 @@
 from collections import deque, defaultdict
 from operator import itemgetter
 
-from snakeoil.demandload import demandload, demand_compile_regexp
+from snakeoil.demandload import demand_compile_regexp
 from snakeoil.osutils import listdir_files, pjoin
 from snakeoil.sequences import iflatten_instance
 
 from pkgcore.ebuild.atom import atom
+from pkgcore.log import logger
 
-demandload('pkgcore.log:logger')
-
-demand_compile_regexp("valid_updates_re", r"^([1-4])Q-(\d{4})$")
+demand_compile_regexp('valid_updates_re', r'^([1-4])Q-(\d{4})$')
 
 
 def _scan_directory(path):

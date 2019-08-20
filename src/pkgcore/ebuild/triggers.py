@@ -1,6 +1,4 @@
-"""
-gentoo/ebuild specific triggers
-"""
+"""gentoo/ebuild specific triggers"""
 
 __all__ = (
     "collapse_envd", "string_collapse_envd", "env_update",
@@ -9,25 +7,21 @@ __all__ = (
     "InfoRegen", "SFPerms", "FixImageSymlinks", "GenerateTriggers",
 )
 
+import fnmatch
 import os
 
+from snakeoil import compatibility
 from snakeoil.bash import read_bash_dict
-from snakeoil.demandload import demandload
 from snakeoil.fileutils import AtomicWriteFile
 from snakeoil.osutils import listdir_files, abspath, normpath, pjoin
 from snakeoil.sequences import stable_unique, iflatten_instance
 
-from pkgcore.merge import triggers, const, errors
+from pkgcore import os_data, ospkg
 from pkgcore.fs import livefs
+from pkgcore.log import logger
+from pkgcore.merge import triggers, const, errors
 from pkgcore.restrictions import values
-
-demandload(
-    'fnmatch',
-    'snakeoil:compatibility',
-    'pkgcore:os_data,ospkg',
-    'pkgcore.system:libtool',
-    'pkgcore.log:logger',
-)
+from pkgcore.system import libtool
 
 
 colon_parsed = frozenset([

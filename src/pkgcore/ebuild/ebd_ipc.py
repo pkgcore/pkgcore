@@ -1,6 +1,10 @@
 import argparse
+import grp
 import itertools
+import locale
+from operator import itemgetter
 import os
+import pwd
 import re
 import shlex
 import shutil
@@ -11,22 +15,13 @@ from snakeoil.cli import arghparse
 from snakeoil.contexts import chdir
 from snakeoil.compression import ArComp, ArCompError
 from snakeoil.decorators import coroutine
-from snakeoil.demandload import demandload
 from snakeoil.iterables import partition
 from snakeoil.osutils import pjoin
 from snakeoil.process import spawn
 
+from pkgcore import os_data
+from pkgcore.ebuild import atom as atom_mod, filter_env, portageq
 from pkgcore.exceptions import PkgcoreException, PkgcoreUserException
-
-demandload(
-    'grp',
-    'locale',
-    'operator:itemgetter',
-    'pwd',
-    'pkgcore:os_data',
-    'pkgcore.ebuild:filter_env,portageq',
-    'pkgcore.ebuild:atom@atom_mod',
-)
 
 
 class IpcError(PkgcoreException):

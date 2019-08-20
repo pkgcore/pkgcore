@@ -2,24 +2,20 @@
 contents set- container of fs objects
 """
 
+from collections import defaultdict, OrderedDict
 from functools import partial
 from operator import attrgetter
+import os
+import time
 
-from snakeoil.demandload import demandload
 from snakeoil.klass import generic_equality, alias_method
 from snakeoil.osutils import normpath, pjoin
 
 from pkgcore.fs import fs
 
-demandload(
-    'collections:defaultdict,OrderedDict',
-    'os:path',
-    'time',
-)
-
 
 def change_offset_rewriter(orig_offset, new_offset, iterable):
-    path_sep = path.sep
+    path_sep = os.path.sep
     offset_len = len(orig_offset.rstrip(path_sep))
     # localize it.
     npf = normpath
@@ -332,7 +328,7 @@ class contentsSet(object, metaclass=generic_equality):
             else:
                 start_point = start_point.location
         for x in self:
-            cn_path = normpath(start_point).rstrip(path.sep) + path.sep
+            cn_path = normpath(start_point).rstrip(os.path.sep) + os.path.sep
             # what about sym targets?
             if x.location.startswith(cn_path):
                 yield x
@@ -381,10 +377,10 @@ class contentsSet(object, metaclass=generic_equality):
         # have to go recursive since many directories may be missing.
         missing_initial = list(missing)
         for x in missing_initial:
-            target = path.dirname(x)
+            target = os.path.dirname(x)
             while target not in missing and target not in self:
                 missing.add(target)
-                target = path.dirname(target)
+                target = os.path.dirname(target)
         missing.discard("/")
         self.update(fs.fsDir(location=x, mode=mode, uid=uid, gid=gid, mtime=mtime)
             for x in missing)

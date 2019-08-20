@@ -3,12 +3,11 @@ restriction classes designed for package level matching
 """
 
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
-from snakeoil.demandload import demandload
 from snakeoil.klass import generic_equality, static_attrgetter
 
 from pkgcore.restrictions import restriction, boolean
+from pkgcore.log import logger
 
-demandload("pkgcore.log:logger")
 
 # Backwards compatibility.
 package_type = restriction.package_type

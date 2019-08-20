@@ -21,23 +21,17 @@ import sys
 
 from snakeoil import formatters, modules
 from snakeoil.cli import arghparse, tool
-from snakeoil.demandload import demandload
 from snakeoil.log import suppress_logging
-from snakeoil.osutils import pjoin
+from snakeoil.osutils import pjoin, abspath, normpath
+from snakeoil.sequences import iflatten_instance, unstable_unique
+from snakeoil.strings import pluralism
 
 from pkgcore import const
-from pkgcore.config import load_config
+from pkgcore.config import basics, load_config
+from pkgcore.plugin import get_plugins
 from pkgcore.repository import errors as repo_errors
-
-demandload(
-    'snakeoil:osutils',
-    'snakeoil.sequences:iflatten_instance,unstable_unique',
-    'snakeoil.strings:pluralism',
-    'pkgcore.config:basics',
-    'pkgcore.plugin:get_plugins',
-    'pkgcore.restrictions:packages,restriction',
-    'pkgcore.util:parserestrict',
-)
+from pkgcore.restrictions import packages, restriction
+from pkgcore.util import parserestrict
 
 
 class StoreTarget(argparse._AppendAction):
@@ -382,12 +376,12 @@ class DomainFromPath(StoreConfigObject):
 
 
 def find_domains_from_path(sections, path):
-    path = osutils.normpath(osutils.abspath(path))
+    path = normpath(abspath(path))
     for name, domain in sections.items():
         root = getattr(domain, 'root', None)
         if root is None:
             continue
-        root = osutils.normpath(osutils.abspath(root))
+        root = normpath(abspath(root))
         if root == path:
             yield name, domain
 

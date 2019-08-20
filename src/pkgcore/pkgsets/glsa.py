@@ -5,23 +5,19 @@ Gentoo Linux Security Advisories (GLSA) support
 __all__ = ("GlsaDirSet", "SecurityUpgrades")
 
 import os
+from lxml import etree
 
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
-from snakeoil.demandload import demandload
 from snakeoil.iterables import caching_iter
 from snakeoil.klass import generic_equality
 from snakeoil.osutils import listdir_files, pjoin
 
 from pkgcore.config import ConfigHint
+from pkgcore.ebuild import cpv, atom, restricts as atom_restricts
+from pkgcore.log import logger
+from pkgcore.package import mutated
+from pkgcore.repository.util import get_virtual_repos
 from pkgcore.restrictions import packages, restriction, values
-
-demandload(
-    'lxml:etree',
-    'pkgcore.ebuild:cpv,atom,restricts@atom_restricts',
-    'pkgcore.log:logger',
-    'pkgcore.package:mutated',
-    'pkgcore.repository.util:get_virtual_repos',
-)
 
 
 class GlsaDirSet(object, metaclass=generic_equality):

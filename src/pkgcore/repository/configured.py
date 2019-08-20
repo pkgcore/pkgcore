@@ -46,11 +46,11 @@ class tree(prototype.tree):
 
     def itermatch(self, restrict, **kwds):
         kwds.setdefault("force", True)
-        o = kwds.get("pkg_klass_override")
+        o = kwds.get("pkg_cls")
         if o is not None:
-            kwds["pkg_klass_override"] = partial(self.package_class, o)
+            kwds["pkg_cls"] = partial(self.package_class, o)
         else:
-            kwds["pkg_klass_override"] = self.package_class
+            kwds["pkg_cls"] = self.package_class
         return self.raw_repo.itermatch(restrict, **kwds)
 
     itermatch.__doc__ = prototype.tree.itermatch.__doc__.replace(

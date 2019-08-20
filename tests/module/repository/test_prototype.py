@@ -128,7 +128,7 @@ class TestPrototype(TestCase):
             sorted(versioned_CPV(x) for x in ("dev-lib/fake-1.0", "dev-lib/fake-1.0-r1")))
 
         obj = malleable_obj(livefs=False)
-        pkg_kls_override = post_curry(MutatedPkg, {'repo': obj})
+        pkg_cls = post_curry(MutatedPkg, {'repo': obj})
         self.assertEqual(
             sorted(self.repo.itermatch(
                 boolean.AndRestriction(
@@ -138,7 +138,7 @@ class TestPrototype(TestCase):
                         packages.PackageRestriction(
                             "category", values.StrExactMatch("virtual"))),
                     atom("dev-lib/fake")),
-                pkg_klass_override=pkg_kls_override)),
+                pkg_cls=pkg_cls)),
             sorted(versioned_CPV(x) for x in (
                 "dev-lib/fake-1.0", "dev-lib/fake-1.0-r1")))
 

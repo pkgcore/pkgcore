@@ -158,7 +158,7 @@ class RestrictionRepo(tree):
     def __iter__(self):
         return iter(self._injected_pkgs)
 
-    def itermatch(self, restrict, sorter=iter, pkg_klass_override=InjectedPkg):
+    def itermatch(self, restrict, sorter=iter, pkg_cls=InjectedPkg):
         if isinstance(restrict, atom.atom):
             func = restrict.intersects
         else:
@@ -172,7 +172,7 @@ class RestrictionRepo(tree):
         # inject/yield any matching atoms into the repo that aren't blockers
         if self._restrictions and isinstance(restrict, atom.atom):
             if self.restriction.match(restrict) and not restrict.blocks:
-                p = pkg_klass_override(restrict, self)
+                p = pkg_cls(restrict, self)
                 self._injected_pkgs[p] = None
                 yield p
 

@@ -359,8 +359,10 @@ class UnconfiguredTree(prototype.tree):
         self.masters = masters
         self.trees = tuple(masters) + (self,)
         self.licenses = repo_objs.Licenses(self.location)
+        self.profiles = self.config.profiles
         if masters:
             self.licenses = repo_objs.OverlayedLicenses(*self.trees)
+            self.profiles = repo_objs.OverlayedProfiles(*self.trees)
 
         mirrors = {}
         fp = pjoin(self.location, 'profiles', "thirdpartymirrors")

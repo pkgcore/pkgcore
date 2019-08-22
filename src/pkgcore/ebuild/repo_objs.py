@@ -4,7 +4,7 @@ package class for buildable ebuilds
 
 __all__ = (
     "Maintainer", "MetadataXml", "LocalMetadataXml",
-    "SharedPkgData", "Licenses", "OverlayedLicenses",
+    "SharedPkgData", "Licenses", "OverlayedLicenses", "OverlayedProfiles",
     "Project", "ProjectMember", "Subproject", "ProjectsXml", "LocalProjectsXml"
 )
 
@@ -597,6 +597,39 @@ class Profiles(object):
     def create_profile(self, node):
         """Return profile object for a given path."""
         return profiles.OnDiskProfile(self.profile_base, node)
+
+
+class OverlayedProfiles(Profiles):
+
+    __inst_caching__ = True
+    __slots__ = ('_profiles_instances', '_profiles_sources')
+
+    def __init__(self, *profiles_sources):
+        object.__setattr__(self, '_profiles_sources', profiles_sources)
+        self._load_profiles_instances()
+
+    @klass.jit_attr_none
+    def arch_profiles(self):
+        d = defaultdict(list)
+        for pi in self._profiles_instances:
+            for k, v in pi.arch_profiles.items():
+                d[k].extend(v)
+        return mappings.ImmutableDict(d)
+
+    def refresh(self):
+        self._load_profiles_instances()
+        for pi in self._profiles_instances:
+            pi.refresh()
+        Profiles.refresh(self)
+
+    def _load_profiles_instances(self):
+        l = []
+        for x in self._profiles_sources:
+            if isinstance(x, Profiles):
+                l.append(x)
+            elif hasattr(x, 'profiles'):
+                l.append(x.profiles)
+        object.__setattr__(self, '_profiles_instances', tuple(l))
 
 
 class RepoConfig(syncable.tree, metaclass=WeakInstMeta):

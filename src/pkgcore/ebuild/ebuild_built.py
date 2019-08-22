@@ -7,9 +7,9 @@ __all__ = ("package", "package_factory")
 from functools import partial
 import re
 
+from snakeoil import demandimport
 from snakeoil.currying import post_curry
 from snakeoil.data_source import local_source
-from snakeoil.demandload import demandload
 from snakeoil.mappings import IndeterminantDict
 from snakeoil.obj import DelayedInstantiation
 
@@ -20,7 +20,9 @@ from pkgcore.fs.livefs import scan
 from pkgcore.merge import engine
 from pkgcore.package import metadata
 
-demandload('pkgcore.ebuild:ebd')
+# TODO: forcibly enable lazy imports to resolve circular module imports
+with demandimport.enabled():
+    from pkgcore.ebuild import ebd
 
 
 def passthrough(inst, attr):

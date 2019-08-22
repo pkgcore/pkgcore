@@ -8,11 +8,10 @@ from functools import partial
 from itertools import chain
 import os
 
-from snakeoil import caching, klass
+from snakeoil import caching, demandimport, klass
 from snakeoil.bash import iter_read_bash, read_bash_dict
 from snakeoil.containers import InvertedContains
 from snakeoil.data_source import local_source
-from snakeoil.demandload import demandload
 from snakeoil.fileutils import readlines_utf8
 from snakeoil.mappings import ImmutableDict
 from snakeoil.osutils import abspath, pjoin
@@ -25,7 +24,9 @@ from pkgcore.ebuild.eapi import get_eapi
 from pkgcore.fs.livefs import sorted_scan
 from pkgcore.log import logger
 
-demandload('pkgcore.ebuild.repository:ProvidesRepo')
+# TODO: resolve circular module imports
+with demandimport.activated():
+    from pkgcore.ebuild.repository import ProvidesRepo
 
 
 def package_keywords_splitter(iterable):
@@ -645,6 +646,8 @@ class ProfileStack(object):
 
     @klass.jit_attr
     def provides_repo(self):
+        # delay importing to avoid circular imports
+        from pkgcore.ebuild.repository import ProvidesRepo
         return ProvidesRepo(pkgs=self._collapse_generic("pkg_provided"))
 
     @klass.jit_attr

@@ -10,14 +10,14 @@ __all__ = ("ConfigHint", "configurable", "load_config")
 
 import os
 
-from snakeoil.demandload import demandload
+from snakeoil import demandimport
 
 from pkgcore import const
 
-demandload(
-    'pkgcore.config:central,cparser',
-    'pkgcore.ebuild.portage_conf:PortageConfig',
-)
+# TODO: resolve circular module imports
+with demandimport.activated():
+    from pkgcore.config import central, cparser
+    from pkgcore.ebuild.portage_conf import PortageConfig
 
 
 class ConfigHint(object):

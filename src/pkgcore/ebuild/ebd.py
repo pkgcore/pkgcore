@@ -598,8 +598,6 @@ class replace_op(format.replace):
 class buildable(ebd, setup_mixin, format.build):
     """Generic build operation."""
 
-    _built_class = ebuild_built.fresh_built_package
-
     # XXX this is unclean- should be handing in strictly what is build
     # env, rather then dumping domain settings as env.
     def __init__(self, domain, pkg, verified_files, eclass_cache,
@@ -611,6 +609,7 @@ class buildable(ebd, setup_mixin, format.build):
             we'll be using
         :param verified_files: mapping of fetchables mapped to their disk location
         """
+        self._built_class = ebuild_built.fresh_built_package
         format.build.__init__(self, domain, pkg, verified_files, observer)
         domain_settings = self.domain.settings
         ebd.__init__(self, pkg, initial_env=domain_settings, **kwargs)
@@ -876,9 +875,8 @@ class binpkg_localize(ebd, setup_mixin, format.build):
     stage_depends = {"finalize": "setup", "setup": "start"}
     setup_is_for_src = False
 
-    _built_class = ebuild_built.package
-
     def __init__(self, domain, pkg, **kwargs):
+        self._built_class = ebuild_built.package
         format.build.__init__(self, domain, pkg, {}, observer=kwargs.get("observer", None))
         ebd.__init__(self, pkg, **kwargs)
         if self.eapi.options.has_merge_type:

@@ -3,7 +3,8 @@ import sys
 from snakeoil.test import TestCase
 import pytest
 
-from pkgcore.config import configurable, basics, errors
+from pkgcore.config import basics, errors
+from pkgcore.config.hint import configurable
 from pkgcore.scripts import pconfig
 from pkgcore.test.scripts.helpers import ArgParseMixin
 

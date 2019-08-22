@@ -1,4 +1,5 @@
-from pkgcore.config import basics, ConfigHint, configurable
+from pkgcore.config import basics
+from pkgcore.config.hint import ConfigHint, configurable
 from pkgcore.scripts import pebuild
 from pkgcore.test.misc import FakePkg, FakeRepo
 from pkgcore.test.scripts.helpers import ArgParseMixin

@@ -29,8 +29,9 @@ from snakeoil.sequences import (
 
 from pkgcore.binpkg import repository as binary_repo
 from pkgcore.cache.flat_hash import md5_cache
-from pkgcore.config import ConfigHint, errors as config_errors
+from pkgcore.config import errors as config_errors
 from pkgcore.config.domain import Failure, MissingFile, domain as config_domain
+from pkgcore.config.hint import ConfigHint
 from pkgcore.ebuild import const, repository as ebuild_repo
 from pkgcore.ebuild.atom import atom as _atom
 from pkgcore.ebuild.misc import (

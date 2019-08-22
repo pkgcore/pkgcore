@@ -8,7 +8,7 @@ from functools import partial
 from itertools import chain
 import os
 
-from snakeoil import caching, demandimport, klass
+from snakeoil import caching, klass
 from snakeoil.bash import iter_read_bash, read_bash_dict
 from snakeoil.containers import InvertedContains
 from snakeoil.data_source import local_source
@@ -17,16 +17,13 @@ from snakeoil.mappings import ImmutableDict
 from snakeoil.osutils import abspath, pjoin
 from snakeoil.sequences import split_negations, stable_unique
 
-from pkgcore.config import ConfigHint, errors
+from pkgcore.config import errors
+from pkgcore.config.hint import ConfigHint
 from pkgcore.ebuild import const, ebuild_src, misc, cpv, repo_objs, errors as ebuild_errors
 from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.eapi import get_eapi
 from pkgcore.fs.livefs import sorted_scan
 from pkgcore.log import logger
-
-# TODO: resolve circular module imports
-with demandimport.activated():
-    from pkgcore.ebuild.repository import ProvidesRepo
 
 
 def package_keywords_splitter(iterable):

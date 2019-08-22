@@ -1,7 +1,8 @@
 import os
 import tempfile
 
-from pkgcore.config import basics, errors, ConfigHint, configurable, central
+from pkgcore.config import basics, errors, central
+from pkgcore.config.hint import ConfigHint, configurable
 from snakeoil.test import TestCase
 
 

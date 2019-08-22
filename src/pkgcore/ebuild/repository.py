@@ -25,7 +25,7 @@ from snakeoil.strings import pluralism as _pl
 from snakeoil.weakrefs import WeakValCache
 
 from pkgcore import fetch
-from pkgcore.config import ConfigHint, configurable
+from pkgcore.config.hint import ConfigHint, configurable
 from pkgcore.ebuild import (
     cpv, digest, ebd, repo_objs, atom, restricts, processor,
     ebuild_src, eclass_cache as eclass_cache_mod, errors as ebuild_errors,

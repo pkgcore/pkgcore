@@ -1,6 +1,7 @@
 import pytest
 
-from pkgcore.config import basics, ConfigHint, configurable
+from pkgcore.config import basics
+from pkgcore.config.hint import ConfigHint, configurable
 from pkgcore.ebuild.repo_objs import RepoConfig
 from pkgcore.repository import multiplex
 from pkgcore.scripts import pshowkw

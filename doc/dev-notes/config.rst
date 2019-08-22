@@ -98,7 +98,7 @@ Adding a callable
 
 To make a callable available you can do this::
 
- from pkgcore.config import configurable, errors
+ from pkgcore.config.hint import configurable
 
  @configurable({'cache': 'section_ref'}, typename=repo)
  def my_repo(repo):
@@ -133,7 +133,8 @@ not expose the same ConfigSection in more than one way". If you do it
 will be collapsed and instantiated once for every way it is exposed,
 which is usually not what you want. An example::
 
- from pkgcore.config import basics, configurable
+ from pkgcore.config import basics
+ from pkgcore.config.hint import configurable
 
  def example():
      return object()

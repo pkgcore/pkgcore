@@ -11,7 +11,7 @@ from snakeoil.fileutils import readlines_utf8
 from snakeoil.osutils import pjoin
 
 from pkgcore.cache import fs_template, errors
-from pkgcore.config import ConfigHint
+from pkgcore.config.hint import ConfigHint
 
 
 class database(fs_template.FsBased):

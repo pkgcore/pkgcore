@@ -12,7 +12,7 @@ from snakeoil.iterables import caching_iter
 from snakeoil.klass import generic_equality
 from snakeoil.osutils import listdir_files, pjoin
 
-from pkgcore.config import ConfigHint
+from pkgcore.config.hint import ConfigHint
 from pkgcore.ebuild import cpv, atom, restricts as atom_restricts
 from pkgcore.log import logger
 from pkgcore.package import mutated

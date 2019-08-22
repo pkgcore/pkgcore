@@ -4,7 +4,7 @@ system pkgset based off of profile system collapsing
 
 __all__ = ("SystemSet",)
 
-from pkgcore.config import ConfigHint
+from pkgcore.config.hint import ConfigHint
 
 
 class SystemSet(object):

@@ -11,7 +11,7 @@ import stat
 from snakeoil import process
 
 from pkgcore import os_data, plugin
-from pkgcore.config import ConfigHint, configurable
+from pkgcore.config.hint import ConfigHint, configurable
 from pkgcore.exceptions import PkgcoreUserException
 
 

@@ -3,7 +3,7 @@
 Note: HACK. Quick proof of concept, could do with cleaning up.
 """
 
-from pkgcore.config import ConfigHint
+from pkgcore.config.hint import ConfigHint
 from pkgcore.pkgsets.installed import VersionedInstalled
 from pkgcore.repository.util import RepositoryGroup
 

@@ -1,4 +1,5 @@
-from pkgcore.config import basics, ConfigHint, configurable
+from pkgcore.config import basics
+from pkgcore.config.hint import ConfigHint, configurable
 from pkgcore.ebuild import atom
 from pkgcore.repository import util
 from pkgcore.scripts import pquery

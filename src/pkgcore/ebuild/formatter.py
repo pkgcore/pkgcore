@@ -15,7 +15,7 @@ from snakeoil.osutils import pjoin, sizeof_fmt
 from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism
 
-from pkgcore.config import ConfigHint
+from pkgcore.config.hint import ConfigHint
 from pkgcore.log import logger
 
 

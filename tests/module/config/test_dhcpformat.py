@@ -11,7 +11,8 @@ else:
         skip_test = None
         from pkgcore.config import dhcpformat, mke2fsformat
 
-from pkgcore.config import central, errors, configurable
+from pkgcore.config import central, errors
+from pkgcore.config.hint import configurable
 from snakeoil.test import TestCase
 
 

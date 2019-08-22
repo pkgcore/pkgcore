@@ -5,7 +5,8 @@ import operator
 from snakeoil.test import TestCase
 from snakeoil.test.mixins import mk_named_tempfile
 
-from pkgcore.config import load_config, configurable, basics
+from pkgcore.config import load_config, basics
+from pkgcore.config.hint import configurable
 
 
 @configurable(typename='foo')

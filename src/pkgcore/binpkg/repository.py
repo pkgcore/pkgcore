@@ -15,7 +15,7 @@ from snakeoil.osutils import listdir_dirs, listdir_files, access, pjoin
 
 from pkgcore.binpkg import remote, repo_ops
 from pkgcore.binpkg.xpak import Xpak
-from pkgcore.config import ConfigHint
+from pkgcore.config.hint import ConfigHint
 from pkgcore.ebuild import ebd, ebuild_built
 from pkgcore.ebuild.cpv import versioned_CPV
 from pkgcore.ebuild.errors import InvalidCPV

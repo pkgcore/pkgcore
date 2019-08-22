@@ -14,7 +14,7 @@ from snakeoil.compatibility import sorted_cmp
 from snakeoil.currying import post_curry
 from snakeoil.iterables import iter_sort
 
-from pkgcore.config import configurable
+from pkgcore.config.hint import configurable
 from pkgcore.operations import repo as repo_interface
 from pkgcore.repository import prototype, errors
 

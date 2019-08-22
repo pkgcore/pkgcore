@@ -10,7 +10,7 @@ from snakeoil.fileutils import readfile
 from snakeoil.mappings import IndeterminantDict
 from snakeoil.osutils import listdir_dirs, pjoin
 
-from pkgcore.config import ConfigHint
+from pkgcore.config.hint import ConfigHint
 from pkgcore.ebuild import ebuild_built
 from pkgcore.ebuild.cpv import versioned_CPV
 from pkgcore.ebuild.errors import InvalidCPV

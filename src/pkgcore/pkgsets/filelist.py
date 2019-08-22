@@ -8,7 +8,8 @@ from snakeoil import klass
 from snakeoil.fileutils import AtomicWriteFile, readlines_ascii
 
 from pkgcore import os_data
-from pkgcore.config import ConfigHint, errors
+from pkgcore.config import errors
+from pkgcore.config.hint import ConfigHint
 from pkgcore.ebuild import const
 from pkgcore.ebuild.atom import atom
 from pkgcore.log import logger

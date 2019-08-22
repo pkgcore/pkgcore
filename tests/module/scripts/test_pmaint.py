@@ -5,7 +5,8 @@ from snakeoil.formatters import PlainTextFormatter
 from snakeoil.mappings import AttrAccessible
 from snakeoil.test import TestCase
 
-from pkgcore.config import basics, ConfigHint, configurable
+from pkgcore.config import basics
+from pkgcore.config.hint import ConfigHint, configurable
 from pkgcore.ebuild.cpv import CPV
 from pkgcore.operations.repo import install, uninstall, replace, operations
 from pkgcore.repository import util, syncable

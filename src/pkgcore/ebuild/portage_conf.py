@@ -19,7 +19,8 @@ from snakeoil.mappings import ImmutableDict, DictMixin
 from snakeoil.osutils import access, normpath, abspath, listdir_files, pjoin, ensure_dirs
 
 from pkgcore import const, exceptions as base_errors
-from pkgcore.config import basics, configurable, errors as config_errors
+from pkgcore.config import basics, errors as config_errors
+from pkgcore.config.hint import configurable
 from pkgcore.ebuild import const as econst, profiles, repo_objs
 from pkgcore.ebuild.misc import optimize_incrementals
 from pkgcore.ebuild.repository import errors as repo_errors

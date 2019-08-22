@@ -27,7 +27,7 @@ from snakeoil.process.namespaces import simple_unshare
 from snakeoil.sequences import iter_stable_unique
 from snakeoil.strings import pluralism
 
-from pkgcore.config import ConfigHint
+from pkgcore.config.hint import ConfigHint
 from pkgcore.ebuild import atom, profiles, pkg_updates
 from pkgcore.ebuild.eapi import get_eapi
 from pkgcore.exceptions import PermissionDenied

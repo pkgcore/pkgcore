@@ -7,7 +7,7 @@ import time
 
 from snakeoil.osutils import pjoin
 
-from pkgcore.config import ConfigHint
+from pkgcore.config.hint import ConfigHint
 from pkgcore.sync import base
 
 

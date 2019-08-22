@@ -523,11 +523,13 @@ class _immutable_attr_dict(mappings.ImmutableDict):
     mappings.inject_getitem_as_getattr(locals())
 
 
-_KnownProfile = namedtuple("_KnownProfile", ['profile', 'status'])
+_KnownProfile = namedtuple('_KnownProfile', ['base', 'arch', 'path', 'status', 'deprecated'])
 
 
 class Profiles(object):
 
+    __slots__ = ('profile_base', 'format', '_profiles')
+    __inst_caching__ = True
     klass.inject_immutable_instance(locals())
 
     def __init__(self, profile_base, profile_format='pms'):
@@ -535,68 +537,80 @@ class Profiles(object):
         object.__setattr__(self, 'format', profile_format)
 
     @klass.jit_attr_none
-    def arch_profiles(self, known_status=None, known_arch=None):
+    def profiles(self):
+        return self._parse_profiles()
+
+    def _parse_profiles(self, known_status=None, known_arch=None):
         """Return the mapping of arches to profiles for a repo."""
-        d = defaultdict(list)
+        l = []
         fp = pjoin(self.profile_base, 'profiles.desc')
         try:
             for lineno, line in iter_read_bash(fp, enum_line=True):
                 try:
-                    key, profile, status = line.split()
+                    arch, profile, status = line.split()
                 except ValueError:
                     logger.error(
                         f"{fp}, line {lineno}: invalid profile line format: "
-                        "should be 'key profile status'")
+                        "should be 'arch profile status'")
                     continue
                 if known_status is not None and status not in known_status:
                     logger.warning(
                         f"{fp}, line {lineno}: unknown profile status: {status!r}")
-                if known_arch is not None and key not in known_arch:
+                if known_arch is not None and arch not in known_arch:
                     logger.warning(
-                        f"{fp}, line {lineno}: unknown arch: {key!r}")
+                        f"{fp}, line {lineno}: unknown arch: {arch!r}")
                 # Normalize the profile name on the offchance someone slipped an extra /
                 # into it.
-                d[key].append(_KnownProfile(
-                    '/'.join(filter(None, profile.split('/'))), status))
+                path = '/'.join(filter(None, profile.split('/')))
+                deprecated = os.path.exists(
+                    os.path.join(self.profile_base, path, 'deprecated'))
+                l.append(_KnownProfile(self.profile_base, arch, path, status, deprecated))
         except FileNotFoundError:
             logger.debug(f"No profile descriptions found at {fp!r}")
-        return mappings.ImmutableDict(
-            (k, tuple(sorted(v))) for k, v in d.items())
+        return frozenset(l)
 
     def __len__(self):
-        return len(chain.from_iterable(self.arch_profiles.values()))
+        return len(self.profiles)
 
     def __iter__(self):
-        for arch, profiles in self.arch_profiles.items():
-            for path, status in profiles:
-                yield arch, path, status
+        yield from self.profiles
+
+    def __getitem__(self, path):
+        if path[0] == '/':
+            path = path.lstrip(self.profile_base).lstrip(os.sep)
+        for p in self.profiles:
+            if p.path == path:
+                return p
+        raise KeyError(path)
+
+    def __contains__(self, path):
+        if path[0] == '/':
+            path = path.lstrip(self.profile_base).lstrip(os.sep)
+        for p in self.profiles:
+            if p.path == path:
+                return True
+        return False
 
     def refresh(self):
-        self._arch_profiles = None
+        self._profiles = None
 
     def arches(self, status=None):
-        """All arches with profiles defined in the repo."""
+        """All arches with profiles defined in the repo optionally matching a given status."""
         arches = []
-        for arch, profiles in self.arch_profiles.items():
-            for _profile_path, profile_status in profiles:
-                if status is None or profile_status == status:
-                    arches.append(arch)
+        for p in self.profiles:
+            if status is None or status == p.status:
+                arches.append(p.arch)
         return frozenset(arches)
 
-    def paths(self, status=None):
-        """Yield profile paths optionally matching a given status."""
-        if status == 'deprecated':
-            for root, dirs, files in os.walk(self.profile_base):
-                if os.path.exists(pjoin(root, 'deprecated')):
-                    yield root[len(self.profile_base) + 1:]
-        else:
-            for profile_path, profile_status in chain.from_iterable(self.arch_profiles.values()):
-                if status is None or status == profile_status:
-                    yield profile_path
+    def get_profiles(self, status):
+        """Yield profiles matching a given status."""
+        for p in self.profiles:
+            if status == p.status or (status == 'deprecated' and p.deprecated):
+                yield p
 
     def create_profile(self, node):
         """Return profile object for a given path."""
-        return profiles.OnDiskProfile(self.profile_base, node)
+        return profiles.OnDiskProfile(node.base, node.path)
 
 
 class OverlayedProfiles(Profiles):
@@ -609,12 +623,8 @@ class OverlayedProfiles(Profiles):
         self._load_profiles_instances()
 
     @klass.jit_attr_none
-    def arch_profiles(self):
-        d = defaultdict(list)
-        for pi in self._profiles_instances:
-            for k, v in pi.arch_profiles.items():
-                d[k].extend(v)
-        return mappings.ImmutableDict(d)
+    def profiles(self):
+        return frozenset(chain.from_iterable(self._profiles_instances))
 
     def refresh(self):
         self._load_profiles_instances()
@@ -866,8 +876,6 @@ class RepoConfig(syncable.tree, metaclass=WeakInstMeta):
     @klass.jit_attr
     def profiles(self):
         return Profiles(self.profiles_base)
-
-    arch_profiles = klass.alias_attr('profiles.arch_profiles')
 
     @klass.jit_attr
     def eapi(self):

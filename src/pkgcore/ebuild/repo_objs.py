@@ -8,7 +8,7 @@ __all__ = (
     "Project", "ProjectMember", "Subproject", "ProjectsXml", "LocalProjectsXml"
 )
 
-from collections import namedtuple
+from collections import namedtuple, defaultdict
 import errno
 from itertools import chain
 from lxml import etree
@@ -526,7 +526,7 @@ class _immutable_attr_dict(mappings.ImmutableDict):
 _KnownProfile = namedtuple("_KnownProfile", ['profile', 'status'])
 
 
-class BundledProfiles(object):
+class Profiles(object):
 
     klass.inject_immutable_instance(locals())
 
@@ -534,10 +534,10 @@ class BundledProfiles(object):
         object.__setattr__(self, 'profile_base', profile_base)
         object.__setattr__(self, 'format', profile_format)
 
-    @klass.jit_attr
+    @klass.jit_attr_none
     def arch_profiles(self, known_status=None, known_arch=None):
         """Return the mapping of arches to profiles for a repo."""
-        d = mappings.defaultdict(list)
+        d = defaultdict(list)
         fp = pjoin(self.profile_base, 'profiles.desc')
         try:
             for lineno, line in iter_read_bash(fp, enum_line=True):
@@ -562,6 +562,17 @@ class BundledProfiles(object):
             logger.debug(f"No profile descriptions found at {fp!r}")
         return mappings.ImmutableDict(
             (k, tuple(sorted(v))) for k, v in d.items())
+
+    def __len__(self):
+        return len(chain.from_iterable(self.arch_profiles.values()))
+
+    def __iter__(self):
+        for arch, profiles in self.arch_profiles.items():
+            for path, status in profiles:
+                yield arch, path, status
+
+    def refresh(self):
+        self._arch_profiles = None
 
     def arches(self, status=None):
         """All arches with profiles defined in the repo."""
@@ -821,7 +832,7 @@ class RepoConfig(syncable.tree, metaclass=WeakInstMeta):
 
     @klass.jit_attr
     def profiles(self):
-        return BundledProfiles(self.profiles_base)
+        return Profiles(self.profiles_base)
 
     arch_profiles = klass.alias_attr('profiles.arch_profiles')
 

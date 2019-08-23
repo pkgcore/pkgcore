@@ -48,7 +48,7 @@ jobs:
       - secure: j/lUk3RkNuas+wiMdoWsC2j7emirtMRz6G/4OVUf1+X9aFLSLo5jpY8C4yZJPb0FuCdYEjfKsq6aMOADwwMg6aXbXj+u5frqhUYAqBELR85G7gRBoLzcqj9YaRVsiIf9rF14xlueCM2cK08rDlkJwHr4fQZkNBZnbZ5+8MvwsO0=
       - CIBW_PLATFORM=linux
       - CIBW_BUILD="cp36-* cp37-*"
-      - CIBW_BEFORE_BUILD="rpm -ivh --force /host/$HOME/downloads/\$(uname -m)/*.rpm && {pip} install -r requirements/wheel.txt -r requirements/test.txt"
+      - CIBW_BEFORE_BUILD="yum -y install bash && {pip} install -r requirements/wheel.txt -r requirements/test.txt"
       - CIBW_ENVIRONMENT="PATH=/opt/bin:\$PATH"
       - CIBW_TEST_COMMAND="py.test {project}/tests"
       before_script:

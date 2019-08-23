@@ -1,5 +1,8 @@
 dist: xenial
 language: python
+python:
+- 3.6
+- 3.7
 addons:
   apt:
     packages:
@@ -8,6 +11,7 @@ cache:
   pip: true
   directories:
   - $HOME/downloads
+
 install:
 - pip install -U pip
 before_script:
@@ -29,63 +33,44 @@ after_success:
 stages:
   - name: test
     if: NOT branch IN (lint, deploy)
-  - name: lint
-    if: branch = lint
   - name: deploy
-    if: (type = api) OR (branch = deploy) OR (branch = master AND type IN (push, api) AND tag IS present)
-
-matrix:
-  include:
-    - python: 3.6
-    - python: 3.7
-  fast_finish: true
+    if: (type = api) OR (branch = deploy) OR (tag IS present)
 
 jobs:
-  # do various lint scans
-  - stage: lint
-    python: 3.6
-    before_script:
-      - git clone https://github.com/pkgcore/pkgdist.git
-      - cp -R pkgdist/requirements/* requirements/
-      - pip install -r requirements/lint.txt
-    script: pkgdist/pylint src/pkgcore
-    after_success:
+  include:
+    # push tarball and wheels to pypi
+    - stage: deploy
+      sudo: required
+      services:
+        - docker
+      env:
+        - secure: VbHW1pmzwc3LtJ4JYivarXMdsAE/MfitddnyYSZs+qBLxPevv967WuXZBeJgEak913bLj9Ku9YoxH8OHxu4uACU1rLNo48y0DMm0qtiGHx2sTmevDwIRflLIx/aJiS5OAuJZ4jY79HKPIfgObfZwO5awRzs8Afhlqg5xIFiWhiQ=
+        - secure: j/lUk3RkNuas+wiMdoWsC2j7emirtMRz6G/4OVUf1+X9aFLSLo5jpY8C4yZJPb0FuCdYEjfKsq6aMOADwwMg6aXbXj+u5frqhUYAqBELR85G7gRBoLzcqj9YaRVsiIf9rF14xlueCM2cK08rDlkJwHr4fQZkNBZnbZ5+8MvwsO0=
+        - CIBW_PLATFORM=linux
+        - CIBW_BUILD="cp36-* cp37-*"
+        - CIBW_BEFORE_BUILD="rpm -ivh --force /host/$HOME/downloads/\$(uname -m)/*.rpm && {pip} install -r requirements/wheel.txt -r requirements/test.txt"
+        - CIBW_ENVIRONMENT="PATH=/opt/bin:\$PATH"
+        - CIBW_TEST_COMMAND="py.test {project}/tests"
+      before_script:
+        - git clone https://github.com/pkgcore/pkgdist.git
+        - cp -R pkgdist/requirements/* requirements/
+      script: pkgdist/build-dist-files.sh
+      after_success:
 
-  # push tarball and wheels to pypi
-  - stage: deploy
-    python: 3.6
-    sudo: required
-    services:
-      - docker
-    env:
-      - secure: VbHW1pmzwc3LtJ4JYivarXMdsAE/MfitddnyYSZs+qBLxPevv967WuXZBeJgEak913bLj9Ku9YoxH8OHxu4uACU1rLNo48y0DMm0qtiGHx2sTmevDwIRflLIx/aJiS5OAuJZ4jY79HKPIfgObfZwO5awRzs8Afhlqg5xIFiWhiQ=
-      - secure: j/lUk3RkNuas+wiMdoWsC2j7emirtMRz6G/4OVUf1+X9aFLSLo5jpY8C4yZJPb0FuCdYEjfKsq6aMOADwwMg6aXbXj+u5frqhUYAqBELR85G7gRBoLzcqj9YaRVsiIf9rF14xlueCM2cK08rDlkJwHr4fQZkNBZnbZ5+8MvwsO0=
-      - CIBW_PLATFORM=linux
-      - CIBW_BUILD="cp36-* cp37-*"
-      - CIBW_BEFORE_BUILD="rpm -ivh --force /host/$HOME/downloads/\$(uname -m)/*.rpm && {pip} install -r requirements/wheel.txt -r requirements/test.txt"
-      - CIBW_ENVIRONMENT="PATH=/opt/bin:\$PATH"
-      - CIBW_TEST_COMMAND="py.test {project}/tests"
-    before_script:
-      - git clone https://github.com/pkgcore/pkgdist.git
-      - cp -R pkgdist/requirements/* requirements/
-    script: pkgdist/build-dist-files.sh
-    after_success:
-
-  # push tarball to github
-  - stage: deploy
-    python: 3.6
-    before_script:
-      - git clone https://github.com/pkgcore/pkgdist.git
-      - cp -R pkgdist/requirements/* requirements/
-      - pip install -r requirements/sdist.txt
-    script: python setup.py sdist
-    after_success: tar -ztf dist/*.tar.gz | sort
-    deploy:
-      provider: releases
-      api_key:
-        secure: M+rX3BOy9kv2hEyeBOdjTf9hXOvrLYE8VsX/DVsPt4ayve9c0xXFjWhXBEd2vKFqqcN7WsPRycwfr8XQtOpmURc14q8SdpTtcmQimm5twtwpiA9rXWO/MG9ELaFvU672Lw9NFvzq/scGnqsNzszVC0prxCXS+fb9g4z4sKA8VLM=
-      file_glob: true
-      file: dist/*.tar.gz
-      skip_cleanup: true
-      on:
-        tags: true
+    # push tarball to github
+    - stage: deploy
+      before_script:
+        - git clone https://github.com/pkgcore/pkgdist.git
+        - cp -R pkgdist/requirements/* requirements/
+        - pip install -r requirements/sdist.txt
+      script: python setup.py sdist
+      after_success: tar -ztf dist/*.tar.gz | sort
+      deploy:
+        provider: releases
+        api_key:
+          secure: Bjyyu2UK3MzH0x0QvKIr/IYfxJEjbc+B43fnP++7rAIjiojckPFJavh5p4ausM/6XjDyJtAFkYBZ6z1f4H5/MR+GJUFl9hN+SZWGO5PuzzxjExxnfq0/ZxHAIWNvfTYoE1Y/8cefPg+DexLILSLFsp3DnX1Zrp5AWmwXaSjesJ0=
+        file_glob: true
+        file: dist/*.tar.gz
+        skip_cleanup: true
+        on:
+          tags: true

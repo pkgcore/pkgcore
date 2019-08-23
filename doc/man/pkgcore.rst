@@ -310,37 +310,6 @@ have to live in the same file as they are inherited from.
 One last special features: things marked as "incremental" get their
 inherited value appended instead of overriding it.
 
-Different config format
-~~~~~~~~~~~~~~~~~~~~~~~
-
-If you have pyparsing installed pkgcore supports a second
-configuration file format that is very similar to the dump output
-(not entirely identical: the string escaping rules are different). It
-does not try to detect what format your config file is in:
-``pkgcore.conf`` is always in "ini" format. But you can load a second
-configuration file from there::
-
- [autoload-dhcpformat]
- class=pkgcore.config.parse_config_file
- parser=pkgcore.config.dhcpformat.config_from_file
- path=/home/<you>/.pkgcore.dhcpconf
-
-If you use "pkgcore.config.cparser.config_from_file" as "parser" you
-can use this to load a second ini-style file. The loaded file can also
-contain autoloads of its own, loading more config files or
-portage_conf. For example, if ``.pkgcore.dhcpconf`` looks like::
-
- "autoload-portage" {
-     class pkgcore.ebuild.portage_conf.config_from_make_conf;
- }
-
-it will load ``/etc/portage/make.conf``.
-
-If you want to get rid of ``/etc/portage/make.conf`` entirely you can start from the
-output of ``pconfig dump``. But be careful: ``pconfig`` does not escape strings
-exactly the same way dhcpformat parses them, so make sure you check the dump
-after you disable portage_conf for mistakes.
-
 Aliases
 ~~~~~~~
 

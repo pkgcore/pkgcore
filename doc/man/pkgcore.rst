@@ -131,8 +131,9 @@ Note for Portage users
 ----------------------
 
 If you already know how to configure Portage you can probably just skip this
-section. As long as you do not have an ``/etc/pkgcore.conf`` or ``~/.pkgcore.conf``
-pkgcore will read Portage's configuration files.
+section. As long as you do not have an ``/etc/pkgcore/pkgcore.conf`` or
+``~/.config/pkgcore/pkgcore.conf`` pkgcore will read Portage's configuration
+files.
 
 Basics, querying
 ----------------

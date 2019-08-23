@@ -188,13 +188,13 @@ tries among other things to:
 Overview from load_config() to instantiated repo
 ------------------------------------------------
 
-When you call load_config() it looks up what config files are
-available (/etc/pkgcore.conf, ~/.pkgcore.conf, /etc/portage/make.conf) and
-loads them. This produces a dict mapping section names to
-ConfigSection instances. For the ini-format pkgcore.conf files this is
+When you call load_config() it looks up what config files are available
+(/etc/pkgcore/pkgcore.conf, ~/.config/pkgcore/pkgcore.conf,
+/etc/portage/make.conf) and loads them. This produces a dict mapping section
+names to ConfigSection instances. For the ini-format pkgcore.conf files this is
 straightforward, for make.conf this is a lot of work done in
-pkgcore.config.portage_conf. I'm not going to describe that module
-here, read the source for details.
+pkgcore.ebuild.portage_conf. I'm not going to describe that module here, read
+the source for details.
 
 The ConfigSections have a pretty straightforward api: they work like
 dicts but get passed a string describing what "type" the value should

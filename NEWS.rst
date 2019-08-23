@@ -2,9 +2,9 @@
 Release Notes
 =============
 
---------------------------
+---------------------------
 pkgcore 0.10.0 (2019-08-23)
---------------------------
+---------------------------
 
 - Dropped dhcpformat/mke2fsformat config format support (and required pyparsing
   dependency).

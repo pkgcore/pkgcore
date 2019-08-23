@@ -3,6 +3,43 @@ Release Notes
 =============
 
 --------------------------
+pkgcore 0.10.0 (2019-08-23)
+--------------------------
+
+- Dropped dhcpformat/mke2fsformat config format support (and required pyparsing
+  dependency).
+
+- GPL2/BSD dual licensing was dropped to BSD as agreed by all contributors.
+
+- pkgcore.ebuild.repo_objs: Add support for processing projects.xml.
+
+- Support PROPERTIES=live as live ebuild indicator.
+
+- The bash ebuild daemon now longer spawns python scripts or uses external
+  processes to call back into the python side. Everything is done via IPC
+  coordinated by the ebuild processor.
+
+- EAPI 7 support.
+
+- Move the majority of ebuild helpers and some functions into the python side
+  including the following: all the do*/new* helpers, keepdir, has_version,
+  best_version, unpack, eapply, and eapply_user.
+
+- EAPI specific bash support is loaded before each phase run providing better
+  separation between EAPI specific functionality -- newer functions won't even
+  exist in scope to be called for ebuilds using older EAPIs.
+
+- pshowkw: Add new utility for displaying/querying package keywords -- an
+  analog to eshowkw from gentoolkit.
+
+- Minimum supported python version is now 3.6 (python2 support dropped).
+
+- Add support for transparently using squashfs repo archives.
+
+- Add various tool support for running against ebuilds in unconfigured,
+  external repos.
+
+--------------------------
 pkgcore 0.9.7 (2017-09-27)
 --------------------------
 

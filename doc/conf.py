@@ -37,7 +37,7 @@ on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = [
     'sphinx.ext.extlinks',
-    'sphinx.ext.autodoc', 'sphinx.ext.autosummary', 'sphinx.ext.doctest',
+    'sphinx.ext.autodoc', 'sphinx.ext.doctest',
     'sphinx.ext.intersphinx', 'sphinx.ext.todo', 'sphinx.ext.coverage',
     'sphinx.ext.ifconfig', 'sphinx.ext.viewcode',
 ]
@@ -292,7 +292,6 @@ intersphinx_mapping = {
     'python': ('http://docs.python.org/', None),
     'snakeoil': ('https://github.com/pkgcore/snakeoil', None),
 }
-autosummary_generate = False
 autodoc_default_flags = [
     "members", "show-inheritance", "inherited-members", "undoc-members"]
 

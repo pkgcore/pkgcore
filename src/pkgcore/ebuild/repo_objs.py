@@ -528,13 +528,17 @@ _KnownProfile = namedtuple('_KnownProfile', ['base', 'arch', 'path', 'status', '
 
 class Profiles(object):
 
-    __slots__ = ('profile_base', 'format', '_profiles')
+    __slots__ = ('profile_base', 'format', '_repo_id', '_profiles')
     __inst_caching__ = True
     klass.inject_immutable_instance(locals())
 
-    def __init__(self, profile_base, profile_format='pms'):
+    def __init__(self, profile_base, profile_format='pms', repo_id=None):
         object.__setattr__(self, 'profile_base', profile_base)
         object.__setattr__(self, 'format', profile_format)
+        if repo_id is None:
+            # determine repo name from profiles base path
+            repo_id = profile_base.rstrip(os.sep).rsplit(os.sep, 2)[-2]
+        object.__setattr__(self, '_repo_id', repo_id)
 
     @klass.jit_attr_none
     def profiles(self):
@@ -550,15 +554,18 @@ class Profiles(object):
                     arch, profile, status = line.split()
                 except ValueError:
                     logger.error(
-                        f"{fp}, line {lineno}: invalid profile line format: "
+                        f"{self._repo_id}::profiles/profiles.desc, "
+                        f"line {lineno}: invalid profile line format: "
                         "should be 'arch profile status'")
                     continue
                 if known_status is not None and status not in known_status:
                     logger.warning(
-                        f"{fp}, line {lineno}: unknown profile status: {status!r}")
+                        f"{self._repo_id}::profiles/profiles.desc, "
+                        f"line {lineno}: unknown profile status: {status!r}")
                 if known_arch is not None and arch not in known_arch:
                     logger.warning(
-                        f"{fp}, line {lineno}: unknown arch: {arch!r}")
+                        f"{self._repo_id}::profiles/profiles.desc, "
+                        f"line {lineno}: unknown arch: {arch!r}")
                 # Normalize the profile name on the offchance someone slipped an extra /
                 # into it.
                 path = '/'.join(filter(None, profile.split('/')))
@@ -566,7 +573,8 @@ class Profiles(object):
                     os.path.join(self.profile_base, path, 'deprecated'))
                 l.append(_KnownProfile(self.profile_base, arch, path, status, deprecated))
         except FileNotFoundError:
-            logger.debug(f"No profile descriptions found at {fp!r}")
+            logger.debug(
+                f"No profile descriptions found at {self._repo_id}::profiles/profiles.desc")
         return frozenset(l)
 
     def __len__(self):
@@ -875,7 +883,7 @@ class RepoConfig(syncable.tree, metaclass=WeakInstMeta):
 
     @klass.jit_attr
     def profiles(self):
-        return Profiles(self.profiles_base)
+        return Profiles(self.profiles_base, repo_id=self.repo_id)
 
     @klass.jit_attr
     def eapi(self):

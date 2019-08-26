@@ -745,17 +745,10 @@ def parse_eapi(value):
     '--owns', action='append',
     help='exact match on an owned file/dir')
 def parse_owns(value):
-    "Value is a comma delimited set of paths to search contents for"
-    # yes it would be easier to do this without using parserestrict-
-    # we use defer to using it for the sake of a common parsing
-    # exposed to the commandline however.
-    # the problem here is we don't want to trigger fs* module loadup
-    # unless needed- hence this function.
-    parser = parserestrict.comma_separated_containment(
+    return packages.PackageRestriction(
         'contents',
-        values_kls=contents_module.contentsSet,
-        token_kls=partial(fs_module.fsBase, strict=False))
-    return parser(value)
+        values.AnyMatch(values.GetAttrRestriction(
+            'location', values.StrExactMatch(value))))
 
 @bind_add_query(
     '--owns-re', action='append',

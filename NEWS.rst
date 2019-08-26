@@ -3,6 +3,15 @@ Release Notes
 =============
 
 ---------------------------
+pkgcore 0.10.1 (2019-08-26)
+---------------------------
+
+- pquery --owns: Fix queries and drop support for comma-separated args.
+
+- pkgcore.ebuild.repo_objs: Use relative paths instead of absolute in logged
+  output.
+
+---------------------------
 pkgcore 0.10.0 (2019-08-23)
 ---------------------------
 

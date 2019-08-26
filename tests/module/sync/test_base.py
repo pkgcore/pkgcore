@@ -168,8 +168,9 @@ class TestAutodetectSyncer(object):
         syncer = base.AutodetectSyncer(str(tmp_path))
         assert isinstance(syncer, base.DisabledSyncer)
 
-    def test_syncer_detected(self, tmp_path):
-        d = tmp_path / ".git"
+    @mock.patch('snakeoil.process.find_binary', return_value='git')
+    def test_syncer_detected(self, find_binary, tmp_path):
+        d = tmp_path / '.git'
         d.mkdir()
         syncer = base.AutodetectSyncer(str(tmp_path))
         assert isinstance(syncer, git.git_syncer)

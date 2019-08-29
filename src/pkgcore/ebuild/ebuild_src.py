@@ -25,8 +25,9 @@ from pkgcore.restrictions import boolean, values
 
 
 demand_compile_regexp(
-    '_parse_EAPI_regex', r"^EAPI=(['\"]?)(?P<EAPI>[A-Za-z0-9+_.-]*)\1[\t ]*(?:#.*)?"
-)
+    '_EAPI_regex', r"^EAPI=(['\"]?)(?P<EAPI>[A-Za-z0-9+_.-]*)\1[\t ]*(?:#.*)?")
+demand_compile_regexp(
+    '_EAPI_str_regex', r"^EAPI=(['\"]?)(?P<EAPI>.*)\1")
 demand_compile_regexp('_parse_inherit_regex', r'^\s*inherit\s(.*)$')
 
 
@@ -168,7 +169,7 @@ def create_fetchable_from_uri(pkg, chksums, ignore_missing_chksums, ignore_unkno
 
 def get_parsed_eapi(self):
     ebuild = self.ebuild
-    eapi = None
+    eapi = '0'
     if ebuild.path:
         # Use readlines directly since it does whitespace stripping
         # for us, far faster than native python can.
@@ -178,12 +179,16 @@ def get_parsed_eapi(self):
     for line in i:
         if line[0:1] in ('', '#'):
             continue
-        eapi = _parse_EAPI_regex.match(line)
+        eapi_str = _EAPI_str_regex.match(line)
+        if eapi_str is not None:
+            eapi_str = eapi_str.group('EAPI')
+            if eapi_str:
+                eapi = _EAPI_regex.match(line).group('EAPI')
         break
     try:
-        return get_eapi(eapi.group('EAPI') if eapi is not None else '0')
+        return get_eapi(eapi)
     except ValueError as e:
-        raise metadata_errors.MetadataException(self, 'eapi', f'{e}: {eapi.string!r}')
+        raise metadata_errors.MetadataException(self, 'eapi', f'{e}: {eapi_str!r}')
 
 
 def get_parsed_inherits(self):
@@ -429,7 +434,7 @@ class package_factory(metadata.factory):
 
         inherited = mydata.pop("INHERITED", None)
         # Rewrite defined_phases as needed, since we now know the EAPI.
-        eapi = get_eapi(mydata["EAPI"])
+        eapi = get_eapi(mydata.get('EAPI', '0'))
         if parsed_eapi != eapi:
             raise metadata_errors.MetadataException(
                 pkg, 'eapi',

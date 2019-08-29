@@ -192,6 +192,7 @@ class TestBase(object):
             getattr(pkg, 'depend')
 
     def test_get_parsed_eapi(self, tmpdir):
+        # ebuild has a real path on the fs
         def _path(self, cpv, eapi_str):
             ebuild = pjoin(str(tmpdir), "temp-0.ebuild")
             with open(ebuild, 'w') as f:
@@ -202,20 +203,21 @@ class TestBase(object):
                     EAPI={eapi_str}'''))
             return local_source(str(ebuild))
 
-        # ebuild has a real path on the fs
-        for eapi_str, eapi in EAPI.known_eapis.items():
-            c = self.make_parent(get_ebuild_src=post_curry(_path, eapi_str))
-            o = self.get_pkg({'EAPI': None}, repo=c)
-            assert str(o.eapi) == eapi_str
-
+        # ebuild is a faked obj
         def _src(self, cpv, eapi_str):
             return data_source(f'EAPI={eapi_str}')
 
-        # ebuild is a faked obj
-        for eapi_str, eapi in EAPI.known_eapis.items():
-            c = self.make_parent(get_ebuild_src=post_curry(_src, eapi_str))
-            o = self.get_pkg({'EAPI': None}, repo=c)
-            assert str(o.eapi) == eapi_str
+        for func in (_path, _src):
+            # verify parsing known EAPIs
+            for eapi_str in EAPI.known_eapis.keys():
+                c = self.make_parent(get_ebuild_src=post_curry(func, eapi_str))
+                o = self.get_pkg({'EAPI': None}, repo=c)
+                assert str(o.eapi) == eapi_str
+            # check explicitly unsetting EAPI equates to EAPI=0
+            for eapi_str in ('', '""', "''"):
+                c = self.make_parent(get_ebuild_src=post_curry(func, eapi_str))
+                o = self.get_pkg({'EAPI': None}, repo=c)
+                assert str(o.eapi) == '0'
 
     def test_keywords(self):
         assert list(self.get_pkg({'KEYWORDS': ''}).keywords) == []

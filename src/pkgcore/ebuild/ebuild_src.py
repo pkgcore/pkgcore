@@ -25,7 +25,7 @@ from pkgcore.restrictions import boolean, values
 
 
 demand_compile_regexp(
-    '_parse_EAPI_regex', r"^EAPI=(['\"]?)([A-Za-z0-9+_.-]*)\1[\t ]*(?:#.*)?"
+    '_parse_EAPI_regex', r"^EAPI=(['\"]?)(?P<EAPI>[A-Za-z0-9+_.-]*)\1[\t ]*(?:#.*)?"
 )
 demand_compile_regexp('_parse_inherit_regex', r'^\s*inherit\s(.*)$')
 
@@ -180,7 +180,10 @@ def get_parsed_eapi(self):
             continue
         eapi = _parse_EAPI_regex.match(line)
         break
-    return get_eapi(eapi.group(2) if eapi is not None else '0')
+    try:
+        return get_eapi(eapi.group('EAPI') if eapi is not None else '0')
+    except ValueError as e:
+        raise metadata_errors.MetadataException(self, 'eapi', f'{e}: {eapi.string!r}')
 
 
 def get_parsed_inherits(self):

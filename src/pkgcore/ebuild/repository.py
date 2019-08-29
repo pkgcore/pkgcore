@@ -506,6 +506,10 @@ class UnconfiguredTree(prototype.tree):
                 f'failed fetching packages for category {category}: {e}') from e
 
     def _get_versions(self, catpkg):
+        """Determine available versions for a given package.
+
+        Ebuilds with mismatched or invalid package names are ignored.
+        """
         cppath = pjoin(self.base, catpkg[0], catpkg[1])
         pkg = f'{catpkg[-1]}-'
         lp = len(pkg)
@@ -546,13 +550,6 @@ class UnconfiguredTree(prototype.tree):
                     pkg.required_use
                 except pkg_errors.MetadataException as e:
                     self._masked[e.pkg.versioned_atom] = e
-                    continue
-                except FileNotFoundError as e:
-                    # TODO: catch this in _get_versions() instead so we have
-                    # more info, this will need to be coordinated with pkgcheck
-                    # InvalidPN/MismatchPN changes.
-                    self._masked[pkg.versioned_atom] = pkg_errors.InvalidPackageName(
-                        pkg.PN, 'mismatched package name')
                     continue
                 yield pkg
 

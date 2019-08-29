@@ -286,11 +286,12 @@ class StoreRepoObject(StoreConfigObject):
         self.repo_key = self.valid_repo_types[self.repo_type]
 
         self.allow_aliases = set(kwargs.pop("allow_aliases", ()))
-        unknown_aliases = self.allow_aliases.difference(self.valid_repo_types)
-        if unknown_aliases:
-            raise argparse.ArgumentTypeError(
-                'unknown repo alias%s: %s' % (
-                    pluralism(unknown_aliases, plural='es'), ', '.join(unknown_aliases)))
+        if self.allow_aliases:
+            unknown_aliases = self.allow_aliases.difference(self.valid_repo_types)
+            if unknown_aliases:
+                raise argparse.ArgumentTypeError(
+                    'unknown repo alias%s: %s' % (
+                        pluralism(unknown_aliases, plural='es'), ', '.join(unknown_aliases)))
 
         if self.repo_type == 'config':
             kwargs['config_type'] = 'repo_config'

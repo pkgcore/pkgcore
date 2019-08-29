@@ -789,12 +789,12 @@ class TestRepoConfig(object):
     def test_repo_id(self, caplog):
         # nonexistent repo
         repo_config = repo_objs.RepoConfig('nonexistent')
-        assert repo_config.repo_id == "<unlabeled repo: 'nonexistent'>"
+        assert repo_config.repo_id == 'nonexistent'
         del repo_config
 
         # empty repo
         repo_config = repo_objs.RepoConfig(self.repo_path)
-        assert repo_config.repo_id == f"<unlabeled repo: {self.repo_path!r}>"
+        assert repo_config.repo_id == self.repo_path
         assert caplog.text == ''
         caplog.clear()
         del repo_config
@@ -802,7 +802,7 @@ class TestRepoConfig(object):
         # nonempty repo
         os.mkdir(self.profiles_base)
         repo_config = repo_objs.RepoConfig(self.repo_path)
-        assert repo_config.repo_id == f"<unlabeled repo: {self.repo_path!r}>"
+        assert repo_config.repo_id == self.repo_path
         assert 'repo lacks a defined name:' in caplog.text
         caplog.clear()
         del repo_config

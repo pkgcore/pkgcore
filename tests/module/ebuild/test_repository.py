@@ -68,7 +68,7 @@ class TestUnconfiguredTree(TempDirMixin):
         dir1 = pjoin(self.dir, '1')
         os.mkdir(dir1, 0o755)
         repo = self.mk_tree(dir1)
-        self.assertEqual(repo.repo_id, f'<unlabeled repo: {dir1!r}>')
+        self.assertEqual(repo.repo_id, dir1)
         dir2 = pjoin(self.dir, '2')
         ensure_dirs(pjoin(dir2, 'profiles'))
         with open(pjoin(dir2, 'profiles', 'repo_name'), 'w') as f:

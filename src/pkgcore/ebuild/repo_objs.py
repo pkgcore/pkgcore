@@ -872,7 +872,7 @@ class RepoConfig(syncable.tree, metaclass=WeakInstMeta):
             return self.pms_repo_name
         if not self.is_empty:
             logger.warning(f"repo lacks a defined name: {self.location!r}")
-        return f'<unlabeled repo: {self.location!r}>'
+        return self.location
 
     @klass.jit_attr
     def updates(self):

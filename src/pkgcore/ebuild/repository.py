@@ -398,6 +398,7 @@ class UnconfiguredTree(prototype.tree):
 
     repo_id = klass.alias_attr("config.repo_id")
     repo_name = klass.alias_attr("config.repo_name")
+    aliases = klass.alias_attr("config.aliases")
     eapi = klass.alias_attr('config.eapi')
     is_supported = klass.alias_attr('config.eapi.is_supported')
 

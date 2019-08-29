@@ -731,7 +731,7 @@ class RepoConfig(syncable.tree, metaclass=WeakInstMeta):
             masters = tuple(iter_stable_unique(masters.split()))
         sf(self, '_missing_masters', _missing_masters)
         sf(self, 'masters', masters)
-        aliases = data.get('aliases', '').split() + [self.repo_id, self.location]
+        aliases = data.get('aliases', '').split() + [self.repo_id, self.pms_repo_name, self.location]
         sf(self, 'aliases', tuple(iter_stable_unique(aliases)))
         sf(self, 'eapis_deprecated', tuple(iter_stable_unique(data.get('eapis-deprecated', '').split())))
         sf(self, 'eapis_banned', tuple(iter_stable_unique(data.get('eapis-banned', '').split())))

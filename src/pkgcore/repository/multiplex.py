@@ -185,10 +185,12 @@ class tree(prototype.tree):
 
     def __contains__(self, obj):
         if isinstance(obj, str):
+            # check by repo id
+            if obj in map(str, self.trees):
+                return True
+
+            # check by path
             path = os.path.realpath(obj)
-            if not os.path.exists(path):
-                # check by repo id
-                return obj in map(str, self.trees)
             for repo in self.trees:
                 try:
                     repo_path = os.path.realpath(repo.location)

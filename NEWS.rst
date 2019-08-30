@@ -3,6 +3,17 @@ Release Notes
 =============
 
 ---------------------------
+pkgcore 0.10.2 (2019-08-30)
+---------------------------
+
+- pkgcore.ebuild.repo_objs: Explicitly add all known repo identifiers as
+  aliases. Previously some weren't getting added causing issues when trying to
+  use external repos with names matching those of configured repos on the
+  system.
+
+- Make explicitly unset EAPI values mean EAPI=0 in accordance with the spec.
+
+---------------------------
 pkgcore 0.10.1 (2019-08-26)
 ---------------------------
 

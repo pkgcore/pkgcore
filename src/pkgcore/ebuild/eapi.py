@@ -157,7 +157,7 @@ class EAPI(object, metaclass=klass.immutable_instance):
     unknown_eapis = weakrefs.WeakValCache()
 
     def __init__(self, magic, parent=None, phases=(), default_phases=(),
-                 metadata_keys=(), mandatory_keys=(),
+                 mandatory_keys=(), dep_keys=(), metadata_keys=(),
                  tracked_attributes=(), archive_suffixes=(),
                  optionals=None, ebd_env_options=None):
         sf = object.__setattr__
@@ -174,8 +174,11 @@ class EAPI(object, metaclass=klass.immutable_instance):
         sf(self, "default_phases", frozenset(default_phases))
 
         sf(self, "mandatory_keys", frozenset(mandatory_keys))
-        sf(self, "metadata_keys", frozenset(metadata_keys))
-        sf(self, "tracked_attributes", frozenset(tracked_attributes))
+        sf(self, "dep_keys", frozenset(dep_keys))
+        sf(self, "metadata_keys", (
+            frozenset(mandatory_keys) | frozenset(dep_keys) | frozenset(metadata_keys)))
+        sf(self, "tracked_attributes", (
+            frozenset(tracked_attributes) | frozenset(x.lower() for x in dep_keys)))
         sf(self, "archive_suffixes", frozenset(archive_suffixes))
 
         if optionals is None:
@@ -371,19 +374,24 @@ common_default_phases = tuple(
 common_phases = (
     "pkg_setup", "pkg_config", "pkg_info", "pkg_nofetch",
     "pkg_prerm", "pkg_postrm", "pkg_preinst", "pkg_postinst",
-    "src_unpack", "src_compile", "src_test", "src_install")
+    "src_unpack", "src_compile", "src_test", "src_install",
+)
 
 common_mandatory_metadata_keys = (
     "DESCRIPTION", "HOMEPAGE", "IUSE",
-    "KEYWORDS", "LICENSE", "SLOT", "SRC_URI")
+    "KEYWORDS", "LICENSE", "SLOT", "SRC_URI",
+)
 
-common_metadata_keys = common_mandatory_metadata_keys + (
-    "DEPEND", "RDEPEND", "PDEPEND", "RESTRICT",
-    "DEFINED_PHASES", "INHERITED", "PROPERTIES", "EAPI")
+common_dep_keys = (
+    "DEPEND", "RDEPEND", "PDEPEND",
+)
+
+common_metadata_keys = (
+    "RESTRICT", "PROPERTIES", "DEFINED_PHASES", "INHERITED", "EAPI",
+)
 
 common_tracked_attributes = (
     "cflags", "cbuild", "chost", "ctarget", "cxxflags", "defined_phases",
-    "bdepend", "depend", "rdepend", "pdepend",
     "description", "eapi", "distfiles", "fullslot", "homepage", "inherited",
     "iuse", "keywords", "ldflags", "license", "properties",
     "restrict", "source_repository",
@@ -417,8 +425,9 @@ eapi0 = EAPI.register(
     parent=None,
     phases=_mk_phase_func_map(*common_phases),
     default_phases=_mk_phase_func_map(*common_default_phases),
-    metadata_keys=common_metadata_keys,
     mandatory_keys=common_mandatory_metadata_keys,
+    dep_keys=common_dep_keys,
+    metadata_keys=common_metadata_keys,
     tracked_attributes=common_tracked_attributes,
     archive_suffixes=common_archive_suffixes,
     optionals=eapi_optionals,
@@ -430,8 +439,9 @@ eapi1 = EAPI.register(
     parent=eapi0,
     phases=eapi0.phases,
     default_phases=eapi0.default_phases,
-    metadata_keys=eapi0.metadata_keys,
     mandatory_keys=eapi0.mandatory_keys,
+    dep_keys=eapi0.dep_keys,
+    metadata_keys=eapi0.metadata_keys,
     tracked_attributes=eapi0.tracked_attributes,
     archive_suffixes=eapi0.archive_suffixes,
     optionals=_combine_dicts(eapi0.options, dict(
@@ -447,8 +457,9 @@ eapi2 = EAPI.register(
         eapi1.phases, _mk_phase_func_map("src_prepare", "src_configure")),
     default_phases=eapi1.default_phases.union(
         list(map(_shorten_phase_name, ["src_prepare", "src_configure"]))),
-    metadata_keys=eapi1.metadata_keys,
     mandatory_keys=eapi1.mandatory_keys,
+    dep_keys=eapi1.dep_keys,
+    metadata_keys=eapi1.metadata_keys,
     tracked_attributes=eapi1.tracked_attributes,
     archive_suffixes=eapi1.archive_suffixes,
     optionals=_combine_dicts(eapi1.options, dict(
@@ -464,8 +475,9 @@ eapi3 = EAPI.register(
     parent=eapi2,
     phases=eapi2.phases,
     default_phases=eapi2.default_phases,
-    metadata_keys=eapi2.metadata_keys,
     mandatory_keys=eapi2.mandatory_keys,
+    dep_keys=eapi2.dep_keys,
+    metadata_keys=eapi2.metadata_keys,
     tracked_attributes=eapi2.tracked_attributes,
     archive_suffixes=eapi2.archive_suffixes | frozenset([".tar.xz", ".xz"]),
     optionals=_combine_dicts(eapi2.options, dict(
@@ -479,8 +491,9 @@ eapi4 = EAPI.register(
     parent=eapi3,
     phases=_combine_dicts(eapi3.phases, _mk_phase_func_map("pkg_pretend")),
     default_phases=eapi3.default_phases.union([_shorten_phase_name('src_install')]),
-    metadata_keys=eapi3.metadata_keys | frozenset(["REQUIRED_USE"]),
     mandatory_keys=eapi3.mandatory_keys,
+    dep_keys=eapi3.dep_keys,
+    metadata_keys=eapi3.metadata_keys | frozenset(["REQUIRED_USE"]),
     tracked_attributes=eapi3.tracked_attributes,
     archive_suffixes=eapi3.archive_suffixes,
     optionals=_combine_dicts(eapi3.options, dict(
@@ -502,8 +515,9 @@ eapi5 = EAPI.register(
     parent=eapi4,
     phases=eapi4.phases,
     default_phases=eapi4.default_phases,
-    metadata_keys=eapi4.metadata_keys,
     mandatory_keys=eapi4.mandatory_keys,
+    dep_keys=eapi4.dep_keys,
+    metadata_keys=eapi4.metadata_keys,
     tracked_attributes=eapi4.tracked_attributes | frozenset(["iuse_effective"]),
     archive_suffixes=eapi4.archive_suffixes,
     optionals=_combine_dicts(eapi4.options, dict(
@@ -523,8 +537,9 @@ eapi6 = EAPI.register(
     parent=eapi5,
     phases=eapi5.phases,
     default_phases=eapi5.default_phases,
-    metadata_keys=eapi5.metadata_keys,
     mandatory_keys=eapi5.mandatory_keys,
+    dep_keys=eapi5.dep_keys,
+    metadata_keys=eapi5.metadata_keys,
     tracked_attributes=eapi5.tracked_attributes | frozenset(["user_patches"]),
     archive_suffixes=eapi5.archive_suffixes | frozenset([".txz"]),
     optionals=_combine_dicts(eapi5.options, dict(
@@ -543,8 +558,9 @@ eapi7 = EAPI.register(
     parent=eapi6,
     phases=eapi6.phases,
     default_phases=eapi6.default_phases,
-    metadata_keys=eapi6.metadata_keys | frozenset(["BDEPEND"]),
     mandatory_keys=eapi6.mandatory_keys,
+    dep_keys=eapi6.dep_keys | frozenset(["BDEPEND"]),
+    metadata_keys=eapi6.metadata_keys,
     tracked_attributes=eapi6.tracked_attributes,
     archive_suffixes=eapi6.archive_suffixes,
     optionals=_combine_dicts(eapi6.options, dict(

@@ -73,6 +73,15 @@ class base(object):
 
         return d
 
+    def __getstate__(self):
+        d = self.__dict__.copy()
+        del d['_eclass_data_inst_cache']
+        return d
+
+    def __setstate__(self, state):
+        self.__dict__ = state.copy()
+        self.__dict__['_eclass_data_inst_cache'] = WeakValCache()
+
 
 class cache(base):
 

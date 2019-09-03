@@ -4,6 +4,7 @@ cache subsystem, typically used for storing package metadata
 
 __all__ = ("base", "bulk")
 
+from functools import partial
 import math
 import os
 import operator
@@ -60,22 +61,40 @@ class base(object):
         self.updates = 0
 
     @staticmethod
-    def _get_chf_serializer(chf):
-        if chf == 'eclassdir':
-            return lambda data: os.path.dirname(data.path)
-        if chf == 'mtime':
-            return lambda data: '%.0f' % math.floor(data.mtime)
-        # Skip the leading 0x...
-        getter = operator.attrgetter(chf)
-        return lambda data: get_handler(chf).long2str(getter(data))
+    def _eclassdir_serializer(data):
+        return os.path.dirname(data.path)
 
     @staticmethod
-    def _get_chf_deserializer(chf):
+    def _mtime_serializer(data):
+        return '%.0f' % math.floor(data.mtime)
+
+    @staticmethod
+    def _default_serializer(chf, data):
+        # Skip the leading 0x...
+        getter = operator.attrgetter(chf)
+        return get_handler(chf).long2str(getter(data))
+
+    def _get_chf_serializer(self, chf):
+        if chf == 'eclassdir':
+            return self._eclassdir_serializer
+        if chf == 'mtime':
+            return self._mtime_serializer
+        return partial(self._default_serializer, chf)
+
+    @staticmethod
+    def _mtime_deserializer(data):
+        return int(math.floor(float(data)))
+
+    @staticmethod
+    def _default_deserializer(data):
+        return int(data, 16)
+
+    def _get_chf_deserializer(self, chf):
         if chf == 'eclassdir':
             return str
         elif chf == 'mtime':
-            return lambda val: int(math.floor(float(val)))
-        return lambda val: int(val, 16)
+            return self._mtime_deserializer
+        return self._default_deserializer
 
     @klass.jit_attr
     def eclass_chf_serializers(self):

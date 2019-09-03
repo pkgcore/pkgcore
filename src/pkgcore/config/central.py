@@ -224,6 +224,17 @@ class CollapsedConfig(object):
 
         return self._instance
 
+    def __getstate__(self):
+        d = self.__dict__.copy()
+        # pull actual value from weakref
+        d['manager'] = d['manager']()
+        return d
+
+    def __setstate__(self, state):
+        self.__dict__ = state.copy()
+        # reset weakref
+        self.__dict__['manager'] = weakref.ref(self.__dict__['manager'])
+
 
 _singleton = object()
 
@@ -241,6 +252,11 @@ class _ConfigObjMap(object):
             raise KeyError(key)
         return val
 
+    def __getstate__(self):
+        # Explicitly defined to force pickling to work as expected without
+        # trying to pull __getstate__ from _ConfigMapping due to __getattr__.
+        return self.__dict__.copy()
+
 
 class CompatConfigManager(object):
 
@@ -254,6 +270,7 @@ class CompatConfigManager(object):
         return obj
 
     __dir__ = klass.DirProxy("_manager")
+
 
 class ConfigManager(object):
 

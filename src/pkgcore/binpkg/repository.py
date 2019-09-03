@@ -74,24 +74,20 @@ class force_unpacking(triggers.base):
         engine.replace_cset('new_cset', cset)
 
 
-def wrap_factory(klass, *args, **kwds):
+class BinPkg(ebuild_built.generate_new_factory):
 
-    class new_factory(klass):
+    def _add_format_triggers(self, pkg, op_inst, format_op_inst,
+                                engine_inst):
+        if (engine.UNINSTALL_MODE != engine_inst.mode and
+                pkg == engine_inst.new and pkg.repo is engine_inst.new.repo):
+            t = force_unpacking(op_inst.format_op)
+            t.register(engine_inst)
 
-        def _add_format_triggers(self, pkg, op_inst, format_op_inst,
-                                 engine_inst):
-            if (engine.UNINSTALL_MODE != engine_inst.mode and
-                    pkg == engine_inst.new and pkg.repo is engine_inst.new.repo):
-                t = force_unpacking(op_inst.format_op)
-                t.register(engine_inst)
+        klass._add_format_triggers(
+            self, pkg, op_inst, format_op_inst, engine_inst)
 
-            klass._add_format_triggers(
-                self, pkg, op_inst, format_op_inst, engine_inst)
-
-        def scan_contents(self, location):
-            return scan(location, offset=location)
-
-    return new_factory(*args, **kwds)
+    def scan_contents(self, location):
+        return scan(location, offset=location)
 
 
 class StackedXpakDict(DictMixin):
@@ -197,8 +193,6 @@ class StackedCache(StackedDict):
 
 class tree(prototype.tree):
 
-    package_factory = staticmethod(ebuild_built.generate_new_factory)
-
     # yes, the period is required. no, do not try and remove it
     # (harring says it stays)
     extension = ".tbz2"
@@ -237,7 +231,7 @@ class tree(prototype.tree):
                 (self.base, os.stat(self.base).st_mode & 0o4777))
 
         self.cache = remote.get_cache_kls(cache_version)(pjoin(self.base, self.cache_name))
-        self.package_class = wrap_factory(self.package_factory, self)
+        self.package_class = BinPkg(self)
 
     def __str__(self):
         return self.repo_id

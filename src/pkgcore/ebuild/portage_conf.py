@@ -187,13 +187,10 @@ class PortageConfig(DictMixin):
         self._make_repo_syncers(repos_conf, make_conf)
         repos = [name for name in repos_conf.keys()]
         if repos:
-            if len(repos) > 1:
-                self['repo-stack'] = basics.FakeIncrementalDictConfigSection(
-                    my_convert_hybrid, {
-                        'class': 'pkgcore.repository.multiplex.config_tree',
-                        'repos': tuple(repos)})
-            else:
-                self['repo-stack'] = basics.section_alias(repos[0], 'repo')
+            self['repo-stack'] = basics.FakeIncrementalDictConfigSection(
+                my_convert_hybrid, {
+                    'class': 'pkgcore.repository.multiplex.config_tree',
+                    'repos': tuple(repos)})
 
             self['vuln'] = basics.AutoConfigSection({
                 'class': SecurityUpgradesViaProfile,
@@ -201,8 +198,6 @@ class PortageConfig(DictMixin):
                 'vdb': 'vdb',
                 'profile': 'profile',
             })
-            self['glsa'] = basics.section_alias(
-                'vuln', SecurityUpgradesViaProfile.pkgcore_config_type.typename)
 
         # check if package building was forced on by the user
         forced_buildpkg = kwargs.pop('buildpkg', False)

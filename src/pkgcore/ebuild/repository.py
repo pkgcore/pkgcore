@@ -637,6 +637,15 @@ class UnconfiguredTree(prototype.tree):
             self, force=bool(kwds.get('force', False)),
             eclass_caching=bool(kwds.get('eclass_caching', True)))
 
+    def __getstate__(self):
+        d = self.__dict__.copy()
+        del d['_shared_pkg_cache']
+        return d
+
+    def __setstate__(self, state):
+        self.__dict__ = state.copy()
+        self.__dict__['_shared_pkg_cache'] = WeakValCache()
+
 
 class _RegenOpHelper(object):
 

@@ -130,3 +130,12 @@ class factory(object):
         Must be overridden in derivatives.
         """
         raise NotImplementedError
+
+    def __getstate__(self):
+        d = self.__dict__.copy()
+        del d['_cached_instances']
+        return d
+
+    def __setstate__(self, state):
+        self.__dict__ = state.copy()
+        self.__dict__['_cached_instances'] = weakrefs.WeakValCache()

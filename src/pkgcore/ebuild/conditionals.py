@@ -24,8 +24,6 @@ class DepSet(boolean.AndRestriction):
     """Gentoo DepSet syntax parser"""
 
     __slots__ = ('element_class', '_node_conds', '_known_conditionals')
-    type = packages.package_type
-    negate = False
 
     _evaluate_collapse = True
 
@@ -43,6 +41,8 @@ class DepSet(boolean.AndRestriction):
         sf(self, 'element_class', element_class)
         sf(self, 'restrictions', restrictions)
         sf(self, '_node_conds', node_conds)
+        sf(self, 'type', packages.package_type)
+        sf(self, 'negate', False)
 
     @classmethod
     def parse(cls, dep_str, element_class,

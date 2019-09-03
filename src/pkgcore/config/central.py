@@ -257,6 +257,9 @@ class _ConfigObjMap(object):
         # trying to pull __getstate__ from _ConfigMapping due to __getattr__.
         return self.__dict__.copy()
 
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+
 
 class CompatConfigManager(object):
 

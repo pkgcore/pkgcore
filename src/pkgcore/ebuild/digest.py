@@ -9,7 +9,7 @@ import operator
 import os
 
 from snakeoil.chksum import get_handler
-from snakeoil.mappings import ImmutableDict, make_SlottedDict_kls
+from snakeoil.mappings import ImmutableDict
 from snakeoil.sequences import iflatten_instance
 
 from pkgcore import gpg
@@ -77,10 +77,8 @@ def parse_manifest(source, ignore_gpg=True):
         if f is not None and f.close:
             f.close()
 
-    # finally convert it to slotted dict for memory savings.
-    slotted_kls = make_SlottedDict_kls(x.lower() for x in chf_types)
     for t, d in types.items():
-        types[t] = ImmutableDict((k, slotted_kls(v)) for k, v in d.items())
+        types[t] = ImmutableDict((k, dict(v)) for k, v in d.items())
     # ordering annoyingly matters. bad api.
     return [types[x] for x in ("DIST", "AUX", "EBUILD", "MISC")]
 

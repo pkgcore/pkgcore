@@ -526,11 +526,10 @@ class _immutable_attr_dict(mappings.ImmutableDict):
 _KnownProfile = namedtuple('_KnownProfile', ['base', 'arch', 'path', 'status', 'deprecated'])
 
 
-class Profiles(object):
+class Profiles(klass.ImmutableInstance):
 
     __slots__ = ('profile_base', 'format', '_repo_id', '_profiles')
     __inst_caching__ = True
-    klass.inject_immutable_instance(locals())
 
     def __init__(self, profile_base, profile_format='pms', repo_id=None):
         object.__setattr__(self, 'profile_base', profile_base)
@@ -650,7 +649,7 @@ class OverlayedProfiles(Profiles):
         object.__setattr__(self, '_profiles_instances', tuple(l))
 
 
-class RepoConfig(syncable.tree, metaclass=WeakInstMeta):
+class RepoConfig(syncable.tree, klass.ImmutableInstance, metaclass=WeakInstMeta):
     """Configuration data for an ebuild repository."""
 
     layout_offset = "metadata/layout.conf"
@@ -660,7 +659,6 @@ class RepoConfig(syncable.tree, metaclass=WeakInstMeta):
     supported_profile_formats = ('pms', 'portage-1', 'portage-2', 'profile-set')
     supported_cache_formats = ('md5-dict', 'pms')
 
-    klass.inject_immutable_instance(locals())
     __inst_caching__ = True
 
     pkgcore_config_type = ConfigHint(

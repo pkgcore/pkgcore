@@ -1,5 +1,4 @@
-"""
-base package class; instances should derive from this.
+"""base package class; instances should derive from this.
 
 Right now, doesn't provide much, need to change that down the line
 """
@@ -14,7 +13,7 @@ from pkgcore.operations import format
 from pkgcore.package import errors
 
 
-class base(object, metaclass=klass.immutable_instance):
+class base(klass.SlotsPicklingMixin, metaclass=klass.immutable_instance):
 
     built = False
     configurable = False

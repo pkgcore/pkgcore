@@ -11,7 +11,7 @@ import operator
 
 from snakeoil import klass
 from snakeoil.chksum import get_handler
-from snakeoil.mappings import ProtectedDict, make_SlottedDict_kls
+from snakeoil.mappings import ProtectedDict
 
 from pkgcore.cache import errors
 from pkgcore.ebuild.const import metadata_keys
@@ -55,7 +55,7 @@ class base(object):
         self._chf_serializer = self._get_chf_serializer(self.chf_type)
         self._chf_deserializer = self._get_chf_deserializer(self.chf_type)
         self._known_keys |= frozenset([self._chf_key])
-        self._cdict_kls = make_SlottedDict_kls(self._known_keys)
+        self._cdict_kls = dict
         self.readonly = readonly
         self.set_sync_rate(self.default_sync_rate)
         self.updates = 0

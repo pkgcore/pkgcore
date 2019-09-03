@@ -413,9 +413,6 @@ def mk_cpv_cls(base_cls):
         def unversioned(cls, *args):
             return cls(versioned=False, *args)
 
-        def __reduce__(self):
-            return (self.__class__, (self.cpvstr,), None, None, None)
-
     return CPV
 
 native_CPV = mk_cpv_cls(_native_CPV)

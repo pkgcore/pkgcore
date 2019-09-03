@@ -110,9 +110,8 @@ class repo_operations(_repo_ops.operations):
                         k: v for k, v in fetchable.chksums.items() if k in chksum_set}
                     fetchables[filename] = fetchable
 
-            # Manifest file is current and not forcing a refresh
+            # Manifest files aren't necessary with thin manifests and no distfiles
             if manifest_config.thin and not pkgdir_fetchables:
-                # Manifest files aren't necessary with thin manifests and no distfiles
                 if os.path.exists(manifest.path):
                     try:
                         os.remove(manifest.path)
@@ -121,6 +120,10 @@ class repo_operations(_repo_ops.operations):
                             'failed removing old manifest: '
                             f'{key_query}::{self.repo.repo_id}: {e}')
                         ret.add(key_query)
+                continue
+
+            # Manifest file is current and not forcing a refresh
+            if manifest.distfiles.keys() == pkgdir_fetchables.keys():
                 continue
 
             pkg_ops = domain.pkg_operations(pkgs[0], observer=observer)

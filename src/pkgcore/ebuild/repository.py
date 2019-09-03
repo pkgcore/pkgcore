@@ -123,7 +123,7 @@ class repo_operations(_repo_ops.operations):
                 continue
 
             # Manifest file is current and not forcing a refresh
-            if manifest.distfiles.keys() == pkgdir_fetchables.keys():
+            if not force and manifest.distfiles.keys() == pkgdir_fetchables.keys():
                 continue
 
             pkg_ops = domain.pkg_operations(pkgs[0], observer=observer)

@@ -360,7 +360,7 @@ class PortageFormatter(CountingFormatter):
                 if downloads.difference(self.downloads):
                     self.downloads.update(downloads)
                     size = sum(
-                        v.size for dist, v in
+                        v['size'] for dist, v in
                         op.pkg.manifest.distfiles.items() if dist in downloads)
                     if size:
                         self.download_size += size

@@ -15,7 +15,7 @@ from pkgcore.restrictions import packages, restriction, values
 
 # TODO: change values.EqualityMatch so it supports le, lt, gt, ge, eq,
 # ne ops, and convert this to it.
-class VersionMatch(restriction.base, metaclass=generic_equality):
+class _VersionMatch(restriction.base, metaclass=generic_equality):
 
     """
     package restriction implementing gentoo ebuild version comparison rules
@@ -26,10 +26,9 @@ class VersionMatch(restriction.base, metaclass=generic_equality):
 
     __slots__ = ("ver", "rev", "vals", "droprev", "negate")
 
-    __inst_caching__ = True
     __attr_comparison__ = ('negate', 'rev', 'droprev', 'vals')
 
-    type = packages.package_type
+    type = restriction.value_type
     attr = "fullver"
 
     _convert_op2str = {
@@ -74,17 +73,16 @@ class VersionMatch(restriction.base, metaclass=generic_equality):
             sf(self, "droprev", False)
             sf(self, "vals", self._convert_str2op[operator])
 
-    def match(self, pkginst):
+    def match(self, pkg, *args, **kwargs):
         if self.droprev:
             r1, r2 = None, None
         else:
-            r1, r2 = self.rev, pkginst.revision
+            r1, r2 = self.rev, pkg.revision
 
-        if pkginst.version is None:
+        if pkg.version is None:
             return False
 
-        return (cpv.ver_cmp(pkginst.version, r2, self.ver, r1) in self.vals) \
-            != self.negate
+        return (cpv.ver_cmp(pkg.version, r2, self.ver, r1) in self.vals) != self.negate
 
     def __str__(self):
         s = self._convert_op2str[self.vals]
@@ -127,6 +125,19 @@ class VersionMatch(restriction.base, metaclass=generic_equality):
 
     def __hash__(self):
         return hash((self.droprev, self.ver, self.rev, self.negate, self.vals))
+
+
+class VersionMatch(packages.PackageRestriction):
+
+    __slots__ = ()
+    __inst_caching__ = True
+
+    def __init__(self, *args, **kwds):
+        v = _VersionMatch(*args, **kwds)
+        super().__init__('fullver', v, negate=kwds.get('negate', False))
+
+    def match(self, pkg, *args, **kwds):
+        return self.restriction.match(pkg)
 
 
 class SlotDep(packages.PackageRestriction):

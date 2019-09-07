@@ -8,7 +8,7 @@ from pkgcore.restrictions import packages, boolean, restriction
 
 
 def _is_package_instance(inst):
-    return (getattr(inst, "type", None) == packages.package_type and not
+    return (getattr(inst, "type", None) == restriction.package_type and not
             isinstance(inst, boolean.base))
 
 

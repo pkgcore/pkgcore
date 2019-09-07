@@ -31,8 +31,8 @@ class base(restriction.base, metaclass=generic_equality):
     def __init__(self, *restrictions, **kwds):
         """
         :keyword node_type: type of restriction this accepts
-            (:obj:`pkgcore.restrictions.packages.package_type` and
-            :obj:`pkgcore.restrictions.values.value_type` being
+            (:obj:`pkgcore.restrictions.restriction.package_type` and
+            :obj:`pkgcore.restrictions.restriction.value_type` being
             common types).  If set to C{None}, no instance limiting is done.
         :type restrictions: node_type (if that is specified)
         :param restrictions: initial restrictions to add

@@ -9,10 +9,6 @@ from pkgcore.restrictions import restriction, boolean
 from pkgcore.log import logger
 
 
-# Backwards compatibility.
-package_type = restriction.package_type
-
-
 class native_PackageRestriction(object, metaclass=generic_equality):
 
     __slots__ = ('_pull_attr_func', '_attr_split', 'restriction', 'ignore_missing', 'negate')
@@ -300,7 +296,7 @@ class KeyedAndRestriction(boolean.AndRestriction):
 
     __inst_caching__ = True
 
-    type = package_type
+    type = restriction.package_type
 
     def __init__(self, *a, **kwds):
         key = kwds.pop("key", None)

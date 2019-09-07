@@ -14,9 +14,6 @@ from snakeoil.sequences import iflatten_instance
 from pkgcore.restrictions import restriction, boolean, packages
 
 
-# Backwards compatibility.
-value_type = restriction.value_type
-
 try:
     from pkgcore.restrictions import _restrictions as extension
 except ImportError:

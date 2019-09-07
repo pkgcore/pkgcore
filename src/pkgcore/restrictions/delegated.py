@@ -6,7 +6,7 @@ restrictions on the fly
 
 __all__ = ("delegate",)
 
-from pkgcore.restrictions import packages, restriction
+from pkgcore.restrictions import restriction
 
 
 class delegate(restriction.base):
@@ -18,7 +18,7 @@ class delegate(restriction.base):
 
     __slots__ = ('_transform', 'negate')
 
-    type = packages.package_type
+    type = restriction.package_type
     inst_caching = False
 
     def __init__(self, transform_func, negate=False):

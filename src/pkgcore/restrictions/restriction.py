@@ -45,8 +45,8 @@ class AlwaysBool(base):
     def __init__(self, node_type=None, negate=False):
         """
         :param node_type: the restriction type the instance should be,
-            typically :obj:`pkgcore.restrictions.packages.package_type` or
-            :obj:`pkgcore.restrictions.values.value_type`
+            typically :obj:`pkgcore.restrictions.restriction.package_type` or
+            :obj:`pkgcore.restrictions.restriction.value_type`
         :param negate: boolean to return for the match
         """
         object.__setattr__(self, "negate", negate)

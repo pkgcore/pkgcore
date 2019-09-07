@@ -15,7 +15,7 @@ from snakeoil.klass import (
     reflective_hash, alias_attr)
 
 from pkgcore.ebuild import cpv, errors, restricts
-from pkgcore.restrictions import values, packages, boolean
+from pkgcore.restrictions import values, packages, boolean, restriction
 from pkgcore.restrictions.packages import Conditional, AndRestriction as PkgAndRestriction
 from pkgcore.restrictions.values import ContainmentMatch2
 
@@ -363,7 +363,7 @@ class atom(boolean.AndRestriction, metaclass=generic_equality):
         "category", "version", "revision", "fullver",
         "package", "key", "repo_id", "_hash")
 
-    type = packages.package_type
+    type = restriction.package_type
 
     negate = False
 

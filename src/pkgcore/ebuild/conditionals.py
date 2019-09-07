@@ -12,7 +12,7 @@ from snakeoil.sequences import iflatten_instance
 
 from pkgcore.ebuild.atom import atom, transitive_use_atom
 from pkgcore.ebuild.errors import DepsetParseError
-from pkgcore.restrictions import packages, values, boolean
+from pkgcore.restrictions import packages, values, boolean, restriction
 
 try:
     from pkgcore.ebuild._depset import parse_depset
@@ -41,7 +41,7 @@ class DepSet(boolean.AndRestriction):
         sf(self, 'element_class', element_class)
         sf(self, 'restrictions', restrictions)
         sf(self, '_node_conds', node_conds)
-        sf(self, 'type', packages.package_type)
+        sf(self, 'type', restriction.package_type)
         sf(self, 'negate', False)
 
     @classmethod

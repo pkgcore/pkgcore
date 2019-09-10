@@ -12,7 +12,7 @@ from pkgcore.ebuild.misc import collapsed_restrict_to_data
 from pkgcore.ebuild.repo_objs import RepoConfig
 from pkgcore.package.metadata import factory
 from pkgcore.repository.util import SimpleTree
-from pkgcore.restrictions.packages import AlwaysTrue
+from pkgcore.restrictions import packages
 
 default_arches = set(["x86", "ppc", "amd64", "ia64"])
 
@@ -50,11 +50,11 @@ class FakeProfile(object):
         self.name = name
 
         self.forced_data = collapsed_restrict_to_data(
-            [(AlwaysTrue, (self.arch,))],
+            [(packages.AlwaysTrue, (self.arch,))],
             self.forced_use.items())
 
         self.masked_data = collapsed_restrict_to_data(
-            [(AlwaysTrue, default_arches)],
+            [(packages.AlwaysTrue, default_arches)],
             self.masked_use.items())
 
     def make_virtuals_repo(self, repo):
@@ -77,6 +77,9 @@ class FakeRepo(object):
 
     def match(self, restrict, **kwargs):
         return list(self.itermatch(restrict, **kwargs))
+
+    def __iter__(self):
+        return self.itermatch(packages.AlwaysTrue)
 
     def __contains__(self, obj):
         """Determine if a path or a package is in a repo."""

@@ -3,6 +3,16 @@ Release Notes
 =============
 
 ---------------------------
+pkgcore 0.10.3 (2019-09-13)
+---------------------------
+
+- Various object pickling fixes for pkgcheck parallelization support.
+
+- pmaint digest: Fix skipping re-manifesting for manifests that are current.
+
+- ebuild.eapi: Split dep keys into their own attribute.
+
+---------------------------
 pkgcore 0.10.2 (2019-08-30)
 ---------------------------
 

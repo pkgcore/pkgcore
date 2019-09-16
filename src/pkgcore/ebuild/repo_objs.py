@@ -528,23 +528,23 @@ _KnownProfile = namedtuple('_KnownProfile', ['base', 'arch', 'path', 'status', '
 
 class Profiles(klass.ImmutableInstance):
 
-    __slots__ = ('profile_base', 'repo_config', 'format', '_profiles')
+    __slots__ = ('config', 'profiles_base', '_profiles')
     __inst_caching__ = True
 
-    def __init__(self, profile_base, repo_config, profile_format='pms'):
-        object.__setattr__(self, 'profile_base', profile_base)
-        object.__setattr__(self, 'repo_config', repo_config)
-        object.__setattr__(self, 'format', profile_format)
+    def __init__(self, repo_config, profiles_base=None):
+        object.__setattr__(self, 'config', repo_config)
+        profiles_base = profiles_base if profiles_base is not None else repo_config.profiles_base
+        object.__setattr__(self, 'profiles_base', profiles_base)
 
     @klass.jit_attr_none
     def profiles(self):
-        return self.parse(self.profile_base, self.repo_config.repo_id)
+        return self.parse(self.profiles_base, self.config.repo_id)
 
     @staticmethod
-    def parse(profile_base, repo_id, known_status=None, known_arch=None):
+    def parse(profiles_base, repo_id, known_status=None, known_arch=None):
         """Return the mapping of arches to profiles for a repo."""
         l = []
-        fp = pjoin(profile_base, 'profiles.desc')
+        fp = pjoin(profiles_base, 'profiles.desc')
         try:
             for lineno, line in iter_read_bash(fp, enum_line=True):
                 try:
@@ -567,8 +567,8 @@ class Profiles(klass.ImmutableInstance):
                 # into it.
                 path = '/'.join(filter(None, profile.split('/')))
                 deprecated = os.path.exists(
-                    os.path.join(profile_base, path, 'deprecated'))
-                l.append(_KnownProfile(profile_base, arch, path, status, deprecated))
+                    os.path.join(profiles_base, path, 'deprecated'))
+                l.append(_KnownProfile(profiles_base, arch, path, status, deprecated))
         except FileNotFoundError:
             logger.debug(
                 f"No profile descriptions found at {repo_id}::profiles/profiles.desc")
@@ -582,7 +582,7 @@ class Profiles(klass.ImmutableInstance):
 
     def __getitem__(self, path):
         if path[0] == '/':
-            path = path.lstrip(self.profile_base).lstrip(os.sep)
+            path = path.lstrip(self.profiles_base).lstrip(os.sep)
         for p in self.profiles:
             if p.path == path:
                 return p
@@ -590,7 +590,7 @@ class Profiles(klass.ImmutableInstance):
 
     def __contains__(self, path):
         if path[0] == '/':
-            path = path.lstrip(self.profile_base).lstrip(os.sep)
+            path = path.lstrip(self.profiles_base).lstrip(os.sep)
         for p in self.profiles:
             if p.path == path:
                 return True
@@ -614,7 +614,7 @@ class Profiles(klass.ImmutableInstance):
                 yield p
 
     def create_profile(self, node):
-        """Return profile object for a given path."""
+        """Return profile object for a given, parsed profile entry."""
         return profiles.OnDiskProfile(node.base, node.path)
 
 
@@ -880,7 +880,7 @@ class RepoConfig(syncable.tree, klass.ImmutableInstance, metaclass=WeakInstMeta)
 
     @klass.jit_attr
     def profiles(self):
-        return Profiles(self.profiles_base, self)
+        return Profiles(self)
 
     @klass.jit_attr
     def eapi(self):

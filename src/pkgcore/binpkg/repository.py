@@ -316,7 +316,7 @@ class tree(prototype.tree):
         return repo_ops
 
 
-class WrappedBinpkg(pkg_base.wrapper):
+class _WrappedBinpkg(pkg_base.wrapper):
     """Binary package with configuration data bound to it."""
 
     built = True
@@ -335,9 +335,9 @@ class ConfiguredTree(wrapper.tree):
     configured = True
 
     def __init__(self, repo, domain_settings):
-        WrappedBinpkg._operations = self._generate_operations
-        WrappedBinpkg.repo = self
-        wrapper.tree.__init__(self, repo, package_class=WrappedBinpkg)
+        _WrappedBinpkg._operations = self._generate_operations
+        _WrappedBinpkg.repo = self
+        wrapper.tree.__init__(self, repo, package_class=_WrappedBinpkg)
         self.domain_settings = domain_settings
 
     def _generate_operations(self, domain, pkg, **kwargs):

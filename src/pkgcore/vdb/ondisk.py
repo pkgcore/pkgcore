@@ -188,7 +188,7 @@ class tree(prototype.tree):
         return f"{self.repo_id}: location {self.location}"
 
 
-class WrappedInstalledPkg(pkg_base.wrapper):
+class _WrappedInstalledPkg(pkg_base.wrapper):
     """Installed package with configuration data bound to it."""
 
     built = True
@@ -208,9 +208,9 @@ class ConfiguredTree(wrapper.tree, tree):
     frozen_settable = False
 
     def __init__(self, vdb, domain, domain_settings):
-        WrappedInstalledPkg._operations = self._generate_operations
-        WrappedInstalledPkg.repo = self
-        wrapper.tree.__init__(self, vdb, package_class=WrappedInstalledPkg)
+        _WrappedInstalledPkg._operations = self._generate_operations
+        _WrappedInstalledPkg.repo = self
+        wrapper.tree.__init__(self, vdb, package_class=_WrappedInstalledPkg)
         self.domain = domain
         self.domain_settings = domain_settings
 

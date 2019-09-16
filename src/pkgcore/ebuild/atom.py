@@ -9,10 +9,8 @@ __all__ = ("atom", "transitive_use_atom")
 
 import string
 
+from snakeoil import klass
 from snakeoil.compatibility import cmp
-from snakeoil.klass import (
-    generic_equality, inject_richcmp_methods_from_cmp,
-    reflective_hash, alias_attr)
 
 from pkgcore.ebuild import cpv, errors, restricts
 from pkgcore.restrictions import values, packages, boolean, restriction
@@ -38,7 +36,7 @@ valid_slot_chars = frozenset(valid_slot_chars)
 valid_ops = frozenset(['<', '<=', '=', '~', '>=', '>'])
 
 
-class atom(boolean.AndRestriction, metaclass=generic_equality):
+class atom(boolean.AndRestriction, metaclass=klass.generic_equality):
 
     """Currently implements gentoo ebuild atom parsing.
 
@@ -48,9 +46,8 @@ class atom(boolean.AndRestriction, metaclass=generic_equality):
     # note we don't need _hash
     __slots__ = (
         "blocks", "blocks_strongly", "op", "cpvstr", "negate_vers",
-        "use", "slot_operator", "slot", "subslot",
-        "category", "version", "revision", "fullver",
-        "package", "key", "repo_id", "_hash")
+        "use", "slot_operator", "slot", "subslot", "repo_id", "_cpv", "_hash",
+    )
 
     type = restriction.package_type
 
@@ -62,7 +59,7 @@ class atom(boolean.AndRestriction, metaclass=generic_equality):
         "cpvstr", "op", "blocks", "negate_vers",
         "use", "slot", "subslot", "slot_operator", "repo_id")
 
-    inject_richcmp_methods_from_cmp(locals())
+    klass.inject_richcmp_methods_from_cmp(locals())
     # hack; combine these 2 metaclasses at some point...
     locals().pop("__eq__", None)
     locals().pop("__ne__", None)
@@ -264,15 +261,9 @@ class atom(boolean.AndRestriction, metaclass=generic_equality):
                 orig_atom,
                 "slot restriction must proceed use")
         try:
-            c = cpv.CPV(self.cpvstr, versioned=bool(self.op))
+            sf(self, "_cpv", cpv.CPV(self.cpvstr, versioned=bool(self.op)))
         except errors.InvalidCPV as e:
             raise errors.MalformedAtom(orig_atom) from e
-        sf(self, "key", c.key)
-        sf(self, "package", c.package)
-        sf(self, "category", c.category)
-        sf(self, "version", c.version)
-        sf(self, "fullver", c.fullver)
-        sf(self, "revision", c.revision)
 
         if self.op:
             if self.version is None:
@@ -288,11 +279,14 @@ class atom(boolean.AndRestriction, metaclass=generic_equality):
         sf(self, "_hash", hash(orig_atom))
         sf(self, "negate_vers", negate_vers)
 
+    __getattr__ = klass.GetAttrProxy("_cpv")
+    __dir__ = klass.DirProxy("_cpv")
+
     @property
     def blocks_temp_ignorable(self):
         return not self.blocks_strongly
 
-    weak_blocker = alias_attr("blocks_temp_ignorable")
+    weak_blocker = klass.alias_attr("blocks_temp_ignorable")
 
     def __repr__(self):
         if self.op == '=*':
@@ -398,7 +392,7 @@ class atom(boolean.AndRestriction, metaclass=generic_equality):
             s += f"[{use}]"
         return s
 
-    __hash__ = reflective_hash('_hash')
+    __hash__ = klass.reflective_hash('_hash')
 
     def __iter__(self):
         return iter(self.restrictions)

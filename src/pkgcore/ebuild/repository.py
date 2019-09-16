@@ -558,7 +558,8 @@ class UnconfiguredTree(prototype.tree):
                 yield pkg
 
     def itermatch(self, *args, **kwargs):
-        kwargs.setdefault('pkg_filter', partial(self._pkg_filter, 'raw_pkg_cls' in kwargs))
+        raw = 'raw_pkg_cls' in kwargs or not kwargs.get('versioned', True)
+        kwargs.setdefault('pkg_filter', partial(self._pkg_filter, raw))
         return super().itermatch(*args, **kwargs)
 
     def _get_ebuild_path(self, pkg):

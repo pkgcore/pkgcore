@@ -221,7 +221,7 @@ class tree:
     def match(self, atom, **kwds):
         return list(self.itermatch(atom, **kwds))
 
-    def itermatch(self, restrict, sorter=None, pkg_filter=None,
+    def itermatch(self, restrict, sorter=None, pkg_filter=None, versioned=True,
                   raw_pkg_cls=None, pkg_cls=None, force=None, yield_none=False):
         """Generator that yields packages match a restriction.
 
@@ -231,6 +231,7 @@ class tree:
         :param sorter: callable to do sorting during searching-
             if sorting the results, use this instead of sorting externally.
         :param pkg_filter: callable to do package filtering
+        :param versioned: boolean controlling returning versioned or unversioned pkgs
         :param raw_pkg_cls: custom package class to use for generating raw pkg instances
         :param pkg_cls: custom package class to override raw pkg instances with
         :param yield_none: if True then itermatch will yield None for every
@@ -252,7 +253,10 @@ class tree:
         if pkg_filter is None:
             pkg_filter = iter
         if raw_pkg_cls is None:
-            raw_pkg_cls = self.package_class
+            if versioned:
+                raw_pkg_cls = self.package_class
+            else:
+                raw_pkg_cls = lambda *args: args
 
         if isinstance(restrict, atom):
             candidates = [(restrict.category, restrict.package)]
@@ -267,11 +271,19 @@ class tree:
             match = restrict.force_False
         return self._internal_match(
             candidates, match, raw_pkg_cls=raw_pkg_cls, pkg_cls=pkg_cls,
-            yield_none=yield_none, sorter=sorter, pkg_filter=pkg_filter)
+            yield_none=yield_none, sorter=sorter, pkg_filter=pkg_filter,
+            versioned=versioned)
 
-    def _internal_gen_candidates(self, candidates, sorter, pkg_filter, raw_pkg_cls):
+    def _internal_gen_candidates(self, candidates, sorter, raw_pkg_cls, pkg_filter, versioned):
         for cp in sorter(candidates):
-            pkgs = (raw_pkg_cls(cp[0], cp[1], ver) for ver in self.versions.get(cp, ()))
+            if versioned:
+                pkgs = (raw_pkg_cls(cp[0], cp[1], ver) for ver in self.versions.get(cp, ()))
+            else:
+                if self.versions.get(cp, ()):
+                    pkgs = (raw_pkg_cls(cp[0], cp[1]),)
+                else:
+                    pkgs = ()
+                pkgs = iter(pkgs)
             yield from sorter(pkg_filter(pkgs))
 
     def _internal_match(self, candidates, match_func, pkg_cls, yield_none=False, **kwargs):

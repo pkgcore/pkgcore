@@ -114,7 +114,7 @@ class _Revision(UserString):
         return self.data >= other
 
 
-class _native_CPV(object):
+class _native_CPV:
     """base ebuild package class
 
     :ivar category: str category

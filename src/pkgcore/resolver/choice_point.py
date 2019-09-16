@@ -4,7 +4,7 @@ from snakeoil import klass
 from snakeoil.sequences import iter_stable_unique
 
 
-class choice_point(object):
+class choice_point:
 
     __slots__ = (
         "__weakref__", "atom", "matches", "matches_cur", "solution_filters",

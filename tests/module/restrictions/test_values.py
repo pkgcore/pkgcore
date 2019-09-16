@@ -32,12 +32,12 @@ class GetAttrTest(TestRestriction):
         succeeds = values.GetAttrRestriction('test', values.AlwaysTrue)
         fails = values.GetAttrRestriction('test', values.AlwaysFalse)
 
-        class Dummy(object):
+        class Dummy:
             test = True
 
         dummy = Dummy()
 
-        class FakePackage(object):
+        class FakePackage:
             """XXX this is vastly too minimal."""
             value = dummy
 

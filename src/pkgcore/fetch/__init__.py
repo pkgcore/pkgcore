@@ -100,7 +100,7 @@ class default_mirror(mirror):
     __slots__ = ()
 
 
-class uri_list(object):
+class uri_list:
 
     __slots__ = ("_uri_source", "filename", "__weakref__")
 

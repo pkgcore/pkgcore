@@ -12,7 +12,7 @@ from .util import fake_engine
 from ..fs.fs_util import fsFile, fsDir, fsSymlink
 
 
-class fake_pkg(object):
+class fake_pkg:
 
     def __init__(self, contents, label=None):
         self.label = label

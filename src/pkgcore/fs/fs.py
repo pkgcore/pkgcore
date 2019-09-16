@@ -50,7 +50,7 @@ def gen_doc_additions(init, slots):
         "\n".join(_fs_doc[k] for k in _fs_doc if k in slots)
 
 
-class fsBase(object):
+class fsBase:
 
     """base class, all extensions must derive from this class"""
     __slots__ = ("location", "mtime", "mode", "uid", "gid")

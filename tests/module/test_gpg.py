@@ -1,7 +1,7 @@
 from pkgcore import gpg
 
 
-class TestSkipSignatures(object):
+class TestSkipSignatures:
 
     def test_simple_skipping(self):
         for header in (

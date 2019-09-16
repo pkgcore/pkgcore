@@ -7,7 +7,7 @@ from snakeoil.process import CommandNotFound
 from pkgcore.sync import base, hg
 
 
-class TestHgSyncer(object):
+class TestHgSyncer:
 
     @pytest.fixture(autouse=True)
     def _setup(self, tmp_path):

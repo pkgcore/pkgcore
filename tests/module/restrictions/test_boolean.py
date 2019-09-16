@@ -15,7 +15,7 @@ class AlwaysForcableBool(boolean.base):
     match = force_False = force_True
 
 
-class base(object):
+class base:
 
     kls = None
 

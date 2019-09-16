@@ -291,7 +291,7 @@ def chuck_StoppingCommand(val, ebp, *args):
     raise FinishedProcessing(val)
 
 
-class EbuildProcessor(object):
+class EbuildProcessor:
     """Abstraction of a running ebd instance.
 
     Contains the env, functions, etc that ebuilds expect.

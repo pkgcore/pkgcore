@@ -18,7 +18,7 @@ class fake_trigger(triggers.base):
         self._called.append(args)
 
 
-class fake_engine(object):
+class fake_engine:
 
     def __init__(self, **kwargs):
         kwargs.setdefault('observer', None)
@@ -34,7 +34,7 @@ class fake_engine(object):
         self._triggers.append((hook_point, trigger, required_csets))
 
 
-class fake_reporter(object):
+class fake_reporter:
     def __init__(self, **kwargs):
         for k, v in kwargs.items():
             setattr(self, k, v)

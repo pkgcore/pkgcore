@@ -97,6 +97,6 @@ class TestRestriction(TestCase):
             negated=not negated, msg=msg)
 
 
-class malleable_obj(object):
+class malleable_obj:
     def __init__(self, **kwds):
         self.__dict__.update(kwds)

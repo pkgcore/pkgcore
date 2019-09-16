@@ -23,7 +23,7 @@ from pkgcore.restrictions import packages
 from pkgcore.sync import base as _sync_base
 
 
-class fake_lock(object):
+class fake_lock:
     def __init__(self):
         pass
 

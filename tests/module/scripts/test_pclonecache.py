@@ -5,7 +5,7 @@ from pkgcore.test.scripts.helpers import ArgParseMixin
 from snakeoil.test import TestCase
 
 
-class Cache(object):
+class Cache:
 
     pkgcore_config_type = ConfigHint(typename='cache')
 

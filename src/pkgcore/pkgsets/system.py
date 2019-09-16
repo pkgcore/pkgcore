@@ -7,7 +7,7 @@ __all__ = ("SystemSet",)
 from pkgcore.config.hint import ConfigHint
 
 
-class SystemSet(object):
+class SystemSet:
     """Set of packages defined by the selected profile."""
     pkgcore_config_type = ConfigHint({'profile': 'ref:profile'}, typename='pkgset')
 

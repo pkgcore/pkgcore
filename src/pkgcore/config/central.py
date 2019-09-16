@@ -97,7 +97,7 @@ class _ConfigStack(defaultdict):
         return list(results)
 
 
-class CollapsedConfig(object):
+class CollapsedConfig:
 
     """A collapsed config section.
 
@@ -238,7 +238,7 @@ class CollapsedConfig(object):
 
 _singleton = object()
 
-class _ConfigObjMap(object):
+class _ConfigObjMap:
 
     def __init__(self, manager):
         self._manager = manager
@@ -261,7 +261,7 @@ class _ConfigObjMap(object):
         self.__dict__.update(state)
 
 
-class CompatConfigManager(object):
+class CompatConfigManager:
 
     def __init__(self, manager):
         self._manager = manager
@@ -275,7 +275,7 @@ class CompatConfigManager(object):
     __dir__ = klass.DirProxy("_manager")
 
 
-class ConfigManager(object):
+class ConfigManager:
 
     """Combine config type definitions and configuration sections.
 

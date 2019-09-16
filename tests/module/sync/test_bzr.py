@@ -6,7 +6,7 @@ from snakeoil.process import CommandNotFound
 from pkgcore.sync import base, bzr
 
 
-class TestBzrSyncer(object):
+class TestBzrSyncer:
 
     @pytest.fixture(autouse=True)
     def _setup(self, tmp_path):

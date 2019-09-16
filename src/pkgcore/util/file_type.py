@@ -6,7 +6,7 @@ from snakeoil.klass import jit_attr
 from snakeoil.process.spawn import spawn_get_output
 
 
-class file_identifier(object):
+class file_identifier:
 
     def __init__(self, force_binary=False):
         if force_binary:

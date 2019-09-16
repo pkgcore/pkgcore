@@ -2,7 +2,7 @@ from pkgcore.pkgsets import installed
 from pkgcore.repository.util import SimpleTree
 
 
-class FakePkg(object):
+class FakePkg:
 
     package_is_real = True
     is_supported = True
@@ -21,7 +21,7 @@ class FakePkg(object):
         return f"{self.cat}/{self.pn}-{self.ver}"
 
 
-class TestInstalled(object):
+class TestInstalled:
 
     def test_iter(self):
         fake_vdb = SimpleTree(

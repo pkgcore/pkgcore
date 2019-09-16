@@ -12,7 +12,7 @@ existing_user = pwd.getpwall()[0].pw_name
 existing_uid = pwd.getpwnam(existing_user).pw_uid
 
 
-class TestSyncer(object):
+class TestSyncer:
 
     @pytest.fixture(autouse=True)
     def _setup(self, tmp_path):
@@ -63,7 +63,7 @@ class TestSyncer(object):
 
 
 @mock.patch('snakeoil.process.find_binary')
-class TestExternalSyncer(object):
+class TestExternalSyncer:
 
     @pytest.fixture(autouse=True)
     def _setup(self, tmp_path):
@@ -105,7 +105,7 @@ class TestExternalSyncer(object):
 
 @mock.patch('snakeoil.process.find_binary', return_value='git')
 @mock.patch('snakeoil.process.spawn.spawn')
-class TestVcsSyncer(object):
+class TestVcsSyncer:
 
     def test_basedir_perms_error(self, spawn, find_binary, tmp_path):
         syncer = git.git_syncer(str(tmp_path), 'git://blah.git')
@@ -142,7 +142,7 @@ class TestVcsSyncer(object):
         assert '-q' == spawn.call_args[0][0][-1]
 
 
-class TestGenericSyncer(object):
+class TestGenericSyncer:
 
     def test_init(self):
         with pytest.raises(base.UriError):
@@ -152,7 +152,7 @@ class TestGenericSyncer(object):
         assert tar.tar_syncer is syncer.__class__
 
 
-class TestDisabledSyncer(object):
+class TestDisabledSyncer:
 
     def test_init(self):
         syncer = base.DisabledSyncer('/foo/bar', f'https://blah.git')
@@ -162,7 +162,7 @@ class TestDisabledSyncer(object):
         assert not syncer.sync()
 
 
-class TestAutodetectSyncer(object):
+class TestAutodetectSyncer:
 
     def test_no_syncer_detected(self, tmp_path):
         syncer = base.AutodetectSyncer(str(tmp_path))

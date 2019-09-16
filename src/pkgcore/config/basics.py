@@ -28,7 +28,7 @@ type_names = ("list", "str", "bool", "int")
 CO_VARARGS, CO_VARKEYWORDS = 4, 8
 
 
-class ConfigType(object):
+class ConfigType:
     """A configurable type.
 
     :ivar name: string specifying the protocol the instantiated object
@@ -147,7 +147,7 @@ class ConfigType(object):
                     f'{self.callable}: {var!r} is in positionals but not in required')
 
 
-class LazySectionRef(object):
+class LazySectionRef:
     """Abstract base class for lazy-loaded section references."""
 
     def __init__(self, central, typename):
@@ -195,7 +195,7 @@ class LazyUnnamedSectionRef(LazySectionRef):
         return self.central.collapse_section([self.section])
 
 
-class ConfigSection(object):
+class ConfigSection:
     """Single Config section, returning typed values from a key.
 
     Not much of an object this, if we were using zope.interface it'd
@@ -586,7 +586,7 @@ def parse_config_file(path, parser):
         f.close()
 
 
-class ConfigSource(object):
+class ConfigSource:
 
     description = "No description available"
 

@@ -3,7 +3,7 @@ from pkgcore.restrictions.boolean import AndRestriction, OrRestriction
 from snakeoil.test import TestCase
 
 
-class fake_package(object):
+class fake_package:
 
     def __init__(self, **kwds):
         for k, v in (

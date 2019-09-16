@@ -199,7 +199,7 @@ def _sort_eclasses(config, repo_config):
 class ProvidesRepo(util.SimpleTree):
     """Fake, installed repo populated with entries from package.provided."""
 
-    class PkgProvidedParent(object):
+    class PkgProvidedParent:
 
         def __init__(self, **kwds):
             self.__dict__.update(kwds)
@@ -647,7 +647,7 @@ class UnconfiguredTree(prototype.tree):
         self.__dict__['_shared_pkg_cache'] = WeakValCache()
 
 
-class _RegenOpHelper(object):
+class _RegenOpHelper:
 
     def __init__(self, repo, force=False, eclass_caching=True):
         self.force = force

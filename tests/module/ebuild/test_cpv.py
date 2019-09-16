@@ -21,7 +21,7 @@ def generate_misc_sufs():
     return good_sufs, bad_sufs
 
 
-class Test_native_Cpv(object):
+class Test_native_Cpv:
 
     kls = staticmethod(cpv.native_CPV)
 

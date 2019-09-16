@@ -22,7 +22,7 @@ def drawer(content=None, contents=None):
 # This makes sure the types are not unnecessarily queried (since
 # querying object() will blow up).
 
-class RemoteSource(object):
+class RemoteSource:
 
     """Use this one for tests that do need the names but nothing more."""
 
@@ -153,7 +153,7 @@ class ConfigManagerTest(TestCase):
             manager.collapse_named_section('myrepo').instantiate)
 
     def test_not_callable(self):
-        class myrepo(object):
+        class myrepo:
             def __repr__(self):
                 return 'useless'
         manager = central.ConfigManager(

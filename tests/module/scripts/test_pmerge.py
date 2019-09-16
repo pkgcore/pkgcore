@@ -8,7 +8,7 @@ from pkgcore.test.misc import FakePkg, FakeRepo
 
 
 # TODO: make repo objs into configurable fixtures
-class TestTargetParsing(object):
+class TestTargetParsing:
 
     def test_base_targets(self):
         repo = SimpleTree({'spork': {'foon': ('1', '1.0.1', '2')}})

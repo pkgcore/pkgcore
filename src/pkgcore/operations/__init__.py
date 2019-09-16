@@ -31,7 +31,7 @@ class OperationError(PkgcoreException):
         return f"unhandled exception in {self._api}"
 
 
-class base(object):
+class base:
 
     __required__ = frozenset()
 

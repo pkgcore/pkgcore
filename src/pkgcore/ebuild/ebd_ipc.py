@@ -78,7 +78,7 @@ class IpcArgumentParser(arghparse.OptionalsParser, arghparse.CsvActionsParser,
         raise IpcCommandError(msg)
 
 
-class IpcCommand(object):
+class IpcCommand:
     """Commands sent from the bash side of the ebuild daemon to run."""
 
     # argument parser for internal options

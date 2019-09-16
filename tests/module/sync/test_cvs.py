@@ -6,7 +6,7 @@ from snakeoil.process import CommandNotFound
 from pkgcore.sync import base, cvs
 
 
-class TestCVSSyncer(object):
+class TestCVSSyncer:
 
     @pytest.fixture(autouse=True)
     def _setup(self, tmp_path):

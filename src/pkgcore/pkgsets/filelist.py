@@ -16,7 +16,7 @@ from pkgcore.log import logger
 from pkgcore.package.errors import InvalidDependency
 
 
-class FileList(object):
+class FileList:
     pkgcore_config_type = ConfigHint({'location': 'str'}, typename='pkgset')
     error_on_subsets = True
 

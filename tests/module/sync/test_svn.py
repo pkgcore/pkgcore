@@ -6,7 +6,7 @@ from snakeoil.process import CommandNotFound
 from pkgcore.sync import base, svn
 
 
-class TestSVNSyncer(object):
+class TestSVNSyncer:
 
     @pytest.fixture(autouse=True)
     def _setup(self, tmp_path):

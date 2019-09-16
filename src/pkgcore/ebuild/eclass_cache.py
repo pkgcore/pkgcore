@@ -17,7 +17,7 @@ from snakeoil.weakrefs import WeakValCache
 from pkgcore.config.hint import ConfigHint
 
 
-class base(object):
+class base:
     """
     Maintains the cache information about eclasses available to an ebuild.
     """

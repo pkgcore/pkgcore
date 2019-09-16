@@ -465,7 +465,7 @@ class EmptyRootNode(ProfileNode):
     pkg_provided = system = profile_set = ((), ())
 
 
-class ProfileStack(object):
+class ProfileStack:
 
     _node_kls = ProfileNode
 

@@ -9,7 +9,7 @@ from pkgcore.test.misc import FakePkg, FakeEbuildRepo
 from pkgcore.test.scripts.helpers import ArgParseMixin
 
 
-class FakeDomain(object):
+class FakeDomain:
 
     pkgcore_config_type = ConfigHint({'repos': 'refs:repo'}, typename='domain')
 

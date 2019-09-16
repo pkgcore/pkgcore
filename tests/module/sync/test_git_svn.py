@@ -8,7 +8,7 @@ from snakeoil.process import CommandNotFound
 from pkgcore.sync import base, git_svn
 
 
-class TestGitSVNSyncer(object):
+class TestGitSVNSyncer:
 
     @pytest.fixture(autouse=True)
     def _setup(self, tmp_path):

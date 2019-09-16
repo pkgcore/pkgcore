@@ -56,7 +56,7 @@ def make_repo_config(repo_data, livefs=False, frozen=False, repo_id=None):
     return basics.HardCodedConfigSection({'class':repo})
 
 
-class FakeDomain(object):
+class FakeDomain:
 
     pkgcore_config_type = ConfigHint({'repos': 'refs:repo',
                                       'binpkg': 'refs:repo',

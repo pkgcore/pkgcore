@@ -3,7 +3,7 @@ __all__ = ("tree",)
 from pkgcore.operations.repo import sync_operations
 
 
-class tree(object):
+class tree:
 
     operations_kls = sync_operations
 

@@ -30,7 +30,7 @@ def _convert(msg, args=(), kwds={}):
             f"observer interpolation error: {e}, msg={msg!r}, kwds={kwds!r}")
 
 
-class null_output(object):
+class null_output:
 
     def warn(self, msg, *args, **kwds):
         pass
@@ -100,7 +100,7 @@ class file_handle_output(formatter_output):
         self._out.write(_convert(msg, args, kwds))
 
 
-class phase_observer(object):
+class phase_observer:
 
     def __init__(self, output, debug=False):
         self._output = output

@@ -19,7 +19,7 @@ from pkgcore.exceptions import PkgcoreUserException
 from pkgcore.fetch import errors as fetch_errors
 
 
-class fetch_base(object):
+class fetch_base:
 
     def __init__(self, domain, pkg, fetchables, fetcher):
         self.verified_files = {}

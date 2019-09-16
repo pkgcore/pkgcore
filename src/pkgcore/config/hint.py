@@ -4,7 +4,7 @@
 __all__ = ('ConfigHint', 'configurable')
 
 
-class ConfigHint(object):
+class ConfigHint:
     """Hint for introspection supplying overrides."""
 
     # be aware this is used in clone

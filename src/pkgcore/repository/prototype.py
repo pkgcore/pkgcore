@@ -111,7 +111,7 @@ class VersionMapping(DictMixin):
             self._cache.pop(key, None)
 
 
-class tree(object):
+class tree:
     """Template for all repository variants.
 
     Args:

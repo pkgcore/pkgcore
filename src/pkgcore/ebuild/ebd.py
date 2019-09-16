@@ -41,7 +41,7 @@ from pkgcore.os_data import portage_gid, portage_uid, xargs
 from pkgcore.package.mutated import MutatedPkg
 
 
-class ebd(object):
+class ebd:
 
     def __init__(self, pkg, initial_env=None, env_data_source=None,
                  observer=None, clean=True, tmp_offset=None,
@@ -423,7 +423,7 @@ class ebd(object):
                 raise
 
 
-class setup_mixin(object):
+class setup_mixin:
 
     setup_is_for_src = True
 
@@ -886,7 +886,7 @@ class binpkg_localize(ebd, setup_mixin, format.build):
         return MutatedPkg(self.pkg, {"environment": self.get_env_source()})
 
 
-class ebuild_operations(object):
+class ebuild_operations:
 
     _checks = []
 

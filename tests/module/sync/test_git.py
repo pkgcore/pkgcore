@@ -7,7 +7,7 @@ from snakeoil.process import CommandNotFound
 from pkgcore.sync import base, git
 
 
-class TestGitSyncer(object):
+class TestGitSyncer:
 
     @pytest.fixture(autouse=True)
     def _setup(self, tmp_path):
@@ -51,7 +51,7 @@ class TestGitSyncer(object):
 
 
 @pytest.mark_network
-class TestGitSyncerReal(object):
+class TestGitSyncerReal:
 
     def test_sync(self, tmp_path):
         path = tmp_path / 'repo'

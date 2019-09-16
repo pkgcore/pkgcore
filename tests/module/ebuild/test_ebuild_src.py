@@ -16,7 +16,7 @@ from pkgcore.test import malleable_obj
 from .test_eclass_cache import FakeEclassCache
 
 
-class TestBase(object):
+class TestBase:
 
     kls = ebuild_src.base
 
@@ -476,7 +476,7 @@ class TestPackage(TestBase):
         assert o.manifest is m
 
 
-class TestPackageFactory(object):
+class TestPackageFactory:
 
     kls = ebuild_src.package_factory
 

@@ -19,7 +19,7 @@ def test_get_eapi():
     assert eapi6 == eapi
 
 
-class TestEAPI(object):
+class TestEAPI:
 
     def test_register(self):
         # re-register known EAPI

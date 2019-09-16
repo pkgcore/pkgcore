@@ -17,7 +17,7 @@ def fake_pkg(cat='dev-util', pkg='bsdiff', ver='1.0', **attrs):
     return malleable_obj(**d)
 
 
-class mixin(object):
+class mixin:
 
     def mk_inst(self):
         raise NotImplementedError(self, "mk_inst")

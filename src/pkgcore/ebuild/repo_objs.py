@@ -36,7 +36,7 @@ from pkgcore.repository import syncable, errors as repo_errors
 from pkgcore.restrictions import packages
 
 
-class Maintainer(object):
+class Maintainer:
     """Data on a single maintainer.
 
     At least one of email and name is not C{None}.
@@ -74,7 +74,7 @@ class Maintainer(object):
         return res
 
 
-class MetadataXml(object):
+class MetadataXml:
     """metadata.xml parsed results
 
     Attributes are set to -1 if unloaded, None if no entry, or the value
@@ -167,7 +167,7 @@ class LocalMetadataXml(MetadataXml):
             self._source = None
 
 
-class SharedPkgData(object):
+class SharedPkgData:
 
     __slots__ = ("__weakref__", "metadata_xml", "manifest")
 
@@ -210,7 +210,7 @@ class ProjectMember(object, metaclass=klass.generic_equality):
         return res
 
 
-class Subproject(object):
+class Subproject:
     """Data on a subproject.
 
     :type inherit_members: C{bool}
@@ -238,7 +238,7 @@ class Subproject(object):
     __dir__ = klass.DirProxy('project')
 
 
-class Project(object):
+class Project:
     """Data on a single project.
 
     :type email: C{unicode} object
@@ -312,7 +312,7 @@ class Project(object):
         return tuple(members.values())
 
 
-class ProjectsXml(object):
+class ProjectsXml:
     """projects.xml parsed results
 
     Attributes are set to -1 if unloaded, None if no entry, or the value

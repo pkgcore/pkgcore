@@ -6,7 +6,7 @@ from pkgcore.sync import base
 from pkgcore.sync.sqfs import sqfs_syncer
 
 
-class TestSqfsSyncer(object):
+class TestSqfsSyncer:
 
     def test_uri_parse(self):
         assert sqfs_syncer.parse_uri("sqfs+http://repo.lzo.sqfs") == "http://repo.lzo.sqfs"
@@ -24,7 +24,7 @@ class TestSqfsSyncer(object):
 
 
 @pytest.mark_network
-class TestSqfsSyncerReal(object):
+class TestSqfsSyncerReal:
 
     def test_sync(self, tmp_path):
         path = tmp_path / 'repo'

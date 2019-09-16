@@ -9,7 +9,7 @@ from pkgcore.package.mutated import MutatedPkg
 from pkgcore.restrictions import packages
 
 
-class nodeps_repo(object):
+class nodeps_repo:
     """Repository wrapper that returns wrapped pkgs with deps wiped."""
 
     default_bdepend = default_depend = default_rdepend = default_pdepend = DepSet()
@@ -39,7 +39,7 @@ class nodeps_repo(object):
         return self.itermatch(packages.AlwaysTrue)
 
 
-class restrict_repo(object):
+class restrict_repo:
     """Repository wrapper that skips packages matching a given restriction."""
 
     def __init__(self, restrict, repo):
@@ -65,7 +65,7 @@ class restrict_repo(object):
         return self.itermatch(packages.AlwaysTrue)
 
 
-class caching_repo(object):
+class caching_repo:
     """Repository wrapper that overrides match, returning :obj:`caching_iter` instances.
 
     Itermatch is slaved to match, in other words iterating over the
@@ -116,7 +116,7 @@ class caching_repo(object):
         self.__cache__.clear()
 
 
-class multiplex_sorting_repo(object):
+class multiplex_sorting_repo:
 
     def __init__(self, sorter, repos):
         self.__repos__ = tuple(repos)

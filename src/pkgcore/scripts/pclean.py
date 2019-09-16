@@ -552,7 +552,7 @@ def _remove(options, out, err):
     return ret
 
 
-class Filters(object):
+class Filters:
     """Generic filtering support."""
 
     def __init__(self):

@@ -51,7 +51,7 @@ class MissingBinary(SyncError):
         super().__init__(f"{msg}: {binary!r}")
 
 
-class Syncer(object):
+class Syncer:
 
     forcable = False
 

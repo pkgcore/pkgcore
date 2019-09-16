@@ -44,7 +44,7 @@ def alltypes(alist=(), astr='astr', abool=True, aref=object(), anint=3,
     """Function taking lots of kinds of args."""
 
 
-class NewStyleStrClass(object):
+class NewStyleStrClass:
 
     def __init__(self, one, two='two'):
         """Newstyle testclass."""
@@ -53,7 +53,7 @@ class NewStyleStrClass(object):
         """Newstyle memberfunc."""
 
 
-class NewStyleClass(object):
+class NewStyleClass:
 
     def __init__(self, one, two=object()):
         """Newstyle testclass."""
@@ -142,7 +142,7 @@ class ConfigTypeFromClassTest(TestCase):
         self.assertEqual('interesting', basics.ConfigType(Class).doc)
 
     def test_object_init(self):
-        class kls(object):
+        class kls:
             pass
         conf = basics.ConfigType(kls)
         self.assertEqual(conf.types, {})
@@ -380,7 +380,7 @@ class ConvertStringTest(TestCase):
             """Noop."""
         target_config = central.CollapsedConfig(
             basics.ConfigType(spoon), {}, None)
-        class TestCentral(object):
+        class TestCentral:
             def collapse_named_section(self, section):
                 try:
                     return {'target': target_config}[section]
@@ -402,7 +402,7 @@ class ConvertStringTest(TestCase):
             basics.ConfigType(spoon), {}, None)
         config2 = central.CollapsedConfig(
             basics.ConfigType(spoon), {}, None)
-        class TestCentral(object):
+        class TestCentral:
             def collapse_named_section(self, section):
                 try:
                     return {'1': config1, '2': config2}[section]
@@ -473,7 +473,7 @@ class AliasTest(TestCase):
         def spoon():
             """Noop."""
         foon = central.CollapsedConfig(basics.ConfigType(spoon), {}, None)
-        class MockManager(object):
+        class MockManager:
             def collapse_named_section(self, name):
                 if name == 'foon':
                     return foon

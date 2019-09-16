@@ -37,7 +37,7 @@ class FakePkgBase(package):
         object.__setattr__(self, "data", data)
 
 
-class FakeProfile(object):
+class FakeProfile:
 
     def __init__(self, masked_use={}, forced_use={},
                  provides={}, masks=[], virtuals={}, arch='x86', name='none'):
@@ -61,7 +61,7 @@ class FakeProfile(object):
         return self.virtuals
 
 
-class FakeRepo(object):
+class FakeRepo:
 
     def __init__(self, pkgs=(), repo_id='', location='', masks=(), **kwds):
         self.pkgs = pkgs
@@ -123,7 +123,7 @@ class FakePkg(FakePkgBase):
             object.__setattr__(self, "iuse", set(iuse))
 
 
-class DisablePlugins(object):
+class DisablePlugins:
 
     default_state = {}
     wipe_plugin_state = True

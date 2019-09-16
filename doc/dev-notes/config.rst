@@ -71,7 +71,7 @@ To make a class available, do this::
 
  from pkgcore.config import ConfigHint, errors
 
- class MyRepo(object):
+ class MyRepo:
 
      pkgcore_config_type = ConfigHint({'cache': 'section_ref'},
                                       typename='repo')

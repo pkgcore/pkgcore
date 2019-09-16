@@ -9,7 +9,7 @@ from snakeoil.containers import RefCountingSet
 from pkgcore.resolver.pigeonholes import PigeonHoledSlots
 
 
-class plan_state(object):
+class plan_state:
 
     def __init__(self):
         self.state = PigeonHoledSlots()
@@ -81,7 +81,7 @@ class plan_state(object):
         return len(self.plan)
 
 
-class ops_sequence(object):
+class ops_sequence:
 
     def __init__(self, sequence, is_livefs=True):
         self._ops = tuple(sequence)
@@ -100,7 +100,7 @@ class ops_sequence(object):
         return bool(self._ops)
 
 
-class base_op_state(object):
+class base_op_state:
 
     __slots__ = ("pkg", "force", "choices")
     internal = False
@@ -261,7 +261,7 @@ class replace_op(base_op_state):
             self.choices, self.old_pkg, self.pkg, self.force, id(self))
 
 
-class blocker_base_op(object):
+class blocker_base_op:
 
     __slots__ = ("choices", "blocker", "key")
     desc = None

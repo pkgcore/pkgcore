@@ -8,7 +8,7 @@ from pkgcore.restrictions import packages, values, boolean, restriction
 from pkgcore.util import parserestrict
 
 
-class TestMatch(object):
+class TestMatch:
 
     def test_comma_separated_containment(self):
         parser = parserestrict.comma_separated_containment('utensil')
@@ -22,7 +22,7 @@ class TestMatch(object):
         assert not valrestrict.match(('foo',))
 
 
-class TestExtendedRestrictionGeneration(object):
+class TestExtendedRestrictionGeneration:
 
     def verify_text_glob(self, restrict, token):
         assert isinstance(restrict, values.StrRegex), token
@@ -187,7 +187,7 @@ class TestExtendedRestrictionGeneration(object):
                 parserestrict.parse_match(token)
 
 
-class TestParsePV(object):
+class TestParsePV:
 
     def setup_method(self, method):
         self.repo = util.SimpleTree({

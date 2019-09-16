@@ -35,7 +35,7 @@ class MalformedXpak(PkgcoreException):
         self.msg = msg
 
 
-class Xpak(object):
+class Xpak:
     __slots__ = ("_source", "_source_is_path", "xpak_start", "_keys_dict")
 
     _reading_key_rewrites = {'repo': 'REPO'}

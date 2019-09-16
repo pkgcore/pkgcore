@@ -17,7 +17,7 @@ from pkgcore.cache import errors
 from pkgcore.ebuild.const import metadata_keys
 
 
-class base(object):
+class base:
     # this is for metadata/cache transfer.
     # basically flags the cache needs be updated when transfered cache to cache.
     # leave this.

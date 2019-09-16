@@ -93,7 +93,7 @@ def _stream_and_getvalue():
     return f, getvalue
 
 
-class TestMain(object):
+class TestMain:
 
     def assertMain(self, status, outtext, errtext, subcmds, *args, **kwargs):
         out, out_getvalue = _stream_and_getvalue()

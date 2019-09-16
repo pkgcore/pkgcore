@@ -6,7 +6,7 @@ from snakeoil.process import CommandNotFound
 from pkgcore.sync import base, darcs
 
 
-class TestDarcsSyncer(object):
+class TestDarcsSyncer:
 
     @pytest.fixture(autouse=True)
     def _setup(self, tmp_path):

@@ -20,7 +20,7 @@ chksums = LazyValDict(frozenset(handlers.keys()), _callback)
 # get a non size based chksum
 known_chksum = [x for x in handlers.keys() if x != "size"][0]
 
-class TestFetcher(object):
+class TestFetcher:
 
     @pytest.fixture(autouse=True)
     def _setup(self, tmpdir):

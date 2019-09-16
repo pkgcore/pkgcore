@@ -19,7 +19,7 @@ from pkgcore.config.hint import ConfigHint
 from pkgcore.log import logger
 
 
-class use_expand_filter(object):
+class use_expand_filter:
 
     def __init__(self, use_expand, use_expand_hidden):
         """
@@ -81,7 +81,7 @@ class use_expand_filter(object):
         return frozenset(usel), ue_dict
 
 
-class Formatter(object):
+class Formatter:
     """Base Formatter class: All formatters should be subclasses of this."""
 
     pkgcore_config_type = ConfigHint(typename='pmerge_formatter', raw_class=True)

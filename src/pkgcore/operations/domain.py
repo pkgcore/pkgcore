@@ -17,7 +17,7 @@ from pkgcore.merge.engine import MergeEngine
 from pkgcore.package.mutated import MutatedPkg
 
 
-class fake_lock(object):
+class fake_lock:
 
     def __init__(self):
         pass

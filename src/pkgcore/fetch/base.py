@@ -11,7 +11,7 @@ from snakeoil.chksum import get_handlers, get_chksums, MissingChksumHandler
 from pkgcore.fetch import errors
 
 
-class fetcher(object):
+class fetcher:
 
     def _verify(self, file_location, target, all_chksums=True, handlers=None):
         """Internal function for derivatives.

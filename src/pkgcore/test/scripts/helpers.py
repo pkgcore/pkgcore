@@ -8,7 +8,7 @@ from pkgcore.config import central, basics
 from pkgcore.config.hint import ConfigHint
 
 
-class fake_domain(object):
+class fake_domain:
     pkgcore_config_type = ConfigHint(typename='domain')
 
     def __init__(self):

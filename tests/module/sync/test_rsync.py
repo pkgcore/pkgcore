@@ -19,7 +19,7 @@ def fake_ips(num):
 
 @mock.patch('socket.getaddrinfo', return_value=fake_ips(3))
 @mock.patch('snakeoil.process.spawn.spawn')
-class TestRsyncSyncer(object):
+class TestRsyncSyncer:
 
     _syncer_class = rsync.rsync_syncer
 
@@ -97,7 +97,7 @@ class TestRsyncTimestampSyncer(TestRsyncSyncer):
 
 
 @pytest.mark_network
-class TestRsyncSyncerReal(object):
+class TestRsyncSyncerReal:
 
     def test_sync(self, tmp_path):
         # perform a tarball sync for initial week-old base

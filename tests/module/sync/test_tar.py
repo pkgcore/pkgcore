@@ -6,7 +6,7 @@ from pkgcore.sync import base
 from pkgcore.sync.tar import tar_syncer
 
 
-class TestTarSyncer(object):
+class TestTarSyncer:
 
     def test_uri_parse(self):
         assert tar_syncer.parse_uri("tar+http://repo.tar.gz") == "http://repo.tar.gz"
@@ -27,7 +27,7 @@ class TestTarSyncer(object):
 
 
 @pytest.mark_network
-class TestTarSyncerReal(object):
+class TestTarSyncerReal:
 
     def test_sync(self, tmp_path):
         path = tmp_path / 'repo'

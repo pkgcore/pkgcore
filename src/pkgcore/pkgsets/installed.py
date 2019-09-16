@@ -6,7 +6,7 @@ from pkgcore.config.hint import ConfigHint
 from pkgcore.restrictions import packages, values
 
 
-class _Base(object):
+class _Base:
     """Base for Installed and VersionedInstalled."""
 
     def __init__(self, vdb):

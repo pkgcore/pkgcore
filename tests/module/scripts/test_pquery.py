@@ -7,7 +7,7 @@ from pkgcore.test.scripts.helpers import ArgParseMixin
 from snakeoil.test import TestCase
 
 
-class FakeDomain(object):
+class FakeDomain:
 
     pkgcore_config_type = ConfigHint({'repos': 'refs:repo',
                                       'vdb': 'refs:repo'},

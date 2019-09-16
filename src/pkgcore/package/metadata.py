@@ -89,7 +89,7 @@ def DeriveMetadataKls(original_kls):
 
 package = DeriveMetadataKls(cpv.versioned_CPV_cls)
 
-class factory(object):
+class factory:
     """package generator
 
     does weakref caching per repository

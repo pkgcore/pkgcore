@@ -10,7 +10,7 @@ from pkgcore.ebuild import repo_objs, atom
 from pkgcore.repository import errors as repo_errors
 
 
-class TestMetadataXml(object):
+class TestMetadataXml:
 
     @staticmethod
     def get_metadata_xml(maintainers=(), comments=(), local_use={},
@@ -120,7 +120,7 @@ Blake-light tragedy among the scholars of war.
         assert " ".join(s.split()) == self.get_metadata_xml(longdescription=s).longdescription
 
 
-class TestProjectsXml(object):
+class TestProjectsXml:
 
     @staticmethod
     def get_projects_xml(s=None):
@@ -405,7 +405,7 @@ class TestProjectsXml(object):
         assert not p.recursive_members[5].is_lead
 
 
-class TestRepoConfig(object):
+class TestRepoConfig:
 
     @pytest.fixture(autouse=True)
     def _setup(self, tmpdir):

@@ -83,7 +83,7 @@ def parse_manifest(source, ignore_gpg=True):
     return [types[x] for x in ("DIST", "AUX", "EBUILD", "MISC")]
 
 
-class Manifest(object):
+class Manifest:
 
     def __init__(self, path, enforce_gpg=False, thin=False, allow_missing=False):
         self.path = path

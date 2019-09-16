@@ -25,7 +25,7 @@ class FakeEbuildSrc(FakePkg):
         return f"config wrapped(use): ebuild src: {self.cpvstr}"
 
 
-class FakeOp(object):
+class FakeOp:
     def __init__(self, package, oldpackage=None, desc='add'):
         self.pkg = package
         if oldpackage:
@@ -34,7 +34,7 @@ class FakeOp(object):
         else:
             self.desc = desc
 
-class BaseFormatterTest(object):
+class BaseFormatterTest:
     prefix = ()
     suffix = ('\n',)
     def setUp(self):

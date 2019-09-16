@@ -9,7 +9,7 @@ from snakeoil.test.mixins import tempdir_decorator
 from pkgcore.fs import fs
 
 
-class base(object):
+class base:
 
     kls = None
 

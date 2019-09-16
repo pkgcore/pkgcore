@@ -199,7 +199,7 @@ def scan(*a, **kw):
     mutable = kw.pop("mutable", True)
     return contentsSet(iter_scan(*a, **kw), mutable=mutable)
 
-class _realpath_dir(object):
+class _realpath_dir:
 
     _realpath_func = staticmethod(os.path.realpath)
 

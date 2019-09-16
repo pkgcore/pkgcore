@@ -464,7 +464,7 @@ END-INFO-DIR-ENTRY
         self.assertFalse(self.run_trigger('post_unmerge', [self.dir]))
 
 
-class single_attr_change_base(object):
+class single_attr_change_base:
 
     kls = triggers.fix_uid_perms
     attr = None

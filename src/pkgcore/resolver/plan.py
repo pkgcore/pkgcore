@@ -114,7 +114,7 @@ class MutableContainmentRestriction(values.base):
         sf(self, 'match', self._blacklist.__contains__)
 
 
-class resolver_frame(object):
+class resolver_frame:
 
     __slots__ = ("parent", "atom", "choices", "mode", "start_point", "dbs",
         "depth", "drop_cycles", "__weakref__", "ignored", "vdb_limited",
@@ -245,7 +245,7 @@ class resolver_stack(deque):
         return -1
 
 
-class merge_plan(object):
+class merge_plan:
 
     vdb_restrict = packages.PackageRestriction("repo.livefs", values.EqualityMatch(True))
 

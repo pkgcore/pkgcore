@@ -28,7 +28,7 @@ generic_data = \
     ),
 )
 
-class GenericCacheMixin(object):
+class GenericCacheMixin:
 
     cache_keys = ("DEPENDS", "RDEPEND", "EAPI", "HOMEPAGE", "KEYWORDS",
         "LICENSE", "PDEPEND", "RESTRICT", "SLOT", "SRC_URI",

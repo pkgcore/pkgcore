@@ -46,7 +46,7 @@ def map_new_cset_livefs(engine, csets, cset_name='new_cset'):
     return ret
 
 
-class MergeEngine(object):
+class MergeEngine:
 
     install_hooks = {x: [] for x in
         ("sanity_check", "pre_merge", "merge", "post_merge", "final")}

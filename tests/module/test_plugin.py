@@ -11,11 +11,11 @@ from snakeoil.osutils import pjoin
 from snakeoil.sequences import stable_unique
 
 
-class LowPlug(object):
+class LowPlug:
     priority = 1
 
 
-class TestModules(object):
+class TestModules:
 
     def setup_method(self, method):
         self.dir = tempfile.mkdtemp()
@@ -42,13 +42,13 @@ extend_path(__path__, __name__)
         filename = pjoin(self.packdir, 'plug.py')
         with open(filename, 'w') as plug:
             plug.write('''
-class DisabledPlug(object):
+class DisabledPlug:
     disabled = True
 
-class HighPlug(object):
+class HighPlug:
     priority = 7
 
-class LowPlug(object):
+class LowPlug:
     priority = 1
 
 low_plug = LowPlug()
@@ -73,7 +73,7 @@ pkgcore_plugins = {
 # This file is later on sys.path than the plug.py in packdir, so it should
 # not have any effect on the tests.
 
-class HiddenPlug(object):
+class HiddenPlug:
     priority = 8
 
 pkgcore_plugins = {'plugtest': [HiddenPlug]}
@@ -203,7 +203,7 @@ pkgcore_plugins = {'plugtest': [HiddenPlug]}
         plug3 = open(pjoin(self.packdir, 'plug3.py'), 'w')
         try:
             plug3.write('''
-class LowPlug(object):
+class LowPlug:
     priority = 6
 
 pkgcore_plugins = {
@@ -216,7 +216,7 @@ pkgcore_plugins = {
         try:
             plug4.write('''
 # First file tried, only a disabled plugin.
-class HighDisabledPlug(object):
+class HighDisabledPlug:
     priority = 15
     disabled = True
 
@@ -230,11 +230,11 @@ pkgcore_plugins = {
         try:
             plug5.write('''
 # Second file tried, with a skipped low priority plugin.
-class HighDisabledPlug(object):
+class HighDisabledPlug:
     priority = 12
     disabled = True
 
-class LowPlug(object):
+class LowPlug:
     priority = 6
 
 pkgcore_plugins = {
@@ -247,7 +247,7 @@ pkgcore_plugins = {
         try:
             plug6.write('''
 # Not tried, bogus priority.
-class BogusPlug(object):
+class BogusPlug:
     priority = 'spoon'
 
 pkgcore_plugins = {

@@ -49,7 +49,7 @@ UNINSTALLING_MODES = (const.REPLACE_MODE, const.UNINSTALL_MODE)
 INSTALLING_MODES = (const.REPLACE_MODE, const.INSTALL_MODE)
 
 
-class base(object):
+class base:
 
     """base trigger class
 
@@ -184,7 +184,7 @@ class ThreadedTrigger(base):
         pass
 
 
-class mtime_watcher(object):
+class mtime_watcher:
     """
     passed a list of locations, return a :obj:`contents.contentsSet` containing
     those that are directories.

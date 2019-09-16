@@ -9,7 +9,7 @@ from snakeoil.test.mixins import TempDirMixin
 from pkgcore.fs import ops, fs, livefs, contents
 
 
-class VerifyMixin(object):
+class VerifyMixin:
 
     def verify(self, obj, kwds, stat):
         for attr, keyword in (("st_mtime", "mtime"),

@@ -64,7 +64,7 @@ invalidate the cache). Instead you should do something like this::
  try:
      from spork_package import ThePlugin
  except ImportError:
-     class ThePlugin(object):
+     class ThePlugin:
          disabled = True
 
  pkgcore_plugins = {'myplug': [ThePlugin]}

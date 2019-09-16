@@ -606,7 +606,7 @@ class FixImageSymlinks(triggers.base):
             for x in l)
 
 
-class GenerateTriggers(object):
+class GenerateTriggers:
 
     def __init__(self, domain, settings):
         self.domain = domain

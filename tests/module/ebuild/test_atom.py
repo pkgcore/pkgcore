@@ -2,7 +2,6 @@ from functools import partial
 from pickle import dumps, loads
 
 from snakeoil.compatibility import cmp
-from snakeoil.test import mk_cpy_loadable_testcase
 
 from pkgcore import test
 from pkgcore.ebuild import atom, errors, restricts
@@ -11,10 +10,9 @@ from pkgcore.restrictions.boolean import AndRestriction
 from pkgcore.test.misc import FakePkg, FakeRepo
 
 
-class Test_native_atom(test.TestRestriction):
+class Test_atom(test.TestRestriction):
 
     class kls(atom.atom):
-        locals().update(atom.native_atom_overrides.items())
         __inst_caching__ = True
         __slots__ = ()
 
@@ -551,13 +549,3 @@ class Test_native_atom(test.TestRestriction):
         self.assertFalse(self.kls("=dev-util/diffball-1").is_simple)
         self.assertFalse(self.kls("dev-util/diffball[x]").is_simple)
         self.assertFalse(self.kls("dev-util/diffball[x?]").is_simple)
-
-
-class Test_cpy_atom(Test_native_atom):
-
-    kls = staticmethod(atom.atom)
-    if atom.atom_overrides is atom.native_atom_overrides:
-        skip = "extension isn't available"
-
-test_cpy_used = mk_cpy_loadable_testcase('pkgcore.ebuild._atom',
-    "pkgcore.ebuild.atom", "atom_overrides", "overrides")

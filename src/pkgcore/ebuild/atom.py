@@ -19,7 +19,6 @@ from pkgcore.restrictions import values, packages, boolean, restriction
 from pkgcore.restrictions.packages import Conditional, AndRestriction as PkgAndRestriction
 from pkgcore.restrictions.values import ContainmentMatch2
 
-
 # namespace compatibility...
 MalformedAtom = errors.MalformedAtom
 
@@ -37,316 +36,6 @@ valid_use_chars = frozenset(valid_use_chars)
 valid_repo_chars = frozenset(valid_repo_chars)
 valid_slot_chars = frozenset(valid_slot_chars)
 valid_ops = frozenset(['<', '<=', '=', '~', '>=', '>'])
-
-
-def native_init(self, atom, negate_vers=False, eapi='-1'):
-    """
-    :param atom: string, see gentoo ebuild atom syntax
-    :keyword negate_vers: boolean controlling whether the version should be
-        inverted for restriction matching
-    :keyword eapi: string/int controlling what eapi to enforce for this atom
-    """
-    sf = object.__setattr__
-
-    orig_atom = atom
-
-    override_kls = False
-    use_start = atom.find("[")
-    slot_start = atom.find(":")
-    if use_start != -1:
-        # use dep
-        use_end = atom.find("]", use_start)
-        if use_end == -1:
-            raise errors.MalformedAtom(
-                orig_atom, "use restriction isn't completed")
-        elif use_end != len(atom) - 1:
-            raise errors.MalformedAtom(
-                orig_atom, "trailing garbage after use dep")
-        sf(self, "use", tuple(sorted(atom[use_start + 1:use_end].split(','))))
-        for x in self.use:
-            # stripped purely for validation reasons
-            try:
-                if x[-1] in "=?":
-                    override_kls = True
-                    x = x[:-1]
-                    if x[0] == '!':
-                        x = x[1:]
-                    if x[0] == '-':
-                        raise errors.MalformedAtom(
-                            orig_atom, f"malformed use flag: {x}")
-                elif x[0] == '-':
-                    x = x[1:]
-
-                if x[-1] == ')' and eapi not in ('0', '1', '2', '3'):
-                    # use defaults.
-                    if x[-3:] in ("(+)", "(-)"):
-                        x = x[:-3]
-
-                if not x:
-                    raise errors.MalformedAtom(
-                        orig_atom, 'empty use dep detected')
-                elif x[0] not in alphanum:
-                    raise errors.MalformedAtom(
-                        orig_atom,
-                        f"invalid first char spotted in use dep '{x}' (must be alphanumeric)")
-                if not valid_use_chars.issuperset(x):
-                    raise errors.MalformedAtom(
-                        orig_atom, f"invalid char spotted in use dep '{x}'")
-            except IndexError:
-                raise errors.MalformedAtom(
-                    orig_atom, 'empty use dep detected')
-        if override_kls:
-            sf(self, '__class__', self._transitive_use_atom)
-        atom = atom[0:use_start]+atom[use_end + 1:]
-    else:
-        sf(self, "use", None)
-    if slot_start != -1:
-        i2 = atom.find("::", slot_start)
-        if i2 != -1:
-            repo_id = atom[i2 + 2:]
-            if not repo_id:
-                raise errors.MalformedAtom(
-                    orig_atom, "repo_id must not be empty")
-            elif repo_id[0] in '-':
-                raise errors.MalformedAtom(
-                    orig_atom,
-                    f"invalid first char of repo_id '{repo_id}' (must not begin with a hyphen)")
-            elif not valid_repo_chars.issuperset(repo_id):
-                raise errors.MalformedAtom(
-                    orig_atom,
-                    f"repo_id may contain only [a-Z0-9_-/], found {repo_id!r}")
-            atom = atom[:i2]
-            sf(self, "repo_id", repo_id)
-        else:
-            sf(self, "repo_id", None)
-        # slot dep.
-        slot = atom[slot_start+1:]
-        slot_operator = subslot = None
-        if not slot:
-            # if the slot char came in only due to repo_id, force slots to None
-            if i2 == -1:
-                raise errors.MalformedAtom(
-                    orig_atom, "Empty slot targets aren't allowed")
-            slot = None
-        else:
-            slots = (slot,)
-            if eapi not in ('0', '1', '2', '3', '4'):
-                if slot[0:1] in ("*", "="):
-                    if len(slot) > 1:
-                        raise errors.MalformedAtom(
-                            orig_atom,
-                            "Slot operators '*' and '=' do not take slot targets")
-                    slot_operator = slot
-                    slot, slots = None, ()
-                else:
-                    if slot.endswith('='):
-                        slot_operator = '='
-                        slot = slot[:-1]
-                    slots = slot.split('/', 1)
-            elif eapi == '0':
-                raise errors.MalformedAtom(
-                    orig_atom,
-                    "slot dependencies aren't allowed in EAPI 0")
-
-            for chunk in slots:
-                if not chunk:
-                    raise errors.MalformedAtom(
-                        orig_atom,
-                        "Empty slot targets aren't allowed")
-
-                if chunk[0] in '-.':
-                    raise errors.MalformedAtom(
-                        orig_atom,
-                        "Slot targets must not start with a hypen or dot: {chunk!r}")
-                elif not valid_slot_chars.issuperset(chunk):
-                    invalid_chars = ', '.join(map(repr, sorted(set(chunk).difference(valid_slot_chars))))
-                    raise errors.MalformedAtom(
-                        orig_atom,
-                        f"Invalid character(s) in slot target: {invalid_chars}")
-
-            if len(slots) == 2:
-                slot, subslot = slots
-
-        sf(self, "slot_operator", slot_operator)
-        sf(self, "slot", slot)
-        sf(self, "subslot", subslot)
-        atom = atom[:slot_start]
-    else:
-        sf(self, "slot_operator", None)
-        sf(self, "slot", None)
-        sf(self, "subslot", None)
-        sf(self, "repo_id", None)
-
-    sf(self, "blocks", atom[0] == "!")
-    if self.blocks:
-        atom = atom[1:]
-        # hackish/slow, but lstrip doesn't take a 'prune this many' arg
-        # open to alternatives
-        if eapi not in ('0', '1') and atom.startswith("!"):
-            atom = atom[1:]
-            sf(self, "blocks_strongly", True)
-        else:
-            sf(self, "blocks_strongly", False)
-    else:
-        sf(self, "blocks_strongly", False)
-
-    if atom[0] in ('<', '>'):
-        if atom[1] == '=':
-            sf(self, 'op', atom[:2])
-            atom = atom[2:]
-        else:
-            sf(self, 'op', atom[0])
-            atom = atom[1:]
-    elif atom[0] == '=':
-        if atom[-1] == '*':
-            sf(self, 'op', '=*')
-            atom = atom[1:-1]
-        else:
-            atom = atom[1:]
-            sf(self, 'op', '=')
-    elif atom[0] == '~':
-        sf(self, 'op', '~')
-        atom = atom[1:]
-    else:
-        sf(self, 'op', '')
-    sf(self, 'cpvstr', atom)
-
-    if eapi == '0':
-        for x in ('use', 'slot'):
-            if getattr(self, x) is not None:
-                raise errors.MalformedAtom(
-                    orig_atom,
-                    f"{x} atoms aren't supported for EAPI 0")
-    elif eapi == '1':
-        if self.use is not None:
-            raise errors.MalformedAtom(
-                orig_atom,
-                "use atoms aren't supported for EAPI < 2")
-    if eapi != '-1':
-        if self.repo_id is not None:
-            raise errors.MalformedAtom(
-                orig_atom,
-                f"repo_id atoms aren't supported for EAPI {eapi}")
-    if use_start != -1 and slot_start != -1 and use_start < slot_start:
-        raise errors.MalformedAtom(
-            orig_atom,
-            "slot restriction must proceed use")
-    try:
-        c = cpv.CPV(self.cpvstr, versioned=bool(self.op))
-    except errors.InvalidCPV as e:
-        raise errors.MalformedAtom(orig_atom) from e
-    sf(self, "key", c.key)
-    sf(self, "package", c.package)
-    sf(self, "category", c.category)
-    sf(self, "version", c.version)
-    sf(self, "fullver", c.fullver)
-    sf(self, "revision", c.revision)
-
-    if self.op:
-        if self.version is None:
-            raise errors.MalformedAtom(
-                orig_atom, "operator requires a version")
-        elif self.op == '~' and self.revision:
-            raise errors.MalformedAtom(
-                orig_atom,
-                "~ revision operater cannot be combined with a revision")
-    elif self.version is not None:
-        raise errors.MalformedAtom(
-            orig_atom, 'versioned atom requires an operator')
-    sf(self, "_hash", hash(orig_atom))
-    sf(self, "negate_vers", negate_vers)
-
-
-def native__getattr__(self, attr):
-    if attr != "restrictions":
-        raise AttributeError(attr)
-
-    # ordering here matters; against 24702 ebuilds for
-    # a non matchable atom with package as the first restriction
-    # 10 loops, best of 3: 206 msec per loop
-    # with category as the first(the obvious ordering)
-    # 10 loops, best of 3: 209 msec per loop
-    # why?  because category is more likely to collide;
-    # at the time of this profiling, there were 151 categories.
-    # over 11k packages however.
-    r = [restricts.PackageDep(self.package),
-         restricts.CategoryDep(self.category)]
-
-    if self.repo_id is not None:
-        r.insert(0, restricts.RepositoryDep(self.repo_id))
-
-    if self.fullver is not None:
-        if self.op == '=*':
-            r.append(packages.PackageRestriction(
-                "fullver", values.StrGlobMatch(self.fullver)))
-        else:
-            r.append(restricts.VersionMatch(
-                self.op, self.version, self.revision, negate=self.negate_vers))
-
-    if self.slot is not None:
-        r.append(restricts.SlotDep(self.slot))
-        if self.subslot is not None:
-            r.append(restricts.SubSlotDep(self.subslot))
-
-    if self.use is not None:
-        r.extend(restricts._parse_nontransitive_use(self.use))
-
-    r = tuple(r)
-    object.__setattr__(self, attr, r)
-    return r
-
-
-native_atom_overrides = {
-    "__init__": native_init,
-    "__getattr__": native__getattr__,
-}
-
-try:
-    from pkgcore.ebuild._atom import overrides as atom_overrides
-
-    # python issue 4230 complicates things pretty heavily since
-    # __getattr__ either supports descriptor or doesn't.
-    # so we test it.
-    class test(object):
-        __getattr__ = atom_overrides['__getattr__desc']
-
-    try:
-        test().asdf
-    except TypeError:
-
-        # function was invoked incorrectly- self and attr were passed in
-        # to the meth_o variant.  meaning no __getattr__ descriptor support.
-
-        try:
-            class test2(object):
-                __getattr__ = atom_overrides['__getattr__nondesc']
-            test2().asdf
-
-        except SystemError:
-            # ...or there was a screwup in the cpy implementation and it's
-            # bitching about the passed in 'attr' key being the wrong type.
-            # retrigger the exception.
-            test().asdf
-
-        except AttributeError:
-            # old form works.  See the 'else' for why we do this
-            atom_overrides['__getattr__'] = atom_overrides['__getattr__nondesc']
-
-        del test2
-
-    except AttributeError:
-        # function invocation succeeded, but blew up due to our test object
-        # missing expected attributes.  This is fine- it was invocable at
-        # least.  Means this python version doesn't support descriptor for
-        # __getattr__
-        pass
-    atom_overrides.setdefault('__getattr__', atom_overrides['__getattr__desc'])
-    del atom_overrides['__getattr__desc']
-    del atom_overrides['__getattr__nondesc']
-    del test
-
-except ImportError:
-    atom_overrides = native_atom_overrides
 
 
 class atom(boolean.AndRestriction, metaclass=generic_equality):
@@ -379,10 +68,225 @@ class atom(boolean.AndRestriction, metaclass=generic_equality):
     locals().pop("__ne__", None)
     __inst_caching__ = True
 
-    locals().update(atom_overrides.items())
-
     # overrided in child class if it's supported
     evaluate_depset = None
+
+    def __init__(self, atom, negate_vers=False, eapi='-1'):
+        """
+        :param atom: string, see gentoo ebuild atom syntax
+        :keyword negate_vers: boolean controlling whether the version should be
+            inverted for restriction matching
+        :keyword eapi: string/int controlling what eapi to enforce for this atom
+        """
+        sf = object.__setattr__
+
+        orig_atom = atom
+
+        override_kls = False
+        use_start = atom.find("[")
+        slot_start = atom.find(":")
+        if use_start != -1:
+            # use dep
+            use_end = atom.find("]", use_start)
+            if use_end == -1:
+                raise errors.MalformedAtom(
+                    orig_atom, "use restriction isn't completed")
+            elif use_end != len(atom) - 1:
+                raise errors.MalformedAtom(
+                    orig_atom, "trailing garbage after use dep")
+            sf(self, "use", tuple(sorted(atom[use_start + 1:use_end].split(','))))
+            for x in self.use:
+                # stripped purely for validation reasons
+                try:
+                    if x[-1] in "=?":
+                        override_kls = True
+                        x = x[:-1]
+                        if x[0] == '!':
+                            x = x[1:]
+                        if x[0] == '-':
+                            raise errors.MalformedAtom(
+                                orig_atom, f"malformed use flag: {x}")
+                    elif x[0] == '-':
+                        x = x[1:]
+
+                    if x[-1] == ')' and eapi not in ('0', '1', '2', '3'):
+                        # use defaults.
+                        if x[-3:] in ("(+)", "(-)"):
+                            x = x[:-3]
+
+                    if not x:
+                        raise errors.MalformedAtom(
+                            orig_atom, 'empty use dep detected')
+                    elif x[0] not in alphanum:
+                        raise errors.MalformedAtom(
+                            orig_atom,
+                            f"invalid first char spotted in use dep '{x}' (must be alphanumeric)")
+                    if not valid_use_chars.issuperset(x):
+                        raise errors.MalformedAtom(
+                            orig_atom, f"invalid char spotted in use dep '{x}'")
+                except IndexError:
+                    raise errors.MalformedAtom(
+                        orig_atom, 'empty use dep detected')
+            if override_kls:
+                sf(self, '__class__', transitive_use_atom)
+            atom = atom[0:use_start]+atom[use_end + 1:]
+        else:
+            sf(self, "use", None)
+        if slot_start != -1:
+            i2 = atom.find("::", slot_start)
+            if i2 != -1:
+                repo_id = atom[i2 + 2:]
+                if not repo_id:
+                    raise errors.MalformedAtom(
+                        orig_atom, "repo_id must not be empty")
+                elif repo_id[0] in '-':
+                    raise errors.MalformedAtom(
+                        orig_atom,
+                        f"invalid first char of repo_id '{repo_id}' (must not begin with a hyphen)")
+                elif not valid_repo_chars.issuperset(repo_id):
+                    raise errors.MalformedAtom(
+                        orig_atom,
+                        f"repo_id may contain only [a-Z0-9_-/], found {repo_id!r}")
+                atom = atom[:i2]
+                sf(self, "repo_id", repo_id)
+            else:
+                sf(self, "repo_id", None)
+            # slot dep.
+            slot = atom[slot_start+1:]
+            slot_operator = subslot = None
+            if not slot:
+                # if the slot char came in only due to repo_id, force slots to None
+                if i2 == -1:
+                    raise errors.MalformedAtom(
+                        orig_atom, "Empty slot targets aren't allowed")
+                slot = None
+            else:
+                slots = (slot,)
+                if eapi not in ('0', '1', '2', '3', '4'):
+                    if slot[0:1] in ("*", "="):
+                        if len(slot) > 1:
+                            raise errors.MalformedAtom(
+                                orig_atom,
+                                "Slot operators '*' and '=' do not take slot targets")
+                        slot_operator = slot
+                        slot, slots = None, ()
+                    else:
+                        if slot.endswith('='):
+                            slot_operator = '='
+                            slot = slot[:-1]
+                        slots = slot.split('/', 1)
+                elif eapi == '0':
+                    raise errors.MalformedAtom(
+                        orig_atom,
+                        "slot dependencies aren't allowed in EAPI 0")
+
+                for chunk in slots:
+                    if not chunk:
+                        raise errors.MalformedAtom(
+                            orig_atom,
+                            "Empty slot targets aren't allowed")
+
+                    if chunk[0] in '-.':
+                        raise errors.MalformedAtom(
+                            orig_atom,
+                            "Slot targets must not start with a hypen or dot: {chunk!r}")
+                    elif not valid_slot_chars.issuperset(chunk):
+                        invalid_chars = ', '.join(map(repr, sorted(set(chunk).difference(valid_slot_chars))))
+                        raise errors.MalformedAtom(
+                            orig_atom,
+                            f"Invalid character(s) in slot target: {invalid_chars}")
+
+                if len(slots) == 2:
+                    slot, subslot = slots
+
+            sf(self, "slot_operator", slot_operator)
+            sf(self, "slot", slot)
+            sf(self, "subslot", subslot)
+            atom = atom[:slot_start]
+        else:
+            sf(self, "slot_operator", None)
+            sf(self, "slot", None)
+            sf(self, "subslot", None)
+            sf(self, "repo_id", None)
+
+        sf(self, "blocks", atom[0] == "!")
+        if self.blocks:
+            atom = atom[1:]
+            # hackish/slow, but lstrip doesn't take a 'prune this many' arg
+            # open to alternatives
+            if eapi not in ('0', '1') and atom.startswith("!"):
+                atom = atom[1:]
+                sf(self, "blocks_strongly", True)
+            else:
+                sf(self, "blocks_strongly", False)
+        else:
+            sf(self, "blocks_strongly", False)
+
+        if atom[0] in ('<', '>'):
+            if atom[1] == '=':
+                sf(self, 'op', atom[:2])
+                atom = atom[2:]
+            else:
+                sf(self, 'op', atom[0])
+                atom = atom[1:]
+        elif atom[0] == '=':
+            if atom[-1] == '*':
+                sf(self, 'op', '=*')
+                atom = atom[1:-1]
+            else:
+                atom = atom[1:]
+                sf(self, 'op', '=')
+        elif atom[0] == '~':
+            sf(self, 'op', '~')
+            atom = atom[1:]
+        else:
+            sf(self, 'op', '')
+        sf(self, 'cpvstr', atom)
+
+        if eapi == '0':
+            for x in ('use', 'slot'):
+                if getattr(self, x) is not None:
+                    raise errors.MalformedAtom(
+                        orig_atom,
+                        f"{x} atoms aren't supported for EAPI 0")
+        elif eapi == '1':
+            if self.use is not None:
+                raise errors.MalformedAtom(
+                    orig_atom,
+                    "use atoms aren't supported for EAPI < 2")
+        if eapi != '-1':
+            if self.repo_id is not None:
+                raise errors.MalformedAtom(
+                    orig_atom,
+                    f"repo_id atoms aren't supported for EAPI {eapi}")
+        if use_start != -1 and slot_start != -1 and use_start < slot_start:
+            raise errors.MalformedAtom(
+                orig_atom,
+                "slot restriction must proceed use")
+        try:
+            c = cpv.CPV(self.cpvstr, versioned=bool(self.op))
+        except errors.InvalidCPV as e:
+            raise errors.MalformedAtom(orig_atom) from e
+        sf(self, "key", c.key)
+        sf(self, "package", c.package)
+        sf(self, "category", c.category)
+        sf(self, "version", c.version)
+        sf(self, "fullver", c.fullver)
+        sf(self, "revision", c.revision)
+
+        if self.op:
+            if self.version is None:
+                raise errors.MalformedAtom(
+                    orig_atom, "operator requires a version")
+            elif self.op == '~' and self.revision:
+                raise errors.MalformedAtom(
+                    orig_atom,
+                    "~ revision operater cannot be combined with a revision")
+        elif self.version is not None:
+            raise errors.MalformedAtom(
+                orig_atom, 'versioned atom requires an operator')
+        sf(self, "_hash", hash(orig_atom))
+        sf(self, "negate_vers", negate_vers)
 
     @property
     def blocks_temp_ignorable(self):
@@ -435,6 +339,39 @@ class atom(boolean.AndRestriction, metaclass=generic_equality):
     @property
     def is_simple(self):
         return len(self.restrictions) == 2
+
+    @property
+    def restrictions(self):
+        # ordering here matters; against 24702 ebuilds for
+        # a non matchable atom with package as the first restriction
+        # 10 loops, best of 3: 206 msec per loop
+        # with category as the first(the obvious ordering)
+        # 10 loops, best of 3: 209 msec per loop
+        # why?  because category is more likely to collide;
+        # at the time of this profiling, there were 151 categories.
+        # over 11k packages however.
+        r = [restricts.PackageDep(self.package), restricts.CategoryDep(self.category)]
+
+        if self.repo_id is not None:
+            r.insert(0, restricts.RepositoryDep(self.repo_id))
+
+        if self.fullver is not None:
+            if self.op == '=*':
+                r.append(packages.PackageRestriction(
+                    "fullver", values.StrGlobMatch(self.fullver)))
+            else:
+                r.append(restricts.VersionMatch(
+                    self.op, self.version, self.revision, negate=self.negate_vers))
+
+        if self.slot is not None:
+            r.append(restricts.SlotDep(self.slot))
+            if self.subslot is not None:
+                r.append(restricts.SubSlotDep(self.subslot))
+
+        if self.use is not None:
+            r.extend(restricts._parse_nontransitive_use(self.use))
+
+        return tuple(r)
 
     def __str__(self):
         if self.op == '=*':
@@ -747,12 +684,9 @@ class transitive_use_atom(atom):
                     use, self._recurse_transitive_use_conds(
                         atom_str, forced_use + use_states[1], varied), negate=True))
 
-    def __getattr__(self, attr):
-        if attr != 'restrictions':
-            return atom.__getattr__(self, attr)
-        obj = self.convert_to_conditionals()
-        object.__setattr__(self, 'restrictions', obj)
-        return obj
+    @property
+    def restrictions(self):
+        return self.convert_to_conditionals()
 
     def convert_to_conditionals(self):
         static_use = [use for use in self.use if use[-1] not in '?=']
@@ -845,6 +779,3 @@ class transitive_use_atom(atom):
 
     iter_dnf_solutions = boolean.AndRestriction.iter_dnf_solutions
     cnf_solutions = boolean.AndRestriction.cnf_solutions
-
-
-atom._transitive_use_atom = transitive_use_atom

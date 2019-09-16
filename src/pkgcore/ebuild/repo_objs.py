@@ -528,52 +528,50 @@ _KnownProfile = namedtuple('_KnownProfile', ['base', 'arch', 'path', 'status', '
 
 class Profiles(klass.ImmutableInstance):
 
-    __slots__ = ('profile_base', 'format', '_repo_id', '_profiles')
+    __slots__ = ('profile_base', 'repo_config', 'format', '_profiles')
     __inst_caching__ = True
 
-    def __init__(self, profile_base, profile_format='pms', repo_id=None):
+    def __init__(self, profile_base, repo_config, profile_format='pms'):
         object.__setattr__(self, 'profile_base', profile_base)
+        object.__setattr__(self, 'repo_config', repo_config)
         object.__setattr__(self, 'format', profile_format)
-        if repo_id is None:
-            # determine repo name from profiles base path
-            repo_id = profile_base.rstrip(os.sep).rsplit(os.sep, 2)[-2]
-        object.__setattr__(self, '_repo_id', repo_id)
 
     @klass.jit_attr_none
     def profiles(self):
-        return self._parse_profiles()
+        return self.parse(self.profile_base, self.repo_config.repo_id)
 
-    def _parse_profiles(self, known_status=None, known_arch=None):
+    @staticmethod
+    def parse(profile_base, repo_id, known_status=None, known_arch=None):
         """Return the mapping of arches to profiles for a repo."""
         l = []
-        fp = pjoin(self.profile_base, 'profiles.desc')
+        fp = pjoin(profile_base, 'profiles.desc')
         try:
             for lineno, line in iter_read_bash(fp, enum_line=True):
                 try:
                     arch, profile, status = line.split()
                 except ValueError:
                     logger.error(
-                        f"{self._repo_id}::profiles/profiles.desc, "
+                        f"{repo_id}::profiles/profiles.desc, "
                         f"line {lineno}: invalid profile line format: "
                         "should be 'arch profile status'")
                     continue
                 if known_status is not None and status not in known_status:
                     logger.warning(
-                        f"{self._repo_id}::profiles/profiles.desc, "
+                        f"{repo_id}::profiles/profiles.desc, "
                         f"line {lineno}: unknown profile status: {status!r}")
                 if known_arch is not None and arch not in known_arch:
                     logger.warning(
-                        f"{self._repo_id}::profiles/profiles.desc, "
+                        f"{repo_id}::profiles/profiles.desc, "
                         f"line {lineno}: unknown arch: {arch!r}")
                 # Normalize the profile name on the offchance someone slipped an extra /
                 # into it.
                 path = '/'.join(filter(None, profile.split('/')))
                 deprecated = os.path.exists(
-                    os.path.join(self.profile_base, path, 'deprecated'))
-                l.append(_KnownProfile(self.profile_base, arch, path, status, deprecated))
+                    os.path.join(profile_base, path, 'deprecated'))
+                l.append(_KnownProfile(profile_base, arch, path, status, deprecated))
         except FileNotFoundError:
             logger.debug(
-                f"No profile descriptions found at {self._repo_id}::profiles/profiles.desc")
+                f"No profile descriptions found at {repo_id}::profiles/profiles.desc")
         return frozenset(l)
 
     def __len__(self):
@@ -882,7 +880,7 @@ class RepoConfig(syncable.tree, klass.ImmutableInstance, metaclass=WeakInstMeta)
 
     @klass.jit_attr
     def profiles(self):
-        return Profiles(self.profiles_base, repo_id=self.repo_id)
+        return Profiles(self.profiles_base, self)
 
     @klass.jit_attr
     def eapi(self):

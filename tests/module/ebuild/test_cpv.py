@@ -2,7 +2,6 @@ from random import shuffle
 
 import pytest
 from snakeoil.compatibility import cmp
-from snakeoil.test import mk_cpy_loadable_testcase
 
 from pkgcore.ebuild import cpv
 
@@ -21,18 +20,7 @@ def generate_misc_sufs():
     return good_sufs, bad_sufs
 
 
-class Test_native_Cpv:
-
-    kls = staticmethod(cpv.native_CPV)
-
-    @classmethod
-    def vkls(cls, *args):
-        return cls.kls(versioned=True, *args)
-
-    def ukls(cls, *args):
-        return cls.kls(versioned=False, *args)
-
-    run_cpy_ver_cmp = False
+class TestCPV:
 
     good_cats = (
         "dev-util", "dev+", "dev-util+", "DEV-UTIL", "aaa0",
@@ -58,10 +46,10 @@ class Test_native_Cpv:
 
     def make_inst(self, cat, pkg, fullver=""):
         if self.testing_secondary_args:
-            return self.kls(cat, pkg, fullver, versioned=bool(fullver))
+            return cpv.CPV(cat, pkg, fullver, versioned=bool(fullver))
         if fullver:
-            return self.vkls(f"{cat}/{pkg}-{fullver}")
-        return self.ukls(f"{cat}/{pkg}")
+            return cpv.versioned_CPV(f"{cat}/{pkg}-{fullver}")
+        return cpv.unversioned_CPV(f"{cat}/{pkg}")
 
     def test_simple_key(self):
         with pytest.raises(cpv.InvalidCPV):
@@ -90,18 +78,18 @@ class Test_native_Cpv:
             assert self.make_inst(cat, pkg, ver).key == key
 
     def test_init(self):
-        self.kls("dev-util", "diffball", "0.7.1")
-        self.kls("dev-util", "diffball")
-        self.kls("dev-util/diffball-0.7.1", versioned=True)
+        cpv.CPV("dev-util", "diffball", "0.7.1")
+        cpv.CPV("dev-util", "diffball")
+        cpv.CPV("dev-util/diffball-0.7.1", versioned=True)
         with pytest.raises(TypeError):
-            self.vkls("dev-util", "diffball", None)
+            cpv.versioned_CPV("dev-util", "diffball", None)
 
     def test_parsing(self):
         # check for gentoo bug 263787
         self.process_pkg(False, 'app-text', 'foo-123-bar')
         self.process_ver(False, 'app-text', 'foo-123-bar', '2.0017a_p', '-r5')
         with pytest.raises(cpv.InvalidCPV):
-            self.ukls('app-text/foo-123')
+            cpv.unversioned_CPV('app-text/foo-123')
         for cat_ret, cats in [[False, self.good_cats], [True, self.bad_cats]]:
             for cat in cats:
                 for pkg_ret, pkgs in [[False, self.good_pkgs],
@@ -121,9 +109,9 @@ class Test_native_Cpv:
                                              ver, rev)
 
         for x in (10, 18, 19, 36, 100):
-            assert self.kls("da", "ba", f"1-r0{'0' * x}").revision == 0
+            assert cpv.CPV("da", "ba", f"1-r0{'0' * x}").revision == 0
             assert \
-                int(self.kls("da", "ba", f"1-r1{'0' * x}1").revision) == int(f"1{'0' * x}1")
+                int(cpv.CPV("da", "ba", f"1-r1{'0' * x}1").revision) == int(f"1{'0' * x}1")
 
     def process_pkg(self, ret, cat, pkg):
         if ret:
@@ -211,7 +199,7 @@ class Test_native_Cpv:
                     f'cpy_ver_cmp, {obj2!r} < {obj1!r}'
 
     def test_cmp(self):
-        ukls, vkls = self.ukls, self.vkls
+        ukls, vkls = cpv.unversioned_CPV, cpv.versioned_CPV
         assert cmp(vkls("dev-util/diffball-0.1"), vkls("dev-util/diffball-0.2")) < 0
         base = "dev-util/diffball-0.7.1"
         assert not cmp(vkls(base), vkls(base))
@@ -282,7 +270,7 @@ class Test_native_Cpv:
         # Regression test: python does comparison slightly differently
         # if the classes do not match exactly (it prefers rich
         # comparison over __cmp__).
-        class DummySubclass(self.kls):
+        class DummySubclass(cpv.CPV):
             pass
 
         assert DummySubclass("da/ba-6.0_alpha0_p1", versioned=True) != vkls("da/ba-6.0_alpha")
@@ -299,8 +287,8 @@ class Test_native_Cpv:
         a subclass of CPV which raised cpv.InvalidCPV. This checks
         if such uninitialized objects survive some basic poking.
         """
-        uninited = self.kls.__new__(self.kls)
-        broken = self.kls.__new__(self.kls)
+        uninited = cpv.CPV.__new__(cpv.CPV)
+        broken = cpv.CPV.__new__(cpv.CPV)
         with pytest.raises(cpv.InvalidCPV):
             broken.__init__('broken', versioned=True)
         for thing in (uninited, broken):
@@ -316,46 +304,29 @@ class Test_native_Cpv:
 
     def test_r0_revisions(self):
         # single '0'
-        obj = self.kls("dev-util/diffball-1.0-r0", versioned=True)
+        obj = cpv.CPV("dev-util/diffball-1.0-r0", versioned=True)
         assert obj.cpvstr == "dev-util/diffball-1.0"
         assert str(obj) == "dev-util/diffball-1.0"
         assert obj.fullver == "1.0-r0"
         assert obj.revision == 0
 
         # multiple '0'
-        obj = self.kls("dev-util/diffball-1.0-r000", versioned=True)
+        obj = cpv.CPV("dev-util/diffball-1.0-r000", versioned=True)
         assert obj.cpvstr == "dev-util/diffball-1.0"
         assert str(obj) == "dev-util/diffball-1.0"
         assert obj.fullver == "1.0-r000"
         assert obj.revision == 0
 
         # single '0' prefix
-        obj = self.kls("dev-util/diffball-1.0-r01", versioned=True)
+        obj = cpv.CPV("dev-util/diffball-1.0-r01", versioned=True)
         assert obj.cpvstr == "dev-util/diffball-1.0-r1"
         assert str(obj) == "dev-util/diffball-1.0-r1"
         assert obj.fullver == "1.0-r01"
         assert obj.revision == 1
 
         # multiple '0' prefixes
-        obj = self.kls("dev-util/diffball-1.0-r0001", versioned=True)
+        obj = cpv.CPV("dev-util/diffball-1.0-r0001", versioned=True)
         assert obj.cpvstr == "dev-util/diffball-1.0-r1"
         assert str(obj) == "dev-util/diffball-1.0-r1"
         assert obj.fullver == "1.0-r0001"
         assert obj.revision == 1
-
-
-@pytest.mark.skipif(not cpv.cpy_builtin, reason="cpython cpv extension not available")
-class Test_CPY_Cpv(Test_native_Cpv):
-    if cpv.cpy_builtin:
-        kls = staticmethod(cpv.cpy_CPV)
-        run_cpy_ver_cmp = True
-
-
-class Test_CPY_Cpv_OptionalArgs(Test_CPY_Cpv):
-
-    testing_secondary_args = True
-
-
-test_cpy_used = mk_cpy_loadable_testcase(
-    "pkgcore.ebuild._cpv", "pkgcore.ebuild.cpv", "CPV_base", "CPV")
-

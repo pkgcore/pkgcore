@@ -45,8 +45,9 @@ class atom(boolean.AndRestriction, metaclass=klass.generic_equality):
 
     # note we don't need _hash
     __slots__ = (
-        "blocks", "blocks_strongly", "op", "cpvstr", "negate_vers",
-        "use", "slot_operator", "slot", "subslot", "repo_id", "_cpv", "_hash",
+        "blocks", "blocks_strongly", "op", "cpvstr", "negate_vers", "use",
+        "slot_operator", "slot", "subslot", "repo_id", "_hash", "_cpv",
+        "_restrictions",
     )
 
     type = restriction.package_type
@@ -334,7 +335,7 @@ class atom(boolean.AndRestriction, metaclass=klass.generic_equality):
     def is_simple(self):
         return len(self.restrictions) == 2
 
-    @property
+    @klass.jit_attr
     def restrictions(self):
         # ordering here matters; against 24702 ebuilds for
         # a non matchable atom with package as the first restriction
@@ -678,7 +679,7 @@ class transitive_use_atom(atom):
                     use, self._recurse_transitive_use_conds(
                         atom_str, forced_use + use_states[1], varied), negate=True))
 
-    @property
+    @klass.jit_attr
     def restrictions(self):
         return self.convert_to_conditionals()
 

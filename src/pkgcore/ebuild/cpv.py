@@ -133,7 +133,7 @@ class _native_CPV:
     )
 
     # if native is being used, forget trying to reuse strings.
-    def __init__(self, *a, **kwds):
+    def __init__(self, *args, **kwargs):
         """
         Can be called with one string or with three string args.
 
@@ -144,26 +144,30 @@ class _native_CPV:
         version components of the cpv string respectively.
         """
         versioned = True
-        had_versioned = 'versioned' in kwds
+        had_versioned = 'versioned' in kwargs
         if had_versioned:
-            versioned = kwds.pop("versioned")
-        if kwds:
-            raise TypeError(f"versioned is the only allowed kwds: {kwds!r}")
-        l = len(a)
+            versioned = kwargs.pop("versioned")
+        if kwargs:
+            raise TypeError(f"versioned is the only allowed kwargs: {kwargs!r}")
+
+        for x in args:
+            if not isinstance(x, str):
+                raise TypeError(f"all args must be strings, got {args!r}")
+
+        l = len(args)
         if l == 1:
-            cpvstr = a[0]
+            cpvstr = args[0]
             if not had_versioned:
-                raise TypeError(f"single argument invocation requires versioned kwd; {cpvstr!r}")
+                raise TypeError(f"single argument invocation requires versioned kwarg; {cpvstr!r}")
+        elif l == 2:
+            cpvstr = f"{args[0]}/{args[1]}"
+            versioned = False
         elif l == 3:
-            for x in a:
-                if not isinstance(x, str):
-                    raise TypeError(f"all args must be strings, got {a!r}")
-            cpvstr = f"{a[0]}/{a[1]}-{a[2]}"
+            cpvstr = f"{args[0]}/{args[1]}-{args[2]}"
             versioned = True
         else:
-            raise TypeError(f"CPV takes 1 arg (cpvstr), or 3 (cat, pkg, ver): got {a!r}")
-        if not isinstance(cpvstr, str):
-            raise TypeError(self.cpvstr)
+            raise TypeError(
+                f"CPV takes 1 arg (cpvstr), 2 (cat, pkg), or 3 (cat, pkg, ver): got {args!r}")
 
         try:
             category, pkgver = cpvstr.rsplit("/", 1)

@@ -91,9 +91,8 @@ class Test_native_Cpv:
 
     def test_init(self):
         self.kls("dev-util", "diffball", "0.7.1")
+        self.kls("dev-util", "diffball")
         self.kls("dev-util/diffball-0.7.1", versioned=True)
-        with pytest.raises(TypeError):
-            self.kls("dev-util", "diffball")
         with pytest.raises(TypeError):
             self.vkls("dev-util", "diffball", None)
 

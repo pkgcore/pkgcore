@@ -1,7 +1,5 @@
 """gentoo ebuild specific base package class"""
 
-__all__ = ("CPV", "versioned_CPV", "unversioned_CPV")
-
 from collections import UserString
 
 from snakeoil.compatibility import cmp
@@ -386,7 +384,7 @@ class CPV(base.base):
         return cls(versioned=False, *args)
 
 
-class versioned_CPV(CPV):
+class VersionedCPV(CPV):
 
     __slots__ = ()
 
@@ -394,7 +392,7 @@ class versioned_CPV(CPV):
         super().__init__(*args, versioned=True)
 
 
-class unversioned_CPV(CPV):
+class UnversionedCPV(CPV):
 
     __slots__ = ()
 

@@ -87,7 +87,7 @@ def DeriveMetadataKls(original_kls):
 
     return package
 
-package = DeriveMetadataKls(cpv.versioned_CPV)
+package = DeriveMetadataKls(cpv.VersionedCPV)
 
 class factory:
     """package generator

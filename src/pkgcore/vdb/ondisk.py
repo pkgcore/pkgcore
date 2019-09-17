@@ -12,7 +12,7 @@ from snakeoil.osutils import listdir_dirs, pjoin
 
 from pkgcore.config.hint import ConfigHint
 from pkgcore.ebuild import ebuild_built
-from pkgcore.ebuild.cpv import versioned_CPV
+from pkgcore.ebuild.cpv import VersionedCPV
 from pkgcore.ebuild.errors import InvalidCPV
 from pkgcore.log import logger
 from pkgcore.package import base as pkg_base
@@ -87,7 +87,7 @@ class tree(prototype.tree):
                         or x.startswith("-MERGING-"):
                     continue
                 try:
-                    pkg = versioned_CPV(f'{category}/{x}')
+                    pkg = VersionedCPV(f'{category}/{x}')
                 except InvalidCPV:
                     bad = True
                 if bad or not pkg.fullver:

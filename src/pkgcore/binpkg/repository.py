@@ -17,7 +17,7 @@ from pkgcore.binpkg import remote, repo_ops
 from pkgcore.binpkg.xpak import Xpak
 from pkgcore.config.hint import ConfigHint
 from pkgcore.ebuild import ebd, ebuild_built
-from pkgcore.ebuild.cpv import versioned_CPV
+from pkgcore.ebuild.cpv import VersionedCPV
 from pkgcore.ebuild.errors import InvalidCPV
 from pkgcore.fs.contents import offset_rewriter, contentsSet
 from pkgcore.fs.livefs import scan
@@ -261,7 +261,7 @@ class tree(prototype.tree):
                         x.startswith(".tmp.")):
                     continue
                 pv = x[:-lext]
-                pkg = versioned_CPV(f'{category}/{pv}')
+                pkg = VersionedCPV(f'{category}/{pv}')
                 l.add(pkg.package)
                 d.setdefault((category, pkg.package), []).append(pkg.fullver)
         except EnvironmentError as e:

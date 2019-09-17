@@ -48,8 +48,8 @@ class TestCPV:
         if self.testing_secondary_args:
             return cpv.CPV(cat, pkg, fullver, versioned=bool(fullver))
         if fullver:
-            return cpv.versioned_CPV(f"{cat}/{pkg}-{fullver}")
-        return cpv.unversioned_CPV(f"{cat}/{pkg}")
+            return cpv.VersionedCPV(f"{cat}/{pkg}-{fullver}")
+        return cpv.UnversionedCPV(f"{cat}/{pkg}")
 
     def test_simple_key(self):
         with pytest.raises(cpv.InvalidCPV):
@@ -82,14 +82,14 @@ class TestCPV:
         cpv.CPV("dev-util", "diffball")
         cpv.CPV("dev-util/diffball-0.7.1", versioned=True)
         with pytest.raises(TypeError):
-            cpv.versioned_CPV("dev-util", "diffball", None)
+            cpv.VersionedCPV("dev-util", "diffball", None)
 
     def test_parsing(self):
         # check for gentoo bug 263787
         self.process_pkg(False, 'app-text', 'foo-123-bar')
         self.process_ver(False, 'app-text', 'foo-123-bar', '2.0017a_p', '-r5')
         with pytest.raises(cpv.InvalidCPV):
-            cpv.unversioned_CPV('app-text/foo-123')
+            cpv.UnversionedCPV('app-text/foo-123')
         for cat_ret, cats in [[False, self.good_cats], [True, self.bad_cats]]:
             for cat in cats:
                 for pkg_ret, pkgs in [[False, self.good_pkgs],
@@ -199,7 +199,7 @@ class TestCPV:
                     f'cpy_ver_cmp, {obj2!r} < {obj1!r}'
 
     def test_cmp(self):
-        ukls, vkls = cpv.unversioned_CPV, cpv.versioned_CPV
+        ukls, vkls = cpv.UnversionedCPV, cpv.VersionedCPV
         assert cmp(vkls("dev-util/diffball-0.1"), vkls("dev-util/diffball-0.2")) < 0
         base = "dev-util/diffball-0.7.1"
         assert not cmp(vkls(base), vkls(base))

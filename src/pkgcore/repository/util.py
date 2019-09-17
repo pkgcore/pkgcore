@@ -6,7 +6,7 @@ __all__ = (
 from snakeoil import klass
 from snakeoil.mappings import DictMixin
 
-from pkgcore.ebuild.cpv import versioned_CPV
+from pkgcore.ebuild.cpv import VersionedCPV
 from pkgcore.repository import multiplex, prototype, virtual
 
 
@@ -25,7 +25,7 @@ class SimpleTree(prototype.tree):
                  repo_id=None):
         self.cpv_dict = cpv_dict
         if pkg_klass is None:
-            pkg_klass = versioned_CPV
+            pkg_klass = VersionedCPV
         self.livefs = livefs
         self.repo_id = repo_id
         self.package_class = pkg_klass

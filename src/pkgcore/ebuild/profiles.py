@@ -224,7 +224,7 @@ class ProfileNode(object, metaclass=caching.WeakInstMeta):
     def pkg_provided(self, data):
         def _parse_cpv(s):
             try:
-                return cpv.versioned_CPV(s)
+                return cpv.VersionedCPV(s)
             except cpv.InvalidCPV:
                 logger.error(f'invalid package.provided entry: {s!r}')
         data = (x[0] for x in data)

@@ -443,7 +443,7 @@ class UnconfiguredTree(prototype.tree):
             if repo_path[0] in self.categories:
                 restrictions.append(restricts.CategoryDep(repo_path[0]))
                 restrictions.append(restricts.PackageDep(repo_path[1]))
-                base = cpv.versioned_CPV(f"{repo_path[0]}/{os.path.splitext(repo_path[2])[0]}")
+                base = cpv.VersionedCPV(f"{repo_path[0]}/{os.path.splitext(repo_path[2])[0]}")
                 restrictions.append(restricts.VersionMatch('=', base.version, rev=base.revision))
         except IndexError:
             pass

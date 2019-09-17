@@ -154,7 +154,7 @@ class GlsaDirSet(object, metaclass=generic_equality):
         glob = base.endswith("*")
         if glob:
             base = base[:-1]
-        base = cpv.versioned_CPV(f"cat/pkg-{base}")
+        base = cpv.VersionedCPV(f"cat/pkg-{base}")
 
         if glob:
             if op != "eq":

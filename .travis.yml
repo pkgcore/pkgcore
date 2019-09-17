@@ -16,8 +16,7 @@ install:
 - pip install -U pip
 before_script:
 - git clone https://github.com/pkgcore/pkgdist.git
-- cp -R pkgdist/requirements/* requirements/
-- requirements/pip.sh -rrequirements/ci.txt
+- pkgdist/ci.sh
 # Make sure the actual install-info binary is first in PATH since
 # Debian-based distros use a wrapper script that outputs warnings and
 # breaks the info file merge trigger test.

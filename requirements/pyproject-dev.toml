@@ -1,0 +1,6 @@
+[build-system]
+requires = [
+	"wheel", "setuptools",
+	"https://github.com/pkgcore/snakeoil/archive/master.tar.gz#egg=snakeoil",
+]
+build-backend = "setuptools.build_meta"

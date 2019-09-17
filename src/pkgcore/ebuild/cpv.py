@@ -248,7 +248,7 @@ class CPV(base.base):
     __slots__ = ("cpvstr", "key", "category", "package", "version", "revision", "fullver")
     inject_richcmp_methods_from_cmp(locals())
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, versioned=None):
         """
         Can be called with one string or with three string args.
 
@@ -258,13 +258,6 @@ class CPV(base.base):
         If called with three args they are the category, package and
         version components of the cpv string respectively.
         """
-        versioned = True
-        had_versioned = 'versioned' in kwargs
-        if had_versioned:
-            versioned = kwargs.pop("versioned")
-        if kwargs:
-            raise TypeError(f"versioned is the only allowed kwargs: {kwargs!r}")
-
         for x in args:
             if not isinstance(x, str):
                 raise TypeError(f"all args must be strings, got {args!r}")
@@ -272,8 +265,9 @@ class CPV(base.base):
         l = len(args)
         if l == 1:
             cpvstr = args[0]
-            if not had_versioned:
-                raise TypeError(f"single argument invocation requires versioned kwarg; {cpvstr!r}")
+            if versioned is None:
+                raise TypeError(
+                    f"single argument invocation requires versioned kwarg; {cpvstr!r}")
         elif l == 2:
             cpvstr = f"{args[0]}/{args[1]}"
             versioned = False

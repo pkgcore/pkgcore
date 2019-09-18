@@ -417,7 +417,7 @@ class Licenses(object, metaclass=WeakInstMeta):
             logger.error(f"failed parsing license_groups: {pe}")
             return mappings.ImmutableDict()
         self._expand_groups(d)
-        return mappings.ImmutableDict((k, tuple(v)) for (k, v) in d.items())
+        return mappings.ImmutableDict((k, frozenset(v)) for (k, v) in d.items())
 
     def _expand_groups(self, groups):
         keep_going = True

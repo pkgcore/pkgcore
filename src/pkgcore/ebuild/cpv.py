@@ -363,7 +363,9 @@ class CPV(base.base):
 
     @property
     def versioned_atom(self):
-        return atom.atom(f"={self.cpvstr}")
+        if self.version is not None:
+            return atom.atom(f"={self.cpvstr}")
+        return self.unversioned_atom
 
     @property
     def unversioned_atom(self):

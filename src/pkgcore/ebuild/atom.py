@@ -37,7 +37,6 @@ valid_ops = frozenset(['<', '<=', '=', '~', '>=', '>'])
 
 
 class atom(boolean.AndRestriction, metaclass=klass.generic_equality):
-
     """Currently implements gentoo ebuild atom parsing.
 
     Should be converted into an agnostic dependency base.
@@ -449,6 +448,23 @@ class atom(boolean.AndRestriction, metaclass=klass.generic_equality):
             return c
 
         return cmp(self.repo_id, other.repo_id)
+
+    @property
+    def no_usedeps(self):
+        """Return atom object stripped of USE dependencies."""
+        if not self.use:
+            return self
+        if self.op == '=*':
+            s = f'={self.cpvstr}*'
+        else:
+            s = self.op + self.cpvstr
+        if self.blocks:
+            s = '!' + s
+            if not self.blocks_temp_ignorable:
+                s = '!' + s
+        if self.slot:
+            s += f':{self.slot}'
+        return atom(s)
 
     def intersects(self, other):
         """Check if a passed in atom "intersects" this restriction's atom.

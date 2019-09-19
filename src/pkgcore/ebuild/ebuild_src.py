@@ -295,7 +295,7 @@ class base(metadata.package):
     @property
     def iuse_stripped(self):
         if self.eapi.options.iuse_defaults:
-            return frozenset(x.lstrip('-+') for x in self.iuse)
+            return frozenset(x.lstrip('-+') if len(x) > 1 else x for x in self.iuse)
         return self.iuse
 
     @property

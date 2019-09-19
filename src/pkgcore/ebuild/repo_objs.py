@@ -483,7 +483,7 @@ class OverlayedLicenses(Licenses):
         for li in self._license_instances:
             for k, v in li.groups.items():
                 if k in d:
-                    d[k] += v
+                    d[k] |= v
                 else:
                     d[k] = v
         return mappings.ImmutableDict(d)

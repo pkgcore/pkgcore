@@ -11,6 +11,7 @@ import string
 
 from snakeoil import klass
 from snakeoil.compatibility import cmp
+from snakeoil.demandload import demand_compile_regexp
 
 from pkgcore.ebuild import cpv, errors, restricts
 from pkgcore.restrictions import values, packages, boolean, restriction
@@ -25,15 +26,14 @@ alphanum.update(string.ascii_letters)
 
 valid_repo_chars = set(alphanum)
 valid_repo_chars.update("_-")
-valid_use_chars = set(alphanum)
-valid_use_chars.update("@+_-")
 valid_slot_chars = set(alphanum)
 valid_slot_chars.update(".+_-")
 alphanum = frozenset(alphanum)
-valid_use_chars = frozenset(valid_use_chars)
 valid_repo_chars = frozenset(valid_repo_chars)
 valid_slot_chars = frozenset(valid_slot_chars)
 valid_ops = frozenset(['<', '<=', '=', '~', '>=', '>'])
+
+demand_compile_regexp('valid_use_flag', r'^[A-Za-z0-9][A-Za-z0-9+_@-]*$')
 
 
 class atom(boolean.AndRestriction, metaclass=klass.generic_equality):
@@ -112,15 +112,9 @@ class atom(boolean.AndRestriction, metaclass=klass.generic_equality):
                             x = x[:-3]
 
                     if not x:
-                        raise errors.MalformedAtom(
-                            orig_atom, 'empty use dep detected')
-                    elif x[0] not in alphanum:
-                        raise errors.MalformedAtom(
-                            orig_atom,
-                            f"invalid first char spotted in use dep '{x}' (must be alphanumeric)")
-                    if not valid_use_chars.issuperset(x):
-                        raise errors.MalformedAtom(
-                            orig_atom, f"invalid char spotted in use dep '{x}'")
+                        raise errors.MalformedAtom(orig_atom, 'empty use dep detected')
+                    if not valid_use_flag.match(x):
+                        raise errors.MalformedAtom(orig_atom, f'invalid USE flag: {x!r}')
                 except IndexError:
                     raise errors.MalformedAtom(
                         orig_atom, 'empty use dep detected')

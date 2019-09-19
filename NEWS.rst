@@ -3,6 +3,23 @@ Release Notes
 =============
 
 ---------------------------
+pkgcore 0.10.4 (2019-09-18)
+---------------------------
+
+- pkgcore.ebuild.atom: Add no_usedeps property that returns atom object
+  stripped of use deps.
+
+- pkgcore.ebuild.cpv: Fix versioned_atom() for unversioned CPV objects.
+
+- pkgcore.repository.prototype: Support returning unversioned matches from
+  itermatch().
+
+- pkgcore.ebuild.cpv: Add support for passing (cat, package) for unversioned
+  CPVs.
+
+- pkgcore.ebuild.atom: Provide access to all cpv attributes for atom objects.
+
+---------------------------
 pkgcore 0.10.3 (2019-09-13)
 ---------------------------
 
@@ -10,7 +27,7 @@ pkgcore 0.10.3 (2019-09-13)
 
 - pmaint digest: Fix skipping re-manifesting for manifests that are current.
 
-- ebuild.eapi: Split dep keys into their own attribute.
+- pkgcore.ebuild.eapi: Split dep keys into their own attribute.
 
 ---------------------------
 pkgcore 0.10.2 (2019-08-30)

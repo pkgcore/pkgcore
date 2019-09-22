@@ -81,26 +81,28 @@ def write_pkgcore_ebd_funclists(root, target, scripts_dir=None, python_base='.')
     ebd_dir = target
     if root != '/':
         ebd_dir = os.path.join(root, target.lstrip('/'))
-    log.info("Writing ebd function lists to %s" % os.path.join(ebd_dir, 'funcnames'))
-    os.makedirs(os.path.join(ebd_dir, 'funcnames'), exist_ok=True)
+    log.info("Writing ebd function lists to %s" % os.path.join(ebd_dir, 'funcs'))
+    os.makedirs(os.path.join(ebd_dir, 'funcs'), exist_ok=True)
 
     # generate global function list
-    with open(os.path.join(ebd_dir, 'funcnames', 'global'), 'w') as f:
+    with open(os.path.join(ebd_dir, 'funcs', 'global'), 'w') as f:
         if subprocess.call(
                 [os.path.join(pkgdist.REPODIR, 'ebd', 'generate_global_func_list')],
                 cwd=ebd_dir, stdout=f):
             raise DistutilsExecError("generating global function list failed")
 
     # generate EAPI specific function lists
-    eapis = (x.split('.')[0] for x in os.listdir(os.path.join(pkgdist.REPODIR, 'ebd', 'eapi'))
-             if x.split('.')[0].isdigit())
-    for eapi in sorted(eapis):
-        with open(os.path.join(ebd_dir, 'funcnames', eapi), 'w') as f:
-            if subprocess.call(
-                    [os.path.join(pkgdist.REPODIR, 'ebd', 'generate_eapi_func_list'), eapi],
-                    cwd=ebd_dir, stdout=f):
-                raise DistutilsExecError(
-                    "generating EAPI %s function list failed" % eapi)
+    with pkgdist.syspath(pkgdist.PACKAGEDIR):
+        from pkgcore.ebuild.eapi import EAPI
+        for eapi_obj in EAPI.known_eapis.values():
+            eapi = str(eapi_obj)
+            os.makedirs(os.path.join(ebd_dir, 'funcs', eapi), exist_ok=True)
+            with open(os.path.join(ebd_dir, 'funcs', eapi, 'names'), 'w') as f:
+                if subprocess.call(
+                        [os.path.join(pkgdist.REPODIR, 'ebd', 'generate_eapi_func_list'), eapi],
+                        cwd=ebd_dir, stdout=f):
+                    raise DistutilsExecError(
+                        "generating EAPI %s function list failed" % eapi)
 
 
 def write_pkgcore_ebd_eapi_libs(root, target, scripts_dir=None, python_base='.'):

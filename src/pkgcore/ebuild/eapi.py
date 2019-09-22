@@ -221,12 +221,12 @@ class EAPI(object, metaclass=klass.immutable_instance):
     @klass.jit_attr
     def bash_funcs(self):
         """Internally implemented EAPI specific functions to skip when exporting."""
-        eapi_funcs = pjoin(const.EBD_PATH, '.generated', 'funcnames', self._magic)
-        if not os.path.exists(eapi_funcs):
+        funcs = pjoin(const.EBD_PATH, '.generated', 'funcs', self._magic, 'names')
+        if not os.path.exists(funcs):
             # we're probably running in a cacheless git repo, so generate a cached version
             try:
-                os.makedirs(os.path.dirname(eapi_funcs), exist_ok=True)
-                with open(eapi_funcs, 'w') as f:
+                os.makedirs(os.path.dirname(funcs), exist_ok=True)
+                with open(funcs, 'w') as f:
                     subprocess.run(
                         [pjoin(const.EBD_PATH, 'generate_eapi_func_list'), self._magic],
                         cwd=const.EBD_PATH, stdout=f)
@@ -234,7 +234,7 @@ class EAPI(object, metaclass=klass.immutable_instance):
                 raise Exception(
                     f"failed to generate list of EAPI '{self}' specific functions: {str(e)}")
 
-        with open(eapi_funcs, 'r') as f:
+        with open(funcs, 'r') as f:
             return tuple(line.strip() for line in f)
 
     def bash_libs(self):

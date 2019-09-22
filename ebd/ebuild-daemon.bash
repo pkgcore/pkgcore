@@ -135,8 +135,8 @@ __ebd_exec_main() {
 
 	# finally, load the master list of pkgcore funcs. fallback to
 	# regenerating it if needed.
-	if [[ -f ${PKGCORE_EBD_PATH}/generated/funcnames/global ]]; then
-		PKGCORE_BLACKLIST_FUNCS+=( $(<"${PKGCORE_EBD_PATH}"/generated/funcnames/global) )
+	if [[ -f ${PKGCORE_EBD_PATH}/generated/funcs/global ]]; then
+		PKGCORE_BLACKLIST_FUNCS+=( $(<"${PKGCORE_EBD_PATH}"/generated/funcs/global) )
 	else
 		PKGCORE_BLACKLIST_FUNCS+=( $("${PKGCORE_EBD_PATH}"/generate_global_func_list 2> /dev/null) )
 	fi

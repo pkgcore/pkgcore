@@ -78,11 +78,12 @@ def write_pkgcore_ebd_funclists(root, target):
     ebd_dir = target
     if root != '/':
         ebd_dir = os.path.join(root, target.lstrip('/'))
-    log.info("Writing ebd function lists to %s" % os.path.join(ebd_dir, 'funcs'))
     os.makedirs(os.path.join(ebd_dir, 'funcs'), exist_ok=True)
 
     # generate global function list
-    with open(os.path.join(ebd_dir, 'funcs', 'global'), 'w') as f:
+    path = os.path.join(ebd_dir, 'funcs', 'global')
+    log.info(f'writing ebd global function list: {path!r}')
+    with open(path, 'w') as f:
         if subprocess.call(
                 [os.path.join(pkgdist.REPODIR, 'ebd', 'generate_global_func_list')],
                 cwd=ebd_dir, stdout=f):
@@ -94,7 +95,9 @@ def write_pkgcore_ebd_funclists(root, target):
         for eapi_obj in EAPI.known_eapis.values():
             eapi = str(eapi_obj)
             os.makedirs(os.path.join(ebd_dir, 'funcs', eapi), exist_ok=True)
-            with open(os.path.join(ebd_dir, 'funcs', eapi, 'names'), 'w') as f:
+            path = os.path.join(ebd_dir, 'funcs', eapi, 'names')
+            log.info(f'writing EAPI {eapi} function list: {path!r}')
+            with open(path, 'w') as f:
                 if subprocess.call(
                         [os.path.join(pkgdist.REPODIR, 'ebd', 'generate_eapi_func_list'), eapi],
                         cwd=ebd_dir, stdout=f):
@@ -117,7 +120,7 @@ def write_pkgcore_ebd_cmdlists(root, target):
             os.makedirs(os.path.join(ebd_dir, 'funcs', eapi), exist_ok=True)
 
             path = os.path.join(ebd_dir, 'funcs', eapi, 'banned')
-            log.info(f'Writing EAPI {eapi} banned command list: {path!r}')
+            log.info(f'writing EAPI {eapi} banned command list: {path!r}')
             with open(path, 'w') as f:
                 if subprocess.call(
                         [os.path.join(pkgdist.REPODIR, 'ebd', 'generate_eapi_cmd_list'), '-b', eapi],
@@ -125,7 +128,7 @@ def write_pkgcore_ebd_cmdlists(root, target):
                     raise DistutilsExecError(f'generating EAPI {eapi} banned command list failed')
 
             path = os.path.join(ebd_dir, 'funcs', eapi, 'deprecated')
-            log.info(f'Writing EAPI {eapi} deprecated command list: {path!r}')
+            log.info(f'writing EAPI {eapi} deprecated command list: {path!r}')
             with open(path, 'w') as f:
                 if subprocess.call(
                         [os.path.join(pkgdist.REPODIR, 'ebd', 'generate_eapi_cmd_list'), '-d', eapi],
@@ -138,7 +141,6 @@ def write_pkgcore_ebd_eapi_libs(root, target):
     ebd_dir = target
     if root != '/':
         ebd_dir = os.path.join(root, target.lstrip('/'))
-    log.info("Writing ebd libs %s" % os.path.join(ebd_dir, 'libs'))
 
     script = os.path.join(pkgdist.REPODIR, 'ebd', 'generate_eapi_lib')
     with pkgdist.syspath(pkgdist.PACKAGEDIR):
@@ -148,14 +150,18 @@ def write_pkgcore_ebd_eapi_libs(root, target):
             os.makedirs(os.path.join(ebd_dir, 'libs', eapi), exist_ok=True)
 
             # generate global scope lib
-            with open(os.path.join(ebd_dir, 'libs', eapi, 'global'), 'w') as f:
+            path = os.path.join(ebd_dir, 'libs', eapi, 'global')
+            log.info(f'writing global EAPI {eapi} lib: {path!r}')
+            with open(path, 'w') as f:
                 if subprocess.call([script, eapi], cwd=ebd_dir, stdout=f):
                     raise DistutilsExecError(
                         f"generating global scope EAPI {eapi} lib failed")
 
             for phase in eapi_obj.phases.values():
                 # generate phase scope lib
-                with open(os.path.join(ebd_dir, 'libs', eapi, phase), 'w') as f:
+                path = os.path.join(ebd_dir, 'libs', eapi, phase)
+                log.info(f'writing EAPI {eapi} {phase} phase lib: {path!r}')
+                with open(path, 'w') as f:
                     if subprocess.call([script, '-s', phase, eapi], cwd=ebd_dir, stdout=f):
                         raise DistutilsExecError(
                             f"generating {phase} phase scope EAPI {eapi} lib failed")

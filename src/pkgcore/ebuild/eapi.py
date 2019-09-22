@@ -221,7 +221,7 @@ class EAPI(object, metaclass=klass.immutable_instance):
     @klass.jit_attr
     def bash_funcs(self):
         """Internally implemented EAPI specific functions to skip when exporting."""
-        funcs = pjoin(const.EBD_PATH, '.generated', 'funcs', self._magic, 'names')
+        funcs = pjoin(const.EBD_PATH, '.generated', 'funcs', self._magic)
         if not os.path.exists(funcs):
             # we're probably running in a cacheless git repo, so generate a cached version
             try:

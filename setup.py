@@ -94,8 +94,7 @@ def write_pkgcore_ebd_funclists(root, target):
         from pkgcore.ebuild.eapi import EAPI
         for eapi_obj in EAPI.known_eapis.values():
             eapi = str(eapi_obj)
-            os.makedirs(os.path.join(ebd_dir, 'funcs', eapi), exist_ok=True)
-            path = os.path.join(ebd_dir, 'funcs', eapi, 'names')
+            path = os.path.join(ebd_dir, 'funcs', eapi)
             log.info(f'writing EAPI {eapi} function list: {path!r}')
             with open(path, 'w') as f:
                 if subprocess.call(
@@ -110,16 +109,16 @@ def write_pkgcore_ebd_cmdlists(root, target):
     ebd_dir = target
     if root != '/':
         ebd_dir = os.path.join(root, target.lstrip('/'))
-    os.makedirs(os.path.join(ebd_dir, 'funcs'), exist_ok=True)
+    os.makedirs(os.path.join(ebd_dir, 'cmds'), exist_ok=True)
 
     # generate EAPI specific command lists
     with pkgdist.syspath(pkgdist.PACKAGEDIR):
         from pkgcore.ebuild.eapi import EAPI
         for eapi_obj in EAPI.known_eapis.values():
             eapi = str(eapi_obj)
-            os.makedirs(os.path.join(ebd_dir, 'funcs', eapi), exist_ok=True)
+            os.makedirs(os.path.join(ebd_dir, 'cmds', eapi), exist_ok=True)
 
-            path = os.path.join(ebd_dir, 'funcs', eapi, 'banned')
+            path = os.path.join(ebd_dir, 'cmds', eapi, 'banned')
             log.info(f'writing EAPI {eapi} banned command list: {path!r}')
             with open(path, 'w') as f:
                 if subprocess.call(
@@ -127,7 +126,7 @@ def write_pkgcore_ebd_cmdlists(root, target):
                         cwd=ebd_dir, stdout=f):
                     raise DistutilsExecError(f'generating EAPI {eapi} banned command list failed')
 
-            path = os.path.join(ebd_dir, 'funcs', eapi, 'deprecated')
+            path = os.path.join(ebd_dir, 'cmds', eapi, 'deprecated')
             log.info(f'writing EAPI {eapi} deprecated command list: {path!r}')
             with open(path, 'w') as f:
                 if subprocess.call(

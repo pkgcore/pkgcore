@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+#
+# Generate the list of banned or deprecated commands specific to an EAPI version.
+#
+# Outputs the list of banned commands for a given EAPI by default. The -b and
+# -d options can be used to output only the banned or deprecated commands,
+# respectively. The -o option limits command scanning to the single, specified
+# EAPI instead of cumulatively building up the command list from inherited
+# EAPIs.
+
+ONLY=false
+BANNED=false
+DEPRECATED=false
+
+while getopts "bdo" opt; do
+	case ${opt} in
+		b) BANNED=true ;;
+		d) DEPRECATED=true ;;
+		o) ONLY=true ;;
+		*) ;;
+	esac
+done
+
+# default to outputting banned list
+if ! ${BANNED} && ! ${DEPRECATED}; then
+	BANNED=true
+fi
+
+shift $((OPTIND-1))
+EAPI=${1:-0}
+${ONLY} && INITIAL_EAPI=${EAPI} || INITIAL_EAPI=0
+export PKGCORE_EBD_PATH=${BASH_SOURCE[0]%/*}
+
+BANNED_CMDS=()
+DEPRECATED_CMDS=()
+BANNED_HELPER=${PKGCORE_EBD_PATH}/helpers/internals/banned
+DEPRECATED_HELPER=${PKGCORE_EBD_PATH}/helpers/internals/deprecated
+
+shopt -s nullglob
+for (( eapi=${INITIAL_EAPI} ; eapi<=${EAPI} ; eapi++ )) ; do
+	# scan for banned/deprecated shell functions
+	for file in "${PKGCORE_EBD_PATH}/eapi/${eapi}"/*.bash; do
+		source "${file}" || { echo "failed loading ${file}" >&2; exit 1; }
+		BANNED_CMDS+=( "${PKGCORE_BANNED_FUNCS[@]}" )
+		unset PKGCORE_BANNED_FUNCS
+		DEPRECATED_CMDS+=( "${PKGCORE_DEPRECATED_FUNCS[@]}" )
+		unset PKGCORE_DEPRECATED_FUNCS
+	done
+	# scan for banned/deprecated helpers
+	if [[ -d "${PKGCORE_EBD_PATH}/helpers/${eapi}" ]]; then
+		for file in $(find "${PKGCORE_EBD_PATH}/helpers/${eapi}" ! -type d); do
+			cmd=${file##*/}
+			if $(cmp -s "${file}" "${BANNED_HELPER}"); then
+				BANNED_CMDS+=( "${cmd}" )
+				# remove deprecated entry if one exists
+				for i in "${!DEPRECATED_CMDS[@]}"; do
+					[[ ${DEPRECATED_CMDS[i]} == ${cmd} ]] && unset 'DEPRECATED_CMDS[i]'
+				done
+			elif $(cmp -s "${file}" "${DEPRECATED_HELPER}"); then
+				DEPRECATED_CMDS+=( "${cmd}" )
+			fi
+		done
+	fi
+done
+
+if ${BANNED} && [[ -n ${BANNED_CMDS[@]} ]]; then
+	printf '%s\n' ${BANNED_CMDS[@]}
+fi
+if ${DEPRECATED} && [[ -n ${DEPRECATED_CMDS[@]} ]]; then
+	printf '%s\n' ${DEPRECATED_CMDS[@]}
+fi

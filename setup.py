@@ -32,6 +32,7 @@ class sdist(pkgdist.sdist):
 
         # generate function lists so they don't need to be created on install
         write_pkgcore_ebd_funclists(root='/', target='ebd/.generated')
+        write_pkgcore_ebd_cmdlists(root='/', target='ebd/.generated')
         write_pkgcore_ebd_eapi_libs(root='/', target='ebd/.generated')
         shutil.copytree(
             os.path.join(pkgdist.REPODIR, 'ebd', '.generated'),
@@ -66,18 +67,14 @@ class install(pkgdist.install):
             # Generate ebd libs when not running from release tarballs that
             # contain pre-generated files.
             if not os.path.exists(os.path.join(pkgdist.REPODIR, 'man')):
-                write_pkgcore_ebd_funclists(
-                    root=root, target=os.path.join(target, EBD_INSTALL_OFFSET, '.generated'),
-                    scripts_dir=self.install_scripts, python_base=self.install_purelib)
-                write_pkgcore_ebd_eapi_libs(
-                        root=root, target=os.path.join(target, EBD_INSTALL_OFFSET, '.generated'),
-                    scripts_dir=self.install_scripts, python_base=self.install_purelib)
+                generated_target = os.path.join(target, EBD_INSTALL_OFFSET, '.generated')
+                write_pkgcore_ebd_funclists(root=root, target=generated_target)
+                write_pkgcore_ebd_cmdlists(root=root, target=generated_target)
+                write_pkgcore_ebd_eapi_libs(root=root, target=generated_target)
 
 
-def write_pkgcore_ebd_funclists(root, target, scripts_dir=None, python_base='.'):
+def write_pkgcore_ebd_funclists(root, target):
     "Generate bash function lists from ebd implementation for env filtering."""
-    if scripts_dir is None:
-        scripts_dir = os.path.join(pkgdist.REPODIR, 'bin')
     ebd_dir = target
     if root != '/':
         ebd_dir = os.path.join(root, target.lstrip('/'))
@@ -105,10 +102,39 @@ def write_pkgcore_ebd_funclists(root, target, scripts_dir=None, python_base='.')
                         "generating EAPI %s function list failed" % eapi)
 
 
-def write_pkgcore_ebd_eapi_libs(root, target, scripts_dir=None, python_base='.'):
+def write_pkgcore_ebd_cmdlists(root, target):
+    "Generate bash function lists from ebd implementation for env filtering."""
+    ebd_dir = target
+    if root != '/':
+        ebd_dir = os.path.join(root, target.lstrip('/'))
+    os.makedirs(os.path.join(ebd_dir, 'funcs'), exist_ok=True)
+
+    # generate EAPI specific command lists
+    with pkgdist.syspath(pkgdist.PACKAGEDIR):
+        from pkgcore.ebuild.eapi import EAPI
+        for eapi_obj in EAPI.known_eapis.values():
+            eapi = str(eapi_obj)
+            os.makedirs(os.path.join(ebd_dir, 'funcs', eapi), exist_ok=True)
+
+            path = os.path.join(ebd_dir, 'funcs', eapi, 'banned')
+            log.info(f'Writing EAPI {eapi} banned command list: {path!r}')
+            with open(path, 'w') as f:
+                if subprocess.call(
+                        [os.path.join(pkgdist.REPODIR, 'ebd', 'generate_eapi_cmd_list'), '-b', eapi],
+                        cwd=ebd_dir, stdout=f):
+                    raise DistutilsExecError(f'generating EAPI {eapi} banned command list failed')
+
+            path = os.path.join(ebd_dir, 'funcs', eapi, 'deprecated')
+            log.info(f'Writing EAPI {eapi} deprecated command list: {path!r}')
+            with open(path, 'w') as f:
+                if subprocess.call(
+                        [os.path.join(pkgdist.REPODIR, 'ebd', 'generate_eapi_cmd_list'), '-d', eapi],
+                        cwd=ebd_dir, stdout=f):
+                    raise DistutilsExecError(f'generating EAPI {eapi} deprecated command list failed')
+
+
+def write_pkgcore_ebd_eapi_libs(root, target):
     "Generate bash EAPI scope libs for sourcing."""
-    if scripts_dir is None:
-        scripts_dir = os.path.join(pkgdist.REPODIR, 'bin')
     ebd_dir = target
     if root != '/':
         ebd_dir = os.path.join(root, target.lstrip('/'))

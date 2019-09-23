@@ -254,7 +254,7 @@ class EAPI(object, metaclass=klass.immutable_instance):
                     f'failed to generate list of EAPI {self} deprecated commands: {str(e)}')
 
         with open(cmds, 'r') as f:
-            return tuple(line.strip() for line in f)
+            return frozenset(line.strip() for line in f)
 
     @klass.jit_attr
     def bash_cmds_banned(self):
@@ -273,7 +273,7 @@ class EAPI(object, metaclass=klass.immutable_instance):
                     f'failed to generate list of EAPI {self} banned commands: {str(e)}')
 
         with open(cmds, 'r') as f:
-            return tuple(line.strip() for line in f)
+            return frozenset(line.strip() for line in f)
 
     def bash_libs(self):
         """Generate internally implemented EAPI specific bash libs required by the ebd."""

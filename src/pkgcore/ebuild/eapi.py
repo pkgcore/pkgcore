@@ -237,6 +237,44 @@ class EAPI(object, metaclass=klass.immutable_instance):
         with open(funcs, 'r') as f:
             return tuple(line.strip() for line in f)
 
+    @klass.jit_attr
+    def bash_cmds_deprecated(self):
+        """EAPI specific commands deprecated for this EAPI."""
+        cmds = pjoin(const.EBD_PATH, '.generated', 'cmds', self._magic, 'deprecated')
+        if not os.path.exists(cmds):
+            # we're probably running in a cacheless git repo, so generate a cached version
+            try:
+                os.makedirs(os.path.dirname(cmds), exist_ok=True)
+                with open(cmds, 'w') as f:
+                    subprocess.run(
+                        [pjoin(const.EBD_PATH, 'generate_eapi_cmd_list'), '-d', self._magic],
+                        cwd=const.EBD_PATH, stdout=f)
+            except (IOError, subprocess.CalledProcessError) as e:
+                raise Exception(
+                    f'failed to generate list of EAPI {self} deprecated commands: {str(e)}')
+
+        with open(cmds, 'r') as f:
+            return tuple(line.strip() for line in f)
+
+    @klass.jit_attr
+    def bash_cmds_banned(self):
+        """EAPI specific commands banned for this EAPI."""
+        cmds = pjoin(const.EBD_PATH, '.generated', 'cmds', self._magic, 'banned')
+        if not os.path.exists(cmds):
+            # we're probably running in a cacheless git repo, so generate a cached version
+            try:
+                os.makedirs(os.path.dirname(cmds), exist_ok=True)
+                with open(cmds, 'w') as f:
+                    subprocess.run(
+                        [pjoin(const.EBD_PATH, 'generate_eapi_cmd_list'), '-b', self._magic],
+                        cwd=const.EBD_PATH, stdout=f)
+            except (IOError, subprocess.CalledProcessError) as e:
+                raise Exception(
+                    f'failed to generate list of EAPI {self} banned commands: {str(e)}')
+
+        with open(cmds, 'r') as f:
+            return tuple(line.strip() for line in f)
+
     def bash_libs(self):
         """Generate internally implemented EAPI specific bash libs required by the ebd."""
         eapi_global_lib = pjoin(const.EBD_PATH, '.generated', 'libs', self._magic, 'global')

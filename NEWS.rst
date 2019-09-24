@@ -3,6 +3,15 @@ Release Notes
 =============
 
 ---------------------------
+pkgcore 0.10.5 (2019-09-24)
+---------------------------
+
+- pkgcore.ebuild.eapi: Add deprecated and banned bash commands attributes.
+
+- pkgcore.ebuild.repo_objs: Fix collapsing license groups for
+  OverlayedLicenses.
+
+---------------------------
 pkgcore 0.10.4 (2019-09-18)
 ---------------------------
 

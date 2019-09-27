@@ -188,9 +188,9 @@ class PackagesCacheV0(cache.bulk):
                 handler = AtomicWriteFile(self._location)
                 self._serialize_to_handle(list(self.data.items()), handler)
                 handler.close()
-            except PermissionError:
+            except PermissionError as e:
                 logger.error(
-                    f"failed writing binpkg Packages cache to {self._location!r}; permissions issue {e}")
+                    f'failed writing binpkg cache to {self._location!r}: {e}')
         finally:
             if handler is not None:
                 handler.discard()

@@ -267,6 +267,8 @@ class CompatConfigManager:
         self._manager = manager
 
     def __getattr__(self, attr):
+        if attr == '_manager':
+            return object.__getattribute__(self, '_manager')
         obj = getattr(self._manager, attr, _singleton)
         if obj is _singleton:
             obj = getattr(self._manager.objects, attr)

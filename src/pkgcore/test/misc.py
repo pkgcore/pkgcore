@@ -72,7 +72,7 @@ class FakeRepo:
         for k, v in kwds.items():
             setattr(self, k, v)
 
-    def itermatch(self, restrict, sorter=iter, pkg_cls=lambda x: x):
+    def itermatch(self, restrict, sorter=iter, pkg_cls=lambda x: x, **kwargs):
         return filter(restrict.match, list(map(pkg_cls, sorter(self.pkgs))))
 
     def match(self, restrict, **kwargs):

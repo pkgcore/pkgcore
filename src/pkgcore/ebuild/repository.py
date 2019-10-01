@@ -528,7 +528,7 @@ class UnconfiguredTree(prototype.tree):
                 "failed fetching versions for package %s: %s" %
                 (pjoin(self.base, '/'.join(catpkg)), str(e))) from e
 
-    def _pkg_filter(self, raw, pkgs):
+    def _pkg_filter(self, raw, error_callback, pkgs):
         """Filter packages with bad metadata."""
         while True:
             try:
@@ -545,8 +545,10 @@ class UnconfiguredTree(prototype.tree):
                 # check pkgs for unsupported/invalid EAPIs and bad metadata
                 try:
                     if not pkg.is_supported:
-                        self._masked[pkg.versioned_atom] = pkg_errors.MetadataException(
+                        exc = pkg_errors.MetadataException(
                             pkg, 'eapi', f"EAPI '{pkg.eapi}' is not supported")
+                        self._masked[pkg.versioned_atom] = exc
+                        error_callback(exc)
                         continue
                     # TODO: add a generic metadata validation method to avoid slow metadata checks?
                     pkg.data
@@ -554,12 +556,14 @@ class UnconfiguredTree(prototype.tree):
                     pkg.required_use
                 except pkg_errors.MetadataException as e:
                     self._masked[e.pkg.versioned_atom] = e
+                    error_callback(e)
                     continue
                 yield pkg
 
     def itermatch(self, *args, **kwargs):
         raw = 'raw_pkg_cls' in kwargs or not kwargs.get('versioned', True)
-        kwargs.setdefault('pkg_filter', partial(self._pkg_filter, raw))
+        error_callback = kwargs.pop('error_callback', lambda x: x)
+        kwargs.setdefault('pkg_filter', partial(self._pkg_filter, raw, error_callback))
         return super().itermatch(*args, **kwargs)
 
     def _get_ebuild_path(self, pkg):

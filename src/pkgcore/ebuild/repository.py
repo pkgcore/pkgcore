@@ -541,14 +541,17 @@ class UnconfiguredTree(prototype.tree):
 
             if raw:
                 yield pkg
-            elif pkg not in self._masked.itermatch(pkg.versioned_atom):
+            elif pkg in self._masked.itermatch(pkg.versioned_atom) and error_callback is not None:
+                error_callback(self._masked[pkg.versioned_atom])
+            else:
                 # check pkgs for unsupported/invalid EAPIs and bad metadata
                 try:
                     if not pkg.is_supported:
                         exc = pkg_errors.MetadataException(
                             pkg, 'eapi', f"EAPI '{pkg.eapi}' is not supported")
                         self._masked[pkg.versioned_atom] = exc
-                        error_callback(exc)
+                        if error_callback is not None:
+                            error_callback(exc)
                         continue
                     # TODO: add a generic metadata validation method to avoid slow metadata checks?
                     pkg.data
@@ -556,13 +559,14 @@ class UnconfiguredTree(prototype.tree):
                     pkg.required_use
                 except pkg_errors.MetadataException as e:
                     self._masked[e.pkg.versioned_atom] = e
-                    error_callback(e)
+                    if error_callback is not None:
+                        error_callback(e)
                     continue
                 yield pkg
 
     def itermatch(self, *args, **kwargs):
         raw = 'raw_pkg_cls' in kwargs or not kwargs.get('versioned', True)
-        error_callback = kwargs.pop('error_callback', lambda x: x)
+        error_callback = kwargs.pop('error_callback', None)
         kwargs.setdefault('pkg_filter', partial(self._pkg_filter, raw, error_callback))
         return super().itermatch(*args, **kwargs)
 

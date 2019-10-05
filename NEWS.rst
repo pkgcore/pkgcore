@@ -3,6 +3,17 @@ Release Notes
 =============
 
 ---------------------------
+pkgcore 0.10.6 (2019-10-05)
+---------------------------
+
+- pkgcore.ebuild.repository: Add error_callback parameter for itermatch() to
+  allow pkgcheck to redirect metadata exceptions to itself in order to report
+  them more easily.
+
+- pkgcore.config.central: Fix recursion error while pickling/unpickling
+  CompatConfigManager instances when using a process pool.
+
+---------------------------
 pkgcore 0.10.5 (2019-09-24)
 ---------------------------
 

@@ -313,7 +313,7 @@ class EAPI(object, metaclass=klass.immutable_instance):
         else:
             flags = 0
         archive_suffixes = '|'.join(map(re.escape, self.archive_suffixes))
-        return re.compile(rf'({archive_suffixes})$', flags=flags)
+        return re.compile(rf'({archive_suffixes})', flags=flags)
 
     @klass.jit_attr
     def atom_kls(self):

@@ -9,6 +9,7 @@ __all__ = (
 import os
 
 from snakeoil.mappings import LazyValDict, DictMixin
+from snakeoil.osutils import pjoin
 from snakeoil.sequences import iflatten_instance
 
 from pkgcore.ebuild.atom import atom
@@ -192,17 +193,20 @@ class tree:
     def __contains__(self, obj):
         """Determine if a path or a package is in a repo."""
         if isinstance(obj, str):
-            path = os.path.realpath(obj)
-            if not os.path.exists(path):
-                return False
-
+            path = os.path.normpath(obj)
             try:
                 repo_path = os.path.realpath(getattr(self, 'location'))
             except AttributeError:
                 return False
 
-            if path.startswith(repo_path):
+            if os.path.exists(pjoin(repo_path, path)):
                 return True
+            else:
+                fullpath = os.path.realpath(os.path.abspath(path))
+                if not os.path.exists(fullpath):
+                    return False
+                if fullpath.startswith(repo_path):
+                    return True
             return False
         else:
             for pkg in self.itermatch(obj):

@@ -420,30 +420,33 @@ class UnconfiguredTree(prototype.tree):
             path relates to a file that isn't an ebuild, or the ebuild isn't in the
             proper directory layout
         """
-        realpath = os.path.realpath(path)
-
-        if realpath not in self:
+        if path not in self:
             raise ValueError(f"{self.repo_id!r} repo doesn't contain: {path!r}")
 
-        relpath = realpath[len(os.path.realpath(self.location)):].strip('/')
-        repo_path = relpath.split(os.path.sep) if relpath else []
-        restrictions = []
+        if not path.startswith(os.sep) and os.path.exists(pjoin(self.location, path)):
+            path_chunks = path.split(os.path.sep)
+        else:
+            path = os.path.realpath(os.path.abspath(path))
+            relpath = path[len(os.path.realpath(self.location)):].strip('/')
+            path_chunks = relpath.split(os.path.sep)
 
-        if os.path.isfile(realpath):
+        if os.path.isfile(path):
             if not path.endswith('.ebuild'):
                 raise ValueError(f"file is not an ebuild: {path!r}")
-            elif len(repo_path) != 3:
+            elif len(path_chunks) != 3:
                 # ebuild isn't in a category/PN directory
                 raise ValueError(
                     f"ebuild not in the correct directory layout: {path!r}")
 
+        restrictions = []
+
         # add restrictions until path components run out
         try:
             restrictions.append(restricts.RepositoryDep(self.repo_id))
-            if repo_path[0] in self.categories:
-                restrictions.append(restricts.CategoryDep(repo_path[0]))
-                restrictions.append(restricts.PackageDep(repo_path[1]))
-                base = cpv.VersionedCPV(f"{repo_path[0]}/{os.path.splitext(repo_path[2])[0]}")
+            if path_chunks[0] in self.categories:
+                restrictions.append(restricts.CategoryDep(path_chunks[0]))
+                restrictions.append(restricts.PackageDep(path_chunks[1]))
+                base = cpv.VersionedCPV(f"{path_chunks[0]}/{os.path.splitext(path_chunks[2])[0]}")
                 restrictions.append(restricts.VersionMatch('=', base.version, rev=base.revision))
         except IndexError:
             pass

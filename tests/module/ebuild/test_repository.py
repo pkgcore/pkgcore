@@ -143,12 +143,28 @@ class TestUnconfiguredTree(TempDirMixin):
             # matches all 3 ebuilds in the category
             self.assertEqual(len(repo.match(restriction)), 3)
 
+            # relative category dir
+            with mock.patch('os.getcwd', return_value=repo.location):
+                restriction = repo.path_restrict('cat')
+                self.assertEqual(len(restriction), 2)
+                self.assertInstance(restriction[1], restricts.CategoryDep)
+                # matches all 3 ebuilds in the category
+                self.assertEqual(len(repo.match(restriction)), 3)
+
             # package dir
             restriction = repo.path_restrict(pjoin(repo.location, 'cat', 'foo'))
             self.assertEqual(len(restriction), 3)
             self.assertInstance(restriction[2], restricts.PackageDep)
             # matches both ebuilds in the package dir
             self.assertEqual(len(repo.match(restriction)), 2)
+
+            # relative package dir
+            with mock.patch('os.getcwd', return_value=repo.location):
+                restriction = repo.path_restrict('cat/foo')
+                self.assertEqual(len(restriction), 3)
+                self.assertInstance(restriction[2], restricts.PackageDep)
+                # matches both ebuilds in the package dir
+                self.assertEqual(len(repo.match(restriction)), 2)
 
             # ebuild file
             restriction = repo.path_restrict(pjoin(repo.location, 'cat', 'foo', 'foo-1.ebuild'))

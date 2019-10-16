@@ -199,14 +199,15 @@ class tree:
             except AttributeError:
                 return False
 
-            if os.path.exists(pjoin(repo_path, path)):
+            # existing relative path
+            if not path.startswith(os.sep) and os.path.exists(pjoin(repo_path, path)):
                 return True
-            else:
-                fullpath = os.path.realpath(os.path.abspath(path))
-                if not os.path.exists(fullpath):
-                    return False
-                if fullpath.startswith(repo_path):
-                    return True
+
+            # existing full path
+            fullpath = os.path.realpath(os.path.abspath(path))
+            if fullpath.startswith(repo_path) and os.path.exists(fullpath):
+                return True
+
             return False
         else:
             for pkg in self.itermatch(obj):

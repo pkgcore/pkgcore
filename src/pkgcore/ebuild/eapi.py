@@ -158,7 +158,7 @@ class EAPI(object, metaclass=klass.immutable_instance):
 
     def __init__(self, magic, parent=None, phases=(), default_phases=(),
                  mandatory_keys=(), dep_keys=(), metadata_keys=(),
-                 tracked_attributes=(), archive_suffixes=(),
+                 tracked_attributes=(), archive_exts=(),
                  optionals=None, ebd_env_options=None):
         sf = object.__setattr__
 
@@ -179,7 +179,7 @@ class EAPI(object, metaclass=klass.immutable_instance):
             frozenset(mandatory_keys) | frozenset(dep_keys) | frozenset(metadata_keys)))
         sf(self, "tracked_attributes", (
             frozenset(tracked_attributes) | frozenset(x.lower() for x in dep_keys)))
-        sf(self, "archive_suffixes", frozenset(archive_suffixes))
+        sf(self, "archive_exts", frozenset(archive_exts))
 
         if optionals is None:
             optionals = {}
@@ -307,13 +307,17 @@ class EAPI(object, metaclass=klass.immutable_instance):
                     raise Exception(f"failed to generate EAPI '{self}' phase {phase} lib: {str(e)}")
 
     @klass.jit_attr
-    def archive_suffixes_re(self):
+    def archive_exts_regex_pattern(self):
+        """Regex pattern for supported archive extensions."""
+        pattern = '|'.join(map(re.escape, self.archive_exts))
         if self.options.unpack_case_insensitive:
-            flags = re.IGNORECASE
-        else:
-            flags = 0
-        archive_suffixes = '|'.join(map(re.escape, self.archive_suffixes))
-        return re.compile(rf'({archive_suffixes})', flags=flags)
+            return f'(?i:({pattern}))'
+        return f'({pattern})'
+
+    @klass.jit_attr
+    def archive_exts_regex(self):
+        """Regex matching strings ending with supported archive extensions."""
+        return re.compile(rf'{self.archive_exts_regex_pattern}$')
 
     @klass.jit_attr
     def atom_kls(self):
@@ -435,7 +439,7 @@ common_tracked_attributes = (
     "restrict", "source_repository",
 )
 
-common_archive_suffixes = (
+common_archive_exts = (
     ".tar",
     ".tar.gz", ".tgz", ".tar.Z", ".tar.z",
     ".tar.bz2", ".tbz2", ".tbz",
@@ -467,7 +471,7 @@ eapi0 = EAPI.register(
     dep_keys=common_dep_keys,
     metadata_keys=common_metadata_keys,
     tracked_attributes=common_tracked_attributes,
-    archive_suffixes=common_archive_suffixes,
+    archive_exts=common_archive_exts,
     optionals=eapi_optionals,
     ebd_env_options=common_env_optionals,
 )
@@ -481,7 +485,7 @@ eapi1 = EAPI.register(
     dep_keys=eapi0.dep_keys,
     metadata_keys=eapi0.metadata_keys,
     tracked_attributes=eapi0.tracked_attributes,
-    archive_suffixes=eapi0.archive_suffixes,
+    archive_exts=eapi0.archive_exts,
     optionals=_combine_dicts(eapi0.options, dict(
         iuse_defaults=True,
     )),
@@ -499,7 +503,7 @@ eapi2 = EAPI.register(
     dep_keys=eapi1.dep_keys,
     metadata_keys=eapi1.metadata_keys,
     tracked_attributes=eapi1.tracked_attributes,
-    archive_suffixes=eapi1.archive_suffixes,
+    archive_exts=eapi1.archive_exts,
     optionals=_combine_dicts(eapi1.options, dict(
         doman_language_detect=True,
         transitive_use_atoms=True,
@@ -517,7 +521,7 @@ eapi3 = EAPI.register(
     dep_keys=eapi2.dep_keys,
     metadata_keys=eapi2.metadata_keys,
     tracked_attributes=eapi2.tracked_attributes,
-    archive_suffixes=eapi2.archive_suffixes | frozenset([".tar.xz", ".xz"]),
+    archive_exts=eapi2.archive_exts | frozenset([".tar.xz", ".xz"]),
     optionals=_combine_dicts(eapi2.options, dict(
         prefix_capable=True,
     )),
@@ -533,7 +537,7 @@ eapi4 = EAPI.register(
     dep_keys=eapi3.dep_keys,
     metadata_keys=eapi3.metadata_keys | frozenset(["REQUIRED_USE"]),
     tracked_attributes=eapi3.tracked_attributes,
-    archive_suffixes=eapi3.archive_suffixes,
+    archive_exts=eapi3.archive_exts,
     optionals=_combine_dicts(eapi3.options, dict(
         dodoc_allow_recursive=True,
         doman_language_override=True,
@@ -557,7 +561,7 @@ eapi5 = EAPI.register(
     dep_keys=eapi4.dep_keys,
     metadata_keys=eapi4.metadata_keys,
     tracked_attributes=eapi4.tracked_attributes | frozenset(["iuse_effective"]),
-    archive_suffixes=eapi4.archive_suffixes,
+    archive_exts=eapi4.archive_exts,
     optionals=_combine_dicts(eapi4.options, dict(
         ebuild_phase_func=True,
         profile_iuse_injection=True,
@@ -579,7 +583,7 @@ eapi6 = EAPI.register(
     dep_keys=eapi5.dep_keys,
     metadata_keys=eapi5.metadata_keys,
     tracked_attributes=eapi5.tracked_attributes | frozenset(["user_patches"]),
-    archive_suffixes=eapi5.archive_suffixes | frozenset([".txz"]),
+    archive_exts=eapi5.archive_exts | frozenset([".txz"]),
     optionals=_combine_dicts(eapi5.options, dict(
         global_failglob=True,
         nonfatal_die=True,
@@ -600,7 +604,7 @@ eapi7 = EAPI.register(
     dep_keys=eapi6.dep_keys | frozenset(["BDEPEND"]),
     metadata_keys=eapi6.metadata_keys,
     tracked_attributes=eapi6.tracked_attributes,
-    archive_suffixes=eapi6.archive_suffixes,
+    archive_exts=eapi6.archive_exts,
     optionals=_combine_dicts(eapi6.options, dict(
         has_profile_data_dirs=True,
         has_portdir=False,

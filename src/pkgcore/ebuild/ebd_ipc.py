@@ -689,14 +689,14 @@ class Doman(_InstallWrapper):
         dirs = set()
         for x in targets:
             basename = os.path.basename(x)
-            suffix = os.path.splitext(basename)[1]
+            ext = os.path.splitext(basename)[1]
 
-            if self.eapi.archive_suffixes_re.match(suffix):
+            if self.eapi.archive_exts_regex.match(ext):
                 # TODO: uncompress/warn?
-                suffix = os.path.splitext(basename.rsplit('.', 1)[0])[1]
+                ext = os.path.splitext(basename.rsplit('.', 1)[0])[1]
 
             name = basename
-            mandir = f'man{suffix[1:]}'
+            mandir = f'man{ext[1:]}'
 
             if self.language_override and self.opts.i18n:
                 mandir = pjoin(self.opts.i18n, mandir)
@@ -1061,7 +1061,7 @@ class Unpack(IpcCommand):
             elif os.stat(path).st_size == 0:
                 raise IpcCommandError(f'empty file: {archive!r}')
 
-            match = self.eapi.archive_suffixes_re.search(archive)
+            match = self.eapi.archive_exts_regex.search(archive)
             if not match:
                 self.warn(f'skipping unrecognized file format: {archive!r}')
                 continue

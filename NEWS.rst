@@ -3,6 +3,17 @@ Release Notes
 =============
 
 ---------------------------
+pkgcore 0.10.7 (2019-11-04)
+---------------------------
+
+- pkgcore.ebuild.eapi: Split archive extension pattern into separate attribute
+  for easier use in pkgcheck.
+
+- Fix containment checks for absolute paths against repo objects.
+
+- Fix generating path restricts with relative paths for ebuild repo objects.
+
+---------------------------
 pkgcore 0.10.6 (2019-10-05)
 ---------------------------
 

@@ -3,6 +3,7 @@ language: python
 python:
 - 3.6
 - 3.7
+- 3.8
 addons:
   apt:
     packages:
@@ -46,7 +47,7 @@ jobs:
       - secure: VbHW1pmzwc3LtJ4JYivarXMdsAE/MfitddnyYSZs+qBLxPevv967WuXZBeJgEak913bLj9Ku9YoxH8OHxu4uACU1rLNo48y0DMm0qtiGHx2sTmevDwIRflLIx/aJiS5OAuJZ4jY79HKPIfgObfZwO5awRzs8Afhlqg5xIFiWhiQ=
       - secure: j/lUk3RkNuas+wiMdoWsC2j7emirtMRz6G/4OVUf1+X9aFLSLo5jpY8C4yZJPb0FuCdYEjfKsq6aMOADwwMg6aXbXj+u5frqhUYAqBELR85G7gRBoLzcqj9YaRVsiIf9rF14xlueCM2cK08rDlkJwHr4fQZkNBZnbZ5+8MvwsO0=
       - CIBW_PLATFORM=linux
-      - CIBW_BUILD="cp36-* cp37-*"
+      - CIBW_BUILD="cp36-* cp37-* cp38-*"
       - CIBW_BEFORE_BUILD="tar -xf /host/$HOME/downloads/\$(uname -m)/*.tar.gz -C / && pip install -r requirements/wheel.txt -r requirements/test.txt"
       - CIBW_ENVIRONMENT="PATH=/opt/bin:\$PATH"
       - CIBW_TEST_COMMAND="py.test {project}/tests"

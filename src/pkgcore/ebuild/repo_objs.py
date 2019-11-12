@@ -814,18 +814,19 @@ class RepoConfig(syncable.tree, klass.ImmutableInstance, metaclass=WeakInstMeta)
         fp = pjoin(self.profiles_base, name)
         try:
             for line in iter_read_bash(fp):
-                key, val = line.split(None, 1)
-                key = converter(key)
-                if matcher:
-                    yield key[0], (key[1], val.split('-', 1)[1].strip())
-                else:
-                    yield key, val.split('-', 1)[1].strip()
+                try:
+                    key, val = line.split(None, 1)
+                    key = converter(key)
+                    if matcher:
+                        yield key[0], (key[1], val.split('-', 1)[1].strip())
+                    else:
+                        yield key, val.split('-', 1)[1].strip()
+                except ValueError as e:
+                    logger.error(f'failed parsing {fp!r}, line {line!r}: {e}')
         except FileNotFoundError:
             pass
         except ValueError as e:
-            if line is None:
-                raise
-            raise ValueError(f"Failed parsing {fp!r}: line was {line!r}") from e
+            logger.error(f'failed parsing {fp!r}: {e}')
 
     @klass.jit_attr
     def is_empty(self):

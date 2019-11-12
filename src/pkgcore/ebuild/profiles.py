@@ -82,7 +82,7 @@ def load_property(filename, *, read_func=_read_profile_files, fallback=(),
 def _load_and_invoke(func, filename, read_func, fallback, allow_recurse,
                      allow_line_cont, parse_func, eapi_optional, self):
     if eapi_optional is not None and not getattr(self.eapi.options, eapi_optional, None):
-        return fallback
+        return func(self, fallback)
 
     profile_path = self.path.rstrip('/')
     base = pjoin(profile_path, filename)

@@ -437,6 +437,27 @@ def _dist_validate_args(parser, namespace):
         filter(namespace.file_filters.run, targets))
 
 
+def pkg_changed(pkg, domain, attrs):
+    """Determine if given attributes from a binpkg changed compared to the related ebuild."""
+    try:
+        repo = domain.ebuild_repos_raw[pkg.source_repository]
+        ebuild_pkg = repo.match(pkg.versioned_atom)[0]
+    except (KeyError, IndexError):
+        # source repo doesn't exist on the system or related ebuild doesn't exist
+        return False
+    for attr in attrs:
+        try:
+            ebuild_attr = getattr(ebuild_pkg, attr)
+            binpkg_attr = getattr(pkg, attr)
+        except AttributeError:
+            raise argparser.error(f'nonexistent attribute: {attr!r}')
+        if attr.upper() in pkg.eapi.dep_keys:
+            ebuild_attr = ebuild_attr.evaluate_depset(pkg.use)
+        if ebuild_attr != binpkg_attr:
+            return True
+    return False
+
+
 pkg_opts = ArgumentParser(suppress=True)
 pkg_cleaning_opts = pkg_opts.add_argument_group('binpkg cleaning options')
 pkg_cleaning_opts.add_argument(
@@ -445,6 +466,9 @@ pkg_cleaning_opts.add_argument(
 pkg_cleaning_opts.add_argument(
     '-b', '--bindist', action='store_true',
     help='only remove binpkgs that restrict distribution')
+pkg_cleaning_opts.add_argument(
+    '-c', '--changed', action='csv',
+    help='comma separated list of package attributes to check for ebuild changes')
 pkg = subparsers.add_parser(
     'pkg', parents=(shared_opts, file_opts, repo_opts, pkg_opts),
     description='remove binpkgs')
@@ -462,6 +486,8 @@ def _pkg_validate_args(parser, namespace):
     pkg_filters = Filters()
     if namespace.bindist:
         pkg_filters.append(lambda pkg: 'bindist' in pkg.restrict)
+    if namespace.changed:
+        pkg_filters.append(lambda pkg: pkg_changed(pkg, namespace.domain, namespace.changed))
     if namespace.exclude_installed:
         pkg_filters.append(lambda pkg: pkg.versioned_atom not in namespace.domain.all_installed_repos)
     if namespace.exclude_exists:

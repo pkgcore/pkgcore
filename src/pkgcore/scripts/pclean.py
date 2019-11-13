@@ -464,6 +464,8 @@ def _pkg_validate_args(parser, namespace):
         pkg_filters.append(lambda pkg: 'bindist' in pkg.restrict)
     if namespace.exclude_installed:
         pkg_filters.append(lambda pkg: pkg.versioned_atom not in namespace.domain.all_installed_repos)
+    if namespace.exclude_exists:
+        pkg_filters.append(lambda pkg: pkg.versioned_atom not in namespace.domain.all_ebuild_repos_raw)
     if namespace.exclude_fetch_restricted:
         pkg_filters.append(lambda pkg: 'fetch' not in pkg.restrict)
     if namespace.source_repo is not None:

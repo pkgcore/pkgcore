@@ -159,11 +159,21 @@ class ProfileNode(object, metaclass=caching.WeakInstMeta):
                     neg_sys.append(self.eapi_atom(line[2:]))
                 elif profile_set:
                     neg_pro.append(self.eapi_atom(line[1:]))
+                else:
+                    logger.error(
+                        f'invalid line format, '
+                        f'{self.name}/packages, line {lineno}: {line!r}'
+                    )
             else:
                 if line[0] == '*':
                     sys.append(self.eapi_atom(line[1:]))
                 elif profile_set:
                     pro.append(self.eapi_atom(line))
+                else:
+                    logger.error(
+                        f'invalid line format, '
+                        f'{self.name}/packages, line {lineno}: {line!r}'
+                    )
         system = [tuple(neg_sys), tuple(sys)]
         profile = [tuple(neg_pro), tuple(pro)]
         if neg_wildcard:

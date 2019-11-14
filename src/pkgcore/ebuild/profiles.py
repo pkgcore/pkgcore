@@ -152,28 +152,31 @@ class ProfileNode(object, metaclass=caching.WeakInstMeta):
         sys, neg_sys, pro, neg_pro = [], [], [], []
         neg_wildcard = False
         for line, lineno, path in data:
-            if line[0] == '-':
-                if line == '-*':
-                    neg_wildcard = True
-                elif line[1] == '*':
-                    neg_sys.append(self.eapi_atom(line[2:]))
-                elif profile_set:
-                    neg_pro.append(self.eapi_atom(line[1:]))
+            try:
+                if line[0] == '-':
+                    if line == '-*':
+                        neg_wildcard = True
+                    elif line[1] == '*':
+                        neg_sys.append(self.eapi_atom(line[2:]))
+                    elif profile_set:
+                        neg_pro.append(self.eapi_atom(line[1:]))
+                    else:
+                        logger.error(
+                            f'invalid line format, '
+                            f'{self.name}/packages, line {lineno}: {line!r}'
+                        )
                 else:
-                    logger.error(
-                        f'invalid line format, '
-                        f'{self.name}/packages, line {lineno}: {line!r}'
-                    )
-            else:
-                if line[0] == '*':
-                    sys.append(self.eapi_atom(line[1:]))
-                elif profile_set:
-                    pro.append(self.eapi_atom(line))
-                else:
-                    logger.error(
-                        f'invalid line format, '
-                        f'{self.name}/packages, line {lineno}: {line!r}'
-                    )
+                    if line[0] == '*':
+                        sys.append(self.eapi_atom(line[1:]))
+                    elif profile_set:
+                        pro.append(self.eapi_atom(line))
+                    else:
+                        logger.error(
+                            f'invalid line format, '
+                            f'{self.name}/packages, line {lineno}: {line!r}'
+                        )
+            except ebuild_errors.MalformedAtom as e:
+                logger.error(f'{self.name}/packages, line {lineno}: {e}')
         system = [tuple(neg_sys), tuple(sys)]
         profile = [tuple(neg_pro), tuple(pro)]
         if neg_wildcard:

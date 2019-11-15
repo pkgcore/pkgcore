@@ -53,7 +53,7 @@ jobs:
       - CIBW_TEST_COMMAND="py.test {project}/tests"
       before_script:
       - git clone https://github.com/pkgcore/pkgdist.git
-      - cp -R pkgdist/requirements/* requirements/
+      - pkgdist/ci.sh
       script: pkgdist/build-dist-files.sh
       after_success:
 
@@ -61,7 +61,7 @@ jobs:
     - stage: deploy
       before_script:
       - git clone https://github.com/pkgcore/pkgdist.git
-      - cp -R pkgdist/requirements/* requirements/
+      - pkgdist/ci.sh
       - pip install -r requirements/sdist.txt
       script: python setup.py sdist -v
       after_success: tar -ztf dist/*.tar.gz | sort

@@ -1,2 +1,2 @@
 lxml
-snakeoil~=0.8.3
+snakeoil~=0.8.4

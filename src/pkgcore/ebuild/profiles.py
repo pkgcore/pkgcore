@@ -253,6 +253,11 @@ class ProfileNode(object, metaclass=caching.WeakInstMeta):
         data = (x[0] for x in data)
         return split_negations(data, self.eapi_atom)
 
+    @load_property("package.deprecated", allow_recurse=True)
+    def pkg_deprecated(self, data):
+        data = (x[0] for x in data)
+        return split_negations(data, self.eapi_atom)
+
     @load_property("package.keywords", allow_recurse=True,
                    parse_func=package_keywords_splitter)
     def keywords(self, data):
@@ -667,6 +672,10 @@ class ProfileStack:
     @klass.jit_attr
     def unmasks(self):
         return frozenset(self._collapse_generic('unmasks'))
+
+    @klass.jit_attr
+    def pkg_deprecated(self):
+        return frozenset(chain(self._collapse_generic("pkg_deprecated")))
 
     @klass.jit_attr
     def keywords(self):

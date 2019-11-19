@@ -219,6 +219,20 @@ class TestPmsProfileNode(profile_mixin, TestCase):
             ((atom("dev-util/diffball"),), ()))
         self.simple_eapi_awareness_check('package.unmask', 'unmasks')
 
+    def test_pkg_deprecated(self):
+        path = pjoin(self.dir, self.profile)
+        self.assertEqual(self.klass(path).pkg_deprecated, ((), ()))
+        self.parsing_checks("package.deprecated", "pkg_deprecated")
+        self.write_file("package.deprecated", "dev-util/diffball")
+        self.assertEqual(
+            self.klass(path).pkg_deprecated,
+            ((), (atom("dev-util/diffball"),)))
+        self.write_file("package.deprecated", "-dev-util/diffball")
+        self.assertEqual(
+            self.klass(path).pkg_deprecated,
+            ((atom("dev-util/diffball"),), ()))
+        self.simple_eapi_awareness_check('package.deprecated', 'pkg_deprecated')
+
     def _check_package_use_files(self, path, filename, attr):
         self.write_file(filename, "dev-util/bar X")
         self.assertEqualChunks(getattr(self.klass(path), attr),
@@ -807,6 +821,22 @@ class TestOnDiskProfile(profile_mixin, TestCase):
             frozenset([atom("dev-util/foo")]))
         self.assertEqual(
             self.get_profile("2").unmasks,
+            frozenset([atom("dev-util/" + x) for x in ("confcache", "foo")]))
+
+    def test_pkg_deprecated(self):
+        self.mk_profiles(
+            {"package.deprecated":"dev-util/foo"},
+            {},
+            {"package.deprecated":"dev-util/confcache"}
+        )
+        self.assertEqual(
+            self.get_profile("0").pkg_deprecated,
+            frozenset([atom("dev-util/foo")]))
+        self.assertEqual(
+            self.get_profile("1").pkg_deprecated,
+            frozenset([atom("dev-util/foo")]))
+        self.assertEqual(
+            self.get_profile("2").pkg_deprecated,
             frozenset([atom("dev-util/" + x) for x in ("confcache", "foo")]))
 
     def test_bashrc(self):

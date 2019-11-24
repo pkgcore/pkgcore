@@ -207,7 +207,7 @@ class TestUnconfiguredTree(TempDirMixin):
         repo = self.mk_tree(self.dir)
         self.assertEqual(sorted([atom('it-is/broken'),
             atom('<just/newer-than-42')]),
-            sorted(repo.default_visibility_limiters))
+            sorted(repo.masks))
 
 
 class TestSlavedTree(TestUnconfiguredTree):

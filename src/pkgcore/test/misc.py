@@ -67,7 +67,7 @@ class FakeRepo:
         self.pkgs = pkgs
         self.repo_id = repo_id or location
         self.location = location
-        self.default_visibility_limiters = masks
+        self.masks = masks
 
         for k, v in kwds.items():
             setattr(self, k, v)

@@ -245,13 +245,8 @@ class tree(prototype.tree):
             id(self))
 
     @property
-    def _visibility_limiters(self):
-        neg, pos = set(), set()
-        for tree in self.trees:
-            data = tree._visibility_limiters
-            neg.update(data[0])
-            pos.update(data[1])
-        return tuple(neg), tuple(pos)
+    def masks(self):
+        return frozenset(chain.from_iterable(repo.masks for repo in self.trees))
 
     @property
     def location(self):

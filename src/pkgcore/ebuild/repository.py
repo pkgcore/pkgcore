@@ -31,6 +31,7 @@ from pkgcore.ebuild import (
     ebuild_src, eclass_cache as eclass_cache_mod, errors as ebuild_errors,
 )
 from pkgcore.ebuild.eapi import get_eapi
+from pkgcore.ebuild.profiles import EmptyRootNode
 from pkgcore.fs.livefs import sorted_scan
 from pkgcore.log import logger
 from pkgcore.operations import repo as _repo_ops
@@ -618,31 +619,12 @@ class UnconfiguredTree(prototype.tree):
             self.__class__.__name__, self.base, id(self))
 
     @klass.jit_attr
-    def _visibility_limiters(self):
-        path = pjoin(self.base, 'profiles', 'package.mask')
-        neg, pos = [], []
-        try:
-            if (self.config.eapi.options.has_profile_data_dirs or
-                    self.config.profile_formats.intersection(['portage-1', 'portage-2'])):
-                paths = sorted_scan(path)
-            else:
-                paths = [path]
-            for path in paths:
-                for lineno, line in iter_read_bash(path, enum_line=True):
-                    line = line.strip()
-                    if line == '-':
-                        logger.warning(f"{path!r}, line {lineno}: empty negation '-'")
-                        continue
-                    try:
-                        if line.startswith('-'):
-                            neg.append(atom.atom(line[1:]))
-                        else:
-                            pos.append(atom.atom(line))
-                    except ebuild_errors.MalformedAtom as e:
-                        logger.warning(f'{path!r}, line {lineno}: {e}')
-        except FileNotFoundError:
-            pass
-        return tuple(neg), tuple(pos)
+    def _profile(self):
+        return EmptyRootNode._autodetect_and_create(pjoin(self.base, 'profiles'))
+
+    @klass.jit_attr
+    def masks(self):
+        return frozenset(chain.from_iterable(repo._profile.masks[1] for repo in self.trees))
 
     def _regen_operation_helper(self, **kwds):
         return _RegenOpHelper(
@@ -797,10 +779,6 @@ class ConfiguredTree(configured.tree):
             fetcher = domain.fetcher
         return ebd.src_operations(
             domain, pkg, pkg.repo.eclass_cache, fetcher=fetcher, **kwds)
-
-    @klass.jit_attr
-    def _masks(self):
-        return tuple(repo._visibility_limiters for repo in self.trees)
 
 
 UnconfiguredTree.configure = ConfiguredTree

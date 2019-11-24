@@ -145,6 +145,7 @@ class tree:
     configure = None
     frozen_settable = True
     operations_kls = repo.operations
+    masks = ()
 
     def __init__(self, frozen=False):
         self.categories = CategoryIterValLazyDict(
@@ -485,19 +486,6 @@ class tree:
             return True
         except StopIteration:
             return False
-
-    @property
-    def default_visibility_limiters(self):
-        # designed this way to allow for easy override
-        return self._visibility_limiters[1]
-
-    @property
-    def _visibility_limiters(self):
-        return (), ()
-
-    @property
-    def _masks(self):
-        return tuple(self._visibility_limiters for _ in range(1))
 
     def __str__(self):
         if self.aliases:

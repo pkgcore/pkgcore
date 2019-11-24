@@ -41,6 +41,11 @@ class tree(prototype.tree):
     def package_class(self, pkg):
         return self._pkg_klass(pkg, **self._get_pkg_kwds(pkg))
 
+    @property
+    def masks(self):
+        # required to override empty masks inherited from prototype.tree
+        return self.raw_repo.masks
+
     __getattr__ = GetAttrProxy("raw_repo")
     __dir__ = DirProxy("raw_repo")
 

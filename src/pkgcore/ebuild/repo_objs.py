@@ -613,9 +613,9 @@ class Profiles(klass.ImmutableInstance):
             if status == p.status or (status == 'deprecated' and p.deprecated):
                 yield p
 
-    def create_profile(self, node):
+    def create_profile(self, node, **kwargs):
         """Return profile object for a given, parsed profile entry."""
-        return profiles.OnDiskProfile(node.base, node.path)
+        return profiles.OnDiskProfile(node.base, node.path, **kwargs)
 
 
 class OverlayedProfiles(Profiles):

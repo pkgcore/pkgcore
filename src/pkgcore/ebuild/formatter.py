@@ -279,10 +279,8 @@ class PortageFormatter(CountingFormatter):
             elif not op.pkg.keywords:
                 op_chars[6] = [out.fg('red'), out.bold, '*', out.reset]
             else:
-                for masked_atom in op.pkg.repo.masks:
-                    if masked_atom.match(op.pkg.versioned_atom):
-                        op_chars[6] = [out.fg('red'), out.bold, '#', out.reset]
-                        break
+                if op.pkg.repo.masked.match(op.pkg.versioned_atom):
+                    op_chars[6] = [out.fg('red'), out.bold, '#', out.reset]
 
         out.write(*(iflatten_instance(op_chars)))
         out.write('] ')

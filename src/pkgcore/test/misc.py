@@ -78,6 +78,10 @@ class FakeRepo:
     def match(self, restrict, **kwargs):
         return list(self.itermatch(restrict, **kwargs))
 
+    @property
+    def masked(self):
+        return packages.OrRestriction(*self.masks)
+
     def __iter__(self):
         return self.itermatch(packages.AlwaysTrue)
 

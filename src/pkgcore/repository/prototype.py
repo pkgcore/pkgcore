@@ -8,6 +8,7 @@ __all__ = (
 
 import os
 
+from snakeoil.klass import jit_attr
 from snakeoil.mappings import LazyValDict, DictMixin
 from snakeoil.osutils import pjoin
 from snakeoil.sequences import iflatten_instance
@@ -496,3 +497,8 @@ class tree:
     def aliases(self):
         potentials = (getattr(self, key, None) for key in ('repo_id', 'location'))
         return tuple(x for x in potentials if x is not None)
+
+    @jit_attr
+    def masked(self):
+        """Base package mask restriction."""
+        return packages.OrRestriction(*self.masks)

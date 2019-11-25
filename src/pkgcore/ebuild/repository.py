@@ -624,6 +624,7 @@ class UnconfiguredTree(prototype.tree):
 
     @klass.jit_attr
     def masks(self):
+        """Base package masks from profiles/package.mask."""
         return frozenset(chain.from_iterable(repo._profile.masks[1] for repo in self.trees))
 
     def _regen_operation_helper(self, **kwds):

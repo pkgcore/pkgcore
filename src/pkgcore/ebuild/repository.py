@@ -627,6 +627,12 @@ class UnconfiguredTree(prototype.tree):
         """Base package masks from profiles/package.mask."""
         return frozenset(chain.from_iterable(repo._profile.masks[1] for repo in self.trees))
 
+    @klass.jit_attr
+    def deprecated(self):
+        """Base deprecated packages restriction from profiles/package.deprecated."""
+        return packages.OrRestriction(*chain.from_iterable(
+            repo._profile.pkg_deprecated[1] for repo in self.trees))
+
     def _regen_operation_helper(self, **kwds):
         return _RegenOpHelper(
             self, force=bool(kwds.get('force', False)),

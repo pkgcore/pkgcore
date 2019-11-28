@@ -211,11 +211,14 @@ def get_parsed_inherits(self):
 
 
 def get_slot(self):
-    o = self.data.pop("SLOT", None)
-    if not o:
+    slot = self.data.pop('SLOT', None)
+    if not slot:
         raise metadata_errors.MetadataException(
             self, 'slot', 'SLOT cannot be unset or empty')
-    return o.strip()
+    if not self.eapi.valid_slot_regex.match(slot):
+        raise metadata_errors.MetadataException(
+            self, 'slot', f'invalid SLOT: {slot!r}')
+    return slot
 
 
 def get_subslot(self):

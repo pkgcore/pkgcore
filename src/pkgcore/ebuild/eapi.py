@@ -320,6 +320,14 @@ class EAPI(object, metaclass=klass.immutable_instance):
         return re.compile(rf'{self.archive_exts_regex_pattern}$')
 
     @klass.jit_attr
+    def valid_slot_regex(self):
+        """Regex matching valid SLOT values."""
+        valid_slot = r'[A-Za-z0-9_][A-Za-z0-9+_.-]*'
+        if self.options.sub_slotting:
+            valid_slot += rf'(/{valid_slot})?'
+        return re.compile(rf'^{valid_slot}$')
+
+    @klass.jit_attr
     def atom_kls(self):
         return partial(atom.atom, eapi=self._magic)
 

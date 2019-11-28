@@ -121,12 +121,21 @@ class TestBase:
     def test_fullslot(self):
         o = self.get_pkg({'SLOT': '0'})
         assert o.fullslot == '0'
-        o = self.get_pkg({'SLOT': '0/0'})
-        assert o.fullslot == '0/0'
-        o = self.get_pkg({'SLOT': '1/2'})
-        assert o.fullslot == '1/2'
-        o = self.get_pkg({'SLOT': '1/foo-1'})
-        assert o.fullslot == '1/foo-1'
+
+        # subslot support
+        for eapi_str, eapi in EAPI.known_eapis.items():
+            if eapi.options.sub_slotting:
+                o = self.get_pkg({'EAPI': eapi_str, 'SLOT': '0/0'})
+                assert o.fullslot == '0/0'
+                o = self.get_pkg({'EAPI': eapi_str, 'SLOT': '1/2'})
+                assert o.fullslot == '1/2'
+                o = self.get_pkg({'EAPI': eapi_str, 'SLOT': '1/foo-1'})
+                assert o.fullslot == '1/foo-1'
+            else:
+                o = self.get_pkg({'EAPI': eapi_str, 'SLOT': '0/0'})
+                with pytest.raises(errors.MetadataException):
+                    o.fullslot
+
         # unset SLOT variable
         with pytest.raises(errors.MetadataException):
             self.get_pkg({}).fullslot
@@ -137,10 +146,19 @@ class TestBase:
     def test_slot(self):
         o = self.get_pkg({'SLOT': '0'})
         assert o.slot == '0'
-        o = self.get_pkg({'SLOT': '1/2'})
-        assert o.slot == '1'
-        o = self.get_pkg({'SLOT': '1/foo-1'})
-        assert o.slot == '1'
+
+        # subslot support
+        for eapi_str, eapi in EAPI.known_eapis.items():
+            if eapi.options.sub_slotting:
+                o = self.get_pkg({'EAPI': eapi_str, 'SLOT': '1/2'})
+                assert o.slot == '1'
+                o = self.get_pkg({'EAPI': eapi_str, 'SLOT': '1/foo-1'})
+                assert o.slot == '1'
+            else:
+                o = self.get_pkg({'EAPI': eapi_str, 'SLOT': '1/2'})
+                with pytest.raises(errors.MetadataException):
+                    o.slot
+
         # unset SLOT variable
         with pytest.raises(errors.MetadataException):
             self.get_pkg({}).slot
@@ -153,10 +171,19 @@ class TestBase:
         assert o.subslot == '0'
         o = self.get_pkg({'SLOT': '1'})
         assert o.subslot == '1'
-        o = self.get_pkg({'SLOT': '1/2'})
-        assert o.subslot == '2'
-        o = self.get_pkg({'SLOT': '1/foo-1'})
-        assert o.subslot == 'foo-1'
+
+        # subslot support
+        for eapi_str, eapi in EAPI.known_eapis.items():
+            if eapi.options.sub_slotting:
+                o = self.get_pkg({'EAPI': eapi_str, 'SLOT': '1/2'})
+                assert o.subslot == '2'
+                o = self.get_pkg({'EAPI': eapi_str, 'SLOT': '1/foo-1'})
+                assert o.subslot == 'foo-1'
+            else:
+                o = self.get_pkg({'EAPI': eapi_str, 'SLOT': '1/2'})
+                with pytest.raises(errors.MetadataException):
+                    o.subslot
+
         # unset SLOT variable
         with pytest.raises(errors.MetadataException):
             self.get_pkg({}).subslot

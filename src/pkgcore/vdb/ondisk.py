@@ -164,7 +164,7 @@ class tree(prototype.tree):
                 if data is None:
                     raise KeyError(key)
         else:
-            data = readfile(pjoin(path, key), True)
+            data = readfile(pjoin(path, key), True).rstrip('\n')
             if data is None:
                 raise KeyError((path, key))
         return data

@@ -164,9 +164,10 @@ class tree(prototype.tree):
                 if data is None:
                     raise KeyError(key)
         else:
-            data = readfile(pjoin(path, key), True).rstrip('\n')
+            data = readfile(pjoin(path, key), True)
             if data is None:
                 raise KeyError((path, key))
+            data = data.rstrip('\n')
         return data
 
     def notify_remove_package(self, pkg):

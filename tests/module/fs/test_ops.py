@@ -81,7 +81,7 @@ class TestCopyFile(VerifyMixin, TempDirMixin, TestCase):
     def test_sym_perms(self):
         curgid = os.getgid()
         group = [x for x in os.getgroups() if x != curgid]
-        if not group and os.getuid() != 0:
+        if not group or os.getuid() != 0:
             raise SkipTest("requires root privs for this test, or for this"
                 " user to belong to more then one group")
         group = group[0]

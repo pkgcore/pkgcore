@@ -235,7 +235,7 @@ class EAPI(object, metaclass=klass.immutable_instance):
                     f"failed to generate list of EAPI '{self}' specific functions: {str(e)}")
 
         with open(funcs, 'r') as f:
-            return tuple(line.strip() for line in f)
+            return frozenset(line.strip() for line in f)
 
     @klass.jit_attr
     def bash_cmds_deprecated(self):

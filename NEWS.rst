@@ -3,6 +3,22 @@ Release Notes
 =============
 
 ---------------------------
+pkgcore 0.10.8 (2019-11-30)
+---------------------------
+
+- Add support for validating SLOT values, used by pkgcheck to flag invalid
+  SLOTs and pkgs with bad SLOTs will be automasked.
+
+- Add initial profiles/package.deprecated support to flag deprecated packages
+  by pkgcheck.
+
+- pclean pkg: Add initial -c/--changed option that allows for scanning the
+  related ebuilds for given attribute changes and flagging binpkgs for removal
+  if changes exist.
+
+- Add py3.8 support.
+
+---------------------------
 pkgcore 0.10.7 (2019-11-04)
 ---------------------------
 

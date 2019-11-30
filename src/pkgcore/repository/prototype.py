@@ -146,7 +146,7 @@ class tree:
     configure = None
     frozen_settable = True
     operations_kls = repo.operations
-    masks = ()
+    pkg_masks = ()
 
     def __init__(self, frozen=False):
         self.categories = CategoryIterValLazyDict(
@@ -501,4 +501,4 @@ class tree:
     @jit_attr
     def masked(self):
         """Base package mask restriction."""
-        return packages.OrRestriction(*self.masks)
+        return packages.OrRestriction(*self.pkg_masks)

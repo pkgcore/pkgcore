@@ -46,6 +46,13 @@ class ProfileError(errors.ParsingError):
         return f"failed parsing {self.path!r}: {self.error}"
 
 
+class NonexistentProfile(ProfileError):
+    """Profile for a nonexistent directory."""
+
+    def __init__(self, path):
+        super().__init__(path, "", "nonexistent profile directory")
+
+
 def _read_profile_files(files, allow_line_cont=False):
     """Read all the given data files."""
     for path in files:
@@ -128,7 +135,7 @@ class ProfileNode(object, metaclass=caching.WeakInstMeta):
     def __init__(self, path, pms_strict=True):
         self.path = path
         if not os.path.isdir(self.path):
-            raise ProfileError(self.path, "", "nonexistent profile")
+            raise NonexistentProfile(self.path)
         self.pms_strict = pms_strict
 
     def __str__(self):
@@ -423,15 +430,16 @@ class ProfileNode(object, metaclass=caching.WeakInstMeta):
 
     @load_property('eapi', fallback=('0',))
     def eapi(self, data):
-        data = (x[0] for x in data)
-        data = (x.strip() for x in data)
-        data = [x for x in data if x]
-        if len(data) != 1:
-            raise ProfileError(self.path, 'eapi', "multiple lines detected")
-        eapi = get_eapi(data[0])
-        if not eapi.is_supported:
-            raise ProfileError(self.path, 'eapi', f'unsupported EAPI: {str(eapi)!r}')
-        return eapi
+        try:
+            data = (x[0] for x in data)
+            data = (x.strip() for x in data)
+            data = [x for x in data if x]
+            if len(data) > 1:
+                logger.error(f'{self.name}/eapi, multiple lines detected')
+            return get_eapi(data[0])
+        except IndexError:
+            logger.error(f'{self.name}/eapi, empty file')
+            return get_eapi('0')
 
     eapi_atom = klass.alias_attr("eapi.atom_kls")
 

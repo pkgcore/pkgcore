@@ -413,65 +413,62 @@ class TestRepoConfig:
         self.profiles_base = os.path.join(self.repo_path, 'profiles')
         self.metadata_path = os.path.join(
             self.repo_path, repo_objs.RepoConfig.layout_offset)
+        self.eapi_path = os.path.join(self.profiles_base, 'eapi')
 
     def test_nonexistent_repo(self):
         # Newly configured, nonexistent repos shouldn't cause issues.
         repo_config = repo_objs.RepoConfig('nonexistent')
         assert repo_config.location == 'nonexistent'
 
-    def test_eapi(self, caplog):
+    def test_default_eapi(self):
         os.mkdir(self.profiles_base)
-        eapi_path = os.path.join(self.profiles_base, 'eapi')
-
-        # default EAPI
         repo_config = repo_objs.RepoConfig(self.repo_path)
         assert str(repo_config.eapi) == '0'
-        del repo_config
 
-        # empty file
-        touch(eapi_path)
+    def test_empty_file_eapi(self):
+        os.mkdir(self.profiles_base)
+        touch(self.eapi_path)
         repo_config = repo_objs.RepoConfig(self.repo_path)
         assert str(repo_config.eapi) == '0'
-        del repo_config
 
-        # whitespace content
-        with open(eapi_path, 'w+') as f:
+    def test_empty_content_eapi(self):
+        os.mkdir(self.profiles_base)
+        with open(self.eapi_path, 'w+') as f:
             f.write('     \n')
         repo_config = repo_objs.RepoConfig(self.repo_path)
         assert str(repo_config.eapi) == '0'
-        del repo_config
 
-        # unknown EAPI
-        with open(eapi_path, 'w+') as f:
+    def test_unknown_eapi(self):
+        os.mkdir(self.profiles_base)
+        with open(self.eapi_path, 'w+') as f:
             f.write('unknown_eapi')
         with pytest.raises(repo_errors.UnsupportedRepo) as excinfo:
             repo_objs.RepoConfig(self.repo_path)
         assert isinstance(excinfo.value.repo, repo_objs.RepoConfig)
 
-        # known EAPI
-        with open(eapi_path, 'w+') as f:
+    def test_known_eapi(self):
+        os.mkdir(self.profiles_base)
+        with open(self.eapi_path, 'w+') as f:
             f.write('6')
         repo_config = repo_objs.RepoConfig(self.repo_path)
         assert str(repo_config.eapi) == '6'
-        del repo_config
 
-        # bad data, good EAPI
-        with open(eapi_path, 'w+') as f:
+    def test_bad_data_known_eapi(self, caplog):
+        os.mkdir(self.profiles_base)
+        with open(self.eapi_path, 'w+') as f:
             f.write('4\nfoo\nbar')
         repo_config = repo_objs.RepoConfig(self.repo_path)
         assert str(repo_config.eapi) == '4'
-        assert 'multiple EAPI lines detected:' in caplog.text
-        caplog.clear()
-        del repo_config
+        assert 'multiple lines detected' in caplog.text
 
-        # bad data, unknown EAPI
-        with open(eapi_path, 'w+') as f:
+    def test_bad_data_unknown_eapi(self, caplog):
+        os.mkdir(self.profiles_base)
+        with open(self.eapi_path, 'w+') as f:
             f.write('eapi\nfoo\nbar')
         with pytest.raises(repo_errors.UnsupportedRepo) as excinfo:
             repo_objs.RepoConfig(self.repo_path)
         assert isinstance(excinfo.value.repo, repo_objs.RepoConfig)
-        assert 'multiple EAPI lines detected:' in caplog.text
-        caplog.clear()
+        assert 'multiple lines detected' in caplog.text
 
     def test_is_empty(self, caplog):
         caplog.set_level(logging.DEBUG)

@@ -692,7 +692,7 @@ class domain(config_domain):
         if pkg_unmasks is None:
             pkg_unmasks = self.pkg_unmasks
 
-        global_masks = [((), repo.masks)]
+        global_masks = [((), repo.pkg_masks)]
         if profile:
             global_masks.extend(self.profile._incremental_masks)
         masks = set()

@@ -884,16 +884,25 @@ class RepoConfig(syncable.tree, klass.ImmutableInstance, metaclass=WeakInstMeta)
         return Profiles(self)
 
     @klass.jit_attr
+    def base_profile(self):
+        return profiles.EmptyRootNode(self.profiles_base)
+
+    @klass.jit_attr
     def eapi(self):
         try:
-            path = pjoin(self.profiles_base, 'eapi')
-            data = (x.strip() for x in iter_read_bash(path))
-            data = [_f for _f in data if _f]
-            if len(data) != 1:
-                logger.warning(f"multiple EAPI lines detected: {path!r}")
-            return get_eapi(data[0])
-        except (FileNotFoundError, IndexError):
+            return self.base_profile.eapi
+        except profiles.NonexistentProfile:
             return get_eapi('0')
+
+    @klass.jit_attr
+    def pkg_masks(self):
+        """Package masks from profiles/package.mask."""
+        return frozenset(self.base_profile.masks[1])
+
+    @klass.jit_attr
+    def pkg_deprecated(self):
+        """Deprecated packages from profiles/package.deprecated."""
+        return frozenset(self.base_profile.pkg_deprecated[1])
 
 
 class SquashfsRepoConfig(RepoConfig):

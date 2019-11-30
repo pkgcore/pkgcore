@@ -245,8 +245,8 @@ class tree(prototype.tree):
             id(self))
 
     @property
-    def masks(self):
-        return frozenset(chain.from_iterable(repo.masks for repo in self.trees))
+    def pkg_masks(self):
+        return frozenset(chain.from_iterable(repo.pkg_masks for repo in self.trees))
 
     @property
     def location(self):

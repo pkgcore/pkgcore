@@ -251,7 +251,7 @@ class operations(sync_operations):
             # report pkgs with bad metadata -- relies on iterating over the
             # unfiltered repo to populate the masked repo
             pkgs = frozenset(pkg.cpvstr for pkg in self.repo)
-            for pkg in sorted(self.repo._masked):
+            for pkg in sorted(self.repo._bad_masked):
                 observer.error(f'{pkg.cpvstr}: {pkg.data.msg(verbosity=observer.verbosity)}')
                 ret = 1
 

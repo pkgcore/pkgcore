@@ -31,7 +31,6 @@ from pkgcore.ebuild import (
     ebuild_src, eclass_cache as eclass_cache_mod, errors as ebuild_errors,
 )
 from pkgcore.ebuild.eapi import get_eapi
-from pkgcore.ebuild.profiles import EmptyRootNode
 from pkgcore.fs.livefs import sorted_scan
 from pkgcore.log import logger
 from pkgcore.operations import repo as _repo_ops
@@ -59,7 +58,7 @@ class repo_operations(_repo_ops.operations):
             pkgs = self.repo.match(key_query)
 
             # check for pkgs masked by bad metadata
-            bad_metadata = self.repo._masked.match(key_query)
+            bad_metadata = self.repo._bad_masked.match(key_query)
             if bad_metadata:
                 for pkg in bad_metadata:
                     e = pkg.data
@@ -396,7 +395,7 @@ class UnconfiguredTree(prototype.tree):
         self.package_class = self.package_factory(
             self, cache, self.eclass_cache, self.mirrors, self.default_mirrors)
         self._shared_pkg_cache = WeakValCache()
-        self._masked = RestrictionRepo(repo_id='masked')
+        self._bad_masked = RestrictionRepo(repo_id='bad_masked')
         self.projects_xml = repo_objs.LocalProjectsXml(
             pjoin(self.location, 'metadata', 'projects.xml'))
 
@@ -405,6 +404,7 @@ class UnconfiguredTree(prototype.tree):
     aliases = klass.alias_attr("config.aliases")
     eapi = klass.alias_attr('config.eapi')
     is_supported = klass.alias_attr('config.eapi.is_supported')
+    pkg_masks = klass.alias_attr('config.pkg_masks')
 
     @klass.jit_attr
     def known_arches(self):
@@ -545,15 +545,15 @@ class UnconfiguredTree(prototype.tree):
 
             if raw:
                 yield pkg
-            elif pkg in self._masked.itermatch(pkg.versioned_atom) and error_callback is not None:
-                error_callback(self._masked[pkg.versioned_atom])
+            elif self._bad_masked.has_match(pkg.versioned_atom) and error_callback is not None:
+                error_callback(self._bad_masked[pkg.versioned_atom])
             else:
                 # check pkgs for unsupported/invalid EAPIs and bad metadata
                 try:
                     if not pkg.is_supported:
                         exc = pkg_errors.MetadataException(
                             pkg, 'eapi', f"EAPI '{pkg.eapi}' is not supported")
-                        self._masked[pkg.versioned_atom] = exc
+                        self._bad_masked[pkg.versioned_atom] = exc
                         if error_callback is not None:
                             error_callback(exc)
                         continue
@@ -562,7 +562,7 @@ class UnconfiguredTree(prototype.tree):
                     pkg.slot
                     pkg.required_use
                 except pkg_errors.MetadataException as e:
-                    self._masked[e.pkg.versioned_atom] = e
+                    self._bad_masked[e.pkg.versioned_atom] = e
                     if error_callback is not None:
                         error_callback(e)
                     continue
@@ -619,19 +619,9 @@ class UnconfiguredTree(prototype.tree):
             self.__class__.__name__, self.base, id(self))
 
     @klass.jit_attr
-    def _profile(self):
-        return EmptyRootNode._autodetect_and_create(pjoin(self.base, 'profiles'))
-
-    @klass.jit_attr
-    def masks(self):
-        """Base package masks from profiles/package.mask."""
-        return frozenset(chain.from_iterable(repo._profile.masks[1] for repo in self.trees))
-
-    @klass.jit_attr
     def deprecated(self):
         """Base deprecated packages restriction from profiles/package.deprecated."""
-        return packages.OrRestriction(*chain.from_iterable(
-            repo._profile.pkg_deprecated[1] for repo in self.trees))
+        return packages.OrRestriction(*self.config.pkg_deprecated)
 
     def _regen_operation_helper(self, **kwds):
         return _RegenOpHelper(

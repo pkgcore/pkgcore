@@ -755,7 +755,7 @@ class OnDiskProfile(ProfileStack):
         chunks = [x for x in path.split("/") if x]
         try:
             # poor mans rindex.
-            pbase = max(x for x in enumerate(chunks) if x[1] == 'profiles')[0]
+            pbase = max(idx for idx, x in enumerate(chunks) if x == 'profiles')
         except ValueError:
             # no base found.
             return None

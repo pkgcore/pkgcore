@@ -250,20 +250,35 @@ class ProfileNode(object, metaclass=caching.WeakInstMeta):
         data = (x[0] for x in data)
         return split_negations(data, _parse_cpv)
 
+    def _parse_atom_negations(self, data):
+        """Parse files containing optionally negated package atoms."""
+        neg, pos = [], []
+        for line, lineno, path in data:
+            if line[0] == '-':
+                line = line[1:]
+                if not line:
+                    logger.error(f"{path!r}, line {lineno}: '-' negation without an atom")
+                    continue
+                l = neg
+            else:
+                l = pos
+            try:
+                l.append(self.eapi_atom(line))
+            except ebuild_errors.MalformedAtom as e:
+                logger.error(f'{path!r}, line {lineno}: parsing error: {e}')
+        return tuple(neg), tuple(pos)
+
     @load_property("package.mask", allow_recurse=True)
     def masks(self, data):
-        data = (x[0] for x in data)
-        return split_negations(data, self.eapi_atom)
+        return self._parse_atom_negations(data)
 
     @load_property("package.unmask", allow_recurse=True)
     def unmasks(self, data):
-        data = (x[0] for x in data)
-        return split_negations(data, self.eapi_atom)
+        return self._parse_atom_negations(data)
 
     @load_property("package.deprecated", allow_recurse=True)
     def pkg_deprecated(self, data):
-        data = (x[0] for x in data)
-        return split_negations(data, self.eapi_atom)
+        return self._parse_atom_negations(data)
 
     @load_property("package.keywords", allow_recurse=True,
                    parse_func=package_keywords_splitter)

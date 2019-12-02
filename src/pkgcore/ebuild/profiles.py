@@ -325,7 +325,7 @@ class ProfileNode(object, metaclass=caching.WeakInstMeta):
                 logger.error(e)
                 continue
             if len(l) == 1:
-                logger.error(f"malformed line, missing USE flag(s): {line!r}")
+                logger.error(f'{path!r}, line {lineno}: missing USE flag(s): {line!r}')
                 continue
             d[a.key].append(misc.chunked_data(a, *split_negations(l[1:])))
 

@@ -28,7 +28,7 @@ demand_compile_regexp(
     '_EAPI_regex', r"^EAPI=(['\"]?)(?P<EAPI>[A-Za-z0-9+_.-]*)\1[\t ]*(?:#.*)?")
 demand_compile_regexp(
     '_EAPI_str_regex', r"^EAPI=(['\"]?)(?P<EAPI>.*)\1")
-demand_compile_regexp('_parse_inherit_regex', r'^\s*inherit\s(.*)$')
+demand_compile_regexp('_parse_inherit_regex', r'^\s*inherit\s(?P<eclasses>.*?)(#.*)?$')
 
 
 def generate_depset(kls, key, self):
@@ -207,7 +207,7 @@ def get_parsed_inherits(self):
     # get all inherit line matches in the ebuild file
     matches = filter(None, map(_parse_inherit_regex.match, i))
     # and return the directly inherited eclasses in the order they're seen
-    return tuple(chain.from_iterable(m.group(1).split() for m in matches))
+    return tuple(chain.from_iterable(m.group('eclasses').split() for m in matches))
 
 
 def get_slot(self):

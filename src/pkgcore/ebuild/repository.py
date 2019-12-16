@@ -471,14 +471,14 @@ class UnconfiguredTree(prototype.tree):
         return o
 
     @klass.jit_attr
-    def hardcoded_categories(self):
-        # try reading $LOC/profiles/categories if it's available.
-        categories = readlines(
-            pjoin(self.base, 'profiles', 'categories'),
-            True, True, True)
-        if categories is not None:
-            categories = tuple(map(intern, categories))
-        return categories
+    def category_dirs(self):
+        try:
+            return frozenset(map(intern, filterfalse(
+                self.false_categories.__contains__,
+                (x for x in listdir_dirs(self.base) if not x.startswith('.')))))
+        except EnvironmentError as e:
+            logger.error(f"failed listing categories: {e}")
+        return ()
 
     def _get_categories(self, *optional_category):
         # why the auto return? current porttrees don't allow/support
@@ -486,18 +486,10 @@ class UnconfiguredTree(prototype.tree):
         if optional_category:
             # raise KeyError
             return ()
-        categories = set()
-        for repo in self.trees:
-            if repo.hardcoded_categories is not None:
-                categories.update(repo.hardcoded_categories)
+        categories = frozenset(chain.from_iterable(repo.config.categories for repo in self.trees))
         if categories:
-            return tuple(categories)
-        try:
-            return tuple(map(intern, filterfalse(
-                self.false_categories.__contains__,
-                (x for x in listdir_dirs(self.base) if x[0:1] != "."))))
-        except EnvironmentError as e:
-            raise KeyError(f"failed fetching categories: {e}") from e
+            return categories
+        return self.category_dirs
 
     def _get_packages(self, category):
         cpath = pjoin(self.base, category.lstrip(os.path.sep))

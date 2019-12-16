@@ -15,6 +15,7 @@ from lxml import etree
 import os
 import platform
 import subprocess
+from sys import intern
 
 from snakeoil import klass, mappings
 from snakeoil.bash import BashParseError, iter_read_bash, read_dict
@@ -877,6 +878,13 @@ class RepoConfig(syncable.tree, klass.ImmutableInstance, metaclass=WeakInstMeta)
         updates_dir = pjoin(self.profiles_base, 'updates')
         d = pkg_updates.read_updates(updates_dir)
         return mappings.ImmutableDict(d)
+
+    @klass.jit_attr
+    def categories(self):
+        categories = readlines(pjoin(self.profiles_base, 'categories'), True, True, True)
+        if categories is not None:
+            return tuple(map(intern, categories))
+        return ()
 
     @klass.jit_attr
     def profiles(self):

@@ -20,7 +20,7 @@ from snakeoil import klass, mappings
 from snakeoil.bash import BashParseError, iter_read_bash, read_dict
 from snakeoil.caching import WeakInstMeta
 from snakeoil.currying import post_curry
-from snakeoil.fileutils import readfile, readlines_ascii
+from snakeoil.fileutils import readfile, readlines
 from snakeoil.osutils import pjoin, listdir_files, listdir
 from snakeoil.osutils.mount import umount
 from snakeoil.process.namespaces import simple_unshare
@@ -681,8 +681,7 @@ class RepoConfig(syncable.tree, klass.ImmutableInstance, metaclass=WeakInstMeta)
         """Load data from the repo's metadata/layout.conf file."""
         path = pjoin(self.location, self.layout_offset)
         data = read_dict(
-            iter_read_bash(
-                readlines_ascii(path, strip_whitespace=True, swallow_missing=True)),
+            iter_read_bash(readlines(path, strip_whitespace=True, swallow_missing=True)),
             source_isiter=True, strip=True, filename=path, ignore_errors=True)
 
         sf = object.__setattr__

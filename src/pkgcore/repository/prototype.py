@@ -146,7 +146,7 @@ class tree:
     configure = None
     frozen_settable = True
     operations_kls = repo.operations
-    pkg_masks = ()
+    pkg_masks = frozenset()
 
     def __init__(self, frozen=False):
         self.categories = CategoryIterValLazyDict(

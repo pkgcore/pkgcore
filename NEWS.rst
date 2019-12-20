@@ -3,6 +3,21 @@ Release Notes
 =============
 
 ---------------------------
+pkgcore 0.10.9 (2019-12-20)
+---------------------------
+
+- pkgcore.ebuild.repository: Add category_dirs attribute to return the set of
+  existing categories from a repo.
+
+- Allow unicode in metadata/layout.conf for repos.
+
+- Ignore inline comments when parsing ebuild inherit lines for directly
+  inherited eclasses.
+
+- Log errors in profiles/package.* files instead of raising ProfileError
+  exceptions so pkgcheck can properly flag them.
+
+---------------------------
 pkgcore 0.10.8 (2019-11-30)
 ---------------------------
 

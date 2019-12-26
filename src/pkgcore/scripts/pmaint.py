@@ -70,6 +70,10 @@ def sync_main(options, out, err):
         out.write(f"*** syncing {repo_name}")
         ret = False
         err_msg = ''
+        # repo operations don't yet take an observer, thus flush
+        # output to keep lines consistent.
+        out.flush()
+        err.flush()
         try:
             ret = repo.operations.sync(
                 force=options.force, verbosity=options.verbosity)
@@ -79,21 +83,26 @@ def sync_main(options, out, err):
                 raise
             err_msg = f': {exc}'
         if not ret:
-            out.write(f"*** failed syncing {repo_name}{err_msg}")
+            out.write(f"!!! failed syncing {repo_name}{err_msg}")
             failed.append(repo_name)
         else:
             succeeded.append(repo_name)
             out.write(f"*** synced {repo_name}")
 
+    out.flush()
+    err.flush()
     total = len(succeeded) + len(failed)
     if total > 1:
+        results = []
+        succeeded = ', '.join(sorted(succeeded))
+        failed = ', '.join(sorted(failed))
         if succeeded:
-            out.write("*** synced %s" % ', '.join(sorted(succeeded)))
+            results.append(f"*** synced: {succeeded}")
         if failed:
-            err.write("!!! failed syncing %s" % ', '.join(sorted(failed)))
-    if failed:
-        return 1
-    return 0
+            results.append(f"!!! failed: {failed}")
+        results = "\n".join(results)
+        out.write(f"\n*** sync results:\n{results}")
+    return 1 if failed else 0
 
 
 # TODO: restrict to required repo types

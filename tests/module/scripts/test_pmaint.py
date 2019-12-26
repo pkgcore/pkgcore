@@ -141,7 +141,7 @@ class TestSync(TestCase, ArgParseMixin):
         self.assertOut(
             [
                 "*** syncing myrepo",
-                "*** failed syncing myrepo",
+                "!!! failed syncing myrepo",
                 ],
             myrepo=failure_section)
         self.assertOutAndErr(
@@ -149,11 +149,12 @@ class TestSync(TestCase, ArgParseMixin):
                 "*** syncing goodrepo",
                 "*** synced goodrepo",
                 "*** syncing badrepo",
-                "*** failed syncing badrepo",
-                "*** synced goodrepo",
-                ], [
                 "!!! failed syncing badrepo",
-                ],
+                "",
+                "*** sync results:",
+                "*** synced: goodrepo",
+                "!!! failed: badrepo",
+                ], [],
             'goodrepo', 'badrepo',
             goodrepo=success_section, badrepo=failure_section)
 

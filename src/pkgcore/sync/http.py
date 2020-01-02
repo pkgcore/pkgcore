@@ -25,7 +25,7 @@ class http_syncer(base.Syncer):
     def _sync(self, verbosity, output_fd, force=False, **kwargs):
         dest = self._pre_download()
 
-        if self.uri.startswith('https://'):
+        if self.uri.lower().startswith('https://'):
             # default to using system ssl certs
             context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
         else:

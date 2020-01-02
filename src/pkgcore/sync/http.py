@@ -6,10 +6,11 @@ import ssl
 import sys
 import urllib.request
 
-from snakeoil.fileutils import AtomicWriteFile
+from snakeoil.fileutils import AtomicWriteFile, readfile_ascii
 from snakeoil.osutils import pjoin
 
 from pkgcore.sync import base
+from pkgcore.log import logger
 
 
 class http_syncer(base.Syncer):
@@ -36,22 +37,12 @@ class http_syncer(base.Syncer):
 
         if not force:
             # use cached ETag to check if updates exist
-            previous_etag = None
-            try:
-                with open(etag_path, 'r') as f:
-                    previous_etag = f.read()
-            except FileNotFoundError:
-                pass
+            previous_etag = readfile_ascii(etag_path, none_on_missing=True)
             if previous_etag:
                 headers['If-None-Match'] = previous_etag
 
             # use cached modification timestamp to check if updates exist
-            previous_modified = None
-            try:
-                with open(modified_path, 'r') as f:
-                    previous_modified = f.read()
-            except FileNotFoundError:
-                pass
+            previous_modified = readfile_ascii(modified_path, none_on_missing=True)
             if previous_modified:
                 headers['If-Modified-Since'] = previous_modified
 
@@ -61,16 +52,22 @@ class http_syncer(base.Syncer):
         try:
             resp = urllib.request.urlopen(req, context=context)
         except urllib.error.URLError as e:
+            if e.getcode() == 304: # Not Modified
+                logger.debug("content is unchanged")
+                return True
             raise base.SyncError(f'failed fetching {self.uri!r}: {e.reason}') from e
 
         # Manually check cached values ourselves since some servers appear to
         # ignore If-None-Match or If-Modified-Since headers.
-        etag = resp.getheader('ETag', '')
-        modified = resp.getheader('Last-Modified', '')
+        convert = lambda x: x.strip() if x else None
+        etag = resp.getheader('ETag')
+        modified = resp.getheader('Last-Modified')
         if not force:
-            if etag == previous_etag:
+            if convert(etag) == convert(previous_etag):
+                logger.debug(f"etag {etag} is equal, no update available")
                 return True
-            if modified == previous_modified:
+            if convert(modified) == convert(previous_modified):
+                logger.debug(f"header mtime is unmodified: {modified}")
                 return True
 
         try:

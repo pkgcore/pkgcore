@@ -129,8 +129,12 @@ def generate_distfiles(self):
 # utility func.
 def create_fetchable_from_uri(pkg, chksums, ignore_missing_chksums, ignore_unknown_mirrors,
                               mirrors, default_mirrors, common_files, uri, filename=None):
-    if filename is None:
-        filename = os.path.basename(uri)
+    default_filename = os.path.basename(uri)
+    if filename is not None:
+        if filename == default_filename:
+            logger.info(f'redundant rename: {uri} -> {filename}')
+    else:
+        filename = default_filename
 
     if not filename:
         raise ValueError(f'missing filename: {uri!r}')

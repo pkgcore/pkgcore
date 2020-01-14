@@ -131,6 +131,7 @@ def create_fetchable_from_uri(pkg, chksums, ignore_missing_chksums, ignore_unkno
                               mirrors, default_mirrors, common_files, uri, filename=None):
     default_filename = os.path.basename(uri)
     if filename is not None:
+        # log redundant renames for pkgcheck to flag
         if filename == default_filename:
             logger.info(f'redundant rename: {uri} -> {filename}')
     else:

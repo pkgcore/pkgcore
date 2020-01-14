@@ -63,10 +63,10 @@ class http_syncer(base.Syncer):
         etag = resp.getheader('ETag')
         modified = resp.getheader('Last-Modified')
         if not force:
-            if convert(etag) == convert(previous_etag):
+            if etag is not None and convert(etag) == convert(previous_etag):
                 logger.debug(f"etag {etag} is equal, no update available")
                 return True
-            if convert(modified) == convert(previous_modified):
+            if modified is not None and convert(modified) == convert(previous_modified):
                 logger.debug(f"header mtime is unmodified: {modified}")
                 return True
 

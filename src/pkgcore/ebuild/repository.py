@@ -18,6 +18,7 @@ from snakeoil.bash import iter_read_bash, read_dict
 from snakeoil.containers import InvertedContains
 from snakeoil.data_source import local_source
 from snakeoil.fileutils import readlines
+from snakeoil.mappings import ImmutableDict
 from snakeoil.obj import make_kls
 from snakeoil.osutils import listdir_files, listdir_dirs, pjoin
 from snakeoil.sequences import iflatten_instance, stable_unique
@@ -367,17 +368,8 @@ class UnconfiguredTree(prototype.tree):
             self.licenses = repo_objs.OverlayedLicenses(*self.trees)
             self.profiles = repo_objs.OverlayedProfiles(*self.trees)
 
-        mirrors = {}
-        fp = pjoin(self.location, 'profiles', "thirdpartymirrors")
-        try:
-            for k, v in read_dict(fp, splitter=None).items():
-                v = v.split()
-                shuffle(v)
-                mirrors[k] = v
-        except FileNotFoundError:
-            pass
-
         # use mirrors from masters if not defined in the repo
+        mirrors = dict(self.thirdpartymirrors)
         for master in masters:
             for k, v in master.mirrors.items():
                 if k not in mirrors:
@@ -469,6 +461,20 @@ class UnconfiguredTree(prototype.tree):
         o.packages = self.packages
         o.versions = self.versions
         return o
+
+    @klass.jit_attr
+    def thirdpartymirrors(self):
+        mirrors = {}
+        fp = pjoin(self.location, 'profiles', 'thirdpartymirrors')
+        try:
+            for k, v in read_dict(fp, splitter=None).items():
+                v = v.split()
+                # shuffle mirrors so the same ones aren't used every time
+                shuffle(v)
+                mirrors[k] = v
+        except FileNotFoundError:
+            pass
+        return ImmutableDict(mirrors)
 
     @klass.jit_attr
     def category_dirs(self):

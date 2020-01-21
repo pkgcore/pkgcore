@@ -6,6 +6,10 @@
 DIR=${BASH_SOURCE[0]%/*}
 PACKAGES=( "$@" )
 
+# Force using a older version of pip that allows using URL deps in
+# pyproject.toml build-system.requires.
+pip install -U 'pip<20'
+
 # Try installing the latest build/runtime deps once, if they don't exist
 # install directly from the git.
 INSTALLED="${VIRTUAL_ENV}"/.installed_deps

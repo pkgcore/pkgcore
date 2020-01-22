@@ -257,7 +257,7 @@ __export_bash_compat() {
 
 __load_ebuild() {
 	local EBUILD=$1
-	[[ ! -f ${EBUILD} ]] || die "nonexistent ebuild: '${EBUILD}'"
+	[[ -f ${EBUILD} ]] || die "nonexistent ebuild: '${EBUILD}'"
 	shift
 
 	SANDBOX_ON=1

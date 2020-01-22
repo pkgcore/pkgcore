@@ -104,7 +104,7 @@ __request_sandbox_summary() {
 __internal_inherit() {
 	local line
 	if [[ $# -ne 1 ]]; then
-		die "internal_inherit accepts one arg, requested eclass location.  $* is a bit much"
+		die "internal_inherit accepts a single eclass name as an arg, got $*"
 	fi
 	if [[ -n ${PKGCORE_PRELOADED_ECLASSES[$1]} ]]; then
 		__qa_invoke "${PKGCORE_PRELOADED_ECLASSES[$1]}"
@@ -114,12 +114,12 @@ __internal_inherit() {
 	__ebd_read_line line
 	if [[ ${line} == "path" ]]; then
 		__ebd_read_line line
-		__qa_invoke source "${line}" >&2 || die "failed sources inherit: ${line}"
+		__qa_invoke source "${line}" >&2 || die "failed eclass inherit: $1"
 	elif [[ ${line} == "transfer" ]]; then
 		__ebd_read_line line
-		__qa_invoke eval "${line}" || die "failed evaluating eclass $1 on an inherit transfer"
+		__qa_invoke eval "${line}" || die "failed evaluating eclass $1 on transfer"
 	else
-		die "unknown inherit command from pythonic side, '${line}' for eclass $1"
+		die "unknown inherit command from python for eclass $1: '${line}'"
 	fi
 }
 
@@ -137,7 +137,7 @@ __source_bashrcs() {
 			eval "${line}" || die "failed evaluating profile bashrc: ${line}"
 		else
 			__ebd_write_line "failed"
-			die "unknown profile bashrc transfer mode from pythonic side, '${line}'"
+			die "unknown profile bashrc transfer mode from python: '${line}'"
 		fi
 		__ebd_write_line "next"
 		__ebd_read_line line

@@ -26,9 +26,9 @@ __phase_src_test() {
 	local extra_args=( ${EXTRA_EMAKE} -j1 )
 	if make check -n &> /dev/null; then
 		echo ">>> Test phase [check]: ${CATEGORY}/${PF}"
-		emake "${extra_args[@]}" check || die "Make check failed. See above for details."
+		emake "${extra_args[@]}" check || die "make check failed, see above for details"
 	elif make test -n &> /dev/null; then
-		emake "${extra_args[@]}" test || die "Make test failed. See above for details."
+		emake "${extra_args[@]}" test || die "make test failed, see above for details"
 	else
 		echo ">>> Test phase [none]: ${CATEGORY}/${PF}"
 	fi

@@ -50,7 +50,7 @@ __environ_dump() {
 	# dump variables first so no local variables get picked up
 	local exported_vars=( $(compgen -v | __regex_filter_input ${PKGCORE_BLACKLIST_VARS[@]}) )
 	if [[ ${#exported_vars[@]} -ne 0 ]]; then
-		declare -p "${exported_vars[@]}" || die "failed outputting env vars ${exported_vars[@]}" >&2
+		declare -p "${exported_vars[@]}" || die "failed outputting env vars ${exported_vars[@]}"
 	fi
 
 	local func_filters=( "${PKGCORE_BLACKLIST_FUNCS[@]}" ${PKGCORE_EAPI_FUNCS} "${PKGCORE_PRELOADED_ECLASSES[@]}" )
@@ -59,7 +59,7 @@ __environ_dump() {
 	__escape_regex_array func_filters
 	local exported_funcs=( $(compgen -A function | __regex_filter_input "${func_filters[@]}" ) )
 	if [[ ${#exported_funcs[@]} -ne 0 ]]; then
-		declare -f "${exported_funcs[@]}" || die "failed outputting funcs ${exported_funcs[@]}" >&2
+		declare -f "${exported_funcs[@]}" || die "failed outputting funcs ${exported_funcs[@]}"
 	fi
 
 	__shopt_pop
@@ -68,7 +68,7 @@ __environ_dump() {
 # dump environ to $1, optionally piping it through $2 and redirecting $2's output to $1.
 __environ_save_to_file() {
 	if [[ $# -ne 1 && $# -ne 2 ]]; then
-		die "${FUNCNAME}: requires at least one argument, two max; given $@"
+		die "${FUNCNAME}: requires at least one argument, two max; got $@"
 	fi
 
 	if [[ $# -eq 1 ]]; then
@@ -117,7 +117,7 @@ __environ_sanitize_saved_env() {
 			"$1" "${T}"/.pre-scrubbed-env \
 			|| die "failed first step of scrubbing the env to load"
 
-		[[ -s ${T}/.pre-scrubbed-env ]] || die "empty pre-scrubbed-env file.  pkgcore bug?"
+		[[ -s ${T}/.pre-scrubbed-env ]] || die "empty pre-scrubbed-env file, pkgcore bug?"
 		source "${T}"/.pre-scrubbed-env >&2 || die "failed sourcing scrubbed env"
 
 		# ok. it's loaded into this subshell... now we use our dump mechanism (which we trust)

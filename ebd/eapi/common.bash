@@ -122,7 +122,7 @@ __phase_pre_src_install() {
 	rm -rf "${D}"
 	if ${PKGCORE_PREFIX_SUPPORT}; then
 		[[ -n ${ED+set} ]] || \
-			die "variable ED is unset, but prefix mode is enabled.	internal error?"
+			die "variable ED is unset, but prefix mode is enabled, internal error?"
 		export ED=${ED}
 		mkdir -p "${ED}"
 	else

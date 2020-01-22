@@ -257,6 +257,7 @@ __export_bash_compat() {
 
 __load_ebuild() {
 	local EBUILD=$1
+	[[ ! -f ${EBUILD} ]] || die "nonexistent ebuild: '${EBUILD}'"
 	shift
 
 	SANDBOX_ON=1
@@ -264,11 +265,6 @@ __load_ebuild() {
 
 	unset -v IUSE   REQUIRED_USE   DEPEND   RDEPEND   PDEPEND   BDEPEND
 	local  E_IUSE E_REQUIRED_USE E_DEPEND E_RDEPEND E_PDEPEND E_BDEPEND
-
-	if [[ ! -f ${EBUILD} ]]; then
-		echo "bailing, ebuild not found at '${EBUILD}'"
-		die "EBUILD=${EBUILD}; problem is, it doesn't exist.  bye." >&2
-	fi
 
 	__env_push
 	__export_bash_compat

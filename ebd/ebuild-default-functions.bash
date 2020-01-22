@@ -160,7 +160,7 @@ __dyn_pkg_preinst() {
 
 			addwrite /selinux/context
 			/usr/sbin/setfiles -r "${ED}" "${T}"/file_contexts "${ED}" \
-				|| die "Failed to set SELinux security labels."
+				|| die "failed to set SELinux security labels"
 		else
 			# nonfatal, since merging can happen outside a SE kernel
 			# like during a recovery situation

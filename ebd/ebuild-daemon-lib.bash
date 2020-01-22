@@ -12,7 +12,7 @@ __ebd_read_line() {
 	__ebd_read_line_nonfatal "$@"
 	local ret=$?
 	[[ ${ret} -ne 0 ]] && \
-		die "coms error in ${PKGCORE_EBD_PID}, read_line $@ failed w/ ${ret}: backing out of daemon."
+		die "coms error in ${PKGCORE_EBD_PID}, read_line $@ failed w/ ${ret}"
 }
 
 # Read a line into an array using a bell char as a delimiter since the null char
@@ -20,7 +20,7 @@ __ebd_read_line() {
 __ebd_read_array() {
 	IFS=$'\07' read -u ${PKGCORE_EBD_READ_FD} -a $1
 	[[ $? -ne 0 ]] && \
-		die "coms error in ${PKGCORE_EBD_PID}, read_array $@ failed: backing out of daemon."
+		die "coms error in ${PKGCORE_EBD_PID}, read_array $@ failed"
 }
 
 # read -N usage requires bash-4.1 or so (EAPI 6 requires >= 4.2)
@@ -28,7 +28,7 @@ __ebd_read_size() {
 	read -u ${PKGCORE_EBD_READ_FD} -r -N $1 $2
 	local ret=$?
 	[[ ${ret} -ne 0 ]] && \
-		die "coms error in ${PKGCORE_EBD_PID}, read_size $@ failed w/ ${ret}: backing out of daemon."
+		die "coms error in ${PKGCORE_EBD_PID}, read_size $@ failed w/ ${ret}"
 }
 
 __ebd_read_cat_size() {
@@ -46,11 +46,11 @@ __ebd_write_line() {
 	echo "$*" >&${PKGCORE_EBD_WRITE_FD}
 	local ret=$?
 	[[ ${ret} -ne 0 ]] && \
-		die "coms error, write failed w/ ${ret}: backing out of daemon."
+		die "coms error, write failed w/ ${ret}"
 }
 
 __ebd_write_raw() {
-	echo -n "$*" >&${PKGCORE_EBD_WRITE_FD} || die "coms error, __ebd_write_raw failed;  Backing out."
+	echo -n "$*" >&${PKGCORE_EBD_WRITE_FD} || die "coms error, __ebd_write_raw failed"
 }
 
 __ipc_exit() {
@@ -104,7 +104,7 @@ __request_sandbox_summary() {
 __internal_inherit() {
 	local line
 	if [[ $# -ne 1 ]]; then
-		die "internal_inherit accepts a single eclass name as an arg, got $*"
+		die "internal_inherit accepts an eclass name arg, got $*"
 	fi
 	if [[ -n ${PKGCORE_PRELOADED_ECLASSES[$1]} ]]; then
 		__qa_invoke "${PKGCORE_PRELOADED_ECLASSES[$1]}"

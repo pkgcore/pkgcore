@@ -16,7 +16,7 @@ source "${PKGCORE_EBD_PATH}"/exit-handling.bash || {
 }
 
 if [[ $# -lt 1 ]]; then
-	die "ipc-helper invoked without a target helper; no args given."
+	die "ipc-helper invoked without a target helper arg"
 fi
 
 source "${PKGCORE_EBD_PATH}"/ebuild-daemon-lib.bash || \
@@ -35,7 +35,7 @@ HELPER_ERROR_PREFIX=
 if ! ${PKGCORE_PREFIX_SUPPORT:=false}; then
 	export ED=${D}
 elif [[ ${ED:-unset} == "unset" ]]; then
-	error "The variable ED is missing from the environment, but is required for prefix mode; failing."
+	error "The variable ED is missing from the environment, but is required for prefix mode."
 	exit -1
 fi
 
@@ -48,9 +48,8 @@ run_ipc_helper() {
 	shift
 	local HELPER_ARG_COUNT=$#
 	if [[ ! -e ${HELPER_PATH} ]]; then
-		# note this can daftly go find a binary...
 		HELPER_PATH=$(type -p "${HELPER_NAME}")
-		[[ -z ${HELPER_PATH} ]] && die "couldn't find implementation of ${HELPER_NAME}!?"
+		[[ -z ${HELPER_PATH} ]] && die "${HELPER_NAME} command not found"
 	fi
 
 	local OLD_ERROR_PREFIX=${HELPER_ERROR_PREFIX}

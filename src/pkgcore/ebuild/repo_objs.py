@@ -134,7 +134,7 @@ class MetadataXml:
         for x in tree.findall("longdescription"):
             if x.get('lang', 'en') != 'en':
                 continue
-            longdesc = x.text
+            longdesc = ''.join(x.itertext())
             if longdesc:
                 self._longdescription = ' '.join(longdesc.split())
             break

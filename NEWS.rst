@@ -2,6 +2,19 @@
 Release Notes
 =============
 
+----------------------------
+pkgcore 0.10.10 (2020-01-25)
+----------------------------
+
+- pkgcore.ebuild.repo_objs: Fix pulling all text from longdescription
+  metadata.xml elements that use embedded XML tags, e.g. <pkg></pkg>.
+
+- pkgcore.ebuild.repository: Add thirdparty mirrors attribute for easy access
+  to mirrors defined by an individual repo.
+
+- pkgcore.ebuild.ebuild_src: Add support for flagging redundant SRC_URI
+  renames.
+
 ---------------------------
 pkgcore 0.10.9 (2019-12-20)
 ---------------------------

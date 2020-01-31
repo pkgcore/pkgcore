@@ -9,7 +9,7 @@ from pkgcore.restrictions import restriction, boolean
 from pkgcore.log import logger
 
 
-class native_PackageRestriction(object, metaclass=generic_equality):
+class native_PackageRestriction(metaclass=generic_equality):
 
     __slots__ = ('_pull_attr_func', '_attr_split', 'restriction', 'ignore_missing', 'negate')
     __attr_comparison__ = ("__class__", "negate", "_attr_split", "restriction")

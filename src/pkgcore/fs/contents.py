@@ -34,7 +34,7 @@ def check_instance(obj):
     return obj.location, obj
 
 
-class contentsSet(object, metaclass=generic_equality):
+class contentsSet(metaclass=generic_equality):
     """set of :class:`pkgcore.fs.fs.fsBase` objects"""
     __attr_comparison__ = ('_dict',)
     __dict_kls__ = dict

@@ -20,7 +20,7 @@ from pkgcore.repository.util import get_virtual_repos
 from pkgcore.restrictions import packages, restriction, values
 
 
-class GlsaDirSet(object, metaclass=generic_equality):
+class GlsaDirSet(metaclass=generic_equality):
     """generate a pkgset based on GLSA's distributed via a directory.
 
     (rsync tree is the usual source.)
@@ -213,7 +213,7 @@ def find_vulnerable_repo_pkgs(glsa_src, repo, grouped=False, arch=None):
             yield restrict, matches
 
 
-class SecurityUpgrades(object, metaclass=generic_equality):
+class SecurityUpgrades(metaclass=generic_equality):
     """Set of packages for available security upgrades."""
 
     pkgcore_config_type = ConfigHint({'ebuild_repo': 'ref:repo',

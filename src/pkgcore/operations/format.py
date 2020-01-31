@@ -188,7 +188,7 @@ class build_operations(operations):
         return True
 
 
-class build_base(object, metaclass=ForcedDepends):
+class build_base(metaclass=ForcedDepends):
 
     stage_depends = {'finish': 'start'}
 

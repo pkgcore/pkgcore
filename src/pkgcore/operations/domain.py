@@ -30,7 +30,7 @@ class Failure(PkgcoreException):
     pass
 
 
-class base(object, metaclass=ForcedDepends):
+class base(metaclass=ForcedDepends):
 
     stage_depends = {}
 

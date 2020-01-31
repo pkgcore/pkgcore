@@ -177,7 +177,7 @@ class SharedPkgData:
         self.manifest = manifest
 
 
-class ProjectMember(object, metaclass=klass.generic_equality):
+class ProjectMember(metaclass=klass.generic_equality):
     """Data on a single project member.
 
     :type email: C{unicode} object
@@ -386,7 +386,7 @@ class LocalProjectsXml(ProjectsXml):
             return mappings.ImmutableDict()
 
 
-class Licenses(object, metaclass=WeakInstMeta):
+class Licenses(metaclass=WeakInstMeta):
 
     __inst_caching__ = True
 

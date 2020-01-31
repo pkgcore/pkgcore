@@ -143,7 +143,7 @@ class StrRegex(base, metaclass=hashed_base):
         return result
 
 
-class native_StrExactMatch(object, metaclass=generic_equality):
+class native_StrExactMatch(metaclass=generic_equality):
     """exact string comparison match"""
 
     __slots__ = __attr_comparison__ = ('_hash', 'exact', 'case_sensitive', 'negate')

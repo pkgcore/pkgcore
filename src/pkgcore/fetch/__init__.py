@@ -9,7 +9,7 @@ from itertools import zip_longest
 from snakeoil.klass import generic_equality
 
 
-class fetchable(object, metaclass=generic_equality):
+class fetchable(metaclass=generic_equality):
     """class representing uri sources for a file and chksum information."""
 
     __slots__ = ("filename", "uri", "chksums")
@@ -49,7 +49,7 @@ class fetchable(object, metaclass=generic_equality):
         return self.__class__(self.filename, uri=uri_list, chksums=self.chksums)
 
 
-class mirror(object, metaclass=generic_equality):
+class mirror(metaclass=generic_equality):
     """uri source representing a mirror tier"""
 
     __attr_comparison__ = ('mirror_name', 'mirrors')

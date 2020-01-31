@@ -127,7 +127,7 @@ _make_incrementals_dict = partial(misc.IncrementalsDict, const.incrementals)
 _Packages = namedtuple("_Packages", ("system", "profile"))
 
 
-class ProfileNode(object, metaclass=caching.WeakInstMeta):
+class ProfileNode(metaclass=caching.WeakInstMeta):
 
     __inst_caching__ = True
     _repo_map = None

@@ -151,7 +151,7 @@ class _optionals_cls(mappings.ImmutableDict):
     mappings.inject_getitem_as_getattr(locals())
 
 
-class EAPI(object, metaclass=klass.immutable_instance):
+class EAPI(metaclass=klass.immutable_instance):
 
     known_eapis = weakrefs.WeakValCache()
     unknown_eapis = weakrefs.WeakValCache()

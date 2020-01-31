@@ -157,7 +157,7 @@ class IncrementalsDict(mappings.DictMixin):
     del x, s
 
 
-class collapsed_restrict_to_data(object, metaclass=generic_equality):
+class collapsed_restrict_to_data(metaclass=generic_equality):
 
     __attr_comparison__ = ('defaults', 'freeform', 'atoms', '__class__')
     incremental = True
@@ -362,7 +362,7 @@ def _build_cp_atom_payload(sequence, restrict, payload_form=False):
     return tuple(new_l)
 
 
-class ChunkedDataDict(object, metaclass=generic_equality):
+class ChunkedDataDict(metaclass=generic_equality):
 
     __attr_comparison__ = ('_global_settings', '_dict')
 

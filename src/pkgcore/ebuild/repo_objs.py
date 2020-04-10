@@ -84,7 +84,7 @@ class MetadataXml:
 
     __slots__ = (
         "__weakref__", "_maintainers", "_local_use",
-        "_longdescription", "_source",
+        "_longdescription", "_source", "_stabilize_allarches",
     )
 
     def __init__(self, source):
@@ -95,7 +95,8 @@ class MetadataXml:
             self._parse_xml()
         return getattr(self, attr)
 
-    for attr in ("maintainers", "local_use", "longdescription"):
+    for attr in ("maintainers", "local_use", "longdescription",
+                 "stabilize_allarches"):
         locals()[attr] = property(post_curry(_generic_attr, "_" + attr))
     del attr
 
@@ -109,6 +110,7 @@ class MetadataXml:
             self._local_use = mappings.ImmutableDict()
             self._longdescription = None
             self._source = None
+            self._stabilize_allarches = False
             logger.error(e)
             return
 
@@ -153,6 +155,8 @@ class MetadataXml:
             )
             break
 
+        self._stabilize_allarches = tree.find("stabilize-allarches") is not None
+
 
 class LocalMetadataXml(MetadataXml):
 
@@ -166,6 +170,7 @@ class LocalMetadataXml(MetadataXml):
             self._local_use = mappings.ImmutableDict()
             self._longdescription = None
             self._source = None
+            self._stabilize_allarches = False
 
 
 class SharedPkgData:

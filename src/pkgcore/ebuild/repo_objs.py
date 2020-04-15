@@ -125,9 +125,13 @@ class MetadataXml:
                     email = e.text
                 elif e.tag == 'description' and e.get('lang', 'en') == 'en':
                     description = e.text
-            maintainers.append(Maintainer(
-                name=name, email=email, description=description,
-                maint_type=x.get('type')))
+            try:
+                maintainers.append(Maintainer(
+                    name=name, email=email, description=description,
+                    maint_type=x.get('type')))
+            except ValueError:
+                # ignore invalid maintainers that should be caught by pkgcheck
+                pass
 
         self._maintainers = tuple(maintainers)
 

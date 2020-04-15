@@ -918,6 +918,7 @@ class Eapply(IpcCommand):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.patch_cmd = ['patch', '-p1', '-f', '-s', '-g0', '--no-backup-if-mismatch']
+        self.patch_opts = []
 
     def _parse_patch_opts(self, args):
         patch_opts = []
@@ -950,7 +951,7 @@ class Eapply(IpcCommand):
                 yield None, [path]
 
     def parse_args(self, options, args):
-        args, self.opts.patch_opts = self._parse_patch_opts(args)
+        args, self.patch_opts = self._parse_patch_opts(args)
         args = super().parse_args(options, args)
         return self._find_patches(args.targets)
 
@@ -981,7 +982,7 @@ class Eapply(IpcCommand):
                 try:
                     with open(patch) as f:
                         ret, output = spawn.spawn_get_output(
-                            self.patch_cmd + self.opts.patch_opts,
+                            self.patch_cmd + self.patch_opts,
                             fd_pipes={0: f.fileno()}, **spawn_kwargs)
                     if ret:
                         filename = os.path.basename(patch)

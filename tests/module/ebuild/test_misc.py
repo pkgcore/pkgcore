@@ -1,4 +1,4 @@
-from snakeoil.test import TestCase, mk_cpy_loadable_testcase
+from snakeoil.test import TestCase
 
 from pkgcore.ebuild import misc
 from pkgcore.restrictions import packages
@@ -67,14 +67,6 @@ class test_native_incremental_expansion(TestCase):
         s = set('ab')
         self.f(s, ('c', '-*', 'd'))
         self.assertEqual(sorted(s), ['d'])
-
-class test_CPY_incremental_expansion(test_native_incremental_expansion):
-    if misc.incremental_expansion == misc.native_incremental_expansion:
-        skip = "CPy extension not available"
-    f = staticmethod(misc.incremental_expansion)
-
-test_cpy_used = mk_cpy_loadable_testcase('pkgcore.ebuild._misc',
-    "pkgcore.ebuild.misc", "incremental_expansion", "incremental_expansion")
 
 
 class TestIncrementalsDict(TestCase):

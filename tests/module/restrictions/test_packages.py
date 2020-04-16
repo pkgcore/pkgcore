@@ -1,5 +1,4 @@
 from snakeoil.mappings import AttrAccessible
-from snakeoil.test import mk_cpy_loadable_testcase
 
 from pkgcore import log
 from pkgcore.restrictions import packages, values
@@ -114,13 +113,6 @@ class native_PackageRestrictionTest(TestRestriction):
         hash(inst)
 
 
-class cpy_PackageRestrictionTest(native_PackageRestrictionTest):
-    if packages.native_PackageRestriction is packages.PackageRestriction_base:
-        skip = "cpython extension isn't available"
-    else:
-        kls = staticmethod(packages.PackageRestriction)
-
-
 class values_callback(values.base):
 
     __slots__ = ("callback",)
@@ -204,6 +196,3 @@ class ConditionalTest(TestCase):
         self.assertNotEqual(
             packages.Conditional('use1', v, p),
             packages.Conditional('use', v, p))
-
-test_cpy_used = mk_cpy_loadable_testcase('pkgcore.restrictions._restrictions',
-    "pkgcore.restrictions.packages", "PackageRestriction_base", "PackageRestriction")

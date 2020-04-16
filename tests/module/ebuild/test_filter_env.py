@@ -1,7 +1,7 @@
 from functools import partial
 import io
 
-from snakeoil.test import TestCase, mk_cpy_loadable_testcase
+from snakeoil.test import TestCase
 
 from pkgcore.ebuild import filter_env
 
@@ -244,14 +244,3 @@ src_install() {
         assertVars("f(){\nX=dar\n}\nmy command\nY=a\nf=$(dar) foon\n", ['Y'],
             self.assertNotEqual)
         assertVars("f(){\nX=dar foon\n}\nY=dar\nf2(){Z=dar;}\n", ['Y'])
-
-
-class CPyFilterEnvTest(NativeFilterEnvTest):
-
-    if filter_env.cpy_run is None:
-        skip = 'cpy filter_env not available.'
-    else:
-        filter_env = staticmethod(partial(filter_env.main_run, _parser=filter_env.cpy_run))
-
-cpy_loaded_Test = mk_cpy_loadable_testcase("pkgcore.ebuild._filter_env",
-    "pkgcore.ebuild.filter_env", "run", "run")

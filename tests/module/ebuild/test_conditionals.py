@@ -1,7 +1,7 @@
 from snakeoil.currying import post_curry
 from snakeoil.iterables import expandable_chain
 from snakeoil.sequences import iflatten_instance
-from snakeoil.test import TestCase, mk_cpy_loadable_testcase
+from snakeoil.test import TestCase
 
 from pkgcore.ebuild import conditionals
 from pkgcore.ebuild.atom import atom
@@ -194,13 +194,6 @@ class native_DepSetParsingTest(base):
         self.gen_depset("a/b[x(+)]", element_func=atom)
 
 
-class cpy_DepSetParsingTest(native_DepSetParsingTest):
-
-    kls = staticmethod(conditionals.DepSet)
-    if not conditionals.DepSet.parse_depset:
-        skip = "extension not available"
-
-
 class native_DepSetConditionalsInspectionTest(base):
 
     def test_sanity_has_conditionals(self):
@@ -264,14 +257,6 @@ class native_DepSetConditionalsInspectionTest(base):
             element_kls=atom, transitive_use_atoms=True, *s)
 
 
-class cpy_DepSetConditionalsInspectionTest(
-    native_DepSetConditionalsInspectionTest):
-
-    kls = staticmethod(conditionals.DepSet)
-    if not conditionals.DepSet.parse_depset:
-        skip = "extension not available"
-
-
 class native_DepSetEvaluateTest(base):
 
     def test_evaluation(self):
@@ -332,13 +317,3 @@ class native_DepSetEvaluateTest(base):
                     (result, str(collapsed), src, use, tristate))
             if not ('?' in src or kwds.get("transitive_use_atoms")):
                 self.assertIdentical(orig, collapsed)
-
-
-class cpy_DepSetEvaluateTest(native_DepSetEvaluateTest):
-
-    kls = staticmethod(conditionals.DepSet)
-    if not conditionals.DepSet.parse_depset:
-        skip = "extension not available"
-
-test_cpy_used = mk_cpy_loadable_testcase('pkgcore.ebuild._depset',
-    "pkgcore.ebuild.conditionals", "parse_depset", "parse_depset")

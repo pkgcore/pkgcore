@@ -3,6 +3,16 @@ Release Notes
 =============
 
 ----------------------------
+pkgcore 0.10.12 (2020-04-15)
+----------------------------
+
+- Ignore invalid maintainers in metadata.xml that should be caught by pkgcheck.
+
+- Add support for <stabilize-allarches/> in metadata.xml files.
+
+- Fix eapply_user calls erroring out due to missing patch opts variable.
+
+----------------------------
 pkgcore 0.10.11 (2020-01-26)
 ----------------------------
 

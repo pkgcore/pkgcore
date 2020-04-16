@@ -5,10 +5,11 @@ import os
 import shutil
 import time
 
+import pytest
 from snakeoil import process
 from snakeoil.currying import post_curry
 from snakeoil.osutils import pjoin, ensure_dirs, normpath
-from snakeoil.test import mixins, TestCase, SkipTest
+from snakeoil.test import mixins, TestCase
 
 from pkgcore.fs import fs
 from pkgcore.merge import triggers, const
@@ -367,8 +368,7 @@ END-INFO-DIR-ENTRY
         o = self.raw_kls()
         path = o.get_binary_path()
         if path is None:
-            raise SkipTest("can't verify regen behaviour due to install-info "
-                "not being available")
+            pytest.skip("can't verify regen behaviour due to install-info not being available")
         # test it without the directory existing.
         self.assertEqual(list(o.regen(path, pjoin(self.dir, 'foo'))), [])
         self.assertFalse(os.path.exists(pjoin(self.dir, 'foo')))
@@ -402,8 +402,7 @@ END-INFO-DIR-ENTRY
 
     def test_trigger(self):
         if self.raw_kls().get_binary_path() is None:
-            raise SkipTest(
-                "can't verify regen behaviour due to install-info not being available")
+            pytest.skip("can't verify regen behaviour due to install-info not being available")
 
         cur = os.environ.get("PATH", self)
         try:

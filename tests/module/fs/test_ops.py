@@ -1,9 +1,10 @@
 import os
 import shutil
 
+import pytest
 from snakeoil.data_source import local_source
 from snakeoil.osutils import pjoin
-from snakeoil.test import TestCase, SkipTest
+from snakeoil.test import TestCase
 from snakeoil.test.mixins import TempDirMixin
 
 from pkgcore.fs import ops, fs, livefs, contents
@@ -82,8 +83,10 @@ class TestCopyFile(VerifyMixin, TempDirMixin, TestCase):
         curgid = os.getgid()
         group = [x for x in os.getgroups() if x != curgid]
         if not group or os.getuid() != 0:
-            raise SkipTest("requires root privs for this test, or for this"
-                " user to belong to more then one group")
+            pytest.skip(
+                "requires root privs for this test, or for this user to"
+                "belong to more then one group"
+            )
         group = group[0]
         fp = pjoin(self.dir, "sym")
         o = fs.fsSymlink(fp, mtime=10321, uid=os.getuid(), gid=group,

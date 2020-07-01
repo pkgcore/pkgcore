@@ -74,6 +74,14 @@ class Maintainer:
             return f'{res} ({self.description})'
         return res
 
+    def __eq__(self, other):
+        try:
+            return self.email == other.email and self.name == other.name
+        except AttributeError:
+            if isinstance(other, str):
+                return other == self.email or other == self.name
+        return False
+
 
 class MetadataXml:
     """metadata.xml parsed results

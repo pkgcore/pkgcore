@@ -57,12 +57,16 @@ f"""<?xml version="1.0" encoding="UTF-8"?>
         names = ("foo@gmail.com", "monkeybone@gmail.com")
         mx = self.get_metadata_xml(maintainers=tuple((x,) for x in names))
         assert sorted(names) == sorted(map(str, mx.maintainers))
+        assert "foo@gmail.com" in mx.maintainers
+        assert "monkeybone@gmail.com" in mx.maintainers
 
     def test_maintainer_name_with_email(self):
         mx = self.get_metadata_xml(
             maintainers=(("funkymonkey@gmail.com", "funky monkey \N{SNOWMAN}"),))
         assert ("funky monkey \N{SNOWMAN} <funkymonkey@gmail.com>",) == \
             tuple(map(str, mx.maintainers))
+        assert "funkymonkey@gmail.com" in mx.maintainers
+        assert "funky monkey \N{SNOWMAN}" in mx.maintainers
         assert "funkymonkey@gmail.com" == mx.maintainers[0].email
         assert "funky monkey \N{SNOWMAN}" == mx.maintainers[0].name
         assert mx.maintainers[0].description is None
@@ -72,6 +76,8 @@ f"""<?xml version="1.0" encoding="UTF-8"?>
         mx = self.get_metadata_xml(
             maintainers=(("foo@bar.com", "foobar", "Foobar"),))
         assert ("foobar <foo@bar.com> (Foobar)",) == tuple(map(str, mx.maintainers))
+        assert "foo@bar.com" in mx.maintainers
+        assert "foobar" in mx.maintainers
         assert "foo@bar.com" == mx.maintainers[0].email
         assert "foobar" == mx.maintainers[0].name
         assert "Foobar" == mx.maintainers[0].description
@@ -82,6 +88,8 @@ f"""<?xml version="1.0" encoding="UTF-8"?>
             maintainers=(("foo@bar.com", "foobar"),),
             maint_type='person')
         assert ("foobar <foo@bar.com>",) == tuple(map(str, mx.maintainers))
+        assert "foo@bar.com" in mx.maintainers
+        assert "foobar" in mx.maintainers
         assert "foo@bar.com" == mx.maintainers[0].email
         assert "foobar" == mx.maintainers[0].name
         assert mx.maintainers[0].description is None

@@ -530,7 +530,7 @@ def _mk_domain(parser):
     parser.add_argument(
         '--domain', get_default=True, config_type='domain',
         action=StoreConfigObject,
-        help="domain to use for this operation")
+        help="custom pkgcore domain to use for this operation")
 
 
 class _SubParser(arghparse._SubParser):

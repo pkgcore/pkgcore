@@ -8,7 +8,7 @@ __all__ = (
     "Project", "ProjectMember", "Subproject", "ProjectsXml", "LocalProjectsXml"
 )
 
-from collections import namedtuple, defaultdict
+from collections import namedtuple
 import errno
 from itertools import chain
 from lxml import etree

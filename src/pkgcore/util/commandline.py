@@ -555,18 +555,18 @@ class ArgumentParser(arghparse.ArgumentParser):
                 config_opts.add_argument(
                     '--add-config', nargs=3, action='append',
                     metavar=('SECTION', 'KEY', 'VALUE'),
-                    help='modify an existing configuration section')
+                    help='modify existing pkgcore config section')
                 config_opts.add_argument(
                     '--new-config', nargs=3, action='append',
                     metavar=('SECTION', 'KEY', 'VALUE'),
-                    help='add a new configuration section')
+                    help='add new pkgcore config section')
                 config_opts.add_argument(
                     '--empty-config', action='store_true',
-                    help='do not load user/system configuration')
+                    help='skip loading user/system pkgcore config')
                 config_opts.add_argument(
                     '--config', metavar='PATH', dest='override_config',
                     type=arghparse.existent_path,
-                    help='override location of config files')
+                    help='use custom pkgcore config file')
 
                 if script is not None:
                     try:

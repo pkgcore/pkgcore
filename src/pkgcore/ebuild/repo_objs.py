@@ -789,6 +789,39 @@ class RepoConfig(syncable.tree, klass.ImmutableInstance, metaclass=WeakInstMeta)
             return frozenset()
 
     @klass.jit_attr
+    def arches_desc(self):
+        """Arch stability status (GLEP 72).
+
+        See https://www.gentoo.org/glep/glep-0072.html for more details.
+        """
+        fp = pjoin(self.profiles_base, 'arches.desc')
+        d = {'stable': set(), 'transitional': set(), 'testing': set()}
+        try:
+            for lineno, line in iter_read_bash(fp, enum_line=True):
+                try:
+                    arch, status = line.split()
+                except ValueError:
+                    logger.error(
+                        f"{self.repo_id}::profiles/arches.desc, "
+                        f"line {lineno}: invalid line format: "
+                        "should be '<arch> <status>'")
+                    continue
+                if arch not in self.known_arches:
+                    logger.warning(
+                        f"{self.repo_id}::profiles/arches.desc, "
+                        f"line {lineno}: unknown arch: {arch!r}")
+                    continue
+                if status not in d:
+                    logger.warning(
+                        f"{self.repo_id}::profiles/arches.desc, "
+                        f"line {lineno}: unknown status: {status!r}")
+                    continue
+                d[status].add(arch)
+        except FileNotFoundError:
+            pass
+        return mappings.ImmutableDict(d)
+
+    @klass.jit_attr
     def use_desc(self):
         """Global USE flags for the repo."""
         # todo: convert this to using a common exception base, with

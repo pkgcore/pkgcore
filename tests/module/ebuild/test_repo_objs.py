@@ -5,6 +5,7 @@ import re
 import pytest
 from snakeoil.data_source import data_source
 from snakeoil.fileutils import touch
+from snakeoil.mappings import ImmutableDict
 
 from pkgcore.ebuild import repo_objs, atom
 from pkgcore.repository import errors as repo_errors
@@ -873,6 +874,43 @@ class TestRepoConfig:
                 """)
         repo_config = repo_objs.RepoConfig(self.repo_path)
         assert repo_config.known_arches == frozenset(['amd64', 'x86', 'foo-bar'])
+        del repo_config
+
+    def test_arches_desc(self):
+        # nonexistent repo
+        repo_config = repo_objs.RepoConfig('nonexistent')
+        empty = {'stable': set(), 'transitional': set(), 'testing': set()}
+        assert repo_config.arches_desc == ImmutableDict(empty)
+        del repo_config
+
+        # empty file
+        os.mkdir(self.profiles_base)
+        arches_desc_path = os.path.join(self.profiles_base, 'arches.desc')
+        touch(arches_desc_path)
+        repo_config = repo_objs.RepoConfig(self.repo_path)
+        assert repo_config.arches_desc == ImmutableDict(empty)
+        del repo_config
+
+        # regular entries
+        with open(os.path.join(self.profiles_base, 'arch.list'), 'w') as f:
+            f.write(
+                """
+                amd64
+                alpha
+                foo
+                """)
+        with open(arches_desc_path, 'w') as f:
+            f.write(
+                """
+                # arches.desc file
+
+                amd64 stable
+                alpha testing
+                """)
+        repo_config = repo_objs.RepoConfig(self.repo_path)
+        assert repo_config.arches_desc['stable'] == {'amd64'}
+        assert repo_config.arches_desc['testing'] == {'alpha'}
+        assert repo_config.arches_desc['transitional'] == set()
         del repo_config
 
     def test_use_desc(self):

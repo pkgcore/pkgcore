@@ -575,8 +575,7 @@ def run_sanity_checks(pkgs, domain, threads=None):
             if pkg_ops.supports("sanity_check"):
                 yield pkg_ops
 
-    with ThreadPoolExecutor(max_workers=threads) as executor:
-        for pkg, failed in executor.map(sanity_check, _filter_pkgs(pkgs)):
-            if failed:
-                failures[pkg].extend(failed)
+    for pkg, failed in map(sanity_check, _filter_pkgs(pkgs)):
+        if failed:
+            failures[pkg].extend(failed)
     return failures

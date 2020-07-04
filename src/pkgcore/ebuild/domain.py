@@ -390,8 +390,7 @@ class domain(config_domain):
         files = sorted_scan(pjoin(self.config_dir, 'bashrc'), follow_symlinks=True)
         return tuple(local_source(x) for x in files)
 
-    @klass.jit_attr_named('_jit_reset_vfilters', uncached_val=None)
-    def _vfilters(self, pkg_accept_keywords=None, pkg_keywords=None):
+    def _pkg_filters(self, pkg_accept_keywords=None, pkg_keywords=None):
         if pkg_accept_keywords is None:
             pkg_accept_keywords = self.pkg_accept_keywords
         if pkg_keywords is None:
@@ -407,7 +406,7 @@ class domain(config_domain):
         # create keyword filters
         accept_keywords = (
             pkg_keywords + pkg_accept_keywords + self.profile.accept_keywords)
-        vfilters = [self._make_keywords_filter(
+        filters = [self._make_keywords_filter(
             default_keywords, accept_keywords,
             incremental="package.keywords" in const.incrementals)]
 
@@ -417,9 +416,9 @@ class domain(config_domain):
         if master_license or self.pkg_licenses:
             # restrict that matches iff the licenses are allowed
             restrict = delegate(partial(self._apply_license_filter, master_license))
-            vfilters.append(restrict)
+            filters.append(restrict)
 
-        return tuple(vfilters)
+        return tuple(filters)
 
     @klass.jit_attr_none
     def _default_licenses_manager(self):
@@ -684,13 +683,15 @@ class domain(config_domain):
             configured_repo = repo.configure(*pargs)
         return configured_repo
 
-    def filter_repo(self, repo, pkg_masks=None, pkg_unmasks=None,
+    def filter_repo(self, repo, pkg_masks=None, pkg_unmasks=None, pkg_filters=None,
                     pkg_accept_keywords=None, pkg_keywords=None, profile=True):
         """Filter a configured repo."""
         if pkg_masks is None:
             pkg_masks = self.pkg_masks
         if pkg_unmasks is None:
             pkg_unmasks = self.pkg_unmasks
+        if pkg_filters is None:
+            pkg_filters = self._pkg_filters(pkg_accept_keywords, pkg_keywords)
 
         global_masks = [((), repo.pkg_masks)]
         if profile:
@@ -706,20 +707,9 @@ class domain(config_domain):
                 unmasks.difference_update(neg)
                 unmasks.update(pos)
         unmasks.update(pkg_unmasks)
-        if pkg_accept_keywords or pkg_keywords:
-            # TODO: rework jitted attr access to provide underlying method
-            # access when requested via some suffixed attr name
-            #
-            # avoid jitted attr and call class method directly
-            func = getattr(self.__class__, '_vfilters').function
-            vfilters = func(
-                self,
-                pkg_accept_keywords=pkg_accept_keywords, pkg_keywords=pkg_keywords)
-        else:
-            vfilters = self._vfilters
-        filter = generate_filter(masks, unmasks, *vfilters)
-        filtered_repo = filtered.tree(repo, filter, True)
-        return filtered_repo
+
+        filters = generate_filter(masks, unmasks, *pkg_filters)
+        return filtered.tree(repo, filters, True)
 
     @klass.jit_attr_named('_jit_reset_tmpdir', uncached_val=None)
     def tmpdir(self):

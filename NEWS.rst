@@ -3,6 +3,18 @@ Release Notes
 =============
 
 ----------------------------
+pkgcore 0.10.13 (2020-07-05)
+----------------------------
+
+- pkgcore.ebuild.domain: Allow license and keyword filters to be
+  overridden.
+
+- Add initial arches.desc file parsing support (GLEP 72).
+
+- pkgcore.ebuild.repo_objs: Support testing strings against
+  maintainer objects for equality.
+
+----------------------------
 pkgcore 0.10.12 (2020-04-15)
 ----------------------------
 

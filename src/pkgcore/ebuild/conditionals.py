@@ -150,7 +150,6 @@ class DepSet(boolean.AndRestriction):
             raise DepsetParseError(dep_str, attr=attr)
 
         if transitive_use_atoms and not node_conds:
-            # localize to this scope for speed.
             element_class = transitive_use_atom
             # we can't rely on iter(self) here since it doesn't
             # descend through boolean restricts.

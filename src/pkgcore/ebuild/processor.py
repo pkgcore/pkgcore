@@ -134,7 +134,7 @@ def release_ebuild_processor(ebp):
     assert ebp not in inactive_ebp_list
     # We can't reuse processors that use custom fd mappings or are locked on
     # release for one reason or another.
-    if ebp.locked or ebp._fd_pipes:
+    if ebp.is_locked or ebp._fd_pipes:
         ebp.shutdown_processor()
     else:
         inactive_ebp_list.append(ebp)
@@ -636,7 +636,7 @@ class EbuildProcessor:
         """Unlock the processor."""
         self.processing_lock = False
 
-    locked = klass.alias_attr('processing_lock')
+    is_locked = klass.alias_attr('processing_lock')
 
     @property
     def is_alive(self):

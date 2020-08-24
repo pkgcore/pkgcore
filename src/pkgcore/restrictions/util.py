@@ -27,11 +27,11 @@ def collect_package_restrictions(restrict, attrs=None, invert=False):
                 'restrict must be of a restriction.base, '
                 f'not {r.__class__.__class__}: {r!r}'
             )
+    i = iflatten_func(restrict, _is_package_instance)
     if attrs is None:
-        for r in iflatten_func(restrict, _is_package_instance):
-            yield r
-    else:
-        attrs = frozenset(attrs)
-        for r in iflatten_func(restrict, _is_package_instance):
-            if invert == attrs.isdisjoint(getattr(r, 'attrs', ())):
-                yield r
+        return i
+    attrs = frozenset(attrs)
+    return (
+        r for r in i
+        if invert == attrs.isdisjoint(getattr(r, 'attrs', ()))
+    )

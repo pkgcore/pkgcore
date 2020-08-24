@@ -99,7 +99,7 @@ def request_ebuild_processor(userpriv=False, sandbox=None, fd_pipes=None):
 
     for ebp in inactive_ebp_list:
         if ebp.userprived() == userpriv and (ebp.sandboxed() or not sandbox):
-            if not ebp.is_alive:
+            if not ebp.is_responsive:
                 inactive_ebp_list.remove(ebp)
                 continue
             inactive_ebp_list.remove(ebp)
@@ -569,7 +569,7 @@ class EbuildProcessor:
         return 1
 
     def clear_preloaded_eclasses(self):
-        if self.is_alive:
+        if self.is_responsive:
             self.write("clear_preloaded_eclasses")
             if not self.expect("clear_preload_eclasses succeeded", flush=True):
                 self.shutdown_processor()
@@ -641,48 +641,56 @@ class EbuildProcessor:
     @property
     def is_alive(self):
         """Return whether the processor is alive."""
-        try:
-            if self.pid is None:
-                return False
+        # remember that this function may be invoked from a threaded context, don't
+        # assume self.pid won't be changed between under our feet.
+        current_pid = self.pid
+        if current_pid is not None:
             try:
-                if process.is_running(self.pid):
-                    self.write("alive", disable_runtime_exceptions=True)
-                    if self.expect("yep!", timeout=10):
-                        return True
-            except process.ProcessNotFound:
-                # pid doesn't exist
-                self.pid = None
-            return False
+                if (0, 0) == os.waitpid(current_pid, os.WNOHANG):
+                    # still alive.
+                    return True
+            except EnvironmentError as e:
+                if e.errno != errno.ECHILD:
+                    raise
+            # making it here means waitpid reaped, or the pid was already reaped by another thread (two
+            # # threads in is_alive() at the same time)  EIther way, the EBD is dead.
+            self.pid = False
+        return False
 
-        except (AttributeError, KeyboardInterrupt):
-            # thrown only if failure occurred instantiation.
-            return False
+    @property
+    def is_responsive(self):
+        """Return where the processor is in main control loop and responsive."""
+        if self.is_alive:
+            self.write("alive", disable_runtime_exceptions=True)
+            if self.expect("yep!", timeout=10):
+                return True
+        return False
 
     def shutdown_processor(self, force=False, ignore_keyboard_interrupt=False):
         """Tell the daemon to shut itself down, and mark this instance as dead."""
-        kill = False or force
+        if self.pid is None:
+            return
+        kill = force
         if not force:
             try:
-                if self.pid is None:
-                    return
-                elif self.is_alive:
+                if self.is_responsive:
                     self.write("shutdown_daemon", disable_runtime_exceptions=True)
                     self.ebd_write.close()
                     self.ebd_read.close()
-                else:
-                    kill = True
+                    kill = False
             except (EnvironmentError, ValueError):
-                kill = True
+                kill = self.pid is not None
 
-        if kill:
-            os.killpg(self.pid, signal.SIGKILL)
+        if self.pid:
+            if kill:
+                os.killpg(self.pid, signal.SIGKILL)
 
-        # now we wait for the process group
-        try:
-            os.waitpid(-self.pid, 0)
-        except KeyboardInterrupt:
-            if not ignore_keyboard_interrupt:
-                raise
+            # now we wait for the process group
+            try:
+                os.waitpid(-self.pid, 0)
+            except KeyboardInterrupt:
+                if not ignore_keyboard_interrupt:
+                    raise
 
         # currently, this assumes all went well.
         # which isn't always true.
@@ -747,7 +755,7 @@ class EbuildProcessor:
         # Simply attempts to notify the daemon to die. If a processor reaches
         # this state it shouldn't be in the active or inactive lists anymore so
         # no need to try to remove itself from them.
-        if self.is_alive:
+        if self.is_responsive:
             # I'd love to know why the exception wrapping is required...
             try:
                 self.shutdown_processor()

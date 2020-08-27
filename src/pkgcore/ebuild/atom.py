@@ -446,8 +446,10 @@ class atom(boolean.AndRestriction, metaclass=klass.generic_equality):
 
         return cmp(self.repo_id, other.repo_id)
 
+    no_usedeps = klass.alias_attr("get_atom_without_use_deps")
+
     @property
-    def no_usedeps(self):
+    def get_atom_without_use_deps(self):
         """Return atom object stripped of USE dependencies."""
         if not self.use:
             return self

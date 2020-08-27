@@ -19,7 +19,7 @@ class ParseError(ValueError):
 
 
 def comma_separated_containment(attr, values_kls=frozenset, token_kls=str):
-    """Helper for parsing comma-separated strings to a ContainmentMatch2.
+    """Helper for parsing comma-separated strings to a ContainmentMatch.
 
     :param attr: name of the attribute.
     :return: a parse function: takes a string of comma-separated values,
@@ -28,7 +28,7 @@ def comma_separated_containment(attr, values_kls=frozenset, token_kls=str):
     """
     def _parse(value):
         return packages.PackageRestriction(
-            attr, values.ContainmentMatch2(
+            attr, values.ContainmentMatch(
                 values_kls(token_kls(piece.strip()) for piece in value.split(','))
             )
         )

@@ -16,7 +16,7 @@ from snakeoil.demandload import demand_compile_regexp
 from ..restrictions import boolean, packages, restriction, values
 from ..restrictions.packages import AndRestriction as PkgAndRestriction
 from ..restrictions.packages import Conditional
-from ..restrictions.values import ContainmentMatch2
+from ..restrictions.values import ContainmentMatch
 from . import cpv, errors, restricts
 
 # namespace compatibility...
@@ -649,7 +649,7 @@ class transitive_use_atom(atom):
 
     @staticmethod
     def _mk_conditional(flag, payload, negate=False):
-        return Conditional('use', ContainmentMatch2(flag, negate=negate), payload)
+        return Conditional('use', ContainmentMatch(flag, negate=negate), payload)
 
     def _recurse_transitive_use_conds(self, atom_str, forced_use, varied):
         if not varied:

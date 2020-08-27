@@ -305,8 +305,8 @@ class base(metadata.package):
     @staticmethod
     def _mk_required_use_node(data):
         if data[0] == '!':
-            return values.ContainmentMatch2(data[1:], negate=True)
-        return values.ContainmentMatch2(data)
+            return values.ContainmentMatch(data[1:], negate=True)
+        return values.ContainmentMatch(data)
 
     @DynamicGetattrSetter.register
     def required_use(self):
@@ -330,7 +330,7 @@ class base(metadata.package):
 
                 return conditionals.DepSet.parse(
                     data,
-                    values.ContainmentMatch2, operators=operators,
+                    values.ContainmentMatch, operators=operators,
                     element_func=self._mk_required_use_node, attr='REQUIRED_USE')
         return conditionals.DepSet()
 

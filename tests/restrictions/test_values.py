@@ -2,6 +2,8 @@ from pkgcore.restrictions import values
 from pkgcore.test import TestRestriction
 from snakeoil.test import TestCase
 
+from functools import partial
+
 
 class SillyBool(values.base):
     """Extra stupid version of AlwaysBool to test base.force_{True,False}."""
@@ -246,7 +248,7 @@ class TestEqualityMatch(TestRestriction):
 
 class TestContainmentMatch(TestRestriction):
 
-    kls = values.ContainmentMatch
+    kls = partial(values.ContainmentMatch, disable_inst_caching=True)
 
     def test_match(self):
         for x, y, ret in (
@@ -256,16 +258,16 @@ class TestContainmentMatch(TestRestriction):
             (set(range(10)), list(range(10)), True)):
 
             for negated in (False, True):
-                self.assertMatches(self.kls(negate=negated,
-                    disable_inst_caching=True, *x),
+                self.assertMatches(self.kls(x, negate=negated,
+                    disable_inst_caching=True),
                     y, [y]*3, negated=(ret == negated))
 
         for negated in (False, True):
             # intentionally differing for the force_* args; slips in
             # an extra data set for testing.
-            self.assertMatches(self.kls(all=True, negate=negated, *range(10)),
+            self.assertMatches(self.kls(range(10), match_all=True, negate=negated),
                 list(range(20)), [list(range(10))]*3, negated=negated)
-            self.assertNotMatches(self.kls(all=True, negate=negated, *range(10)),
+            self.assertNotMatches(self.kls(range(10), match_all=True, negate=negated),
                 list(range(5)), [list(range(5))]*3, negated=negated)
 
         self.assertNotMatches(self.kls("asdf"), "fdsa", ["fdas"]*3)
@@ -275,18 +277,20 @@ class TestContainmentMatch(TestRestriction):
 
     def test__eq__(self):
         for negate in (True, False):
-            assert self.kls(negate=negate, *range(100)) == self.kls(negate=negate, *range(100)), \
+            assert self.kls(range(100), negate=negate) == \
+                self.kls(range(100), negate=negate), \
                 f"range(100), negate={negate}"
-            assert self.kls(1, negate=not negate) != self.kls(1, negate=negate)
+            assert (self.kls("1", negate=not negate) !=
+                self.kls("1", negate=negate))
             assert (
-                self.kls(1, 2, 3, all=True, negate=negate) ==
-                self.kls(1, 2, 3, all=True, negate=negate))
+                self.kls((1, 2, 3), match_all=True, negate=negate) ==
+                self.kls((1, 2, 3), match_all=True, negate=negate))
             assert (
-                self.kls(1, 2, all=True, negate=negate) !=
-                self.kls(1, 2, 3, all=True, negate=negate))
+                self.kls((1, 2), match_all=True, negate=negate) !=
+                self.kls((1, 2, 3), match_all=True, negate=negate))
             assert (
-                self.kls(1, 2, 3, all=False, negate=negate) !=
-                self.kls(1, 2, 3, all=True, negate=negate))
+                self.kls([1, 2, 3], match_all=False, negate=negate) !=
+                self.kls([1, 2, 3], match_all=True, negate=negate))
 
 
 class FlatteningRestrictionTest(TestCase):

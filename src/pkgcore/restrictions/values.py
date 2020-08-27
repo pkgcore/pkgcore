@@ -283,14 +283,11 @@ class EqualityMatch(base, metaclass=generic_equality):
         return f'EqualityMatch: ={self.data}'
 
 
-class ContainmentMatch2(base, metaclass=hashed_base):
+class ContainmentMatch(base, metaclass=hashed_base):
     """Used for an 'in' style operation.
 
     For example, 'x86' in ['x86', '~x86']. Note that negation of this *does*
     not result in a true NAND when all is on.
-
-    Note that ContainmentMatch will be removed in favor of this class. When
-    that occurs an alias will be left in place for compatibility.
     """
 
     __slots__ = ('_hash', 'vals', 'all', 'negate')
@@ -451,26 +448,10 @@ class ContainmentMatch2(base, metaclass=hashed_base):
         negate = '!' if self.negate else ''
         return f'{negate}{restricts_str}'
 
-
-class ContainmentMatch(ContainmentMatch2):
-    """Used for an 'in' style operation.
-
-    For example, 'x86' in ['x86', '~x86']. Note that negation of this *does*
-    not result in a true NAND when all is on.
-
-    Deprecated in favor of ContainmentMatch2.
-    """
-
-    __slots__ = ()
-    __inst_caching__ = True
-
-    def __init__(self, *args, **kwargs):
-        # note that we're discarding any specialized __getitem__ on vals here.
-        # this isn't optimal, and should be special cased for known
-        # types (lists/tuples fex)
-        vals = frozenset(args)
-        match_all = kwargs.pop("all", False)
-        ContainmentMatch2.__init__(self, vals, match_all=match_all, **kwargs)
+# ContainmentMatch2 was added in f1d3c6f to deprecate ContainmentMatch;
+# cleanup took a while (2021).  This ContainmentMatch2 can be removed
+# by 2023 at latest (pkgcheck is the only known dependency on this).
+ContainmentMatch2 = ContainmentMatch
 
 
 class FlatteningRestriction(base, metaclass=generic_equality):

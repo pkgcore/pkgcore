@@ -224,9 +224,7 @@ class tree:
         kwds.pop("sorter", None)
         kwds.pop("yield_none", None)
 
-        for pkg in self.itermatch(atom, **kwds):
-            return True
-        return False
+        return any(True for _ in self.itermatch(atom, **kwds))
 
     def match(self, atom, **kwds):
         return list(self.itermatch(atom, **kwds))

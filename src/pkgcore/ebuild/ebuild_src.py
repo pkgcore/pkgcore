@@ -251,7 +251,7 @@ class base(metadata.package):
         x: klass.alias_method("evaluate_depset")
         for x in (
             "bdepend", "depend", "rdepend", "pdepend",
-            "fetchables", "license", "src_uri", "restrict", "required_use",
+            "fetchables", "license", "restrict", "required_use",
         )
     }
 

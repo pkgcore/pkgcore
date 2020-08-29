@@ -21,6 +21,7 @@ from pkgcore.ebuild.eapi import get_eapi
 from pkgcore.ebuild.misc import sort_keywords
 from pkgcore.log import logger
 from pkgcore.package import errors as metadata_errors, metadata
+from pkgcore.package.base import DynamicGetattrSetter
 from pkgcore.restrictions import boolean, values
 
 
@@ -37,94 +38,10 @@ def generate_depset(kls, key, self):
         attr=key, element_func=self.eapi.atom_kls,
         transitive_use_atoms=self.eapi.options.transitive_use_atoms)
 
-
-def generate_licenses(self):
-    return conditionals.DepSet.parse(
-        self.data.pop('LICENSE', ''), str,
-        operators={
-            '||': boolean.OrRestriction,
-            '': boolean.AndRestriction},
-        attr='LICENSE', element_func=intern)
-
-
 def _mk_required_use_node(data):
     if data[0] == '!':
         return values.ContainmentMatch2(data[1:], negate=True)
     return values.ContainmentMatch2(data)
-
-
-def generate_required_use(self):
-    if self.eapi.options.has_required_use:
-        data = self.data.pop("REQUIRED_USE", "")
-        if data:
-            operators = {
-                "||": boolean.OrRestriction,
-                "": boolean.AndRestriction,
-                "^^": boolean.JustOneRestriction
-            }
-
-            def _invalid_op(msg, *args):
-                raise metadata_errors.MetadataException(self, 'eapi', f'REQUIRED_USE: {msg}')
-
-            if self.eapi.options.required_use_one_of:
-                operators['??'] = boolean.AtMostOneOfRestriction
-            else:
-                operators['??'] = partial(
-                    _invalid_op, f"EAPI '{self.eapi}' doesn't support '??' operator")
-
-            return conditionals.DepSet.parse(
-                data,
-                values.ContainmentMatch2, operators=operators,
-                element_func=_mk_required_use_node, attr='REQUIRED_USE')
-    return conditionals.DepSet()
-
-
-def generate_fetchables(self, allow_missing_checksums=False,
-                        ignore_unknown_mirrors=False, skip_default_mirrors=False):
-    chksums_can_be_missing = allow_missing_checksums or \
-        bool(getattr(self.repo, '_allow_missing_chksums', False))
-    chksums_can_be_missing, chksums = self.repo._get_digests(
-        self, allow_missing=chksums_can_be_missing)
-
-    mirrors = getattr(self._parent, "mirrors", {})
-    if skip_default_mirrors:
-        default_mirrors = None
-    else:
-        default_mirrors = getattr(self._parent, "default_mirrors", None)
-    common = {}
-    func = partial(
-        create_fetchable_from_uri, self, chksums,
-        chksums_can_be_missing, ignore_unknown_mirrors,
-        mirrors, default_mirrors, common)
-
-    # TODO: try/except block can be dropped when pkg._get_attr['fetchables']
-    # filtering hacks to pass custom args are fixed/removed.
-    #
-    # Usually dynamic_getattr_dict() catches/rethrows all exceptions as
-    # MetadataExceptions when attrs are accessed properly (e.g. pkg.fetchables).
-    try:
-        d = conditionals.DepSet.parse(
-            self.data.get("SRC_URI", ""), fetch.fetchable, operators={},
-            element_func=func, attr='SRC_URI',
-            allow_src_uri_file_renames=self.eapi.options.src_uri_renames)
-    except ebuild_errors.DepsetParseError as e:
-        raise metadata_errors.MetadataException(self, 'fetchables', str(e))
-
-    for v in common.values():
-        v.uri.finalize()
-    return d
-
-
-def generate_distfiles(self):
-    def _extract_distfile_from_uri(uri, filename=None):
-        if filename is not None:
-            return filename
-        return os.path.basename(uri)
-    return conditionals.DepSet.parse(
-        self.data.get("SRC_URI", ''), str, operators={}, attr='SRC_URI',
-        element_func=partial(_extract_distfile_from_uri),
-        allow_src_uri_file_renames=self.eapi.options.src_uri_renames)
-
 
 # utility func.
 def create_fetchable_from_uri(pkg, chksums, ignore_missing_chksums, ignore_unknown_mirrors,
@@ -172,73 +89,6 @@ def create_fetchable_from_uri(pkg, chksums, ignore_missing_chksums, ignore_unkno
     return common_files[filename]
 
 
-def get_parsed_eapi(self):
-    ebuild = self.ebuild
-    eapi = '0'
-    if ebuild.path:
-        # Use readlines directly since it does whitespace stripping
-        # for us, far faster than native python can.
-        i = fileutils.readlines_utf8(ebuild.path)
-    else:
-        i = (x.strip() for x in ebuild.text_fileobj())
-    for line in i:
-        if line[0:1] in ('', '#'):
-            continue
-        eapi_str = _EAPI_str_regex.match(line)
-        if eapi_str is not None:
-            eapi_str = eapi_str.group('EAPI')
-            if eapi_str:
-                eapi = _EAPI_regex.match(line).group('EAPI')
-        break
-    try:
-        return get_eapi(eapi)
-    except ValueError as e:
-        raise metadata_errors.MetadataException(self, 'eapi', f'{e}: {eapi_str!r}')
-
-
-def get_parsed_inherits(self):
-    """Search for directly inherited eclasses in an ebuild file.
-
-    This ignores conditional inherits since it naively uses a regex for
-    simplicity.
-    """
-    if self.ebuild.path:
-        # Use readlines directly since it does whitespace stripping
-        # for us, far faster than native python can.
-        i = fileutils.readlines_utf8(self.ebuild.path)
-    else:
-        i = (x.strip() for x in self.ebuild.text_fileobj())
-
-    # get all inherit line matches in the ebuild file
-    matches = filter(None, map(_parse_inherit_regex.match, i))
-    # and return the directly inherited eclasses in the order they're seen
-    return tuple(chain.from_iterable(m.group('eclasses').split() for m in matches))
-
-
-def get_slot(self):
-    slot = self.data.pop('SLOT', None)
-    if not slot:
-        raise metadata_errors.MetadataException(
-            self, 'slot', 'SLOT cannot be unset or empty')
-    if not self.eapi.valid_slot_regex.match(slot):
-        raise metadata_errors.MetadataException(
-            self, 'slot', f'invalid SLOT: {slot!r}')
-    return slot
-
-
-def get_subslot(self):
-    slot, _sep, subslot = self.fullslot.partition('/')
-    if not subslot:
-        return slot
-    return subslot
-
-
-def get_bdepend(self):
-    if "BDEPEND" in self.eapi.metadata_keys:
-        return generate_depset(atom, "BDEPEND", self)
-    return conditionals.DepSet()
-
-
 class base(metadata.package):
     """ebuild package
 
@@ -254,57 +104,227 @@ class base(metadata.package):
         )
     }
 
-    _get_attr = dict(metadata.package._get_attr)
-    _get_attr["bdepend"] = get_bdepend
-    _get_attr["depend"] = partial(generate_depset, atom, "DEPEND")
-    _get_attr["rdepend"] = partial(generate_depset, atom, "RDEPEND")
-    _get_attr["pdepend"] = partial(generate_depset, atom, "PDEPEND")
-    _get_attr["license"] = generate_licenses
-    _get_attr["fullslot"] = get_slot
-    _get_attr["slot"] = lambda s: s.fullslot.partition('/')[0]
-    _get_attr["subslot"] = get_subslot
-    _get_attr["fetchables"] = generate_fetchables
-    _get_attr["distfiles"] = generate_distfiles
-    _get_attr["description"] = lambda s: s.data.pop("DESCRIPTION", "").strip()
-    _get_attr["keywords"] = lambda s: tuple(
-        map(intern, s.data.pop("KEYWORDS", "").split()))
-    _get_attr["restrict"] = lambda s: conditionals.DepSet.parse(
-        s.data.pop("RESTRICT", ''), str, operators={}, attr='RESTRICT')
-    _get_attr["eapi"] = get_parsed_eapi
-    _get_attr["iuse"] = lambda s: frozenset(
-        map(intern, s.data.pop("IUSE", "").split()))
-    _get_attr["user_patches"] = lambda s: ()
-    _get_attr["iuse_effective"] = lambda s: s.iuse_stripped
-    _get_attr["properties"] = lambda s: conditionals.DepSet.parse(
-        s.data.pop("PROPERTIES", ''), str, operators={}, attr='PROPERTIES')
-    _get_attr["defined_phases"] = lambda s: s.eapi.interpret_cache_defined_phases(
-        map(intern, s.data.pop("DEFINED_PHASES", "").split()))
-    _get_attr["homepage"] = lambda s: tuple(s.data.pop("HOMEPAGE", "").split())
-    _get_attr["inherited"] = lambda s: tuple(sorted(s.data.get('_eclasses_', {})))
-    _get_attr["inherit"] = get_parsed_inherits
+    __slots__ = ('_pkg_metadata_shared',)
 
-    _get_attr["required_use"] = generate_required_use
-    _get_attr["source_repository"] = lambda s: s.repo.repo_id
+    @DynamicGetattrSetter.register
+    def bdepend(self):
+        if "BDEPEND" in self.eapi.metadata_keys:
+            return generate_depset(atom, "BDEPEND", self)
+        return conditionals.DepSet()
 
-    __slots__ = tuple(list(_get_attr.keys()) + ["_pkg_metadata_shared"])
+    depend = DynamicGetattrSetter.register(partial(generate_depset, atom, "DEPEND"))
+    rdepend = DynamicGetattrSetter.register(partial(generate_depset, atom, "RDEPEND"))
+    pdepend = DynamicGetattrSetter.register(partial(generate_depset, atom, "PDEPEND"))
 
-    PN = klass.alias_attr("package")
-    PV = klass.alias_attr("version")
-    PVR = klass.alias_attr("fullver")
+    @DynamicGetattrSetter.register
+    def license(self):
+        return conditionals.DepSet.parse(
+            self.data.pop('LICENSE', ''), str,
+            operators={
+                '||': boolean.OrRestriction,
+                '': boolean.AndRestriction},
+            attr='LICENSE', element_func=intern)
 
-    is_supported = klass.alias_attr('eapi.is_supported')
-    tracked_attributes = klass.alias_attr('eapi.tracked_attributes')
+    @DynamicGetattrSetter.register
+    def fullslot(self):
+        slot = self.data.pop('SLOT', None)
+        if not slot:
+            raise metadata_errors.MetadataException(
+                self, 'slot', 'SLOT cannot be unset or empty')
+        if not self.eapi.valid_slot_regex.match(slot):
+            raise metadata_errors.MetadataException(
+                self, 'slot', f'invalid SLOT: {slot!r}')
+        return slot
+
+    @DynamicGetattrSetter.register
+    def subslot(self):
+        slot, _sep, subslot = self.fullslot.partition('/')
+        if not subslot:
+            return slot
+        return subslot
+
+    @DynamicGetattrSetter.register
+    def slot(self):
+        return self.fullslot.partition('/')[0]
+
+    @DynamicGetattrSetter.register
+    def fetchables(self, allow_missing_checksums=False,
+                            ignore_unknown_mirrors=False, skip_default_mirrors=False):
+        chksums_can_be_missing = allow_missing_checksums or \
+            bool(getattr(self.repo, '_allow_missing_chksums', False))
+        chksums_can_be_missing, chksums = self.repo._get_digests(
+            self, allow_missing=chksums_can_be_missing)
+
+        mirrors = getattr(self._parent, "mirrors", {})
+        if skip_default_mirrors:
+            default_mirrors = None
+        else:
+            default_mirrors = getattr(self._parent, "default_mirrors", None)
+        common = {}
+        func = partial(
+            create_fetchable_from_uri, self, chksums,
+            chksums_can_be_missing, ignore_unknown_mirrors,
+            mirrors, default_mirrors, common)
+
+        # TODO: try/except block can be dropped when pkg._get_attr['fetchables']
+        # filtering hacks to pass custom args are fixed/removed.
+        #
+        # Usually dynamic_getattr_dict() catches/rethrows all exceptions as
+        # MetadataExceptions when attrs are accessed properly (e.g. pkg.fetchables).
+        try:
+            d = conditionals.DepSet.parse(
+                self.data.get("SRC_URI", ""), fetch.fetchable, operators={},
+                element_func=func, attr='SRC_URI',
+                allow_src_uri_file_renames=self.eapi.options.src_uri_renames)
+        except ebuild_errors.DepsetParseError as e:
+            raise metadata_errors.MetadataException(self, 'fetchables', str(e))
+
+        for v in common.values():
+            v.uri.finalize()
+        return d
+
+    @DynamicGetattrSetter.register
+    def distfiles(self):
+        def _extract_distfile_from_uri(uri, filename=None):
+            if filename is not None:
+                return filename
+            return os.path.basename(uri)
+        return conditionals.DepSet.parse(
+            self.data.get("SRC_URI", ''), str, operators={}, attr='SRC_URI',
+            element_func=partial(_extract_distfile_from_uri),
+            allow_src_uri_file_renames=self.eapi.options.src_uri_renames)
+
+    @DynamicGetattrSetter.register
+    def description(self):
+        return self.data.pop("DESCRIPTION", "").strip()
+
+    @DynamicGetattrSetter.register
+    def keywords(self):
+        return tuple(map(intern, self.data.pop("KEYWORDS", "").split()))
 
     @property
     def sorted_keywords(self):
         """Sort keywords with prefix keywords after regular arches."""
         return tuple(sort_keywords(self.keywords))
 
+    @DynamicGetattrSetter.register
+    def restrict(self):
+        return conditionals.DepSet.parse(
+            self.data.pop("RESTRICT", ''), str, operators={},
+            attr='RESTRICT')
+
+    @DynamicGetattrSetter.register
+    def eapi(self):
+        ebuild = self.ebuild
+        eapi = '0'
+        if ebuild.path:
+            # Use readlines directly since it does whitespace stripping
+            # for us, far faster than native python can.
+            i = fileutils.readlines_utf8(ebuild.path)
+        else:
+            i = (x.strip() for x in ebuild.text_fileobj())
+        for line in i:
+            if line[0:1] in ('', '#'):
+                continue
+            eapi_str = _EAPI_str_regex.match(line)
+            if eapi_str is not None:
+                eapi_str = eapi_str.group('EAPI')
+                if eapi_str:
+                    eapi = _EAPI_regex.match(line).group('EAPI')
+            break
+        try:
+            return get_eapi(eapi)
+        except ValueError as e:
+            raise metadata_errors.MetadataException(self, 'eapi', f'{e}: {eapi_str!r}')
+
+    is_supported = klass.alias_attr('eapi.is_supported')
+    tracked_attributes = klass.alias_attr('eapi.tracked_attributes')
+
+    @DynamicGetattrSetter.register
+    def iuse(self):
+        return frozenset(map(intern, self.data.pop("IUSE", "").split()))
+
     @property
     def iuse_stripped(self):
         if self.eapi.options.iuse_defaults:
             return frozenset(x.lstrip('-+') if len(x) > 1 else x for x in self.iuse)
         return self.iuse
+
+    iuse_effective = klass.alias_attr("iuse_stripped")
+
+    @DynamicGetattrSetter.register
+    def user_patches(self):
+        return ()
+
+    @DynamicGetattrSetter.register
+    def properties(self):
+        return conditionals.DepSet.parse(
+            self.data.pop("PROPERTIES", ''), str, operators={},
+            attr='PROPERTIES')
+
+    @DynamicGetattrSetter.register
+    def defined_phases(self):
+        return self.eapi.interpret_cache_defined_phases(
+            map(intern, self.data.pop("DEFINED_PHASES", "").split()))
+
+    @DynamicGetattrSetter.register
+    def homepage(self):
+        return tuple(self.data.pop("HOMEPAGE", "").split())
+
+    @DynamicGetattrSetter.register
+    def inherited(self):
+        return tuple(sorted(self.data.get('_eclasses_', {})))
+
+    @DynamicGetattrSetter.register
+    def inherit(self):
+        """Search for directly inherited eclasses in an ebuild file.
+
+        This ignores conditional inherits since it naively uses a regex for
+        simplicity.
+        """
+        if self.ebuild.path:
+            # Use readlines directly since it does whitespace stripping
+            # for us, far faster than native python can.
+            i = fileutils.readlines_utf8(self.ebuild.path)
+        else:
+            i = (x.strip() for x in self.ebuild.text_fileobj())
+
+        # get all inherit line matches in the ebuild file
+        matches = filter(None, map(_parse_inherit_regex.match, i))
+        # and return the directly inherited eclasses in the order they're seen
+        return tuple(chain.from_iterable(m.group('eclasses').split() for m in matches))
+
+    @DynamicGetattrSetter.register
+    def required_use(self):
+        if self.eapi.options.has_required_use:
+            data = self.data.pop("REQUIRED_USE", "")
+            if data:
+                operators = {
+                    "||": boolean.OrRestriction,
+                    "": boolean.AndRestriction,
+                    "^^": boolean.JustOneRestriction
+                }
+
+                def _invalid_op(msg, *args):
+                    raise metadata_errors.MetadataException(self, 'eapi', f'REQUIRED_USE: {msg}')
+
+                if self.eapi.options.required_use_one_of:
+                    operators['??'] = boolean.AtMostOneOfRestriction
+                else:
+                    operators['??'] = partial(
+                        _invalid_op, f"EAPI '{self.eapi}' doesn't support '??' operator")
+
+                return conditionals.DepSet.parse(
+                    data,
+                    values.ContainmentMatch2, operators=operators,
+                    element_func=_mk_required_use_node, attr='REQUIRED_USE')
+        return conditionals.DepSet()
+
+    source_repository = klass.alias_attr("repo.repo_id")
+
+    PN = klass.alias_attr("package")
+    PV = klass.alias_attr("version")
+    PVR = klass.alias_attr("fullver")
 
     @property
     def mandatory_phases(self):
@@ -348,8 +368,6 @@ class base(metadata.package):
 class package(base):
 
     __slots__ = ("_shared_pkg_data",)
-
-    _get_attr = dict(base._get_attr)
 
     def __init__(self, shared_pkg_data, *args, **kwargs):
         super().__init__(*args, **kwargs)

@@ -3,9 +3,11 @@
 Right now, doesn't provide much, need to change that down the line
 """
 
-__all__ = ("base", "wrapper", "dynamic_getattr_dict")
+__all__ = ("base", "wrapper", "dynamic_getattr_dict", "DynamicGetattrSetter")
 
-from snakeoil import klass
+import itertools
+
+from snakeoil import klass, sequences
 from snakeoil.compatibility import cmp
 
 from pkgcore import exceptions as base_errors
@@ -92,3 +94,58 @@ def dynamic_getattr_dict(self, attr):
         raise errors.MetadataException(self, attr, str(e)) from e
     except PermissionError as e:
         raise base_errors.PermissionDenied(self.path, write=False) from e
+
+
+class DynamicGetattrSetter(type):
+    """Metaclass utilizing __getattr__ to JIT generate attributes and store them.
+
+    Consider `snakeoil.klass.jit_attr` for comparison; that pseudo property
+    will invoke a functor and store the result, but every subsequent access- still
+    pays overhead of passing through the redirects.
+
+    This metaclass lacks that overhead; via hooking __getattr__, this generates
+    the requested attribute, stores it on the instance, and returns it.  All
+    future access of that attribute go through the fast path cpy access ways.
+
+    This optimization in the early days of pkgcore had drastic impact; in modern
+    times python has improved.  There still is gain, but the implementation complexity
+    may warrant phasing this out in favor of `snakeoil.klas.jit_attr` alternatives.
+    """
+
+    class register:
+        """decorator used to mark a function as an attribute loader"""
+        __slot__ = ('functor',)
+        def __init__(self, functor):
+            self.functor = functor
+
+    def __new__(cls, name, bases, class_dict):
+        new_functions = {
+            attr: class_dict.pop(attr).functor
+            for attr, thing in list(class_dict.items())
+            if isinstance(thing, cls.register)
+        }
+
+        existing = {}
+        for base in bases:
+            existing.update(getattr(base, '_get_attr', {}))
+
+        slots = class_dict.get('__slots__', None)
+        if slots is not None:
+            # only add slots for new attr's; assume the layer above already slotted
+            # if this layer is setting slots.
+            class_dict['__slots__'] = tuple(
+                sequences.iter_stable_unique(
+                    itertools.chain(
+                        slots,
+                        set(new_functions).difference(existing)
+                    )
+                )
+            )
+
+        d = existing if class_dict.pop('__DynamicGetattrSetter_auto_inherit__', True) else {}
+        d.update(new_functions)
+        d.update(class_dict.pop('_get_attr', {}))
+        class_dict['_get_attr'] = d
+        class_dict.setdefault('__getattr__', dynamic_getattr_dict)
+
+        return type.__new__(cls, name, bases, class_dict)

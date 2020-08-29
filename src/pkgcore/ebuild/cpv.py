@@ -242,7 +242,6 @@ class CPV(base.base):
     :ivar revision: str revision
     :ivar versioned_atom: atom matching this exact version
     :ivar unversioned_atom: atom matching all versions of this package
-    :cvar _get_attr: mapping of attr:callable to generate attributes on the fly
     """
 
     __slots__ = ("cpvstr", "key", "category", "package", "version", "revision", "fullver")

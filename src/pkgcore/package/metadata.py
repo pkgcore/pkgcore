@@ -13,7 +13,7 @@ def DeriveMetadataKls(original_kls):
     if getattr(original_kls, "_derived_metadata_kls", False):
         return original_kls
 
-    class package(original_kls):
+    class package(original_kls, metaclass=base.DynamicGetattrSetter):
         _derived_metadata_kls = True
         built = False
         __slots__ = ("_parent", "data", "_domain")
@@ -31,8 +31,6 @@ def DeriveMetadataKls(original_kls):
         immutable = True
         package_is_real = True
 
-        _get_attr = dict(original_kls._get_attr)
-
         def __init__(self, parent_repository, *args, **kwds):
             f"""wrapper for {original_kls}.__init__
             
@@ -46,15 +44,10 @@ def DeriveMetadataKls(original_kls):
             super().__init__(*args, **kwds)
             object.__setattr__(self, '_parent',  parent_repository)
 
-        def _get_data(self):
-            """internal hook func to get the packages metadata
-
-            consumer of :obj:`_get_attr`
-            """
+        @base.DynamicGetattrSetter.register
+        def data(self):
+            """internal hook func to get the packages metadata"""
             return self._fetch_metadata()
-        _get_attr["data"] = _get_data
-
-        __getattr__ = base.dynamic_getattr_dict
 
         repo = klass.alias_attr("_parent._parent_repo")
 

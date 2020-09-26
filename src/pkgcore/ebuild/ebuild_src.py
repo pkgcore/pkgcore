@@ -197,11 +197,7 @@ def get_parsed_eapi(self):
 
 
 def get_parsed_inherits(self):
-    """Search for directly inherited eclasses in an ebuild file.
-
-    This ignores conditional inherits since it naively uses a regex for
-    simplicity.
-    """
+    """Return the tuple of directly inherited eclasses for an ebuild."""
     if self.ebuild.path:
         # Use readlines directly since it does whitespace stripping
         # for us, far faster than native python can.
@@ -211,8 +207,13 @@ def get_parsed_inherits(self):
 
     # get all inherit line matches in the ebuild file
     matches = filter(None, map(_parse_inherit_regex.match, i))
-    # and return the directly inherited eclasses in the order they're seen
-    return tuple(chain.from_iterable(m.group('eclasses').split() for m in matches))
+    # and return direct inherits in the order they're seen
+    eclasses = []
+    for eclass in chain.from_iterable(m.group('eclasses').split() for m in matches):
+        # verify eclass is in inherited set to avoid conditional inherits
+        if eclass in self.inherited:
+            eclasses.append(eclass)
+    return tuple(eclasses)
 
 
 def get_slot(self):

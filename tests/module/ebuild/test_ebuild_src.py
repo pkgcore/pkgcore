@@ -370,7 +370,7 @@ class TestBase:
 
         # skip default mirrors
         pkg = self.get_pkg({'SRC_URI': 'http://foo.com/monkey.tgz'}, repo=parent)
-        f = pkg._get_attr['fetchables'](pkg, skip_default_mirrors=True)
+        f = pkg.generate_fetchables(skip_default_mirrors=True)
         assert list(f[0].uri) == ['http://foo.com/monkey.tgz']
 
         # test primaryuri...

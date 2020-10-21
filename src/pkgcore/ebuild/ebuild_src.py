@@ -148,9 +148,9 @@ class base(metadata.package):
     def slot(self):
         return self.fullslot.partition('/')[0]
 
-    @DynamicGetattrSetter.register
-    def fetchables(self, allow_missing_checksums=False,
-                   ignore_unknown_mirrors=False, skip_default_mirrors=False):
+    def generate_fetchables(self, allow_missing_checksums=False,
+                            ignore_unknown_mirrors=False, skip_default_mirrors=False):
+        """Generate fetchables object for a package."""
         chksums_can_be_missing = allow_missing_checksums or \
             bool(getattr(self.repo, '_allow_missing_chksums', False))
         chksums_can_be_missing, chksums = self.repo._get_digests(
@@ -167,11 +167,6 @@ class base(metadata.package):
             chksums_can_be_missing, ignore_unknown_mirrors,
             mirrors, default_mirrors, common)
 
-        # TODO: try/except block can be dropped when pkg._get_attr['fetchables']
-        # filtering hacks to pass custom args are fixed/removed.
-        #
-        # Usually dynamic_getattr_dict() catches/rethrows all exceptions as
-        # MetadataExceptions when attrs are accessed properly (e.g. pkg.fetchables).
         try:
             d = conditionals.DepSet.parse(
                 self.data.get("SRC_URI", ""), fetch.fetchable, operators={},
@@ -183,6 +178,10 @@ class base(metadata.package):
         for v in common.values():
             v.uri.finalize()
         return d
+
+    @DynamicGetattrSetter.register
+    def fetchables(self):
+        return self.generate_fetchables()
 
     @DynamicGetattrSetter.register
     def distfiles(self):

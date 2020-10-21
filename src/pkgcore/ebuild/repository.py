@@ -96,11 +96,11 @@ class repo_operations(_repo_ops.operations):
             for pkg in pkgs:
                 pkgdir_fetchables.update({
                     fetchable.filename: fetchable for fetchable in
-                    iflatten_instance(pkg._get_attr['fetchables'](
-                        pkg, allow_missing_checksums=True,
+                    iflatten_instance(pkg.generate_fetchables(
+                        allow_missing_checksums=True,
                         skip_default_mirrors=(not mirrors)),
                         fetch.fetchable)
-                    })
+                })
 
             # fetchables targeted for (re-)manifest generation
             fetchables = {}

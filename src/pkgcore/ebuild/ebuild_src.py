@@ -11,11 +11,10 @@ from sys import intern
 
 from snakeoil import chksum, data_source, fileutils, klass
 from snakeoil.demandload import demand_compile_regexp
-from snakeoil.sequences import iflatten_instance
 
 from pkgcore import fetch
 from pkgcore.cache import errors as cache_errors
-from pkgcore.ebuild import conditionals, const, processor, errors as ebuild_errors
+from pkgcore.ebuild import conditionals, processor, errors as ebuild_errors
 from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.eapi import get_eapi
 from pkgcore.ebuild.misc import sort_keywords

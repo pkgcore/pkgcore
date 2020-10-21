@@ -5,6 +5,7 @@ built ebuild packages (vdb packages and binpkgs are derivatives of this)
 __all__ = ("package", "package_factory")
 
 from functools import partial
+import itertools
 import re
 
 from snakeoil import demandimport
@@ -88,7 +89,9 @@ class package(ebuild_src.base):
     @property
     def tracked_attributes(self):
         # tracked attributes varies depending on EAPI, thus this has to be runtime computed
-        return tuple(super().tracked_attributes | frozenset(['contents', 'use', 'environment']))
+        return tuple(itertools.chain(
+            super().tracked_attributes, ('contents', 'use', 'environment')
+        ))
 
     @DynamicGetattrSetter.register
     def cflags(self):

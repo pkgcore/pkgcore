@@ -11,7 +11,7 @@ from snakeoil.currying import pretty_docs
 class base(klass.SlotsPicklingMixin, metaclass=caching.WeakInstMeta):
     """base restriction matching object.
 
-    all derivatives *should* be __slot__ based (lot of instances may
+    all derivatives *should* be __slots__ based (lot of instances may
     wind up in memory).
     """
     __inst_caching__ = True

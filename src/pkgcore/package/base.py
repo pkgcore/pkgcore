@@ -113,8 +113,10 @@ class DynamicGetattrSetter(type):
     """
 
     class register:
-        """decorator used to mark a function as an attribute loader"""
-        __slot__ = ('functor',)
+        """Decorator used to mark a function as an attribute loader."""
+
+        __slots__ = ('functor',)
+
         def __init__(self, functor):
             self.functor = functor
 

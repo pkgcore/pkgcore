@@ -37,10 +37,12 @@ def generate_depset(kls, key, self):
         attr=key, element_func=self.eapi.atom_kls,
         transitive_use_atoms=self.eapi.options.transitive_use_atoms)
 
+
 def _mk_required_use_node(data):
     if data[0] == '!':
         return values.ContainmentMatch2(data[1:], negate=True)
     return values.ContainmentMatch2(data)
+
 
 # utility func.
 def create_fetchable_from_uri(pkg, chksums, ignore_missing_chksums, ignore_unknown_mirrors,
@@ -148,7 +150,7 @@ class base(metadata.package):
 
     @DynamicGetattrSetter.register
     def fetchables(self, allow_missing_checksums=False,
-                            ignore_unknown_mirrors=False, skip_default_mirrors=False):
+                   ignore_unknown_mirrors=False, skip_default_mirrors=False):
         chksums_can_be_missing = allow_missing_checksums or \
             bool(getattr(self.repo, '_allow_missing_chksums', False))
         chksums_can_be_missing, chksums = self.repo._get_digests(

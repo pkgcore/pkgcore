@@ -84,7 +84,7 @@ class package(ebuild_src.base):
     chost = DynamicGetattrSetter.register(partial(_chost_fallback, 'CHOST'))
     ctarget = DynamicGetattrSetter.register(partial(_chost_fallback, 'CTARGET'))
     contents = DynamicGetattrSetter.register(post_curry(_passthrough, 'contents'))
-    environment = DynamicGetattrSetter.register(partial(_passthrough, 'environment'))
+    environment = DynamicGetattrSetter.register(post_curry(_passthrough, 'environment'))
 
     @property
     def tracked_attributes(self):

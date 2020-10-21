@@ -12,7 +12,6 @@ from snakeoil.currying import post_curry
 from snakeoil.data_source import local_source
 from snakeoil.mappings import IndeterminantDict
 from snakeoil.obj import DelayedInstantiation
-from snakeoil.sequences import iter_stable_unique
 
 from pkgcore import fetch
 from pkgcore.ebuild import ebuild_src, conditionals, triggers
@@ -88,13 +87,8 @@ class package(ebuild_src.base):
 
     @property
     def tracked_attributes(self):
-        # tracked attributes varies depending on EAPI, thus this hbas to be runtime computed.
-        return tuple(
-            iter_stable_unique(
-                super().tracked_attributes,
-                ('contents', 'use', 'environment')
-            )
-        )
+        # tracked attributes varies depending on EAPI, thus this has to be runtime computed
+        return tuple(super().tracked_attributes | frozenset(['contents', 'use', 'environment']))
 
     @DynamicGetattrSetter.register
     def cflags(self):

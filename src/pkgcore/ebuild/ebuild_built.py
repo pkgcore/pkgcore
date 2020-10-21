@@ -97,6 +97,18 @@ class package(ebuild_src.base):
         )
 
     @DynamicGetattrSetter.register
+    def cflags(self):
+        return self.data.get("CFLAGS", "")
+
+    @DynamicGetattrSetter.register
+    def cxxflags(self):
+        return self.data.get("CXXFLAGS", "")
+
+    @DynamicGetattrSetter.register
+    def ldflags(self):
+        return self.data.get("LDFLAGS", "")
+
+    @DynamicGetattrSetter.register
     def distfiles(self):
         return tuple(self.data.get("DISTFILES", "").split())
 

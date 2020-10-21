@@ -6,7 +6,6 @@ __all__ = ("package", "package_factory")
 
 from functools import partial
 import itertools
-import re
 
 from snakeoil import demandimport
 from snakeoil.currying import post_curry
@@ -30,6 +29,7 @@ with demandimport.enabled():
 def _passthrough(inst, attr):
     return inst.data[attr]
 
+
 def _chost_fallback(initial, self):
     o = self.data.get(initial)
     if o is None:
@@ -38,15 +38,13 @@ def _chost_fallback(initial, self):
             return o
     return o.strip()
 
+
 def _render_and_evaluate_attr(self, attr_func, render_func):
     return render_func(attr_func(self), self.use)
 
 
 class package(ebuild_src.base):
-
-    """
-    built form of an ebuild
-    """
+    """Built form of an ebuild."""
 
     immutable = True
     allow_regen = False
@@ -158,16 +156,13 @@ class package(ebuild_src.base):
         raise NotImplementedError()
 
     def _repo_install_op(self, domain, observer):
-        return self._parent._generate_format_install_op(domain, self,
-            observer)
+        return self._parent._generate_format_install_op(domain, self, observer)
 
     def _repo_uninstall_op(self, domain, observer):
-        return self._parent._generate_format_uninstall_op(domain, self,
-            observer)
+        return self._parent._generate_format_uninstall_op(domain, self, observer)
 
     def _repo_replace_op(self, domain, old_pkg, observer):
-        return self._parent._generate_format_replace_op(domain, old_pkg,
-            self, observer)
+        return self._parent._generate_format_replace_op(domain, old_pkg, self, observer)
 
     def _fetch_metadata(self):
         return self._parent._get_metadata(self)
@@ -210,11 +205,14 @@ def generic_format_triggers(self, pkg, op_inst, format_op_inst, engine_inst):
         # screwed, the target is in place already
         triggers.FixImageSymlinks(format_op_inst).register(engine_inst)
 
+
 def _generic_format_install_op(self, domain, newpkg, observer):
     return ebd.install_op(domain, newpkg, observer)
 
+
 def _generic_format_uninstall_op(self, domain, oldpkg, observer):
     return ebd.uninstall_op(domain, oldpkg, observer)
+
 
 def _generic_format_replace_op(self, domain, oldpkg, newpkg, observer):
     return ebd.replace_op(domain, oldpkg, newpkg, observer)
@@ -245,10 +243,9 @@ class package_factory(metadata.factory):
 
 
 class fake_package_factory(package_factory):
-    """
-    a fake package_factory, so that we can reuse the normal get_metadata hooks.
+    """A fake package_factory, so that we can reuse the normal get_metadata hooks.
 
-    a factory is generated per package instance, rather then one
+    A factory is generated per package instance, rather then one
     factory, N packages.
 
     Do not use this unless you know it's what your after; this is

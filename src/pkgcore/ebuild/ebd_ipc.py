@@ -1056,7 +1056,7 @@ class Unpack(IpcCommand):
                         f"'./' in EAPI {self.eapi}")
 
             path = pjoin(srcdir, archive)
-            if not os.path.exists:
+            if not os.path.exists(path):
                 raise IpcCommandError(f'nonexistent file: {archive!r}')
             elif os.stat(path).st_size == 0:
                 raise IpcCommandError(f'empty file: {archive!r}')

@@ -1072,7 +1072,7 @@ class Unpack(IpcCommand):
 
     def run(self, args):
         spawn_kwargs = {}
-        if self.op.userpriv:
+        if self.op.userpriv and self.phase == 'unpack':
             spawn_kwargs['uid'] = os_data.portage_uid
             spawn_kwargs['gid'] = os_data.portage_gid
 

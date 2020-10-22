@@ -9,7 +9,6 @@ import re
 import shlex
 import shutil
 import stat
-import sys
 
 from snakeoil.cli import arghparse
 from snakeoil.contexts import chdir
@@ -990,7 +989,7 @@ class Eapply(IpcCommand):
                         raise IpcCommandError(msg, code=ret)
                 except OSError as e:
                     raise IpcCommandError(
-                    f'failed reading patch file: {patch!r}: {e.strerror}')
+                        f'failed reading patch file: {patch!r}: {e.strerror}')
 
 
 class Eapply_User(IpcCommand):

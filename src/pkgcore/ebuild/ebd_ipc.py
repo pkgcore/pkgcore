@@ -963,6 +963,9 @@ class Eapply(IpcCommand):
             output_func = self.observer.info
 
         spawn_kwargs = {'collect_fds': (1, 2)}
+        if self.op.userpriv:
+            spawn_kwargs['uid'] = os_data.portage_uid
+            spawn_kwargs['gid'] = os_data.portage_gid
 
         for path, patches in args:
             prefix = ''
@@ -1067,13 +1070,18 @@ class Unpack(IpcCommand):
             yield archive, ext, path
 
     def run(self, args):
+        spawn_kwargs = {}
+        if self.op.userpriv:
+            spawn_kwargs['uid'] = os_data.portage_uid
+            spawn_kwargs['gid'] = os_data.portage_gid
+
         for filename, ext, source in args.targets:
             self.observer.write(f'>>> Unpacking {filename} to {self.cwd}', autoline=True)
             self.observer.flush()
             dest = pjoin(self.cwd, filename[:-len(ext)])
             try:
                 target = ArComp(source, ext=ext)
-                target.unpack(dest=dest)
+                target.unpack(dest=dest, **spawn_kwargs)
             except ArCompError as e:
                 raise IpcCommandError(str(e), code=e.code)
 

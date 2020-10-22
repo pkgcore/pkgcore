@@ -84,6 +84,7 @@ __ebd_ipc_cmd() {
 	__ebd_write_line ${IPC_CMD}
 	__ebd_write_line ${PKGCORE_NONFATAL:-false}
 	__ebd_write_line ${PWD}
+	__ebd_write_line ${EBUILD_PHASE}
 	__ebd_write_line ${opts}
 	__ebd_write_array "$@"
 	__ebd_read_array ret

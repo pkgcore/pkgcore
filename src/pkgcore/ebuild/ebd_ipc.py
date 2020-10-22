@@ -103,6 +103,7 @@ class IpcCommand:
         # read info from bash side
         nonfatal = self.read() == 'true'
         self.cwd = self.read()
+        self.phase = self.read()
         options = shlex.split(self.read())
         args = self.read().strip('\0')
         args = args.split('\0') if args else []

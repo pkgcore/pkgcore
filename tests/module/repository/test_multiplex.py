@@ -4,12 +4,11 @@ from functools import partial
 from pkgcore.repository.multiplex import tree
 from pkgcore.repository.util import SimpleTree
 from pkgcore.restrictions import packages, values
-from snakeoil.test import TestCase
 
 rev_sorted = partial(sorted, reverse=True)
 
 
-class TestMultiplex(TestCase):
+class TestMultiplex:
 
     kls = staticmethod(tree)
     tree1_pkgs = (
@@ -21,7 +20,7 @@ class TestMultiplex(TestCase):
     tree1_list = [f"{k}-{ver}" for k, v in tree1_pkgs for ver in v]
     tree2_list = [f"{k}-{ver}" for k, v in tree2_pkgs for ver in v]
 
-    def setUp(self):
+    def setup_method(self):
         self.d1, self.d2 = {}, {}
         for key, ver in self.tree1_pkgs:
             cat, pkg = key.rsplit("/", 1)
@@ -41,27 +40,17 @@ class TestMultiplex(TestCase):
         self.ctree = self.kls(self.tree1, self.tree2)
 
     def test_iter(self):
-        self.assertEqual(
-            sorted(x.cpvstr for x in self.ctree),
-            sorted(self.tree1_list + self.tree2_list))
+        assert sorted(x.cpvstr for x in self.ctree) == \
+            sorted(self.tree1_list + self.tree2_list)
 
     def test_itermatch(self):
         imatch = self.ctree.itermatch
-        self.assertEqual(
-            sorted(x.cpvstr for x in imatch(packages.AlwaysTrue)),
-            sorted(self.tree1_list + self.tree2_list))
+        assert sorted(x.cpvstr for x in imatch(packages.AlwaysTrue)) == \
+            sorted(self.tree1_list + self.tree2_list)
         p = packages.PackageRestriction("package", values.StrExactMatch("diffball"))
-        self.assertEqual(
-            sorted(x.cpvstr for x in imatch(p)),
-            [y for y in sorted(self.tree1_list + self.tree2_list)
-                if "/diffball" in y])
+        assert sorted(x.cpvstr for x in imatch(p)) == \
+            [y for y in sorted(self.tree1_list + self.tree2_list) if "/diffball" in y]
 
     def test_sorting(self):
-        self.assertEqual(
-            list(x.cpvstr for x in self.ctree.itermatch(packages.AlwaysTrue, sorter=rev_sorted)),
-            rev_sorted(self.tree1_list + self.tree2_list))
-
-    # def test_install(self):
-    #     raise Exception()
-    # test_install.todo = "need to implement tests for multiplexing down repo_ops"
-    # test_replace = test_uninstall = test_install
+        assert list(x.cpvstr for x in self.ctree.itermatch(packages.AlwaysTrue, sorter=rev_sorted)) == \
+            rev_sorted(self.tree1_list + self.tree2_list)

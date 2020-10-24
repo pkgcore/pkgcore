@@ -31,19 +31,6 @@ demand_compile_regexp(
 demand_compile_regexp('_parse_inherit_regex', r'^\s*inherit\s(?P<eclasses>.*?)(#.*)?$')
 
 
-def generate_depset(kls, key, self):
-    return conditionals.DepSet.parse(
-        self.data.pop(key, ""), kls,
-        attr=key, element_func=self.eapi.atom_kls,
-        transitive_use_atoms=self.eapi.options.transitive_use_atoms)
-
-
-def _mk_required_use_node(data):
-    if data[0] == '!':
-        return values.ContainmentMatch2(data[1:], negate=True)
-    return values.ContainmentMatch2(data)
-
-
 class base(metadata.package):
     """ebuild package
 
@@ -61,15 +48,29 @@ class base(metadata.package):
 
     __slots__ = ('_pkg_metadata_shared',)
 
+    def _generate_depset(self, kls, key):
+        return conditionals.DepSet.parse(
+            self.data.pop(key, ""), kls,
+            attr=key, element_func=self.eapi.atom_kls,
+            transitive_use_atoms=self.eapi.options.transitive_use_atoms)
+
     @DynamicGetattrSetter.register
     def bdepend(self):
         if "BDEPEND" in self.eapi.metadata_keys:
-            return generate_depset(atom, "BDEPEND", self)
+            return self._generate_depset(atom, "BDEPEND")
         return conditionals.DepSet()
 
-    depend = DynamicGetattrSetter.register(partial(generate_depset, atom, "DEPEND"))
-    rdepend = DynamicGetattrSetter.register(partial(generate_depset, atom, "RDEPEND"))
-    pdepend = DynamicGetattrSetter.register(partial(generate_depset, atom, "PDEPEND"))
+    @DynamicGetattrSetter.register
+    def depend(self):
+        return self._generate_depset(atom, "DEPEND")
+
+    @DynamicGetattrSetter.register
+    def rdepend(self):
+        return self._generate_depset(atom, "RDEPEND")
+
+    @DynamicGetattrSetter.register
+    def pdepend(self):
+        return self._generate_depset(atom, "PDEPEND")
 
     @DynamicGetattrSetter.register
     def license(self):
@@ -294,6 +295,12 @@ class base(metadata.package):
                 eclasses.append(eclass)
         return tuple(eclasses)
 
+    @staticmethod
+    def _mk_required_use_node(data):
+        if data[0] == '!':
+            return values.ContainmentMatch2(data[1:], negate=True)
+        return values.ContainmentMatch2(data)
+
     @DynamicGetattrSetter.register
     def required_use(self):
         if self.eapi.options.has_required_use:
@@ -317,7 +324,7 @@ class base(metadata.package):
                 return conditionals.DepSet.parse(
                     data,
                     values.ContainmentMatch2, operators=operators,
-                    element_func=_mk_required_use_node, attr='REQUIRED_USE')
+                    element_func=self._mk_required_use_node, attr='REQUIRED_USE')
         return conditionals.DepSet()
 
     source_repository = klass.alias_attr("repo.repo_id")

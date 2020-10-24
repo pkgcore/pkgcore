@@ -44,52 +44,6 @@ def _mk_required_use_node(data):
     return values.ContainmentMatch2(data)
 
 
-# utility func.
-def create_fetchable_from_uri(pkg, chksums, ignore_missing_chksums, ignore_unknown_mirrors,
-                              mirrors, default_mirrors, common_files, uri, filename=None):
-    default_filename = os.path.basename(uri)
-    if filename is not None:
-        # log redundant renames for pkgcheck to flag
-        if filename == default_filename:
-            logger.info(f'redundant rename: {uri} -> {filename}')
-    else:
-        filename = default_filename
-
-    if not filename:
-        raise ValueError(f'missing filename: {uri!r}')
-
-    preexisting = common_files.get(filename)
-
-    if preexisting is None:
-        if filename not in chksums and not ignore_missing_chksums:
-            raise metadata_errors.MissingChksum(pkg, filename)
-        uris = fetch.uri_list(filename)
-    else:
-        uris = preexisting.uri
-
-    if filename != uri:
-        if preexisting is None:
-            if "primaryuri" not in pkg.restrict:
-                if default_mirrors and "mirror" not in pkg.restrict:
-                    uris.add_mirror(default_mirrors)
-
-        if uri.startswith("mirror://"):
-            # mirror:// is 9 chars.
-            tier, remaining_uri = uri[9:].split("/", 1)
-            mirror = mirrors.get(tier, fetch.unknown_mirror(tier))
-            uris.add_mirror(mirror, sub_uri=remaining_uri)
-
-        else:
-            uris.add_uri(uri)
-        if preexisting is None and "primaryuri" in pkg.restrict:
-            if default_mirrors and "mirror" not in pkg.restrict:
-                uris.add_mirror(default_mirrors)
-
-    if preexisting is None:
-        common_files[filename] = fetch.fetchable(filename, uris, chksums.get(filename))
-    return common_files[filename]
-
-
 class base(metadata.package):
     """ebuild package
 
@@ -148,6 +102,51 @@ class base(metadata.package):
     def slot(self):
         return self.fullslot.partition('/')[0]
 
+    def create_fetchable_from_uri(
+            self, chksums, ignore_missing_chksums, ignore_unknown_mirrors,
+            mirrors, default_mirrors, common_files, uri, filename=None):
+        default_filename = os.path.basename(uri)
+        if filename is not None:
+            # log redundant renames for pkgcheck to flag
+            if filename == default_filename:
+                logger.info(f'redundant rename: {uri} -> {filename}')
+        else:
+            filename = default_filename
+
+        if not filename:
+            raise ValueError(f'missing filename: {uri!r}')
+
+        preexisting = common_files.get(filename)
+
+        if preexisting is None:
+            if filename not in chksums and not ignore_missing_chksums:
+                raise metadata_errors.MissingChksum(self, filename)
+            uris = fetch.uri_list(filename)
+        else:
+            uris = preexisting.uri
+
+        if filename != uri:
+            if preexisting is None:
+                if "primaryuri" not in self.restrict:
+                    if default_mirrors and "mirror" not in self.restrict:
+                        uris.add_mirror(default_mirrors)
+
+            if uri.startswith("mirror://"):
+                # mirror:// is 9 chars.
+                tier, remaining_uri = uri[9:].split("/", 1)
+                mirror = mirrors.get(tier, fetch.unknown_mirror(tier))
+                uris.add_mirror(mirror, sub_uri=remaining_uri)
+
+            else:
+                uris.add_uri(uri)
+            if preexisting is None and "primaryuri" in self.restrict:
+                if default_mirrors and "mirror" not in self.restrict:
+                    uris.add_mirror(default_mirrors)
+
+        if preexisting is None:
+            common_files[filename] = fetch.fetchable(filename, uris, chksums.get(filename))
+        return common_files[filename]
+
     def generate_fetchables(self, allow_missing_checksums=False,
                             ignore_unknown_mirrors=False, skip_default_mirrors=False):
         """Generate fetchables object for a package."""
@@ -163,7 +162,7 @@ class base(metadata.package):
             default_mirrors = getattr(self._parent, "default_mirrors", None)
         common = {}
         func = partial(
-            create_fetchable_from_uri, self, chksums,
+            self.create_fetchable_from_uri, chksums,
             chksums_can_be_missing, ignore_unknown_mirrors,
             mirrors, default_mirrors, common)
 

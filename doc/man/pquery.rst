@@ -70,7 +70,7 @@ Other tool                   pquery                                    Comments
 ``equery list python``       ``pquery -I '*python*'``                  this is in ExtendedAtomSyntax
 ``equery size python``       ``pquery --size python``
 ``equery uses python``       ``pquery --attr use python``              less information, but is an output option so mixes with any restriction
-``emerge -s python``         ``pquery -vnm '*python*'``
+``emerge -s python``         ``pquery -vn '*python*'``
 ``emerge -S python``         ``pquery -vnS python``                    searches through longdescription (from metadata.xml) too
 no equivalent                ``pquery --license GPL-2 -I``             list all installed GPL-2 packages
 no equivalent                ``pquery --maintainer radhermit``         list all packages that are maintained by radhermit

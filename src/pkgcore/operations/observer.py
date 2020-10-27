@@ -23,11 +23,13 @@ def _convert(msg, args=(), kwds={}):
         except (ValueError, TypeError) as e:
             raise TypeError(
                 f"observer interpolation error: {e}, msg={msg!r}, args={args!r}")
-    try:
-        return msg % kwds
-    except (KeyError, TypeError, ValueError) as e:
-        raise TypeError(
-            f"observer interpolation error: {e}, msg={msg!r}, kwds={kwds!r}")
+    elif kwds:
+        try:
+            return msg % kwds
+        except (KeyError, TypeError, ValueError) as e:
+            raise TypeError(
+                f"observer interpolation error: {e}, msg={msg!r}, kwds={kwds!r}")
+    return msg
 
 
 class null_output:

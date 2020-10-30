@@ -176,9 +176,9 @@ class EAPI(metaclass=klass.immutable_instance):
         sf(self, "mandatory_keys", frozenset(mandatory_keys))
         sf(self, "dep_keys", frozenset(dep_keys))
         sf(self, "metadata_keys", (
-            frozenset(mandatory_keys) | frozenset(dep_keys) | frozenset(metadata_keys)))
+            self.mandatory_keys | self.dep_keys | frozenset(metadata_keys)))
         # variables that eclasses have access to (used by pkgcheck eclass inherit checks)
-        sf(self, "eclass_keys", self.metadata_keys | frozenset(eclass_keys))
+        sf(self, "eclass_keys", self.mandatory_keys | self.dep_keys | frozenset(eclass_keys))
         sf(self, "tracked_attributes", (
             frozenset(tracked_attributes) | frozenset(x.lower() for x in dep_keys)))
         sf(self, "archive_exts", frozenset(archive_exts))
@@ -442,6 +442,8 @@ common_metadata_keys = (
     "RESTRICT", "PROPERTIES", "DEFINED_PHASES", "INHERITED", "EAPI",
 )
 
+common_eclass_keys = ("S", "RESTRICT", "PROPERTIES")
+
 common_tracked_attributes = (
     "cflags", "cbuild", "chost", "ctarget", "cxxflags", "defined_phases",
     "description", "eapi", "distfiles", "fullslot", "homepage", "inherited",
@@ -480,6 +482,7 @@ eapi0 = EAPI.register(
     mandatory_keys=common_mandatory_metadata_keys,
     dep_keys=common_dep_keys,
     metadata_keys=common_metadata_keys,
+    eclass_keys=common_eclass_keys,
     tracked_attributes=common_tracked_attributes,
     archive_exts=common_archive_exts,
     optionals=eapi_optionals,
@@ -549,7 +552,7 @@ eapi4 = EAPI.register(
     mandatory_keys=eapi3.mandatory_keys,
     dep_keys=eapi3.dep_keys,
     metadata_keys=eapi3.metadata_keys | frozenset(["REQUIRED_USE"]),
-    eclass_keys=eapi3.eclass_keys,
+    eclass_keys=eapi3.eclass_keys | frozenset(["REQUIRED_USE"]),
     tracked_attributes=eapi3.tracked_attributes,
     archive_exts=eapi3.archive_exts,
     optionals=_combine_dicts(eapi3.options, dict(

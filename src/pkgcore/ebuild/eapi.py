@@ -158,7 +158,7 @@ class EAPI(metaclass=klass.immutable_instance):
 
     def __init__(self, magic, parent=None, phases=(), default_phases=(),
                  mandatory_keys=(), dep_keys=(), metadata_keys=(),
-                 tracked_attributes=(), archive_exts=(),
+                 eclass_keys=(), tracked_attributes=(), archive_exts=(),
                  optionals=None, ebd_env_options=None):
         sf = object.__setattr__
 
@@ -177,6 +177,8 @@ class EAPI(metaclass=klass.immutable_instance):
         sf(self, "dep_keys", frozenset(dep_keys))
         sf(self, "metadata_keys", (
             frozenset(mandatory_keys) | frozenset(dep_keys) | frozenset(metadata_keys)))
+        # variables that eclasses have access to (used by pkgcheck eclass inherit checks)
+        sf(self, "eclass_keys", self.metadata_keys | frozenset(eclass_keys))
         sf(self, "tracked_attributes", (
             frozenset(tracked_attributes) | frozenset(x.lower() for x in dep_keys)))
         sf(self, "archive_exts", frozenset(archive_exts))
@@ -492,6 +494,7 @@ eapi1 = EAPI.register(
     mandatory_keys=eapi0.mandatory_keys,
     dep_keys=eapi0.dep_keys,
     metadata_keys=eapi0.metadata_keys,
+    eclass_keys=eapi0.eclass_keys,
     tracked_attributes=eapi0.tracked_attributes,
     archive_exts=eapi0.archive_exts,
     optionals=_combine_dicts(eapi0.options, dict(
@@ -510,6 +513,7 @@ eapi2 = EAPI.register(
     mandatory_keys=eapi1.mandatory_keys,
     dep_keys=eapi1.dep_keys,
     metadata_keys=eapi1.metadata_keys,
+    eclass_keys=eapi1.eclass_keys,
     tracked_attributes=eapi1.tracked_attributes,
     archive_exts=eapi1.archive_exts,
     optionals=_combine_dicts(eapi1.options, dict(
@@ -528,6 +532,7 @@ eapi3 = EAPI.register(
     mandatory_keys=eapi2.mandatory_keys,
     dep_keys=eapi2.dep_keys,
     metadata_keys=eapi2.metadata_keys,
+    eclass_keys=eapi2.eclass_keys | frozenset(['EPREFIX']),
     tracked_attributes=eapi2.tracked_attributes,
     archive_exts=eapi2.archive_exts | frozenset([".tar.xz", ".xz"]),
     optionals=_combine_dicts(eapi2.options, dict(
@@ -544,6 +549,7 @@ eapi4 = EAPI.register(
     mandatory_keys=eapi3.mandatory_keys,
     dep_keys=eapi3.dep_keys,
     metadata_keys=eapi3.metadata_keys | frozenset(["REQUIRED_USE"]),
+    eclass_keys=eapi3.eclass_keys,
     tracked_attributes=eapi3.tracked_attributes,
     archive_exts=eapi3.archive_exts,
     optionals=_combine_dicts(eapi3.options, dict(
@@ -568,6 +574,7 @@ eapi5 = EAPI.register(
     mandatory_keys=eapi4.mandatory_keys,
     dep_keys=eapi4.dep_keys,
     metadata_keys=eapi4.metadata_keys,
+    eclass_keys=eapi4.eclass_keys,
     tracked_attributes=eapi4.tracked_attributes | frozenset(["iuse_effective"]),
     archive_exts=eapi4.archive_exts,
     optionals=_combine_dicts(eapi4.options, dict(
@@ -590,6 +597,7 @@ eapi6 = EAPI.register(
     mandatory_keys=eapi5.mandatory_keys,
     dep_keys=eapi5.dep_keys,
     metadata_keys=eapi5.metadata_keys,
+    eclass_keys=eapi5.eclass_keys | frozenset(['PATCHES']),
     tracked_attributes=eapi5.tracked_attributes | frozenset(["user_patches"]),
     archive_exts=eapi5.archive_exts | frozenset([".txz"]),
     optionals=_combine_dicts(eapi5.options, dict(
@@ -611,6 +619,7 @@ eapi7 = EAPI.register(
     mandatory_keys=eapi6.mandatory_keys,
     dep_keys=eapi6.dep_keys | frozenset(["BDEPEND"]),
     metadata_keys=eapi6.metadata_keys,
+    eclass_keys=eapi6.eclass_keys,
     tracked_attributes=eapi6.tracked_attributes,
     archive_exts=eapi6.archive_exts,
     optionals=_combine_dicts(eapi6.options, dict(

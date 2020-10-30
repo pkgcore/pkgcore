@@ -8,7 +8,7 @@ import sys
 from snakeoil import mappings, weakrefs, klass
 from snakeoil.demandload import demand_compile_regexp
 from snakeoil.osutils import pjoin
-from snakeoil.process.spawn import bash_version, spawn_get_output
+from snakeoil.process.spawn import bash_version
 
 from pkgcore.ebuild import atom, const
 from pkgcore.log import logger

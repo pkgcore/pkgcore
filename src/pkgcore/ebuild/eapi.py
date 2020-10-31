@@ -442,7 +442,7 @@ common_metadata_keys = (
     "RESTRICT", "PROPERTIES", "DEFINED_PHASES", "INHERITED", "EAPI",
 )
 
-common_eclass_keys = ("S", "RESTRICT", "PROPERTIES")
+common_eclass_keys = ("S", "RESTRICT", "PROPERTIES", "ECONF_SOURCE")
 
 common_tracked_attributes = (
     "cflags", "cbuild", "chost", "ctarget", "cxxflags", "defined_phases",

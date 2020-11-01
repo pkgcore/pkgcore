@@ -657,7 +657,7 @@ class domain(config_domain):
                 try:
                     repo = self.add_repo(path, config=config, configure=configure)
                     break
-                except repo_errors.InitializationError:
+                except repo_errors.InvalidRepo:
                     path = os.path.dirname(path)
         return repo
 

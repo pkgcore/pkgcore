@@ -103,6 +103,7 @@ class http_syncer(base.Syncer):
                 progress = '=' * int(size / length * 50)
                 percent = int(size / length * 100)
                 sys.stdout.write("[%-50s] %d%%" % (progress, percent))
+                sys.stdout.flush()
 
         self._post_download(dest)
 

@@ -1,0 +1,51 @@
+name: Build and upload release files
+
+on:
+  push:
+    branches: [deploy]
+    tags: [v*]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Python 3.6
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.6
+
+    - name: Install dependencies
+      run: |
+        # pull in pkgdist dep lists
+        git clone https://github.com/pkgcore/pkgdist.git
+        cp -Rv pkgdist/requirements/* requirements/
+
+        # install deps required for building sdist/wheels
+        python -m pip install --upgrade pip
+        pip install -r requirements/dist.txt
+        pip install -r requirements/test.txt
+
+    - name: Test with pytest
+      run: python setup.py test
+
+    - name: Build release files
+      run: |
+        # use release version of pyproject.toml (without URL dev deps)
+        cp requirements/pyproject.toml ./pyproject.toml
+        python setup.py sdist
+        python setup.py bdist_wheel
+
+        # output file info
+        tar -ztf dist/*.tar.gz | sort
+        sha512sum dist/*
+
+    - name: Upload files for tagged releases
+      env:
+        TWINE_USERNAME: __token__
+        TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+      # only upload files for tagged releases
+      if: startsWith(github.ref, 'refs/tags/')
+      run: twine upload dist/*

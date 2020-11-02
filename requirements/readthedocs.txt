@@ -1,3 +1,0 @@
--r dev.txt
-
-sphinx

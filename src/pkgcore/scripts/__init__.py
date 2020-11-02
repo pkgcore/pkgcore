@@ -10,8 +10,6 @@ import sys
 def run(script_name):
     """Run a given script module."""
     try:
-        from snakeoil import demandimport
-        demandimport.enable()
         from pkgcore.util.commandline import Tool
         script_module = '.'.join(
             os.path.realpath(__file__).split(os.path.sep)[-3:-1] +

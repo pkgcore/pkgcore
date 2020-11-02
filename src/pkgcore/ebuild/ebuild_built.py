@@ -7,23 +7,18 @@ __all__ = ("package", "package_factory")
 from functools import partial
 import itertools
 
-from snakeoil import demandimport
 from snakeoil.currying import post_curry
 from snakeoil.data_source import local_source
 from snakeoil.mappings import IndeterminantDict
 from snakeoil.obj import DelayedInstantiation
 
 from pkgcore import fetch
-from pkgcore.ebuild import ebuild_src, conditionals, triggers
+from pkgcore.ebuild import ebd, ebuild_src, conditionals, triggers
 from pkgcore.ebuild.eapi import get_eapi
 from pkgcore.fs.livefs import scan
 from pkgcore.merge import engine
 from pkgcore.package import metadata
 from pkgcore.package.base import DynamicGetattrSetter
-
-# TODO: forcibly enable lazy imports to resolve circular module imports
-with demandimport.enabled():
-    from pkgcore.ebuild import ebd
 
 
 def _passthrough(inst, attr):

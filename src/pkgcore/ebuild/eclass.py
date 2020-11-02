@@ -268,17 +268,21 @@ _eclass_blocks_re = re.compile(
 class Eclass(UserDict):
     """Support parsing eclass docs for a given eclass path."""
 
-    def __init__(self, path):
+    def __init__(self, path, sourced=False):
         self.path = path
         self.mtime = os.path.getmtime(self.path)
-        # ignore parsing errors when constructing cache objects
         data = {}
+
+        # ignore parsing errors when constructing cache objects
         try:
             data.update(self.parse(self.path))
         except EclassDocParsingError:
             data['_parse_failed'] = True
+
         # inject full lists of exported funcs and vars
-        data.update(self._source_eclass(self.path))
+        if sourced:
+            data.update(self._source_eclass(self.path))
+
         super().__init__(data)
 
     @staticmethod

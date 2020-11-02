@@ -236,8 +236,6 @@ class CollapsedConfig:
         self.__dict__['manager'] = weakref.ref(self.__dict__['manager'])
 
 
-_singleton = object()
-
 class _ConfigObjMap:
 
     def __init__(self, manager):
@@ -247,7 +245,7 @@ class _ConfigObjMap:
         return _ConfigMapping(self._manager, attr)
 
     def __getitem__(self, key):
-        val = getattr(self._manager.objects, key, _singleton)
+        val = getattr(self._manager.objects, key, klass.sentinel)
         if val is None:
             raise KeyError(key)
         return val
@@ -269,8 +267,8 @@ class CompatConfigManager:
     def __getattr__(self, attr):
         if attr == '_manager':
             return object.__getattribute__(self, '_manager')
-        obj = getattr(self._manager, attr, _singleton)
-        if obj is _singleton:
+        obj = getattr(self._manager, attr, klass.sentinel)
+        if obj is klass.sentinel:
             obj = getattr(self._manager.objects, attr)
         return obj
 

@@ -148,9 +148,8 @@ class sync_operations(_operations_mod.base):
         return ret
 
     def _get_syncer(self, lazy=False):
-        singleton = object()
-        syncer = getattr(self.repo, '_syncer', singleton)
-        if syncer is singleton:
+        syncer = getattr(self.repo, '_syncer', klass.sentinel)
+        if syncer is klass.sentinel:
             # raw repo's vs non-raw; drive down to the raw repo.
             # see pkgcore.ebuild.repository for an example
             syncer = getattr(self.repo, 'config', None)

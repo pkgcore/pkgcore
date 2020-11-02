@@ -3,6 +3,7 @@ restriction classes designed for package level matching
 """
 
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
+from snakeoil import klass
 from snakeoil.klass import generic_equality, static_attrgetter
 
 from pkgcore.restrictions import restriction, boolean
@@ -41,11 +42,11 @@ class native_PackageRestriction(metaclass=generic_equality):
         except Exception as e:
             if self._handle_exception(pkg, e, self._attr_split):
                 raise
-            return self.__sentinel__
+            return klass.sentinel
 
     def match(self, pkg):
         attr = self._pull_attr(pkg)
-        if attr is self.__sentinel__:
+        if attr is klass.sentinel:
             return self.negate
         return self.restriction.match(attr) != self.negate
 
@@ -55,11 +56,9 @@ class PackageRestriction_mixin(restriction.base):
 
     __slots__ = ()
 
-    # note __sentinel__ is used purely because the codepath that use it can
-    # get executed a *lot*, and setup/tear down of exception machinery can
-    # be surprisingly costly
-
-    __sentinel__ = object()
+    # Note a sentinel is used purely because the codepath that use it
+    # can get executed a *lot*, and setup/tear down of exception
+    # machinery can be surprisingly costly
 
     # Careful: some methods (__eq__, __hash__, intersect) try to work
     # for subclasses too. They will not behave as intended if a
@@ -94,7 +93,7 @@ class PackageRestriction_mixin(restriction.base):
 
     def force_False(self, pkg):
         attr = self._pull_attr(pkg)
-        if attr is self.__sentinel__:
+        if attr is klass.sentinel:
             return not self.negate
         if self.negate:
             return self.restriction.force_True(pkg, self.attr, attr)
@@ -102,7 +101,7 @@ class PackageRestriction_mixin(restriction.base):
 
     def force_True(self, pkg):
         attr = self._pull_attr(pkg)
-        if attr is self.__sentinel__:
+        if attr is klass.sentinel:
             return self.negate
         if self.negate:
             return self.restriction.force_False(pkg, self.attr, attr)
@@ -161,7 +160,7 @@ class native_PackageRestrictionMulti(native_PackageRestriction):
         except Exception as e:
             if self._handle_exception(pkg, e, self._attr_split[len(val)]):
                 raise
-            return self.__sentinel__
+            return klass.sentinel
         return val
 
 
@@ -173,7 +172,7 @@ class PackageRestrictionMulti_mixin(PackageRestriction_mixin):
 
     def force_False(self, pkg):
         attrs = self._pull_attr(pkg)
-        if attrs is self.__sentinel__:
+        if attrs is klass.sentinel:
             return not self.negate
         if self.negate:
             return self.restriction.force_True(pkg, self.attrs, attrs)
@@ -181,7 +180,7 @@ class PackageRestrictionMulti_mixin(PackageRestriction_mixin):
 
     def force_True(self, pkg):
         attrs = self._pull_attr(pkg)
-        if attrs is self.__sentinel__:
+        if attrs is klass.sentinel:
             return self.negate
         if self.negate:
             return self.restriction.force_False(pkg, self.attrs, attrs)

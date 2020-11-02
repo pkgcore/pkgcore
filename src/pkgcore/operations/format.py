@@ -105,18 +105,18 @@ class operations(_operations_mod.base):
     def _cmd_implementation_sanity_check(self, domain):
         return True
 
-    def _cmd_api_localize(self, force=False, observer=klass._sentinel):
-        observer = observer if observer is not klass._sentinel else self.observer
+    def _cmd_api_localize(self, force=False, observer=klass.sentinel):
+        observer = observer if observer is not klass.sentinel else self.observer
         return self._cmd_implementation_localize(
             self._get_observer(observer), force=force)
 
-    def _cmd_api_cleanup(self, force=False, observer=klass._sentinel):
-        observer = observer if observer is not klass._sentinel else self.observer
+    def _cmd_api_cleanup(self, force=False, observer=klass.sentinel):
+        observer = observer if observer is not klass.sentinel else self.observer
         return self._cmd_implementation_cleanup(
             self._get_observer(observer), force=force)
 
-    def _cmd_api_configure(self, observer=klass._sentinel):
-        observer = observer if observer is not klass._sentinel else self.observer
+    def _cmd_api_configure(self, observer=klass.sentinel):
+        observer = observer if observer is not klass.sentinel else self.observer
         return self._cmd_implementation_configure(
             self._get_observer(observer))
 
@@ -145,8 +145,8 @@ class operations(_operations_mod.base):
             self._find_fetcher())
 
     @_operations_mod.is_standalone
-    def _cmd_api_fetch(self, fetchables=None, observer=klass._sentinel):
-        observer = observer if observer is not klass._sentinel else self.observer
+    def _cmd_api_fetch(self, fetchables=None, observer=klass.sentinel):
+        observer = observer if observer is not klass.sentinel else self.observer
         if fetchables is None:
             fetcher = self._fetch_op
         else:
@@ -156,8 +156,8 @@ class operations(_operations_mod.base):
         return fetcher.fetch_all(self._get_observer(observer))
 
     @_operations_mod.is_standalone
-    def _cmd_api_mirror(self, observer=klass._sentinel):
-        observer = observer if observer is not klass._sentinel else self.observer
+    def _cmd_api_mirror(self, observer=klass.sentinel):
+        observer = observer if observer is not klass.sentinel else self.observer
         return self._mirror_op.fetch_all(self._get_observer(observer))
 
     def _find_fetcher(self):

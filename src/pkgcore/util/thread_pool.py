@@ -5,6 +5,7 @@ from types import GeneratorType
 import queue
 
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
+from snakeoil import klass
 
 
 def reclaim_threads(threads):
@@ -54,12 +55,11 @@ def map_async(iterable, functor, *args, **kwds):
             else:
                 results.append(result)
 
-    empty_signal = object()
     threads = []
     for x in range(parallelism):
         tkwds = kwds.copy()
         tkwds.update(per_thread_kwds())
-        targs = (iter_queue(kill, q, empty_signal),) + args + per_thread_args()
+        targs = (iter_queue(kill, q, klass.sentinel),) + args + per_thread_args()
         threads.append(threading.Thread(target=worker, args=targs, kwargs=tkwds))
     try:
         try:
@@ -68,12 +68,12 @@ def map_async(iterable, functor, *args, **kwds):
             # now we feed the queue.
             for data in iterable:
                 q.put(data)
-        except:
+        except Exception:
             kill.set()
             raise
     finally:
         for x in range(parallelism):
-            q.put(empty_signal)
+            q.put(klass.sentinel)
 
         reclaim_threads(threads)
 

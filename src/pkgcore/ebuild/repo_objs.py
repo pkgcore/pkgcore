@@ -977,7 +977,7 @@ class SquashfsRepoConfig(RepoConfig):
         if os.path.exists(self._sqfs):
             try:
                 self._mount_archive()
-            except PermissionError as e:
+            except PermissionError:
                 if platform.uname().release < '4.18':
                     raise repo_errors.InitializationError(
                         'fuse mounts in user namespaces require linux >= 4.18')
@@ -985,10 +985,11 @@ class SquashfsRepoConfig(RepoConfig):
         super().__init__(location, *args, **kwargs)
 
     def _pre_sync(self):
-        try:
-            self._umount_archive()
-        except repo_errors.InitializationError:
-            pass
+        if os.path.ismount(self.location):
+            try:
+                self._umount_archive()
+            except repo_errors.InitializationError:
+                pass
 
     def _post_sync(self):
         if os.path.exists(self._sqfs):

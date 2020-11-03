@@ -1,4 +1,4 @@
-|pypi| |test| |coverage| |docs|
+|pypi| |test| |coverage|
 
 =======
 pkgcore
@@ -55,12 +55,6 @@ Installing from a tarball or git repo::
 
     python setup.py install
 
-Documentation
-=============
-
-Official documentation is provided on readthedocs_ with alternative
-formats available for download_.
-
 Tests
 =====
 
@@ -87,9 +81,6 @@ For bugs and feature requests please create an issue on Github_.
 .. _snakeoil: https://github.com/pkgcore/snakeoil
 .. _Github: https://github.com/pkgcore/pkgcore/issues
 .. _#pkgcore: https://webchat.freenode.net?channels=%23pkgcore&uio=d4
-.. _readthedocs: https://pkgcore.readthedocs.io/
-.. _download: https://readthedocs.org/projects/pkgcore/downloads/
-.. _mock: https://pypi.python.org/pypi/mock
 
 .. |pypi| image:: https://img.shields.io/pypi/v/pkgcore.svg
     :target: https://pypi.python.org/pypi/pkgcore
@@ -97,6 +88,3 @@ For bugs and feature requests please create an issue on Github_.
     :target: https://github.com/pkgcore/pkgcore/actions?query=workflow%3A%22Run+tests%22
 .. |coverage| image:: https://codecov.io/gh/pkgcore/pkgcore/branch/master/graph/badge.svg
     :target: https://codecov.io/gh/pkgcore/pkgcore
-.. |docs| image:: https://readthedocs.org/projects/pkgcore/badge/?version=latest
-    :target: https://pkgcore.readthedocs.io/
-    :alt: Documentation Status

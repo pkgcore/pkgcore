@@ -42,15 +42,15 @@ optimizations split out of pkgcore for others to use.
 Installing
 ==========
 
-Installing latest pypi release:
+Installing latest pypi release::
 
     pip install pkgcore
 
-Installing from git:
+Installing from git::
 
     pip install https://github.com/pkgcore/pkgcore/archive/master.tar.gz
 
-Installing from a tarball:
+Installing from a tarball::
 
     python setup.py install
 

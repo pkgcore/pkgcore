@@ -20,6 +20,7 @@ from snakeoil.osutils import pjoin, listdir_dirs
 from snakeoil.sequences import iter_stable_unique
 from snakeoil.strings import pluralism
 
+from pkgcore import const
 from pkgcore.ebuild import processor, triggers
 from pkgcore.ebuild.cpv import CPV
 from pkgcore.exceptions import PkgcoreUserException
@@ -49,6 +50,7 @@ shared_options_domain = (commandline.ArgumentParser(
 sync = subparsers.add_parser(
     "sync", parents=shared_options,
     description="synchronize a local repository with its defined remote")
+sync.set_defaults(profile_override=pjoin(const.DATA_PATH, 'stubrepo/profiles/default'))
 sync.add_argument(
     'repos', metavar='repo', nargs='*', help="repo(s) to sync",
     action=commandline.StoreRepoObject, store_name=True, repo_type='config')

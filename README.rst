@@ -42,16 +42,15 @@ optimizations split out of pkgcore for others to use.
 Installing
 ==========
 
-Installing latest pypi release in a virtualenv::
+Installing latest pypi release:
 
     pip install pkgcore
 
-Installing from git in a virtualenv::
+Installing from git:
 
-    git clone https://github.com/pkgcore/pkgcore.git
-    ./pkgcore/requirements/pip.sh ./pkgcore
+    pip install https://github.com/pkgcore/pkgcore/archive/master.tar.gz
 
-Installing from a tarball or git repo::
+Installing from a tarball:
 
     python setup.py install
 

@@ -26,9 +26,10 @@ from itertools import groupby, islice
 from operator import attrgetter, itemgetter
 
 from snakeoil.cli import arghparse
+from snakeoil.osutils import pjoin
 from snakeoil.sequences import iflatten_instance, unstable_unique
 
-from pkgcore import fetch
+from pkgcore import const, fetch
 from pkgcore.ebuild import inspect_profile
 from pkgcore.ebuild import portageq as _portageq
 from pkgcore.package import errors
@@ -39,6 +40,7 @@ from pkgcore.util import commandline
 pkgcore_opts = commandline.ArgumentParser(domain=False, script=(__file__, __name__))
 argparser = commandline.ArgumentParser(
     suppress=True, description=__doc__, parents=(pkgcore_opts,))
+argparser.set_defaults(profile_override=pjoin(const.DATA_PATH, 'stubrepo/profiles/default'))
 subparsers = argparser.add_subparsers(description="report applets")
 
 pkgsets = subparsers.add_parser(

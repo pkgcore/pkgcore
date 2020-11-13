@@ -5,7 +5,6 @@ __all__ = (
     "perl_rebuild", "perl_rebuild_main", "env_update", "env_update_main",
 )
 
-from collections import defaultdict
 from multiprocessing import cpu_count
 import os
 import re
@@ -13,15 +12,13 @@ import textwrap
 import time
 
 from snakeoil.cli import arghparse
-from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.contexts import patch
 from snakeoil.fileutils import AtomicWriteFile
 from snakeoil.osutils import pjoin, listdir_dirs
 from snakeoil.sequences import iter_stable_unique
-from snakeoil.strings import pluralism
 
 from pkgcore import const
-from pkgcore.ebuild import processor, triggers
+from pkgcore.ebuild import triggers
 from pkgcore.ebuild.cpv import CPV
 from pkgcore.exceptions import PkgcoreUserException
 from pkgcore.fs import contents, livefs
@@ -29,7 +26,6 @@ from pkgcore.merge import triggers as merge_triggers
 from pkgcore.operations import observer as observer_mod, OperationError
 from pkgcore.package import mutated
 from pkgcore.package.errors import MetadataException
-from pkgcore.repository import multiplex
 from pkgcore.restrictions import packages
 from pkgcore.util import commandline
 from pkgcore.util.parserestrict import parse_match

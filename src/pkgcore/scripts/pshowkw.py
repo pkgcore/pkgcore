@@ -8,7 +8,6 @@ from snakeoil.strings import pluralism as _pl
 from pkgcore._vendor.tabulate import tabulate, tabulate_formats
 from pkgcore.ebuild import restricts
 from pkgcore.util import commandline, packages as pkgutils
-from pkgcore.repository import errors as repo_errors
 
 
 argparser = commandline.ArgumentParser(description=__doc__, script=(__file__, __name__))

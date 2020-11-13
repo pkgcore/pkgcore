@@ -23,7 +23,7 @@ from snakeoil.osutils import sizeof_fmt
 from snakeoil.sequences import iter_stable_unique
 
 from pkgcore.ebuild import conditionals, atom
-from pkgcore.fs import fs as fs_module, contents as contents_module
+from pkgcore.fs import fs as fs_module
 from pkgcore.repository import multiplex
 from pkgcore.repository.util import get_raw_repos, get_virtual_repos
 from pkgcore.restrictions import packages, values, boolean

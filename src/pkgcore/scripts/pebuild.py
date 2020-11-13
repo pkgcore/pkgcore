@@ -1,14 +1,11 @@
 """low-level ebuild utility"""
 
-import os
 import sys
 
 from snakeoil.cli.exceptions import ExitException
 from snakeoil.strings import pluralism
 
-from pkgcore.ebuild import atom
-from pkgcore.ebuild.errors import MalformedAtom
-from pkgcore.operations import observer, format, OperationError
+from pkgcore.operations import observer, OperationError
 from pkgcore.package.errors import MetadataException
 from pkgcore.util.commandline import ArgumentParser, StoreTarget
 

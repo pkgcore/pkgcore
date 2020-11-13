@@ -12,16 +12,13 @@ import shutil
 import sys
 import time
 
-from snakeoil import klass
 from snakeoil.mappings import DictMixin
 from snakeoil.osutils import listdir_dirs, listdir_files, pjoin
 from snakeoil.sequences import iflatten_instance, split_negations
 from snakeoil.strings import pluralism
 
-from pkgcore import fetch
 from pkgcore.ebuild import atom as atom_mod
 from pkgcore.ebuild.domain import domain as domain_cls
-from pkgcore.package import errors
 from pkgcore.repository import multiplex
 from pkgcore.repository.util import SimpleTree, get_virtual_repos
 from pkgcore.restrictions import boolean, packages

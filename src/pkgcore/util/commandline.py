@@ -19,14 +19,13 @@ from importlib import import_module
 import os
 import sys
 
-from snakeoil import formatters, modules
+from snakeoil import modules
 from snakeoil.cli import arghparse, tool
 from snakeoil.log import suppress_logging
 from snakeoil.osutils import pjoin, abspath, normpath
 from snakeoil.sequences import iflatten_instance, unstable_unique
 from snakeoil.strings import pluralism
 
-from pkgcore import const
 from pkgcore.config import basics, load_config
 from pkgcore.plugin import get_plugins
 from pkgcore.repository import errors as repo_errors

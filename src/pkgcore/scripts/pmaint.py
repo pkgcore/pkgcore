@@ -429,6 +429,7 @@ def mirror_main(options, out, err):
 digest = subparsers.add_parser(
     "digest", parents=shared_options_domain,
     description="update package manifests")
+digest.set_defaults(profile_override=pjoin(const.DATA_PATH, 'stubrepo/profiles/default'))
 digest.add_argument(
     'target', nargs='*',
     help="packages matching any of these restrictions will have their "

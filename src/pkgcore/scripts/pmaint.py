@@ -255,6 +255,7 @@ def update_pkg_desc_index(repo, observer):
 regen = subparsers.add_parser(
     "regen", parents=shared_options_domain,
     description="regenerate repository caches")
+regen.set_defaults(profile_override=pjoin(const.DATA_PATH, 'stubrepo/profiles/default'))
 regen.add_argument(
     'repos', metavar='repo', nargs='*',
     action=commandline.StoreRepoObject, repo_type='source-raw', allow_external_repos=True,

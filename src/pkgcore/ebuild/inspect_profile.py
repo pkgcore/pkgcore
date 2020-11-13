@@ -43,7 +43,7 @@ class _base(arghparse.ArgparseCommand):
 
     def bind_to_parser(self, parser):
         arghparse.ArgparseCommand.bind_to_parser(self, parser)
-        parser.add_argument('profile', nargs='?', help='path to the profile to inspect')
+        parser.add_argument('profile', help='path to the profile to inspect')
         name = self.__class__.__name__
         kwds = {(f'_{name}_suppress'): arghparse.DelayedDefault.wipe(('domain'), 50)}
         parser.set_defaults(**kwds)

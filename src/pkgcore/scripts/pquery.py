@@ -19,9 +19,10 @@ import os
 
 from snakeoil.cli import arghparse
 from snakeoil.formatters import decorate_forced_wrapping
-from snakeoil.osutils import sizeof_fmt
+from snakeoil.osutils import pjoin, sizeof_fmt
 from snakeoil.sequences import iter_stable_unique
 
+from pkgcore import const
 from pkgcore.ebuild import conditionals, atom
 from pkgcore.fs import fs as fs_module
 from pkgcore.repository import multiplex
@@ -467,6 +468,7 @@ def print_packages_noversion(options, out, err, pkgs):
 
 argparser = commandline.ArgumentParser(
     domain=True, description=__doc__, script=(__file__, __name__))
+argparser.set_defaults(profile_override=pjoin(const.DATA_PATH, 'stubrepo/profiles/default'))
 
 repo_group = argparser.add_argument_group(
     'repository matching options',

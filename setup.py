@@ -4,7 +4,6 @@ from distutils import log
 from distutils.errors import DistutilsExecError
 from distutils.util import byte_compile
 import glob
-import io
 from itertools import chain
 import os
 import subprocess
@@ -244,26 +243,8 @@ class test(pkgdist.pytest):
                 os.environ.pop(key, None)
 
 
-extensions = []
-if not pkgdist.is_py3k:
-    extensions.extend([
-        pkgdist.OptionalExtension(
-            'pkgcore.ebuild._atom', ['src/atom.c']),
-        pkgdist.OptionalExtension(
-            'pkgcore.ebuild._cpv', ['src/cpv.c']),
-        pkgdist.OptionalExtension(
-            'pkgcore.ebuild._depset', ['src/depset.c']),
-        pkgdist.OptionalExtension(
-            'pkgcore.ebuild._filter_env', [
-                'src/filter_env.c', 'src/bmh_search.c']),
-        pkgdist.OptionalExtension(
-            'pkgcore.restrictions._restrictions', ['src/restrictions.c']),
-        pkgdist.OptionalExtension(
-            'pkgcore.ebuild._misc', ['src/misc.c']),
-    ])
-
-
-setup(**dict(pkgdist_setup,
+setup(**dict(
+    pkgdist_setup,
     description='package managing framework',
     url='https://github.com/pkgcore/pkgcore',
     license='BSD',
@@ -276,22 +257,19 @@ setup(**dict(pkgdist_setup,
         pkgdist.data_mapping(
             os.path.join(LIBDIR_INSTALL_OFFSET, 'shell'), 'shell',
             skip=glob.glob('shell/*/completion'),
-            ),
-        )),
-    ext_modules=extensions,
+        ),
+    )),
     cmdclass=dict(
         pkgdist_cmds,
         sdist=sdist,
-        build_ext=pkgdist.build_ext,
         test=test,
         install=install,
-        ),
+    ),
     classifiers=[
         'License :: OSI Approved :: BSD License',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
-        ],
-    )
-)
+    ],
+))

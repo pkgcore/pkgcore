@@ -102,7 +102,7 @@ class cache(base):
             files = listdir_files(self.eclassdir)
         except (FileNotFoundError, NotADirectoryError):
             return ImmutableDict()
-        for y in files:
+        for y in sorted(files):
             if not y.endswith(".eclass"):
                 continue
             ys = y[:-eclass_len]

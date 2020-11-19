@@ -657,7 +657,7 @@ class Dosym(_Symlink):
     def run(self, args):
         target = args.target
         if (target.endswith(os.path.sep) or
-            (os.path.isdir(target) and not os.path.islink(target))):
+                (os.path.isdir(target) and not os.path.islink(target))):
             # bug 379899
             raise IpcCommandError(f'missing filename target: {target!r}')
         super().run(args)
@@ -927,7 +927,7 @@ class Eapply(IpcCommand):
             if arg == '--':
                 if files:
                     raise IpcCommandError('options must be specified before file arguments')
-                files = args[i + l:]
+                files = args[i + 1:]
                 break
             elif arg.startswith('-'):
                 if files:
@@ -1016,8 +1016,8 @@ class Unpack(IpcCommand):
     arg_parser.add_argument('targets', nargs='+')
 
     _file_mode = (
-        stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH \
-        | stat.S_IWUSR \
+        stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH
+        | stat.S_IWUSR
         & ~stat.S_IWGRP & ~stat.S_IWOTH
     )
     _dir_mode = _file_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH

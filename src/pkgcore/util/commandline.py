@@ -578,13 +578,15 @@ class ArgumentParser(arghparse.ArgumentParser):
                     project = __name__.split('.')[0]
 
                 # TODO: figure out a better method for plugin registry/loading
+                kwargs = {}
                 try:
                     plugins = import_module('.plugins', project)
-                    global_config = get_plugins('global_config', plugins)
-                    self.set_defaults(config=arghparse.DelayedValue(
-                        partial(store_config, global_config=global_config)))
+                    kwargs['global_config'] = get_plugins('global_config', plugins)
                 except ImportError:
+                    # project doesn't bundle plugins
                     pass
+                self.set_defaults(config=arghparse.DelayedValue(
+                    partial(store_config, **kwargs)))
 
             if domain:
                 _mk_domain(config_opts)

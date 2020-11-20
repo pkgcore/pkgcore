@@ -1,6 +1,6 @@
 __all__ = (
     "PackageError", "InvalidPackageName", "MetadataException", "InvalidDependency",
-    "ChksumBase", "MissingChksum", "ParseChksumError",
+    "ChksumError", "MissingChksum", "ParseChksumError",
 )
 
 from pkgcore.exceptions import PkgcoreUserException
@@ -47,11 +47,11 @@ class InvalidDependency(PackageError):
     """Generic bad package dependency."""
 
 
-class ChksumBase(PkgcoreUserException):
+class ChksumError(PkgcoreUserException):
     """Generic checksum failure."""
 
 
-class MissingChksum(ChksumBase):
+class MissingChksum(ChksumError):
 
     def __init__(self, pkg, filename):
         super().__init__(
@@ -60,7 +60,7 @@ class MissingChksum(ChksumBase):
         self.file = filename
 
 
-class ParseChksumError(ChksumBase):
+class ParseChksumError(ChksumError):
 
     def __init__(self, filename, error, missing=False):
         if missing:

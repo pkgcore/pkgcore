@@ -597,6 +597,7 @@ class UnconfiguredTree(prototype.tree):
     def _get_manifest(self, category, package):
         return digest.Manifest(pjoin(
             self.base, category, package, "Manifest"),
+            cpv.UnversionedCPV(f'{category}/{package}'),
             thin=self.config.manifests.thin,
             enforce_gpg=self.enable_gpg)
 
@@ -610,7 +611,7 @@ class UnconfiguredTree(prototype.tree):
         except pkg_errors.ParseChksumError as e:
             if e.missing and allow_missing:
                 return allow_missing, {}
-            raise
+            raise pkg_errors.MetadataException(pkg, 'manifest', str(e))
 
     def __repr__(self):
         return "<ebuild %s location=%r @%#8x>" % (

@@ -10,7 +10,6 @@ import os
 
 from snakeoil.chksum import get_handler
 from snakeoil.mappings import ImmutableDict
-from snakeoil.sequences import iflatten_instance
 
 from pkgcore import gpg
 from pkgcore.package import errors
@@ -85,10 +84,11 @@ def parse_manifest(source, ignore_gpg=True):
 
 class Manifest:
 
-    def __init__(self, path, enforce_gpg=False, thin=False, allow_missing=False):
+    def __init__(self, path, pkg, enforce_gpg=False, thin=False, allow_missing=False):
         self.path = path
         self.thin = thin
         self.allow_missing = allow_missing
+        self._pkg = pkg
         self._gpg = enforce_gpg
         self._sourced = False
 
@@ -101,6 +101,8 @@ class Manifest:
             if not (self.thin or self.allow_missing) or e.errno != errno.ENOENT:
                 raise errors.ParseChksumError(self.path, e) from e
             data = {}, {}, {}, {}
+        except errors.ChksumError as e:
+            raise errors.MetadataException(self._pkg, 'manifest', str(e))
         self._dist, self._aux, self._ebuild, self._misc = data
         self._sourced = True
 

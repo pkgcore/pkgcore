@@ -18,7 +18,8 @@ from snakeoil.osutils import pjoin, listdir_dirs
 from snakeoil.sequences import iter_stable_unique
 
 from pkgcore import const
-from pkgcore.ebuild import triggers
+from pkgcore.cache.flat_hash import md5_cache
+from pkgcore.ebuild import triggers, repository as ebuild_repo
 from pkgcore.ebuild.cpv import CPV
 from pkgcore.exceptions import PkgcoreUserException
 from pkgcore.fs import contents, livefs
@@ -278,6 +279,9 @@ regen_opts.add_argument(
     "--force", action='store_true', default=False,
     help="force regeneration to occur regardless of staleness checks or repo settings")
 regen_opts.add_argument(
+    "--dir", dest='cache_dir',
+    help="use separate directory to store repository caches")
+regen_opts.add_argument(
     "--rsync", action='store_true', default=False,
     help="perform actions necessary for rsync repos (update metadata/timestamp.chk)")
 regen_opts.add_argument(
@@ -293,6 +297,11 @@ def regen_main(options, out, err):
 
     observer = observer_mod.formatter_output(out)
     for repo in iter_stable_unique(options.repos):
+        if options.cache_dir is not None:
+            # recreate new repo object with cache dir override
+            cache = (md5_cache(pjoin(options.cache_dir.strip(os.sep), repo.repo_id)),)
+            repo = ebuild_repo.tree(
+                options.config, repo.config, cache=cache)
         if not repo.operations.supports("regen_cache"):
             out.write(f"repo {repo} doesn't support cache regeneration")
             continue

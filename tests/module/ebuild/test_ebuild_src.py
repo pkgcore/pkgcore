@@ -498,7 +498,7 @@ class TestPackage(TestBase):
     del x
 
     def test_manifest(self):
-        m = digest.Manifest(None, None)
+        m = digest.Manifest(None)
         o = self.make_shared_pkg_data(manifest=m)
         assert o.manifest is m
 

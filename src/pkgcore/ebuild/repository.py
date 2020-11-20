@@ -597,7 +597,6 @@ class UnconfiguredTree(prototype.tree):
     def _get_manifest(self, category, package):
         return digest.Manifest(pjoin(
             self.base, category, package, "Manifest"),
-            cpv.UnversionedCPV(f'{category}/{package}'),
             thin=self.config.manifests.thin,
             enforce_gpg=self.enable_gpg)
 

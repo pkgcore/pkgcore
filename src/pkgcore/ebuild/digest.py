@@ -73,6 +73,8 @@ def parse_manifest(source, ignore_gpg=True):
             # [size, 1] becomes [(size, 1)]
             i = iter(line[3:])
             d[line[1]] = [("size", int(line[2]))] + list(convert_chksums(zip(i, i)))
+    except ValueError as e:
+        raise errors.ParseChksumError(source, str(e))
     finally:
         if f is not None and f.close:
             f.close()

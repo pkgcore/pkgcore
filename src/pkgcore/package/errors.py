@@ -3,6 +3,8 @@ __all__ = (
     "ChksumError", "MissingChksum", "ParseChksumError",
 )
 
+import os
+
 from pkgcore.exceptions import PkgcoreUserException
 
 
@@ -63,12 +65,12 @@ class MissingChksum(ChksumError):
 class ParseChksumError(ChksumError):
 
     def __init__(self, filename, error, missing=False):
+        filename = os.sep.join(filename.split(os.sep)[-3:])
         if missing:
             super().__init__(
-                f"failed parsing {filename!r} chksum; data isn't available: {error}")
+                f"failed parsing {filename!r}; data isn't available: {error}")
         else:
-            super().__init__(
-                f"failed parsing {filename!r} chksum due to {error}")
+            super().__init__(f"failed parsing {filename!r}: {error}")
         self.file = filename
         self.error = error
         self.missing = missing

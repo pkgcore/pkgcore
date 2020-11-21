@@ -1,4 +1,4 @@
-include AUTHORS LICENSE *.py *.rst
+include LICENSE *.py *.rst
 include pytest.ini tox.ini pyproject.toml .coveragerc
 recursive-include bin *
 recursive-include data *

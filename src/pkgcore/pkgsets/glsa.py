@@ -70,23 +70,25 @@ class GlsaDirSet(metaclass=generic_equality):
             yield packages.KeyedAndRestriction(
                 pkgatoms[pkgname], packages.OrRestriction(*pkgs[pkgname]), key=pkgname)
 
-
     def iter_vulnerabilities(self):
         """generator yielding each GLSA restriction"""
         for path in self.paths:
             for fn in listdir_files(path):
                 # glsa-1234-12.xml
                 if not (fn.startswith("glsa-") and fn.endswith(".xml")):
+                    logger.warning(f'invalid glsa file name: {fn!r}')
                     continue
                 # This verifies the filename is of the correct syntax.
                 try:
                     [int(x) for x in fn[5:-4].split("-")]
                 except ValueError:
+                    logger.warning(f'invalid glsa file name: {fn!r}')
                     continue
                 root = etree.parse(pjoin(path, fn))
                 glsa_node = root.getroot()
                 if glsa_node.tag != 'glsa':
-                    raise ValueError("glsa without glsa rootnode")
+                    logger.warning(f'glsa file without glsa root node: {fn!r}')
+                    continue
                 for affected in root.findall('affected'):
                     for pkg in affected.findall('package'):
                         try:
@@ -100,12 +102,11 @@ class GlsaDirSet(metaclass=generic_equality):
                             yield fn[5:-4], pkgname, pkgatom, pkg_vuln_restrict
                         except (TypeError, ValueError) as e:
                             # thrown from cpv.
-                            logger.warning(f"invalid glsa- {fn}, package {pkgname}: {e}")
+                            logger.warning(f"invalid glsa file {fn!r}, package {pkgname}: {e}")
                         except IGNORED_EXCEPTIONS:
                             raise
                         except Exception as e:
-                            logger.warning(f"invalid glsa- {fn}: error: {e}")
-
+                            logger.warning(f"invalid glsa file {fn!r}: {e}")
 
     def generate_intersects_from_pkg_node(self, pkg_node, tag=None):
         arch = pkg_node.get("arch")

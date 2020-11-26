@@ -588,8 +588,8 @@ class Profiles(klass.ImmutableInstance):
                     os.path.join(profiles_base, path, 'deprecated'))
                 l.append(_KnownProfile(profiles_base, arch, path, status, deprecated))
         except FileNotFoundError:
-            logger.debug(
-                f"No profile descriptions found at {repo_id}::profiles/profiles.desc")
+            # no profiles exist
+            pass
         return frozenset(l)
 
     def __len__(self):

@@ -31,7 +31,7 @@ def _parsing_error(exc):
     raise exc
 
 
-class _EclassDoc:
+class _ParseEclassDoc:
     """Generic block for eclass docs.
 
     See the devmanual [#]_ for the eclass docs specification.
@@ -144,7 +144,7 @@ class _EclassDoc:
 
 
 @eclass_block
-class _EclassBlock(_EclassDoc):
+class _EclassBlock(_ParseEclassDoc):
     """ECLASS doc block."""
 
     _tag = '@ECLASS:'
@@ -182,7 +182,7 @@ class _EclassBlock(_EclassDoc):
 
 
 @eclass_block
-class _EclassVarBlock(_EclassDoc):
+class _EclassVarBlock(_ParseEclassDoc):
     """ECLASS-VARIABLE doc block."""
 
     _tag = '@ECLASS-VARIABLE:'
@@ -207,7 +207,7 @@ class _EclassVarBlock(_EclassDoc):
 
 
 @eclass_block
-class _EclassFuncBlock(_EclassDoc):
+class _EclassFuncBlock(_ParseEclassDoc):
     """FUNCTION doc block."""
 
     _tag = '@FUNCTION:'
@@ -241,7 +241,7 @@ class _EclassFuncBlock(_EclassDoc):
 
 
 @eclass_block
-class _EclassFuncVarBlock(_EclassDoc):
+class _EclassFuncVarBlock(_ParseEclassDoc):
     """VARIABLE doc block."""
 
     _tag = '@VARIABLE:'
@@ -265,7 +265,7 @@ _eclass_blocks_re = re.compile(
     rf'^(?P<prefix>\s*#) (?P<tag>{"|".join(_eclass_blocks)})(?P<value>.*)')
 
 
-class Eclass(UserDict):
+class EclassDoc(UserDict):
     """Support parsing eclass docs for a given eclass path."""
 
     def __init__(self, path, sourced=False):

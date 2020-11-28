@@ -695,7 +695,7 @@ class ConfiguredTree(configured.tree):
             (x, domain_settings.get(x.upper(), chost))
             for x in ('cbuild', 'ctarget'))
         scope_update.update(
-            (x, domain_settings[x.upper()])
+            (x, domain_settings.get(x.upper(), ''))
             for x in ('cflags', 'cxxflags', 'ldflags'))
         scope_update['operations_callback'] = self._generate_pkg_operations
 

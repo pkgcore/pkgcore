@@ -759,7 +759,7 @@ class RepoConfig(syncable.tree, klass.ImmutableInstance, metaclass=WeakInstMeta)
             # sort into favored order
             v = [f for f in self.supported_cache_formats if f in v]
             if not v:
-                logger.warning(f'unknown cache format: falling back to md5-dict format')
+                logger.warning('unknown cache format: falling back to md5-dict format')
                 v = ['md5-dict']
         sf(self, 'cache_format', list(v)[0])
 

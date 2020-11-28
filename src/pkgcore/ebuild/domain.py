@@ -630,7 +630,7 @@ class domain(config_domain):
         try:
             if name is None:
                 # parse repo id from the given path
-                name = RepoConfig(path).repo_id
+                name = RepoConfig(path, disable_inst_caching=True).repo_id
                 if name in self.source_repos_raw:
                     # fallback to using path for repo id in case of duplicate repos
                     name = path

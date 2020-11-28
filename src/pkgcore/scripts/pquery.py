@@ -468,7 +468,6 @@ def print_packages_noversion(options, out, err, pkgs):
 
 argparser = commandline.ArgumentParser(
     domain=True, description=__doc__, script=(__file__, __name__))
-argparser.set_defaults(profile_override=pjoin(const.DATA_PATH, 'stubrepo/profiles/default'))
 
 repo_group = argparser.add_argument_group(
     'repository matching options',

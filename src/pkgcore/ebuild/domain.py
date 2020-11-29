@@ -626,18 +626,12 @@ class domain(config_domain):
 
     def add_repo(self, path, config, name=None, configure=True):
         """Add an external repo to the domain."""
-        path = os.path.abspath(path)
+        path = os.path.realpath(path)
+        if path in self.source_repos_raw:
+            raise ValueError(f'{name!r} repo already configured')
         try:
-            if name is None:
-                # parse repo id from the given path
-                name = RepoConfig(path, disable_inst_caching=True).repo_id
-                if name in self.source_repos_raw:
-                    # fallback to using path for repo id in case of duplicate repos
-                    name = path
-            if name in self.source_repos_raw:
-                raise ValueError(f'{name!r} repo already configured')
             # forcibly create repo_config object, otherwise cached version might be used
-            repo_config = RepoConfig(path, config_name=name, disable_inst_caching=True)
+            repo_config = RepoConfig(path, config_name=path, disable_inst_caching=True)
         except OSError as e:
             raise repo_errors.InvalidRepo(str(e))
         kwargs = {}

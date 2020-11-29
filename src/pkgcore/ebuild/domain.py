@@ -636,7 +636,8 @@ class domain(config_domain):
                     name = path
             if name in self.source_repos_raw:
                 raise ValueError(f'{name!r} repo already configured')
-            repo_config = RepoConfig(path, config_name=name)
+            # forcibly create repo_config object, otherwise cached version might be used
+            repo_config = RepoConfig(path, config_name=name, disable_inst_caching=True)
         except OSError as e:
             raise repo_errors.InvalidRepo(str(e))
         kwargs = {}

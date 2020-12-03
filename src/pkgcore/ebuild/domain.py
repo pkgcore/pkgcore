@@ -24,13 +24,12 @@ from snakeoil.mappings import ProtectedDict, ImmutableDict
 from snakeoil.log import suppress_logging
 from snakeoil.osutils import pjoin
 from snakeoil.process.spawn import spawn_get_output
-from snakeoil.sequences import (
-    split_negations, stable_unique, unstable_unique, predicate_split)
+from snakeoil.sequences import split_negations, stable_unique, predicate_split
 
 from pkgcore.binpkg import repository as binary_repo
 from pkgcore.cache.flat_hash import md5_cache
 from pkgcore.config import errors as config_errors
-from pkgcore.config.domain import Failure, MissingFile, domain as config_domain
+from pkgcore.config.domain import Failure, domain as config_domain
 from pkgcore.config.hint import ConfigHint
 from pkgcore.ebuild import const, repository as ebuild_repo
 from pkgcore.ebuild.atom import atom as _atom
@@ -131,7 +130,7 @@ def _read_config_file(path):
     except FileNotFoundError:
         pass
     except EnvironmentError as e:
-        raise Failure(f"failed reading {filename!r}: {e}") from e
+        raise Failure(f"failed reading {path!r}: {e}") from e
 
 
 def load_property(filename, *, read_func=_read_config_file,

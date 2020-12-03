@@ -693,7 +693,10 @@ class RepoConfig(syncable.tree, klass.ImmutableInstance, metaclass=WeakInstMeta)
             raise repo_errors.UnsupportedRepo(self)
 
         super().__init__(syncer)
-        self._parse_config()
+        try:
+            self._parse_config()
+        except OSError as e:
+            raise repo_errors.InitializationError(str(e))
 
     def _parse_config(self):
         """Load data from the repo's metadata/layout.conf file."""

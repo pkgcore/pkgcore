@@ -337,12 +337,6 @@ class UnconfiguredTree(prototype.tree):
         """
         super().__init__()
         self.base = self.location = location
-        try:
-            if not stat.S_ISDIR(os.stat(self.base).st_mode):
-                raise errors.InitializationError(f"base not a dir: {self.base}")
-        except OSError as e:
-            raise errors.InitializationError(f"lstat failed: {self.base}") from e
-
         if repo_config is None:
             repo_config = repo_objs.RepoConfig(location)
         self.config = repo_config

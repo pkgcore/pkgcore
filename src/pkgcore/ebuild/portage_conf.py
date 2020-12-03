@@ -112,6 +112,9 @@ class PortageConfig(DictMixin):
             if not os.path.exists(location):
                 location = pjoin(const.DATA_PATH, 'stubconfig')
                 profile_override = pjoin(const.DATA_PATH, 'stubrepo/profiles/default')
+        elif location == pjoin(const.DATA_PATH, 'stubconfig'):
+            # override profile when using stub config
+            profile_override = pjoin(const.DATA_PATH, 'stubrepo/profiles/default')
 
         self.dir = pjoin(
             os.environ.get('PORTAGE_CONFIGROOT', kwargs.pop('configroot', '/')),

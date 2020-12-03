@@ -105,7 +105,14 @@ class PortageConfig(DictMixin):
             dict: config settings
         """
         self._config = {}
-        location = location if location is not None else '/etc/portage'
+
+        if location is None:
+            location = '/etc/portage'
+            # fallback to stub config and profile on non-Gentoo systems
+            if not os.path.exists(location):
+                location = pjoin(const.DATA_PATH, 'stubconfig')
+                profile_override = pjoin(const.DATA_PATH, 'stubrepo/profiles/default')
+
         self.dir = pjoin(
             os.environ.get('PORTAGE_CONFIGROOT', kwargs.pop('configroot', '/')),
             location.lstrip('/'))

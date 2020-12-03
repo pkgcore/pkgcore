@@ -12,16 +12,6 @@ from snakeoil import klass
 from snakeoil.strings import pluralism
 
 
-# mapping from eclass doc blocks to parsing instances
-_eclass_blocks = dict()
-
-
-def eclass_block(cls):
-    """Decorator to register eclass blocks."""
-    _eclass_blocks[cls._tag] = cls()
-    return cls
-
-
 class EclassDocParsingError(Exception):
     """Error when parsing eclass docs."""
 
@@ -31,7 +21,7 @@ def _parsing_error(exc):
     raise exc
 
 
-class _ParseEclassDoc:
+class ParseEclassDoc:
     """Generic block for eclass docs.
 
     See the devmanual [#]_ for the eclass docs specification.
@@ -40,9 +30,17 @@ class _ParseEclassDoc:
     """
 
     # block tag
-    _tag = None
+    tag = None
     # block key name -- None for singular block types
-    _key = None
+    key = None
+
+    # mapping from eclass doc blocks to parsing instances
+    blocks = {}
+
+    def __init_subclass__(cls, **kwargs):
+        """Register known eclass doc block tags."""
+        super().__init_subclass__(**kwargs)
+        cls.blocks[cls.tag] = cls()
 
     def __init__(self, tags):
         self.tags = tags
@@ -143,11 +141,10 @@ class _ParseEclassDoc:
         return data
 
 
-@eclass_block
-class _EclassBlock(_ParseEclassDoc):
+class EclassBlock(ParseEclassDoc):
     """ECLASS doc block."""
 
-    _tag = '@ECLASS:'
+    tag = '@ECLASS:'
 
     def __init__(self):
         tags = {
@@ -181,12 +178,11 @@ class _EclassBlock(_ParseEclassDoc):
         return frozenset(eapis)
 
 
-@eclass_block
-class _EclassVarBlock(_ParseEclassDoc):
+class EclassVarBlock(ParseEclassDoc):
     """ECLASS-VARIABLE doc block."""
 
-    _tag = '@ECLASS-VARIABLE:'
-    _key = 'variables'
+    tag = '@ECLASS-VARIABLE:'
+    key = 'variables'
 
     def __init__(self):
         tags = {
@@ -206,12 +202,11 @@ class _EclassVarBlock(_ParseEclassDoc):
         super().__init__(tags)
 
 
-@eclass_block
-class _EclassFuncBlock(_ParseEclassDoc):
+class EclassFuncBlock(ParseEclassDoc):
     """FUNCTION doc block."""
 
-    _tag = '@FUNCTION:'
-    _key = 'functions'
+    tag = '@FUNCTION:'
+    key = 'functions'
 
     def __init__(self):
         tags = {
@@ -240,12 +235,11 @@ class _EclassFuncBlock(_ParseEclassDoc):
         return block[0]
 
 
-@eclass_block
-class _EclassFuncVarBlock(_ParseEclassDoc):
+class EclassFuncVarBlock(ParseEclassDoc):
     """VARIABLE doc block."""
 
-    _tag = '@VARIABLE:'
-    _key = 'function-variables'
+    tag = '@VARIABLE:'
+    key = 'function-variables'
 
     def __init__(self):
         tags = {
@@ -262,7 +256,7 @@ class _EclassFuncVarBlock(_ParseEclassDoc):
 
 
 _eclass_blocks_re = re.compile(
-    rf'^(?P<prefix>\s*#) (?P<tag>{"|".join(_eclass_blocks)})(?P<value>.*)')
+    rf'^(?P<prefix>\s*#) (?P<tag>{"|".join(ParseEclassDoc.blocks)})(?P<value>.*)')
 
 
 class EclassDoc(UserDict):
@@ -300,7 +294,7 @@ class EclassDoc(UserDict):
                 f'echo ${{PROPERTIES}}'],
             stderr=subprocess.DEVNULL, stdout=subprocess.PIPE, encoding='utf8')
         if p.returncode == 0:
-            eclass_obj = _eclass_blocks['@ECLASS:']
+            eclass_obj = ParseEclassDoc.blocks['@ECLASS:']
             funcs, variables, properties = p.stdout.split('#\n')
             data['_exported_funcs'] = tuple(funcs.split())
             data['_exported_vars'] = tuple(
@@ -406,14 +400,14 @@ class EclassDoc(UserDict):
             _parsing_error(EclassDocParsingError("'@ECLASS:' block not first"))
 
         data = {}
-        duplicates = {k: set() for k in _eclass_blocks.keys()}
+        duplicates = {k: set() for k in ParseEclassDoc.blocks}
 
         # parse identified blocks
         for tag, block, block_start in blocks:
-            block_obj = _eclass_blocks[tag]
+            block_obj = ParseEclassDoc.blocks[tag]
             block_data = block_obj.parse(block, block_start)
             # check if duplicate blocks exist and merge data
-            if block_obj._key is None:
+            if block_obj.key is None:
                 if block_data.keys() & data.keys():
                     _parsing_error(EclassDocParsingError(
                         f"'@ECLASS:', line {block_start}: duplicate block"))
@@ -424,6 +418,6 @@ class EclassDoc(UserDict):
                     _parsing_error(EclassDocParsingError(
                         f'{repr(block[0])}, line {block_start}: duplicate block'))
                 duplicates[tag].add(name)
-                data.setdefault(block_obj._key, []).append(block_data)
+                data.setdefault(block_obj.key, []).append(block_data)
 
         return data

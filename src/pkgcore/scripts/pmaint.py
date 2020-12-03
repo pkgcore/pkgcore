@@ -47,7 +47,6 @@ shared_options_domain = (commandline.ArgumentParser(
 sync = subparsers.add_parser(
     "sync", parents=shared_options,
     description="synchronize a local repository with its defined remote")
-sync.set_defaults(profile_override=pjoin(const.DATA_PATH, 'stubrepo/profiles/default'))
 sync.add_argument(
     'repos', metavar='repo', nargs='*', help="repo(s) to sync",
     action=commandline.StoreRepoObject, store_name=True, repo_type='config')
@@ -252,7 +251,6 @@ def update_pkg_desc_index(repo, observer):
 regen = subparsers.add_parser(
     "regen", parents=shared_options_domain,
     description="regenerate repository caches")
-regen.set_defaults(profile_override=pjoin(const.DATA_PATH, 'stubrepo/profiles/default'))
 regen.add_argument(
     'repos', metavar='repo', nargs='*',
     action=commandline.StoreRepoObject, repo_type='source-raw', allow_external_repos=True,
@@ -438,7 +436,6 @@ def mirror_main(options, out, err):
 digest = subparsers.add_parser(
     "digest", parents=shared_options_domain,
     description="update package manifests")
-digest.set_defaults(profile_override=pjoin(const.DATA_PATH, 'stubrepo/profiles/default'))
 digest.add_argument(
     'target', nargs='*',
     help="packages matching any of these restrictions will have their "

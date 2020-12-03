@@ -13,7 +13,6 @@ from pkgcore.util import commandline, packages as pkgutils
 
 
 argparser = commandline.ArgumentParser(description=__doc__, script=(__file__, __name__))
-argparser.set_defaults(profile_override=pjoin(const.DATA_PATH, 'stubrepo/profiles/default'))
 argparser.add_argument(
     'targets', metavar='target', nargs='*',
     action=commandline.StoreTarget,

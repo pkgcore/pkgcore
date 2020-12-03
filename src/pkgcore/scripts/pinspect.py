@@ -40,7 +40,6 @@ from pkgcore.util import commandline
 pkgcore_opts = commandline.ArgumentParser(domain=False, script=(__file__, __name__))
 argparser = commandline.ArgumentParser(
     suppress=True, description=__doc__, parents=(pkgcore_opts,))
-argparser.set_defaults(profile_override=pjoin(const.DATA_PATH, 'stubrepo/profiles/default'))
 subparsers = argparser.add_subparsers(description="report applets")
 
 pkgsets = subparsers.add_parser(

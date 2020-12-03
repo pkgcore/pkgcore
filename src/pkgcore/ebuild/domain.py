@@ -640,9 +640,12 @@ class domain(config_domain):
             # default to using md5 cache
             kwargs['cache'] = (md5_cache(path),)
         repo_obj = ebuild_repo.tree(config, repo_config, **kwargs)
-
-        # TODO: reset related jit attrs
         self.source_repos_raw += repo_obj
+
+        # reset repo-related jit attrs
+        for attr in (x for x in dir(self) if x.startswith('_jit_repo_')):
+            setattr(self, attr, None)
+
         if configure:
             return self._wrap_repo(repo_obj)
         return repo_obj
@@ -743,7 +746,7 @@ class domain(config_domain):
             return version[0].strip()
         raise ValueError('unknown kernel version')
 
-    @klass.jit_attr_none
+    @klass.jit_attr_named('_jit_repo_source_repos_raw', uncached_val=None)
     def source_repos_raw(self):
         """Group of package repos without filtering."""
         repos = []
@@ -764,7 +767,7 @@ class domain(config_domain):
             repos.append(repo)
         return RepositoryGroup(repos)
 
-    @klass.jit_attr_none
+    @klass.jit_attr_named('_jit_repo_installed_repos_raw', uncached_val=None)
     def installed_repos_raw(self):
         """Group of installed repos without filtering."""
         repos = [r.instantiate() for r in self.__vdb]
@@ -772,13 +775,13 @@ class domain(config_domain):
             repos.append(self.profile.provides_repo)
         return RepositoryGroup(repos)
 
-    @klass.jit_attr_none
+    @klass.jit_attr_named('_jit_repo_repos_raw', uncached_val=None)
     def repos_raw(self):
         """Group of all repos without filtering."""
         return RepositoryGroup(
             chain(self.source_repos_raw, self.installed_repos_raw))
 
-    @klass.jit_attr_none
+    @klass.jit_attr_named('_jit_repo_source_repos', uncached_val=None)
     def source_repos(self):
         """Group of configured, filtered package repos."""
         repos = []
@@ -789,7 +792,7 @@ class domain(config_domain):
                 logger.warning(f'skipping {repo.repo_id!r} repo: {e}')
         return RepositoryGroup(repos)
 
-    @klass.jit_attr_none
+    @klass.jit_attr_named('_jit_repo_installed_repos', uncached_val=None)
     def installed_repos(self):
         """Group of configured, installed package repos."""
         repos = []
@@ -800,55 +803,55 @@ class domain(config_domain):
                 logger.warning(f'skipping {repo.repo_id!r} repo: {e}')
         return RepositoryGroup(repos)
 
-    @klass.jit_attr_none
+    @klass.jit_attr_named('_jit_repo_unfiltered_repos', uncached_val=None)
     def unfiltered_repos(self):
         """Group of all configured repos without filtering."""
         repos = chain(self.source_repos, self.installed_repos)
         return RepositoryGroup(
             (r.raw_repo if r.raw_repo is not None else r) for r in repos)
 
-    @klass.jit_attr_none
+    @klass.jit_attr_named('_jit_repo_repos', uncached_val=None)
     def repos(self):
         """Group of all repos."""
         return RepositoryGroup(
             chain(self.source_repos, self.installed_repos))
 
-    @klass.jit_attr_none
+    @klass.jit_attr_named('_jit_repo_ebuild_repos', uncached_val=None)
     def ebuild_repos(self):
         """Group of all ebuild repos bound with configuration data."""
         return RepositoryGroup(
             x for x in self.source_repos
             if isinstance(x.raw_repo, ebuild_repo.ConfiguredTree))
 
-    @klass.jit_attr_none
+    @klass.jit_attr_named('_jit_repo_ebuild_repos_unfiltered', uncached_val=None)
     def ebuild_repos_unfiltered(self):
         """Group of all ebuild repos without package filtering."""
         return RepositoryGroup(
             x for x in self.unfiltered_repos
             if isinstance(x, ebuild_repo.ConfiguredTree))
 
-    @klass.jit_attr_none
+    @klass.jit_attr_named('_jit_repo_ebuild_repos_raw', uncached_val=None)
     def ebuild_repos_raw(self):
         """Group of all ebuild repos without filtering."""
         return RepositoryGroup(
             x for x in self.source_repos_raw
             if isinstance(x, ebuild_repo.UnconfiguredTree))
 
-    @klass.jit_attr_none
+    @klass.jit_attr_named('_jit_repo_binary_repos', uncached_val=None)
     def binary_repos(self):
         """Group of all binary repos bound with configuration data."""
         return RepositoryGroup(
             x for x in self.source_repos
             if isinstance(x.raw_repo, binary_repo.ConfiguredTree))
 
-    @klass.jit_attr_none
+    @klass.jit_attr_named('_jit_repo_binary_repos_unfiltered', uncached_val=None)
     def binary_repos_unfiltered(self):
         """Group of all binary repos without package filtering."""
         return RepositoryGroup(
             x for x in self.unfiltered_repos
             if isinstance(x, binary_repo.ConfiguredTree))
 
-    @klass.jit_attr_none
+    @klass.jit_attr_named('_jit_repo_binary_repos_raw', uncached_val=None)
     def binary_repos_raw(self):
         """Group of all binary repos without filtering."""
         return RepositoryGroup(

@@ -321,7 +321,12 @@ class PortageConfig(DictMixin):
                         f"repos.conf: parsing {fp!r}: "
                         f"{name!r} repo missing location setting, ignoring repo")
                     continue
-                repo_conf['location'] = os.path.abspath(location)
+                if os.path.isabs(location):
+                    repo_conf['location'] = location
+                else:
+                    # support relative paths based on where repos.conf is located
+                    repo_conf['location'] = os.path.abspath(
+                        pjoin(os.path.dirname(path), location))
 
                 # repo type defaults to ebuild for compat with portage
                 repo_type = repo_conf.get('repo-type', 'ebuild-v1')

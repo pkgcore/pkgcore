@@ -235,7 +235,8 @@ class base(metadata.package):
         try:
             return get_eapi(eapi)
         except ValueError as e:
-            raise metadata_errors.MetadataException(self, 'eapi', f'{e}: {eapi_str!r}')
+            error = str(e) if eapi else f'{e}: {eapi_str!r}'
+            raise metadata_errors.MetadataException(self, 'eapi', error)
 
     is_supported = klass.alias_attr('eapi.is_supported')
     tracked_attributes = klass.alias_attr('eapi.tracked_attributes')

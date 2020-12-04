@@ -61,8 +61,7 @@ class UnknownArguments(IpcCommandError):
         super().__init__(f"unknown arguments: {', '.join(map(repr, args))}")
 
 
-class IpcArgumentParser(arghparse.OptionalsParser, arghparse.CsvActionsParser,
-                        arghparse.CopyableParser):
+class IpcArgumentParser(arghparse.ArgumentParser):
     """Raise IPC exception for argparse errors.
 
     Otherwise standard argparse prints the parser usage then outputs the error
@@ -70,8 +69,7 @@ class IpcArgumentParser(arghparse.OptionalsParser, arghparse.CsvActionsParser,
     """
 
     def __init__(self, *args, **kwargs):
-        kwargs.setdefault('add_help', False)
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, suppress=True, add_help=False, **kwargs)
 
     def error(self, msg):
         raise IpcCommandError(msg)
@@ -1012,7 +1010,7 @@ class Eapply_User(IpcCommand):
 
 class Unpack(IpcCommand):
 
-    arg_parser = IpcArgumentParser(add_help=False)
+    arg_parser = IpcArgumentParser()
     arg_parser.add_argument('targets', nargs='+')
 
     _file_mode = (

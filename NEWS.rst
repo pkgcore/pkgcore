@@ -3,6 +3,38 @@ Release Notes
 =============
 
 ----------------------------
+pkgcore 0.10.14 (2020-12-04)
+----------------------------
+
+- pkgcore.ebuild.portage_config: Fallback to using a bundled stub
+  config and profile on non-Gentoo systems. This should help tools
+  that shouldn't require a Gentoo install to function properly
+  (e.g. pkgcheck) when installed elsewhere.
+
+- pkgcore.ebuild.domain: Forcibly create new repo_config object for
+  add_repo() disregarding cached instances.
+
+- pmaint regen: Add --dir option to support using an external cache
+  dir.
+
+- pkgcore.ebuild.digest: Re-raise Manifest parsing errors as
+  MetadataExceptions in order for pkgcheck to handle them better.
+
+- pkgcore.util.commandline: Add support for projects that remove
+  plugin support functionality.
+
+- pinspect profile: Force profile argument to be non-optional.
+
+- pkgcore.ebuild.eclass: Add initial support for eclass doc format
+  parsing.
+
+- pkgcore.ebuild.domain: Raise InitializationError exceptions when
+  scanning for repos to aid consumers that try to add external
+  repos via add_repo().
+
+- Update default binpkg location to match portage's new default.
+
+----------------------------
 pkgcore 0.10.13 (2020-07-05)
 ----------------------------
 

@@ -17,7 +17,6 @@ from snakeoil.fileutils import AtomicWriteFile
 from snakeoil.osutils import pjoin, listdir_dirs
 from snakeoil.sequences import iter_stable_unique
 
-from pkgcore import const
 from pkgcore.cache.flat_hash import md5_cache
 from pkgcore.ebuild import triggers, repository as ebuild_repo
 from pkgcore.ebuild.cpv import CPV
@@ -277,7 +276,7 @@ regen_opts.add_argument(
     "--force", action='store_true', default=False,
     help="force regeneration to occur regardless of staleness checks or repo settings")
 regen_opts.add_argument(
-    "--dir", dest='cache_dir',
+    "--dir", dest='cache_dir', type=arghparse.create_dir,
     help="use separate directory to store repository caches")
 regen_opts.add_argument(
     "--rsync", action='store_true', default=False,

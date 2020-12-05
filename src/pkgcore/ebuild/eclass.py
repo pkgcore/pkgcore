@@ -114,11 +114,10 @@ class ParseEclassDoc:
 
         # split eclass doc block into separate blocks by tag
         for i, line in enumerate(lines):
-            m = self._block_tags_re.match(line)
-            if m is not None:
-                tag = m.group('tag')
+            if (mo := self._block_tags_re.match(line)):
+                tag = mo.group('tag')
                 missing_tags.discard(tag)
-                value = m.group('value').strip()
+                value = mo.group('value').strip()
                 blocks.append((tag, line_ind + i, [value]))
             else:
                 blocks[-1][-1].append(line)
@@ -375,12 +374,11 @@ class EclassDoc(UserDict):
             line_ind = 0
 
             while line_ind < len(lines):
-                m = _eclass_blocks_re.match(lines[line_ind])
-                if m is not None:
+                if (mo := _eclass_blocks_re.match(lines[line_ind])):
                     # Isolate identified doc block by pulling all following
                     # lines with a matching prefix.
-                    prefix = m.group('prefix')
-                    tag = m.group('tag')
+                    prefix = mo.group('prefix')
+                    tag = mo.group('tag')
                     block = []
                     block_start = line_ind + 1
                     while line_ind < len(lines):

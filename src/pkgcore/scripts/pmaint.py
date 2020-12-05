@@ -297,7 +297,7 @@ def regen_main(options, out, err):
     for repo in iter_stable_unique(options.repos):
         if options.cache_dir is not None:
             # recreate new repo object with cache dir override
-            cache = (md5_cache(pjoin(options.cache_dir.strip(os.sep), repo.repo_id)),)
+            cache = (md5_cache(pjoin(options.cache_dir.rstrip(os.sep), repo.repo_id)),)
             repo = ebuild_repo.tree(
                 options.config, repo.config, cache=cache)
         if not repo.operations.supports("regen_cache"):

@@ -753,18 +753,17 @@ class domain(config_domain):
         for r in self.__repos:
             try:
                 repo = r.instantiate()
+                if not repo.is_supported:
+                    logger.warning(
+                        f'skipping {r.name!r} repo: unsupported EAPI {str(repo.eapi)!r}')
+                    continue
+                repos.append(repo)
             except config_errors.InstantiationError as e:
                 # roll back the exception chain to a meaningful error message
                 exc = find_user_exception(e)
                 if exc is None:
                     exc = e
                 logger.warning(f'skipping {r.name!r} repo: {exc}')
-                continue
-            if not repo.is_supported:
-                logger.warning(
-                    f'skipping {r.name!r} repo: unsupported EAPI {str(repo.eapi)!r}')
-                continue
-            repos.append(repo)
         return RepositoryGroup(repos)
 
     @klass.jit_attr_named('_jit_repo_installed_repos_raw', uncached_val=None)

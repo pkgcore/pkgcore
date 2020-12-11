@@ -221,6 +221,27 @@ class EAPI(metaclass=klass.immutable_instance):
         return False
 
     @klass.jit_attr
+    def bash_funcs_global(self):
+        """Internally implemented global EAPI specific functions to skip when exporting."""
+        # TODO: This is currently duplicated across EAPI objs, but
+        # instead could be cached to a class attr.
+        funcs = pjoin(const.EBD_PATH, '.generated', 'funcs', 'global')
+        if not os.path.exists(funcs):
+            # we're probably running in a cacheless git repo, so generate a cached version
+            try:
+                os.makedirs(os.path.dirname(funcs), exist_ok=True)
+                with open(funcs, 'w') as f:
+                    subprocess.run(
+                        [pjoin(const.EBD_PATH, 'generate_global_func_list')],
+                        cwd=const.EBD_PATH, stdout=f)
+            except (IOError, subprocess.CalledProcessError) as e:
+                raise Exception(
+                    f"failed to generate list of global EAPI '{self}' specific functions: {str(e)}")
+
+        with open(funcs, 'r') as f:
+            return frozenset(line.strip() for line in f)
+
+    @klass.jit_attr
     def bash_funcs(self):
         """Internally implemented EAPI specific functions to skip when exporting."""
         funcs = pjoin(const.EBD_PATH, '.generated', 'funcs', self._magic)

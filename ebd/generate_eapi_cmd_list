@@ -11,18 +11,20 @@
 ONLY=false
 BANNED=false
 DEPRECATED=false
+INTERNAL=false
 
-while getopts "bdo" opt; do
+while getopts "bdio" opt; do
 	case ${opt} in
 		b) BANNED=true ;;
 		d) DEPRECATED=true ;;
+		i) INTERNAL=true ;;
 		o) ONLY=true ;;
 		*) ;;
 	esac
 done
 
 # default to outputting banned list
-if ! ${BANNED} && ! ${DEPRECATED}; then
+if ! ${BANNED} && ! ${DEPRECATED} && ! ${INTERNAL}; then
 	BANNED=true
 fi
 
@@ -33,6 +35,7 @@ export PKGCORE_EBD_PATH=${BASH_SOURCE[0]%/*}
 
 BANNED_CMDS=()
 DEPRECATED_CMDS=()
+INTERNAL_CMDS=()
 BANNED_HELPER=${PKGCORE_EBD_PATH}/helpers/internals/banned
 DEPRECATED_HELPER=${PKGCORE_EBD_PATH}/helpers/internals/deprecated
 
@@ -58,6 +61,8 @@ for (( eapi=${INITIAL_EAPI} ; eapi<=${EAPI} ; eapi++ )) ; do
 				done
 			elif $(cmp -s "${file}" "${DEPRECATED_HELPER}"); then
 				DEPRECATED_CMDS+=( "${cmd}" )
+			else
+				INTERNAL_CMDS+=( "${cmd}" )
 			fi
 		done
 	fi
@@ -68,4 +73,7 @@ if ${BANNED} && [[ -n ${BANNED_CMDS[@]} ]]; then
 fi
 if ${DEPRECATED} && [[ -n ${DEPRECATED_CMDS[@]} ]]; then
 	printf '%s\n' ${DEPRECATED_CMDS[@]}
+fi
+if ${INTERNAL} && [[ -n ${INTERNAL_CMDS[@]} ]]; then
+	printf '%s\n' ${INTERNAL_CMDS[@]}
 fi

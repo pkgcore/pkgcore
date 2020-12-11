@@ -133,6 +133,14 @@ def write_pkgcore_ebd_cmdlists(root, target):
                         cwd=ebd_dir, stdout=f):
                     raise DistutilsExecError(f'generating EAPI {eapi} deprecated command list failed')
 
+            path = os.path.join(ebd_dir, 'cmds', eapi, 'internal')
+            log.info(f'writing EAPI {eapi} internal command list: {path!r}')
+            with open(path, 'w') as f:
+                if subprocess.call(
+                        [os.path.join(pkgdist.REPODIR, 'ebd', 'generate_eapi_cmd_list'), '-i', eapi],
+                        cwd=ebd_dir, stdout=f):
+                    raise DistutilsExecError(f'generating EAPI {eapi} internal command list failed')
+
 
 def write_pkgcore_ebd_eapi_libs(root, target):
     "Generate bash EAPI scope libs for sourcing."""

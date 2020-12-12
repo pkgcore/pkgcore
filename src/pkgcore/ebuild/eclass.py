@@ -307,15 +307,15 @@ class EclassDoc(UserDict):
     @property
     def functions(self):
         """Set of documented function names in the eclass."""
-        return frozenset(d['name'] for d in self.data.get('functions', ()))
+        return frozenset(self.data.get('functions', ()))
 
     @property
     def internal_functions(self):
         """Set of internal function names in the eclass."""
         # include all internal tagged functions
         s = {
-            x['name'] for x in self.data.get('functions', ())
-            if x.get('internal', False)
+            k for k, v in self.data.get('functions', {}).items()
+            if v.get('internal', False)
         }
         # and all exported, underscore-prefixed functions
         s.update(
@@ -331,15 +331,15 @@ class EclassDoc(UserDict):
     @property
     def variables(self):
         """Set of documented variable names in the eclass."""
-        return frozenset(d['name'] for d in self.data.get('variables', ()))
+        return frozenset(self.data.get('variables', ()))
 
     @property
     def internal_variables(self):
         """Set of internal variable names in the eclass."""
         # include all internal tagged variables
         s = {
-            x['name'] for x in self.data.get('variables', ())
-            if x.get('internal', False)
+            k for k, v in self.data.get('variables', {}).items()
+            if v.get('internal', False)
         }
         # and all exported, underscore-prefixed variables
         s.update(
@@ -413,11 +413,11 @@ class EclassDoc(UserDict):
                         f"'@ECLASS:', line {block_start}: duplicate block"))
                 data.update(block_data)
             else:
-                name = block_data['name']
+                name = block_data.pop('name')
                 if name in duplicates[tag]:
                     _parsing_error(EclassDocParsingError(
                         f'{repr(block[0])}, line {block_start}: duplicate block'))
                 duplicates[tag].add(name)
-                data.setdefault(block_obj.key, []).append(block_data)
+                data.setdefault(block_obj.key, {})[name] = block_data
 
         return data

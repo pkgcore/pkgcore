@@ -311,23 +311,22 @@ class EclassDoc(UserDict):
 
     @property
     def internal_functions(self):
-        """Set of documented internal function names in the eclass."""
-        return frozenset(
-            d['name'] for d in self.data.get('functions', ())
-            if d.get('internal', False)
-        )
+        """Set of internal function names in the eclass."""
+        # include all internal tagged functions
+        s = {
+            x['name'] for x in self.data.get('functions', ())
+            if x.get('internal', False)
+        }
+        # and all exported, underscore-prefixed functions
+        s.update(
+            x for x in self.data.get('_exported_funcs', ())
+            if x.startswith('_'))
+        return frozenset(s)
 
     @property
     def exported_functions(self):
-        """Set of all exported function names in the eclass.
-
-        Ignores functions that start with underscores since
-        it's assumed they are private.
-        """
-        return frozenset(
-            x for x in self.data.get('_exported_funcs', ())
-            if not x.startswith('_')
-        )
+        """Set of all exported function names in the eclass."""
+        return frozenset(self.data.get('_exported_funcs', ()))
 
     @property
     def variables(self):
@@ -336,11 +335,17 @@ class EclassDoc(UserDict):
 
     @property
     def internal_variables(self):
-        """Set of documented internal variable names in the eclass."""
-        return frozenset(
-            d['name'] for d in self.data.get('variables', ())
-            if d.get('internal', False)
-        )
+        """Set of internal variable names in the eclass."""
+        # include all internal tagged variables
+        s = {
+            x['name'] for x in self.data.get('variables', ())
+            if x.get('internal', False)
+        }
+        # and all exported, underscore-prefixed variables
+        s.update(
+            x for x in self.data.get('_exported_vars', ())
+            if x.startswith('_'))
+        return frozenset(s)
 
     @property
     def exported_variables(self):
@@ -349,10 +354,7 @@ class EclassDoc(UserDict):
         Ignores variables that start with underscores since
         it's assumed they are private.
         """
-        return frozenset(
-            x for x in self.data.get('_exported_vars', ())
-            if not x.startswith('_')
-        )
+        return frozenset(self.data.get('_exported_vars', ()))
 
     @property
     def indirect_eclasses(self):

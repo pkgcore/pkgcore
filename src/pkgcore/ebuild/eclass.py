@@ -208,7 +208,7 @@ class EclassVarBlock(ParseEclassDoc):
     def __init__(self):
         tags = {
             '@ECLASS-VARIABLE:': ('name', True, self._tag_inline_arg, None),
-            '@DEPRECATED:': ('deprecated', False, self._tag_deprecated, None),
+            '@DEPRECATED:': ('deprecated', False, self._tag_deprecated, False),
             '@DEFAULT_UNSET': ('default_unset', False, self._tag_bool, False),
             '@INTERNAL': ('internal', False, self._tag_bool, False),
             '@REQUIRED': ('required', False, self._tag_bool, False),
@@ -231,7 +231,7 @@ class EclassFuncBlock(ParseEclassDoc):
         tags = {
             '@FUNCTION:': ('name', True, self._tag_inline_arg, None),
             '@RETURN:': ('returns', False, self._tag_inline_arg, None),
-            '@DEPRECATED:': ('deprecated', False, self._tag_deprecated, None),
+            '@DEPRECATED:': ('deprecated', False, self._tag_deprecated, False),
             '@INTERNAL': ('internal', False, self._tag_bool, False),
             '@MAINTAINER:': ('maintainers', False, self._tag_multiline_args, None),
             '@DESCRIPTION:': ('description', False, self._tag_multiline_args, None),
@@ -261,7 +261,7 @@ class EclassFuncVarBlock(ParseEclassDoc):
     def __init__(self):
         tags = {
             '@VARIABLE:': ('name', True, self._tag_inline_arg, None),
-            '@DEPRECATED:': ('deprecated', False, self._tag_deprecated, None),
+            '@DEPRECATED:': ('deprecated', False, self._tag_deprecated, False),
             '@DEFAULT_UNSET': ('default_unset', False, self._tag_bool, False),
             '@INTERNAL': ('internal', False, self._tag_bool, False),
             '@REQUIRED': ('required', False, self._tag_bool, False),

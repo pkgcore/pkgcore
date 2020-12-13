@@ -262,8 +262,7 @@ class EclassDoc(UserDict):
     """Support parsing eclass docs for a given eclass path."""
 
     def __init__(self, path, sourced=False):
-        self.path = path
-        self.mtime = os.path.getmtime(self.path)
+        self.mtime = os.path.getmtime(path)
 
         # set default fields
         data = {}
@@ -273,13 +272,13 @@ class EclassDoc(UserDict):
                 data[block_obj.key] = OrderedSet()
 
         try:
-            data.update(self.parse(self.path))
+            data.update(self.parse(path))
         except EclassDocParsingError:
             pass
 
         # inject full lists of exported funcs and vars
         if sourced:
-            data.update(self._source_eclass(self.path))
+            data.update(self._source_eclass(path))
 
         super().__init__(data)
 

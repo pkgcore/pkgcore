@@ -100,7 +100,7 @@ class ParseEclassDoc:
     def _tag_deprecated(self, block, tag, lineno):
         """Parse deprecated tags."""
         arg = self._tag_inline_arg(block, tag, lineno)
-        return None if arg.lower() == 'none' else arg
+        return True if arg.lower() == 'none' else arg
 
     @klass.jit_attr
     def _required(self):
@@ -173,7 +173,7 @@ class EclassBlock(ParseEclassDoc):
             '@ECLASS:': ('name', True, self._tag_inline_arg, None),
             '@VCSURL:': ('vcsurl', False, self._tag_inline_arg, None),
             '@BLURB:': ('blurb', True, self._tag_inline_arg, None),
-            '@DEPRECATED:': ('deprecated', False, self._tag_deprecated, None),
+            '@DEPRECATED:': ('deprecated', False, self._tag_deprecated, False),
             '@INDIRECT_ECLASSES:': ('indirect_eclasses', False, self._tag_inline_list, ()),
             '@MAINTAINER:': ('maintainers', True, self._tag_multiline_args, None),
             '@AUTHOR:': ('authors', False, self._tag_multiline_args, None),

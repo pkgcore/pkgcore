@@ -33,6 +33,8 @@ class ParseEclassDoc:
     tag = None
     # block key name -- None for singular block types
     key = None
+    # boolean flagging if block attribute defaults should be inserted
+    default = False
 
     # mapping from eclass doc blocks to parsing instances
     blocks = {}
@@ -88,7 +90,7 @@ class ParseEclassDoc:
     def _required(self):
         """Set of required eclass doc block tags."""
         tags = set()
-        for tag, (_name, required, _func) in self.tags.items():
+        for tag, (_name, required, _func, _default) in self.tags.items():
             if required:
                 tags.add(tag)
         return frozenset(tags)
@@ -105,10 +107,15 @@ class ParseEclassDoc:
             variables = p.stdout.splitlines()
         return frozenset(variables)
 
+    @property
+    def defaults(self):
+        """Return default field mapping for the block."""
+        return {name: default for name, _required, _func, default in self.tags.values()}
+
     def parse(self, lines, line_ind):
         """Parse an eclass block."""
         blocks = []
-        data = dict()
+        data = self.defaults
         # track if all required tags are defined
         missing_tags = set(self._required)
 
@@ -124,7 +131,7 @@ class ParseEclassDoc:
 
         # parse each tag block
         for tag, line_ind, block in blocks:
-            name, required, func = self.tags[tag]
+            name, required, func, _default = self.tags[tag]
             try:
                 data[name] = func(block, tag, line_ind)
             except EclassDocParsingError as e:
@@ -147,19 +154,17 @@ class EclassBlock(ParseEclassDoc):
 
     def __init__(self):
         tags = {
-            '@ECLASS:': ('name', True, self._tag_inline_arg),
-            '@VCSURL:': ('vcsurl', False, self._tag_inline_arg),
-            '@BLURB:': ('blurb', True, self._tag_inline_arg),
-            '@DEPRECATED:': ('deprecated', False, self._tag_deprecated),
-            '@INDIRECT_ECLASSES:': ('indirect_eclasses', False, self._tag_inline_list),
-
-            '@MAINTAINER:': ('maintainers', True, self._tag_multiline_args),
-            '@AUTHOR:': ('authors', False, self._tag_multiline_args),
-            '@BUGREPORTS:': ('bugreports', False, self._tag_multiline_args),
-            '@DESCRIPTION:': ('description', False, self._tag_multiline_args),
-            '@EXAMPLE:': ('example', False, self._tag_multiline_args),
-
-            '@SUPPORTED_EAPIS:': ('supported_eapis', False, self._supported_eapis),
+            '@ECLASS:': ('name', True, self._tag_inline_arg, None),
+            '@VCSURL:': ('vcsurl', False, self._tag_inline_arg, None),
+            '@BLURB:': ('blurb', True, self._tag_inline_arg, None),
+            '@DEPRECATED:': ('deprecated', False, self._tag_deprecated, None),
+            '@INDIRECT_ECLASSES:': ('indirect_eclasses', False, self._tag_inline_list, ()),
+            '@MAINTAINER:': ('maintainers', True, self._tag_multiline_args, None),
+            '@AUTHOR:': ('authors', False, self._tag_multiline_args, None),
+            '@BUGREPORTS:': ('bugreports', False, self._tag_multiline_args, None),
+            '@DESCRIPTION:': ('description', False, self._tag_multiline_args, None),
+            '@EXAMPLE:': ('example', False, self._tag_multiline_args, None),
+            '@SUPPORTED_EAPIS:': ('supported_eapis', False, self._supported_eapis, ()),
         }
         super().__init__(tags)
 
@@ -182,21 +187,19 @@ class EclassVarBlock(ParseEclassDoc):
 
     tag = '@ECLASS-VARIABLE:'
     key = 'variables'
+    default = True
 
     def __init__(self):
         tags = {
-            '@ECLASS-VARIABLE:': ('name', True, self._tag_inline_arg),
-            '@DEPRECATED:': ('deprecated', False, self._tag_deprecated),
-
-            '@DEFAULT_UNSET': ('default_unset', False, self._tag_bool),
-            '@INTERNAL': ('internal', False, self._tag_bool),
-            '@REQUIRED': ('required', False, self._tag_bool),
-
-            '@PRE_INHERIT': ('pre_inherit', False, self._tag_bool),
-            '@USER_VARIABLE': ('user_variable', False, self._tag_bool),
-            '@OUTPUT_VARIABLE': ('output_variable', False, self._tag_bool),
-
-            '@DESCRIPTION:': ('description', True, self._tag_multiline_args),
+            '@ECLASS-VARIABLE:': ('name', True, self._tag_inline_arg, None),
+            '@DEPRECATED:': ('deprecated', False, self._tag_deprecated, None),
+            '@DEFAULT_UNSET': ('default_unset', False, self._tag_bool, False),
+            '@INTERNAL': ('internal', False, self._tag_bool, False),
+            '@REQUIRED': ('required', False, self._tag_bool, False),
+            '@PRE_INHERIT': ('pre_inherit', False, self._tag_bool, False),
+            '@USER_VARIABLE': ('user_variable', False, self._tag_bool, False),
+            '@OUTPUT_VARIABLE': ('output_variable', False, self._tag_bool, False),
+            '@DESCRIPTION:': ('description', True, self._tag_multiline_args, None),
         }
         super().__init__(tags)
 
@@ -206,21 +209,19 @@ class EclassFuncBlock(ParseEclassDoc):
 
     tag = '@FUNCTION:'
     key = 'functions'
+    default = True
 
     def __init__(self):
         tags = {
-            '@FUNCTION:': ('name', True, self._tag_inline_arg),
-            '@RETURN:': ('returns', False, self._tag_inline_arg),
-            '@DEPRECATED:': ('deprecated', False, self._tag_deprecated),
-
-            '@INTERNAL': ('internal', False, self._tag_bool),
-
-            '@MAINTAINER:': ('maintainers', False, self._tag_multiline_args),
-            '@DESCRIPTION:': ('description', False, self._tag_multiline_args),
-
+            '@FUNCTION:': ('name', True, self._tag_inline_arg, None),
+            '@RETURN:': ('returns', False, self._tag_inline_arg, None),
+            '@DEPRECATED:': ('deprecated', False, self._tag_deprecated, None),
+            '@INTERNAL': ('internal', False, self._tag_bool, False),
+            '@MAINTAINER:': ('maintainers', False, self._tag_multiline_args, None),
+            '@DESCRIPTION:': ('description', False, self._tag_multiline_args, None),
             # TODO: The devmanual states this is required, but disabling for now since
             # many phase override functions don't document usage.
-            '@USAGE:': ('usage', False, self._usage),
+            '@USAGE:': ('usage', False, self._usage, None),
         }
         super().__init__(tags)
 
@@ -239,17 +240,16 @@ class EclassFuncVarBlock(ParseEclassDoc):
 
     tag = '@VARIABLE:'
     key = 'function-variables'
+    default = True
 
     def __init__(self):
         tags = {
-            '@VARIABLE:': ('name', True, self._tag_inline_arg),
-            '@DEPRECATED:': ('deprecated', False, self._tag_deprecated),
-
-            '@DEFAULT_UNSET': ('default_unset', False, self._tag_bool),
-            '@INTERNAL': ('internal', False, self._tag_bool),
-            '@REQUIRED': ('required', False, self._tag_bool),
-
-            '@DESCRIPTION:': ('description', True, self._tag_multiline_args),
+            '@VARIABLE:': ('name', True, self._tag_inline_arg, None),
+            '@DEPRECATED:': ('deprecated', False, self._tag_deprecated, None),
+            '@DEFAULT_UNSET': ('default_unset', False, self._tag_bool, False),
+            '@INTERNAL': ('internal', False, self._tag_bool, False),
+            '@REQUIRED': ('required', False, self._tag_bool, False),
+            '@DESCRIPTION:': ('description', True, self._tag_multiline_args, None),
         }
         super().__init__(tags)
 
@@ -264,13 +264,18 @@ class EclassDoc(UserDict):
     def __init__(self, path, sourced=False):
         self.path = path
         self.mtime = os.path.getmtime(self.path)
-        data = {}
 
-        # ignore parsing errors when constructing cache objects
+        # set default fields
+        data = {}
+        data.update(ParseEclassDoc.blocks['@ECLASS:'].defaults)
+        for block_obj in ParseEclassDoc.blocks.values():
+            if block_obj.default:
+                data[block_obj.key] = OrderedSet()
+
         try:
             data.update(self.parse(self.path))
         except EclassDocParsingError:
-            data['_parse_failed'] = True
+            pass
 
         # inject full lists of exported funcs and vars
         if sourced:
@@ -399,7 +404,7 @@ class EclassDoc(UserDict):
         elif blocks[0][0] != '@ECLASS:':
             _parsing_error(EclassDocParsingError("'@ECLASS:' block not first"))
 
-        data = {}
+        data = {block.key: OrderedSet() for block in ParseEclassDoc.blocks.values() if block.default}
         duplicates = {k: set() for k in ParseEclassDoc.blocks}
 
         # parse identified blocks
@@ -413,11 +418,11 @@ class EclassDoc(UserDict):
                         f"'@ECLASS:', line {block_start}: duplicate block"))
                 data.update(block_data)
             else:
-                name = block_data.pop('name')
+                name = block_data['name']
                 if name in duplicates[tag]:
                     _parsing_error(EclassDocParsingError(
                         f'{repr(block[0])}, line {block_start}: duplicate block'))
                 duplicates[tag].add(name)
-                data.setdefault(block_obj.key, {})[name] = block_data
+                data[block_obj.key].add(block_data)
 
         return data

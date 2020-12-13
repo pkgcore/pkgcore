@@ -1,6 +1,5 @@
 """Eclass parsing support."""
 
-from collections import UserDict
 import os
 import re
 import shlex
@@ -9,6 +8,7 @@ import subprocess
 from pkgcore.ebuild import conditionals
 from pkgcore.ebuild.eapi import EAPI
 from snakeoil import klass
+from snakeoil.mappings import ImmutableDict, OrderedSet
 from snakeoil.strings import pluralism
 
 
@@ -19,6 +19,22 @@ class EclassDocParsingError(Exception):
 def _parsing_error(exc):
     """Callback to handle parsing exceptions."""
     raise exc
+
+
+class AttrDict(ImmutableDict):
+    """Support accessing dict keys as attributes."""
+
+    def __getattr__(self, name):
+        try:
+            object.__getattribute__(self, name)
+        except AttributeError as e:
+            try:
+                return object.__getattribute__(self, '_dict')[name]
+            except KeyError:
+                raise e
+
+    def __dir__(self):
+        return sorted(dir(self._dict) + list(self._dict))
 
 
 class ParseEclassDoc:
@@ -144,7 +160,7 @@ class ParseEclassDoc:
             _parsing_error(EclassDocParsingError(
                 f'{repr(lines[0])}: missing tag{s}: {missing_tags_str}'))
 
-        return data
+        return AttrDict(data)
 
 
 class EclassBlock(ParseEclassDoc):
@@ -258,7 +274,7 @@ _eclass_blocks_re = re.compile(
     rf'^(?P<prefix>\s*#) (?P<tag>{"|".join(ParseEclassDoc.blocks)})(?P<value>.*)')
 
 
-class EclassDoc(UserDict):
+class EclassDoc(AttrDict):
     """Support parsing eclass docs for a given eclass path."""
 
     def __init__(self, path, sourced=False):
@@ -309,66 +325,51 @@ class EclassDoc(UserDict):
         return data
 
     @property
-    def functions(self):
+    def function_names(self):
         """Set of documented function names in the eclass."""
-        return frozenset(self.data.get('functions', ()))
+        return frozenset(x.name for x in self.functions)
 
     @property
-    def internal_functions(self):
+    def internal_function_names(self):
         """Set of internal function names in the eclass."""
         # include all internal tagged functions
-        s = {
-            k for k, v in self.data.get('functions', {}).items()
-            if v.get('internal', False)
-        }
+        s = {x.name for x in self.functions if x.internal}
         # and all exported, underscore-prefixed functions
-        s.update(
-            x for x in self.data.get('_exported_funcs', ())
-            if x.startswith('_'))
+        s.update(x for x in self._dict.get('_exported_funcs', ()) if x.startswith('_'))
         return frozenset(s)
 
     @property
-    def exported_functions(self):
+    def exported_function_names(self):
         """Set of all exported function names in the eclass."""
-        return frozenset(self.data.get('_exported_funcs', ()))
+        return frozenset(self._dict.get('_exported_funcs', ()))
 
     @property
-    def variables(self):
-        """Set of documented variable names in the eclass."""
-        return frozenset(self.data.get('variables', ()))
+    def variable_names(self):
+        """Set of documented function names in the eclass."""
+        return frozenset(x.name for x in self.variables)
 
     @property
-    def internal_variables(self):
+    def internal_variable_names(self):
         """Set of internal variable names in the eclass."""
         # include all internal tagged variables
-        s = {
-            k for k, v in self.data.get('variables', {}).items()
-            if v.get('internal', False)
-        }
+        s = {x.name for x in self.variables if x.internal}
         # and all exported, underscore-prefixed variables
-        s.update(
-            x for x in self.data.get('_exported_vars', ())
-            if x.startswith('_'))
+        s.update(x for x in self._dict.get('_exported_vars', ()) if x.startswith('_'))
         return frozenset(s)
 
     @property
-    def exported_variables(self):
+    def exported_variable_names(self):
         """Set of all exported variable names in the eclass.
 
         Ignores variables that start with underscores since
         it's assumed they are private.
         """
-        return frozenset(self.data.get('_exported_vars', ()))
-
-    @property
-    def indirect_eclasses(self):
-        """Set of allowed indirect eclass inherits."""
-        return frozenset(self.data.get('indirect_eclasses', ()))
+        return frozenset(self._dict.get('_exported_vars', ()))
 
     @property
     def live(self):
         """Eclass implements functionality to support a version control system."""
-        return 'live' in self.data.get('_properties', ())
+        return 'live' in self._dict.get('_properties', ())
 
     @staticmethod
     def parse(path):

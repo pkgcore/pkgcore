@@ -352,11 +352,9 @@ class CPV(base.base):
 
     def __lt__(self, other):
         try:
-            if self.category == other.category:
-                if self.package == other.package:
-                    return ver_cmp(self.version, self.revision, other.version, other.revision) < 0
-                return self.package < other.package
-            return self.category < other.category
+            if self.category == other.category and self.package == other.package:
+                return ver_cmp(self.version, self.revision, other.version, other.revision) < 0
+            return self.package < other.package or self.category < other.category
         except AttributeError:
             raise TypeError(
                 "'<' not supported between instances of "
@@ -364,15 +362,21 @@ class CPV(base.base):
             )
 
     def __le__(self, other):
-        return self.__lt__(other) or self.__eq__(other)
+        try:
+            if self.category > other.category and self.package > other.package:
+                return ver_cmp(self.version, self.revision, other.version, other.revision) <= 0
+            return True
+        except AttributeError:
+            raise TypeError(
+                "'<=' not supported between instances of "
+                f"{self.__class__.__name__!r} and {other.__class__.__name__!r}"
+            )
 
     def __gt__(self, other):
         try:
-            if self.category == other.category:
-                if self.package == other.package:
-                    return ver_cmp(self.version, self.revision, other.version, other.revision) > 0
-                return self.package > other.package
-            return self.category > other.category
+            if self.category == other.category and self.package == other.package:
+                return ver_cmp(self.version, self.revision, other.version, other.revision) > 0
+            return self.package > other.package or self.category > other.category
         except AttributeError:
             raise TypeError(
                 "'>' not supported between instances of "
@@ -380,7 +384,15 @@ class CPV(base.base):
             )
 
     def __ge__(self, other):
-        return self.__gt__(other) or self.__eq__(other)
+        try:
+            if self.category < other.category and self.package < other.package:
+                return ver_cmp(self.version, self.revision, other.version, other.revision) >= 0
+            return True
+        except AttributeError:
+            raise TypeError(
+                "'>=' not supported between instances of "
+                f"{self.__class__.__name__!r} and {other.__class__.__name__!r}"
+            )
 
     @property
     def versioned_atom(self):

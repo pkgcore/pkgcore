@@ -8,7 +8,6 @@ __all__ = ("base", "wrapper", "dynamic_getattr_dict", "DynamicGetattrSetter")
 import itertools
 
 from snakeoil import klass, sequences
-from snakeoil.compatibility import cmp
 
 from pkgcore import exceptions as base_errors
 from pkgcore.operations import format
@@ -44,26 +43,38 @@ class wrapper(base):
 
     __slots__ = ("_raw_pkg", "_domain")
 
-    klass.inject_richcmp_methods_from_cmp(locals())
-
     def operations(self, domain, **kwds):
         return self._raw_pkg._operations(domain, self, **kwds)
 
     def __init__(self, raw_pkg):
         object.__setattr__(self, "_raw_pkg", raw_pkg)
 
-    def __cmp__(self, other):
-        if isinstance(other, wrapper):
-            return cmp(self._raw_pkg, other._raw_pkg)
-        return cmp(self._raw_pkg, other)
-
     def __eq__(self, other):
         if isinstance(other, wrapper):
-            return cmp(self._raw_pkg, other._raw_pkg) == 0
-        return cmp(self._raw_pkg, other) == 0
+            return self._raw_pkg == other._raw_pkg
+        try:
+            return self._raw_pkg == other
+        except TypeError:
+            return False
 
     def __ne__(self, other):
-        return not self == other
+        return not self.__eq__(other)
+
+    def __lt__(self, other):
+        if isinstance(other, wrapper):
+            return self._raw_pkg < other._raw_pkg
+        return self._raw_pkg < other
+
+    def __le__(self, other):
+        return self.__lt__(other) or self.__eq__(other)
+
+    def __gt__(self, other):
+        if isinstance(other, wrapper):
+            return self._raw_pkg > other._raw_pkg
+        return self._raw_pkg > other
+
+    def __ge__(self, other):
+        return self.__gt__(other) or self.__eq__(other)
 
     __getattr__ = klass.GetAttrProxy("_raw_pkg")
     __dir__ = klass.DirProxy("_raw_pkg")

@@ -229,9 +229,16 @@ class EbdError(ProcessorError):
             lines = (bash.ansi_escape_re.sub('', x) for x in self.error.split('\n'))
             # extract context and die message from bash error output
             bash_error = [x.lstrip(' *') for x in lines if x.startswith(' *')]
+            die_context = [x for x in bash_error if x.endswith('called die')]
             # output specific error message if it exists in the expected format
-            if bash_error:
-                return bash_error[1]
+            try:
+                error = bash_error[1]
+                # add non-helper die context if it exists
+                if die_context:
+                    error += f', ({die_context[0]})'
+                return error
+            except IndexError:
+                pass
         # show full bash output in verbose mode
         return self.error.strip('\n')
 

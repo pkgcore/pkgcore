@@ -220,22 +220,29 @@ class ProcessorError(PkgcoreUserException):
 
 
 class EbdError(ProcessorError):
-    """Ebuild daemon received a die() call on the bash side."""
+    """Ebuild daemon received a die() call on the bash side.
+
+    This highly depends on the die message format and must be updated if
+    that changes substantially.
+    """
 
     def msg(self, verbosity=0):
         """Extract error message from verbose output depending on verbosity level."""
         if verbosity <= 0:
             # strip ANSI escapes from output
             lines = (bash.ansi_escape_re.sub('', x) for x in self.error.split('\n'))
-            # extract context and die message from bash error output
+            # pull eerror cmd output and strip prefixes
             bash_error = [x.lstrip(' *') for x in lines if x.startswith(' *')]
-            die_context = [x for x in bash_error if x.endswith('called die')]
-            # output specific error message if it exists in the expected format
             try:
+                # output specific error message if it exists in the expected format
                 error = bash_error[1]
-                # add non-helper die context if it exists
-                if die_context:
-                    error += f', ({die_context[0]})'
+                try:
+                    # add non-helper die context if it exists
+                    die_context = next(
+                        x for x in reversed(bash_error) if x.endswith('called die'))
+                    error += f', ({die_context})'
+                except StopIteration:
+                    pass
                 return error
             except IndexError:
                 pass

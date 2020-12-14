@@ -185,34 +185,21 @@ class TestCPV:
             assert c.key == f"{cat}/{pkg}"
             assert c.version == ver
 
-    def assertGT(self, obj1, obj2):
-        assert obj1 > obj2, f'{obj1!r} must be > {obj2!r}'
-        # swap the ordering, so that it's no longer obj1.__cmp__, but obj2s
-        assert obj2 < obj1, f'{obj2!r} must be < {obj1!r}'
-
-        if self.run_cpy_ver_cmp and obj1.fullver and obj2.fullver:
-            assert cpv.cpy_ver_cmp(
-                obj1.version, obj1.revision, obj2.version, obj2.revision) > 0, \
-                    f'cpy_ver_cmp, {obj1!r} > {obj2!r}'
-            assert cpv.cpy_ver_cmp(
-                obj2.version, obj2.revision, obj1.version, obj1.revision) < 0, \
-                    f'cpy_ver_cmp, {obj2!r} < {obj1!r}'
-
     def test_cmp(self):
         ukls, vkls = cpv.UnversionedCPV, cpv.VersionedCPV
-        assert cmp(vkls("dev-util/diffball-0.1"), vkls("dev-util/diffball-0.2")) < 0
+        assert vkls("dev-util/diffball-0.1") < vkls("dev-util/diffball-0.2")
         base = "dev-util/diffball-0.7.1"
-        assert not cmp(vkls(base), vkls(base))
+        assert vkls(base) == vkls(base)
         for rev in ("", "-r1"):
             last = None
             for suf in ["_alpha", "_beta", "_pre", "", "_p"]:
                 if suf == "":
                     sufs = [suf]
                 else:
-                    sufs = [suf, suf+"4"]
+                    sufs = [suf, f'{suf}4']
                 for x in sufs:
-                    cur = vkls(base+x+rev)
-                    assert cur == vkls(base+x+rev)
+                    cur = vkls(f'{base}{x}{rev}')
+                    assert cur == vkls(f'{base}{x}{rev}')
                     if last is not None:
                         assert cur > last
 
@@ -330,3 +317,16 @@ class TestCPV:
         assert str(obj) == "dev-util/diffball-1.0-r1"
         assert obj.fullver == "1.0-r0001"
         assert obj.revision == 1
+
+    def test_attribute_errors(self):
+        obj = cpv.VersionedCPV("foo/bar-0")
+        assert not obj == 0
+        assert obj != 0
+        with pytest.raises(TypeError):
+            assert obj < 0
+        with pytest.raises(TypeError):
+            assert obj <= 0
+        with pytest.raises(TypeError):
+            assert obj > 0
+        with pytest.raises(TypeError):
+            assert obj >= 0

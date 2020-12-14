@@ -4,7 +4,6 @@ from collections import UserString
 
 from snakeoil.compatibility import cmp
 from snakeoil.demandload import demand_compile_regexp
-from snakeoil.klass import inject_richcmp_methods_from_cmp
 
 from pkgcore.ebuild import atom
 from pkgcore.ebuild.errors import InvalidCPV
@@ -245,7 +244,6 @@ class CPV(base.base):
     """
 
     __slots__ = ("cpvstr", "key", "category", "package", "version", "revision", "fullver")
-    inject_richcmp_methods_from_cmp(locals())
 
     def __init__(self, *args, versioned=None):
         """
@@ -339,26 +337,50 @@ class CPV(base.base):
     def __str__(self):
         return getattr(self, 'cpvstr', 'None')
 
-    def __cmp__(self, other):
+    def __eq__(self, other):
         try:
             if self.cpvstr == other.cpvstr:
-                return 0
-
-            if (self.category and other.category and self.category != other.category):
-                return cmp(self.category, other.category)
-
-            if self.package and other.package and self.package != other.package:
-                return cmp(self.package, other.package)
-
-            # note I chucked out valueerror, none checks on versions
-            # passed in. I suck, I know.
-            # ~harring
-            # fails in doing comparison of unversioned atoms against
-            # versioned atoms
-            return ver_cmp(
-                self.version, self.revision, other.version, other.revision)
+                return True
+            if self.category == other.category and self.package == other.package:
+                return ver_cmp(self.version, self.revision, other.version, other.revision) == 0
         except AttributeError:
-            return 1
+            pass
+        return False
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __lt__(self, other):
+        try:
+            if self.category == other.category:
+                if self.package == other.package:
+                    return ver_cmp(self.version, self.revision, other.version, other.revision) < 0
+                return self.package < other.package
+            return self.category < other.category
+        except AttributeError:
+            raise TypeError(
+                "'<' not supported between instances of "
+                f"{self.__class__.__name__!r} and {other.__class__.__name__!r}"
+            )
+
+    def __le__(self, other):
+        return self.__lt__(other) or self.__eq__(other)
+
+    def __gt__(self, other):
+        try:
+            if self.category == other.category:
+                if self.package == other.package:
+                    return ver_cmp(self.version, self.revision, other.version, other.revision) > 0
+                return self.package > other.package
+            return self.category > other.category
+        except AttributeError:
+            raise TypeError(
+                "'>' not supported between instances of "
+                f"{self.__class__.__name__!r} and {other.__class__.__name__!r}"
+            )
+
+    def __ge__(self, other):
+        return self.__gt__(other) or self.__eq__(other)
 
     @property
     def versioned_atom(self):

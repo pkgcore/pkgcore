@@ -417,6 +417,11 @@ class EclassDoc(AttrDict):
                 if block_data.keys() & data.keys():
                     _parsing_error(EclassDocParsingError(
                         f"'@ECLASS:', line {block_start}: duplicate block"))
+                # verify name is correct
+                file_name = os.path.basename(path)
+                if block_data.name != file_name:
+                    _parsing_error(EclassDocParsingError(
+                        f"'@ECLASS:' invalid name {block_data.name!r} (should be {file_name!r})"))
                 data.update(block_data)
             else:
                 name = block_data['name']

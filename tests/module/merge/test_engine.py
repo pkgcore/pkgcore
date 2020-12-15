@@ -8,8 +8,8 @@ from pkgcore.fs import livefs
 from pkgcore.fs.contents import contentsSet
 from pkgcore.merge import engine
 
+from ..fs.fs_util import fsDir, fsFile, fsSymlink
 from .util import fake_engine
-from ..fs.fs_util import fsFile, fsDir, fsSymlink
 
 
 class fake_pkg:

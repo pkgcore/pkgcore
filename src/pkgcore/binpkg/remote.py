@@ -7,8 +7,8 @@ local binpkg repositories
 
 __all__ = ("PackagesCacheV0", "PackagesCacheV1")
 
-from operator import itemgetter
 import os
+from operator import itemgetter
 from time import time
 
 from snakeoil.chksum import get_chksums

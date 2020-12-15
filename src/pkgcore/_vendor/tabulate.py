@@ -21,12 +21,12 @@
 
 """Pretty-print tabular data."""
 
-from collections import namedtuple
-from collections.abc import Iterable
-from functools import reduce, partial
-from itertools import zip_longest
 import math
 import re
+from collections import namedtuple
+from collections.abc import Iterable
+from functools import partial, reduce
+from itertools import zip_longest
 
 _none_type = type(None)
 _bool_type = bool

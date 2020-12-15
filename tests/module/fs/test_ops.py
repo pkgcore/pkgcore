@@ -7,7 +7,7 @@ from snakeoil.osutils import pjoin
 from snakeoil.test import TestCase
 from snakeoil.test.mixins import TempDirMixin
 
-from pkgcore.fs import ops, fs, livefs, contents
+from pkgcore.fs import contents, fs, livefs, ops
 
 
 class VerifyMixin:

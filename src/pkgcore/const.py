@@ -9,7 +9,6 @@ from snakeoil import mappings
 
 from . import __title__
 
-
 osp = os.path
 _reporoot = osp.realpath(__file__).rsplit(os.path.sep, 3)[0]
 _module = sys.modules[__name__]

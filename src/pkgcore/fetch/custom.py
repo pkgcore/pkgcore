@@ -7,11 +7,11 @@ __all__ = ("MalformedCommand", "fetcher",)
 import os
 
 from snakeoil.osutils import ensure_dirs, pjoin
-from snakeoil.process.spawn import spawn_bash, is_userpriv_capable
+from snakeoil.process.spawn import is_userpriv_capable, spawn_bash
 
 from ..config.hint import ConfigHint
-from . import errors, base, fetchable
-from ..os_data import portage_uid, portage_gid
+from ..os_data import portage_gid, portage_uid
+from . import base, errors, fetchable
 
 
 class MalformedCommand(errors.FetchError):

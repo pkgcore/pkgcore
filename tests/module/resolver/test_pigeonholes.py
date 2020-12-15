@@ -1,6 +1,7 @@
+from snakeoil.test import TestCase
+
 from pkgcore.resolver.pigeonholes import PigeonHoledSlots
 from pkgcore.restrictions import restriction
-from snakeoil.test import TestCase
 
 from .test_choice_point import fake_package
 

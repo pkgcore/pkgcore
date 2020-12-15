@@ -5,10 +5,9 @@ import sys
 from snakeoil.cli.exceptions import ExitException
 from snakeoil.strings import pluralism
 
-from ..operations import observer, OperationError
+from ..operations import OperationError, observer
 from ..package.errors import MetadataException
 from ..util.commandline import ArgumentParser, StoreTarget
-
 
 argparser = ArgumentParser(description=__doc__, script=(__file__, __name__))
 argparser.add_argument(

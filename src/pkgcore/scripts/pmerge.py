@@ -8,10 +8,10 @@ source or binary packages.
 # more should be doc'd...
 __all__ = ("AmbiguousQuery", "NoMatches")
 
-from functools import partial
 import sys
-from time import time
+from functools import partial
 from textwrap import dedent
+from time import time
 
 from snakeoil.cli.exceptions import ExitException
 from snakeoil.sequences import iflatten_instance, stable_unique
@@ -21,14 +21,13 @@ from ..ebuild import resolver, restricts
 from ..ebuild.atom import atom
 from ..ebuild.misc import run_sanity_checks
 from ..merge import errors as merge_errors
-from ..operations import observer, format
+from ..operations import format, observer
 from ..repository.util import get_raw_repos
 from ..repository.virtual import RestrictionRepo
 from ..resolver.util import reduce_to_failures
 from ..restrictions import packages
 from ..restrictions.boolean import OrRestriction
 from ..util import commandline, parserestrict
-
 
 argparser = commandline.ArgumentParser(
     domain=True, description=__doc__, script=(__file__, __name__))

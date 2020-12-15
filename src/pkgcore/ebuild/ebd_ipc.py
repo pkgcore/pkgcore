@@ -2,25 +2,26 @@ import argparse
 import grp
 import itertools
 import locale
-from operator import itemgetter
 import os
 import pwd
 import re
 import shlex
 import shutil
 import stat
+from operator import itemgetter
 
 from snakeoil.cli import arghparse
-from snakeoil.contexts import chdir
 from snakeoil.compression import ArComp, ArCompError
+from snakeoil.contexts import chdir
 from snakeoil.decorators import coroutine
 from snakeoil.iterables import partition
 from snakeoil.osutils import pjoin
 from snakeoil.process import spawn
 
 from .. import os_data
-from . import atom as atom_mod, filter_env, portageq
 from ..exceptions import PkgcoreException, PkgcoreUserException
+from . import atom as atom_mod
+from . import filter_env, portageq
 
 
 class IpcError(PkgcoreException):

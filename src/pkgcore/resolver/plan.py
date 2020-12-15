@@ -1,20 +1,20 @@
 __all__ = ("resolver_frame", "resolver_stack", "merge_plan")
 
+import operator
+import sys
 from collections import deque
 from functools import partial
-import operator
-from itertools import chain, islice, filterfalse
-import sys
+from itertools import chain, filterfalse, islice
 
 from snakeoil.compatibility import cmp, sort_cmp
 from snakeoil.iterables import caching_iter
 
 # XXX: hack; see insert_blockers
 from ..ebuild import atom as _atom
-from ..repository import misc, multiplex, filtered, util
+from ..repository import filtered, misc, multiplex, util
+from ..restrictions import packages, restriction, values
 from . import state
 from .choice_point import choice_point
-from ..restrictions import packages, values, restriction
 
 limiters = set(["cycle"])
 

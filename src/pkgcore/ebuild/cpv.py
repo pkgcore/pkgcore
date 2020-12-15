@@ -5,10 +5,9 @@ from collections import UserString
 from snakeoil.compatibility import cmp
 from snakeoil.demandload import demand_compile_regexp
 
+from ..package import base
 from . import atom
 from .errors import InvalidCPV
-from ..package import base
-
 
 demand_compile_regexp(
     'suffix_regexp', '^(alpha|beta|rc|pre|p)(\\d*)$')

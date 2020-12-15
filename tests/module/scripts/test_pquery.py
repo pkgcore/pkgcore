@@ -1,10 +1,11 @@
+from snakeoil.test import TestCase
+
 from pkgcore.config import basics
 from pkgcore.config.hint import ConfigHint, configurable
 from pkgcore.ebuild import atom
 from pkgcore.repository import util
 from pkgcore.scripts import pquery
 from pkgcore.test.scripts.helpers import ArgParseMixin
-from snakeoil.test import TestCase
 
 
 class FakeDomain:

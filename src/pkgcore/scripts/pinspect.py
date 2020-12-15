@@ -35,7 +35,6 @@ from ..package import errors
 from ..restrictions import packages
 from ..util import commandline
 
-
 pkgcore_opts = commandline.ArgumentParser(domain=False, script=(__file__, __name__))
 argparser = commandline.ArgumentParser(
     suppress=True, description=__doc__, parents=(pkgcore_opts,))

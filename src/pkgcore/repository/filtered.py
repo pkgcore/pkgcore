@@ -6,11 +6,11 @@ __all__ = ("tree",)
 
 from itertools import filterfalse
 
-from snakeoil.klass import GetAttrProxy, DirProxy
+from snakeoil.klass import DirProxy, GetAttrProxy
 
 from ..operations.repo import operations_proxy
-from . import prototype, errors
 from ..restrictions import restriction
+from . import errors, prototype
 
 
 class tree(prototype.tree):

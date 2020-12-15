@@ -4,8 +4,8 @@ import itertools
 import sys
 
 try:
-    from pkgcore.util import commandline
     from pkgcore.restrictions.boolean import OrRestriction
+    from pkgcore.util import commandline
 except ImportError:
     print('Cannot import pkgcore!', file=sys.stderr)
     print('Verify it is properly installed and/or PYTHONPATH is set correctly.', file=sys.stderr)

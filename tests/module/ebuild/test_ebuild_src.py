@@ -1,15 +1,15 @@
-from functools import partial
 import os
 import textwrap
+from functools import partial
 
+import pytest
 from snakeoil.currying import post_curry
 from snakeoil.data_source import data_source, local_source
 from snakeoil.osutils import pjoin
-import pytest
 
 from pkgcore import fetch
-from pkgcore.ebuild import ebuild_src, digest, repo_objs
-from pkgcore.ebuild.eapi import get_eapi, EAPI
+from pkgcore.ebuild import digest, ebuild_src, repo_objs
+from pkgcore.ebuild.eapi import EAPI, get_eapi
 from pkgcore.package import errors
 from pkgcore.test import malleable_obj
 

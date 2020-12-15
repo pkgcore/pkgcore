@@ -11,7 +11,7 @@ from snakeoil.chksum import LazilyHashedPath
 from snakeoil.data_source import local_source
 from snakeoil.klass import jit_attr_ext_method
 from snakeoil.mappings import ImmutableDict, StackedDict
-from snakeoil.osutils import normpath, pjoin, listdir_files
+from snakeoil.osutils import listdir_files, normpath, pjoin
 from snakeoil.weakrefs import WeakValCache
 
 from ..config.hint import ConfigHint

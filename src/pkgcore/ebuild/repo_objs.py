@@ -8,33 +8,34 @@ __all__ = (
     "Project", "ProjectMember", "Subproject", "ProjectsXml", "LocalProjectsXml"
 )
 
-from collections import namedtuple
 import errno
-from itertools import chain
-from lxml import etree
 import os
 import platform
 import subprocess
+from collections import namedtuple
+from itertools import chain
 from sys import intern
 
+from lxml import etree
 from snakeoil import klass, mappings
 from snakeoil.bash import BashParseError, iter_read_bash, read_dict
 from snakeoil.caching import WeakInstMeta
 from snakeoil.currying import post_curry
 from snakeoil.fileutils import readfile, readlines
-from snakeoil.osutils import pjoin, listdir_files, listdir
+from snakeoil.osutils import listdir, listdir_files, pjoin
 from snakeoil.osutils.mount import umount
 from snakeoil.process.namespaces import simple_unshare
 from snakeoil.sequences import iter_stable_unique
 from snakeoil.strings import pluralism
 
 from ..config.hint import ConfigHint
-from . import atom, profiles, pkg_updates
-from .eapi import get_eapi
 from ..exceptions import PermissionDenied
 from ..log import logger
-from ..repository import syncable, errors as repo_errors
+from ..repository import errors as repo_errors
+from ..repository import syncable
 from ..restrictions import packages
+from . import atom, pkg_updates, profiles
+from .eapi import get_eapi
 
 
 class Maintainer:

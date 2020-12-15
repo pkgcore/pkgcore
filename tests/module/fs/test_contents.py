@@ -1,11 +1,11 @@
-from functools import partial
 import os
+from functools import partial
 
 from snakeoil.currying import post_curry
 from snakeoil.osutils import pjoin
 from snakeoil.test import TestCase
 
-from pkgcore.fs import fs, contents
+from pkgcore.fs import contents, fs
 
 mk_file = partial(fs.fsFile, strict=False)
 mk_dir  = partial(fs.fsDir, strict=False)

@@ -5,31 +5,32 @@ __all__ = (
     "perl_rebuild", "perl_rebuild_main", "env_update", "env_update_main",
 )
 
-from multiprocessing import cpu_count
 import os
 import re
 import textwrap
 import time
+from multiprocessing import cpu_count
 
 from snakeoil.cli import arghparse
 from snakeoil.contexts import patch
 from snakeoil.fileutils import AtomicWriteFile
-from snakeoil.osutils import pjoin, listdir_dirs
+from snakeoil.osutils import listdir_dirs, pjoin
 from snakeoil.sequences import iter_stable_unique
 
 from ..cache.flat_hash import md5_cache
-from ..ebuild import triggers, repository as ebuild_repo
+from ..ebuild import repository as ebuild_repo
+from ..ebuild import triggers
 from ..ebuild.cpv import CPV
 from ..exceptions import PkgcoreUserException
 from ..fs import contents, livefs
 from ..merge import triggers as merge_triggers
-from ..operations import observer as observer_mod, OperationError
+from ..operations import OperationError
+from ..operations import observer as observer_mod
 from ..package import mutated
 from ..package.errors import MetadataException
 from ..restrictions import packages
 from ..util import commandline
 from ..util.parserestrict import parse_match
-
 
 pkgcore_opts = commandline.ArgumentParser(domain=False, script=(__file__, __name__))
 argparser = commandline.ArgumentParser(

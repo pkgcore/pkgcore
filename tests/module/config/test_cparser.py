@@ -1,8 +1,9 @@
-from io import StringIO
 import sys
+from io import StringIO
 
-from pkgcore.config import cparser, central, errors
 from snakeoil.test import TestCase
+
+from pkgcore.config import central, cparser, errors
 
 
 class CaseSensitiveConfigParserTest(TestCase):

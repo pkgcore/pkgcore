@@ -10,8 +10,8 @@ import stat
 from snakeoil.fileutils import readlines_utf8
 from snakeoil.osutils import pjoin
 
-from . import fs_template, errors
 from ..config.hint import ConfigHint
+from . import errors, fs_template
 
 
 class database(fs_template.FsBased):

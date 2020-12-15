@@ -9,7 +9,7 @@ __all__ = ("AndRestriction", "OrRestriction")
 
 from itertools import islice
 
-from snakeoil.klass import generic_equality, cached_hash
+from snakeoil.klass import cached_hash, generic_equality
 
 from . import restriction
 

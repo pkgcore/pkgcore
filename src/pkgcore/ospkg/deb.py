@@ -4,7 +4,7 @@ from snakeoil.data_source import text_data_source
 from snakeoil.osutils import pjoin, unlink_if_exists
 from snakeoil.process.spawn import spawn
 
-from ..fs import tar, fs, contents
+from ..fs import contents, fs, tar
 
 OPS = {
     '>=': (True, '>='),

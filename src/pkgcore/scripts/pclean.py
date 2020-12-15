@@ -1,16 +1,16 @@
 """system cleaning utility"""
 
 import argparse
-from collections import defaultdict
 import errno
-from functools import partial
 import glob
-from itertools import chain
 import os
 import re
 import shutil
 import sys
 import time
+from collections import defaultdict
+from functools import partial
+from itertools import chain
 
 from snakeoil.mappings import DictMixin
 from snakeoil.osutils import listdir_dirs, listdir_files, pjoin
@@ -23,8 +23,8 @@ from ..repository import multiplex
 from ..repository.util import SimpleTree, get_virtual_repos
 from ..restrictions import boolean, packages
 from ..util import parserestrict
-from ..util.commandline import ArgumentParser, StoreRepoObject, convert_to_restrict
-
+from ..util.commandline import (ArgumentParser, StoreRepoObject,
+                                convert_to_restrict)
 
 argparser = ArgumentParser(description=__doc__, script=(__file__, __name__))
 subparsers = argparser.add_subparsers(description='cleaning applets')

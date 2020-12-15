@@ -4,8 +4,8 @@ virtual package
 
 __all__ = ("package", "factory")
 
-from . import metadata
 from ..restrictions.packages import OrRestriction
+from . import metadata
 
 
 class package(metadata.package):

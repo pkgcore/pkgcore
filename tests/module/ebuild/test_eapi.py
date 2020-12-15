@@ -1,10 +1,10 @@
 from importlib import reload
 from unittest import mock
 
-from pkgcore.ebuild import eapi
-from pkgcore.ebuild.eapi import EAPI, get_eapi, eapi6
-
 import pytest
+
+from pkgcore.ebuild import eapi
+from pkgcore.ebuild.eapi import EAPI, eapi6, get_eapi
 
 
 def test_get_eapi():

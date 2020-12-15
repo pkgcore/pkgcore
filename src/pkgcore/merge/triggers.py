@@ -22,28 +22,27 @@ __all__ = (
     "InfoRegen",
 )
 
-from math import floor
 import os
 import platform
 import re
 import time
+from math import floor
 
 from snakeoil import process
 from snakeoil.bash import iter_read_bash
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.fileutils import touch
-from snakeoil.osutils import listdir_files, pjoin, ensure_dirs, normpath
+from snakeoil.osutils import ensure_dirs, listdir_files, normpath, pjoin
 from snakeoil.process import spawn
 
 from .. import os_data
-from ..fs import fs, contents
+from ..fs import contents, fs
 from ..fs.livefs import gen_obj
-from . import errors, const
 from ..operations.observer import threadsafe_repo_observer
 from ..package.mutated import MutatedPkg
 from ..plugin import get_plugin
 from ..util import file_type, thread_pool
-
+from . import const, errors
 
 UNINSTALLING_MODES = (const.REPLACE_MODE, const.UNINSTALL_MODE)
 INSTALLING_MODES = (const.REPLACE_MODE, const.INSTALL_MODE)

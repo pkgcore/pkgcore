@@ -16,11 +16,11 @@ from functools import partial
 from itertools import chain
 
 from snakeoil import mappings
-from snakeoil.klass import generic_equality, alias_method
+from snakeoil.klass import alias_method, generic_equality
 from snakeoil.sequences import iflatten_instance
 
+from ..restrictions import boolean, packages, restriction
 from . import atom
-from ..restrictions import packages, restriction, boolean
 
 restrict_payload = namedtuple("restrict_data", ["restrict", "data"])
 chunked_data = namedtuple("chunked_data", ("key", "neg", "pos"))

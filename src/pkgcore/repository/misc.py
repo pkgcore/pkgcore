@@ -1,7 +1,7 @@
 __all__ = ("nodeps_repo", "caching_repo")
 
 from snakeoil.iterables import caching_iter, iter_sort
-from snakeoil.klass import GetAttrProxy, DirProxy
+from snakeoil.klass import DirProxy, GetAttrProxy
 
 from ..ebuild.conditionals import DepSet
 from ..operations.repo import operations_proxy

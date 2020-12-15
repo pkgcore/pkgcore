@@ -13,20 +13,20 @@ __all__ = ("initialize_cache", "get_plugins", "get_plugin")
 # latter an installed plugin issue. May have to change this if it
 # causes problems.
 
-from collections import defaultdict, namedtuple
-from importlib import import_module
 import operator
 import os.path
 import sys
+from collections import defaultdict, namedtuple
+from importlib import import_module
 
 from snakeoil import mappings, modules
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.fileutils import AtomicWriteFile, readlines_ascii
-from snakeoil.osutils import pjoin, listdir_files, ensure_dirs, unlink_if_exists
+from snakeoil.osutils import (ensure_dirs, listdir_files, pjoin,
+                              unlink_if_exists)
 
 from . import const, os_data
 from .log import logger
-
 
 _plugin_data = namedtuple(
     "_plugin_data", ["key", "priority", "source", "target"])

@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 
-from distutils import log
-from distutils.errors import DistutilsExecError
-from distutils.util import byte_compile
 import glob
-from itertools import chain
 import os
 import subprocess
 import sys
+from distutils import log
+from distutils.errors import DistutilsExecError
+from distutils.util import byte_compile
+from itertools import chain
 
 from setuptools import setup
-
 from snakeoil.dist import distutils_extensions as pkgdist
+
 pkgdist_setup, pkgdist_cmds = pkgdist.setup()
 
 # These offsets control where we install the pkgcore config files and the EBD

@@ -9,10 +9,10 @@ from snakeoil.sequences import stable_unique
 
 from ..ebuild import atom
 from ..ebuild.conditionals import DepSet
-from ..package import virtual
 from ..package import base as pkg_base
-from . import prototype
+from ..package import virtual
 from ..restrictions.boolean import OrRestriction
+from . import prototype
 
 
 class tree(prototype.tree):

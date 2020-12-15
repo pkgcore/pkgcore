@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 # Copyright 2007 Charlie Shepherd
 
-from operator import attrgetter
 import os
 import sys
+from operator import attrgetter
 
 try:
-    from pkgcore.util import commandline
     from pkgcore.restrictions.boolean import OrRestriction
+    from pkgcore.util import commandline
 except ImportError:
     print('Cannot import pkgcore!', file=sys.stderr)
     print('Verify it is properly installed and/or PYTHONPATH is set correctly.', file=sys.stderr)

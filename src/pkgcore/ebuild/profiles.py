@@ -3,10 +3,10 @@ __all__ = (
     "UserProfile",
 )
 
+import os
 from collections import defaultdict, namedtuple
 from functools import partial
 from itertools import chain
-import os
 
 from snakeoil import caching, klass
 from snakeoil.bash import iter_read_bash, read_bash_dict
@@ -19,11 +19,13 @@ from snakeoil.sequences import split_negations, stable_unique
 
 from ..config import errors
 from ..config.hint import ConfigHint
-from . import const, ebuild_src, misc, cpv, repo_objs, errors as ebuild_errors
-from .atom import atom
-from .eapi import get_eapi
 from ..fs.livefs import sorted_scan
 from ..log import logger
+from . import const, cpv, ebuild_src
+from . import errors as ebuild_errors
+from . import misc, repo_objs
+from .atom import atom
+from .eapi import get_eapi
 
 
 def package_keywords_splitter(iterable):

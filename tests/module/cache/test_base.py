@@ -1,9 +1,9 @@
 import operator
 
 from snakeoil.chksum import LazilyHashedPath
-
-from pkgcore.cache import base, errors, bulk
 from snakeoil.test import TestCase
+
+from pkgcore.cache import base, bulk, errors
 
 
 def _mk_chf_obj(**kwargs):

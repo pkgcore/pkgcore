@@ -1,8 +1,9 @@
+from snakeoil.test import TestCase
+
 from pkgcore.config import basics
 from pkgcore.config.hint import ConfigHint
 from pkgcore.scripts import pclonecache
 from pkgcore.test.scripts.helpers import ArgParseMixin
-from snakeoil.test import TestCase
 
 
 class Cache:

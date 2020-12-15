@@ -19,7 +19,6 @@ from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from . import errors
 from .hint import configurable
 
-
 type_names = ("list", "str", "bool", "int")
 
 

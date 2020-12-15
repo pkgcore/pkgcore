@@ -6,7 +6,7 @@ __all__ = ("tree",)
 
 from functools import partial
 
-from snakeoil.klass import GetAttrProxy, DirProxy
+from snakeoil.klass import DirProxy, GetAttrProxy
 
 from ..operations.repo import operations_proxy
 from ..package.conditionals import make_wrapper

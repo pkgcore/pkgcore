@@ -6,17 +6,16 @@ Shouldn't be accessed directly for the most part, use
 """
 
 import errno
-from functools import partial
 import os
+from functools import partial
 
 from snakeoil.osutils import ensure_dirs, pjoin, unlink_if_exists
 from snakeoil.process.spawn import spawn
 
 from ..const import CP_BINARY
+from ..plugin import get_plugin
 from . import contents, fs
 from .livefs import gen_obj
-from ..plugin import get_plugin
-
 
 __all__ = [
     "merge_contents", "unmerge_contents", "default_ensure_perms",

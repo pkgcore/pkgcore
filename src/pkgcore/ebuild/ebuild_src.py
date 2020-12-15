@@ -4,9 +4,9 @@ package class for buildable ebuilds
 
 __all__ = ("base", "package", "package_factory")
 
+import os
 from functools import partial
 from itertools import chain
-import os
 from sys import intern
 
 from snakeoil import chksum, data_source, fileutils, klass
@@ -14,15 +14,17 @@ from snakeoil.demandload import demand_compile_regexp
 
 from .. import fetch
 from ..cache import errors as cache_errors
-from . import conditionals, processor, errors as ebuild_errors
+from ..log import logger
+from ..package import errors as metadata_errors
+from ..package import metadata
+from ..package.base import DynamicGetattrSetter
+from ..restrictions import boolean, values
+from . import conditionals
+from . import errors as ebuild_errors
+from . import processor
 from .atom import atom
 from .eapi import get_eapi
 from .misc import sort_keywords
-from ..log import logger
-from ..package import errors as metadata_errors, metadata
-from ..package.base import DynamicGetattrSetter
-from ..restrictions import boolean, values
-
 
 demand_compile_regexp(
     '_EAPI_regex', r"^EAPI=(['\"]?)(?P<EAPI>[A-Za-z0-9+_.-]*)\1[\t ]*(?:#.*)?")

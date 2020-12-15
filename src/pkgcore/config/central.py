@@ -5,14 +5,14 @@ A lot of extra documentation on this is in dev-notes/config.rst.
 
 __all__ = ("CollapsedConfig", "ConfigManager",)
 
+import weakref
 from collections import defaultdict, deque, namedtuple
 from itertools import chain
-import weakref
 
-from snakeoil import mappings, klass
+from snakeoil import klass, mappings
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
 
-from . import errors, basics
+from . import basics, errors
 
 _section_data = namedtuple('_section_data', ['name', 'section'])
 

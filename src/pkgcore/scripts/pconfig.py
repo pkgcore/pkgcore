@@ -8,13 +8,13 @@ __all__ = (
     "dump_uncollapsed", "dump_uncollapsed_main"
 )
 
-from functools import partial
 import textwrap
 import traceback
+from functools import partial
 
 from snakeoil.errors import dump_error
 
-from ..config import errors, basics
+from ..config import basics, errors
 from ..ebuild import atom
 from ..plugin import get_plugins
 from ..util import commandline

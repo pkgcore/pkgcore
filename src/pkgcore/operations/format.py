@@ -14,7 +14,8 @@ from snakeoil.dependant_methods import ForcedDepends
 from snakeoil.osutils import pjoin
 from snakeoil.sequences import iflatten_instance
 
-from .. import fetch as _fetch_module, operations as _operations_mod
+from .. import fetch as _fetch_module
+from .. import operations as _operations_mod
 from ..exceptions import PkgcoreUserException
 from ..fetch import errors as fetch_errors
 

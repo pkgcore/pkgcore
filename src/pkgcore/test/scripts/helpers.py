@@ -3,7 +3,7 @@
 from snakeoil.cli import arghparse
 from snakeoil.test import argparse_helpers
 
-from ...config import central, basics
+from ...config import basics, central
 from ...config.hint import ConfigHint
 
 

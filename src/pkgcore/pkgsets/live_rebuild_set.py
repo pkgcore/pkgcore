@@ -4,8 +4,8 @@ Note: HACK. Quick proof of concept, could do with cleaning up.
 """
 
 from ..config.hint import ConfigHint
-from .installed import VersionedInstalled
 from ..repository.util import RepositoryGroup
+from .installed import VersionedInstalled
 
 
 class EclassConsumerSet(VersionedInstalled):

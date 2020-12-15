@@ -5,7 +5,7 @@ from pkgcore.config.hint import ConfigHint, configurable
 from pkgcore.ebuild.repo_objs import RepoConfig
 from pkgcore.repository import multiplex
 from pkgcore.scripts import pshowkw
-from pkgcore.test.misc import FakePkg, FakeEbuildRepo
+from pkgcore.test.misc import FakeEbuildRepo, FakePkg
 from pkgcore.test.scripts.helpers import ArgParseMixin
 
 

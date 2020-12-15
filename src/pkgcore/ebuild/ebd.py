@@ -9,36 +9,36 @@ __all__ = (
     "ebd", "setup_mixin", "install_op", "uninstall_op", "replace_op",
     "buildable", "binpkg_localize")
 
-from collections import defaultdict
 import errno
-from functools import partial
-from itertools import chain
 import os
 import re
 import shutil
 import sys
-from tempfile import TemporaryFile
 import time
+from collections import defaultdict
+from functools import partial
+from itertools import chain
+from tempfile import TemporaryFile
 
 from snakeoil import data_source, klass
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.contexts import chdir
 from snakeoil.currying import post_curry, pretty_docs
 from snakeoil.fileutils import touch
-from snakeoil.osutils import ensure_dirs, normpath, pjoin, listdir_files
-from snakeoil.process.spawn import (
-    spawn_bash, spawn, is_sandbox_capable, is_userpriv_capable)
+from snakeoil.osutils import ensure_dirs, listdir_files, normpath, pjoin
+from snakeoil.process.spawn import (is_sandbox_capable, is_userpriv_capable,
+                                    spawn, spawn_bash)
 from snakeoil.sequences import iflatten_instance, iter_stable_unique
 
 from .. import const
-from . import ebd_ipc, ebuild_built, errors
-from .processor import (
-    request_ebuild_processor, release_ebuild_processor, ProcessorError,
-    expected_ebuild_env, chuck_UnhandledCommand, inherit_handler)
 from ..log import logger
-from ..operations import observer, format
+from ..operations import format, observer
 from ..os_data import portage_gid, portage_uid, xargs
 from ..package.mutated import MutatedPkg
+from . import ebd_ipc, ebuild_built, errors
+from .processor import (ProcessorError, chuck_UnhandledCommand,
+                        expected_ebuild_env, inherit_handler,
+                        release_ebuild_processor, request_ebuild_processor)
 
 
 class ebd:

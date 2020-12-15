@@ -1,14 +1,14 @@
 """display package keywords"""
 
-from functools import partial
 import os
+from functools import partial
 
 from snakeoil.strings import pluralism as _pl
 
 from .._vendor.tabulate import tabulate, tabulate_formats
 from ..ebuild import restricts
-from ..util import commandline, packages as pkgutils
-
+from ..util import commandline
+from ..util import packages as pkgutils
 
 argparser = commandline.ArgumentParser(description=__doc__, script=(__file__, __name__))
 argparser.add_argument(

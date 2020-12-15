@@ -4,8 +4,8 @@ built ebuild packages (vdb packages and binpkgs are derivatives of this)
 
 __all__ = ("package", "package_factory")
 
-from functools import partial
 import itertools
+from functools import partial
 
 from snakeoil.currying import post_curry
 from snakeoil.data_source import local_source
@@ -13,12 +13,12 @@ from snakeoil.mappings import IndeterminantDict
 from snakeoil.obj import DelayedInstantiation
 
 from .. import fetch
-from . import ebd, ebuild_src, conditionals, triggers
-from .eapi import get_eapi
 from ..fs.livefs import scan
 from ..merge import engine
 from ..package import metadata
 from ..package.base import DynamicGetattrSetter
+from . import conditionals, ebd, ebuild_src, triggers
+from .eapi import get_eapi
 
 
 def _passthrough(inst, attr):

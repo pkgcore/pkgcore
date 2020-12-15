@@ -1,5 +1,5 @@
-from functools import partial
 import io
+from functools import partial
 
 from snakeoil.test import TestCase
 

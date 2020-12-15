@@ -10,9 +10,9 @@ from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.iterables import expandable_chain
 from snakeoil.sequences import iflatten_instance
 
+from ..restrictions import boolean, packages, restriction, values
 from .atom import atom, transitive_use_atom
 from .errors import DepsetParseError
-from ..restrictions import packages, values, boolean, restriction
 
 
 class DepSet(boolean.AndRestriction):

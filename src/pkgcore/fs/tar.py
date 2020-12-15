@@ -2,10 +2,10 @@
 binpkg tar utilities
 """
 
-from functools import partial
-from itertools import count
 import os
 import stat
+from functools import partial
+from itertools import count
 
 from snakeoil import compression
 from snakeoil.compatibility import cmp, sorted_cmp
@@ -13,7 +13,7 @@ from snakeoil.data_source import invokable_data_source
 from snakeoil.tar import tarfile
 
 from . import contents
-from .fs import fsFile, fsDir, fsSymlink, fsFifo, fsDev
+from .fs import fsDev, fsDir, fsFifo, fsFile, fsSymlink
 
 _unique_inode = count(2**32).__next__
 

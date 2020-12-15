@@ -6,47 +6,50 @@ __all__ = ("domain",)
 
 # XXX doc this up better...
 
-from collections import defaultdict
 import copy
+import os
+import re
+import tempfile
+from collections import defaultdict
 from functools import partial
 from itertools import chain
 from multiprocessing import cpu_count
 from operator import itemgetter
-import os
-import re
-import tempfile
 
 from snakeoil import klass
 from snakeoil.bash import iter_read_bash, read_bash_dict
 from snakeoil.cli.exceptions import find_user_exception
 from snakeoil.data_source import local_source
-from snakeoil.mappings import ProtectedDict, ImmutableDict
 from snakeoil.log import suppress_logging
+from snakeoil.mappings import ImmutableDict, ProtectedDict
 from snakeoil.osutils import pjoin
 from snakeoil.process.spawn import spawn_get_output
-from snakeoil.sequences import split_negations, stable_unique, predicate_split
+from snakeoil.sequences import predicate_split, split_negations, stable_unique
 
 from ..binpkg import repository as binary_repo
 from ..cache.flat_hash import md5_cache
 from ..config import errors as config_errors
-from ..config.domain import Failure, domain as config_domain
+from ..config.domain import Failure
+from ..config.domain import domain as config_domain
 from ..config.hint import ConfigHint
-from . import const, repository as ebuild_repo
-from .atom import atom as _atom
-from .misc import (
-    ChunkedDataDict, chunked_data, collapsed_restrict_to_data,
-    incremental_expansion, incremental_expansion_license,
-    non_incremental_collapsed_restrict_to_data, optimize_incrementals)
-from .portage_conf import PortageConfig
-from .repo_objs import RepoConfig, OverlayedLicenses
-from .triggers import GenerateTriggers
 from ..fs.livefs import iter_scan, sorted_scan
 from ..log import logger
-from ..repository import filtered, errors as repo_errors
+from ..repository import errors as repo_errors
+from ..repository import filtered
 from ..repository.util import RepositoryGroup
 from ..restrictions import packages, values
 from ..restrictions.delegated import delegate
-from ..util.parserestrict import parse_match, ParseError
+from ..util.parserestrict import ParseError, parse_match
+from . import const
+from . import repository as ebuild_repo
+from .atom import atom as _atom
+from .misc import (ChunkedDataDict, chunked_data, collapsed_restrict_to_data,
+                   incremental_expansion, incremental_expansion_license,
+                   non_incremental_collapsed_restrict_to_data,
+                   optimize_incrementals)
+from .portage_conf import PortageConfig
+from .repo_objs import OverlayedLicenses, RepoConfig
+from .triggers import GenerateTriggers
 
 
 def package_masks(iterable):

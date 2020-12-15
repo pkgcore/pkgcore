@@ -8,23 +8,23 @@ import errno
 import os
 
 from snakeoil import chksum, compression
-from snakeoil.data_source import local_source, data_source
-from snakeoil.klass import jit_attr, jit_attr_named, alias_attr
+from snakeoil.data_source import data_source, local_source
+from snakeoil.klass import alias_attr, jit_attr, jit_attr_named
 from snakeoil.mappings import DictMixin, StackedDict
-from snakeoil.osutils import listdir_dirs, listdir_files, access, pjoin
+from snakeoil.osutils import access, listdir_dirs, listdir_files, pjoin
 
-from . import remote, repo_ops
-from .xpak import Xpak
 from ..config.hint import ConfigHint
 from ..ebuild import ebd, ebuild_built
 from ..ebuild.cpv import VersionedCPV
-from ..fs.contents import offset_rewriter, contentsSet
+from ..fs.contents import contentsSet, offset_rewriter
 from ..fs.livefs import scan
 from ..fs.tar import generate_contents
 from ..merge import engine, triggers
 from ..package import base as pkg_base
 from ..plugin import get_plugin
-from ..repository import prototype, errors, wrapper
+from ..repository import errors, prototype, wrapper
+from . import remote, repo_ops
+from .xpak import Xpak
 
 
 class force_unpacking(triggers.base):

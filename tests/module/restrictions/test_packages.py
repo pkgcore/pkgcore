@@ -2,8 +2,8 @@ from snakeoil.mappings import AttrAccessible
 
 from pkgcore import log
 from pkgcore.restrictions import packages, values
-from pkgcore.test import (
-    silence_logging, TestRestriction, TestCase, malleable_obj, callback_logger)
+from pkgcore.test import (TestCase, TestRestriction, callback_logger,
+                          malleable_obj, silence_logging)
 
 
 class AlwaysSelfIntersect(values.base):

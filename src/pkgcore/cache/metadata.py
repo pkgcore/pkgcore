@@ -6,12 +6,12 @@ __all__ = ("database", "protective_database")
 
 import os
 
-from snakeoil.osutils import pjoin
 from snakeoil.mappings import ProtectedDict
+from snakeoil.osutils import pjoin
 
-from . import flat_hash, errors
 from ..config.hint import ConfigHint
 from ..ebuild import eclass_cache
+from . import errors, flat_hash
 
 
 # store the current key order *here*.

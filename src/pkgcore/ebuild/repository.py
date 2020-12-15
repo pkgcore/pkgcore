@@ -4,12 +4,12 @@ Ebuild repository, specific to gentoo ebuild trees.
 
 __all__ = ("UnconfiguredTree", "ConfiguredTree", "ProvidesRepo", "tree")
 
-from functools import partial, wraps
-from itertools import chain, filterfalse
 import locale
-from operator import attrgetter
 import os
 import stat
+from functools import partial, wraps
+from itertools import chain, filterfalse
+from operator import attrgetter
 from random import shuffle
 from sys import intern
 
@@ -20,26 +20,26 @@ from snakeoil.data_source import local_source
 from snakeoil.fileutils import readlines
 from snakeoil.mappings import ImmutableDict
 from snakeoil.obj import make_kls
-from snakeoil.osutils import listdir_files, listdir_dirs, pjoin
+from snakeoil.osutils import listdir_dirs, listdir_files, pjoin
 from snakeoil.sequences import iflatten_instance, stable_unique
 from snakeoil.strings import pluralism as _pl
 from snakeoil.weakrefs import WeakValCache
 
 from .. import fetch
 from ..config.hint import ConfigHint, configurable
-from . import (
-    cpv, digest, ebd, repo_objs, atom, restricts, processor,
-    ebuild_src, eclass_cache as eclass_cache_mod, errors as ebuild_errors,
-)
-from .eapi import get_eapi
 from ..fs.livefs import sorted_scan
 from ..log import logger
 from ..operations import repo as _repo_ops
 from ..package import errors as pkg_errors
-from ..repository import prototype, errors, configured, util
+from ..repository import configured, errors, prototype, util
 from ..repository.virtual import RestrictionRepo
 from ..restrictions import packages
 from ..util.packages import groupby_pkg
+from . import atom, cpv, digest, ebd, ebuild_src
+from . import eclass_cache as eclass_cache_mod
+from . import errors as ebuild_errors
+from . import processor, repo_objs, restricts
+from .eapi import get_eapi
 
 
 class repo_operations(_repo_ops.operations):

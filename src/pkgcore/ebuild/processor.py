@@ -20,24 +20,23 @@ __all__ = (
 
 import contextlib
 import errno
-from functools import partial, wraps
 import logging
-from itertools import chain
 import os
 import signal
 import sys
 import threading
 import traceback
+from functools import partial, wraps
+from itertools import chain
 
 from snakeoil import bash, fileutils, klass, process
 from snakeoil.osutils import abspath, normpath, pjoin
 from snakeoil.process import spawn
 
 from .. import __file__, const, os_data
-from . import const as e_const
 from ..exceptions import PkgcoreException, PkgcoreUserException
 from ..log import logger
-
+from . import const as e_const
 
 _global_ebp_lock = threading.Lock()
 inactive_ebp_list = []

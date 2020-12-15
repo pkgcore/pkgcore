@@ -1,5 +1,6 @@
-from pkgcore.restrictions import util, packages, values
 from snakeoil.test import TestCase
+
+from pkgcore.restrictions import packages, util, values
 
 
 class Test_collect_package_restrictions(TestCase):

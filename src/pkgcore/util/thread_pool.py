@@ -1,11 +1,11 @@
+import queue
+import threading
 from collections import deque
 from multiprocessing import cpu_count
-import threading
 from types import GeneratorType
-import queue
 
-from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil import klass
+from snakeoil.compatibility import IGNORED_EXCEPTIONS
 
 
 def reclaim_threads(threads):

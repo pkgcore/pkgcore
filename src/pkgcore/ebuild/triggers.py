@@ -13,15 +13,14 @@ import os
 from snakeoil.bash import read_bash_dict
 from snakeoil.fileutils import AtomicWriteFile
 from snakeoil.osutils import listdir_files, normpath, pjoin
-from snakeoil.sequences import stable_unique, iflatten_instance
+from snakeoil.sequences import iflatten_instance, stable_unique
 
 from .. import os_data, ospkg
 from ..fs import livefs
 from ..log import logger
-from ..merge import triggers, const, errors
+from ..merge import const, errors, triggers
 from ..restrictions import values
 from ..system import libtool
-
 
 colon_parsed = frozenset([
     "ADA_INCLUDE_PATH", "ADA_OBJECTS_PATH", "INFODIR", "INFOPATH", "LDPATH",

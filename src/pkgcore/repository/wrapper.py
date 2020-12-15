@@ -7,10 +7,10 @@ __all__ = ("tree",)
 # icky.
 # ~harring
 
-from snakeoil.klass import GetAttrProxy, DirProxy
+from snakeoil.klass import DirProxy, GetAttrProxy
 
 from ..operations import repo
-from . import prototype, errors
+from . import errors, prototype
 
 
 class tree(prototype.tree):

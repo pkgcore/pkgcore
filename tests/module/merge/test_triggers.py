@@ -1,22 +1,21 @@
-from functools import partial
-
-from math import floor, ceil
 import os
 import shutil
 import time
+from functools import partial
+from math import ceil, floor
 
 import pytest
 from snakeoil import process
 from snakeoil.currying import post_curry
-from snakeoil.osutils import pjoin, ensure_dirs, normpath
-from snakeoil.test import mixins, TestCase
+from snakeoil.osutils import ensure_dirs, normpath, pjoin
+from snakeoil.test import TestCase, mixins
 
 from pkgcore.fs import fs
-from pkgcore.merge import triggers, const
 from pkgcore.fs.contents import contentsSet
 from pkgcore.fs.livefs import gen_obj, scan
+from pkgcore.merge import const, triggers
 
-from .util import fake_trigger, fake_engine, fake_reporter
+from .util import fake_engine, fake_reporter, fake_trigger
 
 
 def _render_msg(func, msg, *args, **kwargs):

@@ -9,7 +9,7 @@ from pkgcore.ebuild.cpv import VersionedCPV
 from pkgcore.operations.repo import operations
 from pkgcore.package.mutated import MutatedPkg
 from pkgcore.repository.util import SimpleTree
-from pkgcore.restrictions import packages, values, boolean
+from pkgcore.restrictions import boolean, packages, values
 from pkgcore.test import malleable_obj
 
 

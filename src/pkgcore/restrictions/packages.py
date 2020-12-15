@@ -2,12 +2,12 @@
 restriction classes designed for package level matching
 """
 
-from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil import klass
+from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.klass import generic_equality, static_attrgetter
 
-from . import restriction, boolean
 from ..log import logger
+from . import boolean, restriction
 
 
 class PackageRestriction(restriction.base, metaclass=generic_equality):

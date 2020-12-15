@@ -5,17 +5,16 @@ interaction with the livefs: generating fs objects to represent the livefs.
 import collections
 import errno
 import os
-from stat import S_IMODE, S_ISDIR, S_ISREG, S_ISLNK, S_ISFIFO
+from stat import S_IMODE, S_ISDIR, S_ISFIFO, S_ISLNK, S_ISREG
 
 from snakeoil.chksum import get_handlers
 from snakeoil.data_source import local_source
-from snakeoil.osutils import normpath, pjoin
 from snakeoil.mappings import LazyValDict
-from snakeoil.osutils import listdir
+from snakeoil.osutils import listdir, normpath, pjoin
 
 from .contents import contentsSet
-from .fs import (
-    fsFile, fsDir, fsSymlink, fsDev, fsFifo, get_major_minor, fsBase)
+from .fs import (fsBase, fsDev, fsDir, fsFifo, fsFile, fsSymlink,
+                 get_major_minor)
 
 __all__ = ["gen_obj", "scan", "iter_scan", "sorted_scan"]
 

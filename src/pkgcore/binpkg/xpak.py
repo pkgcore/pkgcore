@@ -4,14 +4,13 @@ XPAK container support
 
 __all__ = ("MalformedXpak", "Xpak")
 
-from collections import OrderedDict
 import os
+from collections import OrderedDict
 
 from snakeoil import klass
 from snakeoil import struct_compat as struct
 
 from ..exceptions import PkgcoreException
-
 
 # format is:
 # XPAKPACKIIIIDDDD[index][data]XPAKSTOPOOOOSTOP

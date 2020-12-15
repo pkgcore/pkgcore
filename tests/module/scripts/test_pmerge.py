@@ -3,8 +3,8 @@ import pytest
 from pkgcore.ebuild.atom import atom
 from pkgcore.repository.util import SimpleTree
 from pkgcore.scripts import pmerge
-from pkgcore.util.parserestrict import parse_match
 from pkgcore.test.misc import FakePkg, FakeRepo
+from pkgcore.util.parserestrict import parse_match
 
 
 # TODO: make repo objs into configurable fixtures

@@ -6,7 +6,6 @@ from snakeoil.osutils import pjoin
 
 from .. import const
 
-
 incrementals = (
     "ACCEPT_KEYWORDS", "ACCEPT_LICENSE", "CONFIG_PROTECT",
     "CONFIG_PROTECT_MASK", "FEATURES", "IUSE_IMPLICIT",

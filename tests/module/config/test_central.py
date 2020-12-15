@@ -1,7 +1,7 @@
 from snakeoil.errors import walk_exception_chain
 from snakeoil.test import TestCase
 
-from pkgcore.config import central, basics, errors
+from pkgcore.config import basics, central, errors
 from pkgcore.config.hint import configurable
 
 

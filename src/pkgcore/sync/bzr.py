@@ -3,6 +3,7 @@ __all__ = ("bzr_syncer",)
 import os
 
 from snakeoil.process.spawn import spawn_get_output
+
 from . import base
 
 

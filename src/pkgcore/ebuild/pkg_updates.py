@@ -1,12 +1,12 @@
-from collections import deque, defaultdict
+from collections import defaultdict, deque
 from operator import itemgetter
 
 from snakeoil.demandload import demand_compile_regexp
 from snakeoil.osutils import listdir_files, pjoin
 from snakeoil.sequences import iflatten_instance
 
-from .atom import atom
 from ..log import logger
+from .atom import atom
 
 demand_compile_regexp('valid_updates_re', r'^([1-4])Q-(\d{4})$')
 

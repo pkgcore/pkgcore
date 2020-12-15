@@ -16,10 +16,11 @@ from snakeoil.dependant_methods import ForcedDepends
 from .. import operations as operations_mod
 from ..exceptions import PkgcoreException
 from ..log import logger
-from . import observer as observer_mod, regen
 from ..package.mutated import MutatedPkg
 from ..restrictions import packages
 from ..sync import base as _sync_base
+from . import observer as observer_mod
+from . import regen
 
 
 class fake_lock:

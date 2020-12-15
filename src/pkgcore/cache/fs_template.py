@@ -8,8 +8,8 @@ import os
 
 from snakeoil.osutils import ensure_dirs, pjoin
 
-from . import base
 from ..os_data import portage_gid
+from . import base
 
 
 class FsBased(base):

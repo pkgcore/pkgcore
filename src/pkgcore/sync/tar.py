@@ -1,11 +1,11 @@
 __all__ = ("tar_syncer",)
 
 import atexit
-from functools import partial
 import os
 import shutil
 import tempfile
 import uuid
+from functools import partial
 
 from snakeoil.osutils import ensure_dirs
 

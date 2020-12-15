@@ -5,6 +5,7 @@ from snakeoil.compatibility import cmp
 
 from pkgcore.ebuild import cpv
 
+
 def generate_misc_sufs():
     simple_good_sufs = ["_alpha", "_beta", "_pre", "_p"]
     suf_nums = list(range(100))

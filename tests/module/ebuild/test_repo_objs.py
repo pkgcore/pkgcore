@@ -7,7 +7,7 @@ from snakeoil.data_source import data_source
 from snakeoil.fileutils import touch
 from snakeoil.mappings import ImmutableDict
 
-from pkgcore.ebuild import repo_objs, atom
+from pkgcore.ebuild import atom, repo_objs
 from pkgcore.repository import errors as repo_errors
 
 

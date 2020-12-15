@@ -7,7 +7,6 @@ import re
 
 from ..log import logger
 
-
 COMMAND_PARSING, SPACE_PARSING = list(range(2))
 
 

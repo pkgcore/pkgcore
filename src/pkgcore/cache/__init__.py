@@ -4,17 +4,17 @@ cache subsystem, typically used for storing package metadata
 
 __all__ = ("base", "bulk")
 
-from functools import partial
 import math
-import os
 import operator
+import os
+from functools import partial
 
 from snakeoil import klass
 from snakeoil.chksum import get_handler
 from snakeoil.mappings import ProtectedDict
 
-from . import errors
 from ..ebuild.const import metadata_keys
+from . import errors
 
 
 class base:

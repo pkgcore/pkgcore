@@ -2,13 +2,13 @@
 contents set- container of fs objects
 """
 
-from collections import defaultdict, OrderedDict
-from functools import partial
-from operator import attrgetter
 import os
 import time
+from collections import OrderedDict, defaultdict
+from functools import partial
+from operator import attrgetter
 
-from snakeoil.klass import generic_equality, alias_method
+from snakeoil.klass import alias_method, generic_equality
 from snakeoil.osutils import normpath, pjoin
 
 from . import fs

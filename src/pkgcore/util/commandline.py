@@ -14,15 +14,15 @@ __all__ = (
 )
 
 import argparse
-from functools import partial
-from importlib import import_module
 import os
 import sys
+from functools import partial
+from importlib import import_module
 
 from snakeoil import modules
 from snakeoil.cli import arghparse, tool
 from snakeoil.log import suppress_logging
-from snakeoil.osutils import pjoin, abspath, normpath
+from snakeoil.osutils import abspath, normpath, pjoin
 from snakeoil.sequences import iflatten_instance, unstable_unique
 from snakeoil.strings import pluralism
 

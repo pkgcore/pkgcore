@@ -4,10 +4,10 @@ repository that combines multiple repos together
 
 __all__ = ("tree", "operations")
 
+import os
 from functools import partial
 from itertools import chain
 from operator import itemgetter
-import os
 
 from snakeoil import klass
 from snakeoil.compatibility import sorted_cmp
@@ -16,7 +16,7 @@ from snakeoil.iterables import iter_sort
 
 from ..config.hint import configurable
 from ..operations import repo as repo_interface
-from . import prototype, errors
+from . import errors, prototype
 
 
 class operations(repo_interface.operations_proxy):

@@ -12,9 +12,9 @@ from snakeoil.chksum import get_handler
 from snakeoil.mappings import ImmutableDict
 
 from .. import gpg
-from . import cpv
-from ..package import errors
 from ..fs.livefs import iter_scan
+from ..package import errors
+from . import cpv
 
 
 def _write_manifest(handle, chf, filename, chksums):

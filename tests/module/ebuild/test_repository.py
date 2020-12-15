@@ -6,8 +6,9 @@ from snakeoil.fileutils import touch
 from snakeoil.osutils import ensure_dirs, pjoin
 from snakeoil.test.mixins import TempDirMixin
 
+from pkgcore.ebuild import eclass_cache
 from pkgcore.ebuild import errors as ebuild_errors
-from pkgcore.ebuild import repository, restricts, eclass_cache
+from pkgcore.ebuild import repository, restricts
 from pkgcore.ebuild.atom import atom
 from pkgcore.repository import errors
 

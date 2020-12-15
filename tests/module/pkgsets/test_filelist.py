@@ -1,11 +1,12 @@
 import os
 import tempfile
 
+from snakeoil.test import TestCase
+
 from pkgcore import log, os_data
 from pkgcore.ebuild.atom import atom
 from pkgcore.pkgsets import filelist
-from pkgcore.test import protect_logging, callback_logger
-from snakeoil.test import TestCase
+from pkgcore.test import callback_logger, protect_logging
 
 
 class TestFileList(TestCase):

@@ -9,13 +9,13 @@ __all__ = (
 import os
 
 from snakeoil.klass import jit_attr
-from snakeoil.mappings import LazyValDict, DictMixin
+from snakeoil.mappings import DictMixin, LazyValDict
 from snakeoil.osutils import pjoin
 from snakeoil.sequences import iflatten_instance
 
 from ..ebuild.atom import atom
 from ..operations import repo
-from ..restrictions import values, boolean, restriction, packages
+from ..restrictions import boolean, packages, restriction, values
 from ..restrictions.util import collect_package_restrictions
 
 

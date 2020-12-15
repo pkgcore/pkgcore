@@ -1,4 +1,4 @@
-from snakeoil.osutils import pjoin, ensure_dirs
+from snakeoil.osutils import ensure_dirs, pjoin
 
 from ..merge import triggers
 from . import deb

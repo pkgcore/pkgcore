@@ -1,13 +1,13 @@
-from functools import partial
 import os
+from functools import partial
 
 from snakeoil import osutils
 from snakeoil.cli import arghparse
 
-from . import atom, conditionals
-from .eapi import get_eapi
 from ..restrictions.boolean import AndRestriction
 from ..util import commandline, packages
+from . import atom, conditionals
+from .eapi import get_eapi
 
 
 def str_pkg(pkg):

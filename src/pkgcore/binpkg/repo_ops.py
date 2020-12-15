@@ -15,12 +15,12 @@ import os
 
 from snakeoil.compression import compress_data
 from snakeoil.klass import steal_docs
-from snakeoil.osutils import pjoin, unlink_if_exists, ensure_dirs
+from snakeoil.osutils import ensure_dirs, pjoin, unlink_if_exists
 
-from . import xpak
 from ..fs import tar
 from ..log import logger
 from ..operations import repo as repo_interfaces
+from . import xpak
 
 
 def discern_loc(base, pkg, extension='.tbz2'):

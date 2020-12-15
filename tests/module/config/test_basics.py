@@ -1,9 +1,10 @@
 import os
 import tempfile
 
-from pkgcore.config import basics, errors, central
-from pkgcore.config.hint import ConfigHint, configurable
 from snakeoil.test import TestCase
+
+from pkgcore.config import basics, central, errors
+from pkgcore.config.hint import ConfigHint, configurable
 
 
 def passthrough(*args, **kwargs):

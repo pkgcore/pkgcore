@@ -7,7 +7,7 @@ from snakeoil import data_source
 from snakeoil.chksum import get_handler
 from snakeoil.fileutils import AtomicWriteFile, readlines_utf8
 
-from ..  import os_data
+from .. import os_data
 from ..fs import fs
 from ..fs.contents import contentsSet
 

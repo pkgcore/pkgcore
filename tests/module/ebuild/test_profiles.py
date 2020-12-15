@@ -1,12 +1,12 @@
 import binascii
 import errno
-from functools import partial
 import os
 import shutil
 import tempfile
+from functools import partial
 from unittest import mock
 
-from snakeoil.osutils import pjoin, ensure_dirs, normpath
+from snakeoil.osutils import ensure_dirs, normpath, pjoin
 from snakeoil.test import TestCase
 from snakeoil.test.mixins import TempDirMixin
 

@@ -6,7 +6,7 @@ __all__ = ("fetcher",)
 
 import os
 
-from snakeoil.chksum import get_handlers, get_chksums, MissingChksumHandler
+from snakeoil.chksum import MissingChksumHandler, get_chksums, get_handlers
 
 from . import errors
 

@@ -2,9 +2,9 @@
 
 """Wrapper for running commandline scripts."""
 
-from importlib import import_module
 import os
 import sys
+from importlib import import_module
 
 
 def run(script_name):

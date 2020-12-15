@@ -1,7 +1,7 @@
 import sys
 
-from snakeoil.test import TestCase
 import pytest
+from snakeoil.test import TestCase
 
 from pkgcore.config import basics, errors
 from pkgcore.config.hint import configurable

@@ -4,8 +4,8 @@
 import sys
 
 try:
-    from pkgcore.util import commandline
     from pkgcore.repository.util import get_raw_repos, get_virtual_repos
+    from pkgcore.util import commandline
 except ImportError:
     print('Cannot import pkgcore!', file=sys.stderr)
     print('Verify it is properly installed and/or PYTHONPATH is set correctly.', file=sys.stderr)

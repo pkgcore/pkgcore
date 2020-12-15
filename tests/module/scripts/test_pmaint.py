@@ -8,13 +8,11 @@ from snakeoil.test import TestCase
 from pkgcore.config import basics
 from pkgcore.config.hint import ConfigHint, configurable
 from pkgcore.ebuild.cpv import CPV
-from pkgcore.operations.repo import install, uninstall, replace, operations
-from pkgcore.repository import util, syncable
+from pkgcore.operations.repo import install, operations, replace, uninstall
+from pkgcore.repository import syncable, util
 from pkgcore.scripts import pmaint
 from pkgcore.sync import base
 from pkgcore.test.scripts.helpers import ArgParseMixin
-
-
 
 Options = AttrAccessible
 

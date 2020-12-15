@@ -1,18 +1,17 @@
-from collections import defaultdict
-from functools import partial
 import os
 import re
 import subprocess
 import sys
+from collections import defaultdict
+from functools import partial
 
-from snakeoil import mappings, weakrefs, klass
+from snakeoil import klass, mappings, weakrefs
 from snakeoil.demandload import demand_compile_regexp
 from snakeoil.osutils import pjoin
 from snakeoil.process.spawn import bash_version
 
-from . import atom, const
 from ..log import logger
-
+from . import atom, const
 
 demand_compile_regexp(
     '_valid_EAPI_regex', r"^[A-Za-z0-9_][A-Za-z0-9+_.-]*$"

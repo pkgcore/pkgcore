@@ -11,7 +11,7 @@ import re
 from snakeoil.klass import generic_equality, reflective_hash
 from snakeoil.sequences import iflatten_instance
 
-from . import restriction, boolean, packages
+from . import boolean, packages, restriction
 
 
 class base(restriction.base):

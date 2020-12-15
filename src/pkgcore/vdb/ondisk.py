@@ -1,9 +1,9 @@
 __all__ = ("tree", "ConfiguredTree")
 
 import errno
-from functools import partial
 import os
 import stat
+from functools import partial
 
 from snakeoil import data_source
 from snakeoil.fileutils import readfile

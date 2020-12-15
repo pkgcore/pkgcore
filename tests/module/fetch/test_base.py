@@ -1,11 +1,11 @@
-from functools import partial
 import os
+from functools import partial
 
+import pytest
 from snakeoil import data_source
 from snakeoil.chksum import get_handlers
-import pytest
 
-from pkgcore.fetch import base, fetchable, errors
+from pkgcore.fetch import base, errors, fetchable
 
 repeating_str = 'asdf'
 data = repeating_str * 4000
@@ -13,6 +13,8 @@ handlers = get_handlers()
 
 
 from snakeoil.mappings import LazyValDict
+
+
 def _callback(chf):
     return handlers[chf](data_source.data_source(data))
 chksums = LazyValDict(frozenset(handlers.keys()), _callback)

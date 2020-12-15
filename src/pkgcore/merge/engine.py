@@ -10,26 +10,26 @@ __all__ = ("alias_cset", "map_new_cset_livefs", "MergeEngine")
 # post merge triggers
 # ordering?
 
-from functools import partial
-from itertools import chain
 import io
-from multiprocessing import cpu_count
 import operator
 import tempfile
 import traceback
+from functools import partial
+from itertools import chain
+from multiprocessing import cpu_count
 
 from snakeoil import data_source
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.currying import post_curry
 from snakeoil.fileutils import touch
-from snakeoil.mappings import LazyValDict, ImmutableDict, StackedDict
+from snakeoil.mappings import ImmutableDict, LazyValDict, StackedDict
 from snakeoil.osutils import normpath
 
 from ..fs import contents, livefs
-from . import errors
-from .const import REPLACE_MODE, INSTALL_MODE, UNINSTALL_MODE
 from ..operations import observer as observer_mod
 from ..plugin import get_plugins
+from . import errors
+from .const import INSTALL_MODE, REPLACE_MODE, UNINSTALL_MODE
 
 
 def alias_cset(alias, engine, csets):

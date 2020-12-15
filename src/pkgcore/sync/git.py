@@ -2,7 +2,7 @@ __all__ = ("git_syncer",)
 
 import os
 
-from pkgcore.sync import base
+from . import base
 
 
 class git_syncer(base.VcsSyncer):

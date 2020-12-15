@@ -12,16 +12,16 @@ from sys import intern
 from snakeoil import chksum, data_source, fileutils, klass
 from snakeoil.demandload import demand_compile_regexp
 
-from pkgcore import fetch
-from pkgcore.cache import errors as cache_errors
-from pkgcore.ebuild import conditionals, processor, errors as ebuild_errors
-from pkgcore.ebuild.atom import atom
-from pkgcore.ebuild.eapi import get_eapi
-from pkgcore.ebuild.misc import sort_keywords
-from pkgcore.log import logger
-from pkgcore.package import errors as metadata_errors, metadata
-from pkgcore.package.base import DynamicGetattrSetter
-from pkgcore.restrictions import boolean, values
+from .. import fetch
+from ..cache import errors as cache_errors
+from . import conditionals, processor, errors as ebuild_errors
+from .atom import atom
+from .eapi import get_eapi
+from .misc import sort_keywords
+from ..log import logger
+from ..package import errors as metadata_errors, metadata
+from ..package.base import DynamicGetattrSetter
+from ..restrictions import boolean, values
 
 
 demand_compile_regexp(

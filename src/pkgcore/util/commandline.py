@@ -26,11 +26,11 @@ from snakeoil.osutils import pjoin, abspath, normpath
 from snakeoil.sequences import iflatten_instance, unstable_unique
 from snakeoil.strings import pluralism
 
-from pkgcore.config import basics, load_config
-from pkgcore.plugin import get_plugins
-from pkgcore.repository import errors as repo_errors
-from pkgcore.restrictions import packages, restriction
-from pkgcore.util import parserestrict
+from ..config import basics, load_config
+from ..plugin import get_plugins
+from ..repository import errors as repo_errors
+from ..restrictions import packages, restriction
+from . import parserestrict
 
 
 class StoreTarget(argparse._AppendAction):

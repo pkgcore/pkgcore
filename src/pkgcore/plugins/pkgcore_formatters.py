@@ -1,4 +1,4 @@
-from pkgcore.config import basics
+from ..config import basics
 
 pkgcore_plugins = {
     'global_config': [{

@@ -17,13 +17,13 @@ from snakeoil.osutils import listdir_dirs, listdir_files, pjoin
 from snakeoil.sequences import iflatten_instance, split_negations
 from snakeoil.strings import pluralism
 
-from pkgcore.ebuild import atom as atom_mod
-from pkgcore.ebuild.domain import domain as domain_cls
-from pkgcore.repository import multiplex
-from pkgcore.repository.util import SimpleTree, get_virtual_repos
-from pkgcore.restrictions import boolean, packages
-from pkgcore.util import parserestrict
-from pkgcore.util.commandline import ArgumentParser, StoreRepoObject, convert_to_restrict
+from ..ebuild import atom as atom_mod
+from ..ebuild.domain import domain as domain_cls
+from ..repository import multiplex
+from ..repository.util import SimpleTree, get_virtual_repos
+from ..restrictions import boolean, packages
+from ..util import parserestrict
+from ..util.commandline import ArgumentParser, StoreRepoObject, convert_to_restrict
 
 
 argparser = ArgumentParser(description=__doc__, script=(__file__, __name__))

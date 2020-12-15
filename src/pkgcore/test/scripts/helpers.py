@@ -3,8 +3,8 @@
 from snakeoil.cli import arghparse
 from snakeoil.test import argparse_helpers
 
-from pkgcore.config import central, basics
-from pkgcore.config.hint import ConfigHint
+from ...config import central, basics
+from ...config.hint import ConfigHint
 
 
 class fake_domain:

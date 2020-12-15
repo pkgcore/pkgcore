@@ -9,9 +9,9 @@ import itertools
 
 from snakeoil import klass, sequences
 
-from pkgcore import exceptions as base_errors
-from pkgcore.operations import format
-from pkgcore.package import errors
+from .. import exceptions as base_errors
+from ..operations import format
+from . import errors
 
 
 class base(klass.SlotsPicklingMixin, metaclass=klass.immutable_instance):

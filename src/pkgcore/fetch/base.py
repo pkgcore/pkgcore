@@ -8,7 +8,7 @@ import os
 
 from snakeoil.chksum import get_handlers, get_chksums, MissingChksumHandler
 
-from pkgcore.fetch import errors
+from . import errors
 
 
 class fetcher:

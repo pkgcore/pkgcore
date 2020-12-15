@@ -6,7 +6,7 @@ restrictions on the fly
 
 __all__ = ("delegate",)
 
-from pkgcore.restrictions import restriction
+from . import restriction
 
 
 class delegate(restriction.base):

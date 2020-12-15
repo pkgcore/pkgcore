@@ -18,18 +18,18 @@ import operator
 import tempfile
 import traceback
 
-from pkgcore.fs import contents, livefs
-from pkgcore.merge import errors
-from pkgcore.merge.const import REPLACE_MODE, INSTALL_MODE, UNINSTALL_MODE
-from pkgcore.operations import observer as observer_mod
-from pkgcore.plugin import get_plugins
-
 from snakeoil import data_source
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.currying import post_curry
 from snakeoil.fileutils import touch
 from snakeoil.mappings import LazyValDict, ImmutableDict, StackedDict
 from snakeoil.osutils import normpath
+
+from ..fs import contents, livefs
+from . import errors
+from .const import REPLACE_MODE, INSTALL_MODE, UNINSTALL_MODE
+from ..operations import observer as observer_mod
+from ..plugin import get_plugins
 
 
 def alias_cset(alias, engine, csets):

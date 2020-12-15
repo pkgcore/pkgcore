@@ -10,12 +10,12 @@ from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.iterables import expandable_chain
 from snakeoil.sequences import iflatten_instance
 
-from pkgcore.ebuild.atom import atom, transitive_use_atom
-from pkgcore.ebuild.errors import DepsetParseError
-from pkgcore.restrictions import packages, values, boolean, restriction
+from .atom import atom, transitive_use_atom
+from .errors import DepsetParseError
+from ..restrictions import packages, values, boolean, restriction
 
 try:
-    from pkgcore.ebuild._depset import parse_depset
+    from ._depset import parse_depset
 except ImportError:
     parse_depset = None
 

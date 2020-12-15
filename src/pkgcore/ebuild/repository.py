@@ -25,21 +25,21 @@ from snakeoil.sequences import iflatten_instance, stable_unique
 from snakeoil.strings import pluralism as _pl
 from snakeoil.weakrefs import WeakValCache
 
-from pkgcore import fetch
-from pkgcore.config.hint import ConfigHint, configurable
-from pkgcore.ebuild import (
+from .. import fetch
+from ..config.hint import ConfigHint, configurable
+from . import (
     cpv, digest, ebd, repo_objs, atom, restricts, processor,
     ebuild_src, eclass_cache as eclass_cache_mod, errors as ebuild_errors,
 )
-from pkgcore.ebuild.eapi import get_eapi
-from pkgcore.fs.livefs import sorted_scan
-from pkgcore.log import logger
-from pkgcore.operations import repo as _repo_ops
-from pkgcore.package import errors as pkg_errors
-from pkgcore.repository import prototype, errors, configured, util
-from pkgcore.repository.virtual import RestrictionRepo
-from pkgcore.restrictions import packages
-from pkgcore.util.packages import groupby_pkg
+from .eapi import get_eapi
+from ..fs.livefs import sorted_scan
+from ..log import logger
+from ..operations import repo as _repo_ops
+from ..package import errors as pkg_errors
+from ..repository import prototype, errors, configured, util
+from ..repository.virtual import RestrictionRepo
+from ..restrictions import packages
+from ..util.packages import groupby_pkg
 
 
 class repo_operations(_repo_ops.operations):

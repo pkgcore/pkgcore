@@ -3,15 +3,14 @@ __all__ = ("tar_syncer",)
 import atexit
 from functools import partial
 import os
-import subprocess
 import shutil
 import tempfile
 import uuid
 
 from snakeoil.osutils import ensure_dirs
 
-from pkgcore.sync import base
-from pkgcore.sync.http import http_syncer
+from . import base
+from .http import http_syncer
 
 
 class tar_syncer(http_syncer, base.ExternalSyncer):

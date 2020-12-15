@@ -17,13 +17,13 @@ from snakeoil.mappings import ImmutableDict
 from snakeoil.osutils import abspath, pjoin
 from snakeoil.sequences import split_negations, stable_unique
 
-from pkgcore.config import errors
-from pkgcore.config.hint import ConfigHint
-from pkgcore.ebuild import const, ebuild_src, misc, cpv, repo_objs, errors as ebuild_errors
-from pkgcore.ebuild.atom import atom
-from pkgcore.ebuild.eapi import get_eapi
-from pkgcore.fs.livefs import sorted_scan
-from pkgcore.log import logger
+from ..config import errors
+from ..config.hint import ConfigHint
+from . import const, ebuild_src, misc, cpv, repo_objs, errors as ebuild_errors
+from .atom import atom
+from .eapi import get_eapi
+from ..fs.livefs import sorted_scan
+from ..log import logger
 
 
 def package_keywords_splitter(iterable):
@@ -685,7 +685,7 @@ class ProfileStack:
     @klass.jit_attr
     def provides_repo(self):
         # delay importing to avoid circular imports
-        from pkgcore.ebuild.repository import ProvidesRepo
+        from .repository import ProvidesRepo
         return ProvidesRepo(pkgs=self._collapse_generic("pkg_provided"))
 
     @klass.jit_attr

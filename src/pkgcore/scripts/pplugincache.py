@@ -4,8 +4,8 @@ from functools import partial
 
 from snakeoil.sequences import stable_unique
 
-from pkgcore import plugin, plugins
-from pkgcore.util import commandline
+from .. import plugin, plugins
+from ..util import commandline
 
 argparser = commandline.ArgumentParser(
     config=False, domain=False, color=False,

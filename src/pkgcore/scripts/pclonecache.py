@@ -2,7 +2,7 @@
 
 import time
 
-from pkgcore.util import commandline
+from ..util import commandline
 
 argparser = commandline.ArgumentParser(
     domain=False, description=__doc__, script=(__file__, __name__))

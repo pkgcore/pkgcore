@@ -17,11 +17,10 @@ from snakeoil.compression import compress_data
 from snakeoil.klass import steal_docs
 from snakeoil.osutils import pjoin, unlink_if_exists, ensure_dirs
 
-from pkgcore.binpkg import xpak
-from pkgcore.ebuild.conditionals import stringify_boolean
-from pkgcore.fs import tar
-from pkgcore.log import logger
-from pkgcore.operations import repo as repo_interfaces
+from . import xpak
+from ..fs import tar
+from ..log import logger
+from ..operations import repo as repo_interfaces
 
 
 def discern_loc(base, pkg, extension='.tbz2'):

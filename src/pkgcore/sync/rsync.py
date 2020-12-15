@@ -7,8 +7,8 @@ import time
 
 from snakeoil.osutils import pjoin
 
-from pkgcore.config.hint import ConfigHint
-from pkgcore.sync import base
+from ..config.hint import ConfigHint
+from . import base
 
 
 class rsync_syncer(base.ExternalSyncer):

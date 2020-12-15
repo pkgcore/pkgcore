@@ -9,9 +9,7 @@ __all__ = (
     "QuoteInterpretationError",
 )
 
-from snakeoil import currying
-
-from pkgcore.exceptions import PkgcoreException, PkgcoreUserException
+from ..exceptions import PkgcoreException, PkgcoreUserException
 
 
 def _identify_functor_source(functor):

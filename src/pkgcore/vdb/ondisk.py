@@ -5,20 +5,20 @@ from functools import partial
 import os
 import stat
 
-from snakeoil import data_source, klass
+from snakeoil import data_source
 from snakeoil.fileutils import readfile
 from snakeoil.mappings import IndeterminantDict
 from snakeoil.osutils import listdir_dirs, pjoin
 
-from pkgcore.config.hint import ConfigHint
-from pkgcore.ebuild import ebuild_built
-from pkgcore.ebuild.cpv import VersionedCPV
-from pkgcore.ebuild.errors import InvalidCPV
-from pkgcore.log import logger
-from pkgcore.package import base as pkg_base
-from pkgcore.repository import errors, prototype, wrapper
-from pkgcore.vdb import repo_ops
-from pkgcore.vdb.contents import ContentsFile
+from ..config.hint import ConfigHint
+from ..ebuild import ebuild_built
+from ..ebuild.cpv import VersionedCPV
+from ..ebuild.errors import InvalidCPV
+from ..log import logger
+from ..package import base as pkg_base
+from ..repository import errors, prototype, wrapper
+from . import repo_ops
+from .contents import ContentsFile
 
 
 class tree(prototype.tree):

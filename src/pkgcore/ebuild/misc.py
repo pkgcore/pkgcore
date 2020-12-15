@@ -19,8 +19,8 @@ from snakeoil import mappings
 from snakeoil.klass import generic_equality, alias_method
 from snakeoil.sequences import iflatten_instance
 
-from pkgcore.ebuild import atom
-from pkgcore.restrictions import packages, restriction, boolean
+from . import atom
+from ..restrictions import packages, restriction, boolean
 
 restrict_payload = namedtuple("restrict_data", ["restrict", "data"])
 chunked_data = namedtuple("chunked_data", ("key", "neg", "pos"))
@@ -92,7 +92,7 @@ def native_incremental_expansion(orig, iterable, msg_prefix='', finalize=True):
             orig.add(token)
 
 try:
-    from pkgcore.ebuild._misc import incremental_expansion
+    from ._misc import incremental_expansion
 except ImportError:
     incremental_expansion = native_incremental_expansion
 

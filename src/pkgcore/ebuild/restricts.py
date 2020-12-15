@@ -9,8 +9,8 @@ __all__ = ("VersionMatch",)
 
 from snakeoil.klass import generic_equality
 
-from pkgcore.ebuild import cpv, errors
-from pkgcore.restrictions import packages, restriction, values
+from . import cpv, errors
+from ..restrictions import packages, restriction, values
 
 
 # TODO: change values.EqualityMatch so it supports le, lt, gt, ge, eq,

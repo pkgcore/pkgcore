@@ -35,14 +35,14 @@ from snakeoil.fileutils import touch
 from snakeoil.osutils import listdir_files, pjoin, ensure_dirs, normpath
 from snakeoil.process import spawn
 
-from pkgcore import os_data
-from pkgcore.fs import fs, contents
-from pkgcore.fs.livefs import gen_obj
-from pkgcore.merge import errors, const
-from pkgcore.operations.observer import threadsafe_repo_observer
-from pkgcore.package.mutated import MutatedPkg
-from pkgcore.plugin import get_plugin
-from pkgcore.util import file_type, thread_pool
+from .. import os_data
+from ..fs import fs, contents
+from ..fs.livefs import gen_obj
+from . import errors, const
+from ..operations.observer import threadsafe_repo_observer
+from ..package.mutated import MutatedPkg
+from ..plugin import get_plugin
+from ..util import file_type, thread_pool
 
 
 UNINSTALLING_MODES = (const.REPLACE_MODE, const.UNINSTALL_MODE)

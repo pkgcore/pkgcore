@@ -1,7 +1,7 @@
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
 
-from pkgcore.package.errors import MetadataException
-from pkgcore.util.thread_pool import map_async
+from ..package.errors import MetadataException
+from ..util.thread_pool import map_async
 
 
 def regen_iter(iterable, regen_func, observer):

@@ -12,7 +12,7 @@ from operator import attrgetter
 
 from snakeoil.containers import LimitedChangeSet, Unchangable
 
-from pkgcore.package.base import wrapper
+from .base import wrapper
 
 
 def _getattr_wrapped(attr, self):

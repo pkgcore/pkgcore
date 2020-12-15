@@ -4,8 +4,8 @@ virtual package
 
 __all__ = ("package", "factory")
 
-from pkgcore.package import metadata
-from pkgcore.restrictions.packages import OrRestriction
+from . import metadata
+from ..restrictions.packages import OrRestriction
 
 
 class package(metadata.package):
@@ -26,7 +26,7 @@ class package(metadata.package):
         object.__setattr__(self, 'provider', provider)
         object.__setattr__(self, 'data', {})
 
-    def __getattr__ (self, key):
+    def __getattr__(self, key):
         val = None
         if key == "rdepend":
             val = self.provider
@@ -46,4 +46,3 @@ class package(metadata.package):
 
 class factory(metadata.factory):
     child_class = package
-

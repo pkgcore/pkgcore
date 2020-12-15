@@ -17,18 +17,18 @@ from snakeoil.fileutils import AtomicWriteFile
 from snakeoil.osutils import pjoin, listdir_dirs
 from snakeoil.sequences import iter_stable_unique
 
-from pkgcore.cache.flat_hash import md5_cache
-from pkgcore.ebuild import triggers, repository as ebuild_repo
-from pkgcore.ebuild.cpv import CPV
-from pkgcore.exceptions import PkgcoreUserException
-from pkgcore.fs import contents, livefs
-from pkgcore.merge import triggers as merge_triggers
-from pkgcore.operations import observer as observer_mod, OperationError
-from pkgcore.package import mutated
-from pkgcore.package.errors import MetadataException
-from pkgcore.restrictions import packages
-from pkgcore.util import commandline
-from pkgcore.util.parserestrict import parse_match
+from ..cache.flat_hash import md5_cache
+from ..ebuild import triggers, repository as ebuild_repo
+from ..ebuild.cpv import CPV
+from ..exceptions import PkgcoreUserException
+from ..fs import contents, livefs
+from ..merge import triggers as merge_triggers
+from ..operations import observer as observer_mod, OperationError
+from ..package import mutated
+from ..package.errors import MetadataException
+from ..restrictions import packages
+from ..util import commandline
+from ..util.parserestrict import parse_match
 
 
 pkgcore_opts = commandline.ArgumentParser(domain=False, script=(__file__, __name__))

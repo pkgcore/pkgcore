@@ -9,9 +9,9 @@ import os
 from snakeoil.osutils import ensure_dirs, pjoin
 from snakeoil.process.spawn import spawn_bash, is_userpriv_capable
 
-from pkgcore.config.hint import ConfigHint
-from pkgcore.fetch import errors, base, fetchable
-from pkgcore.os_data import portage_uid, portage_gid
+from ..config.hint import ConfigHint
+from . import errors, base, fetchable
+from ..os_data import portage_uid, portage_gid
 
 
 class MalformedCommand(errors.FetchError):

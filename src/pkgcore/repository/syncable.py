@@ -1,6 +1,6 @@
 __all__ = ("tree",)
 
-from pkgcore.operations.repo import sync_operations
+from ..operations.repo import sync_operations
 
 
 class tree:

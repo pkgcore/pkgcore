@@ -6,8 +6,8 @@ __all__ = (
 from snakeoil import klass
 from snakeoil.mappings import DictMixin
 
-from pkgcore.ebuild.cpv import VersionedCPV
-from pkgcore.repository import multiplex, prototype, virtual
+from ..ebuild.cpv import VersionedCPV
+from . import multiplex, prototype, virtual
 
 
 class SimpleTree(prototype.tree):

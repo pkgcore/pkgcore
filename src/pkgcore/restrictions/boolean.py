@@ -11,7 +11,7 @@ from itertools import islice
 
 from snakeoil.klass import generic_equality, cached_hash
 
-from pkgcore.restrictions import restriction
+from . import restriction
 
 
 class base(restriction.base, metaclass=generic_equality):

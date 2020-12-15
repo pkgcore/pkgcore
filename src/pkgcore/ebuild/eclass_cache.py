@@ -14,7 +14,7 @@ from snakeoil.mappings import ImmutableDict, StackedDict
 from snakeoil.osutils import normpath, pjoin, listdir_files
 from snakeoil.weakrefs import WeakValCache
 
-from pkgcore.config.hint import ConfigHint
+from ..config.hint import ConfigHint
 
 
 class base:

@@ -7,7 +7,7 @@ __all__ = (
     "GeneralCacheCorruption", "ReadOnly",
 )
 
-from pkgcore.exceptions import PkgcoreException
+from ..exceptions import PkgcoreException
 
 
 class CacheError(PkgcoreException):

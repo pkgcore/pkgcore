@@ -3,7 +3,7 @@ __all__ = ("bzr_syncer",)
 import os
 
 from snakeoil.process.spawn import spawn_get_output
-from pkgcore.sync import base
+from . import base
 
 
 class bzr_syncer(base.VcsSyncer):

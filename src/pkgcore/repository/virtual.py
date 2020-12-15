@@ -7,12 +7,12 @@ __all__ = ("tree", "RestrictionRepo")
 from snakeoil.compatibility import cmp
 from snakeoil.sequences import stable_unique
 
-from pkgcore.ebuild import atom
-from pkgcore.ebuild.conditionals import DepSet
-from pkgcore.package import virtual
-from pkgcore.package import base as pkg_base
-from pkgcore.repository import prototype
-from pkgcore.restrictions.boolean import OrRestriction
+from ..ebuild import atom
+from ..ebuild.conditionals import DepSet
+from ..package import virtual
+from ..package import base as pkg_base
+from . import prototype
+from ..restrictions.boolean import OrRestriction
 
 
 class tree(prototype.tree):

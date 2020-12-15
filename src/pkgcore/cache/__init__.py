@@ -13,8 +13,8 @@ from snakeoil import klass
 from snakeoil.chksum import get_handler
 from snakeoil.mappings import ProtectedDict
 
-from pkgcore.cache import errors
-from pkgcore.ebuild.const import metadata_keys
+from . import errors
+from ..ebuild.const import metadata_keys
 
 
 class base:

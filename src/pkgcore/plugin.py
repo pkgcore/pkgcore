@@ -24,8 +24,8 @@ from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.fileutils import AtomicWriteFile, readlines_ascii
 from snakeoil.osutils import pjoin, listdir_files, ensure_dirs, unlink_if_exists
 
-from pkgcore import const, os_data
-from pkgcore.log import logger
+from . import const, os_data
+from .log import logger
 
 
 _plugin_data = namedtuple(

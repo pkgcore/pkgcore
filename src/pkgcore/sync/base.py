@@ -10,9 +10,9 @@ import stat
 
 from snakeoil import process
 
-from pkgcore import os_data, plugin
-from pkgcore.config.hint import ConfigHint, configurable
-from pkgcore.exceptions import PkgcoreUserException
+from .. import os_data, plugin
+from ..config.hint import ConfigHint, configurable
+from ..exceptions import PkgcoreUserException
 
 
 class SyncError(PkgcoreUserException):

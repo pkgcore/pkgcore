@@ -10,11 +10,11 @@ import tempfile
 from snakeoil import osutils
 from snakeoil.dependant_methods import ForcedDepends
 
-from pkgcore.exceptions import PkgcoreException
-from pkgcore.log import logger
-from pkgcore.merge import errors as merge_errors
-from pkgcore.merge.engine import MergeEngine
-from pkgcore.package.mutated import MutatedPkg
+from ..exceptions import PkgcoreException
+from ..log import logger
+from ..merge import errors as merge_errors
+from ..merge.engine import MergeEngine
+from ..package.mutated import MutatedPkg
 
 
 class fake_lock:

@@ -2,7 +2,7 @@
 errors fetch subsystem may throw
 """
 
-from pkgcore.exceptions import PkgcoreUserException
+from ..exceptions import PkgcoreUserException
 
 
 class FetchError(PkgcoreUserException):

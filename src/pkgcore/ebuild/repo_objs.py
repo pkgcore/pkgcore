@@ -28,13 +28,13 @@ from snakeoil.process.namespaces import simple_unshare
 from snakeoil.sequences import iter_stable_unique
 from snakeoil.strings import pluralism
 
-from pkgcore.config.hint import ConfigHint
-from pkgcore.ebuild import atom, profiles, pkg_updates
-from pkgcore.ebuild.eapi import get_eapi
-from pkgcore.exceptions import PermissionDenied
-from pkgcore.log import logger
-from pkgcore.repository import syncable, errors as repo_errors
-from pkgcore.restrictions import packages
+from ..config.hint import ConfigHint
+from . import atom, profiles, pkg_updates
+from .eapi import get_eapi
+from ..exceptions import PermissionDenied
+from ..log import logger
+from ..repository import syncable, errors as repo_errors
+from ..restrictions import packages
 
 
 class Maintainer:

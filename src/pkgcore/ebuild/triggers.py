@@ -10,22 +10,21 @@ __all__ = (
 import fnmatch
 import os
 
-from snakeoil import compatibility
 from snakeoil.bash import read_bash_dict
 from snakeoil.fileutils import AtomicWriteFile
-from snakeoil.osutils import listdir_files, abspath, normpath, pjoin
+from snakeoil.osutils import listdir_files, normpath, pjoin
 from snakeoil.sequences import stable_unique, iflatten_instance
 
-from pkgcore import os_data, ospkg
-from pkgcore.fs import livefs
-from pkgcore.log import logger
-from pkgcore.merge import triggers, const, errors
-from pkgcore.restrictions import values
-from pkgcore.system import libtool
+from .. import os_data, ospkg
+from ..fs import livefs
+from ..log import logger
+from ..merge import triggers, const, errors
+from ..restrictions import values
+from ..system import libtool
 
 
 colon_parsed = frozenset([
-    "ADA_INCLUDE_PATH",  "ADA_OBJECTS_PATH", "INFODIR", "INFOPATH", "LDPATH",
+    "ADA_INCLUDE_PATH", "ADA_OBJECTS_PATH", "INFODIR", "INFOPATH", "LDPATH",
     "MANPATH", "PATH", "PYTHONPATH", "PKG_CONFIG_PATH", "ROOTPATH"
 ])
 

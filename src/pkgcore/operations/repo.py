@@ -13,14 +13,13 @@ from snakeoil import klass
 from snakeoil.currying import post_curry
 from snakeoil.dependant_methods import ForcedDepends
 
-from pkgcore import operations as _operations_mod
-from pkgcore.exceptions import PkgcoreException
-from pkgcore.log import logger
-from pkgcore.operations import observer as observer_mod,regen
-from pkgcore.package.errors import MetadataException
-from pkgcore.package.mutated import MutatedPkg
-from pkgcore.restrictions import packages
-from pkgcore.sync import base as _sync_base
+from .. import operations as operations_mod
+from ..exceptions import PkgcoreException
+from ..log import logger
+from . import observer as observer_mod, regen
+from ..package.mutated import MutatedPkg
+from ..restrictions import packages
+from ..sync import base as _sync_base
 
 
 class fake_lock:
@@ -132,13 +131,13 @@ class replace(install, uninstall):
         install.__init__(self, repo, newpkg, observer)
 
 
-class sync_operations(_operations_mod.base):
+class sync_operations(operations_mod.base):
 
     def __init__(self, repository, disable_overrides=(), enable_overrides=()):
         self.repo = repository
         super().__init__(disable_overrides, enable_overrides)
 
-    @_operations_mod.is_standalone
+    @operations_mod.is_standalone
     def _cmd_api_sync(self, observer=None, **kwargs):
         # often enough, the syncer is a lazy_ref
         syncer = self._get_syncer()
@@ -225,7 +224,7 @@ class operations(sync_operations):
             for p in cache_pkgs - pkgs:
                 del cache[p]
 
-    @_operations_mod.is_standalone
+    @operations_mod.is_standalone
     def _cmd_api_regen_cache(self, observer=None, threads=1, **kwargs):
         cache = getattr(self.repo, 'cache', None)
         if not cache and not kwargs.get('force', False):
@@ -269,7 +268,7 @@ class operations(sync_operations):
             return caches
         return [caches]
 
-    @_operations_mod.is_standalone
+    @operations_mod.is_standalone
     def _cmd_api_flush_cache(self, observer=None):
         for cache in self._get_caches():
             cache.commit(force=True)

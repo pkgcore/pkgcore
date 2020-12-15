@@ -6,8 +6,8 @@ from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil import klass
 from snakeoil.klass import generic_equality, static_attrgetter
 
-from pkgcore.restrictions import restriction, boolean
-from pkgcore.log import logger
+from . import restriction, boolean
+from ..log import logger
 
 
 class native_PackageRestriction(metaclass=generic_equality):
@@ -192,8 +192,7 @@ class PackageRestrictionMulti_mixin(PackageRestriction_mixin):
 
 
 try:
-    from pkgcore.restrictions._restrictions import \
-        PackageRestriction as PackageRestriction_base
+    from ._restrictions import PackageRestriction as PackageRestriction_base
 except ImportError:
     PackageRestriction_base = native_PackageRestriction
 PackageRestrictionMulti_base = native_PackageRestrictionMulti

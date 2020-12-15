@@ -3,9 +3,9 @@
 Note: HACK. Quick proof of concept, could do with cleaning up.
 """
 
-from pkgcore.config.hint import ConfigHint
-from pkgcore.pkgsets.installed import VersionedInstalled
-from pkgcore.repository.util import RepositoryGroup
+from ..config.hint import ConfigHint
+from .installed import VersionedInstalled
+from ..repository.util import RepositoryGroup
 
 
 class EclassConsumerSet(VersionedInstalled):

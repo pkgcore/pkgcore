@@ -12,8 +12,8 @@ from snakeoil.compatibility import cmp, sorted_cmp
 from snakeoil.data_source import invokable_data_source
 from snakeoil.tar import tarfile
 
-from pkgcore.fs import contents
-from pkgcore.fs.fs import fsFile, fsDir, fsSymlink, fsFifo, fsDev
+from . import contents
+from .fs import fsFile, fsDir, fsSymlink, fsFifo, fsDev
 
 _unique_inode = count(2**32).__next__
 

@@ -7,9 +7,9 @@ from snakeoil.cli import arghparse
 from snakeoil.osutils import pjoin
 from snakeoil.sequences import split_negations
 
-from pkgcore.ebuild import atom, profiles
-from pkgcore.ebuild.misc import ChunkedDataDict
-from pkgcore.util import commandline
+from . import atom, profiles
+from .misc import ChunkedDataDict
+from ..util import commandline
 
 
 commands = []

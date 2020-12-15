@@ -3,7 +3,6 @@ Internal constants.
 """
 
 import os
-osp = os.path
 import sys
 
 from snakeoil import mappings
@@ -11,6 +10,7 @@ from snakeoil import mappings
 from . import __title__
 
 
+osp = os.path
 _reporoot = osp.realpath(__file__).rsplit(os.path.sep, 3)[0]
 _module = sys.modules[__name__]
 
@@ -18,7 +18,7 @@ try:
     # This is a file written during pkgcore installation;
     # if it exists, we defer to it.  If it doesn't, then we're
     # running from a git checkout or a tarball.
-    from pkgcore import _const as _defaults
+    from . import _const as _defaults
 except ImportError:
     _defaults = object()
 

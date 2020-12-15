@@ -7,13 +7,13 @@ __all__ = ("FileList", "WorldFile")
 from snakeoil import klass
 from snakeoil.fileutils import AtomicWriteFile, readlines_ascii
 
-from pkgcore import os_data
-from pkgcore.config import errors
-from pkgcore.config.hint import ConfigHint
-from pkgcore.ebuild import const
-from pkgcore.ebuild.atom import atom
-from pkgcore.log import logger
-from pkgcore.package.errors import InvalidDependency
+from .. import os_data
+from ..config import errors
+from ..config.hint import ConfigHint
+from ..ebuild import const
+from ..ebuild.atom import atom
+from ..log import logger
+from ..package.errors import InvalidDependency
 
 
 class FileList:

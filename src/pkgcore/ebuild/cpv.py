@@ -5,9 +5,9 @@ from collections import UserString
 from snakeoil.compatibility import cmp
 from snakeoil.demandload import demand_compile_regexp
 
-from pkgcore.ebuild import atom
-from pkgcore.ebuild.errors import InvalidCPV
-from pkgcore.package import base
+from . import atom
+from .errors import InvalidCPV
+from ..package import base
 
 
 demand_compile_regexp(

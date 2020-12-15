@@ -1,7 +1,7 @@
 __all__ = ("sqfs_syncer",)
 
-from pkgcore.sync import base
-from pkgcore.sync.http import http_syncer
+from . import base
+from .http import http_syncer
 
 
 class sqfs_syncer(http_syncer):

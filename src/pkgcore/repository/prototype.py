@@ -13,10 +13,10 @@ from snakeoil.mappings import LazyValDict, DictMixin
 from snakeoil.osutils import pjoin
 from snakeoil.sequences import iflatten_instance
 
-from pkgcore.ebuild.atom import atom
-from pkgcore.operations import repo
-from pkgcore.restrictions import values, boolean, restriction, packages
-from pkgcore.restrictions.util import collect_package_restrictions
+from ..ebuild.atom import atom
+from ..operations import repo
+from ..restrictions import values, boolean, restriction, packages
+from ..restrictions.util import collect_package_restrictions
 
 
 class IterValLazyDict(LazyValDict):

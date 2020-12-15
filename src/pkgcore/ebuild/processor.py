@@ -33,10 +33,10 @@ from snakeoil import bash, fileutils, klass, process
 from snakeoil.osutils import abspath, normpath, pjoin
 from snakeoil.process import spawn
 
-from pkgcore import __file__, const, os_data
-from pkgcore.ebuild import const as e_const
-from pkgcore.exceptions import PkgcoreException, PkgcoreUserException
-from pkgcore.log import logger
+from .. import __file__, const, os_data
+from . import const as e_const
+from ..exceptions import PkgcoreException, PkgcoreUserException
+from ..log import logger
 
 
 _global_ebp_lock = threading.Lock()

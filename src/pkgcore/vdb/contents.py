@@ -7,9 +7,9 @@ from snakeoil import data_source
 from snakeoil.chksum import get_handler
 from snakeoil.fileutils import AtomicWriteFile, readlines_utf8
 
-from pkgcore import os_data
-from pkgcore.fs import fs
-from pkgcore.fs.contents import contentsSet
+from ..  import os_data
+from ..fs import fs
+from ..fs.contents import contentsSet
 
 
 class LookupFsDev(fs.fsDev):

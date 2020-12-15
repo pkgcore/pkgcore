@@ -1,6 +1,6 @@
 __all__ = ("darcs_syncer",)
 
-from pkgcore.sync import base
+from . import base
 
 
 class darcs_syncer(base.VcsSyncer):

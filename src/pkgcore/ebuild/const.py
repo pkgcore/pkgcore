@@ -3,7 +3,8 @@ ebuild internal constants
 """
 
 from snakeoil.osutils import pjoin
-from pkgcore import const
+
+from .. import const
 
 
 incrementals = (

@@ -26,27 +26,27 @@ from snakeoil.osutils import pjoin
 from snakeoil.process.spawn import spawn_get_output
 from snakeoil.sequences import split_negations, stable_unique, predicate_split
 
-from pkgcore.binpkg import repository as binary_repo
-from pkgcore.cache.flat_hash import md5_cache
-from pkgcore.config import errors as config_errors
-from pkgcore.config.domain import Failure, domain as config_domain
-from pkgcore.config.hint import ConfigHint
-from pkgcore.ebuild import const, repository as ebuild_repo
-from pkgcore.ebuild.atom import atom as _atom
-from pkgcore.ebuild.misc import (
+from ..binpkg import repository as binary_repo
+from ..cache.flat_hash import md5_cache
+from ..config import errors as config_errors
+from ..config.domain import Failure, domain as config_domain
+from ..config.hint import ConfigHint
+from . import const, repository as ebuild_repo
+from .atom import atom as _atom
+from .misc import (
     ChunkedDataDict, chunked_data, collapsed_restrict_to_data,
     incremental_expansion, incremental_expansion_license,
     non_incremental_collapsed_restrict_to_data, optimize_incrementals)
-from pkgcore.ebuild.portage_conf import PortageConfig
-from pkgcore.ebuild.repo_objs import RepoConfig, OverlayedLicenses
-from pkgcore.ebuild.triggers import GenerateTriggers
-from pkgcore.fs.livefs import iter_scan, sorted_scan
-from pkgcore.log import logger
-from pkgcore.repository import filtered, errors as repo_errors
-from pkgcore.repository.util import RepositoryGroup
-from pkgcore.restrictions import packages, values
-from pkgcore.restrictions.delegated import delegate
-from pkgcore.util.parserestrict import parse_match, ParseError
+from .portage_conf import PortageConfig
+from .repo_objs import RepoConfig, OverlayedLicenses
+from .triggers import GenerateTriggers
+from ..fs.livefs import iter_scan, sorted_scan
+from ..log import logger
+from ..repository import filtered, errors as repo_errors
+from ..repository.util import RepositoryGroup
+from ..restrictions import packages, values
+from ..restrictions.delegated import delegate
+from ..util.parserestrict import parse_match, ParseError
 
 
 def package_masks(iterable):

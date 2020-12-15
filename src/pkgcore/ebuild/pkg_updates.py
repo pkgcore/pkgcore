@@ -5,8 +5,8 @@ from snakeoil.demandload import demand_compile_regexp
 from snakeoil.osutils import listdir_files, pjoin
 from snakeoil.sequences import iflatten_instance
 
-from pkgcore.ebuild.atom import atom
-from pkgcore.log import logger
+from .atom import atom
+from ..log import logger
 
 demand_compile_regexp('valid_updates_re', r'^([1-4])Q-(\d{4})$')
 

@@ -4,7 +4,7 @@ exceptions thrown by repository classes.
 Need to extend the usage a bit further still.
 """
 
-from pkgcore.exceptions import PkgcoreException, PkgcoreUserException
+from ..exceptions import PkgcoreException, PkgcoreUserException
 
 
 class RepoError(PkgcoreException):

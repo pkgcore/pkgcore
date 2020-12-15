@@ -5,7 +5,7 @@ __all__ = (
 
 import os
 
-from pkgcore.exceptions import PkgcoreUserException
+from ..exceptions import PkgcoreUserException
 
 
 class PackageError(ValueError, PkgcoreUserException):

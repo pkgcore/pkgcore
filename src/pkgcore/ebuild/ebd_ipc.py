@@ -18,9 +18,9 @@ from snakeoil.iterables import partition
 from snakeoil.osutils import pjoin
 from snakeoil.process import spawn
 
-from pkgcore import os_data
-from pkgcore.ebuild import atom as atom_mod, filter_env, portageq
-from pkgcore.exceptions import PkgcoreException, PkgcoreUserException
+from .. import os_data
+from . import atom as atom_mod, filter_env, portageq
+from ..exceptions import PkgcoreException, PkgcoreUserException
 
 
 class IpcError(PkgcoreException):

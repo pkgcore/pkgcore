@@ -4,7 +4,7 @@ import os
 
 from snakeoil.process.spawn import spawn_get_output
 
-from pkgcore.sync import base
+from . import base
 
 
 class svn_syncer(base.ExternalSyncer):

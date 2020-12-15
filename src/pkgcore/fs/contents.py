@@ -11,7 +11,7 @@ import time
 from snakeoil.klass import generic_equality, alias_method
 from snakeoil.osutils import normpath, pjoin
 
-from pkgcore.fs import fs
+from . import fs
 
 
 def change_offset_rewriter(orig_offset, new_offset, iterable):

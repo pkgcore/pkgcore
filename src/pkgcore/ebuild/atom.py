@@ -13,10 +13,10 @@ from snakeoil import klass
 from snakeoil.compatibility import cmp
 from snakeoil.demandload import demand_compile_regexp
 
-from pkgcore.ebuild import cpv, errors, restricts
-from pkgcore.restrictions import values, packages, boolean, restriction
-from pkgcore.restrictions.packages import Conditional, AndRestriction as PkgAndRestriction
-from pkgcore.restrictions.values import ContainmentMatch2
+from . import cpv, errors, restricts
+from ..restrictions import values, packages, boolean, restriction
+from ..restrictions.packages import Conditional, AndRestriction as PkgAndRestriction
+from ..restrictions.values import ContainmentMatch2
 
 # namespace compatibility...
 MalformedAtom = errors.MalformedAtom

@@ -7,8 +7,8 @@ import re
 from snakeoil.currying import post_curry
 from snakeoil.sequences import stable_unique
 
-from pkgcore.merge import triggers
-from pkgcore.exceptions import PkgcoreException
+from ..merge import triggers
+from ..exceptions import PkgcoreException
 
 x11_sub = post_curry(partial(
     re.compile(r"X11R6/+lib").sub, "lib"), 1)
@@ -111,7 +111,7 @@ def rewrite_lafile(handle, filename):
     return True, template % {"content":content, "file":filename}
 
 def fix_fsobject(location):
-    from pkgcore.fs import livefs, fs
+    from ..fs import livefs, fs
     for obj in livefs.iter_scan(location):
         if not fs.isreg(obj) or not obj.basename.endswith(".la"):
             continue

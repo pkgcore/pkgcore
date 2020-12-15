@@ -16,8 +16,8 @@ from functools import partial
 from snakeoil import modules
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
 
-from pkgcore.config import errors
-from pkgcore.config.hint import configurable
+from . import errors
+from .hint import configurable
 
 
 type_names = ("list", "str", "bool", "int")

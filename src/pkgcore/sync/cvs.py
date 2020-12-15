@@ -2,7 +2,7 @@ __all__ = ("cvs_syncer",)
 
 import os
 
-from pkgcore.sync import base
+from . import base
 
 
 class cvs_syncer(base.VcsSyncer):

@@ -16,9 +16,9 @@ from snakeoil.containers import RefCountingSet
 from snakeoil.fileutils import AtomicWriteFile, readlines
 from snakeoil.mappings import ImmutableDict, StackedDict
 
-from pkgcore import cache
-from pkgcore.log import logger
-from pkgcore.restrictions import packages
+from .. import cache
+from ..log import logger
+from ..restrictions import packages
 
 
 def _iter_till_empty_newline(data):

@@ -2,7 +2,7 @@ __all__ = ("hg_syncer",)
 
 import os
 
-from pkgcore.sync import base
+from . import base
 
 
 class hg_syncer(base.VcsSyncer):

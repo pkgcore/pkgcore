@@ -5,7 +5,7 @@ exceptions thrown by the MergeEngine
 __all__ = ("ModificationError", "BlockModification", "TriggerUnknownCset")
 
 
-from pkgcore.exceptions import PkgcoreException
+from ..exceptions import PkgcoreException
 
 
 class ModificationError(PkgcoreException):

@@ -5,11 +5,12 @@ import re
 import shlex
 import subprocess
 
-from pkgcore.ebuild import conditionals
-from pkgcore.ebuild.eapi import EAPI
 from snakeoil import klass
 from snakeoil.mappings import ImmutableDict, OrderedSet
 from snakeoil.strings import pluralism
+
+from . import conditionals
+from .eapi import EAPI
 
 
 class EclassDocParsingError(Exception):

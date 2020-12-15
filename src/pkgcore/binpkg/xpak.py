@@ -10,7 +10,7 @@ import os
 from snakeoil import klass
 from snakeoil import struct_compat as struct
 
-from pkgcore.exceptions import PkgcoreException
+from ..exceptions import PkgcoreException
 
 
 # format is:

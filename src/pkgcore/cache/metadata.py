@@ -9,9 +9,9 @@ import os
 from snakeoil.osutils import pjoin
 from snakeoil.mappings import ProtectedDict
 
-from pkgcore.cache import flat_hash, errors
-from pkgcore.config.hint import ConfigHint
-from pkgcore.ebuild import eclass_cache
+from . import flat_hash, errors
+from ..config.hint import ConfigHint
+from ..ebuild import eclass_cache
 
 
 # store the current key order *here*.

@@ -8,7 +8,7 @@ import configparser
 
 from snakeoil import mappings
 
-from pkgcore.config import basics, errors
+from . import basics, errors
 
 
 class CaseSensitiveConfigParser(configparser.ConfigParser):

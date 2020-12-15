@@ -10,11 +10,11 @@ from snakeoil.data_source import local_source
 from snakeoil.osutils import ensure_dirs, pjoin, normpath
 from snakeoil.version import get_version
 
-from pkgcore import __title__
-from pkgcore.ebuild import conditionals
-from pkgcore.log import logger
-from pkgcore.operations import repo as repo_ops
-from pkgcore.vdb.contents import ContentsFile
+from .. import __title__
+from ..ebuild import conditionals
+from ..log import logger
+from ..operations import repo as repo_ops
+from .contents import ContentsFile
 
 
 def update_mtime(path, timestamp=None):

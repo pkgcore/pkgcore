@@ -12,12 +12,12 @@ from snakeoil.iterables import caching_iter
 from snakeoil.klass import generic_equality
 from snakeoil.osutils import listdir_files, pjoin
 
-from pkgcore.config.hint import ConfigHint
-from pkgcore.ebuild import cpv, atom, restricts as atom_restricts
-from pkgcore.log import logger
-from pkgcore.package import mutated
-from pkgcore.repository.util import get_virtual_repos
-from pkgcore.restrictions import packages, restriction, values
+from ..config.hint import ConfigHint
+from ..ebuild import cpv, atom, restricts as atom_restricts
+from ..log import logger
+from ..package import mutated
+from ..repository.util import get_virtual_repos
+from ..restrictions import packages, restriction, values
 
 
 class GlsaDirSet(metaclass=generic_equality):

@@ -6,7 +6,7 @@ __all__ = (
 
 from snakeoil.containers import RefCountingSet
 
-from pkgcore.resolver.pigeonholes import PigeonHoledSlots
+from .pigeonholes import PigeonHoledSlots
 
 
 class plan_state:

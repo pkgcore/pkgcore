@@ -8,9 +8,9 @@ from itertools import filterfalse
 
 from snakeoil.klass import GetAttrProxy, DirProxy
 
-from pkgcore.operations.repo import operations_proxy
-from pkgcore.repository import prototype, errors
-from pkgcore.restrictions import restriction
+from ..operations.repo import operations_proxy
+from . import prototype, errors
+from ..restrictions import restriction
 
 
 class tree(prototype.tree):

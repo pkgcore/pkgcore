@@ -4,7 +4,7 @@ __all__ = ("git_svn_syncer",)
 
 import os
 
-from pkgcore.sync import base
+from . import base
 
 
 class git_svn_syncer(base.VcsSyncer):

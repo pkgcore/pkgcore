@@ -25,20 +25,20 @@ from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.contexts import chdir
 from snakeoil.currying import post_curry, pretty_docs
 from snakeoil.fileutils import touch
-from snakeoil.osutils import ensure_dirs, abspath, normpath, pjoin, listdir_files
+from snakeoil.osutils import ensure_dirs, normpath, pjoin, listdir_files
 from snakeoil.process.spawn import (
     spawn_bash, spawn, is_sandbox_capable, is_userpriv_capable)
 from snakeoil.sequences import iflatten_instance, iter_stable_unique
 
-from pkgcore import const, fetch
-from pkgcore.ebuild import ebd_ipc, ebuild_built, errors
-from pkgcore.ebuild.processor import (
+from .. import const
+from . import ebd_ipc, ebuild_built, errors
+from .processor import (
     request_ebuild_processor, release_ebuild_processor, ProcessorError,
     expected_ebuild_env, chuck_UnhandledCommand, inherit_handler)
-from pkgcore.log import logger
-from pkgcore.operations import observer, format
-from pkgcore.os_data import portage_gid, portage_uid, xargs
-from pkgcore.package.mutated import MutatedPkg
+from ..log import logger
+from ..operations import observer, format
+from ..os_data import portage_gid, portage_uid, xargs
+from ..package.mutated import MutatedPkg
 
 
 class ebd:

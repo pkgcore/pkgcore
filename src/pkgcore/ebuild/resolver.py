@@ -7,10 +7,10 @@ __all__ = ["upgrade_resolver", "min_install_resolver"]
 from functools import partial
 from itertools import chain
 
-from pkgcore.ebuild.atom import atom
-from pkgcore.repository import misc, multiplex
-from pkgcore.resolver import plan
-from pkgcore.restrictions import packages, values
+from .atom import atom
+from ..repository import misc, multiplex
+from ..resolver import plan
+from ..restrictions import packages, values
 
 
 def upgrade_resolver(vdbs, dbs, verify_vdb=True, nodeps=False,

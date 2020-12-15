@@ -13,19 +13,18 @@ from snakeoil.klass import jit_attr, jit_attr_named, alias_attr
 from snakeoil.mappings import DictMixin, StackedDict
 from snakeoil.osutils import listdir_dirs, listdir_files, access, pjoin
 
-from pkgcore.binpkg import remote, repo_ops
-from pkgcore.binpkg.xpak import Xpak
-from pkgcore.config.hint import ConfigHint
-from pkgcore.ebuild import ebd, ebuild_built
-from pkgcore.ebuild.cpv import VersionedCPV
-from pkgcore.ebuild.errors import InvalidCPV
-from pkgcore.fs.contents import offset_rewriter, contentsSet
-from pkgcore.fs.livefs import scan
-from pkgcore.fs.tar import generate_contents
-from pkgcore.merge import engine, triggers
-from pkgcore.package import base as pkg_base
-from pkgcore.plugin import get_plugin
-from pkgcore.repository import prototype, errors, wrapper
+from . import remote, repo_ops
+from .xpak import Xpak
+from ..config.hint import ConfigHint
+from ..ebuild import ebd, ebuild_built
+from ..ebuild.cpv import VersionedCPV
+from ..fs.contents import offset_rewriter, contentsSet
+from ..fs.livefs import scan
+from ..fs.tar import generate_contents
+from ..merge import engine, triggers
+from ..package import base as pkg_base
+from ..plugin import get_plugin
+from ..repository import prototype, errors, wrapper
 
 
 class force_unpacking(triggers.base):

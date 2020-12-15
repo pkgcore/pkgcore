@@ -2,7 +2,7 @@
 
 from snakeoil.test import TestCase
 
-from pkgcore import log
+from .. import log
 
 
 class QuietLogger(log.logging.Handler):

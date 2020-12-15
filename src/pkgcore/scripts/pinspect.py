@@ -26,15 +26,14 @@ from itertools import groupby, islice
 from operator import attrgetter, itemgetter
 
 from snakeoil.cli import arghparse
-from snakeoil.osutils import pjoin
 from snakeoil.sequences import iflatten_instance, unstable_unique
 
-from pkgcore import const, fetch
-from pkgcore.ebuild import inspect_profile
-from pkgcore.ebuild import portageq as _portageq
-from pkgcore.package import errors
-from pkgcore.restrictions import packages
-from pkgcore.util import commandline
+from .. import fetch
+from ..ebuild import inspect_profile
+from ..ebuild import portageq as _portageq
+from ..package import errors
+from ..restrictions import packages
+from ..util import commandline
 
 
 pkgcore_opts = commandline.ArgumentParser(domain=False, script=(__file__, __name__))

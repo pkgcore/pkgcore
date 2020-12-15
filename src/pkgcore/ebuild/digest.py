@@ -11,10 +11,10 @@ import os
 from snakeoil.chksum import get_handler
 from snakeoil.mappings import ImmutableDict
 
-from pkgcore import gpg
-from pkgcore.ebuild import cpv
-from pkgcore.package import errors
-from pkgcore.fs.livefs import iter_scan
+from .. import gpg
+from . import cpv
+from ..package import errors
+from ..fs.livefs import iter_scan
 
 
 def _write_manifest(handle, chf, filename, chksums):

@@ -22,13 +22,13 @@ from snakeoil.formatters import decorate_forced_wrapping
 from snakeoil.osutils import pjoin, sizeof_fmt
 from snakeoil.sequences import iter_stable_unique
 
-from pkgcore import const
-from pkgcore.ebuild import conditionals, atom
-from pkgcore.fs import fs as fs_module
-from pkgcore.repository import multiplex
-from pkgcore.repository.util import get_raw_repos, get_virtual_repos
-from pkgcore.restrictions import packages, values, boolean
-from pkgcore.util import commandline, parserestrict, packages as pkgutils
+from .. import const
+from ..ebuild import conditionals, atom
+from ..fs import fs as fs_module
+from ..repository import multiplex
+from ..repository.util import get_raw_repos, get_virtual_repos
+from ..restrictions import packages, values, boolean
+from ..util import commandline, parserestrict, packages as pkgutils
 
 
 class DataSourceRestriction(values.base):

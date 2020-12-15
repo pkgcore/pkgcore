@@ -9,8 +9,8 @@ import urllib.request
 from snakeoil.fileutils import AtomicWriteFile, readfile_ascii
 from snakeoil.osutils import pjoin
 
-from pkgcore.sync import base
-from pkgcore.log import logger
+from . import base
+from ..log import logger
 
 
 class http_syncer(base.Syncer):

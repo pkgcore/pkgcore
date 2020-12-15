@@ -12,7 +12,7 @@ import weakref
 from snakeoil import mappings, klass
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
 
-from pkgcore.config import errors, basics
+from . import errors, basics
 
 _section_data = namedtuple('_section_data', ['name', 'section'])
 

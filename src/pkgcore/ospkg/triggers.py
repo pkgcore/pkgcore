@@ -1,7 +1,7 @@
 from snakeoil.osutils import pjoin, ensure_dirs
 
-from pkgcore.merge import triggers
-from pkgcore.ospkg import deb
+from ..merge import triggers
+from . import deb
 
 
 class SaveDeb(triggers.base):

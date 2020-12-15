@@ -2,7 +2,6 @@ __all__ = ("file_identifier",)
 
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.klass import jit_attr
-
 from snakeoil.process.spawn import spawn_get_output
 
 

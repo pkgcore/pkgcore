@@ -3,13 +3,11 @@
 from functools import partial
 import os
 
-from snakeoil.osutils import pjoin
 from snakeoil.strings import pluralism as _pl
 
-from pkgcore import const
-from pkgcore._vendor.tabulate import tabulate, tabulate_formats
-from pkgcore.ebuild import restricts
-from pkgcore.util import commandline, packages as pkgutils
+from .._vendor.tabulate import tabulate, tabulate_formats
+from ..ebuild import restricts
+from ..util import commandline, packages as pkgutils
 
 
 argparser = commandline.ArgumentParser(description=__doc__, script=(__file__, __name__))

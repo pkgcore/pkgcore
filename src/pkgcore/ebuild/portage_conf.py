@@ -13,20 +13,19 @@ import errno
 import os
 
 from snakeoil.bash import read_bash_dict
-from snakeoil.currying import wrap_exception
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.mappings import ImmutableDict, DictMixin
-from snakeoil.osutils import access, normpath, abspath, listdir_files, pjoin, ensure_dirs
+from snakeoil.osutils import access, normpath, abspath, listdir_files, pjoin
 
-from pkgcore import const, exceptions as base_errors
-from pkgcore.config import basics, errors as config_errors
-from pkgcore.config.hint import configurable
-from pkgcore.ebuild import const as econst, profiles, repo_objs
-from pkgcore.ebuild.misc import optimize_incrementals
-from pkgcore.ebuild.repository import errors as repo_errors
-from pkgcore.fs.livefs import sorted_scan
-from pkgcore.log import logger
-from pkgcore.pkgsets.glsa import SecurityUpgrades
+from .. import const, exceptions as base_errors
+from ..config import basics, errors as config_errors
+from ..config.hint import configurable
+from . import const as econst, profiles, repo_objs
+from .misc import optimize_incrementals
+from .repository import errors as repo_errors
+from ..fs.livefs import sorted_scan
+from ..log import logger
+from ..pkgsets.glsa import SecurityUpgrades
 
 
 def my_convert_hybrid(manager, val, arg_type):

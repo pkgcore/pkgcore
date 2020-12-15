@@ -2,8 +2,8 @@ __all__ = ("Installed", "VersionedInstalled")
 
 import operator
 
-from pkgcore.config.hint import ConfigHint
-from pkgcore.restrictions import packages, values
+from ..config.hint import ConfigHint
+from ..restrictions import packages, values
 
 
 class _Base:

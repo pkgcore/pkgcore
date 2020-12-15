@@ -1,4 +1,4 @@
-from pkgcore.fs import ops
+from ..fs import ops
 
 pkgcore_plugins = {
     'fs_ops.copyfile': [ops.default_copyfile],

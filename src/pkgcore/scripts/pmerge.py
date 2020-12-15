@@ -17,17 +17,17 @@ from snakeoil.cli.exceptions import ExitException
 from snakeoil.sequences import iflatten_instance, stable_unique
 from snakeoil.strings import pluralism
 
-from pkgcore.ebuild import resolver, restricts
-from pkgcore.ebuild.atom import atom
-from pkgcore.ebuild.misc import run_sanity_checks
-from pkgcore.merge import errors as merge_errors
-from pkgcore.operations import observer, format
-from pkgcore.repository.util import get_raw_repos
-from pkgcore.repository.virtual import RestrictionRepo
-from pkgcore.resolver.util import reduce_to_failures
-from pkgcore.restrictions import packages
-from pkgcore.restrictions.boolean import OrRestriction
-from pkgcore.util import commandline, parserestrict
+from ..ebuild import resolver, restricts
+from ..ebuild.atom import atom
+from ..ebuild.misc import run_sanity_checks
+from ..merge import errors as merge_errors
+from ..operations import observer, format
+from ..repository.util import get_raw_repos
+from ..repository.virtual import RestrictionRepo
+from ..resolver.util import reduce_to_failures
+from ..restrictions import packages
+from ..restrictions.boolean import OrRestriction
+from ..util import commandline, parserestrict
 
 
 argparser = commandline.ArgumentParser(

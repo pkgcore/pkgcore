@@ -10,8 +10,8 @@ from snakeoil.demandload import demand_compile_regexp
 from snakeoil.osutils import pjoin
 from snakeoil.process.spawn import bash_version
 
-from pkgcore.ebuild import atom, const
-from pkgcore.log import logger
+from . import atom, const
+from ..log import logger
 
 
 demand_compile_regexp(

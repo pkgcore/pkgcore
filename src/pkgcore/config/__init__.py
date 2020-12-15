@@ -8,8 +8,8 @@ __all__ = ('load_config',)
 
 import os
 
-from pkgcore import const
-from pkgcore.config import central, cparser
+from .. import const
+from . import central, cparser
 
 
 def load_config(user_conf_file=const.USER_CONF_FILE,

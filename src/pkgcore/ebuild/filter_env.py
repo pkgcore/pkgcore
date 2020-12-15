@@ -5,7 +5,7 @@ __all__ = ("run",)
 import io
 import re
 
-from pkgcore.log import logger
+from ..log import logger
 
 
 COMMAND_PARSING, SPACE_PARSING = list(range(2))
@@ -29,7 +29,7 @@ def native_run(out, file_buff, var_match, func_match,
 
 cpy_run = None
 try:
-    from pkgcore.ebuild._filter_env import run
+    from ._filter_env import run
     cpy_run = run
 except ImportError:
     run = native_run

@@ -4,9 +4,9 @@ __all__ = ("DeriveMetadataKls", "factory", "package")
 
 from snakeoil import klass, weakrefs
 
-from pkgcore.ebuild import cpv
-from pkgcore.ebuild.atom import atom
-from pkgcore.package import base
+from ..ebuild import cpv
+from ..ebuild.atom import atom
+from . import base
 
 
 def DeriveMetadataKls(original_kls):

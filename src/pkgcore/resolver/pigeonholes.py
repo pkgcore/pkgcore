@@ -1,6 +1,6 @@
 __all__ = ("PigeonHoledSlots",)
 
-from pkgcore.restrictions import restriction
+from ..restrictions import restriction
 
 # lil too getter/setter like for my tastes...
 

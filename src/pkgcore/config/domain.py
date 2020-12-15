@@ -6,11 +6,8 @@ Bit empty at the moment
 
 __all__ = ("MissingFile", "Failure", "domain")
 
-from snakeoil import klass
-
-from pkgcore.exceptions import PkgcoreException
-from pkgcore.operations import domain as domain_ops
-from pkgcore.repository.util import RepositoryGroup
+from ..exceptions import PkgcoreException
+from ..operations import domain as domain_ops
 
 
 class MissingFile(PkgcoreException):
@@ -18,7 +15,7 @@ class MissingFile(PkgcoreException):
 
     def __init__(self, filename, setting):
         super().__init__(
-            f"setting {settings} points at {filename!r}, which doesn't exist.")
+            f"setting {setting} points at {filename!r}, which doesn't exist.")
         self.file, self.setting = filename, setting
 
 

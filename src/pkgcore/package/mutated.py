@@ -4,7 +4,7 @@ package wrapper class to override a packages attributes
 
 __all__ = ("MutatedPkg",)
 
-from pkgcore.package.base import wrapper
+from .base import wrapper
 
 
 class MutatedPkg(wrapper):

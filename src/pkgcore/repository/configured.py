@@ -8,9 +8,9 @@ from functools import partial
 
 from snakeoil.klass import GetAttrProxy, DirProxy
 
-from pkgcore.operations.repo import operations_proxy
-from pkgcore.package.conditionals import make_wrapper
-from pkgcore.repository import prototype
+from ..operations.repo import operations_proxy
+from ..package.conditionals import make_wrapper
+from . import prototype
 
 
 class tree(prototype.tree):

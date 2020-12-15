@@ -3,10 +3,10 @@ __all__ = ("nodeps_repo", "caching_repo")
 from snakeoil.iterables import caching_iter, iter_sort
 from snakeoil.klass import GetAttrProxy, DirProxy
 
-from pkgcore.ebuild.conditionals import DepSet
-from pkgcore.operations.repo import operations_proxy
-from pkgcore.package.mutated import MutatedPkg
-from pkgcore.restrictions import packages
+from ..ebuild.conditionals import DepSet
+from ..operations.repo import operations_proxy
+from ..package.mutated import MutatedPkg
+from ..restrictions import packages
 
 
 class nodeps_repo:

@@ -7,9 +7,9 @@ __all__ = ("parse_match", "ParseError",)
 
 import re
 
-from pkgcore.ebuild import atom, cpv, errors, restricts
-from pkgcore.restrictions import packages, values
-from pkgcore.restrictions.util import collect_package_restrictions
+from ..ebuild import atom, cpv, errors, restricts
+from ..restrictions import packages, values
+from ..restrictions.util import collect_package_restrictions
 
 valid_globbing = re.compile(r"^(?:[\w+-.]+|(?<!\*)\*)+$").match
 

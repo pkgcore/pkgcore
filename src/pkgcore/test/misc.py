@@ -2,17 +2,17 @@
 
 from snakeoil.mappings import AttrAccessible
 
-from pkgcore import plugin
-from pkgcore.ebuild.atom import atom
-from pkgcore.ebuild.conditionals import DepSet
-from pkgcore.ebuild.cpv import CPV
-from pkgcore.ebuild.eapi import get_eapi
-from pkgcore.ebuild.ebuild_src import package
-from pkgcore.ebuild.misc import collapsed_restrict_to_data
-from pkgcore.ebuild.repo_objs import RepoConfig
-from pkgcore.package.metadata import factory
-from pkgcore.repository.util import SimpleTree
-from pkgcore.restrictions import packages
+from .. import plugin
+from ..ebuild.atom import atom
+from ..ebuild.conditionals import DepSet
+from ..ebuild.cpv import CPV
+from ..ebuild.eapi import get_eapi
+from ..ebuild.ebuild_src import package
+from ..ebuild.misc import collapsed_restrict_to_data
+from ..ebuild.repo_objs import RepoConfig
+from ..package.metadata import factory
+from ..repository.util import SimpleTree
+from ..restrictions import packages
 
 default_arches = set(["x86", "ppc", "amd64", "ia64"])
 

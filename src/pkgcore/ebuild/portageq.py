@@ -4,10 +4,10 @@ import os
 from snakeoil import osutils
 from snakeoil.cli import arghparse
 
-from pkgcore.ebuild import atom, conditionals
-from pkgcore.ebuild.eapi import get_eapi
-from pkgcore.restrictions.boolean import AndRestriction
-from pkgcore.util import commandline, packages
+from . import atom, conditionals
+from .eapi import get_eapi
+from ..restrictions.boolean import AndRestriction
+from ..util import commandline, packages
 
 
 def str_pkg(pkg):

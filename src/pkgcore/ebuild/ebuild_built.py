@@ -12,13 +12,13 @@ from snakeoil.data_source import local_source
 from snakeoil.mappings import IndeterminantDict
 from snakeoil.obj import DelayedInstantiation
 
-from pkgcore import fetch
-from pkgcore.ebuild import ebd, ebuild_src, conditionals, triggers
-from pkgcore.ebuild.eapi import get_eapi
-from pkgcore.fs.livefs import scan
-from pkgcore.merge import engine
-from pkgcore.package import metadata
-from pkgcore.package.base import DynamicGetattrSetter
+from .. import fetch
+from . import ebd, ebuild_src, conditionals, triggers
+from .eapi import get_eapi
+from ..fs.livefs import scan
+from ..merge import engine
+from ..package import metadata
+from ..package.base import DynamicGetattrSetter
 
 
 def _passthrough(inst, attr):

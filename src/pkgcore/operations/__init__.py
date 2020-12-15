@@ -15,8 +15,8 @@ from functools import partial
 from snakeoil import klass
 from snakeoil.currying import pretty_docs
 
-from pkgcore.exceptions import PkgcoreException
-from pkgcore.operations import observer as _observer
+from ..exceptions import PkgcoreException
+from ..operations import observer as _observer
 
 
 class OperationError(PkgcoreException):

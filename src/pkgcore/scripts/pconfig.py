@@ -14,10 +14,10 @@ import traceback
 
 from snakeoil.errors import dump_error
 
-from pkgcore.config import errors, basics
-from pkgcore.ebuild import atom
-from pkgcore.plugin import get_plugins
-from pkgcore.util import commandline
+from ..config import errors, basics
+from ..ebuild import atom
+from ..plugin import get_plugins
+from ..util import commandline
 
 
 def dump_section(config, out):

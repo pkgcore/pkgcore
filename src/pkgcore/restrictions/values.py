@@ -11,11 +11,11 @@ import re
 from snakeoil.klass import generic_equality, reflective_hash
 from snakeoil.sequences import iflatten_instance
 
-from pkgcore.restrictions import restriction, boolean, packages
+from . import restriction, boolean, packages
 
 
 try:
-    from pkgcore.restrictions import _restrictions as extension
+    from . import _restrictions as extension
 except ImportError:
     extension = None
 

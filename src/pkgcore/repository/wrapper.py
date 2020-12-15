@@ -9,8 +9,8 @@ __all__ = ("tree",)
 
 from snakeoil.klass import GetAttrProxy, DirProxy
 
-from pkgcore.operations import repo
-from pkgcore.repository import prototype, errors
+from ..operations import repo
+from . import prototype, errors
 
 
 class tree(prototype.tree):

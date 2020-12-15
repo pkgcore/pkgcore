@@ -9,8 +9,8 @@ __all__ = ("MalformedAtom", "InvalidVersion", "InvalidCPV", "DepsetParseError")
 
 import textwrap
 
-from pkgcore.exceptions import PkgcoreException
-from pkgcore.package import errors
+from ..exceptions import PkgcoreException
+from ..package import errors
 
 
 class MalformedAtom(errors.InvalidDependency):

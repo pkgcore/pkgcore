@@ -226,11 +226,8 @@ class base(metadata.package):
         for line in i:
             if line[0:1] in ('', '#'):
                 continue
-            eapi_str = _EAPI_str_regex.match(line)
-            if eapi_str is not None:
-                eapi_str = eapi_str.group('EAPI')
-                if eapi_str:
-                    eapi = _EAPI_regex.match(line).group('EAPI')
+            if (mo := _EAPI_str_regex.match(line)) and mo.group('EAPI'):
+                eapi = _EAPI_regex.match(line).group('EAPI')
             break
         try:
             return get_eapi(eapi)

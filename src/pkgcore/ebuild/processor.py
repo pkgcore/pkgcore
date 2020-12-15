@@ -236,10 +236,11 @@ class EbdError(ProcessorError):
                 # output specific error message if it exists in the expected format
                 error = bash_error[1]
                 try:
-                    # add non-helper die context if it exists
+                    # add non-helper die context if it exists and is from an eclass
                     die_context = next(
                         x for x in reversed(bash_error) if x.endswith('called die'))
-                    error += f', ({die_context})'
+                    if die_context.split(',', 1)[0].endswith('.eclass'):
+                        error += f', ({die_context})'
                 except StopIteration:
                     pass
                 return error

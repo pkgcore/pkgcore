@@ -10,10 +10,25 @@ from . import restriction, boolean
 from ..log import logger
 
 
-class native_PackageRestriction(metaclass=generic_equality):
+class PackageRestriction(restriction.base, metaclass=generic_equality):
+    """Package data restriction."""
 
     __slots__ = ('_pull_attr_func', '_attr_split', 'restriction', 'ignore_missing', 'negate')
     __attr_comparison__ = ("__class__", "negate", "_attr_split", "restriction")
+    __inst_caching__ = True
+
+    type = restriction.package_type
+    subtype = restriction.value_type
+    conditional = False
+
+    # Note a sentinel is used purely because the codepath that use it
+    # can get executed a *lot*, and setup/tear down of exception
+    # machinery can be surprisingly costly
+
+    # Careful: some methods (__eq__, __hash__, intersect) try to work
+    # for subclasses too. They will not behave as intended if a
+    # subclass adds attributes. So if you do that, override the
+    # methods.
 
     def __init__(self, attr, childrestriction, negate=False, ignore_missing=True):
         """
@@ -49,25 +64,6 @@ class native_PackageRestriction(metaclass=generic_equality):
         if attr is klass.sentinel:
             return self.negate
         return self.restriction.match(attr) != self.negate
-
-
-class PackageRestriction_mixin(restriction.base):
-    """Package data restriction."""
-
-    __slots__ = ()
-
-    # Note a sentinel is used purely because the codepath that use it
-    # can get executed a *lot*, and setup/tear down of exception
-    # machinery can be surprisingly costly
-
-    # Careful: some methods (__eq__, __hash__, intersect) try to work
-    # for subclasses too. They will not behave as intended if a
-    # subclass adds attributes. So if you do that, override the
-    # methods.
-
-    type = restriction.package_type
-    subtype = restriction.value_type
-    conditional = False
 
     def _handle_exception(self, pkg, exc, attr_split):
         if isinstance(exc, AttributeError):
@@ -138,36 +134,10 @@ class PackageRestriction_mixin(restriction.base):
         return (self.attr,)
 
 
-class native_PackageRestrictionMulti(native_PackageRestriction):
+class PackageRestrictionMulti(PackageRestriction):
 
     __slots__ = ()
-
-    @property
-    def attrs(self):
-        return tuple('.'.join(x) for x in self._attr_split)
-
-    def _parse_attr(self, attrs):
-        object.__setattr__(self, '_pull_attr_func', tuple(map(static_attrgetter, attrs)))
-        object.__setattr__(self, '_attr_split', tuple(x.split('.') for x in attrs))
-
-    def _pull_attr(self, pkg):
-        val = []
-        try:
-            for attr_func in self._pull_attr_func:
-                val.append(attr_func(pkg))
-        except IGNORED_EXCEPTIONS:
-            raise
-        except Exception as e:
-            if self._handle_exception(pkg, e, self._attr_split[len(val)]):
-                raise
-            return klass.sentinel
-        return val
-
-
-class PackageRestrictionMulti_mixin(PackageRestriction_mixin):
-
-    __slots__ = ()
-
+    __inst_caching__ = True
     attr = None
 
     def force_False(self, pkg):
@@ -190,29 +160,25 @@ class PackageRestrictionMulti_mixin(PackageRestriction_mixin):
     def attrs(self):
         return tuple('.'.join(x) for x in self._attr_split)
 
+    def _parse_attr(self, attrs):
+        object.__setattr__(self, '_pull_attr_func', tuple(map(static_attrgetter, attrs)))
+        object.__setattr__(self, '_attr_split', tuple(x.split('.') for x in attrs))
 
-try:
-    from ._restrictions import PackageRestriction as PackageRestriction_base
-except ImportError:
-    PackageRestriction_base = native_PackageRestriction
-PackageRestrictionMulti_base = native_PackageRestrictionMulti
+    def _pull_attr(self, pkg):
+        val = []
+        try:
+            for attr_func in self._pull_attr_func:
+                val.append(attr_func(pkg))
+        except IGNORED_EXCEPTIONS:
+            raise
+        except Exception as e:
+            if self._handle_exception(pkg, e, self._attr_split[len(val)]):
+                raise
+            return klass.sentinel
+        return val
 
-
-class PackageRestriction(PackageRestriction_base, PackageRestriction_mixin):
-    __slots__ = ()
-    __inst_caching__ = True
-
-    __hash__ = PackageRestriction_mixin.__hash__
-    __eq__ = PackageRestriction_base.__eq__
-
-
-class PackageRestrictionMulti(PackageRestrictionMulti_base, PackageRestrictionMulti_mixin):
-
-    __slots__ = ()
-    __inst_caching__ = True
-
-    __hash__ = PackageRestriction_mixin.__hash__
-    __eq__ = PackageRestriction_base.__eq__
+    __hash__ = PackageRestriction.__hash__
+    __eq__ = PackageRestriction.__eq__
 
 
 class Conditional(PackageRestriction, metaclass=generic_equality):
@@ -308,6 +274,7 @@ class KeyedAndRestriction(boolean.AndRestriction):
         if self.tag is None:
             return boolean_str
         return f'{self.tag} {boolean_str}'
+
 
 AlwaysTrue = AlwaysBool(negate=True)
 AlwaysFalse = AlwaysBool(negate=False)

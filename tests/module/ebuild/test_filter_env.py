@@ -6,9 +6,9 @@ from snakeoil.test import TestCase
 from pkgcore.ebuild import filter_env
 
 
-class NativeFilterEnvTest(TestCase):
+class TestFilterEnv(TestCase):
 
-    filter_env = staticmethod(partial(filter_env.main_run, _parser=filter_env.native_run))
+    filter_env = staticmethod(partial(filter_env.main_run))
 
     def get_output(self, raw_data, funcs=None, vars=None, preserve_funcs=False,
                    preserve_vars=False, debug=False, global_envvar_callback=None):

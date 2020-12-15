@@ -92,12 +92,12 @@ class StrRegexTest(TestRestriction):
 
 
 
-class native_TestStrExactMatch(TestRestriction):
+class TestStrExactMatch(TestRestriction):
 
-    if values.base_StrExactMatch is values.native_StrExactMatch:
+    if values.StrExactMatch is values.StrExactMatch:
         kls = values.StrExactMatch
     else:
-        class kls(values.native_StrExactMatch, values.base):
+        class kls(values.StrExactMatch, values.base):
             __slots__ = ()
             __inst_caching__ = True
 

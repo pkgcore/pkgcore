@@ -13,12 +13,12 @@ class AlwaysSelfIntersect(values.base):
     __hash__ = object.__hash__
 
 
-class native_PackageRestrictionTest(TestRestriction):
+class TestPackageRestriction(TestRestriction):
 
-    if packages.native_PackageRestriction is packages.PackageRestriction_base:
+    if packages.PackageRestriction is packages.PackageRestriction:
         kls = packages.PackageRestriction
     else:
-        class kls(packages.native_PackageRestriction,
+        class kls(packages.PackageRestriction,
             packages.PackageRestriction_mixin):
             __slots__ = ()
             __inst_caching__ = packages.PackageRestriction.__inst_caching__
@@ -130,12 +130,12 @@ class values_callback(values.base):
         return self.callback((False, pkg, attr, val))
 
 
-class native_PackageRestrictionMultiTest(TestCase):
+class TestPackageRestrictionMulti(TestCase):
 
-    if packages.native_PackageRestriction is packages.PackageRestriction_base:
+    if packages.PackageRestriction is packages.PackageRestriction:
         kls = packages.PackageRestrictionMulti
     else:
-        class kls(packages.native_PackageRestrictionMulti,
+        class kls(packages.PackageRestrictionMulti,
             packages.PackageRestrictionMulti_mixin):
             __slots__ = ()
             __inst_caching__ = packages.PackageRestrictionMulti.__inst_caching__

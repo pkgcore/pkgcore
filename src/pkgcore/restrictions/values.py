@@ -14,12 +14,6 @@ from snakeoil.sequences import iflatten_instance
 from . import restriction, boolean, packages
 
 
-try:
-    from . import _restrictions as extension
-except ImportError:
-    extension = None
-
-
 class base(restriction.base):
     """Base restriction matching object for values.
 
@@ -143,10 +137,11 @@ class StrRegex(base, metaclass=hashed_base):
         return result
 
 
-class native_StrExactMatch(metaclass=generic_equality):
+class StrExactMatch(base, metaclass=generic_equality):
     """exact string comparison match"""
 
     __slots__ = __attr_comparison__ = ('_hash', 'exact', 'case_sensitive', 'negate')
+    __inst_caching__ = True
 
     def __init__(self, exact, case_sensitive=True, negate=False):
         """
@@ -171,52 +166,31 @@ class native_StrExactMatch(metaclass=generic_equality):
         else:
             return (self.exact == value.lower()) != self.negate
 
+    def intersect(self, other):
+        s1, s2 = self.exact, other.exact
+        if other.case_sensitive and not self.case_sensitive:
+            s1 = s1.lower()
+        elif self.case_sensitive and not other.case_sensitive:
+            s2 = s2.lower()
+        if s1 == s2 and self.negate == other.negate:
+            if other.case_sensitive:
+                return other
+            return self
+        return None
+
+    def __repr__(self):
+        if self.negate:
+            string = '<%s %r negated @%#8x>'
+        else:
+            string = '<%s %r @%#8x>'
+        return string % (self.__class__.__name__, self.exact, id(self))
+
+    def __str__(self):
+        if self.negate:
+            return f'!= {self.exact}'
+        return f'== {self.exact}'
+
     __hash__ = reflective_hash('_hash')
-
-if extension is None:
-    base_StrExactMatch = native_StrExactMatch
-else:
-    base_StrExactMatch = extension.StrExactMatch
-
-
-# these are broken out so that it is easier to
-# generate native/cpy version of the class for
-# testing each.
-def _StrExact_intersect(self, other):
-    s1, s2 = self.exact, other.exact
-    if other.case_sensitive and not self.case_sensitive:
-        s1 = s1.lower()
-    elif self.case_sensitive and not other.case_sensitive:
-        s2 = s2.lower()
-    if s1 == s2 and self.negate == other.negate:
-        if other.case_sensitive:
-            return other
-        return self
-    return None
-
-
-def _StrExact__repr__(self):
-    if self.negate:
-        string = '<%s %r negated @%#8x>'
-    else:
-        string = '<%s %r @%#8x>'
-    return string % (self.__class__.__name__, self.exact, id(self))
-
-
-def _StrExact__str__(self):
-    if self.negate:
-        return f'!= {self.exact}'
-    return f'== {self.exact}'
-
-
-class StrExactMatch(base_StrExactMatch, base):
-
-    __slots__ = ()
-    __inst_caching__ = True
-
-    intersect = _StrExact_intersect
-    __repr__ = _StrExact__repr__
-    __str__ = _StrExact__str__
 
 
 class StrGlobMatch(base, metaclass=hashed_base):

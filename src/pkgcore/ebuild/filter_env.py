@@ -11,7 +11,7 @@ from ..log import logger
 COMMAND_PARSING, SPACE_PARSING = list(range(2))
 
 
-def native_run(out, file_buff, var_match, func_match,
+def run(out, file_buff, var_match, func_match,
                global_envvar_callback=None,
                func_callback=None):
     """Print a filtered environment.
@@ -25,14 +25,6 @@ def native_run(out, file_buff, var_match, func_match,
 
     process_scope(out, file_buff, 0, var_match, func_match, '\0',
         global_envvar_callback, func_callback=func_callback)
-
-
-cpy_run = None
-try:
-    from ._filter_env import run
-    cpy_run = run
-except ImportError:
-    run = native_run
 
 
 def build_regex_string(tokens, invert=False):
@@ -400,8 +392,9 @@ def walk_dollar_expansion(buff, pos, end, endchar, disable_quote=False):
             pos += 1
     return pos + 1
 
+
 def main_run(out_handle, data, vars_to_filter=(), funcs_to_filter=(), vars_is_whitelist=False, funcs_is_whitelist=False,
-             global_envvar_callback=None, func_callback=None, _parser=None):
+             global_envvar_callback=None, func_callback=None):
     vars = funcs = None
     if vars_to_filter:
         vars = build_regex_string(vars_to_filter, invert=vars_is_whitelist).match
@@ -412,20 +405,11 @@ def main_run(out_handle, data, vars_to_filter=(), funcs_to_filter=(), vars_is_wh
         funcs = build_regex_string(funcs_to_filter, invert=funcs_is_whitelist).match
 
     data = data + '\0'
-
-    kwds = {'global_envvar_callback':global_envvar_callback}
+    kwds = {'global_envvar_callback': global_envvar_callback}
 
     if func_callback:
-        if _parser not in (None, native_run):
-            raise ValueError("_parser must be native_run or None if func_callback is active")
-        _parser = native_run
-        # Set this only if func_callback is enabled; extension can't yet
-        # handle the arg.
         kwds['func_callback'] = func_callback
-    if _parser is None:
-        _parser = run
-
     if out_handle is None:
         out_handle = io.BytesIO()
 
-    _parser(out_handle, data, vars, funcs, **kwds)
+    run(out_handle, data, vars, funcs, **kwds)

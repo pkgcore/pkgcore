@@ -47,8 +47,8 @@ class test_collapsed_restrict_to_data(base):
 #     test_it.todo = "implement this..."
 
 
-class test_native_incremental_expansion(TestCase):
-    f = staticmethod(misc.native_incremental_expansion)
+class test_incremental_expansion(TestCase):
+    f = staticmethod(misc.incremental_expansion)
 
     def test_it(self):
         s = set("ab")

@@ -33,6 +33,7 @@ def sort_keywords(keywords):
         return parts[0], parts[2]
     return sorted(keywords, key=_sort_kwds)
 
+
 def optimize_incrementals(sequence):
     # roughly the algorithm walks sequences right->left,
     # identifying terminal points for incrementals; aka, -x x, 'x'
@@ -74,7 +75,7 @@ def render_incrementals(iterable, **kwds):
     return s
 
 
-def native_incremental_expansion(orig, iterable, msg_prefix='', finalize=True):
+def incremental_expansion(orig, iterable, msg_prefix='', finalize=True):
     for token in iterable:
         if token[0] == '-':
             i = token[1:]
@@ -90,11 +91,6 @@ def native_incremental_expansion(orig, iterable, msg_prefix='', finalize=True):
         else:
             orig.discard("-" + token)
             orig.add(token)
-
-try:
-    from ._misc import incremental_expansion
-except ImportError:
-    incremental_expansion = native_incremental_expansion
 
 
 def incremental_expansion_license(pkg, licenses, license_groups, iterable, msg_prefix=''):

@@ -14,11 +14,6 @@ from .atom import atom, transitive_use_atom
 from .errors import DepsetParseError
 from ..restrictions import packages, values, boolean, restriction
 
-try:
-    from ._depset import parse_depset
-except ImportError:
-    parse_depset = None
-
 
 class DepSet(boolean.AndRestriction):
     """Gentoo DepSet syntax parser"""
@@ -29,10 +24,6 @@ class DepSet(boolean.AndRestriction):
 
     # do not enable instance caching w/out adjust evaluate_depset!
     __inst_caching__ = False
-    # stored for tests primarily
-    parse_depset = parse_depset
-    if parse_depset is not None:
-        parse_depset = staticmethod(parse_depset)
 
     def __init__(self, restrictions='', element_class=atom,
                  node_conds=True, known_conditionals=None):
@@ -62,26 +53,6 @@ class DepSet(boolean.AndRestriction):
         """
         if element_func is None:
             element_func = element_class
-
-        if cls.parse_depset is not None and not (allow_src_uri_file_renames):
-            restrictions = None
-            if operators is None:
-                has_conditionals, restrictions = cls.parse_depset(
-                    dep_str, element_func,
-                    boolean.AndRestriction, boolean.OrRestriction)
-            else:
-                for x in operators:
-                    if x not in ("", "||"):
-                        break
-                else:
-                    has_conditionals, restrictions = cls.parse_depset(
-                        dep_str, element_func,
-                        operators.get(""), operators.get("||"))
-
-            if restrictions is not None:
-                if not has_conditionals and transitive_use_atoms:
-                    has_conditionals = cls._has_transitive_use_atoms(restrictions)
-                return cls(restrictions, element_class, has_conditionals)
 
         restrictions = []
         if operators is None:

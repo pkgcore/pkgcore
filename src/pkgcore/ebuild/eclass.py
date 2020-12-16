@@ -251,6 +251,12 @@ class EclassFuncBlock(ParseEclassDoc):
             raise EclassDocParsingError(f'{repr(tag)}, line {lineno}: non-inline arg')
         return block[0]
 
+    def parse(self, *args):
+        data = super().parse(*args)
+        if not (data.returns or data.description):
+            raise EclassDocParsingError(f'{repr(self.tag)}, @RETURN or @DESCRIPTION required')
+        return data
+
 
 class EclassFuncVarBlock(ParseEclassDoc):
     """VARIABLE doc block."""

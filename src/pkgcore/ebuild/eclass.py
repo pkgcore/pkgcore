@@ -254,7 +254,7 @@ class EclassFuncVarBlock(ParseEclassDoc):
     """VARIABLE doc block."""
 
     tag = '@VARIABLE:'
-    key = 'function-variables'
+    key = 'function_variables'
     default = True
 
     def __init__(self):
@@ -349,7 +349,7 @@ class EclassDoc(AttrDict):
 
     @property
     def variable_names(self):
-        """Set of documented function names in the eclass."""
+        """Set of documented variable names in the eclass."""
         return frozenset(x.name for x in self.variables)
 
     @property
@@ -369,6 +369,11 @@ class EclassDoc(AttrDict):
         it's assumed they are private.
         """
         return frozenset(self._dict.get('_exported_vars', ()))
+
+    @property
+    def function_variable_names(self):
+        """Set of documented function variable names in the eclass."""
+        return frozenset(x.name for x in self.function_variables)
 
     @property
     def live(self):

@@ -17,11 +17,6 @@ class EclassDocParsingError(Exception):
     """Error when parsing eclass docs."""
 
 
-def _parsing_error(exc):
-    """Callback to handle parsing exceptions."""
-    raise exc
-
-
 class AttrDict(ImmutableDict):
     """Support accessing dict keys as attributes."""
 
@@ -149,17 +144,14 @@ class ParseEclassDoc:
         # parse each tag block
         for tag, line_ind, block in blocks:
             name, required, func, _default = self.tags[tag]
-            try:
-                data[name] = func(block, tag, line_ind)
-            except EclassDocParsingError as e:
-                _parsing_error(e)
+            data[name] = func(block, tag, line_ind)
 
         # check if any required tags are missing
         if missing_tags:
             missing_tags_str = ', '.join(map(repr, missing_tags))
             s = pluralism(missing_tags)
-            _parsing_error(EclassDocParsingError(
-                f'{repr(lines[0])}: missing tag{s}: {missing_tags_str}'))
+            raise EclassDocParsingError(
+                f'{repr(lines[0])}: missing tag{s}: {missing_tags_str}')
 
         return AttrDict(data)
 
@@ -279,6 +271,11 @@ class EclassFuncVarBlock(ParseEclassDoc):
 
 _eclass_blocks_re = re.compile(
     rf'^(?P<prefix>\s*#) (?P<tag>{"|".join(ParseEclassDoc.blocks)})(?P<value>.*)')
+
+
+def _parsing_error(exc):
+    """Callback to handle parsing exceptions."""
+    raise exc
 
 
 class EclassDoc(AttrDict):
@@ -407,9 +404,9 @@ class EclassDoc(AttrDict):
 
         # @ECLASS block must exist and be first in eclasses
         if not blocks:
-            _parsing_error(EclassDocParsingError("'@ECLASS:' block missing"))
+            raise EclassDocParsingError("'@ECLASS:' block missing")
         elif blocks[0][0] != '@ECLASS:':
-            _parsing_error(EclassDocParsingError("'@ECLASS:' block not first"))
+            raise EclassDocParsingError("'@ECLASS:' block not first")
 
         data = {block.key: OrderedSet() for block in ParseEclassDoc.blocks.values() if block.default}
         duplicates = {k: set() for k in ParseEclassDoc.blocks}
@@ -421,19 +418,19 @@ class EclassDoc(AttrDict):
             # check if duplicate blocks exist and merge data
             if block_obj.key is None:
                 if block_data.keys() & data.keys():
-                    _parsing_error(EclassDocParsingError(
-                        f"'@ECLASS:', line {block_start}: duplicate block"))
+                    raise EclassDocParsingError(
+                        f"'@ECLASS:', line {block_start}: duplicate block")
                 # verify name is correct
                 file_name = os.path.basename(path)
                 if block_data.name != file_name:
-                    _parsing_error(EclassDocParsingError(
-                        f"'@ECLASS:' invalid name {block_data.name!r} (should be {file_name!r})"))
+                    raise EclassDocParsingError(
+                        f"'@ECLASS:' invalid name {block_data.name!r} (should be {file_name!r})")
                 data.update(block_data)
             else:
                 name = block_data['name']
                 if name in duplicates[tag]:
-                    _parsing_error(EclassDocParsingError(
-                        f'{repr(block[0])}, line {block_start}: duplicate block'))
+                    raise EclassDocParsingError(
+                        f'{repr(block[0])}, line {block_start}: duplicate block')
                 duplicates[tag].add(name)
                 data[block_obj.key].add(block_data)
 

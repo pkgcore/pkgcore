@@ -296,8 +296,8 @@ class EclassDoc(AttrDict):
 
         try:
             data.update(self.parse(path))
-        except EclassDocParsingError:
-            pass
+        except EclassDocParsingError as e:
+            _parsing_error(e)
 
         # inject full lists of exported funcs and vars
         if sourced:

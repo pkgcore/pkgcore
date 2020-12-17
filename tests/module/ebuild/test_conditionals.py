@@ -24,7 +24,7 @@ class base(TestCase):
         return self.kls.parse(string, element_kls, operators=operators, **kwds)
 
 
-class native_DepSetParsingTest(base):
+class TestDepSetParsing(base):
 
     def f(self, x):
         self.assertRaises(DepsetParseError, self.gen_depset, x)
@@ -194,7 +194,7 @@ class native_DepSetParsingTest(base):
         self.gen_depset("a/b[x(+)]", element_func=atom)
 
 
-class native_DepSetConditionalsInspectionTest(base):
+class TestDepSetConditionalsInspection(base):
 
     def test_sanity_has_conditionals(self):
         self.assertFalse(bool(self.gen_depset("a b").has_conditionals))
@@ -257,7 +257,7 @@ class native_DepSetConditionalsInspectionTest(base):
             element_kls=atom, transitive_use_atoms=True, *s)
 
 
-class native_DepSetEvaluateTest(base):
+class TestDepSetEvaluate(base):
 
     def test_evaluation(self):
         flag_set = list(sorted("x%i" % (x,) for x in range(2000)))

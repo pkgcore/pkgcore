@@ -15,9 +15,8 @@ from snakeoil.fileutils import AtomicWriteFile
 from snakeoil.osutils import listdir_files, normpath, pjoin
 from snakeoil.sequences import iflatten_instance, stable_unique
 
-from .. import os_data, ospkg
+from .. import os_data
 from ..fs import livefs
-from ..log import logger
 from ..merge import const, errors, triggers
 from ..restrictions import values
 from ..system import libtool
@@ -677,15 +676,6 @@ class GenerateTriggers:
                     pristine='yes', target_repo=target_repo, pkgset=self.domain.profile.system)
             elif 'unmerge-backup' in self.domain.features:
                 yield triggers.SavePkgUnmerging(target_repo=target_repo)
-
-        if 'save-deb' in self.domain.features:
-            path = self.opts.get("DEB_REPO_ROOT", None)
-            if path is None:
-                logger.warning("disabling save-deb; DEB_REPO_ROOT is unset")
-            else:
-                yield ospkg.triggers.SaveDeb(
-                    basepath=normpath(path), maintainer=self.opts.get("DEB_MAINAINER", ''),
-                    platform=self.opts.get("DEB_ARCHITECTURE", ""))
 
         if 'splitdebug' in self.domain.features:
             yield triggers.BinaryDebug(mode='split', compress=('compressdebug' in self.domain.features))

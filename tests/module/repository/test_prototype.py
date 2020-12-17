@@ -146,11 +146,11 @@ class TestPrototype:
                 "dev-lib/fake-1.0", "dev-lib/fake-1.0-r1"))
 
     def test_iter(self):
-        assert sorted(self.repo) == \
-            sorted(VersionedCPV(x) for x in (
-                "dev-util/diffball-1.0", "dev-util/diffball-0.7",
-                "dev-util/bsdiff-0.4.1", "dev-util/bsdiff-0.4.2",
-                "dev-lib/fake-1.0", "dev-lib/fake-1.0-r1"))
+        expected = sorted(VersionedCPV(x) for x in (
+            "dev-util/diffball-1.0", "dev-util/diffball-0.7",
+            "dev-util/bsdiff-0.4.1", "dev-util/bsdiff-0.4.2",
+            "dev-lib/fake-1.0", "dev-lib/fake-1.0-r1"))
+        assert sorted(self.repo) == expected
 
     def test_notify_remove(self):
         pkg = VersionedCPV("dev-util/diffball-1.0")

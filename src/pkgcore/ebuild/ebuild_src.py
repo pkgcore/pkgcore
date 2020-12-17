@@ -11,6 +11,7 @@ from sys import intern
 
 from snakeoil import chksum, data_source, fileutils, klass
 from snakeoil.demandload import demand_compile_regexp
+from snakeoil.mappings import OrderedFrozenSet
 
 from .. import fetch
 from ..cache import errors as cache_errors
@@ -273,7 +274,8 @@ class base(metadata.package):
 
     @DynamicGetattrSetter.register
     def inherited(self):
-        return tuple(sorted(self.data.get('_eclasses_', {})))
+        """Ordered set of all inherited eclasses."""
+        return OrderedFrozenSet(self.data.get('_eclasses_', {}))
 
     @DynamicGetattrSetter.register
     def inherit(self):

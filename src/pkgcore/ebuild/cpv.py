@@ -364,9 +364,11 @@ class CPV(base.base):
 
     def __le__(self, other):
         try:
-            if self.category > other.category and self.package > other.package:
-                return ver_cmp(self.version, self.revision, other.version, other.revision) <= 0
-            return True
+            if self.category == other.category:
+                if self.package == other.package:
+                    return ver_cmp(self.version, self.revision, other.version, other.revision) <= 0
+                return self.package < other.package
+            return self.category < other.category
         except AttributeError:
             raise TypeError(
                 "'<=' not supported between instances of "
@@ -388,9 +390,11 @@ class CPV(base.base):
 
     def __ge__(self, other):
         try:
-            if self.category < other.category and self.package < other.package:
-                return ver_cmp(self.version, self.revision, other.version, other.revision) >= 0
-            return True
+            if self.category == other.category:
+                if self.package == other.package:
+                    return ver_cmp(self.version, self.revision, other.version, other.revision) >= 0
+                return self.package > other.package
+            return self.category > other.category
         except AttributeError:
             raise TypeError(
                 "'>=' not supported between instances of "

@@ -468,7 +468,6 @@ class package_factory(metadata.factory):
                 raise metadata_errors.MetadataException(
                     pkg, 'data', 'failed sourcing ebuild', e)
 
-        inherited = mydata.pop("INHERITED", None)
         # Rewrite defined_phases as needed, since we now know the EAPI.
         eapi = get_eapi(mydata.get('EAPI', '0'))
         if parsed_eapi != eapi:
@@ -487,9 +486,8 @@ class package_factory(metadata.factory):
             phases.discard(None)
             mydata["DEFINED_PHASES"] = ' '.join(sorted(phases))
 
-        if inherited:
-            mydata["_eclasses_"] = self._ecache.get_eclass_data(
-                inherited.split())
+        if inherited := mydata.pop("INHERITED", None):
+            mydata["_eclasses_"] = self._ecache.get_eclass_data(inherited.split())
         mydata['_chf_'] = chksum.LazilyHashedPath(pkg.path)
 
         for x in wipes:

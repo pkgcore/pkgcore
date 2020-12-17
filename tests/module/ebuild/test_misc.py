@@ -52,20 +52,18 @@ class test_incremental_expansion(TestCase):
 
     def test_it(self):
         s = set("ab")
-        self.f(s, ("-a", "b", "-b", "-b", "c"))
+        self.f(("-a", "b", "-b", "-b", "c"), orig=s)
         self.assertEqual(sorted(s), ["c"])
-        self.assertRaises(ValueError,
-            self.f, set(), '-')
+        self.assertRaises(ValueError, self.f, set(), '-')
 
     def test_non_finalized(self):
         s = set("ab")
-        self.f(s, ("-a", "b", "-b", "c", "c"),
-            finalize=False)
+        self.f(("-a", "b", "-b", "c", "c"), orig=s, finalize=False)
         self.assertEqual(sorted(s), ["-a", "-b", "c"])
 
     def test_starred(self):
         s = set('ab')
-        self.f(s, ('c', '-*', 'd'))
+        self.f(('c', '-*', 'd'), orig=s)
         self.assertEqual(sorted(s), ['d'])
 
 

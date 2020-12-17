@@ -262,22 +262,16 @@ class domain(config_domain):
             # skipped because negations are required for license filtering.
             if incremental not in settings or incremental in ("USE", "ACCEPT_LICENSE"):
                 continue
-            s = set()
-            incremental_expansion(
-                s, settings[incremental],
-                f'while expanding {incremental}')
-            settings[incremental] = tuple(s)
+            settings[incremental] = tuple(incremental_expansion(
+                settings[incremental],
+                msg_prefix=f'while expanding {incremental}'))
 
         if 'ACCEPT_KEYWORDS' not in settings:
             raise Failure("No ACCEPT_KEYWORDS setting detected from profile, "
                           "or user config")
-        s = set()
-        default_keywords = []
-        incremental_expansion(
-            s, settings['ACCEPT_KEYWORDS'],
-            'while expanding ACCEPT_KEYWORDS')
-        default_keywords.extend(s)
-        settings['ACCEPT_KEYWORDS'] = set(default_keywords)
+        settings['ACCEPT_KEYWORDS'] = incremental_expansion(
+            settings['ACCEPT_KEYWORDS'],
+            msg_prefix='while expanding ACCEPT_KEYWORDS')
 
         # pull trigger options from the env
         self._triggers = GenerateTriggers(self, settings)

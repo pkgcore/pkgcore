@@ -63,19 +63,10 @@ def incremental_chunked(orig, iterables):
         orig.update(cinst.pos)
 
 
-def render_incrementals(iterable, **kwds):
-    """helper function for simple incremental_expansion calls
+def incremental_expansion(iterable, orig=None, msg_prefix='', finalize=True):
+    if orig is None:
+        orig = set()
 
-    :param iterable: sequence of items to incrementally stack
-    :param kwargs: options to pass to incremental_expansion
-    :return: a set of the rendered results from incremental_expansion
-    """
-    s = set()
-    incremental_expansion(s, iterable, **kwds)
-    return s
-
-
-def incremental_expansion(orig, iterable, msg_prefix='', finalize=True):
     for token in iterable:
         if token[0] == '-':
             i = token[1:]
@@ -91,6 +82,8 @@ def incremental_expansion(orig, iterable, msg_prefix='', finalize=True):
         else:
             orig.discard("-" + token)
             orig.add(token)
+
+    return orig
 
 
 def incremental_expansion_license(pkg, licenses, license_groups, iterable, msg_prefix=''):
@@ -210,9 +203,7 @@ class collapsed_restrict_to_data(metaclass=generic_equality):
                         f"or atom: data {data!r}")
 
         if always:
-            s = set()
-            incremental_expansion(s, always, finalize=kwds.get("finalize_defaults", True))
-            always = s
+            always = incremental_expansion(always, finalize=kwds.get("finalize_defaults", True))
         else:
             always = set()
         self.defaults = always
@@ -232,12 +223,12 @@ class collapsed_restrict_to_data(metaclass=generic_equality):
 
         if pre_defaults:
             s = set(pre_defaults)
-            incremental_expansion(s, self.defaults)
+            incremental_expansion(self.defaults, orig=s)
         else:
             s = set(self.defaults_finalized)
 
         if l:
-            incremental_expansion(s, iflatten_instance(l))
+            incremental_expansion(iflatten_instance(l), orig=s)
         return s
 
     def iter_pull_data(self, pkg, pre_defaults=()):
@@ -550,11 +541,9 @@ class PayloadDict(ChunkedDataDict):
         if items is None:
             items = self._global_settings
         s = set(pre_defaults)
-        incremental_expansion(
-            s,
-            chain.from_iterable(
-                item.data for item in items if item.restrict.match(pkg)))
-        return s
+        data = chain.from_iterable(
+            item.data for item in items if item.restrict.match(pkg))
+        return incremental_expansion(data, orig=s)
 
     pull_data = render_pkg
 

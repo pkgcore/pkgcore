@@ -273,15 +273,10 @@ _eclass_blocks_re = re.compile(
     rf'^(?P<prefix>\s*#) (?P<tag>{"|".join(ParseEclassDoc.blocks)})(?P<value>.*)')
 
 
-def _parsing_error(exc):
-    """Callback to handle parsing exceptions."""
-    raise exc
-
-
 class EclassDoc(AttrDict):
     """Support parsing eclass docs for a given eclass path."""
 
-    def __init__(self, path, sourced=False):
+    def __init__(self, path, /, *, sourced=False, error_callback=None):
         self.mtime = os.path.getmtime(path)
 
         # set default fields
@@ -294,7 +289,9 @@ class EclassDoc(AttrDict):
         try:
             data.update(self.parse(path))
         except EclassDocParsingError as e:
-            _parsing_error(e)
+            # parse errors are ignored by default
+            if error_callback is not None:
+                error_callback(e)
 
         # inject full lists of exported funcs and vars
         if sourced:

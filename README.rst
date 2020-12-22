@@ -72,14 +72,11 @@ the following::
 Contact
 =======
 
-For support and development inquiries join `#pkgcore`_ on Freenode.
-
 For bugs and feature requests please create an issue on Github_.
 
 
 .. _snakeoil: https://github.com/pkgcore/snakeoil
 .. _Github: https://github.com/pkgcore/pkgcore/issues
-.. _#pkgcore: https://webchat.freenode.net?channels=%23pkgcore&uio=d4
 
 .. |pypi| image:: https://img.shields.io/pypi/v/pkgcore.svg
     :target: https://pypi.python.org/pypi/pkgcore

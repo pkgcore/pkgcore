@@ -377,8 +377,6 @@ Please submit an issue via github:
 
 https://github.com/pkgcore/pkgcore/issues
 
-You can also stop by #pkgcore on freenode.
-
 See Also
 ========
 

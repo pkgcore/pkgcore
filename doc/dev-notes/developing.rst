@@ -66,8 +66,7 @@ Drop back to normal user, and try::
 
 
 At the time of writing the domain interface is in flux, so this example might
-fail for you. If it doesn't work ask for assistance in #pkgcore on freenode,
-or email ferringb (at) gmail.com' with the traceback.
+fail for you.
 
 Build extensions
 ================

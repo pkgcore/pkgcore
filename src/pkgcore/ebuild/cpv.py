@@ -44,7 +44,7 @@ def isvalid_rev(s):
     return s and s[0] == 'r' and s[1:].isdigit()
 
 
-class _Revision(UserString):
+class Revision(UserString):
     """Internal revision class storing revisions as strings and comparing as integers."""
 
     # parent __hash__() isn't inherited when __eq__() is defined in the child class
@@ -65,7 +65,7 @@ class _Revision(UserString):
             return self.data
 
     def __eq__(self, other):
-        if isinstance(other, _Revision):
+        if isinstance(other, Revision):
             return self._revint == other._revint
         elif isinstance(other, int):
             return self._revint == other
@@ -74,7 +74,7 @@ class _Revision(UserString):
         return self.data == other
 
     def __lt__(self, other):
-        if isinstance(other, _Revision):
+        if isinstance(other, Revision):
             return self._revint < other._revint
         elif isinstance(other, int):
             return self._revint < other
@@ -83,7 +83,7 @@ class _Revision(UserString):
         return self.data < other
 
     def __le__(self, other):
-        if isinstance(other, _Revision):
+        if isinstance(other, Revision):
             return self._revint <= other._revint
         elif isinstance(other, int):
             return self._revint <= other
@@ -92,7 +92,7 @@ class _Revision(UserString):
         return self.data <= other
 
     def __gt__(self, other):
-        if isinstance(other, _Revision):
+        if isinstance(other, Revision):
             return self._revint > other._revint
         elif isinstance(other, int):
             return self._revint > other
@@ -101,7 +101,7 @@ class _Revision(UserString):
         return self.data > other
 
     def __ge__(self, other):
-        if isinstance(other, _Revision):
+        if isinstance(other, Revision):
             return self._revint >= other._revint
         elif isinstance(other, int):
             return self._revint >= other
@@ -294,7 +294,7 @@ class CPV(base.base):
                     # needs at least ('pkg', 'ver', 'rev')
                     raise InvalidCPV(
                         cpvstr, 'missing package name, version, and/or revision')
-                rev = _Revision(pkg_chunks.pop(-1)[1:])
+                rev = Revision(pkg_chunks.pop(-1)[1:])
                 if rev == 0:
                     # reset stored cpvstr to drop -r0+
                     sf(self, 'cpvstr', f"{category}/{'-'.join(pkg_chunks)}")
@@ -303,7 +303,7 @@ class CPV(base.base):
                     sf(self, 'cpvstr', f"{category}/{'-'.join(pkg_chunks)}-r{int(rev)}")
                 sf(self, 'revision', rev)
             else:
-                sf(self, 'revision', _Revision(''))
+                sf(self, 'revision', Revision(''))
 
             if not isvalid_version_re.match(pkg_chunks[-1]):
                 raise InvalidCPV(cpvstr, f"invalid version '{pkg_chunks[-1]}'")

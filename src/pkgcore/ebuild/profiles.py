@@ -185,7 +185,7 @@ class ProfileNode(metaclass=caching.WeakInstMeta):
                             f'{self.name}/packages, line {lineno}: {line!r}'
                         )
             except ebuild_errors.MalformedAtom as e:
-                logger.error(f'{self.name}/packages, line {lineno}: {e}')
+                logger.error(f'{self.name}/packages, line {lineno}: parsing error: {e}')
         system = [tuple(neg_sys), tuple(sys)]
         profile = [tuple(neg_pro), tuple(pro)]
         if neg_wildcard:
@@ -324,7 +324,7 @@ class ProfileNode(metaclass=caching.WeakInstMeta):
             try:
                 a = self.eapi_atom(l[0])
             except ebuild_errors.MalformedAtom as e:
-                logger.error(e)
+                logger.error(f'{path!r}, line {lineno}: parsing error: {e}')
                 continue
             if len(l) == 1:
                 logger.error(f'{path!r}, line {lineno}: missing USE flag(s): {line!r}')

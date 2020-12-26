@@ -10,7 +10,6 @@ from itertools import chain
 
 from snakeoil import caching, klass
 from snakeoil.bash import iter_read_bash, read_bash_dict
-from snakeoil.containers import InvertedContains
 from snakeoil.data_source import local_source
 from snakeoil.fileutils import readlines_utf8
 from snakeoil.mappings import ImmutableDict
@@ -21,11 +20,19 @@ from ..config import errors
 from ..config.hint import ConfigHint
 from ..fs.livefs import sorted_scan
 from ..log import logger
-from . import const, cpv, ebuild_src
+from . import const, cpv
 from . import errors as ebuild_errors
 from . import misc, repo_objs
 from .atom import atom
 from .eapi import get_eapi
+
+
+def _r(path):
+    """Create relative profiles path from full path."""
+    try:
+        return path.split('profiles/', 1)[1]
+    except IndexError:
+        return path
 
 
 def package_keywords_splitter(iterable):
@@ -34,7 +41,7 @@ def package_keywords_splitter(iterable):
         try:
             yield atom(v[0]), tuple(v[1:]), line, lineno, path
         except ebuild_errors.MalformedAtom as e:
-            logger.error(f'{path!r}, line {lineno}: parsing error: {e}')
+            logger.error(f'{_r(path)!r}, line {lineno}: parsing error: {e}')
 
 
 class ProfileError(errors.ParsingError):
@@ -259,7 +266,7 @@ class ProfileNode(metaclass=caching.WeakInstMeta):
             if line[0] == '-':
                 line = line[1:]
                 if not line:
-                    logger.error(f"{path!r}, line {lineno}: '-' negation without an atom")
+                    logger.error(f"{_r(path)!r}, line {lineno}: '-' negation without an atom")
                     continue
                 l = neg
             else:
@@ -267,7 +274,7 @@ class ProfileNode(metaclass=caching.WeakInstMeta):
             try:
                 l.append(self.eapi_atom(line))
             except ebuild_errors.MalformedAtom as e:
-                logger.error(f'{path!r}, line {lineno}: parsing error: {e}')
+                logger.error(f'{_r(path)!r}, line {lineno}: parsing error: {e}')
         return tuple(neg), tuple(pos)
 
     @load_property("package.mask", allow_recurse=True)
@@ -324,10 +331,10 @@ class ProfileNode(metaclass=caching.WeakInstMeta):
             try:
                 a = self.eapi_atom(l[0])
             except ebuild_errors.MalformedAtom as e:
-                logger.error(f'{path!r}, line {lineno}: parsing error: {e}')
+                logger.error(f'{_r(path)!r}, line {lineno}: parsing error: {e}')
                 continue
             if len(l) == 1:
-                logger.error(f'{path!r}, line {lineno}: missing USE flag(s): {line!r}')
+                logger.error(f'{_r(path)!r}, line {lineno}: missing USE flag(s): {line!r}')
                 continue
             d[a.key].append(misc.chunked_data(a, *split_negations(l[1:])))
 

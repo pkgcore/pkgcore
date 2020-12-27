@@ -30,7 +30,8 @@ from .eapi import get_eapi
 def rel(path):
     """Create relative profiles path from full path."""
     try:
-        return path.split('profiles/', 1)[1]
+        p = path.rstrip(os.sep) + os.sep
+        return p.split('/profiles/', 1)[1]
     except IndexError:
         return path
 

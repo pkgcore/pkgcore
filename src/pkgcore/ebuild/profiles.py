@@ -48,9 +48,16 @@ class NonexistentProfile(ProfileError):
 def _read_profile_files(files, allow_line_cont=False):
     """Read all the given data files."""
     for path in files:
+        # determine file path relative to the profiles dir
+        try:
+            relpath = path.split('/profiles/')[1]
+        except IndexError:
+            # profiles base path
+            relpath = os.path.basename(path)
+
         for lineno, line in iter_read_bash(
                 path, allow_line_cont=allow_line_cont, enum_line=True):
-            yield line, lineno, path
+            yield line, lineno, relpath
 
 
 def load_property(filename, *, read_func=_read_profile_files, fallback=(),
@@ -142,7 +149,7 @@ class ProfileNode(metaclass=caching.WeakInstMeta):
 
     @klass.jit_attr
     def name(self):
-        """Relative path to the profile."""
+        """Relative path to the profile from the profiles directory."""
         try:
             return self.path.split('/profiles/')[1]
         except IndexError:
@@ -156,7 +163,7 @@ class ProfileNode(metaclass=caching.WeakInstMeta):
         profile_set = repo_config is not None and 'profile-set' in repo_config.profile_formats
         sys, neg_sys, pro, neg_pro = [], [], [], []
         neg_wildcard = False
-        for line, lineno, path in data:
+        for line, lineno, relpath in data:
             try:
                 if line[0] == '-':
                     if line == '-*':
@@ -166,22 +173,16 @@ class ProfileNode(metaclass=caching.WeakInstMeta):
                     elif profile_set:
                         neg_pro.append(self.eapi_atom(line[1:]))
                     else:
-                        logger.error(
-                            f'invalid line format, '
-                            f'{self.name}/packages, line {lineno}: {line!r}'
-                        )
+                        logger.error(f'{relpath!r}: invalid line format, line {lineno}: {line!r}')
                 else:
                     if line[0] == '*':
                         sys.append(self.eapi_atom(line[1:]))
                     elif profile_set:
                         pro.append(self.eapi_atom(line))
                     else:
-                        logger.error(
-                            f'invalid line format, '
-                            f'{self.name}/packages, line {lineno}: {line!r}'
-                        )
+                        logger.error(f'{relpath!r}: invalid line format, line {lineno}: {line!r}')
             except ebuild_errors.MalformedAtom as e:
-                logger.error(f'{self.name}/packages, line {lineno}: parsing error: {e}')
+                logger.error(f'{relpath!r}, line {lineno}: parsing error: {e}')
         system = [tuple(neg_sys), tuple(sys)]
         profile = [tuple(neg_pro), tuple(pro)]
         if neg_wildcard:
@@ -194,7 +195,7 @@ class ProfileNode(metaclass=caching.WeakInstMeta):
         repo_config = self.repoconfig
         if repo_config is not None and 'portage-2' in repo_config.profile_formats:
             l = []
-            for line, lineno, path in data:
+            for line, lineno, relpath in data:
                 repo_id, separator, profile_path = line.partition(':')
                 if separator:
                     if repo_id:
@@ -209,7 +210,7 @@ class ProfileNode(metaclass=caching.WeakInstMeta):
                             else:
                                 logger.error(
                                     f'repo {repo_config.repo_id!r}: '
-                                    f"'{self.name}/parent' (line {lineno}), "
+                                    f"{relpath!r} (line {lineno}), "
                                     f'bad profile parent {line!r}: '
                                     f'unknown repo {repo_id!r}'
                                 )
@@ -219,7 +220,7 @@ class ProfileNode(metaclass=caching.WeakInstMeta):
                     l.append((abspath(pjoin(self.path, repo_id)), line, lineno))
             return tuple(l)
         return tuple((abspath(pjoin(self.path, line)), line, lineno)
-                     for line, lineno, path in data)
+                     for line, lineno, relpath in data)
 
     @klass.jit_attr
     def parents(self):
@@ -251,11 +252,11 @@ class ProfileNode(metaclass=caching.WeakInstMeta):
     def _parse_atom_negations(self, data):
         """Parse files containing optionally negated package atoms."""
         neg, pos = [], []
-        for line, lineno, path in data:
+        for line, lineno, relpath in data:
             if line[0] == '-':
                 line = line[1:]
                 if not line:
-                    logger.error(f"{self.name!r}, line {lineno}: '-' negation without an atom")
+                    logger.error(f"{relpath!r}, line {lineno}: '-' negation without an atom")
                     continue
                 l = neg
             else:
@@ -263,17 +264,17 @@ class ProfileNode(metaclass=caching.WeakInstMeta):
             try:
                 l.append(self.eapi_atom(line))
             except ebuild_errors.MalformedAtom as e:
-                logger.error(f'{self.name!r}, line {lineno}: parsing error: {e}')
+                logger.error(f'{relpath!r}, line {lineno}: parsing error: {e}')
         return tuple(neg), tuple(pos)
 
     def _package_keywords_splitter(self, iterable):
         """Parse package keywords files."""
-        for line, lineno, path in iterable:
+        for line, lineno, relpath in iterable:
             v = line.split()
             try:
                 yield (atom(v[0]), tuple(stable_unique(v[1:])))
             except ebuild_errors.MalformedAtom as e:
-                logger.error(f'{self.name!r}, line {lineno}: parsing error: {e}')
+                logger.error(f'{relpath!r}, line {lineno}: parsing error: {e}')
 
     @load_property("package.mask", allow_recurse=True)
     def masks(self, data):
@@ -322,15 +323,15 @@ class ProfileNode(metaclass=caching.WeakInstMeta):
     def _parse_package_use(self, data):
         d = defaultdict(list)
         # split the data down ordered cat/pkg lines
-        for line, lineno, path in data:
+        for line, lineno, relpath in data:
             l = line.split()
             try:
                 a = self.eapi_atom(l[0])
             except ebuild_errors.MalformedAtom as e:
-                logger.error(f'{self.name!r}, line {lineno}: parsing error: {e}')
+                logger.error(f'{relpath!r}, line {lineno}: parsing error: {e}')
                 continue
             if len(l) == 1:
-                logger.error(f'{self.name!r}, line {lineno}: missing USE flag(s): {line!r}')
+                logger.error(f'{relpath!r}, line {lineno}: missing USE flag(s): {line!r}')
                 continue
             d[a.key].append(misc.chunked_data(a, *split_negations(l[1:])))
 

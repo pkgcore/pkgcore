@@ -24,7 +24,7 @@ from . import const, cpv
 from . import errors as ebuild_errors
 from . import misc, repo_objs
 from .atom import atom
-from .eapi import get_eapi
+from .eapi import EAPI, get_eapi
 
 
 class ProfileError(errors.ParsingError):
@@ -468,8 +468,10 @@ class ProfileNode(metaclass=caching.WeakInstMeta):
         except StopIteration:
             pass
 
-        eapi = line.strip()
-        return get_eapi(eapi)
+        eapi_str = line.strip()
+        if eapi_str not in EAPI.known_eapis:
+            logger.error(f'{relpath!r}: unknown EAPI {eapi_str!r}')
+        return get_eapi(eapi_str)
 
     eapi_atom = klass.alias_attr("eapi.atom_kls")
 

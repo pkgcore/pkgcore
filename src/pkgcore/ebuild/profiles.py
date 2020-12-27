@@ -27,24 +27,6 @@ from .atom import atom
 from .eapi import get_eapi
 
 
-def rel(path):
-    """Create relative profiles path from full path."""
-    try:
-        p = path.rstrip(os.sep) + os.sep
-        return p.split('/profiles/', 1)[1]
-    except IndexError:
-        return path
-
-
-def package_keywords_splitter(iterable):
-    for line, lineno, path in iterable:
-        v = line.split()
-        try:
-            yield atom(v[0]), tuple(v[1:]), line, lineno, path
-        except ebuild_errors.MalformedAtom as e:
-            logger.error(f'{rel(path)!r}, line {lineno}: parsing error: {e}')
-
-
 class ProfileError(errors.ParsingError):
 
     def __init__(self, path, filename, error):
@@ -95,6 +77,7 @@ def load_property(filename, *, read_func=_read_profile_files, fallback=(),
             _load_and_invoke, func, filename, read_func, fallback,
             allow_recurse, allow_line_cont, parse_func, eapi_optional))
     return f
+
 
 def _load_and_invoke(func, filename, read_func, fallback, allow_recurse,
                      allow_line_cont, parse_func, eapi_optional, self):
@@ -283,6 +266,15 @@ class ProfileNode(metaclass=caching.WeakInstMeta):
                 logger.error(f'{self.name!r}, line {lineno}: parsing error: {e}')
         return tuple(neg), tuple(pos)
 
+    def _package_keywords_splitter(self, iterable):
+        """Parse package keywords files."""
+        for line, lineno, path in iterable:
+            v = line.split()
+            try:
+                yield (atom(v[0]), tuple(stable_unique(v[1:])))
+            except ebuild_errors.MalformedAtom as e:
+                logger.error(f'{self.name!r}, line {lineno}: parsing error: {e}')
+
     @load_property("package.mask", allow_recurse=True)
     def masks(self, data):
         return self._parse_atom_negations(data)
@@ -295,15 +287,13 @@ class ProfileNode(metaclass=caching.WeakInstMeta):
     def pkg_deprecated(self, data):
         return self._parse_atom_negations(data)
 
-    @load_property("package.keywords", allow_recurse=True,
-                   parse_func=package_keywords_splitter)
+    @load_property("package.keywords", allow_recurse=True)
     def keywords(self, data):
-        return tuple((x[0], tuple(stable_unique(x[1]))) for x in data)
+        return tuple(self._package_keywords_splitter(data))
 
-    @load_property("package.accept_keywords", allow_recurse=True,
-                   parse_func=package_keywords_splitter)
+    @load_property("package.accept_keywords", allow_recurse=True)
     def accept_keywords(self, data):
-        return tuple((x[0], tuple(stable_unique(x[1]))) for x in data)
+        return tuple(self._package_keywords_splitter(data))
 
     @load_property("package.use", allow_recurse=True)
     def pkg_use(self, data):

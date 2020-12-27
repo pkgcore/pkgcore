@@ -449,18 +449,27 @@ class ProfileNode(metaclass=caching.WeakInstMeta):
             return local_source(path)
         return None
 
-    @load_property('eapi', fallback=('0',))
+    @load_property('eapi', fallback='0')
     def eapi(self, data):
+        # handle fallback
+        if isinstance(data, str):
+            return get_eapi(data)
+
         try:
-            data = (x[0] for x in data)
-            data = (x.strip() for x in data)
-            data = [x for x in data if x]
-            if len(data) > 1:
-                logger.error(f'{self.name}/eapi, multiple lines detected')
-            return get_eapi(data[0])
-        except IndexError:
-            logger.error(f'{self.name}/eapi, empty file')
+            line, lineno, relpath = next(data)
+        except StopIteration:
+            relpath = pjoin(self.name, 'eapi')
+            logger.error(f'{relpath!r}: empty file')
             return get_eapi('0')
+
+        try:
+            next(data)
+            logger.error(f'{relpath!r}: multiple lines detected')
+        except StopIteration:
+            pass
+
+        eapi = line.strip()
+        return get_eapi(eapi)
 
     eapi_atom = klass.alias_attr("eapi.atom_kls")
 

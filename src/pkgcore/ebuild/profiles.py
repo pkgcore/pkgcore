@@ -143,7 +143,7 @@ class ProfileNode(metaclass=caching.WeakInstMeta):
     _repo_map = None
 
     def __init__(self, path, pms_strict=True):
-        self.path = path
+        self.path = path.rstrip(os.path.sep)
         if not os.path.isdir(self.path):
             raise NonexistentProfile(self.path)
         self.pms_strict = pms_strict
@@ -159,7 +159,12 @@ class ProfileNode(metaclass=caching.WeakInstMeta):
 
     @klass.jit_attr
     def name(self):
-        return self.path.split('/profiles/')[-1]
+        """Relative path to the profile."""
+        try:
+            return self.path.split('/profiles/')[1]
+        except IndexError:
+            # profiles base path
+            return ''
 
     @load_property("packages")
     def packages(self, data):

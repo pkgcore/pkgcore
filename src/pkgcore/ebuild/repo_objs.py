@@ -918,8 +918,9 @@ class RepoConfig(syncable.tree, klass.ImmutableInstance, metaclass=WeakInstMeta)
         """
         if self.config_name:
             return self.config_name
-        if self.repo_name:
-            return self.repo_name
+        # repo_name might not be parsed yet if failure occurs during init
+        if repo_name := getattr(self, 'repo_name', None):
+            return repo_name
         if self.pms_repo_name:
             return self.pms_repo_name
         if not self.is_empty:

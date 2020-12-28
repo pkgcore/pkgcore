@@ -686,18 +686,18 @@ class RepoConfig(syncable.tree, klass.ImmutableInstance, metaclass=WeakInstMeta)
         })
 
     def __init__(self, location, config_name=None, syncer=None, profiles_base='profiles'):
+        super().__init__(syncer)
         object.__setattr__(self, 'config_name', config_name)
         object.__setattr__(self, 'location', location)
         object.__setattr__(self, 'profiles_base', pjoin(self.location, profiles_base))
 
-        if not self.eapi.is_supported:
-            raise repo_errors.UnsupportedRepo(self)
-
-        super().__init__(syncer)
         try:
             self._parse_config()
         except OSError as e:
             raise repo_errors.InitializationError(str(e))
+
+        if not self.eapi.is_supported:
+            raise repo_errors.UnsupportedRepo(self)
 
     def _parse_config(self):
         """Load data from the repo's metadata/layout.conf file."""
@@ -947,7 +947,8 @@ class RepoConfig(syncable.tree, klass.ImmutableInstance, metaclass=WeakInstMeta)
 
     @klass.jit_attr
     def base_profile(self):
-        return profiles.EmptyRootNode(self.profiles_base)
+        pms_strict = 'pms' in self.profile_formats
+        return profiles.EmptyRootNode(self.profiles_base, pms_strict=pms_strict)
 
     @klass.jit_attr
     def eapi(self):

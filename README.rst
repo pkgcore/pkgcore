@@ -69,14 +69,20 @@ the following::
 
     tox -e py39
 
+Docs
+====
+
+Documentation is available on Github_.
+
 Contact
 =======
 
-For bugs and feature requests please create an issue on Github_.
+For bugs and feature requests please create an issue_.
 
 
+.. _Github: https://pkgcore.github.io/pkgcore/
 .. _snakeoil: https://github.com/pkgcore/snakeoil
-.. _Github: https://github.com/pkgcore/pkgcore/issues
+.. _issue: https://github.com/pkgcore/pkgcore/issues
 
 .. |pypi| image:: https://img.shields.io/pypi/v/pkgcore.svg
     :target: https://pypi.python.org/pypi/pkgcore

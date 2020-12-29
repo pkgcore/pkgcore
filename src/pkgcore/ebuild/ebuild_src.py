@@ -31,7 +31,6 @@ demand_compile_regexp(
     '_EAPI_regex', r"^EAPI=(['\"]?)(?P<EAPI>[A-Za-z0-9+_.-]*)\1[\t ]*(?:#.*)?")
 demand_compile_regexp(
     '_EAPI_str_regex', r"^EAPI=(['\"]?)(?P<EAPI>.*)\1")
-demand_compile_regexp('_parse_inherit_regex', r'^\s*inherit\s(?P<eclasses>.*?)(#.*)?$')
 
 
 class base(metadata.package):
@@ -275,27 +274,12 @@ class base(metadata.package):
     @DynamicGetattrSetter.register
     def inherited(self):
         """Ordered set of all inherited eclasses."""
-        return OrderedFrozenSet(self.data.get('_eclasses_', {}))
+        return OrderedFrozenSet(self.data.get("_eclasses_", ()))
 
     @DynamicGetattrSetter.register
     def inherit(self):
-        """Return the tuple of directly inherited eclasses for an ebuild."""
-        if self.ebuild.path:
-            # Use readlines directly since it does whitespace stripping
-            # for us, far faster than native python can.
-            i = fileutils.readlines_utf8(self.ebuild.path)
-        else:
-            i = (x.strip() for x in self.ebuild.text_fileobj())
-
-        # get all inherit line matches in the ebuild file
-        matches = filter(None, map(_parse_inherit_regex.match, i))
-        # and return direct inherits in the order they're seen
-        eclasses = []
-        for eclass in chain.from_iterable(m.group('eclasses').split() for m in matches):
-            # verify eclass is in inherited set to avoid conditional inherits
-            if eclass in self.inherited:
-                eclasses.append(eclass)
-        return tuple(eclasses)
+        """Ordered set of directly inherited eclasses."""
+        return OrderedFrozenSet(self.data.get("INHERIT", "").split())
 
     @staticmethod
     def _mk_required_use_node(data):

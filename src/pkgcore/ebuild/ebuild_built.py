@@ -111,6 +111,10 @@ class package(ebuild_src.base):
         return tuple(self.data.get("INHERITED", "").split())
 
     @DynamicGetattrSetter.register
+    def inherit(self):
+        return tuple(self.data.get("INHERIT", "").split())
+
+    @DynamicGetattrSetter.register
     def source_repository(self):
         repo = self.data.get('source_repository')
         if repo is None:

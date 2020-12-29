@@ -171,10 +171,10 @@ __dyn_pkg_preinst() {
 
 inherit() {
 	[[ -z $@ ]] && die "${FUNCNAME}: missing eclass argument"
-	local ECLASS_DEPTH=$(( ${ECLASS_DEPTH-0} + 1 ))
+	local INHERIT_DEPTH=$(( ${INHERIT_DEPTH:-1} + 1 ))
 
-	if [[ ${ECLASS_DEPTH} -gt 1 ]]; then
-		debug-print "*** Multiple Inheritance (Level: ${ECLASS_DEPTH})"
+	if [[ ${INHERIT_DEPTH} -gt 0 ]]; then
+		debug-print "*** Multiple Inheritance (level: ${INHERIT_DEPTH})"
 	fi
 
 	local location olocation
@@ -185,7 +185,7 @@ inherit() {
 	local IUSE REQUIRED_USE DEPEND RDEPEND PDEPEND BDEPEND
 
 	# keep track of direct ebuild inherits
-	[[ ${ECLASS_DEPTH} -eq 1 ]] && INHERIT+=" $@"
+	[[ ${INHERIT_DEPTH} -eq 0 ]] && INHERIT+=" $@"
 
 	for ECLASS in "$@"; do
 		if [[ ${EBUILD_PHASE} != "depend" ]]; then

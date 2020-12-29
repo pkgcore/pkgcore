@@ -19,7 +19,7 @@ incrementals_unfinalized = ("USE",)
 metadata_keys = (
     "BDEPEND", "DEPEND", "RDEPEND", "PDEPEND",
     "DEFINED_PHASES", "DESCRIPTION", "EAPI", "HOMEPAGE",
-    "INHERITED", "IUSE", "KEYWORDS", "LICENSE", "PROPERTIES",
+    "INHERIT", "INHERITED", "IUSE", "KEYWORDS", "LICENSE", "PROPERTIES",
     "REQUIRED_USE", "RESTRICT", "SLOT", "SRC_URI", "_eclasses_",
 )
 

@@ -478,7 +478,7 @@ common_dep_keys = (
 )
 
 common_metadata_keys = (
-    "RESTRICT", "PROPERTIES", "DEFINED_PHASES", "INHERITED", "EAPI",
+    "RESTRICT", "PROPERTIES", "DEFINED_PHASES", "INHERIT", "INHERITED", "EAPI",
 )
 
 common_eclass_keys = ("S", "RESTRICT", "PROPERTIES", "ECONF_SOURCE")

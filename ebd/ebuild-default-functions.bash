@@ -184,6 +184,9 @@ inherit() {
 	# setting is protected.
 	local IUSE REQUIRED_USE DEPEND RDEPEND PDEPEND BDEPEND
 
+	# keep track of direct ebuild inherits
+	[[ ${ECLASS_DEPTH} -eq 1 ]] && INHERIT+=" $@"
+
 	for ECLASS in "$@"; do
 		if [[ ${EBUILD_PHASE} != "depend" ]]; then
 			if ! __safe_has "${ECLASS}" ${INHERITED}; then

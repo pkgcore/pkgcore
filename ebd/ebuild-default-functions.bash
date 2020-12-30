@@ -171,7 +171,7 @@ __dyn_pkg_preinst() {
 
 inherit() {
 	[[ -z $@ ]] && die "${FUNCNAME}: missing eclass argument"
-	local INHERIT_DEPTH=$(( ${INHERIT_DEPTH:-1} + 1 ))
+	local INHERIT_DEPTH=$(( ${INHERIT_DEPTH--1} + 1 ))
 
 	if [[ ${INHERIT_DEPTH} -gt 0 ]]; then
 		debug-print "*** Multiple Inheritance (level: ${INHERIT_DEPTH})"

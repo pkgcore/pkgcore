@@ -4,6 +4,9 @@ import os
 import re
 import shlex
 import subprocess
+from functools import partial
+from itertools import groupby
+from operator import itemgetter
 
 from snakeoil import klass
 from snakeoil.mappings import ImmutableDict, OrderedSet
@@ -11,10 +14,7 @@ from snakeoil.strings import pluralism
 
 from . import conditionals
 from .eapi import EAPI
-
-
-class EclassDocParsingError(Exception):
-    """Error when parsing eclass docs."""
+from ..log import logger
 
 
 class AttrDict(ImmutableDict):
@@ -67,7 +67,7 @@ class ParseEclassDoc:
         """Parse boolean tags."""
         try:
             args = next(x for x in block if x)
-            raise EclassDocParsingError(
+            logger.warning(
                 f'{repr(tag)}, line {lineno}: tag takes no args, got {repr(args)}')
         except StopIteration:
             pass
@@ -76,9 +76,9 @@ class ParseEclassDoc:
     def _tag_inline_arg(self, block, tag, lineno):
         """Parse tags with inline argument."""
         if not block[0]:
-            raise EclassDocParsingError(f'{repr(tag)}, line {lineno}: missing inline arg')
+            logger.warning(f'{repr(tag)}, line {lineno}: missing inline arg')
         elif len(block) > 1:
-            raise EclassDocParsingError(f'{repr(tag)}, line {lineno}: non-inline arg')
+            logger.warning(f'{repr(tag)}, line {lineno}: non-inline arg')
         return block[0]
 
     def _tag_inline_list(self, block, tag, lineno):
@@ -89,22 +89,18 @@ class ParseEclassDoc:
     def _tag_multiline_args(self, block, tag, lineno):
         """Parse tags with multiline arguments."""
         if block[0]:
-            raise EclassDocParsingError(f'{repr(tag)}, line {lineno}: invalid inline arg')
+            logger.warning(f'{repr(tag)}, line {lineno}: invalid inline arg')
         if not block[1:]:
-            raise EclassDocParsingError(f'{repr(tag)}, line {lineno}: missing args')
+            logger.warning(f'{repr(tag)}, line {lineno}: missing args')
         return tuple(block[1:])
 
     def _tag_multiline_str(self, block, tag, lineno):
         """Parse tags with multiline text while handling @CODE tags."""
-        lines = list(self._tag_multiline_args(block, tag, lineno))
-        # drop extra blank newlines
-        for line in reversed(lines):
-            if line:
-                break
-            lines.pop()
-
+        lines = self._tag_multiline_args(block, tag, lineno)
         data = []
+        indented = []
         code_block = False
+
         for i, line in enumerate(lines, 1):
             if self._code_block.match(line):
                 # in a literal code block
@@ -117,17 +113,24 @@ class ParseEclassDoc:
                 if code_block:
                     # add indentation for code blocks
                     line = f'  {line}'
-                elif line.lstrip() != line:
-                    raise EclassDocParsingError(
-                        f'{repr(tag)}, line {lineno + i}: indented code not in @CODE block')
+                elif re.match(r'^\s+', line):
+                    indented.append(lineno + i)
                 data.append(f'{line}\n')
             else:
                 data.append('\n')
 
         if code_block:
-            raise EclassDocParsingError(f'{repr(tag)}, line {code_block}: unterminated @CODE block')
+            logger.warning(f'{repr(tag)}, line {code_block}: unterminated @CODE block')
+        for k, g in groupby(enumerate(indented), lambda x: x[0] - x[1]):
+            lines = list(map(itemgetter(1), g))
+            if len(lines) == 1:
+                context = f'line {lines[0]}'
+            else:
+                context = f'lines {lines[0]}-{lines[1]}'
+            logger.warning(
+                f'{repr(tag)}, {context}: indented code not in @CODE block')
 
-        return ''.join(data)
+        return ''.join(data).rstrip('\n')
 
     def _tag_deprecated(self, block, tag, lineno):
         """Parse deprecated tags."""
@@ -186,7 +189,7 @@ class ParseEclassDoc:
         if missing_tags:
             missing_tags_str = ', '.join(map(repr, missing_tags))
             s = pluralism(missing_tags)
-            raise EclassDocParsingError(
+            logger.warning(
                 f'{repr(lines[0])}: missing tag{s}: {missing_tags_str}')
 
         return AttrDict(data)
@@ -222,7 +225,7 @@ class EclassBlock(ParseEclassDoc):
         if unknown:
             s = pluralism(unknown)
             unknown_str = ' '.join(sorted(unknown))
-            raise EclassDocParsingError(
+            logger.warning(
                 f'{repr(tag)}, line {lineno}: unknown EAPI{s}: {unknown_str}')
         return OrderedSet(eapis)
 
@@ -276,13 +279,13 @@ class EclassFuncBlock(ParseEclassDoc):
         Empty usage is allowed for functions with no arguments.
         """
         if len(block) > 1:
-            raise EclassDocParsingError(f'{repr(tag)}, line {lineno}: non-inline arg')
+            logger.warning(f'{repr(tag)}, line {lineno}: non-inline arg')
         return block[0]
 
     def parse(self, *args):
         data = super().parse(*args)
         if not (data.returns or data.description):
-            raise EclassDocParsingError(f'{repr(self.tag)}, @RETURN or @DESCRIPTION required')
+            logger.warning(f"'{self.tag}:{data.name}', @RETURN or @DESCRIPTION required")
         return data
 
 
@@ -309,25 +312,25 @@ _eclass_blocks_re = re.compile(
     rf'^(?P<prefix>\s*#) (?P<tag>{"|".join(ParseEclassDoc.blocks)})(?P<value>.*)')
 
 
+def _rst_header(char, text, leading=False, newline=False):
+    """Create rST header data from a given character and header text."""
+    sep = char * len(text)
+    data = [text, sep]
+    if leading:
+        data = [sep] + data
+    if newline:
+        data.append('')
+    return data
+
+
 class EclassDoc(AttrDict):
     """Support parsing eclass docs for a given eclass path."""
 
-    def __init__(self, path, /, *, sourced=False, error_callback=None):
+    def __init__(self, path, /, *, sourced=False):
         self.mtime = os.path.getmtime(path)
 
-        # set default fields
-        data = {}
-        data.update(ParseEclassDoc.blocks['@ECLASS:'].defaults)
-        for block_obj in ParseEclassDoc.blocks.values():
-            if block_obj.default:
-                data[block_obj.key] = OrderedSet()
-
-        try:
-            data.update(self.parse(path))
-        except EclassDocParsingError as e:
-            # parse errors are ignored by default
-            if error_callback is not None:
-                error_callback(e)
+        # parse eclass doc
+        data = self.parse(path)
 
         # inject full lists of exported funcs and vars
         if sourced:
@@ -440,13 +443,22 @@ class EclassDoc(AttrDict):
                     blocks.append((tag, block, block_start))
                 line_ind += 1
 
+        # set default fields
+        data = {}
+        data.update(ParseEclassDoc.blocks['@ECLASS:'].defaults)
+        for block_obj in ParseEclassDoc.blocks.values():
+            if block_obj.default:
+                data[block_obj.key] = OrderedSet()
+        data.update({block.key: OrderedSet() for block in ParseEclassDoc.blocks.values() if block.default})
+
         # @ECLASS block must exist and be first in eclasses
         if not blocks:
-            raise EclassDocParsingError("'@ECLASS:' block missing")
+            logger.error("'@ECLASS:' block missing")
+            return data
         elif blocks[0][0] != '@ECLASS:':
-            raise EclassDocParsingError("'@ECLASS:' block not first")
+            logger.warning("'@ECLASS:' block not first")
 
-        data = {block.key: OrderedSet() for block in ParseEclassDoc.blocks.values() if block.default}
+        # track duplicate tags
         duplicates = {k: set() for k in ParseEclassDoc.blocks}
 
         # parse identified blocks
@@ -456,20 +468,118 @@ class EclassDoc(AttrDict):
             # check if duplicate blocks exist and merge data
             if block_obj.key is None:
                 if block_data.keys() & data.keys():
-                    raise EclassDocParsingError(
+                    logger.warning(
                         f"'@ECLASS:', line {block_start}: duplicate block")
                 # verify name is correct
                 file_name = os.path.basename(path)
                 if block_data.name != file_name:
-                    raise EclassDocParsingError(
+                    logger.warning(
                         f"'@ECLASS:' invalid name {block_data.name!r} (should be {file_name!r})")
                 data.update(block_data)
             else:
                 name = block_data['name']
                 if name in duplicates[tag]:
-                    raise EclassDocParsingError(
+                    logger.warning(
                         f'{repr(block[0])}, line {block_start}: duplicate block')
                 duplicates[tag].add(name)
                 data[block_obj.key].add(block_data)
 
         return data
+
+    def to_rst(self):
+        """Convert eclassdoc object to reStructuredText."""
+        if self.name is None:
+            raise ValueError('eclass lacking doc support')
+
+        _header_only = partial(_rst_header, newline=True)
+
+        rst = []
+        rst.extend(_header_only('=', self.name, leading=True))
+        if self.blurb:
+            rst.extend(_header_only('=', self.blurb))
+
+        if self.description:
+            rst.extend(_rst_header('-', 'Description'))
+            rst.append(self.description)
+            rst.append('')
+        if self.deprecated:
+            rst.extend(_rst_header('-', 'Deprecated'))
+            if isinstance(self.deprecated, bool):
+                replacement = 'none'
+            else:
+                replacement = self.deprecated
+            rst.append(f'Replacement: {replacement}')
+            rst.append('')
+        if self.supported_eapis:
+            rst.extend(_rst_header('-', 'Supported EAPIs'))
+            rst.append(' '.join(self.supported_eapis))
+            rst.append('')
+        if self.example:
+            rst.extend(_rst_header('-', 'Example'))
+            rst.append(self.example)
+            rst.append('')
+
+        if external_funcs := [x for x in self.functions if not x.internal]:
+            rst.extend(_header_only('-', 'Functions'))
+            for func in external_funcs:
+                header = [func.name]
+                if func.usage:
+                    header.append(func.usage)
+                rst.extend(_rst_header('~', ' '.join(header)))
+                if func.description:
+                    rst.append(func.description)
+                if func.returns:
+                    if func.description:
+                        rst.append('')
+                    rst.append(f'Return value: {func.returns}')
+                rst.append('')
+        if external_vars := [x for x in self.variables if not x.internal]:
+            rst.extend(_header_only('-', 'Variables'))
+            for var in external_vars:
+                rst.extend(_rst_header('~', var.name))
+                if var.description:
+                    rst.append(var.description)
+                rst.append('')
+        if external_func_vars := [x for x in self.function_variables if not x.internal]:
+            rst.extend(_header_only('-', 'Function Variables'))
+            for var in external_func_vars:
+                rst.extend(_rst_header('~', var.name))
+                if var.description:
+                    rst.append(var.description)
+                rst.append('')
+
+        if self.authors:
+            rst.extend(_rst_header('-', 'Authors'))
+            rst.append('\n'.join(f'| {x}' for x in self.authors))
+            rst.append('')
+        if self.maintainers:
+            rst.extend(_rst_header('-', 'Maintainers'))
+            rst.append('\n'.join(f'| {x}' for x in self.maintainers))
+            rst.append('')
+        if self.bugreports:
+            rst.extend(_rst_header('-', 'Bug Reports'))
+            rst.append(self.bugreports)
+            rst.append('')
+
+        return '\n'.join(rst)
+
+    def _to_docutils(self, writer):
+        """Convert eclassdoc object using docutils."""
+        from docutils.core import publish_string
+        return publish_string(
+            source=self.to_rst(), writer=writer,
+            settings_overrides={
+                'input_encoding': 'unicode',
+                'output_encoding': 'unicode',
+            }
+        )
+
+    def to_man(self):
+        """Convert eclassdoc object to a man page."""
+        from docutils.writers import manpage
+        return self._to_docutils(manpage.Writer())
+
+    def to_html(self):
+        """Convert eclassdoc object to an HTML 5 document."""
+        from docutils.writers import html5_polyglot
+        return self._to_docutils(html5_polyglot.Writer())

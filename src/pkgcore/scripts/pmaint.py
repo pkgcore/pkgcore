@@ -5,6 +5,8 @@ __all__ = (
     "perl_rebuild", "perl_rebuild_main", "env_update", "env_update_main",
 )
 
+import argparse
+import logging
 import os
 import re
 import textwrap
@@ -21,6 +23,7 @@ from ..cache.flat_hash import md5_cache
 from ..ebuild import repository as ebuild_repo
 from ..ebuild import triggers
 from ..ebuild.cpv import CPV
+from ..ebuild.eclass import EclassDoc
 from ..exceptions import PkgcoreUserException
 from ..fs import contents, livefs
 from ..merge import triggers as merge_triggers
@@ -527,5 +530,94 @@ def digest_main(options, out, err):
         observer=observer_mod.formatter_output(out),
         mirrors=options.mirrors,
         force=options.force)
+
+    return int(any(failed))
+
+
+class EclassArgs(argparse.Action):
+    """Determine eclass arguments for `pmaint eclass`."""
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        if values:
+            eclasses = []
+            for val in values:
+                path = os.path.realpath(val)
+                if os.path.isdir(path):
+                    eclasses.extend(os.listdir(path))
+                elif val.endswith('.eclass'):
+                    eclasses.append(path)
+                else:
+                    raise argparse.ArgumentError(self, f'invalid eclass: {val!r}')
+            eclasses = sorted(x for x in eclasses if x.endswith('.eclass'))
+        else:
+            eclass_dir = pjoin(namespace.repo.location, 'eclass')
+            try:
+                files = sorted(os.listdir(eclass_dir))
+            except FileNotFoundError:
+                files = []
+            eclasses = [pjoin(eclass_dir, x) for x in files if x.endswith('.eclass')]
+            if not eclasses:
+                parser.error(f'{namespace.repo.repo_id} repo: no eclasses found')
+
+        setattr(namespace, self.dest, eclasses)
+
+
+eclass = subparsers.add_parser(
+    "eclass", parents=shared_options_domain,
+    description="generate eclass docs")
+eclass.add_argument(
+    'eclasses', nargs='*', help="eclasses to target",
+    action=arghparse.Delayed, target=EclassArgs, priority=1001)
+eclass_opts = eclass.add_argument_group("subcommand options")
+eclass_opts.add_argument(
+    "--dir", dest='output_dir', type=arghparse.create_dir, help="output directory")
+eclass_opts.add_argument(
+    "-f", "--format", help="output format",
+    default='man', choices=('rst', 'man', 'html'))
+eclass_opts.add_argument(
+    "-r", "--repo", help="target repository",
+    action=commandline.StoreRepoObject, repo_type='ebuild-raw', allow_external_repos=True,
+    docs="""
+        Target repository to search for eclasses. If no repo is specified the default repo is used.
+    """)
+
+
+@eclass.bind_delayed_default(1000, 'repo')
+def _eclass_default_repo(namespace, attr):
+    """Use default repo if none is selected."""
+    repo = namespace.config.get_default('repo')
+    setattr(namespace, attr, repo)
+
+
+@eclass.bind_delayed_default(1000, 'output_dir')
+def _eclass_default_output_dir(namespace, attr):
+    """Use CWD as output dir if unset."""
+    setattr(namespace, attr, os.getcwd())
+
+
+@eclass.bind_main_func
+def _eclass_main(options, out, err):
+    # suppress all eclassdoc parsing warnings
+    logging.getLogger('pkgcore').setLevel(100)
+    failed = []
+
+    # determine output file extension
+    ext_map = {'man': '5'}
+    ext = ext_map.get(options.format, options.format)
+
+    for path in options.eclasses:
+        try:
+            with open(pjoin(options.output_dir, f'{os.path.basename(path)}.{ext}'), 'wt') as f:
+                obj = EclassDoc(path)
+                convert_func = getattr(obj, f'to_{options.format}')
+                f.write(convert_func())
+        except ValueError as e:
+            # skip eclasses lacking eclassdoc support
+            err.write(f'{eclass.prog}: skipping {path!r}: {e}')
+            err.flush()
+        except IOError as e:
+            err.write(f'{eclass.prog}: error: {path!r}: {e}')
+            err.flush()
+            failed.append(path)
 
     return int(any(failed))

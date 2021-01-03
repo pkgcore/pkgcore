@@ -188,7 +188,7 @@ class EclassBlock(ParseEclassDoc):
             unknown_str = ' '.join(sorted(unknown))
             raise EclassDocParsingError(
                 f'{repr(tag)}, line {lineno}: unknown EAPI{s}: {unknown_str}')
-        return frozenset(eapis)
+        return OrderedSet(eapis)
 
 
 class EclassVarBlock(ParseEclassDoc):

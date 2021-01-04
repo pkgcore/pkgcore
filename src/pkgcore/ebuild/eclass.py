@@ -460,9 +460,11 @@ class EclassDoc(AttrDict):
             block_data = block_obj.parse(block, block_start)
             # check if duplicate blocks exist and merge data
             if block_obj.key is None:
-                if block_data.keys() & data.keys():
+                # main @ECLASS block
+                if duplicates[tag]:
                     logger.warning(
                         f"'@ECLASS:', line {block_start}: duplicate block")
+                duplicates[tag] = True
                 # verify name is correct
                 file_name = os.path.basename(path)
                 if block_data.name != file_name:
@@ -470,6 +472,7 @@ class EclassDoc(AttrDict):
                         f"'@ECLASS:' invalid name {block_data.name!r} (should be {file_name!r})")
                 data.update(block_data)
             else:
+                # item block
                 name = block_data['name']
                 if name in duplicates[tag]:
                     logger.warning(

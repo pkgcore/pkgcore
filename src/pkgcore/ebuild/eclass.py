@@ -4,12 +4,15 @@ import os
 import re
 import shlex
 import subprocess
+from datetime import datetime
 from functools import partial
 
 from snakeoil import klass
 from snakeoil.mappings import ImmutableDict, OrderedSet
 from snakeoil.strings import pluralism
+from snakeoil.version import get_version
 
+from .. import __title__
 from . import conditionals
 from .eapi import EAPI
 from ..log import logger
@@ -566,7 +569,32 @@ class EclassDoc(AttrDict):
     def to_man(self):
         """Convert eclassdoc object to a man page."""
         from docutils.writers import manpage
-        return self._to_docutils(manpage.Writer())
+
+        man_data = {
+            'manual_section': '5',
+            'manual_group': 'eclass-manpages',
+            'date': datetime.utcnow().strftime('%Y-%m-%d'),
+            'version': 'Gentoo Linux',
+        }
+        if self.blurb:
+            man_data['subtitle'] = self.blurb
+
+        # add pkgcore version to header comment
+        pkgcore_version = get_version(__title__, __file__).split(' --')[0]
+        header_comment = f'\nCreated by {pkgcore_version}.'
+
+        class Translator(manpage.Translator):
+            """Override docutils man page metadata defaults."""
+
+            document_start = manpage.Translator.document_start + header_comment
+
+            def __init__(self, *args, **kwargs):
+                super().__init__(*args, **kwargs)
+                self._docinfo.update(man_data)
+
+        writer = manpage.Writer()
+        writer.translator_class = Translator
+        return self._to_docutils(writer)
 
     def to_html(self):
         """Convert eclassdoc object to an HTML 5 document."""

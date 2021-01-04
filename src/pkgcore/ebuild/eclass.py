@@ -5,8 +5,6 @@ import re
 import shlex
 import subprocess
 from functools import partial
-from itertools import groupby
-from operator import itemgetter
 
 from snakeoil import klass
 from snakeoil.mappings import ImmutableDict, OrderedSet
@@ -31,6 +29,17 @@ class AttrDict(ImmutableDict):
 
     def __dir__(self):
         return sorted(dir(self._dict) + list(self._dict))
+
+
+def _rst_header(char, text, leading=False, newline=False):
+    """Create rST header data from a given character and header text."""
+    sep = char * len(text)
+    data = [text, sep]
+    if leading:
+        data = [sep] + data
+    if newline:
+        data.append('')
+    return data
 
 
 class ParseEclassDoc:
@@ -60,8 +69,10 @@ class ParseEclassDoc:
         self.tags = tags
         # regex matching all known tags for the eclass doc block
         self._block_tags_re = re.compile(rf'^(?P<tag>{"|".join(self.tags)})(?P<value>.*)')
-        # regex matching @CODE tags for literal blocks
-        self._code_block = re.compile(r'^\s*@CODE\s*$')
+        # regex matching @CODE tags
+        self._code_tag = re.compile(r'^\s*@CODE\s*$')
+        # regex matching @SUBSECTION tags
+        self._subsection_tag = re.compile(r'^\s*@SUBSECTION (?P<title>.+)$')
 
     def _tag_bool(self, block, tag, lineno):
         """Parse boolean tags."""
@@ -95,42 +106,32 @@ class ParseEclassDoc:
         return tuple(block[1:])
 
     def _tag_multiline_str(self, block, tag, lineno):
-        """Parse tags with multiline text while handling @CODE tags."""
+        """Parse tags with multiline text while handling @CODE/@SUBSECTION tags."""
         lines = self._tag_multiline_args(block, tag, lineno)
-        data = []
-        indented = []
-        code_block = False
+        if not lines:
+            return None
+
+        # use literal blocks for all multiline text
+        data = ['::', '\n\n']
 
         for i, line in enumerate(lines, 1):
-            if self._code_block.match(line):
-                # in a literal code block
-                if code_block:
-                    code_block = False
-                else:
-                    code_block = lineno + i
-                    data.extend(['\n', '.. code-block:: bash', '\n\n'])
+            if self._code_tag.match(line):
+                continue
+            elif mo := self._subsection_tag.match(line):
+                header = _rst_header('~', mo.group('title'))
+                data.extend(f'{x}\n' for x in header)
+                data.extend(['::', '\n\n'])
             elif line:
-                if code_block:
-                    # add indentation for code blocks
-                    line = f'  {line}'
-                elif re.match(r'^\s+', line):
-                    indented.append(lineno + i)
-                data.append(f'{line}\n')
+                data.append(f'  {line}\n')
             else:
                 data.append('\n')
 
-        if code_block:
-            logger.warning(f'{repr(tag)}, line {code_block}: unterminated @CODE block')
-        for k, g in groupby(enumerate(indented), lambda x: x[0] - x[1]):
-            lines = list(map(itemgetter(1), g))
-            if len(lines) == 1:
-                context = f'line {lines[0]}'
-            else:
-                context = f'lines {lines[0]}-{lines[1]}'
-            logger.warning(
-                f'{repr(tag)}, {context}: indented code not in @CODE block')
-
         return ''.join(data).rstrip('\n')
+
+    def _tag_multiline_rst(self, block, tag, lineno):
+        """Parse tags with multiline rST formatting."""
+        lines = self._tag_multiline_args(block, tag, lineno)
+        return ''.join(lines).rstrip('\n')
 
     def _tag_deprecated(self, block, tag, lineno):
         """Parse deprecated tags."""
@@ -310,17 +311,6 @@ class EclassFuncVarBlock(ParseEclassDoc):
 
 _eclass_blocks_re = re.compile(
     rf'^(?P<prefix>\s*#) (?P<tag>{"|".join(ParseEclassDoc.blocks)})(?P<value>.*)')
-
-
-def _rst_header(char, text, leading=False, newline=False):
-    """Create rST header data from a given character and header text."""
-    sep = char * len(text)
-    data = [text, sep]
-    if leading:
-        data = [sep] + data
-    if newline:
-        data.append('')
-    return data
 
 
 class EclassDoc(AttrDict):

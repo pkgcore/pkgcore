@@ -483,10 +483,9 @@ class EclassDoc(AttrDict):
 
         _header_only = partial(_rst_header, newline=True)
 
-        rst = []
-        rst.extend(_header_only('=', self.name, leading=True))
+        rst = _header_only('=', self.name, leading=True)
         if self.blurb:
-            rst.extend(_header_only('=', self.blurb))
+            rst.extend(_header_only('-', self.blurb, leading=True))
 
         if self.description:
             rst.extend(_rst_header('-', 'Description'))

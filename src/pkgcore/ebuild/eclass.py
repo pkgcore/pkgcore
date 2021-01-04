@@ -60,6 +60,8 @@ class ParseEclassDoc:
         self.tags = tags
         # regex matching all known tags for the eclass doc block
         self._block_tags_re = re.compile(rf'^(?P<tag>{"|".join(self.tags)})(?P<value>.*)')
+        # regex matching @CODE tags for literal blocks
+        self._code_block = re.compile(r'^\s*@CODE\s*$')
 
     def _tag_bool(self, block, tag, lineno):
         """Parse boolean tags."""
@@ -84,7 +86,6 @@ class ParseEclassDoc:
         line = self._tag_inline_arg(block, tag, lineno)
         return tuple(line.split())
 
-    # TODO: add support for @CODE blocks once doc output is added
     def _tag_multiline_args(self, block, tag, lineno):
         """Parse tags with multiline arguments."""
         if block[0]:
@@ -92,6 +93,41 @@ class ParseEclassDoc:
         if not block[1:]:
             raise EclassDocParsingError(f'{repr(tag)}, line {lineno}: missing args')
         return tuple(block[1:])
+
+    def _tag_multiline_str(self, block, tag, lineno):
+        """Parse tags with multiline text while handling @CODE tags."""
+        lines = list(self._tag_multiline_args(block, tag, lineno))
+        # drop extra blank newlines
+        for line in reversed(lines):
+            if line:
+                break
+            lines.pop()
+
+        data = []
+        code_block = False
+        for i, line in enumerate(lines, 1):
+            if self._code_block.match(line):
+                # in a literal code block
+                if code_block:
+                    code_block = False
+                else:
+                    code_block = lineno + i
+                    data.extend(['\n', '.. code-block:: bash', '\n\n'])
+            elif line:
+                if code_block:
+                    # add indentation for code blocks
+                    line = f'  {line}'
+                elif line.lstrip() != line:
+                    raise EclassDocParsingError(
+                        f'{repr(tag)}, line {lineno + i}: indented code not in @CODE block')
+                data.append(f'{line}\n')
+            else:
+                data.append('\n')
+
+        if code_block:
+            raise EclassDocParsingError(f'{repr(tag)}, line {code_block}: unterminated @CODE block')
+
+        return ''.join(data)
 
     def _tag_deprecated(self, block, tag, lineno):
         """Parse deprecated tags."""
@@ -170,9 +206,9 @@ class EclassBlock(ParseEclassDoc):
             '@INDIRECT_ECLASSES:': ('indirect_eclasses', False, self._tag_inline_list, ()),
             '@MAINTAINER:': ('maintainers', True, self._tag_multiline_args, None),
             '@AUTHOR:': ('authors', False, self._tag_multiline_args, None),
-            '@BUGREPORTS:': ('bugreports', False, self._tag_multiline_args, None),
-            '@DESCRIPTION:': ('description', False, self._tag_multiline_args, None),
-            '@EXAMPLE:': ('example', False, self._tag_multiline_args, None),
+            '@BUGREPORTS:': ('bugreports', False, self._tag_multiline_str, None),
+            '@DESCRIPTION:': ('description', False, self._tag_multiline_str, None),
+            '@EXAMPLE:': ('example', False, self._tag_multiline_str, None),
             '@SUPPORTED_EAPIS:': ('supported_eapis', False, self._supported_eapis, ()),
         }
         super().__init__(tags)
@@ -208,7 +244,7 @@ class EclassVarBlock(ParseEclassDoc):
             '@PRE_INHERIT': ('pre_inherit', False, self._tag_bool, False),
             '@USER_VARIABLE': ('user_variable', False, self._tag_bool, False),
             '@OUTPUT_VARIABLE': ('output_variable', False, self._tag_bool, False),
-            '@DESCRIPTION:': ('description', True, self._tag_multiline_args, None),
+            '@DESCRIPTION:': ('description', True, self._tag_multiline_str, None),
         }
         super().__init__(tags)
 
@@ -227,7 +263,7 @@ class EclassFuncBlock(ParseEclassDoc):
             '@DEPRECATED:': ('deprecated', False, self._tag_deprecated, False),
             '@INTERNAL': ('internal', False, self._tag_bool, False),
             '@MAINTAINER:': ('maintainers', False, self._tag_multiline_args, None),
-            '@DESCRIPTION:': ('description', False, self._tag_multiline_args, None),
+            '@DESCRIPTION:': ('description', False, self._tag_multiline_str, None),
             # TODO: The devmanual states this is required, but disabling for now since
             # many phase override functions don't document usage.
             '@USAGE:': ('usage', False, self._usage, None),
@@ -264,7 +300,7 @@ class EclassFuncVarBlock(ParseEclassDoc):
             '@DEFAULT_UNSET': ('default_unset', False, self._tag_bool, False),
             '@INTERNAL': ('internal', False, self._tag_bool, False),
             '@REQUIRED': ('required', False, self._tag_bool, False),
-            '@DESCRIPTION:': ('description', True, self._tag_multiline_args, None),
+            '@DESCRIPTION:': ('description', True, self._tag_multiline_str, None),
         }
         super().__init__(tags)
 

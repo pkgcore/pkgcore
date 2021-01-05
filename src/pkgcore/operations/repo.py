@@ -234,7 +234,7 @@ class operations(sync_operations):
         try:
             if sync_rate is not None:
                 cache.set_sync_rate(1000000)
-            ret = 0
+            errors = 0
 
             # Force usage of unfiltered repo to include pkgs with metadata issues.
             # Matches are collapsed directly to a list to avoid threading issues such
@@ -245,19 +245,19 @@ class operations(sync_operations):
             for pkg, e in regen.regen_repository(
                     self.repo, pkgs, observer=observer, threads=threads, **kwargs):
                 observer.error(f'caught exception {e} while processing {pkg.cpvstr}')
-                ret = 1
+                errors += 1
 
             # report pkgs with bad metadata -- relies on iterating over the
             # unfiltered repo to populate the masked repo
             pkgs = frozenset(pkg.cpvstr for pkg in self.repo)
             for pkg in sorted(self.repo._bad_masked):
                 observer.error(f'{pkg.cpvstr}: {pkg.data.msg(verbosity=observer.verbosity)}')
-                ret = 1
+                errors += 1
 
             # remove old/invalid cache entries
             self._cmd_implementation_clean_cache(pkgs)
 
-            return ret
+            return errors
         finally:
             if sync_rate is not None:
                 cache.set_sync_rate(sync_rate)

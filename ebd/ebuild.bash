@@ -272,7 +272,7 @@ __load_ebuild() {
 	# EAPI 6 and up raise expansion errors on failed globbing in global scope.
 	${PKGCORE_GLOBAL_FAILGLOB} && __shopt_push -s failglob
 
-	__qa_invoke source "${EBUILD}" 2>/dev/null
+	__qa_invoke source "${EBUILD}"
 	if [[ $? != 0 ]]; then
 		# rerun source in a subshell to capture stderr
 		local error_msg="error sourcing ebuild"

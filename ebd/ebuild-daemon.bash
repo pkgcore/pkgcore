@@ -339,12 +339,13 @@ __ebd_main_loop() {
 			process_ebuild*)
 				# cleanse whitespace.
 				local phases=$(echo ${com#process_ebuild})
-				__ebd_process_ebuild_phases ${phases}
-				# tell python if it succeeded or not.
-				if [[ $? -ne 0 ]]; then
-					__ebd_write_line "phases failed"
-				else
+				local error_output
+				error_output=$(__ebd_process_ebuild_phases ${phases} 2>&1)
+				if [[ $? -eq 0 ]]; then
 					__ebd_write_line "phases succeeded"
+				else
+					[[ -n ${error_output} ]] || error_output="ebd::${com% *} failed"
+					__ebd_write_line "phases failed ${error_output}"
 				fi
 				;;
 			shutdown_daemon)
@@ -378,12 +379,15 @@ __ebd_main_loop() {
 				;;
 			gen_metadata\ *|gen_ebuild_env\ *)
 				local __mode="depend"
+				local error_output
 				[[ ${com} == gen_ebuild_env* ]] && __mode="generate_env"
 				line=${com#* }
-				if __ebd_process_metadata "${line}" "${__mode}"; then
+				error_output=$(__ebd_process_metadata "${line}" "${__mode}" 2>&1)
+				if [[ $? -eq 0 ]]; then
 					__ebd_write_line "phases succeeded"
 				else
-					__ebd_write_line "phases failed"
+					[[ -n ${error_output} ]] || error_output="ebd::${com% *} failed"
+					__ebd_write_line "phases failed ${error_output}"
 				fi
 				;;
 			alive)

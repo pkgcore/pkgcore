@@ -300,11 +300,15 @@ def chuck_UnhandledCommand(ebp, line):
     raise UnhandledCommand(line)
 
 
-def chuck_StoppingCommand(val, ebp, *args):
+def chuck_StoppingCommand(ebp, line):
     """Event handler for successful phase/command completion."""
-    if callable(val):
-        val = val(args[0])
-    raise FinishedProcessing(val)
+    args = line.split(' ', 1)
+    if args[0] == 'succeeded':
+        raise FinishedProcessing(True)
+    else:
+        # Note that we want failures missing an error message to raise
+        # IndexError here so they can be fixed on the bash side.
+        raise ProcessorError(args[1])
 
 
 class EbuildProcessor:
@@ -804,11 +808,7 @@ class EbuildProcessor:
             updates = set()
         commands = extra_commands.copy()
         commands["request_inherit"] = partial(inherit_handler, eclass_cache, updates=updates)
-        val = self.generic_handler(additional_commands=commands)
-
-        if not val:
-            raise ProcessorError(f"returned val from {command} was '{val}'")
-
+        self.generic_handler(additional_commands=commands)
         if updates:
             self.preload_eclasses(eclass_cache, limited_to=updates, async_req=True)
 
@@ -902,12 +902,10 @@ class EbuildProcessor:
             handlers[x] = f
         del f
 
-        handlers["phases"] = partial(
-            chuck_StoppingCommand, lambda f: f.lower().strip() == "succeeded")
-
         handlers["SIGINT"] = chuck_KeyboardInterrupt
         handlers["SIGTERM"] = chuck_TermInterrupt
         handlers["dying"] = chuck_DyingInterrupt
+        handlers["phases"] = chuck_StoppingCommand
 
         if additional_commands is not None:
             for x in additional_commands:

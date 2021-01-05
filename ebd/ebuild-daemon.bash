@@ -339,13 +339,11 @@ __ebd_main_loop() {
 			process_ebuild*)
 				# cleanse whitespace.
 				local phases=$(echo ${com#process_ebuild})
-				local error_output
-				error_output=$(__ebd_process_ebuild_phases ${phases} 2>&1)
+				__ebd_process_ebuild_phases ${phases}
 				if [[ $? -eq 0 ]]; then
 					__ebd_write_line "phases succeeded"
 				else
-					[[ -n ${error_output} ]] || error_output="ebd::${com% *} failed"
-					__ebd_write_line "phases failed ${error_output}"
+					__ebd_write_line "phases failed ebd::${com% *} failed"
 				fi
 				;;
 			shutdown_daemon)
@@ -382,7 +380,8 @@ __ebd_main_loop() {
 				local error_output
 				[[ ${com} == gen_ebuild_env* ]] && __mode="generate_env"
 				line=${com#* }
-				error_output=$(__ebd_process_metadata "${line}" "${__mode}" 2>&1)
+				# capture sourcing stderr output
+				error_output=$(__ebd_process_metadata "${line}" "${__mode}" 2>&1 1>/dev/null)
 				if [[ $? -eq 0 ]]; then
 					__ebd_write_line "phases succeeded"
 				else

@@ -20,20 +20,18 @@ __all__ = (
 
 import contextlib
 import errno
-import logging
 import os
 import signal
-import sys
 import threading
 import traceback
 from functools import partial, wraps
 from itertools import chain
 
-from snakeoil import bash, fileutils, klass, process
-from snakeoil.osutils import abspath, normpath, pjoin
+from snakeoil import bash, fileutils, klass
+from snakeoil.osutils import pjoin
 from snakeoil.process import spawn
 
-from .. import __file__, const, os_data
+from .. import const, os_data
 from ..exceptions import PkgcoreException, PkgcoreUserException
 from ..log import logger
 from . import const as e_const
@@ -79,6 +77,7 @@ def shutdown_all_processors():
         traceback.print_exc()
         logger.error(e)
         raise
+
 
 spawn.atexit_register(shutdown_all_processors)
 
@@ -155,6 +154,7 @@ def drop_ebuild_processor(ebp):
         inactive_ebp_list.remove(ebp)
     except ValueError:
         pass
+
 
 @contextlib.contextmanager
 def reuse_or_request(ebp=None, **kwargs):
@@ -274,6 +274,7 @@ def chuck_KeyboardInterrupt(*args):
         ebp.shutdown_processor(force=True)
     raise KeyboardInterrupt("ctrl+c encountered")
 
+
 signal.signal(signal.SIGINT, chuck_KeyboardInterrupt)
 
 
@@ -289,6 +290,7 @@ def chuck_TermInterrupt(ebp, *args):
         # individual ebd got SIGTERM-ed, shutdown corresponding processor
         drop_ebuild_processor(ebp)
         ebp.shutdown_processor()
+
 
 signal.signal(signal.SIGTERM, partial(chuck_TermInterrupt, None))
 
@@ -942,6 +944,7 @@ class EbuildProcessor:
             return v
         finally:
             self.unlock()
+
 
 def inherit_handler(ecache, ebp, line=None, updates=None):
     """Callback for implementing inherit digging into eclass_cache.

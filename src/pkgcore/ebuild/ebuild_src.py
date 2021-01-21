@@ -491,12 +491,18 @@ class package_factory(metadata.factory):
         return mydata
 
     def new_package(self, *args):
-        inst = self._cached_instances.get(args)
+        if self._parent_repo.package_cache:
+            inst = self._cached_instances.get(args)
+        else:
+            # package caching is disabled
+            inst = None
+
         if inst is None:
             # key being cat/pkg
             mxml = self._parent_repo._get_shared_pkg_data(args[0], args[1])
             inst = self._cached_instances[args] = self.child_class(
                 mxml, self, *args)
+
         return inst
 
 

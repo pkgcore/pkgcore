@@ -323,7 +323,8 @@ class UnconfiguredTree(prototype.tree):
         typename='repo')
 
     def __init__(self, location, eclass_cache=None, masters=(), cache=(),
-                 default_mirrors=None, allow_missing_manifests=False, repo_config=None):
+                 default_mirrors=None, allow_missing_manifests=False, package_cache=True,
+                 repo_config=None):
         """
         :param location: on disk location of the tree
         :param cache: sequence of :obj:`pkgcore.cache.template.database` instances
@@ -334,9 +335,12 @@ class UnconfiguredTree(prototype.tree):
             if None, generates the eclass_cache itself
         :param default_mirrors: Either None, or sequence of mirrors to try
             fetching from first, then falling back to other uri
+        :param package_cache: boolean controlling package instance caching
+        :param repo_config: :obj:`pkgcore.repo_objs.RepoConfig` instance for the related repo
         """
         super().__init__()
         self.base = self.location = location
+        self.package_cache = package_cache
         if repo_config is None:
             repo_config = repo_objs.RepoConfig(location)
         self.config = repo_config

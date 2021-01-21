@@ -29,6 +29,9 @@ jobs:
         pip install -r requirements/test.txt
 
     - name: Test with pytest
+      # forcibly enable pytest colors
+      env:
+        PY_COLORS: 1
       run: python setup.py test
 
     - name: Build release files

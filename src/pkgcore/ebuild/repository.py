@@ -533,7 +533,7 @@ class UnconfiguredTree(prototype.tree):
         while True:
             try:
                 pkg = next(pkgs)
-            except pkg_errors.PackageError as e:
+            except pkg_errors.PackageError:
                 # ignore pkgs with invalid CPVs
                 continue
             except StopIteration:

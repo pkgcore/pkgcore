@@ -85,7 +85,7 @@ class base(metadata.package):
 
     @DynamicGetattrSetter.register
     def fullslot(self):
-        slot = self.data.pop('SLOT', None)
+        slot = self.data.get('SLOT', None)
         if not slot:
             raise metadata_errors.MetadataException(
                 self, 'slot', 'SLOT cannot be unset or empty')

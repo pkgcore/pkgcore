@@ -260,6 +260,17 @@ class DepSet(boolean.AndRestriction):
     def __str__(self):
         return stringify_boolean(self)
 
+    # parent __hash__() isn't inherited when __eq__() is defined in the child class
+    __hash__ = boolean.AndRestriction.__hash__
+
+    def __eq__(self, other):
+        if isinstance(other, DepSet):
+            return set(self.restrictions) == set(other.restrictions)
+        return False
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
     def __iter__(self):
         return iter(self.restrictions)
 

@@ -464,26 +464,25 @@ class PortageConfig(DictMixin):
         except FileNotFoundError:
             pass
 
-    def _find_profile_link(self):
-        make_profile = pjoin(self.dir, 'make.profile')
-        try:
-            return normpath(abspath(
-                pjoin(self.dir, os.readlink(make_profile))))
-        except EnvironmentError as e:
-            if e.errno in (errno.ENOENT, errno.EINVAL):
-                raise config_errors.UserConfigError(
-                    f"{make_profile!r} must be a symlink pointing to a real target") from e
-            raise config_errors.ComplexInstantiationError(
-                f"{make_profile!r}: unexpected error- {e.strerror}") from e
+    def _find_profile_path(self, profile_override):
+        if profile_override is None:
+            make_profile = pjoin(self.dir, 'make.profile')
+            if not os.path.islink(make_profile):
+                raise config_errors.UserConfigError(f'invalid symlink: {make_profile!r}')
+            path = os.readlink(make_profile)
+        else:
+            path = profile_override
+
+        path = normpath(abspath(path))
+        if not os.path.exists(path):
+            if profile_override is None:
+                raise config_errors.UserConfigError(f'broken symlink: {make_profile!r}')
+            else:
+                raise config_errors.UserConfigError(f'nonexistent profile: {profile_override!r}')
+        return path
 
     def _add_profile(self, profile_override=None):
-        if profile_override is None:
-            profile = self._find_profile_link()
-        else:
-            profile = normpath(abspath(profile_override))
-            if not os.path.exists(profile):
-                raise config_errors.UserConfigError(f"{profile!r} doesn't exist")
-
+        profile = self._find_profile_path(profile_override)
         paths = profiles.OnDiskProfile.split_abspath(profile)
         if paths is None:
             raise config_errors.UserConfigError(

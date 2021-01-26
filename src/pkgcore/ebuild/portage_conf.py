@@ -15,7 +15,7 @@ from collections import OrderedDict
 from snakeoil.bash import read_bash_dict
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.mappings import DictMixin, ImmutableDict
-from snakeoil.osutils import abspath, access, listdir_files, normpath, pjoin
+from snakeoil.osutils import access, listdir_files, pjoin
 
 from .. import const
 from .. import exceptions as base_errors
@@ -469,11 +469,10 @@ class PortageConfig(DictMixin):
             make_profile = pjoin(self.dir, 'make.profile')
             if not os.path.islink(make_profile):
                 raise config_errors.UserConfigError(f'invalid symlink: {make_profile!r}')
-            path = os.readlink(make_profile)
+            path = os.path.realpath(make_profile)
         else:
-            path = profile_override
+            path = os.path.realpath(profile_override)
 
-        path = normpath(abspath(path))
         if not os.path.exists(path):
             if profile_override is None:
                 raise config_errors.UserConfigError(f'broken symlink: {make_profile!r}')
@@ -510,7 +509,7 @@ class PortageConfig(DictMixin):
 
         fetcher_dict = {
             "class": "pkgcore.fetch.custom.fetcher",
-            "distdir": normpath(os.environ.get("DISTDIR", make_conf.pop("DISTDIR"))),
+            "distdir": os.path.normpath(os.environ.get("DISTDIR", make_conf.pop("DISTDIR"))),
             "command": fetchcommand,
             "resume_command": resumecommand,
             "attempts": make_conf.pop("FETCH_ATTEMPTS", '10'),

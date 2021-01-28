@@ -2,6 +2,37 @@
 Release Notes
 =============
 
+---------------------------
+pkgcore 0.11.0 (2021-01-27)
+---------------------------
+
+- pkgcore.ebuild.conditionals: Add __eq__() and __ne__() support
+  for DepSet objects.
+
+- Catch bash stderr output during sourcing for python error
+  messages (#277).
+
+- pmaint eclass: Add initial subcommand that supports eclassdoc
+  generation.
+
+- pkgcore.ebuild.eclass: Provide support to convert eclassdoc
+  objects to rst, manpage, and html formats.
+
+- Inject direct ebuild inherits into metadata cache using the
+  'INHERIT' key. This is used by pkgcheck inherit checks.
+
+- Make the base profile node respect profile-formats settings (#293).
+
+- Keep inherit order for inherited eclasses instead of sorting them
+  lexically in the metadata cache. The inherit order used by bash
+  is useful information for pkgcheck and related tools.
+
+- EbdError: Add die context for non-helper errors to error message.
+  This should help give users more context when die() is called
+  from ebuilds or eclasses.
+
+- Drop support for python 3.6 and 3.7.
+
 ----------------------------
 pkgcore 0.10.14 (2020-12-04)
 ----------------------------

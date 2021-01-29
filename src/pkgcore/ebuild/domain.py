@@ -652,12 +652,15 @@ class domain(config_domain):
         repo = None
         path = os.path.abspath(path)
         with suppress_logging():
-            while path != self.root:
+            while True:
                 try:
                     repo = self.add_repo(path, config=config, configure=configure)
                     break
                 except repo_errors.InvalidRepo:
-                    path = os.path.dirname(path)
+                    parent = os.path.dirname(path)
+                    if parent == path:
+                        break
+                    path = parent
         return repo
 
     def _configure_repo(self, repo):

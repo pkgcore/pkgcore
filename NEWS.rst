@@ -3,6 +3,13 @@ Release Notes
 =============
 
 ---------------------------
+pkgcore 0.11.1 (2021-01-29)
+---------------------------
+
+- pkgcore.ebuild.domain: Disregard ROOT to avoid infinite loops when using
+  find_repo().
+
+---------------------------
 pkgcore 0.11.0 (2021-01-27)
 ---------------------------
 
